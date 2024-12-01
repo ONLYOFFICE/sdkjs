@@ -675,15 +675,17 @@
 	};
 	CNumberingApplicator.prototype.ApplyNumPr = function(numId, ilvl)
 	{
+		// TODO: Надо перенести сюда всю логику подбора уровня по отступам, а в классе параграфа делать простое выставление
+		let checkIndents = this.IsCheckIndents();
 		for (let index = 0, count = this.Paragraphs.length; index < count; ++index)
 		{
 			let paragraph = this.Paragraphs[index];
 			let oldNumPr  = paragraph.GetNumPr();
 
 			if (oldNumPr)
-				paragraph.ApplyNumPr(numId, oldNumPr.Lvl);
+				paragraph.ApplyNumPr(numId, oldNumPr.Lvl, checkIndents);
 			else
-				paragraph.ApplyNumPr(numId, ilvl);
+				paragraph.ApplyNumPr(numId, ilvl, checkIndents);
 		}
 	};
 	CNumberingApplicator.prototype.ApplyToHeadings = function(numId)
@@ -743,6 +745,25 @@
 		newLvl.SetParaPr(paraPr);
 		
 		newLvl.SetPStyle(oldLvl.GetPStyle());
+	};
+	CNumberingApplicator.prototype.IsCheckIndents = function()
+	{
+		// TODO: Возможно, наоборот, надо тут false возвращать
+		if (this.Paragraphs.length <= 1)
+			return true;
+		
+		let paraPr = this.Paragraphs[0].Get_CompiledPr2(false).ParaPr;
+		let left   = paraPr.Ind.Left;
+		let first  = paraPr.Ind.FirstLine;
+		
+		for (let index = 1, count = this.Paragraphs.length; index < count; ++index)
+		{
+			let paraPr = this.Paragraphs[index].Get_CompiledPr2(false).ParaPr;
+			if (Math.abs(left - paraPr.Ind.Left) > 0.001 || Math.abs(first - paraPr.Ind.FirstLine) > 0.001)
+				return true;
+		}
+		
+		return false;
 	};
 	//---------------------------------------------------------export---------------------------------------------------
 	window["AscWord"].CNumberingApplicator = CNumberingApplicator;

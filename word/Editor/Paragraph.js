@@ -611,6 +611,18 @@ Paragraph.prototype.GetAllParaMaths = function(arrParaMaths)
 
 	return arrParaMaths;
 };
+Paragraph.prototype.GetAllPermRangeMarks = function(marks)
+{
+	if (!marks)
+		marks = [];
+	
+	for (let i = 0, count = this.Content.length; i < count; ++i)
+	{
+		this.Content[i].GetAllPermRangeMarks(marks);
+	}
+	
+	return marks;
+};
 
 Paragraph.prototype.GetAllSeqFieldsByType = function(sType, aFields)
 {
@@ -1451,10 +1463,9 @@ Paragraph.prototype.CheckNotInlineObject = function(nMathPos, nDirection)
 			}
 			else
 			{
-				if (undefined !== this.Get_CompiledPr2(false).ParaPr.Bullet)
-				{
+				let oBullet = this.Get_CompiledPr2(false).ParaPr.Bullet;
+				if (oBullet && !oBullet.isNone())
 					return false;
-				}
 			}
 		}
 
@@ -2673,6 +2684,23 @@ Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawStat
 				pGraphics.rect(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0, Element.Additional2);
 				pGraphics.df();
 				Element = aHigh.Get_Next();
+			}
+			
+			//----------------------------------------------------------------------------------------------------------
+			// Рисуем выделение разрешенных областей
+			//----------------------------------------------------------------------------------------------------------
+			let aPerm = PDSH.Perm;
+			Element   = aPerm.Get_Next();
+			while (null != Element)
+			{
+				if (!pGraphics.set_fillColor)
+					pGraphics.b_color1(Element.r, Element.g, Element.b, 255);
+				else
+					pGraphics.set_fillColor(Element.r, Element.g, Element.b);
+				
+				pGraphics.rect(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0);
+				pGraphics.df();
+				Element = aPerm.Get_Next();
 			}
 
 			//----------------------------------------------------------------------------------------------------------
@@ -8588,7 +8616,33 @@ Paragraph.prototype.RemoveSelection = function()
 	this.Selection.StartPos = 0;
 	this.Selection.EndPos   = 0;
 };
-Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
+(function()
+{
+	function drawSelectionOnPage(drawingDocument, clipInfo, page, x, y, w, h, draw2)
+	{
+		if (clipInfo)
+		{
+			let x0 = clipInfo.correctX0(x);
+			let x1 = clipInfo.correctX1(x + w)
+			let y0 = clipInfo.correctY0(y);
+			let y1 = clipInfo.correctY1(y + h);
+			x      = x0;
+			w      = Math.max(0, x1 - x0)
+			y      = y0;
+			h      = Math.max(0, y1 - y0);
+		}
+		
+		if (w < 0.001 || h < 0.001)
+			return;
+		
+		if (draw2)
+			drawingDocument.AddPageSelection2(page, x, y, w, h);
+		else
+			drawingDocument.AddPageSelection(page, x, y, w, h);
+	}
+	AscWord.drawSelectionOnPage = drawSelectionOnPage;
+})();
+Paragraph.prototype.DrawSelectionOnPage = function(CurPage, clipInfo)
 {
 	if (!this.IsRecalculated())
 		return;
@@ -8710,14 +8764,12 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 							{
 								var oRect = arrRects[nIndex];
 								
-								if (oRect.W > 0.001 && oRect.H > 0.001)
-									drawingDocument.AddPageSelection(PageAbs, oRect.X, oRect.Y, oRect.W, oRect.H);
+								AscWord.drawSelectionOnPage(drawingDocument, clipInfo, PageAbs, oRect.X, oRect.Y, oRect.W, oRect.H);
 							}
 						}
 						else
 						{
-							if (_w > 0.001)
-								drawingDocument.AddPageSelection(PageAbs, _x, _y, _w, _h);
+							AscWord.drawSelectionOnPage(drawingDocument, clipInfo, PageAbs, _x, _y, _w, _h);
 						}
 					}
 				}
@@ -8775,11 +8827,11 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 				}
 			}
 			
-			drawingDocument.AddPageSelection(PageAbs, SelectX, SelectY, SelectW, SelectH);
-
+			AscWord.drawSelectionOnPage(drawingDocument, clipInfo, PageAbs, SelectX, SelectY, SelectW, SelectH);
+			
 			if (selectionflag_NumberingCur === this.Selection.Flag && drawingDocument.AddPageSelection2)
-				drawingDocument.AddPageSelection2(PageAbs, SelectX, SelectY, SelectW2, SelectH);
-
+				AscWord.drawSelectionOnPage(drawingDocument, clipInfo, PageAbs, SelectX, SelectY, SelectW2, SelectH, true);
+			
 			break;
 		}
 	}
@@ -9842,8 +9894,9 @@ Paragraph.prototype.Remove_StartTabs = function(TabsCounter)
  * Применяем заданную нумерацию к данному параграфу (учитываем отступы, количество табов в начале параграфа и т.д.)
  * @param sNumId {string}
  * @param nLvl {number} 0..8
+ * @param checkIndents {boolean} - Подбирать ли уровень по отступам
  */
-Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
+Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl, checkIndents)
 {
 	var ParaPr    = this.Get_CompiledPr2(false).ParaPr;
 	var NumPr_old = this.GetNumPr();
@@ -9956,24 +10009,30 @@ Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
 			// Если выделено несколько параграфов, тогда уже по сдвигу X определяем уровень данной нумерации
 
 			var LvlFound  = -1;
-			for (var LvlIndex = 0; LvlIndex < 9; ++LvlIndex)
+			if (false !== checkIndents)
 			{
-				var oNumLvl = oNum.GetLvl(LvlIndex);
-				if (oNumLvl)
+				for (var LvlIndex = 0; LvlIndex < 9; ++LvlIndex)
 				{
-					var oNumParaPr = oNumLvl.GetParaPr();
-
-					if (undefined != oNumParaPr.Ind && undefined != oNumParaPr.Ind.Left && X <= oNumParaPr.Ind.Left)
+					var oNumLvl = oNum.GetLvl(LvlIndex);
+					if (oNumLvl)
 					{
-						LvlFound = LvlIndex;
-						break;
+						var oNumParaPr = oNumLvl.GetParaPr();
+						
+						if (undefined != oNumParaPr.Ind && undefined != oNumParaPr.Ind.Left && X <= oNumParaPr.Ind.Left)
+						{
+							LvlFound = LvlIndex;
+							break;
+						}
 					}
 				}
+				if (-1 === LvlFound)
+					LvlFound = 0;
 			}
-
-			if (-1 === LvlFound)
-				LvlFound = 0;
-
+			else
+			{
+				LvlFound = undefined !== nLvl ? nLvl : 0;
+			}
+			
 			if (this.Pr.Ind && (undefined !== this.Pr.Ind || undefined !== this.Pr.Ind.Left))
 			{
 				AscCommon.History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, undefined));
@@ -12180,6 +12239,21 @@ Paragraph.prototype.Get_Layout = function(ContentPos, Drawing)
 
 	return null;
 };
+Paragraph.prototype.GetLayout = function(contentPos, useWrap)
+{
+	let drawing = {
+		Use_TextWrap : function()
+		{
+			return useWrap;
+		},
+		IsLayoutInCell : function()
+		{
+			return false;
+		}
+	};
+	
+	return this.Get_Layout(contentPos, drawing);
+};
 Paragraph.prototype.Get_AnchorPos = function(Drawing)
 {
 	var ContentPos = this.Get_DrawingObjectContentPos(Drawing.Get_Id());
@@ -12667,23 +12741,20 @@ Paragraph.prototype.PreDelete = function()
 	// Кроме этого, если тут начинались или заканчивались комметарии, то их тоже
 	// удаляем.
 
+	let logicDocument = this.GetLogicDocument();
 	for (var Index = 0; Index < this.Content.length; Index++)
 	{
 		var Item = this.Content[Index];
 
 		if (Item.PreDelete)
 			Item.PreDelete(true);
-
-		if(this.LogicDocument)
+		
+		if (logicDocument && logicDocument.IsDocumentEditor())
 		{
-			if (para_Comment === Item.Type  && true === this.LogicDocument.RemoveCommentsOnPreDelete)
-			{
-				this.LogicDocument.RemoveComment(Item.CommentId, true, false);
-			}
+			if (para_Comment === Item.Type && true === logicDocument.RemoveCommentsOnPreDelete)
+				logicDocument.RemoveComment(Item.CommentId, true, false);
 			else if (para_Bookmark === Item.Type)
-			{
-				this.LogicDocument.GetBookmarksManager().SetNeedUpdate(true);
-			}
+				logicDocument.GetBookmarksManager().SetNeedUpdate(true);
 		}
 	}
 
@@ -13540,15 +13611,15 @@ Paragraph.prototype.Split = function(oNewParagraph, oContentPos, isNoDuplicate)
 		//    добавляем в начало нового параграфа.
 
 		var NewContent = this.Content.slice(nCurPos + 1);
-
+		
+		this.Internal_Content_Remove2(nCurPos + 1, this.Content.length - nCurPos - 1);
+		this.CheckParaEnd();
+		
 		// Очищаем новый параграф и добавляем в него Right элемент и NewContent
 		oNewParagraph.Internal_Content_Remove2(0, oNewParagraph.Content.length);
 		oNewParagraph.ConcatContent(NewContent);
 		oNewParagraph.Internal_Content_Add(0, NewElement);
 		oNewParagraph.CorrectContent();
-
-		this.Internal_Content_Remove2(nCurPos + 1, this.Content.length - nCurPos - 1);
-		this.CheckParaEnd();
 	}
 
 	if (false !== localTrack)
@@ -16684,6 +16755,22 @@ Paragraph.prototype.AddContentControl = function(nContentControlType)
 		return oContentControl;
 	}
 };
+Paragraph.prototype.GetCurrentPermRanges = function()
+{
+	let permRanges = [];
+	
+	let endInfo = this.GetEndInfoByPage(-1);
+	if (endInfo)
+		permRanges = endInfo.GetPermRanges().slice();
+	
+	let endPos = Math.min(this.CurPos.ContentPos, this.Content.length - 1);
+	for (let pos = 0; pos <= endPos; ++pos)
+	{
+		this.Content[pos].GetCurrentPermRanges(permRanges, pos === endPos);
+	}
+	
+	return permRanges;
+};
 Paragraph.prototype.GetCurrentComplexFields = function(bReturnFieldPos)
 {
 	var arrComplexFields = [];
@@ -18058,24 +18145,24 @@ Paragraph.prototype.AddTrackMoveMark = function(isFrom, isStart, sMarkId)
 };
 /**
  * Удаляем из параграфа заданный элемент, если он тут есть
- * @param oElement
+ * @param element
  */
-Paragraph.prototype.RemoveElement = function(oElement)
+Paragraph.prototype.RemoveElement = function(element)
 {
-	for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
+	for (let i = 0, count = this.Content.length; i < count; ++i)
 	{
-		var oItem = this.Content[nPos];
-		if (oItem === oElement)
+		let item = this.Content[i];
+		if (item === element)
 		{
-			this.Internal_Content_Remove(nPos);
-			nPos--;
-			nCount--;
+			this.RemoveFromContent(i, 1);
+			return true;
 		}
-		else if (oItem.RemoveElement)
+		else if (item.RemoveElement(element))
 		{
-			oItem.RemoveElement(oElement);
+			return true;
 		}
 	}
+	return false;
 };
 /**
  * Пробегаемся по все ранам с заданной функцией
@@ -18375,8 +18462,28 @@ Paragraph.prototype.Document_Is_SelectionLocked = function(CheckType)
 	var arrContentControls = this.GetSelectedContentControls();
 	for (var nIndex = 0, nCount = arrContentControls.length; nIndex < nCount; ++nIndex)
 	{
-		if (arrContentControls[nIndex].IsSelectionUse() === isSelectionUse)
-			arrContentControls[nIndex].Document_Is_SelectionLocked(CheckType);
+		let cc     = arrContentControls[nIndex];
+		let paraCC = cc.GetParagraph();
+		if (!paraCC)
+			continue;
+		
+		if (paraCC !== this)
+		{
+			// Проверяем типы, при которых произойдет удаление элемента, содержащего данный контрол
+			if (CheckType !== AscCommon.changestype_Paragraph_AddText
+				&& CheckType !== AscCommon.changestype_Remove
+				&& CheckType !== AscCommon.changestype_Delete
+				&& CheckType !== AscCommon.changestype_Document_Content
+				&& CheckType !== AscCommon.changestype_Paragraph_Content)
+				continue;
+			
+			if (Asc.c_oAscSdtLockType.SdtLocked === cc.GetContentControlLock() || Asc.c_oAscSdtLockType.SdtContentLocked === cc.GetContentControlLock())
+				AscCommon.CollaborativeEditing.Add_CheckLock(true);
+		}
+		else if (cc.IsSelectionUse() === isSelectionUse)
+		{
+			cc.Document_Is_SelectionLocked(CheckType);
+		}
 	}
 
 	// Проверка для специального случая, когда мы переносим текст из параграфа в него самого. В такой ситуации надо
@@ -18991,6 +19098,7 @@ function CParagraphPageEndInfo()
 {
     this.Comments      = []; // Массив незакрытых комментариев на данной странице
 	this.ComplexFields = []; // Массив незакрытых полей на данной странице
+	this.PermRanges    = []; // Массив незакрытых разрешенных областей
 
     this.RunRecalcInfo = null;
 	this.RecalcId     = -1;
@@ -18999,16 +19107,18 @@ CParagraphPageEndInfo.prototype.Copy = function()
 {
 	var oInfo = new CParagraphPageEndInfo();
 
-	for (var nIndex = 0, nCount = this.Comments.length; nIndex < nCount; ++nIndex)
+	for (let nIndex = 0, nCount = this.Comments.length; nIndex < nCount; ++nIndex)
 	{
 		oInfo.Comments.push(this.Comments[nIndex]);
 	}
 
-	for (var nIndex = 0, nCount = this.ComplexFields.length; nIndex < nCount; ++nIndex)
+	for (let nIndex = 0, nCount = this.ComplexFields.length; nIndex < nCount; ++nIndex)
 	{
 		if (this.ComplexFields[nIndex].ComplexField.IsUse())
 			oInfo.ComplexFields.push(this.ComplexFields[nIndex].Copy());
 	}
+	
+	oInfo.PermRanges = this.PermRanges.slice();
 
 	return oInfo;
 };
@@ -19016,6 +19126,7 @@ CParagraphPageEndInfo.prototype.SetFromPRSI = function(PRSI)
 {
 	this.Comments      = PRSI.Comments;
 	this.ComplexFields = PRSI.ComplexFields;
+	this.PermRanges    = PRSI.PermRanges;
 };
 CParagraphPageEndInfo.prototype.GetComplexFields = function()
 {
@@ -19030,23 +19141,35 @@ CParagraphPageEndInfo.prototype.GetComments = function()
 {
 	return this.Comments;
 };
+CParagraphPageEndInfo.prototype.GetPermRanges = function()
+{
+	return this.PermRanges;
+};
 CParagraphPageEndInfo.prototype.IsEqual = function(oEndInfo)
 {
-	if (this.Comments.length !== oEndInfo.Comments.length || this.ComplexFields.length !== oEndInfo.ComplexFields.length)
+	if (this.Comments.length !== oEndInfo.Comments.length
+		|| this.ComplexFields.length !== oEndInfo.ComplexFields.length
+		|| this.PermRanges.length !== oEndInfo.PermRanges.length)
 		return false;
 
-	for (var nIndex = 0, nCount = this.Comments.length; nIndex < nCount; ++nIndex)
+	for (let nIndex = 0, nCount = this.Comments.length; nIndex < nCount; ++nIndex)
 	{
 		if (this.Comments[nIndex] !== oEndInfo.Comments[nIndex])
 			return false;
 	}
 
-	for (var nIndex = 0, nCount = this.ComplexFields.length; nIndex < nCount; ++nIndex)
+	for (let nIndex = 0, nCount = this.ComplexFields.length; nIndex < nCount; ++nIndex)
 	{
 		if (!this.ComplexFields[nIndex].IsEqual(oEndInfo.ComplexFields[nIndex]))
 			return false;
 	}
-
+	
+	for (let index = 0, count = this.PermRanges.length; index < count; ++index)
+	{
+		if (this.PermRanges[index] !== oEndInfo.PermRanges[index])
+			return false;
+	}
+	
 	return true;
 };
 CParagraphPageEndInfo.prototype.CheckRecalcId = function(recalcId)

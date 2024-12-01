@@ -92,7 +92,7 @@
             // сначала ищем на самой странице, если не было конвертации в шейпы
             let nStartIdx = this.Id;
             let oPdfPageResult;
-            if (true != oFile.pages[i].isConvertedToShapes) {
+            if (true != oFile.pages[i].isRecognized) {
                 oPdfPageResult = oFile.searchPage(i);
 
                 for (let nMatch = 0; nMatch < oPdfPageResult.matches.length; nMatch++) {

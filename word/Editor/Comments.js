@@ -1403,7 +1403,7 @@ ParaComment.prototype.IsUseInDocument = function()
 		return false;
 
 	return oParagraph.IsUseInDocument();
-}
+};
 ParaComment.prototype.RemoveMark = function()
 {
 	var oParagraph = this.GetParagraph();

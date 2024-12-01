@@ -1212,7 +1212,7 @@
 			this.EndPos = End;
 		}
 		else
-			this.private_UpdateDocPos(Start, End);
+			this.private_UpdateDocPos(Start, End, oElement);
 
 		if (this.StartPos === null || this.EndPos === null)
 		{
@@ -1230,7 +1230,7 @@
 
 	ApiRange.prototype.constructor = ApiRange;
 	
-	ApiRange.prototype.private_UpdateDocPos = function(nStartPos, nEndPos)
+	ApiRange.prototype.private_UpdateDocPos = function(nStartPos, nEndPos, oElement)
 	{
 		function correctPositions(oElement) {
 			let nPosCount = 0;
@@ -1258,7 +1258,7 @@
 			{
 				let temp	= nStartPos;
 				nStartPos	= nEndPos;
-				nEndPos			= temp;
+				nEndPos		= temp;
 				return;
 			}
 			
@@ -1271,7 +1271,7 @@
 				nEndPos = nPosCount;
 			}
 		}
-		correctPositions(this.Element);
+		correctPositions(oElement);
 
 		let isStartDocPosFinded = false;
 		let isEndDocPosFinded	= false;
@@ -1338,28 +1338,9 @@
 			checkDone(nPosInRun);
 		}
 
-		if (this.Element instanceof CDocument || this.Element instanceof CDocumentContent || this.Element instanceof CTable || this.Element instanceof CBlockLevelSdt)
-		{
-			let allParagraphs	= this.Element.GetAllParagraphs({OnlyMainDocument : true, All : true});
-
-			for (let paraItem = 0; paraItem < allParagraphs.length; paraItem++)
-			{
-				if (isStartDocPosFinded && isEndDocPosFinded)
-					break;
-				else 
-					allParagraphs[paraItem].CheckRunContent(callback);
-
-					this.StartPos	= aStartDocPos;
-					this.EndPos		= aEndDocPos;
-			}
-		}
-		else if (this.Element instanceof Paragraph || this.Element instanceof ParaHyperlink || this.Element instanceof CInlineLevelSdt || this.Element instanceof ParaRun)
-		{
-			this.Element.CheckRunContent(callback);
-			
-			this.StartPos	= aStartDocPos;
-			this.EndPos		= aEndDocPos;
-		}
+		oElement.CheckRunContent(callback);
+		this.StartPos	= aStartDocPos;
+		this.EndPos		= aEndDocPos;
 	};
 	ApiRange.prototype.private_CheckController = function()
 	{
@@ -1687,67 +1668,36 @@
 		private_RefreshRangesPosition();
 		private_RemoveEmptyRanges();
 
+		let oDoc			= private_GetLogicDocument();
+		let oldSelectionInfo	= oDoc.SaveDocumentState();
+
+		this.Select(false);
 		if (this.isEmpty || this.isEmpty === undefined)
-			return [];
-
-		var done = false;
-
-		var AllParagraphsListOfElement = [];
-		var RangeParagraphsList = [];
-
-		var startPara = this.StartPos[this.StartPos.length - 1].Class.GetParagraph();
-		var endPara   = this.EndPos[this.EndPos.length - 1].Class.GetParagraph();
-
-		if (startPara instanceof ParaHyperlink)
 		{
-			startPara = startPara.Paragraph;
+			oDoc.LoadDocumentState(oldSelectionInfo);
+			this.Paragraphs = [];
+			return null;
 		}
 
-		if (endPara instanceof ParaHyperlink)
+		private_TrackRangesPositions();
+
+		let SelectedContent = oDoc.GetSelectedElementsInfo({CheckAllSelection : true});
+		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
 		{
-			endPara = endPara.Paragraph;
+			oDoc.LoadDocumentState(oldSelectionInfo);
+			oDoc.UpdateSelection();
+
+			return null;
 		}
 
-		if (startPara.Id === endPara.Id)
-		{
-			RangeParagraphsList.push(new ApiParagraph(startPara));
-			this.Paragraphs = RangeParagraphsList;
-			return RangeParagraphsList;
-		}
+		this.Paragraphs = oDoc.GetSelectedParagraphs().map(function(para) {
+			return new ApiParagraph(para);
+		});
 
-		if (this.Element instanceof CDocument || this.Element instanceof CTable || this.Element instanceof CBlockLevelSdt)
-		{
-			AllParagraphsListOfElement = this.Element.GetAllParagraphs({All : true});
+		oDoc.LoadDocumentState(oldSelectionInfo);
+		oDoc.UpdateSelection();
 
-			for (var Index1 = 0; Index1 < AllParagraphsListOfElement.length; Index1++)
-			{
-				if (done)
-					break;
-
-				if (AllParagraphsListOfElement[Index1].Id === startPara.Id)
-				{
-					RangeParagraphsList.push(new ApiParagraph(AllParagraphsListOfElement[Index1]));
-
-					for (var Index2 = Index1 + 1; Index2 < AllParagraphsListOfElement.length; Index2++)
-					{
-						if (AllParagraphsListOfElement[Index2].Id !== endPara.Id)
-						{
-							RangeParagraphsList.push(new ApiParagraph(AllParagraphsListOfElement[Index2]));
-						}
-						else 
-						{
-							RangeParagraphsList.push(new ApiParagraph(endPara));
-
-							done = true;
-							break;
-						}
-					}
-				}
-			}
-		}
-
-		this.Paragraphs = RangeParagraphsList;
-		return RangeParagraphsList;
+		return this.Paragraphs;
 	};
 
 	/**
@@ -1798,7 +1748,7 @@
 	};
 
 	/**
-	 * Returns a new range that goes beyond the specified range in any direction and spans a different range. The current range has not changed. Throws an error if two ranges do not have a union.
+	 * Returns a new range that goes beyond the specified range in any direction and spans a different range. The current range has not changed.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiRange} oRange - The range that will be expanded.
@@ -1813,48 +1763,15 @@
 		if (!(oRange instanceof ApiRange) || this.isEmpty || this.isEmpty === undefined || oRange.isEmpty || oRange.isEmpty === undefined)
 			return null;
 
-		var firstStartPos 		= this.StartPos;
-		var firstEndPos			= this.EndPos;
-		var secondStartPos		= oRange.StartPos;
-		var secondEndPos		= oRange.EndPos;
-
-		if (this.Controller !== oRange.Controller)
+		if (this.StartPos[0].Class !== oRange.StartPos[0].Class) {
 			return null;
-
-		function check_pos(firstPos, secondPos)
-		{
-			for (var nPos = 0, nLen = Math.min(firstPos.length, secondPos.length); nPos < nLen; ++nPos)
-			{
-				if (!secondPos[nPos] || !firstPos[nPos] || firstPos[nPos].Class !== secondPos[nPos].Class)
-					return 1;
-
-				if (firstPos[nPos].Position < secondPos[nPos].Position)
-					return 1;
-				else if (firstPos[nPos].Position > secondPos[nPos].Position)
-					return -1;
-			}
-
-			return 1;
 		}
-		
-		var newRangeStartPos;
-		var newRangeEndPos;
 
-		if (check_pos(firstStartPos, secondStartPos) === 1)
-			newRangeStartPos = firstStartPos;
-		else 
-			newRangeStartPos = secondStartPos;
-
-		if (check_pos(firstEndPos, secondEndPos) === 1)
-			newRangeEndPos = secondEndPos;
-		else 
-			newRangeEndPos = firstEndPos;
-
-		return new ApiRange(newRangeStartPos[0].Class, newRangeStartPos, newRangeEndPos);
+		return new ApiRange(this.StartPos[0].Class, Math.min(this.GetStartPos(), oRange.GetStartPos()), Math.max(this.GetEndPos(), oRange.GetEndPos()));
 	};
 
 	/**
-	 * Returns a new range as the intersection of the current range with another range. The current range has not changed. Throws an error if two ranges do not overlap or are not adjacent.
+	 * Returns a new range as the intersection of the current range with another range. The current range has not changed.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiRange} oRange - The range that will be intersected with the current range.
@@ -1869,69 +1786,118 @@
 		if (!(oRange instanceof ApiRange) || this.isEmpty || this.isEmpty === undefined || oRange.isEmpty || oRange.isEmpty === undefined)
 			return null;
 
-		var firstStartPos 		= this.StartPos;
-		var firstEndPos			= this.EndPos;
-		var secondStartPos		= oRange.StartPos;
-		var secondEndPos		= oRange.EndPos;
-
-		if (this.Controller !== oRange.Controller)
+		if (this.StartPos[0].Class !== oRange.StartPos[0].Class)
 			return null;
 
-		function check_direction(firstPos, secondPos)
+		let oDocument			= private_GetLogicDocument();
+		let oldSelectionInfo	= oDocument.SaveDocumentState();
+		private_TrackRangesPositions();
+
+		function findFirstTable(aDocPos)
 		{
-			for (var nPos = 0, nLen = Math.min(firstPos.length, secondPos.length); nPos < nLen; ++nPos)
+			for (let i = aDocPos.length - 1; i >= 1; i--)
 			{
-				if (!secondPos[nPos] || !firstPos[nPos] || firstPos[nPos].Class !== secondPos[nPos].Class)
-					return 1;
-
-				if (firstPos[nPos].Position < secondPos[nPos].Position)
-					return 1;
-				else if (firstPos[nPos].Position > secondPos[nPos].Position)
-					return -1;
+				if (aDocPos[i].Class instanceof CTable)
+				{
+					return aDocPos[i].Class;
+				}
 			}
-
-			return 1;
 		}
+
+		function findFirstPara(aDocPos) {
+			for (let i = aDocPos.length - 1; i >= 1; i--)
+			{
+				if (aDocPos[i].Class instanceof Paragraph)
+				{
+					return aDocPos[i].Class;
+				}
+			}
+		}
+
+		function findCommonCells(array1, array2)
+		{
+			const commonElements = [];
 		
-		var newRangeStartPos	= null;
-		var newRangeEndPos		= null;
-
-		// Взаимное расположение диапазонов относительно друг друга. A и B - начало и конец первого диапазона, C и D - начало и конец второго диапазона.
-		var AC	= check_direction(firstStartPos, secondStartPos);
-		var AD	= check_direction(firstStartPos, secondEndPos);
-		var BC	= check_direction(firstEndPos, secondStartPos);
-		var BD	= check_direction(firstEndPos, secondEndPos);
-
-		if (AC === AD && AC === BC && AC === BD)
-			return null;
-		else if (AC === BD && AD !== BC)
-		{
-			if (AC === 1)
+			for (let i = 0; i < array1.length; i++)
 			{
-				newRangeStartPos	= secondStartPos;
-				newRangeEndPos		= firstEndPos;
+				for (let j = 0; j < array2.length; j++)
+				{
+					if (array1[i].Row === array2[j].Row && array1[i].Cell === array2[j].Cell)
+					{
+						commonElements.push(array1[i]);
+						break;
+					}
+				}
 			}
-			else if (AC === - 1)
-			{
-				newRangeStartPos	= firstStartPos;
-				newRangeEndPos		= secondEndPos;
-			}
-		}
-		else if (AC !== BD && AD !== BC)
-		{
-			if (AC === 1)
-			{
-				newRangeStartPos	= secondStartPos;
-				newRangeEndPos		= secondEndPos;
-			}
-			else if (AC === - 1)
-			{
-				newRangeStartPos	= firstStartPos;
-				newRangeEndPos		= firstEndPos;
-			}
+		
+			return commonElements;
 		}
 
-		return new ApiRange(newRangeStartPos[0].Class, newRangeStartPos, newRangeEndPos);
+		function restoreDocState() {
+			oDocument.LoadDocumentState(oldSelectionInfo);
+			oDocument.UpdateSelection();
+		}
+
+		let oThisStartParentTable	= findFirstTable(this.StartPos);
+		let oThisEndParentTable		= findFirstTable(this.EndPos);
+		let oRangeStartParentTable	= findFirstTable(oRange.StartPos);
+		let oRangeEndParentTable	= findFirstTable(oRange.EndPos);
+
+		let nIntersectStartPos, nIntersectEndPos;
+
+		// if start and end pos of ranges in table
+		if (oThisStartParentTable === oRangeStartParentTable && oThisEndParentTable === oRangeEndParentTable)
+		{
+			const aStartEndParas = [
+				findFirstPara(this.StartPos),
+				findFirstPara(oRange.StartPos),
+				findFirstPara(this.EndPos),
+				findFirstPara(oRange.EndPos)
+			];
+
+			// should be different paragraphs
+			if (new Set(aStartEndParas).size !== 1) {
+				this.Select(false);
+				let aThisSelectedCells = oThisStartParentTable.GetSelectionArray(); 
+				
+				oRange.Select(false);
+				let aRangeSelectedCells = oRangeStartParentTable.GetSelectionArray();
+
+				let aCommon = findCommonCells(aThisSelectedCells, aRangeSelectedCells);
+				if (aCommon.length == 0)
+				{
+					restoreDocState();
+					return null;
+				}
+
+				let oApiTable		= new ApiTable(oThisStartParentTable);
+				let oApiCellStart	= oApiTable.GetCell(aCommon[0].Row, aCommon[0].Cell);
+				let oApiCellEnd		= oApiTable.GetCell(aCommon[aCommon.length - 1].Row, aCommon[aCommon.length - 1].Cell);
+				
+				nIntersectStartPos	= oApiCellStart.GetContent().GetRange().GetStartPos();
+				nIntersectEndPos	= oApiCellEnd.GetContent().GetRange().GetEndPos();
+			}
+		}
+
+		if (undefined === nIntersectStartPos && undefined === nIntersectEndPos)
+		{
+			nIntersectStartPos = Math.max(this.GetStartPos(), oRange.GetStartPos());
+			nIntersectEndPos = Math.min(this.GetEndPos(), oRange.GetEndPos());
+
+			if (nIntersectStartPos >= nIntersectEndPos)
+			{
+				restoreDocState();
+				return null;
+			}
+		}
+		else if (undefined !== nIntersectStartPos && undefined === nIntersectEndPos)
+			nIntersectEndPos = Math.min(this.GetEndPos(), oRange.GetEndPos());
+		else if (undefined !== nIntersectEndPos && undefined === nIntersectStartPos)
+			nIntersectStartPos = Math.max(this.GetStartPos(), oRange.GetStartPos());
+
+		restoreDocState();
+
+		return new ApiRange(this.StartPos[0].Class, nIntersectStartPos, nIntersectEndPos);
 	};
 
 	/**
@@ -2750,7 +2716,7 @@
 	};
 
 	/**
-	 * Returns the merged text properties of entire range.
+	 * Returns the merged text properties of the entire range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiTextPr}
@@ -2910,8 +2876,8 @@
 	/**
      * Returns a Range object that represents the document part contained in the specified range.
      * @typeofeditors ["CDE"]
-     * @param {Number} [Start=0] - Start character index in the current range.
-     * @param {Number} [End=-1] - End character index in the current range (if <= 0, then the range is taken to the end).
+     * @param {Number} [Start=0] - Start position index in the current range.
+     * @param {Number} [End=-1] - End position index in the current range (if <= 0, then the range is taken to the end).
      * @returns {ApiRange}
      * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetRange.js
 	 */
@@ -2919,128 +2885,20 @@
 	{
 		if (typeof(nStart) != "number" || nStart < 0)
 			nStart = 0;
-		if (typeof(nEnd) != "number" || nEnd < 0)
+		if (typeof(nEnd) != "number")
 			nEnd = -1;
 
 		if (nEnd > 0 && nStart > nEnd)
-			[nStart, nEnd] = [nEnd, nStart];
-
-		let curStartPos	= this.StartPos;
-		let curEndPos	= this.EndPos;
-
-		let newStartPos	= null;
-		let newEndPos	= nEnd == -1 ? curEndPos : nEnd;
-
-		let isStartDocPosFinded	= false;
-		let isEndDocPosFinded	= nEnd == -1 ? true : false;
-		
-		let nCharsNewRange = nEnd === -1 ? -1 : nEnd - nStart + 1; // кол-во символов в новом Range
-		let tempCharsCount = 0; // все символы по которым прошлись
-
-		let isSearchBegin = false; // нашли стартовый ран
-		let isStartRun = false;	// начинаем считать символы со Start позиции текущего Range (только в стартовом Run).
-
-		let isOutOfRange = false;
-
-		function checkRelateDocPos(firstPos, secondPos)
 		{
-			for (var nPos = 0, nLen = Math.min(firstPos.length, secondPos.length); nPos < nLen; ++nPos)
-			{
-				if (!secondPos[nPos] || !firstPos[nPos] || firstPos[nPos].Class !== secondPos[nPos].Class)
-					return -1;
-
-				if (firstPos[nPos].Position < secondPos[nPos].Position)
-					return -1;
-				else if (firstPos[nPos].Position > secondPos[nPos].Position)
-					return 1;
-			}
-
-			return 0;
+			const temp = nStart;
+			nStart = nEnd;
+			nEnd = temp;
 		}
 
-		function processRun(oRun)
-		{
-			if (isOutOfRange)
-				return;
+		let nNewStartPos = this.GetStartPos() + nStart;
+		let nNewEndPos = nEnd < 0 ? this.GetEndPos() : nNewStartPos + (nEnd - nStart);
 
-			var nRangePos = 0;
-
-			if (isSearchBegin == false && checkRelateDocPos(oRun.GetDocumentPositionFromObject(), curStartPos) === 0) {
-				isStartRun = true;
-				isSearchBegin = true;
-			}
-			else if (isSearchBegin == false)
-				return;
-			
-			var nLenght = oRun.Content.length;
-			var nPos = isStartRun == true ? curStartPos[curStartPos.length - 1].Position : 0;
-
-			for (; nPos < nLenght; ++nPos)
-			{
-				if (para_Text === oRun.Content[nPos].Type || para_Space === oRun.Content[nPos].Type || para_Tab === oRun.Content[nPos].Type || para_NewLine === oRun.Content[nPos].Type || para_End === oRun.Content[nPos].Type)
-				{
-					nRangePos++;
-					tempCharsCount++;
-				}
-					
-				if (isStartDocPosFinded == false && nStart === tempCharsCount - 1)
-				{
-					let DocPosInRun =
-					{
-						Class : oRun,
-						Position : nPos,
-					};
-		
-					let aDocPos = oRun.GetDocumentPositionFromObject();
-		
-					aDocPos.push(DocPosInRun);
-		
-					newStartPos = aDocPos;
-
-					isStartDocPosFinded = true;
-					tempCharsCount = 1; // теперь считаем кол-во символов от стартового в Range. Конец Range будет через nCharsNewRange символов.
-				}
-				
-				if (isStartDocPosFinded == true && isEndDocPosFinded == false && nCharsNewRange == tempCharsCount)
-				{
-					let DocPosInRun =
-					{
-						Class : oRun,
-						Position : nPos + 1,
-					};
-		
-					let aDocPos = oRun.GetDocumentPositionFromObject();
-					aDocPos.push(DocPosInRun);
-		
-					newEndPos = aDocPos;
-					isEndDocPosFinded = true;
-				}
-			}
-
-			isStartRun = false;
-		}
-		
-		if (this.Element instanceof CDocument || this.Element instanceof CDocumentContent || this.Element instanceof CTable || this.Element instanceof CBlockLevelSdt)
-		{
-			var allParagraphs = this.Element.GetAllParagraphs({OnlyMainDocument : true, All : true});
-
-			for (var paraItem = 0; paraItem < allParagraphs.length; paraItem++)
-			{
-				if (isOutOfRange)
-					return null;
-
-				if (isStartDocPosFinded && isEndDocPosFinded)
-					break;
-				else
-					allParagraphs[paraItem].CheckRunContent(processRun);
-			}
-		}
-		else if (this.Element instanceof Paragraph || this.Element instanceof ParaHyperlink || this.Element instanceof CInlineLevelSdt || this.Element instanceof ParaRun)
-		{
-			this.Element.CheckRunContent(processRun);
-		}
-		
-		let oRange = new ApiRange(this.Element, newStartPos, newEndPos);
+		let oRange = new ApiRange(this.StartPos[0].Class, nNewStartPos, nNewEndPos);
 		if (oRange.isEmpty)
 			return null;
 		
@@ -3048,7 +2906,7 @@
 	};
 	
 	/**
-	 * Returns the start page number of current range.
+	 * Returns the start page number of the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @return {Number}
@@ -3064,7 +2922,7 @@
 	};
 
 	/**
-	 * Returns the end page number of current range.
+	 * Returns the end page number of the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @return {Number}
@@ -3080,76 +2938,82 @@
 	};
 
 	/**
-	 * Sets the start position of a current range object.
+	 * Sets the start position of the current range object.
 	 * @memberof ApiRange
-	 * @param {Number} nPos - start position
+	 * @param {Number} nPos - Start position.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetStartPos.js
 	 */
 	ApiRange.prototype.SetStartPos = function(nPos)
 	{
 		let nEndPos = this.GetEndPos();
-		this.private_UpdateDocPos(nPos, nEndPos);
+		this.private_UpdateDocPos(nPos, nEndPos, this.StartPos[0].Class);
 		return true;
 	};
 
 	/**
-	 * Sets the start position of a current range object.
+	 * Sets the end position of the current range object.
 	 * @memberof ApiRange
-	 * @param {Number} nPos - end position
+	 * @param {Number} nPos - End position.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetEndPos.js
 	 */
 	ApiRange.prototype.SetEndPos = function(nPos)
 	{
 		let nStartPos = this.GetStartPos();
-		this.private_UpdateDocPos(nStartPos, nPos);
+		this.private_UpdateDocPos(nStartPos, nPos, this.EndPos[0].Class);
 		return true;
 	};
 
 	/**
-	 * Returns the start position of a current range.
+	 * Returns the start position of the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @returns {number}
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetStartPos.js
 	 */
 	ApiRange.prototype.GetStartPos = function() {
 		private_RefreshRangesPosition();
 		private_RemoveEmptyRanges();
 
-		let isFirstRun	= true;
-		let oRunEnd		= this.StartPos[this.StartPos.length - 1].Class;
-		let oRunEndPos	= this.StartPos[this.StartPos.length - 1].Position;
+		let isFirstRun		= true;
+		let oRunStart		= this.StartPos[this.StartPos.length - 1].Class;
+		let oRunStartPos	= this.StartPos[this.StartPos.length - 1].Position;
 
-		let isEndPosFounded = false;
-		let nEndCharPos = 0;
+		let isStartPosFounded = false;
+		let nStartCharPos = 0;
 
-		function calcEndPos(oRun)
+		function calcStartPos(oRun)
 		{
-			if (isEndPosFounded)
+			if (isStartPosFounded)
 				return;
 
 			if (false == isFirstRun) {
-				nEndCharPos++;
+				nStartCharPos++;
 			}
 			if (isFirstRun) {
 				isFirstRun = false;
 			}
 
-			if (oRun == oRunEnd) {
-				isEndPosFounded = true;
+			if (oRun == oRunStart) {
+				isStartPosFounded = true;
 			}
 				
-			let nEndPos = oRun.Content.length;
-			if (oRun == oRunEnd)
-				nEndPos = oRunEndPos;
+			let nStartPos = oRun.Content.length;
+			if (oRun == oRunStart)
+				nStartPos = oRunStartPos;
 
-			for (let nPos = 0; nPos < nEndPos; ++nPos)
-				nEndCharPos++;
+			for (let nPos = 0; nPos < nStartPos; ++nPos)
+				nStartCharPos++;
 		}
 
-		this.Element.CheckRunContent(calcEndPos);
-		return nEndCharPos;
+		this.StartPos[0].Class.CheckRunContent(calcStartPos);
+		return nStartCharPos;
 	};
 
 	Object.defineProperty(ApiRange.prototype, "Start", {
@@ -3162,10 +3026,12 @@
 	});
 
 	/**
-	 * Returns the end position of a current range.
+	 * Returns the end position of the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @returns {number}
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetEndPos.js
 	 */
 	ApiRange.prototype.GetEndPos = function() {
 		private_RefreshRangesPosition();
@@ -3202,7 +3068,7 @@
 				nEndCharPos++;
 		}
 
-		this.Element.CheckRunContent(calcEndPos);
+		this.EndPos[0].Class.CheckRunContent(calcEndPos);
 		return nEndCharPos;
 	};
 	
@@ -3635,8 +3501,8 @@
 	/**
 	 * Returns a Range object that represents the document part contained in the specified hyperlink.
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start character index in the current element.
-	 * @param {Number} End - End character index in the current element.
+	 * @param {Number} Start - Start position index in the current element.
+	 * @param {Number} End - End position index in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetRange.js
 	 */
@@ -5628,8 +5494,8 @@
 	 * Returns a Range object that represents the part of the document contained in the document content.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start character in the current element.
-	 * @param {Number} End - End character in the current element.
+	 * @param {Number} Start - Start position index in the current element.
+	 * @param {Number} End - End position index in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetRange.js
 	 */
@@ -6165,7 +6031,7 @@
 	 * @property {ReviewReportRecordType} Type - Review record type.
 	 * @property {string} [Value=undefined] - Review change value that is set for the "TextAdd" and "TextRem" types only.
 	 * @property {number} Date - The time when this change was made.
-	 * @property {ApiParagraph | ApiTable} ReviewedElement - Element that has been reviewed
+	 * @property {ApiParagraph | ApiTable} ReviewedElement - Element that has been reviewed.
 	 * @see office-js-api/Examples/Enumerations/ReviewReportRecord.js
 	 */
 	
@@ -6479,10 +6345,12 @@
 	 */
 	ApiDocument.prototype.SetFormsData = function(arrData)
 	{
-		if (!arrData || !Array.isArray(arrData))
-			return;
-		
-		this.Document.GetFormsManager().SetAllFormsData(arrData);
+		return executeNoFormLockCheck(function() {
+			if (!arrData || !Array.isArray(arrData))
+				return;
+			
+			this.Document.GetFormsManager().SetAllFormsData(arrData);
+		}, this);
 	};
 	/**
 	 * Sets the change tracking mode.
@@ -6510,8 +6378,8 @@
 	 * Returns a Range object that represents the part of the document contained in the specified document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start character in the current element.
-	 * @param {Number} End - End character in the current element.
+	 * @param {Number} Start - Start position index in the current element.
+	 * @param {Number} End - End position index in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetRange.js
 	 */
@@ -7000,10 +6868,11 @@
 		}
 	};
 	/**
-	 * Updates all fields in the document
+	 * Updates all fields in the document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {boolean} [bBySelection=false] - update all fields within selection
+	 * @param {boolean} [bBySelection=false] - Specifies whether all fields will be updated within the selection.
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/UpdateAllFields.js
 	 */
 	ApiDocument.prototype.UpdateAllFields = function(bBySelection)
@@ -7712,20 +7581,21 @@
 	};
 	/**
 	 * Returns the document information:
-	 * <b>Application</b> - the application the document has been created with.
+	 * <b>Application</b> - the application the document was created with.
 	 * <b>CreatedRaw</b> - the date and time when the file was created.
 	 * <b>Created</b> - the parsed date and time when the file was created.
 	 * <b>LastModifiedRaw</b> - the date and time when the file was last modified.
 	 * <b>LastModified</b> - the parsed date and time when the file was last modified.
-	 * <b>LastModifiedBy</b> - the name of the user who has made the latest change to the document.
-	 * <b>Authors</b> - the persons who has created the file.
-	 * <b>Title</b> - this property allows you to simplify your documents classification.
-	 * <b>Tags</b> - this property allows you to simplify your documents classification.
-	 * <b>Subject</b> - this property allows you to simplify your documents classification.
-	 * <b>Comment</b> - this property allows you to simplify your documents classification.
+	 * <b>LastModifiedBy</b> - the name of the user who made the latest change to the document.
+	 * <b>Authors</b> - the persons who created the file.
+	 * <b>Title</b> - the document title (this property allows you to simplify your documents classification).
+	 * <b>Tags</b> - the document tags (this property allows you to simplify your documents classification).
+	 * <b>Subject</b> - the document subject (this property allows you to simplify your documents classification).
+	 * <b>Comment</b> - the comment to the document (this property allows you to simplify your documents classification).
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {object}
+	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetDocumentInfo.js
 	 */
 	ApiDocument.prototype.GetDocumentInfo = function()
@@ -7796,11 +7666,12 @@
 		return oDocInfo;
 	};
 	/**
-	 * Returns the current word or part of the current word
-	 * @param {undefined | "before" | "after"} sWordPart - Specifies the desired part of the current word
+	 * Returns the current word or part of the current word.
+	 * @param {undefined | "before" | "after"} sWordPart - The desired part of the current word to be returned.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetCurrentWord.js
 	 */
 	ApiDocument.prototype.GetCurrentWord = function(sWordPart)
@@ -7815,12 +7686,13 @@
 		return this.Document.GetCurrentWord(dir);
 	};
 	/**
-	 * Replace the current word or part of the current word with the specified text
-	 * @param sReplace {string} String to replace
-	 * @param {undefined | "before" | "after"} sPart - Specifies the desired part of the current word
+	 * Replaces the current word or part of the current word with the specified text.
+	 * @param sReplace {string} - The string to replace the current word with.
+	 * @param {undefined | "before" | "after"} sPart - The desired part of the current word to be replaced.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/ReplaceCurrentWord.js
 	 */
 	ApiDocument.prototype.ReplaceCurrentWord = function(sReplace, sPart)
@@ -7837,10 +7709,11 @@
 		return this.Document.ReplaceCurrentWord(dir, replace);
 	};
 	/**
-	 * Selects the current word if it possible
+	 * Selects the current word if it is possible.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {object}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SelectCurrentWord.js
 	 */
 	ApiDocument.prototype.SelectCurrentWord = function()
@@ -7848,7 +7721,7 @@
 		return this.Document.SelectCurrentWord();
 	};
 	/**
-	 * Adds a comment to the current selection of the document, or to the current word if there is no text selection
+	 * Adds a comment to the current document selection, or to the current word if no text is selected.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text (required).
@@ -7876,11 +7749,12 @@
 		return comment ? new ApiComment(comment) : null;
 	};
 	/**
-	 * Returns the current sentence or part of the current sentence
-	 * @param {undefined | "before" | "after"} sPart - Specifies the desired part of the current sentence
+	 * Returns the current sentence or part of the current sentence.
+	 * @param {undefined | "before" | "after"} sPart - The desired part of the current sentence to be returned.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetCurrentSentence.js
 	 */
 	ApiDocument.prototype.GetCurrentSentence = function(sPart)
@@ -7895,12 +7769,13 @@
 		return this.Document.GetCurrentSentence(dir);
 	};
 	/**
-	 * Replace the current sentence or part of the current sentence with the specified text
-	 * @param sReplace {string} String to replace
-	 * @param {undefined | "before" | "after"} sPart - Specifies the desired part of the current sentence
+	 * Replaces the current sentence or part of the current sentence with the specified text.
+	 * @param sReplace {string} - The string to replace the current sentence with.
+	 * @param {undefined | "before" | "after"} sPart - The desired part of the current sentence to be replaced.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/ReplaceCurrentSentence.js
 	 */
 	ApiDocument.prototype.ReplaceCurrentSentence = function(sReplace, sPart)
@@ -7917,9 +7792,13 @@
 		return this.Document.ReplaceCurrentSentence(dir, replace);
 	};
 	/**
-	 * Add a math equation
-	 * @param sText {string} An equation written as a linear text string
-	 * @param [sFormat="unicode"] {"unicode" | "latex"} The format of the specified linear representation
+	 * Adds a math equation to the current document.
+	 * @param sText {string} - An equation written as a linear text string.
+	 * @param {"unicode" | "latex"} [sFormat="unicode"] - The format of the specified linear representation.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddMathEquation.js
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddMathEquation.js
@@ -8420,8 +8299,8 @@
 	 * Returns a Range object that represents the part of the document contained in the specified paragraph.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start character in the current element.
-	 * @param {Number} End - End character in the current element.
+	 * @param {Number} Start - Start position index in the current element.
+	 * @param {Number} End - End position index in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetRange.js
 	 */
@@ -10096,8 +9975,8 @@
 	 * Returns a Range object that represents the part of the document contained in the specified run.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start character in the current element.
-	 * @param {Number} End - End character in the current element.
+	 * @param {Number} Start - Start position index in the current element.
+	 * @param {Number} End - End position index in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/GetRange.js
 	 */
@@ -10602,13 +10481,14 @@
 	};
 	
 	/**
-	 * Move cursor to a specified position of the current text run.
-	 * If the current run is not assigned to any part of the document then returns false otherwise returns true.
-	 * If there was any selection in the document, it will be removed.
+	 * Moves a cursor to a specified position of the current text run.
+	 * If the current run is not assigned to any document part, then <b>false</b> is returned. Otherwise, this method returns <b>true</b>.
+	 * If there is any selection in the document, it will be removed.
 	 * @memberof ApiRun
 	 * @param {number} [nPos=0] - Desired cursor position.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/MoveCursorToPos.js
 	 */
 	ApiRun.prototype.MoveCursorToPos = function(nPos)
@@ -10650,22 +10530,28 @@
 	{
 		return "section";
 	};
+
+	/**
+	 * The section break type which defines how the contents of the current section are placed relative to the previous section.
+	 * WordprocessingML supports five distinct types of section breaks:
+	 * <b>Next page</b> ("nextPage") - starts a new section on the next page (the default value).
+	 * <b>Odd</b> ("oddPage") - starts a new section on the next odd-numbered page.
+	 * <b>Even</b> ("evenPage") - starts a new section on the next even-numbered page.
+	 * <b>Continuous</b> ("continuous") - starts a new section in the next paragraph.
+	 * This means that continuous section breaks might not specify certain page-level section properties,
+	 * since they shall be inherited from the following section.
+	 * However, these breaks can specify other section properties, such as line numbering and footnote/endnote settings.
+	 * <b>Column</b> ("nextColumn") - starts a new section in the next column on the page.
+	 * @typedef {("nextPage" | "oddPage" | "evenPage" | "continuous" | "nextColumn")} SectionBreakType
+	* @see office-js-api/Examples/Enumerations/SectionBreakType.js
+	*/
+
 	/**
 	 * Specifies a type of the current section. The section type defines how the contents of the current 
-	 * section are placed relative to the previous section.<br/>
-	 * WordprocessingML supports five distinct types of section breaks:
-	 *   * <b>Next page</b> section breaks (the default if type is not specified), which begin the new section on the
-	 *   following page.
-	 *   * <b>Odd</b> page section breaks, which begin the new section on the next odd-numbered page.
-	 *   * <b>Even</b> page section breaks, which begin the new section on the next even-numbered page.
-	 *   * <b>Continuous</b> section breaks, which begin the new section on the following paragraph. This means that
-	 *   continuous section breaks might not specify certain page-level section properties, since they shall be
-	 *   inherited from the following section. These breaks, however, can specify other section properties, such
-	 *   as line numbering and footnote/endnote settings.
-	 *   * <b>Column</b> section breaks, which begin the new section on the next column on the page.
+	 * section are placed relative to the previous section.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
-	 * @param {("nextPage" | "oddPage" | "evenPage" | "continuous" | "nextColumn")} sType - The section break type.
+	 * @param {SectionBreakType} sType - The section break type.
 	 * @see office-js-api/Examples/{Editor}/ApiSection/Methods/SetType.js
 	 */
 	ApiSection.prototype.SetType = function(sType)
@@ -10683,10 +10569,10 @@
 	};
 
 	/**
-	 * Returns the section type.
+	 * Returns the section break type.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
-	 * @returns {("nextPage" | "oddPage" | "evenPage" | "continuous" | "nextColumn")} - The section break type.
+	 * @returns {SectionBreakType} - The section break type.
 	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiSection/Methods/GetType.js
 	 */
@@ -11021,6 +10907,36 @@
 		if (bWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
 		return JSON.stringify(oJSON);
+	};
+	/**
+	 * Sets start page number for specified section.
+	 * @memberof ApiSection
+	 * @typeofeditors ["CDE"]
+	 * @param {number} nStartNumber
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiSection/Methods/SetStartPageNumber.js
+	 */
+	ApiSection.prototype.SetStartPageNumber = function(nStartNumber)
+	{
+		if (typeof(nStartNumber) !== "number" || nStartNumber < 0) {
+			return false;
+		}
+
+		nStartNumber >>= 0;
+
+		this.Section.SetPageNumStart(nStartNumber);
+		return true;
+	};
+	/**
+	 * Gets start page number of specified section.
+	 * @memberof ApiSection
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiSection/Methods/GetStartPageNumber.js
+	 */
+	ApiSection.prototype.GetStartPageNumber = function()
+	{
+		return this.Section.GetPageNumStart();
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -11465,8 +11381,8 @@
 	 * Returns a Range object that represents the part of the document contained in the specified table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start character in the current element.
-	 * @param {Number} End - End character in the current element.
+	 * @param {Number} Start - Start position index in the current element.
+	 * @param {Number} End - End position index in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetRange.js
 	 */
@@ -11651,7 +11567,7 @@
         return null;
 	};
 	/**
-	 * Returns a Tables array that represents all the tables nested within the specified table.
+	 * Returns an array of tables that represents all the tables nested within the specified table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiTable[]}
@@ -14293,9 +14209,10 @@
 	 * Sets the outline level for the specified properties.
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {Number?} [nLvl=undefined] - 0 - based outline level. Possible values are: 0-8.
-	 * Note: to set no outline level use this method without parameter.
+	 * @param {Number?} [nLvl=undefined] - The outline level. Possible values: 0-8. The 0 value means the basic outline level.
+	 * To set no outline level, use this method without a parameter.
 	 * @returns {boolean}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetOutlineLvl.js
 	 */
 	ApiParaPr.prototype.SetOutlineLvl = function(nLvl)
@@ -14315,10 +14232,11 @@
 	};
 
 	/**
-	 * Gets the outline level of the specified properties.
+	 * Returns the outline level of the specified properties.
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {Number?}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/GetOutlineLvl.js
 	 */
 	ApiParaPr.prototype.GetOutlineLvl = function()
@@ -17149,7 +17067,7 @@
 	};
 	
 	/**
-	 * Returns the series with specific index.
+	 * Returns the series with a specific index.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {number} nIdx - Series index.
@@ -17189,7 +17107,7 @@
 	};
 
 	/**
-	 * Tries to change the type of the series. Returns true in case of success.
+	 * Tries to change the series type. Returns true if successful.
 	 * @memberof ApiChartSeries
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ChartType} sType - Chart type.
@@ -17209,7 +17127,7 @@
 	};
 
 	/**
-	 * Returns a chart type of the series.
+	 * Returns a chart type of the current series.
 	 * @memberof ApiChartSeries
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {ChartType}
@@ -17910,8 +17828,8 @@
 	 * Returns a Range object that represents the part of the document contained in the specified content control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start character in the current element.
-	 * @param {Number} End - End character in the current element.
+	 * @param {Number} Start - Start position index in the current element.
+	 * @param {Number} End - End position index in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetRange.js
 	 */
@@ -18878,8 +18796,8 @@
 	 * Returns a Range object that represents the part of the document contained in the specified content control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start character in the current element.
-	 * @param {Number} End - End character in the current element.
+	 * @param {Number} Start - Start position index in the current element.
+	 * @param {Number} End - End position index in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/GetRange.js
 	 */
@@ -18887,7 +18805,25 @@
 	{
 		return new ApiRange(this.Sdt, Start, End);
 	};
-
+	
+	/**
+	 * Creates a copy of a block content control. Ignores comments, footnote references, complex fields.
+	 * @memberof ApiBlockLvlSdt
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiBlockLvlSdt}
+	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/Copy.js
+	 */
+	ApiBlockLvlSdt.prototype.Copy = function()
+	{
+		let oBlockSdt = this.Sdt.Copy(null, null, {
+			SkipComments          : true,
+			SkipAnchors           : true,
+			SkipFootnoteReference : true,
+			SkipComplexFields     : true
+		});
+		
+		return new ApiBlockLvlSdt(oBlockSdt);
+	};
 	/**
 	 * Searches for a scope of a content control object. The search results are a collection of ApiRange objects.
 	 * @memberof ApiBlockLvlSdt
@@ -21957,6 +21893,8 @@
 	ApiSection.prototype["GetNext"]                  = ApiSection.prototype.GetNext;
 	ApiSection.prototype["GetPrevious"]              = ApiSection.prototype.GetPrevious;
 	ApiSection.prototype["ToJSON"]                   = ApiSection.prototype.ToJSON;
+	ApiSection.prototype["SetStartPageNumber"]       = ApiSection.prototype.SetStartPageNumber;
+	ApiSection.prototype["GetStartPageNumber"]       = ApiSection.prototype.GetStartPageNumber;
 	
 	ApiTable.prototype["GetClassType"]               = ApiTable.prototype.GetClassType;
 	ApiTable.prototype["SetJc"]                      = ApiTable.prototype.SetJc;
@@ -22405,6 +22343,7 @@
 	ApiBlockLvlSdt.prototype["AddElement"]              = ApiBlockLvlSdt.prototype.AddElement;
 	ApiBlockLvlSdt.prototype["AddText"]                 = ApiBlockLvlSdt.prototype.AddText;
 	ApiBlockLvlSdt.prototype["GetRange"]                = ApiBlockLvlSdt.prototype.GetRange;
+	ApiBlockLvlSdt.prototype["Copy"]                    = ApiBlockLvlSdt.prototype.Copy;
 	ApiBlockLvlSdt.prototype["Search"]                  = ApiBlockLvlSdt.prototype.Search;
 	ApiBlockLvlSdt.prototype["Select"]                  = ApiBlockLvlSdt.prototype.Select;
 	ApiBlockLvlSdt.prototype["ToJSON"]                  = ApiBlockLvlSdt.prototype.ToJSON;

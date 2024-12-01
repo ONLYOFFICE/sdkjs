@@ -317,7 +317,8 @@ $(function () {
             ['8', '25', '-2'],
             ['0', '2', '123', '1', '-1233'],
             ['0', '-10', '123', '1', '-1233'],
-            ['0', '200000', '123', '1', '-1233']
+            ['0', '200000', '123', '1', '-1233'],
+            ['1', '2']
         ];
         // Fill data
         let oRange = ws.getRange4(0, 0);
@@ -547,8 +548,12 @@ $(function () {
         [nResult, nChangingVal] = getResult(nExpectedVal, ws.getRange4(44, 1), 'A45+B45-C45+D45+E45', 'F45');
         assert.strictEqual(Math.round(nResult), nExpectedVal, `Case: Find second parameter with 200000 as changed value for a+b-c+d+e. Result formula: ${nResult}`);
         assert.strictEqual(Math.round(nChangingVal), 101355, `Case: Find second parameter with 200000 as changed value for a+b-c+d+e. Result ChangingVal: ${nChangingVal}`);
+        nExpectedVal = 5.5;
+        [nResult, nChangingVal] = getResult(nExpectedVal, ws.getRange4(45, 0), 'A46*B46', 'D46');
+        assert.strictEqual(nResult, nExpectedVal, `Case: Find first parameter with 1 as changed value for formula a*b. Result formula: ${nResult}`);
+        assert.strictEqual(nChangingVal, 2.75, `Case: Find first parameter with 1 as changed value for formula a*b. Result ChangingVal: ${nChangingVal}`);
         // Clear data
-        clearData(0,0, 3, 44);
+        clearData(0,0, 3, 45);
     });
     QUnit.test('Financials calculation', function (assert) {
        const aTestData = [

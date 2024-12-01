@@ -727,6 +727,10 @@ ParaField.prototype.IsAddin = function()
 {
 	return this.CheckType(AscWord.fieldtype_ADDIN);
 };
+ParaField.prototype.IsFormCheckBox = function()
+{
+	return this.CheckType(AscWord.fieldtype_FORMCHECKBOX);
+};
 //----------------------------------------------------------------------------------------------------------------------
 // Функции совместного редактирования
 //----------------------------------------------------------------------------------------------------------------------

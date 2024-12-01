@@ -160,7 +160,9 @@
 				}
 				else
 				{
-					let file = this.api.WordControl.m_oDrawingDocument.m_oDocumentRenderer.file;
+					let viewer = this.api.WordControl.m_oDrawingDocument.m_oDocumentRenderer;
+					let file = viewer.file;
+					
 					if (!file)
 						return;
 
@@ -184,7 +186,7 @@
 						h = height;
 					}
 
-					this.pageImage = file.getPage(this.page, w, h, undefined, 0xFFFFFF);
+					this.pageImage = viewer.GetPrintPage(this.page, w, h);
 				}
 
 				break;

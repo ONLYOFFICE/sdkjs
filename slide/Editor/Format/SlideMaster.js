@@ -612,6 +612,19 @@ MasterSlide.prototype.addNewLayout = function()
     return oLayout;
 };
 
+MasterSlide.prototype.getName = function () {
+    if(this.Theme) {
+        return this.Theme.name || "";
+    }
+    return "";
+};
+
+MasterSlide.prototype.setName = function (sName) {
+    if(this.Theme) {
+        return this.Theme.setName(sName);
+    }
+    return "";
+};
 
 MasterSlide.prototype.Refresh_RecalcData = function (data) {
     if(data)

@@ -147,6 +147,8 @@
 		
 		this.bidiFlow.end();
 		
+		this.checkRangeBounds(x, paraRange);
+		
 		this.checkInText()
 		
 		if (this.diffX > MAX_DIFF - 1)
@@ -491,6 +493,47 @@
 		return (((diff <= 0 && Math.abs(diff) < this.diffX - EPSILON) || (diff > 0 && diff < this.diffX + EPSILON))
 			&& (this.centerMode || this.x > this.curX));
 	}
+	ParagraphSearchPositionXY.prototype.checkRangeBounds = function(x, range)
+	{
+		if (this.stepEnd)
+			return;
+		
+		let para = this.paragraph;
+		if (para.isRtlDirection())
+		{
+			if (x < range.XVisible)
+			{
+				this.setDiff(range.XVisible - x);
+				this.pos       = para.Get_EndRangePos2(this.line, this.range);
+				this.inTextPos = this.pos.Copy();
+				this.inTextX   = false;
+			}
+			else if (x > range.XEndVisible)
+			{
+				this.setDiff(range.XEndVisible - x);
+				this.pos       = para.Get_StartRangePos2(this.line, this.range);
+				this.inTextPos = this.pos.Copy();
+				this.inTextX   = false;
+			}
+		}
+		else
+		{
+			if (x < range.XVisible)
+			{
+				this.setDiff(range.XVisible - x);
+				this.pos       = para.Get_StartRangePos2(this.line, this.range);
+				this.inTextPos = this.pos.Copy();
+				this.inTextX   = false;
+			}
+			else if (x > range.XEndVisible)
+			{
+				this.setDiff(range.XEndVisible - x);
+				this.pos       = para.Get_EndRangePos2(this.line, this.range);
+				this.inTextPos = this.pos.Copy();
+				this.inTextX   = false;
+			}
+		}
+	};
 	ParagraphSearchPositionXY.prototype.checkInText = function()
 	{
 		this.inText = false;

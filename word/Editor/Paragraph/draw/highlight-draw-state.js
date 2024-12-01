@@ -40,6 +40,7 @@
 	const FLAG_COMPLEX_FIELD = 0x0010;
 	const FLAG_COLLABORATION = 0x0020;
 	const FLAG_SHD           = 0x0040;
+	const FLAG_PERM_RANGE    = 0x0080;
 	
 	/**
 	 * Class for storing the current draw state of paragraph highlight (text/paragraph/field/etc. background)
@@ -67,12 +68,14 @@
 		this.MMFields = new CParaDrawingRangeLines();
 		this.CFields  = new CParaDrawingRangeLines();
 		this.HyperCF  = new CParaDrawingRangeLines();
+		this.Perm     = new CParaDrawingRangeLines();
 		
 		this.DrawComments       = true;
 		this.DrawSolvedComments = true;
 		this.haveCurrentComment = false;
 		this.currentCommentId   = null;
 		this.comments           = []; // current list of comments
+		this.permRanges         = {};
 		
 		this.hyperlinks = [];
 		
@@ -98,6 +101,8 @@
 		this.highlight = highlight_None;
 		this.shdColor  = null;
 		this.shd       = null;
+		
+		this.permColor = null;
 	}
 	ParagraphHighlightDrawState.prototype.init = function(paragraph, graphics)
 	{
@@ -113,6 +118,14 @@
 		this.DrawSolvedComments = commentManager && commentManager.isUseSolved();
 		this.DrawMMFields       = logicDocument && logicDocument.IsDocumentEditor() && logicDocument.isHighlightMailMergeFields();
 		this.currentCommentId   = commentManager ? commentManager.getCurrentCommentId() : -1;
+		
+		this.permColor = new AscWord.CDocumentColor(233, 233, 233, 255);
+		if (logicDocument && logicDocument.IsDocumentEditor())
+		{
+			let docApi = logicDocument.GetApi();
+			if (docApi.isRestrictionView() || docApi.isRestrictionComments())
+				this.permColor = new AscWord.CDocumentColor(255, 254, 213, 255);
+		}
 	};
 	ParagraphHighlightDrawState.prototype.resetPage = function(page)
 	{
@@ -124,6 +137,7 @@
 		
 		this.comments           = [];
 		this.haveCurrentComment = false;
+		this.permRanges         = [];
 		
 		let pageEndInfo = this.Paragraph.GetEndInfoByPage(page - 1);
 		if (pageEndInfo)
@@ -131,6 +145,11 @@
 			for (let index = 0, count = pageEndInfo.Comments.length; index < count; ++index)
 			{
 				this.addComment(pageEndInfo.Comments[index]);
+			}
+			
+			for (let index = 0, count = pageEndInfo.PermRanges.length; index < count; ++index)
+			{
+				this.addPermRange(pageEndInfo.PermRanges[index]);
 			}
 		}
 		this.complexFields.resetPage(this.Paragraph, page);
@@ -160,6 +179,7 @@
 		this.MMFields.Clear();
 		this.CFields.Clear();
 		this.HyperCF.Clear();
+		this.Perm.Clear();
 		
 		this.run       = null;
 		this.highlight = highlight_None;
@@ -197,6 +217,26 @@
 		let index = this.comments.indexOf(commentId);
 		if (-1 !== index)
 			this.comments.splice(index, 1);
+	};
+	ParagraphHighlightDrawState.prototype.addPermRange = function(rangeId)
+	{
+		this.permRanges.push(rangeId);
+	};
+	ParagraphHighlightDrawState.prototype.removePermRange = function(rangeId)
+	{
+		if (!this.permRanges.length)
+			return;
+		
+		if (this.permRanges[this.permRanges.length - 1] === rangeId)
+		{
+			--this.permRanges.length;
+		}
+		else
+		{
+			let pos = this.permRanges.indexOf(rangeId);
+			if (-1 !== pos)
+				this.permRanges.splice(pos, 1);
+		}
 	};
 	ParagraphHighlightDrawState.prototype.increaseSearchCounter = function()
 	{
@@ -425,6 +465,9 @@
 		
 		if ((flags & FLAG_COLLABORATION) && collColor)
 			this.Coll.Add(startY, endY, startX, endX, 0, collColor.r, collColor.g, collColor.b);
+		
+		if (flags & FLAG_PERM_RANGE && this.permColor)
+			this.Perm.Add(startY, endY, startX, endX, 0, this.permColor.r, this.permColor.g, this.permColor.b);
 	};
 	ParagraphHighlightDrawState.prototype.pushHyperlink = function(hyperlink)
 	{
@@ -462,6 +505,8 @@
 			flags |= FLAG_SEARCH;
 		if (this.isComplexFieldHighlight())
 			flags |= FLAG_COMPLEX_FIELD;
+		if (this.permRanges.length > 0)
+			flags |= FLAG_PERM_RANGE;
 		
 		if (element.Type !== para_End)
 			flags |= FLAG_SHD;

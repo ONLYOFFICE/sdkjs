@@ -849,7 +849,7 @@
 				const oNode = oChange.insert[oChange.insert.length - 1];
         const oLastText = oNode.element;
 				const oEndOfInsertRun = oNode.getContentElement();
-        const oParentParagraph =  (this.partner && this.partner.element) || oEndOfInsertRun.Paragraph;
+        const oParentParagraph =  (this.partner && this.partner.element) || oEndOfInsertRun.GetParent();
         const applyingParagraph = this.getApplyParagraph(comparison);
 	    const arrEndBookmarks = oNode.getLastBookmarks();
 	    if (arrEndBookmarks)
@@ -964,7 +964,7 @@
 			const oLastElement = oLastNode.getContentElement();
         const applyingParagraph = this.getApplyParagraph(comparison);
 
-        const oParentParagraph =  (this.partner && this.partner.element) || oLastElement.Paragraph;
+        const oParentParagraph =  (this.partner && this.partner.element) || oLastElement.GetParent();
         let k = posOfLastInsertRun;
         let lastCheckRun;
         for(k -= 1; k > -1; --k)
@@ -4232,7 +4232,7 @@
 		const oLastElement = this.elements[this.elementIndex];
 		this.innerElementIndex = oLastElement.elements.length - 1;
 		const oLastRun = oLastElement.lastRun;
-		const oParent = oLastRun.Paragraph;
+		const oParent = oLastRun.GetParent();
 		this.parent = oParent;
 		const oContent = oParent.Content;
 		for (let i = oContent.length - 1; i >= 0; i -= 1) {

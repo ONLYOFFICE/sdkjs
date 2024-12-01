@@ -333,9 +333,9 @@ CBlockLevelSdt.prototype.GetDirectTextPr = function()
 {
 	return this.Content.GetDirectTextPr();
 };
-CBlockLevelSdt.prototype.DrawSelectionOnPage = function(CurPage)
+CBlockLevelSdt.prototype.DrawSelectionOnPage = function(CurPage, clipInfo)
 {
-	this.Content.DrawSelectionOnPage(CurPage);
+	this.Content.DrawSelectionOnPage(CurPage, clipInfo);
 };
 CBlockLevelSdt.prototype.GetSelectionBounds = function()
 {
@@ -536,13 +536,17 @@ CBlockLevelSdt.prototype.Remove = function(nCount, isRemoveWholeElement, bRemove
 {
 	if (this.IsPlaceHolder())
 	{
-		let logicDocument = this.GetLogicDocument();
+		let logicDocument  = this.GetLogicDocument();
+		let isRemoveOnDrag = logicDocument ? logicDocument.DragAndDropAction : false;
 		
-		if (!this.CanBeDeleted() && !bOnAddText)
+		if (!this.CanBeDeleted() && (!bOnAddText || isRemoveOnDrag))
 			return true;
 		
 		if (bOnAddText || !(logicDocument && logicDocument.IsDocumentEditor() && logicDocument.IsFillingFormMode()))
 			this.private_ReplacePlaceHolderWithContent();
+		
+		if (isRemoveOnDrag)
+			return false;
 		
 		return !!bOnAddText;
 	}
@@ -2721,3 +2725,4 @@ window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CBlockLevelSdt = CBlockLevelSdt;
 window['AscCommonWord'].type_BlockLevelSdt = type_BlockLevelSdt;
 window["AscWord"].CBlockLevelSdt = CBlockLevelSdt;
+window["AscWord"].BlockLevelSdt = CBlockLevelSdt;

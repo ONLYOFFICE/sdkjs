@@ -43,7 +43,9 @@ var moveTo=0,
     arcTo=2,
     bezier3=3,
     bezier4=4,
-    close=5;
+    close=5,
+    ellipticalArcTo=6,
+    nurbsTo=7;
 
 // Import
 var cToRad = AscFormat.cToRad;
@@ -57,6 +59,9 @@ var MOVE_DELTA = AscFormat.MOVE_DELTA;
 
 var cToRad2 = (Math.PI/60000)/180;
 
+const degToC = 60000;
+const radToDeg = 180 / Math.PI;
+const cToDeg = cToRad2 * radToDeg;
 
 function CChangesDrawingsAddPathCommand(Class, oCommand, nIndex, bReverse){
     this.Type = AscDFH.historyitem_PathAddPathCommand;
@@ -307,9 +312,14 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
     {
         this.addPathCommand({id:lineTo, X:x, Y:y});
     };
-    Path.prototype.arcTo = function(wR, hR, stAng, swAng)
+    Path.prototype.arcTo = function(wR, hR, stAng, swAng, ellipseRotation)
     {
-        this.addPathCommand({id: arcTo, wR: wR, hR: hR, stAng: stAng, swAng: swAng});
+        if (typeof ellipseRotation !== 'undefined') {
+            // to be sure for backwards compatibility
+            this.addPathCommand({id: arcTo, wR: wR, hR: hR, stAng: stAng, swAng: swAng, ellipseRotation: ellipseRotation});
+        } else {
+            this.addPathCommand({id: arcTo, wR: wR, hR: hR, stAng: stAng, swAng: swAng});
+        }
     };
     Path.prototype.quadBezTo = function(x0, y0, x1, y1)
     {
@@ -325,6 +335,21 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
             this.addPathCommand({id:close});
         }
     };
+    Path.prototype.ellipticalArcTo = function(x, y, a, b, c, d)
+    {
+        this.addPathCommand({id: ellipticalArcTo, x: x, y: y, a: a, b: b, c: c, d: d});
+    };
+    /**
+     * curveOrder (4 for 3 degree NURBS) + points count = knots count
+     * @param {{x, y}[]} controlPoints
+     * @param {[]} weights
+     * @param {[]} knots
+     * @param {Number} degree
+     */
+    Path.prototype.nurbsTo = function(controlPoints, weights, knots, degree)
+    {
+        this.addPathCommand({id: nurbsTo, controlPoints: controlPoints, weights: weights, knots: knots, degree: degree});
+    };
 	Path.prototype.calculateCommandCoord = function(oGdLst, sFormula, dFormulaCoeff, dNumberCoeff)
     {
         let dVal;
@@ -335,6 +360,174 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
         }
         return parseInt(sFormula, 10)*dNumberCoeff;
     };
+    /**
+     * accepts angles in anti-clockwise system
+     * @param {number} startAngle
+     * @param {number} endAngle
+     * @param {number} ctrlAngle
+     * @returns {number} sweep - positive sweep means anti-clockwise
+     */
+    function computeSweep(startAngle, endAngle, ctrlAngle) {
+        let sweep;
+
+        startAngle = (360.0 + startAngle) % 360.0;
+        endAngle = (360.0 + endAngle) % 360.0;
+        ctrlAngle = (360.0 + ctrlAngle) % 360.0;
+
+        // different sweeps depending on where the control point is
+
+        if (startAngle < endAngle) {
+            if (startAngle < ctrlAngle && ctrlAngle < endAngle) {
+                // positive sweep - anti-clockwise
+                sweep = endAngle - startAngle;
+            } else {
+                // negative sweep - clockwise
+                sweep = (endAngle - startAngle) - 360;
+            }
+        } else {
+            if (endAngle < ctrlAngle && ctrlAngle < startAngle) {
+                // negative sweep - clockwise
+                sweep = endAngle - startAngle;
+            } else {
+                // positive sweep - anti-clockwise
+                sweep = 360 - (startAngle - endAngle);
+            }
+        }
+
+        return sweep;
+    }
+    /**
+     * afin rotate clockwise
+     * @param {number} x
+     * @param {number} y
+     * @param {number} radiansRotateAngle radians Rotate ClockWise Angle. E.g. 30 degrees rotates does DOWN.
+     * @returns {{x: number, y: number}} point
+     */
+    function rotatePointAroundCordsStartClockWise(x, y, radiansRotateAngle) {
+        let newX = x * Math.cos(radiansRotateAngle) + y * Math.sin(radiansRotateAngle);
+        let newY = x * (-1) * Math.sin(radiansRotateAngle) + y * Math.cos(radiansRotateAngle);
+        return {x : newX, y: newY};
+    }
+
+    /**
+     *  Accepts visio params
+     *  https://learn.microsoft.com/en-us/office/client-developer/visio/ellipticalarcto-row-geometry-section
+     * @param x0
+     * @param y0
+     * @param x
+     * @param y
+     * @param a
+     * @param b
+     * @param c
+     * @param d
+     * @returns {{stAng: number, ellipseRotation: number, hR: number, wR: number, swAng: number}}
+     * WARNING these are not ECMA params exactly, stAng and swAng angles are anti-clockwise
+     */
+    function transformEllipticalArcParams(x0, y0, x, y, a, b, c, d) {
+        // https://www.figma.com/file/hs43oiAUyuoqFULVoJ5lyZ/EllipticArcConvert?type=design&node-id=1-2&mode=design&t=QJu8MtR3JV62WiW9-0
+
+        x0 = Number(x0);
+        y0 = Number(y0);
+        x = Number(x);
+        y = Number(y);
+        a = Number(a);
+        b = Number(b);
+        c = Number(c);
+        d = Number(d);
+
+        // it is not necessary, but I try to avoid imprecise calculations
+        // with points:
+        // 		convert
+        // 				719999.9999999999 			to 720000
+        // 				719999.5555 						to 719999.5555
+        // with angles (see below):
+        // 		convert
+        // 				-90.00000000000006 			to -90
+        // 				6.176024640130164e-15 	to 0
+        // 		but lost precision on convert
+        // 				54.61614630046808 			to 54.6161
+        // can be enhanced by if add: if rounded angle is 0 so round otherwise dont
+
+        // lets save only 4 digits after point coordinates to avoid imprecise calculations to perform correct compares later
+        x0 = Math.round(x0 * 1e4) / 1e4;
+        y0 = Math.round(y0 * 1e4) / 1e4;
+        x = Math.round(x * 1e4) / 1e4;
+        y = Math.round(y * 1e4) / 1e4;
+        a = Math.round(a * 1e4) / 1e4;
+        b = Math.round(b * 1e4) / 1e4;
+
+        // translate points to ellipse angle
+        let startPoint = rotatePointAroundCordsStartClockWise(x0, y0, c);
+        let endPoint = rotatePointAroundCordsStartClockWise(x, y, c);
+        let controlPoint = rotatePointAroundCordsStartClockWise(a, b, c);
+        x0 = startPoint.x;
+        y0 = startPoint.y;
+        x = endPoint.x;
+        y = endPoint.y;
+        a = controlPoint.x;
+        b = controlPoint.y;
+
+        // http://visguy.com/vgforum/index.php?topic=2464.0
+        let d2 = d*d;
+        let cx = ((x0-x)*(x0+x)*(y-b)-(x-a)*(x+a)*(y0-y)+d2*(y0-y)*(y-b)*(y0-b))/(2.0*((x0-x)*(y-b)-(x-a)*(y0-y)));
+        let cy = ((x0-x)*(x-a)*(x0-a)/d2+(x-a)*(y0-y)*(y0+y)-(x0-x)*(y-b)*(y+b))/(2.0*((x-a)*(y0-y)-(x0-x)*(y-b)));
+        // can also be helpful https://stackoverflow.com/questions/6729056/mapping-svg-arcto-to-html-canvas-arcto
+
+        let rx = Math.sqrt(Math.pow(x0-cx, 2) + Math.pow(y0-cy,2) * d2);
+        let ry = rx / d;
+
+        // lets NOT save only 4 digits after to avoid precision loss
+        // rx = Math.round(rx * 1e4) / 1e4;
+        // ry = Math.round(ry * 1e4) / 1e4;
+        // cy = Math.round(cy * 1e4) / 1e4;
+
+        let ctrlAngle = Math.atan2(b-cy, a-cx) * radToDeg;
+        let startAngle = Math.atan2(y0-cy, x0-cx) * radToDeg;
+        let endAngle = Math.atan2(y-cy, x-cx) * radToDeg;
+
+        // lets save only 4 digits after to avoid imprecise calculations result
+        ctrlAngle = Math.round(ctrlAngle * 1e4) / 1e4;
+        startAngle = Math.round(startAngle * 1e4) / 1e4;
+        endAngle = Math.round(endAngle * 1e4) / 1e4;
+        // set -0 to 0
+        ctrlAngle = ctrlAngle === -0 ? 0 : ctrlAngle;
+        startAngle = startAngle === -0 ? 0 : startAngle;
+        endAngle = endAngle === -0 ? 0 : endAngle;
+
+        let sweep = computeSweep(startAngle, endAngle, ctrlAngle);
+
+        let ellipseRotationAngle = c * radToDeg;
+        ellipseRotationAngle = Math.round(ellipseRotationAngle * 1e4) / 1e4;
+        ellipseRotationAngle = ellipseRotationAngle === -0 ? 0 : ellipseRotationAngle;
+        ellipseRotationAngle = ellipseRotationAngle === 360 ? 0 : ellipseRotationAngle;
+
+        // TODO check results consider sweep sign is important: clockwise or anti-clockwise
+
+        // let mirrorVertically = false;
+        // if (mirrorVertically) {
+        // 	startAngle = 360 - startAngle;
+        // 	sweep = -sweep;
+        // 	ellipseRotationAngle = - ellipseRotationAngle;
+        // }
+
+        // WARNING these are not ECMA params exactly, stAng and swAng angles are anti-clockwise!
+        // about ECMA cord system:
+        // c is AntiClockwise so 30 deg go up in Visio
+        // but in ECMA it should be another angle
+        // because in ECMA angles are clockwise ang 30 deg go down.
+        // convert from anticlockwise angle system to clockwise
+        // angleEcma = 360 - angleVisio;
+        // using visio angles here but still multiply to degToC
+        // then cord system trasformed in sdkjs/draw/model/VisioDocument.js CVisioDocument.prototype.draw
+        let swAng = sweep * degToC;
+        let stAng = startAngle * degToC;
+        let ellipseRotationInC = ellipseRotationAngle * degToC;
+
+        let wR = rx;
+        let hR = ry;
+
+        return {wR : wR, hR : hR, stAng : stAng, swAng : swAng, ellipseRotation : ellipseRotationInC};
+    }
     Path.prototype.recalculate = function(gdLst, bResetPathsInfo)
     {
         var ch, cw;
@@ -374,7 +567,7 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
             dCustomPathCoeffH = 1/36000;
         }
         var APCI=this.ArrPathCommandInfo, n = APCI.length, cmd;
-        var x0, y0, x1, y1, x2, y2, wR, hR, stAng, swAng, lastX, lastY;
+        var x0, y0, x1, y1, x2, y2, wR, hR, stAng, swAng, ellipseRotation, lastX, lastY;
         for(var i=0; i<n; ++i)
         {
             cmd=APCI[i];
@@ -443,6 +636,7 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
                     if((swAng < 0) && (a3 > 0)) swAng += 21600000;
                     if(swAng == 0 && a3 != 0) swAng = 21600000;
 
+                    // https://www.figma.com/file/hs43oiAUyuoqFULVoJ5lyZ/EllipticArcConvert?type=design&node-id=291-2&mode=design&t=jLr0jZ6jdV6YhG2S-0
                     var a = wR;
                     var b = hR;
                     var sin2 = Math.sin(stAng*cToRad);
@@ -459,23 +653,358 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
                     var _yrad1 = sin1 / b;
                     var l1 = 1 / Math.sqrt(_xrad1 * _xrad1 + _yrad1 * _yrad1);
 
-                    this.ArrPathCommand[i]={id: arcTo,
-                        stX: lastX,
-                        stY: lastY,
-                        wR: wR,
-                        hR: hR,
-                        stAng: stAng*cToRad,
-                        swAng: swAng*cToRad};
+                    if (cmd.ellipseRotation === undefined ) {
+                        this.ArrPathCommand[i]={id: arcTo,
+                            stX: lastX,
+                            stY: lastY,
+                            wR: wR,
+                            hR: hR,
+                            stAng: stAng*cToRad,
+                            swAng: swAng*cToRad};
 
-                    lastX = xc + l1 * cos1;
-                    lastY = yc + l1 * sin1;
+                        lastX = xc + l1 * cos1;
+                        lastY = yc + l1 * sin1;
+                    } else {
+                        // do transformations with ellipseRotation by analogy. ellipseRotation is added later
+                        // then calculate new end point
+                        ellipseRotation = gdLst[cmd.ellipseRotation];
+                        if(ellipseRotation===undefined)
+                        {
+                            ellipseRotation=parseInt(cmd.ellipseRotation, 10);
+                        }
 
+                        var a4 = ellipseRotation;
+
+                        ellipseRotation = Math.atan2(ch * Math.sin(a4 * cToRad), cw * Math.cos(a4 * cToRad)) / cToRad;
+
+                        if((ellipseRotation > 0) && (a4 < 0)) ellipseRotation -= 21600000;
+                        if((ellipseRotation < 0) && (a4 > 0)) ellipseRotation += 21600000;
+                        if(ellipseRotation == 0 && a4 != 0) ellipseRotation = 21600000;
+
+                        this.ArrPathCommand[i]={id: arcTo,
+                            stX: lastX,
+                            stY: lastY,
+                            wR: wR,
+                            hR: hR,
+                            stAng: stAng*cToRad,
+                            swAng: swAng*cToRad,
+                            ellipseRotation: ellipseRotation*cToRad};
+
+                        // https://www.figma.com/file/hs43oiAUyuoqFULVoJ5lyZ/EllipticArcConvert?type=design&node-id=291-34&mode=design&t=LKiEAjzKEzKacCBc-0
+
+                        // lets convert ECMA clockwise angle to trigonometrical
+                        // (anti clockwise) angle to correctly calculate sin and cos
+                        // of l1 angle to calculate l1 end point cords
+                        let l1AntiClockWiseAngle = (360 - (stAng + swAng)) * cToRad;
+
+                        //  new cord system center is ellipse center and its y does up
+                        let l1xNewCordSystem = l1 * Math.cos(l1AntiClockWiseAngle);
+                        let l1yNewCordSystem = l1 * Math.sin(l1AntiClockWiseAngle);
+                        // if no rotate it is:
+                        // lastX = xc + l1xNewCordSystem;
+                        // lastY = yc - l1yNewCordSystem;
+                        // we invert y because start and calculate point coordinate systems are different. see figma
+
+                        let l1xyRotatedEllipseNewCordSystem = rotatePointAroundCordsStartClockWise(l1xNewCordSystem,
+                          l1yNewCordSystem, ellipseRotation * cToRad);
+                        let l1xRotatedEllipseOldCordSystem = l1xyRotatedEllipseNewCordSystem.x + xc;
+                        let l1yRotatedEllipseOldCordSystem = yc - l1xyRotatedEllipseNewCordSystem.y;
+
+                        // calculate last point offset after ellipse rotate
+                        let lastXnewCordSystem = lastX - xc;
+                        let lastYnewCordSystem = -lastY + yc;
+                        // center of cord system now is the center of ellipse
+                        // blue point
+                        let rotatedLastXYnewCordSystem = rotatePointAroundCordsStartClockWise(lastXnewCordSystem,
+                          lastYnewCordSystem, ellipseRotation * cToRad);
+                        let rotatedLastXoldCordSystem = rotatedLastXYnewCordSystem.x + xc;
+                        let rotatedLastYoldCordSystem = yc - rotatedLastXYnewCordSystem.y;
+                        // calculate vector
+                        let lastPointOffsetVectorX = lastX - rotatedLastXoldCordSystem;
+                        let lastPointOffsetVectorY = lastY - rotatedLastYoldCordSystem;
+
+                        lastX = l1xRotatedEllipseOldCordSystem + lastPointOffsetVectorX;
+                        lastY = l1yRotatedEllipseOldCordSystem + lastPointOffsetVectorY;
+                    }
 
                     break;
                 }
                 case close:
                 {
                     this.ArrPathCommand[i]={id: close};
+                    break;
+                }
+                case ellipticalArcTo:
+                {
+                    // https://learn.microsoft.com/en-us/office/client-developer/visio/ellipticalarcto-row-geometry-section
+                    // but with a length in EMUs units and an angle in C-units, which will be expected clockwise as in other functions.
+                    let x, y, a, b, c, d;
+                    x = this.calculateCommandCoord(gdLst, cmd.x, cw, dCustomPathCoeffW);
+                    y = this.calculateCommandCoord(gdLst, cmd.y, ch, dCustomPathCoeffH);
+                    a = this.calculateCommandCoord(gdLst, cmd.a, cw, dCustomPathCoeffW);
+                    b = this.calculateCommandCoord(gdLst, cmd.b, ch, dCustomPathCoeffH);
+
+                    c = gdLst[cmd.c];
+                    if(c===undefined)
+                    {
+                        c=parseInt(cmd.c, 10);
+                    }
+
+                    // d is fraction
+                    d = Number(cmd.d, 10);
+
+                    c = Math.atan2(ch * Math.sin(c * cToRad), cw * Math.cos(c * cToRad)) / cToRad;
+
+                    let cRadians = c * cToRad2;
+
+                    let newParams = transformEllipticalArcParams(lastX, lastY, x, y,
+                      a, b, cRadians, d);
+
+                    // check if it not ellipse arc in fact but line (three points on one line)
+                    // if this case will not be caught there will be NaN in params and
+                    // drawing will be unpredictable
+                    // inaccuracy may be different so commented code below
+                    // (Ax * (By - Cy) + Bx * (Cy - Ay) + Cx * (Ay - By) ) / 2 - triangle square
+                    if (isNaN(lastY)) {
+                        lastY = 0;
+                    }
+                    if (isNaN(lastX)) {
+                        lastX = 0;
+                    }
+                    // let triangleSquare = (x * (b - lastY) + a * (lastY - y) + lastX * (y - b)) / 2;
+                    // if ( Math.round(triangleSquare) === 0 || Math.round(triangleSquare) === -0) {
+                    //     AscCommon.consoleLog("tranform ellipticalArcTo to line. 2 catch:",
+                    //         cmd.x, cmd.y, cmd.a, cmd.b, 0, 1);
+                    //     this.ArrPathCommand[i] ={id: lineTo, X:x, Y:y};
+                    // } else {
+
+                    // change ellipticalArcTo params to draw arc easy
+                    this.ArrPathCommand[i]={id: ellipticalArcTo,
+                        stX: lastX,
+                        stY: lastY,
+                        wR: newParams.wR,
+                        hR: newParams.hR,
+                        stAng: newParams.stAng*cToRad,
+                        swAng: newParams.swAng*cToRad,
+                        ellipseRotation: newParams.ellipseRotation*cToRad};
+
+                    // }
+
+                    lastX = x;
+                    lastY = y;
+                    break;
+                }
+                case nurbsTo:
+                {
+                    //TODO
+                    // consider homogenous or euclidean weighted points weights
+
+                    /**
+                     * for NURBS to Bezier convert https://math.stackexchange.com/questions/417859/convert-a-b-spline-into-bezier-curves
+                     * @param {{x: Number, y: Number, z? :Number}[]} controlPoints
+                     * @param {Number[]} weights
+                     * @param {Number[]} knots
+                     * @param {Number} multiplicity
+                     * @returns {{controlPoints: {x: Number, y: Number, z? :Number}[], weights: Number[], knots: Number[]}} new bezier data
+                     */
+                    function duplicateKnots(controlPoints, weights, knots, multiplicity) {
+                        /**
+                         * http://preserve.mactech.com/articles/develop/issue_25/schneider.html
+                         * can be found with pictures
+                         * @param {{x: Number, y: Number, z? :Number}[]} controlPoints
+                         * @param {Number[]} weights
+                         * @param {Number[]} knots
+                         * @param {Number} tNew
+                         * @return {{controlPoints: {x: Number, y: Number, z? :Number}[], weights: Number[], knots: Number[]}} new bezier data
+                         */
+                        function insertKnot(controlPoints, weights, knots, tNew) {
+                            let n = controlPoints.length;
+                            let order = knots.length - controlPoints.length;
+                            let k = order;
+
+                            let calculateZ = controlPoints[0].z !== undefined;
+
+                            let newKnots = [];
+                            let newWeights = [];
+                            let newControlPoints = [];
+
+                            // find index to insert tNew after
+                            let i = -1;
+                            for (let j = 0; j < n + k; j++) {
+                                if (tNew > knots[j] && tNew <= knots[j + 1]) {
+                                    i = j;
+                                    break;
+                                }
+                            }
+
+                            // insert tNew
+                            if (i === -1) {
+                                throw new Error("Not found position to insert new knot");
+                            } else {
+                                // Copy knots to new array.
+                                for (let j = 0; j < n + k + 1; j++) {
+                                    if (j <= i) {
+                                        newKnots[j] = knots[j];
+                                    } else if (j === i + 1) {
+                                        newKnots[j] = tNew;
+                                    } else {
+                                        newKnots[j] = knots[j - 1];
+                                    }
+                                }
+                            }
+
+                            // Compute position of new control point and new positions of
+                            // existing ones.
+                            let alpha;
+                            for (let j = 0; j < n + 1; j++) {
+                                if (j <= i - k + 1) {
+                                    alpha = 1;
+                                } else if (i - k + 2 <= j && j <= i) {
+                                    if (knots[j + k - 1] - knots[j] == 0) {
+                                        alpha = 0;
+                                    } else {
+                                        alpha = (tNew - knots[j]) / (knots[j + k - 1] - knots[j]);
+                                    }
+                                } else {
+                                    alpha = 0;
+                                }
+                                if (alpha == 0) {
+                                    newControlPoints[j] = controlPoints[j - 1];
+                                    newWeights[j] = weights[j - 1];
+                                } else if (alpha == 1) {
+                                    newControlPoints[j] = controlPoints[j];
+                                    newWeights[j] = weights[j];
+                                } else {
+                                    newControlPoints[j] = {};
+                                    newControlPoints[j].x =
+                                      (1 - alpha) * controlPoints[j - 1].x + alpha * controlPoints[j].x;
+                                    newControlPoints[j].y =
+                                      (1 - alpha) * controlPoints[j - 1].y + alpha * controlPoints[j].y;
+                                    if (calculateZ) {
+                                        newControlPoints[j].z =
+                                          (1 - alpha) * controlPoints[j - 1].z + alpha * controlPoints[j].z;
+                                    }
+                                    newWeights[j] = (1 - alpha) * weights[j - 1] + alpha * weights[j];
+                                }
+                            }
+
+                            return {
+                                controlPoints: newControlPoints,
+                                weights: newWeights,
+                                knots: newKnots,
+                            };
+                        }
+
+                        if (multiplicity === undefined) {
+                            throw new Error('multiplicity is undefined');
+                        }
+
+                        let knotValue = knots[0];
+                        let knotIndex;
+                        while (true) {
+                            let knotsCount = 0;
+                            for(let i = 0; i < knots.length; i++) {
+                                knotsCount += knots[i] === knotValue ? 1 : 0;
+                            }
+
+                            knotIndex = knots.indexOf(knotValue);
+                            let insertCount = multiplicity - knotsCount;
+                            insertCount = insertCount < 0 ? 0 : insertCount;
+                            for (let i = 0; i < insertCount; i++) {
+                                let newNURBSdata;
+                                try {
+                                    newNURBSdata = insertKnot(controlPoints, weights, knots, knotValue);
+                                } catch (e) {
+                                    AscCommon.consoleLog('Unknown error. unexpected t');
+                                }
+                                controlPoints = newNURBSdata.controlPoints;
+                                weights = newNURBSdata.weights;
+                                knots = newNURBSdata.knots;
+                            }
+
+                            knotIndex = knotIndex + knotsCount + insertCount ;
+                            if (knotIndex === knots.length) {
+                                // out of bounds
+                                break;
+                            }
+                            knotValue = knots[knotIndex];
+                        }
+                        return {controlPoints: controlPoints, weights: weights, knots: knots};
+                    }
+
+                    /**
+                     *
+                     * @param {{x: Number, y: Number, z? :Number}[]} controlPoints
+                     * @param {Number} degree
+                     * @returns {{
+                     *              startPoint:     {x: Number, y: Number, z? :Number},
+                     *              controlPoints:  {x: Number, y: Number, z? :Number}[],
+                     *              endPoint:       {x: Number, y: Number, z? :Number}
+                     *            }[]}
+                     */
+                    function NURBSnormalizedToBezier(controlPoints, degree) {
+                        let bezierArray = [];
+                        // first Bezier
+                        let nthBezier = {
+                            startPoint: controlPoints[0],
+                            controlPoints: []
+                        };
+                        for (let i = 1; i < controlPoints.length; i++) {
+                            const point = controlPoints[i];
+                            if (i % degree === 0) {
+                                nthBezier.endPoint = point;
+                                let nthBezierCopy = JSON.parse(JSON.stringify(nthBezier));
+                                bezierArray.push(nthBezierCopy);
+                                nthBezier = {
+                                    startPoint: point,
+                                    controlPoints: []
+                                };
+                            } else {
+                                nthBezier.controlPoints.push(point);
+                            }
+                        }
+                        return bezierArray;
+                    }
+
+
+                    // Init arguments
+                    let controlPoints = cmd.controlPoints;
+                    let weights = cmd.weights;
+                    let knots = cmd.knots;
+                    let degree = cmd.degree;
+
+                    for (let j = 0; j < controlPoints.length; j++) {
+                        controlPoints[j].x = this.calculateCommandCoord(gdLst, controlPoints[j].x, cw, dCustomPathCoeffW);
+                        controlPoints[j].y = this.calculateCommandCoord(gdLst, controlPoints[j].y, ch, dCustomPathCoeffH);
+                    }
+
+                    if (degree + 1 + controlPoints.length !== knots.length) {
+                        AscCommon.consoleLog("Wrong arguments format.", "Degree + 1 + controlPoints.length !== knots.length",
+                          degree + 1 + controlPoints.length, "!==", knots.length);
+                        break;
+                    }
+
+                    let clampedStart = true;
+                    for (let j = 0; j < degree; j++) {
+                        // compare first degree + 1 knots
+                        clampedStart = clampedStart === false ? clampedStart : knots[j] === knots[j + 1];
+                    }
+                    if (!clampedStart) {
+                        AscCommon.consoleLog("first degree + 1 knots are not equal. Non clamped start is not yet supported",
+                          "Degree is", degree, "knots:", knots);
+                        break;
+                    }
+
+                    // Convert to Bezier
+                    let newNURBSform = duplicateKnots(controlPoints, weights, knots, degree);
+                    let bezierArray = NURBSnormalizedToBezier(newNURBSform.controlPoints, degree);
+
+                    // change nurbsTo params to draw using bezier
+                    // nurbs degree is equal to each bezier degree
+                    this.ArrPathCommand[i]={id: nurbsTo, degree: degree, bezierArray: bezierArray};
+
+                    lastX = bezierArray[bezierArray.length-1].endPoint.x;
+                    lastY = bezierArray[bezierArray.length-1].endPoint.y;
                     break;
                 }
                 default:
@@ -628,12 +1157,48 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
                 case arcTo:
                 {
                     bIsDrawLast = true;
-                    ArcToCurvers(shape_drawer, cmd.stX, cmd.stY, cmd.wR, cmd.hR, cmd.stAng, cmd.swAng, shape_drawer.Shape.calcGeometry);
+                    ArcToCurvers(shape_drawer, cmd.stX, cmd.stY, cmd.wR, cmd.hR, cmd.stAng, cmd.swAng, cmd.ellipseRotation /*ellipseRotation added later*/);
                     break;
                 }
                 case close:
                 {
                     shape_drawer._z();
+                    break;
+                }
+                case ellipticalArcTo:
+                {
+                    bIsDrawLast = true;
+                    ArcToCurvers(shape_drawer, cmd.stX, cmd.stY, cmd.wR, cmd.hR, cmd.stAng, cmd.swAng, cmd.ellipseRotation);
+                    break;
+                }
+                case nurbsTo:
+                {
+                    bIsDrawLast = true;
+                    cmd.bezierArray.forEach(function (bezier) {
+                        if (cmd.degree === 2) {
+                            let cp1x = bezier.controlPoints[0].x;
+                            let cp1y = bezier.controlPoints[0].y;
+                            let endx = bezier.endPoint.x;
+                            let endy = bezier.endPoint.y;
+                            shape_drawer._c2(cp1x, cp1y, endx, endy);
+                        } else if (cmd.degree === 3) {
+                            let cp1x = bezier.controlPoints[0].x;
+                            let cp1y = bezier.controlPoints[0].y;
+                            let cp2x = bezier.controlPoints[1].x;
+                            let cp2y = bezier.controlPoints[1].y;
+                            let endx = bezier.endPoint.x;
+                            let endy = bezier.endPoint.y;
+                            shape_drawer._c(cp1x, cp1y, cp2x, cp2y,endx, endy);
+                        } else {
+                            let startPoint = bezier.startPoint;
+                            let controlPoints = bezier.controlPoints;
+                            let endPoint = bezier.endPoint;
+                            // unlike in other commands pass start point bcs other commands use canvas system
+                            // end point for next command start point
+                            // (which we cant get explicitly for _cN calculation)
+                            shape_drawer._cN(startPoint, controlPoints, endPoint);
+                        }
+                    });
                     break;
                 }
             }
@@ -676,12 +1241,45 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
                 }
                 case arcTo:
                 {
-                    ArcToCurvers(checker, cmd.stX, cmd.stY, cmd.wR, cmd.hR, cmd.stAng, cmd.swAng);
+                    ArcToCurvers(checker, cmd.stX, cmd.stY, cmd.wR, cmd.hR, cmd.stAng, cmd.swAng, cmd.ellipseRotation /*ellipseRotation added later*/);
                     break;
                 }
                 case close:
                 {
                     checker._z();
+                    break;
+                }
+                case ellipticalArcTo:
+                {
+                    ArcToCurvers(checker, cmd.stX, cmd.stY, cmd.wR, cmd.hR, cmd.stAng, cmd.swAng, cmd.ellipseRotation);
+                    break;
+                }
+                case nurbsTo:
+                {
+                    cmd.bezierArray.forEach(function (bezier) {
+                        if (cmd.degree === 2) {
+                            let cp1x = bezier.controlPoints[0].x;
+                            let cp1y = bezier.controlPoints[0].y;
+                            let endx = bezier.endPoint.x;
+                            let endy = bezier.endPoint.y;
+                            checker._c2(cp1x, cp1y, endx, endy);
+                        } else if (cmd.degree === 3) {
+                            let cp1x = bezier.controlPoints[0].x;
+                            let cp1y = bezier.controlPoints[0].y;
+                            let cp2x = bezier.controlPoints[1].x;
+                            let cp2y = bezier.controlPoints[1].y;
+                            let endx = bezier.endPoint.x;
+                            let endy = bezier.endPoint.y;
+                            checker._c(cp1x, cp1y, cp2x, cp2y, endx, endy);
+                        } else {
+                            let startPoint = bezier.startPoint;
+                            let controlPoints = bezier.controlPoints;
+                            let endPoint = bezier.endPoint;
+                            let pointsToCheck = controlPoints.concat(endPoint);
+                            pointsToCheck = pointsToCheck.concat(startPoint);
+                            checker.checkPoints(pointsToCheck);
+                        }
+                    });
                     break;
                 }
             }
@@ -2752,6 +3350,8 @@ function partition_bezier4(x0, y0, x1, y1, x2, y2, x3, y3, epsilon)
     window['AscFormat'].bezier4 = bezier4;
     window['AscFormat'].close = close;
     window['AscFormat'].cToRad2 = cToRad2;
+    window['AscFormat'].degToC = degToC;
+    window['AscFormat'].radToDeg = radToDeg;
     window['AscFormat'].Path = Path;
     window['AscFormat'].Path2 = Path2;
     window['AscFormat'].CPathCmd = CPathCmd;

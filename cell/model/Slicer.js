@@ -1075,10 +1075,10 @@
 			case insertSlicerType.pivotTable: {
 				var cacheDefinition = pivotTable.cacheDefinition;
 				var cacheFields = cacheDefinition.getFields();
-				var fieldIndex = cacheDefinition.getFieldIndexByName(name);
+				var fieldIndex = pivotTable.asc_getFieldIndexByName(name);
 				var cacheField = -1 !== fieldIndex && cacheFields[fieldIndex];
 				if (cacheField) {
-					this.sourceName = name;
+					this.sourceName = cacheField.asc_getName();
 					//TODO для генерации имени нужна отдельная функция
 					this.name = this.generateSlicerCacheName(name);
 					this.data = new CT_slicerCacheData();
@@ -1380,12 +1380,19 @@
 			case insertSlicerType.pivotTable: {
 				var tabular = this.data.tabular;
 				var cacheDefinition = tabular.pivotCacheDefinition;
+				let pivotTables = this.getPivotTables();
 				if (cacheDefinition) {
 					var fieldIndex = cacheDefinition.getFieldIndexByName(this.sourceName);
 					if (-1 !== fieldIndex) {
+						let pivotField;
+						if (pivotTables.length > 0) {
+							const slicerCachePivotTable = this.pivotTables[0];
+							const pivotTable = slicerCachePivotTable.getPivotTable(wb);
+							pivotField = pivotTable.asc_getPivotFields()[fieldIndex];
+						}
 						var cacheField = cacheDefinition.getFields()[fieldIndex];
 						res = {
-							values: tabular.getFilterObject(cacheField, this.slicerCacheHideItemsWithNoData),
+							values: tabular.getFilterObject(cacheField, this.slicerCacheHideItemsWithNoData, pivotField),
 							automaticRowCount: null,
 							ignoreCustomFilter: null
 						};
@@ -1646,7 +1653,7 @@
 		var tabular = this.getTabular();
 		var pivotTables = this.getPivotTables();
 		if (tabular && pivotTables.length > 0) {
-			var pivotTable = pivotTables[pivotTables.length - 1];
+			var pivotTable = pivotTables[0];
 			var calculateRes = pivotTable.calculateDataRow();
 			this.syncWithPivot(pivotTable, calculateRes.cacheFieldsWithData);
 		}
@@ -2849,16 +2856,26 @@
 			});
 		}
 	};
-	CT_tabularSlicerCache.prototype.getFilterObject = function (cacheField, slicerCacheHideItemsWithNoData) {
+	CT_tabularSlicerCache.prototype.getFilterObject = function (cacheField, slicerCacheHideItemsWithNoData, opt_pivotField) {
 		var values = [];
+		let pivotItems;
+		if (opt_pivotField) {
+			pivotItems = opt_pivotField.getItems();
+		}
 		for (var i = 0; i < this.items.length; ++i) {
 			var item = this.items[i];
 			var elem = AscCommonExcel.AutoFiltersOptionsElements();
 			var sharedItem = cacheField.getGroupOrSharedItem(item.x);
 			var num = sharedItem.isDateOrNum() && cacheField.getNumFormat();
-			var cellValue = sharedItem.getCellValue();
+			let name;
+			if (pivotItems) {
+				const pivotItem = pivotItems[opt_pivotField.getItemIndexByValue(item.x)];
+				name = pivotItem.getName(cacheField, num);
+			} else {
+				name = sharedItem.getCellValue().getTextValue(num);
+			}
 			elem.val = item.x;
-			elem.text = cellValue.getTextValue(num);
+			elem.text = name;
 			elem.visible = item.s;
 			elem.hiddenByOtherColumns = item.nd || undefined;//todo
 			elem.isDateFormat = false;

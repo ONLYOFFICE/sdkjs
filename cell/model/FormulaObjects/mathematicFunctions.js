@@ -4322,6 +4322,8 @@ function (window, undefined) {
 	cROUNDUP.prototype.argumentsType = [argType.number, argType.number];
 	cROUNDUP.prototype.Calculate = function (arg) {
 		function roundupHelper(number, num_digits) {
+			let fractionalPart = number.toString().split(".")[1];
+
 			if (num_digits > AscCommonExcel.cExcelMaxExponent) {
 				if (Math.abs(number) >= 1e-100 || num_digits <= 98303) {
 					return new cNumber(number);
@@ -4332,6 +4334,8 @@ function (window, undefined) {
 					return new cNumber(number);
 				}
 				return new cError(cErrorType.not_numeric);
+			} else if (fractionalPart && fractionalPart.length === num_digits) {
+				return new cNumber(number);
 			}
 
 			let sign = number >= 0 ? 1 : -1,

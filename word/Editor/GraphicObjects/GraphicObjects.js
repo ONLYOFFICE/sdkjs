@@ -786,6 +786,7 @@ CGraphicObjects.prototype =
             {
                 image_props = new asc_CImgProperty(para_drawing_props);
                 image_props.ImageUrl = props_by_types.imageProps.ImageUrl;
+                image_props.isCrop = props_by_types.imageProps.isCrop;
                 image_props.Width = props_by_types.imageProps.w;
                 image_props.Height = props_by_types.imageProps.h;
                 image_props.rot = props_by_types.imageProps.rot;
@@ -3294,8 +3295,8 @@ CGraphicObjects.prototype =
 				{
 					// Обновляем позицию курсора, чтобы проскроллиться к заданной позиции
 					var oDrawingDocument = oLogicDocument.GetDrawingDocument();
-					oDrawingDocument.m_oWordControl.ScrollToPosition(oParaDrawing.GraphicObj.x, oParaDrawing.GraphicObj.y, oParaDrawing.PageNum, oParaDrawing.GraphicObj.extY);
-
+					oDrawingDocument.m_oWordControl.ScrollToPosition(oParaDrawing.GraphicObj.transform.tx, oParaDrawing.GraphicObj.transform.ty, oParaDrawing.PageNum, oParaDrawing.GraphicObj.extY);
+					
 					return {
 						X         : oParaDrawing.GraphicObj.x,
 						Y         : oParaDrawing.GraphicObj.y,

@@ -332,7 +332,10 @@
     };
     CComboBoxField.prototype.SetCurIdxs = function(aIdxs) {
         if (this.IsWidget()) {
-            this.SelectOption(aIdxs[0]);
+            if (undefined !== aIdxs[0]) {
+                this.SelectOption(aIdxs[0]);
+            }
+
             if (editor.getDocumentRenderer().IsOpenFormsInProgress)
                 this.SetApiCurIdxs(aIdxs);
         }
@@ -473,8 +476,19 @@
         }
         oDoc.EndNoHistoryMode();
         
-        if (this.GetApiValue() != this.GetValue()) {
-            AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetApiValue(), this.GetValue()));
+        let aCurIdxs = this.GetCurIdxs();
+        let aApiIdxs = this.GetApiCurIdxs();
+
+        let isChanged = false;
+        for (let i = 0; i < aCurIdxs.length; i++) {
+            if (aCurIdxs[i] === undefined || aApiIdxs[i] === undefined || aCurIdxs[i] !== aApiIdxs[i]) {
+                isChanged = true;
+                break;
+            }
+        }
+
+        if (isChanged) {
+            AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetApiCurIdxs(), aCurIdxs));
             this.SetApiValue(this.GetValue());
             this.SetApiCurIdxs(this.GetCurIdxs());
         }
@@ -701,15 +715,6 @@
             }
         }
 
-        // форматируемое значение
-        let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
-        let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
-        if (oActionRunScript) {
-            memory.widgetFlags |= (1 << 12);
-            let sFormatValue = this.contentFormat.getAllText();
-            memory.WriteString(sFormatValue);
-        }
-        
         if (value != null && Array.isArray(value) == true) {
             // флаг что значение - это массив
             memory.fieldDataFlags |= (1 << 13);
@@ -732,6 +737,9 @@
             }
         }
 
+        memory.fieldDataFlags |= (1 << 15);
+        this.WriteRenderToBinary(memory);
+        
         // top index
         
         if (this.IsEditable()) {

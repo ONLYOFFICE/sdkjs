@@ -68,6 +68,7 @@ jobs:
           node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/table/correctBadTable.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/table/flowTablePosition.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/table/pageBreak.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/table/table-flow.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/table/table-header.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/textShaper/textShaper.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/text-hyphenator/text-hyphenator.html 30000 "--no-sandbox"

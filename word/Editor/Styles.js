@@ -10356,12 +10356,12 @@ CDocumentBorder.prototype =
     {
         // Double   : Size
         // Long     : Space
-        // Byte     : Value
+        // Long     : Value
         // Variable : Color
 
         Writer.WriteDouble( this.Size );
         Writer.WriteLong( this.Space );
-        Writer.WriteByte( this.Value );
+        Writer.WriteLong( this.Value );
         this.Color.Write_ToBinary( Writer );
         if(this.Unifill)
         {
@@ -10393,7 +10393,7 @@ CDocumentBorder.prototype =
 
         this.Size  = Reader.GetDouble();
         this.Space = Reader.GetLong();
-        this.Value = Reader.GetByte();
+        this.Value = Reader.GetLong();
         this.Color.Read_FromBinary( Reader );
         if(Reader.GetBool())
         {
@@ -12266,7 +12266,7 @@ CRFonts.prototype.Merge = function(oRFonts)
 		this.AsciiTheme = oRFonts.AsciiTheme;
 		this.Ascii      = undefined;
 	}
-	else if (oRFonts.Ascii)
+	else if (oRFonts.Ascii && oRFonts.Ascii.Name)
 	{
 		this.Ascii      = oRFonts.Ascii;
 		this.AsciiTheme = undefined;
@@ -12277,7 +12277,7 @@ CRFonts.prototype.Merge = function(oRFonts)
 		this.EastAsiaTheme = oRFonts.EastAsiaTheme;
 		this.EastAsia      = undefined;
 	}
-	else if (oRFonts.EastAsia)
+	else if (oRFonts.EastAsia && oRFonts.EastAsia.Name)
 	{
 		this.EastAsia      = oRFonts.EastAsia;
 		this.EastAsiaTheme = undefined;
@@ -12288,7 +12288,7 @@ CRFonts.prototype.Merge = function(oRFonts)
 		this.HAnsiTheme = oRFonts.HAnsiTheme;
 		this.HAnsi      = undefined;
 	}
-	else if (oRFonts.HAnsi)
+	else if (oRFonts.HAnsi && oRFonts.HAnsi.Name)
 	{
 		this.HAnsi      = oRFonts.HAnsi;
 		this.HAnsiTheme = undefined;
@@ -12299,7 +12299,7 @@ CRFonts.prototype.Merge = function(oRFonts)
 		this.CSTheme = oRFonts.CSTheme;
 		this.CS      = undefined;
 	}
-	else if (oRFonts.CS)
+	else if (oRFonts.CS && oRFonts.CS.Name)
 	{
 		this.CS      = oRFonts.CS;
 		this.CSTheme = undefined;
@@ -12990,7 +12990,7 @@ CTextPr.prototype.Merge = function(TextPr)
 	if (undefined != TextPr.Underline)
 		this.Underline = TextPr.Underline;
 
-	if (undefined != TextPr.FontFamily)
+	if (undefined != TextPr.FontFamily && undefined !== TextPr.FontFamily.Name)
 	{
 		this.FontFamily       = {};
 		this.FontFamily.Name  = TextPr.FontFamily.Name;

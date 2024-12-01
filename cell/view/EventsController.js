@@ -154,7 +154,7 @@
 				return;
 			}
 
-			if (this.view.Api.isMobileVersion) {
+			if (this.view.Api.isUseOldMobileVersion()) {
 				/*раньше события на ресайз вызывался из меню через контроллер. теперь контроллер в меню не доступен, для ресайза подписываемся на глобальный ресайз от window.*/
 				window.addEventListener("resize", function () {
 					self._onWindowResize.apply(self, arguments);
@@ -1642,6 +1642,8 @@
 				touchManager.stopTouchingInProcess();
 				return res;
 			}
+			if (touchManager)
+				touchManager.checkMouseFocus(event);
 
 			var t = this;
 			asc["editor"].checkInterfaceElementBlur();
@@ -1816,6 +1818,9 @@
 						return;
 					} else if (t.targetInfo.target === c_oTargetType.TableSelectionChange) {
 						this.handlers.trigger('onChangeTableSelection', t.targetInfo);
+						return;
+					} else if (t.targetInfo.target === c_oTargetType.TraceDependents) {
+						// if we do a single click on traces, do nothing
 						return;
 					}
 				}
@@ -2108,44 +2113,77 @@
 
 			var self = this;
 			var deltaX = 0, deltaY = 0;
-			if (undefined !== event.wheelDelta && 0 !== event.wheelDelta) {
-				deltaY = -1 * event.wheelDelta / 40;
-			} else if (undefined !== event.detail && 0 !== event.detail) {
-				// FF
-				deltaY = event.detail;
-			} else if (undefined !== event.deltaY && 0 !== event.deltaY) {
-				// FF
-				//ограничиваем шаг из-за некорректного значения deltaY после обновления FF
-				//TODO необходимо пересмотреть. нужны корректные значения и учетом системного шага.
-				var _maxDelta = 3;
-				if (AscCommon.AscBrowser.isMozilla && Math.abs(event.deltaY) > _maxDelta) {
-					deltaY = Math.sign(event.deltaY) * _maxDelta;
-				} else {
-					deltaY = event.deltaY;
+
+			const wb = window["Asc"]["editor"].wb;
+			//TODO for mac touchpads. need review
+			if (wb.smoothScroll && AscCommon.AscBrowser.isMacOs) {
+				var delta  = 0;
+
+				if (undefined != event.wheelDelta && event.wheelDelta != 0) {
+					delta = -45 * event.wheelDelta / 120;
+				}
+				{
+					delta = 45 * event.detail / 3;
+				}
+
+				// New school multidimensional scroll (touchpads) deltas
+				deltaY = delta;
+
+
+				// Webkit
+				if (undefined !== event.wheelDeltaY && 0 !== event.wheelDeltaY) {
+					deltaY = -45 * event.wheelDeltaY / 120;
+				}
+				if (undefined !== event.wheelDeltaX && 0 !== event.wheelDeltaX) {
+					deltaX = -45 * event.wheelDeltaX / 120;
+				}
+
+
+				deltaX >>= 0;
+				deltaY >>= 0;
+
+				deltaX = (deltaX / wb.getWorksheet().getHScrollStep()) * AscCommon.AscBrowser.retinaPixelRatio;
+				deltaY = (deltaY / wb.getWorksheet().getVScrollStep()) * AscCommon.AscBrowser.retinaPixelRatio;
+			} else {
+				if (undefined !== event.wheelDelta && 0 !== event.wheelDelta) {
+					deltaY = -1 * event.wheelDelta / 40;
+				} else if (undefined !== event.detail && 0 !== event.detail) {
+					// FF
+					deltaY = event.detail;
+				} else if (undefined !== event.deltaY && 0 !== event.deltaY) {
+					// FF
+					//ограничиваем шаг из-за некорректного значения deltaY после обновления FF
+					//TODO необходимо пересмотреть. нужны корректные значения и учетом системного шага.
+					var _maxDelta = 3;
+					if (AscCommon.AscBrowser.isMozilla && Math.abs(event.deltaY) > _maxDelta) {
+						deltaY = Math.sign(event.deltaY) * _maxDelta;
+					} else {
+						deltaY = event.deltaY;
+					}
+				}
+				if (undefined !== event.deltaX && 0 !== event.deltaX) {
+					deltaX = event.deltaX;
+				}
+				if (event.axis !== undefined && event.axis === event.HORIZONTAL_AXIS) {
+					deltaX = deltaY;
+					deltaY = 0;
+				}
+
+				if (undefined !== event.wheelDeltaX && 0 !== event.wheelDeltaX) {
+					// Webkit
+					deltaX = -1 * event.wheelDeltaX / 40;
+				}
+				if (undefined !== event.wheelDeltaY && 0 !== event.wheelDeltaY) {
+					// Webkit
+					deltaY = -1 * event.wheelDeltaY / 40;
 				}
 			}
-			if (undefined !== event.deltaX && 0 !== event.deltaX) {
-				deltaX = event.deltaX;
-			}
-			if (event.axis !== undefined && event.axis === event.HORIZONTAL_AXIS) {
-				deltaX = deltaY;
-				deltaY = 0;
-			}
 
-			if (undefined !== event.wheelDeltaX && 0 !== event.wheelDeltaX) {
-				// Webkit
-				deltaX = -1 * event.wheelDeltaX / 40;
-			}
-			if (undefined !== event.wheelDeltaY && 0 !== event.wheelDeltaY) {
-				// Webkit
-				deltaY = -1 * event.wheelDeltaY / 40;
-			}
 			if (event.shiftKey) {
 				deltaX = deltaY;
 				deltaY = 0;
 			}
 
-			const wb = window["Asc"]["editor"].wb;
 			if (this.smoothWheelCorrector && !wb.smoothScroll) {
 				deltaX = this.smoothWheelCorrector.get_DeltaX(deltaX);
 				deltaY = this.smoothWheelCorrector.get_DeltaY(deltaY);

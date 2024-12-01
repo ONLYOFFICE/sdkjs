@@ -387,6 +387,9 @@ $(function () {
 			Test("[]+", [["ParaRun", ""], ["CDelimiter", "[]"], ["ParaRun", "+"]], false);
 			Test("||+", [["ParaRun", ""], ["CDelimiter", "||"], ["ParaRun", "+"]], false);
 
+			Test("|z}+", [["ParaRun", ""], ["CDelimiter", "|z}"], ["ParaRun", "+"]], false);
+			Test("(c|+", [["ParaRun", ""], ["CDelimiter", "(c|"], ["ParaRun", "+"]], false);
+
 			Test("(1+2)+", [["ParaRun", ""], ["CDelimiter", "(1+2)"], ["ParaRun", "+"]], false);
 			Test("{1+2}+", [["ParaRun", ""], ["CDelimiter", "{1+2}"], ["ParaRun", "+"]], false);
 			Test("[1+2]+", [["ParaRun", ""], ["CDelimiter", "[1+2]"], ["ParaRun", "+"]], false);
@@ -1094,18 +1097,73 @@ $(function () {
 				assert.strictEqual(strBinomial, '(1→∞)', 'Check \\infty');
 			})
 
+			QUnit.test('Check absolute brackets inside normal brackets', function (assert)
+			{
+				Clear();
+				logicDocument.SetMathInputType(0);
+				AddText('(x|y|z)');
+				assert.ok(true, "Add text '(x|y|z)'");
+
+				MathContent.ConvertView(false, Asc.c_oAscMathInputType.Unicode);
+				assert.ok(true, "Convert to professional view");
+
+				let oWrapDelimiter	= MathContent.Root.Content[1];
+				let oDelContent		= oWrapDelimiter.Content[0];
+				let oFirstParaRun	= oDelContent.Content[0];
+				let oInnerDel		= oDelContent.Content[1];
+				let oSecondParaRun	= oDelContent.Content[2];
+
+				assert.strictEqual(oFirstParaRun.GetTextOfElement(0).GetText(), 'x', 'Check first text is x');
+				assert.strictEqual(oInnerDel.GetTextOfElement(0).GetText(), '|y|', 'Check del is |y|');
+				assert.strictEqual(oSecondParaRun.GetTextOfElement(0).GetText(), 'z', 'Check second text is z');
+
+				let strBinomial = MathContent.GetTextOfElement(0).GetText();
+				assert.strictEqual(strBinomial, '(x|y|z)', 'Check');
+			})
+
+			QUnit.test('Check Dirac notion', function (assert)
+			{
+				// in future find better algorithm
+				//
+				// 		"...Another case where we treat | as a close delimiter is if it is followed by a space
+				// 		(U+0020). This handles the important case of the bra vector ⟨ | in Dirac notation..."
+				//
+				// now we don't need to add spaces to handle these brackets correctly
+
+				Clear();
+				logicDocument.SetMathInputType(0);
+
+				AscMath.SetAutoConvertation(false);
+				AddText('p=∑_ψ▒〖P_ψ |ψ⟩ ⟨ψ|〗');
+				assert.ok(true, "Add text 'p=∑_ψ▒〖P_ψ |ψ⟩ ⟨ψ|〗'");
+
+				MathContent.ConvertView(false, Asc.c_oAscMathInputType.Unicode);
+				assert.ok(true, "Convert to professional view");
+
+				let strBinomial = MathContent.GetTextOfElement(0).GetText();
+				assert.strictEqual(strBinomial, 'p=∑_ψ▒〖P_ψ |ψ⟩ ⟨ψ|〗', 'Check');
+
+				MathContent.ConvertView(true, Asc.c_oAscMathInputType.Unicode);
+				assert.ok(true, "Convert to professional view");
+
+				strBinomial = MathContent.GetTextOfElement(0).GetText();
+				assert.strictEqual(strBinomial, 'p=∑_ψ▒〖P_ψ |ψ⟩ ⟨ψ|〗', 'Check');
+
+				AscMath.SetAutoConvertation(true);
+			})
+
 			QUnit.test('Check eqarray', function (assert)
 			{
 				Clear();
 				logicDocument.SetMathInputType(0);
-				AddText('{█(a,  n odd@(a),  n even)┤');
-				assert.ok(true, "Add text '{█(a,  n odd@(a),  n even)┤'");
+				AddText('{█(a, n odd@|a|, n even)┤');
+				assert.ok(true, "Add text '{█(a, n odd@|a|, n even)┤'");
 
 				MathContent.ConvertView(false, Asc.c_oAscMathInputType.Unicode);
 				assert.ok(true, "Convert to linear view");
 
 				let strBinomial = MathContent.GetTextOfElement(0).GetText();
-				assert.strictEqual(strBinomial, '{█(a,  n odd@(a),  n even)┤', 'Check');
+				assert.strictEqual(strBinomial, '{█(a, n odd@|a|, n even)┤', 'Check');
 			})
 
 			QUnit.test('Check eqarray frac', function (assert)

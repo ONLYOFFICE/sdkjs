@@ -50,6 +50,7 @@ function (window, undefined) {
 		this.ws = ws;
 		this.precedents = null;
 		this.precedentsExternal = null;
+		this.dependentsExternal = null;
 		this.dependents = null;
 		this.isDependetsCall = null;
 		this.inLoop = null;
@@ -76,6 +77,9 @@ function (window, undefined) {
 		this.aPassedDependents = null;
 
 		this._lockChangeDocument = null;
+
+		/* an array with the coordinates of the start and end of all drawn lines */
+		this.tracesCoords = null;
 	}
 
 	TraceDependentsManager.prototype.setPrecedentsCall = function () {
@@ -86,18 +90,74 @@ function (window, undefined) {
 		this.isDependetsCall = true;
 		this.isPrecedentsCall = false;
 	};
-	TraceDependentsManager.prototype.setPrecedentExternal = function (cellIndex) {
+	TraceDependentsManager.prototype.setPrecedentExternal = function (from, to, elemRange, elemWs, externalLink) {
 		if (!this.precedentsExternal) {
-			this.precedentsExternal = new Set();
+			this.precedentsExternal = {};
 		}
-		this.precedentsExternal.add(cellIndex);
+
+		if (!this.precedentsExternal[from]) {
+			this.precedentsExternal[from] = {};
+		}
+
+		let docInfo = window["Asc"]["editor"].DocInfo;
+		let externalInfo = {range: elemRange, ws: elemWs, fullPath: null, isCurrentWorkbook: null};
+
+		let rangeName = elemRange.getName();
+		let wsName = elemWs.getName();
+		let isCurrentWorkbook = true;
+		let eR, fileName;
+
+		if (externalLink != null) {
+			isCurrentWorkbook = false;
+			eR = this.ws && this.ws.workbook && this.ws.workbook.model && this.ws.workbook.model.getExternalLinkByIndex(externalLink - 1);
+			fileName = eR ? eR.Id : "";
+		}
+
+		fileName = isCurrentWorkbook ? docInfo && docInfo.get_Title() : fileName;
+		// in fullPath we write a line with full information about the name of the book, sheet and range
+		let fullPath = "[" + fileName + "]" + wsName + "!" + rangeName;
+
+		externalInfo.isCurrentWorkbook = isCurrentWorkbook;
+		externalInfo.fullPath = fullPath;
+
+		this.precedentsExternal[from][to] = externalInfo;
 	};
 	TraceDependentsManager.prototype.checkPrecedentExternal = function (cellIndex) {
 		if (!this.precedentsExternal) {
 			return false;
 		}
-		return this.precedentsExternal.has(cellIndex);
+		return this.precedentsExternal[cellIndex];
 	};
+	// dependentsExternal
+	TraceDependentsManager.prototype.setDependentsExternal = function (from, to, elemRange, elemWs) {
+		if (!this.dependentsExternal) {
+			this.dependentsExternal = {};
+		}
+
+		if (!this.dependentsExternal[from]) {
+			this.dependentsExternal[from] = {};
+		}
+
+		let docInfo = window["Asc"]["editor"].DocInfo;
+		let externalInfo = {range: elemRange, ws: elemWs, fullPath: null};
+
+		let rangeName = elemRange.getName();
+		let wsName = elemWs.getName();
+		let fileName = docInfo ? docInfo.get_Title() : "";
+		// in fullPath we write a line with complete information about the name of the book, sheet and range
+		let fullPath = "[" + fileName + "]" + wsName + "!" + rangeName;
+
+		externalInfo.fullPath = fullPath;
+
+		this.dependentsExternal[from][to] = externalInfo;
+	};
+	TraceDependentsManager.prototype.checkDependentExternal = function (cellIndex) {
+		if (!this.dependentsExternal) {
+			return false;
+		}
+		return this.dependentsExternal[cellIndex];
+	};
+
 	TraceDependentsManager.prototype.checkCircularReference = function (cellIndex, isDependentCall) {
 		if (this.dependents && this.dependents[cellIndex] && this.precedents && this.precedents[cellIndex]) {
 			if (isDependentCall) {
@@ -574,6 +634,13 @@ function (window, undefined) {
 							//if (parentCellIndex === null || (typeof(parentCellIndex) === "number" && isNaN(parentCellIndex))) {
 							continue;
 						}
+
+						if (is3D && typeof parentCellIndex === "string") {
+							// the object dependentsExternal is only needed to handle a double click on an arrow, and is not used in drawing
+							let elemRange = cellListeners[i].ref ? cellListeners[i].ref : new Asc.Range(parent.col, parent.row, parent.col, parent.row);
+							let elemWs = parent.ws;
+							this.setDependentsExternal(cellIndex, parentCellIndex, elemRange, elemWs);
+						}
 						this._setDependents(cellIndex, parentCellIndex);
 						this._setPrecedents(parentCellIndex, cellIndex, true);
 					}
@@ -1043,7 +1110,9 @@ function (window, undefined) {
 						}
 
 						// cross check for element:
-						// if element isArea and does not reference to another sheet and element not in the function and formula is not CSE - do cross check
+						// if the element is Area and it doesn't have reference to another sheet, 
+						// and the element is not in the function, 
+						// and the formula is not CSE - we are checking for cross
 						if (isArea && !ref && !is3D && !newOutStack[index].inFormulaRef) {
 							if (elemRange.getWidth() > 1 && elemRange.getHeight() <= 1) {
 								// check cols
@@ -1084,16 +1153,22 @@ function (window, undefined) {
 						}
 
 						if (is3D) {
-							// TODO другой механизм отрисовки для внешних precedents
+							// external dependencies are stored in a separate object and rendered in a separate loop 
 							let elemIndex = elem.wsTo ? elem.wsTo.index : elem.ws.index;
+							let elemWs = elem.wsFrom ? elem.wsTo : elem.ws;			
 							if (currentWsIndex !== elemIndex) {
+								if (elem.externalLink != null) {
+									elemIndex = "[" + elem.externalLink + "]";
+								}
+
 								elemCellIndex += ";" + elemIndex;
-								this.setPrecedentExternal(currentCellIndex);
+								this.setPrecedentExternal(currentCellIndex, elemCellIndex, elemRange, elemWs, elem.externalLink);
+								continue
 							}
 							this._setDependents(elemCellIndex, currentCellIndex);
 							this._setPrecedents(currentCellIndex, elemCellIndex);
 						} else {
-							this._setPrecedents(currentCellIndex, elemCellIndex, false, false);
+							this._setPrecedents(currentCellIndex, elemCellIndex, false, areaName ? areaName : false);
 							this._setDependents(elemCellIndex, currentCellIndex);
 							if (areaName) {
 								this._setPrecedentsAreaHeader(elemCellIndex, areaName);
@@ -1128,9 +1203,94 @@ function (window, undefined) {
 				this.clearPassedPrecedents();
 			}
 		}
-		if (Object.keys(this.precedents[currentCellIndex]).length === 0 && bCellHasNotTrace) {
+		if (this.precedents && this.precedents[currentCellIndex] && Object.keys(this.precedents[currentCellIndex]).length === 0 && bCellHasNotTrace) {
 			this.ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.TracePrecedentsNoValidReference, c_oAscError.Level.NoCritical);
 		}
+	};
+	TraceDependentsManager.prototype.addLineCoordinates = function (from, to, /*fromXY, toXY*/x1, y1, x2, y2) {
+		/*	
+			from - cellIndex
+			to - cellIndex
+			fromXY - from coordinates
+			toXY - to coordinates
+
+			we are working with the precedents object, where
+			[from] - this is the position of the line with the arrow pointing to the cell,
+			[to] - this is the position of the line with a dot at the beginning
+		*/
+
+		if (from === undefined || to === undefined) {
+			return
+		}
+
+		let traceLineInfo = {from : {x: x1, y: y1, cellRange: null, areaRange: null}, to: {x: x2, y: y2, cellRange: null, areaRange: null}};
+
+		let fromRowCol = AscCommonExcel.getFromCellIndex(from, true);
+		let toRowCol = AscCommonExcel.getFromCellIndex(to, true);
+
+		let toAreInfo = this.precedents[from] && this.precedents[from][to];
+		let fromAreaInfo = this.precedents[to] && this.precedents[to][from];
+
+		traceLineInfo.from.cellRange = new Asc.Range(fromRowCol.col, fromRowCol.row, fromRowCol.col, fromRowCol.row);
+		traceLineInfo.to.cellRange = new Asc.Range(toRowCol.col, toRowCol.row, toRowCol.col, toRowCol.row);
+
+		// areaCheck
+		if (this.precedentsAreas) {
+			if (toAreInfo && toAreInfo !== 1 && this.precedentsAreas[toAreInfo]) {
+				traceLineInfo.to.areaRange = this.precedentsAreas[toAreInfo].range;
+			}
+			if (fromAreaInfo && fromAreaInfo !== 1 && this.precedentsAreas[fromAreaInfo]) {
+				traceLineInfo.from.areaRange = this.precedentsAreas[fromAreaInfo].range;
+			}
+		}
+
+		if (!this.tracesCoords) {
+			this.tracesCoords = [];
+		}
+		this.tracesCoords.push(traceLineInfo);
+	};
+	TraceDependentsManager.prototype.addExternalLineCoordinates = function (from, x1, y1, x2, y2) {
+		/*	
+			from - cellIndex
+			we are working with the precedentsExternal and dependentsExternal object, where
+			[from] - this is the position of the line with an arrow indicating external dependencies
+		*/
+
+		if (from === undefined) {
+			return
+		}
+
+		// in external we pass an array of strings like "[BookName.xlsx]SheetName!$A$1:$A$3" which we should pass to the goto window
+		let traceLineInfo = {from : {x: x1, y: y1}, to: {x: x2, y: y2}, external: null};
+
+		// we go through all external dependencies and fill array of external dependencies for chosen line
+		if (this.precedentsExternal && this.precedentsExternal[from]) {
+			for (let i in this.precedentsExternal[from]) {
+				let externalInfo = this.precedentsExternal[from][i];
+
+				if (!traceLineInfo.external) {
+					traceLineInfo.external = [];
+				}
+
+				traceLineInfo.external.push(externalInfo);
+			}
+		}
+		if (this.dependentsExternal && this.dependentsExternal[from]) {
+			for (let i in this.dependentsExternal[from]) {
+				let externalInfo = this.dependentsExternal[from][i];
+
+				if (!traceLineInfo.external) {
+					traceLineInfo.external = [];
+				}
+
+				traceLineInfo.external.push(externalInfo);
+			}
+		}
+
+		if (!this.tracesCoords) {
+			this.tracesCoords = [];
+		}
+		this.tracesCoords.push(traceLineInfo);
 	};
 	TraceDependentsManager.prototype.checkUnrecordedAndFormNewStack = function (cellIndex, formulaParsed) {
 		let newOutStack = [], isHaveUnrecorded;
@@ -1249,7 +1409,19 @@ function (window, undefined) {
 					}
 
 					if (is3D) {
-						elemCellIndex += ";" + (elem.wsTo ? elem.wsTo.index : elem.ws.index);
+						// elemCellIndex += ";" + (elem.wsTo ? elem.wsTo.index : elem.ws.index);
+
+						let elemIndex = elem.wsTo ? elem.wsTo.index : elem.ws.index;
+						let elemWs = elem.wsFrom ? elem.wsTo : elem.ws;
+						if (currentWsIndex !== elemIndex) {
+							let hasExternalPrecedent = this.checkPrecedentExternal(cellIndex);
+							elemCellIndex += ";" + elemIndex;
+							if (!hasExternalPrecedent || (hasExternalPrecedent && !this.precedentsExternal[cellIndex][elemCellIndex])) {
+								isHaveUnrecorded = true;
+							}
+							// this.setPrecedentExternal(currentCellIndex, elemCellIndex, elemRange, elemWs);
+							continue
+						}
 					}
 					if (!this._getPrecedents(cellIndex, elemCellIndex)) {
 						isHaveUnrecorded = true;
@@ -1340,13 +1512,19 @@ function (window, undefined) {
 	TraceDependentsManager.prototype.isHavePrecedents = function () {
 		return !!this.precedents;
 	};
+	TraceDependentsManager.prototype.isHaveExternalPrecedents = function () {
+		return !!this.precedentsExternal;
+	};
+	TraceDependentsManager.prototype.isHaveExternalDependents = function () {
+		return !!this.dependentsExternal;
+	};
 	TraceDependentsManager.prototype.forEachDependents = function (callback) {
 		for (let i in this.dependents) {
 			callback(i, this.dependents[i], this.isPrecedentsCall);
 		}
 	};
 	TraceDependentsManager.prototype.forEachExternalPrecedent = function (callback) {
-		for (let i in this.precedents) {
+		for (let i in this.precedentsExternal) {
 			callback(i);
 		}
 	};
@@ -1368,6 +1546,7 @@ function (window, undefined) {
 		}
 		this.precedents = null;
 		this.precedentsExternal = null;
+		this.dependentsExternal = null;
 		this.dependents = null;
 		this.isDependetsCall = null;
 		this.inLoop = null;
@@ -1376,6 +1555,7 @@ function (window, undefined) {
 		this.currentCalculatedPrecedentAreas = null;
 		this.precedentsAreasHeaders = null;
 		this._setDefaultData();
+		this.clearCoordsData();
 
 		if (needDraw) {
 			if (this.ws && this.ws.overlayCtx) {
@@ -1416,9 +1596,17 @@ function (window, undefined) {
 				} else {
 					this._lockChangeDocument = null;
 					let t = this;
-					if (arg2) {
-						for (let col = arg2.c1; col <= arg2.c2; col++) {
-							for (let row = arg2.r1; row <= arg2.r2; row++) {
+					if (t.isHaveData() && arg2) {
+						if (Asc.c_oAscSelectionType.RangeMax === arg2.getType()) {
+							t.clearAll();
+							break;
+						}
+
+						let maxRowToClear = t.ws.nRowsCount ? Math.min(t.ws.nRowsCount, arg2.r2) : arg2.r2,
+							maxColToClear = t.ws.nColsCount ? Math.min(t.ws.nColsCount, arg2.c2) : arg2.c2;
+
+						for (let col = arg2.c1; col <= maxColToClear; col++) {
+							for (let row = arg2.r1; row <= maxRowToClear; row++) {
 								if (!(arg2.c1 === col && arg2.r1 === row)) {
 									t.clearCellTraces(row, col);
 								}
@@ -1457,6 +1645,10 @@ function (window, undefined) {
 				delete this.precedentsAreasHeaders[areaHeader];
 			}
 		}
+	};
+	TraceDependentsManager.prototype.clearCoordsData = function () {
+		/* clear coordinatess data */
+		this.tracesCoords = null;
 	};
 	/**
 	 * Sets passed precedents cells index for recursive calls

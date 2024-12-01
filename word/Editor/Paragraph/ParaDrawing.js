@@ -256,6 +256,9 @@ ParaDrawing.prototype.GetSearchElementId = function(bNext, bCurrent)
 };
 ParaDrawing.prototype.FindNextFillingForm = function(isNext, isCurrent)
 {
+	if (isCurrent && this.IsForm())
+		return null;
+	
 	if (AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.FindNextFillingForm === "function")
 		return this.GraphicObj.FindNextFillingForm(isNext, isCurrent);
 
@@ -1848,8 +1851,14 @@ ParaDrawing.prototype.GetInnerForm = function()
 };
 ParaDrawing.prototype.Use_TextWrap = function()
 {
+	if (this.IsInline())
+		return false;
+	
+	// TODO: Проверить, возможно данную проверку можно заменить на Paragraph.IsInline()
 	// Если автофигура привязана к параграфу с рамкой, обтекание не делается
-	if (this.IsInline() || !this.Parent || !this.Parent.Get_FramePr || (null !== this.Parent.Get_FramePr() && undefined !== this.Parent.Get_FramePr()))
+	if (!this.Parent
+		|| !this.Parent.GetFramePr
+		|| (this.Parent.GetFramePr() && !this.Parent.GetFramePr().IsInline()))
 		return false;
 
 	// здесь должна быть проверка, нужно ли использовать обтекание относительно данного объекта,
@@ -2117,10 +2126,7 @@ ParaDrawing.prototype.AddToDocument = function(oAnchorPos, oRunPr, oRun, oPictur
 		oSdt.ReplacePlaceHolderWithContent();
 		oSdt.AddToContent(0, oDrawingRun);
 		oInsertParagraph.AddToContent(0, oSdt);
-
-		let oFormPr = oPictureCC.GetFormPr();
-		if (oFormPr)
-			oSdt.SetFormPr(oFormPr.Copy());
+		oPictureCC.private_CopyPrTo(oSdt);
 	}
 	else
 	{
@@ -2703,7 +2709,7 @@ ParaDrawing.prototype.setPageIndex = function(newPageIndex)
 		}
 	}
 };
-ParaDrawing.prototype.Get_PageNum = function()
+ParaDrawing.prototype.GetPageNum = function()
 {
 	return this.PageNum;
 };
@@ -3293,9 +3299,14 @@ ParaDrawing.prototype.CheckDeletingLock = function()
 	
 	if (logicDocument && logicDocument.IsDocumentEditor())
 	{
-		// Если в форму зайти нельзя, то и не проверяем можно ли удалять её внутреннюю часть
+		// Если в форму зайти нельзя, то проверяем можно ли удалять её внутреннюю часть
 		if (form && this.IsForm() && !form.CanPlaceCursorInside())
+		{
+			if (Asc.c_oAscSdtLockType.SdtLocked === form.GetContentControlLock() || Asc.c_oAscSdtLockType.SdtContentLocked === form.GetContentControlLock())
+				AscCommon.CollaborativeEditing.Add_CheckLock(true);
+			
 			return;
+		}
 		
 		if (!this.LogicDocument.CanEdit() || this.LogicDocument.IsFillingFormMode())
 		{

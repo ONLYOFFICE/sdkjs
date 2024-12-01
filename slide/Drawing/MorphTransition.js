@@ -1168,7 +1168,7 @@
         if(!oFadeTexture) {
             return;
         }
-        oFadeTexture.draw(oGraphics, null);
+        oFadeTexture.drawWithoutSaveState(oGraphics, null);
     };
 
     function CMorphedAppearObject(oTexturesCache, oDrawing, nRelH, bNoText) {
@@ -1228,7 +1228,7 @@
             oDrawing.txBody = null;
         }
         let sId = oDrawing.GetId();
-        let sFormatId = sId; GetDrawingFormatId(oDrawing);
+        let sFormatId = sId;
         let oAnimParams = oAnimPlayer.getDrawingParams(sFormatId, true);
         let oTexture, oBounds, dOpacity;
         if(!oAnimParams) {
@@ -1281,7 +1281,10 @@
             this.texture = oTexture1.createTexture(nTextureWidth, nTextureHeight);
         }
         const oDrawCanvas = this.texture.canvas;
-        let oCtx = oDrawCanvas.getContext("2d");
+        if(!this.texture.context) {
+            this.texture.context = oDrawCanvas.getContext("2d");
+        }
+        let oCtx = this.texture.context;
         oCtx.clearRect(0, 0, oDrawCanvas.width, oDrawCanvas.height);
         let sOldOperation = oCtx.globalCompositeOperation;
         oCtx.globalCompositeOperation = "lighter";
@@ -1744,9 +1747,8 @@
         return aRet;
     };
     CSlideMorphEffect.prototype.morph = function(t) {
-        let dTime_ = t*t*t - 2*t*t + 2*t;
         for(let nIdx = 0; nIdx < this.morphObjects.length; ++nIdx) {
-            this.morphObjects[nIdx].morph(dTime_);
+            this.morphObjects[nIdx].morph(t);
         }
         this.morphObjects.sort(function (a, b) {
             return a.relHeight - b.relHeight;

@@ -4717,7 +4717,7 @@
 					formatBorders.initDefault();
 				}
 				//top border for cell
-				if (top === cellTable.top && (!formatBorders.t || formatBorders.t.isEmpty()) && borders.Top.Value !== 0/*border_None*/) {
+				if (top === cellTable.top && (!formatBorders.t || formatBorders.t.isEmpty()) && borders.Top.Value !== AscWord.BorderType.none) {
 					borderStyleName = this.clipboard._getBorderStyleName(defaultStyle, this.ws.objectRender.convertMetric(borders.Top.Size, 3, 1));
 					if (null !== borderStyleName) {
 						formatBorders.t = new AscCommonExcel.BorderProp();
@@ -4726,7 +4726,7 @@
 					}
 				}
 				//left border for cell
-				if (left === cellTable.left && (!formatBorders.l || formatBorders.l.isEmpty()) && borders.Left.Value !== 0/*border_None*/) {
+				if (left === cellTable.left && (!formatBorders.l || formatBorders.l.isEmpty()) && borders.Left.Value !== AscWord.BorderType.none) {
 					borderStyleName = this.clipboard._getBorderStyleName(defaultStyle, this.ws.objectRender.convertMetric(borders.Left.Size, 3, 1));
 					if (null !== borderStyleName) {
 						formatBorders.l = new AscCommonExcel.BorderProp();
@@ -4736,7 +4736,7 @@
 				}
 				//bottom border for cell
 				if (top === cellTable.top + heightCell - 1 && (!formatBorders.b || formatBorders.b.isEmpty()) &&
-					borders.Bottom.Value !== 0/*border_None*/) {
+					borders.Bottom.Value !== AscWord.BorderType.none) {
 					borderStyleName = this.clipboard._getBorderStyleName(defaultStyle, this.ws.objectRender.convertMetric(borders.Bottom.Size, 3, 1));
 					if (null !== borderStyleName) {
 						formatBorders.b = new AscCommonExcel.BorderProp();
@@ -4746,7 +4746,7 @@
 				}
 				//right border for cell
 				if (left === cellTable.left + widthCell - 1 && (!formatBorders.r || formatBorders.r.isEmpty()) &&
-					borders.Right.Value !== 0/*border_None*/) {
+					borders.Right.Value !== AscWord.BorderType.none) {
 					borderStyleName = this.clipboard._getBorderStyleName(defaultStyle, this.ws.objectRender.convertMetric(borders.Right.Size, 3, 1));
 					if (null !== borderStyleName) {
 						formatBorders.r = new AscCommonExcel.BorderProp();

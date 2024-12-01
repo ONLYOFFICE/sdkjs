@@ -2057,7 +2057,7 @@
 	{
 		return this._cursor < this._string.length;
 	};
-	Tokenizer.prototype.GetNextToken = function ()
+	Tokenizer.prototype.GetNextToken = function (isNextLookahead)
 	{
 		if (!this.IsHasMoreTokens())
 			return {
@@ -2073,7 +2073,7 @@
 		for (let i = arrTokensCheckerList.length - 1; i >= 0; i--)
 		{
 			autoCorrectRule = arrTokensCheckerList[i];
-			tokenValue = this.MatchToken(autoCorrectRule, string);
+			tokenValue = this.MatchToken(autoCorrectRule, string, isNextLookahead);
 
 			if (string[0] === "\\" && string[1] === "/")
 			{
@@ -2132,7 +2132,7 @@
 		}
 		return char;
 	};
-	Tokenizer.prototype.MatchToken = function (fMathCheck, arrStr)
+	Tokenizer.prototype.MatchToken = function (fMathCheck, arrStr, isNextLookahead)
 	{
 		if (undefined === fMathCheck)
 			return null;
@@ -2142,7 +2142,8 @@
 		if (oMatched === null || oMatched === undefined)
 			return null;
 
-		this._cursor += this.GetStringLength(oMatched);
+		if (!isNextLookahead)
+			this._cursor += this.GetStringLength(oMatched);
 
 		if (fMathCheck.IsNeedReturnCorrected_Unicode === true && this.isLaTeX)
 			oMatched = fMathCheck.LaTeX[oMatched];

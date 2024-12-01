@@ -150,7 +150,8 @@
 				this.speechElement.setAttribute("role", "region");
 				this.speechElement.setAttribute("aria-label", "");
 				this.speechElement.setAttribute("aria-live", "assertive");
-				this.speechElement.setAttribute("aria-atomic", "true");
+				if (!(AscCommon.AscBrowser.isMozilla && AscCommon.AscBrowser.isWindows))
+					this.speechElement.setAttribute("aria-atomic", "true");
 				this.speechElement.setAttribute("aria-hidden", "false");
 
 				//AscCommon.g_inputContext.HtmlArea.setAttribute("aria-describedby", "area_id_screen_reader");

@@ -369,12 +369,6 @@
     }
   };
 
-  CDocsCoApi.prototype.versionHistory = function(data) {
-    if (this._CoAuthoringApi && this._onlineWork) {
-      this._CoAuthoringApi.versionHistory(data);
-    }
-  };
-
 	CDocsCoApi.prototype.forceSave = function() {
 		if (this._CoAuthoringApi && this._onlineWork) {
 			return this._CoAuthoringApi.forceSave();
@@ -738,7 +732,7 @@
     var isLock = false;
     var idLockInArray = null;
     for (; i < lengthArray; ++i) {
-      idLockInArray = (this._isExcel || this._isPresentation) ? arrayBlockId[i]['guid'] : arrayBlockId[i];
+      idLockInArray = (this._isExcel || this._isPresentation || this._isPDF) ? arrayBlockId[i]['guid'] : arrayBlockId[i];
       if (this._locks[idLockInArray] && 0 !== this._locks[idLockInArray].state) {
         isLock = true;
         break;
@@ -748,7 +742,7 @@
       isLock = true;
     }
 
-    idLockInArray = (this._isExcel || this._isPresentation) ? arrayBlockId[0]['guid'] : arrayBlockId[0];
+    idLockInArray = (this._isExcel || this._isPresentation || this._isPDF) ? arrayBlockId[0]['guid'] : arrayBlockId[0];
 
     if (!isLock) {
       if (this._lockCallbacksErrorTimerId.hasOwnProperty(idLockInArray)) {
@@ -928,10 +922,6 @@
 
   DocsCoApi.prototype.extendSession = function(idleTime) {
     this._send({'type': 'extendSession', 'idletime': idleTime});
-  };
-
-  DocsCoApi.prototype.versionHistory = function(data) {
-    this._send({'type': 'versionHistory', 'cmd': data});
   };
 
 	DocsCoApi.prototype.forceSave = function() {
@@ -1126,7 +1116,7 @@
     if (this.check_state() && data["locks"]) {
       for (var key in data["locks"]) {
         if (data["locks"].hasOwnProperty(key)) {
-          var lock = data["locks"][key], blockTmp = (this._isExcel || this._isPresentation) ? lock["block"]["guid"] : key, blockValue = (this._isExcel || this._isPresentation) ? lock["block"] : key;
+          var lock = data["locks"][key], blockTmp = (this._isExcel || this._isPresentation || this._isPDF) ? lock["block"]["guid"] : key, blockValue = (this._isExcel || this._isPresentation || this._isPDF) ? lock["block"] : key;
           if (lock !== null) {
             var changed = true;
             if (this._locks[blockTmp] && 1 !== this._locks[blockTmp].state /*asked for it*/) {
@@ -1165,7 +1155,7 @@
       var bSendEnd = false;
       for (var block in data["locks"]) {
         if (data["locks"].hasOwnProperty(block)) {
-          var lock = data["locks"][block], blockTmp = (this._isExcel || this._isPresentation) ? lock["block"]["guid"] : lock["block"];
+          var lock = data["locks"][block], blockTmp = (this._isExcel || this._isPresentation || this._isPDF) ? lock["block"]["guid"] : lock["block"];
           if (lock !== null) {
             this._locks[blockTmp] = {"state": 0, "user": lock["user"], "time": lock["time"], "changes": lock["changes"], "block": lock["block"]};
             if (this.onLocksReleased) {
@@ -1209,7 +1199,7 @@
       var bSendEnd = false;
       for (var block in data["locks"]) {
         if (data["locks"].hasOwnProperty(block)) {
-          var lock = data["locks"][block], blockTmp = (this._isExcel || this._isPresentation) ? lock["block"]["guid"] : lock["block"];
+          var lock = data["locks"][block], blockTmp = (this._isExcel || this._isPresentation || this._isPDF) ? lock["block"]["guid"] : lock["block"];
           if (lock !== null) {
             this._locks[blockTmp] = {"state": 0, "user": lock["user"], "time": lock["time"], "changes": lock["changes"], "block": lock["block"]};
             if (this.onLocksReleased) {
@@ -1662,6 +1652,7 @@
     this.editorType = editorType;
     this._isExcel = c_oEditorId.Spreadsheet === editorType;
     this._isPresentation = c_oEditorId.Presentation === editorType;
+    this._isPDF = Asc.editor.isPdfEditor();
     this._isAuth = false;
     this._documentFormatSave = documentFormatSave;
 	this.mode = docInfo.get_Mode();

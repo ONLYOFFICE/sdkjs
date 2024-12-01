@@ -207,7 +207,7 @@ function CEditorPage(api)
 	this.IsInitControl = false;
 
 	// paint loop
-	this.paintMessageLoop = new AscCommon.PaintMessageLoop(40);
+	this.paintMessageLoop = new AscCommon.PaintMessageLoop(40, api);
 
 	this.m_oApi = api;
 	var oThis   = this;
@@ -495,7 +495,7 @@ function CEditorPage(api)
 
 	this.initEventsMobile = function()
 	{
-		if (this.m_oApi.isMobileVersion)
+		if (this.m_oApi.isUseOldMobileVersion())
 		{
 			this.MobileTouchManager = new AscCommon.CMobileTouchManager( { eventsElement : "word_mobile_element" } );
 			this.MobileTouchManager.Init(this.m_oApi);
@@ -535,6 +535,8 @@ function CEditorPage(api)
 			this.MobileTouchManager = new AscCommon.CMobileTouchManager( { eventsElement : "word_mobile_element", desktopMode : true } );
 			this.MobileTouchManager.Init(this.m_oApi);
 			this.MobileTouchManager.Resize();
+
+			this.MobileTouchManager.addClickElement([this.m_oEditor.HtmlElement, this.m_oOverlay.HtmlElement]);
 		}
 	};
 
@@ -1727,6 +1729,9 @@ function CEditorPage(api)
 			return res;
 		}
 
+		if (oThis.MobileTouchManager)
+			oThis.MobileTouchManager.checkMouseFocus(e);
+
 		oThis.m_oApi.checkInterfaceElementBlur();
 		oThis.m_oApi.checkLastWork();
 
@@ -2292,7 +2297,7 @@ function CEditorPage(api)
 			// пошлем сначала моусдаун
 			//oWordControl.m_oLogicDocument.OnMouseDown(global_mouseEvent, pos.X, pos.Y, pos.Page);
 		}
-		if(!oThis.checkFinishEyedropper())
+		if (!oThis.checkFinishEyedropper())
 		{
 			if (bIsSendedToEditor)
 				oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
@@ -2302,8 +2307,12 @@ function CEditorPage(api)
 			oWordControl.MouseDownDocumentCounter = 0;
 
 		oWordControl.m_bIsMouseUpSend = false;
-		oWordControl.m_oLogicDocument.Document_UpdateInterfaceState();
-		oWordControl.m_oLogicDocument.Document_UpdateRulersState();
+
+		if (bIsSendedToEditor)
+		{
+			oWordControl.m_oLogicDocument.Document_UpdateInterfaceState();
+			oWordControl.m_oLogicDocument.Document_UpdateRulersState();
+		}
 
 		oWordControl.EndUpdateOverlay();
 	};
@@ -2380,9 +2389,18 @@ function CEditorPage(api)
 		deltaX >>= 0;
 		deltaY >>= 0;
 
-		if (0 != deltaX)
+		let isSupportDirections2 = false;
+		if (!isSupportDirections2)
+		{
+			if (Math.abs(deltaY) >= Math.abs(deltaX))
+				deltaX = 0;
+			else
+				deltaY = 0;
+		}
+
+		if (0 !== deltaX)
 			oThis.m_oScrollHorApi.scrollBy(deltaX, 0, false);
-		else if (0 != deltaY)
+		if (0 !== deltaY)
 			oThis.m_oScrollVerApi.scrollBy(0, deltaY, false);
 
 		// здесь - имитируем моус мув ---------------------------
@@ -3410,7 +3428,8 @@ function CEditorPage(api)
 			}
 
 			var _table_outline = drDoc.TableOutlineDr.TableOutline;
-			if (_table_outline != null && !this.MobileTouchManager)
+			let isTouchMode = this.MobileTouchManager ? this.MobileTouchManager.isTouchMode() : false;
+			if (_table_outline != null && !isTouchMode)
 			{
 				var _page = _table_outline.PageNum;
 				if (_page >= drDoc.m_lDrawingFirst && _page <= drDoc.m_lDrawingEnd)

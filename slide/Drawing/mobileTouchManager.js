@@ -999,13 +999,19 @@
 		this.checkPointerMultiTouchRemove(e);
 
 		if (this.Api.isViewMode || isPreventDefault)
-            AscCommon.stopEvent(e);//AscCommon.g_inputContext.preventVirtualKeyboard(e);
+		{
+			AscCommon.stopEvent(e);
+			AscCommon.g_inputContext.preventVirtualKeyboard(e);
+		}
 
         if (AscCommon.g_inputContext.isHardCheckKeyboard)
             isPreventDefault ? AscCommon.g_inputContext.preventVirtualKeyboard_Hard() : AscCommon.g_inputContext.enableVirtualKeyboard_Hard();
 
 		if (true !== this.iScroll.isAnimating)
 			this.CheckContextMenuTouchEnd(isCheckContextMenuMode, isCheckContextMenuSelect, isCheckContextMenuCursor, isCheckContextMenuTableRuler);
+
+		if (!isPreventDefault && this.Api.isMobileVersion && !this.Api.isUseOldMobileVersion())
+			this.showKeyboard();
 
 		return false;
 	};
@@ -1014,6 +1020,8 @@
 	{
 		if (AscCommon.g_inputContext && AscCommon.g_inputContext.externalChangeFocus())
 			return;
+
+		this.removeHandlersOnClick();
 
 		if (!this.Api.asc_IsFocus())
 			this.Api.asc_enableKeyEvents(true);

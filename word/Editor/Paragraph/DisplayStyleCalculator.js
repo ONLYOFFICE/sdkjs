@@ -111,7 +111,7 @@
 		let overAllMax   = 10000;  // Не учитываем более 10000 ранов
 		docContent.CheckSelectedRunContent(function(run, startPos, endPos)
 		{
-			if (undefined === rStyle || overAllCount >= overAllMax)
+			if (undefined === rStyle || overAllCount >= overAllMax || run.IsMathRun())
 				return true;
 			
 			let checkNormal = false;

@@ -311,9 +311,7 @@ CFootnotesController.prototype.ContinueElementsFromPreviousColumn = function(nPa
 				oFootnote.Reset(X, _Y, XLimit, _YLimit);
 				oFootnote.Set_StartPage(nPageAbs, nColumnAbs, nColumnsCount);
 			}
-
-			oColumn.Elements.push(oFootnote);
-
+			
 			var nRelativePage = oFootnote.GetElementPageIndex(nPageAbs, nColumnAbs);
 			var nRecalcResult = oFootnote.Recalculate_Page(nRelativePage, true);
 
@@ -327,7 +325,9 @@ CFootnotesController.prototype.ContinueElementsFromPreviousColumn = function(nPa
 			{
 				// Такого не должно быть при расчете сносок
 			}
-
+			
+			oColumn.Elements.push(oFootnote);
+			
 			var oBounds = oFootnote.Get_PageBounds(nRelativePage);
 			_Y += oBounds.Bottom - oBounds.Top;
 			oColumn.Height = _Y;
@@ -442,7 +442,7 @@ CFootnotesController.prototype.RecalculateFootnotes = function(nPageAbs, nColumn
 			break;
 	}
 
-	oColumn.Height = Math.min(_YLimit, oColumn.Height);
+	oColumn.Height = Math.max(0, Math.min(_YLimit, oColumn.Height));
 
 	if (!isLowerY)
 		oColumn.ReferenceY = Y;

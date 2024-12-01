@@ -52,6 +52,7 @@
 		this.Comments       = [];
 		this.CommentsMarks  = {};
 		this.Maths          = [];
+		this.PermRangeMarks = [];
 
 		this.LogicDocument  = null;
 
@@ -91,6 +92,7 @@
 		this.DrawingObjects = [];
 		this.Comments       = [];
 		this.Maths          = [];
+		this.PermRangeMarks = [];
 
 
 		this.MoveDrawing = false;
@@ -104,6 +106,7 @@
 		this.private_CollectObjects();
 		this.private_CheckComments(oLogicDocument);
 		this.private_CheckTrackMove(oLogicDocument);
+		this.private_CheckPermRangeMarks(oLogicDocument);
 	};
 	CSelectedContent.prototype.SetNewCommentsGuid = function(isNew)
 	{
@@ -534,6 +537,7 @@
 				oParagraph.GetAllDrawingObjects(this.DrawingObjects);
 				oParagraph.GetAllComments(this.Comments);
 				oParagraph.GetAllMaths(this.Maths);
+				oParagraph.GetAllPermRangeMarks(this.PermRangeMarks);
 			}
 
 			if (oElement.IsParagraph() && nCount > 1)
@@ -676,6 +680,17 @@
 		else
 		{
 			oLogicDocument.TrackMoveId = null;
+		}
+	};
+	CSelectedContent.prototype.private_CheckPermRangeMarks = function(logicDocument)
+	{
+		// TODO: Пока мы удаляем все метки. В будущем надо сделать, что если скопированы начало и конец, то мы
+		//       приписываем им новый id диапазона, а если скопировано только начала или конец, то удаляем такие метки
+		
+		for (let markIndex = 0, markCount = this.PermRangeMarks.length; markIndex < markCount; ++markIndex)
+		{
+			let mark = this.PermRangeMarks[markIndex];
+			mark.removeMark();
 		}
 	};
 	CSelectedContent.prototype.private_CreateNewCommentsGuid = function()

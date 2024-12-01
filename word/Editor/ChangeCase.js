@@ -125,7 +125,8 @@
 
 		for (var nIndex = 0, nCount = this.WordBuffer.length; nIndex < nCount; ++nIndex)
 		{
-			var nCharCode   = this.WordBuffer[nIndex].Run.GetElement(this.WordBuffer[nIndex].Pos).Value;
+			var nCharCode   = this.WordBuffer[nIndex].Run.GetElement(this.WordBuffer[nIndex].Pos).GetCodePoint();
+
 			var nLowerCode = String.fromCharCode(nCharCode).toLowerCase().charCodeAt(0);
 			var nUpperCode = String.fromCharCode(nCharCode).toUpperCase().charCodeAt(0);
 
@@ -173,8 +174,9 @@
 
 				var oRun      = this.WordBuffer[nIndex].Run;
 				var nInRunPos = this.WordBuffer[nIndex].Pos;
-
-				var nCharCode  = oRun.GetElement(nInRunPos).Value;
+				
+				var nCharCode  = oRun.GetElement(nInRunPos).GetCodePoint();
+				
 				var nLowerCode = String.fromCharCode(nCharCode).toLowerCase().charCodeAt(0);
 				var nUpperCode = String.fromCharCode(nCharCode).toUpperCase().charCodeAt(0);
 
@@ -378,10 +380,12 @@
 				this.isAllinTable = false;
 
 			let oThis = this;
-			oParagraph.CheckRunContent(function(oRun)
+			oParagraph.CheckRunContent(function(oRun, nStartPos, nEndPos)
 			{
-				let nStartPos = 0;
-				let nEndPos   = -1;
+				if (undefined === nStartPos)
+					nStartPos = 0;
+				if (undefined === nEndPos)
+					nEndPos   = -1;
 
 				if (oRun.IsSelectionUse())
 				{
@@ -394,7 +398,7 @@
 					oThis.CheckItemOnCollect(oRun.GetElement(nPos), nPos >= nStartPos && nPos < nEndPos);
 				}
 			});
-
+			
 			this.CurrentParagraph++;
 		}
 	};

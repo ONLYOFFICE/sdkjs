@@ -2895,14 +2895,31 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 							}
 						}
 					}
-					if(oDrawingObject.isDrawing  && oDrawingObject.isPlaceholder()) {
-						if(parent instanceof AscCommonSlide.SlideLayout || parent instanceof AscCommonSlide.MasterSlide) {
-							oPlaceholders[oDrawingObject.Id] = oDrawingObject;
-							bPlaceholders = true;
+					if(oDrawingObject.isDrawing ) {
+						if(oDrawingObject.isPlaceholder()) {
+							if(parent instanceof AscCommonSlide.SlideLayout || parent instanceof AscCommonSlide.MasterSlide) {
+								oPlaceholders[oDrawingObject.Id] = oDrawingObject;
+								bPlaceholders = true;
+								if(parent instanceof AscCommonSlide.MasterSlide) {
+									oMasterPlaceholders[oDrawingObject.Id] = oDrawingObject;
+									bMasterPlaceholders = true;
+									oMasters[parent.Id] = parent;
+								}
+							}
+						}
+						else {
 							if(parent instanceof AscCommonSlide.MasterSlide) {
-								oMasterPlaceholders[oDrawingObject.Id] = oDrawingObject;
-								bMasterPlaceholders = true;
-								oMasters[parent.Id] = parent;
+								for(let nSld = 0; nSld < aAllSlides.length; ++nSld) {
+									if (redrawSlideIndexMap[nSld] !== true) {
+										let oSld = aAllSlides[nSld];
+										let oMS = oSld.getMaster();
+										if(oMS === parent) {
+
+											redrawSlideIndexMap[nSld] = true;
+											aToRedrawSlides.push(nSld);
+										}
+									}
+								}
 							}
 						}
 					}
@@ -7331,6 +7348,10 @@ CPresentation.prototype.Load_DocumentStateAfterLoadChanges = function (oState) {
 
 	this.CollaborativeEditing.UpdateDocumentPositionsByState(oState);
 	let oCurSlide = this.GetCurrentSlide();
+	if(!oCurSlide) {
+		this.DrawingDocument.m_oWordControl.GoToPage(this.GetSlidesCount() - 1);
+		return;
+	}
 	if (oState.Slide) {
 		var oSlide = oState.Slide;
 		if (oSlide !== oCurSlide) {

@@ -3842,6 +3842,9 @@
 						for (i = 0; i < objects_by_type.smartArts.length; ++i) {
 							objects_by_type.smartArts[i].changeFill(props.fill);
 						}
+						for (i = 0; i < objects_by_type.images.length; ++i) {
+							objects_by_type.images[i].changeFill(props.fill);
+						}
 					}
 					if (isRealObject(props.shadow) || props.shadow === null) {
 						for (i = 0; i < objects_by_type.shapes.length; ++i) {
@@ -3960,14 +3963,35 @@
 							}
 						}
 					}
+					if (AscFormat.isRealNumber(props.transparent)) {
+						var oImg;
+						for (i = 0; i < objects_by_type.images.length; ++i) {
+							oImg = objects_by_type.images[i];
+							oImg.setTransparent(props.transparent);
+						}
+					}
 					if (props.resetCrop) {
 						for (i = 0; i < objects_by_type.images.length; ++i) {
-							if (objects_by_type.images[i].blipFill) {
-								var oBlipFill = objects_by_type.images[i].blipFill.createDuplicate();
-								oBlipFill.tile = null;
-								oBlipFill.stretch = true;
-								oBlipFill.srcRect = null;
-								objects_by_type.images[i].setBlipFill(oBlipFill);
+							let oImg = objects_by_type.images[i];
+							let oBlipFill = oImg.blipFill;
+							if (oBlipFill) {
+								let oBlipFillCopy = oBlipFill.createDuplicate();
+								oBlipFillCopy.tile = null;
+								oBlipFillCopy.stretch = true;
+								oBlipFillCopy.srcRect = null;
+								oImg.setBlipFill(oBlipFillCopy);
+
+								let oImgPr = new Asc.asc_CImgProperty();
+								oImgPr.ImageUrl = oBlipFill.RasterImageId;
+								let oSize = oImgPr.asc_getOriginSize(Asc.editor);
+								if(oSize.asc_getIsCorrect()) {
+									oImgPr.Width = oSize.asc_getImageWidth();
+									oImgPr.Height = oSize.asc_getImageHeight();
+									fApplyDrawingSize(oImg, oImgPr);
+									if(oImg.parent && oImg.parent.CheckWH) {
+										oImg.parent.CheckWH();
+									}
+								}
 							}
 
 						}
@@ -7319,6 +7343,8 @@
 								new_image_props =
 									{
 										ImageUrl: drawing.getImageUrl(),
+										transparent: drawing.getTransparent(),
+										isCrop: drawing.hasCrop(),
 										w: drawing.extX,
 										h: drawing.extY,
 										rot: drawing.rot,
@@ -7341,6 +7367,10 @@
 								else {
 									if (image_props.ImageUrl !== null && image_props.ImageUrl !== new_image_props.ImageUrl)
 										image_props.ImageUrl = null;
+									if (image_props.transparent != null && image_props.transparent !== new_image_props.transparent)
+										image_props.transparent = null;
+									if (image_props.isCrop != null && image_props.isCrop !== new_image_props.isCrop)
+										image_props.isCrop = false;
 									if (image_props.w != null && image_props.w !== new_image_props.w)
 										image_props.w = null;
 									if (image_props.h != null && image_props.h !== new_image_props.h)
@@ -7423,6 +7453,8 @@
 								new_image_props =
 									{
 										ImageUrl: drawing.getImageUrl(),
+										isCrop: drawing.hasCrop(),
+										transparent: null,
 										w: drawing.extX,
 										h: drawing.extY,
 										locked: locked,
@@ -7445,6 +7477,10 @@
 									image_props.ImageUrl = null;
 									if (image_props.w != null && image_props.w !== new_image_props.w)
 										image_props.w = null;
+									if (image_props.transparent != null && image_props.transparent !== new_image_props.transparent)
+										image_props.transparent = null;
+									if (image_props.isCrop != null && image_props.isCrop !== new_image_props.isCrop)
+										image_props.isCrop = false;
 									if (image_props.h != null && image_props.h !== new_image_props.h)
 										image_props.h = null;
 									if (image_props.x != null && image_props.x !== new_image_props.x)
@@ -7748,6 +7784,10 @@
 									else {
 										if (image_props.ImageUrl !== null && image_props.ImageUrl !== group_drawing_props.imageProps.ImageUrl)
 											image_props.ImageUrl = null;
+										if (image_props.transparent !== null && image_props.transparent !== group_drawing_props.imageProps.transparent)
+											image_props.transparent = null;
+										if (image_props.isCrop !== null && image_props.isCrop !== group_drawing_props.imageProps.isCrop)
+											image_props.isCrop = null;
 
 										if (image_props.w != null && image_props.w !== group_drawing_props.imageProps.w)
 											image_props.w = null;
@@ -8156,6 +8196,8 @@
 						image_props.flipH = props.imageProps.flipH;
 						image_props.flipV = props.imageProps.flipV;
 						image_props.ImageUrl = props.imageProps.ImageUrl;
+						image_props.isCrop = props.imageProps.isCrop;
+						image_props.transparent = props.imageProps.transparent;
 						image_props.Locked = props.imageProps.locked === true;
 						image_props.lockAspect = props.imageProps.lockAspect;
 						image_props.anchor = props.imageProps.anchor;
@@ -9825,7 +9867,17 @@
 			this.Bounds.CheckPoint(_x1, _y1);
 			this.Bounds.CheckPoint(_x2, _y2);
 		};
-
+		/**
+		 * @param {{x: Number, y: Number, z? :Number}[]} points
+		 */
+		CSlideBoundsChecker.prototype.checkPoints = function (points) {
+			let thisContext = this;
+			points.forEach(function(point) {
+				let x = thisContext.m_oFullTransform.TransformPointX(point.x, point.y);
+				let y = thisContext.m_oFullTransform.TransformPointX(point.x, point.y);
+				thisContext.Bounds.CheckPoint(x, y);
+			})
+		};
 		// images
 		CSlideBoundsChecker.prototype.drawImage2 = function(img, x, y, w, h) {
 			var _x1 = this.m_oFullTransform.TransformPointX(x, y);

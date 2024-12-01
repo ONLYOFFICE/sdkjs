@@ -939,7 +939,9 @@ function (window, undefined) {
 
 		str = arg1.toLocaleString();
 		// searchStr = RegExp.escape(arg0.toLocaleString()); // doesn't work with strings like """ String""" , it's return ""\ String"" instead "" String""
+		//TODO need review. bugs 50869; 68343
 		searchStr = arg0.toLocaleString().replace(/\"\"/g, "\"");
+		searchStr = RegExp.escape(searchStr);
 
 		if (arg2) {
 

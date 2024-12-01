@@ -1497,6 +1497,9 @@ Paragraph.prototype.private_RecalculateLinePosition    = function(CurLine, CurPa
 
     Bottom  = Bottom2;
     Bottom += this.Lines[CurLine].Metrics.LineGap;
+	
+	if (this.Lines[CurLine].Metrics.LineGap < 0)
+		Bottom2 += this.Lines[CurLine].Metrics.LineGap;
 
     // Если данная строка последняя, тогда подкорректируем нижнюю границу
     if ( true === PRS.End )
@@ -2079,6 +2082,8 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
                 return PRSA.RecalcResult;
             }
         }
+		
+		Range.XEndVisible = PRSA.X;
     }
 
     return PRSA.RecalcResult;
@@ -2486,20 +2491,22 @@ Paragraph.prototype.private_CheckNeedBeforeSpacing = function(CurPage, Parent, P
 		&& this.LogicDocument.GetCompatibilityMode() <= AscCommon.document_compatibility_mode_Word14
 		&& true === ParaPr.PageBreakBefore)
 		return true;
-
-	if (!(Parent instanceof CDocument))
+	
+	let topDocument = this.GetTopDocumentContent();
+	if (!(topDocument instanceof AscWord.Document) || this.IsTableCellContent())
 	{
 		if (Parent instanceof AscFormat.CDrawingDocContent && 0 !== CurPage)
 			return false;
-
+		
 		return true;
 	}
 
-	// Если дошли до этого места, то тут все зависит от того на какой мы странице. Если на первой странице данной секции
+	// Если сюда дошли, значит мы либо на верхнем уровне, либо в блочном контроле, который лежит на верхнем уровне.
+	// Дальше все зависит от того на какой мы странице. Если на первой странице данной секции,
 	// тогда добавляем расстояние, а если нет - нет. Но подсчет первой страницы здесь не совпадает с тем, как она
 	// считается для нумерации. Если разрыв секции идет на текущей странице, то первой считается сразу данная страница.
 
-	var LogicDocument = Parent;
+	var LogicDocument = topDocument;
 	var SectionIndex  = LogicDocument.GetSectionIndexByElementIndex(this.Get_Index());
 	var FirstElement  = LogicDocument.GetFirstElementInSection(SectionIndex);
 
@@ -2987,24 +2994,26 @@ CParaLineMetrics.prototype.Reset = function()
 
 function CParaLineRange(X, XEnd)
 {
-    this.X         = X;    // Начальная позиция отрезка без учета прилегания содержимого
-    this.XVisible  = 0;    // Начальная позиция отрезка с учетом прилегания содержимого
-    this.XEnd      = XEnd; // Предельное значение по X для данного отрезка
-    this.StartPos  = 0;    // Позиция в контенте параграфа, с которой начинается данный отрезок
-    this.EndPos    = 0;    // Позиция в контенте параграфа, на которой заканчиваетсяданный отрезок
-    this.W         = 0;
-    this.Spaces    = 0;    // Количество пробелов в отрезке, без учета пробелов в конце отрезка
-	this.WEnd      = 0;    // Если есть знак конца параграфа в данном отрезке, то это его ширина
-	this.WBreak    = 0;    // Если в конце отрезка есть разрыв строки/колонки/страницы
+	this.X           = X;    // Начальная позиция отрезка без учета прилегания содержимого
+	this.XVisible    = 0;    // Начальная позиция отрезка с учетом прилегания содержимого
+	this.XEnd        = XEnd; // Предельное значение по X для данного отрезка
+	this.XEndVisible = X;    // Где фактически заканчивается содержимое в данном отрезке
+	this.StartPos    = 0;    // Позиция в контенте параграфа, с которой начинается данный отрезок
+	this.EndPos      = 0;    // Позиция в контенте параграфа, на которой заканчиваетсяданный отрезок
+	this.W           = 0;
+	this.Spaces      = 0;    // Количество пробелов в отрезке, без учета пробелов в конце отрезка
+	this.WEnd        = 0;    // Если есть знак конца параграфа в данном отрезке, то это его ширина
+	this.WBreak      = 0;    // Если в конце отрезка есть разрыв строки/колонки/страницы
 }
 
 CParaLineRange.prototype =
 {
     Shift : function(Dx, Dy)
     {
-        this.X        += Dx;
-        this.XEnd     += Dx;
-        this.XVisible += Dx;
+		this.X           += Dx;
+		this.XEnd        += Dx;
+		this.XVisible    += Dx;
+		this.XEndVisible += Dx;
     },
 
     Copy : function()
@@ -3014,6 +3023,7 @@ CParaLineRange.prototype =
         NewRange.X           = this.X;
         NewRange.XVisible    = this.XVisible;
         NewRange.XEnd        = this.XEnd;
+		NewRange.XEndVisible = this.XEndVisible;
         NewRange.StartPos    = this.StartPos;
         NewRange.EndPos      = this.EndPos;
         NewRange.W           = this.W;
@@ -4337,6 +4347,7 @@ function CParagraphRecalculateStateInfo()
 	this.fast          = false;
     this.Comments      = [];
     this.ComplexFields = [];
+	this.PermRanges    = [];
 }
 CParagraphRecalculateStateInfo.prototype = Object.create(ParagraphRecalculateStateBase.prototype);
 CParagraphRecalculateStateInfo.prototype.constructor = CParagraphRecalculateStateInfo;
@@ -4348,34 +4359,28 @@ CParagraphRecalculateStateInfo.prototype.isFastRecalculation = function()
 {
 	return this.fast;
 };
-CParagraphRecalculateStateInfo.prototype.Reset = function(PrevInfo)
+CParagraphRecalculateStateInfo.prototype.Reset = function(prevInfo)
 {
-	if (null !== PrevInfo && undefined !== PrevInfo)
+	this.Comments      = [];
+	this.ComplexFields = [];
+	this.PermRanges    = [];
+	
+	if (!prevInfo)
+		return;
+	
+	if (prevInfo.Comments)
+		this.Comments = prevInfo.Comments.slice();
+
+	if (prevInfo.ComplexFields)
 	{
-		this.Comments      = [];
-		this.ComplexFields = [];
-
-		if (PrevInfo.Comments)
+		for (let index = 0, count = prevInfo.ComplexFields.length; index < count; ++index)
 		{
-			for (var nIndex = 0, nCount = PrevInfo.Comments.length; nIndex < nCount; ++nIndex)
-			{
-				this.Comments[nIndex] = PrevInfo.Comments[nIndex];
-			}
-		}
-
-		if (PrevInfo.ComplexFields)
-		{
-			for (var nIndex = 0, nCount = PrevInfo.ComplexFields.length; nIndex < nCount; ++nIndex)
-			{
-				this.ComplexFields[nIndex] = PrevInfo.ComplexFields[nIndex].Copy();
-			}
+			this.ComplexFields[index] = prevInfo.ComplexFields[index].Copy();
 		}
 	}
-	else
-	{
-		this.Comments      = [];
-		this.ComplexFields = [];
-	}
+	
+	if (prevInfo.PermRanges)
+		this.PermRanges = prevInfo.PermRanges.slice();
 };
 CParagraphRecalculateStateInfo.prototype.AddComment = function(Id)
 {
@@ -4392,6 +4397,21 @@ CParagraphRecalculateStateInfo.prototype.RemoveComment = function(Id)
 			break;
 		}
 	}
+};
+CParagraphRecalculateStateInfo.prototype.addPermRange = function(rangeId)
+{
+	this.PermRanges.push(rangeId);
+};
+CParagraphRecalculateStateInfo.prototype.removePermRange = function(rangeId)
+{
+	let pos = this.PermRanges.indexOf(rangeId);
+	if (-1 === pos)
+		return;
+	
+	if (this.PermRanges.length - 1 === pos)
+		--this.PermRanges.length;
+	else
+		this.PermRanges.splice(pos, 1);
 };
 CParagraphRecalculateStateInfo.prototype.processFieldChar = function(oFieldChar)
 {

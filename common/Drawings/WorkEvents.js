@@ -67,7 +67,7 @@
 	var isUsePointerEvents = true;
 	if (AscBrowser.isChrome && (AscBrowser.chromeVersion <= 70)) // xp
 		isUsePointerEvents = false;
-	else if (AscBrowser.isSafari && (AscBrowser.safariVersion < 17004001))
+	else if (AscBrowser.isSafari && (AscBrowser.safariVersion < 15000000))
 		isUsePointerEvents = false;
 	else if (AscBrowser.isIE)
 		isUsePointerEvents = false;
@@ -758,8 +758,9 @@
 		return oEvent.defaultPrevented;
 	}
 
-	function PaintMessageLoop(interval)
+	function PaintMessageLoop(interval, api)
 	{
+		this.isUseInterval = api.isMobileVersion !== true;
 		this.interval = interval || 40;
 		this.id = null;
 
@@ -775,7 +776,7 @@
 			window.oCancelRequestAnimationFrame ||
 			window.msCancelRequestAnimationFrame || null;
 
-		this.isUseRequestAnimationFrame = AscCommon.AscBrowser.isChrome;
+		this.isUseRequestAnimationFrame = AscCommon.AscBrowser.isChrome || AscCommon.AscBrowser.isSafari;
 		if (this.isUseRequestAnimationFrame && !this.requestAnimationFrame)
 			this.isUseRequestAnimationFrame = false;
 
@@ -822,7 +823,7 @@
 	PaintMessageLoop.prototype._animation = function()
 	{
 		var now = Date.now();
-		if (-1 === this.requestAnimationOldTime || (now >= (this.requestAnimationOldTime + 40)) || (now < this.requestAnimationOldTime))
+		if (!this.isUseInterval || -1 === this.requestAnimationOldTime || (now >= (this.requestAnimationOldTime + this.interval)) || (now < this.requestAnimationOldTime))
 		{
 			this.requestAnimationOldTime = now;
 			this.engine();

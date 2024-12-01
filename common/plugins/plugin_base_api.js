@@ -470,7 +470,7 @@ window.startPluginApi = function() {
 	 * @memberof Plugin
 	 * @typeofeditors ["CDE"]
 	 * @alias onSubmitForm
-	 * @description The function called when the user clicks "Complete & Submit" button.
+	 * @description The function called when the user clicks the "Complete & Submit" button.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onSubmitForm.js
 	 */
 

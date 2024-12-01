@@ -1161,11 +1161,14 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
 
                 if (FrameH + FrameY > Page_H)
                     FrameY = Page_H - FrameH;
-
-                // TODO: Пересмотреть, почему эти погрешности возникают
-                // Избавляемся от погрешности
-                FrameY += 0.001;
-                FrameH -= 0.002;
+	
+				// Начинаем рамку с позиции начала следующего твипса, чтобы не было пересечений с объектами, заканчивающимися
+				// на текущем твипсе
+				// TODO: Проверить, нужно ли уменьшать размер рамки на 2 твипса (ранее уменьшали на 0.002, когда исправляли проблему с пересечением объектов в обтекании)
+				let twFrameY = AscCommon.MMToTwips(AscCommon.CorrectMMToTwips(FrameY));
+	
+				FrameY = AscCommon.TwipsToMM(twFrameY + 1);
+				FrameH -= AscCommon.TwipsToMM(2);
 
                 if (FrameY < 0)
                     FrameY = 0;
@@ -1435,14 +1438,19 @@ CDocumentContent.prototype.Draw                           = function(nPageIndex,
     pGraphics.Start_Command(AscFormat.DRAW_COMMAND_CONTENT);
 
 	var nPixelError = this.DrawingDocument && this.DrawingDocument.GetMMPerDot(1);
-
-	var ClipInfo = this.ClipInfo[CurPage];
-    if (ClipInfo)
-    {
-        var Bounds = this.Pages[CurPage].Bounds;
-        pGraphics.SaveGrState();
-        pGraphics.AddClipRect(ClipInfo.X0, Bounds.Top - nPixelError, Math.abs(ClipInfo.X1 - ClipInfo.X0), Bounds.Bottom - Bounds.Top + nPixelError);
-    }
+	
+	let clipInfo = this.ClipInfo[CurPage];
+	if (clipInfo)
+	{
+		let pageBounds = this.Pages[CurPage].Bounds;
+		pGraphics.SaveGrState();
+		
+		let clipX0 = undefined !== clipInfo.X0 ? clipInfo.X0 : pageBounds.Left - nPixelError;
+		let clipX1 = undefined !== clipInfo.X1 ? clipInfo.X1 : pageBounds.Right;
+		let clipY0 = undefined !== clipInfo.Y0 ? clipInfo.Y0 : pageBounds.Top - nPixelError;
+		let clipY1 = undefined !== clipInfo.Y1 ? clipInfo.Y1 : pageBounds.Bottom;
+		pGraphics.AddClipRect(clipX0, clipY0, Math.abs(clipX1 - clipX0), Math.abs(clipY1 - clipY0));
+	}
 
     var oPage = this.Pages[CurPage];
     for (var nIndex = oPage.Pos; nIndex <= oPage.EndPos; ++nIndex)
@@ -1484,11 +1492,9 @@ CDocumentContent.prototype.Draw                           = function(nPageIndex,
 
 		pGraphics.RestoreGrState();
 	}
-
-    if (ClipInfo)
-    {
-        pGraphics.RestoreGrState();
-    }
+	
+	if (clipInfo)
+		pGraphics.RestoreGrState();
 
     pGraphics.End_Command();
 };
@@ -1542,16 +1548,13 @@ CDocumentContent.prototype.GetAllFloatElements = function(FloatObjs)
 
 	return FloatObjs;
 };
-CDocumentContent.prototype.Shift = function(CurPage, Dx, Dy)
+CDocumentContent.prototype.Shift = function(CurPage, Dx, Dy, keepClip)
 {
 	this.Pages[CurPage].Shift(Dx, Dy);
 
-	if (this.ClipInfo[CurPage])
-	{
-		this.ClipInfo[CurPage].X0 += Dx;
-		this.ClipInfo[CurPage].X1 += Dx;
-	}
-
+	if (this.ClipInfo[CurPage] && true !== keepClip)
+		this.ClipInfo[CurPage].shift(Dx, Dy);
+	
 	var StartPos = this.Pages[CurPage].Pos;
 	var EndPos   = this.Pages[CurPage].EndPos;
 	for (var Index = StartPos; Index <= EndPos; Index++)
@@ -1732,7 +1735,7 @@ CDocumentContent.prototype.Get_PageBounds = function(CurPage, Height, bForceChec
 		for (var Index = 0; Index < Count; Index++)
 		{
 			var Obj = AllDrawingObjects[Index];
-			if (PageAbs === Obj.Get_PageNum())
+			if (PageAbs === Obj.GetPageNum())
 			{
 				var ObjBounds = Obj.Get_Bounds();
 				if (true === Obj.Use_TextWrap())
@@ -2616,9 +2619,9 @@ CDocumentContent.prototype.MoveCursorToCell = function(bNext)
 		}
 	}
 };
-CDocumentContent.prototype.Set_ClipInfo = function(CurPage, X0, X1)
+CDocumentContent.prototype.Set_ClipInfo = function(CurPage, X0, X1, Y0, Y1)
 {
-	this.ClipInfo[CurPage] = {X0 : X0, X1 : X1};
+	this.ClipInfo[CurPage] = new AscWord.ClipRect(X0, X1, Y0, Y1);
 };
 CDocumentContent.prototype.IsApplyToAll = function()
 {
@@ -6179,17 +6182,23 @@ CDocumentContent.prototype.RemoveSelection = function(bNoCheckDrawing)
 		this.Selection.Flag  = selectionflag_Common;
 	}
 };
-CDocumentContent.prototype.DrawSelectionOnPage = function(PageIndex)
+CDocumentContent.prototype.DrawSelectionOnPage = function(PageIndex, clipInfo)
 {
     var CurPage = PageIndex;
     if (CurPage < 0 || CurPage >= this.Pages.length)
         return;
+	
+	let pageClip = this.ClipInfo[CurPage];
+	if (!clipInfo && pageClip)
+		clipInfo = pageClip.clone();
+	else if (clipInfo)
+		clipInfo.intersect(pageClip);
 
     if (docpostype_DrawingObjects === this.CurPos.Type)
     {
         this.DrawingDocument.SetTextSelectionOutline(true);
         var PageAbs = CurPage + this.Get_StartPage_Absolute();
-        this.LogicDocument.DrawingObjects.drawSelectionPage(PageAbs);
+        this.LogicDocument.DrawingObjects.drawSelectionPage(PageAbs, clipInfo);
     }
     else
     {
@@ -6217,7 +6226,7 @@ CDocumentContent.prototype.DrawSelectionOnPage = function(PageIndex)
                     for (var Index = Start; Index <= End; Index++)
                     {
                         var ElementPageIndex = this.private_GetElementPageIndex(Index, CurPage, 0, 1);
-                        this.Content[Index].DrawSelectionOnPage(ElementPageIndex);
+                        this.Content[Index].DrawSelectionOnPage(ElementPageIndex, clipInfo);
                     }
 
                     break;
@@ -6233,7 +6242,7 @@ CDocumentContent.prototype.DrawSelectionOnPage = function(PageIndex)
 						var oParagraph = this.Selection.Data.Paragraphs[nIndex];
 						var nParaPageAbs = oParagraph.GetNumberingPage(true);
 						if (nParaPageAbs === nPageAbs)
-							oParagraph.DrawSelectionOnPage(oParagraph.GetNumberingPage(false));
+							oParagraph.DrawSelectionOnPage(oParagraph.GetNumberingPage(false), clipInfo);
 					}
 
                     break;
@@ -9235,6 +9244,83 @@ CDocumentRecalculateObject.prototype =
     }
 
 };
+
+(function()
+{
+	/**
+	 * Class for holding clipping rectangle
+	 * @param x0
+	 * @param x1
+	 * @param y0
+	 * @param y1
+	 * @constructor
+	 */
+	function ClipRect(x0, x1, y0, y1)
+	{
+		this.X0 = x0;
+		this.X1 = x1;
+		this.Y0 = y0;
+		this.Y1 = y1;
+	}
+	ClipRect.prototype.intersect = function(clipRect)
+	{
+		if (!clipRect)
+			return;
+		
+		if (undefined === this.X0 || null === this.X0)
+			this.X0 = clipRect.X0;
+		else if (undefined !== clipRect.X0 && null !== clipRect.X0)
+			this.X0 = Math.max(this.X0, clipRect.X0);
+		
+		if (undefined === this.X1 || null === this.X1)
+			this.X1 = clipRect.X1;
+		else if (undefined !== clipRect.X1 && null !== clipRect.X1)
+			this.X1 = Math.min(this.X1, clipRect.X1);
+		
+		if (undefined === this.Y0 || null === this.Y0)
+			this.Y0 = clipRect.Y0;
+		else if (undefined !== clipRect.Y0 && null !== clipRect.Y0)
+			this.Y0 = Math.max(this.Y0, clipRect.Y0);
+		
+		if (undefined === this.Y1 || null === this.Y1)
+			this.Y1 = clipRect.Y1;
+		else if (undefined !== clipRect.Y1 && null !== clipRect.Y1)
+			this.Y1 = Math.min(this.Y1, clipRect.Y1);
+	};
+	ClipRect.prototype.shift = function(dx, dy)
+	{
+		if (undefined !== this.X0)
+			this.X0 += dx;
+		if (undefined !== this.X1)
+			this.X1 += dx;
+		if (undefined !== this.Y0)
+			this.Y0 += dy;
+		if (undefined !== this.Y1)
+			this.Y1 += dy;
+	};
+	ClipRect.prototype.clone = function()
+	{
+		return new ClipRect(this.X0, this.X1, this.Y0, this.Y1);
+	};
+	ClipRect.prototype.correctX0 = function(x)
+	{
+		return (undefined !== this.X0 && null !== this.X0 ? Math.max(this.X0, x) : x);
+	};
+	ClipRect.prototype.correctX1 = function(x)
+	{
+		return (undefined !== this.X1 && null !== this.X1 ? Math.min(this.X1, x) : x);
+	};
+	ClipRect.prototype.correctY0 = function(y)
+	{
+		return (undefined !== this.Y0 && null !== this.Y0 ? Math.max(this.Y0, y) : y);
+	};
+	ClipRect.prototype.correctY1 = function(y)
+	{
+		return (undefined !== this.Y1 && null !== this.Y1 ? Math.min(this.Y1, y) : y);
+	};
+	//--------------------------------------------------------export----------------------------------------------------
+	AscWord.ClipRect = ClipRect;
+})();
 
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

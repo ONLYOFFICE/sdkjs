@@ -446,6 +446,9 @@ function (window, undefined) {
 		var res = null;
 		for (var i = 1; i < argClone.length; i++) {
 			var argN = argClone[i].getValue();
+			if (cElementType.cell === argClone[i].type || cElementType.cell3D === argClone[i].type) {
+				argN = argN.getValue();
+			}
 			if (arg0 === argN) {
 				if (!argClone[i + 1]) {
 					return new cError(cErrorType.not_available);

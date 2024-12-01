@@ -125,8 +125,8 @@
 			oRes.c = (undefined !== this.c) ? this.c.clone() : undefined;
 			oRes.lm = (undefined !== this.lm) ? this.lm.clone() : undefined;
 			oRes.fm = (undefined !== this.fm) ? this.fm.clone() : undefined;
-			oRes.fsz = (undefined !== this.fsz) ? this.fsz.clone() : undefined;
 			oRes.font = (undefined !== this.font) ? this.font.clone() : undefined;
+			oRes.fsz = this.fsz;
 			oRes.va = this.va;
 			oRes.nl = this.nl;
 			oRes.hp = this.hp;

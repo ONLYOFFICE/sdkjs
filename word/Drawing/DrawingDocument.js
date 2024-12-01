@@ -221,17 +221,20 @@ function CTableOutlineDr()
 		this.TrackOffsetX = 0;
 		this.TrackOffsetY = 0;
 
+		let drDoc = word_control.m_oDrawingDocument;
+		let isTouchMode = word_control.MobileTouchManager ? word_control.MobileTouchManager.isTouchMode() : false;
+
 		if (!this.TableMatrix || global_MatrixTransformer.IsIdentity(this.TableMatrix))
 		{
-			if (word_control.MobileTouchManager)
+			if (isTouchMode)
 			{
 				var _move_point = word_control.MobileTouchManager.TableMovePoint;
 
 				if (_move_point == null || pos.Page != _table_track.PageNum)
 					return false;
 
-				var _pos1 = word_control.m_oDrawingDocument.ConvertCoordsToCursorWR(pos.X, pos.Y, pos.Page);
-				var _pos2 = word_control.m_oDrawingDocument.ConvertCoordsToCursorWR(_move_point.X, _move_point.Y, pos.Page);
+				var _pos1 = drDoc.ConvertCoordsToCursorWR(pos.X, pos.Y, pos.Page);
+				var _pos2 = drDoc.ConvertCoordsToCursorWR(_move_point.X, _move_point.Y, pos.Page);
 
 				var _eps = word_control.MobileTouchManager.TrackTargetEps;
 
@@ -369,7 +372,7 @@ function CTableOutlineDr()
 		}
 		else
 		{
-			if (word_control.MobileTouchManager)
+			if (isTouchMode)
 			{
 				var _invert = global_MatrixTransformer.Invert(this.TableMatrix);
 				var _posx = _invert.TransformPointX(pos.X, pos.Y);
@@ -809,7 +812,7 @@ function CTableOutlineDr()
 		if (null == this.TableOutline)
 			return;
 
-		if (word_control.MobileTouchManager)
+		if (word_control.MobileTouchManager && word_control.MobileTouchManager.isTouchMode())
 			return;
 
 		var _table_track = this.TableOutline;
@@ -3095,17 +3098,7 @@ function CDrawingDocument()
 			drawingCanvas = this.GuiCanvasFillTOC;
 		}
 
-		// draw!
-		var wPx = AscBrowser.convertToRetinaValue(widthPx, true);
-		var hPx = AscBrowser.convertToRetinaValue(heightPx, true);
-		var wMm = wPx * g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio;
-		var hMm = hPx * g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio;
-
-		var wPxOffset = AscBrowser.convertToRetinaValue(8, true);
-		var wMmOffset = wPxOffset * g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio;
-
-		drawingCanvas.style.width = widthPx + "px";
-		drawingCanvas.width = wPx;
+		let api = this.m_oWordControl.m_oApi;
 
 		History.TurnOff();
 
@@ -3118,206 +3111,21 @@ function CDrawingDocument()
 			oLogicDocument.SetLocalTrackRevisions(false);
 		}
 
-		var _oldTurn = editor.isViewMode;
-		editor.isViewMode = true;
+		var _oldTurn = api.isViewMode;
+		api.isViewMode = true;
 
-		var ctx = drawingCanvas.getContext('2d');
+		var old_marks = api.ShowParaMarks;
+		api.ShowParaMarks = false;
 
-		var old_marks = this.m_oWordControl.m_oApi.ShowParaMarks;
-		this.m_oWordControl.m_oApi.ShowParaMarks = false;
+		DrawCustomTocPreview(api, drawingCanvas, props, widthPx, heightPx);
 
-		// content
-		var oStyles        = oLogicDocument.GetStyles();
-
-		var oHeader          = new CHeaderFooter(oLogicDocument.HdrFtr, oLogicDocument, this, AscCommon.hdrftr_Header);
-		var oDocumentContent = oHeader.GetContent();
-
-		var nOutlineStart = props.get_OutlineStart();
-		var nOutlineEnd   = props.get_OutlineEnd();
-		var nStylesType   = props.get_StylesType();
-		var isShowPageNum = props.get_ShowPageNumbers();
-		var isRightTab    = props.get_RightAlignTab();
-		var nTabLeader    = props.get_TabLeader();
-
-		if (undefined === nTabLeader || null === nTabLeader)
-			nTabLeader = Asc.c_oAscTabLeader.Dot;
-
-
-		var arrLevels         = [];
-		var arrStylesToDelete = [];
-
-		var nStyle, nStylesCount, nAddStyle, nAddStyleCount;
-		var nLvl, sName, sStyleId, oStyle, isAddStyle;
-		for (nStyle = 0, nStylesCount = props.get_StylesCount(); nStyle < nStylesCount; ++nStyle)
-		{
-			nLvl  = props.get_StyleLevel(nStyle) - 1;
-			sName = props.get_StyleName(nStyle);
-
-			if (!arrLevels[nLvl])
-			{
-				sStyleId = null;
-				if (Asc.c_oAscTOCStylesType.Current === nStylesType)
-				{
-					sStyleId = oStyles.GetDefaultTOC(nLvl);
-				}
-				else
-				{
-					oStyle = new CStyle("", null, null, styletype_Paragraph, true);
-					oStyle.CreateTOC(nLvl, nStylesType);
-					sStyleId = oStyle.GetId();
-					oStyles.Add(oStyle);
-					arrStylesToDelete.push(oStyle.GetId());
-				}
-				arrLevels[nLvl] = {
-					Styles  : [],
-					StyleId : sStyleId
-				};
-			}
-
-			isAddStyle = true;
-			for (nAddStyle = 0, nAddStyleCount = arrLevels[nLvl].Styles.length; nAddStyle < nAddStyleCount; ++nAddStyle)
-			{
-				if (arrLevels[nLvl].Styles[nAddStyle] === sName)
-				{
-					isAddStyle = false;
-					break;
-				}
-			}
-
-			if (isAddStyle)
-				arrLevels[nLvl].Styles.push(sName);
-		}
-
-		if (-1 !== nOutlineEnd && -1 !== nOutlineStart)
-		{
-			for (var _nLvl = nOutlineStart; _nLvl <= nOutlineEnd; ++_nLvl)
-			{
-				sName = "Heading " + _nLvl;
-				nLvl  = _nLvl - 1;
-
-				if (!arrLevels[nLvl])
-				{
-					sStyleId = null;
-					if (Asc.c_oAscTOCStylesType.Current === nStylesType)
-					{
-						sStyleId = oStyles.GetDefaultTOC(nLvl);
-					}
-					else
-					{
-						oStyle = new CStyle("", null, null, styletype_Paragraph, true);
-						oStyle.CreateTOC(nLvl, nStylesType);
-						sStyleId = oStyle.GetId();
-						oStyles.Add(oStyle);
-						arrStylesToDelete.push(oStyle.GetId());
-					}
-
-					arrLevels[nLvl] = {
-						Styles  : [],
-						StyleId : sStyleId
-					};
-				}
-
-				isAddStyle = true;
-				for (nAddStyle = 0, nAddStyleCount = arrLevels[nLvl].Styles.length; nAddStyle < nAddStyleCount; ++nAddStyle)
-				{
-					if (arrLevels[nLvl].Styles[nAddStyle] === sName)
-					{
-						isAddStyle = false;
-						break;
-					}
-				}
-
-				if (isAddStyle)
-					arrLevels[nLvl].Styles.push(sName);
-			}
-		}
-
-
-
-		var oParaIndex = 0;
-		var nPageIndex = 1;
-
-
-		for (nLvl = 0; nLvl <= 8; ++nLvl)
-		{
-			if (!arrLevels[nLvl])
-				continue;
-
-			sStyleId = arrLevels[nLvl].StyleId;
-			for (nStyle = 0, nStylesCount = arrLevels[nLvl].Styles.length; nStyle < nStylesCount; ++nStyle)
-			{
-				var sStyleName = AscCommon.translateManager.getValue(arrLevels[nLvl].Styles[nStyle]);
-
-				var oParagraph = new AscWord.Paragraph(oDocumentContent, false);
-				oDocumentContent.AddToContent(oParaIndex++, oParagraph);
-				oParagraph.SetParagraphStyleById(sStyleId);
-
-				var oRun = new ParaRun(oParagraph, false);
-				oParagraph.AddToContent(0, oRun);
-				oRun.AddText(sStyleName);
-
-				if (isShowPageNum)
-				{
-					if (isRightTab)
-					{
-						var oParaTabs = new CParaTabs();
-						oParaTabs.Add(new CParaTab(tab_Right, wMm - 2 - wMmOffset, nTabLeader));
-						oParagraph.SetParagraphTabs(oParaTabs);
-
-						oRun.AddToContent(-1, new AscWord.CRunTab());
-					}
-					else
-					{
-						oRun.AddToContent(-1, new AscWord.CRunSpace());
-					}
-
-					oRun.AddText("" + nPageIndex);
-
-					nPageIndex += 2;
-				}
-			}
-		}
-
-		oDocumentContent.Reset(1, 0, 1000, 10000);
-		oDocumentContent.Recalculate_Page(0, true);
-
-		for (nStyle = 0, nStylesCount = arrStylesToDelete.length; nStyle < nStylesCount; ++nStyle)
-		{
-			oStyles.Remove(arrStylesToDelete[nStyle]);
-		}
-
-		var nContentHeight = oDocumentContent.GetSummaryHeight();
-		var nContentHeightPx = (AscCommon.AscBrowser.retinaPixelRatio * nContentHeight / g_dKoef_pix_to_mm) >> 0;
-
-		if (nContentHeightPx > hPx)
-		{
-			hPx = nContentHeightPx;
-			hMm = nContentHeight;
-		}
-
-		drawingCanvas.style.height = AscBrowser.convertToRetinaValue(hPx, false) + "px";
-		drawingCanvas.height = hPx;
-
-		var ctx = drawingCanvas.getContext('2d');
-
-		ctx.fillStyle = "#FFFFFF";
-		ctx.fillRect(0, 0, wPx, hPx);
-
-		var graphics = new AscCommon.CGraphics();
-		graphics.init(ctx, wPx, hPx, wMm, hMm);
-		graphics.m_oFontManager = AscCommon.g_fontManager;
-		graphics.m_oCoordTransform.tx = graphics.m_oCoordTransform.ty = wPxOffset;
-		graphics.transform(1, 0, 0, 1, 0, 0);
-		oDocumentContent.Draw(0, graphics);
-
-		this.m_oWordControl.m_oApi.ShowParaMarks = old_marks;
+		api.ShowParaMarks = old_marks;
+		api.isViewMode = _oldTurn;
 
 		History.TurnOn();
 
 		if (false !== bTrackRevisions)
 			oLogicDocument.SetLocalTrackRevisions(bTrackRevisions);
-
-		editor.isViewMode = _oldTurn;
 	};
 
 	this.GetTOC_Buttons = function(idDiv1, idDiv2, styleWidth)
@@ -3356,23 +3164,12 @@ function CDrawingDocument()
 		canvas2.scaleAttributeText = scaleAttributeText;
 
 		var pixW = (undefined === styleWidth) ? 248 : styleWidth;
-		var pixW_natural = AscCommon.AscBrowser.convertToRetinaValue(pixW, true);
-		var pixH = 0;
-		var pixH_natural = 0;
-
-		var mmW = pixW_natural * g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio;
-		var mmH = pixH_natural * g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio;
-
-		var wPxOffset = AscBrowser.convertToRetinaValue(8, true);
-		var wMmOffset = wPxOffset * g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio;
-
-		var oLogicDocument = this.m_oWordControl.m_oLogicDocument;
-		var oStyles        = oLogicDocument.GetStyles();
 
 		// off
 		History.TurnOff();
 
 		var oldTrack = false;
+		var oLogicDocument = this.m_oWordControl.m_oLogicDocument;
 		if (oLogicDocument.IsTrackRevisions())
 		{
 			oldTrack = oLogicDocument.GetLocalTrackRevisions();
@@ -3385,138 +3182,9 @@ function CDrawingDocument()
 		var oldMarks = this.m_oWordControl.m_oApi.ShowParaMarks;
 		this.m_oWordControl.m_oApi.ShowParaMarks = false;
 
-		var props = [
-			{
-				OutlineStart : 1,
-				OutlineEnd : 3,
-				Hyperlink : false,
-				StylesType : Asc.c_oAscTOCStylesType.Simple,
-				RightTab : true,
-				PageNumbers : true,
-				TabLeader : Asc.c_oAscTabLeader.Dot,
-				Pages : [2, 5, 15]
-			},
-			{
-				OutlineStart : 1,
-				OutlineEnd : 3,
-				Hyperlink : true,
-				StylesType : Asc.c_oAscTOCStylesType.Web,
-				RightTab : true,
-				PageNumbers : false,
-				TabLeader : Asc.c_oAscTabLeader.None
-			}
-		];
-
 		for (var i = 0; i < 2; i++)
 		{
-			// content
-			var oStyles        = oLogicDocument.GetStyles();
-
-			var oHeader          = new CHeaderFooter(oLogicDocument.HdrFtr, oLogicDocument, this, AscCommon.hdrftr_Header);
-			var oDocumentContent = oHeader.GetContent();
-
-			var arrLevels         = [];
-			var arrStylesToDelete = [];
-			var prop = props[i];
-
-			for (var nCurrentLevel = prop.OutlineStart; nCurrentLevel <= prop.OutlineEnd; ++nCurrentLevel)
-			{
-				var sName = "Heading " + nCurrentLevel;
-				var nLvl  = nCurrentLevel - 1;
-
-				var oStyle = new CStyle("", null, null, styletype_Paragraph, true);
-				oStyle.CreateTOC(nLvl, prop.StylesType);
-
-				oStyle.ParaPr.Spacing.Line = 1.2;
-				oStyle.ParaPr.Spacing.LineRule = linerule_Auto;
-				oStyle.ParaPr.Spacing.Before = 0;
-				oStyle.ParaPr.Spacing.After = 0;
-				oStyle.ParaPr.ContextualSpacing = true;
-
-				oStyle.ParaPr.Ind.Left = 15 * (nCurrentLevel - 1) * g_dKoef_pt_to_mm;
-
-				oStyle.TextPr.FontFamily = {Name: "Arial", Index: -1};
-				oStyle.TextPr.FontSize = 10;
-
-				oStyles.Add(oStyle);
-
-				arrLevels[nLvl] = {
-					Styles  : [sName],
-					StyleId : oStyle.GetId()
-				};
-
-				arrStylesToDelete.push(oStyle.GetId());
-			}
-
-			for (var nCurrentLevel = prop.OutlineStart; nCurrentLevel <= prop.OutlineEnd; ++nCurrentLevel)
-			{
-				var sStyleId = arrLevels[nCurrentLevel - 1].StyleId;
-				for (var nStyle = 0, nStylesCount = arrLevels[nCurrentLevel - 1].Styles.length; nStyle < nStylesCount; ++nStyle)
-				{
-					var sStyleName = AscCommon.translateManager.getValue(arrLevels[nCurrentLevel - 1].Styles[nStyle]);
-
-					var oParagraph = new AscWord.Paragraph(oDocumentContent, false);
-					oDocumentContent.AddToContent(nCurrentLevel - 1, oParagraph);
-					oParagraph.SetParagraphStyleById(sStyleId);
-
-					var oRun = new ParaRun(oParagraph, false);
-					oParagraph.AddToContent(0, oRun);
-					oRun.AddText(sStyleName);
-
-					if (prop.PageNumbers)
-					{
-						if (prop.RightTab)
-						{
-							var oParaTabs = new CParaTabs();
-							oParaTabs.Add(new CParaTab(tab_Right, mmW - 4 - wMmOffset, prop.TabLeader));
-							oParagraph.SetParagraphTabs(oParaTabs);
-
-							oRun.AddToContent(-1, new AscWord.CRunTab());
-						}
-						else
-						{
-							oRun.AddToContent(-1, new AscWord.CRunSpace());
-						}
-
-						oRun.AddText("" + prop.Pages[nCurrentLevel - 1]);
-					}
-				}
-			}
-
-			// удаляем последний параграф
-			oDocumentContent.Content.splice(3, 1);
-			oDocumentContent.Reset(1, 0, 1000, 10000);
-			oDocumentContent.Recalculate_Page(0, true);
-
-			for (nStyle = 0, nStylesCount = arrStylesToDelete.length; nStyle < nStylesCount; ++nStyle)
-			{
-				oStyles.Remove(arrStylesToDelete[nStyle]);
-			}
-
-			mmH = oDocumentContent.GetSummaryHeight() + (wMmOffset * 2);
-			pixH = mmH / g_dKoef_pix_to_mm;
-			pixH = ((pixH + 3) >> 2) << 2;
-			pixH_natural = AscCommon.AscBrowser.convertToRetinaValue(pixH, true);
-
-			var canvas = (i === 0) ? canvas1 : canvas2;
-
-			canvas.style.width = pixW + "px";
-			canvas.style.height = pixH + "px";
-
-			canvas.width = pixW_natural;
-			canvas.height = pixH_natural;
-
-			var ctx = canvas.getContext('2d');
-
-			ctx.fillStyle = "#FFFFFF";
-			ctx.fillRect(0, 0, pixW_natural, pixH_natural);
-
-			var graphics = new AscCommon.CGraphics();
-			graphics.init(ctx, pixW_natural, pixH_natural, mmW, mmH);
-			graphics.m_oFontManager = AscCommon.g_fontManager;
-			graphics.m_oCoordTransform.tx = graphics.m_oCoordTransform.ty = wPxOffset;
-			graphics.transform(1, 0, 0, 1, 0, 0);
-			oDocumentContent.Draw(0, graphics);
+			DrawTocPreview(this.m_oWordControl.m_oApi, (i === 0) ? canvas1 : canvas2, i, pixW);
 		}
 
 		this.m_oWordControl.m_oApi.ShowParaMarks = oldMarks;
@@ -4067,7 +3735,8 @@ function CDrawingDocument()
 	// recalculate
 	this.OnStartRecalculate = function (pageCount)
 	{
-		if (!this.m_oWordControl.MobileTouchManager)
+		let isTouchMode = this.m_oWordControl.MobileTouchManager ? this.m_oWordControl.MobileTouchManager.isTouchMode() : false;
+		if (!isTouchMode)
 			this.TableOutlineDr.TableOutline = null;
 
 		if (this.m_oWordControl)
@@ -4076,7 +3745,7 @@ function CDrawingDocument()
 		this.m_lCountCalculatePages = pageCount;
 		//console.log("start " + this.m_lCountCalculatePages);
 
-		if (this.m_oWordControl && this.m_oWordControl.MobileTouchManager)
+		if (isTouchMode)
 			this.m_oWordControl.MobileTouchManager.ClearContextMenu();
 
 		this.m_bIsDocumentCalculating = true;
@@ -5236,9 +4905,10 @@ function CDrawingDocument()
 
 	this.StartTrackTable = function (obj, transform)
 	{
-		if (this.m_oWordControl.MobileTouchManager)
+		let touchManager = this.m_oWordControl.MobileTouchManager;
+		if (touchManager && touchManager.isTouchMode())
 		{
-			if (!this.m_oWordControl.MobileTouchManager.TableStartTrack_Check)
+			if (!touchManager.TableStartTrack_Check)
 				return;
 		}
 
@@ -6158,7 +5828,8 @@ function CDrawingDocument()
 		this.m_oWordControl.UpdateHorRuler();
 		this.m_oWordControl.UpdateVerRuler();
 
-		if (this.m_oWordControl.MobileTouchManager)
+		if (this.m_oWordControl.MobileTouchManager &&
+			this.m_oWordControl.MobileTouchManager.isTouchMode())
 		{
 			this.m_oWordControl.MobileTouchManager.TableStartTrack_Check = true;
 			markup.Table.StartTrackTable();
@@ -6734,6 +6405,11 @@ function CDrawingDocument()
             this.UpdateTarget(this.m_dTargetX, this.m_dTargetY, this.m_lTargetPage);
         }
     };
+	
+	this.scrollToTarget = function()
+	{
+		this.scrollToTargetOnRecalculate(-1, this.m_arrPages.length);
+	};
 
 	this.ChangePageAttack = function (pageIndex)
 	{
@@ -6902,9 +6578,7 @@ function CDrawingDocument()
 
 	this.IsMobileVersion = function ()
 	{
-		if (this.m_oWordControl.MobileTouchManager)
-			return true;
-		return false;
+		return this.m_oWordControl.m_oApi.isMobileVersion;
 	};
 
 	this.isButtonsDisabled = function()

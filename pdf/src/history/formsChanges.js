@@ -38,6 +38,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Remove_Kid]		= CChangesPDFForm
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Change_Display]	= CChangesPDFFormDisplay;
 
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Cur_Idxs]	= CChangesPDFListFormCurIdxs;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Top_Idx]		= CChangesPDListTopIndex;
 
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Image]		= CChangesPDFPushbuttonImage;
 
@@ -57,6 +58,71 @@ CChangesPDFFormValue.prototype.private_SetValue = function(Value)
 	let oField = this.Class;
 	oField.SetValue(Value);
 	oField.Commit();
+};
+
+CChangesPDFFormValue.prototype.WriteToBinary = function(Writer)
+{
+	// Long  : Flag
+	// 1-bit : Подсвечивать ли данные изменения
+	// 2-bit : IsUndefined New
+	// 3-bit : IsUndefined Old
+	// string : New
+	// string : Old
+
+	var nFlags = 0;
+
+	if (false !== this.Color)
+		nFlags |= 1;
+
+	if (undefined === this.New)
+		nFlags |= 2;
+
+	if (undefined === this.Old)
+		nFlags |= 4;
+
+	if (Array.isArray(this.New) || Array.isArray(this.Old))
+		nFlags |= 8;
+
+	Writer.WriteLong(nFlags);
+
+	if (undefined !== this.New) {
+		Writer.WriteString2(Array.isArray(this.New) ? JSON.stringify(this.New) : this.New);
+	}
+		
+	if (undefined !== this.Old) {
+		Writer.WriteString2(Array.isArray(this.Old) ? JSON.stringify(this.Old) : this.Old);
+	}
+};
+CChangesPDFFormValue.prototype.ReadFromBinary = function(Reader)
+{
+	// Long  : Flag
+	// 1-bit : Подсвечивать ли данные изменения
+	// 2-bit : IsUndefined New
+	// 3-bit : IsUndefined Old
+	// string : New
+	// string : Old
+
+
+	var nFlags = Reader.GetLong();
+
+	let isArrayValue = false;
+	if (nFlags & 8)
+		isArrayValue = true;
+
+	if (nFlags & 1)
+		this.Color = true;
+	else
+		this.Color = false;
+
+	if (nFlags & 2)
+		this.New = undefined;
+	else
+		this.New = isArrayValue ? JSON.parse(Reader.GetString2()) : Reader.GetString2();
+
+	if (nFlags & 4)
+		this.Old = undefined;
+	else
+		this.Old = isArrayValue ? JSON.parse(Reader.GetString2()) : Reader.GetString2();
 };
 
 /**
@@ -172,19 +238,94 @@ CChangesPDFFormDisplay.prototype.private_SetValue = function(Value)
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesBaseStringProperty}
+ * @extends {AscDFH.CChangesBaseProperty}
  */
 function CChangesPDFListFormCurIdxs(Class, Old, New, Color)
 {
-	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New, Color);
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
 }
-CChangesPDFListFormCurIdxs.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesPDFListFormCurIdxs.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
 CChangesPDFListFormCurIdxs.prototype.constructor = CChangesPDFListFormCurIdxs;
 CChangesPDFListFormCurIdxs.prototype.Type = AscDFH.historyitem_Pdf_List_Form_Cur_Idxs;
 CChangesPDFListFormCurIdxs.prototype.private_SetValue = function(Value)
 {
 	var oField = this.Class;
-	oField.SetApiCurIdxs(Value);
+	oField.SetCurIdxs(Value);
+	oField.Commit();
+};
+
+CChangesPDFListFormCurIdxs.prototype.WriteToBinary = function(Writer)
+{
+	// Long  : Flag
+	// 1-bit : Подсвечивать ли данные изменения
+	// 2-bit : IsUndefined New
+	// 3-bit : IsUndefined Old
+	// string : New
+	// string : Old
+
+	let nFlags = 0;
+
+	if (false !== this.Color)
+		nFlags |= 1;
+
+	if (undefined === this.New)
+		nFlags |= 2;
+
+	if (undefined === this.Old)
+		nFlags |= 4;
+
+	Writer.WriteLong(nFlags);
+
+	if (undefined !== this.New) {
+		Writer.WriteString2(JSON.stringify(this.New));
+	}
+		
+	if (undefined !== this.Old) {
+		Writer.WriteString2(JSON.stringify(this.Old));
+	}
+};
+CChangesPDFListFormCurIdxs.prototype.ReadFromBinary = function(Reader)
+{
+	// Long  : Flag
+	// 1-bit : Подсвечивать ли данные изменения
+	// 2-bit : IsUndefined New
+	// 3-bit : IsUndefined Old
+	// string : New
+	// string : Old
+
+	let nFlags = Reader.GetLong();
+
+	if (nFlags & 1)
+		this.Color = true;
+	else
+		this.Color = false;
+
+	if (nFlags & 2)
+		this.New = undefined;
+	else
+		this.New = JSON.parse(Reader.GetString2());
+
+	if (nFlags & 4)
+		this.Old = undefined;
+	else
+		this.Old = JSON.parse(Reader.GetString2());
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDListTopIndex(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDListTopIndex.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDListTopIndex.prototype.constructor = CChangesPDListTopIndex;
+CChangesPDListTopIndex.prototype.Type = AscDFH.historyitem_Pdf_List_Form_Top_Idx;
+CChangesPDListTopIndex.prototype.private_SetValue = function(Value)
+{
+	let oField = this.Class;
+	oField.SetTopIndex(Value);
 };
 
 /**
@@ -199,6 +340,9 @@ function CChangesPDFPushbuttonImage(Class, sOldRasterId, sNewRasterId, nAPType, 
 CChangesPDFPushbuttonImage.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
 CChangesPDFPushbuttonImage.prototype.constructor = CChangesPDFPushbuttonImage;
 CChangesPDFPushbuttonImage.prototype.Type = AscDFH.historyitem_Pdf_Pushbutton_Image;
+CChangesPDFPushbuttonImage.prototype.CreateReverseChange = function() {
+	return new this.constructor(this.Class, this.New, this.Old, this.APType, this.Color);
+};
 CChangesPDFPushbuttonImage.prototype.private_SetValue = function(Value)
 {
 	let oButtonField = this.Class;
@@ -222,10 +366,10 @@ CChangesPDFPushbuttonImage.prototype.WriteToBinary = function(Writer)
 		nFlags |= 2;
 
 	if (undefined === this.New)
-		nFlags |= 3;
+		nFlags |= 4;
 
 	if (undefined === this.Old)
-		nFlags |= 4;
+		nFlags |= 8;
 	
 
 	Writer.WriteLong(nFlags);
@@ -263,12 +407,12 @@ CChangesPDFPushbuttonImage.prototype.ReadFromBinary = function(Reader)
 	else
 		this.APType = Reader.GetLong();
 
-	if (nFlags & 3)
+	if (nFlags & 4)
 		this.New = undefined;
 	else
 		this.New = Reader.GetString2();
 
-	if (nFlags & 4)
+	if (nFlags & 8)
 		this.Old = undefined;
 	else
 		this.Old = Reader.GetString2();

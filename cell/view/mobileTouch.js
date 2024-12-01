@@ -211,7 +211,7 @@ function (window, undefined)
 				needInit = isSmoothScrolling;
 				pos += 1;
 			}
-			_api._onScrollY(pos, needInit);
+			_api._onScrollY(pos, needInit, true);
 		}
 		else if ('h' === _scroll.directionLocked)
 		{
@@ -220,7 +220,7 @@ function (window, undefined)
 				needInit = isSmoothScrolling;
 				pos += 1;
 			}
-			_api._onScrollX(pos, needInit);
+			_api._onScrollX(pos, needInit, true);
 		}
 		else if ('n' === _scroll.directionLocked)
 		{
@@ -229,14 +229,14 @@ function (window, undefined)
 				needInit = isSmoothScrolling;
 				pos += 1;
 			}
-			_api._onScrollY(pos, needInit);
+			_api._onScrollY(pos, needInit, true);
 
 			pos = -_scroll.x / _api.controller.settings.vscrollStep;
 			if (-_scroll.x >= -_scroll.maxScrollX) {
 				needInit = isSmoothScrolling;
 				pos += 1;
 			}
-			_api._onScrollX(pos, needInit);
+			_api._onScrollX(pos, needInit, true);
 		}
 	};
 	CMobileDelegateEditorCell.prototype.GetContextMenuType = function()
@@ -495,16 +495,26 @@ function (window, undefined)
 	{
 		return this.Api.controller._onMouseUp(this._convertLogicToEvent(e, x, y, page));
 	};
+	CMobileDelegateEditorCell.prototype.extendPointerEvent = function(e)
+	{
+		try {
+			e.button = 0;
+		} catch(err) {
+		}
+	};
 	CMobileDelegateEditorCell.prototype.Drawing_OnMouseDown = function(e)
 	{
+		this.extendPointerEvent(e);
 		return this.Api.controller._onMouseDown(e);
 	};
 	CMobileDelegateEditorCell.prototype.Drawing_OnMouseMove = function(e)
 	{
+		this.extendPointerEvent(e);
 		return this.Api.controller._onMouseMove(e);
 	};
 	CMobileDelegateEditorCell.prototype.Drawing_OnMouseUp = function(e)
 	{
+		this.extendPointerEvent(e);
 		return this.Api.controller._onMouseUp(e);
 	};
 
@@ -931,8 +941,8 @@ function (window, undefined)
 					this.Api.sendEvent("asc_onTapEvent", e);
 
 					var typeMenu = this.delegate.GetContextMenuType();
-					if (typeMenu == AscCommon.MobileTouchContextMenuType.Target ||
-						(typeMenu == AscCommon.MobileTouchContextMenuType.Select && this.delegate.IsInObject()))
+					if (typeMenu === AscCommon.MobileTouchContextMenuType.Target ||
+						(typeMenu === AscCommon.MobileTouchContextMenuType.Select && this.delegate.IsInObject()))
 						isPreventDefault = false;
 				}
 				else
@@ -963,6 +973,12 @@ function (window, undefined)
 				// TODO:
 				this.delegate.Drawing_OnMouseUp(e.changedTouches ? e.changedTouches[0] : e);
 				this.Mode = AscCommon.MobileTouchMode.None;
+
+				var typeMenu = this.delegate.GetContextMenuType();
+				if (typeMenu === AscCommon.MobileTouchContextMenuType.Target ||
+					(typeMenu === AscCommon.MobileTouchContextMenuType.Select && this.delegate.IsInObject()))
+					isPreventDefault = false;
+
 				break;
 			}
 			case AscCommon.MobileTouchMode.Select:
@@ -998,7 +1014,7 @@ function (window, undefined)
 			this.delegate.Api.controller._onMouseMove(_e);
 		}
 
-		if (this.CellEditorType == Asc.c_oAscCellEditorState.editFormula)
+		if (this.CellEditorType === Asc.c_oAscCellEditorState.editFormula)
 			isPreventDefault = false;
 
 		if (this.Api.isViewMode || isPreventDefault)
@@ -1013,6 +1029,9 @@ function (window, undefined)
 		if (true !== this.iScroll.isAnimating && (this.CellEditorType != Asc.c_oAscCellEditorState.editFormula))
 			this.CheckContextMenuTouchEnd(isCheckContextMenuMode, isCheckContextMenuSelect, isCheckContextMenuCursor);
 
+		if (!isPreventDefault && this.Api.isMobileVersion && !this.Api.isUseOldMobileVersion())
+			this.showKeyboard(true);
+
 		return false;
 	};
 
@@ -1020,6 +1039,7 @@ function (window, undefined)
 	{
 		if (AscCommon.g_inputContext && AscCommon.g_inputContext.externalChangeFocus())
 			return;
+		this.removeHandlersOnClick();
 		return this.onTouchStart(e);
 	};
 	CMobileTouchManager.prototype.mainOnTouchMove = function(e)

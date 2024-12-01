@@ -203,13 +203,26 @@
 	CTextField.prototype.UpdateDisplayValue = function(displayValue) {
         let oDoc        = this.GetDocument();
         let isOnOpen    = oDoc.Viewer.IsOpenFormsInProgress;
+        let _t          = this;
 
         oDoc.StartNoHistoryMode();
 
-        if (isOnOpen == false && this.GetType() == AscPDF.FIELD_TYPES.text) {
-            let nCharLimit = this.GetCharLimit();
-            if (nCharLimit !== 0)
-                displayValue = displayValue.slice(0, nCharLimit);
+        AscFonts.FontPickerByCharacter.getFontsByString(displayValue);
+        if (!oDoc.checkFieldFont(this, function() {
+            _t.UpdateDisplayValue(displayValue);
+        })) {
+            return;
+        }
+
+        if (isOnOpen == false && this.GetType() == AscPDF.FIELD_TYPES.text && typeof(displayValue) == "string") {
+            let aChars      = displayValue.codePointsArray();
+            let nCharsCount = AscWord.GraphemesCounter.GetCount(aChars, this.content.GetCalculatedTextPr());
+            let nCharLimit  = this.GetCharLimit();
+
+            if (0 !== nCharLimit && nCharsCount > nCharLimit)
+                aChars.length = nCharLimit;
+            
+            displayValue = String.fromCharCode.apply(null, aChars);
         }
 
         if (displayValue === this._displayValue && this._useDisplayValue == true)
@@ -217,10 +230,7 @@
 		
 		this._displayValue      = displayValue;
 		this._useDisplayValue   = true;
-		let _t                  = this;
-
-        AscFonts.FontPickerByCharacter.getFontsByString(displayValue);
-
+		
         if (isOnOpen == true) {
             if (_t._displayValue !== displayValue)
 				return;
@@ -705,19 +715,6 @@
         this._scrollInfo.scrollCoeff    = nScrollCoeff;
         this.AddToRedraw();
     };
-    CTextField.prototype.ScrollVerticalEnd = function() {
-        let nHeightPerPara  = this.content.GetElement(1).Y - this.content.GetElement(0).Y;
-        let nShiftCount     = this._curShiftView.y / nHeightPerPara; // количество смещений в длинах параграфов
-        if (Math.abs(Math.round(nShiftCount) - nShiftCount) <= 0.001)
-            return;
-
-        let nMaxShiftY                  = this._scrollInfo.scroll.maxScrollY;
-        this._curShiftView.y            = Math.round(nShiftCount) * nHeightPerPara;
-        this._bAutoShiftContentView     = false;
-        this._scrollInfo.scrollCoeff    = Math.abs(this._curShiftView.y / nMaxShiftY);
-        
-        this.AddToRedraw();
-    };
     CTextField.prototype.GetScrollInfo = function() {
         return this._scrollInfo;
     };
@@ -855,11 +852,6 @@
                 oScroll.scrollVCurrentY = false == bInvertScroll ? oScroll.maxScrollY * nScrollCoeff : oScroll.maxScrollY - (oScroll.maxScrollY * nScrollCoeff);
             }
             
-            oScroll.bind("mouseup", function(evt) {
-                if (oThis.GetType() == AscPDF.FIELD_TYPES.listbox)
-                    oThis.ScrollVerticalEnd();
-            });
-
             if (oScrollInfo == null) {
                 this.SetScrollInfo({
                     scroll:         oScroll,
@@ -958,7 +950,8 @@
 		let selectedCount = this.content.GetSelectedText(true, {NewLine: true}).length;
 		let maxToAdd      = this.getRemainCharCount(selectedCount);
 		
-		if (-1 !== maxToAdd && aChars.length > maxToAdd)
+        let nCharsCount = AscWord.GraphemesCounter.GetCount(aChars, this.content.GetCalculatedTextPr());
+		if (-1 !== maxToAdd && nCharsCount > maxToAdd)
 			aChars.length = maxToAdd;
 		
 		if (!this.DoKeystrokeAction(aChars))
@@ -966,7 +959,7 @@
 		
 		let doc = this.GetDocument();
 		aChars = AscWord.CTextFormFormat.prototype.GetBuffer(doc.event["change"]);
-		if (0 === aChars.length)
+		if (0 === nCharsCount)
 			return false;
 		
 		if (!this.content.EnterText(aChars))
@@ -991,7 +984,8 @@
 	CTextField.prototype.CorrectEnterText = function(oldValue, newValue) {
 		let maxToAdd = this.getRemainCharCount(oldValue.length);
 		
-		if (-1 !== maxToAdd && newValue.length > maxToAdd)
+        let nCharsCount = AscWord.GraphemesCounter.GetCount(newValue, this.content.GetCalculatedTextPr());
+		if (-1 !== maxToAdd && nCharsCount > maxToAdd)
 			newValue.length = maxToAdd;
 		
 		if (!this.DoKeystrokeAction(newValue))
@@ -1104,7 +1098,7 @@
     CTextField.prototype.Commit = function() {
         let oDoc        = this.GetDocument();
         let aFields     = this.GetDocument().GetAllWidgets(this.GetFullName());
-        
+
         oDoc.StartNoHistoryMode();
         if (this.DoFormatAction() == false) {
             this.UndoNotAppliedChanges();
@@ -1118,6 +1112,7 @@
         
         if (this.GetApiValue() != this.GetValue()) {
             AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetApiValue(), this.GetValue()));
+            this.RevertContentView();
             this.SetApiValue(this.GetValue());
         }
 
@@ -1192,7 +1187,7 @@
         let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
         let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
         
-        let isCanFormat = oDoc.isUndoRedoInProgress != true ? this.DoKeystrokeAction(null, false, true) : true;
+        let isCanFormat = AscCommon.History.UndoRedoInProgress != true ? this.DoKeystrokeAction(null, false, true) : true;
         if (!isCanFormat) {
             let oWarningInfo = oDoc.GetWarningInfo();
             if (!oWarningInfo) {
@@ -1600,14 +1595,8 @@
             memory.WriteLong(nCharLimit);
         }
 
-        // форматируемое значение
-        let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
-        let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
-        if (oActionRunScript) {
-            memory.fieldDataFlags |= (1 << 12);
-            let sFormatValue = this.contentFormat.getAllText();
-            memory.WriteString(sFormatValue);
-        }
+        memory.fieldDataFlags |= (1 << 13);
+        this.WriteRenderToBinary(memory);
 
         //
         // rich value

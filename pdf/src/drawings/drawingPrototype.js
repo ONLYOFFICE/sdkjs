@@ -54,7 +54,7 @@
     CPdfDrawingPrototype.prototype.IsForm = function() {
         return false;
     };
-    CPdfDrawingPrototype.prototype.IsTextShape = function() {
+    CPdfDrawingPrototype.prototype.IsShape = function() {
         return false;
     };
     CPdfDrawingPrototype.prototype.IsImage = function() {
@@ -104,6 +104,12 @@
         }
 
         return oRecalcData;
+    };
+    CPdfDrawingPrototype.prototype.SetParentPage = function(oParent) {
+        this.setParent(oParent);
+    };
+    CPdfDrawingPrototype.prototype.GetParentPage = function() {
+        return this.parent;
     };
     CPdfDrawingPrototype.prototype.GetSelectionQuads = function() {
         let oDoc        = this.GetDocument();

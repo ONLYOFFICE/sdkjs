@@ -116,7 +116,8 @@ var c_oAscSelectionDialogType = {
 
 var c_oAscScrollType = {
   ScrollVertical: 1,
-  ScrollHorizontal: 2
+  ScrollHorizontal: 2,
+  ScrollInitRowsColsCount: 4
 };
 
 var c_oAscHyperlinkType = {
@@ -315,7 +316,8 @@ var c_oTargetType = {
   GroupCol: 17,
   TableSelectionChange: 18,
   Placeholder: 19,
-  ColumnRowHeaderMove: 20
+  ColumnRowHeaderMove: 20,
+  TraceDependents: 21
 };
 
 var c_oAscAutoFilterTypes = {

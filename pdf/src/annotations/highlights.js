@@ -205,12 +205,9 @@
                 y: aPoints[7]
             }
 
-            let dx1 = oPoint2.x - oPoint1.x;
-            let dy1 = oPoint2.y - oPoint1.y;
-            let dx2 = oPoint4.x - oPoint3.x;
-            let dy2 = oPoint4.y - oPoint3.y;
-            let angle1          = Math.atan2(dy1, dx1);
-            let angle2          = Math.atan2(dy2, dx2);
+            let dx = oPoint2.x - oPoint1.x;
+            let dy = oPoint2.y - oPoint1.y;
+            let angle1          = Math.atan2(dy, dx);
             let rotationAngle   = angle1;
 
             oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
@@ -237,6 +234,9 @@
             oGraphicsPDF.Fill();
             AscPDF.endMultiplyMode(oGraphicsPDF.GetContext());
         }
+
+        let aUnitedRegion = this.GetUnitedRegion();
+        oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
     };
         
     /**
@@ -317,6 +317,9 @@
             
             oGraphicsPDF.Stroke();
         }
+
+        let aUnitedRegion = this.GetUnitedRegion();
+        oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
     };
     
     /**
@@ -391,6 +394,9 @@
             
             oGraphicsPDF.Stroke();
         }
+
+        let aUnitedRegion = this.GetUnitedRegion();
+        oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
     };
 
     /**
@@ -471,6 +477,9 @@
             
             oGraphicsPDF.Stroke();
         }
+
+        let aUnitedRegion = this.GetUnitedRegion();
+        oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
     };
 
     let CARET_SYMBOL = {
@@ -558,6 +567,9 @@
             
             oGraphicsPDF.Stroke();
         }
+
+        let aUnitedRegion = this.GetUnitedRegion();
+        oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
     };
     CAnnotationCaret.prototype.SetCaretSymbol = function(nType) {
         this._caretSymbol = nType;

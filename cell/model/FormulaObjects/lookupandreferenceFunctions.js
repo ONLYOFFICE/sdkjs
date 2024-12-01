@@ -1359,19 +1359,9 @@ function (window, undefined) {
 	cHLOOKUP.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
 	cHLOOKUP.prototype.argumentsType = [argType.any, argType.number, argType.number, argType.logical];
 	cHLOOKUP.prototype.Calculate = function (arg) {
-		
-		// if(this.bArrayFormula) {
-		// 	//исключение, когда в формуле массива берется из одного аргумента только 1 элемент
-		// 	if(cElementType.cellsRange3D === arg[2].type || cElementType.cellsRange === arg[2].type) {
-		// 		arg[2] = arg[2].getValue2(0,0);
-		// 	} else if(cElementType.array === arg[2].type) {
-		// 		arg[2] = arg[2].getValue2(0,0);
-		// 	}
-		// }
-		
 		let retArr = new cArray();
 		let error = false;
-		if (arg[0].type === cElementType.cellsRange || arg[0].type === cElementType.cellsRange3D || arg[0].type === cElementType.array) {
+		if (arg[0].type === cElementType.array) {
 			if (arg[2] && arg[2].type === cElementType.cellsRange || arg[2].type === cElementType.cellsRange3D || arg[2].type === cElementType.array) {
 				arg[2] = arg[2].getValue2(0,0);
 			}
@@ -1383,10 +1373,10 @@ function (window, undefined) {
 				}
 			}
 
-			return retArr
+			return retArr;
 		}
 
-		if (arg[2] && (arg[2].type === cElementType.cellsRange || arg[2].type === cElementType.cellsRange3D || arg[2].type === cElementType.array)) {
+		if (arg[2] && (arg[2].type === cElementType.array)) {
 			let dimension = arg[2].getDimensions();
 			for (let r = 0; r < dimension.row; r++) {
 				retArr.addRow();
@@ -1770,9 +1760,26 @@ function (window, undefined) {
 	cLOOKUP.prototype.name = 'LOOKUP';
 	cLOOKUP.prototype.argumentsMin = 2;
 	cLOOKUP.prototype.argumentsMax = 3;
-	cLOOKUP.prototype.arrayIndexes = {1: 1, 2: 1};
+	cLOOKUP.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
 	cLOOKUP.prototype.argumentsType = [argType.any, argType.reference, argType.reference];
 	cLOOKUP.prototype.Calculate = function (arg) {
+
+		if (!AscCommonExcel.bIsSupportDynamicArrays && arg[0].type === cElementType.cellsRange || arg[0].type === cElementType.cellsRange3D) {
+			arg[0] = arg[0].isOneElement() ? arg[0].getFirstElement() : arg[0].cross(arguments[1]);
+		} else if (arg[0].type === cElementType.array) {
+			let retArr = new cArray();
+			let dimension = arg[0].getDimensions();
+
+			for (let r = 0; r < dimension.row; r++) {
+				retArr.addRow();
+				for (let c = 0; c < dimension.col; c++) {
+					retArr.addElement(g_oLOOKUPCache.calculate([arg[0].getValue2(r, c), arg[1], arg[2]], arguments[1]));
+				}
+			}
+			return retArr;
+		}
+
+
 		return g_oLOOKUPCache.calculate(arg, arguments[1]);
 	};
 
@@ -2879,6 +2886,18 @@ function (window, undefined) {
 		let t = this, number, valueForSearching, r, c, res = -1, min, regexp, count;
 
 		if (!opt_xlookup) {
+			if (cElementType.cell3D === arg2.type || cElementType.cell === arg2.type) {
+				arg2 = arg2.getValue();
+			} else if (cElementType.array === arg2.type) {
+				arg2 = arg2.getElementRowCol(0, 0);
+			} else if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
+				arg2 = arg2.cross(argument1);
+			}
+
+			if (cElementType.error === arg2.type) {
+				return arg2;
+			}
+
 			number = arg2.getValue() - 1;
 
 			if (isNaN(number)) {
@@ -4188,26 +4207,15 @@ function (window, undefined) {
 	cVLOOKUP.prototype.name = 'VLOOKUP';
 	cVLOOKUP.prototype.argumentsMin = 3;
 	cVLOOKUP.prototype.argumentsMax = 4;
-	cVLOOKUP.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
+	cVLOOKUP.prototype.arrayIndexes = {/*0: 1,*/ 1: 1, /*2: 1*/};
 	cVLOOKUP.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	// cVLOOKUP.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cVLOOKUP.prototype.argumentsType = [argType.any, argType.number, argType.number, argType.logical];
 	cVLOOKUP.prototype.Calculate = function (arg) {
-
-		/*
-		if(this.bArrayFormula) {
-		 	//в случае когда первый аргумент - массив
-			//исключение, когда в формуле массива берется из одного аргумента только 1 элемент
-			if(cElementType.cellsRange3D === arg[2].type || cElementType.cellsRange === arg[2].type) {
-				arg[2] = arg[2].getValue2(0,0);
-			} else if(cElementType.array === arg[2].type) {
-				arg[2] = arg[2].getValue2(0,0);
-			}
-		}
-		*/
 		let retArr = new cArray();
 		let error = false;
 
-		if (arg[0].type === cElementType.cellsRange || arg[0].type === cElementType.cellsRange3D || arg[0].type === cElementType.array) {
+		if (arg[0].type === cElementType.array) {
 			if (arg[2] && arg[2].type === cElementType.cellsRange || arg[2].type === cElementType.cellsRange3D || arg[2].type === cElementType.array) {
 				arg[2] = arg[2].getValue2(0,0);
 			}
@@ -4219,10 +4227,10 @@ function (window, undefined) {
 				}
 			}
 
-			return retArr
+			return retArr;
 		}
 
-		if (arg[2] && (arg[2].type === cElementType.cellsRange || arg[2].type === cElementType.cellsRange3D || arg[2].type === cElementType.array)) {
+		if (arg[2] && (arg[2].type === cElementType.array)) {
 			let dimension = arg[2].getDimensions();
 			for (let r = 0; r < dimension.row; r++) {
 				retArr.addRow();
@@ -4230,11 +4238,11 @@ function (window, undefined) {
 					if (!error) {
 						let res = g_oVLOOKUPCache.calculate([arg[0], arg[1], arg[2].getValue2(r, c), arg[3]], arguments[1]);
 						if (res.type === cElementType.error) {
-							error = true
+							error = true;
 						}
 						retArr.addElement(res);
 					} else {
-						break
+						break;
 					}
 				}
 			}

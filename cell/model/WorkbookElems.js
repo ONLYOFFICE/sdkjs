@@ -11150,6 +11150,9 @@ function RangeDataManagerElem(bbox, data)
 		} else {
 			var isNumberFilter = this.Operator === c_oAscCustomAutoFilter.isGreaterThan || this.Operator === c_oAscCustomAutoFilter.isGreaterThanOrEqualTo || this.Operator === c_oAscCustomAutoFilter.isLessThan || this.Operator === c_oAscCustomAutoFilter.isLessThanOrEqualTo;
 
+			if (isLabelFilter && !isNumberFilter) {
+				isDigitValue = false;
+			}
 			if (c_oAscCustomAutoFilter.equals === this.Operator || c_oAscCustomAutoFilter.doesNotEqual === this.Operator) {
 				filterVal = isNaN(this.Val) ? this.Val.toLowerCase() : this.Val;
 			} else if (isNumberFilter) {
@@ -15019,11 +15022,24 @@ function RangeDataManagerElem(bbox, data)
 		}
 		return res;
 	};
+
+	ExternalReference.prototype.removeSheetByName = function (sheetName) {
+		if (sheetName != null) {
+			let index = this.getSheetByName(sheetName);
+			if (index != null) {
+				this.SheetNames.splice(index, 1);
+				this.SheetDataSet.splice(index, 1);
+				delete this.worksheets[sheetName];
+			}
+		}
+	};
 	
-	ExternalReference.prototype.updateData = function (arr, oPortalData) {
+	ExternalReference.prototype.updateData = function (arr, oPortalData, noData) {
 		var t = this;
 		var isChanged = false;
 		var cloneER = this.clone();
+		
+		let existedWsArray = [];
 		for (var i = 0; i < arr.length; i++) {
 			//если есть this.worksheets, если нет - проверить и обработать
 			var sheetName = arr[i].sName;
@@ -15061,19 +15077,28 @@ function RangeDataManagerElem(bbox, data)
 				if (index != null) {
 					var externalSheetDataSet = this.SheetDataSet[index];
 					if (externalSheetDataSet) {
-						if (externalSheetDataSet.updateFromSheet(t.worksheets[sheetName])) {
+						if (externalSheetDataSet.updateFromSheet(t.worksheets[sheetName], noData)) {
 							isChanged = true;
 						}
 					}
 					let externalDefName = this.getDefinedNamesBySheetIndex(index);
 					if (externalDefName) {
 						for (let i = 0; i < externalDefName.length; i++) {
-							if (externalDefName[i].updateFromSheet(t.worksheets[sheetName])) {
+							if (externalDefName[i].updateFromSheet(t.worksheets[sheetName], noData)) {
 								isChanged = true;
 							}
 						}
 					}
 				}
+			}
+			existedWsArray.push(sheetName);
+		}
+
+		// delete all non-existent sheets in ExternalReference
+		for (let wsName in this.worksheets) {
+			if (!existedWsArray.includes(wsName)) {
+				// throw an error if we referenced to one of the deleted sheets?
+				this.removeSheetByName(wsName);
 			}
 		}
 
@@ -15410,7 +15435,7 @@ function RangeDataManagerElem(bbox, data)
 			this.referenceData = {};
 		}
 		this.referenceData["instanceId"] = portalName;
-		this.referenceData["fileKey"] = fileId;
+		this.referenceData["fileKey"] = fileId + "";
 	};
 
 	ExternalReference.prototype.setId = function (id) {
@@ -15613,7 +15638,7 @@ function RangeDataManagerElem(bbox, data)
 		}
 	};
 
-	ExternalSheetDataSet.prototype.updateFromSheet = function(sheet) {
+	ExternalSheetDataSet.prototype.updateFromSheet = function(sheet, noData) {
 		var isChanged = false;
 		if (sheet) {
 			var t = this;
@@ -15632,13 +15657,19 @@ function RangeDataManagerElem(bbox, data)
 					var range = sheet.getRange2(externalCell.Ref);
 					range._foreach(function (cell) {
 
-						let changedCell = externalCell.initFromCell(cell, true);
+						let changedCell = externalCell.initFromCell(cell, true, noData);
 						if (!isChanged) {
 							isChanged = changedCell;
 						}
 
 						var api_sheet = Asc['editor'];
 						var wb = api_sheet.wbModel;
+						
+						/* if we haven't received data from an external source, put #REF error for all cells */
+						if (noData) {
+							cell._setValue("#REF!");
+						}
+
 						wb.dependencyFormulas.addToChangedCell(cell);
 					});
 				}
@@ -15824,7 +15855,7 @@ function RangeDataManagerElem(bbox, data)
 
 		return newObj;
 	};
-	ExternalCell.prototype.initFromCell = function(cell, bUpdate) {
+	ExternalCell.prototype.initFromCell = function(cell, bUpdate, noData) {
 		var isChanged = false;
 		if (cell) {
 			var t = this;
@@ -15834,7 +15865,7 @@ function RangeDataManagerElem(bbox, data)
 				});
 			}
 
-			var newVal = cell.getValue();
+			let newVal = noData ? "#REF" : cell.getValue();
 			if (this.CellValue !== newVal) {
 				isChanged = true;
 				this.CellValue = newVal;
@@ -15853,6 +15884,11 @@ function RangeDataManagerElem(bbox, data)
 					cellValueType = Asc.ECellTypeType.celltypeError;
 					break;
 			}
+
+			if (noData) {
+				cellValueType = Asc.ECellTypeType.celltypeError;
+			}
+
 			if (this.CellType !== cellValueType) {
 				this.CellType = cellValueType;
 				isChanged = true;
@@ -16311,6 +16347,7 @@ function RangeDataManagerElem(bbox, data)
 		}
 		return isChanged ? this : null;
 	};
+
 
 	/**
 	 * Class representing a Series settings for fills data of context menu and dialog window - "Series"
@@ -17393,6 +17430,115 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	/**
+	 * This element defines a collection of workbook properties
+	 * @constructor
+	 */
+	function CWorkbookPr() {
+		this.Date1904 = null;
+		this.DateCompatibility = null;
+		this.HidePivotFieldList = null;
+		this.ShowPivotChartFilter = null;
+		this.UpdateLinks = null;
+	}
+	/**
+	 * Method clones calculation options
+	 * @memberof CWorkbookPr
+	 * @returns {CWorkbookPr}
+	 */
+	CWorkbookPr.prototype.clone = function () {
+		let res = new CWorkbookPr();
+
+		res.Date1904 = this.Date1904;
+		res.DateCompatibility = this.DateCompatibility;
+		res.HidePivotFieldList = this.HidePivotFieldList;
+		res.ShowPivotChartFilter = this.ShowPivotChartFilter;
+		res.UpdateLinks = this.UpdateLinks;
+
+		return res;
+	};
+	/**
+	 * Method returns "1904" flag
+	 * @memberof CWorkbookPr
+	 * @returns {boolean}
+	 */
+	CWorkbookPr.prototype.getDate1904 = function () {
+		return this.Date1904;
+	};
+	/**
+	 * Method set "1904" flag
+	 * @memberof CWorkbookPr
+	 * @returns {boolean}
+	 */
+	CWorkbookPr.prototype.setDate1904 = function (val) {
+		this.Date1904 = val;
+	};
+	/**
+	 * Method returns "DateCompatibility" flag
+	 * @memberof CWorkbookPr
+	 * @returns {boolean}
+	 */
+	CWorkbookPr.prototype.getDateCompatibility = function () {
+		return this.DateCompatibility;
+	};
+	/**
+	 * Method set "DateCompatibility" flag
+	 * @memberof CWorkbookPr
+	 * @returns {boolean}
+	 */
+	CWorkbookPr.prototype.setDateCompatibility = function (val) {
+		this.DateCompatibility = val;
+	};
+	/**
+	 * Method returns "HidePivotFieldList" flag
+	 * @memberof CWorkbookPr
+	 * @returns {boolean}
+	 */
+	CWorkbookPr.prototype.getHidePivotFieldList = function () {
+		return this.HidePivotFieldList;
+	};
+	/**
+	 * Method set "HidePivotFieldList" flag
+	 * @memberof CWorkbookPr
+	 * @returns {boolean}
+	 */
+	CWorkbookPr.prototype.setHidePivotFieldList = function (val) {
+		this.HidePivotFieldList = val;
+	};
+	/**
+	 * Method returns "ShowPivotChartFilter" flag
+	 * @memberof CWorkbookPr
+	 * @returns {boolean}
+	 */
+	CWorkbookPr.prototype.getShowPivotChartFilter = function () {
+		return this.ShowPivotChartFilter;
+	};
+	/**
+	 * Method set "ShowPivotChartFilter" flag
+	 * @memberof CWorkbookPr
+	 * @returns {boolean}
+	 */
+	CWorkbookPr.prototype.setShowPivotChartFilter = function (val) {
+		this.ShowPivotChartFilter = val;
+	};
+	/**
+	 * Method returns "UpdateLinks" flag
+	 * @memberof CWorkbookPr
+	 * @returns {boolean}
+	 */
+	CWorkbookPr.prototype.getUpdateLinks = function () {
+		return this.UpdateLinks;
+	};
+	/**
+	 * Method set "UpdateLinks" flag
+	 * @memberof CWorkbookPr
+	 * @returns {boolean}
+	 */
+	CWorkbookPr.prototype.setUpdateLinks = function (val) {
+		this.UpdateLinks = val;
+	};
+
+
+	/**
 	 * Class representing calculation settings for UI interface
 	 * @constructor
 	 */
@@ -17462,7 +17608,8 @@ function RangeDataManagerElem(bbox, data)
 			this.asc_setIterativeCalc(oCalcPr.getIterate());
 		}
 		if (oCalcPr.getIterateCount() != null) {
-			this.asc_setMaxIterations(oCalcPr.getIterateCount());
+			const MAX_ITERATE_COUNT = 32767;
+			this.asc_setMaxIterations(oCalcPr.getIterateCount() <= MAX_ITERATE_COUNT ? oCalcPr.getIterateCount() : MAX_ITERATE_COUNT);
 		}
 		if (oCalcPr.getIterateDelta() != null) {
 			this.asc_setMaxChange(oCalcPr.getIterateDelta());
@@ -19070,6 +19217,8 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_setMaxChange"] = prot.asc_setMaxChange;
 	prot["asc_initSettings"] = prot.asc_initSettings;
 
+	window["AscCommonExcel"].CWorkbookPr = CWorkbookPr;
+	
 	window["AscCommonExcel"].CMetadata = CMetadata;
 	window["AscCommonExcel"].CMetadataType = CMetadataType;
 	window["AscCommonExcel"].CMetadataString = CMetadataString;
@@ -19109,6 +19258,7 @@ function RangeDataManagerElem(bbox, data)
 	prot = CWorksheetInfo.prototype;
 	prot["asc_getName"] = prot.asc_getName;
 	prot["asc_getIndex"] = prot.asc_getIndex;
+
 
 
 

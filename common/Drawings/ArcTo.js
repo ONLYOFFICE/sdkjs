@@ -37,8 +37,9 @@
     var HitInBezier4 = AscFormat.HitInBezier4;
     
     // arcTo new version
-    function Arc3(ctx, fX, fY, fWidth, fHeight, fStartAngle, fSweepAngle)
+    function Arc3(ctx, fX, fY, fWidth, fHeight, fStartAngle, fSweepAngle, ellipseRotation)
     {
+        // Params transform
         var sin1 = Math.sin(fStartAngle);
         var cos1 = Math.cos(fStartAngle);
 
@@ -49,11 +50,13 @@
         var cx = fX - l * cos1;
         var cy = fY - l * sin1;
 
-        Arc2(ctx, cx - fWidth, cy - fHeight, 2 * fWidth, 2 * fHeight, fStartAngle, fSweepAngle);
+        // ellipseRotation can be undefined in old version calls and it is passed down anyway
+        Arc2(ctx, cx - fWidth, cy - fHeight, 2 * fWidth, 2 * fHeight, fStartAngle, fSweepAngle, ellipseRotation);
     }
 
-    function Arc2(ctx, fX, fY, fWidth, fHeight, fStartAngle, fSweepAngle)
+    function Arc2(ctx, fX, fY, fWidth, fHeight, fStartAngle, fSweepAngle, ellipseRotation)
     {
+        // Calls Ellipse or EllipseArc
         if (0 >= fWidth || 0 >= fHeight)
             return;
 
@@ -74,6 +77,8 @@
         var bClockDirection = false;
         var fEndAngle = (2 * Math.PI) -(fSweepAngle + fStartAngle);
         var fSrtAngle = (2 * Math.PI) - fStartAngle;
+        // by this moment we have endAngle( = fEndAngle) and startAngle( = fSrtAngle) clockwise
+
         if( fSweepAngle > 0 )
             bClockDirection = true;
 
@@ -83,12 +88,14 @@
         }
         else
         {
-            EllipseArc(ctx, fX + fWidth / 2, fY + fHeight / 2, fWidth / 2, fHeight / 2, fSrtAngle, fEndAngle, bClockDirection);
+            EllipseArc(ctx, fX + fWidth / 2, fY + fHeight / 2, fWidth / 2, fHeight / 2, fSrtAngle, fEndAngle, bClockDirection, ellipseRotation);
         }
     }
 
     function AngToEllPrm(fAngle, fXRad, fYRad)
     {
+        // to ellipse parametric equation angle parameter - t
+        // https://www.mathopenref.com/coordparamellipse.html
         return Math.atan2( Math.sin( fAngle ) / fYRad,  Math.cos( fAngle ) / fXRad );
     }
 
@@ -103,8 +110,9 @@
         ctx._c(fX - fXRad * c_fKappa, fY - fYRad, fX - fXRad, fY - fYRad * c_fKappa, fX - fXRad, fY);
     }
 
-    function EllipseArc(ctx, fX, fY, fXRad, fYRad, fAngle1, fAngle2, bClockDirection)
+    function EllipseArc(ctx, fX, fY, fXRad, fYRad, fAngle1, fAngle2, bClockDirection, ellipseRotation)
     {
+        // If arc comes through 0 angle - splits one to two EllipseArc2 calls
         while ( fAngle1 < 0 )
             fAngle1 += (2 * Math.PI);
 
@@ -117,35 +125,49 @@
         while ( fAngle2 >= (2 * Math.PI) )
             fAngle2 -= (2 * Math.PI);
 
+        let rotatePoint;
+        // fX = cx, fY = cy, fAngle1 = startAngle, fAngle2 = endAngle
+        // rotatePoint added later for ellipse rotation. it is arc start point.
+        // it is not used if ellipseRotation not used
+        if (ellipseRotation !== undefined) {
+            rotatePoint = {x : fX + fXRad * Math.cos( AngToEllPrm( fAngle1, fXRad, fYRad ) ),
+                y : fY + fYRad * Math.sin( AngToEllPrm( fAngle1, fXRad, fYRad ) )};
+        }
+
+        // let rotatePoint = {x : fX - fXRad, y : fY};
         if ( !bClockDirection )
         {
             if ( fAngle1 <= fAngle2 )
-                EllipseArc2(ctx, fX, fY, fXRad, fYRad, fAngle1, fAngle2, false);
+                EllipseArc2(ctx, fX, fY, fXRad, fYRad, fAngle1, fAngle2, false, ellipseRotation, rotatePoint);
             else
             {
-                EllipseArc2(ctx, fX, fY, fXRad, fYRad, fAngle1, 2 * Math.PI, false);
-                EllipseArc2(ctx, fX, fY, fXRad, fYRad, 0, fAngle2, false);
+                // if arc comes through 0 angle - split it
+                EllipseArc2(ctx, fX, fY, fXRad, fYRad, fAngle1, 2 * Math.PI, false, ellipseRotation, rotatePoint);
+                EllipseArc2(ctx, fX, fY, fXRad, fYRad, 0, fAngle2, false, ellipseRotation, rotatePoint);
             }
         }
         else
         {
             if ( fAngle1 >= fAngle2 )
-                EllipseArc2(ctx, fX, fY, fXRad, fYRad, fAngle1, fAngle2, true);
+                EllipseArc2(ctx, fX, fY, fXRad, fYRad, fAngle1, fAngle2, true, ellipseRotation, rotatePoint);
             else
             {
-                EllipseArc2(ctx, fX, fY, fXRad, fYRad, fAngle1, 0, true);
-                EllipseArc2(ctx, fX, fY, fXRad, fYRad, 2 * Math.PI, fAngle2, true);
+                // if arc comes through 0 angle - split it
+                EllipseArc2(ctx, fX, fY, fXRad, fYRad, fAngle1, 0, true, ellipseRotation, rotatePoint);
+                EllipseArc2(ctx, fX, fY, fXRad, fYRad, 2 * Math.PI, fAngle2, true, ellipseRotation, rotatePoint);
             }
         }
     }
 
-    function EllipseArc2(ctx, fX, fY, fXRad, fYRad, dAngle1, dAngle2, bClockDirection)
+    function EllipseArc2(ctx, fX, fY, fXRad, fYRad, dAngle1, dAngle2, bClockDirection, ellipseRotation, rotatePoint)
     {
+        // Splits calls to EllipseArc3 on each quadrant
         var nFirstPointQuard  = ((2 * dAngle1 / Math.PI) >> 0) + 1;
         var nSecondPointQuard = ((2 * dAngle2 / Math.PI) >> 0) + 1;
         nSecondPointQuard = Math.min( 4, Math.max( 1, nSecondPointQuard ) );
         nFirstPointQuard  = Math.min( 4, Math.max( 1, nFirstPointQuard ) );
 
+        // fX = cx, fY = cy, fAngle1 = startAngle, fAngle2 = endAngle
         var fStartX = fX + fXRad * Math.cos( AngToEllPrm( dAngle1, fXRad, fYRad ) );
         var fStartY = fY + fYRad * Math.sin( AngToEllPrm( dAngle1, fXRad, fYRad ) );
 
@@ -167,7 +189,7 @@
                 if ( !( nIndex == nFirstPointQuard ) )
                     dStartAngle = (nIndex - 1 ) * Math.PI / 2;
 
-                EndPoint = EllipseArc3(ctx, fX, fY, fXRad, fYRad, AngToEllPrm( dStartAngle, fXRad, fYRad ), AngToEllPrm( dEndAngle, fXRad, fYRad ), false);
+                EndPoint = EllipseArc3(ctx, fX, fY, fXRad, fYRad, AngToEllPrm( dStartAngle, fXRad, fYRad ), AngToEllPrm( dEndAngle, fXRad, fYRad ), false, ellipseRotation, rotatePoint);
             }
         }
         else
@@ -183,13 +205,15 @@
                 else
                     dEndAngle = dAngle2;
 
-                EndPoint = EllipseArc3(ctx, fX, fY, fXRad, fYRad, AngToEllPrm( dStartAngle, fXRad, fYRad ), AngToEllPrm( dEndAngle, fXRad, fYRad ), false);
+                EndPoint = EllipseArc3(ctx, fX, fY, fXRad, fYRad, AngToEllPrm( dStartAngle, fXRad, fYRad ), AngToEllPrm( dEndAngle, fXRad, fYRad ), false, ellipseRotation, rotatePoint);
             }
         }
     }
 
-    function EllipseArc3(ctx, fX, fY, fXRad, fYRad, dAngle1, dAngle2, bClockDirection)
+    function EllipseArc3(ctx, fX, fY, fXRad, fYRad, dAngle1, dAngle2, bClockDirection, ellipseRotation, rotatePoint)
     {
+        // fX = cx, fY = cy, fAngle1 = startAngle after AngToEllPrm, fAngle2 = endAngle after AngToEllPrm
+
         var fAlpha = Math.sin( dAngle2 - dAngle1 ) * ( Math.sqrt( 4.0 + 3.0 * Math.tan( (dAngle2 - dAngle1) / 2.0 ) * Math.tan( (dAngle2 - dAngle1) / 2.0 ) ) - 1.0 ) / 3.0;
 
         var sin1 = Math.sin(dAngle1);
@@ -197,17 +221,64 @@
         var sin2 = Math.sin(dAngle2);
         var cos2 = Math.cos(dAngle2);
 
+        // calculate start point
         var fX1 = fX + fXRad * cos1;
         var fY1 = fY + fYRad * sin1;
 
+        // calculate end point
         var fX2 = fX + fXRad * cos2;
         var fY2 = fY + fYRad * sin2;
 
+        // bezier control point 1
         var fCX1 = fX1 - fAlpha * fXRad * sin1;
         var fCY1 = fY1 + fAlpha * fYRad * cos1;
 
+        // bezier control point 2
         var fCX2 = fX2 + fAlpha * fXRad * sin2;
         var fCY2 = fY2 - fAlpha * fYRad * cos2;
+
+        if (ellipseRotation !== undefined) {
+            // https://www.figma.com/file/hs43oiAUyuoqFULVoJ5lyZ/EllipticArcConvert?type=design&node-id=265-2&mode=design&t=pla9h2OkZAde8Xim-0
+            // ellipseRotation = 0;
+            // TODO import
+            /**
+             * afin rotate clockwise
+             * @param {number} x
+             * @param {number} y
+             * @param {number} radiansRotateAngle radians Rotate AntiClockWise Angle. E.g. 30 degrees rotates does DOWN.
+             * @returns {{x: number, y: number}} point
+             */
+            function rotatePointAroundCordsStartClockWise(x, y, radiansRotateAngle) {
+                let newX = x * Math.cos(radiansRotateAngle) + y * Math.sin(radiansRotateAngle);
+                let newY = x * (-1) * Math.sin(radiansRotateAngle) + y * Math.cos(radiansRotateAngle);
+                return {x : newX, y: newY};
+            }
+
+            let startPointRelative = {x : fX1 - rotatePoint.x, y : rotatePoint.y - fY1};
+            let endPointRelative = {x : fX2 - rotatePoint.x, y : rotatePoint.y - fY2};
+            let controlPoint1Relative = {x : fCX1 - rotatePoint.x, y : rotatePoint.y - fCY1};
+            let controlPoint2Relative = {x : fCX2 - rotatePoint.x, y : rotatePoint.y - fCY2};
+
+            let startPointRelativeRotated = rotatePointAroundCordsStartClockWise(startPointRelative.x, startPointRelative.y, ellipseRotation);
+            let endPointRelativeRotated = rotatePointAroundCordsStartClockWise(endPointRelative.x, endPointRelative.y, ellipseRotation);
+            let controlPoint1RelativeRotated = rotatePointAroundCordsStartClockWise(controlPoint1Relative.x, controlPoint1Relative.y, ellipseRotation);
+            let controlPoint2RelativeRotated = rotatePointAroundCordsStartClockWise(controlPoint2Relative.x, controlPoint2Relative.y, ellipseRotation);
+
+            // go to initial cord system
+            let startPointRotated = {x : startPointRelativeRotated.x + rotatePoint.x, y : rotatePoint.y - startPointRelativeRotated.y};
+            let endPointRotated = {x : endPointRelativeRotated.x + rotatePoint.x, y : rotatePoint.y - endPointRelativeRotated.y};
+            let controlPoint1Rotated = {x : controlPoint1RelativeRotated.x + rotatePoint.x, y : rotatePoint.y - controlPoint1RelativeRotated.y};
+            let controlPoint2Rotated = {x : controlPoint2RelativeRotated.x + rotatePoint.x, y : rotatePoint.y - controlPoint2RelativeRotated.y};
+
+            fX1 = startPointRotated.x;
+            fY1 = startPointRotated.y;
+            fX2 = endPointRotated.x;
+            fY2 = endPointRotated.y;
+            fCX1 = controlPoint1Rotated.x;
+            fCY1 = controlPoint1Rotated.y;
+            fCX2 = controlPoint2Rotated.x;
+            fCY2 = controlPoint2Rotated.y;
+        }
 
         if ( !bClockDirection )
         {

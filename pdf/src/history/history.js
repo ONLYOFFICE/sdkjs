@@ -211,6 +211,21 @@
             this.Points[nIndex].forbidUnion = true;
         }
     };
+	History.prototype.private_IsContentChange = function(Class, Data) {
+		if (Data.IsContentChange)
+			return Data.IsContentChange();
+		
+		return AscCommon.CHistory.prototype.private_IsContentChange.call(this, Class, Data);
+	};
+	History.prototype.private_UpdateContentChangesOnUndo = function(Item)
+	{
+		if (!this.private_IsContentChange(Item.Class, Item.Data))
+			return;
+		
+		let contentChanges = Item.Data.GetContentChangesClass();
+		if (contentChanges)
+			contentChanges.RemoveByHistoryItem(Item);
+	};
 	
 	//----------------------------------------------------------export--------------------------------------------------
 	window['AscPDF'] = window['AscPDF'] || {};

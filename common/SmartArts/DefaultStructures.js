@@ -51,44 +51,34 @@
 			if (templateChild.layoutNode) {
 				child = getLayoutNode(templateChild.layoutNode);
 			} else if (templateChild.varLst) {
-				child = getVarLst(templateChild.varLst);
+				parent.setVarLst(getVarLst(templateChild.varLst));
 			} else if (templateChild.alg) {
-				child = getAlgorithm(templateChild.alg);
+				parent.setAlg(getAlgorithm(templateChild.alg));
 			} else if (templateChild.shape) {
-				child = getSmartArtShape(templateChild.shape);
+				parent.setShape(getSmartArtShape(templateChild.shape));
 			} else if (templateChild.presOf) {
-				child = getPresOf(templateChild.presOf);
+				parent.setPresOf(getPresOf(templateChild.presOf));
 			} else if (templateChild.constrLst) {
-				child = getConstrLst(templateChild.constrLst);
+				parent.setConstrLst(getConstrLst(templateChild.constrLst));
 			} else if (templateChild.ruleLst) {
-				child = getRuleLst(templateChild.ruleLst);
+				parent.setRuleLst(getRuleLst(templateChild.ruleLst));
 			} else if (templateChild.forEach) {
 				child = getForEach(templateChild.forEach);
 			} else if (templateChild.choose) {
 				child = getChoose(templateChild.choose);
 			}
 			if (child) {
-				if (parent.addToLst) {
 					parent.addToLst(0, child);
-				} else if (parent.addToLstList) {
-					parent.addToLstList(0, child);
-				}
-
 			}
 		}
 	}
 	function getVarLst(info) {
 		const varLst = new AscFormat.VarLst();
-		if (info.bulletEnabled) {
-			varLst.setBulletEnabled(new AscFormat.BulletEnabled());
-			varLst.bulletEnabled.setVal(info.bulletEnabled.val);
+		if (info.bulletEnabled !== undefined) {
+			varLst.setBulletEnabled(info.bulletEnabled.val);
 		}
-		if (info.dir) {
-			varLst.setDir(new AscFormat.DiagramDirection());
-		}
-		if (info.resizeHandles) {
-			varLst.setResizeHandles(new AscFormat.ResizeHandles());
-			varLst.resizeHandles.setVal(info.resizeHandles.val);
+		if (info.resizeHandles !== undefined) {
+			varLst.setResizeHandles(info.resizeHandles.val);
 		}
 		return varLst;
 	}
@@ -120,10 +110,10 @@
 	function getPresOf(info) {
 		const presOf = new AscFormat.PresOf();
 		if (info.axis !== undefined) {
-			presOf.addToLstAxis(0, getAxis(info.axis));
+			presOf.addToLstAxis(0, info.axis);
 		}
 		if (info.ptType !== undefined) {
-			presOf.addToLstPtType(0, getPtType(info.ptType));
+			presOf.addToLstPtType(0, info.ptType);
 		}
 		return presOf;
 	}
@@ -190,21 +180,11 @@
 		}
 		return ruleLst;
 	}
-	function getAxis(type) {
-		const axisType = new AscFormat.AxisType();
-		axisType.setVal(type);
-		return axisType;
-	}
-	function getPtType(type) {
-		const ptType = new AscFormat.ElementType();
-		ptType.setVal(type);
-		return ptType;
-	}
 	function getForEach(info) {
 		const forEach = new AscFormat.ForEach();
 		forEach.setName(info.name);
-		forEach.addToLstAxis(0, getAxis(info.axis));
-		forEach.addToLstPtType(0, getPtType(info.ptType));
+		forEach.addToLstAxis(0, info.axis);
+		forEach.addToLstPtType(0, info.ptType);
 		if (info.cnt !== undefined) {
 			forEach.addToLstCnt(0, info.cnt);
 		}
@@ -303,7 +283,7 @@
 		styleLbl.setName(name);
 		styleLbl.setScene3d(getScene3D());
 		styleLbl.setSp3d(new AscFormat.Sp3d());
-		styleLbl.setTxPr(new AscFormat.CTextBody());
+		styleLbl.setTxPr(new AscFormat.CBodyPr());
 		styleLbl.setStyle(new AscFormat.CShapeStyle());
 		styleLbl.style.setLnRef(new AscFormat.StyleRef());
 		styleLbl.style.lnRef.setIdx(idx[0]);
@@ -367,36 +347,36 @@
 							modelId: "6",
 							srcId: "0",
 							destId: "1",
-							srcOrd: "0",
-							destOrd: "0"
+							srcOrd: 0,
+							destOrd: 0
 						},
 						{
 							modelId: "7",
 							srcId: "0",
 							destId: "2",
-							srcOrd: "1",
-							destOrd: "0"
+							srcOrd: 1,
+							destOrd: 0
 						},
 						{
 							modelId: "8",
 							srcId: "0",
 							destId: "3",
-							srcOrd: "2",
-							destOrd: "0"
+							srcOrd: 2,
+							destOrd: 0
 						},
 						{
 							modelId: "9",
 							srcId: "0",
 							destId: "4",
-							srcOrd: "3",
-							destOrd: "0"
+							srcOrd: 3,
+							destOrd: 0
 						},
 						{
 							modelId: "10",
 							srcId: "0",
 							destId: "5",
-							srcOrd: "4",
-							destOrd: "0"
+							srcOrd: 4,
+							destOrd: 0
 						}
 					],
 					bg: {},
@@ -418,15 +398,15 @@
 							modelId: "3",
 							srcId: "0",
 							destId: "1",
-							srcOrd: "0",
-							destOrd: "0"
+							srcOrd: 0,
+							destOrd: 0
 						},
 						{
 							modelId: "4",
 							srcId: "0",
 							destId: "2",
-							srcOrd: "1",
-							destOrd: "0"
+							srcOrd: 1,
+							destOrd: 0
 						}
 					],
 					bg: {},
@@ -452,43 +432,43 @@
 							modelId: "7",
 							srcId: "0",
 							destId: "1",
-							srcOrd: "0",
-							destOrd: "0"
+							srcOrd: 0,
+							destOrd: 0
 						},
 						{
 							modelId: "8",
 							srcId: "0",
 							destId: "2",
-							srcOrd: "1",
-							destOrd: "0"
+							srcOrd: 1,
+							destOrd: 0
 						},
 						{
 							modelId: "9",
 							srcId: "0",
 							destId: "3",
-							srcOrd: "2",
-							destOrd: "0"
+							srcOrd: 2,
+							destOrd: 0
 						},
 						{
 							modelId: "10",
 							srcId: "0",
 							destId: "4",
-							srcOrd: "3",
-							destOrd: "0"
+							srcOrd: 3,
+							destOrd: 0
 						},
 						{
 							modelId: "11",
 							srcId: "0",
 							destId: "5",
-							srcOrd: "4",
-							destOrd: "0"
+							srcOrd: 4,
+							destOrd: 0
 						},
 						{
 							modelId: "12",
 							srcId: "0",
 							destId: "6",
-							srcOrd: "5",
-							destOrd: "0"
+							srcOrd: 5,
+							destOrd: 0
 						}
 					],
 					bg: {},
@@ -668,19 +648,20 @@
 			}
 		};
 		const layoutDef = new AscFormat.LayoutDef();
-		layoutDef.setUniqueId("urn:microsoft.com/office/officeart/2005/8/layout/default");
-		layoutDef.setTitle(new AscFormat.DiagramTitle());
-		layoutDef.setDesc(new AscFormat.DiagramTitle());
-		layoutDef.setCatLst(new AscFormat.CatLst());
-		const category = new AscFormat.SCat();
-		category.setType("list");
-		category.setPri(400);
-		layoutDef.catLst.addToLst(0, category);
-		layoutDef.setSampData(getSampData(defaultLayoutPreset.sampData));
-		layoutDef.setStyleData(getSampData(defaultLayoutPreset.styleData));
-		layoutDef.setClrData(getSampData(defaultLayoutPreset.clrData));
-		layoutDef.setLayoutNode(getLayoutNode(defaultLayoutPreset.layoutNode));
-
+		AscFormat.ExecuteNoHistory(function() {
+			layoutDef.setUniqueId("urn:microsoft.com/office/officeart/2005/8/layout/default");
+			layoutDef.setTitle(new AscFormat.DiagramTitle());
+			layoutDef.setDesc(new AscFormat.DiagramTitle());
+			layoutDef.setCatLst(new AscFormat.CatLst());
+			const category = new AscFormat.SCat();
+			category.setType("list");
+			category.setPri(400);
+			layoutDef.catLst.addToLst(0, category);
+			layoutDef.setSampData(getSampData(defaultLayoutPreset.sampData));
+			layoutDef.setStyleData(getSampData(defaultLayoutPreset.styleData));
+			layoutDef.setClrData(getSampData(defaultLayoutPreset.clrData));
+			layoutDef.setLayoutNode(getLayoutNode(defaultLayoutPreset.layoutNode));
+		}, this, []);
 		return layoutDef;
 	}
 
@@ -732,23 +713,25 @@
 		];
 
 		const styleDef = new AscFormat.StyleDef();
-		styleDef.setUniqueId("urn:microsoft.com/office/officeart/2005/8/quickstyle/simple1");
-		styleDef.setTitle(new AscFormat.DiagramTitle());
-		styleDef.setDesc(new AscFormat.DiagramTitle());
-		styleDef.setCatLst(new AscFormat.CatLst());
-		const cat = new AscFormat.SCat();
-		cat.setType("simple");
-		cat.setPri(10100);
-		styleDef.catLst.addToLst(0, cat);
-		styleDef.setScene3d(getScene3D());
-		for (let i = 0; i < defaultStylesInfo.length; i++) {
-			const info = defaultStylesInfo[i];
-			const color = info.clr;
-			const idx = info.idx;
-			for (let j = 0; j < info.names.length; j++) {
-				styleDef.addToLstStyleLbl(styleDef.styleLbl.length, generateStyleStyleLbl(info.names[j], color, idx));
+		AscFormat.ExecuteNoHistory(function() {
+			styleDef.setUniqueId("urn:microsoft.com/office/officeart/2005/8/quickstyle/simple1");
+			styleDef.setTitle(new AscFormat.DiagramTitle());
+			styleDef.setDesc(new AscFormat.DiagramTitle());
+			styleDef.setCatLst(new AscFormat.CatLst());
+			const cat = new AscFormat.SCat();
+			cat.setType("simple");
+			cat.setPri(10100);
+			styleDef.catLst.addToLst(0, cat);
+			styleDef.setScene3d(getScene3D());
+			for (let i = 0; i < defaultStylesInfo.length; i++) {
+				const info = defaultStylesInfo[i];
+				const color = info.clr;
+				const idx = info.idx;
+				for (let j = 0; j < info.names.length; j++) {
+					styleDef.addToLstStyleLbl(generateStyleStyleLbl(info.names[j], color, idx));
+				}
 			}
-		}
+		}, this, []);
 		return styleDef;
 	}
 
@@ -960,22 +943,24 @@
 		];
 
 		const colorsDef = new AscFormat.ColorsDef();
-		colorsDef.setUniqueId("urn:microsoft.com/office/officeart/2005/8/colors/accent1_2");
-		colorsDef.setTitle(new AscFormat.DiagramTitle());
-		colorsDef.setDesc(new AscFormat.DiagramTitle());
-		colorsDef.setCatLst(new AscFormat.CatLst());
-		const cat = new AscFormat.SCat();
-		colorsDef.catLst.addToLst(0, cat);
-		cat.setType("accent1");
-		cat.setPri(11200);
-		for (let i = 0; i < presetStyleLbl.length; i++) {
-			const infos = presetStyleLbl[i];
-			const names = infos.names;
-			for (let j = 0; j < names.length; j++) {
-				const styleLbl = createColorsStyleLbl(presetStyleLbl[i].clrsLst, names[j]);
-				colorsDef.addToLstStyleLbl(colorsDef.styleLbl.length, styleLbl);
+		AscFormat.ExecuteNoHistory(function() {
+			colorsDef.setUniqueId("urn:microsoft.com/office/officeart/2005/8/colors/accent1_2");
+			colorsDef.setTitle(new AscFormat.DiagramTitle());
+			colorsDef.setDesc(new AscFormat.DiagramTitle());
+			colorsDef.setCatLst(new AscFormat.CatLst());
+			const cat = new AscFormat.SCat();
+			colorsDef.catLst.addToLst(0, cat);
+			cat.setType("accent1");
+			cat.setPri(11200);
+			for (let i = 0; i < presetStyleLbl.length; i++) {
+				const infos = presetStyleLbl[i];
+				const names = infos.names;
+				for (let j = 0; j < names.length; j++) {
+					const styleLbl = createColorsStyleLbl(presetStyleLbl[i].clrsLst, names[j]);
+					colorsDef.addToLstStyleLbl(styleLbl);
+				}
 			}
-		}
+		}, this, []);
 		return colorsDef;
 	}
 	function createColorsStyleLbl(clrsLst, name) {

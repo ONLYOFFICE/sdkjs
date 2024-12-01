@@ -452,7 +452,10 @@ var c_oSerParType = {
 	BookmarkEnd: 24,
 	MRun: 25,
 	AltChunk: 26,
-	DocParts: 27
+	DocParts: 27,
+	PermStart: 28,
+	PermEnd: 29,
+	JsaProjectExternal: 30
 };
 var c_oSerGlossary = {
 	DocPart: 0,
@@ -488,7 +491,9 @@ var c_oSerDocTableType = {
 	MoveFromRangeStart: 14,
 	MoveFromRangeEnd: 15,
 	MoveToRangeStart: 16,
-	MoveToRangeEnd: 17
+	MoveToRangeEnd: 17,
+	PermStart: 18,
+	PermEnd: 19
 };
 var c_oSerRunType = {
     run:0,
@@ -525,7 +530,8 @@ var c_oSerRunType = {
 	delInstrText: 31,
 	linebreakClearAll: 32,
 	linebreakClearLeft: 33,
-	linebreakClearRight: 34
+	linebreakClearRight: 34,
+	pptxDrawingAlternative: 0x99
 };
 var c_oSerImageType = {
     MediaId:0,
@@ -697,6 +703,15 @@ var c_oSer_CommentsType = {
 	CommentContent: 13,
 	DateUtc: 14,
 	UserData: 15
+};
+
+var c_oSerPermission = {
+	Id                   : 0,
+	DisplacedByCustomXml : 1,
+	ColFirst             : 2,
+	ColLast              : 3,
+	Ed                   : 4,
+	EdGroup              : 5
 };
 
 var c_oSer_StyleType = {
@@ -953,7 +968,22 @@ var c_oSer_OMathContentType = {
 	MoveFromRangeStart: 68,
 	MoveFromRangeEnd: 69,
 	MoveToRangeStart: 70,
-	MoveToRangeEnd: 71
+	MoveToRangeEnd: 71,
+	AnnotationRef: 72,
+	CommentReference: 73,
+	ContentPart: 74,
+	Cr: 75,
+	EndnoteRef: 76,
+	EndnoteReference: 77,
+	FootnoteRef: 78,
+	FootnoteReference: 79,
+	LastRenderedPageBreak: 80,
+	NoBreakHyphen: 81,
+	SoftHyphen: 82,
+	Sym: 83,
+	Tab: 84,
+	PermStart: 85,
+	PermEnd: 86
 };
 var c_oSer_HyperlinkType = {
     Content: 0,
@@ -1712,6 +1742,48 @@ function readBookmarkEnd(length, bcr, oReadResult, paragraphContent) {
 	oReadResult.addBookmarkEnd(paragraphContent, bookmark, true);
 	return res;
 }
+function readPermStart(length, bcr, oReadResult, paragraphContent) {
+	if ((typeof AscWord === "undefined") || (typeof AscWord.ParagraphPermStart === "undefined"))
+		return c_oSerConstants.ReadUnknown;
+	
+	let permPr = {};
+	let res = readPermPr(length, bcr, permPr);
+	let permStart = AscWord.ParagraphPermStart.fromObject(permPr);
+	oReadResult.addPermStart(paragraphContent, permStart);
+	return res;
+}
+function readPermEnd(length, bcr, oReadResult, paragraphContent) {
+	if ((typeof AscWord === "undefined") || (typeof AscWord.ParagraphPermEnd === "undefined"))
+		return c_oSerConstants.ReadUnknown;
+	
+	let permPr = {};
+	let res = readPermPr(length, bcr, permPr);
+	let permEnd = AscWord.ParagraphPermEnd.fromObject(permPr);
+	oReadResult.addPermEnd(paragraphContent, permEnd);
+	return res;
+}
+function readPermPr(length, bcr, permPr) {
+	let stream = bcr.stream;
+	return bcr.Read1(length, function(type, length) {
+		if (c_oSerPermission.Id === type)
+			permPr.id = stream.GetString2LE(length);
+		else if (c_oSerPermission.DisplacedByCustomXml === type)
+			permPr.displacedByCustomXml = stream.GetUChar();
+		else if (c_oSerPermission.ColFirst === type)
+			permPr.colFirst = stream.GetULongLE();
+		else if (c_oSerPermission.ColLast === type)
+			permPr.colLast = stream.GetULongLE();
+		else if (c_oSerPermission.Ed === type)
+			permPr.ed = stream.GetString2LE(length);
+		else if (c_oSerPermission.EdGroup === type)
+			permPr.edGrp = stream.GetUChar();
+		else
+			return c_oSerConstants.ReadUnknown;
+		
+		return c_oSerConstants.ReadOk;
+	});
+}
+
 function initMathRevisions(elem ,props, reader) {
     if(props.del) {
         elem.SetReviewTypeWithInfo(reviewtype_Remove, props.del, false);
@@ -5471,6 +5543,12 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 				case para_RevisionMove:
 					WiteMoveRange(this.bs, this.saveParams, item);
 					break;
+				case para_PermStart:
+				case para_PermEnd:
+					this.bs.WriteItem(para_PermStart === item.Type ? c_oSerParType.PermStart : c_oSerParType.PermEnd, function() {
+						oThis.WritePermPr(item);
+					});
+					break;
             }
         }
         if ((bLastRun && bUseSelection && !par.Selection_CheckParaEnd()) || (selectedAll != undefined && selectedAll === false) )
@@ -5840,6 +5918,37 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		if (undefined !== textInput.type) {
 			this.bs.WriteItem(c_oSerFFData.TIType, function() {
 				oThis.memory.WriteByte(textInput.type);
+			});
+		}
+	};
+	this.WritePermPr = function(permMark) {
+		let _t = this;
+		if (undefined !== permMark.getRangeId()) {
+			this.memory.WriteByte(c_oSerPermission.Id);
+			this.memory.WriteString2(permMark.getRangeId());
+		}
+		if (undefined !== permMark.getColFirst()) {
+			this.bs.WriteItem(c_oSerPermission.ColFirst, function() {
+				_t.memory.WriteLong(permMark.getColFirst());
+			});
+		}
+		if (undefined !== permMark.getColLast()) {
+			this.bs.WriteItem(c_oSerPermission.ColLast, function() {
+				_t.memory.WriteLong(permMark.getColLast());
+			});
+		}
+		if (undefined !== permMark.getDisplacedByCustomXml()) {
+			this.bs.WriteItem(c_oSerPermission.DisplacedByCustomXml, function() {
+				_t.memory.WriteByte(permMark.getDisplacedByCustomXml());
+			});
+		}
+		if (undefined !== permMark.getEd()) {
+			this.memory.WriteByte(c_oSerPermission.Ed);
+			this.memory.WriteString2(permMark.getEd());
+		}
+		if (undefined !== permMark.getEdGrp()) {
+			this.bs.WriteItem(c_oSerPermission.EdGroup, function() {
+				_t.memory.WriteByte(permMark.getEdGrp());
 			});
 		}
 	};
@@ -8300,10 +8409,8 @@ function BinaryFileReader(doc, openParams)
 				api.sync_AddComment( oNewComment.Id, oNewComment.Data );
 			}
 		}
-		//remove bookmarks without end
-		this.oReadResult.deleteMarkupStartWithoutEnd(this.oReadResult.bookmarksStarted);
-		//todo crush
-		// this.oReadResult.deleteMarkupStartWithoutEnd(this.oReadResult.moveRanges);
+		
+		this.oReadResult.deleteMarkupStartWithoutEnd();
 
 		if (this.oReadResult.DocumentContent.length > 0) {
 			this.Document.ReplaceContent(this.oReadResult.DocumentContent);
@@ -8688,11 +8795,9 @@ function BinaryFileReader(doc, openParams)
 				api.sync_AddComment( oNewComment.Id, oNewComment.Data );
 			}
 		}
-		//remove bookmarks without end
-		this.oReadResult.deleteMarkupStartWithoutEnd(this.oReadResult.bookmarksStarted);
-		//todo crush
-		// this.oReadResult.deleteMarkupStartWithoutEnd(this.oReadResult.moveRanges);
-
+		
+		this.oReadResult.deleteMarkupStartWithoutEnd();
+		
 		for (var i = 0, length = this.oReadResult.aTableCorrect.length; i < length; ++i) {
 			var table = this.oReadResult.aTableCorrect[i];
 			table.ReIndexing(0);
@@ -11278,8 +11383,13 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			});
 		} else if (c_oSerParType.JsaProject === type) {
 			this.Document.DrawingDocument.m_oWordControl.m_oApi.macros.SetData(AscCommon.GetStringUtf8(this.stream, length));
-		} else
-            res = c_oSerConstants.ReadUnknown;
+		} else if (c_oSerParType.PermStart === type) {
+			res = readPermStart(length, this.bcr, this.oReadResult, null);
+		} else if (c_oSerParType.PermEnd === type) {
+			res = readPermEnd(length, this.bcr, this.oReadResult, this.oReadResult.lastPar);
+		} else {
+			res = c_oSerConstants.ReadUnknown;
+		}
         return res;
     };
 	this.ReadDocParts = function (type, length, glossary) {
@@ -11611,8 +11721,14 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			res = readMoveRangeStart(length, this.bcr, this.stream, this.oReadResult, paragraphContent, false);
 		} else if ( c_oSerParType.MoveToRangeEnd === type && this.oReadResult.checkReadRevisions()) {
 			res = readMoveRangeEnd(length, this.bcr, this.stream, this.oReadResult, paragraphContent);
-		} else
-		    res = c_oSerConstants.ReadUnknown;
+		} else if (c_oSerParType.PermStart === type) {
+			res = readPermStart(length, this.bcr, this.oReadResult, paragraphContent);
+		} else if (c_oSerParType.PermEnd === type) {
+			res = readPermEnd(length, this.bcr, this.oReadResult, paragraphContent);
+		} else {
+			res = c_oSerConstants.ReadUnknown;
+		}
+		
         return res;
     };
 	this.AppendQuoteToCurrentComments = function(text) {
@@ -12137,6 +12253,17 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 
 				if (GraphicObj.getObjectType() === AscDFH.historyitem_type_SmartArt)
 					GraphicObj.setXfrmByParent();
+			}
+		}
+		if(GraphicObj && !GraphicObj.isSupported())
+		{
+			let nPos = this.stream.cur;
+			var type = this.bcr.stream.GetUChar();
+			this.stream.Seek2(nPos);
+			if(type === c_oSerRunType.pptxDrawingAlternative)
+			{
+				oParaDrawing.GraphicObj = null;
+				GraphicObj = null;
 			}
 		}
 		oDrawing.content = oParaDrawing;
@@ -12796,8 +12923,13 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			res = readMoveRangeStart(length, this.bcr, this.stream, this.oReadResult, null, false);
 		} else if (c_oSerDocTableType.MoveToRangeEnd === type && this.oReadResult.checkReadRevisions()) {
 			res = readMoveRangeEnd(length, this.bcr, this.stream, this.oReadResult, this.oReadResult.lastPar, true);
-		} else
-            res = c_oSerConstants.ReadUnknown;
+		} else if (c_oSerDocTableType.PermStart === type) {
+			res = readPermStart(length, this.bcr, this.oReadResult, null);
+		} else if (c_oSerDocTableType.PermEnd === type) {
+			res = readPermEnd(length, this.bcr, this.oReadResult, this.oReadResult.lastPar);
+		} else {
+			res = c_oSerConstants.ReadUnknown;
+		}
         return res;
     };
     this.Read_Row = function(type, length, Row)
@@ -12849,8 +12981,13 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			res = readMoveRangeStart(length, this.bcr, this.stream, this.oReadResult, null, false);
 		} else if (c_oSerDocTableType.MoveToRangeEnd === type && this.oReadResult.checkReadRevisions()) {
 			res = readMoveRangeEnd(length, this.bcr, this.stream, this.oReadResult, this.oReadResult.lastPar, true);
-		} else
-            res = c_oSerConstants.ReadUnknown;
+		} else if (c_oSerDocTableType.PermStart === type) {
+			res = readPermStart(length, this.bcr, this.oReadResult, null);
+		} else if (c_oSerDocTableType.PermEnd === type) {
+			res = readPermEnd(length, this.bcr, this.oReadResult, this.oReadResult.lastPar);
+		} else {
+			res = c_oSerConstants.ReadUnknown;
+		}
         return res;
     };
     this.ReadCell = function(type, length, cell)
@@ -13783,8 +13920,13 @@ function Binary_oMathReader(stream, oReadResult, curNote, openParams)
 			res = readMoveRangeStart(length, this.bcr, this.stream, this.oReadResult, paragraphContent, false);
 		} else if (c_oSer_OMathContentType.MoveToRangeEnd === type && this.oReadResult.checkReadRevisions()) {
 			res = readMoveRangeEnd(length, this.bcr, this.stream, this.oReadResult, paragraphContent);
-		} else
-            res = c_oSerConstants.ReadUnknown;
+		} else if (c_oSer_OMathContentType.PermStart === type) {
+			res = readPermStart(length, this.bcr, this.oReadResult, paragraphContent);
+		} else if (c_oSer_OMathContentType.PermEnd === type) {
+			res = readPermEnd(length, this.bcr, this.oReadResult, paragraphContent);
+		} else {
+			res = c_oSerConstants.ReadUnknown;
+		}
 
 		if (oElem && bLast)
 			oElem.Correct_Content(false);
@@ -17268,6 +17410,7 @@ function DocReadResult(doc) {
 	this.endnotes = {};
 	this.endnoteRefs = [];
 	this.bookmarksStarted = {};
+	this.permRangesStarted = {};
 	this.moveRanges = {};
 	this.Application;
 	this.AppVersion;
@@ -17347,6 +17490,39 @@ DocReadResult.prototype = {
 			this.toNextPar.push({type: para_RevisionMove, elem: elem, id: id});
 		}
 	},
+	addPermStart: function(paragraphContent, elem, canAddToNext) {
+		let rangeId = elem.getRangeId();
+		if (undefined === rangeId || null === rangeId)
+			return;
+		
+		if (this.bCopyPaste)
+			return;
+		
+		if (paragraphContent)
+		{
+			this.permRangesStarted[rangeId] = {parent : paragraphContent, elem : elem};
+			paragraphContent.AddToContentToEnd(elem);
+		}
+		else if (canAddToNext)
+		{
+			this.toNextPar.push(elem);
+		}
+	},
+	addPermEnd: function(paragraphContent, elem, canAddToNext) {
+		let rangeId = elem.getRangeId();
+		if (!this.permRangesStarted[rangeId])
+			return;
+		
+		if (paragraphContent)
+		{
+			delete this.permRangesStarted[rangeId];
+			paragraphContent.AddToContentToEnd(elem);
+		}
+		else if (canAddToNext)
+		{
+			this.toNextPar.push(elem);
+		}
+	},
 	addToNextPar: function(par) {
 		if (this.toNextPar.length > 0) {
 			for (var i = 0; i < this.toNextPar.length; i++) {
@@ -17366,13 +17542,26 @@ DocReadResult.prototype = {
 							this.addMoveRangeEnd(par, elem.elem, elem.id, false);
 						}
 						break;
+					case para_PermStart:
+						this.addPermStart(par, elem.elem, false);
+						break;
+					case para_PermEnd:
+						this.addPermEnd(par, elem.elem, false);
+						break;
 				}
 			}
 			this.toNextPar = [];
 		}
 		this.lastPar = par;
 	},
-	deleteMarkupStartWithoutEnd: function(elems) {
+	deleteMarkupStartWithoutEnd: function() {
+		this._deleteMarkupStartWithoutEnd(this.bookmarksStarted);
+		this._deleteMarkupStartWithoutEnd(this.permRangesStarted);
+		//todo crush
+		// this._deleteMarkupStartWithoutEnd(this.moveRanges);
+	},
+	
+	_deleteMarkupStartWithoutEnd: function(elems) {
 		for (var id in elems) {
 			if (elems.hasOwnProperty(id)) {
 				let elem = elems[id];

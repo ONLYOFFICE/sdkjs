@@ -195,8 +195,8 @@ SlideLayout.prototype.getTheme = function(){
 };
 
 SlideLayout.prototype.getName = function () {
-	if (isNotEmptyString(this.cSld.Name))
-		return this.cSld.Name;
+	if (isNotEmptyString(this.cSld.name))
+		return this.cSld.name;
 
 	function isNotEmptyString(str) {
 		return typeof str === 'string' && str.length > 0;
@@ -248,6 +248,9 @@ SlideLayout.prototype.getName = function () {
 		}
 	}
 	return 'Text';
+};
+SlideLayout.prototype.setName = function (sName) {
+    this.setCSldName(sName);
 };
 SlideLayout.prototype.getType = function () {
 	return AscFormat.isRealNumber(this.type)

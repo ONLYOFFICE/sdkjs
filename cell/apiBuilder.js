@@ -54,7 +54,7 @@
 	 * @property {ApiComment[]} AllComments - Returns all comments from the current workbook including comments from all worksheets.
 	 * @property {ReferenceStyle} ReferenceStyle - Returns or sets the reference style.
 	 * @property {ApiWorksheetFunction} WorksheetFunction - Returns an object that represents the function list.
-	 * @property {ApiPivotTable[]} PivotTables - Returns all PivotTables.
+	 * @property {ApiPivotTable[]} PivotTables - Returns all pivot tables.
 	 */
 	var Api = window["Asc"]["spreadsheet_api"];
 
@@ -89,7 +89,7 @@
 	 * @property {Array} Comments - Returns all comments from the current worksheet.
 	 * @property {ApiFreezePanes} FreezePanes - Returns the freeze panes for the current worksheet.
 	 * @property {ApiProtectedRange[]} AllProtectedRanges - Returns all protected ranges from the current worksheet.
-	 * @property {ApiPivotTable[]} PivotTables - Returns all PivotTables on worksheet.
+	 * @property {ApiPivotTable[]} PivotTables - Returns all pivot tables from the current worksheet.
 	 */
 	function ApiWorksheet(worksheet) {
 		this.worksheet = worksheet;
@@ -133,7 +133,7 @@
 	 * @property {'xlDownward' | 'xlHorizontal' | 'xlUpward' | 'xlVertical'} Orientation - Sets an angle to the current cell range.
 	 * @property {ApiAreas} Areas - Returns a collection of the areas.
 	 * @property {ApiCharacters} Characters - Returns the ApiCharacters object that represents a range of characters within the object text. Use the ApiCharacters object to format characters within a text string.
-	 * @property {ApiPivotTable | null} PivotTable - Returns a PivotTable object that represents the PivotTable report containing the upper-left corner of the specified range.
+	 * @property {ApiPivotTable | null} PivotTable - Returns the ApiPivotTable object that represents the pivot table report containing the upper-left corner of the specified range.
 	 */
 	function ApiRange(range, areas) {
 		this.range = range;
@@ -373,38 +373,39 @@
 	}
 
 	/**
-	 * Class representing a PivotTable.
+	 * Class representing a pivot table.
 	 * @constructor
-	 * @property {string} Name - Returns or sets name of the PivotTable.
-	 * @property {boolean} ColumnGrand - Returns or sets PivotTable Grand Totals settings for columns.
-	 * @property {boolean} RowGrand - Returns or sets PivotTable Grand Totals settings for rows.
-	 * @property {boolean} DisplayFieldCaptions  - Returns or set show field headers for rows and columns.
-	 * @property {string} Title - Returns or sets the title of the PivotTable.
-	 * @property {string} Description - Returns or sets the description of the PivotTable.
-	 * @property {string} StyleName - Returns or sets the style name of the PivotTable.
-	 * @property {boolean} ShowTableStyleRowHeaders - Returns or sets the row headers style for PivotTable.
-	 * @property {boolean} ShowTableStyleColumnHeaders - Returns or sets the column headers style for PivotTable.
-	 * @property {boolean} ShowTableStyleRowStripes - Returns or sets the banded rows style for PivotTable.
-	 * @property {boolean} ShowTableStyleColumnStripes - Returns or sets the banded columns style for PivotTable.
-	 * @property {ApiRange} Source - Returns or sets source for the PivotTable.
-	 * @property {ApiRange | null} ColumnRange - Returns a Range object that represents the range that contains the column area in the PivotTable report.
-	 * @property {ApiRange | null} RowRange - Returns a Range object that represents the range that contains the row area in the PivotTable report.
-	 * @property {ApiRange} DataBodyRange - Returns a Range object that represents the range of values in a PivotTable.
-	 * @property {ApiRange | null} TableRange1 - Returns a Range object that represents the range containing the entire PivotTable report, but doesn't include page fields.
-	 * @property {ApiRange | null} TableRange2 - Returns a Range object that represents the range containing the entire PivotTable report, including page fields
-	 * @property {string} GrandTotalName - Sets the text string label that is displayed in the grand total column or row heading in the specified PivotTable report.
-	 * @property {boolean} RepeatAllLabels - Specifies whether to repeat item labels for all PivotFields in the specified PivotTable.
-	 * @property {object} RowAxisLayout - Sets the way the specified PivotTable items appear—in table format or in outline format.
-	 * @property {boolean} LayoutBlankLine - Sets PivotTable setting insert blank rows after each item.
-	 * @property {boolean} LayoutSubtotals - Sets PivotTable setting show subtotals.
-	 * @property {number} SubtotalLocation - Sets PivotTable setting layout subtotal location.
-	 * @property {ApiPivotField[]} PivotFields - Returns all PivotFields in PivotTable.
-	 * @property {ApiPivotField[]} ColumnFields - Returns array that are currently showing as column fields in PivotTable.
-	 * @property {ApiPivotField[]} DataFields - Returns array that are currently showing values fields in PivotTable.
-	 * @property {ApiPivotField[]} HiddenFields - Returns array that represents all not added fields in PivotTable.
-	 * @property {ApiPivotField[]} VisibleFields - Returns array that represents all not added fields in PivotTable.
-	 * @property {ApiPivotField[]} PageFields - Returns array that are currently showing as page fields in PivotTable.
-	 * @property {ApiPivotField[]} RowFields - Returns array that are currently showing as row fields in PivotTable.
+	 * @property {string} Name - Returns or sets a name of the pivot table.
+	 * @property {boolean} ColumnGrand - Returns or sets the <b>Grand Totals</b> setting for the pivot table columns.
+	 * @property {boolean} RowGrand - Returns or sets the <b>Grand Totals</b> setting for the pivot table rows.
+	 * @property {boolean} DisplayFieldCaptions - Returns or sets the setting which specifies whether to display field headers for rows and columns.
+	 * @property {string} Title - Returns or sets the pivot table title.
+	 * @property {string} Description - Returns or sets the pivot table description.
+	 * @property {string} StyleName - Returns or sets the pivot table style name.
+	 * @property {ApiWorksheet} Parent - Returns the parent object for the current pivot table.
+	 * @property {boolean} ShowTableStyleRowHeaders - Returns or sets the setting which specifies whether the row headers of the pivot table will be highlighted with the special formatting.
+	 * @property {boolean} ShowTableStyleColumnHeaders - Returns or sets the setting which specifies whether the column headers of the pivot table will be highlighted with the special formatting.
+	 * @property {boolean} ShowTableStyleRowStripes - Returns or sets the setting which specifies whether the background color alternation for odd and even rows will be enabled for the pivot table.
+	 * @property {boolean} ShowTableStyleColumnStripes - Returns or sets the setting which specifies whether the background color alternation for odd and even columns will be enabled for the pivot table.
+	 * @property {ApiRange} Source - Returns or sets the source range for the pivot table.
+	 * @property {ApiRange | null} ColumnRange - Returns a Range object that represents the column area in the pivot table report.
+	 * @property {ApiRange | null} RowRange - Returns a Range object that represents the row area in the pivot table report.
+	 * @property {ApiRange} DataBodyRange - Returns a Range object that represents the range of values in the pivot table.
+	 * @property {ApiRange | null} TableRange1 - Returns a Range object that represents the entire pivot table report, but doesn't include page fields.
+	 * @property {ApiRange | null} TableRange2 - Returns a Range object that represents the entire pivot table report, including page fields.
+	 * @property {string} GrandTotalName - Returns or sets the text string label that is displayed in the grand total column or row heading in the specified pivot table report.
+	 * @property {boolean} RepeatAllLabels - Specifies whether to repeat item labels for all pivot fields in the specified pivot table.
+	 * @property {object} RowAxisLayout - Sets the way the specified pivot table items appear — in table format or in outline format.
+	 * @property {boolean} LayoutBlankLine - Sets the setting which specifies whether to insert blank rows after each item in the pivot table.
+	 * @property {boolean} LayoutSubtotals - Sets the setting which specifies whether to show subtotals in the pivot table.
+	 * @property {number} SubtotalLocation - Sets the layout subtotal location.
+	 * @property {ApiPivotField[]} PivotFields - Returns all pivot fields in the pivot table.
+	 * @property {ApiPivotField[]} ColumnFields - Returns an array that is currently displayed as column fields in the pivot table.
+	 * @property {ApiPivotField[]} DataFields - Returns an array that is currently displayed as data fields in the pivot table.
+	 * @property {ApiPivotField[]} HiddenFields - Returns an array that represents all hidden fields in the pivot table.
+	 * @property {ApiPivotField[]} VisibleFields - Returns an array that represents all visible fields in the pivot table.
+	 * @property {ApiPivotField[]} PageFields - Returns an array that is currently displayed as page fields in the pivot table.
+	 * @property {ApiPivotField[]} RowFields - Returns an array that is currently displayed as row fields in the pivot table.
 	 */
 	function ApiPivotTable(pivot, api) {
 		/** @type {CT_pivotTableDefinition} */
@@ -413,35 +414,37 @@
 	}
 
 	/**
-	 * Class representing a PivotTable field.
+	 * Class representing a pivot table field.
 	 * @constructor
 	 * @property {number} Position - Returns or sets a value that represents the position of the field (first, second, third, and so on) among all the fields in its orientation (Rows, Columns, Pages, Data).
-	 * @property {number} Orientation - A pivot field orientation value that represents the location of the field in the specified PivotTable report.
+	 * @property {number} Orientation - Returns or sets a pivot field orientation value that represents the location of the field in the specified pivot table report.
 	 * @property {string} Caption - Returns or sets a value that represents the label text for the pivot field.
-	 * @property {string} Name - Returns or sets a value representing the name of the object.
-	 * @property {string} Value - Returns or sets a value representing the name of the object.
-	 * @property {string} SourceName - Returns source name.
-	 * @property {number} Index - Returns index.
-	 * @property {ApiPivotTable} Table - Returns ApiPivotField.
-	 * @property {ApiPivotTable} Parent - Returns parent object to this field.
-	 * @property {boolean} LayoutCompactRow - Returns or sets whether or not a PivotField is compacted.
-	 * @property {number} LayoutForm - Returns or sets the way the specified PivotTable items appear—in table format or in outline format.
-	 * @property {boolean} LayoutPageBreak - Returns or set the flag that represents page break is inserted after each field.
-	 * @property {boolean} ShowingInAxis - Returns if the PivotField is currently visible in the PivotTable or not.
-	 * @property {boolean} RepeatLabels - setting repeat items labels at each row.
-	 * @property {boolean} LayoutBlankLine - Returns or sets setting insert blank rows after each item.
-	 * @property {boolean} ShowAllItems - Returns or sets setting show items with no data.
-	 * @property {boolean} LayoutSubtotals - Returns or sets setting show subtotals.
-	 * @property {number} LayoutSubtotalLocation - Returns or sets setting layout subtotal location.
-	 * @property {string} SubtotalName - Returns or sets text string label displayed in the subtotal column or row heading in the specified PivotTable report.
-	 * @property {object} Subtotals - Returns or sets subtotals.
+	 * @property {string} Name - Returns or sets a value representing the object name.
+	 * @property {string} Value - Returns or sets a value representing the name of the specified field in the pivot table report.
+	 * @property {string} SourceName - Returns a source name for the pivot table field.
+	 * @property {number} Index - Returns an index for the pivot table field.
+	 * @property {ApiPivotTable} Table - Returns the ApiPivotTable object which represents the pivot table for the current field.
+	 * @property {ApiPivotTable} Parent - Returns the parent object for the current field.
+	 * @property {boolean} LayoutCompactRow - Returns or sets the setting which specifies whether a pivot table field is compacted.
+	 * @property {number} LayoutForm - Returns or sets the way the specified pivot table items appear — in table format or in outline format.
+	 * @property {boolean} LayoutPageBreak - Returns or sets the setting which specifies whether to insert a page break after each field.
+	 * @property {boolean} ShowingInAxis - Returns the setting which specifies whether the pivot table field is currently visible in the pivot table.
+	 * @property {boolean} RepeatLabels - Returns or sets the setting which specifies whether to repeat items labels at each row.
+	 * @property {boolean} LayoutBlankLine - Returns and sets the setting which specifies whether to insert blank rows after each item.
+	 * @property {boolean} ShowAllItems - Returns or sets the setting which specifies whether to show items with no data.
+	 * @property {boolean} LayoutSubtotals - Returns or sets the setting which specifies whether to show subtotals.
+	 * @property {number} LayoutSubtotalLocation - Returns or sets the layout subtotal location.
+	 * @property {string} SubtotalName - Returns or sets the text label displayed in the subtotal column or row heading in the specified pivot table report.
+	 * @property {object} Subtotals - Returns or sets the subtotals.
 	 * @property {number} Formula - Returns or sets a value that represents the object's formula.
-	 * @property {boolean} DragToColumn - Returns or sets the specified field, can be dragged to the column position or not.
-	 * @property {boolean} DragToRow - Returns or sets the specified field, can be dragged to the row position or not.
-	 * @property {boolean} DragToData - Returns or sets the specified field, can be dragged to the data position or not.
-	 * @property {boolean} DragToPage - Returns or sets the specified field, can be dragged to the page position or not.
+	 * @property {boolean} DragToColumn - Returns or sets the setting which specifies whether the specified field can be dragged to the column position.
+	 * @property {boolean} DragToRow - Returns or sets the setting which specifies whether the specified field can be dragged to the row position.
+	 * @property {boolean} DragToData - Returns or sets the setting which specifies whether the specified field can be dragged to the data position.
+	 * @property {boolean} DragToPage - Returns or sets the setting which specifies whether the specified field can be dragged to the page position.
 	 * @property {string | null} NumberFormat - Returns or sets a value that represents the format code for the object.
-	 * @property {string | number} CurrentPage - Returns the current page showing for the page field (valid only for page fields).
+	 * @property {string | number} CurrentPage - Returns the current page which is displayed for the page field (valid only for page fields).
+	 * @property {ApiPivotItem | ApiPivotItem[]} PivotItems - Returns an object that represents either a single pivot table item (the ApiPivotItem object)
+	 * or a collection of all the visible and hidden items (an array of the ApiPivotItem objects) in the specified field.
 	 */
 	function ApiPivotField(table, index, pivotField) {
 		/** @type {ApiPivotTable} */
@@ -453,18 +456,19 @@
 	}
 
 	/**
-	 * Class representing a PivotTable data field.
+	 * Class representing a pivot table data field.
 	 * @constructor
 	 * @extends ApiPivotField
-	 * @property {DataConsolidateFunctionType} Function - Returns the function performed in the data field.
-	 * @property {number} Position - Returns a value that represents the position of the field in category.
-	 * @property {PivotFieldOrientationType} Orientation - Returns a data field orientation value that represents the location.
-	 * @property {string} Name - Returns a value representing the name of the object.
-	 * @property {string} Value - Returns a value representing the value of the object.
-	 * @property {string} Caption - Returns a value that represents the label text for the data field.
-	 * @property {string | null} NumberFormat - Returns a value that represents the format code for the object.
-	 * @property {number} Index - Returns index of the data field.
-	 * @property {ApiPivotField} PivotField - Returns the pivotField from which the data field was created.
+	 * @property {DataConsolidateFunctionType} Function - Returns or sets a function for the data field.
+	 * @property {number} Position - Returns or sets a value that represents the data field position within a category.
+	 * @property {PivotFieldOrientationType} Orientation - Returns a data field orientation value
+	 * that represents the data field location in the specified pivot table report.
+	 * @property {string} Name - Returns or sets a value representing the object name.
+	 * @property {string} Value - Returns or sets a value representing the name of the specified data field in the pivot table report.
+	 * @property {string} Caption - Returns or sets a value that represents the label text for the data field.
+	 * @property {string | null} NumberFormat - Returns or sets a value that represents the format code for the object.
+	 * @property {number} Index - Returns an index of the data field.
+	 * @property {ApiPivotField} PivotField - Returns the pivot field from which the data field was created.
 	 */
 	function ApiPivotDataField(table, dataIndex, dataField) {
 		const pivotIndex = dataField.asc_getIndex();
@@ -480,13 +484,13 @@
 	ApiPivotDataField.prototype.constructor = ApiPivotDataField;
 
 	/**
-	 * Class representing a PivotTable field item.
+	 * Class representing a pivot table field item.
 	 * @constructor
-	 * @property {string} Name - Returns the name of Pivot Item.
-	 * @property {string} Caption - Returns the caption of Pivot Item.
-	 * @property {string} Value - Returns the value of Pivot Item.
-	 * @property {string} Parent - Returns the parent of Pivot Item.
-	 * @property {string} Field - Returns the field of Pivot Item.
+	 * @property {string} Name - Returns a name of the pivot item.
+	 * @property {string} Caption - Returns a caption of the pivot item.
+	 * @property {string} Value - Returns a name of the specified item in the pivot table field.
+	 * @property {string} Parent - Returns a parent of the pivot item.
+	 * @property {string} Field - Returns a field of the pivot item.
 	 */
 	function ApiPivotItem(field, item) {
 		/** @type{ApiPivotField} */
@@ -655,14 +659,15 @@
 	};
 
 	/**
-	 * Register a new custom functions library (see SetCustomFunctions plugin method).
+	 * Registers a new custom functions library (see the <b>SetCustomFunctions</b> plugin method).
 	 * The description of the function parameters and result is specified using JSDoc. The <em>@customfunction</em> tag is required in JSDoc.
 	 * Parameters and results can be specified as the <em>number / string / bool / any / number[][] / string[][] / bool[][] / any[][]</em> types.
 	 * Parameters can be required or optional. A user can also set a default value.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @param {string} sName - A name of library
-	 * @param {Function} Func - A custom functions library code.
+	 * @param {string} sName - The library name.
+	 * @param {Function} Func - The custom functions library code.
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddCustomFunction.js
 	 */
 	Api.prototype.AddCustomFunctionLibrary = function(sName, Func) {
@@ -1509,9 +1514,12 @@
 		if (!func) {
 			return;
 		}
+		let sendException = function () {
+			throwException(new Error('Arguments count error.'));
+		};
 		let argsCount = arg.length;
 		if (!func.checkArguments(argsCount)) {
-			throwException(new Error('Arguments count error.'));
+			sendException();
 			return null;
 		}
 
@@ -1524,16 +1532,57 @@
 				newArguments.push(new AscCommonExcel.cString(arg[i]));
 			} else if ('boolean' === typeof arg[i]) {
 				newArguments.push(new AscCommonExcel.cBool(arg[i]));
-			} else if (arg[i] instanceof ApiRange ) {
+			} else if (arg[i] instanceof ApiRange) {
 				//cArea/cRef/cArea3D/cRef3d
 				if (arg[i].range && arg[i].range.bbox && arg[i].range.worksheet) {
 					newArguments.push(new AscCommonExcel.cArea3D(arg[i].range.bbox.getName(), arg[i].range.worksheet, arg[i].range.worksheet));
 				} else {
-					throwException(new Error('Arguments type error.'));
+					sendException();
 					return null;
 				}
+			} else if (Array.isArray(arg[i])) {
+				//cArea/cRef/cArea3D/cRef3d
+				if (arg[i] && arg[i].length) {
+
+					let elem = arg[i];
+					let checkedArray = AscCommonExcel.cArray.prototype.checkValidArray.call(null, elem, true);
+					if (checkedArray) {
+						let newArray = new AscCommonExcel.cArray();
+						let bFillRes = newArray.fillFromArray(checkedArray, function (_elem) {
+							if ('number' === typeof _elem) {
+								return new AscCommonExcel.cNumber(_elem);
+							} else if ('string' === typeof _elem) {
+								return new AscCommonExcel.cString(_elem);
+							} else if ('boolean' === typeof _elem) {
+								return new AscCommonExcel.cBool(_elem);
+							}
+							return null;
+						});
+						if (bFillRes && newArray.isValidArray()) {
+							newArguments.push(newArray);
+						} else {
+							sendException();
+							return null;
+						}
+					} else {
+						sendException();
+						return null;
+					}
+				} else {
+					sendException();
+					return null;
+				}
+			} else if (arg[i] instanceof ApiName) {
+				let _name = arg[i].GetName && arg[i].GetName();
+				let _ws = arg[i].DefName && arg[i].DefName.parsedRef && arg[i].DefName.parsedRef.ws;
+				if (_name && _ws) {
+					let oName = new AscCommonExcel.cName(_name, _ws);
+					let nameRes = oName.getValue && oName.getValue();
+					newArguments.push(nameRes);
+				}
+
 			} else {
-				throwException(new Error('Arguments type error.'));
+				sendException();
 				return null;
 			}
 		}
@@ -1550,14 +1599,15 @@
 			return null;
 		}
 
-
+		let isArray = null;
 		if (AscCommonExcel.cElementType.cell === result.type || AscCommonExcel.cElementType.cell3D === result.type) {
 			result = result.getValue();
 			if (AscCommonExcel.cElementType.empty === result.type) {
 				result = new AscCommonExcel.cNumber(0);
 			}
 		} else if (AscCommonExcel.cElementType.array === result.type) {
-			result = result.getElement(0);
+			result = result.toArray(true);
+			isArray = true;
 		} else if (AscCommonExcel.cElementType.cellsRange === result.type || AscCommonExcel.cElementType.cellsRange3D === result.type) {
 			if (AscCommonExcel.cElementType.cellsRange === result.type) {
 				result = result.getValue2(0, 0);
@@ -1566,9 +1616,11 @@
 			}
 		}
 
-		if (result && result.getValue) {
+		if (!isArray && result && result.getValue) {
 			result = result.getValue();
-		} else {
+		}
+
+		if (result == null) {
 			throwException(new Error('Result type error.'));
 			return null;
 		}
@@ -7393,13 +7445,14 @@
 	};
 
 	/**
-	 * Inserts PivotTable on existing worksheet.
+	 * Inserts the specified pivot table into an existing worksheet.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} dataRef - Source data range.
-	 * @param {ApiRange} pivotRef - Range in which the table will be located.
-	 * @param {bool} confirmation - Replace the data in pivotRef (if it exists) or create a dialog box for this (if it exists).
+	 * @param {ApiRange} dataRef - The source data range.
+	 * @param {ApiRange} pivotRef - A range in which the pivot table will be located.
+	 * @param {bool} confirmation - Specifies whether to replace the data in the specified pivot table range (if it exists) or create a dialog box for this (if it exists).
 	 * @returns {ApiPivotTable}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/Cell/Api/Methods/InsertPivotExistingWorksheet.js
 	 */
 	Api.prototype.InsertPivotExistingWorksheet = function (dataRef, pivotRef, confirmation) {
@@ -7422,12 +7475,13 @@
 	};
 
 	/**
-	 * Inserts PivotTable on new worksheet.
+	 * Inserts the specified pivot table into a new worksheet.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} dataRef - Source data range.
-	 * @param {ApiRange} [newSheetName] - New worksheet name.
+	 * @param {ApiRange} dataRef - The source data range.
+	 * @param {ApiRange} [newSheetName] - A new worksheet name.
 	 * @returns {ApiPivotTable}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/Cell/Api/Methods/InsertPivotNewWorksheet.js
 	 */
 	Api.prototype.InsertPivotNewWorksheet = function (dataRef, newSheetName) {
@@ -7459,11 +7513,12 @@
 	};
 
 	/**
-	 * Returns PivotTable by name or null.
+	 * Returns a pivot table by its name, or null if it does not exist.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @param {string} name - Name of PivotTable.
+	 * @param {string} name - The pivot table name.
 	 * @returns {ApiPivotTable|null}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/Cell/Api/Methods/GetPivotByName.js
 	 */
 	Api.prototype.GetPivotByName = function (name) {
@@ -7477,9 +7532,10 @@
 	};
 
 	/**
-	 * Refreshs all PivotTables.
+	 * Refreshes all pivot tables.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/Cell/Api/Methods/RefreshAllPivots.js
 	 */
 	Api.prototype.RefreshAllPivots = function () {
@@ -7487,10 +7543,11 @@
 	};
 
 	/**
-	 * Returns all PivotTables.
+	 * Returns all pivot tables.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiPivotTable[]}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/Cell/Api/Methods/GetAllPivotTables.js
 	 */
 	Api.prototype.GetAllPivotTables = function () {
@@ -8040,8 +8097,11 @@
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetUsedRange.js
 	 */
 	ApiWorksheet.prototype.GetUsedRange = function () {
-		var rEnd = this.worksheet.getRowsCount() - 1;
-		var cEnd = this.worksheet.getColsCount() - 1;
+		const ws = this.worksheet;
+		const eot = ws.findEOT(true);
+		const rEnd = eot.row;
+		const cEnd = eot.col;
+
 		return new ApiRange(this.worksheet.getRange3(0, 0, (rEnd < 0) ? 0 : rEnd,
 			(cEnd < 0) ? 0 : cEnd));
 	};
@@ -8869,11 +8929,12 @@
 	};
 
 	/**
-	 * Return PivotTable by name.
+	 * Returns a pivot table by its name from the current worksheet, or null if it does not exist.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @param {string} name - Name of PivotTable.
+	 * @param {string} name - The pivot table name.
 	 * @returns {ApiPivotTable|null}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetPivotByName.js
 	 */
 	ApiWorksheet.prototype.GetPivotByName = function (name) {
@@ -8887,10 +8948,11 @@
 	};
 
 	/**
-	 * Returns all PivotTables on worksheet.
+	 * Returns all pivot tables from the current worksheet.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiPivotTable[]}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetAllPivotTables.js
 	 */
 	ApiWorksheet.prototype.GetAllPivotTables = function () {
@@ -8909,9 +8971,10 @@
 	});
 
 	/**
-	 * Refresh all PivotTables on current worksheet.
+	 * Refreshes all pivot tables on the current worksheet.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/RefreshAllPivots.js
 	 */
 	ApiWorksheet.prototype.RefreshAllPivots = function () {
@@ -10756,10 +10819,11 @@
 	};
 
 	/**
-	 * Returns a PivotTable object that represents the PivotTable report containing the upper-left corner of the specified range.
+	 * Returns the ApiPivotTable object that represents the pivot table report containing the upper-left corner of the specified range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiPivotTable | null}
+	 * @since 8.2.0
 	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetPivotTable.js
 	 */
 	ApiRange.prototype.GetPivotTable = function() {
@@ -13795,12 +13859,13 @@
 	/* Methods */
 
 	/**
-	 * Adds a data field to a PivotTable report.
+	 * Adds a data field to the pivot table report.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string} field - The index number or name of the field.
+	 * @param {number | string} field - The index number or name of the data field.
 	 * @returns {ApiPivotDataField}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/AddDataField.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/AddDataField.js
 	 */
 	ApiPivotTable.prototype.AddDataField = function (field) {
 		let pivotIndex = -1;
@@ -13822,16 +13887,18 @@
 		return null;
 	};
 	/**
-	 * Adds row, column, and page fields to a PivotTable report.
+	 * Adds the row, column, and page fields to the pivot table report.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {Object} options
-	 * @param {number | string | number[] | string[]} [options.rows] - Specifies an array of field names or ids to be added as rows or added to the category axis.
-	 * @param {number | string | number[] | string[]} [options.columns] - Specifies an array of field names or ids to be added as columns or added to the series axis.
-	 * @param {number | string | number[] | string[]} [options.pages] - Specifies an array of field names or ids to be added as pages or added to the page area.
-	 * @param {boolean} [options.addToTable] - Applies only to PivotTable reports. True to add the specified fields to the report (none of the existing fields are replaced).
-	 * False to replace existing fields with the new fields. The default value is False.
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/AddFields.js
+	 * @param {Object} options - The settings for adding row, column, and page fields to the pivot table report.
+	 * @param {number | string | number[] | string[]} [options.rows] - An array of field names or IDs to be added as rows or added to the category axis.
+	 * @param {number | string | number[] | string[]} [options.columns] - An array of field names or IDs to be added as columns or added to the series axis.
+	 * @param {number | string | number[] | string[]} [options.pages] - An array of field names or IDs to be added as pages or added to the page area.
+	 * @param {boolean} [options.addToTable] - Specifies whether to apply fields only to the pivot table reports. If this parameter is set to <b>true</b>,
+	 * the specified fields will be added to the report (none of the existing fields are replaced).
+	 * If <b>false</b>, the existing fields will be replaced with the new fields. The default value is <b>false</b>.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/AddFields.js
 	 */
 	ApiPivotTable.prototype.AddFields = function (options) {
 		options['rows'] = options['rows'] != null ? options['rows'] : [];
@@ -13885,19 +13952,21 @@
 		});
 	};
 	/**
-	 * Deletes all filters currently applied to the PivotTable.
+	 * Deletes all filters currently applied to the pivot table.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/ClearAllFilters.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/ClearAllFilters.js
 	 */
 	ApiPivotTable.prototype.ClearAllFilters = function () {
 		this.pivot.asc_removeFilters(this.api);
 	};
 	/**
-	 * Clears the Pivot Table.
+	 * Clears the pivot table.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/ClearTable.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/ClearTable.js
 	 */
 	ApiPivotTable.prototype.ClearTable = function () {
 		const ws = this.pivot.worksheet;
@@ -13921,12 +13990,15 @@
 		private_MakeError("Unknown error!");
 	};
 	/**
-	 * Returns the value for the data filed in a PivotTable.
+	 * Returns the value for the data field in a pivot table.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {string[]} items - Describes a single cell in the PivotTable report.
+	 * @param {string[]} items - Describes a single cell in the pivot table report.
+	 * For example, "'Estimated Costs' Tables May", which shows the estimated costs for tables in May
+	 * (Data field = Costs, Product = Tables, Month = May).
 	 * @returns {number | null}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetData.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetData.js
 	 */
 	ApiPivotTable.prototype.GetData = function (items) {
 		const params = this.pivot.asc_getDataToGetPivotData(items);
@@ -13938,13 +14010,14 @@
 		return null;
 	};
 	/**
-	 * Returns a Range object with information about a data item in a PivotTable report.
+	 * Returns a Range object with information about a data item in the pivot table report.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {string} [dataField]
-	 * @param {string[]} [fieldItemsArray]
+	 * @param {string} [dataField] - The name of the field containing the data for the PivotTable.
+	 * @param {string[]} [fieldItemsArray] - An array of field items from the pivot table.
 	 * @returns {ApiRange}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetPivotData.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetPivotData.js
 	 */
 	ApiPivotTable.prototype.GetPivotData = function (dataField, fieldItemsArray) {
 		const cell = this.pivot.getCellByGetPivotDataParams({
@@ -13957,13 +14030,14 @@
 		return null;
 	};
 	/**
-	 * Returns an collection that represents either a single PivotTable field
-	 * or a collection of both the visible and hidden fields in the PivotTable report.
+	 * Returns a collection that represents either a single pivot table field
+	 * or a collection of both the visible and hidden fields in the pivot table report.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @param {string | number} [field] - The name or index of the field to be returned.
 	 * @returns {ApiPivotField[] | ApiPivotField | ApiPivotDataField | null}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetPivotFields.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetPivotFields.js
 	 */
 	ApiPivotTable.prototype.GetPivotFields = function (field) {
 		const pivotFields = this.pivot.asc_getPivotFields();
@@ -13996,10 +14070,11 @@
 	 * Returns the value of a pivot table cell.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {number} rowLine
-	 * @param {number} colLine
+	 * @param {number} rowLine - The position of the pivot line (a line of rows in the pivot table) on the row area.
+	 * @param {number} colLine - The position of the pivot line (a line of columns in the pivot table) on the column area.
 	 * @returns {number | string | null}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/PivotValueCell.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/PivotValueCell.js
 	 */
 	ApiPivotTable.prototype.PivotValueCell = function (rowLine, colLine) {
 		if (rowLine > 0 && colLine > 0) {
@@ -14017,13 +14092,14 @@
 		return null;
 	};
 	/**
-	 * Show details of pivot cell.
+	 * Shows details of the pivot table cell.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {number} rowLine - report area row
-	 * @param {number} colLine - report area column
-	 * @returns {boolean} success
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/ShowDetails.js
+	 * @param {number} rowLine - The position of the pivot line (a line of rows in the pivot table) on the row area.
+	 * @param {number} colLine - The position of the pivot line (a line of columns in the pivot table) on the column area.
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/ShowDetails.js
 	 */
 	ApiPivotTable.prototype.ShowDetails = function (rowLine, colLine) {
 		if (rowLine > 0 && colLine > 0) {
@@ -14041,29 +14117,32 @@
 		return false;
 	};
 	/**
-	 * Refreshes the PivotTable report from the source data.
+	 * Refreshes the pivot table report from the source data.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/RefreshTable.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/RefreshTable.js
 	 */
 	ApiPivotTable.prototype.RefreshTable = function () {
 		this.pivot.asc_refresh(this.api);
 	};
 	/**
-	 * Updates the PivotTable.
+	 * Updates the current pivot table.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/Update.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/Update.js
 	 */
 	ApiPivotTable.prototype.Update = function () {
 		this.pivot.asc_refresh(this.api);
 	};
 	/**
-	 * Specifies whether to repeat item labels for all PivotFields in the specified PivotTable.
+	 * Specifies whether to repeat item labels for all pivot fields in the specified pivot table.
 	 * @memberof ApiPivotTable
-	 * @param {boolean} repeat - Specifies whether to repeat all field item labels in a PivotTable report.
+	 * @param {boolean} repeat - Specifies whether to repeat all field item labels in a pivot table report.
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetRepeatAllLabels.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/SetRepeatAllLabels.js
 	 */
 	ApiPivotTable.prototype.SetRepeatAllLabels = function (repeat) {
 		if (typeof repeat == "boolean") {
@@ -14080,12 +14159,13 @@
 		}
 	});
 	/**
-	 * Sets the way the specified PivotTable items appear—in table format or in outline format.
+	 * Sets the way the specified pivot table items appear — in table format or in outline format.
 	 * @memberof ApiPivotTable
-	 * @param {PivotLayoutType} type - Type of layot report form.
-	 * @param {boolean} compact - Use compact form or not.
+	 * @param {PivotLayoutType} type - The layout type of the pivot table report.
+	 * @param {boolean} compact - Specifies whether the pivot table items will be displayed in the compact form.
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetRowAxisLayout.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/SetRowAxisLayout.js
 	 */
 	ApiPivotTable.prototype.SetRowAxisLayout = function (type, compact) {
 		let props = null;
@@ -14115,14 +14195,16 @@
 		}
 	});
 	/**
+	 * The type of the pivot table subtotal layout.
 	 * @typedef { "Hidden" | "Top" | "Bottom" } PivotSubtotalLayoutType
 	 */
 	/**
-	 * Sets PivotTable setting layout subtotal location.
+	 * Sets the layout subtotal location in the pivot table.
 	 * @memberof ApiPivotTable
-	 * @param {PivotSubtotalLayoutType} type - Type of subtotal layout
+	 * @param {PivotSubtotalLayoutType} type - The type of the pivot table subtotal layout.
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetSubtotalLocation.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/SetSubtotalLocation.js
 	 */
 	ApiPivotTable.prototype.SetSubtotalLocation = function (type) {
 		if ( typeof type == "string" && (type === "Hidden" || type === "Bottom" || type === "Top") ) {
@@ -14145,11 +14227,12 @@
 		}
 	});
 	/**
-	 * Removes field from all PivotTable categories.
+	 * Removes the specified field from all the pivot table categories.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string} identifier - The index number or name of the field.
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/RemoveField.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/RemoveField.js
 	 */
 	ApiPivotTable.prototype.RemoveField = function (identifier) {
 		const pivotField = this.GetPivotFields(identifier);
@@ -14159,20 +14242,24 @@
 	};
 
 	/**
+	 * The direction to move the pivot table field.
 	 * @typedef { "Up" | "Down" | "Begin" | "End" } PivotMoveFieldType
 	 */
 	/**
+	 * The pivot field orientation type.
 	 * @typedef {"Rows" | "Columns" | "Filters" | "Values" | "Hidden" } PivotFieldOrientationType
 	 */
 
 	/**
-	 * Moves field from one category to another.
+	 * Moves the specified field from one category to another.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string} identifier - The index number or name of the field.
-	 * @param {PivotMoveFieldType | PivotFieldOrientationType} type - The type of the field to move.
-	 * @param {number} [index] - The index of the field in new category.
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/MoveField.js
+	 * @param {PivotMoveFieldType | PivotFieldOrientationType} type - The direction to move the pivot table field,
+	 * or the pivot field orientation type.
+	 * @param {number} [index] - The field index in a new category.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/MoveField.js
 	 */
 	ApiPivotTable.prototype.MoveField = function (identifier, type, index) {
 		const pivotField = this.GetPivotFields(identifier);
@@ -14181,10 +14268,11 @@
 		}
 	};
 	/**
-	 * Selects the PivotTable.
+	 * Selects the current pivot table.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/Select.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/Select.js
 	 */
 	ApiPivotTable.prototype.Select = function () {
 		this.pivot.asc_select(this.api);
@@ -14193,11 +14281,13 @@
 	/* Attributes */
 
 	/**
-	 * Returns an collection that represents a collection of all column fields.
+	 * Returns a collection that is currently displayed as column fields in the pivot table.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
+	 * @param {number | string | undefined} field - The name or index of the field to be returned.
 	 * @returns {ApiPivotField[]}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetColumnFields.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetColumnFields.js
 	 */
 	ApiPivotTable.prototype.GetColumnFields = function (field) {
 		const pivotFields = this.pivot.asc_getPivotFields();
@@ -14215,13 +14305,14 @@
 		}
 	});
 	/**
-	 * Returns an collection that represents either a single PivotTable data field
+	 * Returns a collection that represents either a single pivot table data field
 	 * or a collection of all visible data fields.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string |undefined} field - The name or index of the field to be returned.
 	 * @returns {ApiPivotDataField[] | ApiPivotDataField | null}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetDataFields.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetDataFields.js
 	 */
 	ApiPivotTable.prototype.GetDataFields = function (field) {
 		const dataFields = this.pivot.asc_getDataFields();
@@ -14255,11 +14346,12 @@
 	});
 
 	/**
-	 * Returns array that represents all not added fields in PivotTable.
+	 * Returns an array that represents all the hidden fields in the pivot table.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiPivotField[]}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetHiddenFields.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetHiddenFields.js
 	 */
 	ApiPivotTable.prototype.GetHiddenFields = function () {
 		var fields = this.pivot.asc_getPivotFields();
@@ -14278,11 +14370,12 @@
 	});
 
 	/**
-	 * Returns array that represents all added fields in PivotTable.
+	 * Returns an array that represents all the visible fields in the pivot table.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiPivotField[]}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetVisibleFields.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetVisibleFields.js
 	 */
 	ApiPivotTable.prototype.GetVisibleFields = function () {
 		const pivotFields = this.pivot.asc_getPivotFields();
@@ -14302,12 +14395,14 @@
 	});
 
 	/**
-	 * Returns an collection that represents either a single PivotTable page field
+	 * Returns a collection that represents either a single pivot table page field
 	 * or a collection of all visible page fields.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
+	 * @param {number | string |undefined} field - The name or index of the field to be returned.
 	 * @returns {ApiPivotField[]}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetPageFields.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetPageFields.js
 	 */
 	ApiPivotTable.prototype.GetPageFields = function (field) {
 		const pivotFields = this.pivot.asc_getPivotFields();
@@ -14325,11 +14420,13 @@
 		}
 	});
 	/**
-	 * Returns an collection that represents a collection of all row fields.
+	 * Returns a collection that is currently displayed as row fields in the pivot table.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
+	 * @param {number | string |undefined} field - The name or index of the field to be returned.
 	 * @returns {ApiPivotField[]}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetRowFields.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetRowFields.js
 	 */
 	ApiPivotTable.prototype.GetRowFields = function (field) {
 		const pivotFields = this.pivot.asc_getPivotFields();
@@ -14347,22 +14444,24 @@
 		}
 	});
 	/**
-	 * Returns name of the PivotTable.
+	 * Returns the pivot table name.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetName.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetName.js
 	 */
 	ApiPivotTable.prototype.GetName = function () {
 		return this.pivot.asc_getName();
 	};
 
 	/**
-	 * Sets name of the PivotTable.
+	 * Sets the pivot table name.
 	 * @memberof ApiPivotTable
-	 * @param {string} name - Name for PivotTable.
+	 * @param {string} name - The pivot table name.
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetName.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/SetName.js
 	 */
 	ApiPivotTable.prototype.SetName = function (name) {
 		if (typeof name == "string" && name.trim().length) {
@@ -14384,22 +14483,24 @@
 	});
 
 	/**
-	 * Returns PivotTable Grand Totals settings for columns.
+	 * Returns the <b>Grand Totals</b> setting of the pivot table columns.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetColumnGrand.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetColumnGrand.js
 	 */
 	ApiPivotTable.prototype.GetColumnGrand = function () {
 		return this.pivot.asc_getColGrandTotals();
 	};
 
 	/**
-	 * Sets PivotTable Grand Totals settings for columns.
+	 * Sets the <b>Grand Totals</b> setting to the pivot table columns.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {boolean} show - Shows grand totals for columns or not.
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetColumnGrand.js
+	 * @param {boolean} show - Specifies whether to display the grand totals for columns.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/SetColumnGrand.js
 	 */
 	ApiPivotTable.prototype.SetColumnGrand = function (show) {
 		if (typeof show == "boolean") {
@@ -14421,22 +14522,24 @@
 	});
 
 	/**
-	 * Returns PivotTable Grand Totals settings for rows.
+	 * Returns the <b>Grand Totals</b> setting of the pivot table rows.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetRowGrand.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetRowGrand.js
 	 */
 	ApiPivotTable.prototype.GetRowGrand = function () {
 		return this.pivot.asc_getRowGrandTotals();
 	};
 
 	/**
-	 * Sets PivotTable Grand Totals settings for rows.
+	 * Sets the <b>Grand Totals</b> setting to the pivot table rows.
 	 * @memberof ApiPivotTable
-	 * @param {boolean} show - Shows grand totals for rows or not.
+	 * @param {boolean} show - Specifies whether to display the grand totals for rows.
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetRowGrand.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/SetRowGrand.js
 	 */
 	ApiPivotTable.prototype.SetRowGrand = function (show) {
 		if (typeof show == "boolean") {
@@ -14457,14 +14560,20 @@
 		}
 	});
 
-	/** @typedef {"OverThenDown" | "DownThenOver"} FieldsInReportFilterType */
+	/**
+	 * Specifies how the report filter fields are located.
+	 * @typedef {"OverThenDown" | "DownThenOver"} FieldsInReportFilterType
+	 */
 
 	/**
-	 * Returns PivotTable display fields in report filter area settings.
+	 * Returns the pivot table display fields in the report filter area settings.
+	 * The returned object has the following structure: <em>{Type: FieldsInReportFilterType, ReportFilterFields: number}</em>,
+	 * where <b>Type</b> specifies how the report filter fields are located, <b>ReportFilterFields</b> defines a number of the report filter fields.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @returns {{Type: FieldsInReportFilterType, ReportFilterFields: number}}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetDisplayFieldsInReportFilterArea.js
+	 * @returns {object}
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetDisplayFieldsInReportFilterArea.js
 	 */
 	ApiPivotTable.prototype.GetDisplayFieldsInReportFilterArea = function () {
 		return {
@@ -14474,12 +14583,13 @@
 	};
 
 	/**
-	 * Returns PivotTable display fields in report filter area settings.
+	 * Sets the pivot table display fields in the report filter area settings.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {FieldsInReportFilterType} type
-	 * @param {number} fields - Count of report filter fields.
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetDisplayFieldsInReportFilterArea.js
+	 * @param {FieldsInReportFilterType} type - Specifies how the report filter fields are located.
+	 * @param {number} fields - A number of the report filter fields.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/SetDisplayFieldsInReportFilterArea.js
 	 */
 	ApiPivotTable.prototype.SetDisplayFieldsInReportFilterArea = function (type, fields) {
 		var props = null;
@@ -14508,22 +14618,24 @@
 	};
 
 	/**
-	 * Returns PivotTable setting show field headers for rows and columns.
+	 * Returns the setting which specifies whether to display field headers for rows and columns.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetDisplayFieldCaptions.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetDisplayFieldCaptions.js
 	 */
 	ApiPivotTable.prototype.GetDisplayFieldCaptions = function () {
 		return this.pivot.asc_getShowHeaders();
 	};
 
 	/**
-	 * Sets show field headers for rows and columns.
+	 * Returns the setting which specifies whether to display field headers for rows and columns.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {boolean} show - Flag show or not field headers for rows and columns.
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetDisplayFieldCaptions.js
+	 * @param {boolean} show - Specifies whether to display field headers for rows and columns.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/SetDisplayFieldCaptions.js
 	 */
 	ApiPivotTable.prototype.SetDisplayFieldCaptions = function (show) {
 		if (typeof show == "boolean") {
@@ -14545,22 +14657,24 @@
 	});
 
 	/**
-	 * Returns the title of the PivotTable.
+	 * Returns the pivot table title.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetTitle.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetTitle.js
 	 */
 	ApiPivotTable.prototype.GetTitle = function () {
 		return this.pivot.asc_getTitle() || "";
 	};
 
 	/**
-	 * Sets the title of the PivotTable.
+	 * Sets the pivot table title.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {string} title - Title for PivotTable.
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetTitle.js
+	 * @param {string} title - The pivot table title.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/SetTitle.js
 	 */
 	ApiPivotTable.prototype.SetTitle = function (title) {
 		if (typeof title == "string") {
@@ -14582,22 +14696,24 @@
 	});
 
 	/**
-	 * Returns the description of the PivotTable.
+	 * Returns the pivot table description.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetDescription.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetDescription.js
 	 */
 	ApiPivotTable.prototype.GetDescription = function () {
 		return this.pivot.asc_getDescription() || "";
 	};
 
 	/**
-	 * Sets the description of the PivotTable.
+	 * Sets the pivot table description.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {string} description - Description for PivotTable.
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetDescription.js
+	 * @param {string} description - The pivot table description.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/SetDescription.js
 	 */
 	ApiPivotTable.prototype.SetDescription = function (description) {
 		if (typeof description == "string") {
@@ -14619,22 +14735,24 @@
 	});
 
 	/**
-	 * Returns the style name of the PivotTable.
+	 * Returns the pivot table style name.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetStyleName.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetStyleName.js
 	 */
 	ApiPivotTable.prototype.GetStyleName = function () {
 		return this.pivot.asc_getStyleInfo().asc_getName();
 	};
 
 	/**
-	 * Sets the style of the PivotTable.
+	 * Sets the pivot table style name.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {string} name - Style name.
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetStyleName.js
+	 * @param {string} name - The pivot table style name.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/SetStyleName.js
 	 */
 	ApiPivotTable.prototype.SetStyleName = function (name) {
 		if (typeof name == "string" && name.trim().length) {
@@ -14654,22 +14772,24 @@
 	});
 
 	/**
-	 * Returns the row headers style for PivotTable.
+	 * Returns the setting which specifies whether the row headers of the pivot table will be highlighted with the special formatting.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetTableStyleRowHeaders.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetTableStyleRowHeaders.js
 	 */
 	ApiPivotTable.prototype.GetTableStyleRowHeaders = function () {
 		return this.pivot.asc_getStyleInfo().asc_getShowRowHeaders();
 	};
 
 	/**
-	 * Sets the row headers style for PivotTable.
+	 * Sets the setting which specifies whether the row headers of the pivot table will be highlighted with the special formatting.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {boolean} show - Flag show or not row headers.
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetTableStyleRowHeaders.js
+	 * @param {boolean} show - Specifies whether the row headers of the pivot table will be highlighted with the special formatting.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/SetTableStyleRowHeaders.js
 	 */
 	ApiPivotTable.prototype.SetTableStyleRowHeaders = function (show) {
 		if (typeof show == "boolean") {
@@ -14689,22 +14809,24 @@
 	});
 
 	/**
-	 * Returns the column headers style for PivotTable.
+	 * Returns the setting which specifies whether the column headers of the pivot table will be highlighted with the special formatting.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetTableStyleColumnHeaders.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetTableStyleColumnHeaders.js
 	 */
 	ApiPivotTable.prototype.GetTableStyleColumnHeaders = function () {
 		return this.pivot.asc_getStyleInfo().asc_getShowColHeaders();
 	};
 
 	/**
-	 * Sets the column headers style for PivotTable.
+	 * Sets the setting which specifies whether the column headers of the pivot table will be highlighted with the special formatting.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {boolean} show - Flag show or not column headers.
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetTableStyleColumnHeaders.js
+	 * @param {boolean} show - Specifies whether the column headers of the pivot table will be highlighted with the special formatting.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/SetTableStyleColumnHeaders.js
 	 */
 	ApiPivotTable.prototype.SetTableStyleColumnHeaders = function (show) {
 		if (typeof show == "boolean") {
@@ -14724,22 +14846,24 @@
 	});
 
 	/**
-	 * Returns the banded rows style for PivotTable.
+	 * Returns the setting which specifies whether the background color alternation for odd and even rows will be enabled for the pivot table.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetTableStyleRowStripes.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetTableStyleRowStripes.js
 	 */
 	ApiPivotTable.prototype.GetTableStyleRowStripes = function () {
 		return this.pivot.asc_getStyleInfo().asc_getShowRowStripes();
 	};
 
 	/**
-	 * Sets the banded rows style for PivotTable.
+	 * Sets the setting which specifies whether the background color alternation for odd and even rows will be enabled for the pivot table.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {boolean} show - Flag show or not banded rows.
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetTableStyleRowStripes.js
+	 * @param {boolean} show - Specifies whether the background color alternation for odd and even rows will be enabled for the pivot table.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/SetTableStyleRowStripes.js
 	 */
 	ApiPivotTable.prototype.SetTableStyleRowStripes = function (show) {
 		if (typeof show == "boolean") {
@@ -14759,22 +14883,24 @@
 	});
 
 	/**
-	 * Returns the banded columns style for PivotTable.
+	 * Returns the setting which specifies whether the background color alternation for odd and even columns will be enabled for the pivot table.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetTableStyleColumnStripes.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetTableStyleColumnStripes.js
 	 */
 	ApiPivotTable.prototype.GetTableStyleColumnStripes = function () {
 		return this.pivot.asc_getStyleInfo().asc_getShowColStripes();
 	};
 
 	/**
-	 * Sets the banded columns style for PivotTable.
+	 * Sets the setting which specifies whether the background color alternation for odd and even columns will be enabled for the pivot table.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {boolean} show - Flag show or not banded columns.
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetTableStyleColumnStripes.js
+	 * @param {boolean} show - Specifies whether the background color alternation for odd and even columns will be enabled for the pivot table.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/SetTableStyleColumnStripes.js
 	 */
 	ApiPivotTable.prototype.SetTableStyleColumnStripes = function (show) {
 		if (typeof show == "boolean") {
@@ -14794,11 +14920,12 @@
 	});
 
 	/**
-	 * Returns source for the PivotTable.
+	 * Returns the source range for the pivot table.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetSource.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetSource.js
 	 */
 	ApiPivotTable.prototype.GetSource = function () {
 		var location = this.pivot.getDataLocation();
@@ -14806,11 +14933,12 @@
 	};
 
 	/**
-	 * Sets source for the PivotTable.
+	 * Sets the source range for the pivot table.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} source - Range where pivot table will be located.
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetSource.js
+	 * @param {ApiRange} source - The range where the pivot table will be located.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/SetSource.js
 	 */
 	ApiPivotTable.prototype.SetSource = function (source) {
 		if (source instanceof ApiRange) {
@@ -14833,11 +14961,12 @@
 	});
 
 	/**
-	 * Returns a Range object that represents the range that contains the column area in the PivotTable report.
+	 * Returns a Range object that represents the column area in the pivot table report.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange | null}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetColumnRange.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetColumnRange.js
 	 */
 	ApiPivotTable.prototype.GetColumnRange = function () {
 		const res = this.pivot.asc_getColumnRange();
@@ -14854,11 +14983,12 @@
 	});
 
 	/**
-	 * Returns a Range object that represents the range that contains the row area in the PivotTable report.
+	 * Returns a Range object that represents the row area in the pivot table report.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange | null}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetRowRange.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetRowRange.js
 	 */
 	ApiPivotTable.prototype.GetRowRange = function () {
 		const res = this.pivot.asc_getRowRange();
@@ -14875,11 +15005,12 @@
 	});
 
 	/**
-	 * Returns a Range object that represents the range of values in a PivotTable.
+	 * Returns a Range object that represents the range of values in the pivot table.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetDataBodyRange.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetDataBodyRange.js
 	 */
 	ApiPivotTable.prototype.GetDataBodyRange = function () {
 		const res = this.pivot.asc_getDataBodyRange();
@@ -14896,12 +15027,12 @@
 	});
 
 	/**
-	 * Returns a Range object that represents the range containing the entire PivotTable report,
-	 * but doesn't include page fields.
+	 * Returns a Range object that represents the entire pivot table report, but doesn't include page fields.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange | null}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetTableRange1.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetTableRange1.js
 	 */
 	ApiPivotTable.prototype.GetTableRange1 = function () {
 		var ref =  (this.pivot.location ? this.pivot.location.ref : null);
@@ -14915,12 +15046,12 @@
 	});
 
 	/**
-	 * Returns a Range object that represents the range containing the entire PivotTable report,
-	 * including page fields.
+	 * Returns a Range object that represents the entire pivot table report, including page fields.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange | null}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetTableRange2.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetTableRange2.js
 	 */
 	ApiPivotTable.prototype.GetTableRange2 = function () {
 		var ref =  (this.pivot.location ? this.pivot.location.ref : null);
@@ -14946,24 +15077,24 @@
 	});
 
 	/**
-	 * Returns the text string label that is displayed in the grand total column
-	 * or row heading in the specified PivotTable report.
+	 * Returns the text string label that is displayed in the grand total column or row heading in the specified pivot table report.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetGrandTotalName.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetGrandTotalName.js
 	 */
 	ApiPivotTable.prototype.GetGrandTotalName = function () {
 		return ( this.pivot.asc_getGrandTotalCaption() || AscCommon.translateManager.getValue(AscCommonExcel.GRAND_TOTAL_CAPTION) );
 	};
 
 	/**
-	 * Sets the text string label that is displayed in the grand total column
-	 * or row heading in the specified PivotTable report.
+	 * Sets the text string label that is displayed in the grand total column or row heading in the specified pivot table report.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {string} name - Grand total name.
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetGrandTotalName.js
+	 * @param {string} name - The grand total name.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/SetGrandTotalName.js
 	 */
 	ApiPivotTable.prototype.SetGrandTotalName = function (name) {
 		if (typeof name == "string") {
@@ -14984,11 +15115,12 @@
 		}
 	});
 	/**
-	 * Sets PivotTable setting insert blank rows after each item.
+	 * Sets the setting which specifies whether to insert blank rows after each item.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {boolean} insert - Flag insert blank row after each item or not.
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetLayoutBlankLine.js
+	 * @param {boolean} insert - Specifies whether to insert blank rows after each item.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/SetLayoutBlankLine.js
 	 */
 	ApiPivotTable.prototype.SetLayoutBlankLine = function (insert) {
 		if (typeof insert == "boolean") {
@@ -15007,11 +15139,12 @@
 	});
 
 	/**
-	 * Sets PivotTable setting show subtotals.
+	 * Sets the setting which specifies whether to show subtotals.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {boolean} show - Flag show subtotals or not.
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetLayoutSubtotals.js
+	 * @param {boolean} show - Specifies whether to show subtotals.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/SetLayoutSubtotals.js
 	 */
 	ApiPivotTable.prototype.SetLayoutSubtotals = function (show) {
 		if (typeof show == "boolean") {
@@ -15030,11 +15163,12 @@
 	});
 
 	/**
-	 * Returns Pivot Table parent
+	 * Returns the parent object for the current pivot table.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiWorksheet} - Pivot Table parent.
-	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetParent.js
+	 * @returns {ApiWorksheet} - The parent object for the current pivot table.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetParent.js
 	 */
 	ApiPivotTable.prototype.GetParent = function () {
 		return new ApiWorksheet(this.pivot.worksheet);
@@ -15055,21 +15189,24 @@
 	/** Methods */
 
 	/**
-	 * Removes data field from category.
+	 * Removes  the current data field from the category.
 	 * @memberof ApiPivotDataField
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/ApiPivotDataField/Methods/Remove.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotDataField/Methods/Remove.js
 	 */
 	ApiPivotDataField.prototype.Remove = function () {
 		this.table.pivot.asc_removeDataField(this.table.api, this.index, this.dataIndex);
 	};
 	/**
-	 * Moves field inside category.
+	 * Moves the current data field inside the category.
 	 * @memberof ApiPivotDataField
 	 * @typeofeditors ["CSE"]
-	 * @param {PivotMoveFieldType | PivotFieldOrientationType} type - The type of the field to move.
-	 * @param {number} [index] - The index of the field in new category.
-	 * @see office-js-api/Examples/ApiPivotDataField/Methods/Move.js
+	 * @param {PivotMoveFieldType | PivotFieldOrientationType} type - The direction to move the pivot table field,
+	 * or the pivot field orientation type.
+	 * @param {number} [index] - The index of the data field in a new category.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotDataField/Methods/Move.js
 	 */
 	ApiPivotDataField.prototype.Move = function (type, index) {
 		function getIndexTo(type, indexFrom, fields) {
@@ -15115,17 +15252,18 @@
 	/** Attributes */
 
 	/**
-	 * Type of calculation to perform on the data field items.
+	 * The type of calculation to perform on the data field items.
 	 * @typedef {"Average" | "CountNumbers" | "Count" | "Max" | "Min" | "Product" |
 	 * "StdDev" | "StdDevP" | "Sum" | "Var" | "VarP"} DataConsolidateFunctionType
 	 */
 
 	/**
-	 * Sets the function performed in the data field.
+	 * Sets a function to the current data field.
 	 * @memberof ApiPivotDataField
 	 * @typeofeditors ["CSE"]
-	 * @param {DataConsolidateFunctionType} func - The function performed in the added data field.
-	 * @see office-js-api/Examples/ApiPivotDataField/Methods/SetFunction.js
+	 * @param {DataConsolidateFunctionType} func - The function to perform in the added data field.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotDataField/Methods/SetFunction.js
 	 */
 	ApiPivotDataField.prototype.SetFunction = function (func) {
 		const field = new Asc.CT_DataField();
@@ -15170,11 +15308,12 @@
 		this.dataField.asc_set(this.table.api, this.table.pivot, this.dataIndex, field);
 	};
 	/**
-	 * Returns the function performed in the data field.
+	 * Returns a function performed in the data field.
 	 * @memberof ApiPivotDataField
 	 * @typeofeditors ["CSE"]
 	 * @returns {DataConsolidateFunctionType} func - The function performed in the added data field.
-	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetFunction.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotDataField/Methods/GetFunction.js
 	 */
 	ApiPivotDataField.prototype.GetFunction = function () {
 		const subtotal = this.dataField.asc_getSubtotal();
@@ -15205,22 +15344,24 @@
 	};
 
 	/**
-	 * Returns a value that represents the position of the field in category.
+	 * Returns a value that represents the data field position within a category.
 	 * @memberof ApiPivotDataField
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
-	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetPosition.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotDataField/Methods/GetPosition.js
 	 */
 	ApiPivotDataField.prototype.GetPosition = function () {
 		return this.dataIndex + 1;
 	};
 
 	/**
-	 * Sets a value that represents the position of the field in dataField category.
+	 * Sets a value that represents the data field position within a category.
 	 * @memberof ApiPivotDataField
 	 * @typeofeditors ["CSE"]
-	 * @param {number} position - Position.
-	 * @see office-js-api/Examples/ApiPivotDataField/Methods/SetPosition.js
+	 * @param {number} position - The data field position.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotDataField/Methods/SetPosition.js
 	 */
 	ApiPivotDataField.prototype.SetPosition = function (position) {
 		const dataFields = this.table.pivot.asc_getDataFields();
@@ -15245,12 +15386,12 @@
 		}
 	});
 	/**
-	 * Returns a data field orientation value that represents the location
-	 * of the field in the specified PivotTable report.
+	 * Returns a data field orientation value that represents the data field location in the specified pivot table report.
 	 * @memberof ApiPivotDataField
 	 * @typeofeditors ["CSE"]
 	 * @returns {PivotFieldOrientationType}
-	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetOrientation.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotDataField/Methods/GetOrientation.js
 	 */
 	ApiPivotDataField.prototype.GetOrientation = function () {
 		if (this.dataField) {
@@ -15264,22 +15405,24 @@
 		},
 	});
 	/**
-	 * Returns a value representing the name of the object.
+	 * Returns a value representing the name of the specified data field in the pivot table report.
 	 * @memberof ApiPivotDataField
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetValue.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotDataField/Methods/GetValue.js
 	 */
 	ApiPivotDataField.prototype.GetValue = function () {
 		return this.GetName();
 	};
 
 	/**
-	 * Sets a value representing the name of the object.
+	 * Sets a value representing the name of the specified data field in the pivot table report.
 	 * @memberof ApiPivotDataField
 	 * @typeofeditors ["CSE"]
-	 * @param {string} name - Name.
-	 * @see office-js-api/Examples/ApiPivotDataField/Methods/SetValue.js
+	 * @param {string} name - The name of the specified field in the pivot table report.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotDataField/Methods/SetValue.js
 	 */
 	ApiPivotDataField.prototype.SetValue = function (name) {
 		this.SetName(name);
@@ -15298,17 +15441,19 @@
 	 * @memberof ApiPivotDataField
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetCaption.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotDataField/Methods/GetCaption.js
 	 */
 	ApiPivotDataField.prototype.GetCaption = function () {
 		return this.GetName();
 	};
 	/**
-	 * Set value that represents the label text for the pivot field.
+	 * Sets a value that represents the label text for the data field.
 	 * @memberof ApiPivotDataField
 	 * @typeofeditors ["CSE"]
-	 * @param {string} caption
-	 * @see office-js-api/Examples/ApiPivotDataField/Methods/SetCaption.js
+	 * @param {string} caption - The label text for the data field.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotDataField/Methods/SetCaption.js
 	 */
 	ApiPivotDataField.prototype.SetCaption = function (caption) {
 		return this.SetName(caption);
@@ -15324,22 +15469,24 @@
 	});
 
 	/**
-	 * Returns a value representing the name of the object.
+	 * Returns a value representing the object name.
 	 * @memberof ApiPivotDataField
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetName.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotDataField/Methods/GetName.js
 	 */
 	ApiPivotDataField.prototype.GetName = function () {
 		return this.dataField.asc_getName();
 	};
 
 	/**
-	 * Sets a value representing the name of the object.
+	 * Sets a value representing the object name.
 	 * @memberof ApiPivotDataField
 	 * @typeofeditors ["CSE"]
-	 * @param {string} name - Name.
-	 * @see office-js-api/Examples/ApiPivotDataField/Methods/SetName.js
+	 * @param {string} name - The object name.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotDataField/Methods/SetName.js
 	 */
 	ApiPivotDataField.prototype.SetName = function (name) {
 		if (typeof name === 'string' && name.length > 0) {
@@ -15365,17 +15512,19 @@
 	 * @memberof ApiPivotDataField
 	 * @typeofeditors ["CSE"]
 	 * @returns {string | null}
-	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetNumberFormat.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotDataField/Methods/GetNumberFormat.js
 	 */
 	ApiPivotDataField.prototype.GetNumberFormat = function () {
 		return this.dataField.asc_getNumFormat();
 	};
 	/**
-	 * Sets value that represents the format code for the object.
+	 * Sets a value that represents the format code for the object.
 	 * @memberof ApiPivotDataField
 	 * @typeofeditors ["CSE"]
-	 * @param {string} format
-	 * @see office-js-api/Examples/ApiPivotDataField/Methods/SetNumberFormat.js
+	 * @param {string} format - The format code for the object.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotDataField/Methods/SetNumberFormat.js
 	 */
 	ApiPivotDataField.prototype.SetNumberFormat = function (format) {
 		const newField = new Asc.CT_DataField();
@@ -15391,11 +15540,12 @@
 		}
 	});
 	/**
-	 * Returns index of the data field.
+	 * Returns an index of the data field.
 	 * @memberof ApiPivotDataField
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
-	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetIndex.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotDataField/Methods/GetIndex.js
 	 */
 	ApiPivotDataField.prototype.GetIndex = function () {
 		return this.dataIndex + 1;
@@ -15407,11 +15557,12 @@
 		}
 	});
 	/**
-	 * Returns the pivotField from which the data field was created.
+	 * Returns the pivot field from which the data field was created.
 	 * @memberof ApiPivotDataField
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiPivotField}
-	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetPivotField.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotDataField/Methods/GetPivotField.js
 	 */
 	ApiPivotDataField.prototype.GetPivotField = function () {
 		return new ApiPivotField(this.table, this.index, this.pivotField);
@@ -15432,48 +15583,54 @@
 	/** Methods */
 
 	/**
-	 * Calling this method deletes all filters currently applied to the PivotField.
+	 * Deletes all filters currently applied to the pivot field.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/ApiPivotField/Methods/ClearAllFilters.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/ClearAllFilters.js
 	 */
 	ApiPivotField.prototype.ClearAllFilters  = function () {
 		this.table.pivot.removeFiltersWithLock(this.table.api, [this.index], false);
 	};
 	/**
-	 * This method deletes all label filters or all date filters in the PivotFilters collection.
+	 * Deletes all label filters or all date filters from the pivot filters collection.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/ApiPivotField/Methods/ClearLabelFilters.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/ClearLabelFilters.js
 	 */
 	ApiPivotField.prototype.ClearLabelFilters  = function () {
 		this.table.pivot.asc_removePivotFilter(this.table.api, this.index, false, true, false);
 	};
 	/**
+	 * Deletes all manual filters from the pivot filters collection.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/ApiPivotField/Methods/ClearManualFilters.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/ClearManualFilters.js
 	 */
 	ApiPivotField.prototype.ClearManualFilters  = function () {
 		this.table.pivot.asc_removePivotFilter(this.table.api, this.index, true, false, false);
 	};
 	/**
-	 * Calling this method deletes all value filters in the PivotFilters collection of the PivotField.
+	 * Deletes all value filters from the pivot filters collection.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/ApiPivotField/Methods/ClearValueFilters.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/ClearValueFilters.js
 	 */
 	ApiPivotField.prototype.ClearValueFilters  = function () {
 		this.table.pivot.asc_removePivotFilter(this.table.api, this.index, false, false, true);
 	};
 	/**
-	 * Returns an object that represents either a single PivotTable item (a PivotItem object)
-	 * or a collection of all the visible and hidden items (a PivotItems object) in the specified field.
+	 * Returns an object that represents either a single pivot table item (the ApiPivotItem object)
+	 * or a collection of all the visible and hidden items (an array of the ApiPivotItem objects) in the specified field.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {number} [index]
+	 * @param {number} [index] - The item index.
 	 * @returns {ApiPivotItem[] | ApiPivotItem | null}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetPivotItems.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetPivotItems.js
 	 */
 	ApiPivotField.prototype.GetPivotItems = function (index) {
 		const pivotFields = this.table.pivot.asc_getPivotFields();
@@ -15501,12 +15658,14 @@
 		}
 	});
 	/**
-	 * Moves field inside category.
+	 * Moves the current pivot field inside the category.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {PivotMoveFieldType | PivotFieldOrientationType} type - The type of the field to move.
-	 * @param {number | undefined} index - The index of the field in new category.
-	 * @see office-js-api/Examples/ApiPivotField/Methods/Move.js
+	 * @param {PivotMoveFieldType | PivotFieldOrientationType} type - The direction to move the pivot table field,
+	 * or the pivot field orientation type.
+	 * @param {number | undefined} index - The field index in a new category.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/Move.js
 	 */
 	ApiPivotField.prototype.Move = function (type, index) {
 		function getIndexTo(type, indexFrom, fields) {
@@ -15577,10 +15736,11 @@
 		}
 	};
 	/**
-	 * Removes field from PivotTable.
+	 * Removes the current pivot field from the pivot table.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/ApiPivotField/Methods/Remove.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/Remove.js
 	 */
 	ApiPivotField.prototype.Remove = function () {
 		this.table.pivot.asc_removeNoDataField(this.table.api, this.index);
@@ -15589,11 +15749,13 @@
 	/** Attributes */
 
 	/**
-	 * Returns a value that represents the position of the field in category.
+	 * Returns a value that represents the position of the field (first, second, third, and so on)
+	 * among all the fields in its orientation (Rows, Columns, Pages, Data).
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetPosition.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetPosition.js
 	 */
 	ApiPivotField.prototype.GetPosition = function () {
 		const fields = this.table.pivot.getAxisFields(this.pivotField.axis);
@@ -15611,12 +15773,13 @@
 	};
 
 	/**
-	 * Sets a value that represents the position of the field
-	 * among all the fields in its orientation (Rows, Columns, Pages).
+	 * Sets a value that represents the position of the field (first, second, third, and so on)
+	 * among all the fields in its orientation (Rows, Columns, Pages, Data).
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {number} position - Position.
-	 * @see office-js-api/Examples/ApiPivotField/Methods/SetPosition.js
+	 * @param {number} position - The field position.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetPosition.js
 	 */
 	ApiPivotField.prototype.SetPosition = function (position) {
 		if (typeof position == "number") {
@@ -15646,11 +15809,12 @@
 
 	/**
 	 * Returns a pivot field orientation value that represents the location
-	 * of the field in the specified PivotTable report.
+	 * of the field in the specified pivot table report.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {PivotFieldOrientationType}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetOrientation.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetOrientation.js
 	 */
 	ApiPivotField.prototype.GetOrientation = function () {
 		if (this.pivotField.axis === Asc.c_oAscAxis.AxisRow) {
@@ -15666,11 +15830,12 @@
 
 	/**
 	 * Sets a pivot field orientation value that represents the location
-	 * of the field in the specified PivotTable report.
+	 * of the field in the specified pivot table report.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {PivotFieldOrientationType} type - Field orientation type.
-	 * @see office-js-api/Examples/ApiPivotField/Methods/SetOrientation.js
+	 * @param {PivotFieldOrientationType} type - The pivot field orientation type.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetOrientation.js
 	 */
 	ApiPivotField.prototype.SetOrientation = function (type) {
 		switch (type) {
@@ -15716,22 +15881,24 @@
 		}
 	});
 	/**
-	 * Returns a value representing the name of the object.
+	 * Returns a value representing the name of the specified field in the pivot table report.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetValue.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetValue.js
 	 */
 	ApiPivotField.prototype.GetValue = function () {
 		return this.GetName();
 	};
 
 	/**
-	 * Sets a value representing the name of the object.
+	 * Sets a value representing the name of the specified field in the pivot table report.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {string} name - Name.
-	 * @see office-js-api/Examples/ApiPivotField/Methods/SetValue.js
+	 * @param {string} name - The name of the specified field in the pivot table report.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetValue.js
 	 */
 	ApiPivotField.prototype.SetValue = function (name) {
 		this.SetName(name)
@@ -15750,17 +15917,19 @@
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetCaption.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetCaption.js
 	 */
 	ApiPivotField.prototype.GetCaption = function () {
 		return this.GetName();
 	};
 	/**
-	 * Set value that represents the label text for the pivot field.
+	 * Sets a value that represents the label text for the pivot field.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {string} caption
-	 * @see office-js-api/Examples/ApiPivotField/Methods/SetCaption.js
+	 * @param {string} caption - The label text for the pivot field.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetCaption.js
 	 */
 	ApiPivotField.prototype.SetCaption = function (caption) {
 		return this.SetName(caption);
@@ -15776,22 +15945,24 @@
 	});
 
 	/**
-	 * Returns a value representing the name of the object.
+	 * Returns a value representing the object name.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetName.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetName.js
 	 */
 	ApiPivotField.prototype.GetName = function () {
 		return this.pivotField.asc_getName() || this.GetSourceName();
 	};
 
 	/**
-	 * Sets a value representing the name of the object.
+	 * Sets a value representing the object name.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {string} name - Name.
-	 * @see office-js-api/Examples/ApiPivotField/Methods/SetName.js
+	 * @param {string} name - The object name.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetName.js
 	 */
 	ApiPivotField.prototype.SetName = function (name) {
 		if (typeof name === 'string' && name.length > 0) {
@@ -15813,11 +15984,12 @@
 		}
 	});
 	/**
-	 * Returns source name
+	 * Returns a source name for the pivot table field.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetSourceName.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetSourceName.js
 	 */
 	ApiPivotField.prototype.GetSourceName = function () {
 		return this.table.pivot.getCacheFieldName(this.index);
@@ -15830,11 +16002,12 @@
 	});
 
 	/**
-	 * Returns index of the PivotField.
+	 * Returns an index for the pivot table field.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetIndex.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetIndex.js
 	 */
 	ApiPivotField.prototype.GetIndex = function () {
 		return this.index + 1;
@@ -15847,11 +16020,12 @@
 	});
 
 	/**
-	 * Returns ApiPivotTable.
+	 * Returns the ApiPivotTable object which represents the pivot table for the current field.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiPivotTable}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetTable.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetTable.js
 	 */
 	ApiPivotField.prototype.GetTable = function () {
 		return this.table;
@@ -15864,11 +16038,12 @@
 	});
 
 	/**
-	 * Returns parent object to this field.
+	 * Returns the parent object for the current field.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiPivotTable}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetParent.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetParent.js
 	 */
 	ApiPivotField.prototype.GetParent = function () {
 		return this.table;
@@ -15881,11 +16056,12 @@
 	});
 
 	/**
-	 * Returns whether or not a PivotField is compacted.
+	 * Returns the setting which specifies whether a pivot table field is compacted.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetLayoutCompactRow.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetLayoutCompactRow.js
 	 */
 	ApiPivotField.prototype.GetLayoutCompactRow = function () {
 		const pivField = this.table.pivot.asc_getPivotFields()[this.index];
@@ -15893,11 +16069,12 @@
 	};
 
 	/**
-	 * Sets whether or not a PivotField is compacted.
+	 * Sets the setting which specifies whether a pivot table field is compacted.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {boolean} compact - Use compact form or not.
-	 * @see office-js-api/Examples/ApiPivotField/Methods/SetLayoutCompactRow.js
+	 * @param {boolean} compact - Specifies whether a pivot table field is compacted.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetLayoutCompactRow.js
 	 */
 	ApiPivotField.prototype.SetLayoutCompactRow = function (compact) {
 		if (typeof compact == "boolean") {
@@ -15920,26 +16097,29 @@
 	});
 
 	/**
+	 * The layout type of the pivot table report.
 	 * @typedef {"Tabular" | "Outline"} PivotLayoutType
 	 */
 
 	/**
-	 * Returns the way the specified PivotTable items appear—in table format or in outline format.
+	 * Returns the way the specified pivot table items appear — in table format or in outline format.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {PivotLayoutType}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetLayoutForm.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetLayoutForm.js
 	 */
 	ApiPivotField.prototype.GetLayoutForm = function () {
 		return this.pivotField.asc_getOutline() ? "Outline" : "Tabular";
 	};
 
 	/**
-	 * Sets the way the specified PivotTable items appear—in table format or in outline format.
+	 * Sets the way the specified pivot table items appear — in table format or in outline format.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {PivotLayoutType} type - Type of layot report form.
-	 * @see office-js-api/Examples/ApiPivotField/Methods/SetLayoutForm.js
+	 * @param {PivotLayoutType} type - The layout type of the pivot table report.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetLayoutForm.js
 	 */
 	ApiPivotField.prototype.SetLayoutForm = function (type) {
 		if (type === "Tabular" || type === "Outline") {
@@ -15961,22 +16141,24 @@
 	});
 
 	/**
-	 * Returns the flag that represents page break is inserted after each field.
+	 * Returns the setting which specifies whether to insert a page break after each field.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetLayoutPageBreak.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetLayoutPageBreak.js
 	 */
 	ApiPivotField.prototype.GetLayoutPageBreak = function () {
 		return this.pivotField.insertPageBreak;
 	};
 
 	/**
-	 * Sets the flag that represents page break is inserted after each field.
+	 * Sets the setting which specifies whether to insert a page break after each field.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {boolean} insert - Flag insert or not page break after each field.
-	 * @see office-js-api/Examples/ApiPivotField/Methods/SetLayoutPageBreak.js
+	 * @param {boolean} insert - Specifies whether to insert a page break after each field.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetLayoutPageBreak.js
 	 */
 	ApiPivotField.prototype.SetLayoutPageBreak = function (insert) {
 		if ( typeof insert == "boolean") {
@@ -15996,11 +16178,12 @@
 	});
 
 	/**
-	 * Returns if the PivotField is currently visible in the PivotTable or not.
+	 * Returns the setting which specifies whether the pivot table field is currently visible in the pivot table.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetShowingInAxis.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetShowingInAxis.js
 	 */
 	ApiPivotField.prototype.GetShowingInAxis = function () {
 		return this.pivotField.axis !== null || this.pivotField.dataField;
@@ -16013,22 +16196,24 @@
 	});
 
 	/**
-	 * Returns setting repeat items labels at each row.
+	 * Returns the setting which specifies whether to repeat items labels at each row.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetRepeatLabels.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetRepeatLabels.js
 	 */
 	ApiPivotField.prototype.GetRepeatLabels = function () {
 		return this.pivotField.asc_getFillDownLabelsDefault();
 	};
 
 	/**
-	 * Sets setting repeat items labels at each row.
+	 * Sets the setting which specifies whether to repeat items labels at each row.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {boolean} repeat - Flag repeat items labels at each row or not.
-	 * @see office-js-api/Examples/ApiPivotField/Methods/SetRepeatLabels.js
+	 * @param {boolean} repeat - Specifies whether to repeat items labels at each row.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetRepeatLabels.js
 	 */
 	ApiPivotField.prototype.SetRepeatLabels = function (repeat) {
 		if (typeof repeat == "boolean") {
@@ -16050,22 +16235,24 @@
 	});
 
 	/**
-	 * Returns setting insert blank rows after each item.
+	 * Returns the setting which specifies whether to insert blank rows after each item.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetLayoutBlankLine.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetLayoutBlankLine.js
 	 */
 	ApiPivotField.prototype.GetLayoutBlankLine = function () {
 		return this.pivotField.asc_getInsertBlankRow();
 	};
 
 	/**
-	 * Sets setting insert blank rows after each item.
+	 * Sets the setting which specifies whether to insert blank rows after each item.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {boolean} insert - Flag insert blank rows after each item or not.
-	 * @see office-js-api/Examples/ApiPivotField/Methods/SetLayoutBlankLine.js
+	 * @param {boolean} insert - Specifies whether to insert blank rows after each item.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetLayoutBlankLine.js
 	 */
 	ApiPivotField.prototype.SetLayoutBlankLine = function (insert) {
 		if (typeof insert == "boolean") {
@@ -16087,22 +16274,24 @@
 	});
 
 	/**
-	 * Returns setting show items with no data.
+	 * Returns the setting which specifies whether to show items with no data.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetShowAllItems.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetShowAllItems.js
 	 */
 	ApiPivotField.prototype.GetShowAllItems = function () {
 		return this.pivotField.asc_getShowAll();
 	};
 
 	/**
-	 * Sets setting show items with no data.
+	 * Sets the setting which specifies whether to show items with no data.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {boolean} show - Flag show items with no data or not.
-	 * @see office-js-api/Examples/ApiPivotField/Methods/SetShowAllItems.js
+	 * @param {boolean} show - Specifies whether to show items with no data.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetShowAllItems.js
 	 */
 	ApiPivotField.prototype.SetShowAllItems = function (show) {
 		if (typeof show == "boolean") {
@@ -16124,22 +16313,24 @@
 	});
 
 	/**
-	 * Returns setting show subtotals.
+	 * Returns the setting which specifies whether to show subtotals.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetLayoutSubtotals.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetLayoutSubtotals.js
 	 */
 	ApiPivotField.prototype.GetLayoutSubtotals = function () {
 		return this.pivotField.asc_getDefaultSubtotal();
 	};
 
 	/**
-	 * Set setting show subtotals.
+	 * Sets the setting which specifies whether to show subtotals.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {boolean} show - Flag show subtotals or not.
-	 * @see office-js-api/Examples/ApiPivotField/Methods/SetLayoutSubtotals.js
+	 * @param {boolean} show - Specifies whether to show subtotals.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetLayoutSubtotals.js
 	 */
 	ApiPivotField.prototype.SetLayoutSubtotals = function (show) {
 		if (typeof show == "boolean") {
@@ -16160,25 +16351,30 @@
 		}
 	});
 
-	/** @typedef { "Top" | "Bottom" } LayoutSubtotalLocationType */
+	/**
+	 * The layout subtotal location. 
+	 * @typedef { "Top" | "Bottom" } LayoutSubtotalLocationType
+	 */
 
 	/**
-	 * Returns setting layout subtotal location.
+	 * Returns the layout subtotal location.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {LayoutSubtotalLocationType}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetLayoutSubtotalLocation.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetLayoutSubtotalLocation.js
 	 */
 	ApiPivotField.prototype.GetLayoutSubtotalLocation = function () {
 		return ( this.pivotField.asc_getSubtotalTop() ? "Top" : "Bottom" );
 	};
 
 	/**
-	 * Sets setting layout subtotal location.
+	 * Sets the layout subtotal location.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {LayoutSubtotalLocationType} type - Type of layot subtotal location
-	 * @see office-js-api/Examples/ApiPivotField/Methods/SetLayoutSubtotalLocation.js
+	 * @param {LayoutSubtotalLocationType} type - The layout subtotal location.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetLayoutSubtotalLocation.js
 	 */
 	ApiPivotField.prototype.SetLayoutSubtotalLocation = function (type) {
 		if (typeof type == "string" && ( type == "Top" || type == "Bottom")) {
@@ -16200,22 +16396,24 @@
 	});
 
 	/**
-	 * Returns the text string label displayed in the subtotal column or row heading in the specified PivotTable report.
+	 * Returns the text label displayed in the subtotal column or row heading in the specified pivot table report.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetSubtotalName.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetSubtotalName.js
 	 */
 	ApiPivotField.prototype.GetSubtotalName = function () {
 		return (this.pivotField.subtotalCaption);
 	};
 
 	/**
-	 * Sets the text string label displayed in the subtotal column or row heading in the specified PivotTable report.
+	 * Sets the text label displayed in the subtotal column or row heading in the specified pivot table report.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {string} caption - Caption.
-	 * @see office-js-api/Examples/ApiPivotField/Methods/SetSubtotalName.js
+	 * @param {string} caption - The text label displayed in the subtotal column or row heading.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetSubtotalName.js
 	 */
 	ApiPivotField.prototype.SetSubtotalName = function (caption) {
 		if ( typeof caption == "string") {
@@ -16237,27 +16435,28 @@
 	});
 
 	/**
-	 * Subtotal pivot field types
+	 * Subtotal pivot field types (functions for subtotals).
 	 * @typedef {Object} PivotFieldSubtotals
-	 * @property {boolean} Sum
-	 * @property {boolean} Count
-	 * @property {boolean} Average
-	 * @property {boolean} Max
-	 * @property {boolean} Min
-	 * @property {boolean} Product
-	 * @property {boolean} CountNumbers
-	 * @property {boolean} StdDev
-	 * @property {boolean} StdDevP
-	 * @property {boolean} Var
-	 * @property {boolean} VarP
+	 * @property {boolean} Sum - Specififes whether the SUM function will be used.
+	 * @property {boolean} Count - Specififes whether the COUNTA function will be used.
+	 * @property {boolean} Average - Specififes whether the AVERAGE function will be used.
+	 * @property {boolean} Max - Specififes whether the MAX function will be used.
+	 * @property {boolean} Min - Specififes whether the MIN function will be used.
+	 * @property {boolean} Product - Specififes whether the PRODUCT function will be used.
+	 * @property {boolean} CountNumbers - Specififes whether the COUNT function will be used.
+	 * @property {boolean} StdDev - Specififes whether the STDEV function will be used.
+	 * @property {boolean} StdDevP - Specififes whether the STDEV.P function will be used.
+	 * @property {boolean} Var - Specififes whether the VAR function will be used.
+	 * @property {boolean} VarP - Specififes whether the VAR.P function will be used.
 	 */
 
 	/**
-	 * Returns object that represent all subtotals.
+	 * Returns an object that represents all subtotals.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {PivotFieldSubtotals}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetSubtotals.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetSubtotals.js
 	 */
 	ApiPivotField.prototype.GetSubtotals = function () {
 		const res = {
@@ -16317,11 +16516,12 @@
 	};
 
 	/**
-	 * Sets Subtotals.
+	 * Sets an object that represents all subtotals.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {PivotFieldSubtotals} subtotals - Object that represent all subtotals or some of them.
-	 * @see office-js-api/Examples/ApiPivotField/Methods/SetSubtotals.js
+	 * @param {PivotFieldSubtotals} subtotals - An object that represents all subtotals or some of them.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetSubtotals.js
 	 */
 	ApiPivotField.prototype.SetSubtotals = function (subtotals) {
 			if (typeof subtotals == "object") {
@@ -16381,22 +16581,24 @@
 	});
 
 	/**
-	 * Returns the specified field, can be dragged to the column position or not.
+	 * Returns the setting which specifies whether the specified field can be dragged to the column position.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetDragToColumn.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetDragToColumn.js
 	 */
 	ApiPivotField.prototype.GetDragToColumn = function () {
 		return this.pivotField.dragToCol;
 	};
 
 	/**
-	 * Sets the specified field, can be dragged to the column position or not.
+	 * Sets the setting which specifies whether the specified field can be dragged to the column position.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {boolean} flag - Flag whether this field can be moved to columns.
-	 * @see office-js-api/Examples/ApiPivotField/Methods/SetDragToColumn.js
+	 * @param {boolean} flag - Specifies whether the specified field can be dragged to the column position.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetDragToColumn.js
 	 */
 	ApiPivotField.prototype.SetDragToColumn = function (flag) {
 		if (typeof flag == "boolean") {
@@ -16416,22 +16618,24 @@
 	});
 
 	/**
-	 * Returns the specified field, can be dragged to the row position or not.
+	 * Returns the setting which specifies whether the specified field can be dragged to the row position.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetDragToRow.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetDragToRow.js
 	 */
 	ApiPivotField.prototype.GetDragToRow = function () {
 		return this.pivotField.dragToRow;
 	};
 
 	/**
-	 * Sets the specified field, can be dragged to the row position or not.
+	 * Sets the setting which specifies whether the specified field can be dragged to the row position.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {boolean} flag - Flag whether this field can be moved to rows.
-	 * @see office-js-api/Examples/ApiPivotField/Methods/SetDragToRow.js
+	 * @param {boolean} flag - Specifies whether the specified field can be dragged to the row position.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetDragToRow.js
 	 */
 	ApiPivotField.prototype.SetDragToRow = function (flag) {
 		if (typeof flag == "boolean") {
@@ -16451,22 +16655,24 @@
 	});
 
 	/**
-	 * Returns the specified field, can be dragged to the data position or not.
+	 * Returns the setting which specifies whether the specified field can be dragged to the data position.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetDragToData.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetDragToData.js
 	 */
 	ApiPivotField.prototype.GetDragToData = function () {
 		return this.pivotField.dragToData;
 	};
 
 	/**
-	 * Sets the specified field, can be dragged to the data position or not.
+	 * Sets the setting which specifies whether the specified field can be dragged to the data position.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {boolean} flag - Flag whether this field can be moved to data.
-	 * @see office-js-api/Examples/ApiPivotField/Methods/SetDragToData.js
+	 * @param {boolean} flag - Specifies whether the specified field can be dragged to the data position.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetDragToData.js
 	 */
 	ApiPivotField.prototype.SetDragToData = function (flag) {
 		if (typeof flag == "boolean") {
@@ -16486,22 +16692,24 @@
 	});
 
 	/**
-	 * Returns the specified field, can be dragged to the page position or not.
+	 * Returns the setting which specifies whether the specified field can be dragged to the page position.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetDragToPage.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetDragToPage.js
 	 */
 	ApiPivotField.prototype.GetDragToPage = function () {
 		return this.pivotField.dragToPage;
 	};
 
 	/**
-	 * Sets the specified field, can be dragged to the page position or not.
+	 * Sets the setting which specifies whether the specified field can be dragged to the page position.
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
-	 * @param {boolean} flag - Flag whether this field can be moved to page.
-	 * @see office-js-api/Examples/ApiPivotField/Methods/SetDragToPage.js
+	 * @param {boolean} flag - Specifies whether the specified field can be dragged to the page position.
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetDragToPage.js
 	 */
 	ApiPivotField.prototype.SetDragToPage = function (flag) {
 		if (typeof flag == "boolean") {
@@ -16521,11 +16729,12 @@
 	});
 
 	/**
-	 * Returns the current page showing for the page field (valid only for page fields).
+	 * Returns the current page which is displayed for the page field (valid only for page fields).
 	 * @memberof ApiPivotField
 	 * @typeofeditors ["CSE"]
 	 * @returns {string | number}
-	 * @see office-js-api/Examples/ApiPivotField/Methods/GetCurrentPage.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetCurrentPage.js
 	 */
 	ApiPivotField.prototype.GetCurrentPage = function () {
 		const pageFields = this.table.pivot.asc_getPageFields();
@@ -16596,11 +16805,12 @@
 	/* Attributes */
 
 	/**
-	 * Returns a String value representing the name of the object.
+	 * Returns a name of the pivot item.
 	 * @memberof ApiPivotItem
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/ApiPivotItem/Methods/GetName.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotItem/Methods/GetName.js
 	 */
 	ApiPivotItem.prototype.GetName = function () {
 		if (this.pivotItem.n) {
@@ -16621,11 +16831,12 @@
 	});
 
 	/**
-	 * Returns a String value that represents the label text for the pivot item.
+	 * Returns a caption of the pivot item.
 	 * @memberof ApiPivotItem
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/ApiPivotItem/Methods/GetCaption.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotItem/Methods/GetCaption.js
 	 */
 	ApiPivotItem.prototype.GetCaption = function () {
 		return this.GetName();
@@ -16638,11 +16849,12 @@
 	});
 
 	/**
-	 * Returns a String value that represents the name of the specified item in the PivotTable field.
+	 * Returns a name of the specified item in the pivot table field.
 	 * @memberof ApiPivotItem
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/ApiPivotItem/Methods/GetValue.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotItem/Methods/GetValue.js
 	 */
 	ApiPivotItem.prototype.GetValue = function () {
 		return this.GetName();
@@ -16655,11 +16867,12 @@
 	});
 
 	/**
-	 * Returns the parent object for the specified object.
+	 * Returns a parent of the pivot item.
 	 * @memberof ApiPivotItem
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiPivotField}
-	 * @see office-js-api/Examples/ApiPivotItem/Methods/GetParent.js
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotItem/Methods/GetParent.js
 	 */
 	ApiPivotItem.prototype.GetParent = function () {
 		return this.field;

@@ -293,14 +293,14 @@
     {
         return (1 === this.m_nUseType);
     };
+	CCollaborativeEditingBase.prototype.isCollaboration = function()
+	{
+		return (-1 === this.m_nUseType);
+	};
 	CCollaborativeEditingBase.prototype.canSendChanges = function()
 	{
 		let api = this.GetEditorApi();
 		return api && api.canSendChanges();
-	};
-	CCollaborativeEditingBase.prototype.getCoHistory = function()
-	{
-		return this.CoHistory;
 	};
     CCollaborativeEditingBase.prototype.getCollaborativeEditing = function()
     {
@@ -963,6 +963,10 @@
     CCollaborativeEditingBase.prototype.Add_DocumentPosition = function(DocumentPos){
         this.m_aDocumentPositions.Add_DocumentPosition(DocumentPos);
     };
+	CCollaborativeEditingBase.prototype.Remove_DocumentPosition = function(docPos)
+	{
+		this.m_aDocumentPositions.Remove_DocumentPosition(docPos);
+	};
     CCollaborativeEditingBase.prototype.Add_ForeignCursor = function(UserId, DocumentPos, UserShortId){
         this.m_aForeignCursorsPos.Remove_DocumentPosition(this.m_aCursorsToUpdate[UserId]);
         this.m_aForeignCursors[UserId] = DocumentPos;

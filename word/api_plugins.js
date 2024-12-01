@@ -1233,44 +1233,48 @@
 		return logicDocument.ReplaceCurrentSentence(private_GetTextDirection(type), _replaceString);
 	};
 	/**
-	 * Undo the user's last action.
+	 * Undoes the user's last action.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias Undo
 	 * @since 8.2.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/Undo.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_Undo"] = function()
 	{
 		this.Undo();
 	};
 	/**
-	 * Revert the user's last undone action.
+	 * Reverts the user's last undone action.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias Redo
 	 * @since 8.2.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/Redo.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_Redo"] = function()
 	{
 		this.Redo();
 	};
 	/**
-	 * Check if it possible to undo the user's last action.
+	 * Checks if it is possible to undo the user's last action.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias CanUndo
 	 * @since 8.2.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/CanUndo.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_CanUndo"] = function()
 	{
 		return this.asc_getCanUndo();
 	};
 	/**
-	 * Check if it possible to revert the user's last undone action.
+	 * Checks if it possible to revert the user's last undone action.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias CanRedo
 	 * @since 8.2.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/CanRedo.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_CanRedo"] = function()
 	{

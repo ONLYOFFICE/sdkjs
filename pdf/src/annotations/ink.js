@@ -97,7 +97,11 @@
         AscCommon.History.Add(new CChangesPDFInkPoints(this, this._gestures.length, aInkPath, true));
         this._gestures.push(aInkPath);
 
-        this.SetRect(this.private_CalculateBoundingBox());
+        let oViewer = Asc.editor.getDocumentRenderer();
+        if (false == oViewer.IsOpenAnnotsInProgress) {
+            this.SetRect(this.private_CalculateBoundingBox());
+        }
+        
         this.SetWasChanged(true);
         this.recalcGeometry();
         this.SetNeedRecalc(true);

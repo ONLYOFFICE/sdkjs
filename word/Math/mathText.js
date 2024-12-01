@@ -989,6 +989,14 @@ CMathText.prototype.GetLocationOfLetter = function()
 
     return pos;
 };
+/**
+ * Get first find parent typeof CMathContent or MathBase
+ * @return {*}
+ */
+CMathText.prototype.GetMathBaseFirst = function()
+{
+	return this.Parent.GetMathBaseFirst();
+};
 CMathText.prototype.Is_InclineLetter = function()
 {
     var code = this.value;

@@ -225,18 +225,10 @@ CTableRow.prototype =
 
     PreDelete : function()
     {
-        var CellsCount = this.Get_CellsCount();
-        for ( var CurCell = 0; CurCell < CellsCount; CurCell++ )
-        {
-            var Cell = this.Get_Cell( CurCell );
-
-            var CellContent = Cell.Content.Content;
-            var ContentCount = CellContent.length;
-            for ( var Pos = 0; Pos < ContentCount; Pos++ )
-            {
-                CellContent[Pos].PreDelete();
-            }
-        }
+		for (let iCell = 0, cellCount = this.GetCellsCount(); iCell < cellCount; ++iCell)
+		{
+			this.GetCell(iCell).PreDelete();
+		}
     },
     //-----------------------------------------------------------------------------------
     // Работаем с стилем строки
@@ -608,6 +600,8 @@ CTableRow.prototype =
 
 	Remove_Cell : function(Index)
 	{
+		this.Content[Index].PreDelete();
+		
 		AscCommon.History.Add(new CChangesTableRowRemoveCell(this, Index, [this.Content[Index]]));
 
 		this.Content.splice(Index, 1);

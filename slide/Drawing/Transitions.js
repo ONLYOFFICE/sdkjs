@@ -427,23 +427,15 @@ function CTransitionAnimation(htmlpage)
                 _ctx1.fillRect(0, 0, oThis.DemonstrationObject.Canvas.width, oThis.DemonstrationObject.Canvas.height);
             }
 
-            if (!oThis.IsBackward)
+
+            if (null != oThis.CacheImage1.Image)
             {
-                if (null != oThis.CacheImage1.Image)
-                {
-                    _ctx1.drawImage(oThis.CacheImage1.Image, oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
-                }
-                else
-                {
-                    var _c = oThis.CacheImage1.Color;
-                    _ctx1.fillStyle = "rgb(" + _c.r + "," + _c.g + "," + _c.b + ")";
-                    _ctx1.fillRect(oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
-                    _ctx1.beginPath();
-                }
+                _ctx1.drawImage(oThis.CacheImage1.Image, oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
             }
             else
             {
-                _ctx1.fillStyle = "rgb(0,0,0)";
+                var _c = oThis.CacheImage1.Color;
+                _ctx1.fillStyle = "rgb(" + _c.r + "," + _c.g + "," + _c.b + ")";
                 _ctx1.fillRect(oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
                 _ctx1.beginPath();
             }
@@ -463,9 +455,7 @@ function CTransitionAnimation(htmlpage)
             _ctx2.clearRect(oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
         }
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+        let _part = oThis._getPart();
 
         if (oThis.Param == c_oAscSlideTransitionParams.Fade_Smoothly)
         {
@@ -648,9 +638,8 @@ function CTransitionAnimation(htmlpage)
         var _xSrcO = 0;
         var _ySrcO = 0;
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+
+        let _part = oThis._getPart();
 
         var _offX = (_wDst * (1 - _part)) >> 0;
         var _offY = (_hDst * (1 - _part)) >> 0;
@@ -791,9 +780,8 @@ function CTransitionAnimation(htmlpage)
         var _wDst = oThis.Rect.w;
         var _hDst = oThis.Rect.h;
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+
+        let _part = oThis._getPart();
 
         var _ctx2 = null;
         if (oThis.DemonstrationObject == null)
@@ -1315,9 +1303,8 @@ function CTransitionAnimation(htmlpage)
         var _wDst = oThis.Rect.w;
         var _hDst = oThis.Rect.h;
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+
+        let _part = oThis._getPart();
 
         var _ctx2 = null;
         if (oThis.DemonstrationObject == null)
@@ -1703,9 +1690,8 @@ function CTransitionAnimation(htmlpage)
         var _xSrc = 0;
         var _ySrc = 0;
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+
+        let _part = oThis._getPart();
 
         var _offX = (_wDst * _part) >> 0;
         var _offY = (_hDst * _part) >> 0;
@@ -1855,9 +1841,8 @@ function CTransitionAnimation(htmlpage)
         var _xSrc = 0;
         var _ySrc = 0;
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+
+        let _part = oThis._getPart();
 
         var _offX = (_wDst * (1 - _part)) >> 0;
         var _offY = (_hDst * (1 - _part)) >> 0;
@@ -2004,9 +1989,8 @@ function CTransitionAnimation(htmlpage)
         var _wDst = oThis.Rect.w;
         var _hDst = oThis.Rect.h;
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+
+        let _part = oThis._getPart();
 
         var _anglePart1 = Math.atan(_wDst / _hDst);
         var _anglePart2 = Math.PI / 2 - _anglePart1;
@@ -2437,9 +2421,8 @@ function CTransitionAnimation(htmlpage)
         var _wDst = oThis.Rect.w;
         var _hDst = oThis.Rect.h;
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+
+        let _part = oThis._getPart();
 
         switch (oThis.Param)
         {
@@ -2680,9 +2663,8 @@ function CTransitionAnimation(htmlpage)
 
 
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+
+        let _part = oThis._getPart();
 
 
 		if(!oThis.Morph)
@@ -2714,6 +2696,21 @@ function CTransitionAnimation(htmlpage)
 	    oThis.Morph.draw(oCanvas, oThis.Rect, _part)
 
         oThis.TimerId = __nextFrame(oThis._startMorph);
+    };
+
+    this._easeFunction = function(t)
+    {
+        let dT = (1 - t);
+        return 1 - dT*dT*dT;
+    };
+
+    this._getPart = function()
+    {
+        let _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
+        _part = oThis._easeFunction(_part);
+        if (oThis.IsBackward)
+            _part = 1 - _part;
+        return _part;
     };
 }
 
@@ -2798,13 +2795,13 @@ function CDemonstrationManager(htmlpage)
         }
         else if (!is_backward)
         {
-            _slide1 = this.GetPrevVisibleSlide(true);
+            _slide1 = this.GetPrevVisibleSlide();
             _slide2 = this.SlideNum;
         }
         else
         {
             this.Transition.IsBackward = true;
-            _slide1 = this.GetPrevVisibleSlide(true);
+            _slide1 = this.GetPrevVisibleSlide();
             _slide2 = this.SlideNum;
         }
 
@@ -3149,6 +3146,7 @@ function CDemonstrationManager(htmlpage)
         if (oThis.SlideNum == oThis.GetSlidesCount())
         {
             oThis.SlideNum = this.GetPrevVisibleSlide(true);
+
             oThis.StartAnimation(oThis.SlideNum);
             oThis.OnPaintSlide(false);
             if (null != oThis.DivEndPresentation)
@@ -3156,14 +3154,19 @@ function CDemonstrationManager(htmlpage)
                 oThis.DemonstrationDiv.removeChild(oThis.DivEndPresentation);
                 oThis.DivEndPresentation = null;
             }
-
-            return;
+            if(!this.isLoop())
+            {
+                return;
+            }
         }
 
-        if (0 >= this.SlideNum)
+        if (this.GetFirstVisibleSlide() > this.SlideNum)
         {
             this.SlideNum = this.GetFirstVisibleSlide();
-            return;
+            if(!this.isLoop())
+            {
+                return;
+            }
         }
 
         var _slides = oThis.HtmlPage.m_oLogicDocument.Slides;
@@ -3178,7 +3181,7 @@ function CDemonstrationManager(htmlpage)
 
         oThis.StopAnimation(nOldSlideNum);
         if (!_is_transition)
-            oThis.SlideNum = this.GetPrevVisibleSlide(true);
+            oThis.SlideNum = this.GetPrevVisibleSlide();
 
 
         oThis.StartAnimation(oThis.SlideNum);
@@ -3233,7 +3236,7 @@ function CDemonstrationManager(htmlpage)
     {
         if (oThis.Transition.IsBackward)
         {
-            oThis.SlideNum = oThis.GetPrevVisibleSlide(true);
+            oThis.SlideNum = oThis.GetPrevVisibleSlide();
             oThis.HtmlPage.m_oApi.sync_DemonstrationSlideChanged(oThis.SlideNum);
         }
         oThis.OnPaintSlide(true);
@@ -3633,18 +3636,9 @@ function CDemonstrationManager(htmlpage)
 		if (this.HtmlPage.m_oApi.isReporterMode && !isNoSendFormReporter)
 			this.HtmlPage.m_oApi.sendFromReporter("{ \"reporter_command\" : \"prev\" }");
 
-        if (this.GetFirstVisibleSlide() != this.SlideNum)
+        if (this.GetFirstVisibleSlide() !== this.SlideNum || this.isLoop())
         {
             this.CorrectSlideNum();
-
-            // TODO: backward transition
-            this.StartSlideBackward();
-            this.HtmlPage.m_oApi.sync_DemonstrationSlideChanged(this.SlideNum);
-        }
-        else if (this.isLoop())
-        {
-            this.CorrectSlideNum();
-            this.SlideNum = this.GetSlidesCount();
             this.StartSlideBackward();
             this.HtmlPage.m_oApi.sync_DemonstrationSlideChanged(this.SlideNum);
         }

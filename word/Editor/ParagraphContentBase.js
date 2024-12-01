@@ -71,6 +71,9 @@ CParagraphContentBase.prototype.IsStopCursorOnEntryExit = function()
 CParagraphContentBase.prototype.PreDelete = function()
 {
 };
+CParagraphContentBase.prototype.GetCurrentPermRanges = function(permRanges, isCurrent)
+{
+};
 /**
  * Выствялем параграф, в котром лежит данный элемент
  * @param {Paragraph} oParagraph
@@ -847,6 +850,13 @@ CParagraphContentBase.prototype.IsStartFromNewLine = function()
 	return false;
 };
 /**
+ * Удаляем из параграфа заданный элемент, если он тут есть
+ * @param element
+ */
+CParagraphContentBase.prototype.RemoveElement = function(element)
+{
+};
+/**
  * Пробегаемся по все ранам с заданной функцией
  * @param fCheck - функция проверки содержимого рана
  * @param {AscWord.CParagraphContentPos} oStartPos
@@ -958,6 +968,11 @@ CParagraphContentBase.prototype.createDuplicateForSmartArt = function(oPr)
  * @param oEngine {CTextToTableEngine}
  */
 CParagraphContentBase.prototype.CalculateTextToTable = function(oEngine){};
+
+CParagraphContentBase.prototype.GetAllPermRangeMarks = function(marks)
+{
+	return [];
+};
 
 /**
  * Это базовый класс для элементов содержимого(контент) параграфа, у которых есть свое содержимое.
@@ -2401,6 +2416,18 @@ CParagraphContentWithParagraphLikeContent.prototype.Get_Text = function(Text)
     {
         this.Content[CurPos].Get_Text( Text );
     }
+};
+CParagraphContentWithParagraphLikeContent.prototype.GetAllPermRangeMarks = function(marks)
+{
+	if (!marks)
+		marks = [];
+	
+	for (let i = 0, count = this.Content.length; i < count; ++i)
+	{
+		this.Content[i].GetAllPermRangeMarks(marks);
+	}
+	
+	return marks;
 };
 CParagraphContentWithParagraphLikeContent.prototype.GetAllParagraphs = function(Props, ParaArray)
 {
@@ -4560,6 +4587,14 @@ CParagraphContentWithParagraphLikeContent.prototype.PreDelete = function()
 
 	this.RemoveSelection();
 };
+CParagraphContentWithParagraphLikeContent.prototype.GetCurrentPermRanges = function(permRanges, isCurrent)
+{
+	let endPos = isCurrent ? Math.min(this.State.ContentPos, this.Content.length - 1) : this.Content.length - 1;
+	for (let pos = 0; pos <= endPos; ++pos)
+	{
+		this.Content[pos].GetCurrentPermRanges(permRanges, isCurrent && pos === endPos);
+	}
+};
 CParagraphContentWithParagraphLikeContent.prototype.GetCurrentComplexFields = function(arrComplexFields, isCurrent, isFieldPos)
 {
 	var nEndPos = isCurrent ? this.State.ContentPos : this.Content.length - 1;
@@ -4627,6 +4662,23 @@ CParagraphContentWithParagraphLikeContent.prototype.CanAddComment = function()
 	}
 
 	return true;
+};
+CParagraphContentWithParagraphLikeContent.prototype.RemoveElement = function(element)
+{
+	for (let i = 0, count = this.Content.length; i < count; ++i)
+	{
+		let item = this.Content[i];
+		if (item === element)
+		{
+			this.RemoveFromContent(i, 1);
+			return true;
+		}
+		else if (item.RemoveElement(element))
+		{
+			return true;
+		}
+	}
+	return false;
 };
 CParagraphContentWithParagraphLikeContent.prototype.CheckRunContent = function(fCheck, oStartPos, oEndPos, nDepth, oCurrentPos, isForward)
 {
@@ -4965,3 +5017,6 @@ function private_ParagraphContentChangesCheckLock(lockData)
 			lockData.lock();
 	}
 }
+//--------------------------------------------------------export----------------------------------------------------
+AscWord.ParagraphContentBase                     = CParagraphContentBase;
+AscWord.ParagraphContentWithParagraphLikeContent = CParagraphContentWithParagraphLikeContent;

@@ -30,7 +30,7 @@
  *
  */
 QUnit.config.autostart = false;
-$(function() {
+$(function () {
 	let documents = {
 		"test_formats": Asc.test_formats,
 		"test_formats_redo": Asc.test_formats_redo,
@@ -42,51 +42,53 @@ $(function() {
 		'id-view': 'editor_sdk'
 	});
 	api.FontLoader = {
-		LoadDocumentFonts: function() {
+		LoadDocumentFonts: function () {
 		}
 	};
 	api.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
 	window["Asc"]["editor"] = api;
 
-	waitLoadModules(function(){
+	waitLoadModules(function () {
 		AscCommon.g_oTableId.init();
 		api._onEndLoadSdk();
 		startTests();
 	});
+
 	function waitLoadModules(waitCallback) {
-		Asc.spreadsheet_api.prototype._init = function() {
+		Asc.spreadsheet_api.prototype._init = function () {
 			this._loadModules();
 		};
-		Asc.spreadsheet_api.prototype._loadFonts = function(fonts, callback) {
+		Asc.spreadsheet_api.prototype._loadFonts = function (fonts, callback) {
 			callback();
 		};
-		Asc.spreadsheet_api.prototype.onEndLoadFile = function(fonts, callback) {
+		Asc.spreadsheet_api.prototype.onEndLoadFile = function (fonts, callback) {
 			waitCallback();
 		};
-		AscCommonExcel.WorkbookView.prototype._calcMaxDigitWidth = function() {
+		AscCommonExcel.WorkbookView.prototype._calcMaxDigitWidth = function () {
 		};
-		AscCommonExcel.WorkbookView.prototype._init = function() {
+		AscCommonExcel.WorkbookView.prototype._init = function () {
 		};
-		AscCommonExcel.WorkbookView.prototype._onWSSelectionChanged = function() {
+		AscCommonExcel.WorkbookView.prototype._onWSSelectionChanged = function () {
 		};
-		AscCommonExcel.WorkbookView.prototype.showWorksheet = function() {
+		AscCommonExcel.WorkbookView.prototype.showWorksheet = function () {
 		};
-		AscCommonExcel.WorksheetView.prototype._init = function() {
+		AscCommonExcel.WorksheetView.prototype._init = function () {
 		};
-		AscCommonExcel.WorksheetView.prototype.updateRanges = function() {
+		AscCommonExcel.WorksheetView.prototype.updateRanges = function () {
 		};
-		AscCommonExcel.WorksheetView.prototype._autoFitColumnsWidth = function() {
+		AscCommonExcel.WorksheetView.prototype._autoFitColumnsWidth = function () {
 		};
-		AscCommonExcel.WorksheetView.prototype.setSelection = function() {
+		AscCommonExcel.WorksheetView.prototype.setSelection = function () {
 		};
-		AscCommonExcel.WorksheetView.prototype.draw = function() {
+		AscCommonExcel.WorksheetView.prototype.draw = function () {
 		};
-		AscCommonExcel.WorksheetView.prototype._prepareDrawingObjects = function() {
+		AscCommonExcel.WorksheetView.prototype._prepareDrawingObjects = function () {
 		};
-		AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function() {
+		AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function () {
 		};
 	}
-	function openDocument(file){
+
+	function openDocument(file) {
 		if (api.wbModel) {
 			api.asc_CloseFile();
 		}
@@ -99,7 +101,8 @@ $(function() {
 			api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
 		return api.wbModel;
 	}
-	function prepareTest(assert, wb){
+
+	function prepareTest(assert, wb) {
 		api.wb.model = wb;
 		api.wbModel = wb;
 		api.initGlobalObjects(wb);
@@ -113,7 +116,9 @@ $(function() {
 		});
 		AscCommon.History.Clear();
 	}
+
 	let memory = new AscCommon.CMemory();
+
 	function Utf8ArrayToStr(array) {
 		let out, i, len, c;
 		let char2, char3;
@@ -121,19 +126,26 @@ $(function() {
 		out = "";
 		len = array.length;
 		i = 0;
-		while(i < len) {
+		while (i < len) {
 			c = array[i++];
-			switch(c >> 4)
-			{
-				case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
-				// 0xxxxxxx
-				out += String.fromCharCode(c);
-				break;
-				case 12: case 13:
-				// 110x xxxx   10xx xxxx
-				char2 = array[i++];
-				out += String.fromCharCode(((c & 0x1F) << 6) | (char2 & 0x3F));
-				break;
+			switch (c >> 4) {
+				case 0:
+				case 1:
+				case 2:
+				case 3:
+				case 4:
+				case 5:
+				case 6:
+				case 7:
+					// 0xxxxxxx
+					out += String.fromCharCode(c);
+					break;
+				case 12:
+				case 13:
+					// 110x xxxx   10xx xxxx
+					char2 = array[i++];
+					out += String.fromCharCode(((c & 0x1F) << 6) | (char2 & 0x3F));
+					break;
 				case 14:
 					// 1110 xxxx  10xx xxxx  10xx xxxx
 					char2 = array[i++];
@@ -147,25 +159,26 @@ $(function() {
 
 		return out;
 	}
-	function getXml(pivot, addCacheDefinition){
+
+	function getXml(pivot, addCacheDefinition) {
 		memory.Seek(0);
 		pivot.toXml(memory);
-		if(addCacheDefinition) {
+		if (addCacheDefinition) {
 			memory.WriteXmlString('\n\n');
 			pivot.cacheDefinition.toXml(memory);
 		}
 		let buffer = new Uint8Array(memory.GetCurPosition());
-		for (let i = 0; i < memory.GetCurPosition(); i++)
-		{
+		for (let i = 0; i < memory.GetCurPosition(); i++) {
 			buffer[i] = memory.data[i];
 		}
-		if(typeof TextDecoder !== "undefined") {
+		if (typeof TextDecoder !== "undefined") {
 			return new TextDecoder("utf-8").decode(buffer);
 		} else {
 			return Utf8ArrayToStr(buffer);
 		}
 
 	}
+
 	function checkHistoryOperation(assert, pivot, valuesUndo, valuesRedo, message, action, check) {
 		let ws = pivot.GetWS();
 		let wb = ws.workbook;
@@ -202,10 +215,11 @@ $(function() {
 		assert.strictEqual(getXml(pivot, true), xmlDo, message + "_changes_xml");
 		return pivot;
 	}
+
 	function getReportValues(pivot) {
 		let res = [];
 		let range = new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange();
-		pivot.GetWS().getRange3(range.r1, range.c1, range.r2, range.c2)._foreach(function(cell, r, c, r1, c1) {
+		pivot.GetWS().getRange3(range.r1, range.c1, range.r2, range.c2)._foreach(function (cell, r, c, r1, c1) {
 			if (!res[r - r1]) {
 				res[r - r1] = [];
 			}
@@ -213,26 +227,28 @@ $(function() {
 		});
 		return res;
 	}
+
 	function getReportValuesWithBoolFill(pivot) {
 		let res = [];
 		let range = new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange();
-		pivot.GetWS().getRange3(range.r1, range.c1, range.r2, range.c2)._foreach(function(cell, r, c, r1, c1) {
+		pivot.GetWS().getRange3(range.r1, range.c1, range.r2, range.c2)._foreach(function (cell, r, c, r1, c1) {
 			if (!res[r - r1]) {
 				res[r - r1] = [];
 			}
-			res[r - r1][c - c1] = cell.getName() + ":" + cell.getValue()+ ":" + !!(cell.getStyle() && !cell.getStyle().isNormalFill());
+			res[r - r1][c - c1] = cell.getName() + ":" + cell.getValue() + ":" + !!(cell.getStyle() && !cell.getStyle().isNormalFill());
 		});
 		return res;
 	}
+
 	function getReportValuesWithBoolFillAndNum(pivot) {
 		let res = [];
 		let range = new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange();
-		pivot.GetWS().getRange3(range.r1, range.c1, range.r2, range.c2)._foreach(function(cell, r, c, r1, c1) {
+		pivot.GetWS().getRange3(range.r1, range.c1, range.r2, range.c2)._foreach(function (cell, r, c, r1, c1) {
 			if (!res[r - r1]) {
 				res[r - r1] = [];
 			}
 			let xf = cell.getStyle();
-			res[r - r1][c - c1] = cell.getName() + ":" + cell.getValue()+ ":" + !!(xf && (!xf.isNormalFill() || !xf.num || !xf.num.getNumFormat().isGeneralFormat()));
+			res[r - r1][c - c1] = cell.getName() + ":" + cell.getValue() + ":" + !!(xf && (!xf.isNormalFill() || !xf.num || !xf.num.getNumFormat().isGeneralFormat()));
 		});
 		return res;
 	}
@@ -263,33 +279,34 @@ $(function() {
 			let col = 0;
 			let getValues = getReportValuesWithBoolFill;
 
-			function prepareValues(wb, name, row, col){
+			function prepareValues(wb, name, row, col) {
 				let pivot = wb.getWorksheetByName(name).getPivotTable(col, row);
 				return getValues(pivot);
 			}
-			function preparePivots(wb, name, row, col){
+
+			function preparePivots(wb, name, row, col) {
 				return wb.getWorksheetByName(name).getPivotTable(col, row);
 			}
 
 			let wbRedo = openDocument(fileRedo);
-			let valuesRedo = wsNames.map(function(name){
+			let valuesRedo = wsNames.map(function (name) {
 				return prepareValues(wbRedo, name, row, col);
 			});
 
 			let wb = openDocument(file);
-			let valuesUndo = wsNames.map(function(name){
+			let valuesUndo = wsNames.map(function (name) {
 				return prepareValues(wb, name, row, col);
 			});
-			let pivots = wsNames.map(function(name){
+			let pivots = wsNames.map(function (name) {
 				return preparePivots(wb, name, row, col);
 			});
 
 			prepareTest(assert, wb);
-			wsNames.forEach(function(name, index){
+			wsNames.forEach(function (name, index) {
 				let pivot = pivots[index];
-				pivot = checkHistoryOperation(assert, pivot, valuesUndo[index], valuesRedo[index], "refresh[" + name + "]", function(){
+				pivot = checkHistoryOperation(assert, pivot, valuesUndo[index], valuesRedo[index], "refresh[" + name + "]", function () {
 					pivot.asc_refresh(api);
-				}, function(assert, pivot, values, message) {
+				}, function (assert, pivot, values, message) {
 					assert.deepEqual(getValues(pivot), values, message);
 				});
 			});
@@ -304,33 +321,34 @@ $(function() {
 			let col = 0;
 			let getValues = getReportValuesWithBoolFillAndNum;
 
-			function prepareValues(wb, name, row, col){
+			function prepareValues(wb, name, row, col) {
 				let pivot = wb.getWorksheetByName(name).getPivotTable(col, row);
 				return getValues(pivot);
 			}
-			function preparePivots(wb, name, row, col){
+
+			function preparePivots(wb, name, row, col) {
 				return wb.getWorksheetByName(name).getPivotTable(col, row);
 			}
 
 			let wbRedo = openDocument(fileRedo);
-			let valuesRedo = wsNames.map(function(name){
+			let valuesRedo = wsNames.map(function (name) {
 				return prepareValues(wbRedo, name, row, col);
 			});
 
 			let wb = openDocument(file);
-			let valuesUndo = wsNames.map(function(name){
+			let valuesUndo = wsNames.map(function (name) {
 				return prepareValues(wb, name, row, col);
 			});
-			let pivots = wsNames.map(function(name){
+			let pivots = wsNames.map(function (name) {
 				return preparePivots(wb, name, row, col);
 			});
 
 			prepareTest(assert, wb);
-			wsNames.forEach(function(name, index){
+			wsNames.forEach(function (name, index) {
 				let pivot = pivots[index];
-				pivot = checkHistoryOperation(assert, pivot, valuesUndo[index], valuesRedo[index], "refresh[" + name + "]", function(){
+				pivot = checkHistoryOperation(assert, pivot, valuesUndo[index], valuesRedo[index], "refresh[" + name + "]", function () {
 					pivot.asc_refresh(api);
-				}, function(assert, pivot, values, message) {
+				}, function (assert, pivot, values, message) {
 					assert.deepEqual(getValues(pivot), values, message);
 				});
 			});
@@ -352,16 +370,16 @@ $(function() {
 
 			prepareTest(assert, wb);
 			let pivot = wb.getWorksheetByName('DataFieldStart').getPivotTable(col, row);
-			pivot = checkHistoryOperation(assert, dataFieldStartPivot, dataFieldStartValues, moveDataFieldResultValues, "move dataField", function(){
+			pivot = checkHistoryOperation(assert, dataFieldStartPivot, dataFieldStartValues, moveDataFieldResultValues, "move dataField", function () {
 				pivot.asc_moveDataField(api, 0, 1);
 				pivot.asc_refresh(api);
-			}, function(assert, pivot, values, message) {
+			}, function (assert, pivot, values, message) {
 				assert.deepEqual(getValues(pivot), values, message);
 			});
-			pivot = checkHistoryOperation(assert, dataFieldStartPivot, moveDataFieldResultValues, removeDataFieldResultValues, "remove dataField", function(){
+			pivot = checkHistoryOperation(assert, dataFieldStartPivot, moveDataFieldResultValues, removeDataFieldResultValues, "remove dataField", function () {
 				pivot.asc_removeDataField(api, 5, 1);
 				pivot.asc_refresh(api);
-			}, function(assert, pivot, values, message) {
+			}, function (assert, pivot, values, message) {
 				assert.deepEqual(getValues(pivot), values, message);
 			});
 		});
@@ -376,12 +394,12 @@ $(function() {
 			const values = getValues(pivot);
 			prepareTest(assert, wb);
 
-			pivot = checkHistoryOperation(assert, pivot, values, values, "change source data 1", function(){
+			pivot = checkHistoryOperation(assert, pivot, values, values, "change source data 1", function () {
 				const props = new Asc.CT_pivotTableDefinition();
 				props.asc_setDataRef(dataRefFieldSettings);
 				pivot.asc_set(api, props);
 				pivot.asc_refresh(api);
-			}, function(assert, pivot, values, message) {
+			}, function (assert, pivot, values, message) {
 				assert.deepEqual(getValues(pivot), values, message);
 			});
 		});
@@ -393,30 +411,32 @@ $(function() {
 			const dataRefFieldSettings1 = 'Sheet1' + "!" + 'I2:O8';
 			const dataRefFieldSettings2 = 'Sheet1' + "!" + 'A2:G13';
 			const getValues = getReportValuesWithBoolFillAndNum;
-			function prepareValues(wb, name, row, col){
+
+			function prepareValues(wb, name, row, col) {
 				let pivot = wb.getWorksheetByName(name).getPivotTable(col, row);
 				return getValues(pivot);
 			}
+
 			const valuesStart = prepareValues(wb, 'start', row, col);
 			const valuesReindex = prepareValues(wb, 'reindex', row, col);
 			const valuesResult = prepareValues(wb, 'result', row, col);
 			let pivot = wb.getWorksheetByName('start').getPivotTable(col, row);
 			prepareTest(assert, wb);
 
-			pivot = checkHistoryOperation(assert, pivot, valuesStart, valuesReindex, "change source data 2 reindex", function(){
+			pivot = checkHistoryOperation(assert, pivot, valuesStart, valuesReindex, "change source data 2 reindex", function () {
 				const props = new Asc.CT_pivotTableDefinition();
 				props.asc_setDataRef(dataRefFieldSettings1);
 				pivot.asc_set(api, props);
 				pivot.asc_refresh(api);
-			}, function(assert, pivot, values, message) {
+			}, function (assert, pivot, values, message) {
 				assert.deepEqual(getValues(pivot), values, message);
 			});
-			pivot = checkHistoryOperation(assert, pivot, valuesReindex, valuesResult, "change source data 2 result", function(){
+			pivot = checkHistoryOperation(assert, pivot, valuesReindex, valuesResult, "change source data 2 result", function () {
 				const props = new Asc.CT_pivotTableDefinition();
 				props.asc_setDataRef(dataRefFieldSettings2);
 				pivot.asc_set(api, props);
 				pivot.asc_refresh(api);
-			}, function(assert, pivot, values, message) {
+			}, function (assert, pivot, values, message) {
 				assert.deepEqual(getValues(pivot), values, message);
 			});
 		});
@@ -426,21 +446,23 @@ $(function() {
 			const col = 0;
 			const wb = openDocument(file);
 			const getValues = getReportValuesWithBoolFillAndNum;
-			function prepareValues(wb, name, row, col){
+
+			function prepareValues(wb, name, row, col) {
 				let pivot = wb.getWorksheetByName(name).getPivotTable(col, row);
 				return getValues(pivot);
 			}
+
 			const valuesStart = prepareValues(wb, 'start', row, col);
 			const valuesResult = prepareValues(wb, 'result', row, col);
 			let pivot = wb.getWorksheetByName('start').getPivotTable(col, row);
 			prepareTest(assert, wb);
 
-			pivot = checkHistoryOperation(assert, pivot, valuesStart, valuesResult, "remove field", function(){
+			pivot = checkHistoryOperation(assert, pivot, valuesStart, valuesResult, "remove field", function () {
 				pivot.asc_removeField(api, 0);
 				pivot.asc_addRowField(api, 0);
 				pivot.asc_moveRowField(api, 1, 0);
 				pivot.asc_refresh(api);
-			}, function(assert, pivot, values, message) {
+			}, function (assert, pivot, values, message) {
 				assert.deepEqual(getValues(pivot), values, message);
 			});
 		});
@@ -585,7 +607,7 @@ $(function() {
 					['F35', 'D35'],
 				]
 			};
-			for(let sheetName in data) {
+			for (let sheetName in data) {
 				let elems = data[sheetName];
 				let ws = wb.getWorksheetByName(sheetName);
 				elems.forEach(function (elem) {
@@ -659,7 +681,7 @@ $(function() {
 			assert.deepEqual([range.bbox.r1, range.bbox.r2, range.bbox.c1, range.bbox.c2], [3, 12, 0, 0], 'row range');
 
 			range = pivot.asc_getDataBodyRange();
-			assert.deepEqual([range.bbox.r1, range.bbox.r2, range.bbox.c1,range.bbox.c2], [4, 12, 1, 3], 'data range');
+			assert.deepEqual([range.bbox.r1, range.bbox.r2, range.bbox.c1, range.bbox.c2], [4, 12, 1, 3], 'data range');
 
 			let getDataToGetPivotData = pivot.asc_getDataToGetPivotData(['East', 'Boy', 'Fancy']);
 			let params = pivot.getGetPivotParamsByActiveCell({row: 5, col: 1})
@@ -668,6 +690,192 @@ $(function() {
 				optParams: params.optParams
 			}, 'getGetPivotParamsByActiveCell');
 
+		});
+		QUnit.test('Test: CALCULATED-ITEMS refresh', function (assert) {
+			const file = Asc.test_calculated;
+			const wb = openDocument(file);
+			const row = 4;
+			const col = 0;
+			let pivot = wb.getWorksheetByName('Sheet2').getPivotTable(col, row);
+			prepareTest(assert, wb);
+
+			const standard = getReportValues(pivot);
+			pivot = checkHistoryOperation(assert, pivot, standard, standard, "refresh pivot", function () {
+				pivot.asc_refresh(api);
+			}, function (assert, pivot, values, message) {
+				assert.deepEqual(getReportValues(pivot), values, message);
+			});
+		});
+		QUnit.test('Test: CALCULATED-ITEMS add', function (assert) {
+			const fileStart = Asc.AddCalculatedItemsStart;
+			const fileEnd = Asc.AddCalculatedItemsStandard;
+			const startWb = openDocument(fileStart);
+			const standardWb = openDocument(fileEnd);
+			const row = 4;
+			const col = 0;
+			let pivot = startWb.getWorksheetByName('Sheet2').getPivotTable(col, row);
+			const standardPivot = standardWb.getWorksheetByName('Sheet2').getPivotTable(col, row);
+			prepareTest(assert, startWb);
+			const undo = getReportValues(pivot);
+			const standard = getReportValues(standardPivot);
+			pivot = checkHistoryOperation(assert, pivot, undo, standard, "add items", function () {
+				pivot.asc_addCalculatedItem(api, 0, 'Formula3', pivot.asc_convertCalculatedFormula("East2-10+'we''s t'", 0));
+				pivot.asc_addCalculatedItem(api, 1, 'Formula2', pivot.asc_convertCalculatedFormula("Boy-Girl", 1));
+				pivot.asc_addCalculatedItem(api, 2, 'Formula1', pivot.asc_convertCalculatedFormula("Fancy+Tee", 2));
+			}, function (assert, pivot, values, message) {
+				assert.deepEqual(getReportValues(pivot), values, message);
+			});
+		});
+		QUnit.test('Test: CALCULATED-ITEMS remove', function (assert) {
+			const fileStart = Asc.AddCalculatedItemsStandard;
+			const fileEnd = Asc.RemoveCalculatedItemsStandard;
+			const startWb = openDocument(fileStart);
+			const standardWb = openDocument(fileEnd);
+			const row = 4;
+			const col = 0;
+			let pivot = startWb.getWorksheetByName('Sheet2').getPivotTable(col, row);
+			const standardPivot = standardWb.getWorksheetByName('Sheet2').getPivotTable(col, row);
+			prepareTest(assert, startWb);
+			const undo = getReportValues(pivot);
+			const standard = getReportValues(standardPivot);
+			pivot = checkHistoryOperation(assert, pivot, undo, standard, "add items", function () {
+				pivot.asc_removeCalculatedItem(api, 0, 'Formula1');
+				pivot.asc_removeCalculatedItem(api, 1, 'Formula2');
+			}, function (assert, pivot, values, message) {
+				assert.deepEqual(getReportValues(pivot), values, message);
+			});
+		});
+		QUnit.test('Test: CALCULATED-ITEMS modify', function (assert) {
+			const fileStart = Asc.RemoveCalculatedItemsStandard;
+			const fileEnd = Asc.ModifyCalculatedItemsStandard;
+			const startWb = openDocument(fileStart);
+			const standardWb = openDocument(fileEnd);
+			const row = 4;
+			const col = 0;
+			let pivot = startWb.getWorksheetByName('Sheet2').getPivotTable(col, row);
+			const standardPivot = standardWb.getWorksheetByName('Sheet2').getPivotTable(col, row);
+			prepareTest(assert, startWb);
+			const undo = getReportValues(pivot);
+			const standard = getReportValues(standardPivot);
+			pivot = checkHistoryOperation(assert, pivot, undo, standard, "add items", function () {
+				pivot.asc_modifyCalculatedItem(api, 0, 'Formula2', pivot.asc_convertCalculatedFormula("East2-15", 0));
+				pivot.asc_modifyCalculatedItem(api, 2, 'Formula1', pivot.asc_convertCalculatedFormula("Fancy+Tee-10", 2));
+			}, function (assert, pivot, values, message) {
+				assert.deepEqual(getReportValues(pivot), values, message);
+			});
+		});
+		QUnit.test('Test: CALCULATED-ITEMS getFieldIndexByCell', function (assert) {
+			const file = Asc.AddCalculatedItemsStandard;
+			const wb = openDocument(file);
+			const row = 4;
+			const col = 0;
+			const standardFieldIndexes = [
+				[null, 2, null, null, null, null],
+				[0, 2, 2, 2, 2, null],
+				[0, null, null, null, null, null],
+				[1, null, null, null, null, null],
+				[1, null, null, null, null, null],
+				[1, null, null, null, null, null],
+				[1, null, null, null, null, null],
+				[0, null, null, null, null, null],
+				[1, null, null, null, null, null],
+				[1, null, null, null, null, null],
+				[1, null, null, null, null, null],
+				[1, null, null, null, null, null],
+				[0, null, null, null, null, null],
+				[1, null, null, null, null, null],
+				[1, null, null, null, null, null],
+				[1, null, null, null, null, null],
+				[1, null, null, null, null, null],
+				[0, null, null, null, null, null],
+				[1, null, null, null, null, null],
+				[1, null, null, null, null, null],
+				[1, null, null, null, null, null],
+				[1, null, null, null, null, null],
+				[0, null, null, null, null, null],
+				[1, null, null, null, null, null],
+				[1, null, null, null, null, null],
+				[1, null, null, null, null, null],
+				[1, null, null, null, null, null],
+				[null, null, null, null, null, null],
+			];
+			const fieldIndexes = [];
+			let pivot = wb.getWorksheetByName('Sheet2').getPivotTable(col, row);
+			for (let i = 2; i < 30; i += 1) {
+				let row = [];
+				for (let j = 0; j < 6; j += 1) {
+					row.push(pivot.asc_getFieldIndexByCell(i, j));
+				}
+				fieldIndexes.push(row);
+			}
+			assert.deepEqual(fieldIndexes, standardFieldIndexes, 'check getFieldIndexes')
+		});
+		QUnit.test('Test: CALCULATED-ITEMS hasTablesErrorForCalculatedItems', function (assert) {
+			const file = Asc.isTablesValidForCalculatedItems;
+			const wb = openDocument(file);
+			const pivot1 = wb.getWorksheetByName('Sheet2').getPivotTable(0, 4);
+			const pivot2 = wb.getWorksheetByName('Sheet2').getPivotTable(0, 11);
+			const pivot3 = wb.getWorksheetByName('Sheet2').getPivotTable(0, 18);
+			assert.equal(pivot1.asc_hasTablesErrorForCalculatedItems(0), c_oAscError.ID.NotUniqueFieldWithCalculated);
+			assert.equal(pivot2.asc_hasTablesErrorForCalculatedItems(0), c_oAscError.ID.CalculatedItemInPageField);
+			assert.equal(pivot3.asc_hasTablesErrorForCalculatedItems(0), c_oAscError.ID.No);
+		});
+		QUnit.test('Test: CALCULATED-ITEMS can add calculatedItemsName', function (assert) {
+			const file = Asc.AddCalculatedItemsStandard;
+			const wb = openDocument(file);
+			const pivot = wb.getWorksheetByName('Sheet2').getPivotTable(0, 4);
+			assert.equal(pivot.asc_canAddNameCalculatedItem(0, 'East2'), false);
+			assert.equal(pivot.asc_canAddNameCalculatedItem(0, 'East'), false);
+			assert.equal(pivot.asc_canAddNameCalculatedItem(0, 'Formula2'), false);
+			assert.equal(pivot.asc_canAddNameCalculatedItem(0, 'East3'), true);
+			assert.equal(pivot.asc_canAddNameCalculatedItem(1, 'East3'), true);
+			assert.equal(pivot.asc_canAddNameCalculatedItem(1, 'Boy'), false);
+		});
+		QUnit.test('Test: CALCULATED-ITEMS canChangeCalculatedItemsByActiveCell', function (assert) {
+			const file = Asc.AddCalculatedItemsStandard;
+			const wb = openDocument(file);
+			const row = 4;
+			const col = 0;
+			const standardCanAdd = [
+				[false, true, false, false, false, false],
+				[true, true, true, true, true, false],
+				[true, false, false, false, false, false],
+				[true, false, false, false, false, false],
+				[true, false, false, false, false, false],
+				[true, false, false, false, false, false],
+				[true, false, false, false, false, false],
+				[true, false, false, false, false, false],
+				[true, false, false, false, false, false],
+				[true, false, false, false, false, false],
+				[true, false, false, false, false, false],
+				[true, false, false, false, false, false],
+				[true, false, false, false, false, false],
+				[true, false, false, false, false, false],
+				[true, false, false, false, false, false],
+				[true, false, false, false, false, false],
+				[true, false, false, false, false, false],
+				[true, false, false, false, false, false],
+				[true, false, false, false, false, false],
+				[true, false, false, false, false, false],
+				[true, false, false, false, false, false],
+				[true, false, false, false, false, false],
+				[true, false, false, false, false, false],
+				[true, false, false, false, false, false],
+				[true, false, false, false, false, false],
+				[true, false, false, false, false, false],
+				[true, false, false, false, false, false],
+				[false, false, false, false, false, false],
+			];
+			const canAdd = [];
+			let pivot = wb.getWorksheetByName('Sheet2').getPivotTable(col, row);
+			for (let i = 2; i < 30; i += 1) {
+				let row = [];
+				for (let j = 0; j < 6; j += 1) {
+					row.push(pivot.asc_canChangeCalculatedItemByCell(i, j));
+				}
+				canAdd.push(row);
+			}
+			assert.deepEqual(canAdd, standardCanAdd, 'check can change calculatedItems')
 		});
 		QUnit.test('Test: change pivot headers and labels', function (assert) {
 			const file = Asc.PivotFieldNames;
@@ -749,7 +957,7 @@ $(function() {
 				const pivotRange = pivot.getRange();
 
 				const range = new AscCommonExcel.Range(ws, pivotRange.r1, pivotRange.c1, pivotRange.r2, pivotRange.c2);
-				range._foreach(function(cell, r, c, r1, c1) {
+				range._foreach(function (cell, r, c, r1, c1) {
 					const eachRange = Asc.Range(c, r, c, r);
 					const name = eachRange.getName();
 					const func = pivot.rangeMapper.getEditCellFunction(eachRange);

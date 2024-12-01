@@ -6620,18 +6620,114 @@ function BinaryPPTYLoader()
         return shape;
     };
 
+    this.IsNoSlideSpTree = function ()
+    {
+        return this.TempMainObject && AscFormat.isRealNumber(this.TempMainObject.kind) && (this.TempMainObject.kind !== AscFormat.TYPE_KIND.SLIDE);
+    };
+    this.ReadSpTreeElement = function()
+    {
+        let s = this.stream;
+
+        let bIsNoSlideSpTree = this.IsNoSlideSpTree();
+        let _type = s.GetUChar();
+        let _object;
+        switch (_type)
+        {
+            case 1:
+            {
+                _object = this.ReadShape();
+                if (!IsHiddenObj(_object) || bIsNoSlideSpTree)
+                {
+                    _object.setParent2(this.TempMainObject);
+                }
+                else
+                {
+                    _object = null;
+                }
+                break;
+            }
+            case 6:
+            case 2:
+            case 7:
+            case 8:
+            {
+                _object = this.ReadPic(_type);
+                if(_type === 6 && !_object.checkCorrect())
+                {
+                    _object = null;
+                }
+                break;
+            }
+            case 3:
+            {
+                _object = this.ReadCxn();
+                break;
+            }
+            case 4:
+            {
+                _object = this.ReadGroupShape();
+                break;
+            }
+            case 5:
+            {
+                _object = this.ReadGrFrame();
+                break;
+            }
+            case 0x99:
+            {
+                _object = this.ReadSpTreeElement();
+                break;
+            }
+            default:
+            {
+                s.SkipRecord();
+                break;
+            }
+        }
+        if(_object)
+        {
+            if (!IsHiddenObj(_object) || bIsNoSlideSpTree)
+            {
+                _object.setParent2(this.TempMainObject);
+            }
+            else
+            {
+                _object = null
+            }
+        }
+        let nCurPos = s.cur;
+        let nType = s.GetUChar();
+        let oAltDrawing = null;
+        if(nType === 0x99)
+        {
+            let nAltContentLen = s.GetULong();
+            let nEndPos = s.cur + nAltContentLen;
+            if(!_object || !_object.isSupported())
+            oAltDrawing = this.ReadSpTreeElement();
+            if(oAltDrawing)
+            {
+                _object = oAltDrawing;
+            }
+            s.Seek2(nEndPos);
+        }
+        else
+        {
+            s.Seek2(nCurPos);
+        }
+        return _object;
+    };
     this.ReadGroupShapeMain = function()
     {
-        var s = this.stream;
+        let s = this.stream;
 
-        var shapes = [];
+        let shapes = [];
 
-        var _rec_start = s.cur;
-        var _end_rec = _rec_start + s.GetULong() + 4;
+        let _rec_start = s.cur;
+        let _end_rec = _rec_start + s.GetULong() + 4;
+        let _object;
 
         s.Skip2(5); // type SPTREE + len
 
-        let bIsNoSlideSpTree = this.TempMainObject && AscFormat.isRealNumber(this.TempMainObject.kind) && (this.TempMainObject.kind !== AscFormat.TYPE_KIND.SLIDE);
         while (s.cur < _end_rec)
         {
             var _at = s.GetUChar();
@@ -6660,71 +6756,10 @@ function BinaryPPTYLoader()
                         if (__len == 0)
                             continue;
 
-                        var _type = s.GetUChar();
-
-                        switch (_type)
+                        _object = this.ReadSpTreeElement();
+                        if(_object)
                         {
-                            case 1:
-                            {
-                                var _object = this.ReadShape();
-                                if (!IsHiddenObj(_object) || bIsNoSlideSpTree)
-                                {
-                                    shapes[shapes.length] = _object;
-                                    _object.setParent2(this.TempMainObject);
-                                }
-                                break;
-                            }
-                            case 6:
-                            case 2:
-                            case 7:
-                            case 8:
-                            {
-                                var _object = this.ReadPic(_type);
-                                if (!IsHiddenObj(_object) || bIsNoSlideSpTree)
-                                {
-                                    if(_type !== 6 || _object.checkCorrect())
-                                    {
-                                        shapes[shapes.length] = _object;
-                                        _object.setParent2(this.TempMainObject);
-                                    }
-                                }
-                                break;
-                            }
-                            case 3:
-                            {
-                                var _object = this.ReadCxn();
-                                if (!IsHiddenObj(_object) || bIsNoSlideSpTree)
-                                {
-                                    shapes[shapes.length] = _object;
-                                    _object.setParent2(this.TempMainObject);
-                                }
-                                break;
-                            }
-                            case 4:
-                            {
-                                var _object = this.ReadGroupShape();
-                                if (!IsHiddenObj(_object) || bIsNoSlideSpTree)
-                                {
-                                    shapes[shapes.length] = _object;
-                                    _object.setParent2(this.TempMainObject);
-                                }
-                                break;
-                            }
-                            case 5:
-                            {
-                                var _ret = this.ReadGrFrame();
-                                if (null != _ret)
-                                {
-                                    shapes[shapes.length] = _ret;
-                                    _ret.setParent2(this.TempMainObject);
-                                }
-                                break;
-                            }
-                            default:
-                            {
-                                s.SkipRecord();
-                                break;
-                            }
+                            shapes[shapes.length] = _object;
                         }
                     }
                     break;
@@ -7281,6 +7316,7 @@ function BinaryPPTYLoader()
             _smartArt.fromPPTY(this);
             _smartArt.setBDeleted(false);
 						_smartArt.generateDefaultStructures();
+            _smartArt.checkDataModel();
             _smartArt.checkNodePointsAfterRead();
         }
         else
@@ -10501,6 +10537,23 @@ function BinaryPPTYLoader()
                 var GrObject = oThis.Reader.ReadGraphicObject();
 
                 s.Seek2(_end_rec);
+                return GrObject;
+            });
+        };
+        this.ReadGraphicObject2 = function(stream, presentation, drawingDocument) {
+            var oThis = this;
+            return this.ReadPPTXElement(undefined, stream, function() {
+                if(presentation)
+                {
+                    oThis.Reader.presentation = presentation;
+                }
+                if(drawingDocument)
+                {
+                    oThis.Reader.DrawingDocument = drawingDocument;
+                }
+                oThis.LogicDocument = null;
+                var s = oThis.stream;
+                var GrObject = oThis.Reader.ReadGraphicObject();
                 return GrObject;
             });
         };

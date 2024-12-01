@@ -428,6 +428,11 @@ function (window, undefined) {
 		this.intervalClosed = null;
 		this.underflow = null;
 		this.overflow = null;
+		this.compiledBinSize = null;
+		this.compiledBinCount = null;
+		this.compiledUnderflow = null;
+		this.compiledOverflow = null;
+		this.testingNumArr = null;
 	}
 
 	InitClass(CBinning, CBaseChartObject, AscDFH.historyitem_type_Binning);
@@ -461,6 +466,83 @@ function (window, undefined) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsDouble2(this, AscDFH.historyitem_Binning_SetOverflow, this.overflow, pr));
 		this.overflow = pr;
 	};
+
+	CBinning.prototype.recalculate = function (axisProperties) {
+		this.compiledBinSize = this.binSize;
+		this.compiledBinCount = this.binCount;
+		this.compiledUnderflow = ((this.underflow === 0 || this.underflow) && this.underflow > axisProperties.cat.min && this.underflow <= axisProperties.cat.max) ? this.underflow : null;
+		this.compiledOverflow = ((this.overflow === 0 || this.overflow) && this.overflow < axisProperties.cat.max && this.overflow >= axisProperties.cat.min) ? this.overflow : null;
+
+		const catLimits = this.handleCatLimits(axisProperties);
+		this.calculateBinSizeAndCount(catLimits, this.testingNumArr ? this.testingNumArr : this.getNumArr());
+		return catLimits;
+	};
+	CBinning.prototype.getNumArr = function () {
+		const chartSpace = this.getChartSpace();
+		const plotAreaRegion = chartSpace ? chartSpace.getPlotAreaRegion() : null;
+		const seria = plotAreaRegion && Array.isArray(plotAreaRegion.series) && plotAreaRegion.series.length > 0 ? plotAreaRegion.series[0] : null;
+		const numLit = seria ? seria.getValLit() : null;
+		return numLit ? numLit.pts : null;
+	};
+	CBinning.prototype.handleCatLimits = function (axisProperties) {
+		const limits = {
+			isOverflowExist : !!AscFormat.isRealNumber(this.compiledOverflow),
+			isUnderflowExist : !!AscFormat.isRealNumber(this.compiledUnderflow),
+			trueMax : null,
+			trueMin : null,
+		}
+
+		if (limits.isOverflowExist && limits.isUnderflowExist && this.compiledUnderflow > this.compiledOverflow) {
+			this.compiledOverflow = null;
+			limits.isOverflowExist = false;
+		}
+
+		limits.trueMax = limits.isOverflowExist ? this.compiledOverflow : axisProperties.cat.max;
+		limits.trueMin = limits.isUnderflowExist ? this.compiledUnderflow : axisProperties.cat.min;
+		return limits;
+	};
+	CBinning.prototype.calculateBinSizeAndCount = function(catLimits, numArr) {
+		if (!catLimits || !numArr) {
+			return;
+		}
+		if (this.compiledBinSize) {
+			this.compiledBinCount = Math.max(Math.ceil((catLimits.trueMax - catLimits.trueMin) / this.compiledBinSize), 1);
+		} else if (this.compiledBinCount) {
+			this.compiledBinCount -= (catLimits.isOverflowExist ? 1 : 0) + (catLimits.isUnderflowExist ? 1 : 0);
+			this.compiledBinCount = Math.max(this.compiledBinCount, 0);
+			this.compiledBinSize = (this.compiledBinCount !== 0) ? ((catLimits.trueMax - catLimits.trueMin) / this.compiledBinCount) : null;
+		} else {
+			// Find stdev
+			// formula = sqrt((∑(x - mean)^2)/(n-1))
+			let isUnique = true;
+			let mean = 0;
+			let stDev = 0;
+			for (let i = 0; i < numArr.length; i++) {
+				mean += numArr[i].val;
+			}
+			mean /= numArr.length;
+
+			for (let i = 0; i < numArr.length; i++) {
+				isUnique = numArr[i].val === numArr[0].val;
+				stDev += Math.pow((numArr[i].val - mean), 2);
+			}
+			stDev = Math.sqrt(stDev / Math.max(numArr.length - 1, 1));
+
+			// Calculate bin size and bin count
+			this.compiledBinSize = (3.5 * stDev) / (Math.pow(numArr.length, 1 / 3));
+			this.compiledBinCount = (this.compiledBinSize) ? Math.max(Math.ceil((catLimits.trueMax - catLimits.trueMin) / this.compiledBinSize), 1) : 1;
+			if (isUnique) {
+				this.compiledBinSize = 5;
+				this.compiledBinCount = 1;
+				this.compiledOverflow = null;
+				this.compiledUnderflow = null;
+			}
+			// binSize is calculated automatically, it must be rounded to two digits. Example: 78.65 = 79, 0.856 : 0.86!
+			const BINNING_PRECISION = 1;
+			this.compiledBinSize = AscCommon._roundValue(this.compiledBinSize, true, BINNING_PRECISION);
+		}
+
+	}
 
 
 	// CategoryAxisScaling
@@ -2673,6 +2755,7 @@ function (window, undefined) {
 			oPt.setIdx(nPtIdx);
 			oPt.setVal(dVal);
 			oLvl.addPt(oPt);
+			oPt.setFormatCode(oCell.getNumFormatStr());
 		}
 	};
 
@@ -2946,6 +3029,7 @@ function (window, undefined) {
 		CBaseChartObject.call(this);
 		this.plotSurface = null;
 		this.series = [];
+		this.cachedData = null;
 	}
 
 	InitClass(CPlotAreaRegion, CBaseChartObject, AscDFH.historyitem_type_PlotAreaRegion);
@@ -2960,6 +3044,14 @@ function (window, undefined) {
 				oCopy.addSeries(this.series[i].createDuplicate(), i);
 			}
 		}
+	}
+
+	CPlotAreaRegion.prototype.getCachedData = function () {
+		return this.cachedData;
+	};
+
+	CPlotAreaRegion.prototype.setCachedData = function (cachedData) {
+		this.cachedData = cachedData;
 	}
 
 	CPlotAreaRegion.prototype.getMaxSeriesIdx = function () {
@@ -2991,6 +3083,11 @@ function (window, undefined) {
 	};
 	CPlotAreaRegion.prototype.getAllSeries = function () {
 		return [].concat(this.series);
+	};
+	CPlotAreaRegion.prototype.getAllRasterImages = function (images) {
+		for(let nIdx = 0; nIdx < this.series.length; ++nIdx) {
+			this.series[nIdx].getAllRasterImages(images);
+		}
 	};
 
 	// PlotSurface
@@ -3143,7 +3240,15 @@ function (window, undefined) {
 	}
 
 	InitClass(CSeries, AscFormat.CSeriesBase, AscDFH.historyitem_type_Series);
-
+	CSeries.prototype.isSupported = function () {
+		let nType = this.layoutId;
+		if(nType === AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN ||
+			nType === AscFormat.SERIES_LAYOUT_WATERFALL ||
+			nType === AscFormat.SERIES_LAYOUT_FUNNEL) {
+			return true;
+		}
+		return false;
+	};
 	CSeries.prototype.fillObject = function (oCopy) {
 		AscFormat.CSeriesBase.prototype.fillObject.call(this, oCopy);
 		if (this.dataLabels) {
@@ -3278,9 +3383,20 @@ function (window, undefined) {
 		}
 		return null;
 	};
+	CSeries.prototype.getAllRasterImages = function (images) {
+		for (let nDpt = 0; nDpt < this.dPt.length; ++nDpt) {
+			let oDPt = this.dPt[nDpt];
+			if(oDPt && oDPt.spPr) {
+				oDPt.spPr.checkBlipFillRasterImage(images);
+			}
+		}
+	};
 	CSeries.prototype.getValPts = function () {
 		const numLit = this.getValLit();
 		return numLit ? numLit.pts : [];
+	};
+	CSeries.prototype.getNumPts = function() {
+		return this.getValPts();
 	};
 	CSeries.prototype.getCatLit = function (type) {
 		let oSeriesData = this.getData();
@@ -3315,18 +3431,27 @@ function (window, undefined) {
 		}
 		return null;
 	};
+	CSeries.prototype.getPtByIdx = function (idx) {
+		let aPts = this.getNumPts();
+		for (let nIdx = 0; nIdx < aPts.length; ++nIdx) {
+			if (aPts[nIdx].idx === idx) {
+				return aPts[nIdx];
+			}
+		}
+		return null;
+	};
 	CSeries.prototype.getPtPen = function (nIdx) {
-		let oDpt = this.getDptByIdx(nIdx);
-		if (oDpt && oDpt.pen) {
-			return oDpt.pen;
+		let oPt = this.getPtByIdx(nIdx);
+		if (oPt && oPt.pen) {
+			return oPt.pen;
 		}
 		return this.compiledSeriesPen;
 	};
 
 	CSeries.prototype.getPtBrush = function (nIdx) {
-		let oDpt = this.getDptByIdx(nIdx);
-		if (oDpt && oDpt.brush) {
-			return oDpt.brush;
+		let oPt = this.getPtByIdx(nIdx);
+		if (oPt && oPt.brush) {
+			return oPt.brush;
 		}
 		return this.compiledSeriesBrush;
 	};
@@ -4430,6 +4555,7 @@ function (window, undefined) {
 	window['AscFormat'].CValueColorMiddlePosition = CValueColorMiddlePosition;
 	window['AscFormat'].CValueColorPositions = CValueColorPositions;
 	window['AscFormat'].CValueColors = CValueColors;
+	window['AscFormat'].CBinning = CBinning;
 	// ---------------------------------------------
 	// Simple Types
 	// ---------------------------------------------

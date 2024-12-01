@@ -54,7 +54,8 @@
 		Text        : 1,
 		Html        : 2,
 		Internal    : 4,
-		HtmlElement : 8
+		HtmlElement : 8,
+		Rtf         : 16
 	};
 	var c_oClipboardPastedFrom       = {
 		Word        : 0,
@@ -246,8 +247,6 @@
 				if (!_clipboard || !_clipboard.getData)
 					return false;
 
-				//window['AscCommon'].g_clipboardBase.rtf = this.ClosureParams.getData("text/rtf");
-
 				var isDisableRawPaste = false;
 				if (true === AscCommon["isDisableRawPaste"])
 				{
@@ -263,6 +262,16 @@
 					g_clipboardBase.Paste_End();
 					return false;
 				}
+
+
+				//while commented rtf paste. reading RTF with pictures takes a very long time.
+				// var _rtf_format = this.ClosureParams.getData("text/rtf");
+				// if (_rtf_format)
+				// {
+				// 	this.Api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Rtf, _rtf_format);
+				// 	g_clipboardBase.Paste_End();
+				// 	return false;
+				// }
 
 				var _html_format = isDisableRawPaste ? "" : this.ClosureParams.getData("text/html");
 				if (_html_format && _html_format != "")
@@ -1044,6 +1053,12 @@
 
 		Button_Copy : function()
 		{
+			if (window["AscDesktopEditor"])
+			{
+				window["asc_desktop_copypaste"](this.Api, "Copy");
+				return true;
+			}
+
 			if (window["NATIVE_EDITOR_ENJINE"])
 				return false;
 			
@@ -1083,6 +1098,12 @@
 
 		Button_Cut : function()
 		{
+			if (window["AscDesktopEditor"])
+			{
+				window["asc_desktop_copypaste"](this.Api, "Cut");
+				return true;
+			}
+
 			if (window["NATIVE_EDITOR_ENJINE"])
 				return false;
 			
@@ -1126,6 +1147,12 @@
 
 		Button_Paste : function()
 		{
+			if (window["AscDesktopEditor"])
+			{
+				window["asc_desktop_copypaste"](this.Api, "Paste");
+				return true;
+			}
+
 			if (window["NATIVE_EDITOR_ENJINE"])
 				return false;
 			
@@ -1525,6 +1552,4 @@ window["asc_desktop_copypaste"] = function(_api, _method)
 	if (!bIsFocus)
 		_api.asc_enableKeyEvents(true);
 	window["AscDesktopEditor"][_method]();
-	if (!bIsFocus)
-		_api.asc_enableKeyEvents(false);
 };

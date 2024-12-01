@@ -443,6 +443,8 @@ window.AscCommon.g_cIsBeta = "false";
  */
 	function(window, undefined)
 {
+	window['Asc'] = window['Asc'] || {};
+	
 	var g_cCharDelimiter      = String.fromCharCode(5);
 	var g_cGeneralFormat      = 'General';
 	var FONT_THUMBNAIL_HEIGHT = (window["AscDesktopEditor"] && window["AscDesktopEditor"]["GetFontThumbnailHeight"]) ? window["AscDesktopEditor"]["GetFontThumbnailHeight"]() : 28;
@@ -507,6 +509,7 @@ window.AscCommon.g_cIsBeta = "false";
 		XLSX_FLAT  : 0x010b,
 		XLSX_PACKAGE  : 0x010c,
 		XLSY : 0x1002,
+		CANVAS_SPREADSHEET : 0x2002,
 
 		// PowerPoint
 		PPTX : 0x0081,
@@ -521,6 +524,15 @@ window.AscCommon.g_cIsBeta = "false";
 		OTP  : 0x008a,
 		PPTX_PACKAGE  : 0x008b,
 		PPTY : 0x1003,
+		CANVAS_PRESENTATION : 0x2003,
+
+		//Draw
+		VSDX : 0x4001,
+		VSSX : 0x4002,
+		VSTX : 0x4003,
+		VSDM : 0x4004,
+		VSSM : 0x4005,
+		VSTM : 0x4006,
 
 		//image
 		IMG  : 0x0400,
@@ -568,7 +580,8 @@ window.AscCommon.g_cIsBeta = "false";
 		ForceSaveTimeout  : 17,
 		Waiting	: 18,
 		Submit : 19,
-		Disconnect :20
+		Disconnect :20,
+		RefreshFile: 21
 	};
 
 	var c_oAscAdvancedOptionsID = {
@@ -1070,7 +1083,7 @@ window.AscCommon.g_cIsBeta = "false";
 
 	var ST_ChildOrderType = {
 		b: 0,
-		t: 1	
+		t: 1
 	}
 
 	var ST_AlgorithmType = {
@@ -1097,7 +1110,7 @@ window.AscCommon.g_cIsBeta = "false";
 		equ:  1,
 		gte:  2,
 		lte:  3
-	} 
+	}
 
 	var ST_ElementType = {
 		all:      0,
@@ -1938,7 +1951,33 @@ window.AscCommon.g_cIsBeta = "false";
 		sysDash       : 7,
 		sysDashDot    : 8,
 		sysDashDotDot : 9,
-		sysDot        : 10
+		sysDot        : 10,
+		// visio types
+		vsdxTransparent		: 11, // 0 visio value
+		vsdxSolid			: 12,
+		vsdxDash			: 13,
+		vsdxDot				: 14,
+		vsdxDashDot			: 15,
+		vsdxDashDotDot		: 16,
+		vsdxDashDashDot		: 17,
+		vsdxLongDashShortDash   		: 18,
+		vsdxLongDashShortDashShortDash  : 19,
+		vsdxHalfDash  			: 20,
+		vsdxHalfDot				: 21,
+		vsdxHalfDashDot			: 22,
+		vsdxHalfDashDotDot		: 23,
+		vsdxHalfDashDashDot   	: 24,
+		vsdxHalfLongDashShortDash   		 : 25,
+		vsdxHalfLongDashShortDashShortDash   : 26,
+		vsdxDoubleDash   		: 27,
+		vsdxDoubleDot   		: 28,
+		vsdxDoubleDashDot   	: 29,
+		vsdxDoubleDashDotDot   	: 30,
+		vsdxDoubleDashDashDot   : 31,
+		vsdxDoubleLongDashShortDash   			: 32,
+		vsdxDoubleLongDashShortDashShortDash    : 33,
+		vsdxHalfHalfDash   		: 34,
+
 	};
 
 
@@ -2438,9 +2477,9 @@ window.AscCommon.g_cIsBeta = "false";
 		pasteOnlyFormula: 1,
 		formulaNumberFormat: 2,
 		formulaAllFormatting: 3,
-		formulaWithoutBorders: 4, 
+		formulaWithoutBorders: 4,
 		formulaColumnWidth: 5,
-		mergeConditionalFormating: 6, 
+		mergeConditionalFormating: 6,
 		pasteOnlyValues: 7,
 		valueNumberFormat: 8,
 		valueAllFormating: 9,
@@ -3773,8 +3812,36 @@ window.AscCommon.g_cIsBeta = "false";
 		Shape: "Shape",
 		OleObject: "OleObject"
 	};
+	
+	// 17.18.21 ST_EdGrp
+	const ST_EdGrp = {
+		administrators : 0,
+		contributors   : 1,
+		current        : 2,
+		editors        : 3,
+		everyone       : 4,
+		none           : 5,
+		owners         : 6
+	};
+	
+	window['Asc']['ST_EdGrp'] = window['Asc'].ST_EdGrp = ST_EdGrp;
+	ST_EdGrp['administrators'] = ST_EdGrp.administrators;
+	ST_EdGrp['contributors']   = ST_EdGrp.contributors;
+	ST_EdGrp['current']        = ST_EdGrp.current;
+	ST_EdGrp['editors']        = ST_EdGrp.editors;
+	ST_EdGrp['everyone']       = ST_EdGrp.everyone;
+	ST_EdGrp['none']           = ST_EdGrp.none;
 
-
+	// 17.18.13 ST_DisplacedByCustomXml
+	const ST_DisplacedByCustomXml = {
+		next : 0,
+		prev : 1
+	};
+	window['Asc']['ST_DisplacedByCustomXml'] = window['Asc'].ST_DisplacedByCustomXml = ST_DisplacedByCustomXml;
+	ST_DisplacedByCustomXml['next'] = ST_DisplacedByCustomXml.next;
+	ST_DisplacedByCustomXml['prev'] = ST_DisplacedByCustomXml.prev;
+	
+	
 	var c_oAscDateTimeFormat = {};
 	c_oAscDateTimeFormat[lcid_arSA] = [
 		"dd/MM/yyyy",
@@ -4486,7 +4553,6 @@ window.AscCommon.g_cIsBeta = "false";
 
 	//------------------------------------------------------------export--------------------------------------------------
 	var prot;
-	window['Asc']                          = window['Asc'] || {};
 	window['Asc']['FONT_THUMBNAIL_HEIGHT'] = FONT_THUMBNAIL_HEIGHT;
 	window['Asc']['c_oAscMaxColumnWidth']  = window['Asc'].c_oAscMaxColumnWidth = c_oAscMaxColumnWidth;
 	window['Asc']['c_oAscMaxRowHeight'] = window['Asc'].c_oAscMaxRowHeight = c_oAscMaxRowHeight;
@@ -4547,6 +4613,7 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['XLSX_FLAT']            = prot.XLSX_FLAT;
 	prot['XLSX_PACKAGE']         = prot.XLSX_PACKAGE;
 	prot['XLSY']                 = prot.XLSY;
+	prot['CANVAS_SPREADSHEET']   = prot.CANVAS_SPREADSHEET;
 	prot['PPTX']                 = prot.PPTX;
 	prot['PPT']                  = prot.PPT;
 	prot['ODP']                  = prot.ODP;
@@ -4558,6 +4625,13 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['FODP']                 = prot.FODP;
 	prot['OTP']                  = prot.OTP;
 	prot['PPTX_PACKAGE']         = prot.PPTX_PACKAGE;
+	prot['CANVAS_PRESENTATION']  = prot.CANVAS_PRESENTATION;
+
+	prot['VSDX']        		 = prot.VSDX;
+	prot['VSSX']        		 = prot.VSSX;
+	prot['VSTX']        		 = prot.VSTX;
+	prot['VSDM']        		 = prot.VSDM;
+	prot['VSTM']        		 = prot.VSTM;
 
 	prot['JPG']                  = prot.JPG;
 	prot['TIFF']                 = prot.TIFF;
@@ -4603,6 +4677,7 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['Waiting']                          = prot.Waiting;
 	prot['Submit']                           = prot.Submit;
 	prot['Disconnect']                       = prot.Disconnect;
+	prot['RefreshFile']                      = prot.RefreshFile;
 	window['Asc']['c_oAscAdvancedOptionsID'] = window['Asc'].c_oAscAdvancedOptionsID = c_oAscAdvancedOptionsID;
 	prot                                         = c_oAscAdvancedOptionsID;
 	prot['CSV']                                  = prot.CSV;

@@ -481,6 +481,10 @@ function (window, undefined) {
 		if (this.isFormula()) {
 			return;
 		}
+		if (!this.options.fragments) {
+			return;
+		}
+
 		this.startAction();
 
 		var t = this, opt = t.options, begin, end, i, first, last;
@@ -539,6 +543,9 @@ function (window, undefined) {
 		if (this.isFormula()) {
 			return;
 		}
+		if (!this.options.fragments) {
+			return;
+		}
 		var t = this, opt = t.options;
 
 		if (t.selectionBegin !== t.selectionEnd) {
@@ -554,6 +561,9 @@ function (window, undefined) {
 
 	CellEditor.prototype._changeFragments = function (fragmentsMap) {
 		let opt = this.options;
+		if (!opt.fragments) {
+			return;
+		}
 		this.startAction();
 		if (fragmentsMap) {
 			let _undoFragments = {};
@@ -694,8 +704,14 @@ function (window, undefined) {
 				this._moveCursor(kPosition, this.cursorPos - 1);
 
 				// ToDo move this code to moveCursor
-				this.lastRangePos = this.cursorPos;
-				this.lastRangeLength = 0;
+
+				this.lastRangePos = this._parseResult && this._parseResult.argPosArr
+					? this._parseResult.argPosArr[0].start 
+					: this.cursorPos;
+
+				this.lastRangeLength = this._parseResult && this._parseResult.argPosArr
+					? this._parseResult.argPosArr[this._parseResult.argPosArr.length - 1].end - this._parseResult.argPosArr[0].start 
+					: 0;
 			}
 		}
 
@@ -1259,9 +1275,9 @@ function (window, undefined) {
 		//получаю строку без двухбайтовых символов и её отдаю регулярке
 		//позиции всех функций должны совпадать
 		//остаётся вопрос с аргументами, которые могут содержать двухбайтовые символы
-		s = this.options.fragments.reduce(function (pv, cv) {
+		s = this.options.fragments ? this.options.fragments.reduce(function (pv, cv) {
 			return pv + AscCommonExcel.convertUnicodeToSimpleString(cv.getCharCodes());
-		}, "");
+		}, "") : "";
 
 		if (isFormula) {
 			let obj = this._getFunctionByString(this.cursorPos, s);
@@ -1362,7 +1378,7 @@ function (window, undefined) {
 	CellEditor.prototype._expand = function () {
 		var bottom, tm;
 		var doAdjust = false, fragments = this._getRenderFragments();
-		if (0 < fragments.length) {
+		if (fragments && 0 < fragments.length) {
 			bottom = this.bottom;
 			this.bottom = this.sides.b[this.sides.bi];
 
@@ -1536,11 +1552,13 @@ function (window, undefined) {
 
 		if (!window['IS_NATIVE_EDITOR']) {
 			let _width = this._originalCanvasWidth ? this._originalCanvasWidth : ctx.getWidth();
-			ctx.setFillStyle(opt.background)
-				.fillRect(0, 0, _width, ctx.getHeight());
+			if (opt.background) {
+				ctx.setFillStyle(opt.background);
+			}
+			ctx.fillRect(0, 0, _width, ctx.getHeight());
 		}
 
-		if (opt.fragments.length > 0) {
+		if (opt.fragments && opt.fragments.length > 0) {
 			t.textRender.render(undefined, t._getContentLeft(), dy || 0, t._getContentWidth(), opt.font.getColor());
 		}
 	};
@@ -1922,6 +1940,10 @@ function (window, undefined) {
 
 		this.sAutoComplete = null;
 
+		if (!opt.fragments) {
+			return;
+		}
+
 		if (this.selectionBegin !== this.selectionEnd) {
 			var copyFragment = this._findFragmentToInsertInto(Math.min(this.selectionBegin, this.selectionEnd) + 1);
 			if (copyFragment && !this.newTextFormat) {
@@ -2037,6 +2059,9 @@ function (window, undefined) {
 		if (b === e) {
 			return;
 		}
+		if (!opt.fragments) {
+			return;
+		}
 
 		this.startAction();
 
@@ -2124,6 +2149,9 @@ function (window, undefined) {
 		if (!fragments) {
 			fragments = this.options.fragments;
 		}
+		if (!fragments) {
+			return;
+		}
 
 		for (i = 0, begin = 0; i < fragments.length; ++i) {
 			end = begin + fragments[i].getCharCodesLength();
@@ -2142,6 +2170,9 @@ function (window, undefined) {
 
 		if (!fragments) {
 			fragments = this.options.fragments;
+		}
+		if (!fragments) {
+			return;
 		}
 
 		for (i = 0, begin = 0; i < fragments.length; ++i) {
@@ -2165,6 +2196,9 @@ function (window, undefined) {
 		var fr;
 		if (!fragments) {
 			fragments = this.options.fragments;
+		}
+		if (!fragments) {
+			return;
 		}
 
 		if (pos > f.begin && pos < f.end) {
@@ -2223,6 +2257,10 @@ function (window, undefined) {
 	CellEditor.prototype._addFragments = function (f, pos) {
 		var t = this, opt = t.options, fr;
 
+		if (!opt.fragments) {
+			return;
+		}
+
 		fr = t._findFragment(pos);
 		if (fr && pos < fr.end) {
 			t._splitFragment(fr, pos);
@@ -2247,6 +2285,9 @@ function (window, undefined) {
 		if (!fragments) {
 			fragments = this.options.fragments;
 		}
+		if (!fragments) {
+			return;
+		}
 
 		for (i = 0; i < fragments.length;) {
 			if (fragments[i].getCharCodesLength() < 1 && fragments.length > 1) {
@@ -2270,6 +2311,10 @@ function (window, undefined) {
 
 	CellEditor.prototype._cleanFragments = function (fr) {
 		var t = this, i, s, f, wrap = t.textFlags.wrapText || t.textFlags.wrapOnlyNL;
+
+		if (!fr) {
+			return;
+		}
 
 		for (i = 0; i < fr.length; ++i) {
 			s = fr[i].getCharCodes();
@@ -2365,7 +2410,7 @@ function (window, undefined) {
 			let _redoFragments = {};
 			for (let i in _fragments) {
 				if (_fragments.hasOwnProperty(i)) {
-					if (this.options.fragments[i]) {
+					if (this.options.fragments && this.options.fragments[i]) {
 						_redoFragments[i] = this.options.fragments[i].clone();
 					}
 				}
@@ -2424,7 +2469,7 @@ function (window, undefined) {
 		}
 
 		var xfs = new AscCommonExcel.CellXfs();
-		xfs.setFont(this.newTextFormat || this.options.fragments[f.index].format);
+		xfs.setFont(this.newTextFormat || (this.options.fragments && this.options.fragments[f.index].format));
 		this.handlers.trigger("updateEditorSelectionInfo", xfs);
 	};
 
@@ -2798,7 +2843,7 @@ function (window, undefined) {
 			case 186: // ctrl + (shift) + ;
 				if (ctrlKey) {
 					var oDate = new Asc.cDate();
-					t._addChars(event.shiftKey ? oDate.getTimeString(api) : oDate.getDateString(api));
+					t._addChars(event.shiftKey ? oDate.getTimeString(api) : oDate.getDateString(api, true));
 					event.stopPropagation();
 					event.preventDefault();
 				}
@@ -2875,12 +2920,15 @@ function (window, undefined) {
 
 		//TODO в случае добавляения массива - првоерить - возможно часть нужно вызывать каждый раз после _addChars
 		var tmpCursorPos;
-		// При первом быстром вводе стоит добавить в конце проценты (для процентного формата и только для числа)
+		// The first time we enter quickly, we should add percentages at the end (for percentage format and only for numbers)
 		if (t.options.isAddPersentFormat && AscCommon.isNumber(newChar)) {
 			t.options.isAddPersentFormat = false;
 			tmpCursorPos = t.cursorPos;
 			t.undoMode = true;
-			t._addChars("%");
+			// add the percentage only to the line without a formula
+			if (!t._formula) {
+				t._addChars("%");
+			}
 			t.cursorPos = tmpCursorPos;
 			t.undoMode = false;
 			t._updateCursorPosition();

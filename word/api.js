@@ -971,11 +971,6 @@
 		}
 		return false;
 	};
-	// Просмотр PDF
-	asc_docs_api.prototype.isPdfViewer         = function()
-	{
-		return (null === this.WordControl.m_oLogicDocument);
-	};
 
 	asc_docs_api.prototype.getEditorErrorInfo = function()
 	{
@@ -2281,17 +2276,7 @@ background-repeat: no-repeat;\
 		if (options && options.advancedOptions)
 			desktopOptions["nativeOptions"] = options.advancedOptions.asc_getNativeOptions();
 
-		if (null != this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
-		{
-			var viewer = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer;
-			if (window["AscDesktopEditor"] && !window["AscDesktopEditor"]["IsLocalFile"]() && window["AscDesktopEditor"]["SetPdfCloudPrintFileInfo"])
-			{
-				if (!window["AscDesktopEditor"]["IsCachedPdfCloudPrintFileInfo"]())
-					window["AscDesktopEditor"]["SetPdfCloudPrintFileInfo"](AscCommon.Base64.encode(viewer.getFileNativeBinary()));
-			}
-			window["AscDesktopEditor"]["Print"](JSON.stringify(desktopOptions), viewer.savedPassword ? viewer.savedPassword : "");
-		}
-		else
+		if (!this.isPdfEditor())
 		{
 			if (options && options.advancedOptions && (Asc.c_oAscPrintType.Selection === options.advancedOptions.asc_getPrintType()))
 			{
@@ -2326,11 +2311,6 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.Copy           = function()
 	{
-		if (window["AscDesktopEditor"])
-		{
-		    window["asc_desktop_copypaste"](this, "Copy");
-			return true;
-		}
 		return AscCommon.g_clipboardBase.Button_Copy();
 	};
 	asc_docs_api.prototype.Update_ParaTab = function(Default_Tab, ParaTabs)
@@ -2339,20 +2319,10 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.Cut            = function()
 	{
-		if (window["AscDesktopEditor"])
-		{
-		    window["asc_desktop_copypaste"](this, "Cut");
-			return true;
-		}
 		return AscCommon.g_clipboardBase.Button_Cut();
 	};
 	asc_docs_api.prototype.Paste          = function()
 	{
-		if (window["AscDesktopEditor"])
-		{
-		    window["asc_desktop_copypaste"](this, "Paste");
-			return true;
-		}
 		if (!this.WordControl.m_oLogicDocument)
 			return false;
 
@@ -2527,8 +2497,9 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oLogicDocument.Document_Undo();
 			
 			_logicDoc.StartAction(AscDFH.historydescription_Document_PasteHotKey);
-			AscCommon.Editor_Paste_Exec(this, null, null, null, null, props);
-			_logicDoc.FinalizeAction();
+			AscCommon.Editor_Paste_Exec(this, null, null, null, null, props, function () {
+				_logicDoc.FinalizeAction();
+			});
 		}
 	};
 	
@@ -9756,6 +9727,7 @@ background-repeat: no-repeat;\
 		AscCommon.CollaborativeEditing.Clear();
 		this.isApplyChangesOnOpenEnabled = true;
 		this.isDocumentLoadComplete = false;
+		this.ServerImagesWaitComplete = false;
 		this.turnOffSpecialModes();
 
 		var oLogicDocument = this.WordControl.m_oLogicDocument;
@@ -13433,7 +13405,7 @@ background-repeat: no-repeat;\
 		}
 	};
 
-	window["asc_docs_api"].prototype["asc_getButtonsTOC"] = function(id1, id2, styleWidth)
+	asc_docs_api.prototype["asc_getButtonsTOC"] = function(id1, id2, styleWidth)
 	{
 		if (this.WordControl && this.WordControl.m_oDrawingDocument)
 		{
@@ -13619,7 +13591,11 @@ background-repeat: no-repeat;\
 
 		return true;
 	};
-	
+	asc_docs_api.prototype.canEnterText = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		return logicDocument ? logicDocument.canEnterText() : false;
+	};
 	asc_docs_api.prototype.updateDarkMode = function()
 	{
 		if (!this.WordControl || !this.WordControl.m_oDrawingDocument)

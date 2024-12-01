@@ -37,21 +37,20 @@
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_AnnotsContent]	= CChangesPDFDocumentAnnotsContent;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_FieldsContent]	= CChangesPDFDocumentFieldsContent;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_DrawingsContent]	= CChangesPDFDocumentDrawingsContent;
-AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_AddPage]			= CChangesPDFDocumentAddPage;
-AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RemovePage]		= CChangesPDFDocumentRemovePage;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_PagesContent]		= CChangesPDFDocumentPagesContent;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RotatePage]		= CChangesPDFDocumentRotatePage;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RecognizePage]	= CChangesPDFDocumentRecognizePage;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_SetDocument]      = CChangesPDFDocumentSetDocument;
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesDrawingsContent}
+ * @extends {AscDFH.CChangesBaseContentChange}
  */
 function CChangesPDFDocumentAnnotsContent(Class, Pos, Items, bAdd)
 {
-    AscDFH.CChangesDrawingsContent.call(this, Class, this.Type, Pos, Items, bAdd);
+    AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, bAdd);
 }
-CChangesPDFDocumentAnnotsContent.prototype = Object.create(AscDFH.CChangesDrawingsContent.prototype);
+CChangesPDFDocumentAnnotsContent.prototype = Object.create(AscDFH.CChangesBaseContentChange.prototype);
 CChangesPDFDocumentAnnotsContent.prototype.constructor = CChangesPDFDocumentAnnotsContent;
 CChangesPDFDocumentAnnotsContent.prototype.Type = AscDFH.historyitem_PDF_Document_AnnotsContent;
 CChangesPDFDocumentAnnotsContent.prototype.IsContentChange = function(){
@@ -59,23 +58,22 @@ CChangesPDFDocumentAnnotsContent.prototype.IsContentChange = function(){
 };
 
 CChangesPDFDocumentAnnotsContent.prototype.ReadFromBinary = function (reader) {
-    this.PageId = reader.GetString2();
-    AscDFH.CChangesDrawingsContent.prototype.ReadFromBinary.call(this, reader);
+    this.Type = reader.GetLong();
+    this.Add = reader.GetBool();
+    this.Pos = reader.GetLong();
+    AscDFH.CChangesBaseContentChange.prototype.ReadFromBinary.call(this, reader);
 };
 CChangesPDFDocumentAnnotsContent.prototype.WriteToBinary = function (writer) {
-    let oViewer = Asc.editor.getDocumentRenderer();
-    if (!this.PageId) {
-        let nPage = this.Items[0].GetPage();
-        this.PageId = oViewer.pagesInfo.pages[nPage].GetId();
-    }
-    writer.WriteString2(this.PageId);
-
-    AscDFH.CChangesDrawingsContent.prototype.WriteToBinary.call(this, writer);
+    writer.WriteLong(this.Type);
+    writer.WriteBool(this.IsAdd());
+    writer.WriteLong(this.Pos);
+    AscDFH.CChangesBaseContentChange.prototype.WriteToBinary.call(this, writer);
 };
 
 CChangesPDFDocumentAnnotsContent.prototype.Undo = function()
 {
-    let oDocument = this.Class;
+    let oPage = this.Class;
+    let oDocument = this.Class.GetDocument();
     let oViewer = Asc.editor.getDocumentRenderer();
 
     if (this.IsAdd()) {
@@ -83,15 +81,13 @@ CChangesPDFDocumentAnnotsContent.prototype.Undo = function()
         for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
         {
             let oItem = this.Items[nIndex];
-            if (oItem.IsAnnot()) {
-                let nPage = oItem.GetPage();
-                oItem.AddToRedraw();
-                oDocument.annots.splice(oDocument.annots.indexOf(oItem), 1);
-                oViewer.pagesInfo.pages[nPage].annots.splice(this.Pos, 1);
-                if (oItem.IsComment())
-                    editor.sync_RemoveComment(oItem.GetId());
-                oViewer.DrawingObjects.resetSelection();
-                oItem.AddToRedraw();
+            oDocument.annots.splice(oDocument.annots.indexOf(oItem), 1);
+            oPage.annots.splice(this.Pos, 1);
+            oItem.SetParentPage(null);
+            oViewer.DrawingObjects.resetSelection();
+
+            if (oItem.IsComment()) {
+                Asc.editor.sync_RemoveComment(oItem.GetId());
             }
         }
     } else {
@@ -99,16 +95,13 @@ CChangesPDFDocumentAnnotsContent.prototype.Undo = function()
         for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
         {
             let oItem = this.Items[nIndex];
-            if (oItem.IsAnnot()) {
-                let nPage = oItem.GetPage();
-                oItem.AddToRedraw();
-                oDocument.annots.push(oItem);
-                oViewer.pagesInfo.pages[nPage].annots.splice(this.Pos, 0, oItem);
-                if (oItem.IsComment())
-                    editor.sendEvent("asc_onAddComment", oItem.GetId(), oItem.GetAscCommentData());
-                oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
-                oViewer.DrawingObjects.resetSelection();
-                oItem.AddToRedraw();
+            oDocument.annots.push(oItem);
+            oPage.annots.splice(this.Pos, 0, oItem);
+            oItem.SetParentPage(oPage);
+            oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
+            oViewer.DrawingObjects.resetSelection();
+            if (oItem.IsComment()) {
+                Asc.editor.sendEvent("asc_onAddComment", oItem.GetId(), oItem.GetAscCommentData());
             }
         }
     }
@@ -118,24 +111,28 @@ CChangesPDFDocumentAnnotsContent.prototype.Undo = function()
 };
 CChangesPDFDocumentAnnotsContent.prototype.Redo = function()
 {
-    let oDocument = this.Class;
+    let oPage = this.Class;
+    let oDocument = this.Class.GetDocument();
     let oViewer = Asc.editor.getDocumentRenderer();
+    let oContentChanges = this.private_GetContentChanges();
 
     if (this.IsAdd()) {
         // Redo addition by adding items
         for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
         {
             let oItem = this.Items[nIndex];
-            if (oItem.IsAnnot()) {
-                let nPage = oItem.GetPage();
-                oItem.AddToRedraw();
-                oDocument.annots.push(oItem);
-                oViewer.pagesInfo.pages[nPage].annots.splice(this.Pos, 0, oItem);
-                if (oItem.IsComment())
-                    editor.sendEvent("asc_onAddComment", oItem.GetId(), oItem.GetAscCommentData());
-                oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
-                oViewer.DrawingObjects.resetSelection();
-                oItem.AddToRedraw();
+            let nPos = oContentChanges.Check(AscCommon.contentchanges_Add, true !== this.UseArray ? this.Pos + nIndex : this.PosArray[nIndex]);
+            if (nPos === false) continue;
+
+            oItem.AddToRedraw();
+            oDocument.annots.push(oItem);
+            oPage.annots.splice(nPos, 0, oItem);
+            oItem.SetParentPage(oPage);
+            oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
+            oViewer.DrawingObjects.resetSelection();
+            oItem.AddToRedraw();
+            if (oItem.IsComment()) {
+                Asc.editor.sendEvent("asc_onAddComment", oItem.GetId(), oItem.GetAscCommentData());
             }
         }
     } else {
@@ -143,13 +140,16 @@ CChangesPDFDocumentAnnotsContent.prototype.Redo = function()
         for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
         {
             let oItem = this.Items[nIndex];
-            if (oItem.IsAnnot()) {
-                let nPage = oItem.GetPage();
-                oItem.AddToRedraw();
-                oDocument.annots.splice(oDocument.annots.indexOf(oItem), 1);
-                oViewer.pagesInfo.pages[nPage].annots.splice(this.Pos, 1);
-                if (oItem.IsComment())
-                    editor.sync_RemoveComment(oItem.GetId());
+            let nPos = oContentChanges.Check(AscCommon.contentchanges_Remove, true !== this.UseArray ? this.Pos + nIndex : this.PosArray[nIndex]);
+            if (nPos === false) continue;
+
+            oItem.AddToRedraw();
+            oDocument.annots.splice(oDocument.annots.indexOf(oItem), 1);
+            oPage.annots.splice(nPos, 1);
+            oItem.SetParentPage(null);
+            oItem.AddToRedraw();
+            if (oItem.IsComment()) {
+                Asc.editor.sync_RemoveComment(oItem.GetId());
             }
         }
     }
@@ -162,10 +162,10 @@ CChangesPDFDocumentAnnotsContent.prototype.private_InsertInArrayLoad = function(
     if (this.Items.length <= 0)
         return;
 
-    let oDocument       = this.Class;
-    let oViewer         = Asc.editor.getDocumentRenderer();
+    let oPage = this.Class;
+    let oDocument = this.Class.GetDocument();
+    let oViewer = Asc.editor.getDocumentRenderer();
     let oContentChanges = this.private_GetContentChanges();
-    let oPage          = AscCommon.g_oTableId.Get_ById(this.PageId);
 
     for (let i = 0; i < this.Items.length; ++i) {
         let oItem = this.Items[i];
@@ -177,22 +177,21 @@ CChangesPDFDocumentAnnotsContent.prototype.private_InsertInArrayLoad = function(
         // Ensure position is within bounds
         nPos = Math.min(nPos, oDocument.annots.length);
 
-        if (oPage) {
-            // Insert into document annots array
-            oDocument.annots.splice(nPos, 0, oItem);
+        // Insert into document annots array
+        oDocument.annots.splice(nPos, 0, oItem);
 
-            // Insert into viewer annots array
-            let annotsArray = oPage.annots;
-            nPos = Math.min(nPos, annotsArray.length);
-            annotsArray.splice(nPos, 0, oItem);
-            oItem.AddToRedraw();
-            oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
-            if (oItem.IsComment()) {
-                Asc.editor.sendEvent("asc_onAddComment", oItem.GetId(), oItem.GetAscCommentData());
-            }
-        }
-        
+        // Insert into viewer annots array
+        let annotsArray = oPage.annots;
+        nPos = Math.min(nPos, annotsArray.length);
+        annotsArray.splice(nPos, 0, oItem);
+        oItem.SetParentPage(oPage);
+
+        if (oItem.IsComment())
+            editor.sendEvent("asc_onAddComment", oItem.GetId(), oItem.GetAscCommentData());
+
+        oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
         oViewer.DrawingObjects.resetSelection();
+        oItem.AddToRedraw();
     }
 
     oDocument.SetMouseDownObject(null);
@@ -203,10 +202,10 @@ CChangesPDFDocumentAnnotsContent.prototype.private_RemoveInArrayLoad = function(
     if (this.Items.length <= 0)
         return;
 
-    let oDocument       = this.Class;
-    let oViewer         = Asc.editor.getDocumentRenderer();
+    let oPage = this.Class;
+    let oDocument = this.Class.GetDocument();
+    let oViewer = Asc.editor.getDocumentRenderer();
     let oContentChanges = this.private_GetContentChanges();
-    let oPage          = AscCommon.g_oTableId.Get_ById(this.PageId);
 
     // Remove items in reverse order to maintain indices
     for (let i = this.Items.length - 1; i >= 0; --i) {
@@ -216,23 +215,21 @@ CChangesPDFDocumentAnnotsContent.prototype.private_RemoveInArrayLoad = function(
         let nPos = oContentChanges.Check(AscCommon.contentchanges_Remove,  true !== this.UseArray ? this.Pos + i : this.PosArray[i]);
         if (nPos === false) continue;
 
+        oItem.AddToRedraw();
+        // Remove from document annots array
+        let indexInAnnots = oDocument.annots.indexOf(oItem);
+        if (indexInAnnots !== -1)
+            oDocument.annots.splice(indexInAnnots, 1);
+
         // Remove from viewer annots array
-        if (oPage) {
-            oItem.AddToRedraw();
-            // Remove from document annots array
-            let indexInAnnots = oDocument.annots.indexOf(oItem);
-            if (indexInAnnots !== -1)
-                oDocument.annots.splice(indexInAnnots, 1);
+        let annotsArray = oPage.annots;
+        let indexInPageAnnots = annotsArray.indexOf(oItem);
+        if (indexInPageAnnots !== -1)
+            annotsArray.splice(indexInPageAnnots, 1);
+        oItem.SetParentPage(null);
 
-            let annotsArray = oPage.annots;
-            let indexInPageAnnots = annotsArray.indexOf(oItem);
-            if (indexInPageAnnots !== -1)
-                annotsArray.splice(indexInPageAnnots, 1);
-        }
-
-        if (oItem.IsComment()) {
-            Asc.editor.sync_RemoveComment(oItem.GetId());
-        }
+        if (oItem.IsComment())
+            editor.sync_RemoveComment(oItem.GetId());
 
         oViewer.DrawingObjects.resetSelection();
     }
@@ -243,18 +240,41 @@ CChangesPDFDocumentAnnotsContent.prototype.private_RemoveInArrayLoad = function(
 CChangesPDFDocumentAnnotsContent.prototype.private_GetContentChanges = function() {
     return this.Class.annotsContentChanges;
 };
+CChangesPDFDocumentAnnotsContent.prototype.GetContentChangesClass = function() {
+	return this.private_GetContentChanges();
+};
+CChangesPDFDocumentAnnotsContent.prototype.private_WriteItem = function (Writer, Item) {
+    Writer.WriteString2(Item.Get_Id());
+};
+CChangesPDFDocumentAnnotsContent.prototype.private_ReadItem = function (Reader) {
+    var Id = Reader.GetString2();
+    return AscCommon.g_oTableId.Get_ById(Id);
+};
+CChangesPDFDocumentAnnotsContent.prototype.Copy = function() {
+    let oChanges = new this.constructor(this.Class, this.Pos, this.Items, this.Add);
+
+    oChanges.UseArray = this.UseArray;
+
+    for (let nIndex = 0, nCount = this.PosArray.length; nIndex < nCount; ++nIndex)
+        oChanges.PosArray[nIndex] = this.PosArray[nIndex];
+
+    return oChanges;
+};
+CChangesPDFDocumentAnnotsContent.prototype.CreateReverseChange = function(){
+    return this.private_CreateReverseChange(this.constructor);
+};
 
 // Similarly, implement classes for Fields and Drawings
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesDrawingsContent}
+ * @extends {AscDFH.CChangesBaseContentChange}
  */
 function CChangesPDFDocumentFieldsContent(Class, Pos, Items, bAdd)
 {
-    AscDFH.CChangesDrawingsContent.call(this, Class, this.Type, Pos, Items, bAdd);
+    AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, bAdd);
 }
-CChangesPDFDocumentFieldsContent.prototype = Object.create(AscDFH.CChangesDrawingsContent.prototype);
+CChangesPDFDocumentFieldsContent.prototype = Object.create(AscDFH.CChangesBaseContentChange.prototype);
 CChangesPDFDocumentFieldsContent.prototype.constructor = CChangesPDFDocumentFieldsContent;
 CChangesPDFDocumentFieldsContent.prototype.Type = AscDFH.historyitem_PDF_Document_FieldsContent;
 CChangesPDFDocumentFieldsContent.prototype.IsContentChange = function(){
@@ -262,99 +282,91 @@ CChangesPDFDocumentFieldsContent.prototype.IsContentChange = function(){
 };
 
 CChangesPDFDocumentFieldsContent.prototype.ReadFromBinary = function (reader) {
-    this.PageId = reader.GetString2();
-    AscDFH.CChangesDrawingsContent.prototype.ReadFromBinary.call(this, reader);
+    this.Type = reader.GetLong();
+    this.Add = reader.GetBool();
+    this.Pos = reader.GetLong();
+    AscDFH.CChangesBaseContentChange.prototype.ReadFromBinary.call(this, reader);
 };
 CChangesPDFDocumentFieldsContent.prototype.WriteToBinary = function (writer) {
-    let oViewer = Asc.editor.getDocumentRenderer();
-    if (!this.PageId) {
-        let nPage = this.Items[0].GetPage();
-        this.PageId = oViewer.pagesInfo.pages[nPage].GetId();
-    }
-    writer.WriteString2(this.PageId);
-
-    AscDFH.CChangesDrawingsContent.prototype.WriteToBinary.call(this, writer);
+    writer.WriteLong(this.Type);
+    writer.WriteBool(this.IsAdd());
+    writer.WriteLong(this.Pos);
+    AscDFH.CChangesBaseContentChange.prototype.WriteToBinary.call(this, writer);
 };
 
 CChangesPDFDocumentFieldsContent.prototype.Undo = function()
 {
-    let oDocument = this.Class;
-    let oViewer = Asc.editor.getDocumentRenderer();
+    let oPage = this.Class;
+    let oDocument = this.Class.GetDocument();
 
     if (this.IsAdd()) {
         // Undo addition by removing items
-        for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
-        {
+        for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex) {
             let oItem = this.Items[nIndex];
-            if (oItem.IsForm()) {
-                if (oItem.IsWidget()) {
-                    let nPage = oItem.GetPage();
-                    oItem.AddToRedraw();
-                    oDocument.widgets.splice(oDocument.widgets.indexOf(oItem), 1);
-                    oViewer.pagesInfo.pages[nPage].fields.splice(this.Pos, 1);
-                } else {
-                    oDocument.widgetsParents.splice(oDocument.widgetsParents.indexOf(oItem), 1);
-                }
-            }
+            oDocument.widgets.splice(oDocument.widgets.indexOf(oItem), 1);
+            oPage.fields.splice(this.Pos, 1);
+            oItem.SetParentPage(null);
         }
-    } else {
+    }
+    else {
         // Undo removal by adding items back
-        for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
-        {
+        for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex) {
             let oItem = this.Items[nIndex];
-            if (oItem.IsForm()) {
-                if (oItem.IsWidget()) {
-                    let nPage = oItem.GetPage();
-                    oItem.AddToRedraw();
-                    oDocument.widgets.push(oItem);
-                    oViewer.pagesInfo.pages[nPage].fields.splice(this.Pos, 0, oItem);
-                } else {
-                    oDocument.widgetsParents.push(oItem);
-                }
-            }
+            oPage.fields.splice(this.Pos, 0, oItem);
+            oDocument.widgets.push(oItem);
+            oItem.SetParentPage(oPage);
         }
     }
 
-    oDocument.mouseDownAnnot = null;
     oDocument.private_UpdateTargetForCollaboration(true);
 };
 CChangesPDFDocumentFieldsContent.prototype.Redo = function()
 {
-    let oDocument = this.Class;
-    let oViewer = Asc.editor.getDocumentRenderer();
+    let oPage = this.Class;
+    let oDocument = this.Class.GetDocument();
+    let oContentChanges = this.private_GetContentChanges();
 
     if (this.IsAdd()) {
         // Redo addition by adding items
         for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
         {
             let oItem = this.Items[nIndex];
-            if (oItem.IsForm()) {
-                if (oItem.IsWidget()) {
-                    let nPage = oItem.GetPage();
-                    oItem.AddToRedraw();
-                    oDocument.widgets.push(oItem);
-                    oViewer.pagesInfo.pages[nPage].fields.splice(this.Pos, 0, oItem);
-                } else {
-                    oDocument.widgetsParents.push(oItem);
-                }
+            if (oItem.IsWidget()) {
+                let nPos = oContentChanges.Check(AscCommon.contentchanges_Add, true !== this.UseArray ? this.Pos + nIndex : this.PosArray[nIndex]);
+                if (nPos === false) continue;
+
+                oItem.AddToRedraw();
+                oDocument.widgets.push(oItem);
+                oPage.fields.splice(nPos, 0, oItem);
+                oItem.SetParentPage(oPage);
+                oItem.AddToRedraw();
+            }
+            else {
+                oDocument.widgetsParents.push(oItem);
             }
         }
-    } else {
+    }
+    else {
         // Redo removal by removing items
         for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
         {
             let oItem = this.Items[nIndex];
-            if (oItem.IsForm()) {
-                if (oItem.IsWidget()) {
-                    oDocument.RemoveForm(oItem);
-                } else {
-                    oDocument.widgetsParents.splice(oDocument.widgetsParents.indexOf(oItem), 1);
-                }
+            if (oItem.IsWidget()) {
+                let nPos = oContentChanges.Check(AscCommon.contentchanges_Add, true !== this.UseArray ? this.Pos + nIndex : this.PosArray[nIndex]);
+                if (nPos === false) continue;
+
+                oItem.AddToRedraw();
+                oDocument.widgets.splice(oDocument.widgets.indexOf(oItem), 1);
+                oPage.fields.splice(nPos, 1);
+                oItem.SetParentPage(null);
+                oItem.AddToRedraw();
+            }
+            else {
+                oDocument.widgetsParents.splice(oDocument.widgetsParents.indexOf(oItem), 1);
             }
         }
     }
 
-    oDocument.mouseDownAnnot = null;
     oDocument.private_UpdateTargetForCollaboration(true);
 };
 CChangesPDFDocumentFieldsContent.prototype.private_InsertInArrayLoad = function()
@@ -362,9 +374,9 @@ CChangesPDFDocumentFieldsContent.prototype.private_InsertInArrayLoad = function(
     if (this.Items.length <= 0)
         return;
 
-    let oDocument       = this.Class;
+    let oPage = this.Class;
+    let oDocument = oPage.GetDocument();
     let oContentChanges = this.private_GetContentChanges();
-    let oPage           = AscCommon.g_oTableId.Get_ById(this.PageId);
 
     for (let i = 0; i < this.Items.length; ++i) {
         let oItem = this.Items[i];
@@ -373,27 +385,18 @@ CChangesPDFDocumentFieldsContent.prototype.private_InsertInArrayLoad = function(
         let nPos = oContentChanges.Check(AscCommon.contentchanges_Add, true !== this.UseArray ? this.Pos + i : this.PosArray[i]);
         if (nPos === false) continue;
 
-        if (oItem.IsForm()) {
-            if (oItem.IsWidget()) {
-                // Insert into document widgets array
-                nPos = Math.min(nPos, oDocument.widgets.length);
-                if (oPage) {
-                    oDocument.widgets.splice(nPos, 0, oItem);
-                    // Insert into viewer fields array
-                    let fieldsArray = oPage.fields;
-                    nPos = Math.min(nPos, fieldsArray.length);
-                    fieldsArray.splice(nPos, 0, oItem);
-                }
+        // Insert into document widgets array
+        nPos = Math.min(nPos, oDocument.widgets.length);
+        oDocument.widgets.splice(nPos, 0, oItem);
 
-                oItem.AddToRedraw();
-            } else {
-                nPos = Math.min(nPos, oDocument.widgetsParents.length);
-                oDocument.widgetsParents.splice(nPos, 0, oItem);
-            }
-        }
+        // Insert into viewer fields array
+        let fieldsArray = oPage.fields;
+        nPos = Math.min(nPos, fieldsArray.length);
+        fieldsArray.splice(nPos, 0, oItem);
+        oItem.SetParentPage(oPage);
+        oItem.AddToRedraw();
     }
 
-    oDocument.mouseDownAnnot = null;
     oDocument.private_UpdateTargetForCollaboration(true);
 };
 CChangesPDFDocumentFieldsContent.prototype.private_RemoveInArrayLoad = function()
@@ -401,9 +404,9 @@ CChangesPDFDocumentFieldsContent.prototype.private_RemoveInArrayLoad = function(
     if (this.Items.length <= 0)
         return;
 
-    let oDocument       = this.Class;
+    let oPage = this.Class;
+    let oDocument = oPage.GetDocument();
     let oContentChanges = this.private_GetContentChanges();
-    let oPage           = AscCommon.g_oTableId.Get_ById(this.PageId);
 
     // Remove items in reverse order to maintain indices
     for (let i = this.Items.length - 1; i >= 0; --i) {
@@ -413,47 +416,60 @@ CChangesPDFDocumentFieldsContent.prototype.private_RemoveInArrayLoad = function(
         let nPos = oContentChanges.Check(AscCommon.contentchanges_Remove,  true !== this.UseArray ? this.Pos + i : this.PosArray[i]);
         if (nPos === false) continue;
 
-        if (oItem.IsForm()) {
-            if (oItem.IsWidget()) {
-                if (oPage) {
-                    oItem.AddToRedraw();
+        oItem.AddToRedraw();
 
-                    // Remove from document widgets array
-                    let indexInWidgets = oDocument.widgets.indexOf(oItem);
-                    if (indexInWidgets !== -1)
-                        oDocument.widgets.splice(indexInWidgets, 1);
+        // Remove from document widgets array
+        let indexInWidgets = oDocument.widgets.indexOf(oItem);
+        if (indexInWidgets !== -1)
+            oDocument.widgets.splice(indexInWidgets, 1);
 
-                    // Remove from viewer fields array
-                    let fieldsArray = oPage.fields;
-                    let indexInFields = fieldsArray.indexOf(oItem);
-                    if (indexInFields !== -1)
-                        fieldsArray.splice(indexInFields, 1);
-                }
-            }
-            else {
-                let indexInParents = oDocument.widgetsParents.indexOf(oItem);
-                if (indexInParents !== -1)
-                    oDocument.widgetsParents.splice(indexInParents, 1);
-            }
-        }
+        // Remove from viewer fields array
+        let fieldsArray = oPage.fields;
+        let indexInFields = fieldsArray.indexOf(oItem);
+        if (indexInFields !== -1)
+            fieldsArray.splice(indexInFields, 1);
+
+        oItem.SetParentPage(null);
     }
 
-    oDocument.mouseDownAnnot = null;
     oDocument.private_UpdateTargetForCollaboration(true);
 };
 CChangesPDFDocumentFieldsContent.prototype.private_GetContentChanges = function() {
     return this.Class.fieldsContentChanges;
 };
+CChangesPDFDocumentFieldsContent.prototype.GetContentChangesClass = function() {
+	return this.private_GetContentChanges();
+};
+CChangesPDFDocumentFieldsContent.prototype.private_WriteItem = function (Writer, Item) {
+    Writer.WriteString2(Item.Get_Id());
+};
+CChangesPDFDocumentFieldsContent.prototype.private_ReadItem = function (Reader) {
+    var Id = Reader.GetString2();
+    return AscCommon.g_oTableId.Get_ById(Id);
+};
+CChangesPDFDocumentFieldsContent.prototype.Copy = function() {
+    let oChanges = new this.constructor(this.Class, this.Pos, this.Items, this.Add);
+
+    oChanges.UseArray = this.UseArray;
+
+    for (let nIndex = 0, nCount = this.PosArray.length; nIndex < nCount; ++nIndex)
+        oChanges.PosArray[nIndex] = this.PosArray[nIndex];
+
+    return oChanges;
+};
+CChangesPDFDocumentFieldsContent.prototype.CreateReverseChange = function(){
+    return this.private_CreateReverseChange(this.constructor);
+};
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesDrawingsContent}
+ * @extends {AscDFH.CChangesBaseContentChange}
  */
 function CChangesPDFDocumentDrawingsContent(Class, Pos, Items, bAdd)
 {
-    AscDFH.CChangesDrawingsContent.call(this, Class, this.Type, Pos, Items, bAdd);
+    AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, bAdd);
 }
-CChangesPDFDocumentDrawingsContent.prototype = Object.create(AscDFH.CChangesDrawingsContent.prototype);
+CChangesPDFDocumentDrawingsContent.prototype = Object.create(AscDFH.CChangesBaseContentChange.prototype);
 CChangesPDFDocumentDrawingsContent.prototype.constructor = CChangesPDFDocumentDrawingsContent;
 CChangesPDFDocumentDrawingsContent.prototype.Type = AscDFH.historyitem_PDF_Document_DrawingsContent;
 CChangesPDFDocumentDrawingsContent.prototype.IsContentChange = function(){
@@ -461,22 +477,21 @@ CChangesPDFDocumentDrawingsContent.prototype.IsContentChange = function(){
 };
 
 CChangesPDFDocumentDrawingsContent.prototype.ReadFromBinary = function (reader) {
-    this.PageId = reader.GetString2();
-    AscDFH.CChangesDrawingsContent.prototype.ReadFromBinary.call(this, reader);
+    this.Type = reader.GetLong();
+    this.Add = reader.GetBool();
+    this.Pos = reader.GetLong();
+    AscDFH.CChangesBaseContentChange.prototype.ReadFromBinary.call(this, reader);
 };
 CChangesPDFDocumentDrawingsContent.prototype.WriteToBinary = function (writer) {
-    let oViewer = Asc.editor.getDocumentRenderer();
-    if (!this.PageId) {
-        let nPage = this.Items[0].GetPage();
-        this.PageId = oViewer.pagesInfo.pages[nPage].GetId();
-    }
-    writer.WriteString2(this.PageId);
-
-    AscDFH.CChangesDrawingsContent.prototype.WriteToBinary.call(this, writer);
+    writer.WriteLong(this.Type);
+    writer.WriteBool(this.IsAdd());
+    writer.WriteLong(this.Pos);
+    AscDFH.CChangesBaseContentChange.prototype.WriteToBinary.call(this, writer);
 };
 CChangesPDFDocumentDrawingsContent.prototype.Undo = function()
 {
-    let oDocument = this.Class;
+    let oPage = this.Class;
+    let oDocument = this.Class.GetDocument();
     let oViewer = Asc.editor.getDocumentRenderer();
 
     if (this.IsAdd()) {
@@ -484,28 +499,24 @@ CChangesPDFDocumentDrawingsContent.prototype.Undo = function()
         for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
         {
             let oItem = this.Items[nIndex];
-            if (oItem.IsDrawing()) {
-                let nPage = oItem.GetPage();
-                oItem.AddToRedraw();
-                oDocument.drawings.splice(oDocument.drawings.indexOf(oItem), 1);
-                oViewer.pagesInfo.pages[nPage].drawings.splice(this.Pos, 1);
-                oViewer.DrawingObjects.resetSelection();
-                oItem.AddToRedraw();
-            }
+            oItem.AddToRedraw();
+            oDocument.drawings.splice(oDocument.drawings.indexOf(oItem), 1);
+            oPage.drawings.splice(this.Pos, 1);
+            oItem.SetParentPage(null);
+            oViewer.DrawingObjects.resetSelection();
+            oItem.AddToRedraw();
         }
     } else {
         // Undo removal by adding items back
         for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
         {
             let oItem = this.Items[nIndex];
-            if (oItem.IsDrawing()) {
-                let nPage = oItem.GetPage();
-                oItem.AddToRedraw();
-                oDocument.drawings.push(oItem);
-                oViewer.pagesInfo.pages[nPage].drawings.splice(this.Pos, 0, oItem);
-                oViewer.DrawingObjects.resetSelection();
-                oItem.AddToRedraw();
-            }
+            oItem.AddToRedraw();
+            oDocument.drawings.push(oItem);
+            oPage.drawings.splice(this.Pos, 0, oItem);
+            oItem.SetParentPage(oPage);
+            oViewer.DrawingObjects.resetSelection();
+            oItem.AddToRedraw();
         }
     }
 
@@ -514,36 +525,40 @@ CChangesPDFDocumentDrawingsContent.prototype.Undo = function()
 };
 CChangesPDFDocumentDrawingsContent.prototype.Redo = function()
 {
-    let oDocument = this.Class;
+    let oPage = this.Class;
+    let oDocument = this.Class.GetDocument();
     let oViewer = Asc.editor.getDocumentRenderer();
+    let oContentChanges = this.private_GetContentChanges();
 
     if (this.IsAdd()) {
         // Redo addition by adding items
         for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
         {
             let oItem = this.Items[nIndex];
-            if (oItem.IsDrawing()) {
-                let nPage = oItem.GetPage();
-                oItem.AddToRedraw();
-                oDocument.drawings.push(oItem);
-                oViewer.pagesInfo.pages[nPage].drawings.splice(this.Pos, 0, oItem);
-                oViewer.DrawingObjects.resetSelection();
-                oItem.AddToRedraw();
-            }
+            let nPos = oContentChanges.Check(AscCommon.contentchanges_Add, true !== this.UseArray ? this.Pos + nIndex : this.PosArray[nIndex]);
+            if (nPos === false) continue;
+
+            oItem.AddToRedraw();
+            oDocument.drawings.push(oItem);
+            oPage.drawings.splice(nPos, 0, oItem);
+            oItem.SetParentPage(oPage);
+            oViewer.DrawingObjects.resetSelection();
+            oItem.AddToRedraw();
         }
     } else {
         // Redo removal by removing items
         for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
         {
             let oItem = this.Items[nIndex];
-            if (oItem.IsDrawing()) {
-                let nPage = oItem.GetPage();
-                oItem.AddToRedraw();
-                oDocument.drawings.splice(oDocument.drawings.indexOf(oItem), 1);
-                oViewer.pagesInfo.pages[nPage].drawings.splice(this.Pos, 1);
-                oViewer.DrawingObjects.resetSelection();
-                oItem.AddToRedraw();
-            }
+            let nPos = oContentChanges.Check(AscCommon.contentchanges_Remove, true !== this.UseArray ? this.Pos + nIndex : this.PosArray[nIndex]);
+            if (nPos === false) continue;
+
+            oItem.AddToRedraw();
+            oDocument.drawings.splice(oDocument.drawings.indexOf(oItem), 1);
+            oPage.drawings.splice(nPos, 1);
+            oItem.SetParentPage(null);
+            oViewer.DrawingObjects.resetSelection();
+            oItem.AddToRedraw();
         }
     }
 
@@ -553,244 +568,264 @@ CChangesPDFDocumentDrawingsContent.prototype.Redo = function()
 CChangesPDFDocumentDrawingsContent.prototype.private_InsertInArrayLoad = function()
 {
 	if (this.Items.length <= 0)
-		return;
-	
-	let pdfDocument    = this.Class;
-	let oViewer        = Asc.editor.getDocumentRenderer();
-	let drawingChanges = pdfDocument.drawingsContentChanges;
-	let oPage          = AscCommon.g_oTableId.Get_ById(this.PageId);
-	
-	for (let i = 0; i < this.Items.length; ++i)
-	{
-		let oItem = this.Items[i];
-		
-		// Adjust position based on content changes
-		let nPos = drawingChanges.Check(AscCommon.contentchanges_Add, true !== this.UseArray ? this.Pos + i : this.PosArray[i]);
-		if (nPos === false) continue;
-		nPos = Math.min(nPos, pdfDocument.drawings.length);
-		
-		if (oPage)
-		{
-			pdfDocument.drawings.splice(nPos, 0, oItem);
-			let drawingsArray = oPage.drawings;
-			
-			nPos = Math.min(nPos, drawingsArray.length);
-			drawingsArray.splice(nPos, 0, oItem);
-		}
-		
-		oViewer.DrawingObjects.resetSelection();
-		oItem.AddToRedraw();
-	}
-	
-	pdfDocument.SetMouseDownObject(null);
-	pdfDocument.private_UpdateTargetForCollaboration(true);
+        return;
+
+    let oPage = this.Class;
+    let oDocument = this.Class.GetDocument();
+    let oViewer = Asc.editor.getDocumentRenderer();
+    let oContentChanges = this.private_GetContentChanges();
+
+    for (let i = 0; i < this.Items.length; ++i) {
+        let oItem = this.Items[i];
+
+        // Adjust position based on content changes
+        let nPos = oContentChanges.Check(AscCommon.contentchanges_Add, true !== this.UseArray ? this.Pos + i : this.PosArray[i]);
+        if (nPos === false) continue;
+
+        // Ensure position is within bounds
+        nPos = Math.min(nPos, oDocument.drawings.length);
+
+        // Insert into document drawings array
+        oDocument.drawings.splice(nPos, 0, oItem);
+
+        // Insert into viewer drawings array
+        let drawingsArray = oPage.drawings;
+        nPos = Math.min(nPos, drawingsArray.length);
+        drawingsArray.splice(nPos, 0, oItem);
+        oItem.SetParentPage(oPage);
+
+        oViewer.DrawingObjects.resetSelection();
+        oItem.AddToRedraw();
+    }
+
+    oDocument.SetMouseDownObject(null);
+    oDocument.private_UpdateTargetForCollaboration(true);
 };
 CChangesPDFDocumentDrawingsContent.prototype.private_RemoveInArrayLoad = function()
 {
 	if (this.Items.length <= 0)
-		return;
-	
-	let pdfDocument    = this.Class;
-	let oViewer        = Asc.editor.getDocumentRenderer();
-	let drawingChanges = pdfDocument.drawingsContentChanges;
-	let oPage          = AscCommon.g_oTableId.Get_ById(this.PageId);
-	
-	// Remove items in reverse order to maintain indices
-	for (let i = this.Items.length - 1; i >= 0; --i)
-	{
-		let oItem = this.Items[i];
-		
-		let nPos = drawingChanges.Check(AscCommon.contentchanges_Remove, true !== this.UseArray ? this.Pos + i : this.PosArray[i]);
-        if (nPos === false) continue;
-		
-		if (oPage)
-		{
-            let indexInDrawings = pdfDocument.drawings.indexOf(oItem);
-			if (indexInDrawings !== -1)
-				pdfDocument.drawings.splice(indexInDrawings, 1);
+        return;
 
-			let drawingsArray        = oPage.drawings;
-			let indexInDrawingsArray = drawingsArray.indexOf(oItem);
-			if (indexInDrawingsArray !== -1)
-				drawingsArray.splice(indexInDrawingsArray, 1);
-		}
-		
-		oItem.AddToRedraw();
-		oViewer.DrawingObjects.resetSelection();
-	}
-	
-	pdfDocument.SetMouseDownObject(null);
-	pdfDocument.private_UpdateTargetForCollaboration(true);
+    let oPage = this.Class;
+    let oDocument = this.Class.GetDocument();
+    let oViewer = Asc.editor.getDocumentRenderer();
+    let oContentChanges = this.private_GetContentChanges();
+
+    // Remove items in reverse order to maintain indices
+    for (let i = this.Items.length - 1; i >= 0; --i) {
+        let oItem = this.Items[i];
+
+        // Adjust position based on content changes
+        let nPos = oContentChanges.Check(AscCommon.contentchanges_Remove,  true !== this.UseArray ? this.Pos + i : this.PosArray[i]);
+        if (nPos === false) continue;
+
+        oItem.AddToRedraw();
+        // Remove from document drawings array
+        let indexInDrawings = oDocument.drawings.indexOf(oItem);
+        if (indexInDrawings !== -1)
+            oDocument.drawings.splice(indexInDrawings, 1);
+
+        // Remove from viewer drawings array
+        let drawingsArray = oPage.drawings;
+        let indexInDrawingsArray = drawingsArray.indexOf(oItem);
+        if (indexInDrawingsArray !== -1)
+            drawingsArray.splice(indexInDrawingsArray, 1);
+
+        oItem.SetParentPage(null);
+
+        oViewer.DrawingObjects.resetSelection();
+    }
+
+    oDocument.SetMouseDownObject(null);
+    oDocument.private_UpdateTargetForCollaboration(true);
 };
 CChangesPDFDocumentDrawingsContent.prototype.private_GetContentChanges = function() {
     return this.Class.drawingsContentChanges;
 };
+CChangesPDFDocumentDrawingsContent.prototype.GetContentChangesClass = function() {
+	return this.private_GetContentChanges();
+};
+CChangesPDFDocumentDrawingsContent.prototype.private_WriteItem = function (Writer, Item) {
+    Writer.WriteString2(Item.Get_Id());
+};
+CChangesPDFDocumentDrawingsContent.prototype.private_ReadItem = function (Reader) {
+    var Id = Reader.GetString2();
+    return AscCommon.g_oTableId.Get_ById(Id);
+};
+CChangesPDFDocumentDrawingsContent.prototype.Copy = function() {
+    let oChanges = new this.constructor(this.Class, this.Pos, this.Items, this.Add);
+
+    oChanges.UseArray = this.UseArray;
+
+    for (let nIndex = 0, nCount = this.PosArray.length; nIndex < nCount; ++nIndex)
+        oChanges.PosArray[nIndex] = this.PosArray[nIndex];
+
+    return oChanges;
+};
+CChangesPDFDocumentDrawingsContent.prototype.CreateReverseChange = function(){
+    return this.private_CreateReverseChange(this.constructor);
+};
 
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseContentChange}
  */
-function CChangesPDFDocumentAddPage(Class, Pos, Items)
+function CChangesPDFDocumentPagesContent(Class, Pos, Items, bAdd)
 {
-	AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, true);
+	AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, bAdd);
 }
-CChangesPDFDocumentAddPage.prototype = Object.create(AscDFH.CChangesBaseContentChange.prototype);
-CChangesPDFDocumentAddPage.prototype.constructor = CChangesPDFDocumentAddPage;
-CChangesPDFDocumentAddPage.prototype.Type = AscDFH.historyitem_PDF_Document_AddPage;
+CChangesPDFDocumentPagesContent.prototype = Object.create(AscDFH.CChangesBaseContentChange.prototype);
+CChangesPDFDocumentPagesContent.prototype.constructor = CChangesPDFDocumentPagesContent;
+CChangesPDFDocumentPagesContent.prototype.Type = AscDFH.historyitem_PDF_Document_PagesContent;
 
-CChangesPDFDocumentAddPage.prototype.Undo = function()
-{
+CChangesPDFDocumentPagesContent.prototype.Undo = function() {
 	let oDocument   = this.Class;
 	let oDrDoc		= oDocument.GetDrawingDocument();
 	
-	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
-	{
-		let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
-		oDocument.RemovePage(nPos);
-	}
+    if (this.IsAdd()) {
+        for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex) {
+            let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
+            oDocument.RemovePage(nPos);
+        }
+    }
+    else {
+        for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex) {
+            let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
+            let oItem = this.Items[nIndex];
+            oDocument.AddPage(nPos, oItem);
+        }
+    }
+	
 	
 	oDocument.SetMouseDownObject(null);
 	oDrDoc.TargetEnd();
 };
-CChangesPDFDocumentAddPage.prototype.Redo = function()
-{
+CChangesPDFDocumentPagesContent.prototype.Redo = function() {
 	let oDocument	= this.Class;
 	let oDrDoc		= oDocument.GetDrawingDocument();
+	let oContentChanges = this.private_GetContentChanges();
+
+    if (this.IsAdd()) {
+        for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex) {
+            let nPos = oContentChanges.Check(AscCommon.contentchanges_Add, true !== this.UseArray ? this.Pos + nIndex : this.PosArray[nIndex]);
+            if (nPos === false) continue;
+
+            let oItem = this.Items[nIndex];
+            oDocument.AddPage(nPos, oItem)
+        }
+    }
+    else {
+        for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex) {
+            let nPos = oContentChanges.Check(AscCommon.contentchanges_Remove, true !== this.UseArray ? this.Pos + nIndex : this.PosArray[nIndex]);
+            if (nPos === false) continue;
+            oDocument.RemovePage(nPos)
+        }
+    }
 	
-	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
-	{
-		let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
-		let oItem = this.Items[nIndex];
-		oDocument.AddPage(nPos, oItem)
-	}
 
 	oDocument.SetMouseDownObject(null);
 	oDrDoc.TargetEnd();
 };
-CChangesPDFDocumentAddPage.prototype.Load = function()
+CChangesPDFDocumentPagesContent.prototype.Load = function()
 {
 	let pdfDocument = this.Class;
 	let pageChanges = pdfDocument.pagesContentChanges;
-	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
-	{
-		let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
-		nPos = pageChanges.Check(AscCommon.contentchanges_Add, nPos);
-		pdfDocument.AddPage(nPos, this.Items[nIndex]);
-	}
+
+    if (this.IsAdd()) {
+        for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex) {
+            let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
+            nPos = pageChanges.Check(AscCommon.contentchanges_Add, nPos);
+            pdfDocument.AddPage(nPos, this.Items[nIndex]);
+        }
+    }
+    else {
+        for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex) {
+            let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
+            nPos = pageChanges.Check(AscCommon.contentchanges_Remove, nPos);
+            if (false === nPos)
+                continue;
+            
+            pdfDocument.RemovePage(nPos);
+        }
+    }
+	
 };
-CChangesPDFDocumentAddPage.prototype.private_WriteItem = function(Writer, oPage)
+CChangesPDFDocumentPagesContent.prototype.private_WriteItem = function(Writer, oPage)
 {
+    let nFlags = 0;
+    if (undefined == oPage.originIndex) {
+        nFlags |= 1;
+    }
+
+    Writer.WriteLong(nFlags);
+
     Writer.WriteString2(oPage.Id);
 	Writer.WriteLong(oPage.Rotate);
+    if (undefined != oPage.originIndex) {
+        Writer.WriteLong(oPage.originIndex);
+    }
+    Writer.WriteBool(oPage.isRecognized);
 	Writer.WriteLong(oPage.Dpi);
 	Writer.WriteLong(oPage.W);
 	Writer.WriteLong(oPage.H);
 };
-CChangesPDFDocumentAddPage.prototype.private_ReadItem = function(Reader)
+CChangesPDFDocumentPagesContent.prototype.private_ReadItem = function(Reader)
 {
+    let nFlags = Reader.GetLong();
+    let hasOriginIndex = !(nFlags & 1);
+
 	return {
         Id: Reader.GetString2(),
 		Rotate: Reader.GetLong(),
+        originIndex: hasOriginIndex ? Reader.GetLong() : undefined,
+        isRecognized: Reader.GetBool(),
 		Dpi: Reader.GetLong(),
 		W: Reader.GetLong(),
-		H: Reader.GetLong()
+		H: Reader.GetLong(),
+        fonts: []
 	};
 };
+CChangesPDFDocumentPagesContent.prototype.ReadFromBinary = function (reader) {
+    this.Add = reader.GetBool();
+    this.Pos = reader.GetLong();
+    AscDFH.CChangesBaseContentChange.prototype.ReadFromBinary.call(this, reader);
+};
+CChangesPDFDocumentPagesContent.prototype.WriteToBinary = function (writer) {
+    writer.WriteBool(this.IsAdd());
+    writer.WriteLong(this.Pos);
+    AscDFH.CChangesBaseContentChange.prototype.WriteToBinary.call(this, writer);
+};
+CChangesPDFDocumentPagesContent.prototype.Copy = function() {
+    let oChanges = new this.constructor(this.Class, this.Pos, this.Items, this.Add);
 
-/**
- * @constructor
- * @extends {AscDFH.CChangesBaseContentChange}
- */
-function CChangesPDFDocumentRemovePage(Class, Pos, Items)
-{
-	AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, false);
-}
-CChangesPDFDocumentRemovePage.prototype = Object.create(AscDFH.CChangesBaseContentChange.prototype);
-CChangesPDFDocumentRemovePage.prototype.constructor = CChangesPDFDocumentRemovePage;
-CChangesPDFDocumentRemovePage.prototype.Type = AscDFH.historyitem_PDF_Document_RemovePage;
+    oChanges.UseArray = this.UseArray;
 
-CChangesPDFDocumentRemovePage.prototype.Undo = function()
-{
-	let oDocument	= this.Class;
-	let oDrDoc		= oDocument.GetDrawingDocument();
-	
-	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
-	{
-		let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
-		let oItem = this.Items[nIndex];
-		oDocument.AddPage(nPos, oItem);
-	}
-	
-	oDocument.SetMouseDownObject(null);
-	oDrDoc.TargetEnd();
-};
-CChangesPDFDocumentRemovePage.prototype.Redo = function()
-{
-	let oDocument	= this.Class;
-	let oDrDoc		= oDocument.GetDrawingDocument();
-	
-	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
-	{
-		let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
-		oDocument.RemovePage(nPos)
-	}
+    for (let nIndex = 0, nCount = this.PosArray.length; nIndex < nCount; ++nIndex)
+        oChanges.PosArray[nIndex] = this.PosArray[nIndex];
 
-	oDocument.SetMouseDownObject(null);
-	oDrDoc.TargetEnd();
+    return oChanges;
 };
-CChangesPDFDocumentRemovePage.prototype.Load = function()
-{
-	let pdfDocument = this.Class;
-	let pageChanges = pdfDocument.pagesContentChanges;
-	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
-	{
-		let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
-		nPos = pageChanges.Check(AscCommon.contentchanges_Remove, nPos);
-		if (false === nPos)
-			continue;
-		
-		pdfDocument.RemovePage(nPos);
-	}
-};
-CChangesPDFDocumentRemovePage.prototype.private_WriteItem = function(Writer, oPage)
-{
-    Writer.WriteString2(oPage.Id);
-	Writer.WriteLong(oPage.Rotate);
-	Writer.WriteLong(oPage.Dpi);
-	Writer.WriteLong(oPage.W);
-	Writer.WriteLong(oPage.H);
-};
-CChangesPDFDocumentRemovePage.prototype.private_ReadItem = function(Reader)
-{
-	return {
-        Id: Reader.GetString2(),
-		Rotate: Reader.GetLong(),
-		Dpi: Reader.GetLong(),
-		W: Reader.GetLong(),
-		H: Reader.GetLong()
-	};
+CChangesPDFDocumentPagesContent.prototype.CreateReverseChange = function(){
+    return this.private_CreateReverseChange(this.constructor);
 };
 
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
  */
-function CChangesPDFDocumentRotatePage(Class, PageId, Old, New)
+function CChangesPDFDocumentRotatePage(Class, Old, New)
 {
 	AscDFH.CChangesBaseProperty.call(this, Class, Old, New);
-	this.PageId = PageId;
 }
 CChangesPDFDocumentRotatePage.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
 CChangesPDFDocumentRotatePage.prototype.constructor = CChangesPDFDocumentRotatePage;
 CChangesPDFDocumentRotatePage.prototype.Type = AscDFH.historyitem_PDF_Document_RotatePage;
 CChangesPDFDocumentRotatePage.prototype.private_SetValue = function(Value)
 {
-	let oDoc        = this.Class;
+	let oPage       = this.Class;
+    let oDoc        = oPage.GetDocument();
     let oFile       = oDoc.Viewer.file;
-	let sPageId     = this.PageId;
-    let nPageIdx    = oDoc.Viewer.pagesInfo.pages.findIndex(function(pageInfo) {
-        return pageInfo.Id == sPageId;
-    });
+    let nPageIdx    = oPage.GetIndex();
 
     if (-1 !== nPageIdx) {
         oFile.pages[nPageIdx].Rotate = Value;
@@ -810,19 +845,13 @@ CChangesPDFDocumentRotatePage.prototype.WriteToBinary = function(Writer)
 {
 	let nFlags = 0;
 
-	if (undefined === this.PageId)
+	if (undefined === this.New)
 		nFlags |= 1;
 
-	if (undefined === this.New)
+	if (undefined === this.Old)
 		nFlags |= 2;
 
-	if (undefined === this.Old)
-		nFlags |= 4;
-
 	Writer.WriteLong(nFlags);
-
-	if (undefined !== this.PageId)
-		Writer.WriteString2(this.PageId);
 
 	if (undefined !== this.New)
 		Writer.WriteLong(this.New);
@@ -835,16 +864,11 @@ CChangesPDFDocumentRotatePage.prototype.ReadFromBinary = function(Reader)
 	let nFlags = Reader.GetLong();
 	
 	if (nFlags & 1)
-		this.PageId = undefined;
-	else
-		this.PageId = Reader.GetString2();
-	
-	if (nFlags & 2)
 		this.New = undefined;
 	else
 		this.New = Reader.GetLong();
 	
-	if (nFlags & 4)
+	if (nFlags & 2)
 		this.Old = undefined;
 	else
 		this.Old = Reader.GetLong();
@@ -854,10 +878,9 @@ CChangesPDFDocumentRotatePage.prototype.ReadFromBinary = function(Reader)
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
  */
-function CChangesPDFDocumentRecognizePage(Class, PageId, Old, New)
+function CChangesPDFDocumentRecognizePage(Class, Old, New)
 {
 	AscDFH.CChangesBaseProperty.call(this, Class, Old, New);
-	this.PageId = PageId;
 }
 CChangesPDFDocumentRecognizePage.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
 CChangesPDFDocumentRecognizePage.prototype.constructor = CChangesPDFDocumentRecognizePage;
@@ -866,43 +889,30 @@ CChangesPDFDocumentRecognizePage.prototype.WriteToBinary = function(Writer)
 {
 	let nFlags = 0;
 
-	if (undefined !== this.PageId)
+	if (true === this.New)
 		nFlags |= 1;
 	
-	if (true === this.New)
+	if (true === this.Old)
 		nFlags |= 2;
 	
-	if (true === this.Old)
-		nFlags |= 4;
-	
 	Writer.WriteLong(nFlags);
-	if (undefined !== this.PageId)
-		Writer.WriteString2(this.PageId);
 };
 CChangesPDFDocumentRecognizePage.prototype.ReadFromBinary = function(Reader)
 {
 	let nFlags = Reader.GetLong();
 	
-	if (nFlags & 1)
-		this.PageId = Reader.GetString2();
-	else
-		this.PageId = undefined;
-	
-	this.New = !!(nFlags & 2);
-	this.Old = !!(nFlags & 4);
+	this.New = !!(nFlags & 1);
+	this.Old = !!(nFlags & 2);
 };
 CChangesPDFDocumentRecognizePage.prototype.private_SetValue = function(bRecognize)
 {
-	let oDoc = this.Class;
-	let oFile = oDoc.Viewer.file;
+	let oPage       = this.Class;
+    let oDoc        = oPage.GetDocument();
+    let oFile       = oDoc.Viewer.file;
+    let nPageIdx    = oPage.GetIndex();
 	
-    let sPageId = this.PageId;
-    let nPageIdx = oDoc.Viewer.pagesInfo.pages.findIndex(function(pageInfo) {
-        return pageInfo.Id == sPageId;
-    });
-
     if (-1 !== nPageIdx) {
-        oFile.pages[nPageIdx].isConvertedToShapes = bRecognize;
+        oFile.pages[nPageIdx].isRecognized = bRecognize;
         if (oDoc.Viewer.drawingPages[nPageIdx]) {
             delete oDoc.Viewer.drawingPages[nPageIdx].Image;
         }

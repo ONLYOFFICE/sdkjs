@@ -539,6 +539,9 @@
 		this.len  = 0;
 		this.pos  = 0;
 
+		this.posAttrEnd  = 0;
+		this.attrQuote = 0x22;//"
+
 		if (true !== bIsNoInit)
 			this.Init();
 
@@ -908,6 +911,11 @@
 			}
 		};
 
+
+		this.SetXmlAttributeQuote = function(val)
+		{
+			this.attrQuote = val;
+		}
 		this.WriteXmlString = function(val)
 		{
 			var pCur = 0;
@@ -955,6 +963,114 @@
 					this.WriteUtf8Char(0x70);
 					this.WriteUtf8Char(0x6f);
 					this.WriteUtf8Char(0x73);
+					this.WriteUtf8Char(0x3b);
+					break;
+				case 0x3c:
+					//<
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x6c);
+					this.WriteUtf8Char(0x74);
+					this.WriteUtf8Char(0x3b);
+					break;
+				case 0x3e:
+					//>
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x67);
+					this.WriteUtf8Char(0x74);
+					this.WriteUtf8Char(0x3b);
+					break;
+				case 0x22:
+					//"
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x71);
+					this.WriteUtf8Char(0x75);
+					this.WriteUtf8Char(0x6f);
+					this.WriteUtf8Char(0x74);
+					this.WriteUtf8Char(0x3b);
+					break;
+				default:
+					this.WriteUtf8Char(code);
+					break;
+			}
+		};
+		this.WriteXmlStringEncodeInSingleQuote = function(val)
+		{
+			var pCur = 0;
+			var pEnd = val.length;
+			while (pCur < pEnd)
+			{
+				var code = val.charCodeAt(pCur++);
+				if (code >= 0xD800 && code <= 0xDFFF && pCur < pEnd)
+				{
+					code = 0x10000 + (((code & 0x3FF) << 10) | (0x03FF & val.charCodeAt(pCur++)));
+				}
+				this.WriteXmlCharCodeInSingleQuote(code);
+			}
+		};
+		this.WriteXmlCharCodeInSingleQuote = function(code)
+		{
+			switch (code)
+			{
+				case 0x26:
+					//&
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x61);
+					this.WriteUtf8Char(0x6d);
+					this.WriteUtf8Char(0x70);
+					this.WriteUtf8Char(0x3b);
+					break;
+				case 0x27:
+					//'
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x61);
+					this.WriteUtf8Char(0x70);
+					this.WriteUtf8Char(0x6f);
+					this.WriteUtf8Char(0x73);
+					this.WriteUtf8Char(0x3b);
+					break;
+				case 0x3c:
+					//<
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x6c);
+					this.WriteUtf8Char(0x74);
+					this.WriteUtf8Char(0x3b);
+					break;
+				case 0x3e:
+					//>
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x67);
+					this.WriteUtf8Char(0x74);
+					this.WriteUtf8Char(0x3b);
+					break;
+				default:
+					this.WriteUtf8Char(code);
+					break;
+			}
+		};
+		this.WriteXmlStringEncodeInDoubleQuote = function(val)
+		{
+			var pCur = 0;
+			var pEnd = val.length;
+			while (pCur < pEnd)
+			{
+				var code = val.charCodeAt(pCur++);
+				if (code >= 0xD800 && code <= 0xDFFF && pCur < pEnd)
+				{
+					code = 0x10000 + (((code & 0x3FF) << 10) | (0x03FF & val.charCodeAt(pCur++)));
+				}
+				this.WriteXmlCharCodeInDoubleQuote(code);
+			}
+		};
+		this.WriteXmlCharCodeInDoubleQuote = function(code)
+		{
+			switch (code)
+			{
+				case 0x26:
+					//&
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x61);
+					this.WriteUtf8Char(0x6d);
+					this.WriteUtf8Char(0x70);
 					this.WriteUtf8Char(0x3b);
 					break;
 				case 0x3c:
@@ -1033,6 +1149,19 @@
 			this.WriteXmlString(name);
 			this.WriteUtf8Char(0x3e);
 		};
+		this.WriteXmlNodeEndCheckEmpty = function(name)
+		{
+			if (this.posAttrEnd === this.GetCurPosition()) {
+				this.Seek(this.posAttrEnd - 1);
+				this.WriteUtf8Char(0x2f);
+				this.WriteUtf8Char(0x3e);
+			} else {
+				this.WriteUtf8Char(0x3c);
+				this.WriteUtf8Char(0x2f);
+				this.WriteXmlString(name);
+				this.WriteUtf8Char(0x3e);
+			}
+		};
 		this.WriteXmlNodeWithText = function(name, text)
 		{
 			this.WriteXmlNodeStart(name);
@@ -1047,23 +1176,33 @@
 				this.WriteUtf8Char(0x2f);
 			this.WriteUtf8Char(0x3e);
 		};
+		this.WriteXmlAttributesEndSavePos = function()
+		{
+			this.WriteUtf8Char(0x3e);
+			this.posAttrEnd = this.GetCurPosition();
+		};
 		this.WriteXmlAttributeString = function(name, val)
 		{
 			this.WriteUtf8Char(0x20);
 			this.WriteXmlString(name);
 			this.WriteUtf8Char(0x3d);
-			this.WriteUtf8Char(0x22);
+			this.WriteUtf8Char(this.attrQuote);
 			this.WriteXmlString(val.toString());
-			this.WriteUtf8Char(0x22);
+			this.WriteUtf8Char(this.attrQuote);
 		};
 		this.WriteXmlAttributeStringEncode = function(name, val)
 		{
 			this.WriteUtf8Char(0x20);
 			this.WriteXmlString(name);
 			this.WriteUtf8Char(0x3d);
-			this.WriteUtf8Char(0x22);
-			this.WriteXmlStringEncode(val.toString());
-			this.WriteUtf8Char(0x22);
+			this.WriteUtf8Char(this.attrQuote);
+			//todo remove if. save method to proerty like attrQuote
+			if (this.attrQuote === 0x22) {
+				this.WriteXmlStringEncodeInDoubleQuote(val.toString());
+			} else {
+				this.WriteXmlStringEncodeInSingleQuote(val.toString());
+			}
+			this.WriteUtf8Char(this.attrQuote);
 		};
 		this.WriteXmlAttributeBool = function(name, val)
 		{
@@ -1590,6 +1729,31 @@
 	// 9 - sysDashDotDot
 	// 10- sysDot
 
+	//		visio types
+	// 		vsdxTransparent		: 11,
+	// 		vsdxSolid			: 12,
+	// 		vsdxDash			: 13,
+	// 		vsdxDot				: 14,
+	// 		vsdxDashDot			: 15,
+	// 		vsdxDashDotDot		: 16,
+	// 		vsdxDashDashDot		: 17,
+	// 		vsdxLongDashShortDash   		: 18,
+	// 		vsdxLongDashShortDashShortDash  : 19,
+	// 		vsdxHalfDash  			: 20,
+	// 		vsdxHalfDot				: 21,
+	// 		vsdxHalfDashDot			: 22,
+	// 		vsdxHalfDashDotDot		: 23,
+	// 		vsdxHalfDashDashDot   	: 24,
+	// 		vsdxHalfLongDashShortDash   		 : 25,
+	// 		vsdxHalfLongDashShortDashShortDash   : 26,
+	// 		vsdxDoubleDot   		: 27,
+	// 		vsdxDoubleDashDot   	: 28,
+	// 		vsdxDoubleDashDotDot   	: 29,
+	// 		vsdxDoubleDashDashDot   : 30,
+	// 		vsdxDoubleLongDashShortDash   			: 31,
+	// 		vsdxDoubleLongDashShortDashShortDash    : 32,
+	// 		vsdxHalfHalfDash   		: 33,
+
 	var DashPatternPresets = [
 		[4, 3],
 		[4, 3, 1, 3],
@@ -1601,7 +1765,33 @@
 		[3, 1],
 		[3, 1, 1, 1],
 		[3, 1, 1, 1, 1, 1],
-		[1, 1]
+		[1, 1],
+		// visio types
+		[0, 1], // vsdxTransparent
+		[1, 0], // vsdxSolid
+		[9, 3], // vsdxDash
+		[2, 3], // vsdxDot
+		[9, 3, 2, 3], // vsdxDashDot
+		[9, 3, 2, 3, 2, 3], // vsdxDashDotDot
+		[9, 3, 9, 3, 2, 3], // vsdxDashDashDot
+		[21, 3, 9, 3], // vsdxLongDashShortDash
+		[21, 3, 9, 3, 9, 3], // vsdxLongDashShortDashShortDash
+		[5, 1], // vsdxHalfDash
+		[2, 1], // vsdxHalfDot
+		[5, 1, 2, 1],// vsdxHalfDashDot
+		[5, 1, 2, 1, 2, 1],// vsdxHalfDashDotDot
+		[5, 1, 5, 1, 2, 1], // vsdxHalfDashDashDot
+		[11, 1, 5, 1], // vsdxHalfLongDashShortDash
+		[11, 1, 5, 1, 5, 1],		// vsdxHalfLongDashShortDashShortDash
+		[16, 8], // vsdxDoubleDash
+		[2, 7], // vsdxDoubleDot
+		[16, 8, 2, 8],// vsdxDoubleDashDot
+		[17, 7, 2, 7, 2, 7], // vsdxDoubleDashDotDot
+		[16, 7, 16, 7, 2, 7], // vsdxDoubleDashDashDot
+		[41, 7, 17, 7], // vsdxDoubleLongDashShortDash
+		[41, 7, 17, 7, 17, 7], // vsdxDoubleLongDashShortDashShortDash
+		[1, 0], // vsdxHalfHalfDash (in visio is solid)
+
 	];
 
 	function CMetafileFontPicker(manager)

@@ -31,12 +31,12 @@
  */
 
 "use strict";
-function CNativeGraphics()
+function CNativeGraphics(nativeEmbed)
 {
     AscCommon.CGraphicsBase.call(this, AscCommon.RendererType.NativeDrawer);
 
     /** @suppress {checkVars} */
-    this.Native = CreateEmbedObject("CGraphicsEmbed");
+    this.Native = nativeEmbed ? nativeEmbed : CreateEmbedObject("CGraphicsEmbed");
 
     this.isNativeGraphics = true;
 

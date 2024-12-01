@@ -70,8 +70,9 @@
         this.Recalculate();
         this.DrawBackground(oGraphicsPDF);
         
-        if (this._bAutoShiftContentView)
+        if (this._bAutoShiftContentView || this._bShiftByTopIndex) {
             this.CheckFormViewWindow();
+        }
         else {
             this.content.ResetShiftView();
             this.content.ShiftView(this._curShiftView.x, this._curShiftView.y);
@@ -194,19 +195,24 @@
         let aFields = oDoc.GetAllWidgets(this.GetFullName());
         let oThis   = this;
         
-        let oThisBounds = this.getFormRelRect();
-        let aCurIdxs    = this.GetCurIdxs();
+        let aCurIdxs = this.GetCurIdxs();
+        let aApiIdxs = this.GetApiCurIdxs();
 
-        if (this.GetApiValue() != this.GetValue()) {
-            AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetApiValue(), this.GetValue()));
+        this.ScrollVerticalEnd(true);
+        let isChanged = false;
+        for (let i = 0; i < aCurIdxs.length; i++) {
+            if (aCurIdxs[i] === undefined || aApiIdxs[i] === undefined || aCurIdxs[i] !== aApiIdxs[i]) {
+                isChanged = true;
+                break;
+            }
+        }
+
+        if (isChanged) {
             AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetApiCurIdxs(), aCurIdxs));
-
-            if (oDoc.isUndoRedoInProgress) {
-                // из истории выставляем curIdxs для родительского поля. Это выставление не меняет выделение параграфов.
-                // Поэтому вызываем SetCurIdxs
-                this._bAutoShiftContentView = true;
-                aCurIdxs = this.GetApiCurIdxs();
-                this.SetCurIdxs(aCurIdxs);
+            this._bAutoShiftContentView = true;
+            
+            if (false == AscCommon.History.UndoRedoInProgress) {
+                this._bUpdateTopIndex = true;
             }
 
             this.SetApiValue(this.GetValue());
@@ -228,22 +234,31 @@
             if (oThis == field)
                 return;
 
-            field._bAutoShiftContentView = false;
             field.SetCurIdxs(aCurIdxs);
-
-            let oFieldBounds = field.getFormRelRect();
-            if (oFieldBounds && Math.abs(oFieldBounds.H - oThisBounds.H) > 0.001) {
-                field._bAutoShiftContentView = true;
-            }
-            else {
-                field._curShiftView.x = oThis._curShiftView.x;
-                field._curShiftView.y = oThis._curShiftView.y;
-                field._originShiftView.x = oThis._originShiftView.x;
-                field._originShiftView.y = oThis._originShiftView.y;
-            }
+            field._bAutoShiftContentView = true;
         });
 
         oDoc.EndNoHistoryMode();
+    };
+    CListBoxField.prototype.UpdateTopIndex = function() {
+        let oParaBounds     = this.content.GetElement(0).GetPageBounds(0);
+        let nHeightPerPara  = oParaBounds.Bottom - oParaBounds.Top;
+        let nTopIndex       = -this._curShiftView.y / nHeightPerPara; // количество смещений в параграфах
+        
+        AscCommon.History.Add(new CChangesPDListTopIndex(this, this.GetTopIndex(), nTopIndex));
+        this._topIdx = nTopIndex;
+    };
+    CListBoxField.prototype.GetTopIndex = function() {
+        return this._topIdx;
+    };
+    CListBoxField.prototype.SetTopIndex = function(nTopIndex) {
+        // Обновляем _topIdx и добавляем изменение в историю
+        AscCommon.History.Add(new CChangesPDListTopIndex(this, this.GetTopIndex(), nTopIndex));
+        this._topIdx = nTopIndex;
+        this._bAutoShiftContentView = false;
+        this._bShiftByTopIndex = true;
+        
+        this.AddToRedraw();
     };
     
     CListBoxField.prototype.SetMultipleSelection = function(bValue) {
@@ -270,6 +285,8 @@
         let oPara = this.content.GetElement(nIdx);
         let oApiPara;
         
+        AscCommon.History.StartNoHistoryMode();
+
         this.content.Set_CurrentElement(nIdx);
         if (isSingleSelect) {
             this.content.Content.forEach(function(para) {
@@ -286,6 +303,8 @@
             oApiPara.SetShd('clear', LISTBOX_SELECTED_COLOR.r, LISTBOX_SELECTED_COLOR.g, LISTBOX_SELECTED_COLOR.b);
             oApiPara.Paragraph.RecalcCompiledPr(true);
         }
+
+        AscCommon.History.EndNoHistoryMode();
 
         this.SetNeedRecalc(true);
         this.SetNeedCommit(true);
@@ -682,8 +701,13 @@
         this._scrollInfo.scrollCoeff    = nScrollCoeff;
         this.AddToRedraw();
     };
-    CListBoxField.prototype.ScrollVerticalEnd = function() {
-        let nHeightPerPara  = this.content.GetElement(1).Y - this.content.GetElement(0).Y;
+    CListBoxField.prototype.ScrollVerticalEnd = function(isOnCommit) {
+        if (!this._scrollInfo) {
+            return;
+        }
+
+        let oParaBounds     = this.content.GetElement(0).GetPageBounds(0);
+        let nHeightPerPara  = oParaBounds.Bottom - oParaBounds.Top;
         let nShiftCount     = this._curShiftView.y / nHeightPerPara; // количество смещений в длинах параграфов
         if (Math.abs(Math.round(nShiftCount) - nShiftCount) <= 0.001)
             return;
@@ -693,6 +717,11 @@
         this._bAutoShiftContentView     = false;
         this._scrollInfo.scrollCoeff    = Math.abs(this._curShiftView.y / nMaxShiftY);
         
+        if (isOnCommit) {
+            this.content.ResetShiftView();
+            this.content.ShiftView(this._curShiftView.x, this._curShiftView.y);
+        }
+
         this.AddToRedraw();
     };
     CListBoxField.prototype.GetScrollInfo = function() {
@@ -703,6 +732,25 @@
     };
     CListBoxField.prototype.CheckFormViewWindow = function()
     {
+        if (this._bShiftByTopIndex) {
+            let oParaBounds = this.content.GetElement(0).GetPageBounds(0);
+            let nHeightPerPara = oParaBounds.Bottom - oParaBounds.Top;
+            
+            // Устанавливаем _curShiftView.y по заданному nTopIndex
+            this._curShiftView.y = -this.GetTopIndex() * nHeightPerPara;
+
+            this.content.ResetShiftView();
+            this.content.ShiftView(this._curShiftView.x, this._curShiftView.y);
+            this._oldShiftView = {
+                x: this._curShiftView.x,
+                y: this._curShiftView.y
+            }
+
+            this._bShiftByTopIndex = false;
+            this._bAutoShiftContentView = false;
+            return;
+        }
+
         let curIdx = this.GetCurIdxs();
         
         let nFirstSelectedPara = 0;
@@ -741,22 +789,27 @@
         if (Math.abs(nDx) > 0.001 || Math.abs(nDy))
         {
             this.content.ShiftView(nDx, nDy);
-            this._originShiftView = {
+            this._oldShiftView = {
                 x: this.content.ShiftViewX,
                 y: this.content.ShiftViewY
             }
             
-            this._curShiftView.x = this._originShiftView.x;
-            this._curShiftView.y = this._originShiftView.y;
+            this._curShiftView.x = this._oldShiftView.x;
+            this._curShiftView.y = this._oldShiftView.y;
         }
         else {
-            this._originShiftView.x = this._curShiftView.x;
-            this._originShiftView.y = this._curShiftView.y;
+            this._oldShiftView.x = this._curShiftView.x;
+            this._oldShiftView.y = this._curShiftView.y;
         }
 
         if (nDy == 0) {
             let nCurMarginBottom = this._internalMargins.bottom != undefined ? this._internalMargins.bottom : (oFormBounds.Y + oFormBounds.H) - (oParagraph.Y + oCurParaHeight);
             this._internalMargins.bottom = Math.min(nCurMarginBottom, (oFormBounds.Y + oFormBounds.H) - (oParagraph.Y + oCurParaHeight));
+        }
+
+        if (this._bUpdateTopIndex) {
+            this.UpdateTopIndex();
+            this._bUpdateTopIndex = false;
         }
     };
     /**
@@ -819,10 +872,13 @@
                 this.UnselectOption(aCurIdxs[i]);
             }
 
-            this.SelectOption(aIdxs[0], true);
-            for (let i = 1; i < aIdxs.length; i++) {
-                this.SelectOption(aIdxs[i]);
+            if (aIdxs.length !== 0) {
+                this.SelectOption(aIdxs[0], true);
+                for (let i = 1; i < aIdxs.length; i++) {
+                    this.SelectOption(aIdxs[i]);
+                }
             }
+            
             if (editor.getDocumentRenderer().IsOpenFormsInProgress)
                 this.SetApiCurIdxs(aIdxs);
         }
@@ -931,6 +987,9 @@
                 memory.WriteLong(curIdxs[i]);
             }
         }
+        
+        memory.fieldDataFlags |= (1 << 15);
+        this.WriteRenderToBinary(memory);
         
         //
         // top index

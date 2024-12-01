@@ -854,9 +854,6 @@
 				!window["AscDesktopEditor"]["isSupportPlugins"]())
 				return;
 
-			if (this.api.DocInfo && !this.api.DocInfo.get_IsEnabledPlugins())
-				return;
-
 			if (this.runAndCloseData) // run only on close!!!
 				return;
 
@@ -866,6 +863,12 @@
 			let plugin = this.getPluginByGuid(guid);
 			if (!plugin)
 				return;
+
+			if (this.api.DocInfo && !this.api.DocInfo.get_IsEnabledPlugins())
+			{
+				if (!plugin.isConnector)
+					return;
+			}
 
 			if (!this.checkEditorSupport(plugin, variation))
 				return;

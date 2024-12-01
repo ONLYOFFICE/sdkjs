@@ -695,95 +695,80 @@ ParaMath.prototype.Add = function(Item)
 {
 	let logicDocument = this.GetLogicDocument();
 
-    var Type = Item.Type;
-    var oSelectedContent = this.GetSelectContent();
+	var Type = Item.Type;
+	var oSelectedContent = this.GetSelectContent();
 
-    var oContent = oSelectedContent.Content;
+	var oContent = oSelectedContent.Content;
 
-    var StartPos = oSelectedContent.Start;
-    var Run = oContent.Content[StartPos];
+	var StartPos = oSelectedContent.Start;
+	var Run = oContent.Content[StartPos];
 
-    // Мы вставляем только в Run
-    if (para_Math_Run !== Run.Type)
-        return;
+	// Мы вставляем только в Run
+	if (para_Math_Run !== Run.Type)
+		return;
 
-    var NewElement = null;
-    if (para_Text === Type)
-    {
-        // заглушка для текстовых настроек плейсхолдера
+	var NewElement = null;
+	if (para_Text === Type)
+	{
+		// заглушка для текстовых настроек плейсхолдера
 
-        if(oContent.bRoot == false && Run.IsPlaceholder())
-        {
+		if(oContent.bRoot == false && Run.IsPlaceholder())
+		{
 			AscCommon.executeNoRevisions(function()
 			{
 				var CtrRunPr = oContent.Get_ParentCtrRunPr(false); // ctrPrp (не копия)
 				Run.Apply_TextPr(CtrRunPr, undefined, true);
 			}, logicDocument, this);
-        }
+		}
 
-        if(Item.Value == 38)
-        {
-            NewElement = new CMathAmp();
-            Run.Add(NewElement, true);
-        }
-        else
-        {
-            NewElement = new CMathText(false);
-            NewElement.add(Item.Value);
-            Run.Add(NewElement, true);
-        }
-    }
-    else if (para_Space === Type)
-    {
-        NewElement = new CMathText(false);
-        NewElement.add(32);
-        Run.Add(NewElement, true);
-    }
-    else if (para_Math === Type)
-    {
-        var ContentPos = new AscWord.CParagraphContentPos();
+		if(Item.Value == 38)
+		{
+			NewElement = new CMathAmp();
+			Run.Add(NewElement, true);
+		}
+		else
+		{
+			NewElement = new CMathText(false);
+			NewElement.add(Item.Value);
+			Run.Add(NewElement, true);
+		}
+	}
+	else if (para_Space === Type)
+	{
+		NewElement = new CMathText(false);
+		NewElement.add(32);
+		Run.Add(NewElement, true);
+	}
+	else if (para_Math === Type)
+	{
+		var ContentPos = new AscWord.CParagraphContentPos();
 
-        if(this.bSelectionUse == true)
-            this.Get_ParaContentPos(true, true, ContentPos);
-        else
-            this.Get_ParaContentPos(false, false, ContentPos);
-
-        var TextPr = this.Root.GetMathTextPrForMenu(ContentPos, 0);
+		if(this.bSelectionUse == true)
+			this.Get_ParaContentPos(true, true, ContentPos);
+		else
+			this.Get_ParaContentPos(false, false, ContentPos);
+		
+		var TextPr = this.Root.GetMathTextPrForMenu(ContentPos, 0);
 		if (Item.TextPr)
 			TextPr.Merge(Item.TextPr);
 		
-        var bPlh = oContent.IsPlaceholder();
+		// Нам нужно разделить данный Run на 2 части
+		var RightRun = Run.Split2(Run.State.ContentPos);
 
-        // Нам нужно разделить данный Run на 2 части
-        var RightRun = Run.Split2(Run.State.ContentPos);
+		oContent.Internal_Content_Add(StartPos + 1, RightRun, false);
+		// Выставляем позицию в начало этого рана
+		oContent.CurPos = StartPos + 1;
+		RightRun.MoveCursorToStartPos();
 
-        oContent.Internal_Content_Add(StartPos + 1, RightRun, false);
-        // Выставляем позицию в начало этого рана
-        oContent.CurPos = StartPos + 1;
-        RightRun.MoveCursorToStartPos();
-		
-		// TODO: Need to refactor this code. Applying TextPr should be done in LoadFromMenu method
-		// or LoadFromMenu should return an array of added objects
-		let lng = oContent.Content.length;
 		oContent.Load_FromMenu(Item.Menu, this.Paragraph, TextPr, Item.GetText());
 		oContent.Correct_ContentCurPos();
-		
-		AscCommon.executeNoRevisions(function()
-		{
-			let lng2 = oContent.Content.length;
-			TextPr.RFonts.SetAll("Cambria Math", -1);
-			if (bPlh)
-				oContent.Apply_TextPr(TextPr, undefined, true);
-			else if (lng2 > lng)
-				oContent.Apply_TextPr(TextPr, undefined, false, StartPos + 1, StartPos + lng2 - lng);
-		}, logicDocument, this);
-    }
+	}
 	
 	if ((para_Text === Type || para_Space === Type) && null !== NewElement)
 		this.ProcessAutoCorrect(oContent, NewElement);
 
-    // Корректируем данный контент
-    oContent.Correct_Content(true);
+	// Корректируем данный контент
+	oContent.Correct_Content(true);
 };
 ParaMath.prototype.ProcessAutoCorrect = function(content, triggerElement)
 {
@@ -1348,7 +1333,7 @@ ParaMath.prototype.Set_MenuProps = function(Props)
 
 ParaMath.prototype.CheckRunContent = function(fCheck, oStartPos, oEndPos, nDepth, oCurrentPos, isForward)
 {
-	this.Root.CheckRunContent(fCheck, oStartPos, oEndPos, nDepth, oCurrentPos, isForward);
+	return this.Root.CheckRunContent(fCheck, oStartPos, oEndPos, nDepth, oCurrentPos, isForward);
 };
 
 //-----------------------------------------------------------------------------------

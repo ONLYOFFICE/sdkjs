@@ -175,15 +175,9 @@
 	function PageNumRecalculateObject(type, graphemes, widths, totalWidth, isCopy)
 	{
 		this.type      = type;
-		this.graphemes = graphemes;
-		this.widths    = widths;
+		this.graphemes = graphemes && isCopy ? graphemes.slice() : graphemes;
+		this.widths    = widths && isCopy ? widths.slice() : widths;
 		this.width     = totalWidth;
-		
-		if (isCopy)
-		{
-			this.graphemes = graphemes.slice();
-			this.widths    = widths.slice();
-		}
 	}
 	
 	//--------------------------------------------------------export----------------------------------------------------

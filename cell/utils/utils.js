@@ -436,6 +436,12 @@
 		Range.prototype.compareByLeftTop = function (a, b) {
 			return Range.prototype.compareCell(a.c1, a.r1, b.c1, b.r1);
 		};
+		Range.prototype.compareByRightTop = function (a, b) {
+			return Range.prototype.compareCell(a.c2, a.r1, b.c2, b.r1);
+		};
+		Range.prototype.compareByLeftBottom = function (a, b) {
+			return Range.prototype.compareCell(a.c1, a.r2, b.c1, b.r2);
+		};
 		Range.prototype.compareByRightBottom = function (a, b) {
 			return Range.prototype.compareCell(a.c2, a.r2, b.c2, b.r2);
 		};
@@ -2067,6 +2073,9 @@
 		}
 
 		function getFragmentsText(f) {
+			if (!f) {
+				return "";
+			}
 			return f.reduce(function (pv, cv) {
 				if (null === cv.getFragmentText()) {
 					cv.initText();
@@ -2076,6 +2085,9 @@
 		}
 
 		function getFragmentsLength(f) {
+			if (!f) {
+				return;
+			}
 			return f.length > 0 ? f.reduce(function (pv, cv) {
 				if (null === cv.getFragmentText()) {
 					cv.initText();
@@ -2085,18 +2097,27 @@
 		}
 
 		function getFragmentsCharCodes(f) {
+			if (!f) {
+				return;
+			}
 			return f.reduce(function (pv, cv) {
 				return pv.concat(cv.getCharCodes());
 			}, []);
 		}
 
 		function getFragmentsCharCodesLength(f) {
+			if (!f) {
+				return 0;
+			}
 			return f.length > 0 ? f.reduce(function (pv, cv) {
 				return pv + cv.getCharCodes().length;
 			}, 0) : 0;
 		}
 
 		function getFragmentsTextFromCode(f) {
+			if (!f) {
+				return "";
+			}
 			return f.reduce(function (pv, cv) {
 				if (null === cv.getFragmentText()) {
 					cv.initText();
@@ -3219,6 +3240,8 @@
 			this.bChangeColorScheme = false;
 			this.bChangeActive = false;
 			this.activeSheet = null;
+			this.onSlicer = {};
+			this.onSlicerCache = {};
 		}
 
 		/** @constructor */
@@ -3908,8 +3931,8 @@
 			}
 		};
 
-		cDate.prototype.getDateString = function (api) {
-			return api.asc_getLocaleExample(AscCommon.getShortDateFormat(), this.getExcelDate());
+		cDate.prototype.getDateString = function (api, bLocal) {
+			return api.asc_getLocaleExample(AscCommon.getShortDateFormat(), this.getExcelDate(bLocal));
 		};
 		cDate.prototype.getTimeString = function (api) {
 			return api.asc_getLocaleExample(AscCommon.getShortTimeFormat(), this.getExcelDateWithTime() - this.getTimezoneOffset() / (60 * 24));

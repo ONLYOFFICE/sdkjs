@@ -577,6 +577,17 @@ CDrawingsController.prototype.GetSelectionState = function()
 CDrawingsController.prototype.SetSelectionState = function(State, StateIndex)
 {
 	this.DrawingObjects.setSelectionState(State, StateIndex);
+	
+	let parentCC = this.private_GetParentContentControl();
+	if (parentCC && parentCC.IsPicture() && parentCC.IsForm() && parentCC.GetParagraph())
+	{
+		let parentShape = parentCC.GetParagraph().GetParentShape();
+		if (parentShape)
+		{
+			let paraDrawing = parentShape.GetParaDrawing();
+			this.DrawingObjects.selectById(paraDrawing.GetId(), paraDrawing.GetPageNum());
+		}
+	}
 };
 CDrawingsController.prototype.AddHyperlink = function(Props)
 {

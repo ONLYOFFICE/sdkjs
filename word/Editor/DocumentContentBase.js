@@ -815,13 +815,15 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 				let isParagraphMarkRemove = this.Content[StartPos].IsParagraph() && this.Content[StartPos].IsSelectedOnlyParagraphMark();
 
 				this.CurPos.ContentPos = StartPos;
-				if (Count < 0 && this.Content[StartPos].IsTable() && true === this.Content[StartPos].IsCellSelection() && true !== bOnTextAdd)
+				if (this.Content[StartPos].IsTable()
+					&& true === this.Content[StartPos].IsCellSelection()
+					&& ((!bOnTextAdd && Count < 0) || isRemoveOnDrag))
 				{
 					this.RemoveTableCells();
 				}
 				else if (false === this.Content[StartPos].Remove(Count, isRemoveWholeElement, bRemoveOnlySelection, bOnTextAdd))
 				{
-					if (!bOnTextAdd && (isParagraphMarkRemove || ((isRemoveOnDrag || Count > 0 || StartPos < this.Content.length - 1) && this.Content[StartPos].IsEmpty())))
+					if ((!bOnTextAdd || isRemoveOnDrag) && (isParagraphMarkRemove || ((isRemoveOnDrag || Count > 0 || StartPos < this.Content.length - 1) && this.Content[StartPos].IsEmpty())))
 					{
 						// В ворде параграфы объединяются только когда у них все настройки совпадают.
 						// (почему то при изменении и обратном изменении настроек параграфы перестают объединятся)

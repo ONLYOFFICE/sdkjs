@@ -2523,6 +2523,34 @@ function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPastePr
 			oPasteProcessor.Start(null, null, null, null, data1);
 			break;
 		}
+		case AscCommon.c_oAscClipboardDataFormat.Rtf:
+		{
+			//convert rtf string to binary
+			var reader = new FileReader();
+			reader.onload = function () {
+				let document = {data: new Uint8Array(reader.result), format: "rtf"}
+				api.getConvertedBinFileFromRtf(document, Asc.c_oAscFileType.CANVAS_WORD, function (sFileUrlAfterConvert) {
+					AscCommon.loadFileContent(sFileUrlAfterConvert, function(httpRequest) {
+						let stream;
+						if (null === httpRequest || !(stream = AscCommon.initStreamFromResponse(httpRequest)))
+						{
+							api.endInsertDocumentUrls();
+							api.sendEvent("asc_onError", c_oAscError.ID.DirectUrl,
+								c_oAscError.Level.NoCritical);
+							return;
+						}
+						api.endInsertDocumentUrls();
+						oPasteProcessor.Start(null, null, null, stream);
+					}, "arraybuffer");
+
+				});
+			};
+			reader.onerror = function () {
+				api.sendEvent("asc_onError", Asc.c_oAscError.ID.Unknown, Asc.c_oAscError.Level.NoCritical);
+			};
+			reader.readAsArrayBuffer(new Blob([data1]));
+			break;
+		}
 		default:
 		{
 			rejectCallback && rejectCallback();

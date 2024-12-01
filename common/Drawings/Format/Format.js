@@ -145,193 +145,21 @@
 		function CBaseObject() {
 			CBaseNoIdObject.call(this);
 			this.Id = null;
+			this.initId();
+		}
+		InitClass(CBaseObject, CBaseNoIdObject, AscDFH.historyitem_type_Unknown);
+		CBaseObject.prototype.initId = function() {
 			if ((AscCommon.g_oIdCounter.m_bLoad || AscCommon.History.CanAddChanges() || this.notAllowedWithoutId()) && !this.isGlobalSkipAddId()) {
 				this.Id = AscCommon.g_oIdCounter.Get_NewId();
 				AscCommon.g_oTableId.Add(this, this.Id);
 			}
-		}
-		InitClass(CBaseObject, CBaseNoIdObject, AscDFH.historyitem_type_Unknown);
-
+		};
+		CBaseObject.prototype.notAllowedWithoutId = function () {
+			return true;
+		};
 		CBaseObject.prototype.isGlobalSkipAddId = function () {
 			const oApi = window.editor || Asc.editor;
 			return !!(oApi && oApi.isSkipAddIdToBaseObject);
-		}
-
-		function InitClassWithoutType(fClass, fBase) {
-			fClass.prototype = Object.create(fBase.prototype);
-			fClass.prototype.superclass = fBase;
-			fClass.prototype.constructor = fClass;
-		}
-
-		function InitClass(fClass, fBase, nType) {
-			InitClassWithoutType(fClass, fBase);
-			fClass.prototype.classType = nType;
-		}
-
-
-		function CBaseFormatObject() {
-			CBaseObject.call(this);
-			this.parent = null;
-		}
-
-		CBaseFormatObject.prototype = Object.create(CBaseObject.prototype);
-		CBaseFormatObject.prototype.constructor = CBaseFormatObject;
-		CBaseFormatObject.prototype.classType = AscDFH.historyitem_type_Unknown;
-		CBaseFormatObject.prototype.getObjectType = function () {
-			return this.classType;
-		};
-		CBaseFormatObject.prototype.setParent = function (oParent) {
-			AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CommonChartFormat_SetParent, this.parent, oParent));
-			this.parent = oParent;
-		};
-		CBaseFormatObject.prototype.getImageFromBulletsMap = function(oImages) {};
-		CBaseFormatObject.prototype.getDocContentsWithImageBullets = function (arrContents) {};
-		CBaseFormatObject.prototype.setParentToChild = function (oChild) {
-			if (oChild && oChild.setParent) {
-				oChild.setParent(this);
-			}
-		};
-		CBaseFormatObject.prototype.createDuplicate = function (oIdMap) {
-			var oCopy = new this.constructor();
-			this.fillObject(oCopy, oIdMap);
-			return oCopy;
-		};
-		CBaseFormatObject.prototype.fillObject = function (oCopy, oIdMap) {
-		};
-		CBaseFormatObject.prototype.fromPPTY = function (pReader) {
-			var oStream = pReader.stream;
-			var nStart = oStream.cur;
-			var nEnd = nStart + oStream.GetULong() + 4;
-			if (this.readAttribute) {
-				this.readAttributes(pReader);
-			}
-			this.readChildren(nEnd, pReader);
-			oStream.Seek2(nEnd);
-		};
-		CBaseFormatObject.prototype.readAttributes = function (pReader) {
-			var oStream = pReader.stream;
-			oStream.Skip2(1); // start attributes
-			while (true) {
-				var nType = oStream.GetUChar();
-				if (nType == g_nodeAttributeEnd)
-					break;
-				this.readAttribute(nType, pReader)
-			}
-		};
-		CBaseFormatObject.prototype.readAttribute = function (nType, pReader) {
-		};
-		CBaseFormatObject.prototype.readChildren = function (nEnd, pReader) {
-			var oStream = pReader.stream;
-			while (oStream.cur < nEnd) {
-				var nType = oStream.GetUChar();
-				this.readChild(nType, pReader);
-			}
-		};
-		CBaseFormatObject.prototype.readChild = function (nType, pReader) {
-			pReader.stream.SkipRecord();
-		};
-		CBaseFormatObject.prototype.toPPTY = function (pWriter) {
-			if (this.privateWriteAttributes) {
-				this.writeAttributes(pWriter);
-			}
-			this.writeChildren(pWriter);
-		};
-		CBaseFormatObject.prototype.writeAttributes = function (pWriter) {
-			pWriter.WriteUChar(g_nodeAttributeStart);
-			this.privateWriteAttributes(pWriter);
-			pWriter.WriteUChar(g_nodeAttributeEnd);
-		};
-		CBaseFormatObject.prototype.privateWriteAttributes = function (pWriter) {
-		};
-		CBaseFormatObject.prototype.writeChildren = function (pWriter) {
-		};
-		CBaseFormatObject.prototype.writeRecord1 = function (pWriter, nType, oChild) {
-			if (AscCommon.isRealObject(oChild)) {
-				pWriter.WriteRecord1(nType, oChild, function (oChild) {
-					oChild.toPPTY(pWriter);
-				});
-			} else {
-				//TODO: throw an error
-			}
-		};
-		CBaseFormatObject.prototype.writeRecord2 = function (pWriter, nType, oChild) {
-			if (AscCommon.isRealObject(oChild)) {
-				this.writeRecord1(pWriter, nType, oChild);
-			}
-		};
-		CBaseFormatObject.prototype.getChildren = function () {
-			return [];
-		};
-		CBaseFormatObject.prototype.traverse = function (fCallback, bReverseOrder) {
-			if (fCallback(this)) {
-				return true;
-			}
-			let aChildren = this.getChildren();
-			if(bReverseOrder === undefined || bReverseOrder === true) {
-				for (let nChild = aChildren.length - 1; nChild > -1; --nChild) {
-					let oChild = aChildren[nChild];
-					if (oChild && oChild.traverse) {
-						if (oChild.traverse(fCallback, bReverseOrder)) {
-							return true;
-						}
-					}
-				}
-			}
-			else {
-				for (let nChild = 0; nChild < aChildren.length; ++nChild) {
-					let oChild = aChildren[nChild];
-					if (oChild && oChild.traverse) {
-						if (oChild.traverse(fCallback, bReverseOrder)) {
-							return true;
-						}
-					}
-				}
-			}
-			return false;
-		};
-		CBaseFormatObject.prototype.handleRemoveObject = function (sObjectId) {
-			return false;
-		};
-		CBaseFormatObject.prototype.onRemoveChild = function (oChild) {
-			if (this.parent) {
-				this.parent.onRemoveChild(this);
-			}
-		};
-		CBaseFormatObject.prototype.notAllowedWithoutId = function () {
-			return true;
-		};
-		CBaseFormatObject.prototype.isEqual = function (oOther) {
-			if (!oOther) {
-				return false;
-			}
-			if (this.getObjectType() !== oOther.getObjectType()) {
-				return false;
-			}
-			var aThisChildren = this.getChildren();
-			var aOtherChildren = oOther.getChildren();
-			if (aThisChildren.length !== aOtherChildren.length) {
-				return false;
-			}
-			for (var nChild = 0; nChild < aThisChildren.length; ++nChild) {
-				var oThisChild = aThisChildren[nChild];
-				var oOtherChild = aOtherChildren[nChild];
-				if (oThisChild !== this.checkEqualChild(oThisChild, oOtherChild)) {
-					return false;
-				}
-			}
-			return true;
-		};
-		CBaseFormatObject.prototype.checkEqualChild = function (oThisChild, oOtherChild) {
-			if (AscCommon.isRealObject(oThisChild) && oThisChild.isEqual) {
-				if (!oThisChild.isEqual(oOtherChild)) {
-					return undefined;
-				}
-			} else {
-				if (oThisChild !== oOtherChild) {
-					return undefined;
-				}
-			}
-			return oThisChild;
 		};
 		//Method for debug
 		CBaseObject.prototype.compareTypes = function (oOther) {
@@ -371,6 +199,412 @@
 				}
 			}
 		};
+
+		function InitClassWithoutType(fClass, fBase) {
+			fClass.prototype = Object.create(fBase.prototype);
+			fClass.prototype.superclass = fBase;
+			fClass.prototype.constructor = fClass;
+		}
+
+		function InitClass(fClass, fBase, nType) {
+			InitClassWithoutType(fClass, fBase);
+			fClass.prototype.classType = nType;
+		}
+
+		function CBaseFormatNoIdObject() {
+			CBaseNoIdObject.call(this);
+		}
+		InitClass(CBaseFormatNoIdObject, CBaseNoIdObject, AscDFH.historyitem_type_Unknown);
+		CBaseFormatNoIdObject.prototype.getImageFromBulletsMap = function(oImages) {};
+		CBaseFormatNoIdObject.prototype.getDocContentsWithImageBullets = function (arrContents) {};
+		CBaseFormatNoIdObject.prototype.createDuplicate = function (oIdMap) {
+			var oCopy = new this.constructor();
+			this.fillObject(oCopy, oIdMap);
+			return oCopy;
+		};
+		CBaseFormatNoIdObject.prototype.fillObject = function (oCopy, oIdMap) {
+		};
+		CBaseFormatNoIdObject.prototype.fromPPTY = function (pReader) {
+			var oStream = pReader.stream;
+			var nStart = oStream.cur;
+			var nEnd = nStart + oStream.GetULong() + 4;
+			if (this.readAttribute) {
+				this.readAttributes(pReader);
+			}
+			this.readChildren(nEnd, pReader);
+			oStream.Seek2(nEnd);
+		};
+		CBaseFormatNoIdObject.prototype.readAttributes = function (pReader) {
+			var oStream = pReader.stream;
+			oStream.Skip2(1); // start attributes
+			while (true) {
+				var nType = oStream.GetUChar();
+				if (nType == g_nodeAttributeEnd)
+					break;
+				this.readAttribute(nType, pReader)
+			}
+		};
+		CBaseFormatNoIdObject.prototype.readAttribute = function (nType, pReader) {
+		};
+		CBaseFormatNoIdObject.prototype.readChildren = function (nEnd, pReader) {
+			var oStream = pReader.stream;
+			while (oStream.cur < nEnd) {
+				var nType = oStream.GetUChar();
+				this.readChild(nType, pReader);
+			}
+		};
+		CBaseFormatNoIdObject.prototype.readChild = function (nType, pReader) {
+			pReader.stream.SkipRecord();
+		};
+		CBaseFormatNoIdObject.prototype.toPPTY = function (pWriter) {
+			if (this.privateWriteAttributes) {
+				this.writeAttributes(pWriter);
+			}
+			this.writeChildren(pWriter);
+		};
+		CBaseFormatNoIdObject.prototype.writeAttributes = function (pWriter) {
+			pWriter.WriteUChar(g_nodeAttributeStart);
+			this.privateWriteAttributes(pWriter);
+			pWriter.WriteUChar(g_nodeAttributeEnd);
+		};
+		CBaseFormatNoIdObject.prototype.privateWriteAttributes = function (pWriter) {
+		};
+		CBaseFormatNoIdObject.prototype.writeChildren = function (pWriter) {
+		};
+		CBaseFormatNoIdObject.prototype.writeRecord1 = function (pWriter, nType, oChild) {
+			if (AscCommon.isRealObject(oChild)) {
+				pWriter.WriteRecord1(nType, oChild, function (oChild) {
+					oChild.toPPTY(pWriter);
+				});
+			} else {
+				//TODO: throw an error
+			}
+		};
+		CBaseFormatNoIdObject.prototype.writeRecord2 = function (pWriter, nType, oChild) {
+			if (AscCommon.isRealObject(oChild)) {
+				this.writeRecord1(pWriter, nType, oChild);
+			}
+		};
+		CBaseFormatNoIdObject.prototype.getChildren = function () {
+			return [];
+		};
+		CBaseFormatNoIdObject.prototype.traverse = function (fCallback, bReverseOrder) {
+			if (fCallback(this)) {
+				return true;
+			}
+			let aChildren = this.getChildren();
+			if(bReverseOrder === undefined || bReverseOrder === true) {
+				for (let nChild = aChildren.length - 1; nChild > -1; --nChild) {
+					let oChild = aChildren[nChild];
+					if (oChild && oChild.traverse) {
+						if (oChild.traverse(fCallback, bReverseOrder)) {
+							return true;
+						}
+					}
+				}
+			}
+			else {
+				for (let nChild = 0; nChild < aChildren.length; ++nChild) {
+					let oChild = aChildren[nChild];
+					if (oChild && oChild.traverse) {
+						if (oChild.traverse(fCallback, bReverseOrder)) {
+							return true;
+						}
+					}
+				}
+			}
+			return false;
+		};
+		CBaseFormatNoIdObject.prototype.isEqual = function (oOther) {
+			if (!oOther) {
+				return false;
+			}
+			if (this.getObjectType() !== oOther.getObjectType()) {
+				return false;
+			}
+			var aThisChildren = this.getChildren();
+			var aOtherChildren = oOther.getChildren();
+			if (aThisChildren.length !== aOtherChildren.length) {
+				return false;
+			}
+			for (var nChild = 0; nChild < aThisChildren.length; ++nChild) {
+				var oThisChild = aThisChildren[nChild];
+				var oOtherChild = aOtherChildren[nChild];
+				if (oThisChild !== this.checkEqualChild(oThisChild, oOtherChild)) {
+					return false;
+				}
+			}
+			return true;
+		};
+		CBaseFormatNoIdObject.prototype.checkEqualChild = function (oThisChild, oOtherChild) {
+			if (AscCommon.isRealObject(oThisChild) && oThisChild.isEqual) {
+				if (!oThisChild.isEqual(oOtherChild)) {
+					return undefined;
+				}
+			} else {
+				if (oThisChild !== oOtherChild) {
+					return undefined;
+				}
+			}
+			return oThisChild;
+		};
+		function CBaseFormatObject() {
+			CBaseFormatNoIdObject.call(this);
+			this.Id = null;
+			this.initId();
+			this.parent = null;
+		}
+		InitClass(CBaseFormatObject, CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+		CBaseFormatObject.prototype.notAllowedWithoutId = CBaseObject.prototype.notAllowedWithoutId;
+		CBaseFormatObject.prototype.isGlobalSkipAddId = CBaseObject.prototype.isGlobalSkipAddId;
+		CBaseFormatObject.prototype.initId = CBaseObject.prototype.initId;
+		CBaseFormatObject.prototype.compareTypes = CBaseObject.prototype.compareTypes;
+
+		CBaseFormatObject.prototype.setParent = function (oParent) {
+			AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CommonChartFormat_SetParent, this.parent, oParent));
+			this.parent = oParent;
+		};
+		CBaseFormatObject.prototype.setParentToChild = function (oChild) {
+			if (oChild && oChild.setParent) {
+				oChild.setParent(this);
+			}
+		};
+		CBaseFormatObject.prototype.handleRemoveObject = function (sObjectId) {
+			return false;
+		};
+		CBaseFormatObject.prototype.onRemoveChild = function (oChild) {
+			if (this.parent) {
+				this.parent.onRemoveChild(this);
+			}
+		};
+
+
+		// Visio Extensions
+		function CClrSchemeExtLst() {
+			CBaseNoIdObject.call(this);
+
+			/**
+			 * @type {CVariationClrScheme[]}
+			 */
+			this.variationClrSchemeLst = [];
+			/**
+			 * from vt:bkgnd tag. Not visible background but something else
+			 * @type {?CVarColor}
+			 */
+			this.background = null;
+			/**
+			 * attribute schemeEnum from vt:schemeID tag
+			 * @type {?string}
+			 */
+			this.schemeEnum = null;
+		}
+		InitClass(CClrSchemeExtLst, CBaseNoIdObject, 0);
+
+		/**
+		 * props container class
+		 * @constructor
+		 */
+		function CFontProps() {
+			CBaseNoIdObject.call(this);
+
+			/**
+			 * number read as string
+			 * @type {?string}
+			 */
+			this.style = null;
+
+			/**
+			 * concrete props object
+			 * vt:color with a:schemeClr or something else
+			 * See CUniColor for color reference.
+			 * @type {{color: (CSchemeColor | CSysColor
+			 * | CPrstColor | CRGBColor | any)}}
+			 */
+			this.fontPropsObject = {
+				color: null
+			};
+		}
+		InitClass(CFontProps, CBaseNoIdObject, 0);
+		/**
+		 * @param [bSaveFormatting = false] - made by example false is set in other cases by default
+		 * @return {CFontProps}
+		 */
+		CFontProps.prototype.createDuplicate = function (bSaveFormatting) {
+			if (bSaveFormatting === undefined) {
+				bSaveFormatting = false;
+			}
+
+			var duplicate = new CFontProps();
+
+			duplicate.style = this.style;
+
+			if (null !== this.fontPropsObject.color) {
+				if (bSaveFormatting === true) {
+					duplicate.fontPropsObject.color = this.fontPropsObject.color.saveSourceFormatting();
+				} else {
+					duplicate.fontPropsObject.color = this.fontPropsObject.color.createDuplicate();
+				}
+			}
+
+			return duplicate;
+		};
+
+		/**
+		 * line props container class. child element of fmtConnectorSchemeLineStyles or fmtSchemeLineStyles.
+		 * see 2.3.4.2.20	CT_LineStyle
+		 * @constructor
+		 */
+		function CLineStyle() {
+			CBaseNoIdObject.call(this);
+
+			/**
+			 * 2.3.4.2.19	CT_LineEx.
+			 * default is
+			 * <vt:lineEx rndg="0" start="0" startSize="2" end="0" endSize="2" pattern="1"/>
+			 * @type {Object}
+			 */
+			this.lineEx = {rndg: 0, start: 0, startSize: 2, end: 0, endSize: 2, pattern: 1};
+
+			/**
+			 * 2.3.4.2.25	CT_Sketch
+			 * @type {Object}
+			 */
+			this.sketch = {};
+		}
+		InitClass(CLineStyle, CBaseNoIdObject, 0);
+		/**
+		 * @param [bSaveFormatting = false] - made by example false is set in other cases by default
+		 * @return {CLineStyle}
+		 */
+		CLineStyle.prototype.createDuplicate = function (bSaveFormatting) {
+			if (bSaveFormatting === undefined) {
+				bSaveFormatting = false;
+			}
+
+			var duplicate = new CLineStyle();
+
+			if (null !== this.lineEx) {
+				// duplicate.lineEx = this.lineEx.createDuplicate();
+				duplicate.lineEx.rndg = this.lineEx.rndg;
+				duplicate.lineEx.start = this.lineEx.start;
+				duplicate.lineEx.startSize = this.lineEx.startSize;
+				duplicate.lineEx.end = this.lineEx.end;
+				duplicate.lineEx.endSize = this.lineEx.endSize;
+				duplicate.lineEx.pattern = this.lineEx.pattern;
+			}
+
+			if (null !== this.sketch) {
+				// 2.3.4.2.25	CT_Sketch
+				// duplicate.sketch = this.sketch.createDuplicate();
+				duplicate.sketch.lnAmp = this.sketch.lnAmp;
+				duplicate.sketch.fillAmp = this.sketch.fillAmp;
+				duplicate.sketch.lnWeight = this.sketch.lnWeight;
+				duplicate.sketch.numPts = this.sketch.numPts;
+			}
+
+			return duplicate;
+		};
+
+		function CVariationClrScheme() {
+			CBaseNoIdObject.call(this);
+			/**
+			 *
+			 * @type {*}
+			 */
+			this.monotone = null;
+			/**
+			 * read from varColor1, varColor2, varColor3, ...
+			 * @type {CVarColor[]}
+			 */
+			this.varColor = [];
+		}
+		InitClass(CVariationClrScheme, CBaseNoIdObject, 0);
+
+		function CVarColor() {
+			CBaseNoIdObject.call(this);
+			/**
+			 * @type {CUniColor}
+			 */
+			this.unicolor = null;
+		}
+		InitClass(CVarColor, CBaseNoIdObject, 0);
+
+		/**
+		 * General theme extensions. Tag inside themeElements.
+		 * @constructor
+		 */
+		function CThemeExt() {
+			CBaseNoIdObject.call(this);
+
+			/**
+			 * @type {?FmtScheme}
+			 */
+			this.fmtConnectorScheme = null;
+
+			/**
+			 * The only value from themeScheme tag
+			 * @type {?string}
+			 */
+			this.themeSchemeSchemeEnum = null;
+
+			/**
+			 * The only value from fmtSchemeEx tag
+			 * @type {?string}
+			 */
+			this.fmtSchemeExSchemeEnum = null;
+
+			/**
+			 * The only value from fmtConnectorSchemeEx tag
+			 * @type {?string}
+			 */
+			this.fmtConnectorSchemeExSchemeEnum = null;
+
+			/**
+			 * vt:fillStyles
+			 * @type {{pattern: number}[]}
+			 */
+			this.fillStyles = [];
+
+			/**
+			 * @type {{fmtConnectorSchemeLineStyles: CLineStyle[], fmtSchemeLineStyles: CLineStyle[] }}
+			 */
+			this.lineStyles = {
+				fmtConnectorSchemeLineStyles: [],
+				fmtSchemeLineStyles: []
+			};
+
+			/**
+			 * @type {{connectorFontStyles: CFontProps[], fontStyles: CFontProps[] }}
+			 */
+			this.fontStylesGroup = {
+				connectorFontStyles: [],
+				fontStyles: []
+			};
+			this.variationStyleSchemeLst = [];
+		}
+		InitClass(CThemeExt, CBaseNoIdObject, 0);
+
+		function CVariationStyleScheme() {
+			CBaseNoIdObject.call(this);
+
+			this.embellishment = null;
+			/**
+			 * @type {CVarStyle[]}
+			 */
+			this.varStyle = [];
+		}
+		InitClass(CVariationStyleScheme, CBaseNoIdObject, 0);
+
+		function CVarStyle() {
+			CBaseNoIdObject.call(this);
+
+			this.fillIdx = null;
+			this.lineIdx = null;
+			this.effectIdx = null;
+			this.fontIdx = null;
+		}
+		InitClass(CVarStyle, CBaseNoIdObject, 0);
+		// Theme visio extensions end
 
 
 		function CT_Hyperlink() {
@@ -947,6 +1181,24 @@
 			return ret;
 		}
 
+		function writeDouble2(w, val) {
+			const isNumber = typeof val === "number";
+			w.WriteBool(isNumber);
+			if (isNumber) {
+				w.WriteDouble2(val);
+			}
+		}
+
+		function readDouble2(r) {
+			var ret;
+			if (r.GetBool()) {
+				ret = r.GetDoubleLE();
+			} else {
+				ret = null;
+			}
+			return ret;
+		}
+
 		function writeBool(w, val) {
 			w.WriteBool(isRealBool(val));
 			if (isRealBool(val)) {
@@ -1002,13 +1254,30 @@
 			const bIsRealObject = isRealObject(val);
 			w.WriteBool(bIsRealObject);
 			if (bIsRealObject) {
+				w.WriteLong(val.getObjectType());
 				val.Write_ToBinary(w);
 			}
 		}
 
-		function readObjectNoId(r, valConstructor) {
+		function readObjectNoId(r) {
 			if (r.GetBool()) {
-				const val = new valConstructor();
+				const val = AscCommon.g_oTableId.GetClassFromFactory(r.GetLong());
+				val.Read_FromBinary(r);
+				return val;
+			}
+			return null;
+		}
+		function writeObjectNoIdNoType(w, val) {
+			const bIsRealObject = isRealObject(val);
+			w.WriteBool(bIsRealObject);
+			if (bIsRealObject) {
+				val.Write_ToBinary(w);
+			}
+		}
+
+		function readObjectNoIdNoType(r, classConstructor) {
+			if (r.GetBool()) {
+				const val = new classConstructor();
 				val.Read_FromBinary(r);
 				return val;
 			}
@@ -1050,11 +1319,11 @@
 			}
 		}
 
-		function ExecuteNoHistory(f, oThis, args) {
+		function ExecuteNoHistory(f, oThis, args, notOffTableId) {
 			AscCommon.History.TurnOff && AscCommon.History.TurnOff();
 
 			var b_table_id = false;
-			if (g_oTableId && !g_oTableId.m_bTurnOff) {
+			if (!notOffTableId && g_oTableId && !g_oTableId.m_bTurnOff) {
 				g_oTableId.m_bTurnOff = true;
 				b_table_id = true;
 			}
@@ -1112,7 +1381,8 @@
 			EMPTY_PH: 3,
 			CHART_TEXT: 4,
 			CROP: 5,
-			FORM: 6
+			FORM: 6,
+			ANNOT_STAMP: 7
 		};
 		var TYPE_KIND = {
 			SLIDE: 0,
@@ -1832,7 +2102,22 @@
 				oMod.name = name;
 				while (reader.MoveToNextAttribute()) {
 					if (reader.GetNameNoNS() === "val") {
-						oMod.val = reader.GetValueInt();
+						let sVal = reader.GetValue();
+						let nLen = sVal.length;
+						if(typeof sVal === "string" && nLen > 0) {
+							if ((nLen - 1) === sVal.indexOf("%")) {
+								sVal.substring(0, nLen - 1);
+								let dVal = parseFloat(sVal);
+								if (AscFormat.isRealNumber(dVal))
+									oMod.val = dVal * 1000 + 0.5 >> 0;
+							}
+							else {
+								let dVal = parseFloat(sVal);
+								if(AscFormat.isRealNumber(dVal)) {
+									oMod.val = dVal + 0.5 >> 0;
+								}
+							}
+						}
 						break;
 					}
 				}
@@ -2371,7 +2656,7 @@
 			return duplicate;
 		};
 		CSchemeColor.prototype.Calculate = function (theme, slide, layout, masterSlide, RGBA, colorMap) {
-			if (theme.themeElements.clrScheme) {
+			if (theme && theme.themeElements && theme.themeElements.clrScheme) {
 				if (this.id === phClr) {
 					this.RGBA = RGBA;
 				} else {
@@ -2432,6 +2717,10 @@
 				return aColors[this.val % aColors.length];
 			}
 		};
+
+		/**
+		 * @constructor
+		 */
 		function CUniColor() {
 			CBaseNoIdObject.call(this);
 			this.color = null;
@@ -2619,6 +2908,7 @@
 			}
 			return true;
 		};
+		CUniColor.prototype.isEqual = CUniColor.prototype.IsIdentical;
 		CUniColor.prototype.Calculate = function (theme, slide, layout, masterSlide, RGBA, colorMap) {
 			if (this.color == null)
 				return this.RGBA;
@@ -3152,24 +3442,60 @@
 			}
 			return _ret;
 		};
+		CBlipFill.prototype.reduceSize = function (nW, nH, nMaxSize) {
+			let dWK = nW / nMaxSize;
+			let dHK = nH / nMaxSize;
+			let dK = Math.max(dWK, dHK);
+			let oResult = {W: nW, H: nH};
+			if (dK > 1) {
+				oResult.W = ((nW / dK) + 0.5 >> 0);
+				oResult.H = ((nH / dK) + 0.5 >> 0);
+			}
+			return oResult;
+		};
 		CBlipFill.prototype.getBase64Data = function (bReduce, bReturnOrigIfCantDraw) {
-			var sRasterImageId = this.RasterImageId;
+			let sRasterImageId = this.RasterImageId;
 			if (typeof sRasterImageId !== "string" || sRasterImageId.length === 0) {
 				return null;
 			}
-			var oApi = Asc.editor || editor;
-			var sDefaultResult = sRasterImageId;
+			let oApi = Asc.editor || editor;
+			let sDefaultResult = sRasterImageId;
+			const nMaxSize = 640;
 			if(bReturnOrigIfCantDraw === false) {
 				sDefaultResult = null;
+			}
+			if (window["NATIVE_EDITOR_ENJINE"] && window["native"]) {
+				let sSrc = AscCommon.getFullImageSrc2(sRasterImageId);
+				let oImageSize = AscCommon.getSourceImageSize(sSrc);
+				let nW = Math.max(oImageSize.width, 1);
+				let nH = Math.max(oImageSize.height, 1);
+				if (bReduce) {
+					let oReducedSize = this.reduceSize(nW, nH, nMaxSize);
+					nW = oReducedSize.W;
+					nH = oReducedSize.H;
+				}
+				let oCanvas = new AscCommon.CNativeGraphics();
+				oCanvas.width = nW;
+				oCanvas.height = nH;
+				oCanvas.create(window["native"], oCanvas.width, oCanvas.height, oCanvas.width, oCanvas.height);
+				oCanvas.transform(1, 0, 0, 1, 0, 0);
+				oCanvas.drawImage(sSrc, 0, 0, oCanvas.width, oCanvas.height);
+				let sResult;
+				try {
+					sResult = oCanvas.toDataURL("image/png");
+				} catch (err) {
+					sResult = sDefaultResult;
+				}
+				return {img: sResult, w: oCanvas.width, h: oCanvas.height};
 			}
 			if (!oApi) {
 				return {img: sDefaultResult, w: null, h: null};
 			}
-			var oImageLoader = oApi.ImageLoader;
+			let oImageLoader = oApi.ImageLoader;
 			if (!oImageLoader) {
 				return {img: sDefaultResult, w: null, h: null};
 			}
-			var oImage = oImageLoader.map_image_index[AscCommon.getFullImageSrc2(sRasterImageId)];
+			let oImage = oImageLoader.map_image_index[AscCommon.getFullImageSrc2(sRasterImageId)];
 			if (!oImage || !oImage.Image || oImage.Status !== AscFonts.ImageLoadStatus.Complete) {
 				return {img: sDefaultResult, w: null, h: null};
 			}
@@ -3177,20 +3503,15 @@
 			if (sRasterImageId.indexOf("data:") === 0 && sRasterImageId.indexOf("base64") > 0) {
 				return {img: sRasterImageId, w: oImage.Image.width, h: oImage.Image.height};
 			}
-			var sResult = sDefaultResult;
+			let sResult = sDefaultResult;
 			if (!window["NATIVE_EDITOR_ENJINE"]) {
-				var oCanvas = document.createElement("canvas");
-				var nW = Math.max(oImage.Image.width, 1);
-				var nH = Math.max(oImage.Image.height, 1);
+				let oCanvas = document.createElement("canvas");
+				let nW = Math.max(oImage.Image.width, 1);
+				let nH = Math.max(oImage.Image.height, 1);
 				if (bReduce) {
-					var nMaxSize = 640;
-					var dWK = nW / nMaxSize;
-					var dHK = nH / nMaxSize;
-					var dK = Math.max(dWK, dHK);
-					if (dK > 1) {
-						nW = ((nW / dK) + 0.5 >> 0);
-						nH = ((nH / dK) + 0.5 >> 0);
-					}
+					let oReducedSize = this.reduceSize(nW, nH, nMaxSize);
+					nW = oReducedSize.W;
+					nH = oReducedSize.H;
 				}
 				oCanvas.width = nW;
 				oCanvas.height = nH;
@@ -3209,7 +3530,31 @@
 		CBlipFill.prototype.getBase64RasterImageId = function (bReduce, bReturnOrigIfCantDraw) {
 			return this.getBase64Data(bReduce, bReturnOrigIfCantDraw).img;
 		};
-
+		CBlipFill.prototype.getTransparent = function() {
+			for (let nEffect = 0; nEffect < this.Effects.length; ++nEffect) {
+				let oEffect = this.Effects[nEffect];
+				if (oEffect && oEffect instanceof AscFormat.CAlphaModFix && AscFormat.isRealNumber(oEffect.amt)) {
+					return 255 * oEffect.amt / 100000;
+				}
+			}
+			return null;
+		};
+		CBlipFill.prototype.setTransparent = function(transparent) {
+			if (transparent != null) {
+				let i;
+				for (i = 0; i < this.Effects.length; ++i) {
+					if (this.Effects[i].Type === EFFECT_TYPE_ALPHAMODFIX) {
+						this.Effects[i].amt = ((transparent * 100000 / 255) >> 0);
+						break;
+					}
+				}
+				if (i === this.Effects.length) {
+					let oEffect = new CAlphaModFix();
+					oEffect.amt = ((transparent * 100000 / 255) >> 0);
+					this.Effects.push(oEffect);
+				}
+			}
+		};
 
 //-----Effects-----
 		var EFFECT_TYPE_NONE = 0;
@@ -5070,6 +5415,7 @@
 			return null;
 		}
 
+		/** @constructor */
 		function CUniFill() {
 			CBaseNoIdObject.call(this);
 			this.fill = null;
@@ -5968,12 +6314,67 @@
 			ReverseTriangle:	7,
 			Butt:				8,
 			Square:				9,
-			Slash:				10
+			Slash:				10,
+
+			vsdxNone: 11,
+			vsdxOpen90Arrow: 12,
+			vsdxFilled90Arrow: 13,
+			vsdxOpenSharpArrow: 14,
+			vsdxFilledSharpArrow: 15,
+			vsdxIndentedFilledArrow: 16,
+			vsdxOutdentedFilledArrow: 17,
+			vsdxOpenFletch: 18,
+			vsdxFilledFletch: 19,
+			vsdxDimensionLine: 20,
+			vsdxFilledDot: 21,
+			vsdxFilledSquare: 22,
+			vsdxOpenASMEArrow: 23,
+			vsdxFilledASMEArrow: 24,
+			vsdxClosedASMEArrow: 25,
+			vsdxClosed90Arrow: 26,
+			vsdxClosedSharpArrow: 27,
+			vsdxIndentedClosedArrow: 28,
+			vsdxOutdentedClosedArrow: 29,
+			vsdxClosedFletch: 30,
+			vsdxClosedDot: 31,
+			vsdxClosedSquare: 32,
+			vsdxDiamond: 33,
+			vsdxBackslash: 34,
+			vsdxOpenOneDash: 35,
+			vsdxOpenTwoDash: 36,
+			vsdxOpenThreeDash: 37,
+			vsdxFork: 38,
+			vsdxDashFork: 39,
+			vsdxClosedFork: 40,
+			vsdxClosedPlus: 41,
+			vsdxClosedOneDash: 42,
+			vsdxClosedTwoDash: 43,
+			vsdxClosedThreeDash: 44,
+			vsdxClosedDiamond: 45,
+			vsdxFilledOneDash: 46,
+			vsdxFilledTwoDash: 47,
+			vsdxFilledThreeDash: 48,
+			vsdxFilledDiamond: 49,
+			vsdxFilledDoubleArrow: 50,
+			vsdxClosedDoubleArrow: 51,
+			vsdxClosedNoDash: 52,
+			vsdxFilledNoDash: 53,
+			vsdxOpenDoubleArrow: 54,
+			vsdxOpenArrowSingleDash: 55,
+			vsdxOpenDoubleArrowSingleDash: 56
 		};
 		var LineEndSize = {
 			Large: 0,
 			Mid: 1,
-			Small: 2
+			Small: 2,
+
+			vsdxVerySmall : 3,
+			vsdxSmall: 		4,
+			vsdxMedium: 	5,
+			vsdxLarge:		6,
+			vsdxExtraLarge:	7,
+			vsdxJumbo:		8,
+			vsdxColossal:	9
 		};
 
 		var LineJoinType = {
@@ -5982,6 +6383,7 @@
 			Bevel: 2,
 			Miter: 3
 		};
+		let lineWidthInfluenceCoef = 0.028;
 
 		function EndArrow() {
 			CBaseNoIdObject.call(this);
@@ -6021,6 +6423,9 @@
 		EndArrow.prototype.GetWidth = function (_size, _max) {
 			var size = Math.max(_size, _max ? _max : 2);
 			var _ret = 3 * size;
+			let startSizeInch;
+			let inchSize;
+
 			if (null != this.w) {
 				switch (this.w) {
 					case LineEndSize.Large:
@@ -6028,6 +6433,42 @@
 						break;
 					case LineEndSize.Small:
 						_ret = 2 * size;
+						break;
+
+					case LineEndSize.vsdxVerySmall:
+						startSizeInch = 0.0391;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+					case LineEndSize.vsdxSmall:
+						startSizeInch = 0.0508;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+					case LineEndSize.vsdxMedium:
+						startSizeInch = 0.0693;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+					case LineEndSize.vsdxLarge:
+						startSizeInch = 0.0898;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+					case LineEndSize.vsdxExtraLarge:
+						startSizeInch = 0.1094;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+					case LineEndSize.vsdxJumbo:
+						startSizeInch = 0.2473;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+					case LineEndSize.vsdxColossal:
+						startSizeInch = 0.499;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
 						break;
 					default:
 						break;
@@ -6038,6 +6479,9 @@
 		EndArrow.prototype.GetLen = function (_size, _max) {
 			var size = Math.max(_size, _max ? _max : 2);
 			var _ret = 3 * size;
+			let startSizeInch;
+			let inchSize;
+
 			if (null != this.len) {
 				switch (this.len) {
 					case LineEndSize.Large:
@@ -6046,6 +6490,43 @@
 					case LineEndSize.Small:
 						_ret = 2 * size;
 						break;
+
+					case LineEndSize.vsdxVerySmall:
+						startSizeInch = 0.0391;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+					case LineEndSize.vsdxSmall:
+						startSizeInch = 0.0508;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+					case LineEndSize.vsdxMedium:
+						startSizeInch = 0.0693;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+					case LineEndSize.vsdxLarge:
+						startSizeInch = 0.0898;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+					case LineEndSize.vsdxExtraLarge:
+						startSizeInch = 0.1094;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+					case LineEndSize.vsdxJumbo:
+						startSizeInch = 0.2473;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+					case LineEndSize.vsdxColossal:
+						startSizeInch = 0.499;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+
 					default:
 						break;
 				}
@@ -6083,6 +6564,8 @@
 				case "sm": {
 					return LineEndSize.Small;
 				}
+
+				// not used for visio end types. use types enum directly
 			}
 			return LineEndSize.Mid;
 		};
@@ -6099,6 +6582,8 @@
 				case LineEndSize.Small: {
 					return "sm";
 				}
+
+				// not used for visio end types. use types enum directly
 			}
 			return "med";
 		};
@@ -6123,6 +6608,8 @@
 				case "triangle": {
 					return LineEndType.Triangle;
 				}
+
+				// not used for visio end types. use types enum directly
 			}
 			return LineEndType.Arrow;
 		};
@@ -6148,6 +6635,8 @@
 				case LineEndType.Triangle: {
 					return "triangle";
 				}
+
+				// not used for visio end types. use types enum directly
 			}
 			return "arrow";
 		};
@@ -6296,6 +6785,9 @@
 
 			if (ln.w != null) {
 				this.setW(ln.w);
+			}
+			else if(ln.isNoFillLine && ln.isNoFillLine()) {
+				this.setW(0);
 			}
 		};
 		CLn.prototype.calculate = function (theme, slide, layout, master, RGBA, colorMap) {
@@ -6553,6 +7045,30 @@
 				case "sysDot": {
 					return 10;
 				}
+				case "vsdxTransparent": { return 11; }
+				case "vsdxSolid": { return 12; }
+				case "vsdxDash": { return 13; }
+				case "vsdxDot": { return 14; }
+				case "vsdxDashDot": { return 15; }
+				case "vsdxDashDotDot": { return 16; }
+				case "vsdxDashDashDot": { return 17; }
+				case "vsdxLongDashShortDash": { return 18; }
+				case "vsdxLongDashShortDashShortDash": { return 19; }
+				case "vsdxHalfDash": { return 20; }
+				case "vsdxHalfDot": { return 21; }
+				case "vsdxHalfDashDot": { return 22; }
+				case "vsdxHalfDashDotDot": { return 23; }
+				case "vsdxHalfDashDashDot": { return 24; }
+				case "vsdxHalfLongDashShortDash": { return 25; }
+				case "vsdxHalfLongDashShortDashShortDash": { return 26; }
+				case "vsdxDoubleDash": { return 27; }
+				case "vsdxDoubleDot": { return 28; }
+				case "vsdxDoubleDashDot": { return 29; }
+				case "vsdxDoubleDashDotDot": { return 30; }
+				case "vsdxDoubleDashDashDot": { return 31; }
+				case "vsdxDoubleLongDashShortDash": { return 32; }
+				case "vsdxDoubleLongDashShortDashShortDash": { return 33; }
+				case "vsdxHalfHalfDash": { return 34; }
 			}
 			return 6;
 		};
@@ -6591,6 +7107,30 @@
 				case 10 : {
 					return "sysDot";
 				}
+				case 11: { return "vsdxTransparent"; }
+				case 12: { return "vsdxSolid"; }
+				case 13: { return "vsdxDash"; }
+				case 14: { return "vsdxDot"; }
+				case 15: { return "vsdxDashDot"; }
+				case 16: { return "vsdxDashDotDot"; }
+				case 17: { return "vsdxDashDashDot"; }
+				case 18: { return "vsdxLongDashShortDash"; }
+				case 19: { return "vsdxLongDashShortDashShortDash"; }
+				case 20: { return "vsdxHalfDash"; }
+				case 21: { return "vsdxHalfDot"; }
+				case 22: { return "vsdxHalfDashDot"; }
+				case 23: { return "vsdxHalfDashDotDot"; }
+				case 24: { return "vsdxHalfDashDashDot"; }
+				case 25: { return "vsdxHalfLongDashShortDash"; }
+				case 26: { return "vsdxHalfLongDashShortDashShortDash"; }
+				case 27: { return "vsdxDoubleDash"; }
+				case 28: { return "vsdxDoubleDot"; }
+				case 29: { return "vsdxDoubleDashDot"; }
+				case 30: { return "vsdxDoubleDashDotDot"; }
+				case 31: { return "vsdxDoubleDashDashDot"; }
+				case 32: { return "vsdxDoubleLongDashShortDash"; }
+				case 33: { return "vsdxDoubleLongDashShortDashShortDash"; }
+				case 34: { return "vsdxHalfHalfDash"; }
 			}
 			return null;
 		};
@@ -7131,6 +7671,9 @@
 		}
 
 		InitClass(FontRef, CBaseNoIdObject, 0);
+		FontRef.prototype.getObjectType = function() {
+			return AscDFH.historyitem_type_FontRef;
+		};
 		FontRef.prototype.setIdx = function (idx) {
 			this.idx = idx;
 		};
@@ -7231,6 +7774,18 @@
 		CShapeStyle.prototype.setEffectRef = function (pr) {
 			AscCommon.History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ShapeStyle_SetEffectRef, this.effectRef, pr));
 			this.effectRef = pr;
+		};
+		CShapeStyle.prototype.Write_ToBinary = function(w) {
+			AscFormat.writeObjectNoId(w, this.lnRef);
+			AscFormat.writeObjectNoId(w, this.fillRef);
+			AscFormat.writeObjectNoId(w, this.fontRef);
+			AscFormat.writeObjectNoId(w, this.effectRef);
+		};
+		CShapeStyle.prototype.Read_FromBinary = function(r) {
+			this.lnRef = AscFormat.readObjectNoId(r);
+			this.fillRef = AscFormat.readObjectNoId(r);
+			this.fontRef = AscFormat.readObjectNoId(r);
+			this.effectRef = AscFormat.readObjectNoId(r);
 		};
 
 		var LINE_PRESETS_MAP = {};
@@ -7588,7 +8143,7 @@
 			this.EffectLst = null;
 		}
 
-		InitClass(CEffectProperties, CBaseNoIdObject, 0);
+		InitClass(CEffectProperties, CBaseNoIdObject, AscDFH.historyitem_type_CEffectProperties);
 		CEffectProperties.prototype.createDuplicate = function () {
 			var oCopy = new CEffectProperties();
 			if (this.EffectDag) {
@@ -8129,6 +8684,11 @@
 			CBaseNoIdObject.call(this);
 			this.name = "";
 			this.colors = [];
+			/**
+			 * Used to store xml extensions (e.g. visio variant colors)
+			 * set in sdkjs-ooxml/common/Drawings/Format.js ClrScheme.prototype.readChildXml
+			 */
+			this.clrSchemeExtLst = null;
 
 			for (var i = g_clr_MIN; i <= g_clr_MAX; i++)
 				this.colors[i] = null;
@@ -8550,6 +9110,11 @@
 				"minorEastAsia": undefined,
 				"minorHAnsi": undefined
 			};
+			/**
+			 * visio extension from tag vt:schemeID which is stored in a:extLst
+			 * @type {string | null}
+			 */
+			this.schemeEnum = null;
 		}
 
 		InitClass(FontScheme, CBaseNoIdObject, 0);
@@ -8832,10 +9397,20 @@
 			this.clrScheme = new ClrScheme();
 			this.fontScheme = new FontScheme();
 			this.fmtScheme = new FmtScheme();
+
+			/**
+			 *
+			 * @type {CThemeExt}
+			 */
+			this.themeExt = null;
 		}
 
 		InitClass(ThemeElements, CBaseNoIdObject, 0);
 
+		/**
+		 *
+		 * @constructor
+		 */
 		function CTheme() {
 			CBaseFormatObject.call(this);
 			this.name = "";
@@ -8930,6 +9505,84 @@
 			}
 			return new CLn();
 		};
+		/**
+		 * Made for visio editor
+		 * @memberof CTheme
+		 * @param {number} idx
+		 * @param unicolor
+		 * @param {Boolean} getConnectorStyle
+		 * @return {CFontProps}
+		 */
+		CTheme.prototype.getFontStyle = function (idx, unicolor, getConnectorStyle) {
+			if (idx === 0 || isNaN(idx)) {
+				AscCommon.consoleLog("idx getFontStyle argument is 0 or isNaN(idx) is true");
+				return AscFormat.CreateNoFillLine();
+			}
+			let fontProp;
+			if (getConnectorStyle) {
+				fontProp = this.themeElements.themeExt.fontStylesGroup.connectorFontStyles[idx - 1];
+			} else {
+				fontProp = this.themeElements.themeExt.fontStylesGroup.fontStyles[idx - 1];
+			}
+			if (fontProp) {
+				var ret = fontProp.createDuplicate();
+				if (ret.fontPropsObject.color) {
+					ret.fontPropsObject.color.checkPhColor(unicolor, false);
+				}
+				return ret;
+			}
+			AscCommon.consoleLog("no fontProp object found for idx. Return empty obj", idx);
+			return new CFontProps();
+		};
+		/**
+		 * Made for visio editor. Get line end props - lineStyles extension.
+		 * @memberof CTheme
+		 * @param {number} idx
+		 * @param {Boolean} getConnectorStyle
+		 * @return {CLineStyle} lineStyle
+		 */
+		CTheme.prototype.getLineEndStyle = function (idx, getConnectorStyle) {
+			if (idx === 0 || isNaN(idx)) {
+				AscCommon.consoleLog("idx getFontStyle argument is 0 or isNaN(idx) is true");
+				return new CLineStyle();
+			}
+			let lineEndProp;
+			// not using idx - 1. Seems like visio bug here. See file https://disk.yandex.ru/d/OQVR9m1U255B1Q
+			if (getConnectorStyle) {
+				lineEndProp = this.themeElements.themeExt.lineStyles.fmtConnectorSchemeLineStyles[idx];
+			} else {
+				lineEndProp = this.themeElements.themeExt.lineStyles.fmtSchemeLineStyles[idx];
+			}
+			if (lineEndProp) {
+				var ret = lineEndProp.createDuplicate();
+				return ret;
+			}
+			AscCommon.consoleLog("no fontProp object found for idx. Its ok sometimes." +
+				" Return new CLineStyle()", idx);
+			return new CLineStyle();
+		};
+
+		/**
+		 * Made for visio editor. Get fill pattern from <vt:fillStyles...
+		 * @memberof CTheme
+		 * @param {number} idx
+		 * @return {{pattern: number}} lineStyle
+		 */
+		CTheme.prototype.getFillProp = function (idx) {
+			if (idx === 0 || isNaN(idx)) {
+				AscCommon.consoleLog("idx getFillProp argument is 0 or isNaN(idx) is true");
+				return {pattern: 1}; // solid
+			}
+			let fillProp = this.themeElements.themeExt.fillStyles[idx - 1];
+			if (fillProp) {
+				var ret = {pattern: fillProp.pattern};
+				return ret;
+			}
+			AscCommon.consoleLog("no FillProp object found for idx. Its ok sometimes." +
+				" Return default FillProp", idx);
+			return {pattern: 1};
+		};
+
 		CTheme.prototype.getExtraClrScheme = function (sName) {
 			for (var i = 0; i < this.extraClrSchemeLst.length; ++i) {
 				if (this.extraClrSchemeLst[i].clrScheme && this.extraClrSchemeLst[i].clrScheme.name === sName) {
@@ -8979,6 +9632,9 @@
 		CTheme.prototype.setFontScheme = function (fontScheme) {
 			AscCommon.History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ThemeSetFontScheme, this.themeElements.fontScheme, fontScheme));
 			this.themeElements.fontScheme = fontScheme;
+		};
+		CTheme.prototype.setThemeExt = function (themeExt) {
+			this.themeElements.themeExt = themeExt;
 		};
 		CTheme.prototype.changeFontScheme = function (fontScheme) {
 			this.setFontScheme(fontScheme);
@@ -9147,6 +9803,52 @@
 		};
 		CTheme.prototype.Read_FromBinary2 = function (r) {
 			this.Id = r.GetString2();
+		};
+
+		/**
+		 * @memberOf CTheme
+		 * @return {boolean}
+		 */
+		CTheme.prototype.isVariationClrSchemeLstExists = function() {
+			let clrScheme = this.themeElements.clrScheme;
+			let variationClrSchemeLst = clrScheme && clrScheme.clrSchemeExtLst
+				&& clrScheme.clrSchemeExtLst.variationClrSchemeLst;
+			return variationClrSchemeLst.length > 0;
+		}
+
+		/**
+		 * @memberOf CTheme
+		 * @param variationIndex
+		 * @param colorIndex
+		 * @return {CUniColor|null}
+		 */
+		CTheme.prototype.getVariationClrSchemeColor = function (variationIndex, colorIndex) {
+			let clrScheme = this.themeElements.clrScheme;
+			if (clrScheme.clrSchemeExtLst) {
+				let variationClrSchemeLst = clrScheme.clrSchemeExtLst.variationClrSchemeLst;
+				if (variationClrSchemeLst) {
+					let variation = variationClrSchemeLst[variationIndex];
+					if (variation) {
+						let colorObj = variation.varColor[colorIndex];
+						if (colorObj) {
+							return colorObj.unicolor;
+						}
+					}
+				}
+			}
+			return null;
+		};
+		/**
+		 * @param variationIndex
+		 * @param styleIndex
+		 * @return {CVarStyle|null}
+		 */
+		CTheme.prototype.getVariationStyleScheme = function (variationIndex, styleIndex) {
+			let themeExt = this.themeElements.themeExt;
+			if (themeExt && themeExt.variationStyleSchemeLst[variationIndex]) {
+				return themeExt.variationStyleSchemeLst[variationIndex].varStyle[styleIndex] || null;
+			}
+			return null;
 		};
 // ----------------------------------
 
@@ -10766,6 +11468,12 @@
 		};
 		CBullet.prototype.isBullet = function () {
 			return this.bulletType != null && this.bulletType.type != null;
+		};
+		CBullet.prototype.isNone = function() {
+			if (!this.bulletType)
+				return true;
+			
+			return this.bulletType.type === AscFormat.BULLET_TYPE_TYPEFACE_NONE;
 		};
 		CBullet.prototype.getPresentationBullet = function (theme, color) {
 			var para_pr = new CParaPr();
@@ -14852,24 +15560,10 @@
 			}
 
 			if (ret.transparent != null) {
-
 				if (ret.fill && ret.fill.type === c_oAscFill.FILL_TYPE_BLIP) {
-
-					for (var i = 0; i < ret.fill.Effects.length; ++i) {
-						if (ret.fill.Effects[i].Type === EFFECT_TYPE_ALPHAMODFIX) {
-							ret.fill.Effects[i].amt = ((ret.transparent * 100000 / 255) >> 0);
-							break;
-						}
-					}
-					if (i === ret.fill.Effects.length) {
-						var oEffect = new CAlphaModFix();
-						oEffect.amt = ((ret.transparent * 100000 / 255) >> 0);
-						ret.fill.Effects.push(oEffect);
-					}
+					ret.fill.setTransparent(ret.transparent);
 				}
 			}
-
-
 			return ret;
 		}
 
@@ -15272,7 +15966,11 @@
 		}
 
 
-		/* Common Functions For Builder*/
+
+		/**
+		 * Common Functions For Builder
+		 * @return {CShape}
+		 */
 		function builder_CreateShape(sType, nWidth, nHeight, oFill, oStroke, oParent, oTheme, oDrawingDocument, bWord, worksheet) {
 			var oShapeTrack = new AscFormat.NewShapeTrack(sType, 0, 0, oTheme, null, null, null, 0);
 			oShapeTrack.track({}, nWidth, nHeight);
@@ -18468,12 +19166,18 @@
 		window['AscFormat'].readLong = readLong;
 		window['AscFormat'].writeDouble = writeDouble;
 		window['AscFormat'].readDouble = readDouble;
+		window['AscFormat'].writeDouble2 = writeDouble2;
+		window['AscFormat'].readDouble2 = readDouble2;
 		window['AscFormat'].writeBool = writeBool;
 		window['AscFormat'].readBool = readBool;
 		window['AscFormat'].writeString = writeString;
 		window['AscFormat'].readString = readString;
 		window['AscFormat'].writeObject = writeObject;
 		window['AscFormat'].readObject = readObject;
+		window['AscFormat'].readObjectNoId = readObjectNoId;
+		window['AscFormat'].writeObjectNoId = writeObjectNoId;
+		window['AscFormat'].readObjectNoIdNoType = readObjectNoIdNoType;
+		window['AscFormat'].writeObjectNoIdNoType = writeObjectNoIdNoType;
 		window['AscFormat'].checkThemeFonts = checkThemeFonts;
 		window['AscFormat'].ExecuteNoHistory = ExecuteNoHistory;
 		window['AscFormat'].CreatePresentationTableStyles = CreatePresentationTableStyles;
@@ -18757,6 +19461,7 @@
 		window['AscFormat'].InitClassWithoutType = InitClassWithoutType;
 		window['AscFormat'].CBaseObject = CBaseObject;
 		window['AscFormat'].CBaseFormatObject = CBaseFormatObject;
+		window['AscFormat'].CBaseFormatNoIdObject = CBaseFormatNoIdObject;
 		window['AscFormat'].CBaseNoIdObject = CBaseNoIdObject;
 		window['AscFormat'].checkRasterImageId = checkRasterImageId;
 		window['AscFormat'].IdEntry = IdEntry;
@@ -18792,5 +19497,15 @@
 		window['AscFormat'].CLR_NAME_MAP = CLR_NAME_MAP;
 		window['AscFormat'].LINE_PRESETS_MAP = LINE_PRESETS_MAP;
 		window['AscFormat'].OBJECT_MORPH_MARKER = OBJECT_MORPH_MARKER;
+
+		// Visio extensions export
+		window['AscFormat'].CClrSchemeExtLst = CClrSchemeExtLst;
+		window['AscFormat'].CVariationClrScheme = CVariationClrScheme;
+		window['AscFormat'].CVarColor = CVarColor;
+		window['AscFormat'].CThemeExt = CThemeExt;
+		window['AscFormat'].CVariationStyleScheme = CVariationStyleScheme;
+		window['AscFormat'].CVarStyle = CVarStyle;
+		window['AscFormat'].CFontProps = CFontProps;
+		window['AscFormat'].CLineStyle = CLineStyle;
 	})
 (window);

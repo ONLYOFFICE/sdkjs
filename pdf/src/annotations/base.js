@@ -58,8 +58,8 @@
         this._doc                   = undefined;
         this._inReplyTo             = undefined;
         this._intent                = undefined;
-        this._lock                  = undefined;
-        this._lockContent           = undefined;
+        this._lock                  = undefined; // pdf format lock
+        this._lockContent           = undefined; // pdf format lock
         this._modDate               = undefined;
         this._name                  = undefined;
         this._opacity               = 1;
@@ -90,6 +90,7 @@
             rollover:   null
         }
         this._wasChanged = false;
+        this.Lock = new AscCommon.CLock();
 
         this.SetDocument(oDoc);
         this.SetName(sName);
@@ -261,7 +262,6 @@
         let oViewer = editor.getDocumentRenderer();
 
         if (this._wasChanged !== isChanged && oViewer.IsOpenAnnotsInProgress == false) {
-            // AscCommon.History.Add(new CChangesPDFAnnotWasChanged(this, this.IsChanged(), isChanged));
             this._wasChanged = isChanged;
             this.SetDrawFromStream(!isChanged);
         }
@@ -322,6 +322,9 @@
         if (this._apIdx == -1)
             return null;
 
+        nPageW = Math.round(nPageW);
+        nPageH = Math.round(nPageH);
+
         let oViewer = editor.getDocumentRenderer();
         let oFile   = oViewer.file;
         
@@ -377,7 +380,7 @@
         return canvas;
     };
     /**
-     * Returns AP info of this field.
+     * Returns AP info of this annotation.
 	 * @memberof CAnnotationBase
 	 * @typeofeditors ["PDF"]
      * @returns {Object}
@@ -429,9 +432,9 @@
             let aPath;
             for (let i = 0; i < this._gestures.length; i++) {
                 aPath = this._gestures[i];
-                for (let j = 0; j < aPath.length; j++) {
-                    aPath[j].x += nDeltaX;
-                    aPath[j].y += nDeltaY;
+                for (let j = 0; j < aPath.length; j+=2) {
+                    aPath[j] += nDeltaX;
+                    aPath[j+1] += nDeltaY;
                 }
             }
         }
@@ -513,6 +516,9 @@
     CAnnotationBase.prototype.IsFreeText = function() {
         return false;
     };
+    CAnnotationBase.prototype.IsStamp = function() {
+        return false;
+    };
     CAnnotationBase.prototype.SetNeedRecalc = function(bRecalc, bSkipAddToRedraw) {
         if (bRecalc == false) {
             this._needRecalc = false;
@@ -567,6 +573,12 @@
     };
     CAnnotationBase.prototype.GetPopupIdx = function() {
         return this._popupIdx;
+    };
+    CAnnotationBase.prototype.SetParentPage = function(oParent) {
+        this.parentPage = oParent;
+    };
+    CAnnotationBase.prototype.GetParentPage = function() {
+        return this.parentPage;
     };
     CAnnotationBase.prototype.SetPage = function(nPage) {
         let nCurPage = this.GetPage();
@@ -1276,7 +1288,7 @@
         let nStartPos = memory.GetCurPosition();
         memory.Skip(4);
 
-        this.draw(memory.AnnotsRenderer); // для каждой страницы инициализируется свой renderer
+        this.draw(memory.docRenderer); // для каждой страницы инициализируется свой renderer
 
         // запись длины комманд
         let nEndPos = memory.GetCurPosition();

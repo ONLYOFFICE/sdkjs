@@ -1707,22 +1707,25 @@
 			}
 		}
 
-		// Get index of active demo effect (in array of all raw demo effects)
-		let activeDemoEffectIndex;
-		for (let nEffect = 0; nEffect < rawDemoEffects.length; nEffect++) {
-			if (rawDemoEffects[nEffect].originalNode === activeDemoEffect.originalNode) {
-				activeDemoEffectIndex = nEffect;
-				break;
+		if(activeDemoEffect) {
+			// Get index of active demo effect (in array of all raw demo effects)
+			let activeDemoEffectIndex;
+			for (let nEffect = 0; nEffect < rawDemoEffects.length; nEffect++) {
+				if (rawDemoEffects[nEffect].originalNode === activeDemoEffect.originalNode) {
+					activeDemoEffectIndex = nEffect;
+					break;
+				}
 			}
+
+			// Get group of active raw demo effects and their corresponding demo effects
+			const activeRawDemoEffects = rawDemoEffects[activeDemoEffectIndex].getTimeNodeWithLvl(2).getAllAnimEffects();
+			const activeDemoEffects = activeRawDemoEffects.map(function (rawEffect) {
+				return rawEffect.originalDemoNode;
+			});
+
+			return activeDemoEffects;
 		}
-
-		// Get group of active raw demo effects and their corresponding demo effects
-		const activeRawDemoEffects = rawDemoEffects[activeDemoEffectIndex].getTimeNodeWithLvl(2).getAllAnimEffects();
-		const activeDemoEffects = activeRawDemoEffects.map(function (rawEffect) {
-			return rawEffect.originalDemoNode;
-		});
-
-		return activeDemoEffects;
+		return [];
 	};
 	CTimeline.prototype.getNewTmpScrollOffset = function (elapsedTicks, correction) {
 		const leftLimit = 0;

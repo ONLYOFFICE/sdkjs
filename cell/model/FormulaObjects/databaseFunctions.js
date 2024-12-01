@@ -45,7 +45,8 @@ function (window, undefined) {
 	var cError = AscCommonExcel.cError;
 	var argType = Asc.c_oAscFormulaArgumentType;
 
-	function StatisticOnlineAlgorithm() {
+	function StatisticOnlineAlgorithm(isCalculated) {
+		this.isCalculated = !!isCalculated;
 		this.reset();
 	}
 
@@ -60,7 +61,8 @@ function (window, undefined) {
 		this.M2 = 0;
 		this.errorType = null;
 	};
-	StatisticOnlineAlgorithm.prototype.union = function (val) {
+	StatisticOnlineAlgorithm.prototype.union = function (val, isCalculated) {
+		this.isCalculated = !!isCalculated;
 		this.min = Math.min(this.min, val.min);
 		this.max = Math.max(this.max, val.max);
 		this.sum = this.sum + val.sum;
@@ -131,12 +133,12 @@ function (window, undefined) {
 	};
 	StatisticOnlineAlgorithm.prototype.getCellValue = function (dataType, fieldType, rowType, colType) {
 		var oCellValue;
-		if (this.isEmpty()) {
+		if (this.isEmpty() && !this.isCalculated) {
 			return oCellValue;
 		}
 		oCellValue = new AscCommonExcel.CCellValue();
 		oCellValue.type = AscCommon.CellValueType.Number;
-		if (null !== this.errorType) {
+		if (null !== this.errorType && dataType !== Asc.c_oAscItemType.Count && dataType !== Asc.c_oAscItemType.CountA) {
 			oCellValue.type = AscCommon.CellValueType.Error;
 			oCellValue.text = AscCommonExcel.cError.prototype.getStringFromErrorType(this.errorType);
 			return oCellValue;

@@ -1627,7 +1627,7 @@ function XmlParserContext(){
 		this.smartarts = [];
     //docx
     this.commentDataById = {};
-    this.oReadResult = new AscCommonWord.DocReadResult();
+    this.oReadResult = AscCommonWord.DocReadResult && new AscCommonWord.DocReadResult();
     this.maxZIndex = 0;
 
     this.oformContext = null;
@@ -1816,9 +1816,13 @@ XmlParserContext.prototype.loadDataLinks = function() {
             let data = this.zip.getFile(path);
             if (data) {
                 if (!window["NATIVE_EDITOR_ENJINE"]) {
-                    let blob = this.zip.getImageBlob(path);
-                    let url = window.URL.createObjectURL(blob);
-                    AscCommon.g_oDocumentUrls.addImageUrl(path, url);
+                    try {
+                        let blob = this.zip.getImageBlob(path);
+                        let url = window.URL.createObjectURL(blob);
+                        AscCommon.g_oDocumentUrls.addImageUrl(path, url);
+                    } catch (e) {
+                        AscCommon.consoleLog("ERROR: Image blob was not loaded");
+                    }
                 }
                 this.imageMap[path].forEach(function(blipFill) {
                     AscCommon.pptx_content_loader.Reader.initAfterBlipFill(path, blipFill);
@@ -1882,7 +1886,7 @@ function XmlWriterContext(editorId){
     this.sheetIds = [];
     this.sharedStrings = null;
     this.isCopyPaste = null;
-    this.stylesForWrite = new AscCommonExcel.StylesForWrite();
+    this.stylesForWrite = AscCommonExcel.StylesForWrite && new AscCommonExcel.StylesForWrite(); //no StylesForWrite in vsdx now
     this.oSharedStrings = {index: 0, strings: {}};
     this.oleDrawings = [];
     this.signatureDrawings = [];

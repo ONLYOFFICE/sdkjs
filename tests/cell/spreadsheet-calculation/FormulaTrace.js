@@ -320,16 +320,20 @@ $(function() {
 			assert.ok(1, "Trace precedents from A1");
 			api.asc_TracePrecedents();
 			assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), 1, "A1<-C1");
-			assert.strictEqual(traceManager._getPrecedents(A1Index, A10Index), 1, "A1<-A10");
-			assert.strictEqual(traceManager._getPrecedents(A1Index, I5Index), 1, "A1<-I5");
-			assert.strictEqual(traceManager._getPrecedents(A1Index, A10ExternalIndex), 1, "A1<-OtherSheet!A10");
-			assert.strictEqual(traceManager._getPrecedents(A1Index, C3ExternalIndex), 1, "A1<-OtherSheet!C3");
-			assert.strictEqual(traceManager._getPrecedents(C1Index, A10ExternalIndex), undefined, "C1<-OtherSheet!A10 === undefined");
-			assert.strictEqual(traceManager._getPrecedents(C1Index, C3ExternalIndex), undefined, "C1<-OtherSheet!C3 === undefined");
+			assert.strictEqual(traceManager._getPrecedents(A1Index, A10Index), "A10:A11", "A1<-A10");
+			assert.strictEqual(traceManager._getPrecedents(A1Index, I5Index), "I5:J6", "A1<-I5");
+			if (traceManager.checkPrecedentExternal(A1Index)) {
+				assert.ok(traceManager.precedentsExternal[A1Index][A10ExternalIndex], "A1<-OtherSheet!A10");
+				assert.ok(traceManager.precedentsExternal[A1Index][C3ExternalIndex], "A1<-OtherSheet!C3");
+
+				assert.strictEqual(traceManager.checkPrecedentExternal(C1Index), undefined, "From C1 external precedent don't exist");
+			}
 
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(C1Index, A10ExternalIndex), 1, "C1<-OtherSheet!A10");
-			assert.strictEqual(traceManager._getPrecedents(C1Index, C3ExternalIndex), 1, "C1<-OtherSheet!C3");
+			if (traceManager.checkPrecedentExternal(C1Index)) {
+				assert.ok(traceManager.precedentsExternal[C1Index][A10ExternalIndex], "C1<-OtherSheet!A10");
+				assert.ok(traceManager.precedentsExternal[C1Index][C3ExternalIndex], "C1<-OtherSheet!C3");
+			}
 			
 			// clear traces
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
@@ -363,19 +367,19 @@ $(function() {
 
 			assert.ok(1, "Trace precedents from A1");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), 1, "A1<-C1");
+			assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), "$C$1:$D$2", "A1<-C1");
 			assert.strictEqual(traceManager._getPrecedents(C1Index, C2Index), undefined, "C1<-C2 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(D2Index, F1Index), undefined, "D2<-F1 === undefined");
 
 			assert.ok(1, "Trace precedents from A1");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), 1, "A1<-C1");
+			assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), "$C$1:$D$2", "A1<-C1");
 			assert.strictEqual(traceManager._getPrecedents(C1Index, C2Index), 1, "C1<-C2");
 			assert.strictEqual(traceManager._getPrecedents(D2Index, F1Index), 1, "D2<-F1");
 
 			assert.ok(1, "Trace precedents from A1");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), 1, "A1<-C1");
+			assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), "$C$1:$D$2", "A1<-C1");
 			assert.strictEqual(traceManager._getPrecedents(C1Index, C2Index), 1, "C1<-C2");
 			assert.strictEqual(traceManager._getPrecedents(D2Index, F1Index), 1, "D2<-F1");
 
@@ -391,7 +395,7 @@ $(function() {
 
 			assert.ok(1, "Trace precedents from A3");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(A3Index, C1Index), 1, "A3<-C1");
+			assert.strictEqual(traceManager._getPrecedents(A3Index, C1Index), "$C$1:$D$2", "A3<-C1");
 			assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), undefined, "A1<-C1 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), undefined, "A4<-C1 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(B3Index, C1Index), undefined, "B3<-C1 === undefined");
@@ -410,8 +414,8 @@ $(function() {
 
 			assert.ok(1, "Trace precedents from A4");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(A3Index, C1Index), 1, "A3<-C1");
-			assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), 1, "A4<-C1");
+			assert.strictEqual(traceManager._getPrecedents(A3Index, C1Index), "$C$1:$D$2", "A3<-C1");
+			assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), "$C$1:$D$2", "A4<-C1");
 			assert.strictEqual(traceManager._getPrecedents(B3Index, C1Index), undefined, "B3<-C1 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(B4Index, C1Index), undefined, "B4<-C1 === undefined");
 
@@ -421,9 +425,9 @@ $(function() {
 
 			assert.ok(1, "Trace precedents from B3");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(A3Index, C1Index), 1, "A3<-C1");
-			assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), 1, "A4<-C1");
-			assert.strictEqual(traceManager._getPrecedents(B3Index, C1Index), 1, "B3<-C1");
+			assert.strictEqual(traceManager._getPrecedents(A3Index, C1Index), "$C$1:$D$2", "A3<-C1");
+			assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), "$C$1:$D$2", "A4<-C1");
+			assert.strictEqual(traceManager._getPrecedents(B3Index, C1Index), "$C$1:$D$2", "B3<-C1");
 			assert.strictEqual(traceManager._getPrecedents(B4Index, C1Index), undefined, "B4<-C1 === undefined");
 
 			// change selection to B4
@@ -432,17 +436,17 @@ $(function() {
 
 			assert.ok(1, "Trace precedents from B4");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(A3Index, C1Index), 1, "A3<-C1");
-			assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), 1, "A4<-C1");
-			assert.strictEqual(traceManager._getPrecedents(B3Index, C1Index), 1, "B3<-C1");
-			assert.strictEqual(traceManager._getPrecedents(B4Index, C1Index), 1, "B4<-C1");
+			assert.strictEqual(traceManager._getPrecedents(A3Index, C1Index), "$C$1:$D$2", "A3<-C1");
+			assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), "$C$1:$D$2", "A4<-C1");
+			assert.strictEqual(traceManager._getPrecedents(B3Index, C1Index), "$C$1:$D$2", "B3<-C1");
+			assert.strictEqual(traceManager._getPrecedents(B4Index, C1Index), "$C$1:$D$2", "B4<-C1");
 
 			assert.ok(1, "Trace precedents from B4");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(A3Index, C1Index), 1, "A3<-C1");
-			assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), 1, "A4<-C1");
-			assert.strictEqual(traceManager._getPrecedents(B3Index, C1Index), 1, "B3<-C1");
-			assert.strictEqual(traceManager._getPrecedents(B4Index, C1Index), 1, "B4<-C1");
+			assert.strictEqual(traceManager._getPrecedents(A3Index, C1Index), "$C$1:$D$2", "A3<-C1");
+			assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), "$C$1:$D$2", "A4<-C1");
+			assert.strictEqual(traceManager._getPrecedents(B3Index, C1Index), "$C$1:$D$2", "B3<-C1");
+			assert.strictEqual(traceManager._getPrecedents(B4Index, C1Index), "$C$1:$D$2", "B4<-C1");
 			assert.strictEqual(traceManager._getPrecedents(C1Index, C2Index), 1, "C1<-C2");
 			assert.strictEqual(traceManager._getPrecedents(D2Index, F1Index), 1, "D2<-F1");
 
@@ -720,21 +724,21 @@ $(function() {
 
 			assert.ok(1, "Trace precedents from D22 to A20:A22 area");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(D22Index, A20Index), 1, "D22<-A20");
+			assert.strictEqual(traceManager._getPrecedents(D22Index, A20Index), "A20:A22", "D22<-A20");
 			assert.strictEqual(traceManager._getPrecedents(A21Index, A22Index), undefined, "A21<-A22 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(A22Index, B22Index), undefined, "A22<-B22 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(B22Index, C23Index), undefined, "B22<-C23 === undefined");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["A20:A22"]), "object", "Area A20:A22 exist");
 
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(D22Index, A20Index), 1, "D22<-A20");
+			assert.strictEqual(traceManager._getPrecedents(D22Index, A20Index), "A20:A22", "D22<-A20");
 			assert.strictEqual(traceManager._getPrecedents(A21Index, A22Index), 1, "A21<-A22");
 			assert.strictEqual(traceManager._getPrecedents(A22Index, B22Index), 1, "A22<-B22");
 			assert.strictEqual(traceManager._getPrecedents(B22Index, C23Index), undefined, "B22<-C23 === undefined");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["A20:A22"]), "object", "Area A20:A22 exist");
 
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(D22Index, A20Index), 1, "D22<-A20");
+			assert.strictEqual(traceManager._getPrecedents(D22Index, A20Index), "A20:A22", "D22<-A20");
 			assert.strictEqual(traceManager._getPrecedents(A21Index, A22Index), 1, "A21<-A22");
 			assert.strictEqual(traceManager._getPrecedents(A22Index, B22Index), 1, "A22<-B22");
 			assert.strictEqual(traceManager._getPrecedents(B22Index, C23Index), 1, "B22<-C23");
@@ -747,7 +751,7 @@ $(function() {
 			
 			assert.ok(1, "Trace precedents from E13 to a chain of links with ranges(first click)");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), 1, "E13<-B8");
+			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), "B8:B10", "E13<-B8");
 			assert.strictEqual(traceManager._getPrecedents(B8Index, A1Index), undefined, "B8<-A1 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(B9Index, A1Index), undefined, "B9<-A1 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(B10Index, E6Index), undefined, "B10<-E6 === undefined");
@@ -765,9 +769,9 @@ $(function() {
 
 			assert.ok(1, "Trace precedents from E13 to a chain of links with ranges(second click)");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), 1, "E13<-B8");
-			assert.strictEqual(traceManager._getPrecedents(B8Index, A1Index), 1, "B8<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B9Index, A1Index), 1, "B9<-A1");
+			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), "B8:B10", "E13<-B8");
+			assert.strictEqual(traceManager._getPrecedents(B8Index, A1Index), "A1:A6", "B8<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B9Index, A1Index), "A1:A6", "B9<-A1");
 			assert.strictEqual(traceManager._getPrecedents(B10Index, E6Index), 1, "B10<-E6");
 			assert.strictEqual(traceManager._getPrecedents(E6Index, B3Index), undefined, "E6<-B3 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(A4Index, A12Index), undefined, "A4<-A12 === undefined");
@@ -783,11 +787,11 @@ $(function() {
 
 			assert.ok(1, "Trace precedents from E13 to a chain of links with ranges(third click)");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), 1, "E13<-B8");
-			assert.strictEqual(traceManager._getPrecedents(B8Index, A1Index), 1, "B8<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B9Index, A1Index), 1, "B9<-A1");
+			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), "B8:B10", "E13<-B8");
+			assert.strictEqual(traceManager._getPrecedents(B8Index, A1Index), "A1:A6", "B8<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B9Index, A1Index), "A1:A6", "B9<-A1");
 			assert.strictEqual(traceManager._getPrecedents(B10Index, E6Index), 1, "B10<-E6");
-			assert.strictEqual(traceManager._getPrecedents(E6Index, B3Index), 1, "E6<-B3");
+			assert.strictEqual(traceManager._getPrecedents(E6Index, B3Index), "B3:B7", "E6<-B3");
 			assert.strictEqual(traceManager._getPrecedents(A4Index, A12Index), 1, "A4<-A12");
 			assert.strictEqual(traceManager._getPrecedents(A12Index, B12Index), undefined, "A12<-B12 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), undefined, "B3<-A1 === undefined");
@@ -801,132 +805,132 @@ $(function() {
 
 			assert.ok(1, "Trace precedents from E13 to a chain of links with ranges(fourth click)");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), 1, "E13<-B8");
-			assert.strictEqual(traceManager._getPrecedents(B8Index, A1Index), 1, "B8<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B9Index, A1Index), 1, "B9<-A1");
+			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), "B8:B10", "E13<-B8");
+			assert.strictEqual(traceManager._getPrecedents(B8Index, A1Index), "A1:A6", "B8<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B9Index, A1Index), "A1:A6", "B9<-A1");
 			assert.strictEqual(traceManager._getPrecedents(B10Index, E6Index), 1, "B10<-E6");
-			assert.strictEqual(traceManager._getPrecedents(E6Index, B3Index), 1, "E6<-B3");
+			assert.strictEqual(traceManager._getPrecedents(E6Index, B3Index), "B3:B7", "E6<-B3");
 			assert.strictEqual(traceManager._getPrecedents(A4Index, A12Index), 1, "A4<-A12");
 			assert.strictEqual(traceManager._getPrecedents(A12Index, B12Index), 1, "A12<-B12 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(B12Index, B13Index), undefined, "B12<-B13 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(B13Index, B14Index), undefined, "B13<-B14 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(B14Index, B15Index), undefined, "B14<-B15 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(B15Index, B16Index), undefined, "B15<-B16 === undefined");
-			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), 1, "B3<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B4Index, A1Index), 1, "B4<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B5Index, A1Index), 1, "B5<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B6Index, A1Index), 1, "B6<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B7Index, A1Index), 1, "B7<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), "A1:A6", "B3<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B4Index, A1Index), "A1:A6", "B4<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B5Index, A1Index), "A1:A6", "B5<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B6Index, A1Index), "A1:A6", "B6<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B7Index, A1Index), "A1:A6", "B7<-A1");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["A1:A6"]), "object", "Area A1:A6 exist");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["B3:B7"]), "object", "Area B3:B7 exist");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["B8:B10"]), "object", "Area B8:B10 exist");
 
 			assert.ok(1, "Trace precedents from E13 to a chain of links with ranges(fifth click)");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), 1, "E13<-B8");
-			assert.strictEqual(traceManager._getPrecedents(B8Index, A1Index), 1, "B8<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B9Index, A1Index), 1, "B9<-A1");
+			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), "B8:B10", "E13<-B8");
+			assert.strictEqual(traceManager._getPrecedents(B8Index, A1Index), "A1:A6", "B8<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B9Index, A1Index), "A1:A6", "B9<-A1");
 			assert.strictEqual(traceManager._getPrecedents(B10Index, E6Index), 1, "B10<-E6");
-			assert.strictEqual(traceManager._getPrecedents(E6Index, B3Index), 1, "E6<-B3");
+			assert.strictEqual(traceManager._getPrecedents(E6Index, B3Index), "B3:B7", "E6<-B3");
 			assert.strictEqual(traceManager._getPrecedents(A4Index, A12Index), 1, "A4<-A12");
 			assert.strictEqual(traceManager._getPrecedents(A12Index, B12Index), 1, "A12<-B12");
 			assert.strictEqual(traceManager._getPrecedents(B12Index, B13Index), 1, "B12<-B13");
 			assert.strictEqual(traceManager._getPrecedents(B13Index, B14Index), undefined, "B13<-B14 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(B14Index, B15Index), undefined, "B14<-B15 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(B15Index, B16Index), undefined, "B15<-B16 === undefined");
-			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), 1, "B3<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B4Index, A1Index), 1, "B4<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B5Index, A1Index), 1, "B5<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B6Index, A1Index), 1, "B6<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B7Index, A1Index), 1, "B7<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), "A1:A6", "B3<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B4Index, A1Index), "A1:A6", "B4<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B5Index, A1Index), "A1:A6", "B5<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B6Index, A1Index), "A1:A6", "B6<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B7Index, A1Index), "A1:A6", "B7<-A1");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["A1:A6"]), "object", "Area A1:A6 exist");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["B3:B7"]), "object", "Area B3:B7 exist");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["B8:B10"]), "object", "Area B8:B10 exist");
 
 			assert.ok(1, "Trace precedents from E13 to a chain of links with ranges(sixth click)");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), 1, "E13<-B8");
-			assert.strictEqual(traceManager._getPrecedents(B8Index, A1Index), 1, "B8<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B9Index, A1Index), 1, "B9<-A1");
+			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), "B8:B10", "E13<-B8");
+			assert.strictEqual(traceManager._getPrecedents(B8Index, A1Index), "A1:A6", "B8<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B9Index, A1Index), "A1:A6", "B9<-A1");
 			assert.strictEqual(traceManager._getPrecedents(B10Index, E6Index), 1, "B10<-E6");
-			assert.strictEqual(traceManager._getPrecedents(E6Index, B3Index), 1, "E6<-B3");
+			assert.strictEqual(traceManager._getPrecedents(E6Index, B3Index), "B3:B7", "E6<-B3");
 			assert.strictEqual(traceManager._getPrecedents(A4Index, A12Index), 1, "A4<-A12");
 			assert.strictEqual(traceManager._getPrecedents(A12Index, B12Index), 1, "A12<-B12");
 			assert.strictEqual(traceManager._getPrecedents(B12Index, B13Index), 1, "B12<-B13");
 			assert.strictEqual(traceManager._getPrecedents(B13Index, B14Index), 1, "B13<-B14");
 			assert.strictEqual(traceManager._getPrecedents(B14Index, B15Index), undefined, "B14<-B15 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(B15Index, B16Index), undefined, "B15<-B16 === undefined");
-			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), 1, "B3<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B4Index, A1Index), 1, "B4<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B5Index, A1Index), 1, "B5<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B6Index, A1Index), 1, "B6<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B7Index, A1Index), 1, "B7<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), "A1:A6", "B3<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B4Index, A1Index), "A1:A6", "B4<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B5Index, A1Index), "A1:A6", "B5<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B6Index, A1Index), "A1:A6", "B6<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B7Index, A1Index), "A1:A6", "B7<-A1");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["A1:A6"]), "object", "Area A1:A6 exist");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["B3:B7"]), "object", "Area B3:B7 exist");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["B8:B10"]), "object", "Area B8:B10 exist");
 
 			assert.ok(1, "Trace precedents from E13 to a chain of links with ranges(seventh click)");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), 1, "E13<-B8");
-			assert.strictEqual(traceManager._getPrecedents(B8Index, A1Index), 1, "B8<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B9Index, A1Index), 1, "B9<-A1");
+			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), 	"B8:B10", "E13<-B8");
+			assert.strictEqual(traceManager._getPrecedents(B8Index, A1Index), "A1:A6", "B8<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B9Index, A1Index), "A1:A6", "B9<-A1");
 			assert.strictEqual(traceManager._getPrecedents(B10Index, E6Index), 1, "B10<-E6");
-			assert.strictEqual(traceManager._getPrecedents(E6Index, B3Index), 1, "E6<-B3");
+			assert.strictEqual(traceManager._getPrecedents(E6Index, B3Index), "B3:B7", "E6<-B3");
 			assert.strictEqual(traceManager._getPrecedents(A4Index, A12Index), 1, "A4<-A12");
 			assert.strictEqual(traceManager._getPrecedents(A12Index, B12Index), 1, "A12<-B12");
 			assert.strictEqual(traceManager._getPrecedents(B12Index, B13Index), 1, "B12<-B13");
 			assert.strictEqual(traceManager._getPrecedents(B13Index, B14Index), 1, "B13<-B14");
 			assert.strictEqual(traceManager._getPrecedents(B14Index, B15Index), 1, "B14<-B15");
 			assert.strictEqual(traceManager._getPrecedents(B15Index, B16Index), undefined, "B15<-B16 === undefined");
-			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), 1, "B3<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B4Index, A1Index), 1, "B4<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B5Index, A1Index), 1, "B5<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B6Index, A1Index), 1, "B6<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B7Index, A1Index), 1, "B7<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), "A1:A6", "B3<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B4Index, A1Index), "A1:A6", "B4<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B5Index, A1Index), "A1:A6", "B5<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B6Index, A1Index), "A1:A6", "B6<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B7Index, A1Index), "A1:A6", "B7<-A1");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["A1:A6"]), "object", "Area A1:A6 exist");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["B3:B7"]), "object", "Area B3:B7 exist");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["B8:B10"]), "object", "Area B8:B10 exist");
 
 			assert.ok(1, "Trace precedents from E13 to a chain of links with ranges(eighth click)");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), 1, "E13<-B8");
-			assert.strictEqual(traceManager._getPrecedents(B8Index, A1Index), 1, "B8<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B9Index, A1Index), 1, "B9<-A1");
+			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), "B8:B10", "E13<-B8");
+			assert.strictEqual(traceManager._getPrecedents(B8Index, A1Index), "A1:A6", "B8<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B9Index, A1Index), "A1:A6", "B9<-A1");
 			assert.strictEqual(traceManager._getPrecedents(B10Index, E6Index), 1, "B10<-E6");
-			assert.strictEqual(traceManager._getPrecedents(E6Index, B3Index), 1, "E6<-B3");
+			assert.strictEqual(traceManager._getPrecedents(E6Index, B3Index), "B3:B7", "E6<-B3");
 			assert.strictEqual(traceManager._getPrecedents(A4Index, A12Index), 1, "A4<-A12");
 			assert.strictEqual(traceManager._getPrecedents(A12Index, B12Index), 1, "A12<-B12");
 			assert.strictEqual(traceManager._getPrecedents(B12Index, B13Index), 1, "B12<-B13");
 			assert.strictEqual(traceManager._getPrecedents(B13Index, B14Index), 1, "B13<-B14");
 			assert.strictEqual(traceManager._getPrecedents(B14Index, B15Index), 1, "B14<-B15");
 			assert.strictEqual(traceManager._getPrecedents(B15Index, B16Index), 1, "B15<-B16");
-			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), 1, "B3<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B4Index, A1Index), 1, "B4<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B5Index, A1Index), 1, "B5<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B6Index, A1Index), 1, "B6<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B7Index, A1Index), 1, "B7<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), "A1:A6", "B3<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B4Index, A1Index), "A1:A6", "B4<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B5Index, A1Index), "A1:A6", "B5<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B6Index, A1Index), "A1:A6", "B6<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B7Index, A1Index), "A1:A6", "B7<-A1");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["A1:A6"]), "object", "Area A1:A6 exist");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["B3:B7"]), "object", "Area B3:B7 exist");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["B8:B10"]), "object", "Area B8:B10 exist");
 
 			assert.ok(1, "Delete one last built precedents from from linking multiple ranges and cells. Click(1) on E13");
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.precedent);
-			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), 1, "E13<-B8");
-			assert.strictEqual(traceManager._getPrecedents(B8Index, A1Index), 1, "B8<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B9Index, A1Index), 1, "B9<-A1");
+			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), "B8:B10", "E13<-B8");
+			assert.strictEqual(traceManager._getPrecedents(B8Index, A1Index), "A1:A6", "B8<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B9Index, A1Index), "A1:A6", "B9<-A1");
 			assert.strictEqual(traceManager._getPrecedents(B10Index, E6Index), 1, "B10<-E6");
-			assert.strictEqual(traceManager._getPrecedents(E6Index, B3Index), 1, "E6<-B3");
+			assert.strictEqual(traceManager._getPrecedents(E6Index, B3Index), "B3:B7", "E6<-B3");
 			assert.strictEqual(traceManager._getPrecedents(A4Index, A12Index), 1, "A4<-A12");
 			assert.strictEqual(traceManager._getPrecedents(A12Index, B12Index), 1, "A12<-B12");
 			assert.strictEqual(traceManager._getPrecedents(B12Index, B13Index), 1, "B12<-B13");
 			assert.strictEqual(traceManager._getPrecedents(B13Index, B14Index), 1, "B13<-B14");
 			assert.strictEqual(traceManager._getPrecedents(B14Index, B15Index), 1, "B14<-B15");
 			assert.strictEqual(traceManager._getPrecedents(B15Index, B16Index), undefined, "B15<-B16 === undefined");
-			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), 1, "B3<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B4Index, A1Index), 1, "B4<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B5Index, A1Index), 1, "B5<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B6Index, A1Index), 1, "B6<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B7Index, A1Index), 1, "B7<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), "A1:A6", "B3<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B4Index, A1Index), "A1:A6", "B4<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B5Index, A1Index), "A1:A6", "B5<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B6Index, A1Index), "A1:A6", "B6<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B7Index, A1Index), "A1:A6", "B7<-A1");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["A1:A6"]), "object", "Area A1:A6 exist");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["B3:B7"]), "object", "Area B3:B7 exist");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["B8:B10"]), "object", "Area B8:B10 exist");
@@ -936,22 +940,22 @@ $(function() {
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.precedent);
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.precedent);
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.precedent);
-			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), 1, "E13<-B8");
-			assert.strictEqual(traceManager._getPrecedents(B8Index, A1Index), 1, "B8<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B9Index, A1Index), 1, "B9<-A1");
+			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), "B8:B10", "E13<-B8");
+			assert.strictEqual(traceManager._getPrecedents(B8Index, A1Index), "A1:A6", "B8<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B9Index, A1Index), "A1:A6", "B9<-A1");
 			assert.strictEqual(traceManager._getPrecedents(B10Index, E6Index), 1, "B10<-E6");
-			assert.strictEqual(traceManager._getPrecedents(E6Index, B3Index), 1, "E6<-B3");
+			assert.strictEqual(traceManager._getPrecedents(E6Index, B3Index), "B3:B7", "E6<-B3");
 			assert.strictEqual(traceManager._getPrecedents(A4Index, A12Index), 1, "A4<-A12");
 			assert.strictEqual(traceManager._getPrecedents(A12Index, B12Index), undefined, "A12<-B12 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(B12Index, B13Index), undefined, "B12<-B13 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(B13Index, B14Index), undefined, "B13<-B14 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(B14Index, B15Index), undefined, "B14<-B15 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(B15Index, B16Index), undefined, "B15<-B16 === undefined");
-			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), 1, "B3<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B4Index, A1Index), 1, "B4<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B5Index, A1Index), 1, "B5<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B6Index, A1Index), 1, "B6<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B7Index, A1Index), 1, "B7<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), "A1:A6", "B3<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B4Index, A1Index), "A1:A6", "B4<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B5Index, A1Index), "A1:A6", "B5<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B6Index, A1Index), "A1:A6", "B6<-A1");
+			assert.strictEqual(traceManager._getPrecedents(B7Index, A1Index), "A1:A6", "B7<-A1");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["A1:A6"]), "object", "Area A1:A6 exist");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["B3:B7"]), "object", "Area B3:B7 exist");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["B8:B10"]), "object", "Area B8:B10 exist");
@@ -1002,8 +1006,8 @@ $(function() {
 			
 			assert.ok(1, "Trace precedents to a multiple consecutive ranges. First click on N14");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(N14Index, L14Index), 1, "N14<-L14");
-			assert.strictEqual(traceManager._getPrecedents(N14Index, J13Index), 1, "N14<-J13");
+			assert.strictEqual(traceManager._getPrecedents(N14Index, L14Index), "L14:L15", "N14<-L14");
+			assert.strictEqual(traceManager._getPrecedents(N14Index, J13Index), "J13:J14", "N14<-J13");
 			assert.strictEqual(traceManager._getPrecedents(J13Index, I12Index), undefined, "J13<-I12 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(J13Index, L14Index), undefined, "J13<-L14 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(J14Index, I13Index), undefined, "J14<-I13 === undefined");
@@ -1013,8 +1017,8 @@ $(function() {
 
 			assert.ok(1, "Trace precedents to a multiple consecutive ranges. Second click on N14");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(N14Index, L14Index), 1, "N14<-L14");
-			assert.strictEqual(traceManager._getPrecedents(N14Index, J13Index), 1, "N14<-J13");
+			assert.strictEqual(traceManager._getPrecedents(N14Index, L14Index), "L14:L15", "N14<-L14");
+			assert.strictEqual(traceManager._getPrecedents(N14Index, J13Index), "J13:J14", "N14<-J13");
 			assert.strictEqual(traceManager._getPrecedents(J13Index, I12Index), 1, "J13<-I12");
 			assert.strictEqual(traceManager._getPrecedents(J13Index, L14Index), 1, "J13<-L14");
 			assert.strictEqual(traceManager._getPrecedents(J14Index, I13Index), 1, "J14<-I13");
@@ -1024,8 +1028,8 @@ $(function() {
 
 			assert.ok(1, "Remove last built precedent traces from a multiple consecutive ranges. First click on N14");
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.precedent);
-			assert.strictEqual(traceManager._getPrecedents(N14Index, L14Index), 1, "N14<-L14");
-			assert.strictEqual(traceManager._getPrecedents(N14Index, J13Index), 1, "N14<-J13");
+			assert.strictEqual(traceManager._getPrecedents(N14Index, L14Index), "L14:L15", "N14<-L14");
+			assert.strictEqual(traceManager._getPrecedents(N14Index, J13Index), "J13:J14", "N14<-J13");
 			assert.strictEqual(traceManager._getPrecedents(J13Index, I12Index), undefined, "J13<-I12 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(J13Index, L14Index), undefined, "J13<-L14 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(J14Index, I13Index), undefined, "J14<-I13 === undefined");
@@ -1283,18 +1287,18 @@ $(function() {
 
 			assert.ok(1, "Trace precedents from D3");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(D3Index, A3Index), 1, "D3<-A3");
+			assert.strictEqual(traceManager._getPrecedents(D3Index, A3Index), "$A$3:$A$5", "D3<-A3");
 			assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), undefined, "A4<-C1");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["$A$3:$A$5"]), "object", "Area A3:A5 exist");
 
 			assert.ok(1, "Trace precedents from D3");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(D3Index, A3Index), 1, "D3<-A3");
+			assert.strictEqual(traceManager._getPrecedents(D3Index, A3Index), "$A$3:$A$5", "D3<-A3");
 			assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), 1, "A4<-C1");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["$A$3:$A$5"]), "object", "Area A3:A5 exist");
 
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.precedent);
-			assert.strictEqual(traceManager._getPrecedents(D3Index, A3Index), 1, "D3<-A3");
+			assert.strictEqual(traceManager._getPrecedents(D3Index, A3Index), "$A$3:$A$5", "D3<-A3");
 			assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), undefined, "A4<-C1 === undefined");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["$A$3:$A$5"]), "object", "Area A3:A5 exist");
 
@@ -1308,7 +1312,7 @@ $(function() {
 
 			assert.ok(1, "Trace precedents from E2");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(E2Index, A3Index), 1, "E2<-A3");
+			assert.strictEqual(traceManager._getPrecedents(E2Index, A3Index), "$A$3:$A$5", "E2<-A3");
 			assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), undefined, "A4<-C1 === undefined");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["$A$3:$A$5"]), "object", "Area A3:A5 exist");
 
@@ -1329,7 +1333,7 @@ $(function() {
 
 			assert.ok(1, "Trace precedents from E8");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(E8Index, A3Index), 1, "E8<-A3");
+			assert.strictEqual(traceManager._getPrecedents(E8Index, A3Index), "$A$3:$A$5", "E8<-A3");
 			assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), undefined, "A4<-C1 === undefined");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["$A$3:$A$5"]), "object", "Area A3:A5 exist");
 
@@ -1454,7 +1458,7 @@ $(function() {
 			api.asc_TracePrecedents();
 			api.asc_TracePrecedents();
 			assert.strictEqual(traceManager._getPrecedents(I1Index, G1Index), 1, "I1<-G1");
-			assert.strictEqual(traceManager._getPrecedents(I1Index, B1ExternalIndex), 1, "I1<-B1(External)");
+			assert.ok(traceManager.precedentsExternal[I1Index][B1ExternalIndex], "I1<-B1(External)");
 			assert.strictEqual(traceManager._getPrecedents(G1Index, G4Index), 1, "G1<-G4");
 			assert.strictEqual(traceManager._getPrecedents(G1Index, E1Index), 1, "G1<-E1");
 
@@ -1462,7 +1466,7 @@ $(function() {
 			assert.ok(1, "Remove Precedents Arrows from I1. First click");
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.precedent);
 			assert.strictEqual(traceManager._getPrecedents(I1Index, G1Index), 1, "I1<-G1");
-			assert.strictEqual(traceManager._getPrecedents(I1Index, B1ExternalIndex), 1, "I1<-B1(External)");
+			assert.ok(traceManager.precedentsExternal[I1Index][B1ExternalIndex], "I1<-B1(External)");
 			assert.strictEqual(traceManager._getPrecedents(G1Index, G4Index), undefined, "G1<-G4 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(G1Index, E1Index), undefined, "G1<-E1 === undefined");
 
@@ -1835,117 +1839,6 @@ $(function() {
 			// clear all
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 		});
-		// QUnit.test("Test: \"Circular reference tests\"", function (assert) {
-		// 	// TODO checking for cycling dependency will be changed. Change tests after this
-		// 	ws.getRange2("A1:J20").cleanAll();
-
-		// 	let A1Index = AscCommonExcel.getCellIndex(ws.getRange2("A1").bbox.r1, ws.getRange2("A1").bbox.c1),
-		// 		C1Index = AscCommonExcel.getCellIndex(ws.getRange2("C1").bbox.r1, ws.getRange2("C1").bbox.c1),
-		// 		A2Index = AscCommonExcel.getCellIndex(ws.getRange2("A2").bbox.r1, ws.getRange2("A2").bbox.c1),
-		// 		C2Index = AscCommonExcel.getCellIndex(ws.getRange2("C2").bbox.r1, ws.getRange2("C2").bbox.c1),
-		// 		B3Index = AscCommonExcel.getCellIndex(ws.getRange2("B3").bbox.r1, ws.getRange2("B3").bbox.c1),
-		// 		C3Index = AscCommonExcel.getCellIndex(ws.getRange2("C3").bbox.r1, ws.getRange2("C3").bbox.c1),
-		// 		D3Index = AscCommonExcel.getCellIndex(ws.getRange2("D3").bbox.r1, ws.getRange2("D3").bbox.c1);
-
-		// 	ws.getRange2("A1").setValue("=C1");
-		// 	ws.getRange2("C1").setValue("=A1");
-		// 	ws.getRange2("A2").setValue("=A2+C2");
-		// 	ws.getRange2("C2").setValue("=A2+C2");
-		// 	ws.getRange2("B3").setValue("=C1");
-		// 	ws.getRange2("C3").setValue("=C1");
-		// 	ws.getRange2("D3").setValue("=C1");
-
-		// 	ws.selectionRange.ranges = [ws.getRange2("A1").getBBox0()];
-		// 	ws.selectionRange.setActiveCell(ws.getRange2("A1").getBBox0().r1, ws.getRange2("A1").getBBox0().c1);
-
-		// 	api.asc_TracePrecedents();
-		// 	assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), 1);
-		// 	assert.strictEqual(traceManager._getDependents(C1Index, A1Index), 1);
-		// 	assert.strictEqual(traceManager._getPrecedents(C1Index, A1Index), undefined);
-		// 	assert.strictEqual(traceManager._getDependents(A1Index, C1Index), undefined);
-		// 	assert.strictEqual(traceManager._getDependents(C1Index, B3Index), undefined);
-		// 	assert.strictEqual(traceManager._getDependents(C1Index, C3Index), undefined);
-		// 	assert.strictEqual(traceManager._getDependents(C1Index, D3Index), undefined);
-
-		// 	api.asc_TracePrecedents();
-		// 	assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), 1);
-		// 	assert.strictEqual(traceManager._getDependents(C1Index, A1Index), 1);
-		// 	assert.strictEqual(traceManager._getPrecedents(C1Index, A1Index), 1);
-		// 	assert.strictEqual(traceManager._getDependents(A1Index, C1Index), 1);
-		// 	assert.strictEqual(traceManager._getDependents(C1Index, B3Index), undefined);
-		// 	assert.strictEqual(traceManager._getDependents(C1Index, C3Index), undefined);
-		// 	assert.strictEqual(traceManager._getDependents(C1Index, D3Index), undefined);
-
-		// 	api.asc_TracePrecedents();
-		// 	api.asc_TracePrecedents();
-		// 	api.asc_TracePrecedents();
-		// 	api.asc_TracePrecedents();
-		// 	api.asc_TracePrecedents();
-		// 	api.asc_TracePrecedents();
-		// 	api.asc_TracePrecedents();
-		// 	api.asc_TracePrecedents();
-		// 	api.asc_TracePrecedents();
-		// 	api.asc_TracePrecedents();
-		// 	api.asc_TracePrecedents();
-		// 	api.asc_TracePrecedents();
-
-		// 	api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.precedent);
-		// 	assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), undefined);
-		// 	assert.strictEqual(traceManager._getDependents(C1Index, A1Index), undefined);
-		// 	assert.strictEqual(traceManager._getPrecedents(C1Index, A1Index), undefined);
-		// 	assert.strictEqual(traceManager._getDependents(A1Index, C1Index), undefined);
-
-		// 	api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.precedent);
-		// 	assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), undefined);
-		// 	assert.strictEqual(traceManager._getDependents(C1Index, A1Index), undefined);
-		// 	assert.strictEqual(traceManager._getPrecedents(C1Index, A1Index), undefined);
-		// 	assert.strictEqual(traceManager._getDependents(A1Index, C1Index), undefined);
-
-		// 	// clear traces
-		// 	api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
-
-		// 	api.asc_TraceDependents();
-		// 	assert.strictEqual(traceManager._getPrecedents(C1Index, A1Index), 1);
-		// 	assert.strictEqual(traceManager._getDependents(A1Index, C1Index), 1);
-		// 	assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), undefined);
-		// 	assert.strictEqual(traceManager._getDependents(C1Index, A1Index), undefined);
-		// 	assert.strictEqual(traceManager._getDependents(C1Index, B3Index), undefined);
-		// 	assert.strictEqual(traceManager._getDependents(C1Index, C3Index), undefined);
-		// 	assert.strictEqual(traceManager._getDependents(C1Index, D3Index), undefined);
-
-		// 	api.asc_TraceDependents();
-		// 	assert.strictEqual(traceManager._getPrecedents(C1Index, A1Index), 1);
-		// 	assert.strictEqual(traceManager._getDependents(A1Index, C1Index), 1);
-		// 	assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), 1);
-		// 	assert.strictEqual(traceManager._getDependents(C1Index, A1Index), 1);
-		// 	assert.strictEqual(traceManager._getDependents(C1Index, B3Index), 1);
-		// 	assert.strictEqual(traceManager._getDependents(C1Index, C3Index), 1);
-		// 	assert.strictEqual(traceManager._getDependents(C1Index, D3Index), 1);
-
-		// 	api.asc_TraceDependents();
-		// 	api.asc_TraceDependents();
-		// 	api.asc_TraceDependents();
-		// 	api.asc_TraceDependents();
-		// 	api.asc_TraceDependents();
-		// 	api.asc_TraceDependents();
-		// 	api.asc_TraceDependents();
-		// 	api.asc_TraceDependents();
-		// 	api.asc_TraceDependents();
-		// 	api.asc_TraceDependents();
-
-		// 	api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.dependent);
-		// 	assert.strictEqual(traceManager._getPrecedents(C1Index, A1Index), undefined);	// 1
-		// 	assert.strictEqual(traceManager._getDependents(A1Index, C1Index), undefined);	// 1
-		// 	assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), undefined);
-		// 	assert.strictEqual(traceManager._getDependents(C1Index, A1Index), undefined);
-		// 	assert.strictEqual(traceManager._getDependents(C1Index, B3Index), 1);	// undef
-		// 	assert.strictEqual(traceManager._getDependents(C1Index, C3Index), 1);	// undef
-		// 	assert.strictEqual(traceManager._getDependents(C1Index, D3Index), 1);	// undef
-
-		// 	// clear traces
-		// 	api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
-
-		// });
 		QUnit.test("Test: \"Mixed tests\"", function (assert) {
 			ws.getRange2("A1:J20").cleanAll();
 			// TODO check formulas
@@ -1969,15 +1862,19 @@ $(function() {
 			api.asc_TracePrecedents();
 			assert.strictEqual(traceManager._getPrecedents(A1Index, A10ExternalIndex), undefined, "A1<-OtherSheet!A10 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(B1Index, A1Index), 1, "B1<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B1Index, A10ExternalIndex), 1, "B1<-OtherSheet!A10");
+			if (traceManager.checkPrecedentExternal(B1Index)) {
+				assert.ok(traceManager.precedentsExternal[B1Index][A10ExternalIndex], "B1<-OtherSheet!A10");
+
+				assert.strictEqual(traceManager.checkPrecedentExternal(A1Index), undefined, "From A1 external precedent don't exist");
+				assert.strictEqual(traceManager.checkPrecedentExternal(C1Index), undefined, "From C1 external precedent don't exist");
+			}
+
 			assert.strictEqual(traceManager._getPrecedents(C1Index, B1Index), undefined, "C1<-B1 === undefined");
-			assert.strictEqual(traceManager._getPrecedents(C1Index, A1ExternalIndex), undefined, "C1<-OtherSheet!A1 === undefined");
-			assert.strictEqual(traceManager._getPrecedents(C1Index, A10ExternalIndex), undefined, "C1<-OtherSheet!A10 === undefined");
 
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(A1Index, A10ExternalIndex), 1, "A1<-OtherSheet!A10");
+			assert.ok(traceManager.precedentsExternal[A1Index][A10ExternalIndex], "A1<-OtherSheet!A10");
 			assert.strictEqual(traceManager._getPrecedents(B1Index, A1Index), 1, "B1<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B1Index, A10ExternalIndex), 1, "B1<-OtherSheet!A10");
+			assert.ok(traceManager.precedentsExternal[B1Index][A10ExternalIndex], "B1<-OtherSheet!A10");
 			assert.strictEqual(traceManager._getPrecedents(C1Index, B1Index), undefined, "C1<-B1 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(C1Index, A1ExternalIndex), undefined, "C1<-OtherSheet!A1 === undefined");
 			assert.strictEqual(traceManager._getPrecedents(C1Index, A10ExternalIndex), undefined, "C1<-OtherSheet!A10 === undefined");
@@ -1987,24 +1884,22 @@ $(function() {
 			api.asc_TracePrecedents();
 			api.asc_TracePrecedents();
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(A1Index, A10ExternalIndex), 1, "A1<-OtherSheet!A10");
+			assert.ok(traceManager.precedentsExternal[A1Index][A10ExternalIndex], "A1<-OtherSheet!A10");
 			assert.strictEqual(traceManager._getPrecedents(B1Index, A1Index), 1, "B1<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B1Index, A10ExternalIndex), 1, "B1<-OtherSheet!A10");
+			assert.ok(traceManager.precedentsExternal[B1Index][A10ExternalIndex], "B1<-OtherSheet!A10");
 			assert.strictEqual(traceManager._getPrecedents(C1Index, B1Index), undefined, "C1<-B1 === undefined");
-			assert.strictEqual(traceManager._getPrecedents(C1Index, A1ExternalIndex), undefined, "C1<-OtherSheet!A1 === undefined");
-			assert.strictEqual(traceManager._getPrecedents(C1Index, A10ExternalIndex), undefined, "C1<-OtherSheet!A10 === undefined");
+			assert.strictEqual(traceManager.checkPrecedentExternal(C1Index), undefined, "From C1 external precedent don't exist");
 
 			assert.ok(1, "Trace dependents from B1");
 			api.asc_TraceDependents();
 			api.asc_TraceDependents();
 			api.asc_TraceDependents();
 			api.asc_TraceDependents();
-
-			assert.strictEqual(traceManager._getPrecedents(A1Index, A10ExternalIndex), 1, "A1<-OtherSheet!A10");
+			assert.ok(traceManager.precedentsExternal[A1Index][A10ExternalIndex], "A1<-OtherSheet!A10");
 			assert.strictEqual(traceManager._getPrecedents(B1Index, A1Index), 1, "B1<-A1");
-			assert.strictEqual(traceManager._getPrecedents(B1Index, A10ExternalIndex), 1, "B1<-OtherSheet!A10");
-			assert.strictEqual(traceManager._getDependents(C1Index, A1ExternalIndex), 1, "C1->OtherSheet!A1");
-			// assert.strictEqual(traceManager._getPrecedents(C1Index, A10ExternalIndex), 1);		// 1
+			assert.ok(traceManager.precedentsExternal[B1Index][A10ExternalIndex], "B1<-OtherSheet!A10");
+			assert.ok(traceManager.dependentsExternal[C1Index][A1ExternalIndex], "C1<-OtherSheet!A1");
+			// assert.ok(traceManager.precedentsExternal[C1Index][A10ExternalIndex], "C1<-OtherSheet!A10");
 			assert.strictEqual(traceManager._getDependents(B1Index, C1Index), 1, "B1->C1");
 
 			// clear traces
@@ -2025,7 +1920,7 @@ $(function() {
 
 			assert.strictEqual(traceManager._getDependents(A1Index, B1Index), 1, "A1->B1");
 			assert.strictEqual(traceManager._getPrecedents(C1Index, B1Index), 1, "C1<-B1");
-			assert.strictEqual(traceManager._getPrecedents(C1Index, A10ExternalIndex), 1, "C1<-OtherSheet!A10");
+			assert.ok(traceManager.precedentsExternal[C1Index][A10ExternalIndex], "C1<-OtherSheet!A10");
 
 			// clear traces
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
@@ -2329,7 +2224,7 @@ $(function() {
 
 			assert.ok(1, "Trace dependents from B3");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), 1, "B3<-A1. Line should be directed to the range header");
+			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), "A:A", "B3<-A1. Line should be directed to the range header");
 			assert.strictEqual(traceManager._getPrecedents(B3Index, A3Index), undefined, "B3<-A3. Line shouldn't be directed to the opposite cell in range A:A");
 			assert.strictEqual(traceManager.precedentsAreas ? typeof(traceManager.precedentsAreas["A:A"]) : undefined, "object", "A:A should exist as a range");
 
@@ -2363,7 +2258,7 @@ $(function() {
 			
 			assert.ok(1, "Trace dependents from B5");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(B5Index, A1Index), 1, "B5<-A1. Line should be directed to the range header");
+			assert.strictEqual(traceManager._getPrecedents(B5Index, A1Index), "A:A", "B5<-A1. Line should be directed to the range header");
 			assert.strictEqual(traceManager._getPrecedents(B5Index, A5Index), undefined, "B5<-A5. Line shouldn't be directed to the opposite cell in range A:A");
 			assert.strictEqual(traceManager.precedentsAreas ? typeof(traceManager.precedentsAreas["A:A"]) : undefined, "object", "A:A should exist as a range");
 
@@ -2397,7 +2292,7 @@ $(function() {
 			
 			assert.ok(1, "Trace dependents from B7");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(B7Index, A1Index), 1, "B7<-A1. Line should be directed to both ways. Line to the range header");
+			assert.strictEqual(traceManager._getPrecedents(B7Index, A1Index), "A:A", "B7<-A1. Line should be directed to both ways. Line to the range header");
 			assert.strictEqual(traceManager._getPrecedents(B7Index, A7Index), 1, "B7<-A7. Line should be directed to both ways. Line to the opposite cell");
 			assert.strictEqual(traceManager.precedentsAreas ? typeof(traceManager.precedentsAreas["A:A"]) : undefined, "object", "A:A should exist as a range");
 

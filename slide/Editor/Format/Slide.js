@@ -1109,7 +1109,12 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         if(!aImages) {
             aImages = [];
         }
-        this.recalculate();
+
+        if(this.recalcInfo.recalculateBackground)
+        {
+            this.recalculateBackground();
+            this.recalcInfo.recalculateBackground = false;
+        }
         if(this.backgroundFill) {
             let sImageId = this.backgroundFill.checkRasterImageId();
             if(sImageId) {

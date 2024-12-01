@@ -145,6 +145,8 @@ CImageShape.prototype.handleUpdateFlip = function()
 CImageShape.prototype.handleUpdateFill = function()
 {
     this.recalcBrush();
+    this.recalcFill();
+    this.recalcTransparent();
     this.addToRecalculate();
 };
 CImageShape.prototype.handleUpdateGeometry = function()

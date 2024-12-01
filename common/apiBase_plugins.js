@@ -838,11 +838,22 @@
     };
 
 	/**
-	 * Set options for all plugins. This method can be used only in connectors.
+	 * The plugin options.
+     * @typedef {Object} PluginOptions
+     * @property {object} all The parameters which will be set for all plugins ({ "all" : { key, value } }).
+     * @property {object} plugin_guid The parameters which will be set for a specific plugin. The plugin must be specified with the plugin GUID of the asc.{UUID} type ({ "plugin_guid" : { keyForSpecificPlugin : valueForSpecificPlugin } }).
+     * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/PluginOptions.js
+	 */
+	
+	/**
+	 * Configures plugins from an external source. The settings can be set for all plugins or for a specific plugin.
+	 * For example, this method can be used to pass an authorization token to the plugin. This method can be used only with the connector class.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @alias SetPluginsOptions
-	 * @param {object} options - Object with properties ({ all : { key, value }, plugin_giud : { keyForSpecificPlugin : valueForSpecificPlugin } }
+	 * @param {PluginOptions} options - Plugin options.
+	 * @since 8.1.1
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SetPluginsOptions.js
 	 */
 	Api.prototype["pluginMethod_SetPluginsOptions"] = function(options)
 	{

@@ -357,7 +357,7 @@
      */
 
     /**
-     * Any valid drawing element
+     * Any valid drawing element.
      * @typedef {(ApiShape | ApiImage | ApiGroup | ApiOleObject | ApiTable )} Drawing
 	 */
 
@@ -380,6 +380,13 @@
      * @returns {ApiPresentation}
      * @see office-js-api/Examples/{Editor}/Api/Methods/GetPresentation.js
 	 */
+
+	/**
+	 * Represents the type of objects in a selection.
+	 * @typedef {("none" | "shapes" | "slides" | "text")} SelectionType - Available selection types.
+	 *
+	 */
+
     Api.prototype.GetPresentation = function(){
         if(this.WordControl && this.WordControl.m_oLogicDocument){
             return new ApiPresentation(this.WordControl.m_oLogicDocument);
@@ -1011,6 +1018,18 @@
         return oResult;
 	};
 
+
+    /**
+	 * Converts the specified JSON object into the Document Builder object of the corresponding type.
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiSelection}
+	 */
+	Api.prototype.GetSelection = function()
+	{
+		return new ApiSelection();
+	};
+
     /**
 	 * Subscribes to the specified event and calls the callback function when the event fires.
      * @function
@@ -1179,8 +1198,24 @@
 	 */
     ApiPresentation.prototype.GetSlidesCount = function()
     {
-        return this.Presentation.GetSlidesCount();
+        return this.Presentation.Slides.length;
     };
+
+	/**
+	 * Returns an array of all slides in the presentation.
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiSlide[]}
+	 */
+	ApiPresentation.prototype.GetAllSlides = function()
+	{
+		let oPresentation = Asc.editor.getLogicDocument();
+		let aApiSlides = [];
+		let aSlides = oPresentation.Slides;
+		for(let nIdx = 0; nIdx < aSlides.length; ++nIdx) {
+			aApiSlides.push(new ApiSlide(aSlides[nIdx]));
+		}
+		return aApiSlides;
+	};
 
     /**
      * Returns a number of slide masters.
@@ -1191,6 +1226,21 @@
     ApiPresentation.prototype.GetMastersCount = function()
     {
         return this.Presentation.slideMasters.length;
+    };
+
+    /**
+     * Returns an array of all slide masters in the presentation
+     * @typeofeditors ["CPE"]
+     * @returns {ApiMaster[]}
+	 */
+    ApiPresentation.prototype.GetAllSlideMasters = function()
+    {
+        let aSlideMasters = this.Presentation.slideMasters;
+		let aApiSlideMasters = [];
+		for(let nIdx = 0; nIdx < aSlideMasters.length; ++nIdx) {
+			aApiSlideMasters.push(new ApiMaster(aSlideMasters[nIdx]));
+		}
+		return aApiSlideMasters;
     };
 
     /**
@@ -1805,11 +1855,12 @@
     };
 
     /**
-	 * Gets drawings by placeholder type.
+	 * Returns an array of drawings by the specified placeholder type.
 	 * @memberof ApiMaster
      * @typeofeditors ["CPE"]
-     * @param {PlaceholderType} sType - placeholders type
+     * @param {PlaceholderType} sType - The placeholder type.
 	 * @returns {Drawing[]}
+     * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/GetDrawingsByPlaceholderType.js
 	 */
     ApiMaster.prototype.GetDrawingsByPlaceholderType = function(sType) {
@@ -2145,11 +2196,12 @@
     };
 
     /**
-	 * Gets drawings by placeholder type.
+	 * Returns an array of drawings by the specified placeholder type.
 	 * @memberof ApiLayout
      * @typeofeditors ["CPE"]
-     * @param {PlaceholderType} sType - placeholders type
+     * @param {PlaceholderType} sType - The placeholder type.
 	 * @returns {Drawing[]}
+     * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/GetDrawingsByPlaceholderType.js
 	 */
     ApiLayout.prototype.GetDrawingsByPlaceholderType = function(sType) {
@@ -2191,9 +2243,10 @@
     };
 
     /**
-     * Gets the placeholder type.
+     * Returns the placeholder type.
      * @typeofeditors ["CPE"]
-     * @returns {PlaceholderType} - returns placeholder type
+     * @returns {PlaceholderType} - Returns the placeholder type.
+     * @since 8.2.0
      * @see office-js-api/Examples/{Editor}/ApiPlaceholder/Methods/GetType.js
 	 */
     ApiPlaceholder.prototype.GetType = function()
@@ -2213,8 +2266,9 @@
     /**
      * Sets the placeholder index.
      * @typeofeditors ["CPE"]
-     * @param {number} nIdx - placeholder index
-     * @returns {boolean} - returns false if placeholder index wasn't set.
+     * @param {number} nIdx - The placeholder index.
+     * @returns {boolean} - Returns false if the placeholder index wasn't set.
+     * @since 8.2.0
      * @see office-js-api/Examples/{Editor}/ApiPlaceholder/Methods/SetIndex.js
 	 */
     ApiPlaceholder.prototype.SetIndex = function(nIdx)
@@ -2228,9 +2282,10 @@
     };
 
     /**
-     * Gets the placeholder index.
+     * Retuns the placeholder index.
      * @typeofeditors ["CPE"]
-     * @returns {number | undefined} - returns placeholder index
+     * @returns {number | undefined} - Returns the placeholder index.
+     * @since 8.2.0
      * @see office-js-api/Examples/{Editor}/ApiPlaceholder/Methods/GetIndex.js
 	 */
     ApiPlaceholder.prototype.GetIndex = function()
@@ -3275,11 +3330,12 @@
     };
 
     /**
-	 * Gets drawings by placeholder type.
+	 * Returns an array of drawings by the specified placeholder type.
 	 * @memberof ApiSlide
      * @typeofeditors ["CPE"]
-     * @param {PlaceholderType} sType - placeholders type
+     * @param {PlaceholderType} sType - The placeholder type.
 	 * @returns {Drawing[]}
+     * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetDrawingsByPlaceholderType.js
 	 */
     ApiSlide.prototype.GetDrawingsByPlaceholderType = function(sType) {
@@ -3290,6 +3346,21 @@
             return drawing.Drawing.getPlaceholderType() == nType;
         });
     };
+
+	/**
+	 * Selects the current slide.
+	 * @memberof ApiSlide
+	 * @typeofeditors ["CPE"]
+	 */
+	ApiSlide.prototype.Select = function() {
+		if(!Asc.editor.isNormalMode())
+			return;
+
+		let oThumbnails = Asc.editor.getThumbnailsManager();
+		if(!oThumbnails) return;
+		oThumbnails.SetFocusElement(AscCommon.FOCUS_OBJECT_THUMBNAILS);
+		oThumbnails.SelectSlides([this.GetSlideIndex()], false);
+	};
 
     //------------------------------------------------------------------------------------------------------------------
     //
@@ -3636,6 +3707,7 @@
 	 * Selects the current graphic object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
+     * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js
 	 */	
 	ApiDrawing.prototype.Select = function() {
@@ -4527,6 +4599,7 @@
     Api.prototype["CreateThemeFontScheme"]                = Api.prototype.CreateThemeFontScheme;
     Api.prototype["CreateWordArt"]                        = Api.prototype.CreateWordArt;
 	Api.prototype["FromJSON"]                             = Api.prototype.FromJSON;
+	Api.prototype["GetSelection"]                         = Api.prototype.GetSelection;
 
 
     ApiPresentation.prototype["GetClassType"]             = ApiPresentation.prototype.GetClassType;
@@ -4538,7 +4611,9 @@
     ApiPresentation.prototype["SetSizes"]                 = ApiPresentation.prototype.SetSizes;
     ApiPresentation.prototype["ReplaceCurrentImage"]      = ApiPresentation.prototype.ReplaceCurrentImage;
     ApiPresentation.prototype["GetSlidesCount"]           = ApiPresentation.prototype.GetSlidesCount;
+    ApiPresentation.prototype["GetAllSlides"]             = ApiPresentation.prototype.GetAllSlides;
     ApiPresentation.prototype["GetMastersCount"]          = ApiPresentation.prototype.GetMastersCount;
+    ApiPresentation.prototype["GetAllSlideMasters"]       = ApiPresentation.prototype.GetAllSlideMasters;
     ApiPresentation.prototype["GetMaster"]                = ApiPresentation.prototype.GetMaster;
     ApiPresentation.prototype["AddMaster"]                = ApiPresentation.prototype.AddMaster;
     ApiPresentation.prototype["ApplyTheme"]               = ApiPresentation.prototype.ApplyTheme;
@@ -4658,6 +4733,7 @@
     ApiSlide.prototype["GetAllOleObjects"]                = ApiSlide.prototype.GetAllOleObjects;
     ApiSlide.prototype["ToJSON"]                          = ApiSlide.prototype.ToJSON;
     ApiSlide.prototype["GetDrawingsByPlaceholderType"]    = ApiSlide.prototype.GetDrawingsByPlaceholderType;
+    ApiSlide.prototype["Select"]                          = ApiSlide.prototype.Select;
 
 
     ApiDrawing.prototype["GetClassType"]                  = ApiDrawing.prototype.GetClassType;
@@ -4740,6 +4816,11 @@
     ApiTableCell.prototype["SetVerticalAlign"]            = ApiTableCell.prototype.SetVerticalAlign;
     ApiTableCell.prototype["SetTextDirection"]            = ApiTableCell.prototype.SetTextDirection;
 
+    ApiSelection.prototype["GetType"]                     = ApiSelection.prototype.GetType;
+    ApiSelection.prototype["GetShapes"]                   = ApiSelection.prototype.GetShapes;
+    ApiSelection.prototype["GetSlides"]                   = ApiSelection.prototype.GetSlides;
+    ApiSelection.prototype["IsEmpty"]                     = ApiSelection.prototype.IsEmpty;
+
 
     Api.prototype.private_CreateApiSlide = function(oSlide){
         return new ApiSlide(oSlide);
@@ -4753,6 +4834,95 @@
     Api.prototype.private_CreateApiPresentation = function(oPresentation){
         return new ApiPresentation(oPresentation);
     };
+
+	/**
+	 * Class representing the selection in the presentation
+	 * @constructor
+	 */
+	function ApiSelection() {
+	}
+	ApiSelection.prototype.getPresentation = function () {
+		return Asc.editor.getLogicDocument();
+	};
+
+
+	/**
+	 * Returns the type of selection.
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CPE"]
+	 * @returns {SelectionType}
+	 */
+	ApiSelection.prototype.GetType = function() {
+		let oPresentation = this.getPresentation();
+		let nFocusObjectType = oPresentation.GetFocusObjType();
+		if(nFocusObjectType === AscCommon.FOCUS_OBJECT_THUMBNAILS) {
+			return "slides";
+		}
+		else if(nFocusObjectType === AscCommon.FOCUS_OBJECT_MAIN && !oPresentation.IsFocusOnNotes()) {
+			let oController = oPresentation.GetCurrentController();
+			if(!oController || oController.selectedObjects.length === 0) {
+				return "none";
+			}
+			let oContent = oController.getTargetDocContent();
+			if(oContent) {
+				return "text";
+			}
+			return "shapes";
+		}
+		return "none";
+	};
+
+	/**
+	 * Returns selected shapes.
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiDrawing[]}
+	 */
+	ApiSelection.prototype.GetShapes = function() {
+		let oController = Asc.editor.getGraphicController();
+		if(oController) {
+			let aApiDrawings = [];
+			let aSelectedDrawings = oController.selectedObjects;
+			for(let nIdx = 0; nIdx < aSelectedDrawings.length; ++nIdx) {
+				let oDrawing = private_GetApiDrawing(aSelectedDrawings[nIdx]);
+				if(oDrawing) {
+					aApiDrawings.push(oDrawing);
+				}
+			}
+			return aApiDrawings;
+		}
+		return [];
+	};
+
+	/**
+	 * Returns selected slides.
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiSlide[]}
+	 */
+	ApiSelection.prototype.GetSlides = function() {
+		if(!Asc.editor.isNormalMode()) {
+			return [];
+		}
+
+		let oPresentation = this.getPresentation();
+		let aSlides = oPresentation.GetSelectedSlideObjects();
+		let aApiSlides = [];
+		for(let nIdx = 0; nIdx < aSlides.length; ++nIdx) {
+			aApiSlides.push(new ApiSlide(aSlides[nIdx]));
+		}
+		return aApiSlides;
+	};
+
+	/**
+	 * Returns is current selection empty or not
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CPE"]
+	 * @returns {boolean}
+	 */
+	ApiSelection.prototype.IsEmpty = function() {
+		return this.GetType() === "none";
+	};
 
     function private_GetCurrentSlide(){
         var oApiPresentation = editor.GetPresentation();

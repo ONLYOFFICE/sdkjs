@@ -1205,7 +1205,8 @@
                 let oDrawing = this.selectedObjects[i];
                 // if (oDrawing.selectStartPage === pageIndex) {
                 if (oDrawing.selectStartPage === pageIndex && !oDrawing.IsFreeText || (oDrawing.IsFreeText && !oDrawing.IsFreeText())) {
-                    let nType = oDrawing.isForm && oDrawing.isForm() ? AscFormat.TYPE_TRACK.FORM : AscFormat.TYPE_TRACK.SHAPE
+                    let nType = oDrawing.IsAnnot() && oDrawing.IsStamp() ? AscFormat.TYPE_TRACK.ANNOT_STAMP : AscFormat.TYPE_TRACK.SHAPE;
+
                     drawingDocument.DrawTrack(
                         nType,
                         oDrawing.getTransformMatrix(),

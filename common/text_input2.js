@@ -112,6 +112,7 @@
 		this.nativeFocusElementNoRemoveOnElementFocus = false;
 		this.InterfaceEnableKeyEvents = true;
 		this.isNoClearOnFocus = false;
+		this.isGlobalDisableFocus = false;
 
 		this.ReadOnlyCounter = 0;
 
@@ -879,7 +880,8 @@
 					return;
 			}
 
-			focusHtmlElement(this.HtmlArea);
+			if (!this.isGlobalDisableFocus)
+				focusHtmlElement(this.HtmlArea);
 		}
 	};
 	CTextInputPrototype.externalEndCompositeInput = function()
@@ -942,7 +944,11 @@
 		{
 			_style = ("left:-" + (this.HtmlAreaWidth >> 1) + "px;top:" + (-this.HtmlAreaOffset) + "px;");
 			_style += "color:transparent;caret-color:transparent;background:transparent;";
-			_style += (AscCommon.AscBrowser.isAppleDevices && !AscCommon.AscBrowser.isTelegramWebView && (AscCommon.AscBrowser.maxTouchPoints > 0)) ? "font-size:0px;" : "font-size:8px;";
+
+			if (this.Api.isUseOldMobileVersion())
+				_style += (AscCommon.AscBrowser.isAppleDevices && !AscCommon.AscBrowser.isTelegramWebView && (AscCommon.AscBrowser.maxTouchPoints > 0)) ? "font-size:0px;" : "font-size:8px;";
+			else
+				_style += "font-size:8px;";
 		}
 		else
 		{
@@ -1072,7 +1078,7 @@
 			_elem.style.height = _elemSrc.style.height;
 		}
 
-		if (this.Api.isMobileVersion)
+		if (this.Api.isUseOldMobileVersion())
 		{
 			var _elem1 = document.getElementById("area_id_parent");
 			var _elem2 = document.getElementById("area_id");
@@ -1143,7 +1149,7 @@
 	};
 	CTextInputPrototype.move = function(x, y)
 	{
-		if (this.Api.isMobileVersion)
+		if (this.Api.isUseOldMobileVersion())
 			return;
 
 		var oTarget = document.getElementById(this.TargetId);
@@ -1155,6 +1161,13 @@
 
 		if (AscCommon.AscBrowser.isSafari && AscCommon.AscBrowser.isMobile)
 			xPos = -100;
+
+		if (this.Api.editorId === AscCommon.c_oEditorId.Presentation)
+		{
+			let offset = this.Api.getTextInputOffset();
+			xPos += offset.X;
+			yPos += offset.Y;
+		}
 
 		this.HtmlDiv.style.left = xPos + this.FixedPosCheckElementX + "px";
 		this.HtmlDiv.style.top  = yPos + this.FixedPosCheckElementY + this.TargetOffsetY + this.HtmlAreaOffset + "px";
@@ -1218,11 +1231,22 @@
 
 		if (!this.isDisableKeyboard)
 		{
-			if (this.Api.isRestrictionView() && !this.Api.isRestrictionForms())
+			switch (this.Api.editorId)
 			{
-				// в пдф даем комментировать и заполнять формы во вью с сохранением в копию
-				if (!this.Api.isPdfEditor())
-					this.isDisableKeyboard = true;
+				case AscCommon.c_oEditorId.Word:
+				{
+					// use canEnterText instead this
+					break;
+				}
+				case AscCommon.c_oEditorId.Presentation:
+				case AscCommon.c_oEditorId.Spreadsheet:
+				{
+					if (this.Api.isRestrictionView() && !this.Api.isRestrictionForms())
+						this.isDisableKeyboard = true;
+					break;
+				}
+				default:
+					break;
 			}
 		}
 

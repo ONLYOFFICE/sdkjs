@@ -1217,11 +1217,10 @@
         var bIsRectsTrackX = (_len_x >= epsForCenter) ? true : false;
         var bIsRectsTrackY = (_len_y >= epsForCenter) ? true : false;
 
-        // для free text аннотации прямоугольника не рисуем
-        if (Asc.editor.isPdfEditor()) {
-            let oViewer = Asc.editor.getDocumentRenderer();
-            if (oViewer.curDrawingTrack)
-                bIsRectsTrackY = false;
+        // для stamp аннотации не рисуем
+        if (type == AscFormat.TYPE_TRACK.ANNOT_STAMP) {
+            bIsRectsTrackY = false;
+            bIsRectsTrackX = false;
         }
 
         var bIsRectsTrack = (bIsRectsTrackX || bIsRectsTrackY) ? true : false;
@@ -1257,6 +1256,7 @@
             case AscFormat.TYPE_TRACK.SHAPE:
             case AscFormat.TYPE_TRACK.GROUP:
             case AscFormat.TYPE_TRACK.CHART_TEXT:
+            case AscFormat.TYPE_TRACK.ANNOT_STAMP:
             {
                 if (bIsClever)
                 {

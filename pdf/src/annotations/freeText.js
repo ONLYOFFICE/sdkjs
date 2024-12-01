@@ -117,7 +117,7 @@
             return;
         }
 
-        AscCommon.History.Add(new CChangesPDFFreeTextRotate(this, this._rotate, nAngle));
+        AscCommon.History.Add(new CChangesPDFAnnotRotate(this, this._rotate, nAngle));
 		
 		AscCommon.ExecuteNoHistory(function() {
 			let oBodyPr = oTxShape.txBody.bodyPr;
@@ -651,7 +651,14 @@
 
             for (let i = 0; i < curKeys.length; i++) {
                 let key = curKeys[i];
-                if (curRC[key] !== calcedRC[key]) {
+                if (Array.isArray(curRC[key] && Array.isArray(calcedRC[key]))) {
+                    for (let nComp = 0, nCount = Math.max(curRC[key].length, calcedRC[key].length); nComp < nCount; nComp++) {
+                        if (curRC[key][nComp] !== calcedRC[key][nComp]) {
+                            return true;
+                        }
+                    }
+                }
+                else if (curRC[key] !== calcedRC[key]) {
                     return true;
                 }
             }
@@ -731,7 +738,7 @@
                     oLastUsedPara.Set_Align(AscPDF.getInternalAlignByPdfType(oRCInfo["alignment"]));
                 }
                 else {
-                    oRun.Add(AscPDF.codePointToRunElement(nCharCode));
+                    oRun.AddToContentToEnd(AscPDF.codePointToRunElement(nCharCode));
                 }
             }
         }
@@ -1308,7 +1315,6 @@
         let oViewer         = editor.getDocumentRenderer();
         let oDoc            = this.GetDocument();
         let oDrDoc          = oDoc.GetDrawingDocument();
-        this.isInMove       = false;
 
         this.selectStartPage = this.GetPage();
         
@@ -1330,20 +1336,19 @@
                 let yContent    = oTransform.TransformPointY(0, Y);
 
                 if (this.IsInTextBox() == false) {
-                    this.selectedObjects.length = 0;
-                    oContent.Selection_SetStart(xContent, yContent, 0, e);
-                    oContent.RemoveSelection();
-                    oContent.RecalculateCurPos();
-
-                    oDrDoc.UpdateTargetFromPaint = true;
-                    oDrDoc.TargetStart(true);
-                    this.SetInTextBox(true);
-
                     oDoc.SetGlobalHistory();
                     oDoc.DoAction(function() {
                         this.FitTextBox();
                     }, AscDFH.historydescription_Pdf_FreeTextFitTextBox, this);
                     oDoc.SetLocalHistory();
+
+                    this.selectedObjects.length = 0;
+                    oContent.Selection_SetStart(xContent, yContent, 0, e);
+                    oContent.RemoveSelection();
+                    oContent.RecalculateCurPos();
+                    oDrDoc.UpdateTargetFromPaint = true;
+                    oDrDoc.TargetStart(true);
+                    this.SetInTextBox(true);
                 }
                 else {
                     oContent.SelectAll();
@@ -1362,14 +1367,8 @@
     };
     CAnnotationFreeText.prototype.onAfterMove = function() {
         this.onMouseDown();
-        this.isInMove = false;
     };
     CAnnotationFreeText.prototype.onPreMove = function(x, y, e) {
-        if (this.isInMove)
-            return;
-
-        this.isInMove = true; // происходит ли resize/move действие
-
         let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
 
@@ -1385,7 +1384,6 @@
 
         let oCursorInfo = oDrawingObjects.getGraphicInfoUnderCursor(pageObject.index, X, Y);
         if (oCursorInfo.cursorType == null) {
-            this.isInMove = false;
             return;
         }
 

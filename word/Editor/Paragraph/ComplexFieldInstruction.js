@@ -1771,6 +1771,7 @@ CFieldInstructionParser.prototype.private_ReadREF = function(sBookmarkName)
 			this.Result.SetBookmarkName(arrArguments[0]);
 		}
 	}
+	
 	while (this.private_ReadNext())
 	{
 		if (this.private_IsSwitch())
@@ -1813,6 +1814,10 @@ CFieldInstructionParser.prototype.private_ReadREF = function(sBookmarkName)
 			{
 				this.Result.SetIsPosition(true);
 			}
+		}
+		else if ("" === this.Result.GetBookmarkName())
+		{
+			this.Result.SetBookmarkName(this.Buffer);
 		}
 	}
 };

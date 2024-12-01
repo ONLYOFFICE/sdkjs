@@ -3658,6 +3658,8 @@ function (window, undefined) {
 			this.protectionPrint = obj.protectionPrint;
 
 			this.bSetOriginalSize = obj.bSetOriginalSize;
+			this.transparent = obj.transparent;
+			this.isCrop      = obj.isCrop;
 
 		}
 		else {
@@ -3716,6 +3718,9 @@ function (window, undefined) {
 			this.protectionLocked = undefined;
 			this.protectionPrint = undefined;
 			this.bSetOriginalSize = undefined;
+
+			this.transparent = undefined;
+			this.isCrop      = undefined;
 		}
 	}
 
@@ -4095,7 +4100,16 @@ function (window, undefined) {
 	asc_CImgProperty.prototype.asc_putProtectionPrint = function (v) {
 		this.protectionPrint = v;
 	};
+	asc_CImgProperty.prototype.asc_getTransparent = function () {
+		return this.transparent;
+	};
+	asc_CImgProperty.prototype.asc_putTransparent = function (v) {
+		this.transparent = v;
+	};
 
+	asc_CImgProperty.prototype.asc_getIsCrop = function () {
+		return this.isCrop;
+	};
 	/** @constructor */
 	function asc_CSelectedObject(type, val) {
 		this.Type = (undefined != type) ? type : null;
@@ -4108,6 +4122,8 @@ function (window, undefined) {
 	asc_CSelectedObject.prototype.asc_getObjectValue = function () {
 		return this.Value;
 	};
+
+
 
 	/** @constructor */
 	function asc_CShapeFill() {
@@ -4599,7 +4615,14 @@ function (window, undefined) {
 	CHyperlinkProperty.prototype['get_Heading'] = CHyperlinkProperty.prototype.get_Heading;
 
 
-	/** @constructor */
+	/**
+	 * @property {string|null} Id
+	 * @property {string|null} FullName
+	 * @property {string|null} FirstName
+	 * @property {string|null} LastName
+	 * @property {boolean|null} IsAnonymousUser
+	 * @constructor
+	 *  */
 	function asc_CUserInfo() {
 		this.Id = null;
 		this.FullName = null;
@@ -4607,7 +4630,15 @@ function (window, undefined) {
 		this.LastName = null;
 		this.IsAnonymousUser = false;
 	}
-
+	asc_CUserInfo.prototype.clone = function () {
+		let res = new asc_CUserInfo();
+		res.Id = this.Id;
+		res.FullName = this.FullName;
+		res.FirstName = this.FirstName;
+		res.LastName = this.LastName;
+		res.IsAnonymousUser = this.IsAnonymousUser;
+		return res;
+	};
 	asc_CUserInfo.prototype.asc_putId = asc_CUserInfo.prototype.put_Id = function (v) {
 		this.Id = v;
 	};
@@ -4639,7 +4670,32 @@ function (window, undefined) {
 		this.IsAnonymousUser = v;
 	};
 
-	/** @constructor */
+	/**
+	 * @property {string|null} Id
+	 * @property {string|null} Url
+	 * @property {string|null} Title
+	 * @property {string|null} Format
+	 * @property {string|null} VKey
+	 * @property {string|null} Token
+	 * @property {asc_CUserInfo|null} UserInfo
+	 * @property {object|null} Options
+	 * @property {string|null} CallbackUrl
+	 * @property {object|null} TemplateReplacement
+	 * @property {string|null} Mode
+	 * @property {object|null} Permissions
+	 * @property {string|null} Lang
+	 * @property {boolean|null} OfflineApp
+	 * @property {boolean|undefined} Encrypted
+	 * @property {object|undefined} EncryptedInfo
+	 * @property {boolean|null} IsEnabledPlugins
+	 * @property {boolean|null} IsEnabledMacroses
+	 * @property {boolean|null} IsWebOpening
+	 * @property {boolean|null} SupportsOnSaveDocument
+	 * @property {object|null} Wopi
+	 * @property {string|null} shardkey
+	 * @property {object|null} ReferenceData
+	 * @constructor
+	 * */
 	function asc_CDocInfo() {
 		this.Id = null;
 		this.Url = null;
@@ -4669,6 +4725,71 @@ function (window, undefined) {
 	}
 
 	prot = asc_CDocInfo.prototype;
+	prot.clone = function () {
+		let res = new asc_CDocInfo();
+		res.Id = this.Id;
+		res.Url = this.Url;
+		res.Title = this.Title;
+		res.Format = this.Format;
+		res.VKey = this.VKey;
+		res.Token = this.Token;
+		res.UserInfo = this.UserInfo ? this.UserInfo.clone() : null;
+		res.Options = this.Options ? JSON.parse(JSON.stringify(this.Options)) : null;
+		res.CallbackUrl = this.CallbackUrl;
+		res.TemplateReplacement = this.TemplateReplacement ? JSON.parse(JSON.stringify(this.TemplateReplacement)) : null;
+		res.Mode = this.Mode;
+		res.Permissions = this.Permissions ? JSON.parse(JSON.stringify(this.Permissions)) : null;
+		res.Lang = this.Lang;
+		res.OfflineApp = this.OfflineApp;
+		res.Encrypted = this.Encrypted;
+		res.EncryptedInfo = this.EncryptedInfo ? JSON.parse(JSON.stringify(this.EncryptedInfo)) : undefined;
+		res.IsEnabledPlugins = this.IsEnabledPlugins;
+		res.IsEnabledMacroses = this.IsEnabledMacroses;
+		res.IsWebOpening = this.IsWebOpening;
+		res.SupportsOnSaveDocument = this.SupportsOnSaveDocument;
+		res.Wopi = this.Wopi ? JSON.parse(JSON.stringify(this.Wopi)) : null;
+		res.shardkey = this.shardkey;
+		res.ReferenceData = this.ReferenceData ? JSON.parse(JSON.stringify(this.ReferenceData)) : null;
+		return res;
+	};
+	prot.extendWithWopiParams = function(data) {
+		let docInfo = this.clone();
+		//like in web-apps/apps/api/wopi/editor-wopi.ejs and onRefreshFile(web-apps/apps/documenteditor/main/app/controller/Main.js)
+		let key = data["key"];
+		let userAuth = data["userAuth"];
+		let fileInfo = data["fileInfo"];
+		let token = data["token"];
+
+		docInfo.put_Id(key);
+		if (fileInfo["FileUrl"]) {
+			docInfo.put_Url(fileInfo["FileUrl"]);
+		} else if (fileInfo["TemplateSource"]) {
+			docInfo.put_Url(fileInfo["TemplateSource"]);
+		} else if (userAuth) {
+			docInfo.put_Url(userAuth["wopiSrc"] + "/contents?access_token=" + userAuth["access_token"]);
+		}
+		docInfo.put_Title(fileInfo["BreadcrumbDocName"] || fileInfo["BaseFileName"]);
+		docInfo.put_CallbackUrl(JSON.stringify(userAuth),);
+		docInfo.put_Token(token);
+		//todo does userInfo can change? (IsAnonymousUser)
+
+		let fileType = fileInfo["BaseFileName"] ? fileInfo["BaseFileName"].substr(fileInfo["BaseFileName"].lastIndexOf('.') + 1) : "";
+		fileType = fileInfo["FileExtension"] ? fileInfo["FileExtension"].substr(1) : fileType;
+		fileType = fileType.toLowerCase();
+		docInfo.put_Format(fileType);
+		docInfo.put_Mode(userAuth["mode"]);
+		//todo does permissions can change? (formsubmit, dchat)
+		docInfo.put_CoEditingMode(userAuth["mode"] !== "view" ? "fast" : "strict");
+
+		docInfo.put_Wopi({
+			"FileNameMaxLength": fileInfo["FileNameMaxLength"] && fileInfo["FileNameMaxLength"] > 0 ? fileInfo["FileNameMaxLength"] : 250,
+			"WOPISrc": userAuth["wopiSrc"],
+			"UserSessionId": userAuth["userSessionId"],
+			"Version": fileInfo["Version"],
+			"LastModifiedTime": fileInfo["LastModifiedTime"]
+		});
+		return docInfo;
+	};
 	prot.isFormatWithForms = function () {
 		return this.Format === "oform" || this.Format === "docxf" || this.Format === "pdf";
 	};
@@ -5077,7 +5198,13 @@ function (window, undefined) {
 			let ctx = canvasTransparent.getContext("2d");
 			ctx.globalAlpha = this.transparent;
 			ctx.drawImage(this.image, 0, 0);
-			this.imageBase64 = canvasTransparent.toDataURL("image/png");
+			try {
+				this.imageBase64 = canvasTransparent.toDataURL("image/png");
+			}
+			catch (e) {
+				this.imageBase64 = undefined;
+				this.api.sendEvent("asc_onError", Asc.c_oAscError.ID.CannotSaveWatermark, Asc.c_oAscError.Level.NoCritical);
+			}
 			canvasTransparent = null;
 		};
 		this.EndRenderer = function () {
@@ -5087,6 +5214,9 @@ function (window, undefined) {
 			this.imageBase64 = undefined;
 		};
 		this.DrawOnRenderer = function (renderer, w, h) {
+			if(!this.imageBase64) {
+				return;
+			}
 			let wMM = this.width * AscCommon.g_dKoef_pix_to_mm / this.zoom;
 			let hMM = this.height * AscCommon.g_dKoef_pix_to_mm / this.zoom;
 			let x = (w - wMM) / 2;
@@ -5136,7 +5266,7 @@ function (window, undefined) {
 				}
 
 				let _oldTrackRevision = false;
-				if (oApi.getEditorId() === AscCommon.c_oEditorId.Word && oApi.WordControl && !oApi.isPdfEditor())
+				if (oApi.getEditorId() === AscCommon.c_oEditorId.Word && oApi.WordControl && oApi.WordControl.m_oLogicDocument && !oApi.isPdfEditor())
 					_oldTrackRevision = oApi.WordControl.m_oLogicDocument.GetLocalTrackRevisions();
 
 				if (false !== _oldTrackRevision)
@@ -5190,7 +5320,11 @@ function (window, undefined) {
 				if (undefined != align) {
 					oShape.setVerticalAlign(align);
 				}
+				else {
 
+					oShape.setVerticalAlign(1);//ctr
+				}
+				oShape.setVertOverflowType(AscFormat.nVOTOverflow);
 				if (Array.isArray(obj['margins']) && obj['margins'].length === 4) {
 					oShape.setPaddings({
 						Left: obj['margins'][0],
@@ -5451,6 +5585,13 @@ function (window, undefined) {
 			this.zoom = 1;
 			this.calculatezoom = 0;
 			this.CheckParams();
+
+			if (this.contentObjects && "string" === typeof this.contentObjects["fill"])
+			{
+				this.imageBackgroundUrl = this.contentObjects["fill"];
+				this.imageBackground = {};
+			}
+
 			this.Generate();
 		};
 	}
@@ -6657,7 +6798,9 @@ function (window, undefined) {
 	prot["put_ProtectionLocked"] = prot["asc_putProtectionLocked"] = prot.asc_putProtectionLocked;
 	prot["get_ProtectionPrint"] = prot["asc_getProtectionPrint"] = prot.asc_getProtectionPrint;
 	prot["put_ProtectionPrint"] = prot["asc_putProtectionPrint"] = prot.asc_putProtectionPrint;
-
+	prot["get_Transparent"] = prot["asc_getTransparent"] = prot.asc_getTransparent;
+	prot["put_Transparent"] = prot["asc_putTransparent"] = prot.asc_putTransparent;
+	prot["get_IsCrop"] = prot["asc_getIsCrop"] = prot.asc_getIsCrop;
 
 	window["AscCommon"].asc_CSelectedObject = asc_CSelectedObject;
 	prot = asc_CSelectedObject.prototype;

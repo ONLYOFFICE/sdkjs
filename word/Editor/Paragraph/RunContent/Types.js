@@ -79,6 +79,8 @@ var para_Bookmark                  = 0x0047;
 var para_RevisionMove              = 0x0048;
 var para_EndnoteReference          = 0x0049; // Ссылка на сноску
 var para_EndnoteRef                = 0x004a; // Номер сноски (должен быть только внутри сноски)
+var para_PermStart                 = 0x004b;
+var para_PermEnd                   = 0x004c;
 
 (function(window)
 {

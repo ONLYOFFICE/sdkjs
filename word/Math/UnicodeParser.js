@@ -42,6 +42,7 @@
 	const Tokenizer				= AscMath.Tokenizer;
 	const FunctionNames			= AscMath.functionNames;
 	const LimitNames			= AscMath.LimitFunctions;
+	const LRBracketType			= { open: 1, close: 0};
 
 	function CUnicodeParser() {
 		this.oTokenizer			= new Tokenizer(false);
@@ -51,8 +52,10 @@
 		this.isSaveTokens		= false;
 		this.isSpaceExit		= false;
 
-		//need for group like "|1+2|"
-		this.strBreakSymbol		= [];
+		this.prevLookahead		= null;
+		this.bracketStack		= [];
+		this.barStack			= [];
+		this.nBarCount			= 0;
 	}
 	CUnicodeParser.prototype.GetSpaceExitFunction = function (oFunc, oArg)
 	{
@@ -75,7 +78,8 @@
 	CUnicodeParser.prototype.Parse = function (string)
 	{
 		this.oTokenizer.Init(string);
-		this.oLookahead = this.oTokenizer.GetNextToken();
+		this.prevLookahead	= null;
+		this.oLookahead		= this.oTokenizer.GetNextToken();
 		return this.Program();
 	};
 	CUnicodeParser.prototype.Program = function ()
@@ -732,18 +736,24 @@
 		|| Literals.lBrackets.SearchU(this.oLookahead.data)
 		|| Literals.lrBrackets.SearchU(this.oLookahead.data)
 	}
-	CUnicodeParser.prototype.IsExpBracketLiteral = function ()
-	{
-		return (this.IsOpOpenerLiteral() ||
-			this.oLookahead.class === Literals.lrBrackets.id ||
-			this.oLookahead.data === "├" ||
-			this.oLookahead.data === "\\left" ||
-			this.oLookahead.data === "\\open"
-		) && !this.strBreakSymbol.includes(this.oLookahead.data) && this.strBreakSymbol[this.strBreakSymbol.length - 1] !== this.oLookahead.data;
-	};
 	CUnicodeParser.prototype.IsOpCloserLiteral = function()
 	{
 		return this.oLookahead.class === Literals.rBrackets.id || this.oLookahead.class === Literals.lrBrackets.id || this.oLookahead.data === "┤" || this.oLookahead.data === "\\right"
+	}
+	CUnicodeParser.prototype.IsExpBracketLiteral = function ()
+	{
+		return (this.oLookahead.class === Literals.lBrackets.id
+			|| this.oLookahead.class === Literals.lrBrackets.id
+			|| this.oLookahead.data === "├"
+			|| this.oLookahead.data === "\\left"
+			|| this.oLookahead.data === "\\open") && !this.oLookahead.isClose;
+	};
+	CUnicodeParser.prototype.GetTypeOfLastLRInStack = function ()
+	{
+		if (this.bracketStack.length > 0)
+			return this.bracketStack[this.bracketStack.length - 1];
+
+		return false;
 	}
 	CUnicodeParser.prototype.GetExpBracketLiteral = function ()
 	{
@@ -753,121 +763,177 @@
 			endStyle,
 			oExp;
 
-		if (this.oLookahead.class === Literals.lBrackets.id
-			|| this.oLookahead.class === Literals.lrBrackets.id
-			|| this.oLookahead.data === "├"
-			|| this.oLookahead.data === "\\left"
-			|| this.oLookahead.data === "\\open")
+		let oNextLookahead = this.oTokenizer.GetNextToken(true);
+
+		if (this.oLookahead.data === "|" || this.oLookahead.data === "‖")
 		{
-			if (this.oLookahead.data === "├"
-				|| this.oLookahead.data === "\\left"
-				|| this.oLookahead.data === "\\open")
+			let oLastType = this.GetTypeOfLastLRInStack();
+
+			if (this.nBarCount % 2 === 0)
 			{
-				startStyle = this.oLookahead.style;
-				strOpen = this.EatToken(this.oLookahead.class).data;
-				if (this.IsBracketLiteral())
+				if ((oLastType === false
+					|| this.prevLookahead.class === Literals.operator.id
+					|| this.prevLookahead.class === Literals.lBrackets.id
+					|| this.prevLookahead.class === Literals.special.id
+					|| this.prevLookahead.class === Literals.char.id
+					|| this.prevLookahead.data === " ")
+					&& oNextLookahead.class !== Literals.operator.id
+					&& oNextLookahead.class !== undefined
+					)
 				{
-					strOpen = this.oLookahead.data;
-					this.EatToken(this.oLookahead.class);
-				}
-				else if (strOpen !== "\\left" && strOpen !== "\\open")
-				{
-					strOpen = ".";
-				}
-			}
-			else if (this.IsBracketLiteral())
-			{
-				startStyle = this.oLookahead.style;
-				strOpen = this.GetOpOpenLiteral();
-			}
-
-			this.strBreakSymbol.push("|", "‖");
-
-			if (this.IsPreScriptLiteral() && strOpen === "(")
-			{
-				return this.GetPreScriptLiteral(strOpen, true);
-			}
-
-			let isTempSpaceExit = undefined;
-			if (this.isSpaceExit === true)
-			{
-				isTempSpaceExit = this.isSpaceExit;
-				this.isSpaceExit = false;
-			}
-
-			let arrContent = this.GetContentOfBracket();
-			oExp = arrContent[0];
-			let counter = arrContent[1];
-			let middle_styles = arrContent[2];
-
-			if (isTempSpaceExit !== undefined)
-				this.isSpaceExit = isTempSpaceExit;
-
-			if (oExp.length === 0 && !this.IsOpCloserLiteral())
-			{
-				return {
-					type: Struc.char,
-					value: strOpen,
-					style: startStyle
-				}
-			}
-
-			if (this.oLookahead.data === "┤"
-				|| this.oLookahead.data === "\\right"
-				|| this.oLookahead.data === "\\close")
-			{
-				this.EatToken(this.oLookahead.class);
-				if (this.IsBracketLiteral())
-				{
-					strClose = this.oLookahead.data;
-					endStyle = this.oLookahead.style;
-					this.EatToken(this.oLookahead.class);
+					this.bracketStack.push(LRBracketType.open);
+					this.barStack.push(this.nBarCount);
+					this.nBarCount++;
 				}
 				else
 				{
-					strClose = ".";
+					this.bracketStack.pop();
+					this.oLookahead.isClose = true;
+					this.nBarCount++;
+					return [];
 				}
 			}
 			else
 			{
-				if (this.IsBracketLiteral())
+				if (oNextLookahead.class === undefined
+					|| oNextLookahead.class === Literals.rBrackets.id
+					|| oNextLookahead.class === Literals.operator.id
+					|| oNextLookahead.class === Literals.char.id
+					)
 				{
-					endStyle = this.oLookahead.style;
-					strClose = this.GetOpCloseLiteral();
+					this.bracketStack.pop();
+					this.oLookahead.isClose = true;
+					this.nBarCount++;
+					return [];
+				}
+				else
+				{
+					this.bracketStack.push(LRBracketType.open);
+					this.barStack.push(this.nBarCount);
+					this.nBarCount++;
 				}
 			}
-
-			if (!strClose)
-			{
-				return [{
-					type: Struc.char,
-					value: strOpen,
-					style: startStyle,
-				}, oExp]
-			}
-
-			if (strOpen === "〖" && strClose === "〗" && counter === 1)
-				return oExp;
-
-			return {
-				type: Struc.bracket_block,
-				value: oExp,
-				left: strOpen,
-				right: strClose,
-				counter: counter,
-				style: {
-					startStyle : startStyle,
-					endStyle : endStyle,
-					middle: middle_styles,
-				},
-			};
 		}
-		else if (this.oLookahead.data === "├"
-			|| this.oLookahead.data === "\\left"
-			|| this.oLookahead.data === "\\open")
+		else if (this.oLookahead.class === Literals.lBrackets.id)
 		{
-			return this.EatCloseOrOpenBracket();
+			this.bracketStack.push(LRBracketType.open);
+			this.barStack.push(this.nBarCount);
+			this.nBarCount = 0;
 		}
+		else if (this.oLookahead.class === Literals.rBrackets.id)
+		{
+			let oLastType = this.GetTypeOfLastLRInStack();
+
+
+			if (oLastType === LRBracketType.open)
+			{
+				this.bracketStack.pop();
+				this.oLookahead.isClose = true;
+
+				if (this.barStack.length > 0)
+					this.nBarCount = this.barStack.pop();
+
+				return [];
+			}
+		}
+
+		if (this.oLookahead.data === "├" || this.oLookahead.data === "\\left" || this.oLookahead.data === "\\open")
+		{
+			startStyle	= this.oLookahead.style;
+			strOpen		= this.EatToken(this.oLookahead.class).data;
+
+			if (this.IsBracketLiteral())
+			{
+				strOpen		= this.oLookahead.data;
+				this.EatToken(this.oLookahead.class);
+			}
+			else if (strOpen !== "\\left" && strOpen !== "\\open")
+			{
+				strOpen		= ".";
+			}
+		}
+		else if (this.IsBracketLiteral())
+		{
+			startStyle		= this.oLookahead.style;
+			strOpen			= this.GetOpOpenLiteral();
+		}
+
+		if (this.IsPreScriptLiteral() && strOpen === "(")
+		{
+			return this.GetPreScriptLiteral(strOpen, true);
+		}
+
+		let isTempSpaceExit = undefined;
+		if (this.isSpaceExit === true)
+		{
+			isTempSpaceExit = this.isSpaceExit;
+			this.isSpaceExit = false;
+		}
+
+		let arrContent		= this.GetContentOfBracket();
+
+		oExp				= arrContent[0];
+		let counter			= arrContent[1];
+		let middle_styles	= arrContent[2];
+
+		if (isTempSpaceExit !== undefined)
+			this.isSpaceExit = isTempSpaceExit;
+
+		if (oExp.length === 0 && !this.IsOpCloserLiteral())
+		{
+			return {
+				type: Struc.char,
+				value: strOpen,
+				style: startStyle
+			}
+		}
+
+		if (this.oLookahead.data === "┤" || this.oLookahead.data === "\\right" || this.oLookahead.data === "\\close")
+		{
+			this.EatToken(this.oLookahead.class);
+
+			if (this.IsBracketLiteral())
+			{
+				strClose	= this.oLookahead.data;
+				endStyle	= this.oLookahead.style;
+
+				this.EatToken(this.oLookahead.class);
+			}
+			else
+			{
+				strClose	= ".";
+			}
+		}
+		else if (this.IsBracketLiteral())
+		{
+			endStyle	= this.oLookahead.style;
+			strClose	= this.GetOpCloseLiteral();
+		}
+
+		if (!strClose)
+		{
+			return [{
+				type: Struc.char,
+				value: strOpen,
+				style: startStyle,
+			}, oExp]
+		}
+
+		if (strOpen === "〖" && strClose === "〗" && counter === 1)
+			return oExp;
+
+		return {
+			type: Struc.bracket_block,
+			value: oExp,
+			left: strOpen,
+			right: strClose,
+			counter: counter,
+			style: {
+				startStyle : startStyle,
+				endStyle : endStyle,
+				middle: middle_styles,
+			},
+		};
 	};
 	CUnicodeParser.prototype.GetContentOfBracket = function ()
 	{
@@ -2152,6 +2218,8 @@
 	};
 	CUnicodeParser.prototype.GetMatrixLiteral = function ()
 	{
+		this.SaveTokensWhileReturn();
+
 		let oStyles = {
 			head: this.oLookahead.style,
 			cols: {},
@@ -2207,6 +2275,9 @@
 				style:	oStyles,
 			};
 		}
+
+		// get error by parsing matrix or array - write as text
+		return this.WriteSavedTokens();
 	};
 	CUnicodeParser.prototype.IsMatrixLiteral = function ()
 	{
@@ -2337,18 +2408,11 @@
 	{
 		const token = this.oLookahead;
 
-		// if (token === null) {
-		// 	console.log('Unexpected end of input, expected: "' + tokenType + '"');
-		// }
-		//
-		// if (token.class !== tokenType) {
-		// 	console.log('Unexpected token: "' + token.class + '", expected: "' + tokenType + '"');
-		// }
-
 		if (this.isSaveTokens)
 			this.arrSavedTokens.push(this.oLookahead);
 
-		this.oLookahead = this.oTokenizer.GetNextToken();
+		this.prevLookahead	= this.oLookahead;
+		this.oLookahead		= this.oTokenizer.GetNextToken();
 		return token;
 	};
 	CUnicodeParser.prototype.GetContentOfLiteral = function (oContent)
