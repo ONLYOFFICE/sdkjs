@@ -3051,7 +3051,6 @@ CChartsDrawer.prototype =
 				const numIndexes = [0];
 				const strRealIndexes = [0];
 				let realIndex = null;
-				let lastLayerIndex = 0;
 				let strArr = strCache[0].pts;
 				let prevVal = strArr[0].idx === 0 ? strArr[0].val : null;
 				let row = prevVal !== null ? 1 : 0;
@@ -3059,6 +3058,7 @@ CChartsDrawer.prototype =
 				let col = 0;
 				let currIdx = 0;
 
+				// function to update all indexes of current column
 				const updateCurrent = function () {
 					strItIndexes[col] = row;
 					strRealIndexes[col] = realIndex;
