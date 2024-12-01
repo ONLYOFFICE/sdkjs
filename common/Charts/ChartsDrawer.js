@@ -7913,7 +7913,7 @@ drawSunburstChart.prototype = {
 				} else {
 					const angle = head[i].pVal * Math.PI * 2;
 					this.paths[head[i].idx] = this._calculateSegment(startingAngle, angle, ringWidth * currentLayer, ringWidth * (currentLayer + 1), coords);
-					if (head[i].children.length > 0) {
+					if (head[i].children && head[i].children.length > 0) {
 						indexesStack.push(i);
 						currentLayer += 1;
 						anglesStack.push(startingAngle + angle);
@@ -19058,6 +19058,7 @@ CColorObj.prototype =
 
 	function CCachedSunburst(type, numLit, strLit ) {
 		CCachedChartExData.call(this, type, []);
+		this.layersCount = 0;
 		this._calculate(numLit, strLit);
 	}
 
@@ -19068,14 +19069,19 @@ CColorObj.prototype =
 			return;
 		}
 
+		this.createSunburst(numLit.pts, strLit);
+		this.sortSunburstAndCountLayers();
+	}
+
+	CCachedSunburst.prototype.createSunburst = function (numArr, strLit) {
 		// Find index of last layer
-		const getLastLayer = function (strCache) {
-			if (!strCache || strCache.length <= 1) {
+		const getLastLayer = function (strLit) {
+			if (!strLit || strLit.length <= 1) {
 				return null;
 			}
 
-			for (let i = strCache.length - 1; i >= 0; i--) {
-				if (strCache[i].pts.length > 0) {
+			for (let i = strLit.length - 1; i >= 0; i--) {
+				if (strLit[i].pts.length > 0) {
 					return i;
 				}
 			}
@@ -19083,15 +19089,15 @@ CColorObj.prototype =
 		}
 
 		// Normalize all elements that either negative or have no corresponding label to zero
-		const normalizeNumArr = function (numArr, strCache, lastLayer) {
+		const normalizeNumArr = function (numArr, strLit, lastLayer) {
 			// turn all elements that have no corresponding label into zero
 			const verifiedIdxs = {};
 
-			// Populate `verifiedIdxs` if there are labels in `strCache`
+			// Populate `verifiedIdxs` if there are labels in `strLit`
 			if (lastLayer !== null) {
-				for (let i = 0; i < strCache.length; i++) {
-					for (let j = 0; j < strCache[i].pts.length; j++) {
-						verifiedIdxs[strCache[i].pts[j].idx] = true;
+				for (let i = 0; i < strLit.length; i++) {
+					for (let j = 0; j < strLit[i].pts.length; j++) {
+						verifiedIdxs[strLit[i].pts[j].idx] = true;
 					}
 				}
 			}
@@ -19118,8 +19124,8 @@ CColorObj.prototype =
 			return sum;
 		}
 
-		// Transform strCache and numArr into a sunburst
-		const createSunburst = function (numArr, strCache, totalValue, lastLayer) {
+		// Transform strLit and numArr into a sunburst
+		const createSunburst = function (numArr, strLit, totalValue, lastLayer) {
 			const treeHead = [];
 			if (lastLayer != null) {
 				let head = treeHead;
@@ -19128,7 +19134,7 @@ CColorObj.prototype =
 				const numIndexes = [0];
 				const strRealIndexes = [0];
 				let realIndex = null;
-				let strArr = strCache[0].pts;
+				let strArr = strLit[0].pts;
 				let prevVal = strArr[0].idx === 0 ? strArr[0].val : null;
 				let row = prevVal !== null ? 1 : 0;
 				const nullIndexes = [];
@@ -19136,58 +19142,83 @@ CColorObj.prototype =
 				let currIdx = 0;
 
 				// function to update all indexes of current column
-				const updateCurrent = function () {
+				const updateCurrentColumn = function () {
 					strItIndexes[col] = row;
 					strRealIndexes[col] = realIndex;
 					nullIndexes[col] = prevVal === null;
 				}
 
-				const goNext = function () {
-					col += 1;
+				const goNextColumn = function () {
 
-					if (col === strItIndexes.length) {
-						strItIndexes.push(0);
-						numIndexes.push(0);
-						strRealIndexes.push(0);
-						nullIndexes.push(true);
-					}
+					let nextRow = null;
+					do {
+						// failed to go to the next column;
+						if (nextRow !== null && col >= lastLayer) {
+							return false;
+						}
 
-					strArr = strCache[col].pts;
-					let nextRow = strItIndexes[col];
-
-					while (nextRow >= strArr.length) {
-						if (col !== lastLayer) {
+						// handle cases when we skipped more than one column
+						if (nextRow !== null) {
 							strRealIndexes[col] = strRealIndexes[col - 1];
 							nullIndexes[col] = true;
-							col += 1;
-
-							if (col === strItIndexes.length) {
-								strItIndexes.push(0);
-								numIndexes.push(0);
-								strRealIndexes.push(0);
-								nullIndexes.push(true);
-							}
-
-							strArr = strCache[col].pts;
-							nextRow = strItIndexes[col];
-
-						} else {
-							numIndexes[col] = numArr[numIndexes[col]].idx < realIndex ? numIndexes[col] + 1 : numIndexes[col];
-							col -= 1;
-							if (prevVal !== null) {
-								head = parent
-								parent = head.length > 0 ? head[head.length - 1].parent : null;
-							} else {
-								numIndexes[col] = Math.max(numIndexes[col], numIndexes[col + 1]);
-							}
-							strArr = strCache[col].pts;
-							nextRow = strItIndexes[col];
-							break;
 						}
-					}
 
+						// updateColumn;
+						col += 1;
+
+						// if it is the first time in this column then add new indexes
+						if (col === strItIndexes.length) {
+							strItIndexes.push(0);
+							numIndexes.push(0);
+							strRealIndexes.push(0);
+							nullIndexes.push(true);
+						}
+
+						// update strArr and nextRow;
+						strArr = strLit[col].pts;
+						nextRow = strItIndexes[col];
+
+					} while (nextRow >= strArr.length);
+
+					// prepare prevVal and currentRow for next column
 					prevVal = nextRow < strArr.length && strArr[nextRow].idx === strRealIndexes[col] ? strArr[nextRow].val : null;
 					row = prevVal !== null ? nextRow : nextRow - 1;
+					return true;
+				}
+
+				const handleFailedTrial = function () {
+					// col is currently in last layer;
+					// update numindexes for last layer;
+					numIndexes[col] = numArr[numIndexes[col]].idx < realIndex ? numIndexes[col] + 1 : numIndexes[col];
+
+					// go to the previous layer
+					col -= 1;
+
+					// if prevVal then we are currently in empty branch
+					// if not then update numIndexes, because we are returned to previous layer
+					if (prevVal !== null) {
+						head = parent
+						parent = head.length > 0 ? head[head.length - 1].parent : null;
+					} else {
+						numIndexes[col] = Math.max(numIndexes[col], numIndexes[col + 1]);
+					}
+
+					// return to prev strArr
+					strArr = strLit[col].pts;
+					const prevRow = strItIndexes[col];
+					if (prevRow === strArr.length) {
+						row = prevRow;
+						return;
+					}
+					prevVal = prevRow < strArr.length && strArr[prevRow].idx === strRealIndexes[col] ? strArr[prevRow].val : null;
+					row = prevVal !== null ? prevRow : prevRow - 1;
+				}
+
+				const updateNumIndexes = function () {
+					if (prevVal === null) {
+						numIndexes[col] = numArr[numIndexes[col]].idx < realIndex ? numIndexes[col] + 1 : numIndexes[col];
+					}
+					prevVal = row < strArr.length ? strArr[row].val : null;
 				}
 
 				const getPercent = function (end) {
@@ -19215,37 +19246,29 @@ CColorObj.prototype =
 					}
 				}
 
-				const updateNumIndexes = function () {
-					if (prevVal === null) {
-						numIndexes[col] = numArr[numIndexes[col]].idx < realIndex ? numIndexes[col] + 1 : numIndexes[col];
-					}
-					prevVal = row < strArr.length ? strArr[row].val : null;
-				}
-
 				const goBack = function () {
-					const currentCol = col;
-					col -= 1;
-					const lastIdx = strRealIndexes[col];
-
-					if (!nullIndexes[col]) {
-						head = parent
-						parent = head.length > 0 ? head[head.length - 1].parent : null;
+					if (col === 0) {
+						return;
 					}
 
-					numIndexes[col] = Math.max(numIndexes[col], numIndexes[currentCol]);
-
+					// go back both in columns and in tree
 					let index = col - 1;
-					while (index >= 0 && strRealIndexes[index] === lastIdx) {
+					let lastIdx = strRealIndexes[index];
+					do {
 						if (!nullIndexes[index]) {
 							head = parent
 							parent = head.length > 0 ? head[head.length - 1].parent : null;
 						}
-						numIndexes[index] = Math.max(numIndexes[index], numIndexes[currentCol]);
-						col -= 1;
-						index -= 1;
-					}
+						numIndexes[index] = Math.max(numIndexes[index], numIndexes[col]);
 
-					strArr = strCache[col].pts;
+						index -= 1;
+					} while (index >= 0 && strRealIndexes[index] === lastIdx)
+
+					//updateCurrentCol
+					col = index + 1;
+
+					// return to prevStrArr
+					strArr = strLit[col].pts;
 					const prevRow = strItIndexes[col];
 					if (prevRow === strArr.length) {
 						row = prevRow;
@@ -19270,18 +19293,19 @@ CColorObj.prototype =
 					const isNewLabel = !isLastElem && strArr[row].val !== prevVal;
 
 					if (isLastElem || isNewLabel || isLastLayer || isOutOfGroup) {
-						realIndex = ( isLastElem || isOutOfGroup )? (col > 0 ? strRealIndexes[col - 1] : strCache[col].ptCount): strArr[row].idx;
+						realIndex = ( isLastElem || isOutOfGroup )? (col > 0 ? strRealIndexes[col - 1] : strLit[col].ptCount): strArr[row].idx;
 						if (prevVal !== null) {
 							const cell = createCell();
 							updateTree(cell, isLastLayer);
 						}
-						updateCurrent()
+						updateCurrentColumn()
 						if (!isLastLayer) {
-							const prevCol = col;
-							goNext();
-							if (prevCol !== col) {
+							const isSuccess = goNextColumn();
+							// if jumped to next column then don need to handle next functions
+							if (isSuccess) {
 								continue;
 							}
+							handleFailedTrial();
 						} else {
 							updateNumIndexes();
 						}
@@ -19292,63 +19316,54 @@ CColorObj.prototype =
 					}
 				}
 			} else {
-				const isStrCache = strCache.length > 0;
+				const isStrLit = strLit;
 				let labelCounter = 0;
 				for (let i = 0; i < numArr.length; i++) {
-					// search label in strCache if found get name, and increase labelCounter
-					let name = isStrCache && numArr[i].idx === strCache[0].pts[labelCounter].idx ? strCache[0].pts[0].val : null;
+					// search label in strLit if found get name, and increase labelCounter
+					let name = isStrLit && numArr[i].idx === strLit[0].pts[labelCounter].idx ? strLit[0].pts[0].val : null;
 					labelCounter = name !== null ? labelCounter + 1 : labelCounter;
 					treeHead.push({name: name, pVal: numArr[i].val / totalValue, start: i, end: i + 1, pos: i});
 				}
 			}
-			return {data : treeHead};
-
+			return treeHead;
 		}
-
-		const sortSunburst = function (sunburst) {
-
-			const sortArr = function (arr) {
-				arr.sort(function(a, b) {
-					// sort by pVal;
-					return a.pVal - b.pVal;
-				});
-			}
-
-			let head = sunburst.data;
-			let indexesStack = [];
-			let i = 0;
-			let layersCount= 0;
-			while (i <= head.length) {
-				if (i === head.length) {
-					sortArr(head);
-					if (indexesStack.length !== 0) {
-						i = indexesStack.pop() + 1;
-						head = head[0].parent;
-					} else {
-						i++;
-					}
-				} else {
-					if (head[i].children.length > 0) {
-						indexesStack.push(i);
-						layersCount = Math.max(layersCount, indexesStack.length + 1);
-						head = head[i].children;
-						i = 0;
-					} else {
-						i++;
-					}
-				}
-			}
-			sunburst.layersCount = layersCount;
-		}
-
-		const numArr = numLit.pts;
 		const lastLayer = getLastLayer(strLit);
 		const newNumArr = normalizeNumArr(numArr, strLit, lastLayer);
 		const totalValue = getTotalValue(newNumArr);
-		const sunburst = createSunburst(newNumArr, strLit, totalValue, lastLayer);
-		sortSunburst(sunburst);
-		this.data = sunburst.data;
-		this.layersCount = sunburst.layersCount;
+		this.data = createSunburst(newNumArr, strLit, totalValue, lastLayer);
+	}
+
+	CCachedSunburst.prototype.sortSunburstAndCountLayers = function () {
+		const sortArr = function (arr) {
+			arr.sort(function(a, b) {
+				// sort by pVal;
+				return a.pVal - b.pVal;
+			});
+		}
+
+		let head = this.data;
+		let indexesStack = [];
+		let i = 0;
+		while (i <= head.length) {
+			if (i === head.length) {
+				sortArr(head);
+				if (indexesStack.length !== 0) {
+					i = indexesStack.pop() + 1;
+					head = head[0].parent;
+				} else {
+					i++;
+				}
+			} else {
+				if (head[i].children && head[i].children.length > 0) {
+					indexesStack.push(i);
+					this.layersCount = Math.max(this.layersCount, indexesStack.length + 1);
+					head = head[i].children;
+					i = 0;
+				} else {
+					i++;
+				}
+			}
+		}
 	}
 
 	// if rounding is strong it affects whole number. Example 106.82 -> 107, for the precision 2
