@@ -19322,7 +19322,7 @@ CColorObj.prototype =
 					// search label in strLit if found get name, and increase labelCounter
 					let name = isStrLit && numArr[i].idx === strLit[0].pts[labelCounter].idx ? strLit[0].pts[0].val : null;
 					labelCounter = name !== null ? labelCounter + 1 : labelCounter;
-					treeHead.push({name: name, pVal: numArr[i].val / totalValue, start: i, end: i + 1, pos: i});
+					treeHead.push({name: name, pVal: numArr[i].val / totalValue, start: i, end: i + 1, pos: i, idx: i});
 				}
 			}
 			return treeHead;
@@ -19334,6 +19334,9 @@ CColorObj.prototype =
 	}
 
 	CCachedSunburst.prototype.sortSunburstAndCountLayers = function () {
+		if (this.data.length === 0) {
+			this.layersCount = 0;
+		}
 		const sortArr = function (arr) {
 			arr.sort(function(a, b) {
 				// sort by pVal;
@@ -19344,6 +19347,7 @@ CColorObj.prototype =
 		let head = this.data;
 		let indexesStack = [];
 		let i = 0;
+		const additionalLayers = 0;
 		while (i <= head.length) {
 			if (i === head.length) {
 				sortArr(head);
@@ -19356,7 +19360,7 @@ CColorObj.prototype =
 			} else {
 				if (head[i].children && head[i].children.length > 0) {
 					indexesStack.push(i);
-					this.layersCount = Math.max(this.layersCount, indexesStack.length + 1);
+					additionalLayers = Math.max(additionalLayers, indexesStack.length);
 					head = head[i].children;
 					i = 0;
 				} else {
@@ -19364,6 +19368,9 @@ CColorObj.prototype =
 				}
 			}
 		}
+
+		// 1 layer plus maximum number of children
+		this.layersCount = 1 + additionalLayers;
 	}
 
 	// if rounding is strong it affects whole number. Example 106.82 -> 107, for the precision 2
