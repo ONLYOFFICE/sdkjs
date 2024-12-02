@@ -19347,7 +19347,7 @@ CColorObj.prototype =
 		let head = this.data;
 		let indexesStack = [];
 		let i = 0;
-		const additionalLayers = 0;
+		let additionalLayers = 0;
 		while (i <= head.length) {
 			if (i === head.length) {
 				sortArr(head);
