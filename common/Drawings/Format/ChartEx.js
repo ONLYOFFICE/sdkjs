@@ -3244,7 +3244,8 @@ function (window, undefined) {
 		let nType = this.layoutId;
 		if(nType === AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN ||
 			nType === AscFormat.SERIES_LAYOUT_WATERFALL ||
-			nType === AscFormat.SERIES_LAYOUT_FUNNEL) {
+			nType === AscFormat.SERIES_LAYOUT_FUNNEL ||
+			nType === AscFormat.SERIES_LAYOUT_SUNBURST) {
 			return true;
 		}
 		return false;
