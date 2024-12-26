@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -330,6 +330,50 @@
                 info && info.LoadFontsFromServer(this);
             }
         };
+		
+		this.LoadFonts = function(fonts, callback)
+		{
+			let fontMap = {}
+			
+			if (fonts && Array.isArray(fonts))
+			{
+				for (let i = 0; i < fonts.length; ++i)
+				{
+					let name = fonts[i];
+					fontMap[name] = AscFonts.g_fontApplication.GetFontInfo(name);
+					fontMap[name].NeedStyles = 15;
+				}
+			}
+			else
+			{
+				for (let name in fonts)
+				{
+					fontMap[name] = AscFonts.g_fontApplication.GetFontInfo(name);
+					fontMap[name].NeedStyles = 15;
+				}
+			}
+			
+			
+			let globalLoader = this;
+			
+			let checkLoaded = function()
+			{
+				let needLoad = 0;
+				for (let name in fontMap)
+				{
+					if (!fontMap[name].CheckFontLoadStyles(globalLoader))
+						delete fontMap[name];
+					else
+						++needLoad;
+				}
+				
+				if (needLoad)
+					setTimeout(checkLoaded, 50);
+				else if (callback)
+					callback();
+			};
+			checkLoaded();
+		}
     }
 
     function CGlobalImageLoader()
@@ -424,16 +468,16 @@
             }
 
             // сначала заполним массив
-            if (this.ThemeLoader == null)
-                this.Api.asyncImagesDocumentStartLoaded();
-            else
-                this.ThemeLoader.asyncImagesStartLoaded();
 
             this.images_loading = [];
             for (let id in images)
             {
                 this.images_loading[this.images_loading.length] = AscCommon.getFullImageSrc2(images[id]);
             }
+            if (this.ThemeLoader == null)
+                this.Api.asyncImagesDocumentStartLoaded(this.images_loading);
+            else
+                this.ThemeLoader.asyncImagesStartLoaded(this.images_loading);
 
             if (!this.bIsAsyncLoadDocumentImages)
             {

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -175,15 +175,9 @@
 	function PageNumRecalculateObject(type, graphemes, widths, totalWidth, isCopy)
 	{
 		this.type      = type;
-		this.graphemes = graphemes;
-		this.widths    = widths;
+		this.graphemes = graphemes && isCopy ? graphemes.slice() : graphemes;
+		this.widths    = widths && isCopy ? widths.slice() : widths;
 		this.width     = totalWidth;
-		
-		if (isCopy)
-		{
-			this.graphemes = graphemes.slice();
-			this.widths    = widths.slice();
-		}
 	}
 	
 	//--------------------------------------------------------export----------------------------------------------------

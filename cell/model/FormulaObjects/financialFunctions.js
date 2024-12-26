@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -494,6 +494,7 @@ function (window, undefined) {
 	cACCRINT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cACCRINT.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any, argType.any, argType.any, argType.any];
 	cACCRINT.prototype.Calculate = function (arg) {
+		// the ACCRINT formula in ms does not always match the calculation using the formula manually
 		let issue = arg[0],
 			firstInterest = arg[1],
 			settlement = arg[2],
@@ -677,6 +678,12 @@ function (window, undefined) {
 		basis = Math.floor(basis.getValue());
 		calcMethod = calcMethod.toBool();
 
+		// checking for out-of-date dates
+		let maxDate = AscCommonExcel.getMaxDate();
+		if (issue > maxDate || firstInterest > maxDate || settlement > maxDate) {
+			return new cError(cErrorType.not_numeric);
+		}
+
 		if (issue < startRangeCurrentDateSystem || issue <= 0 || issue >= settlement || firstInterest < startRangeCurrentDateSystem ||
 			settlement < startRangeCurrentDateSystem || rate <= 0 || par <= 0 || basis < 0 ||
 			basis > 4 || (frequency != 1 && frequency != 2 && frequency != 4) || (!calcMethod && firstInterest < 366 / frequency)) {
@@ -692,13 +699,19 @@ function (window, undefined) {
 			return newDate;
 		}
 
+		// The function calculates accrued interest on a security on which interest is paid at a certain frequency
+		// Argument calc_method = 0 (we calculate the accumulated interest from the first payment date (first_interest) to the date of purchase of the security (settlement))
+		// calc_method = 1 (we calculate the accumulated interest from the issue date to the date of purchase of the security (settlement))
+		// calc_method = 0 is taken into account only if the date of the first payment (first_interest) is greater than the release date (issue)
+
 		// exception for 1900/1/29 date
 		let iss = issue === 60 ? new Date(Date.UTC(1900, 1, 29)) : AscCommonExcel.getCorrectDate(issue),
 			fInter = firstInterest === 60 ? new Date(Date.UTC(1900, 1, 29)) : AscCommonExcel.getCorrectDate(firstInterest),
 			settl = settlement === 60 ? new Date(Date.UTC(1900, 1, 29)) : AscCommonExcel.getCorrectDate(settlement),
 			numMonths = 12 / frequency,
 			numMonthsNeg = -numMonths,
-			endMonth = fInter.lastDayOfMonth(), coupPCD, firstDate, startDate, endDate, res, days, coupDays;
+			endMonth = fInter.lastDayOfMonth() || (fInter.getUTCDate() === 30 && basis === AscCommonExcel.DayCountBasis.UsPsa30_360), 
+			coupPCD, firstDate, startDate, endDate, res, days, coupDays;
 
 		let mainCoupPcd = lcl_GetCouppcd(iss, fInter, frequency);
 		// if the first coupon period === 0, return 0 as in MS
@@ -725,16 +738,25 @@ function (window, undefined) {
 
 		// if first coup period, get date difference by default
 		if (mainCoupPcd < iss) {
-			days = AscCommonExcel.diffDate(firstDate, settl, basis)
-		} else if (mainCoupPcd >= iss) {
+			days = AscCommonExcel.diffDate(firstDate, settl, basis).getValue();
+		} else {
 			days = AscCommonExcel.days360(firstDate, settl, basis, true);
 		}
+		
+		// if the first date was greater, change the sign of the day difference to minus
+		days = Math.abs(days) * (firstDate > settl ? -1 : 1);
 
 		coupDays = getcoupdays(coupPCD, fInter, frequency, basis).getValue();
 		res = days / coupDays;
 		startDate = new cDate(coupPCD);
 		endDate = iss;
-
+	
+		// res - the coefficient that we use in the formula res * par * rate / frequency
+		// is found by iterating from the first coupon date to the issue date of the bond
+		// 1 step equals the number of months in the coupon period (12, 6, 3)
+		// at each iteration, the issue date and the current coupon date (with the step) are checked, and depending on the result, a number is added to the coefficient:
+		// - 1 or 0 depending on the calc_method used
+		// - or a fraction - the result of dividing the difference in days between the previous step's date and the current date by the number of days in the coupon period
 		while (!(numMonthsNeg > 0 ? startDate >= iss : startDate <= iss)) {
 			endDate = startDate;
 			startDate = addMonth(startDate, numMonthsNeg, endMonth);
@@ -744,8 +766,7 @@ function (window, undefined) {
 				coupDays = getcoupdays(startDate, endDate, frequency, basis).getValue();
 			} else {
 				days = AscCommonExcel.diffDate(firstDate, endDate, basis).getValue();
-				coupDays = (basis == AscCommonExcel.DayCountBasis.Actual365) ? (365 / frequency) :
-					AscCommonExcel.diffDate(startDate, endDate, basis).getValue();
+				coupDays = (basis == AscCommonExcel.DayCountBasis.Actual365) ? (365 / frequency) : AscCommonExcel.diffDate(startDate, endDate, basis).getValue();
 			}
 
 			res += (iss <= startDate) ? calcMethod : days / coupDays;
@@ -3585,61 +3606,61 @@ function (window, undefined) {
 	cODDFYIELD.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any, argType.any,
 		argType.any, argType.any, argType.any];
 	cODDFYIELD.prototype.Calculate = function (arg) {
-		var settlement = arg[0], maturity = arg[1], issue = arg[2], first_coupon = arg[3], rate = arg[4], pr = arg[5],
+		let settlement = arg[0], maturity = arg[1], issue = arg[2], first_coupon = arg[3], rate = arg[4], pr = arg[5],
 			redemption = arg[6], frequency = arg[7],
 			basis = arg[8] && !(arg[8] instanceof cEmpty) ? arg[8] : new cNumber(0);
 
-		if (settlement instanceof cArea || settlement instanceof cArea3D) {
+		if (settlement.type === cElementType.cellsRange || settlement.type === cElementType.cellsRange3D) {
 			settlement = settlement.cross(arguments[1]);
-		} else if (settlement instanceof cArray) {
+		} else if (settlement.type === cElementType.array) {
 			settlement = settlement.getElementRowCol(0, 0);
 		}
 
-		if (maturity instanceof cArea || maturity instanceof cArea3D) {
+		if (maturity.type === cElementType.cellsRange || maturity.type === cElementType.cellsRange3D) {
 			maturity = maturity.cross(arguments[1]);
-		} else if (maturity instanceof cArray) {
+		} else if (maturity.type === cElementType.array) {
 			maturity = maturity.getElementRowCol(0, 0);
 		}
 
-		if (issue instanceof cArea || issue instanceof cArea3D) {
+		if (issue.type === cElementType.cellsRange || issue.type === cElementType.cellsRange3D) {
 			issue = issue.cross(arguments[1]);
-		} else if (issue instanceof cArray) {
+		} else if (issue.type === cElementType.array) {
 			issue = issue.getElementRowCol(0, 0);
 		}
 
-		if (first_coupon instanceof cArea || first_coupon instanceof cArea3D) {
+		if (first_coupon.type === cElementType.cellsRange || first_coupon.type === cElementType.cellsRange3D) {
 			first_coupon = first_coupon.cross(arguments[1]);
-		} else if (first_coupon instanceof cArray) {
+		} else if (first_coupon.type === cElementType.array) {
 			first_coupon = first_coupon.getElementRowCol(0, 0);
 		}
 
-		if (rate instanceof cArea || rate instanceof cArea3D) {
+		if (rate.type === cElementType.cellsRange || rate.type === cElementType.cellsRange3D) {
 			rate = rate.cross(arguments[1]);
-		} else if (rate instanceof cArray) {
+		} else if (rate.type === cElementType.array) {
 			rate = rate.getElementRowCol(0, 0);
 		}
 
-		if (pr instanceof cArea || pr instanceof cArea3D) {
+		if (pr.type === cElementType.cellsRange || pr.type === cElementType.cellsRange3D) {
 			pr = pr.cross(arguments[1]);
-		} else if (pr instanceof cArray) {
+		} else if (pr.type === cElementType.array) {
 			pr = pr.getElementRowCol(0, 0);
 		}
 
-		if (redemption instanceof cArea || redemption instanceof cArea3D) {
+		if (redemption.type === cElementType.cellsRange || redemption.type === cElementType.cellsRange3D) {
 			redemption = redemption.cross(arguments[1]);
-		} else if (redemption instanceof cArray) {
+		} else if (redemption.type === cElementType.array) {
 			redemption = redemption.getElementRowCol(0, 0);
 		}
 
-		if (frequency instanceof cArea || frequency instanceof cArea3D) {
+		if (frequency.type === cElementType.cellsRange || frequency.type === cElementType.cellsRange3D) {
 			frequency = frequency.cross(arguments[1]);
-		} else if (frequency instanceof cArray) {
+		} else if (frequency.type === cElementType.array) {
 			frequency = frequency.getElementRowCol(0, 0);
 		}
 
-		if (basis instanceof cArea || basis instanceof cArea3D) {
+		if (basis.type === cElementType.cellsRange || basis.type === cElementType.cellsRange3D) {
 			basis = basis.cross(arguments[1]);
-		} else if (basis instanceof cArray) {
+		} else if (basis.type === cElementType.array) {
 			basis = basis.getElementRowCol(0, 0);
 		}
 
@@ -3653,31 +3674,31 @@ function (window, undefined) {
 		frequency = frequency.tocNumber();
 		basis = basis.tocNumber();
 
-		if (settlement instanceof cError) {
+		if (settlement.type === cElementType.error) {
 			return settlement;
 		}
-		if (maturity instanceof cError) {
+		if (maturity.type === cElementType.error) {
 			return maturity;
 		}
-		if (issue instanceof cError) {
+		if (issue.type === cElementType.error) {
 			return issue;
 		}
-		if (first_coupon instanceof cError) {
+		if (first_coupon.type === cElementType.error) {
 			return first_coupon;
 		}
-		if (rate instanceof cError) {
+		if (rate.type === cElementType.error) {
 			return rate;
 		}
-		if (pr instanceof cError) {
+		if (pr.type === cElementType.error) {
 			return pr;
 		}
-		if (redemption instanceof cError) {
+		if (redemption.type === cElementType.error) {
 			return redemption;
 		}
-		if (frequency instanceof cError) {
+		if (frequency.type === cElementType.error) {
 			return frequency;
 		}
-		if (basis instanceof cError) {
+		if (basis.type === cElementType.error) {
 			return basis;
 		}
 
@@ -3716,7 +3737,7 @@ function (window, undefined) {
 			x = xN;
 		}
 		if (isNaN(x) || Infinity == Math.abs(x)) {
-			var max = Number.MAX_VALUE, min = -Number.MAX_VALUE, step = 1.6,
+			let max = Number.MAX_VALUE, min = -Number.MAX_VALUE, step = 1.6,
 				low = guess - 0.01 <= min ? min + g_Eps : guess - 0.01,
 				high = guess + 0.01 >= max ? max - g_Eps : guess + 0.01, i, xBegin, xEnd, x, y, currentIter = 0;
 
@@ -3743,7 +3764,7 @@ function (window, undefined) {
 				return new cError(cErrorType.not_numeric);
 			}
 
-			var fXbegin = iterF(xBegin), fXend = iterF(xEnd), fXi, xI;
+			let fXbegin = iterF(xBegin), fXend = iterF(xEnd), fXi, xI;
 
 			if (Math.abs(fXbegin) < g_Eps) {
 				return new cNumber(fXbegin);
@@ -5508,7 +5529,7 @@ function (window, undefined) {
 	cXIRR.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cXIRR.prototype.argumentsType = [argType.any, argType.any, argType.any];
 	cXIRR.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : new cNumber(0.1);
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : new cNumber(0.1);
 
 		function xirrFunction(values, dates, rate) {
 			var D_0 = dates[0], r = rate + 1, res = values[0];
@@ -5529,8 +5550,13 @@ function (window, undefined) {
 
 		function xirr2(_values, _dates, _rate) {
 
-			var arr0 = _values[0], arr1 = _dates[0];
-
+			
+			if (_values.length === 0 || _dates.length === 0) {
+				return new cError(cErrorType.not_numeric); 
+			}
+			
+			let arr0 = _values[0], arr1 = _dates[0];
+			
 			if (arr0 instanceof cError) {
 				return arr0;
 			}
@@ -5643,9 +5669,26 @@ function (window, undefined) {
 
 		}
 
-		var _dates = [], _values = [];
+		if (arg0.type === cElementType.error) {
+			return arg0;
+		}
+		if (arg1.type === cElementType.error) {
+			return arg1;
+		}
+		if (arg2.type === cElementType.error) {
+			return arg2;
+		}
 
-		if (arg0 instanceof cArea) {
+		if (arg0.type === cElementType.empty || arg1.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
+		}
+
+		let _dates = [], _values = [];
+
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
+			if (arg0.type === cElementType.cellsRange3D && !arg0.isSingleSheet()) {
+				return new cError(cErrorType.wrong_value_type);
+			}
 			arg0.foreach2(function (c) {
 				if (c instanceof cNumber) {
 					_values.push(c);
@@ -5654,8 +5697,8 @@ function (window, undefined) {
 				} else {
 					_values.push(new cError(cErrorType.wrong_value_type));
 				}
-			});
-		} else if (arg0 instanceof cArray) {
+			})
+		} else if (arg0.type === cElementType.array) {
 			arg0.foreach(function (c) {
 				if (c instanceof cNumber) {
 					_values.push(c);
@@ -5665,21 +5708,17 @@ function (window, undefined) {
 					_values.push(new cError(cErrorType.wrong_value_type));
 				}
 			})
-		} else if (arg0 instanceof cArea3D) {
-			if (arg0.isSingleSheet()) {
-				_values = arg0.getMatrix()[0];
-			} else {
-				return new cError(cErrorType.wrong_value_type);
-			}
 		} else {
-			if (!(arg0 instanceof cNumber)) {
+			if (!(arg0.type === cElementType.number)) {
 				return new cError(cErrorType.wrong_value_type)
-			} else {
-				_values[0] = arg0;
 			}
+			_values[0] = arg0;
 		}
 
-		if (arg1 instanceof cArea) {
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
+			if (arg1.type === cElementType.cellsRange3D && !arg1.isSingleSheet()) {
+				return new cError(cErrorType.wrong_value_type);
+			}
 			arg1.foreach2(function (c) {
 				if (c instanceof cNumber) {
 					_dates.push(c);
@@ -5688,8 +5727,8 @@ function (window, undefined) {
 				} else {
 					_dates.push(new cError(cErrorType.wrong_value_type));
 				}
-			});
-		} else if (arg1 instanceof cArray) {
+			})
+		} else if (arg1.type === cElementType.array) {
 			arg1.foreach(function (c) {
 				if (c instanceof cNumber) {
 					_dates.push(c);
@@ -5699,18 +5738,11 @@ function (window, undefined) {
 					_dates.push(new cError(cErrorType.wrong_value_type));
 				}
 			})
-		} else if (arg1 instanceof cArea3D) {
-			if (arg1.isSingleSheet()) {
-				_dates = arg1.getMatrix()[0];
-			} else {
-				return new cError(cErrorType.wrong_value_type);
-			}
 		} else {
-			if (!(arg1 instanceof cNumber)) {
+			if (!(arg1.type === cElementType.number)) {
 				return new cError(cErrorType.wrong_value_type)
-			} else {
-				_dates[0] = arg1;
 			}
+			_dates[0] = arg1;
 		}
 
 		if (arg2 instanceof AscCommonExcel.cRef || arg2 instanceof AscCommonExcel.cRef3D) {
@@ -5736,7 +5768,7 @@ function (window, undefined) {
 			return arg2;
 		}
 
-		var res = xirr2(_values, _dates, arg2);
+		let res = xirr2(_values, _dates, arg2);
 		res.numFormat = 9;
 		return res;
 

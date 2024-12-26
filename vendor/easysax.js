@@ -1414,6 +1414,9 @@ StaxParser.prototype.GetDoubleOrNaN = function (val, def) {
     if(val === "NaN") {
         return NaN;
     }
+		if (val === "INF") {
+			return Infinity;
+		}
     return this.GetDouble(val, def);
 };
 StaxParser.prototype.GetValueBool = function () {
@@ -1621,6 +1624,7 @@ function XmlParserContext(){
     this.DrawingDocument = null;
     this.imageMap = {};
     this.curChart = null;
+		this.smartarts = [];
     //docx
     this.commentDataById = {};
     this.oReadResult = new AscCommonWord.DocReadResult();
@@ -1823,6 +1827,15 @@ XmlParserContext.prototype.loadDataLinks = function() {
         }
     }
     return oImageMap;
+};
+XmlParserContext.prototype.GenerateSmartArts = function() {
+	while (this.smartarts.length) {
+		const smartart = this.smartarts.pop();
+		smartart.generateDrawingPart();
+	}
+};
+XmlParserContext.prototype.ClearSmartArts = function() {
+	this.smartarts.length = 0;
 };
 function XmlWriterContext(editorId){
     //common

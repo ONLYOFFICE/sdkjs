@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -41,7 +41,7 @@
 	NONE_SHD.Value = Asc.c_oAscShd.Nil;
 
 	// NumId=0 означает отсутствие нумерации
-	const NONE_NUM = new CNumPr(0, 0);
+	const NONE_NUM = new AscWord.NumPr(0, 0);
 
 	const TEXTFORM_PR = new CParaPr();
 	const CHECKBOX_PR = new CParaPr();

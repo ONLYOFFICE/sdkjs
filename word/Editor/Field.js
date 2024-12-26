@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -331,12 +331,13 @@ ParaField.prototype.GetAllFields = function(isUseSelection, arrFields)
 };
 ParaField.prototype.GetAllSeqFieldsByType = function(sType, aFields)
 {
-	if(this.FieldType === AscWord.fieldtype_SEQ)
+	if (this.FieldType === AscWord.fieldtype_SEQ
+		&& this.Arguments.length
+		&& this.Arguments[0].toLowerCase
+		&& sType.toLowerCase
+		&& this.Arguments[0].toLowerCase() === sType.toLowerCase())
 	{
-		if(this.Arguments[0] === sType)
-		{
-			aFields.push(this);
-		}
+		aFields.push(this);
 	}
 };
 //----------------------------------------------------------------------------------------------------------------------
@@ -725,6 +726,10 @@ ParaField.prototype.CheckType = function(type)
 ParaField.prototype.IsAddin = function()
 {
 	return this.CheckType(AscWord.fieldtype_ADDIN);
+};
+ParaField.prototype.IsFormCheckBox = function()
+{
+	return this.CheckType(AscWord.fieldtype_FORMCHECKBOX);
 };
 //----------------------------------------------------------------------------------------------------------------------
 // Функции совместного редактирования

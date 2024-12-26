@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -348,7 +348,7 @@
 		};
 	}
 
-	AscCommon.CreateDrawingPlaceholder = function(id, buttons, page, rect, transform)
+	AscCommon.CreateDrawingPlaceholder = function(id, buttons, page, rect, transform, isDisabled)
 	{
 		var placeholder = new Placeholder();
 		placeholder.id = id;
@@ -356,7 +356,7 @@
 		placeholder.anchor.page = page;
 		placeholder.anchor.rect = rect;
 		placeholder.anchor.transform = transform;
-
+		placeholder.isDisabled = isDisabled;
 		for (var i = 0; i < placeholder.buttons.length; i++)
 			placeholder.states[i] = AscCommon.PlaceholderButtonState.None;
 
@@ -388,6 +388,8 @@
 			rect : { x : 0, y : 0, w : 0, h : 0 },
 			transform : null
 		};
+
+		this.isDisabled = false;
 	}
 
 	Placeholder.prototype.getCenterInPixels = function(pixelsRect, pageWidthMM, pageHeightMM)
@@ -513,8 +515,9 @@
 
 	Placeholder.prototype.onPointerDown = function(x, y, pixelsRect, pageWidthMM, pageHeightMM)
 	{
-		var pointMenu = { x : 0, y : 0 };
-		var indexButton = this.isInside(x, y, pixelsRect, pageWidthMM, pageHeightMM, pointMenu);
+		if(this.isDisabled) return false;
+		let pointMenu = { x : 0, y : 0 };
+		let indexButton = this.isInside(x, y, pixelsRect, pageWidthMM, pageHeightMM, pointMenu);
 
 		if (-1 == indexButton)
 			return false;
@@ -569,6 +572,7 @@
 
 	Placeholder.prototype.onPointerMove = function(x, y, pixelsRect, pageWidthMM, pageHeightMM, checker)
 	{
+		if(this.isDisabled) return false;
 		var indexButton = this.isInside(x, y, pixelsRect, pageWidthMM, pageHeightMM);
 
 		// может в кнопку-то и не попали, но состояние могло смениться => нужно перерисовать интерфейс
@@ -1033,6 +1037,9 @@
 		};
 	}
 
+	var CONTENT_CONTROL_HEADER_MOVER_W = 15;
+	var CONTENT_CONTROL_TRACK_H = 20;
+
 	function CContentControlTrack(parent, obj, state, geom)
 	{
 		if (window["NATIVE_EDITOR_ENJINE"])
@@ -1204,13 +1211,13 @@
 
 		var rect = {
 			X : this.Pos.X,
-			Y : this.Pos.Y - 20 / koefY,
+			Y : this.Pos.Y - CONTENT_CONTROL_TRACK_H / koefY,
 			W : width / koefX,
-			H : 20 / koefY
+			H : CONTENT_CONTROL_TRACK_H / koefY
 		};
 
 		if (!this.IsNoUseButtons())
-			rect.X += 15 / koefX;
+			rect.X += CONTENT_CONTROL_HEADER_MOVER_W / koefX;
 
 		return rect;
 	};
@@ -1226,7 +1233,7 @@
 				X : this.Pos.X,
 				Y : this.Pos.Y,
 				W : 0,
-				H : 20 / koefY
+				H : CONTENT_CONTROL_TRACK_H / koefY
 			};
 			rectEmpty.Y -= rectEmpty.H;
 			return rectEmpty;
@@ -1235,8 +1242,8 @@
 		var rect = {
 			X : this.Pos.X,
 			Y : this.Pos.Y,
-			W : 15 / koefX,
-			H : 20 / koefY
+			W : CONTENT_CONTROL_HEADER_MOVER_W / koefX,
+			H : CONTENT_CONTROL_TRACK_H / koefY
 		};
 
 		if (this.formInfo && undefined !== this.formInfo.MoveRectH)
@@ -1288,7 +1295,7 @@
 		var rect = {
 			X : this.ComboRect.X,
 			Y : this.ComboRect.Y,
-			W : 20 / koefX,
+			W : CONTENT_CONTROL_TRACK_H / koefX,
 			H : (this.ComboRect.B - this.ComboRect.Y),
 			Page : this.ComboRect.Page
 		};
@@ -1520,6 +1527,17 @@
 	CContentControlTrack.prototype.Copy = function()
 	{
 		return new CContentControlTrack(this.parent, this.base, this.state, this.geom);
+	};
+
+	CContentControlTrack.prototype.isFormFullOneButtonHover = function()
+	{
+		if (!this.IsNoUseButtons() &&
+			this.formInfo &&
+			Asc.c_oAscContentControlSpecificType.Picture === this.type)
+		{
+			return true;
+		}
+		return false;
 	};
 
 	// draw methods
@@ -1908,6 +1926,8 @@
 
 				if (_object.state == AscCommon.ContentControlTrack.In && !_object.isForm)
 				{
+					let cctw = Math.round(CONTENT_CONTROL_TRACK_H * rPR);
+
 					// draw header
 					if (_object.Pos.Page >= _pageStart && _object.Pos.Page <= _pageEnd)
 					{
@@ -1918,38 +1938,38 @@
 							_y = (((_drawingPage.top + _koefY * (_object.Pos.Y + _object.OffsetY)) * rPR) >> 0) + 0.5 * Math.round(rPR);
 
 							if (_object.Name != "" || 0 != _object.Buttons.length)
-								_y -= Math.round(20 * rPR);
+								_y -= cctw;
 							else
-								_x -= Math.round(15 * rPR);
+								_x -= Math.round(CONTENT_CONTROL_HEADER_MOVER_W * rPR);
 
 							var widthName = 0;
 							if (_object.Name != "")
 								widthName = ((_object.CalculateNameRect(_koefX, _koefY).W * _koefX) * rPR) >> 0;
 
-							var widthHeader = (widthName + 20 * _object.Buttons.length * rPR) >> 0 ;
+							var widthHeader = (widthName + CONTENT_CONTROL_TRACK_H * _object.Buttons.length * rPR) >> 0 ;
 							var xText = _x;
 
 							if (_object.IsUseMoveRect())
 							{
-								widthHeader += Math.round(15 * rPR);
-								xText += Math.round(15 * rPR);
+								widthHeader += Math.round(CONTENT_CONTROL_HEADER_MOVER_W * rPR);
+								xText += Math.round(CONTENT_CONTROL_HEADER_MOVER_W * rPR);
 							}
 
 							if (0 != widthHeader)
 							{
 								// сразу чекаем весь хедер
-								overlay.CheckRect(_x, _y, widthHeader, Math.round(20 * rPR) );
+								overlay.CheckRect(_x, _y, widthHeader, cctw);
 
 								// рисуем подложку
 								ctx.fillStyle = AscCommon.GlobalSkin.ContentControlsBack;
-								ctx.rect(_x, _y, widthHeader, Math.round(20 * rPR));
+								ctx.rect(_x, _y, widthHeader, cctw);
 								ctx.fill();
 								ctx.beginPath();
 
 								// draw mover in header
 								if (_object.IsUseMoveRect())
 								{
-									ctx.rect(_x, _y, Math.round(15 * rPR), Math.round(20 * rPR));
+									ctx.rect(_x, _y, Math.round(CONTENT_CONTROL_HEADER_MOVER_W * rPR), cctw);
 									ctx.fillStyle = (1 == this.ContentControlObjectState) ? AscCommon.GlobalSkin.ContentControlsAnchorActive : AscCommon.GlobalSkin.ContentControlsBack;
 									ctx.fill();
 									ctx.beginPath();
@@ -1987,7 +2007,7 @@
 									else
 										ctx.fillStyle = AscCommon.GlobalSkin.ContentControlsBack;
 
-									ctx.rect(xText, _y, widthName, Math.round(20 * rPR));
+									ctx.rect(xText, _y, widthName, cctw);
 									ctx.fill();
 									ctx.beginPath();
 
@@ -1995,7 +2015,7 @@
 									ctx.font = Math.round(11 * rPR) + "px Helvetica, Arial, sans-serif";
 									
 									let _textShift = ctx.direction === "rtl" ? _object.CalculateNameRectNatural() * rPR : 0;
-									_object.fillText(ctx, _object.Name, xText + Math.round(3 * rPR) + _textShift, _y + Math.round(20 * rPR) - Math.round(6 * rPR), _object.CalculateNameRectNatural() * rPR);
+									_object.fillText(ctx, _object.Name, xText + Math.round(3 * rPR) + _textShift, _y + cctw - Math.round(6 * rPR), _object.CalculateNameRectNatural() * rPR);
 
 									if (_object.IsNameAdvanced() && !_object.IsNoUseButtons())
 									{
@@ -2034,20 +2054,20 @@
 
 									if (isFill)
 									{
-										ctx.rect(xText + widthName + 20 * nIndexB, _y, Math.round(20 * rPR), Math.round(20 * rPR));
+										ctx.rect(xText + widthName + CONTENT_CONTROL_TRACK_H * nIndexB, _y, cctw, cctw);
 										ctx.fill();
 										ctx.beginPath();
 									}
 
 									var image = this.icons.getImage(_object.Buttons[nIndexB], nIndexB == _object.ActiveButtonIndex);
 									if (image)
-										ctx.drawImage(image, (xText + widthName + rPR * 20 * nIndexB) >> 0, _y >> 0, Math.round(20 * rPR), Math.round(20 * rPR));
+										ctx.drawImage(image, (xText + widthName + rPR * CONTENT_CONTROL_TRACK_H * nIndexB) >> 0, _y >> 0, cctw, cctw);
 								}
 
 								// рисуем единую обводку
 								_object.SetColor(ctx);
 								ctx.beginPath();
-								ctx.rect(_x, _y, widthHeader, Math.round(20 * rPR));
+								ctx.rect(_x, _y, widthHeader, cctw);
 								ctx.stroke();
 								ctx.beginPath();
 							}
@@ -2061,8 +2081,8 @@
 								var nIndexB = _object.Buttons.length;
 
 								ctx.beginPath();
-								ctx.rect(_x, _y, Math.round(20 * rPR), _b - _y);
-								overlay.CheckRect(_x, _y, Math.round(20 * rPR), _b - _y);
+								ctx.rect(_x, _y, cctw, _b - _y);
+								overlay.CheckRect(_x, _y, cctw, _b - _y);
 								if (_object.ActiveButtonIndex == nIndexB)
 									ctx.fillStyle = AscCommon.GlobalSkin.ContentControlsActive;
 								else if (_object.HoverButtonIndex == nIndexB)
@@ -2076,7 +2096,7 @@
 
 								var image = this.icons.getImage(AscCommon.CCButtonType.Combo, _object.Buttons.length == _object.ActiveButtonIndex);
 								if (image && Math.round(7 * rPR) < (_b - _y))
-									ctx.drawImage(image, _x + 0.5 * Math.round(rPR), _y + 1.5 * Math.round(rPR) + ((_b - _y - Math.round(20 * rPR)) >> 1), Math.round(20 * rPR), Math.round(20 * rPR));
+									ctx.drawImage(image, _x + 0.5 * Math.round(rPR), _y + 1.5 * Math.round(rPR) + ((_b - _y - cctw) >> 1), cctw, cctw);
 							}
 						}
 						else
@@ -2091,9 +2111,9 @@
 							global_MatrixTransformer.MultiplyAppend(_ft, coords);
 							ctx.transform(_ft.sx, _ft.shy, _ft.shx, _ft.sy, _ft.tx, _ft.ty);
 
-							var scaleX_15 = 15 / _koefX;
-							var scaleX_20 = 20 / _koefX;
-							var scaleY_20 = 20 / _koefY;
+							var scaleX_15 = CONTENT_CONTROL_HEADER_MOVER_W / _koefX;
+							var scaleX_20 = CONTENT_CONTROL_TRACK_H / _koefX;
+							var scaleY_20 = CONTENT_CONTROL_TRACK_H / _koefY;
 
 							// check overlay bounds ----------
 							_x = _object.Pos.X - scaleX_15;
@@ -2172,9 +2192,9 @@
 									var cy4 = _y + 10 / _koefY;
 
 									var cx5 = _x + 5 / _koefX;
-									var cy5 = _y + 15 / _koefY;
+									var cy5 = _y + CONTENT_CONTROL_HEADER_MOVER_W / _koefY;
 									var cx6 = _x + 10 / _koefX;
-									var cy6 = _y + 15 / _koefY;
+									var cy6 = _y + CONTENT_CONTROL_HEADER_MOVER_W / _koefY;
 
 									var rad = 1.5 / _koefX;
 									overlay.AddEllipse2(cx1, cy1, rad);
@@ -2210,7 +2230,7 @@
 									ctx.fillStyle = (_object.ActiveButtonIndex == -1) ? AscCommon.GlobalSkin.ContentControlsTextActive : AscCommon.GlobalSkin.ContentControlsText;
 									ctx.font = this.getFont(_koefY);
 									let _textShift = ctx.direction === "rtl" ? _object.CalculateNameRectNatural() / _koefX : 0;
-									_object.fillText(ctx, _object.Name, xText + 3 / _koefX + _textShift, _y + (20 - 6) / _koefY, _object.CalculateNameRectNatural() / _koefX);
+									_object.fillText(ctx, _object.Name, xText + 3 / _koefX + _textShift, _y + (CONTENT_CONTROL_TRACK_H - 6) / _koefY, _object.CalculateNameRectNatural() / _koefX);
 
 									if (_object.IsNameAdvanced() && !_object.IsNoUseButtons())
 									{
@@ -2426,8 +2446,8 @@
 						var x, y, w, h;
 						if (_object.formInfo)
 						{
-							w = 20 / koefX;
-							h = 20 / koefY;
+							w = CONTENT_CONTROL_TRACK_H / koefX;
+							h = CONTENT_CONTROL_TRACK_H / koefY;
 
 							x = _object.formInfo.bounds.x + (_object.formInfo.bounds.w - w) / 2;
 							y = _object.formInfo.bounds.y + (_object.formInfo.bounds.h - h) / 2;
@@ -2446,8 +2466,8 @@
 								return false;
 							x = rectOrigin.X + rectOrigin.W;
 							y = rectOrigin.Y;
-							w = 20 / koefX;
-							h = 20 / koefY;
+							w = CONTENT_CONTROL_TRACK_H / koefX;
+							h = CONTENT_CONTROL_TRACK_H / koefY;
 
 							for (var indexB = 0; indexB < _object.Buttons.length; indexB++)
 							{
@@ -2580,11 +2600,21 @@
 							var x, y, w, h;
 							if (_object.formInfo)
 							{
-								w = 20 / koefX;
-								h = 20 / koefY;
+								if (_object.isFormFullOneButtonHover())
+								{
+									x = _object.formInfo.bounds.x;
+									y = _object.formInfo.bounds.y;
+									w = _object.formInfo.bounds.w;
+									h = _object.formInfo.bounds.h;
+								}
+								else
+								{
+									w = CONTENT_CONTROL_TRACK_H / koefX;
+									h = CONTENT_CONTROL_TRACK_H / koefY;
 
-								x = _object.formInfo.bounds.x + (_object.formInfo.bounds.w - w) / 2;
-								y = _object.formInfo.bounds.y + (_object.formInfo.bounds.h - h) / 2;
+									x = _object.formInfo.bounds.x + (_object.formInfo.bounds.w - w) / 2;
+									y = _object.formInfo.bounds.y + (_object.formInfo.bounds.h - h) / 2;
+								}
 
 								if (xPos > x && xPos < (x + w) && yPos > y && yPos < (y + h))
 								{
@@ -2600,8 +2630,8 @@
 									return false;
 								x = rectOrigin.X + rectOrigin.W;
 								y = rectOrigin.Y;
-								w = 20 / koefX;
-								h = 20 / koefY;
+								w = CONTENT_CONTROL_TRACK_H / koefX;
+								h = CONTENT_CONTROL_TRACK_H / koefY;
 
 								for (var indexB = 0; indexB < _object.Buttons.length; indexB++)
 								{
@@ -2685,7 +2715,7 @@
 							{
 								_object.ActiveButtonIndex = indexB;
 
-								var xCC = rectCombo.X + _object.OffsetX + 20 / koefX;
+								var xCC = rectCombo.X + _object.OffsetX + CONTENT_CONTROL_TRACK_H / koefX;
 								var yCC = rectCombo.Y + rectCombo.H + _object.OffsetY;
 								if (_object.transform)
 								{
@@ -2712,6 +2742,21 @@
 			}
 
 			return false;
+		};
+
+		this.onPointerLeave = function()
+		{
+			var oWordControl = this.document.m_oWordControl;
+			var isChangeHover = false;
+			for (var i = 0; i < this.ContentControlObjects.length; i++)
+			{
+				if (-2 !== this.ContentControlObjects[i].HoverButtonIndex)
+					isChangeHover = true;
+				this.ContentControlObjects[i].HoverButtonIndex = -2;
+			}
+
+			if (isChangeHover)
+				oWordControl.OnUpdateOverlay();
 		};
 
 		this.onPointerMove = function(pos, isWithoutCoords)
@@ -2818,11 +2863,21 @@
 					var x, y, w, h;
 					if (_object.formInfo)
 					{
-						w = 20 / koefX;
-						h = 20 / koefY;
+						if (_object.isFormFullOneButtonHover())
+						{
+							x = _object.formInfo.bounds.x;
+							y = _object.formInfo.bounds.y;
+							w = _object.formInfo.bounds.w;
+							h = _object.formInfo.bounds.h;
+						}
+						else
+						{
+							w = CONTENT_CONTROL_TRACK_H / koefX;
+							h = CONTENT_CONTROL_TRACK_H / koefY;
 
-						x = _object.formInfo.bounds.x + (_object.formInfo.bounds.w - w) / 2;
-						y = _object.formInfo.bounds.y + (_object.formInfo.bounds.h - h) / 2;
+							x = _object.formInfo.bounds.x + (_object.formInfo.bounds.w - w) / 2;
+							y = _object.formInfo.bounds.y + (_object.formInfo.bounds.h - h) / 2;
+						}
 
 						if (xPos > x && xPos < (x + w) && yPos > y && yPos < (y + h))
 						{
@@ -2836,8 +2891,8 @@
 							return false;
 						x = rectOrigin.X + rectOrigin.W;
 						y = rectOrigin.Y;
-						w = 20 / koefX;
-						h = 20 / koefY;
+						w = CONTENT_CONTROL_TRACK_H / koefX;
+						h = CONTENT_CONTROL_TRACK_H / koefY;
 
 						for (var indexB = 0; indexB < _object.Buttons.length; indexB++)
 						{
@@ -3670,8 +3725,8 @@
 						_x4 = (drPage.left + koefX * (this.bounds.x + this.bounds.w + object.OffsetX)) * rPR;
 						_y4 = (drPage.top + koefY * (this.bounds.y + this.bounds.h + object.OffsetY)) * rPR;
 
-						var imageW = AscCommon.AscBrowser.convertToRetinaValue(20, true);
-						var imageH = AscCommon.AscBrowser.convertToRetinaValue(20, true);
+						var imageW = AscCommon.AscBrowser.convertToRetinaValue(CONTENT_CONTROL_TRACK_H, true);
+						var imageH = AscCommon.AscBrowser.convertToRetinaValue(CONTENT_CONTROL_TRACK_H, true);
 						var xPos = (_x1 + _x4 - imageW) >> 1;
 						var yPos = (_y1 + _y4 - imageH) >> 1;
 
@@ -3930,8 +3985,8 @@
 						var image = icons.getImage(AscCommon.CCButtonType.Combo, false);
 						if (image)
 						{
-							var imageW = 20 / koefX; // 1x scale!
-							var imageH = 20 / koefY;
+							var imageW = CONTENT_CONTROL_TRACK_H / koefX; // 1x scale!
+							var imageH = CONTENT_CONTROL_TRACK_H / koefY;
 							var yPos = this.rectCombo.y + this.rectCombo.h - imageH - 0.5 * (lineH - imageH);
 							var xPos = this.rectCombo.x + 0.5 * (this.rectCombo.w - imageW);
 
@@ -3941,8 +3996,8 @@
 
 					if (this.isImage)
 					{
-						var imageW = 20 / koefX; // 1x scale!
-						var imageH = 20 / koefY;
+						var imageW = CONTENT_CONTROL_TRACK_H / koefX; // 1x scale!
+						var imageH = CONTENT_CONTROL_TRACK_H / koefY;
 						var xPos = this.bounds.x + (this.bounds.w - imageW) / 2;
 						var yPos = this.bounds.y + (this.bounds.h - imageH) / 2;
 

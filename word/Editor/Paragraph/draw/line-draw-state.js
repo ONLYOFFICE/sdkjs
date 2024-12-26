@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -239,7 +239,7 @@
 				this.addLines(startX, endX);
 				break;
 			case para_FieldChar:
-				if (element.IsNumValue())
+				if (element.IsVisual())
 					this.addLines(startX, endX);
 				break;
 		}

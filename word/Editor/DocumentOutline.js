@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -471,12 +471,27 @@ CDocumentOutline.prototype.IsEmptyItem = function(nIndex)
 {
 	if (nIndex < 0 || nIndex >= this.Elements.length || !this.Elements[nIndex].Paragraph)
 		return true;
-
+	
+	let paragraph= this.Elements[nIndex].Paragraph;
+	if (paragraph.IsNumberedNumbering() && "" !== paragraph.GetNumberingText())
+		return false;
+	
 	return this.Elements[nIndex].Paragraph.IsEmpty();
 };
 CDocumentOutline.prototype.GetCurrentPosition = function()
 {
 	return this.CurPos;
+};
+CDocumentOutline.prototype.GetDestinationXY = function(nIndex)
+{
+	if (nIndex < 0 || nIndex >= this.Elements.length)
+		return null;
+
+	let paragraph = this.Elements[nIndex].Paragraph;
+	if (!paragraph)
+		return null;
+	
+	return paragraph.GetStartPosXY();
 };
 
 //-------------------------------------------------------------export---------------------------------------------------

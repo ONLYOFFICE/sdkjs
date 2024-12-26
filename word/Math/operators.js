@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -3100,18 +3100,23 @@ COperator.prototype.IsArrow = function()
     return bArrow || bDoubleArrow;
 };
 
-function CMathDelimiterPr()
+function CMathDelimiterPr(ctrPr)
 {
-    this.begChr     = undefined;
-    this.begChrType = undefined;
-    this.endChr     = undefined;
-    this.endChrType = undefined;
-    this.sepChr     = undefined;
-    this.sepChrType = undefined;
-    this.shp        = DELIMITER_SHAPE_CENTERED;
-    this.grow       = true;
+	this.begChr		= undefined;
+	this.begChrType	= undefined;
+	this.endChr		= undefined;
+	this.endChrType	= undefined;
+	this.sepChr		= undefined;
+	this.sepChrType	= undefined;
+	this.shp		= DELIMITER_SHAPE_CENTERED;
+	this.grow		= true;
 
-    this.column     = 0;
+	this.column		= 0;
+	this.ctrPr		= new CMathCtrlPr(ctrPr);
+}
+CMathDelimiterPr.prototype.GetRPr = function ()
+{
+	return this.ctrPr.GetRPr();
 }
 CMathDelimiterPr.prototype.initByContent = function(content) {
     if (!content) {
@@ -3143,6 +3148,8 @@ CMathDelimiterPr.prototype.Set_FromObject = function(Obj)
         this.column = Obj.column;
     else
         this.column = 1;
+
+	this.ctrPr.SetRPr(Obj.ctrPrp);
 };
 
 CMathDelimiterPr.prototype.Copy = function()
@@ -3158,6 +3165,7 @@ CMathDelimiterPr.prototype.Copy = function()
     NewPr.shp        = this.shp       ;
     NewPr.grow       = this.grow      ;
     NewPr.column     = this.column    ;
+	NewPr.ctrPr      = this.ctrPr     ;
 
     return NewPr;
 };
@@ -3225,6 +3233,9 @@ CMathDelimiterPr.prototype.Write_ToBinary = function(Writer)
     Writer.WriteLong(this.shp);
     Writer.WriteBool(this.grow);
     Writer.WriteLong(this.column);
+
+	Writer.WriteBool(true);
+	this.ctrPr.Write_ToBinary(Writer);
 };
 
 CMathDelimiterPr.prototype.Read_FromBinary = function(Reader)
@@ -3277,6 +3288,11 @@ CMathDelimiterPr.prototype.Read_FromBinary = function(Reader)
     this.shp        = Reader.GetLong();
     this.grow       = Reader.GetBool();
     this.column     = Reader.GetLong();
+
+	if (Reader.GetBool())
+	{
+		this.ctrPr.Read_FromBinary(Reader);
+	}
 };
 
 /**
@@ -3291,19 +3307,19 @@ function CDelimiter(props)
 
 	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    this.GeneralMetrics = new CMathSize();
+	this.GeneralMetrics = new CMathSize();
 
-    this.begOper = new COperator (OPER_DELIMITER);
-    this.endOper = new COperator (OPER_DELIMITER);
-    this.sepOper = new COperator (OPER_SEPARATOR);
+	this.begOper = new COperator (OPER_DELIMITER);
+	this.endOper = new COperator (OPER_DELIMITER);
+	this.sepOper = new COperator (OPER_SEPARATOR);
 
-    this.Pr = new CMathDelimiterPr();
-    this.TextInContent = true;
+	this.Pr = new CMathDelimiterPr(this.CtrPrp);
+	this.TextInContent = true;
 
-    if(props !== null && props !== undefined)
-        this.init(props);
+	if(props !== null && props !== undefined)
+		this.init(props);
 
-    AscCommon.g_oTableId.Add( this, this.Id );
+	AscCommon.g_oTableId.Add( this, this.Id );
 }
 CDelimiter.prototype = Object.create(CMathBase.prototype);
 CDelimiter.prototype.constructor = CDelimiter;
@@ -4044,67 +4060,123 @@ CDelimiter.prototype.private_GetRightOperator = function(bHide)
 
     return NewEndCode;
 };
-CDelimiter.prototype.GetTextOfElement = function(isLaTeX) {
-	//	Patterns:
-	//	if start bracket doesn't show:	├ ...) => ...)
-	//	if end bracket doesn't show:	(...┤ => (...
-	//	else:							(...) => (...)
-	//if start and close braketets non-standart add \open, \close
-	var strTemp = "";
-	var strStartSymbol = this.Pr.begChr === -1 ? "" : String.fromCharCode((this.begOper.code || this.Pr.begChr) || 40);
-	var strEndSymbol = this.Pr.endChr === -1 ? "" : String.fromCharCode((this.endOper.code || this.Pr.endChr) || 41);
-	var strSeparatorSymbol = isLaTeX ? "\\mid" : "∣";
+CDelimiter.prototype.GetTextOfElement = function(oMathText)
+{
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
-	if ((!AscMath.MathLiterals.lBrackets.IsIncludes(strStartSymbol) && !AscMath.MathLiterals.lrBrackets.IsIncludes(strStartSymbol)) || isLaTeX)
+	let strSeparatorSymbol	= oMathText.IsLaTeX() ? "\\mid" : "∣";
+	let strStartSymbol;
+	let strEndSymbol;
+
+	if (oMathText.IsLaTeX())
 	{
-		strTemp += isLaTeX ? "\\left" : "├";
-		strTemp += strStartSymbol;
+		strStartSymbol		= this.Pr.begChr === -1 ? "." : String.fromCharCode((this.begOper.code || this.Pr.begChr) || 40);
+		strEndSymbol		= this.Pr.endChr === -1 ? "." : String.fromCharCode((this.endOper.code || this.Pr.endChr) || 41);
 	}
 	else
 	{
-		strTemp += strStartSymbol;
+		strStartSymbol		= this.Pr.begChr === -1 ? "" : String.fromCharCode((this.begOper.code || this.Pr.begChr) || 40);
+		strEndSymbol		= this.Pr.endChr === -1 ? "" : String.fromCharCode((this.endOper.code || this.Pr.endChr) || 41);
 	}
 
-	for (let intCount = 0; intCount < this.Content.length; intCount++)
+	if (oMathText.IsLaTeX())
 	{
-		// Word поддерживает только "matrix" (матрица без скобок) и "pmatrix"
-		// Пока делаем так же
-		if (isLaTeX && this.Content[intCount] instanceof CMathContent && this.Pr.begChr === 40 && this.Pr.endChr === 41)
+		if (strStartSymbol === "{")
+			strStartSymbol = "\\{";
+		if (strEndSymbol === "}")
+			strEndSymbol = "\\}";
+
+		if (strStartSymbol && !AscMath.MathLiterals.lBrackets.IsSimple(strStartSymbol))
 		{
-			if (this.Content[0].Content.length === 1 && this.Content[0].Content[0] instanceof CMathMatrix
-				||
-				this.Content[0].Content.length >= 2
-				&& this.Content[0].Content[0].Is_Empty()
-				&& this.Content[0].Content[2].Is_Empty()
-				&& this.Content[0].Content[1] instanceof CMathMatrix)
-			{
-				return this.Content[intCount].GetMultipleContentForGetText(isLaTeX, true);
-			}
+			let tempStrSymbol = strStartSymbol;
+			strStartSymbol = AscMath.MathLiterals.lBrackets.GetLaTeXWordFromSymbol(strStartSymbol);
+			if (strStartSymbol === undefined)
+				strStartSymbol = tempStrSymbol;
 		}
-		//
-
-		strTemp += this.Content[intCount].GetMultipleContentForGetText(isLaTeX, true);
-		if (strSeparatorSymbol && this.Content.length > 1 && intCount < this.Content.length - 1)
-			strTemp += strSeparatorSymbol;
-	}
-
-	if ((!AscMath.MathLiterals.lrBrackets.IsIncludes(strEndSymbol) && !AscMath.MathLiterals.rBrackets.IsIncludes(strEndSymbol)) || isLaTeX)
-	{
-		strTemp += isLaTeX ? "\\right" : "┤";
-		strTemp += strEndSymbol;
+		oMathText.AddText(new AscMath.MathText("\\left" + strStartSymbol, this), true);
+		oMathText.SetGlobalStyle(this);
 	}
 	else
 	{
-		if ("├" === strTemp)
+		let strStartText;
+		let isOpenToken = AscMath.MathLiterals.lBrackets.SearchU(strStartSymbol) || AscMath.MathLiterals.lrBrackets.SearchU(strStartSymbol);
+
+		if (isOpenToken)
 		{
-			strTemp += "┤" + strEndSymbol;
+			strStartText = strStartSymbol;
 		}
 		else
 		{
-			strTemp += strEndSymbol;
+			strStartText = "├" + strStartSymbol;
+		}
+
+		let oOpenText = new AscMath.MathText(strStartText, this);
+		oMathText.AddText(oOpenText);
+	}
+
+	// check for binom
+	if (oMathText.IsLaTeX()
+		&& strStartSymbol === "("
+		&& strEndSymbol === ")"
+		&& this.getColumnsCount() === 1
+		&& this.Content[0].Content.length === 3
+		&& this.Content[0].Content[0].Is_Empty()
+		&& this.Content[0].Content[2].Is_Empty()
+		&& this.Content[0].Content[1] instanceof CFraction
+		&& this.Content[0].Content[1].Pr.type === NO_BAR_FRACTION)
+	{
+		let oFirstPos = oMathText.GetFirstPos();
+		oMathText.RemoveByPos(oFirstPos);
+		oMathText.Add(this.Content[0], !oMathText.LaTeX);
+		return oMathText;
+	}
+
+	for (let intCount = 0; intCount < this.getColumnsCount(); intCount++)
+	{
+		let oCurrentPos = oMathText.Add(this.Content[intCount], !oMathText.LaTeX);
+		if (strSeparatorSymbol && this.Content.length > 1 && intCount < this.Content.length - 1)
+		{
+			let oSepText = new AscMath.MathText(strSeparatorSymbol, this.Content[intCount]);
+			oMathText.AddAfter(oCurrentPos, oSepText);
 		}
 	}
-	return strTemp;
+
+	if (oMathText.IsLaTeX())
+	{
+		if (strEndSymbol && !AscMath.MathLiterals.rBrackets.IsSimple(strEndSymbol))
+		{
+			let tempStrSymbol = strEndSymbol;
+			strEndSymbol = AscMath.MathLiterals.rBrackets.GetLaTeXWordFromSymbol(strEndSymbol);
+			if (strEndSymbol === undefined)
+				strEndSymbol = tempStrSymbol;
+		}
+		oMathText.AddText(new AscMath.MathText("\\right" + strEndSymbol, this), true);
+	}
+	else
+	{
+		let strCloseSymbol;
+		let isCloseToken = AscMath.MathLiterals.rBrackets.SearchU(strEndSymbol) || AscMath.MathLiterals.lrBrackets.SearchU(strEndSymbol) ;
+		if (!isCloseToken)
+		{
+			strCloseSymbol = "┤" + strEndSymbol;
+		}
+		else
+		{
+			if (strEndSymbol === "")
+			{
+				strCloseSymbol = "┤";
+			}
+			else
+			{
+				strCloseSymbol = strEndSymbol;
+			}
+		}
+
+		let oText = new AscMath.MathText(strCloseSymbol, this.Content[this.Content.length - 1]);
+		oMathText.AddText(oText, true);
+	}
+
+	return oMathText;
 }
 
 /**
@@ -4271,13 +4343,17 @@ CCharacter.prototype.getBase = function()
     return this.elements[0][0];
 };
 
-function CMathGroupChrPr()
+function CMathGroupChrPr(ctrPr)
 {
-    this.chr     = undefined;
-    this.chrType = undefined;
-    this.pos     = LOCATION_BOT;
-    this.vertJc  = VJUST_TOP;
-
+	this.chr		= undefined;
+	this.chrType	= undefined;
+	this.pos		= LOCATION_BOT;
+	this.vertJc		= VJUST_TOP;
+	this.ctrPr		= new CMathCtrlPr(ctrPr);
+}
+CMathGroupChrPr.prototype.GetRPr = function ()
+{
+	return this.ctrPr.GetRPr();
 }
 CMathGroupChrPr.prototype.Set = function(Pr)
 {
@@ -4285,6 +4361,7 @@ CMathGroupChrPr.prototype.Set = function(Pr)
     this.chrType = Pr.chrType;
     this.pos     = Pr.pos;
     this.vertJc  = Pr.vertJc;
+	this.ctrPr   = Pr.ctrPr;
 };
 CMathGroupChrPr.prototype.Set_FromObject = function(Obj)
 {
@@ -4296,6 +4373,8 @@ CMathGroupChrPr.prototype.Set_FromObject = function(Obj)
 
     if(LOCATION_TOP === Obj.pos || LOCATION_BOT === Obj.pos)
         this.pos = Obj.pos;
+
+	this.ctrPr.SetRPr(Obj.ctrPrp);
 };
 CMathGroupChrPr.prototype.Copy = function()
 {
@@ -4305,6 +4384,7 @@ CMathGroupChrPr.prototype.Copy = function()
     NewPr.chrType = this.chrType;
     NewPr.vertJc  = this.vertJc ;
     NewPr.pos     = this.pos    ;
+	NewPr.ctrPr   = this.ctrPr  ;
 
     return NewPr;
 };
@@ -4341,6 +4421,9 @@ CMathGroupChrPr.prototype.Write_ToBinary = function(Writer)
 
     Writer.WriteLong(this.vertJc);
     Writer.WriteLong(this.pos);
+
+	Writer.WriteBool(true);
+	this.ctrPr.Write_ToBinary(Writer);
 };
 CMathGroupChrPr.prototype.Read_FromBinary = function(Reader)
 {
@@ -4366,6 +4449,11 @@ CMathGroupChrPr.prototype.Read_FromBinary = function(Reader)
 
     this.vertJc  = Reader.GetLong();
     this.pos     = Reader.GetLong();
+
+	if (Reader.GetBool())
+	{
+		this.ctrPr.Read_FromBinary(Reader);
+	}
 };
 
 /**
@@ -4378,15 +4466,15 @@ function CGroupCharacter(props)
 {
 	CCharacter.call(this);
 
-	this.Id   = AscCommon.g_oIdCounter.Get_NewId();
+	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    this.Pr = new CMathGroupChrPr();
+	this.Pr = new CMathGroupChrPr(this.CtrPrp);
 
-    if(props !== null && props !== undefined)
-        this.init(props);
+	if(props !== null && props !== undefined)
+		this.init(props);
 
-    /// вызов этой функции обязательно в конце
-    AscCommon.g_oTableId.Add( this, this.Id );
+	/// вызов этой функции обязательно в конце
+	AscCommon.g_oTableId.Add( this, this.Id );
 }
 CGroupCharacter.prototype = Object.create(CCharacter.prototype);
 CGroupCharacter.prototype.constructor = CGroupCharacter;
@@ -4557,35 +4645,67 @@ CGroupCharacter.prototype.Can_ChangePos = function()
 {
     return this.Pr.chr == 0x23DC || this.Pr.chr == 0x23DD || this.Pr.chr == 0x23DE || this.Pr.chr == 0x23DF;
 };
-CGroupCharacter.prototype.GetTextOfElement = function(isLaTeX) {
-	var strTemp = "";
-	var intStartCode = this.Pr.chr || this.operator.Get_CodeChr();
-	var strStart = String.fromCharCode(intStartCode);
-	var Base = this.getBase().GetMultipleContentForGetText(isLaTeX);
+/**
+ *
+ * @param {MathTextAndStyles | boolean} oMathText
+ * @constructor
+ */
+CGroupCharacter.prototype.GetTextOfElement = function(oMathText)
+{
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
-	if (true === isLaTeX)
+	let nStartCode = this.Pr.chr || this.operator.Get_CodeChr();
+	let strStart = String.fromCharCode(nStartCode);
+	let oBase = this.getBase();
+
+	let oPos;
+
+	if (oMathText.IsLaTeX())
 	{
-		let strTempSymbol = AscMath.GetLaTeXFromValue(strStart);
-		if (strTempSymbol)
-			strStart = strTempSymbol;
-
-		if (!(intStartCode === 9182 || intStartCode === 9183))
+		if (AscMath.MathLiterals.hbrack.SearchU(strStart))
 		{
-			strStart += this.Pr.pos === 1 ? "\\above" : "\\below";
+			strStart	= AscMath.SymbolsToLaTeX[strStart];
+			oPos		= oMathText.Add(oBase, true, 2);
+			oMathText.AddBefore(oPos, new AscMath.MathText(strStart, oMathText.GetStyleFromFirst()));
+		}
+		else if (AscMath.MathLiterals.horizontal.SearchU(strStart))
+		{
+			oMathText.AddText(new AscMath.MathText("{", oMathText.GetStyleFromFirst()));
+			strStart	= AscMath.MathLiterals.horizontal.Unicode[strStart]
+			strStart	+= this.Pr.pos === 1 ? "\\above" : "\\below";
+			oPos		= oMathText.Add(oBase, true, 1);
+			oMathText.AddBefore(oPos, new AscMath.MathText(strStart, oMathText.GetStyleFromFirst()));
+			oMathText.AddText(new AscMath.MathText("}", oMathText.GetStyleFromFirst()));
+		}
+		else
+		{
+			strStart	= AscMath.SymbolsToLaTeX[strStart];
+			strStart	+= this.Pr.pos === 1 ? "\\above" : "\\below";
+			oPos		= oMathText.Add(oBase, true, 1);
+			oMathText.AddBefore(oPos, new AscMath.MathText(strStart, oMathText.GetStyleFromFirst()));
+		}
+	}
+	else
+	{
+		let strPos;
+		if (this.Pr.pos === 0)
+		{
+			strPos = "┬";
+		}
+		else if (this.Pr.pos === 1)
+		{
+			strPos = "┴";
 		}
 
-		strTemp = strStart;
-		if (Base)
-			strTemp += Base;
+		oMathText.AddText( new AscMath.MathText(strStart, this), true);
+		if (nStartCode !== 9182 && nStartCode !== 9183)
+		{
+			oMathText.AddText(new AscMath.MathText(strPos, oBase), true);
+		}
+		oMathText.Add(oBase, true);
 	}
-    else
-    {
-        let pos = this.Pr.pos === 1 ? "┴" : "┬";
-        if (intStartCode !== 9182 && intStartCode !== 9183)
-            strStart += pos;
-        strTemp = strStart + Base;
-    }
-	return strTemp;
+
+	return oMathText;
 };
 
 /**
@@ -4626,3 +4746,6 @@ window["CMathMenuGroupCharacter"] = CMathMenuGroupCharacter;
 CMathMenuGroupCharacter.prototype["get_Pos"]         = CMathMenuGroupCharacter.prototype.get_Pos;
 CMathMenuGroupCharacter.prototype["put_Pos"]         = CMathMenuGroupCharacter.prototype.put_Pos;
 CMathMenuGroupCharacter.prototype["can_ChangePos"]   = CMathMenuGroupCharacter.prototype.can_ChangePos;
+
+AscMath.Delimiter = CDelimiter;
+AscMath.GroupCharacter = CGroupCharacter;

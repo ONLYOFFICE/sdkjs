@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -225,18 +225,10 @@ CTableRow.prototype =
 
     PreDelete : function()
     {
-        var CellsCount = this.Get_CellsCount();
-        for ( var CurCell = 0; CurCell < CellsCount; CurCell++ )
-        {
-            var Cell = this.Get_Cell( CurCell );
-
-            var CellContent = Cell.Content.Content;
-            var ContentCount = CellContent.length;
-            for ( var Pos = 0; Pos < ContentCount; Pos++ )
-            {
-                CellContent[Pos].PreDelete();
-            }
-        }
+		for (let iCell = 0, cellCount = this.GetCellsCount(); iCell < cellCount; ++iCell)
+		{
+			this.GetCell(iCell).PreDelete();
+		}
     },
     //-----------------------------------------------------------------------------------
     // Работаем с стилем строки
@@ -608,6 +600,8 @@ CTableRow.prototype =
 
 	Remove_Cell : function(Index)
 	{
+		this.Content[Index].PreDelete();
+		
 		AscCommon.History.Add(new CChangesTableRowRemoveCell(this, Index, [this.Content[Index]]));
 
 		this.Content.splice(Index, 1);
@@ -1170,6 +1164,25 @@ CTableRow.prototype.RejectPrChange = function()
 		this.Set_Pr(this.Pr.PrChange);
 		this.RemovePrChange();
 	}
+};
+CTableRow.prototype.HaveCellPrChange = function()
+{
+	for (let iCell = 0, nCells = this.GetCellsCount(); iCell < nCells; ++iCell)
+	{
+		if (this.GetCell(iCell).HavePrChange())
+			return true;
+	}
+	return false;
+};
+CTableRow.prototype.GetFirstCellReviewInfo = function()
+{
+	for (let iCell = 0, nCells = this.GetCellsCount(); iCell < nCells; ++iCell)
+	{
+		let reviewInfo = this.GetCell(iCell).Pr.ReviewInfo;
+		if (reviewInfo)
+			return reviewInfo;
+	}
+	return null;
 };
 CTableRow.prototype.private_CheckCurCell = function()
 {

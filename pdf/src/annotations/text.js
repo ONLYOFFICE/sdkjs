@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -73,9 +73,9 @@
 	 * Class representing a text annotation.
 	 * @constructor
     */
-    function CAnnotationText(sName, nPage, aRect, oDoc)
+    function CAnnotationText(sName, nPage, aOrigRect, oDoc)
     {
-        AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Text, nPage, aRect, oDoc);
+        AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Text, nPage, aOrigRect, oDoc);
 
         this._noteIcon      = NOTE_ICONS_TYPES.Comment;
         this._point         = undefined;
@@ -88,11 +88,9 @@
         this._width         = undefined;
         this._fillColor     = [1, 0.82, 0];
 
-        // internal
-        TurnOffHistory();
         this._replies = [];
     }
-    CAnnotationText.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
+    AscFormat.InitClass(CAnnotationText, AscPDF.CAnnotationBase, AscDFH.historyitem_type_Pdf_Annot_Text);
 	CAnnotationText.prototype.constructor = CAnnotationText;
     
     CAnnotationText.prototype.SetState = function(nType) {
@@ -110,8 +108,8 @@
     CAnnotationText.prototype.ClearReplies = function() {
         this._replies = [];
     };
-    CAnnotationText.prototype.AddReply = function(CommentData) {
-        let oReply = new CAnnotationText(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), this.GetDocument());
+    CAnnotationText.prototype.AddReply = function(CommentData, nPos) {
+        let oReply = new CAnnotationText(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), this.GetDocument());
 
         oReply.SetContents(CommentData.m_sText);
         oReply.SetCreationDate(CommentData.m_sOOTime);
@@ -119,14 +117,20 @@
         oReply.SetAuthor(CommentData.m_sUserName);
         oReply.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
         oReply.SetReplyTo(this.GetReplyTo() || this);
+        CommentData.SetUserData(oReply.GetId());
 
-        oReply.SetApIdx(this.GetDocument().GetMaxApIdx() + 2);
-        CommentData.m_sUserData = oReply.GetApIdx();
+        if (!nPos) {
+            nPos = this._replies.length;
+        }
 
-        this._replies.push(oReply);
+        this._replies.splice(nPos, 0, oReply);
     };
     CAnnotationText.prototype.GetAscCommentData = function() {
         let oAscCommData = new Asc.asc_CCommentDataWord(null);
+        if (null == this.GetContents()) {
+            return undefined;
+        }
+
         oAscCommData.asc_putText(this.GetContents());
         let sModDate = this.GetModDate();
         if (sModDate)
@@ -140,7 +144,7 @@
             bSolved = true;
         oAscCommData.asc_putSolved(bSolved);
         oAscCommData.asc_putQuoteText("");
-        oAscCommData.m_sUserData = this.GetApIdx();
+        oAscCommData.m_sUserData = this.GetId();
 
         this._replies.forEach(function(reply) {
             oAscCommData.m_aReplies.push(reply.GetAscCommentData());
@@ -195,35 +199,24 @@
     };
     CAnnotationText.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         let oNewAnnot = new CAnnotationText(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
         oNewAnnot.lazyCopy = true;
 
-        if (this._pagePos) {
-            oNewAnnot._pagePos = {
-                x: this._pagePos.x,
-                y: this._pagePos.y,
-                w: this._pagePos.w,
-                h: this._pagePos.h
-            }
-        }
-
-        
-        if (this._origRect)
-            oNewAnnot._origRect = this._origRect.slice();
-
         let aFillColor = this.GetFillColor();
 
         oNewAnnot._originView = this._originView;
         oNewAnnot._apIdx = this._apIdx;
-        oNewAnnot.SetFillColor(aFillColor ? aFillColor.slice() : undefined);
+        aFillColor && oNewAnnot.SetFillColor(aFillColor.slice());
         oNewAnnot.SetOriginPage(this.GetOriginPage());
         oNewAnnot.SetAuthor(this.GetAuthor());
         oNewAnnot.SetModDate(this.GetModDate());
         oNewAnnot.SetCreationDate(this.GetCreationDate());
         oNewAnnot.SetContents(this.GetContents());
+
+        oDoc.EndNoHistoryMode();
 
         return oNewAnnot;
     };
@@ -238,13 +231,13 @@
         let oRGB            = this.GetRGBColor(this.GetFillColor());
         let ICON_TO_DRAW    = this.GetIconImg();
 
-        let aRect       = this.GetRect();
+        let oDoc        = this.GetDocument();
         let nPage       = this.GetPage();
         let aOrigRect   = this.GetOrigRect();
-        let nRotAngle   = this.GetDocument().Viewer.getPageRotate(nPage);
+        let nRotAngle   = oDoc.Viewer.getPageRotate(nPage);
 
-        let nWidth  = (aRect[2] - aRect[0]) * AscCommon.AscBrowser.retinaPixelRatio;
-        let nHeight = (aRect[3] - aRect[1]) * AscCommon.AscBrowser.retinaPixelRatio;
+        let nWidth  = (aOrigRect[2] - aOrigRect[0]) * oDoc.Viewer.getDrawingPageScale(nPage) * AscCommon.AscBrowser.retinaPixelRatio;
+        let nHeight = (aOrigRect[3] - aOrigRect[1]) * oDoc.Viewer.getDrawingPageScale(nPage) * AscCommon.AscBrowser.retinaPixelRatio;
         
         let imgW = ICON_TO_DRAW.width;
         let imgH = ICON_TO_DRAW.height;
@@ -329,9 +322,6 @@
     CAnnotationText.prototype.IsComment = function() {
         return true;
     };
-    CAnnotationText.prototype.getObjectType = function() {
-        return -1;
-    };
     
     CAnnotationText.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
@@ -371,12 +361,7 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
     };
-    // CAnnotationText.prototype.ClearCache = function() {};
-    function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
-    }
-
+    
     window["AscPDF"].CAnnotationText            = CAnnotationText;
     window["AscPDF"].TEXT_ANNOT_STATE           = TEXT_ANNOT_STATE;
     window["AscPDF"].TEXT_ANNOT_STATE_MODEL     = TEXT_ANNOT_STATE_MODEL;

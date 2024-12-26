@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -36,7 +36,7 @@ const {S3Client, GetObjectCommand} = require("@aws-sdk/client-s3");
 
 async function run(accessKeyId, secretAccessKey, inputFile = "unique.txt", mapsDir = "maps", region = "eu-west-1",
 				   endpoint = "https://s3.eu-west-1.amazonaws.com", bucketName = "repo-doc-onlyoffice-com",
-				   keyPrefix = "closure-maps/commercial/{version}") {
+				   keyPrefix = "closure-maps/sdkjs/commercial/{version}") {
 	if (!accessKeyId || !secretAccessKey) {
 		console.error(`missing arguments.USAGE: download-maps.js [accessKeyId] [secretAccessKey] [inputFile=${inputFile}] [mapsDir=${mapsDir}] [region=${region}] [endpoint=${endpoint}] [bucketName=${bucketName}] [keyPrefix=${keyPrefix}]`);
 		console.error(`inputFile must contain at least one line like: "/7.5.1-23/sdkjs/"`);

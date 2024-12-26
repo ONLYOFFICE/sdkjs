@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -100,10 +100,6 @@
 					useWasm = true;
 			}
 		}
-
-		// отключаем wasm для мобильных
-		if (useWasm && (AscCommon.AscBrowser.isAppleDevices || AscCommon.AscBrowser.isAndroid))
-			useWasm = false;
 
 		var engine_name_ext = useWasm ? ".js" : "_ie.js";
 		var _onSuccess = function(){

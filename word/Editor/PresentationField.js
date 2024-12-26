@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -240,6 +240,17 @@
                     if(oStylesObject.shape && oStylesObject.shape.getValueString && oStylesObject.shape.getValueString())
                     {
                         sStr = oStylesObject.shape.getValueString();
+                    }
+                }
+            }
+            else if("categoryname" === sFieldType)
+            {
+                if(this.Paragraph && this.Paragraph.Parent)
+                {
+                    oStylesObject = this.Paragraph.Parent.Get_Styles();
+                    if(oStylesObject.shape && oStylesObject.shape.getCategoryName && oStylesObject.shape.getCategoryName())
+                    {
+                        sStr = oStylesObject.shape.getCategoryName();
                     }
                 }
             }

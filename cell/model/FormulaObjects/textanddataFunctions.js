@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -189,7 +189,7 @@ function (window, undefined) {
 	cARRAYTOTEXT.prototype.isXLFN = true;
 	cARRAYTOTEXT.prototype.argumentsMin = 1;
 	cARRAYTOTEXT.prototype.argumentsMax = 2;
-	cARRAYTOTEXT.prototype.arrayIndexes = {0: 1, 1: 1};
+	cARRAYTOTEXT.prototype.arrayIndexes = {0: 1};
 	cARRAYTOTEXT.prototype.argumentsType = [argType.reference, argType.number];
 	cARRAYTOTEXT.prototype.Calculate = function (arg) {
 		function arrayToTextGeneral(args, isRange) {
@@ -890,7 +890,7 @@ function (window, undefined) {
 	cFIND.prototype.argumentsMax = 3;
 	cFIND.prototype.argumentsType = [argType.text, argType.text, argType.number];
 	cFIND.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg.length === 3 ? arg[2] : null, res, str, searchStr,
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg.length === 3 ? arg[2] : null, res, str, searchStr,
 			pos = -1;
 
 		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
@@ -938,7 +938,10 @@ function (window, undefined) {
 		}
 
 		str = arg1.toLocaleString();
-		searchStr = RegExp.escape(arg0.toLocaleString());
+		// searchStr = RegExp.escape(arg0.toLocaleString()); // doesn't work with strings like """ String""" , it's return ""\ String"" instead "" String""
+		//TODO need review. bugs 50869; 68343
+		searchStr = arg0.toLocaleString().replace(/\"\"/g, "\"");
+		searchStr = RegExp.escape(searchStr);
 
 		if (arg2) {
 

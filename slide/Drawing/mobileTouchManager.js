@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -58,6 +58,21 @@
 	CMobileDelegateEditorPresentation.prototype.ConvertCoordsFromCursor = function(x, y)
 	{
 		return this.DrawingDocument.ConvertCoordsFromCursor2(x, y);
+	};
+	CMobileDelegateEditorPresentation.prototype.GetElementOffset = function()
+	{
+		var _xOffset = this.HtmlPage.X;
+		var _yOffset = this.HtmlPage.Y;
+
+		if (true === this.HtmlPage.m_bIsRuler)
+		{
+			_xOffset += (5 * AscCommon.g_dKoef_mm_to_pix);
+			_yOffset += (7 * AscCommon.g_dKoef_mm_to_pix);
+		}
+
+		let mainViewOffset = parseInt(this.HtmlPage.m_oMainParent.HtmlElement.style.left);
+
+		return { X : _xOffset + mainViewOffset, Y : _yOffset };
 	};
 	CMobileDelegateEditorPresentation.prototype.GetZoomFit = function()
 	{
@@ -372,7 +387,7 @@
 
 		this.iScroll = new window.IScrollMobile(_element, {
 			scrollbars: true,
-			mouseWheel: true,
+			mouseWheel: !this.isDesktopMode,
 			interactiveScrollbars: true,
 			shrinkScrollbars: 'scale',
 			fadeScrollbars: true,
@@ -381,7 +396,8 @@
 			bounce : false,
 			eventsElement : this.eventsElement,
 			click : false,
-			useLongTap : true
+			useLongTap : true,
+			transparentIndicators : this.isDesktopMode
 		});
 
 		this.delegate.Init();
@@ -417,15 +433,30 @@
 		if (_matrix && global_MatrixTransformer.IsIdentity(_matrix))
 			_matrix = null;
 
-		if (!this.CheckSelectTrack())
+		let touchesCount = e.touches ? e.touches.length : this.getPointerCount();
+		let isLockedTouch = false;
+
+		if (touchesCount > 1)
 		{
-			if (!this.CheckTableTrack())
+			if (AscCommon.MobileTouchMode.None !== this.Mode &&
+				AscCommon.MobileTouchMode.Scroll !== this.Mode)
 			{
-				bIsKoefPixToMM = this.CheckObjectTrack();
+				isLockedTouch = true;
 			}
 		}
 
-		if ((e.touches && 2 == e.touches.length) || (2 == this.getPointerCount()))
+		if (!isLockedTouch)
+		{
+			if (!this.CheckSelectTrack())
+			{
+				if (!this.CheckTableTrack())
+				{
+					bIsKoefPixToMM = this.CheckObjectTrack();
+				}
+			}
+		}
+
+		if (!isLockedTouch && (2 === touchesCount))
 		{
 			this.Mode = AscCommon.MobileTouchMode.Zoom;
 		}
@@ -803,10 +834,13 @@
 			{
 				if (!this.MoveAfterDown)
 				{
-					global_mouseEvent.Button = 0;
-					this.delegate.Drawing_OnMouseDown(_e);
-					this.delegate.Drawing_OnMouseUp(_e);
-					this.Api.sendEvent("asc_onTapEvent", e);
+					if (!this.checkDesktopModeContextMenuEnd())
+					{
+						global_mouseEvent.Button = 0;
+						this.delegate.Drawing_OnMouseDown(_e);
+						this.delegate.Drawing_OnMouseUp(_e);
+						this.Api.sendEvent("asc_onTapEvent", e);
+					}
 
 					var typeMenu = this.delegate.GetContextMenuType();
 					if (typeMenu == AscCommon.MobileTouchContextMenuType.Target ||
@@ -965,13 +999,19 @@
 		this.checkPointerMultiTouchRemove(e);
 
 		if (this.Api.isViewMode || isPreventDefault)
-            AscCommon.stopEvent(e);//AscCommon.g_inputContext.preventVirtualKeyboard(e);
+		{
+			AscCommon.stopEvent(e);
+			AscCommon.g_inputContext.preventVirtualKeyboard(e);
+		}
 
         if (AscCommon.g_inputContext.isHardCheckKeyboard)
             isPreventDefault ? AscCommon.g_inputContext.preventVirtualKeyboard_Hard() : AscCommon.g_inputContext.enableVirtualKeyboard_Hard();
 
 		if (true !== this.iScroll.isAnimating)
 			this.CheckContextMenuTouchEnd(isCheckContextMenuMode, isCheckContextMenuSelect, isCheckContextMenuCursor, isCheckContextMenuTableRuler);
+
+		if (!isPreventDefault && this.Api.isMobileVersion && !this.Api.isUseOldMobileVersion())
+			this.showKeyboard();
 
 		return false;
 	};
@@ -981,7 +1021,9 @@
 		if (AscCommon.g_inputContext && AscCommon.g_inputContext.externalChangeFocus())
 			return;
 
-		if (!this.Api.asc_IsFocus())
+		this.removeHandlersOnClick();
+
+		if (!this.Api.asc_IsFocus() && !this.Api.isMobileVersion)
 			this.Api.asc_enableKeyEvents(true);
 
 		var oWordControl = this.Api.WordControl;
@@ -1009,8 +1051,14 @@
 		oWordControl.IsUpdateOverlayOnlyEndReturn = true;
 		oWordControl.StartUpdateOverlay();
 		var ret = this.onTouchEnd(e);
+
+		if (this.isGlassDrawed)
+			oWordControl.OnUpdateOverlay();
+
 		oWordControl.IsUpdateOverlayOnlyEndReturn = false;
 		oWordControl.EndUpdateOverlay();
+
+		this.checkDesktopModeContextMenuEnd(e);
 		return ret;
 	};
 
@@ -1165,14 +1213,15 @@
 
 		this.iScroll = new window.IScrollMobile(_element, {
 			scrollbars: true,
-			mouseWheel: true,
+			mouseWheel: !this.isDesktopMode,
 			interactiveScrollbars: true,
 			shrinkScrollbars: 'scale',
 			fadeScrollbars: true,
 			scrollX : true,
 			scroller_id : this.iScrollElement,
 			eventsElement : this.eventsElement,
-			bounce : true
+			bounce : true,
+			transparentIndicators : this.isDesktopMode
 		});
 
 		this.delegate.Init();
@@ -1309,7 +1358,9 @@
 	};
 	CMobileTouchManagerThumbnails.prototype.mainOnTouchEnd = function(e)
 	{
-		return this.onTouchEnd(e);
+		let res = this.onTouchEnd(e);
+		this.checkDesktopModeContextMenuEnd(e);
+		return res;
 	};
 
 	//--------------------------------------------------------export----------------------------------------------------

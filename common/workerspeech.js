@@ -1,5 +1,5 @@
 ﻿/*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -150,7 +150,8 @@
 				this.speechElement.setAttribute("role", "region");
 				this.speechElement.setAttribute("aria-label", "");
 				this.speechElement.setAttribute("aria-live", "assertive");
-				this.speechElement.setAttribute("aria-atomic", "true");
+				if (!(AscCommon.AscBrowser.isMozilla && AscCommon.AscBrowser.isWindows))
+					this.speechElement.setAttribute("aria-atomic", "true");
 				this.speechElement.setAttribute("aria-hidden", "false");
 
 				//AscCommon.g_inputContext.HtmlArea.setAttribute("aria-describedby", "area_id_screen_reader");
@@ -481,6 +482,7 @@
 		this.onApplyChanges       = null;
 		this.onBeforeUndoRedo     = null;
 		this.onUndoRedo           = null;
+		this.onCloseFile          = null;
 		
 		this.selectionState = null;
 		this.isAction       = false;
@@ -519,6 +521,7 @@
 		this.editor.asc_registerCallback('asc_onUndoRedo', this.onUndoRedo);
 		this.editor.asc_registerCallback('asc_onBeforeUndoRedoInCollaboration', this.onBeforeUndoRedo);
 		this.editor.asc_registerCallback('asc_onUndoRedoInCollaboration', this.onUndoRedo);
+		this.editor.asc_registerCallback('asc_onCloseFile', this.onCloseFile);
 
 		//se
 		this.editor.asc_registerCallback('asc_onActiveSheetChanged', this.onActiveSheetChanged);
@@ -546,6 +549,9 @@
 		this.editor.asc_unregisterCallback('asc_onApplyChanges', this.onApplyChanges);
 		this.editor.asc_unregisterCallback('asc_onBeforeUndoRedo', this.onBeforeUndoRedo);
 		this.editor.asc_unregisterCallback('asc_onUndoRedo', this.onUndoRedo);
+		this.editor.asc_unregisterCallback('asc_onBeforeUndoRedoInCollaboration', this.onBeforeUndoRedo);
+		this.editor.asc_unregisterCallback('asc_onUndoRedoInCollaboration', this.onUndoRedo);
+		this.editor.asc_unregisterCallback('asc_onCloseFile', this.onCloseFile);
 		
 		//se
 		this.editor.asc_unregisterCallback('asc_onActiveSheetChanged', this.onActiveSheetChanged);
@@ -628,6 +634,11 @@
 			_t.handleSpeechDescription({type: SpeakerActionType.sheetChange, index : index});
 		};
 		
+		this.onCloseFile = function()
+		{
+			_t.resetState();
+		};
+		
 	};
 	EditorActionSpeaker.prototype.handleSpeechDescription = function(action)
 	{
@@ -648,6 +659,10 @@
 	EditorActionSpeaker.prototype.updateState = function()
 	{
 		this.selectionState = this.editor.getSelectionState();
+	};
+	EditorActionSpeaker.prototype.resetState = function()
+	{
+		this.selectionState = null;
 	};
 	
 	window.AscCommon.EditorActionSpeaker = new EditorActionSpeaker();

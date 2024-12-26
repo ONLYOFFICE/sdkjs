@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -396,12 +396,19 @@
 			
 			if (form.IsRadioButton())
 			{
-				let key = form.GetRadioButtonGroupKey();
-				if (key && "" !== key)
-					continue;
+				let groupKey = form.GetRadioButtonGroupKey();
+				if (!groupKey || "" === groupKey)
+				{
+					groupKey = keyGenerator.GetNewKey(form);
+					form.SetRadioButtonGroupKey(groupKey);
+				}
 				
-				key = keyGenerator.GetNewKey(form);
-				form.SetRadioButtonGroupKey(key);
+				let choice = form.GetFormKey();
+				if (!choice || "" === choice)
+				{
+					choice = keyGenerator.GetNewChoice(form);
+					form.SetFormKey(choice);
+				}
 			}
 			else
 			{
@@ -663,5 +670,7 @@
 	window['AscWord'].CFormsManager  = CFormsManager;
 	window['AscWord'].registerForm   = registerForm;
 	window['AscWord'].unregisterForm = unregisterForm;
+	
+	
 
 })(window);

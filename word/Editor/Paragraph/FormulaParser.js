@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -885,7 +885,7 @@
             if(oDocument.BookmarksManager.SelectBookmark(this.bookmarkName)){
                 var oCurrentParagraph = oDocument.GetCurrentParagraph();
                 if(oCurrentParagraph.Parent){
-                    oCell = oCurrentParagraph.Parent.IsTableCellContent(true);
+                    oCell = oCurrentParagraph.IsTableCellContent(true);
                     if(oCell){
                         oRow = oCell.GetRow();
                         if(oRow){

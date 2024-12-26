@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -775,7 +775,10 @@ function onLoadFontsModule(window, undefined)
 	if (AscCommon["CZLibEngineJS"])
 		AscCommon["CZLibEngineJS"].prototype["isModuleInit"] = true;
 
-	window.nativeZlibEngine = new ZLib();
+	if (window["NATIVE_EDITOR_ENJINE"])
+		window["InitNativeZLib"] = function() { window.nativeZlibEngine = new ZLib(); };
+	else
+		window.nativeZlibEngine = new ZLib();
 
 	function Hyphenation()
 	{

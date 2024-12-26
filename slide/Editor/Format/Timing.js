@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -668,8 +668,15 @@
                     var aChildren = this.getChildrenTimeNodes();
                     var oThis = this;
 
-                    if (oEndSync) {
-                        oEndSync.fillTrigger(oPlayer, oTrigger);
+                    if(oPlayer instanceof CDemoAnimPlayer) {
+                        oTrigger.addTrigger(function () {
+                            for (var nChild = 0; nChild < aChildren.length; ++nChild) {
+                                if (!aChildren[nChild].isAtEnd() && (!aChildren[nChild].repeatCount || !aChildren[nChild].repeatCount.isIndefinite())) {
+                                    return false;
+                                }
+                            }
+                            return true;
+                        });
                     }
                     else {
                         oTrigger.addTrigger(function () {
@@ -683,6 +690,10 @@
                             }
                             return true;
                         });
+                    }
+
+                    if (oEndSync) {
+                        oEndSync.fillTrigger(oPlayer, oTrigger);
                     }
                     return oTrigger;
                 }
@@ -2701,13 +2712,14 @@
                             ? this.getLastFiniteEffect(aEffectsForDemo)
                             : this.getLastFiniteEffect(oEffectCopy.originalNode.getTimeNodeWithLvl(2).getAllAnimEffects());
 
-                        if (lastFiniteEffect === oEffectCopy) {
+                        if (lastFiniteEffect === oEffectCopy || aEffectCopies.length === 1) {
                             oEffectCopy.cTn.changeRepeatCount(1000);
                         } else {
-                            const oEndSync = new CCond();
-                            oEndSync.setEvt(COND_EVNT_ON_END);
-                            oEndSync.setTn(lastFiniteEffect.copyNode.getAttributesObject().id);
-                            oEffectCopy.cTn.setEndSync(oEndSync);
+                            oEffectCopy.cTn.setEndCondLst(new CCondLst());
+                            const oCond = new CCond();
+                            oCond.setEvt(COND_EVNT_ON_END);
+                            oCond.setTn(lastFiniteEffect.copyNode.getAttributesObject().id);
+                            oEffectCopy.cTn.endCondLst.push(oCond);
                         }
                     }
 
@@ -3415,6 +3427,12 @@
         for (let nSp = 0; nSp < aSpTree.length; ++nSp) {
             let oSp = aSpTree[nSp];
             if (oSp.getFormatIdString() === this.spid) {
+                if(!isDrawingOnSlide(oSp)) {
+                    if (this.parent) {
+                        this.parent.onRemoveChild(this);
+                    }
+                    return;
+                }
                 this.setSpid(oSp.Id);
                 return;
             }
@@ -3480,6 +3498,12 @@
         for (let nSp = 0; nSp < aSpTree.length; ++nSp) {
             let oSp = aSpTree[nSp];
             if ((oSp.getObjectType && oSp.getObjectType() === AscDFH.historyitem_type_ChartSpace) && oSp.getFormatIdString() === this.spid) {
+                if(!isDrawingOnSlide(oSp)) {
+                    if (this.parent) {
+                        this.parent.onRemoveChild(this);
+                    }
+                    return;
+                }
                 this.setSpid(oSp.Id);
                 return;
             }
@@ -3967,6 +3991,12 @@
         for (let nSp = 0; nSp < aSpTree.length; ++nSp) {
             let oSp = aSpTree[nSp];
             if (oSp.getFormatIdString() === this.dgmId) {
+                if(!isDrawingOnSlide(oSp)) {
+                    if (this.parent) {
+                        this.parent.onRemoveChild(this);
+                    }
+                    return;
+                }
                 this.setDgmId(oSp.Id);
                 return;
             }
@@ -6055,7 +6085,7 @@
         if(!oSp) {
             return false;
         }
-        if(!oSp.IsUseInDocument()) {
+        if(!isDrawingOnSlide(oSp)) {
             return false;
         }
         return true;
@@ -6137,6 +6167,20 @@
         oClass.txEl = value;
     };
 
+    function isDrawingOnSlide(oDrawing) {
+        if(!oDrawing) return false;
+        let oSlide = oDrawing.parent;
+        if(!oSlide) return false;
+        let aSpTree = oSlide.cSld && oSlide.cSld.spTree;
+        if(!Array.isArray(aSpTree)) return false;
+        for(let nSp = 0; nSp < aSpTree.length; ++nSp) {
+            if(aSpTree[nSp] === oDrawing) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     function CSpTgt() {
         CObjectTarget.call(this);
         this.bg = null;
@@ -6170,7 +6214,8 @@
     };
     CSpTgt.prototype.assignConnection = function (oObjectsMap) {
         if (this.spid !== null) {
-            if (AscCommon.isRealObject(oObjectsMap[this.spid])) {
+            let oSp = oObjectsMap[this.spid];
+            if (AscCommon.isRealObject(oSp) && isDrawingOnSlide(oSp)) {
                 this.setSpid(oObjectsMap[this.spid].Id);
             } else {
                 if (this.parent) {
@@ -6192,6 +6237,12 @@
         for (let nSp = 0; nSp < aSpTree.length; ++nSp) {
             let oSp = aSpTree[nSp];
             if (oSp.getFormatIdString() === this.spid) {
+                if(!isDrawingOnSlide(oSp)) {
+                    if (this.parent) {
+                        this.parent.onRemoveChild(this);
+                    }
+                    return;
+                }
                 this.setSpid(oSp.Id);
                 return;
             }
@@ -10254,33 +10305,31 @@
         if(this.canvas.width === 0 || this.canvas.height === 0) {
             return;
         }
-        var bNoTransform = false;
-        if (!oTransform) {
-            bNoTransform = true;
-        } else {
-            // if(oTransform.IsIdentity2()) {
-            //     var fDelta = 2;
-            //     if(AscFormat.fApproxEqual(oTransform.tx*this.scale, this.x, fDelta) &&
-            //         AscFormat.fApproxEqual(oTransform.ty*this.scale, this.y, fDelta)) {
-            //         bNoTransform = true;
-            //     }
-            // }
+        oGraphics.SaveGrState();
+        this.drawWithoutSaveState(oGraphics, oTransform);
+        oGraphics.RestoreGrState();
+        oGraphics.FreeFont && oGraphics.FreeFont();
+    };
+    CBaseAnimTexture.prototype.drawWithIntegerGrid = function (oGraphics) {
+        oGraphics.SetIntegerGrid(true);
+        let nDx = oGraphics.m_oCoordTransform.tx;
+        let nDy = oGraphics.m_oCoordTransform.ty;
+        oGraphics.m_oContext.drawImage(this.canvas, (nDx + this.x + 0.5) >> 0, (nDy + this.y + 0.5) >> 0, this.canvas.width, this.canvas.height);
+    };
+    CBaseAnimTexture.prototype.drawWithoutIntegerGrid = function (oGraphics, oTransform) {
+        oGraphics.SetIntegerGrid(false);
+        oGraphics.transform3(oTransform, false);
+        oGraphics.drawImage2(this.canvas, 0, 0, this.canvas.width / this.scale, this.canvas.height / this.scale);
+    };
+    CBaseAnimTexture.prototype.drawWithoutSaveState = function(oGraphics, oTransform) {
+        if(this.canvas.width === 0 || this.canvas.height === 0) {
+            return;
         }
-        if (bNoTransform) {
-            oGraphics.SaveGrState();
-            oGraphics.SetIntegerGrid(true);
-            var nDx = oGraphics.m_oCoordTransform.tx;
-            var nDy = oGraphics.m_oCoordTransform.ty;
-            oGraphics.m_oContext.drawImage(this.canvas, (nDx + this.x + 0.5) >> 0, (nDy + this.y + 0.5) >> 0, this.canvas.width, this.canvas.height);
-            oGraphics.RestoreGrState();
-            oGraphics.FreeFont && oGraphics.FreeFont();
-        } else {
-            oGraphics.SaveGrState();
-            oGraphics.SetIntegerGrid(false);
-            oGraphics.transform3(oTransform, false);
-            oGraphics.drawImage2(this.canvas, 0, 0, this.canvas.width / this.scale, this.canvas.height / this.scale);
-            oGraphics.RestoreGrState();
-            oGraphics.FreeFont && oGraphics.FreeFont();
+        if (!oTransform) {
+            this.drawWithIntegerGrid(oGraphics);
+        }
+        else {
+            this.drawWithoutIntegerGrid(oGraphics, oTransform);
         }
     };
 	CBaseAnimTexture.prototype.beforeRelease = function() {
@@ -13535,6 +13584,9 @@
     };
     MoveAnimationDrawObject.prototype.canGroup = function () {
         return false;
+    };
+    MoveAnimationDrawObject.prototype.canResize = function () {
+        return true;
     };
     MoveAnimationDrawObject.prototype.draw = function (oGraphics) {
         if (oGraphics.IsThumbnail === true ||

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -769,17 +769,13 @@
 
 		if (!this.AsYouType)
 			return false;
-
-		if (!oDocument.IsAutoCorrectFirstLetterOfSentences())
+		
+		let isCellFistLetter = (oRunElementsBefore.IsEnd() && oParagraph.IsTableCellContent());
+		
+		if ((isCellFistLetter && !oDocument.IsAutoCorrectFirstLetterOfCells())
+			|| (!isCellFistLetter && !oDocument.IsAutoCorrectFirstLetterOfSentences()))
 			return false;
-
-		if (oRunElementsBefore.IsEnd()
-			&& oParagraph.IsTableCellContent()
-			&& !oDocument.IsAutoCorrectFirstLetterOfCells())
-		{
-			return false;
-		}
-
+		
 		if ("www" === sText || "http" === sText || "https" === sText)
 			return false;
 
@@ -872,13 +868,17 @@
 		var oItem = oRun.GetElement(nInRunPos);
 		if (!oItem || oItem.Type !== para_Text)
 			return false;
+		
+		let codePoint = oItem.GetCodePoint();
+		if (AscCommon.IsGeorgianScript(codePoint))
+			return false;
 
 		if (this.private_IsDocumentLocked())
 			return false;
 
 		oDocument.StartAction(AscDFH.historydescription_Document_AutoCorrectFirstLetterOfSentence);
 
-		var oNewItem = new AscWord.CRunText(String.fromCharCode(oItem.Value).toUpperCase().charCodeAt(0));
+		var oNewItem = new AscWord.CRunText(String.fromCharCode(codePoint).toUpperCase().charCodeAt(0));
 		oRun.RemoveFromContent(nInRunPos, 1, true);
 		oRun.AddToContent(nInRunPos, oNewItem, true);
 
@@ -998,7 +998,7 @@
 					var oPrevNumLvl = oDocument.GetNumbering().GetNum(oPrevNumPr.NumId).GetLvl(oPrevNumPr.Lvl);
 					if (oPrevNumLvl.IsSimilar(oNumLvl))
 					{
-						oNumPr = new CNumPr(oPrevNumPr.NumId, oPrevNumPr.Lvl);
+						oNumPr = new AscWord.NumPr(oPrevNumPr.NumId, oPrevNumPr.Lvl);
 					}
 				}
 
@@ -1007,7 +1007,7 @@
 					var oNum = oDocument.GetNumbering().CreateNum();
 					oNum.CreateDefault(c_oAscMultiLevelNumbering.Bullet);
 					oNum.SetLvl(oNumLvl, 0);
-					oNumPr = new CNumPr(oNum.GetId(), 0);
+					oNumPr = new AscWord.NumPr(oNum.GetId(), 0);
 				}
 			}
 		}
@@ -1073,7 +1073,7 @@
 					}
 
 					if (isAdd)
-						oNumPr = new CNumPr(oPrevNumPr.NumId, nResultLvL);
+						oNumPr = new AscWord.NumPr(oPrevNumPr.NumId, nResultLvL);
 				}
 				else
 				{
@@ -1100,7 +1100,7 @@
 							oNum.SetLvl(newLvl, iLvl);
 						}
 
-						oNumPr = new CNumPr(oNum.GetId(), arrResult.length - 1);
+						oNumPr = new AscWord.NumPr(oNum.GetId(), arrResult.length - 1);
 					}
 				}
 			}

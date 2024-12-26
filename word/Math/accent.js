@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -428,10 +428,15 @@ CAccentBreve.prototype.drawPath = function(pGraphics, XX, YY)
     pGraphics._l(XX[22], YY[22]);
 };
 
-function CMathAccentPr()
+function CMathAccentPr(ctrPr)
 {
-    this.chr     = null;
-    this.chrType = null;
+	this.chr		= null;
+	this.chrType	= null;
+	this.ctrPr		= new CMathCtrlPr(ctrPr);
+}
+CMathAccentPr.prototype.GetRPr = function ()
+{
+	return this.ctrPr.GetRPr();
 }
 CMathAccentPr.prototype.Set_FromObject = function(Obj)
 {
@@ -444,6 +449,8 @@ CMathAccentPr.prototype.Set_FromObject = function(Obj)
         this.chrType = Obj.chrType;
     else
         this.chrType = null;
+
+    this.ctrPr.SetRPr(Obj.ctrPrp);
 };
 CMathAccentPr.prototype.Copy = function()
 {
@@ -451,6 +458,7 @@ CMathAccentPr.prototype.Copy = function()
 
     NewPr.chr     = this.chr;
     NewPr.chrType = this.chrType;
+    NewPr.ctrPr   = this.ctrPr;
 
     return NewPr;
 };
@@ -461,6 +469,9 @@ CMathAccentPr.prototype.Write_ToBinary = function(Writer)
 
     Writer.WriteLong(null === this.chr ? -1 : this.chr);
     Writer.WriteLong(null === this.chrType ? -1 : this.chrType);
+
+	Writer.WriteBool(true);
+	this.ctrPr.Write_ToBinary(Writer);
 };
 CMathAccentPr.prototype.Read_FromBinary = function(Reader)
 {
@@ -472,6 +483,11 @@ CMathAccentPr.prototype.Read_FromBinary = function(Reader)
 
     this.chr     = -1 === chr ? null : chr;
     this.chrType = -1 === chrType ? null : chrType;
+
+    if (Reader.GetBool())
+    {
+        this.ctrPr.Read_FromBinary(Reader);
+    }
 };
 
 /**
@@ -484,21 +500,21 @@ function CAccent(props)
 {
 	CMathBase.call(this);
 
-    this.Id = AscCommon.g_oIdCounter.Get_NewId();
+	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    //// Properties
-    this.Pr = new CMathAccentPr();
+	//// Properties
+	this.Pr = new CMathAccentPr(this.CtrPrp);
 
-    this.gap = 0;
+	this.gap = 0;
 
-    /////////////////
+	/////////////////
 
-    this.operator = new COperator(OPER_ACCENT);
+	this.operator = new COperator(OPER_ACCENT);
 
-    if(props !== null && typeof(props) !== "undefined")
-        this.init(props);
+	if(props !== null && typeof(props) !== "undefined")
+		this.init(props);
 
-    AscCommon.g_oTableId.Add( this, this.Id );	
+	AscCommon.g_oTableId.Add( this, this.Id );
 }
 CAccent.prototype = Object.create(CMathBase.prototype);
 CAccent.prototype.constructor = CAccent;
@@ -688,22 +704,37 @@ CAccent.prototype.Get_InterfaceProps = function()
 {
     return new CMathMenuAccent(this);
 };
-CAccent.prototype.GetTextOfElement = function(isLaTeX) {
-	var strTemp = "";
-	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
-	var strAccent = this.Pr.chr === null ? "̂" : String.fromCharCode(this.Pr.chr);
-	var strStartBracet = (strBase.length > 1 || isLaTeX) ? this.GetStartBracetForGetTextContent(isLaTeX) : "";
-	var strCloseBracet = (strBase.length > 1 || isLaTeX) ? this.GetEndBracetForGetTextContent(isLaTeX) : "";
+/**
+ *
+ * @param {MathTextAndStyles | boolean} oMathText
+ * @constructor
+ */
+CAccent.prototype.GetTextOfElement = function(oMathText)
+{
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
+
+	let oBase = this.getBase();
+
+	let strAccent = this.Pr.chr
+		? String.fromCharCode(this.Pr.chr)
+		: String.fromCharCode(this.operator.code);
 	
-	if (isLaTeX)
-    {
-		var intAccentCode = strAccent.charCodeAt();
-		switch (intAccentCode) {
+	if (oMathText.IsLaTeX())
+	{
+		let oStartPos;
+
+		if (this.Pr.chr === 831)
+			oStartPos = oMathText.Add(oBase, true, 0);
+		else
+			oStartPos = oMathText.Add(oBase, true, 2);
+
+		switch (this.Pr.chr)
+		{
 			case 0:		strAccent = '\\hat'; 				break;
 			case 768:	strAccent = '\\grave';				break;
 			case 769:	strAccent = '\\acute';				break;
 			case 771:	strAccent = '\\tilde';				break;
-			case 831:	strAccent = '\\bar{\\bar';			break;
+			case 831:   strAccent = "\\bar{\\bar{";         break;
 			case 773:	strAccent = '\\bar';				break;
 			case 774:	strAccent = '\\breve';				break;
 			case 775:	strAccent = '\\dot';				break;
@@ -714,21 +745,21 @@ CAccent.prototype.GetTextOfElement = function(isLaTeX) {
 			case 8401:	strAccent = '\\hvec';				break;
 			case 8406:	strAccent = '\\lvec';				break;
 			case 8407:	strAccent = '\\vec';			    break;
-			case 8417:	strAccent = '\\tvec';				break;
+			case 8417:	strAccent = '\\overleftrightarrow';	break;
 			default:	strAccent = '\\hat';				break;
 		}
-		strTemp = strAccent + strStartBracet + strBase + strCloseBracet
+		oMathText.AddBefore(oStartPos, new AscMath.MathText(strAccent, oMathText.GetStyleFromFirst()));
 
-		if (intAccentCode === 831)
-			strTemp += "}";
+		if (this.Pr.chr === 831)
+			oStartPos = oMathText.AddText(new AscMath.MathText('}}', this));
 	}
-    else
-    {
-        if (strBase.length === 0)
-            strBase = "()";
-	   strTemp = strStartBracet + strBase + strCloseBracet + strAccent;
+	else
+	{
+		oMathText.Add(oBase, true);
+		let oAccentText = new AscMath.MathText(strAccent, this);
+		oMathText.AddText(oAccentText);
 	}
-	return strTemp;
+	return oMathText;
 };
 
 /**
@@ -751,3 +782,5 @@ window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CAccent = CAccent;
 
 window["CMathMenuAccent"] = CMathMenuAccent;
+
+AscMath.Accent = CAccent;

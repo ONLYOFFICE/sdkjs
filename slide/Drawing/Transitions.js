@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -463,9 +463,7 @@ function CTransitionAnimation(htmlpage)
             _ctx2.clearRect(oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
         }
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+        let _part = oThis._getPart();
 
         if (oThis.Param == c_oAscSlideTransitionParams.Fade_Smoothly)
         {
@@ -648,9 +646,8 @@ function CTransitionAnimation(htmlpage)
         var _xSrcO = 0;
         var _ySrcO = 0;
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+
+        let _part = oThis._getPart();
 
         var _offX = (_wDst * (1 - _part)) >> 0;
         var _offY = (_hDst * (1 - _part)) >> 0;
@@ -791,9 +788,8 @@ function CTransitionAnimation(htmlpage)
         var _wDst = oThis.Rect.w;
         var _hDst = oThis.Rect.h;
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+
+        let _part = oThis._getPart();
 
         var _ctx2 = null;
         if (oThis.DemonstrationObject == null)
@@ -1315,9 +1311,8 @@ function CTransitionAnimation(htmlpage)
         var _wDst = oThis.Rect.w;
         var _hDst = oThis.Rect.h;
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+
+        let _part = oThis._getPart();
 
         var _ctx2 = null;
         if (oThis.DemonstrationObject == null)
@@ -1703,9 +1698,8 @@ function CTransitionAnimation(htmlpage)
         var _xSrc = 0;
         var _ySrc = 0;
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+
+        let _part = oThis._getPart();
 
         var _offX = (_wDst * _part) >> 0;
         var _offY = (_hDst * _part) >> 0;
@@ -1855,9 +1849,8 @@ function CTransitionAnimation(htmlpage)
         var _xSrc = 0;
         var _ySrc = 0;
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+
+        let _part = oThis._getPart();
 
         var _offX = (_wDst * (1 - _part)) >> 0;
         var _offY = (_hDst * (1 - _part)) >> 0;
@@ -2004,9 +1997,8 @@ function CTransitionAnimation(htmlpage)
         var _wDst = oThis.Rect.w;
         var _hDst = oThis.Rect.h;
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+
+        let _part = oThis._getPart();
 
         var _anglePart1 = Math.atan(_wDst / _hDst);
         var _anglePart2 = Math.PI / 2 - _anglePart1;
@@ -2437,9 +2429,8 @@ function CTransitionAnimation(htmlpage)
         var _wDst = oThis.Rect.w;
         var _hDst = oThis.Rect.h;
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+
+        let _part = oThis._getPart();
 
         switch (oThis.Param)
         {
@@ -2680,9 +2671,8 @@ function CTransitionAnimation(htmlpage)
 
 
 
-        var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        if (oThis.IsBackward)
-            _part = 1 - _part;
+
+        let _part = oThis._getPart();
 
 
 		if(!oThis.Morph)
@@ -2714,6 +2704,21 @@ function CTransitionAnimation(htmlpage)
 	    oThis.Morph.draw(oCanvas, oThis.Rect, _part)
 
         oThis.TimerId = __nextFrame(oThis._startMorph);
+    };
+
+    this._easeFunction = function(t)
+    {
+        let dT = (1 - t);
+        return 1 - dT*dT*dT;
+    };
+
+    this._getPart = function()
+    {
+        let _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
+        _part = oThis._easeFunction(_part);
+        if (oThis.IsBackward)
+            _part = 1 - _part;
+        return _part;
     };
 }
 
@@ -2933,6 +2938,24 @@ function CDemonstrationManager(htmlpage)
         this.waitReporterObject = null;
     };
 
+    this.wrapKeyboard = function()
+    {
+        if (this.HtmlPage.m_oApi.isReporterMode)
+            return;
+
+        var _t = this;
+        this._funcWrapKeyboard = function(e) {
+            if (document.activeElement === document.body)
+                _t.onKeyDown(e);
+        };
+        window.addEventListener("keydown", this._funcWrapKeyboard, false);
+    };
+    this.unwrapKeyboard = function()
+    {
+        if (this._funcWrapKeyboard)
+            window.removeEventListener("keydown", this._funcWrapKeyboard);
+    };
+
     this.Start = function(main_div_id, start_slide_num, is_play_mode, is_no_fullscreen)
     {
 		this.StartSlideNum = start_slide_num;
@@ -2968,6 +2991,8 @@ function CDemonstrationManager(htmlpage)
         this.Canvas.onmouseup    = this.onMouseUp;
 		this.Canvas.onmouseleave = this.onMouseLeave;
 
+        this.wrapKeyboard();
+
         this.Canvas.onmousewheel = this.onMouseWhell;
         if (this.Canvas.addEventListener)
             this.Canvas.addEventListener("DOMMouseScroll", this.onMouseWhell, false);
@@ -2981,7 +3006,7 @@ function CDemonstrationManager(htmlpage)
         this.SlideIndexes[0] = -1;
         this.SlideIndexes[1] = -1;
 
-				this.GoToSlideShortcutStack = [];
+		this.GoToSlideShortcutStack = [];
         this.StartSlide(true, true);
     };
 
@@ -3080,6 +3105,15 @@ function CDemonstrationManager(htmlpage)
         {
             oSlide.getAnimationPlayer().pause();
         }
+    };
+    this.IsPausedAnimation = function(nSlideNum)
+    {
+        var oSlide = this.GetSlide(nSlideNum);
+        if(oSlide)
+        {
+            return oSlide.getAnimationPlayer().isPaused();
+        }
+        return false;
     };
 
     this.OnAnimMainSeqFinished = function(nSlideNum)
@@ -3191,8 +3225,9 @@ function CDemonstrationManager(htmlpage)
             this.DemonstrationDiv.appendChild(oThis.Overlay);
         }
 
-        oThis.Transition.Type = _transition.TransitionType;
-        oThis.Transition.Param = _transition.TransitionOption;
+        let oTypeAndOption = _transition.getTypeAndOption();
+        oThis.Transition.Type = oTypeAndOption.Type;
+        oThis.Transition.Param = oTypeAndOption.Option;
         oThis.Transition.Duration = _transition.TransitionDuration;
 
         oThis.PrepareTransition(is_first, is_backward);
@@ -3369,6 +3404,7 @@ function CDemonstrationManager(htmlpage)
         var ctx1 = this.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
         ctx1.setTransform(1, 0, 0, 1, 0, 0);
 
+        this.unwrapKeyboard();
         this.HtmlPage.m_oApi.sync_endDemonstration();
 
         if (true)
@@ -3650,19 +3686,20 @@ function CDemonstrationManager(htmlpage)
     this.Play = function(isNoSendFormReporter)
     {
         this.IsPlayMode = true;
-        if (-1 == this.CheckSlideDuration)
+        if(this.IsPausedAnimation(this.SlideNum) || -1 !== this.CheckSlideDuration)
         {
-            this.NextSlide(isNoSendFormReporter);
+            this.StartAnimation(this.SlideNum);
         }
         else
         {
-            this.StartAnimation(this.SlideNum);
+            this.NextSlide(isNoSendFormReporter);
         }
     };
 
     this.Pause = function()
     {
         this.IsPlayMode = false;
+        this.StopTransition();
         this.PauseAnimation(this.SlideNum);
     };
 

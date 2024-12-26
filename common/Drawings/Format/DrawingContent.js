@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -789,7 +789,8 @@
                 var oShape = this.Parent.parent;
                 var contentPoints = oShape.getSmartArtPointContent();
                 if (contentPoints && contentPoints.length !== 0) {
-                    var isPhldr = contentPoints.every(function (point) {
+                    var isPhldr = contentPoints.every(function (node) {
+												const point = node.point;
                         return point && point.prSet && point.prSet.phldr;
                     });
                     if (isPhldr) {

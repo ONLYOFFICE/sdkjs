@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -515,9 +515,9 @@ CNum.prototype.GetLvlByStyle = function(sStyleId)
  * @param nLvl {number} 0..8
  * @param nNumShift {number}
  * @param [isForceArabic=false] {boolean}
- * @param langForTextNumbering {number}
+ * @param oLangForTextNumbering {AscCommonWord.CLang}
  */
-CNum.prototype.private_GetNumberedLvlText = function(nLvl, nNumShift, isForceArabic, langForTextNumbering)
+CNum.prototype.private_GetNumberedLvlText = function(nLvl, nNumShift, isForceArabic, oLangForTextNumbering)
 {
 	var nFormat = this.GetLvl(nLvl).GetFormat();
 	if (true === isForceArabic
@@ -525,7 +525,7 @@ CNum.prototype.private_GetNumberedLvlText = function(nLvl, nNumShift, isForceAra
 		&& nFormat !== Asc.c_oAscNumberingFormat.DecimalZero)
 		nFormat = Asc.c_oAscNumberingFormat.Decimal;
 
-	return AscCommon.IntToNumberFormat(nNumShift, nFormat, langForTextNumbering);
+	return AscCommon.IntToNumberFormat(nNumShift, nFormat, {lang: oLangForTextNumbering});
 };
 /**
  * Функция отрисовки заданного уровня нумерации в заданной позиции
@@ -732,9 +732,10 @@ CNum.prototype.GetAllFontNames = function(arrAllFonts)
  * @param nLvl {number} 0..8
  * @param oNumInfo
  * @param bWithoutLastLvlText {?boolean}
+ * @param [oLang] {AscCommonWord.CLang}
  * @returns {string}
  */
-CNum.prototype.GetText = function(nLvl, oNumInfo, bWithoutLastLvlText)
+CNum.prototype.GetText = function(nLvl, oNumInfo, bWithoutLastLvlText, oLang)
 {
 	var oLvl    = this.GetLvl(nLvl);
 	var arrText = oLvl.GetLvlText();
@@ -757,7 +758,7 @@ CNum.prototype.GetText = function(nLvl, oNumInfo, bWithoutLastLvlText)
 			{
 				var nCurLvl = arrText[Index].Value;
 				if (nCurLvl < oNumInfo.length)
-					sResult += this.private_GetNumberedLvlText(nCurLvl, oNumInfo[nCurLvl]);
+					sResult += this.private_GetNumberedLvlText(nCurLvl, oNumInfo[nCurLvl], false, oLang);
 
 				break;
 			}

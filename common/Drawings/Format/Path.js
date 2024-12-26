@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -54,8 +54,6 @@ var HitInLine = AscFormat.HitInLine;
 var HitInBezier4 = AscFormat.HitInBezier4;
 var HitInBezier3 = AscFormat.HitInBezier3;
 var MOVE_DELTA = AscFormat.MOVE_DELTA;
-
-    var History = AscCommon.History;
 
 var cToRad2 = (Math.PI/60000)/180;
 
@@ -273,32 +271,32 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
     };
     Path.prototype.setStroke = function(pr)
     {
-        History.CanAddChanges() && History.Add(new AscDFH.CChangesDrawingsBool(this, AscDFH.historyitem_PathSetStroke, this.stroke, pr));
+        AscCommon.History.CanAddChanges() && AscCommon.History.Add(new AscDFH.CChangesDrawingsBool(this, AscDFH.historyitem_PathSetStroke, this.stroke, pr));
         this.stroke = pr;
     };
     Path.prototype.setExtrusionOk = function(pr)
     {
-        History.CanAddChanges() && History.Add(new AscDFH.CChangesDrawingsBool(this, AscDFH.historyitem_PathSetExtrusionOk, this.extrusionOk, pr));
+        AscCommon.History.CanAddChanges() && AscCommon.History.Add(new AscDFH.CChangesDrawingsBool(this, AscDFH.historyitem_PathSetExtrusionOk, this.extrusionOk, pr));
         this.extrusionOk = pr;
     };
     Path.prototype.setFill = function(pr)
     {
-        History.CanAddChanges() && History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_PathSetFill, this.fill, pr));
+        AscCommon.History.CanAddChanges() && AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_PathSetFill, this.fill, pr));
         this.fill = pr;
     };
     Path.prototype.setPathH = function(pr)
     {
-        History.CanAddChanges() && History.Add(new AscDFH.CChangesDrawingsLong(this, AscDFH.historyitem_PathSetPathH, this.pathH, pr));
+        AscCommon.History.CanAddChanges() && AscCommon.History.Add(new AscDFH.CChangesDrawingsLong(this, AscDFH.historyitem_PathSetPathH, this.pathH, pr));
         this.pathH = pr;
     };
     Path.prototype.setPathW = function(pr)
     {
-        History.CanAddChanges() && History.Add(new AscDFH.CChangesDrawingsLong(this, AscDFH.historyitem_PathSetPathW, this.pathW, pr));
+        AscCommon.History.CanAddChanges() && AscCommon.History.Add(new AscDFH.CChangesDrawingsLong(this, AscDFH.historyitem_PathSetPathW, this.pathW, pr));
         this.pathW = pr;
     };
     Path.prototype.addPathCommand = function(cmd)
     {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsAddPathCommand(this, cmd, this.ArrPathCommandInfo.length));
+        AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsAddPathCommand(this, cmd, this.ArrPathCommandInfo.length));
         this.ArrPathCommandInfo.push(cmd);
     };
     Path.prototype.moveTo = function(x, y)

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -3294,8 +3294,8 @@ CGraphicObjects.prototype =
 				{
 					// Обновляем позицию курсора, чтобы проскроллиться к заданной позиции
 					var oDrawingDocument = oLogicDocument.GetDrawingDocument();
-					oDrawingDocument.m_oWordControl.ScrollToPosition(oParaDrawing.GraphicObj.x, oParaDrawing.GraphicObj.y, oParaDrawing.PageNum, oParaDrawing.GraphicObj.extY);
-
+					oDrawingDocument.m_oWordControl.ScrollToPosition(oParaDrawing.GraphicObj.transform.tx, oParaDrawing.GraphicObj.transform.ty, oParaDrawing.PageNum, oParaDrawing.GraphicObj.extY);
+					
 					return {
 						X         : oParaDrawing.GraphicObj.x,
 						Y         : oParaDrawing.GraphicObj.y,

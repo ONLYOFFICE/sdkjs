@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -37,6 +37,45 @@
 	// define after window['AscCommon']
 	var AscCommon = window['AscCommon'];
 	var global_mouseEvent = AscCommon.global_mouseEvent;
+
+	/*
+	function CVirtualKeyboard()
+	{
+		this.checkSupport = false;
+		this.isShow = false;
+
+		try
+		{
+			if ("virtualKeyboard" in navigator)
+			{
+				this.checkSupport = true;
+
+				if (navigator.virtualKeyboard.addEventListener)
+				{
+					navigator.virtualKeyboard.addEventListener("geometrychange", function(event) {
+						alert(JSON.stringify(event.target.boundingRect));
+					});
+				}
+			}
+		}
+		catch (err)
+		{
+			this.checkSupport = false;
+		}
+
+		this.isSupport = function()
+		{
+			return this.checkSupport;
+		};
+
+		this.isVisible = function()
+		{
+			return this.isShow;
+		};
+	}
+
+	AscCommon.virtualKeyboard = new CVirtualKeyboard();
+	*/
 
 	AscCommon.MobileTouchMode =
 		{
@@ -215,6 +254,10 @@
 	{
 		return false;
 	};
+	CMobileDelegateSimple.prototype.IsLockedZoom = function()
+	{
+		return false;
+	};
 
 	/**
 	 * @extends {CMobileDelegateSimple}
@@ -241,7 +284,10 @@
 	};
 	CMobileDelegateEditor.prototype.ConvertCoordsFromCursor = function(x, y)
 	{
-		return this.DrawingDocument.ConvertCoordsFromCursor2(x, y);
+		let res = this.DrawingDocument.ConvertCoordsFromCursor2(x, y);
+		if (undefined === res.pageIndex)
+			res.Page = res.DrawPage;
+		return res;
 	};
 	CMobileDelegateEditor.prototype.GetElementOffset = function()
 	{
@@ -312,17 +358,14 @@
 		var _target = this.LogicDocument.IsSelectionUse();
 		if (_target === false)
 		{
-			/*
+			let targetPos = this.LogicDocument.Get_TargetPos();
+			if (!targetPos)
+				return;
+
 			_info = {
-				X : this.DrawingDocument.m_dTargetX,
-				Y : this.DrawingDocument.m_dTargetY,
-				Page : this.DrawingDocument.m_lTargetPage
-			};
-			*/
-			_info = {
-				X : this.LogicDocument.TargetPos.X,
-				Y : this.LogicDocument.TargetPos.Y,
-				Page : this.LogicDocument.TargetPos.PageNum
+				X : targetPos.X,
+				Y : targetPos.Y,
+				Page : targetPos.PageNum
 			};
 
 			_transform = this.DrawingDocument.TextMatrix;
@@ -508,7 +551,7 @@
 	CMobileDelegateEditor.prototype.GetScrollerParent = function()
 	{
 		if (this.IsNativeViewer())
-			return document.getElementById(this.Api.HtmlElementName);
+			return document.getElementById("id_main");
 		return this.HtmlPage.m_oMainView.HtmlElement;
 	};
 	CMobileDelegateEditor.prototype.GetScrollerSize = function()
@@ -570,7 +613,13 @@
 	};
 	CMobileDelegateEditor.prototype.IsReader = function()
 	{
-		return (null != this.DrawingDocument.m_oDocumentRenderer);
+		return false;//(null != this.DrawingDocument.m_oDocumentRenderer);
+	};
+	CMobileDelegateEditor.prototype.IsLockedZoom = function()
+	{
+		// Fix after testing...
+		return false;
+		return this.HtmlPage.ReaderModeCurrent === 1;
 	};
 	CMobileDelegateEditor.prototype.IsNativeViewer = function()
 	{
@@ -581,6 +630,8 @@
 
 	CMobileDelegateEditor.prototype.Logic_GetNearestPos = function(x, y, page)
 	{
+		if (this.IsNativeViewer())
+			return null;
 		return this.LogicDocument.Get_NearestPos(page, x, y);
 	};
 	CMobileDelegateEditor.prototype.Logic_OnMouseDown = function(e, x, y, page)
@@ -597,14 +648,20 @@
 	};
 	CMobileDelegateEditor.prototype.Drawing_OnMouseDown = function(e)
 	{
+		if (this.IsNativeViewer())
+			return this.DrawingDocument.m_oDocumentRenderer.onMouseDown(e);
 		return this.HtmlPage.onMouseDown(e);
 	};
 	CMobileDelegateEditor.prototype.Drawing_OnMouseMove = function(e)
 	{
+		if (this.IsNativeViewer())
+			return this.DrawingDocument.m_oDocumentRenderer.onMouseMove(e);
 		return this.HtmlPage.onMouseMove(e);
 	};
 	CMobileDelegateEditor.prototype.Drawing_OnMouseUp = function(e)
 	{
+		if (this.IsNativeViewer())
+			return this.DrawingDocument.m_oDocumentRenderer.onMouseUp(e);
 		return this.HtmlPage.onMouseUp(e);
 	};
 
@@ -613,14 +670,20 @@
 		this.Api			= null;
 		this.Mode 			= AscCommon.MobileTouchMode.None;
 
+		this.isDesktopMode  = _config.desktopMode === true;
+		this.isTouchingProcess = false;
+		this.desktopTouchState = false;
+
 		this.IsTouching		= false;
 
 		this.ReadingGlassTime  = 750;
 		this.TimeDown          = 0;
 		this.DownPoint         = null;
 		this.DownPointOriginal = {X : 0, Y : 0};
+		this.MoveMinDist       = 20;
+		this.isGlassDrawed     = false;
+
 		this.MoveAfterDown     = false;
-		this.MoveMinDist       = 10;
 
 		/* select text */
 		this.SelectEnabled = (_config.isSelection !== false);
@@ -681,13 +744,130 @@
 
 		this.isShowingContextMenu = false;
 		this.isMobileContextMenuShowResize = false;
+
+		// On Android, there is no way to show the keyboard except onclick
+		// TODO: may be exist another way??
+		this.isCheckFocusOnClick = AscCommon.AscBrowser.isAndroid;
+		this.isCheckFocusOnClickValue = false;
 	}
 
 	CMobileTouchManagerBase.prototype.initEvents = function(_id)
 	{
+		this.desktopTouchState = true;
 		this.eventsElement = _id;
 		this.iScroll.eventsElement = this.eventsElement;
 		this.iScroll._initEvents();
+	};
+
+	CMobileTouchManagerBase.prototype.isTouchMode = function()
+	{
+		if (this.isDesktopMode)
+			return this.desktopTouchState;
+		return true;
+	};
+
+	CMobileTouchManagerBase.prototype.checkMouseFocus = function(e)
+	{
+		// mobile version does not get focus with mouse events
+		if (this.Api.isMobileVersion && e && "mouse" === e.pointerType)
+		{
+			if (AscCommon.g_inputContext)
+				AscCommon.g_inputContext.setInterfaceEnableKeyEvents(true);
+		}
+	};
+
+	CMobileTouchManagerBase.prototype.checkTouchEvent = function(e)
+	{
+		if (!e)
+			return false;
+
+		if (this.isDesktopMode)
+		{
+			if (this.isTouchingInProcess())
+				return false;
+
+			if (e.pointerType === "touch")
+			{
+				this.desktopTouchState = true;
+
+				switch (this.Api.editorId)
+				{
+					case AscCommon.c_oEditorId.Word:
+					{
+						if (this.Api.isDrawTableErase === true ||
+							this.Api.isDrawTablePen === true   ||
+							this.Api.isStartAddShape === true  ||
+							this.Api.isInkDrawerOn())
+						{
+							this.desktopTouchState = false;
+						}
+						break;
+					}
+					case AscCommon.c_oEditorId.Spreadsheet:
+					{
+						if (this.Api.isStartAddShape === true)
+						{
+							this.desktopTouchState = false;
+						}
+						break;
+					}
+					case AscCommon.c_oEditorId.Presentation:
+					{
+						if (this.Api.isStartAddShape === true)
+						{
+							this.desktopTouchState = false;
+						}
+						break;
+					}
+					default:
+						break;
+				}
+			}
+			else
+				this.desktopTouchState = false;
+
+			return this.desktopTouchState;
+		}
+
+		return false;
+	};
+
+	CMobileTouchManagerBase.prototype.isTouchingInProcess = function()
+	{
+		return this.isTouchingProcess;
+	};
+	CMobileTouchManagerBase.prototype.startTouchingInProcess = function()
+	{
+		this.isTouchingProcess = true;
+	};
+	CMobileTouchManagerBase.prototype.stopTouchingInProcess = function()
+	{
+		this.isTouchingProcess = false;
+	};
+
+	CMobileTouchManagerBase.prototype.checkDesktopModeContextMenuEnd = function(e)
+	{
+		let isContextMenu = false;
+		if (this.isDesktopMode && !this.MoveAfterDown)
+		{
+			let newTime = new Date().getTime();
+			if ((newTime - this.TimeDown) > 750)
+				isContextMenu = true;
+		}
+
+		if (!e)
+			return isContextMenu;
+
+		if (!isContextMenu)
+			return;
+
+		AscCommon.global_mouseEvent.ButtonOverride = AscCommon.g_mouse_button_right;
+
+		let _e = e.changedTouches ? e.changedTouches[0] : e;
+		this.delegate.Drawing_OnMouseDown(_e);
+		this.delegate.Drawing_OnMouseUp(_e);
+
+		AscCommon.global_mouseEvent.ButtonOverride = -1;
 	};
 
 	CMobileTouchManagerBase.prototype.checkHandlersOnClick = function()
@@ -711,7 +891,7 @@
 	CMobileTouchManagerBase.prototype.CreateScrollerDiv = function(_wrapper)
 	{
 		var _scroller = document.createElement('div');
-		var _style = "position: absolute; z-index: 0; margin: 0; padding: 0; -webkit-tap-highlight-color: rgba(0,0,0,0); width: 100%; heigth: 100%; display: block;";
+		var _style = "position: absolute; z-index: -1; margin: 0; padding: 0; -webkit-tap-highlight-color: rgba(0,0,0,0); width: 100%; heigth: 100%; display: block;";
 		_style += "-webkit-transform: translateZ(0); -moz-transform: translateZ(0); -ms-transform: translateZ(0); -o-transform: translateZ(0); transform: translateZ(0);";
 		_style += "touch-action:none;-webkit-touch-callout: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;";
 		_style += "-webkit-text-size-adjust: none; -moz-text-size-adjust: none; -ms-text-size-adjust: none; -o-text-size-adjust: none; text-size-adjust: none;";
@@ -1072,6 +1252,12 @@
 		}
 
 		var _new_value = this.delegate.GetZoomFit();
+		if (this.isDesktopMode && !this.Api.isMobileVersion)
+		{
+			let c_min_zoom_value = 50; // delegate method
+			if (_new_value > c_min_zoom_value)
+				_new_value = c_min_zoom_value;
+		}
 
 		this.ZoomValueMin = _new_value;
 		if (this.ZoomValue < this.ZoomValueMin)
@@ -1170,7 +1356,9 @@
 		{
 			that.ContextMenuShowTimerId = -1;
 			var _pos = that.delegate.GetContextMenuPosition();
+			if (AscCommon.g_inputContext) AscCommon.g_inputContext.isGlobalDisableFocus = true;
 			that.Api.sendEvent("asc_onShowPopMenu", _pos.X, _pos.Y, (_pos.Mode > 1) ? true : false);
+			if (AscCommon.g_inputContext) AscCommon.g_inputContext.isGlobalDisableFocus = false;
 		}, 500);
 	};
 
@@ -1473,9 +1661,199 @@
 		this.PageSelect2 	= _rect2.Page;
 	};
 
+	CMobileTouchManagerBase.prototype.CheckGlassUpdate = function()
+	{
+		if (this.isGlassDrawed)
+			this.delegate.HtmlPage.OnUpdateOverlay();
+	};
+
+	CMobileTouchManagerBase.prototype.CheckGlass = function(overlay, mainLayer, targetElement)
+	{
+		this.isGlassDrawed = false;
+
+		if (this.Mode !== AscCommon.MobileTouchMode.Cursor &&
+			this.Mode !== AscCommon.MobileTouchMode.Select)
+		{
+			return;
+		}
+
+		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+		let elementOffset = this.delegate.GetElementOffset();
+		let posMouseX = (rPR * (AscCommon.global_mouseEvent.X - elementOffset.X)) >> 0;
+		let posMouseY = (rPR * (AscCommon.global_mouseEvent.Y - elementOffset.Y)) >> 0;
+
+		let glassSize = (rPR * 100) >> 0;
+		let glassOffset = (rPR * 25) >> 0;
+		let glassScale = 2;
+
+		let srcSize = (glassSize / glassScale) >> 0;
+		let srcX = posMouseX - (srcSize >> 1);
+		let srcY = posMouseY - (srcSize >> 1);
+
+		if (0 > srcX || 0 > srcY)
+			return;
+
+		let srcR = srcX + srcSize;
+		let srcB = srcY + srcSize;
+
+		let rad = (glassSize >> 1);
+		let dstX = posMouseX - rad;
+		let dstY = posMouseY - glassOffset - glassSize;
+
+		let imageSizeX = mainLayer.width;
+		let imageSizeY = mainLayer.height;
+
+		if (srcY < 0)
+		{
+			dstY += ((-1 * glassScale * srcY) >> 0);
+			srcY = 0;
+		}
+		if (srcX < 0)
+		{
+			dstX += ((-1 * glassScale * srcX) >> 0);
+			srcX = 0;
+		}
+		if (srcR >= imageSizeX)
+			srcR = imageSizeX;
+		if (srcB >= imageSizeY)
+			srcB = imageSizeY;
+
+		var ctx = overlay.m_oContext;
+		ctx.save();
+		ctx.beginPath();
+		ctx.arc(dstX + rad, dstY + rad, rad, 0, 2 * Math.PI);
+		ctx.clip();
+		ctx.beginPath();
+
+		let srcW = srcR - srcX;
+		let srcH = srcB - srcY;
+
+		if (srcW > 0 && srcH > 0)
+		{
+			if (AscCommon.AscBrowser.isAppleDevices)
+			{
+				if (!this.glassCanvas)
+					this.glassCanvas = document.createElement("canvas");
+
+				if (glassSize !== this.glassCanvas.width || glassSize !== this.glassCanvas.height)
+				{
+					this.glassCanvas.width = glassSize;
+					this.glassCanvas.width = glassSize;
+				}
+				let ctxTmp = this.glassCanvas.getContext("2d");
+
+				let data1 = mainLayer.getContext("2d").getImageData(srcX, srcY, srcW, srcH);
+				ctxTmp.putImageData(data1, 0, 0);
+				ctx.drawImage(this.glassCanvas, 0, 0, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
+
+				let data2 = ctx.getImageData(srcX, srcY, srcW, srcH);
+				ctxTmp.putImageData(data2, 0, 0);
+				ctx.drawImage(this.glassCanvas, 0, 0, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
+			} else
+			{
+				ctx.drawImage(mainLayer, srcX, srcY, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
+				ctx.drawImage(ctx.canvas, srcX, srcY, srcW, srcH, dstX, dstY, (srcW * glassScale) >> 0, (srcH * glassScale) >> 0);
+			}
+		}
+
+		if (targetElement)
+		{
+			let tL = parseInt(targetElement.style.left);
+			let tT = parseInt(targetElement.style.top);
+			let tR = tL + parseInt(targetElement.style.width);
+			let tB = tT + parseInt(targetElement.style.height);
+			let m = undefined;
+
+			let transform = targetElement.style["transform"] || targetElement.style["webkitTransform"] || targetElement.style["mozTransform"] || targetElement.style["msTransform"] || "";
+			if (transform !== "")
+			{
+				let pos1 = transform.indexOf("(");
+				let pos2 = transform.indexOf(")");
+
+				if (-1 !== pos1 && -1 !== pos2 && pos2 > pos1)
+				{
+					let arrPos = transform.substring(pos1 + 1, pos2).split(", ");
+					if (6 === arrPos.length)
+					{
+						m = new AscCommon.CMatrix();
+						m.SetValues(parseFloat(arrPos[0]), parseFloat(arrPos[1]), parseFloat(arrPos[2]),
+							parseFloat(arrPos[3]), parseFloat(arrPos[4]), parseFloat(arrPos[5]));
+					}
+				}
+			}
+
+			let arrPoints = new Array(8);
+
+			if (!m)
+			{
+				arrPoints[0] = tL * rPR;
+				arrPoints[1] = tT * rPR;
+
+				arrPoints[2] = tR * rPR;
+				arrPoints[3] = tT * rPR;
+
+				arrPoints[4] = tR * rPR;
+				arrPoints[5] = tB * rPR;
+
+				arrPoints[6] = tL * rPR;
+				arrPoints[7] = tB * rPR;
+			}
+			else
+			{
+				arrPoints[0] = rPR * m.TransformPointX(tL, tT);
+				arrPoints[1] = rPR * m.TransformPointY(tL, tT);
+
+				arrPoints[2] = rPR * m.TransformPointX(tR, tT);
+				arrPoints[3] = rPR * m.TransformPointY(tR, tT);
+
+				arrPoints[4] = rPR * m.TransformPointX(tR, tB);
+				arrPoints[5] = rPR * m.TransformPointY(tR, tB);
+
+				arrPoints[6] = rPR * m.TransformPointX(tL, tB);
+				arrPoints[7] = rPR * m.TransformPointY(tL, tB);
+			}
+
+			let cX = posMouseX;
+			let cY = posMouseY - glassOffset - rad;
+			for (let i = 0; i < 8; i += 2)
+			{
+				let x = arrPoints[i];
+				let y = arrPoints[i + 1];
+
+				x = cX + (x - posMouseX) * glassScale;
+				y = cY + (y - posMouseY) * glassScale;
+
+				if (0 === i)
+					ctx.moveTo(x, y);
+				else
+					ctx.lineTo(x, y);
+			}
+			ctx.closePath();
+			ctx.fillStyle = targetElement.style.backgroundColor;
+			ctx.fill();
+			ctx.beginPath();
+		}
+
+		ctx.beginPath();
+		ctx.arc(dstX + rad, dstY + rad, rad, 0, 2 * Math.PI);
+		ctx.lineWidth = 1;
+		ctx.strokeStyle = GlobalSkin.RulerOutline;
+		ctx.stroke();
+		ctx.beginPath();
+
+		overlay.CheckRect(posMouseX - rad, posMouseY - glassOffset - glassSize, glassSize, glassSize);
+
+		ctx.restore();
+
+		this.isGlassDrawed = true;
+	};
+
 	// отрисовка текстового селекта
 	CMobileTouchManagerBase.prototype.CheckSelect = function(overlay)
 	{
+		if (!this.desktopTouchState)
+			return;
+
 		if (!this.SelectEnabled)
 			return;
 
@@ -1586,6 +1964,9 @@
 	// заточка на определенного делегата
 	CMobileTouchManagerBase.prototype.CheckTableRules = function(overlay)
 	{
+		if (!this.desktopTouchState)
+			return;
+
 		if (this.Api.isViewMode || this.Api.isRestrictionForms() || !this.TableTrackEnabled)
 			return;
 
@@ -1647,8 +2028,8 @@
 		{
 			this.TableMovePoint = {X : _tableOutline.X, Y : _tableOutline.Y};
 
-			var pos1 = DrawingDocument.ConvertCoordsToCursorWR(_tableOutline.X, _tableOutline.Y, _tableOutline.PageNum);
-			var pos2 = DrawingDocument.ConvertCoordsToCursorWR(_tableOutline.X + _tableW, _tableOutline.Y, _tableOutline.PageNum);
+			var pos1 = DrawingDocument.ConvertCoordsToCursorWR(_tableOutline.X, _tableOutline.Y, _tableOutline.PageNum, undefined, false);
+			var pos2 = DrawingDocument.ConvertCoordsToCursorWR(_tableOutline.X + _tableW, _tableOutline.Y, _tableOutline.PageNum, undefined, false);
 
 			ctx.beginPath();
 
@@ -1680,8 +2061,8 @@
 				_y2 += _table_markup.Rows[i].H;
 			}
 
-			var pos3 = DrawingDocument.ConvertCoordsToCursorWR(_tableOutline.X, _y1, DrawingDocument.m_lCurrentPage);
-			var pos4 = DrawingDocument.ConvertCoordsToCursorWR(_tableOutline.X, _y2, DrawingDocument.m_lCurrentPage);
+			var pos3 = DrawingDocument.ConvertCoordsToCursorWR(_tableOutline.X, _y1, DrawingDocument.m_lCurrentPage, undefined, false);
+			var pos4 = DrawingDocument.ConvertCoordsToCursorWR(_tableOutline.X, _y2, DrawingDocument.m_lCurrentPage, undefined, false);
 
 			if (this.delegate.Name != "slide")
 			{
@@ -1760,7 +2141,7 @@
 				var _newPos = (i != _count) ? _table_markup.Rows[i].Y : _oldY;
 
 				var _p = {Y : _oldY, H : (_newPos - _oldY)};
-				var _y = DrawingDocument.ConvertCoordsToCursorWR(0, _oldY, _PageNum);
+				var _y = DrawingDocument.ConvertCoordsToCursorWR(0, _oldY, _PageNum, undefined, false);
 
 				ctx.beginPath();
 				overlay.AddDiamond(Math.round(_x * rPR) + 1.5 + Math.round(Math.round(_rectWidth * rPR) / 2), Math.round(_y.Y * rPR), Math.round(AscCommon.MOBILE_TABLE_RULER_DIAMOND * rPR));
@@ -2232,13 +2613,16 @@
 	CMobileTouchManagerBase.prototype.checkPointerEvent = function(e)
 	{
 		var _type = e.type;
+		if (!_type)
+			return false;
+
 		if (_type.toLowerCase)
 			_type = _type.toLowerCase();
 
-		if (-1 == _type.indexOf("pointer"))
+		if (-1 === _type.indexOf("pointer"))
 			return false;
 
-		if (undefined == e["pointerId"])
+		if (undefined === e["pointerId"])
 			return false;
 
 		return true;
@@ -2300,13 +2684,45 @@
 		return _count;
 	};
 
-	CMobileTouchManagerBase.prototype.showKeyboard = function()
+	CMobileTouchManagerBase.prototype.showKeyboard = function(isForce)
 	{
 		if (AscCommon.g_inputContext)
 		{
-			if (this.ContextMenuLastMode ==  AscCommon.MobileTouchContextMenuType.Target)
-				AscCommon.g_inputContext.HtmlArea.focus();
+			let isShow = (isForce === true) ? true : false;
+			if (!isShow)
+			{
+				if (this.ContextMenuLastMode ===  AscCommon.MobileTouchContextMenuType.Target)
+				{
+					if (this.Api.canEnterText())
+						isShow = true;
+				}
+			}
+			if (isShow)
+			{
+				AscCommon.g_inputContext.showKeyboard();
+
+				if (this.isCheckFocusOnClick)
+					this.isCheckFocusOnClickValue = true;
+			}
 		}
+	};
+
+	CMobileTouchManagerBase.prototype.addClickElement = function(elems)
+	{
+		for (let i = 0, len = elems.length; i < len; i++)
+			elems[i].onclick = this.onClickElement.bind(this);
+	};
+
+	CMobileTouchManagerBase.prototype.onClickElement = function(e)
+	{
+		if (this.isCheckFocusOnClickValue === true)
+		{
+			if (AscCommon.g_inputContext)
+				AscCommon.g_inputContext.showKeyboard();
+			this.isCheckFocusOnClickValue = false;
+		}
+
+		this.checkHandlersOnClick();
 	};
 
 	CMobileTouchManagerBase.prototype.scrollTo = function(x, y)

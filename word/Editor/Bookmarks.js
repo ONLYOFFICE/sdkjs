@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -67,14 +67,20 @@ CParagraphBookmark.prototype.GetId = function()
 };
 CParagraphBookmark.prototype.Copy = function(Selected, oPr, isCopyReviewPr)
 {
-	let sId = this.BookmarkId;
+	let nId = this.BookmarkId;
+	let nComparisonId;
 	if (oPr && oPr.Comparison)
 	{
-		const sComparisonId = oPr.Comparison.oBookmarkManager.getId(this);
-		if (sComparisonId)
-			sId = sComparisonId;
+		nComparisonId = oPr.Comparison.oBookmarkManager.getId(this);
+		if (AscFormat.isRealNumber(nComparisonId))
+			nId = nComparisonId;
 	}
-	return new CParagraphBookmark(this.Start, sId, this.BookmarkName);
+	const oCopy = new CParagraphBookmark(this.Start, nId, this.BookmarkName);
+
+	if (AscFormat.isRealNumber(nComparisonId))
+		oPr.Comparison.oBookmarkManager.addToLink(oCopy.Id, nComparisonId);
+
+	return oCopy;
 };
 CParagraphBookmark.prototype.GetBookmarkId = function()
 {
@@ -135,24 +141,10 @@ CParagraphBookmark.prototype.GoToBookmark = function()
 };
 CParagraphBookmark.prototype.GetDestinationXY = function()
 {
-	var oParagraph = this.Paragraph;
-	if (!oParagraph)
+	if (!this.Paragraph)
 		return null;
-
-	var oLogicDocument = oParagraph.LogicDocument;
-	if (!oLogicDocument)
-		return null;
-
-	var oCurPos = oParagraph.Get_PosByElement(this);
-	if (!oCurPos)
-		return null;
-
-	var oState = oParagraph.SaveSelectionState();
-	oParagraph.Set_ParaContentPos(oCurPos, false, -1, -1, true); // Корректировать позицию нужно обязательно
-	var oResult = oParagraph.GetCalculatedCurPosXY();
-	oParagraph.LoadSelectionState(oState);
-
-	return oResult;
+	
+	return this.Paragraph.GetStartPosXY();
 };
 CParagraphBookmark.prototype.RemoveBookmark = function()
 {
@@ -327,11 +319,30 @@ CBookmarksManager.prototype.GetBookmarkById = function(Id)
 
 	for (var nIndex = 0, nCount = this.Bookmarks.length; nIndex < nCount; ++nIndex)
 	{
-		if (this.Bookmarks[nIndex].GetBookmarkId() === Id)
+		var oStart = this.Bookmarks[nIndex][0];
+		if (oStart.GetBookmarkId() === Id)
 			return this.Bookmarks[nIndex];
 	}
 
 	return null;
+};
+CBookmarksManager.prototype.GetBookmarkStart = function(index)
+{
+	this.Update();
+	
+	if (index < 0 || index > this.Bookmarks.length)
+		return null;
+	
+	return this.Bookmarks[index][0];
+};
+CBookmarksManager.prototype.GetBookmarkEnd = function(index)
+{
+	this.Update();
+	
+	if (index < 0 || index > this.Bookmarks.length)
+		return null;
+	
+	return this.Bookmarks[index][1];
 };
 CBookmarksManager.prototype.GetBookmarkByName = function(sName)
 {
@@ -564,6 +575,7 @@ CBookmarksManager.prototype.SelectBookmark = function(sName)
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CParagraphBookmark = CParagraphBookmark;
+window['AscWord'].CParagraphBookmark = CParagraphBookmark;
 CBookmarksManager.prototype['asc_GetCount']              = CBookmarksManager.prototype.GetCount;
 CBookmarksManager.prototype['asc_GetName']               = CBookmarksManager.prototype.GetName;
 CBookmarksManager.prototype['asc_GetId']                 = CBookmarksManager.prototype.GetId;

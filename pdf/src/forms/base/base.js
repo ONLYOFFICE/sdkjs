@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -133,14 +133,12 @@
         this._fillColor     = undefined;
         this._bgColor       = undefined;          // prop for old versions (fillColor)
         this._hidden        = false;             // This property has been superseded by the display property and its use is discouraged.
-        this._lineWidth     = undefined;  // In older versions of this specification, this property was borderWidth
+        this._lineWidth     = undefined;        // In older versions of this specification, this property was borderWidth
         this._borderWidth   = undefined;       
         this._name          = sName;         // partial field name
         this._page          = nPage;        // integer | array
         this._print         = true;        // This property has been superseded by the display property and its use is discouraged.
         this._readonly      = false;
-        this._rect          = aRect;         // scaled rect
-        this._origRect      = [];           // orig rect as in file
         this._required      = false;       // for all except button
         this._rotation      = 0;
         this._strokeColor   = null;     // In older versions of this specification, this property was borderColor. The use of borderColor is now discouraged,
@@ -152,9 +150,9 @@
         this._textFont          = undefined; // исходный
         this._textFontActual    = undefined; // фактический используемый
         this._fgColor       = undefined;
-        this._textSize      = 10; // 0 == max text size // to do
-        this._fontStyle     = 0; // информация о стиле шрифта (bold, italic)
-        this._userName      = ""; // It is intended to be used as tooltip text whenever the cursor enters a field. 
+        this._textSize      = 10;
+        this._fontStyle     = 0;    // информация о стиле шрифта (bold, italic)
+        this._userName      = "";   // It is intended to be used as tooltip text whenever the cursor enters a field. 
         //It can also be used as a user-friendly name, instead of the field name, when generating error messages.
         this._parent        = null;
         
@@ -162,30 +160,15 @@
 
         // internal
         this._id = AscCommon.g_oIdCounter.Get_NewId();
-        
+        AscCommon.g_oTableId.Add(this, this._id);
+
         this._isWidget = aRect && aRect.length == 4 ? true : false;
 
-        this.contentRect = {
-            X: 0,
-            Y: 0,
-            W: 0,
-            H: 0,
-            Page: nPage
-        }
-        this._formRect = {
-            X: 0,
-            Y: 0,
-            W: 0,
-            H: 0,
-            Page: nPage
-        }
-
-        this._oldContentPos = {X: 0, Y: 0, XLimit: 0, YLimit: 0};
         this._curShiftView = { // смещение, когда мы скролим, т.е. активное смещение
             x: 0,
             y: 0
         }
-        this._originShiftView = { // смещение, когда значение формы применено (т.е. форма не активна)
+        this._oldShiftView = { // смещение, когда значение формы применено (т.е. форма не активна)
             x: 0,
             y: 0
         }
@@ -206,15 +189,14 @@
             rollover:   null
         }
 
-        editor.getDocumentRenderer().ImageMap = {};
-        editor.getDocumentRenderer().InitDocument = function() {return};
-
         this._partialName = sName;
         this.api = this.GetFormApi();
         this["api"] = this.api;
 		
 		this.compositeInput = null;
 		this.compositeReplaceCount = 0;
+
+        this.SetRect(aRect);
     }
 
     CBaseField.prototype.IsAnnot = function() {
@@ -225,12 +207,26 @@
     };
     CBaseField.prototype.IsDrawing = function() {
         return false;
-     };
+    };
+    CBaseField.prototype.IsPdfObject = function() {
+        return true;
+    };
     CBaseField.prototype.SetApIdx = function(nIdx) {
-        this.GetDocument().UpdateApIdx(nIdx);
         this._apIdx = nIdx;
     };
     CBaseField.prototype.GetApIdx = function() {
+        if (-1 == this._apIdx) {
+            if (undefined == this.GetId()) {
+                return -1;
+            }
+            else {
+                let nApIdx = Number(this.GetId().replace("_", ""));
+                if (!isNaN(nApIdx)) {
+                    return nApIdx;
+                }
+            }
+        }
+
         return this._apIdx;
     };
 
@@ -252,6 +248,7 @@
 	CBaseField.prototype.checkFonts = function() {
 		return this._doc && 1 === this._doc.defaultFontsLoaded;
 	};
+	CBaseField.prototype.getAllRasterImages = function(images) {};
     /**
 	 * Invokes only on open forms.
 	 * @memberof CBaseField
@@ -379,10 +376,17 @@
     };
 
     CBaseField.prototype.getFormRelRect = function() {
-        return this.contentRect;
+        return this.contentClipRect;
     };
     CBaseField.prototype.getFormRect = function() {
-        return this._formRect;
+        let aOrigRect = this.GetOrigRect();
+
+        return {
+            X : aOrigRect[0] * g_dKoef_pt_to_mm,
+            Y : aOrigRect[1] * g_dKoef_pt_to_mm,
+            W : (aOrigRect[2] - aOrigRect[0]) * g_dKoef_pt_to_mm,
+            H : (aOrigRect[3] - aOrigRect[1]) * g_dKoef_pt_to_mm
+        }
     };
     
     CBaseField.prototype.GetFullName = function() {
@@ -714,57 +718,46 @@
     /**
      * Does the actions setted for specifed trigger type.
 	 * @memberof CBaseField
-     * @param {number} nType - trigger type (FORMS_TRIGGERS_TYPES)
 	 * @typeofeditors ["PDF"]
      * @returns {canvas}
 	 */
-    CBaseField.prototype.AddActionsToQueue = function(nType) {
+    CBaseField.prototype.AddActionsToQueue = function() {
+        let oThis           = this;
         let oDoc            = this.GetDocument();
         let oActionsQueue   = oDoc.GetActionsQueue();
-        let oTrigger        = this.GetTrigger(nType);
+
+        Object.values(arguments).forEach(function(type) {
+            let oTrigger = oThis.GetTrigger(type);
         
-        if (oTrigger && oTrigger.Actions.length > 0) {
-            oActionsQueue.AddActions(oTrigger.Actions);
-            oActionsQueue.Start();
-        }
-    };
-
-    CBaseField.prototype.CalculateContentRect = function() {
-        if (!this.content)
-            return;
-
-        let aRect       = this.GetRect();
-        let Y           = aRect[1];
-        let nHeight     = ((aRect[3]) - (aRect[1]));
-        let oMargins    = this.GetMarginsFromBorders(false, false);
-
-        this.contentRect.X = this.content.X;
-        this.contentRect.Y = (Y + oMargins.top) * g_dKoef_pix_to_mm;
-        this.contentRect.W = this.content.XLimit - this.content.X;
-        this.contentRect.H = (nHeight - oMargins.top - oMargins.bottom) * g_dKoef_pix_to_mm;
+            if (oTrigger && oTrigger.Actions.length > 0 && false == AscCommon.History.UndoRedoInProgress) {
+                oActionsQueue.AddActions(oTrigger.Actions);
+            }
+        })
+        
+        oActionsQueue.Start();
     };
 
     CBaseField.prototype.DrawHighlight = function(oCtx) {
         if (this.IsHidden() == true)
             return;
 
-        let oViewer     = editor.getDocumentRenderer();
-        let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[this.GetPage()].Dpi);
+        let oViewer     = Asc.editor.getDocumentRenderer();
+        let nPage       = this.GetPage();
+        let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * oViewer.getDrawingPageScale(nPage);
         let aBgColor    = this.GetBackgroundColor();
 
         let xCenter = oViewer.width >> 1;
-        if (oViewer.documentWidth > oViewer.width)
-        {
+        if (oViewer.documentWidth > oViewer.width) {
             xCenter = (oViewer.documentWidth >> 1) - (oViewer.scrollX) >> 0;
         }
         let yPos    = oViewer.scrollY >> 0;
-        let page    = oViewer.drawingPages[this.GetPage()];
+        let page    = oViewer.drawingPages[nPage];
         let w       = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
         let h       = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
         let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
         let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
         
-        let isLandscape = oViewer.isLandscapePage(this.GetPage());
+        let isLandscape = oViewer.isLandscapePage(nPage);
         if (isLandscape) {
             indLeft = indLeft + (w - h) / 2;
         }
@@ -822,7 +815,7 @@
         if (aBgColor && aBgColor.length != 0)
             oBgRGBColor = AscPDF.MakeColorMoreGray(oBgRGBColor, 50);
         
-        let nLineWidth = this._lineWidth != undefined ? this._lineWidth : 1;
+        let nLineWidth = this.GetBorderWidth() != undefined ? this.GetBorderWidth() : 1;
 
         if (nLineWidth == 0) {
             return;
@@ -1223,25 +1216,6 @@
     
     CBaseField.prototype.DrawSelected = function() {
         return;
-        /*
-        let oViewer     = editor.getDocumentRenderer();
-        let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
-
-        let X       = this._pagePos.x * nScale;
-        let Y       = this._pagePos.y * nScale;
-        let nWidth  = this._pagePos.w * nScale;
-        let nHeight = this._pagePos.h * nScale;
-
-        oCtx.globalAlpha = 1;
-        oCtx.setLineDash([]);
-        oCtx.strokeStyle = "rgb(0, 0, 0)";
-        oCtx.lineWidth = Math.max(nScale, 1);
-        
-        oCtx.beginPath();
-        oCtx.rect(X, Y, nWidth, nHeight);
-        oCtx.stroke();
-        oCtx.closePath();
-        */
     };
     
     CBaseField.prototype.Get_Id = function() {
@@ -1263,6 +1237,7 @@
     CBaseField.prototype.IsNeedRecalc = function() {
         return this._needRecalc;
     };
+    CBaseField.prototype.Refresh_RecalcData = function(){};
     CBaseField.prototype.SetWasChanged = function(isChanged) {
         let oViewer = editor.getDocumentRenderer();
 
@@ -1405,7 +1380,10 @@
         return false;
     };
     CBaseField.prototype.SetDisplay = function(nType) {
+        AscCommon.History.Add(new CChangesPDFFormDisplay(this, this._display, nType));
+
         this._display = nType;
+
         this.SetWasChanged(true);
         this.AddToRedraw();
     };
@@ -1439,7 +1417,6 @@
         let defValue = this.GetDefaultValue() || "";
         if (this.GetValue() != defValue) {
             this.SetValue(defValue);
-            this.SetApiValue(defValue);
             this.SetWasChanged(true);
             this.SetNeedRecalc(true);
         }
@@ -1534,13 +1511,13 @@
 	 * @typedef {"MouseUp" | "MouseDown" | "MouseEnter" | "MouseExit" | "OnFocus" | "OnBlur" | "Keystroke" | "Validate" | "Calculate" | "Format"} cTrigger
 	 * For a list box, use the Keystroke trigger for the Selection Change event.
      */
-    CBaseField.prototype.RevertContentViewToOriginal = function() {
+    CBaseField.prototype.RevertContentView = function() {
         this.content.ResetShiftView();
-        this._curShiftView.x = this._originShiftView.x;
-        this._curShiftView.y = this._originShiftView.y;
+        this._curShiftView.x = this._oldShiftView.x;
+        this._curShiftView.y = this._oldShiftView.y;
 
         this._bAutoShiftContentView = false;
-        this.content.ShiftView(this._originShiftView.x, this._originShiftView.y);
+        this.content.ShiftView(this._oldShiftView.x, this._oldShiftView.y);
 
         if (this._scrollInfo) {
             let nMaxShiftY                  = this._scrollInfo.scroll.maxScrollY;
@@ -1553,13 +1530,12 @@
         return this._isWidget;
     };
     CBaseField.prototype.IsNeedRevertShiftView = function() {
-        if (this._curShiftView.y != this._originShiftView.y ||
-            this._curShiftView.x != this._originShiftView.x)
+        if (this._curShiftView.y != this._oldShiftView.y ||
+            this._curShiftView.x != this._oldShiftView.x)
             return true;
     };
-    CBaseField.prototype.GetBordersWidth = function(bScaled) {
-        let oViewer = editor.getDocumentRenderer();
-        let nLineWidth = bScaled == true ? 1.25 * (this._lineWidth ? this._lineWidth : 1)  * AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom : 1.25 * (this._lineWidth ? this._lineWidth : 1);
+    CBaseField.prototype.GetBordersWidth = function() {
+        let nLineWidth = this._lineWidth != undefined ? this._lineWidth : 1;
 
         if (nLineWidth == 0 || this._borderStyle == undefined) {
             return {
@@ -1596,34 +1572,33 @@
                 }
         }
     };
-    CBaseField.prototype.GetMarginsFromBorders = function(bScaled, bMM) {
-        let oBorders    = this.GetBordersWidth(bScaled);
-        let nKoeff      = bMM == true ? g_dKoef_pix_to_mm : 1;
+    CBaseField.prototype.GetMarginsFromBorders = function() {
+        let oBorders = this.GetBordersWidth();
 
         switch (this._borderStyle) {
             case BORDER_TYPES.solid:
             case BORDER_TYPES.dashed:
             case BORDER_TYPES.underline:
                 return {
-                    left:     oBorders.bottom * nKoeff,
-                    top:      oBorders.bottom * nKoeff,
-                    right:    oBorders.bottom * nKoeff,
-                    bottom:   oBorders.bottom * nKoeff
+                    left:     oBorders.bottom,
+                    top:      oBorders.bottom,
+                    right:    oBorders.bottom,
+                    bottom:   oBorders.bottom
                 }
             case BORDER_TYPES.inset:
             case BORDER_TYPES.beveled:
                 return {
-                    left:     oBorders.bottom * nKoeff,
-                    top:      oBorders.bottom * nKoeff,
-                    right:    oBorders.bottom * nKoeff,
-                    bottom:   oBorders.bottom * nKoeff
+                    left:     oBorders.bottom,
+                    top:      oBorders.bottom,
+                    right:    oBorders.bottom,
+                    bottom:   oBorders.bottom
                 }
             default:
                 return {
-                    left:     oBorders.bottom * nKoeff,
-                    top:      oBorders.bottom * nKoeff,
-                    right:    oBorders.bottom * nKoeff,
-                    bottom:   oBorders.bottom * nKoeff
+                    left:     oBorders.bottom,
+                    top:      oBorders.bottom,
+                    right:    oBorders.bottom,
+                    bottom:   oBorders.bottom
                 }
         };
     };
@@ -1733,7 +1708,7 @@
         let supportImageDataConstructor = (AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isIeEdge) ? false : true;
 
         let ctx             = canvas.getContext("2d");
-        let mappedBuffer    = new Uint8ClampedArray(oFile.memory().buffer, oApInfoTmp["retValue"], 4 * nWidth * nHeight);
+        let mappedBuffer    = oFile.getUint8ClampedArray(oApInfoTmp["retValue"], 4 * nWidth * nHeight);
         let imageData       = null;
 
         if (supportImageDataConstructor)
@@ -1982,11 +1957,15 @@
     CBaseField.prototype.GetTextSize = function() {
         return this._textSize;
     };
+    CBaseField.prototype.SetRect = function(aOrigRect) {
+        this._origRect = aOrigRect;
+        this.SetWasChanged(true);
+    };
     CBaseField.prototype.GetOrigRect = function() {
         return this._origRect;
     };
     CBaseField.prototype.GetRect = function() {
-        return this._rect;
+        return this.GetOrigRect();
     };
 
     // common triggers
@@ -2033,9 +2012,6 @@
         return this._page;
     };
     CBaseField.prototype["getPagePos"] = function() {
-        if (!this._pagePos)
-            return null;
-
         let aOrigRect = this.GetOrigRect();
         return {
             "x" : aOrigRect[0],
@@ -2324,6 +2300,25 @@
         let nEndPos = memory.GetCurPosition();
         memory.Seek(nStartPos);
         memory.WriteLong(nFlags);
+        memory.Seek(nEndPos);
+    };
+    CBaseField.prototype.WriteRenderToBinary = function(memory) {
+        // пока только для text, combobox
+        if (false == [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
+            return;
+        }
+
+        // тут будет длина комманд
+        let nStartPos = memory.GetCurPosition();
+        memory.Skip(4);
+
+        let oContentToDraw = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format) ? this.contentFormat : this.content;
+        oContentToDraw.Draw(0, memory.docRenderer);
+
+        // запись длины комманд
+        let nEndPos = memory.GetCurPosition();
+        memory.Seek(nStartPos);
+        memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
     };
 

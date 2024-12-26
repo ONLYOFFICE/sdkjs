@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -87,7 +87,7 @@
                 arrToRemove = arrToRemove.reverse();
             }
             nInsertPosition = arrToRemove[0].GetPosInParent();
-            comparison.resolveConflicts(arrToInsert, arrToRemove, arrToRemove[0].Paragraph, nInsertPosition);
+            comparison.resolveConflicts(arrToInsert, arrToRemove, this.getApplyParagraph(comparison), nInsertPosition);
         }
     }
 
@@ -373,8 +373,10 @@
         for (let i = oNode.children.length - 1; i >= 0; i -= 1) {
             const oChildNode = oNode.children[i];
             if (i !== oNode.children.length - 1) {
-                oChildNode.tryUpdateNode(this);
-                oChildNode.resolveTypesWithPartner(this);
+							if (oChildNode.partner && oChildNode.element instanceof CTextElement) {
+								oChildNode.tryUpdateNode(this);
+								oChildNode.resolveTypesWithPartner(this);
+							}
             }
             if (currentChangeId < oNode.changes.length && oNode.changes[currentChangeId].anchor.index === i) {
                 const aContentToInsert = oNode.getArrOfInsertsFromChanges(currentChangeId, this);
@@ -496,6 +498,7 @@
         const oPartnerNode = this.partner;
         if (oPartnerNode)
         {
+					let oSplitRun;
             const oOriginalTextElement = this.element;
             const oPartnerTextElement = oPartnerNode.element;
             if (oPartnerTextElement.elements.length > oOriginalTextElement.elements.length) {
@@ -506,7 +509,8 @@
                 const bIsWordBeginWithText = oPartnerTextElement.isWordBeginWith(oOriginalTextElement);
                 const bIsWordEndWithText = oPartnerTextElement.isWordEndWith(oOriginalTextElement);
 
-                const oParagraph = oOriginalTextElement.lastRun.Paragraph;
+                const oParent = oOriginalTextElement.lastRun.GetParent();
+								const oMainMockParagraph = this.par.element;
                 if (bIsWordBeginWithText) {
                     for (let i = 0; i < oOriginalTextElement.elements.length; i += 1) {
                         oNewOriginalTextElement.addToElements(oOriginalTextElement.elements[i], oOriginalTextElement.reviewElementTypes[i]);
@@ -535,14 +539,16 @@
                     } else {
                         nLastPartnerElementPosition = oCurrentRun.GetElementPosition(oPartnerTextElement.elements[oPartnerTextElement.elements.length - 1]);
                     }
-                    oCurrentRun.Split2(nLastPartnerElementPosition + 1);
+	                oSplitRun = oCurrentRun.Split2(nLastPartnerElementPosition + 1);
+										oMockParagraph.Add_ToContent(nCurrentRunPosition + 1, oSplitRun);
                     const arrContentForInsert = [];
                     while (nAmountOfAddingElements) {
                         const oReviewInfo = comparison.getCompareReviewInfo(oCurrentRun);
                         for (let i = oCurrentRun.Content.length - 1; i >= 0; i -= 1) {
                             nAmountOfAddingElements -= 1;
-                            if (nAmountOfAddingElements === 0) {
+                            if (nAmountOfAddingElements === 0 && i !== 0) {
                                 oCurrentRun = oCurrentRun.Split2(i);
+	                            oMockParagraph.Add_ToContent(nCurrentRunPosition + 1, oCurrentRun);
                                 break;
                             }
                         }
@@ -556,29 +562,34 @@
                     }
                     let nLastOriginalElementPosition;
                     let nLastRunPosition;
+										let nMockRunPosition;
                     if (bIsWordBeginWithText) {
                         nLastRunPosition = oOriginalTextElement.lastRun.GetPosInParent();
+	                    nMockRunPosition = oOriginalTextElement.lastRun.GetPosInParent(oMainMockParagraph);
                         oNewOriginalTextElement.lastRun = arrContentForInsert[0];
-                        nLastOriginalElementPosition = oParagraph.Content[nLastRunPosition].GetElementPosition(oOriginalTextElement.elements[oOriginalTextElement.elements.length - 1]);
-                        oParagraph.Content[nLastRunPosition].Split2(nLastOriginalElementPosition + 1, oParagraph, nLastRunPosition)
+                        nLastOriginalElementPosition = oParent.Content[nLastRunPosition].GetElementPosition(oOriginalTextElement.elements[oOriginalTextElement.elements.length - 1]);
+                        oSplitRun = oParent.Content[nLastRunPosition].Split2(nLastOriginalElementPosition + 1, oParent, nLastRunPosition)
+	                    oMainMockParagraph.Add_ToContent(nLastRunPosition + 1, oSplitRun);
                     } else {
                         nLastRunPosition = oOriginalTextElement.firstRun.GetPosInParent();
+	                    nMockRunPosition = oOriginalTextElement.firstRun.GetPosInParent(oMainMockParagraph);
                         nPreviousRunPosition = nLastRunPosition + arrContentForInsert.length;
-                        nLastOriginalElementPosition = oParagraph.Content[nLastRunPosition].GetElementPosition(oOriginalTextElement.elements[0]);
-                        oParagraph.Content[nLastRunPosition].Split2(nLastOriginalElementPosition/* + 1*/, oParagraph, nLastRunPosition);
+                        nLastOriginalElementPosition = oParent.Content[nLastRunPosition].GetElementPosition(oOriginalTextElement.elements[0]);
+	                    oSplitRun = oParent.Content[nLastRunPosition].Split2(nLastOriginalElementPosition, oParent, nLastRunPosition);
+	                    oMainMockParagraph.Add_ToContent(nMockRunPosition + 1, oSplitRun);
                         oNewOriginalTextElement.firstRun = arrContentForInsert[0];
                     }
 
-                    //oParagraph.Content[nLastRunPosition].Split2(nLastOriginalElementPosition + 1, oParagraph, nLastRunPosition)
                     for (let i = 0; i < arrContentForInsert.length; i += 1) {
-                        oParagraph.Add_ToContent(nLastRunPosition + 1, arrContentForInsert[i]);
+                        oParent.Add_ToContent(nLastRunPosition + 1, arrContentForInsert[i]);
+												oMainMockParagraph.Add_ToContent(nMockRunPosition + 1, arrContentForInsert[i]);
                     }
                 }
 
                 if (bIsWordEndWithText && !bIsWordBeginWithText) {
                     let nElementsAmount = oOriginalTextElement.elements.length;
                     let nCurrentRunPosition = nPreviousRunPosition + 1;
-                    let oCurrentRun = oParagraph.Content[nCurrentRunPosition];
+                    let oCurrentRun = oParent.Content[nCurrentRunPosition];
                     while (nElementsAmount) {
                         const oReviewInfo = comparison.getCompareReviewInfo(oCurrentRun);
                         oNewOriginalTextElement.lastRun = oCurrentRun;
@@ -591,7 +602,7 @@
                             }
                         }
                         nCurrentRunPosition += 1;
-                        oCurrentRun = oParagraph.Content[nCurrentRunPosition];
+                        oCurrentRun = oParent.Content[nCurrentRunPosition];
                     }
                 }
             } else if (oPartnerTextElement.elements.length < oOriginalTextElement.elements.length) {
@@ -674,6 +685,9 @@
     function CMockParagraph() {
         this.Content = [];
     }
+	CMockParagraph.prototype.Add_ToContent = function (position, element) {
+		this.Content.splice(position, 0, element);
+	};
 
     function CMockMinHash() {
         this.count = 0;
@@ -832,9 +846,9 @@
                     if (oInsertInfo.isParaEnd) {
                         oRun.AddAfterParaEnd(oInsertParaMove);
                         } else {
-                        const oParagraph = oRun.Paragraph;
-                        const nPosition = oRun.GetPosInParent(oParagraph);
-                        oParagraph.AddToContent(nPosition, oInsertParaMove);
+                        const oParent = oRun.GetParent();
+                        const nPosition = oRun.GetPosInParent(oParent);
+                        oParent.AddToContent(nPosition, oInsertParaMove);
                     }
                 }
             }
@@ -907,6 +921,7 @@
 	      comparison.oBookmarkManager = this.oBookmarkManager;
         comparison.oComparisonMoveMarkManager = this.oComparisonMoveMarkManager;
         comparison.CommentsMap = this.CommentsMap;
+				comparison.StylesMap = this.StylesMap;
         const originalDocument = new CMockDocument();
         const revisedDocument = new CMockDocument();
         const originalParagraph = new CMockParagraph();
@@ -1048,6 +1063,7 @@
 	    {
 		    oOriginalDocument.UpdateBookmarks();
 	    }
+	      this.comparison.updateCommentsQuoteText();
         oOriginalDocument.Recalculate();
         oOriginalDocument.UpdateInterface();
         oOriginalDocument.FinalizeAction();

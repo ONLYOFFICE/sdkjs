@@ -359,11 +359,65 @@
                 return this.isHideTargetBeforeFirstClick;
             return false;
         };
+        this.TargetStart = function (bShowHide) {
+            if (this.m_lTimerTargetId != -1)
+                clearInterval(this.m_lTimerTargetId);
+            this.m_lTimerTargetId = setInterval(oThis.DrawTarget, 500);
+
+            this.showTarget(bShowHide);
+        };
+        this.Collaborative_UpdateTarget = function (_id, _shortId, _x, _y, _size, _page, _transform, is_from_paint) {
+            this.AutoShapesTrack.SetCurrentPage(_page, true);
+            let TextMatrix = this.AutoShapesTrack.transformPageMatrix(_transform);
+
+            if (is_from_paint !== true) {
+                this.CollaborativeTargetsUpdateTasks.push([_id, _shortId, _x, _y, _size, _page, _transform]);
+                return;
+            }
+
+            for (let i = 0; i < this.CollaborativeTargets.length; i++) {
+                if (_id == this.CollaborativeTargets[i].Id) {
+                    this.CollaborativeTargets[i].CheckPosition(_x, _y, _size, _page, TextMatrix);
+                    return;
+                }
+            }
+
+            let _target = new CDrawingCollaborativeTarget(this);
+            _target.Id = _id;
+            _target.ShortId = _shortId;
+            _target.CheckPosition(_x, _y, _size, _page, TextMatrix);
+            this.CollaborativeTargets[this.CollaborativeTargets.length] = _target;
+        };
         this.OnRecalculatePage = function() {};
         this.OnEndRecalculate = function() {};
         this.ConvertCoordsToAnotherPage = function (x, y, pageCoord, pageNeed) {
             return AscPDF.ConvertCoordsToAnotherPage(x, y, pageCoord, pageNeed);
         }
+
+        this.CheckRasterImageOnScreen = function(src)
+        {
+            let redrawPages = [];
+            let viewer = this.m_oDocumentRenderer;
+
+            for (let i = viewer.startVisiblePage; i <= viewer.endVisiblePage; i++)
+            {
+                let imgs = viewer.DrawingObjects.getAllRasterImagesOnPage(i);
+                for (let j = 0, len = imgs.length; j < len; j++)
+                {
+                    if (AscCommon.getFullImageSrc2(imgs[j]) === src)
+                    {
+                        redrawPages.push(i);
+                        break;
+                    }
+                }
+            }
+
+            if (redrawPages.length > 0)
+            {
+                viewer.onUpdatePages(redrawPages);
+                viewer.onRepaintForms(redrawPages);
+            }
+        };
     }
 
     CDrawingDocument.prototype.constructor = CDrawingDocument;

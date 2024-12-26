@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -628,31 +628,112 @@ function (window, undefined) {
 				if (_arg0 < 1 || _arg0 > arg.length - 1) {
 					return new cError(cErrorType.wrong_value_type);
 				}
-
-				let returnVal = arg[Math.floor(_arg0)];
-				if (returnVal.type === cElementType.cell || returnVal.type === cElementType.cell3D) {
-					returnVal = returnVal.getValue();
-				} else if (returnVal.type === cElementType.cellsRange || returnVal.type === cElementType.cellsRange3D) {
-					returnVal = returnVal.cross(args[1]);
-				}
 	
-				return returnVal;
+				return arg[Math.floor(_arg0)];
 			}
 
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		if (cElementType.array === arg0.type) {
+		if (cElementType.array === arg0.type || cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+			// TODO refactor
 			// go through the array and return result for each element
 			let resArr = new cArray();
-			arg0.foreach(function(elem, r, c) {
-				if (!resArr.array[r]) {
-					resArr.addRow();
-				}
+			let tempArraySize, maxArraySize = arg0.getDimensions();
+			let arg0Rows = maxArraySize.row, arg0Cols = maxArraySize.col;
 
-				let res = chooseArgument(elem);
-				resArr.addElement(res);
+			// get max array size by first loop
+			arg0.foreach2(function (elem) {
+				let chosenArgument = chooseArgument(elem);
+				if (chosenArgument && chosenArgument.type === cElementType.cellsRange || chosenArgument.type === cElementType.cellsRange3D || chosenArgument.type === cElementType.array) {
+					tempArraySize = chosenArgument.getDimensions();
+					maxArraySize.row = tempArraySize.row > maxArraySize.row ? tempArraySize.row : maxArraySize.row;
+					maxArraySize.col = tempArraySize.col > maxArraySize.col ? tempArraySize.col : maxArraySize.col;
+				}
 			});
+
+			for (let r = 0; r < arg0Rows; r++) {
+				for (let c = 0; c < arg0Cols; c++) {
+					let elem = arg0.getValue2(r, c);
+					let chosenArgument = chooseArgument(elem);
+					let argDimensions = chosenArgument.getDimensions();
+					let singleRow = arg0Rows === 1;
+					let singleCol = arg0Cols === 1;
+					let tempArr = [];
+
+					if (singleRow || singleCol) {
+						// if the first argument has one row or column we need to fully take this row or column and pass it to the resulting array
+						for (let i = 0; i < (singleRow ? maxArraySize.row : maxArraySize.col); i++) {
+							let elemFromChosenArgument;
+							if (chosenArgument.type === cElementType.array || chosenArgument.type === cElementType.cellsRange || chosenArgument.type === cElementType.cellsRange3D) {
+								if (argDimensions.col === 1) {
+									// return elem from first col
+									elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(singleRow ? i : r, 0) : chosenArgument.getValueByRowCol(singleRow ? i : r, 0);
+								} else if (argDimensions.row === 1) {
+									// return elem from first row
+									elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(0, singleRow ? c : i) : chosenArgument.getValueByRowCol(0, singleRow ? c : i);
+								} else {
+									// return r/c elem
+									elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(singleRow ? i : r, singleRow ? c : i) : chosenArgument.getValueByRowCol(singleRow ? i : r, singleRow ? c : i);
+								}
+
+								// if we go outside the range, we must return the #N/A error to the array
+								if ((singleRow && argDimensions.row - 1 !== 0 && argDimensions.row - 1 < i) || (singleCol && argDimensions.col - 1 !== 0 && argDimensions.col - 1 < i)) {
+									elemFromChosenArgument = new cError(cErrorType.not_available);
+								}
+							} else {
+								elemFromChosenArgument = chosenArgument;
+							}
+							
+							// undefined can be obtained when accessing an empty cell in the range, in which case we need to return cEmpty
+							if (elemFromChosenArgument === undefined) {
+								elemFromChosenArgument = new cEmpty();
+							}
+
+							singleRow ? tempArr.push([elemFromChosenArgument]) : tempArr.push(elemFromChosenArgument);
+						}
+						singleRow ? resArr.pushCol(tempArr, 0) : resArr.pushRow([tempArr], 0);
+					} else {
+						// get r/c part from chosen argument
+						let elemFromChosenArgument;
+						if (chosenArgument.type === cElementType.array || chosenArgument.type === cElementType.cellsRange || chosenArgument.type === cElementType.cellsRange3D) {
+							if (argDimensions.row === 1) {
+								elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(0, c) : chosenArgument.getValueByRowCol(0, c);
+							} else if (argDimensions.col === 1) {
+								elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(r, 0) : chosenArgument.getValueByRowCol(r, 0);
+							} else {
+								elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(r, c) : chosenArgument.getValueByRowCol(r, c);
+							}
+							if (argDimensions.col - 1 !== 0 && argDimensions.col - 1 < c) {
+								elemFromChosenArgument = new cError(cErrorType.not_available);
+							}
+						} else {
+							elemFromChosenArgument = chosenArgument;
+						}
+
+						// undefined can be obtained when accessing an empty cell in the range, in which case we need to return cEmpty
+						if (elemFromChosenArgument === undefined) {
+							elemFromChosenArgument = new cEmpty();
+						}
+
+						if (!resArr.array[r]) {
+							resArr.addRow();
+						}
+						resArr.addElement(elemFromChosenArgument);
+					}
+				}
+			}
+
+			if (resArr.getRowCount() < maxArraySize.row) {
+				// fill the rest of array with #N/A error
+				for (let i = resArr.getRowCount(); i < maxArraySize.row; i++) {
+					resArr.addRow();
+					for (let j = 0; j < resArr.getCountElementInRow(); j++) {
+						resArr.addElement(new cError(cErrorType.not_available));
+					}
+				}
+			}
+
 			return resArr;
 		}
 
@@ -999,7 +1080,7 @@ function (window, undefined) {
 
 			for (let i = 0; i < rows; i++) {
 				for (let j = 0; j < columns; j++) {
-					let val = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j, true) : arg1.getElementRowCol(i, j);
+					let val = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j) : arg1.getElementRowCol(i, j, true);
 
 					val = val.tocBool();
 					val = val.toBool ? val.toBool() : new cError(cErrorType.wrong_value_type);
@@ -1064,10 +1145,10 @@ function (window, undefined) {
 		}
 
 		if (rangeMode) {
-			const initialArrayDimensions = arg0.getDimensions(),
+			const initialArrayDimensions = arg0.getDimensions(true),
 				initRows = initialArrayDimensions.row,
 				initColumns = initialArrayDimensions.col,
-				lookingArrayDimensions = arg1.getDimensions();
+				lookingArrayDimensions = arg1.getDimensions(true);
 
 			// check for matching array sizes
 			if (lookingArrayDimensions.row === 1 && lookingArrayDimensions.col === initColumns) {
@@ -1173,7 +1254,7 @@ function (window, undefined) {
 			if (cElementType.cell !== pivot_table_ref.type && cElementType.cell3D !== pivot_table_ref.type && cElementType.cellsRange !== pivot_table_ref.type && cElementType.cellsRange3D !== pivot_table_ref.type) {
 				return refError;
 			}
-			let worksheet = pivot_table_ref.ws;
+			let worksheet = pivot_table_ref.getWS();
 			let bbox = pivot_table_ref.getBBox0();
 
 			let pivotTables = worksheet.getPivotTablesIntersectingRange(bbox);
@@ -1275,18 +1356,45 @@ function (window, undefined) {
 	cHLOOKUP.prototype.name = 'HLOOKUP';
 	cHLOOKUP.prototype.argumentsMin = 3;
 	cHLOOKUP.prototype.argumentsMax = 4;
-	cHLOOKUP.prototype.arrayIndexes = {1: 1, 2: 1};
+	cHLOOKUP.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
 	cHLOOKUP.prototype.argumentsType = [argType.any, argType.number, argType.number, argType.logical];
 	cHLOOKUP.prototype.Calculate = function (arg) {
-		//TODO  с excel есть несоостветствие - в тестовом файле - E11:H13
-		if(this.bArrayFormula) {
-			//исключение, когда в формуле массива берется из одного аргумента только 1 элемент
-			if(cElementType.cellsRange3D === arg[2].type || cElementType.cellsRange === arg[2].type) {
-				arg[2] = arg[2].getValue2(0,0);
-			} else if(cElementType.array === arg[2].type) {
+		let retArr = new cArray();
+		let error = false;
+		if (arg[0].type === cElementType.array) {
+			if (arg[2] && arg[2].type === cElementType.cellsRange || arg[2].type === cElementType.cellsRange3D || arg[2].type === cElementType.array) {
 				arg[2] = arg[2].getValue2(0,0);
 			}
+			let dimension = arg[0].getDimensions();
+			for (let r = 0; r < dimension.row; r++) {
+				retArr.addRow();
+				for (let c = 0; c < dimension.col; c++) {
+					retArr.addElement(g_oHLOOKUPCache.calculate([arg[0].getValue2(r, c), arg[1], arg[2], arg[3]], arguments[1]));
+				}
+			}
+
+			return retArr;
 		}
+
+		if (arg[2] && (arg[2].type === cElementType.array)) {
+			let dimension = arg[2].getDimensions();
+			for (let r = 0; r < dimension.row; r++) {
+				retArr.addRow();
+				for (let c = 0; c < dimension.col; c++) {
+					if (!error) {
+						let res = g_oHLOOKUPCache.calculate([arg[0], arg[1], arg[2].getValue2(r, c), arg[3]], arguments[1]);
+						if (res.type === cElementType.error) {
+							error = true
+						}
+						retArr.addElement(res);
+					} else {
+						break
+					}
+				}
+			}
+			return error ? new cError(cErrorType.bad_reference) : retArr;
+		}
+
 		return g_oHLOOKUPCache.calculate(arg, arguments[1]);
 	};
 
@@ -1364,8 +1472,8 @@ function (window, undefined) {
 	cINDEX.prototype.arrayIndexes = {0: 1};
 	cINDEX.prototype.argumentsType = [argType.reference, argType.number, argType.number];
 	cINDEX.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1] && (cElementType.empty !== arg[1].type) ? arg[1] : new cNumber(1),
-			arg2 = arg[2] && (cElementType.empty !== arg[2].type) ? arg[2] : new cNumber(1),
+		let arg0 = arg[0], arg1 = arg[1] && (cElementType.empty !== arg[1].type) ? arg[1] : new cNumber(0),
+			arg2 = arg[2] && (cElementType.empty !== arg[2].type) ? arg[2] : new cNumber(0),
 			arg3 = arg[3] && (cElementType.empty !== arg[3].type) ? arg[3] : new cNumber(1), res;
 
 		if (cElementType.cellsRange3D === arg0.type) {
@@ -1411,11 +1519,11 @@ function (window, undefined) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		var generateArray = function (_from, row, col) {
-			var ret = null;
-			var _colCount = _from.getCountElementInRow();
-			var _rowCount = _from.rowCount;
-			var i;
+		const generateArray = function (_from, row, col) {
+			let ret = null;
+			let _colCount = _from.getCountElementInRow();
+			let _rowCount = _from.rowCount;
+			let i;
 			row = row !== undefined ? Math.ceil(row) : row;
 			col = col !== undefined ? Math.ceil(col) : col;
 			if (undefined !== row) {
@@ -1453,77 +1561,71 @@ function (window, undefined) {
 		};
 
 		AscCommonExcel.executeInR1C1Mode(false, function () {
-			if (cElementType.array === arg0.type) {
-				if ((!arg[1] || arg1 === 0) && (!arg[2] || arg2 === 0)) {
-					//возвращаем массив
-					res = arg0;
-				} else if (!arg[2] || arg2 === 0) {
-					//возращаем массив из arg1 строки
-					res = generateArray(arg0, arg1);
-				} else if (!arg[1] || arg1 === 0) {
-					//возращаем массив из arg2 столбца
-					res = generateArray(arg0, undefined, arg2);
-				} else if(undefined === arg[2] && 1 === arg0.rowCount) {//если последний аргумент опущен, и выделенa 1 строка
-					res = arg0.getValue2(0, (0 === arg1) ? 0 : arg1 - 1);
-				} else if(undefined === arg[2] && 1 === arg0.getCountElementInRow()) {//если последний аргумент опущен, и выделен 1 столбец
-					res = arg0.getValue2((0 === arg1) ? 0 : arg1 - 1, 0);
-				} else {
-					res = arg0.getValue2((1 === arg0.rowCount || 0 === arg1) ? 0 : arg1 - 1, 0 === arg2 ? 0 : arg2 - 1);
-				}
-			} else if (cElementType.cellsRange === arg0.type) {
-				var ws = arg0.getWS(), bbox = arg0.getBBox0();
+			let dimension = arg0.getDimensions();
+			let isSingleRowCol = (dimension.row > 1 && dimension.col > 1) ? false : true;
+			let isByColumn = (dimension.row > 1) ? true : false;
+			let isArray = cElementType.array === arg0.type;
 
-				if(cElementType.empty === arg[1].type) {
-					arg1 = 0;
-				}
+			let diffArg1 = arg1 === 0 ? 0 : 1;
+			let diffArg2 = arg2 === 0 ? 0 : 1;
 
-				var diffArg1 = arg1 === 0 ? 0 : 1;
-				var diffArg2 = arg2 === 0 ? 0 : 1;
-				if(undefined === arg[2] && bbox.r1 === bbox.r2) {//если последний аргумент опущен, и выделенa 1 строка
-					if (arg1 > Math.abs(bbox.c1 - bbox.c2) + 1) {
-						res = new cError(cErrorType.bad_reference);
+			if (arg[2] !== undefined && (arg1 > dimension.row || arg2 > dimension.col)) {
+				/* if the col_num and row_num in the arguments is greater than the array size, return an error */
+				res = new cError(cErrorType.bad_reference);
+			} else if (!isArray && arg[2] === undefined && !isSingleRowCol) {
+				/* if the second arg is ommited and range(exactly reference) is two dimensional, return an error */
+				res = new cError(cErrorType.bad_reference);
+			} else if (cElementType.array === arg0.type || cElementType.cellsRange === arg0.type) {
+				let ws = arg0.getWS ? arg0.getWS() : null, bbox = arg0.getBBox0 ? arg0.getBBox0() : null;
+
+				if (!isSingleRowCol) {
+					/* r&c > 1 */
+					if (arg1 === 0 && arg2 === 0) {
+						res = arg0;
+					} else if (arg1 === 0) {
+						// return full column
+						if (isArray) {
+							res = generateArray(arg0, undefined, arg2);
+						} else {
+							res = new Asc.Range(bbox.c1 + arg2 - diffArg2, bbox.r1, bbox.c1 + arg2 - diffArg2, bbox.r2);
+							res = new cArea(res.getName(), ws);
+						}
+					} else if (arg2 === 0) {
+						// return full row
+						if (isArray) {
+							res = generateArray(arg0, arg1, undefined);
+						} else {
+							res = new Asc.Range(bbox.c1, bbox.r1 + arg1 - diffArg1, bbox.c2, bbox.r1 + arg1 - diffArg1);
+							res = new cArea(res.getName(), ws);
+						}
 					} else {
-						res = new Asc.Range(bbox.c1 + arg1 - diffArg1, bbox.r1, bbox.c1 + arg1 - diffArg1, bbox.r1);
-						res = new cRef(res.getName(), ws);
+						if (isArray) {
+							res = arg0.getValue2(arg1 > 0 ? arg1 - 1 : 0, arg2 > 0 ? arg2 - 1 : 0);
+						} else {
+							res = new Asc.Range(bbox.c1 + arg2 - diffArg2, bbox.r1 + arg1 - diffArg1, bbox.c1 + arg2 - diffArg2, bbox.r1 + arg1 - diffArg1);
+							res = new cRef(res.getName(), ws);
+						}
 					}
-				} else if(undefined === arg[2] && bbox.c1 === bbox.c2 && arg1 > 0) {//если последний аргумент опущен, и выделен 1 столбец
-					if (arg1 > Math.abs(bbox.r1 - bbox.r2) + 1) {
-						res = new cError(cErrorType.bad_reference);
-					} else {
-						res = new Asc.Range(bbox.c1, bbox.r1 + arg1 - diffArg1, bbox.c1, bbox.r1 + arg1 - diffArg1);
-						res = new cRef(res.getName(), ws);
-					}
-				} else if(undefined === arg[2] && Math.abs(bbox.r1 - bbox.r2) + 1 > 1 && Math.abs(bbox.c1 - bbox.c2) + 1 > 1) {//если последний аргумент опущен, и выделен более 1 строки и более 1 столбца
-					//так себя ведёт excel в случае с cellsArea
-					res = new cError(cErrorType.bad_reference);
-				} else if (bbox.r1 === bbox.r2) {/*одна строка*/
-					res = new Asc.Range(bbox.c1 + arg2 - 1, bbox.r1, bbox.c1 + arg2 - 1, bbox.r1);
-					res = new cRef(res.getName(), ws);
 				} else {
-					if (0 === arg1 && arg2 > 0) {
-						if (arg2 > Math.abs(bbox.c1 - bbox.c2) + 1) {
-							res = new cError(cErrorType.bad_reference);
+					/* r|c === 1 */
+					if (arg[2] === undefined && ((isByColumn && arg1 > dimension.row) || (!isByColumn && arg1 > dimension.col))) {
+						res = new cError(cErrorType.bad_reference);
+					} else if (arg1 === 0 && isByColumn) {
+						// res = isByColumn ? arg0 : arg0.getValue2(1, arg2);
+						res = arg0;
+					} else if (undefined !== arg[2] && arg2 === 0 && !isByColumn) {
+						res = arg0;
+					} else if (undefined === arg[2] && dimension.row === 1) {	
+						// if the last argument is omitted and 1 line is selected
+						if (isArray) {
+							res = arg0.getValue2(0, arg1 > 0 ? arg1 - 1 : 0);
 						} else {
-							if (0 === arg2 || undefined === arg[2] || cElementType.empty === arg[2].type) {
-								res = new Asc.Range(bbox.c1 + arg2 - 1, bbox.r1, bbox.c2 + arg2 - 1, bbox.r2);
-							} else {
-								res = new Asc.Range(bbox.c1 + arg2 - 1, bbox.r1, bbox.c1 + arg2 - 1, bbox.r2);
-							}
-							res = res.isOneCell() ? new cRef(res.getName(),ws) : new cArea(res.getName(), ws);
+							res = new Asc.Range(bbox.c1 + arg1 - diffArg1, bbox.r1, bbox.c1 + arg1 - diffArg1, bbox.r1);
+							res = new cRef(res.getName(), ws);
 						}
-					} else if ((0 === arg2 || undefined === arg[2] || cElementType.empty === arg[2].type) && arg1 > 0) {
-						if (arg1 > Math.abs(bbox.r1 - bbox.r2) + 1) {
-							res = new cError(cErrorType.bad_reference);
-						} else {
-							res = new Asc.Range(bbox.c1 + arg2 - diffArg2, bbox.r1 + arg1 - diffArg1, bbox.c2 + arg2 - diffArg2, bbox.r1 + arg1 - diffArg1);
-							res = res.isOneCell() ? new cRef(res.getName(),ws) : new cArea(res.getName(), ws);
-						}
-					} else if ((0 === arg1 || undefined === arg[1] || cElementType.empty === arg[1].type) && (0 === arg2 || undefined === arg[2] || cElementType.empty === arg[2].type)) {
-						res = new Asc.Range(bbox.c1 + arg2 - diffArg2, bbox.r1 + arg1 - diffArg1, bbox.c2 + arg2 - diffArg2, bbox.r2 + arg1 - diffArg1);
-						res = res.isOneCell() ? new cRef(res.getName(),ws) : new cArea(res.getName(), ws);
 					} else {
-						if (arg1 > Math.abs(bbox.r1 - bbox.r2) + 1 || arg2 > Math.abs(bbox.c1 - bbox.c2) + 1) {
-							res = new cError(cErrorType.bad_reference);
+						if (isArray) {
+							res = arg0.getValue2(arg1 > 0 ? arg1 - 1 : 0, arg2 > 0 ? arg2 - 1 : 0);
 						} else {
 							res = new Asc.Range(bbox.c1 + arg2 - diffArg2, bbox.r1 + arg1 - diffArg1, bbox.c1 + arg2 - diffArg2, bbox.r1 + arg1 - diffArg1);
 							res = new cRef(res.getName(), ws);
@@ -1658,9 +1760,26 @@ function (window, undefined) {
 	cLOOKUP.prototype.name = 'LOOKUP';
 	cLOOKUP.prototype.argumentsMin = 2;
 	cLOOKUP.prototype.argumentsMax = 3;
-	cLOOKUP.prototype.arrayIndexes = {1: 1, 2: 1};
+	cLOOKUP.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
 	cLOOKUP.prototype.argumentsType = [argType.any, argType.reference, argType.reference];
 	cLOOKUP.prototype.Calculate = function (arg) {
+
+		if (!AscCommonExcel.bIsSupportDynamicArrays && arg[0].type === cElementType.cellsRange || arg[0].type === cElementType.cellsRange3D) {
+			arg[0] = arg[0].isOneElement() ? arg[0].getFirstElement() : arg[0].cross(arguments[1]);
+		} else if (arg[0].type === cElementType.array) {
+			let retArr = new cArray();
+			let dimension = arg[0].getDimensions();
+
+			for (let r = 0; r < dimension.row; r++) {
+				retArr.addRow();
+				for (let c = 0; c < dimension.col; c++) {
+					retArr.addElement(g_oLOOKUPCache.calculate([arg[0].getValue2(r, c), arg[1], arg[2]], arguments[1]));
+				}
+			}
+			return retArr;
+		}
+
+
 		return g_oLOOKUPCache.calculate(arg, arguments[1]);
 	};
 
@@ -2756,22 +2875,30 @@ function (window, undefined) {
 	}
 
 	VHLOOKUPCache.prototype.calculate = function (arg, argument1) {
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
-		var arg3 = arg[3] ? arg[3].tocBool().value : true;
-		var opt_xlookup = arg[4] !== undefined;
-		var opt_arg4, opt_arg5;
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
+		let arg3 = arg[3] ? arg[3].tocBool().value : true;
+		let opt_xlookup = arg[4] !== undefined;
+		let opt_arg4, opt_arg5;
 		if (opt_xlookup) {
 			opt_arg4 = arg[4];
 			opt_arg5 = arg[5];
 		}
-		var t = this, number, valueForSearching, r, c, res = -1, min, regexp, count;
+		let t = this, number, valueForSearching, r, c, res = -1, min, regexp, count;
 
 		if (!opt_xlookup) {
-			number = arg2.getValue() - 1;
-			if (cElementType.array === arg2.type) {
-				var arg2Val = arg2.getElementRowCol(0, 0);
-				number = arg2Val ? arg2Val.getValue() - 1 : number;
+			if (cElementType.cell3D === arg2.type || cElementType.cell === arg2.type) {
+				arg2 = arg2.getValue();
+			} else if (cElementType.array === arg2.type) {
+				arg2 = arg2.getElementRowCol(0, 0);
+			} else if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
+				arg2 = arg2.cross(argument1);
 			}
+
+			if (cElementType.error === arg2.type) {
+				return arg2;
+			}
+
+			number = arg2.getValue() - 1;
 
 			if (isNaN(number)) {
 				return new cError(cErrorType.bad_reference);
@@ -2789,7 +2916,7 @@ function (window, undefined) {
 			return arg0;
 		}
 
-		var arg0Val;
+		let arg0Val;
 		if (cElementType.array === arg0.type) {
 			arg0Val = arg0.getElementRowCol(0, 0);
 			valueForSearching = ('' + arg0Val.getValue()).toLowerCase();
@@ -2812,41 +2939,50 @@ function (window, undefined) {
 			return new cError(cErrorType.not_available);
 		}
 
-		//TODO hlookup не правильно работает если первый агумент массив - раскомментировать тесты для hlookup
-		var found = false;
+		let found = false;
+		let arg0ValType = arg0Val.type
 		if (cElementType.array === arg1.type && !opt_xlookup) {
 			// ToDo
 			if (cElementType.string === arg0.type) {
 				regexp = searchRegExp(valueForSearching);
 			}
-			arg1.foreach(function (elem, r, c) {
-				var v = ('' + elem.getValue()).toLowerCase();
-				var i = t.bHor ? c : r;
-				if (0 === i) {
-					min = v;
-				}
 
+			let arrayToSearch, row, col, res = -1;
+			let dimension = arg1.getDimensions();
+
+			row = this.bHor ? 0 : dimension.row;
+			col = this.bHor ? dimension.col : 0;
+
+			if (this.bHor) {
+				arrayToSearch = arg1.getRow(0);
+			} else {
+				arrayToSearch = arg1.getCol(0);
+			}
+
+			if (arrayToSearch) {
 				if (arg3) {
-					if (valueForSearching === v) {
-						res = i;
-						found = true;
-					} else if (valueForSearching > v && !found) {
-						res = i;
-					}
+					// approximate(binary) search
+					res = _func.binarySearch(arg0Val, arrayToSearch, false);
 				} else {
-					if (cElementType.string === arg0.type) {
-						if (regexp.test(v)) {
-							res = i;
+					// exact (simple) search
+					for (let i = 0; i < arrayToSearch.length; i++) {
+						let elem = arrayToSearch[i];
+						let elemValue = elem.getValue();
+	
+						if (elem.type === cElementType.string) {
+							elemValue = elemValue.toLowerCase();
 						}
-					} else if (valueForSearching === v) {
-						res = i;
+	
+						if ((elem.type === arg0ValType) && elemValue === arg0Val.getValue()) {
+							res = i;
+							break
+						}
 					}
 				}
 
-				min = Math.min(min, v);
-			});
+			}
 
-			if (/*min > valueForSearching ||*/ -1 === res) {
+			if (-1 === res) {
 				return new cError(cErrorType.not_available);
 			}
 
@@ -2860,12 +2996,12 @@ function (window, undefined) {
 			return arg1.getElementRowCol(r, c);
 		}
 
-		var range;
+		let range;
 		if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type ||
 			cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
 			range = arg1.getRange();
 		} else if (cElementType.array === arg1.type && opt_xlookup) {
-			var _cacheElem = {elements: []};
+			let _cacheElem = {elements: []};
 			arg1.foreach(function (elem, r, c) {
 				if (elem && elem.type === cElementType.string) {
 					elem.value = elem.value.toLowerCase();
@@ -2879,15 +3015,15 @@ function (window, undefined) {
 			return new cError(cErrorType.bad_reference);
 		}
 
-		var bb = range.getBBox0();
+		let bb = range.getBBox0();
 		count = this.bHor ? (bb.r2 - bb.r1) : (bb.c2 - bb.c1);
 		if (number > count) {
 			return new cError(cErrorType.bad_reference);
 		}
-		var ws = arg1.getWS();
+		let ws = arg1.getWS();
 		r = this.bHor ? bb.r1 : bb.r2;
 		c = this.bHor ? bb.c2 : bb.c1;
-		var oSearchRange = ws.getRange3(bb.r1, bb.c1, r, c);
+		let oSearchRange = ws.getRange3(bb.r1, bb.c1, r, c);
 
 
 		res = this._get(oSearchRange, arg0Val, arg3, opt_arg4, opt_arg5);
@@ -2901,7 +3037,7 @@ function (window, undefined) {
 
 		r = this.bHor ? bb.r1 + number : res;
 		c = this.bHor ? res : bb.c1 + number;
-		var resVal;
+		let resVal;
 		arg1.getWS()._getCellNoEmpty(r, c, function (cell) {
 			resVal = checkTypeCell(cell);
 		});
@@ -3021,8 +3157,9 @@ function (window, undefined) {
 		//из обработанных элементов выбираем те, которые больше(меньше) -> из них уже ищем наименьший(наибольший)
 		//т.е. в итоге получаем следующий наименьший/наибольший элемент
 		const _binarySearch = function (revert) {
+			let canCompare;
+			
 			i = 0;
-
 			//TODO проверить обратный поиск
 			if (revert) {
 				j = length - 1;
@@ -3049,12 +3186,22 @@ function (window, undefined) {
 					k = Math.floor((i + j) / 2);
 					elem = cacheArray[k];
 					val = elem.v;
+					canCompare = true;
 					if (val.type === cElementType.empty) {
 						val = val.tocBool();
 					}
+
+					if (valueForSearching.type !== val.type) {
+						if (valueForSearching.type !== cElementType.string && val.type !== cElementType.string) {
+							canCompare = true;
+						} else {
+							canCompare = false;
+						}
+					}
+
 					if (_compareValues(valueForSearching, val, "=")) {
 						return elem.i;
-					} else if (_compareValues(valueForSearching, val, "<")) {
+					} else if (canCompare && _compareValues(valueForSearching, val, "<")) {
 						j = k - 1;
 						opt_arg4 !== undefined && addNextOptVal(elem, valueForSearching, true);
 					} else {
@@ -4060,19 +4207,46 @@ function (window, undefined) {
 	cVLOOKUP.prototype.name = 'VLOOKUP';
 	cVLOOKUP.prototype.argumentsMin = 3;
 	cVLOOKUP.prototype.argumentsMax = 4;
-	cVLOOKUP.prototype.arrayIndexes = {1: 1, 2: {0: 0}};
+	cVLOOKUP.prototype.arrayIndexes = {/*0: 1,*/ 1: 1, /*2: 1*/};
 	cVLOOKUP.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	// cVLOOKUP.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cVLOOKUP.prototype.argumentsType = [argType.any, argType.number, argType.number, argType.logical];
 	cVLOOKUP.prototype.Calculate = function (arg) {
+		let retArr = new cArray();
+		let error = false;
 
-		if(this.bArrayFormula) {
-		 	//в случае когда первый аргумент - массив
-			//исключение, когда в формуле массива берется из одного аргумента только 1 элемент
-			if(cElementType.cellsRange3D === arg[2].type || cElementType.cellsRange === arg[2].type) {
-				arg[2] = arg[2].getValue2(0,0);
-			} else if(cElementType.array === arg[2].type) {
+		if (arg[0].type === cElementType.array) {
+			if (arg[2] && arg[2].type === cElementType.cellsRange || arg[2].type === cElementType.cellsRange3D || arg[2].type === cElementType.array) {
 				arg[2] = arg[2].getValue2(0,0);
 			}
+			let dimension = arg[0].getDimensions();
+			for (let r = 0; r < dimension.row; r++) {
+				retArr.addRow();
+				for (let c = 0; c < dimension.col; c++) {
+					retArr.addElement(g_oVLOOKUPCache.calculate([arg[0].getValue2(r, c), arg[1], arg[2], arg[3]], arguments[1]));
+				}
+			}
+
+			return retArr;
+		}
+
+		if (arg[2] && (arg[2].type === cElementType.array)) {
+			let dimension = arg[2].getDimensions();
+			for (let r = 0; r < dimension.row; r++) {
+				retArr.addRow();
+				for (let c = 0; c < dimension.col; c++) {
+					if (!error) {
+						let res = g_oVLOOKUPCache.calculate([arg[0], arg[1], arg[2].getValue2(r, c), arg[3]], arguments[1]);
+						if (res.type === cElementType.error) {
+							error = true;
+						}
+						retArr.addElement(res);
+					} else {
+						break;
+					}
+				}
+			}
+			return error ? new cError(cErrorType.bad_reference) : retArr
 		}
 
 		return g_oVLOOKUPCache.calculate(arg, arguments[1]);
@@ -4382,7 +4556,12 @@ function (window, undefined) {
 		if (arg1.type === arg1.empty) {
 			return new cError(cErrorType.wrong_value_type);
 		}
-		arg1 = arg1.toArray();
+
+		if (arg1.type === cElementType.cellsRange3D) {
+			arg1 = arg1.toArray()[0];
+		} else {
+			arg1 = arg1.toArray();
+		}
 
 		//Excel returns a #NUM when array is too large.
 		let elemCount = arg1.length * arg1[0].length;

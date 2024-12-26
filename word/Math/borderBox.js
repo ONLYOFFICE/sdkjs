@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -47,6 +47,10 @@ CMathBreak.prototype.Set_FromObject = function(Obj)
             this.alnAt = Obj.alnAt;
     }
 };
+CMathBreak.prototype.IsEqual = function (oMathBrk)
+{
+	return oMathBrk && oMathBrk.alnAt === this.alnAt;
+}
 CMathBreak.prototype.Copy = function()
 {
     var NewMBreak = new CMathBreak();
@@ -119,16 +123,21 @@ CMathBreak.prototype.Read_FromBinary = function(Reader)
 };
 
 
-function CMathBorderBoxPr()
+function CMathBorderBoxPr(ctrPr)
 {
-    this.hideBot    = false;
-    this.hideLeft   = false;
-    this.hideRight  = false;
-    this.hideTop    = false;
-    this.strikeBLTR = false;
-    this.strikeH    = false;
-    this.strikeTLBR = false;
-    this.strikeV    = false;
+	this.hideBot	= false;
+	this.hideLeft	= false;
+	this.hideRight	= false;
+	this.hideTop	= false;
+	this.strikeBLTR	= false;
+	this.strikeH	= false;
+	this.strikeTLBR	= false;
+	this.strikeV	= false;
+	this.ctrPr		= new CMathCtrlPr(ctrPr);
+}
+CMathBorderBoxPr.prototype.GetRPr = function ()
+{
+	return this.ctrPr.GetRPr();
 }
 CMathBorderBoxPr.prototype.Set_FromObject = function(Obj)
 {
@@ -155,6 +164,9 @@ CMathBorderBoxPr.prototype.Set_FromObject = function(Obj)
 
     if (undefined !== Obj.strikeV && null !== Obj.strikeV)
         this.strikeV = Obj.strikeV;
+
+	if (undefined !== Obj.ctrPrp && null !== Obj.ctrPrp)
+		this.ctrPr.SetRPr(Obj.ctrPrp);
 };
 CMathBorderBoxPr.prototype.Copy = function()
 {
@@ -167,6 +179,7 @@ CMathBorderBoxPr.prototype.Copy = function()
     NewPr.strikeH    = this.strikeH;
     NewPr.strikeTLBR = this.strikeTLBR;
     NewPr.strikeV    = this.strikeV;
+	NewPr.ctrPr      = this.ctrPr;
 
     return NewPr;
 };
@@ -189,6 +202,8 @@ CMathBorderBoxPr.prototype.Write_ToBinary = function(Writer)
     Writer.WriteBool(this.strikeH);
     Writer.WriteBool(this.strikeTLBR);
     Writer.WriteBool(this.strikeV);
+	Writer.WriteBool(true);
+	this.ctrPr.Write_ToBinary(Writer);
 };
 CMathBorderBoxPr.prototype.Read_FromBinary = function(Reader)
 {
@@ -209,6 +224,10 @@ CMathBorderBoxPr.prototype.Read_FromBinary = function(Reader)
     this.strikeH    = Reader.GetBool();
     this.strikeTLBR = Reader.GetBool();
     this.strikeV    = Reader.GetBool();
+	if (Reader.GetBool())
+	{
+		this.ctrPr.Read_FromBinary(Reader);
+	}
 };
 
 /**
@@ -223,14 +242,14 @@ function CBorderBox(props)
 
 	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    this.gapBrd = 0;
+	this.gapBrd = 0;
 
-    this.Pr = new CMathBorderBoxPr();
+	this.Pr = new CMathBorderBoxPr(this.CtrPrp);
 
-    if(props !== null && typeof(props) !== "undefined")
-        this.init(props);
+	if(props !== null && typeof(props) !== "undefined")
+		this.init(props);
 
-    AscCommon.g_oTableId.Add(this, this.Id);
+	AscCommon.g_oTableId.Add(this, this.Id);
 }
 CBorderBox.prototype = Object.create(CMathBase.prototype);
 CBorderBox.prototype.constructor = CBorderBox;
@@ -559,18 +578,31 @@ CBorderBox.prototype.Get_InterfaceProps = function()
 {
     return new CMathMenuBorderBox(this);
 };
-CBorderBox.prototype.GetTextOfElement = function(isLaTeX) {
-	var strTemp = "";
-	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
-	var strStartBracet = (strBase.length > 1 || isLaTeX) ? this.GetStartBracetForGetTextContent(isLaTeX) : "";
-	var strCloseBracet = (strBase.length > 1 || isLaTeX) ? this.GetEndBracetForGetTextContent(isLaTeX) : "";
-	
-	if (true === isLaTeX)
-		strTemp = '\\rect' + strStartBracet + strBase + strCloseBracet;
-	else
-		strTemp = "▭" + strStartBracet + strBase + strCloseBracet;
+/**
+ *
+ * @param {MathTextAndStyles | boolean} oMathText
+ * @constructor
+ */
+CBorderBox.prototype.GetTextOfElement = function(oMathText)
+{
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
-	return strTemp;
+	let oBase = this.getBase();
+
+	if (oMathText.IsLaTeX())
+	{
+		let oPos = oMathText.Add(oBase, true, 1);
+		oMathText.AddBefore(oPos, new AscMath.MathText("\\rect", oMathText.GetStyleFromFirst()));
+	}
+	else
+	{
+		let oBoxStr = new AscMath.MathText("▭", this)
+		oMathText.AddText(oBoxStr);
+		oMathText.SetGlobalStyle(this, true);
+		oMathText.Add(oBase, true, 2)
+	}
+
+	return oMathText;
 };
 
 /**
@@ -647,13 +679,18 @@ CMathMenuBorderBox.prototype["put_HideTopRTL"] = CMathMenuBorderBox.prototype.pu
 
 
 
-function CMathBoxPr()
+function CMathBoxPr(ctrPr)
 {
-    this.brk     = undefined;
-    this.aln     = false;
-    this.diff    = false;
-    this.noBreak = false;
-    this.opEmu   = false;
+	this.brk		= undefined;
+	this.aln		= false;
+	this.diff		= false;
+	this.noBreak	= false;
+	this.opEmu		= false;
+	this.ctrPr		= new CMathCtrlPr(ctrPr);
+}
+CMathBoxPr.prototype.GetRPr = function ()
+{
+	return this.ctrPr.GetRPr();
 }
 CMathBoxPr.prototype.Set_FromObject = function(Obj)
 {
@@ -682,6 +719,8 @@ CMathBoxPr.prototype.Set_FromObject = function(Obj)
         this.opEmu = true;
     else
         this.opEmu = false;
+
+	this.ctrPr.SetRPr(Obj.ctrPrp);
 };
 CMathBoxPr.prototype.Get_AlnAt = function()
 {
@@ -731,6 +770,7 @@ CMathBoxPr.prototype.Copy = function()
     NewPr.diff    = this.diff   ;
     NewPr.noBreak = this.noBreak;
     NewPr.opEmu   = this.opEmu  ;
+	NewPr.ctrPr   = this.ctrPr  ;
 
     if(this.brk !== undefined)
         NewPr.brk = this.brk.Copy();
@@ -759,6 +799,9 @@ CMathBoxPr.prototype.Write_ToBinary = function(Writer)
     {
         Writer.WriteBool(true);
     }
+
+	Writer.WriteBool(true);
+	this.ctrPr.Write_ToBinary(Writer);
 };
 CMathBoxPr.prototype.Read_FromBinary = function(Reader)
 {
@@ -782,6 +825,11 @@ CMathBoxPr.prototype.Read_FromBinary = function(Reader)
     {
         this.brk = undefined;
     }
+
+	if (Reader.GetBool())
+	{
+		this.ctrPr.Read_FromBinary(Reader);
+	}
 };
 
 /**
@@ -796,14 +844,14 @@ function CBox(props)
 
 	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    this.Pr = new CMathBoxPr();
+	this.Pr = new CMathBoxPr(this.CtrPrp);
 
-    this.baseContent = new CMathContent();
+	this.baseContent = new CMathContent();
 
-    if(props !== null && typeof(props) !== "undefined")
-        this.init(props);
+	if(props !== null && typeof(props) !== "undefined")
+		this.init(props);
 
-    AscCommon.g_oTableId.Add( this, this.Id );
+	AscCommon.g_oTableId.Add( this, this.Id );
 }
 CBox.prototype = Object.create(CMathBase.prototype);
 CBox.prototype.constructor = CBox;
@@ -958,16 +1006,29 @@ CBox.prototype.Apply_ForcedBreak = function(Props)
     if(Props.Action & c_oMathMenuAction.DeleteForcedBreak)
         Props.Action ^= c_oMathMenuAction.DeleteForcedBreak;
 };
-CBox.prototype.GetTextOfElement = function(isLaTeX) {
-	var strTemp = "";
-	var strSymbol = (true === isLaTeX) ? "\\box" : "□";
-	var Base = this.getBase().GetMultipleContentForGetText(isLaTeX);
+/**
+ *
+ * @param {MathTextAndStyles} oMathText
+ * @constructor
+ */
+CBox.prototype.GetTextOfElement = function(oMathText)
+{
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
-	strTemp =
-		strSymbol
-		+ Base
+	let oBase = this.getBase();
 
-	return strTemp;
+	if (oMathText.IsLaTeX())
+	{
+		let oBasePos = oMathText.Add(oBase, true, 0);
+		oMathText.WrapExactElement(oBasePos, "{", "}", oMathText.GetStyleFromFirst())
+	}
+	else
+	{
+		oMathText.AddText(new AscMath.MathText("□", this));
+		oMathText.SetGlobalStyle(this);
+		oMathText.Add(oBase, true, 2);
+	}
+	return oMathText;
 };
 
 /**
@@ -980,36 +1041,52 @@ function CMathMenuBox(Box)
 {
 	CMathMenuBase.call(this, Box);
 
-    this.Type = Asc.c_oAscMathInterfaceType.Box;
+	this.Type = Asc.c_oAscMathInterfaceType.Box;
 }
 CMathMenuBox.prototype = Object.create(CMathMenuBase.prototype);
 CMathMenuBox.prototype.constructor = CMathMenuBox;
 window["CMathMenuBox"] = CMathMenuBox;
 
-function CMathBarPr()
+function CMathBarPr(ctrPr)
 {
-    this.pos = LOCATION_BOT;
+	this.pos	= LOCATION_BOT;
+	this.ctrPr	= new CMathCtrlPr(ctrPr);
+}
+CMathBarPr.prototype.GetRPr = function ()
+{
+	return this.ctrPr.GetRPr();
 }
 CMathBarPr.prototype.Set_FromObject = function(Obj)
 {
     if(LOCATION_TOP === Obj.pos || LOCATION_BOT === Obj.pos)
         this.pos = Obj.pos;
+
+	this.ctrPr.SetRPr(Obj.ctrPrp);
 };
 CMathBarPr.prototype.Copy = function()
 {
     var NewPr = new CMathBarPr();
     NewPr.pos = this.pos;
+	NewPr.ctrPr   = this.ctrPr;
     return NewPr;
 };
 CMathBarPr.prototype.Write_ToBinary = function(Writer)
 {
     // Long : pos
     Writer.WriteLong(this.pos);
+
+	Writer.WriteBool(true);
+	this.ctrPr.Write_ToBinary(Writer);
 };
 CMathBarPr.prototype.Read_FromBinary = function(Reader)
 {
     // Long : pos
     this.pos = Reader.GetLong();
+
+	if (Reader.GetBool())
+	{
+		this.ctrPr.Read_FromBinary(Reader);
+	}
 };
 
 /**
@@ -1024,14 +1101,14 @@ function CBar(props)
 
 	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    this.Pr = new CMathBarPr();
+	this.Pr = new CMathBarPr(this.CtrPrp);
 
-    this.operator = new COperator(OPER_BAR);
+	this.operator = new COperator(OPER_BAR);
 
-    if(props !== null && typeof(props) !== "undefined")
-        this.init(props);
+	if(props !== null && typeof(props) !== "undefined")
+		this.init(props);
 
-    AscCommon.g_oTableId.Add( this, this.Id );
+	AscCommon.g_oTableId.Add( this, this.Id );
 }
 CBar.prototype = Object.create(CCharacter.prototype);
 CBar.prototype.constructor = CBar;
@@ -1106,27 +1183,30 @@ CBar.prototype.raw_SetLinePos = function(Value)
     this.RecalcInfo.bProps = true;
     this.ApplyProperties();
 };
-CBar.prototype.GetTextOfElement = function(isLaTeX) {
-	var strTemp = "",
-        strSymbol,
-        strBase,
-        strStartBracket = this.GetStartBracetForGetTextContent(isLaTeX),
-        strCloseBracket = this.GetEndBracetForGetTextContent(isLaTeX);
+/**
+ *
+ * @param {MathTextAndStyles | boolean} oMathText
+ * @constructor
+ */
+CBar.prototype.GetTextOfElement = function(oMathText)
+{
+	oMathText	= new AscMath.MathTextAndStyles(oMathText);
 
-    if (!isLaTeX)
-        strSymbol = (this.Pr.pos) ? "▁" : "¯";
-    else
-        strSymbol = (this.Pr.pos) ? "\\underline" : "\\overline";
+	let oBase	= this.getBase();
 
-	strBase = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
-	
-	strTemp =
-		strSymbol
-		+ strStartBracket
-		+ strBase
-		+ strCloseBracket;
+	if (oMathText.IsLaTeX())
+	{
+		let oBasePos = oMathText.Add(oBase, true, 2);
+		oMathText.AddBefore(oBasePos, new AscMath.MathText((this.Pr.pos) ? "\\underline" : "\\overline", oMathText.GetStyleFromFirst()));
+	}
+	else
+	{
+		let oText =  new AscMath.MathText((this.Pr.pos) ? "▁" : "¯", this, true)
+		oMathText.AddText(oText, true);
+		oMathText.Add(oBase, true);
+	}
 
-	return strTemp;
+	return oMathText;
 }
 
 /**
@@ -1282,3 +1362,8 @@ window['AscCommonWord'].CBar = CBar;
 window['AscCommonWord'].CBox = CBox;
 window['AscCommonWord'].CBorderBox = CBorderBox;
 window['AscCommonWord'].CPhantom = CPhantom;
+
+AscMath.Bar = CBar;
+AscMath.Box = CBox;
+AscMath.BorderBox = CBorderBox;
+AscMath.Phantom = CPhantom;

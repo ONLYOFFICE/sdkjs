@@ -89,28 +89,6 @@
     CPdfChart.prototype.SelectAllText = function() {
         this.GetDocContent().SelectAll();
     };
-    /**
-     * Exit from this annot.
-     * @memberof CTextField
-     * @typeofeditors ["PDF"]
-     */
-    CPdfChart.prototype.Blur = function() {
-        let oDoc        = this.GetDocument();
-        let oContent    = this.GetDocContent();
-        let oPara       = oContent.GetElement(0);
-
-        oPara.SetApplyToAll(true);
-        let sText = oPara.GetSelectedText(true, {NewLine: true});
-        oPara.SetApplyToAll(false);
-
-        if (this.GetContents() != sText) {
-            oDoc.CreateNewHistoryPoint();
-            this.SetContents(sText);
-            oDoc.TurnOffHistory();
-        }
-        
-        oDoc.GetDrawingDocument().TargetEnd();
-    };
 
     CPdfChart.prototype.onMouseUp = function(x, y, e) {
         let oViewer         = Asc.editor.getDocumentRenderer();
@@ -150,7 +128,6 @@
         false == this.IsInTextBox() && oContent.SetApplyToAll(false);
 
         this.SetNeedRecalc(true);
-        this.SetNeedUpdateRC(true);
     };
     CPdfChart.prototype.SetAlign = function(nType) {
         let oContent = this.GetDocContent();
@@ -205,7 +182,6 @@
     CPdfChart.prototype.IncreaseDecreaseFontSize = function(bIncrease) {
         this.GetDocContent().IncreaseDecreaseFontSize(bIncrease);
         this.SetNeedRecalc(true);
-        this.SetNeedUpdateRC(true);
     };
     CPdfChart.prototype.SetSpacing = function(nSpacing) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({Spacing : nSpacing}));
@@ -325,9 +301,6 @@
     ///// Overrides
     /////////////////////////////////////////////////////////////////////////////
     
-    CPdfChart.prototype.Get_AbsolutePage = function() {
-        return this.GetPage();
-    };
     CPdfChart.prototype.getLogicDocument = function() {
         return this.GetDocument();
     };

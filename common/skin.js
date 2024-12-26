@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -168,7 +168,7 @@ var EditorSkins = {
 
 		Color                    : "#363636",
 		ColorActive              : "#363636",
-		ColorHighlighted         : "#6a6a70",
+		ColorHighlighted         : "#363636",
 		ColorFiltering           : "#008636",
 
 		SheetViewCellBackground        : "#73bf91",

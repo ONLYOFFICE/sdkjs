@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -42,6 +42,12 @@
 			HAnsi : {Name : AscPDF.DEFAULT_FIELD_FONT, Index : -1},
 			CS : {Name : AscPDF.DEFAULT_FIELD_FONT, Index : -1}
 		}
+	});
+	STYLES.Default.ParaPr.Merge({
+		KeepLines : false,
+		KeepNext : false,
+		WidowControl : false,
+		PageBreakBefore : false
 	});
 	
 	/**
@@ -139,8 +145,17 @@
 		run.ClearContent();
 		
 		if (codePoints) {
-			if (this.ParentPDF && this.ParentPDF.IsComb && this.ParentPDF.IsComb() && codePoints.length > this.ParentPDF.GetCharLimit()) {
-				codePoints.length = this.ParentPDF.GetCharLimit();
+			if (this.ParentPDF && this.ParentPDF.GetCharLimit && 0 !== this.ParentPDF.GetCharLimit()) {
+				let oDoc        = this.ParentPDF.GetDocument();
+				let isOnOpen    = oDoc.Viewer.IsOpenFormsInProgress;
+				let nCharLimit	= this.ParentPDF.GetCharLimit();
+				
+				if (false == isOnOpen) {
+					let nCharsCount = AscWord.GraphemesCounter.GetCount(codePoints, this.GetCalculatedTextPr());
+					
+					if (nCharsCount > nCharLimit)
+						codePoints.length = nCharLimit;
+				}
 			}
 
 			for (let index = 0, inRunIndex = 0, count = codePoints.length; index < count; ++index) {
@@ -150,6 +165,49 @@
 			}
 			this.MoveCursorToEndPos();
 		}
+	};
+	CTextBoxContent.prototype.EnterText = function(value) {
+		let oParentPDF = this.ParentPDF;
+		let isAllowLineBreak = oParentPDF.IsForm() && oParentPDF.GetType() == AscPDF.FIELD_TYPES.text && oParentPDF.IsMultiline();
+
+		if (undefined === value
+			|| null === value
+			|| (Array.isArray(value) && !value.length))
+			return false;
+		
+		let codePoints = typeof(value) === "string" ? value.codePointsArray() : value;
+		
+		if (Array.isArray(codePoints)) {
+			for (let index = 0, count = codePoints.length; index < count; ++index) {
+				let codePoint = codePoints[index];
+				addToParagraph.call(this, codePoint);
+			}
+		}
+		else {
+			addToParagraph.call(this, codePoints);
+		}
+		
+		function addToParagraph(codePoint) {
+			if ((10 === codePoint || 13 === codePoint)) {
+				if (isAllowLineBreak) {
+					this.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Line));
+				}
+				else {
+					this.AddToParagraph(new AscWord.CRunSpace(32));
+				}
+			}
+			else if (9 === codePoint) {
+				this.AddToParagraph(new AscWord.CRunSpace(32));
+			}
+			else if (AscCommon.IsSpace(codePoint)) {
+				this.AddToParagraph(new AscWord.CRunSpace(codePoint));
+			}
+			else {
+				this.AddToParagraph(new AscWord.CRunText(codePoint));
+			}
+		}
+
+		return true;
 	};
 	CTextBoxContent.prototype.getAllText = function() {
 		let paragraph = this.GetElement(0);
@@ -213,6 +271,4 @@
 	window['AscPDF'].getPdfTypeAlignByInternal	= getPdfTypeAlignByInternal;
 	window['AscPDF'].CTextBoxContent			= CTextBoxContent;
 	
-	
 })(window);
-

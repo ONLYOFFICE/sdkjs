@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -61,6 +61,9 @@
 	};
 	BidiFlow.prototype.add = function(element, bidiType)
 	{
+		if (bidiType === AscBidi.TYPE.B)
+			this.end();
+		
 		if (AscBidi.DIRECTION.R === this.direction)
 		{
 			if (bidiType & AscBidi.FLAG.STRONG && bidiType & AscBidi.FLAG.RTL)
@@ -99,7 +102,7 @@
 	};
 	BidiFlow.prototype.end = function()
 	{
-		if (AscBidi.DIRECTION.R === this.direction)
+		if (AscBidi.DIRECTION.R === this.direction || this.buffer.length)
 		{
 			this.flushLTR();
 			this.flushNeutralRTL();

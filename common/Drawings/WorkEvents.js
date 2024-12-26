@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -67,7 +67,7 @@
 	var isUsePointerEvents = true;
 	if (AscBrowser.isChrome && (AscBrowser.chromeVersion <= 70)) // xp
 		isUsePointerEvents = false;
-	else if (AscBrowser.isSafari && (AscBrowser.safariVersion < 17004001))
+	else if (AscBrowser.isSafari && (AscBrowser.safariVersion < 15000000))
 		isUsePointerEvents = false;
 	else if (AscBrowser.isIE)
 		isUsePointerEvents = false;
@@ -104,6 +104,7 @@
 		this.Y = 0;                            // позиция курсора Y
 
 		this.Button = g_mouse_button_left;          // кнопка мыши
+		this.ButtonOverride = -1;
 		this.Type   = g_mouse_event_type_move;      // тип евента
 
 		this.AltKey   = false;                        // нажата ли кнопка alt
@@ -333,6 +334,8 @@
 
 	function getMouseButton(e)
 	{
+		if (-1 !== global_mouseEvent.ButtonOverride)
+			return global_mouseEvent.ButtonOverride;
 		var res = e.button;
 		return (res && -1 !== res) ? res : 0;
 	}
@@ -755,8 +758,9 @@
 		return oEvent.defaultPrevented;
 	}
 
-	function PaintMessageLoop(interval)
+	function PaintMessageLoop(interval, api)
 	{
+		this.isUseInterval = api.isMobileVersion !== true;
 		this.interval = interval || 40;
 		this.id = null;
 
@@ -772,7 +776,7 @@
 			window.oCancelRequestAnimationFrame ||
 			window.msCancelRequestAnimationFrame || null;
 
-		this.isUseRequestAnimationFrame = AscCommon.AscBrowser.isChrome;
+		this.isUseRequestAnimationFrame = AscCommon.AscBrowser.isChrome || AscCommon.AscBrowser.isSafari;
 		if (this.isUseRequestAnimationFrame && !this.requestAnimationFrame)
 			this.isUseRequestAnimationFrame = false;
 
@@ -819,7 +823,7 @@
 	PaintMessageLoop.prototype._animation = function()
 	{
 		var now = Date.now();
-		if (-1 === this.requestAnimationOldTime || (now >= (this.requestAnimationOldTime + 40)) || (now < this.requestAnimationOldTime))
+		if (!this.isUseInterval || -1 === this.requestAnimationOldTime || (now >= (this.requestAnimationOldTime + this.interval)) || (now < this.requestAnimationOldTime))
 		{
 			this.requestAnimationOldTime = now;
 			this.engine();

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -102,6 +102,10 @@ function CTableCell(Row, ColW)
         X_cell_end   : 0,
         Y_cell_start : 0,
         Y_cell_end   : 0,
+		
+		UseClip : false,
+		ClipTop : 0,
+		ClipBottom : 0,
 
         Y_VAlign_offset : [] // Сдвиг, который нужно сделать из-за VAlign (массив по страницам)
     };
@@ -1070,6 +1074,9 @@ CTableCell.prototype =
 
 	ShiftCell : function(CurPage, dX, dY)
     {
+		// TODO: По логике нужно тут двигать this.Temp.ClipTop/ClipBottom, но при пересчете мы их проставляем заново,
+		//       возможно сделать через флаг
+		
         if (true === this.IsVerticalText())
         {
             this.Temp.X_start += dX;
@@ -1090,9 +1097,9 @@ CTableCell.prototype =
         }
     },
 
-	ShiftCellContent : function(nCurPage, nShiftX, nShiftY)
+	ShiftCellContent : function(nCurPage, nShiftX, nShiftY, keepClip)
 	{
-		this.Content.Shift(nCurPage, nShiftX, nShiftY);
+		this.Content.Shift(nCurPage, nShiftX, nShiftY, keepClip);
 
 		var arrDrawings = this.Content.GetAllDrawingObjects();
 		for (var nIndex = 0, nCount = arrDrawings.length; nIndex < nCount; ++nIndex)
@@ -2763,6 +2770,10 @@ CTableCell.prototype.OnContentChange = function()
 	let table = this.GetTable();
 	if (table)
 		table.OnContentChange();
+};
+CTableCell.prototype.PreDelete = function()
+{
+	this.Content.PreDelete();
 };
 
 

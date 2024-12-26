@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -67,7 +67,9 @@
 		SelectClear : function() {},
 		Start_CollaborationEditing : function() {},
 		End_CollaborationEditing : function() {},
-		ConvertCoordsToCursorWR : function() {return {X : 0, Y : 0};}
+		ConvertCoordsToCursorWR : function() {return {X : 0, Y : 0};},
+		Set_RulerState_Table : function() {},
+		scrollToTarget : function() {}
 	};
 
 	drawingDocument.CanvasHit = document.createElement('canvas');
@@ -157,6 +159,7 @@
 	editor.asc_removeSpaceAfterParagraph = AscCommon.DocumentEditorApi.prototype.asc_removeSpaceAfterParagraph.bind(editor);
 	editor.asc_haveSpaceBeforeParagraph = AscCommon.DocumentEditorApi.prototype.asc_haveSpaceBeforeParagraph.bind(editor);
 	editor.asc_haveSpaceAfterParagraph = AscCommon.DocumentEditorApi.prototype.asc_haveSpaceAfterParagraph.bind(editor);
+	editor.initCollaborativeEditing = AscCommon.DocumentEditorApi.prototype.initCollaborativeEditing.bind(editor);
 	
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.DrawingDocument = drawingDocument;
@@ -165,4 +168,6 @@
 	window.editor = editor;
 	Asc['editor'] = Asc.editor = editor;
 
+	// TODO: Заменить на вызов onEndLoadSdk
+	editor.initCollaborativeEditing();
 })(window);

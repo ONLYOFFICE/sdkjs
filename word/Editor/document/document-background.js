@@ -75,7 +75,7 @@
 	DocumentBackground.prototype._getBrush = function()
 	{
 		let brush = null;
-		if (false)//this.shape)
+		if (this.shape)
 			brush = this.shape.brush;
 		else if (this.Unifill)
 			brush = this.Unifill;

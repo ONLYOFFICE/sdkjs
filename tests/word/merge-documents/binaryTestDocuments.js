@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -51,17 +51,12 @@ mockEditor.sync_RemoveComment = function ()
 {
 	
 };
-AscCommon.ParaComment.prototype.getTestObject = function (arrParentContent)
-{
-	let oComment = oMainComments.Get_ById(this.GetCommentId());
-	if (oComment)
-	{
-		const oContentObject = {type: 'comment', text: oComment.Data.Get_Text(), quoteText: oComment.Data.Get_QuoteText(), arrAnswers: oComment.Data.m_aReplies.map((e) => e.Get_Text())};
-		arrParentContent.push(oContentObject);
-	}
-};
+AscCommonWord.CDocument.prototype.Document_UpdateRulersState = function () {};
+
+let oCurrentTestDocument;
 AscCommonWord.CDocument.prototype.getTestObject = function ()
 {
+	oCurrentTestDocument = this;
 	const oContentObject = {type: 'document', content: []};
 	this.Content.forEach(function (oItem)
 	{
@@ -88,6 +83,142 @@ AscCommonWord.CDocument.prototype.getTestObject = function ()
 		this.Footnotes.getTestObject(oContentObject.content);
 	}
 	return oContentObject;
+};
+AscCommon.ParaComment.prototype.getTestObject = function (arrParentContent)
+{
+	let oComment = oMainComments.Get_ById(this.GetCommentId());
+	if (oComment)
+	{
+		const oContentObject = {type: 'comment', text: oComment.Data.Get_Text(), quoteText: oComment.Data.Get_QuoteText(), arrAnswers: oComment.Data.m_aReplies.map((e) => e.Get_Text())};
+		arrParentContent.push(oContentObject);
+	}
+};
+AscCommonWord.CTextPr.prototype.getTestObject = function () {
+	const oRes = {};
+	if (this.Bold !== undefined) {
+		oRes.Bold = this.Bold;
+	}
+	if (this.Italic !== undefined) {
+		oRes.Italic = this.Italic;
+	}
+	if (this.Strikeout !== undefined) {
+		oRes.Strikeout = this.Strikeout;
+	}
+	if (this.Underline !== undefined) {
+		oRes.Underline = this.Underline;
+	}
+	if (this.FontSize !== undefined) {
+		oRes.FontSize = this.FontSize;
+	}
+	if (this.VertAlign !== undefined) {
+		oRes.VertAlign = this.VertAlign;
+	}
+	if (this.RStyle !== undefined) {
+		oRes.RStyle = this.RStyle;
+	}
+	if (this.Spacing !== undefined) {
+		oRes.Spacing = this.Spacing;
+	}
+	if (this.DStrikeout !== undefined) {
+		oRes.DStrikeout = this.DStrikeout;
+	}
+	if (this.Caps !== undefined) {
+		oRes.Caps = this.Caps;
+	}
+	if (this.SmallCaps !== undefined) {
+		oRes.SmallCaps = this.SmallCaps;
+	}
+	if (this.Position !== undefined) {
+		oRes.Position = this.Position;
+	}
+	if (this.BoldCS !== undefined) {
+		oRes.BoldCS = this.BoldCS;
+	}
+	if (this.ItalicCS !== undefined) {
+		oRes.ItalicCS = this.ItalicCS;
+	}
+	if (this.FontSizeCS !== undefined) {
+		oRes.FontSizeCS = this.FontSizeCS;
+	}
+	if (this.CS !== undefined) {
+		oRes.CS = this.CS;
+	}
+	if (this.RTL !== undefined) {
+		oRes.RTL = this.RTL;
+	}
+	if (this.FontScale !== undefined) {
+		oRes.FontScale = this.FontScale;
+	}
+	if (this.FontSizeOrig !== undefined) {
+		oRes.FontSizeOrig = this.FontSizeOrig;
+	}
+	if (this.FontSizeCSOrig !== undefined) {
+		oRes.FontSizeCSOrig = this.FontSizeCSOrig;
+	}
+	return oRes;
+};
+AscCommonWord.CTextPr.prototype.isEqualTestObject = function (oTestObject) {
+	if (this.Bold !== oTestObject.Bold) {
+		return false;
+	}
+	if (this.Italic !== oTestObject.Italic) {
+		return false;
+	}
+	if (this.Strikeout !== oTestObject.Strikeout) {
+		return false;
+	}
+	if (this.Underline !== oTestObject.Underline) {
+		return false;
+	}
+	if (this.FontSize !== oTestObject.FontSize) {
+		return false;
+	}
+	if (this.VertAlign !== oTestObject.VertAlign) {
+		return false;
+	}
+	if (this.RStyle !== oTestObject.RStyle) {
+		return false;
+	}
+	if (this.Spacing !== oTestObject.Spacing) {
+		return false;
+	}
+	if (this.DStrikeout !== oTestObject.DStrikeout) {
+		return false;
+	}
+	if (this.Caps !== oTestObject.Caps) {
+		return false;
+	}
+	if (this.SmallCaps !== oTestObject.SmallCaps) {
+		return false;
+	}
+	if (this.Position !== oTestObject.Position) {
+		return false;
+	}
+	if (this.BoldCS !== oTestObject.BoldCS) {
+		return false;
+	}
+	if (this.ItalicCS !== oTestObject.ItalicCS) {
+		return false;
+	}
+	if (this.FontSizeCS !== oTestObject.FontSizeCS) {
+		return false;
+	}
+	if (this.CS !== oTestObject.CS) {
+		return false;
+	}
+	if (this.RTL !== oTestObject.RTL) {
+		return false;
+	}
+	if (this.FontScale !== oTestObject.FontScale) {
+		return false;
+	}
+	if (this.FontSizeOrig !== oTestObject.FontSizeOrig) {
+		return false;
+	}
+	if (this.FontSizeCSOrig !== oTestObject.FontSizeCSOrig) {
+		return false;
+	}
+	return true;
 };
 
 AscCommonWord.CHeaderFooter.prototype.getTestObject = function (arrParentContent)
@@ -247,10 +378,10 @@ Paragraph.prototype.getTestObject = function (arrParentContent)
 };
 AscCommonWord.CParagraphBookmark.prototype.getTestObject = function (arrParentContent)
 {
+	const oStartBookmark = oCurrentTestDocument.BookmarksManager.GetBookmarkById(this.GetBookmarkId())[0];
 	const oContentObject = {
 		type : 'bookmark',
-		id   : this.GetBookmarkId(),
-		name : this.GetBookmarkName(),
+		name : oStartBookmark.GetBookmarkName(),
 		start: this.IsStart()
 	};
 	arrParentContent.push(oContentObject)
@@ -277,7 +408,8 @@ ParaRun.prototype.getTestObject = function (oParentContent)
 	let oCurrentTextInfo = oParentContent[oParentContent.length - 1];
 	const needCreateNewText = (oParentContent.length === 0 ||
 		oCurrentTextInfo.mainReviewType !== nMainReviewType || oCurrentTextInfo.mainUserName !== sMainUserName || oCurrentTextInfo.mainDateTime !== nMainDateTime ||
-		oCurrentTextInfo.additionalReviewType !== nAdditionalReviewType || oCurrentTextInfo.additionalUserName !== sAdditionalUserName || oCurrentTextInfo.additionalDateTime !== nAdditionalDateTime);
+		oCurrentTextInfo.additionalReviewType !== nAdditionalReviewType || oCurrentTextInfo.additionalUserName !== sAdditionalUserName || oCurrentTextInfo.additionalDateTime !== nAdditionalDateTime ||
+	!this.Pr.isEqualTestObject(oCurrentTextInfo.textPr));
 	if (needCreateNewText || this.IsParaEndRun())
 	{
 		oCurrentTextInfo = {
@@ -287,7 +419,8 @@ ParaRun.prototype.getTestObject = function (oParentContent)
 			additionalReviewType: nAdditionalReviewType,
 			additionalDateTime  : nAdditionalDateTime,
 			additionalUserName  : sAdditionalUserName,
-			text                : ''
+			text                : '',
+			textPr              : this.Pr.getTestObject()
 		};
 		oParentContent.push(oCurrentTextInfo);
 	}
@@ -406,7 +539,7 @@ function createTestDocument(oDocument, arrParagraphsTextInfo)
 			}
 			let arrStartCommentsInfo;
 			let arrEndCommentsInfo;
-			if (oParagraphTextInfo[j].options && oParagraphTextInfo[j].options.comments)
+			if (oParagraphTextInfo[j].options.comments)
 			{
 				arrStartCommentsInfo = oParagraphTextInfo[j].options.comments.start;
 				arrEndCommentsInfo = oParagraphTextInfo[j].options.comments.end;
@@ -424,7 +557,8 @@ function createTestDocument(oDocument, arrParagraphsTextInfo)
 						oParaComment.SetCommentId(oComment.GetId());
 						const oStartParaComment = mapParaComments[oStartCommentInfo.id];
 						oStartParaComment.SetCommentId(oComment.GetId());
-
+						oComment.SetRangeMark(oParaComment);
+						oComment.SetRangeMark(oStartParaComment);
 					}
 					else
 					{
@@ -454,6 +588,11 @@ function createTestDocument(oDocument, arrParagraphsTextInfo)
 				oParaRun.SetReviewTypeWithInfo(oParagraphTextInfo[j].reviewType, oParagraphTextInfo[j].reviewInfo);
 				oParagraph.AddToContentToEnd(oParaRun);
 			}
+			if (oParagraphTextInfo[j].options.textPr) {
+				const oTextPr = new AscCommonWord.CTextPr();
+				oTextPr.Set_FromObject(oParagraphTextInfo[j].options.textPr);
+				oParaRun.SetPr(oTextPr);
+			}
 			if (arrEndBookmarkInfo)
 			{
 				for (let k = 0; k < arrEndBookmarkInfo.length; k += 1)
@@ -476,6 +615,8 @@ function createTestDocument(oDocument, arrParagraphsTextInfo)
 						oParaComment.SetCommentId(oComment.GetId());
 						const oStartParaComment = mapParaComments[oEndCommentInfo.id];
 						oStartParaComment.SetCommentId(oComment.GetId());
+						oComment.SetRangeMark(oParaComment);
+						oComment.SetRangeMark(oStartParaComment);
 
 					}
 					else
@@ -509,7 +650,7 @@ function createParagraphInfo(sText, oMainReviewInfoOptions, oAdditionalReviewInf
 		text      : sText,
 		reviewType: reviewtype_Common,
 		bookmark  : oBookmarkInfo,
-		options   : oOptions,
+		options   : oOptions || {},
 	};
 	let oMainReviewInfo;
 	if (oMainReviewInfoOptions)
@@ -564,3 +705,264 @@ function createFindingReviewInfo(nReviewType)
 {
 	return new CCreatingReviewInfo('Valdemar', nReviewType, 3000000);
 }
+//
+// asc_docs_api.prototype.getTest = function()
+// {
+// 	function getPr(oPr) {
+// 		const oRes = {};
+// 		if (oPr.Bold !== undefined) {
+// 			oRes.Bold = oPr.Bold;
+// 		}
+// 		if (oPr.Italic !== undefined) {
+// 			oRes.Italic = oPr.Italic;
+// 		}
+// 		if (oPr.Strikeout !== undefined) {
+// 			oRes.Strikeout = oPr.Strikeout;
+// 		}
+// 		if (oPr.Underline !== undefined) {
+// 			oRes.Underline = oPr.Underline;
+// 		}
+// 		if (oPr.FontSize !== undefined) {
+// 			oRes.FontSize = oPr.FontSize;
+// 		}
+// 		if (oPr.VertAlign !== undefined) {
+// 			oRes.VertAlign = oPr.VertAlign;
+// 		}
+// 		if (oPr.RStyle !== undefined) {
+// 			oRes.RStyle = oPr.RStyle;
+// 		}
+// 		if (oPr.Spacing !== undefined) {
+// 			oRes.Spacing = oPr.Spacing;
+// 		}
+// 		if (oPr.DStrikeout !== undefined) {
+// 			oRes.DStrikeout = oPr.DStrikeout;
+// 		}
+// 		if (oPr.Caps !== undefined) {
+// 			oRes.Caps = oPr.Caps;
+// 		}
+// 		if (oPr.SmallCaps !== undefined) {
+// 			oRes.SmallCaps = oPr.SmallCaps;
+// 		}
+// 		if (oPr.Position !== undefined) {
+// 			oRes.Position = oPr.Position;
+// 		}
+// 		if (oPr.BoldCS !== undefined) {
+// 			oRes.BoldCS = oPr.BoldCS;
+// 		}
+// 		if (oPr.ItalicCS !== undefined) {
+// 			oRes.ItalicCS = oPr.ItalicCS;
+// 		}
+// 		if (oPr.FontSizeCS !== undefined) {
+// 			oRes.FontSizeCS = oPr.FontSizeCS;
+// 		}
+// 		if (oPr.CS !== undefined) {
+// 			oRes.CS = oPr.CS;
+// 		}
+// 		if (oPr.RTL !== undefined) {
+// 			oRes.RTL = oPr.RTL;
+// 		}
+// 		if (oPr.FontScale !== undefined) {
+// 			oRes.FontScale = oPr.FontScale;
+// 		}
+// 		if (oPr.FontSizeOrig !== undefined) {
+// 			oRes.FontSizeOrig = oPr.FontSizeOrig;
+// 		}
+// 		if (oPr.FontSizeCSOrig !== undefined) {
+// 			oRes.FontSizeCSOrig = oPr.FontSizeCSOrig;
+// 		}
+// 		return oRes;
+// 	}
+// 	function getReview(oRun) {
+// 		const bPrevAdded = oRun.ReviewInfo && oRun.ReviewInfo.GetPrevAdded();
+// 		const nMainReviewInfo = oRun.GetReviewType();
+//
+// 		const oRes = {};
+// 		if (nMainReviewInfo !== reviewtype_Common) {
+// 			oRes.mainReviewType = nMainReviewInfo;
+// 		}
+//
+// 		if (bPrevAdded) {
+// 			oRes.additionalReviewType = reviewtype_Add;
+// 		}
+// 		return oRes;
+// 	}
+//
+// 	function compareReviewDiff(rev1, rev2) {
+// 		if (rev1.mainReviewType !== rev2.mainReviewType) {
+// 			return false;
+// 		}
+// 		if (rev1.additionalReviewType !== rev2.additionalReviewType) {
+// 			return false;
+// 		}
+// 		return true;
+// 	}
+//
+// 	function compareTextPrDiff(oPr1, oPr2) {
+// 		if (oPr1.Bold !== oPr2.Bold) {
+// 			return false;
+// 		}
+// 		if (oPr1.Italic !== oPr2.Italic) {
+// 			return false;
+// 		}
+// 		if (oPr1.Strikeout !== oPr2.Strikeout) {
+// 			return false;
+// 		}
+// 		if (oPr1.Underline !== oPr2.Underline) {
+// 			return false;
+// 		}
+// 		if (oPr1.FontSize !== oPr2.FontSize) {
+// 			return false;
+// 		}
+// 		if (oPr1.VertAlign !== oPr2.VertAlign) {
+// 			return false;
+// 		}
+// 		if (oPr1.RStyle !== oPr2.RStyle) {
+// 			return false;
+// 		}
+// 		if (oPr1.Spacing !== oPr2.Spacing) {
+// 			return false;
+// 		}
+// 		if (oPr1.DStrikeout !== oPr2.DStrikeout) {
+// 			return false;
+// 		}
+// 		if (oPr1.Caps !== oPr2.Caps) {
+// 			return false;
+// 		}
+// 		if (oPr1.SmallCaps !== oPr2.SmallCaps) {
+// 			return false;
+// 		}
+// 		if (oPr1.Position !== oPr2.Position) {
+// 			return false;
+// 		}
+// 		if (oPr1.BoldCS !== oPr2.BoldCS) {
+// 			return false;
+// 		}
+// 		if (oPr1.ItalicCS !== oPr2.ItalicCS) {
+// 			return false;
+// 		}
+// 		if (oPr1.FontSizeCS !== oPr2.FontSizeCS) {
+// 			return false;
+// 		}
+// 		if (oPr1.CS !== oPr2.CS) {
+// 			return false;
+// 		}
+// 		if (oPr1.RTL !== oPr2.RTL) {
+// 			return false;
+// 		}
+// 		if (oPr1.FontScale !== oPr2.FontScale) {
+// 			return false;
+// 		}
+// 		if (oPr1.FontSizeOrig !== oPr2.FontSizeOrig) {
+// 			return false;
+// 		}
+// 		if (oPr1.FontSizeCSOrig !== oPr2.FontSizeCSOrig) {
+// 			return false;
+// 		}
+// 		return true;
+// 	}
+//
+// 	const oLogicDocument = this.private_GetLogicDocument();
+// 	const arrTests = [];
+// 	for (let i = 0; i < oLogicDocument.Content.length; i += 1) {
+// 		const oParagraph = oLogicDocument.Content[i];
+// 		let arrBookmarks = [];
+// 		let arrComments = [];
+// 		let test;
+// 		let paragraphTest = [];
+// 		arrTests.push(paragraphTest);
+// 		for (let j = 0; j < oParagraph.Content.length; j += 1) {
+// 			const oRunElement = oParagraph.Content[j];
+// 			if (oRunElement instanceof AscCommon.ParaComment) {
+// 				const isStart = oRunElement.IsCommentStart();
+// 				const comment = oLogicDocument.Comments.GetById(oRunElement.CommentId);
+// 				const data = !isStart ? `, data:{text: "${comment.Data.m_sText}", quoteText: "${comment.Data.m_sQuoteText}", arrAnswers: ${comment.Data.m_aReplies.length ? `[${comment.Data.m_aReplies.map((e) => '"' + e.Get_Text() + '"')}]` : "null"}}`: "";
+// 				arrComments.push(`{start: ${isStart}, id: ${comment.Id}${data}}`);
+// 			} else if (oRunElement instanceof AscCommonWord.CParagraphBookmark) {
+// 				arrBookmarks.push(`{id: ${oRunElement.GetBookmarkId()}${oRunElement.IsStart() ? ", name: " + '"' + oRunElement.GetBookmarkName() + '"' : ""}}`);
+// 			} else if (oRunElement instanceof AscCommonWord.ParaRun && oRunElement.Content.length) {
+// 				const prChange = getPr(oRunElement.Pr);
+// 				const revChange = getReview(oRunElement);
+// 				if (test) {
+// 					const prChange = getPr(oRunElement.Pr);
+// 					const revChange = getReview(oRunElement);
+// 					if (!compareReviewDiff(revChange, test.revChange) || !compareTextPrDiff(prChange, test.prChange) || arrBookmarks.length || arrComments.length) {
+// 						test = {
+// 							bookmarks: arrBookmarks,
+// 							comments: arrComments,
+// 							text: oRunElement.GetText(),
+// 							revChange: revChange,
+// 							prChange: prChange
+// 						};
+// 						arrComments = [];
+// 						arrBookmarks = [];
+// 						paragraphTest.push(test);
+// 					} else {
+// 						test.text += oRunElement.GetText();
+// 					}
+// 				} else {
+// 					test = {
+// 						bookmarks: arrBookmarks,
+// 						comments: arrComments,
+// 						text: oRunElement.GetText(),
+// 						revChange: revChange,
+// 						prChange: prChange
+// 					};
+// 					paragraphTest.push(test);
+// 					arrComments = [];
+// 					arrBookmarks = [];
+// 				}
+// 			}
+// 		}
+// 		if (arrBookmarks.length || arrComments.length) {
+// 			paragraphTest.push({bookmarks: arrBookmarks, comments: arrComments});
+// 			arrComments = [];
+// 			arrBookmarks = [];
+// 		}
+// 	}
+//
+//
+// 	let result = [];
+// 	for (let i = 0; i < arrTests.length; i++) {
+// 		const paragraphTest = arrTests[i];
+// 		const paragraphResult = [];
+// 		for (let j = 0; j < paragraphTest.length; j++) {
+// 			const runInfo = paragraphTest[j];
+// 			const stext = runInfo.text ? '"' + runInfo.text + '"' : "undefined";
+// 			let review = "undefined";
+// 			let addReview = "undefined"
+// 			if (runInfo.revChange) {
+// 				if (runInfo.revChange.mainReviewType === reviewtype_Add) {
+// 					review = "new CCreatingReviewInfo('Mark Potato', reviewtype_Add, 1000)";
+// 				} else if (runInfo.revChange.mainReviewType === reviewtype_Remove) {
+// 					review = "new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000)";
+// 				}
+// 				if (runInfo.revChange.additionalReviewType === reviewtype_Add) {
+// 					addReview = "new CCreatingReviewInfo('Mark Potato', reviewtype_Add, 1000)";
+// 				}
+// 			}
+// 			let bookmarks = "undefined";
+// 			if (runInfo.bookmarks && runInfo.bookmarks.length) {
+// 				bookmarks = `{start: [${runInfo.bookmarks.join(", ")}]}`;
+// 			}
+// 			let comments = "";
+// 			if (runInfo.comments && runInfo.comments.length) {
+// 				comments = `comments: {start: [${runInfo.comments.join(", ")}]},`;
+// 			}
+// 			let textpr = "";
+// 			if (runInfo.prChange) {
+// 				for (let sName in runInfo.prChange) {
+// 					if (!textpr) {
+// 						textpr = "textPr: {"
+// 					}
+// 					textpr += `${sName}: ${runInfo.prChange[sName]},`
+// 				}
+// 				if (textpr) {
+// 					textpr += "}"
+// 				}
+// 			}
+// 			paragraphResult.push(`createParagraphInfo(${stext}, ${review}, ${addReview}, ${bookmarks}, {${comments}${textpr}})`)
+// 		}
+// 		result.push("[" + paragraphResult.join(", ") + "]")
+// 	}
+// 	console.log(result.join(", "))
+// };

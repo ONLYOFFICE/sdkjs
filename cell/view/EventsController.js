@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -154,7 +154,7 @@
 				return;
 			}
 
-			if (this.view.Api.isMobileVersion) {
+			if (this.view.Api.isUseOldMobileVersion()) {
 				/*раньше события на ресайз вызывался из меню через контроллер. теперь контроллер в меню не доступен, для ресайза подписываемся на глобальный ресайз от window.*/
 				window.addEventListener("resize", function () {
 					self._onWindowResize.apply(self, arguments);
@@ -434,7 +434,7 @@
 				settings.isVerticalScroll = true;
 				settings.isHorizontalScroll = false;
 				this.vsbApi.canvasH = null;
-				this.reinitScrollY(settings, ws.getFirstVisibleRow(true), ws.getVerticalScrollRange(), ws.getVerticalScrollMax());
+				this.reinitScrollY(settings, ws.workbook.getSmoothScrolling() ? ws.getFirstVisibleRowSmoothScroll(true) : ws.getFirstVisibleRow(true), ws.getVerticalScrollRange(), ws.getVerticalScrollMax());
 				this.vsbApi.settings = settings;
 			}
 			if (this.hsbApi) {
@@ -444,7 +444,7 @@
 				settings.isVerticalScroll = false;
 				settings.isHorizontalScroll = true;
 				this.hsbApi.canvasW = null;
-				this.reinitScrollX(settings, ws.getFirstVisibleCol(true), ws.getHorizontalScrollRange(), ws.getHorizontalScrollMax());
+				this.reinitScrollX(settings, ws.workbook.getSmoothScrolling() ? ws.getFirstVisibleColSmoothScroll(true) : ws.getFirstVisibleCol(true), ws.getHorizontalScrollRange(), ws.getHorizontalScrollMax());
 				this.hsbApi.settings = settings;
 			}
 		};
@@ -456,7 +456,15 @@
 			this.vsb = document.createElement('div');
 			this.vsb.id = "ws-v-scrollbar";
 			this.vsb.style.backgroundColor = AscCommon.GlobalSkin.ScrollBackgroundColor;
-			this.widget.appendChild(this.vsb);
+			//TODO test rtl
+			/*if (window.rightToleft) {
+				this.vsb.style.left = "0px";
+				this.widget.prepend(this.vsb);
+				this.widget.children[1].style.left = this.vsb.clientWidth + "px";
+				this.widget.children[1].style.overflow = "visible"
+			} else {*/
+				this.widget.appendChild(this.vsb);
+			//}
 
 			if (!this.vsbApi) {
 				settings = this.createScrollSettings();
@@ -1331,9 +1339,13 @@
 			};
 
 			if ((dc !== 0 || dr !== 0) && false === t.handlers.trigger("isGlobalLockEditCell")) {
+				const wb = window["Asc"]["editor"].wb;
+				let ws = wb.getWorksheet();
+				if (ws && ws.getRightToLeft()) {
+					dc = -dc;
+				}
 				if (isChangeVisibleAreaMode) {
 					t.handlers.trigger("changeVisibleArea", !shiftKey, dc, dr, false, function (d) {
-						const wb = window["Asc"]["editor"].wb;
 						if (t.targetInfo) {
 							wb._onUpdateWorksheet(t.targetInfo.coordX, t.targetInfo.coordY, false);
 						}
@@ -1354,7 +1366,8 @@
 							if (t.targetInfo) {
 								wb._onUpdateWorksheet(t.targetInfo.coordX, t.targetInfo.coordY, false);
 							}
-							t.scroll(d);
+							const ws = wb.getWorksheet();
+							t.scroll(ws.convertOffsetToSmooth(d));
 							_checkLastTab();
 						});
 				}
@@ -1621,6 +1634,17 @@
 
 		/** @param event {MouseEvent} */
 		asc_CEventsController.prototype._onMouseDown = function (event) {
+			let touchManager = this.view.Api.wb.MobileTouchManager;
+			if (touchManager && touchManager.checkTouchEvent(event))
+			{
+				touchManager.startTouchingInProcess();
+				let res = touchManager.mainOnTouchStart(event);
+				touchManager.stopTouchingInProcess();
+				return res;
+			}
+			if (touchManager)
+				touchManager.checkMouseFocus(event);
+
 			var t = this;
 			asc["editor"].checkInterfaceElementBlur();
 			var ctrlKey = !AscCommon.getAltGr(event) && (event.metaKey || event.ctrlKey);
@@ -1851,6 +1875,15 @@
 
 		/** @param event {MouseEvent} */
 		asc_CEventsController.prototype._onMouseUp = function (event) {
+			let touchManager = this.view.Api.wb.MobileTouchManager;
+			if (touchManager && touchManager.checkTouchEvent(event))
+			{
+				touchManager.startTouchingInProcess();
+				let res = touchManager.mainOnTouchEnd(event);
+				touchManager.stopTouchingInProcess();
+				return res;
+			}
+
 			var button = AscCommon.getMouseButton(event);
 			AscCommon.global_mouseEvent.UnLockMouse();
 
@@ -1943,6 +1976,15 @@
 
 		/** @param event {MouseEvent} */
 		asc_CEventsController.prototype._onMouseMove = function (event) {
+			let touchManager = this.view.Api.wb.MobileTouchManager;
+			if (touchManager && touchManager.checkTouchEvent(event))
+			{
+				touchManager.startTouchingInProcess();
+				let res = touchManager.mainOnTouchMove(event);
+				touchManager.stopTouchingInProcess();
+				return res;
+			}
+
 			var t = this;
 			var ctrlKey = !AscCommon.getAltGr(event) && (event.metaKey || event.ctrlKey);
 			var coord = t._getCoordinates(event);
@@ -2068,44 +2110,78 @@
 
 			var self = this;
 			var deltaX = 0, deltaY = 0;
-			if (undefined !== event.wheelDelta && 0 !== event.wheelDelta) {
-				deltaY = -1 * event.wheelDelta / 40;
-			} else if (undefined !== event.detail && 0 !== event.detail) {
-				// FF
-				deltaY = event.detail;
-			} else if (undefined !== event.deltaY && 0 !== event.deltaY) {
-				// FF
-				//ограничиваем шаг из-за некорректного значения deltaY после обновления FF
-				//TODO необходимо пересмотреть. нужны корректные значения и учетом системного шага.
-				var _maxDelta = 3;
-				if (AscCommon.AscBrowser.isMozilla && Math.abs(event.deltaY) > _maxDelta) {
-					deltaY = Math.sign(event.deltaY) * _maxDelta;
-				} else {
-					deltaY = event.deltaY;
+
+			const wb = window["Asc"]["editor"].wb;
+			//TODO for mac touchpads. need review
+			if (wb.smoothScroll && AscCommon.AscBrowser.isMacOs) {
+				var delta  = 0;
+
+				if (undefined != event.wheelDelta && event.wheelDelta != 0) {
+					delta = -45 * event.wheelDelta / 120;
+				}
+				{
+					delta = 45 * event.detail / 3;
+				}
+
+				// New school multidimensional scroll (touchpads) deltas
+				deltaY = delta;
+
+
+				// Webkit
+				if (undefined !== event.wheelDeltaY && 0 !== event.wheelDeltaY) {
+					deltaY = -45 * event.wheelDeltaY / 120;
+				}
+				if (undefined !== event.wheelDeltaX && 0 !== event.wheelDeltaX) {
+					deltaX = -45 * event.wheelDeltaX / 120;
+				}
+
+
+				deltaX >>= 0;
+				deltaY >>= 0;
+
+				deltaX = (deltaX / wb.getWorksheet().getHScrollStep()) * AscCommon.AscBrowser.retinaPixelRatio;
+				deltaY = (deltaY / wb.getWorksheet().getVScrollStep()) * AscCommon.AscBrowser.retinaPixelRatio;
+			} else {
+				if (undefined !== event.wheelDelta && 0 !== event.wheelDelta) {
+					deltaY = -1 * event.wheelDelta / 40;
+				} else if (undefined !== event.detail && 0 !== event.detail) {
+					// FF
+					deltaY = event.detail;
+				} else if (undefined !== event.deltaY && 0 !== event.deltaY) {
+					// FF
+					//ограничиваем шаг из-за некорректного значения deltaY после обновления FF
+					//TODO необходимо пересмотреть. нужны корректные значения и учетом системного шага.
+					var _maxDelta = 3;
+					if (AscCommon.AscBrowser.isMozilla && Math.abs(event.deltaY) > _maxDelta) {
+						deltaY = Math.sign(event.deltaY) * _maxDelta;
+					} else {
+						deltaY = event.deltaY;
+					}
+				}
+				if (undefined !== event.deltaX && 0 !== event.deltaX) {
+					deltaX = event.deltaX;
+				}
+				if (event.axis !== undefined && event.axis === event.HORIZONTAL_AXIS) {
+					deltaX = deltaY;
+					deltaY = 0;
+				}
+
+				if (undefined !== event.wheelDeltaX && 0 !== event.wheelDeltaX) {
+					// Webkit
+					deltaX = -1 * event.wheelDeltaX / 40;
+				}
+				if (undefined !== event.wheelDeltaY && 0 !== event.wheelDeltaY) {
+					// Webkit
+					deltaY = -1 * event.wheelDeltaY / 40;
 				}
 			}
-			if (undefined !== event.deltaX && 0 !== event.deltaX) {
-				deltaX = event.deltaX;
-			}
-			if (event.axis !== undefined && event.axis === event.HORIZONTAL_AXIS) {
-				deltaX = deltaY;
-				deltaY = 0;
-			}
 
-			if (undefined !== event.wheelDeltaX && 0 !== event.wheelDeltaX) {
-				// Webkit
-				deltaX = -1 * event.wheelDeltaX / 40;
-			}
-			if (undefined !== event.wheelDeltaY && 0 !== event.wheelDeltaY) {
-				// Webkit
-				deltaY = -1 * event.wheelDeltaY / 40;
-			}
 			if (event.shiftKey) {
 				deltaX = deltaY;
 				deltaY = 0;
 			}
 
-			if (this.smoothWheelCorrector) {
+			if (this.smoothWheelCorrector && !wb.smoothScroll) {
 				deltaX = this.smoothWheelCorrector.get_DeltaX(deltaX);
 				deltaY = this.smoothWheelCorrector.get_DeltaY(deltaY);
 			}
@@ -2118,11 +2194,15 @@
 			this.handlers.trigger("updateWorksheet", /*x*/undefined, /*y*/undefined, /*ctrlKey*/undefined,
 				function () {
 					if (deltaX && (!self.smoothWheelCorrector || !self.smoothWheelCorrector.isBreakX())) {
-						deltaX = Math.sign(deltaX) * Math.ceil(Math.abs(deltaX / 3));
+						if (!wb.smoothScroll) {
+							deltaX = Math.sign(deltaX) * Math.ceil(Math.abs(deltaX / 3));
+						}
 						self.scrollHorizontal(deltaX, event);
 					}
 					if (deltaY && (!self.smoothWheelCorrector || !self.smoothWheelCorrector.isBreakY())) {
-						deltaY = Math.sign(deltaY) * Math.ceil(Math.abs(deltaY * self.settings.wheelScrollLinesV / 3));
+						if (!wb.smoothScroll) {
+							deltaY = Math.sign(deltaY) * Math.ceil(Math.abs(deltaY * self.settings.wheelScrollLinesV / 3));
+						}
 						self.scrollVertical(deltaY, event);
 					}
 					self._onMouseMove(event);
@@ -2158,7 +2238,7 @@
 				return event.coord;
 			}
 
-			var offs = this.element.getBoundingClientRect();
+			var offs = AscCommon.UI.getBoundingClientRect(this.element);
 			var x = ((event.pageX * AscBrowser.zoom) >> 0) - offs.left;
 			var y = ((event.pageY * AscBrowser.zoom) >> 0) - offs.top;
 

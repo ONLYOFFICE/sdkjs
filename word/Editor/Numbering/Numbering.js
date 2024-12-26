@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -307,12 +307,13 @@
 	 * @param nLvl {number} 0..8
 	 * @param oNumInfo
 	 * @param bWithoutLastLvlText {?boolean}
+	 * @param [oLang] {AscCommonWord.CLang}
 	 * @returns {string}
 	 */
-	CNumbering.prototype.GetText = function(sNumId, nLvl, oNumInfo, bWithoutLastLvlText)
+	CNumbering.prototype.GetText = function(sNumId, nLvl, oNumInfo, bWithoutLastLvlText, oLang)
 	{
 		var oNum = this.GetNum(sNumId);
-		return oNum.GetText(nLvl, oNumInfo, bWithoutLastLvlText);
+		return oNum.GetText(nLvl, oNumInfo, bWithoutLastLvlText, oLang);
 	};
 	/**
 	 * Проверяем, есть ли обьекты на которые можно ссылаться

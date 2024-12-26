@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -3121,7 +3121,7 @@
 		if (true === s.asc_marker)
 		{
 			return {
-				"data" : AscFonts.GetUint8ArrayFromPointer(s.data),
+				"data" : AscFonts.GetUint8ArrayFromPointer(s.data, s.len),
 				"size" : s.len
 			};
 		}

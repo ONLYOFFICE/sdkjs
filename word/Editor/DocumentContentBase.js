@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -441,6 +441,8 @@ CDocumentContentBase.prototype.MoveCursorToNearestPos = function(oNearestPos)
 		var oTopDocument = oParent.Is_TopDocument(true);
 		if (oTopDocument)
 			oTopDocument.RemoveSelection();
+		else
+			this.RemoveSelection();
 	}
 
 	oPara.Set_ParaContentPos(oNearestPos.ContentPos, true, -1, -1);
@@ -813,13 +815,15 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 				let isParagraphMarkRemove = this.Content[StartPos].IsParagraph() && this.Content[StartPos].IsSelectedOnlyParagraphMark();
 
 				this.CurPos.ContentPos = StartPos;
-				if (Count < 0 && this.Content[StartPos].IsTable() && true === this.Content[StartPos].IsCellSelection() && true !== bOnTextAdd)
+				if (this.Content[StartPos].IsTable()
+					&& true === this.Content[StartPos].IsCellSelection()
+					&& ((!bOnTextAdd && Count < 0) || isRemoveOnDrag))
 				{
 					this.RemoveTableCells();
 				}
 				else if (false === this.Content[StartPos].Remove(Count, isRemoveWholeElement, bRemoveOnlySelection, bOnTextAdd))
 				{
-					if (!bOnTextAdd && (isParagraphMarkRemove || ((isRemoveOnDrag || Count > 0 || StartPos < this.Content.length - 1) && this.Content[StartPos].IsEmpty())))
+					if ((!bOnTextAdd || isRemoveOnDrag) && (isParagraphMarkRemove || ((isRemoveOnDrag || Count > 0 || StartPos < this.Content.length - 1) && this.Content[StartPos].IsEmpty())))
 					{
 						// В ворде параграфы объединяются только когда у них все настройки совпадают.
 						// (почему то при изменении и обратном изменении настроек параграфы перестают объединятся)
@@ -1688,7 +1692,7 @@ CDocumentContentBase.prototype.GetAllParagraphs = function(oProps, arrParagraphs
 /**
  * Получаем массив всех параграфов с заданной нумерацией
  * NB: массив НЕ отсортирован по позиции в документе (для сортировки, если нужно, вызывать метод AscWord.sortByDocumentPosition)
- * @param oNumPr {CNumPr | CNumPr[]}
+ * @param oNumPr {AscWord.NumPr | AscWord.NumPr[]}
  * @returns {Paragraph[]}
  */
 CDocumentContentBase.prototype.GetAllParagraphsByNumbering = function(oNumPr)
@@ -1724,7 +1728,7 @@ CDocumentContentBase.prototype.GetAllTables = function(oProps, arrTables)
 };
 /**
  * Выделяем заданную нумерацию
- * @param oNumPr {CNumPr}
+ * @param oNumPr {AscWord.NumPr}
  * @param oPara {Paragraph} - текущий парограф
  */
 CDocumentContentBase.prototype.SelectNumbering = function(oNumPr, oPara)
@@ -1783,7 +1787,7 @@ CDocumentContentBase.prototype.RemoveNumberingSelection = function()
 /**
  * Рассчитываем значение нумерованного списка для заданной нумерации
  * @param oPara {Paragraph}
- * @param oNumPr {CNumPr}
+ * @param oNumPr {AscWord.NumPr}
  * @param [isUseReview=false] {boolean}
  * @returns {number[]}
  */
@@ -1937,8 +1941,15 @@ CDocumentContentBase.prototype.RemoveParagraphForReview = function(nPosition)
 	{
 		if (1 === this.Content.length)
 		{
-			if (this.IsBlockLevelSdtContent())
-				this.GetParent().ReplaceContentWithPlaceHolder();
+			let parent = this.GetParent();
+			if (parent && parent instanceof AscWord.CBlockLevelSdt)
+			{
+				// Если после принятия других изменений контент не пустой, то не удаляем ничего,
+				// но если он пустой и нужно было удалить последний параграф в нем, то удаляем его,
+				// чтобы при проверке выше удалялись блочные контролы с пустым содержимым
+				if (parent.IsEmpty())
+					this.RemoveFromContent(0, 1, false);
+			}
 			else
 				this.RemoveFromContent(0, 1, true);
 		}
@@ -2095,6 +2106,11 @@ CDocumentContentBase.prototype.private_AcceptRevisionChanges = function(nType, b
 						this.RemoveFromContent(nCurPos, 1, false);
 					}
 				}
+				else if (oElement.IsBlockLevelSdt())
+				{
+					if (oElement.GetElementsCount() <= 0)
+						this.RemoveFromContent(nCurPos, 1, false);
+				}
 			}
 		}
 	}
@@ -2204,6 +2220,11 @@ CDocumentContentBase.prototype.private_RejectRevisionChanges = function(nType, b
 					{
 						this.RemoveFromContent(nCurPos, 1, false);
 					}
+				}
+				else if (oElement.IsBlockLevelSdt())
+				{
+					if (oElement.GetElementsCount() <= 0)
+						this.RemoveFromContent(nCurPos, 1, false);
 				}
 			}
 		}
@@ -2521,6 +2542,25 @@ CDocumentContentBase.prototype.OnContentChange = function()
 	{
 		this.GetLogicDocument().CheckShapeAutoFit(shape);
 	}
+	else if (shape && shape.OnContentChange) {
+		shape.OnContentChange();
+	}
+};
+CDocumentContentBase.prototype.OnTextPrChange = function()
+{
+	if (this.Parent && this.Parent.OnTextPrChange)
+		this.Parent.OnTextPrChange();
+	
+	let shape = this.Is_DrawingShape(true);
+	if (shape
+		&& this.GetLogicDocument()
+		&& this.GetLogicDocument().IsDocumentEditor())
+	{
+		this.GetLogicDocument().CheckShapeAutoFit(shape);
+	}
+	else if (shape && shape.OnTextPrChange) {
+		shape.OnTextPrChange();
+	}
 };
 
 CDocumentContentBase.prototype.GetCalculatedTextPr = function()
@@ -2591,6 +2631,8 @@ CDocumentContentBase.prototype.UpdateNumberingCollection = function(elements)
 };
 CDocumentContentBase.prototype.private_RecalculateNumbering = function(elements)
 {
+	if(this.bPresentation)
+		return;
 	this.UpdateNumberingCollection(elements);
 	
 	let logicDocument = this.GetLogicDocument();

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -603,10 +603,29 @@ CShape.prototype.getIsSingleBody = function(x, y)
     return true;
 };
 
-CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex){
+CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex, bNoTextSelection){
     if(this.parent && this.parent.graphicObjects){
         var drawing_objects = this.parent.graphicObjects;
-        this.SetControllerTextSelection(drawing_objects, 0);
+        
+        if(bNoTextSelection !== true) 
+        {
+            this.SetControllerTextSelection(drawing_objects, 0);
+        }
+        else 
+        {
+            let oSelector;
+            if (this.group)
+            {
+                let main_group = this.group.getMainGroup();
+                oSelector = main_group;
+            }
+            else
+            {
+                oSelector = drawing_objects;
+            }
+            oSelector.resetSelection();
+            oSelector.selectObject(this, 0);
+        }
         var nSlideNum;
         if(this.parent instanceof AscCommonSlide.CNotes){
             editor.WordControl.m_oLogicDocument.FocusOnNotes = true;
@@ -629,6 +648,10 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex){
                 editor.WordControl.m_oLogicDocument.FocusOnNotes = true;
             }
         }
+		if (bUpdate && editor.WordControl.m_oLogicDocument) {
+			editor.WordControl.m_oLogicDocument.Document_UpdateSelectionState();
+			editor.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
+		}
     }
 };
 

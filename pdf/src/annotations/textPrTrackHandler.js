@@ -89,11 +89,15 @@
 
 		if (!oAnnot)
 			return null;
-        
+		
+		let oDoc = oAnnot.GetDocument();
+		if (!oDoc) {
+			return null;
+		}
+
         let aOrigRect   = oAnnot.GetOrigRect();
         let aRD         = oAnnot.GetRectangleDiff() || [0, 0, 0, 0]; // отступ координат фигуры с текстом от ректа аннотации
         let nPage       = oAnnot.GetPage();
-		let oDoc		= oAnnot.GetDocument();
 		let oTr			= oDoc.pagesTransform[nPage].invert;
 		
         let aFreeTextRect = []; // прямоугольник

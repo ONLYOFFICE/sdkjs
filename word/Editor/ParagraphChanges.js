@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -571,7 +571,7 @@ CChangesParagraphNumbering.prototype.constructor = CChangesParagraphNumbering;
 CChangesParagraphNumbering.prototype.Type = AscDFH.historyitem_Paragraph_Numbering;
 CChangesParagraphNumbering.prototype.private_CreateObject = function()
 {
-	return new CNumPr();
+	return new AscWord.NumPr();
 };
 CChangesParagraphNumbering.prototype.private_SetValue = function(newNumPr)
 {

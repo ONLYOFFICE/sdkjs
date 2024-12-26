@@ -59,16 +59,17 @@
 			this.Points[this.Index].Additional.Pdf = aObj;
 		}
 	};
-	History.prototype.GetPdfConvertTextPoint = function() {
-		if (this.Index !== -1) {
-			return !!this.Points[this.Index].Additional.PdfConvertText;
-		}
-	};
-	History.prototype.SetPdfConvertTextPoint = function(oConvertInfo) {
-		if (this.Index !== -1) {
-			this.Points[this.Index].Additional.PdfConvertText = oConvertInfo;
-		}
-	};
+    History.prototype.CanAddChanges = function() {
+        return !this.UndoRedoInProgress && AscCommon.CHistory.prototype.CanAddChanges.call(this);
+    };
+    History.prototype.StartNoHistoryMode = function() {
+        this.TurnOff();
+        AscCommon.g_oTableId.TurnOff();
+    };
+    History.prototype.EndNoHistoryMode = function() {
+        this.TurnOn();
+        AscCommon.g_oTableId.TurnOn();
+    };
 	History.prototype.Add = function(_Class, Data) {
 		if (!this.CanAddChanges())
 			return;
@@ -86,11 +87,6 @@
 	};
 	History.prototype.CheckUnionLastPoints = function()
     {
-        // Не объединяем точки в истории, когда отключается пересчет.
-        // TODO: Неправильно изменяется RecalcIndex
-        if (this.Document && null == this.Document.Viewer.scheduledRepaintTimer)
-            return false;
-
         // Не объединяем точки во время Undo/Redo
         if (this.Index < this.Points.length - 1)
         	return false;
@@ -103,6 +99,11 @@
 
         var Point1 = this.Points[this.Points.length - 2];
         var Point2 = this.Points[this.Points.length - 1];
+
+        // запрет на объединение
+        if (Point1.forbidUnion || Point2.forbidUnion) {
+            return false;
+        }
 
         // Не объединяем слова больше 63 элементов
         if (Point1.Items.length > 63 && AscDFH.historydescription_Document_AddLetterUnion === Point1.Description)
@@ -200,6 +201,30 @@
         }
 
         return true;
+	};
+    History.prototype.ForbidUnionPoint = function(nIndex) {
+        if (!nIndex) {
+            nIndex = this.Points.length - 1;
+        }
+
+        if (this.Points[nIndex]) {
+            this.Points[nIndex].forbidUnion = true;
+        }
+    };
+	History.prototype.private_IsContentChange = function(Class, Data) {
+		if (Data.IsContentChange)
+			return Data.IsContentChange();
+		
+		return AscCommon.CHistory.prototype.private_IsContentChange.call(this, Class, Data);
+	};
+	History.prototype.private_UpdateContentChangesOnUndo = function(Item)
+	{
+		if (!this.private_IsContentChange(Item.Class, Item.Data))
+			return;
+		
+		let contentChanges = Item.Data.GetContentChangesClass();
+		if (contentChanges)
+			contentChanges.RemoveByHistoryItem(Item);
 	};
 	
 	//----------------------------------------------------------export--------------------------------------------------

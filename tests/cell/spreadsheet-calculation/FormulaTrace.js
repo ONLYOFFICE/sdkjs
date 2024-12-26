@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -171,6 +171,7 @@ $(function() {
 			let A1Index = AscCommonExcel.getCellIndex(ws.getRange2("A1").bbox.r1, ws.getRange2("A1").bbox.c1),
 				C10Index = AscCommonExcel.getCellIndex(ws.getRange2("C10").bbox.r1, ws.getRange2("C10").bbox.c1);
 
+			// ws.getRange2("D3:D5").setValue("=Table1", undefined, undefined, bbox);
 			ws.getRange2("A10").setValue("=A1:A2");
 			ws.getRange2("A11").setValue("=A1:A2");
 			let A10Index = AscCommonExcel.getCellIndex(ws.getRange2("A10").bbox.r1, ws.getRange2("A10").bbox.c1),
@@ -206,7 +207,7 @@ $(function() {
 			assert.strictEqual(traceManager._getDependents(A1Index, B101Index), 1, "A1->B101");
 			assert.strictEqual(traceManager._getDependents(A1Index, B102Index), 1, "A1->B102");
 			assert.strictEqual(traceManager._getDependents(A1Index, C101Index), 1, "A1->C101");
-			assert.strictEqual(traceManager._getDependents(A1Index, C102Index), 1, "A1->C10");
+			assert.strictEqual(traceManager._getDependents(A1Index, C102Index), 1, "A1->C102");
 			assert.strictEqual(traceManager._getDependents(C101Index, E200Index), undefined, "C101->E200 === undefined");
 			assert.strictEqual(traceManager._getDependents(C101Index, E201Index), undefined, "C101->E201 === undefined");
 			assert.strictEqual(traceManager._getDependents(E200Index, H200Index), undefined, "E200->H200 === undefined");
@@ -448,7 +449,7 @@ $(function() {
 			// clear traces
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 
-			// dependents tests
+			/* dependents tests */
 
 			// change selection to C1
 			ws.selectionRange.ranges = [ws.getRange2("C1").getBBox0()];
@@ -484,7 +485,7 @@ $(function() {
 			assert.strictEqual(traceManager._getDependents(C1Index, A4Index), 1, "C1->A4");
 			assert.strictEqual(traceManager._getDependents(C1Index, B3Index), 1, "C1->B3");
 			assert.strictEqual(traceManager._getDependents(C1Index, B4Index), 1, "C1->B4");
-			assert.strictEqual(traceManager._getDependents(C1Index, A1Index), undefined, "C1->A1 === undefined");
+			// assert.strictEqual(traceManager._getDependents(C1Index, A1Index), undefined, "C1->A1 === undefined");	// todo add back .cross() for dependencies SINGLE(A1:A10)|SINGLE(A1:D10)
 			assert.strictEqual(traceManager._getDependents(C1Index, F7Index), 1, "C1->F7");
 			assert.strictEqual(traceManager._getDependents(C1Index, F9Index), 1, "C1->F9");
 			assert.strictEqual(traceManager._getDependents(C1Index, G9Index), 1, "C1->G9");
@@ -499,7 +500,7 @@ $(function() {
 			assert.strictEqual(traceManager._getDependents(D1Index, A4Index), 1, "D1->A4");
 			assert.strictEqual(traceManager._getDependents(D1Index, B3Index), 1, "D1->B3");
 			assert.strictEqual(traceManager._getDependents(D1Index, B4Index), 1, "D1->B4");
-			assert.strictEqual(traceManager._getDependents(D1Index, A1Index), undefined, "D1->A1 === undefined");
+			// assert.strictEqual(traceManager._getDependents(D1Index, A1Index), undefined, "D1->A1 === undefined");	// todo add back .cross() for dependencies SINGLE(A1:A10)|SINGLE(A1:D10)
 			assert.strictEqual(traceManager._getDependents(D1Index, F7Index), undefined, "D1->F7 === undefined");
 			assert.strictEqual(traceManager._getDependents(D1Index, F9Index), 1, "D1->F9");
 			assert.strictEqual(traceManager._getDependents(D1Index, G9Index), 1, "D1->G9");
@@ -514,12 +515,101 @@ $(function() {
 			assert.strictEqual(traceManager._getDependents(D2Index, A4Index), 1, "D1->A4");
 			assert.strictEqual(traceManager._getDependents(D2Index, B3Index), 1, "D1->B3");
 			assert.strictEqual(traceManager._getDependents(D2Index, B4Index), 1, "D1->B4");
-			assert.strictEqual(traceManager._getDependents(D2Index, A1Index), undefined, "D1->A1 === undefined");
+			// assert.strictEqual(traceManager._getDependents(D2Index, A1Index), undefined, "D1->A1 === undefined");	// todo add back .cross() for dependencies SINGLE(A1:A10)|SINGLE(A1:D10)
 			assert.strictEqual(traceManager._getDependents(D2Index, F7Index), undefined, "D1->F7 === undefined");
 			assert.strictEqual(traceManager._getDependents(D2Index, F9Index), undefined, "D1->F9 === undefined");
 			assert.strictEqual(traceManager._getDependents(D2Index, G9Index), undefined, "D1->G9 === undefined");
 
+			// clear traces
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 
+			// defname in formulas
+			// todo in future versions add a separation between the range in the formula and the range in SINGLE
+			wb.dependencyFormulas.addDefName("OneCell", "Sheet1!$C$1");
+			wb.dependencyFormulas.addDefName("TwoCellInARow", "Sheet1!$C$1:$D$1");
+			// wb.dependencyFormulas.defNames.wb[name]
+
+			let I3Index = AscCommonExcel.getCellIndex(ws.getRange2("I3").bbox.r1, ws.getRange2("I3").bbox.c1),
+				I4Index = AscCommonExcel.getCellIndex(ws.getRange2("I4").bbox.r1, ws.getRange2("I4").bbox.c1),
+				I5Index = AscCommonExcel.getCellIndex(ws.getRange2("I5").bbox.r1, ws.getRange2("I5").bbox.c1),
+				I6Index = AscCommonExcel.getCellIndex(ws.getRange2("I6").bbox.r1, ws.getRange2("I6").bbox.c1);
+			bbox = ws.getRange2("I3").bbox;
+			ws.getRange2("I3").setValue("=IF(1,OneCell,0)", undefined, undefined, bbox);
+			cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+			oParser = new parserFormula("IF(1,OneCell,0)", cellWithFormula, ws);
+			oParser.setArrayFormulaRef(bbox);
+			oParser.parse();
+
+			ws.getRange2("I4").setValue("=IF(1,OneCell,0)");
+			cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+			oParser = new parserFormula("IF(1,OneCell,0)", cellWithFormula, ws);
+			oParser.parse();
+
+			bbox = ws.getRange2("I5").bbox;
+			ws.getRange2("I5").setValue("=IF(0,OneCell,0)", undefined, undefined, bbox);
+			cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+			oParser = new parserFormula("IF(0,OneCell,0)", cellWithFormula, ws);
+			oParser.setArrayFormulaRef(bbox);
+			oParser.parse();
+
+			ws.getRange2("I6").setValue("=IF(0,OneCell,0)");
+			cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+			oParser = new parserFormula("IF(0,OneCell,0)", cellWithFormula, ws);
+			oParser.parse();
+
+			// change selection to C1
+			ws.selectionRange.ranges = [ws.getRange2("C1").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("C1").getBBox0().r1, ws.getRange2("C1").getBBox0().c1);
+
+			assert.ok(1, "Trace dependents from C1. Defname in formula test.");
+			api.asc_TraceDependents();
+			assert.strictEqual(traceManager._getDependents(C1Index, I3Index), 1, "C1->I3");
+			assert.strictEqual(traceManager._getDependents(C1Index, I4Index), 1, "C1->I4");
+			assert.strictEqual(traceManager._getDependents(C1Index, I5Index), 1, "C1->I5");
+			assert.strictEqual(traceManager._getDependents(C1Index, I6Index), 1, "C1->I6");
+
+
+			// clear traces
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+
+			let K3Index = AscCommonExcel.getCellIndex(ws.getRange2("K3").bbox.r1, ws.getRange2("K3").bbox.c1),
+				K4Index = AscCommonExcel.getCellIndex(ws.getRange2("K4").bbox.r1, ws.getRange2("K4").bbox.c1),
+				K5Index = AscCommonExcel.getCellIndex(ws.getRange2("K5").bbox.r1, ws.getRange2("K5").bbox.c1),
+				K6Index = AscCommonExcel.getCellIndex(ws.getRange2("K6").bbox.r1, ws.getRange2("K6").bbox.c1);
+			bbox = ws.getRange2("K3").bbox;
+			ws.getRange2("K3").setValue("=IF(1,TwoCellInARow,0)", undefined, undefined, bbox);
+			cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+			oParser = new parserFormula("IF(1,TwoCellInARow,0)", cellWithFormula, ws);
+			oParser.setArrayFormulaRef(bbox);
+			oParser.parse();
+
+			ws.getRange2("K4").setValue("=IF(1,TwoCellInARow,0)");
+			cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+			oParser = new parserFormula("IF(1,TwoCellInARow,0)", cellWithFormula, ws);
+			oParser.parse();
+
+			bbox = ws.getRange2("K5").bbox;
+			ws.getRange2("K5").setValue("=IF(0,TwoCellInARow,0)", undefined, undefined, bbox);
+			cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+			oParser = new parserFormula("IF(0,TwoCellInARow,0)", cellWithFormula, ws);
+			oParser.setArrayFormulaRef(bbox);
+			oParser.parse();
+
+			ws.getRange2("K6").setValue("=IF(0,TwoCellInARow,0)");
+			cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+			oParser = new parserFormula("IF(0,TwoCellInARow,0)", cellWithFormula, ws);
+			oParser.parse();
+
+			assert.ok(1, "Trace dependents from C1. Defname in formula test 2.");
+			api.asc_TraceDependents();
+			assert.strictEqual(traceManager._getDependents(C1Index, K3Index), 1, "C1->K3");
+			assert.strictEqual(traceManager._getDependents(C1Index, K4Index), 1, "C1->K4");
+			assert.strictEqual(traceManager._getDependents(C1Index, K5Index), 1, "C1->K5");
+			assert.strictEqual(traceManager._getDependents(C1Index, K6Index), 1, "C1->K6");
+
+
+			// clear traces
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 		});
 		QUnit.test("Test: \"Areas tests\"", function (assert) {
 			let bbox;
@@ -1058,7 +1148,7 @@ $(function() {
 			oParser = new parserFormula("B3", cellWithFormula, ws);
 			sharedRef = bbox.clone();
 			oParser.setShared(sharedRef, cellWithFormula);
-			oParser.parse();	// ?
+			oParser.parse();
 			oParser.calculate();
 
 			// set parser formula to the cell
@@ -1070,7 +1160,6 @@ $(function() {
 				// let parsed = cell.getFormulaParsed();
 				// parsed.buildDependencies();
 			});
-			// console.log(ws.getRange2("C1").getFormula());
 			ws.selectionRange.ranges = [ws.getRange2("B3").getBBox0()];
 			ws.selectionRange.setActiveCell(ws.getRange2("B3").getBBox0().r1, ws.getRange2("B3").getBBox0().c1);
 
@@ -1152,8 +1241,8 @@ $(function() {
 			api.asc_TraceDependents();
 			assert.strictEqual(traceManager._getDependents(A3Index, D2Index), undefined, "A3->D2 === undefined");
 			assert.strictEqual(traceManager._getDependents(A3Index, D3Index), 1, "A3->D3");
-			assert.strictEqual(traceManager._getDependents(A3Index, D4Index), 1, "A3->D4");
-			assert.strictEqual(traceManager._getDependents(A3Index, D5Index), 1, "A3->D5");
+			assert.strictEqual(traceManager._getDependents(A3Index, D4Index), 1, "A3->D4");	// ?
+			assert.strictEqual(traceManager._getDependents(A3Index, D5Index), 1, "A3->D5");	// ?
 			assert.strictEqual(traceManager._getDependents(A3Index, A8Index), undefined, "A3->A8 === undefined");
 
 			assert.ok(1, "Remove last dependents from A3");
@@ -2323,6 +2412,39 @@ $(function() {
 		// 	// asc_Paste -> false
 		// 	// asc_PasteData -> true*
 		// });
+		QUnit.test("Test: \"Recursive formulas\"", function (assert) {
+			// Case #1: Precedent trace for formula - =A100+1. A dot or line shouldn't be traced
+			ws.getRange2("A100").setValue("=A100+1");
+			let A100Index = AscCommonExcel.getCellIndex(ws.getRange2("A100").bbox.r1, ws.getRange2("A100").bbox.c1);
+			ws.selectionRange.ranges = [ws.getRange2("A100").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("A100").getBBox0().r1, ws.getRange2("C1").getBBox0().c1);
+
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(A100Index, A100Index), undefined, "Precedent trace. Formula A100+1. A100. Dot shouldn't be show");
+
+			// clear traces
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+			// Case #2: Dependent trace for formula - =A100+1. A dot or line shouldn't be traced
+			api.asc_TraceDependents();
+			assert.strictEqual(traceManager._getDependents(A100Index, A100Index), undefined, "Dependent trace. Formula A100+1. A100. Dot shouldn't be show");
+			// Case #3: Precedent trace for formula - A100: A100+B100, B100: B100+C100. A100<-B100.  Arrow without dot in A100 cell.
+			ws.getRange2("A100").setValue("=A100+B100");
+			ws.getRange2("B100").setValue("=B100+C100");
+			A100Index = AscCommonExcel.getCellIndex(ws.getRange2("A100").bbox.r1, ws.getRange2("A100").bbox.c1);
+			let B100Index = AscCommonExcel.getCellIndex(ws.getRange2("B100").bbox.r1, ws.getRange2("B100").bbox.c1);
+			ws.selectionRange.ranges = [ws.getRange2("A100").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("A100").getBBox0().r1, ws.getRange2("C1").getBBox0().c1);
+
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(A100Index, B100Index), 1, "Precedent trace. Formula: A100: A100+B100, B100: B100+C100. A100<-B100. Arrow to A100 without dot in A100 cell.");
+			assert.strictEqual(traceManager._getPrecedents(A100Index, A100Index), undefined, "Precedent trace. Formula: A100: A100+B100, B100: B100+C100. A100. Dot shouldn't be show");
+
+			// clear traces
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+			// Case #4: Dependent trace for formula - A100: A100+B100, B100: B100+C100. A100->B100.  Arrow without dot in B100 cell.
+			api.asc_TraceDependents();
+			assert.strictEqual(traceManager._getDependents(A100Index, A100Index), undefined, "Dependent trace. Formula: A100: A100+B100, B100: B100+C100. A100. Dot shouldn't be show");
+		});
 	}
 
 	QUnit.module("FormulaTrace");

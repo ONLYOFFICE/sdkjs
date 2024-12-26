@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -82,7 +82,7 @@ function (window, undefined) {
 		cCOTH, cCSC, cCSCH, cDECIMAL, cDEGREES, cECMA_CEILING, cEVEN, cEXP, cFACT, cFACTDOUBLE, cFLOOR, cFLOOR_PRECISE,
 		cFLOOR_MATH, cGCD, cINT, cISO_CEILING, cLCM, cLN, cLOG, cLOG10, cMDETERM, cMINVERSE, cMMULT, cMOD, cMROUND,
 		cMULTINOMIAL, cMUNIT, cODD, cPI, cPOWER, cPRODUCT, cQUOTIENT, cRADIANS, cRAND, cRANDARRAY, cRANDBETWEEN, cROMAN, cROUND, cROUNDDOWN,
-		cROUNDUP, cSEC, cSECH, cSERIESSUM, cSIGN, cSIN, cSINH, cSQRT, cSQRTPI, cSUBTOTAL, cSUM, cSUMIF, cSUMIFS,
+		cROUNDUP, cSEC, cSECH, cSERIESSUM, cSIGN, cSIN, cSINGLE, cSINH, cSQRT, cSQRTPI, cSUBTOTAL, cSUM, cSUMIF, cSUMIFS,
 		cSUMPRODUCT, cSUMSQ, cSUMX2MY2, cSUMX2PY2, cSUMXMY2, cTAN, cTANH, cTRUNC, cSEQUENCE);
 
 	var cSubTotalFunctionType = {
@@ -389,21 +389,21 @@ function (window, undefined) {
 	cAGGREGATE.prototype.isXLFN = true;
 	cAGGREGATE.prototype.argumentsType = [argType.number, argType.number, [argType.reference]];
 	//TODO начиная со 3 аргумента все оставшиеся - массивы
-	cAGGREGATE.prototype.arrayIndexes = {2: 1, 3: 1, 4: 1, 5: 1, 6: 1};
+	cAGGREGATE.prototype.arrayIndexes = {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1};
 	cAGGREGATE.prototype.Calculate = function (arg) {
-		var oArguments = this._prepareArguments([arg[0], arg[1]], arguments[1]);
-		var argClone = oArguments.args;
+		let oArguments = this._prepareArguments([arg[0], arg[1]], arguments[1]);
+		let argClone = oArguments.args;
 
 		argClone[0] = argClone[0].tocNumber();
 		argClone[1] = argClone[1].tocNumber();
 
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
 
-		var nFunc = argClone[0].getValue();
-		var f = null;
+		let nFunc = argClone[0].getValue();
+		let f = null;
 		switch (nFunc) {
 			case AGGREGATE_FUNC_AVE:
 				f = AscCommonExcel.cAVERAGE.prototype;
@@ -482,10 +482,10 @@ function (window, undefined) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		var nOption = argClone[1].getValue();
-		var ignoreHiddenRows = false;
-		var ignoreErrorsVal = false;
-		var ignoreNestedStAg = false;
+		let nOption = argClone[1].getValue();
+		let ignoreHiddenRows = false;
+		let ignoreErrorsVal = false;
+		let ignoreNestedStAg = false;
 		switch (nOption) {
 			case 0 : // ignore nested SUBTOTAL and AGGREGATE functions
 				ignoreNestedStAg = true;
@@ -519,20 +519,20 @@ function (window, undefined) {
 				return new cError(cErrorType.not_numeric);
 		}
 
-		var res;
+		let res;
 		if (f) {
-			var oldExcludeHiddenRows = f.excludeHiddenRows;
-			var oldExcludeErrorsVal = f.excludeErrorsVal;
-			var oldIgnoreNestedStAg = f.excludeNestedStAg;
+			let oldExcludeHiddenRows = f.excludeHiddenRows;
+			let oldExcludeErrorsVal = f.excludeErrorsVal;
+			let oldIgnoreNestedStAg = f.excludeNestedStAg;
 
 			f.excludeHiddenRows = ignoreHiddenRows;
 			f.excludeErrorsVal = ignoreErrorsVal;
 			f.excludeNestedStAg = ignoreNestedStAg;
 
-			var newArgs = [];
+			let newArgs = [];
 			//14 - 19 особенные функции, требующие второго аргумента
-			var doNotCheckRef = nFunc >= 14 && nFunc <= 19;
-			for (var i = 2; i < arg.length; i++) {
+			let doNotCheckRef = nFunc >= 14 && nFunc <= 19;
+			for (let i = 2; i < arg.length; i++) {
 				//аргумент может быть только ссылка на ячейку или диапазон ячеек
 				//в противном случае - ошибка
 				if (doNotCheckRef || this.checkRef(arg[i])) {
@@ -4322,6 +4322,8 @@ function (window, undefined) {
 	cROUNDUP.prototype.argumentsType = [argType.number, argType.number];
 	cROUNDUP.prototype.Calculate = function (arg) {
 		function roundupHelper(number, num_digits) {
+			let fractionalPart = number.toString().split(".")[1];
+
 			if (num_digits > AscCommonExcel.cExcelMaxExponent) {
 				if (Math.abs(number) >= 1e-100 || num_digits <= 98303) {
 					return new cNumber(number);
@@ -4332,6 +4334,8 @@ function (window, undefined) {
 					return new cNumber(number);
 				}
 				return new cError(cErrorType.not_numeric);
+			} else if (fractionalPart && fractionalPart.length === num_digits) {
+				return new cNumber(number);
 			}
 
 			let sign = number >= 0 ? 1 : -1,
@@ -4675,6 +4679,32 @@ function (window, undefined) {
 	 * @constructor
 	 * @extends {AscCommonExcel.cBaseFunction}
 	 */
+	function cSINGLE() {
+	}
+
+	//***array-formula***
+	cSINGLE.prototype = Object.create(cBaseFunction.prototype);
+	cSINGLE.prototype.constructor = cSINGLE;
+	cSINGLE.prototype.name = 'SINGLE';
+	cSINGLE.prototype.argumentsMin = 1;
+	cSINGLE.prototype.argumentsMax = 1;
+	cSINGLE.prototype.argumentsType = [argType.any];
+	cSINGLE.prototype.arrayIndexes = {0: 1};
+	cSINGLE.prototype.isXLFN = true;
+	cSINGLE.prototype.Calculate = function (arg) {
+		let arg0 = arg[0];
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
+			arg0 = arg0.cross(arguments[1]);
+		} else if (arg0.type === cElementType.array) {
+			arg0 = arg0.getElement(0);
+		}
+		return arg0;
+	};
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
 	function cSINH() {
 	}
 
@@ -4966,9 +4996,10 @@ function (window, undefined) {
 	cSUMIF.prototype.argumentsMin = 2;
 	cSUMIF.prototype.argumentsMax = 3;
 	cSUMIF.prototype.arrayIndexes = {0: 1, 2: 1};
+	cSUMIF.prototype.exactTypes = {0: 1};
 	cSUMIF.prototype.argumentsType = [argType.reference, argType.any, argType.reference];
 	cSUMIF.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : arg[0], _sum = 0, matchingInfo;
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : arg[0], _sum = 0, matchingInfo;
 		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
 			cElementType.cellsRange !== arg0.type) {
 			if (cElementType.cellsRange3D === arg0.type) {
@@ -4999,7 +5030,9 @@ function (window, undefined) {
 			arg1 = arg1.getElementRowCol(0, 0);
 		}
 
-		arg1 = arg1.tocString();
+		if (cElementType.string !== arg1.type) {
+			arg1 = arg1.tocString();
+		}
 
 		if (cElementType.string !== arg1.type) {
 			return new cError(cErrorType.wrong_value_type);
@@ -5007,9 +5040,9 @@ function (window, undefined) {
 
 		matchingInfo = AscCommonExcel.matchingValue(arg1);
 		if (cElementType.cellsRange === arg0.type || cElementType.cell === arg0.type) {
-			var arg0Matrix = arg0.getMatrix(), arg2Matrix = arg2.getMatrix(), valMatrix2;
-			for (var i = 0; i < arg0Matrix.length; i++) {
-				for (var j = 0; j < arg0Matrix[i].length; j++) {
+			let arg0Matrix = arg0.getMatrix(), arg2Matrix = arg[2] ? arg2.getMatrix() : arg0Matrix, valMatrix2;
+			for (let i = 0; i < arg0Matrix.length; i++) {
+				for (let j = 0; j < arg0Matrix[i].length; j++) {
 					if (arg2Matrix[i] && (valMatrix2 = arg2Matrix[i][j]) && cElementType.number === valMatrix2.type &&
 						AscCommonExcel.matching(arg0Matrix[i][j], matchingInfo)) {
 						_sum += valMatrix2.getValue();
@@ -5098,6 +5131,7 @@ function (window, undefined) {
 	cSUMIFS.prototype.name = 'SUMIFS';
 	cSUMIFS.prototype.argumentsMin = 3;
 	cSUMIFS.prototype.arrayIndexes = {0: 1, 1: 1, 3: 1, 5: 1, 7: 1};
+	cSUMIFS.prototype.exactTypes = {0: 1, 1: 1};	// in this function every odd argument is should be checked for type reference
 	cSUMIFS.prototype.argumentsType = [argType.reference, [argType.reference, argType.any]];
 	cSUMIFS.prototype.Calculate = function (arg) {
 		let arg0 = arg[0];
@@ -5255,6 +5289,24 @@ function (window, undefined) {
 	};
 	cSUMIFS.prototype.checkArguments = function (countArguments) {
 		return 1 === countArguments % 2 && cBaseFunction.prototype.checkArguments.apply(this, arguments);
+	};
+	cSUMIFS.prototype.checkArgumentsTypes = function (args) {
+		// check first element, then all odd ones
+		if (!cBaseFunction.prototype.checkArgumentsTypes.call(this, [args[0]])) {
+			return false
+		}
+
+		for (let i = 1; i < args.length; i += 2) {
+			// check reference type for each odd element
+			let oddArgument = args[i];
+			if (oddArgument && this.exactTypes[1]) {
+				if (oddArgument.type !== cElementType.cellsRange && oddArgument.type !== cElementType.cellsRange3D 
+					&& oddArgument.type !== cElementType.cell && oddArgument.type !== cElementType.cell3D) {
+						return false
+				}
+			}
+		}
+		return true;
 	};
 
 	/**

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -504,7 +504,15 @@
         return {OffX: dOffX, OffY: dOffY};
 
     };
-
+		EditShapeGeometryTrack.prototype.checkDrawingPartWithHistory = function () {
+			if (this.originalObject.checkDrawingPartWithHistory) {
+				const newObject = this.originalObject.checkDrawingPartWithHistory();
+				if (newObject) {
+					this.originalObject = newObject;
+					this.originalShape = newObject;
+				}
+			}
+		};
     EditShapeGeometryTrack.prototype.trackEnd = function(bWord) {
         this.addCommandsInPathInfo();
         //set new extents

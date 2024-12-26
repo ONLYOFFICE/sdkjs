@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -112,8 +112,6 @@ CGroupShape.prototype.recalcBounds = function()
 {
     this.recalcInfo.recalculateBounds = true;
 };
-
-CGroupShape.prototype.getDrawingObjectsController =  CShape.prototype.getDrawingObjectsController;
 
 CGroupShape.prototype.addToRecalculate = CShape.prototype.addToRecalculate;
 CGroupShape.prototype.convertPixToMM = CShape.prototype.convertPixToMM;
@@ -252,4 +250,18 @@ CGroupShape.prototype.recalculate = function()
             this.worksheet.contentChanges.Refresh();
         }
     };
+	CGroupShape.prototype.checkDrawingPartWithHistory = function() {
+		for (let i = 0; i < this.spTree.length; i++) {
+			if (this.spTree[i].checkDrawingPartWithHistory) {
+				this.spTree[i].checkDrawingPartWithHistory();
+			}
+		}
+	};
+	CGroupShape.prototype.generateLocalDrawingPart = function() {
+		for (let i = 0; i < this.spTree.length; i++) {
+			if (this.spTree[i].generateLocalDrawingPart) {
+				this.spTree[i].generateLocalDrawingPart();
+			}
+		}
+	};
 })(window);

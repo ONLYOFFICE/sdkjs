@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -53,6 +53,9 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Workbook_Date1904 = 11;
 	window['AscCH'].historyitem_Workbook_ChangeExternalReference = 12;
 	window['AscCH'].historyitem_Workbook_TimelineCacheDelete = 13;
+	window['AscCH'].historyitem_Workbook_CalcPr_iterate = 14;
+	window['AscCH'].historyitem_Workbook_CalcPr_iterateCount = 15;
+	window['AscCH'].historyitem_Workbook_CalcPr_iterateDelta = 16;
 
 	window['AscCH'].historyitem_Worksheet_RemoveCell = 1;
 	window['AscCH'].historyitem_Worksheet_RemoveRows = 2;
@@ -76,6 +79,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Worksheet_SetTabColor = 27;
 	window['AscCH'].historyitem_Worksheet_RowHide = 28;
 // Frozen cell
+	window['AscCH'].historyitem_Worksheet_SetRightToLeft = 29;
 	window['AscCH'].historyitem_Worksheet_ChangeFrozenCell = 30;
 	window['AscCH'].historyitem_Worksheet_SetDisplayGridlines = 31;
 	window['AscCH'].historyitem_Worksheet_SetDisplayHeadings = 32;
@@ -264,6 +268,8 @@ function (window, undefined) {
 	window['AscCH'].historyitem_PivotTable_FormatsRemoveField = 63;
 	window['AscCH'].historyitem_PivotTable_FormatsAddRowField = 64;
 	window['AscCH'].historyitem_PivotTable_FormatsAddColField = 65;
+	window['AscCH'].historyitem_PivotTable_SetGrandTotalCaption = 59;
+	window['AscCH'].historyitem_PivotTable_PivotFieldSetSubtotalCaption = 60;
 
 	window['AscCH'].historyitem_SharedFormula_ChangeFormula = 1;
 	window['AscCH'].historyitem_SharedFormula_ChangeShared = 2;
@@ -570,9 +576,13 @@ CHistory.prototype.RedoAdd = function(oRedoObjectParam, Class, Type, sheetid, ra
 					if(changedObject){
 						var fChangesClass = AscDFH.changesFactory[nChangesType];
 						if (fChangesClass){
+							let color = null;
+							if (AscCommon.CollaborativeEditing.isCollaboration())
+								color = new CDocumentColor(255, 255, 255);
+							
 							var oChange = new fChangesClass(changedObject);
 							oChange.ReadFromBinary(Data.oBinaryReader);
-							oChange.Load(new CDocumentColor(255, 255, 255));
+							oChange.Load(color);
 						}
 					}
 				}

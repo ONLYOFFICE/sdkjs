@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -180,7 +180,8 @@
 
 		this.CheckArray.length = nIndex < 0 ? 0 : nIndex;
 
-		if (bNeedUpdate)
+		// TODO: Сделать нормальную проверку, что текущий параграф или текущее выделение попала в проверенные элементы
+		//if (bNeedUpdate)
 			this.LogicDocument.UpdateInterface();
 	};
 	/**
@@ -729,7 +730,7 @@
 
 		for (var ParaId in this.Changes)
 		{
-			var Para = g_oTableId.Get_ById(ParaId);
+			var Para = AscCommon.g_oTableId.Get_ById(ParaId);
 			if (Para && Para.Get_Parent())
 			{
 				LogicDocuments[Para.Get_Parent().Get_Id()] = true;
@@ -789,7 +790,7 @@
 		var ParagraphsArray = [];
 		for (var ParaId in ParagraphsObject)
 		{
-			var Para = g_oTableId.Get_ById(ParaId);
+			var Para = AscCommon.g_oTableId.Get_ById(ParaId);
 			if (null !== Para)
 			{
 				ParagraphsArray.push(Para);

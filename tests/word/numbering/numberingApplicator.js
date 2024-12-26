@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -297,5 +297,53 @@ $(function ()
 		CheckParagraph(5, "A.");
 		CheckParagraph(6, "1.");
 		CheckParagraph(7, "a)");
+	});
+	
+	QUnit.test("Applying numbering by selecting to paragraphs with left indentation", function (assert)
+	{
+		// Check situation from bug 71056
+		
+		function CheckParagraph(paraIndex, text)
+		{
+			let p = logicDocument.GetElement(paraIndex);
+			assert.strictEqual(p.GetNumberingText(false), text, "Check numbering text for paragraph " + paraIndex);
+		}
+		
+		function GenerateDocument()
+		{
+			AscTest.ClearDocument();
+			
+			for (let i = 0; i < 4; ++i)
+			{
+				let p = AscTest.CreateParagraph();
+				p.SetParagraphIndent({Left : 5, FirstLine : 15});
+				logicDocument.PushToContent(p);
+				let run = new AscWord.CRun();
+				p.AddToContent(0, run);
+				run.AddText("Paragraph " + i);
+			}
+			assert.strictEqual(logicDocument.GetElementsCount(), 4, "Check number of paragraphs");
+		}
+		
+		GenerateDocument();
+		logicDocument.SelectAll();
+		logicDocument.SetParagraphNumbering(AscWord.GetNumberingObjectByDeprecatedTypes(1, 2));
+		AscTest.Recalculate();
+		
+		CheckParagraph(0, "1)");
+		CheckParagraph(1, "2)");
+		CheckParagraph(2, "3)");
+		CheckParagraph(3, "4)");
+		
+		GenerateDocument();
+		logicDocument.GetElement(0).SetParagraphIndent({Left : 5, FirstLine : 25});
+		logicDocument.SelectAll();
+		logicDocument.SetParagraphNumbering(AscWord.GetNumberingObjectByDeprecatedTypes(1, 2));
+		AscTest.Recalculate();
+		
+		CheckParagraph(0, "i.");
+		CheckParagraph(1, "b.");
+		CheckParagraph(2, "c.");
+		CheckParagraph(3, "d.");
 	});
 });

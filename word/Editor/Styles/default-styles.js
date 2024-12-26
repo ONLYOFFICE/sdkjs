@@ -46,7 +46,7 @@
 		return pt * g_dKoef_pt_to_mm;
 	}
 	
-	const DEFAULT_STYLES = [
+	const DEFAULT_STYLE_LIST = [
 		{
 			StyleId : "Normal",
 			Default : true,
@@ -846,11 +846,11 @@
 				Tabs    : {
 					Tabs : [
 						{
-							Value : Asc.c_oAscTabType.tab_Center,
+							Value : Asc.c_oAscTabType.Center,
 							Pos   : tw2mm(4844)
 						},
 						{
-							Value : Asc.c_oAscTabType.tab_Right,
+							Value : Asc.c_oAscTabType.Right,
 							Pos   : tw2mm(9689)
 						}
 					]
@@ -882,11 +882,11 @@
 				Tabs : {
 					Tabs : [
 						{
-							Value : Asc.c_oAscTabType.tab_Center,
+							Value : Asc.c_oAscTabType.Center,
 							Pos   : tw2mm(4844)
 						},
 						{
-							Value : Asc.c_oAscTabType.tab_Right,
+							Value : Asc.c_oAscTabType.Right,
 							Pos   : tw2mm(9689)
 						}
 					]
@@ -1049,15 +1049,165 @@
 				Unifill    : AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorFollowedHyperlink, null, null),
 				Underline  : true
 			}
+		},
+		{
+			StyleId        : "Toc1",
+			Type           : AscWord.styletype_Paragraph,
+			Name           : "toc 1",
+			BasedOn        : "Normal",
+			Next           : "Normal",
+			UiPriority     : 39,
+			UnhideWhenUsed : true,
+			ParaPr         : {
+				Spacing : {
+					After : tw2mm(100)
+				}
+			}
+		},
+		{
+			StyleId        : "Toc2",
+			Type           : AscWord.styletype_Paragraph,
+			Name           : "toc 2",
+			BasedOn        : "Normal",
+			Next           : "Normal",
+			UiPriority     : 39,
+			UnhideWhenUsed : true,
+			ParaPr         : {
+				Spacing : {
+					After : tw2mm(100)
+				},
+				Ind     : {
+					Left : tw2mm(220)
+				}
+			}
+		},
+		{
+			StyleId        : "Toc3",
+			Type           : AscWord.styletype_Paragraph,
+			Name           : "toc 3",
+			BasedOn        : "Normal",
+			Next           : "Normal",
+			UiPriority     : 39,
+			UnhideWhenUsed : true,
+			ParaPr         : {
+				Spacing : {
+					After : tw2mm(100)
+				},
+				Ind     : {
+					Left : tw2mm(440)
+				}
+			}
+		},
+		{
+			StyleId        : "Toc4",
+			Type           : AscWord.styletype_Paragraph,
+			Name           : "toc 4",
+			BasedOn        : "Normal",
+			Next           : "Normal",
+			UiPriority     : 39,
+			UnhideWhenUsed : true,
+			ParaPr         : {
+				Spacing : {
+					After : tw2mm(100)
+				},
+				Ind     : {
+					Left : tw2mm(660)
+				}
+			}
+		},
+		{
+			StyleId        : "Toc5",
+			Type           : AscWord.styletype_Paragraph,
+			Name           : "toc 5",
+			BasedOn        : "Normal",
+			Next           : "Normal",
+			UiPriority     : 39,
+			UnhideWhenUsed : true,
+			ParaPr         : {
+				Spacing : {
+					After : tw2mm(100)
+				},
+				Ind     : {
+					Left : tw2mm(880)
+				}
+			}
+		},
+		{
+			StyleId        : "Toc6",
+			Type           : AscWord.styletype_Paragraph,
+			Name           : "toc 6",
+			BasedOn        : "Normal",
+			Next           : "Normal",
+			UiPriority     : 39,
+			UnhideWhenUsed : true,
+			ParaPr         : {
+				Spacing : {
+					After : tw2mm(100)
+				},
+				Ind     : {
+					Left : tw2mm(1100)
+				}
+			}
+		},
+		{
+			StyleId        : "Toc7",
+			Type           : AscWord.styletype_Paragraph,
+			Name           : "toc 7",
+			BasedOn        : "Normal",
+			Next           : "Normal",
+			UiPriority     : 39,
+			UnhideWhenUsed : true,
+			ParaPr         : {
+				Spacing : {
+					After : tw2mm(100)
+				},
+				Ind     : {
+					Left : tw2mm(1320)
+				}
+			}
+		},
+		{
+			StyleId        : "Toc8",
+			Type           : AscWord.styletype_Paragraph,
+			Name           : "toc 8",
+			BasedOn        : "Normal",
+			Next           : "Normal",
+			UiPriority     : 39,
+			UnhideWhenUsed : true,
+			ParaPr         : {
+				Spacing : {
+					After : tw2mm(100)
+				},
+				Ind     : {
+					Left : tw2mm(1540)
+				}
+			}
+		},
+		{
+			StyleId        : "Toc9",
+			Type           : AscWord.styletype_Paragraph,
+			Name           : "toc 9",
+			BasedOn        : "Normal",
+			Next           : "Normal",
+			UiPriority     : 39,
+			UnhideWhenUsed : true,
+			ParaPr         : {
+				Spacing : {
+					After : tw2mm(100)
+				},
+				Ind     : {
+					Left : tw2mm(1760)
+				}
+			}
 		}
 	];
 	
 	function getDefaultStyleObject(styleName)
 	{
-		for (let i = 0; i < DEFAULT_STYLES.length; ++i)
+		for (let i = 0; i < DEFAULT_STYLE_LIST.length; ++i)
 		{
-			if (DEFAULT_STYLES[i].Name === styleName)
-				return DEFAULT_STYLES[i];
+			if (DEFAULT_STYLE_LIST[i].Name === styleName)
+				return DEFAULT_STYLE_LIST[i];
 		}
 		
 		return null;
@@ -1069,17 +1219,17 @@
 	 */
 	function getDefaultStyleName(defaultStyleId)
 	{
-		for (let i = 0; i < DEFAULT_STYLES.length; ++i)
+		for (let i = 0; i < DEFAULT_STYLE_LIST.length; ++i)
 		{
-			if (DEFAULT_STYLES[i].StyleId === defaultStyleId)
-				return DEFAULT_STYLES[i].Name;
+			if (DEFAULT_STYLE_LIST[i].StyleId === defaultStyleId)
+				return DEFAULT_STYLE_LIST[i].Name;
 		}
 		
 		return "";
 	}
 	
 	//--------------------------------------------------------export----------------------------------------------------
-	AscWord.DEFAULT_STYLES        = DEFAULT_STYLES;
+	AscWord.DEFAULT_STYLE_LIST    = DEFAULT_STYLE_LIST;
 	AscWord.DEFAULT_HEADING_FONT  = DEFAULT_HEADING_FONT;
 	AscWord.DEFAULT_FONT          = DEFAULT_FONT;
 	AscWord.getDefaultStyleObject = getDefaultStyleObject;

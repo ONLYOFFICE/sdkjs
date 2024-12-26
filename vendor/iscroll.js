@@ -320,7 +320,9 @@ function IScroll (el, options) {
 		HWCompositing: true,
 		useTransition: true,
 		useTransform: true,
-		bindToWrapper: typeof window.onmousedown === "undefined"
+		bindToWrapper: typeof window.onmousedown === "undefined",
+
+		transparentIndicators: false
 	};
 
 	for ( var i in options ) {
@@ -1082,6 +1084,11 @@ IScroll.prototype = {
 		if ( this.options.indicators ) {
 			// TODO: check concat compatibility
 			indicators = indicators.concat(this.options.indicators);
+		}
+
+		if (this.options.transparentIndicators) {
+			for (var i = 0; i < indicators.length; i++)
+				indicators[i].transparent = true;
 		}
 
 		for ( var i = indicators.length; i--; ) {
@@ -1846,11 +1853,23 @@ function Indicator (scroller, options) {
 		shrink: false,
 		fade: false,
 		speedRatioX: 0,
-		speedRatioY: 0
+		speedRatioY: 0,
+		transparent: false
 	};
 
 	for ( var i in options ) {
 		this.options[i] = options[i];
+	}
+
+	if (this.options.transparent) {
+		this.options.interactive = false;
+		this.options.fade = false;
+		this.options.disableTouch = true;
+		this.options.disablePointer = true;
+		this.options.disableMouse = true;
+
+		this.wrapperStyle.display = "none";
+		this.indicatorStyle.display = "none";
 	}
 
 	this.sizeRatioX = 1;
@@ -2068,12 +2087,14 @@ Indicator.prototype = {
 	refresh: function () {
 		this.transitionTime();
 
-		if ( this.options.listenX && !this.options.listenY ) {
-			this.indicatorStyle.display = this.scroller.hasHorizontalScroll ? 'block' : 'none';
-		} else if ( this.options.listenY && !this.options.listenX ) {
-			this.indicatorStyle.display = this.scroller.hasVerticalScroll ? 'block' : 'none';
-		} else {
-			this.indicatorStyle.display = this.scroller.hasHorizontalScroll || this.scroller.hasVerticalScroll ? 'block' : 'none';
+		if (!this.options.transparent) {
+			if (this.options.listenX && !this.options.listenY) {
+				this.indicatorStyle.display = this.scroller.hasHorizontalScroll ? 'block' : 'none';
+			} else if (this.options.listenY && !this.options.listenX) {
+				this.indicatorStyle.display = this.scroller.hasVerticalScroll ? 'block' : 'none';
+			} else {
+				this.indicatorStyle.display = this.scroller.hasHorizontalScroll || this.scroller.hasVerticalScroll ? 'block' : 'none';
+			}
 		}
 
 		if ( this.scroller.hasHorizontalScroll && this.scroller.hasVerticalScroll ) {

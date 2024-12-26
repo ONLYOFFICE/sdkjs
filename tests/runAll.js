@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -38,9 +38,11 @@ const allTests = [
 	'cell/spreadsheet-calculation/CopyPasteTests.html',
 	'cell/spreadsheet-calculation/AutoFilterTests.html',
 	'word/unit-tests/paragraphContentPos.html',
+	'word/unit-tests/deleted-text-recovery.html',
 	'word/content-control/block-level/cursorAndSelection.html',
 	'word/content-control/inline-level/checkbox.html',
 	'word/content-control/inline-level/cursorAndSelection.html',
+	'word/content-control/inline-level/date-time.html',
 	'word/document-calculation/floating-position/drawing.html',
 	'word/document-calculation/paragraph.html',
 	'word/document-calculation/table/correctBadTable.html',
@@ -55,13 +57,17 @@ const allTests = [
 	'word/numbering/numberingCalculation.html',
 	'word/numbering/numberingAutocorrect.html',
 	'word/api/api.html',
+	'word/api/cross-ref.html',
 	'word/api/textInput.html',
 	'word/styles/displayStyle.html',
 	'word/styles/paraPr.html',
 	'word/styles/styleApplicator.html',
+	'word/text-autocorrection/as-you-type.html',
 	'word/plugins/pluginsApi.html',
+	'word/revisions/document-content.html',
 	'word/revisions/paragraph.html',
 	'word/merge-documents/mergeDocuments.html',
+	'word/math-autocorrection/math-autocorrection.html',
 
 	'cell/shortcuts/shortcuts.html',
 	'slide/shortcuts/shortcuts.html',

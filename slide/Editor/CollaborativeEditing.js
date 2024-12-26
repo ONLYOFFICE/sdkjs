@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -689,4 +689,4 @@ CCollaborativeEditing.prototype.private_UpdateForeignCursor = function(CursorInf
 
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommon'] = window['AscCommon'] || {};
-window['AscCommon'].CollaborativeEditing = new CCollaborativeEditing();
+window['AscCommon'].SlideCollaborativeEditing = CCollaborativeEditing;

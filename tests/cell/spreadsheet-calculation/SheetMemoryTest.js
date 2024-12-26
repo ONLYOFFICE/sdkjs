@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -428,5 +428,104 @@ $(function () {
 		assert.strictEqual(sheetMemory.getUint8(12, 0), 0);
 	});
 
+	testForeachNoEmpty("Test: SweepLineRowIterator step" + 1, 1, 1);
+	testForeachNoEmpty("Test: SweepLineRowIterator step" + 2, 1, 1);
+
 	QUnit.module("SheetMemory");
+	function testForeachNoEmpty(name, offset, stepRow) {
+		QUnit.test(name, function (assert) {
+			// console.profile('testForeachNoEmpty');
+
+			// let rowsTest = offset + 2 + stepRow;
+			// let colsTest = 2;
+			// let dataTest = [0,2,3,4,0,0,0,0];
+			// testCellsByCol(dataTest, rowsTest + 1, colsTest, offset, stepRow, assert);
+
+			let rows = offset + 3 + stepRow;//stepRow rows are needed to properly clean
+			let cols = 3;
+			let baseLen = (rows - stepRow) * cols;//last row for correct cleaning
+			let base = [...Array(baseLen + 1).keys()].slice(1);
+			let data = new Array(rows * cols);
+			data.fill(0);
+			let iterations = Math.pow(2, baseLen);
+			for (let i = 0; i < iterations; ++i) {
+				for (let j = 0; j < baseLen; ++j) {
+					let bit = ((i >> j) % 2 !== 0);
+					data[j] = bit ? base[j] : 0;
+				}
+				testCellsByCol(data, rows, cols, offset, stepRow, assert);
+			}
+
+			// console.profileEnd('testForeachNoEmpty');
+
+			assert.ok(true);
+		});
+	}
+
+	function testCellsByCol(data, rows, cols, offset, stepRow, assert) {
+		let res = '';
+		let testData = getTestDataFromArray(data, rows, cols, offset, stepRow);
+		let r1 = offset;
+
+		let sweepLine = new AscCommonExcel.SweepLineRowIterator();
+		sweepLine.init(testData.cellsByCol, r1, 0, cols);
+		for (let i = r1; i < rows; i += stepRow) {
+			sweepLine.setRow(i);
+			while (sweepLine.nextCol()) {
+				res += `${i}-${sweepLine.col}-${sweepLine.colData.getUint8(i, 0)};`;
+			}
+		}
+		//many asserts processes very slow
+		if (res !== testData.expected) {
+			assert.strictEqual(res, testData.expected, JSON.stringify(data));
+		}
+		if (sweepLine.colDatas.length !== sweepLine.colDatasIndex) {
+			assert.strictEqual(sweepLine.colDatas.length, sweepLine.colDatasIndex, "colDatas");
+		}
+		if (sweepLine.toInsert.length !== sweepLine.toInsertIndex) {
+			assert.strictEqual(sweepLine.toInsert.length, sweepLine.toInsertIndex, "toInsert");
+		}
+		if (sweepLine.toDelete.length !== sweepLine.toDeleteIndex) {
+			assert.strictEqual(sweepLine.toDelete.length, sweepLine.toDeleteIndex, "toDelete");
+		}
+		if (sweepLine.r1.length !== sweepLine.r1Index) {
+			assert.strictEqual(sweepLine.r1.length, sweepLine.r1Index, "r1");
+		}
+		if (sweepLine.r2.length !== sweepLine.r2Index) {
+			assert.strictEqual(sweepLine.r2.length, sweepLine.r2Index, "r2");
+		}
+	}
+
+	function getTestDataFromArray(data, rows, cols, offset, stepRow) {
+		let expected = "";
+		let cellsByCol = Array.from(Array(cols), () => {
+			return new SheetMemory(2, rows);
+		});
+		let dataLen = data.length;
+		for (let i = 0; i < dataLen; ++i) {
+			if (data[i] > 0) {
+				let row = Math.trunc(i / cols);
+				let col = i % cols;
+				let sheetMemory = cellsByCol[col];
+				sheetMemory.checkIndex(row);
+				sheetMemory.setUint8(row, 0, data[i]);
+			}
+		}
+		for (let i = 0; i < cellsByCol.length; ++i) {
+			if (cellsByCol[i].getAllocatedCount() === 0) {
+				delete cellsByCol[i];
+			}
+		}
+		for (let i = offset * cols; i < dataLen; ++i) {
+			let row = Math.trunc(i / cols);
+			let col = i % cols;
+			if(row % stepRow === 0) {
+				let sheetMemory = cellsByCol[col];
+				if (sheetMemory && sheetMemory.hasIndex(row)) {
+					expected += `${row}-${col}-${data[i]};`;
+				}
+			}
+		}
+		return {cellsByCol, expected}
+	}
 });

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -150,6 +150,7 @@
     	this.isUse3d = false;
     	this.cacheManager = null;
     	this.logging = true;
+        this.type = -1;
 
     	this.Selection = {
             Page1 : 0,
@@ -183,11 +184,15 @@
     };
     CFile.prototype.getFileBinary = function()
     {
-        return this.nativeFile ? this.nativeFile["getFileAsBase64"]() : null;
+        return this.nativeFile ? this.nativeFile["getFileBinary"]() : null;
     };
-    CFile.prototype.memory = function()
+    CFile.prototype.getUint8Array = function(ptr, len)
     {
-        return this.nativeFile ? this.nativeFile["memory"]() : null;
+        return this.nativeFile ? this.nativeFile["getUint8Array"](ptr, len) : null;
+    };
+    CFile.prototype.getUint8ClampedArray = function(ptr, len)
+    {
+        return this.nativeFile ? this.nativeFile["getUint8ClampedArray"](ptr, len) : null;
     };
     CFile.prototype.free = function(pointer)
     {
@@ -261,6 +266,12 @@
         image.requestHeight = requestH;
         return image;
     };
+    CFile.prototype.addPage = function(pageIndex, pageObj) {
+        return this.nativeFile["addPage"](pageIndex, pageObj);
+    };
+    CFile.prototype.removePage = function(pageIndex) {
+        return this.nativeFile["removePage"](pageIndex);
+    };
     CFile.prototype.getPageWidth = function(nPage) {
         return this.pages[nPage].W;
     };
@@ -274,7 +285,7 @@
 
     CFile.prototype.getText = function(pageIndex)
     {
-        return this.nativeFile ? this.nativeFile["getGlyphs"](pageIndex) : [];
+        return this.nativeFile && undefined != pageIndex ? this.nativeFile["getGlyphs"](pageIndex) : [];
     };
 
     CFile.prototype.destroyText = function()
@@ -320,7 +331,7 @@
         }
         
         var ctx = canvas.getContext("2d");
-        var mappedBuffer = new Uint8ClampedArray(this.memory().buffer, pixels, 4 * width * height);
+        var mappedBuffer = this.getUint8ClampedArray(pixels, 4 * width * height);
         var imageData = null;
         if (supportImageDataConstructor)
         {
@@ -405,7 +416,7 @@ void main() {\n\
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(this.memory().buffer, pixels, 4 * width * height));
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.getUint8Array(pixels, 4 * width * height));
 
         if (gl.getError() != gl.NONE)
             throw new Error('FAIL: creating webgl image texture failed');
@@ -616,31 +627,30 @@ void main() {\n\
         this.onUpdateOverlay();
 
         if (this.viewer.Api.isMarkerFormat) {
-            let oDoc = this.viewer.getPDFDoc();
-            let oColor = oDoc.GetMarkerColor(this.viewer.Api.curMarkerType);
-            oDoc.CreateNewHistoryPoint();
-            switch (this.viewer.Api.curMarkerType) {
-				case AscPDF.ANNOTATIONS_TYPES.Highlight:
-					this.viewer.Api.SetHighlight(oColor.r, oColor.g, oColor.b, oColor.a);
-					break;
-				case AscPDF.ANNOTATIONS_TYPES.Underline:
-					this.viewer.Api.SetUnderline(oColor.r, oColor.g, oColor.b, oColor.a);
-					break;
-				case AscPDF.ANNOTATIONS_TYPES.Strikeout:
-					this.viewer.Api.SetStrikeout(oColor.r, oColor.g, oColor.b, oColor.a);
-					break;
-			}
+            let oDoc    = this.viewer.getPDFDoc();
+            let oViewer = this.viewer;
+            let oColor  = oDoc.GetMarkerColor(oViewer.Api.curMarkerType);
 
-            if (AscCommon.History.Is_LastPointEmpty())
-                AscCommon.History.Remove_LastPoint();
-            oDoc.TurnOffHistory();
+            oDoc.DoAction(function() {
+                switch (oViewer.Api.curMarkerType) {
+                    case AscPDF.ANNOTATIONS_TYPES.Highlight:
+                        oViewer.Api.SetHighlight(oColor.r, oColor.g, oColor.b, oColor.a);
+                        break;
+                    case AscPDF.ANNOTATIONS_TYPES.Underline:
+                        oViewer.Api.SetUnderline(oColor.r, oColor.g, oColor.b, oColor.a);
+                        break;
+                    case AscPDF.ANNOTATIONS_TYPES.Strikeout:
+                        oViewer.Api.SetStrikeout(oColor.r, oColor.g, oColor.b, oColor.a);
+                        break;
+                }
+            }, AscDFH.historydescription_Pdf_AddHighlightAnnot);
         }
     };
 
     CFile.prototype.getPageTextStream = function(pageIndex)
     {
         var textCommands = this.pages[pageIndex].text;
-        if (!textCommands)
+        if (!textCommands || 0 === textCommands.length)
             return null;
 
         return new TextStreamReader(textCommands, textCommands.length);
@@ -651,6 +661,13 @@ void main() {\n\
         var stream = this.getPageTextStream(pageIndex);
         if (!stream)
             return { Line : -1, Glyph : -1 };
+
+        if (this.type === 2)
+        {
+            let k = 72 / 96;
+            x *= k;
+            y *= k;
+        }
 
         // textline parameters
         var _line = -1;
@@ -1753,7 +1770,7 @@ void main() {\n\
     {
         var stream = this.getPageTextStream(pageIndex);
         if (!stream)
-            return;
+            return "";
 
         var ret = "";
 
@@ -2815,6 +2832,8 @@ void main() {\n\
         var error = file.nativeFile["loadFromData"](data);
         if (0 === error)
         {
+            file.type = file.nativeFile["getType"]();
+
             file.nativeFile["onRepaintPages"] = function(pages) {
                 file.onRepaintPages && file.onRepaintPages(pages);
             };
@@ -2860,6 +2879,8 @@ void main() {\n\
         var error = file.nativeFile["loadFromDataWithPassword"](password);
         if (0 === error)
         {
+            file.type = file.nativeFile["getType"]();
+
             file.nativeFile["onRepaintPages"] = function(pages) {
                 file.onRepaintPages && file.onRepaintPages(pages);
             };
@@ -2878,7 +2899,8 @@ void main() {\n\
                 page.originRotate   = page["Rotate"];
                 page.Rotate         = page["Rotate"];
             }
-
+            file.originalPagesCount = file.pages.length;
+            
             //file.cacheManager = new AscCommon.CCacheManager();
         }
     };

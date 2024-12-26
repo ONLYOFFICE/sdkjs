@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -577,6 +577,17 @@ CDrawingsController.prototype.GetSelectionState = function()
 CDrawingsController.prototype.SetSelectionState = function(State, StateIndex)
 {
 	this.DrawingObjects.setSelectionState(State, StateIndex);
+	
+	let parentCC = this.private_GetParentContentControl();
+	if (parentCC && parentCC.IsPicture() && parentCC.IsForm() && parentCC.GetParagraph())
+	{
+		let parentShape = parentCC.GetParagraph().GetParentShape();
+		if (parentShape)
+		{
+			let paraDrawing = parentShape.GetParaDrawing();
+			this.DrawingObjects.selectById(paraDrawing.GetId(), paraDrawing.GetPageNum());
+		}
+	}
 };
 CDrawingsController.prototype.AddHyperlink = function(Props)
 {

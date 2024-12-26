@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -2270,6 +2270,8 @@ function CHorRuler()
 			this.m_oWordControl.m_oLogicDocument.SetParagraphTabs(_arr);
 			this.m_oWordControl.m_oLogicDocument.FinalizeAction();
 		}
+		this.m_oWordControl.m_oLogicDocument.UpdateSelection();
+		this.m_oWordControl.m_oLogicDocument.UpdateInterface();
 	}
 
     this.SetPrProperties = function(isTemporary)
@@ -2280,7 +2282,11 @@ function CHorRuler()
 		
 		let logicDocument = this.m_oWordControl.m_oLogicDocument;
 		if (logicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Properties))
+		{
+			logicDocument.UpdateSelection();
+			logicDocument.UpdateInterface();
 			return;
+		}
 		
 		isTemporary = isTemporary && logicDocument.IsDocumentEditor();
 		
@@ -2311,8 +2317,8 @@ function CHorRuler()
             this.m_oWordControl.m_oLogicDocument.SetDocumentMargin( { Left : this.m_dMarginLeft, Right : this.m_dMarginRight }, true);
 			this.m_oWordControl.m_oLogicDocument.FinalizeAction();
         }
-        //oWordControl.m_oLogicDocument.SetParagraphIndent( { Left : this.m_dIndentLeft, Right : this.m_dIndentRight,
-        //    FirstLine: (this.m_dIndentLeftFirst - this.m_dIndentLeft) } );
+		this.m_oWordControl.m_oLogicDocument.UpdateSelection();
+		this.m_oWordControl.m_oLogicDocument.UpdateInterface();
     }
 
     this.SetTableProperties = function()
@@ -2326,11 +2332,12 @@ function CHorRuler()
 			if (this.m_oTableMarkup)
 			    this.m_oTableMarkup.CorrectFrom();
 
-            this.m_oWordControl.m_oLogicDocument.UpdateInterface();
             this.m_oWordControl.m_oLogicDocument.UpdateRulers();
 			this.m_oWordControl.m_oLogicDocument.FinalizeAction();
         }
-    }
+		this.m_oWordControl.m_oLogicDocument.UpdateSelection();
+		this.m_oWordControl.m_oLogicDocument.UpdateInterface();
+	}
 
     this.SetColumnsProperties = function()
     {

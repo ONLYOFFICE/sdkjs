@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -1196,6 +1196,7 @@ function (window, undefined) {
 		}
 
 		let val = arg0.getValue();
+		val = parseInt(val);
 		if (val < 0) {
 			return new cError(cErrorType.not_numeric);
 		} else if (!AscCommon.bDate1904) {
@@ -2203,16 +2204,21 @@ function (window, undefined) {
 	cWORKDAY_INTL.prototype.argumentsMin = 2;
 	cWORKDAY_INTL.prototype.argumentsMax = 4;
 	cWORKDAY_INTL.prototype.numFormat = AscCommonExcel.cNumFormatNone;
-	cWORKDAY_INTL.prototype.arrayIndexes = {2: 0, 3: 1};
+	cWORKDAY_INTL.prototype.arrayIndexes = {0: AscCommonExcel.arrayIndexesType.range, 1: AscCommonExcel.arrayIndexesType.range, 3: 1};
 	cWORKDAY_INTL.prototype.argumentsType = [argType.any, argType.any, argType.number, argType.any];
 	//TODO в данном случае есть различия с ms. при 3 и 4 аргументах - замена результата на ошибку не происходит.
-	cWORKDAY_INTL.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
+	// cWORKDAY_INTL.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cWORKDAY_INTL.prototype.Calculate = function (arg) {
 		//TODO проблема с формулами следующего типа - WORKDAY.INTL(8,60,"0000000")
 		let t = this;
 		let tempArgs = arg[2] ? [arg[0], arg[1], arg[2]] : [arg[0], arg[1]];
 		let oArguments = this._prepareArguments(tempArgs, arguments[1]);
 		let argClone = oArguments.args;
+
+		if ((arg[0] && (arg[0].type === cElementType.cellsRange || arg[0].type === cElementType.cellsRange3D)) || 
+			(arg[1] && (arg[1].type === cElementType.cellsRange || arg[1].type === cElementType.cellsRange3D))) {
+			return new cError(cErrorType.wrong_value_type);
+		}
 
 		argClone[0] = argClone[0].tocNumber();
 		argClone[1] = argClone[1].tocNumber();

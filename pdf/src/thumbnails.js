@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -235,7 +235,9 @@
             var pH = (drPage.page.height * zoom) >> 0;
             if (isLandscape)
             {
-                [pW, pH] = [pH, pW];
+                let tmp = pW;
+                pW = pH;
+                pH = tmp;
             }
 
             var curPageHeight = pH + PageStyle.numberFontOffset + PageStyle.numberFontHeight;
@@ -478,6 +480,11 @@
     // очередь задач - нужно ли перерисоваться и/или перерисовать страницу
     CDocument.prototype.checkTasks = function(isViewerTask)
     {
+		let pdfDoc = this.viewer.getPDFDoc();
+	
+		if (pdfDoc.fontLoader.isWorking() || AscCommon.CollaborativeEditing.waitingImagesForLoad)
+			return true;
+		
         var isNeedTasks = false;
         if (!this.isEnabled)
             return isNeedTasks;
@@ -506,6 +513,9 @@
 
             if (needPage)
             {
+				if (!this.viewer._checkFontsOnPages(needPage.num, needPage.num))
+					return true;
+				
                 isNeedTasks = true;
                 let isLandscape = this.viewer.isLandscapePage(needPage.num);
                 let angle       = this.viewer.getPageRotate(needPage.num);

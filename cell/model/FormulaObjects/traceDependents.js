@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -72,6 +72,8 @@ function (window, undefined) {
 			// isCalculated: null
 			// }
 		};
+		this.aPassedPrecedents = null;
+		this.aPassedDependents = null;
 
 		this._lockChangeDocument = null;
 	}
@@ -296,11 +298,13 @@ function (window, undefined) {
 			for (let i in allDefNamesListeners) {
 				if (allDefNamesListeners.hasOwnProperty(i) && i.toLowerCase() === defName.toLowerCase()) {
 					for (let listener in allDefNamesListeners[i].listeners) {
-						// TODO возможно стоить добавить все слушатели сразу в curListener
+						// TODO maybe add all listeners in 'curListener' at once
+						// listener can be: cell, range, table, named range - there will be unique processing for each case
 						let elem = allDefNamesListeners[i].listeners[listener];
 						let isArea = elem.ref ? true : false;
 						let is3D = elem.ws.Id ? elem.ws.Id !== ws.Id : false;
 						let isIntersect;
+
 						if (isArea && !is3D && !isCurrentCellHeader) {
 							if (defNameRange) {
 								let defBBox = defNameRange.getBBox0();
@@ -311,6 +315,7 @@ function (window, undefined) {
 
 								isIntersect = elem.ref.contains(cellAddress.col - colShift, cellAddress.row - rowShift);
 							}
+
 							if (isIntersect) {
 								// decompose all elements into dependencies
 								let areaIndexes = getAllAreaIndexes(elem);
@@ -321,9 +326,9 @@ function (window, undefined) {
 											t._setPrecedents(areaIndexes[index], cellIndex);
 										}
 									}
-									continue;
 								}
 							}
+							continue;
 						}
 
 						let parentCellIndex = getParentIndex(elem.parent);
@@ -342,7 +347,6 @@ function (window, undefined) {
 								} else {
 									continue;
 								}
-								// continue;
 							} else if (!elem.Formula.includes("Headers") && isCurrentCellHeader) {
 								continue;
 							}
@@ -372,9 +376,9 @@ function (window, undefined) {
 								setSharedTableIntersection(ws.getTableByName(defName).getRangeWithoutHeaderFooter(), currentCellRange, elem.shared);
 								continue;
 							}
-							t._setDependents(cellIndex, parentCellIndex);
-							t._setPrecedents(parentCellIndex, cellIndex);
 						}
+						t._setDependents(cellIndex, parentCellIndex);
+						t._setPrecedents(parentCellIndex, cellIndex);
 					}
 				}
 			}
@@ -384,9 +388,9 @@ function (window, undefined) {
 			if (!range) {
 				return;
 			}
-			for (let i = range.c1; i <= range.c2; i++) {
-				for (let j = range.r1; j <= range.r2; j++) {
-					let index = AscCommonExcel.getCellIndex(j, i);
+			for (let c = range.c1; c <= range.c2; c++) {
+				for (let r = range.r1; r <= range.r2; r++) {
+					let index = AscCommonExcel.getCellIndex(r, c);
 					indexes.push(index);
 				}
 			}
@@ -513,6 +517,7 @@ function (window, undefined) {
 			if (!this.dependents[cellIndex]) {
 				// if dependents by cellIndex didn't exist, create it
 				this.dependents[cellIndex] = {};
+				let parentCellIndex = null;
 				for (let i in cellListeners) {
 					if (cellListeners.hasOwnProperty(i)) {
 						let parent = cellListeners[i].parent;
@@ -564,7 +569,7 @@ function (window, undefined) {
 							}
 						}
 
-						let parentCellIndex = getParentIndex(parent);
+						parentCellIndex = getParentIndex(parent);
 						if (parentCellIndex === null) {
 							//if (parentCellIndex === null || (typeof(parentCellIndex) === "number" && isNaN(parentCellIndex))) {
 							continue;
@@ -573,7 +578,7 @@ function (window, undefined) {
 						this._setPrecedents(parentCellIndex, cellIndex, true);
 					}
 				}
-				if (Object.keys(this.dependents[cellIndex]).length === 0) {
+				if (Object.keys(this.dependents[cellIndex]).length === 0 && cellIndex !== parentCellIndex) {
 					delete this.dependents[cellIndex];
 					this.ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.TraceDependentsNoFormulas, c_oAscError.Level.NoCritical);
 				}
@@ -581,9 +586,16 @@ function (window, undefined) {
 				if (this.checkCircularReference(cellIndex, true)) {
 					return;
 				}
+				if (this.checkPassedDependents(cellIndex)) {
+					return;
+				}
 				// if dependents by cellIndex aldready exist, check current tree
 				let currentIndex = Object.keys(this.dependents[cellIndex])[0];
 				let isUpdated = false;
+				let bCellHasNotTrace = false;
+				if (Object.keys(this.dependents[cellIndex]).length === 0) {
+					bCellHasNotTrace = true;
+				}
 				for (let i in cellListeners) {
 					if (cellListeners.hasOwnProperty(i)) {
 						let parent = cellListeners[i].parent;
@@ -611,7 +623,7 @@ function (window, undefined) {
 						}
 
 						// if the child cell does not yet have a dependency with listeners, create it
-						if (!this._getDependents(cellIndex, elemCellIndex)) {
+						if (!this._getDependents(cellIndex, elemCellIndex) && cellIndex !== elemCellIndex) {
 							this._setDependents(cellIndex, elemCellIndex);
 							this._setPrecedents(elemCellIndex, cellIndex, true);
 							isUpdated = true;
@@ -620,11 +632,18 @@ function (window, undefined) {
 				}
 
 				if (!isUpdated) {
+					this.setPassedDependents(cellIndex);
 					for (let i in this.dependents[cellIndex]) {
 						if (this.dependents[cellIndex].hasOwnProperty(i)) {
-							this._calculateDependents(i, curListener, true);
+							this._calculateDependents(+i, curListener, true);
 						}
 					}
+					if (!isSecondCall) {
+						this.clearPassedDependents();
+					}
+				}
+				if (Object.keys(this.dependents[cellIndex]).length === 0 && bCellHasNotTrace) {
+					this.ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.TraceDependentsNoFormulas, c_oAscError.Level.NoCritical);
 				}
 			}
 		} else if (!isSecondCall) {
@@ -640,6 +659,9 @@ function (window, undefined) {
 		}
 		if (!this.dependents[from]) {
 			this.dependents[from] = {};
+		}
+		if (from === to) {
+			return;
 		}
 		this.dependents[from][to] = 1;
 	};
@@ -701,9 +723,9 @@ function (window, undefined) {
 			}
 
 			let area = areas[areaName];
-			for (let i = area.range.r1; i <= area.range.r2; i++) {
-				for (let j = area.range.c1; j <= area.range.c2; j++) {
-					let index = AscCommonExcel.getCellIndex(i, j);
+			for (let r = area.range.r1; r <= area.range.r2; r++) {
+				for (let c = area.range.c1; c <= area.range.c2; c++) {
+					let index = AscCommonExcel.getCellIndex(r, c);
 					indexes.push(index);
 				}
 			}
@@ -907,7 +929,11 @@ function (window, undefined) {
 		let currentCellIndex = AscCommonExcel.getCellIndex(row, col);
 		let formulaInfoObject = this.checkUnrecordedAndFormNewStack(currentCellIndex, formulaParsed), isHaveUnrecorded,
 			newOutStack;
+		let bCellHasNotTrace = false;
 
+		if (this.precedents[currentCellIndex] && Object.keys(this.precedents[currentCellIndex]).length === 0) {
+			bCellHasNotTrace = true;
+		}
 		if (formulaInfoObject) {
 			isHaveUnrecorded = formulaInfoObject.isHaveUnrecorded;
 			newOutStack = formulaInfoObject.newOutStack;
@@ -935,6 +961,8 @@ function (window, undefined) {
 						isArea = elemType === cElementType.cellsRange || elemType === cElementType.name,
 						isDefName = elemType === cElementType.name || elemType === cElementType.name3D,
 						isTable = elemType === cElementType.table, areaName;
+					let bPinCell = false;
+					let sValue = null;
 
 					if (elemType === cElementType.cell || is3D || isArea || isDefName || isTable) {
 						let cellRange = new asc_Range(col, row, col, row), elemRange, elemCellIndex;
@@ -954,6 +982,8 @@ function (window, undefined) {
 							} else if (elemRange.isOneCell()) {
 								isArea = false;
 							}
+							sValue = elemValue.value;
+							bPinCell = sValue.includes("$");
 						} else if (isTable) {
 							let currentWsId = elem.ws.Id,
 								elemWsId = elem.area.ws ? elem.area.ws.Id : elem.area.wsFrom.Id;
@@ -962,6 +992,8 @@ function (window, undefined) {
 							elemRange = elem.area.bbox ? elem.area.bbox : (elem.area.range ? elem.area.range.bbox : null);
 							isArea = ref ? true : !elemRange.isOneCell();
 						} else {
+							sValue = elem.value;
+							bPinCell = sValue.includes("$");
 							elemRange = elem.range.bbox ? elem.range.bbox : elem.bbox;
 						}
 
@@ -988,6 +1020,20 @@ function (window, undefined) {
 											elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1 + (row - base.nRow), elemRange.c1 + (col - base.nCol));
 										}
 									}
+								}
+							} else if (bPinCell) {
+								const FIRST_INDEX_VALUE = 0;
+								let nIndex = sValue.indexOf("$");
+								if (nIndex === FIRST_INDEX_VALUE) {
+									sValue = sValue.slice(nIndex + 1);
+									let bStaticCell = sValue.includes("$");
+									if (bStaticCell) {
+										elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1, elemRange.c1);
+									} else {
+										elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1 + (row - base.nRow), elemRange.c1);
+									}
+								} else {
+									elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1, elemRange.c1 + (col - base.nCol));
 								}
 							} else {
 								elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1 + (row - base.nRow), elemRange.c1 + (col - base.nCol));
@@ -1060,7 +1106,11 @@ function (window, undefined) {
 			if (this.checkCircularReference(currentCellIndex, false)) {
 				return;
 			}
+			if (this.checkPassedPrecedents(currentCellIndex)) {
+				return;
+			}
 			this.setPrecedentsLoop(true);
+			this.setPassedPrecedents(currentCellIndex);
 			let isHavePrecedents = false;
 			// check first level, then if function return false, check second, third and so on
 			for (let i in this.precedents[currentCellIndex]) {
@@ -1074,6 +1124,12 @@ function (window, undefined) {
 			}
 
 			this.setPrecedentsLoop(false);
+			if (!isSecondCall) {
+				this.clearPassedPrecedents();
+			}
+		}
+		if (Object.keys(this.precedents[currentCellIndex]).length === 0 && bCellHasNotTrace) {
+			this.ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.TracePrecedentsNoValidReference, c_oAscError.Level.NoCritical);
 		}
 	};
 	TraceDependentsManager.prototype.checkUnrecordedAndFormNewStack = function (cellIndex, formulaParsed) {
@@ -1252,6 +1308,9 @@ function (window, undefined) {
 		if (!this.precedents[from]) {
 			this.precedents[from] = {};
 		}
+		if (from === to) {
+			return;
+		}
 		// TODO calculated: 1, not_calculated: 2
 		// TODO isAreaHeader: "A3:B4"
 		// this.precedents[from][to] = isDependent ? 2 : 1;
@@ -1357,9 +1416,17 @@ function (window, undefined) {
 				} else {
 					this._lockChangeDocument = null;
 					let t = this;
-					if (arg2) {
-						for (let col = arg2.c1; col <= arg2.c2; col++) {
-							for (let row = arg2.r1; row <= arg2.r2; row++) {
+					if (t.isHaveData() && arg2) {
+						if (Asc.c_oAscSelectionType.RangeMax === arg2.getType()) {
+							t.clearAll();
+							break;
+						}
+
+						let maxRowToClear = t.ws.nRowsCount ? Math.min(t.ws.nRowsCount, arg2.r2) : arg2.r2,
+							maxColToClear = t.ws.nColsCount ? Math.min(t.ws.nColsCount, arg2.c2) : arg2.c2;
+
+						for (let col = arg2.c1; col <= maxColToClear; col++) {
+							for (let row = arg2.r1; row <= maxRowToClear; row++) {
 								if (!(arg2.c1 === col && arg2.r1 === row)) {
 									t.clearCellTraces(row, col);
 								}
@@ -1398,6 +1465,59 @@ function (window, undefined) {
 				delete this.precedentsAreasHeaders[areaHeader];
 			}
 		}
+	};
+	/**
+	 * Sets passed precedents cells index for recursive calls
+	 * @memberof TraceDependentsManager
+	 * @param {number} currentCellIndex
+	 */
+	TraceDependentsManager.prototype.setPassedPrecedents = function (currentCellIndex) {
+		if (!this.aPassedPrecedents) {
+			this.aPassedPrecedents = [];
+		}
+		this.aPassedPrecedents.push(currentCellIndex);
+	};
+	/**
+	 * Checks current cell index is already passed in recursive calls
+	 * @memberof TraceDependentsManager
+	 * @param {number} currentCellIndex
+	 * @returns {boolean}
+	 */
+	TraceDependentsManager.prototype.checkPassedPrecedents = function (currentCellIndex) {
+		return !!(this.aPassedPrecedents && this.aPassedPrecedents.includes(currentCellIndex));
+	};
+	/**
+	 * Clears attribute of passed precedents
+	 * @memberof TraceDependentsManager
+	 */
+	TraceDependentsManager.prototype.clearPassedPrecedents = function () {
+		this.aPassedPrecedents = null;
+	};
+	/**
+	 * Sets passed dependents cells index for recursive calls
+	 * @memberof TraceDependentsManager
+	 * @param {number} currentCellIndex
+	 */
+	TraceDependentsManager.prototype.setPassedDependents = function (currentCellIndex) {
+		if (!this.aPassedDependents) {
+			this.aPassedDependents = [];
+		}
+		this.aPassedDependents.push(currentCellIndex);
+	};
+	/**
+	 * Checks current cell index is already passed in recursive calls
+	 * @memberof TraceDependentsManager
+	 * @param {number} currentCellIndex
+	 * @returns {boolean}
+	 */
+	TraceDependentsManager.prototype.checkPassedDependents = function (currentCellIndex) {
+		return !!(this.aPassedDependents && this.aPassedDependents.includes(currentCellIndex));
+	};
+	/**
+	 * Clears attribute of passed dependents
+	 */
+	TraceDependentsManager.prototype.clearPassedDependents = function () {
+		this.aPassedDependents = null;
 	};
 
 

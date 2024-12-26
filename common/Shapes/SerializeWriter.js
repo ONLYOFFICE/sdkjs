@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -582,7 +582,7 @@ function CBinaryFileWriter()
 			this.WriteCore(presentation.Core, presentation.Api);
 
 		// Core
-		if (presentation.CustomProperties)
+		if (presentation.CustomProperties && presentation.CustomProperties.hasProperties())
 			this.WriteCustomProperties(presentation.CustomProperties, presentation.Api);
 
         // ViewProps
@@ -2971,8 +2971,10 @@ function CBinaryFileWriter()
         {
             oThis.WriteRecord2(1, txBody.lstStyle, oThis.WriteTextListStyle);
         }
-        var _content = txBody.content.Content;
-        oThis.WriteRecordArray(2, 0, _content, oThis.WriteParagraph);
+        var _content = txBody.content && txBody.content.Content;
+				if (_content) {
+					oThis.WriteRecordArray(2, 0, _content, oThis.WriteParagraph);
+				}
     };
 
     this.WriteParagraph = function(paragraph, startPos, endPos)
@@ -3329,7 +3331,7 @@ function CBinaryFileWriter()
         else{
             oThis.StartRecord(1);
             oThis.WriteUChar(g_nodeAttributeStart);
-            oThis._WriteBool2(0, shape.attrUseBgFill);
+            oThis._WriteBool2(0, shape.useBgFill);
             oThis.WriteUChar(g_nodeAttributeEnd);
         }
 
@@ -3507,7 +3509,14 @@ function CBinaryFileWriter()
             }
             case AscDFH.historyitem_type_ChartSpace:
             {
-                oThis.WriteRecord2(3, grObj, oThis.WriteChart2);
+                if(grObj.isChartEx())
+                {
+                    oThis.WriteRecord2(7, grObj, oThis.WriteChart2);
+                }
+                else
+                {
+                    oThis.WriteRecord2(3, grObj, oThis.WriteChart2);
+                }
                 break;
             }
             case AscDFH.historyitem_type_SlicerView:
@@ -3548,7 +3557,11 @@ function CBinaryFileWriter()
         oThis.UseContinueWriter++;
 
         var oBinaryChartWriter = new AscCommon.BinaryChartWriter(_memory);
-        oBinaryChartWriter.WriteCT_ChartSpace(grObj);
+        if (grObj.isChartEx()) {
+            oBinaryChartWriter.WriteCT_ChartExSpace(grObj);
+        } else {
+            oBinaryChartWriter.WriteCT_ChartSpace(grObj);
+        }
 
         oThis.data = _memory.data;
         oThis.len = _memory.len;
@@ -5226,7 +5239,7 @@ function CBinaryFileWriter()
             else{
                 _writer.StartRecord(1);
                 _writer.WriteUChar(g_nodeAttributeStart);
-                _writer._WriteBool2(0, shape.attrUseBgFill);
+                _writer._WriteBool2(0, shape.useBgFill);
                 _writer.WriteUChar(g_nodeAttributeEnd);
             }
 
