@@ -8313,10 +8313,10 @@
 
 					// 1 px gap for each section length
 					const gapWidth = 0.5 / this.chartProp.pxToMM;
-					const gapNumber = data.length;
+					const gapNumber = ends.length;
 
 					//Each bar will have 2 gapWidth and 2 margins , on left and right sides
-					const initialBarWidth = (this.chartProp.trueWidth - (2 * gapWidth * gapNumber)) / cachedData.data.length;
+					const initialBarWidth = (this.chartProp.trueWidth - (2 * gapWidth * gapNumber)) / ends.length;
 					const barWidth = (initialBarWidth / (1 + coeff));
 					const margin = (initialBarWidth - barWidth) / 2;
 
@@ -8333,36 +8333,46 @@
 					const meanLine = [];
 					let j = 0;
 					for (let i = 0; i < data.length; i++) {
-						const valPoint = this.cChartDrawer.getYPosition(data[i].val, valAxis, true);
+						let valPoint = this.cChartDrawer.getYPosition(data[i].val, valAxis, true);
 
 						switch (data[i].type) {
 							case cachedData.pointType:
 								// Point
 								this.paths[index] = [this.createPoint(catPoint, valPoint, 18 * gapWidth), false];
+								console.log(valPoint)
 								break;
 							case cachedData.tailType:
 								// Tail
 								const boxEdgeValPoint = this.cChartDrawer.getYPosition(data[i].val2, valAxis, true);
 								this.paths[index] = [this.createTail(catPoint, valPoint, boxEdgeValPoint, tailWidth), true];
+								console.log(valPoint, boxEdgeValPoint)
 								break;
 							case cachedData.bottomBoxType:
 								// Bottom of the box
-								const medianValPointTop = this.cChartDrawer.getYPosition(data[i].val2, valAxis, true);
+								const medianValPointTop = this.cChartDrawer.getYPosition(data[i].val2, valAxis, true) * this.chartProp.pxToMM;
+								valPoint *= this.chartProp.pxToMM
 								this.paths[index] = [this.cChartDrawer._calculateRect(catPoint - (barWidth / 2), valPoint, barWidth, valPoint - medianValPointTop ), true];
+								console.log(valPoint, medianValPointTop)
 								break;
 							case cachedData.medianType:
 								// Median of the box
+								valPoint *= this.chartProp.pxToMM
 								this.paths[index] = [this._createLine([[catPoint - (barWidth / 2), valPoint], [catPoint + (barWidth / 2), valPoint]]), true];
+								console.log(valPoint)
 								break;
 							case cachedData.topBoxType:
 								// Top of the box
-								const medianValPointBottom = this.cChartDrawer.getYPosition(data[i].val2, valAxis, true);
+								const medianValPointBottom = this.cChartDrawer.getYPosition(data[i].val2, valAxis, true) * this.chartProp.pxToMM;
+								valPoint *= this.chartProp.pxToMM
 								this.paths[index] = [this.cChartDrawer._calculateRect(catPoint - (barWidth / 2), medianValPointBottom, barWidth, medianValPointBottom - valPoint), true];
+								console.log(valPoint, medianValPointBottom)
 								break;
 							case cachedData.meanType:
 								// Mean
+								valPoint *= this.chartProp.pxToMM
 								meanLine.push([catPoint, valPoint]);
 								this.paths[index] = [this._createMeanMarker(catPoint, valPoint, 32 * gapWidth), false];
+								console.log(valPoint)
 								break;
 						}
 
@@ -8488,6 +8498,10 @@
 						this.cChartDrawer.drawPath(this.paths[i][0], pen, brush);
 					}
 				}
+			},
+
+			_calculateDLbl : function (compiledDlb) {
+				return;
 			}
 		}
 
@@ -19227,7 +19241,6 @@
 				box = this._createBox(resultingArr[i], axisProperties);
 				this._addDataPoints(box, resultingArr[i]);
 			}
-			console.log(JSON.stringify(this.data));
 		}
 
 		CCachedBoxWhisker.prototype._constructArrays = function (strCache, numArr) {
