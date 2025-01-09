@@ -8306,13 +8306,14 @@ drawBoxWhiskerChart.prototype = {
 
 			const valAxis = this.cChartSpace.chart.plotArea.axId[1];
 			const catAxis = this.cChartSpace.chart.plotArea.axId[0];
-			const arrays = cachedData._constructArrays(strCache, numLit.pts);
+			const data = cachedData.data;
+			const ends = cachedData.ends;
 
 			const coeff = catAxis.scaling.gapWidth;
 
 			// 1 px gap for each section length
 			const gapWidth = 0.5 / this.chartProp.pxToMM;
-			const gapNumber = cachedData.data.length;
+			const gapNumber = data.length;
 
 			//Each bar will have 2 gapWidth and 2 margins , on left and right sides
 			const initialBarWidth = (this.chartProp.trueWidth - (2 * gapWidth * gapNumber)) / cachedData.data.length;
@@ -8330,50 +8331,47 @@ drawBoxWhiskerChart.prototype = {
 			let index = 0;
 
 			const meanLine = [];
-			for (let i = 0; i < arrays.length; i++) {
-				for (let j = 0; j < arrays[i].length; j++) {
-					const valPoint = this.cChartDrawer.getYPosition(arrays[i][j], valAxis, true);
-					if (arrays[i][j] === cachedData.data[i].fStart || arrays[i][j] === cachedData.data[i].fEnd) {
-						// point from which to start drawing vertical line to tail
-						const value = arrays[i][j] === cachedData.data[i].fStart ? cachedData.data[i].fFirstQuartile : cachedData.data[i].fThirdQuartile;
-						const valPoint2 = this.cChartDrawer.getYPosition(value, valAxis, true);
-						this.paths[index] = [this.createTail(catPoint, valPoint, valPoint2, tailWidth), true];
-					} else {
-						// obtain condition to draw, either outlier or nonoutlier
-						const isDraw = arrays[i][j] < cachedData.data[i].fStart || arrays[i][j] > cachedData.data[i].fEnd ? cachedData.outliers : cachedData.nonoutliers;
-						if (isDraw) {
-							this.paths[index] = [this.createPoint(catPoint, valPoint, 18 * gapWidth), false];
-						}
-					}
-					index += 1;
+			let j = 0;
+			for (let i = 0; i < data.length; i++) {
+				const valPoint = this.cChartDrawer.getYPosition(data[i].val, valAxis, true);
+
+				switch (data[i].type) {
+					case cachedData.pointType:
+						// Point
+						this.paths[index] = [this.createPoint(catPoint, valPoint, 18 * gapWidth), false];
+						break;
+					case cachedData.tailType:
+						// Tail
+						const boxEdgeValPoint = this.cChartDrawer.getYPosition(data[i].val2, valAxis, true);
+						this.paths[index] = [this.createTail(catPoint, valPoint, boxEdgeValPoint, tailWidth), true];
+						break;
+					case cachedData.bottomBoxType:
+						// Bottom of the box
+						const medianValPointTop = this.cChartDrawer.getYPosition(data[i].val2, valAxis, true);
+						this.paths[index] = [this.cChartDrawer._calculateRect(catPoint - (barWidth / 2), valPoint, barWidth, valPoint - medianValPointTop ), true];
+						break;
+					case cachedData.medianType:
+						// Median of the box
+						this.paths[index] = [this._createLine([[catPoint - (barWidth / 2), valPoint], [catPoint + (barWidth / 2), valPoint]]), true];
+						break;
+					case cachedData.topBoxType:
+						// Top of the box
+						const medianValPointBottom = this.cChartDrawer.getYPosition(data[i].val2, valAxis, true);
+						this.paths[index] = [this.cChartDrawer._calculateRect(catPoint - (barWidth / 2), medianValPointBottom, barWidth, medianValPointBottom - valPoint), true];
+						break;
+					case cachedData.meanType:
+						// Mean
+						meanLine.push([catPoint, valPoint]);
+						this.paths[index] = [this._createMeanMarker(catPoint, valPoint, 32 * gapWidth), false];
+						break;
 				}
 
-				// recalculate bar body
-				const valFirstQuartile = this.cChartDrawer.getYPosition(cachedData.data[i].fFirstQuartile, valAxis, true) * this.chartProp.pxToMM;
-				const valMedian = this.cChartDrawer.getYPosition(cachedData.data[i].fMedian, valAxis, true) * this.chartProp.pxToMM;
-				const valThirdQuartile = this.cChartDrawer.getYPosition(cachedData.data[i].fThirdQuartile, valAxis, true) * this.chartProp.pxToMM;
-				const valMean = this.cChartDrawer.getYPosition(cachedData.data[i].fMean, valAxis, true) * this.chartProp.pxToMM;
-
-				// draw bottom part of the bar
-				this.paths[index] = [this.cChartDrawer._calculateRect(catPoint - (barWidth / 2), valFirstQuartile, barWidth, valFirstQuartile - valMedian), true];
-				index += 1;
-
-				// draw median part of the bar
-				this.paths[index] = [this._createLine([[catPoint - (barWidth / 2), valMedian], [catPoint + (barWidth / 2), valMedian]]), true];
-				index += 1;
-
-				// draw top part of the bar
-				this.paths[index] = [this.cChartDrawer._calculateRect(catPoint - (barWidth / 2), valMedian, barWidth, valMedian - valThirdQuartile), true];
-				index += 1;
-
-				// draw mean point
-				if (cachedData.meanMarker) {
-					meanLine.push([catPoint, valMean]);
-					this.paths[index] = [this._createMeanMarker(catPoint, valMean, 32 * gapWidth), false];
+				if (i === ends[j]) {
+					catPoint += (gapBetween + barWidth);
+					j++;
 				}
-				index += 1;
 
-				catPoint += (gapBetween + barWidth);
+				index++;
 			}
 
 			if (cachedData.meanLine) {
@@ -19204,6 +19202,13 @@ CColorObj.prototype =
 		this.nonoutliers = seria && seria.layoutPr && seria.layoutPr.visibility ? seria.layoutPr.visibility.nonoutliers : false;
 		this.meanLine = seria && seria.layoutPr && seria.layoutPr.visibility ? seria.layoutPr.visibility.meanLine : false;
 		this.meanMarker = seria && seria.layoutPr && seria.layoutPr.visibility ? seria.layoutPr.visibility.meanMarker : false;
+		this.ends = [];
+		this.pointType = 0;
+		this.tailType = 1;
+		this.bottomBoxType = 2;
+		this.medianType = 3;
+		this.topBoxType = 4
+		this.meanType = 5;
 		this._calculate(seria, numLit, strLit, axisProperties);
 	}
 
@@ -19217,10 +19222,12 @@ CColorObj.prototype =
 		const strCache = strLit && strLit.pts;
 
 		const resultingArr = this._constructArrays(strCache, numLit.pts);
+		let box = null;
 		for (let i = 0; i < resultingArr.length; i++) {
-			this.data.push(this._createBox(resultingArr[i], axisProperties));
+			box = this._createBox(resultingArr[i], axisProperties);
+			this._addDataPoints(box, resultingArr[i]);
 		}
-		console.log(this.data);
+		console.log(JSON.stringify(this.data));
 	}
 
 	CCachedBoxWhisker.prototype._constructArrays = function (strCache, numArr) {
@@ -19334,6 +19341,33 @@ CColorObj.prototype =
 		this._chartExSetAxisMinAndMax(axisProperties.val, fHighestNum);
 
 		return {fStart: fLowestNum, fFirstQuartile: fFirstQuartileVal, fMedian: fMedian.getValue(), fMean: fMean,  fThirdQuartile: fThirdQuartileVal, fEnd: fHighestNum}
+	}
+
+	CCachedBoxWhisker.prototype._addDataPoints = function (box, arr) {
+		for (let j = 0; j < arr.length; j++) {
+
+			if (arr[j] === box.fStart || arr[j] === box.fEnd) {
+				// point from which to start drawing vertical line to tail
+				const value = arr[j] === box.fStart ? box.fFirstQuartile : box.fThirdQuartile;
+				this.data.push({type: this.tailType, val : arr[j], val2: value})
+			} else {
+				// obtain condition to draw, either outlier or nonoutlier
+				const isDraw = arr[j] < box.fStart || arr[j] > box.fEnd ? this.outliers : this.nonoutliers;
+				if (isDraw) {
+					this.data.push({type : this.pointType, val: arr[j]})
+				}
+			}
+		}
+		this.data.push({type: this.bottomBoxType, val: box.fFirstQuartile, val2: box.fMedian});
+		this.data.push({type: this.medianType, val: box.fMedian});
+		this.data.push({type: this.topBoxType, val: box.fThirdQuartile, val2: box.fMedian});
+
+		if (this.meanLine) {
+			this.data.push({type: this.meanType, val: box.fMean});
+		}
+
+		// store the ending index;
+		this.ends.push(this.data.length - 1);
 	}
 
 

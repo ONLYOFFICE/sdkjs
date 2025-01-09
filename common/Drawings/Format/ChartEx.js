@@ -3217,9 +3217,10 @@ function (window, undefined) {
 	InitClass(CSeries, AscFormat.CSeriesBase, AscDFH.historyitem_type_Series);
 	CSeries.prototype.isSupported = function () {
 		let nType = this.layoutId;
-		if(nType === AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN ||
+		if (nType === AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN ||
 			nType === AscFormat.SERIES_LAYOUT_WATERFALL ||
-			nType === AscFormat.SERIES_LAYOUT_FUNNEL) {
+			nType === AscFormat.SERIES_LAYOUT_FUNNEL ||
+			nType === AscFormat.SERIES_LAYOUT_BOX_WHISKER) {
 			return true;
 		}
 		return false;
