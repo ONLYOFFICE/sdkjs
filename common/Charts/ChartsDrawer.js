@@ -2743,6 +2743,8 @@ CChartsDrawer.prototype =
 		const secondType = 1 < plotArea.plotAreaRegion.series.length ? plotArea.plotAreaRegion.series[1].layoutId : null;
 		const strLit = seria.getCatLit(type);
 		const numLit = seria.getValLit();
+		const width = plotArea.extX;
+		const height = plotArea.extY;
 
 		if (numLit && numLit.pts && numLit.ptCount > 0) {
 
@@ -2769,12 +2771,12 @@ CChartsDrawer.prototype =
 			}
 
 			calculateExtremums(type, axisProperties, numLit);
-			plotArea.plotAreaRegion.setCachedData(this._createCachedData(type, seria, numLit, strLit, axisProperties, secondType));
+			plotArea.plotAreaRegion.setCachedData(this._createCachedData(type, seria, numLit, strLit, axisProperties, secondType, width, height));
 			this._chartExHandleAxesConfigurations(plotArea.axId, axisProperties);
 		}
 	},
 
-	_createCachedData: function (type, seria, numLit, strLit, axisProperties, secondType) {
+	_createCachedData: function (type, seria, numLit, strLit, axisProperties, secondType, width, height) {
 		switch (type) {
 			case AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN:
 				return new CCachedClusteredColumn(type, seria, numLit, strLit, axisProperties, secondType);
@@ -2783,7 +2785,7 @@ CChartsDrawer.prototype =
 			case AscFormat.SERIES_LAYOUT_FUNNEL:
 				return new CCachedFunnel(type, numLit, axisProperties);
 			case AscFormat.SERIES_LAYOUT_TREEMAP:
-				return new CCachedTreemap(type, seria, numLit, strLit, axisProperties);
+				return new CCachedTreemap(type, numLit, strLit, width, height);
 			default:
 				return null;
 		}
@@ -18971,34 +18973,128 @@ CColorObj.prototype =
 		return isNegative ? -num : num;
 	}
 
-	function CCachedTreemap(type, numLit, strLit, axisProperties) {
+	function CCachedTreemap(type, numLit, strLit, width, height) {
 		CCachedChartExData.call(this, type, []);
-		this._calculate(numLit, strLit, axisProperties);
+		this._calculate(numLit, strLit, width, height);
 	}
 
 	AscFormat.InitClassWithoutType(CCachedTreemap, CCachedChartExData);
 
-	CCachedTreemap.prototype._calculate = function (numLit, strLit, axisProperties) {
-		if (!numLit || !axisProperties) {
+	CCachedTreemap.prototype._calculate = function (numLit, strLit, width, height) {
+		if (!numLit || !numLit.pts) {
 			return;
 		}
 		const getLastLayer = function (strLit) {
-			console.log(strLit);
-			const strCache = strLit && strLit.pts ? strLit.pts : null;
-			if (!strCache || strCache.length <= 1) {
+			if (!strLit || strLit.length <= 1) {
 				return null;
 			}
 
-			for (let i = strCache.length - 1; i >= 0; i--) {
-				if (strCache[i].pts.length > 0) {
+			for (let i = strLit.length - 1; i >= 0; i--) {
+				if (strLit[i].pts.length > 0) {
 					return i;
 				}
 			}
 			return null
 		}
 
-		const lastLayer = getLastLayer(strLit)
+		// Normalize all elements that either negative or have no corresponding label to zero
+		const normalizeNumArr = function (numArr, strLit, lastLayer, area) {
+			// turn all elements that have no corresponding label into zero
+			const verifiedIdxs = {};
 
+			// Populate `verifiedIdxs` if there are labels in `strLit`
+			if (lastLayer !== null) {
+				for (let i = 0; i < strLit.length; i++) {
+					for (let j = 0; j < strLit[i].pts.length; j++) {
+						verifiedIdxs[strLit[i].pts[j].idx] = true;
+					}
+				}
+			}
+
+			// Normalize `numArr` values
+			const arr = [];
+			let sum = 0;
+			for (let k = 0; k < numArr.length; k++) {
+				if (numArr[k].val < 0 || (lastLayer !== null && !verifiedIdxs[numArr[k].idx])) {
+					continue;
+				}
+				sum += numArr[k].val;
+				arr.push({idx: numArr[k].idx, val: numArr[k].val});
+			}
+
+			for (let k = 0; k < arr.length; k++) {
+				arr[k].val = (arr[k].val / sum) * area;
+			}
+			return arr;
+		}
+
+		const createTreemap = function (numArr, strLit, lastLayer, width, height) {
+
+			const getAspectRatio = function(currentAreasSum, lastElementArea, predefinedSide, isVert){
+				const totalArea = currentAreasSum + lastElementArea;
+				let newWidth = null;
+				let newHeight = null;
+				if (isVert){
+					newWidth = totalArea / predefinedSide;
+					newHeight = lastElementArea / newWidth;
+				} else{
+					newHeight = totalArea / predefinedSide;
+					newWidth = lastElementArea / newHeight;
+				}
+				return Math.max(newWidth, newHeight) / Math.min(newWidth, newHeight);
+			}
+
+			const squarify = function(areas, newWidth, newHeight){
+				const resArr = [];
+				let oldHeight, oldWidth
+				for (let i = 0; i < areas.length; i++){
+					const area = areas[i].val;
+					const lastElem = resArr.length !== 0 ? resArr[resArr.length - 1] : null;
+					const newPredefinedSize = lastElem && lastElem.position ? newWidth : newHeight;
+					if (lastElem && newPredefinedSize !== 0 && getAspectRatio(lastElem.totalSum, area, lastElem.predefinedSize, lastElem.position) < getAspectRatio(0, area, newPredefinedSize, !lastElem.position)){
+						lastElem.array.push(area);
+						lastElem.totalSum += area;
+						if (lastElem.position) {
+							newWidth = (lastElem.totalSum / oldHeight);
+						} else {
+							newHeight = (lastElem.totalSum / oldWidth);
+						}
+					}else {
+						oldHeight = newHeight;
+						oldWidth = newWidth;
+						if (getAspectRatio(0, area, oldHeight, true) < getAspectRatio(0, area, oldWidth, false)){
+							resArr.push({position: true, array: [area], totalSum: area, predefinedSize: oldHeight});
+							newWidth = oldWidth - (area / oldHeight);
+						} else {
+							resArr.push({position: false, array: [area], totalSum: area, predefinedSize: oldWidth});
+							newHeight = oldHeight - (area / oldWidth);
+						}
+					}
+				}
+				return resArr;
+			}
+
+
+			if (lastLayer != null) {
+				return null;
+			} else {
+				// const isStrLit = strLit;
+				// let labelCounter = 0;
+				// for (let i = 0; i < numArr.length; i++) {
+				// 	// search label in strLit if found get name, and increase labelCounter
+				// 	let name = isStrLit && numArr[i].idx === strLit[0].pts[labelCounter].idx ? strLit[0].pts[0].val : null;
+				// 	labelCounter = name !== null ? labelCounter + 1 : labelCounter;
+				// 	treeHead.push({name: name, pVal: numArr[i].val / totalValue, start: i, end: i + 1, pos: i, idx: i});
+				// }
+				return squarify(numArr, width, height);
+			}
+		}
+
+		const numArr = numLit.pts;
+		const lastLayer = getLastLayer(strLit)
+		const newNumArr = normalizeNumArr(numArr, strLit, lastLayer, width * height);
+		this.data = createTreemap(newNumArr, strLit, lastLayer, width, height);
+		console.log(this.data);
 	}
 
 
