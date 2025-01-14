@@ -4418,7 +4418,10 @@ function(window, undefined) {
 			if (!this.chart.plotArea.plotAreaRegion) {
 				return true;
 			}
-
+			const type = this.chart.plotArea.plotAreaRegion.series[0].layoutId;
+			if (type === AscFormat.SERIES_LAYOUT_TREEMAP) {
+				return false;
+			}
 			const numLit = this.chart.plotArea.plotAreaRegion.series[0].getValLit();
 			if (!numLit) {
 				return true;
@@ -4685,7 +4688,7 @@ function(window, undefined) {
 		
 		// TODO after new succefull implementation of new type remove option here
 		const type = this.chart && this.chart.plotArea && this.chart.plotArea.plotAreaRegion && this.chart.plotArea.plotAreaRegion.series && this.chart.plotArea.plotAreaRegion.series[0] ? this.chart.plotArea.plotAreaRegion.series[0].layoutId : null;
-		if (isChartEx && !type && (type === AscFormat.SERIES_LAYOUT_BOX_WHISKER || type === AscFormat.SERIES_LAYOUT_PARETO_LINE || type === AscFormat.SERIES_LAYOUT_REGION_MAP || type === AscFormat.SERIES_LAYOUT_SUNBURST || type === AscFormat.SERIES_LAYOUT_TREEMAP)) {
+		if (isChartEx && !type && (type === AscFormat.SERIES_LAYOUT_BOX_WHISKER || type === AscFormat.SERIES_LAYOUT_PARETO_LINE || type === AscFormat.SERIES_LAYOUT_REGION_MAP || type === AscFormat.SERIES_LAYOUT_SUNBURST)) {
 			return ;
 		}
 		//----------------------------------
@@ -5613,7 +5616,7 @@ function(window, undefined) {
 
 		// TODO after new succefull implementation of new type remove option here
 		const type = this.chart && this.chart.plotArea && this.chart.plotArea.plotAreaRegion && this.chart.plotArea.plotAreaRegion.series && this.chart.plotArea.plotAreaRegion.series[0] ? this.chart.plotArea.plotAreaRegion.series[0].layoutId : null;
-		if (isChartEx && !type && (type === AscFormat.SERIES_LAYOUT_BOX_WHISKER || type === AscFormat.SERIES_LAYOUT_PARETO_LINE || type === AscFormat.SERIES_LAYOUT_REGION_MAP || type === AscFormat.SERIES_LAYOUT_SUNBURST || type === AscFormat.SERIES_LAYOUT_TREEMAP)) {
+		if (isChartEx && !type && (type === AscFormat.SERIES_LAYOUT_BOX_WHISKER || type === AscFormat.SERIES_LAYOUT_PARETO_LINE || type === AscFormat.SERIES_LAYOUT_REGION_MAP || type === AscFormat.SERIES_LAYOUT_SUNBURST)) {
 			return ;
 		}
 		//----------------------------------
@@ -9005,7 +9008,7 @@ function(window, undefined) {
 
 		// TODO after new succefull implementation of new type remove option here
 		const type = this.chart && this.chart.plotArea && this.chart.plotArea.plotAreaRegion && this.chart.plotArea.plotAreaRegion.series && this.chart.plotArea.plotAreaRegion.series[0] ? this.chart.plotArea.plotAreaRegion.series[0].layoutId : null;
-		if (isChartEx && !type && (type === AscFormat.SERIES_LAYOUT_BOX_WHISKER || type === AscFormat.SERIES_LAYOUT_PARETO_LINE || type === AscFormat.SERIES_LAYOUT_REGION_MAP || type === AscFormat.SERIES_LAYOUT_SUNBURST || type === AscFormat.SERIES_LAYOUT_TREEMAP)) {
+		if (isChartEx && !type && (type === AscFormat.SERIES_LAYOUT_BOX_WHISKER || type === AscFormat.SERIES_LAYOUT_PARETO_LINE || type === AscFormat.SERIES_LAYOUT_REGION_MAP || type === AscFormat.SERIES_LAYOUT_SUNBURST)) {
 			return ;
 		}
 		//----------------------------------

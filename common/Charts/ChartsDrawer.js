@@ -1492,6 +1492,7 @@ CChartsDrawer.prototype =
 			this.calcProp.trueWidth = this.calcProp.widthCanvas - this.calcProp.chartGutter._left - this.calcProp.chartGutter._right;
 			this.calcProp.trueHeight = this.calcProp.heightCanvas - this.calcProp.chartGutter._top - this.calcProp.chartGutter._bottom;
 		}
+		console.log(this.calcProp.trueWidth, this.calcProp.trueHeight);
 	},
 	
 	//****new calculate data****
@@ -2781,6 +2782,8 @@ CChartsDrawer.prototype =
 				return new CCachedWaterfall(type, seria, numLit, axisProperties);
 			case AscFormat.SERIES_LAYOUT_FUNNEL:
 				return new CCachedFunnel(type, numLit, axisProperties);
+			case AscFormat.SERIES_LAYOUT_TREEMAP:
+				return new CCachedTreemap(type, seria, numLit, strLit, axisProperties);
 			default:
 				return null;
 		}
@@ -18966,6 +18969,36 @@ CColorObj.prototype =
 		// Return the normalized number with the appropriate scale
 		num = (count >= 0) ? roundedNum * Math.pow(10, count) : roundedNum / Math.pow(10, -count);
 		return isNegative ? -num : num;
+	}
+
+	function CCachedTreemap(type, numLit, strLit, axisProperties) {
+		CCachedChartExData.call(this, type, []);
+		this._calculate(numLit, strLit, axisProperties);
+	}
+
+	AscFormat.InitClassWithoutType(CCachedTreemap, CCachedChartExData);
+
+	CCachedTreemap.prototype._calculate = function (numLit, strLit, axisProperties) {
+		if (!numLit || !axisProperties) {
+			return;
+		}
+		const getLastLayer = function (strLit) {
+			console.log(strLit);
+			const strCache = strLit && strLit.pts ? strLit.pts : null;
+			if (!strCache || strCache.length <= 1) {
+				return null;
+			}
+
+			for (let i = strCache.length - 1; i >= 0; i--) {
+				if (strCache[i].pts.length > 0) {
+					return i;
+				}
+			}
+			return null
+		}
+
+		const lastLayer = getLastLayer(strLit)
+
 	}
 
 

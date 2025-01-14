@@ -793,7 +793,7 @@ function (window, undefined) {
 		let aRes = [];
 		for (let nDim = 0; nDim < this.dimension.length; ++nDim) {
 			let oDim = this.dimension[nDim];
-			if ((oDim instanceof  CNumericDimension) && oDim.type === AscFormat.NUMERIC_DIMENSION_TYPE_VAL) {
+			if ((oDim instanceof  CNumericDimension) && (oDim.type === AscFormat.NUMERIC_DIMENSION_TYPE_VAL || oDim.type === AscFormat.NUMERIC_DIMENSION_TYPE_SIZE)) {
 				aRes.push(oDim);
 			}
 		}
@@ -3219,7 +3219,8 @@ function (window, undefined) {
 		let nType = this.layoutId;
 		if(nType === AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN ||
 			nType === AscFormat.SERIES_LAYOUT_WATERFALL ||
-			nType === AscFormat.SERIES_LAYOUT_FUNNEL) {
+			nType === AscFormat.SERIES_LAYOUT_FUNNEL ||
+			nType === AscFormat.SERIES_LAYOUT_TREEMAP) {
 			return true;
 		}
 		return false;
