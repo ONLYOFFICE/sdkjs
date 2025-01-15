@@ -1261,6 +1261,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias CanUndo
+	 * @returns {boolean}
 	 * @since 8.2.0
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/CanUndo.js
 	 */
@@ -1273,6 +1274,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias CanRedo
+	 * @returns {boolean}
 	 * @since 8.2.0
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/CanRedo.js
 	 */
