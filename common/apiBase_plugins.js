@@ -1175,8 +1175,8 @@
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias ReplaceTextSmart
      * @param {Array} arrString - An array of replacement strings.
-     * @param {string} [sParaTab=" "] - A character which is used to specify the tab in the source text.
-     * @param {string} [sParaNewLine=" "] - A character which is used to specify the line break character in the source text.
+     * @param {string} [sParaTab="\t"] - A character which is used to specify the tab in the source text.
+     * @param {string} [sParaNewLine="\r\n"] - A character which is used to specify the line break character in the source text.
      * @returns {boolean} - Always returns true.
      * @since 7.1.0
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ReplaceTextSmart.js
