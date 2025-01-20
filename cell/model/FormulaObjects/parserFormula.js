@@ -1308,6 +1308,23 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var ws = r.worksheet;
 		var oldExcludeHiddenRows = ws.bExcludeHiddenRows;
 		ws.bExcludeHiddenRows = false;
+
+		// let bbox = r._getNoEmptyBBox(r.bbox);
+		// //todo bbox.r1 может быть меньше r.bbox.r1. рассчитывает ли функции выше что getMatrix возвращает от r.bbox.r1
+		// for (let i = 0; i < bbox.r2 - bbox.r1 + 1; ++i) {
+		// 	arr[i] = [];
+		// 	for (let j = 0; j < bbox.c2 - bbox.c1 + 1; ++j) {
+		// 		arr[i][j] = new cEmpty();
+		// 	}
+		// }
+		// r._foreachNoEmptyData(function (cell, i, j, r1, c1) {
+		// 	if(!(excludeNestedStAg && cell.formulaParsed && cell.formulaParsed.isFoundNestedStAg())){
+		// 		var checkTypeVal = checkTypeCell(cell);
+		// 		if(!(excludeErrorsVal && CellValueType.Error === checkTypeVal.type)){
+		// 			arr[i -  bbox.r1][j - bbox.c1] = checkTypeVal;
+		// 		}
+		// 	}
+		// });
 		r._foreach2(function (cell, i, j, r1, c1) {
 			if (!arr[i - r1]) {
 				arr[i - r1] = [];

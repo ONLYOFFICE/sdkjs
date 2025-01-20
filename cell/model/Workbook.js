@@ -2149,7 +2149,7 @@
 						for (var name in changedSheet) {
 							if (changedSheet.hasOwnProperty(name)) {
 								bbox = changedSheet[name];
-								ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2)._foreachNoEmpty(callback);
+								ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2)._foreachNoEmptyData(callback);
 							}
 						}
 					}
@@ -17653,6 +17653,26 @@
 			}
 		if (null != actionCell) {
 			return this._foreachNoEmpty(actionCell);
+		}
+	};
+	Range.prototype._getNoEmptyBBox=function(bbox){
+		let r1 = gc_nMaxRow0 + 1;
+		let r2 = -1;
+		let c1 = gc_nMaxCol0 + 1;
+		let c2 = -1;
+		for (let i = bbox.c1; i <= bbox.c2; ++i) {
+			let sheetMemory = this.worksheet.cellsByCol[i];
+			if (sheetMemory) {
+				c1 = Math.min(c1, i);
+				c2 = Math.max(c2, i);
+				r1 = Math.min(r1, sheetMemory.getMinIndex());
+				r2 = Math.max(r2, sheetMemory.getMaxIndex());
+			}
+		}
+		if (r1 <= r2 && c1 <= c2) {
+			return new Asc.Range(c1, r1, c2, r2);
+		} else {
+			return null;
 		}
 	};
 	Range.prototype._getRangeType=function(oBBox){
