@@ -46,39 +46,6 @@ window.startPluginApi = function() {
 	 */
 
 	/**
-	 * The editors which the plugin is available for:
-	 * <b>word</b> - text document editor,
-	 * <b>cell</b> - spreadsheet editor,
-	 * <b>slide</b> - presentation editor,
-	 * <b>pdf</b> - pdf editor.
-	 * @typedef {("word" | "cell" | "slide" | "pdf")} editorType
-	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/editorType.js
-	 */
-
-	/**
-	 * The data type selected in the editor and sent to the plugin:
-     * <b>text</b> - the text data,
-	 * <b>html</b> - HTML formatted code,
-	 * <b>ole</b> - OLE object data,
-     * <b>desktop</b> - the desktop editor data,
-     * <b>destop-external</b> - the main page data of the desktop app (system messages),
-     * <b>none</b> - no data will be send to the plugin from the editor,
-	 * <b>sign</b> - the sign for the keychain plugin.
-	 * @typedef {("text" | "html" | "ole" | "desktop" | "destop-external" | "none" | "sign")} initDataType
-     * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/initDataType.js
-	 */
-
-	/**
-	 * The skinnable plugin button used in the plugin interface (used for visual plugins with their own window only, i.e. isVisual == true and isInsideMode == false).
-	 * @typedef { Object } Button
-	 * @property {string} text - The label which is displayed on the button.
-	 * @property {boolean} [primary] - Defines if the button is primary or not. The primary flag affects the button skin only.
-	 * @property {boolean} [isViewer] - Defines if the button is shown in the viewer mode only or not.
-	 * @property {localeTranslate} [textLocale] - Translations for the text field. The object keys are the two letter language codes (ru, de, it, etc.) and the values are the button label translation for each language.
-	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/Button.js
-	 */
-
-	/**
 	 * @typedef {Object} ContentControl
 	 * Content control object.
 	 * @property {string} Tag - A tag assigned to the content control. The same tag can be assigned to several content controls so that you can make reference to them in your code.
