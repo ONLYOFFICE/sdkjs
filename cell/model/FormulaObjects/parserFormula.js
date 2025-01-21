@@ -8093,7 +8093,7 @@ function parserFormula( formula, parent, _ws ) {
 				let sheetName = _3DRefTmp[1];
 
 				// _3DRefTmp[4] - shortlink info
-				let isExternalRefExist, externalLink, receivedLink, externalName, isShortLink, externalProps;
+				let isExternalRefExist, externalLink, receivedLink, externalName, isShortLink, externalProps, isCurrentFile, currentFileDefname;
 				if (_3DRefTmp[4]) {
 					externalProps = t.wb && t.wb.externalReferenceHelper && t.wb.externalReferenceHelper.check3dRef(_3DRefTmp, local);
 				} else {
@@ -8112,13 +8112,15 @@ function parserFormula( formula, parent, _ws ) {
 					externalName = externalProps.externalName;
 					receivedLink = externalProps.receivedLink;
 					isShortLink = externalProps.isShortLink;
+					isCurrentFile = externalProps.isCurrentFile;
+					currentFileDefname = externalProps.currentFileDefname;
 				}
 				
 				if (externalProps && !sheetName) {
 					sheetName = externalProps.sheetName ? externalProps.sheetName : externalName;
 				}
 
-				if (externalLink) {
+				if (externalLink && !isCurrentFile) {
 					if (local) {
 						externalLink = t.wb.getExternalLinkIndexByName(externalLink);
 						if (externalLink === null) {
@@ -8149,7 +8151,7 @@ function parserFormula( formula, parent, _ws ) {
 						// if we refer to defname that doesn't exist, but the ER itself exists, then we refer to the first existing worksheet
 						// since we don't know the name of the sheet in the short link and defname doesn't exist
 						wsF =  t.wb.getExternalWorksheet(externalLink, sheetName, true /* getFirtsSheet */);
-						
+
 						// todo in future versions it's necessary to check the internal defname and refer to it when opening the file with [0] eLink. 
 						// todo Research needed. this is special case when externalLink equal [0] and it refers to the current file
 						if (!wsF) {
@@ -8163,7 +8165,32 @@ function parserFormula( formula, parent, _ws ) {
 
 					wsT = wsF;
 				} else {
-					wsF = t.wb.getWorksheetByName(sheetName/*_3DRefTmp[1]*/);
+					// isCurrentFileCheck
+					let currentDefname, sheet;
+					if (isCurrentFile && currentFileDefname /*&& !local*/) {
+						// if link to the same file - set external link to zero just like in MS
+						externalLink = "0";
+
+						// looking for defname from this sheet
+						currentDefname = t.wb.getDefinesNames(currentFileDefname);
+						if (!currentDefname) {
+							// todo it's not entirely clear what needs to be returned in the absence of defname - an error or cName
+							// parseResult.setError(c_oAscError.ID.FrmlWrongReferences);
+							// if (!ignoreErrors) {
+							// 	t.outStack = [];
+							// 	return false;
+							// }
+
+							sheet = t.wb.getActiveWs();
+							wsF = t.wb.getWorksheetByName(sheet.getName());
+						} else {
+							let exclamationMarkIndex = currentDefname.ref && currentDefname.ref.lastIndexOf("!");
+							sheet = currentDefname.ref.slice(0, exclamationMarkIndex);
+							wsF = t.wb.getWorksheetByName(sheet);
+						}
+					}
+
+					wsF = wsF ? wsF : t.wb.getWorksheetByName(sheetName/*_3DRefTmp[1]*/);
 					wsT = (null !== _3DRefTmp[2]) ? t.wb.getWorksheetByName(_3DRefTmp[2]) : wsF;
 				}
 

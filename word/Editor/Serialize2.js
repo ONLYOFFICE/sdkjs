@@ -7748,8 +7748,10 @@ function BinaryCustomsTableWriter(memory, doc, customXmlManager)
 		}
 		if (null !== customXml.content) {
 			this.bs.WriteItem(c_oSerCustoms.ContentA, function() {
-				let str = customXmlManager.getCustomXMLString(customXml);
-				oThis.memory.WriteCustomStringA(str);
+				let str  = customXmlManager.getCustomXMLString(customXml);
+				let data = AscCommon.Utf8.encode(str);
+				oThis.memory.WriteULong(data.length);
+				oThis.memory.WriteBuffer(data, 0, data.length);
 			});
 		}
 	};
@@ -7819,16 +7821,16 @@ function BinaryFileReader(doc, openParams)
 	this.ReadFromStream = function(stream, bClearStreamOnly)
 	{
 		this.stream = stream;
-		this.PreLoadPrepare(bClearStreamOnly);
+		this.PreLoadPrepare(bClearStreamOnly, true);
 		this.ReadMainTable();
-		this.PostLoadPrepare();
+		this.PostLoadPrepare(undefined, true);
 		return true;
 	};
     this.Read = function(data)
     {
 		return this.ReadFromStream(this.getbase64DecodedData(data));
     };
-	this.PreLoadPrepare = function(bClearStreamOnly)
+	this.PreLoadPrepare = function(bClearStreamOnly, bClearPptxLoader)
 	{
 		var styles = this.Document.Styles.Style;
         
@@ -7838,8 +7840,10 @@ function BinaryFileReader(doc, openParams)
         stDefault.Paragraph = null;
 		stDefault.Table = null;
 
-        //надо сбросить то, что остался после открытия документа(повторное открытие в Version History)
-        pptx_content_loader.Clear(bClearStreamOnly);
+		if (bClearPptxLoader) {
+			//надо сбросить то, что остался после открытия документа(повторное открытие в Version History)
+			pptx_content_loader.Clear(bClearStreamOnly);
+		}
 	}
     this.ReadMainTable = function()
 	{	
@@ -8107,7 +8111,7 @@ function BinaryFileReader(doc, openParams)
 			}
 		}
 	};
-    this.PostLoadPrepare = function(opt_xmlParserContext)
+    this.PostLoadPrepare = function(opt_xmlParserContext, bClearPptxLoader)
     {
 		let api = this.Document.DrawingDocument && this.Document.DrawingDocument.m_oWordControl && this.Document.DrawingDocument.m_oWordControl.m_oApi;
 		this.Document.UpdateDefaultsDependingOnCompatibility();
@@ -8470,9 +8474,11 @@ function BinaryFileReader(doc, openParams)
 			}
 		}
 	    pptx_content_loader.Reader.GenerateSmartArts();
-		
-		//чтобы удалялся stream с бинарником
-		pptx_content_loader.Clear(true);
+
+		if (bClearPptxLoader) {
+			//чтобы удалялся stream с бинарником
+			pptx_content_loader.Clear(true);
+		}
     };
     this.ReadFromString = function (sBase64, copyPasteObj) {
         //надо сбросить то, что остался после открытия документа

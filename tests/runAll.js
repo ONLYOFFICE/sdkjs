@@ -76,7 +76,9 @@ const allTests = [
 	'slide/shortcuts/shortcuts.html',
 	'word/shortcuts/shortcuts.html',
 
-	'oform/xml/oformXml.html'
+	// related ooxml tests
+	'oform/xml/oformXml.html',
+	'word/custom-xml/custom-xml-ooxml.html',
 ];
 
 const maxTestsAtOnce = require('events').defaultMaxListeners;

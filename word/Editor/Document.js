@@ -2281,6 +2281,10 @@ CDocument.prototype.IsLoadingDocument = function()
 {
 	return (AscCommon.g_oIdCounter.m_bLoad);
 };
+CDocument.prototype.IsSelectParagraphEndMark = function()
+{
+	return true;
+};
 CDocument.prototype.On_EndLoad                     = function()
 {
 	this.Start_SilentMode();
@@ -9750,8 +9754,21 @@ CDocument.prototype.executeShortcut = function(type)
 		{
 			if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, false, this.IsFormFieldEditing()))
 			{
+				let selectedInfo = this.GetSelectedElementsInfo();
+				let math = selectedInfo.GetMath();
+
 				this.StartAction(AscDFH.historydescription_Document_EnterButton);
-				this.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Line));
+				if (math && math.Is_InInnerContent())
+				{
+					math.Handle_AddNewLine();
+					math.ProcessAutoCorrect();
+					// TODO: Implement case !math.Is_InInnerContent()
+				}
+				else
+				{
+					this.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Line));
+				}
+				this.Recalculate();
 				this.FinalizeAction();
 				result = true;
 			}
@@ -11841,9 +11858,14 @@ CDocument.prototype.EndFormEditing = function()
 	if (oInlineSdt && oInlineSdt.IsForm())
 	{
 		if (oInlineSdt.IsFixedForm())
+		{
 			this.EndDrawingEditing();
+		}
 		else
+		{
+			this.RemoveSelection();
 			oInlineSdt.MoveCursorOutsideElement(true);
+		}
 
 		this.UpdateSelection();
 		this.UpdateInterface();

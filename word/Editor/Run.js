@@ -3713,30 +3713,41 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
             if (PRS.ComplexFields.isHiddenFieldContent() && para_End !== ItemType && para_FieldChar !== ItemType)
             	continue;
 
-			if (para_InstrText === ItemType && !PRS.IsFastRecalculate())
+			if (para_InstrText === ItemType)
 			{
-				var oInstrText = Item;
-				if (!PRS.ComplexFields.isComplexFieldCode())
+				if (PRS.IsFastRecalculate())
 				{
-					if (AscCommon.IsSpace(Item.Value))
+					if (Item.GetReplacementItem())
 					{
-						Item     = new AscWord.CRunSpace(Item.Value);
-						ItemType = para_Space;
-						Item.Measure(g_oTextMeasurer, this.getCompiledPr());
+						Item = Item.GetReplacementItem();
+						ItemType = Item.Type;
 					}
-					else
-					{
-						// TODO: Пока для такого текста не шейпим по-нормальному, а как по-старому по одному отдельному символу
-						Item     = new AscWord.CRunText(Item.Value);
-						ItemType = para_Text;
-						AscWord.ParagraphTextShaper.ShapeRunTextItem(Item, this.getCompiledPr());
-					}
-					
-					oInstrText.SetReplacementItem(Item);
 				}
 				else
 				{
-					oInstrText.SetReplacementItem(null);
+					var oInstrText = Item;
+					if (!PRS.ComplexFields.isComplexFieldCode())
+					{
+						if (AscCommon.IsSpace(Item.Value))
+						{
+							Item     = new AscWord.CRunSpace(Item.Value);
+							ItemType = para_Space;
+							Item.Measure(g_oTextMeasurer, this.getCompiledPr());
+						}
+						else
+						{
+							// TODO: Пока для такого текста не шейпим по-нормальному, а как по-старому по одному отдельному символу
+							Item     = new AscWord.CRunText(Item.Value);
+							ItemType = para_Text;
+							AscWord.ParagraphTextShaper.ShapeRunTextItem(Item, this.getCompiledPr());
+						}
+						
+						oInstrText.SetReplacementItem(Item);
+					}
+					else
+					{
+						oInstrText.SetReplacementItem(null);
+					}
 				}
 			}
 
@@ -5008,16 +5019,14 @@ ParaRun.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _Cur
 		
 		if (para_Text === Item.Type)
 		{
-			let font = AscFonts.GetGraphemeFont(Item.GetGrapheme());
-			if (font)
+			let fontId = AscFonts.GetGraphemeFontId(Item.GetGrapheme());
+			if (fontId)
 			{
 				let fontSize = Item.GetFontSlot(textPr) === fontslot_CS ? textPr.FontSizeCS : textPr.FontSize;
-				if (undefined === fontMap[font.name])
-					fontMap[font.name] = {};
-				if (undefined === fontMap[font.name][font.style])
-					fontMap[font.name][font.style] = fontSize;
+				if (undefined === fontMap[fontId])
+					fontMap[fontId] = fontSize;
 				else
-					fontMap[font.name][font.style] = Math.max(fontSize, fontMap[font.name][font.style]);
+					fontMap[fontId] = Math.max(fontSize, fontMap[fontId]);
 			}
 			UpdateLineMetricsText = true;
 			continue;
@@ -5106,12 +5115,11 @@ ParaRun.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _Cur
 		
 		let metrics = textPr.GetTextMetrics(fontSlot, this.Paragraph.GetTheme());
 		
-		for (let fontName in fontMap)
+		for (let fontId in fontMap)
 		{
-			for (let fontStyle in fontMap[fontName])
-			{
-				metrics.Update(fontName, fontMap[fontName][fontStyle], fontStyle);
-			}
+			let fontName  = AscFonts.GetFontNameByFontId(fontId);
+			let fontStyle = AscFonts.GetFontStyleByFontId(fontId);
+			metrics.Update(fontName, fontMap[fontId], fontStyle);
 		}
 		
 		let textDescent = metrics.Descent;

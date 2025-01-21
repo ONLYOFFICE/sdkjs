@@ -2904,7 +2904,7 @@
 		hostnameRe            = /^(((https?)|(ftps?)):\/\/)?([\-\wа-яё]*:?[\-\wа-яё]*@)?(([\-\wа-яё]+\.)+[\wа-яё\-]{2,}(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`'~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?)/i,
 		localRe               = /^(((https?)|(ftps?)):\/\/)([\-\wа-яё]*:?[\-\wа-яё]*@)?(([\-\wа-яё]+)(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`'~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?)/i,
 		fileRe                = /^((file):\/\/)[^'`"%^{}<>].*/i,//reserved symbols from word 2010
-		rx_allowedProtocols      = /(^((https?|ftps?|file|tessa|smb):\/\/)|(mailto:)).*/i,
+		rx_allowedProtocols      = /(^((https?|ftps?|file|tessa|joplin|smb):\/\/)|(mailto:)).*/i,
 
 		rx_table              = build_rx_table(null),
 		rx_table_local        = build_rx_table(null);
@@ -3475,10 +3475,19 @@
 			}
 		}
 
+		/* current file check */
+		let currentFileName = window["Asc"]["editor"].DocInfo && window["Asc"]["editor"].DocInfo.get_Title();
+		// let currentFileDefname;
+
 		/* shortlink return obj {fullstring, externalLink, defname} */
 		let shortLink = isExternalShortLink(subSTR) || (local && !external && isExternalShortLinkLocal(subSTR));
 
 		if (shortLink) {
+			if ((shortLink.externalLink && shortLink.externalLink === currentFileName) || external === "0") {
+				external = null;
+				shortLink.currentFile = true;
+			}
+
 			this.pCurrPos += shortLink.fullString.length + externalLength;
 			this.operand_str = shortLink.defname;
 			return [true, null, null, external, shortLink];

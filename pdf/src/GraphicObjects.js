@@ -1205,25 +1205,41 @@
         } else {
             for (i = 0; i < this.selectedObjects.length; ++i) {
                 let oDrawing = this.selectedObjects[i];
-                if (oDrawing.selectStartPage === pageIndex && !oDrawing.IsFreeText || (oDrawing.IsFreeText && !oDrawing.IsFreeText())) {
+                if (oDrawing.selectStartPage === pageIndex) {
                     let nType = oDrawing.IsAnnot() && oDrawing.IsStamp() ? AscFormat.TYPE_TRACK.ANNOT_STAMP : AscFormat.TYPE_TRACK.SHAPE;
 
                     if (oDrawing.IsAnnot() && (oDrawing.IsTextMarkup() || oDrawing.IsComment())) {
                         oDrawing.DrawSelected(drawingDocument.Overlay);
                     }
                     else {
-                        drawingDocument.DrawTrack(
-                            nType,
-                            oDrawing.getTransformMatrix(),
-                            0,
-                            0,
-                            oDrawing.extX,
-                            oDrawing.extY,
-                            AscFormat.CheckObjectLine(oDrawing),
-                            oDrawing.canRotate(),
-                            undefined,
-                            (isDrawHandles || this.document.IsViewerObject(oDrawing)) && oDrawing.canEdit()
-                        );
+                        if (oDrawing.IsAnnot() && oDrawing.IsFreeText()) {
+                            drawingDocument.DrawTrack(
+                                nType,
+                                oDrawing.getTransformMatrix(),
+                                0,
+                                0,
+                                oDrawing.extX,
+                                oDrawing.extY,
+                                AscFormat.CheckObjectLine(oDrawing),
+                                oDrawing.canRotate(),
+                                undefined,
+                                true
+                            );
+                        }
+                        else {
+                            drawingDocument.DrawTrack(
+                                nType,
+                                oDrawing.getTransformMatrix(),
+                                0,
+                                0,
+                                oDrawing.extX,
+                                oDrawing.extY,
+                                AscFormat.CheckObjectLine(oDrawing),
+                                oDrawing.canRotate(),
+                                undefined,
+                                (isDrawHandles || this.document.IsViewerObject(oDrawing)) && oDrawing.canEdit()
+                            );
+                        }
                     }
                 }
             }
@@ -1285,11 +1301,13 @@
                     this.lastSelectedObject = object;
                 }
                 this.checkShowMediaControlOnSelect();
-                oDoc.SetMouseDownObject(this.selectedObjects[0], this.selectedObjects.length == 0);
+                if (!object.IsFreeText || !object.IsFreeText() || !object.IsInTextBox()) {
+                    oDoc.SetMouseDownObject(object, this.selectedObjects.length == 0);
+                }
                 return;
             }
         }
-    },
+    };
     CGraphicObjects.prototype.hyperlinkCanAdd = function (bCheckInHyperlink) {
         var content = this.getTargetDocContent();
         if (content) {
@@ -1352,7 +1370,6 @@
         return bRet;
     };
 
-    CGraphicObjects.prototype.loadDocumentStateAfterLoadChanges = function() {};
     CGraphicObjects.prototype.saveDocumentState = function(){};
 	
 	CGraphicObjects.prototype.getAllRasterImagesOnPage = function(pageIndex) {
@@ -1394,6 +1411,7 @@
     CGraphicObjects.prototype.getDrawingsPasteShift     = AscFormat.DrawingObjectsController.prototype.getDrawingsPasteShift;
     CGraphicObjects.prototype.removeCallback            = AscFormat.DrawingObjectsController.prototype.removeCallback;
     CGraphicObjects.prototype.getAllSingularDrawings    = AscFormat.DrawingObjectsController.prototype.getAllSingularDrawings;
+    CGraphicObjects.prototype.loadDocumentStateAfterLoadChanges = AscFormat.DrawingObjectsController.prototype.loadDocumentStateAfterLoadChanges;
 
     CGraphicObjects.prototype.startRecalculate = function() {};
 

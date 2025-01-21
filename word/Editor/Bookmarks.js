@@ -130,7 +130,7 @@ CParagraphBookmark.prototype.GoToBookmark = function()
 	if (!oParagraph)
 		return;
 
-	var oLogicDocument = oParagraph.LogicDocument;
+	var oLogicDocument = oParagraph.GetLogicDocument();
 	if (!oLogicDocument)
 		return;
 

@@ -15018,8 +15018,16 @@ function RangeDataManagerElem(bbox, data)
 				this.DefinedNames[i].parent = this;
 			}
 		}
+
+		let api = Asc.editor || editor;
+		let originalWb = api.wbModel;
+		originalWb && originalWb.dependencyFormulas.lockRecal();
+
 		this.initWorksheetsFromSheetDataSet();
 		this.initWorkbook();
+		this.prepareDefNames();
+
+		originalWb && originalWb.dependencyFormulas.unlockRecal();
 
 		return res;
 	};
@@ -15068,7 +15076,7 @@ function RangeDataManagerElem(bbox, data)
 				*/
 				for (let i = 0; i < this.DefinedNames.length; i++) {
 					let defname = this.DefinedNames[i];
-					let defnameFromWorkbook = wb.getDefinesNames(defname.Name);
+					let defnameFromWorkbook = wb && wb.getDefinesNames(defname.Name);
 					if (defnameFromWorkbook) {
 						let defnameArea3D = defnameFromWorkbook.parsedRef && defnameFromWorkbook.parsedRef.outStack && defnameFromWorkbook.parsedRef.outStack[0];
 						let defnameWorksheet = defnameArea3D && defnameArea3D.getWS && defnameArea3D.getWS();
@@ -15344,6 +15352,38 @@ function RangeDataManagerElem(bbox, data)
 		}
 	};
 
+	ExternalReference.prototype.prepareDefNames = function () {
+		let wb = this.getWb();
+		if (wb && wb.dependencyFormulas && wb.dependencyFormulas.defNames && wb.dependencyFormulas.defNames.wb) {
+			for (let i in wb.dependencyFormulas.defNames.wb) {
+				let defName = wb.dependencyFormulas.defNames.wb[i];
+				defName.parsedRef.parse();
+			}
+		}
+	};
+
+	ExternalReference.prototype.initWorksheets = function () {
+		if (this.SheetNames) {
+			for (var i = 0; i < this.SheetNames.length; i++) {
+				this.initWorksheet(this.SheetNames[i]);
+			}
+		}
+	};
+	
+	ExternalReference.prototype.initWorksheet = function (sheetName) {
+		var ws = this.worksheets[sheetName];
+		if (!this.worksheets[sheetName]) {
+			var wb = this.getWb();
+			if (!wb) {
+				wb = new AscCommonExcel.Workbook(null, window["Asc"]["editor"]);
+			}
+			ws = new AscCommonExcel.Worksheet(wb);
+			ws.sName = sheetName;
+
+			this.worksheets[sheetName] = ws;
+		}
+	};
+
 	ExternalReference.prototype.initWorksheetFromSheetDataSet = function (sheetName) {
 		var sheetDataSetIndex = this.getSheetByName(sheetName);
 		if (null !== sheetDataSetIndex) {
@@ -15351,11 +15391,15 @@ function RangeDataManagerElem(bbox, data)
 			var sheetDataSet = this.SheetDataSet[sheetDataSetIndex];
 			var ws = this.worksheets[sheetName];
 			if (!this.worksheets[sheetName]) {
-				var wb = new AscCommonExcel.Workbook(null, window["Asc"]["editor"]);
-				ws = new AscCommonExcel.Worksheet(wb);
+				var wb = this.getWb();
+				if (!wb) {
+					wb = new AscCommonExcel.Workbook(null, window["Asc"]["editor"]);
+				}
+				ws = new AscCommonExcel.Worksheet(wb, wb.aWorksheets.length);
 				ws.sName = sheetName;
 
 				this.worksheets[sheetName] = ws;
+				wb.aWorksheets.push(ws);
 			}
 
 
@@ -15363,6 +15407,9 @@ function RangeDataManagerElem(bbox, data)
 			if (!sheetDataSet || !sheetDataSet.Row) {
 				return;
 			}
+			let api = Asc.editor || editor;
+			let originalWb = api.wbModel;
+			let isLockRecalc = false;
 			for (var i = 0; i < sheetDataSet.Row.length; i++) {
 				if (!sheetDataSet.Row[i] || !sheetDataSet.Row[i].Cell) {
 					continue;
@@ -15376,11 +15423,18 @@ function RangeDataManagerElem(bbox, data)
 					// this.CellValue = null;
 					AscFormat.ExecuteNoHistory(function(){
 						AscCommonExcel.executeInR1C1Mode(false, function () {
+							if (!isLockRecalc) {
+								originalWb && originalWb.dependencyFormulas.lockRecal();
+								isLockRecalc = true;
+							}
 							var range = ws.getRange2(sheetDataSet.Row[i].Cell[j].Ref);
 							range.setValue(sheetDataSet.Row[i].Cell[j].CellValue);
 						});
 					});
 				}
+			}
+			if (isLockRecalc) {
+				originalWb && originalWb.dependencyFormulas.unlockRecal();
 			}
 		}
 	};
@@ -15391,12 +15445,37 @@ function RangeDataManagerElem(bbox, data)
 			for (let i = 0; i < this.DefinedNames.length; i++) {
 				let defName = this.DefinedNames[i];
 				let ws = this.getSheetByIndex(defName.SheetId);
+				if (!ws && defName.RefersTo) {
+					// try to find sheetname by RefersTo string
+					let exclamationMarkIndex = defName.RefersTo.lastIndexOf("!");
+					if (exclamationMarkIndex !== -1) {
+						let sheetNamePart = defName.RefersTo.slice(0, exclamationMarkIndex);
+						// remove equal sign
+						if (sheetNamePart[0] === "=") {
+							sheetNamePart = sheetNamePart.substring(1);
+						}
+
+						// regex to find string enclosed in single qoutes
+						let regex = /^'(.*)'$/;
+						let match = regex.exec(sheetNamePart);
+						if (match && match[1]) {
+							sheetNamePart = match[1];
+						}
+
+						ws = this.worksheets[sheetNamePart];
+					}
+				}
+
 				if (ws != null) {
 					//on parse name3d use g_DefNameWorksheet
 					let RealDefNameWorksheet = AscCommonExcel.g_DefNameWorksheet;
 					AscCommonExcel.g_DefNameWorksheet = ws;
-					let oDefName = new Asc.asc_CDefName(defName.Name, defName.RefersTo);
-					wb.editDefinesNames(null, oDefName);
+					let stringToParse;
+					if (defName && defName.RefersTo && defName.RefersTo[0] === "=") {
+						stringToParse = defName.RefersTo.substring(1);
+					}
+					let oDefName = new Asc.asc_CDefName(defName.Name, stringToParse ? stringToParse : defName.RefersTo);
+					wb && wb.editDefinesNames(null, oDefName);
 					AscCommonExcel.g_DefNameWorksheet = RealDefNameWorksheet;	
 				}
 			}
@@ -15436,7 +15515,7 @@ function RangeDataManagerElem(bbox, data)
 
 	ExternalReference.prototype.getWb = function () {
 		if (this.worksheets) {
-			for (var i in this.worksheets) {
+			for (let i in this.worksheets) {
 				//если есть this.worksheets, если нет - проверить и обработать
 				if (this.worksheets[i]) {
 					return this.worksheets[i].workbook;
@@ -16117,7 +16196,8 @@ function RangeDataManagerElem(bbox, data)
 						this.RefersTo = defNames.wb[this.Name].getRef();
 						//need init from range + updateFromSheet from data set
 						if (this.RefersTo) {
-							this.parent.updateSheetData(sheetName, sheet, [AscCommonExcel.g_oRangeCache.getAscRange(this.RefersTo.split("!")[1])]);
+							let exclamationMarkIndex = this.RefersTo.lastIndexOf("!");
+							this.parent.updateSheetData(sheetName, sheet, [AscCommonExcel.g_oRangeCache.getAscRange(this.RefersTo.slice(exclamationMarkIndex + 1))]);
 						}
 
 						isChanged = true;

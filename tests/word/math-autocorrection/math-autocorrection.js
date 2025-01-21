@@ -970,6 +970,7 @@ $(function () {
 			Test("\\int _(x+1)\\of 1/2  ", [["ParaRun", ""], ["CNary", "∫_(x+1)▒〖1/2〗"], ["ParaRun", ""]], false, "Check large operators");
 			Test("\\prod ^(x+1)\\of 1/2  ", [["ParaRun", ""], ["CNary", "∏^(x+1)▒〖1/2〗"], ["ParaRun", ""]],false, "Check large operators");
 			Test("∫^(x+1)_(1_i)\\of 1/2  ", [["ParaRun", ""], ["CNary", "∫_(1_i)^(x+1)▒〖1/2〗"], ["ParaRun", ""]], false, "Check large operators");
+			Test("∑_(k=0)^n▒〖(n¦k) a^k b^(n-k)〗   ", [["ParaRun", ""], ["CNary", "∑_(k=0)^n▒〖(n¦k) a^k b^(n-k)〗"], ["ParaRun", " "]], false, "Check add space after nary");
 		})
 
 		QUnit.module( "Functions", function ()

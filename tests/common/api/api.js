@@ -71,6 +71,7 @@ $(function () {
 			["smb://192.168.56.1/e/Testfolder/TestFile.docx", AscCommon.c_oAscUrlType.Unsafe],
 
 			["tessa://tessaclient.EPD/?Action=OpenCard&ID=c40076f5-daa9-4929-8f66-d3fd6ae2dcb1", AscCommon.c_oAscUrlType.Unsafe],
+			["joplin://x-callback-url/openFolder?id=1234", AscCommon.c_oAscUrlType.Unsafe],
 
 			["file://localhost/etc/fstab", AscCommon.c_oAscUrlType.Unsafe],
 			["file:///etc/fstab", AscCommon.c_oAscUrlType.Unsafe],

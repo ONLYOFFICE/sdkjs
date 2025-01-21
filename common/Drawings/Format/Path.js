@@ -764,7 +764,7 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
                     // check if it not ellipse arc in fact but line (three points on one line)
                     // if this case will not be caught there will be NaN in params and
                     // drawing will be unpredictable
-                    // inaccuracy may be different so commented code below
+                    // inaccuracy may be different
                     // (Ax * (By - Cy) + Bx * (Cy - Ay) + Cx * (Ay - By) ) / 2 - triangle square
                     if (isNaN(lastY)) {
                         lastY = 0;
@@ -772,24 +772,23 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
                     if (isNaN(lastX)) {
                         lastX = 0;
                     }
-                    // let triangleSquare = (x * (b - lastY) + a * (lastY - y) + lastX * (y - b)) / 2;
-                    // if ( Math.round(triangleSquare) === 0 || Math.round(triangleSquare) === -0) {
-                    //     AscCommon.consoleLog("tranform ellipticalArcTo to line. 2 catch:",
-                    //         cmd.x, cmd.y, cmd.a, cmd.b, 0, 1);
-                    //     this.ArrPathCommand[i] ={id: lineTo, X:x, Y:y};
-                    // } else {
-
-                    // change ellipticalArcTo params to draw arc easy
-                    this.ArrPathCommand.push({id: ellipticalArcTo,
-                        stX: lastX,
-                        stY: lastY,
-                        wR: newParams.wR,
-                        hR: newParams.hR,
-                        stAng: newParams.stAng*cToRad,
-                        swAng: newParams.swAng*cToRad,
-                        ellipseRotation: newParams.ellipseRotation*cToRad});
-
-                    // }
+                    let triangleSquare = (x * (b - lastY) + a * (lastY - y) + lastX * (y - b)) / 2;
+                    let accuracy = 10e4;
+                    if ( Math.round(triangleSquare * accuracy) === 0 || Math.round(triangleSquare * accuracy) === -0) {
+                        AscCommon.consoleLog("tranform ellipticalArcTo to line. 2 catch. Triangle square:",
+                            triangleSquare);
+                        this.ArrPathCommand[i] ={id: lineTo, X:x, Y:y};
+                    } else {
+                        // change ellipticalArcTo params to draw arc easy
+                        this.ArrPathCommand.push({id: ellipticalArcTo,
+                            stX: lastX,
+                            stY: lastY,
+                            wR: newParams.wR,
+                            hR: newParams.hR,
+                            stAng: newParams.stAng*cToRad,
+                            swAng: newParams.swAng*cToRad,
+                            ellipseRotation: newParams.ellipseRotation*cToRad});
+                    }
 
                     lastX = x;
                     lastY = y;

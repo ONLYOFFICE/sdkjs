@@ -50,8 +50,9 @@
 	};
 	CAnnotSelectTrackHandler.prototype.OnChangePosition = function(bCheckMouseUpPos) {
 		let oMouseDownAnnot = this.Document.mouseDownAnnot;
+		let isLocked = oMouseDownAnnot && oMouseDownAnnot.Lock.Is_Locked();
 
-		if (!oMouseDownAnnot || false == oMouseDownAnnot.IsTextMarkup() || this.Document.Viewer.file.isSelectionUse()) {
+		if (!oMouseDownAnnot || false == oMouseDownAnnot.IsTextMarkup() || this.Document.Viewer.file.isSelectionUse() || isLocked) {
 			this.OnHide();
 			return;
 		}

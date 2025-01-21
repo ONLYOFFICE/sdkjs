@@ -5146,6 +5146,23 @@
 	baseEditorsApi.prototype.asc_StopInkDrawer = function() {
 		this.stopInkDrawer();
 	};
+	baseEditorsApi.prototype.asc_RemoveAllInks = function() {
+		this.removeAllInks();
+	};
+	baseEditorsApi.prototype.removeAllInks = function() {
+	};
+	baseEditorsApi.prototype.asc_HaveInks = function() {
+        return this.haveInks();
+	};
+	baseEditorsApi.prototype.haveInks = function() {
+        return true;
+	};
+	baseEditorsApi.prototype.asc_CanRemoveAllInks = function() {
+        return this.canRemoveAllInks();
+	};
+	baseEditorsApi.prototype.canRemoveAllInks = function() {
+        return true;
+	};
 	baseEditorsApi.prototype.stopInkDrawer = function() {
 		this.inkDrawer.turnOff();
 	};
@@ -5475,6 +5492,9 @@
 	prot['asc_StartDrawInk'] = prot.asc_StartDrawInk;
 	prot['asc_StartInkEraser'] = prot.asc_StartInkEraser;
 	prot['asc_StopInkDrawer'] = prot.asc_StopInkDrawer;
+	prot['asc_RemoveAllInks'] = prot.asc_RemoveAllInks;
+	prot['asc_HaveInks'] = prot.asc_HaveInks;
+	prot['asc_CanRemoveAllInks'] = prot.asc_CanRemoveAllInks;
 	prot['startGetDocInfo'] = prot.startGetDocInfo;
 	prot['stopGetDocInfo'] = prot.stopGetDocInfo;
 	prot["can_CopyCut"] = prot.can_CopyCut;

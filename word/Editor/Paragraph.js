@@ -5953,6 +5953,10 @@ Paragraph.prototype.private_CorrectPosInCombiningMark = function(oContentPos, is
  */
 Paragraph.prototype.getSearchPosByXY = function(x, y, page, yIsLine, stepEnd, centerMode)
 {
+	let logicDocument = this.GetLogicDocument();
+	if (stepEnd && logicDocument && logicDocument.IsSelectParagraphEndMark)
+		stepEnd = logicDocument.IsSelectParagraphEndMark();
+	
 	let searchPos = new AscWord.ParagraphSearchPositionXY();
 	searchPos.init(this, stepEnd, centerMode);
 	
@@ -6653,7 +6657,7 @@ Paragraph.prototype.Get_StartRangePos2 = function(CurLine, CurRange)
 	this.Content[Pos].Get_StartRangePos2(CurLine, CurRange, ContentPos, Depth + 1);
 	return ContentPos;
 };
-Paragraph.prototype.Get_EndRangePos2 = function(CurLine, CurRange)
+Paragraph.prototype.Get_EndRangePos2 = function(CurLine, CurRange, stepEnd)
 {
 	var ContentPos = new AscWord.CParagraphContentPos();
 	if (!this.Lines[CurLine] || !this.Lines[CurLine].Ranges[CurRange])
@@ -6661,8 +6665,12 @@ Paragraph.prototype.Get_EndRangePos2 = function(CurLine, CurRange)
 
 	var Depth = 0;
 	var Pos   = this.Lines[CurLine].Ranges[CurRange].EndPos;
+	if (false === stepEnd && Pos === this.Content.length - 1 && Pos > 0)
+		--Pos;
+	
 	ContentPos.Update(Pos, Depth);
 	this.Content[Pos].Get_EndRangePos2(CurLine, CurRange, ContentPos, Depth + 1);
+	
 	return ContentPos;
 };
 Paragraph.prototype.Get_StartPos = function()
@@ -8727,6 +8735,12 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage, clipInfo)
 					
 					drawSelectionState.beginRange(iRange);
 					
+					if (rangeEnd === this.Content.length - 1
+						&& this.GetLogicDocument()
+						&& this.GetLogicDocument().IsSelectParagraphEndMark
+						&& !this.GetLogicDocument().IsSelectParagraphEndMark())
+						--rangeEnd;
+					
 					for (let pos = rangeStart; pos <= rangeEnd; ++pos)
 					{
 						this.Content[pos].drawSelectionInRange(iLine, iRange, drawSelectionState);
@@ -9139,6 +9153,12 @@ Paragraph.prototype.GetSelectionBounds = function()
 				
 				if (StartPos > rangeEnd || EndPos < rangeStart)
 					continue;
+				
+				if (rangeEnd === this.Content.length - 1
+					&& this.GetLogicDocument()
+					&& this.GetLogicDocument().IsSelectParagraphEndMark
+					&& !this.GetLogicDocument().IsSelectParagraphEndMark())
+					--rangeEnd;
 				
 				drawSelectionState.beginRange(iRange);
 				for (var CurPos = rangeStart; CurPos <= rangeEnd; CurPos++)

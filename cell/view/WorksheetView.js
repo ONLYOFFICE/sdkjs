@@ -15718,6 +15718,35 @@
 				return false;
 			};
 
+			const doByAllRange = function (_range, callback) {
+				let isAllProperty = false;
+				let _allColProps = t.model.getAllCol();
+				if (!_allColProps || !_allColProps.xfs) {
+					let _allRowProps = t.model.getAllRow();
+					if (!_allRowProps || !_allRowProps.xfs) {
+						_range._foreachColNoEmpty(function (_col) {
+							if (_col && _col.xfs) {
+								isAllProperty = true;
+								return true;
+							}
+						});
+						if (!isAllProperty) {
+							_range._foreachRowNoEmpty(function (_row) {
+								if (_row && _row.xfs) {
+									isAllProperty = true;
+									return true;
+								}
+							});
+						}
+					}
+				}
+
+				if (isAllProperty) {
+					callback(_range, true);
+				} else {
+					callback(_range);
+				}
+			};
 
             History.Create_NewPoint();
             History.StartTransaction();
@@ -15981,7 +16010,9 @@
 
                         switch(val) {
 							case c_oAscCleanOptions.All:
-							    range.cleanAll();
+								doByAllRange (range, function (_range, ignoreNoEmpty) {
+									_range.cleanAll(ignoreNoEmpty);
+								});
 								t.model.deletePivotTables(range.bbox);
 								t.model.removeSparklines(range.bbox);
 								t.model.clearDataValidation([range.bbox], true);
@@ -15999,7 +16030,9 @@
 								break;
 							case c_oAscCleanOptions.Format:
 								t.model.clearConditionalFormattingRulesByRanges([range.bbox]);
-							    range.cleanFormat();
+								doByAllRange (range, function (_range, ignoreNoEmpty) {
+									_range.cleanFormat(ignoreNoEmpty);
+								});
 								break;
 							case c_oAscCleanOptions.Hyperlinks:
 							    range.cleanHyperlinks();
@@ -26325,7 +26358,7 @@
 						let type = fP.outStack[i].type;
 						if ((AscCommonExcel.cElementType.cellsRange3D === type || AscCommonExcel.cElementType.cell3D === type ||
 							AscCommonExcel.cElementType.name3D === type) && fP.outStack[i].externalLink) {
-							let eR = t.model.workbook.getExternalWorksheet(fP.outStack[i].externalLink);
+							let eR = t.model.workbook.getExternalLink(fP.outStack[i].externalLink);
 							if (eR) {
 								externalReferences.push(opt_get_only_ids ? eR.Id : eR.getAscLink());
 								if (initStructure) {
@@ -26345,7 +26378,7 @@
 					let importRangeLinks = fP.importFunctionsRangeLinks;
 					if (importRangeLinks) {
 						for (let i in importRangeLinks) {
-							let eR = t.model.workbook.getExternalWorksheet(i);
+							let eR = t.model.workbook.getExternalLink(i);
 							if (eR) {
 								externalReferences.push(opt_get_only_ids ? eR.Id : eR.getAscLink());
 								if (initStructure) {

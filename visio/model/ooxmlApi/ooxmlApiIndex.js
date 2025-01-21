@@ -760,7 +760,7 @@
 		let fillResultCells = ["LineColor", "FillForegnd", "FillBkgnd"];
 		let fillColorResultCells = ["Color", "GradientStopColor"];
 		let numberResultCells = ["LinePattern", "LineWeight", "GradientStopColorTrans", "GradientStopPosition",
-		"FillGradientAngle", "EndArrowSize", "BeginArrowSize", "FillPattern"];
+		"FillGradientAngle", "EndArrowSize", "BeginArrowSize", "FillPattern", "LineCap"];
 		let stringResultCells = ["EndArrow", "BeginArrow"];
 		let booleanResultCells = ["FillGradientEnabled"];
 
@@ -900,6 +900,18 @@
 						angle = 5400000;
 					}
 					cellNumberValue = angle;
+				} else if (cellName === "LineCap") {
+					switch (cellNumberValue) {
+						case 0:
+							cellNumberValue = 1;
+							break;
+						case 1:
+							cellNumberValue = 0;
+							break;
+						case 2:
+							cellNumberValue = 2;
+							break;
+					}
 				}
 				return cellNumberValue;
 			}

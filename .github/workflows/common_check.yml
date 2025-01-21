@@ -131,4 +131,4 @@ jobs:
                      -v $PWD/deploy/sdkjs/word:/opt/onlyoffice/documentbuilder/sdkjs/word \
                      -v $PWD/deploy/sdkjs/cell:/opt/onlyoffice/documentbuilder/sdkjs/cell \
                      -v $PWD/deploy/sdkjs/slide:/opt/onlyoffice/documentbuilder/sdkjs/slide \
-                     onlyoffice/doc-builder-testing:next-release rake rspec_critical
+                     onlyoffice/doc-builder-testing:next-release rspec_critical

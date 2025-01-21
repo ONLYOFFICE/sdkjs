@@ -810,7 +810,7 @@
 
 		if (this.isUseRequestAnimationFrame)
 		{
-			this.cancelAnimationFrame(this.id);
+			this.cancelAnimationFrame.call(window, this.id);
 		}
 		else
 		{

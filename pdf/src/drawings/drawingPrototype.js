@@ -37,9 +37,6 @@
 	 * @constructor
     */
     function CPdfDrawingPrototype() {
-        this._page          = undefined;
-        this._apIdx         = undefined; // индекс объекта в файле
-
         this._isFromScan = false;   // флаг, что был прочитан из скана страницы 
 
         this._doc                   = undefined;
@@ -106,11 +103,13 @@
         return oRecalcData;
     };
     CPdfDrawingPrototype.prototype.SetParentPage = function(oParent) {
-        this.setParent(oParent);
+        this.parent = oParent;
     };
+    CPdfDrawingPrototype.prototype.setParent2 = function() {};
     CPdfDrawingPrototype.prototype.GetParentPage = function() {
         return this.parent;
     };
+    
     CPdfDrawingPrototype.prototype.GetSelectionQuads = function() {
         let oDoc        = this.GetDocument();
         let oViewer     = oDoc.Viewer;
@@ -180,39 +179,38 @@
                     for (let index = 0; index < aAnchored.length; ++index) {
                         aAnchored[index].Draw_Selection();
                     }
+                }
+            }
+
+            let aSelectionRanges = oDrawSelectionState.getSelectionRanges();
+            for (let iSel = 0; iSel < aSelectionRanges.length; ++iSel) {
+                let x = aSelectionRanges[iSel].x;
+                let w = aSelectionRanges[iSel].w;
+                let y = aSelectionRanges[iSel].y;
+                let h = aSelectionRanges[iSel].h;
+                
+                if (oPara.CalculatedFrame) {
+                    let Frame_X_min = oPara.CalculatedFrame.L2;
+                    let Frame_Y_min = oPara.CalculatedFrame.T2;
+                    let Frame_X_max = oPara.CalculatedFrame.L2 + oPara.CalculatedFrame.W2;
+                    let Frame_Y_max = oPara.CalculatedFrame.T2 + oPara.CalculatedFrame.H2;
                     
-                    let aSelectionRanges = oDrawSelectionState.getSelectionRanges();
-                    for (let iSel = 0; iSel < aSelectionRanges.length; ++iSel) {
-                        let x = aSelectionRanges[iSel].x;
-                        let w = aSelectionRanges[iSel].w;
-                        let y = aSelectionRanges[iSel].y;
-                        let h = aSelectionRanges[iSel].h;
-                        
-                        if (oPara.CalculatedFrame) {
-                            let Frame_X_min = oPara.CalculatedFrame.L2;
-                            let Frame_Y_min = oPara.CalculatedFrame.T2;
-                            let Frame_X_max = oPara.CalculatedFrame.L2 + oPara.CalculatedFrame.W2;
-                            let Frame_Y_max = oPara.CalculatedFrame.T2 + oPara.CalculatedFrame.H2;
-                            
-                            x = Math.min(Math.max(Frame_X_min, x), Frame_X_max);
-                            y = Math.min(Math.max(Frame_Y_min, y), Frame_Y_max);
-                            w = Math.min(w, Frame_X_max - x);
-                            h = Math.min(h, Frame_Y_max - y);
-                        }
-                        
-                        let isTextMatrixUse = ((null != oDrDoc.TextMatrix) && !global_MatrixTransformer.IsIdentity(oDrDoc.TextMatrix));
-                        if (isTextMatrixUse) {
-                            let oPt1 = oDrDoc.TextMatrix.TransformPoint(x, y);            // левый верхний
-                            let oPt2 = oDrDoc.TextMatrix.TransformPoint(x + w, y);        // правый верхний
-                            let oPt3 = oDrDoc.TextMatrix.TransformPoint(x + w, y + h);    // правый нижний
-                            let oPt4 = oDrDoc.TextMatrix.TransformPoint(x, y + h);        // левый нижний
+                    x = Math.min(Math.max(Frame_X_min, x), Frame_X_max);
+                    y = Math.min(Math.max(Frame_Y_min, y), Frame_Y_max);
+                    w = Math.min(w, Frame_X_max - x);
+                    h = Math.min(h, Frame_Y_max - y);
+                }
+                
+                let isTextMatrixUse = ((null != oDrDoc.TextMatrix) && !global_MatrixTransformer.IsIdentity(oDrDoc.TextMatrix));
+                if (isTextMatrixUse) {
+                    let oPt1 = oDrDoc.TextMatrix.TransformPoint(x, y);            // левый верхний
+                    let oPt2 = oDrDoc.TextMatrix.TransformPoint(x + w, y);        // правый верхний
+                    let oPt3 = oDrDoc.TextMatrix.TransformPoint(x + w, y + h);    // правый нижний
+                    let oPt4 = oDrDoc.TextMatrix.TransformPoint(x, y + h);        // левый нижний
 
-                            let nKoeff = oViewer.getDrawingPageScale(nPage) * g_dKoef_pix_to_mm;
+                    let nKoeff = oViewer.getDrawingPageScale(nPage) * g_dKoef_pix_to_mm;
 
-                            oInfo.quads.push([oPt1.x / nKoeff, oPt1.y / nKoeff, oPt2.x / nKoeff, oPt2.y / nKoeff, oPt4.x / nKoeff, oPt4.y / nKoeff, oPt3.x / nKoeff, oPt3.y / nKoeff]);
-                        }
-
-                    }
+                    oInfo.quads.push([oPt1.x / nKoeff, oPt1.y / nKoeff, oPt2.x / nKoeff, oPt2.y / nKoeff, oPt4.x / nKoeff, oPt4.y / nKoeff, oPt3.x / nKoeff, oPt3.y / nKoeff]);
                 }
             }
         }
@@ -265,37 +263,40 @@
         return this._doc;
     };
     CPdfDrawingPrototype.prototype.SetPage = function(nPage) {
-        let nCurPage = this.GetPage();
-        if (nPage == nCurPage)
-            return;
-
         let oViewer = editor.getDocumentRenderer();
         let oDoc    = this.GetDocument();
+        
+        let oCurPage = this.GetParentPage();
+        let oNewPage = oDoc.GetPageInfo(nPage);
+        let nCurPage = oCurPage ? oCurPage.GetIndex() : -1;
+        
+        if (oNewPage == oCurPage)
+            return;
 
         AscCommon.History.Add(new CChangesPDFDrawingPage(this, nCurPage, nPage));
 
         // initial set
-        if (nCurPage == undefined) {
-            this._page = nPage;
+        if (oCurPage == null) {
+            this.SetParentPage(oNewPage);
             return;
         }
         
-        let nCurIdxOnPage = oViewer.pagesInfo.pages[nCurPage] && oViewer.pagesInfo.pages[nCurPage].drawings ? oViewer.pagesInfo.pages[nCurPage].drawings.indexOf(this) : -1;
-        if (oViewer.pagesInfo.pages[nPage]) {
+        let nCurIdxOnPage = oCurPage && oCurPage.drawings ? oCurPage.drawings.indexOf(this) : -1;
+        if (oNewPage) {
             if (oDoc.drawings.indexOf(this) != -1) {
                 if (nCurIdxOnPage != -1) {
-                    oViewer.pagesInfo.pages[nCurPage].drawings.splice(nCurIdxOnPage, 1);
+                    oCurPage.drawings.splice(nCurIdxOnPage, 1);
                 }
     
-                if (this.IsUseInDocument() && oViewer.pagesInfo.pages[nPage].drawings.indexOf(this) == -1)
-                    oViewer.pagesInfo.pages[nPage].drawings.push(this);
+                if (this.IsUseInDocument() && oNewPage.drawings.indexOf(this) == -1)
+                    oNewPage.drawings.push(this);
 
                 // добавляем в перерисовку исходную страницу
                 this.AddToRedraw();
             }
 
-            this._page = nPage;
             this.selectStartPage = nPage;
+            this.SetParentPage(oViewer.pagesInfo.pages[nPage]);
             this.AddToRedraw();
         }
     };
@@ -303,7 +304,12 @@
         if (this.group)
             return this.group.GetPage();
         
-        return this._page;
+        let oParentPage = this.GetParentPage();
+        if (!oParentPage || !(oParentPage instanceof AscPDF.CPageInfo)) {
+            return -1;
+        }
+
+        return oParentPage.GetIndex();
     };
     
     CPdfDrawingPrototype.prototype.AddToRedraw = function() {

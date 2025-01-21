@@ -478,6 +478,7 @@
 				shape_drawer.Clear();
 				graphics.RestoreGrState();
 
+
 				// handle group children
 				group.spTree.forEach(function(shapeOrGroup) {
 					drawShapeOrGroupRecursively(graphics, shapeOrGroup, baseMatrix, baseTextMatrix, isRecalculateTextY,
@@ -525,7 +526,6 @@
 			let isRecalculateTextY = false;
 			let isFlipYMatrix = false;
 			let isFlipImages = false;
-
 
 			// let pageInfo = visioDocument.pages.page[pageIndex];
 			// let pageContent = visioDocument.pageContents[pageIndex];
@@ -722,20 +722,14 @@
 			shape.realizeStyleInheritanceRecursively(this.styleSheets, stylesWithRealizedInheritance);
 
 			if (shape.type === "Group") {
-				let cGroupShapeAndText = shape.toCGroupShapeRecursively(this, pageInfo, drawingPageScale);
-				if (cGroupShapeAndText.cGroupShape) {
-					topLevelShapesAndGroups.push(cGroupShapeAndText.cGroupShape);
-				}
-				if (cGroupShapeAndText.textCShape) {
-					topLevelShapesAndGroups.push(cGroupShapeAndText.textCShape);
+				let cGroupShape = shape.convertGroup(this, pageInfo, drawingPageScale);
+				if (cGroupShape) {
+					topLevelShapesAndGroups.push(cGroupShape);
 				}
 			} else {
-				let cShapes = shape.toGeometryAndTextCShapes(this, pageInfo, drawingPageScale);
-				if (cShapes.geometryCShape !== null) {
-					topLevelShapesAndGroups.push(cShapes.geometryCShape);
-				}
-				if (cShapes.textCShape !== null) {
-					topLevelShapesAndGroups.push(cShapes.textCShape);
+				let cShapeOrCGroupShape = shape.convertShape(this, pageInfo, drawingPageScale);
+				if (cShapeOrCGroupShape !== null) {
+					topLevelShapesAndGroups.push(cShapeOrCGroupShape);
 				}
 			}
 		}

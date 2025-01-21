@@ -347,6 +347,7 @@
 			"pdf/src/viewer.js",
 			"pdf/src/file.js",
 			"pdf/src/pdfSearch.js",
+			"pdf/src/previews.js",
 			"pdf/src/forms/formActions.js",
 			"pdf/src/forms/base/base.js",
 			"pdf/src/forms/apiFunctions.js",

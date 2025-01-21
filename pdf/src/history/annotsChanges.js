@@ -61,6 +61,7 @@ AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_FreeText_CL]			= CChange
 AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_FreeText_RC]			= CChangesPDFFreeTextRC;
 AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_FreeText_Align]			= CChangesPDFFreeTextAlign;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Stamp_Type]						= CChangesPDFAnnotStampType;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Stamp_InRect]						= CChangesPDFAnnotStampInRect;
 
 
 function CChangesAnnotArrayOfDoubleProperty(Class, Old, New) {
@@ -910,6 +911,23 @@ CChangesPDFAnnotStampType.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
 	oAnnot.SetIconType(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesAnnotArrayOfDoubleProperty}
+ */
+function CChangesPDFAnnotStampInRect(Class, Old, New, Color)
+{
+	AscDFH.CChangesAnnotArrayOfDoubleProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFAnnotStampInRect.prototype = Object.create(AscDFH.CChangesAnnotArrayOfDoubleProperty.prototype);
+CChangesPDFAnnotStampInRect.prototype.constructor = CChangesPDFAnnotStampInRect;
+CChangesPDFAnnotStampInRect.prototype.Type = AscDFH.historyitem_Pdf_Stamp_InRect;
+CChangesPDFAnnotStampInRect.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot.SetInRect(Value);
 };
 
 /**

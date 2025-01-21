@@ -1835,6 +1835,7 @@
         let Y = aOringRect[1];
 
         if (originView) {
+            oGraphicsPDF.SetGlobalAlpha(1);
             oGraphicsPDF.DrawImageXY(originView, X, Y, undefined, true);
         }
 

@@ -1567,11 +1567,12 @@ background-repeat: no-repeat;\
 
 		let reader, openParams = {};
 		let oBinaryFileReader = new AscCommonWord.BinaryFileReader(this.WordControl.m_oLogicDocument, openParams);
-		oBinaryFileReader.PreLoadPrepare();
+		//очищать pptx_content_loader не надо, т.к. открываем zip
+		oBinaryFileReader.PreLoadPrepare(undefined, false);
 
 		this.WordControl.m_oLogicDocument.fromZip(jsZlib, xmlParserContext, oBinaryFileReader.oReadResult);
 
-		oBinaryFileReader.PostLoadPrepare(xmlParserContext);
+		oBinaryFileReader.PostLoadPrepare(xmlParserContext, false);
 		jsZlib.close();
 		return true;
 	};

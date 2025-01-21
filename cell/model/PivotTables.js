@@ -10294,9 +10294,11 @@ CT_pivotTableDefinition.prototype.hasErrorForCalculatedItems = function(fld) {
 		}
 	}
 	const dataFields = this.asc_getDataFields();
-	for (let i = 0; i < dataFields.length; i += 1) {
-		if (!dataFields[i].canWorkWithCalculatedItems()) {
-			return c_oAscError.ID.WrongDataFieldSubtotalForCalculatedItems
+	if (dataFields) {
+		for (let i = 0; i < dataFields.length; i += 1) {
+			if (!dataFields[i].canWorkWithCalculatedItems()) {
+				return c_oAscError.ID.WrongDataFieldSubtotalForCalculatedItems
+			}
 		}
 	}
 	return c_oAscError.ID.No;

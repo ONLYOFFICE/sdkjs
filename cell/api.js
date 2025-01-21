@@ -3068,6 +3068,19 @@ var editor;
     }
   };
 
+  spreadsheet_api.prototype.onDocumentContentReady = function() {
+    AscCommon.baseEditorsApi.prototype.onDocumentContentReady.call(this);
+
+	if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["onFileLockedClose"]) {
+      this.asc_registerCallback("onOpenCellEditor", function() {
+        window["AscDesktopEditor"]["onFileLockedClose"](true);
+	  });
+	  this.asc_registerCallback("onCloseCellEditor", function() {
+        window["AscDesktopEditor"]["onFileLockedClose"](false);
+	  });
+    }
+  };
+
   spreadsheet_api.prototype._onCleanSelection = function() {
     if (this.wb) {
       this.wb.getWorksheet().cleanSelection();
@@ -7020,6 +7033,8 @@ var editor;
 			   _adjustPrint.asc_setStartPageIndex(_options["adjustOptions"]["startPageIndex"]);
 		   if (_options["adjustOptions"]["endPageIndex"])
 			   _adjustPrint.asc_setEndPageIndex(_options["adjustOptions"]["endPageIndex"]);
+		   if (_options["adjustOptions"]["activeSheetsArray"])
+			   _adjustPrint.asc_setActiveSheetsArray(_options["adjustOptions"]["activeSheetsArray"]);
 	   }
 
 	   _adjustPrint.asc_setPrintType(Asc.c_oAscPrintType.EntireWorkbook);

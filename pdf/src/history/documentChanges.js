@@ -91,9 +91,7 @@ CChangesPDFDocumentAnnotsContent.prototype.Undo = function()
 
             oViewer.DrawingObjects.resetSelection();
             oItem.AddToRedraw();
-            if (oItem.IsComment()) {
-                Asc.editor.sync_RemoveComment(oItem.GetId());
-            }
+            Asc.editor.sync_RemoveComment(oItem.GetId());
         }
     } else {
         // Undo removal by adding items back
@@ -111,9 +109,7 @@ CChangesPDFDocumentAnnotsContent.prototype.Undo = function()
             oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
             oViewer.DrawingObjects.resetSelection();
             oItem.AddToRedraw();
-            if (oItem.IsComment()) {
-                Asc.editor.sendEvent("asc_onAddComment", oItem.GetId(), oItem.GetAscCommentData());
-            }
+            oDocument.CheckComment(oItem);
         }
     }
 
@@ -142,9 +138,7 @@ CChangesPDFDocumentAnnotsContent.prototype.Redo = function()
             oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
             oViewer.DrawingObjects.resetSelection();
             oItem.AddToRedraw();
-            if (oItem.IsComment()) {
-                Asc.editor.sendEvent("asc_onAddComment", oItem.GetId(), oItem.GetAscCommentData());
-            }
+            oDocument.CheckComment(oItem);
         }
     } else {
         // Redo removal by removing items
@@ -160,9 +154,7 @@ CChangesPDFDocumentAnnotsContent.prototype.Redo = function()
             oItem.selectStartPage = -1;
 
             oItem.AddToRedraw();
-            if (oItem.IsComment()) {
-                Asc.editor.sync_RemoveComment(oItem.GetId());
-            }
+            Asc.editor.sync_RemoveComment(oItem.GetId());
         }
     }
 
@@ -209,8 +201,7 @@ CChangesPDFDocumentAnnotsContent.prototype.private_InsertInArrayLoad = function(
         oItem._page = oPage.GetIndex();
         oItem.selectStartPage = oItem._page;
 
-        if (oItem.IsComment())
-            editor.sendEvent("asc_onAddComment", oItem.GetId(), oItem.GetAscCommentData());
+        oDocument.CheckComment(oItem);
 
         oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
         oViewer.DrawingObjects.resetSelection();
@@ -254,8 +245,7 @@ CChangesPDFDocumentAnnotsContent.prototype.private_RemoveInArrayLoad = function(
         oItem._page = -1;
         oItem.selectStartPage = -1;
 
-        if (oItem.IsComment())
-            editor.sync_RemoveComment(oItem.GetId());
+        Asc.editor.sync_RemoveComment(oItem.GetId());
 
         oViewer.DrawingObjects.resetSelection();
     }
@@ -574,8 +564,7 @@ CChangesPDFDocumentDrawingsContent.prototype.Undo = function()
             oDocument.drawings.splice(oDocument.drawings.indexOf(oItem), 1);
             oPage.drawings.splice(this.Pos, 1);
 
-            oItem.parentPage = oPage;
-            oItem._page = -1;
+            oItem.parent = oPage;
             oItem.selectStartPage = -1;
 
             oViewer.DrawingObjects.resetSelection();
@@ -590,8 +579,7 @@ CChangesPDFDocumentDrawingsContent.prototype.Undo = function()
             oDocument.drawings.push(oItem);
             oPage.drawings.splice(this.Pos, 0, oItem);
 
-            oItem.parentPage = oPage;
-            oItem._page = oPage.GetIndex();
+            oItem.parent = oPage;
             oItem.selectStartPage = oItem._page;
 
             oViewer.DrawingObjects.resetSelection();
@@ -618,8 +606,7 @@ CChangesPDFDocumentDrawingsContent.prototype.Redo = function()
             oDocument.drawings.push(oItem);
             oPage.drawings.splice(this.Pos, 0, oItem);
 
-            oItem.parentPage = oPage;
-            oItem._page = oPage.GetIndex();
+            oItem.parent = oPage;
             oItem.selectStartPage = oItem._page;
 
             oViewer.DrawingObjects.resetSelection();
@@ -635,8 +622,7 @@ CChangesPDFDocumentDrawingsContent.prototype.Redo = function()
             oDocument.drawings.splice(oDocument.drawings.indexOf(oItem), 1);
             oPage.drawings.splice(this.Pos, 1);
 
-            oItem.parentPage = null;
-            oItem._page = -1;
+            oItem.parent = null;
             oItem.selectStartPage = -1;
             
             oViewer.DrawingObjects.resetSelection();
@@ -682,8 +668,7 @@ CChangesPDFDocumentDrawingsContent.prototype.private_InsertInArrayLoad = functio
         let drawingsArray = oPage.drawings;
         nPos = Math.min(nPos, drawingsArray.length);
         drawingsArray.splice(nPos, 0, oItem);
-        oItem.parentPage = oPage;
-        oItem._page = oPage.GetIndex();
+        oItem.parent = oPage;
         oItem.selectStartPage = oItem._page;
 
         oViewer.DrawingObjects.resetSelection();
@@ -723,8 +708,7 @@ CChangesPDFDocumentDrawingsContent.prototype.private_RemoveInArrayLoad = functio
         if (indexInDrawingsArray !== -1)
             drawingsArray.splice(indexInDrawingsArray, 1);
 
-        oItem.parentPage = null;
-        oItem._page = -1;
+        oItem.parent = null;
         oItem.selectStartPage = -1;
 
         oViewer.DrawingObjects.resetSelection();

@@ -144,6 +144,7 @@ function (window, undefined) {
 		this.selectionTimer = undefined;
 		this.enableKeyEvents = true;
 		this.isTopLineActive = false;
+		this.openFromTopLine = false;
 		this.skipTLUpdate = true;
 		this.loadFonts = false;
 		this.isOpened = false;
@@ -332,7 +333,7 @@ function (window, undefined) {
 		}
 		this._setOptions(options);
 		this._cleanLastRangeInfo();
-		this._updateTopLineActive(true === this.input.isFocused);
+		this._updateTopLineActive(true === this.input.isFocused, true);
 
 		this._updateEditorState();
 		this._draw();
@@ -365,6 +366,7 @@ function (window, undefined) {
 		this._updateUndoRedoChanged();
 
 		AscCommon.StartIntervalDrawText(true);
+		this.openAction();
 	};
 
 	CellEditor.prototype.close = function (saveValue, callback) {
@@ -410,6 +412,7 @@ function (window, undefined) {
 			// Сброс состояния редактора
 			t._setEditorState(c_oAscCellEditorState.editEnd);
 			t.handlers.trigger("closed");
+			t.closeAction();
 
 			if (callback) {
 				callback(true);
@@ -466,6 +469,8 @@ function (window, undefined) {
 		// Сброс состояния редактора
 		this._setEditorState(c_oAscCellEditorState.editEnd);
 		this.handlers.trigger("closed");
+		t.closeAction();
+
 		if (callback) {
 			callback(true);
 		}
@@ -1137,9 +1142,10 @@ function (window, undefined) {
 		return !range ? {range: null} : {range: range, wsName: wsName};
 	};
 
-	CellEditor.prototype._updateTopLineActive = function (state) {
+	CellEditor.prototype._updateTopLineActive = function (state, isOpening) {
 		if (state !== this.isTopLineActive) {
 			this.isTopLineActive = state;
+			this.openFromTopLine = isOpening && state;
 			this.handlers.trigger("updateTopLine", this.isTopLineActive ? c_oAscCellEditorState.editInFormulaBar : c_oAscCellEditorState.editInCell);
 		}
 	};
@@ -3369,6 +3375,22 @@ function (window, undefined) {
 			return;
 		}
 		api.sendEvent('asc_onUserActionEnd');
+	};
+
+	CellEditor.prototype.openAction = function () {
+		var api = window["Asc"]["editor"];
+		if (!api) {
+			return;
+		}
+		api.sendEvent('onOpenCellEditor');
+	};
+
+	CellEditor.prototype.closeAction = function () {
+		var api = window["Asc"]["editor"];
+		if (!api) {
+			return;
+		}
+		api.sendEvent('onCloseCellEditor');
 	};
 
 

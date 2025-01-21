@@ -651,6 +651,7 @@
             oDoc.SetLocalHistory();
             if (false == e.ShiftKey) {
                 oDoc.SelectionSetStart(x, y, e);
+				oDoc.SelectionSetEnd(x, y, e);
             }
             else {
                 this.content.StartSelectionFromCurPos();

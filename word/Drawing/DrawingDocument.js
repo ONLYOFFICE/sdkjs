@@ -4476,7 +4476,7 @@ function CDrawingDocument()
 
 		var dKoefX = (drawPage.right - drawPage.left) / page.width_mm;
 		var dKoefY = (drawPage.bottom - drawPage.top) / page.height_mm;
-		this.AutoShapesTrack.SetCurrentPage(pageIndex, true);
+		this.AutoShapesTrack.SetCurrentPage(pageIndex);
 		if (!this.IsTextMatrixUse)
 		{
 			var _x = ((drawPage.left + dKoefX * x) >> 0);

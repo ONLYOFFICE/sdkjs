@@ -948,17 +948,22 @@
         graphics.reset();
         graphics.SetIntegerGrid(true);
     };
-
+    CAnnotationFreeText.prototype.canResize = function () {
+        return false
+    };
     CAnnotationFreeText.prototype.onMouseDown = function(x, y, e) {
         let oDoc                = this.GetDocument();
         let oController         = oDoc.GetController();
-        this.selectStartPage    = this.GetPage();
         
         if (this.IsInTextBox() == false) {
-            if (this.selectedObjects.length <= this.spTree.length - 1) {
+            if (oController.selectedObjects.length > 1) {
+                AscPDF.CAnnotationBase.prototype.onMouseDown.call(this, x, y, e);
+            }
+            else if (this.selectedObjects.length <= this.spTree.length - 1) {
                 let _t = this;
                 // селектим все фигуры в группе (кроме перпендикулярной линии) если до сих пор не заселекчены
                 oController.selection.groupSelection = this;
+                this.select(oController, this.selectStartPage);
                 this.selectedObjects.length = 0;
 
                 this.spTree.forEach(function(sp) {
@@ -1545,7 +1550,34 @@
     CAnnotationFreeText.prototype.Get_AbsolutePage = function() {
         return this.GetPage();
     };
+    CAnnotationFreeText.prototype.select = function (drawingObjectsController, pageIndex) {
+		if (!AscFormat.canSelectDrawing(this)) {
+			return;
+		}
+		this.selected = true;
+		this.selectStartPage = pageIndex;
+		var content = this.getDocContent && this.getDocContent();
+		if (content)
+			content.Set_StartPage(pageIndex);
+		var selected_objects;
+		if (!AscCommon.isRealObject(this.group))
+			selected_objects = drawingObjectsController ? drawingObjectsController.selectedObjects : [];
+		else
+			selected_objects = this.group.getMainGroup().selectedObjects;
+		for (var i = 0; i < selected_objects.length; ++i) {
+			if (selected_objects[i] === this)
+				break;
+		}
+		if (i === selected_objects.length)
+			selected_objects.push(this);
 
+
+		if (drawingObjectsController) {
+			drawingObjectsController.onChangeDrawingsSelection();
+            drawingObjectsController.selection.groupSelection = null;
+            this.selectedObjects.length = 0;
+		}
+	}
     function fillShapeByPoints(arrOfArrPoints, aShapeRect, oParentAnnot) {
         let xMin = aShapeRect[0];
         let yMin = aShapeRect[1];

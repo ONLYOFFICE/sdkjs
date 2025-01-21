@@ -15528,6 +15528,19 @@
 		return "drawing";
 	};
 	/**
+	 * Returns the shape inner contents where a paragraph or text runs can be inserted if it exists.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE", "CSE"]
+	 * @returns {?ApiDocumentContent}
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetContent.js
+	 */
+	ApiDrawing.prototype.GetContent = function()
+	{
+		if (this.Drawing && this.Drawing.textBoxContent && !this.Drawing.isForm())
+			return new ApiDocumentContent(this.Drawing.textBoxContent);
+		return null;
+	};
+	/**
 	 * Sets the size of the object (image, shape, chart) bounding box.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
@@ -16347,21 +16360,6 @@
 	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetDocContent.js
 	 */
 	ApiShape.prototype.GetDocContent = function()
-	{
-		if(this.Shape && this.Shape.textBoxContent && !this.Shape.isForm())
-		{
-			return new ApiDocumentContent(this.Shape.textBoxContent);
-		}
-		return null;
-	};
-	/**
-	 * Returns the shape inner contents where a paragraph or text runs can be inserted.
-	 * @memberof ApiShape
-	 * @typeofeditors ["CDE", "CSE"]
-	 * @returns {?ApiDocumentContent}
-	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetContent.js
-	 */
-	ApiShape.prototype.GetContent = function()
 	{
 		if(this.Shape && this.Shape.textBoxContent && !this.Shape.isForm())
 		{
@@ -20636,17 +20634,15 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {Array} arrString - An array of replacement strings.
-	 * @param {string} [sParaTab=" "] - A character which is used to specify the tab in the source text.
-	 * @param {string} [sParaNewLine=" "] - A character which is used to specify the line break character in the source text.
+	 * @param {string} [sParaTab="\t"] - A character which is used to specify the tab in the source text.
+	 * @param {string} [sParaNewLine="\r\n"] - A character which is used to specify the line break character in the source text.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/ReplaceTextSmart.js
 	 */
 	Api.prototype.ReplaceTextSmart = function(arrString, sParaTab, sParaNewLine)
 	{
-		if (typeof(sParaTab) !== "string")
-			sParaTab = String.fromCharCode(32);
-		if (typeof(sParaNewLine) !== "string")
-			sParaNewLine = String.fromCharCode(32);
-
+		sParaTab     = GetStringParameter(sParaTab, "\t");
+		sParaNewLine = GetStringParameter(sParaTab, "\r\n");
+		
 		var allRunsInfo      = null;
 		var textDelta        = null;
 		var arrSelectedParas = null;
@@ -22582,6 +22578,7 @@
 	ApiTableStylePr.prototype["ToJSON"]              = ApiTableStylePr.prototype.ToJSON;
 
 	ApiDrawing.prototype["GetClassType"]             = ApiDrawing.prototype.GetClassType;
+	ApiDrawing.prototype["GetContent"]               = ApiDrawing.prototype.GetContent;
 	ApiDrawing.prototype["SetSize"]                  = ApiDrawing.prototype.SetSize;
 	ApiDrawing.prototype["SetWrappingStyle"]         = ApiDrawing.prototype.SetWrappingStyle;
 	ApiDrawing.prototype["SetHorAlign"]              = ApiDrawing.prototype.SetHorAlign;
@@ -22621,7 +22618,6 @@
 
 	ApiShape.prototype["GetClassType"]               = ApiShape.prototype.GetClassType;
 	ApiShape.prototype["GetDocContent"]              = ApiShape.prototype.GetDocContent;
-	ApiShape.prototype["GetContent"]                 = ApiShape.prototype.GetContent;
 	ApiShape.prototype["SetVerticalTextAlign"]       = ApiShape.prototype.SetVerticalTextAlign;
 	ApiShape.prototype["SetPaddings"]                = ApiShape.prototype.SetPaddings;
 	ApiShape.prototype["GetNextShape"]               = ApiShape.prototype.GetNextShape;

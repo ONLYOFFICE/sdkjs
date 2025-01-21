@@ -993,9 +993,10 @@ $(function () {
 		assert.strictEqual(wb.externalReferences.length, 0);
 	});
 
-	QUnit.test("Test: \"Check short links\"", function (assert) {
+	QUnit.test("Test: \"Check short links parse\"", function (assert) {
 		// create ext link
 		// check parser formula - simulate reading a string like [linkIndex] + "SheetName" + "!" + "ReferenceTo"
+		let fileName = window["Asc"]["editor"].DocInfo && window["Asc"]["editor"].DocInfo.get_Title();
 		let fullLinkLocal = "'[book.xlsx]Sheet1'!A1",
 			fullLinkDefnameLocal = "'[book.xlsx]Sheet1'!_s1",
 			fullLink = "'[1]Sheet1'!A1",
@@ -1032,6 +1033,10 @@ $(function () {
 		wb.externalReferences[0].updateData([externalWs]);
 		// defNames.wb[this.Name].getRef();
 		// wb.externalReferences[0].addDefName()
+
+		// add defname to current workbook([0] tests)
+		wb.dependencyFormulas.addDefName("currentDef", "Sheet2!$A$1:$B$2");
+		wb.createWorksheet(0, "Sheet2");
 
 		// local = false. Read/open file with formulas. Try to parse string to external ref similiar as read the file
 		oParser = new parserFormula(fullLink, cellWithFormula, ws);
@@ -1074,14 +1079,63 @@ $(function () {
 		oParser = new parserFormula("SUM('[1]'!_s1,2,3)", cellWithFormula, ws);
 		assert.ok(oParser.parse(false, null, parseResult) === false, "SUM('[1]'!_s1,2,3). isLocal = false");
 
-		// for bug 72385. eR in file === [0]
-		oParser = new parserFormula("[0]!_s1", cellWithFormula, ws);
-		assert.ok(oParser.parse(false, null, parseResult) === false, "[0]!_s1. isLocal = false");
+		/* Links to current file check. Formula in file have format "[0]!defname" */
+		oParser = new parserFormula("[0]!currentDef", cellWithFormula, ws);
+		assert.ok(oParser.parse(false, null, parseResult), "[0]!currentDef. isLocal = false. Link to existing defname in current wb");
+		elemInStack = oParser.outStack && oParser.outStack[0];
+		if (elemInStack && (elemInStack.type === AscCommonExcel.cElementType.name3D)) {
+			assert.strictEqual(elemInStack.value, "currentDef");
+			assert.ok(elemInStack.ws);
+			assert.ok(elemInStack.shortLink);
+			assert.strictEqual(elemInStack.externalLink, "0");
+			assert.strictEqual(elemInStack.ws && elemInStack.ws.sName, "Sheet2", "Defname location");
+			assert.ok(wb.getDefinesNames(elemInStack.value), "Defname exist on second sheet");
+		}
 
-		oParser = new parserFormula("SUM([0]!_s1,2,3,4)", cellWithFormula, ws);
-		assert.ok(oParser.parse(false, null, parseResult) === false, "SUM([0]!_s1,2,3,4). isLocal = false");
+		oParser = new parserFormula("SUM([0]!currentDef,2,3,4)", cellWithFormula, ws);
+		assert.ok(oParser.parse(false, null, parseResult), "SUM([0]!currentDef,2,3,4). isLocal = false. Link to existing defname in current wb inside the formula");
+
+		oParser = new parserFormula("[0]!_nonExistentDefname", cellWithFormula, ws);
+		assert.ok(oParser.parse(false, null, parseResult), "[0]!_nonExistentDefname. isLocal = false. Link to non-existent defname in current wb");
+		elemInStack = oParser.outStack && oParser.outStack[0];
+		if (elemInStack && (elemInStack.type === AscCommonExcel.cElementType.name3D)) {
+			assert.strictEqual(elemInStack.value, "_nonExistentDefname");
+			assert.ok(elemInStack.ws);
+			assert.ok(elemInStack.shortLink);
+			assert.strictEqual(elemInStack.externalLink, "0");
+			assert.strictEqual(elemInStack.ws && elemInStack.ws.sName, wb.getActiveWs() &&  wb.getActiveWs().getName(), "Location for WS in cName3D by default");
+			assert.ok(!wb.getDefinesNames(elemInStack.value), "Defname doesn't exist");
+		}
+
+		oParser = new parserFormula("SUM([0]!_nonExistentDefname,2,3,4)", cellWithFormula, ws);
+		assert.ok(oParser.parse(false, null, parseResult), "SUM([0]!_nonExistentDefname,2,3,4). isLocal = false. Link to non-existent defname in current wb inside the formula");
 
 		// local = true. Manual input. Try parse string to external ref similiar as writing a string manually
+		/* Links to current file check. Formula is typed as "filename.xlsx!defname" */
+		oParser = new parserFormula(fileName + "!currentDef", cellWithFormula, ws);
+		assert.ok(oParser.parse(true, null, parseResult), fileName +"!currentDef. isLocal = true. Link to existing defname in current wb");
+		elemInStack = oParser.outStack && oParser.outStack[0];
+		if (elemInStack && (elemInStack.type === AscCommonExcel.cElementType.name3D)) {
+			assert.strictEqual(elemInStack.value, "currentDef");
+			assert.ok(elemInStack.ws);
+			assert.ok(elemInStack.shortLink);
+			assert.strictEqual(elemInStack.externalLink, "0");
+			assert.strictEqual(elemInStack.ws && elemInStack.ws.sName, "Sheet2", "Defname location");
+			assert.ok(wb.getDefinesNames(elemInStack.value), "Defname exist on the second sheet");
+		}
+
+		oParser = new parserFormula(fileName + "!_nonExistentDefname", cellWithFormula, ws);
+		assert.ok(oParser.parse(true, null, parseResult), fileName +"!_nonExistentDefname. isLocal = true. Link to non-existent defname in current wb");
+		elemInStack = oParser.outStack && oParser.outStack[0];
+		if (elemInStack && (elemInStack.type === AscCommonExcel.cElementType.name3D)) {
+			assert.strictEqual(elemInStack.value, "_nonExistentDefname");
+			assert.ok(elemInStack.ws);
+			assert.ok(elemInStack.shortLink);
+			assert.strictEqual(elemInStack.externalLink, "0");
+			assert.strictEqual(elemInStack.ws && elemInStack.ws.sName, wb.getActiveWs() && wb.getActiveWs().getName(), "Location for WS in cName3D by default");
+			assert.ok(!wb.getDefinesNames(elemInStack.value), "Defname doesn't exist");
+		}
+
 		oParser = new parserFormula(fullLinkLocal, cellWithFormula, ws);
 		assert.ok(oParser.parse(true/*isLocal*/, null, parseResult), "Full link. isLocal = true. " + fullLinkLocal);
 
@@ -1199,6 +1253,86 @@ $(function () {
 
 		//remove external reference
 		wb.removeExternalReferences([wb.externalReferences[0].getAscLink()]);
+		assert.strictEqual(wb.externalReferences.length, 0);
+	});
+
+
+	QUnit.test("Test: \"Read and init external reference data\"", function (assert) {
+		// create external link
+		let cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 1, 0);
+		let parseResult = new AscCommonExcel.ParseResult([]);
+
+		oParser = new parserFormula("[book.xlsx]Sheet1!_s1", cellWithFormula, ws);
+		assert.ok(oParser.parse(true, null, parseResult), "book.xlsx!_s1");
+
+		// set extrefs to 0
+		wb.externalReferences.length = 0;
+
+		assert.strictEqual(wb.externalReferences.length, 0, 'External reference length before add');
+		wb.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
+		assert.strictEqual(wb.externalReferences.length, 1, 'External reference length after add');
+		
+		let eR = wb.externalReferences[0];
+		let externalWb = eR.getWb();
+		let externalWs;
+
+		initDefinedName(eR, "Sheet1", "A1:A2", "_s1");
+		initReference(eR, "Sheet1", "A1:A2", [["10"],["20"]], true);
+
+		let newDefname = eR.DefinedNames[0].clone();
+		newDefname.RefersTo = "='Sheet1'!$A$1:$A$2";
+		newDefname.SheetId = null;
+
+		eR.DefinedNames[0] = newDefname;
+
+		externalWs = createExternalWorksheet("Sheet1");
+		externalWs.getRange2("A1").setValue("10");
+		externalWs.getRange2("A2").setValue("20");
+
+		eR.updateData([externalWs]);
+
+		// defname listeners check
+		assert.strictEqual(Object.keys(wb.dependencyFormulas.defNameListeners).length, 0, 'Defname listeners before setValue into cell');
+		ws.getRange2("A1").setValue("='book.xlsx'!_s1");
+		assert.strictEqual(Object.keys(wb.dependencyFormulas.defNameListeners).length, 1, 'Defname listeners after setValue into cell');
+		
+		// defnames in external wb check
+		assert.strictEqual(Object.keys(externalWb.dependencyFormulas.defNames.wb).length, 0, 'Defnames before init');
+		eR.initPostOpen();
+		assert.strictEqual(Object.keys(externalWb.dependencyFormulas.defNames.wb).length, 1, 'Defnames after init');
+
+
+		/* add second sheet with '!' in name */
+		externalWs = createExternalWorksheet(" 'Sheet!'!1");
+		eR.addSheet(externalWs);
+
+		// initReference(eR, " 'Sheet!'!1", "A1", [[""]], true);
+		initDefinedName(eR, " 'Sheet!'!1", "A1:A2", "_s2");
+		initReference(eR, " 'Sheet!'!1", "A1:A2", [["40"],["80"]], true);
+
+		newDefname = eR.DefinedNames[1].clone();
+		newDefname.RefersTo = "=' 'Sheet!'!1'!$A$1:$A$2";
+		newDefname.SheetId = null;
+
+		eR.DefinedNames[1] = newDefname;
+
+		// externalWs.getRange2("A1").setValue("400");
+		// externalWs.getRange2("A2").setValue("800");
+
+		eR.updateData([externalWs]);
+
+		assert.strictEqual(Object.keys(externalWb.dependencyFormulas.defNames.wb).length, 1, 'Defnames before second init');
+		eR.initPostOpen();
+		assert.strictEqual(Object.keys(externalWb.dependencyFormulas.defNames.wb).length, 2, 'Defnames after second init');
+
+		assert.strictEqual(Object.keys(wb.dependencyFormulas.defNameListeners).length, 1, 'Defname listeners before setValue into cell');
+		ws.getRange2("A2").setValue("='book.xlsx'!_s2");
+		assert.strictEqual(Object.keys(wb.dependencyFormulas.defNameListeners).length, 2, 'Defname listeners after setValue into cell');
+
+		//remove external reference and clear cells
+		ws.getRange2("A1:A2").setValue("");
+
+		wb.removeExternalReferences([eR.getAscLink()]);
 		assert.strictEqual(wb.externalReferences.length, 0);
 	});
 

@@ -32,6 +32,40 @@
 
 (function(){
 
+    let STAMP_TYPES = {
+        // dinamic
+        D_Approved:               'D_Approved',
+        D_Revised:                'D_Revised',
+        D_Reviewed:               'D_Reviewed',
+        D_Received:               'D_Received',
+        
+        // standard
+        SB_Approved:              'SB_Approved',
+        SB_NotApproved:           'SB_NotApproved',
+        SB_Revised:               'SB_Revised',
+        SB_Confidential:          'SB_Confidential',
+        SB_ForComment:            'SB_ForComment',
+        SB_ForPublicRelease:      'SB_ForPublicRelease',
+        SB_NotForPublicRelease:   'SB_NotForPublicRelease',
+        SB_PreliminaryResults:    'SB_PreliminaryResults',
+        SB_InformationOnly:       'SB_InformationOnly',
+        SB_Draft:                 'SB_Draft',
+        SB_Completed:             'SB_Completed',
+        SB_Final:                 'SB_Final',
+        SB_Void:                  'SB_Void',
+        
+        // sign
+        SH_SignHere:              'SH_SignHere',
+        SH_Witness:               'SH_Witness',
+        SH_InitialHere:           'SH_InitialHere',
+        
+        // foxit
+        Expired:                  'Expired',
+
+        // onlyoffice
+        Image:                    'Image'
+    }
+
     /**
 	 * Class representing a stamp annotation.
 	 * @constructor
@@ -42,6 +76,8 @@
         AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Stamp, nPage, aRect, oDoc);
         
         this._rotate = 0;
+        this._stampType = undefined;
+
         this.Init();
     }
     
@@ -52,15 +88,81 @@
     CAnnotationStamp.prototype.IsStamp = function() {
         return true;
     };
+    CAnnotationStamp.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
+        let sType = this.GetIconType();
+        if (sType == undefined) {
+            return;
+        }
+
+        this.Recalculate();
+        if (AscPDF.STAMP_TYPES.Image == sType) {
+            this.draw(oGraphicsWord);
+        }
+        else {
+            let oStructure = this.GetRenderStructure();
+            if (!oStructure) {
+                return;
+            }
+
+            let nScale = this.GetOriginViewScale();
+            let oTr = new AscCommon.CMatrix();
+            
+            // draw without rotate and scale for saving
+            if (oGraphicsWord.isPdf()) {
+                let hc = this.extX * 0.5;
+				let vc = this.extY * 0.5;
+				AscCommon.global_MatrixTransformer.TranslateAppend(oTr, -hc, -vc);
+                AscCommon.global_MatrixTransformer.TranslateAppend(oTr, this.x + hc, this.y + vc);
+
+                let aInRect = this.GetInRect();
+                let nSourceX = aInRect[0] * g_dKoef_pt_to_mm;
+                let nSourceY = aInRect[3] * g_dKoef_pt_to_mm;
+                
+                oTr.tx = nSourceX;
+                oTr.ty = nSourceY;
+            }
+            else {
+                oTr.Scale(nScale, nScale);
+                let oOwnTr = this.getTransformMatrix();
+                AscCommon.global_MatrixTransformer.MultiplyAppend(oTr, oOwnTr);
+            }
+
+            oStructure.draw(oGraphicsWord, oTr);
+        }
+    };
+    CAnnotationStamp.prototype.SetRenderStructure = function(oStructure) {
+        this.renderStructure = oStructure;
+    };
+    CAnnotationStamp.prototype.GetRenderStructure = function() {
+        if (this.renderStructure) {
+            return this.renderStructure;
+        }
+        else {
+            let oDoc = this.GetDocument();
+            let oTextDrawer = oDoc.CreateStampRender(this.GetIconType());
+            this.SetRenderStructure(oTextDrawer && oTextDrawer.m_aStack[0]);
+            return this.renderStructure;
+        }
+    };
     CAnnotationStamp.prototype.SetInRect = function(aInRect) {
+        AscCommon.History.Add(new CChangesPDFAnnotStampInRect(this, this.inRect, aInRect));
+
         this.inRect = aInRect;
         
         function getDistance(x1, y1, x2, y2) {
             return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
         }
 
+        if (!aInRect) {
+            return;
+        }
+        
         let nShapeW = getDistance(aInRect[0], aInRect[1], aInRect[6], aInRect[7]);
         let nShapeH = getDistance(aInRect[0], aInRect[1], aInRect[2], aInRect[3]);
+
+        if (nShapeH == 0 || nShapeW == 0) {
+            return;
+        }
 
         this.spPr.xfrm.setExtX(nShapeW * g_dKoef_pt_to_mm);
         this.spPr.xfrm.setExtY(nShapeH * g_dKoef_pt_to_mm);
@@ -121,6 +223,7 @@
             if (this.IsHighlight())
                 AscPDF.startMultiplyMode(oGraphicsPDF.GetContext());
             
+            oGraphicsPDF.SetGlobalAlpha(1);
             oGraphicsPDF.DrawImageXY(originView, X, Y, nRot, true);
             AscPDF.endMultiplyMode(oGraphicsPDF.GetContext());
         }
@@ -188,8 +291,9 @@
         let oDoc        = oViewer.getPDFDoc();
         let aCurRect    = this.GetRect();
 
-        let bCalcRect = this._origRect.length != 0 && false == AscCommon.History.UndoRedoInProgress;
+        let bCalcRect = aCurRect && aCurRect.length != 0 && false == AscCommon.History.UndoRedoInProgress;
 
+        oDoc.History.Add(new CChangesPDFAnnotRect(this, aCurRect, aRect));
         this._origRect = aRect;
 
         if (bCalcRect) {
@@ -212,8 +316,6 @@
             this._origRect[1] = Math.round(oGrBounds.t) * g_dKoef_mm_to_pt;
             this._origRect[2] = Math.round(oGrBounds.r) * g_dKoef_mm_to_pt;
             this._origRect[3] = Math.round(oGrBounds.b) * g_dKoef_mm_to_pt;
-
-            oDoc.History.Add(new CChangesPDFAnnotRect(this, aCurRect, aRect));
         }
 
         this.SetWasChanged(true);
@@ -261,6 +363,8 @@
         oNewStamp.SetOpacity(this.GetOpacity());
         oNewStamp.recalcGeometry()
         oNewStamp.Recalculate(true);
+        oNewStamp.SetIconType(this.GetIconType());
+        oNewStamp.SetRenderStructure(this.GetRenderStructure());
 
         oDoc.EndNoHistoryMode();
         return oNewStamp;
@@ -277,7 +381,7 @@
             return;
         }
 
-        AscCommon.History.Add(new CChangesPDFAnnotName(this, this._stampType, sType));
+        AscCommon.History.Add(new CChangesPDFAnnotStampType(this, this._stampType, sType));
         this._stampType = sType;
         this.SetWasChanged(true);
     };
@@ -331,12 +435,43 @@
         this.WriteToBinaryBase2(memory);
         
         memory.WriteString(this.GetIconType());
-        memory.WriteLong(this.GetRotate());
+        memory.WriteDouble(this.GetRotate());
+        
+        let aInRect = this.GetInRect();
+        // original rect
+        memory.WriteDouble(aInRect[0]); // x1
+        memory.WriteDouble(aInRect[3]); // y1
+        memory.WriteDouble(aInRect[4]); // x2
+        memory.WriteDouble(aInRect[1]); // y2
 
         let nEndPos = memory.GetCurPosition();
         memory.Seek(memory.posForFlags);
         memory.WriteLong(memory.annotFlags);
         
+        memory.Seek(nStartPos);
+        memory.WriteLong(nEndPos - nStartPos);
+        memory.Seek(nEndPos);
+    };
+    CAnnotationStamp.prototype.SetDrawFromStream = function() {
+        let oViewer = editor.getDocumentRenderer();
+        if (oViewer.IsOpenAnnotsInProgress) {
+            this._bDrawFromStream = true;
+        }
+    };
+    CAnnotationStamp.prototype.WriteRenderToBinary = function(memory) {
+        // пока только для основанных на фигурах
+        if (this.IsNeedDrawFromStream()) {
+            return;
+        }
+
+        // тут будет длина комманд
+        let nStartPos = memory.GetCurPosition();
+        memory.Skip(4);
+
+        this.Draw(undefined, memory.docRenderer); // для каждой страницы инициализируется свой renderer
+
+        // запись длины комманд
+        let nEndPos = memory.GetCurPosition();
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
@@ -379,6 +514,8 @@
         
         AscCommon.History.EndNoHistoryMode();
     };
+    
     window["AscPDF"].CAnnotationStamp = CAnnotationStamp;
+    window["AscPDF"].STAMP_TYPES = window["AscPDF"]["STAMP_TYPES"] = STAMP_TYPES;
 })();
 
