@@ -225,6 +225,9 @@ CChartsDrawer.prototype =
 			case AscFormat.SERIES_LAYOUT_PARETO_LINE :
 				this.charts.chartEx = new drawParetoChart(seria, this);
 				break;
+			case AscFormat.SERIES_LAYOUT_TREEMAP :
+				this.charts.chartEx = new drawTreemapChart(seria, this);
+				break;
 			default :
 				this.charts.chartEx = null;
 		}
@@ -8268,6 +8271,122 @@ drawFunnelChart.prototype = {
 		return {x: centerX, y: centerY};
 	}
 }
+
+	/** @constructor */
+	function drawTreemapChart(chart, chartsDrawer) {
+		this.chartProp = chartsDrawer.calcProp;
+		this.cChartDrawer = chartsDrawer;
+		this.cChartSpace = chartsDrawer.cChartSpace;
+
+		this.chart = chart;
+
+		this.catAx = null;
+		this.valAx = null;
+
+		this.ptCount = null;
+		this.seriesCount = null;
+		this.subType = null;
+
+		this.paths = {};
+		this.linePath = null;
+	}
+
+	drawTreemapChart.prototype = {
+		constructor: drawTreemapChart,
+
+		recalculate: function () {
+			const cachedData = this.cChartSpace ? this.cChartSpace.getCachedData() : null;
+			if (!cachedData) {
+				return;
+			}
+			if (cachedData.data.length > 0 && this.chartProp && this.chartProp.chartGutter) {
+
+				// getYPoints will not work?
+				// I should find the end of cat and val Axis
+				// get each row inside cahcedData
+				// for each row calculate the x and y component of the resulting block
+
+				// if Row is true then I should add the width to totalX, and for each element add its height
+				// if Row is false then I should add the height to totalY, and for each element add its width
+
+				// for (let i = 0; i < cachedData.data.length; i++) {
+				// 	let x = cachedData.data[i].start.x;
+				// 	let y = cachedData.data[i].start.y;
+				// 	for (let j = 0; j < cachedData.data[i].coords.length; j++) {
+				// 		this.paths[i] = this.cChartDrawer._calculateRect(x, y, cachedData.data[i].coords[j].w, cachedData.data[i].coords[j].h);
+				// 		if (cachedData.data[i].isVert) {
+				// 			y += cachedData.data[i].coords[j].h;
+				// 		} else {
+				// 			x += cachedData.data[i].coords[j].w;
+				// 		}
+				// 	}
+				// }
+				const plotArea = this.cChartSpace.chart.plotArea;
+				const x = plotArea.x;
+				const y = plotArea.y;
+				// this.paths[0] = this.cChartDrawer._calculateRect(x, y + 54, 100, 54, true);
+				let pos = 0;
+				for (let i = 0; i < cachedData.data.length; i++) {
+					let startX = x + cachedData.data[i].start.x;
+					let startY = y + cachedData.data[i].start.y;
+					let direction = cachedData.data[i].isVert;
+					for( let j = 0; j < cachedData.data[i].coords.length; j++) {
+						this.paths[pos] = this.cChartDrawer._calculateRect(startX, startY + cachedData.data[i].coords[j].h, cachedData.data[i].coords[j].w, cachedData.data[i].coords[j].h, true);
+						if (direction) {
+							startY += cachedData.data[i].coords[j].h;
+						} else {
+							startX += cachedData.data[i].coords[j].w;
+						}
+						pos += 1;
+					}
+				}
+			}
+		},
+
+		draw: function () {
+			if (!this.cChartDrawer || !this.cChartDrawer.calcProp || !this.cChartDrawer.cShapeDrawer || !this.cChartDrawer.cShapeDrawer.Graphics || !this.cChartDrawer.calcProp.chartGutter) {
+				return;
+			}
+
+			// find chart starting coordinates, width and height;
+			// let leftRect = this.cChartDrawer.calcProp.chartGutter._left / this.cChartDrawer.calcProp.pxToMM;
+			// let topRect = (this.cChartDrawer.calcProp.chartGutter._top) / this.cChartDrawer.calcProp.pxToMM;
+			// let rightRect = this.cChartDrawer.calcProp.trueWidth / this.cChartDrawer.calcProp.pxToMM;
+			// let bottomRect = (this.cChartDrawer.calcProp.trueHeight) / this.cChartDrawer.calcProp.pxToMM;
+			//
+			// if (!AscFormat.isRealNumber(leftRect) || !AscFormat.isRealNumber(topRect) || !AscFormat.isRealNumber(rightRect) || !AscFormat.isRealNumber(bottomRect) ) {
+			// 	return
+			// }
+			//
+			// this.cChartDrawer.cShapeDrawer.Graphics.SaveGrState();
+			// this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(leftRect, topRect, rightRect, bottomRect);
+
+			let series = this.cChartSpace.chart.plotArea.plotAreaRegion.series;
+
+			let oSeries = series[0];
+			if(oSeries) {
+				for (let i in this.paths) {
+					if (this.paths.hasOwnProperty(i) && this.paths[i]) {
+						let nPtIdx = parseInt(i);
+						let pen = oSeries.getPtPen(nPtIdx);
+						if (pen) {
+							pen.Fill.fill.color.RGBA.R = 255;
+							pen.Fill.fill.color.RGBA.G = 0;
+							pen.Fill.fill.color.RGBA.B = 0;
+						}
+						let brush = oSeries.getPtBrush(nPtIdx);
+						this.cChartDrawer.drawPath(this.paths[i], pen, brush);
+					}
+				}
+			}
+
+			// this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
+		},
+
+		_calculateDLbl: function (compiledDlb) {
+			return {x: null, y: null}
+		}
+	}
 
 /** @constructor */
 function drawLineChart(chart, chartsDrawer) {
@@ -19037,10 +19156,13 @@ CColorObj.prototype =
 				if (isVert){
 					newWidth = totalArea / predefinedSide;
 					newHeight = lastElementArea / newWidth;
+					console.log("\\" + newWidth, newHeight);
 				} else{
 					newHeight = totalArea / predefinedSide;
 					newWidth = lastElementArea / newHeight;
+					console.log("\\" + newWidth, newHeight);
 				}
+				console.log(currentAreasSum, lastElementArea, predefinedSide, isVert, Math.max(newWidth, newHeight) / Math.min(newWidth, newHeight));
 				return Math.max(newWidth, newHeight) / Math.min(newWidth, newHeight);
 			}
 
@@ -19050,28 +19172,53 @@ CColorObj.prototype =
 				for (let i = 0; i < areas.length; i++){
 					const area = areas[i].val;
 					const lastElem = resArr.length !== 0 ? resArr[resArr.length - 1] : null;
-					const newPredefinedSize = lastElem && lastElem.position ? newWidth : newHeight;
-					if (lastElem && newPredefinedSize !== 0 && getAspectRatio(lastElem.totalSum, area, lastElem.predefinedSize, lastElem.position) < getAspectRatio(0, area, newPredefinedSize, !lastElem.position)){
+					const newPredefinedSize = lastElem && lastElem.isVert ? newWidth : newHeight;
+					if (lastElem && newPredefinedSize !== 0 && getAspectRatio(lastElem.totalSum, area, lastElem.predefinedSize, lastElem.isVert) < getAspectRatio(0, area, newPredefinedSize, !lastElem.isVert) &&
+						getAspectRatio(lastElem.totalSum, area, lastElem.predefinedSize, lastElem.isVert) < getAspectRatio(0, area, lastElem.predefinedSize, lastElem.isVert)
+					){
+						console.log("-------------------");
 						lastElem.array.push(area);
 						lastElem.totalSum += area;
-						if (lastElem.position) {
-							newWidth = (lastElem.totalSum / oldHeight);
+						if (lastElem.isVert) {
+							newWidth = oldWidth - (lastElem.totalSum / oldHeight);
 						} else {
-							newHeight = (lastElem.totalSum / oldWidth);
+							newHeight = oldHeight - (lastElem.totalSum / oldWidth);
 						}
 					}else {
+						console.log("-------------------");
 						oldHeight = newHeight;
 						oldWidth = newWidth;
 						if (getAspectRatio(0, area, oldHeight, true) < getAspectRatio(0, area, oldWidth, false)){
-							resArr.push({position: true, array: [area], totalSum: area, predefinedSize: oldHeight});
+							resArr.push({isVert: true, array: [area], totalSum: area, predefinedSize: oldHeight});
 							newWidth = oldWidth - (area / oldHeight);
 						} else {
-							resArr.push({position: false, array: [area], totalSum: area, predefinedSize: oldWidth});
+							resArr.push({isVert: false, array: [area], totalSum: area, predefinedSize: oldWidth});
 							newHeight = oldHeight - (area / oldWidth);
 						}
 					}
 				}
 				return resArr;
+			}
+
+			const pretify = function (arr) {
+				let x = 0;
+				let y = 0;
+				for (let i = 0; i < arr.length; i++) {
+					arr[i].start = {x: x, y: y};
+					const weakSide = arr[i].totalSum / arr[i].predefinedSize;
+					if (arr[i].isVert) {
+						x += weakSide;
+					} else {
+						y += weakSide;
+					}
+					arr[i].coords = [];
+					for (let j = 0; j < arr[i].array.length; j++) {
+						const strongSide = arr[i].array[j] / weakSide;
+						let width = arr[i].isVert ? weakSide : strongSide;
+						let height = arr[i].isVert ? strongSide : weakSide;
+						arr[i].coords.push({w: width, h: height});
+					}
+				}
 			}
 
 
@@ -19086,7 +19233,9 @@ CColorObj.prototype =
 				// 	labelCounter = name !== null ? labelCounter + 1 : labelCounter;
 				// 	treeHead.push({name: name, pVal: numArr[i].val / totalValue, start: i, end: i + 1, pos: i, idx: i});
 				// }
-				return squarify(numArr, width, height);
+				const result = squarify(numArr, width, height);
+				pretify(result)
+				return result;
 			}
 		}
 
