@@ -2900,8 +2900,15 @@
 		/**
 	 * @constructor
 	 */
-	function Workbook(eventsHandlers, oApi){
+	function Workbook(eventsHandlers, oApi, isMainLogicDocument){
 		this.oApi = oApi;
+		this.History = History;
+		if (false !== isMainLogicDocument)
+		{
+			if (this.History)
+				this.History.Set_LogicDocument(this);
+		}
+		this.MainDocument = false !== isMainLogicDocument;
 		this.handlers = eventsHandlers;
 		this.dependencyFormulas = new DependencyGraph(this);
 		this.nActive = 0;
@@ -3027,7 +3034,16 @@
 			this.snapshot = this._getSnapshot();
 		}
 
-		g_cCalcRecursion.initCalcProperties(this.calcPr);
+		if (this.MainDocument) {
+			g_cCalcRecursion.initCalcProperties(this.calcPr);
+		}
+
+	};
+	Workbook.prototype.Get_Api = function() {
+		return this.oApi;
+	};
+	Workbook.prototype.Get_CollaborativeEditing = function() {
+		return this.oApi.collaborativeEditing
 	};
 	Workbook.prototype.addImages = function (aImages, obj) {
 		const oApi = Asc.editor;
@@ -3695,6 +3711,11 @@
 			return;
 		}
 	};
+	Workbook.prototype._SerializeHistoryItem2 = function (oMemory, item) {
+		if (!item.LocalChange) {
+			item.Serialize(oMemory, this.oApi.collaborativeEditing);
+		}
+	};
 	Workbook.prototype._SerializeHistory = function(oMemory, item, aPointChanges) {
 		let data = this._SerializeHistoryItem(oMemory, item);
 		if (data) {
@@ -3702,7 +3723,8 @@
 		}
 	};
 	Workbook.prototype.SerializeHistory = function(){
-		var aRes = [];
+		var aResData = [];
+		var aResSerializable = [];
 		//соединяем изменения, которые были до приема данных с теми, что получились после.
 
 		var t, j, length2;
@@ -3716,23 +3738,30 @@
 			var oMemory = new AscCommon.CMemory();
 			for(var i = 0, length = aActions.length; i < length; ++i)
 			{
-				var aPointChanges = aActions[i];
-				for (j = 0, length2 = aPointChanges.length; j < length2; ++j) {
-					var item = aPointChanges[j];
-					if (item.bytes) {
-						aRes.push(item.bytes);
-					} else {
-						this._SerializeHistory(oMemory, item, aRes);
+				let items = aActions[i];
+				for (j = 0, length2 = items.length; j < length2; ++j) {
+					var item = items[j];
+					// Пересчитываем позиции
+					if (item.Data && item.Data.applyCollaborative) {
+						//не делаем копию oData, а сдвигаем в ней, потому что все равно после сериализации изменения потруться
+						if (item.Data.applyCollaborative(item.SheetId, this.oApi.collaborativeEditing)) {
+							AscCommon.History.Refresh_SpreadsheetChanges(item);
+						}
+					}
+					if (!item.LocalChange) {
+						let data = AscCommon.CCollaborativeChanges.ToBase64(item.Binary.Pos, item.Binary.Len);
+						aResData.push(data);
+						aResSerializable.push(AscCommon.History.Item_ToSerializable(item));
 					}
 				}
 			}
 			this.aCollaborativeActions = [];
 			this.snapshot = this._getSnapshot();
 		}
-		return aRes;
+		return [aResData, aResSerializable];
 	};
 	Workbook.prototype._getSnapshot = function() {
-		var wb = new Workbook(new AscCommonExcel.asc_CHandlersList(), this.oApi);
+		var wb = new Workbook(new AscCommonExcel.asc_CHandlersList(), this.oApi, false);
 		wb.dependencyFormulas = this.dependencyFormulas.getSnapshot(wb);
 		this.forEach(function (ws) {
 			ws = ws.getSnapshot(wb);
@@ -3960,6 +3989,9 @@
 			var nCurOffset = 0;
 			for (i = 0; i < length; ++i) {
 				sChange = aChanges[i];
+				if (sChange.startsWith("0;")) {
+					continue;
+				}
 				var oBinaryFileReader = new AscCommonExcel.BinaryFileReader();
 				nCurOffset = oBinaryFileReader.getbase64DecodedData2(sChange, aIndexes[i], stream, nCurOffset);
 				var item = new UndoRedoItemSerializable();
@@ -4015,7 +4047,7 @@
 			AscCommon.History.Clear();
 			AscCommon.History.TurnOff();
 			var history = new AscCommon.CHistory();
-			history.init(this);
+			history.Set_LogicDocument(this);
 			history.Create_NewPoint();
 
 			history.SetSelection(null);
@@ -4033,16 +4065,23 @@
 						if (!window["native"]["CheckNextChange"]())
 							break;
 					}
-					// TODO if(g_oUndoRedoGraphicObjects == item.oClass && item.oData.drawingData)
-					//     item.oData.drawingData.bCollaborativeChanges = true;
-					AscCommonExcel.executeInR1C1Mode(false, function () {
-						history.RedoAdd(oRedoObjectParam, item.oClass, item.nActionType, item.nSheetId, item.oRange, item.oData);
-					});
-					if (oThis.oApi.VersionHistory && item.nSheetId && item.GetChangedRange) {
-						let changedRange = item.nSheetId && item.GetChangedRange();
-						if (changedRange) {
-							oThis.oApi.wb.addToHistoryChangedRanges(item.nSheetId, changedRange, oColor);
+					if (true === oThis.oApi.collaborativeEditing.private_AddOverallChange(item))
+					{
+						// TODO if(g_oUndoRedoGraphicObjects == item.oClass && item.oData.drawingData)
+						//     item.oData.drawingData.bCollaborativeChanges = true;
+						AscCommonExcel.executeInR1C1Mode(false, function () {
+							history.RedoAdd(oRedoObjectParam, item.oClass, item.nActionType, item.nSheetId, item.oRange, item.oData, false, item);
+						});
+						if (oThis.oApi.VersionHistory && item.nSheetId && item.GetChangedRange) {
+							let changedRange = item.nSheetId && item.GetChangedRange();
+							if (changedRange) {
+								oThis.oApi.wb.addToHistoryChangedRanges(item.nSheetId, changedRange, oColor);
+							}
 						}
+
+						if (item.GetClass() && item.GetClass().SetIsRecalculated && item.IsNeedRecalculate())
+							item.GetClass().SetIsRecalculated(false);
+
 					}
 				}
 			}
@@ -4132,7 +4171,7 @@
 				item.Deserialize(stream);
 				if ((null != item.oClass || (item.oData && typeof item.oData.sChangedObjectId === "string")) && null != item.nActionType){
 					AscCommonExcel.executeInR1C1Mode(false, function () {
-						AscCommon.History.RedoAdd(oRedoObjectParam, item.oClass, item.nActionType, item.nSheetId, item.oRange, item.oData);
+						AscCommon.History.RedoAdd(oRedoObjectParam, item.oClass, item.nActionType, item.nSheetId, item.oRange, item.oData, false, item);
 					});
 				}
 
@@ -5300,7 +5339,7 @@
 				}
 			}
 		}
-		return new Workbook();
+		return new Workbook(undefined, undefined, false);
 	};
 
 	Workbook.prototype.removeExternalReferences = function (arr) {
@@ -5990,6 +6029,9 @@
 		this.activeFillType = null;
 		this.timelines = [];
 		this.changedArrays = null;
+		AscFormat.ExecuteNoHistory(function () {
+			AscCommon.g_oTableId.Add(this, this.Id);
+		}, this, [], true);
 	}
 
 	Worksheet.prototype.getCompiledStyle = function (row, col, opt_cell, opt_styleComponents) {
@@ -6843,7 +6885,7 @@
 	Worksheet.prototype._forEachCell = function(fAction) {
 		this.getRange3(0, 0, gc_nMaxRow0, gc_nMaxCol0)._foreachNoEmpty(fAction);
 	};
-	Worksheet.prototype.getId=function(){
+	Worksheet.prototype.Get_Id = Worksheet.prototype.getId=function(){
 		return this.Id;
 	};
 	Worksheet.prototype.getIndex=function(){
@@ -14545,8 +14587,10 @@
 		var DataNew = null;
 		if(AscCommon.History.Is_On())
 			DataNew = this.getValueData();
-		if(AscCommon.History.Is_On() && false == DataOld.isEqual(DataNew))
+		if(AscCommon.History.Is_On() && false == DataOld.isEqual(DataNew)) {
+			// History.Add(new AscDFH.CChangesCellValueChange(this.ws, DataOld, DataNew, new AscDFH.CCellCoordsWritable(this.nRow, this.nCol)));
 			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_ChangeValue, this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new UndoRedoData_CellSimpleData(this.nRow, this.nCol, DataOld, DataNew));
+		}
 		//todo не должны удаляться ссылки, если сделать merge ее части.
 		if(this.isNullTextString())
 		{

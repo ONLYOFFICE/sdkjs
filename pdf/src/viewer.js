@@ -127,9 +127,11 @@
 	AscFormat.InitClass(CPageInfo, AscFormat.CBaseNoIdObject, AscDFH.historyitem_type_Pdf_Page);
 	CPageInfo.prototype.constructor = CPageInfo;
 
-	Object.defineProperty(CPageInfo.prototype, "PageNum", {
-		get: function () {
-			return this.GetIndex();
+	Object.defineProperties(CPageInfo.prototype, {
+		PageNum: {
+			get: function () {
+				return this.GetIndex();
+			}
 		}
 	});
 

@@ -744,6 +744,12 @@
         // oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
         // oGraphicsPDF.Stroke();
     };
+    CAnnotationBase.prototype.changeFlipH = function () {
+        return false;
+    };
+    CAnnotationBase.prototype.changeFlipV = function () {
+        return false;
+    };
     CAnnotationBase.prototype.GetReplies = function() {
         return this._replies;
     };

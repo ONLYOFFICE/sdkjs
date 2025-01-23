@@ -801,3 +801,12 @@ AscCommonWord.CPresentationField.prototype.private_GetString = function()
 	}
 	return sStr;
 };
+
+//todo CMobileDelegateEditorDiagram
+AscCommon.CMobileDelegateEditorPresentation.prototype.GetObjectTrack = function(x, y, page, bSelected, bText) { return false; }
+AscCommon.CMobileDelegateEditorPresentation.prototype.GetSelectionRectsBounds = function () { return null; }
+AscCommon.CMobileDelegateEditorPresentation.prototype.GetSelectionRectsBounds = function () { return null; }
+AscCommon.CMobileDelegateEditorPresentation.prototype.GetContextMenuType = function () { return AscCommon.MobileTouchContextMenuType.None; }
+AscCommon.CMobileDelegateEditorPresentation.prototype.GetContextMenuInfo = function () {}
+AscCommon.CMobileDelegateEditorPresentation.prototype.GetContextMenuPosition = function () { return { X : 0, Y : 0, Mode : AscCommon.MobileTouchContextMenuType.None }; }
+AscCommon.CMobileDelegateEditorPresentation.prototype.Logic_GetNearestPos = function () { return null; }

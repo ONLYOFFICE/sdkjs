@@ -4498,10 +4498,10 @@
 			if (MathLiterals.accent.SearchU(strCorrection))
 				strCorrection = String.fromCharCode(160) + strCorrection; //add nbsp before accent, like word
 
-			for (let i = 0; i < strCorrection.length; i++)
+			for (let oIter = strCorrection.getUnicodeIterator(); oIter.check(); oIter.next())
 			{
 				let oAddMath = new MathTextAdditionalData(oCurrentEl.Parent);
-				oCMathContent.Add_Text(strCorrection[i], undefined, undefined, oAddMath);
+				oCMathContent.Add_Text(String.fromCodePoint(oIter.value()), undefined, undefined, oAddMath);
 			}
 
 			if (oLastOperator)
@@ -4983,6 +4983,7 @@
 		if (oContent instanceof MathTextAndStyles)
 		{
 			this.arr.push(oContent);
+			this.Increase();
 			return this.AddPosition(this.nPos - nPosCopy);
 		}
 

@@ -368,6 +368,18 @@
      * @see office-js-api/Examples/Enumerations/DrawingForGroup.js
 	 */
 
+    /**
+     * Any valid element which can be added to the document structure.
+	 * @typedef {(ApiParagraph)} DocumentElement
+	 * @see office-js-api/Examples/Enumerations/DocumentElement.js
+	 */
+
+    /**
+	 * The types of elements that can be added to the paragraph structure.
+	 * @typedef {(ApiUnsupported | ApiRun | ApiHyperlink)} ParagraphContent
+	 * @see office-js-api/Examples/Enumerations/ParagraphContent.js
+	 */
+
     //------------------------------------------------------------------------------------------------------------------
     //
     // Base Api
@@ -5422,7 +5434,12 @@
 		}
 		return aWrappers;
 	}
-
+	window['AscBuilder'] = window['AscBuilder'] || {};
+	window['AscBuilder'].ApiShape = ApiShape;
+	window['AscBuilder'].ApiImage = ApiImage;
+	window['AscBuilder'].ApiGroup = ApiGroup;
+	window['AscBuilder'].ApiOleObject = ApiOleObject;
+	window['AscBuilder'].ApiTable = ApiTable;
 })(window, null);
 
 

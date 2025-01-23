@@ -80,7 +80,7 @@ var c_oChartBar3dFaces =
 
 var globalGapDepth = 150;
 var isTurnOn3DCharts = true;
-var standartMarginForCharts = 15;
+var standartMarginForCharts = 13;
 
 function arrReverse(arr) {
 	if(!arr || !arr.length)

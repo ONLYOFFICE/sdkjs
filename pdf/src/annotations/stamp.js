@@ -228,6 +228,10 @@
             AscPDF.endMultiplyMode(oGraphicsPDF.GetContext());
         }
     };
+    CAnnotationStamp.prototype.ClearCache = function() {
+        this._originView.normal = null;
+        this.APInfo = null;
+    };
     CAnnotationStamp.prototype.GetOriginViewInfo = function(nPageW, nPageH) {
         let oViewer     = editor.getDocumentRenderer();
         let oFile       = oViewer.file;

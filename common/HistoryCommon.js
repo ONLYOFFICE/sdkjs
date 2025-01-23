@@ -4645,6 +4645,10 @@
 	{
 		return false;
 	};
+	CChangesBase.prototype.IsSpreadsheetChange = function()
+	{
+		return false;
+	};
 	CChangesBase.prototype.CreateReverseChange = function()
 	{
 		return null;

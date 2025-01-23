@@ -363,7 +363,7 @@ var editor;
     }
   };
   spreadsheet_api.prototype._openDocument = function(data) {
-    this.wbModel = new AscCommonExcel.Workbook(this.handlers, this);
+    this.wbModel = new AscCommonExcel.Workbook(this.handlers, this, true);
     this.initGlobalObjects(this.wbModel);
 	  AscFonts.IsCheckSymbols = true;
 	  if(this.isOpenOOXInBrowser) {
@@ -380,8 +380,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.initGlobalObjects = function(wbModel) {
-    // History & global counters
-    History.init(wbModel);
+    // global counters
 
     AscCommonExcel.UndoRedoClassTypes.Clean();
     AscCommonExcel.g_oUndoRedoCell = new AscCommonExcel.UndoRedoCell(wbModel);
@@ -724,7 +723,7 @@ var editor;
 				isCopyPaste: true, activeRange: null, selectAllSheet: true
 			};
 
-			let wb = new AscCommonExcel.Workbook();
+			let wb = new AscCommonExcel.Workbook(undefined, undefined, false);
 			wb.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
 
 			AscFormat.ExecuteNoHistory(function () {
@@ -1038,19 +1037,42 @@ var editor;
     return result;
   };
 
-  spreadsheet_api.prototype.asc_Undo = function() {
-    if (!this.canUndoRedoByRestrictions())
-      return;
-    this.wb.undo();
-    this.wb.restoreFocus();
-  };
+	spreadsheet_api.prototype.sync_CanUndoCallback = function(canUndo) {
+		if (!this.canUndoRedoByRestrictions())
+			canUndo = false;
+		this.handlers.trigger("asc_onCanUndoChanged", canUndo);
+	};
+	spreadsheet_api.prototype.sync_CanRedoCallback = function(bCanRedo) {
+		this.handlers.trigger("asc_onCanRedoChanged", bCanRedo);
+	};
+	spreadsheet_api.prototype.CheckChangedDocument = function() {
+		// if (true === History.Have_Changes())
+		// {
+		// 	// дублирование евента. когда будет undo-redo - тогда
+		// 	// эти евенты начнут отличаться
+		// 	this.SetDocumentModified(true);
+		// }
+		// else
+		// {
+		// 	this.SetDocumentModified(false);
+		// }
 
-  spreadsheet_api.prototype.asc_Redo = function() {
-    if (!this.canUndoRedoByRestrictions())
-      return;
-    this.wb.redo();
-    this.wb.restoreFocus();
-  };
+		this._onUpdateDocumentCanSave();
+	};
+	spreadsheet_api.prototype.Undo = spreadsheet_api.prototype.asc_Undo = function () {
+		if (!this.canUndoRedoByRestrictions()) {
+			return;
+		}
+		this.wb.undo();
+		this.wb.restoreFocus();
+	};
+	spreadsheet_api.prototype.Undo = spreadsheet_api.prototype.asc_Redo = function () {
+		if (!this.canUndoRedoByRestrictions()) {
+			return;
+		}
+		this.wb.redo();
+		this.wb.restoreFocus();
+	};
 
   spreadsheet_api.prototype.asc_Resize = function () {
     var oldScale = AscCommon.AscBrowser.retinaPixelRatio;
@@ -1752,6 +1774,14 @@ var editor;
       this.collaborativeEditing.setFast(bFast);
     }
   };
+	spreadsheet_api.prototype.initCollaborativeEditing = function(opt_handlers)
+	{
+		if (AscCommon.CollaborativeEditing)
+			return;
+
+		this._coAuthoringInitCollaborativeEditing(opt_handlers);
+		AscCommon.CollaborativeEditing = this.collaborativeEditing;
+	};
 
 	spreadsheet_api.prototype.asc_setThumbnailStylesSizes = function (width, height) {
 		this.styleThumbnailWidth = width;
@@ -2682,84 +2712,88 @@ var editor;
   /////////////////////////////////////////////////////////////////////////
   ///////////////////CoAuthoring and Chat api//////////////////////////////
   /////////////////////////////////////////////////////////////////////////
-  spreadsheet_api.prototype._coAuthoringInitEnd = function() {
-    var t = this;
-    this.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing(/*handlers*/{
-      "askLock": function() {
-        t.CoAuthoringApi.askLock.apply(t.CoAuthoringApi, arguments);
-      },
-      "releaseLocks": function() {
-        t.CoAuthoringApi.releaseLocks.apply(t.CoAuthoringApi, arguments);
-      },
-      "sendChanges": function() {
-        t._onSaveChanges.apply(t, arguments);
-      },
-      "applyChanges": function() {
-        t._onApplyChanges.apply(t, arguments);
-      },
-      "updateAfterApplyChanges": function() {
-        t._onUpdateAfterApplyChanges.apply(t, arguments);
-      },
-      "drawSelection": function() {
-        t._onDrawSelection.apply(t, arguments);
-      },
-      "drawFrozenPaneLines": function() {
-        t._onDrawFrozenPaneLines.apply(t, arguments);
-      },
-      "updateAllSheetsLock": function() {
-        t._onUpdateAllSheetsLock.apply(t, arguments);
-      },
-      "showDrawingObjects": function() {
-        t._onShowDrawingObjects.apply(t, arguments);
-      },
-      "showComments": function() {
-        t._onShowComments.apply(t, arguments);
-      },
-      "cleanSelection": function() {
-        t._onCleanSelection.apply(t, arguments);
-      },
-      "updateDocumentCanSave": function() {
-        t._onUpdateDocumentCanSave();
-      },
-      "checkCommentRemoveLock": function(lockElem) {
-        return t._onCheckCommentRemoveLock(lockElem);
-      },
-      "unlockDefName": function() {
-        t._onUnlockDefName.apply(t, arguments);
-      },
-      "checkDefNameLock": function(lockElem) {
-        return t._onCheckDefNameLock(lockElem);
-      },
-      "updateAllLayoutsLock": function() {
-          t._onUpdateAllLayoutsLock.apply(t, arguments);
-      },
-      "updateAllHeaderFooterLock": function() {
-          t._onUpdateAllHeaderFooterLock.apply(t, arguments);
-      },
-      "updateAllPrintScaleLock": function() {
-          t._onUpdateAllPrintScaleLock.apply(t, arguments);
-      },
-      "updateAllSheetViewLock": function() {
-          if (t._onUpdateAllSheetViewLock) {
-            t._onUpdateAllSheetViewLock.apply(t, arguments);
-          }
-      },
-      "unlockCF": function() {
-        t._onUnlockCF.apply(t, arguments);
-      },
-      "checkCFRemoveLock": function(lockElem) {
-        return t._onCheckCFRemoveLock(lockElem);
-      },
-      "unlockProtectedRange": function() {
-      	t._onUnlockProtectedRange.apply(t, arguments);
-      },
-      "checkProtectedRangeRemoveLock": function(lockElem) {
-      	return t._onCheckProtectedRangeRemoveLock(lockElem);
-      },
-      "unlockUserProtectedRanges": function() {
-      	t._onUnlockUserProtectedRanges.apply(t, arguments);
-      }
-    }, this.getViewMode());
+	spreadsheet_api.prototype._coAuthoringInitCollaborativeEditing = function(opt_handlers) {
+		var t = this;
+		opt_handlers = opt_handlers || {
+			"askLock": function() {
+				t.CoAuthoringApi.askLock.apply(t.CoAuthoringApi, arguments);
+			},
+			"releaseLocks": function() {
+				t.CoAuthoringApi.releaseLocks.apply(t.CoAuthoringApi, arguments);
+			},
+			"sendChanges": function() {
+				t._onSaveChanges.apply(t, arguments);
+			},
+			"applyChanges": function() {
+				t._onApplyChanges.apply(t, arguments);
+			},
+			"updateAfterApplyChanges": function() {
+				t._onUpdateAfterApplyChanges.apply(t, arguments);
+			},
+			"drawSelection": function() {
+				t._onDrawSelection.apply(t, arguments);
+			},
+			"drawFrozenPaneLines": function() {
+				t._onDrawFrozenPaneLines.apply(t, arguments);
+			},
+			"updateAllSheetsLock": function() {
+				t._onUpdateAllSheetsLock.apply(t, arguments);
+			},
+			"showDrawingObjects": function() {
+				t._onShowDrawingObjects.apply(t, arguments);
+			},
+			"showComments": function() {
+				t._onShowComments.apply(t, arguments);
+			},
+			"cleanSelection": function() {
+				t._onCleanSelection.apply(t, arguments);
+			},
+			"updateDocumentCanSave": function() {
+				t._onUpdateDocumentCanSave();
+			},
+			"checkCommentRemoveLock": function(lockElem) {
+				return t._onCheckCommentRemoveLock(lockElem);
+			},
+			"unlockDefName": function() {
+				t._onUnlockDefName.apply(t, arguments);
+			},
+			"checkDefNameLock": function(lockElem) {
+				return t._onCheckDefNameLock(lockElem);
+			},
+			"updateAllLayoutsLock": function() {
+				t._onUpdateAllLayoutsLock.apply(t, arguments);
+			},
+			"updateAllHeaderFooterLock": function() {
+				t._onUpdateAllHeaderFooterLock.apply(t, arguments);
+			},
+			"updateAllPrintScaleLock": function() {
+				t._onUpdateAllPrintScaleLock.apply(t, arguments);
+			},
+			"updateAllSheetViewLock": function() {
+				if (t._onUpdateAllSheetViewLock) {
+					t._onUpdateAllSheetViewLock.apply(t, arguments);
+				}
+			},
+			"unlockCF": function() {
+				t._onUnlockCF.apply(t, arguments);
+			},
+			"checkCFRemoveLock": function(lockElem) {
+				return t._onCheckCFRemoveLock(lockElem);
+			},
+			"unlockProtectedRange": function() {
+				t._onUnlockProtectedRange.apply(t, arguments);
+			},
+			"checkProtectedRangeRemoveLock": function(lockElem) {
+				return t._onCheckProtectedRangeRemoveLock(lockElem);
+			},
+			"unlockUserProtectedRanges": function() {
+				t._onUnlockUserProtectedRanges.apply(t, arguments);
+			}
+		}
+		this.collaborativeEditing = this.CollaborativeEditing = new AscCommonExcel.CCollaborativeEditing(opt_handlers, this.getViewMode());
+	}
+	spreadsheet_api.prototype._coAuthoringInitEnd = function() {
+	var t = this;
 
     this.CoAuthoringApi.onConnectionStateChanged = function(e) {
 		if (true === AscCommon.CollaborativeEditing.Is_Fast() && false === e['state']) {
@@ -2991,10 +3025,18 @@ var editor;
 	  };
   };
 
-  spreadsheet_api.prototype._onSaveChanges = function(recalcIndexColumns, recalcIndexRows, isAfterAskSave) {
+  spreadsheet_api.prototype._onSaveChanges = function(recalcIndexColumns, recalcIndexRows, isAfterAskSave, arrChanges) {
     if (this.isDocumentLoadComplete) {
-      var arrChanges = this.wbModel.SerializeHistory();
-      var deleteIndex = History.GetDeleteIndex();
+		let arrChangesaSerializable = null;
+		let deleteIndex = null;
+		if (arrChanges) {
+			deleteIndex = null;
+		} else {
+			let ser = this.wbModel.SerializeHistory();
+			arrChanges = ser[0];
+			arrChangesaSerializable = ser[1];
+			deleteIndex = History.GetDeleteIndex();
+		}
       var excelAdditionalInfo = null;
       var bCollaborative = this.collaborativeEditing.getCollaborativeEditing();
       if (bCollaborative) {
@@ -3003,7 +3045,7 @@ var editor;
           excelAdditionalInfo = {"indexCols": recalcIndexColumns, "indexRows": recalcIndexRows};
         }
       }
-      if (0 < arrChanges.length || null !== deleteIndex || null !== excelAdditionalInfo) {
+      if (true) {
           var oWs = this.wb.getWorksheet();
           var sCursorBinary = "";
           if (oWs && oWs.objectRender) {
@@ -3017,6 +3059,9 @@ var editor;
               excelAdditionalInfo["UserShortId"] = this.DocInfo.get_UserId();
               excelAdditionalInfo["CursorInfo"] = this.wb.getCursorInfo();
           }
+		  if (arrChangesaSerializable) {
+			  this.collaborativeEditing.CoHistory.AddOwnChanges(arrChangesaSerializable, deleteIndex);
+		  }
         this.CoAuthoringApi.saveChanges(arrChanges, deleteIndex, excelAdditionalInfo, this.canUnlockDocument2, bCollaborative);
         History.CanNotAddChanges = true;
       } else {
@@ -3524,7 +3569,16 @@ var editor;
 			}
 		};
 		// Пересылаем свои изменения
-		this.collaborativeEditing.sendChanges(this.IsUserSave, true);
+		if (this.forceSaveUndoRequest)
+		{
+			this.collaborativeEditing.Set_GlobalLock(false);
+			this.collaborativeEditing.Undo();
+			this.forceSaveUndoRequest = false;
+		}
+		else
+		{
+			this.collaborativeEditing.sendChanges(this.IsUserSave, true);
+		}
 	};
 
   spreadsheet_api.prototype._isLockedSparkline = function (id, callback) {
@@ -6731,7 +6785,9 @@ var editor;
 		  return;
         }
 
-		if (this.isLiveViewer()) {
+		if (this.CollaborativeEditing.Is_Fast() && !this.CollaborativeEditing.Is_SingleUser()) {
+			this.wb.Continue_FastCollaborativeEditing();
+		} else if (this.isLiveViewer()) {
 			if (this.collaborativeEditing.haveOtherChanges()) {
 				this.collaborativeEditing.applyChanges();
 			}
@@ -9677,41 +9733,235 @@ var editor;
 		return oWBModel.CustomProperties;
 	};
 
-  
-	spreadsheet_api.prototype.addCustomProperty = function(name, type, value) {
-    let oCustomProperties = this.getCustomProperties();
-    if(!oCustomProperties) return;
-    
-		this.checkObjectsLock([oCustomProperties.Id], function(bNoLock) {
-			if(bNoLock) {
-        AscCommon.History.Create_NewPoint();
-        oCustomProperties.AddProperty(name, type, value);
+
+	spreadsheet_api.prototype.addCustomProperty = function (name, type, value) {
+		let oCustomProperties = this.getCustomProperties();
+		if (!oCustomProperties) return;
+
+		this.checkObjectsLock([oCustomProperties.Id], function (bNoLock) {
+			if (bNoLock) {
+				AscCommon.History.Create_NewPoint();
+				oCustomProperties.AddProperty(name, type, value);
 			}
 		});
 	};
 
-	spreadsheet_api.prototype.modifyCustomProperty = function(idx, name, type, value) {
-    let oCustomProperties = this.getCustomProperties();
-    if(!oCustomProperties) return;
-    
-		this.checkObjectsLock([oCustomProperties.Id], function(bNoLock) {
-			if(bNoLock) {
-        AscCommon.History.Create_NewPoint();
-        oCustomProperties.ModifyProperty(idx, name, type, value);
+	spreadsheet_api.prototype.modifyCustomProperty = function (idx, name, type, value) {
+		let oCustomProperties = this.getCustomProperties();
+		if (!oCustomProperties) return;
+
+		this.checkObjectsLock([oCustomProperties.Id], function (bNoLock) {
+			if (bNoLock) {
+				AscCommon.History.Create_NewPoint();
+				oCustomProperties.ModifyProperty(idx, name, type, value);
 			}
 		});
 	};
 
-	spreadsheet_api.prototype.removeCustomProperty = function(idx) {
-    let oCustomProperties = this.getCustomProperties();
-    if(!oCustomProperties) return;
-		this.checkObjectsLock([oCustomProperties.Id], function(bNoLock) {
-			if(bNoLock) {
-        AscCommon.History.Create_NewPoint();
-        oCustomProperties.RemoveProperty(idx);
+	spreadsheet_api.prototype.removeCustomProperty = function (idx) {
+		let oCustomProperties = this.getCustomProperties();
+		if (!oCustomProperties) return;
+		this.checkObjectsLock([oCustomProperties.Id], function (bNoLock) {
+			if (bNoLock) {
+				AscCommon.History.Create_NewPoint();
+				oCustomProperties.RemoveProperty(idx);
 			}
 		});
 	};
+
+	spreadsheet_api.prototype.executeShortcut = function(type)
+	{
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		return wb.controller.executeShortcut(type);
+	};
+	spreadsheet_api.prototype._InitCommonShortcuts = function ()
+	{
+
+		const keyCodes = {
+			BackSpace       : 8,
+			Tab             : 9,
+			Enter           : 13,
+			Esc             : 27,
+			Space           : 32,
+			PageUp          : 33,
+			PageDown        : 34,
+			End             : 35,
+			Home            : 36,
+			ArrowLeft       : 37,
+			ArrowTop        : 38,
+			ArrowRight      : 39,
+			ArrowBottom     : 40,
+			Digit1          : 49,
+			Digit2          : 50,
+			Digit3          : 51,
+			Digit4          : 52,
+			Digit5          : 53,
+			Digit6          : 54,
+			SemicolonFirefox: 59,
+			Delete          : 46,
+			EqualFirefox    : 61,
+			A               : 65,
+			B               : 66,
+			C               : 67,
+			E               : 69,
+			I               : 73,
+			J               : 74,
+			K               : 75,
+			L               : 76,
+			M               : 77,
+			P               : 80,
+			R               : 82,
+			S               : 83,
+			U               : 85,
+			V               : 86,
+			X               : 88,
+			Y               : 89,
+			Z               : 90,
+			ContextMenu     : 93,
+			NumpadDecimal   : 110,
+			F2              : 113,
+			F4              : 115,
+			F5              : 116,
+			F9              : 120,
+			F10             : 121,
+			NumLock         : 144,
+			ScrollLock      : 145,
+			MinusFirefox    : 173,
+			Semicolon       : 186,
+			Equal           : 187,
+			Comma           : 188,
+			Minus           : 189,
+			Period          : 190,
+			Backquote       : 192,
+			BracketLeft     : 219,
+			BracketRight    : 221,
+			OperaContextMenu: 57351,
+		}
+
+
+		/*[Asc.c_oAscCellShortcutType.addDate] = [
+			new CNativeEvent(keyCodes.Semicolon, true, false, false, false),
+			new CNativeEvent(keyCodes.SemicolonFirefox, true, false, false, false),
+		];
+		[Asc.c_oAscCellShortcutType.addTime] = [
+			new CNativeEvent(keyCodes.Semicolon, true, true, false, false),
+			new CNativeEvent(keyCodes.SemicolonFirefox, true, true, false, false),
+		];
+		[
+		[Asc.c_oAscCellShortcutType.selectSheet] = [
+			new CNativeEvent(keyCodes.Space, true, true, false, false),
+			new CNativeEvent(keyCodes.A, true, false, false, false];
+		
+		[Asc.c_oAscCellShortcutType.moveToRightEdgeCell] = [
+			new CNativeEvent(keyCodes.ArrowRight, true, false, false, false),
+			new CNativeEvent(keyCodes.End, false, false, false, false)
+
+		];
+		[Asc.c_oAscCellShortcutType.selectToRightEdgeCell] = [
+			new CNativeEvent(keyCodes.ArrowRight, true, true, false, false),
+			new CNativeEvent(keyCodes.End, false, true, false, false];
+		
+		[Asc.c_oAscCellShortcutType.addSum,keyCodes.EqualFirefox, false, false, true, false),
+			new CNativeEvent(keyCodes.EqualFirefox, true, false, true, false, testFlags.macOs),
+			new CNativeEvent(keyCodes.Equal, false, false, true, false),
+			new CNativeEvent(keyCodes.Equal, true, false, true, false, testFlags.macOs];*/
+
+
+		// ActionType, Key, Ctrl, Shift, Alt
+		this.initShortcuts([
+			[Asc.c_oAscCellShortcutType.refreshAllConnections, keyCodes.F5, true, false, true],
+			[Asc.c_oAscCellShortcutType.refreshSelectedConnections, keyCodes.F5, false, false, true],
+			[Asc.c_oAscCellShortcutType.changeFormatTableInfo,keyCodes.R, true, true, false],
+			[Asc.c_oAscCellShortcutType.calculateAll,keyCodes.F9, false, false, false],
+			[Asc.c_oAscCellShortcutType.calculateActiveSheet,keyCodes.F9, false, true, false],
+			[Asc.c_oAscCellShortcutType.focusOnCellEditor,keyCodes.F2, false, false, false],
+			[Asc.c_oAscCellShortcutType.removeActiveCell,keyCodes.BackSpace, false, false, false],
+			[Asc.c_oAscCellShortcutType.emptyRange,keyCodes.Delete, false, false, false],
+			[Asc.c_oAscCellShortcutType.moveActiveCellToLeft,keyCodes.Tab, false, true, false],
+			[Asc.c_oAscCellShortcutType.moveActiveCellToRight,keyCodes.Tab, false, false, false],
+			[Asc.c_oAscCellShortcutType.moveActiveCellToDown,keyCodes.Enter, false, false, false],
+			[Asc.c_oAscCellShortcutType.moveActiveCellToUp,keyCodes.Enter, false, true, false],
+			[Asc.c_oAscCellShortcutType.reset,keyCodes.Esc, false, false, false],
+
+			[Asc.c_oAscCellShortcutType.disableNumLock,keyCodes.NumLock, false, false, false],//opera flags
+			[Asc.c_oAscCellShortcutType.disableScrollLock,keyCodes.ScrollLock, false, false],//opera flags
+
+			[Asc.c_oAscCellShortcutType.selectColumn,keyCodes.Space, false, true, false],
+			[Asc.c_oAscCellShortcutType.selectRow,keyCodes.Space, true, false, false],
+			[Asc.c_oAscCellShortcutType.addSeparator,keyCodes.NumpadDecimal, false, false, false],
+			[Asc.c_oAscCellShortcutType.goToPreviousSheet,keyCodes.PageUp, false, false, true],
+			[Asc.c_oAscCellShortcutType.moveToUpperCell,keyCodes.PageUp, false, false, false],
+			[Asc.c_oAscCellShortcutType.selectToUpperCell,keyCodes.PageUp, false, true, false],
+			[Asc.c_oAscCellShortcutType.moveToTopCell,keyCodes.ArrowTop, true, false, false],
+			[Asc.c_oAscCellShortcutType.moveToNextSheet,keyCodes.PageDown, false, false, true],
+			[Asc.c_oAscCellShortcutType.moveToBottomCell,keyCodes.ArrowBottom, true, false, false],
+			[Asc.c_oAscCellShortcutType.moveToLowerCell,keyCodes.PageDown, false, false, false],
+			[Asc.c_oAscCellShortcutType.selectToLowerCell,keyCodes.PageDown, false, true, false],
+			[Asc.c_oAscCellShortcutType.moveToLeftEdgeCell,keyCodes.ArrowLeft, true, false, false],
+			[Asc.c_oAscCellShortcutType.selectToLeftEdgeCell,keyCodes.ArrowLeft, true, true, false],
+			[Asc.c_oAscCellShortcutType.moveToLeftCell,keyCodes.ArrowLeft, false, false, false],
+			[Asc.c_oAscCellShortcutType.selectToLeftCell,keyCodes.ArrowLeft, false, true, false],
+			[Asc.c_oAscCellShortcutType.moveToRightCell,keyCodes.ArrowRight, false, false, false],
+			[Asc.c_oAscCellShortcutType.selectToRightCell,keyCodes.ArrowRight, false, true, false],
+			[Asc.c_oAscCellShortcutType.moveToRightEdgeCell,keyCodes.ArrowRight, true, false, false],
+			[Asc.c_oAscCellShortcutType.selectToRightEdgeCell,keyCodes.ArrowRight, true, true, false],
+			[Asc.c_oAscCellShortcutType.selectToTopCell,keyCodes.ArrowTop, true, true, false],
+			[Asc.c_oAscCellShortcutType.moveToUpCell,keyCodes.ArrowTop, false, false, false],
+			[Asc.c_oAscCellShortcutType.selectToUpCell,keyCodes.ArrowTop, false, true, false],
+			[Asc.c_oAscCellShortcutType.selectToBottomCell,keyCodes.ArrowBottom, true, true, false],
+			[Asc.c_oAscCellShortcutType.moveToDownCell,keyCodes.ArrowBottom, false, false, false],
+			[Asc.c_oAscCellShortcutType.selectToDownCell,keyCodes.ArrowBottom, false, true, false],
+			[Asc.c_oAscCellShortcutType.moveToFirstColumn,keyCodes.Home, false, false, false],
+			[Asc.c_oAscCellShortcutType.selectToFirstColumn,keyCodes.Home, false, true, false],
+			[Asc.c_oAscCellShortcutType.moveToLeftEdgeTop,keyCodes.Home, true, false, false],
+			[Asc.c_oAscCellShortcutType.selectToLeftEdgeTop,keyCodes.Home, true, true, false],
+			[Asc.c_oAscCellShortcutType.moveToRightBottomEdge,keyCodes.End, true, false, false],
+			[Asc.c_oAscCellShortcutType.selectToRightBottomEdge,keyCodes.End, true, true, false],
+			[Asc.c_oAscCellShortcutType.setNumberFormat,keyCodes.Digit1, true, true, false],
+			[Asc.c_oAscCellShortcutType.setTimeFormat,keyCodes.Digit2, true, true, false],
+			[Asc.c_oAscCellShortcutType.setDateFormat,keyCodes.Digit3, true, true, false],
+			[Asc.c_oAscCellShortcutType.setCurrencyFormat,keyCodes.Digit4, true, true, false],
+			[Asc.c_oAscCellShortcutType.setPercentFormat,keyCodes.Digit5, true, true, false],
+			[Asc.c_oAscCellShortcutType.setStrikethrough,keyCodes.Digit5, true, false, false],
+			[Asc.c_oAscCellShortcutType.setExponentialFormat,keyCodes.Digit6, true, true, false],
+			[Asc.c_oAscCellShortcutType.setBold,keyCodes.B, true, false, false],
+			[Asc.c_oAscCellShortcutType.setItalic,keyCodes.I, true, false, false],
+			[Asc.c_oAscCellShortcutType.setUnderline,keyCodes.U, true, false, false],
+			[Asc.c_oAscCellShortcutType.setGeneralFormat,keyCodes.Backquote, true, true, false],
+			[Asc.c_oAscCellShortcutType.redo,keyCodes.Y, true, false, false],
+			[Asc.c_oAscCellShortcutType.undo,keyCodes.Z, true, false, false],
+			[Asc.c_oAscCellShortcutType.print,keyCodes.P, true, false, false],
+			[Asc.c_oAscCellShortcutType.contextMenu, keyCodes.ContextMenu, false, false, false],
+			[Asc.c_oAscCellShortcutType.showFilterOptions, keyCodes.ArrowBottom, false, false, true],
+			[Asc.c_oAscCellShortcutType.showAutoComplete, keyCodes.ArrowBottom, false, false, true],
+			[Asc.c_oAscCellShortcutType.showDataValidation, keyCodes.ArrowBottom, false, false, true],
+			[Asc.c_oAscCellShortcutType.increaseFontSize, keyCodes.BracketRight, true, false, false],
+			[Asc.c_oAscCellShortcutType.decreaseFontSize, keyCodes.BracketLeft, true, false, false]
+		]);
+	}
+
+	spreadsheet_api.prototype._InitWindowsShortcuts = function () {
+		// ActionType, Key, Ctrl, Shift, Alt
+		this.initShortcuts([]);
+	}
+
+	spreadsheet_api.prototype._InitMacOsShortcuts = function () {
+		// ActionType, Key, Ctrl, Shift, Alt
+		this.initShortcuts([]);
+	}
+
+	spreadsheet_api.prototype.initDefaultShortcuts = function () {
+		this._InitCommonShortcuts();
+		if (AscCommon.AscBrowser.isMacOs) {
+			this._InitMacOsShortcuts();
+		} else {
+			this._InitWindowsShortcuts();
+		}
+	};
+
   /*
    * Export
    * -----------------------------------------------------------------------------

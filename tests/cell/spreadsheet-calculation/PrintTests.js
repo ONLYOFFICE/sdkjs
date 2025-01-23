@@ -71,8 +71,6 @@ $(function() {
 		AscCommonExcel.g_oUndoRedoProtectedWorkbook = new AscCommonExcel.UndoRedoProtectedWorkbook(wbModel);
 		AscCommonExcel.g_oUndoRedoNamedSheetViews = new AscCommonExcel.UndoRedoNamedSheetViews(wbModel);
 		AscCommonExcel.g_oUndoRedoUserProtectedRange = new AscCommonExcel.UndoRedoUserProtectedRange(wbModel);
-
-		History.init(wbModel);
 	};
 	Asc.spreadsheet_api.prototype._onUpdateDocumentCanSave = function() {
 	};
@@ -107,7 +105,7 @@ $(function() {
 	};
 
 	Asc.spreadsheet_api.prototype.fAfterLoad = function(fonts, callback) {
-		api.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
+		api.initCollaborativeEditing({});
 		api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,
 			api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
 		wb = api.wbModel;

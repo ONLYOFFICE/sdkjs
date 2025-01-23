@@ -1994,6 +1994,11 @@
 	};
 	PDFEditorApi.prototype.loadStampsJSON = function() {
 		try {
+			if (window["native_pdf_stamps"]) {
+				AscPDF["STAMPS_JSON"] = AscPDF.STAMPS_JSON = window["native_pdf_stamps"];
+				delete window["native_pdf_stamps"];
+				return;
+			}
 			var xhr = new XMLHttpRequest();
 			xhr.open("GET", "../../../../sdkjs/pdf/src/annotations/stamps.json", true);
 			var t = this;

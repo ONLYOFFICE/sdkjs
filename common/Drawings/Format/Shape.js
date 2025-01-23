@@ -4183,7 +4183,27 @@
 			}
 			return currentFontSize;
 		}
-
+		CShape.prototype.isCorrectSmartArtContentPoints = function () {
+			const oContent = this.txBody && this.txBody.content;
+			const contentPoints = this.getSmartArtPointContent();
+			if (contentPoints && oContent) {
+				let countPointParagraphs = 0;
+				for (let i = 0; i < contentPoints.length; i++) {
+					const node = contentPoints[i];
+					const point = node.point;
+					const oPointContent = point && point.t && point.t.content;
+					if (oPointContent) {
+						countPointParagraphs += oPointContent.Content.length;
+					}
+				}
+				return oContent.Content.length === countPointParagraphs;
+			}
+			return false;
+		};
+		CShape.prototype.correctUngeneratedSmartArtContent = function () {
+				const textAlgorithm = new AscFormat.TextAlgorithm();
+				textAlgorithm.applyContentFilling(this);
+		};
 		CShape.prototype.setFontSizeInSmartArt = function (fontSize, bSkipRecalculateContent2, isParentWithChildren) {
 			const oContent = this.txBody && this.txBody.content;
 			if (this.txBody && oContent) {

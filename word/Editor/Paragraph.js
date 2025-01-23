@@ -7477,17 +7477,17 @@ Paragraph.prototype.CanCorrectContent = function()
 /**
  * Корректируем содержимое параграфа
  */
-Paragraph.prototype.CorrectContent = function()
+Paragraph.prototype.CorrectContent = function(startPos, endPos, preserveEmptyElements)
 {
 	if (!this.CanCorrectContent())
 		return;
 
-	this.Correct_Content();
+	this.Correct_Content(startPos, endPos, preserveEmptyElements);
 
 	if (this.CurPos.ContentPos >= this.Content.length - 1)
 		this.MoveCursorToEndPos();
 };
-Paragraph.prototype.Correct_Content = function(_StartPos, _EndPos, bDoNotDeleteEmptyRuns)
+Paragraph.prototype.Correct_Content = function(_StartPos, _EndPos, preserveEmptyElements)
 {
 	if (!this.CanCorrectContent())
 		return;
@@ -7520,7 +7520,8 @@ Paragraph.prototype.Correct_Content = function(_StartPos, _EndPos, bDoNotDeleteE
 				|| para_Field === CurElement.Type
 				|| (para_InlineLevelSdt === CurElement.Type && !CurElement.IsPlaceHolder()))
 			&& true === CurElement.Is_Empty()
-			&& true !== CurElement.Is_CheckingNearestPos())
+			&& true !== CurElement.Is_CheckingNearestPos()
+			&& true !== preserveEmptyElements)
 		{
 			this.Internal_Content_Remove(CurPos);
 		}
@@ -7541,7 +7542,7 @@ Paragraph.prototype.Correct_Content = function(_StartPos, _EndPos, bDoNotDeleteE
 		}
 		else
 		{
-			if (true !== bDoNotDeleteEmptyRuns)
+			if (true !== preserveEmptyElements)
 			{
 				// TODO (Para_End): Предпоследний элемент мы не проверяем, т.к. на ран с Para_End мы не ориентируемся
 				if (true === CurElement.Is_Empty() && (0 < CurPos || para_Run !== this.Content[CurPos].Type) && CurPos < this.Content.length - 2 && para_Run === this.Content[CurPos + 1].Type)

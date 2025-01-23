@@ -1379,6 +1379,537 @@
 			return result;
 		};
 
+		asc_CEventsController.prototype.executeShortcut = function(type) {
+			let result = false;
+			let t = this;
+			let canEdit = this.canEdit();
+			let selectionDialogMode = this.getSelectionDialogMode();
+			let selectionActivePointChanged, dc = 0, dr = 0, shiftKey, isNeedCheckActiveCellChanged, enterOptions;
+			let isFormulaEditMode = this.getFormulaEditMode();
+			let isChangeVisibleAreaMode = this.view.Api.isEditVisibleAreaOleEditor;
+
+			// While not removed for compatibility with key down
+			function stop(immediate) {
+				/*event.stopPropagation();
+				immediate ? event.stopImmediatePropagation() : true;
+				event.preventDefault();
+				result = false;*/
+			}
+			function _setSkipKeyPress(val) {
+				/*event.stopPropagation();
+				immediate ? event.stopImmediatePropagation() : true;
+				event.preventDefault();
+				result = false;*/
+			}
+
+			switch (type) {
+				case Asc.c_oAscCellShortcutType.refreshAllConnections:
+				case Asc.c_oAscCellShortcutType.refreshSelectedConnections: {
+					if (canEdit && !t.getCellEditMode() && !selectionDialogMode && t.handlers.trigger("refreshConnections", type === Asc.c_oAscCellShortcutType.refreshAllConnections)) {
+						return true;
+					}
+					_setSkipKeyPress(false);
+					result = true;
+					break;
+				}
+				case Asc.c_oAscCellShortcutType.changeFormatTableInfo: {
+					stop();
+					if (canEdit && !t.getCellEditMode() && !selectionDialogMode) {
+						t.handlers.trigger("changeFormatTableInfo");
+					}
+
+					_setSkipKeyPress(false);
+					result = true;
+					break;
+				}
+				case Asc.c_oAscCellShortcutType.calculateActiveSheet:
+				case Asc.c_oAscCellShortcutType.calculateAll: {
+					let calcType;
+					if (Asc.c_oAscCellShortcutType.calculateActiveSheet === type) {
+						calcType = Asc.c_oAscCalculateType.ActiveSheet;
+					} else {
+						calcType = Asc.c_oAscCalculateType.All;
+					}
+					t.handlers.trigger("calculate", calcType);
+					result = true;
+					break;
+				}
+				case Asc.c_oAscCellShortcutType.focusOnCellEditor: {
+					if (!canEdit || t.getCellEditMode() || selectionDialogMode) {
+						return true;
+					}
+					if (AscBrowser.isOpera) {
+						stop();
+					}
+					// When pressing F2, set focus in the editor
+					let enterOptions = new AscCommonExcel.CEditorEnterOptions();
+					enterOptions.focus = true;
+					t.handlers.trigger("editCell", enterOptions);
+					result = true;
+
+					break;
+				}
+				case Asc.c_oAscCellShortcutType.addDate:
+				case Asc.c_oAscCellShortcutType.addTime: // add current date or time Ctrl + (Shift) + ;
+					if (!canEdit || t.getCellEditMode() || selectionDialogMode) {
+						return true;
+					}
+
+					// When a character is pressed, do not set focus. Clear the cell content
+					// Next event processed by cellEditor
+					enterOptions = new AscCommonExcel.CEditorEnterOptions();
+					enterOptions.newText = '';
+					enterOptions.quickInput = true;
+					this.handlers.trigger("editCell", enterOptions);
+					result = true;
+
+					break;
+				case Asc.c_oAscCellShortcutType.removeActiveCell: // backspace
+					if (!canEdit || t.getCellEditMode() || selectionDialogMode) {
+						return true;
+					}
+					stop();
+
+					// When backspace is pressed, focus is not in the editor (clearing content)
+					enterOptions = new AscCommonExcel.CEditorEnterOptions();
+					enterOptions.newText = '';
+					t.handlers.trigger("editCell", enterOptions);
+					result = true;
+
+					break;
+
+				case Asc.c_oAscCellShortcutType.emptyRange: // Del
+					if (!canEdit || this.getCellEditMode() || selectionDialogMode || shiftKey) {
+						return true;
+					}
+					// Удаляем содержимое
+					this.handlers.trigger("empty");
+					result = true;
+
+					break;
+
+				case Asc.c_oAscCellShortcutType.moveActiveCellToLeft: // tab
+				case Asc.c_oAscCellShortcutType.moveActiveCellToRight:
+					if (t.getCellEditMode() || selectionDialogMode) {
+						return true;
+					}
+					// Disable standard browser handling of the tab key press
+					stop();
+
+					// Special case (possibly moving within a selected area)
+					selectionActivePointChanged = true;
+					if (Asc.c_oAscCellShortcutType.moveActiveCellToLeft === type) {
+						dc = -1;      // (shift + tab) - move left by 1 column
+						shiftKey = false;  // Reset shift, because we are not selecting
+					} else {
+						let _activeCell = t.handlers.trigger("getActiveCell");
+						if (t.lastTab === null) {
+							if (_activeCell) {
+								t.lastTab = _activeCell.c2;
+							}
+						} else if (!_activeCell) {
+							t.lastTab = null;
+						}
+						dc = +1;      // (tab) - move right by 1 column
+					}
+					break;
+
+				case Asc.c_oAscCellShortcutType.moveActiveCellToDown: // "enter"
+				case Asc.c_oAscCellShortcutType.moveActiveCellToUp:
+					if (t.getCellEditMode() || selectionDialogMode) {
+						return true;
+					}
+					// Special case (possibly moving within a selected area)
+					selectionActivePointChanged = true;
+					if (Asc.c_oAscCellShortcutType.moveActiveCellToUp === type) {
+						dr = -1;      // (shift + enter) - move up by 1 row
+						shiftKey = false;  // Reset shift, because we are not selecting
+						t.lastTab = null;
+					} else {
+						if (t.lastTab !== null) {
+							let _activeCell = t.handlers.trigger("getActiveCell");
+							if (_activeCell) {
+								dc = t.lastTab - _activeCell.c2;
+							} else {
+								t.lastTab = null;
+							}
+						}
+						dr = +1;      // (enter) - move down by 1 row
+					}
+					break;
+
+				case Asc.c_oAscCellShortcutType.reset: // Esc
+					t.handlers.trigger("stopFormatPainter");
+					t.handlers.trigger("stopAddShape");
+					t.handlers.trigger("cleanCutData", true, true);
+					t.handlers.trigger("cleanCopyData", true, true);
+					t.view.Api.cancelEyedropper();
+					window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
+					result = true;
+					break;
+				case Asc.c_oAscCellShortcutType.disableNumLock: // Num Lock
+				case Asc.c_oAscCellShortcutType.disableScrollLock: // Scroll Lock
+					if (AscBrowser.isOpera) {
+						stop();
+					}
+					result = true;
+					break;
+				case Asc.c_oAscCellShortcutType.selectSheet: // Spacebar
+				case Asc.c_oAscCellShortcutType.selectColumn: // Spacebar
+				case Asc.c_oAscCellShortcutType.selectRow: // Spacebar
+					if (t.getCellEditMode()) {
+						return true;
+					}
+
+					// Disable standard browser handling for key presses
+					// Ctrl+Shift+Spacebar, Ctrl+Spacebar, Shift+Spacebar
+					if (Asc.c_oAscCellShortcutType.selectColumn === type || Asc.c_oAscCellShortcutType.selectSheet === type) {
+						t.handlers.trigger("selectColumnsByRange");
+					}
+					if (Asc.c_oAscCellShortcutType.selectRow === type || Asc.c_oAscCellShortcutType.selectSheet === type) {
+						t.handlers.trigger("selectRowsByRange");
+					}
+					stop();
+
+					result = true;
+					break;
+
+				case Asc.c_oAscCellShortcutType.addSeparator: //NumpadDecimal
+					if (!canEdit || t.getCellEditMode() || selectionDialogMode) {
+						return true;
+					}
+					t.view.Api.wb.EnterText(this.view.Api.asc_getDecimalSeparator().charCodeAt(0), true);
+					//stop to prevent double enter
+					stop();
+
+					result = true;
+					break;
+				case Asc.c_oAscCellShortcutType.goToPreviousSheet: // PageUp
+				case Asc.c_oAscCellShortcutType.moveToUpperCell:
+				case Asc.c_oAscCellShortcutType.selectToUpperCell:
+					// Disable standard browser handling of the PageUp key press
+					stop();
+					if (/*TODO ctrlKey */ Asc.c_oAscCellShortcutType.goToPreviousSheet === type) {
+						// Moving through sheets from right to left
+						// Not working in Chrome (because it has its own handling for certain key presses with Ctrl)
+						t.handlers.trigger("showNextPrevWorksheet", -1);
+						return true;
+					} else {
+						// Solution design department to handle Alt + PgUp  Alt + PgDown as a transition between sheets
+						/*event.altKey ? dc = -0.5 : */
+						dr = -0.5;
+					}
+					isNeedCheckActiveCellChanged = true;
+					result = true;
+					break;
+
+				case Asc.c_oAscCellShortcutType.moveToNextSheet: // PageDown
+				case Asc.c_oAscCellShortcutType.moveToLowerCell:
+				case Asc.c_oAscCellShortcutType.selectToLowerCell:
+					// Disable standard browser handling of the PageDown key press
+					stop();
+					if (/*TODO ctrlKey */ Asc.c_oAscCellShortcutType.moveToNextSheet) {
+						// Moving through sheets from left to right
+						// Not working in Chrome (because it has its own handling for certain key presses with Ctrl)
+						t.handlers.trigger("showNextPrevWorksheet", +1);
+						return true;
+					} else {
+						// Solution design department to handle Alt + PgUp  Alt + PgDown as a transition between sheets
+						/*event.altKey ? dc = +0.5 : */
+						dr = +0.5;
+					}
+					isNeedCheckActiveCellChanged = true;
+					result = true;
+					break;
+
+				case Asc.c_oAscCellShortcutType.moveToLeftEdgeCell: // left
+				case Asc.c_oAscCellShortcutType.selectToLeftEdgeCell: // + shift
+				case Asc.c_oAscCellShortcutType.moveToLeftCell:
+				case Asc.c_oAscCellShortcutType.selectToLeftCell: // + shift
+					stop(); // Disable standard browser handling of the left key press
+					dc = (Asc.c_oAscCellShortcutType.moveToLeftEdgeCell === type || Asc.c_oAscCellShortcutType.selectToLeftEdgeCell === type) ? -1.5 : -1; // Arrow key movement (left-right, up-down)
+					isNeedCheckActiveCellChanged = true;
+					result = true;
+					break;
+
+				case Asc.c_oAscCellShortcutType.moveToTopCell: // up
+				case Asc.c_oAscCellShortcutType.selectToTopCell: // + shift
+				case Asc.c_oAscCellShortcutType.moveToUpCell:
+				case Asc.c_oAscCellShortcutType.selectToUpCell: // + shift
+					stop(); // Disable standard browser handling of the up key press
+					/*if (canEdit && !t.getCellEditMode() && !selectionDialogMode && event.altKey && t.handlers.trigger("onDataValidation")) {
+						return result;
+					}*/
+					dr = (Asc.c_oAscCellShortcutType.moveToTopCell === type || Asc.c_oAscCellShortcutType.selectToTopCell === type) ? -1.5 : -1; // Arrow key movement (left-right, up-down)
+					isNeedCheckActiveCellChanged = true;
+					result = true;
+					break;
+
+				case Asc.c_oAscCellShortcutType.moveToRightEdgeCell: // right
+				case Asc.c_oAscCellShortcutType.selectToRightEdgeCell: // + shift
+				case Asc.c_oAscCellShortcutType.moveToRightCell:
+				case Asc.c_oAscCellShortcutType.selectToRightCell: // + shift
+					stop(); // Disable standard browser handling of the right key press
+					dc = (Asc.c_oAscCellShortcutType.moveToRightEdgeCell === type || Asc.c_oAscCellShortcutType.selectToRightEdgeCell === type) ? +1.5 : +1; // Arrow key movement (left-right, up-down)
+					isNeedCheckActiveCellChanged = true;
+					result = true;
+					break;
+				case Asc.c_oAscCellShortcutType.moveToBottomCell: // down
+				case Asc.c_oAscCellShortcutType.selectToBottomCell:
+				case Asc.c_oAscCellShortcutType.moveToDownCell:
+				case Asc.c_oAscCellShortcutType.selectToDownCell:
+				case Asc.c_oAscCellShortcutType.showFilterOptions:
+				case Asc.c_oAscCellShortcutType.showAutoComplete:
+				case Asc.c_oAscCellShortcutType.showDataValidation:
+					stop(); // Disable standard browser handling of the down key press
+					// Handling Alt + down
+					if (canEdit && !t.getCellEditMode() && !selectionDialogMode && (Asc.c_oAscCellShortcutType.showFilterOptions === type
+						|| Asc.c_oAscCellShortcutType.showAutoComplete === type || Asc.c_oAscCellShortcutType.showDataValidation === type)) {
+						if (Asc.c_oAscCellShortcutType.showFilterOptions === type && t.handlers.trigger("onShowFilterOptionsActiveCell")) {
+							return result;
+						}
+						if (Asc.c_oAscCellShortcutType.showDataValidation === type && t.handlers.trigger("onDataValidation")) {
+							return result;
+						}
+						Asc.c_oAscCellShortcutType.showAutoComplete === type && t.handlers.trigger("showAutoComplete");
+						return result;
+					}
+					dr = Asc.c_oAscCellShortcutType.selectToBottomCell === type ? +1.5 : +1; // Arrow key movement (left-right, up-down)
+					isNeedCheckActiveCellChanged = true;
+					result = true;
+					break;
+
+				case Asc.c_oAscCellShortcutType.moveToFirstColumn: // home
+				case Asc.c_oAscCellShortcutType.selectToFirstColumn:
+				case Asc.c_oAscCellShortcutType.moveToLeftEdgeTop:
+				case Asc.c_oAscCellShortcutType.selectToLeftEdgeTop:
+					stop(); // Disable standard browser handling of the home key press
+					if (isFormulaEditMode) {
+						break;
+					}
+					dc = -2.5;
+					if (type === Asc.c_oAscCellShortcutType.moveToLeftEdgeTop || type === Asc.c_oAscCellShortcutType.selectToLeftEdgeTop) {
+						dr = -2.5;
+					}
+					isNeedCheckActiveCellChanged = true;
+					break;
+
+				case Asc.c_oAscCellShortcutType.moveToRightBottomEdge: // end
+				case Asc.c_oAscCellShortcutType.selectToRightBottomEdge:
+					stop(); // Disable standard browser handling of the end key press
+					if (isFormulaEditMode) {
+						break;
+					}
+					dc = 2.5;
+					if (type === Asc.c_oAscCellShortcutType.moveToRightBottomEdge || type === Asc.c_oAscCellShortcutType.selectToRightBottomEdge) {
+						dr = 2.5;
+					}
+					isNeedCheckActiveCellChanged = true;
+					break;
+
+				case Asc.c_oAscCellShortcutType.setNumberFormat:  // set number format		Ctrl + Shift + !
+				case Asc.c_oAscCellShortcutType.setTimeFormat:  // set time format		Ctrl + Shift + @
+				case Asc.c_oAscCellShortcutType.setDateFormat:  // set date format		Ctrl + Shift + #
+				case Asc.c_oAscCellShortcutType.setCurrencyFormat:  // set currency format	Ctrl + Shift + $
+				case Asc.c_oAscCellShortcutType.setPercentFormat:  // make strikethrough		Ctrl + 5
+				case Asc.c_oAscCellShortcutType.setStrikethrough:  // make strikethrough		Ctrl + 5
+				case Asc.c_oAscCellShortcutType.setExponentialFormat:  // set exponential format Ctrl + Shift + ^
+				case Asc.c_oAscCellShortcutType.setBold:  // make bold				Ctrl + b
+				case Asc.c_oAscCellShortcutType.setItalic:  // make italic			Ctrl + i
+				//case 83: // save					Ctrl + s
+				case Asc.c_oAscCellShortcutType.setUnderline:  // make underline			Ctrl + u
+				case Asc.c_oAscCellShortcutType.setGeneralFormat: // set general format 	Ctrl + Shift + ~
+					if (!canEdit || selectionDialogMode) {
+						return true;
+					}
+
+				case Asc.c_oAscCellShortcutType.redo:  // redo					Ctrl + y
+				case Asc.c_oAscCellShortcutType.undo:  // undo					Ctrl + z
+					if (!(canEdit || t.handlers.trigger('isRestrictionComments')) || selectionDialogMode) {
+						return true;
+					}
+					isNeedCheckActiveCellChanged = true;
+
+				case Asc.c_oAscCellShortcutType.selectAll: // select all      Ctrl + a
+				case Asc.c_oAscCellShortcutType.print: // print           Ctrl + p
+					if (t.getCellEditMode()) {
+						return true;
+					}
+
+					let action = false;
+					switch (/*event.which*/type) {
+						case Asc.c_oAscCellShortcutType.setNumberFormat: //49:
+							if (shiftKey) {
+								t.handlers.trigger("setCellFormat", Asc.c_oAscNumFormatType.Number);
+								action = true;
+							}
+							break;
+						case  Asc.c_oAscCellShortcutType.setTimeFormat: //50:
+							if (shiftKey) {
+								t.handlers.trigger("setCellFormat", Asc.c_oAscNumFormatType.Time);
+								action = true;
+							}
+							break;
+						case  Asc.c_oAscCellShortcutType.setDateFormat: //51:
+							if (shiftKey) {
+								t.handlers.trigger("setCellFormat", Asc.c_oAscNumFormatType.Date);
+								action = true;
+							}
+							break;
+						case  Asc.c_oAscCellShortcutType.setCurrencyFormat: //52:
+							if (shiftKey) {
+								t.handlers.trigger("setCellFormat", Asc.c_oAscNumFormatType.Currency);
+								action = true;
+							}
+							break;
+						case  Asc.c_oAscCellShortcutType.setPercentFormat: //53:
+							if (shiftKey) {
+								t.handlers.trigger("setCellFormat", Asc.c_oAscNumFormatType.Percent);
+							} else {
+								t.handlers.trigger("setFontAttributes", "s");
+							}
+							action = true;
+							break;
+						case  Asc.c_oAscCellShortcutType.setExponentialFormat: //54:
+							t.handlers.trigger("setCellFormat", Asc.c_oAscNumFormatType.Scientific);
+							action = true;
+							break;
+						case Asc.c_oAscCellShortcutType.selectSheet:
+							//t.handlers.trigger("selectColumnsByRange");
+							//t.handlers.trigger("selectRowsByRange");
+							t.handlers.trigger("selectAllByRange");
+							action = true;
+							break;
+						case Asc.c_oAscCellShortcutType.setBold:
+							t.handlers.trigger("setFontAttributes", "b");
+							action = true;
+							break;
+						case Asc.c_oAscCellShortcutType.setItalic:
+							t.handlers.trigger("setFontAttributes", "i");
+							action = true;
+							break;
+						case Asc.c_oAscCellShortcutType.print:
+							t.handlers.trigger("print");
+							action = true;
+							break;
+						case Asc.c_oAscCellShortcutType.save:
+							t.handlers.trigger("save");
+							 action = true;
+							break;
+						case Asc.c_oAscCellShortcutType.setUnderline:
+							t.handlers.trigger("setFontAttributes", "u");
+							action = true;
+							break;
+						case Asc.c_oAscCellShortcutType.redo:
+							t.handlers.trigger("redo");
+							action = true;
+							break;
+						case Asc.c_oAscCellShortcutType.undo:
+							t.handlers.trigger("undo");
+							action = true;
+							break;
+						case Asc.c_oAscCellShortcutType.setGeneralFormat:
+							t.handlers.trigger("setCellFormat", Asc.c_oAscNumFormatType.General);
+							action = true;
+							break;
+					}
+
+					if (!action) {
+						_setSkipKeyPress(false);
+						return true;
+					}
+					stop();
+					result = true;
+					break;
+				case Asc.c_oAscCellShortcutType.addSum:  // Firefox, Opera (+/=)
+					//case 187: // +/=
+					if (!canEdit || t.getCellEditMode() || selectionDialogMode) {
+						return true;
+					}
+
+					t.handlers.trigger('addFunction',
+						AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale['SUM'] :
+							'SUM', Asc.c_oAscPopUpSelectorType.Func, true);
+					stop();
+
+					result = true;
+					break;
+
+				case Asc.c_oAscCellShortcutType.contextMenu:
+					stop();
+					this.handlers.trigger('onContextMenu');
+					result = true;
+					break;
+
+				case Asc.c_oAscCellShortcutType.decreaseFontSize:
+				case Asc.c_oAscCellShortcutType.increaseFontSize:
+					if (t.getCellEditMode() || !canEdit || selectionDialogMode) {
+						return true;
+					}
+					stop();
+					t.view.setFontAttributes("changeFontSize", type === Asc.c_oAscCellShortcutType.increaseFontSize);
+					result = true;
+					break;
+				default:
+					_setSkipKeyPress(false);
+					result = true;
+					break;
+
+			}
+
+
+
+			var activeCellBefore;
+			if (isNeedCheckActiveCellChanged) {
+				activeCellBefore = t.handlers.trigger("getActiveCell");
+			}
+			var _checkLastTab = function () {
+				if (isNeedCheckActiveCellChanged) {
+					var activeCellAfter = t.handlers.trigger("getActiveCell");
+					if (!activeCellBefore || !activeCellAfter || !activeCellAfter.isEqual(activeCellBefore)) {
+						t.lastTab = null;
+					}
+				}
+			};
+
+			if ((dc !== 0 || dr !== 0) && false === t.handlers.trigger("isGlobalLockEditCell")) {
+				const wb = window["Asc"]["editor"].wb;
+				let ws = wb.getWorksheet();
+				if (ws && ws.getRightToLeft()) {
+					dc = -dc;
+				}
+				if (isChangeVisibleAreaMode) {
+					t.handlers.trigger("changeVisibleArea", !shiftKey, dc, dr, false, function (d) {
+						if (t.targetInfo) {
+							wb._onUpdateWorksheet(t.targetInfo.coordX, t.targetInfo.coordY, false);
+						}
+						t.scroll(d);
+						const oOleSize = wb.getOleSize();
+						oOleSize.addPointToLocalHistory();
+						_checkLastTab();
+					}, true);
+				} else if (selectionActivePointChanged) { // Проверка на движение в выделенной области
+					t.handlers.trigger("selectionActivePointChanged", dc, dr, function (d) {
+						t.scroll(d);
+						_checkLastTab();
+					});
+				} else {
+					t.handlers.trigger("changeSelection", /*isStartPoint*/!shiftKey, dc, dr, /*isCoord*/false, false,
+						function (d) {
+							var wb = window["Asc"]["editor"].wb;
+							if (t.targetInfo) {
+								wb._onUpdateWorksheet(t.targetInfo.coordX, t.targetInfo.coordY, false);
+							}
+							const ws = wb.getWorksheet();
+							t.scroll(ws.convertOffsetToSmooth(d));
+							_checkLastTab();
+						});
+				}
+			}
+
+			return result;
+		};
+
 		/** @param event {KeyboardEvent} */
 		asc_CEventsController.prototype._onWindowKeyPress = function (event) {
 			// Нельзя при отключенных эвентах возвращать false (это касается и ViewerMode)

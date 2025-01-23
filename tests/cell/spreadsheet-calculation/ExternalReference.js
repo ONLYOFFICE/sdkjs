@@ -619,12 +619,12 @@ $(function () {
 		let docInfo = new Asc.asc_CDocInfo();
 		docInfo.asc_putTitle("TeSt.xlsx");
 		api.DocInfo = docInfo;
-
+		api.initCollaborativeEditing({});
 
 		window["Asc"]["editor"] = api;
 
 		AscCommon.g_oTableId.init();
-		wb = new AscCommonExcel.Workbook(new AscCommonExcel.asc_CHandlersList(), api);
+		wb = new AscCommonExcel.Workbook(new AscCommonExcel.asc_CHandlersList(), api, true);
 		AscCommon.History.init(wb);
 		wb.maxDigitWidth = 7;
 		wb.paddingPlusBorder = 5;
@@ -1135,6 +1135,67 @@ $(function () {
 			assert.strictEqual(elemInStack.ws && elemInStack.ws.sName, wb.getActiveWs() && wb.getActiveWs().getName(), "Location for WS in cName3D by default");
 			assert.ok(!wb.getDefinesNames(elemInStack.value), "Defname doesn't exist");
 		}
+
+		// same wb, full link tests
+		oParser = new parserFormula("'[" + fileName + "]Sheet1'!currentDef", cellWithFormula, ws);
+		assert.ok(oParser.parse(true, null, parseResult), "'[" + fileName + "]Sheet1'!currentDef. isLocal = true. Link to existing defname in current wb");
+		elemInStack = oParser.outStack && oParser.outStack[0];
+		if (elemInStack && (elemInStack.type === AscCommonExcel.cElementType.name3D)) {
+			assert.strictEqual(elemInStack.value, "currentDef");
+			assert.ok(elemInStack.ws);
+			assert.ok(elemInStack.shortLink);
+			assert.strictEqual(elemInStack.externalLink, "0");
+			assert.strictEqual(elemInStack.ws && elemInStack.ws.sName, "Sheet2", "Defname location");
+			assert.ok(wb.getDefinesNames(elemInStack.value), "Defname exist on the second sheet");
+		}
+
+		oParser = new parserFormula("'[" + fileName + "]Sheet1'!_nonExistentDefname", cellWithFormula, ws);
+		assert.ok(oParser.parse(true, null, parseResult), "'[" + fileName + "]Sheet1'!_nonExistentDefname. isLocal = true. Link to non-existent defname in current wb");
+		elemInStack = oParser.outStack && oParser.outStack[0];
+		if (elemInStack && (elemInStack.type === AscCommonExcel.cElementType.name3D)) {
+			assert.strictEqual(elemInStack.value, "_nonExistentDefname");
+			assert.ok(elemInStack.ws);
+			assert.ok(elemInStack.shortLink);
+			assert.strictEqual(elemInStack.externalLink, "0");
+			assert.strictEqual(elemInStack.ws && elemInStack.ws.sName, wb.getActiveWs() && wb.getActiveWs().getName(), "Location for WS in cName3D by default");
+			assert.ok(!wb.getDefinesNames(elemInStack.value), "Defname doesn't exist");
+		}
+
+		oParser = new parserFormula("'[" + fileName + "]Sheet1'!A1", cellWithFormula, ws);
+		assert.ok(oParser.parse(true, null, parseResult), "'[" + fileName + "]Sheet1'!A1. isLocal = true. Link to A1 cell");
+		elemInStack = oParser.outStack && oParser.outStack[0];
+		if (elemInStack && (elemInStack.type === AscCommonExcel.cElementType.cell3D)) {
+			assert.strictEqual(elemInStack.value, "A1");
+			assert.ok(elemInStack.ws);
+			assert.ok(elemInStack.externalLink == null);
+			assert.strictEqual(elemInStack.ws && elemInStack.ws.sName, "Sheet1", "Location for WS in cRef3D");
+		}
+
+		oParser = new parserFormula("'[" + fileName + "]Sheet1'!A1:A2", cellWithFormula, ws);
+		assert.ok(oParser.parse(true, null, parseResult), "'[" + fileName + "]Sheet1'!A1:A2. isLocal = true. Link to A1:A2 range");
+		elemInStack = oParser.outStack && oParser.outStack[0];
+		if (elemInStack && (elemInStack.type === AscCommonExcel.cElementType.cellsRange3D)) {
+			assert.strictEqual(elemInStack.value, "A1:A2");
+			assert.ok(elemInStack.wsFrom);
+			assert.ok(elemInStack.externalLink == null);
+			assert.strictEqual(elemInStack.wsFrom && elemInStack.wsFrom.sName, "Sheet1", "Location for WS in cArea3D");
+		}
+
+		oParser = new parserFormula("'[" + fileName + "]Sheet1'!$A$1:$B$2", cellWithFormula, ws);
+		assert.ok(oParser.parse(true, null, parseResult), "'[" + fileName + "]Sheet1'!$A$1:$B$2. isLocal = true. Link to $A$1:$B$2 range");
+		elemInStack = oParser.outStack && oParser.outStack[0];
+		if (elemInStack && (elemInStack.type === AscCommonExcel.cElementType.cellsRange3D)) {
+			assert.strictEqual(elemInStack.value, "$A$1:$B$2");
+			assert.ok(elemInStack.wsFrom);
+			assert.ok(elemInStack.externalLink == null);
+			assert.strictEqual(elemInStack.wsFrom && elemInStack.wsFrom.sName, "Sheet1", "Location for WS in cArea3D");
+		}
+
+		oParser = new parserFormula("'[" + fileName + "]Sheet222'!currentDef", cellWithFormula, ws);
+		assert.ok(oParser.parse(true, null, parseResult) === false, "'[" + fileName + "]Sheet222'!currentDef. isLocal = true. Link to existing defname on a non-existent sheet");
+
+		oParser = new parserFormula("'[" + fileName + "]Non!'!@ExistentSheet'!currentDef", cellWithFormula, ws);
+		assert.ok(oParser.parse(true, null, parseResult) === false, "'[" + fileName + "]Non!'!@ExistentSheet'!currentDef. isLocal = true. Link to existing defname on a non-existent sheet");
 
 		oParser = new parserFormula(fullLinkLocal, cellWithFormula, ws);
 		assert.ok(oParser.parse(true/*isLocal*/, null, parseResult), "Full link. isLocal = true. " + fullLinkLocal);

@@ -34,20 +34,8 @@
 
 (function(window, undefined){
 
-    /**
-     *
-     * @constructor
-     * @extends {AscCommon.CCollaborativeEditingBase}
-     */
-    function CCollaborativeEditing()
-    {
-        AscCommon.CCollaborativeEditingBase.call(this);
-        this.WaitImages = {};
-    }
-
-    CCollaborativeEditing.prototype = Object.create(AscCommon.CCollaborativeEditingBase.prototype);
-    CCollaborativeEditing.prototype.constructor = CCollaborativeEditing;
-
+    let CCollaborativeEditing = AscCommonExcel.CCollaborativeEditing;
+    //constructor in cell/model/CollaborativeEditing.js
     CCollaborativeEditing.prototype.GetEditorApi = function()
     {
         return Asc.editor;
@@ -348,5 +336,4 @@
     };
     //--------------------------------------------------------export----------------------------------------------------
     window['AscCommon'] = window['AscCommon'] || {};
-    window['AscCommon'].CollaborativeEditing = new CCollaborativeEditing();
 })(window);

@@ -162,8 +162,11 @@ function (window, undefined) {
 		w.WriteBool(this.bSizeWithCells);
 	};
 	asc_CCommentCoords.prototype.applyCollaborative = function (nSheetId, collaborativeEditing) {
+		let nColOld = this.nCol;
+		let nRowOld = this.nRow;
 		this.nCol = collaborativeEditing.getLockMeColumn2(nSheetId, this.nCol);
 		this.nRow = collaborativeEditing.getLockMeRow2(nSheetId, this.nRow);
+		return this.nCol !== nColOld || this.nRow !== nRowOld;
 	};
 
 	/** @constructor */
@@ -422,8 +425,11 @@ function (window, undefined) {
 
 	asc_CCommentData.prototype.applyCollaborative = function (nSheetId, collaborativeEditing) {
 		if ( !this.bDocument ) {
+			let nColOld = this.nCol;
+			let nRowOld = this.nRow;
 			this.nCol = collaborativeEditing.getLockMeColumn2(nSheetId, this.nCol);
 			this.nRow = collaborativeEditing.getLockMeRow2(nSheetId, this.nRow);
+			return this.nCol !== nColOld || this.nRow !== nRowOld;
 		}
 	};
 

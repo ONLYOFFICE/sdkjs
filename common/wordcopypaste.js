@@ -7745,7 +7745,7 @@ PasteProcessor.prototype =
 
 	_readFromBinaryExcel: function (base64) {
 		var oBinaryFileReader = new AscCommonExcel.BinaryFileReader(true);
-		var tempWorkbook = new AscCommonExcel.Workbook();
+		var tempWorkbook = new AscCommonExcel.Workbook(undefined, undefined, false);
 		tempWorkbook.DrawingDocument = editor.WordControl.m_oLogicDocument.DrawingDocument;
 		tempWorkbook.theme = this.oDocument.theme ? this.oDocument.theme : this.oLogicDocument.theme;
 		if (!tempWorkbook.theme && this.oLogicDocument.Get_Theme)

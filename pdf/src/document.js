@@ -1190,7 +1190,7 @@ var CPresentation = CPresentation || function(){};
             return;
         }
 
-        if (this.GetActiveObject() == oObject) {
+        if (this.GetActiveObject() == oObject || (oObject.IsUseInDocument && false == oObject.IsUseInDocument())) {
             return;
         }
 

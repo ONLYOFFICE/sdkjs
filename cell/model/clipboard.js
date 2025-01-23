@@ -1667,7 +1667,7 @@
 			_pasteFromBinaryExcel: function (worksheet, base64, isIntoShape, isCellEditMode, isPasteAll) {
 				var t = this;
 				var newFonts;
-				var tempWorkbook = new AscCommonExcel.Workbook();
+				var tempWorkbook = new AscCommonExcel.Workbook(undefined, undefined, false);
 				tempWorkbook.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
 				var aPastedImages = this._readExcelBinary(base64, tempWorkbook);
 

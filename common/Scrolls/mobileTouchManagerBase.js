@@ -821,6 +821,15 @@
 						}
 						break;
 					}
+					case AscCommon.c_oEditorId.Visio:
+					{
+						if (this.Api.isStartAddShape === true ||
+							this.Api.isInkDrawerOn())
+						{
+							this.desktopTouchState = false;
+						}
+						break;
+					}
 					default:
 						break;
 				}

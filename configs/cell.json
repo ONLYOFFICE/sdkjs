@@ -27,8 +27,8 @@
 			"cell/view/HandlerList.js",
 			"common/collaborativeHistory.js",
 			"common/CollaborativeEditingBase.js",
-			"cell/model/DrawingObjects/GlobalCounters.js",
 			"cell/model/CollaborativeEditing.js",
+			"cell/model/DrawingObjects/GlobalCounters.js",
 			"common/macros.js",
 			"common/apiBase.js",
 			"common/apiBase_plugins.js",
@@ -75,7 +75,8 @@
 			"common/Drawings/Metafile.js",
 			"common/libfont/textmeasurer.js",
 			"common/Drawings/WorkEvents.js",
-			
+
+			"word/Editor/History.js",
 			"cell/model/History.js",
 
 			"common/Shapes/EditorSettings.js",

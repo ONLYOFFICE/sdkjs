@@ -344,7 +344,7 @@
     CCollaborativeEditingBase.prototype.Add_Unlock2 = function(Lock)
     {
         this.m_aNeedUnlock2.push(Lock);
-        editor._onUpdateDocumentCanSave();
+        (Asc.editor || editor)._onUpdateDocumentCanSave();
     };
     CCollaborativeEditingBase.prototype.Have_OtherChanges = function()
     {
@@ -356,10 +356,10 @@
         {
             this.GetEditorApi().sendEvent("asc_onBeforeApplyChanges");
             AscFonts.IsCheckSymbols = true;
-            editor.WordControl.m_oLogicDocument.PauseRecalculate();
-            editor.WordControl.m_oLogicDocument.EndPreview_MailMergeResult();
+            (Asc.editor || editor).WordControl.m_oLogicDocument.PauseRecalculate();
+            (Asc.editor || editor).WordControl.m_oLogicDocument.EndPreview_MailMergeResult();
 
-            editor.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.ApplyChanges);
+            (Asc.editor || editor).sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.ApplyChanges);
 
             var DocState = this.private_SaveDocumentState();
             this.Clear_NewImages();
@@ -524,7 +524,7 @@
 
 		AscCommon.g_oIdCounter.Set_Load( false );
 
-		editor.WordControl.m_oLogicDocument.RecalculateFromStart();
+		(Asc.editor || editor).WordControl.m_oLogicDocument.RecalculateFromStart();
 
 		return counter;
 	};
@@ -748,7 +748,7 @@
                 Lock.Set_Type( AscCommon.c_oAscLockTypes.kLockTypeOther, false );
                 if(Class.getObjectType && Class.getObjectType() === AscDFH.historyitem_type_Slide)
                 {
-                    editor.WordControl.m_oLogicDocument.DrawingDocument.UnLockSlide && editor.WordControl.m_oLogicDocument.DrawingDocument.UnLockSlide(Class.num);
+                    (Asc.editor || editor).WordControl.m_oLogicDocument.DrawingDocument.UnLockSlide && editor.WordControl.m_oLogicDocument.DrawingDocument.UnLockSlide(Class.num);
                 }
                 Lock.Set_UserId( this.m_aNeedLock[Id] );
             }
@@ -828,10 +828,6 @@
 
         };
         CCollaborativeEditingBase.prototype.RewritePosExtChanges = function(changesArr, scale, Binary_Writer)
-        {
-        };
-
-        CCollaborativeEditingBase.prototype.RefreshPosExtChanges = function()
         {
         };
     //-----------------------------------------------------------------------------------
@@ -1079,7 +1075,7 @@
         }
     };
     CCollaborativeEditingBase.prototype.private_SaveDocumentState = function() {
-        var LogicDocument = editor.WordControl.m_oLogicDocument;
+        var LogicDocument = (Asc.editor || editor).WordControl.m_oLogicDocument;
         var DocState;
         if (true !== this.Is_Fast()) {
             DocState = LogicDocument.Get_SelectionState2();
@@ -1094,7 +1090,7 @@
         delete this.m_aForeignCursorsToShow[UserId];
     };
     CCollaborativeEditingBase.prototype.private_RestoreDocumentState = function(DocState) {
-        var LogicDocument = editor.WordControl.m_oLogicDocument;
+        var LogicDocument = (Asc.editor || editor).WordControl.m_oLogicDocument;
         if (true !== this.Is_Fast()) {
             LogicDocument.Set_SelectionState2(DocState);
         }

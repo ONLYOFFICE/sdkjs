@@ -1294,6 +1294,13 @@ $(function () {
 				assert.strictEqual(strFunc, 'cos⁡〖 θ〗', 'Check complex math func content');
 			})
 		})
+
+		QUnit.module( "Font", function ()
+		{
+			Test("\\doubleE ", [["ParaRun", "𝔼"]], false, "Check math font autocorrection");
+			Test("\\frakturE ", [["ParaRun", "𝔈"]], false, "Check math font autocorrection");
+			Test("\\scriptE ", [["ParaRun", "ℰ"]], false, "Check math font autocorrection");
+		})
 	})
 
 	QUnit.module("Cursor", function ()

@@ -962,8 +962,8 @@
             else if (this.selectedObjects.length <= this.spTree.length - 1) {
                 let _t = this;
                 // селектим все фигуры в группе (кроме перпендикулярной линии) если до сих пор не заселекчены
-                oController.selection.groupSelection = this;
                 this.select(oController, this.selectStartPage);
+                oController.selection.groupSelection = this;
                 this.selectedObjects.length = 0;
 
                 this.spTree.forEach(function(sp) {

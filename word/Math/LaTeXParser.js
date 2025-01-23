@@ -726,7 +726,11 @@
 			let third = this.GetArguments(1);
 			return {
 				type: Struc.func_lim,
-				value: base.value,
+				value: {
+					type: Struc.char,
+					value: base.value,
+					style: base.style
+				},
 				up: isBelow ? oContent : undefined,
 				down: !isBelow ? oContent : undefined,
 				third: third,

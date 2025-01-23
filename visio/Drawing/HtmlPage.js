@@ -210,8 +210,6 @@ function CEditorPage(api)
 	// thumbnails
 	this.Thumbnails                 = new CThumbnailsManager();//todo override CThumbnailsManager
 	this.Thumbnails.showContextMenu = function(bPosBySelect) {}
-	this.Thumbnails.onMouseUp = function() {}
-	this.Thumbnails.onMouseMove = function() {}
 
 	// сплиттеры (для табнейлов и для заметок)
 	this.Splitter1Pos    = 0;
@@ -976,7 +974,7 @@ function CEditorPage(api)
 
 	this.initEventsMobile = function()
 	{
-		if (this.m_oApi.isMobileVersion)
+		if (this.m_oApi.isUseOldMobileVersion())
 		{
 			this.MobileTouchManager = new AscCommon.CMobileTouchManager( { eventsElement : "slides_mobile_element" } );
 			this.MobileTouchManager.Init(this.m_oApi);
@@ -1017,12 +1015,11 @@ function CEditorPage(api)
 		}
 		else
 		{
-			//todo
-			// this.MobileTouchManager = new AscCommon.CMobileTouchManager( { eventsElement : "slides_mobile_element", desktopMode : true } );
-			// this.MobileTouchManager.Init(this.m_oApi);
-			//
-			// this.MobileTouchManagerThumbnails = new AscCommon.CMobileTouchManagerThumbnails( { eventsElement : "slides_mobile_element", desktopMode : true } );
-			// this.MobileTouchManagerThumbnails.Init(this.m_oApi);
+			this.MobileTouchManager = new AscCommon.CMobileTouchManager( { eventsElement : "slides_mobile_element", desktopMode : true } );
+			this.MobileTouchManager.Init(this.m_oApi);
+
+			this.MobileTouchManagerThumbnails = new AscCommon.CMobileTouchManagerThumbnails( { eventsElement : "slides_mobile_element", desktopMode : true } );
+			this.MobileTouchManagerThumbnails.Init(this.m_oApi);
 		}
 	};
 

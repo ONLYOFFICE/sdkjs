@@ -624,12 +624,15 @@ $(function () {
 		window["Asc"]["editor"] = api;
 
 		AscCommon.g_oTableId.init(api);
-		wb = new AscCommonExcel.Workbook(new AscCommonExcel.asc_CHandlersList(), api);
+		wb = new AscCommonExcel.Workbook(new AscCommonExcel.asc_CHandlersList(), api, true);
 		AscCommon.History.init(wb);
+		//нет тестовых операция с историей, отключаем чтобы не было лишних сериализаций
+		AscCommon.History.TurnOff();
 		wb.maxDigitWidth = 7;
 		wb.paddingPlusBorder = 5;
 
 		api.wbModel = wb;
+		api.initCollaborativeEditing({});
 
 		if (this.User) {
 			g_oIdCounter.Set_UserId(this.User.asc_getId());
@@ -36150,11 +36153,11 @@ $(function () {
 			'id-view': 'editor_sdk'
 		});
 		window["Asc"]["editor"] = api;
-		AscCommon.g_oTableId.init();
 		api._onEndLoadSdk();
 		api.isOpenOOXInBrowser = false;
 		api._openDocument(AscCommon.getEmpty());
-		api.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
+		api.initCollaborativeEditing({});
+		api._coAuthoringInitCollaborativeEditing({});
 		api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,
 			api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
 		// Test api: GetCalcSettings
