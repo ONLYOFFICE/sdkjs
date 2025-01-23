@@ -315,18 +315,22 @@
 	 */
 
 	/**
+	 * The report filter area settings.
 	 * @typedef {object} PivotTableFilterAreaInfo
 	 * @property {FieldsInReportFilterType} Type - Specifies how the report filter fields are located.
 	 * @property {number} ReportFilterFields - Defines the number of the report filter fields.
+	 * @see office-js-api/Examples/Enumerations/PivotTableFilterAreaInfo.js
 	 */
 
 	/**
+	 * The settings for adding row, column, and page fields to the pivot table report.
 	 * @typedef {object} PivotTableFieldOptions
 	 * @property {number | string | number[] | string[]} [rows] - An array of field names or IDs to be added as rows or added to the category axis.
 	 * @property {number | string | number[] | string[]} [columns] - An array of field names or IDs to be added as columns or added to the series axis.
 	 * @property {number | string | number[] | string[]} [pages] - An array of field names or IDs to be added as pages or added to the page area.
 	 * @property {boolean} [addToTable=false] - Specifies whether to apply fields only to the pivot table reports. If `true`, the specified fields will be added to the report 
 	 * without replacing existing fields. If `false`, existing fields will be replaced with the new fields.
+	 * @see office-js-api/Examples/Enumerations/PivotTableFieldOptions.js
 	 */
 
 	/**

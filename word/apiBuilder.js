@@ -15540,7 +15540,7 @@
 		return "drawing";
 	};
 	/**
-	 * Returns the shape inner contents where a paragraph or text runs can be inserted if it exists.
+	 * Returns the drawing inner contents where a paragraph or text runs can be inserted if it exists.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE", "CSE"]
 	 * @returns {?ApiDocumentContent}
@@ -19550,7 +19550,7 @@
 	 * @memberof ApiFormBase
 	 * @param {twips} width - The wrapper shape width measured in twentieths of a point (1/1440 of an inch).
 	 * @param {twips} height - The wrapper shape height measured in twentieths of a point (1/1440 of an inch).
-	 * @param {boolean} keepPosition - Save position on the page (it can be a little bit slow, because it runs the document calculation)
+	 * @param {boolean} keepPosition - Save position on the page (it can be a little bit slow, because it runs the document calculation).
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/ToFixed.js
