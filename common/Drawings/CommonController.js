@@ -11716,7 +11716,11 @@
 				const paraDrawing = new ParaDrawing(5, 5, null, graphicController.drawingDocument, null, null);
 				paraDrawing.Set_GraphicObject(newShape);
 				paraDrawing.Set_DrawingType(drawing_Anchor);
-				paraDrawing.Set_WrappingType(WRAPPING_TYPE_NONE);
+
+				paraDrawing.Set_WrappingType(referenceShape.parent.wrappingType || WRAPPING_TYPE_NONE);
+				paraDrawing.Set_BehindDoc(referenceShape.parent.behindDoc);
+				paraDrawing.Check_WrapPolygon();
+
 				paraDrawing.setExtent(newShape.spPr.xfrm.extX, newShape.spPr.xfrm.extY);
 
 				const nearestPos = graphicController.document.Get_NearestPos(pageIndex, dOffX, dOffY, true, paraDrawing);
