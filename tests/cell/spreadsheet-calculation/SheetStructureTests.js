@@ -129,7 +129,7 @@ $(function () {
 	api.isOpenOOXInBrowser = false;
 	api._openDocument(AscCommon.getEmpty());
 	api._openOnClient();
-	api.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
+	api.initCollaborativeEditing({});
 	api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,
 		api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
 	var wb = api.wbModel;
@@ -3024,6 +3024,145 @@ $(function () {
 		clearData(0, 99, 0, 105);
 	});
 
+	QUnit.test('Table special characters tests', function (assert) {
+		/* This test checks for special characters inside a table, namely column names with escaped characters */
+		let array;
+		ws.getRange2("A100:C103").setValue("1");
+		ws.getRange2("A100").setValue("With a single ' quote");
+		ws.getRange2("B100").setValue("With a double '' quote");
+		ws.getRange2("C100").setValue("With a special ' @ & ? * / | \ # '' [ ] characters");
+
+		let tableOptions = new AscCommonExcel.AddFormatTableOptions();
+		tableOptions.range = "A100:C103";
+		tableOptions.isTitle = true;
+		api.asc_addAutoFilter("TableStyleMedium2", tableOptions);	// create table in A100:C103 range
+
+		let tables = wsView.model.autoFilters.getTablesIntersectionRange(new Asc.Range(0, 100, 0, 100));
+		assert.strictEqual(tables.length, 1, "compare tables length");
+
+		debugger
+		let table = tables[0];
+		let tableName = table.DisplayName;	// due to the fact that other tables are used in file, get the name of the one we need by this way
+		wsView.af_changeFormatTableInfo(tableName, Asc.c_oAscChangeTableStyleInfo.rowTotal, true);
+
+		// calc res check
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 101, 70);
+		oParser = new AscCommonExcel.parserFormula(tableName + "[#All]", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getValueByRowCol(0, 0).getValue(), "With a single ' quote", 'Result of Table[#All][0,0]');
+		assert.strictEqual(array.getValueByRowCol(0, 1).getValue(), "With a double '' quote", 'Result of Table[#All][0,1]');
+		assert.strictEqual(array.getValueByRowCol(0, 2).getValue(), "With a special ' @ & ? * / |  # '' [ ] characters", 'Result of Table[#All][0,2]');
+		assert.strictEqual(array.getValueByRowCol(1, 0).getValue(), 1, 'Result of Table[#All][1,0]');
+		assert.strictEqual(array.getValueByRowCol(1, 1).getValue(), 1, 'Result of Table[#All][1,1]');
+		assert.strictEqual(array.getValueByRowCol(3, 0).getValue(), 1, 'Result of Table[#All][3,0]');
+		assert.strictEqual(array.getValueByRowCol(3, 1).getValue(), 1, 'Result of Table[#All][3,1]');
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(101, 70);
+		resCell.setValue("=" + tableName +"[#All]");
+		
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName, "Value for edit in cell after Table[#All] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName, "Formula in cell after Table[#All] is typed");
+
+
+		/* column header check */
+		// this pattern is looking for special characters in the string that need to be escaped
+		let specialSymbolsPattern = /(['#@\[\]])/g;
+		// set selection to the first column header
+		let selectedRange = ws.getRange2("A100");
+		wsView.setSelection(selectedRange.bbox);
+
+		let ranges = wsView.model.selectionRange.ranges;
+		let valueInCellEditMode = tables[0].getSelectionString(wsView.model.getSelection().activeCell, ranges[0]);
+		let expectedValue = tableName + "[[#Headers],[" + ws.getRange2("A100").getValueForEdit().replace(specialSymbolsPattern, "'$1") + "]]";
+
+		assert.strictEqual(valueInCellEditMode, expectedValue, "Header value in first column. Simulation value for edit in cellEditMode");
+
+
+		// set selection to the second column header
+		selectedRange = ws.getRange2("B100");
+		wsView.setSelection(selectedRange.bbox);
+
+		ranges = wsView.model.selectionRange.ranges;
+		valueInCellEditMode = tables[0].getSelectionString(wsView.model.getSelection().activeCell, ranges[0]);
+		expectedValue = tableName + "[[#Headers],[" + ws.getRange2("B100").getValueForEdit().replace(specialSymbolsPattern, "'$1") + "]]";
+
+		assert.strictEqual(valueInCellEditMode, expectedValue, "Header value in second column. Simulation value for edit in cellEditMode");
+
+
+		// set selection to the third column header
+		selectedRange = ws.getRange2("C100");
+		wsView.setSelection(selectedRange.bbox);
+
+		ranges = wsView.model.selectionRange.ranges;
+		valueInCellEditMode = tables[0].getSelectionString(wsView.model.getSelection().activeCell, ranges[0]);
+		expectedValue = tableName + "[[#Headers],[" + ws.getRange2("C100").getValueForEdit().replace(specialSymbolsPattern, "'$1") + "]]";
+
+		assert.strictEqual(valueInCellEditMode, expectedValue, "Header value in third column. Simulation value for edit in cellEditMode");
+
+		/* full column check */
+		// first column select
+		selectedRange = ws.getRange2("A101:A103");
+		wsView.setSelection(selectedRange.bbox);
+
+		ranges = wsView.model.selectionRange.ranges;
+		valueInCellEditMode = tables[0].getSelectionString(wsView.model.getSelection().activeCell, ranges[0]);
+		expectedValue = tableName + "[" + ws.getRange2("A100:A103").getValueForEdit().replace(specialSymbolsPattern, "'$1") + "]";
+
+		assert.strictEqual(valueInCellEditMode, expectedValue, "First column without header select. Simulation value for edit in cellEditMode");
+
+		// second column select
+		selectedRange = ws.getRange2("B101:B103");
+		wsView.setSelection(selectedRange.bbox);
+
+		ranges = wsView.model.selectionRange.ranges;
+		valueInCellEditMode = tables[0].getSelectionString(wsView.model.getSelection().activeCell, ranges[0]);
+		expectedValue = tableName + "[" + ws.getRange2("B100:B103").getValueForEdit().replace(specialSymbolsPattern, "'$1") + "]";
+
+		assert.strictEqual(valueInCellEditMode, expectedValue, "Second column without header select. Simulation value for edit in cellEditMode");
+
+		// third column select
+		selectedRange = ws.getRange2("C101:C103");
+		wsView.setSelection(selectedRange.bbox);
+
+		ranges = wsView.model.selectionRange.ranges;
+		valueInCellEditMode = tables[0].getSelectionString(wsView.model.getSelection().activeCell, ranges[0]);
+		expectedValue = tableName + "[" + ws.getRange2("C100:C103").getValueForEdit().replace(specialSymbolsPattern, "'$1") + "]";
+
+		assert.strictEqual(valueInCellEditMode, expectedValue, "Third column without header select. Simulation value for edit in cellEditMode");
+
+		/* two columns check */
+		// first and second column
+		selectedRange = ws.getRange2("A101:B103");
+		wsView.setSelection(selectedRange.bbox);
+
+		ranges = wsView.model.selectionRange.ranges;
+		valueInCellEditMode = tables[0].getSelectionString(wsView.model.getSelection().activeCell, ranges[0]);
+		expectedValue = tableName + "[" 
+						+ "[" + ws.getRange2("A100:A103").getValueForEdit().replace(specialSymbolsPattern, "'$1") + "]:" 
+						+ "[" + ws.getRange2("B100:B103").getValueForEdit().replace(specialSymbolsPattern, "'$1") + "]"
+						+ "]";
+
+		assert.strictEqual(valueInCellEditMode, expectedValue, "First and second column without header select. Simulation value for edit in cellEditMode");
+
+		// second and third column
+		selectedRange = ws.getRange2("B101:C103");
+		wsView.setSelection(selectedRange.bbox);
+
+		ranges = wsView.model.selectionRange.ranges;
+		valueInCellEditMode = tables[0].getSelectionString(wsView.model.getSelection().activeCell, ranges[0]);
+		expectedValue = tableName + "[" 
+						+ "[" + ws.getRange2("B100:B103").getValueForEdit().replace(specialSymbolsPattern, "'$1") + "]:" 
+						+ "[" + ws.getRange2("C100:C103").getValueForEdit().replace(specialSymbolsPattern, "'$1") + "]"
+						+ "]";
+
+		assert.strictEqual(valueInCellEditMode, expectedValue, "Second and third column without header select. Simulation value for edit in cellEditMode");
+
+
+		clearData(0, 99, 0, 105);
+	});
+
 	/* for bug 61856 */
 	QUnit.test('Array of arguments check after calling the wizard for the function', function (assert) { 
 		let resArray;
@@ -4899,16 +5038,15 @@ $(function () {
 		getAutofillCase([0, 0, 6, 7], [0, 0, 5, 0], 1, 'Date & Time format. Reverse sequence. Vertical. Two selected cells. Step - month. 1900 year.', expectedData);
 		ws.getRange2('A1:A20').cleanAll();
 		// Case #74: Date & Time format. Asc sequence. Horizontal. Two selected cells. Step - month. Asc month seq, but time sequence is reverse.
-		// TODO Need to fix bug.
-		/*testData = [
+		testData = [
 			['02/01/2000 12:00', '04/01/2000 5:00']
 		];
 		range = ws.getRange4(0, 0);
 		range.fillData(testData);
 		undoData = ['', '', '', '', '', ''];
-		expectedData = ['36677.91667', '36738.625', '36799.33333', '36860.04167', '36921.75', '36980.45833'];
+		expectedData = ['36677.916666666664', '36738.62499999999', '36799.33333333332', '36860.04166666665', '36921.74999999998', '36980.45833333331'];
 		getAutofillCase([0, 1, 0, 0], [2, 7, 0, 0], 3, 'Date & Time format. Asc sequence. Horizontal. Two selected cells. Step - month. Asc month seq, but time sequence is reverse.', expectedData);
-		ws.getRange2('A1:Z20').cleanAll();*/
+		ws.getRange2('A1:Z20').cleanAll();
 		// Case #75: Mixed date format. Asc sequence. Vertical. Two selected cells. Step - month.
 		testData = [
 			['01/01/2000 12:00'],
@@ -5127,6 +5265,43 @@ $(function () {
 		undoData = [[''], [''], ['37987'], ['37257.5'], ['36526.5']];
 		expectedData = [['35796.5'], ['35065.5'], ['34335.5'], ['33604.5'], ['32874.5']];
 		getAutofillCase([0, 0, 5, 7], [0, 0, 4, 0], 1, 'Mixed date format. Reverse sequence. Vertical. Three selected cells. Step - year.', expectedData);
+		ws.getRange2('A1:A20').cleanAll();
+		// Case #101: Date & Time format. Asc sequence. Horizontal. Two selected cells. Step - year. Asc month seq, but time sequence is reverse.
+		testData = [
+			['01/01/2000 12:00', '01/01/2002 5:00']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = ['', '', '', '', '', ''];
+		expectedData = ['37986.916666666664', '38717.62499999999', '39447.33333333332', '40178.04166666665', '40907.74999999998', '41638.45833333331'];
+		getAutofillCase([0, 1, 0, 0], [2, 7, 0, 0], 3, 'Date & Time format. Asc sequence. Horizontal. Two selected cells. Step - year. Asc month seq, but time sequence is reverse.', expectedData);
+		// Case #102: Date & Time format. Reverse sequence. Horizontal. Two selected cells. Step - year. Asc month seq, but time sequence is reverse.
+		range = ws.getRange4(0, 6);
+		range.fillData(testData);
+		undoData = ['', '', '', '', '37257.208333333336', '36526.5'];
+		expectedData = ['35796.79166666666', '35066.083333333314', '34336.37499999997', '33605.66666666663', '32875.958333333285', '32145.24999999994'];
+		getAutofillCase([6, 7, 0, 0], [5, 0, 0, 0], 1, 'Date & Time format. Reverse sequence. Horizontal. Two selected cells. Step - year. Asc month seq, but time sequence is reverse.', expectedData);
+		ws.getRange2('A1:Z20').cleanAll();
+		// Case #103: Date format. Asc sequence. Vertical. Two selected cells. Step - month. Next month is February, and the day is more than the last day of the month.
+		testData = [
+			['12/30/2002'],
+			['01/30/2003']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], [''], [''], [''], ['']];
+		expectedData = [['37680'], ['37710'], ['37741'], ['37771'], ['37802'], ['37832']];
+		getAutofillCase([0, 0, 0, 1], [0, 0, 2, 7], 3, 'Date format. Asc sequence. Vertical. Two selected cells. Step - month. Next month is February, and the day is more than the last day of the month.', expectedData);
+		// Case #104: Date format. Reverse sequence. Vertical. Two selected cells. Step - month. Next month is February, and the day is more than the last day of the month.
+		testData = [
+			['03/30/2003'],
+			['04/30/2003']
+		]
+		range = ws.getRange4(6, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], [''], [''], ['37651'], ['37620']];
+		expectedData = [['37680'], ['37651'], ['37620'], ['37590'], ['37559'], ['37529']];
+		getAutofillCase([0, 0, 6, 7], [0, 0, 5, 0], 1, 'Date format. Reverse sequence. Vertical. Two selected cells. Step - month. Next month is February, and the day is more than the last day of the month.', expectedData);
 		ws.getRange2('A1:A20').cleanAll();
 	});
 
@@ -5399,5 +5574,55 @@ $(function () {
 
 	});
 
-	QUnit.module("Sheet structure");
+	QUnit.test('All selection test', function (assert) {
+
+		ws.getRange2("A1:Z100").cleanAll();
+
+		ws.getRange2("A1").setValue("1");
+		ws.getRange2("A2").setValue("2");
+		ws.getRange2("B1").setValue("3");
+		ws.getRange2("B2").setValue("4");
+		ws.getRange2("C2").setValue("5");
+
+		let fillRange = new Asc.Range(0, 0, 0, 0);
+		wsView.setSelection(fillRange);
+		assert.strictEqual(ws.selectionRange.getLast().getName(), "A1");
+
+		api.wb._onSelectAllByRange();
+		assert.strictEqual(ws.selectionRange.getLast().getName(), "A1:C2");
+		api.wb._onSelectAllByRange();
+		assert.strictEqual(ws.selectionRange.getLast().getType(), Asc.c_oAscSelectionType.RangeMax);
+
+		fillRange = new Asc.Range(10, 10, 10, 10);
+		wsView.setSelection(fillRange);
+		api.wb._onSelectAllByRange();
+		assert.strictEqual(ws.selectionRange.getLast().getType(), Asc.c_oAscSelectionType.RangeMax);
+
+
+		let tableOptions = new AscCommonExcel.AddFormatTableOptions();
+		fillRange = new Asc.Range(0, 0, 2, 1);
+		tableOptions.range = fillRange.getName();
+		ws.autoFilters.addAutoFilter("style", fillRange, tableOptions);
+		assert.strictEqual(ws.TableParts.length, 1);
+		assert.strictEqual(ws.TableParts[0].Ref.getName(), "A1:C3");
+
+
+		fillRange = new Asc.Range(1, 1, 1, 1);
+		wsView.setSelection(fillRange);
+		api.wb._onSelectAllByRange();
+		assert.strictEqual(ws.selectionRange.getLast().getName(), "A2:C3");
+		api.wb._onSelectAllByRange();
+		assert.strictEqual(ws.selectionRange.getLast().getName(), "A1:C3");
+		api.wb._onSelectAllByRange();
+		assert.strictEqual(ws.selectionRange.getLast().getType(), Asc.c_oAscSelectionType.RangeMax);
+
+		fillRange = new Asc.Range(0, 0, 0, 0);
+		wsView.setSelection(fillRange);
+		api.wb._onSelectAllByRange();
+		assert.strictEqual(ws.selectionRange.getLast().getName(), "A1:C3");
+		api.wb._onSelectAllByRange();
+		assert.strictEqual(ws.selectionRange.getLast().getType(), Asc.c_oAscSelectionType.RangeMax);
+	});
+
+		QUnit.module("Sheet structure");
 });

@@ -278,3 +278,4 @@ CFootEndnote.prototype.GetRef = function()
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CFootEndnote = CFootEndnote;
+window['AscWord'].FootEndnote = CFootEndnote;

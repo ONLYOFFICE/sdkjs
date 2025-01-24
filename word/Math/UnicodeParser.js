@@ -357,7 +357,8 @@
 	};
 	CUnicodeParser.prototype.IsTextLiteral = function ()
 	{
-		return (this.oLookahead.data === "\"" || this.oLookahead.data === "\'") && !this.isTextLiteral
+		// only \" for text
+		return this.oLookahead.data === "\"" && !this.isTextLiteral
 	};
 	CUnicodeParser.prototype.GetTextLiteral = function ()
 	{
@@ -365,14 +366,14 @@
 		let strSymbol = this.EatToken(this.oLookahead.class);
 		let strExp = "";
 
-		while (this.oLookahead.data !== "\"" && this.oLookahead.data !== "\'" && this.oLookahead.class !== undefined)
+		while (this.oLookahead.data !== "\"" && this.oLookahead.class !== undefined)
 		{
 			strExp += this.oLookahead.data;
 			arrStyles.push(this.oLookahead.style);
 			this.EatToken(this.oLookahead.class)
 		}
 
-		if (strExp === "" && this.oLookahead.data !== "\"" && this.oLookahead.data !== "\'")
+		if (strExp === "" && this.oLookahead.data !== "\"")
 		{
 			return {
 				type: Struc.char,
@@ -381,7 +382,7 @@
 			}
 		}
 
-		if (this.oLookahead.data === "\"" || this.oLookahead.data === "\'")
+		if (this.oLookahead.data === "\"")
 			this.EatToken(this.oLookahead.class);
 
 		return {

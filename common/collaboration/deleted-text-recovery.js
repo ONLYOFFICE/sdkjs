@@ -359,7 +359,8 @@
 		if (!oReviewInfoParent === undefined)
 			return;
 
-		if (!oReviewInfoParent || !oReviewInfoParent.ReviewInfo)
+		// TODO: Проверку по каким классам нужно проходить лучше переделать
+		if (!oReviewInfoParent || !oReviewInfoParent.GetReviewInfo)
 		{
 			if (oReviewInfoParent instanceof ParaMath)
 			{
@@ -381,14 +382,19 @@
 			return;
 		}
 
-		if (oReviewInfoParent.ReviewType !== 1)
+		if (oReviewInfoParent.GetReviewType() !== reviewtype_Remove)
 		{
-			let oCurrentReviewType			= oReviewInfoParent.GetReviewInfo().Copy();
-			oCurrentReviewType.UserId		= this.userId;
-			oCurrentReviewType.UserName		= this.userName;
-			oCurrentReviewType.DateTime		= this.userTime;
+			let reviewInfo = oReviewInfoParent.GetReviewInfo();
+			if (!reviewInfo)
+				reviewInfo = new AscWord.ReviewInfo();
+			else
+				reviewInfo = reviewInfo.Copy();
+			
+			reviewInfo.UserId		= this.userId;
+			reviewInfo.UserName		= this.userName;
+			reviewInfo.DateTime		= this.userTime;
 
-			oReviewInfoParent.SetReviewTypeWithInfo(1, oCurrentReviewType, false);
+			oReviewInfoParent.SetReviewTypeWithInfo(reviewtype_Remove, reviewInfo, false);
 		}
 	};
 	DeletedTextRecovery.prototype.FindPosInParent = function(oClass)

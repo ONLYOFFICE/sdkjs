@@ -398,8 +398,15 @@
         {
             let redrawPages = [];
             let viewer = this.m_oDocumentRenderer;
+            let thumbnails = viewer.thumbnails;
 
-            for (let i = viewer.startVisiblePage; i <= viewer.endVisiblePage; i++)
+            let thumbStartVisiblePage = thumbnails && thumbnails.getStartVisiblePage();
+            let thumbEndVisiblePage = thumbnails && thumbnails.getEndVisiblePage();
+
+            let startVisiblePage = thumbStartVisiblePage != undefined ? thumbStartVisiblePage : viewer.startVisiblePage;
+            let endVisiblePage = thumbEndVisiblePage != undefined ? thumbEndVisiblePage : viewer.endVisiblePage;
+
+            for (let i = startVisiblePage; i <= endVisiblePage; i++)
             {
                 let imgs = viewer.DrawingObjects.getAllRasterImagesOnPage(i);
                 for (let j = 0, len = imgs.length; j < len; j++)

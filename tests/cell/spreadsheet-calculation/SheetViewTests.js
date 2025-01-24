@@ -66,7 +66,6 @@ $(function() {
 	Asc.spreadsheet_api.prototype.initGlobalObjects = function(wbModel) {
 		AscCommonExcel.g_DefNameWorksheet = new AscCommonExcel.Worksheet(wbModel, -1);
 		AscCommonExcel.g_oUndoRedoWorksheet = new AscCommonExcel.UndoRedoWoorksheet(wbModel);
-		History.init(wbModel);
 	};
 	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function() {
 		AscFonts.g_fontApplication.Init();
@@ -79,7 +78,7 @@ $(function() {
 
 
 	Asc.spreadsheet_api.prototype.fAfterLoad = function(fonts, callback) {
-		api.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
+		api.initCollaborativeEditing({});
 		api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,
 			api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
 		wb = api.wbModel;

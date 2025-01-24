@@ -5770,6 +5770,9 @@
 									if (null !== oMath && oMath.Is_InInnerContent()) {
 										this.checkSelectedObjectsAndCallback(function () {
 											oMath.Handle_AddNewLine();
+											let oShape = target_doc_content.Is_DrawingShape(true);
+											if(oShape)
+												oShape.checkExtentsByDocContent();
 										}, [], false, AscDFH.historydescription_Spreadsheet_AddNewParagraph, undefined, window["Asc"]["editor"].collaborativeEditing.getFast());
 										this.recalculate();
 									} else {
@@ -6408,7 +6411,7 @@
 							var oParagraph = oDocContent.GetElement(0);
 							var oForm;
 							if (oParagraph && oParagraph.IsParagraph() && oParagraph.IsInFixedForm() && (oForm = oParagraph.GetInnerForm())) {
-								oDocContent.ResetShiftView();
+								oDocContent.ShiftViewToFirstLine();
 								bRedraw = true;
 							}
 						}
@@ -7404,7 +7407,7 @@
 
 								new_shape_props =
 									{
-										canFill: false,
+										canFill: drawing.canFill(),
 										type: drawing.getPresetGeom(),
 										fill: drawing.getFill(),
 										stroke: drawing.getStroke(),
@@ -11312,6 +11315,458 @@
 				|| nType === AscDFH.historyitem_type_SlideMaster );
 		}
 
+		// Shapes merge
+		const canMergeSelectedShapes = function (operation) {
+			const graphicController = Asc.editor.getGraphicController();
+			if (!graphicController) return false;
+
+			const selectedArray = graphicController.getSelectedArray();
+			if (selectedArray.length < 2) return false;
+
+			const hasShape = selectedArray.some(function (item) {
+				return item instanceof AscFormat.CShape;
+			});
+			if (!hasShape) return false;
+
+			const hasLocked = selectedArray.some(function (item) {
+				return item.Lock &&
+					item.Lock.Type !== AscCommon.c_oAscLockTypes.kLockTypeNone &&
+					item.Lock.Type !== AscCommon.c_oAscLockTypes.kLockTypeMine;
+			});
+			if (hasLocked) return false;
+
+			const hasInvalidGeometry = selectedArray.some(function (item) {
+				return !item.getGeometry || !AscCommon.isRealObject(item.getGeometry());
+			});
+			if (hasInvalidGeometry) return false;
+
+			const forbiddenTypes = [
+				AscFormat.CGraphicFrame,
+				AscFormat.CChartSpace,
+				AscFormat.CGroupShape,
+				AscFormat.CConnectionShape,
+			];
+			const hasForbiddenTypesInSelection = selectedArray.some(function (item) {
+				return forbiddenTypes.some(function (forbiddenType) {
+					return item instanceof forbiddenType;
+				});
+			});
+			if (hasForbiddenTypesInSelection) return false;
+
+			const hasGroupedItem = selectedArray.some(function (item) {
+				// return item.group != null;
+				return item.group instanceof AscFormat.CGroupShape;
+			});
+			if (hasGroupedItem) return false;
+
+			if (operation) {
+				const operations = ['unite', 'intersect', 'subtract', 'exclude', 'divide'];
+				if (operations.indexOf(operation) === -1) return false;
+
+				if (operation === 'intersect') {
+					const rects = selectedArray.map(function (item) { return item.getRectBounds(); });
+					const hasIntersection = rects.every(function (rectA, indexA) {
+						return rects.some(function (rectB, indexB) {
+							return indexA !== indexB && rectA.isIntersectOther(rectB);
+						});
+					});
+					if (!hasIntersection) return false;
+				}
+			}
+
+			return true;
+		};
+
+		const mergeSelectedShapes = function (operation) {
+			const operations = ['unite', 'intersect', 'subtract', 'exclude', 'divide'];
+			if (operations.indexOf(operation) === -1) return false;
+			if (!canMergeSelectedShapes(operation)) return false;
+
+			const selectedShapes = Asc.editor.getGraphicController().getSelectedArray();
+			const compoundPathLst = selectedShapes.map(function (shape) {
+				const shapeGeometry = shape.getGeometry();
+				const pathLst = shapeGeometry.pathLst;
+				const compoundPaths = pathLst.map(function (path) {
+					return convertFormatPathToCompoundPath(path, shape.transform);
+				});
+				const unitedCompoundPath = compoundPaths.reduce(function (resultPath, currentPath) {
+					return resultPath['unite'](currentPath);
+				})
+				return unitedCompoundPath;
+			});
+
+			// resultPath can be either Path or CompoundPath
+			let resultShapes;
+			if (operation === 'divide') {
+				const resultPathsArray = AscCommon['PathBoolean']['CompoundPath'].prototype['divide'](compoundPathLst);
+				resultShapes = resultPathsArray.map(function (path) {
+					return createShapeByCompoundPath(path, selectedShapes[0]);
+				});
+			} else {
+				const resultPath = compoundPathLst.reduce(function (resultPath, currentPath) {
+					return resultPath[operation](currentPath);
+				});
+				resultShapes = [createShapeByCompoundPath(resultPath, selectedShapes[0])];
+			}
+
+			if (Asc.editor.isDocumentEditor) return de_replaceShapes(selectedShapes, resultShapes);
+			if (Asc.editor.isPdfEditor()) return pdf_replaceShapes(selectedShapes, resultShapes);
+			return replaceShapes(selectedShapes, resultShapes);
+		};
+
+		function convertFormatPathToCompoundPath(path, transform) {
+			const convertedPath = AscFormat.ExecuteNoHistory(function (_path) {
+				const _convertedPath = new AscFormat.Path();
+				_path.convertToBezierCurves(_convertedPath, transform, true);
+				return _convertedPath;
+			}, this, [path]);
+
+			const compoundPath = new AscCommon['PathBoolean']['CompoundPath']();
+
+			convertedPath.ArrPathCommand.forEach(function (pathCommand) {
+				switch (pathCommand.id) {
+					case AscFormat.moveTo:
+						compoundPath['moveTo'](pathCommand.X, pathCommand.Y);
+						break;
+					case AscFormat.lineTo:
+						compoundPath['lineTo'](pathCommand.X, pathCommand.Y);
+						break;
+					case AscFormat.bezier4:
+						compoundPath['cubicCurveTo'](
+							pathCommand.X0, pathCommand.Y0,
+							pathCommand.X1, pathCommand.Y1,
+							pathCommand.X2, pathCommand.Y2
+						);
+						break;
+					case AscFormat.close:
+						compoundPath['closePath']();
+						break;
+				}
+			});
+
+			return compoundPath;
+		}
+
+		function convertCompoundPathToFormatPath(compoundPath) {
+			const compoundPathBounds = compoundPath['getBounds']();
+			const position = compoundPath['getPosition']()['subtract'](compoundPathBounds['getTopLeft']())
+			compoundPath['setPosition'](position);
+
+			const formatPath = new AscFormat.Path();
+			formatPath.setPathW(compoundPathBounds['getWidth']() * 36000);
+			formatPath.setPathH(compoundPathBounds['getHeight']() * 36000);
+
+			const pathChildren = compoundPath instanceof AscCommon['PathBoolean']['CompoundPath'] ? compoundPath['getChildren']() : compoundPath;
+			const pathsToHandle = Array.isArray(pathChildren) && pathChildren.length > 0 ? pathChildren : [compoundPath];
+			pathsToHandle.forEach(function (path) {
+				const segments = path['getSegments']();
+
+				segments.forEach(function (segment, segmentIndex, segments) {
+					const prevSegment = segment['getPrevious']();
+					const nextSegment = segment['getNext']();
+
+					if (segment['isFirst']()) {
+						let oPt = segment['getPoint']();
+						return formatPath.addPathCommand({
+							id: AscFormat.moveTo,
+							X: '' + (oPt['getX']() * 36000 >> 0),
+							Y: '' + (oPt['getY']() * 36000 >> 0)
+						});
+					}
+
+					// TODO: Check if bezier curve is just a straight line
+
+					let oPt = segment['getPoint']();
+					let oPrevPt = prevSegment['getPoint']();
+					let oPrevHandleOut = prevSegment['getHandleOut']();
+					let oSegmentHandleIn = segment['getHandleIn']();
+					let oSegmentHandleOut = segment['getHandleOut']();
+					let oPt0 = segments[0]['getPoint']();
+					let oSegment0HandleIn = segments[0]['getHandleIn']();
+					formatPath.addPathCommand({
+						id: AscFormat.bezier4,
+						X0: '' + ((oPrevPt['getX']() + oPrevHandleOut['getX']()) * 36000 >> 0),
+						Y0: '' + ((oPrevPt['getY']() + oPrevHandleOut['getY']()) * 36000 >> 0),
+						X1: '' + ((oPt['getX']() + oSegmentHandleIn['getX']()) * 36000 >> 0),
+						Y1: '' + ((oPt['getY']() + oSegmentHandleIn['getY']()) * 36000 >> 0),
+						X2: '' + (oPt['getX']() * 36000 >> 0),
+						Y2: '' + (oPt['getY']() * 36000 >> 0)
+					});
+
+					if (segment['isLast']() && path['isClosed']()) {
+						formatPath.addPathCommand({
+							id: AscFormat.bezier4,
+							X0: '' + ((oPt['getX']() + oSegmentHandleOut['getX']()) * 36000 >> 0),
+							Y0: '' + ((oPt['getY']() + oSegmentHandleOut['getY']()) * 36000 >> 0),
+							X1: '' + ((oPt0['getX']() + oSegment0HandleIn['getX']()) * 36000 >> 0),
+							Y1: '' + ((oPt0['getY']() + oSegment0HandleIn['getY']()) * 36000 >> 0),
+							X2: '' + (oPt0['getX']() * 36000 >> 0),
+							Y2: '' + (oPt0['getY']() * 36000 >> 0)
+						});
+						return formatPath.addPathCommand({
+							id: AscFormat.close
+						});
+					}
+				});
+			});
+
+			return formatPath;
+		}
+
+		function createShapeByCompoundPath(compoundPath /* compoundPath can be either Path or CompoundPath */, referenceShape) {
+			const supportedConstructors = [AscFormat.CShape, AscFormat.CImageShape];
+			const constructor = supportedConstructors.indexOf(referenceShape.constructor) === -1
+				? supportedConstructors[0]
+				: referenceShape.constructor;
+
+			const compoundPathBounds = compoundPath['getBounds']();
+			const formatPath = convertCompoundPathToFormatPath(compoundPath);
+			const pathLst = [formatPath];
+
+			const resultGeometry = new AscFormat.Geometry();
+			pathLst.forEach(function (path) {
+				resultGeometry.AddPath(path);
+			});
+
+			const resultShape = new constructor();
+			resultShape.setBDeleted(false);
+
+			if (AscCommon.isRealObject(referenceShape.blipFill)) {
+				const blipFill = referenceShape.blipFill.createDuplicate();
+
+				const refX = referenceShape.bounds.l;
+				const refY = referenceShape.bounds.t;
+				const refW = referenceShape.bounds.r - referenceShape.bounds.l;
+				const refH = referenceShape.bounds.b - referenceShape.bounds.t;
+				const resX = compoundPathBounds['getLeft']();
+				const resY = compoundPathBounds['getTop']();
+				const resW = compoundPathBounds['getWidth']();
+				const resH = compoundPathBounds['getHeight']();
+
+				blipFill.srcRect = new AscFormat.CSrcRect();
+				blipFill.srcRect.setLTRB(
+					100 * (resX - refX) / refW,
+					100 * (resY - refY) / refH,
+					100 * (resX + resW - refX) / refW,
+					100 * (resY + resH - refY) / refH
+				);
+
+				resultShape.setBlipFill(blipFill);
+			}
+
+			if (referenceShape.bWordShape) {
+				resultShape.bWordShape = true;
+				if (AscCommon.isRealObject(referenceShape.textBoxContent)) {
+					const textBoxContent = referenceShape.textBoxContent.Copy(resultShape, referenceShape.textBoxContent.DrawingDocument);
+					resultShape.setTextBoxContent(textBoxContent);
+				}
+				if (AscCommon.isRealObject(referenceShape.style)) {
+					const style = referenceShape.style.createDuplicate();
+					resultShape.setStyle(style);
+				}
+				if (AscCommon.isRealObject(referenceShape.bodyPr)) {
+					const bodyPr = referenceShape.bodyPr.createDuplicate();
+					resultShape.setBodyPr(bodyPr);
+				}
+			} else {
+				if (AscCommon.isRealObject(referenceShape.txBody)) {
+					const txBody = referenceShape.txBody.createDuplicate();
+					resultShape.setTxBody(txBody);
+				}
+			}
+
+			resultShape.setSpPr(new AscFormat.CSpPr());
+			resultShape.spPr.setParent(resultShape);
+			resultShape.spPr.setXfrm(new AscFormat.CXfrm());
+			resultShape.spPr.xfrm.setParent(resultShape.spPr);
+			resultShape.spPr.xfrm.setOffX(compoundPathBounds['getLeft']());
+			resultShape.spPr.xfrm.setOffY(compoundPathBounds['getTop']());
+			resultShape.spPr.xfrm.setExtX(compoundPathBounds['getWidth']());
+			resultShape.spPr.xfrm.setExtY(compoundPathBounds['getHeight']());
+
+			resultGeometry.setParent(resultShape);
+			resultShape.spPr.setGeometry(resultGeometry);
+
+			if (AscCommon.isRealObject(referenceShape.spPr.effectProps)) {
+				const effectProps = referenceShape.spPr.effectProps.createDuplicate();
+				resultShape.spPr.setEffectPr(effectProps);
+			}
+
+			return resultShape;
+		}
+
+		function replaceShapes(oldShapes, newShapes) {
+			const referenceShape = oldShapes[0];
+			const shapeFill = referenceShape.getFill();
+			const shapeStroke = referenceShape.getStroke();
+
+			// Copy Fill and Stroke properties from referenceShape
+			newShapes.forEach(function (newShape) {
+				newShape.getGeometry().pathLst.forEach(function (path) {
+					path.setFill('norm');
+					path.setStroke(true);
+					path.setExtrusionOk(false);
+				});
+				newShape.spPr.setFill(shapeFill.createDuplicate());
+				newShape.spPr.setLn(shapeStroke.createDuplicate());
+			});
+
+			// Remove old shapes
+			oldShapes.forEach(function (shape) {
+				shape.deleteDrawingBase();
+			});
+
+			const graphicController = Asc.editor.getGraphicController();
+			graphicController.resetSelection();
+
+			// Add new shapes to document
+			newShapes.forEach(function (newShape) {
+				newShape.setDrawingObjects(graphicController.drawingObjects);
+				if (graphicController.drawingObjects.getWorksheetModel) {
+					newShape.setWorksheet(graphicController.drawingObjects.getWorksheetModel());
+				}
+				if (graphicController.drawingObjects && graphicController.drawingObjects.cSld) {
+					newShape.setParent(graphicController.drawingObjects);
+				}
+				newShape.addToDrawingObjects();
+				newShape.checkDrawingBaseCoords();
+				graphicController.selectObject(newShape, 0);
+				newShape.addToRecalculate();
+			});
+
+			// Finalize changes
+			graphicController.startRecalculate();
+		}
+
+		function pdf_replaceShapes(oldShapes, newShapes) {
+			const aOldShapes = oldShapes.slice();
+			const referenceShape = aOldShapes[0];
+			const shapeFill = referenceShape.getFill();
+			const shapeStroke = referenceShape.getStroke();
+
+			// Copy Fill and Stroke properties from referenceShape
+			newShapes.forEach(function (newShape) {
+				newShape.getGeometry().pathLst.forEach(function (path) {
+					path.setFill('norm');
+					path.setStroke(true);
+					path.setExtrusionOk(false);
+				});
+				newShape.spPr.setFill(shapeFill.createDuplicate());
+				newShape.spPr.setLn(shapeStroke.createDuplicate());
+			});
+
+			let oDoc = Asc.editor.getPDFDoc();
+			let nPage = aOldShapes[0].GetPage();
+
+			// Remove old shapes
+			aOldShapes.forEach(function (shape) {
+				oDoc.RemoveDrawing(shape.GetId());
+			});
+
+			const graphicController = Asc.editor.getGraphicController();
+			graphicController.resetSelection();
+
+			// Add new shapes to document
+			newShapes.forEach(function (newShape, idx) {
+				let oPdfShape = newShape.convertToPdf();
+				oDoc.AddDrawing(oPdfShape, nPage);
+				oPdfShape.checkDrawingBaseCoords();
+				if (idx == 0) {
+					oDoc.SetMouseDownObject(oPdfShape);
+				}
+				graphicController.selectObject(oPdfShape, nPage);
+				oPdfShape.addToRecalculate();
+			});
+		}
+
+		function de_replaceShapes(oldShapes, newShapes) {
+			const graphicController = Asc.editor.getGraphicController();
+
+			const referenceShape = oldShapes[0];
+			const shapeFill = referenceShape.getFill();
+			const shapeStroke = referenceShape.getStroke();
+			const pageIndex = referenceShape.parent.pageIndex;
+			const firstParagraph = referenceShape.parent.Get_ParentParagraph();
+
+			// Copy Fill and Stroke properties from referenceShape
+			newShapes.forEach(function (newShape) {
+				newShape.getGeometry().pathLst.forEach(function (path) {
+					path.setFill('norm');
+					path.setStroke(true);
+					path.setExtrusionOk(false);
+				});
+				newShape.spPr.setFill(shapeFill.createDuplicate());
+				newShape.spPr.setLn(shapeStroke.createDuplicate());
+			});
+
+			// Disable revision tracking ?
+			let bTrackRevisions = false;
+			if (graphicController.document.IsTrackRevisions()) {
+				bTrackRevisions = graphicController.document.GetLocalTrackRevisions();
+				graphicController.document.SetLocalTrackRevisions(false);
+			}
+
+			// Create drawing paragraphs
+			newShapes.forEach(function (newShape) {
+				const dOffX = newShape.spPr.xfrm.offX;
+				const dOffY = newShape.spPr.xfrm.offY;
+				newShape.spPr.xfrm.setOffX(0);
+				newShape.spPr.xfrm.setOffY(0);
+
+				const paraDrawing = new ParaDrawing(5, 5, null, graphicController.drawingDocument, null, null);
+				paraDrawing.Set_GraphicObject(newShape);
+				paraDrawing.Set_DrawingType(drawing_Anchor);
+				paraDrawing.Set_WrappingType(WRAPPING_TYPE_NONE);
+				paraDrawing.setExtent(newShape.spPr.xfrm.extX, newShape.spPr.xfrm.extY);
+
+				const nearestPos = graphicController.document.Get_NearestPos(pageIndex, dOffX, dOffY, true, paraDrawing);
+				nearestPos.Paragraph.Check_NearestPos(nearestPos);
+				paraDrawing.Set_XYForAdd(dOffX, dOffY, nearestPos, pageIndex);
+
+				paraDrawing.AddToParagraph(firstParagraph);
+				paraDrawing.Set_Parent(firstParagraph);
+
+				paraDrawing.Set_Props(new Asc.asc_CImgProperty({
+					PositionH: {
+						RelativeFrom: Asc.c_oAscRelativeFromH.Page,
+						UseAlign: false,
+						Align: undefined,
+						Value: dOffX
+					},
+					PositionV: {
+						RelativeFrom: Asc.c_oAscRelativeFromV.Page,
+						UseAlign: false,
+						Align: undefined,
+						Value: dOffY
+					}
+				}));
+
+				newShape.setParent(paraDrawing);
+				graphicController.addGraphicObject(paraDrawing);
+			})
+
+			// Remove old shapes
+			oldShapes.forEach(function (shape) {
+				shape.parent.bNotPreDelete = true;
+				shape.parent.Remove_FromDocument(false);
+				shape.parent.bNotPreDelete = undefined;
+				if (shape.setParent) shape.setParent(null);
+			});
+
+			// Finalize changes
+			graphicController.resetSelection();
+			newShapes.forEach(function (shape) { graphicController.selectObject(shape, pageIndex); });
+			graphicController.document.Recalculate();
+			graphicController.document.UpdateInterface();
+			graphicController.document.UpdateSelection();
+
+			// Restore revision tracking
+			if (bTrackRevisions !== false) {
+				graphicController.document.SetLocalTrackRevisions(bTrackRevisions);
+			}
+		}
+		// -- Shapes merge
+
 		//--------------------------------------------------------export----------------------------------------------------
 		window['AscFormat'] = window['AscFormat'] || {};
 		window['AscFormat'].HANDLE_EVENT_MODE_HANDLE = HANDLE_EVENT_MODE_HANDLE;
@@ -11405,4 +11860,7 @@
 		window["AscCommon"].getSpeechDescription = getSpeechDescription;
 		window["AscCommon"].getArrayElementsDiff = getArrayElementsDiff;
 		window["AscCommon"].GetSelectedDrawings = GetSelectedDrawings;
+
+		window['AscFormat'].canMergeSelectedShapes = canMergeSelectedShapes;
+		window['AscFormat'].mergeSelectedShapes = mergeSelectedShapes;
 	})(window);

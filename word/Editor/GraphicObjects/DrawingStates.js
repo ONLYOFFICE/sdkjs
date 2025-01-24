@@ -828,11 +828,6 @@ RotateState.prototype =
                                 let oAnnot  = oTrack.originalObject;
                                 let aRect   = [bounds.posX * g_dKoef_mm_to_pt, bounds.posY * g_dKoef_mm_to_pt, (bounds.posX + bounds.extX) * g_dKoef_mm_to_pt, (bounds.posY + bounds.extY) * g_dKoef_mm_to_pt];
                                 
-                                if (oTrack.originalFlipV != oTrack.resizedflipV)
-                                    oDoc.History.Add(new CChangesPDFInkFlipV(oAnnot, oTrack.originalFlipV, oTrack.resizedflipV));
-                                if (oTrack.originalFlipH != oTrack.resizedflipH)
-                                    oDoc.History.Add(new CChangesPDFInkFlipH(oAnnot, oTrack.originalFlipH, oTrack.resizedflipH));
-    
                                 if (oAnnot.IsLine()) {
                                     
                                     let aPaths = oTrack.geometry.pathLst[0].ArrPathCommand;
@@ -1744,6 +1739,7 @@ MoveInGroupState.prototype =
                 this.drawingObjects.document.FinalizeAction();
             }
             else {
+                let oDoc = Asc.editor.getPDFDoc();
                 let oViewer = Asc.editor.getDocumentRenderer();
 
                 let xMin;
@@ -1970,6 +1966,7 @@ MoveInGroupState.prototype =
                 oFreeText.SetRect(aNewRect);
                 oFreeText.onAfterMove();
                 oViewer.DrawingObjects.drawingObjects.length = 0;
+                oDoc.FinalizeAction();
             }
         }
         if (isPdf) {

@@ -148,7 +148,7 @@ AscFormat.CTheme.prototype.getFillStyle = function (idx, unicolor, isConnectorSh
 		return AscFormat.CreateNoFillUniFill();
 	}
 	var ret;
-	let fmtScheme = isConnectorShape ?
+	let fmtScheme = (isConnectorShape && this.themeElements.themeExt) ?
 		this.themeElements.themeExt.fmtConnectorScheme :
 		this.themeElements.fmtScheme;
 	if (idx >= 1 && idx <= 999) {
@@ -184,7 +184,7 @@ AscFormat.CTheme.prototype.getLnStyle = function (idx, unicolor, isConnectorShap
 	if (idx === 0) {
 		return AscFormat.CreateNoFillLine();
 	}
-	let fmtScheme = isConnectorShape ?
+	let fmtScheme = (isConnectorShape && this.themeElements.themeExt) ?
 		this.themeElements.themeExt.fmtConnectorScheme :
 		this.themeElements.fmtScheme;
 	if (fmtScheme.lnStyleLst[idx - 1]) {
@@ -508,6 +508,29 @@ AscCommonWord.CPresentationField.prototype.private_GetDateTimeFormat = function(
 					defaultResult = "dd.MM.yyyy";
 					// aFormatIndex = 0; // not found for default - english
 					break;
+
+				case 30:
+					defaultResult = "T";
+					break;
+				case 31:
+					defaultResult = "h:mm";
+					break;
+				case 32:
+					defaultResult = "hh:mm";
+					break;
+				case 33:
+					defaultResult = "H:mm";
+					break;
+				case 34:
+					defaultResult = "HH:mm";
+					break;
+				case 35:
+					defaultResult = "h:mm tt";
+					break;
+				case 36:
+					defaultResult = "Hh:mm tt";
+					break;
+
 				case 37:
 					// defaultResult = "@";
 					defaultResult = "dd.MM.yyyy";
@@ -622,6 +645,7 @@ AscCommonWord.CPresentationField.prototype.private_GetDateTimeFormat = function(
 
 /** @constructor */
 function cDate(date) {
+	// original
 	var bind = Function.bind;
 	var unbind = bind.bind(bind);
 	var date = new (unbind(Date, null).apply(null, arguments));
@@ -630,6 +654,7 @@ function cDate(date) {
 }
 
 Asc.cDate.prototype.getUTCFullYear = function () {
+	// original
 	var year = Date.prototype.getUTCFullYear.call(this);
 	var month = Date.prototype.getUTCMonth.call(this);
 	var date = Date.prototype.getUTCDate.call(this);
@@ -644,7 +669,13 @@ Asc.cDate.prototype.getUTCFullYear = function () {
 AscCommonWord.CPresentationField.prototype.private_GetString = function()
 {
 	//todo add num formats with units in editor
-	return;
+
+	// return; returns direct tag value
+	// if (!this.isTextInherited) {
+	// 	return;
+	// }
+
+
 	/**
 	 *
 	 * @param valueV
@@ -693,6 +724,10 @@ AscCommonWord.CPresentationField.prototype.private_GetString = function()
 		let val = convertConsiderUnits(this.vsdxFieldValue.v, this.vsdxFieldValue.u);
 
 
+		// get known functions and get val otherwise return tag text
+		// time formats are not handled correctly for now so date formats are commented
+
+		// todo check INH sFieldType
 
 		if("PAGECOUNT()" === sFieldType)
 		{
@@ -700,21 +735,26 @@ AscCommonWord.CPresentationField.prototype.private_GetString = function()
 				val = logicDocument.getCountPages();
 			}
 		}
-		else if("NOW()" === sFieldType)
-		{
-			let oDateTime = new Asc.cDate();
-			val = oDateTime.getExcelDateWithTime(true);
-		}
-		else if("DOCCREATION()" === sFieldType)
-		{
-			let oDateTime
-			if (logicDocument.core && logicDocument.core.created) {
-				oDateTime = new Asc.cDate(logicDocument.core.created);
-			} else {
-				oDateTime = new Asc.cDate(val);
+		else if("PAGENUMBER()" === sFieldType) {
+			if (logicDocument) {
+				val = logicDocument.getCurrentPage();
 			}
-			val = oDateTime.getExcelDateWithTime(true);
 		}
+ 		// else if("NOW()" === sFieldType)
+		// {
+		// 	let oDateTime = new Asc.cDate();
+		// 	val = oDateTime.getExcelDateWithTime(true);
+		// }
+		// else if("DOCCREATION()" === sFieldType)
+		// {
+		// 	let oDateTime
+		// 	if (logicDocument.core && logicDocument.core.created) {
+		// 		oDateTime = new Asc.cDate(logicDocument.core.created);
+		// 	} else {
+		// 		oDateTime = new Asc.cDate(val);
+		// 	}
+		// 	val = oDateTime.getExcelDateWithTime(true);
+		// }
 		else if("CREATOR()" === sFieldType)
 		{
 			if (logicDocument.core && logicDocument.core.creator) {
@@ -726,29 +766,47 @@ AscCommonWord.CPresentationField.prototype.private_GetString = function()
 			//todo display units
 			val = this.vsdxFieldValue.getValueInMM();
 		}
-		if (this.vsdxFieldValue.u === "DATE") {
-			// TODO fix 31.12.1899 visio date
-			const oFormat = this.private_GetDateTimeFormat(this.vsdxFieldValue,
-				this.vsdxFieldFormat);
-			if(oFormat)
-			{
-				let dateString = this.vsdxFieldValue.v;
-				dateString = dateString === "" ? dateString : dateString;
-				oDateTime = new Asc.cDate(dateString);
-
-				sStr = oFormat.formatToWord(oDateTime.getExcelDate(false) + 1 + (oDateTime.getHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
-			}
-			// const oFormat = AscCommon.oNumFormatCache.get(format, AscCommon.NumFormatType.Excel);
-			// sStr =  format._formatToText(val, AscCommon.CellValueType.String, 15, oCultureInfo);
-		} else {
-			let format;
-			if (this.vsdxFieldFormat) {
-				format = parseFieldPictureFormat(this.vsdxFieldValue, this.vsdxFieldFormat);
-			}
-			const oFormat = AscCommon.oNumFormatCache.get(format, AscCommon.NumFormatType.Excel);
-			sStr =  oFormat._formatToText(val, AscCommon.CellValueType.String, 15, oCultureInfo);
-			// sStr = val + "";
+		else if ((this.vsdxFieldValue.u === "STR" || !this.vsdxFieldValue.u) && (sFieldType === "INH" || !sFieldType)) {
+			// handle simple values. consider is function is INH value is calculated correctly already
+			val = this.vsdxFieldValue.v;
 		}
+		else
+		{
+			return;
+		}
+
+		// if (this.vsdxFieldValue.u === "DATE") {
+		// 	// TODO fix 31.12.1899 visio date
+		// 	const oFormat = this.private_GetDateTimeFormat(this.vsdxFieldValue,
+		// 		this.vsdxFieldFormat);
+		// 	if(oFormat)
+		// 	{
+		// 		let dateString = this.vsdxFieldValue.v;
+		// 		dateString = dateString === "" ? dateString : dateString;
+		// 		oDateTime = new Asc.cDate(dateString);
+		//
+		// 		sStr = oFormat.formatToWord(oDateTime.getExcelDate(false) + 1 + (oDateTime.getHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
+		// 	}
+		// 	// const oFormat = AscCommon.oNumFormatCache.get(format, AscCommon.NumFormatType.Excel);
+		// 	// sStr =  format._formatToText(val, AscCommon.CellValueType.String, 15, oCultureInfo);
+		// } else {
+		let format;
+		if (this.vsdxFieldFormat) {
+			format = parseFieldPictureFormat(this.vsdxFieldValue, this.vsdxFieldFormat);
+		}
+		const oFormat = AscCommon.oNumFormatCache.get(format, AscCommon.NumFormatType.Excel);
+		sStr =  oFormat._formatToText(val, AscCommon.CellValueType.String, 15, oCultureInfo);
+		// sStr = val + "";
+		// }
 	}
 	return sStr;
 };
+
+//todo CMobileDelegateEditorDiagram
+AscCommon.CMobileDelegateEditorPresentation.prototype.GetObjectTrack = function(x, y, page, bSelected, bText) { return false; }
+AscCommon.CMobileDelegateEditorPresentation.prototype.GetSelectionRectsBounds = function () { return null; }
+AscCommon.CMobileDelegateEditorPresentation.prototype.GetSelectionRectsBounds = function () { return null; }
+AscCommon.CMobileDelegateEditorPresentation.prototype.GetContextMenuType = function () { return AscCommon.MobileTouchContextMenuType.None; }
+AscCommon.CMobileDelegateEditorPresentation.prototype.GetContextMenuInfo = function () {}
+AscCommon.CMobileDelegateEditorPresentation.prototype.GetContextMenuPosition = function () { return { X : 0, Y : 0, Mode : AscCommon.MobileTouchContextMenuType.None }; }
+AscCommon.CMobileDelegateEditorPresentation.prototype.Logic_GetNearestPos = function () { return null; }

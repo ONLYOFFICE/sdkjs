@@ -194,7 +194,6 @@
 	var oZipImages = null;
 	var sDownloadServiceLocalUrl = "../../../../downloadas";
 	var sUploadServiceLocalUrl = "../../../../upload";
-	var sUploadServiceLocalUrlOld = "../../../../uploadold";
 	var sSaveFileLocalUrl = "../../../../savefile";
 	var sDownloadFileLocalUrl = "../../../../downloadfile";
 	var nMaxRequestLength = 5242880;//5mb <requestLimits maxAllowedContentLength="30000000" /> default 30mb
@@ -832,7 +831,7 @@
 			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.presentation.macroEnabled.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.slideshow.macroEnabled.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.template.macroEnabled.main+xml");
-		let isDraw = -1 !== contentTypes.indexOf("application/vnd.ms-visio.drawing.main+xml") ||
+		let isVisio = -1 !== contentTypes.indexOf("application/vnd.ms-visio.drawing.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-visio.stencil.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-visio.template.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-visio.drawing.macroEnabled.main+xml") ||
@@ -844,8 +843,8 @@
 			return AscCommon.c_oEditorId.Spreadsheet;
 		} else if (isSlide) {
 			return AscCommon.c_oEditorId.Presentation;
-		} else if (isDraw) {
-			return AscCommon.c_oEditorId.Draw;
+		} else if (isVisio) {
+			return AscCommon.c_oEditorId.Visio;
 		} else {
 			return null;
 		}
@@ -2278,48 +2277,7 @@
 	function ShowImageFileDialog(documentId, documentUserId, jwt, shardKey, wopiSrc, userSessionId, callback, callbackOld)
 	{
 		if (false === _ShowFileDialog(getAcceptByArray(c_oAscImageUploadProp.SupportedFormats), true, true, ValidateUploadImage, callback)) {
-			//todo remove this compatibility
-			var frameWindow = GetUploadIFrame();
-			let url = sUploadServiceLocalUrlOld + '/' + documentId;
-			let queryParams = [];
-			if (shardKey) {
-				queryParams.push(Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey));
-			}
-			if (wopiSrc) {
-				queryParams.push(Asc.c_sWopiSrcName + '=' + encodeURIComponent(wopiSrc));
-			}
-			if (userSessionId) {
-				queryParams.push(Asc.c_sUserSessionIdName + '=' + encodeURIComponent(userSessionId));
-			}
-			if (jwt) {
-				queryParams.push('token=' + encodeURIComponent(jwt));
-			}
-			if (queryParams.length > 0) {
-				url += '?' + queryParams.join('&');
-			}
-			var content = '<html><head></head><body><form action="' + url + '" method="POST" enctype="multipart/form-data"><input id="apiiuFile" name="apiiuFile" type="file" accept="image/*" size="1"><input id="apiiuSubmit" name="apiiuSubmit" type="submit" style="display:none;"></form></body></html>';
-			frameWindow.document.open();
-			frameWindow.document.write(content);
-			frameWindow.document.close();
-
-			var fileName = frameWindow.document.getElementById("apiiuFile");
-			var fileSubmit = frameWindow.document.getElementById("apiiuSubmit");
-
-			fileName.onchange = function (e)
-			{
-				if (e && e.target && e.target.files)
-				{
-					var nError = ValidateUploadImage(e.target.files);
-					if (c_oAscServerError.NoError != nError)
-					{
-						callbackOld(mapAscServerErrorToAscError(nError));
-						return;
-					}
-				}
-				callbackOld(Asc.c_oAscError.ID.No);
-				fileSubmit.click();
-			};
-			fileName.click();
+			callback(Asc.c_oAscError.ID.Unknown);
 		}
 	}
 	function ShowDocumentFileDialog(callback, isAllowMultiple) {
@@ -2946,7 +2904,7 @@
 		hostnameRe            = /^(((https?)|(ftps?)):\/\/)?([\-\wа-яё]*:?[\-\wа-яё]*@)?(([\-\wа-яё]+\.)+[\wа-яё\-]{2,}(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`'~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?)/i,
 		localRe               = /^(((https?)|(ftps?)):\/\/)([\-\wа-яё]*:?[\-\wа-яё]*@)?(([\-\wа-яё]+)(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`'~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?)/i,
 		fileRe                = /^((file):\/\/)[^'`"%^{}<>].*/i,//reserved symbols from word 2010
-		rx_allowedProtocols      = /(^((https?|ftps?|file|tessa|smb):\/\/)|(mailto:)).*/i,
+		rx_allowedProtocols      = /(^((https?|ftps?|file|tessa|joplin|smb):\/\/)|(mailto:)).*/i,
 
 		rx_table              = build_rx_table(null),
 		rx_table_local        = build_rx_table(null);
@@ -3010,6 +2968,71 @@
 		}
 
 		return null;
+	}
+
+	function isExternalShortLink (string) {
+		// short links that ms writes as [externalLink] + "!" + "Defname"
+		// strings come in "!"+"Defname" format only after external
+		if (string[0] !== "!") {
+			return null;
+		}
+
+		let secondPartOfString = string.slice(1);
+		let defname = XRegExp.exec(secondPartOfString, rx_name);
+
+		if (defname && defname["name"]) {
+			defname = defname["name"];
+		}
+
+		if (!defname || !AscCommon.rx_defName.test(defname)) {
+			return null;
+		}
+
+		return {
+			externalLink: "",
+			defname: defname,
+			fullString: "!" + defname,
+		}
+	}
+
+	function isExternalShortLinkLocal (string) {
+		// short links that user writes as "'externalLinkWithoutBrackets'" + "!" + "Defname"  -  "'DefTest.xlsx'!_s1"
+		// we split the string into two parts, where the separator is an exclamation point
+		if (!string) {
+			return null;
+		}
+
+		let shortLinkReg = /[\<\>\?\[\]\\\/\|\*\+\"\:\']/;	// reg contains special characters that are not allowed in the shortLink
+
+		let linkInQuotes;
+		let exclamationMarkIndex = string.indexOf("!");
+		let externalLink = exclamationMarkIndex !== -1 ? string.substring(0, exclamationMarkIndex) : null;
+		let secondPartOfString = exclamationMarkIndex !== -1 ? string.substring(exclamationMarkIndex + 1) : null;
+
+		let defname = XRegExp.exec(secondPartOfString, rx_name);
+		if (defname && defname["name"]) {
+			defname = defname["name"];
+		}
+
+		if (externalLink && externalLink[0] === "'" && externalLink[externalLink.length - 1] === "'") {
+			externalLink = externalLink.substring(1, externalLink.length - 1);
+			linkInQuotes = true;
+		}
+
+		if (!externalLink || !defname || shortLinkReg.test(externalLink) || !AscCommon.rx_defName.test(defname)) {
+			return null;
+		}
+
+		// external link without quotes is parsed using a regular parser for the name
+		if (!linkInQuotes && !rx_test_ws_name.test(externalLink)) {
+			return null;
+		}
+
+		return {
+			externalLink: externalLink,
+			defname: defname,
+			fullString: linkInQuotes ? ("'" + externalLink + "'" + "!" + defname) : (externalLink + "!" + defname)
+		}
 	}
 
 	function isValidFileUrl(url) {
@@ -3411,7 +3434,32 @@
 
 		return false;
 	};
-	parserHelper.prototype.is3DRef = function (formula, start_pos, support_digital_start)
+	/**
+	 * Checks if the provided formula is a 3D reference.
+	 *
+	 * A 3D reference in the context of formulas typically indicates a range of cells 
+	 * that can span multiple sheets in an Excel workbook. This function analyzes 
+	 * the formula to determine if it conforms to the format of a 3D reference.
+	 *
+	 * The function processes the formula starting from the specified position, 
+	 * handling external links, short links, and various formats of references.
+	 *
+	 * @param {string} formula - The formula to be checked for 3D reference.
+	 * @param {number} start_pos - The starting position in the formula for analysis.
+	 * @param {boolean} support_digital_start - Indicates whether the function 
+	 *     supports digital start references (e.g., "1Sheet").
+	 * @param {boolean} local - the flag that indicate is local context used or not, that may be used during 
+	 *     the analysis of the formula.
+	 * @returns {[boolean, (string|null), (string|null), (string|null), (number|Object|null), (string|null)]} 
+	 * Returns an array containing:
+	 * - A boolean indicating if the formula is a 3D reference.
+	 * - The name of the starting sheet or null if not applicable.
+	 * - The name of the ending sheet or null if not applicable.
+	 * - The external link if applicable, or null.
+	 * - The length of the external link if not applicable, or shortLink info object if it exists.
+	 * - The supposed defname or null.
+	 */
+	parserHelper.prototype.is3DRef = function (formula, start_pos, support_digital_start, local)
 	{
 		if (this instanceof parserHelper)
 		{
@@ -3432,8 +3480,14 @@
 			//необходимо вычленить имя файла и путь к нему, затем проверить путь
 			//если путь указан, то ссылка должна быть в одинарных кавычках, если указан просто название файла в [] - в мс это означает, что данный файл открыт, при его закрытии путь проставляется
 			//пока не реализовываем с открытыми файлами, работаем только с путями
+			//также ссылки типа [] + ! + Defname должны обрабатываться аналогично как [] + SheetName + ! + Defname
 			external = parseExternalLink(subSTR);
 			if (external) {
+				if (external.name && (external.name.indexOf("[") !== -1 || external.name.indexOf(":") !== -1)) {
+					// if the name contains '[' and ':' , then we return an error
+					return [false, null, null, external, externalLength];
+				}
+
 				externalLength = external.fullname.length;
 				subSTR = formula.substring(start_pos + externalLength);
 				const posQuote =  subSTR.indexOf("'");
@@ -3446,7 +3500,25 @@
 			}
 		}
 
-		var match  = XRegExp.exec(subSTR, rx_ref3D_quoted) || XRegExp.exec(subSTR, rx_ref3D_non_quoted);
+		/* current file check */
+		let currentFileName = window["Asc"]["editor"].DocInfo && window["Asc"]["editor"].DocInfo.get_Title();
+
+		/* shortlink return obj {fullstring, externalLink, defname} */
+		let shortLink = isExternalShortLink(subSTR) || (local && !external && isExternalShortLinkLocal(subSTR));
+
+		if (shortLink) {
+			if ((shortLink.externalLink && shortLink.externalLink === currentFileName) || external === "0") {
+				external = null;
+				shortLink.currentFile = true;
+			}
+
+			this.pCurrPos += shortLink.fullString.length + externalLength;
+			this.operand_str = shortLink.defname;
+			return [true, null, null, external, shortLink];
+		}
+
+		let match = XRegExp.exec(subSTR, rx_ref3D_quoted) || XRegExp.exec(subSTR, rx_ref3D_non_quoted);
+		
 		if(!match && support_digital_start) {
 			match = XRegExp.exec(subSTR, rx_ref3D_non_quoted_2);
 		}
@@ -3455,7 +3527,15 @@
 		{
 			this.pCurrPos += match[0].length + externalLength;
 			this.operand_str = match[1];
-			return [true, match["name_from"] ? match["name_from"].replace(/''/g, "'") : null, match["name_to"] ? match["name_to"].replace(/''/g, "'") : null, external];
+
+			let currentFileDefname;
+			if (external && external === currentFileName) {
+				let exclamationMarkIndex = subSTR.lastIndexOf("!");
+				let defname = exclamationMarkIndex !== -1 ? subSTR.slice(exclamationMarkIndex + 1) : null;
+				currentFileDefname = defname ? defname : null;
+			}
+
+			return [true, match["name_from"] ? match["name_from"].replace(/''/g, "'") : null, match["name_to"] ? match["name_to"].replace(/''/g, "'") : null, external, null, currentFileDefname];
 		}
 		return [false, null, null, external, externalLength];
 	};
@@ -3813,13 +3893,13 @@
 		{
 			this._reset();
 		}
-		// todo если строка подстрока другой
 		const subSTR = formula.substring(start_pos);
-		const fieldName = opt_namesList[0][0];
-		const itemNames = opt_namesList[1];
-		const fullPatterns = itemNames.map(function(name) {
-			return '^' + fieldName + '\\s*\\[\\s*(' + name + ')\\s*\\]'
-		});
+		const fullPatterns = [];
+		for (let i = 0; i < opt_namesList[0].length; i += 1) {
+			for (let j = 0; j < opt_namesList[1].length; j += 1) {
+				fullPatterns.push('^(' + opt_namesList[0][i] + ')\\s*\\[\\s*(' + opt_namesList[1][j] + ')\\s*\\]');
+			}
+		}
 		const fullRegs = fullPatterns.map(function(pattern) {
 			return new RegExp(pattern, 'i');
 		});
@@ -3828,10 +3908,10 @@
 			if (match !== null) {
 				this.operand_str = match[0];
 				this.pCurrPos += match[0].length;
-				return [fieldName, match[1]];
+				return [match[1], match[2]];
 			}
 		}
-		const shortPatterns = itemNames.map(function(name) {
+		const shortPatterns = opt_namesList[1].map(function(name) {
 			return '^(' + name + ')(?:\\W|$)'
 		});
 		const shortRegs = shortPatterns.map(function(pattern) {
@@ -3842,7 +3922,7 @@
 			if (match !== null) {
 				this.operand_str = match[1];
 				this.pCurrPos += match[1].length;
-				return [null, match[1]];
+				return [null, match[2] ? match[2] : match[1]];
 			}
 		}
 		return false;
@@ -3854,7 +3934,16 @@
 			this._reset();
 		}
 		const subSTR = formula.substring(start_pos);
-		const reg = /^(\w+|(?:\'.+?\'(?!\')))\[(\w+|(?:\'.+?\'(?!\')))\]/;
+		const reg = XRegExp.build('(?x) ^({{fieldName}})\\[({{itemName}})\\]', {
+			'fieldName': XRegExp.build('{{simple}}|{{quotes}}', {
+				'simple': '[\\p{L}_][\\p{L}\\p{N}_]*',
+				'quotes': "\\'.+?\\'(?!\\')",
+			}),
+			'itemName': XRegExp.build('{{simple}}|{{quotes}}', {
+				'simple': '[\\p{L}\\p{N}_]+',
+				'quotes': "\\'.+?\\'(?!\\')",
+			})
+		});
 		const match = reg.exec(subSTR);
 		if (match !== null && match[1] && match[2]) {
 			this.operand_str = match[0];
@@ -3903,8 +3992,11 @@
 		}
 	};
 // Возвращает экранируемое название листа
-	parserHelper.prototype.getEscapeSheetName = function (sheet)
+	parserHelper.prototype.getEscapeSheetName = function (sheet, shortLink)
 	{
+		if (shortLink) {
+			return rx_test_ws_name.test(sheet) ? sheet : sheet.replace(/'/g, "''");
+		}
 		return rx_test_ws_name.test(sheet) ? sheet : "'" + sheet.replace(/'/g, "''") + "'";
 	};
 	/**
@@ -4203,6 +4295,19 @@
 			}
 		}
 		return null;
+	};
+	parserHelper.prototype.escapeTableCharacters = function (string, doEscape) {
+		if (!string) {
+			return "";
+		}
+		
+		// make escape for the special character inside the string
+		if (doEscape) {
+			return string.replace(/(['#@\[\]])/g, "'$1");
+		}
+
+		// return only the character from the capture group(without escaping)
+		return string.replace(/'(['#@\[\]])/g, "$1");
 	};
 
 	var parserHelp = new parserHelper();
@@ -11368,6 +11473,10 @@
 		loadScript('../../../../sdkjs/common/Charts/ChartStyles.js', onSuccess, onError);
 	}
 
+	function loadPathBoolean(onSuccess, onError) {
+		loadScript('../../../../sdkjs/common/Drawings/Format/path-boolean-min.js', onSuccess, onError);
+	}
+
 	function getAltGr(e)
 	{
 		if (true === e["altGraphKey"])
@@ -13847,7 +13956,12 @@
 		var textQualifier = options.asc_getTextQualifier();
 		var matrix = [];
 		//var rows = text.match(/[^\r\n]+/g);
-		var rows = text.split(/\r?\n/);
+		var rows;
+		if (delimiterChar === '\n') {
+			rows = [text];
+		} else {
+			rows = text.split(/\r?\n/);
+		}
 		for (var i = 0; i < rows.length; ++i) {
 			var row = rows[i];
 			if(" " === delimiterChar && bTrimSpaces) {
@@ -14754,31 +14868,6 @@
 		return aArray[Math.random() * aArray.length | 0];
 	}
 
-	function registerServiceWorker() {
-		if ('serviceWorker' in navigator) {
-			const serviceWorkerName = 'document_editor_service_worker.js';
-			const serviceWorkerPath = '../../../../' + serviceWorkerName;
-			let reg;
-			navigator.serviceWorker.register(serviceWorkerPath)
-				.then(function (registration) {
-					reg = registration;
-					return navigator.serviceWorker.getRegistrations();
-				})
-				.then(function (registrations) {
-					//delete stale service workers
-					for (const registration of registrations) {
-						if (registration !== reg && registration.active && registration.active.scriptURL.endsWith(serviceWorkerName)) {
-							registration.unregister();
-						}
-					}
-				})
-				.catch(function (err) {
-					console.error('Registration failed with ' + err);
-				});
-		}
-	}
-	registerServiceWorker();
-
 	function consoleLog(val) {
 		// console.log(val);
 		const showMessages = false;
@@ -14895,6 +14984,7 @@
 	window["AscCommon"].loadSdk = loadSdk;
     window["AscCommon"].loadScript = loadScript;
     window["AscCommon"].loadChartStyles = loadChartStyles;
+    window["AscCommon"].loadPathBoolean = loadPathBoolean;
 	window["AscCommon"].getAltGr = getAltGr;
 	window["AscCommon"].getColorSchemeByName = getColorSchemeByName;
 	window["AscCommon"].getColorSchemeByIdx = getColorSchemeByIdx;

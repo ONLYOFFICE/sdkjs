@@ -805,7 +805,8 @@
 					}
 					case AscCommon.c_oEditorId.Spreadsheet:
 					{
-						if (this.Api.isStartAddShape === true)
+						if (this.Api.isStartAddShape === true ||
+							this.Api.isInkDrawerOn())
 						{
 							this.desktopTouchState = false;
 						}
@@ -813,7 +814,17 @@
 					}
 					case AscCommon.c_oEditorId.Presentation:
 					{
-						if (this.Api.isStartAddShape === true)
+						if (this.Api.isStartAddShape === true ||
+							this.Api.isInkDrawerOn())
+						{
+							this.desktopTouchState = false;
+						}
+						break;
+					}
+					case AscCommon.c_oEditorId.Visio:
+					{
+						if (this.Api.isStartAddShape === true ||
+							this.Api.isInkDrawerOn())
 						{
 							this.desktopTouchState = false;
 						}
@@ -1337,7 +1348,9 @@
 	CMobileTouchManagerBase.prototype.Destroy = function()
 	{
 		var _scroller = document.getElementById(this.iScrollElement);
-		this.delegate.GetScrollerParent().removeChild(_scroller);
+		if (_scroller) {
+			this.delegate.GetScrollerParent().removeChild(_scroller);
+		}
 
 		if (this.iScroll != null)
 			this.iScroll.destroy();

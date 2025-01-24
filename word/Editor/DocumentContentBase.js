@@ -543,7 +543,7 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 					if (oElement && oElement.IsParagraph() && (nIndex < EndPos || this.Content[nIndex].IsSelectionToEnd()))
 					{
 						var oPrChange   = oElement.GetDirectParaPr();
-						var oReviewInfo = new CReviewInfo();
+						var oReviewInfo = new AscWord.ReviewInfo();
 						oReviewInfo.Update();
 
 						oElement.SetDirectParaPr(oDirectParaPr);
@@ -925,7 +925,7 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 								{
 									var oParaPr   = this.Content[nCurContentPos].GetDirectParaPr();
 									var oPrChange = this.Content[nCurContentPos + 1].GetDirectParaPr();
-									var oReviewInfo = new CReviewInfo();
+									var oReviewInfo = new AscWord.ReviewInfo();
 									oReviewInfo.Update();
 
 									this.Content[nCurContentPos + 1].SetDirectParaPr(oParaPr);
@@ -1020,7 +1020,7 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 								{
 									var oParaPr   = this.Content[nCurContentPos - 1].GetDirectParaPr();
 									var oPrChange = this.Content[nCurContentPos].GetDirectParaPr();
-									var oReviewInfo = new CReviewInfo();
+									var oReviewInfo = new AscWord.ReviewInfo();
 									oReviewInfo.Update();
 
 									this.Content[nCurContentPos].SetDirectParaPr(oParaPr);
@@ -2908,4 +2908,15 @@ CDocumentContentBase.prototype.GetCurrentRun = function()
 		return null;
 	
 	return run;
+};
+CDocumentContentBase.prototype.GetText = function(pr)
+{
+	let text = "";
+	for (let i = 0; i < this.Content.length; ++i)
+	{
+		if (this.Content[i].GetText)
+			text += this.Content[i].GetText(pr);
+	}
+	
+	return text;
 };

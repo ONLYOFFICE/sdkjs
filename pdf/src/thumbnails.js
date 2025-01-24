@@ -764,7 +764,9 @@
         this.repaint();
     };
     CDocument.prototype._repaintPage = function(nPage) {
-        this.pages[nPage].needRedraw = true;
+        if (this.pages[nPage]) {
+            this.pages[nPage].needRedraw = true;
+        }
     };
     CDocument.prototype._deletePage = function(nPage) {
         this.pages.splice(nPage, 1);
@@ -782,6 +784,23 @@
         this._resize();
     };
 
+    CDocument.prototype.getStartVisiblePage = function() {
+        if (!this.blocks.length) {
+            return;
+        }
+
+        return this.blocks[0].pages[0].num;
+    };
+    CDocument.prototype.getEndVisiblePage = function() {
+        if (!this.blocks.length) {
+            return;
+        }
+
+        let nBlocks = this.blocks.length;
+        let nPages = this.blocks[nBlocks - 1].pages.length;
+
+        return this.blocks[nBlocks - 1].pages[nPages - 1].num;
+    };
     CDocument.prototype.calculateVisibleBlocks = function()
     {
         this.startBlock = -1;

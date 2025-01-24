@@ -322,8 +322,7 @@
         for (let i = 0; i < arrNeedReviewObjects.length; i += 1) {
             const oNeedReviewObject = arrNeedReviewObjects[i];
             if (oNeedReviewObject.SetReviewTypeWithInfo) {
-                let oReviewInfo = oNeedReviewObject.ReviewInfo.Copy();
-                this.setReviewInfo(oReviewInfo);
+                let oReviewInfo = this.getReviewInfo();
                 if (this.bSaveCustomReviewType) {
                     const reviewType = oNeedReviewObject.GetReviewType && oNeedReviewObject.GetReviewType();
                     if (reviewType === reviewtype_Add || reviewType === reviewtype_Remove) {
@@ -347,8 +346,8 @@
     };
 
     CDocumentResolveConflictComparison.prototype.getCompareReviewInfo = function (oRun) {
-        const oReviewInfo = oRun.GetReviewInfo && oRun.GetReviewInfo();
-        const prevAdded = oReviewInfo.GetPrevAdded();
+        let oReviewInfo = oRun.GetReviewInfo && oRun.GetReviewInfo();
+        const prevAdded = oReviewInfo && oReviewInfo.GetPrevAdded();
         const reviewType = oRun.GetReviewType && oRun.GetReviewType();
         const moveReviewType = oRun.GetReviewMoveType && oRun.GetReviewMoveType();
         const bNotRunIdInit = !this.oComparisonMoveMarkManager.getMoveMarkNameByRun(oRun);
@@ -410,8 +409,13 @@
     CDocumentResolveConflictComparison.prototype.resolveCustomReviewTypesBetweenElements = function (oMainElement, nRevisedReviewType, oRevisedReviewInfo) {
         const nMainReviewType = oMainElement.GetReviewType();
         if (nRevisedReviewType !== reviewtype_Common && nRevisedReviewType !== nMainReviewType) {
-            const oMainReviewInfo = oMainElement.GetReviewInfo().Copy();
-            oRevisedReviewInfo = oRevisedReviewInfo.Copy();
+            let oMainReviewInfo = oMainElement.GetReviewInfo();
+			if (oMainReviewInfo)
+				oMainReviewInfo = oMainReviewInfo.Copy();
+			
+			if (oRevisedReviewInfo)
+				oRevisedReviewInfo = oRevisedReviewInfo.Copy();
+			
             if (nMainReviewType === reviewtype_Common) {
                 oMainElement.SetReviewTypeWithInfo(nRevisedReviewType, oRevisedReviewInfo);
             } else if (nMainReviewType === reviewtype_Add) {

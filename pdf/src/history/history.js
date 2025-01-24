@@ -226,7 +226,36 @@
 		if (contentChanges)
 			contentChanges.RemoveByHistoryItem(Item);
 	};
-	
+		/**
+	 * Проверяем лок для последних нескольких точек
+	 * @param pointCount
+	 */
+	History.prototype.checkLock = function(pointCount)
+	{
+		if (!pointCount || pointCount - 1 > this.Index)
+			return;
+		
+		for (let pointIndex = 0; pointIndex < pointCount; ++pointIndex) {
+			let point = this.Points[this.Index - pointIndex];
+			
+			for (let changeIndex = 0; changeIndex < point.Items.length; ++changeIndex) {
+                let oClass = point.Items[changeIndex].Class;
+
+				if (oClass.IsAnnot && oClass.IsAnnot() || oClass.IsForm && oClass.IsForm()) {
+                    let oParentPage = oClass.GetParentPage();
+
+                    let check_obj = {
+                        "type":     AscPDF.AscLockTypeElemPDF.Object,
+                        "pageId":   oParentPage ? oParentPage.GetId() : null,
+                        "objId":    oClass.GetId(),
+                        "guid":     oClass.GetId()
+                    };
+
+                    oClass.Lock.Check(check_obj);
+                }
+ 			}
+		}
+	};
 	//----------------------------------------------------------export--------------------------------------------------
 	window['AscPDF'] = window['AscPDF'] || {};
 	window['AscPDF'].History = History;

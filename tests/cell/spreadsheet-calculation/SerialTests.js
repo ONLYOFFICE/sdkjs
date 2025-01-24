@@ -110,7 +110,7 @@ $(function () {
 	api.isOpenOOXInBrowser = false;
 	api._openDocument(AscCommon.getEmpty());
 	api._openOnClient();
-	api.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
+	api.initCollaborativeEditing({});
 	api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,
 		api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
 	let wb = api.wbModel;
@@ -4691,6 +4691,304 @@ $(function () {
 		expectedData = [['1'], ['732'], ['1'], ['732'], ['1'], ['732']];
 		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill years. Two selected cells. Reverse sequence. Type Date. 1900 year.');
 		clearData(0, 0, 0, 7);
+		// Case: The context menu property "Fill series". Horizontal. Two selected cells. Asc sequence. Type Date.
+		testData = [
+			['01/01/2000', '04/01/2000']
+		];
+		getFilledData(0, 0, 1, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillSeries;
+		wsView.activeFillHandle = getRange(0, 0, 7, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(2, 0, 7, 0);
+		expectedData = [['36708', '36800', '36892', '36982', '37073', '37165']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill series. Two selected cells. Asc sequence. Type Date.');
+		clearData(0, 0, 7, 0);
+		// Case: The context menu property "Fill months". Vertical. Three selected cells. Asc sequence. Type Date. Diff days.
+		testData = [
+			['01/01/2000'],
+			['01/02/2000'],
+			['01/03/2000']
+		];
+		getFilledData(0, 0, 0, 2, testData, [0, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 0, 0, 8);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 3, 0, 8);
+		expectedData = [['36557'], ['36558'], ['36559'], ['36586'], ['36587'], ['36588']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill month. Three selected cells. Asc sequence. Type Date. Diff days.');
+		clearData(0, 0, 0, 8);
+		// Case: The context menu property "Fill months". Vertical. Three selected cells. Reverse sequence. Type Date. Diff days.
+		getFilledData(0, 6, 0, 8, testData, [6, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 8, 0, 0);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 0, 5);
+		expectedData = [['36465'], ['36466'], ['36467'], ['36495'], ['36496'], ['36497']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill month. Three selected cells. Reverse sequence. Type Date. Diff days.');
+		clearData(0, 0, 0, 8);
+		// Case: The context menu property "Fill years". Horizontal. Three selected cells. Asc sequence. Type Date. Diff days.
+		testData = [
+			['01/01/2000', '01/02/2000', '01/03/2000']
+		]
+		getFilledData(0, 0, 2, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 0, 8, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(3, 0, 8, 0);
+		expectedData = [['36892', '36893', '36894', '37257', '37258', '37259']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill years. Three selected cells. Asc sequence. Type Date. Diff days.');
+		// Case: The context menu property "Fill years". Horizontal. Three selected cells. Reverse sequence. Type Date. Diff days.
+		getFilledData(6, 0, 8, 0, testData, [0, 6]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(8, 0, 0, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 5, 0);
+		expectedData = [['35796', '35797', '35798', '36161', '36162', '36163']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill years. Three selected cells. Reverse sequence. Type Date. Diff days.');
+		clearData(0, 0, 8, 0);
+		// Case: The context menu property "Fill months". Vertical. Two selected cells. Asc sequence. Type Date. Diff days.
+		testData = [
+			['01/01/2000'],
+			['01/30/2000']
+		];
+		getFilledData(0, 0, 0, 1, testData, [0, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 0, 0, 8);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 2, 0, 8);
+		expectedData = [['36557'], ['36585'], ['36586'], ['36615'], ['36617'], ['36646'], ['36647']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill months. Two selected cells. Asc sequence. Type Date. Diff days.');
+		// Case: The context menu property "Fill months". Vertical. Two selected cells. Reverse sequence. Type Date. Diff days.
+		getFilledData(0, 7, 0, 8, testData, [7, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 8, 0, 0);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 0, 6);
+		expectedData = [['36433'], ['36434'], ['36463'], ['36465'], ['36494'], ['36495'], ['36524']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill months. Two selected cells. Reverse sequence. Type Date. Diff days.');
+		clearData(0, 0, 0, 8);
+		// Case: The context menu property "Fill months". Horizontal. Two selected cells. Asc sequence. Type Date. Diff days.
+		testData = [
+			['01/01/2000', '01/31/2000']
+		];
+		getFilledData(0, 0, 1, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 0, 8, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(2, 0, 8, 0);
+		expectedData = [['36557', '36585', '36586', '36616', '36617', '36646', '36647']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill months. Two selected cells. Asc sequence. Type Date. Diff days.');
+		// Case: The context menu property "Fill months". Horizontal. Two selected cells. Reverse sequence. Type Date. Diff days.
+		getFilledData(7, 0, 8, 0, testData, [0, 7]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(8, 0, 0, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 6, 0);
+		expectedData = [['36433', '36434', '36464', '36465', '36494', '36495', '36525']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill months. Two selected cells. Reverse sequence. Type Date. Diff days.');
+		clearData(0, 0, 8, 0);
+		// Case: The context menu property "Fill years". Vertical. Two selected cells. Asc sequence. Type Date. Diff days.
+		testData = [
+			['01/01/2000'],
+			['01/31/2000']
+		];
+		getFilledData(0, 0, 0, 1, testData, [0, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 0, 0, 8);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 2, 0, 8);
+		expectedData = [['36892'], ['36922'], ['37257'], ['37287'], ['37622'], ['37652'], ['37987']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill years. Two selected cells. Asc sequence. Type Date. Diff days.');
+		// Case: The context menu property "Fill years". Vertical. Two selected cells. Reverse sequence. Type Date. Diff days.
+		getFilledData(0, 7, 0, 8, testData, [7, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 8, 0, 0);
+		wsView.fillHandleDirection = 1 // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 0, 6);
+		expectedData = [['35095'], ['35431'], ['35461'], ['35796'], ['35826'], ['36161'], ['36191']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill years. Two selected cells. Reverse sequence. Type Date. Diff days.');
+		clearData(0, 0, 0, 8);
+		// Case: The context menu property "Fill years". Horizontal. Two selected cells. Asc sequence. Type Date. Diff months.
+		testData = [
+			['01/01/2000', '02/01/2000']
+		];
+		getFilledData(0, 0, 1, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 0, 8, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(2, 0, 8, 0);
+		expectedData = [['36892', '36923', '37257', '37288', '37622', '37653', '37987']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill years. Two selected cells. Asc sequence. Type Date. Diff months.');
+		// Case: The context menu property "Fill years". Horizontal. Two selected cells. Reverse sequence. Type Date. Diff months.
+		getFilledData(7, 0, 8, 0, testData, [0, 7]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(8, 0, 0, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 6, 0);
+		expectedData = [['35096', '35431', '35462', '35796', '35827', '36161', '36192']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill years. Two selected cells. Reverse sequence. Type Date. Diff months.');
+		clearData(0, 0, 8, 0);
+		// Case: The context menu property "Fill months". Vertical. Three selected cells. Asc sequence. Type Date. Negative case - incorrect sequence.
+		testData = [
+			['01/12/2000'],
+			['01/13/2000'],
+			['01/15/2000']
+		];
+		getFilledData(0, 0, 0, 2, testData, [0, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 0, 0, 8);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 3, 0, 8);
+		expectedData = [['36537'], ['36538'], ['36540'], ['36537'], ['36538'], ['36540']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill months. Three selected cells. Asc sequence. Type Date. Negative case - incorrect sequence.');
+		// Case: The context menu property "Fill months". Vertical. Three selected cells. Reverse sequence. Type Date. Negative case - incorrect sequence.
+		getFilledData(0, 6, 0, 8, testData, [6, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 8, 0, 0);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 0, 5);
+		expectedData = [['36537'], ['36538'], ['36540'], ['36537'], ['36538'], ['36540']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill months. Three selected cells. Reverse sequence. Type Date. Negative case - incorrect sequence.');
+		// Case: The context menu property "Fill years". Vertical. Three selected cells. Asc sequence. Type Date. Negative case - incorrect sequence.
+		getFilledData(0, 0, 0, 2, testData, [0, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 0, 0, 8);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 3, 0, 8);
+		expectedData = [['36537'], ['36538'], ['36540'], ['36537'], ['36538'], ['36540']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill years. Three selected cells. Asc sequence. Type Date. Negative case - incorrect sequence.');
+		// Case: The context menu property "Fill years". Vertical. Three selected cells. Reverse sequence. Type Date. Negative case - incorrect sequence.
+		getFilledData(0, 6, 0, 8, testData, [6, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 8, 0, 0);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 0, 5);
+		expectedData = [['36537'], ['36538'], ['36540'], ['36537'], ['36538'], ['36540']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill years. Three selected cells. Reverse sequence. Type Date. Negative case - incorrect sequence.');
+		clearData(0, 0, 0, 8);
+		// Case: The context menu property "Fill months". Horizontal. Three selected cells. Asc sequence. Type Date & Time. Negative case - incorrect sequence.
+		testData = [
+			['01/01/2000 12:00', '01/02/2000 13:00', '01/04/2000 14:00']
+		];
+		getFilledData(0, 0, 2, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 0, 8, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(3, 0, 8, 0);
+		expectedData = [['36526.5', '36527.541666666664', '36529.583333333336', '36526.5', '36527.541666666664', '36529.583333333336']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill months. Three selected cells. Asc sequence. Type Date & Time. Negative case - incorrect sequence.');
+		// Case: The context menu property "Fill months". Horizontal. Three selected cells. Reverse sequence. Type Date & Time. Negative case - incorrect sequence.
+		getFilledData(6, 0, 8, 0, testData, [0, 6]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(8, 0, 0, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 5, 0);
+		expectedData = [['36526.5', '36527.541666666664', '36529.583333333336', '36526.5', '36527.541666666664', '36529.583333333336']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill months. Three selected cells. Reverse sequence. Type Date & Time. Negative case - incorrect sequence.');
+		// Case: The context menu property "Fill years". Horizontal. Three selected cells. Asc sequence. Type Date & Time. Negative case - incorrect sequence.
+		getFilledData(0, 0, 2, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 0, 8, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(3, 0, 8, 0);
+		expectedData = [['36526.5', '36527.541666666664', '36529.583333333336', '36526.5', '36527.541666666664', '36529.583333333336']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill years. Three selected cells. Asc sequence. Type Date & Time. Negative case - incorrect sequence.');
+		// Case: The context menu property "Fill years". Horizontal. Three selected cells. Reverse sequence. Type Date & Time. Negative case - incorrect sequence.
+		getFilledData(6, 0, 8, 0, testData, [0, 6]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(8, 0, 0, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 5, 0);
+		expectedData = [['36526.5', '36527.541666666664', '36529.583333333336', '36526.5', '36527.541666666664', '36529.583333333336']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill years. Three selected cells. Reverse sequence. Type Date & Time. Negative case - incorrect sequence.');
+		clearData(0, 0, 8, 0);
+		// Case: The context menu property "Fill months". Vertical. Two selected cells. Asc sequence. Type Date & Time. Diff time.
+		testData = [
+			['01/01/2000 12:00'],
+			['01/01/2000 13:00']
+		];
+		getFilledData(0, 0, 0, 1, testData, [0, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 0, 0, 8);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 2, 0, 8);
+		expectedData = [['36557'], ['36557'], ['36586'], ['36586'], ['36617'], ['36617'], ['36647']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill months. Two selected cells. Asc sequence. Type Date & Time. Diff time.');
+		// Case: The context menu property "Fill months". Vertical. Two selected cells. Reverse sequence. Type Date & Time. Diff time.
+		getFilledData(0, 7, 0, 8, testData, [7, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 8, 0, 0);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 0, 6);
+		expectedData = [['36404'], ['36434'], ['36434'], ['36465'], ['36465'], ['36495'], ['36495']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill months. Two selected cells. Reverse sequence. Type Date & Time. Diff time.');
+		// Case: The context menu property "Fill years". Vertical. Two selected cells. Asc sequence. Type Date & Time. Diff time.
+		getFilledData(0, 0, 0, 1, testData, [0, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 0, 0, 8);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 2, 0, 8);
+		expectedData = [['36892'], ['36892'], ['37257'], ['37257'], ['37622'], ['37622'], ['37987']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill years. Two selected cells. Asc sequence. Type Date & Time. Diff time.');
+		// Case: The context menu property "Fill years". Vertical. Two selected cells. Reverse sequence. Type Date & Time. Diff time.
+		getFilledData(0, 7, 0, 8, testData, [7, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 8, 0, 0);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 0, 6);
+		expectedData = [['35065'], ['35431'], ['35431'], ['35796'], ['35796'], ['36161'], ['36161']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill years. Two selected cells. Reverse sequence. Type Date & Time. Diff time.');
+		clearData(0, 0, 0, 8);
 	});
 	QUnit.test('Toolbar: Fill -> "Up/Down, Left/Right"', function(assert) {
 		const testData = [

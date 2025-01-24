@@ -1041,7 +1041,7 @@ CDocumentContentElementBase.prototype.SetSelectionState2 = function(State)
 };
 CDocumentContentElementBase.prototype.GetReviewInfo = function()
 {
-	return new CReviewInfo();
+	return new AscWord.ReviewInfo();
 };
 CDocumentContentElementBase.prototype.SetReviewTypeWithInfo = function(nType, oInfo)
 {
@@ -1417,7 +1417,7 @@ CDocumentContentElementBase.prototype.getLayoutScaleCoefficient = function()
 };
 CDocumentContentElementBase.prototype.updateTrackRevisions = function()
 {
-	AscWord.checkElementInRevision(this);
+	AscWord.checkElementInRevision && AscWord.checkElementInRevision(this);
 };
 CDocumentContentElementBase.prototype.isPreventedPreDelete = function()
 {

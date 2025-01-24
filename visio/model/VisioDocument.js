@@ -129,6 +129,13 @@
 		 * @type {(CShape | CGroupShape | CImageShape)[][]} topLevelShapesAndGroups
 		 */
 		this.pageShapesCache = [];
+		/**
+		 * Stores pages for which background shapes were add already. Stores indexes in pageInfo array
+		 * @type {number[]}
+		 */
+		this.backgroundAppliedFor = [];
+
+		this.isPagesArranged = false;
 
 		//stubs for compatibility with DocumentContent
 		AscCommon.mockLogicDoc(CVisioDocument.prototype);
@@ -295,6 +302,22 @@
 		//to be parent of shape
 		return 0;
 	};
+	/**
+	 * @memberOf CVisioDocument
+	 * @return {number}
+	 */
+	CVisioDocument.prototype.GetFirstSelectedType = function() {
+		return -1;
+	};
+	/**
+	 * @memberOf CVisioDocument
+	 * @param nIdx
+	 * @return {number}
+	 */
+	CVisioDocument.prototype.GetSlideType = function(nIdx) {
+		//чтобы не работал select thumbnail c ctrl или shift
+		return nIdx;
+	};
 
 	/**
 	 * get zoom from 0 to 100
@@ -377,6 +400,7 @@
 		 * @param api
 		 */
 		function loadFontByName(fontName, aFonts, api) {
+			// if font is not loaded already
 			if (aFonts.findIndex(function (cFont) {
 				return cFont.name === fontName;
 			}) !== -1) {
@@ -384,6 +408,7 @@
 			}
 			aFonts.push(new AscFonts.CFont(fontName, newFontIndex, "", 0));
 			newFontIndex++;
+
 			let fontInfo = api.FontLoader.fontInfos.find(function(cFontInfo) {
 				return cFontInfo.Name === fontName;
 			});
@@ -434,7 +459,7 @@
 	 */
 	CVisioDocument.prototype.draw = function(Zoom, pGraphics, pageIndex) {
 		function drawShapeOrGroupRecursively(graphics, shapeOrGroup, baseMatrix, baseTextMatrix,
-											 changeTextDirection, logic_h_mm, currentGroupHandling) {
+											 isRecalculateTextY, isFlipImages, isAdditionalRecalculate, logic_h_mm, currentGroupHandling) {
 			// see sdkjs/common/Shapes/Serialize.js this.ReadGroupShape = function(type) to
 			// learn how to work with shape groups
 
@@ -476,21 +501,22 @@
 				shape_drawer.Clear();
 				graphics.RestoreGrState();
 
+
 				// handle group children
 				group.spTree.forEach(function(shapeOrGroup) {
-					drawShapeOrGroupRecursively(graphics, shapeOrGroup, baseMatrix, baseTextMatrix, changeTextDirection,
-						logic_h_mm, group);
+					drawShapeOrGroupRecursively(graphics, shapeOrGroup, baseMatrix, baseTextMatrix, isRecalculateTextY,
+						isFlipImages, isAdditionalRecalculate, logic_h_mm, group);
 				});
 			} else {
 				// shape came to argument
 
 				// flip images
-				if (shapeOrGroup.getObjectType() === AscDFH.historyitem_type_ImageShape) {
+				if (isFlipImages && shapeOrGroup.getObjectType() === AscDFH.historyitem_type_ImageShape) {
 					shapeOrGroup.transform.sy = -1;
 					shapeOrGroup.transform.ty += shapeOrGroup.spPr.xfrm.extY;
 				}
 
-				if (changeTextDirection && shapeOrGroup.Id.substring(shapeOrGroup.Id.length - 4) === "Text") {
+				if (isRecalculateTextY && shapeOrGroup.Id.substring(shapeOrGroup.Id.length - 4) === "Text") {
 					if (graphics.SetBaseTransform) {
 						//todo CSlideBoundsChecker
 						graphics.SetBaseTransform(baseTextMatrix);
@@ -504,7 +530,7 @@
 				}
 
 				// set shape transform that was before fix for future drawShapeOrGroupRecursively() calls
-				if (changeTextDirection && shapeOrGroup.Id.substring(shapeOrGroup.Id.length - 4) === "Text") {
+				if (isRecalculateTextY && shapeOrGroup.Id.substring(shapeOrGroup.Id.length - 4) === "Text") {
 					if (graphics.SetBaseTransform) {
 						//todo CSlideBoundsChecker
 						graphics.SetBaseTransform(baseMatrix);
@@ -512,14 +538,26 @@
 					shapeOrGroup.transform.ty = logic_h_mm - shapeOrGroup.transform.ty - shapeOrGroup.spPr.xfrm.extY;
 					shapeOrGroup.recalculateTransformText();
 				}
-				if (shapeOrGroup.getObjectType() === AscDFH.historyitem_type_ImageShape) {
+				if (isFlipImages && shapeOrGroup.getObjectType() === AscDFH.historyitem_type_ImageShape) {
 					shapeOrGroup.transform.sy = 1;
 					shapeOrGroup.transform.ty -= shapeOrGroup.spPr.xfrm.extY;
+				}
+
+				if (isAdditionalRecalculate) {
+					shapeOrGroup.recalculate();
+					shapeOrGroup.recalculateTransformText && shapeOrGroup.recalculateTransformText();
+					shapeOrGroup.recalculateLocalTransform(shapeOrGroup.transform);
 				}
 			}
 		}
 
 		function drawOnCanvas(pageIndex, visioDocument, canvas, isThumbnail) {
+			let isRecalculateTextY = false;
+			let isFlipYMatrix = false;
+			let isFlipImages = false;
+
+			let isAdditionalRecalculate = false;
+
 			// let pageInfo = visioDocument.pages.page[pageIndex];
 			// let pageContent = visioDocument.pageContents[pageIndex];
 			// let topLevelShapesAndGroups = visioDocument.convertToCShapesAndGroups(pageInfo, pageContent);
@@ -601,8 +639,11 @@
 			//visio y coordinate goes up while
 			//ECMA-376-11_5th_edition and Geometry.js y coordinate goes down
 			let baseMatrix = new AscCommon.CMatrix();
-			// baseMatrix.SetValues(1, 0, 0, 1, 0, 0);
-			baseMatrix.SetValues(1, 0, 0, -1, 0, logic_h_mm);
+			if (isFlipYMatrix) {
+				baseMatrix.SetValues(1, 0, 0, -1, 0, logic_h_mm);
+			} else {
+				baseMatrix.SetValues(1, 0, 0, 1, 0, 0);
+			}
 			if (graphics.SetBaseTransform) {
 				//todo CSlideBoundsChecker
 				graphics.SetBaseTransform(baseMatrix);
@@ -611,13 +652,6 @@
 
 			let baseTextMatrix = new AscCommon.CMatrix();
 			baseTextMatrix.SetValues(1, 0, 0, 1, 0, 0);
-			// baseTextMatrix.SetValues(1, 0, 0, -1, 0, logic_h_mm);
-
-			/**
-			 * @type {boolean}
-			 */
-			let changeTextDirection = true;
-
 
 			graphics.SaveGrState();
 			graphics.SetIntegerGrid(false);
@@ -628,8 +662,12 @@
 			graphics.RestoreGrState();
 
 			topLevelShapesAndGroups.forEach(function(shapeOrGroup) {
-				drawShapeOrGroupRecursively(graphics, shapeOrGroup, baseMatrix, baseTextMatrix, changeTextDirection,
-					logic_h_mm);
+				if (isFlipImages || isRecalculateTextY || isAdditionalRecalculate) {
+					drawShapeOrGroupRecursively(graphics, shapeOrGroup, baseMatrix, baseTextMatrix, isRecalculateTextY,
+						isFlipImages, isAdditionalRecalculate, logic_h_mm);
+				} else {
+					shapeOrGroup.draw(graphics);
+				}
 			});
 		}
 
@@ -639,6 +677,30 @@
 			return;
 		}
 
+		// arrange pages
+		if (!this.isPagesArranged) {
+
+			// count backgrounds
+			let backgroundsCount = 0;
+			for (let pageIndex = 0; pageIndex < this.pages.page.length; pageIndex++) {
+				let pageInfo = this.pages.page[pageIndex];
+				if (pageInfo.background === true) {
+					backgroundsCount++;
+				}
+			}
+
+			// move background pages to back
+			for (let i = 0; i < backgroundsCount; i++) {
+				let backgroundInfo = this.pages.page.shift();
+				let backgroundContent = this.pageContents.shift();
+
+				this.pages.page.push(backgroundInfo);
+				this.pageContents.push(backgroundContent);
+			}
+			this.isPagesArranged = true;
+		}
+
+		// convert shapes
 		for (let pageIndex = 0; pageIndex < this.pages.page.length; pageIndex++) {
 			if (this.pageShapesCache[pageIndex] === undefined) {
 				let pageInfo = this.pages.page[pageIndex];
@@ -654,6 +716,26 @@
 
 				let topLevelShapesAndGroups = this.convertToCShapesAndGroups(pageInfo, pageContent, drawingPageScale);
 				this.pageShapesCache[pageIndex] = topLevelShapesAndGroups;
+			}
+		}
+
+		// handle backgrounds
+		for (let pageIndex = 0; pageIndex < this.pages.page.length; pageIndex++) {
+			let pageInfo = this.pages.page[pageIndex];
+			let pageContent = this.pageContents[pageIndex];
+
+			if (!this.backgroundAppliedFor.includes(pageIndex)) {
+				let backgroundPageId = pageInfo.backPage;
+				if (backgroundPageId !== null && backgroundPageId !== undefined) {
+					// find background page
+					let backgroundPageIndex = this.pages.page.findIndex(function (pageInfo) {
+						return pageInfo.iD === backgroundPageId;
+					});
+					if (backgroundPageIndex !== -1) {
+						let backgroundPageContent = this.pageShapesCache[backgroundPageIndex];
+						this.pageShapesCache[pageIndex] = backgroundPageContent.concat(this.pageShapesCache[pageIndex]);
+					}
+				}
 			}
 		}
 
@@ -705,20 +787,24 @@
 		for(let i = 0; i < pageContent.shapes.length; i++) {
 			let shape = pageContent.shapes[i];
 
+			// inherit styles
+			let stylesWithRealizedInheritance = new Set();
+			shape.realizeStyleInheritanceRecursively(this.styleSheets, stylesWithRealizedInheritance);
+			// inherit master and links to master styles
 			shape.realizeMasterInheritanceRecursively(masters);
-			shape.realizeStyleInheritanceRecursively(this.styleSheets);
+			// inherit master styles
+			// TODO performance: realize style inheritance only if style is inherited from master
+			shape.realizeStyleInheritanceRecursively(this.styleSheets, stylesWithRealizedInheritance);
 
 			if (shape.type === "Group") {
-				let cGroupShapeAndText = shape.toCGroupShapeRecursively(this, pageInfo, drawingPageScale);
-				topLevelShapesAndGroups.push(cGroupShapeAndText.cGroupShape);
-				if (cGroupShapeAndText.textCShape) {
-					topLevelShapesAndGroups.push(cGroupShapeAndText.textCShape);
+				let cGroupShape = shape.convertGroup(this, pageInfo, drawingPageScale);
+				if (cGroupShape) {
+					topLevelShapesAndGroups.push(cGroupShape);
 				}
 			} else {
-				let cShapes = shape.toGeometryAndTextCShapes(this, pageInfo, drawingPageScale);
-				topLevelShapesAndGroups.push(cShapes.geometryCShape);
-				if (cShapes.textCShape !== null) {
-					topLevelShapesAndGroups.push(cShapes.textCShape);
+				let cShapeOrCGroupShape = shape.convertShape(this, pageInfo, drawingPageScale);
+				if (cShapeOrCGroupShape !== null) {
+					topLevelShapesAndGroups.push(cShapeOrCGroupShape);
 				}
 			}
 		}
@@ -830,6 +916,9 @@
 		return false;
 	};
 	CVisioDocument.prototype.Set_FastCollaborativeEditing = function (isOn) {
+		//todo
+	};
+	CVisioDocument.prototype.shiftSlides = function (pos, array, bCopy) {
 		//todo
 	};
 	// CVisioDocument.prototype.getMasterByID = function(ID) {

@@ -3295,7 +3295,11 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
                 CellHeight = CellMetrics.X_cell_end - CellMetrics.X_cell_start - CellMar.Left.W - CellMar.Right.W;
             }
 
-            if (CellHeight - ContentHeight > 0.001 || nCompatibilityMode <= AscCommon.document_compatibility_mode_Word14)
+			// В версиях совместимости до 14, если текст в ячейке повернут, то выравнивание идет по центру, даже если
+			// содержимое не убирается в пределах ячейки. В более поздних версиях всегда к верху выравнивание, в такой
+			// ситуации
+            if (CellHeight - ContentHeight > 0.001
+				|| (nCompatibilityMode <= AscCommon.document_compatibility_mode_Word14 && Cell.IsVerticalText()))
             {
                 if (vertalignjc_Bottom === VAlign)
                     Dy = CellHeight - ContentHeight;

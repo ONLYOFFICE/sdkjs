@@ -55,7 +55,7 @@ function CParaRevisionMove(isStart, isFrom, sName, oInfo)
 	}
 	else
 	{
-		this.ReviewInfo = new CReviewInfo();
+		this.ReviewInfo = new AscWord.ReviewInfo();
 		this.ReviewInfo.Update();
 	}
 
@@ -91,7 +91,7 @@ CParaRevisionMove.prototype.Write_ToBinary2 = function(oWriter)
 	// Bool        : is Start
 	// Bool        : is From
 	// String      : Name
-	// CReviewInfo : Info
+	// AscWord.ReviewInfo : Info
 
 	oWriter.WriteString2("" + this.Id);
 	oWriter.WriteBool(this.Start);
@@ -111,7 +111,7 @@ CParaRevisionMove.prototype.Read_FromBinary2 = function(oReader)
 	this.From  = oReader.GetBool();
 	this.Name  = oReader.GetString2();
 
-	this.ReviewInfo = new CReviewInfo();
+	this.ReviewInfo = new AscWord.ReviewInfo();
 	this.ReviewInfo.ReadFromBinary(oReader);
 };
 CParaRevisionMove.prototype.SetParagraph = function(oParagraph)
@@ -227,7 +227,7 @@ function CRunRevisionMove(isStart, isFrom, sName, oInfo)
 	}
 	else
 	{
-		this.ReviewInfo = new CReviewInfo();
+		this.ReviewInfo = new AscWord.ReviewInfo();
 		this.ReviewInfo.Update();
 	}
 }
@@ -249,7 +249,7 @@ CRunRevisionMove.prototype.Write_ToBinary  = function(oWriter)
 	// Bool        : Start
 	// Bool        : From
 	// String      : Name
-	// CReviewInfo : Info
+	// AscWord.ReviewInfo : Info
 
 	oWriter.WriteBool(this.Start);
 	oWriter.WriteBool(this.From);
@@ -261,13 +261,13 @@ CRunRevisionMove.prototype.Read_FromBinary = function(oReader)
 	// Bool        : Start
 	// Bool        : From
 	// String      : Name
-	// CReviewInfo : Info
+	// AscWord.ReviewInfo : Info
 
 	this.Start = oReader.GetBool();
 	this.From  = oReader.GetBool();
 	this.Name  = oReader.GetString2();
 
-	this.ReviewInfo = new CReviewInfo();
+	this.ReviewInfo = new AscWord.ReviewInfo();
 	this.ReviewInfo.ReadFromBinary(oReader);
 };
 CRunRevisionMove.prototype.SetParent = function(oParent)

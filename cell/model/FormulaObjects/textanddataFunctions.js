@@ -1189,7 +1189,7 @@ function (window, undefined) {
 	cIMPORTRANGE.prototype.argumentsMin = 2;
 	cIMPORTRANGE.prototype.argumentsMax = 2;
 	cIMPORTRANGE.prototype.isXLUDF = true;
-	cIMPORTRANGE.prototype.argumentsType = [argType.reference, argType.text];
+	cIMPORTRANGE.prototype.argumentsType = [argType.text, argType.text];
 	cIMPORTRANGE.prototype.Calculate = function (arg) {
 		//gs -> allow array(get first element), cRef, cRef3D, cName, cName3d
 		//not allow area/area3d

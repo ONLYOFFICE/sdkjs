@@ -68,26 +68,13 @@
         if (this.IsHidden() == true)
             return;
 
-        let aRect = this.GetRect();
-
-        let X       = aRect[0];
-        let Y       = aRect[1];
-        let nWidth  = (aRect[2] - aRect[0]);
-        let nHeight = (aRect[3] - aRect[1]);
-
-        // save pos in page.
-        this._pagePos = {
-            x: X,
-            y: Y,
-            w: nWidth,
-            h: nHeight
-        };
-
         this.DrawBackground(oGraphicsPDF);
         this.DrawBorders(oGraphicsPDF);
 
         if (true == this.IsChecked())
             this.DrawCheckedSymbol(oGraphicsPDF);
+
+        this.DrawLocks(oGraphicsPDF);
     };
     CBaseCheckBoxField.prototype.IsChecked = function() {
         return this._checked;
@@ -398,36 +385,33 @@
         let oViewer = oDoc.Viewer;
 
         let oThis = this;
-
-        oDoc.DoAction(function() {
-            let bCommit = false;
-            if (oThis.IsChecked()) {
-                if (oThis.IsNoToggleToOff() == false) {
-                    oThis.SetChecked(false);
-                    oThis.SetApiValue("Off");
-                    bCommit = true;
-                }
-            }
-            else {
-                let oParent = oThis.GetParent();
-                let aOpt    = oParent ? oParent.GetOptions() : undefined;
-                let aKids   = oParent ? oParent.GetKids() : undefined;
-                oThis.SetChecked(true);
-                if (aOpt && aKids) {
-                    oThis.SetApiValue(String(aKids.indexOf(oThis)));
-                }
-                else {
-                    oThis.SetApiValue(oThis.GetExportValue());
-                }
-
+        let bCommit = false;
+        if (oThis.IsChecked()) {
+            if (oThis.IsNoToggleToOff() == false) {
+                oThis.SetChecked(false);
+                oThis.SetApiValue("Off");
                 bCommit = true;
             }
-            
-            if (bCommit) {
-                oThis.SetNeedCommit(true);
-                oThis.Commit2();
+        }
+        else {
+            let oParent = oThis.GetParent();
+            let aOpt    = oParent ? oParent.GetOptions() : undefined;
+            let aKids   = oParent ? oParent.GetKids() : undefined;
+            oThis.SetChecked(true);
+            if (aOpt && aKids) {
+                oThis.SetApiValue(String(aKids.indexOf(oThis)));
             }
-        }, AscDFH.historydescription_Pdf_ClickCheckbox);
+            else {
+                oThis.SetApiValue(oThis.GetExportValue());
+            }
+
+            bCommit = true;
+        }
+        
+        if (bCommit) {
+            oThis.SetNeedCommit(true);
+            oThis.Commit2();
+        }
         
         this.DrawUnpressed();
         
@@ -437,7 +421,6 @@
         oOverlay.ClearAll   = true;
 
         oViewer.onUpdateOverlay();
-        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseUp);
     };
     /**
 	 * The value application logic for all fields with the same name has been changed for this field type.
@@ -519,12 +502,13 @@
         this.SetWasChanged(true);
         this.AddToRedraw();
 
+        let oDoc = this.GetDocument();
         if (bChecked) {
-            AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetValue(), this._exportValue));
+            oDoc.History.Add(new CChangesPDFFormValue(this, this.GetValue(), this._exportValue));
             this._checked = true;
         }
         else {
-            AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetValue(), "Off"));
+            oDoc.History.Add(new CChangesPDFFormValue(this, this.GetValue(), "Off"));
             this._checked = false;
         }
     };

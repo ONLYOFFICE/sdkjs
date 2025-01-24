@@ -309,11 +309,11 @@
 		const nRevisedReviewType = oRevisedRun.GetReviewType();
 		const nRevisedMoveReviewType = oRevisedRun.GetReviewMoveType();
 		const sRevisedNameMoveMark = this.moveMarkManager.getMoveMarkNameByRun(oRevisedRun);
-		const oRevisedPrevAdded = oRevisedReviewInfo.GetPrevAdded();
+		const oRevisedPrevAdded = oRevisedReviewInfo && oRevisedReviewInfo.GetPrevAdded();
 
 		const oMainReviewInfo = oMainRun.GetReviewInfo();
 		const nMainReviewType = oMainRun.GetReviewType();
-		const oMainPrevAdded = oMainReviewInfo.GetPrevAdded();
+		const oMainPrevAdded = oMainReviewInfo && oMainReviewInfo.GetPrevAdded();
 		const nMainMoveReviewType = oMainRun.GetReviewMoveType();
 
 		let nPriorityReviewType;
@@ -516,8 +516,7 @@
 			const oRun = arrRuns[i];
 			const oCopyTextPr = oNewTextPr.Copy();
 			const oOldTextPr = oRun.GetTextPr();
-			const oReviewInfo = new CReviewInfo();
-			oComparison.setReviewInfo(oReviewInfo);
+			const oReviewInfo = oComparison.getReviewInfo();
 			oCopyTextPr.SetPrChange(oOldTextPr, oReviewInfo);
 			oRun.SetPr(oCopyTextPr);
 		}
@@ -887,7 +886,8 @@
                             {
                                 lastCheckRun = oNewRun.Split2(t + 1);
                                 comparison.checkOriginalAndSplitRun(oNewRun, lastCheckRun);
-                                this.setCommonReviewTypeWithInfo(lastCheckRun, oEndOfInsertRun.ReviewInfo.Copy());
+								let reviewInfo = oEndOfInsertRun.GetReviewInfo();
+                                this.setCommonReviewTypeWithInfo(lastCheckRun, reviewInfo ? reviewInfo.Copy() : undefined);
                             }
                             this.pushToArrInsertContent(aContentToInsert, oNewRun, comparison);
                             break;
@@ -996,7 +996,8 @@
                                 oNewRun = lastCheckRun.Split2(t);
                                 comparison.checkOriginalAndSplitRun(lastCheckRun, oNewRun);
                                 this.pushToArrInsertContent(aContentToInsert, oNewRun, comparison);
-                                this.setCommonReviewTypeWithInfo(lastCheckRun, oCurRun.ReviewInfo.Copy());
+								let reviewInfo = oCurRun.GetReviewInfo();
+                                this.setCommonReviewTypeWithInfo(lastCheckRun, reviewInfo ? reviewInfo.Copy() : undefined);
                             }
                         }
                     }
@@ -1225,7 +1226,8 @@
                         nInsertPosition = k + 1;
                         const oNewRun = oEndOfRemoveRun.Split2(t + 1, oApplyParagraph, k);
                         comparison.checkOriginalAndSplitRun(oEndOfRemoveRun, oNewRun);
-                        this.setCommonReviewTypeWithInfo(oNewRun, oEndOfRemoveRun.ReviewInfo.Copy());
+						let reviewInfo = oEndOfRemoveRun.GetReviewInfo();
+                        this.setCommonReviewTypeWithInfo(oNewRun, reviewInfo ? reviewInfo.Copy() : undefined);
                     }
                 }
                 else
@@ -2661,8 +2663,7 @@
 			return null;
 		}
 		oNewParaPr.PrChange = oOldParaPr;
-		oNewParaPr.ReviewInfo = new CReviewInfo();
-		this.setReviewInfo(oNewParaPr.ReviewInfo);
+		oNewParaPr.ReviewInfo = this.getReviewInfo();
 		return oNewParaPr;
 	};
     CDocumentComparison.prototype.isElementForAdd = function (oElement)
@@ -2927,8 +2928,7 @@
 			}
 			const oNewPr = oRevisedPr.Copy();
 			oNewPr.PrChange = oMainPr.Copy();
-			oNewPr.ReviewInfo = new CReviewInfo();
-			this.setReviewInfo(oNewPr.ReviewInfo);
+			oNewPr.ReviewInfo = this.getReviewInfo();
 			oMainTable.Set_Pr(oNewPr);
 		}
 	}
@@ -2971,8 +2971,7 @@
     CDocumentComparison.prototype.checkRowReview = function(oRowNode) {};
 	CDocumentComparison.prototype.addTablePrChange = function (oTablePr) {
 		oTablePr.PrChange = oTablePr.Copy(false);
-		oTablePr.ReviewInfo = new CReviewInfo();
-		this.setReviewInfo(oTablePr.ReviewInfo);
+		oTablePr.ReviewInfo = this.getReviewInfo();
 	};
 		CDocumentComparison.prototype.applyChangesToTableCellPr = function (oNode) {
 			if (oNode.partner) {
@@ -2997,8 +2996,7 @@
 		}
 		const oNewPr = oRevisedPr.Copy();
 		oNewPr.PrChange = oMainPr.Copy();
-		oNewPr.ReviewInfo = new CReviewInfo();
-		this.setReviewInfo(oNewPr.ReviewInfo);
+		oNewPr.ReviewInfo = this.getReviewInfo();
 		oMainElement.Set_Pr(oNewPr);
 		const oTable = oMainElement.GetTable();
 		oTable.AddPrChange(this.copyPr);
@@ -3222,8 +3220,9 @@
             this.applyChangesToChildNode(oNode.children[i]);
         }
     };
-    CDocumentComparison.prototype.setReviewInfo = function(oReviewInfo)
+    CDocumentComparison.prototype.getReviewInfo = function()
     {
+		let oReviewInfo = new AscWord.ReviewInfo();
         oReviewInfo.Editor   = this.api;
         oReviewInfo.UserId   = "";
         oReviewInfo.MoveType = Asc.c_oAscRevisionsMove.NoMove;
@@ -3239,6 +3238,7 @@
         {
             oReviewInfo.DateTime = (new Date()).getTime();
         }
+		return oReviewInfo;
     };
     CDocumentComparison.prototype.getElementsForSetReviewType = function (oObject) {
         if (!oObject) {
@@ -3250,7 +3250,7 @@
         while (arrCheckObjects.length) {
             const oCheckObject = arrCheckObjects.pop();
 
-            if(oCheckObject.ReviewInfo && oCheckObject.SetReviewTypeWithInfo)
+            if(oCheckObject.GetReviewInfo && oCheckObject.SetReviewTypeWithInfo)
             {
                arrReturnObjects.push(oCheckObject);
             }
@@ -3329,8 +3329,7 @@
         for (let i = 0; i < arrNeedReviewObjects.length; i += 1) {
             const oNeedReviewObject = arrNeedReviewObjects[i];
             if (oNeedReviewObject.SetReviewTypeWithInfo) {
-                let oReviewInfo = oNeedReviewObject.ReviewInfo.Copy();
-                this.setReviewInfo(oReviewInfo, sCustomReviewUserName, nCustomReviewDate);
+                let oReviewInfo = this.getReviewInfo(sCustomReviewUserName, nCustomReviewDate);
                 let reviewType;
                 let moveReviewType;
                 if (this.bSaveCustomReviewType) {
@@ -3355,8 +3354,8 @@
     {
         if (oOldObject.GetReviewInfo && oNewObject.SetReviewTypeWithInfo) {
             const reviewType = oOldObject.GetReviewType && oOldObject.GetReviewType();
-            const reviewInfo = oOldObject.GetReviewInfo().Copy();
-            oNewObject.SetReviewTypeWithInfo && oNewObject.SetReviewTypeWithInfo(reviewType, reviewInfo, false);
+            const reviewInfo = oOldObject.GetReviewInfo();
+            oNewObject.SetReviewTypeWithInfo && oNewObject.SetReviewTypeWithInfo(reviewType, reviewInfo ? reviewInfo.Copy() : undefined, false);
         }
     };
     CDocumentComparison.prototype.saveCustomReviewInfo = function(oObject, oOldObject, nType)
@@ -3373,10 +3372,9 @@
     };
     CDocumentComparison.prototype.updateReviewInfo = function(oObject, nType)
     {
-        if(oObject.ReviewInfo && oObject.SetReviewTypeWithInfo)
+        if(oObject.GetReviewInfo && oObject.SetReviewTypeWithInfo)
         {
-            const oReviewInfo = oObject.ReviewInfo.Copy();
-            this.setReviewInfo(oReviewInfo);
+            const oReviewInfo = this.getReviewInfo();
             oObject.SetReviewTypeWithInfo(nType, oReviewInfo, false);
 
         }

@@ -3300,36 +3300,36 @@ function (window, undefined) {
 	cNPER.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cNPER.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.number, argType.number];
 	cNPER.prototype.Calculate = function (arg) {
-		var rate = arg[0], pmt = arg[1], pv = arg[2], fv = arg[3] ? arg[3] : new cNumber(0),
+		let rate = arg[0], pmt = arg[1], pv = arg[2], fv = arg[3] ? arg[3] : new cNumber(0),
 			type = arg[4] ? arg[4] : new cNumber(0);
 
-		if (rate instanceof cArea || rate instanceof cArea3D) {
+		if (rate.type === cElementType.cellsRange || rate.type === cElementType.cellsRange3D) {
 			rate = rate.cross(arguments[1]);
-		} else if (rate instanceof cArray) {
+		} else if (rate.type === cElementType.array) {
 			rate = rate.getElementRowCol(0, 0);
 		}
 
-		if (pmt instanceof cArea || pmt instanceof cArea3D) {
+		if (pmt.type === cElementType.cellsRange || pmt.type === cElementType.cellsRange3D) {
 			pmt = pmt.cross(arguments[1]);
-		} else if (pmt instanceof cArray) {
+		} else if (pmt.type === cElementType.array) {
 			pmt = pmt.getElementRowCol(0, 0);
 		}
 
-		if (pv instanceof cArea || pv instanceof cArea3D) {
+		if (pv.type === cElementType.cellsRange || pv.type === cElementType.cellsRange3D) {
 			pv = pv.cross(arguments[1]);
-		} else if (pv instanceof cArray) {
+		} else if (pv.type === cElementType.array) {
 			pv = pv.getElementRowCol(0, 0);
 		}
 
-		if (fv instanceof cArea || fv instanceof cArea3D) {
+		if (fv.type === cElementType.cellsRange || fv.type === cElementType.cellsRange3D) {
 			fv = fv.cross(arguments[1]);
-		} else if (fv instanceof cArray) {
+		} else if (fv.type === cElementType.array) {
 			fv = fv.getElementRowCol(0, 0);
 		}
 
-		if (type instanceof cArea || type instanceof cArea3D) {
+		if (type.type === cElementType.cellsRange || type.type === cElementType.cellsRange3D) {
 			type = type.cross(arguments[1]);
-		} else if (type instanceof cArray) {
+		} else if (type.type === cElementType.array) {
 			type = type.getElementRowCol(0, 0);
 		}
 
@@ -3339,19 +3339,19 @@ function (window, undefined) {
 		fv = fv.tocNumber();
 		type = type.tocNumber();
 
-		if (rate instanceof cError) {
+		if (rate.type === cElementType.error) {
 			return rate;
 		}
-		if (pmt instanceof cError) {
+		if (pmt.type === cElementType.error) {
 			return pmt;
 		}
-		if (pmt instanceof cError) {
+		if (pv.type === cElementType.error) {
 			return pv;
 		}
-		if (fv instanceof cError) {
+		if (fv.type === cElementType.error) {
 			return fv;
 		}
-		if (type instanceof cError) {
+		if (type.type === cElementType.error) {
 			return type;
 		}
 
@@ -3359,7 +3359,7 @@ function (window, undefined) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var res;
+		let res;
 		if (rate.getValue() != 0) {
 			rate = rate.getValue();
 			pmt = pmt.getValue();
@@ -3369,7 +3369,7 @@ function (window, undefined) {
 			res = (-fv * rate + pmt * (1 + rate * type)) / (rate * pv + pmt * (1 + rate * type));
 			res = Math.log(res) / Math.log(1 + rate)
 		} else {
-			res = -pv.getValue() - fv.getValue() / pmt.getValue();
+			res = -(pv.getValue() + fv.getValue()) / pmt.getValue();
 		}
 
 		return new cNumber(res);

@@ -78,9 +78,9 @@
 			};
 
 
-		var globalGapDepth = 150;
-		var isTurnOn3DCharts = true;
-		var standartMarginForCharts = 15;
+var globalGapDepth = 150;
+var isTurnOn3DCharts = true;
+var standartMarginForCharts = 13;
 
 		function arrReverse(arr) {
 			if(!arr || !arr.length)

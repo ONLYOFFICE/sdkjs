@@ -2755,10 +2755,11 @@ function CDemonstrationManager(htmlpage)
 
     this.isMouseDown = false;
     this.StartSlideNum = -1;
+    this.StartSlideObject = null;
     this.TmpSlideVisible = -1;
     this.LastMoveTime = null;
 
-		this.GoToSlideShortcutStack = [];
+	this.GoToSlideShortcutStack = [];
 
     var oThis = this;
 
@@ -2948,14 +2949,32 @@ function CDemonstrationManager(htmlpage)
             window.removeEventListener("keydown", this._funcWrapKeyboard);
     };
 
+    this.CheckBackgroundColor = function()
+    {
+        if(Asc.editor.demoBackgroundColor && this.Canvas)
+        {
+            this.Canvas.style.backgroundColor = Asc.editor.demoBackgroundColor;
+        }
+    };
+
     this.Start = function(main_div_id, start_slide_num, is_play_mode, is_no_fullscreen)
     {
-		this.StartSlideNum = start_slide_num;
-		if (-1 == start_slide_num)
-			start_slide_num = 0;
+        let nStartSlideNum = start_slide_num;
+        if(Asc.editor.isMasterMode())
+        {
+            nStartSlideNum = 0;
+            this.StartSlideNum = nStartSlideNum;
+            this.StartSlideObject = this.HtmlPage.m_oApi.WordControl.m_oLogicDocument.GetCurrentSlide();
+        }
+        else
+        {
+            this.StartSlideNum = nStartSlideNum;
+            if (-1 == nStartSlideNum)
+                nStartSlideNum = 0;
+        }
 
         this.DemonstrationDiv = document.getElementById(main_div_id);
-        if (this.DemonstrationDiv == null || start_slide_num < 0 || start_slide_num >= this.GetSlidesCount())
+        if (this.DemonstrationDiv == null || nStartSlideNum < 0 || nStartSlideNum >= this.GetSlidesCount())
             return;
 
         if (undefined !== window["AscDesktopEditor"] && (true !== is_no_fullscreen))
@@ -2971,10 +2990,13 @@ function CDemonstrationManager(htmlpage)
         this.Mode = true;
         this.Canvas = document.createElement('canvas');
         this.Canvas.setAttribute("style", "position:absolute;margin:0;padding:0;left:0px;top:0px;width:100%;height:100%;zIndex:2;background-color:#000000;");
+        this.CheckBackgroundColor();
+
+
         this.Canvas.width = AscCommon.AscBrowser.convertToRetinaValue(_width, true);
         this.Canvas.height = AscCommon.AscBrowser.convertToRetinaValue(_height, true);
 
-        this.SlideNum = start_slide_num;
+        this.SlideNum = nStartSlideNum;
 
         this.HtmlPage.m_oApi.sync_DemonstrationSlideChanged(this.SlideNum);
 
@@ -3418,6 +3440,23 @@ function CDemonstrationManager(htmlpage)
 		}
 
 		this.StartSlideNum = -1;
+        if(this.HtmlPage.m_oApi.isMasterMode())
+        {
+            if(this.StartSlideObject)
+            {
+                let oPresentation = this.HtmlPage.m_oApi.WordControl.m_oLogicDocument;
+                let nIdx = oPresentation.GetSlideIndex(this.StartSlideObject);
+                if(nIdx > -1)
+                {
+                    this.HtmlPage.GoToPage(nIdx);
+                }
+                else
+                {
+                    this.HtmlPage.GoToPage(0);
+                }
+            }
+        }
+        this.StartSlideObject = null;
         this.StopAllAnimations();
 
     };

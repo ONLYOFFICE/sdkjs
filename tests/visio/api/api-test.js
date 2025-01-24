@@ -56,7 +56,7 @@ $(function() {
 		addSquarePolygon(doc, 4, 6);
 
 		// serialize
-		api.saveDocumentToZip(api.Document, AscCommon.c_oEditorId.Draw, function (data) {
+		api.saveDocumentToZip(api.Document, AscCommon.c_oEditorId.Visio, function (data) {
 			if (data) {
 				AscCommon.DownloadFileFromBytes(data, "fileName", AscCommon.openXml.GetMimeType("vsdx"));
 			}

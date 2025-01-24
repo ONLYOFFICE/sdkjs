@@ -128,6 +128,9 @@
 		else
 			date = new Date(fullDate);
 		
+		if (isNaN(date))
+			date = new Date();
+		
 		this.FullDate = date.toISOString().slice(0, 19) + 'Z';
 		this.NullFullDate = false;
 	};

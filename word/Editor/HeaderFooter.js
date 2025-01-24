@@ -1415,7 +1415,15 @@ CHeaderFooter.prototype.GetContent = function()
 {
 	return this.Content;
 };
-
+/**
+ * Функция для выставления класса содержимого колонтитула (используется в совместке)
+ * @param {CDocumentContent} oDocumentContent
+ */
+CHeaderFooter.prototype.SetDocumentContent = function(oDocumentContent)
+{
+	this.Content = oDocumentContent;
+	oDocumentContent.SetParent(this);
+};
 CHeaderFooter.prototype.FindWatermark = function()
 {
     var aAllDrawings = this.Content.GetAllDrawingObjects();

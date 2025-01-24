@@ -1294,7 +1294,6 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
 
     if (Index >= Count)
         this.Pages[PageIndex].EndPos = Count - 1;
-
     return Result;
 };
 CDocumentContent.prototype.CanCalculateFrames = function()
@@ -1582,6 +1581,33 @@ CDocumentContent.prototype.ResetShiftView = function()
 	this.ShiftViewX = 0;
 	this.ShiftViewY = 0;
 };
+CDocumentContent.prototype.ShiftViewToFirstLine = function()
+{
+	let para = this.GetElement(0);
+	if (this.GetElementsCount() <= 0 || !para || !para.IsParagraph())
+		return;
+	
+	let paraState = para.SaveSelectionState();
+	para.MoveCursorToStartPos();
+	this.ResetShiftView();
+	this.CheckFormViewWindow(true);
+	para.LoadSelectionState(paraState);
+};
+CDocumentContent.prototype.CheckShiftView = function()
+{
+	var oForm = this.GetInnerForm();
+	if (!this.LogicDocument
+		|| !oForm
+		|| oForm.IsCheckBox()
+		|| oForm.IsPicture()
+		|| (oForm.IsTextForm() && oForm.GetTextFormPr().IsComb())
+		|| oForm.IsAutoFitContent()
+		|| this.Content.length !== 1
+		|| !this.Content[0].IsParagraph())
+		return;
+	
+	this.ShiftViewToFirstLine();
+};
 CDocumentContent.prototype.CheckFormViewWindow = function()
 {
 	var isChanged = false;
@@ -1613,7 +1639,7 @@ CDocumentContent.prototype.CheckFormViewWindow = function()
 	{
 		nDx = -this.ShiftViewX;
 	}
-
+	
 	if (oPageBounds.Bottom - oPageBounds.Top > oFormBounds.H)
 	{
 		if (oPageBounds.Top > oFormBounds.Y)
@@ -1625,13 +1651,13 @@ CDocumentContent.prototype.CheckFormViewWindow = function()
 	{
 		nDy = -this.ShiftViewY;
 	}
-
+	
 	if (Math.abs(nDx) > 0.001 || Math.abs(nDy) > 0.001)
 	{
 		this.ShiftView(nDx, nDy);
 		isChanged = true;
 	}
-
+	
 	var oCursorPos  = oParagraph.GetCalculatedCurPosXY();
 	var oLineBounds = oParagraph.GetLineBounds(oCursorPos.Internal.Line);
 
@@ -1653,7 +1679,7 @@ CDocumentContent.prototype.CheckFormViewWindow = function()
 	if (oPageBounds.Bottom - oPageBounds.Top > oFormBounds.H)
 	{
 		if (nCursorH > oFormBounds.H - nPad || nCursorT < oFormBounds.Y + nPad)
-			nDy = oFormBounds.Y + nPad - nCursorT;
+			nDy = oFormBounds.Y + nPad - nCursorT - (nCursorH - oFormBounds.H - nPad);
 		else if (nCursorT + nCursorH > oFormBounds.H - nPad)
 			nDy = oFormBounds.H - nPad - nCursorT - nCursorH;
 	}
@@ -7730,11 +7756,21 @@ CDocumentContent.prototype.Read_FromBinary2 = function(Reader)
 	// Long   : Количество элементов в массиве this.Content
 	// Array of string : массив Id элементов
 
-	var LinkData = {};
-
 	this.Id               = Reader.GetString2();
 	this.StartPage        = Reader.GetLong();
-	LinkData.Parent       = Reader.GetString2();
+
+	
+	// Сам класс не должен проставлять себе родительский класс. Он должен проставляться ТОЛЬКО родительским классом при
+	// при добавлении в своего содержимое. Пока оставляю тут эту заглушку, чтобы в таблицах работало
+	let parent = g_oTableId.Get_ById(Reader.GetString2());
+	if (parent)
+	{
+		if (parent.SetDocumentContent)
+			parent.SetDocumentContent(this);
+		else
+			this.Parent = parent;
+	}
+	
 	this.TurnOffInnerWrap = Reader.GetBool();
 	this.Split            = Reader.GetBool();
 	this.bPresentation    = AscFormat.readBool(Reader);
@@ -7751,12 +7787,9 @@ CDocumentContent.prototype.Read_FromBinary2 = function(Reader)
 		}
 	}
 
-	AscCommon.CollaborativeEditing.Add_LinkData(this, LinkData);
-
 	var oCellApi = window["Asc"] && window["Asc"]["editor"];
 	if (oCellApi && oCellApi.wbModel)
 	{
-		this.Parent        = g_oTableId.Get_ById(LinkData.Parent);
 		this.DrawingDocument = oCellApi.wbModel.DrawingDocument;
 	}
 	else
@@ -7773,20 +7806,6 @@ CDocumentContent.prototype.Read_FromBinary2 = function(Reader)
 				this.LogicDocument  = DrawingDocument.m_oLogicDocument;
 				this.DrawingObjects = DrawingDocument.m_oLogicDocument.DrawingObjects; // Массив укзателей на все инлайновые графические объекты
 			}
-		}
-	}
-};
-CDocumentContent.prototype.Load_LinkData = function(LinkData)
-{
-	if ("undefined" != typeof(LinkData.Parent))
-		this.Parent = g_oTableId.Get_ById(LinkData.Parent);
-
-	if (this.Parent && this.Parent.getDrawingDocument)
-	{
-		this.DrawingDocument = this.Parent.getDrawingDocument();
-		for (var i = 0; i < this.Content.length; ++i)
-		{
-			this.Content[i].DrawingDocument = this.DrawingDocument;
 		}
 	}
 };

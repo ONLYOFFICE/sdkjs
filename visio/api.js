@@ -48,7 +48,7 @@
 	 */
 	function VisioEditorApi(config)
 	{
-		AscCommon.baseEditorsApi.call(this, config, AscCommon.c_oEditorId.Draw);
+		AscCommon.baseEditorsApi.call(this, config, AscCommon.c_oEditorId.Visio);
 
 		this.WordControl = null;
 
@@ -200,7 +200,7 @@
 								    <div id=\"id_buttonPrevPage\" class=\"block_elem buttonPrevPage\"></div>\
 								    <div id=\"id_buttonNextPage\" class=\"block_elem buttonNextPage\"></div>\
                                 </div>\
-                                <div id=\"id_horscrollpanel\" class=\"block_elem\" style=\"margin-bottom:1px;background-color:" + AscCommon.GlobalSkin.BackgroundColor + ";\">\
+                                <div id=\"id_horscrollpanel\" class=\"block_elem\" style=\"margin-bottom:1px;background-color:" + AscCommon.GlobalSkin.BackgroundColor + ";z-index:0;\">\
                                     <div id=\"id_horizontal_scroll\" style=\"left:0;top:0;height:14px;overflow:hidden;position:absolute;width:100%;\">\
                                     </div>\
                                 </div>\
@@ -231,11 +231,6 @@
 		{
 			for (var i in _loader_object.ImageMap)
 			{
-				if (this.DocInfo && this.DocInfo.get_OfflineApp())
-				{
-					var localUrl = _loader_object.ImageMap[i];
-					AscCommon.g_oDocumentUrls.addImageUrl(localUrl, this.documentUrl + 'media/' + localUrl);
-				}
 				++_count;
 			}
 		}
@@ -314,6 +309,19 @@
 
 		this.WordControl.GoToPage(this.Document.getCurrentPage());
 	};
+	VisioEditorApi.prototype._coAuthoringInitEnd = function()
+	{
+		//todo other events
+		var t                                        = this;
+		this.CoAuthoringApi.onConnectionStateChanged = function(e)
+		{
+			// if (true === AscCommon.CollaborativeEditing.Is_Fast() && false === e['state'])
+			// {
+			// 	editor.WordControl.m_oLogicDocument.Remove_ForeignCursor(e['id']);
+			// }
+			t.sendEvent("asc_onConnectionStateChanged", e);
+		};
+	};
 
 	VisioEditorApi.prototype.OpenDocumentFromZip = function(data)
 	{
@@ -381,6 +389,18 @@
 	{
 		return this.WordControl && this.WordControl.m_oLogicDocument && this.WordControl.m_oLogicDocument.core;
 	};
+	VisioEditorApi.prototype.asc_CheckCopy = function()
+	{
+		//todo
+		return;
+	};
+	VisioEditorApi.prototype.asc_PasteData = function(_format, data1, data2, text_data, useCurrentPoint, callback, checkLocks) {
+		if (!this.canEdit())
+			return;
+		//todo
+		return;
+	}
+
 	window["VisioEditorApi"]                                 = VisioEditorApi;
 	window["VisioEditorApi"].prototype["asc_nativeOpenFile"] = function(base64File, version)
 	{
@@ -463,7 +483,7 @@
 				if (isSelection)
 					pagescount = this.WordControl.Thumbnails.GetSelectedArray().length;
 
-				window["AscDesktopEditor"]["Print_Start"](this.DocumentUrl, pagescount, this.ThemeLoader.ThemesUrl, this.getCurrentPage());
+				window["AscDesktopEditor"]["Print_Start"](this.DocumentUrl, pagescount, "", this.Document.getCurrentPage());
 
 				var oDocRenderer                         = new AscCommon.CDocumentRenderer();
 				oDocRenderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
@@ -572,7 +592,7 @@
 			this.openOOXInBrowserZip = file.data;
 			this.OpenDocumentFromZip(file.data);
 		} else {
-			//this.OpenDocumentFromBin(file.url, file.data);
+			this.sendEvent("asc_onError", Asc.c_oAscError.ID.AccessDeny, Asc.c_oAscError.Level.Critical);
 		}
 		let perfEnd = performance.now();
 		AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onOpenDocument", perfEnd - perfStart), this);
@@ -926,6 +946,16 @@
 	{
 		return this.Document.getCountPages();
 	};
+
+	VisioEditorApi.prototype._printDesktop = function (options)
+	{
+		let desktopOptions = {};
+		if (options && options.advancedOptions)
+			desktopOptions["nativeOptions"] = options.advancedOptions.asc_getNativeOptions();
+
+		window["AscDesktopEditor"]["Print"](JSON.stringify(desktopOptions));
+		return true;
+	};
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};
 	window['Asc']['VisioEditorApi']                                       = VisioEditorApi;
@@ -987,6 +1017,8 @@
 
 	prot['asc_CloseFile']             				= prot.asc_CloseFile;
 	prot['asc_getAppProps']             			= prot.asc_getAppProps;
+	prot['asc_CheckCopy']             				= prot.asc_CheckCopy;
+	prot['asc_PasteData']             				= prot.asc_PasteData;
 	prot['asc_setSpellCheck']             			= prot.asc_setSpellCheck;
 	prot['asc_setSpellCheckSettings']             	= prot.asc_setSpellCheckSettings;
 	prot['asc_setLocale']             				= prot.asc_setLocale;

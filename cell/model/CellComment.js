@@ -162,8 +162,11 @@ function (window, undefined) {
 		w.WriteBool(this.bSizeWithCells);
 	};
 	asc_CCommentCoords.prototype.applyCollaborative = function (nSheetId, collaborativeEditing) {
+		let nColOld = this.nCol;
+		let nRowOld = this.nRow;
 		this.nCol = collaborativeEditing.getLockMeColumn2(nSheetId, this.nCol);
 		this.nRow = collaborativeEditing.getLockMeRow2(nSheetId, this.nRow);
+		return this.nCol !== nColOld || this.nRow !== nRowOld;
 	};
 
 	/** @constructor */
@@ -422,8 +425,11 @@ function (window, undefined) {
 
 	asc_CCommentData.prototype.applyCollaborative = function (nSheetId, collaborativeEditing) {
 		if ( !this.bDocument ) {
+			let nColOld = this.nCol;
+			let nRowOld = this.nRow;
 			this.nCol = collaborativeEditing.getLockMeColumn2(nSheetId, this.nCol);
 			this.nRow = collaborativeEditing.getLockMeRow2(nSheetId, this.nRow);
+			return this.nCol !== nColOld || this.nRow !== nRowOld;
 		}
 	};
 
@@ -634,9 +640,6 @@ CCellCommentator.prototype.isLockedComment = function(oComment, callbackFunc) {
 			return;
 		}
 
-
-		this.worksheet._startRtlRendering(this.drawingCtx);
-
 		this.drawingCtx.setFillStyle(this.commentIconColor);
 		var commentCell, mergedRange, nCol, nRow, x, y, metrics;
 		var aComments = this.model.aComments;
@@ -676,8 +679,6 @@ CCellCommentator.prototype.isLockedComment = function(oComment, callbackFunc) {
 				}
 			}
 		}
-
-		this.worksheet._endRtlRendering();
 	};
 
 	CCellCommentator.prototype.updateActiveComment = function () {

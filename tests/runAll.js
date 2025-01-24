@@ -43,6 +43,7 @@ const allTests = [
 	'word/content-control/inline-level/checkbox.html',
 	'word/content-control/inline-level/cursorAndSelection.html',
 	'word/content-control/inline-level/date-time.html',
+	'word/custom-xml/custom-xml.html',
 	'word/document-calculation/floating-position/drawing.html',
 	'word/document-calculation/paragraph.html',
 	'word/document-calculation/table/correctBadTable.html',
@@ -75,7 +76,9 @@ const allTests = [
 	'slide/shortcuts/shortcuts.html',
 	'word/shortcuts/shortcuts.html',
 
-	'oform/xml/oformXml.html'
+	// related ooxml tests
+	'oform/xml/oformXml.html',
+	'word/custom-xml/custom-xml-ooxml.html',
 ];
 
 const maxTestsAtOnce = require('events').defaultMaxListeners;

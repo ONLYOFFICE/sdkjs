@@ -4496,27 +4496,17 @@ CTable.prototype.Read_FromBinary2 = function(Reader)
 
 	this.Internal_ReIndexing();
 
-	AscCommon.CollaborativeEditing.Add_NewObject(this);
-
 	var DrawingDocument = editor.WordControl.m_oDrawingDocument;
 	if (undefined !== DrawingDocument && null !== DrawingDocument)
 	{
 		this.DrawingDocument = DrawingDocument;
 		this.LogicDocument   = this.DrawingDocument.m_oLogicDocument;
 	}
-
-	// Добавляем, чтобы в конце выставить CurCell
-	var LinkData     = {};
-	LinkData.CurCell = true;
-	AscCommon.CollaborativeEditing.Add_LinkData(this, LinkData);
-};
-CTable.prototype.Load_LinkData = function(LinkData)
-{
-	if ("undefined" != typeof(LinkData) && "undefined" != typeof(LinkData.CurCell))
-	{
-		if (this.Content.length > 0 && this.Content[0].Get_CellsCount() > 0)
-			this.CurCell = this.Content[0].Get_Cell(0);
-	}
+	
+	if (this.GetRowsCount() > 0 && this.GetRow(0).GetCellsCount() > 0)
+		this.CurCell = this.GetRow(0).GetCell(0);
+	else
+		this.CurCell = null;
 };
 CTable.prototype.Get_SelectionState2 = function()
 {
@@ -7467,6 +7457,24 @@ CTable.prototype.GetSelectedText = function(bClearText, oPr)
 	}
 
 	return null;
+};
+CTable.prototype.GetText = function(pr)
+{
+	let sResultText = "";
+
+	for (let nRow = 0, nRows = this.GetRowsCount(); nRow < nRows; ++nRow)
+	{
+		let oRow = this.GetRow(nRow);
+
+		for (let nCell = 0, nCells = oRow.GetCellsCount(); nCell < nCells; ++nCell)
+		{
+			let oCell = oRow.GetCell(nCell);
+			let oContent = oCell.GetContent();
+			sResultText += oContent.GetText(pr);
+		}
+	}
+
+	return sResultText;
 };
 CTable.prototype.GetSelectedElementsInfo = function(Info)
 {

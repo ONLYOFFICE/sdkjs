@@ -568,6 +568,7 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
         }
         var APCI=this.ArrPathCommandInfo, n = APCI.length, cmd;
         var x0, y0, x1, y1, x2, y2, wR, hR, stAng, swAng, ellipseRotation, lastX, lastY;
+        this.ArrPathCommand.length = 0;
         for(var i=0; i<n; ++i)
         {
             cmd=APCI[i];
@@ -578,7 +579,7 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
                 {
                     x0 = this.calculateCommandCoord(gdLst, cmd.X, cw, dCustomPathCoeffW);
                     y0 = this.calculateCommandCoord(gdLst, cmd.Y, ch, dCustomPathCoeffH);
-                    this.ArrPathCommand[i] ={id:cmd.id, X:x0, Y:y0};
+                    this.ArrPathCommand.push({id:cmd.id, X:x0, Y:y0});
                     lastX = x0;
                     lastY = y0;
                     break;
@@ -589,7 +590,7 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
                     y0 = this.calculateCommandCoord(gdLst, cmd.Y0, ch, dCustomPathCoeffH);
                     x1 = this.calculateCommandCoord(gdLst, cmd.X1, cw, dCustomPathCoeffW);
                     y1 = this.calculateCommandCoord(gdLst, cmd.Y1, ch, dCustomPathCoeffH);
-                    this.ArrPathCommand[i] = {id:bezier3, X0: x0, Y0: y0, X1: x1, Y1: y1};
+                    this.ArrPathCommand.push({id:bezier3, X0: x0, Y0: y0, X1: x1, Y1: y1});
                     lastX = x1;
                     lastY = y1;
                     break;
@@ -602,7 +603,7 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
                     y1 = this.calculateCommandCoord(gdLst, cmd.Y1, ch, dCustomPathCoeffH);
                     x2 = this.calculateCommandCoord(gdLst, cmd.X2, cw, dCustomPathCoeffW);
                     y2 = this.calculateCommandCoord(gdLst, cmd.Y2, ch, dCustomPathCoeffH);
-                    this.ArrPathCommand[i] = {id:bezier4, X0:x0, Y0: y0, X1:x1, Y1:y1, X2:x2, Y2:y2};
+                    this.ArrPathCommand.push({id:bezier4, X0:x0, Y0: y0, X1:x1, Y1:y1, X2:x2, Y2:y2});
                     lastX = x2;
                     lastY = y2;
                     break;
@@ -654,13 +655,13 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
                     var l1 = 1 / Math.sqrt(_xrad1 * _xrad1 + _yrad1 * _yrad1);
 
                     if (cmd.ellipseRotation === undefined ) {
-                        this.ArrPathCommand[i]={id: arcTo,
+                        this.ArrPathCommand.push({id: arcTo,
                             stX: lastX,
                             stY: lastY,
                             wR: wR,
                             hR: hR,
                             stAng: stAng*cToRad,
-                            swAng: swAng*cToRad};
+                            swAng: swAng*cToRad});
 
                         lastX = xc + l1 * cos1;
                         lastY = yc + l1 * sin1;
@@ -681,14 +682,14 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
                         if((ellipseRotation < 0) && (a4 > 0)) ellipseRotation += 21600000;
                         if(ellipseRotation == 0 && a4 != 0) ellipseRotation = 21600000;
 
-                        this.ArrPathCommand[i]={id: arcTo,
+                        this.ArrPathCommand.push({id: arcTo,
                             stX: lastX,
                             stY: lastY,
                             wR: wR,
                             hR: hR,
                             stAng: stAng*cToRad,
                             swAng: swAng*cToRad,
-                            ellipseRotation: ellipseRotation*cToRad};
+                            ellipseRotation: ellipseRotation*cToRad});
 
                         // https://www.figma.com/file/hs43oiAUyuoqFULVoJ5lyZ/EllipticArcConvert?type=design&node-id=291-34&mode=design&t=LKiEAjzKEzKacCBc-0
 
@@ -731,7 +732,7 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
                 }
                 case close:
                 {
-                    this.ArrPathCommand[i]={id: close};
+                    this.ArrPathCommand.push({id: close});
                     break;
                 }
                 case ellipticalArcTo:
@@ -763,7 +764,7 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
                     // check if it not ellipse arc in fact but line (three points on one line)
                     // if this case will not be caught there will be NaN in params and
                     // drawing will be unpredictable
-                    // inaccuracy may be different so commented code below
+                    // inaccuracy may be different
                     // (Ax * (By - Cy) + Bx * (Cy - Ay) + Cx * (Ay - By) ) / 2 - triangle square
                     if (isNaN(lastY)) {
                         lastY = 0;
@@ -771,24 +772,23 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
                     if (isNaN(lastX)) {
                         lastX = 0;
                     }
-                    // let triangleSquare = (x * (b - lastY) + a * (lastY - y) + lastX * (y - b)) / 2;
-                    // if ( Math.round(triangleSquare) === 0 || Math.round(triangleSquare) === -0) {
-                    //     AscCommon.consoleLog("tranform ellipticalArcTo to line. 2 catch:",
-                    //         cmd.x, cmd.y, cmd.a, cmd.b, 0, 1);
-                    //     this.ArrPathCommand[i] ={id: lineTo, X:x, Y:y};
-                    // } else {
-
-                    // change ellipticalArcTo params to draw arc easy
-                    this.ArrPathCommand[i]={id: ellipticalArcTo,
-                        stX: lastX,
-                        stY: lastY,
-                        wR: newParams.wR,
-                        hR: newParams.hR,
-                        stAng: newParams.stAng*cToRad,
-                        swAng: newParams.swAng*cToRad,
-                        ellipseRotation: newParams.ellipseRotation*cToRad};
-
-                    // }
+                    let triangleSquare = (x * (b - lastY) + a * (lastY - y) + lastX * (y - b)) / 2;
+                    let accuracy = 10e4;
+                    if ( Math.round(triangleSquare * accuracy) === 0 || Math.round(triangleSquare * accuracy) === -0) {
+                        AscCommon.consoleLog("tranform ellipticalArcTo to line. 2 catch. Triangle square:",
+                            triangleSquare);
+                        this.ArrPathCommand[i] ={id: lineTo, X:x, Y:y};
+                    } else {
+                        // change ellipticalArcTo params to draw arc easy
+                        this.ArrPathCommand.push({id: ellipticalArcTo,
+                            stX: lastX,
+                            stY: lastY,
+                            wR: newParams.wR,
+                            hR: newParams.hR,
+                            stAng: newParams.stAng*cToRad,
+                            swAng: newParams.swAng*cToRad,
+                            ellipseRotation: newParams.ellipseRotation*cToRad});
+                    }
 
                     lastX = x;
                     lastY = y;
@@ -984,6 +984,12 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
                         break;
                     }
 
+                    // round knots maybe start is clamped
+                    // let precision = 10e13;
+                    // for (let j = 0; j < knots.length; j++) {
+                    //     knots[j] = Math.round(knots[j] * precision) / precision;
+                    // }
+
                     let clampedStart = true;
                     for (let j = 0; j < degree; j++) {
                         // compare first degree + 1 knots
@@ -1001,7 +1007,7 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
 
                     // change nurbsTo params to draw using bezier
                     // nurbs degree is equal to each bezier degree
-                    this.ArrPathCommand[i]={id: nurbsTo, degree: degree, bezierArray: bezierArray};
+                    this.ArrPathCommand.push({id: nurbsTo, degree: degree, bezierArray: bezierArray});
 
                     lastX = bezierArray[bezierArray.length-1].endPoint.x;
                     lastY = bezierArray[bezierArray.length-1].endPoint.y;
@@ -1717,7 +1723,7 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
         }
         return true;
     };
-    Path.prototype.convertToBezierCurves = function (oPath, oTransform) {
+    Path.prototype.convertToBezierCurves = function (oPath, oTransform, bConvertCurvesOnly) {
         const nCmdCount = this.ArrPathCommandInfo.length;
         let dX0, dY0, dX1, dY1, dX2, dY2;
         let oLastMoveTo = null;
@@ -1750,7 +1756,9 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
                     dY1 = oTransform.TransformPointY(dLastX + (oCmd.X - dLastX)*(2/3), dLastY + (oCmd.Y - dLastY)*(2/3))*36000 >> 0;
                     dX2 = oTransform.TransformPointX(oCmd.X, oCmd.Y)*36000 >> 0;
                     dY2 = oTransform.TransformPointY(oCmd.X, oCmd.Y)*36000 >> 0;
-                    oPath.cubicBezTo(dX0, dY0, dX1, dY1, dX2, dY2);
+                    (bConvertCurvesOnly)
+						? oPath.lnTo(dX2, dY2)
+						: oPath.cubicBezTo(dX0, dY0, dX1, dY1, dX2, dY2);
                     dLastX = oCmd.X;
                     dLastY = oCmd.Y;
                     break;
@@ -1805,7 +1813,7 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
                     break;
                 }
                 case close: {
-                    if(oLastMoveTo) {
+                    if(!bConvertCurvesOnly & oLastMoveTo) {
                         let dXM = oTransform.TransformPointX(oLastMoveTo.X, oLastMoveTo.Y);
                         let dYM = oTransform.TransformPointY(oLastMoveTo.X, oLastMoveTo.Y);
                         let dLastXM = oTransform.TransformPointX(dLastX, dLastY);

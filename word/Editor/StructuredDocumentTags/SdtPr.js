@@ -39,6 +39,8 @@ function CSdtPr()
 	this.Tag   = undefined;
 	this.Label = undefined;
 	this.Lock  = undefined;
+	
+	this.DataBinding = undefined;
 
 	this.DocPartObj = {
 		Gallery  : undefined,
@@ -83,6 +85,9 @@ CSdtPr.prototype.Copy = function()
 	oPr.Lock       = this.Lock;
 	oPr.Appearance = this.Appearance;
 	oPr.Color      = (this.Color ? this.Color.Copy() : undefined);
+
+	if (this.DataBinding)
+		oPr.DataBinding = this.DataBinding.copy();
 
 	if (this.CheckBox)
 		oPr.CheckBox = this.CheckBox.Copy();
@@ -263,6 +268,12 @@ CSdtPr.prototype.Write_ToBinary = function(Writer)
 		this.ComplexFormPr.WriteToBinary(Writer);
 		Flags |= (1 << 22);
 	}
+	
+	if (this.DataBinding)
+	{
+		this.DataBinding.toBinary(Writer);
+		Flags |= (1 << 23);
+	}
 
 	var EndPos = Writer.GetCurPosition();
 	Writer.Seek(StartPos);
@@ -368,6 +379,9 @@ CSdtPr.prototype.Read_FromBinary = function(Reader)
 		this.ComplexFormPr = new AscWord.CSdtComplexFormPr();
 		this.ComplexFormPr.ReadFromBinary(Reader);
 	}
+	
+	if (Flags & (1 << 23))
+		this.DataBinding = AscWord.DataBinding.fromBinary(Reader);
 };
 CSdtPr.prototype.IsBuiltInDocPart = function()
 {

@@ -475,7 +475,6 @@ ParaField.prototype.GetValue = function()
 {
 	var oText = new CParagraphGetText();
 	oText.SetBreakOnNonText(false);
-	oText.SetParaEndToSpace(true);
 
 	this.Get_Text(oText);
 

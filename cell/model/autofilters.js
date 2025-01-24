@@ -302,6 +302,8 @@
 			this.sheetColumnName = null;
 			this.namedSheetView = null;
 
+			this.visibleDropDown = null;
+
 			//option for interface
 			//show time tree
 			this.isTimeFormat = null;
@@ -342,6 +344,8 @@
 						return this.sortColor;
 					case this.Properties.namedSheetView:
 						return this.namedSheetView;
+					case this.Properties.visibleDropDown:
+						return this.visibleDropDown;
 				}
 
 				return null;
@@ -377,6 +381,9 @@
 						break;
 					case this.Properties.namedSheetView:
 						this.namedSheetView = value;
+						break;
+					case this.Properties.visibleDropDown:
+						this.visibleDropDown = value;
 						break;
 				}
 			},
@@ -431,6 +438,9 @@
 			asc_setTimeFormat: function (val) {
 				this.isTimeFormat = val;
 			},
+			asc_setVisibleDropDown: function (val) {
+				this.visibleDropDown = val;
+			},
 
 
 			asc_getCellId: function () {
@@ -478,6 +488,9 @@
 			},
 			asc_getTimeFormat: function () {
 				return this.isTimeFormat;
+			},
+			asc_getVisibleDropDown: function () {
+				return this.visibleDropDown;
 			},
 
 			setVisibleFromValues: function (visible) {

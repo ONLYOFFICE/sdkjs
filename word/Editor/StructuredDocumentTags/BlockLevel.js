@@ -114,6 +114,15 @@ CBlockLevelSdt.prototype.GetContent = function()
 {
 	return this.Content;
 };
+/**
+ * Функция для выставления класса содержимого колонтитула (используется в совместке)
+ * @param {CDocumentContent} oDocumentContent
+ */
+CBlockLevelSdt.prototype.SetDocumentContent = function(oDocumentContent)
+{
+	this.Content = oDocumentContent;
+	oDocumentContent.SetParent(this);
+};
 CBlockLevelSdt.prototype.Is_Inline = function()
 {
 	return true;
@@ -597,7 +606,7 @@ CBlockLevelSdt.prototype.Add = function(oParaItem)
 	{
 		this.Content.AddToParagraph(oParaItem);
 	}
-
+	
 	if (isRemoveWrapper)
 		this.RemoveContentControlWrapper();
 };
@@ -723,6 +732,10 @@ CBlockLevelSdt.prototype.GetSelectedText = function(bClearText, oPr)
 		return "";
 
 	return this.Content.GetSelectedText(bClearText, oPr);
+};
+CBlockLevelSdt.prototype.GetText = function(pr)
+{
+	return this.Content.GetText(pr);
 };
 CBlockLevelSdt.prototype.GetCurrentParagraph = function(bIgnoreSelection, arrSelectedParagraphs, oPr)
 {
@@ -1466,6 +1479,9 @@ CBlockLevelSdt.prototype.SetPr = function(oPr)
 
 	if (undefined !== oPr.Color)
 		this.SetColor(oPr.Color);
+
+	if (undefined !== oPr.DataBinding)
+		this.setDataBinding(oPr.DataBinding);
 };
 /**
  * Выставляем настройки текста по умолчанию для данного контрола
@@ -1562,6 +1578,39 @@ CBlockLevelSdt.prototype.SetColor = function(oColor)
 		History.Add(new CChangesSdtPrColor(this, this.Pr.Color, oColor));
 		this.Pr.Color = oColor;
 	}
+};
+CBlockLevelSdt.prototype.GetInnerText = function()
+{
+	return this.Content.GetText({ParaSeparator : '\r\n'});
+};
+CBlockLevelSdt.prototype.SetInnerText = function(text)
+{
+	let textPr = this.GetFirstParagraph().GetFirstRunPr();
+	this.Content.ClearContent(false);
+	let para = new AscWord.Paragraph();
+	let run  = new AscWord.Run();
+	run.AddText(text);
+	run.SetPr(textPr.Copy());
+	para.AddToContent(0, run);
+	this.Content.AddToContent(0, para);
+};
+CBlockLevelSdt.prototype.canFillWithComplexDataBindingContent = function()
+{
+	let oParent = this.Parent;
+	if (oParent instanceof CDocumentContent)
+		oParent = oParent.Parent
+	
+	// if parent element is rich text content control - skip
+	return !(oParent instanceof CBlockLevelSdt && oParent.GetSpecificType() === Asc.c_oAscContentControlSpecificType.None);
+};
+CBlockLevelSdt.prototype.fillContentWithDataBinding = function(content)
+{
+	this.Content.RemoveFromContent(0, this.Content.Content.length);
+	this.Content.AddContent(content);
+};
+CBlockLevelSdt.prototype.GetDataBinding = function ()
+{
+	return this.Pr.DataBinding;
 };
 CBlockLevelSdt.prototype.GetColor = function()
 {
@@ -2108,14 +2157,6 @@ CBlockLevelSdt.prototype.SelectPicture = function()
 	return true;
 };
 /**
- * Проверяем является ли данный контейнер специальным для поля со списком
- * @returns {boolean}
- */
-CBlockLevelSdt.prototype.IsComboBox = function()
-{
-	return (undefined !== this.Pr.ComboBox);
-};
-/**
  * @param oPr {AscWord.CSdtComboBoxPr}
  */
 CBlockLevelSdt.prototype.SetComboBoxPr = function(oPr)
@@ -2132,14 +2173,6 @@ CBlockLevelSdt.prototype.SetComboBoxPr = function(oPr)
 CBlockLevelSdt.prototype.GetComboBoxPr = function()
 {
 	return this.Pr.ComboBox;
-};
-/**
- * Проверяем является ли данный контейнер специальным для выпадающего списка
- * @returns {boolean}
- */
-CBlockLevelSdt.prototype.IsDropDownList = function()
-{
-	return (undefined !== this.Pr.DropDown);
 };
 /**
  * @param oPr {AscWord.CSdtComboBoxPr}
@@ -2295,14 +2328,6 @@ CBlockLevelSdt.prototype.private_UpdateListContent = function()
 		return null;
 
 	return oRun;
-};
-/**
- * Проверяем является ли данный контейнер специальным для даты
- * @returns {boolean}
- */
-CBlockLevelSdt.prototype.IsDatePicker = function()
-{
-	return (undefined !== this.Pr.Date);
 };
 /**
  * @param oPr {AscWord.CSdtDatePickerPr}

@@ -755,9 +755,6 @@
 			return true;
 		};
 
-		CImageShape.prototype.Load_LinkData = function (linkData) {
-		};
-
 		CImageShape.prototype.getTypeName = function () {
 			return AscCommon.translateManager.getValue("Picture");
 		};
@@ -907,7 +904,9 @@
 		CImageShape.prototype.getText = function() {
 			return null;
 		};
-
+		CImageShape.prototype.canFill = function () {
+			return true;
+		};
 
 		function CreateBrushFromBlipFill(oBlipFill) {
 			if (!oBlipFill) {

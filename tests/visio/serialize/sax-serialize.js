@@ -78,7 +78,7 @@ $(function() {
 			const openRes = api.OpenDocumentFromZip(vsdx);
 
 			// Creating .vsdx from api and get Uint8Array to data variable
-			api.saveDocumentToZip(api.Document, AscCommon.c_oEditorId.Draw, function (data) {
+			api.saveDocumentToZip(api.Document, AscCommon.c_oEditorId.Visio, function (data) {
 				if (data) {
 					assert.strictEqual(Boolean(data), true, "saveDocumentToZip returned data");
 				}
@@ -94,7 +94,7 @@ $(function() {
 			const openRes = api.OpenDocumentFromZip(vsdx);
 
 			// Creating .vsdx and get Uint8Array to data variable
-			api.saveDocumentToZip(api.Document, AscCommon.c_oEditorId.Draw, function (data) {
+			api.saveDocumentToZip(api.Document, AscCommon.c_oEditorId.Visio, function (data) {
 				if (data) {
 					// Read and parse vsdx file
 					const api2 = new Asc.VisioEditorApi({'id-view': 'editor_sdk'});
@@ -261,7 +261,7 @@ $(function() {
 			let originalFiles = jsZlibOriginal.files;
 
 			// serialize
-			api.saveDocumentToZip(api.Document, AscCommon.c_oEditorId.Draw, function (data) {
+			api.saveDocumentToZip(api.Document, AscCommon.c_oEditorId.Visio, function (data) {
 				if (data) {
 					if(downloadFile) {
 						AscCommon.DownloadFileFromBytes(data, fileName, AscCommon.openXml.GetMimeType("vsdx"));

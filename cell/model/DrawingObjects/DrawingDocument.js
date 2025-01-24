@@ -392,10 +392,6 @@ function CDrawingDocument()
         return { X : 0, Y : 0, Error: true };
     };
 
-    this.InitViewer = function()
-    {
-    };
-
     this.TargetStart = function()
     {
         if ( this.m_lTimerTargetId != -1 )

@@ -2410,10 +2410,10 @@
 					let api = window.Asc.editor;
 					let wb = api && api.wb;
 					let ws = wb.getWorksheet();
-					if (ws && ws.getRightToLeft()) {
+					/*if (ws && ws.getRightToLeft()) {
 						oMatrix.sx = -1;
 						oMatrix.tx = (ws.getCtxWidth() * vector_koef) - oMatrix.tx;
-					}
+					}*/
 					graphics.transform3(oMatrix);
 					var shapeDrawer = new AscCommon.CShapeDrawer();
 					shapeDrawer.Graphics = graphics;
@@ -3242,6 +3242,8 @@
 			this.activeSheet = null;
 			this.onSlicer = {};
 			this.onSlicerCache = {};
+			this.UpdateRigions = {};
+			this.snapshot = null;
 		}
 
 		/** @constructor */

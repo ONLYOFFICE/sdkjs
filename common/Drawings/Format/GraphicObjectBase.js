@@ -272,6 +272,16 @@
 		this.cx = AscFormat.readDouble(Reader);
 		this.cy = AscFormat.readDouble(Reader);
 	};
+	CDrawingBasePosWritable.prototype.CommuteRelated = function (oActionToUndo, oActionOther) {
+		let res = AscCommonExcel.g_oUndoRedoWorksheet.CommuteRelatedRange2(this.fromRow, this.fromCol, this.toRow, this.toCol, oActionOther);
+		if (res) {
+			this.fromRow = AscCommonExcel.g_oUndoRedoWorksheet.tmpRange.r1;
+			this.fromCol = AscCommonExcel.g_oUndoRedoWorksheet.tmpRange.c1;
+			this.toRow = AscCommonExcel.g_oUndoRedoWorksheet.tmpRange.r2;
+			this.toCol = AscCommonExcel.g_oUndoRedoWorksheet.tmpRange.c2;
+		}
+		return res;
+	}
 
 	function CClientData(fLocksWithSheet, fPrintsWithSheet) {
 		this.fLocksWithSheet = fLocksWithSheet !== undefined ? fLocksWithSheet : null;

@@ -658,7 +658,7 @@
 				var oEndRun = oEndParagraph.GetParaEndRun();
 				oEndRun.AddAfterParaEnd(new AscWord.CRunRevisionMove(false, false, oLogicDocument.TrackMoveId));
 
-				var oInfo = new CReviewInfo();
+				var oInfo = new AscWord.ReviewInfo();
 				oInfo.Update();
 				oInfo.SetMove(Asc.c_oAscRevisionsMove.MoveTo);
 				oEndRun.SetReviewTypeWithInfo(reviewtype_Add, oInfo, false);
@@ -671,7 +671,7 @@
 			for (var nIndex = 0, nCount = this.MoveTrackRuns.length; nIndex < nCount; ++nIndex)
 			{
 				var oRun  = this.MoveTrackRuns[nIndex];
-				var oInfo = new CReviewInfo();
+				var oInfo = new AscWord.ReviewInfo();
 				oInfo.Update();
 				oInfo.SetMove(Asc.c_oAscRevisionsMove.MoveTo);
 				oRun.SetReviewTypeWithInfo(reviewtype_Add, oInfo);

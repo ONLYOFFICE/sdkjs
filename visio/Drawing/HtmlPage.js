@@ -127,6 +127,7 @@ function CEditorPage(api)
 	this.m_oScrollHor_   = null;
 	this.m_oScrollVer_   = null;
 	this.m_oScrollThumb_ = null;
+	this.m_nVerticalSlideChangeOnScrollAllow = false;
 	this.m_nVerticalSlideChangeOnScrollInterval = 300; // как часто можно менять слайды при вертикальном скролле
 	this.m_nVerticalSlideChangeOnScrollLast = -1;
     this.m_nVerticalSlideChangeOnScrollEnabled = false;
@@ -142,7 +143,7 @@ function CEditorPage(api)
 	this.m_bDocumentPlaceChangedEnabled = false;
 
 	this.m_nZoomValue = 100;
-	this.zoom_values  = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 320, 340, 360, 380, 400, 425, 450, 475, 500];
+	this.zoom_values  = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 320, 340, 360, 380, 400, 425, 450, 475, 500];
 	this.m_nZoomType  = 2; // 0 - custom, 1 - fitToWodth, 2 - fitToPage
 
 	this.m_oBoundsController = new AscFormat.CBoundsController();
@@ -207,8 +208,8 @@ function CEditorPage(api)
 	this.m_bIsIE = AscCommon.AscBrowser.isIE;
 
 	// thumbnails
-	this.Thumbnails                 = new CThumbnailsManager();
-	this.Thumbnails.showContextMenu = function(bPosBySelect) {}//todo override CThumbnailsManager
+	this.Thumbnails                 = new CThumbnailsManager();//todo override CThumbnailsManager
+	this.Thumbnails.showContextMenu = function(bPosBySelect) {}
 
 	// сплиттеры (для табнейлов и для заметок)
 	this.Splitter1Pos    = 0;
@@ -973,7 +974,7 @@ function CEditorPage(api)
 
 	this.initEventsMobile = function()
 	{
-		if (this.m_oApi.isMobileVersion)
+		if (this.m_oApi.isUseOldMobileVersion())
 		{
 			this.MobileTouchManager = new AscCommon.CMobileTouchManager( { eventsElement : "slides_mobile_element" } );
 			this.MobileTouchManager.Init(this.m_oApi);
@@ -1014,12 +1015,11 @@ function CEditorPage(api)
 		}
 		else
 		{
-			//todo
-			// this.MobileTouchManager = new AscCommon.CMobileTouchManager( { eventsElement : "slides_mobile_element", desktopMode : true } );
-			// this.MobileTouchManager.Init(this.m_oApi);
-			//
-			// this.MobileTouchManagerThumbnails = new AscCommon.CMobileTouchManagerThumbnails( { eventsElement : "slides_mobile_element", desktopMode : true } );
-			// this.MobileTouchManagerThumbnails.Init(this.m_oApi);
+			this.MobileTouchManager = new AscCommon.CMobileTouchManager( { eventsElement : "slides_mobile_element", desktopMode : true } );
+			this.MobileTouchManager.Init(this.m_oApi);
+
+			this.MobileTouchManagerThumbnails = new AscCommon.CMobileTouchManagerThumbnails( { eventsElement : "slides_mobile_element", desktopMode : true } );
+			this.MobileTouchManagerThumbnails.Init(this.m_oApi);
 		}
 	};
 
@@ -1866,12 +1866,20 @@ function CEditorPage(api)
 		size.m_dDocumentPageHeight = one_slide_height;
 
 		size.m_dDocumentWidth  = one_slide_width;
-		size.m_dDocumentHeight = (one_slide_height * this.m_oDrawingDocument.GetSlidesCount()) >> 0;
+		if (this.m_nVerticalSlideChangeOnScrollAllow) {
+			size.m_dDocumentHeight = (one_slide_height * this.m_oDrawingDocument.GetSlidesCount()) >> 0;
+		} else {
+			size.m_dDocumentHeight = one_slide_height;
+		}
 
 		if (0 == this.m_oDrawingDocument.GetSlidesCount())
 			size.m_dDocumentHeight = one_slide_height >> 0;
 
-		size.SlideScrollMIN = this.m_oDrawingDocument.SlideCurrent * one_slide_height;
+		if (this.m_nVerticalSlideChangeOnScrollAllow) {
+			size.SlideScrollMIN = this.m_oDrawingDocument.SlideCurrent * one_slide_height;
+		} else {
+			size.SlideScrollMIN = 0;
+		}
 		size.SlideScrollMAX = size.SlideScrollMIN + one_slide_height - _srcH;
 
 		if (0 == this.m_oDrawingDocument.GetSlidesCount())
@@ -2107,15 +2115,24 @@ function CEditorPage(api)
 			this.VerticalScrollOnMouseUp.ScrollY     = scrollPositionY;
 			this.VerticalScrollOnMouseUp.ScrollY_max = maxY;
 
-			this.VerticalScrollOnMouseUp.SlideNum = (scrollPositionY * this.m_oDrawingDocument.GetSlidesCount() / Math.max(1, maxY)) >> 0;
-			if (this.VerticalScrollOnMouseUp.SlideNum >= this.m_oDrawingDocument.GetSlidesCount())
-				this.VerticalScrollOnMouseUp.SlideNum = this.m_oDrawingDocument.GetSlidesCount() - 1;
+			if (this.m_nVerticalSlideChangeOnScrollAllow) {
+				this.VerticalScrollOnMouseUp.SlideNum = (scrollPositionY * this.m_oDrawingDocument.GetSlidesCount() / Math.max(1, maxY)) >> 0;
+				if (this.VerticalScrollOnMouseUp.SlideNum >= this.m_oDrawingDocument.GetSlidesCount())
+					this.VerticalScrollOnMouseUp.SlideNum = this.m_oDrawingDocument.GetSlidesCount() - 1;
+			} else {
+				this.VerticalScrollOnMouseUp.SlideNum = this.m_oDrawingDocument.SlideCurrent;
+			}
 
 			this.m_oApi.sendEvent("asc_onPaintSlideNum", this.VerticalScrollOnMouseUp.SlideNum);
 			return;
 		}
 
-		var lNumSlide         = ((scrollPositionY / this.m_dDocumentPageHeight) + 0.01) >> 0; // 0.01 - ошибка округления!!
+		var lNumSlide;
+		if (this.m_nVerticalSlideChangeOnScrollAllow) {
+			lNumSlide = ((scrollPositionY / this.m_dDocumentPageHeight) + 0.01) >> 0; // 0.01 - ошибка округления!!;
+		} else {
+			lNumSlide = this.m_oDrawingDocument.SlideCurrent;
+		}
 		var _can_change_slide = true;
 		if (-1 != this.ZoomFreePageNum && this.ZoomFreePageNum == this.m_oDrawingDocument.SlideCurrent)
 			_can_change_slide = false;

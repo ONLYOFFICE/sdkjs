@@ -8846,7 +8846,7 @@
 	};
 	ReaderFromJSON.prototype.ReviewInfoFromJSON = function(oParsedReviewInfo)
 	{
-		var oReviewInfo = new CReviewInfo();
+		var oReviewInfo = new AscWord.ReviewInfo();
 
 		// move type
 		var nMoveType = undefined;

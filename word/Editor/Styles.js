@@ -6294,8 +6294,8 @@ CStyle.prototype =
 			this.TableWholeTable.Read_FromBinary(Reader);
 		}
     },
-
-    Load_LinkData : function(LinkData)
+	
+	Process_EndLoad : function(LinkData)
     {
         if (true === LinkData.StyleUpdate)
         {
@@ -7967,7 +7967,8 @@ CStyles.prototype =
 	Set_DefaultTextPr : function(TextPr)
 	{
 		History.Add(new CChangesStylesChangeDefaultTextPr(this, this.Default.TextPr, TextPr));
-        this.Default.TextPr.InitDefault();
+		this.Default.TextPr = new AscWord.CTextPr();
+		this.Default.TextPr.InitDefault();
 		this.Default.TextPr.Merge(TextPr);
 		this.OnChangeDefaultTextPr();
 		// TODO: Пока данная функция используется только в билдере, как только будет использоваться в самом редакторе,
@@ -8479,6 +8480,20 @@ CStyles.prototype =
                 bNeedRecalc = true;
                 break;
             }
+			case AscDFH.historyitem_Styles_ChangeDefaultTextPr:
+			{
+				// TODO: Нужно сделать отдельный метод для проверки по стилю рана (в том числе и дефолтовому, как здесь)
+				let logicDocument = private_GetWordLogicDocument();
+				if (!logicDocument || !logicDocument.IsDocumentEditor())
+					return;
+				
+				let paragraphs = logicDocument.GetAllParagraphs({All : true});
+				for (let i = 0, count = paragraphs.length; i < count; ++i)
+				{
+					paragraphs[i].Recalc_CompiledPr();
+					paragraphs[i].Recalc_RunsCompiledPr();
+				}
+			}
         }
 
         if ( true === bNeedRecalc )
@@ -8520,7 +8535,7 @@ CStyles.prototype =
 //-----------------------------------------------------------------------------------
 // Функции для совместного редактирования
 //-----------------------------------------------------------------------------------
-    Load_LinkData : function(LinkData)
+	Process_EndLoad : function(LinkData)
     {
         if (undefined !== LinkData.UpdateStyleId)
         {
@@ -9479,6 +9494,33 @@ CDocumentColor.prototype.ToHexColor = function() {
 	} else {
 		return AscCommon.ByteToHex(this.r) + AscCommon.ByteToHex(this.g) + AscCommon.ByteToHex(this.b);
 	}
+};
+CDocumentColor.prototype.ToHighlightColor = function()
+{
+	// 17.18.40 ST_HighlightColor
+	let val = (((this.r & 0xFF) << 16) | ((this.g & 0xFF) << 8) | (this.b & 0xFF));
+	
+	switch (val)
+	{
+		case 0x000000: return "black";
+		case 0x0000FF: return "blue";
+		case 0x00FFFF: return "cyan";
+		case 0x00008B: return "darkBlue";
+		case 0x008B8B: return "darkCyan";
+		case 0xA9A9A9: return "darkGray";
+		case 0x006400: return "darkGreen";
+		case 0x800080: return "darkMagenta";
+		case 0x8B0000: return "darkRed";
+		case 0x808000: return "darkYellow";
+		case 0x00FF00: return "green";
+		case 0xD3D3D3: return "lightGray";
+		case 0xFF00FF: return "magenta";
+		case 0xFF0000: return "red";
+		case 0xFFFFFF: return "white";
+		case 0xFFFF00: return "yellow";
+	}
+	
+	return "";
 };
 
 CDocumentColor.prototype.ConvertToUniColor = function()
@@ -11235,7 +11277,7 @@ CTablePr.prototype.Read_FromBinary = function(Reader)
 	if (1048576 & Flags)
 	{
 		this.PrChange   = new CTablePr();
-		this.ReviewInfo = new CReviewInfo();
+		this.ReviewInfo = new AscWord.ReviewInfo();
 
 		this.PrChange.ReadFromBinary(Reader);
 		this.ReviewInfo.ReadFromBinary(Reader);
@@ -11259,7 +11301,7 @@ CTablePr.prototype.HavePrChange = function()
 CTablePr.prototype.AddPrChange = function()
 {
 	this.PrChange   = this.Copy(false);
-	this.ReviewInfo = new CReviewInfo();
+	this.ReviewInfo = new AscWord.ReviewInfo();
 	this.ReviewInfo.Update();
 };
 CTablePr.prototype.SetPrChange = function(oPrChange, oReviewInfo)
@@ -11579,7 +11621,7 @@ CTableRowPr.prototype.Read_FromBinary = function(Reader)
 	if (512 & Flags)
 	{
 		this.PrChange   = new CTableRowPr();
-		this.ReviewInfo = new CReviewInfo();
+		this.ReviewInfo = new AscWord.ReviewInfo();
 
 		this.PrChange.ReadFromBinary(Reader);
 		this.ReviewInfo.ReadFromBinary(Reader);
@@ -11603,7 +11645,7 @@ CTableRowPr.prototype.HavePrChange = function()
 CTableRowPr.prototype.AddPrChange = function()
 {
 	this.PrChange   = this.Copy(false);
-	this.ReviewInfo = new CReviewInfo();
+	this.ReviewInfo = new AscWord.ReviewInfo();
 	this.ReviewInfo.Update();
 };
 CTableRowPr.prototype.SetPrChange = function(oPrChange, oReviewInfo)
@@ -12128,7 +12170,7 @@ CTableCellPr.prototype.Read_FromBinary = function(Reader)
 	if (262144 & Flags)
 	{
 		this.PrChange   = new CTableCellPr();
-		this.ReviewInfo = new CReviewInfo();
+		this.ReviewInfo = new AscWord.ReviewInfo();
 
 		this.PrChange.ReadFromBinary(Reader);
 		this.ReviewInfo.ReadFromBinary(Reader);
@@ -12171,7 +12213,7 @@ CTableCellPr.prototype.HavePrChange = function()
 CTableCellPr.prototype.AddPrChange = function()
 {
 	this.PrChange   = this.Copy(false);
-	this.ReviewInfo = new CReviewInfo();
+	this.ReviewInfo = new AscWord.ReviewInfo();
 	this.ReviewInfo.Update();
 };
 CTableCellPr.prototype.SetPrChange = function(oPrChange, oReviewInfo)
@@ -12495,55 +12537,55 @@ CRFonts.prototype.Write_ToBinary = function(oWriter)
 	oWriter.Skip(4);
 	var nFlags = 0;
 
-	if (undefined !== this.Ascii)
+	if (undefined !== this.Ascii && null !== this.Ascii)
 	{
 		oWriter.WriteString2(this.Ascii.Name);
 		nFlags |= 1;
 	}
 
-	if (undefined !== this.EastAsia)
+	if (undefined !== this.EastAsia && null !== this.EastAsia)
 	{
 		oWriter.WriteString2(this.EastAsia.Name);
 		nFlags |= 2;
 	}
 
-	if (undefined !== this.HAnsi)
+	if (undefined !== this.HAnsi && null !== this.HAnsi)
 	{
 		oWriter.WriteString2(this.HAnsi.Name);
 		nFlags |= 4;
 	}
 
-	if (undefined !== this.CS)
+	if (undefined !== this.CS && null !== this.CS)
 	{
 		oWriter.WriteString2(this.CS.Name);
 		nFlags |= 8;
 	}
 
-	if (undefined !== this.Hint)
+	if (undefined !== this.Hint && null !== this.Hint)
 	{
 		oWriter.WriteLong(this.Hint);
 		nFlags |= 16;
 	}
 
-	if (undefined !== this.AsciiTheme)
+	if (undefined !== this.AsciiTheme && null !== this.AsciiTheme)
 	{
 		oWriter.WriteString2(this.AsciiTheme);
 		nFlags |= 32;
 	}
 
-	if (undefined !== this.EastAsiaTheme)
+	if (undefined !== this.EastAsiaTheme && null !== this.EastAsiaTheme)
 	{
 		oWriter.WriteString2(this.EastAsiaTheme);
 		nFlags |= 64;
 	}
 
-	if (undefined !== this.HAnsiTheme)
+	if (undefined !== this.HAnsiTheme && null !== this.HAnsiTheme)
 	{
 		oWriter.WriteString2(this.HAnsiTheme);
 		nFlags |= 128;
 	}
 
-	if (undefined !== this.CSTheme)
+	if (undefined !== this.CSTheme && null !== this.CSTheme)
 	{
 		oWriter.WriteString2(this.CSTheme);
 		nFlags |= 256;
@@ -13816,41 +13858,41 @@ CTextPr.prototype.Write_ToBinary = function(Writer)
 		Flags |= 4194304;
 	}
 
-	if (undefined !== this.Shd)
+	if (undefined != this.Shd)
 	{
 		this.Shd.Write_ToBinary(Writer);
 		Flags |= 8388608;
 	}
 
-	if (undefined !== this.Vanish)
+	if (undefined != this.Vanish)
 	{
 		Writer.WriteBool(this.Vanish);
 		Flags |= 16777216;
 	}
 
-	if (undefined !== this.FontRef)
+	if (undefined != this.FontRef)
 	{
 		this.FontRef.Write_ToBinary(Writer);
 		Flags |= 33554432;
 	}
 
-	if (undefined !== this.PrChange)
+	if (undefined != this.PrChange)
 	{
 		this.PrChange.Write_ToBinary(Writer);
 		Flags |= 67108864;
 	}
-	if (undefined !== this.TextOutline)
+	if (undefined != this.TextOutline)
 	{
 		this.TextOutline.Write_ToBinary(Writer);
 		Flags |= 134217728;
 	}
-	if (undefined !== this.TextFill)
+	if (undefined != this.TextFill)
 	{
 		this.TextFill.Write_ToBinary(Writer);
 		Flags |= 268435456;
 	}
 
-	if (undefined !== this.PrChange)
+	if (undefined != this.PrChange)
 	{
 		this.PrChange.WriteToBinary(Writer);
 		this.ReviewInfo.WriteToBinary(Writer);
@@ -13863,7 +13905,7 @@ CTextPr.prototype.Write_ToBinary = function(Writer)
 		Flags |= 1073741824;
 	}
 
-	if (undefined !== this.Ligatures)
+	if (undefined != this.Ligatures)
 	{
 		Writer.WriteByte(this.Ligatures);
 		Flags |= (1 << 31);
@@ -14023,7 +14065,7 @@ CTextPr.prototype.Read_FromBinary = function(Reader)
 	if (Flags & 536870912)
 	{
 		this.PrChange   = new CTextPr();
-		this.ReviewInfo = new CReviewInfo();
+		this.ReviewInfo = new AscWord.ReviewInfo();
 		this.PrChange.ReadFromBinary(Reader);
 		this.ReviewInfo.ReadFromBinary(Reader);
 	}
@@ -14724,7 +14766,7 @@ CTextPr.prototype.HavePrChange = function()
 CTextPr.prototype.AddPrChange = function()
 {
 	this.PrChange   = this.Copy();
-	this.ReviewInfo = new CReviewInfo();
+	this.ReviewInfo = new AscWord.ReviewInfo();
 	this.ReviewInfo.Update();
 };
 CTextPr.prototype.SetPrChange = function(PrChange, ReviewInfo)
@@ -14936,16 +14978,16 @@ CTextPr.prototype.GetTextMetrics = function(nFontFlags, oTheme)
 	}
 
 	if ((nFontFlags & AscWord.fontslot_ASCII) && oTextPr.RFonts.Ascii)
-		oMetrics.Update(oTextPr.GetFontInfo(AscWord.fontslot_ASCII));
+		oMetrics.UpdateByFontInfo(oTextPr.GetFontInfo(AscWord.fontslot_ASCII));
 
 	if ((nFontFlags & AscWord.fontslot_CS) && oTextPr.RFonts.CS)
-		oMetrics.Update(oTextPr.GetFontInfo(AscWord.fontslot_CS));
+		oMetrics.UpdateByFontInfo(oTextPr.GetFontInfo(AscWord.fontslot_CS));
 
 	if ((nFontFlags & AscWord.fontslot_HAnsi) && oTextPr.RFonts.HAnsi)
-		oMetrics.Update(oTextPr.GetFontInfo(AscWord.fontslot_HAnsi));
+		oMetrics.UpdateByFontInfo(oTextPr.GetFontInfo(AscWord.fontslot_HAnsi));
 
 	if ((nFontFlags & AscWord.fontslot_EastAsia) && oTextPr.RFonts.EastAsia)
-		oMetrics.Update(oTextPr.GetFontInfo(AscWord.fontslot_EastAsia));
+		oMetrics.UpdateByFontInfo(oTextPr.GetFontInfo(AscWord.fontslot_EastAsia));
 
 	return oMetrics;
 };
@@ -14989,30 +15031,34 @@ function CTextMetrics()
 	this.Height  = 0;
 }
 /**
- * @param {AscFonts.CTextFontInfo} oFontInfo
+ * @param {AscFonts.CTextFontInfo} fontInfo
  */
-CTextMetrics.prototype.Update = function(oFontInfo)
+CTextMetrics.prototype.UpdateByFontInfo = function(fontInfo)
 {
-	g_oTextMeasurer.SetFontInternal(oFontInfo.Name, oFontInfo.Size, oFontInfo.Style);
-
+	this.Update(fontInfo.Name, fontInfo.Size, fontInfo.Style);
+};
+CTextMetrics.prototype.Update = function(fontName, fontSize, fontStyle)
+{
+	g_oTextMeasurer.SetFontInternal(fontName, fontSize, fontStyle);
+	
 	let nHeight  = g_oTextMeasurer.GetHeight();
 	let nAscent  = g_oTextMeasurer.GetAscender();
 	let nDescent = Math.abs(g_oTextMeasurer.GetDescender());
-
+	
 	let _nHeight  = nHeight;
 	let _nDescent = nDescent;
 	let _nAscent  = Math.min(nAscent, nHeight - nDescent);
 	let _nLineGap = Math.max(0, nHeight - nAscent - nDescent);
-
+	
 	if (this.Height < _nHeight)
 		this.Height = _nHeight;
-
+	
 	if (this.Descent < _nDescent)
 		this.Descent = _nDescent;
-
+	
 	if (this.Ascent < _nAscent)
 		this.Ascent = _nAscent;
-
+	
 	if (this.LineGap < _nLineGap)
 		this.LineGap = _nLineGap;
 };
@@ -17035,7 +17081,7 @@ CParaPr.prototype.Read_FromBinary = function(Reader)
 	if (Flags & 8388608)
 	{
 		this.PrChange   = new CParaPr();
-		this.ReviewInfo = new CReviewInfo();
+		this.ReviewInfo = new AscWord.ReviewInfo();
 		this.PrChange.ReadFromBinary(Reader);
 		this.ReviewInfo.ReadFromBinary(Reader);
 	}
@@ -17385,7 +17431,7 @@ CParaPr.prototype.GetPrChangeNumPr = function()
 CParaPr.prototype.AddPrChange = function()
 {
 	this.PrChange   = this.Copy();
-	this.ReviewInfo = new CReviewInfo();
+	this.ReviewInfo = new AscWord.ReviewInfo();
 	this.ReviewInfo.Update();
 };
 CParaPr.prototype.SetPrChange = function(PrChange, ReviewInfo)
