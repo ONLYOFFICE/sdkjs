@@ -77,6 +77,8 @@
         
         oGraphicsWord.RemoveLastClip();
         this.DrawBorders(oGraphicsPDF);
+
+        this.DrawLocks(oGraphicsPDF);
     };
     CComboBoxField.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
@@ -488,7 +490,7 @@
         }
 
         if (isChanged) {
-            AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetApiCurIdxs(), aCurIdxs));
+            oDoc.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetApiCurIdxs(), aCurIdxs));
             this.SetApiValue(this.GetValue());
             this.SetApiCurIdxs(this.GetCurIdxs());
         }

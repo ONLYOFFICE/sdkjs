@@ -125,6 +125,11 @@
 
 			AscFonts.HB_StartString();
 		};
+		AscFonts.FontPickerByCharacter.checkText = function(text, t, callback)
+		{
+			if (callback)
+				callback.call(t);
+		};
 		g_oTextMeasurer.SetFontInternal = function()
 		{
 		};

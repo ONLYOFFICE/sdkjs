@@ -624,12 +624,15 @@ $(function () {
 		window["Asc"]["editor"] = api;
 
 		AscCommon.g_oTableId.init(api);
-		wb = new AscCommonExcel.Workbook(new AscCommonExcel.asc_CHandlersList(), api);
+		wb = new AscCommonExcel.Workbook(new AscCommonExcel.asc_CHandlersList(), api, true);
 		AscCommon.History.init(wb);
+		//нет тестовых операция с историей, отключаем чтобы не было лишних сериализаций
+		AscCommon.History.TurnOff();
 		wb.maxDigitWidth = 7;
 		wb.paddingPlusBorder = 5;
 
 		api.wbModel = wb;
+		api.initCollaborativeEditing({});
 
 		if (this.User) {
 			g_oIdCounter.Set_UserId(this.User.asc_getId());
@@ -1662,7 +1665,7 @@ $(function () {
 		bCaFromSelectedCell = getCaFromSelectedCell("B1068");
 		assert.strictEqual(bCaFromSelectedCell, true, "Test: IFS. 6 args. Recursion formula. One of condition is recursion but it matches. B1068 - flag ca: true");
 		bCaFromSelectedCell = null;
-		// Case: SWITCH. Without default_arg. One of result_arg has recursion, but it doesn't match. With disabled Iterative calculation setting.
+		// - Case: SWITCH. Without default_arg. One of result_arg has recursion, but it doesn't match. With disabled Iterative calculation setting.
 		// expression
 		ws.getRange2("A1069").setValue("3");
 		// values
@@ -1682,14 +1685,14 @@ $(function () {
 		bCaFromSelectedCell = getCaFromSelectedCell("A1072");
 		assert.strictEqual(bCaFromSelectedCell, false, "Test: SWITCH. Without default_arg. One of result_arg has recursion but it doesn't matches. A1072 - flag ca: false");
 		bCaFromSelectedCell = null;
-		// Case: SWITCH. Without default_arg. One of result_arg has recursion, but it matches. With disabled Iterative calculation setting.
+		// - Case: SWITCH. Without default_arg. One of result_arg has recursion, but it matches. With disabled Iterative calculation setting.
 		ws.getRange2("A1069").setValue("2");
 		ws.getRange2("A1072").setValue("=SWITCH(A1069,A1070, A1071, B1070, A1072, C1070, B1071, D1070, C1071, E1070, D1071)");
 		assert.strictEqual(ws.getRange2("A1072").getValue(), "0", "Test: SWITCH. Without default_arg. One of result_arg has recursion but it matches. A1072 - 0");
 		bCaFromSelectedCell = getCaFromSelectedCell("A1072");
 		assert.strictEqual(bCaFromSelectedCell, true, "Test: SWITCH. Without default_arg. One of result_arg has recursion but it matches. A1072 - flag ca: true");
 		bCaFromSelectedCell = null;
-		// Case: SWITCH. With default_arg. Default_arg has recursion, but it doesn't match. With disabled Iterative calculation setting.
+		// - Case: SWITCH. With default_arg. Default_arg has recursion, but it doesn't match. With disabled Iterative calculation setting.
 		ws.getRange2("A1069").setValue("7");
 		// default_arg
 		ws.getRange2("E1071").setValue("Unknown day of week");
@@ -1698,12 +1701,60 @@ $(function () {
 		bCaFromSelectedCell = getCaFromSelectedCell("A1072");
 		assert.strictEqual(bCaFromSelectedCell, false, "Test: SWITCH. With default_arg. Default_arg has recursion but it doesn't matches. A1072 - flag ca: false");
 		bCaFromSelectedCell = null;
-		// Case: SWITCH. With default_arg. Default_arg has recursion, but it matches. With disabled Iterative calculation setting.
+		// - Case: SWITCH. With default_arg. Default_arg has recursion, but it matches. With disabled Iterative calculation setting.
 		ws.getRange2("A1072").setValue("=SWITCH(A1069,A1070, A1071, B1070, A1072, C1070, B1071, D1070, C1071, E1070, D1071, A1072)");
 		assert.strictEqual(ws.getRange2("A1072").getValue(), "0", "Test: SWITCH. With default_arg. Default_arg has recursion but it matches. A1072 - 0");
 		bCaFromSelectedCell = getCaFromSelectedCell("A1072");
 		assert.strictEqual(bCaFromSelectedCell, true, "Test: SWITCH. With default_arg. Default_arg has recursion but it matches. A1072 - flag ca: true");
 		bCaFromSelectedCell = null;
+		// - Case: Exception formula "CELL" that ignores rules of recursion recognition
+		ws.getRange2("A1073").setValue("=CELL(\"filename\",A1073)");
+		assert.strictEqual(ws.getRange2("A1073").getValue(), "[TeSt.xlsx]Sheet1", "Test: Exception formulas that ignores rules of recursion recognition. A1073 - 1039. Formula - CELL");
+		bCaFromSelectedCell = getCaFromSelectedCell("A1073");
+		assert.strictEqual(bCaFromSelectedCell, true, "Test: Exception formulas that ignores rules of recursion recognition. A1039 - flag ca: true");
+		bCaFromSelectedCell = null;
+		// - Case: Chain without recursion. B1074 <- A1075 <- D1075 <- E1075 <- F1075. With disabled Iterative calculation setting. Case from bug-71996
+		// year field
+		ws.getRange2("A1074").setValue("2024");
+		// month field
+		ws.getRange2("B1074").setValue("=DATE(A1074, SHEET(),1");
+		//  time break
+		ws.getRange2("C1074").setValue("0.02");
+		ws.getRange2("D1074").setValue("0.03");
+		ws.getRange2("E1074").setValue("0.33");
+		// additional field
+		ws.getRange2("F1074").setValue("=IF(MONTH(B1074)=1;$G$1074;INDIRECT(TEXT(DATE(YEAR(B1074);MONTH(B1074)-1;1);\"MMM\") & \"!F39\"))");
+		ws.getRange2("G1074").setValue("0");
+		// main chain
+		ws.getRange2("A1075").setValue("=B1074");
+		ws.getRange2("B1075").setValue("0");
+		ws.getRange2("C1075").setValue("0");
+		ws.getRange2("D1075").setValue("=IF(ISNUMBER($A1075);IF((C1075-B1075)<TIME(6;1;0);TIME(0;0;0);IF((C1075-B1075)<TIME(9;31;0);$C$1074;$D$1074));\"\")");
+		ws.getRange2("E1075").setValue("=IF(ISNUMBER($A1075);IF(OR(G1075=\"U\";H1075=\"X\");(C1075-B1075-D1075);IF(OR(G1075=\"K\";G1075=\"B\";G1075=\"D\");TIME(0;0;0);C1075-B1075-D1075-$E$1074));\"\")");
+		ws.getRange2("F1075").setValue("==IF(ISNUMBER($A1075);IF(OR(G1075=\"Zaus\";E1075>-$E$1074;G1075=\"kA\");(F1074+E1075);TIME(0;0;0));\"\")");
+		ws.getRange2("G1075").setValue("Neujahr");
+		ws.getRange2("H1075").setValue("X");
+		// Checking via initStartCellForIterCalc method that cells haven't recursion
+		oCell = selectCell("A1075");
+		let bCellHasRecursion = !!getStartCellForIterCalc(oCell);
+		assert.strictEqual(bCellHasRecursion, false, "Test: Chain without recursion. B1074 <- A1075 <- D1075 <- E1075 <- F1075. With disabled Iterative calculation setting. Case from bug-71996. A1075 - false");
+		bCellHasRecursion = null;
+		g_cCalcRecursion.setStartCellIndex(null);
+		oCell = selectCell("D1075");
+		bCellHasRecursion = !!getStartCellForIterCalc(oCell);
+		assert.strictEqual(bCellHasRecursion, false, "Test: Chain without recursion. B1074 <- A1075 <- D1075 <- E1075 <- F1075. With disabled Iterative calculation setting. Case from bug-71996. D1075 - false");
+		bCellHasRecursion = null;
+		g_cCalcRecursion.setStartCellIndex(null);
+		oCell = selectCell("E1075");
+		bCellHasRecursion = !!getStartCellForIterCalc(oCell);
+		assert.strictEqual(bCellHasRecursion, false, "Test: Chain without recursion. B1074 <- A1075 <- D1075 <- E1075 <- F1075. With disabled Iterative calculation setting. Case from bug-71996. E1075 - false");
+		bCellHasRecursion = null;
+		g_cCalcRecursion.setStartCellIndex(null);
+		oCell = selectCell("F1075");
+		bCellHasRecursion = !!getStartCellForIterCalc(oCell);
+		assert.strictEqual(bCellHasRecursion, false, "Test: Chain without recursion. B1074 <- A1075 <- D1075 <- E1075 <- F1075. With disabled Iterative calculation setting. Case from bug-71996. F1075 - false");
+		bCellHasRecursion = null;
+		g_cCalcRecursion.setStartCellIndex(null);
 		// -- Test changeLinkedCell method.
 		oCell = selectCell("A1000");
 		let oCellNeedEnableRecalc = selectCell("B1000");
@@ -24604,12 +24655,12 @@ $(function () {
 				fv = 0;
 			}
 
-			var res;
+			let res;
 			if (rate != 0) {
 				res = (-fv * rate + pmt * (1 + rate * type)) / (rate * pv + pmt * (1 + rate * type))
 				res = Math.log(res) / Math.log(1 + rate)
 			} else {
-				res = (-pv - fv) / pmt;
+				res = -(pv + fv) / pmt;
 			}
 			return res;
 		}
@@ -24622,6 +24673,15 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), nper(0.12 / 12, -100, -1000));
 
+
+		// bug 70050
+		oParser = new parserFormula("NPER(0,-393977.5252,14351946.04,,1)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), nper(0,-393977.5252,14351946.04,0,1));
+
+		oParser = new parserFormula("NPER(0,393977.5252,14351946.04,,1)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), nper(0,393977.5252,14351946.04,0,1));
 
 		testArrayFormula2(assert, "NPER", 3, 5);
 	});
@@ -29380,6 +29440,18 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 13);
 
+		ws.getRange2("G1").setValue("Profit");
+		ws.getRange2("G2").setValue("555");
+
+		oParser = new parserFormula('DAVERAGE(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		ws.getRange2("G1").setValue("noname");
+
+		oParser = new parserFormula('DAVERAGE(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 13);
 	});
 
 	QUnit.test("Test: \"DCOUNT\"", function (assert) {
@@ -29398,6 +29470,18 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
 
+		ws.getRange2("G1").setValue("Profit");
+		ws.getRange2("G2").setValue("555");
+
+		oParser = new parserFormula('DCOUNT(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
+
+		ws.getRange2("G1").setValue("noname");
+
+		oParser = new parserFormula('DCOUNT(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 6);
 	});
 
 	QUnit.test("Test: \"DCOUNTA\"", function (assert) {
@@ -29416,6 +29500,18 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
 
+		ws.getRange2("G1").setValue("Profit");
+		ws.getRange2("G2").setValue("555");
+
+		oParser = new parserFormula('DCOUNTA(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
+
+		ws.getRange2("G1").setValue("noname");
+
+		oParser = new parserFormula('DCOUNTA(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 6);
 	});
 
 	QUnit.test("Test: \"DGET\"", function (assert) {
@@ -29430,6 +29526,18 @@ $(function () {
 		assert.ok(oParser.parse(), 'DGET(A4:E10, "Yield", A1:F2)');
 		assert.strictEqual(oParser.calculate().getValue(), 10, 'DGET(A4:E10, "Yield", A1:F2)');
 
+		ws.getRange2("G1").setValue("Profit");
+		ws.getRange2("G2").setValue("555");
+
+		oParser = new parserFormula('DGET(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		ws.getRange2("G1").setValue("noname");
+
+		oParser = new parserFormula('DGET(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
 	});
 
 	QUnit.test("Test: \"DMAX\"", function (assert) {
@@ -29440,6 +29548,18 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 96);
 
+		ws.getRange2("G1").setValue("Profit");
+		ws.getRange2("G2").setValue("555");
+
+		oParser = new parserFormula('DMAX(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
+
+		ws.getRange2("G1").setValue("noname");
+
+		oParser = new parserFormula('DMAX(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 20);
 	});
 
 	QUnit.test("Test: \"DMIN\"", function (assert) {
@@ -29450,6 +29570,18 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 75);
 
+		ws.getRange2("G1").setValue("Profit");
+		ws.getRange2("G2").setValue("555");
+
+		oParser = new parserFormula('DMIN(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
+
+		ws.getRange2("G1").setValue("noname");
+
+		oParser = new parserFormula('DMIN(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 8);
 	});
 
 	QUnit.test("Test: \"DPRODUCT\"", function (assert) {
@@ -29460,6 +29592,18 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 800);
 
+		ws.getRange2("G1").setValue("Profit");
+		ws.getRange2("G2").setValue("555");
+
+		oParser = new parserFormula('DPRODUCT(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
+
+		ws.getRange2("G1").setValue("noname");
+
+		oParser = new parserFormula('DPRODUCT(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 3628800);
 	});
 
 	QUnit.test("Test: \"DSTDEV\"", function (assert) {
@@ -29470,6 +29614,19 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue().toFixed(4) - 0, 1.1547);
 
+
+		ws.getRange2("G1").setValue("Profit");
+		ws.getRange2("G2").setValue("555");
+
+		oParser = new parserFormula('DSTDEV(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		ws.getRange2("G1").setValue("noname");
+
+		oParser = new parserFormula('DSTDEV(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 4.381780460041329);
 	});
 
 	QUnit.test("Test: \"DSTDEVP\"", function (assert) {
@@ -29480,6 +29637,18 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue().toFixed(6) - 0, 0.942809);
 
+		ws.getRange2("G1").setValue("Profit");
+		ws.getRange2("G2").setValue("555");
+
+		oParser = new parserFormula('DSTDEVP(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		ws.getRange2("G1").setValue("noname");
+
+		oParser = new parserFormula('DSTDEV(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 4.381780460041329);
 	});
 
 	QUnit.test("Test: \"STDEVPA\"", function (assert) {
@@ -29564,6 +29733,30 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 247.8);
 
+		oParser = new parserFormula('DSUM(A4:E10, "Age",A1:F2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 15);
+
+		oParser = new parserFormula('DSUM(A4:E10, "Age","test")', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula('DSUM(A4:E10, "Age",E2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		ws.getRange2("G1").setValue("Profit");
+		ws.getRange2("G2").setValue("555");
+
+		oParser = new parserFormula('DSUM(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
+
+		ws.getRange2("G1").setValue("noname");
+
+		oParser = new parserFormula('DSUM(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 78);
 	});
 
 	QUnit.test("Test: \"DVAR\"", function (assert) {
@@ -29574,6 +29767,18 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue().toFixed(1) - 0, 8.8);
 
+		ws.getRange2("G1").setValue("Profit");
+		ws.getRange2("G2").setValue("555");
+
+		oParser = new parserFormula('DSTDEVP(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		ws.getRange2("G1").setValue("noname");
+
+		oParser = new parserFormula('DVAR(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 19.2);
 	});
 
 	QUnit.test("Test: \"DVARP\"", function (assert) {
@@ -29583,6 +29788,19 @@ $(function () {
 		oParser = new parserFormula('DVARP(A4:E10, "Yield", A1:A3)', "AA2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 7.04);
+
+		ws.getRange2("G1").setValue("Profit");
+		ws.getRange2("G2").setValue("555");
+
+		oParser = new parserFormula('DSTDEVP(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		ws.getRange2("G1").setValue("noname");
+
+		oParser = new parserFormula('DVARP(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 16);
 
 	});
 
@@ -35935,11 +36153,11 @@ $(function () {
 			'id-view': 'editor_sdk'
 		});
 		window["Asc"]["editor"] = api;
-		AscCommon.g_oTableId.init();
 		api._onEndLoadSdk();
 		api.isOpenOOXInBrowser = false;
 		api._openDocument(AscCommon.getEmpty());
-		api.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
+		api.initCollaborativeEditing({});
+		api._coAuthoringInitCollaborativeEditing({});
 		api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,
 			api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
 		// Test api: GetCalcSettings

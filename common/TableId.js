@@ -458,6 +458,7 @@
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Underline]	= AscPDF.CAnnotationUnderline;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Strikeout]	= AscPDF.CAnnotationStrikeout;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_FreeText]	= AscPDF.CAnnotationFreeText;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Stamp]		= AscPDF.CAnnotationStamp;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Page]				= AscPDF.CPageInfo;
 		}
 
@@ -505,7 +506,6 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_GeoLocations] = AscFormat.CGeoLocations;
 		this.m_oFactoryClass[AscDFH.historyitem_type_GeoPolygon] = AscFormat.CGeoPolygon;
 		this.m_oFactoryClass[AscDFH.historyitem_type_GeoPolygons] = AscFormat.CGeoPolygons;
-		this.m_oFactoryClass[AscDFH.historyitem_type_Gridlines] = AscFormat.CGridlines;
 		this.m_oFactoryClass[AscDFH.historyitem_type_Dimension] = AscFormat.CDimension;
 		this.m_oFactoryClass[AscDFH.historyitem_type_NumericDimension] = AscFormat.CNumericDimension;
 		this.m_oFactoryClass[AscDFH.historyitem_type_PercentageColorPosition] = AscFormat.CPercentageColorPosition;

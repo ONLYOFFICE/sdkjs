@@ -2328,31 +2328,6 @@ function (window, undefined) {
 	AscDFH.changesFactory[AscDFH.historyitem_Gridlines_SetSpPr] = window['AscDFH'].CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_Gridlines_SetName] = window['AscDFH'].CChangesDrawingsString;
 
-	function CGridlines() {
-		CBaseChartObject.call(this);
-		this.spPr = null;
-		this.name = null;
-	}
-
-	InitClass(CGridlines, CBaseChartObject, AscDFH.historyitem_type_Gridlines);
-
-	CGridlines.prototype.fillObject = function (oCopy) {
-		CBaseChartObject.prototype.fillObject.call(this, oCopy);
-		if (this.spPr) {
-			oCopy.setSpPr(this.spPr.createDuplicate());
-		}
-		oCopy.setName(this.name);
-	}
-
-	CGridlines.prototype.setSpPr = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Gridlines_SetSpPr, this.spPr, pr));
-		this.spPr = pr;
-		this.setParentToChild(pr);
-	};
-	CGridlines.prototype.setName = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Gridlines_SetName, this.name, pr));
-		this.name = pr;
-	};
 
 
 	// // HeaderFooter (contains in ChartFormat.js)
@@ -4525,7 +4500,6 @@ function (window, undefined) {
 	window['AscFormat'].CGeoLocations = CGeoLocations;
 	window['AscFormat'].CGeoPolygon = CGeoPolygon;
 	window['AscFormat'].CGeoPolygons = CGeoPolygons;
-	window['AscFormat'].CGridlines = CGridlines;
 	// window['AscFormat'].CHeaderFooter = CHeaderFooter;
 	// window['AscFormat'].CChartExLegend = CChartExLegend;
 	// window['AscFormat'].CNumberColorPosition = CNumberColorPosition;

@@ -83,6 +83,8 @@
         oGraphicsWord.RemoveLastClip();
 
         this.DrawBorders(oGraphicsPDF);
+
+        this.DrawLocks(oGraphicsPDF);
     };
     CListBoxField.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
@@ -208,10 +210,10 @@
         }
 
         if (isChanged) {
-            AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetApiCurIdxs(), aCurIdxs));
+            oDoc.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetApiCurIdxs(), aCurIdxs));
             this._bAutoShiftContentView = true;
             
-            if (false == AscCommon.History.UndoRedoInProgress) {
+            if (false == oDoc.History.UndoRedoInProgress) {
                 this._bUpdateTopIndex = true;
             }
 

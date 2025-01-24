@@ -9459,11 +9459,11 @@
 			var major_font = font_scheme.majorFont;
 			typeof major_font.latin === "string" && major_font.latin.length > 0 && (AllFonts[major_font.latin] = 1);
 			typeof major_font.ea === "string" && major_font.ea.length > 0 && (AllFonts[major_font.ea] = 1);
-			typeof major_font.cs === "string" && major_font.latin.length > 0 && (AllFonts[major_font.cs] = 1);
+			typeof major_font.cs === "string" && major_font.cs.length > 0 && (AllFonts[major_font.cs] = 1);
 			var minor_font = font_scheme.minorFont;
 			typeof minor_font.latin === "string" && minor_font.latin.length > 0 && (AllFonts[minor_font.latin] = 1);
 			typeof minor_font.ea === "string" && minor_font.ea.length > 0 && (AllFonts[minor_font.ea] = 1);
-			typeof minor_font.cs === "string" && minor_font.latin.length > 0 && (AllFonts[minor_font.cs] = 1);
+			typeof minor_font.cs === "string" && minor_font.cs.length > 0 && (AllFonts[minor_font.cs] = 1);
 		};
 		CTheme.prototype.getOuterShdw = function (idx) {
 			return this.themeElements.fmtScheme.GetOuterShdw(idx);
@@ -9519,10 +9519,12 @@
 				return AscFormat.CreateNoFillLine();
 			}
 			let fontProp;
-			if (getConnectorStyle) {
-				fontProp = this.themeElements.themeExt.fontStylesGroup.connectorFontStyles[idx - 1];
-			} else {
-				fontProp = this.themeElements.themeExt.fontStylesGroup.fontStyles[idx - 1];
+			if (this.themeElements.themeExt) {
+				if (getConnectorStyle) {
+					fontProp = this.themeElements.themeExt.fontStylesGroup.connectorFontStyles[idx - 1];
+				} else {
+					fontProp = this.themeElements.themeExt.fontStylesGroup.fontStyles[idx - 1];
+				}
 			}
 			if (fontProp) {
 				var ret = fontProp.createDuplicate();
@@ -9547,12 +9549,21 @@
 				return new CLineStyle();
 			}
 			let lineEndProp;
-			// not using idx - 1. Seems like visio bug here. See file https://disk.yandex.ru/d/OQVR9m1U255B1Q
-			if (getConnectorStyle) {
-				lineEndProp = this.themeElements.themeExt.lineStyles.fmtConnectorSchemeLineStyles[idx];
+
+			if (this.themeElements.themeExt) {
+				// not using idx - 1. Seems like visio bug here. See file https://disk.yandex.ru/d/OQVR9m1U255B1Q
+				if (getConnectorStyle) {
+					lineEndProp = this.themeElements.themeExt.lineStyles.fmtConnectorSchemeLineStyles[idx];
+				} else {
+					lineEndProp = this.themeElements.themeExt.lineStyles.fmtSchemeLineStyles[idx];
+				}
 			} else {
-				lineEndProp = this.themeElements.themeExt.lineStyles.fmtSchemeLineStyles[idx];
+				AscCommon.consoleLog("no this.themeElements.themeExt (this = CTheme) found with info about line endings. " +
+					"Its ok sometimes. Set end:4 for default lineEndProp");
+				lineEndProp = new CLineStyle();
+				lineEndProp.lineEx = {rndg: 0, start: 0, startSize: 2, end: 4, endSize: 2, pattern: 1};
 			}
+
 			if (lineEndProp) {
 				var ret = lineEndProp.createDuplicate();
 				return ret;
@@ -9573,7 +9584,12 @@
 				AscCommon.consoleLog("idx getFillProp argument is 0 or isNaN(idx) is true");
 				return {pattern: 1}; // solid
 			}
-			let fillProp = this.themeElements.themeExt.fillStyles[idx - 1];
+
+			let fillProp;
+			if (this.themeElements.themeExt) {
+				fillProp = this.themeElements.themeExt.fillStyles[idx - 1];
+			}
+
 			if (fillProp) {
 				var ret = {pattern: fillProp.pattern};
 				return ret;
@@ -9633,6 +9649,15 @@
 			AscCommon.History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ThemeSetFontScheme, this.themeElements.fontScheme, fontScheme));
 			this.themeElements.fontScheme = fontScheme;
 		};
+
+		/**
+		 * made for Visio editor
+		 * @return {FontScheme}
+		 */
+		CTheme.prototype.getFontScheme = function () {
+			return this.themeElements.fontScheme;
+		};
+
 		CTheme.prototype.setThemeExt = function (themeExt) {
 			this.themeElements.themeExt = themeExt;
 		};
@@ -9813,7 +9838,7 @@
 			let clrScheme = this.themeElements.clrScheme;
 			let variationClrSchemeLst = clrScheme && clrScheme.clrSchemeExtLst
 				&& clrScheme.clrSchemeExtLst.variationClrSchemeLst;
-			return variationClrSchemeLst.length > 0;
+			return variationClrSchemeLst && variationClrSchemeLst.length > 0;
 		}
 
 		/**
@@ -15973,7 +15998,7 @@
 		 */
 		function builder_CreateShape(sType, nWidth, nHeight, oFill, oStroke, oParent, oTheme, oDrawingDocument, bWord, worksheet) {
 			var oShapeTrack = new AscFormat.NewShapeTrack(sType, 0, 0, oTheme, null, null, null, 0);
-			oShapeTrack.track({}, nWidth, nHeight);
+			oShapeTrack.track({}, nWidth, nHeight, true);
 			var oShape = oShapeTrack.getShape(bWord === true, oDrawingDocument, null);
 			oShape.setParent(oParent);
 			if (worksheet) {

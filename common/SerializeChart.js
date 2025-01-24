@@ -6752,9 +6752,9 @@ BinaryChartWriter.prototype.WriteCT_TickMarks = function (oVal) {
 };
 BinaryChartWriter.prototype.WriteCT_Gridlines = function (oVal) {
     var oThis = this;
-    if(oVal.spPr !== null) {
+    if(oVal !== null) {
         this.bs.WriteItem(c_oserct_chartExGridlinesSPPR, function() {
-            oThis.WriteSpPr(oVal.spPr);
+            oThis.WriteSpPr(oVal);
         });
     }
 };
@@ -13396,19 +13396,19 @@ BinaryChartReader.prototype.ReadCT_Axis = function (type, length, val) {
     }
     else if (c_oserct_chartExAxisMAJORGRID === type)
     {
-        var oNewVal = new AscFormat.CGridlines();
+		let oNewVal = { spPr: null };
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_Gridlines(t, l, oNewVal);
         });
-        val.setMajorGridlines(oNewVal);
+        val.setMajorGridlines(oNewVal.spPr || new AscFormat.CSpPr());
     }
     else if (c_oserct_chartExAxisMINORGRID === type)
     {
-        var oNewVal = new AscFormat.CGridlines();
-        res = this.bcr.Read1(length, function (t, l) {
-            return oThis.ReadCT_Gridlines(t, l, oNewVal);
-        });
-        val.setMinorGridlines(oNewVal);
+		let oNewVal = { spPr: null };
+		res = this.bcr.Read1(length, function (t, l) {
+			return oThis.ReadCT_Gridlines(t, l, oNewVal);
+		});
+		val.setMinorGridlines(oNewVal.spPr || new AscFormat.CSpPr());
     }
     else if (c_oserct_chartExAxisTICKLABELS === type)
     {
@@ -14369,7 +14369,7 @@ BinaryChartReader.prototype.ReadCT_Gridlines = function (type, length, val) {
     var oNewVal;
     if (c_oserct_chartExGridlinesSPPR === type)
     {
-        val.setSpPr(this.ReadSpPr(length));
+        val.spPr = this.ReadSpPr(length);
     }
     else
     {

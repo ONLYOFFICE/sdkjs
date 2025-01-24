@@ -123,11 +123,14 @@ CParagraphBookmark.prototype.GetXY = function()
 };
 CParagraphBookmark.prototype.GoToBookmark = function()
 {
+	// Данный метод широко используется в макросах, если будет переделываться, то надо иметь ввиду, что сейчас
+	// мы считаем, что курсор ставится ПЕРЕД меткой закладки
+	
 	var oParagraph = this.Paragraph;
 	if (!oParagraph)
 		return;
 
-	var oLogicDocument = oParagraph.LogicDocument;
+	var oLogicDocument = oParagraph.GetLogicDocument();
 	if (!oLogicDocument)
 		return;
 
@@ -168,17 +171,17 @@ CParagraphBookmark.prototype.ChangeBookmarkName = function(sNewName)
 {
 	var oParagraph = this.Paragraph;
 	if (!oParagraph)
-		return;
+		return null;
 
 	var oCurPos = oParagraph.Get_PosByElement(this);
 	if (!oCurPos)
-		return;
+		return null;
 
 	var oParent      = this.GetParent();
 	var nPosInParent = this.GetPosInParent(oParent);
 
 	if (!oParent || -1 === nPosInParent)
-		return;
+		return null;
 
 	var oNewMark = new CParagraphBookmark(this.IsStart(), this.GetBookmarkId(), sNewName);
 	oParent.RemoveFromContent(nPosInParent, 1);
@@ -450,29 +453,11 @@ CBookmarksManager.prototype.RemoveBookmark = function(sName)
 CBookmarksManager.prototype.AddBookmark = function(sName)
 {
 	this.Update();
-
-	if (this.GetBookmarkByName(sName))
-	{
-		if (this.IsHiddenBookmark(sName))
-			return;
-
-		var sTempName = "_temp_" + sName;
-		this.LogicDocument.AddBookmark(sTempName);
-		this.LogicDocument.RemoveBookmark(sName);
-
-		this.NeedUpdate = true;
-		var oBookmark = this.GetBookmarkByName(sTempName);
-		if (oBookmark)
-		{
-			this.NeedUpdate = true;
-			oBookmark[0].ChangeBookmarkName(sName);
-			oBookmark[1].ChangeBookmarkName(sName);
-		}
-	}
-	else
-	{
-		this.LogicDocument.AddBookmark(sName);
-	}
+	
+	if (this.GetBookmarkByName(sName) && this.IsHiddenBookmark(sName))
+		return;
+	
+	this.LogicDocument.AddBookmark(sName);
 };
 CBookmarksManager.prototype.GoToBookmark = function(sName)
 {
@@ -569,6 +554,30 @@ CBookmarksManager.prototype.SelectBookmark = function(sName)
 	}
 
 	return false;
+};
+/**
+ * Возвращаем список связанных с данной закладкой параграфов (где лежит начало и конец)
+ * @param {string} bookmarkName
+ * @returns {AscWord.Paragraph[]}
+ */
+CBookmarksManager.prototype.GetRelatedParagraphs = function(bookmarkName)
+{
+	let chars = this.GetBookmarkByName(bookmarkName);
+	if (!chars)
+		return [];
+	
+	let result = [];
+	
+	let startPara = chars[0].GetParagraph();
+	let endPara   = chars[1].GetParagraph();
+	
+	if (startPara)
+		result.push(startPara);
+	
+	if (endPara !== startPara)
+		result.push(endPara);
+	
+	return result;
 };
 
 

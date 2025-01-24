@@ -357,7 +357,8 @@
 	};
 	CUnicodeParser.prototype.IsTextLiteral = function ()
 	{
-		return (this.oLookahead.data === "\"" || this.oLookahead.data === "\'") && !this.isTextLiteral
+		// only \" for text
+		return this.oLookahead.data === "\"" && !this.isTextLiteral
 	};
 	CUnicodeParser.prototype.GetTextLiteral = function ()
 	{
@@ -365,18 +366,27 @@
 		let strSymbol = this.EatToken(this.oLookahead.class);
 		let strExp = "";
 
-		while (this.oLookahead.data !== "\"" && this.oLookahead.data !== "\'" && this.oLookahead.class !== undefined)
+		while (this.oLookahead.data !== "\"" && this.oLookahead.class !== undefined)
 		{
 			strExp += this.oLookahead.data;
 			arrStyles.push(this.oLookahead.style);
 			this.EatToken(this.oLookahead.class)
 		}
 
-		if (this.oLookahead.data === "\"" || this.oLookahead.data === "\'")
+		if (strExp === "" && this.oLookahead.data !== "\"")
+		{
+			return {
+				type: Struc.char,
+				value: strSymbol.data,
+				style: strSymbol.style,
+			}
+		}
+
+		if (this.oLookahead.data === "\"")
 			this.EatToken(this.oLookahead.class);
 
 		return {
-			type: Struc.char, // Struc.plain,
+			type: Struc.char,
 			value: strExp,
 			style: arrStyles,
 		}
@@ -2177,9 +2187,9 @@
 	};
 	CUnicodeParser.prototype.GetRowsLiteral = function (cols, rows)
 	{
-		let arrRows = [];
-		let nRow = 0;
-		let isHasContent = false;
+		let arrRows			= [];
+		let nRow			= 0;
+		let isHasContent	= false;
 
 		while (this.IsRowLiteral() || this.oLookahead.data === "@")
 		{
@@ -2188,11 +2198,15 @@
 				cols[nRow] = this.oLookahead.style;
 				this.EatToken("@");
 
-				if (arrRows.length === 0 && this.oLookahead.data !== "&")
+				if (!rows[nRow])
+				{
 					arrRows.push([]);
 
-				nRow++;
+					if (!this.IsRowLiteral() && this.oLookahead.class === Literals.rBrackets.id)
+						arrRows.push([]);
+				}
 
+				nRow++;
 				isHasContent = true;
 			}
 			else

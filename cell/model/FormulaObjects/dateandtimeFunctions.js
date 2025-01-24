@@ -531,6 +531,36 @@ function (window, undefined) {
 		}
 	}
 
+	/**
+	 * Returns the last day in the month in Date format.
+	 * @param {number} nExcelDateVal
+	 * @param {number} nMonths - The number of months before or after nExcelDateVal.
+	 * A positive value for months yields a future date; a negative value yields a past date.
+	 * @returns {cDate}
+	 */
+	function getLastDayInMonth (nExcelDateVal, nMonths) {
+		let dtValue;
+		if (!AscCommon.bDate1904) {
+			if (nExcelDateVal === 0) {
+				dtValue = new cDate((nExcelDateVal - AscCommonExcel.c_DateCorrectConst + 1) * c_msPerDay);
+			} else if (nExcelDateVal < 60) {
+				dtValue = new cDate((nExcelDateVal - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
+			} else if (nExcelDateVal === 60) {
+				dtValue = new cDate((nExcelDateVal - AscCommonExcel.c_DateCorrectConst - 1) * c_msPerDay);
+			} else {
+				dtValue = new cDate((nExcelDateVal - AscCommonExcel.c_DateCorrectConst - 1) * c_msPerDay);
+			}
+		} else {
+			dtValue = new cDate((nExcelDateVal - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
+		}
+		// setUTCDate doesn't work properly for -UTC time
+		dtValue.setUTCDate(1);
+		dtValue.setUTCMonth(dtValue.getUTCMonth() + nMonths);
+		dtValue.setUTCDate(dtValue.getDaysInMonth());
+
+		return dtValue;
+	}
+
 	cFormulaFunctionGroup['DateAndTime'] = cFormulaFunctionGroup['DateAndTime'] || [];
 	cFormulaFunctionGroup['DateAndTime'].push(cDATE, cDATEDIF, cDATEVALUE, cDAY, cDAYS, cDAYS360, cEDATE, cEOMONTH,
 		cHOUR, cISOWEEKNUM, cMINUTE, cMONTH, cNETWORKDAYS, cNETWORKDAYS_INTL, cNOW, cSECOND, cTIME, cTIMEVALUE, cTODAY,
@@ -1199,28 +1229,10 @@ function (window, undefined) {
 		val = parseInt(val);
 		if (val < 0) {
 			return new cError(cErrorType.not_numeric);
-		} else if (!AscCommon.bDate1904) {
-			if (val === 0) {
-				val = new cDate((val - AscCommonExcel.c_DateCorrectConst + 1) * c_msPerDay);
-			} else if (val < 60) {
-				val = new cDate((val - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
-			} else if (val == 60) {
-				val = new cDate((val - AscCommonExcel.c_DateCorrectConst - 1) * c_msPerDay);
-			} else {
-				val = new cDate((val - AscCommonExcel.c_DateCorrectConst - 1) * c_msPerDay);
-			}
-		} else {
-			val = new cDate((val - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
 		}
-
-		// setUTCDate doesn't work properly for -UTC time
-		val.setUTCDate(1);
-		val.setUTCMonth(val.getUTCMonth() + arg1.getValue());
-		val.setUTCDate(val.getDaysInMonth());
+		val = getLastDayInMonth(val, arg1.getValue());
 
 		return new cNumber(Math.round(val.getExcelDateWithTime()));
-		// return new cNumber(Math.floor((val.getTime() / 1000 - val.getTimezoneOffset() * 60) / c_sPerDay +
-		// 	(AscCommonExcel.c_DateCorrectConst + 1)));
 	};
 
 
@@ -2434,4 +2446,5 @@ function (window, undefined) {
 	window['AscCommonExcel'].days360 = days360;
 	window['AscCommonExcel'].getCorrectDate = getCorrectDate;
 	window['AscCommonExcel'].daysInYear = daysInYear;
+	window['AscCommonExcel'].getLastDayInMonth = getLastDayInMonth;
 })(window);

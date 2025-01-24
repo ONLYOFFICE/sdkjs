@@ -727,6 +727,7 @@
             }
         }
         
+        this.DrawLocks(oGraphicsPDF);
     };
     CPushButtonField.prototype.SetImageRasterId = function(sRasterId, nAPType) {
         let sPrevRasterId;
@@ -1132,9 +1133,10 @@
     CPushButtonField.prototype.DrawFromStream = function(oGraphicsPDF) {
         if (this.IsHidden() == true)
             return;
-            
+        
         let oViewer = editor.getDocumentRenderer();
-
+        oGraphicsPDF.SetGlobalAlpha(1);
+        
         let nImgType;
         if (this.IsPressed()) {
             nImgType = AscPDF.APPEARANCE_TYPE.mouseDown;
@@ -1149,10 +1151,10 @@
         let oTr             = oGraphicsPDF.GetTransform();
         let highlightType   = this.GetHighlight();
 
-        let aOrigRect = this.GetOrigRect();
+        let aOrigRect = this.GetRect();
 
-        let origX   = aOrigRect[0] >> 0;
-        let origY   = aOrigRect[1] >> 0;
+        let origX   = aOrigRect[0];
+        let origY   = aOrigRect[1];
         let X       = originView.x;
         let Y       = originView.y;
 
@@ -1168,7 +1170,8 @@
         croppedCanvas.height    = nHeight;
 
         if (this.IsPressed() == false) {
-            oGraphicsPDF.DrawImageXY(originView, origX, origY);
+            oGraphicsPDF.DrawImageXY(originView, origX, origY, undefined, true);
+            this.DrawLocks(oGraphicsPDF);
             return;
         }
 
@@ -1176,7 +1179,7 @@
             switch (highlightType) {
                 case AscPDF.BUTTON_HIGHLIGHT_TYPES.none:
                 case AscPDF.BUTTON_HIGHLIGHT_TYPES.push:
-                    oGraphicsPDF.DrawImageXY(originView, origX, origY);
+                    oGraphicsPDF.DrawImageXY(originView, origX, origY, undefined, true);
                     break;
                 case AscPDF.BUTTON_HIGHLIGHT_TYPES.invert: {
                     let xCenter = oViewer.width >> 1;
@@ -1221,7 +1224,7 @@
                     oCroppedCtx.globalCompositeOperation='difference';
                     oCroppedCtx.fillStyle='white';
                     oCroppedCtx.fillRect(0, 0, croppedCanvas.width,croppedCanvas.height);
-                    oGraphicsPDF.DrawImageXY(oCroppedCtx.canvas, origX, origY);
+                    oGraphicsPDF.DrawImageXY(oCroppedCtx.canvas, origX, origY, undefined, true);
                     break;
                 }
                 case AscPDF.BUTTON_HIGHLIGHT_TYPES.outline: {
@@ -1240,11 +1243,13 @@
                     oCroppedCtx.globalCompositeOperation='source-over';
                     oCroppedCtx.drawImage(originView, nLineWidth * oTr.sy, nLineWidth * oTr.sy, nWidth - 2 * nLineWidth * oTr.sy, nHeight - 2 * nLineWidth * oTr.sy, nLineWidth * oTr.sy, nLineWidth * oTr.sy, nWidth -  2 * nLineWidth * oTr.sy, nHeight - 2 * nLineWidth * oTr.sy);
     
-                    oGraphicsPDF.DrawImageXY(oCroppedCtx.canvas, origX, origY);
+                    oGraphicsPDF.DrawImageXY(oCroppedCtx.canvas, origX, origY, undefined, true);
                     break;
                 }
             }
         }
+
+        this.DrawLocks(oGraphicsPDF);
     };
     CPushButtonField.prototype.SetPressed = function(bValue) {
         this._pressed = bValue;

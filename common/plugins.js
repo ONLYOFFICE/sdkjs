@@ -140,6 +140,10 @@
 
 		this.queueCommands = [];
 
+		this.internalGuid = "onlyoffice_internal_guid";
+		this.internalCallbacks = [];
+		this.internalCommandAsync = false;
+
 		// посылать ли сообщения о плагине в интерфейс
 		// (визуальные - да, олеобъекты, обновляемые по ресайзу - нет)
 		this.sendsToInterface = {};
@@ -202,7 +206,7 @@
 			return null;
 		},
 
-		register : function(basePath, plugins, isDelayRun)
+		register : function(basePath, plugins, isDelayRun, runDelayArray)
 		{
 			this.path = basePath;
 
@@ -248,7 +252,12 @@
 				if (isSystem)
 				{
 					if (!isDelayRun)
-						this.run(guid, 0, "");
+					{
+						if (undefined === runDelayArray)
+							this.run(guid, 0, "");
+						else
+							runDelayArray.push(guid);
+					}
 					else
 					{
 						setTimeout(function(){
@@ -267,7 +276,12 @@
 					if (!this.isRunned(guid))
 					{
 						if (!isDelayRun)
-							this.run(guid, 0, "");
+						{
+							if (undefined === runDelayArray)
+								this.run(guid, 0, "");
+							else
+								runDelayArray.push(guid);
+						}
 						else
 						{
 							setTimeout(function(){
@@ -323,6 +337,8 @@
 						{
 							if (this.plugins[j].guid === newPlugin.guid)
 							{
+								if (this.runnedPluginsMap[newPlugin.guid])
+									this.close(newPlugin.guid);
 								this.plugins.splice(j, 1);
 								break;
 							}
@@ -1241,7 +1257,7 @@
 		},
 
 		// external
-		externalConnectorMessage : function(data)
+		externalConnectorMessage : function(data, origin)
 		{
 			switch (data["type"])
 			{
@@ -1251,7 +1267,7 @@
 					this.loadExtensionPlugins([{
 						"name" : "connector",
 						"guid" : data["guid"],
-						"baseUrl" : "",
+						"baseUrl" : (origin !== undefined) ? origin : "",
 						"isConnector" : true,
 
 						"variations" : [
@@ -1336,27 +1352,38 @@
 			}
 
 			let currentCommand = this.queueCommands.shift();
-			let runObject = this.runnedPluginsMap[currentCommand.guid];
 
-			// send callback
-			if (!currentCommand.closed && runObject)
+			if (currentCommand.guid === this.internalGuid)
 			{
-				let pluginDataTmp = new CPluginData();
-				pluginDataTmp.setAttribute("guid", currentCommand.guid);
+				let handler = this.internalCallbacks.shift();
+				if (handler)
+					handler(returnValue);
+				this.internalCommandAsync = false;
+			}
+			else
+			{
+				let runObject = this.runnedPluginsMap[currentCommand.guid];
 
-				if (currentCommand.type === CommandTaskType.Command)
+				// send callback
+				if (!currentCommand.closed && runObject)
 				{
-					pluginDataTmp.setAttribute("type", "onCommandCallback");
-					pluginDataTmp.setAttribute("commandReturnData", returnValue);
-				}
-				else
-				{
-					pluginDataTmp.setAttribute("type", "onMethodReturn");
-					pluginDataTmp.setAttribute("methodReturnData", returnValue);
-					runObject.methodReturnAsync = false;
-				}
+					let pluginDataTmp = new CPluginData();
+					pluginDataTmp.setAttribute("guid", currentCommand.guid);
 
-				this.sendMessageToFrame(runObject.isConnector ? "" : runObject.frameId, pluginDataTmp);
+					if (currentCommand.type === CommandTaskType.Command)
+					{
+						pluginDataTmp.setAttribute("type", "onCommandCallback");
+						pluginDataTmp.setAttribute("commandReturnData", returnValue);
+					}
+					else
+					{
+						pluginDataTmp.setAttribute("type", "onMethodReturn");
+						pluginDataTmp.setAttribute("methodReturnData", returnValue);
+						runObject.methodReturnAsync = false;
+					}
+
+					this.sendMessageToFrame(runObject.isConnector ? "" : runObject.frameId, pluginDataTmp);
+				}
 			}
 
 			if (this.queueCommands.length > 0)
@@ -1489,6 +1516,13 @@
 			let currentPlugin = this.getCurrentPluginGuid();
 			if (currentPlugin === "")
 				return;
+
+			if (currentPlugin === this.internalGuid)
+			{
+				this.internalCommandAsync = true;
+				return;
+			}
+
 			if (this.runnedPluginsMap[currentPlugin])
 				this.runnedPluginsMap[currentPlugin].methodReturnAsync = true;
 		},
@@ -1506,9 +1540,17 @@
 			if (this.api[methodName])
 				methodRetValue = this.api[methodName].apply(this.api, value);
 
-			let runObject = this.runnedPluginsMap[guid];
-			if (!runObject.methodReturnAsync)
-				this.shiftCommand(methodRetValue);
+			if (guid === this.internalGuid)
+			{
+				if (!this.internalCommandAsync)
+					this.shiftCommand(methodRetValue);
+			}
+			else
+			{
+				let runObject = this.runnedPluginsMap[guid];
+				if (!runObject.methodReturnAsync)
+					this.shiftCommand(methodRetValue);
+			}
 		}
 	};
 

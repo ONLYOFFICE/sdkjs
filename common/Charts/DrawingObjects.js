@@ -2713,7 +2713,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                 oContent.AddToParagraph(new AscCommonWord.MathMenu(Type), false);
             }
             oSp.checkExtentsByDocContent();
-            oSp.spPr.xfrm.setOffX(pxToMm(coordsFrom.x) + MOVE_DELTA);
+            oSp.spPr.xfrm.setOffX(pxToMm(coordsFrom.x) + MOVE_DELTA - ((worksheet.getRightToLeft() && oSp.spPr.xfrm.extX) ? oSp.spPr.xfrm.extX : 0));
             oSp.spPr.xfrm.setOffY(pxToMm(coordsFrom.y) + MOVE_DELTA);
 
             oSp.checkDrawingBaseCoords();

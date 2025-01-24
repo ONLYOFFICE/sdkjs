@@ -76,6 +76,7 @@ $(function ()
 		logicDocument.PushToContent(table);
 
 		AscTest.RemoveTableBorders(table);
+		AscTest.RemoveTableMargins(table);
 
 		table.GetRow(0).SetHeight(50, Asc.linerule_AtLeast);
 		table.GetRow(1).SetHeight(50, Asc.linerule_AtLeast);
@@ -85,6 +86,7 @@ $(function ()
 		let cellContent = table.GetRow(0).GetCell(0).GetContent();
 		cellContent.PushToContent(AscTest.CreateParagraph());
 		cellContent.PushToContent(AscTest.CreateParagraph());
+		
 
 		// Test a normal table divided into two pages
 		AscTest.Recalculate();

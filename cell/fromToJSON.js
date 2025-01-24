@@ -3644,7 +3644,7 @@
 		let api = window["Asc"]["editor"];
 		let WorkbookView = api.wb;
 		let renameSheetMap = {};
-		let oTempWorkBook = new AscCommonExcel.Workbook();
+		let oTempWorkBook = new AscCommonExcel.Workbook(undefined, undefined, false);
 		let aRestoredSheets = [];
 		let oThis = this;
 		oTempWorkBook.DrawingDocument = Asc.editor.wbModel.DrawingDocument;

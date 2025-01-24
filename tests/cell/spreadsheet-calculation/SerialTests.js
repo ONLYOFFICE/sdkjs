@@ -110,7 +110,7 @@ $(function () {
 	api.isOpenOOXInBrowser = false;
 	api._openDocument(AscCommon.getEmpty());
 	api._openOnClient();
-	api.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
+	api.initCollaborativeEditing({});
 	api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,
 		api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
 	let wb = api.wbModel;
@@ -2699,9 +2699,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -2746,9 +2746,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "true".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "true".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "true".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -2787,9 +2787,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -2814,9 +2814,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -2844,9 +2844,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -2882,9 +2882,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -2912,9 +2912,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -2944,9 +2944,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -2973,9 +2973,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is nulld as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -2999,9 +2999,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -3029,9 +3029,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -3056,9 +3056,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -3088,9 +3088,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -3115,9 +3115,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -3145,9 +3145,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -3178,9 +3178,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -3208,9 +3208,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -3235,9 +3235,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -3266,9 +3266,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -3296,9 +3296,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -3327,9 +3327,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -3357,9 +3357,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -3390,9 +3390,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -3422,9 +3422,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -3451,9 +3451,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "true".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -3480,9 +3480,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "true".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -3509,9 +3509,9 @@ $(function () {
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "true".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -3858,7 +3858,7 @@ $(function () {
 			['2', '4']
 		];
 		//  Context menu property is "Linear Trend"
-		getFilledData(0, 0, 1, 0, testData, [0,0]);
+		getFilledData(0, 0, 1, 0, testData, [0, 0]);
 		let oSeriesSettings = new cSeriesSettings();
 		assert.ok(oSeriesSettings, 'oSeriesSettings is created.');
 		oSeriesSettings.prepare(wsView);
@@ -3868,9 +3868,9 @@ $(function () {
 
 		autofillRange = getRange(2, 0, 4, 0);
 		autofillData(assert, autofillRange, [['6', '8', '10']], 'Autofill Rows. Context menu - Linear Trend');
-		clearData(0,0,4,0);
+		clearData(0, 0, 4, 0);
 		//Context menu property is "Growth Trend"
-		getFilledData(0, 0, 1, 0, testData, [0,0]);
+		getFilledData(0, 0, 1, 0, testData, [0, 0]);
 		oSeriesSettings = new cSeriesSettings();
 		assert.ok(oSeriesSettings, 'oSeriesSettings is created.');
 		oSeriesSettings.prepare(wsView);
@@ -3880,9 +3880,9 @@ $(function () {
 
 		autofillRange = getRange(2, 0, 4, 0);
 		autofillData(assert, autofillRange, [['7.999999999999998', '15.999999999999991', '31.999999999999986']], 'Autofill Rows. Context menu - Growth Trend');
-		clearData(0,0,4,0);
+		clearData(0, 0, 4, 0);
 		//Context menu property is "Copy cells"
-		getFilledData(0, 0, 1, 0, testData, [0,0]);
+		getFilledData(0, 0, 1, 0, testData, [0, 0]);
 		nType = oRightClickOptions.copyCells;
 		wsView.activeFillHandle = getRange(0, 0, 4, 0);
 		wsView.fillHandleDirection = 0;
@@ -3890,9 +3890,9 @@ $(function () {
 
 		autofillRange = getRange(2, 0, 4, 0);
 		autofillData(assert, autofillRange, [['2', '4', '2']], 'Autofill Rows. Context menu - Copy cells');
-		clearData(0,0,4,0);
+		clearData(0, 0, 4, 0);
 		// Context menu property is "Fill series"
-		getFilledData(0, 0, 1, 0, testData, [0,0]);
+		getFilledData(0, 0, 1, 0, testData, [0, 0]);
 		nType = oRightClickOptions.fillSeries;
 		wsView.activeFillHandle = getRange(0, 0, 4, 0);
 		wsView.fillHandleDirection = 0;
@@ -3900,9 +3900,9 @@ $(function () {
 
 		autofillRange = getRange(2, 0, 4, 0);
 		autofillData(assert, autofillRange, [['6', '8', '10']], 'Autofill Rows. Context menu - Fill series');
-		clearData(0,0,4,0);
+		clearData(0, 0, 4, 0);
 		// Toolbar "Series"
-		getFilledData(0, 0, 4, 0, testData, [0,0]);
+		getFilledData(0, 0, 4, 0, testData, [0, 0]);
 		oSeriesSettings = new cSeriesSettings();
 		assert.ok(oSeriesSettings, 'oSeriesSettings is created.');
 		oSeriesSettings.prepare(wsView);
@@ -3911,9 +3911,9 @@ $(function () {
 
 		autofillRange = getRange(2, 0, 4, 0);
 		autofillData(assert, autofillRange, [['6', '8', '10']], 'Autofill Rows. Toolbar - Series - Linear');
-		clearData(0,0,4,0);
+		clearData(0, 0, 4, 0);
 		// Context menu property is "Series". Rows.
-		getFilledData(0, 0, 1, 0, testData, [0,0]);
+		getFilledData(0, 0, 1, 0, testData, [0, 0]);
 		nType = oRightClickOptions.series;
 		wsView.activeFillHandle = getRange(0, 0, 4, 0);
 		wsView.fillHandleDirection = 0;
@@ -3924,9 +3924,9 @@ $(function () {
 
 		autofillRange = getRange(2, 0, 4, 0);
 		autofillData(assert, autofillRange, [['4', '5', '6']], 'Autofill Rows. Context menu - Series - Linear.');
-		clearData(0,0,4,0);
+		clearData(0, 0, 4, 0);
 		// Context menu property is "Copy cell" with selected one cell number type data. Rows.
-		getFilledData(0, 0, 0, 0, testData, [0,0]);
+		getFilledData(0, 0, 0, 0, testData, [0, 0]);
 		nType = oRightClickOptions.copyCells;
 		wsView.activeFillHandle = getRange(0, 0, 4, 0);
 		wsView.fillHandleDirection = 0;
@@ -3934,9 +3934,9 @@ $(function () {
 
 		autofillRange = getRange(1, 0, 4, 0);
 		autofillData(assert, autofillRange, [['2', '2', '2', '2']], 'Autofill Rows. Context menu - Copy cells. Selected one cell with number type data.');
-		clearData(0,0,4,0);
+		clearData(0, 0, 4, 0);
 		// Context menu property is "Fill series" with selected one cell number type data. Rows.
-		getFilledData(0, 0, 0, 0, testData, [0,0]);
+		getFilledData(0, 0, 0, 0, testData, [0, 0]);
 		nType = oRightClickOptions.fillSeries;
 		wsView.activeFillHandle = getRange(0, 0, 4, 0);
 		wsView.fillHandleDirection = 0;
@@ -3944,9 +3944,9 @@ $(function () {
 
 		autofillRange = getRange(1, 0, 4, 0);
 		autofillData(assert, autofillRange, [['3', '4', '5', '6']], 'Autofill Rows. Context menu - Fill series. Selected one cell with number type data.');
-		clearData(0,0,4,0);
+		clearData(0, 0, 4, 0);
 		// Context menu property is "Series" with selected one cell number type data. Rows.
-		getFilledData(0, 0, 0, 0, testData, [0,0]);
+		getFilledData(0, 0, 0, 0, testData, [0, 0]);
 		nType = oRightClickOptions.series;
 		wsView.activeFillHandle = getRange(0, 0, 4, 0);
 		wsView.fillHandleDirection = 0;
@@ -3957,12 +3957,12 @@ $(function () {
 
 		autofillRange = getRange(1, 0, 4, 0);
 		autofillData(assert, autofillRange, [['3', '4', '5', '6']], 'Autofill Rows. Context menu - Series - Linear. Selected one cell with number type data.');
-		clearData(0,0,4,0);
+		clearData(0, 0, 4, 0);
 		// Context menu property is "Copy cells" with selected one cell Date type data. Columns.
 		testData = [
 			['01/01/2000']
 		];
-		getFilledData(0, 0, 0, 0, testData, [0,0]);
+		getFilledData(0, 0, 0, 0, testData, [0, 0]);
 		nType = oRightClickOptions.copyCells;
 		wsView.activeFillHandle = getRange(0, 0, 0, 4);
 		wsView.fillHandleDirection = 1;
@@ -3970,9 +3970,9 @@ $(function () {
 
 		autofillRange = getRange(0, 1, 0, 4);
 		autofillData(assert, autofillRange, [['36526'], ['36526'], ['36526'], ['36526']], 'Autofill Columns. Context menu - Copy cells. Selected one cell with Date type data.');
-		clearData(0,0,0,4);
+		clearData(0, 0, 0, 4);
 		// Context menu property is "Fill series" with selected one cell Date type data. Columns.
-		getFilledData(0, 0, 0, 0, testData, [0,0]);
+		getFilledData(0, 0, 0, 0, testData, [0, 0]);
 		nType = oRightClickOptions.fillSeries;
 		wsView.activeFillHandle = getRange(0, 0, 0, 4);
 		wsView.fillHandleDirection = 1;
@@ -3980,25 +3980,12 @@ $(function () {
 
 		autofillRange = getRange(0, 1, 0, 4);
 		autofillData(assert, autofillRange, [['36527'], ['36528'], ['36529'], ['36530']], 'Autofill Columns. Context menu - Fill series. Selected one cell with Date type data.');
-		clearData(0,0,0,4);
-		// Context menu property is "Fill Months" with selected one cell Date type data. Rows.
-		/*getFilledData(0, 0, 0, 0, testData, [0,0]);
-		nType = oRightClickOptions.fillMonths;
-		wsView.activeFillHandle = getRange(0, 0, 4, 0);
-		wsView.fillHandleDirection = 0;
-		oSeriesSettings = new cSeriesSettings();
-		assert.ok(oSeriesSettings, 'oSeriesSettings is created.');
-		oSeriesSettings.prepare(wsView);
-		api.asc_FillCells(nType, oSeriesSettings);
-
-		autofillRange = getRange(1, 0, 4, 0);
-		autofillData(assert, autofillRange, [['36557', '36586', '36617', '36647']], 'Autofill Rows. Context menu - Fill Months. Selected one cell with Date type data.');
-		clearData(0, 0, 4, 0);*/
+		clearData(0, 0, 0, 4);
 		// The context menu property is "Fill series" with selected filled cells - A1:F1. The fill handle has a vertical direction. Case: bug #65405
 		testData = [
 			['1', '1', 'Test1', 'Test1', '01/01/2000', '01/01/2000']
 		];
-		getFilledData(0, 0, 5, 0, testData, [0,0]);
+		getFilledData(0, 0, 5, 0, testData, [0, 0]);
 		nType = oRightClickOptions.fillSeries;
 		wsView.activeFillHandle = getRange(0, 0, 5, 2);
 		wsView.fillHandleDirection = 1;
@@ -4012,7 +3999,7 @@ $(function () {
 		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill series. Selected filled cells - A1:F1. The fill handle has a vertical direction. Case: bug #65405');
 		clearData(0, 0, 5, 2);
 		// The context menu property is "Copy cell" with selected filled cells - A1:F1. The fill handle has a vertical direction. Case: bug #65405
-		getFilledData(0, 0, 5, 0, testData, [0,0]);
+		getFilledData(0, 0, 5, 0, testData, [0, 0]);
 		nType = oRightClickOptions.copyCells;
 		wsView.activeFillHandle = getRange(0, 0, 5, 2);
 		wsView.fillHandleDirection = 1;
@@ -4034,7 +4021,7 @@ $(function () {
 			['01/01/2000'],
 			['01/01/2000']
 		];
-		getFilledData(0, 0, 0, 5, testData, [0,0]);
+		getFilledData(0, 0, 0, 5, testData, [0, 0]);
 		nType = oRightClickOptions.fillSeries;
 		wsView.activeFillHandle = getRange(0, 0, 2, 5);
 		wsView.fillHandleDirection = 0;
@@ -4052,7 +4039,7 @@ $(function () {
 		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill series. Selected filled cells - A1:A6. The fill handle has a horizontal direction. Case: bug #65405');
 		clearData(0, 0, 2, 5);
 		// The context menu property is "Copy cell" with selected filled cells - A1:A6. The fill handle has a horizontal direction. Case: bug #65405
-		getFilledData(0, 0, 0, 5, testData, [0,0]);
+		getFilledData(0, 0, 0, 5, testData, [0, 0]);
 		nType = oRightClickOptions.copyCells;
 		wsView.activeFillHandle = getRange(0, 0, 2, 5);
 		wsView.fillHandleDirection = 0;
@@ -4073,7 +4060,7 @@ $(function () {
 		testData = [
 			['1']
 		];
-		getFilledData(0, 0, 0, 3, testData, [0,0]);
+		getFilledData(0, 0, 0, 3, testData, [0, 0]);
 		oSeriesSettings = new cSeriesSettings();
 		assert.ok(oSeriesSettings, 'oSeriesSettings is created.');
 		oSeriesSettings.prepare(wsView);
@@ -4087,7 +4074,7 @@ $(function () {
 		autofillData(assert, autofillRange, expectedData, 'Vertical selected range, but "Series in" - Rows.');
 		clearData(0, 0, 0, 3);
 		// Horizontal selected range, but "Series in" - Columns. Bug #65551
-		getFilledData(0, 0, 3, 0, testData, [0,0]);
+		getFilledData(0, 0, 3, 0, testData, [0, 0]);
 		oSeriesSettings = new cSeriesSettings();
 		assert.ok(oSeriesSettings, 'oSeriesSettings is created.');
 		oSeriesSettings.prepare(wsView);
@@ -4100,6 +4087,908 @@ $(function () {
 		];
 		autofillData(assert, autofillRange, expectedData, 'Horizontal selected range, but "Series in" - Columns.');
 		clearData(0, 0, 3, 0);
+		// Case: The context menu property "Fill weekdays". Vertical. One selected cell. Asc sequence
+		testData = [
+			['01/01/2000']
+		];
+		getFilledData(0, 0, 0, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillWeekdays;
+		wsView.activeFillHandle = getRange(0, 0, 0, 7);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 1, 0, 7);
+		expectedData = [['36528'], ['36529'], ['36530'], ['36531'], ['36532'], ['36535'], ['36536']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill weekdays. One selected cell. Asc sequence');
+		clearData(0, 0, 0, 7);
+		// Case: The context menu property "Fill weekdays". Horizontal. One selected cell. Asc sequence. Type Date
+		getFilledData(0, 0, 0, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillWeekdays;
+		wsView.activeFillHandle = getRange(0, 0, 7, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(1, 0, 7, 0);
+		expectedData = [['36528', '36529', '36530', '36531', '36532', '36535', '36536']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill weekdays. One selected cell. Asc sequence');
+		clearData(0, 0, 7, 0);
+		// Case: The context menu property "Fill weekdays". Vertical. One selected cell. Reverse sequence. Type Date
+		getFilledData(0, 7, 0, 7, testData, [7, 0]);
+		nType = oRightClickOptions.fillWeekdays;
+		wsView.activeFillHandle = getRange(0, 7, 0, 0);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 0, 6);
+		expectedData = [['36517'], ['36518'], ['36521'], ['36522'], ['36523'], ['36524'], ['36525']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill weekdays. One selected cell. Reverse sequence');
+		clearData(0, 0, 0, 7);
+		// Case: The context menu property "Fill weekdays". Horizontal. One selected cell. Reverse sequence. Type Date
+		getFilledData(7, 0, 7, 0, testData, [0, 7]);
+		nType = oRightClickOptions.fillWeekdays;
+		wsView.activeFillHandle = getRange(7, 0, 0, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 6, 0);
+		expectedData = [['36517', '36518', '36521', '36522', '36523', '36524', '36525']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill weekdays. One selected cell. Reverse sequence. Type Date');
+		clearData(0, 0, 7, 0);
+		// Case: The context menu property "Fill weekdays". Vertical. Two selected cells. Asc sequence. Type Date.
+		testData = [
+			['01/01/2000'],
+			['01/03/2000']
+		];
+		getFilledData(0, 0, 0, 1, testData, [0, 0]);
+		nType = oRightClickOptions.fillWeekdays;
+		wsView.activeFillHandle = getRange(0, 0, 0, 7);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 2, 0, 7);
+		expectedData = [['36530'], ['36532'], ['36536'], ['36538'], ['36542'], ['36544']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill weekdays. Two selected cells. Asc sequence. Type Date');
+		clearData(0, 0, 0, 7);
+
+		// Case: The context menu property "Fill weekdays". Vertical. Two selected cells. Reverse sequence. Type Date.
+		getFilledData(0, 6, 0, 7, testData, [6, 0]);
+		nType = oRightClickOptions.fillWeekdays;
+		wsView.activeFillHandle = getRange(0, 7, 0, 0);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 0, 5);
+		expectedData = [['36510'], ['36514'], ['36516'], ['36518'], ['36522'], ['36524']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill weekdays. Two selected cells. Reverse sequence. Type Date');
+		clearData(0, 0, 0, 7);
+		// Case: The context menu property "Fill weekdays". Horizontal. Three selected cells. Asc sequence. Type Date.
+		testData = [
+			['01/02/2000', '01/04/2000', '01/06/2000']
+		];
+		getFilledData(0, 0, 2, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillWeekdays;
+		wsView.activeFillHandle = getRange(0, 0, 7, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(3, 0, 7, 0);
+		expectedData = [['36535', '36537', '36539', '36543', '36545']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill weekdays. Three selected cells. Asc sequence. Type Date');
+		clearData(0, 0, 7, 0);
+		// Case: The context menu property "Fill weekdays". Horizontal. Three selected cells. Reverse sequence. Type Date
+		getFilledData(5, 0, 7, 0, testData, [0, 5]);
+		nType = oRightClickOptions.fillWeekdays;
+		wsView.activeFillHandle = getRange(7, 0, 0, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 4, 0);
+		expectedData = [['36514', '36516', '36518', '36522', '36524']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill weekdays. Three selected cells. Reverse sequence. Type Date');
+		clearData(0, 0, 7, 0);
+		// Case: The context menu property "Fill weekdays". Vertical. One selected cell. Asc sequence. Type Date & Time
+		testData = [
+			['01/01/2000 12:00']
+		];
+		getFilledData(0, 0, 0, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillWeekdays;
+		wsView.activeFillHandle = getRange(0, 0, 0, 7);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 1, 0, 7);
+		expectedData = [['36528'], ['36529'], ['36530'], ['36531'], ['36532'], ['36535'], ['36536']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill weekdays. One selected cell. Asc sequence. Type Date & Time');
+		clearData(0, 0, 0, 7);
+
+		// Case: The context menu property "Fill weekdays". Vertical. One selected cell. Reverse sequence. Type Date & Time
+		getFilledData(0, 7, 0, 7, testData, [7, 0]);
+		nType = oRightClickOptions.fillWeekdays;
+		wsView.activeFillHandle = getRange(0, 7, 0, 0);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 0, 6);
+		expectedData = [['36517'], ['36518'], ['36521'], ['36522'], ['36523'], ['36524'], ['36525']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill weekdays. One selected cell. Reverse sequence. Type Date & Time');
+		clearData(0, 0, 0, 7);
+		// Case: The context menu property "Fill weekends". Horizontal.  Two selected cells. Asc sequence. Type Mixed date.
+		testData = [
+			['01/01/2000 12:00', '01/02/2000']
+		];
+		getFilledData(0, 0, 1, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillWeekdays;
+		wsView.activeFillHandle = getRange(0, 0, 7, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(2, 0, 7, 0);
+		expectedData = [['36528', '36529', '36530', '36531', '36532', '36535']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill weekdays. Two selected cells. Asc sequence. Type Mixed date.');
+		clearData(0, 0, 7, 0);
+		// Case: The context menu property "Fill weekdays". Horizontal. Two selected cells. Reverse sequence. Type Mixed date.
+		testData = [
+			['01/01/2000 12:00', '01/02/2000']
+		];
+		getFilledData(6, 0, 7, 0, testData, [0, 6]);
+		nType = oRightClickOptions.fillWeekdays;
+		wsView.activeFillHandle = getRange(0, 0, 0, 7);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 5, 0);
+		expectedData = [['36518', '36521', '36522', '36523', '36524', '36525']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill weekends. Two selected cells. Reverse sequence. Type Mixed date.');
+		clearData(0, 0, 7, 0);
+		// Case: The context menu property "Fill weekdays". Vertical. One selected cell. Asc sequence. Type Date. 1900 year.
+		testData = [
+			['01/01/1900']
+		];
+		getFilledData(0, 0, 0, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillWeekdays;
+		wsView.activeFillHandle = getRange(0, 0, 0, 7);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 1, 0, 7);
+		expectedData = [['2'], ['3'], ['4'], ['5'], ['6'], ['9'], ['10']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill weekends. One selected cell. Asc sequence. Type Date. 1900 year.');
+		// Case: The context menu property "Fill weekdays". Horizontal. One selected cell. Reverse sequence. Type Date. 1900 year
+		getFilledData(7, 0, 7, 0, testData, [0, 7]);
+		nType = oRightClickOptions.fillWeekdays;
+		wsView.activeFillHandle = getRange(7, 0, 0, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 6, 0);
+		expectedData = [['1', '1', '1', '1', '1', '1', '1']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill weekdays. One selected cell. Reverse sequence. Type Date. 1900 year.');
+		clearData(0, 0, 0, 7);
+		// Case: The context menu property "Fill weekdays". Vertical. Two selected cells. Asc sequence. Type Date. 1900 year
+		testData = [
+			['01/01/1900'],
+			['01/03/1900']
+		];
+		getFilledData(0, 0, 0, 1, testData, [0, 0]);
+		nType = oRightClickOptions.fillWeekdays;
+		wsView.activeFillHandle = getRange(0, 0, 0, 7);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 2, 0, 7);
+		expectedData = [['5'], ['9'], ['11'], ['13'], ['17'], ['19']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill weekends. Two selected cells. Asc sequence. Type Date. 1900 year.');
+		clearData(0, 0, 0, 7);
+		// Case: The context menu property "Fill weekdays". Horizontal. Two selected cells. Reverse sequence. Type Date. 1900 year
+		testData = [
+			['01/04/1900', '01/06/1900']
+		];
+		getFilledData(6, 0, 7, 0, testData, [0, 6]);
+		nType = oRightClickOptions.fillWeekdays;
+		wsView.activeFillHandle = getRange(7, 0, 0, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 5, 0);
+		expectedData = [['4', '6', '4', '6', '4', '2']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill weekdays. Two selected cells. Reverse sequence. Type Date. 1900 year.');
+		clearData(0, 0, 0, 7);
+
+		// Case: The context menu property "Fill weekdays". Vertical. Three selected cells. Asc sequence. Type Date. 1900 year
+		testData = [
+			['01/02/1900'],
+			['01/04/1900'],
+			['01/06/1900']
+		];
+		getFilledData(0, 0, 0, 2, testData, [0, 0]);
+		nType = oRightClickOptions.fillWeekdays;
+		wsView.activeFillHandle = getRange(0, 0, 0, 7);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 3, 0, 7);
+		expectedData = [['10'], ['12'], ['16'], ['18'], ['20']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill weekdays. Three selected cells. Asc sequence. Type Date. 1900 year.');
+		clearData(0, 0, 0, 7);
+
+		// Case: The context menu property "Fill weekdays". Horizontal. Three selected cells. Reverse sequence. Type Date. 1900 year
+		testData = [
+			['01/09/1900', '01/11/1900', '01/13/1900']
+		];
+		getFilledData(5, 0, 7, 0, testData, [0, 5]);
+		nType = oRightClickOptions.fillWeekdays;
+		wsView.activeFillHandle = getRange(7, 0, 0, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 4, 0);
+		expectedData = [['11','13', '9', '3','5']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill weekdays. Three selected cells. Reverse sequence. Type Date. 1900 year.');
+		clearData(0, 0, 0, 7);
+		// Case: The context menu property "Fill weekdays". Vertical. Three selected cells. Negative case - incorrect sequence. Asc sequence. Type Date.
+		testData = [
+			['01/02/2000'],
+			['01/04/2000'],
+			['01/05/2000']
+		];
+		getFilledData(0, 0, 0, 2, testData, [0, 0]);
+		nType = oRightClickOptions.fillWeekdays;
+		wsView.activeFillHandle = getRange(0, 0, 0, 7);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 3, 0, 7);
+		expectedData = [['36527'], ['36529'], ['36530'], ['36527'], ['36529']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill weekdays. Three selected cells. Negative case - incorrect sequence. Asc sequence. Type Date.');
+		clearData(0, 0, 0, 7);
+		// Case: The context menu property "Fill weekdays". Vertical. Three selected cells. Negative case - incorrect sequence. Reverse sequence. Type Date.
+		getFilledData(0, 5, 0, 7, testData, [5, 0]);
+		nType = oRightClickOptions.fillWeekdays;
+		wsView.activeFillHandle = getRange(0, 7, 0, 0);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 0, 4);
+		expectedData = [['36529'], ['36530'], ['36527'], ['36529'], ['36530']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill weekdays. Three selected cells. Negative case - incorrect sequence. Reverse sequence. Type Date.');
+		clearData(0, 0, 0, 7);
+		// Case: The context menu property "Fill months". Vertical.  One selected cell. Asc sequence. Type Date.
+		testData = [
+			['01/01/2000']
+		];
+		getFilledData(0, 0, 0, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 0, 0, 7);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 1, 0, 7);
+		expectedData = [['36557'], ['36586'], ['36617'], ['36647'], ['36678'], ['36708'], ['36739']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill months. One selected cell. Asc sequence. Type Date.');
+		clearData(0, 0, 0, 7);
+
+		// Case: The context menu property "Fill months". Vertical. One selected cell. Reverse sequence. Type Date.
+		getFilledData(0, 7, 0, 7, testData, [7, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 7, 0, 0);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 0, 6);
+		expectedData = [['36312'], ['36342'], ['36373'], ['36404'], ['36434'], ['36465'], ['36495']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill months. One selected cell. Reverse sequence. Type Date.');
+		clearData(0, 0, 0, 7);
+		// Case: The context menu property "Fill months". Horizontal. Two selected cells. Asc sequence. Type Date.
+		testData = [
+			['01/01/2000', '03/01/2000']
+		];
+		getFilledData(0, 0, 1, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 0, 7, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(2, 0, 7, 0);
+		expectedData = [['36647', '36708', '36770', '36831', '36892', '36951']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill months. Two selected cells. Asc sequence. Type Date.');
+		clearData(0, 0, 7, 0);
+
+		// Case: The context menu property "Fill months". Horizontal. Two selected cells. Reverse sequence. Type Date.
+		getFilledData(6, 0, 7, 0, testData, [0, 6]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(7, 0, 0, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 5, 0);
+		expectedData = [['36161', '36220', '36281', '36342', '36404', '36465']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill months. Two selected cells. Reverse sequence. Type Date.');
+		clearData(0, 0, 7, 0);
+		// Case: The context menu property "Fill months". Vertical. Three selected cells. Asc sequence. Type Date.
+		testData = [
+			['02/01/2000'],
+			['04/01/2000'],
+			['06/01/2000']
+		];
+		getFilledData(0, 0, 0, 2, testData, [0, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 0, 0, 7);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 3, 0, 7);
+		expectedData = [['36739'], ['36800'], ['36861'], ['36923'], ['36982']]
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill months. Three selected cells. Asc sequence. Type Date.');
+		clearData(0, 0, 0, 7);
+		// Case: The context menu property "Fill months". Vertical. Three selected cells. Reverse sequence. Type Date.
+		getFilledData(0, 5, 0, 7, testData, [5, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 7, 0, 0);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+		
+		autofillRange = getRange(0, 0, 0, 4);
+		expectedData = [['36251'], ['36312'], ['36373'], ['36434'], ['36495']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill months. Three selected cells. Reverse sequence. Type Date.');
+		clearData(0, 0, 0, 7);
+		// Case: The context menu property "Fill months". Horizontal. Three selected cells. Asc sequence. Negative case - incorrect sequence. Type Date.
+		testData = [
+			['01/01/2000', '03/01/2000', '06/01/2000']
+		];
+		getFilledData(0, 0, 2, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 0, 7, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(3, 0, 7, 0);
+		expectedData = [['36526', '36586', '36678', '36526', '36586']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill months. Three selected cells. Asc sequence. Negative case - incorrect sequence. Type Date.');
+		clearData(0, 0, 7, 0);
+		// Case: The context menu property "Fill months". Horizontal. Three selected cells. Reverse sequence. Negative case - incorrect sequence. Type Date.
+		testData = [
+			['01/01/2000', '03/01/2000', '06/01/2000']
+		];
+		getFilledData(5, 0, 7, 0, testData, [0, 5]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(7, 0, 0, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 4, 0);
+		expectedData = [['36586', '36678', '36526', '36586', '36678']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill months. Three selected cells. Reverse sequence. Negative case - incorrect sequence. Type Date.');
+		clearData(0, 0, 7, 0);
+		// Case: The context menu property "Fill months". Two selected cells. Vertical. Asc sequence. Type Date & Time.
+		testData = [
+			['01/01/2000 12:00'],
+			['03/01/2000 13:00']
+		];
+		getFilledData(0, 0, 0, 1, testData, [0,0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 0, 0, 7);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 2, 0, 7);
+		expectedData = [['36647'], ['36708'], ['36770'], ['36831'], ['36892'],['36951']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill months. Two selected cells. Vertical. Asc sequence. Type Date & Time.');
+		clearData(0, 0, 0, 7);
+		// Case: The context menu property "Fill months". Vertical. Two selected cells. Reverse sequence. Type Date & Time.
+		getFilledData(0, 6, 0, 7, testData, [6, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 7, 0, 0);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 0, 5);
+		expectedData = [['36161'], ['36220'], ['36281'], ['36342'], ['36404'], ['36465']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill months. Two selected cells. Reverse sequence. Type Date & Time.');
+		clearData(0, 0, 0, 7);
+		// Case: The context menu property "Fill months". Horizontal. Three selected cells. Asc sequence. Type Mixed date.
+		testData = [
+			['02/01/2000 12:00', '04/01/2000', '06/01/2000 13:00']
+		];
+		getFilledData(0, 0, 2, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 0, 7, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(3, 0, 7, 0);
+		expectedData = [['36739', '36800', '36861', '36923', '36982']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill months. Three selected cells. Asc sequence. Type Mixed date.');
+		clearData(0, 0, 7, 0);
+		// Case: The context menu property "Fill months". Horizontal. Three selected cells. Reverse sequence. Type Mixed date.
+		getFilledData(5, 0, 7, 0, testData, [0, 5]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(7, 0, 0, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 4, 0);
+		expectedData = [['36251', '36312', '36373', '36434', '36495']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill months. Three selected cells. Reverse sequence. Type Mixed date.');
+		clearData(0, 0, 7, 0);
+		// Case: The context menu property "Fill months". Vertical. One selected cell. Asc sequence. Type Date. 1900 year.
+		testData = [
+			['01/01/1900']
+		];
+		getFilledData(0, 0, 0, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 0, 0, 7);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 1, 0, 7);
+		expectedData = [['32'], ['61'], ['92'], ['122'], ['153'], ['183'], ['214']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill months. One selected cell. Asc sequence. Type Date. 1900 year');
+		clearData(0, 0, 0, 7);
+		// Case: The context menu property "Fill months". Vertical. One selected cell. Reverse sequence. Type Date. 1900 year.
+		getFilledData(0, 7, 0, 7, testData, [7, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 7, 0, 0);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 0, 6);
+		expectedData = [['1'], ['1'], ['1'], ['1'], ['1'], ['1'], ['1']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill months. One selected cell. Reverse sequence. Type Date. 1900 year.');
+		clearData(0, 0, 0, 7);
+		// Case: The context menu property "Fill months". Horizontal. Two selected cells. Asc sequence. Type Date. 1900 year.
+		testData = [
+			['02/01/1900', '04/01/1900']
+		];
+		getFilledData(0, 0, 1, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 0, 7, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(2, 0, 7, 0);
+		expectedData = [['153', '214', '275', '336', '398', '457']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill months. Two selected cells. Asc sequence. Type Date. 1900 year.');
+		clearData(0, 0, 7, 0);
+		// Case: The context menu property "Fill months". Horizontal. Two selected cells. Reverse sequence. Type Date. 1900 year.
+		testData = [
+			['06/01/1900', '08/01/1900']
+		];
+		getFilledData(6, 0, 7, 0, testData, [0, 6]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(7, 0, 0, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 5, 0);
+		expectedData = [['153', '214', '153', '214', '32', '92']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill months. Two selected cells. Reverse sequence. Type Date. 1900 year.');
+		clearData(0, 0, 7, 0);
+		// Case: The context menu property "Fill years". Vertical. One selected cell. Asc sequence. Type Date.
+		testData = [
+			['01/01/2000']
+		];
+		getFilledData(0, 0, 0, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 0, 0, 7);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 1, 0, 7);
+		expectedData = [['36892'], ['37257'], ['37622'], ['37987'], ['38353'], ['38718'], ['39083']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill years. One selected cell. Asc sequence. Type Date.');
+		clearData(0, 0, 0, 7);
+		// Case: The context menu property "Fill years". Vertical. One selected cell. Reverse sequence. Type Date.
+		getFilledData(0, 7, 0, 7, testData, [7, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 7, 0, 0);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 0, 6);
+		expectedData = [['33970'], ['34335'], ['34700'], ['35065'], ['35431'], ['35796'], ['36161']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill years. One selected cell. Reverse sequence. Type Date.');
+		clearData(0, 0, 0, 7);
+		// Case: The context menu property "Fill years". Horizontal. Two selected cells. Asc sequence. Type Date.
+		testData = [
+			['01/01/2000', '01/01/2002']
+		];
+		getFilledData(0, 0, 1, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 0, 7, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(2, 0, 7, 0);
+		expectedData = [['37987', '38718', '39448', '40179', '40909', '41640']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill years. Two selected cells. Asc sequence. Type Date.');
+		clearData(0, 0, 7, 0);
+		// Case: The context menu property "Fill years". Horizontal. Two selected cells. Reverse sequence. Type Date.
+		getFilledData(6, 0, 7, 0, testData, [0, 6]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(7, 0, 0, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 5, 0);
+		expectedData = [['32143', '32874', '33604', '34335', '35065', '35796']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill years. Two selected cells. Reverse sequence. Type Date.');
+		clearData(0, 0, 0, 7);
+		// Case: The context menu property "Fill years". Vertical. Three selected cells. Asc sequence. Type Date.
+		testData = [
+			['01/01/2000'],
+			['01/01/2025'],
+			['01/01/2050']
+		];
+		getFilledData(0, 0, 0, 2, testData, [0, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 0, 0, 7);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 3, 0, 7);
+		expectedData = [['63920'], ['73051'], ['82182'], ['91313'], ['100444']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill years. Three selected cells. Asc sequence. Type Date.');
+		clearData(0, 0, 0, 7);
+		// Case: The context menu property "Fill years". Vertical. Three selected cells. Reverse sequence. Type Date.
+		getFilledData(0, 5, 0, 7, testData, [5, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 7, 0, 0);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 0, 4);
+		expectedData = [['45658'], ['1'], ['9133'], ['18264'], ['27395']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill years. Three selected cells. Reverse sequence. Type Date.');
+		clearData(0, 0, 0, 7);
+		// Case: The context menu property "Fill years". Horizontal. One selected cell. Asc sequence. Type Date. 1900 year.
+		testData = [
+			['01/01/1900']
+		];
+		getFilledData(0, 0, 0, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 0, 7, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(1, 0, 7, 0);
+		expectedData = [['367', '732', '1097', '1462', '1828', '2193', '2558']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill years. One selected cell. Asc sequence. Type Date. 1900 year.');
+		clearData(0, 0, 7, 0);
+		// Case: The context menu property "Fill years". Horizontal. One selected cell. Reverse sequence. Type Date. 1900 year.
+		getFilledData(7, 0, 7, 0, testData, [0, 7]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(7, 0, 0, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 6, 0);
+		expectedData = [['1', '1', '1', '1', '1', '1', '1']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill years. One selected cell. Reverse sequence. Type Date. 1900 year.');
+		clearData(0, 0, 7, 0);
+		// Case: The context menu property "Fill years".  Vertical. Two selected cells. Asc sequence. Type Date. 1900 year
+		testData = [
+			['01/01/1900'],
+			['01/01/1902']
+		];
+		getFilledData(0, 0, 0, 1, testData, [0, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 0, 0, 7);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 2, 0, 7);
+		expectedData = [['1462'], ['2193'], ['2923'], ['3654'], ['4384'], ['5115']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill years. Two selected cells. Asc sequence. Type Date. 1900 year.');
+		clearData(0, 0, 0, 7);
+		// Case: The context menu property "Fill years".  Vertical. Two selected cells. Asc sequence. Type Date. 1900 year
+		getFilledData(0, 6, 0, 7, testData, [6, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 7, 0, 0);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 0, 5)
+		expectedData = [['1'], ['732'], ['1'], ['732'], ['1'], ['732']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill years. Two selected cells. Reverse sequence. Type Date. 1900 year.');
+		clearData(0, 0, 0, 7);
+		// Case: The context menu property "Fill series". Horizontal. Two selected cells. Asc sequence. Type Date.
+		testData = [
+			['01/01/2000', '04/01/2000']
+		];
+		getFilledData(0, 0, 1, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillSeries;
+		wsView.activeFillHandle = getRange(0, 0, 7, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(2, 0, 7, 0);
+		expectedData = [['36708', '36800', '36892', '36982', '37073', '37165']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill series. Two selected cells. Asc sequence. Type Date.');
+		clearData(0, 0, 7, 0);
+		// Case: The context menu property "Fill months". Vertical. Three selected cells. Asc sequence. Type Date. Diff days.
+		testData = [
+			['01/01/2000'],
+			['01/02/2000'],
+			['01/03/2000']
+		];
+		getFilledData(0, 0, 0, 2, testData, [0, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 0, 0, 8);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 3, 0, 8);
+		expectedData = [['36557'], ['36558'], ['36559'], ['36586'], ['36587'], ['36588']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill month. Three selected cells. Asc sequence. Type Date. Diff days.');
+		clearData(0, 0, 0, 8);
+		// Case: The context menu property "Fill months". Vertical. Three selected cells. Reverse sequence. Type Date. Diff days.
+		getFilledData(0, 6, 0, 8, testData, [6, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 8, 0, 0);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 0, 5);
+		expectedData = [['36465'], ['36466'], ['36467'], ['36495'], ['36496'], ['36497']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill month. Three selected cells. Reverse sequence. Type Date. Diff days.');
+		clearData(0, 0, 0, 8);
+		// Case: The context menu property "Fill years". Horizontal. Three selected cells. Asc sequence. Type Date. Diff days.
+		testData = [
+			['01/01/2000', '01/02/2000', '01/03/2000']
+		]
+		getFilledData(0, 0, 2, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 0, 8, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(3, 0, 8, 0);
+		expectedData = [['36892', '36893', '36894', '37257', '37258', '37259']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill years. Three selected cells. Asc sequence. Type Date. Diff days.');
+		// Case: The context menu property "Fill years". Horizontal. Three selected cells. Reverse sequence. Type Date. Diff days.
+		getFilledData(6, 0, 8, 0, testData, [0, 6]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(8, 0, 0, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 5, 0);
+		expectedData = [['35796', '35797', '35798', '36161', '36162', '36163']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill years. Three selected cells. Reverse sequence. Type Date. Diff days.');
+		clearData(0, 0, 8, 0);
+		// Case: The context menu property "Fill months". Vertical. Two selected cells. Asc sequence. Type Date. Diff days.
+		testData = [
+			['01/01/2000'],
+			['01/30/2000']
+		];
+		getFilledData(0, 0, 0, 1, testData, [0, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 0, 0, 8);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 2, 0, 8);
+		expectedData = [['36557'], ['36585'], ['36586'], ['36615'], ['36617'], ['36646'], ['36647']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill months. Two selected cells. Asc sequence. Type Date. Diff days.');
+		// Case: The context menu property "Fill months". Vertical. Two selected cells. Reverse sequence. Type Date. Diff days.
+		getFilledData(0, 7, 0, 8, testData, [7, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 8, 0, 0);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 0, 6);
+		expectedData = [['36433'], ['36434'], ['36463'], ['36465'], ['36494'], ['36495'], ['36524']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill months. Two selected cells. Reverse sequence. Type Date. Diff days.');
+		clearData(0, 0, 0, 8);
+		// Case: The context menu property "Fill months". Horizontal. Two selected cells. Asc sequence. Type Date. Diff days.
+		testData = [
+			['01/01/2000', '01/31/2000']
+		];
+		getFilledData(0, 0, 1, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 0, 8, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(2, 0, 8, 0);
+		expectedData = [['36557', '36585', '36586', '36616', '36617', '36646', '36647']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill months. Two selected cells. Asc sequence. Type Date. Diff days.');
+		// Case: The context menu property "Fill months". Horizontal. Two selected cells. Reverse sequence. Type Date. Diff days.
+		getFilledData(7, 0, 8, 0, testData, [0, 7]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(8, 0, 0, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 6, 0);
+		expectedData = [['36433', '36434', '36464', '36465', '36494', '36495', '36525']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill months. Two selected cells. Reverse sequence. Type Date. Diff days.');
+		clearData(0, 0, 8, 0);
+		// Case: The context menu property "Fill years". Vertical. Two selected cells. Asc sequence. Type Date. Diff days.
+		testData = [
+			['01/01/2000'],
+			['01/31/2000']
+		];
+		getFilledData(0, 0, 0, 1, testData, [0, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 0, 0, 8);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 2, 0, 8);
+		expectedData = [['36892'], ['36922'], ['37257'], ['37287'], ['37622'], ['37652'], ['37987']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill years. Two selected cells. Asc sequence. Type Date. Diff days.');
+		// Case: The context menu property "Fill years". Vertical. Two selected cells. Reverse sequence. Type Date. Diff days.
+		getFilledData(0, 7, 0, 8, testData, [7, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 8, 0, 0);
+		wsView.fillHandleDirection = 1 // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 0, 6);
+		expectedData = [['35095'], ['35431'], ['35461'], ['35796'], ['35826'], ['36161'], ['36191']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill years. Two selected cells. Reverse sequence. Type Date. Diff days.');
+		clearData(0, 0, 0, 8);
+		// Case: The context menu property "Fill years". Horizontal. Two selected cells. Asc sequence. Type Date. Diff months.
+		testData = [
+			['01/01/2000', '02/01/2000']
+		];
+		getFilledData(0, 0, 1, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 0, 8, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(2, 0, 8, 0);
+		expectedData = [['36892', '36923', '37257', '37288', '37622', '37653', '37987']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill years. Two selected cells. Asc sequence. Type Date. Diff months.');
+		// Case: The context menu property "Fill years". Horizontal. Two selected cells. Reverse sequence. Type Date. Diff months.
+		getFilledData(7, 0, 8, 0, testData, [0, 7]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(8, 0, 0, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 6, 0);
+		expectedData = [['35096', '35431', '35462', '35796', '35827', '36161', '36192']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill years. Two selected cells. Reverse sequence. Type Date. Diff months.');
+		clearData(0, 0, 8, 0);
+		// Case: The context menu property "Fill months". Vertical. Three selected cells. Asc sequence. Type Date. Negative case - incorrect sequence.
+		testData = [
+			['01/12/2000'],
+			['01/13/2000'],
+			['01/15/2000']
+		];
+		getFilledData(0, 0, 0, 2, testData, [0, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 0, 0, 8);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 3, 0, 8);
+		expectedData = [['36537'], ['36538'], ['36540'], ['36537'], ['36538'], ['36540']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill months. Three selected cells. Asc sequence. Type Date. Negative case - incorrect sequence.');
+		// Case: The context menu property "Fill months". Vertical. Three selected cells. Reverse sequence. Type Date. Negative case - incorrect sequence.
+		getFilledData(0, 6, 0, 8, testData, [6, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 8, 0, 0);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 0, 5);
+		expectedData = [['36537'], ['36538'], ['36540'], ['36537'], ['36538'], ['36540']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill months. Three selected cells. Reverse sequence. Type Date. Negative case - incorrect sequence.');
+		// Case: The context menu property "Fill years". Vertical. Three selected cells. Asc sequence. Type Date. Negative case - incorrect sequence.
+		getFilledData(0, 0, 0, 2, testData, [0, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 0, 0, 8);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 3, 0, 8);
+		expectedData = [['36537'], ['36538'], ['36540'], ['36537'], ['36538'], ['36540']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill years. Three selected cells. Asc sequence. Type Date. Negative case - incorrect sequence.');
+		// Case: The context menu property "Fill years". Vertical. Three selected cells. Reverse sequence. Type Date. Negative case - incorrect sequence.
+		getFilledData(0, 6, 0, 8, testData, [6, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 8, 0, 0);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 0, 5);
+		expectedData = [['36537'], ['36538'], ['36540'], ['36537'], ['36538'], ['36540']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill years. Three selected cells. Reverse sequence. Type Date. Negative case - incorrect sequence.');
+		clearData(0, 0, 0, 8);
+		// Case: The context menu property "Fill months". Horizontal. Three selected cells. Asc sequence. Type Date & Time. Negative case - incorrect sequence.
+		testData = [
+			['01/01/2000 12:00', '01/02/2000 13:00', '01/04/2000 14:00']
+		];
+		getFilledData(0, 0, 2, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 0, 8, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(3, 0, 8, 0);
+		expectedData = [['36526.5', '36527.541666666664', '36529.583333333336', '36526.5', '36527.541666666664', '36529.583333333336']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill months. Three selected cells. Asc sequence. Type Date & Time. Negative case - incorrect sequence.');
+		// Case: The context menu property "Fill months". Horizontal. Three selected cells. Reverse sequence. Type Date & Time. Negative case - incorrect sequence.
+		getFilledData(6, 0, 8, 0, testData, [0, 6]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(8, 0, 0, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 5, 0);
+		expectedData = [['36526.5', '36527.541666666664', '36529.583333333336', '36526.5', '36527.541666666664', '36529.583333333336']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill months. Three selected cells. Reverse sequence. Type Date & Time. Negative case - incorrect sequence.');
+		// Case: The context menu property "Fill years". Horizontal. Three selected cells. Asc sequence. Type Date & Time. Negative case - incorrect sequence.
+		getFilledData(0, 0, 2, 0, testData, [0, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 0, 8, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(3, 0, 8, 0);
+		expectedData = [['36526.5', '36527.541666666664', '36529.583333333336', '36526.5', '36527.541666666664', '36529.583333333336']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill years. Three selected cells. Asc sequence. Type Date & Time. Negative case - incorrect sequence.');
+		// Case: The context menu property "Fill years". Horizontal. Three selected cells. Reverse sequence. Type Date & Time. Negative case - incorrect sequence.
+		getFilledData(6, 0, 8, 0, testData, [0, 6]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(8, 0, 0, 0);
+		wsView.fillHandleDirection = 0; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 5, 0);
+		expectedData = [['36526.5', '36527.541666666664', '36529.583333333336', '36526.5', '36527.541666666664', '36529.583333333336']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill years. Three selected cells. Reverse sequence. Type Date & Time. Negative case - incorrect sequence.');
+		clearData(0, 0, 8, 0);
+		// Case: The context menu property "Fill months". Vertical. Two selected cells. Asc sequence. Type Date & Time. Diff time.
+		testData = [
+			['01/01/2000 12:00'],
+			['01/01/2000 13:00']
+		];
+		getFilledData(0, 0, 0, 1, testData, [0, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 0, 0, 8);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 2, 0, 8);
+		expectedData = [['36557'], ['36557'], ['36586'], ['36586'], ['36617'], ['36617'], ['36647']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill months. Two selected cells. Asc sequence. Type Date & Time. Diff time.');
+		// Case: The context menu property "Fill months". Vertical. Two selected cells. Reverse sequence. Type Date & Time. Diff time.
+		getFilledData(0, 7, 0, 8, testData, [7, 0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 8, 0, 0);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 0, 6);
+		expectedData = [['36404'], ['36434'], ['36434'], ['36465'], ['36465'], ['36495'], ['36495']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill months. Two selected cells. Reverse sequence. Type Date & Time. Diff time.');
+		// Case: The context menu property "Fill years". Vertical. Two selected cells. Asc sequence. Type Date & Time. Diff time.
+		getFilledData(0, 0, 0, 1, testData, [0, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 0, 0, 8);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 2, 0, 8);
+		expectedData = [['36892'], ['36892'], ['37257'], ['37257'], ['37622'], ['37622'], ['37987']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill years. Two selected cells. Asc sequence. Type Date & Time. Diff time.');
+		// Case: The context menu property "Fill years". Vertical. Two selected cells. Reverse sequence. Type Date & Time. Diff time.
+		getFilledData(0, 7, 0, 8, testData, [7, 0]);
+		nType = oRightClickOptions.fillYears;
+		wsView.activeFillHandle = getRange(0, 8, 0, 0);
+		wsView.fillHandleDirection = 1; // 0 - Horizontal, 1 - Vertical.
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 0, 0, 6);
+		expectedData = [['35065'], ['35431'], ['35431'], ['35796'], ['35796'], ['36161'], ['36161']];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill years. Two selected cells. Reverse sequence. Type Date & Time. Diff time.');
+		clearData(0, 0, 0, 8);
 	});
 	QUnit.test('Toolbar: Fill -> "Up/Down, Left/Right"', function(assert) {
 		const testData = [

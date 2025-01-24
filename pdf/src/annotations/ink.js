@@ -63,30 +63,6 @@
         return this.content.GetAllDrawingObjects()[0];
     };
 
-    CAnnotationInk.prototype.onMouseDown = function(x, y, e) {
-        let oViewer         = Asc.editor.getDocumentRenderer();
-        let oDrawingObjects = oViewer.DrawingObjects;
-
-        this.selectStartPage = this.GetPage();
-
-        let pageObject = oViewer.getPageByCoords2(x, y);
-        if (!pageObject)
-            return false;
-
-        let X = pageObject.x;
-        let Y = pageObject.y;
-
-        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
-
-        if (this.IsSelected()) {
-            oDrawingObjects.handleEventMode = HANDLE_EVENT_MODE_CURSOR;
-        }
-        else {
-            oDrawingObjects.handleEventMode = HANDLE_EVENT_MODE_HANDLE;
-        }
-
-        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
-    };
     CAnnotationInk.prototype.SetInkPoints = function(aSourcePaths) {
         let oThis = this;
         aSourcePaths.forEach(function(aPath) {

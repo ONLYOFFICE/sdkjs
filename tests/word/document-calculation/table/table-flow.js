@@ -91,6 +91,7 @@ $(function ()
 		let table = AscTest.CreateTable(3, 3, [100, 100, 100]);
 		logicDocument.PushToContent(table);
 		AscTest.RemoveTableBorders(table);
+		AscTest.RemoveTableMargins(table);
 		
 		table.GetRow(0).SetHeight(20, Asc.linerule_AtLeast);
 		table.GetRow(1).SetHeight(20, Asc.linerule_AtLeast);
@@ -120,9 +121,10 @@ $(function ()
 		
 		AscTest.Recalculate();
 		assert.strictEqual(table.GetPagesCount(), 1, "Check table page count");
-		checkBounds(table.getRowBounds(0, 0), new AscWord.CDocumentBounds(lField + 60, tableTop, rField, tableTop + 20), "Check first row bounds");
-		checkBounds(table.getRowBounds(1, 0), new AscWord.CDocumentBounds(lField + 60, tableTop + 20, rField, tableTop + 40), "Check second row bounds");
-		checkBounds(table.getRowBounds(2, 0), new AscWord.CDocumentBounds(lField + 60, tableTop + 40, rField, tableTop + 60), "Check third row bounds");
+		let _rField = rField + table.GetRightTableOffsetCorrection() - table.GetTableOffsetCorrection();
+		checkBounds(table.getRowBounds(0, 0), new AscWord.CDocumentBounds(lField + 60, tableTop, _rField, tableTop + 20), "Check first row bounds");
+		checkBounds(table.getRowBounds(1, 0), new AscWord.CDocumentBounds(lField + 60, tableTop + 20, _rField, tableTop + 40), "Check second row bounds");
+		checkBounds(table.getRowBounds(2, 0), new AscWord.CDocumentBounds(lField + 60, tableTop + 40, _rField, tableTop + 60), "Check third row bounds");
 	});
 	
 });

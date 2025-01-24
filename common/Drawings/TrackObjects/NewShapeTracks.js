@@ -277,8 +277,24 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
 
     }, this, []);
 
-    this.track = function(e, x, y)
+    /**
+     *
+     * @param e
+     * @param x
+     * @param y
+     * @param {boolean?} isNoMinSize
+     */
+    this.track = function(e, x, y, isNoMinSize)
     {
+        let minShapeSize = MIN_SHAPE_SIZE;
+        let minShapeSizeDiv2 = MIN_SHAPE_SIZE_DIV2;
+
+        // ignore minSize
+        if (isNoMinSize === true) {
+            minShapeSize = 0;
+            minShapeSizeDiv2 = 0;
+        }
+
         var bConnectorHandled = false;
         this.oShapeDrawConnectors = null;
         this.lastSpPr = null;
@@ -360,15 +376,15 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
             }
             if(!(e.CtrlKey || e.ShiftKey) || (e.CtrlKey && !e.ShiftKey && this.isLine))
             {
-                this.extX = abs_dist_x >= MIN_SHAPE_SIZE  ? abs_dist_x : (this.isLine ? 0 : MIN_SHAPE_SIZE);
-                this.extY = abs_dist_y >= MIN_SHAPE_SIZE  ? abs_dist_y : (this.isLine ? 0 : MIN_SHAPE_SIZE);
+                this.extX = abs_dist_x >= minShapeSize  ? abs_dist_x : (this.isLine ? 0 : minShapeSize);
+                this.extY = abs_dist_y >= minShapeSize  ? abs_dist_y : (this.isLine ? 0 : minShapeSize);
                 if(real_dist_x >= 0)
                 {
                     this.x = this.startX;
                 }
                 else
                 {
-                    this.x = abs_dist_x >= MIN_SHAPE_SIZE  ? x : this.startX - this.extX;
+                    this.x = abs_dist_x >= minShapeSize  ? x : this.startX - this.extX;
                 }
 
                 if(real_dist_y >= 0)
@@ -377,31 +393,31 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
                 }
                 else
                 {
-                    this.y = abs_dist_y >= MIN_SHAPE_SIZE  ? y : this.startY - this.extY;
+                    this.y = abs_dist_y >= minShapeSize  ? y : this.startY - this.extY;
                 }
             }
             else if(e.CtrlKey && !e.ShiftKey)
             {
-                if(abs_dist_x >= MIN_SHAPE_SIZE_DIV2 )
+                if(abs_dist_x >= minShapeSizeDiv2 )
                 {
                     this.x = this.startX - abs_dist_x;
                     this.extX = 2*abs_dist_x;
                 }
                 else
                 {
-                    this.x = this.startX - MIN_SHAPE_SIZE_DIV2;
-                    this.extX = MIN_SHAPE_SIZE;
+                    this.x = this.startX - minShapeSizeDiv2;
+                    this.extX = minShapeSize;
                 }
 
-                if(abs_dist_y >= MIN_SHAPE_SIZE_DIV2 )
+                if(abs_dist_y >= minShapeSizeDiv2 )
                 {
                     this.y = this.startY - abs_dist_y;
                     this.extY = 2*abs_dist_y;
                 }
                 else
                 {
-                    this.y = this.startY - MIN_SHAPE_SIZE_DIV2;
-                    this.extY = MIN_SHAPE_SIZE;
+                    this.y = this.startY - minShapeSizeDiv2;
+                    this.extY = minShapeSize;
                 }
             }
             else if(!e.CtrlKey && e.ShiftKey)
@@ -411,7 +427,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
                 var prop_coefficient = (typeof AscFormat.SHAPE_ASPECTS[this.presetGeom] === "number" ? AscFormat.SHAPE_ASPECTS[this.presetGeom] : 1);
                 if(abs_dist_y === 0)
                 {
-                    new_width = abs_dist_x > MIN_SHAPE_SIZE ? abs_dist_x : MIN_SHAPE_SIZE;
+                    new_width = abs_dist_x > minShapeSize ? abs_dist_x : minShapeSize;
                     new_height = abs_dist_x/prop_coefficient;
                 }
                 else
@@ -429,30 +445,30 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
                     }
                 }
 
-                if(new_width < MIN_SHAPE_SIZE || new_height < MIN_SHAPE_SIZE)
+                if(new_width < minShapeSize || new_height < minShapeSize)
                 {
                     var k_wh = new_width/new_height;
-                    if(new_height < MIN_SHAPE_SIZE && new_width < MIN_SHAPE_SIZE)
+                    if(new_height < minShapeSize && new_width < minShapeSize)
                     {
                         if(new_height < new_width)
                         {
-                            new_height = MIN_SHAPE_SIZE;
+                            new_height = minShapeSize;
                             new_width = new_height*k_wh;
                         }
                         else
                         {
-                            new_width = MIN_SHAPE_SIZE;
+                            new_width = minShapeSize;
                             new_height = new_width/k_wh;
                         }
                     }
-                    else if(new_height < MIN_SHAPE_SIZE)
+                    else if(new_height < minShapeSize)
                     {
-                        new_height = MIN_SHAPE_SIZE;
+                        new_height = minShapeSize;
                         new_width = new_height*k_wh;
                     }
                     else
                     {
-                        new_width = MIN_SHAPE_SIZE;
+                        new_width = minShapeSize;
                         new_height = new_width/k_wh;
                     }
                 }
@@ -492,7 +508,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
                 var prop_coefficient = (typeof AscFormat.SHAPE_ASPECTS[this.presetGeom] === "number" ? AscFormat.SHAPE_ASPECTS[this.presetGeom] : 1);
                 if(abs_dist_y === 0)
                 {
-                    new_width = abs_dist_x > MIN_SHAPE_SIZE_DIV2 ? abs_dist_x*2 : MIN_SHAPE_SIZE;
+                    new_width = abs_dist_x > minShapeSizeDiv2 ? abs_dist_x*2 : minShapeSize;
                     new_height = new_width/prop_coefficient;
                 }
                 else
@@ -510,30 +526,30 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
                     }
                 }
 
-                if(new_width < MIN_SHAPE_SIZE || new_height < MIN_SHAPE_SIZE)
+                if(new_width < minShapeSize || new_height < minShapeSize)
                 {
                     var k_wh = new_width/new_height;
-                    if(new_height < MIN_SHAPE_SIZE && new_width < MIN_SHAPE_SIZE)
+                    if(new_height < minShapeSize && new_width < minShapeSize)
                     {
                         if(new_height < new_width)
                         {
-                            new_height = MIN_SHAPE_SIZE;
+                            new_height = minShapeSize;
                             new_width = new_height*k_wh;
                         }
                         else
                         {
-                            new_width = MIN_SHAPE_SIZE;
+                            new_width = minShapeSize;
                             new_height = new_width/k_wh;
                         }
                     }
-                    else if(new_height < MIN_SHAPE_SIZE)
+                    else if(new_height < minShapeSize)
                     {
-                        new_height = MIN_SHAPE_SIZE;
+                        new_height = minShapeSize;
                         new_width = new_height*k_wh;
                     }
                     else
                     {
-                        new_width = MIN_SHAPE_SIZE;
+                        new_width = minShapeSize;
                         new_height = new_width/k_wh;
                     }
                 }

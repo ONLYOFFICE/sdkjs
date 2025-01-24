@@ -256,11 +256,17 @@
             ctx.restore();
         }
     };
-    CPDFGraphics.prototype.DrawImageXY = function(image, dx, dy, rot) {
+    CPDFGraphics.prototype.DrawImageXY = function(image, dx, dy, rot, minus1) {
         let tr = this.GetTransform();
 
-        let _x = Math.floor(tr.TransformPointX(dx, dy));
-        let _y = Math.floor(tr.TransformPointY(dx, dy));
+        let _x = Math.round(tr.TransformPointX(dx, dy));
+        let _y = Math.round(tr.TransformPointY(dx, dy));
+
+        if (minus1)
+        {
+            _x--;
+            _y--;
+        }
 
         let context = this.m_oContext;
 
@@ -270,10 +276,12 @@
         if (rot && rot !== 0) {
             let W = image.width;
             let H = image.height;
+            let rotW = Math.round(W / 2);
+            let rotH = Math.round(H / 2);
 
-            context.translate(Math.floor(W / 2), Math.floor(H / 2));
+            context.translate(rotW, rotH);
             context.rotate(rot);
-            context.translate(Math.floor(-W / 2), Math.floor(-H / 2));
+            context.translate(-rotW, -rotH);
         }
 
         context.drawImage(image, 0, 0);
@@ -385,6 +393,7 @@
                 return;
         }
     
+        this.SetGlobalAlpha(1);
         if (lock_type === AscCommon.c_oAscLockTypes.kLockTypeMine) {
             this.SetStrokeStyle(22, 156, 0, 255);
         } else {
@@ -421,10 +430,10 @@
                 // Нормали к ребрам
                 let len1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
                 let len2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-                let nx1 = -dy1 / len1;
-                let ny1 = dx1 / len1;
-                let nx2 = -dy2 / len2;
-                let ny2 = dx2 / len2;
+                let nx1 = dy1 / len1;
+                let ny1 = -dx1 / len1;
+                let nx2 = dy2 / len2;
+                let ny2 = -dx2 / len2;
     
                 // Усредненная нормаль
                 let avgNx = (nx1 + nx2) / 2;

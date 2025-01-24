@@ -269,7 +269,6 @@ function NativeCreateApi(options)
 
 	switch (window.NATIVE_DOCUMENT_TYPE)
 	{
-		case "draw":
 		case "document":
 		case "presentation":
 		{
@@ -288,6 +287,11 @@ function NativeCreateApi(options)
 			Api = new window["Asc"]["PDFEditorApi"](configApi);
 			break;
 		}
+		case "visio":
+		{
+			Api = new window["Asc"]["VisioEditorApi"](configApi);
+			break;
+		}
 		default:
 			break;
 	}
@@ -302,7 +306,7 @@ function NativeOpenFileData(data, version, xlsx_file_path, options)
 
 	switch (window.NATIVE_DOCUMENT_TYPE)
 	{
-		case "draw":
+		case "visio":
 		case "document":
 		case "presentation":
 		{

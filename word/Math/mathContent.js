@@ -6181,15 +6181,8 @@ CMathContent.prototype.Process_AutoCorrect = function(oElement)
 	AscCommon.ExecuteEditorAction({description : AscDFH.historydescription_Document_AutoCorrectMath},
 		function()
 		{
-			const arrNextContent = this.SplitContentByPos(this.CurPos, true);
-			if (arrNextContent === false)
-				return;
-
 			if (nInputType === 0)
 				AscMath.StartAutoCorrectionMath(this);
-
-			if (arrNextContent.length > 0)
-				this.AddContentForAutoCorrection(arrNextContent, true);
 		},
 		logicDocument, this
 	);

@@ -1775,9 +1775,9 @@ CChangesParagraphPrChange.prototype.WriteToBinary = function(Writer)
 	// 3-bit : is Old.PrChange undefined ?
 	// 4-bit : is Old.ReviewInfo undefined ?
 	// Variable(CParaPr)     : New.PrChange   (1bit = 0)
-	// Variable(CReviewInfo) : New.ReviewInfo (2bit = 0)
+	// Variable(AscWord.ReviewInfo) : New.ReviewInfo (2bit = 0)
 	// Variable(CParaPr)     : Old.PrChange   (3bit = 0)
-	// Variable(CReviewInfo) : Old.ReviewInfo (4bit = 0)
+	// Variable(AscWord.ReviewInfo) : Old.ReviewInfo (4bit = 0)
 	var nFlags = 0;
 	if (undefined === this.New.PrChange)
 		nFlags |= 1;
@@ -1813,9 +1813,9 @@ CChangesParagraphPrChange.prototype.ReadFromBinary = function(Reader)
 	// 3-bit : is Old.PrChange undefined ?
 	// 4-bit : is Old.ReviewInfo undefined ?
 	// Variable(CParaPr)     : New.PrChange   (1bit = 0)
-	// Variable(CReviewInfo) : New.ReviewInfo (2bit = 0)
+	// Variable(AscWord.ReviewInfo) : New.ReviewInfo (2bit = 0)
 	// Variable(CParaPr)     : Old.PrChange   (3bit = 0)
-	// Variable(CReviewInfo) : Old.ReviewInfo (4bit = 0)
+	// Variable(AscWord.ReviewInfo) : Old.ReviewInfo (4bit = 0)
 	var nFlags = Reader.GetLong();
 
 	this.New = {
@@ -1844,7 +1844,7 @@ CChangesParagraphPrChange.prototype.ReadFromBinary = function(Reader)
 	}
 	else
 	{
-		this.New.ReviewInfo = new CReviewInfo();
+		this.New.ReviewInfo = new AscWord.ReviewInfo();
 		this.New.ReviewInfo.Read_FromBinary(Reader);
 	}
 
@@ -1864,7 +1864,7 @@ CChangesParagraphPrChange.prototype.ReadFromBinary = function(Reader)
 	}
 	else
 	{
-		this.Old.ReviewInfo = new CReviewInfo();
+		this.Old.ReviewInfo = new AscWord.ReviewInfo();
 		this.Old.ReviewInfo.Read_FromBinary(Reader);
 	}
 };
@@ -1913,7 +1913,7 @@ CChangesParagraphPrReviewInfo.prototype.constructor = CChangesParagraphPrReviewI
 CChangesParagraphPrReviewInfo.prototype.Type = AscDFH.historyitem_Paragraph_PrReviewInfo;
 CChangesParagraphPrReviewInfo.prototype.private_CreateObject = function()
 {
-	return new CReviewInfo();
+	return new AscWord.ReviewInfo();
 };
 CChangesParagraphPrReviewInfo.prototype.private_SetValue = function(Value)
 {

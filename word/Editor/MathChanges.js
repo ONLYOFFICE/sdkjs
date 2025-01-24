@@ -58,7 +58,7 @@ AscDFH.changesFactory[AscDFH.historyitem_MathBase_RFontsCS]        = CChangesMat
 AscDFH.changesFactory[AscDFH.historyitem_MathBase_RFontsEastAsia]  = CChangesMathBaseRFontsEastAsia;
 AscDFH.changesFactory[AscDFH.historyitem_MathBase_RFontsHint]      = CChangesMathBaseRFontsHint;
 AscDFH.changesFactory[AscDFH.historyitem_MathBase_HighLight]       = CChangesMathBaseHighLight;
-AscDFH.changesFactory[AscDFH.historyitem_MathBase_ReviewType]      = CChangesMathBaseReviewType;
+AscDFH.changesFactory[AscDFH.historyitem_MathBase_ReviewInfo]      = CChangesMathBaseReviewInfo;
 AscDFH.changesFactory[AscDFH.historyitem_MathBase_TextFill]        = CChangesMathBaseTextFill;
 AscDFH.changesFactory[AscDFH.historyitem_MathBase_TextOutline]     = CChangesMathBaseTextOutline;
 AscDFH.changesFactory[AscDFH.historyitem_MathBase_HighlightColor]  = CChangesMathBaseHighlightColor;
@@ -131,7 +131,7 @@ AscDFH.changesRelationMap[AscDFH.historyitem_MathBase_RFontsCS]        = [AscDFH
 AscDFH.changesRelationMap[AscDFH.historyitem_MathBase_RFontsEastAsia]  = [AscDFH.historyitem_MathBase_RFontsEastAsia];
 AscDFH.changesRelationMap[AscDFH.historyitem_MathBase_RFontsHint]      = [AscDFH.historyitem_MathBase_RFontsHint];
 AscDFH.changesRelationMap[AscDFH.historyitem_MathBase_HighLight]       = [AscDFH.historyitem_MathBase_HighLight];
-AscDFH.changesRelationMap[AscDFH.historyitem_MathBase_ReviewType]      = [AscDFH.historyitem_MathBase_ReviewType];
+AscDFH.changesRelationMap[AscDFH.historyitem_MathBase_ReviewInfo]      = [AscDFH.historyitem_MathBase_ReviewInfo];
 AscDFH.changesRelationMap[AscDFH.historyitem_MathBase_TextFill]        = [AscDFH.historyitem_MathBase_TextFill];
 AscDFH.changesRelationMap[AscDFH.historyitem_MathBase_TextOutline]     = [AscDFH.historyitem_MathBase_TextOutline];
 AscDFH.changesRelationMap[AscDFH.historyitem_MathBase_HighlightColor]  = [AscDFH.historyitem_MathBase_HighlightColor];
@@ -1204,76 +1204,22 @@ CChangesMathBaseHighlightColor.prototype.ReadFromBinary = function(Reader)
 };
 /**
  * @constructor
- * @extends {AscDFH.CChangesBaseProperty}
+ * @extends {AscDFH.CChangesBaseObjectProperty}
  */
-function CChangesMathBaseReviewType(Class, Old, New)
+function CChangesMathBaseReviewInfo(Class, Old, New)
 {
-	AscDFH.CChangesBaseProperty.call(this, Class, Old, New);
+	AscDFH.CChangesBaseObjectProperty.call(this, Class, Old, New);
 }
-CChangesMathBaseReviewType.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
-CChangesMathBaseReviewType.prototype.constructor = CChangesMathBaseReviewType;
-CChangesMathBaseReviewType.prototype.Type = AscDFH.historyitem_MathBase_ReviewType;
-CChangesMathBaseReviewType.prototype.private_SetValue = function(Value)
+CChangesMathBaseReviewInfo.prototype = Object.create(AscDFH.CChangesBaseObjectProperty.prototype);
+CChangesMathBaseReviewInfo.prototype.constructor = CChangesMathBaseReviewInfo;
+CChangesMathBaseReviewInfo.prototype.Type = AscDFH.historyitem_MathBase_ReviewInfo;
+CChangesMathBaseReviewInfo.prototype.private_CreateObject = function()
 {
-	this.Class.raw_SetReviewType(Value.Type, Value.Info);
+	return new AscWord.ReviewInfo();
 };
-CChangesMathBaseReviewType.prototype.WriteToBinary = function(Writer)
+CChangesMathBaseReviewInfo.prototype.private_SetValue = function(Value)
 {
-	// Long : Flags
-	// 1-bit : New.Info is undefined?
-	// 2-bit : Old.Info is undefined?
-	// Long : New.Type
-	// CReviewInfo: New.Info (1-bit is zero)
-	// Long : Old.Type
-	// CReviewInfo: Old.Info (1-bit is zero)
-
-	var nFlags = 0;
-	if (undefined === this.New.Info)
-		nFlags |= 1;
-	if (undefined === this.Old.Info)
-		nFlags |= 2;
-
-	Writer.WriteLong(nFlags);
-	Writer.WriteLong(this.New.Type);
-	if (undefined !== this.New.Info)
-		this.New.Info.Write_ToBinary(Writer);
-	Writer.WriteLong(this.Old.Type);
-	if (undefined !== this.Old.Info)
-		this.Old.Info.Write_ToBinary(Writer);
-};
-CChangesMathBaseReviewType.prototype.ReadFromBinary = function(Reader)
-{
-	// Long : Flags
-	// 1-bit : New.Info is undefined?
-	// 2-bit : Old.Info is undefined?
-	// Long : New.Type
-	// CReviewInfo: New.Info (1-bit is zero)
-	// Long : Old.Type
-	// CReviewInfo: Old.Info (1-bit is zero)
-
-	var nFlags = Reader.GetLong();
-
-	this.New = {
-		Type : Reader.GetLong(),
-		Info : undefined
-	};
-
-	if (!(nFlags & 1))
-	{
-		this.New.Info = new CReviewInfo();
-		this.New.Info.Read_FromBinary(Reader);
-	}
-
-	this.Old = {
-		Type : Reader.GetLong(),
-		Info : undefined
-	};
-
-	if (!(nFlags & 2))
-	{
-		this.Old.Info = new CReviewInfo();
-		this.Old.Info.Read_FromBinary(Reader);
-	}
+	this.Class.raw_SetReviewInfo(Value);
 };
 /**
  * @constructor

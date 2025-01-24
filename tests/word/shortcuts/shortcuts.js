@@ -1322,8 +1322,10 @@
 			TurnOnRecalculate();
 			ClearDocumentAndAddParagraph('');
 			const complexForm = AddComplexForm();
+			AscTest.Recalculate();
+			assert.strictEqual(complexForm.GetLinesCount(), 1, "Check line count before adding line break");
 			ExecuteHotkey(testHotkeyActions.addBreakLineInlineLvlSdt);
-			assert.strictEqual(complexForm.Lines[0], 2, "Check add break line");
+			assert.strictEqual(complexForm.GetLinesCount(), 2, "Check line count after adding line break");
 			TurnOffRecalculate();
 		});
 

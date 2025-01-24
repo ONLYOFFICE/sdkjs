@@ -7272,6 +7272,21 @@ Because of this, the display is sometimes not correct.
     }
 
     InitClass(SmartArt, CGroupShape, AscDFH.historyitem_type_SmartArt);
+		SmartArt.prototype.correctUngeneratedSmartArtContent = function() {
+			if (this.isCanGenerateSmartArt()) {
+				return;
+			}
+			const drawing = this.getDrawing();
+			if (drawing) {
+				this.reconnectSmartArtShapes();
+				for (let i = 0; i < drawing.spTree.length; i += 1) {
+					const shape = drawing.spTree[i];
+					if (!shape.isCorrectSmartArtContentPoints()) {
+						shape.correctUngeneratedSmartArtContent();
+					}
+				}
+			}
+		};
     SmartArt.prototype.getDataModelFromData = function() {
       if (this.dataModel) {
         return this.dataModel.getDataModel();

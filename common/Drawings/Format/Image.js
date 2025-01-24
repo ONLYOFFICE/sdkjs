@@ -598,7 +598,7 @@
 					if (oApi) {
 						sImageId = AscCommon.getFullImageSrc2(sImageId);
 						var _img = oApi.ImageLoader.map_image_index[sImageId];
-						if ((_img && _img.Status === AscFonts.ImageLoadStatus.Loading) || (_img && _img.Image) || graphics.isBoundsChecker() || graphics.isPdf()) {
+						if ((_img && _img.Status === AscFonts.ImageLoadStatus.Loading) || (_img && _img.Image) || graphics.isBoundsChecker()) {
 							this.brush = CreateBrushFromBlipFill(this.blipFill);
 							this.pen = null;
 						} else {
@@ -755,9 +755,6 @@
 			return true;
 		};
 
-		CImageShape.prototype.Load_LinkData = function (linkData) {
-		};
-
 		CImageShape.prototype.getTypeName = function () {
 			return AscCommon.translateManager.getValue("Picture");
 		};
@@ -907,7 +904,9 @@
 		CImageShape.prototype.getText = function() {
 			return null;
 		};
-
+		CImageShape.prototype.canFill = function () {
+			return true;
+		};
 
 		function CreateBrushFromBlipFill(oBlipFill) {
 			if (!oBlipFill) {

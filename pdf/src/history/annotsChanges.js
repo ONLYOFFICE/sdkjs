@@ -40,6 +40,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Pos]				= CChangesPDFAnnotPos
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Page]			= CChangesPDFAnnotPage;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Creation_Date]	= CChangesPDFAnnotCreationDate;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Mod_Date]		= CChangesPDFAnnotModDate;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_User_Id]			= CChangesPDFAnnotUserId;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Author]			= CChangesPDFAnnotAuthor;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Display]			= CChangesPDFAnnotDisplay;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Intent]			= CChangesPDFAnnotIntent;
@@ -60,6 +61,7 @@ AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_FreeText_CL]			= CChange
 AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_FreeText_RC]			= CChangesPDFFreeTextRC;
 AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_FreeText_Align]			= CChangesPDFFreeTextAlign;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Stamp_Type]						= CChangesPDFAnnotStampType;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Stamp_InRect]						= CChangesPDFAnnotStampInRect;
 
 
 function CChangesAnnotArrayOfDoubleProperty(Class, Old, New) {
@@ -772,6 +774,35 @@ CChangesPDFAnnotModDate.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
 	oAnnot.SetModDate(Value);
+	let oAscCommData = oAnnot.GetAscCommentData();
+	if (oAscCommData) {
+		let oCommData = new AscCommon.CCommentData();
+		oCommData.Read_FromAscCommentData(oAscCommData);
+		Asc.editor.sync_ChangeCommentData(oAnnot, oCommData);
+	}
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesPDFAnnotUserId(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFAnnotUserId.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesPDFAnnotUserId.prototype.constructor = CChangesPDFAnnotUserId;
+CChangesPDFAnnotUserId.prototype.Type = AscDFH.historyitem_Pdf_Annot_User_Id;
+CChangesPDFAnnotUserId.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot.SetUserId(Value);
+	let oAscCommData = oAnnot.GetAscCommentData();
+	if (oAscCommData) {
+		let oCommData = new AscCommon.CCommentData();
+		oCommData.Read_FromAscCommentData(oAscCommData);
+		Asc.editor.sync_ChangeCommentData(oAnnot, oCommData);
+	}
 };
 
 /**
@@ -789,6 +820,12 @@ CChangesPDFAnnotAuthor.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
 	oAnnot.SetAuthor(Value);
+	let oAscCommData = oAnnot.GetAscCommentData();
+	if (oAscCommData) {
+		let oCommData = new AscCommon.CCommentData();
+		oCommData.Read_FromAscCommentData(oAscCommData);
+		Asc.editor.sync_ChangeCommentData(oAnnot, oCommData);
+	}
 };
 
 /**
@@ -874,6 +911,23 @@ CChangesPDFAnnotStampType.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
 	oAnnot.SetIconType(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesAnnotArrayOfDoubleProperty}
+ */
+function CChangesPDFAnnotStampInRect(Class, Old, New, Color)
+{
+	AscDFH.CChangesAnnotArrayOfDoubleProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFAnnotStampInRect.prototype = Object.create(AscDFH.CChangesAnnotArrayOfDoubleProperty.prototype);
+CChangesPDFAnnotStampInRect.prototype.constructor = CChangesPDFAnnotStampInRect;
+CChangesPDFAnnotStampInRect.prototype.Type = AscDFH.historyitem_Pdf_Stamp_InRect;
+CChangesPDFAnnotStampInRect.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot.SetInRect(Value);
 };
 
 /**

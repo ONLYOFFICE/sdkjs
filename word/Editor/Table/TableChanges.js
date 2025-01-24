@@ -1531,9 +1531,9 @@ CChangesTablePrChange.prototype.WriteToBinary = function(oWriter)
 	// 3-bit : is Old.PrChange undefined ?
 	// 4-bit : is Old.ReviewInfo undefined ?
 	// Variable(CTablePr)    : New.PrChange   (1bit = 0)
-	// Variable(CReviewInfo) : New.ReviewInfo (2bit = 0)
+	// Variable(AscWord.ReviewInfo) : New.ReviewInfo (2bit = 0)
 	// Variable(CTablePr)    : Old.PrChange   (3bit = 0)
-	// Variable(CReviewInfo) : Old.ReviewInfo (4bit = 0)
+	// Variable(AscWord.ReviewInfo) : Old.ReviewInfo (4bit = 0)
 
 	var nFlags = 0;
 	if (undefined === this.New.PrChange)
@@ -1570,9 +1570,9 @@ CChangesTablePrChange.prototype.ReadFromBinary = function(oReader)
 	// 3-bit : is Old.PrChange undefined ?
 	// 4-bit : is Old.ReviewInfo undefined ?
 	// Variable(CTablePr)    : New.PrChange   (1bit = 0)
-	// Variable(CReviewInfo) : New.ReviewInfo (2bit = 0)
+	// Variable(AscWord.ReviewInfo) : New.ReviewInfo (2bit = 0)
 	// Variable(CTablePr)    : Old.PrChange   (3bit = 0)
-	// Variable(CReviewInfo) : Old.ReviewInfo (4bit = 0)
+	// Variable(AscWord.ReviewInfo) : Old.ReviewInfo (4bit = 0)
 
 	var nFlags = oReader.GetLong();
 
@@ -1602,7 +1602,7 @@ CChangesTablePrChange.prototype.ReadFromBinary = function(oReader)
 	}
 	else
 	{
-		this.New.ReviewInfo = new CReviewInfo();
+		this.New.ReviewInfo = new AscWord.ReviewInfo();
 		this.New.ReviewInfo.ReadFromBinary(oReader);
 	}
 
@@ -1622,7 +1622,7 @@ CChangesTablePrChange.prototype.ReadFromBinary = function(oReader)
 	}
 	else
 	{
-		this.Old.ReviewInfo = new CReviewInfo();
+		this.Old.ReviewInfo = new AscWord.ReviewInfo();
 		this.Old.ReviewInfo.ReadFromBinary(oReader);
 	}
 };

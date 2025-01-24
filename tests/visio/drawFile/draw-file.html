@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Documents</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+  </head>
+  <style>
+      .viewer {
+          position: absolute;
+          margin: 0;
+          padding: 0;
+          left: 0;
+          right: 0;
+          top: 0;
+          bottom: 0;
+      }
+  </style>
+  <body >
+       <script>
+           var  userAgent = navigator.userAgent.toLowerCase();
+           
+            function getUrlParams() {
+                var e,
+                    a = /\+/g,  // Regex for replacing addition symbol with a space
+                    r = /([^&=]+)=?([^&]*)/g,
+                    d = function (s) { return decodeURIComponent(s.replace(a, " ")); },
+                    q = window.location.search.substring(1),
+                    urlParams = {};
+
+                while (e = r.exec(q))
+                    urlParams[d(e[1])] = d(e[2]);
+
+                return urlParams;
+            }
+
+           var params = getUrlParams();
+           window.frameEditorId = params["frameEditorId"];
+           window.parentOrigin = params["parentOrigin"];
+
+        </script>
+
+      <div id="editor_sdk" class="viewer" style="overflow: hidden;" tabindex="-1"></div>
+
+
+       <!--vendor-->
+       <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+       <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xregexp/3.2.0/xregexp-all.min.js"></script>
+
+       <script type="text/javascript" src="../../../develop/sdkjs/visio/scripts.js"></script>
+       <script>
+          window.sdk_scripts.forEach(function(item){
+              document.write('<script type="text/javascript" src="' + item + '"><\/script>');
+          });
+      </script>
+       <script type="text/javascript" src="../api/test-files.js"></script>
+       <script type="text/javascript" src="draw-file.js"></script>
+  </body>
+</html>

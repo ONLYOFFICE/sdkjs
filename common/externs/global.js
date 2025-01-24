@@ -42,7 +42,7 @@ var AscCommon;
 var AscCommonWord;
 var AscCommonExcel;
 var AscCommonSlide;
-var AscCommonDraw;
+var AscVisio;
 var AscBuilder;
 var AscWord;
 var AscMath;

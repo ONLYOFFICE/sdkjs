@@ -321,6 +321,7 @@ function (window, undefined) {
 
 		var previousWinArray;
 		var winElems = [];
+		let isContainsHeader = false;
 		for (var i = 1; i < conditionData.length; i++) {
 			previousWinArray = null;
 			for (var j = 0; j < conditionData[0].length; j++) {
@@ -333,6 +334,8 @@ function (window, undefined) {
 				if (!databaseData) {
 					continue;
 				}
+
+				isContainsHeader = true;
 
 				var winColumnArray = [];
 				for (var n = 0; n < databaseData.length; n++) {
@@ -349,6 +352,9 @@ function (window, undefined) {
 			winElems[i - 1] = previousWinArray;
 		}
 
+		if ((!winElems.length || (winElems.length && winElems[0] && !winElems[0].length)) && isContainsHeader) {
+			return null;
+		}
 
 		var resArr = [];
 		var usuallyAddElems = [];
@@ -363,23 +369,35 @@ function (window, undefined) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		for (var i = 0; i < winElems.length; i++) {
-			for (var j in winElems[i]) {
-				if (winElems[i].hasOwnProperty(j)) {
-					if (true === usuallyAddElems[j] || cElementType.empty === needDataColumn[j].type) {
-						continue;
-					}
+		if (!isContainsHeader) {
+			//ms wins all
+			for (let i = 0; i < needDataColumn.length; i++) {
+				if (bIsGetObjArray) {
+					resArr.push(needDataColumn[i]);
+				} else {
+					resArr.push(needDataColumn[i].getValue());
+				}
+			}
+		} else {
+			for (let i = 0; i < winElems.length; i++) {
+				for (let j in winElems[i]) {
+					if (winElems[i].hasOwnProperty(j)) {
+						if (true === usuallyAddElems[j] || cElementType.empty === needDataColumn[j].type) {
+							continue;
+						}
 
-					if (bIsGetObjArray) {
-						resArr.push(needDataColumn[j]);
-					} else {
-						resArr.push(needDataColumn[j].getValue());
-					}
+						if (bIsGetObjArray) {
+							resArr.push(needDataColumn[j]);
+						} else {
+							resArr.push(needDataColumn[j].getValue());
+						}
 
-					usuallyAddElems[j] = true;
+						usuallyAddElems[j] = true;
+					}
 				}
 			}
 		}
+
 
 		return resArr.length ? resArr : new cError(cErrorType.division_by_zero);
 	}
@@ -416,6 +434,9 @@ function (window, undefined) {
 		}
 
 		var resArr = getNeedValuesFromDataBase(argClone[0], argClone[1], argClone[2]);
+		if (resArr === null) {
+			return new cError(cErrorType.division_by_zero);
+		}
 		if (cElementType.error === resArr.type) {
 			return resArr;
 		}
@@ -467,6 +488,9 @@ function (window, undefined) {
 		}
 
 		var resArr = getNeedValuesFromDataBase(argClone[0], argClone[1], argClone[2], null, true);
+		if (resArr === null) {
+			return new cNumber(0);
+		}
 		if (cElementType.error === resArr.type) {
 			return resArr;
 		}
@@ -517,6 +541,9 @@ function (window, undefined) {
 		}
 
 		var resArr = getNeedValuesFromDataBase(argClone[0], argClone[1], argClone[2], true, true);
+		if (resArr === null) {
+			return new cNumber(0);
+		}
 		if (cElementType.error === resArr.type) {
 			return resArr;
 		}
@@ -559,6 +586,9 @@ function (window, undefined) {
 		}
 
 		var resArr = getNeedValuesFromDataBase(argClone[0], argClone[1], argClone[2]);
+		if (resArr === null) {
+			return new cError(cErrorType.wrong_value_type);
+		}
 		if (cElementType.error === resArr.type) {
 			return resArr;
 		}
@@ -598,6 +628,9 @@ function (window, undefined) {
 		}
 
 		var resArr = getNeedValuesFromDataBase(argClone[0], argClone[1], argClone[2]);
+		if (resArr === null) {
+			return new cNumber(0);
+		}
 		if (cElementType.error === resArr.type) {
 			return resArr;
 		}
@@ -638,6 +671,9 @@ function (window, undefined) {
 		}
 
 		var resArr = getNeedValuesFromDataBase(argClone[0], argClone[1], argClone[2]);
+		if (resArr === null) {
+			return new cNumber(0);
+		}
 		if (cElementType.error === resArr.type) {
 			return resArr;
 		}
@@ -679,6 +715,9 @@ function (window, undefined) {
 		}
 
 		var resArr = getNeedValuesFromDataBase(argClone[0], argClone[1], argClone[2]);
+		if (resArr === null) {
+			return new cNumber(0);
+		}
 		if (cElementType.error === resArr.type) {
 			return resArr;
 		}
@@ -727,6 +766,9 @@ function (window, undefined) {
 		}
 
 		var resArr = getNeedValuesFromDataBase(argClone[0], argClone[1], argClone[2]);
+		if (resArr === null) {
+			return new cError(cErrorType.division_by_zero);
+		}
 		if (cElementType.error === resArr.type) {
 			return resArr;
 		}
@@ -783,6 +825,9 @@ function (window, undefined) {
 		}
 
 		var resArr = getNeedValuesFromDataBase(argClone[0], argClone[1], argClone[2], true);
+		if (resArr === null) {
+			return new cError(cErrorType.division_by_zero);
+		}
 		if (cElementType.error === resArr.type) {
 			return resArr;
 		}
@@ -831,7 +876,7 @@ function (window, undefined) {
 	cDSUM.prototype.argumentsType = [argType.reference, argType.number, argType.text];
 	cDSUM.prototype.Calculate = function (arg) {
 
-		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array]);
+		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array], null, cErrorType.wrong_value_type);
 		var argClone = oArguments.args;
 
 		var argError;
@@ -840,6 +885,9 @@ function (window, undefined) {
 		}
 
 		var resArr = getNeedValuesFromDataBase(argClone[0], argClone[1], argClone[2]);
+		if (resArr === null) {
+			return new cNumber(0);
+		}
 		if (cElementType.error === resArr.type) {
 			return resArr;
 		}
@@ -884,6 +932,9 @@ function (window, undefined) {
 		}
 
 		var resArr = getNeedValuesFromDataBase(argClone[0], argClone[1], argClone[2], true);
+		if (resArr === null) {
+			return new cError(cErrorType.division_by_zero);
+		}
 		if (cElementType.error === resArr.type) {
 			return resArr;
 		}
@@ -947,6 +998,9 @@ function (window, undefined) {
 		}
 
 		var resArr = getNeedValuesFromDataBase(argClone[0], argClone[1], argClone[2], true);
+		if (resArr === null) {
+			return new cError(cErrorType.division_by_zero);
+		}
 		if (cElementType.error === resArr.type) {
 			return resArr;
 		}

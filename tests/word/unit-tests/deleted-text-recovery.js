@@ -156,7 +156,7 @@ $(function () {
 			let name = arr[i][1] === reviewtype_Common ? "reviewtype_Common" : "reviewtype_Remove";
 			let str ="\"" + arr[i][0] + "\"" + " is " + name
 			let oCurrentRun = paragraph.Content[i];
-				assert.strictEqual(oCurrentRun.ReviewType, arr[i][1], str);
+				assert.strictEqual(oCurrentRun.GetReviewType(), arr[i][1], str);
 		}
 	}
 
@@ -187,8 +187,8 @@ $(function () {
 		ShowDelText()
 		assert.ok(true, "Recover deleted text");
 		let recoverRun = p.Content[1];
-		assert.strictEqual(recoverRun.ReviewType, reviewtype_Remove, "New ParaRun ReviewType is delete");
-		assert.strictEqual(run.ReviewType, reviewtype_Common, "Old ParaRun ReviewType is common");
+		assert.strictEqual(recoverRun.GetReviewType(), reviewtype_Remove, "New ParaRun ReviewType is delete");
+		assert.strictEqual(run.GetReviewType(), reviewtype_Common, "Old ParaRun ReviewType is common");
 
 		let strResultText = AscTest.GetParagraphText(p);
 		assert.strictEqual(strResultText, "abc", "Text in run is 'abc'");

@@ -8433,5 +8433,6 @@ function CConnectionDistanceResolver() {
 		// });
 
 	AscFormat.SmartArtAlgorithm = SmartArtAlgorithm;
+	AscFormat.TextAlgorithm = TextAlgorithm;
 })(window);
 

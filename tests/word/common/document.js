@@ -223,6 +223,19 @@
 		table.Set_TableBorder_InsideH(CreateNoneBorder());
 		table.Set_TableBorder_InsideV(CreateNoneBorder());
 	}
+	function RemoveTableMargins(table)
+	{
+		table.Set_TableCellMar(0, 0, 0, 0);
+		
+		for (let rowIndex = 0, rowCount = table.GetRowsCount(); rowIndex < rowIndex; ++rowIndex)
+		{
+			let row = table.GetRow(rowIndex);
+			for (let cellIndex = 0, cellCount = table.GetCells; cellIndex < cellCount; ++cellIndex)
+			{
+				row.GetCell(cellIndex).Set_Margins(null);
+			}
+		}
+	}
 	function SetFillingFormMode(isOForm)
 	{
 		editor.restrictions = Asc.c_oAscRestrictionType.OnlyForms;
@@ -540,6 +553,7 @@
 	AscTest.GetBlockLevelSdtText             = GetBlockLevelSdtText;
 	AscTest.GetBlockLevelSdtReviewText       = GetBlockLevelSdtReviewText;
 	AscTest.RemoveTableBorders               = RemoveTableBorders;
+	AscTest.RemoveTableMargins               = RemoveTableMargins;
 	AscTest.SetFillingFormMode               = SetFillingFormMode;
 	AscTest.SetEditingMode                   = SetEditingMode;
 	AscTest.SetTrackRevisions                = SetTrackRevisions;

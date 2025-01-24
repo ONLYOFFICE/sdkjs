@@ -198,6 +198,15 @@ Paragraph.prototype.Recalculate_FastWholeParagraph = function()
     return [];
 };
 /**
+ * Ивент, если удалось быстро пересчитать параграф
+ */
+Paragraph.prototype.OnFastRecalculate = function()
+{
+	let topDocument = this.GetTopDocumentContent();
+	if (topDocument && (topDocument instanceof AscWord.FootEndnote))
+		topDocument.OnFastRecalculate();
+};
+/**
  * Пытаемся быстро рассчитать отрезок, в котором произошли изменения, и если ничего не съехало, тогда
  * перерисовываем страницу, в противном случаем запускаем обычный пересчет.
  * @param {CParaPos} oParaPos

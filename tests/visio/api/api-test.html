@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+  <title>Api Tests</title>
+
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xregexp/3.2.0/xregexp-all.min.js"></script>
+
+  <script type="text/javascript" src="../../../develop/sdkjs/visio/scripts.js"></script>
+  <script type="text/javascript">
+		window["WebAssembly"] = undefined
+		window.sdk_scripts.forEach(function(item){
+			document.write('<script type="text/javascript" src="' + item + '"><\/script>');
+		});
+  </script>
+  <script type="text/javascript" src="api.js"></script>
+  <script type="text/javascript" src="api-test.js"></script>
+</head>
+<body>
+<h1>Api tests</h1>
+
+</body>
+</html>
