@@ -389,6 +389,7 @@
     /**
 	 * Represents the type of objects in a selection.
 	 * @typedef {("none" | "shapes" | "slides" | "text")} SelectionType - Available selection types.
+     * @see office-js-api/Examples/Enumerations/SelectionType.js
 	 *
 	 */
 
@@ -405,14 +406,6 @@
      * @returns {ApiPresentation}
      * @see office-js-api/Examples/{Editor}/Api/Methods/GetPresentation.js
 	 */
-
-	/**
-	 * Represents the type of objects in a selection.
-	 * @typedef {("none" | "shapes" | "slides" | "text")} SelectionType - Available selection types.
-     * @see office-js-api/Examples/Enumerations/SelectionType.js
-	 *
-	 */
-
     Api.prototype.GetPresentation = function(){
         if(this.WordControl && this.WordControl.m_oLogicDocument){
             return new ApiPresentation(this.WordControl.m_oLogicDocument);
