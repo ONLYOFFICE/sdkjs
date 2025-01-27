@@ -5399,8 +5399,13 @@ CPresentation.prototype.OnKeyDown = function (e) {
 										oTargetDocContent.GetSelectedElementsInfo(oSelectedInfo);
 										var oMath = oSelectedInfo.GetMath();
 										if (null !== oMath && oMath.Is_InInnerContent()) {
-											if (oMath.Handle_AddNewLine())
+											if (oMath.Handle_AddNewLine()) {
+
+												let oShape = oTargetDocContent.Is_DrawingShape(true);
+												if(oShape)
+													oShape.checkExtentsByDocContent();
 												this.Recalculate();
+											}
 										} else {
 											this.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Line));
 										}
@@ -5417,8 +5422,12 @@ CPresentation.prototype.OnKeyDown = function (e) {
 											oTargetDocContent.GetSelectedElementsInfo(oSelectedInfo);
 											var oMath = oSelectedInfo.GetMath();
 											if (null !== oMath && oMath.Is_InInnerContent()) {
-												if (oMath.Handle_AddNewLine())
+												if (oMath.Handle_AddNewLine()) {
+													let oShape = oTargetDocContent.Is_DrawingShape(true);
+													if(oShape)
+														oShape.checkExtentsByDocContent();
 													this.Recalculate();
+												}
 											} else {
 												this.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Line));
 											}
@@ -5431,8 +5440,12 @@ CPresentation.prototype.OnKeyDown = function (e) {
 										if (null !== oMath && oMath.Is_InInnerContent()) {
 											if (true === this.CollaborativeEditing.Is_Fast() || this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false) {
 												History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
-												if (oMath.Handle_AddNewLine())
+												if (oMath.Handle_AddNewLine()) {
+													let oShape = oTargetDocContent.Is_DrawingShape(true);
+													if(oShape)
+														oShape.checkExtentsByDocContent();
 													this.Recalculate();
+												}
 											}
 										} else {
 											this.AddNewParagraph();

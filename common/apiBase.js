@@ -324,6 +324,7 @@
 			window.onunhandledrejection = oldOnunhandledrejection;
 			const errorMsg = errorEvent.reason.message || errorEvent.reason;
 			const stack = errorEvent.reason.stack || "";
+			console.error(errorEvent.reason);
 			sendUnhandledError(errorMsg, undefined, undefined, undefined, stack);
 			if (oldOnunhandledrejection) {
 				return oldOnunhandledrejection.apply(this, arguments);

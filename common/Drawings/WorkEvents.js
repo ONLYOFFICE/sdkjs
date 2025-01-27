@@ -881,6 +881,83 @@
 		return isSupport;
 	}
 
+	function checkMouseWhell(e, options)
+	{
+		let isSupportBidirectional = false;
+		let isAllowHorizontal = false;
+		let isUseMaximumDelta = false;
+
+		if (options)
+		{
+			isSupportBidirectional = (true === options.isSupportBidirectional);
+			isAllowHorizontal = (true === options.isAllowHorizontal);
+			isUseMaximumDelta = (true === options.isUseMaximumDelta);
+		}
+
+		let delta  = 0;
+		let deltaX = 0;
+		let deltaY = 0;
+
+		// delta
+		if (undefined !== e.wheelDelta && 0 !== e.wheelDelta)
+		{
+			delta = -45 * e.wheelDelta / 120;
+		}
+		else if (undefined !== e.detail && 0 == e.detail)
+		{
+			delta = 45 * e.detail / 3;
+		}
+
+		// y
+		if (undefined !== e.wheelDeltaY)
+		{
+			deltaY = -45 * e.wheelDeltaY / 120;
+		}
+		else
+			deltaY = delta;
+
+		// x
+		if (isAllowHorizontal)
+		{
+			if (undefined !== e.wheelDeltaX)
+			{
+				deltaX = -45 * e.wheelDeltaX / 120;
+			}
+
+			if (e.axis !== undefined && e.axis === e.HORIZONTAL_AXIS)
+			{
+				deltaY = 0;
+
+				if (0 === deltaX)
+					deltaX = delta;
+			}
+		}
+
+		deltaX >>= 0;
+		deltaY >>= 0;
+
+		if (!isSupportBidirectional)
+		{
+			if (isUseMaximumDelta)
+			{
+				if (Math.abs(deltaY) >= Math.abs(deltaX))
+					deltaX = 0;
+				else
+					deltaY = 0;
+			}
+			else
+			{
+				if (0 !== deltaX)
+					deltaY = 0;
+			}
+		}
+
+		return {
+			x : deltaX,
+			y : deltaY
+		};
+	}
+
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                          = window['AscCommon'] || {};
 	window['AscCommon'].g_mouse_event_type_down  = g_mouse_event_type_down;
@@ -908,5 +985,7 @@
 
 	window['AscCommon'].PaintMessageLoop 	     = PaintMessageLoop;
 	window['AscCommon'].isSupportDoublePx 	     = isSupportDoublePx;
+
+	window['AscCommon'].checkMouseWhell 	     = checkMouseWhell;
 
 })(window);

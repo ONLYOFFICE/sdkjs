@@ -200,8 +200,9 @@
 				let lineColorRGBA = lineUniFill.fill && lineUniFill.fill.color && lineUniFill.fill.color.color.RGBA;
 				let fillColorRGBA = fillUniFill.fill && fillUniFill.fill.color && fillUniFill.fill.color.color.RGBA;
 
+				AscFormat.CColorModifiers.prototype.RGB2HSL(255, 255, 255, backgroundColorHSL);
+				let compareWithOneColor = lineColorRGBA === undefined || fillColorRGBA === undefined;
 				if (lineColorRGBA !== undefined && fillColorRGBA !== undefined && textColorRGBA !== undefined) {
-					AscFormat.CColorModifiers.prototype.RGB2HSL(255, 255, 255, backgroundColorHSL);
 					AscFormat.CColorModifiers.prototype.RGB2HSL(lineColorRGBA.R, lineColorRGBA.G, lineColorRGBA.B, lineColorHSL);
 					AscFormat.CColorModifiers.prototype.RGB2HSL(fillColorRGBA.R, fillColorRGBA.G, fillColorRGBA.B, fillColorHSL);
 					AscFormat.CColorModifiers.prototype.RGB2HSL(textColorRGBA.R, textColorRGBA.G, textColorRGBA.B, textColorHSL);
@@ -253,6 +254,51 @@
 											textColorRGBA.B = lineColorRGBA.B;
 										} // else leave text color
 									}
+								}
+							}
+						}
+					}
+				} else if (compareWithOneColor) {
+					let compareColorRGBA = lineColorRGBA || fillColorRGBA;
+					let compareColorHSL = {H: undefined, S: undefined, L: undefined};
+					AscFormat.CColorModifiers.prototype.RGB2HSL(compareColorRGBA.R, compareColorRGBA.G, compareColorRGBA.B, compareColorHSL);
+					AscFormat.CColorModifiers.prototype.RGB2HSL(textColorRGBA.R, textColorRGBA.G, textColorRGBA.B, textColorHSL);
+
+					// covert L to percents
+					backgroundColorHSL.L = backgroundColorHSL.L / 255 * 100;
+					compareColorHSL.L = compareColorHSL.L / 255 * 100;
+					textColorHSL.L = textColorHSL.L / 255 * 100;
+
+
+					let quickStyleVariationCell = shape.getCell("QuickStyleVariation");
+					if (quickStyleVariationCell) {
+						let quickStyleVariationCellValue = Number(quickStyleVariationCell.v);
+
+						if ((quickStyleVariationCellValue & 2) === 2) {
+							// text color variation enabled (bit mask used)
+
+							// let fillPattern = shape.getCellNumberValue("FillPattern");
+							// if (fillPattern !== 0) {
+							// 	AscCommon.consoleLog("TextQuickStyleVariation for shapes with FillPattern !== 0 is disabled");
+							// 	// consider example https://disk.yandex.ru/d/2fbgXRrCBThlCw
+							// 	return;
+							// }
+
+							if (Math.abs(backgroundColorHSL.L - textColorHSL.L) < 16.66) {
+								if (backgroundColorHSL.L <= 72.92) {
+									// if background is dark set stroke to white
+									textColorRGBA.R = 255;
+									textColorRGBA.G = 255;
+									textColorRGBA.B = 255;
+								} else {
+									// return the color with the largest absolute difference in luminance from the
+									// formula evaluation of the "TextColor" and "FillColor" or "LineColor" i.e. compareColor
+									if (Math.abs(backgroundColorHSL.L - compareColorHSL.L) >
+										Math.abs(backgroundColorHSL.L - textColorHSL.L)) {
+										textColorRGBA.R = compareColorRGBA.R;
+										textColorRGBA.G = compareColorRGBA.G;
+										textColorRGBA.B = compareColorRGBA.B;
+									} // else leave text color
 								}
 							}
 						}
@@ -1900,12 +1946,6 @@
 				groupShape.pen = cShapeOrCGroupShape.pen;
 				groupShape.Id = cShapeOrCGroupShape.Id + "_Group";
 
-				groupShape.addToSpTree(groupShape.spTree.length, cShapeOrCGroupShape);
-				groupShape.spTree[groupShape.spTree.length - 1].setGroup(groupShape);
-
-				cShapeOrCGroupShape.spPr.xfrm.setOffX(0);
-				cShapeOrCGroupShape.spPr.xfrm.setOffY(0);
-
 				// cShape.setLocks(1)?;
 
 				groupShape.setParent2(visioDocument);
@@ -1928,14 +1968,6 @@
 					currentGroupHandling.spTree[currentGroupHandling.spTree.length - 1].setGroup(currentGroupHandling);
 					groupShape.recalculateLocalTransform(groupShape.transform);
 
-
-					// delete bcs textCShape is always null see toGeometryAndTextCShapes
-					// if (cShapes.textCShape !== null) {
-					// 	currentGroupHandling.addToSpTree(currentGroupHandling.spTree.length, cShapes.textCShape);
-					// 	currentGroupHandling.spTree[currentGroupHandling.spTree.length - 1].setGroup(currentGroupHandling);
-					// 	// cShapes.textCShape.recalculateLocalTransform(cShapes.textCShape.transform); // exists below
-					// }
-
 					currentGroupHandling = groupShape;
 					let subShapes = this.getSubshapes();
 					for (let i = 0; i < subShapes.length; i++) {
@@ -1943,21 +1975,20 @@
 						subShape.convertGroup(visioDocument, pageInfo, drawingPageScale, currentGroupHandling);
 					}
 				}
+
+				// add group own geometry and text to bottom of spTree bcs so it will be brought to top on drawing
+				groupShape.addToSpTree(groupShape.spTree.length, cShapeOrCGroupShape);
+				groupShape.spTree[groupShape.spTree.length - 1].setGroup(groupShape);
+
+				cShapeOrCGroupShape.spPr.xfrm.setOffX(0);
+				cShapeOrCGroupShape.spPr.xfrm.setOffY(0);
+
 				// recalculate positions to local (group) coordinates
 				cShapeOrCGroupShape.recalculateLocalTransform(cShapeOrCGroupShape.transform);
 				// cShapes.geometryCShape.recalculateTransformText();
 				// cShapes.geometryCShape.recalculateContent();
 				// cShapes.geometryCShape.recalculate(); // doesnt work here
 			}
-
-			// 	delete bcs textCShape is always null see toGeometryAndTextCShapes
-			// if (cShapes.textCShape !== null) {
-			// 	// even if not add textCShape to currentGroupHandling above do recalculate just in case
-			// 	cShapes.textCShape.recalculateLocalTransform(cShapes.textCShape.transform);
-			// 	cShapes.textCShape.recalculateTransformText();
-			// 	cShapes.textCShape.recalculateContent();
-			// }
-
 		} else {
 			// if read cShape not CGroupShape
 			if (!currentGroupHandling) {

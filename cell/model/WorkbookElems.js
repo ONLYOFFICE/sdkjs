@@ -14766,6 +14766,9 @@ function RangeDataManagerElem(bbox, data)
 	OleSizeSelectionRange.prototype.constructor = OleSizeSelectionRange;
 	OleSizeSelectionRange.prototype.GetId = AscFormat.CBaseObject.prototype.Get_Id;
 	OleSizeSelectionRange.prototype.Get_Id = AscFormat.CBaseObject.prototype.Get_Id;
+	OleSizeSelectionRange.prototype.Write_ToBinary2 = AscFormat.CBaseNoIdObject.prototype.Write_ToBinary2;
+	OleSizeSelectionRange.prototype.Read_FromBinary2 = AscFormat.CBaseNoIdObject.prototype.Read_FromBinary2;
+	OleSizeSelectionRange.prototype.getObjectType = AscFormat.CBaseNoIdObject.prototype.getObjectType;
 
 	OleSizeSelectionRange.prototype.addToGlobalHistory = function () {
 		const oOldRange = this.getFirstFromLocalHistory();

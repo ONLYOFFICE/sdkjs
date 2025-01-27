@@ -1131,15 +1131,6 @@
 
         memory.WriteLong(nPage);
 
-        // rect
-        let aOrigRect = this.GetOrigRect();
-        memory.WriteDouble(aOrigRect[0]); // x1
-        memory.WriteDouble(aOrigRect[1]); // y1
-        memory.WriteDouble(aOrigRect[2]); // x2
-        memory.WriteDouble(aOrigRect[3]); // y2
-
-        // new flags
-        let Flags = 0;
         let sName           = this.GetName();
         let sContents       = this.GetContents();
         let BES             = this.GetBorderEffectStyle();
@@ -1149,6 +1140,25 @@
         let nBorderW        = this.GetWidth();
         let sModDate        = this.GetModDate(true);
 
+        // rect
+        let aOrigRect = this.GetOrigRect();
+        if (this.IsStamp()) {
+            // for not clipping by half border width
+            memory.WriteDouble(aOrigRect[0] - nBorderW / 2); // x1
+            memory.WriteDouble(aOrigRect[1] - nBorderW / 2); // y1
+            memory.WriteDouble(aOrigRect[2] + nBorderW / 2); // x2
+            memory.WriteDouble(aOrigRect[3] + nBorderW / 2); // y2
+        }
+        else {
+            memory.WriteDouble(aOrigRect[0]); // x1
+            memory.WriteDouble(aOrigRect[1]); // y1
+            memory.WriteDouble(aOrigRect[2]); // x2
+            memory.WriteDouble(aOrigRect[3]); // y2
+        }
+        
+
+        // new flags
+        let Flags = 0;
         let nPosForFlags = memory.GetCurPosition();
         memory.Skip(4);
 

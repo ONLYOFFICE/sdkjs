@@ -1027,7 +1027,7 @@
 			let res = AscCommon.CCollaborativeEditingBase.prototype.PreUndo.apply(this);
 
 			this.oRedoObjectParam = new AscCommonExcel.RedoObjectParam();
-			History.UndoRedoPrepare(this.oRedoObjectParam, false, true);
+			AscCommon.History.UndoRedoPrepare(this.oRedoObjectParam, false, true);
 			//todo встроить в GetReverseOwnChanges
 			if (this.CoHistory.OwnRanges.length > 0) {
 				let range     = this.CoHistory.OwnRanges[this.CoHistory.OwnRanges.length - 1];
@@ -1053,7 +1053,7 @@
 			}
 			//todo Apply_LinkData inside UndoRedoEnd
 			AscCommon.CollaborativeEditing.Apply_LinkData();
-			History.UndoRedoEnd(Point, this.oRedoObjectParam, false);
+			AscCommon.History.UndoRedoEnd(Point, this.oRedoObjectParam, false);
 
 			AscCommon.CCollaborativeEditingBase.prototype.PostUndo.apply(this, arguments);
 		}
@@ -1076,7 +1076,7 @@
 
 		AscCommon.CCollaborativeHistory.prototype.saveChanges = function(changesToSend)
 		{
-			this.CoEditing.sendChanges(false, false, changesToSend);
+			this.CoEditing.sendChanges(false, true, changesToSend);
 		};
 
 		/**

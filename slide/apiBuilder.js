@@ -380,17 +380,23 @@
 	 * @see office-js-api/Examples/Enumerations/ParagraphContent.js
 	 */
 
-    //------------------------------------------------------------------------------------------------------------------
-    //
-    // Base Api
-    //
-    //------------------------------------------------------------------------------------------------------------------
-
     /**
      * The 1000th of a percent (100000 = 100%).
      * @typedef {number} PositivePercentage
      * @see office-js-api/Examples/Enumerations/PositivePercentage.js
 	 */
+
+    /**
+	 * Represents the type of objects in a selection.
+	 * @typedef {("none" | "shapes" | "slides" | "text")} SelectionType - Available selection types.
+	 *
+	 */
+
+    //------------------------------------------------------------------------------------------------------------------
+    //
+    // Base Api
+    //
+    //------------------------------------------------------------------------------------------------------------------
 
     /**
      * Returns the main presentation.

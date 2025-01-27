@@ -45,6 +45,9 @@ $(function () {
 		LoadDocumentFonts: function () {
 		}
 	};
+	let docInfo = new Asc.asc_CDocInfo();
+	docInfo.asc_putTitle("TeSt.xlsx");
+	api.DocInfo = docInfo;
 	api.initCollaborativeEditing({});
 	window["Asc"]["editor"] = api;
 

@@ -13900,7 +13900,7 @@ drawScatterChart.prototype = {
 			yNumCache = this.cChartDrawer.getNumCache(seria.yVal);
 			isLog = this.valAx && this.valAx.scaling ? this.valAx.scaling.logBase : false;
 
-			if (!yNumCache) {
+			if (!yNumCache || !yNumCache.pts || yNumCache.pts.length === 0) {
 				continue;
 			}
 

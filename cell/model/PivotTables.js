@@ -2406,7 +2406,8 @@ CT_PivotCacheRecords.prototype._getDataMapTotal = function(rowMap, index, length
 	for (i in rowMap.vals) {
 		if (rowMap.vals.hasOwnProperty(i)) {
 			this._getDataMapTotal(rowMap.vals[i], index + 1, length);
-			rowMap.unionTotal(rowMap.vals[i], rowMap.vals[i].isCalculated);
+			const isCalculated = !!(rowMap.isCalculated * rowMap.vals[i].isCalculated);
+			rowMap.unionTotal(rowMap.vals[i], isCalculated);
 		}
 	}
 };
@@ -2677,23 +2678,26 @@ CT_PivotCacheRecords.prototype._fillDataMapCalculated = function(options) {
  * cacheFieldsWithData: Array,
  * currentIndex: number
  * dataFields: CT_DataField[],
- * itemsWithDataMap: Map<number, Map<number, boolean>>
+ * itemsWithDataMap: Map<number, Map<number, boolean>>,
+ * calculatedIndexes: number[]
  * }} options
  */
 CT_PivotCacheRecords.prototype._addCalculatedInDataMap = function(options) {
 	const currentDataMap = options.currentDataMap;
 	const fld = options.indexes[options.currentIndex]
 	const cacheFieldsWithData = options.cacheFieldsWithData;
-	const calculatedIndexes = this._getCalculatedIndexes(options.cacheFields, fld);
+	const calculatedIndexes = options.calculatedIndexes[options.currentIndex];
 	const itemsMap = options.itemsWithDataMap.get(fld);
 	if (currentDataMap.isCalculated && itemsMap) {
 		itemsMap.forEach(function(value, key) {
-			currentDataMap.vals[key] = new PivotDataElem(options.dataFields.length, true)
+			currentDataMap.vals[key] = new PivotDataElem(options.dataFields.length, true);
 		});
 	}
-	calculatedIndexes.forEach(function(itemIndex) {
-		currentDataMap.vals[itemIndex] = new PivotDataElem(options.dataFields.length, true);
-	});
+	if (calculatedIndexes) {
+		calculatedIndexes.forEach(function(itemIndex) {
+			currentDataMap.vals[itemIndex] = new PivotDataElem(options.dataFields.length, true);
+		});
+	}
 	let visible = cacheFieldsWithData[fld];
 	if (visible) {
 		calculatedIndexes.forEach(function (itemIndex) {
@@ -2712,10 +2716,50 @@ CT_PivotCacheRecords.prototype._addCalculatedInDataMap = function(options) {
 				currentIndex: options.currentIndex + 1,
 				dataFields: options.dataFields,
 				itemsWithDataMap: options.itemsWithDataMap,
+				calculatedIndexes: options.calculatedIndexes
 			});
 		}
 	}
 };
+/**
+ * @param {{
+ * currentDataMap: PivotDataElem,
+ * indexes: number[],
+ * cacheFieldsWithData: Array,
+ * currentIndex: number,
+ * endIndex: number,
+ * dataFields: CT_DataField[],
+ * itemsWithDataMap: Map<number, Map<number, boolean>>,
+ * }} options
+ */
+CT_PivotCacheRecords.prototype._addRowsForCalculated = function(options) {
+	if (options.currentIndex >= options.endIndex) {
+		return;
+	}
+	const dataMap = options.currentDataMap;
+	const fld = options.indexes[options.currentIndex]
+	const itemsWithData = options.itemsWithDataMap.get(fld);
+	let visible = options.cacheFieldsWithData[fld];
+	itemsWithData.forEach(function(_, itemIndex) {
+		if (!dataMap.vals[itemIndex]) {
+			dataMap.vals[itemIndex] = new PivotDataElem(options.dataFields.length, false);
+			if (visible && 0 <= itemIndex && itemIndex < visible.length) {
+				visible[itemIndex] = 1;
+			}
+		}
+	});
+	for (let i in options.currentDataMap.vals) {
+		this._addRowsForCalculated({
+			currentDataMap: dataMap.vals[i],
+			indexes: options.indexes,
+			currentIndex: options.currentIndex + 1,
+			endIndex: options.endIndex,
+			itemsWithDataMap: options.itemsWithDataMap,
+			cacheFieldsWithData: options.cacheFieldsWithData,
+			dataFields: options.dataFields
+		})
+	}
+}
 /**
  * @param {{
  * cacheFields: CT_CacheField[],
@@ -2730,11 +2774,23 @@ CT_PivotCacheRecords.prototype._addCalculatedInDataMap = function(options) {
  * @return {{dataRow: PivotDataElem, error?: c_oAscError.ID}}
  */
 CT_PivotCacheRecords.prototype.getDataMap = function(options) {
+	const t = this;
 	const indexes = options.rowIndexes.concat(options.colIndexes);
 	const filters = this._splitLabelFilters(indexes, options.filterMaps.labelFilters, options.cacheFieldsWithData);
 	const itemsWithDataMap = new Map();
 	const calculatedItems = options.cacheDefinition.getCalculatedItems();
 	let dataMap = new PivotDataElem(options.dataFields.length);
+	const calculatedIndexes = indexes.map(function(fld, index) {
+		return t._getCalculatedIndexes(options.cacheFields, fld);
+	});
+	let isNeedAddRowsForCalculated = false;
+	if (options.colIndexes.length !== 0) {
+		options.colIndexes.forEach(function(_, index) {
+			if (calculatedIndexes[index + options.rowIndexes.length] && calculatedIndexes[index + options.rowIndexes.length].length !== 0) {
+				isNeedAddRowsForCalculated = true;
+			}
+		});
+	}
 	dataMap = this._getDataMapSkeleton({
 		dataMap: dataMap,
 		cacheFields: options.cacheFields,
@@ -2744,6 +2800,17 @@ CT_PivotCacheRecords.prototype.getDataMap = function(options) {
 		dataFields: options.dataFields,
 		itemsWithDataMap: itemsWithDataMap
 	});
+	if (isNeedAddRowsForCalculated) {
+		this._addRowsForCalculated({
+			currentDataMap: dataMap,
+			indexes: indexes,
+			cacheFieldsWithData: options.cacheFieldsWithData,
+			currentIndex: 0,
+			dataFields: options.dataFields,
+			itemsWithDataMap: itemsWithDataMap,
+			endIndex: options.rowIndexes.length
+		});
+	}
 	this._addCalculatedInDataMap({
 		currentDataMap: dataMap,
 		cacheFields: options.cacheFields,
@@ -2752,6 +2819,7 @@ CT_PivotCacheRecords.prototype.getDataMap = function(options) {
 		currentIndex: 0,
 		dataFields: options.dataFields,
 		itemsWithDataMap: itemsWithDataMap,
+		calculatedIndexes: calculatedIndexes
 	});
 	const err = this._fillDataMapCalculated({
 		cacheDefinition: options.cacheDefinition,

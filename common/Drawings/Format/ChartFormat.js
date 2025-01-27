@@ -16521,7 +16521,12 @@
 
     function fCreateRef(oBBoxInfo) {
         if(oBBoxInfo) {
-            return AscCommon.parserHelp.getEscapeSheetName(oBBoxInfo.worksheet.getName()) + "!" + oBBoxInfo.bbox.getAbsName();
+            let externalIndex = null;
+            let api = Asc['editor'] && Asc['editor'].wbModel;
+            if (api && oBBoxInfo && oBBoxInfo.worksheet) {
+                externalIndex = Asc['editor'].wbModel.getExternalIndexByWorksheet(oBBoxInfo.worksheet);
+            }
+            return AscCommon.parserHelp.getEscapeSheetName((externalIndex !== null ? "[" + externalIndex + "]" : "") + oBBoxInfo.worksheet.getName()) + "!" + oBBoxInfo.bbox.getAbsName();
         }
         return null;
     }

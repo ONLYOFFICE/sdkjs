@@ -212,67 +212,83 @@ window["DesktopOfflineAppDocumentEndLoad"] = function(_url, _data, _len)
 /////////////////////////////////////////////////////////
 //////////////       IMAGES      ////////////////////////
 /////////////////////////////////////////////////////////
-var prot = AscCommon.DocumentUrls.prototype;
-prot.mediaPrefix = 'media/';
-prot.init = function(urls) {
-};
-prot.getUrls = function() {
-	return this.urls;
-};
-prot.addUrls = function(urls){
-};
-prot.addImageUrl = function(strPath, url){
-};
-prot.getImageUrl = function(strPath){
-	if (0 === strPath.indexOf('theme'))
-		return null;
 
-	if (window.editor && window.editor.ThemeLoader && window.editor.ThemeLoader.ThemesUrl != "" && strPath.indexOf(window.editor.ThemeLoader.ThemesUrl) == 0)
-		return null;
+let isOverrideDocumentUrls = window['Asc']['VisioEditorApi'] ? false : true;
 
-	return this.documentUrl + "/media/" + strPath;
-};
-prot.getImageLocal = function(_url){
-	let url = _url.replaceAll("%20", " ");
-	var _first = this.documentUrl + "/media/";
-	if (0 === url.indexOf(_first))
-		return url.substring(_first.length);
-
-	if (window.editor && window.editor.ThemeLoader && 0 === url.indexOf(editor.ThemeLoader.ThemesUrlAbs)) {
-		return url.substring(editor.ThemeLoader.ThemesUrlAbs.length);
-	}
-
-	return null;
-};
-prot.imagePath2Local = function(imageLocal)
+if (isOverrideDocumentUrls)
 {
-	if (imageLocal && this.mediaPrefix === imageLocal.substring(0, this.mediaPrefix.length))
-		imageLocal = imageLocal.substring(this.mediaPrefix.length);
-	return imageLocal;
-};
-prot.getUrl = function(strPath){
-	if (0 === strPath.indexOf('theme'))
-		return null;
-
-	if (window.editor && window.editor.ThemeLoader && window.editor.ThemeLoader.ThemesUrl != "" && strPath.indexOf(window.editor.ThemeLoader.ThemesUrl) == 0)
-		return null;
-
-	if (strPath == "Editor.xlsx")
+	var prot = AscCommon.DocumentUrls.prototype;
+	prot.mediaPrefix = 'media/';
+	prot.init = function(urls)
 	{
-		var test = this.documentUrl + "/" + strPath;
-		if (window["AscDesktopEditor"]["IsLocalFileExist"](test))
-			return test;
-		return undefined;
-    }
+	};
+	prot.getUrls = function()
+	{
+		return this.urls;
+	};
+	prot.addUrls = function(urls)
+	{
+	};
+	prot.addImageUrl = function(strPath, url)
+	{
+	};
+	prot.getImageUrl = function(strPath)
+	{
+		if (0 === strPath.indexOf('theme'))
+			return null;
 
-	return this.documentUrl + "/media/" + strPath;
-};
-prot.getLocal = function(url){
-	return this.getImageLocal(url);
-};
-prot.isThemeUrl = function(sUrl){
-	return sUrl && (0 === sUrl.indexOf('theme'));
-};
+		if (window.editor && window.editor.ThemeLoader && window.editor.ThemeLoader.ThemesUrl != "" && strPath.indexOf(window.editor.ThemeLoader.ThemesUrl) == 0)
+			return null;
+
+		return this.documentUrl + "/media/" + strPath;
+	};
+	prot.getImageLocal = function(_url)
+	{
+		let url = _url.replaceAll("%20", " ");
+		var _first = this.documentUrl + "/media/";
+		if (0 === url.indexOf(_first))
+			return url.substring(_first.length);
+
+		if (window.editor && window.editor.ThemeLoader && 0 === url.indexOf(editor.ThemeLoader.ThemesUrlAbs))
+		{
+			return url.substring(editor.ThemeLoader.ThemesUrlAbs.length);
+		}
+
+		return null;
+	};
+	prot.imagePath2Local = function(imageLocal)
+	{
+		if (imageLocal && this.mediaPrefix === imageLocal.substring(0, this.mediaPrefix.length))
+			imageLocal = imageLocal.substring(this.mediaPrefix.length);
+		return imageLocal;
+	};
+	prot.getUrl = function(strPath)
+	{
+		if (0 === strPath.indexOf('theme'))
+			return null;
+
+		if (window.editor && window.editor.ThemeLoader && window.editor.ThemeLoader.ThemesUrl != "" && strPath.indexOf(window.editor.ThemeLoader.ThemesUrl) == 0)
+			return null;
+
+		if (strPath == "Editor.xlsx")
+		{
+			var test = this.documentUrl + "/" + strPath;
+			if (window["AscDesktopEditor"]["IsLocalFileExist"](test))
+				return test;
+			return undefined;
+		}
+
+		return this.documentUrl + "/media/" + strPath;
+	};
+	prot.getLocal = function(url)
+	{
+		return this.getImageLocal(url);
+	};
+	prot.isThemeUrl = function(sUrl)
+	{
+		return sUrl && (0 === sUrl.indexOf('theme'));
+	};
+}
 
 AscCommon.sendImgUrls = function(api, images, callback)
 {

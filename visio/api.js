@@ -231,11 +231,6 @@
 		{
 			for (var i in _loader_object.ImageMap)
 			{
-				if (this.DocInfo && this.DocInfo.get_OfflineApp())
-				{
-					var localUrl = _loader_object.ImageMap[i];
-					AscCommon.g_oDocumentUrls.addImageUrl(localUrl, this.documentUrl + 'media/' + localUrl);
-				}
 				++_count;
 			}
 		}
@@ -488,7 +483,7 @@
 				if (isSelection)
 					pagescount = this.WordControl.Thumbnails.GetSelectedArray().length;
 
-				window["AscDesktopEditor"]["Print_Start"](this.DocumentUrl, pagescount, this.ThemeLoader.ThemesUrl, this.getCurrentPage());
+				window["AscDesktopEditor"]["Print_Start"](this.DocumentUrl, pagescount, "", this.Document.getCurrentPage());
 
 				var oDocRenderer                         = new AscCommon.CDocumentRenderer();
 				oDocRenderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
@@ -950,6 +945,16 @@
 	VisioEditorApi.prototype.getCountSlides = function()
 	{
 		return this.Document.getCountPages();
+	};
+
+	VisioEditorApi.prototype._printDesktop = function (options)
+	{
+		let desktopOptions = {};
+		if (options && options.advancedOptions)
+			desktopOptions["nativeOptions"] = options.advancedOptions.asc_getNativeOptions();
+
+		window["AscDesktopEditor"]["Print"](JSON.stringify(desktopOptions));
+		return true;
 	};
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};

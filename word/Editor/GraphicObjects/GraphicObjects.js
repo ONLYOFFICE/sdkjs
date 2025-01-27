@@ -151,7 +151,7 @@ CGraphicObjects.prototype =
     AddContentControl: function(nContentControlType)
     {
         var oTargetDocContent = this.getTargetDocContent();
-        if(oTargetDocContent && !oTargetDocContent.bPresentation){
+        if(oTargetDocContent && (!oTargetDocContent.bPresentation || nContentControlType === Asc.c_oAscSdtLevelType.Inline && !oTargetDocContent.Is_ChartTitleContent())){
             return oTargetDocContent.AddContentControl(nContentControlType);
         }
 

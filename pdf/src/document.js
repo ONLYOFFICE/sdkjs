@@ -1880,7 +1880,12 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.OnMouseUp = function(x, y, e) {
         let oViewer = this.Viewer;
+        let oDoc = this;
+
         if (!oViewer.canInteract()) {
+            oViewer.scheduleRepaint(function() {
+                oDoc.OnMouseUp(x, y, e);
+            });
             return;
         }
         
@@ -5227,6 +5232,8 @@ var CPresentation = CPresentation || function(){};
 
         let nCurTime = new Date().getTime();
 
+        let nLineW = oStampRender.m_oPen.Size * g_dKoef_mm_to_pt;
+        
         let oProps = {
             rect:           [X1, Y1, X2, Y2],
             page:           nPage,
@@ -5241,7 +5248,7 @@ var CPresentation = CPresentation || function(){};
 
         let oStamp = this.AddAnnotByProps(oProps);
         oStamp.SetRotate(nRotAngle);
-        oStamp.SetWidth(1);
+        oStamp.SetWidth(nLineW);
         oStamp.SetIconType(sType);
         if (oStampRender) {
             oStamp.SetRenderStructure(oStampRender.m_aStack[0]);

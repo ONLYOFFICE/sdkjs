@@ -149,6 +149,9 @@
 				setTimeout(Callback, 0)
 			}
 		};
+		let docInfo = new Asc.asc_CDocInfo();
+		docInfo.asc_putTitle("TeSt.xlsx");
+		editor.DocInfo = docInfo;
 
 		window["Asc"]["editor"] = editor;
 	}

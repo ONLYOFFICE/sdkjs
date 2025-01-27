@@ -7994,10 +7994,10 @@ function parserFormula( formula, parent, _ws ) {
 				let oRefElem = found_operand.toRef();
 				oRange = oRefElem.getRange();
 			} else {
-				oRange = found_operand.getRange();
+				oRange = found_operand && found_operand.getRange && found_operand.getRange();
 			}
 
-			oRange._foreachNoEmpty(function (oCell) {
+			oRange && oRange._foreachNoEmpty(function (oCell) {
 				if (!bRecursiveCell) {
 					bRecursiveCell = oCell.checkRecursiveFormula(parserFormula.getParent());
 				}

@@ -99,37 +99,40 @@
             this.draw(oGraphicsWord);
         }
         else {
-            let oStructure = this.GetRenderStructure();
-            if (!oStructure) {
-                return;
-            }
-
-            let nScale = this.GetOriginViewScale();
-            let oTr = new AscCommon.CMatrix();
-            
-            // draw without rotate and scale for saving
-            if (oGraphicsWord.isPdf()) {
-                let hc = this.extX * 0.5;
-				let vc = this.extY * 0.5;
-				AscCommon.global_MatrixTransformer.TranslateAppend(oTr, -hc, -vc);
-                AscCommon.global_MatrixTransformer.TranslateAppend(oTr, this.x + hc, this.y + vc);
-
-                let aInRect = this.GetInRect();
-                let nSourceX = aInRect[0] * g_dKoef_pt_to_mm;
-                let nSourceY = aInRect[3] * g_dKoef_pt_to_mm;
-                
-                oTr.tx = nSourceX;
-                oTr.ty = nSourceY;
-            }
-            else {
-                oTr.Scale(nScale, nScale);
-                let oOwnTr = this.getTransformMatrix();
-                AscCommon.global_MatrixTransformer.MultiplyAppend(oTr, oOwnTr);
-            }
-
-            oStructure.draw(oGraphicsWord, oTr);
+            this._draw(oGraphicsWord);
         }
     };
+    CAnnotationStamp.prototype._draw = function(oGraphicsWord) {
+        let oStructure = this.GetRenderStructure();
+        if (!oStructure) {
+            return;
+        }
+
+        let nScale = this.GetOriginViewScale();
+        let oTr = new AscCommon.CMatrix();
+        
+        // draw without rotate and scale for saving
+        if (oGraphicsWord.isPdf()) {
+            let hc = this.extX * 0.5;
+            let vc = this.extY * 0.5;
+            AscCommon.global_MatrixTransformer.TranslateAppend(oTr, -hc, -vc);
+            AscCommon.global_MatrixTransformer.TranslateAppend(oTr, this.x + hc, this.y + vc);
+
+            let aInRect = this.GetInRect();
+            let nSourceX = aInRect[0] * g_dKoef_pt_to_mm;
+            let nSourceY = aInRect[3] * g_dKoef_pt_to_mm;
+            
+            oTr.tx = nSourceX;
+            oTr.ty = nSourceY;
+        }
+        else {
+            oTr.Scale(nScale, nScale);
+            let oOwnTr = this.getTransformMatrix();
+            AscCommon.global_MatrixTransformer.MultiplyAppend(oTr, oOwnTr);
+        }
+
+        oStructure.draw(oGraphicsWord, oTr);
+    }
     CAnnotationStamp.prototype.SetRenderStructure = function(oStructure) {
         this.renderStructure = oStructure;
     };
@@ -327,6 +330,31 @@
     CAnnotationStamp.prototype.canRotate = function() {
         return true;
     };
+    CAnnotationStamp.prototype.recalculateBounds = function() {
+        let sType = this.GetIconType();
+        if (sType == undefined) {
+            return;
+        }
+
+        let boundsChecker = new AscFormat.CSlideBoundsChecker();
+        
+        boundsChecker.DO_NOT_DRAW_ANIM_LABEL = true;
+        if (AscPDF.STAMP_TYPES.Image == sType || !this.GetRenderStructure()) {
+            this.draw(boundsChecker);
+        } else {
+            this._draw(boundsChecker);
+        }
+        boundsChecker.CorrectBounds();
+
+        this.bounds.x = boundsChecker.Bounds.min_x;
+        this.bounds.y = boundsChecker.Bounds.min_y;
+        this.bounds.l = boundsChecker.Bounds.min_x;
+        this.bounds.t = boundsChecker.Bounds.min_y;
+        this.bounds.r = boundsChecker.Bounds.max_x;
+        this.bounds.b = boundsChecker.Bounds.max_y;
+        this.bounds.w = boundsChecker.Bounds.max_x - boundsChecker.Bounds.min_x;
+        this.bounds.h = boundsChecker.Bounds.max_y - boundsChecker.Bounds.min_y;
+    };
     CAnnotationStamp.prototype.Recalculate = function(bForce) {
         if (true !== bForce && false == this.IsNeedRecalc()) {
             return;
@@ -442,11 +470,12 @@
         memory.WriteDouble(this.GetRotate());
         
         let aInRect = this.GetInRect();
+        let nBorderW = this.GetWidth();
         // original rect
-        memory.WriteDouble(aInRect[0]); // x1
-        memory.WriteDouble(aInRect[3]); // y1
-        memory.WriteDouble(aInRect[4]); // x2
-        memory.WriteDouble(aInRect[1]); // y2
+        memory.WriteDouble(aInRect[0] - nBorderW / 2); // x1
+        memory.WriteDouble(aInRect[3] - nBorderW / 2); // y1
+        memory.WriteDouble(aInRect[4] + nBorderW / 2); // x2
+        memory.WriteDouble(aInRect[1] + nBorderW / 2); // y2
 
         let nEndPos = memory.GetCurPosition();
         memory.Seek(memory.posForFlags);

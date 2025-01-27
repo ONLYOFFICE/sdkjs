@@ -3763,7 +3763,7 @@
 				if (!renderingSettings) {
 					renderingSettings = this.initRenderingSettings();
 				}
-				renderingSettings && renderingSettings.setCtxWidth(printPagesData.pageWidth / vector_koef);
+				renderingSettings && !renderingSettings.getCtxWidth() && renderingSettings.setCtxWidth(printPagesData.pageWidth / vector_koef);
 				renderingSettings && renderingSettings.setPageLeftOffset(printPagesData.leftFieldInPx);
 				let pageRightField = c_oAscPrintDefaultSettings.PageRightField;
 				renderingSettings && renderingSettings.setPageRightOffset(pageRightField / vector_koef);
@@ -13173,6 +13173,7 @@
 
         // Получаем гиперссылку (//ToDo)
         var ar = selectionRange.getLast().clone();
+		let isOneColSelected = Math.abs(ar.c2 - ar.c1) + 1;
         var range = this.model.getRange3(ar.r1, ar.c1, ar.r2, ar.c2);
         var hyperlink = range.getHyperlink();
         var oHyperlink;
@@ -13256,7 +13257,7 @@
 			cell_info.isLockedHeaderFooter = true;
 		}
 
-		cell_info.selectedColsCount = Math.abs(ar.c2 - ar.c1) + 1;
+		cell_info.selectedColsCount = isOneColSelected;
 
         return cell_info;
 	};
@@ -20265,7 +20266,7 @@
 			ctx.setStrokeStyle(t.settings.cells.defaultState.border);
 
 			var _diff = isPivotCollapsed ? 1 : 0;
-			ctx.fillRect(startX + _diff, startY + _diff, width - _diff, height - _diff);
+			t._fillRect(ctx, startX + _diff, startY + _diff, width - _diff, height - _diff);
 			if (isPivotCollapsed) {
 				ctx.beginPath();
 				t._lineHor(ctx, startX + _diff, startY, startX + width);

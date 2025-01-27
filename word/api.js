@@ -950,6 +950,12 @@
 		this.isHandMode = false;
 
 		//g_clipboardBase.Init(this);
+		
+		if (config["headings-color"])
+		{
+			let rgba = AscCommon.RgbaHexToRGBA(config["headings-color"]);
+			AscWord.setDefaultHeadingColor(rgba.R, rgba.G, rgba.B)
+		}
 
 		this._init();
 	}

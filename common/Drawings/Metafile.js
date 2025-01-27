@@ -2083,7 +2083,11 @@
 			this.Memory.WriteByte(CommandType.ctBrushTexturePath);
 
 			var _src = src;
-			if (isCloudPrinting)
+			if (src.startsWith("blob:"))
+			{
+				_src = AscCommon.g_oDocumentBlobUrls.getImageBase64(src);
+			}
+			else if (isCloudPrinting)
 			{
 				_src = getCloudPrintingUrl(src)
 			}
@@ -2380,6 +2384,16 @@
 		// images
 		drawImage : function(img, x, y, w, h, isUseOriginUrl)
 		{
+			if (img.startsWith("blob:"))
+			{
+				this.Memory.WriteString2(AscCommon.g_oDocumentBlobUrls.getImageBase64(img));
+				this.Memory.WriteDouble(x);
+				this.Memory.WriteDouble(y);
+				this.Memory.WriteDouble(w);
+				this.Memory.WriteDouble(h);
+				return;
+			}
+
 			var isCloudPrinting = isCloudPrintingUrl();
 
 			if (!window.editor)

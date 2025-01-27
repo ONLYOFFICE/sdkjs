@@ -591,40 +591,39 @@
         let oSize = {width: 0, height: 0};
 
         switch (nType) {
-            case LINE_END_TYPE.None:
+            case AscPDF.LINE_END_TYPE.None:
                 oSize.width = nLineW;
                 oSize.height = nLineW;
-            case LINE_END_TYPE.OpenArrow:
-            case LINE_END_TYPE.ClosedArrow:
-                oSize.width = 4 * nLineW;
-                oSize.height = 2 * nLineW;
+            case AscPDF.LINE_END_TYPE.OpenArrow:
+            case AscPDF.LINE_END_TYPE.ClosedArrow:
+                oSize.width = 6 * nLineW;
+                oSize.height = 3 * nLineW;
                 break;
-            case LINE_END_TYPE.Diamond:
-            case LINE_END_TYPE.Square:
-                oSize.width = 4 * nLineW;
-                oSize.height = 4 * nLineW;
-                break;
-            case LINE_END_TYPE.Circle:
+            case AscPDF.LINE_END_TYPE.Diamond:
+            case AscPDF.LINE_END_TYPE.Square:
                 oSize.width = 4 * nLineW;
                 oSize.height = 4 * nLineW;
                 break;
-            case LINE_END_TYPE.RClosedArrow:
+            case AscPDF.LINE_END_TYPE.Circle:
+                oSize.width = 4 * nLineW;
+                oSize.height = 4 * nLineW;
+                break;
+            case AscPDF.LINE_END_TYPE.RClosedArrow:
                 oSize.width = 6 * nLineW;
                 oSize.height = 6 * nLineW;
                 break;
-            case LINE_END_TYPE.ROpenArrow:
-                oSize.width = 5 * nLineW;
-                oSize.height = 5 * nLineW;
+            case AscPDF.LINE_END_TYPE.ROpenArrow:
+                oSize.width = 6 * nLineW;
+                oSize.height = 6 * nLineW;
                 break;
-            case LINE_END_TYPE.Butt:
+            case AscPDF.LINE_END_TYPE.Butt:
                 oSize.width = 5 * nLineW;
                 oSize.height = 1.5 * nLineW;
                 break;
-            case LINE_END_TYPE.Slash:
-                oSize.width = 4 * nLineW;
-                oSize.height = 3.5 * nLineW;
+            case AscPDF.LINE_END_TYPE.Slash:
+                oSize.width = 6 * nLineW;
+                oSize.height = 3 * nLineW;
                 break;
-            
         }
 
         return oSize;

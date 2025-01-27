@@ -459,7 +459,7 @@
 	 */
 	CVisioDocument.prototype.draw = function(Zoom, pGraphics, pageIndex) {
 		function drawShapeOrGroupRecursively(graphics, shapeOrGroup, baseMatrix, baseTextMatrix,
-											 isRecalculateTextY, isFlipImages, logic_h_mm, currentGroupHandling) {
+											 isRecalculateTextY, isFlipImages, isAdditionalRecalculate, logic_h_mm, currentGroupHandling) {
 			// see sdkjs/common/Shapes/Serialize.js this.ReadGroupShape = function(type) to
 			// learn how to work with shape groups
 
@@ -505,7 +505,7 @@
 				// handle group children
 				group.spTree.forEach(function(shapeOrGroup) {
 					drawShapeOrGroupRecursively(graphics, shapeOrGroup, baseMatrix, baseTextMatrix, isRecalculateTextY,
-						isFlipImages, logic_h_mm, group);
+						isFlipImages, isAdditionalRecalculate, logic_h_mm, group);
 				});
 			} else {
 				// shape came to argument
@@ -542,6 +542,12 @@
 					shapeOrGroup.transform.sy = 1;
 					shapeOrGroup.transform.ty -= shapeOrGroup.spPr.xfrm.extY;
 				}
+
+				if (isAdditionalRecalculate) {
+					shapeOrGroup.recalculate();
+					shapeOrGroup.recalculateTransformText && shapeOrGroup.recalculateTransformText();
+					shapeOrGroup.recalculateLocalTransform(shapeOrGroup.transform);
+				}
 			}
 		}
 
@@ -549,6 +555,8 @@
 			let isRecalculateTextY = false;
 			let isFlipYMatrix = false;
 			let isFlipImages = false;
+
+			let isAdditionalRecalculate = false;
 
 			// let pageInfo = visioDocument.pages.page[pageIndex];
 			// let pageContent = visioDocument.pageContents[pageIndex];
@@ -654,9 +662,9 @@
 			graphics.RestoreGrState();
 
 			topLevelShapesAndGroups.forEach(function(shapeOrGroup) {
-				if (isFlipImages || isRecalculateTextY) {
+				if (isFlipImages || isRecalculateTextY || isAdditionalRecalculate) {
 					drawShapeOrGroupRecursively(graphics, shapeOrGroup, baseMatrix, baseTextMatrix, isRecalculateTextY,
-						isFlipImages, logic_h_mm);
+						isFlipImages, isAdditionalRecalculate, logic_h_mm);
 				} else {
 					shapeOrGroup.draw(graphics);
 				}

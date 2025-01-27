@@ -44,7 +44,6 @@ function (window, undefined) {
 
 	window['AscCH'].historyitem_Workbook_SheetAdd = 1;
 	window['AscCH'].historyitem_Workbook_SheetRemove = 2;
-	window['AscCH'].historyitem_Workbook_SheetMove = 3;
 	window['AscCH'].historyitem_Workbook_ChangeColorScheme = 5;
 	window['AscCH'].historyitem_Workbook_DefinedNamesChange = 7;
 	window['AscCH'].historyitem_Workbook_DefinedNamesChangeUndo = 8;
@@ -899,7 +898,7 @@ CHistory.prototype._addRedoObjectParam = function (oRedoObjectParam, Point) {
 	}
 	else if (AscCommonExcel.g_oUndoRedoWorksheet === Point.Class && (AscCH.historyitem_Worksheet_RowProp == Point.Type || AscCH.historyitem_Worksheet_ColProp == Point.Type || AscCH.historyitem_Worksheet_RowHide == Point.Type))
 		oRedoObjectParam.oChangeWorksheetUpdate[Point.SheetId] = Point.SheetId;
-	else if (AscCommonExcel.g_oUndoRedoWorkbook === Point.Class && (AscCH.historyitem_Workbook_SheetAdd === Point.Type || AscCH.historyitem_Workbook_SheetRemove === Point.Type || AscCH.historyitem_Workbook_SheetMove === Point.Type)) {
+	else if (AscCommonExcel.g_oUndoRedoWorkbook === Point.Class && (AscCH.historyitem_Workbook_SheetAdd === Point.Type || AscCH.historyitem_Workbook_SheetRemove === Point.Type)) {
 		oRedoObjectParam.bUpdateWorksheetByModel = true;
 		oRedoObjectParam.bOnSheetsChanged = true;
 	}

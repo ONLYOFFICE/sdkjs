@@ -163,10 +163,18 @@ function (window, undefined) {
 				oCellValue.number = this.getCount();
 				break;
 			case Asc.c_oAscItemType.Max:
-				oCellValue.number = this.countNums > 0 ? this.getMax() : 0;
+				if (this.isCalculated) {
+					oCellValue.number = this.getMax();
+				} else {
+					oCellValue.number = this.countNums > 0 ? this.getMax() : 0;
+				}
 				break;
 			case Asc.c_oAscItemType.Min:
-				oCellValue.number = this.countNums > 0 ? this.getMin() : 0;
+				if (this.isCalculated) {
+					oCellValue.number = this.getMin();
+				} else {
+					oCellValue.number = this.countNums > 0 ? this.getMin() : 0;
+				}
 				break;
 			case Asc.c_oAscItemType.Product:
 				oCellValue.number = this.getProduct();

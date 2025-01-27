@@ -227,10 +227,10 @@
             }
         
             // Return the coordinates of the rectangle
-            return [minX, minY, maxX, maxY];
+            return [minX - this.defaultPerpLength / 2, minY - this.defaultPerpLength / 2, maxX + this.defaultPerpLength / 2, maxY + this.defaultPerpLength / 2];
         }
 
-        return calculateBoundingRectangle(oLine, oShapeEndSize);
+        return calculateBoundingRectangle.call(this, oLine, oShapeEndSize);
     };
 
     CAnnotationFreeText.prototype.IsFreeText = function() {
@@ -1720,8 +1720,8 @@
                 oSize.height = nLineW;
             case AscPDF.LINE_END_TYPE.OpenArrow:
             case AscPDF.LINE_END_TYPE.ClosedArrow:
-                oSize.width = 4 * nLineW;
-                oSize.height = 2 * nLineW;
+                oSize.width = 6 * nLineW;
+                oSize.height = 3 * nLineW;
                 break;
             case AscPDF.LINE_END_TYPE.Diamond:
             case AscPDF.LINE_END_TYPE.Square:
@@ -1737,20 +1737,19 @@
                 oSize.height = 6 * nLineW;
                 break;
             case AscPDF.LINE_END_TYPE.ROpenArrow:
-                oSize.width = 5 * nLineW;
-                oSize.height = 5 * nLineW;
+                oSize.width = 6 * nLineW;
+                oSize.height = 6 * nLineW;
                 break;
             case AscPDF.LINE_END_TYPE.Butt:
                 oSize.width = 5 * nLineW;
                 oSize.height = 1.5 * nLineW;
                 break;
             case AscPDF.LINE_END_TYPE.Slash:
-                oSize.width = 4 * nLineW;
-                oSize.height = 3.5 * nLineW;
+                oSize.width = 6 * nLineW;
+                oSize.height = 3 * nLineW;
                 break;
             
         }
-
         return oSize;
     }
 
