@@ -16166,6 +16166,34 @@ CDocument.prototype.private_StoreViewPositions = function(state)
 
 				// Update AnchorDistance with the new Y position
 				state.AnchorDistance = newXyInfo.Y - viewPort[0].Y;
+
+				// Anchor may still be on the wrong page, see if we can find a better one
+				if (newXyInfo.Page < topViewPage) {
+					let y1 = desiredY;
+					let altAnchorPos = newAnchorPos;
+					let altXyInfo = newXyInfo;
+					while (altAnchorPos && altXyInfo && altXyInfo.Page < topViewPage && y1 < pageHeight) {
+						y1+=10;
+						altAnchorPos = this.GetDocumentPositionByXY(topViewPage, 0, y1);
+						if (altAnchorPos) {
+							altXyInfo = this.private_GetXYByDocumentPosition(altAnchorPos);
+						}
+					}
+
+					if (altAnchorPos && altXyInfo && altXyInfo.Page == topViewPage) {
+						// Found an anchor on the correct page
+						newAnchorPos = altAnchorPos;
+						newXyInfo = altXyInfo;
+						state.AnchorPos = newAnchorPos;
+						state.AnchorDistance = newXyInfo.Y - viewPort[0].Y;
+					}
+					else
+					{
+						// Can't find an anchor on the right page, so calculate the offset
+						let offset = this.DrawingDocument.ConvertCoordsToAnotherPage(0, newXyInfo.Y, newXyInfo.Page, topViewPage);
+						state.AnchorDistance = offset.Y - viewPort[0].Y;
+					}
+				}
 			}
 			else
 			{
