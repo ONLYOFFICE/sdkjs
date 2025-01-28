@@ -1596,9 +1596,6 @@
     CAnnotationBase.prototype.canResize = function () {
         return true;
     };
-    CAnnotationBase.prototype.isGroupObject = function() {
-        return false;
-    };
     
     function formatTimestampToPDF(timestamp) {
         const date = new Date(parseInt(timestamp));
