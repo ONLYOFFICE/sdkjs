@@ -425,7 +425,7 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
 
-        let annotInfo = oNativeFile.readAnnotationsInfoFromBinary(memory.data.subarray(nPos));
+        let annotInfo = oNativeFile.readAnnotationsInfoFromBinary(memory.GetDataUint8(nPos, nEndPos - nPos));
         console.log(annotInfo);
     };
     CAnnotationText.prototype.ReadFromBinary = function(reader) {
