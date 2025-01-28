@@ -5714,10 +5714,11 @@ CDocument.prototype.CheckViewPosition = function()
 	}
 	
 	this.FullRecalc.ScrollToTarget = false;
-
-	let anchorPos = this.ViewPosition.AnchorPos;
-	let alignTop  = this.ViewPosition.AlignTop;
-	let distance  = this.ViewPosition.Distance;
+	
+	let anchorPos      = this.ViewPosition.AnchorPos;
+	let alignTop       = this.ViewPosition.AlignTop;
+	let distance       = this.ViewPosition.Distance;
+	let savedTopOffset = this.ViewPosition.AnchorSavedTopOffset;
 	
 	if (!anchorPos[0] || this !== anchorPos[0].Class)
 	{
@@ -5738,13 +5739,12 @@ CDocument.prototype.CheckViewPosition = function()
 	// Check for scrolling event since the last update
 	// If so, we don't want the anchor/distance to invalidate the scroll!
 	// This happens quite often when scrolling due to the FullRecalc conditions above!
-	if (this.savedTopOffset) {
-		if (this.savedTopOffset != this.DrawingDocument.m_arrPages[0].drawingPage.top) {
-			let delta = this.savedTopOffset - this.DrawingDocument.m_arrPages[0].drawingPage.top;
+	if (savedTopOffset) {
+		if (savedTopOffset != this.DrawingDocument.m_arrPages[0].drawingPage.top) {
+			let delta = savedTopOffset - this.DrawingDocument.m_arrPages[0].drawingPage.top;
 			delta = this.DrawingDocument.GetMMPerDot(delta);
 			this.ViewPosition.Distance -= delta;
 		}
-		this.savedTopOffset = null;
 	}
 
 	function GetXY(docPos)
@@ -16022,10 +16022,11 @@ CDocument.prototype.private_StoreViewPositions = function(state)
 		// Сюда попадаем, когда мы еще не успели обработать предыдущую расчитанную позицию, но при этом
 		// прошло несколько пересчетов, которые могли поменять значения позиции, поэтому мы должны использовать
 		// начально расчитанные значения
-		state.AnchorAlignTop = this.ViewPosition.AlignTop;
-		state.AnchorDistance = this.ViewPosition.Distance;
-		state.AnchorType     = this.ViewPosition.Type;
-		state.AnchorPos      = this.ViewPosition.AnchorPos;
+		state.AnchorAlignTop       = this.ViewPosition.AlignTop;
+		state.AnchorDistance       = this.ViewPosition.Distance;
+		state.AnchorType           = this.ViewPosition.Type;
+		state.AnchorPos            = this.ViewPosition.AnchorPos;
+		state.AnchorSavedTopOffset = this.ViewPosition.AnchorSavedTopOffset;
 		return;
 	}
 	
@@ -16225,7 +16226,7 @@ CDocument.prototype.private_StoreViewPositions = function(state)
 
 	// Record the scroll position in case we get a scroll event before the frame callback
 	if (this.DrawingDocument.m_arrPages.length) {
-		this.savedTopOffset = this.DrawingDocument.m_arrPages[0].drawingPage.top;
+		state.AnchorSavedTopOffset = this.DrawingDocument.m_arrPages[0].drawingPage.top;
 	}
 };
 CDocument.prototype.Load_DocumentStateAfterLoadChanges = function(State, updateSelection)
@@ -16268,10 +16269,11 @@ CDocument.prototype.Load_DocumentStateAfterLoadChanges = function(State, updateS
 	if (undefined !== State.AnchorType)
 	{
 		this.ViewPosition = {
-			AnchorPos : State.AnchorPos,
-			AlignTop  : State.AnchorAlignTop,
-			Distance  : State.AnchorDistance,
-			Type      : State.AnchorType
+			AnchorPos            : State.AnchorPos,
+			AlignTop             : State.AnchorAlignTop,
+			Distance             : State.AnchorDistance,
+			Type                 : State.AnchorType,
+			AnchorSavedTopOffset : State.AnchorSavedTopOffset
 		};
 		
 		if (AscWord.ViewPositionType.Cursor === this.ViewPosition.Type)
