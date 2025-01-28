@@ -5734,7 +5734,19 @@ CDocument.prototype.CheckViewPosition = function()
 	
 	this.ViewPosition     = null;
 	this.NeedUpdateTarget = false;
-	
+
+	// Check for scrolling event since the last update
+	// If so, we don't want the anchor/distance to invalidate the scroll!
+	// This happens quite often when scrolling due to the FullRecalc conditions above!
+	if (this.savedTopOffset) {
+		if (this.savedTopOffset != this.DrawingDocument.m_arrPages[0].drawingPage.top) {
+			let delta = this.savedTopOffset - this.DrawingDocument.m_arrPages[0].drawingPage.top;
+			delta = this.DrawingDocument.GetMMPerDot(delta);
+			this.ViewPosition.Distance -= delta;
+		}
+		this.savedTopOffset = null;
+	}
+
 	function GetXY(docPos)
 	{
 		let run = docPos[docPos.length - 1].Class;
@@ -16209,6 +16221,11 @@ CDocument.prototype.private_StoreViewPositions = function(state)
 				}
 			}
 		}
+	}
+
+	// Record the scroll position in case we get a scroll event before the frame callback
+	if (this.DrawingDocument.m_arrPages.length) {
+		this.savedTopOffset = this.DrawingDocument.m_arrPages[0].drawingPage.top;
 	}
 };
 CDocument.prototype.Load_DocumentStateAfterLoadChanges = function(State, updateSelection)
