@@ -113,7 +113,9 @@
     CAnnotationBase.prototype.GetUserId = function() {
         return this.uid;
     };
-
+    CAnnotationBase.prototype.copy = function() {
+        return this.Copy();
+    };
     CAnnotationBase.prototype.GetDocContent = function() {
         return null;
     };
@@ -137,6 +139,9 @@
     };
     CAnnotationBase.prototype.SetNoRotate = function(bValue) {
         this._noRotate = bValue;
+    };
+    CAnnotationBase.prototype.SetToggleNoView = function(value) {
+        this._toggleNoView = value;
     };
     CAnnotationBase.prototype.SetNoZoom = function(bValue) {
         this._noZoom = bValue;
@@ -1054,7 +1059,6 @@
         oDoc.EndNoHistoryMode();
         return oNewAnnot;
     };
-
     CAnnotationBase.prototype.onMouseDown = function(x, y, e) {
         let oViewer         = Asc.editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
@@ -1241,6 +1245,99 @@
         memory.WriteLong(Flags);
         memory.Seek(nEndPos);
     };
+    CAnnotationBase.prototype.ReadFromBinaryBase = function(memory) {
+        // type
+        let type = memory.GetUChar();
+    
+        // apidx
+        let apIdx = memory.GetLong();
+    
+        // annot flags
+        let annotFlags = memory.GetLong();
+        let bHidden = (annotFlags & (1 << 1)) !== 0;
+        let bPrint = (annotFlags & (1 << 2)) !== 0;
+        let noZoom = (annotFlags & (1 << 3)) !== 0;
+        let noRotate = (annotFlags & (1 << 4)) !== 0;
+        let bNoView = (annotFlags & (1 << 5)) !== 0;
+        let locked = (annotFlags & (1 << 7)) !== 0;
+        let ToggleNoView = (annotFlags & (1 << 8)) !== 0;
+        let lockedC = (annotFlags & (1 << 9)) !== 0;
+    
+        this.SetDisplay(bHidden ? 1 : (bPrint ? (bNoView ? 3 : 0) : -1));
+
+        // page
+        let nPage = memory.GetLong();
+        this.SetPage(nPage);
+    
+        // rect
+        let x1 = memory.GetDouble();
+        let y1 = memory.GetDouble();
+        let x2 = memory.GetDouble();
+        let y2 = memory.GetDouble();
+        this.SetOrigRect([x1, y1, x2, y2]);
+    
+        // new flags
+        let Flags = memory.GetLong();
+    
+        // name
+        if (Flags & (1 << 0)) {
+            let sName = memory.GetString();
+            this.SetName(sName);
+        }
+    
+        // contents
+        if (Flags & (1 << 1)) {
+            let sContents = memory.GetString();
+            this.SetContents(sContents);
+        }
+    
+        // border effect
+        if (Flags & (1 << 2)) {
+            let BES = memory.GetUChar();
+            let BEI = memory.GetDouble();
+            this.SetBorderEffectStyle(BES);
+            this.SetBorderEffectIntensity(BEI);
+        }
+    
+        // stroke color
+        if (Flags & (1 << 3)) {
+            let colorLength = memory.GetLong();
+            let aStrokeColor = [];
+            for (let i = 0; i < colorLength; i++) {
+                aStrokeColor.push(memory.GetDouble());
+            }
+            this.SetStrokeColor(aStrokeColor);
+        }
+    
+        // border
+        if (Flags & (1 << 4)) {
+            let nBorder = memory.GetUChar();
+            let nBorderW = memory.GetDouble();
+            this.SetBorder(nBorder);
+            this.SetWidth(nBorderW);
+    
+            if (nBorder === 2) {
+                let dashLength = memory.GetLong();
+                let aDash = [];
+                for (let i = 0; i < dashLength; i++) {
+                    aDash.push(memory.GetDouble());
+                }
+                this.SetDash(aDash);
+            }
+        }
+    
+        // modification date
+        if (Flags & (1 << 5)) {
+            let sModDate = memory.GetString();
+            this.SetModDate(sModDate);
+        }
+    
+        // user ID
+        if (Flags & (1 << 7)) {
+            let sUserId = memory.GetString();
+            this.SetUserId(sUserId);
+        }
+    };
     CAnnotationBase.prototype.WriteToBinaryBase2 = function(memory) {
         let nType = this.GetType();
         if ((nType < 18 && nType != 1 && nType != 15) || nType == 25) {
@@ -1341,6 +1438,89 @@
             }
         }
     };
+    CAnnotationBase.prototype.ReadFromBinaryBase2 = function(memory) {
+        let nType = this.GetType();
+        if ((nType < 18 && nType != 1 && nType != 15) || nType == 25) {
+            // Чтение флагов
+            memory.annotFlags = memory.GetLong();
+    
+            let nPopupIdx = null;
+            if (memory.annotFlags & (1 << 0)) {
+                nPopupIdx = memory.GetLong();
+                this.SetPopupIdx(nPopupIdx);
+            }
+    
+            let sAuthor = null;
+            if (memory.annotFlags & (1 << 1)) {
+                sAuthor = memory.GetString();
+                this.SetAuthor(sAuthor);
+            }
+    
+            let nOpacity = null;
+            if (memory.annotFlags & (1 << 2)) {
+                nOpacity = memory.GetDouble();
+                this.SetOpacity(nOpacity);
+            }
+    
+            let aRC = null;
+            if (memory.annotFlags & (1 << 3)) {
+                let rcLength = memory.GetLong();
+                aRC = [];
+    
+                for (let i = 0; i < rcLength; i++) {
+                    let rcItem = {};
+    
+                    rcItem["alignment"] = memory.GetUChar();
+    
+                    let nFontStyle = memory.GetLong();
+                    rcItem["bold"] = (nFontStyle & (1 << 0)) !== 0;
+                    rcItem["italic"] = (nFontStyle & (1 << 1)) !== 0;
+                    rcItem["strikethrough"] = (nFontStyle & (1 << 3)) !== 0;
+                    rcItem["underlined"] = (nFontStyle & (1 << 4)) !== 0;
+                    rcItem["vertical"] = (nFontStyle & (1 << 5)) !== 0 ? memory.GetDouble() : null;
+                    rcItem["actual"] = (nFontStyle & (1 << 6)) !== 0 ? memory.GetString() : null;
+    
+                    rcItem["size"] = memory.GetDouble();
+    
+                    rcItem["color"] = [];
+                    for (let j = 0; j < 4; j++) { // Assuming color has 4 components
+                        rcItem["color"].push(memory.GetDouble());
+                    }
+    
+                    rcItem["name"] = memory.GetString();
+                    rcItem["text"] = memory.GetString();
+    
+                    aRC.push(rcItem);
+                }
+                this.SetRichContents(aRC);
+            }
+    
+            let CrDate = null;
+            if (memory.annotFlags & (1 << 4)) {
+                CrDate = memory.GetString();
+                this.SetCreationDate(CrDate);
+            }
+    
+            let oRefTo = null;
+            if (memory.annotFlags & (1 << 5)) {
+                let refApIdx = memory.GetLong();
+                oRefTo = this.FindAnnotationByApIdx(refApIdx); // Assuming a method to find annotation by ApIdx exists
+                this.SetReplyTo(oRefTo);
+            }
+    
+            let nRefToReason = null;
+            if (memory.annotFlags & (1 << 6)) {
+                nRefToReason = memory.GetUChar();
+                this.SetRefType(nRefToReason);
+            }
+    
+            let sSubject = null;
+            if (memory.annotFlags & (1 << 7)) {
+                sSubject = memory.GetString();
+                this.SetSubject(sSubject);
+            }
+        }
+    };
     CAnnotationBase.prototype.WriteRenderToBinary = function(memory) {
         // пока только для основанных на фигурах
         if (false == this.IsShapeBased() || this.IsNeedDrawFromStream()) {
@@ -1416,7 +1596,10 @@
     CAnnotationBase.prototype.canResize = function () {
         return true;
     };
-
+    CAnnotationBase.prototype.isGroupObject = function() {
+        return false;
+    };
+    
     function formatTimestampToPDF(timestamp) {
         const date = new Date(parseInt(timestamp));
         

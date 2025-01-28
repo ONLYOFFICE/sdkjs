@@ -246,6 +246,27 @@
 
         return oNewAnnot;
     };
+    CAnnotationText.prototype.Copy = function() {
+        let oNewAnnot = new CAnnotationText(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), this.GetDocument());
+        let sDate = ((new Date).getTime()).toString();
+
+        let aFillColor = this.GetFillColor();
+        aFillColor && oNewAnnot.SetFillColor(aFillColor.slice());
+        oNewAnnot.SetOriginPage(this.GetOriginPage());
+        oNewAnnot.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
+        oNewAnnot.SetModDate(sDate);
+        oNewAnnot.SetCreationDate(sDate);
+        oNewAnnot.SetContents(this.GetContents());
+        oNewAnnot.SetIconType(this.GetIconType());
+
+        let oCurAscCommData = this.GetAscCommentData();
+        let oCurData = oCurAscCommData ? new AscCommon.CCommentData() : undefined;
+		oCurData && oCurData.Read_FromAscCommentData(oCurAscCommData);
+
+        oNewAnnot.EditCommentData(oCurData);
+
+        return oNewAnnot;
+    };
     CAnnotationText.prototype.Draw = function(oGraphics) {
         if (this.IsHidden() == true)
             return;
@@ -364,6 +385,9 @@
         overlay.m_oContext.stroke();
     }
     CAnnotationText.prototype.WriteToBinary = function(memory) {
+        let oNativeFile = Asc.editor.getDocumentRenderer().file.nativeFile;
+        let nPos = memory.pos;
+
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
 
         let nStartPos = memory.GetCurPosition();
@@ -400,7 +424,38 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
+
+        let annotInfo = oNativeFile.readAnnotationsInfoFromBinary(memory.data.subarray(nPos));
+        console.log(annotInfo);
     };
+    CAnnotationText.prototype.ReadFromBinary = function(reader) {
+        reader.CommandType = reader.GetUChar();
+        
+        reader.Skip(4);
+    
+        this.ReadFromBinaryBase(reader);
+        this.ReadFromBinaryBase2(reader);
+    
+        // icon
+        if (reader.annotFlags & (1 << 16)) {
+            let nIconType = reader.GetUChar();
+            this.SetIconType(nIconType);
+        }
+    
+        // state model
+        if (reader.annotFlags & (1 << 17)) {
+            let nStateModel = reader.GetUChar();
+            this.SetStateModel(nStateModel);
+        }
+    
+        // state
+        if (reader.annotFlags & (1 << 18)) {
+            let nState = reader.GetUChar();
+            this.SetState(nState);
+        }
+    };
+    
+    
     
     window["AscPDF"].CAnnotationText            = CAnnotationText;
     window["AscPDF"].TEXT_ANNOT_STATE           = TEXT_ANNOT_STATE;

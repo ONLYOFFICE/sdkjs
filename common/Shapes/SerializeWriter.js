@@ -1561,6 +1561,11 @@ function CBinaryFileWriter()
             }
         }
     };
+    this.WriteAnnotTreeElem = function(oAnnot) {
+        oThis.WriteByMemory(function(memory) {
+            oAnnot.WriteToBinary(memory)
+        });
+    };
     this.WriteClrMap = function(clrmap)
     {
         oThis.WriteUChar(g_nodeAttributeStart);

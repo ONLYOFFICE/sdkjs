@@ -1253,6 +1253,7 @@ var CPresentation = CPresentation || function(){};
     function PDFSelectedContent() {
         this.Pages = [];
         this.Drawings = [];
+        this.Annots = [];
         this.DocContent = null;
     }
 
@@ -1361,19 +1362,18 @@ var CPresentation = CPresentation || function(){};
                 }
             }
             function collectSelectedObjects(aSpTree, aCollectArray, bRecursive, oIdMap, bSourceFormatting) {
-                var oSp;
-                var oPr = new AscFormat.CCopyObjectProperties();
+                let oSp;
+                let oPr = new AscFormat.CCopyObjectProperties();
                 oPr.idMap = oIdMap;
                 oPr.bSaveSourceFormatting = bSourceFormatting;
                 for (let i = 0; i < aSpTree.length; ++i) {
                     oSp = aSpTree[i];
-                    // if(oSp.isEmptyPlaceholder())
-                    // {
-                    //     continue;
-                    // }
                     if (oSp.selected) {
-                        var oCopy;
-                        if (oSp.isGroupObject()) {
+                        let oCopy;
+                        if (oSp.IsAnnot()) {
+                            oCopy = oSp.copy(oPr);
+                        }
+                        else if (oSp.isGroupObject()) {
                             oCopy = oSp.copy(oPr);
                             oCopy.setParent(oSp.parent);
                         } else {
@@ -1397,7 +1397,13 @@ var CPresentation = CPresentation || function(){};
             
                         }
             
-                        aCollectArray.push(new DrawingCopyObject(oCopy, oSp.x, oSp.y, oSp.extX, oSp.extY, oSp.getBase64Img()));
+                        if (oSp.IsAnnot()) {
+                            aCollectArray.push(new AnnotCopyObject(oCopy, oSp.x, oSp.y, oSp.extX, oSp.extY));
+                        }
+                        else {
+                            aCollectArray.push(new DrawingCopyObject(oCopy, oSp.x, oSp.y, oSp.extX, oSp.extY, oSp.getBase64Img()));
+                        }
+                        
                         if (AscCommon.isRealObject(oIdMap)) {
                             oIdMap[oSp.Id] = oCopy.Id;
                         }
@@ -1622,14 +1628,15 @@ var CPresentation = CPresentation || function(){};
                     }
                 }
             } else {
-                var bRecursive = isRealObject(oController.selection.groupSelection);
-                var aSpTree = bRecursive ? oController.selection.groupSelection.spTree : this.Viewer.pagesInfo.pages[this.GetCurPage()].drawings;
+                let bRecursive = isRealObject(oController.selection.groupSelection);
+                let aSpTree = bRecursive ? oController.selection.groupSelection.spTree : oController.selectedObjects;
                 oIdMap = {};
 
-                collectSelectedObjects(aSpTree, oEndFormattingContent.Drawings, bRecursive, oIdMap);
+                let isAnnot = !!aSpTree.find(function(sp) { return sp.IsAnnot() });
+                collectSelectedObjects(aSpTree, isAnnot ? oEndFormattingContent.Annots : oEndFormattingContent.Drawings, bRecursive, oIdMap);
                 AscFormat.fResetConnectorsIds(oEndFormattingContent.Drawings, oIdMap);
                 oIdMap = {};
-                collectSelectedObjects(aSpTree, oSourceFormattingContent.Drawings, bRecursive, oIdMap, true);
+                collectSelectedObjects(aSpTree, isAnnot ? oSourceFormattingContent.Annots : oSourceFormattingContent.Drawings, bRecursive, oIdMap, true);
                 AscFormat.fResetConnectorsIds(oSourceFormattingContent.Drawings, oIdMap);
                 let oImageData = oController.getSelectionImageData();
                 if (oImageData) {
@@ -7227,7 +7234,29 @@ var CPresentation = CPresentation || function(){};
             }
         }
         return new DrawingCopyObject(this.Drawing ? _copy : this.Drawing, this.X, this.Y, this.ExtX, this.ExtY, this.ImageUrl);
+    };
+
+    function AnnotCopyObject(oAnnot, X, Y, ExtX, ExtY, ImageUrl) {
+        this.Annot = oAnnot;
+        this.X = X;
+        this.Y = Y;
+        this.ExtX = ExtX;
+        this.ExtY = ExtY;
+        this.ImageUrl = ImageUrl;
+    }
     
+    AnnotCopyObject.prototype.copy = function (oIdMap) {
+    
+        let _copy = this.Annot;
+        let oPr = new AscFormat.CCopyObjectProperties();
+        oPr.idMap = oIdMap;
+        if (this.Annot) {
+            _copy = this.Annot.copy(oPr);
+            if (AscCommon.isRealObject(oIdMap)) {
+                oIdMap[this.Annot.Id] = _copy.Id;
+            }
+        }
+        return new AnnotCopyObject(this.Annot ? _copy : this.Annot, this.X, this.Y, this.ExtX, this.ExtY, this.ImageUrl);
     };
     
     window["AscPDF"].CPDFDoc                    = CPDFDoc;
@@ -7236,6 +7265,7 @@ var CPresentation = CPresentation || function(){};
     window["AscPDF"].CPDFCompositeInput         = CPDFCompositeInput;
     window["AscPDF"].PDFSelectedContent         = PDFSelectedContent;
     window["AscPDF"].DrawingCopyObject          = DrawingCopyObject;
+    window["AscPDF"].AnnotCopyObject            = AnnotCopyObject;
     window["AscPDF"].AscLockTypeElemPDF         = AscLockTypeElemPDF;
     window["AscPDF"]["GetPageCoordsByGlobalCoords"] = window["AscPDF"].GetPageCoordsByGlobalCoords = GetPageCoordsByGlobalCoords;
     window["AscPDF"]["GetGlobalCoordsByPageCoords"] = window["AscPDF"].GetGlobalCoordsByPageCoords = GetGlobalCoordsByPageCoords;

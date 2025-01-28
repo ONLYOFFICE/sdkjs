@@ -1322,7 +1322,7 @@ CopyProcessor.prototype =
 		//DocContent/ Drawings
 
 		if (elementsContent && elementsContent.length) {
-			if (elementsContent[0].DocContent || (elementsContent[0].Drawings && elementsContent[0].Drawings.length)) {
+			if (elementsContent[0].DocContent || (elementsContent[0].Drawings && elementsContent[0].Drawings.length) || (elementsContent[0].Annots && elementsContent[0].Annots.length)) {
 				this.oPDFWriter.WriteString2(this.api.documentId);
 				//флаг о том, что множественный контент в буфере
 				this.oPDFWriter.WriteBool(true);
@@ -1490,6 +1490,23 @@ CopyProcessor.prototype =
 			oThis.oPDFWriter.End_UseFullUrl();
 
 		};
+		let copyAnnots = function(){
+			let elements = elementsContent.Annots;
+
+			//пишем метку и длину
+			oThis.oPDFWriter.WriteString2("Annots");
+			oThis.oPDFWriter.WriteULong(elements.length);
+
+			oThis.oPDFWriter.Start_UseFullUrl();
+			for (let i = 0; i < elements.length; ++i) {
+				oThis.CopyPDFAnnotObject(elements[i]);
+
+				//TODO записывать base64 у картинок для разных контентов в единственном экземпляре
+				oThis.oPDFWriter.WriteString2("");
+			}
+			oThis.oPDFWriter.End_UseFullUrl();
+
+		};
 
 		// пишем количество
 		let contentCount = 0;
@@ -1510,6 +1527,10 @@ CopyProcessor.prototype =
 		//Drawings
 		if (elementsContent.Drawings && elementsContent.Drawings.length) {
 			copyDrawings();
+		}
+		//Annots
+		if (elementsContent.Annots && elementsContent.Annots.length) {
+			copyAnnots();
 		}
 	},
 
@@ -1917,7 +1938,8 @@ CopyProcessor.prototype =
 		} else if (PasteElementsId.g_bIsPDFCopyPaste) {
 			selectedContent = oDocument.GetSelectedContent2();
 			if (!selectedContent[0].DocContent && (!selectedContent[0].Drawings ||
-				(selectedContent[0].Drawings && !selectedContent[0].Drawings.length))) {
+				(selectedContent[0].Drawings && !selectedContent[0].Drawings.length))
+				&& (!selectedContent[0].Annots || (selectedContent[0].Annots && !selectedContent[0].Annots.length))) {
 				return false;
 			}
 
@@ -2293,6 +2315,9 @@ CopyProcessor.prototype =
 			oDomTarget.addChild(oImg);
 		}
 		this.oPDFWriter.WriteSpTreeElem(oGraphicObj);
+	},
+	CopyPDFAnnotObject: function (oAnnotCopyObject) {
+		this.oPDFWriter.WriteAnnotTreeElem(oAnnotCopyObject.Annot);
 	},
 
 	CopyFootnotes: function (oDomTarget, aFootnotes) {
@@ -5723,6 +5748,28 @@ PasteProcessor.prototype =
 			arr_Images = arr_Images.concat(objects.arrImages);
 		};
 
+		let readAnnots = function () {
+
+			if (PasteElementsId.g_bIsDocumentCopyPaste) {
+				History.TurnOff();
+			}
+			// шейпы из презентаций, поэтому чтение то же самое
+			let objects = oThis.ReadPDFAnnots(stream);
+			if (PasteElementsId.g_bIsDocumentCopyPaste) {
+				History.TurnOn();
+			}
+
+			oPDFSelContent.Annots = objects.arrAnnots;
+
+			let arr_annots = objects.arrAnnots;
+			for (let i = 0; i < arr_annots.length; ++i) {
+				if (arr_annots[i].Drawing.getAllFonts) {
+					arr_annots[i].Drawing.getAllFonts(oFontMap);
+				}
+			}
+			arr_Images = arr_Images.concat(objects.arrImages);
+		};
+
 		var bIsEmptyContent = true;
 		var first_content = stream.GetString2();
 		if (first_content === "SelectedContent") {
@@ -5745,6 +5792,10 @@ PasteProcessor.prototype =
 						readDrawings();
 						break;
 					}
+					case "Annots": {
+						readAnnots();
+						break;
+					}
 				}
 			}
 		}
@@ -5758,6 +5809,35 @@ PasteProcessor.prototype =
 		}
 
 		return {content: oPDFSelContent, fonts: fonts, images: arr_Images};
+	},
+
+	ReadPDFAnnots: function (stream) {
+		let oFT_Stream2 = new AscCommon.FT_Stream2(stream.data, stream.size);
+		oFT_Stream2.cur = stream.cur;
+		oFT_Stream2.pos = stream.cur;
+
+		let nCount = oFT_Stream2.GetLong();
+		for (let i = 0; i < nCount; i++) {
+			let nStartPos = oFT_Stream2.GetCurPos();
+			let nCommand = oFT_Stream2.GetUChar();
+			let nCommandSize = oFT_Stream2.GetLong();
+
+			let nAnnotType = oFT_Stream2.GetUChar();
+			oFT_Stream2.Seek2(nStartPos);
+
+			let oAnnot = AscPDF.CreateAnnotByProps({
+				type: nAnnotType
+			}, Asc.editor.getPDFDoc());
+
+			oAnnot.ReadFromBinary(oFT_Stream2);
+
+			console.log(i);
+		}
+
+		stream.cur = oFT_Stream2.cur;
+		stream.pos = oFT_Stream2.pos;
+
+		return {arrShapes: arr_shapes, arrImages: allImages, arrTransforms: arr_transforms};
 	},
 
 	//from PRESENTATION to PRESENTATION
