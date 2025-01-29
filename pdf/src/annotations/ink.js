@@ -384,10 +384,24 @@
         aStrokeColor && oNewInk.SetStrokeColor(aStrokeColor.slice());
         oNewInk.SetWidth(this.GetWidth());
         oNewInk.SetOpacity(this.GetOpacity());
-        oNewInk._relativePaths = this.GetRelativePaths().slice();
         oNewInk._gestures = this._gestures.slice();
         oNewInk.SetContents(this.GetContents());
         oNewInk.recalcGeometry();
+
+        let oCurAscCommData = this.GetAscCommentData();
+        let oCurData = oCurAscCommData ? new AscCommon.CCommentData() : undefined;
+        if (oCurData) {
+            oCurData.Read_FromAscCommentData(oCurAscCommData);
+            oCurData.SetUserData(oNewInk.GetId());
+            oCurData.SetSolved(false);
+        }
+        
+        oNewInk.SetUserId(Asc.editor.documentUserId);
+        oNewInk.GetReplies().forEach(function(reply) {
+            reply.SetUserId(Asc.editor.documentUserId);
+        });
+
+        oNewInk.EditCommentData(oCurData);
 
         return oNewInk;
     };
@@ -429,6 +443,10 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
+
+        this.GetReplies().forEach(function(reply) {
+            reply.IsChanged() && reply.WriteToBinary(memory); 
+        });
     };
     
     function fillShapeByPoints(arrOfArrPoints, aShapeRect, oParentAnnot) {
