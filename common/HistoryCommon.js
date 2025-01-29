@@ -4052,6 +4052,7 @@
 
 	// Comment
 	AscDFH.historyitem_Pdf_Comment_Data			= AscDFH.historyitem_type_Pdf_Comment | 1;
+	AscDFH.historyitem_Pdf_Comment_Icon			= AscDFH.historyitem_type_Pdf_Comment | 2;
 
 	// Ink
 	AscDFH.historyitem_Pdf_Ink_Points			= AscDFH.historyitem_type_Pdf_Annot_Ink | 1;

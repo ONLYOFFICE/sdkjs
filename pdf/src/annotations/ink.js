@@ -367,6 +367,30 @@
         oDoc.EndNoHistoryMode();
         return oNewInk;
     };
+    CAnnotationInk.prototype.Copy = function() {
+        let oDoc = this.GetDocument();
+
+        let oNewInk = new CAnnotationInk(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+        let sDate = ((new Date).getTime()).toString();
+
+        this.fillObject(oNewInk);
+
+        let aStrokeColor = this.GetStrokeColor();
+
+        oNewInk.SetOriginPage(this.GetOriginPage());
+        oNewInk.SetAuthor(this.GetAuthor());
+        oNewInk.SetModDate(sDate);
+        oNewInk.SetCreationDate(sDate);
+        aStrokeColor && oNewInk.SetStrokeColor(aStrokeColor.slice());
+        oNewInk.SetWidth(this.GetWidth());
+        oNewInk.SetOpacity(this.GetOpacity());
+        oNewInk._relativePaths = this.GetRelativePaths().slice();
+        oNewInk._gestures = this._gestures.slice();
+        oNewInk.SetContents(this.GetContents());
+        oNewInk.recalcGeometry();
+
+        return oNewInk;
+    };
     CAnnotationInk.prototype.GetRelativePaths = function() {
         return this._relativePaths;
     };

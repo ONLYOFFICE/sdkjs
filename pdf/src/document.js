@@ -1282,6 +1282,17 @@ var CPresentation = CPresentation || function(){};
             });
         }
 
+        for (let i = 0; i < this.Annots.length; i++) {
+            let oCopyAnnotObj = this.Annots[i].Annot.copy();
+            oCopy.Annots.push({
+                Annot: oCopyAnnotObj,
+                ExtX: this.Annots[i].ExtX,
+                X: this.Annots[i].X,
+                Y: this.Annots[i].Y,
+                base64: this.Annots[i].base64
+            });
+        }
+
         AscFormat.fResetConnectorsIds(oCopy.Drawings.map(function(drawing) {
             return drawing.Drawing;
         }), oIdMap);
@@ -2514,12 +2525,8 @@ var CPresentation = CPresentation || function(){};
         if (!oPageInfo)
             return null;
         
-        AscCommon.g_oTableId.TurnOn();
         let oAnnot = AscPDF.CreateAnnotByProps(oProps, this);
-        if (oProps.apIdx != undefined) {
-            oAnnot.SetApIdx(oProps.apIdx);
-        }
-
+        
         oAnnot.SetNeedRecalc(true);
         oAnnot.SetDisplay(this.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
         
@@ -2527,6 +2534,16 @@ var CPresentation = CPresentation || function(){};
         oPageInfo.AddAnnot(oAnnot);
         
         return oAnnot;
+    };
+    CPDFDoc.prototype.AddAnnot = function(oAnnot, nPage) {
+        let oPagesInfo = this.GetPageInfo(nPage);
+        if (!oPagesInfo)
+            return;
+
+        this.annots.push(oAnnot);
+
+        oAnnot.SetDocument(this);
+        oPagesInfo.AddAnnot(oAnnot);
     };
     CPDFDoc.prototype.AddComment = function(AscCommentData) {
         let oCurHistory = AscCommon.History;
@@ -4715,10 +4732,6 @@ var CPresentation = CPresentation || function(){};
         }
     };
     CPDFDoc.prototype.InsertContent2 = function(aSelContent, nIndex) {
-        if (true == this.Api.isRestrictionView()) {
-            return false;
-        }
-
         let oThis = this;
         return oThis.InsertContent(aSelContent[nIndex].copy());
     };
@@ -4729,71 +4742,102 @@ var CPresentation = CPresentation || function(){};
 
         let bResult = false;
 
-        // во view шейпы не вставляем
-        if (true == this.Api.isRestrictionView()) {
-            return bResult;
-        }
-
-        if (oSelContent.Drawings.length != 0) {
-            this.BlurActiveObject();
-
-            let aDrToPaste = oSelContent.Drawings.map(function(pasteObj) {
-                return pasteObj.Drawing;
-            });
-
-            aDrToPaste.forEach(function(drawing, index) {
-                let oXfrm = drawing.getXfrm();
-                let oPos = private_computeDrawingAddingPos(nCurPage, oXfrm.extX, oXfrm.extY);
-                oXfrm.setOffX(oPos.x);
-                oXfrm.setOffY(oPos.y);
-
-                // чуть-чуть смещаем при вставке, чтобы было видно вставленную фигуру
-                let nShift = oController.getDrawingsPasteShift([drawing]);
-
-                if (nShift > 0) {
-                    oXfrm.shift(nShift, nShift);
-                }
-
-                oThis.AddDrawing(drawing, oThis.GetCurPage());
-
-                if (drawing.IsGraphicFrame()) {
-                    oController.Check_GraphicFrameRowHeight(drawing);
-                }
-                
-                if (index == 0) {
-                    oThis.SetMouseDownObject(drawing);
-                }
-                drawing.select(oController, nCurPage);
-            });
-
-            bResult = true;
-        }
-        if (oSelContent.DocContent) {
-            oSelContent.DocContent.EndCollect(this);
-            if (oSelContent.DocContent.Elements.length > 0) {
-                let oTargetTextObject = AscFormat.getTargetTextObject(oController);
-                let oTargetDocContent = oController.getTargetDocContent(true), paragraph, NearPos;
-
-                if (oTargetDocContent) {
-                    if (oTargetDocContent.Selection.Use) {
-                        oController.removeCallback(1, undefined, undefined, undefined, undefined, undefined);
+        if (false == this.Api.isRestrictionView()) {
+            if (oSelContent.Drawings.length != 0) {
+                this.BlurActiveObject();
+    
+                let aDrToPaste = oSelContent.Drawings.map(function(pasteObj) {
+                    return pasteObj.Drawing;
+                });
+    
+                aDrToPaste.forEach(function(drawing, index) {
+                    let oXfrm = drawing.getXfrm();
+                    let oPos = private_computeDrawingAddingPos(nCurPage, oXfrm.extX, oXfrm.extY);
+                    oXfrm.setOffX(oPos.x);
+                    oXfrm.setOffY(oPos.y);
+    
+                    // чуть-чуть смещаем при вставке, чтобы было видно вставленную фигуру
+                    let nShift = oController.getDrawingsPasteShift([drawing]);
+    
+                    if (nShift > 0) {
+                        oXfrm.shift(nShift, nShift);
                     }
-
-                    paragraph = oTargetDocContent.Content[oTargetDocContent.CurPos.ContentPos];
-                    if (null != paragraph && paragraph.IsParagraph()) {
-                        NearPos = {Paragraph: paragraph, ContentPos: paragraph.Get_ParaContentPos(false, false)};
-                        paragraph.Check_NearestPos(NearPos);
-                        oSelContent.DocContent.Insert(NearPos);
+    
+                    oThis.AddDrawing(drawing, oThis.GetCurPage());
+    
+                    if (drawing.IsGraphicFrame()) {
+                        oController.Check_GraphicFrameRowHeight(drawing);
                     }
                     
-                    oTargetTextObject && oTargetTextObject.checkExtentsByDocContent && oTargetTextObject.checkExtentsByDocContent();
-                    oTargetTextObject.SetNeedRecalc(true);
-                    AscCommon.History.SetSourceObjectsToPointPdf([oTargetTextObject]);
-                }
-                else {
-                    this.CreateAndAddShapeFromSelectedContent(oSelContent.DocContent);
-                }
+                    if (index == 0) {
+                        oThis.SetMouseDownObject(drawing);
+                    }
+                    drawing.select(oController, nCurPage);
+                });
+    
+                bResult = true;
             }
+            if (oSelContent.DocContent) {
+                oSelContent.DocContent.EndCollect(this);
+                if (oSelContent.DocContent.Elements.length > 0) {
+                    let oTargetTextObject = AscFormat.getTargetTextObject(oController);
+                    let oTargetDocContent = oController.getTargetDocContent(true), paragraph, NearPos;
+    
+                    if (oTargetDocContent) {
+                        if (oTargetDocContent.Selection.Use) {
+                            oController.removeCallback(1, undefined, undefined, undefined, undefined, undefined);
+                        }
+    
+                        paragraph = oTargetDocContent.Content[oTargetDocContent.CurPos.ContentPos];
+                        if (null != paragraph && paragraph.IsParagraph()) {
+                            NearPos = {Paragraph: paragraph, ContentPos: paragraph.Get_ParaContentPos(false, false)};
+                            paragraph.Check_NearestPos(NearPos);
+                            oSelContent.DocContent.Insert(NearPos);
+                        }
+                        
+                        oTargetTextObject && oTargetTextObject.checkExtentsByDocContent && oTargetTextObject.checkExtentsByDocContent();
+                        oTargetTextObject.SetNeedRecalc(true);
+                        AscCommon.History.SetSourceObjectsToPointPdf([oTargetTextObject]);
+                    }
+                    else {
+                        this.CreateAndAddShapeFromSelectedContent(oSelContent.DocContent);
+                    }
+                }
+    
+                bResult = true;
+            }
+        } 
+        
+        if (oSelContent.Annots.length != 0) {
+            this.BlurActiveObject();
+
+            let aAnnotsToPaste = oSelContent.Annots.map(function(pasteObj) {
+                return pasteObj.Annot;
+            });
+
+            aAnnotsToPaste.forEach(function(annot, index) {
+                let aRect = annot.GetRect();
+                let extXmm = (aRect[2] - aRect[0]) * g_dKoef_pt_to_mm;
+                let extYmm = (aRect[3] - aRect[1]) * g_dKoef_pt_to_mm;
+
+                let oPos = private_computeDrawingAddingPos(nCurPage, extXmm, extYmm);
+                annot.SetPosition(oPos.x * g_dKoef_mm_to_pt, oPos.y * g_dKoef_mm_to_pt)
+
+                // чуть-чуть смещаем при вставке, чтобы было видно вставленную фигуру
+                // let nShift = oController.getDrawingsPasteShift([annot]);
+
+                // if (nShift > 0) {
+                //     oXfrm.shift(nShift, nShift);
+                // }
+
+                oThis.AddAnnot(annot, oThis.GetCurPage());
+                oThis.CheckComment(annot);
+
+                if (index == 0) {
+                    oThis.SetMouseDownObject(annot);
+                }
+                annot.select(oController, nCurPage);
+            });
 
             bResult = true;
         }
@@ -6898,6 +6942,10 @@ var CPresentation = CPresentation || function(){};
                 return null;
         }
 
+        if (oProps.apIdx != undefined) {
+            oAnnot.SetApIdx(oProps.apIdx);
+        }
+        
         oAnnot.SetCreationDate(sCrDate);
         oAnnot.SetModDate(sModDate);
         oAnnot.SetAuthor(sAuthor);
@@ -6906,6 +6954,155 @@ var CPresentation = CPresentation || function(){};
         oAnnot.SetUserId(sUserId);
 
         return oAnnot;
+    }
+
+    function ReadAnnotFromJSON(annotJson, oDoc) {
+        let rect            = [annotJson["rect"]["x1"], annotJson["rect"]["y1"], annotJson["rect"]["x2"], annotJson["rect"]["y2"]];
+        let creationDate	= annotJson["CreationDate"] ? AscPDF.ParsePDFDate(annotJson["CreationDate"]) : null;
+        let creationStamp	= creationDate ? String(creationDate.getTime()) : undefined;
+        let modDate			= annotJson["LastModified"] ? AscPDF.ParsePDFDate(annotJson["LastModified"]) : null;
+        let modStamp		= modDate ? String(modDate.getTime()) : undefined;
+
+        let oAnnot = AscPDF.CreateAnnotByProps({
+            page:			annotJson["page"],
+            name:			annotJson["UniqueName"], 
+            creationDate:	creationStamp,
+            modDate:		modStamp,
+            contents:		annotJson["Contents"],
+            author:			annotJson["User"],
+            rect:			rect,
+            type:			annotJson["Type"],
+            apIdx:			annotJson["AP"]["i"],
+            uid:			annotJson["OUserID"]
+        }, oDoc);
+        
+        oAnnot.SetDrawFromStream(Boolean(annotJson["AP"]["have"]));
+        oAnnot.SetOriginPage(annotJson["page"]);
+
+        if (annotJson["IT"] != null)
+            oAnnot.SetIntent(annotJson["IT"]);
+
+        if (annotJson["InkList"]) {
+            oAnnot.SetInkPoints(annotJson["InkList"]);
+        }
+        else if (annotJson["L"]) {
+            oAnnot.SetLinePoints(annotJson["L"]);
+        }
+        else if (annotJson["Vertices"]) {
+            oAnnot.SetVertices(annotJson["Vertices"]);
+        }
+
+        if (annotJson["LE"] != null) {
+            if (Array.isArray(annotJson["LE"])) {
+                oAnnot.SetLineStart(annotJson["LE"][0]);
+                oAnnot.SetLineEnd(annotJson["LE"][1]);
+            }
+            else
+                oAnnot.SetLineEnd(annotJson["LE"]);
+        }
+
+        if (annotJson["Icon"] != null)
+            oAnnot.SetIconType(annotJson["Icon"]);
+        if (annotJson["RefToReason"] != null)
+            oAnnot.SetRefType(annotJson["RefToReason"]);
+        if (annotJson["Popup"] != null)
+            oAnnot.SetPopupIdx(annotJson["Popup"]);
+        if (annotJson["Subj"])
+            oAnnot.SetSubject(annotJson["Subj"]);
+        if (annotJson["CL"])
+            oAnnot.SetCallout(annotJson["CL"]);
+        if (annotJson["RC"])
+            oAnnot.SetRichContents(annotJson["RC"]);
+        if (annotJson["RD"])
+            oAnnot.SetRectangleDiff(annotJson["RD"]);
+        if (annotJson["display"])
+            oAnnot.SetDisplay(annotJson["display"]);
+        if (annotJson["locked"] != null)
+            oAnnot.SetLock(Boolean(annotJson["locked"]));
+        if (annotJson["lockedC"] != null)
+            oAnnot.SetLockContent(Boolean(annotJson["lockedC"]));
+        if (annotJson["IC"] != null)
+            oAnnot.SetFillColor(annotJson["IC"]);
+        if (annotJson["dashed"] != null)
+            oAnnot.SetDash(annotJson["dashed"]);
+        if (annotJson["border"] != null)
+            oAnnot.SetBorder(annotJson["border"]);
+        if (annotJson["Icon"] != null)
+            oAnnot.SetIconType(annotJson["Icon"]);
+        if (annotJson["noRotate"] != null)
+            oAnnot.SetNoRotate(Boolean(annotJson["noRotate"]));
+        if (annotJson["noZoom"] != null)
+            oAnnot.SetNoZoom(Boolean(annotJson["noZoom"]));
+        if (annotJson["Sy"] != null)
+            oAnnot.SetCaretSymbol(annotJson["Sy"]);
+        if (annotJson["LL"] != null)
+            oAnnot.SetLeaderLength(annotJson["LL"]);
+        if (annotJson["LLE"] != null)
+            oAnnot.SetLeaderExtend(annotJson["LLE"]);
+        if (annotJson["Cap"] != null)
+            oAnnot.SetDoCaption(Boolean(annotJson["Cap"]));
+
+        // FreeText/Redact
+        if (annotJson["alignment"] != null)
+            oAnnot.SetAlign(annotJson["alignment"]);
+
+        // FreeText
+        if (annotJson["defaultStyle"] != null)
+            oAnnot.SetDefaultStyle(annotJson["defaultStyle"]);
+
+        if (annotJson["Rotate"] != null)
+            oAnnot.SetRotate(annotJson["Rotate"]);
+        if (annotJson["InRect"] != null)
+            oAnnot.SetInRect(annotJson["InRect"]);
+        
+        // border effect
+        if (annotJson["BE"] != null) {
+            if (annotJson["BE"]["I"] != null)
+                oAnnot.SetBorderEffectIntensity(annotJson["BE"]["I"]);
+            if (annotJson["BE"]["S"] != null)
+                oAnnot.SetBorderEffectStyle(annotJson["BE"]["S"]);
+        }
+        
+        oAnnot.SetStrokeColor(annotJson["C"]);
+        
+        if (annotJson["CA"] != null) {
+            oAnnot.SetOpacity(annotJson["CA"]);
+        }
+        if (annotJson["borderWidth"] != null) {
+            oAnnot.SetWidth(annotJson["borderWidth"]);
+        }
+        else {
+            oAnnot.SetWidth(1);
+        }
+
+        if (annotJson["QuadPoints"] != null) {
+            let aSepQuads = [];
+            for (let i = 0; i < annotJson["QuadPoints"].length; i+=8)
+                aSepQuads.push(annotJson["QuadPoints"].slice(i, i+8));
+
+            oAnnot.SetQuads(aSepQuads);
+        }
+
+        return oAnnot;
+    }
+
+    function ReadAnnotReplyJSON(oParentAnnot, replyJson) {
+        let oReply = new AscPDF.CAnnotationText(replyJson["UniqueName"], oParentAnnot.GetPage(), [], oParentAnnot.GetDocument());
+
+        oReply.SetCreationDate(AscPDF.ParsePDFDate(replyJson["CreationDate"]).getTime());
+        oReply.SetModDate(AscPDF.ParsePDFDate(replyJson["LastModified"]).getTime());
+        oReply.SetAuthor(replyJson["User"]);
+        oReply.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
+        oReply.SetPopupIdx(replyJson["Popup"]);
+        oReply.SetSubject(replyJson["Subj"]);
+        oReply.SetUserId(replyJson["OUserID"]);
+
+        oReply.SetReplyTo(oParentAnnot);
+        oReply.SetApIdx(replyJson["AP"]["i"]);
+
+        oReply.SetContents(replyJson["Contents"]);
+        
+        oParentAnnot._replies.push(oReply);
     }
 
     function CreateAscAnnotPropFromObj(annot) {
@@ -7262,6 +7459,8 @@ var CPresentation = CPresentation || function(){};
     window["AscPDF"].CPDFDoc                    = CPDFDoc;
     window["AscPDF"].CreateAnnotByProps         = CreateAnnotByProps;
     window["AscPDF"].CreateAscAnnotPropFromObj  = CreateAscAnnotPropFromObj;
+    window["AscPDF"].ReadAnnotFromJSON          = ReadAnnotFromJSON;
+    window["AscPDF"].ReadAnnotReplyJSON         = ReadAnnotReplyJSON;
     window["AscPDF"].CPDFCompositeInput         = CPDFCompositeInput;
     window["AscPDF"].PDFSelectedContent         = PDFSelectedContent;
     window["AscPDF"].DrawingCopyObject          = DrawingCopyObject;

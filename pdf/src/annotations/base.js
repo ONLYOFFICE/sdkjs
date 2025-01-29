@@ -687,24 +687,6 @@
             this.GetDocument().ShowComment([this.GetId()]);
         }
     };
-    CAnnotationBase.prototype._AddReplyOnOpen = function(oReplyInfo) {
-        let oReply = new AscPDF.CAnnotationText(oReplyInfo["UniqueName"], this.GetPage(), [], this.GetDocument());
-
-        oReply.SetCreationDate(AscPDF.ParsePDFDate(oReplyInfo["CreationDate"]).getTime());
-        oReply.SetModDate(AscPDF.ParsePDFDate(oReplyInfo["LastModified"]).getTime());
-        oReply.SetAuthor(oReplyInfo["User"]);
-        oReply.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
-        oReply.SetPopupIdx(oReplyInfo["Popup"]);
-        oReply.SetSubject(oReplyInfo["Subj"]);
-        oReply.SetUserId(oReplyInfo["OUserID"]);
-
-        oReply.SetReplyTo(this);
-        oReply.SetApIdx(oReplyInfo["AP"]["i"]);
-
-        oReply.SetContents(oReplyInfo["Contents"]);
-        
-        this._replies.push(oReply);
-    };
     CAnnotationBase.prototype.SetContents = function(contents) {
         if (this.GetContents() == contents)
             return;
@@ -883,7 +865,7 @@
         oAscCommData.asc_putUserName(this.GetAuthor());
         oAscCommData.asc_putSolved(false);
         oAscCommData.asc_putQuoteText("");
-        oAscCommData.m_sUserData = this.GetId();
+        oAscCommData.asc_putUserData(this.GetId());
 
         this._replies.forEach(function(reply) {
             oAscCommData.m_aReplies.push(reply.GetAscCommentData());
@@ -1523,7 +1505,7 @@
     };
     CAnnotationBase.prototype.WriteRenderToBinary = function(memory) {
         // пока только для основанных на фигурах
-        if (false == this.IsShapeBased() || this.IsNeedDrawFromStream()) {
+        if (false == this.IsShapeBased() || this.IsNeedDrawFromStream() || !memory.docRenderer) {
             return;
         }
 

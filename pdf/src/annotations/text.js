@@ -178,7 +178,13 @@
     };
 
     CAnnotationText.prototype.SetIconType = function(nType) {
+        if (nType == this._noteIcon) {
+            return;
+        }
+
+        AscCommon.History.Add(new CChangesPDFCommentIcon(this, this._noteIcon, nType));
         this._noteIcon = nType;
+        this.SetWasChanged(true);
     };
     CAnnotationText.prototype.GetIconType = function() {
         return this._noteIcon;
@@ -261,7 +267,16 @@
 
         let oCurAscCommData = this.GetAscCommentData();
         let oCurData = oCurAscCommData ? new AscCommon.CCommentData() : undefined;
-		oCurData && oCurData.Read_FromAscCommentData(oCurAscCommData);
+        if (oCurData) {
+            oCurData.Read_FromAscCommentData(oCurAscCommData);
+            oCurData.SetUserData(oNewAnnot.GetId());
+            oCurData.SetSolved(false);
+        }
+        
+        oNewAnnot.SetUserId(Asc.editor.documentUserId);
+        oNewAnnot.GetReplies().forEach(function(reply) {
+            reply.SetUserId(Asc.editor.documentUserId);
+        });
 
         oNewAnnot.EditCommentData(oCurData);
 
@@ -385,9 +400,6 @@
         overlay.m_oContext.stroke();
     }
     CAnnotationText.prototype.WriteToBinary = function(memory) {
-        let oNativeFile = Asc.editor.getDocumentRenderer().file.nativeFile;
-        let nPos = memory.pos;
-
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
 
         let nStartPos = memory.GetCurPosition();
@@ -425,8 +437,9 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
 
-        let annotInfo = oNativeFile.readAnnotationsInfoFromBinary(memory.GetDataUint8(nPos, nEndPos - nPos));
-        console.log(annotInfo);
+        this.GetReplies().forEach(function(reply) {
+            reply.IsChanged() && reply.WriteToBinary(memory); 
+        });
     };
     CAnnotationText.prototype.ReadFromBinary = function(reader) {
         reader.CommandType = reader.GetUChar();

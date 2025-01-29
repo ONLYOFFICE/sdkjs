@@ -52,6 +52,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Fill]			= CChangesPDFAnnotFil
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_StrokeWidth]		= CChangesPDFAnnotStrokeWidth;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Opacity]			= CChangesPDFAnnotOpacity;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Comment_Data]			= CChangesPDFCommentData;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Comment_Icon]			= CChangesPDFCommentIcon;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Ink_Points]			= CChangesPDFInkPoints;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Quads]			= CChangesPDFAnnotQuads;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Ink_FlipV]				= CChangesPDFInkFlipV;
@@ -148,6 +149,23 @@ CChangesPDFCommentData.prototype.private_SetValue = function(Value)
 CChangesPDFCommentData.prototype.private_CreateObject = function()
 {
 	return new AscCommon.CCommentData();
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFCommentIcon(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFCommentIcon.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFCommentIcon.prototype.constructor = CChangesPDFCommentIcon;
+CChangesPDFCommentIcon.prototype.Type = AscDFH.historyitem_Pdf_Comment_Icon;
+CChangesPDFCommentIcon.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot.SetIconType(Value);
 };
 
 /**

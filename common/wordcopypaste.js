@@ -5763,11 +5763,10 @@ PasteProcessor.prototype =
 
 			let arr_annots = objects.arrAnnots;
 			for (let i = 0; i < arr_annots.length; ++i) {
-				if (arr_annots[i].Drawing.getAllFonts) {
-					arr_annots[i].Drawing.getAllFonts(oFontMap);
+				if (arr_annots[i].Annot.getAllFonts) {
+					arr_annots[i].Annot.getAllFonts(oFontMap);
 				}
 			}
-			arr_Images = arr_Images.concat(objects.arrImages);
 		};
 
 		var bIsEmptyContent = true;
@@ -5812,32 +5811,31 @@ PasteProcessor.prototype =
 	},
 
 	ReadPDFAnnots: function (stream) {
-		let oFT_Stream2 = new AscCommon.FT_Stream2(stream.data, stream.size);
-		oFT_Stream2.cur = stream.cur;
-		oFT_Stream2.pos = stream.cur;
+		let nCountAnnots = stream.GetULong();
 
-		let nCount = oFT_Stream2.GetLong();
-		for (let i = 0; i < nCount; i++) {
-			let nStartPos = oFT_Stream2.GetCurPos();
-			let nCommand = oFT_Stream2.GetUChar();
-			let nCommandSize = oFT_Stream2.GetLong();
+		let oDoc = Asc.editor.getPDFDoc();
+		let oNativeFile = Asc.editor.getDocumentRenderer().file.nativeFile;
+		let aAnnotsInfo = oNativeFile.readAnnotationsInfoFromBinary(stream.data.slice(stream.cur));
 
-			let nAnnotType = oFT_Stream2.GetUChar();
-			oFT_Stream2.Seek2(nStartPos);
+		let oAnnotsMap = {};
+		let aAnnots = [];
+		for (let i = 0; i < aAnnotsInfo.length; i++) {
+			let oAnnotInfo = aAnnotsInfo[i];
 
-			let oAnnot = AscPDF.CreateAnnotByProps({
-				type: nAnnotType
-			}, Asc.editor.getPDFDoc());
+			if (oAnnotInfo["RefTo"] == null || oAnnotInfo["Type"] != AscPDF.ANNOTATIONS_TYPES.Text) {
+				let oAnnot = AscPDF.ReadAnnotFromJSON(oAnnotInfo, oDoc);
+				if (oAnnotInfo["RefTo"] == null)
+					oAnnotsMap[oAnnotInfo["AP"]["i"]] = oAnnot;
 
-			oAnnot.ReadFromBinary(oFT_Stream2);
-
-			console.log(i);
+				aAnnots.push(new AscPDF.AnnotCopyObject(oAnnot));
+			}
+			else {
+				if (oAnnotInfo["StateModel"] != AscPDF.TEXT_ANNOT_STATE_MODEL.Review && oAnnotsMap[oAnnotInfo["RefTo"]])
+					AscPDF.ReadAnnotReplyJSON(oAnnotsMap[oAnnotInfo["RefTo"]], oAnnotInfo);
+			}
 		}
 
-		stream.cur = oFT_Stream2.cur;
-		stream.pos = oFT_Stream2.pos;
-
-		return {arrShapes: arr_shapes, arrImages: allImages, arrTransforms: arr_transforms};
+		return {arrAnnots: aAnnots};
 	},
 
 	//from PRESENTATION to PRESENTATION
