@@ -177,6 +177,37 @@
 
         return oPolygon;
     };
+    CAnnotationPolygon.prototype.Copy = function() {
+        let oDoc = this.GetDocument();
+
+        let oPolygon = new CAnnotationPolygon(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+        let sDate = ((new Date).getTime()).toString();
+
+        this.fillObject(oPolygon);
+
+        let aStrokeColor    = this.GetStrokeColor();
+        let aFillColor      = this.GetFillColor();
+        let aVertices       = this.GetVertices();
+
+        oPolygon.SetOriginPage(this.GetOriginPage());
+        oPolygon.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
+        oPolygon.SetModDate(sDate);
+        oPolygon.SetCreationDate(sDate);
+        oPolygon.SetContents(this.GetContents());
+        aStrokeColor && oPolygon.SetStrokeColor(aStrokeColor.slice());
+        aFillColor && oPolygon.SetFillColor(aFillColor.slice());
+        oPolygon.SetWidth(this.GetWidth());
+        oPolygon.SetOpacity(this.GetOpacity());
+        aVertices && oPolygon.SetVertices(aVertices.slice());
+        oPolygon.SetBorderEffectStyle(this.GetBorderEffectStyle());
+        oPolygon.SetBorderEffectIntensity(this.GetBorderEffectIntensity());
+        oPolygon.SetWasChanged(oPolygon.IsChanged());
+        oPolygon.recalcInfo.recalculateGeometry = true;
+        oPolygon.recalculate();
+
+        this.FillCommentsDataTo(oPolygon);
+        return oPolygon;
+    };
     CAnnotationPolygon.prototype.onMouseDown = function(x, y, e) {
         let oViewer         = Asc.editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
@@ -264,6 +295,10 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
+
+        this.GetReplies().forEach(function(reply) {
+            (reply.IsChanged() || !memory.docRenderer) && reply.WriteToBinary(memory);
+        });
     };
 
     function generateGeometry(aPoints, aBounds, oGeometry) {

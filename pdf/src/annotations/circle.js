@@ -120,6 +120,7 @@
         oCircle.SetDash(this.GetDash());
         oCircle.Recalculate(true);
 
+        this.FillCommentsDataTo(oCircle);
         return oCircle;
     };
     CAnnotationCircle.prototype.RefillGeometry = function(oGeometry, aShapeRectInMM) {
@@ -239,6 +240,10 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
+
+        this.GetReplies().forEach(function(reply) {
+            (reply.IsChanged() || !memory.docRenderer) && reply.WriteToBinary(memory); 
+        });
     };
     
     function generateCloudyGeometry(arrPoints, aBounds, oGeometry, nIntensity) {

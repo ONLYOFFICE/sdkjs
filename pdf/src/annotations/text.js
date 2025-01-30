@@ -265,21 +265,7 @@
         oNewAnnot.SetContents(this.GetContents());
         oNewAnnot.SetIconType(this.GetIconType());
 
-        let oCurAscCommData = this.GetAscCommentData();
-        let oCurData = oCurAscCommData ? new AscCommon.CCommentData() : undefined;
-        if (oCurData) {
-            oCurData.Read_FromAscCommentData(oCurAscCommData);
-            oCurData.SetUserData(oNewAnnot.GetId());
-            oCurData.SetSolved(false);
-        }
-        
-        oNewAnnot.SetUserId(Asc.editor.documentUserId);
-        oNewAnnot.GetReplies().forEach(function(reply) {
-            reply.SetUserId(Asc.editor.documentUserId);
-        });
-
-        oNewAnnot.EditCommentData(oCurData);
-
+        this.FillCommentsDataTo(oNewAnnot);
         return oNewAnnot;
     };
     CAnnotationText.prototype.Draw = function(oGraphics) {
@@ -438,7 +424,7 @@
         memory.Seek(nEndPos);
 
         this.GetReplies().forEach(function(reply) {
-            reply.IsChanged() && reply.WriteToBinary(memory); 
+            (reply.IsChanged() || !memory.docRenderer) && reply.WriteToBinary(memory);
         });
     };
     CAnnotationText.prototype.ReadFromBinary = function(reader) {

@@ -196,6 +196,24 @@
     CAnnotationBase.prototype.SetRichContents = function(sText) {
         this._richContents = sText;
     };
+    CAnnotationBase.prototype.FillCommentsDataTo = function(oAnnot) {
+        let oCurAscCommData = this.GetAscCommentData();
+        let oCurData = oCurAscCommData ? new AscCommon.CCommentData() : undefined;
+        if (oCurData) {
+            oCurData.Read_FromAscCommentData(oCurAscCommData);
+            oCurData.SetUserData(oAnnot.GetId());
+            oCurData.SetSolved(false);
+
+            oCurData.m_aReplies.forEach(function(reply) {
+                reply.m_sUserId = Asc.editor.documentUserId;
+            });
+        }
+        
+        oAnnot.SetUserId(Asc.editor.documentUserId);
+        
+
+        oAnnot.EditCommentData(oCurData);
+    };
     CAnnotationBase.prototype.GetRichContents = function() {
         return this._richContents;
     };

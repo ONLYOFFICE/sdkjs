@@ -388,20 +388,7 @@
         oNewInk.SetContents(this.GetContents());
         oNewInk.recalcGeometry();
 
-        let oCurAscCommData = this.GetAscCommentData();
-        let oCurData = oCurAscCommData ? new AscCommon.CCommentData() : undefined;
-        if (oCurData) {
-            oCurData.Read_FromAscCommentData(oCurAscCommData);
-            oCurData.SetUserData(oNewInk.GetId());
-            oCurData.SetSolved(false);
-        }
-        
-        oNewInk.SetUserId(Asc.editor.documentUserId);
-        oNewInk.GetReplies().forEach(function(reply) {
-            reply.SetUserId(Asc.editor.documentUserId);
-        });
-
-        oNewInk.EditCommentData(oCurData);
+        this.FillCommentsDataTo(oNewInk);
 
         return oNewInk;
     };
@@ -445,7 +432,7 @@
         memory.Seek(nEndPos);
 
         this.GetReplies().forEach(function(reply) {
-            reply.IsChanged() && reply.WriteToBinary(memory); 
+            (reply.IsChanged() || !memory.docRenderer) && reply.WriteToBinary(memory);
         });
     };
     
