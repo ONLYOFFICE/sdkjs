@@ -378,7 +378,7 @@
         let aStrokeColor = this.GetStrokeColor();
 
         oNewInk.SetOriginPage(this.GetOriginPage());
-        oNewInk.SetAuthor(this.GetAuthor());
+        oNewInk.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
         oNewInk.SetModDate(sDate);
         oNewInk.SetCreationDate(sDate);
         aStrokeColor && oNewInk.SetStrokeColor(aStrokeColor.slice());

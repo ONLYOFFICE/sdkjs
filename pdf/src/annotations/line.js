@@ -224,6 +224,35 @@
         oDoc.EndNoHistoryMode();
         return oLine;
     };
+    CAnnotationLine.prototype.Copy = function() {
+        let oDoc = this.GetDocument();
+
+        let oLine = new CAnnotationLine(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+        let sDate = ((new Date).getTime()).toString();
+
+        this.fillObject(oLine);
+
+        let aStrokeColor    = this.GetStrokeColor();
+        let aFillColor      = this.GetFillColor();
+        let aLinePoints     = this.GetLinePoints();
+
+        oLine.SetOriginPage(this.GetOriginPage());
+        oLine.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
+        oLine.SetModDate(sDate);
+        oLine.SetCreationDate(sDate);
+        aStrokeColor && oLine.SetStrokeColor(aStrokeColor.slice());
+        oLine.SetWidth(this.GetWidth());
+        oLine.SetLineStart(this.GetLineStart());
+        oLine.SetLineEnd(this.GetLineEnd());
+        oLine.SetContents(this.GetContents());
+        aFillColor && oLine.SetFillColor(aFillColor.slice());
+        oLine.SetOpacity(this.GetOpacity());
+        aLinePoints && oLine.SetLinePoints(aLinePoints.slice());
+        oLine.recalcInfo.recalculateGeometry = true;
+        oLine.recalculate();
+
+        return oLine;
+    };
     CAnnotationLine.prototype.IsLine = function() {
         return true;
     };

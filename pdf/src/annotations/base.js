@@ -220,13 +220,27 @@
         return this._border;
     };
     CAnnotationBase.prototype.SetBorderEffectIntensity = function(nValue) {
+        if (nValue == this._borderEffectIntensity) {
+            return;
+        }
+
+        AscCommon.History.Add(new CChangesPDFAnnotBorderIntensity(this, this._borderEffectIntensity, nValue));
         this._borderEffectIntensity = nValue;
+        this.SetWasChanged(true);
+        this.SetNeedRecalc(true);
     };
     CAnnotationBase.prototype.GetBorderEffectIntensity = function() {
         return this._borderEffectIntensity;
     };
     CAnnotationBase.prototype.SetBorderEffectStyle = function(nStyle) {
+        if (nStyle == this._borderEffectStyle) {
+            return;
+        }
+
+        AscCommon.History.Add(new CChangesPDFAnnotBorderEffect(this, this._borderEffectStyle, nStyle));
         this._borderEffectStyle = nStyle;
+        this.SetWasChanged(true);
+        this.SetNeedRecalc(true);
     };
     CAnnotationBase.prototype.GetBorderEffectStyle = function() {
         return this._borderEffectStyle;
