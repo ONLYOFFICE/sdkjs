@@ -6983,7 +6983,7 @@ var CPresentation = CPresentation || function(){};
             oAnnot.SetIntent(annotJson["IT"]);
 
         if (annotJson["InkList"]) {
-            oAnnot.SetInkPoints(annotJson["InkList"]);
+            oAnnot.SetInkPoints(annotJson["InkList"], true);
         }
         else if (annotJson["L"]) {
             oAnnot.SetLinePoints(annotJson["L"]);

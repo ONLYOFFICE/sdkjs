@@ -384,7 +384,7 @@
         aStrokeColor && oNewInk.SetStrokeColor(aStrokeColor.slice());
         oNewInk.SetWidth(this.GetWidth());
         oNewInk.SetOpacity(this.GetOpacity());
-        oNewInk._gestures = this._gestures.slice();
+        oNewInk.SetInkPoints(this.GetInkPoints().slice());
         oNewInk.SetContents(this.GetContents());
         oNewInk.recalcGeometry();
 
