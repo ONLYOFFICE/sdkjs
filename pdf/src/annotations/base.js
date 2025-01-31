@@ -1173,7 +1173,7 @@
 
         // rect
         let aOrigRect = this.GetOrigRect();
-        if (this.IsStamp()) {
+        if (this.IsStamp() && memory.docRenderer) {
             // for not clipping by half border width
             memory.WriteDouble(aOrigRect[0] - nBorderW / 2); // x1
             memory.WriteDouble(aOrigRect[1] - nBorderW / 2); // y1

@@ -148,10 +148,16 @@
         }
     };
     CAnnotationStamp.prototype.SetInRect = function(aInRect) {
+        let oViewer = Asc.editor.getDocumentRenderer();
+
         AscCommon.History.Add(new CChangesPDFAnnotStampInRect(this, this.inRect, aInRect));
 
         this.inRect = aInRect;
         
+        if (false == oViewer.IsOpenAnnotsInProgress) {
+            return;
+        }
+
         function getDistance(x1, y1, x2, y2) {
             return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
         }
@@ -313,16 +319,6 @@
             this.spPr.xfrm.setExtY(nY2 - nY1);
             this.spPr.xfrm.setOffX(nX1);
             this.spPr.xfrm.setOffY(nY1);
-
-            this.recalcBounds();
-            this.recalcGeometry();
-            this.Recalculate(true);
-            
-            let oGrBounds = this.bounds;
-            this._origRect[0] = Math.round(oGrBounds.l) * g_dKoef_mm_to_pt;
-            this._origRect[1] = Math.round(oGrBounds.t) * g_dKoef_mm_to_pt;
-            this._origRect[2] = Math.round(oGrBounds.r) * g_dKoef_mm_to_pt;
-            this._origRect[3] = Math.round(oGrBounds.b) * g_dKoef_mm_to_pt;
         }
 
         this.SetWasChanged(true);
@@ -401,7 +397,31 @@
         oDoc.EndNoHistoryMode();
         return oNewStamp;
     };
-    
+    CAnnotationStamp.prototype.Copy = function() {
+        let oDoc = this.GetDocument();
+
+        let oNewStamp = new CAnnotationStamp(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+        let sDate = ((new Date).getTime()).toString();
+
+        this.fillObject(oNewStamp);
+
+        let aStrokeColor    = this.GetStrokeColor();
+        let aFillColor      = this.GetFillColor();
+
+        oNewStamp.SetOriginPage(this.GetOriginPage());
+        oNewStamp.SetInRect(this.GetInRect());
+        oNewStamp.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
+        oNewStamp.SetModDate(sDate);
+        oNewStamp.SetCreationDate(sDate);
+        aStrokeColor && oNewStamp.SetStrokeColor(aStrokeColor.slice());
+        aFillColor && oNewStamp.SetFillColor(aFillColor.slice());
+        oNewStamp.SetWidth(this.GetWidth());
+        oNewStamp.SetOpacity(this.GetOpacity());
+        oNewStamp.SetIconType(this.GetIconType());
+        oNewStamp.Recalculate(true);
+
+        return oNewStamp;
+    };
     CAnnotationStamp.prototype.IsSelected = function() {
         let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
@@ -477,10 +497,19 @@
         let aInRect = this.GetInRect();
         let nBorderW = this.GetWidth();
         // original rect
-        memory.WriteDouble(aInRect[0] - nBorderW / 2); // x1
-        memory.WriteDouble(aInRect[3] - nBorderW / 2); // y1
-        memory.WriteDouble(aInRect[4] + nBorderW / 2); // x2
-        memory.WriteDouble(aInRect[1] + nBorderW / 2); // y2
+        if (memory.docRenderer) {
+            memory.WriteDouble(aInRect[0] - nBorderW / 2); // x1
+            memory.WriteDouble(aInRect[3] - nBorderW / 2); // y1
+            memory.WriteDouble(aInRect[4] + nBorderW / 2); // x2
+            memory.WriteDouble(aInRect[1] + nBorderW / 2); // y2
+        }
+        else {
+            memory.WriteDouble(aInRect[0]); // x1
+            memory.WriteDouble(aInRect[3]); // y1
+            memory.WriteDouble(aInRect[4]); // x2
+            memory.WriteDouble(aInRect[1]); // y2
+        }
+        
 
         let nEndPos = memory.GetCurPosition();
         memory.Seek(memory.posForFlags);
@@ -502,7 +531,7 @@
     };
     CAnnotationStamp.prototype.WriteRenderToBinary = function(memory) {
         // пока только для основанных на фигурах
-        if (this.IsNeedDrawFromStream()) {
+        if (this.IsNeedDrawFromStream() || !memory.docRenderer) {
             return;
         }
 

@@ -90,6 +90,33 @@
 
         return oSquare;
     };
+    CAnnotationSquare.prototype.Copy = function() {
+        let oDoc = this.GetDocument();
+
+        let oSquare = new CAnnotationSquare(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+        let sDate = ((new Date).getTime()).toString();
+
+        this.fillObject(oSquare);
+
+        let aStrokeColor    = this.GetStrokeColor();
+        let aFillColor      = this.GetFillColor();
+        let aRD             = this.GetRectangleDiff();
+
+        oSquare.SetOriginPage(this.GetOriginPage());
+        oSquare.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
+        oSquare.SetModDate(sDate);
+        oSquare.SetCreationDate(sDate);
+        aStrokeColor && oSquare.SetStrokeColor(aStrokeColor.slice());
+        aFillColor && oSquare.SetFillColor(aFillColor.slice());
+        oSquare.SetWidth(this.GetWidth());
+        oSquare.SetOpacity(this.GetOpacity());
+        oSquare.recalcGeometry()
+        aRD && oSquare.SetRectangleDiff(aRD.slice(), true);
+        oSquare.Recalculate(true);
+
+        this.FillCommentsDataTo(oSquare);
+        return oSquare;
+    };
     CAnnotationSquare.prototype.RefillGeometry = function(oGeometry, aShapeRectInMM) {
         if (this.GetBorderEffectStyle() !== AscPDF.BORDER_EFFECT_STYLES.Cloud)
             return;

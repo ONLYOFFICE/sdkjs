@@ -169,6 +169,36 @@
 
         return oPolyline;
     };
+    CAnnotationPolyLine.prototype.Copy = function() {
+        let oDoc = this.GetDocument();
+
+        let oPolyline = new CAnnotationPolyLine(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+        let sDate = ((new Date).getTime()).toString();
+
+        this.fillObject(oPolyline);
+
+        let aStrokeColor    = this.GetStrokeColor();
+        let aFillColor      = this.GetFillColor();
+        let aVertices       = this.GetVertices();
+
+        oPolyline.SetOriginPage(this.GetOriginPage());
+        oPolyline.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
+        oPolyline.SetModDate(sDate);
+        oPolyline.SetCreationDate(sDate);
+        oPolyline.SetContents(this.GetContents());
+        aStrokeColor && oPolyline.SetStrokeColor(aStrokeColor.slice());
+        aFillColor && oPolyline.SetFillColor(aFillColor.slice());
+        oPolyline.SetWidth(this.GetWidth());
+        oPolyline.SetLineStart(this.GetLineStart());
+        oPolyline.SetLineEnd(this.GetLineEnd());
+        oPolyline.SetOpacity(this.GetOpacity());
+        aVertices && oPolyline.SetVertices(aVertices.slice());
+        oPolyline.SetWasChanged(oPolyline.IsChanged());
+        oPolyline.recalcInfo.recalculateGeometry = true;
+        
+        this.FillCommentsDataTo(oPolyline);
+        return oPolyline;
+    };
     CAnnotationPolyLine.prototype.onMouseDown = function(x, y, e) {
         let oViewer         = Asc.editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
