@@ -181,6 +181,7 @@
         let aFillColor      = this.GetFillColor();
         let aVertices       = this.GetVertices();
 
+        oPolyline.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
         oPolyline.SetOriginPage(this.GetOriginPage());
         oPolyline.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
         oPolyline.SetModDate(sDate);

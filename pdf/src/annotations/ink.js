@@ -377,6 +377,7 @@
 
         let aStrokeColor = this.GetStrokeColor();
 
+        oNewInk.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
         oNewInk.SetOriginPage(this.GetOriginPage());
         oNewInk.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
         oNewInk.SetModDate(sDate);

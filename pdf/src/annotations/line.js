@@ -236,6 +236,7 @@
         let aFillColor      = this.GetFillColor();
         let aLinePoints     = this.GetLinePoints();
 
+        oLine.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
         oLine.SetOriginPage(this.GetOriginPage());
         oLine.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
         oLine.SetModDate(sDate);

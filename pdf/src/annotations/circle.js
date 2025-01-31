@@ -105,6 +105,7 @@
         let aFillColor      = this.GetFillColor();
         let aRD             = this.GetRectangleDiff();
 
+        oCircle.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
         oCircle.SetOriginPage(this.GetOriginPage());
         oCircle.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
         oCircle.SetModDate(sDate);
@@ -121,6 +122,11 @@
         oCircle.Recalculate(true);
 
         this.FillCommentsDataTo(oCircle);
+
+        if (this.IsNeedDrawFromStream()) {
+            oCircle.SetDrawFromStream(true);
+        }
+        
         return oCircle;
     };
     CAnnotationCircle.prototype.RefillGeometry = function(oGeometry, aShapeRectInMM) {

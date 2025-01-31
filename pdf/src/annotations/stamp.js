@@ -408,6 +408,7 @@
         let aStrokeColor    = this.GetStrokeColor();
         let aFillColor      = this.GetFillColor();
 
+        oNewStamp.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
         oNewStamp.SetOriginPage(this.GetOriginPage());
         oNewStamp.SetInRect(this.GetInRect());
         oNewStamp.SetAuthor(AscCommon.UserInfoParser.getCurrentName());

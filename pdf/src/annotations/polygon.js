@@ -189,6 +189,7 @@
         let aFillColor      = this.GetFillColor();
         let aVertices       = this.GetVertices();
 
+        oPolygon.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
         oPolygon.SetOriginPage(this.GetOriginPage());
         oPolygon.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
         oPolygon.SetModDate(sDate);

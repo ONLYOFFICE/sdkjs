@@ -102,6 +102,7 @@
         let aFillColor      = this.GetFillColor();
         let aRD             = this.GetRectangleDiff();
 
+        oSquare.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
         oSquare.SetOriginPage(this.GetOriginPage());
         oSquare.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
         oSquare.SetModDate(sDate);
