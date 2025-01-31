@@ -512,6 +512,36 @@
         oDoc.EndNoHistoryMode();
         return oFreeText;
     };
+    CAnnotationFreeText.prototype.Copy = function() {
+        let oDoc = this.GetDocument();
+
+        let oFreeText = new CAnnotationFreeText(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+        let sDate = ((new Date).getTime()).toString();
+
+        let aStrokeColor    = this.GetStrokeColor();
+        let aFillColor      = this.GetFillColor();
+        let aCallout        = this.GetCallout();
+        let aRD             = this.GetRectangleDiff();
+
+        oFreeText.SetOriginPage(this.GetOriginPage());
+        oFreeText.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
+        oFreeText.SetModDate(sDate);
+        oFreeText.SetCreationDate(sDate);
+        oFreeText.SetContents(this.GetContents());
+        aStrokeColor && oFreeText.SetStrokeColor(aStrokeColor.slice());
+        aFillColor && oFreeText.SetFillColor(aFillColor.slice());
+        oFreeText.SetWidth(this.GetWidth());
+        oFreeText.SetLineEnd(this.GetLineEnd());
+        oFreeText.SetOpacity(this.GetOpacity());
+        aCallout && oFreeText.SetCallout(aCallout.slice());
+        aRD && oFreeText.SetRectangleDiff(aRD.slice());
+        oFreeText.SetWasChanged(oFreeText.IsChanged());
+        oFreeText.recalcGeometry();
+        
+        this.FillCommentsDataTo(oFreeText);
+
+        return oFreeText;
+    };
     CAnnotationFreeText.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
             return;

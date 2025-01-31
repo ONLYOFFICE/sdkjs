@@ -1640,7 +1640,7 @@ var CPresentation = CPresentation || function(){};
                 }
             } else {
                 let bRecursive = isRealObject(oController.selection.groupSelection);
-                let aSpTree = bRecursive ? oController.selection.groupSelection.spTree : oController.selectedObjects;
+                let aSpTree = bRecursive && !oController.selection.groupSelection.IsAnnot() ? oController.selection.groupSelection.spTree : oController.selectedObjects;
                 oIdMap = {};
 
                 let isAnnot = !!aSpTree.find(function(sp) { return sp.IsAnnot() });
