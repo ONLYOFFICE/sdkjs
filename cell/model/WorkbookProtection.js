@@ -1306,9 +1306,8 @@
 		this.saltValue = null;
 		this.spinCount = null;
 
-		this.password = null;
 		this.userName = null;
-		this.readOnly = null;
+		this.readOnlyRecommended = null;
 
 		this._wb = wb;
 		/*this.temporaryPassword = null;*/
@@ -1326,7 +1325,7 @@
 
 		res.password = this.password;
 		res.userName = this.userName;
-		res.readOnly = this.readOnly;
+		res.readOnlyRecommended = this.readOnlyRecommended;
 
 		return res;
 	};
@@ -1393,9 +1392,9 @@
 		} else {
 			w.WriteBool(false);
 		}
-		if (null != this.readOnly) {
+		if (null != this.readOnlyRecommended) {
 			w.WriteBool(true);
-			w.WriteBool(this.readOnly);
+			w.WriteBool(this.readOnlyRecommended);
 		} else {
 			w.WriteBool(false);
 		}
@@ -1421,8 +1420,11 @@
 			this.userName = r.GetString2();
 		}
 		if (r.GetBool()) {
-			this.readOnly = r.GetBool();
+			this.readOnlyRecommended = r.GetBool();
 		}
+	};
+	CFileSharing.prototype.asc_getUserName = function () {
+		return this.userName;
 	};
 	CFileSharing.prototype.asc_getAlgorithmName = function () {
 		return this.algorithmName;
@@ -1436,23 +1438,8 @@
 	CFileSharing.prototype.asc_getSpinCount = function () {
 		return this.spinCount;
 	};
-	CFileSharing.prototype.asc_getReadOnly = function () {
-		return this.readOnly;
-	};
-	CFileSharing.prototype.asc_getSpinCount = function () {
-		return this.spinCount;
-	};
-	CFileSharing.prototype.asc_isPassword = function () {
-		return this.password != null || this.password != null;
-	};
-	CFileSharing.prototype.setPasswordXL = function (val) {
-		this.password = val;
-	};
-	CFileSharing.prototype.getPasswordXL = function () {
-		return this.password;
-	};
-	CFileSharing.prototype.isPasswordXL = function () {
-		return this.password != null;
+	CFileSharing.prototype.asc_getReadOnlyRecommended = function () {
+		return this.readOnlyRecommended;
 	};
 
 
@@ -1550,6 +1537,12 @@
 
 	window["Asc"].CFileSharing = CFileSharing;
 	prot = CFileSharing.prototype;
+	prot["asc_getUserName"] = prot.asc_getUserName;
+	prot["asc_getAlgorithmName"] = prot.asc_getAlgorithmName;
+	prot["asc_getHashValue"] = prot.asc_getHashValue;
+	prot["asc_getSaltValue"] = prot.asc_getSaltValue;
+	prot["asc_getSpinCount"] = prot.asc_getSpinCount;
+	prot["asc_getReadOnlyRecommended"] = prot.asc_getReadOnlyRecommended;
 
 	window["AscCommonExcel"].getPasswordHash = getPasswordHash;
 	window["AscCommonExcel"].FromXml_ST_AlgorithmName = FromXml_ST_AlgorithmName;
