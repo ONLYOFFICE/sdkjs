@@ -1355,6 +1355,31 @@
 		return propOld;*/
 	};
 
+	CFileSharing.prototype.isModify = function () {
+		if (this.algorithmName && this.hashValue) {
+			return false;
+		}
+		return true;
+	};
+
+	CFileSharing.prototype.checkPassword = function (val, callback) {
+		let t = this;
+
+		if (this.algorithmName == null || this.hashValue == null) {
+			callback(false);
+			return false;
+		}
+
+		var checkPassword = function (hash) {
+			callback(hash && hash[0] === t.hashValu);
+		};
+
+		//this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction);
+		var checkHash = {password: val, salt: this.saltValue, spinCount: this.spinCount,
+			alg: AscCommon.fromModelAlgorithmName(this.algorithmName)};
+		AscCommon.calculateProtectHash([checkHash], checkPassword);
+	};
+
 	CFileSharing.prototype.Write_ToBinary2 = function (w) {
 		if (null != this.algorithmName) {
 			w.WriteBool(true);
@@ -1377,12 +1402,6 @@
 		if (null != this.spinCount) {
 			w.WriteBool(true);
 			w.WriteLong(this.spinCount);
-		} else {
-			w.WriteBool(false);
-		}
-		if (null != this.password) {
-			w.WriteBool(true);
-			w.WriteString2(this.password);
 		} else {
 			w.WriteBool(false);
 		}
@@ -1412,9 +1431,6 @@
 		}
 		if (r.GetBool()) {
 			this.spinCount = r.GetLong();
-		}
-		if (r.GetBool()) {
-			this.password = r.GetString2();
 		}
 		if (r.GetBool()) {
 			this.userName = r.GetString2();

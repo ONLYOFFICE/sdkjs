@@ -1494,6 +1494,10 @@ var editor;
 				AscCommon.PasteElementsId.PASTE_ELEMENT_ID = "wrd_pastebin";
 				AscCommon.PasteElementsId.ELEMENT_DISPAY_STYLE = "none";
 			}
+			if (t.wbModel && t.wbModel.fileSharing && !t.wbModel.fileSharing.isModify()) {
+				//!t.wbModel.fileSharing.checkPassword(callback)
+				this.handlers.trigger("asc_onError", c_oAscError.ID.Unknown, c_oAscError.Level.Critical);
+			}
 		}
 	};
 	spreadsheet_api.prototype._openOnClient = function() {
