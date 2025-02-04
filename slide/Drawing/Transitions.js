@@ -3377,6 +3377,8 @@ function CDemonstrationManager(htmlpage)
             oThis.CheckSlideDuration = setTimeout(function()
             {
                 oThis.CheckSlideDuration = -1;
+                if(!oThis.Mode)
+                    return;
                 if(oThis.IsMainSeqFinished(nSlideNum))
                 {
                     oThis.AdvanceAfter();
