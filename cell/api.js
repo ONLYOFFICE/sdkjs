@@ -1682,7 +1682,7 @@ var editor;
 		//возвращаю инфомарцию об активном листе, который печатаем
 		var indexActiveWs = curPage && curPage.indexWorksheet;
 		if (indexActiveWs === undefined) {
-			indexActiveWs = this.wbModel.getActive();
+			indexActiveWs = null !== this.wb.printPreviewState.realActiveSheet ? this.wb.printPreviewState.realActiveSheet : this.wbModel.getActive();
 		}
 		this.handlers.trigger("asc_onPrintPreviewSheetChanged", indexActiveWs);
 		this.handlers.trigger("asc_onPrintPreviewPageChanged", index);

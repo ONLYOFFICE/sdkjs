@@ -1585,12 +1585,19 @@ CBlockLevelSdt.prototype.GetInnerText = function()
 };
 CBlockLevelSdt.prototype.SetInnerText = function(text)
 {
-	let textPr = this.GetFirstParagraph().GetFirstRunPr();
+	let firstParagraph = this.GetFirstParagraph();
+	
+	let textPr = firstParagraph.GetFirstRunPr();
+	let endPr  = firstParagraph.GetParaEndPr();
+	let paraPr = firstParagraph.GetDirectParaPr();
+	
 	this.Content.ClearContent(false);
 	let para = new AscWord.Paragraph();
 	let run  = new AscWord.Run();
 	run.AddText(text);
 	run.SetPr(textPr.Copy());
+	para.SetDirectParaPr(paraPr);
+	para.SetParaEndPr(endPr);
 	para.AddToContent(0, run);
 	this.Content.AddToContent(0, para);
 };

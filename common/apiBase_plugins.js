@@ -1353,6 +1353,11 @@
 			// UPD: done. Ничего не изменять в менеджере плагинов, если guid пуст
 
             let result = window["AscDesktopEditor"]["PluginInstall"](JSON.stringify(config));
+
+			if (result && window.g_asc_plugins.isRunned(config["guid"]))
+			{
+				window.g_asc_plugins.close(config["guid"]);
+			}
 			
 			return {
 				"type" : loadFuncName,

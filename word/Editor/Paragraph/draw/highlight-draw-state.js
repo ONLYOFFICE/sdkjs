@@ -494,7 +494,7 @@
 	ParagraphHighlightDrawState.prototype.isComplexFieldHighlight = function()
 	{
 		return (this.complexFields.isComplexField()
-			&& !this.complexFields.isComplexFieldCode()
+			&& !this.complexFields.isHiddenComplexFieldPart()
 			&& this.complexFields.isCurrentComplexField()
 			&& !this.complexFields.isHyperlinkField());
 	};

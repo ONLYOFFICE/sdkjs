@@ -1533,6 +1533,9 @@ ParaMath.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 			
 			// TODO: Вообще инлайновая формула должна вести себя как буква на строке, т.е. идти как часть слова, но
 			//       пока будем считать, что на ней всегда заканчивается слово
+			
+			PRS.X += PRS.WordLen + PRS.SpaceLen;
+			
 			PRS.Word            = false;
 			PRS.FirstItemOnLine = false;
 			PRS.EmptyLine       = false;

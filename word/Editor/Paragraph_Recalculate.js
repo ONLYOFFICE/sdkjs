@@ -4473,6 +4473,18 @@ CParagraphRecalculateStateInfo.prototype.isComplexFieldCode = function()
 
 	return false;
 };
+CParagraphRecalculateStateInfo.prototype.isHiddenComplexFieldPart = function()
+{
+	for (let fieldIndex = 0, fieldCount = this.ComplexFields.length; fieldIndex < fieldCount; ++ fieldIndex)
+	{
+		let isFieldCode = this.ComplexFields[fieldIndex].IsFieldCode();
+		let isShowCode  = this.ComplexFields[fieldIndex].IsShowFieldCode();
+		if (isFieldCode !== isShowCode)
+			return true;
+	}
+	
+	return false;
+};
 CParagraphRecalculateStateInfo.prototype.processFieldCharAndCollectComplexField = function(oChar)
 {
 	if (oChar.IsBegin())

@@ -1241,6 +1241,11 @@
 			}
 		}
 	}
+	function setDefaultHeadingColorStr(rgbStr)
+	{
+		let rgba = AscCommon.RgbaTextToRGBA(rgbStr);
+		setDefaultHeadingColor(rgba.R, rgba.G, rgba.B);
+	}
 	
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.DEFAULT_STYLE_LIST     = DEFAULT_STYLE_LIST;
@@ -1249,4 +1254,5 @@
 	AscWord.getDefaultStyleObject  = getDefaultStyleObject;
 	AscWord.getDefaultStyleName    = getDefaultStyleName;
 	AscWord["setDefaultHeadingColor"] = AscWord.setDefaultHeadingColor = setDefaultHeadingColor;
+	AscWord["setDefaultHeadingColorStr"] = AscWord.setDefaultHeadingColorStr = setDefaultHeadingColorStr;
 })(window);

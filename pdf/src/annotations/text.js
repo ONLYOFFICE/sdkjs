@@ -141,7 +141,8 @@
         oReply.SetReplyTo(this.GetReplyTo() || this);
         CommentData.SetUserData(oReply.GetId());
         oReply.SetContents(CommentData.m_sText);
-
+        oReply._wasChanged = true;
+        
         if (!nPos) {
             nPos = this._replies.length;
         }
