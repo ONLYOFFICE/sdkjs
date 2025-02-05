@@ -1267,6 +1267,13 @@
             memory.WriteString(sUserId);
         }
 
+        // copy of annot
+        let nCopyOfApId = this.GetCopyOfApIdx();
+        if (nCopyOfApId != -1) {
+            Flags |= (1 << 8);
+            memory.WriteLong(nCopyOfApId);
+        }
+
         nEndPos = memory.GetCurPosition();
         memory.Seek(nPosForFlags);
         memory.WriteLong(Flags);
