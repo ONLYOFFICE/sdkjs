@@ -13838,6 +13838,15 @@
 		CCustomProperties.prototype.hasProperties = function () {
 			return this.properties.length > 0;
 		};
+		CCustomProperties.prototype.getPropertyValueBool = function (name) {
+			for (let i = 0; i < this.properties.length; i += 1) {
+				const res = this.properties[i].getPropertyValueBool(name);
+				 if (res !== null) {
+					 return res;
+				 }
+			}
+			return false;
+		};
 
 		window['AscCommon'].CCustomProperties = CCustomProperties;
 		prot = CCustomProperties.prototype;
@@ -13855,6 +13864,12 @@
 		}
 
 		InitClass(CCustomProperty, CBaseNoIdObject, 0);
+		CCustomProperty.prototype.getPropertyValueBool = function(name) {
+			if (this.name === name) {
+				return !!(this.content && this.content.bContent);
+			}
+			return null;
+		};
 		CCustomProperty.prototype.fromStream = function (s) {
 			var _type;
 			var _len = s.GetULong();

@@ -320,9 +320,13 @@
     CTextBody.prototype.checkCurrentPlaceholder = function() {
         return false;
     };
+	CTextBody.prototype.isSmartArtTextTestMode = function() {
+		const oCustomProperties = Asc.editor && Asc.editor.getCustomProperties();
+		return oCustomProperties && oCustomProperties.getPropertyValueBool("smartart_text_test");
+	};
     CTextBody.prototype.draw = function(graphics) {
         if((!this.content || this.content.Is_Empty()) && !AscCommon.IsShapeToImageConverter && this.parent.isEmptyPlaceholder() && !this.checkCurrentPlaceholder()) {
-            if(/*AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN || */graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true && this.content2 && !graphics.isPdf()) {
+            if(graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true && this.content2 && !graphics.isPdf() || this.isSmartArtTextTestMode()) {
                 if(!graphics.isSupportTextDraw()) {
                     let _w2 = this.content2.XLimit;
                     let _h2 = this.content2.GetSummaryHeight();

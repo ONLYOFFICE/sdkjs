@@ -33,10 +33,6 @@
 "use strict";
 
 (function (window) {
-	// const IS_DEBUG_DRAWING = true;
-	// const IS_ADD_HTML = false;
-	AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN = false;
-
 	const LayoutNode = AscFormat.LayoutNode;
 	const Choose = AscFormat.Choose;
 	const If = AscFormat.If;
