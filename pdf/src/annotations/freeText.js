@@ -533,6 +533,7 @@
         oFreeText.SetWidth(this.GetWidth());
         oFreeText.SetLineEnd(this.GetLineEnd());
         oFreeText.SetOpacity(this.GetOpacity());
+        oFreeText.SetAlign(this.GetAlign());
         aCallout && oFreeText.SetCallout(aCallout.slice());
         aRD && oFreeText.SetRectangleDiff(aRD.slice());
         oFreeText.SetWasChanged(oFreeText.IsChanged());
