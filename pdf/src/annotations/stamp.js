@@ -508,20 +508,16 @@
         // original rect
         if (memory.docRenderer) {
             memory.WriteDouble(aInRect[0] - nBorderW / 2); // x1
-            memory.WriteDouble(aInRect[1] + nBorderW / 2); // y2
-            memory.WriteDouble(aInRect[0] - nBorderW / 2); // x1
-            memory.WriteDouble(aInRect[3] - nBorderW / 2); // y1
-            memory.WriteDouble(aInRect[4] + nBorderW / 2); // x2
             memory.WriteDouble(aInRect[3] - nBorderW / 2); // y1
             memory.WriteDouble(aInRect[4] + nBorderW / 2); // x2
             memory.WriteDouble(aInRect[1] + nBorderW / 2); // y2
         }
         else {
-            aInRect.forEach(function(measure) {
-                memory.WriteDouble(measure);
-            });
+            memory.WriteDouble(aInRect[0]); // x1
+            memory.WriteDouble(aInRect[3]); // y1
+            memory.WriteDouble(aInRect[4]); // x2
+            memory.WriteDouble(aInRect[1]); // y2
         }
-        
 
         let nEndPos = memory.GetCurPosition();
         memory.Seek(memory.posForFlags);
