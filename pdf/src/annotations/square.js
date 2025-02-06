@@ -72,6 +72,7 @@
         let aFillColor      = this.GetFillColor();
         let aRD             = this.GetRectangleDiff();
 
+        oSquare._copyApIdx = this._copyApIdx;
         oSquare._apIdx = this._apIdx;
         oSquare._originView = this._originView;
         oSquare.SetOriginPage(this.GetOriginPage());
@@ -116,6 +117,11 @@
         oSquare.Recalculate(true);
 
         this.FillCommentsDataTo(oSquare);
+
+        if ((this.IsUseInDocument() && this.IsNeedDrawFromStream()) || !this.IsChanged() || this.GetCopyOfApIdx() != -1) {
+            oSquare.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
+            oSquare.SetDrawFromStream(true);
+        }
         return oSquare;
     };
     CAnnotationSquare.prototype.RefillGeometry = function(oGeometry, aShapeRectInMM) {

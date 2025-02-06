@@ -6976,6 +6976,9 @@ var CPresentation = CPresentation || function(){};
             uid:			annotJson["OUserID"]
         }, oDoc);
         
+        if (annotJson["AP"]["Copy"]) {
+            oAnnot.SetCopyOfApIdx(annotJson["AP"]["Copy"]);
+        }
         oAnnot.SetDrawFromStream(Boolean(annotJson["AP"]["have"]));
         oAnnot.SetOriginPage(annotJson["page"]);
 

@@ -245,10 +245,11 @@
         let oViewer     = editor.getDocumentRenderer();
         let oFile       = oViewer.file;
         let nPage       = this.GetOriginPage();
+        let nApIdx      = this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx();
 
         if (this.APInfo == null || this.APInfo.size.w != nPageW || this.APInfo.size.h != nPageH) {
             this.APInfo = {
-                info: oFile.nativeFile["getAnnotationsAP"](nPage, nPageW, nPageH, undefined, this.GetApIdx()),
+                info: oFile.nativeFile["getAnnotationsAP"](nPage, nPageW, nPageH, undefined, nApIdx),
                 size: {
                     w: nPageW,
                     h: nPageH
@@ -257,7 +258,7 @@
         }
         
         for (let i = 0; i < this.APInfo.info.length; i++) {
-            if (this.APInfo.info[i]["i"] == this._apIdx)
+            if (this.APInfo.info[i]["i"] == nApIdx)
                 return this.APInfo.info[i];
         }
 
@@ -379,6 +380,7 @@
         let aStrokeColor    = this.GetStrokeColor();
         let aFillColor      = this.GetFillColor();
 
+        oNewStamp._copyApIdx = this._copyApIdx;
         oNewStamp._apIdx = this._apIdx;
         oNewStamp._originView = this._originView;
         oNewStamp.SetOriginPage(this.GetOriginPage());
@@ -419,7 +421,13 @@
         oNewStamp.SetWidth(this.GetWidth());
         oNewStamp.SetOpacity(this.GetOpacity());
         oNewStamp.SetIconType(this.GetIconType());
+        oNewStamp.SetRotate(this.GetRotate());
         oNewStamp.Recalculate(true);
+
+        if ((this.IsUseInDocument() && this.IsNeedDrawFromStream()) || !this.IsChanged() || this.GetCopyOfApIdx() != -1) {
+            oNewStamp.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
+            oNewStamp.SetDrawFromStream(true, true);
+        }
 
         return oNewStamp;
     };
@@ -500,15 +508,18 @@
         // original rect
         if (memory.docRenderer) {
             memory.WriteDouble(aInRect[0] - nBorderW / 2); // x1
+            memory.WriteDouble(aInRect[1] + nBorderW / 2); // y2
+            memory.WriteDouble(aInRect[0] - nBorderW / 2); // x1
+            memory.WriteDouble(aInRect[3] - nBorderW / 2); // y1
+            memory.WriteDouble(aInRect[4] + nBorderW / 2); // x2
             memory.WriteDouble(aInRect[3] - nBorderW / 2); // y1
             memory.WriteDouble(aInRect[4] + nBorderW / 2); // x2
             memory.WriteDouble(aInRect[1] + nBorderW / 2); // y2
         }
         else {
-            memory.WriteDouble(aInRect[0]); // x1
-            memory.WriteDouble(aInRect[3]); // y1
-            memory.WriteDouble(aInRect[4]); // x2
-            memory.WriteDouble(aInRect[1]); // y2
+            aInRect.forEach(function(measure) {
+                memory.WriteDouble(measure);
+            });
         }
         
 
@@ -524,10 +535,10 @@
             (reply.IsChanged() || !memory.docRenderer) && reply.WriteToBinary(memory);
         });
     };
-    CAnnotationStamp.prototype.SetDrawFromStream = function() {
+    CAnnotationStamp.prototype.SetDrawFromStream = function(bDraw, bForce) {
         let oViewer = editor.getDocumentRenderer();
-        if (oViewer.IsOpenAnnotsInProgress) {
-            this._bDrawFromStream = true;
+        if (oViewer.IsOpenAnnotsInProgress || bForce) {
+            this._bDrawFromStream = bDraw;
         }
     };
     CAnnotationStamp.prototype.WriteRenderToBinary = function(memory) {

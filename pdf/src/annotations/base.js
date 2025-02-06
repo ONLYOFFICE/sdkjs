@@ -411,8 +411,21 @@
             return null;
             
         oApInfoTmp = oApearanceInfo["N"];
-        oSavedView = this._originView.normal;
+        
+        // for stamp save info in stamp
+        if (this.GetCopyOfApIdx() != -1 && !this.IsStamp()) {
+            let _t = this;
+            let oDoc = this.GetDocument();
+            let oCopyOf = oDoc.annots.find(function(annot) {
+                return annot.GetApIdx() == _t.GetCopyOfApIdx();
+            });
 
+            if (oCopyOf) {
+                this._originView.normal = oCopyOf._originView.normal;
+            }
+        }
+
+        oSavedView = this._originView.normal;
         if (oSavedView) {
             if (oSavedView.width == oApearanceInfo["w"] && oSavedView.height == oApearanceInfo["h"]) {
                 return oSavedView;
