@@ -140,11 +140,11 @@
 				let strValue = oData.data;
 				let oStyle = oData.style;
 
-				if ("\\bmod" === strValue) // todo в новой версии конвертора добавить отдельный модуль для такого типа токенов
+				if ("\\bmod" === strValue) // TODO: add a separate module for this type of tokens in the new converter version
 				{
-					strValue = " mod "; // в обратную сторону (линейную) такие токены вряд ли получится конвертнуть,
-										// а ворде такого токена просто нет
-										// todo продумать как будет происходить преобразование в линейную форму
+					strValue = " mod "; // reverse (linear) conversion of such tokens is unlikely to work,
+										// and Word doesn't have such a token
+										// TODO: think about how the conversion to linear form will occur
 				}
 
 				arrExp.push({
@@ -1037,8 +1037,7 @@
 			}
 		}
 
-		if (this.oLookahead.data === "_")
-		{
+		if (this.oLookahead.data === "_") {
 			oSubStyle = this.oLookahead.style;
 			oDownContent = this.GetPartOfSupSup();
 			if (this.oLookahead.data === "^" && isSingle !== true)
@@ -1051,8 +1050,7 @@
 				oDownContent = oDownContent.base;
 			}
 		}
-		else if (this.oLookahead.data === "^")
-		{
+		else if (this.oLookahead.data === "^") {
 			oSupStyle = this.oLookahead.style;
 			oUpContent = this.GetPartOfSupSup();
 			if (this.oLookahead.data === "_" && isSingle !== true)

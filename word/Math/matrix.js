@@ -365,7 +365,7 @@ CMatrixBase.prototype.recalculateSize = function (oMeasure, RPI) {
 		}
 
 		if (this.kind == MATH_MATRIX) {
-			// выставим выравнивание для столбцов
+			// Set alignment for columns
 			if (this.Pr.mcs !== undefined) {
 				var lng = this.Pr.mcs.length;
 				var col = 0;
@@ -529,13 +529,13 @@ CMatrixBase.prototype.Add_Row = function (Pos) {
 	this.raw_AddRow(Pos, Items);
 };
 CMatrixBase.prototype.raw_AddRow = function (Pos, Items) {
-	// изменить кол-во строк в матрицы и добавить элементы новой строки нужно в одной точке истории
-	// т.к. при добавлении, удалении элементов учитывается кол-во строк и столбцов для заполнения массива elements
+	// Changing the number of rows in the matrix and adding new row elements should be done at one history point
+	// because when adding/removing elements, the number of rows and columns is considered for filling the elements array
 
 	this.Pr.Set_Row(this.Pr.row + 1);
 	this.raw_AddToContent(Pos, Items, true);
 
-	// чтобы корректно обновить NearPos пройдемся циклом еще раз по всем позициям добавленных контентов
+	// To correctly update NearPos, let's iterate through all positions of added contents again
 	for (var CurPos = Pos; CurPos < Pos + Items.length; CurPos++) {
 		this.private_UpdatePosOnAdd(CurPos, true);
 	}
@@ -544,7 +544,7 @@ CMatrixBase.prototype.raw_RemoveRow = function (Pos, Count) {
 	this.Pr.Set_Row(this.Pr.row - 1);
 	this.raw_RemoveFromContent(Pos, Count);
 
-	// Обновим текущую позицию
+	// Update current position
 	if (this.CurPos > Pos + Count)
 		this.CurPos -= Count;
 	else if (this.CurPos > Pos)
@@ -733,7 +733,7 @@ CMathMatrix.prototype.Get_RowPos = function (Pos) {
 };
 CMathMatrix.prototype.Get_ColumnPos = function (Pos) {
 	var ColumnCount = this.getColsCount();
-	var RowPos = Pos / ColumnCount >> 0; // номер строки
+	var RowPos = Pos / ColumnCount >> 0; // row number
 
 	return Pos - ColumnCount * RowPos;
 };
@@ -847,8 +847,8 @@ CMathMatrix.prototype.Apply_MenuProps = function (Props) {
 
 					if (bGapNumber == true && Props.Gap >= 0 && Props.Gap <= 55.87) {
 						var Gap = (Props.Gap / 0.21163) >> 0,
-							NextMenuGap = (((0.21163 * (Gap + 1)) * 100 + 0.5) >> 0) / 100; // учтем округление
-																							// (пример: Props.Gap =
+							NextMenuGap = (((0.21163 * (Gap + 1)) * 100 + 0.5) >> 0) / 100; // account for rounding
+																							// (example: Props.Gap =
 																							// 2.96)
 
 						if (Props.Gap >= NextMenuGap)
@@ -876,7 +876,7 @@ CMathMatrix.prototype.Apply_MenuProps = function (Props) {
 				this.Add_Row(NextPos);
 			}
 			else {
-				NextPos = (RowPos + 1) * ColumnCount;     // позиция для вставки массива контентов
+				NextPos = (RowPos + 1) * ColumnCount;     // position for inserting content array
 				this.Add_Row(NextPos);
 			}
 		}
@@ -917,7 +917,7 @@ CMathMatrix.prototype.Add_Column = function (ColumnPos) {
 CMathMatrix.prototype.raw_AddColumn = function (Pos, Items) {
 	var CountColumn = this.getColsCount();
 
-	var RowPos = this.CurPos / CountColumn >> 0; // номер строки
+	var RowPos = this.CurPos / CountColumn >> 0; // row number
 
 	for (var CurPos = 0; CurPos < Items.length; CurPos++) {
 		this.Content.splice((CountColumn + 1) * CurPos + Pos, 0, Items[CurPos]);
@@ -944,7 +944,7 @@ CMathMatrix.prototype.Remove_Column = function (ColumnPos) {
 };
 CMathMatrix.prototype.raw_RemoveColumn = function (Pos, CountItems) {
 	var CountColumn = this.getColsCount();
-	var RowPos = this.CurPos / CountColumn >> 0; // номер строки
+	var RowPos = this.CurPos / CountColumn >> 0; // row number
 
 	for (var CurPos = 0; CurPos < CountItems; CurPos++) {
 		this.Content.splice((CountColumn - 1) * CurPos + Pos, 1);
@@ -954,7 +954,7 @@ CMathMatrix.prototype.raw_RemoveColumn = function (Pos, CountItems) {
 
 	this.fillContent();
 
-	// Обновим текущую позицию
+	// Update current position
 	if (this.CurPos > Pos - RowPos)
 		this.CurPos -= RowPos;
 	else if (this.CurPos > Pos)
@@ -1046,17 +1046,17 @@ CMathMatrix.prototype.GetTextOfElement = function (oMathText)
 		oMathText.AddText(new AscMath.MathText("■(", this));
 	}
 
-	// 	Word поддерживает несколько типов ввода для матриц LaTeX:
-	// 		1. Команды матриц с заданными скобками (matrix, pmatrix, bmatrix, Bmatrix, vmatrix, Vmatrix). В Word поддерживается только matrix и pmatrix.
-	// 			- При получении линейного вида для матрицы pmatrix в Word мы будем получать так же pmatrix, однако если
-	// 			переоткрыть документ для pmatrix. То при получении линейного вида матрица будет в формате matrix обёрнутая
-	// 			в скобки. Можно ввести отдельное свойство матриц для отслеживания таких данных (без записи этих данных),
-	// 			тогда поведение будет аналогичным Word.
+	// 	Word supports several types of input for matrices LaTeX:
+	// 		1. Matrix commands with specified brackets (matrix, pmatrix, bmatrix, Bmatrix, vmatrix, Vmatrix). In Word, only matrix and pmatrix are supported.
+	// 			- When getting the linear view for a pmatrix matrix in Word, we will get pmatrix as well, but if
+	// 			reopen the document for pmatrix. Then when getting the linear view, the matrix will be in the format matrix wrapped
+	// 			in brackets. We can introduce a separate property for matrices to track such data (without recording these data),
+	// 			then the behavior will be similar to Word.
 
-	// 		2. Можно обернуть команду matrix (матрица без скобок) в скобку:
+	// 		2. You can wrap the matrix command (matrix without brackets) in a bracket:
 	// 			\left\langle \begin{matrix}  1 & 2 & 3 \end{matrix}  \right)
-	//
-	// 	На данный момент делаем получение линейного формата всегда в режиме pmatrix, если это возможно (используем обычные скобки)
+
+	// 	For now, we always get the linear format in pmatrix mode, if possible (using regular brackets)
 
 	let oLastPos;
 
@@ -1423,12 +1423,12 @@ CEqArray.prototype.getMetrics = function () {
 	var DescentsMetrics = [];
 	var WidthsMetrics = [];
 
-	// нумерация начинается с нуля, поэтому все четные точки идут с нечетными номерами в массиве
+	// numbering starts from zero, so all even points have odd numbers in the array
 
 	var EndWidths = 0;
 
-	var even, // четная точка
-		odd,  // нечетная точка
+	var even, // even point
+		odd,  // odd point
 		last;
 
 	var maxDim, maxDimWidth;
@@ -1500,7 +1500,7 @@ CEqArray.prototype.getMetrics = function () {
 		DescentsMetrics[i] = size.height - size.ascent;
 	}
 
-	return {ascents: AscentsMetrics, descents: DescentsMetrics, widths: WidthsMetrics};
+	return {ascents: AscentsMetrics, descents: DescentsMetrics, widths: WidthsMetrics}
 };
 CEqArray.prototype.setPosition = function (pos, PosInfo) {
 	this.pos.x = pos.x;
@@ -1531,7 +1531,7 @@ CEqArray.prototype.setPosition = function (pos, PosInfo) {
 
 	pos.x += this.size.width;
 };
-CEqArray.prototype.setJustificationForConversion = function (js) // эта функция должна вызываться только при конвертации, после того как у всех элементов контенты заполнены
+CEqArray.prototype.setJustificationForConversion = function (js) // this function should only be called during conversion, after all element contents are filled
 {
 	var lng = this.Content.length;
 	var NewElement, Run;
@@ -1729,24 +1729,24 @@ function CMathMenuEqArray(EqArray) {
 	}
 }
 
-CMathMenuEqArray.prototype = Object.create(CMathMenuBase.prototype);
-CMathMenuEqArray.prototype.constructor = CMathMenuEqArray;
-CMathMenuEqArray.prototype.get_Align = function () {
+CEqArray.prototype = Object.create(CMatrixBase.prototype);
+CEqArray.prototype.constructor = CEqArray;
+CEqArray.prototype.get_Align = function () {
 	return this.BaseJc;
 };
-CMathMenuEqArray.prototype.put_Align = function (Align) {
+CEqArray.prototype.put_Align = function (Align) {
 	this.BaseJc = Align;
 };
-CMathMenuEqArray.prototype.get_LineRule = function () {
+CEqArray.prototype.get_LineRule = function () {
 	return this.RowRule;
 };
-CMathMenuEqArray.prototype.put_LineRule = function (Rule) {
+CEqArray.prototype.put_LineRule = function (Rule) {
 	this.RowRule = Rule;
 };
-CMathMenuEqArray.prototype.get_LineGap = function () {
+CEqArray.prototype.get_LineGap = function () {
 	return this.RowGap;
 };
-CMathMenuEqArray.prototype.put_LineGap = function (Gap) {
+CEqArray.prototype.put_LineGap = function (Gap) {
 	this.RowGap = Gap;
 };
 

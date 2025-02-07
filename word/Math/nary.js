@@ -32,8 +32,8 @@
 
 "use strict";
 
-//величина символа "сигма" не меняется в зависимости от аргумента
-//если не выставлено в настройках
+//the size of the "sigma" symbol does not change depending on the argument
+//unless set in settings
 /////////////////////****//////////////////////////
 
 function CMathNaryPr(ctrPr)
@@ -326,7 +326,7 @@ CNary.prototype.ApplyProperties = function(RPI)
             subHide:    this.Pr.subHide
         };
 
-        // пока оставим так, chrType сейчас нигде не используется
+        // let's leave it for now, chrType is not used anywhere currently
         this.Pr.chrType = oSign.chrType;
 
         this.fillBase(PropsInfo);
@@ -607,7 +607,7 @@ CNary.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
             PRS.WordLen += this.BrGapLeft;
             var WordLen = PRS.WordLen;
 
-            if(this.Base.IsJustDraw())
+            if(this.Base.IsJustDraw()) // for Just-Draw elements we need to set Font
             {
                 this.MeasureJustDraw(this.Base);
             }
@@ -629,7 +629,7 @@ CNary.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 
             PRS.WordLen += this.dW;
 
-            this.Arg.Recalculate_Reset(PRS.Range, PRS.Line, PRS); // обновим StartLine и StartRange
+            this.Arg.Recalculate_Reset(PRS.Range, PRS.Line, PRS); // update StartLine and StartRange
         }
 
         PRS.Update_CurPos(2, Depth); // this.Arg = this.Content[2]
@@ -657,7 +657,7 @@ CNary.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
     else
     {
         var CurLine = _CurLine - this.StartLine;
-        var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
+        var CurRange = (0 === CurLine ? _CurRange - this.StartRange : _CurRange);
 
         var RangeW = PRSC.Range.W;
 
@@ -695,7 +695,7 @@ CNary.prototype.Draw_Elements = function(PDSE)
 
     if(CurLine == 0 && CurRange == 0)
     {
-        if(this.Base.IsJustDraw()) // для Just-Draw элементов надо выставить Font
+        if(this.Base.IsJustDraw()) // for Just-Draw elements we need to set Font
         {
             var ctrPrp = this.Get_TxtPrControlLetter();
 
@@ -754,8 +754,8 @@ CNary.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _CurRa
             this.Bounds.Reset(CurLine, CurRange);
         }
 
-        // т.к. ParaNumbering привязывается к первому текстовому элементы, он может находится в аргументе
-        // обновляем LineMetrics для Base после того, как обновим метрики для аргумента
+        // since ParaNumbering is bound to the first text element, it can be in the argument
+        // update LineMetrics for Base after updating metrics for the argument
 
         this.Arg.Recalculate_LineMetrics(PRS, ParaPr, _CurLine, _CurRange, ContentMetrics);
 
@@ -776,7 +776,7 @@ CNary.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _CurRa
             }
             else
             {
-                // чтобы при вычислении метрик итераторов не были перебили метрики (например, у внутр мат объекта Asc может быть больше Asc текущего объекта)
+                // to prevent metrics from being overwritten when calculating iterator metrics (for example, internal math object Asc can be greater than current object's Asc)
 
                 var NewContentMetrics = new CMathBoundsMeasures();
 
@@ -812,6 +812,7 @@ CNary.prototype.setPosition = function(pos, PosInfo)
             pos.x += this.BrGapLeft;
 
             var PosBase = new CMathPosition();
+
             PosBase.x = pos.x;
             PosBase.y = pos.y - this.Base.size.ascent;
 
@@ -1183,7 +1184,7 @@ CNaryUndOvr.prototype.setPosition = function(pos, PosInfo)
     PosLowIter.x = pos.x + this.GapLeft + this.align(2,0).x;
     PosLowIter.y = PosSign.y + Sign.size.height + this.gapBottom + LowIter.size.ascent;
 
-    // такой порядок нужен для выравнивания Box по операторам
+    // this order is needed for aligning Box with operators
     LowIter.setPosition(PosLowIter, PosInfo);
     Sign.setPosition(PosSign, PosInfo);
     UpIter.setPosition(PosUpIter, PosInfo);
@@ -1241,7 +1242,7 @@ CNaryOperator.prototype.drawGlyph = function(x, y, pGraphics, PDSE)
         YY = [];
 
     var textScale = this.Get_TxtPrControlLetter().FontSize/850; // 1000 pt
-    var alpha = textScale*25.4/96 /64; // коэффициент; используется для того чтобы перевести координаты в миллиметры
+    var alpha = textScale*25.4/96 /64; // coefficient used to convert coordinates to millimeters
     // g_dKoef_px_to_mm = 25.4/96
 
     var a, b;
@@ -1322,7 +1323,7 @@ CNaryOperator.prototype.PreRecalc = function(Parent, ParaMath, ArgSize, RPI)
 };
 CNaryOperator.prototype.Measure = function(oMeasure, RPI)
 {
-    this.recalculateSize(); //обычный пересчет, oMeasure не нужен
+    this.recalculateSize(); //normal recalculation, oMeasure not needed
 };
 CNaryOperator.prototype.Get_TxtPrControlLetter = function()
 {
@@ -1344,14 +1345,13 @@ CSigma.prototype.drawPath = function(pGraphics, XX, YY)
 {
     pGraphics._m(XX[0], YY[0]);
     pGraphics._l(XX[1], YY[1]);
-    pGraphics._l(XX[2], YY[2]);
-    pGraphics._l(XX[3], YY[3]);
-    pGraphics._l(XX[4], YY[4]);
-    pGraphics._c(XX[4], YY[4], XX[5], YY[5], XX[6], YY[6] );
-    pGraphics._c(XX[6], YY[6], XX[7], YY[7], XX[8], YY[8] );
-    pGraphics._c(XX[8], YY[8], XX[9], YY[9], XX[10], YY[10] );
-    pGraphics._c(XX[10], YY[10], XX[11], YY[11], XX[12], YY[12] );
-    pGraphics._c(XX[12], YY[12], XX[13], YY[13], XX[14], YY[14] );
+    pGraphics._c(XX[1], YY[1], XX[2], YY[2], XX[3], YY[3] );
+    pGraphics._c(XX[3], YY[3], XX[4], YY[4], XX[5], YY[5] );
+    pGraphics._c(XX[5], YY[5], XX[6], YY[6], XX[7], YY[7] );
+    pGraphics._c(XX[7], YY[7], XX[8], YY[8], XX[9], YY[9] );
+    pGraphics._c(XX[9], YY[9], XX[10], YY[10], XX[11], YY[11] );
+    pGraphics._c(XX[11], YY[11], XX[12], YY[12], XX[13], YY[13] );
+    pGraphics._c(XX[13], YY[13], XX[14], YY[14], XX[15], YY[15] );
     pGraphics._l(XX[15], YY[15]);
     pGraphics._l(XX[16], YY[16]);
     pGraphics._l(XX[17], YY[17]);
@@ -1426,7 +1426,7 @@ CSigma.prototype.getCoord = function()
     X[11] = 56552; Y[11] = 78056;
     X[12] = 57402; Y[12] = 75456;
     X[13] = 58252; Y[13] = 72856;
-    X[14] = 59002; Y[14] = 68656;
+    X[14] = 59176; Y[14] = 68656;
     X[15] = 64850; Y[15] = 68656;
     X[16] = 63400; Y[16] = 93056;
     X[17] = 0; Y[17] = 93056;
@@ -1498,30 +1498,14 @@ CSigma.prototype.getCoord = function()
     for(var i = 24; i < 35; i++)
         X[i] = X[22] + X[i] - x22;
 
-    var c3 = (X[4] - X[3])/X[15],
-        c4 = (X[15] - X[16])/X[15],
-        c5 = (X[15] - X[2])/X[15];
+    X[62] += ww;
 
-    var x15 = X[15],
-        x2 = X[2];
-
-    X[4] = X[3] + c3*W;
-    X[15] = W;
-    X[16] = X[15] - c4*W;
-
-    X[2] = X[1] = X[15] - c5*W;
-
-    X[19] = X[2] - (x2 - X[19]);
-
-    for(var i = 5; i < 15 ; i++)
-        X[i] = X[15] - (x15 - X[i]);
 
     return {X: X, Y: Y};
+
 };
 CSigma.prototype.calculateSizeGlyph = function()
 {
-    // пока размер не меняем в зависимости от высоты аргумента
-
     //var betta = this.getTxtPrp().FontSize/36;
     var betta = this.Get_TxtPrControlLetter().FontSize/36;
 
@@ -1775,7 +1759,7 @@ CUnion.prototype.calculateSizeGlyph = function()
     var betta = this.Get_TxtPrControlLetter().FontSize/36;
     this.gap = 0.93*betta;
 
-    var _width = 9.38*betta,
+    var _width =  9.38*betta,
         _height = 11.994444444444444*betta;
 
     var width = 1.76*_width + this.gap,
@@ -2020,7 +2004,7 @@ CDoubleIntegral.prototype.drawPath = function(pGraphics, XX, YY, Width)
     var XX2 = [],
         YY2 = [];
 
-    // Width прийдрийдет для TextArt, смещение второго интеграла и для обводки, и для заливки должно быть одинаковым, чтобы корректно отрисовалась обводка
+    // Width will come for TextArt, offset of second integral should be the same for both stroke and fill for correct stroke rendering
     var w = Width == undefined ? (XX[9] - XX[29])*0.6 : Width*0.36;
 
     for(var i = 0; i < XX.length; i++)
@@ -2067,7 +2051,7 @@ CTripleIntegral.prototype.drawPath = function(pGraphics, XX, YY, Width)
     var XX2 = [],
         YY2 = [];
 
-    // Width прийдрийдет для TextArt, смещения второго и третьего интегралов и для обводки, и для заливки должны быть одинаковыми, чтобы корректно отрисовалась обводка
+    // Width will come for TextArt, offsets of second and third integrals should be the same for both stroke and fill for correct stroke rendering
     var w = Width == undefined ? (XX[9] - XX[29])*0.6 : Width*0.26;
 
     var XX3 = [],
@@ -2156,29 +2140,30 @@ CCircle.prototype.getCoord = function()
     var W = X[7],
         H = Y[16];
 
+
     return {X: X, Y: Y, W: W, H: H};
 
 };
 CCircle.prototype.drawPath = function(pGraphics, XX, YY)
 {
     pGraphics._m(XX[0], YY[0]);
-    pGraphics._c(XX[0], YY[0], XX[1], YY[1], XX[2], YY[2]);
-    pGraphics._c(XX[2], YY[2], XX[3], YY[3], XX[4], YY[4]);
-    pGraphics._c(XX[4], YY[4], XX[5], YY[5], XX[6], YY[6]);
-    pGraphics._c(XX[6], YY[6], XX[7], YY[7], XX[8], YY[8]);
-    pGraphics._c(XX[8], YY[8], XX[9], YY[9], XX[10], YY[10]);
-    pGraphics._c(XX[10], YY[10], XX[11], YY[11], XX[12], YY[12]);
-    pGraphics._c(XX[12], YY[12], XX[13], YY[13], XX[14], YY[14]);
-    pGraphics._c(XX[14], YY[14], XX[15], YY[15], XX[16], YY[16]);
+    pGraphics._c(XX[0], YY[0], XX[1], YY[1], XX[2], YY[2] );
+    pGraphics._c(XX[2], YY[2], XX[3], YY[3], XX[4], YY[4] );
+    pGraphics._c(XX[4], YY[4], XX[5], YY[5], XX[6], YY[6] );
+    pGraphics._c(XX[6], YY[6], XX[7], YY[7], XX[8], YY[8] );
+    pGraphics._c(XX[8], YY[8], XX[9], YY[9], XX[10], YY[10] );
+    pGraphics._c(XX[10], YY[10], XX[11], YY[11], XX[12], YY[12] );
+    pGraphics._c(XX[12], YY[12], XX[13], YY[13], XX[14], YY[14] );
+    pGraphics._c(XX[14], YY[14], XX[15], YY[15], XX[16], YY[16] );
 
-    pGraphics._c(XX[17], YY[17], XX[18], YY[18], XX[19], YY[19]);
-    pGraphics._c(XX[19], YY[19], XX[20], YY[20], XX[21], YY[21]);
-    pGraphics._c(XX[21], YY[21], XX[22], YY[22], XX[23], YY[23]);
-    pGraphics._c(XX[23], YY[23], XX[24], YY[24], XX[25], YY[25]);
-    pGraphics._c(XX[25], YY[25], XX[26], YY[26], XX[27], YY[27]);
-    pGraphics._c(XX[27], YY[27], XX[28], YY[28], XX[29], YY[29]);
-    pGraphics._c(XX[29], YY[29], XX[30], YY[30], XX[31], YY[31]);
-    pGraphics._c(XX[31], YY[31], XX[32], YY[32], XX[33], YY[33]);
+    pGraphics._c(XX[17], YY[17], XX[18], YY[18], XX[19], YY[19] );
+    pGraphics._c(XX[19], YY[19], XX[20], YY[20], XX[21], YY[21] );
+    pGraphics._c(XX[21], YY[21], XX[22], YY[22], XX[23], YY[23] );
+    pGraphics._c(XX[23], YY[23], XX[24], YY[24], XX[25], YY[25] );
+    pGraphics._c(XX[25], YY[25], XX[26], YY[26], XX[27], YY[27] );
+    pGraphics._c(XX[27], YY[27], XX[28], YY[28], XX[29], YY[29] );
+    pGraphics._c(XX[29], YY[29], XX[30], YY[30], XX[31], YY[31] );
+    pGraphics._c(XX[31], YY[31], XX[32], YY[32], XX[33], YY[33] );
 };
 
 
@@ -2237,7 +2222,6 @@ CSurface.prototype.getCoord = function()
 
     var W = X[11],
         H = Y[21];
-
 
 
     return {X: X, Y: Y, W: W, H: H};
@@ -2460,12 +2444,12 @@ CClosedPathIntegral.prototype.drawGlyph = function(parameters)
         pGraphics.ds();
         pGraphics.df();
 
-        // делаем заливку уже обводки
+        // make fill narrower than stroke
 		var WidthLine = 0;
 		if (oTextOutline && AscFormat.isRealNumber(oTextOutline.w))
-			WidthLine = (oTextOutline.w / 36000) * 0.6; // сместим заливку на половину толщины линии , чтобы не было зазоров м/ду обводкой и заливкой
+			WidthLine = (oTextOutline.w / 36000) * 0.6; // shift fill by half line width to avoid gaps between stroke and fill
 
-        // последняя точка совпадает в пути с первой, поэтому берем предпоследнюю
+        // last point in path matches first, so take second to last
 
         var PrevX = ExtX[CircleLng - 2],
             PrevY = ExtY[CircleLng - 2];

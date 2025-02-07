@@ -35,9 +35,8 @@
 (function(window)
 {
 	/**
-	 * Класс контролирует события работы трека формулы. Вызывать у этого класса события обновления можно
-	 * сколько угодно раз, а этот класс уже отрисовщику и в интерфейс посылает события, только когда реально что-то
-	 * изменилось
+	 * The class controls the events of the formula track work. You can call update events for this class as many times as you want,
+	 * and this class will send events to the renderer and interface only when something really changes.
 	 *
 	 * @constructor
 	 */
@@ -53,7 +52,7 @@
 
 	CMathTrackHandler.prototype.SetTrackObject = function(math, pageNum, isActive)
 	{
-		// TODO: Сейчас посылаем сообщение в отрисовщик трека по старому всегда
+		// TODO: Currently sending track renderer message in the old way always
 
 		if (math)
 			this.DrawingDocument.Update_MathTrack(true, isActive, math);

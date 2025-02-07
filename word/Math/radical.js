@@ -42,7 +42,7 @@ function CSignRadical()
 
     this.size = new CMathSize();
     this.gapArg = 0;
-    this.gapSign = 0;   /// расстояние до значка радикала
+    this.gapSign = 0;   /// distance to the radical sign
 
     this.measure =
     {
@@ -64,7 +64,7 @@ CSignRadical.prototype.draw = function(x, y, pGraphics, PDSE)
         penW2 = 5.4*penW,
         penW3 = 1.8*penW;
 
-    y += this.gapSign; // смещаем
+    y += this.gapSign; // shift
 
     //// Tick for degree ////
 
@@ -148,7 +148,7 @@ CSignRadical.prototype.draw = function(x, y, pGraphics, PDSE)
 
     if(PDSE.Graphics.Start_Command) // textArt
     {
-        PDSE.Graphics.p_width(0); // в pGraphics выставится ширина равная 1 px
+        PDSE.Graphics.p_width(0); // in pGraphics width will be set to 1 px
 
         PDSE.Graphics._m(xx1,  yy1);
         PDSE.Graphics._l(xx2,  yy2);
@@ -165,10 +165,10 @@ CSignRadical.prototype.draw = function(x, y, pGraphics, PDSE)
 
         PDSE.Graphics.df();
     }
-    else // чтобы линии были четкие не в WordArt, рисуем знак радикала по заданному пути линиями нужной толщины
+    else // to make lines sharp when not in WordArt, draw the radical sign along the specified path with lines of required thickness
     {
         var intGrid = PDSE.Graphics.GetIntegerGrid();
-        PDSE.Graphics.SetIntegerGrid(true);             // для того чтобы линии были отрисованы четко (неразмыто)
+        PDSE.Graphics.SetIntegerGrid(true);             // to ensure lines are rendered sharply (not blurred)
 
         PDSE.Graphics.p_width(penW3*1000);
 
@@ -177,8 +177,8 @@ CSignRadical.prototype.draw = function(x, y, pGraphics, PDSE)
             var CoordTransform = PDSE.Graphics.m_oCoordTransform;
             var diff = CoordTransform.TransformPointX(xx5, yy5) - CoordTransform.TransformPointX(xx4, yy4);
 
-            // чтобы реже перескакивали точки при незначительном изменении ширины формулы (из-за округления на отрисовке)
-            // на небольших размерах приравниваем две нижние точки друг другу
+            // to reduce point jumps during minor formula width changes (due to rounding during rendering)
+            // at small sizes, equalize the two lower points
             if( diff < 0.3 )
                 xx5 = xx4;
         }
@@ -207,13 +207,13 @@ CSignRadical.prototype.recalculateSize = function(oMeasure, sizeArg, bInline)
     var Symbol5 = new CMathText(true);
     Symbol5.add(0x35);
 
-    // измеряем функцией MeasureJustDraw, чтобы был выставлен Font
+    // measure using MeasureJustDraw function to set the Font
     this.Parent.MeasureJustDraw(Symbol5);
 
     var measureH = Symbol5.size.height;
 
-    // высота символов изменяется непропорционально размерам шрифта
-    // поэтому ориентируемся на высоту символа 5
+    // character height changes disproportionately to font sizes
+    // therefore we focus on the height of character 5
 
     var H1;
 
@@ -225,15 +225,15 @@ CSignRadical.prototype.recalculateSize = function(oMeasure, sizeArg, bInline)
 
     if(bInline)
     {
-        this.gapArg =   measureH*0.015; /// расстояние до аргумента
-        this.gapSign =  0; /// расстояние до значка радикала
+        this.gapArg =   measureH*0.015; /// distance to the argument
+        this.gapSign =  0; /// distance to the radical sign
 
         H1 = measureH*1.45;
     }
     else
     {
-        this.gapArg =  measureH*0.0991; /// расстояние до аргумента
-        this.gapSign = measureH*0.1215; /// расстояние до значка радикала
+        this.gapArg =  measureH*0.0991; /// distance to the argument
+        this.gapSign = measureH*0.1215; /// distance to the radical sign
 
         H1 = measureH*1.6235;
     }
@@ -246,7 +246,7 @@ CSignRadical.prototype.recalculateSize = function(oMeasure, sizeArg, bInline)
     var letterG = new CMathText(true);
     letterG.add(0x67);
 
-    // измеряем функцией MeasureJustDraw, чтобы был выставлен Font
+    // measure using MeasureJustDraw function to set the Font
     this.Parent.MeasureJustDraw(letterG);
 
     var Descent = letterG.size.height - letterG.size.ascent;
@@ -438,7 +438,7 @@ function CRadical(props)
     this.Pr = new CMathRadicalPr();
 
     this.gapDegree = 0;
-    this.gapWidth = 0; //  в случае со степенью, если ширина степени не нулевая, добавляется расстояние для ширины
+    this.gapWidth = 0; //  in case of power, if power width is not zero, distance is added for width
 
     if(props !== null && props !== undefined)
         this.init(props);
@@ -496,9 +496,9 @@ CRadical.prototype.ApplyProperties = function(RPI)
         {
             this.setDimension(1, 1);
 
-            // TODO: IlyaKirillov: Пока убрал данный вариант, потому что у обычного пользователя он
-            //       не встретится с вероятностью 99%, а обработка данного случая в текущей реализации
-            //       приводит к багам в совместном редактировании.
+            // TODO: IlyaKirillov: Currently removed this option because for a regular user it
+            //       won't occur with 99% probability, and handling this case in the current implementation
+            //       leads to bugs in collaborative editing.
 
 //            if(this.Iterator !== null)
 //            {
@@ -538,7 +538,7 @@ CRadical.prototype.ApplyProperties = function(RPI)
 CRadical.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 {
     var bOneLine = PRS.bMath_OneLine;
-    var WordLen = PRS.WordLen; // запоминаем, чтобы внутр мат объекты не увеличили WordLen
+    var WordLen = PRS.WordLen; // store to prevent internal math objects from increasing WordLen
     this.BrGapLeft  = this.GapLeft;
     this.BrGapRight = this.GapRight;
 
@@ -567,9 +567,9 @@ CRadical.prototype.recalculateSize = function(oMeasure)
     var txtPrp = this.Get_CompiledCtrPrp();
     var sign = this.signRadical.size,
         gSign = this.signRadical.gapSign,
-        // в случае смещения baseline контента тоже смещается, и по высоте артгумент может выйти чуть за пределы (т.о. значок интеграла будет расположен чуть выше, чем следовало бы, и размер аргумента выйде за границы)
-        gArg = this.signRadical.gapArg > 2*g_dKoef_pt_to_mm ? this.signRadical.gapArg : 2*g_dKoef_pt_to_mm; // делаем смещение, т.к. для fontSize 11, 14 и меньше высота плейсхолдера не совпадает
-                                                                                                            // с высотой отрисовки плейсхолдера и происходит наложение черты значка радикала и плейсхолдера
+        // in case of baseline shift, the content also shifts, and the argument height may slightly exceed the bounds (thus the integral sign will be positioned slightly higher than it should be, and the argument size will go beyond boundaries)
+        gArg = this.signRadical.gapArg > 2*g_dKoef_pt_to_mm ? this.signRadical.gapArg : 2*g_dKoef_pt_to_mm; // make an offset because for fontSize 11, 14 and smaller, placeholder height doesn't match
+                                                                                                             // with placeholder rendering height and radical sign line overlaps with placeholder
 
     var gapBase = gSign + gArg;
 
@@ -589,8 +589,8 @@ CRadical.prototype.recalculateSize = function(oMeasure)
         var wTick = this.signRadical.measure.widthTick,
             hTick = this.signRadical.measure.heightTick;
 
-        // общие gaps
-        var gapHeight = 0.011*txtPrp.FontSize; // добавляем это расстояние к общей высоте радикала, также как и gapWidth
+        // common gaps
+        var gapHeight = 0.011*txtPrp.FontSize; // add this distance to the total radical height, same as gapWidth
         this.gapWidth = 0.011*txtPrp.FontSize;
 
         var wDegree = this.Iterator.size.width > wTick ? this.Iterator.size.width - wTick : 0;
@@ -746,7 +746,7 @@ CRadical.prototype.raw_SetHideDegree = function(Value)
         this.RecalcInfo.bProps = true;
         this.ApplyProperties();
 
-        if(this.Pr.type === SQUARE_RADICAL && this.CurPos == 0) // находимся в степени
+        if(this.Pr.type === SQUARE_RADICAL && this.CurPos == 0) // we are in power
         {
             this.CurPos = 1;
             this.Base.MoveCursorToStartPos();

@@ -90,8 +90,8 @@ function CDegreeBase(props, bInside)
 {
 	CMathBase.call(this, bInside);
 
-	this.upBase = 0; // отступ сверху для основания
-	this.upIter = 0; // отступ сверху для итератора
+	this.upBase = 0; // top offset for base
+	this.upIter = 0; // top offset for iterator
 
 	this.Pr = new CMathDegreePr(this.CtrPrp);
 
@@ -200,7 +200,7 @@ CDegreeBase.prototype.GetSizeSup = function(oMeasure, Metric)
     }
 
     var PlH = 0.64*this.ParaMath.GetPlh(oMeasure, mgCtrPrp);
-    var UpBaseline = 0.75*PlH; // расстояние от baseline основания до бейзлайна итератора
+    var UpBaseline = 0.75*PlH; // distance from base baseline to iterator baseline
 
     if(bTextElement)
     {
@@ -230,7 +230,7 @@ CDegreeBase.prototype.GetSizeSup = function(oMeasure, Metric)
     {
         var shCenter = this.ParaMath.GetShiftCenter(oMeasure, mgCtrPrp);
 
-        if(iter.height - iter.ascent + shCenter > baseAsc) // для дробей и т.п.
+        if(iter.height - iter.ascent + shCenter > baseAsc) // for fractions and similar
         {
             this.upBase = iter.height - (baseAsc - shCenter);
         }
@@ -313,7 +313,7 @@ CDegreeBase.prototype.GetSizeSubScript = function(oMeasure, Metric)
     {
         this.upIter = baseHeight + shCenter - iter.ascent;
 
-        // ограничение для случая, когда аскент итератора >> высоты основания
+        // limit for case when iterator's ascent >> base height
         if(baseAsc - 1.5*shCenter > this.upIter)
             this.upIter = baseAsc - 1.5*shCenter;
 
@@ -494,7 +494,7 @@ CDegree.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _Cur
 
     if(this.bOneLine == false && this.baseContent.Math_Is_End( _CurLine, _CurRange))
     {
-        // чтобы при вычислении метрик итератора не были перебили метрики (например, у внутр мат объекта Asc может быть больше Asc текущего объекта)
+        // to prevent iterator metrics from overriding metrics (e.g., internal math object's Asc can be greater than current object's Asc)
 
         var NewContentMetrics = new CMathBoundsMeasures();
         this.iterContent.Recalculate_LineMetrics(PRS, ParaPr, _CurLine, _CurRange, NewContentMetrics);
@@ -533,7 +533,7 @@ CDegree.prototype.setPosition = function(pos, PosInfo)
     var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
     var Len = this.Content.length;
 
-    // у степени всегда итератор идет в конце, поэтому сделать проверку на то, что текущий контент последний (т.е. это и будет итератор)
+    // degree always has iterator at the end, so check if current content is last (i.e. it will be the iterator)
 
     if(this.bOneLine || EndPos == Len - 1)
     {
@@ -551,7 +551,7 @@ CDegree.prototype.Get_InterfaceProps = function()
 };
 CDegree.prototype.Can_ModifyArgSize = function()
 {
-    return this.CurPos == 1 && false === this.Is_SelectInside(); // находимся в итераторе
+    return this.CurPos == 1 && false === this.Is_SelectInside(); // we are in iterator
 };
 CDegree.prototype.GetTextOfElement = function(oMathText)
 {
@@ -662,8 +662,8 @@ CIterators.prototype.setPosition = function(pos, PosInfo)
     DownIterPos.x = this.pos.x + this.GapLeft + al.x;
     DownIterPos.y = this.pos.y + this.dH + this.iterUp.size.height + this.iterDn.size.ascent;
 
-    // сначала выставляем setPosition у верхнего итератора, потом у нижнего
-    // такой порядок нужен для выравнивания Box по операторам (так же как в Ворде)
+    // first set position for upper iterator, then for lower
+    // this order is needed for aligning Box with operators (same as in Word)
 
     this.iterDn.setPosition(DownIterPos, PosInfo);
     this.iterUp.setPosition(UpIterPos, PosInfo);
@@ -674,7 +674,7 @@ CIterators.prototype.setPosition = function(pos, PosInfo)
 function CMathDegreeSubSupPr(ctrPr)
 {
 	this.type	= DEGREE_SubSup;
-	this.alnScr	= false;// не выровнены, итераторы идут в соответствии с наклоном буквы/мат. объекта
+	this.alnScr	= false;// not aligned, iterators follow letter/math object slope
 	this.ctrPr	= new CMathCtrlPr(ctrPr);
 }
 CMathDegreeSubSupPr.prototype.GetRPr = function ()
@@ -794,9 +794,9 @@ CDegreeSubSupBase.prototype.recalculateSize = function(oMeasure)
 };
 CDegreeSubSupBase.prototype.GetSize = function(oMeasure, Metric)
 {
-    var mgCtrPrp = this.Get_CompiledCtrPrp(); // Get_CompiledCtrPrp -  чтобы итераторы не разъезжались
-    // половину ascent брать нельзя, т.к. черта дроби будет разделительной для верхнего и нижнего итератора => соответственно
-    // если числитель меньше/больше знаменателя расположение итераторов у степени будет неправильным
+    var mgCtrPrp = this.Get_CompiledCtrPrp(); // Get_CompiledCtrPrp - so that iterators don't spread apart
+    // can't take half ascent because fraction line will be dividing upper and lower iterators => accordingly
+    // if numerator is smaller/larger than denominator, degree iterator placement will be incorrect
 
     var iterUp   = this.iters.iterUp.size,
         iterDown = this.iters.iterDn.size;
@@ -876,8 +876,8 @@ CDegreeSubSupBase.prototype.GetSize = function(oMeasure, Metric)
         }
         else
         {
-            UpGap   = lUpBase > DescUpIter    ? lUpBase   - DescUpIter  : 0;           // расстояние от центра основания до верхнего итератора
-            DownGap = lDownBase > AscDownIter ? lDownBase - AscDownIter : 0;           // расстояние от центра основания до нижнего итератора
+            UpGap   = lUpBase > DescUpIter    ? lUpBase   - DescUpIter  : 0;           // distance from base center to upper iterator
+            DownGap = lDownBase > AscDownIter ? lDownBase - AscDownIter : 0;           // distance from base center to lower iterator
         }
 
         if(UpGap + DownGap > minGap)
@@ -990,13 +990,13 @@ CDegreeSubSup.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine
 
     if(this.bOneLine === false && true === this.Need_Iters(_CurLine, _CurRange))
     {
-        // чтобы при вычислении метрик итератора не были перебили метрики (например, у внутр мат объекта Asc может быть больше Asc текущего объекта)
+        // to prevent iterator metrics from overriding metrics (e.g., internal math object's Asc can be greater than current object's Asc)
 
         var NewContentMetrics = new CMathBoundsMeasures();
 
         this.Content[1].Recalculate_LineMetrics(PRS, ParaPr, _CurLine, _CurRange, NewContentMetrics);
         this.Content[2].Recalculate_LineMetrics(PRS, ParaPr, _CurLine, _CurRange, NewContentMetrics);
-        // основание, baseContent
+        // base, baseContent
         this.Content[0].Recalculate_LineMetrics(PRS, ParaPr, _CurLine, _CurRange, NewContentMetrics);
 
         var BoundBase = this.baseContent.Get_LineBound(_CurLine, _CurRange);
@@ -1234,7 +1234,7 @@ CDegreeSubSup.prototype.Get_InterfaceProps = function()
 };
 CDegreeSubSup.prototype.Can_ModifyArgSize = function()
 {
-    return this.CurPos !== 0 && false === this.Is_SelectInside(); // находимся в итераторе
+    return this.CurPos !== 0 && false === this.Is_SelectInside(); // we are in iterator
 };
 CDegreeSubSup.prototype.GetTextOfElement = function(oMathText)
 {

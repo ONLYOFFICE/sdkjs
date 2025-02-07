@@ -84,11 +84,11 @@
 	function asc_CAutoFilterInfo() {
 		this.tableStyleName = null;
 		this.tableName = null;
-		this.isApplyAutoFilter = false;   // Кнопка очистить фильтр: false - disable, true - pressed button
-		this.isAutoFilter = false;  // Кнопка автофильтр (также влияет на formatTable и Sort). Возможные состояния:
-		// - null - мы в пересечении с таблицой (но не полностью в ней)
-		// - true/false - когда мы полностью в таблице или вне ее (true/false в зависимости от того применен фильтр или нет)
-		this.isSlicerAdded = false;//добавлен флаг для особой ситуации - блокировать кнопку удалить фильтр с ф/т со срезом
+		this.isApplyAutoFilter = false;   // Clear filter button: false - disable, true - pressed button
+		this.isAutoFilter = false;  // Auto filter button (also affects formatTable and Sort). Possible states:
+		// - null - we are at the intersection with a table (but not completely inside it)
+		// - true/false - when we are completely inside or outside the table (true/false depending on whether the filter is applied or not)
+		this.isSlicerAdded = false;//added flag for special case - block delete filter button for f/t with slicer
 	}
 
 	asc_CAutoFilterInfo.prototype = {

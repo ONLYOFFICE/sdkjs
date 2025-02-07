@@ -2387,11 +2387,11 @@
 		return oExpLiteral;
 	};
 	/**
-	 * Метод позволяет обрабатывать токены одного типа, пока они не прервутся другим типом токенов
+	 * Method to process tokens of the same type until they are interrupted by another type of tokens
 	 *
 	 * @param arrTypeOfLiteral {LiteralType}
 	 * @param isSpecial {boolean}
-	 * @return {array} Обработанные токены
+	 * @return {array} Processed tokens
 	 * @constructor
 	 */
 	CUnicodeParser.prototype.ReadTokensWhileEnd = function (arrTypeOfLiteral, type, isSpecial)

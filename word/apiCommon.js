@@ -46,7 +46,7 @@
 
 			if (obj.GetSimpleColor)
 			{
-				// TODO: Поддерживаем пока только Asc.c_oAscShd.Clear и Asc.c_oAscShd.Nil
+				// TODO: Currently only supporting Asc.c_oAscShd.Clear and Asc.c_oAscShd.Nil
 				if (undefined !== obj.Value && Asc.c_oAscShd.Nil !== this.Value)
 					this.Value = Asc.c_oAscShd.Clear;
 
@@ -233,7 +233,7 @@
 	 TableWidth   : null - галочка убрана, либо заданное значение в мм
 	 TableSpacing : null - галочка убрана, либо заданное значение в мм
 
-	 TableDefaultMargins :  // маргины для всей таблицы(значение по умолчанию)
+	 TableDefaultMargins :  // default margins for the entire table
 	 {
 	 Left   : 1.9,
 	 Right  : 1.9,
@@ -247,13 +247,13 @@
 	 Right  : 1.9, (null - неопределенное значение)
 	 Top    : 0,   (null - неопределенное значение)
 	 Bottom : 0,   (null - неопределенное значение)
-	 Flag   : 0 - У всех выделенных ячеек значение берется из TableDefaultMargins
-	 1 - У выделенных ячеек есть ячейки с дефолтовыми значениями, и есть со своими собственными
-	 2 - У всех ячеек свои собственные значения
+	 Flag   : 0 - All selected cells have values from TableDefaultMargins
+	 1 - Selected cells have both default values and their own
+	 2 - All cells have their own values
 	 }
 
-	 TableAlignment : 0, 1, 2 (слева, по центру, справа)
-	 TableIndent : значение в мм,
+	 TableAlignment : 0, 1, 2 (left, center, right)
+	 TableIndent : value in mm,
 	 TableWrappingStyle : 0, 1 (inline, flow)
 	 TablePaddings:
 	 {
@@ -263,7 +263,7 @@
 	 Bottom : 0
 	 }
 
-	 TableBorders : // границы таблицы
+	 TableBorders : // table borders
 	 {
 	 Bottom :
 	 {
@@ -314,7 +314,7 @@
 	 }
 	 }
 
-	 CellBorders : // границы выделенных ячеек
+	 CellBorders : // borders of selected cells
 	 {
 	 ForSelectedCells : true,
 
@@ -350,8 +350,8 @@
 	 Space :
 	 },
 
-	 InsideH : // данного элемента может не быть, если у выделенных ячеек
-	 // нет горизонтальных внутренних границ
+	 InsideH : // this element may not exist if selected cells
+	 // have no horizontal internal borders
 	 {
 	 Color : { r : 0, g : 0, b : 0 },
 	 Value : border_Single,
@@ -359,8 +359,8 @@
 	 Space :
 	 },
 
-	 InsideV : // данного элемента может не быть, если у выделенных ячеек
-	 // нет вертикальных внутренних границ
+	 InsideV : // this element may not exist if selected cells
+	 // have no vertical internal borders
 	 {
 	 Color : { r : 0, g : 0, b : 0 },
 	 Value : border_Single,
@@ -371,12 +371,12 @@
 
 	 TableBackground :
 	 {
-	 Value : тип заливки(прозрачная или нет),
+	 Value : fill type (transparent or not),
 	 Color : { r : 0, g : 0, b : 0 }
 	 }
-	 CellsBackground : null если заливка не определена для выделенных ячеек
+	 CellsBackground : null if fill is not defined for selected cells
 	 {
-	 Value : тип заливки(прозрачная или нет),
+	 Value : fill type (transparent or not),
 	 Color : { r : 0, g : 0, b : 0 }
 	 }
 
@@ -443,9 +443,9 @@
 		}
 		else
 		{
-			//Все свойства класса CTableProp должны быть undefined если они не изменялись
+			//All properties of CTableProp class must be undefined if they were not changed
 			//this.CanBeFlow = false;
-			this.CellSelect = false; //обязательное свойство
+			this.CellSelect = false; //required property
 			/*this.TableWidth = null;
 			 this.TableSpacing = null;
 			 this.TableDefaultMargins = new Asc.asc_CPaddings ();
@@ -876,7 +876,7 @@
 			this.InsideH = (undefined != obj.InsideH && null != obj.InsideH) ? new Asc.asc_CTextBorder(obj.InsideH) : null;
 			this.InsideV = (undefined != obj.InsideV && null != obj.InsideV) ? new Asc.asc_CTextBorder(obj.InsideV) : null;
 		}
-		//Все свойства класса CBorders должны быть undefined если они не изменялись
+		//All properties of CBorders class must be undefined if they were not changed
 		/*else
 		 {
 		 this.Left = null;
@@ -1036,34 +1036,34 @@
 			this.PageBreakBefore = (undefined != obj.PageBreakBefore) ? obj.PageBreakBefore : null;
 			this.Spacing = (undefined != obj.Spacing && null != obj.Spacing) ? new AscCommon.asc_CParagraphSpacing(obj.Spacing) : null;
 			this.Shd = (undefined != obj.Shd && null != obj.Shd) ? new Asc.asc_CParagraphShd(obj.Shd) : null;
-			this.WidowControl = (undefined != obj.WidowControl) ? obj.WidowControl : null;                  // Запрет висячих строк
+			this.WidowControl = (undefined != obj.WidowControl) ? obj.WidowControl : null;                  // Prevent orphaned lines
 			this.Tabs = obj.Tabs;
 			this.OutlineLvl = (undefined !== obj.OutlineLvl) ? obj.OutlineLvl : 0;
 		}
 		else
 		{
-			//ContextualSpacing : false,            // Удалять ли интервал между параграфами одинакового стиля
+			//ContextualSpacing : false,            // Whether to remove spacing between paragraphs of the same style
 			//
 			//    Ind :
 			//    {
-			//        Left      : 0,                    // Левый отступ
-			//        Right     : 0,                    // Правый отступ
-			//        FirstLine : 0                     // Первая строка
+			//        Left      : 0,                    // Left indent
+			//        Right     : 0,                    // Right indent
+			//        FirstLine : 0                     // First line
 			//    },
 			//
-			//    Jc : align_Left,                      // Прилегание параграфа
+			//    Jc : align_Left,                      // Paragraph alignment
 			//
-			//    KeepLines : false,                    // переносить параграф на новую страницу,
-			//                                          // если на текущей он целиком не убирается
-			//    KeepNext  : false,                    // переносить параграф вместе со следующим параграфом
+			//    KeepLines : false,                    // move paragraph to new page,
+			//                                          // if on current page it does not fit completely
+			//    KeepNext  : false,                    // move paragraph together with the next paragraph
 			//
-			//    PageBreakBefore : false,              // начинать параграф с новой страницы
+			//    PageBreakBefore : false,              // start paragraph from new page
 			//    Spacing :
 			//    {
-			//        Line     : 1.15,                  // Расстояние между строками внутри абзаца
-			//        LineRule : linerule_Auto,         // Тип расстрояния между строками
-			//        Before   : 0,                     // Дополнительное расстояние до абзаца
-			//        After    : 10 * g_dKoef_pt_to_mm  // Дополнительное расстояние после абзаца
+			//        Line     : 1.15,                  // Distance between lines within a paragraph
+			//        LineRule : linerule_Auto,         // Type of distance between lines
+			//        Before   : 0,                     // Additional distance before paragraph
+			//        After    : 10 * g_dKoef_pt_to_mm  // Additional distance after paragraph
 			//    },
 			//
 			//    Shd :
@@ -1077,7 +1077,7 @@
 			//        }
 			//    },
 			//
-			//    WidowControl : true,                  // Запрет висячих строк
+			//    WidowControl : true,                  // Prevent orphaned lines
 			//
 			//    Tabs : []
 			this.ContextualSpacing = false;
@@ -1088,7 +1088,7 @@
 			this.PageBreakBefore = false;
 			this.Spacing = new AscCommon.asc_CParagraphSpacing();
 			this.Shd = new Asc.asc_CParagraphShd();
-			this.WidowControl = true;                  // Запрет висячих строк
+			this.WidowControl = true;                  // Prevent orphaned lines
 			this.Tabs = null;
 			this.OutlineLvl = 0;
 		}
@@ -1329,34 +1329,34 @@
 // ---------------------------------------------------------------
 
 	/*
-	 структура заголовков, предварительно, выглядит так
+	 structure of headers, preliminary, looks like this
 	 {
-	 headerText: "Header1",//заголовок
-	 pageNumber: 0, //содержит номер страницы, где находится искомая последовательность
-	 X: 0,//координаты по OX начала последовательности на данной страницы
-	 Y: 0,//координаты по OY начала последовательности на данной страницы
-	 level: 0//уровень заголовка
+	 headerText: "Header1",//header
+	 pageNumber: 0, //contains page number where the sequence is located
+	 X: 0,//coordinates by OX of the beginning of the sequence on this page
+	 Y: 0,//coordinates by OY of the beginning of the sequence on this page
+	 level: 0//header position
 	 }
-	 заголовки приходят либо в списке, либо последовательно.
+	 headers come either in a list or sequentially.
 	 */
 
 	function CHeader(obj)
 	{
 		if (obj)
 		{
-			this.headerText = (undefined != obj.headerText) ? obj.headerText : null;	//заголовок
-			this.pageNumber = (undefined != obj.pageNumber) ? obj.pageNumber : null;	//содержит номер страницы, где находится искомая последовательность
-			this.X = (undefined != obj.X) ? obj.X : null;						//координаты по OX начала последовательности на данной страницы
-			this.Y = (undefined != obj.Y) ? obj.Y : null;						//координаты по OY начала последовательности на данной страницы
-			this.level = (undefined != obj.level) ? obj.level : null;				//позиция заголовка
+			this.headerText = (undefined != obj.headerText) ? obj.headerText : null;	//header
+			this.pageNumber = (undefined != obj.pageNumber) ? obj.pageNumber : null;	//contains page number where the sequence is located
+			this.X = (undefined != obj.X) ? obj.X : null;						//coordinates by OX of the beginning of the sequence on this page
+			this.Y = (undefined != obj.Y) ? obj.Y : null;						//coordinates by OY of the beginning of the sequence on this page
+			this.level = (undefined != obj.level) ? obj.level : null;				//header position
 		}
 		else
 		{
-			this.headerText = null;				//заголовок
-			this.pageNumber = null;				//содержит номер страницы, где находится искомая последовательность
-			this.X = null;				//координаты по OX начала последовательности на данной страницы
-			this.Y = null;				//координаты по OY начала последовательности на данной страницы
-			this.level = null;				//позиция заголовка
+			this.headerText = null;				//header
+			this.pageNumber = null;				//contains page number where the sequence is located
+			this.X = null;				//coordinates by OX of the beginning of the sequence on this page
+			this.Y = null;				//coordinates by OY of the beginning of the sequence on this page
+			this.level = null;				//header position
 		}
 	}
 
@@ -1389,7 +1389,7 @@
 	CHeader.prototype['get_Level'] = CHeader.prototype.get_Level;
 
 	/**
-	 * Класс для работы с настройками таблицы содержимого
+	 * Class for working with table of contents settings
 	 * @constructor
 	 */
 	function CTableOfContentsPr()
@@ -1401,7 +1401,7 @@
 		this.PageNumbers  = true;
 		this.RightTab     = true;
 
-		// Эти параметры задаются только из интерфейса
+		// These parameters are set only from the interface
 		this.TabLeader    = undefined;
 
 		this.StylesType   = Asc.c_oAscTOCStylesType.Current;
@@ -1612,7 +1612,7 @@
 
 
 	/**
-	 * Класс для работы с настройками стиля
+	 * Class for working with style settings
 	 * @constructor
 	 */
 	function CAscStyle()
@@ -1683,7 +1683,7 @@
 	CAscStyle.prototype['get_TranslatedName'] = CAscStyle.prototype.get_TranslatedName;
 	
 	/**
-	 * Класс для работы с настройками нумерации
+	 * Class for working with numbering settings
 	 * @constructor
 	 */
 	function CAscNumbering()
@@ -1729,7 +1729,7 @@
 	CAscNumbering.prototype['put_FromJSON']      = CAscNumbering.prototype.put_FromJSON;
 
 	/**
-	 * Класс для работы с текстом конкретного уровня нумерации
+	 * Class for working with text of a specific numbering level
 	 * @constructor
 	 */
 	function CAscNumberingLvlText(Type, Value)
@@ -1761,7 +1761,7 @@
 
 
 	/**
-	 * Класс для работы с настройками конкретного уровня нумерации
+	 * Class for working with settings of a specific numbering level
 	 * @constructor
 	 */
 	function CAscNumberingLvl(nLvlNum)
@@ -2558,7 +2558,7 @@
 	};
 
 	/**
-	* Класс для настроек конвертации текста в таблицу
+	* Class for settings of converting text to table
 	* oSelectedContent {AscCommonWord.CSelectedContent}
 	* @constructor
 	*/

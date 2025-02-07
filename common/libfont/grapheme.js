@@ -117,8 +117,8 @@
 	}
 	function FillCodePoints(codePoints)
 	{
-		// Пишем по схеме: распределяем везде по 1, если есть лишние, то все они уходят в первый глиф, если
-		// последним глифам не хватает, тогда им проставляем пробелы
+		// Write according to the scheme: distribute 1 everywhere, if there are extras, they all go to the first glyph, if
+		// the last glyphs are missing, then we put spaces for them
 
 		let nCount = GRAPHEME_BUFFER[2];
 		if (nCount <= 0)
@@ -182,7 +182,7 @@
 			result = result[nGID];
 		}
 
-		// TODO: Для скорости проверку совпадения отключили (всегда совпадает)
+		// TODO: For speed, the match check is disabled (always matches)
 		if (!result.Grapheme)
 			result.Grapheme = GetGraphemeIndex(codePoints);
 		// else if (!CompareGraphemes(result.Buffer))

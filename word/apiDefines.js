@@ -71,8 +71,8 @@ var c_oAscTableSelectionType = {
 
 /** @enum {number} */
 var c_oAscContextMenuTypes = {
-	Common       : 0, // Обычное контекстное меню
-	ChangeHdrFtr : 1  // Специальное контестное меню для попадания в колонтитул
+	Common       : 0, // Normal context menu
+	ChangeHdrFtr : 1  // Special context menu for header/footer
 };
 
 /** @enum {number} */
@@ -218,7 +218,7 @@ var c_oAscDocumentShortcutType = {
 	ApplyHeading2        : 7,
 	ApplyHeading3        : 8,
 	Strikeout            : 9,
-	ShowAll              : 10, // Показать/скрыть непечатаемые символы
+	ShowAll              : 10, // Show/hide non-printing characters
 	EditSelectAll        : 11,
 	Bold                 : 12,
 	CopyFormat           : 13,

@@ -249,7 +249,7 @@
 		this.brkBin     = null;
 		
 		this.defJc      = null;
-		this.dispDef    = null;  // свойство: применять/ не применять paragraph settings (в тч defJc)
+		this.dispDef    = null;  // property: apply/don't apply paragraph settings (including defJc)
 		
 		this.intLim     = null;
 		this.naryLim    = null;
@@ -261,7 +261,7 @@
 		
 		this.smallFrac  = null;
 		
-		//   не реализовано    //
+		//   not implemented    //
 		
 		// for minus operator
 		// when brkBin is set to repeat
@@ -269,8 +269,8 @@
 		
 		//***** WORD IGNORES followings parameters *****//
 		
-		// mathFont: в качестве font поддерживается только Cambria Math
-		// остальные шрифты  возможно будут поддержаны MS Word в будущем
+		// mathFont: only Cambria Math is supported as a font
+		// other fonts may be supported by MS Word in the future
 		
 		this.mathFont   = null;
 		
@@ -542,4 +542,3 @@
 	window['AscWord'].MathPr       = MathPr;
 	
 })(window);
-

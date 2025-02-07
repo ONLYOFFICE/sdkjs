@@ -117,7 +117,7 @@ function CMathBase(bInside)
 
     //  Properties
     this.Parent 			 = null;
-    this.ParaMath 			 = null; // ссылка на общую формулу
+    this.ParaMath 			 = null; // reference to the common formula
 
     this.CtrPrp 			 = new CTextPr();
     this.CompiledCtrPrp 	 = new CTextPr(); 
@@ -139,8 +139,8 @@ function CMathBase(bInside)
 
     this.Bounds = new CMathBounds();
 
-    this.dW = 0; //column gap, gap width
-    this.dH = 0; //row gap, gap height
+    this.dW = 0; // column gap, gap width
+    this.dH = 0; // row gap, gap height
 
     this.alignment =
     {
@@ -182,7 +182,7 @@ function CMathBase(bInside)
         this.ReviewInfo.Update();
     }
 
-	this.m_oContentChanges = new AscCommon.CContentChanges(); // список изменений(добавление/удаление элементов)
+	this.m_oContentChanges = new AscCommon.CContentChanges(); // list of changes (adding/removing elements)
 
     return this;
 }
@@ -227,7 +227,7 @@ CMathBase.prototype.NeedBreakContent = function(Number)
     this.NumBreakContent = Number;
 };
 ///////// RunPrp, CtrPrp
-CMathBase.prototype.setCtrPrp = function(txtPrp) // выставляем ctrPrp на чтение
+CMathBase.prototype.setCtrPrp = function(txtPrp) // set ctrPrp for reading
 {
     if(txtPrp !== null && typeof(txtPrp) !== "undefined")
     {
@@ -263,7 +263,7 @@ CMathBase.prototype.Get_CompiledCtrPrp = function(bAllowInline)
     }
 
     if(bAllowInline !== false && this.ParaMath)
-        CompiledCtrPrp.FontSize *= MatGetKoeffArgSize(CompiledCtrPrp.FontSize, this.ArgSize.value);// для настроек inline формул
+        CompiledCtrPrp.FontSize *= MatGetKoeffArgSize(CompiledCtrPrp.FontSize, this.ArgSize.value);// for inline formula settings
 
     return CompiledCtrPrp;
 };
@@ -284,7 +284,7 @@ CMathBase.prototype.Get_CompiledArgSize = function()
 {
     return this.Parent.Get_CompiledArgSize();
 };
-CMathBase.prototype.Get_TxtPrControlLetter = function(RPI) // TextPrControlLetter не копируются !
+CMathBase.prototype.Get_TxtPrControlLetter = function(RPI) // TextPrControlLetter is not copied!
 {
     this.Set_CompiledCtrPrp(this.Parent, this.ParaMath, RPI);
 
@@ -323,7 +323,7 @@ CMathBase.prototype.addMCToContent = function(elements)
     else
         this.setContent();
 };
-// эта функция здесь необходима для случая с n-арными операторами : когда передаем n-арный оператор с итераторами и аргумент
+// this function is needed here for the case with n-ary operators: when passing n-ary operator with iterators and argument
 CMathBase.prototype.IsJustDraw = function()
 {
     return false;
@@ -446,7 +446,7 @@ CMathBase.prototype.setPosition = function(pos, PosInfo)
                 NewPos.x = this.pos.x + this.GapLeft + al.x + this.dW*j + w;
                 NewPos.y = this.pos.y + al.y + this.dH*i + h;
 
-                if(this.elements[i][j].Type == para_Math_Content) // прибавим ascent только для контентов, для вложенных мат объектов не добавляем !
+                if(this.elements[i][j].Type == para_Math_Content) // add ascent only for contents, not for nested math objects!
                     NewPos.y += this.elements[i][j].size.ascent;
 
                 this.elements[i][j].setPosition(NewPos, PosInfo);
@@ -480,7 +480,7 @@ CMathBase.prototype.setPosition = function(pos, PosInfo)
 
         var Len = this.Content.length;
 
-        // Здесь проверяем не на то, что это последний Range (т.к. на данном этапе еще идет вычисление строк) а на конец контента !
+        // Here we check not if it's the last Range (since at this stage lines are still being calculated) but for the end of content!
 
         var EndBrContentEnd = this.NumBreakContent == EndPos && this.Content[EndPos].Math_Is_End(Line, Range),
             NotBrContent = this.NumBreakContent !== EndPos;
@@ -590,12 +590,12 @@ CMathBase.prototype.UpdateBoundsPosInfo = function(PRSA, _CurLine, _CurRange, _C
 };
 CMathBase.prototype.draw = function(x, y, pGraphics, PDSE)
 {
-    this.Make_ShdColor(PDSE, this.Get_CompiledCtrPrp()); // для Just-Draw элементов
+    this.Make_ShdColor(PDSE, this.Get_CompiledCtrPrp()); // for Just-Draw elements
 
     for(var i=0; i < this.nRow; i++)
         for(var j = 0; j < this.nCol; j++)
         {
-            if(this.elements[i][j].IsJustDraw()) // для Just-Draw элементов надо выставить Font
+            if(this.elements[i][j].IsJustDraw()) // for Just-Draw elements need to set Font
             {
                 var ctrPrp = this.Get_TxtPrControlLetter();
 
@@ -619,13 +619,13 @@ CMathBase.prototype.Draw_Elements = function(PDSE)
     {
         var X = PDSE.X;
 
-        this.Make_ShdColor(PDSE, this.Get_CompiledCtrPrp()); // для Just-Draw элементов
+        this.Make_ShdColor(PDSE, this.Get_CompiledCtrPrp()); // for Just-Draw elements
 
         for(var i=0; i < this.nRow; i++)
         {
             for(var j = 0; j < this.nCol; j++)
             {
-                if(this.elements[i][j].IsJustDraw()) // для Just-Draw элементов надо выставить Font
+                if(this.elements[i][j].IsJustDraw()) // for Just-Draw elements need to set Font
                 {
                     var ctrPrp = this.Get_TxtPrControlLetter();
 
@@ -675,7 +675,7 @@ CMathBase.prototype.PreRecalc = function(Parent, ParaMath, ArgSize, RPI, GapsInf
 
     this.ApplyProperties(RPI);
 
-    // setGaps обязательно после того как смержили CtrPrp (Set_CompiledCtrPrp)
+    // setGaps must be called after merging CtrPrp (Set_CompiledCtrPrp)
     if(this.bInside == false)
         GapsInfo.setGaps(this, this.TextPrControlLetter.FontSize);
 
@@ -766,7 +766,7 @@ CMathBase.prototype.Resize = function(oMeasure, RPI)
     for(var i=0; i < this.nRow; i++)
         for(var j = 0; j < this.nCol; j++)
         {
-            if(this.elements[i][j].IsJustDraw()) // для Just-Draw элементов надо выставить Font
+            if(this.elements[i][j].IsJustDraw()) // for Just-Draw elements need to set Font
             {
                 var ctrPrp = this.Get_TxtPrControlLetter();
 
@@ -805,12 +805,12 @@ CMathBase.prototype.Set_CompiledCtrPrp = function(Parent, ParaMath, RPI)
             return;
         }
 
-        // Получим настройки текста, для данного параграфа
+        // Get text settings for this paragraph
         this.CompiledCtrPrp = ParaMath.Paragraph.Get_CompiledPr2(false).TextPr.Copy();
 
         this.CompiledCtrPrp.Merge(ParaMath.Get_Default_TPrp());
 
-        // Если в прямых настройках задан стиль, тогда смержим настройки стиля
+        // If style is set in direct settings, then merge style settings
         if ( undefined != this.CtrPrp.RStyle )
         {
             var Styles = ParaMath.Paragraph.Parent.Get_Styles();
@@ -834,7 +834,7 @@ CMathBase.prototype.Set_CompiledCtrPrp = function(Parent, ParaMath, RPI)
 
         if(this.bInside == true)
         {
-            var TxtPr = Parent.Get_TxtPrControlLetter(RPI); // чтобы применился ArgSize Parent
+            var TxtPr = Parent.Get_TxtPrControlLetter(RPI); // to apply Parent's ArgSize
 
             FontSize = TxtPr.FontSize;
             FontSize *= MatGetKoeffArgSize(FontSize, this.ArgSize.value);
@@ -1598,7 +1598,7 @@ CMathBase.prototype.Copy = function(Selected, oPr)
 CMathBase.prototype.Refresh_RecalcData = function(Data)
 {
     if(this.ParaMath !== null)
-        this.ParaMath.Refresh_RecalcData(); // Refresh_RecalcData сообщает родительскому классу, что у него произошли изменения, нужно пересчитать
+        this.ParaMath.Refresh_RecalcData(); // Refresh_RecalcData tells the parent class that changes occurred, need to recalculate
 };
 CMathBase.prototype.Write_ToBinary2 = function( Writer )
 {
@@ -1888,7 +1888,7 @@ CMathBase.prototype.Draw_Lines = function(PDSL)
 	var ArgSize		= this.Get_CompiledArgSize();
 	var fontCoeff	= MatGetKoeffArgSize(CtrPrp.FontSize, ArgSize.value);
 
-	// вычисляем координату Y и LineW также как в Run
+	// calculate Y coordinate and LineW same as in Run
 	var X			= PDSL.X;
 	var Y			= PDSL.Baseline - CtrPrp.FontSize * fontCoeff * g_dKoef_pt_to_mm * 0.27;
 	var LineW		= (CtrPrp.FontSize / 18) * g_dKoef_pt_to_mm;
@@ -1902,7 +1902,7 @@ CMathBase.prototype.Draw_Lines = function(PDSL)
 
 	var BgColor = PDSL.BgColor;
 	if (CtrPrp.Shd && !CtrPrp.Shd.IsNil())
-		BgColor = CtrPrp.Shd.GetSimpleColor(Para.GetTheme(), Para.GetColorMap());
+		BgColor = CtrPrp.Shd.Get_Color( Para );
 
 	var AutoColor = ( undefined != BgColor && false === BgColor.Check_BlackAutoColor() )
 		? new CDocumentColor( 255, 255, 255, false)
@@ -1913,8 +1913,8 @@ CMathBase.prototype.Draw_Lines = function(PDSL)
 		Theme		= this.Paragraph.Get_Theme(),
 		ColorMap	= this.Paragraph.Get_ColorMap();
 
-	// Выставляем цвет обводки
-	if ( true === PDSL.VisitedHyperlink && ( undefined === this.Pr.Color && undefined === this.Pr.Unifill ) )
+	// Set stroke color
+	if ( true === PDSL.VisitedHyperlink && ( undefined === this.CtrPrp.Color && undefined === this.CtrPrp.Unifill ) )
 		CurColor = new CDocumentColor( 128, 0, 151 );
 	else if ( true === CtrPrp.Color.Auto && !CtrPrp.Unifill)
 		CurColor = new CDocumentColor( AutoColor.r, AutoColor.g, AutoColor.b );
@@ -1977,77 +1977,79 @@ CMathBase.prototype.Make_ShdColor = function(PDSE, CurTextPr)
     if ( undefined !== CurTextPr.Shd && Asc.c_oAscShdNil !== CurTextPr.Shd.Value )
         BgColor = CurTextPr.Shd.Get_Color( Para );
 
-    var AutoColor = ( undefined != BgColor && false === BgColor.Check_BlackAutoColor() ? new CDocumentColor( 255, 255, 255, false ) : new CDocumentColor( 0, 0, 0, false ) );
+    var AutoColor = ( undefined != BgColor && false === BgColor.Check_BlackAutoColor() )
+		? new CDocumentColor( 255, 255, 255, false)
+		: new CDocumentColor( 0, 0, 0, false );
 
-    var RGBA;
+	var RGBA;
 
-    if(CurTextPr.FontRef && CurTextPr.FontRef.Color)
-    {
-        CurTextPr.FontRef.Color.check(PDSE.Theme, PDSE.ColorMap);
-        RGBA = CurTextPr.FontRef.Color.RGBA;
-        AutoColor = new CDocumentColor( RGBA.R, RGBA.G, RGBA.B, RGBA.A );
-    }
+	if(CurTextPr.FontRef && CurTextPr.FontRef.Color)
+	{
+		CurTextPr.FontRef.Color.check(PDSE.Theme, PDSE.ColorMap);
+		RGBA = CurTextPr.FontRef.Color.RGBA;
+		AutoColor = new CDocumentColor( RGBA.R, RGBA.G, RGBA.B, RGBA.A );
+	}
 
-    if(CurTextPr.Unifill)
-    {
-        CurTextPr.Unifill.check(PDSE.Theme, PDSE.ColorMap);
-        RGBA = CurTextPr.Unifill.getRGBAColor();
+	if(CurTextPr.Unifill)
+	{
+		CurTextPr.Unifill.check(PDSE.Theme, PDSE.ColorMap);
+		RGBA = CurTextPr.Unifill.getRGBAColor();
 
-        if ( true === PDSE.VisitedHyperlink && ( undefined === this.CtrPrp.Color && undefined === this.CtrPrp.Unifill ) )
-        {
-            AscFormat.G_O_VISITED_HLINK_COLOR.check(PDSE.Theme, PDSE.ColorMap);
-            RGBA = AscFormat.G_O_VISITED_HLINK_COLOR.getRGBAColor();
-            pGraphics.p_color( RGBA.R, RGBA.G, RGBA.B, RGBA.A );
-            pGraphics.b_color1( RGBA.R, RGBA.G, RGBA.B, RGBA.A );
-        }
-        else
-        {
-            pGraphics.p_color( RGBA.R, RGBA.G, RGBA.B, RGBA.A );
-            pGraphics.b_color1( RGBA.R, RGBA.G, RGBA.B, RGBA.A);
-        }
-    }
-    else
-    {
-        if ( true === PDSE.VisitedHyperlink && ( undefined === this.CtrPrp.Color && undefined === this.CtrPrp.Unifill ) )
-        {
-            AscFormat.G_O_VISITED_HLINK_COLOR.check(PDSE.Theme, PDSE.ColorMap);
-            RGBA = AscFormat.G_O_VISITED_HLINK_COLOR.getRGBAColor();
-            pGraphics.p_color( RGBA.R, RGBA.G, RGBA.B, RGBA.A );
-            pGraphics.b_color1( RGBA.R, RGBA.G, RGBA.B, RGBA.A );
-        }
-        else
-        {
-            if(!pGraphics.m_bIsTextDrawer || !CurTextPr.TextFill)
-            {
-                if ( true === CurTextPr.Color.Auto )
-                {
-                    pGraphics.p_color( AutoColor.r, AutoColor.g, AutoColor.b, 255);
-                    pGraphics.b_color1( AutoColor.r, AutoColor.g, AutoColor.b, 255);
-                }
-                else
-                {
-                    pGraphics.p_color( CurTextPr.Color.r, CurTextPr.Color.g, CurTextPr.Color.b, 255);
-                    pGraphics.b_color1( CurTextPr.Color.r, CurTextPr.Color.g, CurTextPr.Color.b, 255);
-                }
-            }
+		if ( true === PDSE.VisitedHyperlink && ( undefined === this.CtrPrp.Color && undefined === this.CtrPrp.Unifill ) )
+		{
+			AscFormat.G_O_VISITED_HLINK_COLOR.check(PDSE.Theme, PDSE.ColorMap);
+			RGBA = AscFormat.G_O_VISITED_HLINK_COLOR.getRGBAColor();
+			pGraphics.p_color( RGBA.R, RGBA.G, RGBA.B, RGBA.A );
+			pGraphics.b_color1( RGBA.R, RGBA.G, RGBA.B, RGBA.A );
+		}
+		else
+		{
+			pGraphics.p_color( RGBA.R, RGBA.G, RGBA.B, RGBA.A );
+			pGraphics.b_color1( RGBA.R, RGBA.G, RGBA.B, RGBA.A);
+		}
+	}
+	else
+	{
+		if ( true === PDSE.VisitedHyperlink && ( undefined === this.CtrPrp.Color && undefined === this.CtrPrp.Unifill ) )
+		{
+			AscFormat.G_O_VISITED_HLINK_COLOR.check(PDSE.Theme, PDSE.ColorMap);
+			RGBA = AscFormat.G_O_VISITED_HLINK_COLOR.getRGBAColor();
+			pGraphics.p_color( RGBA.R, RGBA.G, RGBA.B, RGBA.A );
+			pGraphics.b_color1( RGBA.R, RGBA.G, RGBA.B, RGBA.A );
+		}
+		else
+		{
+			if(!pGraphics.m_bIsTextDrawer || !CurTextPr.TextFill)
+			{
+				if ( true === CurTextPr.Color.Auto )
+				{
+					pGraphics.p_color( AutoColor.r, AutoColor.g, AutoColor.b, 255);
+					pGraphics.b_color1( AutoColor.r, AutoColor.g, AutoColor.b, 255);
+				}
+				else
+				{
+					pGraphics.p_color( CurTextPr.Color.r, CurTextPr.Color.g, CurTextPr.Color.b, 255);
+					pGraphics.b_color1( CurTextPr.Color.r, CurTextPr.Color.g, CurTextPr.Color.b, 255);
+				}
+			}
 			else if (pGraphics.m_bIsTextDrawer)
 			{
 				pGraphics.SetTextPr(CurTextPr, PDSE.Theme);
 			}
-        }
-    }
+		}
+	}
 
-    if (reviewtype_Common !== this.GetReviewType())
-    {
-        var ReviewColor = this.GetReviewColor();
-        pGraphics.p_color(ReviewColor.r, ReviewColor.g, ReviewColor.b, 255);
-        pGraphics.b_color1(ReviewColor.r, ReviewColor.g, ReviewColor.b, 255);
-    }
+	if (reviewtype_Common !== this.GetReviewType())
+	{
+		var ReviewColor = this.GetReviewColor();
+		pGraphics.p_color(ReviewColor.r, ReviewColor.g, ReviewColor.b, 255);
+		pGraphics.b_color1(ReviewColor.r, ReviewColor.g, ReviewColor.b, 255);
+	}
 
-    if(BgColor == undefined)
-        BgColor = new CDocumentColor( 255, 255, 255, false );
+	if(BgColor == undefined)
+		BgColor = new CDocumentColor( 255, 255, 255, false );
 
-    return BgColor;
+	return BgColor;
 };
 CMathBase.prototype.protected_AddToContent = function(Pos, Items, bUpdatePosition)
 {
@@ -2062,7 +2064,7 @@ CMathBase.prototype.protected_RemoveItems = function(Pos, Items, bUpdatePosition
 	var Count = Items.length;
 	this.raw_RemoveFromContent(Pos, Count);
 
-	// Обновим текущую позицию
+	// Update current position
 	if (this.CurPos > Pos + Count)
 		this.CurPos -= Count;
 	else if (this.CurPos > Pos)
@@ -2095,11 +2097,6 @@ CMathBase.prototype.raw_RemoveFromContent = function(Pos, Count)
 
     this.fillContent();
 };
-CMathBase.prototype.raw_SetColumn = function(Value)
-{
-    if(Value > 0)
-        this.Pr.Set_Column(Value);
-};
 CMathBase.prototype.Recalc_RunsCompiledPr = function()
 {
     this.RecalcInfo.bCtrPrp = true;
@@ -2122,7 +2119,7 @@ CMathBase.prototype.GetFirstElement = function()
 };
 CMathBase.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 {
-    var WordLen = PRS.WordLen; // запоминаем, чтобы внутр мат объекты не увеличили WordLen
+    var WordLen = PRS.WordLen; // remember so that internal math objects don't increase WordLen
     var bContainCompareOper = PRS.bContainCompareOper;
 
     var bOneLine = PRS.bMath_OneLine;
@@ -2145,13 +2142,13 @@ CMathBase.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
             {
                 var Item = this.elements[i][j];
 
-                if(Item.IsJustDraw()) // для Just-Draw элементов надо выставить Font
+                if(Item.IsJustDraw()) // for Just-Draw elements need to set Font
                 {
                     this.MeasureJustDraw(Item);
                 }
                 else
                 {
-                    Item.Recalculate_Reset(PRS.Range, PRS.Line, PRS); // обновим StartLine и StartRange
+                    Item.Recalculate_Reset(PRS.Range, PRS.Line, PRS); // update StartLine and StartRange
                     Item.Recalculate_Range(PRS, ParaPr, Depth);
                 }
             }
@@ -2187,7 +2184,7 @@ CMathBase.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 
             var NeedSetReset = CurLine == 0 && CurRange == 0  || Pos !== RangeStartPos;
             if(Item.Type == para_Math_Content && NeedSetReset)
-                Item.Recalculate_Reset(PRS.Range, PRS.Line, PRS); // обновим StartLine и StartRange
+                Item.Recalculate_Reset(PRS.Range, PRS.Line, PRS); // update StartLine and StartRange
 
             if(Pos == Numb)
             {
@@ -2241,7 +2238,7 @@ CMathBase.prototype.RecalculateMinMaxContentWidth = function(MinMax)
 	let mathContent = this.Content[this.NumBreakContent];
 	if (mathContent)
 	{
-		// Всю формулу воспринимаем как слово
+		// Treat the entire formula as a word
 		MinMax.addLetter(this.BrGapLeft);
 		mathContent.RecalculateMinMaxContentWidth(MinMax);
 		MinMax.addLetter(this.BrGapRight);
@@ -2303,7 +2300,7 @@ CMathBase.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _C
         //this.Bounds.UpdateMetrics(CurLine, CurRange, this.size);
         this.Bounds.UpdateMetrics(0, 0, this.size);
 
-        // чтобы внутр объекты не перебили метрики (например, у внутр мат объекта Asc может быть больше Asc текущего объекта)
+        // so that internal objects don't override metrics (e.g., internal math object's Asc can be greater than current object's Asc)
 
         ContentMetrics.UpdateMetrics(this.size);
 
@@ -2400,7 +2397,7 @@ CMathBase.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange
 
         PRSC.Range.W += this.dW*(EndPos - StartPos);
 
-        // Здесь проверяем не на то, что это последний Range (т.к. на данном этапе еще идет вычисление строк) а на конец контента !
+        // Here we check not if it's the last Range (since at this stage lines are still being calculated) but for the end of content!
 
         var Len = this.Content.length;
         var EndBrContentEnd = this.NumBreakContent == EndPos && this.Content[EndPos].Math_Is_End( _CurLine, _CurRange),
@@ -2420,7 +2417,7 @@ CMathBase.prototype.UpdateOperators = function(_CurLine, _CurRange, bEmptyGapLef
 {
     if(this.bOneLine == false)
     {
-         // Content[this.NumBreakContent] должен содержаться в каждой строке многострочного объекта
+         // Content[this.NumBreakContent] must be contained in each line of a multiline object
          this.Content[this.NumBreakContent].UpdateOperators(_CurLine, _CurRange, bEmptyGapLeft, bEmptyGapRight);
     }
 
@@ -2572,7 +2569,7 @@ CMathBase.prototype.CheckRevisionsChanges = function(Checker, ContentPos, Depth)
             this.Get_EndPos(false, ContentPos, Depth);
             Checker.Set_AddRemoveEndPos(ContentPos);
 
-            // Нам нужно проставить конечную позицию в начало следующего рана, чтобы выделился данный элемент целиком
+            // We need to set the end position to the beginning of the next run to select this element entirely
             if (this.Paragraph)
             {
                 var TempContentPos = this.Paragraph.Get_PosByElement(this);
@@ -2988,7 +2985,7 @@ CMathBounds.prototype.Get_LineBound = function(CurLine, CurRange)
     {
         Bound = this.Bounds[CurLine][CurRange];
     }
-    else // заглушка, если еще не пересчитали, а запрос Bonds пришел (например, на поиске)
+    else // fallback if not yet recalculated but Bonds request came (e.g., during search)
     {
         Bound = new CMathBoundsMeasures();
     }
@@ -3025,10 +3022,10 @@ function CMathBoundsMeasures()
 {
     this.Type = MATH_BOUNDS_MEASURES;
 
-    // нужны ля расчета выравниваний относительно операторов
+    // needed for calculating alignments relative to operators
     this._X   = 0;
     this._Y   = 0;
-    // необходимы для отрисовки рамки, подсветки
+    // necessary for drawing frame, highlighting
     this.X    = 0;
     this.Y    = 0;
 
@@ -3323,7 +3320,7 @@ CMathMenuBase.prototype.Set_DeleteForcedBreak = function()
  */
 function CMathCtrlPr(ctrPr)
 {
-	this.rPr = ctrPr || new CTextPr(); //по умолчанию должен наследоваться от текущего абзаца
+	this.rPr = ctrPr || new CTextPr(); //by default should inherit from current paragraph
 	this.del = new CTextPr();
 	this.ins = new CTextPr();
 }
@@ -3484,3 +3481,5 @@ CMathMenuBase.prototype["can_AlignToCharacter"]        = CMathMenuBase.prototype
 CMathMenuBase.prototype["align_ToCharacter"]           = CMathMenuBase.prototype.align_ToCharacter;
 CMathMenuBase.prototype["remove_DelimiterCharacters"]  = CMathMenuBase.prototype.remove_DelimiterCharacters;
 CMathMenuBase.prototype["remove_Radical"]              = CMathMenuBase.prototype.remove_Radical;
+
+```

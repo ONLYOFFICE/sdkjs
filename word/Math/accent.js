@@ -253,7 +253,7 @@ CAccentTilde.prototype.calcSize = function(stretch)
 {
     var betta = this.Parent.Get_TxtPrControlLetter().FontSize/36;
 
-    var width = 9.047509765625*betta; // реальная на отрисовке width 7.495282031249999
+    var width = 9.047509765625*betta; // actual width on rendering is 7.495282031249999
     var height = 2.469444444444444*betta;
 
     var augm = 0.9*stretch/width;
@@ -315,7 +315,7 @@ CAccentTilde.prototype.calcCoord = function(stretch)
     for(var i = 0; i < X.length; i++)
     {
         XX[i] = X[i]*alpha*augm;
-        YY[i] = (Y[5] - Y[i])*alpha*0.65; // сжали !
+        YY[i] = (Y[5] - Y[i])*alpha*0.65; // compressed!
     }
 
     var H = YY[5];
@@ -616,12 +616,12 @@ CAccent.prototype.Resize = function(oMeasure, RPI)
 CAccent.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 {
     var bMath_OneLine = PRS.bMath_OneLine;
-    var WordLen = PRS.WordLen; // запоминаем, чтобы внутр мат объекты не увеличили WordLen
+    var WordLen = PRS.WordLen; // remember so that internal math objects don't increase WordLen
 
     PRS.bMath_OneLine = true;
 
     var oBase = this.getBase();
-    oBase.Recalculate_Reset(PRS.Range, PRS.Line, PRS ); // обновим StartLine и StartRange
+    oBase.Recalculate_Reset(PRS.Range, PRS.Line, PRS ); // update StartLine and StartRange
     oBase.Recalculate_Range(PRS, ParaPr, Depth);
 
     this.operator.fixSize(g_oTextMeasurer, oBase.size.width);

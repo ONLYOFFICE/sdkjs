@@ -60,9 +60,9 @@ CMathBreak.prototype.Copy = function()
 };
 CMathBreak.prototype.Get_AlignBrk = function()
 {
-    // undefined - break отсутствует
-    // 0         - break присутствует, alnAt = undefined
-    // Number    = break присутствует, alnAt = Number
+    // undefined - break is absent
+    // 0         - break is present, alnAt = undefined
+    // Number    - break is present, alnAt = Number
 
     return this.alnAt !== undefined ? this.alnAt : 0;
 };
@@ -512,20 +512,19 @@ CBorderBox.prototype.Apply_MenuProps = function(Props)
 			this.raw_SetRight(Props.HideRight);
 		}
 
-		if (Props.HideHor !== undefined && Props.HideHor == this.Pr.strikeH) // strikeH - нарисовать горизонтальную линию
+		if (Props.HideHor !== undefined && Props.HideHor == this.Pr.strikeH) // strikeH - draw horizontal line
 		{
 			History.Add(new CChangesMathBorderBoxHor(this, this.Pr.strikeH, !Props.HideHor));
 			this.raw_SetHor(!Props.HideHor);
 		}
 
-		if (Props.HideVer !== undefined && Props.HideVer == this.Pr.strikeV) // strikeV - нарисовать вертикальную линию
+		if (Props.HideVer !== undefined && Props.HideVer == this.Pr.strikeV) // strikeV - draw vertical line
 		{
 			History.Add(new CChangesMathBorderBoxVer(this, this.Pr.strikeV, !Props.HideVer));
 			this.raw_SetVer(!Props.HideVer);
 		}
 
-		if (Props.HideTopLTR !== undefined && Props.HideTopLTR == this.Pr.strikeTLBR) // strikeTLBR - нарисовать диагональ из
-																			  // верхнего угла слева направо
+		if (Props.HideTopLTR !== undefined && Props.HideTopLTR == this.Pr.strikeTLBR) // strikeTLBR - draw diagonal from top left corner to right
 		{
 			History.Add(new CChangesMathBorderBoxTopLTR(this, this.Pr.strikeTLBR, !Props.HideTopLTR));
 			this.raw_SetTopLTR(!Props.HideTopLTR);
@@ -533,11 +532,7 @@ CBorderBox.prototype.Apply_MenuProps = function(Props)
 
 		if (Props.HideTopRTL !== undefined && Props.HideTopRTL == this.Pr.strikeBLTR)
 		{
-			History.Add(new CChangesMathBorderBoxTopRTL(this, this.Pr.strikeBLTR, !Props.HideTopRTL)); // strikeBLTR -
-																									   // нарисовать
-																									   // диагональ из
-																									   // нижнего угла
-																									   // слева направо
+			History.Add(new CChangesMathBorderBoxTopRTL(this, this.Pr.strikeBLTR, !Props.HideTopRTL)); // strikeBLTR - draw diagonal from bottom left corner to right
 			this.raw_SetTopRTL(!Props.HideTopRTL);
 		}
 	}
@@ -885,7 +880,7 @@ CBox.prototype.getBase = function()
 CBox.prototype.UpdatePRS_OneLine = function(PRS, WordLen, MathFirstItem)
 {
     PRS.WordLen   = WordLen;
-    PRS.MathFirstItem = MathFirstItem; // вернем MathFirstItem, который был до расчета Box, т.к . при расчете он мог измениться (при наличии внутри Box др мат объектов)
+    PRS.MathFirstItem = MathFirstItem; // return MathFirstItem, which was before calculating Box, because it could have changed (if there are other math objects inside Box)
 };
 CBox.prototype.IsOperatorEmulator = function()
 {
@@ -903,9 +898,9 @@ CBox.prototype.IsForcedBreak = function()
 };
 CBox.prototype.Get_AlignBrk = function()
 {
-    // null      - break отсутствует
-    // 0         - break присутствует, alnAt = undefined
-    // Number    = break присутствует, alnAt = Number
+    // null      - break is absent
+    // 0         - break is present, alnAt = undefined
+    // Number    - break is present, alnAt = Number
 
     return false == this.private_CanUseForcedBreak() ? null : this.Pr.Get_AlignBrk();
 };
@@ -940,8 +935,8 @@ CBox.prototype.Can_ModifyArgSize = function()
 };
 CBox.prototype.Apply_MenuProps = function(Props)
 {
-    // не проверяем изменения на тип !
-    // потому что может прийти свойства из другого (вложенного в Box) мат объекта, но при этом есть возможность вставить/удалить  принудительный перенос для Box
+    // do not check changes on type!
+    // because it can come from properties of another (nested in Box) math object, but there is a possibility to insert/delete forced break for Box
 
     if(Props.Action & c_oMathMenuAction.InsertForcedBreak && true == this.Can_InsertForcedBreak())
     {
@@ -998,8 +993,8 @@ CBox.prototype.Apply_ForcedBreak = function(Props)
 {
     this.Apply_MenuProps(Props);
 
-    // исключаем из Props, чтобы не применить к операторам внути Box
-    // иначе при Drag'n'Drop оператора получим неочевидный результат :  принудительный перенос
+    // exclude from Props, so as not to apply to operators inside Box
+    // otherwise, when dragging and dropping an operator, we get an unexpected result: a forced break
     if(Props.Action & c_oMathMenuAction.InsertForcedBreak)
         Props.Action ^= c_oMathMenuAction.InsertForcedBreak;
 

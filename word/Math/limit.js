@@ -206,7 +206,7 @@ CLimitPrimary.prototype.setPosition = function(pos, PosInfo)
         FNamePos.y = this.pos.y + this.FName.size.ascent + this.dH + this.Iterator.size.height;
     }
 
-    // такой порядок нужен для выравнивания Box по операторам
+    // such order is needed for aligning Box with operators
     this.FName.setPosition(FNamePos, PosInfo);
     this.Iterator.setPosition(IterPos, PosInfo);
 
@@ -242,7 +242,7 @@ CLimit.prototype.init = function(props)
 {
     this.Fill_LogicalContent(2, props.content);
 
-    // посмотреть GetAllFonts
+    // check all fonts
     this.setProperties(props);
     this.fillContent();
 };
@@ -263,8 +263,8 @@ CLimit.prototype.getBase = function()
 };
 CLimit.prototype.ApplyProperties = function(RPI)
 {
-    // реализовано также как и для Word 2010
-    // в 2007 реализовано limit для inline формул как степень (закомментированный код)
+    // implemented the same way as in Word 2010
+    // in 2007, limit for inline formulas was implemented as a power (commented code)
 
     /*if(this.RecalcInfo.bProps == true || RPI.bChangeInline == true)
     {

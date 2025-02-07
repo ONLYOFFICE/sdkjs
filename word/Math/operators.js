@@ -94,8 +94,8 @@ CGlyphOperator.prototype.fixSize = function(stretch)
         width = sizeGlyph.height;
         height = sizeGlyph.width;
 
-        // baseLine смещен чуть вверх, чтобы текст при вставке в скобки располагался по центру, относительно высоты скобок
-        // плейсхолдер из-за этого располагается чуть выше, как в Ворде
+        // baseline is shifted slightly up so that text when inserted in brackets is centered relative to bracket height
+        // placeholder is positioned slightly higher because of this, as in Word
         //center = height/2 - 1.234722222222222*betta;
         ascent = height/2;
         this.stretch = stretch > height ? stretch : height;
@@ -126,12 +126,12 @@ CGlyphOperator.prototype.getCoordinateGlyph = function()
          glH = coord.W;
      }
 
-     /*var shW = (W - glW)/ 2, // выравниваем глиф по длине
-         shH = (H - glH)/2; // при повороте на 90 градусовы*/
+     /*var shW = (W - glW)/ 2, // align glyph by length
+         shH = (H - glH)/2; // when rotated 90 degrees*/
 
     // A*x + B*y + C = 0
 
-    var bLine = this.Parent.typeOper == DELIMITER_LINE || this.Parent.typeOper == DELIMITER_DOUBLE_LINE, // если оператор линия, то размещаем оператор по середине
+    var bLine = this.Parent.typeOper == DELIMITER_LINE || this.Parent.typeOper == DELIMITER_DOUBLE_LINE, // if operator is a line, place operator in the middle
         bArrow = this.Parent.typeOper == ARROW_LEFT || this.Parent.typeOper == ARROW_RIGHT || this.Parent.typeOper == ARROW_LR,
         bDoubleArrow = this.Parent.typeOper == DOUBLE_LEFT_ARROW || this.Parent.typeOper == DOUBLE_RIGHT_ARROW || this.Parent.typeOper == DOUBLE_ARROW_LR;
 
@@ -280,13 +280,13 @@ COperatorBracket.prototype.calcSize = function( stretch )
 
     if(this.Parent.type == OPER_GROUP_CHAR)
     {
-        // перевернутая скобка
+        // inverted bracket
         widthBr = 7.347222222222221*betta;
         heightBr = minBoxH;
     }
     else
     {
-        // перевернутая скобка
+        // inverted bracket
         widthBr = 12.347222222222221*betta;
         var maxBoxH;
 
@@ -373,7 +373,7 @@ COperatorBracket.prototype.calcCoord = function(stretch)
     // X[1] > X[52]
 
     var textScale = this.getCtrPrp().FontSize/1000; // 1000 pt
-    var alpha = textScale*25.4/96 /64; // коэффициент используется для того, чтобы перевести координаты в миллиметры
+    var alpha = textScale*25.4/96 /64; // coefficient used to convert coordinates to millimeters
 
     var augm = stretch/((X[52] + (X[0] - X[1])/2 + X[1] - X[52])*alpha*2);
 
@@ -474,7 +474,7 @@ COperatorBracket.prototype.calcCoord = function(stretch)
         RX[27] = 1;
         RX[26] = 1;
 
-        for(var i = 0; i < 8; i++ )
+        for(var i = 0; i < 7; i++ )
             RX[26-i] = 1 + i*((RX2+RX1)/2 - 1)/7;
 
 
@@ -534,7 +534,7 @@ COperatorBracket.prototype.calcCoord = function(stretch)
             }
         }
 
-        //переопределяем 36 и 17
+        // redefine 36 and 17
         for(var i = 1; i < 9; i++)
         {
             XX[36 + i] = XX[35+i] + (X[36+i] - X[35+i])*hh1[4];
@@ -649,7 +649,7 @@ COperatorBracket.prototype.calcCoord = function(stretch)
             XX[25 - i] = XX[26 - i] + (X[25-i] - X[26-i])*hh2[i];
         }
 
-        //переопределяем 36 и 17
+        // redefine 36 and 17
         for(var i = 1; i < 9; i++)
         {
             XX[36 + i] = XX[35+i] + (X[36+i] - X[35+i])*hh1[8];
@@ -657,7 +657,7 @@ COperatorBracket.prototype.calcCoord = function(stretch)
         }
 
         // TODO
-        // переделать
+        // redo
         for(var i = 0; i < 4; i++)
         {
             XX[45+i] = XX[44+i] + ( X[45+i] - X[44+i])*hh1[9];
@@ -700,7 +700,7 @@ COperatorBracket.prototype.calcCoord = function(stretch)
         }
 
         var _H1 = augm*(X[52] + c1[11]),
-            _H2 =  _H1 - (X[26] - X[27]);
+            _H2 =  _H1 - (X[26] - X[27]) ;
 
         var w3 = _H1 - (XX[52] + c1[11]),
             w4 = _H2 - (XX[1] - XX[26] + c2[11]);
@@ -732,8 +732,8 @@ COperatorBracket.prototype.calcCoord = function(stretch)
     for(var i = 0; i < 50; i++)
         XX[54 + i] =  XX[53] + XX[52] - XX[51-i];
 
-    var W = XX[77], // ширина глифа
-        H = YY[26]; // высота глифа
+    var W = XX[77], // glyph width
+        H = YY[26]; // glyph height
 
     return {XX: XX, YY: YY, W: W, H: H};
 };
@@ -820,7 +820,7 @@ COperatorParenthesis.prototype.calcSize = function(stretch)
 
     if(this.Parent.type == OPER_GROUP_CHAR)
     {
-        // перевернутая скобка
+        // inverted bracket
         widthBr = 6.99444444444*betta;
         heightBr = minBoxH;
     }
@@ -842,7 +842,7 @@ COperatorParenthesis.prototype.calcSize = function(stretch)
 };
 COperatorParenthesis.prototype.calcCoord = function(stretch)
 {
-    //cкобка перевернутая на 90 градусов
+    // bracket rotated 90 degrees
 
     var X = [],
         Y = [];
@@ -859,9 +859,9 @@ COperatorParenthesis.prototype.calcCoord = function(stretch)
     X[9] = 39470; Y[9] = 26227;
 
     var textScale = this.getCtrPrp().FontSize/1000; // 1000 pt
-    var alpha = textScale*25.4/96 /64; // коэффициент используется для того, чтобы перевести координаты в миллиметры
+    var alpha = textScale*25.4/96 /64; // coefficient used to convert coordinates to millimeters
 
-    var aug = stretch/(X[9]*alpha)/2; //Y[9]*alpha - высота скобки
+    var aug = stretch/(X[9]*alpha)/2; //Y[9]*alpha - bracket height
     var RX, RY;
 
     var MIN_AUG = this.Parent.type == OPER_GROUP_CHAR ? 0.5 : 1;
@@ -890,8 +890,8 @@ COperatorParenthesis.prototype.calcCoord = function(stretch)
 
         for(var i = 5; i < 10; i++)
         {
-            Y[i] = Y[i]*RY;               //точки правой дуги
-            Y[9-i] = Y[i] - DistH[9-i];   //точки левой дуги
+            Y[i] = Y[i]*RY;               //points of right arc
+            Y[9-i] = Y[i] - DistH[9-i];   //points of left arc
         }
     }
 
@@ -909,10 +909,10 @@ COperatorParenthesis.prototype.calcCoord = function(stretch)
 
     var shiftY =  1.1*Y[9]*alpha;
 
-    // YY[0]  - YY[9]  - нижняя часть скобки
-    // YY[9]  - YY[10] - отрезок прямой
-    // YY[11] - YY[19] - верхняя часть скобки
-    // YY[19] - YY[20] - отрезок прямой
+    // YY[0]  - YY[9]  - lower part of bracket
+    // YY[9]  - YY[10] - straight line segment
+    // YY[11] - YY[19] - upper part of bracket
+    // YY[19] - YY[20] - straight line segment
 
     for(var i = 0; i < 10; i++)
     {
@@ -950,7 +950,7 @@ COperatorParenthesis.prototype.drawPath = function(pGraphics, XX, YY)
 };
 
 // TODO
-// установить минимальный размер стрелок
+// set minimum size of arrows
 /**
  *
  * @constructor
@@ -964,7 +964,7 @@ COperatorAngleBracket.prototype = Object.create(CGlyphOperator.prototype);
 COperatorAngleBracket.prototype.constructor = COperatorAngleBracket;
 COperatorAngleBracket.prototype.calcSize = function(stretch)
 {
-    //скобка перевернутая
+    // bracket rotated
 
     var betta = this.getCtrPrp().FontSize/36;
     var widthBr = 11.994444444444444*betta;
@@ -992,7 +992,7 @@ COperatorAngleBracket.prototype.calcCoord = function(stretch)
     X[7] = 38990; Y[7] = 7665;
 
     var textScale = this.getCtrPrp().FontSize/1000; // 1000 pt
-    var alpha = textScale*25.4/96 /64; // коэффициент используется для того, чтобы перевести координаты в миллиметры
+    var alpha = textScale*25.4/96 /64; // coefficient used to convert coordinates to millimeters
 
     var augm = stretch/(X[5]*alpha);
 
@@ -1095,7 +1095,7 @@ CSquareBracket.prototype.calcCoord = function(stretch)
     X[8] = 3200;  Y[8] = 6912;
 
     var textScale = this.getCtrPrp().FontSize/1000; // 1000 pt
-    var alpha = textScale*25.4/96 /64; // коэффициент используется для того, чтобы перевести координаты в миллиметры
+    var alpha = textScale*25.4/96 /64; // coefficient used to convert coordinates to millimeters
 
     var lng = stretch/alpha - X[4] - 2*X[0];
 
@@ -1109,7 +1109,7 @@ CSquareBracket.prototype.calcCoord = function(stretch)
     var XX = [],
         YY = [];
 
-    var shY =  Y[0]*alpha;
+    var shY = Y[0]*alpha;
 
     for(var i = 0; i < X.length; i++)
     {
@@ -1170,7 +1170,7 @@ CHalfSquareBracket.prototype.calcCoord = function(stretch)
     X[6] = 0; Y[6] = 0;
 
     var textScale = this.getCtrPrp().FontSize/1000; // 1000 pt
-    var alpha = textScale*25.4/96 /64; // коэффициент используется для того, чтобы перевести координаты в миллиметры
+    var alpha = textScale*25.4/96 /64; // coefficient used to convert coordinates to millimeters
 
     var w1 = X[4],
         w2 = X[4] - X[3];
@@ -1250,7 +1250,7 @@ COperatorLine.prototype.calcCoord = function(stretch)
     X[4] = 0;     Y[4] = 0;
 
     var textScale = this.getCtrPrp().FontSize/1000; // 1000 pt
-    var alpha = textScale*25.4/96 /64; // коэффициент используется для того, чтобы перевести координаты в миллиметры
+    var alpha = textScale*25.4/96 /64; // coefficient used to convert coordinates to millimeters
 
     var XX = [],
         YY = [];
@@ -1344,7 +1344,7 @@ CWhiteSquareBracket.prototype.calcCoord = function(stretch)
     X[13] = 74304; Y[13] = 12700;
 
     var textScale = this.getCtrPrp().FontSize/1000; // 1000 pt
-    var alpha = textScale*25.4/96 /64; // коэффициент используется для того, чтобы перевести координаты в миллиметры
+    var alpha = textScale*25.4/96 /64; // coefficient used to convert coordinates to millimeters
 
     var XX = [],
         YY = [];
@@ -1434,7 +1434,7 @@ COperatorDoubleLine.prototype.calcCoord = function(stretch)
     X[9] = 0;     Y[9] = 18112;
 
     var textScale = this.getCtrPrp().FontSize/1000; // 1000 pt
-    var alpha = textScale*25.4/96 /64; // коэффициент используется для того, чтобы перевести координаты в миллиметры
+    var alpha = textScale*25.4/96 /64; // coefficient used to convert coordinates to millimeters
 
     var XX = [],
         YY = [];
@@ -1513,7 +1513,7 @@ CSingleArrow.prototype.calcCoord = function(stretch)
     X[10] = 56138; Y[10] = 12300;
 
     var textScale = this.getCtrPrp().FontSize/1000; // 1000 pt
-    var alpha = textScale*25.4/96 /64; // коэффициент используется для того, чтобы перевести координаты в миллиметры
+    var alpha = textScale*25.4/96 /64; // coefficient used to convert coordinates to millimeters
 
     var XX = [],
         YY = [];
@@ -1598,7 +1598,7 @@ CLeftRightArrow.prototype.calcCoord = function(stretch)
     X[16] = 16950; Y[16] = 28912;
 
     var textScale = this.getCtrPrp().FontSize/1000; // 1000 pt
-    var alpha = textScale*25.4/96 /64; // коэффициент используется для того, чтобы перевести координаты в миллиметры
+    var alpha = textScale*25.4/96 /64; // coefficient used to convert coordinates to millimeters
 
     var XX = [],
         YY = [];
@@ -1691,7 +1691,7 @@ CDoubleArrow.prototype.calcCoord = function(stretch)
     X[17] = 58950; Y[17] = 19495;
 
     var textScale = this.getCtrPrp().FontSize/1000; // 1000 pt
-    var alpha = textScale*25.4/96 /64; // коэффициент используется для того, чтобы перевести координаты в миллиметры
+    var alpha = textScale*25.4/96 /64; // coefficient used to convert coordinates to millimeters
 
     var XX = [],
         YY = [];
@@ -1903,7 +1903,7 @@ CCombiningArrow.prototype.calcCoord = function(stretch)
     X[10] = 0; Y[10] = 8137;
 
     var textScale =  this.getCtrPrp().FontSize/1000; // 1000 pt
-    var alpha = textScale*25.4/96 /64; // коэффициент используется для того, чтобы перевести координаты в миллиметры
+    var alpha = textScale*25.4/96 /64; // coefficient used to convert coordinates to millimeters
 
     var XX = [],
         YY = [];
@@ -1989,7 +1989,7 @@ CCombiningHalfArrow.prototype.calcCoord = function(stretch)
     X[7] = 0; Y[7] = 8137;
 
     var textScale = this.getCtrPrp().FontSize/1000; // 1000 pt
-    var alpha = textScale*25.4/96 /64; // коэффициент используется для того, чтобы перевести координаты в миллиметры
+    var alpha = textScale*25.4/96 /64; // coefficient used to convert coordinates to millimeters
 
     var XX = [],
         YY = [];
@@ -2073,7 +2073,7 @@ CCombining_LR_Arrow.prototype.calcCoord = function(stretch)
     X[16] = 0; Y[16] = 8137;
 
     var textScale = this.getCtrPrp().FontSize/1000; // 1000 pt
-    var alpha = textScale*25.4/96 /64; // коэффициент используется для того, чтобы перевести координаты в миллиметры
+    var alpha = textScale*25.4/96 /64; // coefficient used to convert coordinates to millimeters
 
     var XX = [],
         YY = [];
@@ -2107,7 +2107,7 @@ function COperator(type)
     this.operator = null;
 
     this.code = null;
-    this.typeOper = null;   // тип скобки : круглая и т.п.
+    this.typeOper = null;   // type of bracket: round, etc.
     this.defaultType = null;
     this.grow       = true;
 
@@ -2213,7 +2213,7 @@ COperator.prototype.mergeProperties = function(properties, defaultProps)   // pr
         };
         operator.init(prp);
     }
-    else if(code === 0x27E8 || type === BRACKET_ANGLE_LEFT) // 0x3C => 0x27E8
+    else if(code === 0x27E8 || type == BRACKET_ANGLE_LEFT) // 0x3C => 0x27E8
     {
         codeChr = 0x27E8;
         typeOper = BRACKET_ANGLE_LEFT;
@@ -2530,144 +2530,6 @@ COperator.prototype.mergeProperties = function(properties, defaultProps)   // pr
 
     //////////////////////////////////////////////////////
 
-    /*else if(code === 0x302 || type === ACCENT_CIRCUMFLEX)
-     {
-     typeOper = ACCENT_CIRCUMFLEX;
-     codeChr = 0x302;
-
-     operator = new CCircumflex();
-     var props =
-     {
-     turn:   TURN_0
-     };
-     operator.init(props);
-     }
-     else if(code === 0x30C || type === ACCENT_COMB_CARON)
-     {
-     typeOper = ACCENT_COMB_CARON;
-     codeChr = 0x30C;
-
-     operator = new CCircumflex();
-     var props =
-     {
-     turn:   TURN_MIRROR_0
-     };
-     operator.init(props);
-     }
-     else if(code === 0x332 || type === ACCENT_LINE)
-     {
-     typeOper = ACCENT_LINE;
-     codeChr = 0x332;
-
-     operator = new CLine();
-     }
-     else if(code === 0x333 || type === ACCENT_DOUBLE_LINE)
-     {
-     typeOper = ACCENT_DOUBLE_LINE;
-     codeChr = 0x333;
-
-     operator = new CDoubleLine();
-
-     }
-     else if(code === 0x303 || type === ACCENT_TILDE)
-     {
-     typeOper = ACCENT_TILDE;
-     codeChr = 0x303;
-
-     operator = new CTilde();
-     }
-     else if(code === 0x306 || type === ACCENT_BREVE)
-     {
-     typeOper = ACCENT_BREVE;
-     codeChr = 0x306;
-
-     operator = new CBreve();
-     var props =
-     {
-     turn:   TURN_MIRROR_0
-     };
-     operator.init(props);
-     }
-     else if(code == 0x311 || type == ACCENT_INVERT_BREVE)
-     {
-     typeOper = ACCENT_INVERT_BREVE;
-     codeChr = 0x311;
-
-     operator = new CBreve();
-     var props =
-     {
-     turn:   TURN_0
-     };
-     operator.init(props);
-     }
-     else if(code === 0x20D6 || type === ACCENT_ARROW_LEFT)
-     {
-     typeOper = ACCENT_ARROW_LEFT;
-     codeChr = 0x20D6;
-
-     operator = new CCombiningArrow();
-     var props =
-     {
-     location:   LOCATION_TOP,
-     turn:       TURN_0
-     };
-     operator.init(props);
-     }
-     else if(code === 0x20D7 || type === ACCENT_ARROW_RIGHT)
-     {
-     typeOper = ACCENT_ARROW_RIGHT;
-     codeChr = 0x20D7;
-
-     operator = new CCombiningArrow();
-     var props =
-     {
-     location:   LOCATION_TOP,
-     turn:       TURN_180
-     };
-     operator.init(props);
-     }
-     else if(code === 0x20E1 || type === ACCENT_ARROW_LR)
-     {
-     typeOper = ACCENT_ARROW_LR;
-     codeChr = 0x20E1;
-
-     operator = new CCombining_LR_Arrow();
-     var props =
-     {
-     location:   LOCATION_TOP,
-     turn:       TURN_0
-     };
-     operator.init(props);
-     }
-     else if(code === 0x20D0 || type === ACCENT_HALF_ARROW_LEFT)
-     {
-     typeOper = ACCENT_HALF_ARROW_LEFT;
-     codeChr = 0x20D0;
-
-     operator = new CCombiningHalfArrow();
-     var props =
-     {
-     location:   LOCATION_TOP,
-     turn:       TURN_0
-     };
-     operator.init(props);
-     }
-     else if(code === 0x20D1 || type ===  ACCENT_HALF_ARROW_RIGHT)
-     {
-     typeOper = ACCENT_HALF_ARROW_RIGHT;
-     codeChr = 0x20D1;
-
-     operator = new CCombiningHalfArrow();
-     var props =
-     {
-     location:   LOCATION_TOP,
-     turn:       TURN_180
-     };
-     operator.init(props);
-     }*/
-
-    //////////////////////////////////////////
-
     //////////   group characters   //////////
 
     else if(code === 0x23DE || type == BRACKET_CURLY_TOP)
@@ -2970,7 +2832,7 @@ COperator.prototype.fixSize = function(oMeasure, stretch)
         var bTopBot = this.operator.loc == LOCATION_TOP || this.operator.loc == LOCATION_BOT;
 
         // Width
-        if(this.typeOper == OPERATOR_TEXT) // отдельный случай для текста в качестве оператора
+        if(this.typeOper == OPERATOR_TEXT) // separate case for text as an operator
         {
             this.operator.Measure(oMeasure, ctrPrp);
             width  = this.operator.size.width;
@@ -3064,7 +2926,7 @@ COperator.prototype.PreRecalc = function(Parent, ParaMath)
     this.Parent   = Parent;
     this.ParaMath = ParaMath;
     if(this.typeOper !== OPERATOR_EMPTY)
-        this.operator.PreRecalc(this); // в данном случае mathText нужен только один параметр
+        this.operator.PreRecalc(this); // in this case mathText needs only one parameter
 };
 COperator.prototype.Get_TxtPrControlLetter = function()
 {
@@ -3076,7 +2938,7 @@ COperator.prototype.Is_Empty = function()
 };
 COperator.prototype.Get_CodeChr = function()
 {
-    /*var chr = null; //если operator не определен, то this.code = null
+    /*var chr = null; //if operator is not defined, then this.code = null
 
     if(this.code !== null)
         chr = this.typeOper === this.defaultType ? null : String.fromCharCode(this.code);
@@ -3135,8 +2997,6 @@ CMathDelimiterPr.prototype.Set_FromObject = function(Obj)
     this.begChrType = Obj.begChrType;
     this.endChr     = Obj.endChr;
     this.endChrType = Obj.endChrType;
-    this.sepChr     = Obj.sepChr;
-    this.sepChrType = Obj.sepChrType;
 
     if(DELIMITER_SHAPE_MATCH === Obj.shp || DELIMITER_SHAPE_CENTERED === Obj.shp)
         this.shp = Obj.shp;
@@ -3240,7 +3100,7 @@ CMathDelimiterPr.prototype.Write_ToBinary = function(Writer)
 
 CMathDelimiterPr.prototype.Read_FromBinary = function(Reader)
 {
-    // Long : Flags
+    // Long : Flag
 
     // Long : begChr
     // Long : begChrType
@@ -3417,7 +3277,7 @@ CDelimiter.prototype.PreRecalc = function(Parent, ParaMath, ArgSize, RPI, GapsIn
 };
 CDelimiter.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 {
-    this.bOneLine = PRS.bMath_OneLine == true || this.Content.length > 1; // this.Content.length > 1 - несколько контентов, разделенные сепараторами
+    this.bOneLine = PRS.bMath_OneLine == true || this.Content.length > 1; // this.Content.length > 1 - several contents, separated by separators
 
     if(this.bOneLine == false)
     {
@@ -3433,8 +3293,8 @@ CDelimiter.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 
         if(CurLine == 0 && CurRange == 0)
         {
-            // посчитаем контент как одностроковый для вычисления размера скобок
-            // далее будем считать объект как многостроковый на Recalculate_Range
+            // calculate content as one-line for calculating the size of brackets
+            // further we will calculate the object as multi-line on Recalculate_Range
             PRS.bMath_OneLine = true;
 
             var WordLen  = PRS.WordLen,
@@ -3446,7 +3306,7 @@ CDelimiter.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
             Content.Recalculate_Range(PRS, ParaPr, Depth + 1);
             this.RecalculateGeneralSize(g_oTextMeasurer, Content.size.height, Content.size.ascent);
 
-            // вычисляем до изменения PRS.WordLen
+            // calculate before changing PRS.WordLen
             this.BrGapLeft  = this.GapLeft  + this.begOper.size.width;
             this.BrGapRight = this.GapRight + this.endOper.size.width;
 
@@ -3511,7 +3371,7 @@ CDelimiter.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _
         if ( PRS.LineDescent < BegDescent )
             PRS.LineDescent = BegDescent;
 
-        // метрики скобок не зависят от выравнивания внутренних объектов(например, матриц mbaseJc = top || mbaseJc = bottom )
+        // metrics of brackets do not depend on the alignment of internal objects (e.g., matrices mbaseJc = top || mbaseJc = bottom )
         var Size_BeggingOper = new CMathSize();
         Size_BeggingOper.ascent = BegAscent;
         Size_BeggingOper.height = BegAscent + BegDescent;
@@ -3540,7 +3400,7 @@ CDelimiter.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _
         ContentMetrics.UpdateMetrics(Size_EndOper);
     }
 };
-CDelimiter.prototype.RecalculateGeneralSize = function(oMeasure, height, ascent) // здесь пересчитываем скобки, общий максимальный размер delimiters
+CDelimiter.prototype.RecalculateGeneralSize = function(oMeasure, height, ascent) // here we recalculate brackets, the maximum general size of delimiters
 {
     var descent = height - ascent;
     var mgCtrPrp = this.Get_TxtPrControlLetter();
@@ -3548,7 +3408,7 @@ CDelimiter.prototype.RecalculateGeneralSize = function(oMeasure, height, ascent)
     var maxAD    = ascent - ShCenter  > descent + ShCenter ? ascent - ShCenter: descent + ShCenter;
 
     var plH = this.ParaMath.GetPlh(oMeasure, mgCtrPrp);
-    this.TextInContent = ascent < 1.01*plH && descent < 0.4*plH; // для текста операторы в случае центрирования не увеличиваем
+    this.TextInContent = ascent < 1.01*plH && descent < 0.4*plH; // for text, operators in case of centering do not increase
 
     var bCentered = this.Pr.shp == DELIMITER_SHAPE_CENTERED,
         b2Max = bCentered && (2*maxAD - height > 0.001);
@@ -3592,7 +3452,7 @@ CDelimiter.prototype.RecalculateGeneralSize = function(oMeasure, height, ascent)
             DimAscent = ascent > AscentMaxOper ? ascent : AscentMaxOper;
             DimHeight = HeigthMaxOper;
         }
-        else // для случаев когда скобку можно расстянуть не по всей высоте (угловые скобки, аскент >> дескента)
+        else // for cases when the bracket can be stretched not by the entire height (angular brackets, ascent >> descent)
         {
             DimHeight = HeigthMaxOper/2 + maxAD > height ? HeigthMaxOper/2 + maxAD : height;
             DimAscent = ascent > AscentMaxOper? ascent : AscentMaxOper;
@@ -3618,7 +3478,7 @@ CDelimiter.prototype.RecalculateGeneralSize = function(oMeasure, height, ascent)
 };
 CDelimiter.prototype.recalculateSize = function(oMeasure)
 {
-    // размеры аргумента
+    // sizes of argument
     var widthG = 0,
         ascentG = 0, descentG = 0;
 
@@ -3632,7 +3492,7 @@ CDelimiter.prototype.recalculateSize = function(oMeasure)
 
     this.RecalculateGeneralSize(oMeasure, ascentG + descentG, ascentG);
 
-    // Общая ширина
+    // General width
     var width = widthG + this.begOper.size.width + this.endOper.size.width + (this.Pr.column - 1)*this.sepOper.size.width;
     width += this.GapLeft + this.GapRight;
 
@@ -3642,7 +3502,7 @@ CDelimiter.prototype.recalculateSize = function(oMeasure)
 
     this.size.width = width;
 };
-CDelimiter.prototype.GetAscentOperator = function(operator) // в качестве аргумента передаем высоту оператора
+CDelimiter.prototype.GetAscentOperator = function(operator) // as an argument, we pass the height of the operator
 {
     var GeneralAscent = this.GeneralMetrics.ascent,
         GeneralHeight = this.GeneralMetrics.height;
@@ -3658,7 +3518,7 @@ CDelimiter.prototype.GetAscentOperator = function(operator) // в качеств
     }
     else
     {
-        var shCenter = OperAscent - OperHeight/2; // так получаем shCenter, иначе соотношение м/ду ascent и descent будет неверное
+        var shCenter = OperAscent - OperHeight/2; // so we get shCenter, otherwise the ratio between ascent and descent will be incorrect
 
         var k = (GeneralAscent - shCenter)/GeneralHeight;
 
@@ -3687,7 +3547,7 @@ CDelimiter.prototype.setPosition = function(pos, PosInfo)
 
         this.Content[0].setPosition(pos, PosInfo);
 
-        // пересчет еще не закончился, поэтому на LastRange не можем проверить
+        // the calculation is not yet complete, so we cannot check LastRange
         if(true === this.Content[0].Math_Is_End(Line, Range))
         {
             PosOper.x = pos.x;
@@ -3899,7 +3759,7 @@ CDelimiter.prototype.raw_SetShape = function(Value)
 };
 CDelimiter.prototype.raw_SetColumn = function(Value)
 {
-    if((this.Pr.column == 1 && Value > 1) || (Value == 1 && this.Pr.column > 1)) // выставим сепаратор
+    if((this.Pr.column == 1 && Value > 1) || (Value == 1 && this.Pr.column > 1)) // set separator
     {
         this.Pr.Set_Column(Value);
         this.sepOper = new COperator (OPER_SEPARATOR);
@@ -4749,3 +4609,14 @@ CMathMenuGroupCharacter.prototype["can_ChangePos"]   = CMathMenuGroupCharacter.p
 
 AscMath.Delimiter = CDelimiter;
 AscMath.GroupCharacter = CGroupCharacter;
+
+```
+
+```javascript
+/// this function must be called at the end
+AscCommon.g_oTableId.Add( this, this.Id );
+```
+
+```javascript
+/// this function must be called at the end
+AscCommon.g_oTableId.Add( this, this.Id );

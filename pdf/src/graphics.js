@@ -179,12 +179,12 @@
         let tr = this.GetTransform();
         
         ctx.setTransform(
-            tr.sx,  // масштаб по оси X
-            tr.shy, // наклон по оси Y
-            tr.shx, // наклон по оси X
-            tr.sy,  // масштаб по оси Y
-            tr.tx,  // сдвиг по оси X
-            tr.ty   // сдвиг по оси Y
+            tr.sx,  // X-axis scale
+            tr.shy, // Y-axis skew
+            tr.shx, // X-axis skew
+            tr.sy,  // Y-axis scale
+            tr.tx,  // X-axis shift
+            tr.ty   // Y-axis shift
         );
     }
     CPDFGraphics.prototype.BeginPath = function() {
@@ -294,12 +294,12 @@
         ctx.save();
 
         ctx.setTransform(
-            tr.sx,  // масштаб по оси X
-            tr.shy, // наклон по оси Y
-            tr.shx, // наклон по оси X
-            tr.sy,  // масштаб по оси Y
-            tr.tx,  // сдвиг по оси X
-            tr.ty   // сдвиг по оси Y
+            tr.sx,  // X-axis scale
+            tr.shy, // Y-axis skew
+            tr.shx, // X-axis skew
+            tr.sy,  // Y-axis scale
+            tr.tx,  // X-axis shift
+            tr.ty   // Y-axis shift
         );
 
         ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
@@ -407,13 +407,13 @@
     
         ctx.lineWidth = 1;
     
-        let eps = 5; // Коэффициент расширения
+        let eps = 5; // Expansion coefficient
     
         let tr = this.GetTransform();
     
         ctx.beginPath();
         for (let i = 0; i < aRegions.length; i++) {
-            let aPoints = aRegions[i]; // Массив точек [[x1, y1], [x2, y2], ..., [xn, yn]]
+            let aPoints = aRegions[i]; // Array of points [[x1, y1], [x2, y2], ..., [xn, yn]]
             let expandedPoints = [];
     
             let numPoints = aPoints.length;
@@ -421,13 +421,13 @@
                 let current = aPoints[j];
                 let next = aPoints[(j + 1) % numPoints];
     
-                // Векторы текущего и следующего ребра
+                // Current and next edge vectors
                 let dx1 = next[0] - current[0];
                 let dy1 = next[1] - current[1];
                 let dx2 = aPoints[(j + 2) % numPoints][0] - next[0];
                 let dy2 = aPoints[(j + 2) % numPoints][1] - next[1];
     
-                // Нормали к ребрам
+                // Edge normals
                 let len1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
                 let len2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
                 let nx1 = dy1 / len1;
@@ -435,11 +435,11 @@
                 let nx2 = dy2 / len2;
                 let ny2 = -dx2 / len2;
     
-                // Усредненная нормаль
+                // Averaged normal
                 let avgNx = (nx1 + nx2) / 2;
                 let avgNy = (ny1 + ny2) / 2;
     
-                // Нормализуем усредненную нормаль
+                // Normalize averaged normal
                 let avgLen = Math.sqrt(avgNx * avgNx + avgNy * avgNy);
                 if (avgLen === 0) {
                     avgNx = 0;
@@ -449,20 +449,20 @@
                     avgNy /= avgLen;
                 }
     
-                // Смещение точки
+                // Point offset
                 let x_expanded = next[0] + avgNx * eps;
                 let y_expanded = next[1] + avgNy * eps;
     
-                // Преобразуем координаты
+                // Transform coordinates
                 let tx = tr.TransformPointX(x_expanded, y_expanded);
                 let ty = tr.TransformPointY(x_expanded, y_expanded);
     
                 expandedPoints.push([tx, ty]);
             }
     
-            // Рисуем пунктир вручную
-            let w_dot = 2;  // Длина штриха
-            let w_dist = 2; // Расстояние между штрихами
+            // Draw dashed line manually
+            let w_dot = 2;  // Dash length
+            let w_dist = 2; // Distance between dashes
     
             for (let j = 0; j < expandedPoints.length; j++) {
                 let start = expandedPoints[j];

@@ -81,7 +81,7 @@
         mouseDown:  2
     };
 
-    const CHAR_LIM_MAX = 500; // to do проверить
+    const CHAR_LIM_MAX = 500; // to do verify
 
     // For Span attributes (start)
     let FONT_STRETCH = ["ultra-condensed", "extra-condensed", "condensed", "semi-condensed", "normal",
@@ -147,11 +147,11 @@
         this._borderColor   = undefined;
         this._submitName    = "";
         this._textColor     = [0,0,0];
-        this._textFont          = undefined; // исходный
-        this._textFontActual    = undefined; // фактический используемый
+        this._textFont          = undefined; // original
+        this._textFontActual    = undefined; // actual used
         this._fgColor       = undefined;
         this._textSize      = 10;
-        this._fontStyle     = 0;    // информация о стиле шрифта (bold, italic)
+        this._fontStyle     = 0;    // font style information (bold, italic)
         this._userName      = "";   // It is intended to be used as tooltip text whenever the cursor enters a field. 
         //It can also be used as a user-friendly name, instead of the field name, when generating error messages.
         this._parent        = null;
@@ -164,25 +164,24 @@
 
         this._isWidget = aRect && aRect.length == 4 ? true : false;
 
-        this._curShiftView = { // смещение, когда мы скролим, т.е. активное смещение
+        this._curShiftView = { // shift when scrolling, i.e. active shift
             x: 0,
             y: 0
         }
-        this._oldShiftView = { // смещение, когда значение формы применено (т.е. форма не активна)
+        this._oldShiftView = { // shift when form value is applied (i.e. form is not active)
             x: 0,
             y: 0
         }
 
-        this._apIdx     = undefined; // индекс формы на странице в исходном файле (в массиве метода getInteractiveForms), используется для получения appearance
-        this._parentIdx = undefined; // индекс родителя во время чтения
+        this._apIdx     = undefined; // form index on the page in source file (in array of getInteractiveForms method), used to get appearance
+        this._parentIdx = undefined; // parent index during reading
 
         this.needCommit             = false;
         this._needDrawHighlight     = true;
-        this._needDrawHoverBorder   = false;
         this._needRecalc            = true;
-        this._wasChanged            = false; // была ли изменена форма
-        this._bDrawFromStream       = false; // нужно ли рисовать из стрима
-        this._hasOriginView         = false; // имеет ли внешний вид из файла
+        this._wasChanged            = false; // whether the form was changed
+        this._bDrawFromStream       = false; // whether to draw from stream
+        this._hasOriginView         = false; // whether it has appearance from file
         this._originView = {
             normal:     null,
             mouseDown:  null,
@@ -490,6 +489,8 @@
                 break;
             case AscPDF.FORMS_TRIGGERS_TYPES.Calculate:
                 this._triggers.Calculate = new AscPDF.CFormTrigger(nTriggerType, aActions);
+                oDocument.GetCalculateInfo().RemoveFieldFromOrder(this.GetFullName());
+                oDocument.GetCalculateInfo().AddFieldToOrder(oDocument.GetField(this.GetFullName()).GetApIdx());
                 break;
             case AscPDF.FORMS_TRIGGERS_TYPES.Format:
                 this._triggers.Format = new AscPDF.CFormTrigger(nTriggerType, aActions);
@@ -791,7 +792,7 @@
                 oCtx.fillStyle = 'rgb(' + FIELDS_HIGHLIGHT_REQ.r + ', ' + FIELDS_HIGHLIGHT_REQ.g + ', ' + FIELDS_HIGHLIGHT_REQ.b + ')';
             else 
                 oCtx.fillStyle = 'rgb(' + FIELDS_HIGHLIGHT.r + ', ' + FIELDS_HIGHLIGHT.g + ', ' + FIELDS_HIGHLIGHT.b + ')';
-            // выставляем в центр круга
+            // place in center of circle
             let centerX = X + W / 2;
             let centerY = Y + H / 2;
             let nRadius = Math.min(W / 2, H / 2);
@@ -843,22 +844,22 @@
             oGraphicsPDF.SetStrokeStyle(color.r, color.g, color.b);
         }
 
-        // корректировка координат по бордеру
+        // correction of coordinates by border
         Y += nLineWidth / 2;
         X += nLineWidth / 2;
         nWidth  -= nLineWidth;
         nHeight -= nLineWidth;
 
-        // по умолчанию рисуется solid
+        // by default, solid is drawn
         let nBorderStyle = this.GetBorderStyle() != undefined ? this.GetBorderStyle() : BORDER_TYPES.solid;
 
         if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton && this._chStyle == AscPDF.CHECKBOX_STYLES.circle) {
-            // выставляем в центр круга
+            // place in center of circle
             let centerX = X + nWidth / 2;
             let centerY = Y + nHeight / 2;
             let nRadius = Math.min(nWidth / 2, nHeight / 2);
 
-            // отрисовка
+            // drawing
             switch (nBorderStyle) {
                 case BORDER_TYPES.solid:
                 case BORDER_TYPES.underline:
@@ -941,7 +942,7 @@
             return;
         }
         else {
-            // отрисовка
+            // drawing
             switch (nBorderStyle) {
                 case BORDER_TYPES.solid:
                     if (color == null)
@@ -993,7 +994,6 @@
                     oGraphicsPDF.MoveTo(X + nWidth - nLineWidth / 2, Y + nLineWidth / 2);
                     oGraphicsPDF.LineTo(X + nLineWidth / 2, Y + nLineWidth / 2);
                     oGraphicsPDF.LineTo(X + nLineWidth / 2, Y + nLineWidth + nLineWidth / 2);
-
                     oGraphicsPDF.ClosePath();
                     oGraphicsPDF.Fill();
 
@@ -1482,7 +1482,7 @@
 
             oGraphicsPDF.BeginPath();
             oGraphicsPDF.SetFillStyle(oBgRGBColor.r, oBgRGBColor.g, oBgRGBColor.b);
-            // выставляем в центр круга
+            // place in center of circle
             let centerX = X + nWidth / 2;
             let centerY = Y + nHeight / 2;
             let nRadius = Math.min(nWidth / 2, nHeight / 2);
@@ -2170,7 +2170,7 @@
             memory.WriteDouble(nFontSize);
         }
 
-        // форматируемое значение
+        // formatted value
         let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
         let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
         let oContentToDraw      = oActionRunScript ? this.contentFormat : this.content;
@@ -2205,7 +2205,7 @@
             memory.WriteByte(nAlignType);
         }
 
-        // сюда пойдут 1ые флаги полей
+        // here will be 1st field flags
         memory.widgetFlags   = 0;
         memory.posForWidgetFlags  = memory.GetCurPosition();
         memory.Skip(4);
@@ -2222,7 +2222,7 @@
             memory.widgetFlags |= (1 << 2);
         }
 
-        // сюда пойдут 2ые флаги полей
+        // here will be 2nd field flags
         memory.fieldDataFlags   = 0;
         memory.posForFieldDataFlags  = memory.GetCurPosition();
         memory.Skip(4);
@@ -2348,7 +2348,7 @@
         }
 
         if (value != null && Array.isArray(value) == true) {
-            // флаг что значение - это массив
+            // flag that value is an array
             nFlags |= (1 << 5);
             memory.WriteLong(value.length);
             for (let i = 0; i < value.length; i++) {
@@ -2363,19 +2363,19 @@
         memory.Seek(nEndPos);
     };
     CBaseField.prototype.WriteRenderToBinary = function(memory) {
-        // пока только для text, combobox
+        // for now only for text, combobox
         if (false == [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
             return;
         }
 
-        // тут будет длина комманд
+        // here will be the length of commands
         let nStartPos = memory.GetCurPosition();
         memory.Skip(4);
 
         let oContentToDraw = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format) ? this.contentFormat : this.content;
         oContentToDraw.Draw(0, memory.docRenderer);
 
-        // запись длины комманд
+        // write the length of commands
         let nEndPos = memory.GetCurPosition();
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
@@ -2414,4 +2414,3 @@
     window["AscPDF"].CBaseField = CBaseField;
     
 })();
-

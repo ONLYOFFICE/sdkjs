@@ -173,8 +173,8 @@
 			}
 		}
 
-		// линию не нашли. Начинаем искать из свободной памяти
-		// ищем 3/2 от нужного размера. и параллельно 1
+		// line not found. Start searching from free memory
+		// search for 3/2 of required size and 1 in parallel
 		var _need_height1 = (3 * _need_height) >> 1;
 		if (this.FindOnlyEqualHeight)
 			_need_height1 = _need_height;
@@ -186,7 +186,7 @@
 			var _line = this.LinesFree[i];
 			if (_line.Height >= _need_height1)
 			{
-				// нашли
+				// found
 				var _new_line = new CRasterHeapLine();
 				_new_line.CreatePlaces(_need_height1, _need_height1, this.Width);
 				_new_line.Y = _line.Y;
@@ -211,7 +211,7 @@
 			}
 		}
 
-		// 3/2 не нашли. если нашли для 1, то выделяем там
+		// 3/2 not found. if found for 1, then allocate there
 		if (-1 != _index_found_koef1)
 		{
 			var _line = this.LinesFree[_index_found_koef1];
@@ -235,7 +235,7 @@
 			return _ret;
 		}
 
-		// не нашли.
+		// not found.
 		return null;
 	};
 	CRasterHeapChuck.prototype.Free = function(obj)
@@ -243,8 +243,7 @@
 		var _refs = obj.Line.Free(obj.Index);
 		if (_refs == 0)
 		{
-			// нужно удалить линию и перебить всем оставшимся индексы
-
+			// need to delete line and update indices for all remaining ones
 			var _line = obj.Line;
 			this.LinesBusy.splice(_line.Index, 1);
 
@@ -253,7 +252,7 @@
 			for (var i = _line.Index; i < _busy_len; i++)
 				_lines_busy[i].Index = i;
 
-			// теперь нужно поправить linesfree
+			// now need to fix linesfree
 			var y1 = _line.Y;
 			var y2 = _line.Y + _line.Height;
 			var _lines_free = this.LinesFree;
@@ -280,7 +279,7 @@
 				}
 			}
 
-			// нашли прилегаюую свободную память. теперь нужно их склеить, или создать новую
+			// found adjacent free memory. now need to merge them or create new one
 			if (-1 != _ind_prev && -1 != _ind_next)
 			{
 				_lines_free[_ind_prev].Height += (_line.Height + _lines_free[_ind_next].Height);
@@ -319,7 +318,7 @@
 			this.Chunks[i].Clear();
 		}
 
-		// теперь наверное удалим и память лишнюю
+		// now probably delete excess memory
 		if (_len > 1)
 			this.Chunks.splice(1, _len - 1);
 	};

@@ -301,7 +301,7 @@ CFraction.prototype.drawFractionalLine = function(PDSE, x1, y1, x2, y2)
 
         PDSE.Graphics.df();
     }
-    else  // чтобы линии были четкие как и раньше, рисуем линию заданной толщины (не в textArt)
+    else  // to keep lines sharp as before, draw line with specified thickness (not in textArt)
     {
         var intGrid = PDSE.Graphics.GetIntegerGrid();
         PDSE.Graphics.SetIntegerGrid(true);
@@ -358,15 +358,15 @@ CFraction.prototype.PreRecalc = function(Parent, ParaMath, ArgSize, RPI, GapsInf
     var bInlineBarFaction = RPI.bInline == true && (this.Pr.type === BAR_FRACTION || this.Pr.type == NO_BAR_FRACTION),
         bReduceSize       = (RPI.bSmallFraction || RPI.bDecreasedComp == true) && true == oMathSettings.Get_SmallFrac();
 
-    if(bInlineBarFaction || bReduceSize) // уменьшае размер числителя и знаменателя
+    if(bInlineBarFaction || bReduceSize) // reduce size of numerator and denominator
     {
-        ArgSzNumDen.Decrease();        // для контентов числителя и знаменателя
-        this.ArgSize.SetValue(-1);     // для CtrPrp
+        ArgSzNumDen.Decrease();        // for numerator and denominator contents
+        this.ArgSize.SetValue(-1);     // for CtrPrp
     }
-    else if(RPI.bDecreasedComp == true)    // уменьшаем  расстояние между числителем и знаменателем (размер FontSize для TxtPr ControlLetter)
-                                            // this.ArgSize отвечает за TxtPr ControlLetter
+    else if(RPI.bDecreasedComp == true)    // reduce distance between numerator and denominator (FontSize for TxtPr ControlLetter)
+                                            // this.ArgSize is responsible for TxtPr ControlLetter
     {
-        this.ArgSize.SetValue(-1); // для CtrPrp
+        this.ArgSize.SetValue(-1); // for CtrPrp
     }
     else
     {
@@ -385,7 +385,7 @@ CFraction.prototype.PreRecalc = function(Parent, ParaMath, ArgSize, RPI, GapsInf
 
     RPI.bSmallFraction = true;
 
-    // setGaps обязательно после того как смержили CtrPrp (Set_CompiledCtrPrp)
+    // setGaps must be called after merging CtrPrp (Set_CompiledCtrPrp)
 
     if(this.bInside == false)
         GapsInfo.setGaps(this, this.TextPrControlLetter.FontSize);
@@ -398,7 +398,7 @@ CFraction.prototype.PreRecalc = function(Parent, ParaMath, ArgSize, RPI, GapsInf
 };
 CFraction.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 {
-    var WordLen = PRS.WordLen; // запоминаем, чтобы внутр мат объекты не увеличили WordLen
+    var WordLen = PRS.WordLen; // remember so that internal math objects don't increase WordLen
     var bContainCompareOper = PRS.bContainCompareOper;
 
     var bOneLine = PRS.bMath_OneLine;
@@ -410,7 +410,7 @@ CFraction.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 
     PRS.bMath_OneLine = this.bOneLine;
 
-    this.Numerator.Recalculate_Reset(PRS.Range, PRS.Line, PRS); // обновим StartLine и StartRange
+    this.Numerator.Recalculate_Reset(PRS.Range, PRS.Line, PRS); // update StartLine and StartRange
     this.Numerator.Recalculate_Range(PRS, ParaPr, Depth);
 
     var bNumBarFraction = PRS.bSingleBarFraction;
