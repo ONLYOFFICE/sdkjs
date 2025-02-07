@@ -505,18 +505,17 @@
         
         let aInRect = this.GetInRect();
         let nBorderW = this.GetWidth();
-        // original rect
+        // original rect (save)
         if (memory.docRenderer) {
             memory.WriteDouble(aInRect[0] - nBorderW / 2); // x1
             memory.WriteDouble(aInRect[3] - nBorderW / 2); // y1
             memory.WriteDouble(aInRect[4] + nBorderW / 2); // x2
             memory.WriteDouble(aInRect[1] + nBorderW / 2); // y2
         }
-        else {
-            memory.WriteDouble(aInRect[0]); // x1
-            memory.WriteDouble(aInRect[3]); // y1
-            memory.WriteDouble(aInRect[4]); // x2
-            memory.WriteDouble(aInRect[1]); // y2
+        else { // copying
+            aInRect.forEach(function(measure) {
+                memory.WriteDouble(measure);
+            });
         }
 
         let nEndPos = memory.GetCurPosition();
