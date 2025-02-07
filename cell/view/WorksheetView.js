@@ -3486,58 +3486,44 @@
 
 	WorksheetView.prototype._checkPrintRange = function (range, doNotRecalc/*, _checkLargeRange*/) {
 		let t = this;
-		let isLargeRange = false;
 		var maxCol = -1;
 		var maxRow = -1;
 		var rowCache, rightSide, curRow = -1, hiddenRow = false;
 
-		//TODO while commented large range. need research all limits.
 
-		let checkMaxRowCol = function (_range, stopOnMax) {
-			/*let maxDefinedCells = 99998;
-			let counterCells = 0;*/
+		let checkMaxRowCol = function (_range) {
+
 			t.model.getRange3(_range.r1, _range.c1, _range.r2, _range.c2)._foreachNoEmpty(function(cell) {
-				var c = cell.nCol;
-				var r = cell.nRow;
+				let c = cell.nCol;
+				let r = cell.nRow;
 				if (curRow !== r) {
 					curRow = r;
 					hiddenRow = 0 === t._getRowHeight(r);
 					rowCache = t._getRowCache(r);
 				}
 				if(!hiddenRow && 0 < t._getColumnWidth(c)){
-					var style = cell.getStyle();
+					let style = cell.getStyle();
 					if (style && ((style.fill && style.fill.notEmpty()) || (style.border && style.border.notEmpty()))) {
 						maxCol = Math.max(maxCol, c);
 						maxRow = Math.max(maxRow, r);
 					}
-					var ct = t._getCellTextCache(c, r);
-					if (ct !== undefined) {
-						rightSide = 0;
-						if (!ct.flags.isMerged() && !ct.flags.wrapText) {
-							rightSide = ct.sideR;
-						}
 
-						maxCol = Math.max(maxCol, c + rightSide);
+					let align = cell.getAlign();
+					let angle = align.getAngle();
+					let cellType = cell.getType();
+					let wrap = align.getWrap() || align.hor === AscCommon.align_Distributed;
+					let isNumberFormat = !cell.isEmptyTextString() && (null === cellType || CellValueType.String !== cellType);
+					if (angle || isNumberFormat || wrap) {
+						maxCol = Math.max(maxCol, c);
 						maxRow = Math.max(maxRow, r);
 					}
 				}
-				/*counterCells++;
-				if (stopOnMax && counterCells === maxDefinedCells) {
-					isLargeRange = true;
-					return true;
-				}*/
 			});
 		};
 
-		/*if (_checkLargeRange) {
-			checkMaxRowCol(range, true);
-			if (isLargeRange) {
-				return null;
-			}
-		}*/
 
 		if(!doNotRecalc) {
-			this._prepareCellTextMetricsCache(range);
+			//this._prepareCellTextMetricsCache(range);
 		}
 
 		checkMaxRowCol(range);
@@ -3624,6 +3610,9 @@
 				} else {
 					maxCell = this._checkPrintRange(range, doNotRecalc);
 					range = new asc_Range(range.c1, range.r1, maxCell.col, maxCell.row);
+					if(!doNotRecalc) {
+						//this._prepareCellTextMetricsCache(range);
+					}
 				}
 
 				this._calcPagesPrint(range, pageOptions, indexWorksheet, arrPages, tempPrintScale, adjustPrint);
@@ -3649,6 +3638,9 @@
 				} else {
 					maxCell = this._checkPrintRange(range, doNotRecalc);
 					range = new asc_Range(range.c1, range.r1, maxCell.col, maxCell.row);
+					if(!doNotRecalc) {
+						//this._prepareCellTextMetricsCache(range);
+					}
 				}
 
 				let _startPages = arrPages.length;
@@ -4460,6 +4452,7 @@
 						maxCol = Math.max(maxCol, maxCell.col);
 						maxRow = Math.max(maxRow, maxCell.row);
 					}
+					//this._prepareCellTextMetricsCache(Asc.Range(0, 0, maxCol, maxRow));
 				}
 
 				//TODO print area
@@ -26324,6 +26317,7 @@
 		}
 		let range = new asc_Range(0, 0, modelColsCount - 1, modelRowsCount - 1);
 		let maxCell = this._checkPrintRange(range, doNotRecalc/*, modelRowsCount > nMaxPrintRows*/);
+
 		/*if (!maxCell) {
 			return maxCell;
 		}*/
@@ -26343,6 +26337,10 @@
 		if (maxCell) {
 			maxCol = Math.max(maxCol, maxCell.col);
 			maxRow = Math.max(maxRow, maxCell.row);
+		}
+
+		if(!doNotRecalc) {
+			//this._prepareCellTextMetricsCache(Asc.Range(0, 0, maxCol, maxRow));
 		}
 
 		return {row: maxRow, col: maxCol};
