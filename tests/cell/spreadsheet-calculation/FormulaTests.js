@@ -9743,7 +9743,49 @@ $(function () {
 		assert.ok(oParser.parse(), 'SUMIFS(A2:A9,A2:A9,A2,A2:A9*2,A2) - wrong argument type check');
 		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Result of SUMIFS(A2:A9,A2:A9,A2,A2:A9*2,A2) - wrong argument type check');
 
+		// for bug 56447
+		ws.getRange2("A101:A110").setValue("10");
+		ws.getRange2("B101:B110").setValue("20");
 
+		oParser = new parserFormula('SUMIFS(IF(A101=10,A101:A110,{1,2,3}),A101:A110,">0")', "A11", ws);
+		assert.ok(oParser.parse(), 'SUMIFS(IF(A101=10,A101:A110,{1,2,3}),A101:A110,">0")');
+		assert.strictEqual(oParser.calculate().getValue(), 100, 'Result of SUMIFS(IF(A101=10,A101:A110,{1,2,3}),A101:A110,">0")');
+
+		ws.getRange2("C101").setValue("#N/A");
+		ws.getRange2("C102").setValue("#VALUE!");
+		ws.getRange2("C103").setValue("1");
+		oParser = new parserFormula('SUMIFS(IF(A101=10,A101:A110,{1,2,3}),A101:A110,C101)', "A11", ws);
+		assert.ok(oParser.parse(), 'SUMIFS(IF(A101=10,A101:A110,{1,2,3}),A101:A110,C101)');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Result of SUMIFS(IF(A101=10,A101:A110,{1,2,3}),A101:A110,C101)');
+
+		ws.getRange2("B105").setValue("#N/A");
+		oParser = new parserFormula('SUMIFS(IF(A101=10,A101:A110,{1,2,3}),B101:B110,C101)', "A11", ws);
+		assert.ok(oParser.parse(), 'SUMIFS(IF(A101=10,A101:A110,{1,2,3}),B101:B110,C101)');
+		assert.strictEqual(oParser.calculate().getValue(), 10, 'Result of SUMIFS(IF(A101=10,A101:A110,{1,2,3}),B101:B110,C101)');
+
+		oParser = new parserFormula('SUMIFS(IF(A101=10,A101:A110,{1,2,3}),A101:A110,C102)', "A11", ws);
+		assert.ok(oParser.parse(), 'SUMIFS(IF(A101=10,A101:A110,{1,2,3}),A101:A110,C102)');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Result of SUMIFS(IF(A101=10,A101:A110,{1,2,3}),A101:A110,C102)');
+
+		oParser = new parserFormula('SUMIFS(IF(A101=10,A101:A110,{1,2,3}),A101:A110,C103/0)', "A11", ws);
+		assert.ok(oParser.parse(), 'SUMIFS(IF(A101=10,A101:A110,{1,2,3}),A101:A110,C103/0)');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Result of SUMIFS(IF(A101=10,A101:A110,{1,2,3}),A101:A110,C103/0)');
+
+		ws.getRange2("B106").setValue("#N/A");
+		ws.getRange2("B107").setValue("#N/A");
+		oParser = new parserFormula('SUMIFS(A101:A110,B101:B110,B105)', "A11", ws);
+		assert.ok(oParser.parse(), 'SUMIFS(A101:A110,B101:B110,B105)');
+		assert.strictEqual(oParser.calculate().getValue(), 30, 'Result of SUMIFS(A101:A110,B101:B110,B105)');
+
+		oParser = new parserFormula('SUMIFS(A101:A110,B101:B110,"#N/A")', "A11", ws);
+		assert.ok(oParser.parse(), 'SUMIFS(A101:A110,B101:B110,"#N/A")');
+		assert.strictEqual(oParser.calculate().getValue(), 30, 'Result of SUMIFS(A101:A110,B101:B110,"#N/A")');
+
+		oParser = new parserFormula('SUMIFS(B101:B110,A101:A110,">0")', "A11", ws);
+		assert.ok(oParser.parse(), 'SUMIFS(B101:B110,A101:A110,">0")');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of SUMIFS(B101:B110,A101:A110,"#N/A") returns first error in range');
+
+		ws.getRange2("A1:D200").cleanAll();
 	});
 
 	QUnit.test("Test: \"MAXIFS\"", function (assert) {
@@ -30706,6 +30748,9 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), "FALSE");
 
 		ws.getRange2("A101").setValue("1");
+		ws.getRange2("A102").setValue("2");
+		ws.getRange2("A103").setValue("3");
+		ws.getRange2("A104").setValue("#N/A");
 
 		oParser = new parserFormula('IF(A101=1,"Yes","No")', "AA2", ws);
 		assert.ok(oParser.parse());
@@ -30714,6 +30759,31 @@ $(function () {
 		oParser = new parserFormula('IF(A101=2,"Yes","No")', "AA2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "No");
+
+		oParser = new parserFormula('IF("string",11,0)', "AA2", ws);
+		assert.ok(oParser.parse(), 'IF("string",11,0)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Formula IF("string",11,0) returns an error');
+
+		oParser = new parserFormula('IF(A104,11,0)', "AA2", ws);
+		assert.ok(oParser.parse(), 'IF(A104,11,0)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Formula IF(A104,11,0) returns an error');
+
+		// area and array return
+		let calcRes;
+		oParser = new parserFormula('IF(1,A101:A103,0)', "AA2", ws);
+		assert.ok(oParser.parse(), "IF(1,A101:A103,0)");
+		calcRes = oParser.calculate();
+		assert.strictEqual(calcRes.type, AscCommonExcel.cElementType.cellsRange, "Formula IF(1,A101:A103,0) returns an area");
+		assert.strictEqual(calcRes.getValueByRowCol(0,0).getValue(), 1, "Result IF(1,A101:A103,0)[0,0]");
+		assert.strictEqual(calcRes.getValueByRowCol(1,0).getValue(), 2, "Result IF(1,A101:A103,0)[1,0]");
+		assert.strictEqual(calcRes.getValueByRowCol(2,0).getValue(), 3, "Result IF(1,A101:A103,0)[2,0]");
+
+		oParser = new parserFormula('IF(1,{1,2},0)', "AA2", ws);
+		assert.ok(oParser.parse(), "IF(1,{1,2},0)");
+		calcRes = oParser.calculate();
+		assert.strictEqual(calcRes.type, AscCommonExcel.cElementType.array, "Formula IF(1,{1,2},0) returns an array");
+		assert.strictEqual(calcRes.getElementRowCol(0,0).getValue(), 1, "Result IF(1,{1,2},0)[0,0]");
+		assert.strictEqual(calcRes.getElementRowCol(0,1).getValue(), 2, "Result IF(1,{1,2},0)[0,1]");
 
 		//TODO нужна другая функция для тестирования
 		//testArrayFormula2(assert, "IF", 2, 3);

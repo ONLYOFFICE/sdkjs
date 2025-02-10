@@ -5203,6 +5203,10 @@ function (window, undefined) {
 						if (calcSum) {
 							_calcSum(i, j);
 						}
+						
+						if (foundErrorInRange) {
+							return foundErrorInRange;
+						}
 					}
 				}
 			}
@@ -5212,8 +5216,13 @@ function (window, undefined) {
 
 		let _calcSum = function (i, j) {
 			let arg0Val = arg0.getValueByRowCol ? arg0.getValueByRowCol(i, j) : arg0.tocNumber();
-			if (arg0Val && cElementType.number === arg0Val.type) {
-				_sum += arg0Val.getValue();
+			if (arg0Val) {
+				let type = arg0Val.type;
+				if (cElementType.error === type) {
+					foundErrorInRange = arg0Val;
+				} else if (cElementType.number === type) {
+					_sum += arg0Val.getValue();
+				}
 			}
 		};
 
@@ -5223,6 +5232,7 @@ function (window, undefined) {
 		let arg0R = arg0Range.r2 - arg0Range.r1 + 1;
 		let cacheElem, parent;
 		let arg1, arg2, arg1Range;
+		let foundErrorInRange;
 		for (let k = 1; k < arg.length; k += 2) {
 			arg1 = arg[k];
 			arg2 = arg[k + 1];
@@ -5262,6 +5272,11 @@ function (window, undefined) {
 					} else {
 						return new cError(cErrorType.wrong_value_type);
 					}
+				}
+
+				// If there is an error in 3 argument, we are looking for a string of this argument
+				if (cElementType.error === arg2.type) {
+					arg2 = new cString(arg2.getValue());
 				}
 
 				if (cElementType.string !== arg2.type) {
