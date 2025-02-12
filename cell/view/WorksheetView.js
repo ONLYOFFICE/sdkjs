@@ -28538,7 +28538,10 @@
 
 				pastedRangeProps.hidden = newVal.getHidden();
 
-				pastedRangeProps.locked = newVal.getLocked();
+				//Paste the cell's Lock property only if the worksheet is NOT locked
+				if (!this.model.getSheetProtection(Asc.c_oAscSheetProtectType.selectLockedCells)) {
+					pastedRangeProps.locked = newVal.getLocked();
+					}
 			}
 
 			var tableDxf = getTableDxf(fromRow, fromCol, newVal);
