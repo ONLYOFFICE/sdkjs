@@ -39,12 +39,16 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Changed]			= CChangesPDFFormCh
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Add_Kid]			= CChangesPDFFormAddKid;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Remove_Kid]		= CChangesPDFFormRemoveKid;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Change_Display]	= CChangesPDFFormDisplay;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Border_Color]		= CChangesPDFFormBorderColor;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_BG_Color]			= CChangesPDFFormBGrColor;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Border_Style]		= CChangesPDFFormBorderStyle;
 
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Cur_Idxs]		= CChangesPDFListFormCurIdxs;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Parent_Cur_Idxs]	= CChangesPDFListFormParentCurIdxs;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Top_Idx]			= CChangesPDFListTopIndex;
 
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Image]		= CChangesPDFPushbuttonImage;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Header_Pos]	= CChangesPDFPushbuttonHeaderPos;
 
 /**
  * @constructor
@@ -290,6 +294,57 @@ CChangesPDFFormDisplay.prototype.private_SetValue = function(Value)
 {
 	let oField = this.Class;
 	oField.SetDisplay(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesAnnotArrayOfDoubleProperty}
+ */
+function CChangesPDFFormBorderColor(Class, Old, New, Color)
+{
+	AscDFH.CChangesAnnotArrayOfDoubleProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFormBorderColor.prototype = Object.create(AscDFH.CChangesAnnotArrayOfDoubleProperty.prototype);
+CChangesPDFFormBorderColor.prototype.constructor = CChangesPDFFormBorderColor;
+CChangesPDFFormBorderColor.prototype.Type = AscDFH.historyitem_Pdf_Form_Border_Color;
+CChangesPDFFormBorderColor.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm.SetBorderColor(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesAnnotArrayOfDoubleProperty}
+ */
+function CChangesPDFFormBGrColor(Class, Old, New, Color)
+{
+	AscDFH.CChangesAnnotArrayOfDoubleProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFormBGrColor.prototype = Object.create(AscDFH.CChangesAnnotArrayOfDoubleProperty.prototype);
+CChangesPDFFormBGrColor.prototype.constructor = CChangesPDFFormBGrColor;
+CChangesPDFFormBGrColor.prototype.Type = AscDFH.historyitem_Pdf_Form_BG_Color;
+CChangesPDFFormBGrColor.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm.SetBackgroundColor(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFFormBorderStyle(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFormBorderStyle.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFFormBorderStyle.prototype.constructor = CChangesPDFFormBorderStyle;
+CChangesPDFFormBorderStyle.prototype.Type = AscDFH.historyitem_Pdf_Form_Border_Style;
+CChangesPDFFormBorderStyle.prototype.private_SetValue = function(Value)
+{
+	let oField = this.Class;
+	oField.SetBorderStyle(Value);
 };
 
 /**
@@ -562,4 +617,21 @@ CChangesPDFPushbuttonImage.prototype.ReadFromBinary = function(Reader)
 		this.Old = undefined;
 	else
 		this.Old = Reader.GetString2();
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFPushbuttonHeaderPos(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFPushbuttonHeaderPos.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFPushbuttonHeaderPos.prototype.constructor = CChangesPDFPushbuttonHeaderPos;
+CChangesPDFPushbuttonHeaderPos.prototype.Type = AscDFH.historyitem_Pdf_Pushbutton_Header_Pos;
+CChangesPDFPushbuttonHeaderPos.prototype.private_SetValue = function(Value)
+{
+	let oField = this.Class;
+	oField.SetHeaderPosition(Value);
 };

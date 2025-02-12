@@ -36,9 +36,9 @@
 	 * @constructor
      * @extends {CBaseListField}
 	 */
-    function CComboBoxField(sName, nPage, aRect, oDoc)
+    function CComboBoxField(sName, aRect, oDoc)
     {
-        AscPDF.CBaseListField.call(this, sName, AscPDF.FIELD_TYPES.combobox, nPage, aRect, oDoc);
+        AscPDF.CBaseListField.call(this, sName, AscPDF.FIELD_TYPES.combobox, aRect, oDoc);
 
         this._calcOrderIndex    = 0;
         this._doNotSpellCheck   = false;
@@ -51,8 +51,8 @@
         this._markRect = {};
         this._useDisplayValue   = true;
     }
-    CComboBoxField.prototype = Object.create(AscPDF.CBaseListField.prototype);
-	CComboBoxField.prototype.constructor = CComboBoxField;
+    CComboBoxField.prototype.constructor = CComboBoxField;
+    AscFormat.InitClass(CComboBoxField, AscPDF.CBaseListField, AscDFH.historyitem_type_Pdf_Combobox_Field);
 
     CComboBoxField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
         if (this.IsHidden() == true)

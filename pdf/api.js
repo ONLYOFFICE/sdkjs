@@ -1095,6 +1095,49 @@
 	};
 
 	/////////////////////////////////////////////////////////////
+	///////// For filed
+	////////////////////////////////////////////////////////////
+	PDFEditorApi.prototype.AddTextField = function() {
+		let oDoc = this.getPDFDoc();
+		
+		oDoc.DoAction(function() {
+			let oField = oDoc.CreateTextField();
+			oDoc.AddField(oField, oDoc.GetCurPage());
+		}, AscDFH.historydescription_Pdf_AddField, this);
+	};
+	PDFEditorApi.prototype.AddDateField = function() {
+		let oDoc = this.getPDFDoc();
+		
+		oDoc.DoAction(function() {
+			let oField = oDoc.CreateTextField(true);
+			oDoc.AddField(oField, oDoc.GetCurPage());
+		}, AscDFH.historydescription_Pdf_AddField, this);
+	};
+	PDFEditorApi.prototype.AddImageField = function() {
+		let oDoc = this.getPDFDoc();
+		
+		oDoc.DoAction(function() {
+			let oField = oDoc.CreateButtonField(true);
+			oDoc.AddField(oField, oDoc.GetCurPage());
+		}, AscDFH.historydescription_Pdf_AddField, this);
+	};
+	PDFEditorApi.prototype.AddCheckboxField = function() {
+		let oDoc = this.getPDFDoc();
+		
+		oDoc.DoAction(function() {
+			let oField = oDoc.CreateCheckboxField();
+			oDoc.AddField(oField, oDoc.GetCurPage());
+		}, AscDFH.historydescription_Pdf_AddField, this);
+	};
+	PDFEditorApi.prototype.AddRadiobuttonField = function() {
+		let oDoc = this.getPDFDoc();
+		
+		oDoc.DoAction(function() {
+			let oField = oDoc.CreateCheckboxField(true);
+			oDoc.AddField(oField, oDoc.GetCurPage());
+		}, AscDFH.historydescription_Pdf_AddField, this);
+	};
+	/////////////////////////////////////////////////////////////
 	///////// For drawings
 	////////////////////////////////////////////////////////////
 	PDFEditorApi.prototype.StartAddShape = function(sPreset, is_apply) {
@@ -3130,6 +3173,13 @@
 	// freetext
 	PDFEditorApi.prototype['AddFreeTextAnnot']	= PDFEditorApi.prototype.AddFreeTextAnnot;
 
+	// forms
+	PDFEditorApi.prototype['AddTextField']			= PDFEditorApi.prototype.AddTextField;
+	PDFEditorApi.prototype['AddDateField']			= PDFEditorApi.prototype.AddDateField;
+	PDFEditorApi.prototype['AddImageField']			= PDFEditorApi.prototype.AddImageField;
+	PDFEditorApi.prototype['AddCheckboxField']		= PDFEditorApi.prototype.AddCheckboxField;
+	PDFEditorApi.prototype['AddRadiobuttonField']	= PDFEditorApi.prototype.AddRadiobuttonField;
+	
 	// drawings
 	PDFEditorApi.prototype['AddTextArt']							= PDFEditorApi.prototype.AddTextArt;
 	PDFEditorApi.prototype['StartAddShape']							= PDFEditorApi.prototype.StartAddShape;

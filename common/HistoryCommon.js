@@ -1810,6 +1810,13 @@
 	window['AscDFH'].historyitem_type_Pdf_Page				= 2230 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Annot_Stamp		= 2231 << 16;
 	window['AscDFH'].historyitem_type_Pdf_PropLocker		= 2232 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Checkbox_Field	= 2233 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Combobox_Field	= 2234 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Listbox_Field		= 2235 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Button_Field		= 2236 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Radiobutton_Field	= 2237 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Signature_Field	= 2238 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Text_Field		= 2239 << 16;
 	
 	window['AscDFH'].historyitem_type_CustomProperties      = 2301 << 16;
 
@@ -4017,13 +4024,17 @@
 	AscDFH.historyitem_Pdf_Form_Changed			= AscDFH.historyitem_type_Pdf_Form | 5;
 	AscDFH.historyitem_Pdf_Form_Parent_Value	= AscDFH.historyitem_type_Pdf_Form | 6;
 	AscDFH.historyitem_Pdf_Form_Format_Value	= AscDFH.historyitem_type_Pdf_Form | 7;
+	AscDFH.historyitem_Pdf_Form_Border_Color	= AscDFH.historyitem_type_Pdf_Form | 8;
+	AscDFH.historyitem_Pdf_Form_BG_Color		= AscDFH.historyitem_type_Pdf_Form | 9;
+	AscDFH.historyitem_Pdf_Form_Border_Style	= AscDFH.historyitem_type_Pdf_Form | 10;
 	
 	AscDFH.historyitem_Pdf_List_Form_Cur_Idxs			= AscDFH.historyitem_type_Pdf_List_Form | 1;
 	AscDFH.historyitem_Pdf_List_Form_Top_Idx			= AscDFH.historyitem_type_Pdf_List_Form | 2;
 	AscDFH.historyitem_Pdf_List_Form_Parent_Cur_Idxs	= AscDFH.historyitem_type_Pdf_List_Form | 3;
 
 
-	AscDFH.historyitem_Pdf_Pushbutton_Image		= AscDFH.historyitem_type_Pdf_Pushbutton | 1;
+	AscDFH.historyitem_Pdf_Pushbutton_Image			= AscDFH.historyitem_type_Pdf_Pushbutton | 1;
+	AscDFH.historyitem_Pdf_Pushbutton_Header_Pos	= AscDFH.historyitem_type_Pdf_Pushbutton | 2;
 	
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в PDF Annots 
@@ -4581,6 +4592,7 @@
 	window['AscDFH'].historydescription_Pdf_ChangeFillColor		= 0x2b2;
 	window['AscDFH'].historydescription_Pdf_ChangeOpacity		= 0x2b3;
 	window['AscDFH'].historydescription_Pdf_MovePage			= 0x2b4;
+	window['AscDFH'].historydescription_Pdf_AddField			= 0x2b5;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -121,49 +121,49 @@
 	 * Class representing a base field class.
 	 * @constructor
     */
-    function CBaseField(sName, nType, nPage, aRect, oDoc)
+    function CBaseField(sName, nType, aRect)
     {
-        this.type = nType;
+        this.Id = AscCommon.g_oIdCounter.Get_NewId();
+        if ((AscCommon.g_oIdCounter.m_bLoad || AscCommon.History.CanAddChanges())) {
+            AscCommon.g_oTableId.Add(this, this.Id);
+        }
 
+        this.type           = nType;
+        this._name          = sName; // partial field name
+        this._partialName   = sName;
         this._kids          = [];
+        this._apIdx         = undefined; // индекс формы на странице в исходном файле (в массиве метода getInteractiveForms), используется для получения appearance
         this._borderStyle   = undefined;
-        this._delay         = false;
-        this._display       = AscPDF.Api.Objects.display["visible"];
-        this._doc           = oDoc;
-        this._fillColor     = undefined;
-        this._bgColor       = undefined;          // prop for old versions (fillColor)
-        this._hidden        = false;             // This property has been superseded by the display property and its use is discouraged.
         this._lineWidth     = undefined;        // In older versions of this specification, this property was borderWidth
         this._borderWidth   = undefined;       
-        this._name          = sName;         // partial field name
-        this._page          = nPage;        // integer | array
+        this._strokeColor   = undefined;     // In older versions of this specification, this property was borderColor. The use of borderColor is now discouraged, although it is still valid for backward compatibility.
+        this._borderColor   = undefined;
+        this._fillColor     = undefined;
+        this._bgColor       = undefined;          // prop for old versions (fillColor)
+        this._fgColor       = undefined;
+        this._textColor     = [0,0,0];
+        this._textFont      = undefined; // исходный
+        this._textFontActual= undefined; // фактический используемый
+        this._textSize      = 10;
+        this._fontStyle     = 0;    // информация о стиле шрифта (bold, italic)
+
+        this._display       = AscPDF.Api.Objects.display["visible"];
+        this._hidden        = false;             // This property has been superseded by the display property and its use is discouraged.
         this._print         = true;        // This property has been superseded by the display property and its use is discouraged.
         this._readonly      = false;
         this._required      = false;       // for all except button
-        this._rotation      = 0;
-        this._strokeColor   = null;     // In older versions of this specification, this property was borderColor. The use of borderColor is now discouraged,
-                                        // although it is still valid for backward compatibility.
+        
+        this._delay         = false;
         this._noExport      = false;
-        this._borderColor   = undefined;
+        this._parent        = null;
+        this._rotation      = 0;
         this._submitName    = "";
-        this._textColor     = [0,0,0];
-        this._textFont          = undefined; // исходный
-        this._textFontActual    = undefined; // фактический используемый
-        this._fgColor       = undefined;
-        this._textSize      = 10;
-        this._fontStyle     = 0;    // информация о стиле шрифта (bold, italic)
         this._userName      = "";   // It is intended to be used as tooltip text whenever the cursor enters a field. 
         //It can also be used as a user-friendly name, instead of the field name, when generating error messages.
-        this._parent        = null;
-        
-        this._triggers = new AscPDF.CFormTriggers();
 
         // internal
-        this._id = AscCommon.g_oIdCounter.Get_NewId();
-        AscCommon.g_oTableId.Add(this, this._id);
-
+        this._triggers = new AscPDF.CFormTriggers();
         this._isWidget = aRect && aRect.length == 4 ? true : false;
-
         this._curShiftView = { // смещение, когда мы скролим, т.е. активное смещение
             x: 0,
             y: 0
@@ -172,10 +172,6 @@
             x: 0,
             y: 0
         }
-
-        this._apIdx     = undefined; // индекс формы на странице в исходном файле (в массиве метода getInteractiveForms), используется для получения appearance
-        this._parentIdx = undefined; // индекс родителя во время чтения
-
         this.needCommit             = false;
         this._needDrawHighlight     = true;
         this._needDrawHoverBorder   = false;
@@ -188,17 +184,16 @@
             mouseDown:  null,
             rollover:   null
         }
-
-        this._partialName = sName;
         this.api = this.GetFormApi();
         this["api"] = this.api;
-		
 		this.compositeInput = null;
 		this.compositeReplaceCount = 0;
-
         this.Lock = new AscCommon.CLock();
         this.SetRect(aRect);
     }
+
+    CBaseField.prototype.constructor = CBaseField;
+    CBaseField.prototype = Object.create(AscFormat.CBaseNoIdObject.prototype);
 
     CBaseField.prototype.IsAnnot = function() {
         return false;
@@ -411,12 +406,10 @@
 	 * @param {Array} aActionsInfo - array with actions info for specified trigger. (info from openForms method)
      * @typeofeditors ["PDF"]
 	 */
-    CBaseField.prototype.SetActionsOnOpen = function(nTriggerType, aActionsInfo) {
-        let oDocument = this.GetDocument();
+    CBaseField.prototype.SetActions = function(nTriggerType, aActionsInfo) {
         let aActions = [];
         for (let i = 0; i < aActionsInfo.length; i++) {
             let oAction;
-            let aFields = [];
             switch (aActionsInfo[i]["S"]) {
                 case AscPDF.ACTIONS_TYPES.JavaScript:
                     oAction = new AscPDF.CActionRunScript(aActionsInfo[i]["JS"]);
@@ -1239,10 +1232,10 @@
         return this.parentPage;
     };
     CBaseField.prototype.Get_Id = function() {
-        return this._id;
+        return this.Id;
     };
     CBaseField.prototype.GetId = function() {
-        return this._id;
+        return this.Id;
     };
     CBaseField.prototype.SetNeedRecalc = function(bRecalc, bSkipAddToRedraw) {
         if (bRecalc == false) {
@@ -1250,7 +1243,10 @@
         }
         else {
             if ([AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(this.GetType())) {
-                this.GetDocument().SetNeedUpdateTarget(true);
+                let oDoc = this.GetDocument();
+                if (oDoc) {
+                    oDoc.SetNeedUpdateTarget(true);
+                }
             }
             this._needRecalc = true;
             if (bSkipAddToRedraw != true)
@@ -1383,14 +1379,18 @@
         return this._required;
     };
     CBaseField.prototype.SetBorderColor = function(aColor) {
+        AscCommon.History.Add(new CChangesPDFFormBorderColor(this, this.GetBorderColor(), aColor));
+
         this._strokeColor = this._borderColor = aColor;
         this.SetWasChanged(true);
-        this.SetNeedRecalc(true);
+        this.AddToRedraw();
     };
     CBaseField.prototype.GetBorderColor = function() {
         return this._strokeColor;
     };
     CBaseField.prototype.SetBackgroundColor = function(aColor) {
+        AscCommon.History.Add(new CChangesPDFFormBGrColor(this, this.GetBackgroundColor(), aColor));
+
         this._fillColor = this._bgColor = aColor;
         this.SetWasChanged(true);
         this.AddToRedraw();
@@ -1647,6 +1647,9 @@
     CBaseField.prototype.SetBorderStyle = function(nStyle) {
         if (this._borderStyle != nStyle) {
             this._borderStyle = nStyle;
+
+            AscCommon.History.Add(new CChangesPDFFormBorderStyle(this, this._borderStyle, nStyle));
+
             this.SetWasChanged(true);
             this.SetNeedRecalc(true);
             if (this.IsComb && this.IsComb() == true) {

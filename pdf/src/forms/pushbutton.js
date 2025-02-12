@@ -63,9 +63,9 @@
 	 * @constructor
      * @extends {CBaseField}
 	 */
-    function CPushButtonField(sName, nPage, aRect, oDoc)
+    function CPushButtonField(sName, aRect)
     {
-        AscPDF.CBaseField.call(this, sName, AscPDF.FIELD_TYPES.button, nPage, aRect, oDoc);
+        AscPDF.CBaseField.call(this, sName, AscPDF.FIELD_TYPES.button, aRect);
 
         this._buttonAlignX      = 0.5; // must be integer
         this._buttonAlignY      = 0.5; // must be integer
@@ -83,10 +83,10 @@
         this._pressed = false;
         this._hovered = false;
 
-        oDoc.StartNoHistoryMode();
-        this.content = new AscPDF.CTextBoxContent(this, oDoc);
+        AscCommon.History.StartNoHistoryMode();
+        this.content = new AscPDF.CTextBoxContent(this, Asc.editor.getPDFDoc());
 		this.content.SetAlign(AscPDF.ALIGN_TYPE.center);
-        oDoc.EndNoHistoryMode();
+        AscCommon.History.EndNoHistoryMode();
 
         this._imgData = {
             normal:     undefined,
@@ -108,8 +108,9 @@
 		this._needUpdateImage = true;
 		this._rasterId        = null;
     }
-    CPushButtonField.prototype = Object.create(AscPDF.CBaseField.prototype);
     CPushButtonField.prototype.constructor = CPushButtonField;
+    AscFormat.InitClass(CPushButtonField, AscPDF.CBaseField, AscDFH.historyitem_type_Pdf_Button_Field);
+
     CPushButtonField.prototype.AddImage = function(oImgData, nAPType) {
         if (!oImgData) {
             return;
@@ -1394,6 +1395,8 @@
      * @typeofeditors ["PDF"]
      */
     CPushButtonField.prototype.SetHeaderPosition = function(nType) {
+        AscCommon.History.Add(new CChangesPDFPushbuttonHeaderPos(this, this.GetHeaderPosition(), nType));
+
         switch (nType) {
             case position["textOnly"]:
                 this.SetTextOnly();
@@ -1417,6 +1420,9 @@
                 this.SetOverlay();
                 break;
         }
+
+        this.SetWasChanged(true);
+        this.SetNeedRecalc(true);
     };
     CPushButtonField.prototype.GetHeaderPosition = function() {
         return this._buttonPosition;

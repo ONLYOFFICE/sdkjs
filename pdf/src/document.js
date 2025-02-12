@@ -162,8 +162,8 @@ var CPresentation = CPresentation || function(){};
         this.mouseDownField     = null;
         this.mouseDownAnnot     = null;
 
-        this._id = AscCommon.g_oIdCounter.Get_NewId();
-		AscCommon.g_oTableId.Add(this, this._id);
+        this.Id = AscCommon.g_oIdCounter.Get_NewId();
+		AscCommon.g_oTableId.Add(this, this.Id);
         
 		this.History = new AscPDF.History(this);
         this.History.Set_LogicDocument(this);
@@ -414,6 +414,90 @@ var CPresentation = CPresentation || function(){};
             oViewer.paint();
         }
     };
+    CPDFDoc.prototype.CreateField = function(cName, cFieldType, oCoords) {
+        let oField;
+        switch (cFieldType) {
+            case AscPDF.FIELD_TYPES.button:
+                oField = new AscPDF.CPushButtonField(cName, oCoords);
+                break;
+            case AscPDF.FIELD_TYPES.checkbox:
+                oField = new AscPDF.CCheckBoxField(cName, oCoords);
+                break;
+            case AscPDF.FIELD_TYPES.combobox:
+                oField = new AscPDF.CComboBoxField(cName, oCoords);
+                break;
+            case AscPDF.FIELD_TYPES.listbox:
+                oField = new AscPDF.CListBoxField(cName, oCoords);
+                break;
+            case AscPDF.FIELD_TYPES.radiobutton:
+                oField = new AscPDF.CRadioButtonField(cName, oCoords);
+                break;
+            case AscPDF.FIELD_TYPES.signature:
+                oField = new AscPDF.CSignatureField(cName, oCoords);
+                break;
+            case AscPDF.FIELD_TYPES.text:
+                oField = new AscPDF.CTextField(cName, oCoords);
+                break;
+            case AscPDF.FIELD_TYPES.unknown: 
+                oField = new AscPDF.CBaseField(cName, oCoords);
+                break;
+        }
+
+        oField.SetDocument(this);
+        return oField;
+    };
+    CPDFDoc.prototype.CreateTextField = function(bDateField) {
+        let oTextField = this.CreateField('TextField1', AscPDF.FIELD_TYPES.text, [200, 50, 350, 72]);
+
+        if (bDateField) {
+            oTextField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, [{
+                "S": AscPDF.ACTIONS_TYPES.JavaScript,
+                "JS": "AFDate_KeystrokeEx(\"m/d/yy\");"
+            }]);
+            oTextField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, [{
+                "S": AscPDF.ACTIONS_TYPES.JavaScript,
+                "JS": "AFDate_FormatEx(\"m/d/yy\");"
+            }]);
+        }
+
+        return oTextField;
+    };
+    CPDFDoc.prototype.CreateButtonField = function(bImage) {
+        let sName = 'ButtonField1';
+
+        let aRect = bImage ? [218, 44, 290, 124] : [49, 83, 121, 103];
+        let oButtonField = this.CreateField(sName, AscPDF.FIELD_TYPES.button, aRect);
+
+        if (bImage) {
+            oButtonField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.MouseUp, [{
+                "S": AscPDF.ACTIONS_TYPES.JavaScript,
+                "JS": "event.target.buttonImportIcon();"
+            }]);
+
+            oButtonField.SetHeaderPosition(AscPDF.Api.Objects.position['iconOnly']);
+            oButtonField.SetBorderColor([0.7529]);
+        }
+        else {
+            oButtonField.SetBackgroundColor([0.7529]);
+        }
+
+        return oButtonField;
+    };
+    CPDFDoc.prototype.CreateCheckboxField = function(bRadio) {
+        let sName = 'CheckboxField1';
+        let nType = bRadio ? AscPDF.FIELD_TYPES.radiobutton : AscPDF.FIELD_TYPES.checkbox;
+        let aRect = [320, 45, 338, 63];
+        
+        let oCheckboxField = this.CreateField(sName, nType, aRect);
+
+        oCheckboxField.SetBorderColor([0]);
+
+        if (bRadio) {
+            oCheckboxField.SetBorderStyle(AscPDF.BORDER_TYPES.inset);
+        }
+        
+        return oCheckboxField;
+    };
     CPDFDoc.prototype.FillFormsParents = function(aParentsInfo) {
         let oChilds = this.GetParentsMap();
         let oParents = {};
@@ -425,7 +509,7 @@ var CPresentation = CPresentation || function(){};
 
             let sType = oChilds[nIdx][0].GetType();
 
-            let oParent = private_createField(aParentsInfo[i]["name"], sType, undefined, undefined, this);
+            let oParent = this.CreateField(aParentsInfo[i]["name"], sType);
             if (aParentsInfo[i]["value"] != null)
                 oParent.SetParentValue(aParentsInfo[i]["value"]);
             if (aParentsInfo[i]["Parent"] != null)
@@ -626,10 +710,10 @@ var CPresentation = CPresentation || function(){};
     };
 
     CPDFDoc.prototype.GetId = function() {
-        return this._id;
+        return this.Id;
     };
-    CPDFDoc.prototype.Get_Id = function() {
-        return this._id;
+    CPDFDoc.prototype.GetId = function() {
+        return this.Id;
     };
     CPDFDoc.prototype.GetDrawingDocument = function() {
 		if (!editor || !editor.WordControl)
@@ -2522,7 +2606,7 @@ var CPresentation = CPresentation || function(){};
         if (!oPageInfo)
             return null;
         
-        let oField = private_createField(cName, cFieldType, nPageNum, aCoords, this);
+        let oField = this.CreateField(cName, cFieldType, aCoords);
         if (!oField)
             return null;
 
@@ -3452,7 +3536,7 @@ var CPresentation = CPresentation || function(){};
         // создаем родительские поля, последнее будет виджет-полем
         if (aPartNames.length > 1) {
             if (this.rootFields.get(aPartNames[0]) == null) { // root поле
-                this.rootFields.set(aPartNames[0], private_createField(aPartNames[0], oField.GetType(), oField.GetPage(), []));
+                this.rootFields.set(aPartNames[0], this.CreateField(aPartNames[0], oField.GetType(), []));
             }
 
             let oParentField = this.rootFields.get(aPartNames[0]);
@@ -3468,7 +3552,7 @@ var CPresentation = CPresentation || function(){};
                     if (oExistsField)
                         oParentField = oExistsField;
                     else {
-                        let oNewParent = private_createField(aPartNames[i], oField.GetType(), oField.GetPage(), []);
+                        let oNewParent = this.CreateField(aPartNames[i], oField.GetType(), []);
                         oParentField.AddKid(oNewParent);
                         oParentField = oNewParent;
                     }
@@ -6897,38 +6981,6 @@ var CPresentation = CPresentation || function(){};
             this.Clear();
         }
     };
-
-    function private_createField(cName, cFieldType, nPageNum, oCoords, oPdfDoc) {
-        let oField;
-        switch (cFieldType) {
-            case AscPDF.FIELD_TYPES.button:
-                oField = new AscPDF.CPushButtonField(cName, nPageNum, oCoords, oPdfDoc);
-                break;
-            case AscPDF.FIELD_TYPES.checkbox:
-                oField = new AscPDF.CCheckBoxField(cName, nPageNum, oCoords, oPdfDoc);
-                break;
-            case AscPDF.FIELD_TYPES.combobox:
-                oField = new AscPDF.CComboBoxField(cName, nPageNum, oCoords, oPdfDoc);
-                break;
-            case AscPDF.FIELD_TYPES.listbox:
-                oField = new AscPDF.CListBoxField(cName, nPageNum, oCoords, oPdfDoc);
-                break;
-            case AscPDF.FIELD_TYPES.radiobutton:
-                oField = new AscPDF.CRadioButtonField(cName, nPageNum, oCoords, oPdfDoc);
-                break;
-            case AscPDF.FIELD_TYPES.signature:
-                oField = new AscPDF.CSignatureField(cName, nPageNum, oCoords, oPdfDoc);;
-                break;
-            case AscPDF.FIELD_TYPES.text:
-                oField = new AscPDF.CTextField(cName, nPageNum, oCoords, oPdfDoc);
-                break;
-            case AscPDF.FIELD_TYPES.unknown: 
-                oField = new AscPDF.CBaseField(cName, nPageNum, oCoords, oPdfDoc);
-                break;
-        }
-
-        return oField;
-    }
 
     function CreateAnnotByProps(oProps, oPdfDoc) {
         let aRect       = oProps.rect;

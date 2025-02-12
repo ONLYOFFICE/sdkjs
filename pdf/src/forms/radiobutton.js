@@ -36,17 +36,17 @@
 	 * @constructor
      * @extends {CBaseCheckBoxField}
 	 */
-    function CRadioButtonField(sName, nPage, aRect, oDoc)
+    function CRadioButtonField(sName, aRect, oDoc)
     {
-        AscPDF.CBaseCheckBoxField.call(this, sName, AscPDF.FIELD_TYPES.radiobutton, nPage, aRect, oDoc);
+        AscPDF.CBaseCheckBoxField.call(this, sName, AscPDF.FIELD_TYPES.radiobutton, aRect, oDoc);
         
         this._radiosInUnison = false;
         this._noToggleToOff = true;
 
         this._chStyle       = AscPDF.CHECKBOX_STYLES.circle;
     }
-    CRadioButtonField.prototype = Object.create(AscPDF.CBaseCheckBoxField.prototype);
 	CRadioButtonField.prototype.constructor = CRadioButtonField;
+    AscFormat.InitClass(CRadioButtonField, AscPDF.CBaseCheckBoxField, AscDFH.historyitem_type_Pdf_Radiobutton_Field);
     
     /**
 	 * Synchronizes this field with fields with the same name.

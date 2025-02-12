@@ -42,9 +42,9 @@
 	 * @constructor
      * @extends {CBaseListField}
 	 */
-    function CListBoxField(sName, nPage, aRect, oDoc)
+    function CListBoxField(sName, aRect, oDoc)
     {
-        AscPDF.CBaseListField.call(this, sName, AscPDF.FIELD_TYPES.listbox, nPage, aRect, oDoc);
+        AscPDF.CBaseListField.call(this, sName, AscPDF.FIELD_TYPES.listbox, aRect, oDoc);
 
         this._multipleSelection = false;
 
@@ -56,8 +56,8 @@
             bottom: undefined
         }
     };
-    CListBoxField.prototype = Object.create(AscPDF.CBaseListField.prototype);
 	CListBoxField.prototype.constructor = CListBoxField;
+    AscFormat.InitClass(CListBoxField, AscPDF.CBaseListField, AscDFH.historyitem_type_Pdf_Listbox_Field);
 
     CListBoxField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
         if (this.IsHidden() == true)

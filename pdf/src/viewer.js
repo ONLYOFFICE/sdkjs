@@ -1303,7 +1303,6 @@
 				return;
 			}
 			
-			let aFontsToLoad = [];
 			for (let i = 0; i < aFormsInfo["Fields"].length; i++)
 			{
 				oFormInfo	= aFormsInfo["Fields"][i];
@@ -1540,56 +1539,56 @@
 					// mouseup 0
 					if (oFormInfo["AA"]["A"])
 					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.MouseUp, ExtractActions(oFormInfo["AA"]["A"])));
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.MouseUp, ExtractActions(oFormInfo["AA"]["A"])));
 					}
 					// mousedown 1
 					if (oFormInfo["AA"]["D"])
 					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown, ExtractActions(oFormInfo["AA"]["D"])));
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown, ExtractActions(oFormInfo["AA"]["D"])));
 					}
 					// mouseenter 2
 					if (oFormInfo["AA"]["E"])
 					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter, ExtractActions(oFormInfo["AA"]["E"])));
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter, ExtractActions(oFormInfo["AA"]["E"])));
 					}
 					// mouseexit 3
 					if (oFormInfo["AA"]["X"])
 					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.MouseExit, ExtractActions(oFormInfo["AA"]["X"])));
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.MouseExit, ExtractActions(oFormInfo["AA"]["X"])));
 					}
 					// onFocus 4
 					if (oFormInfo["AA"]["Fo"])
 					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus, ExtractActions(oFormInfo["AA"]["Fo"])));
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus, ExtractActions(oFormInfo["AA"]["Fo"])));
 					}
 					// onBlur 5
 					if (oFormInfo["AA"]["Bl"])
 					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.OnBlur, ExtractActions(oFormInfo["AA"]["Bl"])));
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.OnBlur, ExtractActions(oFormInfo["AA"]["Bl"])));
 					}
 
 					// keystroke 6
 					if (oFormInfo["AA"]["K"])
 					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, ExtractActions(oFormInfo["AA"]["K"])));
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, ExtractActions(oFormInfo["AA"]["K"])));
 					}
 
 					// Validate 7
 					if (oFormInfo["AA"]["V"])
 					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.Validate, ExtractActions(oFormInfo["AA"]["V"])));
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Validate, ExtractActions(oFormInfo["AA"]["V"])));
 					}
 
 					// Calculate 8
 					if (oFormInfo["AA"]["C"])
 					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.Calculate, ExtractActions(oFormInfo["AA"]["C"])));
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Calculate, ExtractActions(oFormInfo["AA"]["C"])));
 					}
 
 					// format 9
 					if (oFormInfo["AA"]["F"])
 					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.Format, ExtractActions(oFormInfo["AA"]["F"])));
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, ExtractActions(oFormInfo["AA"]["F"])));
 					}
 				}
 			}

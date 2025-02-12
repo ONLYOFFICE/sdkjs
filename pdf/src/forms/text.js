@@ -36,9 +36,9 @@
 	 * @constructor
      * @extends {CBaseField}
 	 */
-    function CTextField(sName, nPage, aRect, oDoc)
+    function CTextField(sName, aRect)
     {
-        AscPDF.CBaseField.call(this, sName, AscPDF. FIELD_TYPES.text, nPage, aRect, oDoc);
+        AscPDF.CBaseField.call(this, sName, AscPDF. FIELD_TYPES.text, aRect);
         
         this._alignment         = AscPDF.ALIGN_TYPE.left;
         this._charLimit         = 0;
@@ -57,19 +57,19 @@
 		this._useDisplayValue   = true;
 
         // internal
-        oDoc.StartNoHistoryMode();
-		this.content = new AscPDF.CTextBoxContent(this, oDoc);
+        AscCommon.History.StartNoHistoryMode();
+		this.content = new AscPDF.CTextBoxContent(this);
         // content for formatting value
         // Note: draw this content instead of main if form has a "format" action
-		this.contentFormat = new AscPDF.CTextBoxContent(this, oDoc, true);
-        oDoc.EndNoHistoryMode();
+		this.contentFormat = new AscPDF.CTextBoxContent(this, Asc.editor.getPDFDoc(), true);
+        AscCommon.History.EndNoHistoryMode();
 
         this._scrollInfo = null;
         this._markRect = {};
     }
-    CTextField.prototype = Object.create(AscPDF.CBaseField.prototype);
-	CTextField.prototype.constructor = CTextField;
-    
+    CTextField.prototype.constructor = CTextField;
+    AscFormat.InitClass(CTextField, AscPDF.CBaseField, AscDFH.historyitem_type_Pdf_Text_Field);
+
     CTextField.prototype.SetComb = function(bComb) {
         if (this._comb == bComb && this.GetCharLimit() != 0)
             return;
