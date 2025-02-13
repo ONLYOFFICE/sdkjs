@@ -435,7 +435,7 @@ CChangesPDFListFormParentCurIdxs.prototype.Type = AscDFH.historyitem_Pdf_List_Fo
 CChangesPDFListFormParentCurIdxs.prototype.private_SetValue = function(Value)
 {
 	var oField = this.Class;
-	oField.SetApiCurIdxs(Value);
+	oField.SetParentCurIdxs(Value);
 };
 
 CChangesPDFListFormParentCurIdxs.prototype.WriteToBinary = function(Writer)
@@ -520,6 +520,121 @@ CChangesPDFListTopIndex.prototype.private_SetValue = function(Value)
 	}
 
 	oField.AddToRedraw();
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseContentChange}
+ */
+function CChangesPDFListOption(Class, Pos, Items, isAdd) {
+	AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, isAdd);
+}
+
+CChangesPDFListOption.prototype = Object.create(AscDFH.CChangesBaseContentChange.prototype);
+CChangesPDFListOption.prototype.constructor = CChangesPDFListOption;
+CChangesPDFListOption.prototype.Type = AscDFH.historyitem_Pdf_List_Form_Option;
+
+CChangesPDFListOption.prototype.WriteToBinary = function (writer) {
+	writer.WriteBool(this.IsAdd());
+	writer.WriteLong(this.Pos);
+	writer.WriteString2(JSON.stringify(this.Items));
+};
+CChangesPDFListOption.prototype.ReadFromBinary = function (reader) {
+	reader.Seek2(reader.GetCurPos() - 4);
+	this.Type = reader.GetLong();
+	this.Add = reader.GetBool();
+	this.Pos = reader.GetLong();
+	
+	this.Items = JSON.parse(reader.GetString2());
+};
+CChangesPDFListOption.prototype.private_GetChangedArray = function () {
+	return this.Class._options;
+};
+CChangesPDFListOption.prototype.private_InsertInArrayLoad = function () {
+	if (this.Items.length <= 0)
+		return;
+
+	let aChangedArray = this.private_GetChangedArray();
+	if (null !== aChangedArray) {
+		aChangedArray.splice(this.Pos, 0, this.Items);
+	}
+};
+CChangesPDFListOption.prototype.private_RemoveInArrayLoad = function () {
+
+	var aChangedArray = this.private_GetChangedArray();
+	if (null !== aChangedArray) {
+		aChangedArray.splice(this.Pos, 1);
+	}
+};
+CChangesPDFListOption.prototype.private_InsertInArrayUndoRedo = function () {
+	var aChangedArray = this.private_GetChangedArray();
+	if (null !== aChangedArray) {
+		aChangedArray.splice(this.Pos, 0, this.Items);
+	}
+};
+CChangesPDFListOption.prototype.private_RemoveInArrayUndoRedo = function () {
+
+	var aChangedArray = this.private_GetChangedArray();
+	if (null !== aChangedArray) {
+		aChangedArray.splice(this.Pos, 1);
+	}
+};
+CChangesPDFListOption.prototype.Load = function () {
+	if (this.IsAdd()) {
+		this.private_InsertInArrayLoad();
+	}
+	else {
+		this.private_RemoveInArrayLoad();
+	}
+	this.RefreshRecalcData();
+};
+CChangesPDFListOption.prototype.Undo = function () {
+	if (this.IsAdd()) {
+		this.private_RemoveInArrayUndoRedo();
+	}
+	else {
+		this.private_InsertInArrayUndoRedo();
+	}
+};
+CChangesPDFListOption.prototype.Redo = function () {
+	if (this.IsAdd()) {
+		this.private_InsertInArrayUndoRedo();
+	}
+	else {
+		this.private_RemoveInArrayUndoRedo();
+	}
+};
+CChangesPDFListOption.prototype.IsContentChange = function () {
+	return false;
+};
+CChangesPDFListOption.prototype.Copy = function()
+{
+	var oChanges = new this.constructor(this.Class, this.Type, this.Pos, this.Items, this.Add);
+
+	oChanges.UseArray = this.UseArray;
+
+	for (var nIndex = 0, nCount = this.PosArray.length; nIndex < nCount; ++nIndex)
+		oChanges.PosArray[nIndex] = this.PosArray[nIndex];
+
+	return oChanges;
+};
+CChangesPDFListOption.prototype.ConvertToSimpleChanges = function()
+{
+	let arrSimpleActions = this.ConvertToSimpleActions();
+	let arrChanges       = [];
+	for (let nIndex = 0, nCount = arrSimpleActions.length; nIndex < nCount; ++nIndex)
+	{
+		let oAction = arrSimpleActions[nIndex];
+		let oChange = new this.constructor(this.Class, this.Type, oAction.Pos, [oAction.Item], oAction.Add);
+		arrChanges.push(oChange);
+	}
+	return arrChanges;
+};
+CChangesPDFListOption.prototype.CreateReverseChange = function(){
+	var oRet = this.private_CreateReverseChange(this.constructor);
+	oRet.Type = this.Type;
+	oRet.Pos = this.Pos;
+	return oRet;
 };
 
 /**

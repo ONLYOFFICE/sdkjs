@@ -483,20 +483,41 @@ var CPresentation = CPresentation || function(){};
 
         return oButtonField;
     };
-    CPDFDoc.prototype.CreateCheckboxField = function(bRadio) {
+    CPDFDoc.prototype.CreateCheckboxField = function() {
         let sName = 'CheckboxField1';
-        let nType = bRadio ? AscPDF.FIELD_TYPES.radiobutton : AscPDF.FIELD_TYPES.checkbox;
         let aRect = [320, 45, 338, 63];
         
-        let oCheckboxField = this.CreateField(sName, nType, aRect);
-
+        let oCheckboxField = this.CreateField(sName, AscPDF.FIELD_TYPES.checkbox, aRect);
         oCheckboxField.SetBorderColor([0]);
 
-        if (bRadio) {
-            oCheckboxField.SetBorderStyle(AscPDF.BORDER_TYPES.inset);
-        }
-        
         return oCheckboxField;
+    };
+    CPDFDoc.prototype.CreateRadiobuttonField = function() {
+        let sName = 'RadiobuttonField1';
+        let aRect = [320, 45, 338, 63];
+        
+        let oRadiobuttonField = this.CreateField(sName, AscPDF.FIELD_TYPES.radiobutton, aRect);
+
+        oRadiobuttonField.SetBorderColor([0]);
+        oRadiobuttonField.SetBorderStyle(AscPDF.BORDER_TYPES.inset);
+
+        return oRadiobuttonField;
+    };
+    CPDFDoc.prototype.CreateComboboxField = function() {
+        let sName = 'ComboboxField1';
+        let aRect = [382, 45, 454, 65];
+        
+        let oComboboxField = this.CreateField(sName, AscPDF.FIELD_TYPES.combobox, aRect);
+
+        return oComboboxField;
+    };
+    CPDFDoc.prototype.CreateListboxField = function() {
+        let sName = 'ListboxField1';
+        let aRect = [382, 81, 482, 153];
+        
+        let oListboxField = this.CreateField(sName, AscPDF.FIELD_TYPES.listbox, aRect);
+
+        return oListboxField;
     };
     CPDFDoc.prototype.FillFormsParents = function(aParentsInfo) {
         let oChilds = this.GetParentsMap();
@@ -519,8 +540,8 @@ var CPresentation = CPresentation || function(){};
             if (aParentsInfo[i]["i"] != null)
                 oParent.SetApIdx(aParentsInfo[i]["i"]);
             if (aParentsInfo[i]["curIdxs"])
-                oParent.SetApiCurIdxs(aParentsInfo[i]["curIdxs"]);
-            if (aParentsInfo[i]["Opt"] && oParent instanceof AscPDF.CBaseCheckBoxField)
+                oParent.SetParentCurIdxs(aParentsInfo[i]["curIdxs"]);
+            if (aParentsInfo[i]["Opt"])
                 oParent.SetOptions(aParentsInfo[i]["Opt"]);
 
             oParents[nIdx] = oParent;

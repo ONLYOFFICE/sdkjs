@@ -1133,8 +1133,34 @@
 		let oDoc = this.getPDFDoc();
 		
 		oDoc.DoAction(function() {
-			let oField = oDoc.CreateCheckboxField(true);
+			let oField = oDoc.CreateRadiobuttonField(true);
 			oDoc.AddField(oField, oDoc.GetCurPage());
+		}, AscDFH.historydescription_Pdf_AddField, this);
+	};
+	PDFEditorApi.prototype.AddComboboxField = function() {
+		let oDoc = this.getPDFDoc();
+		
+		oDoc.DoAction(function() {
+			let oField = oDoc.CreateComboboxField(true);
+			oDoc.AddField(oField, oDoc.GetCurPage());
+		}, AscDFH.historydescription_Pdf_AddField, this);
+	};
+	PDFEditorApi.prototype.AddListboxField = function() {
+		let oDoc = this.getPDFDoc();
+		
+		oDoc.DoAction(function() {
+			let oField = oDoc.CreateListboxField(true);
+			oDoc.AddField(oField, oDoc.GetCurPage());
+		}, AscDFH.historydescription_Pdf_AddField, this);
+	};
+	PDFEditorApi.prototype.AddListFieldOption = function(option, nPos) {
+		let oDoc = this.getPDFDoc();
+
+		oDoc.DoAction(function() {
+			let oField = oDoc.activeForm;
+			if (oField && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(oField.GetType())) {
+				oField.AddOption(option, nPos);
+			}
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
 	/////////////////////////////////////////////////////////////
@@ -3179,6 +3205,8 @@
 	PDFEditorApi.prototype['AddImageField']			= PDFEditorApi.prototype.AddImageField;
 	PDFEditorApi.prototype['AddCheckboxField']		= PDFEditorApi.prototype.AddCheckboxField;
 	PDFEditorApi.prototype['AddRadiobuttonField']	= PDFEditorApi.prototype.AddRadiobuttonField;
+	PDFEditorApi.prototype['AddComboboxField']		= PDFEditorApi.prototype.AddComboboxField;
+	PDFEditorApi.prototype['AddListboxField']		= PDFEditorApi.prototype.AddListboxField;
 	
 	// drawings
 	PDFEditorApi.prototype['AddTextArt']							= PDFEditorApi.prototype.AddTextArt;

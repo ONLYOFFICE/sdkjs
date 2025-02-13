@@ -47,19 +47,21 @@
         AscPDF.CBaseField.call(this, sName, sType, nPage, aRect, oDoc);
 
         this._commitOnSelChange     = false;
-        this._currentValueIndices   = undefined;
+        this._currentValueIndices   = [];
         this._textFont              = AscPDF.DEFAULT_FIELD_FONT;
         this._options               = [];
 
+        AscCommon.History.StartNoHistoryMode();
 		this.content = new AscPDF.CTextBoxContent(this, oDoc);
+        AscCommon.History.EndNoHistoryMode();
     }
     CBaseListField.prototype = Object.create(AscPDF.CBaseField.prototype);
 	CBaseListField.prototype.constructor = CBaseListField;
 
-    CBaseListField.prototype.SetApiCurIdxs = function(aIdxs) {
+    CBaseListField.prototype.SetParentCurIdxs = function(aIdxs) {
         let oParent = this.GetParent();
         if (oParent && this.IsWidget() && oParent.IsAllKidsWidgets())
-            oParent.SetApiCurIdxs(aIdxs);
+            oParent.SetParentCurIdxs(aIdxs);
         else {
             let oDoc = this.GetDocument();
             oDoc.History.Add(new CChangesPDFListFormParentCurIdxs(this, this.GetParentCurIdxs(), aIdxs));
@@ -86,12 +88,20 @@
         return this._commitOnSelChange;
     };
 
-    CBaseListField.prototype.GetOptions = function() {
-        return this._options;
+    CBaseListField.prototype.GetOptions = function(bInherit) {
+        let oParent = this.GetParent();
+        if (oParent == null)
+            return this._options;
+        else if (bInherit === false || (this.GetPartialName() != null)) {
+            return this._options;
+        }
+        
+        if (oParent)
+            return oParent.GetOptions();
     };
 	// export
 	CBaseListField.prototype["getOptions"] = function() {
-		return this._options;
+		return this.GetOptions();
 	};
 
     if (!window["AscPDF"])

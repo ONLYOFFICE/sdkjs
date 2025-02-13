@@ -91,9 +91,7 @@
             return;
 
         if (!this.RecalculateContentRect()) {
-            this.content.Content.forEach(function(element) {
-                element.Recalculate_Page(0);
-            });
+            this.content.Recalculate_Page(0, true);
         }
 
         this.SetNeedRecalc(false);
@@ -202,7 +200,7 @@
         this.ScrollVerticalEnd(true);
         let isChanged = false;
         for (let i = 0; i < aCurIdxs.length; i++) {
-            if (aCurIdxs[i] === undefined || aApiIdxs[i] === undefined || aCurIdxs[i] !== aApiIdxs[i]) {
+            if (!aApiIdxs || aCurIdxs[i] === undefined || aApiIdxs[i] === undefined || aCurIdxs[i] !== aApiIdxs[i]) {
                 isChanged = true;
                 break;
             }
@@ -230,7 +228,7 @@
         this._bAutoShiftContentView = true;
         
         this.SetParentValue(this.GetValue());
-        this.SetApiCurIdxs(aCurIdxs);
+        this.SetParentCurIdxs(aCurIdxs);
     };
     CListBoxField.prototype.UpdateTopIndex = function() {
         let oParaBounds     = this.content.GetElement(0).GetPageBounds(0);
@@ -317,36 +315,71 @@
         oApiPara.Paragraph.RecalcCompiledPr(true);
         this.SetNeedRecalc(true);
     };
-    CListBoxField.prototype.SetOptions = function(aOpt) {
-        this.content.Internal_Content_RemoveAll();
-        for (let i = 0; i < aOpt.length; i++) {
-            if (aOpt[i] == null)
-                continue;
-            let sCaption = "";
-            if (typeof(aOpt[i]) == "string" && aOpt[i] != "") {
-                sCaption = aOpt[i];
-                this._options.push(aOpt[i]);
+    CListBoxField.prototype.AddOption = function(option, nPos) {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() == this.GetType())
+            return oParent.AddOption(option, nPos);
+
+        if (option == null) return;
+        
+        let formattedOption;
+        let sCaption = "";
+        if (typeof option === "string" && option !== "") {
+            formattedOption = option;
+            sCaption = option;
+        }
+        else if (Array.isArray(option) && option[0] !== undefined && option[1] !== undefined) {
+            if (option[0].toString && option[1].toString) {
+                formattedOption = [option[0].toString(), option[1].toString()];
+                sCaption = option[0].toString();
             }
-            else if (Array.isArray(aOpt[i]) && aOpt[i][0] != undefined && aOpt[i][1] != undefined) {
-                if (aOpt[i][0].toString && aOpt[i][1].toString) {
-                    this._options.push([aOpt[i][0].toString(), aOpt[i][1].toString()]);
-                    sCaption = aOpt[i][0].toString();
-                }
-            }
-            else if (typeof(aOpt[i]) != "string" && aOpt[i].toString) {
-                this._options.push(aOpt[i].toString());
-                sCaption = aOpt[i].toString();
+        }
+        else if (option.toString) {
+            formattedOption = option.toString();
+            sCaption = option.toString();
+        }
+        
+        if (formattedOption !== undefined) {
+            if (nPos == undefined) {
+                nPos = this._options.length;
             }
 
+            AscCommon.History.Add(new CChangesPDFListOption(this, nPos, formattedOption, true));
+            this._options.push(formattedOption);
             if (sCaption !== "") {
-                AscFonts.FontPickerByCharacter.getFontsByString(sCaption);
+                let oDoc = this.GetDocument();
+                let aFields = oDoc.GetAllWidgets(this.GetFullName());
 
-                let oPara = new AscWord.Paragraph(this.content, false);
-                let oRun = new AscWord.ParaRun(oPara, false);
-                this.content.Internal_Content_Add(i, oPara);
-                oPara.Add(oRun);
-                oRun.AddText(sCaption);
+                aFields.forEach(function(field) {
+                    AscFonts.FontPickerByCharacter.getFontsByString(sCaption);
+                    let oPara = new AscWord.Paragraph(this.content, false);
+                    let oRun = new AscWord.ParaRun(oPara, false);
+                    field.content.Internal_Content_Add(nPos, oPara);
+                    oPara.Add(oRun);
+                    oRun.AddText(sCaption);
+
+                    field.SetWasChanged(true);
+                    field.SetNeedRecalc(true);
+                });
             }
+
+            this.SetWasChanged(true);
+        }
+    };
+    CListBoxField.prototype.RemoveOption = function(nPos) {
+        if (Number.isInteger(nPos) && nPos >= 0 && nPos < this._options.length) {
+            AscCommon.History.Add(new CChangesPDFListOption(this, nPos, option, false));
+
+            this._options.splice(nPos, 1);
+            this.content.Internal_Content_Remove(nPos);
+        }
+    };
+    CListBoxField.prototype.SetOptions = function(aOpt) {
+        while (this._options.length > 0) {
+            this.RemoveOption(0);
+        }
+        for (let i = 0; i < aOpt.length; i++) {
+            this.AddOption(aOpt[i]);
         }
     };
     CListBoxField.prototype.SetValue = function(value) {
@@ -416,13 +449,13 @@
 
             if (editor.getDocumentRenderer().IsOpenFormsInProgress) {
                 this.SetParentValue(value);
-                this.SetApiCurIdxs(aIndexes);
+                this.SetParentCurIdxs(aIndexes);
             }
                 
         }
         else {
             this.SetParentValue(value);
-            this.SetApiCurIdxs(aIndexes);
+            this.SetParentCurIdxs(aIndexes);
         }
     };
     CListBoxField.prototype.private_SetValue = CListBoxField.prototype.SetValue;
@@ -886,10 +919,10 @@
             
             oDoc.History.EndNoHistoryMode();
             if (editor.getDocumentRenderer().IsOpenFormsInProgress)
-                this.SetApiCurIdxs(aIdxs);
+                this.SetParentCurIdxs(aIdxs);
         }
         else {
-            this.SetApiCurIdxs(aIdxs);
+            this.SetParentCurIdxs(aIdxs);
         }
 
         this.SetNeedCommit(false);

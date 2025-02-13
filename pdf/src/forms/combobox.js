@@ -44,9 +44,11 @@
         this._doNotSpellCheck   = false;
         this._editable          = false;
 
+        AscCommon.History.StartNoHistoryMode();
         // content for formatting value
         // Note: draw this content instead of main if form has a "format" action
 		this.contentFormat = new AscPDF.CTextBoxContent(this, oDoc, true);
+        AscCommon.History.EndNoHistoryMode();
 
         this._markRect = {};
         this._useDisplayValue   = true;
@@ -274,7 +276,7 @@
 
             var pageObject = oViewer.getPageByCoords(x, y);
 
-            if (pageObject.x >= this._markRect.x1 && pageObject.x <= this._markRect.x2 && pageObject.y >= this._markRect.y1 && pageObject.y <= this._markRect.y2 && this._options.length != 0) {
+            if (pageObject.x >= this._markRect.x1 && pageObject.x <= this._markRect.x2 && pageObject.y >= this._markRect.y1 && pageObject.y <= this._markRect.y2 && this.GetOptions()) {
                 editor.sendEvent("asc_onShowPDFFormsActions", this, x, y);
                 this.content.MoveCursorToStartPos();
             }
@@ -317,11 +319,14 @@
         let oRun = oPara.GetElement(0);
 
         oRun.ClearContent();
-        if (Array.isArray(this._options[nIdx])) {
-            oRun.AddText(this._options[nIdx][0]);
-        }
-        else {
-            oRun.AddText(this._options[nIdx]);
+        let aOptions = this.GetOptions();
+        if (aOptions[nIdx]) {
+            if (Array.isArray(aOptions[nIdx])) {
+                oRun.AddText(aOptions[nIdx][0]);
+            }
+            else {
+                oRun.AddText(aOptions[nIdx]);
+            }
         }
 
         this.SetNeedRecalc(true);
@@ -342,10 +347,10 @@
             }
 
             if (Asc.editor.getDocumentRenderer().IsOpenFormsInProgress)
-                this.SetApiCurIdxs(aIdxs);
+                this.SetParentCurIdxs(aIdxs);
         }
         else 
-            this.SetApiCurIdxs(aIdxs);
+            this.SetParentCurIdxs(aIdxs);
 
         this.SetNeedCommit(false);
     };
@@ -357,17 +362,18 @@
             let isOnOpen    = oDoc.Viewer.IsOpenFormsInProgress;
 
             let sTextToAdd = "";
-            for (let i = 0; i < this._options.length; i++) {
-                if (Array.isArray(this._options[i]) && this._options[i][1] == sValue) {
-                    sTextToAdd = this._options[i][0];
+            let aOptions = this.GetOptions();
+            for (let i = 0; i < aOptions.length; i++) {
+                if (Array.isArray(aOptions[i]) && aOptions[i][1] == sValue) {
+                    sTextToAdd = aOptions[i][0];
                     aIdxs.push(i);
                     break;
                 }
             }
             if (sTextToAdd == "") {
-                for (let i = 0; i < this._options.length; i++) {
-                    if (this._options[i] == sValue) {
-                        sTextToAdd = this._options[i];
+                for (let i = 0; i < aOptions.length; i++) {
+                    if (aOptions[i] == sValue) {
+                        sTextToAdd = aOptions[i];
                         aIdxs.push(i);
                         break;
                     }
@@ -385,29 +391,30 @@
 
             if (isOnOpen) {
                 this.SetParentValue(sValue);
-                this.SetApiCurIdxs(aIdxs);
+                this.SetParentCurIdxs(aIdxs);
             }
         }
         else {
             this.SetParentValue(sValue);
-            this.SetApiCurIdxs(aIdxs);
+            this.SetParentCurIdxs(aIdxs);
         }
     };
     CComboBoxField.prototype.private_SetValue = function(sValue) {
         let aIdxs = [];
         if (this.IsWidget()) {
+            let aOptions = this.GetOptions();
             let sTextToAdd = "";
-            for (let i = 0; i < this._options.length; i++) {
-                if (Array.isArray(this._options[i]) && this._options[i][1] == sValue) {
-                    sTextToAdd = this._options[i][0];
+            for (let i = 0; i < aOptions.length; i++) {
+                if (Array.isArray(aOptions[i]) && aOptions[i][1] == sValue) {
+                    sTextToAdd = aOptions[i][0];
                     aIdxs.push(i);
                     break;
                 }
             }
             if (sTextToAdd == "") {
-                for (let i = 0; i < this._options.length; i++) {
-                    if (this._options[i] == sValue) {
-                        sTextToAdd = this._options[i];
+                for (let i = 0; i < aOptions.length; i++) {
+                    if (aOptions[i] == sValue) {
+                        sTextToAdd = aOptions[i];
                         aIdxs.push(i);
                         break;
                     }
@@ -422,7 +429,7 @@
         }
         else {
             this.SetParentValue(sValue);
-            this.SetApiCurIdxs(aIdxs);
+            this.SetParentCurIdxs(aIdxs);
         }
     };
     
@@ -508,7 +515,7 @@
 
         let isChanged = false;
         for (let i = 0; i < aCurIdxs.length; i++) {
-            if (aCurIdxs[i] === undefined || aApiIdxs[i] === undefined || aCurIdxs[i] !== aApiIdxs[i]) {
+            if (!aApiIdxs || aCurIdxs[i] === undefined || aApiIdxs[i] === undefined || aCurIdxs[i] !== aApiIdxs[i]) {
                 isChanged = true;
                 break;
             }
@@ -552,7 +559,7 @@
         }
 
         this.SetParentValue(this.GetValue());
-        this.SetApiCurIdxs(aCurIdxs);
+        this.SetParentCurIdxs(aCurIdxs);
 
         // когда выравнивание посередине или справа, то после того
         // как ширина контента будет больше чем размер формы, выравнивание становится слева, пока текста вновь не станет меньше чем размер формы
@@ -580,22 +587,23 @@
      * @returns {number}
 	 */
     CComboBoxField.prototype.UpdateIndexies = function() {
+        let aOptions = this.GetOptions();
         let sValue = this.content.GetElement(0).GetText({ParaEndToSpace: false});
         let nIdx = -1;
-        for (let i = 0; i < this._options.length; i++) {
-            if (this._options[i][0] === sValue) {
+        for (let i = 0; i < aOptions.length; i++) {
+            if (aOptions[i][0] === sValue) {
                 nIdx = i;
                 break;
             }
         }
-        for (let i = 0; i < this._options.length; i++) {
-            if (this._options[i] === sValue) {
+        for (let i = 0; i < aOptions.length; i++) {
+            if (aOptions[i] === sValue) {
                 nIdx = i;
                 break;
             }
         }
 
-        this.SetApiCurIdxs([nIdx]);
+        this.SetParentCurIdxs([nIdx]);
         return nIdx;
     };
     
@@ -612,24 +620,60 @@
         
         return false;
     };
-    CComboBoxField.prototype.SetOptions = function(aOpt) {
-        let aOptToPush = [];
-        for (let i = 0; i < aOpt.length; i++) {
-            if (aOpt[i] == null)
-                continue;
-            if (typeof(aOpt[i]) == "string" && aOpt[i] != "")
-                aOptToPush.push(aOpt[i]);
-            else if (Array.isArray(aOpt[i]) && aOpt[i][0] != undefined && aOpt[i][1] != undefined) {
-                if (aOpt[i][0].toString && aOpt[i][1].toString) {
-                    aOptToPush.push([aOpt[i][0].toString(), aOpt[i][1].toString()])
-                }
+    CComboBoxField.prototype.AddOption = function(option, nPos) {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() == this.GetType())
+            return oParent.AddOption(option, nPos);
+
+        if (option == null) return;
+        
+        let formattedOption;
+        
+        if (option[0] !== undefined && option[1] !== undefined) {
+            if (option[0].toString && option[1].toString) {
+                formattedOption = [option[0].toString(), option[1].toString()];
             }
-            else if (typeof(aOpt[i]) != "string" && aOpt[i].toString) {
-                aOptToPush.push(aOpt[i].toString());
+        } else if (option.toString) {
+            formattedOption = option.toString();
+        }
+        
+        if (formattedOption !== undefined) {
+            if (nPos == undefined) {
+                nPos = this._options.length;
             }
+
+            this._options.splice(nPos, 0, formattedOption);
         }
 
-        this._options = aOptToPush;
+        AscCommon.History.Add(new CChangesPDFListOption(this, nPos, formattedOption, true));
+
+        this.SetWasChanged(true);
+        this.SetNeedRecalc(true);
+    };
+    CComboBoxField.prototype.RemoveOption = function(nPos) {
+        if (Number.isInteger(nPos) && nPos >= 0 && nPos < this._options.length) {
+            if (this.GetCurIdxs().includes(nPos)) {
+                let oPara = this.content.GetElement(0);
+                let oRun = oPara.GetElement(0);
+
+                oRun.ClearContent();
+            }
+
+            let option = this._options.splice(nPos, 1);
+
+            AscCommon.History.Add(new CChangesPDFListOption(this, nPos, option, false));
+
+            this.SetWasChanged(true);
+            this.SetNeedRecalc(true);
+        }
+    };
+    CComboBoxField.prototype.SetOptions = function(aOpt) {
+        while (this._options.length > 0) {
+            this.RemoveOption(0);
+        }
+        for (let i = 0; i < aOpt.length; i++) {
+            this.AddOption(aOpt[i]);
+        }
     };
     
     CComboBoxField.prototype.GetValue = function(bDisplayValue) {
@@ -658,15 +702,16 @@
         if (bApiValue)
             return this._currentValueIndices;
 
+        let aOptions = this.GetOptions();
         let sValue = this.content.GetElement(0).GetText({ParaEndToSpace: false});
-        for (let i = 0; i < this._options.length; i++) {
-            if (Array.isArray(this._options[i])) {
-                if (this._options[i][0] == sValue)
+        for (let i = 0; i < aOptions.length; i++) {
+            if (Array.isArray(aOptions[i])) {
+                if (aOptions[i][0] == sValue)
                     return [i];
             }
         }
-        for (let i = 0; i < this._options.length; i++) {
-            if (this._options[i] === sValue) {
+        for (let i = 0; i < aOptions.length; i++) {
+            if (aOptions[i] === sValue) {
                 return [i];
             }
         }
@@ -727,7 +772,7 @@
         }
 
         // элементы списка выбора
-        let aOptions = this.GetOptions();
+        let aOptions = this.GetOptions(false);
         if (aOptions) {
             memory.fieldDataFlags |= (1 << 10);
             memory.WriteLong(aOptions.length);

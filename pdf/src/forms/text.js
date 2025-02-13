@@ -303,30 +303,6 @@
         return true;
     };
 
-    // /**
-	//  * Sets the value to childs fields.
-	//  * @memberof CTextField
-	//  * @typeofeditors ["PDF"]
-	//  */
-    // CTextField.prototype.SetValueToKids = function(sValue) {
-    //     let oField, sName;
-    //     let aDoneFields = [];
-    //     for (let i = 0; i < this._kids.length; i++) {
-    //         oField = this._kids[i];
-    //         sName = oField.GetPartialName();
-
-    //         if (oField.IsWidget()) {
-    //             if (aDoneFields.includes(sName) == false) {
-    //                 aDoneFields.push(oField.GetFullName());
-    //                 oField.SetValue(sValue);
-    //                 oField.Commit();
-    //             }
-    //         }
-    //         else
-    //             oField.SetValueToKids(sValue);
-    //     }
-    // };
-	
 	/**
 	 * Gets the value of current form (can be not commited).
 	 * @memberof CTextField
