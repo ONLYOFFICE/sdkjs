@@ -420,6 +420,9 @@
 					bulletFont = "Wingdings";
 				}
 
+				let indentationLeftCell = paragraphPropsFinal && paragraphPropsFinal.getCell("IndLeft");
+				let indentationLeft = indentationLeftCell.getNumberValue() * AscCommonWord.g_dKoef_in_to_mm;
+
 
 
 				// create new paragraph to hold new properties
@@ -460,6 +463,8 @@
 				// Bullet.bulletType      = new AscFormat.CBulletType();
 				// Bullet.bulletType.type = AscFormat.BULLET_TYPE_BULLET_AUTONUM;
 				// paragraph.Add_PresentationNumbering(Bullet);
+
+				paragraph.Pr.Ind.Left = indentationLeft;
 
 				oContent.Content.push(paragraph);
 				paragraph.SetParent(oContent);
