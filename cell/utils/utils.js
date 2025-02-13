@@ -584,19 +584,6 @@
 			return bRes;
 		};
 
-		Range.prototype.isIntersectWithOffset = function (range, offset) {
-			let shiftRow = offset && offset.row && offset.row > 0 ? offset.row : 0,
-				shiftCol = offset && offset.col && offset.col > 0 ? offset.col : 0,
-				bRes = true;
-			
-			if ((range.r2 + shiftRow) < this.r1 || this.r2 < range.r1) {
-				bRes = false;
-			} else if ((range.c2 + shiftCol) < this.c1 || this.c2 < range.c1) {
-				bRes = false;
-			}
-			return bRes;
-		};
-
 		Range.prototype.isIntersectForInsertColRow = function (range, isInsertCol) {
 			var bRes = true;
 			if (range.r2 < this.r1 || this.r2 < range.r1)
@@ -625,7 +612,7 @@
 			var isHor = offset && offset.col;
 			var isDelete = offset && (offset.col < 0 || offset.row < 0);
 			if (isHor) {
-				if (!isDelete && (this.r1 <= range.r1) && (range.r2 <= this.r2) && (this.c1 <= (range.c2 + offset.col))) {
+				if (this.r1 <= range.r1 && range.r2 <= this.r2 && this.c1 <= range.c2) {
 					return true;
 				} else if (isDelete && this.c1 <= range.c1 && range.c2 <= this.c2) {
 					var topIn = this.r1 <= range.r1 && range.r1 <= this.r2;
@@ -633,7 +620,7 @@
 					return topIn || bottomIn;
 				}
 			} else {
-				if (!isDelete && (this.c1 <= range.c1) && (range.c2 <= this.c2) && (this.r1 <= (range.r2 + offset.row))) {
+				if (this.c1 <= range.c1 && range.c2 <= this.c2 && this.r1 <= range.r2) {
 					return true;
 				} else if (isDelete && this.r1 <= range.r1 && range.r2 <= this.r2) {
 					var leftIn = this.c1 <= range.c1 && range.c1 <= this.c2;

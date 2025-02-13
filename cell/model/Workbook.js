@@ -2184,7 +2184,8 @@
 				for (var areaIndex in sheetContainer.areaMap) {
 					var areaMapElem = sheetContainer.areaMap[areaIndex];
 					if (c_oNotifyType.Shift === notifyType) {
-						isIntersect = bboxShift.isIntersectWithOffset(areaMapElem.bbox, offset);
+						// isIntersect = bboxShift.isIntersect(areaMapElem.bbox);
+						isIntersect = bboxShift.containsRange(areaMapElem.bbox);
 					} else if (c_oNotifyType.Move === notifyType || c_oNotifyType.Delete === notifyType) {
 						isIntersect = bbox.isIntersect(areaMapElem.bbox);
 					}

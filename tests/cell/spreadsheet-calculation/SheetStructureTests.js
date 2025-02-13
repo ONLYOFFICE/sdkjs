@@ -609,7 +609,7 @@ $(function () {
 		clearData(0, 0, AscCommon.gc_nMaxCol, AscCommon.gc_nMaxRow);
 	});
 
-	QUnit.test("Test: \"Shift cells when table created\"", function (assert) {
+	QUnit.test("Test: \"Shift/move cells after create a table\"", function (assert) {
 		// let testData = [
 		// 	["1", "row1col2", "row1col3", "row1col4", "row1col5", "row1col6"],
 		// 	["2", "row2col2", "row2col3", "row2col4", "row2col5", "row2col6"],
@@ -662,10 +662,11 @@ $(function () {
 		let tableOptions = new AscCommonExcel.AddFormatTableOptions();
 		tableOptions.range = "A100:A104";
 		// create table in A100:A104 range
+		tableOptions.isTitle = false;
 		api.asc_addAutoFilter("TableStyleMedium2", tableOptions);
 
 		let tables = wsView.model.autoFilters.getTablesIntersectionRange(new Asc.Range(0, 100, 0, 100));
-		assert.strictEqual(tables.length, 1, "compare tables length");
+		assert.strictEqual(tables.length, 1, "Table was created without selection of formula. Compare tables length");
 
 		let table = tables[0];
 		let tableName = table.DisplayName;
@@ -696,10 +697,11 @@ $(function () {
 		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
 
 		resCell = ws.getRange4(105, 0);
-		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A105)", "Value for edit in after table is created");
-		assert.strictEqual(resCell.getFormula(), "SUM(A100:A105)", "Formula in cell after table is created");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A101:A105)", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A101:A105)", "Formula in cell after table is created");
 
-		clearData(0, 0, AscCommon.gc_nMaxCol, AscCommon.gc_nMaxRow);
+		tables.length = 0;
+		clearData(0, 0, 200, 200);
 
 
 		/* create table with header/title and with the same data as the previous test*/
@@ -732,7 +734,7 @@ $(function () {
 		api.asc_addAutoFilter("TableStyleMedium2", tableOptions);
 
 		tables = wsView.model.autoFilters.getTablesIntersectionRange(new Asc.Range(0, 100, 0, 100));
-		assert.strictEqual(tables.length, 1, "compare tables length");
+		assert.strictEqual(tables.length, 1, "Table was created without selection of formula.compare tables length");
 
 		table = tables[0];
 		tableName = table.DisplayName;
@@ -766,7 +768,207 @@ $(function () {
 		assert.strictEqual(resCell.getValueForEdit(), "", "Value for edit in after table is created");
 		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table with title is created");
 
-		clearData(0, 0, AscCommon.gc_nMaxCol, AscCommon.gc_nMaxRow);
+		tables.length = 0;
+		clearData(0, 0, 200, 200);
+
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell before table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell before table is created");
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula("SUM(A100:A104)", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		oParser.buildDependencies();
+		array = oParser.calculate();
+
+		tableOptions = new AscCommonExcel.AddFormatTableOptions();
+		tableOptions.range = "A100:A105";
+		tableOptions.isTitle = false;
+		api.asc_addAutoFilter("TableStyleMedium2", tableOptions);
+
+		tables = wsView.model.autoFilters.getTablesIntersectionRange(new Asc.Range(0, 100, 0, 100));
+		assert.strictEqual(tables.length, 1, "Table was created with selection of formula. Compare tables length");
+
+		table = tables[0];
+		tableName = table.DisplayName;
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "Column1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A101:A105)", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A101:A105)", "Formula in cell after table is created");
+
+		tables.length = 0;
+		clearData(0, 0, 200, 200);
+
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell before table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell before table is created");
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula("SUM(A100:A104)", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		oParser.buildDependencies();
+		array = oParser.calculate();
+
+		tableOptions = new AscCommonExcel.AddFormatTableOptions();
+		tableOptions.range = "A100:A103";
+		tableOptions.isTitle = false;
+		api.asc_addAutoFilter("TableStyleMedium2", tableOptions);
+
+		tables = wsView.model.autoFilters.getTablesIntersectionRange(new Asc.Range(0, 100, 0, 100));
+		assert.strictEqual(tables.length, 1, "Table was created without selection of formula. Compare tables length");
+
+		table = tables[0];
+		tableName = table.DisplayName;
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "Column1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A101:A105)", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A101:A105)", "Formula in cell after table is created");
+
+		tables.length = 0;
+		clearData(0, 0, 200, 200);
+
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell before table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell before table is created");
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula("SUM(A100:A104)", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		oParser.buildDependencies();
+		array = oParser.calculate();
+		
+		tableOptions = new AscCommonExcel.AddFormatTableOptions();
+		tableOptions.range = "A102:A105";
+		tableOptions.isTitle = false;
+		api.asc_addAutoFilter("TableStyleMedium2", tableOptions);
+		
+		tables = wsView.model.autoFilters.getTablesIntersectionRange(new Asc.Range(0, 103, 0, 103));
+		assert.strictEqual(tables.length, 1, "Table was created with selection of formula. Compare tables length");
+
+		table = tables[0];
+		tableName = table.DisplayName;
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "Column1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A105)", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A105)", "Formula in cell after table is created");
+
+		tables.length = 0;
+		clearData(0, 0, 200, 200);
+		ws.getRange2("A99:B110").cleanAll();
 
 	});
 

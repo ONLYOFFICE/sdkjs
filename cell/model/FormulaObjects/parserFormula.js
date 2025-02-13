@@ -9161,12 +9161,17 @@ function parserFormula( formula, parent, _ws ) {
 					_cellsBbox = elem.getBBox0();
 				}
 			}
+			let tableOffset = null;
 			if (_cellsRange || _cellsBbox) {
 				var isIntersect;
 				if (AscCommon.c_oNotifyType.Shift === notifyType) {
 					isIntersect = bbox.isIntersectForShift(_cellsBbox, offset);
 				} else if (AscCommon.c_oNotifyType.Move === notifyType) {
 					isIntersect = bbox.containsRange(_cellsBbox);
+					if (!isIntersect && bbox.isIntersect(_cellsBbox)) {
+						tableOffset = offset;
+						isIntersect = true;
+					}
 				} else if (AscCommon.c_oNotifyType.Delete === notifyType) {
 					isIntersect = bbox.isIntersect(_cellsBbox);
 				}
@@ -9175,7 +9180,13 @@ function parserFormula( formula, parent, _ws ) {
 					if (AscCommon.c_oNotifyType.Shift === notifyType) {
 						isNoDelete = _cellsBbox.forShift(bbox, offset, this.wb.bUndoChanges);
 					} else if (AscCommon.c_oNotifyType.Move === notifyType) {
-						_cellsBbox.setOffset(offset);
+						// If the first cell is inside the selective, then we move formula to -1 +1, if not then just +1 down
+						// It should work only when we insert the table
+						if (tableOffset && bbox.r1 !== _cellsBbox.r1) {
+							_cellsBbox.setOffsetLast(tableOffset);
+						} else {
+							_cellsBbox.setOffset(offset);
+						}
 						isNoDelete = true;
 					} else if (AscCommon.c_oNotifyType.Delete === notifyType) {
 						if (bbox.containsRange(_cellsBbox)) {
