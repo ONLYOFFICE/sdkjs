@@ -389,6 +389,37 @@
 					AscCommon.consoleLog("horizontal align cell was not found so default is set (left)");
 				}
 
+				let bulletTypeCell = paragraphPropsFinal && paragraphPropsFinal.getCell("Bullet");
+				let bulletType = bulletTypeCell.getNumberValue();
+
+				let bulletChar;
+				let bulletFont;
+
+				if (bulletType === 0) {
+					// none
+				} else if (bulletType === 1) {
+					bulletChar = "•";
+					bulletFont = "Symbol";
+				} else if (bulletType === 2) {
+					bulletChar = "◆";
+					bulletFont = "Courier New";
+				} else if (bulletType === 3) {
+					bulletChar = "▪";
+					bulletFont = "Wingdings";
+				} else if (bulletType === 4) {
+					bulletChar = "□";
+					bulletFont = "Wingdings";
+				} else if (bulletType === 5) {
+					bulletChar = "❖";
+					bulletFont = "Wingdings";
+				} else if (bulletType === 6) {
+					bulletChar = "➢";
+					bulletFont = "Wingdings";
+				} else if (bulletType === 7) {
+					bulletChar = "✓";
+					bulletFont = "Wingdings";
+				}
+
 
 
 				// create new paragraph to hold new properties
@@ -414,14 +445,15 @@
 
 				// Set defaultParagraph justify/align text - center
 				paragraph.Pr.SetJc(horizontalAlign);
-				oContent.Content.push(paragraph);
-				paragraph.SetParent(oContent);
-
 
 				// // CPresentationBullet
 				paragraph.Pr.Bullet = new AscFormat.CBullet();
-				// paragraph.Pr.Bullet.fillBulletFromCharAndFont("●", "Arial");
-
+				if (bulletChar) {
+					// smth wrong with Symbol font see:
+					// https://disk.yandex.ru/d/uNQ2eMfNyVtUFQ  // https://disk.yandex.ru/i/2a0drnBXaVxJNw
+					// paragraph.Pr.Bullet.fillBulletFromCharAndFont(bulletChar, bulletFont);
+					paragraph.Pr.Bullet.fillBulletFromCharAndFont(bulletChar, "Arial");
+				}
 				// paragraph.PresentationPr.Bullet.m_nType = AscFormat.numbering_presentationnumfrmt_Blip;
 				//
 				// let Bullet             = new AscFormat.CBullet();
@@ -429,6 +461,8 @@
 				// Bullet.bulletType.type = AscFormat.BULLET_TYPE_BULLET_AUTONUM;
 				// paragraph.Add_PresentationNumbering(Bullet);
 
+				oContent.Content.push(paragraph);
+				paragraph.SetParent(oContent);
 
 				// paragraph.Pr.Spacing.Before = 0;
 				// paragraph.Pr.Spacing.After = 0;
