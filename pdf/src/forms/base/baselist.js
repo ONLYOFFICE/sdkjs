@@ -60,10 +60,13 @@
         let oParent = this.GetParent();
         if (oParent && this.IsWidget() && oParent.IsAllKidsWidgets())
             oParent.SetApiCurIdxs(aIdxs);
-        else
+        else {
+            let oDoc = this.GetDocument();
+            oDoc.History.Add(new CChangesPDFListFormParentCurIdxs(this, this.GetParentCurIdxs(), aIdxs));
             this._currentValueIndices = aIdxs;
+        }
     };
-    CBaseListField.prototype.GetApiCurIdxs = function(bInherit) {
+    CBaseListField.prototype.GetParentCurIdxs = function(bInherit) {
         let oParent = this.GetParent();
         if (oParent == null)
             return this._currentValueIndices;
@@ -72,7 +75,7 @@
         }
         
         if (oParent)
-            return oParent.GetApiCurIdxs();
+            return oParent.GetParentCurIdxs();
     };
 
     CBaseListField.prototype.SetCommitOnSelChange = function(bValue) {

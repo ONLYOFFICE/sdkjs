@@ -149,6 +149,9 @@
 				setTimeout(Callback, 0)
 			}
 		};
+		let docInfo = new Asc.asc_CDocInfo();
+		docInfo.asc_putTitle("TeSt.xlsx");
+		editor.DocInfo = docInfo;
 
 		window["Asc"]["editor"] = editor;
 	}
@@ -162,7 +165,7 @@
 		editor.isOpenOOXInBrowser = false;
 		editor._openDocument(AscCommon.getEmpty());
 		editor._openOnClient();
-		editor.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
+		editor.initCollaborativeEditing({});
 		editor.wb = new AscCommonExcel.WorkbookView(editor.wbModel, editor.controller, editor.handlers, editor.HtmlElement,
 			editor.topLineEditorElement, editor, editor.collaborativeEditing, editor.fontRenderingMode);
 		const wb = editor.wbModel;

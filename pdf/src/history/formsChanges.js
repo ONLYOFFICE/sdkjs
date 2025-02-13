@@ -33,12 +33,16 @@
 "use strict";
 
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Value]			= CChangesPDFFormValue;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Parent_Value]		= CChangesPDFFormParentValue;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Format_Value]		= CChangesPDFFormFormatValue;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Changed]			= CChangesPDFFormChanged;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Add_Kid]			= CChangesPDFFormAddKid;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Remove_Kid]		= CChangesPDFFormRemoveKid;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Change_Display]	= CChangesPDFFormDisplay;
 
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Cur_Idxs]	= CChangesPDFListFormCurIdxs;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Top_Idx]		= CChangesPDListTopIndex;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Cur_Idxs]		= CChangesPDFListFormCurIdxs;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Parent_Cur_Idxs]	= CChangesPDFListFormParentCurIdxs;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Top_Idx]			= CChangesPDFListTopIndex;
 
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Image]		= CChangesPDFPushbuttonImage;
 
@@ -56,8 +60,41 @@ CChangesPDFFormValue.prototype.Type = AscDFH.historyitem_Pdf_Form_Value;
 CChangesPDFFormValue.prototype.private_SetValue = function(Value)
 {
 	let oField = this.Class;
-	oField.SetValue(Value);
-	oField.Commit();
+	oField.private_SetValue(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesPDFFormFormatValue(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFormFormatValue.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesPDFFormFormatValue.prototype.constructor = CChangesPDFFormFormatValue;
+CChangesPDFFormFormatValue.prototype.Type = AscDFH.historyitem_Pdf_Form_Format_Value;
+CChangesPDFFormFormatValue.prototype.private_SetValue = function(Value)
+{
+	let oField = this.Class;
+	oField.SetFormatValue(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesPDFFormParentValue(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFormParentValue.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesPDFFormParentValue.prototype.constructor = CChangesPDFFormParentValue;
+CChangesPDFFormParentValue.prototype.Type = AscDFH.historyitem_Pdf_Form_Parent_Value;
+CChangesPDFFormParentValue.prototype.private_SetValue = function(Value)
+{
+	let oField = this.Class;
+	oField.SetParentValue(Value);
 };
 
 CChangesPDFFormValue.prototype.WriteToBinary = function(Writer)
@@ -124,6 +161,25 @@ CChangesPDFFormValue.prototype.ReadFromBinary = function(Reader)
 	else
 		this.Old = isArrayValue ? JSON.parse(Reader.GetString2()) : Reader.GetString2();
 };
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFFormChanged(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFormChanged.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFFormChanged.prototype.constructor = CChangesPDFFormChanged;
+CChangesPDFFormChanged.prototype.Type = AscDFH.historyitem_Pdf_Form_Changed;
+CChangesPDFFormChanged.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm._wasChanged = Value;
+	oForm.IsWidget() && oForm.SetDrawFromStream(!Value);
+};
+
 
 /**
  * @constructor
@@ -251,7 +307,6 @@ CChangesPDFListFormCurIdxs.prototype.private_SetValue = function(Value)
 {
 	var oField = this.Class;
 	oField.SetCurIdxs(Value);
-	oField.Commit();
 };
 
 CChangesPDFListFormCurIdxs.prototype.WriteToBinary = function(Writer)
@@ -313,19 +368,103 @@ CChangesPDFListFormCurIdxs.prototype.ReadFromBinary = function(Reader)
 
 /**
  * @constructor
+ * @extends {AscDFH.CChangesBaseProperty}
+ */
+function CChangesPDFListFormParentCurIdxs(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFListFormParentCurIdxs.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesPDFListFormParentCurIdxs.prototype.constructor = CChangesPDFListFormParentCurIdxs;
+CChangesPDFListFormParentCurIdxs.prototype.Type = AscDFH.historyitem_Pdf_List_Form_Parent_Cur_Idxs;
+CChangesPDFListFormParentCurIdxs.prototype.private_SetValue = function(Value)
+{
+	var oField = this.Class;
+	oField.SetApiCurIdxs(Value);
+};
+
+CChangesPDFListFormParentCurIdxs.prototype.WriteToBinary = function(Writer)
+{
+	// Long  : Flag
+	// 1-bit : Подсвечивать ли данные изменения
+	// 2-bit : IsUndefined New
+	// 3-bit : IsUndefined Old
+	// string : New
+	// string : Old
+
+	let nFlags = 0;
+
+	if (false !== this.Color)
+		nFlags |= 1;
+
+	if (undefined === this.New)
+		nFlags |= 2;
+
+	if (undefined === this.Old)
+		nFlags |= 4;
+
+	Writer.WriteLong(nFlags);
+
+	if (undefined !== this.New) {
+		Writer.WriteString2(JSON.stringify(this.New));
+	}
+		
+	if (undefined !== this.Old) {
+		Writer.WriteString2(JSON.stringify(this.Old));
+	}
+};
+CChangesPDFListFormParentCurIdxs.prototype.ReadFromBinary = function(Reader)
+{
+	// Long  : Flag
+	// 1-bit : Подсвечивать ли данные изменения
+	// 2-bit : IsUndefined New
+	// 3-bit : IsUndefined Old
+	// string : New
+	// string : Old
+
+	let nFlags = Reader.GetLong();
+
+	if (nFlags & 1)
+		this.Color = true;
+	else
+		this.Color = false;
+
+	if (nFlags & 2)
+		this.New = undefined;
+	else
+		this.New = JSON.parse(Reader.GetString2());
+
+	if (nFlags & 4)
+		this.Old = undefined;
+	else
+		this.Old = JSON.parse(Reader.GetString2());
+};
+
+/**
+ * @constructor
  * @extends {AscDFH.CChangesBaseLongProperty}
  */
-function CChangesPDListTopIndex(Class, Old, New, Color)
+function CChangesPDFListTopIndex(Class, Old, New, Color)
 {
 	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
 }
-CChangesPDListTopIndex.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
-CChangesPDListTopIndex.prototype.constructor = CChangesPDListTopIndex;
-CChangesPDListTopIndex.prototype.Type = AscDFH.historyitem_Pdf_List_Form_Top_Idx;
-CChangesPDListTopIndex.prototype.private_SetValue = function(Value)
+CChangesPDFListTopIndex.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFListTopIndex.prototype.constructor = CChangesPDFListTopIndex;
+CChangesPDFListTopIndex.prototype.Type = AscDFH.historyitem_Pdf_List_Form_Top_Idx;
+CChangesPDFListTopIndex.prototype.private_SetValue = function(Value)
 {
 	let oField = this.Class;
-	oField.SetTopIndex(Value);
+	oField._topIdx = Value;
+	if (Value != undefined) {
+		oField._bAutoShiftContentView = false;
+		oField._bShiftByTopIndex = true;
+	}
+	else {
+		oField._bAutoShiftContentView = true;
+		oField._bShiftByTopIndex = false;
+	}
+
+	oField.AddToRedraw();
 };
 
 /**
@@ -347,6 +486,13 @@ CChangesPDFPushbuttonImage.prototype.private_SetValue = function(Value)
 {
 	let oButtonField = this.Class;
 	if (this.FromLoad && typeof Value === "string" && Value.length > 0) {
+		let sImageId = AscCommon.getFullImageSrc2(Value);
+		let _img = Asc.editor.ImageLoader.map_image_index[sImageId];
+		if (_img && _img.Status === AscFonts.ImageLoadStatus.Complete) {
+			oButtonField.AddImage2(Value, this.APType);
+			return;
+		}
+
 		AscCommon.CollaborativeEditing.Add_NewImage(Value);
 		AscCommon.CollaborativeEditing.m_aEndLoadCallbacks.push(oButtonField.AddImage2.bind(oButtonField, Value, this.APType));
 	}

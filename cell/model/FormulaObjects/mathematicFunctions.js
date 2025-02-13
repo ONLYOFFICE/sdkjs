@@ -4069,7 +4069,7 @@ function (window, undefined) {
 			return truncate(quotient + nolpiat) * significance;
 		}
 
-		function roundHelper(number, num_digits) {
+		function roundHelper(number, decimals) {
 			if (num_digits > AscCommonExcel.cExcelMaxExponent) {
 				if (Math.abs(number) < 1 || num_digits < 1e10) // The values are obtained experimentally
 				{
@@ -4084,16 +4084,20 @@ function (window, undefined) {
 				return new cNumber(0);
 			}
 
-			var significance = SignZeroPositive(number) * Math.pow(10, -truncate(num_digits));
+			const EPSILON = 1e-14;
 
-			number += significance / 2;
+			// ->integer
+			decimals = decimals >> 0;
 
-			if (number / significance == Infinity) {
-				return new cNumber(number);
-			}
+			const multiplier = Math.pow(10, decimals);
+			const shifted = Math.abs(number) * multiplier;
 
-			return new cNumber(Floor(number, significance));
+			// Add epsilon to handle floating point precision issues (1.005 case)
+			const compensated = shifted + EPSILON;
+			const rounded = Math.floor(compensated + 0.5);
 
+			let result = (Math.sign(number) * rounded) / multiplier;
+			return new cNumber(result);
 		}
 
 		var arg0 = arg[0], arg1 = arg[1];

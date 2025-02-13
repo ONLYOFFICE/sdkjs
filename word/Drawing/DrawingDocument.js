@@ -4476,7 +4476,7 @@ function CDrawingDocument()
 
 		var dKoefX = (drawPage.right - drawPage.left) / page.width_mm;
 		var dKoefY = (drawPage.bottom - drawPage.top) / page.height_mm;
-		this.AutoShapesTrack.SetCurrentPage(pageIndex, true);
+		this.AutoShapesTrack.SetCurrentPage(pageIndex);
 		if (!this.IsTextMatrixUse)
 		{
 			var _x = ((drawPage.left + dKoefX * x) >> 0);
@@ -6570,10 +6570,6 @@ function CDrawingDocument()
 		this.m_lDrawingFirst = -1;
 		this.m_lDrawingEnd = -1;
 		this.m_lCurrentPage = -1;
-	};
-
-	this.InitViewer = function ()
-	{
 	};
 
 	this.IsMobileVersion = function ()

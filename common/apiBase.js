@@ -103,6 +103,8 @@
 		this.IsLongActionCurrent       = 0;
 		this.LongActionCallbacks       = [];
 		this.LongActionCallbacksParams = [];
+		this.IsActionRestrictionCurrent  = 0;
+		this.IsActionRestrictionPrev  = null;
 
 		// AutoSave
 		this.autoSaveGap = 0;					// Интервал автосохранения (0 - означает, что автосохранения нет) в милесекундах
@@ -167,8 +169,8 @@
         this.forceSaveButtonContinue = false;
         this.forceSaveTimeoutTimeout = null;
 		this.forceSaveForm = null;
-		this.disconnectRestrictions = null;//to restore restrictions after disconnect
 		this.forceSaveUndoRequest = false; // Флаг нужен, чтобы мы знали, что данное сохранение пришло по запросу Undo в совместке
+		this.saveRelativePrev = {};
 
 		// Version History
 		this.VersionHistory = null;				// Объект, который отвечает за точку в списке версий
@@ -282,25 +284,24 @@
 
 		this._loadModules();
 
+		const noop = function () { };
 		if (!this.isPdfEditor())
 		{
-			AscCommon.loadChartStyles(function() {}, function(err) {
+			AscCommon.loadChartStyles(noop, function (err) {
 				t.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingScriptError, c_oAscError.Level.NoCritical);
 			});
 		}
-
-		var oldOnError = window.onerror;
-		window.onerror = function(errorMsg, url, lineNumber, column, errorObj) {
-			//send only first error to reduce number of requests. also following error may be consequences of first
-			window.onerror = oldOnError;
+		const sendUnhandledError  = function(errorMsg, url, lineNumber, column, stack) {
 			let editorInfo = t.getEditorErrorInfo();
 			let memoryInfo = AscCommon.getMemoryInfo();
-			var msg = 'Error: ' + errorMsg + '\n Script: ' + url + '\n Line: ' + lineNumber + ':' + column +
+			lineNumber = undefined !== lineNumber ? lineNumber : "";
+			column = undefined !== column ? column : "";
+			var msg = 'Error: ' + errorMsg + '\n Script: ' + (url || "") + '\n Line: ' + lineNumber + ':' + column +
 				'\n userAgent: ' + (navigator.userAgent || navigator.vendor || window.opera) + '\n platform: ' +
 				navigator.platform + '\n isLoadFullApi: ' + t.isLoadFullApi + '\n isDocumentLoadComplete: ' +
 				t.isDocumentLoadComplete + (editorInfo ? '\n ' + editorInfo : "") +
 				(memoryInfo ? '\n performance.memory: ' + memoryInfo : "") +
-				'\n StackTrace: ' + (errorObj ? errorObj.stack : "");
+				'\n StackTrace: ' + (stack || "");
 			AscCommon.sendClientLog("error", "changesError: " + msg, t);
 			if (t.isLoadFullApi ) {
 				if(t.isDocumentLoadComplete) {
@@ -316,6 +317,26 @@
 					t.sendEvent("asc_onError", Asc.c_oAscError.ID.ConvertationOpenError, c_oAscError.Level.Critical);
 				}
 			}
+		}
+		var oldOnunhandledrejection = window.onunhandledrejection;
+		window.onunhandledrejection = function(errorEvent) {
+			//send only first error to reduce number of requests. also following error may be consequences of first
+			window.onunhandledrejection = oldOnunhandledrejection;
+			const errorMsg = errorEvent.reason.message || errorEvent.reason;
+			const stack = errorEvent.reason.stack || "";
+			console.error(errorEvent.reason);
+			sendUnhandledError(errorMsg, undefined, undefined, undefined, stack);
+			if (oldOnunhandledrejection) {
+				return oldOnunhandledrejection.apply(this, arguments);
+			} else {
+				return false;
+			}
+		}
+		var oldOnError = window.onerror;
+		window.onerror = function(errorMsg, url, lineNumber, column, errorObj) {
+			//send only first error to reduce number of requests. also following error may be consequences of first
+			window.onerror = oldOnError;
+			sendUnhandledError(errorMsg, url, lineNumber, column, (errorObj ? errorObj.stack : ""));
 			if (oldOnError) {
 				return oldOnError.apply(this, arguments);
 			} else {
@@ -375,6 +396,9 @@
 			case c_oEditorId.Presentation:
 				res = 'slide';
 				break;
+			case c_oEditorId.Visio:
+				res = 'visio';
+				break;
 		}
 		return res;
 	};
@@ -384,7 +408,15 @@
 		switch (this.editorId)
 		{
 			case c_oEditorId.Word:
-				res = isOpenOoxml ? Asc.c_oAscFileType.DOCX : Asc.c_oAscFileType.CANVAS_WORD;
+				if (this.isPdfEditor())
+				{
+					//todo выставить формат
+					res = undefined;
+				}
+				else
+				{
+					res = isOpenOoxml ? Asc.c_oAscFileType.DOCX : Asc.c_oAscFileType.CANVAS_WORD;
+				}
 				break;
 			case c_oEditorId.Spreadsheet:
 				res = isOpenOoxml ? Asc.c_oAscFileType.XLSX: Asc.c_oAscFileType.CANVAS_SPREADSHEET;
@@ -671,7 +703,12 @@
 			this.sendEvent("asc_onInitEditorFonts", gui_fonts);
 		}
 	};
-	baseEditorsApi.prototype.sync_StartAction                = function(type, id)
+	/**
+	 * @param {Asc.c_oAscAsyncAction} type
+	 * @param {Asc.c_oAscAsyncActionType} id
+	 * @param {Asc.c_oAscRestrictionType} [actionRestriction]
+	 */
+	baseEditorsApi.prototype.sync_StartAction                = function(type, id, actionRestriction)
 	{
 		if (type !== c_oAscAsyncActionType.Empty)
 			this.sendEvent('asc_onStartAction', type, id);
@@ -681,8 +718,20 @@
 		{
 			this.incrementCounterLongAction();
 		}
+		if (undefined !== actionRestriction)
+		{
+			//для некоторых действий не хочется показывать модальный loader, который закрывает всю страницу
+			//если для них делать incrementCounterLongAction, то будут проблемы, что не заблокированы линейки, resize окна не работает
+			//И скорее всего другие проблемы, поэтому делается через asc_setRestriction
+			this.incrementCounterActionRestriction(actionRestriction);
+		}
 	};
-	baseEditorsApi.prototype.sync_EndAction                  = function(type, id)
+	/**
+	 * @param type {Asc.c_oAscAsyncAction}
+	 * @param id {Asc.c_oAscAsyncActionType}
+	 * @param {Asc.c_oAscRestrictionType} [actionRestriction]
+	 */
+	baseEditorsApi.prototype.sync_EndAction                  = function(type, id, actionRestriction)
 	{
 		if (type !== c_oAscAsyncActionType.Empty)
 			this.sendEvent('asc_onEndAction', type, id);
@@ -692,10 +741,10 @@
 		{
 			this.decrementCounterLongAction();
 		}
-	};
-	baseEditorsApi.prototype.sync_TryUndoInFastCollaborative = function()
-	{
-		this.sendEvent("asc_OnTryUndoInFastCollaborative");
+		if (undefined !== actionRestriction)
+		{
+			this.decrementCounterActionRestriction();
+		}
 	};
 	baseEditorsApi.prototype.asc_setViewMode                 = function()
 	{
@@ -1009,6 +1058,34 @@
 			this.LongActionCallbacksParams.splice(0, _length);
 		}
 	};
+
+	baseEditorsApi.prototype.isActionWithRestriction                   = function()
+	{
+		return 0 !== this.IsActionRestrictionCurrent;
+	};
+	baseEditorsApi.prototype.incrementCounterActionRestriction      = function(restrictions)
+	{
+		if (0 === this.IsActionRestrictionCurrent)
+		{
+			this.IsActionRestrictionPrev = this.restrictions;
+			this.asc_setRestriction(restrictions);
+		}
+		++this.IsActionRestrictionCurrent;
+	};
+	baseEditorsApi.prototype.decrementCounterActionRestriction      = function()
+	{
+		this.IsActionRestrictionCurrent--;
+		if (this.IsActionRestrictionCurrent < 0)
+		{
+			this.IsActionRestrictionCurrent = 0;
+		}
+
+		if (0 === this.IsActionRestrictionCurrent && null !== this.IsActionRestrictionPrev)
+		{
+			this.asc_setRestriction(this.IsActionRestrictionPrev);
+			this.IsActionRestrictionPrev = null;
+		}
+	};
 	baseEditorsApi.prototype.checkLongActionCallback         = function(_callback, _param)
 	{
 		if (this.isLongActionBase())
@@ -1040,6 +1117,10 @@
 				break;
 			case c_oEditorId.Presentation:
 				res = true;
+				break;
+			case c_oEditorId.Visio:
+				//todo сделать как в презентациях когда будет редактор
+				res = false;
 				break;
 		}
 		return res;
@@ -1314,7 +1395,15 @@
 	 * @param callback {saveRelativeFromChangesCallback}
 	 */
 	baseEditorsApi.prototype.saveRelativeFromChanges = function(docId, token, timeout, callback) {
-		if (!this.CoAuthoringApi.callPRC({'type': 'saveRelativeFromChanges', 'docId': docId, 'token': token}, timeout, callback)) {
+		let t = this;
+		let time = this.saveRelativePrev[docId];
+		let callbackWrapper = function (timeout, data) {
+			if (data && data.time) {
+				t.saveRelativePrev[docId] = data.time;
+			}
+			callback(timeout, data);
+		}
+		if (!this.CoAuthoringApi.callPRC({'type': 'saveRelativeFromChanges', 'docId': docId, 'token': token, 'time': time}, timeout, callbackWrapper)) {
 			callback(true, undefined);
 		}
 	};
@@ -1619,11 +1708,7 @@
 			t.sendEvent('asc_onCoAuthoringChatReceiveMessage', e, clear);
 		};
 		this.CoAuthoringApi.onServerVersion = function (buildVersion, buildNumber) {
-			if (null !== t.disconnectRestrictions) {
-				t.sync_EndAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.Disconnect);
-				t.asc_setRestriction(t.disconnectRestrictions);
-				t.disconnectRestrictions = null;
-			}
+			t.sync_EndAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.Disconnect, Asc.c_oAscRestrictionType.View);
 
 			t.sendEvent('asc_onServerVersion', buildVersion, buildNumber);
 		};
@@ -1835,11 +1920,7 @@
 			}
 			let isSessionIdleDisconnect = AscCommon.c_oCloseCode.sessionIdle === opt_closeCode;
 			if (null != opt_closeCode && !isSessionIdleDisconnect) {
-				if (null !== t.disconnectRestrictions) {
-					t.sync_EndAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.Disconnect);
-					t.asc_setRestriction(t.disconnectRestrictions);
-					t.disconnectRestrictions = null;
-				}
+				t.sync_EndAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.Disconnect, Asc.c_oAscRestrictionType.View);
 				let allowRefresh = [c_oCloseCode.updateVersion, c_oCloseCode.noCache, c_oCloseCode.restore, c_oCloseCode.quiet];
 				if (-1 !== allowRefresh.indexOf(opt_closeCode) && !t.isDocumentModified() && t.canRefreshFile())  {
 					t.onRefreshFile();
@@ -1853,10 +1934,8 @@
 						t.sendEvent('asc_onError', error, level);
 					}
 				}
-			} else if (null === t.disconnectRestrictions){
-				t.disconnectRestrictions = t.restrictions;
-				t.sync_StartAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.Disconnect);
-				t.asc_setRestriction(Asc.c_oAscRestrictionType.View);
+			} else if (!t.isActionWithRestriction()){
+				t.sync_StartAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.Disconnect, Asc.c_oAscRestrictionType.View);
 				if (isSessionIdleDisconnect) {
 					t.waitNotIdle(undefined, function () {
 						t.CoAuthoringApi.connect();
@@ -1965,7 +2044,7 @@
 		this._coAuthoringInitEnd();
 
 		let openCmd = this._getOpenCmd();
-		this.CoAuthoringApi.init(this.User, this.documentId, this.documentCallbackUrl, 'fghhfgsjdgfjs', this.editorId, this.documentFormatSave, this.DocInfo, this.documentShardKey, this.documentWopiSrc, this.documentUserSessionId, openCmd);
+		this.CoAuthoringApi.init(this.User, this.documentId, this.documentCallbackUrl, 'fghhfgsjdgfjs', this.editorId, this.documentFormatSave, this.DocInfo, this.documentShardKey, this.documentWopiSrc, this.documentUserSessionId, this.headingsColor, openCmd);
 	};
 	baseEditorsApi.prototype._coAuthoringInitEnd                 = function()
 	{
@@ -2251,7 +2330,7 @@
 			jsonparams["locale"] = this.asc_getLocale();
 			//todo move cmd from header to body and uncomment
 			// jsonparams["translate"] = AscCommon.translateManager.mapTranslate;
-			jsonparams["documentLayout"] = { "openedAt" : this.openedAt};
+			jsonparams["documentLayout"] = { "openedAt" : this.openedAt, "headingsColor" : this.headingsColor};
 			if (this.watermarkDraw && this.watermarkDraw.inputContentSrc) {
 				jsonparams["watermark"] = JSON.parse(this.watermarkDraw.inputContentSrc);
 			}
@@ -2259,7 +2338,7 @@
 		} else if ((Asc.c_oAscFileType.PDF === options.fileType || Asc.c_oAscFileType.PDFA === options.fileType) &&
 			this.watermarkDraw && this.watermarkDraw.inputContentSrc) {
 			let jsonparams = {};
-			jsonparams["watermark"] = JSON.parse(this.watermarkDraw.inputContentSrc);
+			jsonparams["watermark"] = JSON.parse(this.watermarkDraw.getCorrectedInputContentSrc());
 			oAdditionalData["jsonparams"] = jsonparams;
 		}
 		if (options.textParams && undefined !== options.textParams.asc_getAssociation()) {
@@ -2693,7 +2772,7 @@
 		return this.VersionHistory;
 	};
 	baseEditorsApi.prototype.asc_refreshFile = function(docInfo) {
-		this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.RefreshFile);
+		this.sync_EndAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.RefreshFile, Asc.c_oAscRestrictionType.View);
 		//todo always call asc_CloseFile ?
 		let isInfinityLoop = this.documentIsWopi
 			? docInfo.get_Wopi()["Version"] === this.DocInfo.get_Wopi()["Version"]
@@ -2715,7 +2794,7 @@
 	}
 	baseEditorsApi.prototype.onRefreshFile = function () {
 		let t = this;
-		this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.RefreshFile);
+		this.sync_StartAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.RefreshFile, Asc.c_oAscRestrictionType.View);
 		if (this.documentIsWopi) {
 			let callback = function (isTimeout, response) {
 				if (response) {
@@ -3273,6 +3352,11 @@
 		}
 	};
 
+	baseEditorsApi.prototype.isDrawSlideshowAnnotations = function()
+	{
+		return false;
+	};
+
 	// plugins
 	baseEditorsApi.prototype._checkLicenseApiFunctions   = function()
 	{
@@ -3283,8 +3367,15 @@
 	{
 		if (null != this.pluginsManager)
 		{
-			this.pluginsManager.register(basePath, plugins);
+			let runnedArray = [];
+			this.pluginsManager.register(basePath, plugins, undefined, runnedArray);
 			this.checkInstalledPlugins();
+
+			for (let i = 0, len = runnedArray.length; i < len; i++)
+			{
+				if (!this.pluginsManager.isRunned(runnedArray[i]))
+					this.pluginsManager.run(runnedArray[i], 0, "");
+			}
 		}
 		else
 		{
@@ -4332,24 +4423,18 @@
 		return 0;
 	};
 
-	baseEditorsApi.prototype.asc_decodeBuffer = function(buffer, options, callback) {
+	baseEditorsApi.prototype.asc_decodeBuffer = function(buffer, codePage, callback) {
+		//todo TextDecoder (ie11)
 		var reader = new FileReader();
 		//todo onerror
 		reader.onload = reader.onerror = function(e) {
-			var text = e.target.result ? e.target.result : "";
-			if (options instanceof Asc.asc_CTextOptions) {
-				callback(AscCommon.parseText(text, options));
-			} else {
-				callback(text.match(/[^\r\n]+/g));
-			}
+			callback(e.target.result ? e.target.result : "");
 		};
-
 		var encoding = "UTF-8";
-		var codePage = options.asc_getCodePage();
 		var encodingsLen = AscCommon.c_oAscEncodings.length;
 		for (var i = 0; i < encodingsLen; ++i)
 		{
-			if (AscCommon.c_oAscEncodings[i][0] == codePage)
+			if (AscCommon.c_oAscEncodings[i][0] === codePage)
 			{
 				encoding = AscCommon.c_oAscEncodings[i][2];
 				break;
@@ -4358,6 +4443,9 @@
 
 		reader.readAsText(new Blob([buffer]), encoding);
 	};
+	baseEditorsApi.prototype.asc_parseText = function(text, options) {
+		return AscCommon.parseText(text, options, true);
+	}
 
 	baseEditorsApi.prototype.asc_setVisiblePasteButton = function(val)
 	{
@@ -4573,6 +4661,10 @@
 		else
 			return this.Shortcuts.Get(e.KeyCode, e.CtrlKey, e.ShiftKey, e.AltKey);
 	};
+	baseEditorsApi.prototype.executeShortcut = function(type)
+	{
+		
+	};
 	baseEditorsApi.prototype.getCustomShortcutAction = function(nActionType)
 	{
 		return this.Shortcuts.GetCustomAction(nActionType);
@@ -4767,17 +4859,21 @@
     	if (!this.internalEvents.hasOwnProperty(name))
             this.internalEvents[name] = {};
         this.internalEvents[name]["" + ((undefined === listenerId) ? 0 : listenerId)] = callback;
+
+		return true;
     };
     baseEditorsApi.prototype.detachEvent = function(name, listenerId)
     {
         if (!this.internalEvents.hasOwnProperty(name))
-        	return;
+        	return false;
         var obj = this.internalEvents[name];
         var prop = "" + ((undefined === listenerId) ? 0 : listenerId);
         if (obj[prop])
         	delete obj[prop];
         if (0 === Object.getOwnPropertyNames(obj).length)
         	delete this.internalEvents[name];
+
+		return true;
     };
     baseEditorsApi.prototype.sendInternalEvent = function()
 	{
@@ -5088,6 +5184,23 @@
 	baseEditorsApi.prototype.asc_StopInkDrawer = function() {
 		this.stopInkDrawer();
 	};
+	baseEditorsApi.prototype.asc_RemoveAllInks = function() {
+		this.removeAllInks();
+	};
+	baseEditorsApi.prototype.removeAllInks = function() {
+	};
+	baseEditorsApi.prototype.asc_HaveInks = function() {
+        return this.haveInks();
+	};
+	baseEditorsApi.prototype.haveInks = function() {
+        return true;
+	};
+	baseEditorsApi.prototype.asc_CanRemoveAllInks = function() {
+        return this.canRemoveAllInks();
+	};
+	baseEditorsApi.prototype.canRemoveAllInks = function() {
+        return true;
+	};
 	baseEditorsApi.prototype.stopInkDrawer = function() {
 		this.inkDrawer.turnOff();
 	};
@@ -5107,6 +5220,9 @@
 	};
 	baseEditorsApi.prototype.getInkCursorType = function() {
 		return this.inkDrawer.getCursorType();
+	};
+	baseEditorsApi.prototype.getAnnotations = function() {
+		return null;
 	};
 	baseEditorsApi.prototype.isMasterMode = function(){
 		return false;
@@ -5252,6 +5368,14 @@
 		});
 	};
 
+	baseEditorsApi.prototype.wrapShortcut = function(methodName, shortcutType)
+	{
+		this[methodName] = function() {
+			this.executeShortcut.call(this, shortcutType);
+		};
+		this.wrapFunction(methodName);
+	};
+
 	baseEditorsApi.prototype.setPluginsOptions = function(options)
 	{
 		this.externalPluginsOptions = options;
@@ -5327,6 +5451,24 @@
 		plugins.callMethod(plugins.internalGuid, name, params);
 	};
 
+
+	baseEditorsApi.prototype.asc_mergeSelectedShapes = function(operation) {
+		if(AscCommon['PathBoolean']) {
+			this.asc_mergeSelectedShapesAction(operation);
+			return;
+		}
+		let oThis = this;
+		AscCommon.loadPathBoolean(function () {
+			oThis.asc_mergeSelectedShapesAction(operation);
+		}, function () {
+			oThis.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingScriptError, c_oAscError.Level.NoCritical)
+		})
+	};
+
+	baseEditorsApi.prototype.asc_mergeSelectedShapesAction = function(operation) {
+
+	};
+
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
 	window['AscCommon'].baseEditorsApi = baseEditorsApi;
@@ -5348,6 +5490,7 @@
 	prot['asc_runAutostartMacroses'] = prot.asc_runAutostartMacroses;
 	prot['asc_runMacros'] = prot.asc_runMacros;
 	prot['asc_getAllMacrosNames'] = prot.asc_getAllMacrosNames;
+	prot['asc_parseText'] = prot.asc_parseText;
 	prot['asc_setVisiblePasteButton'] = prot.asc_setVisiblePasteButton;
 	prot['asc_getAutoCorrectMathSymbols'] = prot.asc_getAutoCorrectMathSymbols;
 	prot['asc_getAutoCorrectMathFunctions'] = prot.asc_getAutoCorrectMathFunctions;
@@ -5390,6 +5533,9 @@
 	prot['asc_StartDrawInk'] = prot.asc_StartDrawInk;
 	prot['asc_StartInkEraser'] = prot.asc_StartInkEraser;
 	prot['asc_StopInkDrawer'] = prot.asc_StopInkDrawer;
+	prot['asc_RemoveAllInks'] = prot.asc_RemoveAllInks;
+	prot['asc_HaveInks'] = prot.asc_HaveInks;
+	prot['asc_CanRemoveAllInks'] = prot.asc_CanRemoveAllInks;
 	prot['startGetDocInfo'] = prot.startGetDocInfo;
 	prot['stopGetDocInfo'] = prot.stopGetDocInfo;
 	prot["can_CopyCut"] = prot.can_CopyCut;
@@ -5432,6 +5578,7 @@
 	prot["asc_removeCustomProperty"] = prot.asc_removeCustomProperty;
 	
 	prot["asc_setPdfViewer"] = prot.asc_setPdfViewer;
+	prot["asc_mergeSelectedShapes"] = prot.asc_mergeSelectedShapes;
 
 	prot["callCommand"] = prot.callCommand;
 	prot["callMethod"] = prot.callMethod;

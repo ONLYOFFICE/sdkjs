@@ -1847,15 +1847,8 @@
                 }
                 if (sPresetBinary) {
                     AscCommon.pptx_content_loader.Clear(true);
-                    var stream = AscFormat.CreateBinaryReader(sPresetBinary, "PPTY;v10;".length, sPresetBinary.length);
-                    var oBinaryReader = new AscCommon.BinaryPPTYLoader();
-                    oBinaryReader.stream = new AscCommon.FileStream();
-                    oBinaryReader.stream.obj = stream.obj;
-                    oBinaryReader.stream.data = stream.data;
-                    oBinaryReader.stream.size = stream.size;
-                    oBinaryReader.stream.pos = stream.pos;
-                    oBinaryReader.stream.cur = stream.cur;
-                    var oPar = new CPar();
+                    let oBinaryReader = AscFormat.CreatePPTYLoader(sPresetBinary, "PPTY;v10;".length, sPresetBinary.length);
+                    let oPar = new CPar();
                     oPar.fromPPTY(oBinaryReader);
                     var oConnectedObjects = oBinaryReader.oConnectedObjects;
                     for (var sKey in oConnectedObjects) {
@@ -11586,6 +11579,7 @@
         oGraphics.animationDrawer = this;
         oSlide.draw(oGraphics);
         oGraphics.RestoreGrState();
+
         oSlide.getDrawingDocument().m_oWordControl.DemonstrationManager.CheckWatermarkInternal(oGraphics.m_oContext, oRect);
     };
     CAnimationDrawer.prototype.isDrawingVisible = function(sDrawingId) {
@@ -11729,7 +11723,9 @@
         this.timer = new CAnimationTimer(this);
         this.drawer = drawer;
     }
-
+    CAnimationPlayer.prototype.createGraphics = function (oCanvas, oRect) {
+        return this.animationDrawer.createGraphics(oCanvas, oRect);
+    };
     CAnimationPlayer.prototype.updateTimingList = function () {
         this.timings.length = 0;
         if (this.slide.timing) {

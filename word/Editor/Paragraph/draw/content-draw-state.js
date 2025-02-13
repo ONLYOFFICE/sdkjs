@@ -345,7 +345,10 @@
 		
 		let editor = logicDocument.GetApi();
 		if ((!editor || !editor.ShowParaMarks) && (sectPr || !this.reviewColor))
+		{
+			this.X += paraMark.GetWidthVisible();
 			return;
+		}
 		
 		let y = this.Y;
 		if (!sectPr)

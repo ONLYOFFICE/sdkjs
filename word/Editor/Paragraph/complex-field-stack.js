@@ -90,7 +90,7 @@
 	 */
 	ParagraphComplexFieldStack.prototype.checkRunElement = function(element)
 	{
-		if ((this.isHiddenFieldContent() || this.isComplexFieldCode())
+		if ((this.isHiddenFieldContent() || this.isHiddenComplexFieldPart())
 			&& para_End !== element.Type
 			&& para_FieldChar !== element.Type)
 			return false;
@@ -213,6 +213,18 @@
 		for (let index = 0, count = this.CF.length; index < count; ++index)
 		{
 			if (this.CF[index].IsFieldCode())
+				return true;
+		}
+		
+		return false;
+	};
+	ParagraphComplexFieldStack.prototype.isHiddenComplexFieldPart = function()
+	{
+		for (let fieldIndex = 0, fieldCount = this.CF.length; fieldIndex < fieldCount; ++ fieldIndex)
+		{
+			let isFieldCode = this.CF[fieldIndex].IsFieldCode();
+			let isShowCode  = this.CF[fieldIndex].IsShowFieldCode();
+			if (isFieldCode !== isShowCode)
 				return true;
 		}
 		

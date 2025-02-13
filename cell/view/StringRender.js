@@ -1293,8 +1293,8 @@
 			let align = this.flags ? this.flags.textAlign : null;
 			if (initAllLines) {
 				if (this.lines) {
-					let lineWidth = this._calcLineWidth(startPos);
 					for (let i = 0; i < this.lines.length; ++i) {
+						let lineWidth = this._calcLineWidth(this.lines[i].beg);
 						this.lines[i].initStartX(lineWidth, x, maxWidth, align);
 					}
 				}

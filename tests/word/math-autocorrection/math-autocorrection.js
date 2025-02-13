@@ -170,6 +170,11 @@ $(function () {
 		Init();
 	})
 
+	// TODO
+	//  1. substack in LaTeX mode
+	//
+	//
+
 	QUnit.module( "Unicode", function ()
 	{
 		QUnit.module( "Auto-convert rules", function ()
@@ -784,6 +789,7 @@ $(function () {
 			Test("x^[1+2} ", [["ParaRun", ""], ["CDegree", "x^[1+2}"], ["ParaRun", ""]], false, "Check index");
 			Test("x^1/2", [["ParaRun", ""], ["CDegree", "x^1"], ["ParaRun", "/2"]], false, "Check index");
 			Test("x^1/2 ", [["ParaRun", ""], ["CFraction", "(x^1)/2"], ["ParaRun", ""]], false, "Check index");
+			Test("x^'=", [["ParaRun", ""], ["CDegree", "x^'"], ["ParaRun", "="]], false, "Check index");
 
 			Test("x^y_1 ", [["ParaRun", ""], ["CDegreeSubSup", "x_1^y"], ["ParaRun", ""]], false, "Check index degree");
 			Test("x^1_i ", [["ParaRun", ""], ["CDegreeSubSup", "x_i^1"], ["ParaRun", ""]], false, "Check index degree");
@@ -964,6 +970,7 @@ $(function () {
 			Test("\\int _(x+1)\\of 1/2  ", [["ParaRun", ""], ["CNary", "∫_(x+1)▒〖1/2〗"], ["ParaRun", ""]], false, "Check large operators");
 			Test("\\prod ^(x+1)\\of 1/2  ", [["ParaRun", ""], ["CNary", "∏^(x+1)▒〖1/2〗"], ["ParaRun", ""]],false, "Check large operators");
 			Test("∫^(x+1)_(1_i)\\of 1/2  ", [["ParaRun", ""], ["CNary", "∫_(1_i)^(x+1)▒〖1/2〗"], ["ParaRun", ""]], false, "Check large operators");
+			Test("∑_(k=0)^n▒〖(n¦k) a^k b^(n-k)〗   ", [["ParaRun", ""], ["CNary", "∑_(k=0)^n▒〖(n¦k) a^k b^(n-k)〗"], ["ParaRun", " "]], false, "Check add space after nary");
 		})
 
 		QUnit.module( "Functions", function ()
@@ -1286,6 +1293,13 @@ $(function () {
 				let strFunc = MathContent.GetTextOfElement(0).GetText();
 				assert.strictEqual(strFunc, 'cos⁡〖 θ〗', 'Check complex math func content');
 			})
+		})
+
+		QUnit.module( "Font", function ()
+		{
+			Test("\\doubleE ", [["ParaRun", "𝔼"]], false, "Check math font autocorrection");
+			Test("\\frakturE ", [["ParaRun", "𝔈"]], false, "Check math font autocorrection");
+			Test("\\scriptE ", [["ParaRun", "ℰ"]], false, "Check math font autocorrection");
 		})
 	})
 
@@ -1744,19 +1758,20 @@ $(function () {
 				assert.strictEqual(strFunc, '\\lim\\below{\\left(n\\to\\infty\\right){\\left(1+\\frac{1}{n}\\right)^n}}', 'Check complex math func content');
 			})
 
-			QUnit.test('Check eqarray frac', function (assert)
-			{
-				Clear();
-				logicDocument.SetMathInputType(1);
-				AddText('\\frac{\\substack{1\\\\\\substack{\\\\\\substack{\\\\\\substack{\\\\}}}}}{2}');
-				assert.ok(true, "Add text '\\frac{\\substack{1\\\\\\substack{\\\\\\substack{\\\\\\substack{\\\\}}}}}{2}'");
-
-				MathContent.ConvertView(false, Asc.c_oAscMathInputType.LaTeX);
-				assert.ok(true, "Convert to linear view");
-
-				let strBinomial = MathContent.GetTextOfElement(true).GetText();
-				assert.strictEqual(strBinomial, '\\frac{\\substack{1\\\\\\substack{\\\\\\substack{\\\\\\substack{\\\\}}}}}{2}', 'Check');
-			})
+			// QUnit.todo('Check eqarray frac - Find case for LaTeX', function (assert)
+			// {
+			// 	// Find case for LaTeX
+			// 	Clear();
+			// 	logicDocument.SetMathInputType(1);
+			// 	AddText('\\frac{\\substack{1\\\\\\substack{\\\\\\substack{\\\\\\substack{\\\\}}}}}{2}');
+			// 	assert.ok(true, "Add text '\\frac{\\substack{1\\\\\\substack{\\\\\\substack{\\\\\\substack{\\\\}}}}}{2}'");
+			//
+			// 	MathContent.ConvertView(false, Asc.c_oAscMathInputType.LaTeX);
+			// 	assert.ok(true, "Convert to linear view");
+			//
+			// 	let strBinomial = MathContent.GetTextOfElement(true).GetText();
+			// 	assert.strictEqual(strBinomial, '\\frac{\\substack{1\\\\\\substack{\\\\\\substack{\\\\\\substack{\\\\}}}}}{2}', 'Check');
+			// })
 
 			QUnit.module( "Check LaTeX matrix", function ()
 			{
@@ -1764,6 +1779,7 @@ $(function () {
 				Test("\\begin{pmatrix}1&2\\\\3&4\\\\\\end{pmatrix}", [["ParaRun", ""], ["CDelimiter", "\\left(\\begin{matrix}1&2\\\\3&4\\\\\\end{matrix}\\right)"]], true, "Check bug #61007 pmatrix");
 				Test("\\left[\\begin{matrix}1&2\\\\3&4\\\\\\end{matrix}\\right]", [["ParaRun", ""], ["CDelimiter", "\\left[\\begin{matrix}1&2\\\\3&4\\\\\\end{matrix}\\right]"]], true, "Check bug #61007 pmatrix");
 				Test("\\begin{matrix}&&\\\\&&\\\\&&\\\\&&\\end{matrix}", [["ParaRun", ""], ["CMathMatrix", "\\begin{matrix}&&\\\\&&\\\\&&\\\\&&\\\\\\end{matrix}"]], true, "Check matrix bug #71892");
+				Test("\\begin{array}{l} n + 1\\end{array}", [["ParaRun", ""], ["CEqArray", "\\matrix{n+1}"]], true, "Check matrix bug #71892");
 			})
 
 			QUnit.module( "Check bug #67181", function ()

@@ -1667,7 +1667,7 @@
 			_pasteFromBinaryExcel: function (worksheet, base64, isIntoShape, isCellEditMode, isPasteAll) {
 				var t = this;
 				var newFonts;
-				var tempWorkbook = new AscCommonExcel.Workbook();
+				var tempWorkbook = new AscCommonExcel.Workbook(undefined, undefined, false);
 				tempWorkbook.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
 				var aPastedImages = this._readExcelBinary(base64, tempWorkbook);
 
@@ -2708,7 +2708,7 @@
 							curCol = xfrm.offX;
 							curRow = xfrm.offY;
 						} else {
-							curCol = xfrm.offX - startCol + ws.objectRender.convertMetric(ws._getColLeft(activeCol) - ws._getColLeft(0), 0, 3);
+							curCol = xfrm.offX - startCol + ws.objectRender.convertMetric(ws._getColLeft(activeCol + 1*ws.getRightToLeft()) - ws._getColLeft(0), 0, 3);
 							curRow = xfrm.offY - startRow + ws.objectRender.convertMetric(ws._getRowTop(activeRow) - ws._getRowTop(0), 0, 3);
 						}
 
@@ -2718,7 +2718,16 @@
 
 						drawingObject.graphicObject.setDrawingObjects(ws.objectRender);
 						drawingObject.graphicObject.setWorksheet(ws.model);
-						xfrm.setOffX(curCol);
+						let _left = ws.checkRtl(curCol, null, 3);
+						if (ws.getRightToLeft()) {
+							let mmToPx = Asc.getCvtRatio(3/*px*/, 0/*pt*/, ws._getPPIX());
+							let _widthDrawing = drawingObject.getWidthFromTo() / mmToPx;
+							let _widthCtx = ws.getCtxWidth() / mmToPx;
+							if (_left + _widthDrawing > _widthCtx) {
+								_left -= _left + _widthDrawing - _widthCtx;
+							}
+						}
+						xfrm.setOffX( _left);
 						xfrm.setOffY(curRow);
 						aDrawings.push(drawingObject.graphicObject);
 						drawingObject.graphicObject.getAllRasterImages(aImagesSync);

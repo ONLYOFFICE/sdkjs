@@ -748,7 +748,7 @@
 
 		this.removeHandlersOnClick();
 
-		if (!this.Api.asc_IsFocus())
+		if (!this.Api.asc_IsFocus() && !this.Api.isMobileVersion)
 			this.Api.asc_enableKeyEvents(true);
 
 		var oWordControl = this.Api.WordControl;

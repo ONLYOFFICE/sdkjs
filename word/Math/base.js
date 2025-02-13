@@ -1591,13 +1591,7 @@ CMathBase.prototype.Copy = function(Selected, oPr)
     }
     if(oPr && oPr.Comparison)
     {
-        if (oPr.SkipUpdateInfo) {
-            oPr.Comparison.saveReviewInfo(NewElement, this);
-        } else if (oPr.bSaveCustomReviewType) {
-            oPr.Comparison.saveCustomReviewInfo(NewElement, this, oPr.Comparison.nInsertChangesType);
-        } else {
-            oPr.Comparison.updateReviewInfo(NewElement, oPr.Comparison.nInsertChangesType);
-        }
+			oPr.Comparison.checkReviewInfoOfCopiedElements(NewElement, this);
     }
     return NewElement;
 };
@@ -2465,7 +2459,10 @@ CMathBase.prototype.Displace_BreakOperator = function(isForward, bBrkBefore, Cou
 };
 CMathBase.prototype.Get_AlignBrk = function(_CurLine, bBrkBefore)
 {
-    return this.Content[this.NumBreakContent].Get_AlignBrk(_CurLine, bBrkBefore);
+	if (!this.Content[this.NumBreakContent])
+		return null;
+
+	return this.Content[this.NumBreakContent].Get_AlignBrk(_CurLine, bBrkBefore);
 };
 CMathBase.prototype.raw_SetReviewInfo = function(reviewInfo)
 {
@@ -2864,13 +2861,6 @@ CMathBase.prototype.GetTextOfElement = function(oMathText)
 {
 	oMathText = new AscMath.MathTextAndStyles(oMathText);
 	return oMathText;
-};
-CMathBase.prototype.Set_RFont_ForMath = function()
-{
-	this.SetRFontsAscii({Name : "Cambria Math", Index : -1});
-	this.SetRFontsCS({Name : "Cambria Math", Index : -1});
-	this.SetRFontsEastAsia({Name : "Cambria Math", Index : -1});
-	this.SetRFontsHAnsi({Name : "Cambria Math", Index : -1});
 };
 CMathBase.prototype.CheckRunContent = function (fCheck, oStartPos, oEndPos, nDepth, oCurrentPos, isForward)
 {

@@ -1404,25 +1404,11 @@ AscCommonSlide.PH_BINARIES[AscFormat.phType_tbl] = "PPTY;v10;251;9wAAAPr7AGsAAAA
 AscCommonSlide.PH_BINARIES[AscFormat.phType_dgm] = "PPTY;v10;257;/QAAAPr7AHEAAAAAOgAAAPoAEgAAAAEXAAAAUwBtAGEAcgB0AEEAcgB0ACAAUABsAGEAYwBlAGgAbwBsAGQAZQByACAAMQA3APsBBAAAAPoGAfsCJAAAAPr7AA8AAAD6AQIAAAAxADUAAwIEBPsBAAAAAAIEAAAAAAAAAAEsAAAA+vsAFgAAAPoAYPhqAAE77ikAAmowHQAD16AZAPsBAAAAAAIAAAAABAAAAAADTwAAAAAOAAAA+vsBBwAAAPoAAAAAAPsBAAAAAAIyAAAAAQAAAAApAAAAARsAAAD6CgUAAABlAG4ALQBVAFMA+wEAAAAAAgAAAAACBAAAAAAAAAA=";
 AscCommonSlide.PH_BINARIES[AscFormat.phType_title] = "PPTY;v10;461;yQEAAPr7AF4AAAAAMgAAAPoAAgAAAAETAAAAVABpAHQAbABlACAAUABsAGEAYwBlAGgAbwBsAGQAZQByACAAMQD7AQQAAAD6BgH7AhkAAAD6+wAEAAAA+gQP+wEAAAAAAgQAAAAAAAAAAUsAAAD6AAD7ABYAAAD6ADjKDAABRZIFAAKQdKAAA/s5FAD7AR0AAAABGAAAAPoABAAAAHIAZQBjAHQA+wAEAAAAAAAAAAIAAAAABAAAAAADDwEAAAAoAAAA+gEBA5iyAAAIMGUBAAowZQEADAAPmLIAABEB+wEHAAAA+gADAAAA+wEAAAAAAtgAAAABAAAAAM8AAAAAMAAAAPr7AwAAAAAEAAAAAAUAAAAABgAAAAAHBAAAAAAAAAAIDAAAAPr7AQAAAAACAAAAAAEbAAAA+goFAAAAZQBuAC0AVQBTAPsBAAAAAAIAAAAAAnUAAAABAAAAAGwAAAABZwAAAPoAIAAAAEMAbABpAGMAawAgAHQAbwAgAGUAZABpAHQAIABNAGEAcwB0AGUAcgAgAHQAaQB0AGwAZQAgAHMAdAB5AGwAZQD7ABsAAAD6CgUAAABlAG4ALQBVAFMA+wEAAAAAAgAAAAA=";
 function CreateDefaultMaster() {
-    let stream = AscFormat.CreateBinaryReader(AscCommonSlide.DEFAULT_MASTER_BINARY, "PPTY;v10;".length, AscCommonSlide.DEFAULT_MASTER_BINARY.length);
-    let oBinaryReader = new AscCommon.BinaryPPTYLoader();
-    oBinaryReader.stream = new AscCommon.FileStream();
-    oBinaryReader.stream.obj = stream.obj;
-    oBinaryReader.stream.data = stream.data;
-    oBinaryReader.stream.size = stream.size;
-    oBinaryReader.stream.pos = stream.pos;
-    oBinaryReader.stream.cur = stream.cur;
+    let oBinaryReader = AscFormat.CreatePPTYLoader(AscCommonSlide.DEFAULT_MASTER_BINARY, "PPTY;v10;".length, AscCommonSlide.DEFAULT_MASTER_BINARY.length);
     let oMaster = oBinaryReader.ReadSlideMaster();
 
     oMaster.setSlideSize(DEFAULT_SLIDE_W, DEFAULT_SLIDE_H);
-    stream = AscFormat.CreateBinaryReader(AscCommonSlide.DEFAULT_LAYOUTS_BINARY, "PPTY;v10;".length, AscCommonSlide.DEFAULT_LAYOUTS_BINARY.length);
-    oBinaryReader = new AscCommon.BinaryPPTYLoader();
-    oBinaryReader.stream = new AscCommon.FileStream();
-    oBinaryReader.stream.obj = stream.obj;
-    oBinaryReader.stream.data = stream.data;
-    oBinaryReader.stream.size = stream.size;
-    oBinaryReader.stream.pos = stream.pos;
-    oBinaryReader.stream.cur = stream.cur;
+    oBinaryReader = AscFormat.CreatePPTYLoader(AscCommonSlide.DEFAULT_LAYOUTS_BINARY, "PPTY;v10;".length, AscCommonSlide.DEFAULT_LAYOUTS_BINARY.length);
 
     let _sl_count = oBinaryReader.stream.GetULong();
     let oPresentation = Asc.editor.private_GetLogicDocument();
@@ -1431,15 +1417,7 @@ function CreateDefaultMaster() {
         oLt.setSlideSize(DEFAULT_SLIDE_W, DEFAULT_SLIDE_H);
         oMaster.addToSldLayoutLstToPos(oMaster.sldLayoutLst.length, oLt);
     }
-
-    stream = AscFormat.CreateBinaryReader(AscCommonSlide.DEFAULT_THEME_BINARY, "PPTY;v10;".length, AscCommonSlide.DEFAULT_THEME_BINARY.length);
-    oBinaryReader = new AscCommon.BinaryPPTYLoader();
-    oBinaryReader.stream = new AscCommon.FileStream();
-    oBinaryReader.stream.obj = stream.obj;
-    oBinaryReader.stream.data = stream.data;
-    oBinaryReader.stream.size = stream.size;
-    oBinaryReader.stream.pos = stream.pos;
-    oBinaryReader.stream.cur = stream.cur;
+    oBinaryReader = AscFormat.CreatePPTYLoader(AscCommonSlide.DEFAULT_THEME_BINARY, "PPTY;v10;".length, AscCommonSlide.DEFAULT_THEME_BINARY.length);
     let oTheme = oBinaryReader.ReadTheme();
     oTheme.presentation = oPresentation;
     oMaster.setTheme(oTheme);
@@ -1447,15 +1425,7 @@ function CreateDefaultMaster() {
 }
 
 function CreateDefaultLayout(oMaster) {
-    let stream = AscFormat.CreateBinaryReader(AscCommonSlide.DEFAULT_LAYOUTS_BINARY, "PPTY;v10;".length, AscCommonSlide.DEFAULT_LAYOUTS_BINARY.length);
-    let oBinaryReader = new AscCommon.BinaryPPTYLoader();
-    oBinaryReader.stream = new AscCommon.FileStream();
-    oBinaryReader.stream.obj = stream.obj;
-    oBinaryReader.stream.data = stream.data;
-    oBinaryReader.stream.size = stream.size;
-    oBinaryReader.stream.pos = stream.pos;
-    oBinaryReader.stream.cur = stream.cur;
-
+    let oBinaryReader = AscFormat.CreatePPTYLoader(AscCommonSlide.DEFAULT_LAYOUTS_BINARY, "PPTY;v10;".length, AscCommonSlide.DEFAULT_LAYOUTS_BINARY.length);
     let _sl_count = oBinaryReader.stream.GetULong();
     let oPresentation = Asc.editor.private_GetLogicDocument();
 
@@ -1474,14 +1444,7 @@ function CreatePlaceholder(nType, bVertical) {
     if(!sBinary) {
         sBinary = AscCommonSlide.PH_BODY_BINARY;
     }
-    let stream = AscFormat.CreateBinaryReader(sBinary, "PPTY;v10;".length, sBinary.length);
-    let oBinaryReader = new AscCommon.BinaryPPTYLoader();
-    oBinaryReader.stream = new AscCommon.FileStream();
-    oBinaryReader.stream.obj = stream.obj;
-    oBinaryReader.stream.data = stream.data;
-    oBinaryReader.stream.size = stream.size;
-    oBinaryReader.stream.pos = stream.pos;
-    oBinaryReader.stream.cur = stream.cur;
+    let oBinaryReader = AscFormat.CreatePPTYLoader(sBinary, "PPTY;v10;".length, sBinary.length);
     let oSp = oBinaryReader.ReadShape();
     if(bVertical) {
         let oBodyPr = oSp.txBody && oSp.txBody.bodyPr;

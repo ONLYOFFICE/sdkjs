@@ -77,6 +77,8 @@
         
         oGraphicsWord.RemoveLastClip();
         this.DrawBorders(oGraphicsPDF);
+
+        this.DrawLocks(oGraphicsPDF);
     };
     CComboBoxField.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
@@ -332,11 +334,14 @@
     };
     CComboBoxField.prototype.SetCurIdxs = function(aIdxs) {
         if (this.IsWidget()) {
+            let oDoc = this.GetDocument();
+            oDoc.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetParentCurIdxs(), aIdxs));
+
             if (undefined !== aIdxs[0]) {
                 this.SelectOption(aIdxs[0]);
             }
 
-            if (editor.getDocumentRenderer().IsOpenFormsInProgress)
+            if (Asc.editor.getDocumentRenderer().IsOpenFormsInProgress)
                 this.SetApiCurIdxs(aIdxs);
         }
         else 
@@ -372,18 +377,51 @@
             if (sTextToAdd == "")
                 sTextToAdd = sValue;
 
-            
+            oDoc.History.Add(new CChangesPDFFormValue(this, this.GetParentValue(), sValue));
+
             this.UpdateDisplayValue(sTextToAdd);
             this.SetNeedRecalc(true);
             this.SetWasChanged(true);
 
             if (isOnOpen) {
-                this.SetApiValue(sValue);
+                this.SetParentValue(sValue);
                 this.SetApiCurIdxs(aIdxs);
             }
         }
         else {
-            this.SetApiValue(sValue);
+            this.SetParentValue(sValue);
+            this.SetApiCurIdxs(aIdxs);
+        }
+    };
+    CComboBoxField.prototype.private_SetValue = function(sValue) {
+        let aIdxs = [];
+        if (this.IsWidget()) {
+            let sTextToAdd = "";
+            for (let i = 0; i < this._options.length; i++) {
+                if (Array.isArray(this._options[i]) && this._options[i][1] == sValue) {
+                    sTextToAdd = this._options[i][0];
+                    aIdxs.push(i);
+                    break;
+                }
+            }
+            if (sTextToAdd == "") {
+                for (let i = 0; i < this._options.length; i++) {
+                    if (this._options[i] == sValue) {
+                        sTextToAdd = this._options[i];
+                        aIdxs.push(i);
+                        break;
+                    }
+                }
+            }
+            
+            if (sTextToAdd == "")
+                sTextToAdd = sValue;
+
+            this.UpdateDisplayValue(sTextToAdd);
+            this.SetNeedRecalc(true);
+        }
+        else {
+            this.SetParentValue(sValue);
             this.SetApiCurIdxs(aIdxs);
         }
     };
@@ -465,19 +503,8 @@
         let oDoc        = this.GetDocument();
         let aFields     = oDoc.GetAllWidgets(this.GetFullName());
 
-        oDoc.StartNoHistoryMode();
-        if (this.DoFormatAction() == false) {
-            this.UndoNotAppliedChanges();
-            if (this.IsChanged() == false)
-                this.SetDrawFromStream(true);
-
-            oDoc.EndNoHistoryMode();
-            return;
-        }
-        oDoc.EndNoHistoryMode();
-        
         let aCurIdxs = this.GetCurIdxs();
-        let aApiIdxs = this.GetApiCurIdxs();
+        let aApiIdxs = this.GetParentCurIdxs();
 
         let isChanged = false;
         for (let i = 0; i < aCurIdxs.length; i++) {
@@ -486,20 +513,17 @@
                 break;
             }
         }
-
-        if (isChanged) {
-            AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetApiCurIdxs(), aCurIdxs));
-            this.SetApiValue(this.GetValue());
-            this.SetApiCurIdxs(this.GetCurIdxs());
+        if (!isChanged) {
+            return;
         }
-        
-        oDoc.StartNoHistoryMode();
 
-        if (aFields.length == 1)
-            this.SetNeedCommit(false);
+        if (this.DoFormatAction() == false) {
+            this.UndoNotAppliedChanges();
+            if (this.IsChanged() == false)
+                this.SetDrawFromStream(true);
 
-        let sDisplayValue = this.content.getAllText();
-        this.UpdateDisplayValue(sDisplayValue);
+            return;
+        }
 
         for (let i = 0; i < aFields.length; i++) {
             if (aFields[i].IsChanged() == false)
@@ -514,21 +538,21 @@
                 }
             }
                 
-            if (aFields[i] == this)
-                continue;
-
-            aFields[i].UpdateDisplayValue(sDisplayValue);
+            aFields[i].SetCurIdxs(aCurIdxs);
             aFields[i].SetNeedRecalc(true);
         }
 
-        let sFormatValue = this.contentFormat.getAllText();
+        let sFormatValue = this.GetFormatValue();
         for (let i = 0; i < aFields.length; i++) {
-            if (aFields[i] == this)
+            if (aFields[i] == this) {
                 continue;
-
-            aFields[i].contentFormat.replaceAllText(sFormatValue);
-            aFields[i].SetNeedRecalc(true);
+            }
+            
+            aFields[i].SetFormatValue(sFormatValue);
         }
+
+        this.SetParentValue(this.GetValue());
+        this.SetApiCurIdxs(aCurIdxs);
 
         // когда выравнивание посередине или справа, то после того
         // как ширина контента будет больше чем размер формы, выравнивание становится слева, пока текста вновь не станет меньше чем размер формы
@@ -538,8 +562,6 @@
 
         this.SetNeedCommit(false);
         this.needValidate = true;
-
-        oDoc.EndNoHistoryMode();
     };
 	CComboBoxField.prototype.InsertChars = function(aChars) {
 		this.content.EnterText(aChars);
@@ -698,7 +720,7 @@
         this.WriteToBinaryBase(memory);
         this.WriteToBinaryBase2(memory);
 
-        let value = this.GetApiValue(false);
+        let value = this.GetParentValue(false);
         if (value != null && Array.isArray(value) == false) {
             memory.fieldDataFlags |= (1 << 9);
             memory.WriteString(value);
@@ -727,7 +749,7 @@
         // массив I (выделенные значения списка)
         let curIdxs;
         if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
-            curIdxs = this.GetApiCurIdxs(false);
+            curIdxs = this.GetParentCurIdxs(false);
         }
         if (curIdxs) {
             memory.fieldDataFlags |= (1 << 14);
@@ -798,6 +820,8 @@
 	CComboBoxField.prototype.UpdateSelectionByEvent = AscPDF.CTextField.prototype.UpdateSelectionByEvent;
 	CComboBoxField.prototype.SetNeedCheckAlign      = AscPDF.CTextField.prototype.SetNeedCheckAlign;
 	CComboBoxField.prototype.IsNeedCheckAlign       = AscPDF.CTextField.prototype.IsNeedCheckAlign;
+	CComboBoxField.prototype.GetFormatValue         = AscPDF.CTextField.prototype.GetFormatValue;
+	CComboBoxField.prototype.SetFormatValue         = AscPDF.CTextField.prototype.SetFormatValue;
 
 	window["AscPDF"].CComboBoxField = CComboBoxField;
 })();

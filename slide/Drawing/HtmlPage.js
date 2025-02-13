@@ -663,19 +663,27 @@ function CEditorPage(api)
 			styleContent += "@media (-webkit-min-device-pixel-ratio: 1.25) and (-webkit-max-device-pixel-ratio: 1.4),\
             						(min-resolution: 1.25dppx) and (max-resolution: 1.4dppx), \
 									(min-resolution: 120dpi) and (max-resolution: 143dpi) {\n\
-				.back_image_buttons { position:absolute; left: 0px; top: 0px; background-image: url('" + _images_url + "buttons@1.25x.png');background-size: 40px 120px; }\
+				.back_image_buttons { position:absolute; left: 0px; top: 0px; background-image: url('" + _images_url + "buttons@1.25x.png');background-size: 40px 200px; }\
 			}";
 			styleContent += "@media all and (-webkit-min-device-pixel-ratio : 1.5),all and (-o-min-device-pixel-ratio: 3/2),all and (min--moz-device-pixel-ratio: 1.5),all and (min-device-pixel-ratio: 1.5) {\n\
-				.back_image_buttons { position:absolute; left: 0px; top: 0px; background-image: url('" + _images_url + "buttons@1.5x.png');background-size: 40px 120px; }\
+				.back_image_buttons { position:absolute; left: 0px; top: 0px; background-image: url('" + _images_url + "buttons@1.5x.png');background-size: 40px 200px; }\
 			}";
 			styleContent += "@media (-webkit-min-device-pixel-ratio: 1.75) and (-webkit-max-device-pixel-ratio: 1.9),\
             						(min-resolution: 1.75dppx) and (max-resolution: 1.9dppx),\
                 					(min-resolution: 168dpi) and (max-resolution: 191dpi) {\n\
-				.back_image_buttons { position:absolute; left: 0px; top: 0px; background-image: url('" + _images_url + "buttons@1.75x.png');background-size: 40px 120px; }\
+				.back_image_buttons { position:absolute; left: 0px; top: 0px; background-image: url('" + _images_url + "buttons@1.75x.png');background-size: 40px 200px; }\
 			}";
 			styleContent += "@media all and (-webkit-min-device-pixel-ratio : 2),all and (-o-min-device-pixel-ratio: 2),all and (min--moz-device-pixel-ratio: 2),all and (min-device-pixel-ratio: 2) {\n\
-				.back_image_buttons { position:absolute; left: 0px; top: 0px; background-image: url('" + _images_url + "buttons@2x.png');background-size: 40px 120px; }\
+				.back_image_buttons { position:absolute; left: 0px; top: 0px; background-image: url('" + _images_url + "buttons@2x.png');background-size: 40px 200px; }\
 			}";
+			styleContent += ".menu-item-icon { position: relative;display:inline-block;float:left;width:20px;height:20px;margin:-2px 4px 0 -16px; }";
+			styleContent += ".dem_menu {list-style: none;display: none; position: fixed; right: auto; min-height: fit-content; height: auto; min-width: 120px; padding: 5px 0; border-radius: 4px; background-color: " + GlobalSkin.DemBackgroundColor + "; border: 1px solid " + GlobalSkin.DemSplitterColor + ";}";
+			styleContent += "#dem_id_draw_menu li>a{color:" + GlobalSkin.DemButtonTextColor +"; white-space: nowrap; font-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif;;display:block; padding:5px 20px;line-height:16px;cursor:pointer;font-size:11px;text-align:left;}";
+			styleContent += "#dem_id_draw_menu li>a:hover{background-color:" + GlobalSkin.DemButtonBackgroundColorHover + ";}";
+			styleContent += "#dem_id_draw_menu li>a[data-checked=\"true\"]{color:" + GlobalSkin.DemButtonTextColorActive + ";background-color:" + GlobalSkin.DemButtonBackgroundColorActive + ";}";
+			styleContent += "#dem_id_draw_menu >li.submenu>a:after{display:block;content:\" \";float:right;width:0;height:0;border-color:#fff0;border-style:solid;border-width:3px 0 3px 3px;border-left-color:" + GlobalSkin.DemButtonTextColor + ";margin-top:5px;margin-right:-7px;margin-left:0}";
+			styleContent += ".menu-color-cell { cursor:pointer;width:14px;height:14px;border:1px solid rgb(0 0 0 / .2);float:left;margin-right:2px;margin-left:0; }";
+			styleContent += ".dem_draw_menu_divider { margin: 4px 0; height: 1px; background-color:" + GlobalSkin.DemSplitterColor + ";}";
 
 			styleContent += this.getStylesReporter();
 
@@ -684,13 +692,18 @@ function CEditorPage(api)
 			style.innerHTML = styleContent;
 			_head.appendChild(style);
 
-			this.reporterTranslates = ["Reset", "Slide {0} of {1}", "End slideshow"];
+			this.reporterTranslates = ["Reset", "Slide {0} of {1}", "End slideshow", "Pen", "Highlighter", "Ink color", "Eraser", "Erase screen"];
 			var _translates = this.m_oApi.reporterTranslates;
 			if (_translates)
 			{
 				this.reporterTranslates[0] = _translates[0];
 				this.reporterTranslates[1] = _translates[1];
 				this.reporterTranslates[2] = _translates[2];
+				this.reporterTranslates[3] = _translates[3];
+				this.reporterTranslates[4] = _translates[4];
+				this.reporterTranslates[5] = _translates[5];
+				this.reporterTranslates[6] = _translates[6];
+				this.reporterTranslates[7] = _translates[7];
 
 				if (_translates[3])
 					this.m_oApi.DemonstrationEndShowMessage(_translates[3]);
@@ -712,6 +725,30 @@ function CEditorPage(api)
 			_buttonsContent += "<div class=\"separator block_elem_no_select\" id=\"dem_id_sep2\" style=\"left: 350px; bottom: 3px;\"></div>";
 
 			_buttonsContent += "<button class=\"btn-text-default-img\" id=\"dem_id_pointer\"  style=\"left: 365px; bottom: 3px; width: 20px; height: 20px;\"><span id=\"dem_id_pointer_span\" class=\"btn-pointer back_image_buttons\" style=\"width:100%;height:100%;\"></span></button>";
+			
+			_buttonsContent += "<button class=\"btn-text-default-img\" id=\"dem_id_draw_menu_trigger\"  style=\"left: 385px; bottom: 3px; width: 20px; height: 20px;\"><span id=\"dem_id_draw_menu_trigger_span\" class=\"btn-pen back_image_buttons\" style=\"width:100%;height:100%;\"></span></button>";
+			
+			let colorList = "";
+			const drawColors = ["FFFFFF","000000","E81416","FFA500","FAEB36","79C314","487DE7","4B369D","70369D"]; 
+			for (let i = 0; i < drawColors.length; i++) {
+				colorList += "<li class=\"menu-color-cell\" data-value=\"" + drawColors[i] + "\" style=\"background-color: #" + drawColors[i] + "\"></li>";
+			}
+
+			_buttonsContent += [
+				"<ul id=\"dem_id_draw_menu\" class=\"dem_menu\">",
+					"<li><a data-ratio data-tool=\"pen\"><span class=\"menu-item-icon btn-pen back_image_buttons\"></span>" + this.reporterTranslates[3] + "</a></li>",
+					"<li><a data-ratio data-tool=\"highlighter\"><span class=\"menu-item-icon btn-highlighter back_image_buttons\"></span>" + this.reporterTranslates[4] + "</a></li>",
+					"<li class=\"dem_draw_menu_divider\"></li>",
+					"<li id=\"dem_id_draw_color_menu_trigger\" class=\"submenu\"><a style=\"padding-left:28px;\">" + this.reporterTranslates[5] + "</a>",
+						"<ul id=\"dem_id_draw_color_menu\" class=\"dem_menu\" style=\"width: 162px;\">",
+						colorList,
+						"</ul>",
+					"</li>",
+					"<li class=\"dem_draw_menu_divider\"></li>",
+					"<li><a data-ratio data-tool=\"eraser\"><span class=\"menu-item-icon btn-eraser back_image_buttons\"></span>" + this.reporterTranslates[6] + "</a></li>",
+					"<li><a data-tool=\"erase-all\"><span class=\"menu-item-icon btn-erase-all back_image_buttons\"></span>" + this.reporterTranslates[7] + "</a></li>",
+				"</ul>"
+			].join("");
 
 			demBottonsDiv.innerHTML = _buttonsContent;
 
@@ -868,6 +905,154 @@ function CEditorPage(api)
 					_wordControl.DemonstrationManager.PointerRemove();
 			};
 
+			function createSolidPen(color, size, opacity) {
+				color = parseInt(color, 16);
+				const ascColor = new Asc.asc_CColor();
+				ascColor.asc_putType(Asc.c_oAscColor.COLOR_TYPE_SRGB);
+				ascColor.asc_putR(color>>16);
+				ascColor.asc_putG((color&0xff00)>>8);
+				ascColor.asc_putB(color&0xff);
+				ascColor.asc_putA(0xff);
+
+				const stroke = new Asc.asc_CStroke();
+				stroke.asc_putType(Asc.c_oAscStrokeType.STROKE_COLOR);
+				stroke.asc_putColor(ascColor);
+				stroke.asc_putPrstDash(Asc.c_oDashType.solid);
+				stroke.asc_putWidth(size);
+				stroke.asc_putTransparent(opacity * 2.55);
+				return stroke;
+			};
+
+			this.currentDrawColor = 'e81416';
+
+			this.elementReporterDrawMenu = document.getElementById("dem_id_draw_menu");
+			this.elementReporterDrawMenu.onclick = function(e) {
+				if (e.target.hasAttribute("data-ratio")) {
+					const btnIcon = document.getElementById("dem_id_draw_menu_trigger_span");
+					
+					if (!!e.target.dataset.checked) {
+						delete e.target.dataset.checked;
+						api.asc_StopInkDrawer();
+
+						this.elementReporterDrawMenuTrigger.classList.remove("btn-text-default-img2");
+						this.elementReporterDrawMenuTrigger.classList.add("btn-text-default-img");
+						btnIcon.classList.remove("btn-pen-active");
+						btnIcon.classList.add("btn-pen");
+					} else {
+						const elements = this.elementReporterDrawMenu.querySelectorAll("a[data-ratio]")
+						for (let i = 0; i< elements.length; i++) {
+							delete elements[i].dataset.checked;
+						}
+
+						e.target.dataset.checked = "true";
+
+						const currentTool = e.target.getAttribute("data-tool");
+
+						if (window.editor.WordControl.reporterPointer) {
+							this.elementReporter6.onclick()
+						}
+						switch (currentTool) {
+							case "pen": 
+								api.asc_StartDrawInk(createSolidPen(this.currentDrawColor, 1, 100));
+								break;
+							case "highlighter":
+								api.asc_StartDrawInk(createSolidPen(this.currentDrawColor, 6, 50));	
+								break;
+							case "eraser":
+								api.asc_StartInkEraser();
+								break;
+						}
+
+						this.elementReporterDrawMenuTrigger.classList.add("btn-text-default-img2");
+						this.elementReporterDrawMenuTrigger.classList.remove("btn-text-default-img");
+						btnIcon.classList.add("btn-pen-active");
+						btnIcon.classList.remove("btn-pen");
+					}
+				}
+
+				if (e.target.dataset.tool === "erase-all") {
+					api.asc_EraseAllInksOnSlide();
+				}
+
+				this.elementReporterDrawMenu.style.display = "none";
+			}.bind(this);
+
+			let isMenuHovered = false;
+			const drawColorsMenuTrigger = jQuery("#dem_id_draw_color_menu_trigger");
+			drawColorsMenuTrigger.on('mouseenter', function(e) {
+				if (!isMenuHovered) {
+					const offset = AscCommon.UI.getBoundingClientRect(e.target);
+					const menuWidth = 174; 
+					let leftPosition = offset.left + offset.width;
+					if (leftPosition + menuWidth > window.outerWidth) {
+						leftPosition = offset.left - menuWidth;
+					}
+			
+					this.elementReporterDrawColorsMenu.css({
+						display: "block",
+						top: offset.top + "px",
+						left: leftPosition + "px"
+					});
+				}
+			}.bind(this));
+
+			drawColorsMenuTrigger.on('mouseleave', function() {
+				if (!isMenuHovered) {
+					this.elementReporterDrawColorsMenu.css("display", "none");
+				}
+			}.bind(this));
+
+			this.elementReporterDrawColorsMenu = jQuery("#dem_id_draw_color_menu");
+			this.elementReporterDrawColorsMenu.css({
+				"z-index": 2,
+				"padding": "5px"
+			});
+
+			this.elementReporterDrawColorsMenu.on('click', function(e) {
+				const checkedMenuItem = this.elementReporterDrawMenu.querySelector("a[data-checked]");
+				this.currentDrawColor = e.target.dataset.value;
+				if (window.editor.WordControl.reporterPointer) {
+					this.elementReporter6.onclick()
+				}
+				if ((checkedMenuItem && checkedMenuItem.dataset.tool === "eraser") || !checkedMenuItem) {
+					api.asc_StartDrawInk(createSolidPen(this.currentDrawColor, 1, 100));
+					const elements = this.elementReporterDrawMenu.querySelectorAll("a[data-ratio]")
+					for (let i = 0; i< elements.length; i++) {
+						delete elements[i].dataset.checked;
+					}
+
+					const btnIcon = document.getElementById("dem_id_draw_menu_trigger_span");
+					this.elementReporterDrawMenu.querySelector("a[data-tool=\"pen\"]").dataset.checked = "true";
+					this.elementReporterDrawMenuTrigger.classList.add("btn-text-default-img2");
+					this.elementReporterDrawMenuTrigger.classList.remove("btn-text-default-img");
+					btnIcon.classList.add("btn-pen-active");
+					btnIcon.classList.remove("btn-pen");
+				} else {
+					if (checkedMenuItem.dataset.tool === "pen") {
+						api.asc_StartDrawInk(createSolidPen(this.currentDrawColor, 1, 100));
+					} else {
+						api.asc_StartDrawInk(createSolidPen(this.currentDrawColor, 6, 50));
+					}
+				}
+
+				this.elementReporterDrawMenu.style.display = "none";
+			}.bind(this));
+
+			this.elementReporterDrawMenuTrigger = document.getElementById("dem_id_draw_menu_trigger");
+			this.elementReporterDrawMenuTrigger.onclick = function() {
+				var drawMenu = document.getElementById("dem_id_draw_menu");
+				var _draw_menu_trigger = document.getElementById("dem_id_draw_menu_trigger");
+				var _draw_menu_trigger_offset = AscCommon.UI.getBoundingClientRect(_draw_menu_trigger);
+
+				if (drawMenu.style.display == "block") {
+					drawMenu.style.display = "none";
+				} else {
+					drawMenu.style.display = "block";
+					drawMenu.style.left = _draw_menu_trigger_offset.left + (_draw_menu_trigger.offsetWidth - drawMenu.offsetWidth) / 2 + "px";
+					drawMenu.style.top = _draw_menu_trigger_offset.top - _draw_menu_trigger.offsetHeight - drawMenu.offsetHeight + "px";
+				}
+			};
+
 			window.onkeydown = this.onKeyDown;
 			window.onkeyup = this.onKeyUp;
 
@@ -907,6 +1092,10 @@ function CEditorPage(api)
 		}
 		// --------------------------------------------------------------------------
 
+		this.m_oApi.asc_registerCallback("asc_onEndDemoWithAnnotations", function (fCallback)
+		{
+			fCallback(true);
+		});
 		this.m_oDrawingDocument.TargetHtmlElement = document.getElementById('id_target_cursor');
 
 		if (this.IsNotesSupported())
@@ -3082,6 +3271,11 @@ function CEditorPage(api)
 		styleContent += (".btn-pause { background-position: "          + xOffset1 + "px -80px; }");
 		styleContent += (".btn-pointer { background-position: "        + xOffset1 + "px -100px; }");
 		styleContent += (".btn-pointer-active { background-position: " + xOffset2 + "px -100px; }");
+		styleContent += (".btn-erase-all { background-position: " + xOffset1 + "px -120px; }");
+		styleContent += (".btn-eraser { background-position: " + xOffset1 + "px -140px; }");
+		styleContent += (".btn-highlighter { background-position: " + xOffset1 + "px -160px; }");
+		styleContent += (".btn-pen { background-position: " + xOffset1 + "px -180px; }");
+		styleContent += (".btn-pen-active { background-position: " + xOffset2 + "px -180px; }");
 
 		styleContent += (".btn-text-default { position: absolute; background: " + AscCommon.GlobalSkin.DemButtonBackgroundColor + "; border: 1px solid " + AscCommon.GlobalSkin.DemButtonBorderColor + "; border-radius: 2px; color: " + AscCommon.GlobalSkin.DemButtonTextColor + "; font-size: 11px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; height: 22px; cursor: pointer; }");
 		styleContent += ".btn-text-default-img { background-repeat: no-repeat; position: absolute; background: transparent; border: none; height: 22px; cursor: pointer; }";
@@ -3144,7 +3338,17 @@ function CEditorPage(api)
 			var _labelMain = document.getElementById("dem_id_slides");
 			var _buttonSeparator2 = document.getElementById("dem_id_sep2");
 			var _buttonPointer = document.getElementById("dem_id_pointer");
+			var _buttonDrawMenuTrigger = document.getElementById("dem_id_draw_menu_trigger");
+			var _drawMenu = document.getElementById("dem_id_draw_menu");
 			var _buttonEnd = document.getElementById("dem_id_end");
+
+			function redrawMenu() {
+				if (_drawMenu.style.display === "block") {
+					var offset = AscCommon.UI.getBoundingClientRect(_buttonDrawMenuTrigger);
+					_drawMenu.style.left = offset.left + (_buttonDrawMenuTrigger.offsetWidth - _drawMenu.offsetWidth) / 2 + "px";
+					_drawMenu.style.top = offset.top - _buttonDrawMenuTrigger.offsetHeight - _drawMenu.offsetHeight + "px";
+				}
+			}
 
 			_label1.style.display = "block";
 			_buttonPlay.style.display = "block";
@@ -3168,11 +3372,11 @@ function CEditorPage(api)
 			var _width = parseInt(this.m_oMainView.HtmlElement.style.width);
 
 			// test first mode
-			// [10][time][6][play/pause(20)][6][reset]----[10]----[prev(20)][next(20)][15][slide x of x][15][pointer(20)]----[10]----[end][10]
-			var _widthCenter = (20 + 20 + 15 + _main_width + 15 + 20);
+			// [10][time][6][play/pause(20)][6][reset]----[10]----[prev(20)][next(20)][15][slide x of x][15][pointer(20)][drawmenu(20)]----[10]----[end][10]
+			var _widthCenter = (20 + 20 + 15 + _main_width + 15 + 20 + 20);
 			var _posCenter = (_width - _widthCenter) >> 1;
 
-			var _test_width1 = 10 + _label1_width + 6 + 20 + 6 + _buttonReset_width + 10 + 20 + 20 + 15 + _main_width + 15 + 20 + 10 + _buttonEnd_width + 10;
+			var _test_width1 = 10 + _label1_width + 6 + 20 + 6 + _buttonReset_width + 10 + 20 + 20 + 15 + _main_width + 15 + 20 + 20 + 10 + _buttonEnd_width + 10;
 			var _is1 = ((10 + _label1_width + 6 + 20 + 6 + _buttonReset_width + 10) <= _posCenter) ? true : false;
 			var _is2 = ((_posCenter + _widthCenter) <= (_width - 20 - _buttonEnd_width)) ? true : false;
 			if (_is2 && (_test_width1 <= _width))
@@ -3197,13 +3401,15 @@ function CEditorPage(api)
 				_labelMain.style.left = (_posCenter + 55) + "px";
 				_buttonSeparator2.style.left = (_posCenter + 55 + _main_width + 7 - 10) + "px";
 				_buttonPointer.style.left = (_posCenter + 70 + _main_width) + "px";
+				_buttonDrawMenuTrigger.style.left = (_posCenter + 90 + _main_width) + "px";
+				redrawMenu();
 
 				return;
 			}
 
 			// test second mode
-			// [10][prev(20)][next(20)][15][slide x of x][15][pointer(20)]----[10]----[end][10]
-			var _test_width2 = 10 + 20 + 20 + 15 + _main_width + 15 + 20 + 10 + _buttonEnd_width + 10;
+			// [10][prev(20)][next(20)][15][slide x of x][15][pointer(20)][drawmenu(20)]----[10]----[end][10]
+			var _test_width2 = 10 + 20 + 20 + 15 + _main_width + 15 + 20 + 20 + + 10 + _buttonEnd_width + 10;
 			if (_test_width2 <= _width)
 			{
 				_label1.style.display = "none";
@@ -3217,11 +3423,14 @@ function CEditorPage(api)
 				_labelMain.style.left = "65px";
 				_buttonSeparator2.style.left = (65 + _main_width + 7 - 10) + "px";
 				_buttonPointer.style.left = (80 + _main_width) + "px";
+				_buttonDrawMenuTrigger.style.left = (100 + _main_width) + "px";
+				redrawMenu();
+
 				return;
 			}
 
 			// test third mode
-			// ---------[prev(20)][next(20)][15][slide x of x][15][pointer(20)]---------
+			// ---------[prev(20)][next(20)][15][slide x of x][15][pointer(20)][drawmenu(20)]---------
 			// var _test_width3 = 20 + 20 + 15 + _main_width + 15 + 20;
 			if (_posCenter < 0)
 				_posCenter = 0;
@@ -3237,6 +3446,8 @@ function CEditorPage(api)
 			_labelMain.style.left = (_posCenter + 55) + "px";
 			_buttonSeparator2.style.left = (_posCenter + 55 + _main_width + 7 - 10) + "px";
 			_buttonPointer.style.left = (_posCenter + 70 + _main_width) + "px";
+			_buttonDrawMenuTrigger.style.left = (_posCenter + 90 + _main_width) + "px";
+			redrawMenu();
 		}
 	};
 
@@ -3791,63 +4002,18 @@ function CEditorPage(api)
 			return false;
 		}
 
-		var delta  = 0;
-		var deltaX = 0;
-		var deltaY = 0;
-
-		if (undefined != e.wheelDelta && e.wheelDelta != 0)
-		{
-			//delta = (e.wheelDelta > 0) ? -45 : 45;
-			delta = -45 * e.wheelDelta / 120;
-		}
-		else if (undefined != e.detail && e.detail != 0)
-		{
-			//delta = (e.detail > 0) ? 45 : -45;
-			delta = 45 * e.detail / 3;
-		}
-
-		// New school multidimensional scroll (touchpads) deltas
-		deltaY = delta;
-
-		if (oThis.m_bIsHorScrollVisible)
-		{
-			if (e.axis !== undefined && e.axis === e.HORIZONTAL_AXIS)
-			{
-				deltaY = 0;
-				deltaX = delta;
-			}
-
-			// Webkit
-			if (undefined !== e.wheelDeltaY && 0 !== e.wheelDeltaY)
-			{
-				//deltaY = (e.wheelDeltaY > 0) ? -45 : 45;
-				deltaY = -45 * e.wheelDeltaY / 120;
-			}
-			if (undefined !== e.wheelDeltaX && 0 !== e.wheelDeltaX)
-			{
-				//deltaX = (e.wheelDeltaX > 0) ? -45 : 45;
-				deltaX = -45 * e.wheelDeltaX / 120;
-			}
-		}
-
-		deltaX >>= 0;
-		deltaY >>= 0;
+		let values = AscCommon.checkMouseWhell(e, {
+			isSupportBidirectional : false,
+			isAllowHorizontal : oThis.m_bIsHorScrollVisible,
+			isUseMaximumDelta : true
+		});
 
 		oThis.m_nVerticalSlideChangeOnScrollEnabled = true;
 
-		let isSupportDirections2 = false;
-		if (!isSupportDirections2)
-		{
-			if (Math.abs(deltaY) >= Math.abs(deltaX))
-				deltaX = 0;
-			else
-				deltaY = 0;
-		}
-
-		if (0 !== deltaX)
-			oThis.m_oScrollHorApi.scrollBy(deltaX, 0, false);
-		if (0 !== deltaY)
-			oThis.m_oScrollVerApi.scrollBy(0, deltaY, false);
+		if (0 !== values.x)
+			oThis.m_oScrollHorApi.scrollBy(values.x, 0, false);
+		if (0 !== values.y)
+			oThis.m_oScrollVerApi.scrollBy(0, values.y, false);
 
 		oThis.m_nVerticalSlideChangeOnScrollEnabled = false;
 
@@ -4216,6 +4382,7 @@ function CEditorPage(api)
 		}
 
 
+		let oSlide = this.m_oLogicDocument.GetCurrentSlide();
 		if (isDrawNotes && drDoc.m_bIsSelection)
 		{
 			var ctxOverlay = overlayNotes.m_oContext;
@@ -4225,8 +4392,8 @@ function CEditorPage(api)
 
 			ctxOverlay.beginPath();
 
-			if (drDoc.SlideCurrent != -1)
-				this.m_oLogicDocument.Slides[drDoc.SlideCurrent].drawNotesSelect();
+			if (oSlide && oSlide.drawNotesSelect)
+				oSlide.drawNotesSelect();
 
 			ctxOverlay.globalAlpha = 0.2;
 			ctxOverlay.fill();
@@ -4241,13 +4408,12 @@ function CEditorPage(api)
 		ctx.globalAlpha = 1.0;
 		ctx             = null;
 
-		if (this.m_oLogicDocument != null && drDoc.SlideCurrent >= 0)
+		if (this.m_oLogicDocument != null && oSlide)
 		{
-			let oSlide = this.m_oLogicDocument.GetCurrentSlide();
 			oSlide.drawSelect(2);
 
 			var elements = oSlide.graphicObjects;
-			if (!elements.canReceiveKeyPress() && -1 != drDoc.SlideCurrent)
+			if (!elements.canReceiveKeyPress())
 			{
 				var drawPage = drDoc.SlideCurrectRect;
 				drDoc.AutoShapesTrack.init(overlay, drawPage.left, drawPage.top, drawPage.right, drawPage.bottom, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());

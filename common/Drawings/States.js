@@ -148,7 +148,7 @@ StartAddNewShape.prototype =
     onMouseUp: function(e, x, y)
     {
         var bRet = false;
-        if(this.bStart && this.drawingObjects.canEdit() && this.drawingObjects.arrTrackObjects.length > 0)
+        if(this.bStart && (this.drawingObjects.canEdit() || Asc.editor.isDrawSlideshowAnnotations()) && this.drawingObjects.arrTrackObjects.length > 0)
         {
             bRet = true;
             var oThis = this;
@@ -286,8 +286,8 @@ StartAddNewShape.prototype =
                 return;
             }
 
-            var callback = function(bLock, isClickMouseEvent){
-
+            let callback = function(bLock, isClickMouseEvent)
+            {
                 if(bLock)
                 {
                     History.Create_NewPoint(AscDFH.historydescription_CommonStatesAddNewShape);
@@ -374,7 +374,13 @@ StartAddNewShape.prototype =
                 }
 	            oThis.drawingObjects.updateOverlay();
             };
-            if(Asc.editor && Asc.editor.checkObjectsLock)
+            if(Asc.editor.isDrawSlideshowAnnotations())
+            {
+                AscFormat.ExecuteNoHistory(function () {
+                    callback(true, e.ClickCount);
+                }, this, []);
+            }
+            else if(Asc.editor.checkObjectsLock)
             {
                 Asc.editor.checkObjectsLock([AscCommon.g_oIdCounter.Get_NewId()], callback);
             }

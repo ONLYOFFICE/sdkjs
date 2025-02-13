@@ -144,6 +144,7 @@ function (window, undefined) {
 		this.selectionTimer = undefined;
 		this.enableKeyEvents = true;
 		this.isTopLineActive = false;
+		this.openFromTopLine = false;
 		this.skipTLUpdate = true;
 		this.loadFonts = false;
 		this.isOpened = false;
@@ -332,7 +333,7 @@ function (window, undefined) {
 		}
 		this._setOptions(options);
 		this._cleanLastRangeInfo();
-		this._updateTopLineActive(true === this.input.isFocused);
+		this._updateTopLineActive(true === this.input.isFocused, true);
 
 		this._updateEditorState();
 		this._draw();
@@ -365,6 +366,7 @@ function (window, undefined) {
 		this._updateUndoRedoChanged();
 
 		AscCommon.StartIntervalDrawText(true);
+		this.openAction();
 	};
 
 	CellEditor.prototype.close = function (saveValue, callback) {
@@ -410,6 +412,7 @@ function (window, undefined) {
 			// Сброс состояния редактора
 			t._setEditorState(c_oAscCellEditorState.editEnd);
 			t.handlers.trigger("closed");
+			t.closeAction();
 
 			if (callback) {
 				callback(true);
@@ -466,6 +469,8 @@ function (window, undefined) {
 		// Сброс состояния редактора
 		this._setEditorState(c_oAscCellEditorState.editEnd);
 		this.handlers.trigger("closed");
+		t.closeAction();
+
 		if (callback) {
 			callback(true);
 		}
@@ -705,11 +710,11 @@ function (window, undefined) {
 
 				// ToDo move this code to moveCursor
 
-				this.lastRangePos = this._parseResult && this._parseResult.argPosArr
+				this.lastRangePos = this._parseResult && this._parseResult.argPosArr && this._parseResult.argPosArr.length
 					? this._parseResult.argPosArr[0].start 
 					: this.cursorPos;
 
-				this.lastRangeLength = this._parseResult && this._parseResult.argPosArr
+				this.lastRangeLength = this._parseResult && this._parseResult.argPosArr && this._parseResult.argPosArr.length
 					? this._parseResult.argPosArr[this._parseResult.argPosArr.length - 1].end - this._parseResult.argPosArr[0].start 
 					: 0;
 			}
@@ -1012,20 +1017,20 @@ function (window, undefined) {
 	};
 
 	CellEditor.prototype._findRangeUnderCursor = function () {
-		var ranges, t = this, s = t.textRender.getChars(0, t.textRender.getCharsCount()), range, a;
+		// Get character string
+		let s = this.textRender.getChars(0, this.textRender.getCharsCount());
 		s = AscCommonExcel.convertUnicodeToSimpleString(s);
-		var arrFR = this.handlers.trigger("getFormulaRanges");
+		let arrFR = this.handlers.trigger("getFormulaRanges");
 
+		// Check cached formula ranges first
 		if (arrFR) {
-			ranges = arrFR.ranges;
-			/*так как у нас уже есть некий массив с рейнджами, которые в формуле, то пробегаемся по ним и смотрим,
-			* находится ли курсор в позиции над этим диапазоном, дабы не парсить всю формулу заново
-			* необходимо чтобы парсить случаи когда используется что-то такое sumnas2:K2 - sumnas2 невалидная ссылка.
-			* */
-			for (var i = 0, l = ranges.length; i < l; ++i) {
-				a = ranges[i];
-				if (t.cursorPos >= a.cursorePos && t.cursorPos <= a.cursorePos + a.formulaRangeLength) {
-					range = a.clone(true);
+			let ranges = arrFR.ranges;
+			// Check if cursor is over any existing ranges before re-parsing formula
+			// Needed for cases like sumnas2:K2 where sumnas2 is invalid reference
+			for (let i = 0, l = ranges.length; i < l; ++i) {
+				let a = ranges[i];
+				if (this.cursorPos >= a.cursorePos && this.cursorPos <= a.cursorePos + a.formulaRangeLength) {
+					let range = a.clone(true);
 					range.isName = a.isName;
 					range.formulaRangeLength = a.formulaRangeLength;
 					range.cursorePos = a.cursorePos;
@@ -1034,33 +1039,35 @@ function (window, undefined) {
 			}
 		}
 
-		/*не нашли диапазонов под курсором, парсим формулу*/
-		var r, offset, _e, _s, wsName = null, ret = false, refStr, isName = false, _sColorPos, localStrObj;
-		var ws = this.handlers.trigger("getActiveWS");
+		// No ranges found under cursor, parse formula
+		let r, offset, _e, _s, wsName = null, ret = false, refStr, isName = false;
+		let _sColorPos, localStrObj;
+		let ws = this.handlers.trigger("getActiveWS");
 
-		var bbox = this.options.bbox;
+		let bbox = this.options.bbox;
 		this._parseResult = new AscCommonExcel.ParseResult([], []);
-		var cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+		let cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
 		this._formula = new AscCommonExcel.parserFormula(s.substr(1), cellWithFormula, ws);
 		this._formula.parse(true, true, this._parseResult, bbox);
 
+		let range;
 		if (this._parseResult.refPos && this._parseResult.refPos.length > 0) {
-			for (var index = 0; index < this._parseResult.refPos.length; index++) {
+			for (let index = 0; index < this._parseResult.refPos.length; index++) {
 				wsName = null;
 				r = this._parseResult.refPos[index];
 
 				offset = r.end;
-				_e = r.end;
+				_e = r.end; 
 				_sColorPos = _s = r.start;
 
 				switch (r.oper.type) {
-					case cElementType.cell          : {
+					case cElementType.cell: {
 						wsName = ws.getName();
 						refStr = r.oper.toLocaleString();
 						ret = true;
 						break;
 					}
-					case cElementType.cell3D        : {
+					case cElementType.cell3D: {
 						localStrObj = r.oper.toLocaleStringObj();
 						refStr = localStrObj[1];
 						ret = true;
@@ -1069,13 +1076,13 @@ function (window, undefined) {
 						_sColorPos = _e - localStrObj[0].length;
 						break;
 					}
-					case cElementType.cellsRange    : {
+					case cElementType.cellsRange: {
 						wsName = ws.getName();
 						refStr = r.oper.toLocaleString();
 						ret = true;
 						break;
 					}
-					case cElementType.cellsRange3D  : {
+					case cElementType.cellsRange3D: {
 						if (!r.oper.isSingleSheet()) {
 							continue;
 						}
@@ -1086,22 +1093,21 @@ function (window, undefined) {
 						_s = _e - localStrObj[1].length + 1;
 						break;
 					}
-					case cElementType.table          :
-					case cElementType.name          :
-					case cElementType.name3D : {
-						var nameRef = r.oper.toRef(bbox);
+					case cElementType.table:
+					case cElementType.name:
+					case cElementType.name3D: {
+						let nameRef = r.oper.toRef(bbox);
 						if (nameRef instanceof AscCommonExcel.cError) {
 							continue;
 						}
 						switch (nameRef.type) {
-
-							case cElementType.cellsRange3D          : {
+							case cElementType.cellsRange3D: {
 								if (!nameRef.isSingleSheet()) {
 									continue;
 								}
 							}
-							case cElementType.cellsRange          :
-							case cElementType.cell3D        : {
+							case cElementType.cellsRange:
+							case cElementType.cell3D: {
 								ret = true;
 								localStrObj = nameRef.toLocaleStringObj();
 								refStr = localStrObj[1];
@@ -1113,16 +1119,13 @@ function (window, undefined) {
 						isName = true;
 						break;
 					}
-					default                         :
+					default:
 						continue;
 				}
 
-				if (ret && t.cursorPos > _s && t.cursorPos <= _s + refStr.length) {
-					range = t._parseRangeStr(refStr);
+				if (ret && this.cursorPos > _s && this.cursorPos <= _s + refStr.length) {
+					range = this._parseRangeStr(refStr);
 					if (range) {
-						if (ws.getName() !== wsName) {
-							return {range: null};
-						}
 						range.isName = isName;
 						range.formulaRangeLength = refStr.length;
 						range.cursorePos = _s;
@@ -1137,9 +1140,10 @@ function (window, undefined) {
 		return !range ? {range: null} : {range: range, wsName: wsName};
 	};
 
-	CellEditor.prototype._updateTopLineActive = function (state) {
+	CellEditor.prototype._updateTopLineActive = function (state, isOpening) {
 		if (state !== this.isTopLineActive) {
 			this.isTopLineActive = state;
+			this.openFromTopLine = isOpening && state;
 			this.handlers.trigger("updateTopLine", this.isTopLineActive ? c_oAscCellEditorState.editInFormulaBar : c_oAscCellEditorState.editInCell);
 		}
 	};
@@ -1673,11 +1677,11 @@ function (window, undefined) {
 		this.cursorStyle.display = "none";
 	};
 
-	CellEditor.prototype._updateCursorPosition = function (redrawText, isExpand) {
+	CellEditor.prototype._updateCursorPosition = function (redrawText, isExpand, lineIndex) {
 		// ToDo стоит переправить данную функцию
 		let h = this.canvas.height;
 		let y = -this.textRender.calcLineOffset(this.topLineIndex);
-		let cur = this.textRender.calcCharOffset(this.cursorPos);
+		let cur = this.textRender.calcCharOffset(this.cursorPos, lineIndex);
 		let charsCount = this.textRender.getCharsCount();
 		let textAlign = this.textFlags && this.textFlags.textAlign;
 		let curLeft = asc_round(
@@ -1753,7 +1757,7 @@ function (window, undefined) {
 		this._updateSelectionInfo();
 	};
 
-	CellEditor.prototype._moveCursor = function (kind, pos) {
+	CellEditor.prototype._moveCursor = function (kind, pos, lineIndex) {
 		this.newTextFormat = null;
 		var t = this;
 		this.sAutoComplete = null;
@@ -1801,12 +1805,16 @@ function (window, undefined) {
 			t.selectionBegin = t.selectionEnd = -1;
 			t._cleanSelection();
 		}
-		t._updateCursorPosition();
+		t._updateCursorPosition(null, null, lineIndex);
 		t._updateCursor();
 	};
 
 	CellEditor.prototype._findCursorPosition = function (coord) {
 		return this.textRender.getCharPosByXY(coord.x, coord.y, this.topLineIndex, this.getZoom());
+	};
+
+	CellEditor.prototype._findLineIndex = function (coord) {
+		return this.textRender.getLineByY(coord.y, this.topLineIndex, this.getZoom());
 	};
 
 	CellEditor.prototype._updateTopLineCurPos = function () {
@@ -2574,16 +2582,6 @@ function (window, undefined) {
 				}
 				t._removeChars(bIsWordRemove ? kPrevWord : kPrevChar);
 				return false;
-
-			case 32:  // "space"
-
-				t._addChars(String.fromCharCode(32));
-				event.stopPropagation();
-				event.preventDefault();
-
-				t._setSkipKeyPress(false);
-				return false;
-
 			case 35:  // "end"
 				if (!this.enableKeyEvents) {
 					break;
@@ -3016,7 +3014,7 @@ function (window, undefined) {
 					this._updateCursor();
 					pos = this._findCursorPosition(coord);
 					if (pos !== undefined) {
-						pos >= 0 ? this._moveCursor(kPosition, pos) : this._moveCursor(pos);
+						pos >= 0 ? this._moveCursor(kPosition, pos, this._findLineIndex(coord)) : this._moveCursor(pos, null, this._findLineIndex(coord));
 					}
 				} else {
 					this._changeSelection(coord);
@@ -3379,6 +3377,22 @@ function (window, undefined) {
 			return;
 		}
 		api.sendEvent('asc_onUserActionEnd');
+	};
+
+	CellEditor.prototype.openAction = function () {
+		var api = window["Asc"]["editor"];
+		if (!api) {
+			return;
+		}
+		api.sendEvent('onOpenCellEditor');
+	};
+
+	CellEditor.prototype.closeAction = function () {
+		var api = window["Asc"]["editor"];
+		if (!api) {
+			return;
+		}
+		api.sendEvent('onCloseCellEditor');
 	};
 
 

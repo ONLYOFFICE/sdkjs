@@ -1714,6 +1714,7 @@
 	 * Sets the selection to the specified range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Select.js
 	 */	
 	ApiRange.prototype.Select = function(bUpdate)
@@ -1755,6 +1756,8 @@
 			Document.SetDocPosType(controllerType);
 			Document.UpdateSelection();
 		}
+
+		return true;
 	};
 
 	/**
@@ -3217,7 +3220,7 @@
 	/**
 	 * Returns a type of the ApiHyperlink class.
 	 * @memberof ApiHyperlink
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {"hyperlink"}
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetClassType.js
 	 */
@@ -3328,7 +3331,7 @@
 
 	/**
 	 * Sets the hyperlink address.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} sLink - The hyperlink address.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/SetLink.js
@@ -3354,7 +3357,7 @@
 	};
 	/**
 	 * Sets the hyperlink display text.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} sDisplay - The text to display the hyperlink.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/SetDisplayedText.js
@@ -3391,7 +3394,7 @@
 	};
 	/**
 	 * Sets the screen tip text of the hyperlink.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} sScreenTipText - The screen tip text of the hyperlink.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/SetScreenTipText.js
@@ -3407,7 +3410,7 @@
 	};
 	/**
 	 * Returns the hyperlink address.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {string} 
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetLinkedText.js
 	 */
@@ -3424,7 +3427,7 @@
 	};
 	/**
 	 * Returns the hyperlink display text.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {string} 
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetDisplayedText.js
 	 */
@@ -3441,7 +3444,7 @@
 	};
 	/**
 	 * Returns the screen tip text of the hyperlink.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {string} 
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetScreenTipText.js
 	 */
@@ -3458,7 +3461,7 @@
 	};
 	/**
 	 * Returns the hyperlink element using the position specified.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {number} nPos - The position where the element which content we want to get must be located.
 	 * @returns {?ParagraphContent}
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetElement.js
@@ -3475,7 +3478,7 @@
 	};
 	/**
 	 * Returns a number of elements in the current hyperlink.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetElementsCount.js
 	 */
@@ -3485,7 +3488,7 @@
 	};
 	/**
 	 * Sets the default hyperlink style.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/SetDefaultStyle.js
 	 */
@@ -3697,6 +3700,16 @@
 	}
 	ApiChart.prototype = Object.create(ApiDrawing.prototype);
 	ApiChart.prototype.constructor = ApiChart;
+
+	/**
+	 * Class representing a group of drawings.
+	 * @constructor
+	 */
+	function ApiGroup(oGroup){
+		ApiDrawing.call(this, oGroup);
+	}
+	ApiGroup.prototype = Object.create(ApiDrawing.prototype);
+	ApiGroup.prototype.constructor = ApiGroup;
 
 	/**
 	 * Class representing a chart series.
@@ -4324,6 +4337,18 @@
 	 * @see office-js-api/Examples/Enumerations/TofStyle.js
 	 */
 
+	/**
+     * Any valid drawing element.
+     * @typedef {(ApiShape | ApiImage | ApiGroup | ApiOleObject | ApiChart )} Drawing
+	 * @see office-js-api/Examples/Enumerations/Drawing.js
+	 */
+
+	/**
+     * Available drawing element for grouping.
+     * @typedef {(ApiShape | ApiGroup | ApiImage | ApiChart)} DrawingForGroup
+	 * @see office-js-api/Examples/Enumerations/DrawingForGroup.js
+	 */
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// Base Api
@@ -4382,17 +4407,17 @@
 	 * If you do not specify the start and end positions, the range will be taken from the entire element.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param oElement - The element from which the range will be taken.
-	 * @param nStart - Start range position.
-	 * @param nEnd - End range position.
-	 * @returns {ApiRange | null} - returns null if oElement isn't supported.
+	 * @param element - The element from which the range will be taken.
+	 * @param start - Start range position.
+	 * @param end - End range position.
+	 * @returns {ApiRange | null} - returns null if element isn't supported.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateRange.js
 	 */
-	Api.prototype.CreateRange = function(oElement, nStart, nEnd)
+	Api.prototype.CreateRange = function(element, start, end)
 	{
-		if (oElement) 
+		if (element)
 		{
-			switch (oElement.GetClassType())
+			switch (element.GetClassType())
 			{
 				case 'paragraph':
 				case 'hyperlink':
@@ -4402,7 +4427,7 @@
 				case 'document':
 				case 'inlineLvlSdt':
 				case 'blockLvlSdt':
-					return oElement.GetRange(nStart, nEnd);
+					return element.GetRange(start, end);
 				default:
 					return null;
 			}
@@ -4413,17 +4438,17 @@
 	 * Creates a new table with a specified number of rows and columns.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {number} nCols - Number of columns.
-	 * @param {number} nRows - Number of rows.
+	 * @param {number} cols - Number of columns.
+	 * @param {number} rows - Number of rows.
 	 * @returns {ApiTable}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateTable.js
 	 */
-	Api.prototype.CreateTable = function(nCols, nRows)
+	Api.prototype.CreateTable = function(cols, rows)
 	{
-		if (!nRows || nRows <= 0 || !nCols || nCols <= 0)
+		if (!rows || rows <= 0 || !cols || cols <= 0)
 			return null;
 
-		var oTable = new CTable(private_GetDrawingDocument(), private_GetLogicDocument(), true, nRows, nCols, [], false);
+		var oTable = new CTable(private_GetDrawingDocument(), private_GetLogicDocument(), true, rows, cols, [], false);
 		oTable.CorrectBadGrid();
 		oTable.Set_TableW(undefined);
 		oTable.Set_TableStyle2(undefined);
@@ -4444,21 +4469,20 @@
 	 * Creates a new hyperlink text block to be inserted to the current paragraph or table.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sLink - The hyperlink address. 
-	 * @param {string} sDisplay - The text to display the hyperlink.
-	 * @param {string} sScreenTipText - The screen tip text.
+	 * @param {string} link - The hyperlink address.
+	 * @param {string} display - The text to display the hyperlink.
+	 * @param {string} screenTipText - The screen tip text.
 	 * @returns {ApiHyperlink}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateHyperlink.js
 	 */
-	Api.prototype.CreateHyperlink = function(sLink, sDisplay, sScreenTipText)
+	Api.prototype.CreateHyperlink = function(link, display, screenTipText)
 	{
-		// Создаем гиперссылку
-		var oHyperlink		= new ParaHyperlink();
-		var apiHyperlink	= new ApiHyperlink(oHyperlink);
-
-		apiHyperlink.SetLink(sLink);
-		apiHyperlink.SetDisplayedText(sDisplay);
-		apiHyperlink.SetScreenTipText(sScreenTipText);
+		var oHyperlink   = new ParaHyperlink();
+		var apiHyperlink = new ApiHyperlink(oHyperlink);
+		
+		apiHyperlink.SetLink(link);
+		apiHyperlink.SetDisplayedText(display);
+		apiHyperlink.SetScreenTipText(screenTipText);
 		
 		return apiHyperlink;
 	};
@@ -4467,19 +4491,19 @@
 	 * Creates an image with the parameters specified.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently only internet URL or Base64 encoded images are supported).
-	 * @param {EMU} nWidth - The image width in English measure units.
-	 * @param {EMU} nHeight - The image height in English measure units.
+	 * @param {string} imageSrc - The image source where the image to be inserted should be taken from (currently only internet URL or Base64 encoded images are supported).
+	 * @param {EMU} width - The image width in English measure units.
+	 * @param {EMU} height - The image height in English measure units.
 	 * @returns {ApiImage}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateImage.js
 	 */
-	Api.prototype.CreateImage = function(sImageSrc, nWidth, nHeight)
+	Api.prototype.CreateImage = function(imageSrc, width, height)
 	{
-		var nW = private_EMU2MM(nWidth);
-		var nH = private_EMU2MM(nHeight);
+		var nW = private_EMU2MM(width);
+		var nH = private_EMU2MM(height);
 
 		var oDrawing = new ParaDrawing(nW, nH, null, private_GetDrawingDocument(), private_GetLogicDocument(), null);
-		var oImage = private_GetLogicDocument().DrawingObjects.createImage(sImageSrc, 0, 0, nW, nH);
+		var oImage = private_GetLogicDocument().DrawingObjects.createImage(imageSrc, 0, 0, nW, nH);
 		oImage.setParent(oDrawing);
 		oDrawing.Set_GraphicObject(oImage);
 		return new ApiImage(oImage);
@@ -4489,60 +4513,91 @@
 	 * Creates a shape with the parameters specified.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {ShapeType} [sType="rect"] - The shape type which specifies the preset shape geometry.
-	 * @param {EMU} [nWidth = 914400] - The shape width in English measure units.
-	 * @param {EMU} [nHeight = 914400] - The shape height in English measure units.
-	 * @param {ApiFill} [oFill = Api.CreateNoFill()] - The color or pattern used to fill the shape.
-	 * @param {ApiStroke} [oStroke = Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the element shadow.
+	 * @param {ShapeType} [shapeType="rect"] - The shape type which specifies the preset shape geometry.
+	 * @param {EMU} [width = 914400] - The shape width in English measure units.
+	 * @param {EMU} [height = 914400] - The shape height in English measure units.
+	 * @param {ApiFill} [fill = Api.CreateNoFill()] - The color or pattern used to fill the shape.
+	 * @param {ApiStroke} [stroke = Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the element shadow.
 	 * @returns {ApiShape}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateShape.js
 	 */
-	Api.prototype.CreateShape = function(sType, nWidth, nHeight, oFill, oStroke)
+	Api.prototype.CreateShape = function(shapeType, width, height, fill, stroke)
 	{
 		var oLogicDocument = private_GetLogicDocument();
 		var oDrawingDocuemnt = private_GetDrawingDocument();
-		sType   = sType   || "rect";
-        nWidth  = nWidth  || 914400;
-	    nHeight = nHeight || 914400;
-		oFill   = oFill   || editor.CreateNoFill();
-		oStroke = oStroke || editor.CreateStroke(0, editor.CreateNoFill());
-		var nW = private_EMU2MM(nWidth);
-		var nH = private_EMU2MM(nHeight);
+		shapeType = shapeType || "rect";
+		width     = width || 914400;
+		height    = height || 914400;
+		fill      = fill || editor.CreateNoFill();
+		stroke    = stroke || editor.CreateStroke(0, editor.CreateNoFill());
+		var nW = private_EMU2MM(width);
+		var nH = private_EMU2MM(height);
 		var oDrawing = new ParaDrawing(nW, nH, null, oDrawingDocuemnt, oLogicDocument, null);
-		var oShapeTrack = new AscFormat.NewShapeTrack(sType, 0, 0, oLogicDocument.theme, null, null, null, 0);
+		var oShapeTrack = new AscFormat.NewShapeTrack(shapeType, 0, 0, oLogicDocument.theme, null, null, null, 0);
 		oShapeTrack.track({}, nW, nH);
 		var oShape = oShapeTrack.getShape(true, oDrawingDocuemnt, null);
 		oShape.setParent(oDrawing);
 		oDrawing.Set_GraphicObject(oShape);
 		oShape.createTextBoxContent();
-		oShape.spPr.setFill(oFill.UniFill);
-		oShape.spPr.setLn(oStroke.Ln);
+		oShape.spPr.setFill(fill.UniFill);
+		oShape.spPr.setLn(stroke.Ln);
 		return new ApiShape(oShape);
+	};
+
+	/**
+	 * Groups an array of drawings.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {DrawingForGroup[]} drawings - An array of drawings to group.
+	 * @returns {ApiGroup}
+	 * @since 8.3.0
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateGroup.js
+	 */
+	Api.prototype.CreateGroup = function(drawings)
+	{
+		let oDoc = private_GetLogicDocument();
+		let oDrDoc = private_GetDrawingDocument();
+		let oGraphicObjects = oDoc.getDrawingObjects();
+
+		if (drawings.find(function(drawing) { return drawing.Drawing.IsUseInDocument(); }))
+			return null;
+		
+		drawings.forEach(function(drawing) { drawing.Drawing.recalculate(); })
+
+		let oGroup = AscFormat.builder_CreateGroup(drawings, oGraphicObjects);
+		let oParaDrawing = new ParaDrawing(oGroup.getXfrmExtX(), oGroup.getXfrmExtY(), null, oDrDoc, oDoc, null);
+		oParaDrawing.Set_WrappingType(WRAPPING_TYPE_NONE);
+        oParaDrawing.Set_DrawingType(drawing_Anchor);
+		oGroup.setParent(oParaDrawing);
+		oParaDrawing.Set_GraphicObject(oGroup);
+
+		if (oGroup)
+			return new ApiGroup(oGroup);
 	};
 
 	/**
 	 * Creates a chart with the parameters specified.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {ChartType} [sType="bar"] - The chart type used for the chart display.
-	 * @param {Array} aSeries - The array of the data used to build the chart from.
-	 * @param {Array} aSeriesNames - The array of the names (the source table column names) used for the data which the chart will be build from.
-	 * @param {Array} aCatNames - The array of the names (the source table row names) used for the data which the chart will be build from.
-	 * @param {EMU} nWidth - The chart width in English measure units.
-	 * @param {EMU} nHeight - The chart height in English measure units.
-	 * @param {number} nStyleIndex - The chart color style index (can be 1 - 48, as described in OOXML specification).
-	 * @param {NumFormat[] | String[]} aNumFormats - Numeric formats which will be applied to the series (can be custom formats).
+	 * @param {ChartType} [chartType="bar"] - The chart type used for the chart display.
+	 * @param {Array} series - The array of the data used to build the chart from.
+	 * @param {Array} seriesNames - The array of the names (the source table column names) used for the data which the chart will be build from.
+	 * @param {Array} catNames - The array of the names (the source table row names) used for the data which the chart will be build from.
+	 * @param {EMU} width - The chart width in English measure units.
+	 * @param {EMU} height - The chart height in English measure units.
+	 * @param {number} styleIndex - The chart color style index (can be 1 - 48, as described in OOXML specification).
+	 * @param {NumFormat[] | String[]} numFormats - Numeric formats which will be applied to the series (can be custom formats).
      * The default numeric format is "General".
 	 * @returns {ApiChart}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateChart.js
 	 */
-	Api.prototype.CreateChart = function(sType, aSeries, aSeriesNames, aCatNames, nWidth, nHeight, nStyleIndex, aNumFormats)
+	Api.prototype.CreateChart = function(chartType, series, seriesNames, catNames, width, height, styleIndex, numFormats)
 	{
 		var oDrawingDocument = private_GetDrawingDocument();
-		var nW = private_EMU2MM(nWidth);
-		var nH = private_EMU2MM(nHeight);
+		var nW = private_EMU2MM(width);
+		var nH = private_EMU2MM(height);
 		var oDrawing = new ParaDrawing( nW, nH, null, oDrawingDocument, null, null);
-		var oChartSpace = AscFormat.builder_CreateChart(nW, nH, sType, aCatNames, aSeriesNames, aSeries, nStyleIndex, aNumFormats);
+		var oChartSpace = AscFormat.builder_CreateChart(nW, nH, chartType, catNames, seriesNames, series, styleIndex, numFormats);
 		if(!oChartSpace)
 		{
 			return null;
@@ -4557,26 +4612,26 @@
 	 * Creates an OLE object with the parameters specified.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently, only internet URL or Base64 encoded images are supported).
-	 * @param {EMU} nWidth - The OLE object width in English measure units.
-	 * @param {EMU} nHeight - The OLE object height in English measure units.
-	 * @param {string} sData - The OLE object string data.
-	 * @param {string} sAppId - The application ID associated with the current OLE object.
-	 * @returns {ApiOleObject}
+	 * @param {string} imageSrc - The image source where the image to be inserted should be taken from (currently, only internet URL or Base64 encoded images are supported).
+	 * @param {EMU} width - The OLE object width in English measure units.
+	 * @param {EMU} height - The OLE object height in English measure units.
+	 * @param {string} data - The OLE object string data.
+	 * @param {string} appId - The application ID associated with the current OLE object.
+	 * @returns {?ApiOleObject}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateOleObject.js
 	 */
-	Api.prototype.CreateOleObject = function(sImageSrc, nWidth, nHeight, sData, sAppId)
+	Api.prototype.CreateOleObject = function(imageSrc, width, height, data, appId)
 	{
-		if (typeof sImageSrc === "string" && sImageSrc.length > 0 && typeof sData === "string"
-			&& typeof sAppId === "string" && sAppId.length > 0
-			&& AscFormat.isRealNumber(nWidth) && AscFormat.isRealNumber(nHeight)
-		)
-
-		var nW = private_EMU2MM(nWidth);
-		var nH = private_EMU2MM(nHeight);
+		if (!(typeof imageSrc === "string" && imageSrc.length > 0 && typeof data === "string"
+			&& typeof appId === "string" && appId.length > 0
+			&& AscFormat.isRealNumber(width) && AscFormat.isRealNumber(height)))
+			return null;
+		
+		var nW = private_EMU2MM(width);
+		var nH = private_EMU2MM(height);
 
 		var oDrawing = new ParaDrawing(nW, nH, null, private_GetDrawingDocument(), private_GetLogicDocument(), null);
-		var oImage = private_GetLogicDocument().DrawingObjects.createOleObject(sData, sAppId, sImageSrc, 0, 0, nW, nH);
+		var oImage = private_GetLogicDocument().DrawingObjects.createOleObject(data, appId, imageSrc, 0, 0, nW, nH);
 		oImage.setParent(oDrawing);
 		oDrawing.Set_GraphicObject(oImage);
 		return new ApiOleObject(oImage);
@@ -4601,53 +4656,53 @@
 	 * Creates a complex color scheme selecting from one of the available schemes.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {SchemeColorId} sSchemeColorId - The color scheme identifier.
+	 * @param {SchemeColorId} schemeColorId - The color scheme identifier.
 	 * @returns {ApiSchemeColor}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateSchemeColor.js
 	 */
-	Api.prototype.CreateSchemeColor = function(sSchemeColorId)
+	Api.prototype.CreateSchemeColor = function(schemeColorId)
 	{
-		return new ApiSchemeColor(sSchemeColorId);
+		return new ApiSchemeColor(schemeColorId);
 	};
 
 	/**
 	 * Creates a color selecting it from one of the available color presets.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {PresetColor} sPresetColor - A preset selected from the list of the available color preset names.
+	 * @param {PresetColor} presetColor - A preset selected from the list of the available color preset names.
 	 * @returns {ApiPresetColor};
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreatePresetColor.js
 	 */
-	Api.prototype.CreatePresetColor = function(sPresetColor)
+	Api.prototype.CreatePresetColor = function(presetColor)
 	{
-		return new ApiPresetColor(sPresetColor);
+		return new ApiPresetColor(presetColor);
 	};
 
 	/**
 	 * Creates a solid fill to apply to the object using a selected solid color as the object background.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {ApiUniColor} oUniColor - The color used for the element fill.
+	 * @param {ApiUniColor} uniColor - The color used for the element fill.
 	 * @returns {ApiFill}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateSolidFill.js
 	 */
-	Api.prototype.CreateSolidFill = function(oUniColor)
+	Api.prototype.CreateSolidFill = function(uniColor)
 	{
-		return new ApiFill(AscFormat.CreateUniFillByUniColorCopy(oUniColor.Unicolor));
+		return new ApiFill(AscFormat.CreateUniFillByUniColorCopy(uniColor.Unicolor));
 	};
 
 	/**
 	 * Creates a linear gradient fill to apply to the object using the selected linear gradient as the object background.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {Array} aGradientStop - The array of gradient color stops measured in 1000th of percent.
-	 * @param {PositiveFixedAngle} Angle - The angle measured in 60000th of a degree that will define the gradient direction.
+	 * @param {Array} gradientStops - The array of gradient color stops measured in 1000th of percent.
+	 * @param {PositiveFixedAngle} angle - The angle measured in 60000th of a degree that will define the gradient direction.
 	 * @returns {ApiFill}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateLinearGradientFill.js
 	 */
-	Api.prototype.CreateLinearGradientFill = function(aGradientStop, Angle)
+	Api.prototype.CreateLinearGradientFill = function(gradientStops, angle)
 	{
-		return new ApiFill(AscFormat.builder_CreateLinearGradient(aGradientStop, Angle));
+		return new ApiFill(AscFormat.builder_CreateLinearGradient(gradientStops, angle));
 	};
 
 
@@ -4655,41 +4710,41 @@
 	 * Creates a radial gradient fill to apply to the object using the selected radial gradient as the object background.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {Array} aGradientStop - The array of gradient color stops measured in 1000th of percent.
+	 * @param {Array} gradientStops - The array of gradient color stops measured in 1000th of percent.
 	 * @returns {ApiFill}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateRadialGradientFill.js
 	 */
-	Api.prototype.CreateRadialGradientFill = function(aGradientStop)
+	Api.prototype.CreateRadialGradientFill = function(gradientStops)
 	{
-		return new ApiFill(AscFormat.builder_CreateRadialGradient(aGradientStop));
+		return new ApiFill(AscFormat.builder_CreateRadialGradient(gradientStops));
 	};
 	/**
 	 * Creates a pattern fill to apply to the object using the selected pattern as the object background.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {PatternType} sPatternType - The pattern type used for the fill selected from one of the available pattern types.
-	 * @param {ApiUniColor} BgColor - The background color used for the pattern creation.
-	 * @param {ApiUniColor} FgColor - The foreground color used for the pattern creation.
+	 * @param {PatternType} patternType - The pattern type used for the fill selected from one of the available pattern types.
+	 * @param {ApiUniColor} bgColor - The background color used for the pattern creation.
+	 * @param {ApiUniColor} fgColor - The foreground color used for the pattern creation.
 	 * @returns {ApiFill}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreatePatternFill.js
 	 */
-	Api.prototype.CreatePatternFill = function(sPatternType, BgColor, FgColor)
+	Api.prototype.CreatePatternFill = function(patternType, bgColor, fgColor)
 	{
-		return new ApiFill(AscFormat.builder_CreatePatternFill(sPatternType, BgColor, FgColor));
+		return new ApiFill(AscFormat.builder_CreatePatternFill(patternType, bgColor, fgColor));
 	};
 
 	/**
 	 * Creates a blip fill to apply to the object using the selected image as the object background.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {string} sImageUrl - The path to the image used for the blip fill (currently only internet URL or Base64 encoded images are supported).
-	 * @param {BlipFillType} sBlipFillType - The type of the fill used for the blip fill (tile or stretch).
+	 * @param {string} imageUrl - The path to the image used for the blip fill (currently only internet URL or Base64 encoded images are supported).
+	 * @param {BlipFillType} blipFillType - The type of the fill used for the blip fill (tile or stretch).
 	 * @returns {ApiFill}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateBlipFill.js
 	 */
-	Api.prototype.CreateBlipFill = function(sImageUrl, sBlipFillType)
+	Api.prototype.CreateBlipFill = function(imageUrl, blipFillType)
 	{
-		return new ApiFill(AscFormat.builder_CreateBlipFill(sImageUrl, sBlipFillType));
+		return new ApiFill(AscFormat.builder_CreateBlipFill(imageUrl, blipFillType));
 	};
 
 	/**
@@ -4708,28 +4763,28 @@
 	 * Creates a stroke adding shadows to the element.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {EMU} nWidth - The width of the shadow measured in English measure units.
-	 * @param {ApiFill} oFill - The fill type used to create the shadow.
+	 * @param {EMU} width - The width of the shadow measured in English measure units.
+	 * @param {ApiFill} fill - The fill type used to create the shadow.
 	 * @returns {ApiStroke}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateStroke.js
 	 */
-	Api.prototype.CreateStroke = function(nWidth, oFill)
+	Api.prototype.CreateStroke = function(width, fill)
 	{
-		return new ApiStroke(AscFormat.builder_CreateLine(nWidth, oFill));
+		return new ApiStroke(AscFormat.builder_CreateLine(width, fill));
 	};
 
 	/**
 	 * Creates a gradient stop used for different types of gradients.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {ApiUniColor} oUniColor - The color used for the gradient stop.
-	 * @param {PositivePercentage} nPos - The position of the gradient stop measured in 1000th of percent.
+	 * @param {ApiUniColor} uniColor - The color used for the gradient stop.
+	 * @param {PositivePercentage} pos - The position of the gradient stop measured in 1000th of percent.
 	 * @returns {ApiGradientStop}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateGradientStop.js
 	 */
-	Api.prototype.CreateGradientStop = function(oUniColor, nPos)
+	Api.prototype.CreateGradientStop = function(uniColor, pos)
 	{
-		return new ApiGradientStop(oUniColor, nPos);
+		return new ApiGradientStop(uniColor, pos);
 	};
 
 	/**
@@ -4754,60 +4809,72 @@
 	};
 
 	/**
-	 * Creates a bullet for a paragraph with the numbering character or symbol specified with the sType parameter.
+	 * Creates a bullet for a paragraph with the numbering character or symbol specified with the numType parameter.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {BulletType} sType - The numbering type the paragraphs will be numbered with.
-	 * @param {number} nStartAt - The number the first numbered paragraph will start with.
+	 * @param {BulletType} numType - The numbering type the paragraphs will be numbered with.
+	 * @param {number} startAt - The number the first numbered paragraph will start with.
 	 * @returns {ApiBullet}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateNumbering.js
 	 */
-
-	Api.prototype.CreateNumbering = function(sType, nStartAt){
-		var oBullet = new AscFormat.CBullet();
-		oBullet.bulletType = new AscFormat.CBulletType();
+	Api.prototype.CreateNumbering = function(numType, startAt)
+	{
+		var oBullet             = new AscFormat.CBullet();
+		oBullet.bulletType      = new AscFormat.CBulletType();
 		oBullet.bulletType.type = AscFormat.BULLET_TYPE_BULLET_AUTONUM;
-		switch(sType){
-			case "ArabicPeriod" :{
+		switch (numType)
+		{
+			case "ArabicPeriod" :
+			{
 				oBullet.bulletType.AutoNumType = 12;
 				break;
 			}
-			case "ArabicParenR":{
+			case "ArabicParenR":
+			{
 				oBullet.bulletType.AutoNumType = 11;
 				break;
 			}
-			case "RomanUcPeriod":{
+			case "RomanUcPeriod":
+			{
 				oBullet.bulletType.AutoNumType = 34;
 				break;
 			}
-			case "RomanLcPeriod":{
+			case "RomanLcPeriod":
+			{
 				oBullet.bulletType.AutoNumType = 31;
 				break;
 			}
-			case "AlphaLcParenR":{
+			case "AlphaLcParenR":
+			{
 				oBullet.bulletType.AutoNumType = 1;
 				break;
 			}
-			case "AlphaLcPeriod":{
+			case "AlphaLcPeriod":
+			{
 				oBullet.bulletType.AutoNumType = 2;
 				break;
 			}
-			case "AlphaUcParenR":{
+			case "AlphaUcParenR":
+			{
 				oBullet.bulletType.AutoNumType = 4;
 				break;
 			}
-			case "AlphaUcPeriod":{
+			case "AlphaUcPeriod":
+			{
 				oBullet.bulletType.AutoNumType = 5;
 				break;
 			}
-			case "None":{
+			case "None":
+			{
 				oBullet.bulletType.type = AscFormat.BULLET_TYPE_BULLET_NONE;
 				break;
 			}
 		}
-		if( oBullet.bulletType.type === AscFormat.BULLET_TYPE_BULLET_AUTONUM){
-			if(AscFormat.isRealNumber(nStartAt)){
-				oBullet.bulletType.startAt = nStartAt;
+		if (oBullet.bulletType.type === AscFormat.BULLET_TYPE_BULLET_AUTONUM)
+		{
+			if (AscFormat.isRealNumber(startAt))
+			{
+				oBullet.bulletType.startAt = startAt;
 			}
 		}
 		return new ApiBullet(oBullet);
@@ -4843,28 +4910,31 @@
 	 * Saves changes to the specified document.
 	 * @typeofeditors ["CDE"]
 	 * @memberof Api
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/Save.js
 	 */
-	Api.prototype.Save = function () {
+	Api.prototype.Save = function()
+	{
 		this.SaveAfterMacros = true;
+		return true;
 	};
 
 	/**
 	 * Loads data for the mail merge. 
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {String[][]} aList - Mail merge data. The first element of the array is the array with names of the merge fields.
+	 * @param {String[][]} data - Mail merge data. The first element of the array is the array with names of the merge fields.
 	 * The rest of the array elements are arrays with values for the merge fields.
 	 * @typeofeditors ["CDE"]
 	 * @return {boolean}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/LoadMailMergeData.js
 	 */
-	Api.prototype.LoadMailMergeData = function(aList)
+	Api.prototype.LoadMailMergeData = function(data)
 	{
-		if (!aList || aList.length === 0)
+		if (!data || data.length === 0)
 			return false;
 
-		editor.asc_StartMailMergeByList(aList);
+		editor.asc_StartMailMergeByList(data);
 
 		return true;
 	};
@@ -4971,36 +5041,39 @@
 	 * Replaces the main document content with another document content.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiDocumentContent} oApiDocumentContent - The document content which the main document content will be replaced with.
+	 * @param {ApiDocumentContent} documentContent - The document content which the main document content will be replaced with.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/ReplaceDocumentContent.js
 	 */
-	Api.prototype.ReplaceDocumentContent = function(oApiDocumentContent)
+	Api.prototype.ReplaceDocumentContent = function(documentContent)
 	{
 		var oDocument        = editor.private_GetLogicDocument();
-		var mailMergeContent = oApiDocumentContent.Document.Content;
+		var mailMergeContent = documentContent.Document.Content;
 		oDocument.Remove_FromContent(0, oDocument.Content.length);
 
 		for (var nElement = 0; nElement < mailMergeContent.length; nElement++)
 			oDocument.Add_ToContent(oDocument.Content.length, mailMergeContent[nElement].Copy(oDocument, oDocument.DrawingDocument), false);
 
 		oDocument.Remove_FromContent(0, 1);
+
+		return true;
 	};
 
 	/**
 	 * Starts the mail merge process.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {number} [nStartIndex=0] - The start index of the document for mail merge process.
-	 * @param {number} [nEndIndex=Api.GetMailMergeReceptionsCount() - 1] - The end index of the document for mail merge process.
+	 * @param {number} [startIndex=0] - The start index of the document for mail merge process.
+	 * @param {number} [endIndex=Api.GetMailMergeReceptionsCount() - 1] - The end index of the document for mail merge process.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/MailMerge.js
 	 */
-	Api.prototype.MailMerge = function(nStartIndex, nEndIndex)
+	Api.prototype.MailMerge = function(startIndex, endIndex)
 	{
 		var oDocument = editor.private_GetLogicDocument();
 
-		var _nStartIndex = (undefined !== nStartIndex ? Math.max(0, nStartIndex) : 0);
-		var _nEndIndex   = (undefined !== nEndIndex   ? Math.min(nEndIndex, oDocument.MailMergeMap.length - 1) : oDocument.MailMergeMap.length - 1);
+		var _nStartIndex = (undefined !== startIndex ? Math.max(0, startIndex) : 0);
+		var _nEndIndex   = (undefined !== endIndex   ? Math.min(endIndex, oDocument.MailMergeMap.length - 1) : oDocument.MailMergeMap.length - 1);
 
 		var mailMergeDoc = oDocument.Get_MailMergedDocument(_nStartIndex, _nEndIndex);
 
@@ -5015,17 +5088,18 @@
 	/**
 	 * Converts the specified JSON object into the Document Builder object of the corresponding type.
 	 * @memberof Api
-	 * @param {JSON} sMessage - The JSON object to convert.
+	 * @param {JSON} message - The JSON object to convert.
 	 * @typeofeditors ["CDE"]
+	 * @returns {object} - readed api class element
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/FromJSON.js
 	 */
-	Api.prototype.FromJSON = function(sMessage)
+	Api.prototype.FromJSON = function(message)
 	{
 		var oReader = new AscJsonConverter.ReaderFromJSON();
 		AscJsonConverter.ActiveReader = oReader;
 
 		var oDocument = this.GetDocument();
-		var oParsedObj  = JSON.parse(sMessage);
+		var oParsedObj  = JSON.parse(message);
 		var oResult = null;
 		if (oParsedObj["styles"])
 			oReader.StylesFromJSON(oParsedObj["styles"]);
@@ -5255,7 +5329,7 @@
 
 	/**
 	 * Returns a type of the ApiUnsupported class.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {"unsupported"}
 	 * @see office-js-api/Examples/{Editor}/ApiUnsupported/Methods/GetClassType.js
 	 */
@@ -5267,60 +5341,60 @@
 	 * Adds a comment to the specifed document element or array of Runs.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiRun[] | DocumentElement} oElement - The element where the comment will be added. It may be applied to any element which has the *AddComment* method.
-	 * @param {string} sText - The comment text (required).
-	 * @param {string} sAuthor - The author's name (optional).
-	 * @param {string} sUserId - The user ID of the comment author (optional).
+	 * @param {ApiRun[] | DocumentElement} element - The element where the comment will be added. It may be applied to any element which has the *AddComment* method.
+	 * @param {string} text - The comment text (required).
+	 * @param {string} author - The author's name (optional).
+	 * @param {string} userId - The user ID of the comment author (optional).
 	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddComment.js
 	 */
-	Api.prototype.AddComment = function(oElement, sText, sAuthor, sUserId)
+	Api.prototype.AddComment = function(element, text, author, userId)
 	{
-		if (!sText || typeof(sText) !== "string")
+		if (!text || typeof(text) !== "string")
 			return null;
 	
-		if (typeof(sAuthor) !== "string")
-			sAuthor = "";
+		if (typeof(author) !== "string")
+			author = "";
 		
-		// Если oElement не является массивом, определяем параграф это или документ
-		if (!Array.isArray(oElement))
+		// Если element не является массивом, определяем параграф это или документ
+		if (!Array.isArray(element))
 		{
-			if (oElement instanceof ApiParagraph || oElement instanceof ApiDocument || oElement instanceof ApiRange ||
-				oElement instanceof ApiBlockLvlSdt || oElement instanceof ApiInlineLvlSdt || oElement instanceof ApiTable ||
-				oElement instanceof ApiRun)
+			if (element instanceof ApiParagraph || element instanceof ApiDocument || element instanceof ApiRange ||
+				element instanceof ApiBlockLvlSdt || element instanceof ApiInlineLvlSdt || element instanceof ApiTable ||
+				element instanceof ApiRun)
 				{
-					return oElement.AddComment(sText, sAuthor, sUserId);
+					return element.AddComment(text, author, userId);
 				}
 		}
 		// Проверка на массив с ранами
-		else if (Array.isArray(oElement))
+		else if (Array.isArray(element))
 		{
 			// Если хотя бы один элемент массива не является раном, или хотя бы один ран не принадлежит 
 			// ни одному параграфу - не добавляем комментарий
-			for (var Index = 0; Index < oElement.length; Index++)
+			for (var Index = 0; Index < element.length; Index++)
 			{
-				if (!(oElement[Index] instanceof ApiRun))
-					return null;					
+				if (!(element[Index] instanceof ApiRun))
+					return null;
 			}
 			
 			// Если раны из принципиально разных контекcтов (из тела и хедера(или футера) то комментарий не добавляем)
-			for (Index = 1; Index < oElement.length; Index++)
+			for (Index = 1; Index < element.length; Index++)
 			{
-				if (oElement[0].Run.GetDocumentPositionFromObject()[0].Class !== oElement[Index].Run.GetDocumentPositionFromObject()[0].Class)
+				if (element[0].Run.GetDocumentPositionFromObject()[0].Class !== element[Index].Run.GetDocumentPositionFromObject()[0].Class)
 					return null;
 			}
 			
 			var oDocument = private_GetLogicDocument();
 
 			let CommentData = private_CreateCommentData({
-				text: sText,
-				author: sAuthor,
-				userId: sUserId
+				text: text,
+				author: author,
+				userId: userId
 			});
 
-			var oStartRun = private_GetFirstRunInArray(oElement); 
+			var oStartRun = private_GetFirstRunInArray(element);
 			var oStartPos = oStartRun.Run.GetDocumentPositionFromObject();
-			var oEndRun	= private_GetLastRunInArray(oElement)
+			var oEndRun	= private_GetLastRunInArray(element)
 			var oEndPos	= oEndRun.Run.GetDocumentPositionFromObject();
 
 			oStartPos.push({Class: oStartRun.Run, Position: 0});
@@ -5369,6 +5443,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} eventName - The event name.
 	 * @param {function} callback - Function to be called when the event fires.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/attachEvent.js
 	 */
 	Api.prototype["attachEvent"] = Api.prototype.attachEvent;
@@ -5379,6 +5454,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {string} eventName - The event name.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/detachEvent.js
 	 */
 	Api.prototype["detachEvent"] = Api.prototype.detachEvent;
@@ -5440,6 +5516,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {number} nPos - The position where the current element will be added.
 	 * @param {DocumentElement} oElement - The document element which will be added at the current position.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/AddElement.js
 	 */
 	ApiDocumentContent.prototype.AddElement = function(nPos, oElement)
@@ -5450,7 +5527,11 @@
 			if (oElm.IsUseInDocument())
 				return false;
 			this.Document.Internal_Content_Add(nPos, oElm);
+
+			return true;
 		}
+
+		return false;
 	};
 	/**
 	 * Pushes a paragraph or a table to actually add it to the document.
@@ -5480,25 +5561,29 @@
 	 * content to this paragraph, use the {@link ApiDocumentContent#GetElement} method.</note>
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/RemoveAllElements.js
 	 */
 	ApiDocumentContent.prototype.RemoveAllElements = function()
 	{
 		this.Document.Internal_Content_Remove(0, this.Document.Content.length, true);
+		return true;
 	};
 	/**
 	 * Removes an element using the position specified.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {number} nPos - The element number (position) in the document or inside other element.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/RemoveElement.js
 	 */
 	ApiDocumentContent.prototype.RemoveElement = function(nPos)
 	{
 		if (nPos < 0 || nPos >= this.GetElementsCount())
-			return;
+			return false;
 
 		this.Document.Internal_Content_Remove(nPos, 1, true);
+		return true;
 	};
 	/**
 	 * Returns a Range object that represents the part of the document contained in the document content.
@@ -5517,18 +5602,18 @@
 	 * Converts the ApiDocumentContent object into the JSON object.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
-	 * @param {boolean} bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
-	 * @param {boolean} bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
+	 * @param {boolean} isWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
+	 * @param {boolean} isWriteStyles - Specifies if the used styles will be written to the JSON object or not.
 	 * @returns {JSON}
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/ToJSON.js
 	 */
-	ApiDocumentContent.prototype.ToJSON = function(bWriteNumberings, bWriteStyles)
+	ApiDocumentContent.prototype.ToJSON = function(isWriteNumberings, isWriteStyles)
 	{
 		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerDocContent(this.Document);
-		if (bWriteNumberings)
+		if (isWriteNumberings)
 			oJSON["numbering"] = oWriter.jsonWordNumberings;
-		if (bWriteStyles)
+		if (isWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
 
 		return JSON.stringify(oJSON);
@@ -5567,18 +5652,15 @@
 	 * Returns a collection of drawing objects from the document content.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
-	 * @return {ApiDrawing[]}  
+	 * @return {Drawing[]}  
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetAllDrawingObjects.js
 	 */
 	ApiDocumentContent.prototype.GetAllDrawingObjects = function()
 	{
-		var arrAllDrawing = this.Document.GetAllDrawingObjects();
-		var arrApiShapes  = [];
-
-		for (var Index = 0; Index < arrAllDrawing.length; Index++)
-			arrApiShapes.push(new ApiDrawing(arrAllDrawing[Index].GraphicObj));
-		
-		return arrApiShapes;
+		let arrAllDrawing = this.Document.GetAllDrawingObjects();
+		return AscBuilder.GetApiDrawings(arrAllDrawing.map(function(drawing) {
+			return drawing.GraphicObj;
+		}));
 	};
 	/**
 	 * Returns a collection of shape objects from the document content.
@@ -5664,6 +5746,72 @@
 		});
 		return result;
 	};
+	/**
+	 * Returns the inner text of the current document content object.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @param {object} oProps - The resulting string display properties.
+     * @param {boolean} oProps.NewLine - Defines if the resulting string will include line boundaries or not (they will be replaced with '\r').
+     * @param {boolean} oProps.NewLineParagraph - Defines if the resulting string will include paragraph line boundaries or not.
+     * @param {boolean} oProps.Numbering - Defines if the resulting string will include numbering or not.
+     * @param {boolean} oProps.Math - Defines if the resulting string will include mathematical expressions or not.
+     * @param {string} oProps.TableCellSeparator - Defines how the table cell separator will be specified in the resulting string.
+     * @param {string} oProps.TableRowSeparator - Defines how the table row separator will be specified in the resulting string.
+     * @param {string} oProps.ParaSeparator - Defines how the paragraph separator will be specified in the resulting string.
+     * @param {string} oProps.TabSymbol - Defines how the tab will be specified in the resulting string.
+     * @param {string} oProps.NewLineSeparator - Defines how the line separator will be specified in the resulting string (this property has the priority over *NewLine*).
+	 * @return {string}
+	 * @since 8.3.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetText.js
+	 */
+	ApiDocumentContent.prototype.GetText = function(oProps)
+	{
+		let oInnerProps;
+        if (typeof oProps === "object")
+        {
+            oInnerProps =
+            {
+                NewLine : (oProps.hasOwnProperty("NewLine")) ? oProps["NewLine"] : true,
+                NewLineParagraph : (oProps.hasOwnProperty("NewLineParagraph")) ? oProps["NewLineParagraph"] : true,
+                Numbering : (oProps.hasOwnProperty("Numbering")) ? oProps["Numbering"] : true,
+                Math : (oProps.hasOwnProperty("Math")) ? oProps["Math"] : true,
+                TableCellSeparator: oProps["TableCellSeparator"],
+                TableRowSeparator: oProps["TableRowSeparator"],
+                ParaSeparator: oProps["ParaSeparator"],
+                NewLineSeparator: oProps["NewLineSeparator"],
+                TabSymbol: oProps["TabSymbol"]
+            }
+        }
+        else
+        {
+            oInnerProps =
+            {
+                NewLine : true,
+                NewLineParagraph : true,
+                Numbering : true
+            }
+        }
+
+		return this.Document.GetText(oInnerProps);
+	};
+
+	/**
+	 * Returns the current paragraph where the cursor is located.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @return {?ApiParagraph}
+	 * @since 8.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetCurrentParagraph.js
+	 */
+	ApiDocumentContent.prototype.GetCurrentParagraph = function()
+	{
+		let oPara = this.Document.GetCurrentParagraph();
+		if (!oPara) {
+			return null;
+		}
+
+		return new ApiParagraph(oPara);
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiDocument
@@ -5685,11 +5833,13 @@
 	 * Creates a new history point.
 	 * @typeofeditors ["CDE"]
 	 * @memberof ApiDocument
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/CreateNewHistoryPoint.js
 	 */
 	ApiDocument.prototype.CreateNewHistoryPoint = function()
 	{
 		this.Document.Create_NewHistoryPoint(AscDFH.historydescription_Document_ApiBuilder);
+		return true;
 	};
 	/**
 	 * Returns a style by its name.
@@ -5844,11 +5994,13 @@
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isEvenAndOdd - If true the header/footer will be different for odd and even pages, if false they will be the same.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetEvenAndOddHdrFtr.js
 	 */
 	ApiDocument.prototype.SetEvenAndOddHdrFtr = function(isEvenAndOdd)
 	{
 		this.Document.Set_DocumentEvenAndOddHeaders(isEvenAndOdd);
+		return true;
 	};
 	/**
 	 * Creates an abstract multilevel numbering with a specified type.
@@ -6160,7 +6312,7 @@
 	 * @param {string} oProperties.searchString - Search string.
 	 * @param {string} oProperties.replaceString - Replacement string.
 	 * @param {string} [oProperties.matchCase=true] - Case sensitive or not.
-	 *
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SearchAndReplace.js
 	 */
 	ApiDocument.prototype.SearchAndReplace = function(oProperties)
@@ -6171,7 +6323,7 @@
 
 		var oSearchEngine = this.Document.Search(oProps);
 		if (!oSearchEngine)
-			return;
+			return false;
 
 		var sReplace = oProperties["replaceString"];
 		
@@ -6186,6 +6338,7 @@
 		//sReplace = sReplace.replaceAll('\x1f', "");
 		
 		this.Document.ReplaceSearchElement(sReplace, true, null, false);
+		return true;
 	};
 	/**
 	 * Returns a list of all the content controls from the document.
@@ -6350,6 +6503,7 @@
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {Array.<FormData>} arrData - An array of form data to set to the specified forms.
+	 * @returns {boolean}
 	 * @since 8.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetFormsData.js
 	 */
@@ -6357,9 +6511,10 @@
 	{
 		return executeNoFormLockCheck(function() {
 			if (!arrData || !Array.isArray(arrData))
-				return;
+				return false;
 			
 			this.Document.GetFormsManager().SetAllFormsData(arrData);
+			return true;
 		}, this);
 	};
 	/**
@@ -6367,11 +6522,13 @@
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param isTrack {boolean} - Specifies if the change tracking mode is set or not.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetTrackRevisions.js
 	 */
 	ApiDocument.prototype.SetTrackRevisions = function(isTrack)
 	{
 		this.Document.SetGlobalTrackRevisions(isTrack);
+		return true;
 	};
 	/**
 	 * Checks if change tracking mode is enabled or not.
@@ -6572,11 +6729,13 @@
 	 * Removes the current selection.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/RemoveSelection.js
 	 */
 	ApiDocument.prototype.RemoveSelection = function()
 	{
 		this.Document.RemoveSelection();
+		return true;
 	};
 	/**
 	 * Searches for a scope of a document object. The search results are a collection of ApiRange objects.
@@ -6753,6 +6912,7 @@
 	 * Removes a watermark from the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/RemoveWatermark.js
 	 */
 	ApiDocument.prototype.RemoveWatermark = function()
@@ -6760,6 +6920,7 @@
 		let Settings = new Asc.CAscWatermarkProperties();
 		Settings.put_Type(Asc.c_oAscWatermarkType.None);
 		this.Document.SetWatermarkPropsAction(Settings);
+		return true;
 	};
 
 	/**
@@ -6767,6 +6928,7 @@
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} [bOnlyPageNumbers=false] - Specifies that only page numbers will be updated.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/UpdateAllTOC.js
 	 */
 	ApiDocument.prototype.UpdateAllTOC = function(bOnlyPageNumbers)
@@ -6785,14 +6947,14 @@
 			{
 				oTOC = oDocument.GetTableOfContents();
 				if (!oTOC)
-					return;
+					return false;
 			}
 
 			if (oTOC instanceof AscCommonWord.CBlockLevelSdt)
 				oTOC = oTOC.GetInnerTableOfContents();
 
 			if (!oTOC)
-				return;
+				return false;
 
 			var oState = oDocument.SaveDocumentState();
 
@@ -6819,12 +6981,15 @@
 				oDocument.LoadDocumentState(oState);
 			}
 		}
+
+		return true;
 	};
 	/**
 	 * Updates all tables of figures in the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} [bOnlyPageNumbers=false] - Specifies that only page numbers will be updated.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/UpdateAllTOF.js
 	 */
 	ApiDocument.prototype.UpdateAllTOF = function(bOnlyPageNumbers)
@@ -6842,14 +7007,14 @@
 			{
 				oTOC = oDocument.GetTableOfContents();
 				if (!oTOC)
-					return;
+					return false;
 			}
 
 			if (oTOC instanceof AscCommonWord.CBlockLevelSdt)
 				oTOC = oTOC.GetInnerTableOfContents();
 
 			if (!oTOC)
-				return;
+				return false;
 
 			var oState = oDocument.SaveDocumentState();
 
@@ -6876,18 +7041,22 @@
 				oDocument.LoadDocumentState(oState);
 			}
 		}
+
+		return true;
 	};
 	/**
 	 * Updates all fields in the document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} [bBySelection=false] - Specifies whether all fields will be updated within the selection.
+	 * @returns {boolean}
 	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/UpdateAllFields.js
 	 */
 	ApiDocument.prototype.UpdateAllFields = function(bBySelection)
 	{
 		this.Document.UpdateFields(bBySelection);
+		return true;
 	};
 	/**
 	 * Converts the ApiDocument object into the JSON object.
@@ -6945,11 +7114,13 @@
 	 * Clears all forms in the document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/ClearAllFields.js
 	 */
 	ApiDocument.prototype.ClearAllFields = function()
 	{
 		this.Document.ClearAllSpecialForms(false);
+		return true;
 	};
 
 	/**
@@ -6960,6 +7131,7 @@
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [bNone=false] - Defines that highlight will not be set.
 	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetFormsHighlight.js
 	 */
 	ApiDocument.prototype.SetFormsHighlight = function(r, g, b, bNone)
@@ -6968,6 +7140,8 @@
 			this.Document.SetSpecialFormsHighlight(null, null, null);
 		else
 			this.Document.SetSpecialFormsHighlight(r, g, b);
+
+		return true;
 	};
 
 	/**
@@ -7100,22 +7274,26 @@
 	 * Accepts all changes made in review mode.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AcceptAllRevisionChanges.js
 	 */
 	ApiDocument.prototype.AcceptAllRevisionChanges = function()
 	{
 		this.Document.AcceptAllRevisionChanges();
+		return true;
 	};
 
 	/**
 	 * Rejects all changes made in review mode.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/RejectAllRevisionChanges.js
 	 */
 	ApiDocument.prototype.RejectAllRevisionChanges = function()
 	{
 		this.Document.RejectAllRevisionChanges();
+		return true;
 	};
 
 	/**
@@ -7142,10 +7320,12 @@
 	};
 
 	/**
-	 * Gets bookmark by name
+	 * Returns a bookmark by its name from the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
+	 * @param {string} sBookmarkName - The bookmark name.
 	 * @returns {?ApiBookmark}
+	 * @since 8.3.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetBookmark.js
 	 */
 	ApiDocument.prototype.GetBookmark = function(sBookmarkName) 
@@ -7204,6 +7384,7 @@
 	 * @param {string} sImageUrl - The image source where the image to be inserted should be taken from (currently, only internet URL or Base64 encoded images are supported).
 	 * @param {EMU} Width - The image width in English measure units.
 	 * @param {EMU} Height - The image height in English measure units.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/ReplaceCurrentImage.js
 	 */
 	ApiDocument.prototype.ReplaceCurrentImage = function(sImageUrl, Width, Height)
@@ -7213,6 +7394,7 @@
 
 		let dK = 1 / 36000 / AscCommon.g_dKoef_pix_to_mm;
 		oDrawingObjects.putImageToSelection(sImageUrl, Width * dK, Height * dK );
+		return true;
 	};
 
 	/**
@@ -7303,6 +7485,7 @@
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [bNone=false] - Defines that highlight will not be set.
 	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetControlsHighlight.js
 	 */
 	ApiDocument.prototype.SetControlsHighlight = function(r, g, b, bNone)
@@ -7314,6 +7497,7 @@
 			this.Document.SetSdtGlobalShowHighlight(true);
 			this.Document.SetSdtGlobalColor(r, g, b);
 		}
+		return true;
 	};
 
 	/**
@@ -7322,6 +7506,7 @@
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {TocPr} [oTocPr={}] - Table of contents properties.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddTableOfContents.js
 	 */
 	ApiDocument.prototype.AddTableOfContents = function(oTocPr)
@@ -7393,7 +7578,7 @@
 			var oInnerTOC = oTOC.GetInnerTableOfContents();
 			oTOC = oInnerTOC;
 			if (!oTOC)
-				return;
+				return false;
 
 			var oStyles = this.Document.GetStyles();
 			var nStylesType = oTargetPr.get_StylesType();
@@ -7405,10 +7590,11 @@
 
 			oTOC.SetPr(oTargetPr);
 			oTOC.Update();
-			return;
+			return true;
 		}
 
 		this.Document.AddTableOfContents(null, oTargetPr, undefined);
+		return true;
 	};
 
 	/**
@@ -7587,6 +7773,30 @@
 	{
 		this.ForceRecalculate();
 		return this.Document.GetPagesCount();
+	};
+	/**
+	 * Returns the index of the current page.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @return {number}
+	 * @since 8.3.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetCurrentPage.js
+	 */
+	ApiDocument.prototype.GetCurrentPage = function()
+	{
+		return this.Document.GetCurPage();
+	};
+	/**
+	 * Returns the indexes of the currently visible pages.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @return {number[]}
+	 * @since 8.3.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetCurrentVisiblePages.js
+	 */
+	ApiDocument.prototype.GetCurrentVisiblePages = function()
+	{
+		return this.Document.GetApi().GetCurrentVisiblePages();
 	};
 	/**
 	 * Returns all styles of the current document.
@@ -7824,10 +8034,8 @@
 	 * @param {"unicode" | "latex"} [sFormat="unicode"] - The format of the specified linear representation.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
 	 * @since 8.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddMathEquation.js
-	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddMathEquation.js
 	 */
 	ApiDocument.prototype.AddMathEquation = function(sText, sFormat)
@@ -7847,10 +8055,46 @@
 		let info = logicDocument.GetSelectedElementsInfo();
 		let paraMath = info.GetMath();
 		if (!paraMath)
-			return;
+			return false;
 		
 		paraMath.ConvertView(false, "latex" === format ? Asc.c_oAscMathInputType.LaTeX : Asc.c_oAscMathInputType.Unicode);
+		return true;
 	};
+
+	/**
+	 * Groups an array of drawings in the current document.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @param {DrawingForGroup[]} aDrawings - An array of drawings to group.
+	 * @returns {ApiGroup}
+	 * @since 8.3.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GroupDrawings.js
+	 */
+	ApiDocument.prototype.GroupDrawings = function(aDrawings)
+	{
+		if (aDrawings.find(function(drawing) { return !drawing.Drawing.IsUseInDocument(); }))
+			return null;
+
+		let oDoc = this.Document;
+		let oGraphicObjects = oDoc.getDrawingObjects();
+		oGraphicObjects.resetSelection();
+
+		aDrawings.forEach(function(drawing) { drawing.Drawing.recalculate(); })
+		aDrawings.forEach(function(drawing) {
+			oGraphicObjects.selectObject(drawing.Drawing, drawing.Drawing.Get_AbsolutePage());
+		});
+		
+		let canGroup = oGraphicObjects.canGroup();
+		if (!canGroup)
+			return null;
+
+		let oParaDrawing = oGraphicObjects.groupSelectedObjects();
+		if (!oParaDrawing)
+			return null;
+
+		return new ApiGroup(oParaDrawing.GraphicObj);
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiParagraph
@@ -8009,14 +8253,16 @@
 	 * @typeofeditors ["CDE"]
 	 * @see Same as {@link ApiParagraph#SetNumPr}
 	 * @param {ApiNumberingLevel} oNumberingLevel - The numbering level which will be used for assigning the numbers to the paragraph.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetNumbering.js
 	 */
 	ApiParagraph.prototype.SetNumbering = function(oNumberingLevel)
 	{
 		if (!(oNumberingLevel instanceof ApiNumberingLevel))
-			return;
+			return false;
 
 		this.SetNumPr(oNumberingLevel.GetNumbering(), oNumberingLevel.GetLevelIndex());
+		return true;
 	};
 	/**
 	 * Returns a number of elements in the current paragraph.
@@ -8054,15 +8300,17 @@
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {number} nPos - The element position which we want to remove from the paragraph.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/RemoveElement.js
 	 */
 	ApiParagraph.prototype.RemoveElement = function(nPos)
 	{
 		if (nPos < 0 || nPos >= this.Paragraph.Content.length - 1)
-			return;
+			return false;
 
 		this.Paragraph.RemoveFromContent(nPos, 1);
 		this.Paragraph.CorrectContent();
+		return true;
 	};
 	/**
 	 * Removes all the elements from the current paragraph.
@@ -8070,6 +8318,7 @@
 	 * content to this run, use the {@link ApiParagraph#GetElement} method.</note>
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/RemoveAllElements.js
 	 */
 	ApiParagraph.prototype.RemoveAllElements = function()
@@ -8079,6 +8328,8 @@
 			this.Paragraph.RemoveFromContent(0, this.Paragraph.Content.length - 1);
 			this.Paragraph.CorrectContent();
 		}
+
+		return true;
 	};
 	/**
 	 * Deletes the current paragraph.
@@ -8781,20 +9032,15 @@
 	 * Returns a collection of drawing objects in the paragraph.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @return {ApiDrawing[]}  
+	 * @return {Drawing[]}  
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetAllDrawingObjects.js
 	 */
 	ApiParagraph.prototype.GetAllDrawingObjects = function()
 	{
-		var arrAllDrawing = this.Paragraph.GetAllDrawingObjects();
-		var arrApiShapes  = [];
-
-		for (var Index = 0; Index < arrAllDrawing.length; Index++)
-		{
-			arrApiShapes.push(new ApiDrawing(arrAllDrawing[Index].GraphicObj));
-		}
-		
-		return arrApiShapes;
+		let arrAllDrawing = this.Paragraph.GetAllDrawingObjects();
+		return AscBuilder.GetApiDrawings(arrAllDrawing.map(function(drawing) {
+			return drawing.GraphicObj;
+		}));
 	};
 	/**
 	 * Returns a collection of shape objects in the paragraph.
@@ -9135,6 +9381,7 @@
 	 * Wraps the paragraph content in a mail merge field.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/WrapInMailMergeField.js
 	 */
 	ApiParagraph.prototype.WrapInMailMergeField = function()
@@ -9161,6 +9408,7 @@
 		this.RemoveAllElements();
 		oDocument.Register_Field(oField);
 		this.Paragraph.AddToParagraph(oField);
+		return true;
 	};
 
 	/**
@@ -9765,26 +10013,31 @@
 	 * Clears the content from the current run.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/ClearContent.js
 	 */
 	ApiRun.prototype.ClearContent = function()
 	{
 		this.Run.Remove_FromContent(0, this.Run.Content.length);
+		return true;
 	};
 	/**
 	 * Removes all the elements from the current run.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/RemoveAllElements.js
 	 */
 	ApiRun.prototype.RemoveAllElements = function()
 	{
 		this.Run.Remove_FromContent(0, this.Run.Content.length);
+		return true;
 	};
 	/**
 	 * Deletes the current run.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/Delete.js
 	 */
 	ApiRun.prototype.Delete = function()
@@ -9799,60 +10052,72 @@
 		}
 		else 
 			return false;
+
+		return true;
 	};
 	/**
 	 * Adds some text to the current run.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} sText - The text which will be added to the current run.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/AddText.js
 	 */
 	ApiRun.prototype.AddText = function(sText)
 	{
 		if (!sText || !sText.length)
-			return;
+			return false;
 
 		this.Run.AddText(sText);
+		return true;
 	};
 	/**
 	 * Adds a page break and starts the next element from a new page.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/AddPageBreak.js
 	 */
 	ApiRun.prototype.AddPageBreak = function()
 	{
 		this.Run.Add_ToContent(this.Run.Content.length, new AscWord.CRunBreak(AscWord.break_Page));
+		return true;
 	};
 	/**
 	 * Adds a line break to the current run position and starts the next element from a new line.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/AddLineBreak.js
 	 */
 	ApiRun.prototype.AddLineBreak = function()
 	{
 		this.Run.Add_ToContent(this.Run.Content.length, new AscWord.CRunBreak(AscWord.break_Line));
+		return true;
 	};
 	/**
 	 * Adds a column break to the current run position and starts the next element from a new column.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/AddColumnBreak.js
 	 */
 	ApiRun.prototype.AddColumnBreak = function()
 	{
 		this.Run.Add_ToContent(this.Run.Content.length, new AscWord.CRunBreak(AscWord.break_Column));
+		return true;
 	};
 	/**
 	 * Adds a tab stop to the current run.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/AddTabStop.js
 	 */
 	ApiRun.prototype.AddTabStop = function()
 	{
 		this.Run.Add_ToContent(this.Run.Content.length, new AscWord.CRunTab());
+		return true;
 	};
 	/**
 	 * Adds a drawing object (image, shape or chart) to the current text run.
@@ -10400,6 +10665,7 @@
 	 * Wraps a run in a mail merge field.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/WrapInMailMergeField.js
 	 */
 	ApiRun.prototype.WrapInMailMergeField = function()
@@ -10427,6 +10693,7 @@
 		}
 		
 		oDocument.Register_Field(oField);
+		return true;
 	};
 	/**
 	 * Converts the ApiRun object into the JSON object.
@@ -10579,20 +10846,35 @@
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
 	 * @param {SectionBreakType} sType - The section break type.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiSection/Methods/SetType.js
 	 */
 	ApiSection.prototype.SetType = function(sType)
 	{
-		if ("oddPage" === sType)
-			this.Section.Set_Type(c_oAscSectionBreakType.OddPage);
-		else if ("evenPage" === sType)
-			this.Section.Set_Type(c_oAscSectionBreakType.EvenPage);
-		else if ("continuous" === sType)
-			this.Section.Set_Type(c_oAscSectionBreakType.Continuous);
-		else if ("nextColumn" === sType)
-			this.Section.Set_Type(c_oAscSectionBreakType.Column);
-		else if ("nextPage" === sType)
-			this.Section.Set_Type(c_oAscSectionBreakType.NextPage);
+		switch (sType) {
+			case "oddPage": {
+				this.Section.Set_Type(c_oAscSectionBreakType.OddPage);
+				return true;
+			}
+			case "evenPage": {
+				this.Section.Set_Type(c_oAscSectionBreakType.EvenPage);
+				return true;
+			}
+			case "continuous": {
+				this.Section.Set_Type(c_oAscSectionBreakType.Continuous);
+				return true;
+			}
+			case "nextColumn": {
+				this.Section.Set_Type(c_oAscSectionBreakType.Column);
+				return true;
+			}
+			case "nextPage": {
+				this.Section.Set_Type(c_oAscSectionBreakType.NextPage);
+				return true;
+			}
+			default:
+				return false;
+		}
 	};
 
 	/**
@@ -10625,6 +10907,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {number} nCount - Number of columns.
 	 * @param {twips} nSpace - Distance between columns measured in twentieths of a point (1/1440 of an inch).
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiSection/Methods/SetEqualColumns.js
 	 */
 	ApiSection.prototype.SetEqualColumns = function(nCount, nSpace)
@@ -10632,6 +10915,7 @@
 		this.Section.Set_Columns_EqualWidth(true);
 		this.Section.Set_Columns_Num(nCount);
 		this.Section.Set_Columns_Space(private_Twips2MM(nSpace));
+		return true;
 	};
 	/**
 	 * Specifies that all the columns in the current section have the different widths. Number of columns is equal 
@@ -10640,12 +10924,13 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {twips[]} aWidths - An array of column width values measured in twentieths of a point (1/1440 of an inch).
 	 * @param {twips[]} aSpaces - An array of distance values between the columns measured in twentieths of a point (1/1440 of an inch).
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiSection/Methods/SetNotEqualColumns.js
 	 */
 	ApiSection.prototype.SetNotEqualColumns = function(aWidths, aSpaces)
 	{
 		if (!aWidths || !aWidths.length || aWidths.length <= 1 || aSpaces.length !== aWidths.length - 1)
-			return;
+			return false;
 
 		this.Section.Set_Columns_EqualWidth(false);
 		var aCols = [];
@@ -10659,6 +10944,7 @@
 
 		this.Section.Set_Columns_Cols(aCols);
 		this.Section.Set_Columns_Num(aCols.length);
+		return true;
 	};
 	/**
 	 * Specifies the properties (size and orientation) for all the pages in the current section.
@@ -10667,12 +10953,14 @@
 	 * @param {twips} nWidth - The page width measured in twentieths of a point (1/1440 of an inch).
 	 * @param {twips} nHeight - The page height measured in twentieths of a point (1/1440 of an inch).
 	 * @param {boolean} [isPortrait=false] - Specifies the orientation of all the pages in this section (if set to true, then the portrait orientation is chosen).
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiSection/Methods/SetPageSize.js
 	 */
 	ApiSection.prototype.SetPageSize = function(nWidth, nHeight, isPortrait)
 	{
 		this.Section.SetPageSize(private_Twips2MM(nWidth), private_Twips2MM(nHeight));
 		this.Section.SetOrientation(false === isPortrait ? Asc.c_oAscPageOrientation.PageLandscape : Asc.c_oAscPageOrientation.PagePortrait, false);
+		return true;
 	};
 	/**
 	 * Gets page height for current section.
@@ -10705,22 +10993,26 @@
 	 * @param {twips} nTop - The top margin height measured in twentieths of a point (1/1440 of an inch).
 	 * @param {twips} nRight - The right margin width measured in twentieths of a point (1/1440 of an inch).
 	 * @param {twips} nBottom - The bottom margin height measured in twentieths of a point (1/1440 of an inch).
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiSection/Methods/SetPageMargins.js
 	 */
 	ApiSection.prototype.SetPageMargins = function(nLeft, nTop, nRight, nBottom)
 	{
 		this.Section.SetPageMargins(private_Twips2MM(nLeft), private_Twips2MM(nTop), private_Twips2MM(nRight), private_Twips2MM(nBottom));
+		return true;
 	};
 	/**
 	 * Specifies the distance from the top edge of the page to the top edge of the header.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
 	 * @param {twips} nDistance - The distance from the top edge of the page to the top edge of the header measured in twentieths of a point (1/1440 of an inch).
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiSection/Methods/SetHeaderDistance.js
 	 */
 	ApiSection.prototype.SetHeaderDistance = function(nDistance)
 	{
 		this.Section.SetPageMarginHeader(private_Twips2MM(nDistance));
+		return true;
 	};
 	/**
 	 * Specifies the distance from the bottom edge of the page to the bottom edge of the footer.
@@ -10728,11 +11020,13 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {twips} nDistance - The distance from the bottom edge of the page to the bottom edge of the footer measured
 	 * in twentieths of a point (1/1440 of an inch).
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiSection/Methods/SetFooterDistance.js
 	 */
 	ApiSection.prototype.SetFooterDistance = function(nDistance)
 	{
 		this.Section.SetPageMarginFooter(private_Twips2MM(nDistance));
+		return true;
 	};
 	/**
 	 * Returns the content for the specified header type.
@@ -10779,6 +11073,7 @@
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
 	 * @param {HdrFtrType} sType - Header type to be removed.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiSection/Methods/RemoveHeader.js
 	 */
 	ApiSection.prototype.RemoveHeader = function(sType)
@@ -10789,6 +11084,10 @@
 			this.Section.Set_Header_Even(null);
 		else if ("default" === sType)
 			this.Section.Set_Header_Default(null);
+		else
+			return false;
+
+		return true;
 	};
 	/**
 	 * Returns the content for the specified footer type.
@@ -10836,6 +11135,7 @@
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
 	 * @param {HdrFtrType} sType - Footer type to be removed.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiSection/Methods/RemoveFooter.js
 	 */
 	ApiSection.prototype.RemoveFooter = function(sType)
@@ -10846,17 +11146,23 @@
 			this.Section.Set_Footer_Even(null);
 		else if ("default" === sType)
 			this.Section.Set_Footer_Default(null);
+		else
+			return false;
+
+		return true;
 	};
 	/**
 	 * Specifies whether the current section in this document has the different header and footer for the section first page.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isTitlePage - If true, the first page of the section will have header and footer that will differ from the other pages of the same section.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiSection/Methods/SetTitlePage.js
 	 */
 	ApiSection.prototype.SetTitlePage = function(isTitlePage)
 	{
 		this.Section.Set_TitlePage(private_GetBoolean(isTitlePage));
+		return true;
 	};
 	/**
 	 * Returns the next section if exists.
@@ -10936,11 +11242,12 @@
 		return JSON.stringify(oJSON);
 	};
 	/**
-	 * Sets start page number for specified section.
+	 * Sets the start page number for the specified section.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
-	 * @param {number} nStartNumber
+	 * @param {number} nStartNumber - The start page number.
 	 * @returns {boolean}
+	 * @since 8.3.0
 	 * @see office-js-api/Examples/{Editor}/ApiSection/Methods/SetStartPageNumber.js
 	 */
 	ApiSection.prototype.SetStartPageNumber = function(nStartNumber)
@@ -10955,10 +11262,11 @@
 		return true;
 	};
 	/**
-	 * Gets start page number of specified section.
+	 * Returns the start page number of the specified section.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
-	 * @returns {boolean}
+	 * @returns {number}
+	 * @since 8.3.0
 	 * @see office-js-api/Examples/{Editor}/ApiSection/Methods/GetStartPageNumber.js
 	 */
 	ApiSection.prototype.GetStartPageNumber = function()
@@ -11120,6 +11428,7 @@
 	 * @param {boolean} isLastRow - Specifies that the last row conditional formatting will be applied to the table.
 	 * @param {boolean} isHorBand - Specifies that the horizontal band conditional formatting will not be applied to the table.
 	 * @param {boolean} isVerBand - Specifies that the vertical band conditional formatting will not be applied to the table.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetTableLook.js
 	 */
 	ApiTable.prototype.SetTableLook = function(isFirstColumn, isFirstRow, isLastColumn, isLastRow, isHorBand, isVerBand)
@@ -11131,6 +11440,7 @@
 			private_GetBoolean(isHorBand),
 			private_GetBoolean(isVerBand));
 		this.Table.Set_TableLook(oTableLook);
+		return true;
 	};
 	/**
 	 * Splits the cell into a given number of rows and columns.
@@ -11235,6 +11545,7 @@
 	 * @param {ApiTableCell} [oCell] - The cell after which a new column will be added. If not specified, a new column will be added at the end of the table.
 	 * @param {boolean} [isBefore=false] - Adds a new column before (false) or after (true) the specified cell. If no cell is specified,
 	 * then this parameter will be ignored.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/AddColumn.js
 	 */
 	ApiTable.prototype.AddColumn = function(oCell, isBefore)
@@ -11258,6 +11569,7 @@
 		this.Table.AddTableColumn(_isBefore);
 
 		private_EndSilentMode();
+		return true;
 	};
 	/**
 	 * Adds the new columns to the current table.
@@ -11267,6 +11579,7 @@
 	 * @param {Number} nCount - Count of columns to be added.
 	 * @param {boolean} [isBefore=false] - Adds the new columns before (false) or after (true) the specified cell. If no cell is specified,
 	 * then this parameter will be ignored.
+	 * @returns {ApiTable}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/AddColumns.js
 	 */
 	ApiTable.prototype.AddColumns = function(oCell, nCount, isBefore)
@@ -11285,6 +11598,7 @@
 	 * @param {ApiTableCell} oCell - The cell where the specified element will be added.
 	 * @param {number} nPos - The position in the cell where the specified element will be added.
 	 * @param {DocumentElement} oElement - The document element which will be added at the current position.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/AddElement.js
 	 */
 	ApiTable.prototype.AddElement = function(oCell, nPos, oElement)
@@ -12694,11 +13008,13 @@
 	 * @memberof ApiStyle
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sStyleName - The name which will be used for the current style.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiStyle/Methods/SetName.js
 	 */
 	ApiStyle.prototype.SetName = function(sStyleName)
 	{
 		this.Style.Set_Name(sStyleName);
+		return true;
 	};
 	/**
 	 * Returns a type of the current style.
@@ -12793,14 +13109,16 @@
 	 * @memberof ApiStyle
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiStyle} oStyle - The parent style which the style inherits properties from.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiStyle/Methods/SetBasedOn.js
 	 */
 	ApiStyle.prototype.SetBasedOn = function(oStyle)
 	{
 		if (!(oStyle instanceof ApiStyle) || this.Style.Get_Type() !== oStyle.Style.Get_Type())
-			return;
+			return false;
 
 		this.Style.Set_BasedOn(oStyle.Style.Get_Id());
+		return true;
 	};
 	/**
 	 * Returns a set of formatting properties which will be conditionally applied to the parts of a table that match the 
@@ -13605,15 +13923,17 @@
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiStyle} oStyle - The style of the paragraph to be set.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetStyle.js
 	 */
 	ApiParaPr.prototype.SetStyle = function(oStyle)
 	{
 		if (!oStyle || !(oStyle instanceof ApiStyle))
-			return;
+			return false;
 
 		this.ParaPr.PStyle = oStyle.Style.Get_Id();
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Returns the paragraph style method.
@@ -13650,24 +13970,28 @@
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isContextualSpacing - The true value will enable the paragraph contextual spacing.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetContextualSpacing.js
 	 */
 	ApiParaPr.prototype.SetContextualSpacing = function(isContextualSpacing)
 	{
 		this.ParaPr.ContextualSpacing = private_GetBoolean(isContextualSpacing);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Sets the paragraph left side indentation.
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {twips} nValue - The paragraph left side indentation value measured in twentieths of a point (1/1440 of an inch).
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetIndLeft.js
 	 */
 	ApiParaPr.prototype.SetIndLeft = function(nValue)
 	{
 		this.ParaPr.Ind.Left = private_Twips2MM(nValue);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Returns the paragraph left side indentation.
@@ -13691,12 +14015,14 @@
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {twips} nValue - The paragraph right side indentation value measured in twentieths of a point (1/1440 of an inch).
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetIndRight.js
 	 */
 	ApiParaPr.prototype.SetIndRight = function(nValue)
 	{
 		this.ParaPr.Ind.Right = private_Twips2MM(nValue);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Returns the paragraph right side indentation.
@@ -13721,12 +14047,14 @@
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {twips} nValue - The paragraph first line indentation value measured in twentieths of a point (1/1440 of an inch).
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetIndFirstLine.js
 	 */
 	ApiParaPr.prototype.SetIndFirstLine = function(nValue)
 	{
 		this.ParaPr.Ind.FirstLine = private_Twips2MM(nValue);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Returns the paragraph first line indentation.
@@ -13753,12 +14081,14 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {("left" | "right" | "both" | "center")} sJc - The justification type that
 	 * will be applied to the paragraph contents.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetJc.js
 	 */
 	ApiParaPr.prototype.SetJc = function(sJc)
 	{
 		this.ParaPr.Jc = private_GetParaAlign(sJc);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Returns the paragraph contents justification.
@@ -13801,12 +14131,14 @@
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isKeepLines - The true value enables the option to keep lines of the paragraph on a single page.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetKeepLines.js
 	 */
 	ApiParaPr.prototype.SetKeepLines = function(isKeepLines)
 	{
 		this.ParaPr.KeepLines = isKeepLines;
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies that when rendering the document using a paginated view, the contents of the current paragraph are at least
@@ -13815,12 +14147,14 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isKeepNext - The true value enables the option to keep lines of the paragraph on the same
 	 * page as the following paragraph.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetKeepNext.js
 	 */
 	ApiParaPr.prototype.SetKeepNext = function(isKeepNext)
 	{
 		this.ParaPr.KeepNext = isKeepNext;
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies that when rendering the document using a paginated view, the contents of the current paragraph are rendered at
@@ -13829,12 +14163,14 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isPageBreakBefore - The true value enables the option to render the contents of the paragraph
 	 * at the beginning of a new page in the document.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetPageBreakBefore.js
 	 */
 	ApiParaPr.prototype.SetPageBreakBefore = function(isPageBreakBefore)
 	{
 		this.ParaPr.PageBreakBefore = isPageBreakBefore;
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Sets the paragraph line spacing. If the value of the sLineRule parameter is either 
@@ -13845,6 +14181,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {(twips | line240)} nLine - The line spacing value measured either in twentieths of a point (1/1440 of an inch) or in 240ths of a line.
 	 * @param {("auto" | "atLeast" | "exact")} sLineRule - The rule that determines the measuring units of the line spacing.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetSpacingLine.js
 	 */
 	ApiParaPr.prototype.SetSpacingLine = function(nLine, sLineRule)
@@ -13870,6 +14207,7 @@
 		}
 
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Returns the paragraph line spacing value.
@@ -13947,6 +14285,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {twips} nBefore - The value of the spacing before the current paragraph measured in twentieths of a point (1/1440 of an inch).
 	 * @param {boolean} [isBeforeAuto=false] - The true value disables the spacing before the current paragraph.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetSpacingBefore.js
 	 */
 	ApiParaPr.prototype.SetSpacingBefore = function(nBefore, isBeforeAuto)
@@ -13958,6 +14297,7 @@
 			this.ParaPr.Spacing.BeforeAutoSpacing = isBeforeAuto;
 
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Returns the spacing before value of the current paragraph.
@@ -13986,6 +14326,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {twips} nAfter - The value of the spacing after the current paragraph measured in twentieths of a point (1/1440 of an inch).
 	 * @param {boolean} [isAfterAuto=false] - The true value disables the spacing after the current paragraph.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetSpacingAfter.js
 	 */
 	ApiParaPr.prototype.SetSpacingAfter = function(nAfter, isAfterAuto)
@@ -13997,6 +14338,7 @@
 			this.ParaPr.Spacing.AfterAutoSpacing = isAfterAuto;
 
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Returns the spacing after value of the current paragraph. 
@@ -14026,12 +14368,14 @@
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [isAuto=false] - The true value disables paragraph contents shading.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetShd.js
 	 */
 	ApiParaPr.prototype.SetShd = function(sType, r, g, b, isAuto)
 	{
 		this.ParaPr.Shd = private_GetShd(sType, r, g, b, isAuto);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Returns the shading applied to the contents of the paragraph.
@@ -14079,12 +14423,14 @@
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetBottomBorder.js
 	 */
 	ApiParaPr.prototype.SetBottomBorder = function(sType, nSize, nSpace, r, g, b)
 	{
 		this.ParaPr.Brd.Bottom = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies the border which will be displayed at the left side of the page around the specified paragraph.
@@ -14096,12 +14442,14 @@
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetLeftBorder.js
 	 */
 	ApiParaPr.prototype.SetLeftBorder = function(sType, nSize, nSpace, r, g, b)
 	{
 		this.ParaPr.Brd.Left = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies the border which will be displayed at the right side of the page around the specified paragraph.
@@ -14113,12 +14461,14 @@
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetRightBorder.js
 	 */
 	ApiParaPr.prototype.SetRightBorder = function(sType, nSize, nSpace, r, g, b)
 	{
 		this.ParaPr.Brd.Right = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies the border which will be displayed above a set of paragraphs which have the same set of paragraph border settings.
@@ -14131,12 +14481,14 @@
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetTopBorder.js
 	 */
 	ApiParaPr.prototype.SetTopBorder = function(sType, nSize, nSpace, r, g, b)
 	{
 		this.ParaPr.Brd.Top = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies the border which will be displayed between each paragraph in a set of paragraphs which have the same set of paragraph border settings.
@@ -14148,24 +14500,28 @@
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetBetweenBorder.js
 	 */
 	ApiParaPr.prototype.SetBetweenBorder = function(sType, nSize, nSpace, r, g, b)
 	{
 		this.ParaPr.Brd.Between = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies whether a single line of the current paragraph will be displayed on a separate page from the remaining content at display time by moving the line onto the following page.
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isWidowControl - The true value means that a single line of the current paragraph will be displayed on a separate page from the remaining content at display time by moving the line onto the following page.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetWidowControl.js
 	 */
 	ApiParaPr.prototype.SetWidowControl = function(isWidowControl)
 	{
 		this.ParaPr.WidowControl = isWidowControl;
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies a sequence of custom tab stops which will be used for any tab characters in the current paragraph.
@@ -14176,12 +14532,13 @@
 	 * measured in twentieths of a point (1/1440 of an inch).
 	 * @param {TabJc[]} aVal - An array of the styles of custom tab stops, which determines the behavior of the tab
 	 * stop and the alignment which will be applied to text entered at the current custom tab stop.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetTabs.js
 	 */
 	ApiParaPr.prototype.SetTabs = function(aPos, aVal)
 	{
 		if (!(aPos instanceof Array) || !(aVal instanceof Array) || aPos.length !== aVal.length)
-			return;
+			return false;
 
 		var oTabs = new CParaTabs();
 		for (var nIndex = 0, nCount = aPos.length; nIndex < nCount; ++nIndex)
@@ -14190,6 +14547,7 @@
 		}
 		this.ParaPr.Tabs = oTabs;
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies that the current paragraph references a numbering definition instance in the current document.
@@ -14199,12 +14557,13 @@
 	 * @param {number} [nLvl=0] - Specifies a numbering level reference. If the current instance of the ApiParaPr class is direct
 	 * formatting of a paragraph, then this parameter MUST BE specified. Otherwise, if the current instance of the ApiParaPr class
 	 * is the part of ApiStyle properties, this parameter will be ignored.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetNumPr.js
 	 */
 	ApiParaPr.prototype.SetNumPr = function(oNumPr, nLvl)
 	{
 		if (!(oNumPr instanceof ApiNumbering))
-			return;
+			return false;
 		
 		let numId  = oNumPr.Num.GetId();
 		let numLvl = undefined;
@@ -14214,6 +14573,7 @@
 		
 		this.ParaPr.NumPr = new AscWord.NumPr(numId, numLvl);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Sets the bullet or numbering to the current paragraph.
@@ -14401,6 +14761,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {("none" | "bullet" | "1)" | "1." | "I." | "A." | "a)" | "a." | "i." )} sType - The predefined numbering template.
 	 * @param {string} [sSymbol=""] - The symbol used for the list numbering. This parameter has the meaning only if the predefined numbering template is "bullet".
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiNumberingLevel/Methods/SetTemplateType.js
 	 */
 	ApiNumberingLevel.prototype.SetTemplateType = function(sType, sSymbol)
@@ -14434,7 +14795,11 @@
 			case "i."    :
 				this.Num.SetLvlByType(this.Lvl, c_oAscNumberingLevel.LowerRomanDot_Right);
 				break;
+			default:
+				return false;
 		}
+
+		return true;
 	};
 	/**
 	 * Sets your own customized numbering type.
@@ -14444,6 +14809,7 @@
 	 *     "decimalZero")} sType - The custom numbering type used for the current numbering definition.
 	 * @param {string} sTextFormatString - Any text in this parameter will be taken as literal text to be repeated in each instance of this numbering level, except for any use of the percent symbol (%) followed by a number, which will be used to indicate the one-based index of the number to be used at this level. Any number of a level higher than this level will be ignored.
 	 * @param {("left" | "right" | "center")} sAlign - Type of justification applied to the text run in the current numbering level.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiNumberingLevel/Methods/SetCustomType.js
 	 */
 	ApiNumberingLevel.prototype.SetCustomType = function(sType, sTextFormatString, sAlign)
@@ -14465,6 +14831,8 @@
 			nType = Asc.c_oAscNumberingFormat.UpperLetter;
 		else if ("decimalZero" === sType)
 			nType = Asc.c_oAscNumberingFormat.DecimalZero;
+		else
+			return false;
 
 		var nAlign = align_Left;
 		if ("left" === sAlign)
@@ -14473,36 +14841,44 @@
 			nAlign = align_Right;
 		else if ("center" === sAlign)
 			nAlign = align_Center;
+		else
+			return false;
 
 		this.Num.SetLvlByFormat(this.Lvl, nType, sTextFormatString, nAlign);
+		return true;
 	};
 	/**
 	 * Specifies a one-based index which determines when a numbering level should restart to its starting value. A numbering level restarts when an instance of the specified numbering level which is higher (earlier than this level) is used in the given document contents. By default this value is true.
 	 * @memberof ApiNumberingLevel
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isRestart - The true value means that a numbering level will be restarted to its starting value.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiNumberingLevel/Methods/SetRestart.js
 	 */
 	ApiNumberingLevel.prototype.SetRestart = function(isRestart)
 	{
 		this.Num.SetLvlRestart(this.Lvl, private_GetBoolean(isRestart, true));
+		return true;
 	};
 	/**
 	 * Specifies the starting value for the numbering used by the parent numbering level within a given numbering level definition. By default this value is 1.
 	 * @memberof ApiNumberingLevel
 	 * @typeofeditors ["CDE"]
 	 * @param {number} nStart - The starting value for the numbering used by the parent numbering level.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiNumberingLevel/Methods/SetStart.js
 	 */
 	ApiNumberingLevel.prototype.SetStart = function(nStart)
 	{
 		this.Num.SetLvlStart(this.Lvl, private_GetInt(nStart));
+		return true;
 	};
 	/**
 	 * Specifies the content which will be added between the given numbering level text and the text of every numbered paragraph which references that numbering level. By default this value is "tab".
 	 * @memberof ApiNumberingLevel
 	 * @typeofeditors ["CDE"]
 	 * @param {("space" | "tab" | "none")} sType - The content added between the numbering level text and the text in the numbered paragraph.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiNumberingLevel/Methods/SetSuff.js
 	 */
 	ApiNumberingLevel.prototype.SetSuff = function(sType)
@@ -14513,6 +14889,33 @@
 			this.Num.SetLvlSuff(this.Lvl, Asc.c_oAscNumberingSuff.Tab);
 		else if ("none" === sType)
 			this.Num.SetLvlSuff(this.Lvl, Asc.c_oAscNumberingSuff.None);
+		else
+			return false;
+
+		return true;
+	};
+	
+	/**
+	 * Links the specified paragraph style with the current numbering level.
+	 * @memberof ApiNumberingLevel
+	 * @typeofeditors ["CDE"]
+	 * @param {ApiStyle} oStyle - The paragraph style.
+	 * @returns {boolean}
+	 * @since 8.3.0
+	 * @see office-js-api/Examples/{Editor}/ApiNumberingLevel/Methods/LinkWithStyle.js
+	 */
+	ApiNumberingLevel.prototype.LinkWithStyle = function(oStyle)
+	{
+		if (!oStyle || !(oStyle instanceof ApiStyle))
+			return false;
+		
+		let logicDocument = private_GetLogicDocument();
+		if (!logicDocument)
+			return false;
+		
+		let styles = logicDocument.GetStyleManager();
+		this.Num.LinkWithStyle(this.Lvl, oStyle.Style.Get_Id(), styles);
+		return true;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -14537,30 +14940,35 @@
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
 	 * @param {number} nCount - The number of columns measured in positive integers.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetStyleColBandSize.js
 	 */
 	ApiTablePr.prototype.SetStyleColBandSize = function(nCount)
 	{
 		this.TablePr.TableStyleColBandSize = private_GetInt(nCount, 1, null);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies a number of rows which will comprise each table row band for this table style.
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
 	 * @param {number} nCount - The number of rows measured in positive integers.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetStyleRowBandSize.js
 	 */
 	ApiTablePr.prototype.SetStyleRowBandSize = function(nCount)
 	{
 		this.TablePr.TableStyleRowBandSize = private_GetInt(nCount, 1, null);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies the alignment of the current table with respect to the text margins in the current section.
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
 	 * @param {("left" | "right" | "center")} sJcType - The alignment type used for the current table placement.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetJc.js
 	 */
 	ApiTablePr.prototype.SetJc = function(sJcType)
@@ -14572,6 +14980,7 @@
 		else if ("center" === sJcType)
 			this.TablePr.Jc = align_Center;
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies the shading which is applied to the extents of the current table.
@@ -14582,12 +14991,14 @@
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [isAuto=false] - The true value disables the SetShd method use.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetShd.js
 	 */
 	ApiTablePr.prototype.SetShd = function(sType, r, g, b, isAuto)
 	{
 		this.TablePr.Shd = private_GetShd(sType, r, g, b, isAuto);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Sets the border which will be displayed at the top of the current table.
@@ -14599,12 +15010,14 @@
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderTop.js
 	 */
 	ApiTablePr.prototype.SetTableBorderTop = function(sType, nSize, nSpace, r, g, b)
 	{
 		this.TablePr.TableBorders.Top = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Sets the border which will be displayed at the bottom of the current table.
@@ -14616,12 +15029,14 @@
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderBottom.js
 	 */
 	ApiTablePr.prototype.SetTableBorderBottom = function(sType, nSize, nSpace, r, g, b)
 	{
 		this.TablePr.TableBorders.Bottom = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Sets the border which will be displayed on the left of the current table.
@@ -14633,12 +15048,14 @@
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderLeft.js
 	 */
 	ApiTablePr.prototype.SetTableBorderLeft = function(sType, nSize, nSpace, r, g, b)
 	{
 		this.TablePr.TableBorders.Left = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Sets the border which will be displayed on the right of the current table.
@@ -14650,12 +15067,14 @@
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderRight.js
 	 */
 	ApiTablePr.prototype.SetTableBorderRight = function(sType, nSize, nSpace, r, g, b)
 	{
 		this.TablePr.TableBorders.Right = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies the border which will be displayed on all horizontal table cell borders which are not on the outmost edge
@@ -14668,12 +15087,14 @@
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderInsideH.js
 	 */
 	ApiTablePr.prototype.SetTableBorderInsideH = function(sType, nSize, nSpace, r, g, b)
 	{
 		this.TablePr.TableBorders.InsideH = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies the border which will be displayed on all vertical table cell borders which are not on the outmost edge
@@ -14686,12 +15107,39 @@
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderInsideV.js
 	 */
 	ApiTablePr.prototype.SetTableBorderInsideV = function(sType, nSize, nSpace, r, g, b)
 	{
 		this.TablePr.TableBorders.InsideV = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
 		this.private_OnChange();
+		return true;
+	};
+	/**
+	 * Specifies the border which will be displayed on all table cell borders.
+	 * @memberof ApiTablePr
+	 * @typeofeditors ["CDE"]
+	 * @param {BorderType} sType - The vertical table cell border style.
+	 * @param {pt_8} nSize - The width of the current border measured in eighths of a point.
+	 * @param {pt} nSpace - The spacing offset in the vertical table cells of the table measured in points used to place this border.
+	 * @param {byte} r - Red color component value.
+	 * @param {byte} g - Green color component value.
+	 * @param {byte} b - Blue color component value.
+	 * @returns {boolean}
+	 * @since 8.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderAll.js
+	 */
+	ApiTablePr.prototype.SetTableBorderAll = function(sType, nSize, nSpace, r, g, b)
+	{
+		this.TablePr.TableBorders.Top = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
+		this.TablePr.TableBorders.Bottom = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
+		this.TablePr.TableBorders.Left = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
+		this.TablePr.TableBorders.Right = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
+		this.TablePr.TableBorders.InsideH = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
+		this.TablePr.TableBorders.InsideV = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
+		this.private_OnChange();
+		return true;
 	};
 
 	/**
@@ -14701,12 +15149,14 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {twips} nValue - The value for the amount of space below the bottom extent of the cell measured in
 	 * twentieths of a point (1/1440 of an inch).
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableCellMarginBottom.js
 	 */
 	ApiTablePr.prototype.SetTableCellMarginBottom = function(nValue)
 	{
 		this.TablePr.TableCellMar.Bottom = private_GetTableMeasure("twips", nValue);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies an amount of space which will be left between the left extent of the cell contents and the left
@@ -14714,12 +15164,14 @@
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
 	 * @param {twips} nValue - The value for the amount of space to the left extent of the cell measured in twentieths of a point (1/1440 of an inch).
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableCellMarginLeft.js
 	 */
 	ApiTablePr.prototype.SetTableCellMarginLeft = function(nValue)
 	{
 		this.TablePr.TableCellMar.Left = private_GetTableMeasure("twips", nValue);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies an amount of space which will be left between the right extent of the cell contents and the right
@@ -14727,12 +15179,14 @@
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
 	 * @param {twips} nValue - The value for the amount of space to the right extent of the cell measured in twentieths of a point (1/1440 of an inch).
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableCellMarginRight.js
 	 */
 	ApiTablePr.prototype.SetTableCellMarginRight = function(nValue)
 	{
 		this.TablePr.TableCellMar.Right = private_GetTableMeasure("twips", nValue);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies an amount of space which will be left between the top extent of the cell contents and the top border
@@ -14740,18 +15194,21 @@
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
 	 * @param {twips} nValue - The value for the amount of space above the top extent of the cell measured in twentieths of a point (1/1440 of an inch).
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableCellMarginTop.js
 	 */
 	ApiTablePr.prototype.SetTableCellMarginTop = function(nValue)
 	{
 		this.TablePr.TableCellMar.Top = private_GetTableMeasure("twips", nValue);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies the default table cell spacing (the spacing between adjacent cells and the edges of the table).
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
 	 * @param {?twips} nValue - Spacing value measured in twentieths of a point (1/1440 of an inch). <code>"Null"</code> means that no spacing will be applied.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetCellSpacing.js
 	 */
 	ApiTablePr.prototype.SetCellSpacing = function(nValue)
@@ -14761,6 +15218,7 @@
 		else
 			this.TablePr.TableCellSpacing = private_Twips2MM(nValue);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies the indentation which will be added before the leading edge of the current table in the document
@@ -14768,12 +15226,14 @@
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
 	 * @param {twips} nValue - The indentation value measured in twentieths of a point (1/1440 of an inch).
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableInd.js
 	 */
 	ApiTablePr.prototype.SetTableInd = function(nValue)
 	{
 		this.TablePr.TableInd = private_Twips2MM(nValue);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Sets the preferred width to the current table.
@@ -14782,18 +15242,21 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {TableWidth} sType - Type of the width value from one of the available width values types.
 	 * @param {number} [nValue] - The table width value measured in positive integers.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetWidth.js
 	 */
 	ApiTablePr.prototype.SetWidth = function(sType, nValue)
 	{
 		this.TablePr.TableW = private_GetTableMeasure(sType, nValue);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies the algorithm which will be used to lay out the contents of the current table within the document.
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
 	 * @param {("autofit" | "fixed")} sType - The type of the table layout in the document.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableLayout.js
 	 */
 	ApiTablePr.prototype.SetTableLayout = function(sType)
@@ -14804,6 +15267,7 @@
 			this.TablePr.TableLayout = tbllayout_Fixed;
 
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Sets the table title (caption).
@@ -14903,6 +15367,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {("auto" | "atLeast")} sHRule - The rule to apply the height value to the current table row or ignore it. Use the <code>"atLeast"</code> value to enable the <code>SetHeight</code> method use.
 	 * @param {twips} [nValue] - The height for the current table row measured in twentieths of a point (1/1440 of an inch). This value will be ignored if <code>sHRule="auto"<code>.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableRowPr/Methods/SetHeight.js
 	 */
 	ApiTableRowPr.prototype.SetHeight = function(sHRule, nValue)
@@ -14911,8 +15376,11 @@
 			this.RowPr.Height = new CTableRowHeight(0, Asc.linerule_Auto);
 		else if ("atLeast" === sHRule)
 			this.RowPr.Height = new CTableRowHeight(private_Twips2MM(nValue), Asc.linerule_AtLeast);
+		else
+			return false;
 
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies that the current table row will be repeated at the top of each new page 
@@ -14922,12 +15390,14 @@
 	 * @memberof ApiTableRowPr
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isHeader - The true value means that the current table row will be repeated at the top of each new page.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableRowPr/Methods/SetTableHeader.js
 	 */
 	ApiTableRowPr.prototype.SetTableHeader = function(isHeader)
 	{
 		this.RowPr.TableHeader = private_GetBoolean(isHeader);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Converts the ApiTableRowPr object into the JSON object.
@@ -14968,12 +15438,14 @@
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [isAuto=false] - The true value disables the table cell contents shading.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCellPr/Methods/SetShd.js
 	 */
 	ApiTableCellPr.prototype.SetShd = function(sType, r, g, b, isAuto)
 	{
 		this.CellPr.Shd = private_GetShd(sType, r, g, b, isAuto);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies an amount of space which will be left between the bottom extent of the cell contents and the border
@@ -14983,6 +15455,7 @@
 	 * @param {?twips} nValue - The value for the amount of space below the bottom extent of the cell measured in twentieths
 	 * of a point (1/1440 of an inch). If this value is <code>null</code>, then default table cell bottom margin will be used, otherwise
 	 * the table cell bottom margin will be overridden with the specified value for the current cell.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCellPr/Methods/SetCellMarginBottom.js
 	 */
 	ApiTableCellPr.prototype.SetCellMarginBottom = function(nValue)
@@ -15003,6 +15476,7 @@
 		else
 			this.CellPr.TableCellMar.Bottom = private_GetTableMeasure("twips", nValue);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies an amount of space which will be left between the left extent of the cell contents and 
@@ -15012,6 +15486,7 @@
 	 * @param {?twips} nValue - The value for the amount of space to the left extent of the cell measured in twentieths
 	 * of a point (1/1440 of an inch). If this value is <code>null</code>, then default table cell left margin will be used, otherwise
 	 * the table cell left margin will be overridden with the specified value for the current cell.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCellPr/Methods/SetCellMarginLeft.js
 	 */
 	ApiTableCellPr.prototype.SetCellMarginLeft = function(nValue)
@@ -15032,6 +15507,7 @@
 		else
 			this.CellPr.TableCellMar.Left = private_GetTableMeasure("twips", nValue);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies an amount of space which will be left between the right extent of the cell contents and the border of a specific table cell within a table.
@@ -15040,6 +15516,7 @@
 	 * @param {?twips} nValue - The value for the amount of space to the right extent of the cell measured in twentieths
 	 * of a point (1/1440 of an inch). If this value is <code>null</code>, then default table cell right margin will be used, otherwise
 	 * the table cell right margin will be overridden with the specified value for the current cell.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCellPr/Methods/SetCellMarginRight.js
 	 */
 	ApiTableCellPr.prototype.SetCellMarginRight = function(nValue)
@@ -15060,6 +15537,7 @@
 		else
 			this.CellPr.TableCellMar.Right = private_GetTableMeasure("twips", nValue);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies an amount of space which will be left between the upper extent of the cell contents
@@ -15069,6 +15547,7 @@
 	 * @param {?twips} nValue - The value for the amount of space above the upper extent of the cell measured in twentieths
 	 * of a point (1/1440 of an inch). If this value is <code>null</code>, then default table cell top margin will be used, otherwise
 	 * the table cell top margin will be overridden with the specified value for the current cell.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCellPr/Methods/SetCellMarginTop.js
 	 */
 	ApiTableCellPr.prototype.SetCellMarginTop = function(nValue)
@@ -15089,6 +15568,7 @@
 		else
 			this.CellPr.TableCellMar.Top = private_GetTableMeasure("twips", nValue);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Sets the border which will be displayed at the bottom of the current table cell.
@@ -15100,12 +15580,14 @@
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCellPr/Methods/SetCellBorderBottom.js
 	 */
 	ApiTableCellPr.prototype.SetCellBorderBottom = function(sType, nSize, nSpace, r, g, b)
 	{
 		this.CellPr.TableCellBorders.Bottom = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Sets the border which will be displayed to the left of the current table cell.
@@ -15117,12 +15599,14 @@
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCellPr/Methods/SetCellBorderLeft.js
 	 */
 	ApiTableCellPr.prototype.SetCellBorderLeft = function(sType, nSize, nSpace, r, g, b)
 	{
 		this.CellPr.TableCellBorders.Left = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Sets the border which will be displayed to the right of the current table cell.
@@ -15134,12 +15618,14 @@
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCellPr/Methods/SetCellBorderRight.js
 	 */
 	ApiTableCellPr.prototype.SetCellBorderRight = function(sType, nSize, nSpace, r, g, b)
 	{
 		this.CellPr.TableCellBorders.Right = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Sets the border which will be displayed at the top of the current table cell.
@@ -15151,12 +15637,14 @@
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCellPr/Methods/SetCellBorderTop.js
 	 */
 	ApiTableCellPr.prototype.SetCellBorderTop = function(sType, nSize, nSpace, r, g, b)
 	{
 		this.CellPr.TableCellBorders.Top = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Sets the preferred width to the current table cell.
@@ -15164,18 +15652,21 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {TableWidth} sType - Type of the width value from one of the available width values types.
 	 * @param {number} [nValue] - The table cell width value measured in positive integers.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCellPr/Methods/SetWidth.js
 	 */
 	ApiTableCellPr.prototype.SetWidth = function(sType, nValue)
 	{
 		this.CellPr.TableCellW = private_GetTableMeasure(sType, nValue);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies the vertical alignment for the text contents within the current table cell.
 	 * @memberof ApiTableCellPr
 	 * @typeofeditors ["CDE"]
 	 * @param {("top" | "center" | "bottom")} sType - The available types of the vertical alignment for the text contents of the current table cell.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCellPr/Methods/SetVerticalAlign.js
 	 */
 	ApiTableCellPr.prototype.SetVerticalAlign = function(sType)
@@ -15186,8 +15677,11 @@
 			this.CellPr.VAlign = vertalignjc_Bottom;
 		else if ("center" === sType)
 			this.CellPr.VAlign = vertalignjc_Center;
+		else
+			return false;
 
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies the direction of the text flow for this table cell.
@@ -15196,6 +15690,7 @@
 	 * @param {("lrtb" | "tbrl" | "btlr")} sType - The available types of the text direction in the table cell: <code>"lrtb"</code>
 	 * - text direction left-to-right moving from top to bottom, <code>"tbrl"</code> - text direction top-to-bottom moving from right
 	 * to left, <code>"btlr"</code> - text direction bottom-to-top moving from left to right.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCellPr/Methods/SetTextDirection.js
 	 */
 	ApiTableCellPr.prototype.SetTextDirection = function(sType)
@@ -15206,8 +15701,11 @@
 			this.CellPr.TextDirection = textdirection_TBRL;
 		else if ("btlr" === sType)
 			this.CellPr.TextDirection = textdirection_BTLR;
+		else
+			return false;
 
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Specifies how the current table cell is laid out when the parent table is displayed in a document. This setting
@@ -15215,12 +15713,14 @@
 	 * @memberof ApiTableCellPr
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isNoWrap - The true value means that the current table cell will not be wrapped in the parent table.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCellPr/Methods/SetNoWrap.js
 	 */
 	ApiTableCellPr.prototype.SetNoWrap = function(isNoWrap)
 	{
 		this.CellPr.NoWrap = private_GetBoolean(isNoWrap);
 		this.private_OnChange();
+		return true;
 	};
 	/**
 	 * Converts the ApiTableCellPr object into the JSON object.
@@ -15353,11 +15853,25 @@
 		return "drawing";
 	};
 	/**
+	 * Returns the shape inner contents where a paragraph or text runs can be inserted if it exists.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE", "CSE"]
+	 * @returns {?ApiDocumentContent}
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetContent.js
+	 */
+	ApiDrawing.prototype.GetContent = function()
+	{
+		if (this.Drawing && this.Drawing.textBoxContent && !this.Drawing.isForm())
+			return new ApiDocumentContent(this.Drawing.textBoxContent);
+		return null;
+	};
+	/**
 	 * Sets the size of the object (image, shape, chart) bounding box.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 * @param {EMU} nWidth - The object width measured in English measure units.
 	 * @param {EMU} nHeight - The object height measured in English measure units.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetSize.js
 	 */
 	ApiDrawing.prototype.SetSize = function(nWidth, nHeight)
@@ -15370,6 +15884,7 @@
 			this.Drawing.spPr.xfrm.setExtX(fWidth);
 			this.Drawing.spPr.xfrm.setExtY(fHeight);
 		}
+		return true;
 	};
 	/**
 	 * Sets the wrapping type of the current object (image, shape, chart). One of the following wrapping style types can be set:
@@ -15384,6 +15899,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 * @param {"inline" | "square" | "tight" | "through" | "topAndBottom" | "behind" | "inFront"} sType - The wrapping style type available for the object.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetWrappingStyle.js
 	 */
 	ApiDrawing.prototype.SetWrappingStyle = function(sType)
@@ -15433,12 +15949,19 @@
 				oParaDrawing.Set_WrappingType(WRAPPING_TYPE_NONE);
 				oParaDrawing.Set_BehindDoc(false);
 			}
+			else
+				return false;
+
 			oParaDrawing.Check_WrapPolygon();
 			if(this.Drawing.setRecalculateInfo)
 			{
 				this.Drawing.setRecalculateInfo();
 			}
 		}
+		else
+			return false;
+
+		return true;
 	};
 	/**
 	 * Specifies how the floating object will be horizontally aligned.
@@ -15446,6 +15969,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {RelFromH} [sRelativeFrom="page"] - The document element which will be taken as a countdown point for the object horizontal alignment.
 	 * @param {("left" | "right" | "center")} [sAlign="left"] - The alignment type which will be used for the object horizontal alignment.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetHorAlign.js
 	 */
 	ApiDrawing.prototype.SetHorAlign = function(sRelativeFrom, sAlign)
@@ -15453,6 +15977,7 @@
 		let nAlign        = private_GetAlignH(sAlign);
 		let nRelativeFrom = private_GetRelativeFromH(sRelativeFrom);
 		this.getParaDrawing().Set_PositionH(nRelativeFrom, true, nAlign, false);
+		return true;
 	};
 	/**
 	 * Specifies how the floating object will be vertically aligned.
@@ -15460,6 +15985,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {RelFromV} [sRelativeFrom="page"] - The document element which will be taken as a countdown point for the object vertical alignment.
 	 * @param {("top" | "bottom" | "center")} [sAlign="top"] - The alingment type which will be used for the object vertical alignment.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetVerAlign.js
 	 */
 	ApiDrawing.prototype.SetVerAlign = function(sRelativeFrom, sAlign)
@@ -15467,6 +15993,7 @@
 		let nAlign        = private_GetAlignV(sAlign);
 		let nRelativeFrom = private_GetRelativeFromV(sRelativeFrom);
 		this.getParaDrawing().Set_PositionV(nRelativeFrom, true, nAlign, false);
+		return true;
 	};
 	/**
 	 * Sets the absolute measurement for the horizontal positioning of the floating object.
@@ -15474,6 +16001,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {RelFromH} sRelativeFrom - The document element which will be taken as a countdown point for the object horizontal alignment.
 	 * @param {EMU} nDistance - The distance from the right side of the document element to the floating object measured in English measure units.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetHorPosition.js
 	 */
 	ApiDrawing.prototype.SetHorPosition = function(sRelativeFrom, nDistance)
@@ -15481,6 +16009,7 @@
 		let nValue        = private_EMU2MM(nDistance);
 		let nRelativeFrom = private_GetRelativeFromH(sRelativeFrom);
 		this.getParaDrawing().Set_PositionH(nRelativeFrom, false, nValue, false);
+		return true;
 	};
 	/**
 	 * Sets the absolute measurement for the vertical positioning of the floating object.
@@ -15488,6 +16017,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {RelFromV} sRelativeFrom - The document element which will be taken as a countdown point for the object vertical alignment.
 	 * @param {EMU} nDistance - The distance from the bottom part of the document element to the floating object measured in English measure units.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetVerPosition.js
 	 */
 	ApiDrawing.prototype.SetVerPosition = function(sRelativeFrom, nDistance)
@@ -15495,6 +16025,7 @@
 		let nValue        = private_EMU2MM(nDistance);
 		let nRelativeFrom = private_GetRelativeFromV(sRelativeFrom);
 		this.getParaDrawing().Set_PositionV(nRelativeFrom, false, nValue, false);
+		return true;
 	};
 	/**
 	 * Specifies the minimum distance which will be maintained between the edges of the current drawing object and any
@@ -15505,11 +16036,13 @@
 	 * @param {EMU} nTop - The distance from the top side of the current object and the preceding text run measured in English measure units.
 	 * @param {EMU} nRight - The distance from the right side of the current object and the subsequent text run measured in English measure units.
 	 * @param {EMU} nBottom - The distance from the bottom side of the current object and the subsequent text run measured in English measure units.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetDistances.js
 	 */
 	ApiDrawing.prototype.SetDistances = function(nLeft, nTop, nRight, nBottom)
 	{
 		this.getParaDrawing().Set_Distance(private_EMU2MM(nLeft), private_EMU2MM(nTop), private_EMU2MM(nRight), private_EMU2MM(nBottom));
+		return true;
 	};
 	/**
 	 * Returns a parent paragraph that contains the graphic object.
@@ -15679,14 +16212,17 @@
 	 * Selects the current graphic object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js
 	 */	
 	ApiDrawing.prototype.Select = function()
 	{
 		let oParaDrawing = this.getParaDrawing();
-		if(!oParaDrawing) return;
+		if(!oParaDrawing) return false;
 		let oLogicDocument = private_GetLogicDocument();
 		oLogicDocument.Select_DrawingObject(oParaDrawing.Id);
+
+		return true;
 	};
 	/**
 	 * Inserts a break at the specified location in the main document.
@@ -15727,12 +16263,18 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} bFlip - Specifies if the figure will be flipped horizontally or not.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetHorFlip.js
 	 */	
 	ApiDrawing.prototype.SetHorFlip = function(bFlip)
 	{
 		if (this.Drawing.spPr && this.Drawing.spPr.xfrm)
+		{
 			this.Drawing.spPr.xfrm.setFlipH(bFlip);
+			return true;
+		}
+			
+		return false;
 	};
 	/**
 	 * Flips the current drawing vertically.
@@ -16179,27 +16721,13 @@
 		}
 		return null;
 	};
-	/**
-	 * Returns the shape inner contents where a paragraph or text runs can be inserted.
-	 * @memberof ApiShape
-	 * @typeofeditors ["CDE", "CSE"]
-	 * @returns {?ApiDocumentContent}
-	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetContent.js
-	 */
-	ApiShape.prototype.GetContent = function()
-	{
-		if(this.Shape && this.Shape.textBoxContent && !this.Shape.isForm())
-		{
-			return new ApiDocumentContent(this.Shape.textBoxContent);
-		}
-		return null;
-	};
 	
 	/**
 	 * Sets the vertical alignment to the shape content where a paragraph or text runs can be inserted.
 	 * @memberof ApiShape
 	 * @typeofeditors ["CDE", "CSE"]
 	 * @param {VerticalTextAlign} VerticalAlign - The type of the vertical alignment for the shape inner contents.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetVerticalTextAlign.js
 	 */
 	ApiShape.prototype.SetVerticalTextAlign = function(VerticalAlign)
@@ -16223,8 +16751,14 @@
 					this.Shape.setVerticalAlign(0);
 					break;
 				}
+				default:
+					return false;
 			}
+
+			return true;
 		}
+
+		return false;
 	};
 	/**
 	 * Sets the text paddings to the current shape.
@@ -16234,6 +16768,7 @@
 	 * @param {?EMU} nTop - Top padding.
 	 * @param {?EMU} nRight - Right padding.
 	 * @param {?EMU} nBottom - Bottom padding.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetPaddings.js
 	 */
 	ApiShape.prototype.SetPaddings = function(nLeft, nTop, nRight, nBottom)
@@ -16246,7 +16781,11 @@
 				Right: AscFormat.isRealNumber(nRight) ? private_EMU2MM(nRight) : null,
 				Bottom: AscFormat.isRealNumber(nBottom) ? private_EMU2MM(nBottom) : null
 			});
+
+			return true;
 		}
+
+		return false;
 	};
 	/**
 	 * Returns the next inline shape if exists. 
@@ -16344,11 +16883,13 @@
 	 *  @param {string} sTitle - The title which will be displayed for the current chart.
 	 *  @param {pt} nFontSize - The text size value measured in points.
 	 *  @param {?bool} bIsBold - Specifies if the chart title is written in bold font or not.
+	 * 	@returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetTitle.js
 	 */
 	ApiChart.prototype.SetTitle = function (sTitle, nFontSize, bIsBold)
 	{
 		AscFormat.builder_SetChartTitle(this.Chart, sTitle, nFontSize, bIsBold);
+		return true;
 	};
 
 	/**
@@ -16358,11 +16899,13 @@
 	 *  @param {string} sTitle - The title which will be displayed for the horizontal axis of the current chart.
 	 *  @param {pt} nFontSize - The text size value measured in points.
 	 *  @param {?bool} bIsBold - Specifies if the horizontal axis title is written in bold font or not.
+	 *	@returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisTitle.js
 	 */
 	ApiChart.prototype.SetHorAxisTitle = function (sTitle, nFontSize, bIsBold)
 	{
 		AscFormat.builder_SetChartHorAxisTitle(this.Chart, sTitle, nFontSize, bIsBold);
+		return true;
 	};
 
 	/**
@@ -16372,11 +16915,13 @@
 	 *  @param {string} sTitle - The title which will be displayed for the vertical axis of the current chart.
 	 *  @param {pt} nFontSize - The text size value measured in points.
 	 *  @param {?bool} bIsBold - Specifies if the vertical axis title is written in bold font or not.
+	 *	@returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVerAxisTitle.js
 	 */
 	ApiChart.prototype.SetVerAxisTitle = function (sTitle, nFontSize, bIsBold)
 	{
 		AscFormat.builder_SetChartVertAxisTitle(this.Chart, sTitle, nFontSize, bIsBold);
+		return true;
 	};
 
 	/**
@@ -16384,10 +16929,12 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} bIsMinMax - The <code>true</code> value will set the normal data direction for the vertical axis (from minimum to maximum).
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVerAxisOrientation.js
 	 */
 	ApiChart.prototype.SetVerAxisOrientation = function(bIsMinMax){
 		AscFormat.builder_SetChartVertAxisOrientation(this.Chart, bIsMinMax);
+		return true;
 	};
 
 	/**
@@ -16395,10 +16942,12 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} bIsMinMax - The <code>true</code> value will set the normal data direction for the horizontal axis (from minimum to maximum).
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisOrientation.js
 	 */
 	ApiChart.prototype.SetHorAxisOrientation = function(bIsMinMax){
 		AscFormat.builder_SetChartHorAxisOrientation(this.Chart, bIsMinMax);
+		return true;
 	};
 
 	/**
@@ -16406,6 +16955,7 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {"left" | "top" | "right" | "bottom" | "none"} sLegendPos - The position of the chart legend inside the chart window.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetLegendPos.js
 	 */
 	ApiChart.prototype.SetLegendPos = function(sLegendPos)
@@ -16444,6 +16994,8 @@
 						nLegendPos = Asc.c_oAscChartLegendShowSettings.bottom;
 						break;
 					}
+					default:
+						return false;
 				}
 				if(null !== nLegendPos)
 				{
@@ -16459,7 +17011,11 @@
 					}
 				}
 			}
+
+			return true;
 		}
+
+		return false;
 	};
 
 	/**
@@ -16467,11 +17023,13 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {pt} nFontSize - The text size value measured in points.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetLegendFontSize.js
 	 */
 	ApiChart.prototype.SetLegendFontSize = function(nFontSize)
 	{
 		AscFormat.builder_SetLegendFontSize(this.Chart, nFontSize);
+		return true;
 	};
 
 	/**
@@ -16482,11 +17040,13 @@
 	 * @param {boolean} bShowCatName - Whether to show or hide the source table row names used for the data which the chart will be build from.
 	 * @param {boolean} bShowVal - Whether to show or hide the chart data values.
 	 * @param {boolean} bShowPercent - Whether to show or hide the percent for the data values (works with stacked chart types).
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetShowDataLabels.js
 	 */
 	ApiChart.prototype.SetShowDataLabels = function(bShowSerName, bShowCatName, bShowVal, bShowPercent)
 	{
 		AscFormat.builder_SetShowDataLabels(this.Chart, bShowSerName, bShowCatName, bShowVal, bShowPercent);
+		return true;
 	};
 
 
@@ -16500,11 +17060,13 @@
 	 * @param {boolean} bShowCatName - Whether to show or hide the source table row names used for the data which the chart will be build from.
 	 * @param {boolean} bShowVal - Whether to show or hide the chart data values.
 	 * @param {boolean} bShowPercent - Whether to show or hide the percent for the data values (works with stacked chart types).
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetShowPointDataLabel.js
 	 */
 	ApiChart.prototype.SetShowPointDataLabel = function(nSeriesIndex, nPointIndex, bShowSerName, bShowCatName, bShowVal, bShowPercent)
 	{
 		AscFormat.builder_SetShowPointDataLabel(this.Chart, nSeriesIndex, nPointIndex, bShowSerName, bShowCatName, bShowVal, bShowPercent);
+		return true;
 	};
 
 	/**
@@ -16512,11 +17074,13 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {TickLabelPosition} sTickLabelPosition - The type for the position of chart vertical tick labels.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVertAxisTickLabelPosition.js
 	 */
 	ApiChart.prototype.SetVertAxisTickLabelPosition = function(sTickLabelPosition)
 	{
 		AscFormat.builder_SetChartVertAxisTickLablePosition(this.Chart, sTickLabelPosition);
+		return true;
 	};
 
 	/**
@@ -16524,11 +17088,13 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {TickLabelPosition} sTickLabelPosition - The type for the position of chart horizontal tick labels.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisTickLabelPosition.js
 	 */
 	ApiChart.prototype.SetHorAxisTickLabelPosition = function(sTickLabelPosition)
 	{
 		AscFormat.builder_SetChartHorAxisTickLablePosition(this.Chart, sTickLabelPosition);
+		return true;
 	};
 
 	/**
@@ -16536,10 +17102,12 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {TickMark} sTickMark - The type of tick mark appearance.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisMajorTickMark.js
 	 */
 	ApiChart.prototype.SetHorAxisMajorTickMark = function(sTickMark){
 		AscFormat.builder_SetChartHorAxisMajorTickMark(this.Chart, sTickMark);
+		return true;
 	};
 
 	/**
@@ -16547,10 +17115,12 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {TickMark} sTickMark - The type of tick mark appearance.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisMinorTickMark.js
 	 */
 	ApiChart.prototype.SetHorAxisMinorTickMark = function(sTickMark){
 		AscFormat.builder_SetChartHorAxisMinorTickMark(this.Chart, sTickMark);
+		return true;
 	};
 
 	/**
@@ -16558,11 +17128,13 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {TickMark} sTickMark - The type of tick mark appearance.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVertAxisMajorTickMark.js
 	 */
 
 	ApiChart.prototype.SetVertAxisMajorTickMark = function(sTickMark){
 		AscFormat.builder_SetChartVerAxisMajorTickMark(this.Chart, sTickMark);
+		return true;
 	};
 
 	/**
@@ -16570,10 +17142,12 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {TickMark} sTickMark - The type of tick mark appearance.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVertAxisMinorTickMark.js
 	 */
 	ApiChart.prototype.SetVertAxisMinorTickMark = function(sTickMark){
 		AscFormat.builder_SetChartVerAxisMinorTickMark(this.Chart, sTickMark);
+		return true;
 	};
 
 	/**
@@ -16581,11 +17155,13 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetMajorVerticalGridlines.js
 	 */
 	ApiChart.prototype.SetMajorVerticalGridlines = function(oStroke)
 	{
 		AscFormat.builder_SetVerAxisMajorGridlines(this.Chart, oStroke ?  oStroke.Ln : null);
+		return true;
 	};
 
 	/**
@@ -16593,11 +17169,13 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetMinorVerticalGridlines.js
 	 */
 	ApiChart.prototype.SetMinorVerticalGridlines = function(oStroke)
 	{
 		AscFormat.builder_SetVerAxisMinorGridlines(this.Chart, oStroke ?  oStroke.Ln : null);
+		return true;
 	};
 
 
@@ -16606,11 +17184,13 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetMajorHorizontalGridlines.js
 	 */
 	ApiChart.prototype.SetMajorHorizontalGridlines = function(oStroke)
 	{
 		AscFormat.builder_SetHorAxisMajorGridlines(this.Chart, oStroke ?  oStroke.Ln : null);
+		return true;
 	};
 
 	/**
@@ -16618,11 +17198,13 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetMinorHorizontalGridlines.js
 	 */
 	ApiChart.prototype.SetMinorHorizontalGridlines = function(oStroke)
 	{
 		AscFormat.builder_SetHorAxisMinorGridlines(this.Chart, oStroke ?  oStroke.Ln : null);
+		return true;
 	};
 
 
@@ -16631,10 +17213,12 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE"]
 	 * @param {pt} nFontSize - The text size value measured in points.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisLablesFontSize.js
 	 */
 	ApiChart.prototype.SetHorAxisLablesFontSize = function(nFontSize){
 		AscFormat.builder_SetHorAxisFontSize(this.Chart, nFontSize);
+		return true;
 	};
 
 	/**
@@ -16642,10 +17226,12 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE"]
 	 * @param {pt} nFontSize - The text size value measured in points.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVertAxisLablesFontSize.js
 	 */
 	ApiChart.prototype.SetVertAxisLablesFontSize = function(nFontSize){
 		AscFormat.builder_SetVerAxisFontSize(this.Chart, nFontSize);
+		return true;
 	};
 
 	/**
@@ -17173,6 +17759,50 @@
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
+	// ApiGroup
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Returns a type of the ApiGroup class.
+	 * @memberof ApiGroup
+	 * @typeofeditors ["CDE"]
+	 * @returns {"group"}
+	 * @since 8.3.0
+	 * @see office-js-api/Examples/{Editor}/ApiGroup/Methods/GetClassType.js
+	 */
+	ApiGroup.prototype.GetClassType = function()
+	{
+		return "group";
+	};
+
+	/**
+	 * Ungroups the current group of drawings.
+	 * @memberof ApiGroup
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 * @since 8.3.0
+	 * @see office-js-api/Examples/{Editor}/ApiGroup/Methods/Ungroup.js
+	 */
+	ApiGroup.prototype.Ungroup = function()
+	{
+		let oDoc = private_GetLogicDocument();
+		let oGraphicObjects = oDoc.getDrawingObjects();
+
+		oGraphicObjects.resetSelection();
+		oGraphicObjects.selectObject(this.Drawing, this.Drawing.Get_AbsolutePage())
+		
+		let canUngroup = oGraphicObjects.canUnGroup();
+		if (!canUngroup) {
+			return false;
+		}
+
+		oGraphicObjects.unGroupSelectedObjects();
+		return true;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
 	// ApiFill
 	//
 	//------------------------------------------------------------------------------------------------------------------
@@ -17438,6 +18068,7 @@
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {"contentLocked" | "sdtContentLocked" | "sdtLocked"} sLockType - The lock type applied to the inline text content control.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetLock.js
 	 */
 	ApiInlineLvlSdt.prototype.SetLock = function(sLockType)
@@ -17449,8 +18080,11 @@
 			nLock = c_oAscSdtLockType.SdtContentLocked;
 		else if ("sdtLocked" === sLockType)
 			nLock = c_oAscSdtLockType.SdtLocked;
+		else
+			return false;
 
 		this.Sdt.SetContentControlLock(nLock);
+		return true;
 	};
 
 	/**
@@ -17481,11 +18115,13 @@
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sTag - The tag which will be added to the current inline text content control.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetTag.js
 	 */
 	ApiInlineLvlSdt.prototype.SetTag = function(sTag)
 	{
 		this.Sdt.SetTag(sTag);
+		return true;
 	};
 
 	/**
@@ -17505,11 +18141,13 @@
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sLabel - The label which will be added to the current inline text content control. Can be a positive or negative integer from <b>-2147483647</b> to <b>2147483647</b>.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetLabel.js
 	 */
 	ApiInlineLvlSdt.prototype.SetLabel = function(sLabel)
 	{
 		this.Sdt.SetLabel(sLabel);
+		return true;
 	};
 
 	/**
@@ -17529,11 +18167,13 @@
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sAlias - The alias which will be added to the current inline text content control.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetAlias.js
 	 */
 	ApiInlineLvlSdt.prototype.SetAlias = function(sAlias)
 	{
 		this.Sdt.SetAlias(sAlias);
+		return true;
 	};
 
 	/**
@@ -17988,12 +18628,14 @@
 	 * @param {boolean?} [isAfter=true] - Specifies whether a cursor will be placed before (false) or after (true) the current content control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/MoveCursorOutside.js
 	 */
 	ApiInlineLvlSdt.prototype.MoveCursorOutside = function(isAfter)
 	{
 		this.Sdt.MoveCursorOutsideForm(false === isAfter);
+		return true;
 	};
 
 	/**
@@ -18108,6 +18750,7 @@
 	 * Clears a list of values of the combo box / dropdown list content control.
 	 * @memberof ApiContentControlList
 	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiContentControlList/Methods/Clear.js
 	 */
 	ApiContentControlList.prototype.Clear = function()
@@ -18116,6 +18759,7 @@
 		listPr.Clear();
 		this.SetListPr(listPr)
 		this.Sdt.SelectListItem("");
+		return true;
 	};
 
 	/**
@@ -18395,20 +19039,24 @@
 	 * <b>"sdtLocked"</b> - the container cannot be deleted.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {"contentLocked" | "sdtContentLocked" | "sdtLocked"} sLockType - The type of the lock applied to the block text content control.
+	 * @param {"contentLocked" | "sdtContentLocked" | "sdtLocked"} lockType - The type of the lock applied to the block text content control.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/SetLock.js
 	 */
-	ApiBlockLvlSdt.prototype.SetLock = function(sLockType)
+	ApiBlockLvlSdt.prototype.SetLock = function(lockType)
 	{
 		var nLock = c_oAscSdtLockType.Unlocked;
-		if ("contentLocked" === sLockType)
+		if ("contentLocked" === lockType)
 			nLock = c_oAscSdtLockType.ContentLocked;
-		else if ("sdtContentLocked" === sLockType)
+		else if ("sdtContentLocked" === lockType)
 			nLock = c_oAscSdtLockType.SdtContentLocked;
-		else if ("sdtLocked" === sLockType)
+		else if ("sdtLocked" === lockType)
 			nLock = c_oAscSdtLockType.SdtLocked;
+		else
+			return false;
 
 		this.Sdt.SetContentControlLock(nLock);
+		return true;
 	};
 
 	/**
@@ -18438,12 +19086,14 @@
 	 * Sets the tag attribute to the current container.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sTag - The tag which will be added to the current container.
+	 * @param {string} tag - The tag which will be added to the current container.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/SetTag.js
 	 */
-	ApiBlockLvlSdt.prototype.SetTag = function(sTag)
+	ApiBlockLvlSdt.prototype.SetTag = function(tag)
 	{
-		this.Sdt.SetTag(sTag);
+		this.Sdt.SetTag(tag);
+		return true;
 	};
 
 	/**
@@ -18463,11 +19113,13 @@
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sLabel - The label which will be added to the current container. Can be a positive or negative integer from <b>-2147483647</b> to <b>2147483647</b>.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/SetLabel.js
 	 */
-	ApiBlockLvlSdt.prototype.SetLabel = function(sLabel)
+	ApiBlockLvlSdt.prototype.SetLabel = function(label)
 	{
-		this.Sdt.SetLabel(sLabel);
+		this.Sdt.SetLabel(label);
+		return true;
 	};
 
 	/**
@@ -18486,12 +19138,14 @@
 	 * Sets the alias attribute to the current container.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sAlias - The alias which will be added to the current container.
+	 * @param {string} alias - The alias which will be added to the current container.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/SetAlias.js
 	 */
-	ApiBlockLvlSdt.prototype.SetAlias = function(sAlias)
+	ApiBlockLvlSdt.prototype.SetAlias = function(alias)
 	{
-		this.Sdt.SetAlias(sAlias);
+		this.Sdt.SetAlias(alias);
+		return true;
 	};
 
 	/**
@@ -18570,17 +19224,17 @@
 	 * process to arrange tables on the specified page.</note>
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param nPage - Page number. If it is not specified, an empty array will be returned.
+	 * @param page - Page number. If it is not specified, an empty array will be returned.
 	 * @return {ApiTable[]}  
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/GetAllTablesOnPage.js
 	 */
-	ApiBlockLvlSdt.prototype.GetAllTablesOnPage = function(nPage)
+	ApiBlockLvlSdt.prototype.GetAllTablesOnPage = function(page)
 	{
 		var oLogicDocument = this.Sdt.GetLogicDocument();
 		if (oLogicDocument)
-			(new ApiDocument(oLogicDocument)).ForceRecalculate(nPage + 1);
+			(new ApiDocument(oLogicDocument)).ForceRecalculate(page + 1);
 
-		var arrTables		= this.Sdt.GetAllTablesOnPage(nPage);
+		var arrTables		= this.Sdt.GetAllTablesOnPage(page);
 		var arrApiTables	= [];
 
 		for (var Index = 0, nCount = arrTables.length; Index < nCount; Index++)
@@ -18614,55 +19268,52 @@
 	 */
 	ApiBlockLvlSdt.prototype.Delete = function(keepContent)
 	{
-		if (this.Sdt.Index >= 0)
+		let posInParent = this.Sdt.GetIndex();
+		if (-1 === posInParent)
+			return false;
+		
+		if (keepContent)
 		{
-			if (keepContent)
-			{
-				this.Sdt.RemoveContentControlWrapper();
-			}
-			else 
-			{
-				this.Sdt.PreDelete();
-				this.Sdt.Parent.RemoveFromContent(this.Sdt.Index, 1, true);
-			}
-
-			return true;
+			this.Sdt.RemoveContentControlWrapper();
 		}
-
-		return false;
+		else
+		{
+			this.Sdt.PreDelete();
+			this.Sdt.GetParent().RemoveFromContent(posInParent, 1, true);
+		}
+		return true;
 	};
 
 	/**
 	 * Applies text settings to the content of the content control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiTextPr} oTextPr - The properties that will be set to the content of the content control.
+	 * @param {ApiTextPr} textPr - The properties that will be set to the content of the content control.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/SetTextPr.js
 	 */
-	ApiBlockLvlSdt.prototype.SetTextPr = function(oTextPr)
+	ApiBlockLvlSdt.prototype.SetTextPr = function(textPr)
 	{
-		var ParaTextPr = new AscCommonWord.ParaTextPr(oTextPr.TextPr);
+		var ParaTextPr = new AscWord.ParaTextPr(textPr.TextPr);
 		this.Sdt.Content.SetApplyToAll(true);
 		this.Sdt.Add(ParaTextPr);
 		this.Sdt.Content.SetApplyToAll(false);
+		return true;
 	};
 
 	/**
 	 * Returns a collection of drawing objects in the current content control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @return {ApiDrawing[]}  
+	 * @return {Drawing[]}  
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/GetAllDrawingObjects.js
 	 */
 	ApiBlockLvlSdt.prototype.GetAllDrawingObjects = function()
 	{
-		var arrAllDrawing = this.Sdt.GetAllDrawingObjects();
-		var arrApiDrawings  = [];
-
-		for (var Index = 0; Index < arrAllDrawing.length; Index++)
-			arrApiDrawings.push(new ApiDrawing(arrAllDrawing[Index].GraphicObj));
-
-		return arrApiDrawings;
+		let arrAllDrawing = this.Sdt.GetAllDrawingObjects();
+		return AscBuilder.GetApiDrawings(arrAllDrawing.map(function(drawing) {
+			return drawing.GraphicObj;
+		}));
 	};
 
 	/**
@@ -18731,15 +19382,15 @@
 	 * Pushes a paragraph or a table or a block content control to actually add it to the current container.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {DocumentElement} oElement - The type of the element which will be pushed to the current container.
-	 * @return {boolean} - returns false if oElement unsupported.
+	 * @param {DocumentElement} element - The type of the element which will be pushed to the current container.
+	 * @return {boolean} - returns false if element unsupported.
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/Push.js
 	 */
-	ApiBlockLvlSdt.prototype.Push = function(oElement)
+	ApiBlockLvlSdt.prototype.Push = function(element)
 	{
-		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
+		if (element instanceof ApiParagraph || element instanceof ApiTable || element instanceof ApiBlockLvlSdt)
 		{
-			var oElm = oElement.private_GetImpl();
+			var oElm = element.private_GetImpl();
 			if (oElm.IsUseInDocument())
 				return false;
 
@@ -18760,16 +19411,16 @@
 	 * Adds a paragraph or a table or a block content control to the current container.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {DocumentElement} oElement - The type of the element which will be added to the current container.
-	 * @param {Number} nPos - The specified position.
-	 * @return {boolean} - returns false if oElement unsupported.
+	 * @param {DocumentElement} element - The type of the element which will be added to the current container.
+	 * @param {Number} pos - The specified position.
+	 * @return {boolean} - returns false if element unsupported.
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/AddElement.js
 	 */
-	ApiBlockLvlSdt.prototype.AddElement = function(oElement, nPos)
+	ApiBlockLvlSdt.prototype.AddElement = function(element, pos)
 	{
-		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
+		if (element instanceof ApiParagraph || element instanceof ApiTable || element instanceof ApiBlockLvlSdt)
 		{
-			var oElm = oElement.private_GetImpl();
+			var oElm = element.private_GetImpl();
 			if (oElm.IsUseInDocument())
 				return false;
 
@@ -18779,7 +19430,7 @@
 				this.Sdt.SetShowingPlcHdr(false);
 			}
 			
-			this.Sdt.Content.Internal_Content_Add(nPos, oElm);
+			this.Sdt.Content.Internal_Content_Add(pos, oElm);
 			return true;
 		}
 
@@ -18790,13 +19441,13 @@
 	 * Adds a text to the current content control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {String} sText - The text which will be added to the content control.
+	 * @param {String} text - The text which will be added to the content control.
 	 * @return {boolean} - returns false if param is invalid.
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/AddText.js
 	 */
-	ApiBlockLvlSdt.prototype.AddText = function(sText)
+	ApiBlockLvlSdt.prototype.AddText = function(text)
 	{
-		let _sText = GetStringParameter(sText, null);
+		let _sText = GetStringParameter(text, null);
 		if (null === _sText)
 			return false;
 
@@ -18823,14 +19474,14 @@
 	 * Returns a Range object that represents the part of the document contained in the specified content control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} Start - Start position index in the current element.
-	 * @param {Number} End - End position index in the current element.
+	 * @param {Number} start - Start position index in the current element.
+	 * @param {Number} end - End position index in the current element.
 	 * @returns {ApiRange} 
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/GetRange.js
 	 */
-	ApiBlockLvlSdt.prototype.GetRange = function(Start, End)
+	ApiBlockLvlSdt.prototype.GetRange = function(start, end)
 	{
-		return new ApiRange(this.Sdt, Start, End);
+		return new ApiRange(this.Sdt, start, end);
 	};
 	
 	/**
@@ -18838,6 +19489,7 @@
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiBlockLvlSdt}
+	 * @since 8.3.0
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/Copy.js
 	 */
 	ApiBlockLvlSdt.prototype.Copy = function()
@@ -18855,12 +19507,12 @@
 	 * Searches for a scope of a content control object. The search results are a collection of ApiRange objects.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText - Search string.
+	 * @param {string} text - Search string.
 	 * @param {boolean} isMatchCase - Case sensitive or not.
 	 * @return {ApiRange[]}  
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/Search.js
 	 */
-	ApiBlockLvlSdt.prototype.Search = function(sText, isMatchCase)
+	ApiBlockLvlSdt.prototype.Search = function(text, isMatchCase)
 	{
 		if (isMatchCase === undefined)
 			isMatchCase	= false;
@@ -18872,7 +19524,7 @@
 		for (var para in allParagraphs)
 		{
 			var oParagraph			= new ApiParagraph(allParagraphs[para]);
-			var arrOfParaApiRanges	= oParagraph.Search(sText, isMatchCase);
+			var arrOfParaApiRanges	= oParagraph.Search(text, isMatchCase);
 
 			for (var itemRange = 0; itemRange < arrOfParaApiRanges.length; itemRange++)	
 				arrApiRanges.push(arrOfParaApiRanges[itemRange]);
@@ -18885,6 +19537,7 @@
 	 * Selects the current content control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/Select.js
 	 */
 	ApiBlockLvlSdt.prototype.Select = function()
@@ -18893,6 +19546,7 @@
 
 		this.Sdt.SelectContentControl();
 		Document.UpdateSelection();
+		return true;
 	};
 
 	/**
@@ -18910,17 +19564,17 @@
 	/**
 	 * Sets the placeholder text to the current content control.
 	 * @memberof ApiBlockLvlSdt
-	 * @param {string} sText - The text that will be set to the current content control.
+	 * @param {string} text - The text that will be set to the current content control.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/SetPlaceholderText.js
 	 */
-	ApiBlockLvlSdt.prototype.SetPlaceholderText = function(sText)
+	ApiBlockLvlSdt.prototype.SetPlaceholderText = function(text)
 	{
-		if (typeof(sText) !== "string" || sText === "")
+		if (typeof(text) !== "string" || text === "")
 			return false;
 
-		this.Sdt.SetPlaceholderText(sText);
+		this.Sdt.SetPlaceholderText(text);
 		if (this.Sdt.IsEmpty())
 			this.Sdt.private_ReplaceContentWithPlaceHolder();
 
@@ -18973,27 +19627,27 @@
 	 * <note>Please note that the current block content control must be in the document.</note>
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText - The comment text (required).
-	 * @param {string} sAuthor - The author's name (optional).
-	 * @param {string} sUserId - The user ID of the comment author (optional).
+	 * @param {string} text - The comment text (required).
+	 * @param {string} author - The author's name (optional).
+	 * @param {string} userId - The user ID of the comment author (optional).
 	 * @returns {?ApiComment} - Returns null if the comment was not added.
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/AddComment.js
 	 */
-	ApiBlockLvlSdt.prototype.AddComment = function(sText, sAuthor, sUserId)
+	ApiBlockLvlSdt.prototype.AddComment = function(text, author, userId)
 	{
-		if (!sText || typeof(sText) !== "string")
+		if (!text || typeof(text) !== "string")
 			return null;
-		if (typeof(sAuthor) !== "string")
-			sAuthor = "";
+		if (typeof(author) !== "string")
+			author = "";
 
 		if (!this.Sdt.IsUseInDocument())
 			return null;
 
 		var oDocument = private_GetLogicDocument();
 		let CommentData = private_CreateCommentData({
-			text: sText,
-			author: sAuthor,
-			userId: sUserId
+			text: text,
+			author: author,
+			userId: userId
 		});
 
 		var oDocumentState = oDocument.SaveDocumentState();
@@ -19005,43 +19659,43 @@
 		
 		return comment;
 	};
-
+	
 	/**
-     * Adds a caption paragraph after (or before) the current content control.
+	 * Adds a caption paragraph after (or before) the current content control.
 	 * <note>Please note that the current content control must be in the document (not in the footer/header).
 	 * And if the current content control is placed in a shape, then a caption is added after (or before) the parent shape.</note>
-     * @memberof ApiBlockLvlSdt
-     * @typeofeditors ["CDE"]
-     * @param {string} sAdditional - The additional text.
-	 * @param {CaptionLabel | String} [sLabel="Table"] - The caption label.
-	 * @param {boolean} [bExludeLabel=false] - Specifies whether to exclude the label from the caption.
-	 * @param {CaptionNumberingFormat} [sNumberingFormat="Arabic"] - The possible caption numbering format.
-	 * @param {boolean} [bBefore=false] - Specifies whether to insert the caption before the current content control (true) or after (false) (after/before the shape if it is placed in the shape).
-	 * @param {Number} [nHeadingLvl=undefined] - The heading level (used if you want to specify the chapter number).
+	 * @memberof ApiBlockLvlSdt
+	 * @typeofeditors ["CDE"]
+	 * @param {string} additionalText - The additional text.
+	 * @param {CaptionLabel | String} [label="Table"] - The caption label.
+	 * @param {boolean} [excludeLabel=false] - Specifies whether to exclude the label from the caption.
+	 * @param {CaptionNumberingFormat} [numFormat="Arabic"] - The possible caption numbering format.
+	 * @param {boolean} [isBefore=false] - Specifies whether to insert the caption before the current content control (true) or after (false) (after/before the shape if it is placed in the shape).
+	 * @param {Number} [headingLvl=undefined] - The heading level (used if you want to specify the chapter number).
 	 * <note>If you want to specify "Heading 1", then nHeadingLvl === 0 and etc.</note>
-	 * @param {CaptionSep} [sCaptionSep="hyphen"] - The caption separator (used if you want to specify the chapter number).
-     * @returns {boolean}
-     * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/AddCaption.js
+	 * @param {CaptionSep} [captionSep="hyphen"] - The caption separator (used if you want to specify the chapter number).
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/AddCaption.js
 	 */
-	ApiBlockLvlSdt.prototype.AddCaption = function(sAdditional, sLabel, bExludeLabel, sNumberingFormat, bBefore, nHeadingLvl, sCaptionSep)
+	ApiBlockLvlSdt.prototype.AddCaption = function(additionalText, label, excludeLabel, numFormat, isBefore, headingLvl, captionSep)
 	{
 		var oSdtParent = this.Sdt.GetParent();
 		if (this.Sdt.IsUseInDocument() === false || !oSdtParent || oSdtParent.Is_TopDocument(true) !== private_GetLogicDocument())
 			return false;
-		if (typeof(sAdditional) !== "string" || sAdditional.trim() === "")
-			sAdditional = "";
-		if (typeof(bExludeLabel) !== "boolean")
-			bExludeLabel = false;
-		if (typeof(bBefore) !== "boolean")
-			bBefore = false;
-		if (typeof(sLabel) !== "string" || sLabel.trim() === "")
-			sLabel = "Table";
+		if (typeof(additionalText) !== "string" || additionalText.trim() === "")
+			additionalText = "";
+		if (typeof(excludeLabel) !== "boolean")
+			excludeLabel = false;
+		if (typeof(isBefore) !== "boolean")
+			isBefore = false;
+		if (typeof(label) !== "string" || label.trim() === "")
+			label = "Table";
 		
 		let oCapPr = new Asc.CAscCaptionProperties();
 		let oDoc = private_GetLogicDocument();
 
 		let nNumFormat;
-		switch (sNumberingFormat)
+		switch (numFormat)
 		{
 			case "ALPHABETIC":
 				nNumFormat = Asc.c_oAscNumberingFormat.UpperLetter;
@@ -19059,38 +19713,38 @@
 				nNumFormat = Asc.c_oAscNumberingFormat.Decimal;
 				break;
 		}
-		switch (sCaptionSep)
+		switch (captionSep)
 		{
 			case "hyphen":
-				sCaptionSep = "-";
+				captionSep = "-";
 				break;
 			case "period":
-				sCaptionSep = ".";
+				captionSep = ".";
 				break;
 			case "colon":
-				sCaptionSep = ":";
+				captionSep = ":";
 				break;
 			case "longDash":
-				sCaptionSep = "—";
+				captionSep = "—";
 				break;
 			case "dash":
-				sCaptionSep = "-";
+				captionSep = "-";
 				break;
 			default:
-				sCaptionSep = "-";
+				captionSep = "-";
 				break;
 		}
 
-		oCapPr.Label = sLabel;
-		oCapPr.Before = bBefore;
-		oCapPr.ExcludeLabel = bExludeLabel;
+		oCapPr.Label = label;
+		oCapPr.Before = isBefore;
+		oCapPr.ExcludeLabel = excludeLabel;
 		oCapPr.Format = nNumFormat;
-		oCapPr.Separator = sCaptionSep;
-		oCapPr.Additional = sAdditional;
+		oCapPr.Separator = captionSep;
+		oCapPr.Additional = additionalText;
 
-		if (nHeadingLvl >= 0 && nHeadingLvl <= 8)
+		if (headingLvl >= 0 && headingLvl <= 8)
 		{
-			oCapPr.HeadingLvl = nHeadingLvl;
+			oCapPr.HeadingLvl = headingLvl;
 			oCapPr.IncludeChapterNumber = true;
 		}
 		else oCapPr.HeadingLvl = 0;
@@ -19121,12 +19775,14 @@
 	 * @param {boolean?} [isAfter=true] - Specifies whether a cursor will be placed before (false) or after (true) the current content control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/MoveCursorOutside.js
 	 */
 	ApiBlockLvlSdt.prototype.MoveCursorOutside = function(isAfter)
 	{
 		this.Sdt.MoveCursorOutsideForm(false === isAfter);
+		return true;
 	};
 
 	/**
@@ -19323,19 +19979,23 @@
 	/**
 	 * Converts the current form to a fixed size form.
 	 * @memberof ApiFormBase
-	 * @param {twips} nWidth - The wrapper shape width measured in twentieths of a point (1/1440 of an inch).
-	 * @param {twips} nHeight - The wrapper shape height measured in twentieths of a point (1/1440 of an inch).
+	 * @param {twips} width - The wrapper shape width measured in twentieths of a point (1/1440 of an inch).
+	 * @param {twips} height - The wrapper shape height measured in twentieths of a point (1/1440 of an inch).
+	 * @param {boolean} keepPosition - Save position on the page (it can be a little bit slow, because it runs the document calculation)
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/ToFixed.js
 	 */
-	ApiFormBase.prototype.ToFixed = function(nWidth, nHeight)
+	ApiFormBase.prototype.ToFixed = function(width, height, keepPosition)
 	{
 		return executeNoFormLockCheck(function() {
 			if (this.IsFixed())
 				return false;
 			
-			this.Sdt.ConvertFormToFixed(private_Twips2MM(nWidth), private_Twips2MM(nHeight));
+			if (keepPosition)
+				new ApiDocument(private_GetLogicDocument()).ForceRecalculate();
+			
+			this.Sdt.ConvertFormToFixed(private_Twips2MM(width), private_Twips2MM(height));
 			return true;
 		}, this);
 	};
@@ -19451,12 +20111,14 @@
 	 * Clears the current form.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/Clear.js
 	 */
 	ApiFormBase.prototype.Clear = function()
 	{
 		return executeNoFormLockCheck(function() {
 			this.Sdt.ClearContentControlExt();
+			return true;
 		}, this);
 	};
 	/**
@@ -19533,12 +20195,14 @@
 	 * @param {boolean?} [isAfter=true] - Specifies whether a cursor will be placed before (false) or after (true) the current form.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
+	 * @returns {boolean}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/MoveCursorOutside.js
 	 */
 	ApiFormBase.prototype.MoveCursorOutside = function(isAfter)
 	{
 		this.Sdt.MoveCursorOutsideForm(false === isAfter);
+		return true;
 	};
 	/**
 	 * Copies the current form (copies with the shape if it exists).
@@ -20254,6 +20918,7 @@
 	 * @memberof ApiCheckBoxForm
 	 * @param {string} sKey - Radio group key.
 	 * @typeofeditors ["CDE", "CFE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiCheckBoxForm/Methods/SetRadioGroup.js
 	 */
 	ApiCheckBoxForm.prototype.SetRadioGroup = function(sKey)
@@ -20261,11 +20926,12 @@
 		return executeNoFormLockCheck(function(){
 			let oPr = this.Sdt.GetCheckBoxPr();
 			if (!oPr)
-				return;
+				return false;
 			
 			oPr = oPr.Copy();
 			oPr.SetGroupKey(sKey);
 			this.Sdt.SetCheckBoxPr(oPr);
+			return true;
 		}, this);
 	};
 
@@ -20418,18 +21084,17 @@
 	 * Replaces each paragraph (or text in cell) in the select with the corresponding text from an array of strings.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {Array} arrString - An array of replacement strings.
-	 * @param {string} [sParaTab=" "] - A character which is used to specify the tab in the source text.
-	 * @param {string} [sParaNewLine=" "] - A character which is used to specify the line break character in the source text.
+	 * @param {Array} textStrings - An array of replacement strings.
+	 * @param {string} [tab="\t"] - A character which is used to specify the tab in the source text.
+	 * @param {string} [newLine="\r\n"] - A character which is used to specify the line break character in the source text.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/ReplaceTextSmart.js
 	 */
-	Api.prototype.ReplaceTextSmart = function(arrString, sParaTab, sParaNewLine)
+	Api.prototype.ReplaceTextSmart = function(textStrings, tab, newLine)
 	{
-		if (typeof(sParaTab) !== "string")
-			sParaTab = String.fromCharCode(32);
-		if (typeof(sParaNewLine) !== "string")
-			sParaNewLine = String.fromCharCode(32);
-
+		let sParaTab     = GetStringParameter(tab, "\t");
+		let sParaNewLine = GetStringParameter(newLine, "\r\n");
+		
 		var allRunsInfo      = null;
 		var textDelta        = null;
 		var arrSelectedParas = null;
@@ -20722,7 +21387,7 @@
 					continue;
 				}
 					
-				textDelta = AscCommon.getTextDelta(oParaText, arrString[Index]);
+				textDelta = AscCommon.getTextDelta(oParaText, textStrings[Index]);
 
 				DelInsertChars();
 				allRunsInfo = [];
@@ -20750,7 +21415,7 @@
 				if (arrSelectedParas[0] && arrSelectedParas[0].Parent)
 					arrSelectedParas[0].Parent.RemoveSelection();
 				Asc.editor.wb.recalculateDrawingObjects();
-				return;
+				return true;
 			}
 
 			if (oWorksheet.worksheet.getSheetProtection()) {
@@ -20784,10 +21449,10 @@
 
 					for (var nText = nTextToReplace; nText < nTextToReplace + nCountLinesInCell; nText++) 
 					{
-						if (!arrString[nText])
+						if (!textStrings[nText])
 							continue;
 							
-						resultText += arrString[nText];
+						resultText += textStrings[nText];
 						if (nText !== nTextToReplace + nCountLinesInCell - 1)
 							resultText += '\n';
 
@@ -20808,7 +21473,7 @@
 			arrSelectedParas = oDocument.Document.GetSelectedParagraphs();
 			if(arrSelectedParas.length <= 0 )
 			{
-				return;
+				return false;
 			}
 			ReplaceInParas(arrSelectedParas);
 			
@@ -20817,56 +21482,58 @@
 			else 
 				oDocument.Document.RemoveSelection();
 
-			// вставка оставшихся параграфов из arrString
+			// вставка оставшихся параграфов из textStrings
 			var oParaParent   = arrSelectedParas[0].Parent;
 			var nIndexToPaste = arrSelectedParas[arrSelectedParas.length - 1].Index + 1;
 			var isPres        = !arrSelectedParas[0].bFromDocument;
 			if (!oParaParent)
-				return;
+				return true;
 
-			for (var nPara = arrSelectedParas.length; nPara < arrString.length; nPara++)
+			for (var nPara = arrSelectedParas.length; nPara < textStrings.length; nPara++)
 			{
 				var oPara = new AscWord.Paragraph(oParaParent, isPres);
 				var oRun = new ParaRun(oPara, false);
-				oRun.AddText(arrString[nPara]);
+				oRun.AddText(textStrings[nPara]);
 				private_PushElementToParagraph(oPara, oRun);
 				oParaParent.AddToContent(nIndexToPaste, oPara);
 
 				nIndexToPaste++;
 			}
 		}
+
+		return true;
 	};
-	Api.prototype.CoAuthoringChatSendMessage = function(sString)
+	Api.prototype.CoAuthoringChatSendMessage = function(message)
 	{
-		if (typeof sString !== 'string' || sString === '')
+		if (typeof message !== 'string' || message === '')
 			return false;
 
-		this.asc_coAuthoringChatSendMessage(sString);
+		this.asc_coAuthoringChatSendMessage(message);
 		return true;
 	};
 	/**
 	 * Converts a document to Markdown or HTML text.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {"markdown" | "html"} [sConvertType="markdown"] - Conversion type.
-	 * @param {boolean} [bHtmlHeadings=false] - Defines if the HTML headings and IDs will be generated when the Markdown renderer of your target platform does not handle Markdown-style IDs.
-	 * @param {boolean} [bBase64img=false] - Defines if the images will be created in the base64 format.
-	 * @param {boolean} [bDemoteHeadings=false] - Defines if all heading levels in your document will be demoted to conform with the following standard: single H1 as title, H2 as top-level heading in the text body.
-	 * @param {boolean} [bRenderHTMLTags=false] - Defines if HTML tags will be preserved in your Markdown. If you just want to use an occasional HTML tag, you can avoid using the opening angle bracket
+	 * @param {"markdown" | "html"} [convertType="markdown"] - Conversion type.
+	 * @param {boolean} [htmlHeadings=false] - Defines if the HTML headings and IDs will be generated when the Markdown renderer of your target platform does not handle Markdown-style IDs.
+	 * @param {boolean} [base64img=false] - Defines if the images will be created in the base64 format.
+	 * @param {boolean} [demoteHeadings=false] - Defines if all heading levels in your document will be demoted to conform with the following standard: single H1 as title, H2 as top-level heading in the text body.
+	 * @param {boolean} [renderHTMLTags=false] - Defines if HTML tags will be preserved in your Markdown. If you just want to use an occasional HTML tag, you can avoid using the opening angle bracket
 	 * in the following way: \<tag&gt;text\</tag&gt;. By default, the opening angle brackets will be replaced with the special characters.
 	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/ConvertDocument.js
 	 */
-	Api.prototype.ConvertDocument = function(sConvertType, bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags) 
+	Api.prototype.ConvertDocument = function(convertType, htmlHeadings, base64img, demoteHeadings, renderHTMLTags)
 	{
 		var oDocument = this.GetDocument();
 		if (!oDocument.Document)
 			return "Please, use this plugin with the Word document editor";
 
-		if (sConvertType === "html")
-			return oDocument.ToHtml(bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags);
+		if (convertType === "html")
+			return oDocument.ToHtml(htmlHeadings, base64img, demoteHeadings, renderHTMLTags);
 		else
-			return oDocument.ToMarkdown(bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags);
+			return oDocument.ToMarkdown(htmlHeadings, base64img, demoteHeadings, renderHTMLTags);
 	};
 
 	/**
@@ -20876,7 +21543,8 @@
 	 * @returns {ApiTextPr}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateTextPr.js
 	 */
-	Api.prototype.CreateTextPr = function () {
+	Api.prototype.CreateTextPr = function()
+	{
 		return this.private_CreateTextPr(null, new AscCommonWord.CTextPr());
 	};
 
@@ -20884,31 +21552,32 @@
 	 * Creates a Text Art object with the parameters specified.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiTextPr} [oTextPr=Api.CreateTextPr()] - The text properties.
-	 * @param {string} [sText="Your text here"] - The text for the Text Art object.
-	 * @param {TextTransform} [sTransform="textNoShape"] - Text transform type.
-	 * @param {ApiFill}   [oFill=Api.CreateNoFill()] - The color or pattern used to fill the Text Art object.
-	 * @param {ApiStroke} [oStroke=Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the Text Art object shadow.
-	 * @param {number} [nRotAngle=0] - Rotation angle.
-	 * @param {EMU} [nWidth=1828800] - The Text Art width measured in English measure units.
-	 * @param {EMU} [nHeight=1828800] - The Text Art heigth measured in English measure units.
+	 * @param {ApiTextPr} [textPr=Api.CreateTextPr()] - The text properties.
+	 * @param {string} [text="Your text here"] - The text for the Text Art object.
+	 * @param {TextTransform} [transform="textNoShape"] - Text transform type.
+	 * @param {ApiFill}   [fill=Api.CreateNoFill()] - The color or pattern used to fill the Text Art object.
+	 * @param {ApiStroke} [stroke=Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the Text Art object shadow.
+	 * @param {number} [rotAngle=0] - Rotation angle.
+	 * @param {EMU} [width=1828800] - The Text Art width measured in English measure units.
+	 * @param {EMU} [height=1828800] - The Text Art heigth measured in English measure units.
 	 * @returns {ApiDrawing}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateWordArt.js
 	 */
-	Api.prototype.CreateWordArt = function(oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight) {
-		oTextPr   = oTextPr && oTextPr.TextPr ? oTextPr.TextPr : null;
-		nRotAngle = typeof(nRotAngle) === "number" && nRotAngle > 0 ? nRotAngle : 0;
-		nWidth    = typeof(nWidth) === "number" && nWidth > 0 ? nWidth : 1828800;
-		nHeight   = typeof(nHeight) === "number" && nHeight > 0 ? nHeight : 1828800;
-		oFill     = oFill && oFill.UniFill ? oFill.UniFill : this.CreateNoFill().UniFill;
-		oStroke   = oStroke && oStroke.Ln ? oStroke.Ln : this.CreateStroke(0, this.CreateNoFill()).Ln;
-		sTransform = typeof(sTransform) === "string" && sTransform !== "" ? sTransform : "textNoShape";
-
-		var oDrawing = new ParaDrawing(private_EMU2MM(nWidth), private_EMU2MM(nHeight), null, private_GetDrawingDocument(), private_GetLogicDocument(), null);
-		var oArt = this.private_createWordArt(oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight);
+	Api.prototype.CreateWordArt = function(textPr, text, transform, fill, stroke, rotAngle, width, height)
+	{
+		textPr    = textPr && textPr.TextPr ? textPr.TextPr : null;
+		rotAngle  = typeof (rotAngle) === "number" && rotAngle > 0 ? rotAngle : 0;
+		width     = typeof (width) === "number" && width > 0 ? width : 1828800;
+		height    = typeof (height) === "number" && height > 0 ? height : 1828800;
+		fill      = fill && fill.UniFill ? fill.UniFill : this.CreateNoFill().UniFill;
+		stroke    = stroke && stroke.Ln ? stroke.Ln : this.CreateStroke(0, this.CreateNoFill()).Ln;
+		transform = typeof (transform) === "string" && transform !== "" ? transform : "textNoShape";
+		
+		var oDrawing = new ParaDrawing(private_EMU2MM(width), private_EMU2MM(height), null, private_GetDrawingDocument(), private_GetLogicDocument(), null);
+		var oArt     = this.private_createWordArt(textPr, text, transform, fill, stroke, rotAngle, width, height);
 		oArt.setParent(oDrawing);
 		oDrawing.Set_GraphicObject(oArt);
-
+		
 		return new ApiDrawing(oArt);
 	};
 
@@ -20919,7 +21588,8 @@
 	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetFullName.js
 	 */
-	Api.prototype.GetFullName = function () {
+	Api.prototype.GetFullName = function()
+	{
 		return this.DocInfo.Title;
 	};
 	Object.defineProperty(Api.prototype, "FullName", {
@@ -21341,6 +22011,7 @@
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
 	 * @param {WatermarkType} sType - The watermark type.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiWatermarkSettings/Methods/SetType.js
 	 */
 	ApiWatermarkSettings.prototype.SetType = function (sType)
@@ -21359,6 +22030,7 @@
 			nType = Asc.c_oAscWatermarkType.None;
 		}
 		this.Settings.put_Type(nType);
+		return true;
 	};
 
 	/**
@@ -21387,11 +22059,13 @@
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The watermark text.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiWatermarkSettings/Methods/SetText.js
 	 */
 	ApiWatermarkSettings.prototype.SetText = function (sText)
 	{
 		this.Settings.put_Text(sText);
+		return true;
 	};
 
 	/**
@@ -21411,11 +22085,13 @@
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiTextPr} oTextPr - The watermark text properties.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiWatermarkSettings/Methods/SetTextPr.js
 	 */
 	ApiWatermarkSettings.prototype.SetTextPr = function (oTextPr)
 	{
 		this.Settings.put_TextPr(new Asc.CTextProp(oTextPr.TextPr));
+		return true;
 	};
 
 	/**
@@ -21445,12 +22121,14 @@
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
 	 * @param {number} nOpacity - The watermark opacity. This value must be from 0 to 255.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiWatermarkSettings/Methods/SetOpacity.js
 	 */
 	ApiWatermarkSettings.prototype.SetOpacity = function (nOpacity)
 	{
 		let nOpacityVal = Math.min(255, Math.max(0, nOpacity));
 		this.Settings.put_Opacity(nOpacityVal);
+		return true;
 	};
 
 	/**
@@ -21472,6 +22150,7 @@
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
 	 * @param {WatermarkDirection} sDirection - The watermark direction.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiWatermarkSettings/Methods/SetDirection.js
 	 */
 	ApiWatermarkSettings.prototype.SetDirection = function (sDirection)
@@ -21493,7 +22172,11 @@
 				this.Settings.put_Angle(-45);
 				break;
 			}
+			default:
+				return false;
 		}
+
+		return true;
 	};
 	/**
 	 * Returns the direction of the watermark in the document.
@@ -21525,11 +22208,13 @@
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sURL - The watermark image URL.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiWatermarkSettings/Methods/SetImageURL.js
 	 */
 	ApiWatermarkSettings.prototype.SetImageURL = function (sURL)
 	{
 		this.Settings.put_ImageUrl2(sURL);
+		return true;
 	};
 
 	/**
@@ -21574,17 +22259,21 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {EMU} nWidth - The watermark image width.
 	 * @param {EMU} nHeight - The watermark image height.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiWatermarkSettings/Methods/SetImageSize.js
 	 */
 	ApiWatermarkSettings.prototype.SetImageSize = function (nWidth, nHeight)
 	{
 		this.Settings.put_ImageSize(nWidth, nHeight);
+		return true;
 	};
 
 	/**
-	 * Move cursor to this bookmark
+	 * Moves a cursor to the current bookmark.
 	 * @memberof ApiBookmark
+	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 * @since 8.3.0
 	 * @see office-js-api/Examples/{Editor}/ApiBookmark/Methods/GoTo.js
 	 */
 	ApiBookmark.prototype.GoTo = function()
@@ -21597,9 +22286,11 @@
 	};
 	
 	/**
-	 * Select current bookmark
+	 * Selects the current bookmark.
 	 * @memberof ApiBookmark
+	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 * @since 8.3.0
 	 * @see office-js-api/Examples/{Editor}/ApiBookmark/Methods/Select.js
 	 */
 	ApiBookmark.prototype.Select = function()
@@ -21612,10 +22303,12 @@
 	};
 
 	/**
-	 * Changes bookmark name
+	 * Changes the bookmark name.
 	 * @memberof ApiBookmark
-	 * @param {string} sNewName - new bookmark name
+	 * @typeofeditors ["CDE"]
+	 * @param {string} sNewName - A new bookmark name.
 	 * @returns {boolean}
+	 * @since 8.3.0
 	 * @see office-js-api/Examples/{Editor}/ApiBookmark/Methods/SetName.js
 	 */
 	ApiBookmark.prototype.SetName = function(sNewName)
@@ -21636,9 +22329,11 @@
 	};
 
 	/**
-	 * Gets bookmark name
+	 * Returns the bookmark name.
 	 * @memberof ApiBookmark
+	 * @typeofeditors ["CDE"]
 	 * @returns {string}
+	 * @since 8.3.0
 	 * @see office-js-api/Examples/{Editor}/ApiBookmark/Methods/GetName.js
 	 */
 	ApiBookmark.prototype.GetName = function()
@@ -21647,9 +22342,12 @@
 	};
 
 	/**
-	 * Sets bookmark text
+	 * Sets the bookmark text.
 	 * @memberof ApiBookmark
+	 * @typeofeditors ["CDE"]
+	 * @param {string} sText - The bookmark text.
 	 * @returns {boolean}
+	 * @since 8.3.0
 	 * @see office-js-api/Examples/{Editor}/ApiBookmark/Methods/SetText.js
 	 */
 	ApiBookmark.prototype.SetText = function(sText)
@@ -21682,8 +22380,9 @@
 	};
 
 	/**
-	 * Gets bookmark text
+	 * Returns the bookmark text.
 	 * @memberof ApiBookmark
+	 * @typeofeditors ["CDE"]
 	 * @param {object} oPr - The resulting string display properties.
      * @param {boolean} [oPr.NewLineParagraph=false] - Defines if the resulting string will include paragraph line boundaries or not.
      * @param {boolean} [oPr.Numbering=false] - Defines if the resulting string will include numbering or not.
@@ -21692,8 +22391,9 @@
      * @param {string} [oPr.TableCellSeparator='\t'] - Defines how the table cell separator will be specified in the resulting string.
      * @param {string} [oPr.TableRowSeparator='\r\n'] - Defines how the table row separator will be specified in the resulting string.
      * @param {string} [oPr.ParaSeparator='\r\n'] - Defines how the paragraph separator will be specified in the resulting string.
-	 * @param {string} [oPr.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string (does not apply to numbering)
+	 * @param {string} [oPr.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string (does not apply to numbering).
 	 * @returns {string}
+	 * @since 8.3.0
 	 * @see office-js-api/Examples/{Editor}/ApiBookmark/Methods/GetText.js
 	 */
 	ApiBookmark.prototype.GetText = function(oPr)
@@ -21723,9 +22423,11 @@
 	};
 
 	/**
-	 * Gets bookmark range
+	 * Returns the bookmark range.
 	 * @memberof ApiBookmark
+	 * @typeofeditors ["CDE"]
 	 * @returns {ApiRange}
+	 * @since 8.3.0
 	 * @see office-js-api/Examples/{Editor}/ApiBookmark/Methods/GetRange.js
 	 */
 	ApiBookmark.prototype.GetRange = function()
@@ -21744,9 +22446,11 @@
 	};
 
 	/**
-	 * Deletes bookmark from document;
+	 * Deletes the current bookmark from the document.
 	 * @memberof ApiBookmark
+	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 * @since 8.3.0
 	 * @see office-js-api/Examples/{Editor}/ApiBookmark/Methods/Delete.js
 	 */
 	ApiBookmark.prototype.Delete = function()
@@ -21770,6 +22474,7 @@
 	Api.prototype["CreateHyperlink"]                 = Api.prototype.CreateHyperlink;
 	Api.prototype["CreateImage"]                     = Api.prototype.CreateImage;
 	Api.prototype["CreateShape"]                     = Api.prototype.CreateShape;
+	Api.prototype["CreateGroup"]                     = Api.prototype.CreateGroup;
 	Api.prototype["CreateChart"]                     = Api.prototype.CreateChart;
 	Api.prototype["CreateRGBColor"]                  = Api.prototype.CreateRGBColor;
 	Api.prototype["CreateSchemeColor"]               = Api.prototype.CreateSchemeColor;
@@ -21825,6 +22530,8 @@
 	ApiDocumentContent.prototype["GetAllOleObjects"]     = ApiDocumentContent.prototype.GetAllOleObjects;
 	ApiDocumentContent.prototype["GetAllParagraphs"]     = ApiDocumentContent.prototype.GetAllParagraphs;
 	ApiDocumentContent.prototype["GetAllTables"]         = ApiDocumentContent.prototype.GetAllTables;
+	ApiDocumentContent.prototype["GetText"]         	 = ApiDocumentContent.prototype.GetText;
+	ApiDocumentContent.prototype["GetCurrentParagraph"]  = ApiDocumentContent.prototype.GetCurrentParagraph;
 
 	ApiRange.prototype["GetClassType"]               = ApiRange.prototype.GetClassType;
 	ApiRange.prototype["GetParagraph"]               = ApiRange.prototype.GetParagraph;
@@ -21920,6 +22627,8 @@
 	ApiDocument.prototype["GetCommentById"]              = ApiDocument.prototype.GetCommentById;
 	ApiDocument.prototype["GetStatistics"]               = ApiDocument.prototype.GetStatistics;
 	ApiDocument.prototype["GetPageCount"]                = ApiDocument.prototype.GetPageCount;
+	ApiDocument.prototype["GetCurrentPage"]              = ApiDocument.prototype.GetCurrentPage;
+	ApiDocument.prototype["GetCurrentVisiblePages"]      = ApiDocument.prototype.GetCurrentVisiblePages;
 	ApiDocument.prototype["GetAllStyles"]                = ApiDocument.prototype.GetAllStyles;
 	ApiDocument.prototype["GetDocumentInfo"]             = ApiDocument.prototype.GetDocumentInfo;
 	ApiDocument.prototype["GetSelectedDrawings"]         = ApiDocument.prototype.GetSelectedDrawings;
@@ -21943,6 +22652,7 @@
 	ApiDocument.prototype["GetCurrentSentence"]          = ApiDocument.prototype.GetCurrentSentence;
 	ApiDocument.prototype["ReplaceCurrentSentence"]      = ApiDocument.prototype.ReplaceCurrentSentence;
 	ApiDocument.prototype["AddMathEquation"]             = ApiDocument.prototype.AddMathEquation;
+	ApiDocument.prototype["GroupDrawings"]             	 = ApiDocument.prototype.GroupDrawings;
 
 	ApiParagraph.prototype["GetClassType"]           = ApiParagraph.prototype.GetClassType;
 	ApiParagraph.prototype["AddText"]                = ApiParagraph.prototype.AddText;
@@ -22204,6 +22914,7 @@
 	ApiNumberingLevel.prototype["SetRestart"]        = ApiNumberingLevel.prototype.SetRestart;
 	ApiNumberingLevel.prototype["SetStart"]          = ApiNumberingLevel.prototype.SetStart;
 	ApiNumberingLevel.prototype["SetSuff"]           = ApiNumberingLevel.prototype.SetSuff;
+	ApiNumberingLevel.prototype["LinkWithStyle"]     = ApiNumberingLevel.prototype.LinkWithStyle;
 
 	ApiTextPr.prototype["GetClassType"]              = ApiTextPr.prototype.GetClassType;
 	ApiTextPr.prototype["SetStyle"]                  = ApiTextPr.prototype.SetStyle;
@@ -22296,6 +23007,7 @@
 	ApiTablePr.prototype["SetTableBorderRight"]      = ApiTablePr.prototype.SetTableBorderRight;
 	ApiTablePr.prototype["SetTableBorderInsideH"]    = ApiTablePr.prototype.SetTableBorderInsideH;
 	ApiTablePr.prototype["SetTableBorderInsideV"]    = ApiTablePr.prototype.SetTableBorderInsideV;
+	ApiTablePr.prototype["SetTableBorderAll"]    	 = ApiTablePr.prototype.SetTableBorderAll;
 	ApiTablePr.prototype["SetTableCellMarginBottom"] = ApiTablePr.prototype.SetTableCellMarginBottom;
 	ApiTablePr.prototype["SetTableCellMarginLeft"]   = ApiTablePr.prototype.SetTableCellMarginLeft;
 	ApiTablePr.prototype["SetTableCellMarginRight"]  = ApiTablePr.prototype.SetTableCellMarginRight;
@@ -22342,6 +23054,7 @@
 	ApiTableStylePr.prototype["ToJSON"]              = ApiTableStylePr.prototype.ToJSON;
 
 	ApiDrawing.prototype["GetClassType"]             = ApiDrawing.prototype.GetClassType;
+	ApiDrawing.prototype["GetContent"]               = ApiDrawing.prototype.GetContent;
 	ApiDrawing.prototype["SetSize"]                  = ApiDrawing.prototype.SetSize;
 	ApiDrawing.prototype["SetWrappingStyle"]         = ApiDrawing.prototype.SetWrappingStyle;
 	ApiDrawing.prototype["SetHorAlign"]              = ApiDrawing.prototype.SetHorAlign;
@@ -22381,7 +23094,6 @@
 
 	ApiShape.prototype["GetClassType"]               = ApiShape.prototype.GetClassType;
 	ApiShape.prototype["GetDocContent"]              = ApiShape.prototype.GetDocContent;
-	ApiShape.prototype["GetContent"]                 = ApiShape.prototype.GetContent;
 	ApiShape.prototype["SetVerticalTextAlign"]       = ApiShape.prototype.SetVerticalTextAlign;
 	ApiShape.prototype["SetPaddings"]                = ApiShape.prototype.SetPaddings;
 	ApiShape.prototype["GetNextShape"]               = ApiShape.prototype.GetNextShape;
@@ -22442,6 +23154,9 @@
 	ApiOleObject.prototype["GetData"]               = ApiOleObject.prototype.GetData;
 	ApiOleObject.prototype["SetApplicationId"]         = ApiOleObject.prototype.SetApplicationId;
 	ApiOleObject.prototype["GetApplicationId"]         = ApiOleObject.prototype.GetApplicationId;
+	
+	ApiGroup.prototype["GetClassType"]	= ApiGroup.prototype.GetClassType;
+	ApiGroup.prototype["Ungroup"]		= ApiGroup.prototype.Ungroup;
 
 	ApiFill.prototype["GetClassType"]                = ApiFill.prototype.GetClassType;
 	ApiFill.prototype["ToJSON"]                      = ApiFill.prototype.ToJSON;
@@ -22719,6 +23434,8 @@
 	window['AscBuilder'].ApiImage           = ApiImage;
 	window['AscBuilder'].ApiShape           = ApiShape;
 	window['AscBuilder'].ApiChart           = ApiChart;
+	window['AscBuilder'].ApiGroup           = ApiGroup;
+	window['AscBuilder'].ApiOleObject       = ApiOleObject;
 	window['AscBuilder'].ApiInlineLvlSdt    = ApiInlineLvlSdt;
 	window['AscBuilder'].ApiBlockLvlSdt     = ApiBlockLvlSdt;
 	window['AscBuilder'].ApiFormBase        = ApiFormBase;
@@ -22779,6 +23496,9 @@
 	window['AscBuilder'].GetNumberParameter     = GetNumberParameter;
 	window['AscBuilder'].GetArrayParameter      = GetArrayParameter;
 	window['AscBuilder'].executeNoFormLockCheck = executeNoFormLockCheck;
+
+	window['AscBuilder'].GetApiDrawings         = GetApiDrawings;
+	window['AscBuilder'].GetApiDrawing          = GetApiDrawing;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -22884,6 +23604,7 @@
 	{
 		// Добавляем не в конец из-за рана с символом конца параграфа TODO: ParaEnd
 		oPara.Add_ToContent(oPara.Content.length - 1, oElement);
+		oPara.CorrectContent(undefined, undefined, true);
 	}
 
 	function private_IsSupportedParaElement(oElement)
@@ -22960,6 +23681,32 @@
 			return new ApiDateForm(oSdt);
 
 		return new ApiInlineLvlSdt(oSdt);
+	}
+
+	function GetApiDrawing(drawing) {
+        switch (drawing.getObjectType()) {
+            case AscDFH.historyitem_type_Shape:
+                return new AscBuilder.ApiShape(drawing);
+            case AscDFH.historyitem_type_ImageShape:
+                return new AscBuilder.ApiImage(drawing);
+            case AscDFH.historyitem_type_GroupShape:
+                return new AscBuilder.ApiGroup(drawing);
+            case AscDFH.historyitem_type_OleObject:
+                return new AscBuilder.ApiOleObject(drawing);
+            case AscDFH.historyitem_type_GraphicFrame:
+                return new AscBuilder.ApiTable(drawing);
+			case AscDFH.historyitem_type_ChartSpace:
+				return new AscBuilder.ApiChart(drawing);
+        }
+        return null;
+    }
+
+	function GetApiDrawings(drawingObjects) {
+		return drawingObjects.map(function(drawing) {
+			return GetApiDrawing(drawing);
+		}).filter(function(apiDrawing) {
+			return !!apiDrawing;
+		});
 	}
 
 	function private_GetLogicDocument()

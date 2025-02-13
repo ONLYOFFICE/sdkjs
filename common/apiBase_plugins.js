@@ -1353,6 +1353,11 @@
 			// UPD: done. Ничего не изменять в менеджере плагинов, если guid пуст
 
             let result = window["AscDesktopEditor"]["PluginInstall"](JSON.stringify(config));
+
+			if (result && window.g_asc_plugins.isRunned(config["guid"]))
+			{
+				window.g_asc_plugins.close(config["guid"]);
+			}
 			
 			return {
 				"type" : loadFuncName,
@@ -1639,10 +1644,10 @@
 		};
 	};
 	/**
-    * Installs a plugin by the URL to the plugin config.
+    * Installs a plugin using the specified plugin config.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @param {object} [config] - The plugin config for installing.
+     * @param {object} [config] - The plugin {@link https://api.onlyoffice.com/docs/plugin-and-macros/structure/manifest/ config}.
      * @alias InstallPlugin
      * @returns {object} - An object with the result information.
      * @since 7.2.0
@@ -1653,10 +1658,10 @@
 		return installPlugin(config, "Installed");
 	};
 	/**
-    * Updates a plugin by the URL to the plugin config.
+    * Updates a plugin using the specified plugin config.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @param {object} [config] - The plugin config for updating.
+     * @param {object} [config] - The plugin {@link https://api.onlyoffice.com/docs/plugin-and-macros/structure/manifest/ config}.
      * @alias UpdatePlugin
      * @returns {object} - An object with the result information.
      * @since 7.3.0
@@ -1667,16 +1672,6 @@
 		return installPlugin(config, "Updated");
 	};
 
-	/**
-	 * Installs a plugin by the URL to the plugin config.
-	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {string} configUrl - The URL to the plugin *config.json* for installing.
-	 * @alias InstallDeveloperPlugin
-	 * @returns {boolean} - Returns true if the plugin is installed.
-	 * @since 7.4.0
-	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/InstallDeveloperPlugin.js
-	 */
 	Api.prototype["installDeveloperPlugin"] = function(configUrl)
 	{
 		try
@@ -2070,6 +2065,21 @@
 	Api.prototype["pluginMethod_MouseMoveWindow"] = function(frameId, x, y)
 	{
 		this.sendEvent("asc_onPluginWindowMouseMove", frameId, x, y);
+	};
+
+	/**
+	 * Shows an error/warning message.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDF"]
+	 * @param {string} error - The error text.
+	 * @param {number} level - -1 or 0 for error or warning.
+	 * @alias ShowError
+	 * @since 8.3.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ShowError.js
+	 */
+	Api.prototype["pluginMethod_ShowError"] = function(error, level)
+	{
+		this.sendEvent("asc_onError", error, level);
 	};
 })(window);
 

@@ -624,12 +624,15 @@ $(function () {
 		window["Asc"]["editor"] = api;
 
 		AscCommon.g_oTableId.init(api);
-		wb = new AscCommonExcel.Workbook(new AscCommonExcel.asc_CHandlersList(), api);
+		wb = new AscCommonExcel.Workbook(new AscCommonExcel.asc_CHandlersList(), api, true);
 		AscCommon.History.init(wb);
+		//нет тестовых операция с историей, отключаем чтобы не было лишних сериализаций
+		AscCommon.History.TurnOff();
 		wb.maxDigitWidth = 7;
 		wb.paddingPlusBorder = 5;
 
 		api.wbModel = wb;
+		api.initCollaborativeEditing({});
 
 		if (this.User) {
 			g_oIdCounter.Set_UserId(this.User.asc_getId());
@@ -1662,7 +1665,7 @@ $(function () {
 		bCaFromSelectedCell = getCaFromSelectedCell("B1068");
 		assert.strictEqual(bCaFromSelectedCell, true, "Test: IFS. 6 args. Recursion formula. One of condition is recursion but it matches. B1068 - flag ca: true");
 		bCaFromSelectedCell = null;
-		// Case: SWITCH. Without default_arg. One of result_arg has recursion, but it doesn't match. With disabled Iterative calculation setting.
+		// - Case: SWITCH. Without default_arg. One of result_arg has recursion, but it doesn't match. With disabled Iterative calculation setting.
 		// expression
 		ws.getRange2("A1069").setValue("3");
 		// values
@@ -1682,14 +1685,14 @@ $(function () {
 		bCaFromSelectedCell = getCaFromSelectedCell("A1072");
 		assert.strictEqual(bCaFromSelectedCell, false, "Test: SWITCH. Without default_arg. One of result_arg has recursion but it doesn't matches. A1072 - flag ca: false");
 		bCaFromSelectedCell = null;
-		// Case: SWITCH. Without default_arg. One of result_arg has recursion, but it matches. With disabled Iterative calculation setting.
+		// - Case: SWITCH. Without default_arg. One of result_arg has recursion, but it matches. With disabled Iterative calculation setting.
 		ws.getRange2("A1069").setValue("2");
 		ws.getRange2("A1072").setValue("=SWITCH(A1069,A1070, A1071, B1070, A1072, C1070, B1071, D1070, C1071, E1070, D1071)");
 		assert.strictEqual(ws.getRange2("A1072").getValue(), "0", "Test: SWITCH. Without default_arg. One of result_arg has recursion but it matches. A1072 - 0");
 		bCaFromSelectedCell = getCaFromSelectedCell("A1072");
 		assert.strictEqual(bCaFromSelectedCell, true, "Test: SWITCH. Without default_arg. One of result_arg has recursion but it matches. A1072 - flag ca: true");
 		bCaFromSelectedCell = null;
-		// Case: SWITCH. With default_arg. Default_arg has recursion, but it doesn't match. With disabled Iterative calculation setting.
+		// - Case: SWITCH. With default_arg. Default_arg has recursion, but it doesn't match. With disabled Iterative calculation setting.
 		ws.getRange2("A1069").setValue("7");
 		// default_arg
 		ws.getRange2("E1071").setValue("Unknown day of week");
@@ -1698,12 +1701,60 @@ $(function () {
 		bCaFromSelectedCell = getCaFromSelectedCell("A1072");
 		assert.strictEqual(bCaFromSelectedCell, false, "Test: SWITCH. With default_arg. Default_arg has recursion but it doesn't matches. A1072 - flag ca: false");
 		bCaFromSelectedCell = null;
-		// Case: SWITCH. With default_arg. Default_arg has recursion, but it matches. With disabled Iterative calculation setting.
+		// - Case: SWITCH. With default_arg. Default_arg has recursion, but it matches. With disabled Iterative calculation setting.
 		ws.getRange2("A1072").setValue("=SWITCH(A1069,A1070, A1071, B1070, A1072, C1070, B1071, D1070, C1071, E1070, D1071, A1072)");
 		assert.strictEqual(ws.getRange2("A1072").getValue(), "0", "Test: SWITCH. With default_arg. Default_arg has recursion but it matches. A1072 - 0");
 		bCaFromSelectedCell = getCaFromSelectedCell("A1072");
 		assert.strictEqual(bCaFromSelectedCell, true, "Test: SWITCH. With default_arg. Default_arg has recursion but it matches. A1072 - flag ca: true");
 		bCaFromSelectedCell = null;
+		// - Case: Exception formula "CELL" that ignores rules of recursion recognition
+		ws.getRange2("A1073").setValue("=CELL(\"filename\",A1073)");
+		assert.strictEqual(ws.getRange2("A1073").getValue(), "[TeSt.xlsx]Sheet1", "Test: Exception formulas that ignores rules of recursion recognition. A1073 - 1039. Formula - CELL");
+		bCaFromSelectedCell = getCaFromSelectedCell("A1073");
+		assert.strictEqual(bCaFromSelectedCell, true, "Test: Exception formulas that ignores rules of recursion recognition. A1039 - flag ca: true");
+		bCaFromSelectedCell = null;
+		// - Case: Chain without recursion. B1074 <- A1075 <- D1075 <- E1075 <- F1075. With disabled Iterative calculation setting. Case from bug-71996
+		// year field
+		ws.getRange2("A1074").setValue("2024");
+		// month field
+		ws.getRange2("B1074").setValue("=DATE(A1074, SHEET(),1");
+		//  time break
+		ws.getRange2("C1074").setValue("0.02");
+		ws.getRange2("D1074").setValue("0.03");
+		ws.getRange2("E1074").setValue("0.33");
+		// additional field
+		ws.getRange2("F1074").setValue("=IF(MONTH(B1074)=1;$G$1074;INDIRECT(TEXT(DATE(YEAR(B1074);MONTH(B1074)-1;1);\"MMM\") & \"!F39\"))");
+		ws.getRange2("G1074").setValue("0");
+		// main chain
+		ws.getRange2("A1075").setValue("=B1074");
+		ws.getRange2("B1075").setValue("0");
+		ws.getRange2("C1075").setValue("0");
+		ws.getRange2("D1075").setValue("=IF(ISNUMBER($A1075);IF((C1075-B1075)<TIME(6;1;0);TIME(0;0;0);IF((C1075-B1075)<TIME(9;31;0);$C$1074;$D$1074));\"\")");
+		ws.getRange2("E1075").setValue("=IF(ISNUMBER($A1075);IF(OR(G1075=\"U\";H1075=\"X\");(C1075-B1075-D1075);IF(OR(G1075=\"K\";G1075=\"B\";G1075=\"D\");TIME(0;0;0);C1075-B1075-D1075-$E$1074));\"\")");
+		ws.getRange2("F1075").setValue("==IF(ISNUMBER($A1075);IF(OR(G1075=\"Zaus\";E1075>-$E$1074;G1075=\"kA\");(F1074+E1075);TIME(0;0;0));\"\")");
+		ws.getRange2("G1075").setValue("Neujahr");
+		ws.getRange2("H1075").setValue("X");
+		// Checking via initStartCellForIterCalc method that cells haven't recursion
+		oCell = selectCell("A1075");
+		let bCellHasRecursion = !!getStartCellForIterCalc(oCell);
+		assert.strictEqual(bCellHasRecursion, false, "Test: Chain without recursion. B1074 <- A1075 <- D1075 <- E1075 <- F1075. With disabled Iterative calculation setting. Case from bug-71996. A1075 - false");
+		bCellHasRecursion = null;
+		g_cCalcRecursion.setStartCellIndex(null);
+		oCell = selectCell("D1075");
+		bCellHasRecursion = !!getStartCellForIterCalc(oCell);
+		assert.strictEqual(bCellHasRecursion, false, "Test: Chain without recursion. B1074 <- A1075 <- D1075 <- E1075 <- F1075. With disabled Iterative calculation setting. Case from bug-71996. D1075 - false");
+		bCellHasRecursion = null;
+		g_cCalcRecursion.setStartCellIndex(null);
+		oCell = selectCell("E1075");
+		bCellHasRecursion = !!getStartCellForIterCalc(oCell);
+		assert.strictEqual(bCellHasRecursion, false, "Test: Chain without recursion. B1074 <- A1075 <- D1075 <- E1075 <- F1075. With disabled Iterative calculation setting. Case from bug-71996. E1075 - false");
+		bCellHasRecursion = null;
+		g_cCalcRecursion.setStartCellIndex(null);
+		oCell = selectCell("F1075");
+		bCellHasRecursion = !!getStartCellForIterCalc(oCell);
+		assert.strictEqual(bCellHasRecursion, false, "Test: Chain without recursion. B1074 <- A1075 <- D1075 <- E1075 <- F1075. With disabled Iterative calculation setting. Case from bug-71996. F1075 - false");
+		bCellHasRecursion = null;
+		g_cCalcRecursion.setStartCellIndex(null);
 		// -- Test changeLinkedCell method.
 		oCell = selectCell("A1000");
 		let oCellNeedEnableRecalc = selectCell("B1000");
@@ -5887,6 +5938,398 @@ $(function () {
 		oParser = new parserFormula("ROUND(-50.55,0.1)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), -51);
+
+		oParser = new parserFormula("ROUND(183.64, 2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 183.64);
+
+		ws.getRange2("A100").setValue("3.14159");
+		ws.getRange2("A101").setValue("2.71828");
+		ws.getRange2("A102").setValue("1.005");
+		ws.getRange2("A103").setValue("-1.56789");
+		ws.getRange2("A104").setValue("123.456");
+		ws.getRange2("A105").setValue("0.4999");
+		ws.getRange2("A106").setValue("-0.4999");
+		ws.getRange2("A107").setValue("1000.567");
+		ws.getRange2("A108").setValue("999.999");
+		ws.getRange2("A109").setValue("5.55555");
+		ws.getRange2("A110").setValue("1.123123");
+		ws.getRange2("A111").setValue("1.123123");
+
+		ws.getRange2("B100").setValue("2");
+		ws.getRange2("B101").setValue("3");
+		ws.getRange2("B102").setValue("2");
+		ws.getRange2("B103").setValue("1");
+		ws.getRange2("B104").setValue("0");
+		ws.getRange2("B105").setValue("2");
+		ws.getRange2("B106").setValue("2");
+		ws.getRange2("B107").setValue("-1");
+		ws.getRange2("B108").setValue("2");
+		ws.getRange2("B109").setValue("4");
+		ws.getRange2("B110").setValue("6");
+		ws.getRange2("B111").setValue("5");
+
+
+		oParser = new parserFormula("ROUND(A100, B100)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 3.14, "Round ROUND(A100, B100)");
+
+		oParser = new parserFormula("ROUND(A101, B101)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2.718, "Round ROUND(A101, B101)");
+
+		oParser = new parserFormula("ROUND(A102, B102)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1.01, "Round ROUND(A102, B102)");
+
+		oParser = new parserFormula("ROUND(A103, B103)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), -1.6, "Round ROUND(A103, B103)");
+
+		oParser = new parserFormula("ROUND(A104, B104)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 123, "Round ROUND(A104, B104)");
+
+		oParser = new parserFormula("ROUND(A105, B105)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0.5, "Round ROUND(A105, B105)");
+
+		oParser = new parserFormula("ROUND(A106, B106)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), -0.5, "Round ROUND(A106, B106)");
+
+		oParser = new parserFormula("ROUND(A107, B107)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1000, "Round ROUND(A107, B107)");
+
+		oParser = new parserFormula("ROUND(A108, B108)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1000, "Round ROUND(A108, B108)");
+
+		oParser = new parserFormula("ROUND(A109, B109)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 5.5556, "Round ROUND(A109, B109)");
+
+		oParser = new parserFormula("ROUND(A110, B110)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1.123123, "Round ROUND(A110, B110)");
+
+		oParser = new parserFormula("ROUND(A111, B111)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1.12312, "Round ROUND(A111, B111)");
+
+
+		oParser = new parserFormula("ROUND(1.123,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1.12, "ROUND(1.123,2)");
+
+		oParser = new parserFormula("ROUND(1.125,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1.13, "ROUND(1.125,2)");
+
+		oParser = new parserFormula("ROUND(1.005,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1.01, "ROUND(1.005,2)");
+
+		oParser = new parserFormula("ROUND(1.995,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2.00, "ROUND(1.995,2)");
+
+
+		oParser = new parserFormula("ROUND(3.14159,0)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 3, "ROUND(3.14159,0)");
+
+		oParser = new parserFormula("ROUND(3.14159,1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 3.1, "ROUND(3.14159,1)");
+
+		oParser = new parserFormula("ROUND(3.14159,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 3.14, "ROUND(3.14159,2)");
+
+		oParser = new parserFormula("ROUND(3.14159,3)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 3.142, "ROUND(3.14159,3)");
+
+		oParser = new parserFormula("ROUND(3.14159,4)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 3.1416, "ROUND(3.14159,4)");
+
+
+		oParser = new parserFormula("ROUND(-1.123,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), -1.12, "ROUND(-1.123,2)");
+
+		oParser = new parserFormula("ROUND(-1.125,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), -1.13, "ROUND(-1.125,2)");
+
+		oParser = new parserFormula("ROUND(-1.005,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), -1.01, "ROUND(-1.005,2)");
+
+		oParser = new parserFormula("ROUND(-1.995,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), -2.00, "ROUND(-1.995,2)");
+
+		oParser = new parserFormula("ROUND(1.5,0)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2, "ROUND(1.5,0)");
+
+		oParser = new parserFormula("ROUND(2.5,0)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 3, "ROUND(2.5,0)");
+
+		oParser = new parserFormula("ROUND(3.5,0)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 4, "ROUND(3.5,0)");
+
+		oParser = new parserFormula("ROUND(-1.5,0)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), -2, "ROUND(-1.5,0)");
+
+		oParser = new parserFormula("ROUND(-2.5,0)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), -3, "ROUND(-2.5,0)");
+
+		// Negative decimal places tests
+		oParser = new parserFormula("ROUND(123.456,-1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 120, "ROUND(123.456,-1)");
+
+		oParser = new parserFormula("ROUND(123.456,-2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 100, "ROUND(123.456,-2)");
+
+		oParser = new parserFormula("ROUND(555.555,-1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 560, "ROUND(555.555,-1)");
+
+		oParser = new parserFormula("ROUND(555.555,-2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 600, "ROUND(555.555,-2)");
+
+		oParser = new parserFormula("ROUND(555.555,-3)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1000, "ROUND(555.555,-3)");
+
+		oParser = new parserFormula("ROUND(0.123456,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0.12, "ROUND(0.123456,2)");
+
+		oParser = new parserFormula("ROUND(0.123456,3)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0.123, "ROUND(0.123456,3)");
+
+		oParser = new parserFormula("ROUND(0.123456,4)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0.1235, "ROUND(0.123456,4)");
+
+		oParser = new parserFormula("ROUND(0.999999,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1.00, "ROUND(0.999999,2)");
+
+		oParser = new parserFormula("ROUND(123456.789,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 123456.79, "ROUND(123456.789,2)");
+
+		oParser = new parserFormula("ROUND(999999.999,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1000000.00, "ROUND(999999.999,2)");
+
+		oParser = new parserFormula("ROUND(1000000.001,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1000000.00, "ROUND(1000000.001,2)");
+
+		oParser = new parserFormula("ROUND(0.0000123456,5)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0.00001, "ROUND(0.0000123456,5)");
+
+		oParser = new parserFormula("ROUND(0.0000123456,6)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0.000012, "ROUND(0.0000123456,6)");
+
+		oParser = new parserFormula("ROUND(0.0000123456,7)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0.0000123, "ROUND(0.0000123456,7)");
+
+		oParser = new parserFormula("ROUND(2.005,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2.01, "ROUND(2.005,2)");
+
+		oParser = new parserFormula("ROUND(3.005,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 3.01, "ROUND(3.005,2)");
+
+		oParser = new parserFormula("ROUND(4.005,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 4.01, "ROUND(4.005,2)");
+
+		oParser = new parserFormula("ROUND(5.005,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 5.01, "ROUND(5.005,2)");
+
+		oParser = new parserFormula("ROUND(0.333333,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0.33, "ROUND(0.333333,2)");
+
+		oParser = new parserFormula("ROUND(0.666666,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0.67, "ROUND(0.666666,2)");
+
+		oParser = new parserFormula("ROUND(0.166666,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0.17, "ROUND(0.166666,2)");
+
+		oParser = new parserFormula("ROUND(0.142857,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0.14, "ROUND(0.142857,2)");
+
+		oParser = new parserFormula("ROUND(3.141592653589793,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 3.14, "ROUND(3.141592653589793,2)");
+
+		oParser = new parserFormula("ROUND(2.718281828459045,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2.72, "ROUND(2.718281828459045,2)");
+
+		oParser = new parserFormula("ROUND(1.414213562373095,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1.41, "ROUND(1.414213562373095,2)");
+
+		oParser = new parserFormula("ROUND(0.5,0)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1, "ROUND(0.5,0)");
+
+		oParser = new parserFormula("ROUND(1.5,0)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2, "ROUND(1.5,0)");
+
+		oParser = new parserFormula("ROUND(2.5,0)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 3, "ROUND(2.5,0)");
+
+		oParser = new parserFormula("ROUND(-0.5,0)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), -1, "ROUND(-0.5,0)");
+
+		oParser = new parserFormula("ROUND(-1.5,0)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), -2, "ROUND(-1.5,0)");
+
+		oParser = new parserFormula("ROUND(1.23456789,1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1.2, "ROUND(1.23456789,1)");
+
+		oParser = new parserFormula("ROUND(1.23456789,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1.23, "ROUND(1.23456789,2)");
+
+		oParser = new parserFormula("ROUND(1.23456789,3)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1.235, "ROUND(1.23456789,3)");
+
+		oParser = new parserFormula("ROUND(1.23456789,4)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1.2346, "ROUND(1.23456789,4)");
+
+		oParser = new parserFormula("ROUND(1.23456789,5)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1.23457, "ROUND(1.23456789,5)");
+
+		oParser = new parserFormula("ROUND(0,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0, "ROUND(0,2)");
+
+		oParser = new parserFormula("ROUND(0,0)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0, "ROUND(0,0)");
+
+		oParser = new parserFormula("ROUND(0,-2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0, "ROUND(0,-2)");
+
+		oParser = new parserFormula("ROUND(1.15,1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1.2, "ROUND(1.15,1)");
+
+		oParser = new parserFormula("ROUND(1.25,1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1.3, "ROUND(1.25,1)");
+
+		oParser = new parserFormula("ROUND(1.35,1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1.4, "ROUND(1.35,1)");
+
+		oParser = new parserFormula("ROUND(1.45,1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1.5, "ROUND(1.45,1)");
+
+		oParser = new parserFormula("ROUND(1.55,1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1.6, "ROUND(1.55,1)");
+
+		oParser = new parserFormula("ROUND(0.01,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0.01, "ROUND(0.01,2)");
+
+		oParser = new parserFormula("ROUND(0.02,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0.02, "ROUND(0.02,2)");
+
+		oParser = new parserFormula("ROUND(0.03,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0.03, "ROUND(0.03,2)");
+
+		oParser = new parserFormula("ROUND(0.04,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0.04, "ROUND(0.04,2)");
+
+		oParser = new parserFormula("ROUND(0.05,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0.05, "ROUND(0.05,2)");
+
+		oParser = new parserFormula("ROUND(-0.01,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), -0.01, "ROUND(-0.01,2)");
+
+		oParser = new parserFormula("ROUND(-0.02,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), -0.02, "ROUND(-0.02,2)");
+
+		oParser = new parserFormula("ROUND(-0.03,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), -0.03, "ROUND(-0.03,2)");
+
+		oParser = new parserFormula("ROUND(-0.04,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), -0.04, "ROUND(-0.04,2)");
+
+		oParser = new parserFormula("ROUND(-0.05,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), -0.05, "ROUND(-0.05,2)");
+
+
+		oParser = new parserFormula("ROUND(19.99,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 19.99, "ROUND(19.99,2)");
+
+		oParser = new parserFormula("ROUND(19.90,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 19.90, "ROUND(19.90,2)");
+
+		oParser = new parserFormula("ROUND(19.00,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 19.00, "ROUND(19.00,2)");
+
+		oParser = new parserFormula("ROUND(19.999,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 20.00, "ROUND(19.999,2)");
+
+		oParser = new parserFormula("ROUND(19.001,2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 19.00, "ROUND(19.001,2)");
 
 
 		testArrayFormula2(assert, "ROUND", 2, 2);
@@ -24604,12 +25047,12 @@ $(function () {
 				fv = 0;
 			}
 
-			var res;
+			let res;
 			if (rate != 0) {
 				res = (-fv * rate + pmt * (1 + rate * type)) / (rate * pv + pmt * (1 + rate * type))
 				res = Math.log(res) / Math.log(1 + rate)
 			} else {
-				res = (-pv - fv) / pmt;
+				res = -(pv + fv) / pmt;
 			}
 			return res;
 		}
@@ -24622,6 +25065,15 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), nper(0.12 / 12, -100, -1000));
 
+
+		// bug 70050
+		oParser = new parserFormula("NPER(0,-393977.5252,14351946.04,,1)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), nper(0,-393977.5252,14351946.04,0,1));
+
+		oParser = new parserFormula("NPER(0,393977.5252,14351946.04,,1)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), nper(0,393977.5252,14351946.04,0,1));
 
 		testArrayFormula2(assert, "NPER", 3, 5);
 	});
@@ -29380,6 +29832,18 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 13);
 
+		ws.getRange2("G1").setValue("Profit");
+		ws.getRange2("G2").setValue("555");
+
+		oParser = new parserFormula('DAVERAGE(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		ws.getRange2("G1").setValue("noname");
+
+		oParser = new parserFormula('DAVERAGE(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 13);
 	});
 
 	QUnit.test("Test: \"DCOUNT\"", function (assert) {
@@ -29398,6 +29862,18 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
 
+		ws.getRange2("G1").setValue("Profit");
+		ws.getRange2("G2").setValue("555");
+
+		oParser = new parserFormula('DCOUNT(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
+
+		ws.getRange2("G1").setValue("noname");
+
+		oParser = new parserFormula('DCOUNT(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 6);
 	});
 
 	QUnit.test("Test: \"DCOUNTA\"", function (assert) {
@@ -29416,6 +29892,18 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
 
+		ws.getRange2("G1").setValue("Profit");
+		ws.getRange2("G2").setValue("555");
+
+		oParser = new parserFormula('DCOUNTA(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
+
+		ws.getRange2("G1").setValue("noname");
+
+		oParser = new parserFormula('DCOUNTA(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 6);
 	});
 
 	QUnit.test("Test: \"DGET\"", function (assert) {
@@ -29430,6 +29918,18 @@ $(function () {
 		assert.ok(oParser.parse(), 'DGET(A4:E10, "Yield", A1:F2)');
 		assert.strictEqual(oParser.calculate().getValue(), 10, 'DGET(A4:E10, "Yield", A1:F2)');
 
+		ws.getRange2("G1").setValue("Profit");
+		ws.getRange2("G2").setValue("555");
+
+		oParser = new parserFormula('DGET(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		ws.getRange2("G1").setValue("noname");
+
+		oParser = new parserFormula('DGET(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
 	});
 
 	QUnit.test("Test: \"DMAX\"", function (assert) {
@@ -29440,6 +29940,18 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 96);
 
+		ws.getRange2("G1").setValue("Profit");
+		ws.getRange2("G2").setValue("555");
+
+		oParser = new parserFormula('DMAX(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
+
+		ws.getRange2("G1").setValue("noname");
+
+		oParser = new parserFormula('DMAX(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 20);
 	});
 
 	QUnit.test("Test: \"DMIN\"", function (assert) {
@@ -29450,6 +29962,18 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 75);
 
+		ws.getRange2("G1").setValue("Profit");
+		ws.getRange2("G2").setValue("555");
+
+		oParser = new parserFormula('DMIN(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
+
+		ws.getRange2("G1").setValue("noname");
+
+		oParser = new parserFormula('DMIN(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 8);
 	});
 
 	QUnit.test("Test: \"DPRODUCT\"", function (assert) {
@@ -29460,6 +29984,18 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 800);
 
+		ws.getRange2("G1").setValue("Profit");
+		ws.getRange2("G2").setValue("555");
+
+		oParser = new parserFormula('DPRODUCT(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
+
+		ws.getRange2("G1").setValue("noname");
+
+		oParser = new parserFormula('DPRODUCT(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 3628800);
 	});
 
 	QUnit.test("Test: \"DSTDEV\"", function (assert) {
@@ -29470,6 +30006,19 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue().toFixed(4) - 0, 1.1547);
 
+
+		ws.getRange2("G1").setValue("Profit");
+		ws.getRange2("G2").setValue("555");
+
+		oParser = new parserFormula('DSTDEV(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		ws.getRange2("G1").setValue("noname");
+
+		oParser = new parserFormula('DSTDEV(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 4.381780460041329);
 	});
 
 	QUnit.test("Test: \"DSTDEVP\"", function (assert) {
@@ -29480,6 +30029,18 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue().toFixed(6) - 0, 0.942809);
 
+		ws.getRange2("G1").setValue("Profit");
+		ws.getRange2("G2").setValue("555");
+
+		oParser = new parserFormula('DSTDEVP(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		ws.getRange2("G1").setValue("noname");
+
+		oParser = new parserFormula('DSTDEV(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 4.381780460041329);
 	});
 
 	QUnit.test("Test: \"STDEVPA\"", function (assert) {
@@ -29564,6 +30125,30 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 247.8);
 
+		oParser = new parserFormula('DSUM(A4:E10, "Age",A1:F2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 15);
+
+		oParser = new parserFormula('DSUM(A4:E10, "Age","test")', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula('DSUM(A4:E10, "Age",E2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		ws.getRange2("G1").setValue("Profit");
+		ws.getRange2("G2").setValue("555");
+
+		oParser = new parserFormula('DSUM(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
+
+		ws.getRange2("G1").setValue("noname");
+
+		oParser = new parserFormula('DSUM(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 78);
 	});
 
 	QUnit.test("Test: \"DVAR\"", function (assert) {
@@ -29574,6 +30159,18 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue().toFixed(1) - 0, 8.8);
 
+		ws.getRange2("G1").setValue("Profit");
+		ws.getRange2("G2").setValue("555");
+
+		oParser = new parserFormula('DSTDEVP(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		ws.getRange2("G1").setValue("noname");
+
+		oParser = new parserFormula('DVAR(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 19.2);
 	});
 
 	QUnit.test("Test: \"DVARP\"", function (assert) {
@@ -29583,6 +30180,19 @@ $(function () {
 		oParser = new parserFormula('DVARP(A4:E10, "Yield", A1:A3)', "AA2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue().toFixed(2) - 0, 7.04);
+
+		ws.getRange2("G1").setValue("Profit");
+		ws.getRange2("G2").setValue("555");
+
+		oParser = new parserFormula('DSTDEVP(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		ws.getRange2("G1").setValue("noname");
+
+		oParser = new parserFormula('DVARP(A4:E10, "Age",G1:G2)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 16);
 
 	});
 
@@ -35935,11 +36545,11 @@ $(function () {
 			'id-view': 'editor_sdk'
 		});
 		window["Asc"]["editor"] = api;
-		AscCommon.g_oTableId.init();
 		api._onEndLoadSdk();
 		api.isOpenOOXInBrowser = false;
 		api._openDocument(AscCommon.getEmpty());
-		api.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
+		api.initCollaborativeEditing({});
+		api._coAuthoringInitCollaborativeEditing({});
 		api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,
 			api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
 		// Test api: GetCalcSettings

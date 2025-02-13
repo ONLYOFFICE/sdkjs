@@ -274,7 +274,12 @@ CFootEndnote.prototype.GetRef = function()
 {
 	return this.Ref;
 };
+CFootEndnote.prototype.IsInPermRange = function()
+{
+	return this.Ref ? this.Ref.IsInPermRange() : false;
+};
 
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CFootEndnote = CFootEndnote;
+window['AscWord'].FootEndnote = CFootEndnote;

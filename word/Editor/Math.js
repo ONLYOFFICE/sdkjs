@@ -1530,6 +1530,15 @@ ParaMath.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 		{
 			// на случай когда у нас несколько неинлайновых формул в одном параграфе
 			PRS.SetMathRecalcInfoObject(null);
+			
+			// TODO: Вообще инлайновая формула должна вести себя как буква на строке, т.е. идти как часть слова, но
+			//       пока будем считать, что на ней всегда заканчивается слово
+			PRS.Word            = false;
+			PRS.FirstItemOnLine = false;
+			PRS.EmptyLine       = false;
+			PRS.TextOnLine      = true;
+			PRS.SpaceLen        = 0;
+			PRS.WordLen         = 0;
 		}
 	}
 	else

@@ -50,6 +50,11 @@
 	 * @constructor
 	 */
 	function Text_Type() {
+		/**
+		 * if text is inherited (for calculate presentation field)
+		 */
+		this.isInherited = false;
+
 		this.elements = []
 		// array to store elems below. see ShapeSheet element
 		// this.cp = [];
@@ -406,62 +411,6 @@
 		}
 	}
 
-
-	/**
-	 *
-	 * @param obj
-	 * @param {string} constructorName
-	 * @param {string} [attributeName]
-	 * @param attributeValue
-	 * @return {*|undefined}
-	 */
-	function findObject(obj, constructorName, attributeName, attributeValue) {
-		let attributeCheck = true;
-		if (attributeName === undefined) {
-			attributeCheck = false;
-		}
-		// Base case: if the object is null or undefined, or if it's not an object
-		if (!obj || typeof obj !== 'object') {
-			return null;
-		}
-		// Check if the current object has the desired attribute, value, and constructor name
-		if (obj.constructor.name === constructorName && (attributeCheck ? obj[attributeName] === attributeValue : true)) {
-			return obj;
-		}
-		// Iterate over object properties and recursively search for the attribute and constructor name
-		for (const key in obj) {
-			if (obj.hasOwnProperty(key)) {
-				const result = findObject(obj[key], constructorName, attributeName, attributeValue);
-				if (result) {
-					return result;
-				}
-			}
-		}
-		// If the attribute was not found, return undefined
-		return undefined;
-	}
-
-	function findObjects(obj, constructorName, attributeName, attributeValue, results) {
-		if (typeof results === "undefined") {
-			results = [];
-		}
-		// Base case: if the object is null or undefined, or if it's not an object
-		if (!obj || typeof obj !== 'object') {
-			return [];
-		}
-		// Check if the current object has the desired attribute, value, and constructor name
-		if (obj.constructor.name === constructorName && obj[attributeName] === attributeValue) {
-			results.push(obj);
-		}
-		// Iterate over object properties and recursively search for the attribute and constructor name
-		for (const key in obj) {
-			if (obj.hasOwnProperty(key)) {
-				findObjects(obj[key], constructorName, attributeName, attributeValue, results);
-			}
-		}
-		return results;
-	}
-
 	/**
 	 * Always use it see Shape_Type.prototype.realizeMasterToShapeInheritanceRecursive js docs for explanation.
 	 * Finds shape section by formula. Compares N with string argument. For Geometry use find sections.
@@ -520,15 +469,21 @@
 	/**
 	 * Calls getCell on object and tries to parse as Number(cell.v) if cell exists otherwise return undefined.
 	 * @param {String} formula
+	 * @param {number?} defaultValue
 	 * @return {Number | undefined} number
 	 */
-	SheetStorage.prototype.getCellNumberValue = function (formula) {
+	SheetStorage.prototype.getCellNumberValue = function (formula, defaultValue) {
 		let cell = this.getCell(formula);
+		let result;
 		if (cell !== undefined) {
-			return Number(cell.v);
+			result = Number(cell.v);
 		} else {
-			return undefined;
+			result = undefined;
 		}
+		if (defaultValue !== undefined) {
+			result = result === undefined ? defaultValue : result;
+		}
+		return result;
 	}
 	/**
 	 * Calls getCell on object and tries to parse as Number(cell.v) if cell exists otherwise return undefined.
@@ -594,6 +549,28 @@
 		});
 		return resultArr;
 		// return findObjects(this.elements, "Section_Type", "n", formula);
+	}
+
+	/**
+	 * Always use it see Shape_Type.prototype.realizeMasterToShapeInheritanceRecursive js docs for explanation.
+	 * Used with no argument to get all rows
+	 * @memberof SheetStorage
+	 * @returns {Row_Type[]}
+	 */
+	SheetStorage.prototype.getRows = function() {
+		// TODO check may be optimized. maybe use binary search for elements with maximum number as index bcs geometry
+		// rows have Row.ix as index and it is number.
+		let resultArr = [];
+		for (const key in this.elements) {
+			const element = this.elements[key];
+			if (element.kind === c_oVsdxSheetStorageKind.Row_Type) {
+				resultArr.push(element);
+			}
+		}
+		resultArr.sort(function (a, b) {
+			return a.iX - b.iX;
+		});
+		return resultArr;
 	}
 
 	/**
@@ -774,6 +751,7 @@
 																		 gradientEnabled, themedColorsRow) {
 		let cellValue = this.v;
 		let cellName = this.n;
+		let cellFunction = this.f;
 
 		let returnValue;
 
@@ -781,13 +759,13 @@
 		let fillResultCells = ["LineColor", "FillForegnd", "FillBkgnd"];
 		let fillColorResultCells = ["Color", "GradientStopColor"];
 		let numberResultCells = ["LinePattern", "LineWeight", "GradientStopColorTrans", "GradientStopPosition",
-		"FillGradientAngle", "EndArrowSize", "BeginArrowSize", "FillPattern"];
-		let stringResultCells = ["EndArrow", "BeginArrow"];
+		"FillGradientAngle", "EndArrowSize", "BeginArrowSize", "FillPattern", "LineCap"];
+		let stringResultCells = ["EndArrow", "BeginArrow", "Font"];
 		let booleanResultCells = ["FillGradientEnabled"];
 
 		// TODO handle 2.2.7.5	Fixed Theme
 
-		if (cellValue === "Themed") {
+		if (cellValue === "Themed" || cellFunction === "THEMEVAL()") {
 			// equal to THEMEVAL() call
 			// add themeval support for every supported cell
 			returnValue = AscVisio.themeval(this, shape, pageInfo, themes, undefined,
@@ -882,7 +860,14 @@
 						case 23:
 							rgba = AscCommon.RgbaHexToRGBA('#1A1A1A');
 							break;
+						default:
+							AscCommon.consoleLog("error: unknown color index");
+							rgba = AscCommon.RgbaHexToRGBA('#000000');
+							break;
 					}
+				} else {
+					AscCommon.consoleLog("error: color index is null");
+					rgba = AscCommon.RgbaHexToRGBA('#000000');
 				}
 			}
 
@@ -914,6 +899,18 @@
 						angle = 5400000;
 					}
 					cellNumberValue = angle;
+				} else if (cellName === "LineCap") {
+					switch (cellNumberValue) {
+						case 0:
+							cellNumberValue = 1;
+							break;
+						case 1:
+							cellNumberValue = 0;
+							break;
+						case 2:
+							cellNumberValue = 2;
+							break;
+					}
 				}
 				return cellNumberValue;
 			}
@@ -1033,6 +1030,12 @@
 		 */
 		this.cImageShape = null;
 
+		/**
+		 * see MS-VSDX 2.2.7.4.9	Connector. if true shape is connector
+		 * @type {boolean}
+		 */
+		this.isConnectorStyleIherited = false;
+
 		// call parent class constructor
 		let parentClassConstructor = SheetStorageAndStyles;
 		parentClassConstructor.call(this);
@@ -1081,7 +1084,7 @@
 			} else {
 				// compare with previous shape layer
 				for (const cellKey in layerInfo.getElements()) {
-					const cell = previousLayer.getCell(cellKey);
+					const cell = layerInfo.getCell(cellKey);
 					let previousLayerCell = previousLayer.getCell(cell.n);
 					if (previousLayerCell.v !== cell.v) {
 						unEqualProperties.add(cell.n);
@@ -1157,7 +1160,7 @@
 	 * Realizes Master-To-Shape inheritance.
 	 * Comes through the shape recursively through all subshapes
 	 * and copies properties from their masters if master exist.
-	 * Uses clone function so copied objects are unlinked from master.
+	 * Not uses clone function.
 	 *
 	 * This function erases original shape object and after function call we cant find what props are
 	 * inherited.
@@ -1420,8 +1423,18 @@
 	 */
 	function realizeStyleToSheetObjInheritanceRecursive(thisArgument, styles, stylesWithRealizedInheritance) {
 		if (stylesWithRealizedInheritance.has(thisArgument)) {
+			// thisArgument is style not shape and it has realized inheritance already
 			// AscCommon.consoleLog("style has realized inheritance already. return");
 			return;
+		}
+
+		/**
+		 * see MS-VSDX 2.2.7.4.9	Connector.
+		 * @param {Shape_Type | StyleSheet_Type} object
+		 * @param {StyleSheet_Type} style
+		 */
+		function setIsConnectorStyleInherited(object, style) {
+			object.isConnectorStyleIherited = object.isConnectorStyleIherited ? true : style.nameU === "Connector";
 		}
 
 		if (!(thisArgument.lineStyle === thisArgument.fillStyle && thisArgument.lineStyle === thisArgument.textStyle)) {
@@ -1483,6 +1496,7 @@
 				let styleSheet = styles.find(function(style) {
 					return style.iD === styleId;
 				});
+				setIsConnectorStyleInherited(thisArgument, styleSheet);
 				realizeStyleToSheetObjInheritanceRecursive(styleSheet, styles, stylesWithRealizedInheritance);
 				mergeElementArrays(thisArgument.elements, styleSheet.elements, lineStyleElements);
 			}
@@ -1492,6 +1506,7 @@
 				let styleSheet = styles.find(function(style) {
 					return style.iD === styleId;
 				});
+				setIsConnectorStyleInherited(thisArgument, styleSheet);
 				realizeStyleToSheetObjInheritanceRecursive(styleSheet, styles, stylesWithRealizedInheritance);
 				mergeElementArrays(thisArgument.elements, styleSheet.elements, fillStyleElements);
 			}
@@ -1501,6 +1516,7 @@
 				let styleSheet = styles.find(function(style) {
 					return style.iD === styleId;
 				});
+				setIsConnectorStyleInherited(thisArgument, styleSheet);
 				realizeStyleToSheetObjInheritanceRecursive(styleSheet, styles, stylesWithRealizedInheritance);
 				mergeElementArrays(thisArgument.elements, styleSheet.elements, textStyleElements);
 			}
@@ -1517,13 +1533,14 @@
 			return;
 		}
 
+		// if lineStyle === textStyle === fillStyle so let's take lineStyle
 		let styleId = Number(thisArgument.lineStyle);
 		let styleSheet = styles.find(function(style) {
 			return style.iD === styleId;
 		});
+		setIsConnectorStyleInherited(thisArgument, styleSheet);
 
 		realizeStyleToSheetObjInheritanceRecursive(styleSheet, styles, stylesWithRealizedInheritance);
-
 		mergeElementArrays(thisArgument.elements, styleSheet.elements)
 		if (thisArgument.constructor === AscVisio.StyleSheet_Type) {
 			// memorize: that style has realized inheritance
@@ -1534,8 +1551,10 @@
 	/**
 	 * Style-To-Shape inheritance
 	 * Copy all style elements (sections, rows, cells) to shape.
-	 * (Doesnt take much memory < 300MB with master inheritance for the most large files).
+	 * (Doesn't take much memory < 300MB with master inheritance for the most large files).
 	 * stylesWithRealizedInheritance was added for optimization.
+	 * Check if this shape or sub-shapes have lineStyle/fillStyle/textStyle if so realize inheritance with
+	 * recursive style inheritance
 	 * @param styles
 	 * @param {?Set} [stylesWithRealizedInheritance]
 	 * @memberOf Shape_Type
@@ -1573,6 +1592,17 @@
 			return elementsObject[objKey];
 		}
 
+		/**
+		 * if text is inherited so we consider that text fields in it have wrong values
+		 * and we recalculate values them
+		 * @param masterElement
+		 */
+		function setIsInheritedForText(masterElement) {
+			if (masterElement.kind === c_oVsdxSheetStorageKind.Text_Type) {
+				masterElement.isInherited = true;
+			}
+		}
+
 		let mergeAll = false;
 
 		if (elementsToMerge === undefined) {
@@ -1585,8 +1615,8 @@
 			let overrideObject = findObjectIn(shapeElements, masterElement);
 			let elementExistsAlready = overrideObject !== undefined;
 
-			let elementIsInList = elementsToMerge !== undefined && elementsToMerge.includes(masterElement.n);
-			let listCheck = mergeAll || isParentInList || elementIsInList;
+			let isElementInList = elementsToMerge !== undefined && elementsToMerge.includes(masterElement.n);
+			let listCheck = mergeAll || isParentInList || isElementInList;
 
 			if (!elementExistsAlready) {
 				if (listCheck) {
@@ -1596,8 +1626,11 @@
 
 					// mb lets not add cell after section
 					// let elementCopy = clone(masterElement);
+					setIsInheritedForText(masterElement);
+
 					let elementLink = masterElement;
 					shapeElements[key] = elementLink;
+
 				}
 			} else {
 				// merge inner elements recursive if not cell
@@ -1606,7 +1639,7 @@
 					let shapeElement = overrideObject;
 					if (masterElement.kind === c_oVsdxSheetStorageKind.Section_Type || masterElement.kind === c_oVsdxSheetStorageKind.Row_Type) {
 						// for future checks
-						isParentInList = elementIsInList || isParentInList;
+						isParentInList = isElementInList || isParentInList;
 						// recursive calls
 						mergeElementArrays(shapeElement.elements, masterElement.elements, elementsToMerge, isParentInList);
 					}
@@ -1744,6 +1777,12 @@
 		this.nameU = null;
 		this.isCustomName = null;
 		this.isCustomNameU = null;
+
+		/**
+		 * see MS-VSDX 2.2.7.4.9	Connector.
+		 * @type {boolean}
+		 */
+		this.isConnectorStyleIherited = false;
 
 		// call parent class constructor
 		let parentClassConstructor = SheetStorageAndStyles;

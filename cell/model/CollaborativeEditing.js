@@ -56,13 +56,13 @@
 			if (!(this instanceof CCollaborativeEditing)) {
 				return new CCollaborativeEditing();
 			}
+			AscCommon.CCollaborativeEditingBase.call(this);
 
 			this.m_nUseType					= 1;  // 1 - 1 клиент и мы сохраняем историю, -1 - несколько клиентов, 0 - переход из -1 в 1
-			this.m_bIsCollaborativeWithLiveViewer = false;//todo remove after implementing undo in spreadsheet
 
 			this.handlers					= new AscCommonExcel.asc_CHandlersList(handlers);
 			this.m_bIsViewerMode			= !!isViewerMode; // Режим Viewer-а
-			this.m_bGlobalLock				= false; // Глобальный lock
+			this.m_bGlobalLock				= 0; // Глобальный lock
 			this.m_bGlobalLockEditCell		= false; // Глобальный lock (для редактирования ячейки) - отключаем смену select-а, но разрешаем сразу вводить
 			this.m_arrCheckLocks			= [];    // Массив для проверки залоченности объектов, которые мы собираемся изменять
 
@@ -80,12 +80,14 @@
 			this.m_bFast = false;
 
 			this.m_aForeignCursorsData = {};
+			this.WaitImages = {};//cell/model/DrawingObjects/GlobalCounters.js
 
 			this.init();
 
 			return this;
 		}
 
+		CCollaborativeEditing.prototype = Object.create(AscCommon.CCollaborativeEditingBase.prototype);
 		CCollaborativeEditing.prototype.init = function () {
 		};
 
@@ -209,7 +211,7 @@
 
 				if (undefined !== callback) {
 					// Ставим глобальный лок (только если мы не одни и ждем ответа!)
-					this.m_bGlobalLock = true;
+					this.Set_GlobalLock(true);
 				}
 			} else {
 				asc_applyFunction(callback, true);
@@ -221,7 +223,7 @@
 
 		CCollaborativeEditing.prototype.onCallbackAskLock = function (result, callback) {
 			// Снимаем глобальный лок
-			this.m_bGlobalLock = false;
+			this.Set_GlobalLock(false);
 			// Снимаем глобальный лок (для редактирования ячейки)
 			this.m_bGlobalLockEditCell = false;
 
@@ -293,7 +295,7 @@
 			return true;
 		};
 
-		CCollaborativeEditing.prototype.sendChanges = function (IsUserSave, isAfterAskSave) {
+		CCollaborativeEditing.prototype.sendChanges = function (IsUserSave, isAfterAskSave, changesToSend) {
 			// Когда не совместное редактирование чистить ничего не нужно, но отправлять нужно.
 			var bIsCollaborative = this.getCollaborativeEditing();
 
@@ -361,7 +363,7 @@
 			}
 
 			// Отправляем на сервер изменения
-			this.handlers.trigger("sendChanges", this.getRecalcIndexSave(this.m_oRecalcIndexColumns), this.getRecalcIndexSave(this.m_oRecalcIndexRows), isAfterAskSave);
+			this.handlers.trigger("sendChanges", this.getRecalcIndexSave(this.m_oRecalcIndexColumns), this.getRecalcIndexSave(this.m_oRecalcIndexRows), isAfterAskSave, changesToSend);
 
 			if (bIsCollaborative) {
 				// Пересчитываем lock-и от чужих пользователей
@@ -376,6 +378,7 @@
 				this.clearRecalcIndex();
 
 				// Чистим Undo/Redo
+				AscCommon.History.Clear_Redo();
 				AscCommon.History.Clear();
 
 				// Перерисовываем
@@ -406,14 +409,12 @@
 
 				if (0 === this.m_nUseType)
 					this.m_nUseType = 1;
-			} else if (this.m_bIsCollaborativeWithLiveViewer) {
-				//todo remove
-				// Чистим Undo/Redo
-				AscCommon.History.Clear();
 			} else {
 				// Обновляем точку последнего сохранения в истории
 				AscCommon.History.Reset_SavedIndex(IsUserSave);
 			}
+
+			Asc.editor.wb.Document_UpdateUndoRedoState();
 		};
 
 		CCollaborativeEditing.prototype.getRecalcIndexSave = function (oRecalcIndex) {
@@ -1016,6 +1017,61 @@
 				}
 			}
 			return res;
+		};
+		CCollaborativeEditing.prototype.PreUndo = function () {
+			let res = AscCommon.CCollaborativeEditingBase.prototype.PreUndo.apply(this);
+
+			this.oRedoObjectParam = new AscCommonExcel.RedoObjectParam();
+			AscCommon.History.UndoRedoPrepare(this.oRedoObjectParam, false, true);
+			//todo встроить в GetReverseOwnChanges
+			if (this.CoHistory.OwnRanges.length > 0) {
+				let range     = this.CoHistory.OwnRanges[this.CoHistory.OwnRanges.length - 1];
+				let change = this.CoHistory.Changes[range.Position];
+				if (change && change.oData && change.oData.snapshot) {
+					this.oRedoObjectParam.snapshot = change.oData.snapshot
+				}
+			}
+			return res;
+		}
+		CCollaborativeEditing.prototype.PostUndo = function (state, changes) {
+			let Point = {Items: []}
+			if (changes.length > 0) {
+				//изменение не последнее потому что могут добавиться при корректировке
+				let elem = changes.find(function(elem){
+					if(elem && elem.Point) {
+						return true;
+					}
+				});
+				if (elem) {
+					Point = elem.Point;
+				}
+			}
+			//todo Apply_LinkData inside UndoRedoEnd
+			AscCommon.CollaborativeEditing.Apply_LinkData();
+			AscCommon.History.UndoRedoEnd(Point, this.oRedoObjectParam, false);
+
+			AscCommon.CCollaborativeEditingBase.prototype.PostUndo.apply(this, arguments);
+		}
+
+		AscCommon.CCollaborativeHistory.prototype.CommuteRelated = function(oClass, oChange, nStartPosition)
+		{
+			//todo снаследоваться потому что планируется обьедениение sdk
+			var arrChangesForProceed = this.Changes;
+			for (var nIndex = nStartPosition, nOverallCount = arrChangesForProceed.length; nIndex < nOverallCount; ++nIndex) {
+				var oOtherAction = arrChangesForProceed[nIndex];
+				if (!oOtherAction) {
+					continue;
+				}
+				if (true !== oOtherAction.IsReverted() && oChange.CommuteRelated && false === oChange.CommuteRelated(oChange, oOtherAction)) {
+					return false;
+				}
+			}
+			return true;
+		};
+
+		AscCommon.CCollaborativeHistory.prototype.saveChanges = function(changesToSend)
+		{
+			this.CoEditing.sendChanges(false, true, changesToSend);
 		};
 
 		/**

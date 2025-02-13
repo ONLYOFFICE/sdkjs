@@ -48,6 +48,27 @@
     CAnnotationTextMarkup.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
 	CAnnotationTextMarkup.prototype.constructor = CAnnotationTextMarkup;
 
+    CAnnotationTextMarkup.prototype.select = AscFormat.CGraphicObjectBase.prototype.select;
+    CAnnotationTextMarkup.prototype.deselect = AscFormat.CGraphicObjectBase.prototype.deselect;
+    CAnnotationTextMarkup.prototype.canChangeAdjustments = function() {};
+    CAnnotationTextMarkup.prototype.hitToHandles = function() {};
+    CAnnotationTextMarkup.prototype.hitInBoundingRect = function() {};
+    CAnnotationTextMarkup.prototype.getNoChangeAspect = function() {};
+    CAnnotationTextMarkup.prototype.getMainGroup = function() {};
+    CAnnotationTextMarkup.prototype.getObjectName = function() {};
+    CAnnotationTextMarkup.prototype.isShape = function() {};
+    CAnnotationTextMarkup.prototype.isImage = function() {};
+    CAnnotationTextMarkup.prototype.createMoveTrack = function() {};
+    CAnnotationTextMarkup.prototype.canMove = function() {
+        return false;
+    };
+    CAnnotationTextMarkup.prototype.canResize = function() {
+        return false;
+    };
+    CAnnotationTextMarkup.prototype.canRotate = function() {
+        return false;
+    };
+
     CAnnotationTextMarkup.prototype.IsTextMarkup = function() {
         return true;
     };
@@ -260,6 +281,7 @@
         for (let i = 0; i < aQuads.length; i++) {
             let aPoints     = aQuads[i];
             
+            oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
             oGraphicsPDF.SetStrokeStyle(oRGBFill.r, oRGBFill.g, oRGBFill.b);
             oGraphicsPDF.BeginPath();
 
@@ -411,76 +433,99 @@
     AscFormat.InitClass(CAnnotationSquiggly, CAnnotationTextMarkup, AscDFH.historyitem_type_Pdf_Annot_Squiggly);
 
     CAnnotationSquiggly.prototype.Draw = function(oGraphicsPDF) {
-        if (this.IsHidden() == true)
+        if (this.IsHidden())
             return;
-
-        let aQuads      = this.GetQuads();
-        let oRGBFill    = this.GetRGBColor(this.GetStrokeColor());
-        
+    
+        let aQuads   = this.GetQuads();
+        let oRGBFill = this.GetRGBColor(this.GetStrokeColor());
+    
         for (let i = 0; i < aQuads.length; i++) {
-            let aPoints     = aQuads[i];
+            let aPoints = aQuads[i];
             
+            oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
             oGraphicsPDF.SetStrokeStyle(oRGBFill.r, oRGBFill.g, oRGBFill.b);
-            oGraphicsPDF.BeginPath();
-
-            let oPoint1 = {
-                x: aPoints[0],
-                y: aPoints[1]
-            }
-            let oPoint2 = {
-                x: aPoints[2],
-                y: aPoints[3]
-            }
-            let oPoint3 = {
-                x: aPoints[4],
-                y: aPoints[5]
-            }
-            let oPoint4 = {
-                x: aPoints[6],
-                y: aPoints[7]
-            }
-
-            let X1 = oPoint3.x
-            let Y1 = oPoint3.y;
-            let X2 = oPoint4.x;
-            let Y2 = oPoint4.y;
-
+            
+            let oPoint1 = { x: aPoints[0], y: aPoints[1] };
+            let oPoint2 = { x: aPoints[2], y: aPoints[3] };
+            let oPoint3 = { x: aPoints[4], y: aPoints[5] };
+            let oPoint4 = { x: aPoints[6], y: aPoints[7] };
+    
+            let X1 = oPoint3.x, Y1 = oPoint3.y;
+            let X2 = oPoint4.x, Y2 = oPoint4.y;
+    
             let dx1 = oPoint2.x - oPoint1.x;
             let dy1 = oPoint2.y - oPoint1.y;
-            let dx2 = oPoint4.x - oPoint3.x;
-            let dy2 = oPoint4.y - oPoint3.y;
-            let angle1          = Math.atan2(dy1, dx1);
-            let angle2          = Math.atan2(dy2, dx2);
-            let rotationAngle   = angle1;
-
-            let nSide;
-            if (rotationAngle == 0 || rotationAngle == 3/2 * Math.PI) {
-                nSide = Math.abs(oPoint3.y - oPoint1.y);
-                oGraphicsPDF.SetLineWidth(Math.max(1, nSide * 0.1 >> 0));
-            }
-            else {
-                nSide = findMaxSideWithRotation(oPoint1.x, oPoint1.y, oPoint2.x, oPoint2.y, oPoint3.x, oPoint3.y, oPoint4.x, oPoint4.y);
-                oGraphicsPDF.SetLineWidth(Math.max(1, nSide * 0.1 >> 0));
-            }
-
-            let nLineW      = oGraphicsPDF.GetLineWidth();
-            let nIndentX    = Math.sin(rotationAngle) * nLineW * 1.5;
-            let nIndentY    = Math.cos(rotationAngle) * nLineW * 1.5;
-
-            if (rotationAngle == 0 || rotationAngle == 3/2 * Math.PI) {
-                oGraphicsPDF.HorLine(X1, X2, Y2 - nIndentY);
-            }
-            else {
-                oGraphicsPDF.MoveTo(X1 + nIndentX, Y1 - nIndentY);
-                oGraphicsPDF.LineTo(X2 + nIndentX, Y2 - nIndentY);
-            }
+            let angle1 = Math.atan2(dy1, dx1);
             
-            oGraphicsPDF.Stroke();
+            let nSide = (angle1 == 0 || angle1 == 3/2 * Math.PI) 
+                ? Math.abs(oPoint3.y - oPoint1.y) 
+                : findMaxSideWithRotation(oPoint1.x, oPoint1.y, oPoint2.x, oPoint2.y, oPoint3.x, oPoint3.y, oPoint4.x, oPoint4.y);
+    
+            oGraphicsPDF.SetLineWidth(Math.max(1, nSide * 0.05 >> 0));
+            let nLineW   = oGraphicsPDF.GetLineWidth();
+            let nIndentX = Math.sin(angle1) * nLineW * 1.5;
+            let nIndentY = Math.cos(angle1) * nLineW * 1.5;
+    
+            let startX = (angle1 == 0 || angle1 == 3/2 * Math.PI) ? X1 : X1 + nIndentX;
+            let startY = (angle1 == 0 || angle1 == 3/2 * Math.PI) ? Y1 : Y1 - nIndentY;
+            let endX   = (angle1 == 0 || angle1 == 3/2 * Math.PI) ? X2 : X2 + nIndentX;
+            let endY   = (angle1 == 0 || angle1 == 3/2 * Math.PI) ? Y2 : Y2 - nIndentY;
+    
+            drawZigZagLine(oGraphicsPDF, startX, startY, endX, endY, nLineW);
         }
-
+    
         let aUnitedRegion = this.GetUnitedRegion();
         oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
     };
+    
+    function drawZigZagLine(oGraphicsPDF, X1, Y1, X2, Y2, nLineW) {
+        let length = Math.sqrt(Math.pow(X2 - X1, 2) + Math.pow(Y2 - Y1, 2));
+        // Параметры волны
+        let wavelength = 2;          // длина одного "зубчика"
+        let amplitude = nLineW * 1;  // высота волны
+        let dx = (X2 - X1) / length;
+        let dy = (Y2 - Y1) / length;
+        let nx = -dy;
+        let ny = dx;
+    
+        // Сколько сегментов поместится на всей длине?
+        // Один период (полный зубчик - вверх-вниз) занимает 2 сегмента по wavelength/2 каждый,
+        // но для простоты возьмём wavelength как полный период.
+        let segments = Math.floor(length / wavelength);
+    
+        oGraphicsPDF.BeginPath();
+        oGraphicsPDF.MoveTo(X1, Y1);
+    
+        for (let i = 1; i <= segments; i++) {
+            // Чередуем направление сдвига: вверх-амплитуда, вниз-амплитуда
+            let isUp = (i % 2 === 1); 
+            let dist = i * wavelength;
+    
+            let offset = isUp ? amplitude : -amplitude;
+    
+            oGraphicsPDF.LineTo(
+                X1 + dx * dist + nx * offset,
+                Y1 + dy * dist + ny * offset
+            );
+        }
+    
+        // Если длина не делится ровно на сегменты, дойдём до конца
+        let remainder = length - segments * wavelength;
+        if (remainder > 0) {
+            let lastDist = length;
+            // Последний сегмент: продолжаем паттерн
+            let isUp = (segments % 2 === 0); 
+            let offset = isUp ? amplitude : -amplitude;
+            // Пропорционально оставшейся длине уменьшим offset, чтобы плавно закончить
+            let ratio = remainder / wavelength;
+            oGraphicsPDF.LineTo(
+                X1 + dx * lastDist + nx * (offset * ratio),
+                Y1 + dy * lastDist + ny * (offset * ratio)
+            );
+        }
+    
+        oGraphicsPDF.Stroke();
+    }
 
     let CARET_SYMBOL = {
         None:       0,
@@ -510,6 +555,7 @@
         for (let i = 0; i < aQuads.length; i++) {
             let aPoints     = aQuads[i];
             
+            oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
             oGraphicsPDF.SetStrokeStyle(oRGBFill.r, oRGBFill.g, oRGBFill.b);
             oGraphicsPDF.BeginPath();
 
@@ -786,6 +832,8 @@
     window["AscPDF"].CAnnotationStrikeout   = CAnnotationStrikeout;
     window["AscPDF"].CAnnotationSquiggly    = CAnnotationSquiggly;
     window["AscPDF"].CAnnotationCaret       = CAnnotationCaret;
+    window["AscPDF"].fillRegion             = fillRegion;
     window["AscPDF"].IsInQuads              = IsInQuads;
+    
 })();
 

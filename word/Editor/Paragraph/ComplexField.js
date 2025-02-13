@@ -50,11 +50,18 @@ function ParaFieldChar(Type, LogicDocument)
 	this.X             = 0;
 	this.Y             = 0;
 	this.PageAbs       = 0;
+	
+	this.showFieldCode = false;
 
 	this.numText  = null;
 	this.textPr   = null;
 	this.checkBox = null;
 	this.hidden   = false;
+	
+	this.graphemes = [];
+	this.widths    = [];
+	this.ascent    = 0;
+	this.descent   = 0;
 }
 ParaFieldChar.prototype = Object.create(AscWord.CRunElementBase.prototype);
 ParaFieldChar.prototype.constructor = ParaFieldChar;
@@ -115,12 +122,14 @@ ParaFieldChar.prototype.Draw = function(x, y, context)
 		let shift = 0.75 * g_dKoef_pt_to_mm;
 		let penW  = 0.75 * g_dKoef_pt_to_mm;
 		
-		let w = this.GetWidth();
+		let width   = this.GetWidth();
+		let ascent  = this.ascent / AscWord.TEXTWIDTH_DIVIDER;
+		let descent = this.descent / AscWord.TEXTWIDTH_DIVIDER;
 		
-		let y0 = y - 0.815 * w + shift;
-		let y1 = y + 0.185 * w - shift;
+		let y0 = y - ascent + shift;
+		let y1 = y + descent - shift;
 		let x0 = x + shift;
-		let x1 = x + w - shift;
+		let x1 = x + width - shift;
 		
 		context.drawHorLineExt(c_oAscLineDrawingRule.Top, y0, x0, x1, penW, 0, 0);
 		context.drawHorLineExt(c_oAscLineDrawingRule.Bottom, y1, x0, x1, penW, 0, 0);
@@ -353,11 +362,20 @@ ParaFieldChar.prototype.private_UpdateWidth = function()
 		if (ffData && !ffData.isCheckBoxAutoSize())
 			fontSize = ffData.getCheckBoxSize();
 		
-		totalWidth = (1.15 * fontSize * g_dKoef_pt_to_mm * AscWord.TEXTWIDTH_DIVIDER) | 0;
+		let textPr = this.textPr.Copy();
+		textPr.FontSize = fontSize;
+		
+		AscCommon.g_oTextMeasurer.SetTextPr(textPr);
+		AscCommon.g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII, 1);
+		
+		let textHeight = AscCommon.g_oTextMeasurer.GetHeight();
+		totalWidth = (textHeight * AscWord.TEXTWIDTH_DIVIDER) | 0;
 		
 		// Для совместимости при работе с RecalcObject
 		this.graphemes = [];
 		this.widths    = [];
+		this.ascent    = (AscCommon.g_oTextMeasurer.GetAscender() * AscWord.TEXTWIDTH_DIVIDER) | 0;
+		this.descent   = (-AscCommon.g_oTextMeasurer.GetDescender() * AscWord.TEXTWIDTH_DIVIDER) | 0;
 	}
 	
 	this.Width        = totalWidth;
@@ -381,7 +399,7 @@ ParaFieldChar.prototype.IsNeedSaveRecalculateObject = function()
 };
 ParaFieldChar.prototype.SaveRecalculateObject = function(isCopy)
 {
-	return new FieldCharRecalculateObject(this.Type, this.numText, this.checkBox, this.graphemes, this.widths, this.Width, isCopy);
+	return new FieldCharRecalculateObject(this.Type, this.numText, this.checkBox, this.graphemes, this.widths, this.Width, this.ascent, this.descent, isCopy);
 };
 ParaFieldChar.prototype.LoadRecalculateObject = function(recalcObj)
 {
@@ -391,6 +409,8 @@ ParaFieldChar.prototype.LoadRecalculateObject = function(recalcObj)
 	this.widths       = recalcObj.widths;
 	this.Width        = recalcObj.width;
 	this.WidthVisible = this.Width;
+	this.ascent       = recalcObj.ascent;
+	this.descent      = recalcObj.descent;
 };
 ParaFieldChar.prototype.PrepareRecalculateObject = function()
 {
@@ -428,11 +448,37 @@ ParaFieldChar.prototype.FindNextFillingForm = function(isNext, isCurrent, isStar
 	else
 		return (this.IsEnd() && (!isCurrent || isNext) ? this.ComplexField : null);
 };
+ParaFieldChar.prototype.IsShowFieldCode = function()
+{
+	return this.showFieldCode;
+};
+ParaFieldChar.prototype.SetShowFieldCode = function(isShow)
+{
+	this.showFieldCode = isShow;
+};
+ParaFieldChar.prototype.MoveCursorToChar = function(isBefore)
+{
+	let run = this.GetRun();
+	if (!run)
+		return;
+	let inRunPos = run.GetElementPosition(this);
+	if (-1 === inRunPos)
+		return;
+	
+	if (this.LogicDocument)
+		this.LogicDocument.RemoveSelection();
+	
+	if (false === isBefore)
+		inRunPos += 1
+	
+	run.Make_ThisElementCurrent(false);
+	run.SetCursorPosition(inRunPos);
+};
 
 /**
  * @constructor
  */
-function FieldCharRecalculateObject(type, numText, checkBox, graphemes, widths, totalWidth, isCopy)
+function FieldCharRecalculateObject(type, numText, checkBox, graphemes, widths, totalWidth, ascent, descent, isCopy)
 {
 	this.type      = type;
 	this.numText   = numText;
@@ -440,6 +486,8 @@ function FieldCharRecalculateObject(type, numText, checkBox, graphemes, widths, 
 	this.graphemes = graphemes && isCopy ? graphemes.slice() : graphemes;
 	this.widths    = widths && isCopy ? widths.slice() : widths;
 	this.width     = totalWidth;
+	this.ascent    = ascent;
+	this.descent   = descent;
 }
 
 /**
@@ -501,6 +549,14 @@ ParaInstrText.prototype.GetRun = function()
 ParaInstrText.prototype.GetValue = function()
 {
 	return String.fromCharCode(this.Value);
+};
+ParaInstrText.prototype.GetCodePoint = function()
+{
+	return this.Value;
+};
+ParaInstrText.prototype.GetCharCode = function()
+{
+	return this.Value;
 };
 ParaInstrText.prototype.SetCharCode = function(CharCode)
 {
@@ -2096,6 +2152,39 @@ CComplexField.prototype.GetRelatedParagraphs = function()
 		result.push(endPara);
 	
 	return result;
+};
+CComplexField.prototype.IsShowFieldCode = function()
+{
+	if (!this.IsValid())
+		return false;
+	
+	return this.BeginChar.IsShowFieldCode();
+};
+CComplexField.prototype.ToggleFieldCodes = function()
+{
+	let isShowFieldCode = !this.BeginChar.IsShowFieldCode();
+	
+	this.BeginChar.SetShowFieldCode(isShowFieldCode);
+	
+	let logicDocument = this.LogicDocument;
+	if (!logicDocument)
+		return;
+	
+	let history    = logicDocument.GetHistory();
+	let recalcData = history.getRecalcDataByElements([this.BeginChar.GetParagraph()]);
+	logicDocument.RecalculateWithParams(recalcData);
+	
+	if (isShowFieldCode)
+	{
+		this.BeginChar.MoveCursorToChar(false);
+	}
+	else
+	{
+		if (this.SeparateChar)
+			this.SeparateChar.MoveCursorToChar(false);
+		else
+			this.EndChar.MoveCursorToChar(true);
+	}
 };
 
 function getRefInstruction(sBookmarkName, nType, bHyperlink, bAboveBelow, sSeparator)

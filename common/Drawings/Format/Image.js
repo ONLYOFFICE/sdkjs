@@ -591,14 +591,14 @@
 			var oldBrush = this.brush;
 			var oldPen = this.pen;
 
-			if (this.getObjectType() === AscDFH.historyitem_type_OleObject) {
+			if (this.getObjectType() === AscDFH.historyitem_type_OleObject && !graphics.isBoundsChecker()) {
 				var sImageId = this.blipFill && this.blipFill.RasterImageId;
 				if (sImageId) {
 					var oApi = editor || window['Asc']['editor'];
 					if (oApi) {
 						sImageId = AscCommon.getFullImageSrc2(sImageId);
 						var _img = oApi.ImageLoader.map_image_index[sImageId];
-						if ((_img && _img.Status === AscFonts.ImageLoadStatus.Loading) || (_img && _img.Image) || graphics.isBoundsChecker()) {
+						if ((_img && _img.Status === AscFonts.ImageLoadStatus.Loading) || (_img && _img.Image) || window["NATIVE_EDITOR_ENJINE"]) {
 							this.brush = CreateBrushFromBlipFill(this.blipFill);
 							this.pen = null;
 						} else {
@@ -755,9 +755,6 @@
 			return true;
 		};
 
-		CImageShape.prototype.Load_LinkData = function (linkData) {
-		};
-
 		CImageShape.prototype.getTypeName = function () {
 			return AscCommon.translateManager.getValue("Picture");
 		};
@@ -907,7 +904,9 @@
 		CImageShape.prototype.getText = function() {
 			return null;
 		};
-
+		CImageShape.prototype.canFill = function () {
+			return true;
+		};
 
 		function CreateBrushFromBlipFill(oBlipFill) {
 			if (!oBlipFill) {

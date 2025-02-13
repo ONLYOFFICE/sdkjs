@@ -649,6 +649,7 @@ function (window, undefined) {
 	cDATEDIF.prototype.argumentsMin = 3;
 	cDATEDIF.prototype.argumentsMax = 3;
 	cDATEDIF.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cDATEDIF.prototype.argumentsType = [argType.number, argType.number, argType.text];
 	cDATEDIF.prototype.Calculate = function (arg) {
 		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
 

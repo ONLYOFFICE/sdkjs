@@ -92,7 +92,7 @@
 			this.delimiter = delimiter;
 			this.delimiterChar = delimiterChar;
 
-			this.textQualifier = null;
+			this.textQualifier = '"';
 
 			this.numberDecimalSeparator = null;
 			this.numberGroupSeparator = null;

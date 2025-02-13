@@ -260,7 +260,12 @@
 
 			MustIntegerOrDecimalNumber: 1070,
 
-			DocumentAndChangeMismatch: 1080
+			DocumentAndChangeMismatch: 1080,
+			EditProtectedRange       : 1081,
+
+
+			// pdf forms
+			PDFFormsLocked: -1200
 		}
 	};
 
@@ -438,6 +443,8 @@
 	prot['TracePrecedentsNoValidReference']  = prot.TracePrecedentsNoValidReference;
 	prot['MustIntegerOrDecimalNumber']       = prot.MustIntegerOrDecimalNumber;
 	prot['DocumentAndChangeMismatch']        = prot.DocumentAndChangeMismatch;
+	prot['EditProtectedRange']               = prot.EditProtectedRange;
+	prot['PDFFormsLocked']                   = prot.PDFFormsLocked;
 
 
 

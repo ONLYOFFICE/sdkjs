@@ -494,15 +494,7 @@ asc_CChartBinary.prototype = {
         var binary = this["themeBinary"];
         if(binary)
         {
-            var stream = AscFormat.CreateBinaryReader(binary, 0, binary.length);
-            var oBinaryReader = new AscCommon.BinaryPPTYLoader();
-
-            oBinaryReader.stream = new AscCommon.FileStream();
-            oBinaryReader.stream.obj    = stream.obj;
-            oBinaryReader.stream.data   = stream.data;
-            oBinaryReader.stream.size   = stream.size;
-            oBinaryReader.stream.pos    = stream.pos;
-            oBinaryReader.stream.cur    = stream.cur;
+            let oBinaryReader = AscFormat.CreatePPTYLoader(binary, 0, binary.length);
             return oBinaryReader.ReadTheme();
         }
         return null;
@@ -513,16 +505,9 @@ asc_CChartBinary.prototype = {
         var binary = this["colorMapBinary"];
         if(binary)
         {
-            var stream = AscFormat.CreateBinaryReader(binary, 0, binary.length);
-            var oBinaryReader = new AscCommon.BinaryPPTYLoader();
-            oBinaryReader.stream = new AscCommon.FileStream();
-            oBinaryReader.stream.obj    = stream.obj;
-            oBinaryReader.stream.data   = stream.data;
-            oBinaryReader.stream.size   = stream.size;
-            oBinaryReader.stream.pos    = stream.pos;
-            oBinaryReader.stream.cur    = stream.cur;
-            var _rec = oBinaryReader.stream.GetUChar();
-            var ret = new AscFormat.ClrMap();
+            let oBinaryReader = AscFormat.CreatePPTYLoader(binary, 0, binary.length);
+            let _rec = oBinaryReader.stream.GetUChar();
+            let ret = new AscFormat.ClrMap();
             oBinaryReader.ReadClrMap(ret);
             return ret;
         }
@@ -2713,7 +2698,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                 oContent.AddToParagraph(new AscCommonWord.MathMenu(Type), false);
             }
             oSp.checkExtentsByDocContent();
-            oSp.spPr.xfrm.setOffX(pxToMm(coordsFrom.x) + MOVE_DELTA);
+            oSp.spPr.xfrm.setOffX(pxToMm(coordsFrom.x) + MOVE_DELTA - ((worksheet.getRightToLeft() && oSp.spPr.xfrm.extX) ? oSp.spPr.xfrm.extX : 0));
             oSp.spPr.xfrm.setOffY(pxToMm(coordsFrom.y) + MOVE_DELTA);
 
             oSp.checkDrawingBaseCoords();

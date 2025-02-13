@@ -66,7 +66,7 @@
         let oParent     = this.GetParent();
         let aParentOpt  = oParent ? oParent.GetOptions() : undefined;
         let aFields     = this.GetDocument().GetAllWidgets(this.GetFullName());
-        let value       = this.GetApiValue();
+        let value       = this.GetParentValue();
 
         let bFromOpt = false;
         let sExportValue;

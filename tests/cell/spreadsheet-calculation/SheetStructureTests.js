@@ -129,7 +129,7 @@ $(function () {
 	api.isOpenOOXInBrowser = false;
 	api._openDocument(AscCommon.getEmpty());
 	api._openOnClient();
-	api.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
+	api.initCollaborativeEditing({});
 	api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,
 		api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
 	var wb = api.wbModel;
@@ -2843,8 +2843,8 @@ $(function () {
 		resCell = ws.getRange4(101, 70);
 		resCell.setValue("=" + tableName +"[#All]");
 		
-		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName, "Value for edit in cell after Table[#All] is typed");
-		assert.strictEqual(resCell.getFormula(), tableName, "Formula in cell after Table[#All] is typed");
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[#All]", "Value for edit in cell after Table[#All] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[#All]", "Formula in cell after Table[#All] is typed");
 
 
 		// calc res check
@@ -2883,8 +2883,8 @@ $(function () {
 		resCell = ws.getRange4(101, 80);
 		resCell.setValue("=" + tableName +"[#Data]");
 		
-		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName, "Value for edit in cell after Table[#Data] is typed");
-		assert.strictEqual(resCell.getFormula(), tableName, "Formula in cell after Table[#Data] is typed");
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName +"[#Data]", "Value for edit in cell after Table[#Data] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName +"[#Data]", "Formula in cell after Table[#Data] is typed");
 
 
 		// calc res check
@@ -3021,6 +3021,40 @@ $(function () {
 		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[[#Data],[#Headers]]", "Value for edit in cell after Table[[#Data],[#Headers]] is typed");
 		assert.strictEqual(resCell.getFormula(), tableName + "[[#Data],[#Headers]]", "Formula in cell after Table[[#Data],[#Headers]] is typed");
 
+		// for bug 46174
+		// calc res check
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula("[[Column1]]", cellWithFormula, ws);
+		assert.ok(oParser.parse(true));
+		array = oParser.calculate();
+		assert.strictEqual(array.getValueByRowCol(0, 0).getValue(), 1, 'Short notation. Result of [[Column1]][0,0] inside table');
+		assert.strictEqual(array.getValueByRowCol(1, 0).getValue(), 1, 'Short notation. Result of [[Column1]][1,0] inside table');
+		assert.strictEqual(array.getValueByRowCol(2, 0).getValue(), 1, 'Short notation. Result of [[Column1]][2,0] inside table');
+		assert.strictEqual(array.getValueByRowCol(3, 0).getValue(), 1, 'Short notation. Result of [[Column1]][3,0] inside table');
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 105, 0);
+		oParser = new AscCommonExcel.parserFormula("[[Column1]]", cellWithFormula, ws);
+		assert.ok(!oParser.parse(true));
+		array = oParser.calculate();
+		assert.strictEqual(array.type, AscCommonExcel.cElementType.error, 'Short notation. Result of [[Column1]] outside table');
+		
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 101, 20);
+		oParser = new AscCommonExcel.parserFormula(tableName + "[[Column1]]", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getValueByRowCol(0, 0).getValue(), 1, 'Result of [[Column1]][0,0]');
+		assert.strictEqual(array.getValueByRowCol(1, 0).getValue(), 1, 'Result of [[Column1]][1,0]');
+		assert.strictEqual(array.getValueByRowCol(2, 0).getValue(), 1, 'Result of [[Column1]][2,0]');
+		assert.strictEqual(array.getValueByRowCol(3, 0).getValue(), 1, 'Result of [[Column1]][3,0]');
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(101, 20);
+		resCell.setValue("=" + tableName +"[[Column1]]");
+		
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[Column1]", "Value for edit in cell after Table[[Column1]] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[Column1]", "Formula in cell after Table[[Column1]] is typed");
+
+
 		clearData(0, 99, 0, 105);
 	});
 
@@ -3040,7 +3074,6 @@ $(function () {
 		let tables = wsView.model.autoFilters.getTablesIntersectionRange(new Asc.Range(0, 100, 0, 100));
 		assert.strictEqual(tables.length, 1, "compare tables length");
 
-		debugger
 		let table = tables[0];
 		let tableName = table.DisplayName;	// due to the fact that other tables are used in file, get the name of the one we need by this way
 		wsView.af_changeFormatTableInfo(tableName, Asc.c_oAscChangeTableStyleInfo.rowTotal, true);
@@ -3062,8 +3095,8 @@ $(function () {
 		resCell = ws.getRange4(101, 70);
 		resCell.setValue("=" + tableName +"[#All]");
 		
-		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName, "Value for edit in cell after Table[#All] is typed");
-		assert.strictEqual(resCell.getFormula(), tableName, "Formula in cell after Table[#All] is typed");
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[#All]", "Value for edit in cell after Table[#All] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[#All]", "Formula in cell after Table[#All] is typed");
 
 
 		/* column header check */
@@ -3304,6 +3337,17 @@ $(function () {
 		wb.dependencyFormulas._foreachDefName(function(defName) {
 			wb.dependencyFormulas.removeDefName(undefined, defName.name);
 		});
+
+		// for bug 61855
+		let insertArgsRes = api.wb.insertArgumentsInFormula(["1"], 0, 0, "SUM", true/*bEndInsertArg*/);
+		assert.strictEqual(insertArgsRes && insertArgsRes.functionResult, "1", "Calculation result for SUM function when insert first argument in formula");
+
+		insertArgsRes = api.wb.insertArgumentsInFormula(["1,2"], 1, 0, "SUM", true);
+		assert.strictEqual(insertArgsRes && insertArgsRes.functionResult, "3", "Calculation result for SUM function when insert second argument in formula");
+
+		insertArgsRes = api.wb.insertArgumentsInFormula(["1"], 1, 0, "SUM", true);
+		assert.strictEqual(insertArgsRes && insertArgsRes.functionResult, "1", "Calculation result for SUM function when delete second argument in formula");
+		
 	});
 
 	QUnit.test('autoCompleteFormula', function (assert) {
@@ -3863,6 +3907,182 @@ $(function () {
 		supposedActiveCell = ws.getCell2("B22");
 		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. B20:B22(only text in range) autosum");
 
+		/* autocomplete to merge cells */
+		ws.getRange2("A30:B31").setValue("111");
+		// C30:D31 merge & center
+		ws.getRange2("C30:D31").merge(Asc.c_oAscMergeOptions.MergeCenter);
+		assert.ok(ws.getRange2("C30:D31").hasMerged(), 'Range C30:D31 is merged');
+
+		fillRange = ws.getRange2("A30:D31");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("C30");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A30:D31 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A30:D31 autosum");
+		resCell = ws.getRange2("C31");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A30:D31 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A30:D31 autosum");
+		resCell = ws.getRange2("D30");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A30:D31 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A30:D31 autosum");
+		resCell = ws.getRange2("D31");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A30:D31 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A30:D31 autosum");
+
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A30:D31", "Selection after A30:D31 autosum");
+
+
+		ws.getRange2("A40:B41").setValue("111");
+		ws.getRange2("C40:C41").merge(Asc.c_oAscMergeOptions.MergeCenter);
+		assert.ok(ws.getRange2("C40:C41").hasMerged(), 'Range C40:C41 is merged');
+
+		ws.getRange2("D40:D41").merge(Asc.c_oAscMergeOptions.MergeCenter);
+		assert.ok(ws.getRange2("D40:C41").hasMerged(), 'Range D40:C41 is merged');
+
+		fillRange = ws.getRange2("A40:D41");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("C40");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A40:D41 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A40:D41 autosum");
+		resCell = ws.getRange2("C41");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A40:D41 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A40:D41 autosum");
+		resCell = ws.getRange2("D40");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A40:D41 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A40:D41 autosum");
+		resCell = ws.getRange2("D41");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A40:D41 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A40:D41 autosum");
+
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A40:D41", "Selection after A40:D41 autosum");
+
+
+		ws.getRange2("A50:A51").setValue("111");
+		ws.getRange2("A52:A53").merge(Asc.c_oAscMergeOptions.MergeCenter);
+		assert.ok(ws.getRange2("A52:A53").hasMerged(), 'Range A52:A53 is merged');
+
+		fillRange = ws.getRange2("A50:A53");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("A52");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A50:A53 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A50:A53 autosum");
+		resCell = ws.getRange2("A52");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A50:A53 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A50:A53 autosum");
+
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A50:A53", "Selection after A50:A53 autosum");
+
+
+		ws.getRange2("A60:B61").setValue("111");
+		ws.getRange2("C60:D60").merge(Asc.c_oAscMergeOptions.MergeCenter);
+		assert.ok(ws.getRange2("C60:D60").hasMerged(), 'Range C60:D60 is merged');
+
+		ws.getRange2("C62:D62").merge(Asc.c_oAscMergeOptions.MergeCenter);
+		assert.ok(ws.getRange2("C62:D62").hasMerged(), 'Range C62:D62 is merged');
+
+		fillRange = ws.getRange2("A60:D62");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("A62");
+		assert.strictEqual(resCell.getValueWithFormat(), "222", "Value in merged cell after A60:D62 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A60:A61)", "Formula in merged cell after A60:D62 autosum");
+		resCell = ws.getRange2("B62");
+		assert.strictEqual(resCell.getValueWithFormat(), "222", "Value in merged cell after A60:D62 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(B60:B61)", "Formula in merged cell after A60:D62 autosum");
+		resCell = ws.getRange2("C62");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A60:D62 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A60:D62 autosum");
+		resCell = ws.getRange2("D62");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A60:D62 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A60:D62 autosum");
+		resCell = ws.getRange2("D60");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A60:D62 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A60:D62 autosum");
+		resCell = ws.getRange2("D61");
+		assert.strictEqual(resCell.getValueWithFormat(), "222", "Value in merged cell after A60:D62 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A61:C61)", "Formula in merged cell after A60:D62 autosum");
+
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A60:D62", "Selection after A60:D62 autosum");
+
+		ws.getRange2("A1:D70").cleanAll();
+		// autosum from merged cell
+		ws.getRange2("A70:B70").setValue("111");
+		ws.getRange2("C70:D70").merge(Asc.c_oAscMergeOptions.MergeCenter);
+		assert.ok(ws.getRange2("C70:D70").hasMerged(), 'Range C70:D70 is merged');
+
+		fillRange = ws.getRange2("D70");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, "A70:B70", "Formula after autosum from merged cell. C70:D70 autosum from right");
+		resCell = ws.getRange2("C70");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after C70:D70 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after C70:D70 autosum");
+
+
+		ws.getRange2("A80:B82").setValue("111");
+		ws.getRange2("C80:H88").merge(Asc.c_oAscMergeOptions.MergeCenter);
+		assert.ok(ws.getRange2("C80:H88").hasMerged(), 'Range C80:H88" is merged');
+
+		fillRange = ws.getRange2("D82");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, "A80:B80", "Formula after autosum from merged cell. C80:H88 autosum from right");
+		resCell = ws.getRange2("C80");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after C80:H88 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after C80:H88 autosum");
+
+
+		ws.getRange2("A90:B91").setValue("111");
+		ws.getRange2("A92:D94").merge(Asc.c_oAscMergeOptions.MergeCenter);
+		assert.ok(ws.getRange2("A92:D94").hasMerged(), 'Range A92:D94 is merged');
+
+		fillRange = ws.getRange2("D94");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, "A90:A91", "Formula after autosum from merged cell. A92:D94 autosum from bottom");
+		resCell = ws.getRange2("A92");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A92:D94 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A92:D94 autosum");
+
+
+		ws.getRange2("A110:C111").setValue("111");
+		ws.getRange2("C112").setValue("111");
+		ws.getRange2("A113:C115").merge(Asc.c_oAscMergeOptions.MergeCenter);
+		assert.ok(ws.getRange2("A113:C115").hasMerged(), 'Range A113:C115 is merged');
+
+		fillRange = ws.getRange2("C113");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, "A110:A112", "Formula after autosum from merged cell. A113:C115 autosum from bottom");
+		resCell = ws.getRange2("A92");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A113:C115 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A113:C115 autosum");
 		
 		ws.getRange2("A1:Z100").cleanAll();
 	});
@@ -5038,16 +5258,15 @@ $(function () {
 		getAutofillCase([0, 0, 6, 7], [0, 0, 5, 0], 1, 'Date & Time format. Reverse sequence. Vertical. Two selected cells. Step - month. 1900 year.', expectedData);
 		ws.getRange2('A1:A20').cleanAll();
 		// Case #74: Date & Time format. Asc sequence. Horizontal. Two selected cells. Step - month. Asc month seq, but time sequence is reverse.
-		// TODO Need to fix bug.
-		/*testData = [
+		testData = [
 			['02/01/2000 12:00', '04/01/2000 5:00']
 		];
 		range = ws.getRange4(0, 0);
 		range.fillData(testData);
 		undoData = ['', '', '', '', '', ''];
-		expectedData = ['36677.91667', '36738.625', '36799.33333', '36860.04167', '36921.75', '36980.45833'];
+		expectedData = ['36677.916666666664', '36738.62499999999', '36799.33333333332', '36860.04166666665', '36921.74999999998', '36980.45833333331'];
 		getAutofillCase([0, 1, 0, 0], [2, 7, 0, 0], 3, 'Date & Time format. Asc sequence. Horizontal. Two selected cells. Step - month. Asc month seq, but time sequence is reverse.', expectedData);
-		ws.getRange2('A1:Z20').cleanAll();*/
+		ws.getRange2('A1:Z20').cleanAll();
 		// Case #75: Mixed date format. Asc sequence. Vertical. Two selected cells. Step - month.
 		testData = [
 			['01/01/2000 12:00'],
@@ -5266,6 +5485,43 @@ $(function () {
 		undoData = [[''], [''], ['37987'], ['37257.5'], ['36526.5']];
 		expectedData = [['35796.5'], ['35065.5'], ['34335.5'], ['33604.5'], ['32874.5']];
 		getAutofillCase([0, 0, 5, 7], [0, 0, 4, 0], 1, 'Mixed date format. Reverse sequence. Vertical. Three selected cells. Step - year.', expectedData);
+		ws.getRange2('A1:A20').cleanAll();
+		// Case #101: Date & Time format. Asc sequence. Horizontal. Two selected cells. Step - year. Asc month seq, but time sequence is reverse.
+		testData = [
+			['01/01/2000 12:00', '01/01/2002 5:00']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = ['', '', '', '', '', ''];
+		expectedData = ['37986.916666666664', '38717.62499999999', '39447.33333333332', '40178.04166666665', '40907.74999999998', '41638.45833333331'];
+		getAutofillCase([0, 1, 0, 0], [2, 7, 0, 0], 3, 'Date & Time format. Asc sequence. Horizontal. Two selected cells. Step - year. Asc month seq, but time sequence is reverse.', expectedData);
+		// Case #102: Date & Time format. Reverse sequence. Horizontal. Two selected cells. Step - year. Asc month seq, but time sequence is reverse.
+		range = ws.getRange4(0, 6);
+		range.fillData(testData);
+		undoData = ['', '', '', '', '37257.208333333336', '36526.5'];
+		expectedData = ['35796.79166666666', '35066.083333333314', '34336.37499999997', '33605.66666666663', '32875.958333333285', '32145.24999999994'];
+		getAutofillCase([6, 7, 0, 0], [5, 0, 0, 0], 1, 'Date & Time format. Reverse sequence. Horizontal. Two selected cells. Step - year. Asc month seq, but time sequence is reverse.', expectedData);
+		ws.getRange2('A1:Z20').cleanAll();
+		// Case #103: Date format. Asc sequence. Vertical. Two selected cells. Step - month. Next month is February, and the day is more than the last day of the month.
+		testData = [
+			['12/30/2002'],
+			['01/30/2003']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], [''], [''], [''], ['']];
+		expectedData = [['37680'], ['37710'], ['37741'], ['37771'], ['37802'], ['37832']];
+		getAutofillCase([0, 0, 0, 1], [0, 0, 2, 7], 3, 'Date format. Asc sequence. Vertical. Two selected cells. Step - month. Next month is February, and the day is more than the last day of the month.', expectedData);
+		// Case #104: Date format. Reverse sequence. Vertical. Two selected cells. Step - month. Next month is February, and the day is more than the last day of the month.
+		testData = [
+			['03/30/2003'],
+			['04/30/2003']
+		]
+		range = ws.getRange4(6, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], [''], [''], ['37651'], ['37620']];
+		expectedData = [['37680'], ['37651'], ['37620'], ['37590'], ['37559'], ['37529']];
+		getAutofillCase([0, 0, 6, 7], [0, 0, 5, 0], 1, 'Date format. Reverse sequence. Vertical. Two selected cells. Step - month. Next month is February, and the day is more than the last day of the month.', expectedData);
 		ws.getRange2('A1:A20').cleanAll();
 	});
 
@@ -5538,5 +5794,55 @@ $(function () {
 
 	});
 
-	QUnit.module("Sheet structure");
+	QUnit.test('All selection test', function (assert) {
+
+		ws.getRange2("A1:Z100").cleanAll();
+
+		ws.getRange2("A1").setValue("1");
+		ws.getRange2("A2").setValue("2");
+		ws.getRange2("B1").setValue("3");
+		ws.getRange2("B2").setValue("4");
+		ws.getRange2("C2").setValue("5");
+
+		let fillRange = new Asc.Range(0, 0, 0, 0);
+		wsView.setSelection(fillRange);
+		assert.strictEqual(ws.selectionRange.getLast().getName(), "A1");
+
+		api.wb._onSelectAllByRange();
+		assert.strictEqual(ws.selectionRange.getLast().getName(), "A1:C2");
+		api.wb._onSelectAllByRange();
+		assert.strictEqual(ws.selectionRange.getLast().getType(), Asc.c_oAscSelectionType.RangeMax);
+
+		fillRange = new Asc.Range(10, 10, 10, 10);
+		wsView.setSelection(fillRange);
+		api.wb._onSelectAllByRange();
+		assert.strictEqual(ws.selectionRange.getLast().getType(), Asc.c_oAscSelectionType.RangeMax);
+
+
+		let tableOptions = new AscCommonExcel.AddFormatTableOptions();
+		fillRange = new Asc.Range(0, 0, 2, 1);
+		tableOptions.range = fillRange.getName();
+		ws.autoFilters.addAutoFilter("style", fillRange, tableOptions);
+		assert.strictEqual(ws.TableParts.length, 1);
+		assert.strictEqual(ws.TableParts[0].Ref.getName(), "A1:C3");
+
+
+		fillRange = new Asc.Range(1, 1, 1, 1);
+		wsView.setSelection(fillRange);
+		api.wb._onSelectAllByRange();
+		assert.strictEqual(ws.selectionRange.getLast().getName(), "A2:C3");
+		api.wb._onSelectAllByRange();
+		assert.strictEqual(ws.selectionRange.getLast().getName(), "A1:C3");
+		api.wb._onSelectAllByRange();
+		assert.strictEqual(ws.selectionRange.getLast().getType(), Asc.c_oAscSelectionType.RangeMax);
+
+		fillRange = new Asc.Range(0, 0, 0, 0);
+		wsView.setSelection(fillRange);
+		api.wb._onSelectAllByRange();
+		assert.strictEqual(ws.selectionRange.getLast().getName(), "A1:C3");
+		api.wb._onSelectAllByRange();
+		assert.strictEqual(ws.selectionRange.getLast().getType(), Asc.c_oAscSelectionType.RangeMax);
+	});
+
+		QUnit.module("Sheet structure");
 });

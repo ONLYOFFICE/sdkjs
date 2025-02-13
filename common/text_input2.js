@@ -122,8 +122,9 @@
 
 		// параметры для показа/скрытия виртуальной клавиатуры.
 		this.isHardCheckKeyboard = AscCommon.AscBrowser.isSailfish;
+
 		this.virtualKeyboardClickTimeout = -1;
-		this.virtualKeyboardClickPrevent = false;
+		this.virtualKeyboardReadOnly_ShowKeyboard = AscCommon.AscBrowser.isAndroid && AscCommon.AscBrowser.isMozilla;
 
 		// для сброса текста при фокусе
 		this.checkClearTextOnFocusTimerId = -1;
@@ -1189,7 +1190,9 @@
 		if (AscCommon.AscBrowser.isAndroid)
 		{
 			this.setReadOnlyWrapper(true);
-			this.virtualKeyboardClickPrevent = true;
+
+			if (this.virtualKeyboardReadOnly_ShowKeyboard)
+				return;
 
 			this.virtualKeyboardClickTimeout = setTimeout(function ()
 			{
@@ -1205,6 +1208,9 @@
 
 		if (AscCommon.AscBrowser.isAndroid)
 		{
+			if (this.virtualKeyboardReadOnly_ShowKeyboard)
+				return;
+
 			if (-1 != this.virtualKeyboardClickTimeout)
 			{
 				clearTimeout(this.virtualKeyboardClickTimeout);
@@ -1212,7 +1218,6 @@
 			}
 
 			this.setReadOnlyWrapper(false);
-			this.virtualKeyboardClickPrevent = false;
 		}
 	};
 	CTextInputPrototype.preventVirtualKeyboard_Hard = function()
@@ -1223,6 +1228,22 @@
 	{
 		this.setReadOnlyWrapper(false);
 	};
+
+	CTextInputPrototype.showKeyboard = function()
+	{
+		if (this.virtualKeyboardReadOnly_ShowKeyboard)
+		{
+			if (this.HtmlArea.readOnly === true)
+			{
+				this.setReadOnlyWrapper(false);
+			}
+		}
+
+		if (!this.Api.asc_IsFocus())
+			this.Api.asc_enableKeyEvents(true);
+		else
+			focusHtmlElement(this.HtmlArea);
+	}
 
 	CTextInputPrototype.checkViewMode = function()
 	{

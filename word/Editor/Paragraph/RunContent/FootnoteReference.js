@@ -154,7 +154,10 @@
 		// Bool : is undefined mark ?
 		// false -> String2 : CustomMark
 		this.Footnote = g_oTableId.Get_ById(Reader.GetString2());
-
+		
+		if (this.Footnote)
+			this.Footnote.SetRef(this);
+		
 		if (false === Reader.GetBool())
 			this.CustomMark = Reader.GetString2();
 	};

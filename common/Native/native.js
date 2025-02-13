@@ -269,13 +269,18 @@ function NativeCreateApi(options)
 
 	switch (window.NATIVE_DOCUMENT_TYPE)
 	{
-		case "draw":
 		case "document":
 		case "presentation":
 		{
 			Api = new window["Asc"]["asc_docs_api"](configApi);
 			if (options && options["documentLayout"] && undefined !== options["documentLayout"]["openedAt"])
 				Api.setOpenedAt(options["documentLayout"]["openedAt"]);
+			if (options && options["documentLayout"] && undefined !== options["documentLayout"]["headingsColor"])
+			{
+				let rgba = window["AscCommon"]["RgbaTextToRGBA"](options["documentLayout"]["headingsColor"]);
+				if (window["AscWord"] && window["AscWord"]["setDefaultHeadingColor"])
+					window["AscWord"]["setDefaultHeadingColor"](rgba.R, rgba.G, rgba.B);
+			}
 			break;
 		}
 		case "spreadsheet":
@@ -286,6 +291,11 @@ function NativeCreateApi(options)
 		case "pdf":
 		{
 			Api = new window["Asc"]["PDFEditorApi"](configApi);
+			break;
+		}
+		case "visio":
+		{
+			Api = new window["Asc"]["VisioEditorApi"](configApi);
 			break;
 		}
 		default:
@@ -302,7 +312,7 @@ function NativeOpenFileData(data, version, xlsx_file_path, options)
 
 	switch (window.NATIVE_DOCUMENT_TYPE)
 	{
-		case "draw":
+		case "visio":
 		case "document":
 		case "presentation":
 		{

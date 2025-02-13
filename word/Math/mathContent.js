@@ -2505,13 +2505,7 @@ CMathContent.prototype.CopyTo = function(OtherContent, Selected, oPr)
     }
     if(oPr && oPr.Comparison)
     {
-        if (oPr.SkipUpdateInfo) {
-            oPr.Comparison.saveReviewInfo(OtherContent, OtherContent);
-        } else if (oPr.bSaveCustomReviewType) {
-            oPr.Comparison.saveCustomReviewInfo(OtherContent, OtherContent, oPr.Comparison.nInsertChangesType);
-        } else {
-            oPr.Comparison.updateReviewInfo(OtherContent, oPr.Comparison.nInsertChangesType);
-        }
+	    oPr.Comparison.checkReviewInfoOfCopiedElements(OtherContent, OtherContent);
     }
 };
 CMathContent.prototype.getElem = function(nNum)
@@ -6181,15 +6175,8 @@ CMathContent.prototype.Process_AutoCorrect = function(oElement)
 	AscCommon.ExecuteEditorAction({description : AscDFH.historydescription_Document_AutoCorrectMath},
 		function()
 		{
-			const arrNextContent = this.SplitContentByPos(this.CurPos, true);
-			if (arrNextContent === false)
-				return;
-
 			if (nInputType === 0)
 				AscMath.StartAutoCorrectionMath(this);
-
-			if (arrNextContent.length > 0)
-				this.AddContentForAutoCorrection(arrNextContent, true);
 		},
 		logicDocument, this
 	);

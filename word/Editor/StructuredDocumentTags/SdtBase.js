@@ -391,6 +391,30 @@ CSdtBase.prototype.IsRadioButton = function()
 	return !!(this.IsCheckBox() && this.Pr.CheckBox && this.Pr.CheckBox.GroupKey);
 };
 /**
+ * Проверяем является ли данный контейнер специальным для поля со списком
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsComboBox = function()
+{
+	return (undefined !== this.Pr.ComboBox);
+};
+/**
+ * Проверяем является ли данный контейнер специальным для выпадающего списка
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsDropDownList = function()
+{
+	return (undefined !== this.Pr.DropDown);
+};
+/**
+ * Проверяем является ли данный контейнер специальным для даты
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsDatePicker = function()
+{
+	return (undefined !== this.Pr.Date);
+};
+/**
  * Является ли данный контейнер специальной текстовой формой
  * @returns {boolean}
  */
@@ -1131,12 +1155,108 @@ CSdtBase.prototype.IsHideContentControlTrack = function()
 	
 	return Asc.c_oAscSdtAppearance.Hidden === this.GetAppearance();
 };
-
-// TODO: Temporary for building purpose. Remove when actual class is added
-(function()
+CSdtBase.prototype.setDataBinding = function(dataBinding)
 {
-	function DataBinding()
+	AscCommon.History.Add(new CChangesSdtPrDataBinding(this, this.Pr.DataBinding, dataBinding));
+	this.Pr.DataBinding = dataBinding;
+};
+CSdtBase.prototype.getDataBinding = function()
+{
+	return this.Pr.DataBinding;
+};
+/**
+ * Проверяем, есть ли привязанные данные, и если есть заполняем ими содержимое контрола
+ */
+CSdtBase.prototype.checkDataBinding = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !this.Pr.DataBinding)
+		return;
+	
+	let customXmlManager = logicDocument.getCustomXmlManager();
+	if (!customXmlManager || !customXmlManager.isSupported())
+		return;
+	
+	let content = customXmlManager.getContentByDataBinding(this.Pr.DataBinding, this);
+	if (!content)
+		return;
+	
+	if (this.IsPicture())
 	{
+		let allDrawings = this.GetAllDrawingObjects();
+		if (!allDrawings.length)
+			return;
+
+		let drawing = allDrawings[0];
+		let imageData = "data:image/jpeg;base64," + content;
+		let editor = logicDocument.GetApi();
+		editor.ImageLoader.LoadImagesWithCallback([imageData], function(){}, 0, true);
+		
+		let w = drawing.getXfrmExtX();
+		let h = drawing.getXfrmExtY();
+		
+		let imageShape = logicDocument.DrawingObjects.createImage(imageData, 0, 0, w, h);
+		imageShape.setParent(drawing);
+		drawing.Set_GraphicObject(imageShape);
 	}
-	AscWord.DataBinding = DataBinding;
-})();
+	else if (this.IsCheckBox())
+	{
+		if (content === "true" || content === "1")
+		{
+			let checkBoxPr = this.Pr.CheckBox.Copy();
+			checkBoxPr.SetChecked(true);
+			this.SetCheckBoxPr(checkBoxPr)
+		}
+		else if (content === "false" || content === "0")
+		{
+			let checkBoxPr = this.Pr.CheckBox.Copy();
+			checkBoxPr.SetChecked(false);
+			this.SetCheckBoxPr(checkBoxPr)
+		}
+	}
+	else if (this.IsDatePicker())
+	{
+		let date = new Date(content);
+		if (isNaN(date))
+		{
+			if (typeof content === "string")
+				this.SetInnerText(content);
+		}
+		else
+		{
+			let datePr = this.Pr.Date.Copy();
+			datePr.SetFullDate(content);
+			this.SetDatePickerPr(datePr);
+			this.private_UpdateDatePickerContent();
+		}
+	}
+	else if (this.IsDropDownList() || this.IsComboBox() || this.Pr.Text === true)
+	{
+		if (typeof content === "string")
+			this.SetInnerText(content);
+	}
+	else if (this.canFillWithComplexDataBindingContent())
+	{
+		let customXmlManager = logicDocument.getCustomXmlManager();
+		let arrContent       = customXmlManager.proceedLinearXMl(content);
+		this.fillContentWithDataBinding(arrContent);
+	}
+};
+CSdtBase.prototype.canFillWithComplexDataBindingContent = function()
+{
+	return false;
+};
+CSdtBase.prototype.fillContentWithDataBinding = function(content)
+{
+
+};
+CSdtBase.prototype.updateDataBinding = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	let dataBinding = this.Pr.DataBinding;
+	if (!dataBinding || !logicDocument || !logicDocument.IsDocumentEditor())
+		return;
+	
+	let customXmlManager = logicDocument.getCustomXmlManager();
+	customXmlManager.updateDataBinding(this);
+};

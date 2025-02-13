@@ -129,6 +129,13 @@
 		 * @type {(CShape | CGroupShape | CImageShape)[][]} topLevelShapesAndGroups
 		 */
 		this.pageShapesCache = [];
+		/**
+		 * Stores pages for which background shapes were add already. Stores indexes in pageInfo array
+		 * @type {number[]}
+		 */
+		this.backgroundAppliedFor = [];
+
+		this.isPagesArranged = false;
 
 		//stubs for compatibility with DocumentContent
 		AscCommon.mockLogicDoc(CVisioDocument.prototype);
@@ -295,6 +302,22 @@
 		//to be parent of shape
 		return 0;
 	};
+	/**
+	 * @memberOf CVisioDocument
+	 * @return {number}
+	 */
+	CVisioDocument.prototype.GetFirstSelectedType = function() {
+		return -1;
+	};
+	/**
+	 * @memberOf CVisioDocument
+	 * @param nIdx
+	 * @return {number}
+	 */
+	CVisioDocument.prototype.GetSlideType = function(nIdx) {
+		//чтобы не работал select thumbnail c ctrl или shift
+		return nIdx;
+	};
 
 	/**
 	 * get zoom from 0 to 100
@@ -377,6 +400,7 @@
 		 * @param api
 		 */
 		function loadFontByName(fontName, aFonts, api) {
+			// if font is not loaded already
 			if (aFonts.findIndex(function (cFont) {
 				return cFont.name === fontName;
 			}) !== -1) {
@@ -384,6 +408,7 @@
 			}
 			aFonts.push(new AscFonts.CFont(fontName, newFontIndex, "", 0));
 			newFontIndex++;
+
 			let fontInfo = api.FontLoader.fontInfos.find(function(cFontInfo) {
 				return cFontInfo.Name === fontName;
 			});
@@ -434,7 +459,7 @@
 	 */
 	CVisioDocument.prototype.draw = function(Zoom, pGraphics, pageIndex) {
 		function drawShapeOrGroupRecursively(graphics, shapeOrGroup, baseMatrix, baseTextMatrix,
-											 changeTextDirection, logic_h_mm, currentGroupHandling) {
+											 isRecalculateTextY, isFlipImages, isAdditionalRecalculate, logic_h_mm, currentGroupHandling) {
 			// see sdkjs/common/Shapes/Serialize.js this.ReadGroupShape = function(type) to
 			// learn how to work with shape groups
 
@@ -476,21 +501,22 @@
 				shape_drawer.Clear();
 				graphics.RestoreGrState();
 
+
 				// handle group children
 				group.spTree.forEach(function(shapeOrGroup) {
-					drawShapeOrGroupRecursively(graphics, shapeOrGroup, baseMatrix, baseTextMatrix, changeTextDirection,
-						logic_h_mm, group);
+					drawShapeOrGroupRecursively(graphics, shapeOrGroup, baseMatrix, baseTextMatrix, isRecalculateTextY,
+						isFlipImages, isAdditionalRecalculate, logic_h_mm, group);
 				});
 			} else {
 				// shape came to argument
 
 				// flip images
-				if (shapeOrGroup.getObjectType() === AscDFH.historyitem_type_ImageShape) {
+				if (isFlipImages && shapeOrGroup.getObjectType() === AscDFH.historyitem_type_ImageShape) {
 					shapeOrGroup.transform.sy = -1;
 					shapeOrGroup.transform.ty += shapeOrGroup.spPr.xfrm.extY;
 				}
 
-				if (changeTextDirection && shapeOrGroup.Id.substring(shapeOrGroup.Id.length - 4) === "Text") {
+				if (isRecalculateTextY && shapeOrGroup.Id.substring(shapeOrGroup.Id.length - 4) === "Text") {
 					if (graphics.SetBaseTransform) {
 						//todo CSlideBoundsChecker
 						graphics.SetBaseTransform(baseTextMatrix);
@@ -504,7 +530,7 @@
 				}
 
 				// set shape transform that was before fix for future drawShapeOrGroupRecursively() calls
-				if (changeTextDirection && shapeOrGroup.Id.substring(shapeOrGroup.Id.length - 4) === "Text") {
+				if (isRecalculateTextY && shapeOrGroup.Id.substring(shapeOrGroup.Id.length - 4) === "Text") {
 					if (graphics.SetBaseTransform) {
 						//todo CSlideBoundsChecker
 						graphics.SetBaseTransform(baseMatrix);
@@ -512,14 +538,28 @@
 					shapeOrGroup.transform.ty = logic_h_mm - shapeOrGroup.transform.ty - shapeOrGroup.spPr.xfrm.extY;
 					shapeOrGroup.recalculateTransformText();
 				}
-				if (shapeOrGroup.getObjectType() === AscDFH.historyitem_type_ImageShape) {
+				if (isFlipImages && shapeOrGroup.getObjectType() === AscDFH.historyitem_type_ImageShape) {
 					shapeOrGroup.transform.sy = 1;
 					shapeOrGroup.transform.ty -= shapeOrGroup.spPr.xfrm.extY;
+				}
+
+				if (isAdditionalRecalculate) {
+					shapeOrGroup.recalculate();
+					shapeOrGroup.recalculateTransformText && shapeOrGroup.recalculateTransformText();
+					shapeOrGroup.recalculateLocalTransform(shapeOrGroup.transform);
+					shapeOrGroup.recalculateContent && shapeOrGroup.recalculateContent();
+
 				}
 			}
 		}
 
 		function drawOnCanvas(pageIndex, visioDocument, canvas, isThumbnail) {
+			let isRecalculateTextY = false;
+			let isFlipYMatrix = false;
+			let isFlipImages = false;
+
+			let isAdditionalRecalculate = false;
+
 			// let pageInfo = visioDocument.pages.page[pageIndex];
 			// let pageContent = visioDocument.pageContents[pageIndex];
 			// let topLevelShapesAndGroups = visioDocument.convertToCShapesAndGroups(pageInfo, pageContent);
@@ -601,8 +641,11 @@
 			//visio y coordinate goes up while
 			//ECMA-376-11_5th_edition and Geometry.js y coordinate goes down
 			let baseMatrix = new AscCommon.CMatrix();
-			// baseMatrix.SetValues(1, 0, 0, 1, 0, 0);
-			baseMatrix.SetValues(1, 0, 0, -1, 0, logic_h_mm);
+			if (isFlipYMatrix) {
+				baseMatrix.SetValues(1, 0, 0, -1, 0, logic_h_mm);
+			} else {
+				baseMatrix.SetValues(1, 0, 0, 1, 0, 0);
+			}
 			if (graphics.SetBaseTransform) {
 				//todo CSlideBoundsChecker
 				graphics.SetBaseTransform(baseMatrix);
@@ -611,13 +654,6 @@
 
 			let baseTextMatrix = new AscCommon.CMatrix();
 			baseTextMatrix.SetValues(1, 0, 0, 1, 0, 0);
-			// baseTextMatrix.SetValues(1, 0, 0, -1, 0, logic_h_mm);
-
-			/**
-			 * @type {boolean}
-			 */
-			let changeTextDirection = true;
-
 
 			graphics.SaveGrState();
 			graphics.SetIntegerGrid(false);
@@ -628,8 +664,12 @@
 			graphics.RestoreGrState();
 
 			topLevelShapesAndGroups.forEach(function(shapeOrGroup) {
-				drawShapeOrGroupRecursively(graphics, shapeOrGroup, baseMatrix, baseTextMatrix, changeTextDirection,
-					logic_h_mm);
+				if (isFlipImages || isRecalculateTextY || isAdditionalRecalculate) {
+					drawShapeOrGroupRecursively(graphics, shapeOrGroup, baseMatrix, baseTextMatrix, isRecalculateTextY,
+						isFlipImages, isAdditionalRecalculate, logic_h_mm);
+				} else {
+					shapeOrGroup.draw(graphics);
+				}
 			});
 		}
 
@@ -639,6 +679,30 @@
 			return;
 		}
 
+		// arrange pages
+		if (!this.isPagesArranged) {
+
+			// count backgrounds
+			let backgroundsCount = 0;
+			for (let pageIndex = 0; pageIndex < this.pages.page.length; pageIndex++) {
+				let pageInfo = this.pages.page[pageIndex];
+				if (pageInfo.background === true) {
+					backgroundsCount++;
+				}
+			}
+
+			// move background pages to back
+			for (let i = 0; i < backgroundsCount; i++) {
+				let backgroundInfo = this.pages.page.shift();
+				let backgroundContent = this.pageContents.shift();
+
+				this.pages.page.push(backgroundInfo);
+				this.pageContents.push(backgroundContent);
+			}
+			this.isPagesArranged = true;
+		}
+
+		// convert shapes
 		for (let pageIndex = 0; pageIndex < this.pages.page.length; pageIndex++) {
 			if (this.pageShapesCache[pageIndex] === undefined) {
 				let pageInfo = this.pages.page[pageIndex];
@@ -654,6 +718,27 @@
 
 				let topLevelShapesAndGroups = this.convertToCShapesAndGroups(pageInfo, pageContent, drawingPageScale);
 				this.pageShapesCache[pageIndex] = topLevelShapesAndGroups;
+			}
+		}
+
+		// handle backgrounds
+		for (let pageIndex = 0; pageIndex < this.pages.page.length; pageIndex++) {
+			let pageInfo = this.pages.page[pageIndex];
+			let pageContent = this.pageContents[pageIndex];
+
+			if (!this.backgroundAppliedFor.includes(pageIndex)) {
+				this.backgroundAppliedFor.push(pageIndex);
+				let backgroundPageId = pageInfo.backPage;
+				if (backgroundPageId !== null && backgroundPageId !== undefined) {
+					// find background page
+					let backgroundPageIndex = this.pages.page.findIndex(function (pageInfo) {
+						return pageInfo.iD === backgroundPageId;
+					});
+					if (backgroundPageIndex !== -1) {
+						let backgroundPageContent = this.pageShapesCache[backgroundPageIndex];
+						this.pageShapesCache[pageIndex] = backgroundPageContent.concat(this.pageShapesCache[pageIndex]);
+					}
+				}
 			}
 		}
 
@@ -705,20 +790,24 @@
 		for(let i = 0; i < pageContent.shapes.length; i++) {
 			let shape = pageContent.shapes[i];
 
+			// inherit styles
+			let stylesWithRealizedInheritance = new Set();
+			shape.realizeStyleInheritanceRecursively(this.styleSheets, stylesWithRealizedInheritance);
+			// inherit master and links to master styles
 			shape.realizeMasterInheritanceRecursively(masters);
-			shape.realizeStyleInheritanceRecursively(this.styleSheets);
+			// inherit master styles
+			// TODO performance: realize style inheritance only if style is inherited from master
+			shape.realizeStyleInheritanceRecursively(this.styleSheets, stylesWithRealizedInheritance);
 
 			if (shape.type === "Group") {
-				let cGroupShapeAndText = shape.toCGroupShapeRecursively(this, pageInfo, drawingPageScale);
-				topLevelShapesAndGroups.push(cGroupShapeAndText.cGroupShape);
-				if (cGroupShapeAndText.textCShape) {
-					topLevelShapesAndGroups.push(cGroupShapeAndText.textCShape);
+				let cGroupShape = shape.convertGroup(this, pageInfo, drawingPageScale);
+				if (cGroupShape) {
+					topLevelShapesAndGroups.push(cGroupShape);
 				}
 			} else {
-				let cShapes = shape.toGeometryAndTextCShapes(this, pageInfo, drawingPageScale);
-				topLevelShapesAndGroups.push(cShapes.geometryCShape);
-				if (cShapes.textCShape !== null) {
-					topLevelShapesAndGroups.push(cShapes.textCShape);
+				let cShapeOrCGroupShape = shape.convertShape(this, pageInfo, drawingPageScale);
+				if (cShapeOrCGroupShape !== null) {
+					topLevelShapesAndGroups.push(cShapeOrCGroupShape);
 				}
 			}
 		}
@@ -804,6 +893,9 @@
 	};
 	CVisioDocument.prototype.Document_UpdateRulersState = function () {
 	};
+	CVisioDocument.prototype.private_UpdateCursorXY = function (bUpdateX, bUpdateY) {
+	};
+
 	CVisioDocument.prototype.OnMouseUp = function (e, X, Y, PageIndex) {
 	};
 	CVisioDocument.prototype.OnMouseDown = function (e, X, Y, PageIndex) {
@@ -831,6 +923,115 @@
 	};
 	CVisioDocument.prototype.Set_FastCollaborativeEditing = function (isOn) {
 		//todo
+	};
+	CVisioDocument.prototype.shiftSlides = function (pos, array, bCopy) {
+		//todo
+	};
+	CVisioDocument.prototype.executeShortcut = function(type) {
+		let result = false;
+
+		switch (type) {
+			case Asc.c_oAscDiagramShortcutType.Print: {
+				this.api.onPrint();
+				result = true;
+				break;
+			}
+			default: {
+				var oCustom = this.api.getCustomShortcutAction(type);
+				if (oCustom) {
+					if (AscCommon.c_oAscCustomShortcutType.Symbol === oCustom.Type) {
+						this.api["asc_insertSymbol"](oCustom.Font, oCustom.CharCode);
+					}
+				}
+				break;
+			}
+		}
+		return result;
+	}
+	CVisioDocument.prototype.OnKeyDown = function (e) {
+		this.api.sendEvent("asc_onBeforeKeyDown", e);
+
+		var bUpdateSelection = true;
+		var bRetValue = keydownresult_PreventNothing;
+		let nStartHistoryIndex = this.History.Index;
+
+
+		// // Сбрасываем текущий элемент в поиске
+		// if (this.SearchEngine.Count > 0)
+		// 	this.SearchEngine.ResetCurrent();
+
+		let shortcutType = this.api.getShortcut(e);
+		if (this.executeShortcut(shortcutType))
+		{
+			bRetValue = keydownresult_PreventAll;
+			bUpdateSelection = false;
+		}
+		else {
+			const bIsMacOs = AscCommon.AscBrowser.isMacOs;
+			let WordControl = this.api.WordControl;
+			if (e.KeyCode === 33) // PgUp
+			{
+				//
+			}
+			else if (e.KeyCode === 34) // PgDn
+			{
+				//
+			}
+			else if (e.KeyCode === 35) // клавиша End
+			{
+				if (true === e.CtrlKey) // Ctrl + End - переход в конец документа
+				{
+					WordControl.m_oScrollVerApi.scrollTo(WordControl.m_dScrollX_max, WordControl.m_dScrollY_max);
+				}
+				else
+				{
+					WordControl.m_oScrollVerApi.scrollTo(0, WordControl.m_dScrollY_max);
+				}
+			}
+			else if (e.KeyCode === 36) // клавиша Home
+			{
+				if (true === e.CtrlKey) // Ctrl + Home - переход в начало документа
+				{
+					WordControl.m_oScrollVerApi.scrollTo(WordControl.m_dScrollX_max, 0);
+				}
+				else
+				{
+					WordControl.m_oScrollVerApi.scrollTo(0, 0);
+				}
+			}
+			else if (e.KeyCode === 37) // Left Arrow
+			{
+				if (true || WordControl.m_bIsHorScrollVisible)
+				{
+					WordControl.m_oScrollHorApi.scrollBy(-30, 0, false);
+				}
+			}
+			else if (e.KeyCode === 38) // Top Arrow
+			{
+				WordControl.m_oScrollVerApi.scrollBy(0, -30, false);
+			}
+			else if (e.KeyCode === 39) // Right Arrow
+			{
+				if (true || WordControl.m_bIsHorScrollVisible)
+				{
+					WordControl.m_oScrollHorApi.scrollBy(30, 0, false);
+				}
+			}
+			else if (e.KeyCode === 40) // Bottom Arrow
+			{
+				WordControl.m_oScrollVerApi.scrollBy(0, 30, false);
+			}
+		}
+
+		if (bRetValue & keydownflags_PreventKeyPress && true === bUpdateSelection)
+			this.Document_UpdateSelectionState();
+
+		if(nStartHistoryIndex === this.History.Index) {
+			this.private_UpdateCursorXY(true, true);
+		}
+
+		this.api.sendEvent("asc_onKeyDown", e);
+		return bRetValue;
 	};
 	// CVisioDocument.prototype.getMasterByID = function(ID) {
 	// 	// join Master_Type and MasterContents_Type
@@ -1082,34 +1283,32 @@
 	function parsePages(documentPart, reader, context) {
 		let pagesPart = documentPart.getPartByRelationshipType(AscCommon.openXml.Types.pages.relationType);
 		if (pagesPart) {
-			let contentPages = pagesPart.getDocumentContent();
-			reader = new StaxParser(contentPages, pagesPart, context);
+			let pagesXml = pagesPart.getDocumentContent();
+			reader = new StaxParser(pagesXml, pagesPart, context);
 			this.pages = new CPages();
 			this.pages.fromXml(reader);
 
+			// page content parts
 			let pages = pagesPart.getPartsByRelationshipType(AscCommon.openXml.Types.page.relationType);
 			if (pages.length  > 0) {
-				// order is important so sort masters using uri
-				let pagesSort = [];
-				for (let i = 0; i < pages.length; i++) {
-					let pageNumber = pages[i].uri.match(/\d+/); // for page3.xml we get 3
-					if (!isNaN(parseFloat(pageNumber)) && !isNaN(pageNumber - 0)) {
-						// if masterNumber is number
-						pagesSort[pageNumber - 1] = pages[i];
+				// this.pageContents order is important it must correspond to this.pages but pages is messed up by default
+				// so now let's get page contents by page relationship to get pageContents in correct order
+				// 1) find page rId number
+				// 2) find pageContent by rId
+
+				for (let i = 0; i < this.pages.page.length; i++) {
+					let pageContentRid = this.pages.page[i] && this.pages.page[i].rel && this.pages.page[i].rel.id;
+					if (pageContentRid) {
+						// let pageContentRel = pagesPart.getRelationship(pageContentRid);
+						let pageContentPart = pagesPart.getPartById(pageContentRid);
+						let contentPage = pageContentPart.getDocumentContent();
+						reader = new StaxParser(contentPage, pageContentPart, context);
+						let PageContent = new CPageContents();
+						PageContent.fromXml(reader);
+						this.pageContents.push(PageContent);
 					} else {
-						AscCommon.consoleLog('check sdkjs/draw/model/VisioDocument.js : parsePages');
-						pagesSort = pages;
-						break;
+						AscCommon.consoleLog("Page content rId not found");
 					}
-				}
-				pages = pagesSort;
-				for (let i = 0; i < pages.length; i++) {
-					let pagePart = pages[i];
-					let contentPage = pagePart.getDocumentContent();
-					reader = new StaxParser(contentPage, pagePart, context);
-					let PageContent = new CPageContents();
-					PageContent.fromXml(reader);
-					this.pageContents.push(PageContent);
 				}
 			}
 		}
@@ -1141,7 +1340,29 @@
 				this.themes.push(theme);
 			}
 		} else {
-			this.themes.push(AscFormat.GenerateDefaultTheme(null, null));
+			AscCommon.consoleLog("Themes to parse not found. Mb no rels. Trying to get themes by filenames");
+			let themeNum = 1;
+			while (true) {
+				let uInt8ArrayTheme = documentPart.pkg.zip.getFile("visio/theme/theme" + themeNum + ".xml");
+				if (uInt8ArrayTheme === null) {
+					break;
+				}
+				if (!uInt8ArrayTheme) {
+					uInt8ArrayTheme = new Uint8Array(0);
+				}
+				let themeXml = AscCommon.UTF8ArrayToString(uInt8ArrayTheme, 0, uInt8ArrayTheme.length);
+
+				reader = new StaxParser(themeXml, undefined, context);
+				let theme = new AscFormat.CTheme();
+				theme.fromXml(reader, true);
+				this.themes.push(theme);
+
+				themeNum++;
+			}
+			if (themeNum === 1) {
+				AscCommon.consoleLog("No themes found by filenames. Creating default theme");
+				this.themes.push(AscFormat.GenerateDefaultTheme(null, null));
+			}
 		}
 	}
 

@@ -1023,7 +1023,7 @@
 
 		this.removeHandlersOnClick();
 
-		if (!this.Api.asc_IsFocus())
+		if (!this.Api.asc_IsFocus() && !this.Api.isMobileVersion)
 			this.Api.asc_enableKeyEvents(true);
 
 		var oWordControl = this.Api.WordControl;
@@ -1365,6 +1365,7 @@
 
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                          		= window['AscCommon'] || {};
+	window['AscCommon'].CMobileDelegateEditorPresentation = CMobileDelegateEditorPresentation;
 	window['AscCommon'].CMobileTouchManager      		= CMobileTouchManager;
 	window['AscCommon'].CMobileTouchManagerThumbnails   = CMobileTouchManagerThumbnails;
 })(window);

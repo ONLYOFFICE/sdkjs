@@ -56,6 +56,8 @@ AscDFH.changesFactory[AscDFH.historyitem_SdtPr_TextForm]         = CChangesSdtPr
 AscDFH.changesFactory[AscDFH.historyitem_SdtPr_FormPr]           = CChangesSdtPrFormPr;
 AscDFH.changesFactory[AscDFH.historyitem_SdtPr_PictureFormPr]    = CChangesSdtPrPictureFormPr;
 AscDFH.changesFactory[AscDFH.historyitem_SdtPr_ComplexFormPr]    = CChangesSdtPrComplexFormPr;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_OForm]            = CChangesSdtPrOForm;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_DataBinding]      = CChangesSdtPrDataBinding;
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
 //----------------------------------------------------------------------------------------------------------------------
@@ -82,6 +84,9 @@ AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_Appearance] = [
 ];
 AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_Color] = [
 	AscDFH.historyitem_SdtPr_Color
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_DataBinding] = [
+	AscDFH.historyitem_SdtPr_DataBinding
 ];
 AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_CheckBox] = [
 	AscDFH.historyitem_SdtPr_CheckBox,
@@ -138,7 +143,7 @@ function private_SdtPrChangesCheckLock(lockData)
 {
 	if (lockData && lockData.isFillingForm())
 		lockData.setLock(true);
-	
+
 	if (this instanceof AscWord.CInlineLevelSdt)
 		private_ParagraphContentChangesCheckLock.apply(this, arguments);
 }
@@ -427,6 +432,30 @@ CChangesSdtPrColor.prototype.IsNeedRecalculate = function()
 	return false;
 };
 CChangesSdtPrColor.prototype.CheckLock = private_SdtPrChangesCheckLock;
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseObjectProperty}
+ */
+function CChangesSdtPrDataBinding(Class, Old, New)
+{
+	AscDFH.CChangesBaseObjectProperty.call(this, Class, Old, New);
+}
+CChangesSdtPrDataBinding.prototype = Object.create(AscDFH.CChangesBaseObjectProperty.prototype);
+CChangesSdtPrDataBinding.prototype.constructor = CChangesSdtPrDataBinding;
+CChangesSdtPrDataBinding.prototype.Type = AscDFH.historyitem_SdtPr_DataBinding;
+CChangesSdtPrDataBinding.prototype.private_SetValue = function(Value)
+{
+	this.Class.Pr.DataBinding = Value;
+};
+CChangesSdtPrDataBinding.prototype.private_CreateObject = function()
+{
+	return new AscWord.DataBinding();
+};
+CChangesSdtPrDataBinding.prototype.IsNeedRecalculate = function()
+{
+	return true;
+};
+
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectProperty}

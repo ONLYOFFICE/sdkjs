@@ -185,15 +185,24 @@
 			isFillIdx = true;
 
 			initialDefaultValue = 1; // number is return type in calculateValue. Solid fill.
+		} else if (cellName === "Font") {
+			// // uses other mechanism
+			// quickStyleCellName = null;
+			// quickStyleModifiersCellName = "QuickStyleFillMatrix";
+			// getModifiersMethod = themes[0].getFillProp;
+			// isFillIdx = true;
+
+			initialDefaultValue = "Calibri";
 		} else {
 			AscCommon.consoleLog("themeval argument error. cell name: " + cellName + " is unknown. return undefined.");
 			return undefined;
 		}
 
 		// lets define if shape is connector
-		// TODO rewrite consider 2.2.7.4.9	Connector
-		let isConnectorShape = shape.getCellNumberValue("EndArrow") !== 0
-			|| shape.getCellNumberValue("BeginArrow") !== 0;
+		// consider 2.2.7.4.9	Connector
+		// let isConnectorShape = shape.getCellNumberValue("EndArrow") !== 0
+		// 	|| shape.getCellNumberValue("BeginArrow") !== 0;
+		let isConnectorShape = shape.isConnectorStyleIherited;
 
 		// TODO rewrite themeScopeCellName choose consider 2.2.7.4.2	Dynamic Theme Identification
 		// find theme index
@@ -232,17 +241,25 @@
 			return initialDefaultValue;
 		} else {
 			// find theme by themeIndex
-			theme = themes.find(function (theme) {
-				// if search by theme index - theme.themeElements.themeExt.themeSchemeSchemeEnum
-				let findThemeByElement = isConnectorShape?
-					theme.themeElements.themeExt.themeSchemeSchemeEnum :
-					theme.themeElements.clrScheme.clrSchemeExtLst.schemeEnum;
-				let themeEnum = Number(findThemeByElement);
-				return themeEnum === themeIndex;
-			});
-			if (theme === undefined) {
-				AscCommon.consoleLog("Theme was not found by theme enum in themes. using themes[0]");
-				theme = themes[0];
+
+			// if search by theme index - theme.themeElements.themeExt.themeSchemeSchemeEnum
+			let findThemeByElement;
+			if (isConnectorShape && theme.themeElements.themeExt) {
+				findThemeByElement = theme.themeElements.themeExt.themeSchemeSchemeEnum;
+			} else if (!isConnectorShape && theme.themeElements.clrScheme.clrSchemeExtLst) {
+				findThemeByElement = theme.themeElements.clrScheme.clrSchemeExtLst.schemeEnum;
+			}
+			if (findThemeByElement) {
+				theme = themes.find(function (theme) {
+					let themeEnum = Number(findThemeByElement);
+					return themeEnum === themeIndex;
+				});
+
+				// themes.find didn't find anything
+				if (theme === undefined) {
+					AscCommon.consoleLog("Theme was not found by theme enum in themes. using themes[0]");
+					theme = themes[0];
+				}
 			}
 		}
 
@@ -462,6 +479,13 @@
 				result = Number(fillPattern);
 			} else {
 				AscCommon.consoleLog("Error in themeval. result is not changed to appropriate type or quickStyleCellName is not set.");
+			}
+		}
+
+		if (isNaN(quickStyleColor) && isNaN(quickStyleMatrix)) {
+			// other mechanism for theme value calculate is used
+			if (cellName === "Font") {
+				result = theme.getFontScheme().majorFont.latin;
 			}
 		}
 

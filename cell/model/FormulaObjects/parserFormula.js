@@ -75,7 +75,7 @@ function (window, undefined) {
 	var arrayFunctionsMap = {"SUMPRODUCT": 1, "FILTER": 1, "SUM": 1, "LOOKUP": 1, "AGGREGATE": 1};
 
 	var importRangeLinksState = {importRangeLinks: null, startBuildImportRangeLinks: null};
-	const aExcludeRecursiveFomulas = ['ISFORMULA', 'SHEETS', 'AREAS', 'COLUMN', 'COLUMNS', 'ROW', 'ROWS'];
+	const aExcludeRecursiveFormulas = ['ISFORMULA', 'SHEETS', 'AREAS', 'COLUMN', 'COLUMNS', 'ROW', 'ROWS', 'CELL', 'INDIRECT'];
 
 	function getArrayCopy(arr) {
 		var newArray = [];
@@ -642,31 +642,15 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return false;
 	};
-	cBaseType.prototype.getExternalLinkStr = function (externalLink, locale) {
-		var wb = Asc["editor"] && Asc["editor"].wb;
-
-		var index = externalLink;
-		externalLink = externalLink && wb && wb.model && wb.model.getExternalLinkByIndex(index - 1, true);
-		if (externalLink && !locale) {
-			return "[" + index + "]";
+	cBaseType.prototype.getExternalLinkStr = function (externalLink, locale, isShortLink) {
+		let wb = Asc.editor && Asc.editor.wbModel;
+		if (!wb) {
+			return "";
 		}
-		var path = externalLink && externalLink.path;
-		var name = externalLink && externalLink.name;
-		var res = "";
-		if (path || name) {
-			if (path) {
-				res += path;
-			}
-			if (name) {
-				res += "[" + name + "]";
-			}
-		} else if (externalLink) {
-			res = externalLink;
-		}
-		return res;
+		return wb && wb.externalReferenceHelper && wb.externalReferenceHelper.getExternalLinkStr(externalLink, locale, isShortLink);
 	};
 
-	cBaseType.prototype.toArray = function (putValue, checkOnError, fPrepareElem) {
+	cBaseType.prototype.toArray = function (putValue, checkOnError, fPrepareElem, bSaveBoolean) {
 		let arr = [];
 		if (this.getMatrix) {
 			arr = this.getMatrix();
@@ -690,7 +674,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 								}
 							}
 							if (putValue) {
-								arr[i][j] = arr[i][j].getValue();
+								if (bSaveBoolean && arr[i][j].type === cElementType.bool) {
+									arr[i][j] = arr[i][j].toBool();
+								} else {
+									arr[i][j] = arr[i][j].getValue();
+								}
 							}
 						}
 					}
@@ -2359,7 +2347,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		} else if (null != this.reservedColumnIndex) {
 			if (this.isDynamic && isLocal && this.reservedColumnIndex === AscCommon.FormulaTablePartInfo.thisRow) {
 				tblStr += "[" + "@" + "]";
-			} else if (this.isDynamic) {
+			} else /*if (this.isDynamic)*/ {
 				tblStr += "[" + this._buildLocalTableString(this.reservedColumnIndex, isLocal) + "]";
 			}
 		} else if (this.hdtIndexes || this.hdtcstartIndex || this.hdtcendIndex) {
@@ -2432,6 +2420,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			startCol = val['oneColumn']
 			if (startCol[0] === "@") {
 				this.isDynamic = true;
+			}
+
+			let openBracketIndex = startCol.indexOf("[");
+			if (openBracketIndex !== -1) {
+				let closeBracketIndex = startCol.lastIndexOf("]");
+				if (closeBracketIndex !== -1) {
+					startCol = startCol.slice(openBracketIndex + 1, closeBracketIndex);
+				} 
 			}
 
 			this.oneColumnIndex = this.wb.getTableIndexColumnByName(this.tableName, this.isDynamic ? startCol.slice(1) : startCol);
@@ -2818,16 +2814,20 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return this._toString(true);
 	};
 	cStrucPivotTable.prototype._toString = function (isLocal) {
-		return this.fieldString + '[' + this.itemString + ']';
+		if (this.fieldString) {
+			return this.fieldString + '[' + this.itemString + ']';
+		}
+		return this.itemString;
 	};
 
 	/**
 	 * @constructor
 	 * @extends {cName}
 	 */
-	function cName3D(val, ws, externalLink) {
+	function cName3D(val, ws, externalLink, shortLink) {
 		cName.call(this, val, ws);
 		this.externalLink = externalLink;
+		this.shortLink = shortLink;
 	}
 
 	cName3D.prototype = Object.create(cName.prototype);
@@ -2846,12 +2846,16 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 
 	cName3D.prototype.toString = function () {
-		var exPath = this.getExternalLinkStr(this.externalLink);
-		return parserHelp.getEscapeSheetName(exPath + this.ws.getName()) + "!" + cName.prototype.toString.call(this);
+		let exPath = this.getExternalLinkStr(this.externalLink);
+		let wsName = this.ws && this.ws.getName();
+		/* short links returns without wsName */
+		return parserHelp.getEscapeSheetName(this.shortLink ? exPath : (exPath +  (wsName ? wsName : "")), this.shortLink) + "!" + cName.prototype.toString.call(this);
 	};
 	cName3D.prototype.toLocaleString = function () {
-		var exPath = this.getExternalLinkStr(this.externalLink, true);
-		return parserHelp.getEscapeSheetName(exPath + this.ws.getName()) + "!" + cName.prototype.toLocaleString.call(this);
+		let exPath = this.getExternalLinkStr(this.externalLink, true, this.shortLink);
+		let wsName = this.ws && this.ws.getName();
+		/* short links returns without wsName */
+		return parserHelp.getEscapeSheetName(this.shortLink ? exPath : (exPath +  (wsName ? wsName : ""))) + "!" + cName.prototype.toLocaleString.call(this);
 	};
 	cName3D.prototype.getWsId = function () {
 		return this.ws && this.ws.Id;
@@ -3154,7 +3158,20 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArray.prototype.getDimensions = function (getRealSize) {
 		let realSize = getRealSize ? this.getRealArraySize() : false;
-		return {col: realSize ? realSize.col : this.getCountElementInRow(), row: realSize ? realSize.row : this.getRowCount()};
+		let col, row;
+		if (!realSize) {
+			col = this.getCountElementInRow();
+			if (!col) {
+				col = 1;
+			}
+
+			row = this.getRowCount();
+			if (!row) {
+				row = 1;
+			}
+		}
+
+		return {col: realSize ? realSize.col : col, row: realSize ? realSize.row : row};
 	};
 	cArray.prototype.fillMatrix = function (replace_empty) {
 		let maxColCount = Math.max.apply(null, this.countElementInRow);
@@ -3533,7 +3550,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		return calculateFunc(argsArray);
 	};
-	cBaseFunction.prototype._prepareArguments = function (args, arg1, bAddFirstArrElem, typeArray, bFirstRangeElem) {
+	cBaseFunction.prototype._prepareArguments = function (args, arg1, bAddFirstArrElem, typeArray, bFirstRangeElem, notArrayError) {
 		var newArgs = [];
 		var indexArr = null;
 
@@ -3552,7 +3569,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				} else if (cElementType.error === arg.type) {
 					newArgs[i] = arg;
 				} else {
-					newArgs[i] = new cError(cErrorType.division_by_zero);
+					newArgs[i] = new cError(notArrayError ? notArrayError : cErrorType.division_by_zero);
 				}
 			} else if (cElementType.cellsRange === arg.type || cElementType.cellsRange3D === arg.type) {
 				newArgs[i] = bFirstRangeElem ? arg.getValueByRowCol(0,0) : arg.cross(arg1);
@@ -6199,7 +6216,7 @@ _func[cElementType.cell3D] = _func[cElementType.cell];
 					res = [];
 				}
 
-				if (i === this.argPosArr.length - 1 && this.error !== undefined) {
+				if (i === this.argPosArr.length - 1 && this.error === c_oAscError.ID.FrmlParenthesesCorrectCount) {
 					// We don't cut off the line at the last element, but only if the formula is parsed with an error (the formula is not closed or not entered completely)
 					res.push(sFormula.substring(this.argPosArr[i].start - 1, this.argPosArr[i].end));
 					continue
@@ -6390,8 +6407,14 @@ function parserFormula( formula, parent, _ws ) {
 		var eventData = {notifyData: data, assemble: null, formula: this};
 		let sFunctionName = this.getFunctionName();
 
-		if (this._isConditionalFormula(sFunctionName) && data.areaData) {
-			this.ca = this.isRecursiveCondFormula(sFunctionName);
+		if (this._isConditionalFormula(sFunctionName) && data.areaData && g_cCalcRecursion.getIsCellEdited()) {
+			let oCell = null;
+			this.ws._getCell(this.parent.nRow, this.parent.nCol, function (oElem) {
+				oCell = oElem;
+			});
+			if (oCell && oCell.containInFormula()) {
+				this.ca = this.isRecursiveCondFormula(sFunctionName);
+			}
 		}
 		if (AscCommon.c_oNotifyType.Dirty === data.type) {
 				if (this.parent && this.parent.onFormulaEvent) {
@@ -6589,6 +6612,9 @@ function parserFormula( formula, parent, _ws ) {
 
 		for (let i = 0; i < aOutStack.length; i++) {
 			if (!(aOutStack[i] instanceof cBaseOperator) && aOutStack[i].type === cElementType.operator) {
+				continue;
+			}
+			if (aOutStack[i].type === cElementType.specialFunctionStart || aOutStack[i].type === cElementType.specialFunctionEnd) {
 				continue;
 			}
 			if (typeof aOutStack[i] === 'number') {
@@ -7961,7 +7987,7 @@ function parserFormula( formula, parent, _ws ) {
 			if (parserFormula.ca) {
 				return bRecursiveCell;
 			}
-			if (sFunctionName && aExcludeRecursiveFomulas.includes(sFunctionName)) {
+			if (sFunctionName && aExcludeRecursiveFormulas.includes(sFunctionName)) {
 				return bRecursiveCell;
 			}
 			if (bConditionalFormula) {
@@ -7985,10 +8011,10 @@ function parserFormula( formula, parent, _ws ) {
 				let oRefElem = found_operand.toRef();
 				oRange = oRefElem.getRange();
 			} else {
-				oRange = found_operand.getRange();
+				oRange = found_operand && found_operand.getRange && found_operand.getRange();
 			}
 
-			oRange._foreachNoEmpty(function (oCell) {
+			oRange && oRange._foreachNoEmpty(function (oCell) {
 				if (!bRecursiveCell) {
 					bRecursiveCell = oCell.checkRecursiveFormula(parserFormula.getParent());
 				}
@@ -8064,7 +8090,7 @@ function parserFormula( formula, parent, _ws ) {
 				found_operand = new cError(ph.operand_str);
 			}
 
-			/* Referens to 3D area: Sheet1:Sheet3!A1:B3, Sheet1:Sheet3!B3, Sheet1!B3*/ else if ((_3DRefTmp = parserHelp.is3DRef.call(ph, t.Formula, ph.pCurrPos))[0]) {
+			/* Referens to 3D area: Sheet1:Sheet3!A1:B3, Sheet1:Sheet3!B3, Sheet1!B3*/ else if ((_3DRefTmp = parserHelp.is3DRef.call(ph, t.Formula, ph.pCurrPos, null, local))[0]) {
 
 				t.is3D = true;
 
@@ -8080,20 +8106,65 @@ function parserFormula( formula, parent, _ws ) {
 					}
 				}
 
-				var wsF, wsT;
+				let wsF, wsT;
 				let sheetName = _3DRefTmp[1];
-				let externalLink = _3DRefTmp[3];
-				let isExternalRefExist;
-				//check on add to this document
-				let thisTitle = externalLink && window["Asc"]["editor"] && window["Asc"]["editor"].DocInfo && window["Asc"]["editor"].DocInfo.get_Title();
-				if (thisTitle === externalLink) {
-					externalLink = null;
+
+				let isExternalRefExist, externalLink, receivedLink, externalName, 
+					createShortLink, externalProps, isCurrentFile, currentFileDefname;
+
+				/* these flags are needed to further check the link to the current file */
+				let isShortLink = _3DRefTmp[4] ? true : false;	// _3DRefTmp[4] - shortlink info
+				let isFullLink = _3DRefTmp[5] ? true : false;	// _3DRefTmp[5] - current file defname from full link
+
+				if (isShortLink) {
+					externalProps = t.wb && t.wb.externalReferenceHelper && t.wb.externalReferenceHelper.check3dRef(_3DRefTmp, local);
+				} else {
+					externalLink = _3DRefTmp[3];
+					externalName = _3DRefTmp[3];
 				}
-				if (externalLink) {
+
+				if (!externalProps && !sheetName) {
+					parseResult.setError(c_oAscError.ID.FrmlWrongReferences);
+					if (!ignoreErrors) {
+						t.outStack = [];
+						return false;
+					}
+				} else if (externalProps) {
+					externalLink = externalProps.externalLink;
+					externalName = externalProps.externalName;
+					receivedLink = externalProps.receivedLink;
+					createShortLink = externalProps.isShortLink;
+					isCurrentFile = externalProps.isCurrentFile;
+					currentFileDefname = externalProps.currentFileDefname;
+				}
+				
+				if (externalProps && !sheetName) {
+					sheetName = externalProps.sheetName ? externalProps.sheetName : externalName;
+				}
+
+				/* if the link is not short, then we check whether we received the currentFileDefname argument, which indicates whether there is a link to the current file */
+				if (!isShortLink && isFullLink) {
+					if (_3DRefTmp[1] && !t.wb.getWorksheetByName(_3DRefTmp[1])) {
+						// if there is sheetname in the arguments and this sheet is not exist in wb, return an error
+						parseResult.setError(c_oAscError.ID.FrmlWrongReferences);
+						if (!ignoreErrors) {
+							t.outStack = [];
+							return false;
+						}
+					}
+
+					// create shortlink flag
+					createShortLink = true;
+					isCurrentFile = true;
+					externalLink = null;
+					currentFileDefname = _3DRefTmp[5];
+				}
+
+				if (externalLink && !isCurrentFile) {
 					if (local) {
 						externalLink = t.wb.getExternalLinkIndexByName(externalLink);
 						if (externalLink === null) {
-							externalLink = _3DRefTmp[3];
+							externalLink = receivedLink ? receivedLink : _3DRefTmp[3];
 							if (!parseResult.externalReferenesNeedAdd) {
 								parseResult.externalReferenesNeedAdd = [];
 							}
@@ -8103,7 +8174,6 @@ function parserFormula( formula, parent, _ws ) {
 							parseResult.externalReferenesNeedAdd[externalLink].push({sheet: sheetName /*_3DRefTmp[1]*/});
 						} else {
 							isExternalRefExist = true;
-							let externalName = _3DRefTmp[3];
 							if (!parseResult.externalReferenesNeedAdd) {
 								parseResult.externalReferenesNeedAdd = [];
 							}
@@ -8115,9 +8185,41 @@ function parserFormula( formula, parent, _ws ) {
 					}
 
 					wsF = sheetName ? t.wb.getExternalWorksheet(externalLink, sheetName /*_3DRefTmp[1]*/) : null;
+
+					if (externalLink && !local && !wsF) {
+						// special case when opening a file:
+						// if we refer to defname that doesn't exist, but the ER itself exists, then we refer to the first existing worksheet
+						// since we don't know the name of the sheet in the short link and defname doesn't exist
+						wsF =  t.wb.getExternalWorksheet(externalLink, sheetName, true /* getFirtsSheet */);
+						if (!wsF) {
+							parseResult.setError(c_oAscError.ID.FrmlWrongReferences);
+							if (!ignoreErrors) {
+								t.outStack = [];
+								return false;
+							}
+						}
+					}
+
 					wsT = wsF;
 				} else {
-					wsF = t.wb.getWorksheetByName(sheetName/*_3DRefTmp[1]*/);
+					// isCurrentFileCheck
+					let currentDefname, sheet;
+					if (isCurrentFile && currentFileDefname /*&& !local*/) {
+						// looking for defname from this sheet
+						currentDefname = t.wb.getDefinesNames(currentFileDefname);
+						if (!currentDefname && sheetName && isFullLink) {
+							wsF = t.wb.getWorksheetByName(sheetName);
+						} else if (!currentDefname && !isFullLink) {
+							sheet = t.wb.getActiveWs();
+							wsF = t.wb.getWorksheetByName(sheet.getName());
+						} else {
+							let exclamationMarkIndex = currentDefname.ref && currentDefname.ref.lastIndexOf("!");
+							sheet = currentDefname.ref.slice(0, exclamationMarkIndex);
+							wsF = t.wb.getWorksheetByName(sheet);
+						}
+					}
+
+					wsF = wsF ? wsF : t.wb.getWorksheetByName(sheetName/*_3DRefTmp[1]*/);
 					wsT = (null !== _3DRefTmp[2]) ? t.wb.getWorksheetByName(_3DRefTmp[2]) : wsF;
 				}
 
@@ -8164,7 +8266,8 @@ function parserFormula( formula, parent, _ws ) {
 					}
 				} else {
 					parserHelp.isName.call(ph, t.Formula, ph.pCurrPos);
-					found_operand = new cName3D(ph.operand_str, wsF, externalLink);
+					// if link to the same file - set external link to zero just like in MS
+					found_operand = new cName3D(ph.operand_str, wsF, isCurrentFile ? "0" : externalLink, createShortLink);
 					parseResult.addRefPos(prevCurrPos, ph.pCurrPos, t.outStack.length, found_operand);
 					if (local || (local === false && digitDelim === false)) { // local and digitDelim with value false using only for copypaste mode.
 						t.ca = isRecursiveFormula(found_operand, t);
@@ -8192,7 +8295,7 @@ function parserFormula( formula, parent, _ws ) {
 				if (local || (local === false && digitDelim === false)) { // local and digitDelim with value false using only for copypaste mode.
 					t.ca = isRecursiveFormula(found_operand, t);
 				}
-			} else if (_tableTMP = parserHelp.isTable.call(ph, t.Formula, ph.pCurrPos, local)) {
+			} else if (_tableTMP = parserHelp.isTable.call(ph, t.Formula, ph.pCurrPos, local, t)) {
 				found_operand = cStrucTable.prototype.createFromVal(_tableTMP, t.wb, t.ws, tablesMap);
 
 				//todo undo delete column
@@ -10011,6 +10114,7 @@ function parserFormula( formula, parent, _ws ) {
 		this.bShowCycleWarn = true;
 		this.oRecursionCells = null;
 		this.nCellPasteValue = null; // for paste recursive cell
+		this.bIsCellEdited = false;
 
 		this.bIsEnabledRecursion = null;
 		this.nMaxIterations = null; // Max iterations of recursion calculations. Default value: 100.
@@ -10681,6 +10785,24 @@ function parserFormula( formula, parent, _ws ) {
 	CalcRecursion.prototype.getCellPasteValue = function () {
 		return this.nCellPasteValue;
 	};
+	/**
+	 * Method sets flag that checks cell is in edited mode
+	 * * true - cell is editing. File in the editor already opened.
+	 * * false - cell isn't editing. File in the editor is opening.
+	 * @param {boolean} bIsCellEdited
+	 */
+	CalcRecursion.prototype.setIsCellEdited = function (bIsCellEdited) {
+		this.bIsCellEdited = bIsCellEdited;
+	};
+	/**
+	 * Method gets flag that checks cell is in edited mode
+	 * * true - cell is editing. File in the editor already opened.
+	 * * false - cell isn't editing. File in the editor is opening.
+	 * @returns {boolean}
+	 */
+	CalcRecursion.prototype.getIsCellEdited = function () {
+		return this.bIsCellEdited;
+	}
 
 	const g_cCalcRecursion = new CalcRecursion();
 
@@ -11078,11 +11200,27 @@ function parserFormula( formula, parent, _ws ) {
 
 	// ToDo use Array.prototype.max, but some like to use for..in without hasOwnProperty
 	function getArrayMax (array) {
-		return Math.max.apply(null, array);
+		//Math.min and Math.max crash on large arrays
+		let maxValue = array[0], i, length = array.length;
+		for (i = 1; i < length; i++) {
+			if (array[i] > maxValue) {
+				maxValue = array[i];
+			}
+		}
+
+		return maxValue;
 	}
 	// ToDo use Array.prototype.min, but some like to use for..in without hasOwnProperty
 	function getArrayMin (array) {
-		return Math.min.apply(null, array);
+		//Math.min and Math.max crash on large arrays
+		let minValue = array[0], i, length = array.length;
+		for (i = 1; i < length; i++) {
+			if (array[i] < minValue) {
+				minValue = array[i];
+			}
+		}
+
+		return minValue;
 	}
 
 	function compareFormula(formula1, refPos1, formula2, offsetRow) {
@@ -11404,7 +11542,7 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].bIsSupportArrayFormula = bIsSupportArrayFormula;
 	window['AscCommonExcel'].bIsSupportDynamicArrays = bIsSupportDynamicArrays;
 
-	window['AscCommonExcel'].aExcludeRecursiveFomulas = aExcludeRecursiveFomulas;
+	window['AscCommonExcel'].aExcludeRecursiveFormulas = aExcludeRecursiveFormulas;
 
 	window['AscCommonExcel'].cNumber = cNumber;
 	window['AscCommonExcel'].cString = cString;

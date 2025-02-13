@@ -49,6 +49,7 @@
     CSignatureField.prototype.SetValue = function() {
         return;
     };
+    CSignatureField.prototype.private_SetValue = CSignatureField.prototype.SetValue
     CSignatureField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
         return;
     };

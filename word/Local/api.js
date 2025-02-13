@@ -205,7 +205,8 @@ Asc['asc_docs_api'].prototype["getAdditionalSaveParams"] = function()
 {
 	return {
 		"documentLayout" : {
-			"openedAt" : this.openedAt
+			"openedAt" : this.openedAt,
+			"headingsColor" : this.headingsColor
 		},
 		"locale" : this.asc_getLocale(),
 		"translate" : AscCommon.translateManager.mapTranslate

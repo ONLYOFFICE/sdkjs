@@ -146,7 +146,14 @@
 			{
 				return this.engine["getPaths"]();
 			};
-
+			/**
+			 * Get image file raw data. this memory was copied and detach from archive.
+			 * @returns {Uint8Array}
+			 */
+			ZLib.prototype.getImageBuffer = function(path)
+			{
+				return this.engine["getImageBuffer"](path);
+			};
 
 			AscCommon.ZLib = ZLib;
 			AscCommon.ZLib.prototype.isModuleInit = true;

@@ -522,7 +522,19 @@ CShape.prototype.recalculateText = function()
         if (this.recalcInfo.recalculateTransformText) {
             this.recalculateTransformText();
         }
+		
+		this.checkFormShiftView();
     }, this, []);
+};
+
+CShape.prototype.checkFormShiftView = function()
+{
+	if (!this.bWordShape)
+		return;
+	
+	let docContent = this.getDocContent();
+	if (docContent)
+		docContent.ShiftViewToFirstLine();
 };
 
 CShape.prototype.recalculateWrapPolygon = function()

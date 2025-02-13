@@ -120,45 +120,13 @@
         oDoc.EndNoHistoryMode();
     };
     CAnnotationCircle.prototype.SetRect = function(aOrigRect) {
-        let oViewer     = editor.getDocumentRenderer();
-        let oDoc        = oViewer.getPDFDoc();
-        let aCurRect    = this.GetOrigRect();
+        let oViewer = editor.getDocumentRenderer();
+        let oDoc    = oViewer.getPDFDoc();
 
-        let bCalcRDandRect = this._origRect.length != 0 && false == AscCommon.History.UndoRedoInProgress;
+        oDoc.History.Add(new CChangesPDFAnnotRect(this, this._origRect, aOrigRect));
 
         this._origRect = aOrigRect;
-
-        if (bCalcRDandRect) {
-            AscCommon.History.StartNoHistoryMode();
-
-            let aCurRD = this._rectDiff;
-            let nLineW = this.GetWidth() * g_dKoef_pt_to_mm;
-            this.SetRectangleDiff([0, 0, 0, 0]);
-            this.recalcBounds();
-            this.recalcGeometry();
-            this.Recalculate(true);
-            
-            AscCommon.History.EndNoHistoryMode();
-            
-            let oGrBounds = this.bounds;
-            let oShapeBounds = this.getRectBounds();
-
-            this._origRect[0] = Math.round(oGrBounds.l - nLineW) * g_dKoef_mm_to_pt;
-            this._origRect[1] = Math.round(oGrBounds.t - nLineW) * g_dKoef_mm_to_pt;
-            this._origRect[2] = Math.round(oGrBounds.r + nLineW) * g_dKoef_mm_to_pt;
-            this._origRect[3] = Math.round(oGrBounds.b + nLineW) * g_dKoef_mm_to_pt;
-
-            oDoc.History.Add(new CChangesPDFAnnotRect(this, aCurRect, aOrigRect));
-
-            this._rectDiff = aCurRD;
-            this.SetRectangleDiff([
-                Math.round(oShapeBounds.l - oGrBounds.l + nLineW) * g_dKoef_mm_to_pt,
-                Math.round(oShapeBounds.t - oGrBounds.t + nLineW) * g_dKoef_mm_to_pt,
-                Math.round(oGrBounds.r - oShapeBounds.r + nLineW) * g_dKoef_mm_to_pt,
-                Math.round(oGrBounds.b - oShapeBounds.b + nLineW) * g_dKoef_mm_to_pt
-            ]);
-        }
-
+        
         this.SetWasChanged(true);
         this.SetNeedRecalcSizes(true);
     };

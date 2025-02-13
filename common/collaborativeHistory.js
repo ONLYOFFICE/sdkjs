@@ -346,7 +346,11 @@
 		// Формируем новую пачку действий, которые будут откатывать нужные нам действия
 		let reverseChanges = this.GetReverseOwnChanges();
 		if (reverseChanges.length <= 0)
+		{
+			//чтобы не было бесконечного saving(пересмотреть чтобы работало без saveChanges)
+			this.saveChanges([]);
 			return [];
+		}
 
 		for (let index = 0, count = reverseChanges.length; index < count; ++index)
 		{
@@ -370,20 +374,28 @@
 			let historyChange = historyItem.Data;
 			let historyClass  = historyItem.Class;
 
-			if (!historyClass || !historyClass.Get_Id)
+			//todo заполнить Class и Data в изменениях автофигур spreadsheet
+			if (!historyClass || !(historyClass.Get_Id || historyClass.Class && historyClass.Class.Get_Id))
 				continue;
 
-			let data = AscCommon.CCollaborativeChanges.ToBase64(historyItem.Binary.Pos, historyItem.Binary.Len);
-			changesToSend.push(data);
+			if (historyItem.Binary.Len) //spreadsheet local changes
+			{
+				let data = AscCommon.CCollaborativeChanges.ToBase64(historyItem.Binary.Pos, historyItem.Binary.Len);
+				changesToSend.push(data);
+			}
 
 			changesToRecalc.push(historyChange);
 		}
 		AscCommon.History.Remove_LastPoint();
 		this.CoEditing.Clear_DCChanges();
 
-		editor.CoAuthoringApi.saveChanges(changesToSend, null, null, false, this.CoEditing.getCollaborativeEditing());
-
+		this.saveChanges(changesToSend);
 		return changesToRecalc;
+	};
+	CCollaborativeHistory.prototype.saveChanges = function(changesToSend)
+	{
+		//separate function to override in excel
+		(Asc.editor || editor).CoAuthoringApi.saveChanges(changesToSend, null, null, false, this.CoEditing.getCollaborativeEditing());
 	};
 	CCollaborativeHistory.prototype.GetEmptyContentChanges = function()
 	{
@@ -438,7 +450,7 @@
 		let nPosition = range.Position;
 		let nCount    = range.Length;
 
-		let arrChanges = [];
+		let arrReverseChanges = [];
 		for (let nIndex = nCount - 1; nIndex >= 0; --nIndex)
 		{
 			let oChange = this.Changes[nPosition + nIndex];
@@ -451,8 +463,51 @@
 				let _oChange = oChange.Copy();
 
 				if (this.CommuteContentChange(_oChange, nPosition + nCount))
-					arrChanges.push(_oChange);
+				{
+					let oReverseChange = _oChange.CreateReverseChange();
+					if (oReverseChange)
+					{
+						arrReverseChanges.push(oReverseChange);
+						oReverseChange.SetReverted(true);
+					}
+				}
 
+				oChange.SetReverted(true);
+			}
+			else if (oChange.IsSpreadsheetChange())
+			{
+				let _oChange = oChange.Copy();
+				//удобнее сначала создавать обратное изменение
+				let oReverseChange = _oChange.CreateReverseChange();
+				if (oReverseChange) {
+					if (this.CommuteRelated(oClass, oReverseChange, nPosition + nCount))
+					{
+						oReverseChange.SetReverted(true);
+						arrReverseChanges.push(oReverseChange);
+					}
+					else
+					{
+						//todo для автофигур не надо скрывать всю точку
+						//в таблицах не принимается вся точка
+						//например при вставка столбца копируется заливка соседнего столбца
+						arrReverseChanges = [];
+						for (let i = nCount - 1; i > nIndex; --i)
+						{
+							this.Changes[nPosition + i].SetReverted(false);
+						}
+						break;
+					}
+				}
+				else if(null !== oReverseChange)
+				{
+					//ничего не делаем если есть изменения которые не готовы
+					arrReverseChanges = [];
+					for (let i = nCount - 1; i > nIndex; --i)
+					{
+						this.Changes[nPosition + i].SetReverted(false);
+					}
+					break;
+				}
 				oChange.SetReverted(true);
 			}
 			else
@@ -460,22 +515,18 @@
 				let _oChange = oChange; // TODO: Тут надо бы сделать копирование
 
 				if (this.CommutePropertyChange(oClass, _oChange, nPosition + nCount))
-					arrChanges.push(_oChange);
+				{
+					let oReverseChange = _oChange.CreateReverseChange();
+					if (oReverseChange)
+					{
+						arrReverseChanges.push(oReverseChange);
+						oReverseChange.SetReverted(true);
+					}
+				}
 			}
 		}
 
 		this.OwnRanges.length = this.OwnRanges.length - 1;
-
-		let arrReverseChanges = [];
-		for (let nIndex = 0, nCount = arrChanges.length; nIndex < nCount; ++nIndex)
-		{
-			let oReverseChange = arrChanges[nIndex].CreateReverseChange();
-			if (oReverseChange)
-			{
-				arrReverseChanges.push(oReverseChange);
-				oReverseChange.SetReverted(true);
-			}
-		}
 
 		return arrReverseChanges;
 	};
@@ -601,6 +652,11 @@
 
 		return true;
 	};
+
+	CCollaborativeHistory.prototype.CommuteRelated = function(oClass, oChange, nStartPosition)
+	{
+		return true;
+	}
 	CCollaborativeHistory.prototype.CreateLocalHistoryPointByReverseChanges = function(reverseChanges)
 	{
 		let localHistory = AscCommon.History;

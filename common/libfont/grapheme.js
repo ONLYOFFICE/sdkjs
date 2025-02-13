@@ -251,15 +251,34 @@
 			maxY : maxY
 		};
 	}
+	function GetGraphemeFontId(graphemeId)
+	{
+		let oGrapheme = GRAPHEMES[graphemeId];
+		if (!oGrapheme)
+			return null;
+		
+		return oGrapheme[0];
+	}
+	function GetFontNameByFontId(fontId)
+	{
+		return AscCommon.FontNameMap.GetName((fontId | 0) >> 8);
+	}
+	function GetFontStyleByFontId(fontId)
+	{
+		return ((fontId | 0) & 0xF);
+	}
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscFonts'] = window['AscFonts'] || {};
-	window['AscFonts'].NO_GRAPHEME        = NO_GRAPHEME;
-	window['AscFonts'].InitGrapheme       = InitGrapheme;
-	window['AscFonts'].DrawGrapheme       = DrawGrapheme;
-	window['AscFonts'].CompareGraphemes   = CompareGraphemes;
-	window['AscFonts'].AddGlyphToGrapheme = AddGlyphToGrapheme;
-	window['AscFonts'].GetGrapheme        = GetGrapheme;
-	window['AscFonts'].GetGraphemeWidth   = GetGraphemeWidth;
-	window['AscFonts'].GetGraphemeBBox    = GetGraphemeBBox;
+	window['AscFonts'].NO_GRAPHEME          = NO_GRAPHEME;
+	window['AscFonts'].InitGrapheme         = InitGrapheme;
+	window['AscFonts'].DrawGrapheme         = DrawGrapheme;
+	window['AscFonts'].CompareGraphemes     = CompareGraphemes;
+	window['AscFonts'].AddGlyphToGrapheme   = AddGlyphToGrapheme;
+	window['AscFonts'].GetGrapheme          = GetGrapheme;
+	window['AscFonts'].GetGraphemeWidth     = GetGraphemeWidth;
+	window['AscFonts'].GetGraphemeBBox      = GetGraphemeBBox;
+	window['AscFonts'].GetGraphemeFontId    = GetGraphemeFontId;
+	window['AscFonts'].GetFontNameByFontId  = GetFontNameByFontId;
+	window['AscFonts'].GetFontStyleByFontId = GetFontStyleByFontId;
 
 })(window);

@@ -198,6 +198,15 @@ Paragraph.prototype.Recalculate_FastWholeParagraph = function()
     return [];
 };
 /**
+ * Ивент, если удалось быстро пересчитать параграф
+ */
+Paragraph.prototype.OnFastRecalculate = function()
+{
+	let topDocument = this.GetTopDocumentContent();
+	if (topDocument && (topDocument instanceof AscWord.FootEndnote))
+		topDocument.OnFastRecalculate();
+};
+/**
  * Пытаемся быстро рассчитать отрезок, в котором произошли изменения, и если ничего не съехало, тогда
  * перерисовываем страницу, в противном случаем запускаем обычный пересчет.
  * @param {CParaPos} oParaPos
@@ -4462,6 +4471,18 @@ CParagraphRecalculateStateInfo.prototype.isComplexFieldCode = function()
 			return true;
 	}
 
+	return false;
+};
+CParagraphRecalculateStateInfo.prototype.isHiddenComplexFieldPart = function()
+{
+	for (let fieldIndex = 0, fieldCount = this.ComplexFields.length; fieldIndex < fieldCount; ++ fieldIndex)
+	{
+		let isFieldCode = this.ComplexFields[fieldIndex].IsFieldCode();
+		let isShowCode  = this.ComplexFields[fieldIndex].IsShowFieldCode();
+		if (isFieldCode !== isShowCode)
+			return true;
+	}
+	
 	return false;
 };
 CParagraphRecalculateStateInfo.prototype.processFieldCharAndCollectComplexField = function(oChar)

@@ -762,6 +762,14 @@ function onLoadFontsModule(window, undefined)
 		return this.engine["getImageBlob"](path);
 	};
 	/**
+	 * Get image file raw data. this memory was copied and detach from archive.
+	 * @returns {Uint8Array}
+	 */
+	ZLib.prototype.getImageBuffer = function(path)
+	{
+		return this.engine["getImageBuffer"](path);
+	};
+	/**
 	 * Get all file paths in archive
 	 * @returns {Array}
 	 */
@@ -771,6 +779,77 @@ function onLoadFontsModule(window, undefined)
 	};
 
 	AscCommon.ZLib = ZLib;
+
+	function ZlibImageBlobs()
+	{
+		this.url2BlobUrl = {};
+		this.blobUrl2Data = {};
+		this.url2Base64 = {};
+
+		this.nativeBlobCounter = 1;
+	}
+	ZlibImageBlobs.prototype.getBlobUrl = function(path, zip)
+	{
+		if (this.url2BlobUrl[path])
+			return this.url2BlobUrl[path];
+
+		let result = zip.getImageBuffer(path);
+		if (result == null)
+			return "";
+
+		let blobUrl = "";
+		let blobType = AscCommon.openXml.GetMimeType((24 !== result["type"]) ? AscCommon.GetFileExtension(path) : "svg");
+
+		if (window["NATIVE_EDITOR_ENJINE"])
+		{
+			blobUrl = "blob:internal-image" + this.nativeBlobCounter++;
+		}
+		else
+		{
+			try
+			{
+				let blob = new Blob([result["dataBlob"] ? result["dataBlob"] : result["data"]], {type: blobType});
+				blobUrl = window.URL.createObjectURL(blob);
+			}
+			catch (e)
+			{
+				blobUrl = "error";
+				AscCommon.consoleLog("ERROR: Image blob was not loaded");
+			}
+		}
+
+		this.blobUrl2Data[blobUrl] = result;
+		this.url2BlobUrl[path] = blobUrl;
+		return blobUrl;
+	};
+	ZlibImageBlobs.prototype.getImageBase64 = function(url)
+	{
+		if (this.url2Base64[url])
+			return this.url2Base64[url];
+
+		let obj = this.blobUrl2Data[url];
+		if (!obj)
+			return url;
+
+		let header = "";
+		switch (obj.type)
+		{
+			case 3:
+				header = "data:image/jpeg;base64,";
+				break;
+			case 24:
+				header = "data:image/svg+xml;base64,";
+				break;
+			case 4:
+			default:
+				header = "data:image/png;base64,";
+		}
+
+		this.url2Base64[url] = header + AscCommon.Base64.encode(obj.data);
+		return this.url2Base64[url];
+	};
+
+	window["AscCommon"].g_oDocumentBlobUrls = new ZlibImageBlobs();
 
 	if (AscCommon["CZLibEngineJS"])
 		AscCommon["CZLibEngineJS"].prototype["isModuleInit"] = true;

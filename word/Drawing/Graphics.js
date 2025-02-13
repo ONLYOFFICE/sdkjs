@@ -1842,7 +1842,7 @@
 			if (lock_type === locktype_Mine && true === AscCommon.CollaborativeEditing.Is_Fast())
 				return;
 
-			if (Asc.editor.WordControl.m_oDrawingDocument.IsLockObjectsEnable === false && lock_type === locktype_Mine)
+			if (Asc.editor.WordControl.m_oDrawingDocument && Asc.editor.WordControl.m_oDrawingDocument.IsLockObjectsEnable === false && lock_type === locktype_Mine)
 				return;
 		}
 

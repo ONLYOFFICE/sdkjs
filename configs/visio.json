@@ -318,7 +318,10 @@
 			"word/Editor/Styles/FixedFormDefaults.js",
 			"word/Editor/revisions/review-info.js",
 			"word/Editor/revisions/track-revisions-manager.js",
-
+			"word/Editor/custom-xml/custom-xml.js",
+			"word/Editor/custom-xml/custom-xml-manager.js",
+			"word/Editor/custom-xml/data-binding.js",
+			
 			"slide/Editor/Format/ImagePrototype.js",
 			"slide/Editor/Format/GroupPrototype.js",
 			"slide/Editor/Format/ChartSpacePrototype.js",
@@ -348,8 +351,11 @@
 		],
 		"desktop": {
 			"min": [
+				"common/Local/license.js"
 			],
 			"common": [
+				"common/Local/common.js",
+				"visio/Local/api.js"
 			]
 		},
 		"mobile_banners": {

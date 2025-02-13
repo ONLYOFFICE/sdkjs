@@ -2751,114 +2751,116 @@
 	{
 		switch (nType)
 		{
-			case AscCommon.global_hatch_offsets.cross:
+			case AscCommon.global_hatch_offsets["cross"]:
 				return "cross";
-			case AscCommon.global_hatch_offsets.dashDnDiag:
+			case AscCommon.global_hatch_offsets["dashDnDiag"]:
 				return "dashDnDiag";
-			case AscCommon.global_hatch_offsets.dashHorz:
+			case AscCommon.global_hatch_offsets["dashHorz"]:
 				return "dashHorz";
-			case AscCommon.global_hatch_offsets.dashUpDiag:
+			case AscCommon.global_hatch_offsets["dashUpDiag"]:
 				return "dashUpDiag";
-			case AscCommon.global_hatch_offsets.dashVert:
+			case AscCommon.global_hatch_offsets["dashVert"]:
 				return "dashVert";
-			case AscCommon.global_hatch_offsets.diagBrick:
+			case AscCommon.global_hatch_offsets["diagBrick"]:
 				return "diagBrick";
-			case AscCommon.global_hatch_offsets.diagCross:
+			case AscCommon.global_hatch_offsets["diagCross"]:
 				return "diagCross";
-			case AscCommon.global_hatch_offsets.divot:
+			case AscCommon.global_hatch_offsets["divot"]:
 				return "divot";
-			case AscCommon.global_hatch_offsets.dkDnDiag:
+			case AscCommon.global_hatch_offsets["dkDnDiag"]:
 				return "dkDnDiag";
-			case AscCommon.global_hatch_offsets.dkHorz:
+			case AscCommon.global_hatch_offsets["dkHorz"]:
 				return "dkHorz";
-			case AscCommon.global_hatch_offsets.dkUpDiag:
+			case AscCommon.global_hatch_offsets["dkUpDiag"]:
 				return "dkUpDiag";
-			case AscCommon.global_hatch_offsets.dkVert:
+			case AscCommon.global_hatch_offsets["dkVert"]:
 				return "dkVert";
-			case AscCommon.global_hatch_offsets.dnDiag:
+			case AscCommon.global_hatch_offsets["dnDiag"]:
 				return "dnDiag";
-			case AscCommon.global_hatch_offsets.dotDmnd:
+			case AscCommon.global_hatch_offsets["dotDmnd"]:
 				return "dotDmnd";
-			case AscCommon.global_hatch_offsets.dotGrid:
+			case AscCommon.global_hatch_offsets["dotGrid"]:
 				return "dotGrid";
-			case AscCommon.global_hatch_offsets.horz:
+			case AscCommon.global_hatch_offsets["horz"]:
 				return "horz";
-			case AscCommon.global_hatch_offsets.horzBrick:
+			case AscCommon.global_hatch_offsets["horzBrick"]:
 				return "horzBrick";
-			case AscCommon.global_hatch_offsets.lgCheck:
+			case AscCommon.global_hatch_offsets["lgCheck"]:
 				return "lgCheck";
-			case AscCommon.global_hatch_offsets.lgConfetti:
+			case AscCommon.global_hatch_offsets["lgConfetti"]:
 				return "lgConfetti";
-			case AscCommon.global_hatch_offsets.lgGrid:
+			case AscCommon.global_hatch_offsets["lgGrid"]:
 				return "lgGrid";
-			case AscCommon.global_hatch_offsets.ltDnDiag:
+			case AscCommon.global_hatch_offsets["ltDnDiag"]:
 				return "ltDnDiag";
-			case AscCommon.global_hatch_offsets.ltHorz:
+			case AscCommon.global_hatch_offsets["ltHorz"]:
 				return "ltHorz";
-			case AscCommon.global_hatch_offsets.ltUpDiag:
+			case AscCommon.global_hatch_offsets["ltUpDiag"]:
 				return "ltUpDiag";
-			case AscCommon.global_hatch_offsets.ltVert:
+			case AscCommon.global_hatch_offsets["ltVert"]:
 				return "ltVert";
-			case AscCommon.global_hatch_offsets.narHorz:
+			case AscCommon.global_hatch_offsets["narHorz"]:
 				return "narHorz";
-			case AscCommon.global_hatch_offsets.narVert:
+			case AscCommon.global_hatch_offsets["narVert"]:
 				return "narVert";
-			case AscCommon.global_hatch_offsets.openDmnd:
+			case AscCommon.global_hatch_offsets["openDmnd"]:
 				return "openDmnd";
-			case AscCommon.global_hatch_offsets.pct10:
+			case AscCommon.global_hatch_offsets["pct10"]:
 				return "pct10";
-			case AscCommon.global_hatch_offsets.pct20:
+			case AscCommon.global_hatch_offsets["pct20"]:
 				return "pct20";
-			case AscCommon.global_hatch_offsets.pct25:
+			case AscCommon.global_hatch_offsets["pct25"]:
 				return "pct25";
-			case AscCommon.global_hatch_offsets.pct30:
+			case AscCommon.global_hatch_offsets["pct30"]:
 				return "pct30";
-			case AscCommon.global_hatch_offsets.pct40:
+			case AscCommon.global_hatch_offsets["pct40"]:
 				return "pct40";
-			case AscCommon.global_hatch_offsets.pct5:
+			case AscCommon.global_hatch_offsets["pct5"]:
 				return "pct5";
-			case AscCommon.global_hatch_offsets.pct50:
+			case AscCommon.global_hatch_offsets["pct50"]:
 				return "pct50";
-			case AscCommon.global_hatch_offsets.pct60:
+			case AscCommon.global_hatch_offsets["pct60"]:
 				return "pct60";
-			case AscCommon.global_hatch_offsets.pct70:
+			case AscCommon.global_hatch_offsets["pct70"]:
 				return "pct70";
-			case AscCommon.global_hatch_offsets.pct75:
+			case AscCommon.global_hatch_offsets["pct75"]:
 				return "pct75";
-			case AscCommon.global_hatch_offsets.pct80:
+			case AscCommon.global_hatch_offsets["pct80"]:
 				return "pct80";
-			case AscCommon.global_hatch_offsets.pct90:
+			case AscCommon.global_hatch_offsets["pct90"]:
 				return "pct90";
-			case AscCommon.global_hatch_offsets.plaid:
+			case AscCommon.global_hatch_offsets["plaid"]:
 				return "plaid";
-			case AscCommon.global_hatch_offsets.shingle:
+			case AscCommon.global_hatch_offsets["shingle"]:
 				return "shingle";
-			case AscCommon.global_hatch_offsets.smCheck:
+			case AscCommon.global_hatch_offsets["smCheck"]:
 				return "smCheck";
-			case AscCommon.global_hatch_offsets.smConfetti:
+			case AscCommon.global_hatch_offsets["smConfetti"]:
 				return "smConfetti";
-			case AscCommon.global_hatch_offsets.smGrid:
+			case AscCommon.global_hatch_offsets["smGrid"]:
 				return "smGrid";
-			case AscCommon.global_hatch_offsets.solidDmnd:
+			case AscCommon.global_hatch_offsets["solidDmnd"]:
 				return "solidDmnd";
-			case AscCommon.global_hatch_offsets.sphere:
+			case AscCommon.global_hatch_offsets["sphere"]:
 				return "sphere";
-			case AscCommon.global_hatch_offsets.trellis:
+			case AscCommon.global_hatch_offsets["trellis"]:
 				return "trellis";
-			case AscCommon.global_hatch_offsets.upDiag:
+			case AscCommon.global_hatch_offsets["upDiag"]:
 				return "upDiag";
-			case AscCommon.global_hatch_offsets.vert:
+			case AscCommon.global_hatch_offsets["vert"]:
 				return "vert";
-			case AscCommon.global_hatch_offsets.wave:
+			case AscCommon.global_hatch_offsets["wave"]:
 				return "wave";
-			case AscCommon.global_hatch_offsets.wdDnDiag:
+			case AscCommon.global_hatch_offsets["wdDnDiag"]:
 				return "wdDnDiag";
-			case AscCommon.global_hatch_offsets.wdUpDiag:
+			case AscCommon.global_hatch_offsets["wdUpDiag"]:
 				return "wdUpDiag";
-			case AscCommon.global_hatch_offsets.weave:
+			case AscCommon.global_hatch_offsets["weave"]:
 				return "weave";
-			case AscCommon.global_hatch_offsets.zigZag:
+			case AscCommon.global_hatch_offsets["zigZag"]:
 				return "zigZag";
+			default:
+				return undefined;
 		}
 	};
 	WriterToJSON.prototype.SerTxPr = function(oTxPr)
@@ -15344,113 +15346,113 @@
 		switch (sType)
 		{
 			case "cross":
-				return AscCommon.global_hatch_offsets.cross;
+				return AscCommon.global_hatch_offsets["cross"];
 			case "dashDnDiag":
-				return AscCommon.global_hatch_offsets.dashDnDiag;
+				return AscCommon.global_hatch_offsets["dashDnDiag"];
 			case "dashHorz":
-				return AscCommon.global_hatch_offsets.dashHorz;
+				return AscCommon.global_hatch_offsets["dashHorz"];
 			case "dashUpDiag":
-				return AscCommon.global_hatch_offsets.dashUpDiag;
+				return AscCommon.global_hatch_offsets["dashUpDiag"];
 			case "dashVert":
-				return AscCommon.global_hatch_offsets.dashVert;
+				return AscCommon.global_hatch_offsets["dashVert"];
 			case "diagBrick":
-				return AscCommon.global_hatch_offsets.diagBrick;
+				return AscCommon.global_hatch_offsets["diagBrick"];
 			case "diagCross":
-				return AscCommon.global_hatch_offsets.diagCross;
+				return AscCommon.global_hatch_offsets["diagCross"];
 			case "divot":
-				return AscCommon.global_hatch_offsets.divot;
+				return AscCommon.global_hatch_offsets["divot"];
 			case "dkDnDiag":
-				return AscCommon.global_hatch_offsets.dkDnDiag;
+				return AscCommon.global_hatch_offsets["dkDnDiag"];
 			case "dkHorz":
-				return AscCommon.global_hatch_offsets.dkHorz;
+				return AscCommon.global_hatch_offsets["dkHorz"];
 			case "dkUpDiag":
-				return AscCommon.global_hatch_offsets.dkUpDiag;
+				return AscCommon.global_hatch_offsets["dkUpDiag"];
 			case "dkVert":
-				return AscCommon.global_hatch_offsets.dkVert;
+				return AscCommon.global_hatch_offsets["dkVert"];
 			case "dnDiag":
-				return AscCommon.global_hatch_offsets.dnDiag;
+				return AscCommon.global_hatch_offsets["dnDiag"];
 			case "dotDmnd":
-				return AscCommon.global_hatch_offsets.dotDmnd;
+				return AscCommon.global_hatch_offsets["dotDmnd"];
 			case "dotGrid":
-				return AscCommon.global_hatch_offsets.dotGrid;
+				return AscCommon.global_hatch_offsets["dotGrid"];
 			case "horz":
-				return AscCommon.global_hatch_offsets.horz;
+				return AscCommon.global_hatch_offsets["horz"];
 			case "horzBrick":
-				return AscCommon.global_hatch_offsets.horzBrick;
+				return AscCommon.global_hatch_offsets["horzBrick"];
 			case "lgCheck":
-				return AscCommon.global_hatch_offsets.lgCheck;
+				return AscCommon.global_hatch_offsets["lgCheck"];
 			case "lgConfetti":
-				return AscCommon.global_hatch_offsets.lgConfetti;
+				return AscCommon.global_hatch_offsets["lgConfetti"];
 			case "lgGrid":
-				return AscCommon.global_hatch_offsets.lgGrid;
+				return AscCommon.global_hatch_offsets["lgGrid"];
 			case "ltDnDiag":
-				return AscCommon.global_hatch_offsets.ltDnDiag;
+				return AscCommon.global_hatch_offsets["ltDnDiag"];
 			case "ltHorz":
-				return AscCommon.global_hatch_offsets.ltHorz;
+				return AscCommon.global_hatch_offsets["ltHorz"];
 			case "ltUpDiag":
-				return AscCommon.global_hatch_offsets.ltUpDiag;
+				return AscCommon.global_hatch_offsets["ltUpDiag"];
 			case "ltVert":
-				return AscCommon.global_hatch_offsets.ltVert;
+				return AscCommon.global_hatch_offsets["ltVert"];
 			case "narHorz":
-				return AscCommon.global_hatch_offsets.narHorz;
+				return AscCommon.global_hatch_offsets["narHorz"];
 			case "narVert":
-				return AscCommon.global_hatch_offsets.narVert;
+				return AscCommon.global_hatch_offsets["narVert"];
 			case "openDmnd":
-				return AscCommon.global_hatch_offsets.openDmnd;
+				return AscCommon.global_hatch_offsets["openDmnd"];
 			case "pct10":
-				return AscCommon.global_hatch_offsets.pct10;
+				return AscCommon.global_hatch_offsets["pct10"];
 			case "pct20":
-				return AscCommon.global_hatch_offsets.pct20;
+				return AscCommon.global_hatch_offsets["pct20"];
 			case "pct25":
-				return AscCommon.global_hatch_offsets.pct25;
+				return AscCommon.global_hatch_offsets["pct25"];
 			case "pct30":
-				return AscCommon.global_hatch_offsets.pct30;
+				return AscCommon.global_hatch_offsets["pct30"];
 			case "pct40":
-				return AscCommon.global_hatch_offsets.pct40;
+				return AscCommon.global_hatch_offsets["pct40"];
 			case "pct5":
-				return AscCommon.global_hatch_offsets.pct5;
+				return AscCommon.global_hatch_offsets["pct5"];
 			case "pct50":
-				return AscCommon.global_hatch_offsets.pct50;
+				return AscCommon.global_hatch_offsets["pct50"];
 			case "pct60":
-				return AscCommon.global_hatch_offsets.pct60;
+				return AscCommon.global_hatch_offsets["pct60"];
 			case "pct70":
-				return AscCommon.global_hatch_offsets.pct70;
+				return AscCommon.global_hatch_offsets["pct70"];
 			case "pct75":
-				return AscCommon.global_hatch_offsets.pct75;
+				return AscCommon.global_hatch_offsets["pct75"];
 			case "pct80":
-				return AscCommon.global_hatch_offsets.pct80;
+				return AscCommon.global_hatch_offsets["pct80"];
 			case "pct90":
-				return AscCommon.global_hatch_offsets.pct90;
+				return AscCommon.global_hatch_offsets["pct90"];
 			case "plaid":
-				return AscCommon.global_hatch_offsets.plaid;
+				return AscCommon.global_hatch_offsets["plaid"];
 			case "shingle":
-				return AscCommon.global_hatch_offsets.shingle;
+				return AscCommon.global_hatch_offsets["shingle"];
 			case "smCheck":
-				return AscCommon.global_hatch_offsets.smCheck;
+				return AscCommon.global_hatch_offsets["smCheck"];
 			case "smConfetti":
-				return AscCommon.global_hatch_offsets.smConfetti;
+				return AscCommon.global_hatch_offsets["smConfetti"];
 			case "smGrid":
-				return AscCommon.global_hatch_offsets.smGrid;
+				return AscCommon.global_hatch_offsets["smGrid"];
 			case "solidDmnd":
-				return AscCommon.global_hatch_offsets.solidDmnd;
+				return AscCommon.global_hatch_offsets["solidDmnd"];
 			case "sphere":
-				return AscCommon.global_hatch_offsets.sphere;
+				return AscCommon.global_hatch_offsets["sphere"];
 			case "trellis":
-				return AscCommon.global_hatch_offsets.trellis;
+				return AscCommon.global_hatch_offsets["trellis"];
 			case "upDiag":
-				return AscCommon.global_hatch_offsets.upDiag;
+				return AscCommon.global_hatch_offsets["upDiag"];
 			case "vert":
-				return AscCommon.global_hatch_offsets.vert;
+				return AscCommon.global_hatch_offsets["vert"];
 			case "wave":
-				return AscCommon.global_hatch_offsets.wave;
+				return AscCommon.global_hatch_offsets["wave"];
 			case "wdDnDiag":
-				return AscCommon.global_hatch_offsets.wdDnDiag;
+				return AscCommon.global_hatch_offsets["wdDnDiag"];
 			case "wdUpDiag":
-				return AscCommon.global_hatch_offsets.wdUpDiag;
+				return AscCommon.global_hatch_offsets["wdUpDiag"];
 			case "weave":
-				return AscCommon.global_hatch_offsets.weave;
+				return AscCommon.global_hatch_offsets["weave"];
 			case "zigZag":
-				return AscCommon.global_hatch_offsets.zigZag;
+				return AscCommon.global_hatch_offsets["zigZag"];
 		}
 	};
 	ReaderFromJSON.prototype.GetFormulaNumType = function(sFormulaType)

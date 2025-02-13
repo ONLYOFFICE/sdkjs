@@ -233,7 +233,7 @@
 				h * zoom), Asc.round(li.th * zoom), lineIndex);
 		};
 
-		CellTextRender.prototype.calcCharOffset = function (pos) {
+		CellTextRender.prototype.calcCharOffset = function (pos, lineIndex) {
 			var t = this, l = t.lines, i, h, co;
 
 			if (l.length < 1) {
@@ -249,7 +249,10 @@
 
 			for (i = 0, h = 0; i < l.length; ++i) {
 				if (pos >= l[i].beg && pos <= l[i].end) {
-					return this.charOffset(pos, i, h);
+					//end of line and start of line can have same index
+					if (!(lineIndex != null && (pos === l[i].end/* || pos === l[i].beg*/) && lineIndex !== i)) {
+						return this.charOffset(pos, i, h);
+					}
 				}
 				if (i !== l.length - 1) {
 					h += l[i].th;

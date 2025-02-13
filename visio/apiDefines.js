@@ -36,7 +36,11 @@ var c_oSerFormat = {
 	Version   : 1,
 	Signature : "VSDY"
 };
+const c_oAscDiagramShortcutType = {
+	Print           : 1
+};
 
 window['AscCommon']                = window['AscCommon'] || {};
 window['AscCommon'].c_oSerFormat   = c_oSerFormat;
 window['AscCommon'].CurFileVersion = c_oSerFormat.Version;
+window['Asc']['c_oAscDiagramShortcutType'] = window['Asc'].c_oAscDiagramShortcutType = c_oAscDiagramShortcutType;

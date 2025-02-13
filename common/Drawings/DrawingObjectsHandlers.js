@@ -312,19 +312,6 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
     {
         drawing = drawingArr[i];
 
-        if (drawing.IsAnnot && drawing.IsAnnot()) {
-            if (drawing.IsHidden()) {
-                ret = false;
-                continue;
-            }
-
-            if (drawing.GetType() == AscPDF.ANNOTATIONS_TYPES.Text) {
-                ret = handleBaseAnnot(drawing, drawingObjectsController, e, x, y, group, pageIndex);
-            }
-            else {
-                ret = false;
-            }
-        }
         switch(drawing.getObjectType())
         {
 
@@ -367,6 +354,14 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
                 ret = handleFloatTable(drawing, drawingObjectsController, e, x, y, group, pageIndex);
                 break;
             }
+            case AscDFH.historyitem_type_Pdf_Annot_Text:
+            case AscDFH.historyitem_type_Pdf_Annot_Highlight:
+            case AscDFH.historyitem_type_Pdf_Annot_Underline:
+            case AscDFH.historyitem_type_Pdf_Annot_Strikeout:
+            case AscDFH.historyitem_type_Pdf_Annot_Squiggly:
+            case AscDFH.historyitem_type_Pdf_Annot_Caret:
+                ret = handleBaseAnnot(drawing, drawingObjectsController, e, x, y, group, pageIndex);
+                break;
         }
 
         if(ret)
@@ -392,16 +387,29 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
     return ret;
 }
 
-function handleBaseAnnot(drawing, drawingObjectsController, e, x, y, group, pageIndex) {
+function handleBaseAnnot(annot, drawingObjectsController, e, x, y, group, pageIndex) {
     if (drawingObjectsController.handleEventMode != HANDLE_EVENT_MODE_HANDLE)
         return false;
     
-    if (drawing.GetType() != AscPDF.ANNOTATIONS_TYPES.Ink && drawing.IsTextMarkup() == false && Asc.editor.getPDFDoc().GetActiveObject() == drawing) {
-        drawingObjectsController.arrPreTrackObjects.push(drawing.createMoveTrack());
-        drawingObjectsController.changeCurrentState(new AscFormat.PreMoveState(drawingObjectsController, x, y, e.ShiftKey, e.CtrlKey, drawing, true, false, false));
-        if (drawingObjectsController.selectedObjects.indexOf(drawing) == -1) {
-            drawingObjectsController.selectedObjects.push(drawing);
+    let oDoc = Asc.editor.getPDFDoc();
+    let oController = oDoc.GetController();
+    let aSelObjects = oController.selectedObjects;
+
+    if (oDoc.GetActiveObject() == annot || aSelObjects.includes(annot)) {
+        if (!annot.selected) {
+            annot.select(drawingObjectsController, pageIndex);
         }
+        
+        aSelObjects.forEach(function(annot) {
+            let oMoveTrack = annot.createMoveTrack();
+            if (oMoveTrack) {
+                drawingObjectsController.arrPreTrackObjects.push(oMoveTrack);
+                if (oDoc.GetActiveObject() == annot) {
+                    drawingObjectsController.changeCurrentState(new AscFormat.PreMoveState(drawingObjectsController, x, y, e.ShiftKey, e.CtrlKey, annot, true, false, false));
+                }
+            }
+        })
+        
         return true;
     }
     

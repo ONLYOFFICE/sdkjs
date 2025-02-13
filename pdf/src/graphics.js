@@ -393,6 +393,7 @@
                 return;
         }
     
+        this.SetGlobalAlpha(1);
         if (lock_type === AscCommon.c_oAscLockTypes.kLockTypeMine) {
             this.SetStrokeStyle(22, 156, 0, 255);
         } else {
@@ -429,10 +430,10 @@
                 // Нормали к ребрам
                 let len1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
                 let len2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-                let nx1 = -dy1 / len1;
-                let ny1 = dx1 / len1;
-                let nx2 = -dy2 / len2;
-                let ny2 = dx2 / len2;
+                let nx1 = dy1 / len1;
+                let ny1 = -dx1 / len1;
+                let nx2 = dy2 / len2;
+                let ny2 = -dx2 / len2;
     
                 // Усредненная нормаль
                 let avgNx = (nx1 + nx2) / 2;

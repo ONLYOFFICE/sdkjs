@@ -101,8 +101,58 @@
 	CRunElementBase.prototype.SetParent = function(oParent)
 	{
 	};
+	CRunElementBase.prototype.GetRun = function()
+	{
+		return null;
+	};
+	CRunElementBase.prototype.GetInRunPos = function()
+	{
+		let run = this.GetRun();
+		if (!run)
+			return -1;
+		
+		return run.GetElementPosition(this);
+	};
+	CRunElementBase.prototype.GetInParagraphPos = function()
+	{
+		let run = this.GetRun();
+		if (!run)
+			return null;
+		
+		let paragraph = run.GetParagraph();
+		if (!paragraph)
+			return null;
+		
+		let inRunPos = this.GetInRunPos();
+		if (-1 === inRunPos)
+			return null;
+		
+		let paraPos = paragraph.GetPosByElement(run);
+		if (!paraPos)
+			return null;
+		
+		paraPos.Add(inRunPos);
+		return paraPos;
+	};
 	CRunElementBase.prototype.SetParagraph = function(oParagraph)
 	{
+	};
+	CRunElementBase.prototype.GetParagraph = function()
+	{
+		let run = this.GetRun();
+		return run ? run.GetParagraph() : null;
+	};
+	CRunElementBase.prototype.IsInPermRange = function()
+	{
+		let paragraph = this.GetParagraph();
+		if (!paragraph)
+			return false;
+		
+		let paraPos = this.GetInParagraphPos();
+		if (!paraPos)
+			return null;
+		
+		return paragraph.GetPermRangesByPos(paraPos).length > 0;
 	};
 	CRunElementBase.prototype.Copy = function()
 	{

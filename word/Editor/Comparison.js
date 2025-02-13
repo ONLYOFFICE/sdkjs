@@ -41,6 +41,108 @@
     //EXCLUDED_PUNCTUATION[95] = true;
     EXCLUDED_PUNCTUATION[160] = true;
     //EXCLUDED_PUNCTUATION[63] = true;
+	function getMockDocumentFromRuns(arrRuns) {
+		const arrSlice = arrRuns.slice();
+		arrSlice.push(new AscCommonWord.ParaRun());
+		arrSlice[arrSlice.length - 1].Content.push(new AscWord.CRunParagraphMark());
+
+		const mockDocument = new AscCommonWord.CMockDocument();
+		const mockParagraph = new AscCommonWord.CMockParagraph();
+		mockDocument.Content.push(mockParagraph);
+		mockParagraph.Content = arrSlice;
+
+		return mockDocument;
+	}
+	function getChanges(arrOriginalTextElements, arrRevisedTextElements, comparison, oMainParent, oRevisedParent) {
+		let arrTextPrChanges = [];
+		if (comparison.options.formatting) {
+			const oTextPrChangeCollector = new CTextPrChangeCollector(arrOriginalTextElements, arrRevisedTextElements, oMainParent, oRevisedParent, comparison.copyPr);
+			arrTextPrChanges = oTextPrChangeCollector.getTextPrChanges();
+		}
+
+		let arrReviewChanges = [];
+		if (comparison.needCheckReview) {
+			const oReviewChangeCollector = new CReviewChangeCollector(arrOriginalTextElements, arrRevisedTextElements, comparison.oComparisonMoveMarkManager, oMainParent, oRevisedParent, comparison.copyPr);
+			arrReviewChanges = oReviewChangeCollector.getReviewChanges();
+		}
+
+		let oCopyPr;
+		if (comparison.needCopyForResolveEqualWords) {
+			oCopyPr = comparison.copyPr;
+		}
+		const oCommentChangeCollector = new CCommentChangesCollector(arrOriginalTextElements, arrRevisedTextElements, oCopyPr, comparison.oCommentManager);
+		const arrCommentChanges = oCommentChangeCollector.getCommentChanges();
+
+		const oBookmarkChangeCollector = new CBookmarkChangesCollector(arrRevisedTextElements, oCopyPr);
+		const arrBookmarkChanges = oBookmarkChangeCollector.getBookmarkChanges();
+
+		const arrChanges = arrTextPrChanges.concat(arrReviewChanges, arrBookmarkChanges, arrCommentChanges);
+		return arrChanges.sort(function (a, b) {
+			if (a.elementIndex === b.elementIndex) {
+				if (b.innerElementIndex === a.innerElementIndex) {
+					return !!b.isStart - !!a.isStart;
+				}
+				return b.innerElementIndex - a.innerElementIndex;
+			}
+			return b.elementIndex - a.elementIndex;
+		});
+	}
+	function resolveTypesWithPartner(arrNodes, comparison) {
+		const arrMainElements = [];
+		const arrRevisedElements = [];
+		for (let i = 0; i < arrNodes.length; i += 1) {
+			const oNode = arrNodes[i];
+			const oMainElement = oNode.element;
+			const oRevisedElement = oNode.partner.element;
+
+			arrMainElements.push(oMainElement);
+			arrRevisedElements.push(oRevisedElement);
+		}
+		if (!arrMainElements.length) {
+			return;
+		}
+
+		const oFirstNode = arrNodes[0];
+		const oRevisedParent = oFirstNode.partner.par.element;
+		const oMainParent = oFirstNode.par.element;
+
+
+		const oNeedReviewWithUser = {};
+		const arrChanges = getChanges(arrMainElements, arrRevisedElements, comparison, oMainParent, oRevisedParent);
+
+		const oTextIterator = new CRunCollector(arrMainElements, comparison.parentParagraph);
+
+		for (let i = 0; i < arrChanges.length; i += 1) {
+			const oChange = arrChanges[i];
+			oChange.apply(oTextIterator, comparison, oNeedReviewWithUser);
+		}
+		comparison.applyResolveTypes(oNeedReviewWithUser);
+	}
+	function WordCounter() {
+
+		this.mapWords = {};
+		this.count = 0;
+	}
+	WordCounter.prototype.update = function(aCodes, oComparison) {
+		++this.count;
+		let text = String.fromCharCode.apply(String, aCodes);
+		if (!oComparison.options.caseChanges) {
+			text = text.toLowerCase();
+		}
+		if (!this.mapWords[text]) {
+			this.mapWords[text] = 0;
+		}
+		this.mapWords[text] += 1;
+	};
+	WordCounter.prototype.diff = function(other) {
+		let shared = 0;
+		for (let i in this.mapWords) {
+			if (other.mapWords[i]) {
+				shared += Math.min(other.mapWords[i], this.mapWords[i]);
+			}
+		}
+		return other.count + this.count - 2 * shared;
+	};
 
 	function changeFirstTextElement(oTextIterator, oRun)
 	{
@@ -297,13 +399,23 @@
 		this.commentManager.checkComments(arrMainComments, arrRevisedComments, arrRevisedComments);
 	};
 
-	function CReviewChangeCollector(arrMainElements, arrRevisedElements, oMoveMarkManager, oMainParagraph, oRevisedParagraph) {
+	function CReviewChangeCollector(arrMainElements, arrRevisedElements, oMoveMarkManager, oMainParagraph, oRevisedParagraph, oCopyPr) {
 		this.mainElements = arrMainElements;
 		this.revisedElements = arrRevisedElements;
 		this.moveMarkManager = oMoveMarkManager;
 		this.mainParagraph = oMainParagraph;
 		this.revisedParagraph = oRevisedParagraph;
+		this.copyPr = oCopyPr;
 	}
+	CReviewChangeCollector.prototype.isSkippedElement = function (oRun) {
+		if (!(oRun instanceof AscCommonWord.ParaRun)) {
+			return true;
+		}
+		if (this.copyPr.SkipFootnoteReference) {
+			return oRun.IsFootEndnoteReferenceRun();
+		}
+		return false;
+	};
 	CReviewChangeCollector.prototype.getPriorityChange = function (oRevisedRun, oMainRun) {
 		const oRevisedReviewInfo = oRevisedRun.GetReviewInfo();
 		const nRevisedReviewType = oRevisedRun.GetReviewType();
@@ -468,13 +580,13 @@
 				do {
 					nRevisedRunIndex -= 1;
 					bSaveOldRevisedCount = false;
-				} while (!(oRevisedContent[nRevisedRunIndex] instanceof AscCommonWord.ParaRun) && nRevisedRunIndex >= 0)
+				} while (this.isSkippedElement(oRevisedContent[nRevisedRunIndex]) && nRevisedRunIndex >= 0)
 			}
 			if (nMainElementsCount === 0) {
 				do {
 					nMainRunIndex -= 1;
 					bSaveOldMainCount = false;
-				} while (!(oMainContent[nMainRunIndex] instanceof AscCommonWord.ParaRun) && nMainRunIndex >= 0)
+				} while (this.isSkippedElement(oMainContent[nMainRunIndex]) && nMainRunIndex >= 0)
 			}
 		}
 		return arrResult;
@@ -561,6 +673,7 @@
 		this.revisedParagraph = oRevisedParagraph;
 		this.copyPr = oCopyPr;
 	}
+	CTextPrChangeCollector.prototype.isSkippedElement = CReviewChangeCollector.prototype.isSkippedElement;
 	CTextPrChangeCollector.prototype.getRevisedLastRunIndex = function () {
 		const oLastElement = this.elements[this.elements.length - 1];
 		const oLastRun = oLastElement.lastRun;
@@ -672,13 +785,13 @@
 				do {
 					nRevisedRunIndex -= 1;
 					bSaveOldRevisedCount = false;
-				} while (!(oRevisedContent[nRevisedRunIndex] instanceof AscCommonWord.ParaRun) && nRevisedRunIndex >= 0)
+				} while (this.isSkippedElement(oRevisedContent[nRevisedRunIndex]) && nRevisedRunIndex >= 0)
 			}
 			if (nMainElementsCount === 0) {
 				do {
 					nMainRunIndex -= 1;
 					bSaveOldMainCount = false;
-				} while (!(oMainContent[nMainRunIndex] instanceof AscCommonWord.ParaRun) && nMainRunIndex >= 0)
+				} while (this.isSkippedElement(oMainContent[nMainRunIndex]) && nMainRunIndex >= 0)
 			}
 		}
 		return arrResult;
@@ -694,75 +807,53 @@
         this.partner = null;
         this.childidx = null;
 
-        this.hashWords = null;
+        this.wordCounter = null;
         if(oParent)
         {
             oParent.addChildNode(this);
         }
     }
+	CNode.prototype.checkLastNodeOnInsertWithResolveConflict = function(comparison, aContentToInsert, oChange) {
+			if (!comparison.parentParagraph) {
+				return true;
+			}
+		const applyingParagraph = comparison.parentParagraph;
+		const index = oChange.anchor.index;
+		if (index === this.children.length - 1) {
 
-	function getChanges(arrOriginalTextElements, arrRevisedTextElements, comparison, oMainParent, oRevisedParent) {
-		const oTextPrChangeCollector = new CTextPrChangeCollector(arrOriginalTextElements, arrRevisedTextElements, oMainParent, oRevisedParent, comparison.copyPr);
-		const arrTextPrChanges = oTextPrChangeCollector.getTextPrChanges();
-
-		let arrReviewChanges = [];
-		if (comparison.needCheckReview) {
-			const oReviewChangeCollector = new CReviewChangeCollector(arrOriginalTextElements, arrRevisedTextElements, comparison.oComparisonMoveMarkManager, oMainParent, oRevisedParent);
-			arrReviewChanges = oReviewChangeCollector.getReviewChanges();
+			const oLastConflictElement = this.children[this.children.length - 2].element;
+			const nInsertIndex = oLastConflictElement.lastRun.GetPosInParent(applyingParagraph);
+			const nLastSymbolPosition = oLastConflictElement.lastRun.GetElementPosition(oLastConflictElement.elements[oLastConflictElement.elements.length - 1]);
+			if (nLastSymbolPosition !== -1) {
+				const oNewRun = oLastConflictElement.lastRun.Split2(nLastSymbolPosition + 1, applyingParagraph, nInsertIndex);
+				comparison.checkOriginalAndSplitRun(oNewRun, oLastConflictElement.lastRun);
+				this.applyInsert(aContentToInsert, [], nInsertIndex + 1, comparison);
+				return false;
+			}
 		}
-
-		let oCopyPr;
-		if (comparison.needCopyForResolveEqualWords) {
-			oCopyPr = comparison.copyPr;
-		}
-		const oCommentChangeCollector = new CCommentChangesCollector(arrOriginalTextElements, arrRevisedTextElements, oCopyPr, comparison.oCommentManager);
-		const arrCommentChanges = oCommentChangeCollector.getCommentChanges();
-
-		const oBookmarkChangeCollector = new CBookmarkChangesCollector(arrRevisedTextElements, oCopyPr);
-		const arrBookmarkChanges = oBookmarkChangeCollector.getBookmarkChanges();
-
-		const arrChanges = arrTextPrChanges.concat(arrReviewChanges, arrBookmarkChanges, arrCommentChanges);
-		return arrChanges.sort(function (a, b) {
-			if (a.elementIndex === b.elementIndex) {
-				if (b.innerElementIndex === a.innerElementIndex) {
-					return !!b.isStart - !!a.isStart;
+		return true;
+	};
+		CNode.prototype.getDiff = function (oAnotherNode, oComparison) {
+			if (this.equals(oAnotherNode, oComparison)) {
+				let nWordDiff = this.wordCounter.diff(oAnotherNode.wordCounter);
+				if (this.element instanceof AscWord.Paragraph) {
+					let startType;
+					let endType;
+					if (this.element.SectPr) {
+						startType = this.element.SectPr.Type;
+					}
+					if (oAnotherNode.element.SectPr) {
+						endType = oAnotherNode.element.SectPr.Type;
+					}
+					nWordDiff += endType !== startType ? 1 : 0;
 				}
-				return b.innerElementIndex - a.innerElementIndex;
+				return nWordDiff;
 			}
-			return b.elementIndex - a.elementIndex;
-		});
-	}
-		function resolveTypesWithPartner(arrNodes, comparison) {
-			const arrMainElements = [];
-			const arrRevisedElements = [];
-			for (let i = 0; i < arrNodes.length; i += 1) {
-				const oNode = arrNodes[i];
-				const oMainElement = oNode.element;
-				const oRevisedElement = oNode.partner.element;
-
-				arrMainElements.push(oMainElement);
-				arrRevisedElements.push(oRevisedElement);
-			}
-			if (!arrMainElements.length) {
-				return;
-			}
-
-			const oFirstNode = arrNodes[0];
-			const oRevisedParent = oFirstNode.partner.par.element;
-			const oMainParent = oFirstNode.par.element;
-
-
-			const oNeedReviewWithUser = {};
-			const arrChanges = getChanges(arrMainElements, arrRevisedElements, comparison, oMainParent, oRevisedParent);
-
-			const oTextIterator = new CRunCollector(arrMainElements);
-
-			for (let i = 0; i < arrChanges.length; i += 1) {
-				const oChange = arrChanges[i];
-				oChange.apply(oTextIterator, comparison, oNeedReviewWithUser);
-			}
-			comparison.applyResolveTypes(oNeedReviewWithUser);
-		}
+			return this.wordCounter.count + oAnotherNode.wordCounter.count + 2;
+		};
+		CNode.prototype.isSpaceText = function() {
+			return this.element instanceof CTextElement && this.element.isSpaceText();
+		};
 	CNode.prototype.resolveTypesWithPartner = function (comparison) {
 			if (this.partner && this.element instanceof CTextElement) {
 				resolveTypesWithPartner([this], comparison);
@@ -843,8 +934,7 @@
 		}
 		return element;
 	};
-    CNode.prototype.cleanEndOfInsert = function (aContentToInsert, idxOfChange, comparison) {
-        const oChange = this.changes[idxOfChange];
+    CNode.prototype.cleanEndOfInsert = function (aContentToInsert, oChange, comparison) {
 				const oNode = oChange.insert[oChange.insert.length - 1];
         const oLastText = oNode.element;
 				const oEndOfInsertRun = oNode.getContentElement();
@@ -916,6 +1006,9 @@
     };
 
     CNode.prototype.pushToArrInsertContentWithCopy = function (aContentToInsert, elem, comparison) {
+			if (elem instanceof AscCommon.ParaComment && !comparison.options.comments) {
+				return;
+			}
         const elemCopy = elem.Copy(false, comparison.copyPr);
         this.pushToArrInsertContent(aContentToInsert, elemCopy, comparison);
 				if (elem instanceof AscCommon.ParaComment)
@@ -924,8 +1017,7 @@
 				}
     };
 
-    CNode.prototype.cleanStartOfInsertSameRun = function (oNewRun, idxOfChange) {
-        const oChange = this.changes[idxOfChange];
+    CNode.prototype.cleanStartOfInsertSameRun = function (oNewRun, oChange) {
 				const oNode = oChange.insert[0];
         const oFirstText = oNode.element;
         if(oNewRun)
@@ -954,8 +1046,7 @@
         return oNewRun;
     };
 
-    CNode.prototype.cleanStartOfInsertDifferentRun = function (aContentToInsert, posOfLastInsertRun, idxOfChange, comparison) {
-        const oChange = this.changes[idxOfChange];
+    CNode.prototype.cleanStartOfInsertDifferentRun = function (aContentToInsert, posOfLastInsertRun, oChange, comparison) {
 				const oFirstNode = oChange.insert[0];
 				const oLastNode = oChange.insert[oChange.insert.length - 1];
 	    const oFirstText = oFirstNode.element;
@@ -1010,10 +1101,9 @@
             }
         }
     };
-	CNode.prototype.checkCommentsFromInsert = function (idxOfChange, comparison)
+	CNode.prototype.checkCommentsFromInsert = function (oChange, comparison)
 	{
 		const mapRevisedComments = {};
-		const oChange = this.changes[idxOfChange];
 		const arrRevisedComments = [];
 		for (let i = 0; i < oChange.insert.length; i += 1)
 		{
@@ -1059,10 +1149,9 @@
 			comparison.oCommentManager.checkComments(arrMainComments, arrRevisedComments, arrMainComments);
 		}
 	};
-    CNode.prototype.getArrOfInsertsFromChanges = function (idxOfChange, comparison) {
-        const oChange = this.changes[idxOfChange];
+    CNode.prototype.getArrOfInsertsFromChanges = function (oChange, comparison) {
         const aContentToInsert = [];
-				this.checkCommentsFromInsert(idxOfChange, comparison);
+				this.checkCommentsFromInsert(oChange, comparison);
 
         if(oChange.insert.length > 0)
         {
@@ -1071,16 +1160,16 @@
             const oFirstText = oFirstNode.getContentElement(true);
             const oLastText = oLastNode.getContentElement();
 
-            const posLastRunOfInsert = this.cleanEndOfInsert(aContentToInsert, idxOfChange, comparison);
+            const posLastRunOfInsert = this.cleanEndOfInsert(aContentToInsert, oChange, comparison);
 
             // изменения находятся внутри одного рана или это один и тот же элемент
             if(oFirstText === oLastText)
             {
-                this.cleanStartOfInsertSameRun(aContentToInsert[aContentToInsert.length - 1], idxOfChange);
+                this.cleanStartOfInsertSameRun(aContentToInsert[aContentToInsert.length - 1], oChange);
             }
             else
             {
-                this.cleanStartOfInsertDifferentRun(aContentToInsert, posLastRunOfInsert, idxOfChange, comparison);
+                this.cleanStartOfInsertDifferentRun(aContentToInsert, posLastRunOfInsert, oChange, comparison);
             }
 
 	        const arrStartBookmarks = oFirstNode.getFirstBookmarks();
@@ -1100,23 +1189,16 @@
     };
 
 
-    CNode.prototype.applyInsertsToParagraph = function (comparison, aContentToInsert, idxOfChange) {
-        const oChange = this.changes[idxOfChange];
-        if (oChange.remove.length > 0) {
-            this.applyInsertsToParagraphsWithRemove(comparison, aContentToInsert, idxOfChange);
+    CNode.prototype.applyInsertsToParagraph = function (comparison, aContentToInsert, oChange) {
+        if (oChange.remove.length > 0 && !comparison.isSkipWhitespaces(oChange.remove)) {
+            this.applyInsertsToParagraphsWithRemove(comparison, aContentToInsert, oChange);
         } else {
-            this.applyInsertsToParagraphsWithoutRemove(comparison, aContentToInsert, idxOfChange);
+            this.applyInsertsToParagraphsWithoutRemove(comparison, aContentToInsert, oChange);
         }
     };
 
-    CNode.prototype.getStartPosition = function (comparison) {
-        return 0;
-    };
-
-    CNode.prototype.applyInsertsToParagraphsWithoutRemove = function (comparison, aContentToInsert, idxOfChange) {
-        const oChange = this.changes[idxOfChange];
+    CNode.prototype.applyInsertsToParagraphsWithoutRemove = function (comparison, aContentToInsert, oChange) {
         const applyingParagraph = this.getApplyParagraph(comparison);
-
         if(aContentToInsert.length > 0)
         {
             const index = oChange.anchor.index;
@@ -1187,15 +1269,14 @@
     };
 
     CNode.prototype.getApplyParagraph = function (comparison) {
-        return this.element;
+        return comparison.parentParagraph || this.element;
     };
 
     CNode.prototype.setCommonReviewTypeWithInfo = function (element, info) {
         element.SetReviewTypeWithInfo(reviewtype_Common, info);
     };
 
-    CNode.prototype.prepareEndOfRemoveChange = function (idxOfChange, comparison, arrSetRemove) {
-        const oChange = this.changes[idxOfChange];
+    CNode.prototype.prepareEndOfRemoveChange = function (oChange, comparison, arrSetRemove) {
         const oApplyParagraph = this.getApplyParagraph(comparison);
 				const oNode = oChange.remove[oChange.remove.length - 1];
         const oLastText = oNode.element;
@@ -1240,9 +1321,8 @@
         return {posLastRunInContent: k, nInsertPosition: nInsertPosition };
     };
 
-    CNode.prototype.setReviewTypeForRemoveChanges = function (comparison, idxOfChange, posLastRunInContent, nInsertPosition, arrSetRemoveReviewType) {
+    CNode.prototype.setReviewTypeForRemoveChanges = function (comparison, oChange, posLastRunInContent, nInsertPosition, arrSetRemoveReviewType) {
         const oApplyParagraph = this.getApplyParagraph(comparison);
-        const oChange = this.changes[idxOfChange];
 				const oNode = oChange.remove[0];
         const oFirstText = oNode.element;
 				const oStartOfRemoveRun = oNode.getContentElement(true);
@@ -1296,15 +1376,20 @@
         this.insertContentAfterRemoveChanges(arrToInsert, nInsertPosition, comparison, options);
     };
 
-    CNode.prototype.applyInsertsToParagraphsWithRemove = function (comparison, aContentToInsert, idxOfChange) {
+    CNode.prototype.applyInsertsToParagraphsWithRemove = function (comparison, aContentToInsert, oChange) {
         const arrSetRemoveReviewType = [];
-        const infoAboutEndOfRemoveChange = this.prepareEndOfRemoveChange(idxOfChange, comparison, arrSetRemoveReviewType);
+        const infoAboutEndOfRemoveChange = this.prepareEndOfRemoveChange(oChange, comparison, arrSetRemoveReviewType);
         const posLastRunInContent = infoAboutEndOfRemoveChange.posLastRunInContent;
 
         let nInsertPosition = infoAboutEndOfRemoveChange.nInsertPosition;
-        nInsertPosition = this.setReviewTypeForRemoveChanges(comparison, idxOfChange, posLastRunInContent, nInsertPosition, arrSetRemoveReviewType);
-
-        this.applyInsert(aContentToInsert, arrSetRemoveReviewType, nInsertPosition, comparison, {needReverse: true});
+        nInsertPosition = this.setReviewTypeForRemoveChanges(comparison, oChange, posLastRunInContent, nInsertPosition, arrSetRemoveReviewType);
+				if (!comparison.options.words && !comparison.isWordsByOneSymbol && oChange.insert.length === 1 && oChange.remove.length === 1) {
+					aContentToInsert.reverse();
+					arrSetRemoveReviewType.reverse();
+					comparison.resolveConflicts(aContentToInsert, arrSetRemoveReviewType, this.getApplyParagraph(comparison), true);
+				} else {
+					this.applyInsert(aContentToInsert, arrSetRemoveReviewType, nInsertPosition, comparison, {needReverse: true});
+				}
     };
 
     CNode.prototype.insertContentAfterRemoveChanges = function (aContentToInsert, nInsertPosition, comparison) {
@@ -1360,7 +1445,7 @@
     {
         return this.changes.push(oOperation);
     };
-    CNode.prototype.equals = function(oNode)
+    CNode.prototype.equals = function(oNode, oComparison)
     {
         if(this.depth === oNode.depth)
         {
@@ -1377,12 +1462,12 @@
                     return false;
                 }
             }
-            return this.privateCompareElements(oNode, true);
+            return this.privateCompareElements(oNode, true, oComparison);
         }
         return false;
     };
 
-    CNode.prototype.privateCompareElements = function(oNode, bCheckNeighbors)
+    CNode.prototype.privateCompareElements = function(oNode, bCheckNeighbors, oComparison)
     {
         const oElement1 = this.element;
         const oElement2 = oNode.element;
@@ -1408,14 +1493,14 @@
                     }
                     if(aNeighbors1[0] && aNeighbors2[0])
                     {
-                        if(aNeighbors1[0].privateCompareElements(aNeighbors2[0], false))
+                        if(aNeighbors1[0].privateCompareElements(aNeighbors2[0], false, oComparison))
                         {
                             return true;
                         }
                     }
                     if(aNeighbors1[1] && aNeighbors2[1])
                     {
-                        if(aNeighbors1[1].privateCompareElements(aNeighbors2[1], false))
+                        if(aNeighbors1[1].privateCompareElements(aNeighbors2[1], false, oComparison))
                         {
                             return true;
                         }
@@ -1424,7 +1509,7 @@
                 }
                 else
                 {
-                    return oElement1.equals(oElement2, bCheckNeighbors);
+                    return oElement1.equals(oElement2, bCheckNeighbors, oComparison);
                 }
             }
             if (oElement1 instanceof AscCommon.CParaRevisionMove)
@@ -1674,6 +1759,44 @@
 				this.comments = {};
 	    this.lastSwitchElement = null;
     }
+	CTextElement.prototype.isWordBeginWith = function (oOther)
+	{
+		if (this.elements.length < oOther.elements.length) {
+			return false;
+		}
+
+		for (let i = 0; i < oOther.elements.length; i += 1)
+		{
+			const oMainElement = this.elements[i];
+			const oSecondaryElement = oOther.elements[i];
+			if (typeof oMainElement.Value !== 'number' || typeof oSecondaryElement.Value !== 'number')
+			{
+				return false;
+			} else if (oMainElement.Value !== oSecondaryElement.Value) {
+				return false;
+			}
+		}
+		return true;
+	};
+	CTextElement.prototype.isWordEndWith = function (oOther)
+	{
+		if (this.elements.length < oOther.elements.length) {
+			return false;
+		}
+
+		for (let i = 0; i < oOther.elements.length; i += 1)
+		{
+			const oMainElement = this.elements[this.elements.length - 1 - i];
+			const oSecondaryElement = oOther.elements[oOther.elements.length - 1 - i];
+			if (typeof oMainElement.Value !== 'number' || typeof oSecondaryElement.Value !== 'number')
+			{
+				return false;
+			} else if (oMainElement.Value !== oSecondaryElement.Value) {
+				return false;
+			}
+		}
+		return true;
+	};
 	CTextElement.prototype.getSortedInsertIndexesFromMap = function (arrLabels)
 	{
 		return (Object.keys(arrLabels).map(function (e) {return parseInt(e, 10);})
@@ -1740,8 +1863,37 @@
     CTextElement.prototype.getElement = function (idx) {
         return this.elements[idx];
     };
+	CTextElement.prototype.checkRemoveReviewType = function () {
+		return false;
+	};
+	CTextElement.prototype.checkUncompletedWords = function (other) {
+		if (this.elements.length === other.elements.length) {
+			return false;
+		}
+		let oMainTextElement;
+		let oSecondaryTextElement;
+		if (this.elements.length > other.elements.length) {
+			oMainTextElement = this;
+			oSecondaryTextElement = other;
+		}
+		else {
+			oMainTextElement = other;
+			oSecondaryTextElement = this;
+		}
+		const nEndIndex = oSecondaryTextElement.elements.length - 1;
+		const oEndElement = oMainTextElement.elements[nEndIndex];
+		if (oMainTextElement.isWordBeginWith(oSecondaryTextElement)) {
+			return oMainTextElement.checkRemoveReviewType(nEndIndex) || AscCommon.isEastAsianScript(oEndElement.Value);
+		}
 
-    CTextElement.prototype.equals = function (other, bNeedCheckReview)
+		const nStartIndex = oMainTextElement.elements.length - oSecondaryTextElement.elements.length;
+		const oStartElement = oMainTextElement.elements[nStartIndex];
+		if (oMainTextElement.isWordEndWith(oSecondaryTextElement)) {
+			return oMainTextElement.checkRemoveReviewType(nStartIndex) || AscCommon.isEastAsianScript(oStartElement.Value);
+		}
+		return false;
+	};
+    CTextElement.prototype._equals = function (other, bNeedCheckReview, oComparison)
     {
         if(this.elements.length !== other.elements.length)
         {
@@ -1757,7 +1909,12 @@
             }
             if(typeof oElement.Value === "number")
             {
-                if(oElement.Value !== oOtherElement.Value)
+							if (!oComparison.options.caseChanges) {
+								if (String.fromCharCode(oElement.Value).toLowerCase() !== String.fromCharCode(oOtherElement.Value).toLowerCase()) {
+									return false;
+								}
+							}
+							else if(oElement.Value !== oOtherElement.Value)
                 {
                     return false;
                 }
@@ -1769,8 +1926,11 @@
         }
         return true;
     };
+	CTextElement.prototype.equals = function (other, bNeedCheckReview, oComparison) {
+		return this._equals(other, bNeedCheckReview, oComparison) || this.checkUncompletedWords(other);
+	};
 
-    CTextElement.prototype.updateHash = function(oHash){
+    CTextElement.prototype.updateHash = function(oHash, oComparison){
         const aCheckArray = [];
 
         let bVal = false;
@@ -1807,11 +1967,7 @@
         }
         if(aCheckArray.length > 0)
         {
-            oHash.update(aCheckArray);
-            if(bVal)
-            {
-                oHash.countLetters++;
-            }
+            oHash.update(aCheckArray, oComparison);
         }
     };
 
@@ -1943,35 +2099,36 @@
 
     function ComparisonOptions()
     {
-        this.insertionsAndDeletions = null;
-        this.moves = null;
-        this.comments = null;
-        this.formatting = null;
-        this.caseChanges = null;
-        this.whiteSpace = null;
-        this.tables = null;
-        this.headersAndFooters = null;
-        this.footNotes  = null;
-        this.textBoxes = null;
-        this.fields = null;
-        this.words = null;
+	    this.textBoxes = true;
+	    this.tables = true;
+	    this.words = true;
+	    this.headersAndFooters = true;
+	    this.footNotes  = true;
+	    this.caseChanges = true;
+			this.formatting = true;
+			this.whiteSpace = true;
+	    this.comments = true;
+			
+	    this.insertionsAndDeletions = true;
+	    // this.moves = true;
+	    // this.fields = true;
     }
-    ComparisonOptions.prototype["getInsertionsAndDeletions"] = ComparisonOptions.prototype.getInsertionsAndDeletions = function(){return this.insertionsAndDeletions !== false;};
-    ComparisonOptions.prototype["getMoves"] = ComparisonOptions.prototype.getMoves = function(){return this.moves !== false;};
-    ComparisonOptions.prototype["getComments"] = ComparisonOptions.prototype.getComments = function(){return this.comments !== false;};
-    ComparisonOptions.prototype["getFormatting"] = ComparisonOptions.prototype.getFormatting = function(){return this.formatting !== false;};
-    ComparisonOptions.prototype["getCaseChanges"] = ComparisonOptions.prototype.getCaseChanges = function(){return this.caseChanges !== false;};
-    ComparisonOptions.prototype["getWhiteSpace"] = ComparisonOptions.prototype.getWhiteSpace = function(){return this.whiteSpace !== false;};
-    ComparisonOptions.prototype["getTables"] = ComparisonOptions.prototype.getTables = function(){return true;/*this.tables !== false;*/};
-    ComparisonOptions.prototype["getHeadersAndFooters"] = ComparisonOptions.prototype.getHeadersAndFooters = function(){return this.headersAndFooters !== false;};
-    ComparisonOptions.prototype["getFootNotes"] = ComparisonOptions.prototype.getFootNotes = function(){return this.footNotes !== false;};
-    ComparisonOptions.prototype["getTextBoxes"] = ComparisonOptions.prototype.getTextBoxes = function(){return this.textBoxes !== false;};
-    ComparisonOptions.prototype["getFields"] = ComparisonOptions.prototype.getFields = function(){return this.fields !== false;};
-    ComparisonOptions.prototype["getWords"] = ComparisonOptions.prototype.getWords = function(){return true;/* this.words !== false;*/};
+    ComparisonOptions.prototype["getInsertionsAndDeletions"] = ComparisonOptions.prototype.getInsertionsAndDeletions = function(){return this.insertionsAndDeletions;};
+    // ComparisonOptions.prototype["getMoves"] = ComparisonOptions.prototype.getMoves = function(){return this.moves;};
+    ComparisonOptions.prototype["getComments"] = ComparisonOptions.prototype.getComments = function(){return this.comments;};
+    ComparisonOptions.prototype["getFormatting"] = ComparisonOptions.prototype.getFormatting = function(){return this.formatting;};
+    ComparisonOptions.prototype["getCaseChanges"] = ComparisonOptions.prototype.getCaseChanges = function(){return this.caseChanges;};
+    ComparisonOptions.prototype["getWhiteSpace"] = ComparisonOptions.prototype.getWhiteSpace = function(){return this.whiteSpace;};
+    ComparisonOptions.prototype["getTables"] = ComparisonOptions.prototype.getTables = function(){return this.tables;};
+    ComparisonOptions.prototype["getHeadersAndFooters"] = ComparisonOptions.prototype.getHeadersAndFooters = function(){return this.headersAndFooters;};
+    ComparisonOptions.prototype["getFootNotes"] = ComparisonOptions.prototype.getFootNotes = function(){return this.footNotes;};
+    ComparisonOptions.prototype["getTextBoxes"] = ComparisonOptions.prototype.getTextBoxes = function(){return this.textBoxes;};
+    // ComparisonOptions.prototype["getFields"] = ComparisonOptions.prototype.getFields = function(){return this.fields;};
+    ComparisonOptions.prototype["getWords"] = ComparisonOptions.prototype.getWords = function(){return this.words;};
 
 
     ComparisonOptions.prototype["putInsertionsAndDeletions"] = ComparisonOptions.prototype.putInsertionsAndDeletions = function(v){this.insertionsAndDeletions = v;};
-    ComparisonOptions.prototype["putMoves"] = ComparisonOptions.prototype.putMoves = function(v){this.moves = v;};
+    // ComparisonOptions.prototype["putMoves"] = ComparisonOptions.prototype.putMoves = function(v){this.moves = v;};
     ComparisonOptions.prototype["putComments"] = ComparisonOptions.prototype.putComments = function(v){this.comments = v;};
     ComparisonOptions.prototype["putFormatting"] = ComparisonOptions.prototype.putFormatting = function(v){this.formatting = v;};
     ComparisonOptions.prototype["putCaseChanges"] = ComparisonOptions.prototype.putCaseChanges = function(v){this.caseChanges = v;};
@@ -1980,11 +2137,11 @@
     ComparisonOptions.prototype["putHeadersAndFooters"] = ComparisonOptions.prototype.putHeadersAndFooters = function(v){this.headersAndFooters = v;};
     ComparisonOptions.prototype["putFootNotes"] = ComparisonOptions.prototype.putFootNotes = function(v){this.footNotes = v;};
     ComparisonOptions.prototype["putTextBoxes"] = ComparisonOptions.prototype.putTextBoxes = function(v){this.textBoxes = v;};
-    ComparisonOptions.prototype["putFields"] = ComparisonOptions.prototype.putFields = function(v){this.fields = v;};
+    // ComparisonOptions.prototype["putFields"] = ComparisonOptions.prototype.putFields = function(v){this.fields = v;};
     ComparisonOptions.prototype["putWords"] = ComparisonOptions.prototype.putWords = function(v){this.words = v;};
 
 
-    function CDocumentComparison(oOriginalDocument, oRevisedDocument, oOptions)
+    function CDocumentComparison(oOriginalDocument, oRevisedDocument, oOptions, bIsWordsByOneSymbol)
     {
         this.originalDocument = oOriginalDocument;
         this.revisedDocument = oRevisedDocument;
@@ -1995,19 +2152,68 @@
         this.matchedNums = {};
         this.checkedNums = {};
         this.bSaveCustomReviewType = false;
-				this.needCopyForResolveEqualWords = true;
+
         this.copyPr = {
             CopyReviewPr: false,
-            Comparison: this
-        };
+            Comparison: this,
+	        SkipFootnoteReference: !oOptions.footNotes
+				};
 	    this.firstCheckNumId = null;
-				this.needCheckReview = false;
-        this.nInsertChangesType = reviewtype_Add;
-        this.nRemoveChangesType = reviewtype_Remove;
+
         this.oComparisonMoveMarkManager = new CMoveMarkComparisonManager();
 		this.oBookmarkManager = new CComparisonBookmarkManager(oOriginalDocument, oRevisedDocument);
 		this.oCommentManager = new CComparisonCommentManager(this);
+
+		this.isWordsByOneSymbol = bIsWordsByOneSymbol;
+
+	    this.needCheckReview = false;
+	    this.needCopyForResolveEqualWords = true;
+			this.skipCopiedElements = false;
+
+	    this.nInsertChangesType = reviewtype_Add;
+	    this.nRemoveChangesType = reviewtype_Remove;
     }
+		CDocumentComparison.prototype.skipCommentElementOnCopyParagraph = function (oParaComment) {
+			if (this.options.comments) {
+				return false;
+			}
+			return !this.oCommentManager.savedParaComments[oParaComment.Id];
+		}
+	CDocumentComparison.prototype.executeResolveConflictMode = function (oResolveConflictComparison, fCallback) {
+		const oOldCommentsMeeting = this.oCommentManager.mapCommentMeeting;
+		this.oCommentManager.mapCommentMeeting = {};
+		oResolveConflictComparison.oCommentManager = this.oCommentManager;
+
+		const oOldBookmarkMeeting = this.oBookmarkManager.mapBookmarkMeeting;
+		this.oBookmarkManager.mapBookmarkMeeting = {};
+		oResolveConflictComparison.oBookmarkManager = this.oBookmarkManager;
+		oResolveConflictComparison.oComparisonMoveMarkManager = this.oComparisonMoveMarkManager;
+		oResolveConflictComparison.CommentsMap = this.CommentsMap;
+		oResolveConflictComparison.StylesMap = this.StylesMap;
+		fCallback();
+		this.oBookmarkManager.mapBookmarkMeeting = oOldBookmarkMeeting;
+		this.oCommentManager.mapCommentMeeting = oOldCommentsMeeting;
+	};
+		CDocumentComparison.prototype.resolveConflicts = function(arrToInserts, arrToRemove, applyParagraph, bIsWordsByOneSymbol) {
+			if (arrToInserts.length === 0 || arrToRemove.length === 0) return;
+			bIsWordsByOneSymbol = bIsWordsByOneSymbol || this.isWordsByOneSymbol;
+			let comparison;
+			if (this instanceof AscCommonWord.CDocumentResolveConflictComparison) {
+				comparison = new AscCommonWord.CDocumentMergeComparison(this.originalDocument, this.revisedDocument, this.options, bIsWordsByOneSymbol);
+			} else {
+
+				comparison = new AscCommonWord.CDocumentResolveConflictComparison(this.originalDocument, this.revisedDocument, this.options, bIsWordsByOneSymbol);
+			}
+
+			this.executeResolveConflictMode(comparison, function () {
+				const originalDocument = getMockDocumentFromRuns(arrToRemove);
+				const revisedDocument = getMockDocumentFromRuns(arrToInserts);
+				comparison.parentParagraph = applyParagraph;
+				comparison.oComparisonMoveMarkManager.executeResolveConflictMode(function () {
+					comparison.compareRoots(originalDocument, revisedDocument);
+				});
+			});
+		};
     CDocumentComparison.prototype.checkOriginalAndSplitRun = function (oOriginalRun, oSplitRun) {
 
     };
@@ -2019,14 +2225,29 @@
 		}
 		this.oCommentManager.mapDelete = {};
 	};
-    CDocumentComparison.prototype.checkCopyParaRun = function (oNewRun, oOldRun) {
-        const sMoveName = this.oComparisonMoveMarkManager.getMoveMarkNameByRun(oOldRun);
-        this.oComparisonMoveMarkManager.addRunMoveMarkNameRelation(sMoveName, oNewRun);
-        const nMoveReviewType = oOldRun.GetReviewMoveType();
-        if (AscFormat.isRealNumber(nMoveReviewType) && nMoveReviewType !== Asc.c_oAscRevisionsMove.NoMove)
-        {
-            this.oComparisonMoveMarkManager.addMoveMarkNameRunRelation(sMoveName, oNewRun);
-        }
+	CDocumentComparison.prototype.executeWithSkipCopiedElements = function (fCallback) {
+		const bOldSkipCheckCopyRuns = this.skipCopiedElements;
+		this.skipCopiedElements = true;
+		fCallback();
+		this.skipCopiedElements = bOldSkipCheckCopyRuns;
+	};
+	CDocumentComparison.prototype.checkCopyParaRunMoveMarks = function (oNewRun, oOldRun) {
+		const sMoveName = this.oComparisonMoveMarkManager.getMoveMarkNameByRun(oOldRun);
+		this.oComparisonMoveMarkManager.addRunMoveMarkNameRelation(sMoveName, oNewRun);
+		const nMoveReviewType = oOldRun.GetReviewMoveType();
+		if (AscFormat.isRealNumber(nMoveReviewType) && nMoveReviewType !== Asc.c_oAscRevisionsMove.NoMove)
+		{
+			this.oComparisonMoveMarkManager.addMoveMarkNameRunRelation(sMoveName, oNewRun);
+		}
+	}
+	CDocumentComparison.prototype.checkCopyParaRun = function (oNewRun, oOldRun) {
+		this.checkCopyParaRunMoveMarks(oNewRun, oOldRun);
+		this.checkReviewInfoOfCopiedElements(oNewRun, oOldRun);
+	}
+    CDocumentComparison.prototype.checkReviewInfoOfCopiedElements = function (oNewRun, oOldRun) {
+			if (this.skipCopiedElements) {
+				return;
+			}
         if (this.copyPr.SkipUpdateInfo)
         {
             this.saveReviewInfo(oNewRun, oOldRun);
@@ -2056,23 +2277,15 @@
             return AscCommon.translateManager.getValue("Author");
         }
     };
-
-    CDocumentComparison.prototype.getMinJaccardCoefficient = function () {
-        return MIN_JACCARD;
-    };
-
-    CDocumentComparison.prototype.getMinDiffCoefficient = function () {
-        return MIN_DIFF;
-    };
-    CDocumentComparison.prototype.getLCSCallback = function (oLCS, bOrig) {
+    CDocumentComparison.prototype.getLCSCallback = function (bOrig) {
         const oThis = this;
         return function(x, y) {
-            const oOrigNode = oLCS.a[x];
-            const oReviseNode = oLCS.b[y];
+            const oOrigNode = x;
+            const oReviseNode = y;
             const oDiff  = new AscCommon.Diff(oOrigNode, oReviseNode);
             oDiff.equals = function(a, b)
             {
-                return a.equals(b);
+                return a.equals(b, oThis);
             };
             const oMatching = new CMatching();
             oDiff.matchTrees(oMatching);
@@ -2087,193 +2300,100 @@
     CDocumentComparison.prototype.forEachChangeCallback = function(oOperation) {
         oOperation.anchor.base.addChange(oOperation);
     };
+	CDocumentComparison.prototype.compareElementsArray = function(aBase, aCompare, bOrig) {
+		if (!aBase.length || !aCompare.length) {
+			return;
+		}
+		const arrComparedSums = [0];
+		for (let i = 0; i < aCompare.length; i++) {
+			arrComparedSums.push(arrComparedSums[i] + aCompare[i].wordCounter.count + 1);
+		}
 
-    CDocumentComparison.prototype.getLCSEqualsMethod = function (oEqualMap, oMapEquals) {
-        return function(a, b) {
-            const bEquals = oMapEquals[a.element.Id] || oMapEquals[b.element.Id];
-            if(oEqualMap[a.element.Id])
-            {
-                if(bEquals && !AscFormat.fApproxEqual(oEqualMap[a.element.Id].jaccard, 1.0, 0.01))
-                {
-                    return false;
-                }
-                if(oEqualMap[a.element.Id].map[b.element.Id])
-                {
-                    return true;
-                }
-            }
-            else
-            {
-                if(bEquals && !AscFormat.fApproxEqual(oEqualMap[b.element.Id].jaccard, 1.0, 0.01))
-                {
-                    return false;
-                }
-                if(oEqualMap[b.element.Id])
-                {
-                    if(oEqualMap[b.element.Id].map[a.element.Id])
-                    {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        };
-    };
+		const arrBaseSums = [0];
+		for (let i = 0; i < aBase.length; i++) {
+			arrBaseSums.push(arrBaseSums[i] + aBase[i].wordCounter.count + 1);
+		}
 
-    CDocumentComparison.prototype.compareElementsArray = function(aBase, aCompare, bOrig, bUseMinDiff)
-    {
-        const oMapEquals = {};
-        const aBase2 = [];
-        const aCompare2 = [];
-        const oCompareMap = {};
-        const MIN_JACCARD_COEFFICIENT = this.getMinJaccardCoefficient();
-        const MIN_DIFF_COEFFICIENT = this.getMinDiffCoefficient();
+		const oResult = {};
+		const oFirstRow = {};
+		oResult[0] = oFirstRow;
+		oFirstRow[0] = {diff: aCompare[0].getDiff(aBase[0], this), baseIndex: 0, compareIndex: 0};
+		for (let i = 1; i < aCompare.length; i += 1) {
+			const nCompareSum = arrComparedSums[i];
+			const nTotalDiff = nCompareSum + aCompare[i].getDiff(aBase[0], this);
+			if (oFirstRow[i - 1].diff >= nTotalDiff) {
+				oFirstRow[i] = {diff: nTotalDiff, baseIndex: 0, compareIndex: i};
+			} else {
+				oFirstRow[i] = oFirstRow[i - 1];
+			}
+		}
+		for (let i = 1; i < aBase.length; i += 1) {
+			const oPreviousRow = oResult[i - 1];
+			const oCurrentRow = {};
+			oResult[i] = oCurrentRow;
+			const nCurTotalDiff = aBase[i].getDiff(aCompare[0], this) + arrBaseSums[i];
 
-        let bMatchNoEmpty = false;
-        let oEqualMap = {};
-        for(let i = 0; i < aBase.length; ++i)
-        {
-            const oCurNode =  aBase[i];
-            if(oCurNode.hashWords)
-            {
-                const oCurInfo = {
-                    jaccard: 0,
-                    map: {},
-                    minDiff: 0,
-                    intersection: 0
-                };
-                oEqualMap[oCurNode.element.Id] = oCurInfo;
-                for(let j = 0; j < aCompare.length; ++j)
-                {
-                    const oCompareNode = aCompare[j];
-                    if(oCompareNode.hashWords && oCurNode.isComparable(oCompareNode))
-                    {
-                        let dJaccard = oCurNode.hashWords.jaccard(oCompareNode.hashWords);
-                        if(oCurNode.element instanceof CTable)
-                        {
-                            dJaccard += MIN_JACCARD_COEFFICIENT;
-                        }
-                        const dIntersection = dJaccard*(oCurNode.hashWords.count + oCompareNode.hashWords.count)/(1+dJaccard);
+			const oPreviousCell = oPreviousRow[0];
+			const nPreviousTotalDiff = oPreviousCell.diff + arrBaseSums[i + 1] - arrBaseSums[oPreviousCell.baseIndex + 1];
 
-                        if(dJaccard > 0)
-                        {
-                            let diffA = 0, diffB = 0, dMinDiff = 0;
-                            if(oCurNode.hashWords.count > 0)
-                            {
-                                diffA = dIntersection/oCurNode.hashWords.count;
-                            }
-                            if(oCompareNode.hashWords.count > 0)
-                            {
-                                diffB = dIntersection/oCompareNode.hashWords.count;
-                            }
-                            dMinDiff = Math.max(diffA, diffB);
+			if (nPreviousTotalDiff >= nCurTotalDiff) {
+				oCurrentRow[0] = {diff: nCurTotalDiff, compareIndex: 0, baseIndex: i};
+			} else {
+				oCurrentRow[0] = oPreviousCell;
+			}
+		}
+		for (let i = 1; i < aBase.length; i += 1) {
+			const oBaseElem = aBase[i];
+			const oCurrentBestResult = oResult[i];
+			const oPreviousBestResult = oResult[i - 1];
+			for (let j = 1; j < aCompare.length; j++) {
+				const oCompareElem = aCompare[j];
 
-                            if(oCurInfo.jaccard <= dJaccard && dJaccard >= MIN_JACCARD_COEFFICIENT || (oCurInfo.jaccard < MIN_JACCARD_COEFFICIENT && dMinDiff > MIN_DIFF_COEFFICIENT && oCurInfo.minDiff <= dMinDiff))
-                            {
-                                if(oCurInfo.jaccard < dJaccard && dJaccard >= MIN_JACCARD_COEFFICIENT)
-                                {
-                                    oCurInfo.map = {};
-                                    oCurInfo.minDiff = 0;
-                                }
-                                oCurInfo.map[oCompareNode.element.Id] = oCompareNode;
-                                oCurInfo.jaccard = dJaccard;
-                                oCurInfo.intersection = dIntersection;
-                                oCurInfo.minDiff = dMinDiff;
-                                if(AscFormat.fApproxEqual(dJaccard, 1.0, 0.01))
-                                {
-                                    oMapEquals[oCompareNode.element.Id] = true;
-                                }
-                            }
-                        }
+				const oPrevCurrentBest = oCurrentBestResult[j - 1];
+				const baseSum = arrBaseSums[i + 1] - arrBaseSums[oPrevCurrentBest.baseIndex + 1];
+				const compareSum = arrComparedSums[j + 1] - arrComparedSums[oPrevCurrentBest.compareIndex + 1];
+				const nPrevColumnCurDiff = baseSum + compareSum + oPrevCurrentBest.diff;
 
-                    }
-                }
-                if(oCurInfo.jaccard >= MIN_JACCARD_COEFFICIENT || (bUseMinDiff && oCurInfo.minDiff > MIN_DIFF_COEFFICIENT && oCurNode.hashWords.countLetters > 0 ))
-                {
-                    aBase2.push(oCurNode);
-                    for(let key in oCurInfo.map)
-                    {
-                        if(oCurInfo.map.hasOwnProperty(key))
-                        {
-                            oCompareMap[key] = true;
-                            if(oCurNode.hashWords.countLetters > 0 && oCurInfo.map[key].hashWords.countLetters > 0)
-                            {
-                                bMatchNoEmpty = true;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        for(let j = 0; j < aCompare.length; ++j)
-        {
-            const oCompareNode = aCompare[j];
-            if(oCompareMap[oCompareNode.element.Id])
-            {
-                aCompare2.push(oCompareNode);
-            }
-        }
-        if(!bMatchNoEmpty)
-        {
-            if(bOrig)
-            {
-                for(let i = 0; i < aBase2.length; ++i)
-                {
-                    if(i !== aBase2[i].childidx)
-                    {
-                        aBase2.splice(i, aBase2[i].length - i);
-                        break;
-                    }
-                }
-                for(let i = aCompare2.length - 1; i > -1; i--)
-                {
-                    if(i !== aCompare2[i].childidx)
-                    {
-                        aCompare2.splice(0, i + 1);
-                        break;
-                    }
-                }
-            }
-            else
-            {
+				const oCurPreviousBest = oPreviousBestResult[j];
+				const nCurBaseSum = arrBaseSums[i + 1] - arrBaseSums[oCurPreviousBest.baseIndex + 1];
+				const nCurCompareSum = arrComparedSums[j + 1] - arrComparedSums[oCurPreviousBest.compareIndex + 1];
+				const nPrevColumnPrevDiff = nCurBaseSum + nCurCompareSum + oCurPreviousBest.diff;
 
-                for(let i = 0; i < aCompare2.length; ++i)
-                {
-                    if(i !== aCompare2[i].childidx)
-                    {
-                        aCompare2.splice(i, aCompare2[i].length - i);
-                        break;
-                    }
-                }
-                for(let i = aBase2.length - 1; i > -1; i--)
-                {
-                    if(i !== aBase2[i].childidx)
-                    {
-                        aBase2.splice(0, i + 1);
-                        break;
-                    }
-                }
-            }
+				const oPrevPreviousBest = oPreviousBestResult[j - 1];
+				const nPrevBaseSum = arrBaseSums[i] - arrBaseSums[oPrevPreviousBest.baseIndex + 1];
+				const nPrevCompareSum = arrComparedSums[j] - arrComparedSums[oPrevPreviousBest.compareIndex + 1];
+				const nDiff = oBaseElem.getDiff(oCompareElem, this);
+				const nCurColumnPrevDiff = nPrevBaseSum + nPrevCompareSum + oPrevPreviousBest.diff + nDiff;
 
-        }
-        if(aBase2.length > 0 && aCompare2.length > 0)
-        {
-            let oLCS;
-            if(bOrig)
-            {
-                oLCS = new AscCommon.LCS(aBase2, aCompare2);
-            }
-            else
-            {
-                oLCS = new AscCommon.LCS(aCompare2, aBase2);
-            }
-            const fLCSCallback = this.getLCSCallback(oLCS, bOrig);
-            oLCS.equals = this.getLCSEqualsMethod(oEqualMap, oMapEquals);
-            oLCS.forEachCommonSymbol(fLCSCallback);
-        }
-        oEqualMap.bMatchNoEmpty = bMatchNoEmpty;
-        return oEqualMap;
-    };
+				if (nCurColumnPrevDiff <= nPrevColumnPrevDiff && nCurColumnPrevDiff <= nPrevColumnCurDiff) {
+					oCurrentBestResult[j] = {diff: nCurColumnPrevDiff, baseIndex: i, compareIndex: j};
+				} else if (nPrevColumnCurDiff <= nCurColumnPrevDiff && nPrevColumnCurDiff <= nPrevColumnPrevDiff) {
+					oCurrentBestResult[j] = oPrevCurrentBest;
+				} else {
+					oCurrentBestResult[j] = oCurPreviousBest;
+				}
+			}
+		}
+
+		const fLCSCallback = this.getLCSCallback(bOrig);
+		let curBaseIndex = aBase.length - 1;
+		let curCompareIndex = aCompare.length - 1;
+		while (curBaseIndex >= 0 && curCompareIndex >= 0) {
+			const curResultObject = oResult[curBaseIndex][curCompareIndex];
+			const oBaseElement = aBase[curResultObject.baseIndex];
+			const oCompareElement = aCompare[curResultObject.compareIndex];
+			if (oBaseElement.equals(oCompareElement)) {
+				oBaseElement.setPartner(oCompareElement);
+				if (bOrig) {
+					fLCSCallback(oBaseElement, oCompareElement);
+				} else {
+					fLCSCallback(oCompareElement, oBaseElement);
+				}
+			}
+			curBaseIndex = curResultObject.baseIndex - 1;
+			curCompareIndex = curResultObject.compareIndex - 1;
+		}
+	};
     CDocumentComparison.prototype.compareNotes = function(oMatching)
     {
         for(let key in oMatching.Footnotes)
@@ -2428,7 +2548,7 @@
     };
     CDocumentComparison.prototype.compareGraphicObject = function(oBaseGrObject, oCompareGrObject)
     {
-        if(!oBaseGrObject || !oCompareGrObject)
+        if(!this.options.textBoxes || !oBaseGrObject || !oCompareGrObject)
         {
             return;
         }
@@ -2455,6 +2575,9 @@
     CDocumentComparison.prototype.applyParagraphComparison = function (oOrigRoot, oRevisedRoot) {
         const aInsertContent = [];
         let nRemoveCount = 0;
+	    this.oCommentManager.generateSavedParaComments();
+			const bOldSkipFootnoteReference = this.copyPr.SkipFootnoteReference;
+	    this.copyPr.SkipFootnoteReference = false;
         for(let i = oOrigRoot.children.length - 1; i > -1 ; --i)
         {
             if(!oOrigRoot.children[i].partner)
@@ -2486,6 +2609,7 @@
         {
             this.insertNodesToDocContent(oOrigRoot.element, nRemoveCount, aInsertContent);
         }
+	    this.copyPr.SkipFootnoteReference = bOldSkipFootnoteReference;
     };
 
     CDocumentComparison.prototype.compareRoots = function(oRoot1, oRoot2)
@@ -2505,70 +2629,7 @@
             aCompare = oOrigRoot.children;
         }
 
-        const aBase2 = [];
-        const aCompare2 = [];
-        const oEqualMap = this.compareElementsArray(aBase, aCompare, bOrig, false);
-        const bMatchNoEmpty = oEqualMap.bMatchNoEmpty;
-
-        //included paragraphs
-        if(bMatchNoEmpty)
-        {
-            let i = 0;
-            let j = 0;
-            let oCompareMap = {};
-
-            while(i < aBase.length && j < aCompare.length)
-            {
-                let oCurNode = aBase[i];
-                let oCompareNode = aCompare[j];
-                if(oCurNode.partner && oCompareNode.partner)
-                {
-                    ++i;
-                    ++j;
-                }
-                else
-                {
-                    const nStartI = i;
-                    const nStartJ = j;
-                    const nStartCompareIndex = j - 1;
-                    let nEndCompareIndex = nStartCompareIndex;
-                    aCompare2.length = 0;
-                    while(j < aCompare.length && !aCompare[j].partner)
-                    {
-                        aCompare2.push(aCompare[j]);
-                        ++j;
-                    }
-                    nEndCompareIndex = j;
-                    if((nEndCompareIndex - nStartCompareIndex) > 1)
-                    {
-                        oCompareMap = {};
-                        aBase2.length = 0;
-                        while (i < aBase.length && !aBase[i].partner)
-                        {
-                             oCurNode = aBase[i];
-                            aBase2.push(oCurNode);
-                            ++i;
-                        }
-
-                        if(aBase2.length > 0 && aCompare2.length > 0)
-                        {
-                            this.compareElementsArray(aBase2, aCompare2, bOrig, true);
-                        }
-                    }
-                    i = nStartI;
-                    j = nStartJ;
-                    while(j < aCompare.length && !aCompare[j].partner)
-                    {
-                        ++j;
-                    }
-                    while(i < aBase.length && !aBase[i].partner)
-                    {
-                        ++i;
-                    }
-                }
-            }
-        }
-
+        this.compareElementsArray(aBase, aCompare, bOrig);
         this.applyParagraphComparison(oOrigRoot, oRevisedRoot);
     };
     CDocumentComparison.prototype.compare = function(callback)
@@ -2619,7 +2680,7 @@
                 }
             }
             oThis.compareRoots(oOriginalDocument, oRevisedDocument);
-            oThis.compareSectPr(oOriginalDocument, oRevisedDocument);
+            oThis.compareSectPr(oOriginalDocument, oRevisedDocument, !oThis.options.headersAndFooters);
 
             const oFonts = oOriginalDocument.Document_Get_AllFontNames();
             const aFonts = [];
@@ -2671,23 +2732,67 @@
         return !(oElement.IsParaEndRun && oElement.IsParaEndRun() || this.oBookmarkManager.isSkip(oElement));
     };
     CDocumentComparison.prototype.executeWithCheckInsertAndRemove = function (callback, oChange) {
-        callback();
+			this.copyPr.SkipUpdateInfo = !this.options.words && oChange.remove.length === 1 && oChange.insert.length === 1;
+			callback();
+			this.copyPr.SkipUpdateInfo = false;
     };
 
 	CDocumentComparison.prototype.applyResolveTypes = function () {};
 
+	CDocumentComparison.prototype.isSkipWhitespaces = function(arrNodes) {
+		if (this.options.whiteSpace) {
+			return false;
+		}
+
+		for (let i = 0; i < arrNodes.length; i++) {
+			const oNode = arrNodes[i];
+			if (!oNode.isSpaceText()) {
+				return false;
+
+			}
+		}
+		return true;
+	};
+	CNode.prototype.updateEqualNode = function (comparison, index) {
+		const oPartnerNode = this.partner;
+		const oOriginalTextElement = this.element;
+		const oPartnerTextElement = oPartnerNode.element;
+		if (oPartnerTextElement.elements.length === oOriginalTextElement.elements.length) {
+			this.resolveTypesWithPartner(comparison);
+		} else {
+			const oParentNode = this.par;
+			const oChange = new AscCommon.AttachedOperation(
+				new AscCommon.Anchor(oParentNode, oParentNode, index),
+				AscCommon.UPDATE_FOREST_TYPE, [index],
+				[this], [oPartnerNode]);
+			const bOldComparisonWordOption = comparison.options.words;
+			comparison.options.words = false;
+			comparison.copyPr.SkipUpdateInfo = true;
+			const aContentToInsert = comparison.isSkipWhitespaces(oChange.insert) ? [] : oParentNode.getArrOfInsertsFromChanges(oChange, comparison); // todo: check skip on symbol comparing
+			oParentNode.applyInsertsToParagraph(comparison, aContentToInsert, oChange);
+			comparison.options.words = bOldComparisonWordOption;
+			comparison.copyPr.SkipUpdateInfo = false;
+		}
+	};
 	CDocumentComparison.prototype.applyChangesToParagraph = function(oNode)
 	{
 		oNode.changes.sort(function(c1, c2){return c2.anchor.index - c1.anchor.index});
 		let nLastIndex = oNode.children.length - 1;
 		for(let i = 0; i < oNode.changes.length; ++i)
 		{
+			const oChange = oNode.changes[i];
 			let arrResult = [];
-			for (let j = nLastIndex; j >= oNode.changes[i].anchor.index; j -= 1)
+			for (let j = nLastIndex; j >= oChange.anchor.index; j -= 1)
 			{
 				const oChild = oNode.children[j];
 				if (oChild.partner && oChild.element instanceof CTextElement) {
-					arrResult.unshift(oChild);
+					if (oChild.element.checkUncompletedWords(oChild.partner.element)) {
+						resolveTypesWithPartner(arrResult, this);
+						arrResult = [];
+						oChild.updateEqualNode(this, j);
+					} else {
+						arrResult.unshift(oChild);
+					}
 				} else if (arrResult.length) {
 					resolveTypesWithPartner(arrResult, this);
 					arrResult = [];
@@ -2697,19 +2802,25 @@
 				resolveTypesWithPartner(arrResult, this);
 			}
 			this.executeWithCheckInsertAndRemove(function () {
-				const aContentToInsert = oNode.getArrOfInsertsFromChanges(i, this);
+				const aContentToInsert = this.isSkipWhitespaces(oChange.insert) ? [] : oNode.getArrOfInsertsFromChanges(oChange, this);
 				//handle removed elements
-				oNode.applyInsertsToParagraph(this, aContentToInsert, i);
-			}.bind(this), oNode.changes[i]);
+				oNode.applyInsertsToParagraph(this, aContentToInsert, oChange);
+			}.bind(this), oChange);
 
-			nLastIndex = oNode.changes[i].anchor.index - 1;
+			nLastIndex = oChange.anchor.index - 1;
 		}
 		let arrResult = [];
 		for (let j = nLastIndex; j >= 0; j -= 1)
 		{
 			const oChild = oNode.children[j];
 			if (oChild.partner && oChild.element instanceof CTextElement) {
-				arrResult.unshift(oChild);
+				if (oChild.element.checkUncompletedWords(oChild.partner.element)) {
+					resolveTypesWithPartner(arrResult, this);
+					arrResult = [];
+					oChild.updateEqualNode(this, j);
+				} else {
+					arrResult.unshift(oChild);
+				}
 			} else if (arrResult.length) {
 				resolveTypesWithPartner(arrResult, this);
 				arrResult = [];
@@ -2761,7 +2872,7 @@
         }
     };
 
-    CDocumentComparison.prototype.compareSectPr = function(oElement, oPartnerElement)
+    CDocumentComparison.prototype.compareSectPr = function(oElement, oPartnerElement, bSkipCheckHeadersFooters)
     {
         const oOrigSectPr = oElement.SectPr;
         const oReviseSectPr = oPartnerElement.SectPr;
@@ -2779,102 +2890,102 @@
         }
         if(oOrigSectPr)
         {
-            oOrigContent = oOrigSectPr.HeaderFirst && oOrigSectPr.HeaderFirst.Content;
-            oReviseContent = oReviseSectPr && oReviseSectPr.HeaderFirst && oReviseSectPr.HeaderFirst.Content;
-            if(oOrigContent && !oReviseContent)
-            {
-                this.setReviewInfoRecursive(oOrigContent, this.nRemoveChangesType);
-            }
-            else if(oOrigContent && oReviseContent)
-            {
-                this.compareRoots(oOrigContent, oReviseContent);
-            }
-            else if(!oOrigContent && oReviseContent && oReviseSectPr.HeaderFirst)
-            {
-                oOrigSectPr.Set_Header_First(oReviseSectPr.HeaderFirst.Copy(this.originalDocument, this.copyPr));
-            }
+					if (!bSkipCheckHeadersFooters) {
+						oOrigContent = oOrigSectPr.HeaderFirst && oOrigSectPr.HeaderFirst.Content;
+						oReviseContent = oReviseSectPr && oReviseSectPr.HeaderFirst && oReviseSectPr.HeaderFirst.Content;
+						if(oOrigContent && !oReviseContent)
+						{
+							this.setReviewInfoRecursive(oOrigContent, this.nRemoveChangesType);
+						}
+						else if(oOrigContent && oReviseContent)
+						{
+							this.compareRoots(oOrigContent, oReviseContent);
+						}
+						else if(!oOrigContent && oReviseContent && oReviseSectPr.HeaderFirst)
+						{
+							oOrigSectPr.Set_Header_First(oReviseSectPr.HeaderFirst.Copy(this.originalDocument, this.copyPr));
+						}
 
 
-            oOrigContent = oOrigSectPr.HeaderEven && oOrigSectPr.HeaderEven.Content;
-            oReviseContent = oReviseSectPr && oReviseSectPr.HeaderEven && oReviseSectPr.HeaderEven.Content;
-            if(oOrigContent && !oReviseContent)
-            {
-                this.setReviewInfoRecursive(oOrigContent, this.nRemoveChangesType);
-            }
-            else if(oOrigContent && oReviseContent)
-            {
-                this.compareRoots(oOrigContent, oReviseContent);
-            }
-            else if(!oOrigContent && oReviseContent && oReviseSectPr.HeaderEven)
-            {
-                oOrigSectPr.Set_Header_Even(oReviseSectPr.HeaderEven.Copy(this.originalDocument, this.copyPr));
-            }
+						oOrigContent = oOrigSectPr.HeaderEven && oOrigSectPr.HeaderEven.Content;
+						oReviseContent = oReviseSectPr && oReviseSectPr.HeaderEven && oReviseSectPr.HeaderEven.Content;
+						if(oOrigContent && !oReviseContent)
+						{
+							this.setReviewInfoRecursive(oOrigContent, this.nRemoveChangesType);
+						}
+						else if(oOrigContent && oReviseContent)
+						{
+							this.compareRoots(oOrigContent, oReviseContent);
+						}
+						else if(!oOrigContent && oReviseContent && oReviseSectPr.HeaderEven)
+						{
+							oOrigSectPr.Set_Header_Even(oReviseSectPr.HeaderEven.Copy(this.originalDocument, this.copyPr));
+						}
 
 
-            oOrigContent = oOrigSectPr.HeaderDefault && oOrigSectPr.HeaderDefault.Content;
-            oReviseContent = oReviseSectPr && oReviseSectPr.HeaderDefault && oReviseSectPr.HeaderDefault.Content;
-            if(oOrigContent && !oReviseContent)
-            {
-                this.setReviewInfoRecursive(oOrigContent, this.nRemoveChangesType);
-            }
-            else if(oOrigContent && oReviseContent)
-            {
-                this.compareRoots(oOrigContent, oReviseContent);
-            }
-            else if(!oOrigContent && oReviseContent && oReviseSectPr.HeaderDefault)
-            {
-                oOrigSectPr.Set_Header_Default(oReviseSectPr.HeaderDefault.Copy(this.originalDocument, this.copyPr));
-            }
+						oOrigContent = oOrigSectPr.HeaderDefault && oOrigSectPr.HeaderDefault.Content;
+						oReviseContent = oReviseSectPr && oReviseSectPr.HeaderDefault && oReviseSectPr.HeaderDefault.Content;
+						if(oOrigContent && !oReviseContent)
+						{
+							this.setReviewInfoRecursive(oOrigContent, this.nRemoveChangesType);
+						}
+						else if(oOrigContent && oReviseContent)
+						{
+							this.compareRoots(oOrigContent, oReviseContent);
+						}
+						else if(!oOrigContent && oReviseContent && oReviseSectPr.HeaderDefault)
+						{
+							oOrigSectPr.Set_Header_Default(oReviseSectPr.HeaderDefault.Copy(this.originalDocument, this.copyPr));
+						}
 
 
-            oOrigContent = oOrigSectPr.FooterFirst && oOrigSectPr.FooterFirst.Content;
-            oReviseContent = oReviseSectPr && oReviseSectPr.FooterFirst && oReviseSectPr.FooterFirst.Content;
-            if(oOrigContent && !oReviseContent)
-            {
-                this.setReviewInfoRecursive(oOrigContent, this.nRemoveChangesType);
-            }
-            else if(oOrigContent && oReviseContent)
-            {
-                this.compareRoots(oOrigContent, oReviseContent);
-            }
-            else if(!oOrigContent && oReviseContent && oReviseSectPr.FooterFirst)
-            {
-                oOrigSectPr.Set_Footer_First(oReviseSectPr.FooterFirst.Copy(this.originalDocument, this.copyPr));
-            }
+						oOrigContent = oOrigSectPr.FooterFirst && oOrigSectPr.FooterFirst.Content;
+						oReviseContent = oReviseSectPr && oReviseSectPr.FooterFirst && oReviseSectPr.FooterFirst.Content;
+						if(oOrigContent && !oReviseContent)
+						{
+							this.setReviewInfoRecursive(oOrigContent, this.nRemoveChangesType);
+						}
+						else if(oOrigContent && oReviseContent)
+						{
+							this.compareRoots(oOrigContent, oReviseContent);
+						}
+						else if(!oOrigContent && oReviseContent && oReviseSectPr.FooterFirst)
+						{
+							oOrigSectPr.Set_Footer_First(oReviseSectPr.FooterFirst.Copy(this.originalDocument, this.copyPr));
+						}
 
 
-            oOrigContent = oOrigSectPr.FooterEven && oOrigSectPr.FooterEven.Content;
-            oReviseContent = oReviseSectPr && oReviseSectPr.FooterEven && oReviseSectPr.FooterEven.Content;
-            if(oOrigContent && !oReviseContent)
-            {
-                this.setReviewInfoRecursive(oOrigContent, this.nRemoveChangesType);
-            }
-            else if(oOrigContent && oReviseContent)
-            {
-                this.compareRoots(oOrigContent, oReviseContent);
-            }
-            else if(!oOrigContent && oReviseContent && oReviseSectPr.FooterEven)
-            {
-                oOrigSectPr.Set_Footer_Even(oReviseSectPr.FooterEven.Copy(this.originalDocument, this.copyPr));
-            }
+						oOrigContent = oOrigSectPr.FooterEven && oOrigSectPr.FooterEven.Content;
+						oReviseContent = oReviseSectPr && oReviseSectPr.FooterEven && oReviseSectPr.FooterEven.Content;
+						if(oOrigContent && !oReviseContent)
+						{
+							this.setReviewInfoRecursive(oOrigContent, this.nRemoveChangesType);
+						}
+						else if(oOrigContent && oReviseContent)
+						{
+							this.compareRoots(oOrigContent, oReviseContent);
+						}
+						else if(!oOrigContent && oReviseContent && oReviseSectPr.FooterEven)
+						{
+							oOrigSectPr.Set_Footer_Even(oReviseSectPr.FooterEven.Copy(this.originalDocument, this.copyPr));
+						}
 
 
-            oOrigContent = oOrigSectPr.FooterDefault && oOrigSectPr.FooterDefault.Content;
-            oReviseContent = oReviseSectPr && oReviseSectPr.FooterDefault && oReviseSectPr.FooterDefault.Content;
-            if(oOrigContent && !oReviseContent)
-            {
-                this.setReviewInfoRecursive(oOrigContent, this.nRemoveChangesType);
-            }
-            else if(oOrigContent && oReviseContent)
-            {
-                this.compareRoots(oOrigContent, oReviseContent);
-            }
-            else if(!oOrigContent && oReviseContent && oReviseSectPr.FooterDefault)
-            {
-                oOrigSectPr.Set_Footer_Default(oReviseSectPr.FooterDefault.Copy(this.originalDocument, this.copyPr));
-            }
-
-
+						oOrigContent = oOrigSectPr.FooterDefault && oOrigSectPr.FooterDefault.Content;
+						oReviseContent = oReviseSectPr && oReviseSectPr.FooterDefault && oReviseSectPr.FooterDefault.Content;
+						if(oOrigContent && !oReviseContent)
+						{
+							this.setReviewInfoRecursive(oOrigContent, this.nRemoveChangesType);
+						}
+						else if(oOrigContent && oReviseContent)
+						{
+							this.compareRoots(oOrigContent, oReviseContent);
+						}
+						else if(!oOrigContent && oReviseContent && oReviseSectPr.FooterDefault)
+						{
+							oOrigSectPr.Set_Footer_Default(oReviseSectPr.FooterDefault.Copy(this.originalDocument, this.copyPr));
+						}
+					}
             if(oReviseSectPr)
             {
                 const oReviseHeaderFirst = oReviseSectPr.HeaderFirst;
@@ -3249,7 +3360,9 @@
 
         while (arrCheckObjects.length) {
             const oCheckObject = arrCheckObjects.pop();
-
+						if (oCheckObject.Type === para_Drawing && !this.options.textBoxes) {
+							continue;
+						}
             if(oCheckObject.GetReviewInfo && oCheckObject.SetReviewTypeWithInfo)
             {
                arrReturnObjects.push(oCheckObject);
@@ -3261,7 +3374,7 @@
                     arrCheckObjects.push(oCheckObject.Content[i]);
                 }
             }
-            if(AscCommon.isRealObject(oCheckObject.Content))
+            else if(AscCommon.isRealObject(oCheckObject.Content))
             {
                 arrCheckObjects.push(oCheckObject.Content);
             }
@@ -3383,9 +3496,8 @@
         return CNode;
     };
 
-    CDocumentComparison.prototype.createNodeFromDocContent = function(oElement, oParentNode, oHashWords, isOriginalDocument)
+    CDocumentComparison.prototype.createNodeFromDocContent = function(oElement, oParentNode, oWordCounter, isOriginalDocument)
     {
-        const NodeConstructor = this.getNodeConstructor();
         const oRet = this.createNode(oElement, oParentNode);
         const bRoot = (oParentNode === null);
         for(let i = 0; i < oElement.Content.length; ++i)
@@ -3395,24 +3507,24 @@
             {
                 if(bRoot)
                 {
-                    oHashWords = new Minhash({});
+                    oWordCounter = new WordCounter();
                 }
-                const oParagraphNode = this.createNodeFromRunContentElement(oChElement, oRet, oHashWords, isOriginalDocument);
+                const oParagraphNode = this.createNodeFromRunContentElement(oChElement, oRet, oWordCounter, isOriginalDocument);
                 if(bRoot)
                 {
-                    oParagraphNode.hashWords = oHashWords;
+                    oParagraphNode.wordCounter = oWordCounter;
                 }
             }
             else if(oChElement instanceof CBlockLevelSdt)
             {
                 if(bRoot)
                 {
-                    oHashWords = new Minhash({});
+                    oWordCounter = new WordCounter();
                 }
-                const oBlockNode = this.createNodeFromDocContent(oChElement.Content, oRet, oHashWords, isOriginalDocument);
+                const oBlockNode = this.createNodeFromDocContent(oChElement.Content, oRet, oWordCounter, isOriginalDocument);
                 if(bRoot)
                 {
-                    oBlockNode.hashWords = oHashWords;
+                    oBlockNode.wordCounter = oWordCounter;
                 }
             }
             else if(oChElement instanceof CTable)
@@ -3421,20 +3533,20 @@
                 {
                     if(bRoot)
                     {
-                        oHashWords = new Minhash({});
+                        oWordCounter = new WordCounter();
                     }
                     const oTableNode = this.createNode(oChElement, oRet);
                     if(bRoot)
                     {
-                        oHashWords = new Minhash({});
-                        oTableNode.hashWords = oHashWords;
+                        oWordCounter = new WordCounter();
+                        oTableNode.wordCounter = oWordCounter;
                     }
                     for(let j = 0; j < oChElement.Content.length; ++j)
                     {
                         const oRowNode = this.createNode(oChElement.Content[j], oTableNode);
                         for(let k = 0; k < oChElement.Content[j].Content.length; ++k)
                         {
-                            this.createNodeFromDocContent(oChElement.Content[j].Content[k].Content, oRowNode, oHashWords, isOriginalDocument);
+                            this.createNodeFromDocContent(oChElement.Content[j].Content[k].Content, oRowNode, oWordCounter, isOriginalDocument);
                         }
                     }
                 }
@@ -3442,12 +3554,12 @@
             else if (oChElement instanceof AscCommonWord.CMockParagraph) {
                 if(bRoot)
                 {
-                    oHashWords = new AscCommonWord.CMockMinHash();
+                    oWordCounter = new WordCounter();
                 }
-                const oParagraphNode = this.createNodeFromRunContentElement(oChElement, oRet, oHashWords, isOriginalDocument);
+                const oParagraphNode = this.createNodeFromRunContentElement(oChElement, oRet, oWordCounter, isOriginalDocument);
                 if(bRoot)
                 {
-                    oParagraphNode.hashWords = oHashWords;
+                    oParagraphNode.wordCounter = oWordCounter;
                 }
             }
             else
@@ -3455,8 +3567,8 @@
                 const oNode = this.createNode(oChElement, oRet);
                 if(bRoot)
                 {
-                    oHashWords = new Minhash({});
-                    oNode.hashWords = oHashWords;
+                    oWordCounter = new WordCounter();
+                    oNode.wordCounter = oWordCounter;
                 }
             }
 
@@ -3477,7 +3589,7 @@
             || bPunctuation);
     }
 
-	CDocumentComparison.prototype._createNodeFromRun = function(oRun, oLastText, oHashWords, oRet, TextElementConstructor, NodeConstructor, oReviewInfo) {
+	CDocumentComparison.prototype._createNodeFromRun = function(oRun, oLastText, oWordCounter, oRet, TextElementConstructor, NodeConstructor, oReviewInfo) {
         if(oRun.Content.length > 0)
         {
             if(!oLastText)
@@ -3493,30 +3605,34 @@
             for(let j = 0; j < oRun.Content.length; ++j)
             {
                 const oRunElement = oRun.Content[j];
-                if(isBreakWordElement(oRunElement))
+                if(isBreakWordElement(oRunElement) || this.isWordsByOneSymbol)
                 {
                     if(oLastText.elements.length > 0)
                     {
                         this.createNode(oLastText, oRet);
-                        oLastText.updateHash(oHashWords);
+                        oLastText.updateHash(oWordCounter, this);
                         oLastText = new TextElementConstructor();
                         oLastText.setFirstRun(oRun);
                     }
+										if (this.options.footNotes || !(oRunElement.Type === para_FootnoteReference || oRunElement.Type === para_EndnoteReference)) {
+											oLastText.setLastRun(oRun);
+											oLastText.addToElements(oRunElement, oReviewInfo);
+											this.createNode(oLastText, oRet);
+											oLastText.updateHash(oWordCounter, this);
+										}
 
-                    oLastText.setLastRun(oRun);
-                    oLastText.addToElements(oRunElement, oReviewInfo);
-                    this.createNode(oLastText, oRet);
-                    oLastText.updateHash(oHashWords);
 
-                    oLastText = new TextElementConstructor();
-                    oLastText.setFirstRun(oRun);
+										if (oLastText.elements.length > 0) {
+											oLastText = new TextElementConstructor();
+											oLastText.setFirstRun(oRun);
+										}
                     oLastText.setLastRun(oRun);
                 }
                 else if(oRunElement.Type === para_Drawing)
                 {
                     if(oLastText.elements.length > 0)
                     {
-                        oLastText.updateHash(oHashWords);
+                        oLastText.updateHash(oWordCounter, this);
                         this.createNode(oLastText, oRet);
                         oLastText = new TextElementConstructor();
                         oLastText.setFirstRun(oRun);
@@ -3531,7 +3647,7 @@
                 else if (oRunElement.Type === para_RevisionMove) {
                     if(oLastText.elements.length > 0)
                     {
-                        oLastText.updateHash(oHashWords);
+                        oLastText.updateHash(oWordCounter, this);
                         this.createNode(oLastText, oRet);
                         oLastText = new TextElementConstructor();
                         oLastText.setFirstRun(oRun);
@@ -3542,7 +3658,7 @@
                 {
                     if(oLastText.elements.length > 0)
                     {
-                        oLastText.updateHash(oHashWords);
+                        oLastText.updateHash(oWordCounter, this);
                         this.createNode(oLastText, oRet);
                         oLastText = new TextElementConstructor();
                         oLastText.setFirstRun(oRun);
@@ -3553,7 +3669,7 @@
                     // мы будем сравнивать ревью paraEnd отдельно, поскольку это единственный общий элемент в параграфе, до которого мы можем вставить любой различающийся контент
                     oLastText.addToElements(oRun.Content[j], {reviewType: reviewtype_Common, moveReviewType: Asc.c_oAscRevisionsMove.NoMove});
                     this.createNode(oLastText, oRet);
-                    oLastText.updateHash(oHashWords);
+                    oLastText.updateHash(oWordCounter, this);
                     oLastText = new TextElementConstructor();
                     oLastText.setFirstRun(oRun);
                     oLastText.setLastRun(oRun);
@@ -3576,39 +3692,31 @@
 
     };
 
-    CDocumentComparison.prototype.createNodeFromRun = function (oRun, oLastText, oHashWords, oRet) {
+    CDocumentComparison.prototype.createNodeFromRun = function (oRun, oLastText, oWordCounter, oRet) {
         const TextElementConstructor = this.getTextElementConstructor();
         const NodeConstructor = this.getNodeConstructor();
         const oReviewInfo = this.getCompareReviewInfo(oRun);
-        return this._createNodeFromRun(oRun, oLastText, oHashWords, oRet, TextElementConstructor, NodeConstructor, oReviewInfo);
+        return this._createNodeFromRun(oRun, oLastText, oWordCounter, oRet, TextElementConstructor, NodeConstructor, oReviewInfo);
     };
-    CDocumentComparison.prototype.createNodeFromRunContentElement = function(oElement, oParentNode, oHashWords, isOriginalDocument)
+    CDocumentComparison.prototype.createNodeFromRunContentElement = function(oElement, oParentNode, oWordCounter, isOriginalDocument)
     {
 	    this.oBookmarkManager.previousNode = null;
 	    this.oCommentManager.previousNode = null;
-        const NodeConstructor = this.getNodeConstructor();
-        const TextElementConstructor = this.getTextElementConstructor();
         const oRet = this.createNode(oElement, oParentNode);
-        const aLastWord = [];
         let oLastText = null;
         for(let i = 0; i < oElement.Content.length; ++i)
         {
             const oRun = oElement.Content[i];
             if(oRun instanceof ParaRun)
             {
-                oLastText = this.createNodeFromRun(oRun, oLastText, oHashWords, oRet);
+                oLastText = this.createNodeFromRun(oRun, oLastText, oWordCounter, oRet);
             }
             else if (oRun instanceof AscCommon.CParaRevisionMove)
             {
                 if(oLastText && oLastText.elements.length > 0)
                 {
-                    oLastText.updateHash(oHashWords);
+                    oLastText.updateHash(oWordCounter, this);
                     this.createNode(oLastText, oRet);
-                }
-                if(aLastWord.length > 0)
-                {
-                    oHashWords.update(aLastWord);
-                    aLastWord.length = 0;
                 }
                 oLastText = null;
                 this.createNode(oRun, oRet);
@@ -3634,33 +3742,32 @@
             }
 						else if (oRun instanceof AscCommon.ParaComment)
             {
-							const oComment = this.getComment(oRun.GetCommentId());
-	            const oElement = new CCommentElement(oComment, oRun);
-							if (oLastText)
-							{
-								this.oCommentManager.addToStack(oElement, oLastText.elements.length);
-							}
-							else
-							{
-								this.oCommentManager.addToStack(oElement, 0);
+							if (this.options.comments) {
+								const oComment = this.getComment(oRun.GetCommentId());
+								const oElement = new CCommentElement(oComment, oRun);
+								if (oLastText)
+								{
+									this.oCommentManager.addToStack(oElement, oLastText.elements.length);
+								}
+								else
+								{
+									this.oCommentManager.addToStack(oElement, 0);
+								}
+							} else {
+								this.oCommentManager.addToCheckSaveParaComment(oRun);
 							}
             }
             else
             {
 	            if (oLastText && oLastText.elements.length > 0)
 	            {
-		            oLastText.updateHash(oHashWords);
+		            oLastText.updateHash(oWordCounter, this);
 		            this.createNode(oLastText, oRet);
-	            }
-	            if (aLastWord.length > 0)
-	            {
-		            oHashWords.update(aLastWord);
-		            aLastWord.length = 0;
 	            }
 	            oLastText = null;
 	            if (Array.isArray(oRun.Content))
 	            {
-		            this.createNodeFromRunContentElement(oRun, oRet, oHashWords, isOriginalDocument);
+		            this.createNodeFromRunContentElement(oRun, oRet, oWordCounter, isOriginalDocument);
 	            }
 	            else
 	            {
@@ -3670,7 +3777,7 @@
         }
         if(oLastText && oLastText.elements.length > 0)
         {
-            oLastText.updateHash(oHashWords);
+            oLastText.updateHash(oWordCounter, this);
             this.createNode(oLastText, oRet);
         }
         return oRet;
@@ -3722,10 +3829,6 @@
 		oLogicDocument.LoadDocumentState(oSelectionState);
 	};
 
-    window['AscCommonWord'] = window['AscCommonWord'] || {};
-    window['AscCommonWord'].CDocumentComparison = CDocumentComparison;
-    window['AscCommonWord'].ComparisonOptions = window['AscCommonWord']["ComparisonOptions"] = ComparisonOptions;
-
     function CompareBinary(oApi, sBinary2, oOptions, bForceApplyChanges)
     {
         const oDoc1 = oApi.WordControl.m_oLogicDocument;
@@ -3743,7 +3846,7 @@
 	    oDoc1.SetTrackRevisions(false);
 	    let bHaveRevisons2 = false;
 	    const oDoc2 = AscFormat.ExecuteNoHistory(function(){
-            const openParams = {disableRevisions: true, noSendComments: true};
+            const openParams = {disableRevisions: true, noSendComments: true, noGenerateSmartArts: true};
             const oTempDocument = new CDocument(oApi.WordControl.m_oDrawingDocument, false);
             const oBinaryFileReader = new AscCommonWord.BinaryFileReader(oTempDocument, openParams);
             AscCommon.pptx_content_loader.Start_UseFullUrl(oApi.insertDocumentUrlsData);
@@ -4012,8 +4115,35 @@
 		this.mapChecked = {};
 		this.mapLink = {};
 		this.mapMergeLater = {};
+		this.checkSkipParaComment = {};
+		this.savedParaComments = {};
 	}
 
+	CComparisonCommentManager.prototype.addToCheckSaveParaComment = function (oParaComment) {
+		const sCommentId = oParaComment.GetCommentId();
+		if (!this.checkSkipParaComment[sCommentId]) {
+			this.checkSkipParaComment[sCommentId] = Array(2);
+		}
+		if (oParaComment.IsCommentStart()) {
+			this.checkSkipParaComment[sCommentId][0] = oParaComment;
+		} else {
+			this.checkSkipParaComment[sCommentId][1] = oParaComment;
+		}
+	};
+	CComparisonCommentManager.prototype.generateSavedParaComments = function () {
+		for (let sCommentId in this.checkSkipParaComment) {
+			const arrParaComments = this.checkSkipParaComment[sCommentId];
+			const oStartParaComment = arrParaComments[0];
+			const oEndParaComment = arrParaComments[1];
+			if (oStartParaComment && oEndParaComment) {
+				if (oStartParaComment.Paragraph === oEndParaComment.Paragraph && oStartParaComment.Parent === oEndParaComment.Parent) {
+					this.savedParaComments[oStartParaComment.Id] = true;
+					this.savedParaComments[oEndParaComment.Id] = true;
+				}
+			}
+		}
+		this.checkSkipParaComment = {};
+	}
 	CComparisonCommentManager.prototype.addToLink = function (sKey, sValue)
 	{
 		this.mapLink[sKey] = sValue;
@@ -4212,7 +4342,7 @@
 		this.insertIndex = nInsertIndex;
 	}
 	
-	function CRunCollector(arrElements) {
+	function CRunCollector(arrElements, parentParagraph) {
 		this.elements = arrElements;
 		this.runIndex = null;
 		this.runElementIndex = null;
@@ -4222,15 +4352,15 @@
 		this.collectTextPrChange = null;
 		this.collectReviewChange = null;
 
-		this.init();
+		this.init(parentParagraph);
 	}
 
-	CRunCollector.prototype.init = function () {
+	CRunCollector.prototype.init = function (parentParagraph) {
 		this.elementIndex = this.elements.length - 1;
 		const oLastElement = this.elements[this.elementIndex];
 		this.innerElementIndex = oLastElement.elements.length - 1;
 		const oLastRun = oLastElement.lastRun;
-		const oParent = oLastRun.GetParent();
+		const oParent = parentParagraph || oLastRun.GetParent();
 		this.parent = oParent;
 		const oContent = oParent.Content;
 		for (let i = oContent.length - 1; i >= 0; i -= 1) {

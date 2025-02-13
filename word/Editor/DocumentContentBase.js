@@ -2909,3 +2909,14 @@ CDocumentContentBase.prototype.GetCurrentRun = function()
 	
 	return run;
 };
+CDocumentContentBase.prototype.GetText = function(pr)
+{
+	let text = "";
+	for (let i = 0; i < this.Content.length; ++i)
+	{
+		if (this.Content[i].GetText)
+			text += this.Content[i].GetText(pr);
+	}
+	
+	return text;
+};

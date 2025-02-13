@@ -2040,14 +2040,8 @@ CTableCell.prototype =
 		this.Content = AscCommon.g_oTableId.Get_ById(Reader.GetString2());
 
 		if (this.Content)
-			this.Content.Parent = this;
-
-		AscCommon.CollaborativeEditing.Add_NewObject(this);
-	},
-
-    Load_LinkData : function(LinkData)
-    {
-    }
+			this.Content.SetParent(this);
+	}
 };
 /**
  * Доступ к содержимому ячейки
@@ -2056,6 +2050,15 @@ CTableCell.prototype =
 CTableCell.prototype.GetContent = function()
 {
 	return this.Content;
+};
+/**
+ * Функция для выставления класса содержимого ячейки (используется в совместке)
+ * @param {CDocumentContent} oDocumentContent
+ */
+CTableCell.prototype.SetDocumentContent = function(oDocumentContent)
+{
+	this.Content = oDocumentContent;
+	oDocumentContent.SetParent(this);
 };
 /**
  * Доступ к родительской строке

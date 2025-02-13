@@ -6607,7 +6607,7 @@ function CSlideDrawer()
 		}
 
 		if (this.m_oWordControl.m_oApi.watermarkDraw &&
-			!this.m_oWordControl.DemonstrationManager.Mode &&
+			!(this.m_oWordControl.DemonstrationManager && this.m_oWordControl.DemonstrationManager.Mode) &&
 			!this.m_oWordControl.m_oDrawingDocument.TransitionSlide.IsPlaying())
 		{
 			this.m_oWordControl.m_oApi.watermarkDraw.Draw(outputCtx,

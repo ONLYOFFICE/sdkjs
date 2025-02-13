@@ -440,6 +440,10 @@ CHistory.prototype =
     // Data  - сами изменения
 	Add : function(_Class, Data)
 	{
+		let Class = _Class ? _Class.GetClass() : undefined;
+		if (Class && Class.SetIsRecalculated && (!_Class || _Class.IsNeedRecalculate()))
+			Class.SetIsRecalculated(false);
+		
 		if (!this.CanAddChanges())
 			return;
 
@@ -452,18 +456,13 @@ CHistory.prototype =
 
 		var Binary_Pos = this.BinaryWriter.GetCurPosition();
 
-		var Class;
-		if (_Class) {
-            Class = _Class.GetClass();
+		if (_Class)
+		{
             Data = _Class;
-
             this.BinaryWriter.WriteString2(Class.Get_Id());
             this.BinaryWriter.WriteLong(_Class.Type);
             _Class.WriteToBinary(this.BinaryWriter);
         }
-
-        if (Class && Class.SetIsRecalculated && (!_Class || _Class.IsNeedRecalculate()))
-        	Class.SetIsRecalculated(false);
 
 		var Binary_Len = this.BinaryWriter.GetCurPosition() - Binary_Pos;
 		var Item       = {
@@ -479,28 +478,26 @@ CHistory.prototype =
 
 		this.Points[this.Index].Items.push(Item);
 
-		if (!this.CollaborativeEditing)
+		if (!this.CollaborativeEditing || !_Class)
 			return;
-
-		if (_Class)
+		
+		if (_Class.IsContentChange())
 		{
-			if (_Class.IsContentChange())
-			{
-				var bAdd  = _Class.IsAdd();
-				var Count = _Class.GetItemsCount();
-
-				var ContentChanges = new AscCommon.CContentChangesElement(bAdd == true ? AscCommon.contentchanges_Add : AscCommon.contentchanges_Remove, Data.Pos, Count, Item);
-				Class.Add_ContentChanges(ContentChanges);
-				this.CollaborativeEditing.Add_NewDC(Class);
-
-				if (true === bAdd)
-					this.CollaborativeEditing.Update_DocumentPositionsOnAdd(Class, Data.Pos);
-				else
-					this.CollaborativeEditing.Update_DocumentPositionsOnRemove(Class, Data.Pos, Count);
-			}
-		    if(_Class.IsPosExtChange()){
-                this.CollaborativeEditing.AddPosExtChanges(Item, _Class);
-            }
+			var bAdd  = _Class.IsAdd();
+			var Count = _Class.GetItemsCount();
+			
+			var ContentChanges = new AscCommon.CContentChangesElement(bAdd == true ? AscCommon.contentchanges_Add : AscCommon.contentchanges_Remove, Data.Pos, Count, Item);
+			Class.Add_ContentChanges(ContentChanges);
+			this.CollaborativeEditing.Add_NewDC(Class);
+			
+			if (true === bAdd)
+				this.CollaborativeEditing.Update_DocumentPositionsOnAdd(Class, Data.Pos);
+			else
+				this.CollaborativeEditing.Update_DocumentPositionsOnRemove(Class, Data.Pos, Count);
+		}
+		if (_Class.IsPosExtChange())
+		{
+			this.CollaborativeEditing.AddPosExtChanges(Item, _Class);
 		}
 	},
 
