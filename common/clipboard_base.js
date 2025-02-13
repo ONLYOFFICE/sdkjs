@@ -954,6 +954,26 @@
 		{
 			if (navigator.clipboard)
 			{
+
+				/*async function getClipboardData() {
+					try {
+						const clipboardContents = await navigator.clipboard.read();
+						for (const item of clipboardContents) {
+							if (item.types.includes("image/png")) {
+
+							}
+							const blob = await item.getType("image/png");
+						}
+					} catch (error) {
+						//log(error.message);
+					}
+				}
+
+				getClipboardData();
+
+				return;*/
+
+
 				let copy_data = {
 					data : {},
 					pushData: function (format, value) {
@@ -971,8 +991,8 @@
 					//https://webkit.org/blog/10855/async-clipboard-api/
 					const data = [new ClipboardItem({
 						"text/plain"        : new Blob([copy_data.data[c_oAscClipboardDataFormat.Text]], {type: "text/plain"}),
-						"text/html"         : new Blob([copy_data.data[c_oAscClipboardDataFormat.Html]], {type: "text/html"}),
-						"image/png"         : copy_data.data[c_oAscClipboardDataFormat.Image]
+						"text/html"         : new Blob([copy_data.data[c_oAscClipboardDataFormat.Html]], {type: "text/html"})
+						//"image/png"         : copy_data.data[c_oAscClipboardDataFormat.Image]
 						/*"web text/x-custom" : new Blob(["asc_internalData2;" + copy_data.data[c_oAscClipboardDataFormat.Internal]], {type: "web text/x-custom"})/*,//not support
 						*/
 					})];
