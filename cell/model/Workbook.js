@@ -2149,7 +2149,8 @@
 						for (var name in changedSheet) {
 							if (changedSheet.hasOwnProperty(name)) {
 								bbox = changedSheet[name];
-								ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2)._foreachNoEmptyData(callback);
+								//can not use _foreachNoEmptyData because of numformat
+								ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2)._foreachNoEmpty(callback);
 							}
 						}
 					}
@@ -5918,7 +5919,26 @@
 		offset += (index - this.indexA) * this.structSize;
 		return AscFonts.FT_Common.IntToUInt(this.data[offset] | this.data[offset + 1] << 8 | this.data[offset + 2] << 16 | this.data[offset + 3] << 24);
 	};
+	SheetMemory.prototype.getInt8 = function(index, offset) {
+		offset += (index - this.indexA) * this.structSize;
+		return this.data[offset];
+	};
+	SheetMemory.prototype.setInt8 = function(index, offset, val) {
+		offset += (index - this.indexA) * this.structSize;
+		this.data[offset] = val;
+	};
 	SheetMemory.prototype.setUint32 = function(index, offset, val) {
+		offset += (index - this.indexA) * this.structSize;
+		this.data[offset] = (val) & 0xFF;
+		this.data[offset + 1] = (val >>> 8) & 0xFF;
+		this.data[offset + 2] = (val >>> 16) & 0xFF;
+		this.data[offset + 3] = (val >>> 24) & 0xFF;
+	};
+	SheetMemory.prototype.getInt32 = function(index, offset) {
+		offset += (index - this.indexA) * this.structSize;
+		return this.data[offset] | this.data[offset + 1] << 8 | this.data[offset + 2] << 16 | this.data[offset + 3] << 24;
+	};
+	SheetMemory.prototype.setInt32 = function(index, offset, val) {
 		offset += (index - this.indexA) * this.structSize;
 		this.data[offset] = (val) & 0xFF;
 		this.data[offset + 1] = (val >>> 8) & 0xFF;
@@ -14148,7 +14168,7 @@
 		this._hasChanged = true;
 	};
 	Cell.prototype.saveContent = function(opt_inCaseOfChange, opt_append) {
-		if (this.hasRowCol() && (!opt_inCaseOfChange || this._hasChanged)) {
+		if ((!opt_inCaseOfChange || this._hasChanged) && this.hasRowCol()) {
 			this._hasChanged = false;
 			var wb = this.ws.workbook;
 			var sheetMemory = this.ws.getColData(this.nCol);
@@ -14158,20 +14178,25 @@
 				sheetMemory.checkIndex(this.nRow);
 				var flagValue = 0;
 				if (null != this.number) {
-					flagValue = 1;
-					sheetMemory.setFloat64(this.nRow, g_nCellOffsetValue, this.number);
+					if (Math.floor(this.number) === this.number && 0x80000000 <= this.number && this.number <= 0x7FFFFFFF) {
+						flagValue = 4;
+						sheetMemory.setInt32(this.nRow, g_nCellOffsetValue, this.number);
+					} else {
+						flagValue = 1;
+						sheetMemory.setFloat64(this.nRow, g_nCellOffsetValue, this.number);
+					}
 				} else if (null != this.text) {
 					flagValue = 2;
 					numberSave = this.getTextIndex();
-					sheetMemory.setUint32(this.nRow, g_nCellOffsetValue, numberSave);
+					sheetMemory.setInt32(this.nRow, g_nCellOffsetValue, numberSave);
 				} else if (null != this.multiText) {
 					flagValue = 3;
 					numberSave = this.getTextIndex();
-					sheetMemory.setUint32(this.nRow, g_nCellOffsetValue, numberSave);
+					sheetMemory.setInt32(this.nRow, g_nCellOffsetValue, numberSave);
 				}
-				sheetMemory.setUint8(this.nRow, g_nCellOffsetFlag, this._toFlags(flagValue));
-				// sheetMemory.setUint32(this.nRow, g_nCellOffsetXf, xfSave);
-				sheetMemory.setUint32(this.nRow, g_nCellOffsetFormula, formulaSave);
+				sheetMemory.setInt8(this.nRow, g_nCellOffsetFlag, this._toFlags(flagValue));
+				// sheetMemory.setInt32(this.nRow, g_nCellOffsetXf, xfSave);
+				sheetMemory.setInt32(this.nRow, g_nCellOffsetFormula, formulaSave);
 			}
 
 			let xfSave = this.xfs ? this.xfs.getIndexNumber() : 0;
@@ -14191,16 +14216,18 @@
 				if (0 !== (g_nCellFlag_init & flags)) {
 					var wb = this.ws.workbook;
 					var flagValue = this._fromFlags(flags);
-					// this.xfs = g_StyleCache.getXf(sheetMemory.getUint32(this.nRow, g_nCellOffsetXf));
+					// this.xfs = g_StyleCache.getXf(sheetMemory.getInt32(this.nRow, g_nCellOffsetXf));
 
-					this.formulaParsed = wb.workbookFormulas.get(sheetMemory.getUint32(this.nRow, g_nCellOffsetFormula));
-					if (1 === flagValue) {
+					this.formulaParsed = wb.workbookFormulas.get(sheetMemory.getInt32(this.nRow, g_nCellOffsetFormula));
+					if (4 === flagValue) {
+						this.number = sheetMemory.getInt32(this.nRow, g_nCellOffsetValue);
+					} else if (1 === flagValue) {
 						this.number = sheetMemory.getFloat64(this.nRow, g_nCellOffsetValue);
 					} else if (2 === flagValue) {
-						this.textIndex = sheetMemory.getUint32(this.nRow, g_nCellOffsetValue);
+						this.textIndex = sheetMemory.getInt32(this.nRow, g_nCellOffsetValue);
 						this.text = wb.sharedStrings.get(this.textIndex);
 					} else if (3 === flagValue) {
-						this.textIndex = sheetMemory.getUint32(this.nRow, g_nCellOffsetValue);
+						this.textIndex = sheetMemory.getInt32(this.nRow, g_nCellOffsetValue);
 						this.multiText = wb.sharedStrings.get(this.textIndex);
 					}
 					res = true;
@@ -17478,65 +17505,84 @@
 			}
 		}
 	};
-	Range.prototype._foreachNoEmptyData = function(actionCell, actionRow, excludeHiddenRows) {
+	Range.prototype._foreachNoEmptyData = function(actionCell, excludeHiddenRows) {
+		if (!actionCell) {
+			return;
+		}
 		var oRes, i, oBBox = this.bbox ;
 		var minR = oBBox.r2;
-		var itRow;
-		if (actionCell) {
-			itRow = new RowIterator();
-			itRow.init(this.worksheet, this.bbox.r1, this.bbox.c1, this.bbox.r2, this.bbox.c2, this.worksheet.cellsByCol, null);
-			minR = Math.min(minR, itRow.iter.maxRow);
-		}
-		if (actionRow) {
-			minR = Math.min(minR, this.worksheet.rowsData.getMaxIndex());
-		}
-		if (actionCell || actionRow) {
-			var bExcludeHiddenRows = (this.worksheet.bExcludeHiddenRows || excludeHiddenRows);
-			var excludedCount = 0;
-			var tempCell;
-			var tempRow = new AscCommonExcel.Row(this.worksheet);
-			var allRow = this.worksheet.getAllRow();
-			var allRowHidden = allRow && allRow.getHidden();
-			for (i = oBBox.r1; i <= minR; i++) {
-				if (actionRow) {
-					if (tempRow.loadContent(i)) {
-						if (bExcludeHiddenRows && tempRow.getHidden()) {
-							excludedCount++;
-							continue;
-						}
-						oRes = actionRow(tempRow, excludedCount);
-						tempRow.saveContent(true);
-						if (null != oRes) {
-							if (actionCell) {
-								itRow.release();
-							}
-							return oRes;
-						}
-					} else if (bExcludeHiddenRows && allRowHidden) {
-						excludedCount++;
-						continue;
+		var itRow = new RowIterator();
+		itRow.init(this.worksheet, this.bbox.r1, this.bbox.c1, this.bbox.r2, this.bbox.c2, this.worksheet.cellsByCol, null);
+		minR = Math.min(minR, itRow.iter.maxRow);
+		var bExcludeHiddenRows = (this.worksheet.bExcludeHiddenRows || excludeHiddenRows);
+		var excludedCount = 0;
+		var tempCell;
+		for (i = oBBox.r1; i <= minR; i++) {
+			if (bExcludeHiddenRows && this.worksheet.getRowHidden(i)) {
+				excludedCount++;
+				continue;
+			}
+			itRow.setRow(i);
+			while (tempCell = itRow.next()) {
+				oRes = actionCell(tempCell, i, tempCell.nCol, oBBox.r1, oBBox.c1, excludedCount);
+				if (null != oRes) {
+					if (actionCell) {
+						itRow.release();
 					}
-				} else if (bExcludeHiddenRows && this.worksheet.getRowHidden(i)) {
+					return oRes;
+				}
+			}
+		}
+		itRow.release();
+	};
+	Range.prototype._foreachNoEmptyDataByCol = function(actionCell, excludeHiddenRows, opt_bbox) {
+		if (!actionCell) {
+			return;
+		}
+		let wb = this.worksheet.workbook;
+		let bExcludeHiddenRows = (this.worksheet.bExcludeHiddenRows || excludeHiddenRows);
+		let oRes = true;
+		let oBBox = opt_bbox || this.bbox;
+		let excludedCount = 0;
+		let targetCell = null;
+		let tempCell = new Cell(this.worksheet);
+		//wb.loadCells.push(tempCell);
+		for (let col = this.bbox.c1; col <= this.bbox.c2 && col < this.worksheet.getColDataLength(); ++col) {
+			let sheetMemory = this.worksheet.getColDataNoEmpty(col);
+			if (!sheetMemory) {
+				continue;
+			}
+			let r1 = Math.max(oBBox.r1, sheetMemory.getMinIndex());
+			let r2 = Math.min(oBBox.r2, sheetMemory.getMaxIndex());
+			for (let row = r1; row <= r2; ++row) {
+				if (bExcludeHiddenRows && this.worksheet.getRowHidden(row)) {
 					excludedCount++;
 					continue;
 				}
-				if (actionCell) {
-					itRow.setRow(i);
-					while (tempCell = itRow.next()) {
-						oRes = actionCell(tempCell, i, tempCell.nCol, oBBox.r1, oBBox.c1, excludedCount);
-						if (null != oRes) {
-							if (actionCell) {
-								itRow.release();
-							}
-							return oRes;
-						}
+				// for (var k = 0; k < wb.loadCells.length - 1; ++k) {
+				// 	var elem = wb.loadCells[k];
+				// 	if (elem.nRow === row && elem.nCol === col && this.worksheet === elem.ws) {
+				// 		targetCell = elem;
+				// 		break;
+				// 	}
+				// }
+				if (null === targetCell) {
+					if (tempCell.loadContent(row, col, true, sheetMemory, true, null)) {
+						oRes = actionCell(tempCell, row, col, oBBox.r1, oBBox.c1, excludedCount);
+						// saveContent cannot be done because the tempCell has no styles
+						//tempCell.saveContent(true);
 					}
+				} else {
+					oRes = actionCell(targetCell, row, col, oBBox.r1, oBBox.c1, excludedCount);
 				}
-			}
-			if (actionCell) {
-				itRow.release();
+				// if (null != oRes) {
+				// 	wb.loadCells.pop();
+				// 	return oRes;
+				// }
 			}
 		}
+		// wb.loadCells.pop();
+		return oRes;
 	};
 	Range.prototype._foreachNoEmptyByCol = function(actionCell, excludeHiddenRows) {
 		var oRes, i, j, colData, colXf;
@@ -17655,20 +17701,23 @@
 			return this._foreachNoEmpty(actionCell);
 		}
 	};
+
 	Range.prototype._getNoEmptyBBox=function(bbox){
-		let r1 = gc_nMaxRow0 + 1;
-		let r2 = -1;
-		let c1 = gc_nMaxCol0 + 1;
-		let c2 = -1;
-		for (let i = bbox.c1; i <= bbox.c2; ++i) {
-			let sheetMemory = this.worksheet.cellsByCol[i];
+		let r1 = bbox.r2;
+		let r2 = bbox.r1 - 1;
+		let c1 = bbox.c2;
+		let c2 = bbox.c1 - 1;
+		for (let i = bbox.c1; i <= bbox.c2 && i < this.worksheet.getColDataLength(); ++i) {
+			let sheetMemory = this.worksheet.getColDataNoEmpty(i);
 			if (sheetMemory) {
 				c1 = Math.min(c1, i);
-				c2 = Math.max(c2, i);
+				c2 = i;
 				r1 = Math.min(r1, sheetMemory.getMinIndex());
 				r2 = Math.max(r2, sheetMemory.getMaxIndex());
 			}
 		}
+		r1 = Math.max(r1, bbox.r1);
+		r2 = Math.min(r2, bbox.r2);
 		if (r1 <= r2 && c1 <= c2) {
 			return new Asc.Range(c1, r1, c2, r2);
 		} else {
