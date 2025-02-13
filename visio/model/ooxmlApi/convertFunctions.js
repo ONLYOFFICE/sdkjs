@@ -308,6 +308,30 @@
 			}
 
 			/**
+			 * Searches for pp element after passed element in textElements
+			 * @param {[]} textElements
+			 * @param {number} currentIndex
+			 * @param {string?} afterDropText
+			 * @return {number} row num
+			 */
+			function searchForPP(textElements, currentIndex, afterDropText) {
+				if (afterDropText === undefined) {
+					afterDropText = "";
+				}
+				let afterNext = textElements[currentIndex + 2];
+				let next = textElements[currentIndex + 1];
+				// if there is text after \r\n
+				if (afterDropText.length > 2) {
+					return undefined;
+				} else if (afterNext && afterNext.kind === AscVisio.c_oVsdxTextKind.PP) {
+					return afterNext.iX;
+				} else if (next && next.kind === AscVisio.c_oVsdxTextKind.PP) {
+					return next.iX;
+				}
+				return undefined;
+			}
+
+			/**
 			 * @param propsRowNum
 			 * @param {?Section_Type} paragraphPropsCommon
 			 * @param textCShape
@@ -395,6 +419,9 @@
 
 
 				// // CPresentationBullet
+				paragraph.Pr.Bullet = new AscFormat.CBullet();
+				// paragraph.Pr.Bullet.fillBulletFromCharAndFont("●", "Arial");
+
 				// paragraph.PresentationPr.Bullet.m_nType = AscFormat.numbering_presentationnumfrmt_Blip;
 				//
 				// let Bullet             = new AscFormat.CBullet();
@@ -798,6 +825,7 @@
 			textCShape.setVerticalAlign(1); // sets text vert align center. equal to anchor set to txBody bodyPr
 			textCShape.bSelectedText = false;
 
+
 			// instead of AscFormat.AddToContentFromString(oContent, sText);
 			// use https://api.onlyoffice.com/docbuilder/presentationapi/apishape api implementation code
 			// to work with text separated into ParaRuns to split properties use
@@ -814,6 +842,8 @@
 			// TODO tp_Type is not parsed?
 			let propsCP = null;
 			let propsTP = null;
+			let currentParagraphPropsRow;
+			let currentParagraph;
 
 			let oContent = textCShape.getDocContent();
 			oContent.Content = [];
@@ -824,39 +854,71 @@
 			 */
 			const isTextInherited = textElement.isInherited;
 
-			// read text
+			// visio set extra \r\n at the end of each text element: see fix below. Both are needed
+			let lastTextEl = textElement.elements[textElement.elements.length - 1];
+			if (typeof lastTextEl === "string" && lastTextEl.endsWith("\r\n")) {
+				lastTextEl = lastTextEl.slice(0, lastTextEl.length - 2);
+				textElement.elements[textElement.elements.length - 1] = lastTextEl;
+			}
+
+			// read text:
+			// consider CRLF (\r\n) as new paragraph start. Right after CRLF visio searches for pp
+			// which will be properties for new paragraph.
+			// (Or if it is something after CRLF it doesn't search for pp)
+
+			// interesting moment: if pp comes in text, so it ignores
 			textElement.elements.forEach(function(textElementPart, i) {
+				if (i === 0) {
+					currentParagraphPropsRow = searchForPP(textElement.elements, i);
+					// check defaultParagraph properties: get pp_Type object and in paragraphPropsCommon get needed Row (0)
+					currentParagraphPropsRow = currentParagraphPropsRow === undefined ? 0 : currentParagraphPropsRow;
+					parseParagraphAndAddToShapeContent(currentParagraphPropsRow,
+						paragraphPropsCommon, textCShape);
+					currentParagraph = oContent.Content.slice(-1)[0]; // last paragraph
+				}
+
 				if (typeof textElementPart === "string" || textElementPart.kind === AscVisio.c_oVsdxTextKind.FLD) {
-
-					// create defaultParagraph
-					if (oContent.Content.length === 0) {
-						parseParagraphAndAddToShapeContent(0, paragraphPropsCommon, textCShape);
-					}
-					let paragraph = oContent.Content.slice(-1)[0];
-
 					if (typeof textElementPart === "string") {
-						// create paraRun using propsObjects
+						// "LSCRLF" transforms to line drop and new paragraph without line drop so we get one
+						// line drop where should be two line drops so let's add extra line drop
+						textElementPart = textElementPart.replaceAll("\u2028\r\n", "\u2028\u2028\r\n");
+						let textArr = textElementPart.split("\r\n");
 
-						// equal to ApiParagraph.prototype.AddText method
-						let oRun = new ParaRun(paragraph, false);
-						textElementPart = convertVsdxTextToPptxText(textElementPart);
-						oRun.AddText(textElementPart);
+						for (let j = 0; j < textArr.length; j++) {
+							let text = textArr[j];
 
-						// setup Run
-						// check character properties: get cp_Type object and in characterPropsCommon get needed Row
-						let characterRowNum = propsCP && propsCP.iX;
-						if (propsCP === null) {
-							characterRowNum = 0;
+							// if j > 0 CR exists in textArr and should be handled as new paragraph start
+							if (j > 0) {
+								let nextPP = searchForPP(textElement.elements, i, text);
+								currentParagraphPropsRow = nextPP ? nextPP : currentParagraphPropsRow;
+
+								parseParagraphAndAddToShapeContent(currentParagraphPropsRow,
+									paragraphPropsCommon, textCShape);
+								currentParagraph = oContent.Content.slice(-1)[0]; // last paragraph
+							}
+
+							// equal to ApiParagraph.prototype.AddText method
+							let oRun = new ParaRun(currentParagraph, false);
+							let textWithLineDrops = convertVsdxTextToPptxText(text);
+							oRun.AddText(textWithLineDrops);
+
+							// check character properties: get cp_Type object and in characterPropsCommon get needed Row
+							let characterRowNum = propsCP && propsCP.iX;
+							if (propsCP === null) {
+								characterRowNum = 0;
+							}
+
+							// setup Run props
+							setRunProps(characterRowNum, characterPropsCommon,
+								oRun, lineUniFill, fillUniFill, theme, shape,
+								visioDocument, pageInfo);
+							currentParagraph.Add_ToContent(currentParagraph.Content.length - 1, oRun);
 						}
 
-						setRunProps(characterRowNum, characterPropsCommon,
-							oRun, lineUniFill, fillUniFill, theme, shape,
-							visioDocument, pageInfo);
-						paragraph.Add_ToContent(paragraph.Content.length - 1, oRun);
 					} else if (textElementPart.kind === AscVisio.c_oVsdxTextKind.FLD) {
 						// text field
 
-						let oFld = new AscCommonWord.CPresentationField(paragraph);
+						let oFld = new AscCommonWord.CPresentationField(currentParagraph);
 						let fieldRowNum = textElementPart.iX;
 						let fieldPropsFinal = fieldRowNum !== null && fieldPropsCommon.getRow(fieldRowNum);
 						initPresentationField(oFld, fieldPropsFinal, isTextInherited);
@@ -880,16 +942,15 @@
 							oFld, lineUniFill, fillUniFill, theme, shape,
 							visioDocument, pageInfo);
 
-						paragraph.AddToContent(paragraph.Content.length - 1, new ParaRun(paragraph, false));
-						paragraph.AddToContent(paragraph.Content.length - 1, oFld);
-						paragraph.AddToContent(paragraph.Content.length - 1, new ParaRun(paragraph, false));
+						currentParagraph.AddToContent(currentParagraph.Content.length - 1, new ParaRun(currentParagraph, false));
+						currentParagraph.AddToContent(currentParagraph.Content.length - 1, oFld);
+						currentParagraph.AddToContent(currentParagraph.Content.length - 1, new ParaRun(currentParagraph, false));
 					}
 				} else if (textElementPart.kind === AscVisio.c_oVsdxTextKind.PP) {
-					// setup Paragraph
+					// search for pp only after CRLF and in the beginning of text element
 
-					// check defaultParagraph properties: get pp_Type object and in paragraphPropsCommon get needed Row
-					let paragraphRowNum = textElementPart.iX;
-					parseParagraphAndAddToShapeContent(paragraphRowNum, paragraphPropsCommon, textCShape);
+					// currentParagraphPropsRow = textElementPart.iX;
+					// parseParagraphAndAddToShapeContent(currentParagraphPropsRow, paragraphPropsCommon, textCShape);
 
 				} else if (textElementPart.kind === AscVisio.c_oVsdxTextKind.CP) {
 					propsCP = textElementPart;
