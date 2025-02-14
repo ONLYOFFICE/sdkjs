@@ -460,8 +460,49 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.IsEditFieldsMode = function() {
         return this.editFieldsMode;
     };
+    CPDFDoc.prototype.CreateNewFieldName = function(nFieldType) {
+        let sFormType = "";
+        switch (nFieldType) {
+            case AscPDF.FIELD_TYPES.button: {
+                sFormType += "Button";
+                break;
+            }
+            case AscPDF.FIELD_TYPES.radiobutton: {
+                sFormType += "Radiobutton";
+                break;
+            }
+            case AscPDF.FIELD_TYPES.checkbox: {
+                sFormType += "Checkbox";
+                break;
+            }
+            case AscPDF.FIELD_TYPES.text: {
+                sFormType += "Text";
+                break;
+            }
+            case AscPDF.FIELD_TYPES.combobox: {
+                sFormType += "Combobox";
+                break;
+            }
+            case AscPDF.FIELD_TYPES.listbox: {
+                sFormType += "Listbox";
+                break;
+            }
+            case AscPDF.FIELD_TYPES.signature: {
+                sFormType += "Signature";
+                break;
+            }
+        }
+
+        let nFormNumber = 1;
+        while (this.GetField(sFormType + nFormNumber)) {
+            nFormNumber = AscCommon.g_oIdCounter.GetNewIdForPdfForm();
+        }
+        
+        return sFormType + nFormNumber;
+    };
     CPDFDoc.prototype.CreateTextField = function(bDateField) {
-        let oTextField = this.CreateField('TextField1', AscPDF.FIELD_TYPES.text, [200, 50, 350, 72]);
+        let sName = this.CreateNewFieldName(AscPDF.FIELD_TYPES.text);
+        let oTextField = this.CreateField(sName, AscPDF.FIELD_TYPES.text, [200, 50, 350, 72]);
 
         if (bDateField) {
             oTextField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, [{
@@ -477,8 +518,7 @@ var CPresentation = CPresentation || function(){};
         return oTextField;
     };
     CPDFDoc.prototype.CreateButtonField = function(bImage) {
-        let sName = 'ButtonField1';
-
+        let sName = this.CreateNewFieldName(AscPDF.FIELD_TYPES.button);
         let aRect = bImage ? [218, 44, 290, 124] : [49, 83, 121, 103];
         let oButtonField = this.CreateField(sName, AscPDF.FIELD_TYPES.button, aRect);
 
@@ -498,7 +538,7 @@ var CPresentation = CPresentation || function(){};
         return oButtonField;
     };
     CPDFDoc.prototype.CreateCheckboxField = function() {
-        let sName = 'CheckboxField1';
+        let sName = this.CreateNewFieldName(AscPDF.FIELD_TYPES.checkbox);
         let aRect = [320, 45, 338, 63];
         
         let oCheckboxField = this.CreateField(sName, AscPDF.FIELD_TYPES.checkbox, aRect);
@@ -507,7 +547,7 @@ var CPresentation = CPresentation || function(){};
         return oCheckboxField;
     };
     CPDFDoc.prototype.CreateRadiobuttonField = function() {
-        let sName = 'RadiobuttonField1';
+        let sName = this.CreateNewFieldName(AscPDF.FIELD_TYPES.radiobutton);
         let aRect = [320, 45, 338, 63];
         
         let oRadiobuttonField = this.CreateField(sName, AscPDF.FIELD_TYPES.radiobutton, aRect);
@@ -518,7 +558,7 @@ var CPresentation = CPresentation || function(){};
         return oRadiobuttonField;
     };
     CPDFDoc.prototype.CreateComboboxField = function() {
-        let sName = 'ComboboxField1';
+        let sName = this.CreateNewFieldName(AscPDF.FIELD_TYPES.combobox);
         let aRect = [382, 45, 454, 65];
         
         let oComboboxField = this.CreateField(sName, AscPDF.FIELD_TYPES.combobox, aRect);
@@ -526,7 +566,7 @@ var CPresentation = CPresentation || function(){};
         return oComboboxField;
     };
     CPDFDoc.prototype.CreateListboxField = function() {
-        let sName = 'ListboxField1';
+        let sName = this.CreateNewFieldName(AscPDF.FIELD_TYPES.listbox);
         let aRect = [382, 81, 482, 153];
         
         let oListboxField = this.CreateField(sName, AscPDF.FIELD_TYPES.listbox, aRect);
