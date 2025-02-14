@@ -212,13 +212,12 @@
     };
 
     CTextField.prototype.SetFormatValue = function(sValue) {
-        let oDoc = this.GetDocument();
-        oDoc.History.Add(new CChangesPDFFormFormatValue(this, this.GetFormatValue(), sValue));
+        AscCommon.History.Add(new CChangesPDFFormFormatValue(this, this.GetFormatValue(), sValue));
 
-        oDoc.StartNoHistoryMode();
+        AscCommon.History.StartNoHistoryMode();
         this.contentFormat.replaceAllText(sValue);
         this.SetNeedRecalc(true);
-        oDoc.EndNoHistoryMode();
+        AscCommon.History.EndNoHistoryMode();
     };
     CTextField.prototype.GetFormatValue = function() {
         return this.contentFormat.getAllText();

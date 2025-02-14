@@ -1698,6 +1698,14 @@
         if (!oApearanceInfo)
             return null;
             
+        if (!this._originView.normal && oApearanceInfo["N"]["apValue"]) {
+            AscCommon.History.StartNoHistoryMode();
+            if (this.contentFormat && !this.GetFormatValue()) {
+                this.SetFormatValue(oApearanceInfo["N"]["apValue"]);
+            }
+            AscCommon.History.EndNoHistoryMode();
+        }
+
         switch (nAPType) {
             case APPEARANCE_TYPE.normal:
                 oApInfoTmp = oApearanceInfo["N"];
