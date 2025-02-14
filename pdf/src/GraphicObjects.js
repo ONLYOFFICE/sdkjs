@@ -1009,6 +1009,70 @@
         }
         return false;
     };
+    CGraphicObjects.prototype.handleTextHit = function (object, e, x, y, group, pageIndex, bWord) {
+        var content, invert_transform_text, tx, ty, check_hyperlink;
+    
+        if (this.handleEventMode === HANDLE_EVENT_MODE_HANDLE) {
+            if (object.IsDrawing() && object.IsEditFieldShape()) {
+                return this.handleMoveHit(object, e, x, y, group, false, pageIndex, bWord);
+            }
+    
+            // Обработка выбора объекта (для одиночного объекта или группы)
+            if (!group) {
+                if (this.selection.textSelection !== object) {
+                    this.resetSelection(true);
+                    this.selectObject(object, pageIndex);
+                    this.selection.textSelection = object;
+                } else if (this.checkTargetSelection(object, x, y, object.invertTransformText)) {
+                    return true;
+                }
+            } else {
+                if (this.selection.groupSelection !== group || group.selection.textSelection !== object) {
+                    this.resetSelection(true);
+                    group.selectObject(object, pageIndex);
+                    this.selectObject(group, pageIndex);
+                    this.selection.groupSelection = group;
+                    group.selection.textSelection = object;
+                } else if (this.checkTargetSelection(object, x, y, object.invertTransformText)) {
+                    return true;
+                }
+            }
+    
+            // Вызываем начало выделения без проверки isSlideShow
+            object.selectionSetStart(e, x, y, pageIndex);
+            this.changeCurrentState(new AscFormat.TextAddState(this, object, x, y, e.Button));
+            return true;
+    
+        } else {
+            var ret = { objectId: object.Get_Id(), cursorType: "text" };
+            content = object.getDocContent();
+            invert_transform_text = object.invertTransformText;
+            if (content && invert_transform_text) {
+                tx = invert_transform_text.TransformPointX(x, y);
+                ty = invert_transform_text.TransformPointY(x, y);
+    
+                // Отрисовка контролов для Document Editor
+                if (this.document.IsDocumentEditor() && object instanceof AscFormat.CShape && object.isForm()) {
+                    var oForm = object.getInnerForm();
+                    if (oForm)
+                        oForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.Hover, tx, ty, 0, false);
+                }
+    
+                var nPageIndex = pageIndex;
+                if (this.drawingObjects.cSld && !this.noNeedUpdateCursorType && AscFormat.isRealNumber(this.drawingObjects.num)) {
+                    nPageIndex = this.drawingObjects.num;
+                }
+                content.UpdateCursorType(tx, ty, 0);
+                ret.updated = true;
+            } else if (this.drawingObjects) {
+                check_hyperlink = fCheckObjectHyperlink(object, x, y);
+                if (isRealObject(check_hyperlink)) {
+                    ret.hyperlink = check_hyperlink;
+                }
+            }
+            return ret;
+        }
+    };
     CGraphicObjects.prototype.selectObject = function (object, pageIndex) {
         let oDoc = this.document;
         object.select(this, pageIndex);

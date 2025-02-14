@@ -2194,7 +2194,8 @@
 
         oPdfShape.setSpPr(new AscFormat.CSpPr());
         oPdfShape.spPr.setLn(new AscFormat.CLn());
-        let oFill = AscFormat.CreateSolidFillRGBA(255, 255, 255, 0);
+        oPdfShape.setFLocksText(true);
+        let oFill = AscFormat.CreateSolidFillRGBA(0, 0, 0, 0);
         oFill.setTransparent(0);
 
         oPdfShape.spPr.ln.setFill(oFill);
