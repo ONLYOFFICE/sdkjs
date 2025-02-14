@@ -389,8 +389,12 @@
 					AscCommon.consoleLog("horizontal align cell was not found so default is set (left)");
 				}
 
+				// handle bullet list
 				let bulletTypeCell = paragraphPropsFinal && paragraphPropsFinal.getCell("Bullet");
-				let bulletType = bulletTypeCell.getNumberValue();
+				let bulletType;
+				if (bulletTypeCell) {
+					bulletType = bulletTypeCell.getNumberValue();
+				}
 
 				let bulletChar;
 				let bulletFont;
@@ -420,8 +424,12 @@
 					bulletFont = "Wingdings";
 				}
 
+				// handle left indentation
 				let indentationLeftCell = paragraphPropsFinal && paragraphPropsFinal.getCell("IndLeft");
-				let indentationLeft = indentationLeftCell.getNumberValue() * AscCommonWord.g_dKoef_in_to_mm;
+				let indentationLeft;
+				if (indentationLeftCell) {
+					indentationLeft = indentationLeftCell.getNumberValue() * AscCommonWord.g_dKoef_in_to_mm;
+				}
 
 
 
@@ -450,8 +458,8 @@
 				paragraph.Pr.SetJc(horizontalAlign);
 
 				// // CPresentationBullet
-				paragraph.Pr.Bullet = new AscFormat.CBullet();
 				if (bulletChar) {
+					paragraph.Pr.Bullet = new AscFormat.CBullet();
 					// smth wrong with Symbol font see:
 					// https://disk.yandex.ru/d/uNQ2eMfNyVtUFQ  // https://disk.yandex.ru/i/2a0drnBXaVxJNw
 					// paragraph.Pr.Bullet.fillBulletFromCharAndFont(bulletChar, bulletFont);
