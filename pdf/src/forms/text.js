@@ -211,11 +211,11 @@
 		}
     };
 
-    CTextField.prototype.SetFormatValue = function(sValue) {
+    CTextField.prototype.SetFormatValue = function(sValue, bIgnoreCount) {
         AscCommon.History.Add(new CChangesPDFFormFormatValue(this, this.GetFormatValue(), sValue));
 
         AscCommon.History.StartNoHistoryMode();
-        this.contentFormat.replaceAllText(sValue);
+        this.contentFormat.replaceAllText(sValue, bIgnoreCount);
         this.SetNeedRecalc(true);
         AscCommon.History.EndNoHistoryMode();
     };

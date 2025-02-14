@@ -1701,7 +1701,7 @@
         if (!this._originView.normal && oApearanceInfo["N"]["apValue"]) {
             AscCommon.History.StartNoHistoryMode();
             if (this.contentFormat && !this.GetFormatValue()) {
-                this.SetFormatValue(oApearanceInfo["N"]["apValue"]);
+                this.SetFormatValue(oApearanceInfo["N"]["apValue"], true);
             }
             AscCommon.History.EndNoHistoryMode();
         }
