@@ -41,11 +41,11 @@ jobs:
           node-qunit-puppeteer tests/cell/spreadsheet-calculation/autoFilterTests.html
           node-qunit-puppeteer tests/cell/spreadsheet-calculation/UserProtectedRangesTest.html
           node-qunit-puppeteer tests/cell/spreadsheet-calculation/FormulaTrace.html
-          node-qunit-puppeteer tests/cell/spreadsheet-calculation/GoalSeekTests.html
           node-qunit-puppeteer tests/cell/spreadsheet-calculation/NumFormatParse.html
           node-qunit-puppeteer tests/cell/spreadsheet-calculation/DataValidationTests.html
           node-qunit-puppeteer tests/cell/spreadsheet-calculation/conditionalFormattingTests.html
           node-qunit-puppeteer tests/cell/spreadsheet-calculation/ExternalReference.html
+          node-qunit-puppeteer tests/cell/spreadsheet-calculation/whatIfAnalysisTests.html
           node-qunit-puppeteer tests/word/unit-tests/paragraphContentPos.html
           node-qunit-puppeteer tests/word/unit-tests/deleted-text-recovery.html
           node-qunit-puppeteer tests/word/content-control/block-level/cursorAndSelection.html

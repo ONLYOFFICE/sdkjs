@@ -40,7 +40,7 @@ function (window, undefined) {
 	// Import
 	const oCNumberType = AscCommonExcel.cNumber;
 
-	//Collections for UI
+	// Collections for UI Solver feature
 	/** @enum {number} */
 	const c_oAscOptimizeTo = {
 		max: 0,
@@ -69,7 +69,7 @@ function (window, undefined) {
 	};
 
 	/**
-	 * Class representing base attributes and methods for features of analysis.
+	 * c
 	 * @param {parserFormula} oParsedFormula - Formula object
 	 * @param {Range} oChangingCell - Changing cells.
 	 * For Goal Seek feature it's 1-1 object, for Solver 1-*.
@@ -86,6 +86,29 @@ function (window, undefined) {
 		this.nMaxIterations = 100; // max iterations of goal seek. Default value is 100
 	}
 
+	/**
+	 * Returns a result of formula with picked changing value.
+	 * @memberof CBaseAnalysis
+	 * @param {number} nChangingVal
+	 * @param {Range} oChangingCell
+	 * @returns {number} nFactValue
+	 */
+	CBaseAnalysis.prototype.calculateFormula = function(nChangingVal, oChangingCell) {
+		let oParsedFormula = this.getParsedFormula();
+		let sRegNumDecimalSeparator = this.getRegNumDecimalSeparator();
+		let nFactValue = null;
+
+		oChangingCell.setValue(String(nChangingVal).replace('.', sRegNumDecimalSeparator));
+		oChangingCell.worksheet.workbook.dependencyFormulas.unlockRecal();
+		oParsedFormula.parse();
+		nFactValue = oParsedFormula.calculate().getValue();
+		// If result of formula returns type cNumber, convert to Number
+		if (nFactValue instanceof oCNumberType) {
+			nFactValue = nFactValue.toNumber();
+		}
+
+		return nFactValue;
+	};
 	/**
 	 * Returns a formula object.
 	 * @memberof CBaseAnalysis
@@ -235,6 +258,7 @@ function (window, undefined) {
 			return true;
 		}
 
+		const oChangingCell = this.getChangingCell();
 		let nChangingVal = this.getChangingValue();
 		let nExpectedVal = this.getExpectedVal();
 		let nPrevFactValue = this.getPrevFactValue();
@@ -243,7 +267,7 @@ function (window, undefined) {
 		this.increaseCurrentAttempt();
 		// Exponent step mode
 		if (!this.getEnabledRidder()) {
-			nFactValue = this.calculateFormula(nChangingVal);
+			nFactValue = this.calculateFormula(nChangingVal, oChangingCell);
 			nDiff = nFactValue - nExpectedVal;
 			// Checks should it switch to Ridder algorithm.
 			if (this.getReverseCompare()) {
@@ -260,18 +284,18 @@ function (window, undefined) {
 			let nLow = this.getLowBorder();
 			let nHigh = this.getHighBorder();
 			// Search f(lowBorder_value) and f(highBorder_value)
-			nLowFx = this.calculateFormula(nLow) - nExpectedVal;
-			let nHighFx = this.calculateFormula(nHigh) - nExpectedVal;
+			nLowFx = this.calculateFormula(nLow, oChangingCell) - nExpectedVal;
+			let nHighFx = this.calculateFormula(nHigh, oChangingCell) - nExpectedVal;
 			// Search avg value in interval [nLow, nHigh]
 			nMedianVal = (nLow + nHigh) / 2;
-			nMedianFx = this.calculateFormula(nMedianVal) - nExpectedVal;
+			nMedianFx = this.calculateFormula(nMedianVal, oChangingCell) - nExpectedVal;
 			// Search changing value via root of exponential function
 			nChangingVal = nMedianVal + (nMedianVal - nLow) * Math.sign(nLowFx - nHighFx) * nMedianFx / Math.sqrt(Math.pow(nMedianFx,2) - nLowFx * nHighFx);
 			// If result exponential function is NaN then we use nMedianVal as changing value. It may be possible for unlinear function like sin, cos, tg.
 			if (isNaN(nChangingVal)) {
 				nChangingVal = nMedianVal;
 			}
-			nFactValue = this.calculateFormula(nChangingVal);
+			nFactValue = this.calculateFormula(nChangingVal, oChangingCell);
 			nDiff = nFactValue - nExpectedVal;
 			this.setChangingValue(nChangingVal);
 		}
@@ -324,6 +348,7 @@ function (window, undefined) {
 	 * @memberof CGoalSeek
 	 */
 	CGoalSeek.prototype.initStepDirection = function() {
+		const oChangingCell = this.getChangingCell();
 		let sChangingVal = this.getChangingCell().getValue();
 		let nChangingVal = sChangingVal ? Number(sChangingVal) : 0;
 		let nExpectedVal = this.getExpectedVal();
@@ -336,8 +361,8 @@ function (window, undefined) {
 			nFirstChangedVal = nChangingVal + nChangingVal / 100;
 		}
 		// Find first and next formula result for check step direction
-		let nFirstFormulaResult = this.calculateFormula(nChangingVal);
-		let nNextFormulaResult = this.calculateFormula(nFirstChangedVal);
+		let nFirstFormulaResult = this.calculateFormula(nChangingVal, oChangingCell);
+		let nNextFormulaResult = this.calculateFormula(nFirstChangedVal, oChangingCell);
 		// Init step direction
 		if ((nFirstFormulaResult > nExpectedVal && nNextFormulaResult > nFirstFormulaResult)) {
 			this.setStepDirection(-1);
@@ -364,29 +389,6 @@ function (window, undefined) {
 	 */
 	CGoalSeek.prototype.setStepDirection = function(nStepDirection) {
 		this.nStepDirection = nStepDirection;
-	};
-	/**
-	 * Returns a result of formula with picked changing value.
-	 * @memberof CGoalSeek
-	 * @param {number} nChangingVal
-	 * @returns {number} nFactValue
-	 */
-	CGoalSeek.prototype.calculateFormula = function(nChangingVal) {
-		let oParsedFormula = this.getParsedFormula();
-		let sRegNumDecimalSeparator = this.getRegNumDecimalSeparator();
-		let oChangingCell = this.getChangingCell();
-		let nFactValue = null;
-
-		oChangingCell.setValue(String(nChangingVal).replace('.', sRegNumDecimalSeparator));
-		oChangingCell.worksheet.workbook.dependencyFormulas.unlockRecal();
-		oParsedFormula.parse();
-		nFactValue = oParsedFormula.calculate().getValue();
-		// If result of formula returns type cNumber, convert to Number
-		if (nFactValue instanceof oCNumberType) {
-			nFactValue = nFactValue.toNumber();
-		}
-
-		return nFactValue;
 	};
 	/**
 	 * Returns expected value.
@@ -521,11 +523,12 @@ function (window, undefined) {
 	 * @memberof CGoalSeek
 	 */
 	CGoalSeek.prototype.initReverseCompare = function() {
+		const oChangingCell = this.getChangingCell();
 		let nFirstFormulaResult = null;
 		let nFirstChangingVal = this.getFirstChangingValue() ? Number(this.getFirstChangingValue()) : 0;
 
 		this.bReverseCompare = false;
-		nFirstFormulaResult = this.calculateFormula(nFirstChangingVal);
+		nFirstFormulaResult = this.calculateFormula(nFirstChangingVal, oChangingCell);
 		if (nFirstFormulaResult > this.getExpectedVal()) {
 			this.bReverseCompare = true;
 		}
@@ -694,6 +697,7 @@ function (window, undefined) {
 	// Solver
 	// Classes for interact with UI.
 	/**
+	 * Class representing object with input data from dialogue window of Solver tool.
 	 * @constructor
 	 * @returns {asc_CSolverParams}
 	 */
@@ -710,9 +714,8 @@ function (window, undefined) {
 		return this;
 	}
 
-
 	/**
-	 * Returns the objective function.
+	 * Returns value of "Set Objective" parameter.
 	 * @memberof asc_CSolverParams
 	 * @returns {string}
 	 */
@@ -720,7 +723,7 @@ function (window, undefined) {
 		return this.sObjectiveFunction;
 	};
 	/**
-	 * Sets the objective function.
+	 * Sets value of "Set Objective" parameter.
 	 * @memberof asc_CSolverParams
 	 * @param {string} objectiveFunction
 	 */
@@ -728,7 +731,22 @@ function (window, undefined) {
 		this.sObjectiveFunction = objectiveFunction;
 	};
 	/**
-	 * Returns "Optimize result to" parameter.
+	 * Returns value of "By Changing Variable Cells" parameters.
+	 * @memberof asc_CSolverParams
+	 * @returns {string}
+	 */
+	asc_CSolverParams.prototype.getChangingCells = function () {
+		return this.sChangingCells;
+	};
+	/**
+	 * Sets value of "By Changing Variable Cells" parameters.
+	 * @param {string} changingCells
+	 */
+	asc_CSolverParams.prototype.setChangingCells = function (changingCells) {
+		this.sChangingCells = changingCells;
+	}
+	/**
+	 * Returns value of "To" parameter.
 	 * @memberof asc_CSolverParams
 	 * @returns {c_oAscOptimizeTo}
 	 */
@@ -737,15 +755,15 @@ function (window, undefined) {
 	};
 
 	/**
-	 * Sets "Optimize result to" parameter.
+	 * Sets value of "To" parameter.
 	 * @memberof asc_CSolverParams
-	 * @param {number} optimizeResultTo
+	 * @param {c_oAscOptimizeTo} optimizeResultTo
 	 */
 	asc_CSolverParams.prototype.setOptimizeResultTo = function (optimizeResultTo) {
 		this.nOptimizeResultTo = optimizeResultTo;
 	};
 	/**
-	 * Returns the constraints.
+	 * Returns value of "Subject to the Constraints" parameter.
 	 * @memberof asc_CSolverParams
 	 * @returns {Map}
 	 */
@@ -753,15 +771,33 @@ function (window, undefined) {
 		return this.aConstraints;
 	};
 	/**
-	 * Sets the constraints.
+	 * Adds the constraint in "Subject to the Constraints" parameter.
 	 * @memberof asc_CSolverParams
-	 * @param {Map} constraints
+	 * @param {number} index - key of constraint in Map object
+	 * @param {{cellRef:string, operator:c_oAscOperator, constraint:string}} constraint
 	 */
-	asc_CSolverParams.prototype.setConstraints = function (constraints) {
-		this.aConstraints = constraints;
+	asc_CSolverParams.prototype.addConstraint = function (index, constraint) {
+		this.aConstraints.set(index, constraint);
 	};
 	/**
-	 * Returns whether unconstrained variables are non-negative.
+	 * Edits the chosen constraint in "Subject to the Constraints" parameter.
+	 * @memberof asc_CSolverParams
+	 * @param {number} index - index of chosen constraint
+	 * @param {{cellRef:string, operator:c_oAscOperator, constraint:string}} constraint
+	 */
+	asc_CSolverParams.prototype.editConstraint = function (index, constraint) {
+		this.aConstraints.set(index, constraint);
+	};
+	/**
+	 * Removes the chosen constraint in "Subject to the Constraints" parameter.
+	 * @memberof asc_CSolverParams
+	 * @param {number} index
+	 */
+	asc_CSolverParams.prototype.removeConstraint = function (index) {
+		this.aConstraints.delete(index);
+	};
+	/**
+	 * Returns value of "Make Unconstrained Variables Non-negative" parameter.
 	 * @memberof asc_CSolverParams
 	 * @returns {boolean}
 	 */
@@ -769,7 +805,7 @@ function (window, undefined) {
 		return this.bVariablesNonNegative;
 	};
 	/**
-	 * Sets whether unconstrained variables are non-negative.
+	 * Sets value of "Make Unconstrained Variables Non-negative" parameter.
 	 * @memberof asc_CSolverParams
 	 * @param {boolean} variablesNonNegative
 	 */
@@ -777,7 +813,7 @@ function (window, undefined) {
 		this.bVariablesNonNegative = variablesNonNegative;
 	};
 	/**
-	 * Returns the solving method.
+	 * Returns value of "Select a Solving Method" parameter.
 	 * @memberof asc_CSolverParams
 	 * @returns {c_oAscSolvingMethod}
 	 */
@@ -785,7 +821,7 @@ function (window, undefined) {
 		return this.nSolvingMethod;
 	};
 	/**
-	 * Sets the solving method.
+	 * Sets value of "Select a Solving Method" parameter.
 	 * @memberof asc_CSolverParams
 	 * @param {c_oAscSolvingMethod} solvingMethod
 	 */
@@ -807,291 +843,342 @@ function (window, undefined) {
 	 */
 	function asc_COptions () {
 		// All methods
-		this.nConstraintPrecision = null;
+		this.sConstraintPrecision = null;
 		this.bAutomaticScaling = false;
 		this.bShowIterResults = false;
 		this.bIgnoreIntConstriants = false;
-		this.nIntOptimal = null;
-		this.nMaxTime = null;
-		this.nMaxSubproblems = null;
-		this.nMaxFeasibleSolution = null;
+		this.sIntOptimal = null;
+		this.sMaxTime = null;
+		this.sIterations = null;
+		this.sMaxSubproblems = null;
+		this.sMaxFeasibleSolution = null;
 		// GRG Nonlinear and Evolutionary
-		this.nConvergence = null;
+		this.sConvergence = null;
 		this.nDerivatives = null;
 		this.bMultistart = false; // ?
-		this.nPopulationSize = null;
-		this.nRandomSeed = null;
+		this.sPopulationSize = null;
+		this.sRandomSeed = null;
 		this.bRequireBounds = false;
-		this.nMutationRate = null;
-		this.nEvoMaxTime = null;
+		this.sMutationRate = null;
+		this.sEvoMaxTime = null;
 	}
 
 	/**
-	 * Returns the constraint precision.
+	 * Returns value of "Constraint Precision" parameter.
 	 * @memberof asc_COptions
-	 * @returns {number}
+	 * @returns {string}
 	 */
 	asc_COptions.prototype.getConstraintPrecision = function() {
-		return this.nConstraintPrecision;
+		return this.sConstraintPrecision;
 	};
 	/**
-	 * Returns the automatic scaling option.
+	 * Returns value of "Use automatic Scaling" parameter.
 	 * @memberof asc_COptions
-	 * @returns {boolean} True if automatic scaling is enabled
+	 * @returns {boolean}
 	 */
 	asc_COptions.prototype.getAutomaticScaling = function() {
 		return this.bAutomaticScaling;
 	};
 	/**
-	 * Returns whether to show iteration results.
+	 * Returns value of "Show Iteration Results" parameter.
 	 * @memberof asc_COptions
-	 * @returns {boolean} True if iteration results should be shown.
+	 * @returns {boolean}
 	 */
 	asc_COptions.prototype.getShowIterResults = function() {
 		return this.bShowIterResults;
 	};
 	/**
-	 * Returns whether to ignore integer constraints.
+	 * Returns value of "Ignore Integer Constraints" parameter.
 	 * @memberof asc_COptions
-	 * @returns {boolean} True if integer constraints are ignored
+	 * @returns {boolean}
 	 */
 	asc_COptions.prototype.getIgnoreIntConstraints = function() {
 		return this.bIgnoreIntConstriants;
 	};
 	/**
-	 * Returns the integer optimality value.
+	 * Returns value of "Integer Optimality (%)" parameter.
 	 * @memberof asc_COptions
-	 * @returns {number}
+	 * @returns {string}
 	 */
 	asc_COptions.prototype.getIntOptimal = function () {
-		return this.nIntOptimal;
+		return this.sIntOptimal;
 	};
 	/**
-	 * Returns the maximum calculation time.
+	 * Returns value of "Max Time (Seconds)" parameter.
 	 * @memberof asc_COptions
-	 * @returns {number}
+	 * @returns {string}
 	 */
 	asc_COptions.prototype.getMaxTime = function () {
-		return this.nMaxTime;
+		return this.sMaxTime;
 	};
 	/**
-	 * Returns the maximum subproblems value.
+	 * Returns value of "Iterations"
 	 * @memberof asc_COptions
-	 * @returns {number}
+	 * @returns {string}
+	 */
+	asc_COptions.prototype.getIterations = function () {
+		return this.sIterations;
+	}
+	/**
+	 * Returns value of "Max Subproblems" parameter.
+	 * @memberof asc_COptions
+	 * @returns {string}
 	 */
 	asc_COptions.prototype.getMaxSubproblems = function () {
-		return this.nMaxSubproblems;
+		return this.sMaxSubproblems;
 	};
 	/**
-	 * Returns the maximum feasible solution count.
+	 * Returns value of "Max Feasible Solutions" parameter.
 	 * @memberof asc_COptions
-	 * @returns {number}
+	 * @returns {string}
 	 */
 	asc_COptions.prototype.getMaxFeasibleSolution = function () {
-		return this.nMaxFeasibleSolution;
+		return this.sMaxFeasibleSolution;
 	};
 	/**
-	 * Returns the convergence value.
+	 * Returns value of "Convergence" parameter.
 	 * @memberof asc_COptions
-	 * @returns {number}
+	 * @returns {string}
 	 */
 	asc_COptions.prototype.getConvergence = function () {
-		return this.nConvergence;
+		return this.sConvergence;
 	};
 	/**
-	 * Returns the derivatives value.
+	 * Returns value of "Derivatives" parameter.
 	 * @memberof asc_COptions
-	 * @returns {number} The derivatives value.
+	 * @returns {c_oAscDerivativeType}
 	 */
 	asc_COptions.prototype.getDerivatives = function () {
 		return this.nDerivatives;
 	};
 	/**
-	 * Returns whether multistart is enabled.
+	 * Returns value of "Use multistart" parameter.
 	 * @memberof asc_COptions
-	 * @returns {boolean} True if multistart is enabled
+	 * @returns {boolean}
 	 */
 	asc_COptions.prototype.getMultistart = function () {
 		return this.bMultistart;
 	};
 	/**
-	 * Returns the population size for evolutionary calculations.
+	 * Returns value of "Population Size" parameter.
 	 * @memberof asc_COptions
-	 * @returns {number}
+	 * @returns {string}
 	 */
 	asc_COptions.prototype.getPopulationSize = function () {
-		return this.nPopulationSize;
+		return this.sPopulationSize;
 	};
 	/**
-	 * Returns the random seed for calculations.
+	 * Returns value of "Random seed" parameter.
 	 * @memberof asc_COptions
-	 * @returns {number}
+	 * @returns {string}
 	 */
 	asc_COptions.prototype.getRandomSeed = function () {
-		return this.nRandomSeed;
+		return this.sRandomSeed;
 	};
 	/**
-	 * Returns require bounds on Variables option.
+	 * Returns value of "Require Bounds on Variables" parameter.
 	 * @memberof asc_COptions
-	 * @returns {boolean} True if bounds are required.
+	 * @returns {boolean}
 	 */
 	asc_COptions.prototype.getRequireBounds = function () {
 		return this.bRequireBounds;
 	};
 	/**
-	 * Returns the mutation rate for evolutionary calculations.
+	 * Returns value of "Mutation Rate" parameter.
 	 * @memberof asc_COptions
-	 * @returns {number}
+	 * @returns {string}
 	 */
 	asc_COptions.prototype.getMutationRate = function () {
-		return this.nMutationRate;
+		return this.sMutationRate;
 	};
 	/**
-	 * Returns value of "Maximum Time without improvement" option.
+	 * Returns value of "Maximum Time without improvement" parameter.
 	 * @memberof asc_COptions
-	 * @returns {number}
+	 * @returns {string}
 	 */
 	asc_COptions.prototype.getEvoMaxTime = function () {
-		return this.nEvoMaxTime;
+		return this.sEvoMaxTime;
 	};
 	/**
-	 * Sets the constraint precision.
+	 * Sets value of "Constraint Precision" parameter.
 	 * @memberof asc_COptions
-	 * @param {number} value
+	 * @param {string} constraintPrecision
 	 */
-	asc_COptions.prototype.setConstraintPrecision = function (value) {
-		this.nConstraintPrecision = value;
+	asc_COptions.prototype.setConstraintPrecision = function (constraintPrecision) {
+		this.sConstraintPrecision = constraintPrecision;
 	};
 	/**
-	 * Enables or disables automatic scaling.
+	 * Sets value of "Use automatic Scaling" parameter.
 	 * @memberof asc_COptions
-	 * @param {boolean} value
+	 * @param {boolean} automaticScaling
 	 */
-	asc_COptions.prototype.setAutomaticScaling = function (value) {
-		this.bAutomaticScaling = value;
+	asc_COptions.prototype.setAutomaticScaling = function (automaticScaling) {
+		this.bAutomaticScaling = automaticScaling;
 	};
 	/**
-	 * Sets whether to show iteration results.
+	 * Sets value of "Show Iteration Results" parameter.
 	 * @memberof asc_COptions
-	 * @param {boolean} value
+	 * @param {boolean} showIterResults
 	 */
-	asc_COptions.prototype.setShowIterResults = function (value) {
-		this.bShowIterResults = value;
+	asc_COptions.prototype.setShowIterResults = function (showIterResults) {
+		this.bShowIterResults = showIterResults;
 	};
 	/**
-	 * Sets whether to ignore integer constraints.
+	 * Sets value of "Ignore Integer Constraints" parameter.
 	 * @memberof asc_COptions
-	 * @param {boolean} value
+	 * @param {boolean} ignoreIntConstraints
 	 */
-	asc_COptions.prototype.setIgnoreIntConstraints = function (value) {
-		this.bIgnoreIntConstriants = value;
+	asc_COptions.prototype.setIgnoreIntConstraints = function (ignoreIntConstraints) {
+		this.bIgnoreIntConstriants = ignoreIntConstraints;
 	};
 	/**
-	 * Sets the integer optimality value.
+	 * Sets value of "Integer Optimality (%)" parameter.
 	 * @memberof asc_COptions
-	 * @param {number} value
+	 * @param {string} intOptimality
 	 */
-	asc_COptions.prototype.setIntOptimal = function (value) {
-		this.nIntOptimal = value;
+	asc_COptions.prototype.setIntOptimal = function (intOptimality) {
+		this.sIntOptimal = intOptimality;
 	};
 	/**
-	 * Sets the maximum calculation time.
+	 * Sets value of "Max Time (Seconds)" parameter.
 	 * @memberof asc_COptions
-	 * @param {number} value
+	 * @param {string} maxTime
 	 */
-	asc_COptions.prototype.setMaxTime = function (value) {
-		this.nMaxTime = value;
+	asc_COptions.prototype.setMaxTime = function (maxTime) {
+		this.sMaxTime = maxTime;
 	};
 	/**
-	 * Sets the maximum subproblems value.
+	 * Sets value of "Iterations" parameter
 	 * @memberof asc_COptions
-	 * @param {number} value
+	 * @param {string} iterations
 	 */
-	asc_COptions.prototype.setMaxSubproblems = function (value) {
-		this.nMaxSubproblems = value;
+	asc_COptions.prototype.setIterations = function (iterations) {
+		this.sIterations = iterations;
+	}
+	/**
+	 * Sets value of "Max Subproblems" parameter.
+	 * @memberof asc_COptions
+	 * @param {string} maxSubproblems
+	 */
+	asc_COptions.prototype.setMaxSubproblems = function (maxSubproblems) {
+		this.sMaxSubproblems = maxSubproblems;
 	};
 	/**
-	 * Sets the maximum feasible solution count.
+	 * Sets value of "Max Feasible Solution" parameter.
 	 * @memberof asc_COptions
-	 * @param {number} value
+	 * @param {string} maxFeasibleSolution
 	 */
-	asc_COptions.prototype.setMaxFeasibleSolution = function (value) {
-		this.nMaxFeasibleSolution = value;
+	asc_COptions.prototype.setMaxFeasibleSolution = function (maxFeasibleSolution) {
+		this.sMaxFeasibleSolution = maxFeasibleSolution;
 	};
 	/**
-	 * Sets the convergence value.
+	 * Sets value of "Convergence" parameter.
 	 * @memberof asc_COptions
-	 * @param {number} value
+	 * @param {string} convergence
 	 */
-	asc_COptions.prototype.setConvergence = function (value) {
-		this.nConvergence = value;
+	asc_COptions.prototype.setConvergence = function (convergence) {
+		this.sConvergence = convergence;
 	};
 	/**
-	 * Sets the derivatives value.
+	 * Sets value of "Derivatives" parameter.
 	 * @memberof asc_COptions
-	 * @param {number} value
+	 * @param {c_oAscDerivativeType} derivatives
 	 */
-	asc_COptions.prototype.setDerivatives = function (value) {
-		this.nDerivatives = value;
+	asc_COptions.prototype.setDerivatives = function (derivatives) {
+		this.nDerivatives = derivatives;
 	};
 	/**
-	 * Enables or disables multistart.
+	 * Sets value of "Use Multistart" parameter.
 	 * @memberof asc_COptions
-	 * @param {boolean} value
+	 * @param {boolean} multistart
 	 */
-	asc_COptions.prototype.setMultistart = function (value) {
-		this.bMultistart = value;
+	asc_COptions.prototype.setMultistart = function (multistart) {
+		this.bMultistart = multistart;
 	};
 	/**
-	 * Sets the population size for evolutionary calculations.
+	 * Sets value of "Population Size" parameter.
 	 * @memberof asc_COptions
-	 * @param {number} value
+	 * @param {string} populationSize
 	 */
-	asc_COptions.prototype.setPopulationSize = function (value) {
-		this.nPopulationSize = value;
+	asc_COptions.prototype.setPopulationSize = function (populationSize) {
+		this.sPopulationSize = populationSize;
 	};
 	/**
-	 * Sets the random seed for calculations.
+	 * Sets value of "Random Seed" parameter.
 	 * @memberof asc_COptions
-	 * @param {number} value
+	 * @param {string} randomSeed
 	 */
-	asc_COptions.prototype.setRandomSeed = function (value) {
-		this.nRandomSeed = value;
+	asc_COptions.prototype.setRandomSeed = function (randomSeed) {
+		this.sRandomSeed = randomSeed;
 	};
 	/**
-	 * Sets whether bounds are required on Variables option.
+	 * Sets value of "Require Bounds on Variables" parameter.
 	 * @memberof asc_COptions
-	 * @param {boolean} value
+	 * @param {boolean} requireBounds
 	 */
-	asc_COptions.prototype.setRequireBounds = function (value) {
-		this.bRequireBounds = value;
+	asc_COptions.prototype.setRequireBounds = function (requireBounds) {
+		this.bRequireBounds = requireBounds;
 	};
 	/**
-	 * Sets the mutation rate for evolutionary calculations.
+	 * Sets value of "Mutation Rate" parameter.
 	 * @memberof asc_COptions
-	 * @param {number} value
+	 * @param {string} mutationRate
 	 */
-	asc_COptions.prototype.setMutationRate = function (value) {
-		this.nMutationRate = value;
+	asc_COptions.prototype.setMutationRate = function (mutationRate) {
+		this.sMutationRate = mutationRate;
 	};
 	/**
-	 * Sets the "Maximum Time without improvement" option value.
+	 * Sets value of "Maximum Time without improvement" parameter.
 	 * @memberof asc_COptions
-	 * @param {number} value
+	 * @param {string} evoMaxTime
 	 */
-	asc_COptions.prototype.setEvoMaxTime = function (value) {
-		this.nEvoMaxTime = value;
+	asc_COptions.prototype.setEvoMaxTime = function (evoMaxTime) {
+		this.sEvoMaxTime = evoMaxTime;
 	};
 
-	// Classes for main logic of Solver feature
+	// Classes and functions for main logic of Solver feature
+	/**
+	 * Returns worksheet that has selected cell(s) from parameters.
+	 * @param {string} sRef - selected cell(s) reference from parameters
+	 * @param {Worksheet} oWs
+	 * @returns {Worksheet}
+	 * @private
+	 */
+	function _actualWsByRef (sRef, oWs) {
+		let oActualWs = oWs;
+		if (~sRef.indexOf("!")) {
+			const sSheetName = sRef.split("!")[0].replace(/'/g, "");
+			if (sSheetName !== oActualWs.getName()) {
+				oActualWs = oWs.workbook.getWorksheetByName(sSheetName);
+			}
+		}
+
+		return oActualWs;
+	}
+
+	/**
+	 * Converts absolute reference containing the worksheet name to reference with only selected cell(s) name.
+	 * @param {string} sRef - selected cell(s) reference from parameters
+	 * @returns {string}
+	 * @private
+	 */
+	function _convertToAbsoluteRef (sRef) {
+		let sConvertedRef = sRef;
+		if (~sRef.indexOf("!")) {
+			sConvertedRef = sRef.split("!")[1];
+		}
+
+		return sConvertedRef;
+	}
+
 	/**
 	 * Class representing a constraints option for Solver.
 	 * @param {Range} oCell
 	 * @param {c_oAscOperator} nOperator
-	 * @param {Range|number} constraint
+	 * @param {Range|number|string} constraint
 	 * @constructor
 	 */
-	function CConstraints (oCell, nOperator, constraint) {
+	function CConstraint (oCell, nOperator, constraint) {
 		this.oCell = oCell;
 		this.nOperator = nOperator;
 		this.constraint = constraint;
@@ -1099,54 +1186,159 @@ function (window, undefined) {
 	
 	/**
 	 * Returns cell reference.
-	 * @memberof CConstraints
+	 * @memberof CConstraint
 	 * @returns {Range}
 	 */
-	CConstraints.prototype.getCell = function() {
+	CConstraint.prototype.getCell = function() {
 		return this.oCell;
 	};
 	/**
 	 * Returns comparison operator.
-	 * @memberof CConstraints
+	 * @memberof CConstraint
 	 * @returns {number}
 	 */
-	CConstraints.prototype.getOperator = function() {
+	CConstraint.prototype.getOperator = function() {
 		return this.nOperator;
 	};
 	/**
 	 * Returns constraint. Element that comparisons with reference cell.
-	 * @memberof CConstraints
+	 * @memberof CConstraint
 	 * @returns {Range|number}
 	 */
-	CConstraints.prototype.getConstraint = function() {
+	CConstraint.prototype.getConstraint = function() {
 		return this.constraint;
 	};
 
 	// Main class of solver feature
 	/**
-	 * Class representing a solver feature
-	 * @param  {asc_CSolverParams} oParams - solver parameters
+	 * Class representing a solver feature.
+	 * @param {asc_CSolverParams} oParams - solver parameters
+	 * @param {Worksheet} oWs
 	 * @constructor
 	 */
-	function CSolver (oParams) {
-		//TODO logic for converting string from attributes: sObjective and sChangingCells to cell object.
-		CBaseAnalysis.call(this, oParams.parsedFormula, oParams.changingCells);
+	function CSolver (oParams, oWs) {
+		const oParsedFormula = this.convertToCell(oParams.getObjectiveFunction(), oWs).getFormulaParsed();
+		const oChangingCellsWs = _actualWsByRef(oParams.getChangingCells(), oWs);
+		const sChangingCells = _convertToAbsoluteRef(oParams.getChangingCells());
+		CBaseAnalysis.call(this, oParsedFormula, oChangingCellsWs.getRange2(sChangingCells));
 
-		//Solver parameters
+		// Solver parameters
 		this.nOptimizeResultTo = oParams.getOptimizeResultTo();
-		this.aConstraints = oParams.getConstraints();
+		this.aConstraints = this.initConstraints(oParams.getConstraints(), oWs);
 		this.bIsVarsNonNegative = oParams.getVariablesNonNegative();
 		this.nSolvingMethod = oParams.getSolvingMethod();
+
 		// Calculating option
 		this.oOptions = oParams.getOptions();
+
+		// Updating nMaxIterations attribute of super class to value from calculating options.
+		this.setMaxIterations(parseFloat(this.oOptions.getIterations()));
 	}
 
 	CSolver.prototype = Object.create(CBaseAnalysis.prototype);
 	CSolver.prototype.constructor = CSolver;
+	/**
+	 * @memberof CSolver
+	 */
+	CSolver.prototype.calculate = function () {
+
+	}
+	/**
+	 * Converts cell reference from UI to Cell object.
+	 * @memberof CSolver
+	 * @param {string} sCellRef
+	 * @param {Worksheet}oWs
+	 * @returns {Cell}
+	 */
+	CSolver.prototype.convertToCell = function (sCellRef, oWs) {
+		const oCellWs = _actualWsByRef(sCellRef, oWs);
+		const sCellActualRef = _convertToAbsoluteRef(sCellRef);
+		const oCellRange = oCellWs.getCell2(sCellActualRef);
+		let oCell = null;
+
+		oCellWs._getCell(oCellRange.bbox.r1, oCellRange.bbox.c1, function (oElem) {
+			oCell = oElem;
+		});
+
+		return oCell;
+	};
+	/**
+	 * Initializes the constraints array with necessary for solving data.
+	 * @memberof CSolver
+	 * @param {Map} oConstraints
+	 * @param {Worksheet} oWs
+	 * @returns {CConstraint[]}
+	 */
+	CSolver.prototype.initConstraints = function (oConstraints, oWs) {
+		const aExcludeWords = ['integer', 'binary', 'AllDifferent'];
+		const aConstraints = [];
+
+		oConstraints.forEach((oConstraint) => {
+			const oConstraintsWs = _actualWsByRef(oConstraint.constraint, oWs);
+			const sConstraintsActualRef = _convertToAbsoluteRef(oConstraint.constraint);
+			const oCellRefWs = _actualWsByRef(oConstraint.cellRef, oWs);
+			const sCellRefActualRef = _convertToAbsoluteRef(oConstraint.cellRef);
+			let constraintData = oConstraintsWs.getRange2(sConstraintsActualRef);
+			if (constraintData == null) {
+				constraintData = aExcludeWords.includes(oConstraint.constraint) ? oConstraint.constraint :
+					Number(oConstraint.constraint.replace(/,/g, "."));
+			}
+			aConstraints.push(new CConstraint(oCellRefWs.getRange2(sCellRefActualRef), oConstraint.operator, constraintData));
+		});
+
+		return aConstraints;
+	};
+	/**
+	 * Returns value of "Optimize to" parameter
+	 * @memberof CSolver
+	 * @returns {number}
+	 */
+	CSolver.prototype.getOptimizeResultTo = function () {
+		return this.nOptimizeResultTo;
+	};
+	/**
+	 * Returns the array of constraints.
+	 * @memberof CSolver
+	 * @returns {CConstraint[]}
+	 */
+	CSolver.prototype.getConstraints = function () {
+		return this.aConstraints;
+	};
+	/**
+	 * Returns value of "Make Unconstrained Variables Non-Negative".
+	 * @memberof CSolver
+	 * @returns {boolean}
+	 */
+	CSolver.prototype.getVariablesNonNegative = function () {
+		return this.bIsVarsNonNegative;
+	};
+	/**
+	 * Returns the solving method.
+	 * @memberof CSolver
+	 * @returns {number}
+	 */
+	CSolver.prototype.getSolvingMethod = function () {
+		return this.nSolvingMethod;
+	};
+	/**
+	 * Returns solver options.
+	 * @memberof CSolver
+	 * @returns {Object}
+	 */
+	CSolver.prototype.getOptions = function () {
+		return this.oOptions;
+	};
 
 	// Export
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window['AscCommonExcel'].CGoalSeek = CGoalSeek;
 	window['AscCommonExcel'].CSolver = CSolver;
+
+	window['AscCommonExcel'].c_oAscDerivativeType = c_oAscDerivativeType;
+	window['AscCommonExcel'].c_oAscOperator = c_oAscOperator;
+	window['AscCommonExcel'].c_oAscOptimizeTo = c_oAscOptimizeTo;
+	window['AscCommonExcel'].c_oAscSolvingMethod = c_oAscSolvingMethod;
+
+	window['AscCommonExcel'].asc_CSolverParams = asc_CSolverParams;
 
 })(window);

@@ -31,11 +31,20 @@
  */
 
 $(function () {
+    //Goal Seek
     let CGoalSeek = AscCommonExcel.CGoalSeek;
     let CParserFormula = AscCommonExcel.parserFormula;
     let g_oIdCounter = AscCommon.g_oIdCounter;
     let sData = AscCommon.getEmpty();
     let wb, ws, oParserFormula, oGoalSeek, nResult, nChangingVal, nExpectedVal, api;
+    // Solver
+    let CSolver = AscCommonExcel.CSolver;
+    let asc_CSolverParams = AscCommonExcel.asc_CSolverParams;
+    let c_oAscOperator = AscCommonExcel.c_oAscOperator;
+    let c_oAscDerivativeType = AscCommonExcel.c_oAscDerivativeType;
+    let c_oAscSolvingMethod = AscCommonExcel.c_oAscSolvingMethod;
+    let c_oAscOptimizeTo = AscCommonExcel.c_oAscOptimizeTo;
+    let oSolver;
 
     if (AscCommon.c_oSerFormat.Signature === sData.substring(0, AscCommon.c_oSerFormat.Signature.length)) {
         Asc.spreadsheet_api.prototype._init = function() {
@@ -68,6 +77,7 @@ $(function () {
         AscCommonExcel.getFormulasInfo();
     }
     wb.dependencyFormulas.lockRecal();
+    // Goal Seek
     CGoalSeek.prototype.resume = function() {
         this.setIsPause(false);
         while (true) {
@@ -997,4 +1007,67 @@ $(function () {
        assert.strictEqual(Number(nChangingVal.toFixed(0)), 185714, `Case: Trying to find first parameter for Financial formula Bug #65864. Result ChangingVal: ${nChangingVal}`);
        clearData(0, 0, 3, 4);
     });
+    QUnit.module('Solver');
+    QUnit.test('Test: Example - Order distribution task', function(assert) {
+        // Filling data
+        const testData = [
+            ['1000'],
+            ['30'],
+            ['Worker 1', '15', '2500', '0', '=C3*D3', '=D3/B3'],
+            ['Worker 2', '7', '900', '0', '=C4*D4', '=D4/B4'],
+            ['Worker 3', '10', '1550', '0', '=C5*D5', '=D5/B5'],
+            ['Worker 4', '12', '2150', '0', '=C6*D6', '=D6/B6'],
+            ['Total', '=SUM(B3:B6)', '', '=SUM(D3:D6)', '=SUM(E3:E6)', '=MAX(F3:F6)']
+        ];
+        let oRange = ws.getRange4(0, 0);
+        oRange.fillData(testData);
+        // Imitating of filling dialogue window of Solver tool
+        const oParams = new asc_CSolverParams();
+        oParams.setObjectiveFunction("Sheet1!$E$7");
+        oParams.setOptimizeResultTo(c_oAscOptimizeTo.min);
+        oParams.setChangingCells("Sheet1!$D$3:$D$6");
+        oParams.addConstraint(0, {cellRef: "Sheet1!$D$3:$D$6", operator: c_oAscOperator['='], constraint: "integer"});
+        oParams.addConstraint(1, {cellRef: "Sheet1!$D$3:$D$6", operator: c_oAscOperator['>='], constraint: "0"});
+        oParams.addConstraint(2, {cellRef: "Sheet1!$A$1", operator: c_oAscOperator['='], constraint: "1000"});
+        oParams.addConstraint(3, {cellRef: "Sheet1!$F$7", operator: c_oAscOperator['<='], constraint: "Sheet1!$A$2"});
+        oParams.setVariablesNonNegative(false);
+        oParams.setSolvingMethod(c_oAscSolvingMethod.grgNonlinear);
+        // Filling options for calculation
+        const oOptions = oParams.getOptions();
+        oOptions.setConstraintPrecision("0,000001");
+        oOptions.setIntOptimal("1");
+        oOptions.setConvergence("0,0001");
+        oOptions.setDerivatives(c_oAscDerivativeType.forward);
+        oOptions.setPopulationSize("0");
+        oOptions.setRandomSeed("0");
+        oOptions.setMutationRate("0,075");
+        oOptions.setEvoMaxTime("30");
+        assert.ok(oParams, "Params is created");
+        // Creating Solver object for calculate example.
+        oSolver = new CSolver(oParams, ws);
+        assert.ok(oSolver, "Solver is created");
+        // Checking attributes of Solver
+        let bIsParserFormulaObject = oSolver.getParsedFormula() instanceof CParserFormula;
+        assert.strictEqual(bIsParserFormulaObject , true, "Check Solver attributes: Objective cell is parserFormula object");
+        assert.strictEqual(oSolver.getChangingCell().getName(), "$D$3:$D$6", "Check Solver attributes: Changing cells is D3:D6");
+        assert.strictEqual(isNaN(oSolver.getMaxIterations()), true, "Check Solver attributes: Max iterations is NaN");
+        assert.strictEqual(oSolver.getSolvingMethod(), c_oAscSolvingMethod.grgNonlinear, "Check Solver attributes: Solving method is grgNonlinear");
+        assert.strictEqual(oSolver.getOptimizeResultTo(), c_oAscOptimizeTo.min, "Check Solver attributes: Optimize result to is min");
+        assert.strictEqual(oSolver.getVariablesNonNegative(), false, "Check Solver attributes: Variables non negative is false");
+        const aConstraints = oSolver.getConstraints();
+        const aExpectedData = [
+            {cellRef: "$D$3:$D$6", operator: c_oAscOperator['='], constraint: "integer"},
+            {cellRef: "$D$3:$D$6", operator: c_oAscOperator['>='],constraint: 0},
+            {cellRef: "$A$1", operator: c_oAscOperator['='], constraint: 1000},
+            {cellRef: "$F$7", operator: c_oAscOperator['<='], constraint: "$A$2"}
+        ];
+        aConstraints.forEach(function(oConstraint, index) {
+            let constraint = oConstraint.getConstraint() instanceof AscCommonExcel.Range ? oConstraint.getConstraint().getName() : oConstraint.getConstraint();
+            assert.strictEqual(oConstraint.getCell().getName(), aExpectedData[index].cellRef, `Check Solver attributes: Constraint element #${index} cell is ${aExpectedData[index].cellRef}`);
+            assert.strictEqual(oConstraint.getOperator(), aExpectedData[index].operator, `Check Solver attributes: Constraint element #${index} operator is ${aExpectedData[index].operator}`);
+            assert.strictEqual(constraint, aExpectedData[index].constraint, `Check Solver attributes: Constraint element #${index} constraint is ${aExpectedData[index].constraint}`);
+        });
+        // Checking calculate logic
+
+    })
 });
