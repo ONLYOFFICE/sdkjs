@@ -339,7 +339,7 @@
 
         oGraphicsWord.AddClipRect(this.contentClipRect.X, this.contentClipRect.Y, this.contentClipRect.W, this.contentClipRect.H);
         oContentToDraw.Draw(0, oGraphicsWord);
-
+        
         oGraphicsWord.RemoveLastClip();
         this.DrawBorders(oGraphicsPDF, oGraphicsWord);
         // redraw target cursor if field is selected
@@ -348,6 +348,7 @@
 
 
         this.DrawLocks(oGraphicsPDF);
+        this.DrawEdit(oGraphicsWord);
     };
     CTextField.prototype.DrawDateMarker = function(oCtx) {
         if (this.IsHidden())
@@ -649,6 +650,13 @@
         let isInForm    = this.IsInForm();
 
         oDoc.activeForm = this;
+
+        if (oDoc.IsEditFieldsMode()) {
+            let oController = oDoc.GetController();
+            this.editShape.select(oController, this.GetPage());
+            this.editShape.onMouseDown(x, y, e);
+            return;
+        }
 
         function callbackAfterFocus(x, y, e) {
             this.SetInForm(true);

@@ -56,7 +56,7 @@
     
     CPdfSmartArt.prototype.constructor = CPdfSmartArt;
     CPdfSmartArt.prototype = Object.create(AscFormat.SmartArt.prototype);
-    Object.assign(CPdfSmartArt.prototype, AscPDF.PdfDrawingPrototype.prototype);
+    Object.assign(CPdfSmartArt.prototype, AscPDF.CPdfDrawingPrototype.prototype);
 
     CPdfSmartArt.prototype.IsSmartArt = function() {
         return true;

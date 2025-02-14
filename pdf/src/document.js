@@ -446,6 +446,16 @@ var CPresentation = CPresentation || function(){};
         oField.SetDocument(this);
         return oField;
     };
+    CPDFDoc.prototype.SetEditFieldsMode = function(bEdit) {
+        this.editFieldsMode = bEdit;
+        
+        this.widgets.forEach(function(field) {
+            field.SetEditMode(bEdit);
+        });
+    };
+    CPDFDoc.prototype.IsEditFieldsMode = function() {
+        return this.editFieldsMode;
+    };
     CPDFDoc.prototype.CreateTextField = function(bDateField) {
         let oTextField = this.CreateField('TextField1', AscPDF.FIELD_TYPES.text, [200, 50, 350, 72]);
 
@@ -1214,8 +1224,8 @@ var CPresentation = CPresentation || function(){};
             oViewer.onMouseDownEpsilon(e);
         }
         
-        // если в селекте нет drawing (аннотации или шейпа) по которой кликнули, то сбрасываем селект
-        if (oMouseDownObject == null || (false == oController.selectedObjects.includes(oMouseDownObject) && oController.selection.groupSelection != oMouseDownObject)) {
+        // если в селекте нет drawing по которой кликнули, то сбрасываем селект
+        if (oMouseDownObject == null || (this.IsEditFieldsMode() == false && (false == oController.selectedObjects.includes(oMouseDownObject)) && oController.selection.groupSelection != oMouseDownObject)) {
             oController.resetSelection();
             oController.resetTrackState();
         }
@@ -1819,6 +1829,11 @@ var CPresentation = CPresentation || function(){};
             }
             // обработка mouseMove в полях
             else if (this.activeForm) {
+                if (this.IsEditFieldsMode()) {
+                    oController.OnMouseMove(e, X, Y, pageObject.index);
+                    return;
+                }
+
                 // селект текста внутри формы с редаткриуемым текстом
                 if ([AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(this.activeForm.GetType())) {
                     this.SelectionSetEnd(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
@@ -1925,6 +1940,12 @@ var CPresentation = CPresentation || function(){};
             else if (oCurObject.GetId() == oCursorInfo.objectId) {
                 return true;
             }
+            else if (this.IsEditFieldsMode()) {
+                let oEditShape = oCurObject.GetEditShape && oCurObject.GetEditShape();
+                if (oEditShape && oEditShape.GetId() == oCursorInfo.objectId) {
+                    return true;
+                }
+            }
         }
 
         // курсор залочен для этих действий
@@ -1939,29 +1960,34 @@ var CPresentation = CPresentation || function(){};
             if (!pageObject)
                 return false;
 
-            switch (oMouseMoveField.GetType()) {
-                case AscPDF.FIELD_TYPES.text: {
-                    cursorType = "text";
-                    
-                    if (oMouseMoveField.IsDateFormat() && oMouseMoveField.IsInForm()) {
-                        // попадание в mark поля с датой
-                        if (pageObject.x >= oMouseMoveField._markRect.x1 && pageObject.x <= oMouseMoveField._markRect.x2 && pageObject.y >= oMouseMoveField._markRect.y1 && pageObject.y <= oMouseMoveField._markRect.y2) {
+            if (this.IsEditFieldsMode()) {
+                cursorType = "pointer";
+            }
+            else {
+                switch (oMouseMoveField.GetType()) {
+                    case AscPDF.FIELD_TYPES.text: {
+                        cursorType = "text";
+                        
+                        if (oMouseMoveField.IsDateFormat() && oMouseMoveField.IsInForm()) {
+                            // попадание в mark поля с датой
+                            if (pageObject.x >= oMouseMoveField._markRect.x1 && pageObject.x <= oMouseMoveField._markRect.x2 && pageObject.y >= oMouseMoveField._markRect.y1 && pageObject.y <= oMouseMoveField._markRect.y2) {
+                                cursorType = "pointer";
+                            }
+                        }
+                        break;
+                    }
+                    case AscPDF.FIELD_TYPES.combobox: {
+                        cursorType = "text";
+    
+                        // попадание в mark выбора элементов списка
+                        if (pageObject.x >= oMouseMoveField._markRect.x1 && pageObject.x <= oMouseMoveField._markRect.x2 && pageObject.y >= oMouseMoveField._markRect.y1 && pageObject.y <= oMouseMoveField._markRect.y2 && oMouseMoveField._options.length != 0) {
                             cursorType = "pointer";
                         }
+                        break;
                     }
-                    break;
-                }
-                case AscPDF.FIELD_TYPES.combobox: {
-                    cursorType = "text";
-
-                    // попадание в mark выбора элементов списка
-                    if (pageObject.x >= oMouseMoveField._markRect.x1 && pageObject.x <= oMouseMoveField._markRect.x2 && pageObject.y >= oMouseMoveField._markRect.y1 && pageObject.y <= oMouseMoveField._markRect.y2 && oMouseMoveField._options.length != 0) {
+                    default:
                         cursorType = "pointer";
-                    }
-                    break;
                 }
-                default:
-                    cursorType = "pointer";
             }
         }
         else if (oMouseMoveAnnot) {
@@ -2034,8 +2060,15 @@ var CPresentation = CPresentation || function(){};
             return;
         }
 
-        if (this.mouseDownField && oMouseUpField == this.mouseDownField) {
-            this.OnMouseUpField(oMouseUpField, e);
+        if (this.mouseDownField) {
+            if (this.IsEditFieldsMode()) {
+                oController.OnMouseUp(e, X, Y, pageObject.index);
+                return;
+            }
+
+            if (oMouseUpField == this.mouseDownField) {
+                this.OnMouseUpField(oMouseUpField, e);
+            }
         }
         else if (this.mouseDownAnnot) {
             oController.OnMouseUp(e, X, Y, pageObject.index);
@@ -6335,7 +6368,7 @@ var CPresentation = CPresentation || function(){};
 
                 if (isRestrictionView) {
                     for (let i = 0; i < selected_objects.length; i++) {
-                        if (selected_objects[i].IsDrawing()) {
+                        if (selected_objects[i].IsDrawing() && !selected_objects[i].IsEditFieldShape()) {
                             return true;
                         }
                     }
@@ -6768,7 +6801,7 @@ var CPresentation = CPresentation || function(){};
         return this.Api.canEdit() && false == this.Api.IsCommentMarker();
     };
     CPDFDoc.prototype.IsViewerObject = function(oObject) {
-        return !!(oObject && oObject.IsAnnot && (oObject.IsAnnot() || oObject.IsForm() || oObject.group && oObject.group.IsAnnot()));
+        return !!(oObject && oObject.IsAnnot && (oObject.IsAnnot() || oObject.IsForm() || (oObject.IsDrawing() && oObject.IsEditFieldShape()) || oObject.group && oObject.group.IsAnnot()));
     };
     CPDFDoc.prototype.IsFillingFormMode = function() {
 		return false;

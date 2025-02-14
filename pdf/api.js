@@ -1097,6 +1097,10 @@
 	/////////////////////////////////////////////////////////////
 	///////// For filed
 	////////////////////////////////////////////////////////////
+	PDFEditorApi.prototype.SetEditFieldsMode = function(bEdit) {
+		let oDoc = this.getPDFDoc();
+		oDoc.SetEditFieldsMode(bEdit);
+	};
 	PDFEditorApi.prototype.AddTextField = function() {
 		let oDoc = this.getPDFDoc();
 		

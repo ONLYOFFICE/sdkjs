@@ -444,6 +444,6 @@
         this.toXml(memory, '');
     };
 
-    window["AscPDF"].PdfDrawingPrototype = CPdfDrawingPrototype;
+    window["AscPDF"].CPdfDrawingPrototype = CPdfDrawingPrototype;
 })();
 

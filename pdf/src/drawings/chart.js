@@ -56,7 +56,7 @@
     
     CPdfChart.prototype.constructor = CPdfChart;
     CPdfChart.prototype = Object.create(AscFormat.CChartSpace.prototype);
-    Object.assign(CPdfChart.prototype, AscPDF.PdfDrawingPrototype.prototype);
+    Object.assign(CPdfChart.prototype, AscPDF.CPdfDrawingPrototype.prototype);
 
     CPdfChart.prototype.IsChart = function() {
         return true;

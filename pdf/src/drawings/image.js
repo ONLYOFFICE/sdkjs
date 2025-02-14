@@ -43,7 +43,7 @@
     
     CPdfImage.prototype.constructor = CPdfImage;
     CPdfImage.prototype = Object.create(AscFormat.CImageShape.prototype);
-    Object.assign(CPdfImage.prototype, AscPDF.PdfDrawingPrototype.prototype);
+    Object.assign(CPdfImage.prototype, AscPDF.CPdfDrawingPrototype.prototype);
 
     CPdfImage.prototype.IsImage = function() {
         return true;

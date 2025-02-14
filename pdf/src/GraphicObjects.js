@@ -978,7 +978,7 @@
                 let oDoc = this.document;
                 let isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
 
-                let oObject = AscCommon.g_oTableId.Get_ById(ret.objectId) || oDoc.GetShapeBasedAnnotById(ret.objectId);
+                let oObject = AscCommon.g_oTableId.Get_ById(ret.objectId) || oDoc.GetShapeBasedAnnotById(ret.objectId) || this.selectedObjects.find(function(obj) { return obj.GetId() == ret.objectId});
                 let isViewerObj = this.document.IsViewerObject(oObject);
 
                 if (!isDrawHandles && isViewerObj) {
@@ -1206,6 +1206,11 @@
             for (i = 0; i < this.selectedObjects.length; ++i) {
                 let oDrawing = this.selectedObjects[i];
                 if (oDrawing.selectStartPage === pageIndex) {
+
+                    if (oDrawing.IsForm()) {
+                        oDrawing = oDrawing.editShape;
+                    }
+
                     let nType = oDrawing.IsAnnot() && oDrawing.IsStamp() ? AscFormat.TYPE_TRACK.ANNOT_STAMP : AscFormat.TYPE_TRACK.SHAPE;
 
                     if (oDrawing.IsAnnot() && (oDrawing.IsTextMarkup() || oDrawing.IsComment())) {

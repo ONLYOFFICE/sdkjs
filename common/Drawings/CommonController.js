@@ -7266,7 +7266,7 @@
 						drawing = drawings[i];
 
 						// skip sticky note for pdf editor
-						if (drawing.IsAnnot && drawing.IsAnnot() && drawing.IsComment()) {
+						if (drawing.IsAnnot && drawing.IsAnnot() && drawing.IsComment() || drawing.IsEditFieldShape && drawing.IsEditFieldShape()) {
 							continue;
 						}
 
@@ -7925,7 +7925,7 @@
 					let hyperlink_properties = null;
 					if(drawings.length === 1) {
 						let oDrawing = drawings[0];
-						let isStickyNote = oDrawing.IsAnnot && oDrawing.IsAnnot() && oDrawing.IsComment(); // skip pdf text annot
+						let isStickyNote = oDrawing.IsAnnot && oDrawing.IsAnnot() && oDrawing.IsComment() || drawing.IsEditFieldShape && oDrawing.IsEditFieldShape(); // skip pdf text annot and form
 
 						if(!isStickyNote && (oDrawing.isShape() || oDrawing.isImage())) {
 

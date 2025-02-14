@@ -2841,145 +2841,127 @@
 			}
 		};
 
-		this.onUpdateOverlay = function()
-		{
+		this.onUpdateOverlay = function() {
 			Asc.editor.checkLastWork();
+			if (!this.overlay || this.scheduledRepaintTimer != null) return;
 			
-			if (!this.overlay || this.scheduledRepaintTimer != null)
-				return;
-
-			let oDoc = this.getPDFDoc();
-			let oDrDoc = oDoc.GetDrawingDocument();
-			if (oDoc.fontLoader.isWorking() || this.IsOpenFormsInProgress)
-				return;
-
+			const oDoc = this.getPDFDoc();
+			const oDrDoc = oDoc.GetDrawingDocument();
+			if (oDoc.fontLoader.isWorking() || this.IsOpenFormsInProgress) return;
+			
 			this.overlay.Clear();
-
 			oDrDoc.AutoShapesTrack.PageIndex = -1;
-
-			if (!this.file)
-				return;
-
-			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
-				return;
-
-			// seletion
-			var ctx = this.overlay.m_oContext;
-			ctx.globalAlpha = 0.2;
-
-			if (this.IsSearch)
-			{
-				if (oDoc.SearchEngine.Show)
-				{
-					ctx.globalAlpha = 0.5;
-					ctx.fillStyle = "rgba(255,200,0,1)";
-					ctx.beginPath();
-
-					for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
-					{
-						var pageMatches = oDoc.SearchEngine.GetPdfPageMatches(i);
-						if (0 != pageMatches.length) {
-							oDrDoc.AutoShapesTrack.SetCurrentPage(i, true);
-							this.drawSearch(i, pageMatches);
-						}
-							
-					}
-
-					ctx.fill();
-					ctx.globalAlpha = 0.2;
-				}
-				ctx.beginPath();
-
-				if (this.CurrentSearchNavi && oDoc.SearchEngine.Show)
-				{
-					if (!(this.CurrentSearchNavi instanceof AscWord.Paragraph)) {
-						var pageNum  = this.CurrentSearchNavi[0].PageNum;
-						ctx.fillStyle = "rgba(51,102,204,255)";
-						if (pageNum >= this.startVisiblePage && pageNum <= this.endVisiblePage)
-						{
-							oDrDoc.AutoShapesTrack.SetCurrentPage(pageNum, true);
-							ctx.globalAlpha = 0.2;
-							this.drawSearchCur(pageNum, this.CurrentSearchNavi);
-						}
-					}
-				}
-			}
-
-			oDrDoc.private_StartDrawSelection(this.overlay);
 			
-			//if (!this.MouseHandObject)
-			{
-				ctx.fillStyle = "rgba(51,102,204,255)";
-				ctx.beginPath();
-
-				if (this.file.isSelectionUse())
-				{
-					for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
-					{
-						var pageCoords = this.pageDetector.pages[i - this.startVisiblePage];
-						ctx.beginPath();
-						oDrDoc.AutoShapesTrack.SetCurrentPage(i, true);
-						ctx.globalAlpha = 0.2;
-						this.file.drawSelection(i, this.overlay, pageCoords.x, pageCoords.y);
-						ctx.fill();
-					}
-				}
-
-				this.DrawingObjects.updateSelectionState();
-
-				if (this.DrawingObjects.needUpdateOverlay())
-				{
-					oDrDoc.AutoShapesTrack.PageIndex = -1;
-					this.DrawingObjects.drawOnOverlay(oDrDoc.AutoShapesTrack);
-					oDrDoc.AutoShapesTrack.CorrectOverlayBounds();
-				}
-				else if (oDoc.mouseDownAnnot)
-				{
-					if (oDoc.mouseDownAnnot.IsFreeText() && oDoc.mouseDownAnnot.IsInTextBox() && oDoc.mouseDownAnnot.GetDocContent().IsSelectionUse()) {
-						ctx.beginPath();
-						oDrDoc.SetTextSelectionOutline(true);
-						oDoc.mouseDownAnnot.GetDocContent().DrawSelectionOnPage(0);
-						oDrDoc.private_EndDrawSelection();
-					}
-					else {
-						let nPage = oDoc.mouseDownAnnot.GetPage();
-						oDrDoc.AutoShapesTrack.SetCurrentPage(nPage, true);
-						this.DrawingObjects.drawSelect(nPage);
-					}
-				}
-				else if (oDoc.activeDrawing) {
-					let nPage = oDoc.activeDrawing.GetPage();
-					oDrDoc.SetTextSelectionOutline(true);
-					oDrDoc.private_EndDrawSelection();
-					oDrDoc.AutoShapesTrack.PageIndex = nPage;
-					this.DrawingObjects.drawSelect(nPage);
-				}
+			if (!this.file || this.startVisiblePage < 0 || this.endVisiblePage < 0) return;
+			
+			const ctx = this.overlay.m_oContext;
+			ctx.globalAlpha = 0.2;
+			
+			if (this.IsSearch) {
+				this.drawSearchHighlights(ctx, oDoc, oDrDoc);
+				this.drawCurrentSearchHighlight(ctx, oDoc, oDrDoc);
 			}
-			if (oDoc.activeForm && oDoc.activeForm.content && oDoc.activeForm.content.IsSelectionUse() && oDoc.activeForm.content.IsSelectionEmpty() == false)
-			{
+			
+			oDrDoc.private_StartDrawSelection(this.overlay);
+			this.drawSelection(ctx, oDoc, oDrDoc);
+			
+			if (oDoc.activeForm && oDoc.activeForm.content && oDoc.activeForm.content.IsSelectionUse() && !oDoc.activeForm.content.IsSelectionEmpty()) {
 				ctx.beginPath();
 				oDoc.activeForm.content.DrawSelectionOnPage(0);
 				oDrDoc.private_EndDrawSelection();
 			}
-
-			if (oDrDoc.MathTrack.IsActive())
-			{
-				var dGlobalAplpha = ctx.globalAlpha;
+			
+			if (oDrDoc.MathTrack.IsActive()) {
+				const prevAlpha = ctx.globalAlpha;
 				ctx.globalAlpha = 1.0;
 				oDrDoc.DrawMathTrack(this.overlay);
-				ctx.globalAlpha = dGlobalAplpha;
+				ctx.globalAlpha = prevAlpha;
 			}
 			
-			ctx.globalAlpha = 1.0;
-
-			for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
-			{
+			this.drawForeignSelections(oDoc, oDrDoc, ctx);
+		};
+		
+		this.drawSearchHighlights = function(ctx, oDoc, oDrDoc) {
+			if (!oDoc.SearchEngine.Show) return;
+			ctx.globalAlpha = 0.5;
+			ctx.fillStyle = "rgba(255,200,0,1)";
+			ctx.beginPath();
+			for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++) {
+				const matches = oDoc.SearchEngine.GetPdfPageMatches(i);
+				if (matches.length) {
+					oDrDoc.AutoShapesTrack.SetCurrentPage(i, true);
+					this.drawSearch(i, matches);
+				}
+			}
+			ctx.fill();
+			ctx.globalAlpha = 0.2;
+		};
+		
+		this.drawCurrentSearchHighlight = function(ctx, oDoc, oDrDoc) {
+			if (this.CurrentSearchNavi && oDoc.SearchEngine.Show && !(this.CurrentSearchNavi instanceof AscWord.Paragraph)) {
+				const pageNum = this.CurrentSearchNavi[0].PageNum;
+				if (pageNum >= this.startVisiblePage && pageNum <= this.endVisiblePage) {
+					ctx.fillStyle = "rgba(51,102,204,255)";
+					oDrDoc.AutoShapesTrack.SetCurrentPage(pageNum, true);
+					ctx.globalAlpha = 0.2;
+					this.drawSearchCur(pageNum, this.CurrentSearchNavi);
+				}
+			}
+		};
+		
+		this.drawSelection = function(ctx, oDoc, oDrDoc) {
+			ctx.fillStyle = "rgba(51,102,204,255)";
+			ctx.beginPath();
+			if (this.file.isSelectionUse()) {
+				for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++) {
+					const pageCoords = this.pageDetector.pages[i - this.startVisiblePage];
+					ctx.beginPath();
+					oDrDoc.AutoShapesTrack.SetCurrentPage(i, true);
+					ctx.globalAlpha = 0.2;
+					this.file.drawSelection(i, this.overlay, pageCoords.x, pageCoords.y);
+					ctx.fill();
+				}
+			}
+			
+			this.DrawingObjects.updateSelectionState();
+			
+			if (this.DrawingObjects.needUpdateOverlay()) {
+				oDrDoc.AutoShapesTrack.PageIndex = -1;
+				this.DrawingObjects.drawOnOverlay(oDrDoc.AutoShapesTrack);
+				oDrDoc.AutoShapesTrack.CorrectOverlayBounds();
+			}
+			else if (oDoc.mouseDownAnnot) {
+				if (oDoc.mouseDownAnnot.IsFreeText() && oDoc.mouseDownAnnot.IsInTextBox() && oDoc.mouseDownAnnot.GetDocContent().IsSelectionUse()) {
+					ctx.beginPath();
+					oDrDoc.SetTextSelectionOutline(true);
+					oDoc.mouseDownAnnot.GetDocContent().DrawSelectionOnPage(0);
+					oDrDoc.private_EndDrawSelection();
+				}
+				else {
+					const nPage = oDoc.mouseDownAnnot.GetPage();
+					oDrDoc.AutoShapesTrack.SetCurrentPage(nPage, true);
+					this.DrawingObjects.drawSelect(nPage);
+				}
+			}
+			else if (oDoc.activeDrawing || (oDoc.activeForm && oDoc.IsEditFieldsMode())) {
+				let oObj = oDoc.activeDrawing || oDoc.activeForm;
+				const nPage = oObj.GetPage();
+				oDrDoc.SetTextSelectionOutline(true);
+				oDrDoc.private_EndDrawSelection();
+				oDrDoc.AutoShapesTrack.PageIndex = nPage;
+				this.DrawingObjects.drawSelect(nPage);
+			}
+		};
+		
+		this.drawForeignSelections = function(oDoc, oDrDoc, ctx) {
+			for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++) {
 				oDrDoc.AutoShapesTrack.SetCurrentPage(i, true);
 				ctx.globalAlpha = 1.0;
 				oDoc.Draw_ForeingSelection(i);
 				oDoc.CollaborativeEditing.Update_ForeignSelectedObjectsLabelsPositions(i);
 			}
 		};
+		
 
 		this.checkVisiblePages = function()
 		{

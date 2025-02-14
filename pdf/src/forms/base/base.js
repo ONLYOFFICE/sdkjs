@@ -1312,6 +1312,11 @@
         return this._needDrawHighlight;
     };
 
+    CBaseField.prototype.DrawEdit = function(oGraphicsWord) {
+        if (this.IsEditMode()) {
+            this.editShape.Draw(oGraphicsWord);
+        }
+    };
     CBaseField.prototype.AddToRedraw = function() {
         let oViewer = editor.getDocumentRenderer();
         let nPage   = this.GetPage();
@@ -1828,13 +1833,13 @@
         }
         else {
             if (this.IsNeedDrawFromStream())
-                this.DrawFromStream(pdfGraphics);
+                this.DrawFromStream(pdfGraphics, textBoxGraphics);
             else
                 this.DrawFromTextBox(pdfGraphics, textBoxGraphics, pageIndex);
         }
 	};
 
-    CBaseField.prototype.DrawFromStream = function(oGraphicsPDF) {
+    CBaseField.prototype.DrawFromStream = function(oGraphicsPDF, oGraphicsWord) {
         let nAPType = this.IsHovered && this.IsHovered() ? AscPDF.APPEARANCE_TYPE.rollover : undefined;
 
         let originView = this.GetOriginView(nAPType, oGraphicsPDF.GetDrawingPageW(), oGraphicsPDF.GetDrawingPageH());
@@ -1865,6 +1870,7 @@
         // oGraphicsPDF.Stroke();
 
         this.DrawLocks(oGraphicsPDF);
+        this.DrawEdit(oGraphicsWord);
     };
     CBaseField.prototype.DrawLocks = function(oGraphicsPDF) {
         let aOrigRect   = this.GetRect();
@@ -2029,6 +2035,7 @@
     CBaseField.prototype.SetRect = function(aOrigRect) {
         this._origRect = aOrigRect;
         this.SetWasChanged(true);
+        this.SetNeedRecalc(true);
     };
     CBaseField.prototype.GetOrigRect = function() {
         return this._origRect;
@@ -2165,6 +2172,74 @@
         let oTextPr = oRun.Get_CompiledPr(true);
 
         return oTextPr.FontSize;
+    };
+    CBaseField.prototype.SetEditMode = function(bEdit) {
+        if (bEdit == false) {
+            this.editShape = null;
+            this.AddToRedraw();
+            return;
+        }
+
+        AscCommon.History.StartNoHistoryMode();
+        let oPdfShape = new AscPDF.CPdfShape();
+        let aOrigRect = this.GetRect();
+        let aRectMM = aOrigRect ? aOrigRect.map(function(measure) {
+            return measure * g_dKoef_pt_to_mm;
+        }) : [];
+
+        let nOffX = aRectMM[0];
+        let nOffY = aRectMM[1];
+        let nExtX = aRectMM[2] - aRectMM[0];
+        let nExtY = aRectMM[3] - aRectMM[1];
+
+        oPdfShape.setSpPr(new AscFormat.CSpPr());
+        oPdfShape.spPr.setLn(new AscFormat.CLn());
+        let oFill = AscFormat.CreateSolidFillRGBA(255, 255, 255, 0);
+        oFill.setTransparent(0);
+
+        oPdfShape.spPr.ln.setFill(oFill);
+        oPdfShape.spPr.setFill(oFill);
+        oPdfShape.spPr.setParent(oPdfShape);
+        oPdfShape.spPr.setXfrm(new AscFormat.CXfrm());
+        oPdfShape.spPr.xfrm.setParent(oPdfShape.spPr);
+        
+        oPdfShape.spPr.xfrm.setOffX(nOffX);
+        oPdfShape.spPr.xfrm.setOffY(nOffY);
+        oPdfShape.spPr.xfrm.setExtX(nExtX);
+        oPdfShape.spPr.xfrm.setExtY(nExtY);
+        
+        oPdfShape.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
+
+        oPdfShape.createTextBody();
+        oPdfShape.txBody.bodyPr.setInsets(0.5,0.5,0.5,0.5);
+        oPdfShape.txBody.bodyPr.horzOverflow = AscFormat.nHOTClip;
+        oPdfShape.txBody.bodyPr.vertOverflow = AscFormat.nVOTClip;
+        oPdfShape.setVerticalAlign(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
+
+        let oContent = oPdfShape.GetDocContent();
+        let oPara = oContent.GetElement(0);
+        let oRun = oPara.GetElement(0);
+        oRun.AddText(this.GetFullName());
+        oPara.SetParagraphAlign(AscCommon.align_Center);
+        oPara.SetApplyToAll(true);
+        oPara.Add(new ParaTextPr({HighlightColor: AscFormat.CreateUniColorRGB(0, 0, 0)}));
+        oPara.SetApplyToAll(false);
+
+        oPdfShape.setStyle(AscFormat.CreateDefaultShapeStyle());
+        oPdfShape.setBDeleted(false);
+        oPdfShape.recalculate();
+        
+        oPdfShape.SetEditField(this);
+        this.editShape = oPdfShape;
+        AscCommon.History.EndNoHistoryMode();
+
+        this.AddToRedraw();
+    };
+    CBaseField.prototype.IsEditMode = function() {
+        return !!this.editShape;
+    };
+    CBaseField.prototype.GetEditShape = function() {
+        return this.editShape;
     };
     CBaseField.prototype.WriteToBinaryBase2 = function(memory) {
         // font name

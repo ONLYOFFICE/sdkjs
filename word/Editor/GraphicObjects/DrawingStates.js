@@ -452,11 +452,20 @@ NullState.prototype =
         }
         else {
             let oViewer = Asc.editor.getDocumentRenderer();
+            let oDoc    = Asc.editor.getPDFDoc();
 
             let aDrawings = [];
 
             aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].drawings);
             aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].annots);
+
+            if (oDoc.IsEditFieldsMode()) {
+                if (this.drawingObjects.selectedObjects.find(function(obj) {
+                    return obj.IsDrawing() && obj.IsEditFieldShape();
+                })) {
+                    aDrawings = aDrawings.concat(this.drawingObjects.selectedObjects);
+                }
+            }
 
             ret = AscFormat.handleFloatObjects(this.drawingObjects, aDrawings, e, x, y, null, pageIndex, true);
 
@@ -946,6 +955,12 @@ RotateState.prototype =
                                 if (oTrack.pageIndex != oTrack.originalObject.GetPage()) {
                                     oTrack.originalObject.SetPage(oTrack.pageIndex);
                                 }
+                            }
+                            if (oTrack.originalObject.IsDrawing() && oTrack.originalObject.IsEditFieldShape()) {
+                                let aRect = [bounds.posX * g_dKoef_mm_to_pt, bounds.posY * g_dKoef_mm_to_pt, (bounds.posX + bounds.extX) * g_dKoef_mm_to_pt, (bounds.posY + bounds.extY) * g_dKoef_mm_to_pt];
+                                let oField = oTrack.originalObject.GetEditField();
+
+                                oField.SetRect(aRect);
                             }
                             
                             oTrack.originalObject.SetNeedRecalc(true);

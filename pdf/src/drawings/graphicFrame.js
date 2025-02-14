@@ -43,7 +43,7 @@
     
     CPdfGraphicFrame.prototype.constructor = CPdfGraphicFrame;
     CPdfGraphicFrame.prototype = Object.create(AscFormat.CGraphicFrame.prototype);
-    Object.assign(CPdfGraphicFrame.prototype, AscPDF.PdfDrawingPrototype.prototype);
+    Object.assign(CPdfGraphicFrame.prototype, AscPDF.CPdfDrawingPrototype.prototype);
 
     CPdfGraphicFrame.prototype.IsGraphicFrame = function() {
         return true;
