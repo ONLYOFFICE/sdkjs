@@ -2033,6 +2033,8 @@
         return this._textSize;
     };
     CBaseField.prototype.SetRect = function(aOrigRect) {
+        AscCommon.History.Add(new CChangesPDFFormRect(this, this.GetRect(), aOrigRect));
+
         this._origRect = aOrigRect;
         this.SetWasChanged(true);
         this.SetNeedRecalc(true);

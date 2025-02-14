@@ -730,6 +730,7 @@
         }
         
         this.DrawLocks(oGraphicsPDF);
+        this.DrawEdit(oGraphicsWord);
     };
     CPushButtonField.prototype.SetImageRasterId = function(sRasterId, nAPType) {
         let sPrevRasterId;
@@ -1252,6 +1253,7 @@
         }
 
         this.DrawLocks(oGraphicsPDF);
+        this.DrawEdit(oGraphicsWord);
     };
     CPushButtonField.prototype.SetPressed = function(bValue) {
         this._pressed = bValue;
@@ -1274,6 +1276,13 @@
 
         let isInFocus   = oDoc.activeForm === this;
         oDoc.activeForm = this;
+
+        if (oDoc.IsEditFieldsMode()) {
+            let oController = oDoc.GetController();
+            this.editShape.select(oController, this.GetPage());
+            this.editShape.onMouseDown(x, y, e);
+            return;
+        }
 
         function callbackAfterFocus() {
             this.SetInForm(true);

@@ -64,7 +64,7 @@
     CBaseCheckBoxField.prototype = Object.create(AscPDF.CBaseField.prototype);
     CBaseCheckBoxField.prototype.constructor = CBaseCheckBoxField;
 
-    CBaseCheckBoxField.prototype.Draw = function(oGraphicsPDF) {
+    CBaseCheckBoxField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
         if (this.IsHidden() == true)
             return;
 
@@ -75,6 +75,7 @@
             this.DrawCheckedSymbol(oGraphicsPDF);
 
         this.DrawLocks(oGraphicsPDF);
+        this.DrawEdit(oGraphicsWord);
     };
     CBaseCheckBoxField.prototype.IsChecked = function() {
         return this._checked;
@@ -341,6 +342,13 @@
         let isInFocus = oDoc.activeForm === this;
         oDoc.activeForm = this;
         
+        if (oDoc.IsEditFieldsMode()) {
+            let oController = oDoc.GetController();
+            this.editShape.select(oController, this.GetPage());
+            this.editShape.onMouseDown(x, y, e);
+            return;
+        }
+
         function callbackAfterFocus() {
             this.SetInForm(true);
         }

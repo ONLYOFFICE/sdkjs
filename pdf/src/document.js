@@ -444,6 +444,10 @@ var CPresentation = CPresentation || function(){};
         }
 
         oField.SetDocument(this);
+        if (this.IsEditFieldsMode()) {
+            oField.SetEditMode(true);
+        }
+
         return oField;
     };
     CPDFDoc.prototype.SetEditFieldsMode = function(bEdit) {
@@ -3217,7 +3221,13 @@ var CPresentation = CPresentation || function(){};
         let oDrawing    = this.activeDrawing;
 
         let oContent;
-        if (oForm && oForm.IsCanEditText()) {
+        if (this.IsEditFieldsMode()) {
+            oController.selectedObjects.forEach(function(shape) {
+                let field = shape.GetEditField();
+                oThis.RemoveField(field.GetId());
+            });
+        }
+        else if (oForm && oForm.IsCanEditText()) {
             oForm.Remove(nDirection, isCtrlKey);
             oContent = oForm.GetDocContent();
         }
@@ -3354,8 +3364,6 @@ var CPresentation = CPresentation || function(){};
 
     CPDFDoc.prototype.RemoveField = function(sId) {
         let oController = this.GetController();
-        this.BlurActiveObject();
-
         let oForm = this.widgets.find(function(form) {
             return form.GetId() == sId;
         });

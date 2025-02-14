@@ -85,6 +85,7 @@
         this.DrawBorders(oGraphicsPDF);
 
         this.DrawLocks(oGraphicsPDF);
+        this.DrawEdit(oGraphicsWord);
     };
     CListBoxField.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
@@ -487,6 +488,13 @@
         let isInForm    = this.IsInForm();
         
         oDoc.activeForm = this;
+
+        if (oDoc.IsEditFieldsMode()) {
+            let oController = oDoc.GetController();
+            this.editShape.select(oController, this.GetPage());
+            this.editShape.onMouseDown(x, y, e);
+            return;
+        }
 
         function callbackAfterFocus(x, y, e) {
             this.SetInForm(true);

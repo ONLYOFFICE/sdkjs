@@ -349,6 +349,23 @@ CChangesPDFFormBorderStyle.prototype.private_SetValue = function(Value)
 
 /**
  * @constructor
+ * @extends {AscDFH.CChangesAnnotArrayOfDoubleProperty}
+ */
+function CChangesPDFFormRect(Class, Old, New, Color)
+{
+	AscDFH.CChangesAnnotArrayOfDoubleProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFormRect.prototype = Object.create(AscDFH.CChangesAnnotArrayOfDoubleProperty.prototype);
+CChangesPDFFormRect.prototype.constructor = CChangesPDFFormRect;
+CChangesPDFFormRect.prototype.Type = AscDFH.historyitem_Pdf_Form_Rect;
+CChangesPDFFormRect.prototype.private_SetValue = function(Value)
+{
+	let oField = this.Class;
+	oField.SetRect(Value);
+};
+
+/**
+ * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
  */
 function CChangesPDFListFormCurIdxs(Class, Old, New, Color)

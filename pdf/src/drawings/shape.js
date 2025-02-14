@@ -55,7 +55,14 @@
     };
     CPdfShape.prototype.GetEditField = function() {
         return this.editField;
-    }
+    };
+    CPdfShape.prototype.hitInTextRect = function(x, y) {
+        if (this.IsEditFieldShape()) {
+            return false;
+        }
+        
+        return this.hitInTextRectWord(x, y);
+    };
     CPdfShape.prototype.GetDocument = function() {
         if (this.IsEditFieldShape()) {
             return this.editField.GetDocument();

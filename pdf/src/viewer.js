@@ -2142,12 +2142,21 @@
 		this.getPageFieldByCoords = function(x, y, pageIndex, bGetHidden)
 		{
 			var pageFields = this.pagesInfo.pages[pageIndex];
+
 			if (pageFields.fields)
 			{
 				for (var i = 0, len = pageFields.fields.length; i < len; i++)
 				{
-					if (x >= pageFields.fields[i]._origRect[0] && x <= pageFields.fields[i]._origRect[2] &&
-						y >= pageFields.fields[i]._origRect[1] && y <= pageFields.fields[i]._origRect[3]) {
+					let oField = pageFields.fields[i];
+					let aRect = oField.GetRect();
+					let oFieldEditShape = oField.GetEditShape();
+					let bHitToHandles = false;
+					if (oFieldEditShape) {
+						bHitToHandles = oFieldEditShape.hitToHandles(x * g_dKoef_pt_to_mm, y * g_dKoef_pt_to_mm) !== -1;
+					}
+					
+					if (x >= aRect[0] && x <= aRect[2] &&
+						y >= aRect[1] && y <= aRect[3] || bHitToHandles) {
 						if (bGetHidden) {
 							return pageFields.fields[i];
 						}
