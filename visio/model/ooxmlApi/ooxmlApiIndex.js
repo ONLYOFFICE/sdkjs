@@ -892,7 +892,7 @@
 					// This simple type represents an angle in 60,000ths of a degree. Positive angles are clockwise (i.e., towards the
 					// positive y axis); negative angles are counter-clockwise (i.e., towards the negative y axis)
 					// direction is considered in global transform
-					let stAngle = angleRads / Math.PI * 180 * 60000;
+					let stAngle = angleRads / Math.PI * 180 * AscFormat.degToC;
 					if (!isNaN(stAngle)) {
 						angle = stAngle;
 					} else {

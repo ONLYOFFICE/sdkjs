@@ -1692,7 +1692,7 @@
 				}
 			}
 
-			if (fillGradientDir === 3) {
+			if (fillGradientDir && fillGradientDir !== 0) {
 				// radial
 				uniFillForegnd = AscFormat.builder_CreateRadialGradient(fillGradientStops);
 			} else {
@@ -1868,8 +1868,173 @@
 				uniFillForegndWithPattern = uniFillForegnd;
 			} else if (fillPatternType === 0) {
 				uniFillForegndWithPattern = AscFormat.CreateNoFillUniFill();
-			} else if (fillPatternType === 1 || isfillPatternTypeGradient) {
+			} else if (fillPatternType === 1) {
 				uniFillForegndWithPattern = uniFillForegnd;
+			} else if (isfillPatternTypeGradient) {
+				if (fillPatternType === 25) {
+					let fillGradientStops = [];
+
+					// has color (CUniColor) and pos from 0 to 100000
+					let colorStop1 = new AscFormat.CGs();
+					// calculate color (AscFormat.CUniColor)
+					let color1 = uniFillForegnd.fill.color;
+					let pos1 = 0;
+					colorStop1.setColor(color1);
+					colorStop1.setPos(pos1);
+					fillGradientStops.push({Gs : colorStop1});
+
+					let colorStop2 = new AscFormat.CGs();
+					// calculate color (AscFormat.CUniColor)
+					let color2 = uniFillBkgnd.fill.color;
+					let pos2 = 100000;
+					colorStop2.setColor(color2);
+					colorStop2.setPos(pos2);
+					fillGradientStops.push({Gs : colorStop2});
+
+					uniFillForegndWithPattern = AscFormat.builder_CreateLinearGradient(fillGradientStops, 0);
+				} else if (fillPatternType === 26) {
+					let fillGradientStops = [];
+
+					// has color (CUniColor) and pos from 0 to 100000
+					let colorStop1 = new AscFormat.CGs();
+					// calculate color (AscFormat.CUniColor)
+					let color1 = uniFillBkgnd.fill.color;
+					let pos1 = 0;
+					colorStop1.setColor(color1);
+					colorStop1.setPos(pos1);
+					fillGradientStops.push({Gs : colorStop1});
+
+					let colorStop2 = new AscFormat.CGs();
+					// calculate color (AscFormat.CUniColor)
+					let color2 = uniFillForegnd.fill.color;
+					let pos2 = 50000;
+					colorStop2.setColor(color2);
+					colorStop2.setPos(pos2);
+					fillGradientStops.push({Gs : colorStop2});
+
+					let colorStop3 = new AscFormat.CGs();
+					// calculate color (AscFormat.CUniColor)
+					let color3 = uniFillBkgnd.fill.color;
+					let pos3 = 100000;
+					colorStop3.setColor(color3);
+					colorStop3.setPos(pos3);
+					fillGradientStops.push({Gs : colorStop3});
+
+					uniFillForegndWithPattern = AscFormat.builder_CreateLinearGradient(fillGradientStops, 0);
+				} else if (fillPatternType === 27) {
+					let fillGradientStops = [];
+
+					// has color (CUniColor) and pos from 0 to 100000
+					let colorStop1 = new AscFormat.CGs();
+					// calculate color (AscFormat.CUniColor)
+					let color1 = uniFillBkgnd.fill.color;
+					let pos1 = 0;
+					colorStop1.setColor(color1);
+					colorStop1.setPos(pos1);
+					fillGradientStops.push({Gs : colorStop1});
+
+					let colorStop2 = new AscFormat.CGs();
+					// calculate color (AscFormat.CUniColor)
+					let color2 = uniFillForegnd.fill.color;
+					let pos2 = 100000;
+					colorStop2.setColor(color2);
+					colorStop2.setPos(pos2);
+					fillGradientStops.push({Gs : colorStop2});
+
+					uniFillForegndWithPattern = AscFormat.builder_CreateLinearGradient(fillGradientStops, 0);
+				} else if (fillPatternType === 28) {
+					let fillGradientStops = [];
+
+					// has color (CUniColor) and pos from 0 to 100000
+					let colorStop1 = new AscFormat.CGs();
+					// calculate color (AscFormat.CUniColor)
+					let color1 = uniFillForegnd.fill.color;
+					let pos1 = 0;
+					colorStop1.setColor(color1);
+					colorStop1.setPos(pos1);
+					fillGradientStops.push({Gs : colorStop1});
+
+					let colorStop2 = new AscFormat.CGs();
+					// calculate color (AscFormat.CUniColor)
+					let color2 = uniFillBkgnd.fill.color;
+					let pos2 = 100000;
+					colorStop2.setColor(color2);
+					colorStop2.setPos(pos2);
+					fillGradientStops.push({Gs : colorStop2});
+
+					uniFillForegndWithPattern = AscFormat.builder_CreateLinearGradient(fillGradientStops, 90 * AscFormat.degToC);
+				} else if (fillPatternType === 29) {
+					let fillGradientStops = [];
+
+					// has color (CUniColor) and pos from 0 to 100000
+					let colorStop1 = new AscFormat.CGs();
+					// calculate color (AscFormat.CUniColor)
+					let color1 = uniFillBkgnd.fill.color;
+					let pos1 = 0;
+					colorStop1.setColor(color1);
+					colorStop1.setPos(pos1);
+					fillGradientStops.push({Gs : colorStop1});
+
+					let colorStop2 = new AscFormat.CGs();
+					// calculate color (AscFormat.CUniColor)
+					let color2 = uniFillForegnd.fill.color;
+					let pos2 = 50000;
+					colorStop2.setColor(color2);
+					colorStop2.setPos(pos2);
+					fillGradientStops.push({Gs : colorStop2});
+
+					let colorStop3 = new AscFormat.CGs();
+					// calculate color (AscFormat.CUniColor)
+					let color3 = uniFillBkgnd.fill.color;
+					let pos3 = 100000;
+					colorStop3.setColor(color3);
+					colorStop3.setPos(pos3);
+					fillGradientStops.push({Gs : colorStop3});
+
+					uniFillForegndWithPattern = AscFormat.builder_CreateLinearGradient(fillGradientStops, 90 * AscFormat.degToC);
+				} else if (fillPatternType === 30) {
+					let fillGradientStops = [];
+
+					// has color (CUniColor) and pos from 0 to 100000
+					let colorStop1 = new AscFormat.CGs();
+					// calculate color (AscFormat.CUniColor)
+					let color1 = uniFillForegnd.fill.color;
+					let pos1 = 0;
+					colorStop1.setColor(color1);
+					colorStop1.setPos(pos1);
+					fillGradientStops.push({Gs : colorStop1});
+
+					let colorStop2 = new AscFormat.CGs();
+					// calculate color (AscFormat.CUniColor)
+					let color2 = uniFillBkgnd.fill.color;
+					let pos2 = 100000;
+					colorStop2.setColor(color2);
+					colorStop2.setPos(pos2);
+					fillGradientStops.push({Gs : colorStop2});
+
+					uniFillForegndWithPattern = AscFormat.builder_CreateLinearGradient(fillGradientStops, -90 * AscFormat.degToC);
+				} else {
+					let fillGradientStops = [];
+
+					// has color (CUniColor) and pos from 0 to 100000
+					let colorStop1 = new AscFormat.CGs();
+					// calculate color (AscFormat.CUniColor)
+					let color1 = uniFillForegnd.fill.color;
+					let pos1 = 0;
+					colorStop1.setColor(color1);
+					colorStop1.setPos(pos1);
+					fillGradientStops.push({Gs : colorStop1});
+
+					let colorStop2 = new AscFormat.CGs();
+					// calculate color (AscFormat.CUniColor)
+					let color2 = uniFillBkgnd.fill.color;
+					let pos2 = 100000;
+					colorStop2.setColor(color2);
+					colorStop2.setPos(pos2);
+					fillGradientStops.push({Gs : colorStop2});
+
+					uniFillForegndWithPattern = AscFormat.builder_CreateRadialGradient(fillGradientStops);
+				}
 			} else if (fillPatternType > 1) {
 				let ooxmlFillPatternType = mapVisioFillPatternToOOXML(fillPatternType);
 				if (uniFillForegnd.fill instanceof AscFormat.CPattFill) {
