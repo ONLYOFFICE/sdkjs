@@ -458,6 +458,18 @@
 	 * @param {number} pageIndex
 	 */
 	CVisioDocument.prototype.draw = function(Zoom, pGraphics, pageIndex) {
+		/**
+		 *
+		 * @param graphics
+		 * @param {(CShape | CGroupShape)} shapeOrGroup
+		 * @param baseMatrix
+		 * @param baseTextMatrix
+		 * @param isRecalculateTextY
+		 * @param isFlipImages
+		 * @param isAdditionalRecalculate
+		 * @param logic_h_mm
+		 * @param {CGroupShape?} currentGroupHandling
+		 */
 		function drawShapeOrGroupRecursively(graphics, shapeOrGroup, baseMatrix, baseTextMatrix,
 											 isRecalculateTextY, isFlipImages, isAdditionalRecalculate, logic_h_mm, currentGroupHandling) {
 			// see sdkjs/common/Shapes/Serialize.js this.ReadGroupShape = function(type) to

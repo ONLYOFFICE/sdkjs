@@ -1172,38 +1172,43 @@
 
 				let localYmm;
 
-				let flipYCell = shape.getCell("FlipY");
-				let flipVertically = flipYCell ?  flipYCell.v === "1" : false;
-				if (flipVertically) {
-					// if we flip figure we flip text pinY around shape pinY
-					if (txtPinY_inch > 0) {
-						// y cord of text block start. when cord system starts in left bottom corner on shape
-						let blockCord = txtPinY_inch - txtLocPinY_inch;
-						// (y part of vector) from shape center to txt block start
-						let fromShapeCenterToBlockStart = blockCord - shapeLocPinY;
+				// Don't recalculate text pos on flip manually, shape with text combined to group whose flipV is applied
+				// let flipYCell = shape.getCell("FlipY");
+				// let flipVertically = flipYCell ?  flipYCell.v === "1" : false;
+				// if (flipVertically) {
+				// 	// if we flip figure we flip text pinY around shape pinY
+				// 	if (txtPinY_inch > 0) {
+				// 		// y cord of text block start. when cord system starts in left bottom corner on shape
+				// 		let blockCord = txtPinY_inch - txtLocPinY_inch;
+				// 		// (y part of vector) from shape center to txt block start
+				// 		let fromShapeCenterToBlockStart = blockCord - shapeLocPinY;
+				//
+				// 		// mirror distance fromBlock start ToShapeCenter then add text block height to it
+				// 		// + shapeLocPinY made shift from shape center to shape bottom bcs we calculate
+				// 		// localYmm starting from bottom of shape not from center
+				// 		localYmm = (-fromShapeCenterToBlockStart - txtHeight_inch + shapeLocPinY) * g_dKoef_in_to_mm;
+				// 	} else {
+				// 		// negative, y part of vector. y cord of text block start. when cord system starts in left bottom corner on shape
+				// 		let blockCord = txtPinY_inch + (txtHeight_inch - txtLocPinY_inch);
+				//
+				// 		// lets make it negative like y part of vector. It comes from top to bottom.
+				// 		// It is vector that comes from shape center to text block start.
+				// 		let fromBlockToShapeCenter = blockCord - shapeLocPinY;
+				//
+				// 		// Finally we mirror fromBlockToShapeCenter by multiplying by -1 and add shapeLocPinY to move its
+				// 		// start to bottom on shape
+				// 		localYmm = (-fromBlockToShapeCenter + shapeLocPinY) * g_dKoef_in_to_mm;
+				// 	}
+				// 	oXfrm.setRot(- textAngle);
+				// } else {
+				// 	// do calculations
+				// 	localYmm = (txtPinY_inch - txtLocPinY_inch) * g_dKoef_in_to_mm;
+				// 	oXfrm.setRot(textAngle);
+				// }
 
-						// mirror distance fromBlock start ToShapeCenter then add text block height to it
-						// + shapeLocPinY made shift from shape center to shape bottom bcs we calculate
-						// localYmm starting from bottom of shape not from center
-						localYmm = (-fromShapeCenterToBlockStart - txtHeight_inch + shapeLocPinY) * g_dKoef_in_to_mm;
-					} else {
-						// negative, y part of vector. y cord of text block start. when cord system starts in left bottom corner on shape
-						let blockCord = txtPinY_inch + (txtHeight_inch - txtLocPinY_inch);
-
-						// lets make it negative like y part of vector. It comes from top to bottom.
-						// It is vector that comes from shape center to text block start.
-						let fromBlockToShapeCenter = blockCord - shapeLocPinY;
-
-						// Finally we mirror fromBlockToShapeCenter by multiplying by -1 and add shapeLocPinY to move its
-						// start to bottom on shape
-						localYmm = (-fromBlockToShapeCenter + shapeLocPinY) * g_dKoef_in_to_mm;
-					}
-					oXfrm.setRot(- textAngle);
-				} else {
-					// do calculations
-					localYmm = (txtPinY_inch - txtLocPinY_inch) * g_dKoef_in_to_mm;
-					oXfrm.setRot(textAngle);
-				}
+				// do calculations
+				localYmm = (txtPinY_inch - txtLocPinY_inch) * g_dKoef_in_to_mm;
+				oXfrm.setRot(textAngle);
 
 				let offY = globalYmm + localYmm;
 				// back to presentation coords
@@ -1224,10 +1229,12 @@
 				oXfrm.setExtY(Math.abs(shapeHeight) * g_dKoef_in_to_mm);
 				oXfrm.setRot(0);
 			}
+
 			oSpPr.setXfrm(oXfrm);
 			oXfrm.setParent(oSpPr);
 			oSpPr.setFill(AscFormat.CreateNoFillUniFill());
 			oSpPr.setLn(AscFormat.CreateNoFillLine());
+
 
 			textCShape.setSpPr(oSpPr);
 			oSpPr.setParent(textCShape);
@@ -2172,8 +2179,10 @@
 			noLineFillSpPr.setFill(AscFormat.CreateNoFillUniFill());
 			noLineFillSpPr.setLn(AscFormat.CreateNoFillLine());
 			// these flips come to group
-			noLineFillSpPr.xfrm.flipV = false;
-			noLineFillSpPr.xfrm.flipH = false;
+			noLineFillSpPr.xfrm.flipV = cShape.spPr.xfrm.flipV;
+			noLineFillSpPr.xfrm.flipH = cShape.spPr.xfrm.flipH;
+			cShape.spPr.xfrm.flipV = false;
+			cShape.spPr.xfrm.flipH = false;
 
 			groupShape.setSpPr(noLineFillSpPr);
 			groupShape.spPr.setParent(groupShape);
@@ -2200,9 +2209,18 @@
 			textCShape.spPr.xfrm.flipH = false;
 			textCShape.spPr.xfrm.flipV = false;
 
+			// In power point presentations on flipV text is position is flipped + text
+			// is mirrored horizontally and vertically (https://disk.yandex.ru/d/Hi8OCMITgb730Q)
+			// below we remove text mirror. In visio text is never mirrored. (https://disk.yandex.ru/d/JjbNzzZLDIAEuQ)
+			// (on flipH in power point presentation text is not mirrored)
+			if (textCShape.getFullFlip().flipV) {
+				textCShape.spPr.xfrm.setRot(Math.PI + textCShape.spPr.xfrm.rot);
+			}
+
 			textCShape.recalculateLocalTransform(textCShape.transform);
 			textCShape.recalculateTransformText();
 			textCShape.recalculateContent();
+
 
 			groupShape.setParent2(visioDocument);
 			groupShape.recalculate();

@@ -949,6 +949,10 @@
 
 		const TEXT_RECT_ERROR = 0.01;
 
+		/**
+		 *
+		 * @constructor
+		 */
 		function CShape() {
 			AscFormat.CGraphicObjectBase.call(this);
 			this.nvSpPr = null;
@@ -5328,6 +5332,7 @@
 		};
 
 		/**
+		 * note: sometimes call to recalculate bounds
 		 * @memberOf CShape
 		 */
 		CShape.prototype.draw = function (graphics, transform, transformText, pageIndex, opt) {
