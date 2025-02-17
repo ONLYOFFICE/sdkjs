@@ -32,6 +32,7 @@
 
 "use strict";
 
+// common
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Value]			= CChangesPDFFormValue;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Parent_Value]		= CChangesPDFFormParentValue;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Format_Value]		= CChangesPDFFormFormatValue;
@@ -42,11 +43,26 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Change_Display]	= CChangesPDFF
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Border_Color]		= CChangesPDFFormBorderColor;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_BG_Color]			= CChangesPDFFormBGrColor;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Border_Style]		= CChangesPDFFormBorderStyle;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Required]			= CChangesPDFFormRequired;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Text_Color]		= CChangesPDFFormTextColor;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Text_Font]		= CChangesPDFFormTextFont;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Text_Size]		= CChangesPDFFormTextSize;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Default_Value]	= CChangesPDFFormDefaultValue;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Rect]				= CChangesPDFFormRect;
 
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Cur_Idxs]		= CChangesPDFListFormCurIdxs;
+// text
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Multiline]		= CChangesPDFTextFormMultiline;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Align]			= CChangesPDFTextFormAlign;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Char_Limit]		= CChangesPDFTextCharLimit;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Comb]			= CChangesPDFTextComb;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_DoNot_Scroll]	= CChangesPDFTextFormDoNotScroll;
+
+// listbox
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Cur_Idxs]			= CChangesPDFListFormCurIdxs;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Parent_Cur_Idxs]	= CChangesPDFListFormParentCurIdxs;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Top_Idx]			= CChangesPDFListTopIndex;
 
+// button
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Image]		= CChangesPDFPushbuttonImage;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Header_Pos]	= CChangesPDFPushbuttonHeaderPos;
 
@@ -349,6 +365,92 @@ CChangesPDFFormBorderStyle.prototype.private_SetValue = function(Value)
 
 /**
  * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFFormRequired(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFormRequired.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFFormRequired.prototype.constructor = CChangesPDFFormRequired;
+CChangesPDFFormRequired.prototype.Type = AscDFH.historyitem_Pdf_Form_Required;
+CChangesPDFFormRequired.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm._required = Value;
+	oForm.AddToRedraw();
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesAnnotArrayOfDoubleProperty}
+ */
+function CChangesPDFFormTextColor(Class, Old, New, Color)
+{
+	AscDFH.CChangesAnnotArrayOfDoubleProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFormTextColor.prototype = Object.create(AscDFH.CChangesAnnotArrayOfDoubleProperty.prototype);
+CChangesPDFFormTextColor.prototype.constructor = CChangesPDFFormTextColor;
+CChangesPDFFormTextColor.prototype.Type = AscDFH.historyitem_Pdf_Form_Text_Color;
+CChangesPDFFormTextColor.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm.SetTextColor(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesPDFFormTextFont(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFormTextFont.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesPDFFormTextFont.prototype.constructor = CChangesPDFFormTextFont;
+CChangesPDFFormTextFont.prototype.Type = AscDFH.historyitem_Pdf_Form_Text_Font;
+CChangesPDFFormTextFont.prototype.private_SetValue = function(Value)
+{
+	let oField = this.Class;
+	oField.SetTextFontActual(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFFormTextSize(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFormTextSize.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFFormTextSize.prototype.constructor = CChangesPDFFormTextSize;
+CChangesPDFFormTextSize.prototype.Type = AscDFH.historyitem_Pdf_Form_Text_Size;
+CChangesPDFFormTextSize.prototype.private_SetValue = function(Value)
+{
+	let oField = this.Class;
+	oField.SetTextSize(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesPDFFormDefaultValue(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFormDefaultValue.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesPDFFormDefaultValue.prototype.constructor = CChangesPDFFormDefaultValue;
+CChangesPDFFormDefaultValue.prototype.Type = AscDFH.historyitem_Pdf_Form_Default_Value;
+CChangesPDFFormDefaultValue.prototype.private_SetValue = function(Value)
+{
+	let oField = this.Class;
+	oField.SetDefaultValue(Value);
+};
+
+/**
+ * @constructor
  * @extends {AscDFH.CChangesAnnotArrayOfDoubleProperty}
  */
 function CChangesPDFFormRect(Class, Old, New, Color)
@@ -363,6 +465,103 @@ CChangesPDFFormRect.prototype.private_SetValue = function(Value)
 	let oField = this.Class;
 	oField.SetRect(Value);
 };
+
+//------------------------------------------------------------------------------------------------------------------
+//
+// Text Form
+//
+//------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFTextFormMultiline(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFTextFormMultiline.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFTextFormMultiline.prototype.constructor = CChangesPDFTextFormMultiline;
+CChangesPDFTextFormMultiline.prototype.Type = AscDFH.historyitem_Pdf_Text_Form_Multiline;
+CChangesPDFTextFormMultiline.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm.SetMultiline(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFTextFormAlign(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFTextFormAlign.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFTextFormAlign.prototype.constructor = CChangesPDFTextFormAlign;
+CChangesPDFTextFormAlign.prototype.Type = AscDFH.historyitem_Pdf_Text_Form_Align;
+CChangesPDFTextFormAlign.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm.SetAlign(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFTextCharLimit(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFTextCharLimit.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFTextCharLimit.prototype.constructor = CChangesPDFTextCharLimit;
+CChangesPDFTextCharLimit.prototype.Type = AscDFH.historyitem_Pdf_Text_Form_Char_Limit;
+CChangesPDFTextCharLimit.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm.SetCharLimit(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFTextComb(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFTextComb.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFTextComb.prototype.constructor = CChangesPDFTextComb;
+CChangesPDFTextComb.prototype.Type = AscDFH.historyitem_Pdf_Text_Form_Comb;
+CChangesPDFTextComb.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm.SetComb(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFTextFormDoNotScroll(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFTextFormDoNotScroll.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFTextFormDoNotScroll.prototype.constructor = CChangesPDFTextFormDoNotScroll;
+CChangesPDFTextFormDoNotScroll.prototype.Type = AscDFH.historyitem_Pdf_Text_Form_DoNot_Scroll;
+CChangesPDFTextFormDoNotScroll.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm.SetDoNotScroll(Value);
+};
+
+//------------------------------------------------------------------------------------------------------------------
+//
+// List Form
+//
+//------------------------------------------------------------------------------------------------------------------
 
 /**
  * @constructor

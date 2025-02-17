@@ -1375,6 +1375,8 @@
     
     CBaseField.prototype.SetRequired = function(bRequired) {
         if (this.GetType() != AscPDF.FIELD_TYPES.button && this.IsRequired() != bRequired) {
+            AscCommon.History.Add(new CChangesPDFFormRequired(this, this._required, bRequired));
+
             this._required = bRequired;
             this.SetWasChanged(true);
             this.AddToRedraw();
@@ -1944,6 +1946,8 @@
     };
     
     CBaseField.prototype.SetTextColor = function(aColor) {
+        AscCommon.History.Add(new CChangesPDFFormTextColor(this, this._textColor, aColor));
+
         this._textColor = aColor;
         
         let oRGB = this.GetRGBColor(aColor);
@@ -1986,6 +1990,8 @@
         if (typeof(sFontName) !== "string" && sFontName == "")
             return;
         
+        AscCommon.History.Add(new CChangesPDFFormTextFont(this, this._textFontActual, sFontName));
+
         this._textFontActual = sFontName;
 
         if (this.content)
@@ -2023,6 +2029,8 @@
         return this._fontStyle;
     };
     CBaseField.prototype.SetTextSize = function(nSize) {
+        AscCommon.History.Add(new CChangesPDFFormTextSize(this, this._textSize, nSize));
+
         this._textSize = nSize;
         
         if (nSize != 0) {

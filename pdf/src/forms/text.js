@@ -73,6 +73,8 @@
     CTextField.prototype.SetComb = function(bComb) {
         if (this._comb == bComb && this.GetCharLimit() != 0)
             return;
+
+        AscCommon.History.Add(new CChangesPDFTextComb(this, this._comb, bComb));
             
         if (bComb == true) {
             this._comb = true;
@@ -103,6 +105,8 @@
         return false;
     };
     CTextField.prototype.SetCharLimit = function(nChars) {
+        AscCommon.History.Add(new CChangesPDFTextCharLimit(this, this._charLimit, nChars));
+
         let oViewer = editor.getDocumentRenderer();
 
         if (typeof(nChars) == "number" && nChars <= 500 && nChars > 0 && this.IsFileSelect() === false) {
@@ -124,7 +128,11 @@
         return this._charLimit;
     };
     CTextField.prototype.SetDoNotScroll = function(bNot) {
+        AscCommon.History.Add(new CChangesPDFTextFormDoNotScroll(this, this._doNotScroll, bNot));
+
         this._doNotScroll = bNot;
+        this.SetWasChanged(true);
+        this.AddToRedraw();
     };
     CTextField.prototype.IsDoNotScroll = function() {
         return this._doNotScroll;
@@ -148,6 +156,8 @@
         return this._fileSelect;
     };
     CTextField.prototype.SetMultiline = function(bMultiline) {
+        AscCommon.History.Add(new CChangesPDFTextFormMultiline(this, this._multiline, bMultiline));
+
         if (bMultiline == true && this.fileSelect != true) {
             this.content.SetUseXLimit(true);
             this.contentFormat.SetUseXLimit(true);
@@ -1163,6 +1173,8 @@
         this.needValidate = true;
     };
 	CTextField.prototype.SetAlign = function(nAlignType) {
+        AscCommon.History.Add(new CChangesPDFTextFormAlign(this, this._alignment, nAlignType));
+
         this._alignment = nAlignType;
 		this.content.SetAlign(nAlignType);
 		if (this.contentFormat)

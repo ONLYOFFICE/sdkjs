@@ -1805,18 +1805,17 @@
 	window['AscDFH'].historyitem_type_Pdf_Annot_Squiggly	= 2225 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Annot_Caret		= 2226 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Pushbutton		= 2227 << 16;
-	window['AscDFH'].historyitem_type_Pdf_List_Form			= 2228 << 16;
-	window['AscDFH'].historyitem_type_Pdf_Drawing			= 2229 << 16;
-	window['AscDFH'].historyitem_type_Pdf_Page				= 2230 << 16;
-	window['AscDFH'].historyitem_type_Pdf_Annot_Stamp		= 2231 << 16;
-	window['AscDFH'].historyitem_type_Pdf_PropLocker		= 2232 << 16;
-	window['AscDFH'].historyitem_type_Pdf_Checkbox_Field	= 2233 << 16;
-	window['AscDFH'].historyitem_type_Pdf_Combobox_Field	= 2234 << 16;
-	window['AscDFH'].historyitem_type_Pdf_Listbox_Field		= 2235 << 16;
-	window['AscDFH'].historyitem_type_Pdf_Button_Field		= 2236 << 16;
-	window['AscDFH'].historyitem_type_Pdf_Radiobutton_Field	= 2237 << 16;
-	window['AscDFH'].historyitem_type_Pdf_Signature_Field	= 2238 << 16;
-	window['AscDFH'].historyitem_type_Pdf_Text_Field		= 2239 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Drawing			= 2228 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Page				= 2229 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Annot_Stamp		= 2230 << 16;
+	window['AscDFH'].historyitem_type_Pdf_PropLocker		= 2231 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Checkbox_Field	= 2232 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Combobox_Field	= 2233 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Listbox_Field		= 2234 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Button_Field		= 2235 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Radiobutton_Field	= 2236 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Signature_Field	= 2237 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Text_Field		= 2238 << 16;
 	
 	window['AscDFH'].historyitem_type_CustomProperties      = 2301 << 16;
 
@@ -4017,6 +4016,7 @@
 	// Типы изменений в PDF Forms 
 	//------------------------------------------------------------------------------------------------------------------
 
+	// common
 	AscDFH.historyitem_Pdf_Form_Value			= AscDFH.historyitem_type_Pdf_Form | 1;
 	AscDFH.historyitem_Pdf_Form_Add_Kid			= AscDFH.historyitem_type_Pdf_Form | 2;
 	AscDFH.historyitem_Pdf_Form_Remove_Kid		= AscDFH.historyitem_type_Pdf_Form | 3;
@@ -4027,12 +4027,27 @@
 	AscDFH.historyitem_Pdf_Form_Border_Color	= AscDFH.historyitem_type_Pdf_Form | 8;
 	AscDFH.historyitem_Pdf_Form_BG_Color		= AscDFH.historyitem_type_Pdf_Form | 9;
 	AscDFH.historyitem_Pdf_Form_Border_Style	= AscDFH.historyitem_type_Pdf_Form | 10;
+	AscDFH.historyitem_Pdf_Form_Required		= AscDFH.historyitem_type_Pdf_Form | 11;
+	AscDFH.historyitem_Pdf_Form_Text_Color		= AscDFH.historyitem_type_Pdf_Form | 12;
+	AscDFH.historyitem_Pdf_Form_Text_Font		= AscDFH.historyitem_type_Pdf_Form | 13;
+	AscDFH.historyitem_Pdf_Form_Text_Size		= AscDFH.historyitem_type_Pdf_Form | 14;
+	AscDFH.historyitem_Pdf_Form_Default_Value	= AscDFH.historyitem_type_Pdf_Form | 15;
+	AscDFH.historyitem_Pdf_Form_Rect			= AscDFH.historyitem_type_Pdf_Form | 16;
 	
-	AscDFH.historyitem_Pdf_List_Form_Cur_Idxs			= AscDFH.historyitem_type_Pdf_List_Form | 1;
-	AscDFH.historyitem_Pdf_List_Form_Top_Idx			= AscDFH.historyitem_type_Pdf_List_Form | 2;
-	AscDFH.historyitem_Pdf_List_Form_Parent_Cur_Idxs	= AscDFH.historyitem_type_Pdf_List_Form | 3;
+	// text
+	AscDFH.historyitem_Pdf_Text_Form_Multiline		= AscDFH.historyitem_type_Pdf_Text_Field | 1;
+	AscDFH.historyitem_Pdf_Text_Form_Align			= AscDFH.historyitem_type_Pdf_Text_Field | 2;
+	AscDFH.historyitem_Pdf_Text_Form_Char_Limit		= AscDFH.historyitem_type_Pdf_Text_Field | 3;
+	AscDFH.historyitem_Pdf_Text_Form_Comb			= AscDFH.historyitem_type_Pdf_Text_Field | 4;
+	AscDFH.historyitem_Pdf_Text_Form_DoNot_Scroll	= AscDFH.historyitem_type_Pdf_Text_Field | 5;
+	
 
+	// list
+	AscDFH.historyitem_Pdf_List_Form_Cur_Idxs			= AscDFH.historyitem_type_Pdf_Listbox_Field | 1;
+	AscDFH.historyitem_Pdf_List_Form_Top_Idx			= AscDFH.historyitem_type_Pdf_Listbox_Field | 2;
+	AscDFH.historyitem_Pdf_List_Form_Parent_Cur_Idxs	= AscDFH.historyitem_type_Pdf_Listbox_Field | 3;
 
+	// button
 	AscDFH.historyitem_Pdf_Pushbutton_Image			= AscDFH.historyitem_type_Pdf_Pushbutton | 1;
 	AscDFH.historyitem_Pdf_Pushbutton_Header_Pos	= AscDFH.historyitem_type_Pdf_Pushbutton | 2;
 	
