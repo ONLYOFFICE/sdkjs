@@ -1167,6 +1167,127 @@
 			}
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
+	PDFEditorApi.prototype.SetFieldNumberFormat = function(nDemical, nSepStyle, nNegStyle, sCurrency, bCurrencyPrepend) {
+		let oDoc = this.getPDFDoc();
+		
+		oDoc.DoAction(function() {
+			let oField = oDoc.activeForm;
+
+			let oActionsFormat = [{
+				"S": AscPDF.ACTIONS_TYPES.JavaScript,
+				"JS": "AFNumber_Format(" + nDemical + "," + nSepStyle + "," + nNegStyle + "," + "0" + "," + sCurrency + "," + bCurrencyPrepend + ");"
+			}];
+			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, oActionsFormat);
+
+			let oActionsKeystroke = [{
+				"S": AscPDF.ACTIONS_TYPES.JavaScript,
+				"JS": "AFNumber_Keystroke(" + nDemical + "," + nSepStyle + "," + nNegStyle + "," + "0" + "," + sCurrency + "," + bCurrencyPrepend + ");"
+			}];
+			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, oActionsKeystroke);
+
+		}, AscDFH.historydescription_Pdf_AddField, this);
+	};
+	PDFEditorApi.prototype.SetFieldPercentageFormat = function(nDemical, nSepStyle) {
+		let oDoc = this.getPDFDoc();
+		
+		oDoc.DoAction(function() {
+			let oField = oDoc.activeForm;
+
+			let oActionsFormat = [{
+				"S": AscPDF.ACTIONS_TYPES.JavaScript,
+				"JS": "AFPercent_Format(" + nDemical + "," + nSepStyle + ");"
+			}]
+			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, oActionsFormat);
+
+			let oActionsKeystroke = [{
+				"S": AscPDF.ACTIONS_TYPES.JavaScript,
+				"JS": "AFPercent_Keystroke(" + nDemical + "," + nSepStyle + ");"
+			}];
+			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, oActionsKeystroke);
+
+		}, AscDFH.historydescription_Pdf_AddField, this);
+	};
+
+	PDFEditorApi.prototype.SetFieldDateFormat = function(sFormat) {
+		let oDoc = this.getPDFDoc();
+		
+		oDoc.DoAction(function() {
+			let oField = oDoc.activeForm;
+
+			let oActionsFormat = [{
+				"S": AscPDF.ACTIONS_TYPES.JavaScript,
+				"JS": "AFDate_Format(" + sFormat + ");"
+			}]
+			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, oActionsFormat);
+
+			let oActionsKeystroke = [{
+				"S": AscPDF.ACTIONS_TYPES.JavaScript,
+				"JS": "AFDate_Keystroke(" + sFormat + ");"
+			}];
+			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, oActionsKeystroke);
+
+		}, AscDFH.historydescription_Pdf_AddField, this);
+	};
+
+	PDFEditorApi.prototype.SetFieldTimeFormat = function(sFormat) {
+		let oDoc = this.getPDFDoc();
+		
+		oDoc.DoAction(function() {
+			let oField = oDoc.activeForm;
+
+			let oActionsFormat = [{
+				"S": AscPDF.ACTIONS_TYPES.JavaScript,
+				"JS": "AFTime_Format(" + sFormat + ");"
+			}]
+			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, oActionsFormat);
+
+			let oActionsKeystroke = [{
+				"S": AscPDF.ACTIONS_TYPES.JavaScript,
+				"JS": "AFTime_Keystroke(" + sFormat + ");"
+			}];
+			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, oActionsKeystroke);
+
+		}, AscDFH.historydescription_Pdf_AddField, this);
+	};
+
+	PDFEditorApi.prototype.SetFieldSpecialFormat = function(sFormat) {
+		let oDoc = this.getPDFDoc();
+		
+		oDoc.DoAction(function() {
+			let oField = oDoc.activeForm;
+
+			let oActionsFormat = [{
+				"S": AscPDF.ACTIONS_TYPES.JavaScript,
+				"JS": "AFSpecial_Format(" + sFormat + ");"
+			}]
+			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, oActionsFormat);
+
+			let oActionsKeystroke = [{
+				"S": AscPDF.ACTIONS_TYPES.JavaScript,
+				"JS": "AFSpecial_Keystroke(" + sFormat + ");"
+			}];
+			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, oActionsKeystroke);
+
+		}, AscDFH.historydescription_Pdf_AddField, this);
+	};
+
+	PDFEditorApi.prototype.SetFieldMask = function(sMask) {
+		let oDoc = this.getPDFDoc();
+		
+		oDoc.DoAction(function() {
+			let oField = oDoc.activeForm;
+
+			let oActionsFormat = []
+			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, oActionsFormat);
+
+			let oActionsKeystroke = [{
+				"S": AscPDF.ACTIONS_TYPES.JavaScript,
+				"JS": "AFSpecial_KeystrokeEx(" + sMask + ");"
+			}];
+			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, oActionsKeystroke);
+
+		}, AscDFH.historydescription_Pdf_AddField, this);
+	};
 	/////////////////////////////////////////////////////////////
 	///////// For drawings
 	////////////////////////////////////////////////////////////
@@ -3204,13 +3325,20 @@
 	PDFEditorApi.prototype['AddFreeTextAnnot']	= PDFEditorApi.prototype.AddFreeTextAnnot;
 
 	// forms
-	PDFEditorApi.prototype['AddTextField']			= PDFEditorApi.prototype.AddTextField;
-	PDFEditorApi.prototype['AddDateField']			= PDFEditorApi.prototype.AddDateField;
-	PDFEditorApi.prototype['AddImageField']			= PDFEditorApi.prototype.AddImageField;
-	PDFEditorApi.prototype['AddCheckboxField']		= PDFEditorApi.prototype.AddCheckboxField;
-	PDFEditorApi.prototype['AddRadiobuttonField']	= PDFEditorApi.prototype.AddRadiobuttonField;
-	PDFEditorApi.prototype['AddComboboxField']		= PDFEditorApi.prototype.AddComboboxField;
-	PDFEditorApi.prototype['AddListboxField']		= PDFEditorApi.prototype.AddListboxField;
+	PDFEditorApi.prototype['AddTextField']				= PDFEditorApi.prototype.AddTextField;
+	PDFEditorApi.prototype['AddDateField']				= PDFEditorApi.prototype.AddDateField;
+	PDFEditorApi.prototype['AddImageField']				= PDFEditorApi.prototype.AddImageField;
+	PDFEditorApi.prototype['AddCheckboxField']			= PDFEditorApi.prototype.AddCheckboxField;
+	PDFEditorApi.prototype['AddRadiobuttonField']		= PDFEditorApi.prototype.AddRadiobuttonField;
+	PDFEditorApi.prototype['AddComboboxField']			= PDFEditorApi.prototype.AddComboboxField;
+	PDFEditorApi.prototype['AddListboxField']			= PDFEditorApi.prototype.AddListboxField;
+	PDFEditorApi.prototype['AddListFieldOption']		= PDFEditorApi.prototype.AddListFieldOption;
+	PDFEditorApi.prototype['SetFieldNumberFormat']		= PDFEditorApi.prototype.SetFieldNumberFormat;
+	PDFEditorApi.prototype['SetFieldPercentageFormat']	= PDFEditorApi.prototype.SetFieldPercentageFormat;
+	PDFEditorApi.prototype['SetFieldDateFormat']		= PDFEditorApi.prototype.SetFieldDateFormat;
+	PDFEditorApi.prototype['SetFieldTimeFormat']		= PDFEditorApi.prototype.SetFieldTimeFormat;
+	PDFEditorApi.prototype['SetFieldSpecialFormat']		= PDFEditorApi.prototype.SetFieldSpecialFormat;
+	PDFEditorApi.prototype['SetFieldMask']				= PDFEditorApi.prototype.SetFieldMask;
 	
 	// drawings
 	PDFEditorApi.prototype['AddTextArt']							= PDFEditorApi.prototype.AddTextArt;
