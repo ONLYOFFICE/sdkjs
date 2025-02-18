@@ -454,37 +454,42 @@
                     break;
             }
         }
+        
+        const oNewTrigger = aActions.length != 0 ? new AscPDF.CFormTrigger(nTriggerType, aActions) : null;
+        const aCurActionsInfo = this.GetActions();
+
+        AscCommon.History.Add(new CChangesPDFFormActions(this, aCurActionsInfo, aActionsInfo, nTriggerType));
 
         switch (nTriggerType) {
             case AscPDF.FORMS_TRIGGERS_TYPES.MouseUp:
-                this._triggers.MouseUp = new AscPDF.CFormTrigger(nTriggerType, aActions);
+                this._triggers.MouseUp = oNewTrigger;
                 break;
             case AscPDF.FORMS_TRIGGERS_TYPES.MouseDown:
-                this._triggers.MouseDown = new AscPDF.CFormTrigger(nTriggerType, aActions);
+                this._triggers.MouseDown = oNewTrigger;
                 break;
             case AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter:
-                this._triggers.MouseEnter = new AscPDF.CFormTrigger(nTriggerType, aActions);
+                this._triggers.MouseEnter = oNewTrigger;
                 break;
             case AscPDF.FORMS_TRIGGERS_TYPES.MouseExit:
-                this._triggers.MouseExit = new AscPDF.CFormTrigger(nTriggerType, aActions);
+                this._triggers.MouseExit = oNewTrigger;
                 break;
             case AscPDF.FORMS_TRIGGERS_TYPES.OnFocus:
-                this._triggers.OnFocus = new AscPDF.CFormTrigger(nTriggerType, aActions);
+                this._triggers.OnFocus = oNewTrigger;
                 break;
             case AscPDF.FORMS_TRIGGERS_TYPES.OnBlur:
-                this._triggers.OnBlur = new AscPDF.CFormTrigger(nTriggerType, aActions);
+                this._triggers.OnBlur = oNewTrigger;
                 break;
             case AscPDF.FORMS_TRIGGERS_TYPES.Keystroke:
-                this._triggers.Keystroke = new AscPDF.CFormTrigger(nTriggerType, aActions);
+                this._triggers.Keystroke = oNewTrigger;
                 break;
             case AscPDF.FORMS_TRIGGERS_TYPES.Validate:
-                this._triggers.Validate = new AscPDF.CFormTrigger(nTriggerType, aActions);
+                this._triggers.Validate = oNewTrigger;
                 break;
             case AscPDF.FORMS_TRIGGERS_TYPES.Calculate:
-                this._triggers.Calculate = new AscPDF.CFormTrigger(nTriggerType, aActions);
+                this._triggers.Calculate = oNewTrigger;
                 break;
             case AscPDF.FORMS_TRIGGERS_TYPES.Format:
-                this._triggers.Format = new AscPDF.CFormTrigger(nTriggerType, aActions);
+                this._triggers.Format = oNewTrigger;
                 break;
         }
 
@@ -494,6 +499,65 @@
 
         return aActions;
     };
+    CBaseField.prototype.GetActions = function(nTriggerType) {
+        // Get the trigger by type
+        let oTrigger = this.GetTrigger(nTriggerType);
+        if (!oTrigger || !oTrigger.Actions) {
+            return [];
+        }
+        
+        let aActionsInfo = [];
+        // Iterate through all actions associated with the trigger
+        for (let i = 0; i < oTrigger.Actions.length; i++) {
+            let oAction = oTrigger.Actions[i];
+            let actionInfo = {};
+            
+            // Determine the action type and populate the object with information
+            switch (oAction.GetType()) {
+                case AscPDF.ACTIONS_TYPES.JavaScript:
+                    actionInfo["S"] = AscPDF.ACTIONS_TYPES.JavaScript;
+                    actionInfo["JS"] = oAction.GetScript();
+                    break;
+                case AscPDF.ACTIONS_TYPES.ResetForm:
+                    actionInfo["S"] = AscPDF.ACTIONS_TYPES.ResetForm;
+                    actionInfo["Fields"] = oAction.GetNames();
+                    actionInfo["Flags"] = Number(oAction.GetNeedAllExcept());
+                    break;
+                case AscPDF.ACTIONS_TYPES.URI:
+                    actionInfo["S"] = AscPDF.ACTIONS_TYPES.URI;
+                    actionInfo["URI"] = oAction.GetURI();
+                    break;
+                case AscPDF.ACTIONS_TYPES.HideShow:
+                    actionInfo["S"] = AscPDF.ACTIONS_TYPES.HideShow;
+                    actionInfo["H"] = oAction.GetHidden();
+                    actionInfo["T"] = oAction.GetNames();
+                    break;
+                case AscPDF.ACTIONS_TYPES.GoTo:
+                    actionInfo["S"] = AscPDF.ACTIONS_TYPES.GoTo;
+                    actionInfo["page"] = oAction.GetPage();
+                    actionInfo["kind"] = oAction.GetKind();
+                    actionInfo["zoom"] = oAction.GetZoom();
+                    let oRect = oAction.GetRect();
+                    actionInfo["top"] = oRect.top;
+                    actionInfo["right"] = oRect.right;
+                    actionInfo["bottom"] = oRect.bottom;
+                    actionInfo["left"] = oRect.left;
+                    break;
+                case AscPDF.ACTIONS_TYPES.Named:
+                    actionInfo["S"] = AscPDF.ACTIONS_TYPES.Named;
+                    actionInfo["N"] = oAction.GetName();
+                    break;
+                default:
+                    // If the type is not recognized, add handling or skip
+                    break;
+            }
+            
+            aActionsInfo.push(actionInfo);
+        }
+        
+        return aActionsInfo;
+    };
+
 
     /**
 	 * Sets the JavaScript action of the field for a given trigger.

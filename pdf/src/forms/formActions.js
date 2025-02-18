@@ -268,6 +268,10 @@
         return this.goToType;
     };
 
+    CActionGoTo.prototype.GetRect = function() {
+        return this.rect;
+    };
+
     CActionGoTo.prototype.Do = function() {
         let oViewer         = editor.getDocumentRenderer();
         let oDoc            = this.field.GetDocument();
@@ -493,6 +497,13 @@
         oDoc.HideShowForms(this.hidden, this.names);
     };
 
+    CActionHideShow.prototype.GetNames = function() {
+        return this.names;
+    };
+    CActionHideShow.prototype.GetHidden = function() {
+        return this.hidden;
+    };
+
     CActionHideShow.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(this.GetType());
         if (this.hidden)
@@ -529,6 +540,13 @@
         }
             
         oDoc.ResetForms(this.names, this.bAllExcept);
+    };
+
+    CActionReset.prototype.GetNames = function() {
+        return this.names;
+    };
+    CActionReset.prototype.GetNeedAllExcept = function() {
+        return this.bAllExcept;
     };
 
     CActionReset.prototype.WriteToBinary = function(memory) {
@@ -599,6 +617,10 @@
             console.log(err);
         }
     };
+
+    CActionRunScript.prototype.GetScript = function() {
+        return this.script;
+    }
 
     CActionRunScript.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(this.GetType());

@@ -466,6 +466,90 @@ CChangesPDFFormRect.prototype.private_SetValue = function(Value)
 	oField.SetRect(Value);
 };
 
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesPDFFormActions(Class, oOldActionsInfo, oNewActionsInfo, nTriggerType, Color)
+{
+	AscDFH.CChangesBaseStringProperty.call(this, Class, JSON.stringify(oOldActionsInfo), JSON.stringify(oNewActionsInfo), Color);
+	this.TriggerType = nTriggerType;
+}
+CChangesPDFFormActions.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesPDFFormActions.prototype.constructor = CChangesPDFFormActions;
+CChangesPDFFormActions.prototype.Type = AscDFH.historyitem_Pdf_Pushbutton_Image;
+CChangesPDFFormActions.prototype.CreateReverseChange = function() {
+	return new this.constructor(this.Class, this.New, this.Old, this.TriggerType, this.Color);
+};
+CChangesPDFFormActions.prototype.private_SetValue = function(Value)
+{
+	let oField = this.Class;
+	oField.SetActions(this.TriggerType, JSON.parse(Value));
+};
+
+CChangesPDFFormActions.prototype.WriteToBinary = function(Writer)
+{
+	let nFlags = 0;
+
+	if (false !== this.Color)
+		nFlags |= 1;
+
+	if (undefined === this.TriggerType)
+		nFlags |= 2;
+
+	if (undefined === this.New)
+		nFlags |= 4;
+
+	if (undefined === this.Old)
+		nFlags |= 8;
+	
+
+	Writer.WriteLong(nFlags);
+
+	if (undefined !== this.TriggerType)
+		Writer.WriteLong(this.TriggerType);
+
+	if (undefined !== this.New)
+		Writer.WriteString2(this.New);
+
+	if (undefined !== this.Old)
+		Writer.WriteString2(this.Old);
+};
+CChangesPDFFormActions.prototype.ReadFromBinary = function(Reader)
+{
+	this.FromLoad = true;
+
+	// Long  : Flag
+	// 1-bit : Подсвечивать ли данные изменения
+	// 2-bit : IsUndefined New
+	// 3-bit : IsUndefined Old
+	// long : New
+	// long : Old
+
+
+	var nFlags = Reader.GetLong();
+
+	if (nFlags & 1)
+		this.Color = true;
+	else
+		this.Color = false;
+
+	if (nFlags & 2)
+		this.TriggerType = undefined;
+	else
+		this.TriggerType = Reader.GetLong();
+
+	if (nFlags & 4)
+		this.New = undefined;
+	else
+		this.New = Reader.GetString2();
+
+	if (nFlags & 8)
+		this.Old = undefined;
+	else
+		this.Old = Reader.GetString2();
+};
+
 //------------------------------------------------------------------------------------------------------------------
 //
 // Text Form
