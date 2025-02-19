@@ -2178,15 +2178,14 @@
 			let noLineFillSpPr = cShape.spPr.createDuplicate();
 			noLineFillSpPr.setFill(AscFormat.CreateNoFillUniFill());
 			noLineFillSpPr.setLn(AscFormat.CreateNoFillLine());
-			// these flips come to group
-			noLineFillSpPr.xfrm.flipV = cShape.spPr.xfrm.flipV;
-			noLineFillSpPr.xfrm.flipH = cShape.spPr.xfrm.flipH;
+			groupShape.setSpPr(noLineFillSpPr);
+			groupShape.spPr.setParent(groupShape);
+			// these props came to group
+			cShape.spPr.xfrm.rot = 0;
 			cShape.spPr.xfrm.flipV = false;
 			cShape.spPr.xfrm.flipH = false;
 
-			groupShape.setSpPr(noLineFillSpPr);
-			groupShape.spPr.setParent(groupShape);
-			// groupShape.rot = 0;
+
 			groupShape.brush = cShape.brush;
 			groupShape.bounds = cShape.bounds;
 			groupShape.localTransform = cShape.localTransform;
@@ -2197,7 +2196,6 @@
 			groupShape.spTree[groupShape.spTree.length - 1].setGroup(groupShape);
 			cShape.spPr.xfrm.setOffX(0);
 			cShape.spPr.xfrm.setOffY(0);
-			cShape.spPr.xfrm.rot = 0;
 
 
 			cShape.recalculateLocalTransform(cShape.transform);
@@ -2264,17 +2262,20 @@
 				let noLineFillSpPr = cShapeOrCGroupShape.spPr.createDuplicate();
 				noLineFillSpPr.setFill(AscFormat.CreateNoFillUniFill());
 				noLineFillSpPr.setLn(AscFormat.CreateNoFillLine());
-
 				groupShape.setSpPr(noLineFillSpPr);
 				groupShape.spPr.setParent(groupShape);
-				groupShape.rot = cShapeOrCGroupShape.rot;
+				// these props came to group
+				cShapeOrCGroupShape.spPr.xfrm.rot = 0;
+				cShapeOrCGroupShape.spPr.xfrm.flipH = false;
+				cShapeOrCGroupShape.spPr.xfrm.flipV = false;
+
+
 				groupShape.brush = cShapeOrCGroupShape.brush;
 				groupShape.bounds = cShapeOrCGroupShape.bounds;
-				groupShape.flipH = cShapeOrCGroupShape.flipH;
-				groupShape.flipV = cShapeOrCGroupShape.flipV;
 				groupShape.localTransform = cShapeOrCGroupShape.localTransform;
 				groupShape.pen = cShapeOrCGroupShape.pen;
 				groupShape.Id = cShapeOrCGroupShape.Id + "_Group";
+
 
 				// add group geometry to bottom
 				if (cShapeOrCGroupShape instanceof CGroupShape) {
