@@ -14199,6 +14199,13 @@
 				sheetMemory.setInt32(this.nRow, g_nCellOffsetFormula, formulaSave);
 			}
 
+			// let xfSave = this.xfs ? this.xfs.getIndexNumber() : 0;
+			// let attrArray = this.ws.getColXf(this.nCol);
+			// attrArray.set(this.nRow, xfSave, opt_append);
+		}
+	};
+	Cell.prototype.saveContentXf = function(opt_inCaseOfChange, opt_append) {
+		if ((!opt_inCaseOfChange || this._hasChanged) && this.hasRowCol()) {
 			let xfSave = this.xfs ? this.xfs.getIndexNumber() : 0;
 			let attrArray = this.ws.getColXf(this.nCol);
 			attrArray.set(this.nRow, xfSave, opt_append);

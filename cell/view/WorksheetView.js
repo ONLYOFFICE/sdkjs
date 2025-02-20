@@ -26375,7 +26375,7 @@
 	WorksheetView.prototype.getExternalReferencesByCell = function (c, initStructure, opt_get_only_ids) {
 		let t = this;
 		let externalReferences = [];
-		t.model._getCell(c.bbox.r1, c.bbox.c1, function (cell) {
+		t.model._getCellNoEmpty(c.bbox.r1, c.bbox.c1, function (cell) {
 			if (cell && cell.isFormula()) {
 				let fP = cell.formulaParsed;
 				let needCalc = false;

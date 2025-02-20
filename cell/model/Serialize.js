@@ -13478,7 +13478,8 @@
         if(!(this.copyPasteObj && this.copyPasteObj.isCopyPaste && typeof editor != "undefined" && editor)) {
             this.setFormulaOpen(tmp);
         }
-        tmp.cell.saveContent(undefined, true);
+        tmp.cell.saveContent();
+        tmp.cell.saveContentXf(undefined, true);
         if (tmp.cell.nCol >= tmp.ws.nColsCount) {
             tmp.ws.nColsCount = tmp.cell.nCol + 1;
         }
