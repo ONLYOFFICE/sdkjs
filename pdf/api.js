@@ -1175,13 +1175,13 @@
 
 			let oActionsFormat = [{
 				"S": AscPDF.ACTIONS_TYPES.JavaScript,
-				"JS": "AFNumber_Format(" + nDemical + "," + nSepStyle + "," + nNegStyle + "," + "0" + "," + sCurrency + "," + bCurrencyPrepend + ");"
+				"JS": "AFNumber_Format(" + nDemical + "," + nSepStyle + "," + nNegStyle + "," + "0" + ',"' + sCurrency + '",' + bCurrencyPrepend + ");"
 			}];
 			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, oActionsFormat);
 
 			let oActionsKeystroke = [{
 				"S": AscPDF.ACTIONS_TYPES.JavaScript,
-				"JS": "AFNumber_Keystroke(" + nDemical + "," + nSepStyle + "," + nNegStyle + "," + "0" + "," + sCurrency + "," + bCurrencyPrepend + ");"
+				"JS": "AFNumber_Keystroke(" + nDemical + "," + nSepStyle + "," + nNegStyle + "," + "0" + ',"' + sCurrency + '",' + bCurrencyPrepend + ");"
 			}];
 			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, oActionsKeystroke);
 
@@ -1216,13 +1216,13 @@
 
 			let oActionsFormat = [{
 				"S": AscPDF.ACTIONS_TYPES.JavaScript,
-				"JS": "AFDate_Format(" + sFormat + ");"
+				"JS": 'AFDate_Format("' + sFormat + '");'
 			}]
 			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, oActionsFormat);
 
 			let oActionsKeystroke = [{
 				"S": AscPDF.ACTIONS_TYPES.JavaScript,
-				"JS": "AFDate_Keystroke(" + sFormat + ");"
+				"JS": 'AFDate_Keystroke("' + sFormat + '");'
 			}];
 			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, oActionsKeystroke);
 
@@ -1237,20 +1237,20 @@
 
 			let oActionsFormat = [{
 				"S": AscPDF.ACTIONS_TYPES.JavaScript,
-				"JS": "AFTime_Format(" + sFormat + ");"
+				"JS": 'AFTime_Format("' + sFormat + '");'
 			}]
 			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, oActionsFormat);
 
 			let oActionsKeystroke = [{
 				"S": AscPDF.ACTIONS_TYPES.JavaScript,
-				"JS": "AFTime_Keystroke(" + sFormat + ");"
+				"JS": 'AFTime_Keystroke("' + sFormat + '");'
 			}];
 			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, oActionsKeystroke);
 
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
 
-	PDFEditorApi.prototype.SetFieldSpecialFormat = function(sFormat) {
+	PDFEditorApi.prototype.SetFieldSpecialFormat = function(nFormat) {
 		let oDoc = this.getPDFDoc();
 		
 		oDoc.DoAction(function() {
@@ -1258,13 +1258,13 @@
 
 			let oActionsFormat = [{
 				"S": AscPDF.ACTIONS_TYPES.JavaScript,
-				"JS": "AFSpecial_Format(" + sFormat + ");"
+				"JS": "AFSpecial_Format(" + nFormat + ");"
 			}]
 			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, oActionsFormat);
 
 			let oActionsKeystroke = [{
 				"S": AscPDF.ACTIONS_TYPES.JavaScript,
-				"JS": "AFSpecial_Keystroke(" + sFormat + ");"
+				"JS": "AFSpecial_Keystroke(" + nFormat + ");"
 			}];
 			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, oActionsKeystroke);
 
@@ -1282,7 +1282,7 @@
 
 			let oActionsKeystroke = [{
 				"S": AscPDF.ACTIONS_TYPES.JavaScript,
-				"JS": "AFSpecial_KeystrokeEx(" + sMask + ");"
+				"JS": 'AFSpecial_KeystrokeEx("' + sMask + '");'
 			}];
 			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, oActionsKeystroke);
 
