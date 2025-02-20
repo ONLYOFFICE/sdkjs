@@ -160,31 +160,29 @@
     CListBoxField.prototype.SyncField = function() {
         let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         
-        let oDoc = this.GetDocument();
-        oDoc.StartNoHistoryMode();
-
         for (let i = 0; i < aFields.length; i++) {
             if (aFields[i] != this) {
                 this.SetMultipleSelection(aFields[i].IsMultipleSelection());
+                this.SetCommitOnSelChange(aFields[i].IsCommitOnSelChange());
+                this.SetOptions(aFields[i].GetOptions());
+
                 this.content.Internal_Content_RemoveAll();
                 for (let nItem = 0; nItem < aFields[i].content.Content.length; nItem++) {
                     this.content.Internal_Content_Add(nItem, aFields[i].content.Content[nItem].Copy());
                 }
                 
-                this._options = aFields[i]._options.slice();
-                this._currentValueIndices = aFields.multipleSelection ? aFields[i]._currentValueIndices.slice() : aFields[i]._currentValueIndices;
-
                 let oPara;
                 for (let i = 0; i < this.content.Content.length; i++) {
                     oPara = this.content.GetElement(i);
                     if (oPara.Pr.Shd && oPara.Pr.Shd.IsNil() == false)
                         oPara.RecalcCompiledPr(true);
                 }
+
+                this.SetCurIdxs(aFields[i].GetCurIdxs(true));
+                this.SetTopIndex(aFields[i].GetTopIndex());
                 break;
             }
         }
-
-        oDoc.EndNoHistoryMode();
     };
     /**
 	 * Applies value of this field to all fields with the same name.
@@ -262,12 +260,11 @@
     };
     
     CListBoxField.prototype.SetMultipleSelection = function(bValue) {
-        if (bValue == true) {
-            this._multipleSelection = true;
-        }
-        else {
-            this._multipleSelection = false;
-        }
+        let oDoc = this.GetDocument();
+        oDoc.History.Add(new CChangesPDFListMultipleSelection(this, this._multipleSelection, bValue));
+
+        this._multipleSelection = bValue;
+        this.SetWasChanged(true);
     };
     CListBoxField.prototype.IsMultipleSelection = function() {
         return this._multipleSelection;

@@ -1104,74 +1104,89 @@
 	PDFEditorApi.prototype.AddTextField = function() {
 		let oDoc = this.getPDFDoc();
 		
-		oDoc.DoAction(function() {
+		return oDoc.DoAction(function() {
 			let oField = oDoc.CreateTextField();
 			oDoc.AddField(oField, oDoc.GetCurPage());
+			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
 	PDFEditorApi.prototype.AddDateField = function() {
 		let oDoc = this.getPDFDoc();
 		
-		oDoc.DoAction(function() {
+		return oDoc.DoAction(function() {
 			let oField = oDoc.CreateTextField(true);
 			oDoc.AddField(oField, oDoc.GetCurPage());
+			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
 	PDFEditorApi.prototype.AddImageField = function() {
 		let oDoc = this.getPDFDoc();
 		
-		oDoc.DoAction(function() {
+		return oDoc.DoAction(function() {
 			let oField = oDoc.CreateButtonField(true);
 			oDoc.AddField(oField, oDoc.GetCurPage());
+			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
 	PDFEditorApi.prototype.AddCheckboxField = function() {
 		let oDoc = this.getPDFDoc();
 		
-		oDoc.DoAction(function() {
+		return oDoc.DoAction(function() {
 			let oField = oDoc.CreateCheckboxField();
 			oDoc.AddField(oField, oDoc.GetCurPage());
+			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
 	PDFEditorApi.prototype.AddRadiobuttonField = function() {
 		let oDoc = this.getPDFDoc();
 		
-		oDoc.DoAction(function() {
+		return oDoc.DoAction(function() {
 			let oField = oDoc.CreateRadiobuttonField(true);
 			oDoc.AddField(oField, oDoc.GetCurPage());
+			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
 	PDFEditorApi.prototype.AddComboboxField = function() {
 		let oDoc = this.getPDFDoc();
 		
-		oDoc.DoAction(function() {
+		return oDoc.DoAction(function() {
 			let oField = oDoc.CreateComboboxField(true);
 			oDoc.AddField(oField, oDoc.GetCurPage());
+			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
 	PDFEditorApi.prototype.AddListboxField = function() {
 		let oDoc = this.getPDFDoc();
 		
-		oDoc.DoAction(function() {
+		return oDoc.DoAction(function() {
 			let oField = oDoc.CreateListboxField(true);
 			oDoc.AddField(oField, oDoc.GetCurPage());
+			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
 	PDFEditorApi.prototype.AddListFieldOption = function(option, nPos) {
 		let oDoc = this.getPDFDoc();
 
-		oDoc.DoAction(function() {
+		return oDoc.DoAction(function() {
 			let oField = oDoc.activeForm;
+			if (!oField) {
+				return false;
+			}
 			if (oField && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(oField.GetType())) {
 				oField.AddOption(option, nPos);
 			}
+
+			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
 	PDFEditorApi.prototype.SetFieldNumberFormat = function(nDemical, nSepStyle, nNegStyle, sCurrency, bCurrencyPrepend) {
 		let oDoc = this.getPDFDoc();
 		
-		oDoc.DoAction(function() {
+		return oDoc.DoAction(function() {
 			let oField = oDoc.activeForm;
+			if (!oField) {
+				return false;
+			}
 
 			let oActionsFormat = [{
 				"S": AscPDF.ACTIONS_TYPES.JavaScript,
@@ -1185,13 +1200,17 @@
 			}];
 			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, oActionsKeystroke);
 
-		}, AscDFH.historydescription_Pdf_AddField, this);
+			return true;
+		}, AscDFH.historydescription_Pdf_ChangeField, this);
 	};
 	PDFEditorApi.prototype.SetFieldPercentageFormat = function(nDemical, nSepStyle) {
 		let oDoc = this.getPDFDoc();
 		
-		oDoc.DoAction(function() {
+		return oDoc.DoAction(function() {
 			let oField = oDoc.activeForm;
+			if (!oField) {
+				return false;
+			}
 
 			let oActionsFormat = [{
 				"S": AscPDF.ACTIONS_TYPES.JavaScript,
@@ -1205,14 +1224,18 @@
 			}];
 			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, oActionsKeystroke);
 
-		}, AscDFH.historydescription_Pdf_AddField, this);
+			return true;
+		}, AscDFH.historydescription_Pdf_ChangeField, this);
 	};
 
 	PDFEditorApi.prototype.SetFieldDateFormat = function(sFormat) {
 		let oDoc = this.getPDFDoc();
 		
-		oDoc.DoAction(function() {
+		return oDoc.DoAction(function() {
 			let oField = oDoc.activeForm;
+			if (!oField) {
+				return false;
+			}
 
 			let oActionsFormat = [{
 				"S": AscPDF.ACTIONS_TYPES.JavaScript,
@@ -1226,14 +1249,18 @@
 			}];
 			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, oActionsKeystroke);
 
-		}, AscDFH.historydescription_Pdf_AddField, this);
+			return true;
+		}, AscDFH.historydescription_Pdf_ChangeField, this);
 	};
 
 	PDFEditorApi.prototype.SetFieldTimeFormat = function(sFormat) {
 		let oDoc = this.getPDFDoc();
 		
-		oDoc.DoAction(function() {
+		return oDoc.DoAction(function() {
 			let oField = oDoc.activeForm;
+			if (!oField) {
+				return false;
+			}
 
 			let oActionsFormat = [{
 				"S": AscPDF.ACTIONS_TYPES.JavaScript,
@@ -1247,14 +1274,19 @@
 			}];
 			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, oActionsKeystroke);
 
-		}, AscDFH.historydescription_Pdf_AddField, this);
+			return true;
+
+		}, AscDFH.historydescription_Pdf_ChangeField, this);
 	};
 
 	PDFEditorApi.prototype.SetFieldSpecialFormat = function(nFormat) {
 		let oDoc = this.getPDFDoc();
 		
-		oDoc.DoAction(function() {
+		return oDoc.DoAction(function() {
 			let oField = oDoc.activeForm;
+			if (!oField) {
+				return false;
+			}
 
 			let oActionsFormat = [{
 				"S": AscPDF.ACTIONS_TYPES.JavaScript,
@@ -1268,15 +1300,19 @@
 			}];
 			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, oActionsKeystroke);
 
-		}, AscDFH.historydescription_Pdf_AddField, this);
+			return true;
+		}, AscDFH.historydescription_Pdf_ChangeField, this);
 	};
 
 	PDFEditorApi.prototype.SetFieldMask = function(sMask) {
 		let oDoc = this.getPDFDoc();
 		
-		oDoc.DoAction(function() {
+		return oDoc.DoAction(function() {
 			let oField = oDoc.activeForm;
-
+			if (!oField) {
+				return false;
+			}
+			
 			let oActionsFormat = []
 			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, oActionsFormat);
 
@@ -1285,8 +1321,21 @@
 				"JS": 'AFSpecial_KeystrokeEx("' + sMask + '");'
 			}];
 			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, oActionsKeystroke);
+			return true;
 
-		}, AscDFH.historydescription_Pdf_AddField, this);
+		}, AscDFH.historydescription_Pdf_ChangeField, this);
+	};
+
+	PDFEditorApi.prototype.SetFieldName = function(sName) {
+		let oDoc = this.getPDFDoc();
+		
+		return oDoc.DoAction(function() {
+			let oField = oDoc.activeForm;
+			if (!oField) {
+				return false;
+			}
+			return oField.SetName(sName);
+		}, AscDFH.historydescription_Pdf_ChangeField, this);
 	};
 	/////////////////////////////////////////////////////////////
 	///////// For drawings

@@ -4033,6 +4033,8 @@
 	AscDFH.historyitem_Pdf_Form_Text_Size		= AscDFH.historyitem_type_Pdf_Form | 14;
 	AscDFH.historyitem_Pdf_Form_Default_Value	= AscDFH.historyitem_type_Pdf_Form | 15;
 	AscDFH.historyitem_Pdf_Form_Rect			= AscDFH.historyitem_type_Pdf_Form | 16;
+	AscDFH.historyitem_Pdf_Form_Actions			= AscDFH.historyitem_type_Pdf_Form | 17;
+	AscDFH.historyitem_Pdf_Form_Partial_Name	= AscDFH.historyitem_type_Pdf_Form | 18;
 	
 	// text
 	AscDFH.historyitem_Pdf_Text_Form_Multiline		= AscDFH.historyitem_type_Pdf_Text_Field | 1;
@@ -4043,14 +4045,24 @@
 	
 
 	// list
-	AscDFH.historyitem_Pdf_List_Form_Cur_Idxs			= AscDFH.historyitem_type_Pdf_Listbox_Field | 1;
-	AscDFH.historyitem_Pdf_List_Form_Top_Idx			= AscDFH.historyitem_type_Pdf_Listbox_Field | 2;
-	AscDFH.historyitem_Pdf_List_Form_Parent_Cur_Idxs	= AscDFH.historyitem_type_Pdf_Listbox_Field | 3;
+	AscDFH.historyitem_Pdf_List_Form_Cur_Idxs				= AscDFH.historyitem_type_Pdf_Listbox_Field | 1;
+	AscDFH.historyitem_Pdf_List_Form_Parent_Cur_Idxs		= AscDFH.historyitem_type_Pdf_Listbox_Field | 2;
+	AscDFH.historyitem_Pdf_List_Form_Top_Idx				= AscDFH.historyitem_type_Pdf_Listbox_Field | 3;
+	AscDFH.historyitem_Pdf_List_Form_Option					= AscDFH.historyitem_type_Pdf_Listbox_Field | 4;
+	AscDFH.historyitem_Pdf_List_Form_Commit_On_Sel_Change	= AscDFH.historyitem_type_Pdf_Listbox_Field | 5;
+	AscDFH.historyitem_Pdf_List_Form_Multiple_Selection		= AscDFH.historyitem_type_Pdf_Listbox_Field | 6;
 
 	// button
 	AscDFH.historyitem_Pdf_Pushbutton_Image			= AscDFH.historyitem_type_Pdf_Pushbutton | 1;
 	AscDFH.historyitem_Pdf_Pushbutton_Header_Pos	= AscDFH.historyitem_type_Pdf_Pushbutton | 2;
 	
+	// checkbox/radio
+	AscDFH.historyitem_Pdf_Checkbox_No_Toggle_To_Off = AscDFH.historyitem_type_Pdf_Checkbox_Field | 1;
+
+	// radio
+	AscDFH.historyitem_Pdf_Radiobutton_Is_Unison = AscDFH.historyitem_type_Pdf_Radiobutton_Field | 1;
+	
+
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в PDF Annots 
 	//------------------------------------------------------------------------------------------------------------------
@@ -4608,6 +4620,7 @@
 	window['AscDFH'].historydescription_Pdf_ChangeOpacity		= 0x2b3;
 	window['AscDFH'].historydescription_Pdf_MovePage			= 0x2b4;
 	window['AscDFH'].historydescription_Pdf_AddField			= 0x2b5;
+	window['AscDFH'].historydescription_Pdf_ChangeField			= 0x2b6;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

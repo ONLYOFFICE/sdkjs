@@ -49,6 +49,8 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Text_Font]		= CChangesPDFFormT
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Text_Size]		= CChangesPDFFormTextSize;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Default_Value]	= CChangesPDFFormDefaultValue;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Rect]				= CChangesPDFFormRect;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Actions]			= CChangesPDFFormActions;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Partial_Name]		= CChangesPDFFormPartialName;
 
 // text
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Multiline]		= CChangesPDFTextFormMultiline;
@@ -59,12 +61,23 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_DoNot_Scroll]	= CChangesP
 
 // listbox
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Cur_Idxs]			= CChangesPDFListFormCurIdxs;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Parent_Cur_Idxs]	= CChangesPDFListFormParentCurIdxs;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Top_Idx]			= CChangesPDFListTopIndex;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Parent_Cur_Idxs]		= CChangesPDFListFormParentCurIdxs;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Top_Idx]				= CChangesPDFListTopIndex;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Option]				= CChangesPDFListOption;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Commit_On_Sel_Change]= CChangesPDFListCommitOnSelChange;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Multiple_Selection]	= CChangesPDFListMultipleSelection;
 
 // button
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Image]		= CChangesPDFPushbuttonImage;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Header_Pos]	= CChangesPDFPushbuttonHeaderPos;
+
+
+// checbox/radio
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Checkbox_No_Toggle_To_Off] = CChangesPDFCheckboxNoToggleToOff;
+
+
+// radio
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Radiobutton_Is_Unison] = CChangesPDFRadiobuttonIsUnison;
 
 /**
  * @constructor
@@ -477,7 +490,7 @@ function CChangesPDFFormActions(Class, oOldActionsInfo, oNewActionsInfo, nTrigge
 }
 CChangesPDFFormActions.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
 CChangesPDFFormActions.prototype.constructor = CChangesPDFFormActions;
-CChangesPDFFormActions.prototype.Type = AscDFH.historyitem_Pdf_Pushbutton_Image;
+CChangesPDFFormActions.prototype.Type = AscDFH.historyitem_Pdf_Form_Actions;
 CChangesPDFFormActions.prototype.CreateReverseChange = function() {
 	return new this.constructor(this.Class, this.New, this.Old, this.TriggerType, this.Color);
 };
@@ -548,6 +561,23 @@ CChangesPDFFormActions.prototype.ReadFromBinary = function(Reader)
 		this.Old = undefined;
 	else
 		this.Old = Reader.GetString2();
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesPDFFormPartialName(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFormPartialName.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesPDFFormPartialName.prototype.constructor = CChangesPDFFormPartialName;
+CChangesPDFFormPartialName.prototype.Type = AscDFH.historyitem_Pdf_Form_Partial_Name;
+CChangesPDFFormPartialName.prototype.private_SetValue = function(Value)
+{
+	let oField = this.Class;
+	oField._partialName = Value;
 };
 
 //------------------------------------------------------------------------------------------------------------------
@@ -939,6 +969,40 @@ CChangesPDFListOption.prototype.CreateReverseChange = function(){
 
 /**
  * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFListCommitOnSelChange(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFListCommitOnSelChange.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFListCommitOnSelChange.prototype.constructor = CChangesPDFListCommitOnSelChange;
+CChangesPDFListCommitOnSelChange.prototype.Type = AscDFH.historyitem_Pdf_List_Form_Commit_On_Sel_Change;
+CChangesPDFListCommitOnSelChange.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm._commitOnSelChange = Value;
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFListMultipleSelection(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFListMultipleSelection.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFListMultipleSelection.prototype.constructor = CChangesPDFListMultipleSelection;
+CChangesPDFListMultipleSelection.prototype.Type = AscDFH.historyitem_Pdf_List_Form_Multiple_Selection;
+CChangesPDFListMultipleSelection.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm._multipleSelection = Value;
+};
+
+/**
+ * @constructor
  * @extends {AscDFH.CChangesBaseStringProperty}
  */
 function CChangesPDFPushbuttonImage(Class, sOldRasterId, sNewRasterId, nAPType, Color)
@@ -1049,4 +1113,39 @@ CChangesPDFPushbuttonHeaderPos.prototype.private_SetValue = function(Value)
 {
 	let oField = this.Class;
 	oField.SetHeaderPosition(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFCheckboxNoToggleToOff(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFCheckboxNoToggleToOff.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFCheckboxNoToggleToOff.prototype.constructor = CChangesPDFCheckboxNoToggleToOff;
+CChangesPDFCheckboxNoToggleToOff.prototype.Type = AscDFH.historyitem_Pdf_Checkbox_No_Toggle_To_Off;
+CChangesPDFCheckboxNoToggleToOff.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm._noToggleToOff = Value;
+};
+
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFRadiobuttonIsUnison(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFRadiobuttonIsUnison.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFRadiobuttonIsUnison.prototype.constructor = CChangesPDFRadiobuttonIsUnison;
+CChangesPDFRadiobuttonIsUnison.prototype.Type = AscDFH.historyitem_Pdf_Radiobutton_Is_Unison;
+CChangesPDFRadiobuttonIsUnison.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm._radiosInUnison = Value;
 };

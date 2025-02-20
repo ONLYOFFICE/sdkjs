@@ -129,7 +129,6 @@
         }
 
         this.type           = nType;
-        this._name          = sName; // partial field name
         this._partialName   = sName;
         this._kids          = [];
         this._apIdx         = undefined; // индекс формы на странице в исходном файле (в массиве метода getInteractiveForms), используется для получения appearance
@@ -414,22 +413,18 @@
                 case AscPDF.ACTIONS_TYPES.JavaScript:
                     oAction = new AscPDF.CActionRunScript(aActionsInfo[i]["JS"]);
                     aActions.push(oAction);
-                    oAction.SetField(this);
                     break;
                 case AscPDF.ACTIONS_TYPES.ResetForm:
                     oAction = new AscPDF.CActionReset(aActionsInfo[i]["Fields"], Boolean(aActionsInfo[i]["Flags"]));
                     aActions.push(oAction);
-                    oAction.SetField(this);
                     break;
                 case AscPDF.ACTIONS_TYPES.URI:
                     oAction = new AscPDF.CActionURI(aActionsInfo[i]["URI"]);
                     aActions.push(oAction);
-                    oAction.SetField(this);
                     break;
                 case AscPDF.ACTIONS_TYPES.HideShow:
                     oAction = new AscPDF.CActionHideShow(Boolean(aActionsInfo[i]["H"]), aActionsInfo[i]["T"]);
                     aActions.push(oAction);
-                    oAction.SetField(this);
                     break;
                 case AscPDF.ACTIONS_TYPES.GoTo:
                     let oRect = {
@@ -445,12 +440,10 @@
 
                     oAction = new AscPDF.CActionGoTo(aActionsInfo[i]["page"], aActionsInfo[i]["kind"], aActionsInfo[i]["zoom"], oRect);
                     aActions.push(oAction);
-                    oAction.SetField(this);
                     break;
                 case AscPDF.ACTIONS_TYPES.Named:
                     oAction = new AscPDF.CActionNamed(AscPDF.CActionNamed.GetInternalType(aActionsInfo[i]["N"]));
                     aActions.push(oAction);
-                    oAction.SetField(this);
                     break;
             }
         }
@@ -492,10 +485,6 @@
                 this._triggers.Format = oNewTrigger;
                 break;
         }
-
-        aActions.forEach(function(oAction) {
-            oAction.SetTrigger(nTriggerType);
-        });
 
         return aActions;
     };
@@ -571,40 +560,42 @@
         let oDoc        = this.GetDocument();
         let oCalcInfo   = oDoc.GetCalculateInfo();
         let oAction     = new AscPDF.CActionRunScript(sScript);
-        oAction.SetField(this);
+
+        let oTrigger = new AscPDF.CFormTrigger(nTriggerType, [oAction]);
+        oTrigger.SetParent(this);
 
         switch (nTriggerType) {
             case AscPDF.FORMS_TRIGGERS_TYPES.MouseUp:
-                this._triggers.MouseUp = new AscPDF.CFormTrigger(nTriggerType, [oAction]);
+                this._triggers.MouseUp = oTrigger;
                 break;
             case AscPDF.FORMS_TRIGGERS_TYPES.MouseDown:
-                this._triggers.MouseDown = new AscPDF.CFormTrigger(nTriggerType, [oAction]);
+                this._triggers.MouseDown = oTrigger;
                 break;
             case AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter:
-                this._triggers.MouseEnter = new AscPDF.CFormTrigger(nTriggerType, [oAction]);
+                this._triggers.MouseEnter = oTrigger;
                 break;
             case AscPDF.FORMS_TRIGGERS_TYPES.MouseExit:
-                this._triggers.MouseExit = new AscPDF.CFormTrigger(nTriggerType, [oAction]);
+                this._triggers.MouseExit = oTrigger;
                 break;
             case AscPDF.FORMS_TRIGGERS_TYPES.OnFocus:
-                this._triggers.OnFocus = new AscPDF.CFormTrigger(nTriggerType, [oAction]);
+                this._triggers.OnFocus = oTrigger;
                 break;
             case AscPDF.FORMS_TRIGGERS_TYPES.OnBlur:
-                this._triggers.OnBlur = new AscPDF.CFormTrigger(nTriggerType, [oAction]);
+                this._triggers.OnBlur = oTrigger;
                 break;
             case AscPDF.FORMS_TRIGGERS_TYPES.Keystroke:
-                this._triggers.Keystroke = new AscPDF.CFormTrigger(nTriggerType, [oAction]);
+                this._triggers.Keystroke = oTrigger;
                 break;
             case AscPDF.FORMS_TRIGGERS_TYPES.Validate:
-                this._triggers.Validate = new AscPDF.CFormTrigger(nTriggerType, [oAction]);
+                this._triggers.Validate = oTrigger;
                 break;
             case AscPDF.FORMS_TRIGGERS_TYPES.Calculate:
-                this._triggers.Calculate = new AscPDF.CFormTrigger(nTriggerType, [oAction]);
+                this._triggers.Calculate = oTrigger;
                 oCalcInfo.RemoveFieldFromOrder(this.GetFullName());
                 oCalcInfo.AddFieldToOrder(oDoc.GetField(this.GetFullName()).GetApIdx());
                 break;
             case AscPDF.FORMS_TRIGGERS_TYPES.Format:
-                this._triggers.Format = new AscPDF.CFormTrigger(nTriggerType, [oAction]);
+                this._triggers.Format = oTrigger;
                 break;
         }
     };
@@ -1316,6 +1307,76 @@
             if (bSkipAddToRedraw != true)
                 this.AddToRedraw();
         }
+    };
+    CBaseField.prototype.SetName = function(sName) {
+        let oDoc = this.GetDocument();
+        let nFieldType = this.GetType();
+
+        while (sName.indexOf('..') != -1)
+            sName = sName.replace(new RegExp("\.\.", "g"), ".");
+
+        let oExistsWidget = oDoc.GetField(sName);
+        // если есть виджет-поле с таким именем то не добавляем 
+        if (oExistsWidget && oExistsWidget.GetType() != nFieldType)
+            return false; // to do выдавать ошибку смены имени поля
+
+        // получаем partial names
+        let aPartNames = sName.split('.').filter(function(item) {
+            if (item != "")
+                return item;
+        })
+
+        // по формату не больше 20 вложенностей
+        if (aPartNames.length > 20)
+            return false;
+
+        // удаляем поле из родителя
+        let oParent = this.GetParent();
+        if (oParent) {
+            oParent.RemoveKid(this);
+        }
+
+        // создаем родительские поля, последнее будет виджет-полем
+        if (aPartNames.length !== 0) {
+            if (oDoc.rootFields.get(aPartNames[0]) == null) { // root поле
+                oDoc.rootFields.set(aPartNames[0], this.CreateField(aPartNames[0], nFieldType, []));
+            }
+
+            let oParent = oDoc.rootFields.get(aPartNames[0]);
+            
+            for (let i = 0; i < aPartNames.length; i++) {
+                // добавляем виджет-поле (то, которое рисуем)
+                if (i == aPartNames.length - 1) {
+                    oParent.AddKid(this);
+
+                    let sNewPartName = undefined;
+                    if (oParent.GetKids().length == 1) {
+                        sNewPartName = aPartNames[i];
+                    }
+                    
+                    AscCommon.History.Add(new CChangesPDFFormPartialName(this, this._partialName, sNewPartName));
+                    this._partialName = sNewPartName;
+                }
+                else {
+                    // если есть поле с таким именем (part name), то двигаемся дальше, если нет, то создаем
+                    let oExistsField = oParent.GetField(aPartNames[i]);
+                    if (oExistsField)
+                        oParent = oExistsField;
+                    else {
+                        let oNewParent = oDoc.CreateField(aPartNames[i], nFieldType, []);
+                        oParent.AddKid(oNewParent);
+                        oParent = oNewParent;
+                    }
+                }
+            }
+        }
+
+        if (oParent) {
+            oDoc.CheckParentForm(oParent);
+        }
+        
+        this.SyncField();
+        return true;
     };
     CBaseField.prototype.IsNeedRecalc = function() {
         return this._needRecalc;

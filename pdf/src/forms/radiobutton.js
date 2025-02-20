@@ -49,15 +49,6 @@
     AscFormat.InitClass(CRadioButtonField, AscPDF.CBaseCheckBoxField, AscDFH.historyitem_type_Pdf_Radiobutton_Field);
     
     /**
-	 * Synchronizes this field with fields with the same name.
-	 * @memberof CRadioButtonField
-	 * @typeofeditors ["PDF"]
-	 */
-    CRadioButtonField.prototype.SyncField = function() {
-        // to do
-    };
-    
-    /**
 	 * Updates all field with this field name.
 	 * @memberof CRadioButtonField
 	 * @typeofeditors ["PDF"]
@@ -163,6 +154,9 @@
     };
     
     CRadioButtonField.prototype.SetRadiosInUnison = function(bValue) {
+        let oDoc = this.GetDocument();
+        oDoc.History.Add(new CChangesPDFRadiobuttonIsUnison(this, this._radiosInUnison, bValue));
+
         this._radiosInUnison = bValue;
         this.SetWasChanged(true);
     };

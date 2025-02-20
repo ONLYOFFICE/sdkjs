@@ -447,7 +447,11 @@
         return this._exportValue;
     };
     CBaseCheckBoxField.prototype.SetNoToggleToOff = function(bValue) {
+        let oDoc = this.GetDocument();
+        oDoc.History.Add(new CChangesPDFCheckboxNoToggleToOff(this, this._noToggleToOff, bValue));
+
         this._noToggleToOff = bValue;
+        this.SetWasChanged(true);
     };
     CBaseCheckBoxField.prototype.IsNoToggleToOff = function() {
         return this._noToggleToOff;
@@ -519,6 +523,36 @@
         else {
             oDoc.History.Add(new CChangesPDFFormValue(this, this.GetValue(), "Off"));
             this._checked = false;
+        }
+    };
+    /**
+	 * Synchronizes this field with fields with the same name.
+	 * @memberof CCheckBoxField
+	 * @typeofeditors ["PDF"]
+	 */
+    CBaseCheckBoxField.prototype.SyncField = function() {
+        let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
+        
+        for (let i = 0; i < aFields.length; i++) {
+            if (aFields[i] != this) {
+
+                this.SetNoToggleToOff(aFields[i].IsNoToggleToOff());
+
+                if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton) {
+                    this.SetRadiosInUnison(aFields[i].IsRadiosInUnison());
+                }
+
+                if (this.GetExportValue() == aFields[i].GetParentValue()) {
+                    this.SetChecked(true);
+                    this.AddToRedraw();
+                }
+                else {
+                    this.SetChecked(false);
+                    this.AddToRedraw();
+                }
+
+                break;
+            }
         }
     };
     CBaseCheckBoxField.prototype.WriteToBinary = function(memory) {

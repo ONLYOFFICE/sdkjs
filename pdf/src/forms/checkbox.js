@@ -75,15 +75,6 @@
         });
     };
 
-    /**
-	 * Synchronizes this field with fields with the same name.
-	 * @memberof CCheckBoxField
-	 * @typeofeditors ["PDF"]
-	 */
-    CCheckBoxField.prototype.SyncField = function() {
-        // to do
-    };
-	
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
         

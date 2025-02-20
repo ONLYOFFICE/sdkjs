@@ -449,31 +449,24 @@
     CComboBoxField.prototype.SyncField = function() {
         let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         
-        let oDoc = this.GetDocument();
-        oDoc.StartNoHistoryMode();
-
         for (let i = 0; i < aFields.length; i++) {
             if (aFields[i] != this) {
 
                 this.SetCalcOrderIndex(aFields[i].GetCalcOrderIndex());
                 this.SetDoNotSpellCheck(aFields[i].IsDoNotSpellCheck());
                 this.SetEditable(aFields[i].IsEditable());
+                this.SetOptions(aFields[i].GetOptions());
 
-                let oPara = this.content.GetElement(0);
-                let oParaToCopy = aFields[i].content.GetElement(0);
-
-                oPara.ClearContent();
-                for (var nPos = 0; nPos < oParaToCopy.Content.length - 1; nPos++) {
-                    oPara.Internal_Content_Add(nPos, oParaToCopy.GetElement(nPos).Copy());
-                }
-                oPara.CheckParaEnd();
+                let _t = this;
+                Object.values(AscPDF.ACTIONS_TYPES).forEach(function(type) {
+                    _t.SetActions(aFields[i].GetActions(type));
+                });
                 
-                this._options = aFields[i]._options.slice();
+                this.UpdateDisplayValue(aFields[i].GetValue(), true);
+                this.SetFormatValue(aFields[i].GetFormatValue());
                 break;
             }
         }
-
-        oDoc.EndNoHistoryMode();
     };
 	CComboBoxField.prototype.EnterText = function(aChars) {
 		if (!this.DoKeystrokeAction(aChars))

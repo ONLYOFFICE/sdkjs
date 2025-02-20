@@ -81,6 +81,9 @@
     };
 
     CBaseListField.prototype.SetCommitOnSelChange = function(bValue) {
+        let oDoc = this.GetDocument();
+        oDoc.History.Add(new CChangesPDFListCommitOnSelChange(this, this._commitOnSelChange, bValue));
+
         this._commitOnSelChange = bValue;
         this.SetWasChanged(true);
     };

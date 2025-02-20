@@ -232,18 +232,18 @@
     CTextField.prototype.GetFormatValue = function() {
         return this.contentFormat.getAllText();
     };
-	CTextField.prototype.UpdateDisplayValue = function(displayValue) {
+	CTextField.prototype.UpdateDisplayValue = function(displayValue, bAddToHistory) {
         let oDoc        = this.GetDocument();
         let isOnOpen    = oDoc.Viewer.IsOpenFormsInProgress;
         let _t          = this;
 
-        oDoc.StartNoHistoryMode();
+        bAddToHistory !== true && AscCommon.History.StartNoHistoryMode();
 
         AscFonts.FontPickerByCharacter.getFontsByString(displayValue);
         if (!oDoc.checkFieldFont(this, function() {
             _t.UpdateDisplayValue(displayValue);
         })) {
-            oDoc.EndNoHistoryMode();
+            bAddToHistory !== true && AscCommon.History.EndNoHistoryMode();
             return;
         }
 
@@ -259,7 +259,7 @@
         }
 
         if (displayValue === this._displayValue && this._useDisplayValue == true) {
-            oDoc.EndNoHistoryMode();
+            bAddToHistory !== true && AscCommon.History.EndNoHistoryMode();
             return;
         }
 		
@@ -275,7 +275,7 @@
         }
         else {
             if (_t._displayValue !== displayValue) {
-                oDoc.EndNoHistoryMode();
+                bAddToHistory !== true && AscCommon.History.EndNoHistoryMode();
                 return;
             }
             
@@ -284,7 +284,7 @@
             _t.content.MoveCursorToStartPos();
         }
 		
-        oDoc.EndNoHistoryMode();
+        bAddToHistory !== true && AscCommon.History.EndNoHistoryMode();
 	};
     CTextField.prototype.GetCalcOrderIndex = function() {
         return this.GetDocument().GetCalculateInfo().ids.indexOf(this.GetApIdx());
@@ -1370,48 +1370,28 @@
     CTextField.prototype.SyncField = function() {
         let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         
-        let oDoc = this.GetDocument();
-        oDoc.StartNoHistoryMode();
-
         for (let i = 0; i < aFields.length; i++) {
             if (aFields[i] != this) {
-                this._alignment         = aFields[i]._alignment;
-                this._charLimit         = aFields[i]._charLimit;
-                this._comb              = aFields[i]._comb;
-                this._doNotScroll       = aFields[i]._doNotScroll;
-                this._doNotSpellCheckl  = aFields[i]._doNotSpellCheckl;
-                this._fileSelect        = aFields[i]._fileSelect;
-                this._multiline         = aFields[i]._multiline;
-                this._password          = aFields[i]._password;
-                this._richText          = aFields[i]._richText;
-                this._richValue         = aFields[i]._richValue.slice();
-                this._textFont          = aFields[i]._textFont;
-                this._borderStyle       = aFields[i]._borderStyle;
+                this.SetAlign(aFields[i].GetAlign());
+                this.SetCharLimit(aFields[i].GetCharLimit());
+                this.SetComb(aFields[i].IsComb());
+                this.SetDoNotScroll(aFields[i].IsDoNotScroll());
+                this.SetDoNotSpellCheck(aFields[i].IsDoNotSpellCheck());
+                this.SetFileSelect(aFields[i].IsFileSelect());
+                this.SetMultiline(aFields[i].IsMultiline());
+                this.SetPassword(aFields[i].IsPassword());
+                this.SetRichText(aFields[i].IsRichText());
+                this._richValue = aFields[i]._richValue.slice();
 
-                this._triggers = aFields[i]._triggers ? aFields[i]._triggers.Copy(this) : null;
+                let _t = this;
+                Object.values(AscPDF.ACTIONS_TYPES).forEach(function(type) {
+                    _t.SetActions(type, aFields[i].GetActions(type));
+                });
 
-                if (this._multiline)
-                    this.content.SetUseXLimit(true);
-
-                let oPara = this.content.GetElement(0);
-                let oParaToCopy = aFields[i].content.GetElement(0);
-
-                oPara.ClearContent();
-                for (var nPos = 0; nPos < oParaToCopy.Content.length - 1; nPos++) {
-                    oPara.Internal_Content_Add(nPos, oParaToCopy.GetElement(nPos).Copy());
-                }
-                oPara.CheckParaEnd();
-
-                // format content
-                oPara = this.contentFormat.GetElement(0);
-                oParaToCopy = aFields[i].contentFormat.GetElement(0);
-
-                oPara.ClearContent();
-                for (var nPos = 0; nPos < oParaToCopy.Content.length - 1; nPos++) {
-                    oPara.Internal_Content_Add(nPos, oParaToCopy.GetElement(nPos).Copy());
-                }
-                oPara.CheckParaEnd();
+                this.UpdateDisplayValue(aFields[i].GetValue(), true);
+                this.SetFormatValue(aFields[i].GetFormatValue());
                 
+                this.SetNeedRecalc(true);
                 break;
             }
         }
