@@ -11744,6 +11744,19 @@
 			f = (canEdit || viewMode) && (isNotFirst && y < r.top + epsChangeSize || y >= r.bottom - epsChangeSize) &&
 				readyMode && !this.model.getSheetProtection(Asc.c_oAscSheetProtectType.formatRows);
 
+			if (f && isMobileVersion) {
+				let selection = this._getSelection();
+				if (selection && selection.ranges) {
+					f = false;
+					for (let i = 0 ; i < selection.ranges.length; i++) {
+						let curSelection = selection.ranges[i];
+						//move cols/rows was planned only for full version
+						if (curSelection.getType() === Asc.c_oAscSelectionType.RangeRow && curSelection.r1 <= r.row && curSelection.r2 >= r.row) {
+							f = true;
+						}
+					}
+				}
+			}
 
 			let _target = c_oTargetType.RowHeader;
 			if (!f && !isMobileVersion) {
@@ -11783,6 +11796,21 @@
 			f = (canEdit || viewMode) && (isNotFirst && x < c.left + epsChangeSize || x >= c.right - epsChangeSize) &&
 				readyMode && !this.model.getSheetProtection(Asc.c_oAscSheetProtectType.formatColumns);
 			// ToDo В Excel зависимость epsilon от размера ячейки (у нас фиксированный 3)
+
+
+			if (f && isMobileVersion) {
+				let selection = this._getSelection();
+				if (selection && selection.ranges) {
+					f = false;
+					for (let i = 0 ; i < selection.ranges.length; i++) {
+						let curSelection = selection.ranges[i];
+						//move cols/rows was planned only for full version
+						if (curSelection.getType() === Asc.c_oAscSelectionType.RangeCol && curSelection.c1 <= c.col && curSelection.c2 >= c.col) {
+							f = true;
+						}
+					}
+				}
+			}
 
 			let _target = c_oTargetType.ColumnHeader;
 			if (!f && !isMobileVersion) {
