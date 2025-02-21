@@ -61,11 +61,19 @@ var CPresentation = CPresentation || function(){};
     };
 
     function CCalculateInfo(oDoc) {
+        this.Id = AscCommon.g_oIdCounter.Get_NewId();
+        if ((AscCommon.g_oIdCounter.m_bLoad || AscCommon.History.CanAddChanges())) {
+            AscCommon.g_oTableId.Add(this, this.Id);
+        }
+
         this.ids = [];
         this.document = oDoc;
         this.isInProgress = false;
         this.sourceField = null; // поле вызвавшее calculate
     };
+
+    CCalculateInfo.prototype.constructor = CCalculateInfo;
+    CCalculateInfo.prototype = Object.create(AscFormat.CBaseNoIdObject.prototype);
 
     CCalculateInfo.prototype.AddFieldToOrder = function(id) {
         if (this.ids.includes(id) == false)
@@ -84,8 +92,13 @@ var CPresentation = CPresentation || function(){};
         return this.isInProgress;
     };
     CCalculateInfo.prototype.SetCalculateOrder = function(aIds) {
-        this.ids = aIds.slice();
+        AscCommon.History.Add(new CChangesPDFCalcOrder(this, this.ids, aIds));
+        this.ids = aIds;
     };
+    CCalculateInfo.prototype.GetCalculateOrder = function() {
+        return this.ids;
+    };
+    
     /**
 	 * Sets field to calc info, which caused the recalculation.
      * Note: This field cannot be changed in scripts.
@@ -714,7 +727,7 @@ var CPresentation = CPresentation || function(){};
         }), function() {
             // выставляем только ImageData. Форму пересчитаем и добавим картинку после того, как форма изменится, чтобы не грузить шрифты
             for (let nBtn = 0; nBtn < oIconsInfo["MK"].length; nBtn++) {
-                let oBtnField = oDoc.GetFieldBySourceIdx(oIconsInfo["MK"][nBtn]["i"]);
+                let oBtnField = oDoc.GetFieldByApIdx(oIconsInfo["MK"][nBtn]["i"]);
 
                 if (oIconsInfo["MK"][nBtn]["I"]) {
                     oBtnField.SetImageRasterId(oIconsInfo["MK"][nBtn]["I"].src, AscPDF.APPEARANCE_TYPE.normal);
@@ -2334,7 +2347,7 @@ var CPresentation = CPresentation || function(){};
         this.calculateInfo.SetIsInProgress(true);
         this.calculateInfo.SetSourceField(oSourceField);
         this.calculateInfo.ids.forEach(function(id) {
-            let oField = oThis.GetFieldBySourceIdx(id);
+            let oField = oThis.GetFieldByApIdx(id);
             if (!oField)
                 return;
             
@@ -2363,7 +2376,7 @@ var CPresentation = CPresentation || function(){};
 
         let isCalcLocked = false;
         this.calculateInfo.ids.forEach(function(id) {
-            let oField = oThis.GetFieldBySourceIdx(id);
+            let oField = oThis.GetFieldByApIdx(id);
             if (!oField)
                 return;
 
@@ -3533,7 +3546,7 @@ var CPresentation = CPresentation || function(){};
         this.showedCommentId = undefined;
     };
 
-    CPDFDoc.prototype.GetFieldBySourceIdx = function(nIdx) {
+    CPDFDoc.prototype.GetFieldByApIdx = function(nIdx) {
         for (let i = 0; i < this.widgets.length; i++) {
             if (this.widgets[i].GetApIdx() == nIdx) {
                 return this.widgets[i];
@@ -3778,6 +3791,10 @@ var CPresentation = CPresentation || function(){};
 	 * @returns {boolean}
 	 */
     CPDFDoc.prototype.GetAllWidgets = function(sName) {
+        if (!sName) {
+            return this.widgets;
+        }
+
         let aFields = [];
         for (let i = 0; i < this.widgets.length; i++) {
             if (this.widgets[i].GetFullName() == sName)

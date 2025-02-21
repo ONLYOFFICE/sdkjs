@@ -868,6 +868,7 @@
 	CComboBoxField.prototype.IsNeedCheckAlign       = AscPDF.CTextField.prototype.IsNeedCheckAlign;
 	CComboBoxField.prototype.GetFormatValue         = AscPDF.CTextField.prototype.GetFormatValue;
 	CComboBoxField.prototype.SetFormatValue         = AscPDF.CTextField.prototype.SetFormatValue;
+	CComboBoxField.prototype.IsNumberFormat         = AscPDF.CTextField.prototype.IsNumberFormat;
 
 	window["AscPDF"].CComboBoxField = CComboBoxField;
 })();

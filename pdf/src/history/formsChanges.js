@@ -327,13 +327,13 @@ CChangesPDFFormDisplay.prototype.private_SetValue = function(Value)
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesAnnotArrayOfDoubleProperty}
+ * @extends {AscDFH.CChangesPDFArrayOfDoubleProperty}
  */
 function CChangesPDFFormBorderColor(Class, Old, New, Color)
 {
-	AscDFH.CChangesAnnotArrayOfDoubleProperty.call(this, Class, Old, New, Color);
+	AscDFH.CChangesPDFArrayOfDoubleProperty.call(this, Class, Old, New, Color);
 }
-CChangesPDFFormBorderColor.prototype = Object.create(AscDFH.CChangesAnnotArrayOfDoubleProperty.prototype);
+CChangesPDFFormBorderColor.prototype = Object.create(AscDFH.CChangesPDFArrayOfDoubleProperty.prototype);
 CChangesPDFFormBorderColor.prototype.constructor = CChangesPDFFormBorderColor;
 CChangesPDFFormBorderColor.prototype.Type = AscDFH.historyitem_Pdf_Form_Border_Color;
 CChangesPDFFormBorderColor.prototype.private_SetValue = function(Value)
@@ -344,13 +344,13 @@ CChangesPDFFormBorderColor.prototype.private_SetValue = function(Value)
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesAnnotArrayOfDoubleProperty}
+ * @extends {AscDFH.CChangesPDFArrayOfDoubleProperty}
  */
 function CChangesPDFFormBGrColor(Class, Old, New, Color)
 {
-	AscDFH.CChangesAnnotArrayOfDoubleProperty.call(this, Class, Old, New, Color);
+	AscDFH.CChangesPDFArrayOfDoubleProperty.call(this, Class, Old, New, Color);
 }
-CChangesPDFFormBGrColor.prototype = Object.create(AscDFH.CChangesAnnotArrayOfDoubleProperty.prototype);
+CChangesPDFFormBGrColor.prototype = Object.create(AscDFH.CChangesPDFArrayOfDoubleProperty.prototype);
 CChangesPDFFormBGrColor.prototype.constructor = CChangesPDFFormBGrColor;
 CChangesPDFFormBGrColor.prototype.Type = AscDFH.historyitem_Pdf_Form_BG_Color;
 CChangesPDFFormBGrColor.prototype.private_SetValue = function(Value)
@@ -396,13 +396,13 @@ CChangesPDFFormRequired.prototype.private_SetValue = function(Value)
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesAnnotArrayOfDoubleProperty}
+ * @extends {AscDFH.CChangesPDFArrayOfDoubleProperty}
  */
 function CChangesPDFFormTextColor(Class, Old, New, Color)
 {
-	AscDFH.CChangesAnnotArrayOfDoubleProperty.call(this, Class, Old, New, Color);
+	AscDFH.CChangesPDFArrayOfDoubleProperty.call(this, Class, Old, New, Color);
 }
-CChangesPDFFormTextColor.prototype = Object.create(AscDFH.CChangesAnnotArrayOfDoubleProperty.prototype);
+CChangesPDFFormTextColor.prototype = Object.create(AscDFH.CChangesPDFArrayOfDoubleProperty.prototype);
 CChangesPDFFormTextColor.prototype.constructor = CChangesPDFFormTextColor;
 CChangesPDFFormTextColor.prototype.Type = AscDFH.historyitem_Pdf_Form_Text_Color;
 CChangesPDFFormTextColor.prototype.private_SetValue = function(Value)
@@ -464,13 +464,13 @@ CChangesPDFFormDefaultValue.prototype.private_SetValue = function(Value)
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesAnnotArrayOfDoubleProperty}
+ * @extends {AscDFH.CChangesPDFArrayOfDoubleProperty}
  */
 function CChangesPDFFormRect(Class, Old, New, Color)
 {
-	AscDFH.CChangesAnnotArrayOfDoubleProperty.call(this, Class, Old, New, Color);
+	AscDFH.CChangesPDFArrayOfDoubleProperty.call(this, Class, Old, New, Color);
 }
-CChangesPDFFormRect.prototype = Object.create(AscDFH.CChangesAnnotArrayOfDoubleProperty.prototype);
+CChangesPDFFormRect.prototype = Object.create(AscDFH.CChangesPDFArrayOfDoubleProperty.prototype);
 CChangesPDFFormRect.prototype.constructor = CChangesPDFFormRect;
 CChangesPDFFormRect.prototype.Type = AscDFH.historyitem_Pdf_Form_Rect;
 CChangesPDFFormRect.prototype.private_SetValue = function(Value)

@@ -452,6 +452,17 @@
 
         return false;
     };
+    CTextField.prototype.IsNumberFormat = function() {
+        let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
+        let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
+        let sScript             = oActionRunScript ? oActionRunScript.GetScript() : "";
+
+        if (sScript && (sScript.startsWith('AFNumber_Format') || sScript.startsWith('AFPercent_Format'))) {
+            return true;
+        }
+
+        return false;
+    };
     CTextField.prototype.GetDateFormat = function() {
         let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
         let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;

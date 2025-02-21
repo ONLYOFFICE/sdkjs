@@ -44,6 +44,70 @@ AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_SetDocument]      = CChang
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_PageLocks]        = CChangesPDFDocumentPageLocks;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_PropLocker_ObjectId]	    = CChangesPDFPropLockerObjectId;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_MovePage]         = CChangesPDFDocumentMovePage;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Documen_Calc_Order]        = CChangesPDFCalcOrder;
+
+function CChangesPDFArrayOfDoubleProperty(Class, Old, New) {
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New);
+}
+CChangesPDFArrayOfDoubleProperty.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesPDFArrayOfDoubleProperty.prototype.constructor = CChangesPDFArrayOfDoubleProperty;
+
+CChangesPDFArrayOfDoubleProperty.prototype.WriteToBinary = function(Writer)
+{
+	let nFlags = 0;
+
+	if (undefined === this.New)
+		nFlags |= 1;
+
+	if (undefined === this.Old)
+		nFlags |= 2;
+
+	Writer.WriteLong(nFlags);
+
+	if (undefined !== this.New) {
+		var nNewCount = this.New.length;
+		Writer.WriteLong(nNewCount);
+		for (var nIndex = 0; nIndex < nNewCount; ++nIndex)
+			Writer.WriteDouble(this.New[nIndex]);
+	}
+	
+	if (undefined !== this.Old) {
+		var nOldCount = this.Old.length;
+		Writer.WriteLong(nOldCount);
+		for (var nIndex = 0; nIndex < nOldCount; ++nIndex)
+			Writer.WriteDouble(this.Old[nIndex]);
+	}
+};
+CChangesPDFArrayOfDoubleProperty.prototype.ReadFromBinary = function(Reader)
+{
+	// Long : Count of the columns in the new grid
+	// Array of double : widths of columns in the new grid
+	// Long : Count of the columns in the old grid
+	// Array of double : widths of columns in the old grid
+
+	let nFlags = Reader.GetLong();
+	
+	if (!(nFlags & 1)) {
+		let nCount = Reader.GetLong();
+		this.New = [];
+		for (var nIndex = 0; nIndex < nCount; ++nIndex)
+			this.New[nIndex] = Reader.GetDouble();
+	}
+
+	if (!(nFlags & 2)) {
+		let nCount = Reader.GetLong();
+		this.Old = [];
+		for (var nIndex = 0; nIndex < nCount; ++nIndex)
+			this.Old[nIndex] = Reader.GetDouble();
+	} 
+};
+
+CChangesPDFArrayOfDoubleProperty.prototype.Load = function(){
+	this.Redo();
+	this.RefreshRecalcData();
+};
+
+window['AscDFH'].CChangesPDFArrayOfDoubleProperty = CChangesPDFArrayOfDoubleProperty;
 
 /**
  * @constructor
@@ -1131,4 +1195,21 @@ CChangesPDFDocumentMovePage.prototype.private_SetValue = function(nNewPos)
 
     oDoc.Viewer.resize(true);
     oDoc.Viewer.paint();
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesPDFArrayOfDoubleProperty}
+ */
+function CChangesPDFCalcOrder(Class, Old, New, Color)
+{
+	AscDFH.CChangesPDFArrayOfDoubleProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFCalcOrder.prototype = Object.create(AscDFH.CChangesPDFArrayOfDoubleProperty.prototype);
+CChangesPDFCalcOrder.prototype.constructor = CChangesPDFCalcOrder;
+CChangesPDFCalcOrder.prototype.Type = AscDFH.historyitem_Pdf_Documen_Calc_Order;
+CChangesPDFCalcOrder.prototype.private_SetValue = function(Value)
+{
+	let oCalcInfo = this.Class;
+	oCalcInfo.ids = Value;
 };

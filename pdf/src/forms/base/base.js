@@ -397,6 +397,7 @@
     CBaseField.prototype.GetPartialName = function() {
         return this._partialName;
     };
+    CBaseField.prototype.SyncField = function() {};
     /**
 	 * Sets the action of the field for a given trigger.
      * Note: This method will overwrite any action already defined for the chosen trigger.
@@ -449,8 +450,11 @@
         }
         
         const oNewTrigger = aActions.length != 0 ? new AscPDF.CFormTrigger(nTriggerType, aActions) : null;
-        const aCurActionsInfo = this.GetActions();
+        if (oNewTrigger) {
+            oNewTrigger.SetParent(this);
+        }
 
+        const aCurActionsInfo = this.GetActions();
         AscCommon.History.Add(new CChangesPDFFormActions(this, aCurActionsInfo, aActionsInfo, nTriggerType));
 
         switch (nTriggerType) {

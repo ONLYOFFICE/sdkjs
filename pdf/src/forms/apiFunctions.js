@@ -70,6 +70,20 @@
     NegativeStyle["PARENS_BLACK"] = NegativeStyle.PARENS_BLACK;
     NegativeStyle["PARENS_RED"] = NegativeStyle.PARENS_RED;
 
+    const CalculateType = {
+        SUM:        0,
+        PRODUCT:    1,
+        AVERAGE:    2,
+        MIN:        3,
+        MAX:        4
+    }
+
+    CalculateType["SUM"]        = CalculateType.SUM;
+    CalculateType["PRODUCT"]    = CalculateType.PRODUCT;
+    CalculateType["AVERAGE"]    = CalculateType.AVERAGE;
+    CalculateType["MIN"]        = CalculateType.MIN;
+    CalculateType["MAX"]        = CalculateType.MAX;
+    
     /**
 	 * Convert field value to specific number format.
      * @param {number} nDec = number of decimals
@@ -1157,7 +1171,7 @@
                 aValues = aValues.concat(fieldValue);
             }
             else {
-                aValues.push(fieldValue !== "Off" && fieldValue != "" ? fieldValue : "0");
+                aValues.push(fieldValue !== "Off" && fieldValue !== "" && fieldValue != undefined ? fieldValue : "0");
             }
         });
 
@@ -1266,7 +1280,7 @@
 	}
     
     window["AscPDF"].FormatDateValue = FormatDateValue;
-    window["AscPDF"].Api = {
+    window["AscPDF"]["Api"] = {
         "Functions": {
             "AFNumber_Format":        AFNumber_Format,
             "AFNumber_Keystroke":     AFNumber_Keystroke,
@@ -1289,7 +1303,8 @@
         "Types": {
             "FormattingType":   FormattingType,
             "SeparatorStyle":   SeparatorStyle,
-            "NegativeStyle":    NegativeStyle
+            "NegativeStyle":    NegativeStyle,
+            "CalculateType":    CalculateType
         }
     }
 })();

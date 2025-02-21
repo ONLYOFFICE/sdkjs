@@ -1133,7 +1133,7 @@
         this._captionRun = oRun;  
     };
 
-    CPushButtonField.prototype.DrawFromStream = function(oGraphicsPDF) {
+    CPushButtonField.prototype.DrawFromStream = function(oGraphicsPDF, oGraphicsWord) {
         if (this.IsHidden() == true)
             return;
         
@@ -1863,54 +1863,6 @@
         this.SetNeedRecalc(true);
     };
 
-    /**
-     * Synchronizes this field with fields with the same name.
-     * @memberof CPushButtonField
-     * @typeofeditors ["PDF"]
-     */
-    CPushButtonField.prototype.SyncField = function() {
-        let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
-        
-        let oDoc = this.GetDocument();
-        oDoc.StartNoHistoryMode();
-
-        for (let i = 0; i < aFields.length; i++) {
-            if (aFields[i] != this) {
-                this._buttonAlignX      = aFields[i]._buttonAlignX;
-                this._buttonAlignY      = aFields[i]._buttonAlignY;
-                this._buttonFitBounds   = aFields[i]._buttonFitBounds;
-                this._buttonPosition    = Object.assign(this._buttonPosition, aFields[i]._buttonPosition);
-                this._buttonScaleHow    = aFields[i]._buttonScaleHow;
-                this._highlight         = aFields[i]._highlight;
-                this._textFont          = aFields[i]._textFont;
-
-                this._triggers = aFields[i]._triggers ? aFields[i]._triggers.Copy(this) : null;
-
-                let oPara = this.content.GetElement(0);
-                let oParaToCopy = aFields[i].content.GetElement(0);
-
-                oPara.ClearContent();
-                for (var nPos = 0; nPos < oParaToCopy.Content.length - 1; nPos++) {
-                    oPara.Internal_Content_Add(nPos, oParaToCopy.GetElement(nPos).Copy());
-                }
-                oPara.CheckParaEnd();
-
-                // format content
-                oPara = this.contentFormat.GetElement(0);
-                oParaToCopy = aFields[i].contentFormat.GetElement(0);
-
-                oPara.ClearContent();
-                for (var nPos = 0; nPos < oParaToCopy.Content.length - 1; nPos++) {
-                    oPara.Internal_Content_Add(nPos, oParaToCopy.GetElement(nPos).Copy());
-                }
-                oPara.CheckParaEnd();
-                
-                break;
-            }
-        }
-
-        oDoc.EndNoHistoryMode();
-    };
     /**
      * Applies value of this field to all field with the same name.
      * @memberof CPushButtonField
