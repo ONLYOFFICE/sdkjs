@@ -343,7 +343,7 @@
 					let oContent = textCShape.getDocContent();
 					let paragraph = new Paragraph(textCShape.getDrawingDocument(), true);
 					// Set defaultParagraph justify/align text - center
-					paragraph.Pr.SetJc(AscCommon.align_Left);
+					paragraph.Pr.SetJc(AscCommon.align_Center);
 					oContent.Content.push(paragraph);
 					paragraph.SetParent(oContent);
 					return;
