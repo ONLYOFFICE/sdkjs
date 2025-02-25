@@ -515,7 +515,7 @@
 					fontColor = characterColorCell.calculateValue(shape, pageInfo,
 						visioDocument.themes, themeValWasUsedFor);
 				} else {
-					AscCommon.consoleLog.log("text color cell not found! set text color as themed");
+					AscCommon.consoleLog("text color cell not found! set text color as themed");
 					fontColor = AscVisio.themeval(null, shape, pageInfo, visioDocument.themes, "TextColor");
 					themeValWasUsedFor.fontColor = true;
 				}

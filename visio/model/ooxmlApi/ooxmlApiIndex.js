@@ -207,7 +207,7 @@
 	// When the IX attribute is not present, the index of the element is calculated implicitly
 	// by counting the number of  preceding Section_Type elements with the same N attribute in the containing
 	// Sheet_Type.
-
+	let lastIx = 0;
 	function createKeyFromSheetObject(object) {
 		let key;
 		if (object.kind === c_oVsdxSheetStorageKind.Cell_Type) {
@@ -217,8 +217,11 @@
 				key = object.n;
 			} else if (object.iX !== null) {
 				key = object.iX;
+				lastIx = object.iX;
 			} else {
-				AscCommon.consoleLog("Cant calculate key to store object", object);
+				key = lastIx;
+				lastIx++;
+				AscCommon.consoleLog("Ix key is generated to store object", object);
 			}
 		} else if (object.kind === c_oVsdxSheetStorageKind.Section_Type)	{
 			if (object.n === "Geometry") {
@@ -567,9 +570,9 @@
 				resultArr.push(element);
 			}
 		}
-		resultArr.sort(function (a, b) {
-			return a.iX - b.iX;
-		});
+		// resultArr.sort(function (a, b) {
+		// 	return a.iX - b.iX;
+		// });
 		return resultArr;
 	}
 
