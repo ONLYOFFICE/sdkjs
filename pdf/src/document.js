@@ -3914,6 +3914,9 @@ var CPresentation = CPresentation || function(){};
             else if (oCurObject.IsAnnot()) {
                 this.Api.sync_annotPropCallback(oCurObject);
             }
+            else if (oCurObject.IsForm() && this.IsEditFieldsMode()) {
+                this.Api.sync_fieldPropCallback(oCurObject);
+            }
         }
         
         let oTargetDocContent = oController.getTargetDocContent(undefined, true);
@@ -7138,6 +7141,75 @@ var CPresentation = CPresentation || function(){};
         return oProps;
     }
 
+    function CreateAscFieldPropFromObj(field) {
+        let oCommonProps = new Asc.asc_CBaseFieldProperty();
+
+        oCommonProps.asc_putType(field.GetType());
+        oCommonProps.asc_putName(field.GetFullName());
+        oCommonProps.asc_putRequired(field.IsRequired());
+        oCommonProps.asc_putReadOnly(field.IsReadOnly());
+        // oCommonProps.asc_putRot(field.GetRot());
+        oCommonProps.asc_putDisplay(field.GetDisplay());
+        oCommonProps.asc_putFill(field.GetBackgroundColor());
+        oCommonProps.asc_putStroke(field.GetBorderColor());
+        oCommonProps.asc_putStrokeWidth(field.GetBorderWidth());
+        oCommonProps.asc_putStrokeStyle(field.GetBorderStyle());
+
+        let oFieldProps;
+        switch (field.GetType()) {
+            case AscPDF.FIELD_TYPES.text: {
+                oFieldProps = new Asc.asc_CTextFieldProperty();
+                oFieldProps.asc_putDefaultValue(field.GetDefaultValue());
+                oFieldProps.asc_putMultiline(field.IsMultiline());
+                oFieldProps.asc_putCharLimit(field.GetCharLimit());
+                oFieldProps.asc_putComb(field.IsComb());
+                break;
+            }
+            case AscPDF.FIELD_TYPES.combobox: {
+                oFieldProps = new Asc.asc_CComboboxFieldProperty();
+                oFieldProps.asc_putOptions(field.GetOptions());
+                oFieldProps.asc_putEditable(field.IsEditable());
+                break;
+            }
+            case AscPDF.FIELD_TYPES.listbox: {
+                oFieldProps = new Asc.asc_CListboxFieldProperty();
+                oFieldProps.asc_putOptions(field.GetOptions());
+                oFieldProps.asc_putCommitOnSelChange(field.IsCommitOnSelChange());
+                oFieldProps.asc_putMultipleSelection(field.IsMultipleSelection());
+                break;
+            }
+            case AscPDF.FIELD_TYPES.checkbox: {
+                oFieldProps = new Asc.asc_CCheckboxFieldProperty();
+                oFieldProps.asc_putCheckStyle(field.GetStyle());
+                oFieldProps.asc_putExportValue(field.GetExportValue());
+                oFieldProps.asc_putDefaultChecked(field.GetDefaultValue() == field.GetExportValue());
+                break;
+            }
+            case AscPDF.FIELD_TYPES.radiobutton: {
+                oFieldProps = new Asc.asc_CRadiobuttonFieldProperty();
+                oFieldProps.asc_putCheckStyle(field.GetStyle());
+                oFieldProps.asc_putExportValue(field.GetExportValue());
+                oFieldProps.asc_putDefaultChecked(field.GetDefaultValue() == field.GetExportValue());
+                oFieldProps.asc_putRadiosInUnison(field.IsRadiosInUnison());
+                break;
+            }
+            case AscPDF.FIELD_TYPES.button: {
+                oFieldProps = new Asc.asc_CButtonFieldProperty();
+                oFieldProps.asc_putHighlight(field.GetHighlight());
+                oFieldProps.asc_putLayout(field.GetHeaderPosition());
+                oFieldProps.asc_putScaleWhen(field.GetScaleWhen());
+                oFieldProps.asc_putScaleHow(field.GetScaleHow());
+                oFieldProps.asc_putFitBounds(field.IsButtonFitBounds());
+                oFieldProps.asc_putIconPos(field.GetIconPosition());
+                oFieldProps
+                break;
+            }
+        }
+
+        oCommonProps.asc_putFieldProps(oFieldProps);
+        return oCommonProps;
+    }
+
     function CreateAscPagePropFromObj(pageInfo) {
         let oProps = new Asc.asc_CPdfPageProperty();
 
@@ -7452,6 +7524,7 @@ var CPresentation = CPresentation || function(){};
     window["AscPDF"].CPDFDoc                    = CPDFDoc;
     window["AscPDF"].CreateAnnotByProps         = CreateAnnotByProps;
     window["AscPDF"].CreateAscAnnotPropFromObj  = CreateAscAnnotPropFromObj;
+    window["AscPDF"].CreateAscFieldPropFromObj  = CreateAscFieldPropFromObj;
     window["AscPDF"].CreateAscPagePropFromObj   = CreateAscPagePropFromObj;
     window["AscPDF"].CPDFCompositeInput         = CPDFCompositeInput;
     window["AscPDF"].PDFSelectedContent         = PDFSelectedContent;

@@ -750,6 +750,19 @@
 
 		this.SelectedObjectsStack[this.SelectedObjectsStack.length] = new AscCommon.asc_CSelectedObject(Asc.c_oAscTypeSelectElement.Annot, obj);
 	};
+	PDFEditorApi.prototype.sync_fieldPropCallback = function(field) {
+		var obj = AscPDF.CreateAscFieldPropFromObj(field);
+
+		var _len = this.SelectedObjectsStack.length;
+		if (_len > 0) {
+			if (this.SelectedObjectsStack[_len - 1].Type == Asc.c_oAscTypeSelectElement.Field) {
+				this.SelectedObjectsStack[_len - 1].Value = obj;
+				return;
+			}
+		}
+
+		this.SelectedObjectsStack[this.SelectedObjectsStack.length] = new AscCommon.asc_CSelectedObject(Asc.c_oAscTypeSelectElement.Field, obj);
+	};
 	PDFEditorApi.prototype.sync_pagePropCallback = function(pageInfo) {
 		let obj = AscPDF.CreateAscPagePropFromObj(pageInfo);
 
@@ -3531,6 +3544,7 @@
 	PDFEditorApi.prototype['asc_FitImagesToPage']					= PDFEditorApi.prototype.asc_FitImagesToPage;
 	PDFEditorApi.prototype['sync_shapePropCallback']				= PDFEditorApi.prototype.sync_shapePropCallback;
 	PDFEditorApi.prototype['sync_annotPropCallback']				= PDFEditorApi.prototype.sync_annotPropCallback;
+	PDFEditorApi.prototype['sync_fieldPropCallback']					= PDFEditorApi.prototype.sync_fieldPropCallback;
 	PDFEditorApi.prototype['canUnGroup']							= PDFEditorApi.prototype.canUnGroup;
 	PDFEditorApi.prototype['canGroup']								= PDFEditorApi.prototype.canGroup;
 	PDFEditorApi.prototype['shapes_bringToFront']					= PDFEditorApi.prototype.shapes_bringToFront;

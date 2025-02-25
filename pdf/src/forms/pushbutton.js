@@ -1178,6 +1178,7 @@
         if (this.IsPressed() == false) {
             oGraphicsPDF.DrawImageXY(originView, origX, origY, undefined, true);
             this.DrawLocks(oGraphicsPDF);
+            this.DrawEdit(oGraphicsWord);
             return;
         }
 
@@ -1275,8 +1276,6 @@
         let oDoc            = this.GetDocument();
         let oActionsQueue   = oDoc.GetActionsQueue();
 
-        this.DrawPressed();
-
         let isInFocus   = oDoc.activeForm === this;
         oDoc.activeForm = this;
 
@@ -1290,6 +1289,8 @@
         function callbackAfterFocus() {
             this.SetInForm(true);
         }
+        
+        this.DrawPressed();
         
         let oOnFocus = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
         // вызываем выставление курсора после onFocus. Если уже в фокусе, тогда сразу.
@@ -1488,7 +1489,12 @@
         AscCommon.History.EndNoHistoryMode();
     };
     CPushButtonField.prototype.GetIconPosition = function() {
-        return {X: this._buttonAlignX, Y: this._buttonAlignY};
+        let oIconPos = {X: this._buttonAlignX, Y: this._buttonAlignY};
+
+        oIconPos["X"] = oIconPos.X;
+        oIconPos["Y"] = oIconPos.Y;
+
+        return oIconPos;
     };
     CPushButtonField.prototype.SetTextOnly = function() {
         if (this._buttonPosition == position["textOnly"])

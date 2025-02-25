@@ -335,10 +335,6 @@
         let oDrDoc          = oDoc.GetDrawingDocument();
         let oActionsQueue   = oDoc.GetActionsQueue();
 
-        oDrDoc.TargetEnd();
-        this.SetDrawHighlight(false);
-        this.DrawPressed();
-        
         let isInFocus = oDoc.activeForm === this;
         oDoc.activeForm = this;
         
@@ -353,6 +349,10 @@
             this.SetInForm(true);
         }
 
+        oDrDoc.TargetEnd();
+        this.SetDrawHighlight(false);
+        this.DrawPressed();
+        
         let oOnFocus = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
         // вызываем выставление курсора после onFocus. Если уже в фокусе, тогда сразу.
         if (false == isInFocus && oOnFocus && oOnFocus.Actions.length > 0)

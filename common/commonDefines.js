@@ -708,9 +708,11 @@ window.AscCommon.g_cIsBeta = "false";
 		ContentControl    : 11,
 		Animation         : 12,
 		UnProtectedRegion : 13,
-		Text              : 14, // viewer
+		// viewer
+		Text              : 14,
 		Annot             : 15,
-		PdfPage           : 16
+		Field			  : 16,
+		PdfPage           : 17
 	};
 
 	var c_oAscLineDrawingRule = {
