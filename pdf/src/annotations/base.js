@@ -581,11 +581,12 @@
         this.SetWasChanged(true);
     };
     CAnnotationBase.prototype.IsUseInDocument = function() {
-        let oDoc = Asc.editor.getPDFDoc();
-        if (oDoc.annots.indexOf(this) == -1)
-            return false;
+        let oPage = this.GetParentPage();
+        if (oPage && oPage.annots.includes(this)) {
+            return true;
+        }
 
-        return true;
+        return false;
     };
     
     CAnnotationBase.prototype.GetRect = function() {

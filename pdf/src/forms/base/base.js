@@ -746,11 +746,12 @@
         oActionsQueue.Start();
     };
     CBaseField.prototype.IsUseInDocument = function() {
-        let oDoc = Asc.editor.getPDFDoc();
-        if (oDoc.widgets.indexOf(this) == -1)
-            return false;
+        let oPage = this.GetParentPage();
+        if (oPage && oPage.fields.includes(this)) {
+            return true;
+        }
 
-        return true;
+        return false;
     };
     CBaseField.prototype.DrawHighlight = function(oCtx) {
         if (this.IsHidden() == true)
