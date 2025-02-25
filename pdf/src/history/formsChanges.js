@@ -59,6 +59,9 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Char_Limit]		= CChangesPD
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Comb]			= CChangesPDFTextComb;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_DoNot_Scroll]	= CChangesPDFTextFormDoNotScroll;
 
+// combobox
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Combobox_Form_Editable]	= CChangesPDFComboboxFieldEditable;
+
 // listbox
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Cur_Idxs]			= CChangesPDFListFormCurIdxs;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Parent_Cur_Idxs]		= CChangesPDFListFormParentCurIdxs;
@@ -68,8 +71,13 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Commit_On_Sel_Change]= CC
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Multiple_Selection]	= CChangesPDFListMultipleSelection;
 
 // button
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Image]		= CChangesPDFPushbuttonImage;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Header_Pos]	= CChangesPDFPushbuttonHeaderPos;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Image]			= CChangesPDFPushbuttonImage;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Header_Pos]		= CChangesPDFPushbuttonHeaderPos;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Icon_Pos]		= CChangesPDFPushbuttonIconPos;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Highlight_Type]	= CChangesPDFPushbuttonHighlightType;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Scale_When_Type]= CChangesPDFPushbuttonScaleWhenType;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Scale_How_Type]	= CChangesPDFPushbuttonScaleHowType;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Fit_Bounds]		= CChangesPDFPushbuttonFitBounds;
 
 
 // checbox/radio
@@ -679,6 +687,29 @@ CChangesPDFTextFormDoNotScroll.prototype.private_SetValue = function(Value)
 
 /**
  * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFComboboxFieldEditable(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFComboboxFieldEditable.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFComboboxFieldEditable.prototype.constructor = CChangesPDFComboboxFieldEditable;
+CChangesPDFComboboxFieldEditable.prototype.Type = AscDFH.historyitem_Pdf_Combobox_Form_Editable;
+CChangesPDFComboboxFieldEditable.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm._editable = Value;
+};
+
+//------------------------------------------------------------------------------------------------------------------
+//
+// List Form
+//
+//------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
  */
 function CChangesPDFListFormCurIdxs(Class, Old, New, Color)
@@ -1113,6 +1144,91 @@ CChangesPDFPushbuttonHeaderPos.prototype.private_SetValue = function(Value)
 {
 	let oField = this.Class;
 	oField.SetHeaderPosition(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesPDFArrayOfDoubleProperty}
+ */
+function CChangesPDFPushbuttonIconPos(Class, Old, New, Color)
+{
+	AscDFH.CChangesPDFArrayOfDoubleProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFPushbuttonIconPos.prototype = Object.create(AscDFH.CChangesPDFArrayOfDoubleProperty.prototype);
+CChangesPDFPushbuttonIconPos.prototype.constructor = CChangesPDFPushbuttonIconPos;
+CChangesPDFPushbuttonIconPos.prototype.Type = AscDFH.historyitem_Pdf_Pushbutton_Icon_Pos;
+CChangesPDFPushbuttonIconPos.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm.SetIconPosition(Value[0], Value[1]);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFPushbuttonHighlightType(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFPushbuttonHighlightType.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFPushbuttonHighlightType.prototype.constructor = CChangesPDFPushbuttonHighlightType;
+CChangesPDFPushbuttonHighlightType.prototype.Type = AscDFH.historyitem_Pdf_Pushbutton_Highlight_Type;
+CChangesPDFPushbuttonHighlightType.prototype.private_SetValue = function(Value)
+{
+	let oField = this.Class;
+	oField.SetHighlight(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFPushbuttonScaleWhenType(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFPushbuttonScaleWhenType.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFPushbuttonScaleWhenType.prototype.constructor = CChangesPDFPushbuttonScaleWhenType;
+CChangesPDFPushbuttonScaleWhenType.prototype.Type = AscDFH.historyitem_Pdf_Pushbutton_Scale_When_Type;
+CChangesPDFPushbuttonScaleWhenType.prototype.private_SetValue = function(Value)
+{
+	let oField = this.Class;
+	oField.SetScaleWhen(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFPushbuttonScaleHowType(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFPushbuttonScaleHowType.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFPushbuttonScaleHowType.prototype.constructor = CChangesPDFPushbuttonScaleHowType;
+CChangesPDFPushbuttonScaleHowType.prototype.Type = AscDFH.historyitem_Pdf_Pushbutton_Scale_How_Type;
+CChangesPDFPushbuttonScaleHowType.prototype.private_SetValue = function(Value)
+{
+	let oField = this.Class;
+	oField.SetScaleHow(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFPushbuttonFitBounds(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFPushbuttonFitBounds.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFPushbuttonFitBounds.prototype.constructor = CChangesPDFPushbuttonFitBounds;
+CChangesPDFPushbuttonFitBounds.prototype.Type = AscDFH.historyitem_Pdf_Pushbutton_Fit_Bounds;
+CChangesPDFPushbuttonFitBounds.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm.SetButtonFitBounds(Value);
 };
 
 /**

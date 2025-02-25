@@ -4043,6 +4043,8 @@
 	AscDFH.historyitem_Pdf_Text_Form_Comb			= AscDFH.historyitem_type_Pdf_Text_Field | 4;
 	AscDFH.historyitem_Pdf_Text_Form_DoNot_Scroll	= AscDFH.historyitem_type_Pdf_Text_Field | 5;
 	
+	// combobox
+	AscDFH.historyitem_Pdf_Combobox_Form_Editable = AscDFH.historyitem_type_Pdf_Combobox_Field | 1;
 
 	// list
 	AscDFH.historyitem_Pdf_List_Form_Cur_Idxs				= AscDFH.historyitem_type_Pdf_Listbox_Field | 1;
@@ -4053,8 +4055,13 @@
 	AscDFH.historyitem_Pdf_List_Form_Multiple_Selection		= AscDFH.historyitem_type_Pdf_Listbox_Field | 6;
 
 	// button
-	AscDFH.historyitem_Pdf_Pushbutton_Image			= AscDFH.historyitem_type_Pdf_Pushbutton | 1;
-	AscDFH.historyitem_Pdf_Pushbutton_Header_Pos	= AscDFH.historyitem_type_Pdf_Pushbutton | 2;
+	AscDFH.historyitem_Pdf_Pushbutton_Image				= AscDFH.historyitem_type_Pdf_Pushbutton | 1;
+	AscDFH.historyitem_Pdf_Pushbutton_Header_Pos		= AscDFH.historyitem_type_Pdf_Pushbutton | 2;
+	AscDFH.historyitem_Pdf_Pushbutton_Icon_Pos			= AscDFH.historyitem_type_Pdf_Pushbutton | 3;
+	AscDFH.historyitem_Pdf_Pushbutton_Highlight_Type	= AscDFH.historyitem_type_Pdf_Pushbutton | 4;
+	AscDFH.historyitem_Pdf_Pushbutton_Scale_When_Type	= AscDFH.historyitem_type_Pdf_Pushbutton | 5;
+	AscDFH.historyitem_Pdf_Pushbutton_Scale_How_Type	= AscDFH.historyitem_type_Pdf_Pushbutton | 6;
+	AscDFH.historyitem_Pdf_Pushbutton_Fit_Bounds		= AscDFH.historyitem_type_Pdf_Pushbutton | 7;
 	
 	// checkbox/radio
 	AscDFH.historyitem_Pdf_Checkbox_No_Toggle_To_Off = AscDFH.historyitem_type_Pdf_Checkbox_Field | 1;

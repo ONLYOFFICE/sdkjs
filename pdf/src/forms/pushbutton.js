@@ -433,7 +433,10 @@
      * @typeofeditors ["PDF"]
      */
     CPushButtonField.prototype.SetHighlight = function(nType) {
+        AscCommon.History.Add(new CChangesPDFPushbuttonHighlightType(this, _highlight, nType));
+
         this._highlight = nType;
+        this.SetWasChanged(true);
     };
     CPushButtonField.prototype.GetHighlight = function() {
         return this._highlight;
@@ -1373,9 +1376,10 @@
     };
     CPushButtonField.prototype.SetButtonFitBounds = function(bValue) {
         if (this._buttonFitBounds != bValue) {
+            AscCommon.History.Add(new CChangesPDFPushbuttonFitBounds(this, this._buttonFitBounds, nType));
+
             this._buttonFitBounds = bValue;
             this.SetWasChanged(true);
-
             this.SetNeedRecalc(true);
         }
     };
@@ -1383,6 +1387,8 @@
         return this._buttonFitBounds;
     };
     CPushButtonField.prototype.SetScaleWhen = function(nType) {
+        AscCommon.History.Add(new CChangesPDFPushbuttonScaleWhenType(this, this._buttonScaleWhen, nType));
+
         this._buttonScaleWhen = nType;
         this.SetWasChanged(true);
     };
@@ -1390,6 +1396,8 @@
         return this._buttonScaleWhen;
     };
     CPushButtonField.prototype.SetScaleHow = function(nType) {
+        AscCommon.History.Add(new CChangesPDFPushbuttonScaleHowType(this, this._buttonScaleHow, nType));
+
         this._buttonScaleHow = nType;
         this.SetWasChanged(true);
     };
@@ -1437,18 +1445,17 @@
         return this._buttonPosition;
     };
     CPushButtonField.prototype.SetIconPosition = function(X, Y) {
-        let oViewer = editor.getDocumentRenderer();
+        AscCommon.History.Add(new CChangesPDFPushbuttonIconPos(this, [this._buttonAlignX, this._buttonAlignY], [X, Y]));
 
         if (X != null)
             this._buttonAlignX = Math.abs(Math.min(X, 1));
         if (Y != null)
             this._buttonAlignY = Math.abs(Math.min(Y, 1));
 
-        if (oViewer.IsOpenFormsInProgress == false) {
-            this.SetWasChanged(true);
-            this.SetNeedRecalc(true);
-        }
+        this.SetWasChanged(true);
+        this.SetNeedRecalc(true);
 
+        AscCommon.History.StartNoHistoryMode();
         let oDrawing = this.GetDrawing();
         if (oDrawing) {
             let nScaleWhen  = this.GetScaleWhen();
@@ -1478,6 +1485,7 @@
                 oImgShape.blipFill.stretch = false;
             }
         }
+        AscCommon.History.EndNoHistoryMode();
     };
     CPushButtonField.prototype.GetIconPosition = function() {
         return {X: this._buttonAlignX, Y: this._buttonAlignY};

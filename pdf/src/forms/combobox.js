@@ -609,7 +609,11 @@
     };
     
     CComboBoxField.prototype.SetEditable = function(bValue) {
+        AscCommon.History.Add(new CChangesPDFListOption(this, nPos, this._editable, bValue));
+
         this._editable = bValue;
+
+        this.SetWasChanged(true);
     };
     CComboBoxField.prototype.IsEditable = function() {
         return this._editable;
