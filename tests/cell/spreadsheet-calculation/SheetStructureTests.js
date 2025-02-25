@@ -3761,7 +3761,9 @@ $(function () {
 
 
 		// number 
+		ws.getRange2("A20:A23").cleanAll();
 		fillRange = ws.getRange2("A20:A22");
+		fillRange.setValue("1");
 		fillRange.setNumFormat("0.00"); 	// change to the number format
 
 		wsView.setSelection(fillRange.bbox);
@@ -4083,8 +4085,314 @@ $(function () {
 		resCell = ws.getRange2("A92");
 		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A113:C115 autosum");
 		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A113:C115 autosum");
+
+		// for bug 36902
+		// single cell selection, left cell data
+		ws.getRange2("A1:Z20").cleanAll();
+		ws.getRange2("A1:A3").setValue("1");
+		fillRange = ws.getRange2("B1");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("B1");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty B1 cell");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, "A1", "Formula for edit after autosum from empty B1 cell");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, undefined, "Is the B1 cell open for edit");
+		resCell = ws.getRange2("B1");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in cell B1 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in cell B1 after autosum");
+
+
+		fillRange = ws.getRange2("D1");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("D1");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty D1 cell");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, "A1:C1", "Formula for edit after autosum from empty D1 cell");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, undefined, "Is the D1 cell open for edit");
+		resCell = ws.getRange2("D1");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in cell D1 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in cell D1 after autosum");
+
+		// multi cells selection, left cell data
+		// vertical selection line
+		fillRange = ws.getRange2("B1:B3");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("B1");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty B1:B3 range");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, undefined, "Formula for edit after autosum from empty B1:B3 range");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, true, "Is the B1 cell open for edit");
+		resCell = ws.getRange2("B1");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell B1 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A1)", "Formula in cell B1 after autosum");
+		resCell = ws.getRange2("B2");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell B2 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A2)", "Formula in cell B2 after autosum");
+		resCell = ws.getRange2("B3");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell B3 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A3)", "Formula in cell B3 after autosum");
+		ws.getRange2("B1:B3").cleanAll();
+
 		
-		ws.getRange2("A1:Z100").cleanAll();
+		fillRange = ws.getRange2("D1:D3");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("D1");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty D1:D3 range");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, undefined, "Formula for edit after autosum from empty D1:D3 range");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, true, "Is the D1 cell open for edit");
+		resCell = ws.getRange2("D1");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell D1 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A1:C1)", "Formula in cell D1 after autosum");
+		resCell = ws.getRange2("D2");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell B2 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A2:C2)", "Formula in cell B2 after autosum");
+		resCell = ws.getRange2("D3");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell B3 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A3:C3)", "Formula in cell B3 after autosum");
+		ws.getRange2("D1:D3").cleanAll();
+
+		// horizontal
+		fillRange = ws.getRange2("B1:D1");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("B1");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty B1:D1 range");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, undefined, "Formula for edit after autosum from empty B1:D1 range");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, true, "Is the B1 cell open for edit");
+		resCell = ws.getRange2("B1");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell B1 after B1:D1 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A1)", "Formula in cell B1 after B1:D1 autosum");
+		resCell = ws.getRange2("C1");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell C1 after B1:D1 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(B1)", "Formula in cell C1 after B1:D1 autosum");
+		resCell = ws.getRange2("D1");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell D1 after B1:D1 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(C1)", "Formula in cell D1 after B1:D1 autosum");
+		ws.getRange2("B1:D1").cleanAll();
+
+
+		fillRange = ws.getRange2("D1:F1");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("D1");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty D1:F1 range");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, undefined, "Formula for edit after autosum from empty D1:F1 range");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, true, "Is the D1 cell open for edit");
+		resCell = ws.getRange2("D1");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell D1 after D1:F1 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A1:C1)", "Formula in cell D1 after D1:F1 autosum");
+		resCell = ws.getRange2("E1");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell E1 after D1:F1 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(B1:D1)", "Formula in cell E1 after D1:F1 autosum");
+		resCell = ws.getRange2("F1");
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value in cell F1 after D1:F1 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(C1:E1)", "Formula in cell F1 after D1:F1 autosum");
+		ws.getRange2("D1:F1").cleanAll();
+
+		// two-dimensional
+		fillRange = ws.getRange2("B2:C3");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("B2");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty B2:C3 range");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, "A2", "Formula for edit after autosum from empty B2:C3 range");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, undefined, "Is the B2 cell open for edit");
+		resCell = ws.getRange2("B2");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in cell B2 after B2:C3 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in cell B2 after B2:C3 autosum");
+		resCell = ws.getRange2("C3");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in cell C3 after B2:C3 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in cell C3 after B2:C3 autosum");
+
+
+		// single cell selection, top cell data
+		ws.getRange2("A1:D1").setValue("1");
+		fillRange = ws.getRange2("D2");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("D2");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty D2 cell");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, "D1", "Formula for edit after autosum from empty D2 cell");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, undefined, "Is the D2 cell open for edit");
+		resCell = ws.getRange2("D2");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in cell D2 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in cell D2 after autosum");
+
+
+		fillRange = ws.getRange2("D6");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("D6");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty D6 cell");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, "D1:D5", "Formula for edit after autosum from empty D6 cell");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, undefined, "Is the D6 cell open for edit");
+		resCell = ws.getRange2("D6");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in cell D6 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in cell D6 after autosum");
+
+
+		// multi cells selection, top cell data
+		// vertical
+		fillRange = ws.getRange2("D2:D3");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("D2");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty D2:D3 range");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, undefined, "Formula for edit after autosum from empty D2:D3 range");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, true, "Is the D2 cell open for edit");
+		resCell = ws.getRange2("D2");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell D2 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(D1)", "Formula in cell D2 after D2:D3 autosum");
+		resCell = ws.getRange2("D3");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell D3 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(D2)", "Formula in cell D3 after D2:D3 autosum");
+		ws.getRange2("D2:D3").cleanAll();
+
+
+		fillRange = ws.getRange2("D6:D8");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("D6");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty D6:D8 range");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, undefined, "Formula for edit after autosum from empty D6:D8 range");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, true, "Is the B1 cell open for edit");
+		resCell = ws.getRange2("D6");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell D6 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(D1:D5)", "Formula in cell D6 after D6:D8 autosum");
+		resCell = ws.getRange2("D7");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell D7 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(D2:D6)", "Formula in cell D7 after D6:D8 autosum");
+		resCell = ws.getRange2("D8");
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value in cell D8 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(D3:D7)", "Formula in cell D8 after D6:D8 autosum");
+		ws.getRange2("D6:D8").cleanAll();
+
+		// horizontal
+		fillRange = ws.getRange2("D2:F2");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("D2");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty D2:F2 range");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, undefined, "Formula for edit after autosum from empty D2:F2 range");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, true, "Is the D2 cell open for edit");
+		resCell = ws.getRange2("D2");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell D2 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(D1)", "Formula in cell D2 after D2:F2 autosum");
+		resCell = ws.getRange2("E2");
+		assert.strictEqual(resCell.getValueWithFormat(), "0", "Value in cell E2 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(E1)", "Formula in cell E2 after D2:F2 autosum");
+		resCell = ws.getRange2("F2");
+		assert.strictEqual(resCell.getValueWithFormat(), "0", "Value in cell F2 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(F1)", "Formula in cell F2 after D2:F2 autosum");
+		ws.getRange2("D2:F2").cleanAll();
+
+
+		fillRange = ws.getRange2("D5:F5");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("D5");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty D5:F5 range");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, undefined, "Formula for edit after autosum from empty D5:F5 range");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, true, "Is the D5 cell open for edit");
+		resCell = ws.getRange2("D5");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell D5 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(D1:D4)", "Formula in cell D5 after D5:F5 autosum");
+		resCell = ws.getRange2("E5");
+		assert.strictEqual(resCell.getValueWithFormat(), "0", "Value in cell E5 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(E1:E4)", "Formula in cell E5 after D5:F5 autosum");
+		resCell = ws.getRange2("F5");
+		assert.strictEqual(resCell.getValueWithFormat(), "0", "Value in cell F5 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(F1:F4)", "Formula in cell F5 after D5:F5 autosum");
+		ws.getRange2("D5:F5").cleanAll();
+
+		// two-dimensional
+		fillRange = ws.getRange2("D3:E4");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("D3");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty D3:E4 range");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, "D1:D2", "Formula for edit after autosum from empty D3:E4 range");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, undefined, "Is the D4 cell open for edit");
+		resCell = ws.getRange2("D3");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in cell D3 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in cell D3 after D3:E4 autosum");
+		resCell = ws.getRange2("E4");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in cell E4 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in cell E4 after D3:E4 autosum");
+		ws.getRange2("D3:E4").cleanAll();
+		
+		ws.getRange2("A1:Z200").cleanAll();
 	});
 
 	/* for bug 69708 */
