@@ -2098,16 +2098,15 @@
         let arCopy = null;
         let arHistorySelect = ar.clone(true);
         let vr = this.visibleRange;
-        // First top cell
+        // First top cell with data
         let topCell = null;
-        // First left cell
+        // First left cell with data
         let leftCell = null;
 
         let r = activeCell.row - 1;
         let c = activeCell.col - 1;
         let cell, cellType, isNumberFormat;
         let result = {};
-        // let hasNumber = this._getValuesPositionsInRange(true);
         let hasNumber = !callFromWizard && this._getAutocompleteValues();		// Get all valid values ​​for autocomplete according to the cell format and type
 
 		const onAutoCompleteFormula = function (isSuccess) {
@@ -2140,10 +2139,6 @@
 			t.draw();
 		};
 
-        // Get all non-empty values ​​in the range
-        // let realValues = this._getValuesPositionsInRange();
-        let val, text;
-
         /*
             If the first value in the select is a string, then:
             if there are numeric values ​​and there are more than 1, then cut the select to the first value in the column/row
@@ -2157,12 +2152,12 @@
             or the number of numeric values ​​in the column is 1
         */
 
+        let val, text, merged;
         let firstCell = this._getCellTextCache(ar.c1, ar.r1, true);
         let lastCell = this._getCellTextCache(ar.c2, ar.r2, true);
 
 		let isSingleCellSelection = (ar.r1 === ar.r2) && (ar.c1 === ar.c2);
 		let isSingleRowColSelection =  (ar.r1 === ar.r2) || (ar.c1 === ar.c2);
-		let merged;
 		let functionAction = null;
 
         if (hasNumber) {
@@ -2471,12 +2466,12 @@
         }
 
         if (leftCell) {
-            // Идем влево до первой не числовой ячейки
+            // Move to the left until the first non-numeric cell
             --c;
             for (; c >= 0; --c) {
                 cell = this._getCellTextCache(c, activeCell.row);
                 if (!cell) {
-                    // Могут быть еще не закешированные данные
+                    // There may still be uncached data
                     this._addCellTextToCache(c, activeCell.row);
                     cell = this._getCellTextCache(c, activeCell.row);
                     if (!cell) {
@@ -2489,7 +2484,7 @@
                     break;
                 }
             }
-            // Мы ушли чуть дальше
+            // We have gone a little further
             ++c;
 
 			// If we have one line or column in the selection and we found not empty cells to the left or on top, 
@@ -2522,10 +2517,10 @@
 				result.notEditCell = true;
 				return result;
 			}
-			
+
             if (activeCell.col - 1 !== c) {
                 // Range
-				result = new asc_Range(c, leftCell.r, activeCell.col - 1, leftCell.r);
+                result = new asc_Range(c, leftCell.r, activeCell.col - 1, leftCell.r);
             } else {
                 // Single cell
                 result = new asc_Range(c, leftCell.r, c, leftCell.r);
@@ -2535,12 +2530,12 @@
         }
 
         if (topCell) {
-            // Идем вверх до первой не числовой ячейки
+            // Move up until the first non-numeric cell
             --r;
             for (; r >= 0; --r) {
                 cell = this._getCellTextCache(activeCell.col, r);
                 if (!cell) {
-                    // Могут быть еще не закешированные данные
+                    // There may still be uncached data
                     this._addCellTextToCache(activeCell.col, r);
                     cell = this._getCellTextCache(activeCell.col, r);
                     if (!cell) {
@@ -2553,7 +2548,7 @@
                     break;
                 }
             }
-            // Мы ушли чуть дальше
+            // We have gone a little further
             ++r;
 
 			if (!isSingleCellSelection && !merged && isSingleRowColSelection) {
