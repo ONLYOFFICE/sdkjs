@@ -931,10 +931,10 @@ function CEditorPage(api)
 			const showCurrentColor = function() {
 				const elements = document.querySelectorAll(".menu-color-cell");
 				for (let i = 0; i< elements.length; i++) {
-					if (this.currentDrawColor === elements[i].dataset.value) {
-						elements[i].dataset.current = "true";
+					if (this.currentDrawColor === elements[i].getAttribute("data-value")) {
+						elements[i].dataset["current"] = "true";
 					} else {
-						delete elements[i].dataset.current;
+						delete elements[i].dataset["current"];
 					}
 				}
 			}.bind(this);
@@ -946,8 +946,8 @@ function CEditorPage(api)
 				if (e.target.hasAttribute("data-ratio")) {
 					const btnIcon = document.getElementById("dem_id_draw_menu_trigger_span");
 					
-					if (!!e.target.dataset.checked) {
-						delete e.target.dataset.checked;
+					if (!!e.target.getAttribute("data-checked")) {
+						delete e.target.dataset["checked"];
 						api.asc_StopInkDrawer();
 
 						this.elementReporterDrawMenuTrigger.classList.remove("btn-text-default-img2");
@@ -957,10 +957,10 @@ function CEditorPage(api)
 					} else {
 						const elements = this.elementReporterDrawMenu.querySelectorAll("a[data-ratio]")
 						for (let i = 0; i< elements.length; i++) {
-							delete elements[i].dataset.checked;
+							delete elements[i].dataset["checked"];
 						}
 
-						e.target.dataset.checked = "true";
+						e.target.dataset["checked"] = "true";
 
 						const currentTool = e.target.getAttribute("data-tool");
 
@@ -986,7 +986,7 @@ function CEditorPage(api)
 					}
 				}
 
-				if (e.target.dataset.tool === "erase-all") {
+				if (e.target.getAttribute("data-tool") === "erase-all") {
 					api.asc_EraseAllInksOnSlide();
 				}
 
@@ -1026,26 +1026,26 @@ function CEditorPage(api)
 
 			this.elementReporterDrawColorsMenu.on('click', function(e) {
 				const checkedMenuItem = this.elementReporterDrawMenu.querySelector("a[data-checked]");
-				this.currentDrawColor = e.target.dataset.value;
+				this.currentDrawColor = e.target.getAttribute("data-value");
 				showCurrentColor();
 				if (window.editor.WordControl.reporterPointer) {
 					this.elementReporter6.onclick()
 				}
-				if ((checkedMenuItem && checkedMenuItem.dataset.tool === "eraser") || !checkedMenuItem) {
+				if ((checkedMenuItem && checkedMenuItem.getAttribute("data-tool") === "eraser") || !checkedMenuItem) {
 					api.asc_StartDrawInk(createSolidPen(this.currentDrawColor, 1, 100));
 					const elements = this.elementReporterDrawMenu.querySelectorAll("a[data-ratio]")
 					for (let i = 0; i< elements.length; i++) {
-						delete elements[i].dataset.checked;
+						delete elements[i].dataset["checked"];
 					}
 
 					const btnIcon = document.getElementById("dem_id_draw_menu_trigger_span");
-					this.elementReporterDrawMenu.querySelector("a[data-tool=\"pen\"]").dataset.checked = "true";
+					this.elementReporterDrawMenu.querySelector("a[data-tool=\"pen\"]").dataset["checked"] = "true";
 					this.elementReporterDrawMenuTrigger.classList.add("btn-text-default-img2");
 					this.elementReporterDrawMenuTrigger.classList.remove("btn-text-default-img");
 					btnIcon.classList.add("btn-pen-active");
 					btnIcon.classList.remove("btn-pen");
 				} else {
-					if (checkedMenuItem.dataset.tool === "pen") {
+					if (checkedMenuItem.getAttribute("data-tool") === "pen") {
 						api.asc_StartDrawInk(createSolidPen(this.currentDrawColor, 1, 100));
 					} else {
 						api.asc_StartDrawInk(createSolidPen(this.currentDrawColor, 6, 50));
