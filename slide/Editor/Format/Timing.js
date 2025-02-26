@@ -3479,8 +3479,9 @@
     };
 
     CBldBase.prototype.assignConnection = function (oObjectsMap) {
-        if (AscCommon.isRealObject(oObjectsMap[this.spid]) && oObjectsMap[this.spid].isDrawing) {
-            this.setSpid(oObjectsMap[this.spid].Id);
+        let oSp = oObjectsMap[this.spid];
+        if (AscCommon.isRealObject(oSp) && oSp.isDrawing && isDrawingOnSlide(oSp)) {
+            this.setSpid(oSp.Id);
         } else {
             if (this.parent) {
                 this.parent.onRemoveChild(this);
