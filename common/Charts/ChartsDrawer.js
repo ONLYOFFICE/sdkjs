@@ -6393,18 +6393,21 @@ drawBarChart.prototype = {
 
 		this.sortZIndexPaths = [];
 
-		var countSeries = this.cChartDrawer.calculateCountSeries(this.chart);
+		const countSeries = this.cChartDrawer.calculateCountSeries(this.chart);
 		this.seriesCount = countSeries.series;
-		this.ptCount = countSeries.points;
-		this.subType = this.cChartDrawer.getChartGrouping(this.chart);
-		this.catAx = this.cChartDrawer.getAxisFromAxId(this.chart.axId, AscDFH.historyitem_type_CatAx);
-		if (!this.catAx) {
-			this.catAx = this.cChartDrawer.getAxisFromAxId(this.chart.axId, AscDFH.historyitem_type_DateAx);
-		}
-		this.valAx = this.cChartDrawer.getAxisFromAxId(this.chart.axId, AscDFH.historyitem_type_ValAx);
-		this.serAx = this.cChartDrawer.getAxisFromAxId(this.chart.axId, AscDFH.historyitem_type_SerAx);
 
-		this._recalculateBars();
+		if (this.seriesCount !== 0) {
+			this.ptCount = countSeries.points;
+			this.subType = this.cChartDrawer.getChartGrouping(this.chart);
+			this.catAx = this.cChartDrawer.getAxisFromAxId(this.chart.axId, AscDFH.historyitem_type_CatAx);
+			if (!this.catAx) {
+				this.catAx = this.cChartDrawer.getAxisFromAxId(this.chart.axId, AscDFH.historyitem_type_DateAx);
+			}
+			this.valAx = this.cChartDrawer.getAxisFromAxId(this.chart.axId, AscDFH.historyitem_type_ValAx);
+			this.serAx = this.cChartDrawer.getAxisFromAxId(this.chart.axId, AscDFH.historyitem_type_SerAx);
+
+			this._recalculateBars();
+		}
 	},
 
 	draw: function () {
