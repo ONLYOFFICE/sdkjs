@@ -6385,6 +6385,8 @@ function parserFormula( formula, parent, _ws ) {
 
 	this.ref = null;
 
+	this.promiseResult = null;
+
 	//mark function, when need reparse and recalculate on custom function change change
 	this.bUnknownOrCustomFunction = null;
 
@@ -8860,8 +8862,11 @@ function parserFormula( formula, parent, _ws ) {
 			opt_bbox = new Asc.Range(0, 0, 0, 0);
 		}
 
+		let isPromise = function (val) {
+			return val && val.promise && val.promise.then;
+		};
+
 		let promiseCounter = 0;
-		let curPromises;
 		var elemArr = [], _tmp, numFormat = cNumFormatFirstCell, currentElement = null, bIsSpecialFunction, argumentsCount, defNameCalcArr, defNameArgCount = 0;
 		for (var i = 0; i < this.outStack.length; i++) {
 			currentElement = this.outStack[i];
@@ -8944,20 +8949,14 @@ function parserFormula( formula, parent, _ws ) {
 					}
 
 					//check promise
-					if (_tmp && _tmp.promise && _tmp.promise.then) {
+					if (isPromise(_tmp)) {
 						if (this.promiseResult) {
 							_tmp = this.promiseResult[promiseCounter];
-							promiseCounter++;
 						} else {
-							if (!curPromises) {
-								curPromises = [];
-							}
 							_tmp.parserFormula = this;
-							curPromises.push(_tmp);
-							//this.value = new cError(cErrorType.wrong_name);
-							//this._endCalculate();
-							//return this.value;
+							this.wb.asyncFormulasManager.addPromise(_tmp);
 						}
+						promiseCounter++;
 					}
 
 					//_tmp = currentElement.Calculate(arg, opt_bbox, opt_defName, this.ws, bIsSpecialFunction);
@@ -8996,11 +8995,7 @@ function parserFormula( formula, parent, _ws ) {
 			}
 		}
 
-		if (curPromises) {
-			if (!window.promises) {
-				window.promises = [];
-			}
-			window.promises = window.promises.concat(curPromises);
+		if (promiseCounter && !this.promiseResult) {
 			this.value = new cError(cErrorType.wrong_name);
 			//this._endCalculate();
 			return this.value;

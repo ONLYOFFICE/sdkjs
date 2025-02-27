@@ -2076,29 +2076,34 @@
 			});
 
 
-
-			if (window.promises) {
-				let promises = [];
-				for (let i = 0; i < window.promises.length; i++) {
+			let promises = this.wb.asyncFormulasManager.getPromises();
+			if (promises) {
+				let fPromises = [];
+				for (let i = 0; i < promises.length; i++) {
 					const fPromise = function () {
-						return window.promises[i].promise
+						return promises[i].promise;
 					};
-					promises.push(fPromise)
+					fPromises.push(fPromise);
 				}
-				const promiseIterator = new AscCommon.CPromiseGetterIterator(promises);
+				const promiseIterator = new AscCommon.CPromiseGetterIterator(fPromises);
 				promiseIterator.forAllSuccessValues(function (streamInfos) {
 					for (let i = 0; i < streamInfos.length; i++) {
-						if (!window.promises[i].parserFormula.promiseResult) {
-							window.promises[i].parserFormula.promiseResult = [];
+						if (!promises[i].parserFormula.promiseResult) {
+							promises[i].parserFormula.promiseResult = [];
 						}
-						window.promises[i].parserFormula.promiseResult.push(window.promises[i].callback(streamInfos[i]));
-						t.wb.dependencyFormulas.addToChangedCell(window.promises[i].parserFormula.parent);
+						promises[i].parserFormula.promiseResult.push(promises[i].callback(streamInfos[i]));
+						t.wb.dependencyFormulas.addToChangedCell(promises[i].parserFormula.parent);
 					}
 					//t.wb.sortDependency();
 					t._foreachChanged(function (oCell) {
 						oCell.setIsDirty(true);
 						oCell && oCell._checkDirty();
 					});
+
+					t.wb.asyncFormulasManager.clearPromises();
+					for (let i = 0; i < streamInfos.length; i++) {
+						promises[i].parserFormula.promiseResult = null;
+					}
 				});
 			}
 
@@ -2878,6 +2883,27 @@
 		this.nextRow();
 	};
 
+	function AsyncFormulasManager(wb) {
+		this.wb = wb;
+		this.promises = null;
+	}
+
+	AsyncFormulasManager.prototype.addPromise = function (val) {
+		if (!this.promises) {
+			this.promises = [];
+		}
+		this.promises.push(val);
+	};
+	AsyncFormulasManager.prototype.getPromise = function (index) {
+		return this.promises[index];
+	};
+	AsyncFormulasManager.prototype.getPromises = function () {
+		return this.promises;
+	};
+	AsyncFormulasManager.prototype.clearPromises = function () {
+		this.promises = null;
+	};
+
 	function ForwardTransformationFormula(elem, formula, parsed) {
 		this.elem = elem;
 		this.formula = formula;
@@ -2938,6 +2964,7 @@
 		this.MainDocument = false !== isMainLogicDocument;
 		this.handlers = eventsHandlers;
 		this.dependencyFormulas = new DependencyGraph(this);
+		this.asyncFormulasManager = new AsyncFormulasManager(this);
 		this.nActive = 0;
 		this.showVerticalScroll = null;
 		this.showHorizontalScroll = null;
