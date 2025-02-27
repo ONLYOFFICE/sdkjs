@@ -16591,6 +16591,9 @@
 			case cErrorOrigin["spill"]:
 				return cErrorLocal["spill"];
 				break;
+			case cErrorOrigin["busy"]:
+				return cErrorLocal["busy"];
+				break;
 		}
 		return cErrorLocal["nil"];
 	};

@@ -509,7 +509,8 @@ var cErrorType = {
 		not_available       : 7,
 		getting_data        : 8,
 		array_not_calc      : 9,
-		cannot_be_spilled	: 10
+		cannot_be_spilled	: 10,
+		busy                : 11
   };
 //добавляю константу cReturnFormulaType для корректной обработки формул массива
 // value - функция умеет возвращать только значение(не массив)
@@ -942,6 +943,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				this.errorType = cErrorType.cannot_be_spilled;
 				break;
 			}
+			case cErrorLocal["busy"]:
+			case cErrorOrigin["busy"]:
+			case cErrorType.busy: {
+				this.value = "#BUSY!";
+				this.errorType = cErrorType.busy;
+				break;
+			}
 		}
 
 		return this;
@@ -1007,6 +1015,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			case cErrorType.cannot_be_spilled: {
 				return cErrorLocal["spill"];
 			}
+			case cErrorOrigin["busy"]:
+			case cErrorType.busy: {
+				return cErrorLocal["busy"];
+			}
 		}
 		return cErrorLocal["na"];
 	};
@@ -1055,6 +1067,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 			case cErrorOrigin["spill"]: {
 				res = cErrorType.cannot_be_spilled;
+				break;
+			}
+			case cErrorOrigin["busy"]: {
+				res = cErrorType.busy;
 				break;
 			}
 			default: {
@@ -1109,6 +1125,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 			case cErrorType.cannot_be_spilled: {
 				res = cErrorOrigin["spill"];
+				break;
+			}
+			case cErrorType.busy: {
+				res = cErrorOrigin["busy"];
 				break;
 			}
 			default:
@@ -8996,8 +9016,8 @@ function parserFormula( formula, parent, _ws ) {
 		}
 
 		if (promiseCounter && !this.promiseResult) {
-			this.value = new cError(cErrorType.wrong_name);
-			//this._endCalculate();
+			this.value = new cError(cErrorType.busy);
+			this._endCalculate();
 			return this.value;
 		}
 

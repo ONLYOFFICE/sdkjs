@@ -1470,6 +1470,7 @@
 		"uf": "#UNSUPPORTED_FUNCTION!",
 		"calc": "#CALC!",
 		"spill": "#SPILL!",
+		"busy": "#BUSY!",
 	};
 	var cErrorLocal = {};
 	let cCellFunctionLocal = {};
@@ -1577,7 +1578,8 @@
 			"getdata": "#GETTING_DATA",
 			"uf":      "#UNSUPPORTED_FUNCTION!",
 			"calc":    "#CALC!",
-			"spill":   "#SPILL!"
+			"spill":   "#SPILL!",
+			"busy":    "#BUSY!"
 		};
 		cErrorLocal['nil'] = local['nil'];
 		cErrorLocal['div'] = local['div'];
@@ -1590,6 +1592,7 @@
 		cErrorLocal['uf'] = local['uf'];
 		cErrorLocal['calc'] = local['calc'];
 		cErrorLocal['spill'] = local['spill'];
+		cErrorLocal['busy'] = local['busy'];
 
 		return new RegExp("^(" + cErrorLocal["nil"] + "|" +
 			cErrorLocal["div"] + "|" +
@@ -1601,7 +1604,8 @@
 			cErrorLocal["getdata"] + "|" +
 			cErrorLocal["uf"] + "|" +
 			cErrorLocal["calc"] + "|" +
-			cErrorLocal["spill"] + ")", "i")
+			cErrorLocal["spill"] + "|" +
+			cErrorLocal["busy"] + ")", "i")
 	}
 
 	function build_rx_cell_func(local)
