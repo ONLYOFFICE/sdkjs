@@ -18166,6 +18166,8 @@ function RangeDataManagerElem(bbox, data)
 		this.activeLocale = null;
 
 		this.needRecalculate = null;
+
+		this.promises = null;
 	}
 	CCustomFunctionEngine.prototype.add = function (func, options) {
 		//options ->
@@ -18681,6 +18683,18 @@ function RangeDataManagerElem(bbox, data)
 
 	CCustomFunctionEngine.prototype.prepareResult = function (val, _type) {
 		let res = null;
+		//detect promise
+		let t = this;
+		if (val && val.then) {
+			if (!this.promises) {
+				this.promises = [];
+			}
+			let oPromise = {promise: val, callback: function (_val) {
+				return t.prepareResult(_val, _type);
+			}}
+			this.promises.push(oPromise);
+			return oPromise;
+		}
 		switch (_type) {
 			case "number":
 				if (typeof val === "object") {

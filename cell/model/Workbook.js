@@ -2075,6 +2075,33 @@
 				}
 			});
 
+
+
+			if (window.promises) {
+				let promises = [];
+				for (let i = 0; i < window.promises.length; i++) {
+					const fPromise = function () {
+						return window.promises[i].promise
+					};
+					promises.push(fPromise)
+				}
+				const promiseIterator = new AscCommon.CPromiseGetterIterator(promises);
+				promiseIterator.forAllSuccessValues(function (streamInfos) {
+					for (let i = 0; i < streamInfos.length; i++) {
+						if (!window.promises[i].parserFormula.promiseResult) {
+							window.promises[i].parserFormula.promiseResult = [];
+						}
+						window.promises[i].parserFormula.promiseResult.push(window.promises[i].callback(streamInfos[i]));
+						t.wb.dependencyFormulas.addToChangedCell(window.promises[i].parserFormula.parent);
+					}
+					//t.wb.sortDependency();
+					t._foreachChanged(function (oCell) {
+						oCell.setIsDirty(true);
+						oCell && oCell._checkDirty();
+					});
+				});
+			}
+
 			if (AscCommonExcel.importRangeLinksState.importRangeLinks) {
 				//need update
 

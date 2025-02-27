@@ -8860,6 +8860,8 @@ function parserFormula( formula, parent, _ws ) {
 			opt_bbox = new Asc.Range(0, 0, 0, 0);
 		}
 
+		let promiseCounter = 0;
+		let curPromises;
 		var elemArr = [], _tmp, numFormat = cNumFormatFirstCell, currentElement = null, bIsSpecialFunction, argumentsCount, defNameCalcArr, defNameArgCount = 0;
 		for (var i = 0; i < this.outStack.length; i++) {
 			currentElement = this.outStack[i];
@@ -8941,6 +8943,23 @@ function parserFormula( formula, parent, _ws ) {
 						_tmp = currentElement.Calculate(arg, opt_bbox, opt_defName, this.ws, bIsSpecialFunction);
 					}
 
+					//check promise
+					if (_tmp && _tmp.promise && _tmp.promise.then) {
+						if (this.promiseResult) {
+							_tmp = this.promiseResult[promiseCounter];
+							promiseCounter++;
+						} else {
+							if (!curPromises) {
+								curPromises = [];
+							}
+							_tmp.parserFormula = this;
+							curPromises.push(_tmp);
+							//this.value = new cError(cErrorType.wrong_name);
+							//this._endCalculate();
+							//return this.value;
+						}
+					}
+
 					//_tmp = currentElement.Calculate(arg, opt_bbox, opt_defName, this.ws, bIsSpecialFunction);
 					if (cNumFormatNull !== _tmp.numFormat) {
 						numFormat = _tmp.numFormat;
@@ -8975,6 +8994,16 @@ function parserFormula( formula, parent, _ws ) {
 			} else {
 				elemArr.push(currentElement);
 			}
+		}
+
+		if (curPromises) {
+			if (!window.promises) {
+				window.promises = [];
+			}
+			window.promises = window.promises.concat(curPromises);
+			this.value = new cError(cErrorType.wrong_name);
+			//this._endCalculate();
+			return this.value;
 		}
 
 		// ref(CSE) - legacy array-formula
