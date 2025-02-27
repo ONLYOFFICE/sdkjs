@@ -185,9 +185,10 @@
 	};
 	/**
 	 * Все ли обязательные поля заполнены
+	 * @param {string} [roleName]
 	 * @returns {boolean}
 	 */
-	CFormsManager.prototype.IsAllRequiredFormsFilled = function()
+	CFormsManager.prototype.IsAllRequiredFormsFilled = function(roleName)
 	{
 		// TODO: Сейчас у нас здесь идет проверка и на правильность заполнения форм с форматом
 		// Возможно стоит разделить на 2 разные проверки и добавить одну общую проверку на правильность
@@ -197,6 +198,10 @@
 		for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 		{
 			let oForm = arrForms[nIndex];
+			
+			if (roleName && roleName !== oForm.GetFormRole())
+				continue;
+			
 			if (oForm.IsFormRequired() && !oForm.IsFormFilled())
 				return false;
 

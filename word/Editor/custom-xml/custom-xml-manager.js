@@ -286,122 +286,131 @@
 	 */
 	CustomXmlManager.prototype.proceedLinearXMl = function (strLinearXML)
 	{
-		strLinearXML					= strLinearXML.replaceAll("&lt;", "<");
-		strLinearXML					= strLinearXML.replaceAll("&gt;", ">");
-		strLinearXML					= strLinearXML.replaceAll("<?xml version=\"1.0\" standalone=\"yes\"?>", "");
-		strLinearXML					= strLinearXML.replaceAll("<?mso-application progid=\"Word.Document\"?>", "");
-
-		// при записи в атрибут больше проблем, изменить подход если в будущем еще будут проблемы c html entry
-		strLinearXML					= strLinearXML.replaceAll("&#xA;", "");
-		strLinearXML					= strLinearXML.replaceAll("&amp;", "&");
-		strLinearXML					= strLinearXML.replaceAll("&quot;", "\"");
-		strLinearXML					= strLinearXML.replaceAll("&#039;", "'");
-
-		let zLib				= new AscCommon.ZLib;
-		zLib.create();
-		zLib.addFile('[Content_Types].xml', AscCommon.Utf8.encode('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-			'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
-			'<Default Extension="wmf" ContentType="image/x-wmf"/>' +
-			'<Default Extension="png" ContentType="image/png"/>' +
-			'<Default Extension="jpeg" ContentType="image/jpeg"/>' +
-			'<Default Extension="xml" ContentType="application/xml"/>' +
-			'<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
-			'<Default Extension="bin" ContentType="application/vnd.openxmlformats-officedocument.oleObject"/>' +
-			'<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>' +
-			'<Override PartName="/word/fontTable.xml"' +
-			'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.fontTable+xml"/>' +
-			'<Override PartName="/word/styles.xml"' +
-			'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>' +
-			'<Override PartName="/word/document.xml"' +
-			'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
-			'<Override PartName="/word/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>' +
-			'<Override PartName="/word/endnotes.xml"' +
-			'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.endnotes+xml"/>' +
-			'<Override PartName="/word/webSettings.xml"' +
-			'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.webSettings+xml"/>' +
-			'<Override PartName="/word/glossary/webSettings.xml"' +
-			'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.webSettings+xml"/>' +
-			'<Override PartName="/word/glossary/fontTable.xml"' +
-			'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.fontTable+xml"/>' +
-			'<Override PartName="/word/glossary/settings.xml"' +
-			'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>' +
-			'<Override PartName="/docProps/app.xml"' +
-			'ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>' +
-			'<Override PartName="/word/footnotes.xml"' +
-			'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footnotes+xml"/>' +
-			'<Override PartName="/word/settings.xml"' +
-			'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>' +
-			'<Override PartName="/word/glossary/styles.xml"' +
-			'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>' +
-			'<Override PartName="/word/glossary/document.xml"' +
-			'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.glossary+xml"/>' +
-			'<Override PartName="/customXml/itemProps1.xml"' +
-			'ContentType="application/vnd.openxmlformats-officedocument.customXmlProperties+xml"/>' +
-			'</Types>'));
-
-		let nPos = 0;
-		while (true)
-		{
-			let nStartPos = nPos = strLinearXML.indexOf('<pkg:part', nPos);
-
-			if (!nStartPos || nStartPos === -1)
-				break;
-
-			let nEndPos			= nPos = strLinearXML.indexOf('</pkg:part>', nStartPos);
-			let strText			= strLinearXML.substring(nStartPos, nEndPos);
-
-			let nPosStartName	= strText.indexOf('name="', 0) + 'name="'.length;
-			let nPosEndName		= strText.indexOf('"', nPosStartName);
-			let name			= strText.substring(nPosStartName, nPosEndName);
-
-			let nDataStartPos	= strText.indexOf('<pkg:xmlData>', 0);
-			let nDataEndPos;
-
-			if (nDataStartPos !== -1)
+		let drawingDocument = this.document.GetDrawingDocument();
+		let docContent = AscCommon.ExecuteNoHistory(function(){
+			strLinearXML = strLinearXML.replaceAll("&lt;", "<");
+			strLinearXML = strLinearXML.replaceAll("&gt;", ">");
+			strLinearXML = strLinearXML.replaceAll("<?xml version=\"1.0\" standalone=\"yes\"?>", "");
+			strLinearXML = strLinearXML.replaceAll("<?mso-application progid=\"Word.Document\"?>", "");
+			
+			// при записи в атрибут больше проблем, изменить подход если в будущем еще будут проблемы c html entry
+			strLinearXML = strLinearXML.replaceAll("&#xA;", "");
+			strLinearXML = strLinearXML.replaceAll("&amp;", "&");
+			strLinearXML = strLinearXML.replaceAll("&quot;", "\"");
+			strLinearXML = strLinearXML.replaceAll("&#039;", "'");
+			
+			let zLib = new AscCommon.ZLib;
+			zLib.create();
+			zLib.addFile('[Content_Types].xml', AscCommon.Utf8.encode('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+				'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+				'<Default Extension="wmf" ContentType="image/x-wmf"/>' +
+				'<Default Extension="png" ContentType="image/png"/>' +
+				'<Default Extension="jpeg" ContentType="image/jpeg"/>' +
+				'<Default Extension="xml" ContentType="application/xml"/>' +
+				'<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+				'<Default Extension="bin" ContentType="application/vnd.openxmlformats-officedocument.oleObject"/>' +
+				'<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>' +
+				'<Override PartName="/word/fontTable.xml"' +
+				'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.fontTable+xml"/>' +
+				'<Override PartName="/word/styles.xml"' +
+				'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>' +
+				'<Override PartName="/word/document.xml"' +
+				'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+				'<Override PartName="/word/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>' +
+				'<Override PartName="/word/endnotes.xml"' +
+				'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.endnotes+xml"/>' +
+				'<Override PartName="/word/webSettings.xml"' +
+				'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.webSettings+xml"/>' +
+				'<Override PartName="/word/glossary/webSettings.xml"' +
+				'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.webSettings+xml"/>' +
+				'<Override PartName="/word/glossary/fontTable.xml"' +
+				'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.fontTable+xml"/>' +
+				'<Override PartName="/word/glossary/settings.xml"' +
+				'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>' +
+				'<Override PartName="/docProps/app.xml"' +
+				'ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>' +
+				'<Override PartName="/word/footnotes.xml"' +
+				'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footnotes+xml"/>' +
+				'<Override PartName="/word/settings.xml"' +
+				'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>' +
+				'<Override PartName="/word/glossary/styles.xml"' +
+				'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>' +
+				'<Override PartName="/word/glossary/document.xml"' +
+				'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.glossary+xml"/>' +
+				'<Override PartName="/customXml/itemProps1.xml"' +
+				'ContentType="application/vnd.openxmlformats-officedocument.customXmlProperties+xml"/>' +
+				'</Types>'));
+			
+			let nPos = 0;
+			while (true)
 			{
-				nDataStartPos	= nDataStartPos + '<pkg:xmlData>'.length;
-				nDataEndPos		= strText.indexOf('</pkg:xmlData>', nDataStartPos);
-			}
-			else
-			{
-				nDataStartPos	= strText.indexOf('<pkg:binaryData>', 0);
+				let nStartPos = nPos = strLinearXML.indexOf('<pkg:part', nPos);
+				
+				if (!nStartPos || nStartPos === -1)
+					break;
+				
+				let nEndPos = nPos = strLinearXML.indexOf('</pkg:part>', nStartPos);
+				let strText = strLinearXML.substring(nStartPos, nEndPos);
+				
+				let nPosStartName = strText.indexOf('name="', 0) + 'name="'.length;
+				let nPosEndName   = strText.indexOf('"', nPosStartName);
+				let name          = strText.substring(nPosStartName, nPosEndName);
+				
+				let nDataStartPos = strText.indexOf('<pkg:xmlData>', 0);
+				let nDataEndPos;
+				
 				if (nDataStartPos !== -1)
-					nDataStartPos += '<pkg:binaryData>'.length;
-				nDataEndPos		= strText.indexOf('</pkg:binaryData>', nDataStartPos);
+				{
+					nDataStartPos = nDataStartPos + '<pkg:xmlData>'.length;
+					nDataEndPos   = strText.indexOf('</pkg:xmlData>', nDataStartPos);
+				}
+				else
+				{
+					nDataStartPos = strText.indexOf('<pkg:binaryData>', 0);
+					if (nDataStartPos !== -1)
+						nDataStartPos += '<pkg:binaryData>'.length;
+					nDataEndPos = strText.indexOf('</pkg:binaryData>', nDataStartPos);
+				}
+				
+				if (nStartPos === -1 || nEndPos === -1)
+					continue;
+				
+				let data = strText.substring(nDataStartPos, nDataEndPos).trim();
+				
+				if (name[0] === "/")
+					name = name.substring(1, name.length);
+				
+				zLib.addFile(name, AscCommon.Utf8.encode(data));
 			}
-
-			if (nStartPos === -1 || nEndPos === -1)
-				continue;
-
-			let data = strText.substring(nDataStartPos, nDataEndPos).trim();
-
-			if (name[0] === "/")
-				name = name.substring(1, name.length);
-
-			zLib.addFile(name, AscCommon.Utf8.encode(data));
+			
+			let arr              = zLib.save();
+			let Doc              = new AscWord.CDocument(drawingDocument, false);
+			let xmlParserContext = new AscCommon.XmlParserContext();
+			let jsZlib           = new AscCommon.ZLib();
+			
+			xmlParserContext.DrawingDocument = drawingDocument;
+			
+			if (!jsZlib.open(arr))
+				return [];
+			
+			let oBinaryFileReader	= new AscCommonWord.BinaryFileReader(Doc, {});
+			oBinaryFileReader.PreLoadPrepare(undefined, false);
+			
+			Doc.fromZip(jsZlib, xmlParserContext, oBinaryFileReader.oReadResult);
+			//очищать pptx_content_loader не надо чтобы не было проблем с вызовом внутри ReadPPTXElement и т.к. открываем zip
+			//лучше уйти от глобального pptx_content_loader
+			oBinaryFileReader.PostLoadPrepare(xmlParserContext, false);
+			jsZlib.close();
+			return Doc.Content;
+		}, this.document, this, []);
+		
+		let resultContent = [];
+		for (let i = 0; i < docContent.length; ++i)
+		{
+			resultContent.push(docContent[i].Copy(null));
 		}
 
-		let arr					= zLib.save();
-		let draw				= this.document.DrawingDocument;
-		let Doc					= new CDocument(draw, false);
-		let xmlParserContext	= new AscCommon.XmlParserContext();
-		let jsZlib				= new AscCommon.ZLib();
-
-		xmlParserContext.DrawingDocument = draw;
-
-		if (!jsZlib.open(arr))
-			return [];
-
-		let oBinaryFileReader	= new AscCommonWord.BinaryFileReader(Doc, {});
-		oBinaryFileReader.PreLoadPrepare(undefined, false);
-
-		Doc.fromZip(jsZlib, xmlParserContext, oBinaryFileReader.oReadResult);
-		//очищать pptx_content_loader не надо чтобы не было проблем с вызовом внутри ReadPPTXElement и т.к. открываем zip
-		//лучше уйти от глобального pptx_content_loader
-		oBinaryFileReader.PostLoadPrepare(xmlParserContext, false);
-		jsZlib.close();
-
-		return Doc.Content;
+		return resultContent;
 	};
 	/**
 	 * Get CustomXML text

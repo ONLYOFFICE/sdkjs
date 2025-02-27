@@ -4561,6 +4561,7 @@
 	window['AscDFH'].historydescription_RemoveAllInks                               = 0x01c4;
 	window['AscDFH'].historydescription_DisconnectEveryone                          = 0x01c5;
 	window['AscDFH'].historydescription_OForm_RoleFilled                            = 0x01c6;
+	window['AscDFH'].historydescription_OForm_CompletePreparation                   = 0x01c7;
 	
 	// pdf
 	window['AscDFH'].historydescription_Pdf_AddAnnot			= 0x29a;
