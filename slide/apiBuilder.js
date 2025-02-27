@@ -1631,7 +1631,7 @@
     {
         if (this.Master) 
         {
-            if (!(oDrawing instanceof ApiDrawing) || oDrawing.Drawing.group || oDrawing.Drawing.IsUseInDocument())
+            if (!(oDrawing.Drawing || !oDrawing.Drawing.isD) || oDrawing.Drawing.group || oDrawing.Drawing.IsUseInDocument())
                 return false;
 
             oDrawing.Drawing.setParent(this.Master);
@@ -2008,7 +2008,7 @@
     {
         if (this.Layout) 
         {
-            if (!(oDrawing instanceof ApiDrawing) || oDrawing.Drawing.group || oDrawing.Drawing.IsUseInDocument())
+            if (oDrawing.Drawing.group || oDrawing.Drawing.IsUseInDocument())
                 return false;
 
             oDrawing.Drawing.setParent(this.Layout);
@@ -2933,7 +2933,7 @@
 	 */
     ApiSlide.prototype.AddObject = function(oDrawing){
         if(this.Slide){
-            if (!(oDrawing instanceof ApiDrawing) || oDrawing.Drawing.group || oDrawing.Drawing.IsUseInDocument())
+            if (oDrawing.Drawing.group || oDrawing.Drawing.IsUseInDocument())
                 return false;
 
             oDrawing.Drawing.setParent(this.Slide);
