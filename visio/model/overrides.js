@@ -58,24 +58,6 @@ AscFormat.CShape.prototype.getParentObjects = function ()
 };
 
 /**
- * get full flip using group flips
- * @return {{flipV: (boolean|*), flipH: (boolean|*)}}
- */
-AscFormat.CShape.prototype.getFullFlip = function ()
-{
-	let group = this.group;
-	let flipV = this.spPr.xfrm.flipV;
-	let flipH = this.spPr.xfrm.flipH;
-	while (group) {
-		flipV = group.spPr.xfrm.flipV ? !flipV : flipV;
-		flipH = group.spPr.xfrm.flipH ? !flipH : flipH;
-		group = group.group;
-	}
-
-	return {flipV: flipV, flipH: flipH};
-};
-
-/**
  * @memberOf AscFormat.CGroupShape
  * @type {function(): {layout: null, slide: null, theme: CTheme, master: null}}
  */

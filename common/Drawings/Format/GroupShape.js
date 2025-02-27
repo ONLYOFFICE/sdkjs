@@ -73,6 +73,10 @@
 			return oClass.spTree;
 		};
 
+		/**
+		 * @extends CGraphicObjectBase
+		 * @constructor
+		 */
 		function CGroupShape() {
 			AscFormat.CGraphicObjectBase.call(this);
 			this.nvGrpSpPr = null;

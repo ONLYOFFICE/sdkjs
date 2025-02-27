@@ -45,6 +45,21 @@
 	}
 
 	/**
+	 * get full flip using group flips
+	 * @return {{flipV: (boolean|*), flipH: (boolean|*)}}
+	 */
+	AscFormat.CGraphicObjectBase.prototype.getFullFlipVSpPr = function ()
+	{
+		let group = this.group;
+		let flipV = this.spPr.xfrm.flipV;
+		while (group) {
+			flipV = group.spPr.xfrm.flipV ? !flipV : flipV;
+			group = group.group;
+		}
+		return flipV;
+	};
+
+	/**
 	 * calculateShapeParamsAndConvertToCShape or CGroupShape which combines shape and text if Shape has text
 	 * @memberof Shape_Type
 	 * @param {CVisioDocument} visioDocument
@@ -53,7 +68,8 @@
 	 * @param {CGroupShape?} currentGroupHandling
 	 * @return {(CShape | CGroupShape)} cShape or cGroupShape (if shape and text)
 	 */
-	Shape_Type.prototype.convertShape = function (visioDocument, pageInfo, drawingPageScale, currentGroupHandling) {
+	Shape_Type.prototype.convertShape = function (visioDocument,
+												  pageInfo, drawingPageScale, currentGroupHandling) {
 
 		/**
 		 * handle QuickStyleVariation cell which can change color (but only if color is a result of ThemeVal)
@@ -2211,7 +2227,10 @@
 			// is mirrored horizontally and vertically (https://disk.yandex.ru/d/Hi8OCMITgb730Q)
 			// below we remove text mirror. In visio text is never mirrored. (https://disk.yandex.ru/d/JjbNzzZLDIAEuQ)
 			// (on flipH in power point presentation text is not mirrored)
-			if (textCShape.getFullFlip().flipV) {
+			let currentFlip = groupShape.spPr.xfrm.flipV;
+			let groupFlip = currentGroupHandling && currentGroupHandling.getFullFlipVSpPr();
+			let flip = groupFlip ? !currentFlip : currentFlip;
+			if (flip) {
 				textCShape.spPr.xfrm.setRot(Math.PI + textCShape.spPr.xfrm.rot);
 			}
 
@@ -2293,30 +2312,19 @@
 
 				groupShape.setParent2(visioDocument);
 
-				if (!currentGroupHandling) {
-
-					currentGroupHandling = groupShape;
-					let subShapes = this.getSubshapes();
-					for (let i = 0; i < subShapes.length; i++) {
-						const subShape = subShapes[i];
-						subShape.convertGroup(visioDocument, pageInfo, drawingPageScale, currentGroupHandling);
-					}
-
-					// textCShape is returned from this function
-
-				} else {
+				if (currentGroupHandling) {
 					// insert group to currentGroupHandling
-
 					currentGroupHandling.addToSpTree(currentGroupHandling.spTree.length, groupShape);
 					currentGroupHandling.spTree[currentGroupHandling.spTree.length - 1].setGroup(currentGroupHandling);
 					// groupShape.recalculateLocalTransform(groupShape.transform);
+				}
 
-					currentGroupHandling = groupShape;
-					let subShapes = this.getSubshapes();
-					for (let i = 0; i < subShapes.length; i++) {
-						const subShape = subShapes[i];
-						subShape.convertGroup(visioDocument, pageInfo, drawingPageScale, currentGroupHandling);
-					}
+				// handle sub-shapes
+				currentGroupHandling = groupShape;
+				let subShapes = this.getSubshapes();
+				for (let i = 0; i < subShapes.length; i++) {
+					const subShape = subShapes[i];
+					subShape.convertGroup(visioDocument, pageInfo, drawingPageScale, currentGroupHandling);
 				}
 
 				// add group text to top
