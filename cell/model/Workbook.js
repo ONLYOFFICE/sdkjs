@@ -2076,7 +2076,7 @@
 			});
 
 
-			let promises = this.wb.asyncFormulasManager.getPromises();
+			let promises = !this.wb.asyncFormulasManager.isRecalculating() && this.wb.asyncFormulasManager.getPromises();
 			if (promises) {
 				let fPromises = [];
 				for (let i = 0; i < promises.length; i++) {
@@ -2094,16 +2094,21 @@
 						promises[i].parserFormula.promiseResult.push(promises[i].callback(streamInfos[i]));
 						t.wb.dependencyFormulas.addToChangedCell(promises[i].parserFormula.parent);
 					}
+					//t.wb.buildDependency();
 					//t.wb.sortDependency();
-					t._foreachChanged(function (oCell) {
+					/*t._foreachChanged(function (oCell) {
 						oCell.setIsDirty(true);
 						oCell && oCell._checkDirty();
-					});
+					});*/
 
+					t.wb.asyncFormulasManager.setRecalculating(true);
+					t.calcTree();
+					t.wb.handlers && t.wb.handlers.trigger("drawWS");
 					t.wb.asyncFormulasManager.clearPromises();
 					for (let i = 0; i < streamInfos.length; i++) {
 						promises[i].parserFormula.promiseResult = null;
 					}
+					t.wb.asyncFormulasManager.setRecalculating(false);
 				});
 			}
 
@@ -2886,6 +2891,7 @@
 	function AsyncFormulasManager(wb) {
 		this.wb = wb;
 		this.promises = null;
+		this.calcProcess = null;
 	}
 
 	AsyncFormulasManager.prototype.addPromise = function (val) {
@@ -2903,6 +2909,13 @@
 	AsyncFormulasManager.prototype.clearPromises = function () {
 		this.promises = null;
 	};
+	AsyncFormulasManager.prototype.setRecalculating = function (val) {
+		this.calcProcess = val;
+	};
+	AsyncFormulasManager.prototype.isRecalculating = function () {
+		return this.calcProcess;
+	};
+
 
 	function ForwardTransformationFormula(elem, formula, parsed) {
 		this.elem = elem;
