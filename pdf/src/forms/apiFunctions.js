@@ -32,58 +32,6 @@
 
 (function() {
 
-    const FormattingType = {
-        ZIP_CODE: 0,       // Почтовый индекс (ZIP Code)
-        ZIP_PLUS_4: 1,     // Почтовый индекс + 4 (ZIP + 4)
-        PHONE: 2,          // Телефонный номер
-        SSN: 3             // Социальное страхование (SSN)
-    }
-
-    FormattingType["ZIP_CODE"] = FormattingType.ZIP_CODE;
-    FormattingType["ZIP_PLUS_4"] = FormattingType.ZIP_PLUS_4;
-    FormattingType["PHONE"] = FormattingType.PHONE;
-    FormattingType["SSN"] = FormattingType.SSN;
-
-    const SeparatorStyle = {
-        COMMA_DOT: 0,       // 1,234.56
-        NO_SEPARATOR: 1,    // 1234.56
-        DOT_COMMA: 2,       // 1.234,56
-        NO_SEPARATOR_COMMA: 3, // 1234,56
-        APOSTROPHE_DOT: 4   // 1'234.56
-    };
-
-    SeparatorStyle["COMMA_DOT"] = SeparatorStyle.COMMA_DOT;
-    SeparatorStyle["NO_SEPARATOR"] = SeparatorStyle.NO_SEPARATOR;
-    SeparatorStyle["DOT_COMMA"] = SeparatorStyle.DOT_COMMA;
-    SeparatorStyle["NO_SEPARATOR_COMMA"] = SeparatorStyle.NO_SEPARATOR_COMMA;
-    SeparatorStyle["APOSTROPHE_DOT"] = SeparatorStyle.APOSTROPHE_DOT;
-
-    const NegativeStyle = {
-        BLACK_MINUS: 0,   // black minus
-        RED_MINUS: 1,     // red minus
-        PARENS_BLACK: 2,  // black parens
-        PARENS_RED: 3     // red parens
-    }
-
-    NegativeStyle["BLACK_MINUS"] = NegativeStyle.BLACK_MINUS;
-    NegativeStyle["RED_MINUS"] = NegativeStyle.RED_MINUS;
-    NegativeStyle["PARENS_BLACK"] = NegativeStyle.PARENS_BLACK;
-    NegativeStyle["PARENS_RED"] = NegativeStyle.PARENS_RED;
-
-    const CalculateType = {
-        SUM:        0,
-        PRODUCT:    1,
-        AVERAGE:    2,
-        MIN:        3,
-        MAX:        4
-    }
-
-    CalculateType["SUM"]        = CalculateType.SUM;
-    CalculateType["PRODUCT"]    = CalculateType.PRODUCT;
-    CalculateType["AVERAGE"]    = CalculateType.AVERAGE;
-    CalculateType["MIN"]        = CalculateType.MIN;
-    CalculateType["MAX"]        = CalculateType.MAX;
-    
     /**
 	 * Convert field value to specific number format.
      * @param {number} nDec = number of decimals
@@ -1299,12 +1247,6 @@
             "AFSpecial_KeystrokeEx":  AFSpecial_KeystrokeEx,
             "AFSimple_Calculate":     AFSimple_Calculate,
             "AFRange_Validate":       AFRange_Validate,
-        },
-        "Types": {
-            "FormattingType":   FormattingType,
-            "SeparatorStyle":   SeparatorStyle,
-            "NegativeStyle":    NegativeStyle,
-            "CalculateType":    CalculateType
         }
     }
 })();

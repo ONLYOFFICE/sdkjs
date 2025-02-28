@@ -7155,6 +7155,42 @@ var CPresentation = CPresentation || function(){};
         oCommonProps.asc_putStrokeWidth(field.GetBorderWidth());
         oCommonProps.asc_putStrokeStyle(field.GetBorderStyle());
 
+        let oFormatProps;
+        if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(field.GetType())) {
+            let nFormatType = field.GetFormatType();
+            if (false == [AscPDF.FormatType.NONE, AscPDF.FormatType.CUSTOM].includes(nFormatType)) {
+                let aArgs = field.GetFormatArgs();
+
+                switch (nFormatType) {
+                    case AscPDF.FormatType.NUMBER: {
+                        oFormatProps = new Asc.asc_CFieldNumberFormatProperty();
+                        oFormatProps.asc_putDecimals(aArgs[0]);
+                        oFormatProps.asc_putSepStyle(aArgs[1]);
+                        oFormatProps.asc_putNegStyle(aArgs[2]);
+                        oFormatProps.asc_putCurrency(aArgs[4]);
+                        oFormatProps.asc_putCurrencyPrepend(aArgs[5]);
+                        break;
+                    }
+                    case AscPDF.FormatType.PERCENTAGE: {
+                        oFormatProps = new Asc.asc_CFieldPercentageFormatProperty();
+                        oFormatProps.asc_putDecimals(aArgs[0]);
+                        oFormatProps.asc_putSepStyle(aArgs[1]);
+                        break;
+                    }
+                    case AscPDF.FormatType.DATE: {
+                        oFormatProps = new Asc.asc_CFieldDateFormatProperty();
+                        oFormatProps.asc_putFormat(aArgs[0]);
+                        break;
+                    }
+                    case AscPDF.FormatType.TIME: {
+                        oFormatProps = new Asc.asc_CFieldSpecialFormatProperty();
+                        oFormatProps.asc_putFormat(aArgs[0]);
+                        break;
+                    }
+                }
+            }
+        }
+
         let oFieldProps;
         switch (field.GetType()) {
             case AscPDF.FIELD_TYPES.text: {
@@ -7163,12 +7199,14 @@ var CPresentation = CPresentation || function(){};
                 oFieldProps.asc_putMultiline(field.IsMultiline());
                 oFieldProps.asc_putCharLimit(field.GetCharLimit());
                 oFieldProps.asc_putComb(field.IsComb());
+                oFieldProps.asc_putFormat(oFormatProps);
                 break;
             }
             case AscPDF.FIELD_TYPES.combobox: {
                 oFieldProps = new Asc.asc_CComboboxFieldProperty();
                 oFieldProps.asc_putOptions(field.GetOptions());
                 oFieldProps.asc_putEditable(field.IsEditable());
+                oFieldProps.asc_putFormat(oFormatProps);
                 break;
             }
             case AscPDF.FIELD_TYPES.listbox: {

@@ -108,9 +108,83 @@
         movePage:   4
     }
 
+    const FormatType = {
+        NONE:       -1,
+        NUMBER:     0,
+        PERCENTAGE: 1,
+        DATE:       2,
+        TIME:       3,
+        SPECIAL:    4,
+        CUSTOM:     5
+    }
+
+    FormatType["NUMBER"]        = FormatType.NUMBER;
+    FormatType["PERCENTAGE"]    = FormatType.PERCENTAGE;
+    FormatType["DATE"]          = FormatType.DATE;
+    FormatType["TIME"]          = FormatType.TIME;
+    FormatType["SPECIAL"]       = FormatType.SPECIAL;
+    FormatType["CUSTOM"]        = FormatType.CUSTOM;
+
+    const SpectialFormattingType = {
+        ZIP_CODE: 0,       // Почтовый индекс (ZIP Code)
+        ZIP_PLUS_4: 1,     // Почтовый индекс + 4 (ZIP + 4)
+        PHONE: 2,          // Телефонный номер
+        SSN: 3             // Социальное страхование (SSN)
+    }
+
+    SpectialFormattingType["ZIP_CODE"] = SpectialFormattingType.ZIP_CODE;
+    SpectialFormattingType["ZIP_PLUS_4"] = SpectialFormattingType.ZIP_PLUS_4;
+    SpectialFormattingType["PHONE"] = SpectialFormattingType.PHONE;
+    SpectialFormattingType["SSN"] = SpectialFormattingType.SSN;
+
+    const SeparatorStyle = {
+        COMMA_DOT: 0,       // 1,234.56
+        NO_SEPARATOR: 1,    // 1234.56
+        DOT_COMMA: 2,       // 1.234,56
+        NO_SEPARATOR_COMMA: 3, // 1234,56
+        APOSTROPHE_DOT: 4   // 1'234.56
+    };
+
+    SeparatorStyle["COMMA_DOT"] = SeparatorStyle.COMMA_DOT;
+    SeparatorStyle["NO_SEPARATOR"] = SeparatorStyle.NO_SEPARATOR;
+    SeparatorStyle["DOT_COMMA"] = SeparatorStyle.DOT_COMMA;
+    SeparatorStyle["NO_SEPARATOR_COMMA"] = SeparatorStyle.NO_SEPARATOR_COMMA;
+    SeparatorStyle["APOSTROPHE_DOT"] = SeparatorStyle.APOSTROPHE_DOT;
+
+    const NegativeStyle = {
+        BLACK_MINUS: 0,   // black minus
+        RED_MINUS: 1,     // red minus
+        PARENS_BLACK: 2,  // black parens
+        PARENS_RED: 3     // red parens
+    }
+
+    NegativeStyle["BLACK_MINUS"] = NegativeStyle.BLACK_MINUS;
+    NegativeStyle["RED_MINUS"] = NegativeStyle.RED_MINUS;
+    NegativeStyle["PARENS_BLACK"] = NegativeStyle.PARENS_BLACK;
+    NegativeStyle["PARENS_RED"] = NegativeStyle.PARENS_RED;
+
+    const CalculateType = {
+        SUM:        0,
+        PRODUCT:    1,
+        AVERAGE:    2,
+        MIN:        3,
+        MAX:        4
+    }
+
+    CalculateType["SUM"]        = CalculateType.SUM;
+    CalculateType["PRODUCT"]    = CalculateType.PRODUCT;
+    CalculateType["AVERAGE"]    = CalculateType.AVERAGE;
+    CalculateType["MIN"]        = CalculateType.MIN;
+    CalculateType["MAX"]        = CalculateType.MAX;
+
     Object.freeze(FIELD_TYPES);
-    asc["FIELD_TYPES"]          = asc.FIELD_TYPES            = FIELD_TYPES;
-    asc["BORDER_EFFECT_STYLES"] = asc.BORDER_EFFECT_STYLES   = BORDER_EFFECT_STYLES;
-    asc["REF_TO_REASON"]        = asc.REF_TO_REASON          = REF_TO_REASON;
-    asc.CommandType             = CommandType;
+    asc["FIELD_TYPES"]              = asc.FIELD_TYPES               = FIELD_TYPES;
+    asc["BORDER_EFFECT_STYLES"]     = asc.BORDER_EFFECT_STYLES      = BORDER_EFFECT_STYLES;
+    asc["REF_TO_REASON"]            = asc.REF_TO_REASON             = REF_TO_REASON;
+    asc["FormatType"]              = asc.FormatType                 = FormatType;
+    asc["SpectialFormattingType"]   = asc.SpectialFormattingType    = SpectialFormattingType;
+    asc["SeparatorStyle"]           = asc.SeparatorStyle            = SeparatorStyle;
+    asc["NegativeStyle"]            = asc.NegativeStyle             = NegativeStyle;
+    asc["CalculateType"]            = asc.CalculateType             = CalculateType;
+    asc.CommandType                 = CommandType;
 })();

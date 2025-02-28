@@ -446,7 +446,7 @@
     CTextField.prototype.IsDateFormat = function() {
         let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
         let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
-        if (oActionRunScript && oActionRunScript.script.startsWith('AFDate_Format')) {
+        if (oActionRunScript && (oActionRunScript.script.startsWith('AFDate_Format') || oActionRunScript.script.startsWith('AFDate_FormatEx'))) {
             return true;
         }
 
@@ -478,7 +478,84 @@
         }
 
         return "";
-    }
+    };
+    CTextField.prototype.GetFormatType = function() {
+        let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
+        let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
+        let sScript             = oActionRunScript ? oActionRunScript.GetScript(): "";
+        if (!sScript) {
+            return AscPDF.FormatType.NONE;
+        }
+
+        if (sScript.startsWith('AFNumber_Format')) {
+            return AscPDF.FormatType.NUMBER;
+        }
+        else if (sScript.startsWith('AFPercent_Format')) {
+            return AscPDF.FormatType.PERCENTAGE;
+        }
+        else if (sScript.startsWith('AFDate_Format') || sScript.startsWith('AFDate_FormatEx')) {
+            return AscPDF.FormatType.DATE;
+        }
+        else if (sScript.startsWith('AFTime_Format') || sScript.startsWith('AFTime_FormatEx')) {
+            return AscPDF.FormatType.TIME;
+        }
+        else if (sScript.startsWith('AFSpecial_Format')) {
+            return AscPDF.FormatType.SPECIAL;
+        }
+        else {
+            return AscPDF.FormatType.CUSTOM;
+        }
+    };
+    CTextField.prototype.GetFormatArgs = function() {
+        function extractArguments(str) {
+            var match = str.match(/\(([^)]+)\)/);
+            if (!match) {
+                return [];
+            }
+        
+            var args = match[1].split(/,\s*/);
+            var parsedArgs = [];
+        
+            for (var i = 0; i < args.length; i++) {
+                var arg = args[i].trim();
+        
+                // Проверяем на булево значение
+                if (arg === "true") {
+                    parsedArgs.push(true);
+                } else if (arg === "false") {
+                    parsedArgs.push(false);
+                }
+                // Проверяем на null
+                else if (arg === "null") {
+                    parsedArgs.push(null);
+                }
+                // Проверяем на число
+                else if (!isNaN(arg) && arg !== "") {
+                    parsedArgs.push(Number(arg));
+                }
+                // Проверяем на строку в кавычках
+                else if ((arg.startsWith('"') && arg.endsWith('"')) || (arg.startsWith("'") && arg.endsWith("'"))) {
+                    parsedArgs.push(arg.slice(1, -1));
+                }
+                // Иначе оставляем как есть
+                else {
+                    parsedArgs.push(arg);
+                }
+            }
+        
+            return parsedArgs;
+        }
+
+        
+        if (false == [AscPDF.FormatType.NONE, AscPDF.FormatType.CUSTOM].includes(this.GetFormatType())) {
+            let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
+            let oActionRunScript    = oFormatTrigger.GetActions()[0]
+            let sScript             = oActionRunScript.GetScript();
+
+            let args = extractArguments(sScript);
+            return args;
+        }
+    };
     CTextField.prototype.ProcessAutoFitContent = function(oContent) {
         let oPara       = oContent.GetElement(0);
         let oRun        = oPara.GetElement(0);

@@ -3569,6 +3569,13 @@ function (window, undefined) {
 	asc_CTextFieldProperty.prototype.asc_putComb = function (v) {
 		this.comb = v;
 	};
+	asc_CTextFieldProperty.prototype.asc_getFormat = function () {
+		return this.format;
+	};
+	asc_CTextFieldProperty.prototype.asc_putFormat = function (v) {
+		this.format = v;
+	};
+	
 	//////////////////////////////////////////////////////////////////
 	///// Combobox field
 	//////////////////////////////////////////////////////////////////
@@ -3590,6 +3597,12 @@ function (window, undefined) {
 	};
 	asc_CComboboxFieldProperty.prototype.asc_putEditable = function (v) {
 		this.editable = v;
+	};
+	asc_CTextFieldProperty.prototype.asc_getFormat = function () {
+		return this.format;
+	};
+	asc_CTextFieldProperty.prototype.asc_putFormat = function (v) {
+		this.format = v;
 	};
 
 	//////////////////////////////////////////////////////////////////
@@ -3705,6 +3718,129 @@ function (window, undefined) {
 	};
 	asc_CButtonFieldProperty.prototype.asc_putIconPos = function (v) {
 		this.fitBounds = v;
+	};
+	//////////////////////////////////////////////////////////////////
+	///// Number format
+	//////////////////////////////////////////////////////////////////
+	function asc_CFieldNumberFormatProperty() {
+		this.type				= AscPDF.FormatType.NUMBER;
+		this.decimals			= undefined;
+		this.sepStyle			= undefined;
+		this.negStyle			= undefined;
+		this.currency			= undefined;
+		this.currencyPrepend	= undefined;
+	};
+
+	asc_CFieldNumberFormatProperty.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CFieldNumberFormatProperty.prototype.asc_getDecimals = function () {
+		return this.decimals;
+	};
+	asc_CFieldNumberFormatProperty.prototype.asc_putDecimals = function (v) {
+		this.decimals = v;
+	};
+	asc_CFieldNumberFormatProperty.prototype.asc_getSepStyle = function () {
+		return this.sepStyle;
+	};
+	asc_CFieldNumberFormatProperty.prototype.asc_putSepStyle = function (v) {
+		this.sepStyle = v;
+	};
+	asc_CFieldNumberFormatProperty.prototype.asc_getNegStyle = function () {
+		return this.negStyle;
+	};
+	asc_CFieldNumberFormatProperty.prototype.asc_putNegStyle = function (v) {
+		this.negStyle = v;
+	};
+	asc_CFieldNumberFormatProperty.prototype.asc_getCurrency = function () {
+		return this.currency;
+	};
+	asc_CFieldNumberFormatProperty.prototype.asc_putCurrency = function (v) {
+		this.currency = v;
+	};
+	asc_CFieldNumberFormatProperty.prototype.asc_getCurrencyPrepend = function () {
+		return this.currencyPrepend;
+	};
+	asc_CFieldNumberFormatProperty.prototype.asc_putCurrencyPrepend = function (v) {
+		this.currencyPrepend = v;
+	};
+	//////////////////////////////////////////////////////////////////
+	///// Percentage format
+	//////////////////////////////////////////////////////////////////
+	function asc_CFieldPercentageFormatProperty() {
+		this.type		= AscPDF.FormatType.PERCENTAGE;
+		this.decimals	= undefined;
+		this.sepStyle	= undefined;
+	};
+
+	asc_CFieldPercentageFormatProperty.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CFieldPercentageFormatProperty.prototype.asc_getDecimals = function () {
+		return this.decimals;
+	};
+	asc_CFieldPercentageFormatProperty.prototype.asc_putDecimals = function (v) {
+		this.decimals = v;
+	};
+	asc_CFieldPercentageFormatProperty.prototype.asc_getSepStyle = function () {
+		return this.sepStyle;
+	};
+	asc_CFieldPercentageFormatProperty.prototype.asc_putSepStyle = function (v) {
+		this.sepStyle = v;
+	};
+
+	//////////////////////////////////////////////////////////////////
+	///// Date format
+	//////////////////////////////////////////////////////////////////
+	function asc_CFieldDateFormatProperty() {
+		this.type		= AscPDF.FormatType.DATE;
+		this.format		= undefined;
+	};
+
+	asc_CFieldDateFormatProperty.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CFieldDateFormatProperty.prototype.asc_getFormat = function () {
+		return this.format;
+	};
+	asc_CFieldDateFormatProperty.prototype.asc_putFormat = function (v) {
+		this.format = v;
+	};
+	
+	//////////////////////////////////////////////////////////////////
+	///// Time format
+	//////////////////////////////////////////////////////////////////
+	function asc_CFieldTimeFormatProperty() {
+		this.type		= AscPDF.FormatType.TIME;
+		this.format		= undefined;
+	};
+
+	asc_CFieldTimeFormatProperty.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CFieldTimeFormatProperty.prototype.asc_getFormat = function () {
+		return this.format;
+	};
+	asc_CFieldTimeFormatProperty.prototype.asc_putFormat = function (v) {
+		this.format = v;
+	};
+
+	//////////////////////////////////////////////////////////////////
+	///// Special format
+	//////////////////////////////////////////////////////////////////
+	function asc_CFieldSpecialFormatProperty() {
+		this.type		= AscPDF.FormatType.SPECIAL;
+		this.format		= undefined;
+	};
+
+	asc_CFieldSpecialFormatProperty.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CFieldSpecialFormatProperty.prototype.asc_getFormat = function () {
+		return this.format;
+	};
+	asc_CFieldSpecialFormatProperty.prototype.asc_putFormat = function (v) {
+		this.format = v;
 	};
 
 	/** @constructor */
@@ -7092,6 +7228,47 @@ function (window, undefined) {
 	prot["asc_getFitBounds"]	= prot.asc_getFitBounds;
 	prot["asc_putFitBounds"]	= prot.asc_putFitBounds;
 
+	window["Asc"]["asc_CFieldNumberFormatProperty"] = window["Asc"].asc_CFieldNumberFormatProperty = asc_CFieldNumberFormatProperty;
+	prot = asc_CFieldNumberFormatProperty.prototype;
+	prot["asc_getType"]				= prot.asc_getType;
+	prot["asc_getDecimals"]			= prot.asc_getDecimals;
+	prot["asc_putDecimals"]			= prot.asc_putDecimals;
+	prot["asc_getSepStyle"]			= prot.asc_getSepStyle;
+	prot["asc_putSepStyle"]			= prot.asc_putSepStyle;
+	prot["asc_getNegStyle"]			= prot.asc_getNegStyle;
+	prot["asc_putNegStyle"]			= prot.asc_putNegStyle;
+	prot["asc_getCurrency"]			= prot.asc_getCurrency;
+	prot["asc_putCurrency"]			= prot.asc_putCurrency;
+	prot["asc_getCurrencyPrepend"]	= prot.asc_getCurrencyPrepend;
+	prot["asc_putCurrencyPrepend"]	= prot.asc_putCurrencyPrepend;
+
+	
+	window["Asc"]["asc_CFieldPercentageFormatProperty"] = window["Asc"].asc_CFieldPercentageFormatProperty = asc_CFieldPercentageFormatProperty;
+	prot = asc_CFieldPercentageFormatProperty.prototype;
+	prot["asc_getType"]				= prot.asc_getType;
+	prot["asc_getDecimals"]			= prot.asc_getDecimals;
+	prot["asc_putDecimals"]			= prot.asc_putDecimals;
+	prot["asc_getSepStyle"]			= prot.asc_getSepStyle;
+	prot["asc_putSepStyle"]			= prot.asc_putSepStyle;
+
+	window["Asc"]["asc_CFieldDateFormatProperty"] = window["Asc"].asc_CFieldDateFormatProperty = asc_CFieldDateFormatProperty;
+	prot = asc_CFieldDateFormatProperty.prototype;
+	prot["asc_getType"]				= prot.asc_getType;
+	prot["asc_getFormat"]			= prot.asc_getFormat;
+	prot["asc_putFormat"]			= prot.asc_putFormat;
+	
+	window["Asc"]["asc_CFieldTimeFormatProperty"] = window["Asc"].asc_CFieldTimeFormatProperty = asc_CFieldTimeFormatProperty;
+	prot = asc_CFieldTimeFormatProperty.prototype;
+	prot["asc_getType"]				= prot.asc_getType;
+	prot["asc_getFormat"]			= prot.asc_getFormat;
+	prot["asc_putFormat"]			= prot.asc_putFormat;
+	
+	window["Asc"]["asc_CFieldSpecialFormatProperty"] = window["Asc"].asc_CFieldSpecialFormatProperty = asc_CFieldSpecialFormatProperty;
+	prot = asc_CFieldSpecialFormatProperty.prototype;
+	prot["asc_getType"]				= prot.asc_getType;
+	prot["asc_getFormat"]			= prot.asc_getFormat;
+	prot["asc_putFormat"]			= prot.asc_putFormat;
+	
 	window["Asc"]["asc_CPdfPageProperty"] = window["Asc"].asc_CPdfPageProperty = asc_CPdfPageProperty;
 	prot = asc_CPdfPageProperty.prototype;
 	prot["asc_getDeleteLock"]	= prot.asc_getDeleteLock;
