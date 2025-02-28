@@ -9771,6 +9771,7 @@
 					else {
 						let oPresentation = this.GetPresentation();
 						if(oPresentation) {
+							oPresentation.bNeedUpdateThemes = true;
 							let oThemedObjects = oPresentation.GetSlideObjectsWithTheme(this);
 							for(let nIdx = 0; nIdx < oThemedObjects.masters.length; ++nIdx) {
 								oThemedObjects.masters[nIdx].checkSlideTheme();

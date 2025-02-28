@@ -8727,6 +8727,7 @@ CPresentation.prototype.Refresh_RecalcData2 = function (Data) {
 			break;
 		}
 		case AscDFH.historyitem_ThemeSetColorScheme: {
+			this.bNeedUpdateThemes = true;
 			History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, Theme: true, ThemeObj: Data.Theme});
 			break;
 		}
