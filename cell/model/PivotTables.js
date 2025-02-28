@@ -9140,6 +9140,12 @@ CT_pivotTableDefinition.prototype.asc_getDataToGetPivotData = function(items) {
 	return getPivotDataParams;
 };
 /**
+ * @return {boolean}
+ */
+CT_pivotTableDefinition.prototype.getHideValuesRow = function() {
+	return !!(this.pivotTableDefinitionX14 && this.pivotTableDefinitionX14.hideValuesRow);
+};
+/**
  * @return {Range | null}
  */
 CT_pivotTableDefinition.prototype.asc_getRowRange = function() {
@@ -9310,7 +9316,8 @@ PivotRangeMapper.prototype.getEditCellFunction = function(bbox) {
 	}
 	const rowRange = this.getRowRange();
 	if (rowRange && bbox.intersection(rowRange.bbox)) {
-		if (bbox.intersection(this.getRowHeadersRange().bbox)) {
+		const rowHeadersRange = this.getRowHeadersRange();
+		if (rowHeadersRange && bbox.intersection(rowHeadersRange.bbox)) {
 			return this.getEditRowHeaderCellFunction(bbox);
 		}
 		if (bbox.intersection(this.getRowLabelsRange().bbox)) {
@@ -9600,14 +9607,16 @@ PivotRangeMapper.prototype.getEditRowHeaderCellFunction = function(bbox) {
 PivotRangeMapper.prototype.getEditColHeaderCellFunction = function(bbox) {
 	const pivot = this.pivot;
 	const api = pivot.worksheet.workbook.oApi;
+	const colFields = pivot.asc_getColumnFields()
 	if (pivot.compact) {
-		return function(text) {
-			api._changePivotWithLock(pivot, function(ws, pivot) {
-				pivot.asc_setColHeaderCaption(text, true);
-			});
+		if (!(!pivot.getHideValuesRow() && colFields.length === 1 && colFields[0].asc_getIndex() === AscCommonExcel.st_VALUES)) {
+			return function(text) {
+				api._changePivotWithLock(pivot, function(ws, pivot) {
+					pivot.asc_setColHeaderCaption(text, true);
+				});
+			}
 		}
 	}
-	const colFields = pivot.asc_getColumnFields()
 	const index = colFields.length - (this.getColHeadersRange().bbox.c2 - bbox.c1) - 1;
 	const colField = colFields[index];
 	const pivotIndex = colField.asc_getIndex();
@@ -9747,9 +9756,11 @@ PivotRangeMapper.prototype.getColLabelsRange = function() {
  */
 PivotRangeMapper.prototype.getColHeadersRange = function() {
 	const colFields = this.pivot.asc_getColumnFields();
-	if (this.pivot.getColumnFieldsCount()) {
+	if (this.pivot.getColumnFieldsCount() && this.pivot.showHeaders) {
 		if (colFields.length === 1 && colFields[0].asc_getIndex() === AscCommonExcel.st_VALUES) {
-			return null;
+			if (this.pivot.getHideValuesRow()) {
+				return null;
+			}
 		}
 		const range = this.pivot.getRange();
 		const location = this.pivot.location;
@@ -9764,7 +9775,7 @@ PivotRangeMapper.prototype.getColHeadersRange = function() {
  * @return {Range[] | null}
  */
 PivotRangeMapper.prototype.getRowHeadersRange = function() {
-	if (this.pivot.getRowFieldsCount()) {
+	if (this.pivot.getRowFieldsCount() && this.pivot.showHeaders) {
 		const rowFieldsOffset = this.getRowFieldsOffset();
 		const range = this.pivot.getRange();
 		const location = this.pivot.location;
