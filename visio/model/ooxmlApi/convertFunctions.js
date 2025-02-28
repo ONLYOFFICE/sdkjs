@@ -1276,12 +1276,6 @@
 			// Set Paragraph (the only one defaultParagraph exist) justify/align text - center
 			// textCShape.txBody.content.Content[0].Pr.SetJc(AscCommon.align_Left);
 
-			// cShape.recalculateTextStyles();
-			// cShape.recalculateTransformText(); // recalculates text position (i. e. transformText objects);
-			// cShape.recalculateContent();
-			// cShape.recalculateContent2();
-			// cShape.recalculateContentWitCompiledPr();
-
 			// use ParaRun.prototype.Set_Color
 			// cShape.txBody.content.Content[0].Content[1].Pr.Color = TextColor1;
 			// cShape.txBody.content.Content[0].Content[0].Pr.Color = TextColor1;
@@ -2097,9 +2091,6 @@
 
 		cShape.Id = String(this.iD); // it was string in cShape
 
-		cShape.recalculate();
-		cShape.recalculateLocalTransform(cShape.transform);
-
 		// not scaling fontSize
 		let textCShape = getTextCShape(visioDocument.themes[0], this, cShape,
 			lineUniFill, uniFillForegnd, drawingPageScale, maxHeightScaledIn,
@@ -2109,9 +2100,6 @@
 			if (isShapeDeleted) {
 				textCShape.setBDeleted(true);
 			}
-
-			textCShape.recalculate();
-			textCShape.recalculateLocalTransform(textCShape.transform);
 		}
 
 		if (this.type === "Foreign") {
@@ -2169,9 +2157,6 @@
 					this.cImageShape.Id = cShape.Id;
 
 					this.cImageShape.setParent2(visioDocument);
-					this.cImageShape.recalculate();
-					this.cImageShape.recalculateTransformText && this.cImageShape.recalculateTransformText();
-					this.cImageShape.recalculateContent && this.cImageShape.recalculateContent();
 
 					cShape = this.cImageShape;
 				} else {
@@ -2214,8 +2199,6 @@
 			cShape.spPr.xfrm.setOffY(0);
 
 
-			cShape.recalculateLocalTransform(cShape.transform);
-
 			groupShape.addToSpTree(groupShape.spTree.length, textCShape);
 			groupShape.spTree[groupShape.spTree.length - 1].setGroup(groupShape);
 			textCShape.spPr.xfrm.setOffX(textCShape.spPr.xfrm.offX - groupShape.spPr.xfrm.offX);
@@ -2234,13 +2217,7 @@
 				textCShape.spPr.xfrm.setRot(Math.PI + textCShape.spPr.xfrm.rot);
 			}
 
-			textCShape.recalculateLocalTransform(textCShape.transform);
-			textCShape.recalculateTransformText();
-			textCShape.recalculateContent();
-
-
 			groupShape.setParent2(visioDocument);
-			groupShape.recalculate();
 
 			return groupShape;
 		} else {
@@ -2316,7 +2293,6 @@
 					// insert group to currentGroupHandling
 					currentGroupHandling.addToSpTree(currentGroupHandling.spTree.length, groupShape);
 					currentGroupHandling.spTree[currentGroupHandling.spTree.length - 1].setGroup(currentGroupHandling);
-					// groupShape.recalculateLocalTransform(groupShape.transform);
 				}
 
 				// handle sub-shapes
@@ -2332,37 +2308,6 @@
 					groupShape.addToSpTree(groupShape.spTree.length, cShapeOrCGroupShape.spTree[1]);
 					groupShape.spTree[groupShape.spTree.length - 1].setGroup(groupShape);
 				}
-
-				// recalculate positions to local (group) coordinates
-				// cShapeOrCGroupShape.recalculateLocalTransform(cShapeOrCGroupShape.transform);
-
-				if (cShapeOrCGroupShape instanceof CGroupShape) {
-					cShapeOrCGroupShape.spTree[0].recalculateLocalTransform(cShapeOrCGroupShape.spTree[0].transform);
-					cShapeOrCGroupShape.spTree[0].recalculateTransformText && cShapeOrCGroupShape.spTree[0].recalculateTransformText();
-					cShapeOrCGroupShape.spTree[0].recalculateContent && cShapeOrCGroupShape.spTree[0].recalculateContent();
-					cShapeOrCGroupShape.spTree[0].recalculate();
-
-
-					cShapeOrCGroupShape.spTree[1].recalculateLocalTransform(cShapeOrCGroupShape.spTree[1].transform);
-					cShapeOrCGroupShape.spTree[1].recalculateTransformText && cShapeOrCGroupShape.spTree[1].recalculateTransformText();
-					cShapeOrCGroupShape.spTree[1].recalculateContent && cShapeOrCGroupShape.spTree[1].recalculateContent();
-
-					cShapeOrCGroupShape.spTree[1].recalculate();
-				} else {
-					cShapeOrCGroupShape.recalculateLocalTransform(cShapeOrCGroupShape.transform);
-					cShapeOrCGroupShape.recalculateTransformText && cShapeOrCGroupShape.recalculateTransformText();
-					cShapeOrCGroupShape.recalculateContent && cShapeOrCGroupShape.recalculateContent();
-					cShapeOrCGroupShape.recalculate();
-				}
-
-				groupShape.recalculateTransformText && groupShape.recalculateTransformText();
-				groupShape.recalculateContent && groupShape.recalculateContent();
-				groupShape.recalculateLocalTransform(groupShape.transform);
-				groupShape.recalculate();
-
-				// cShapes.geometryCShape.recalculateTransformText();
-				// cShapes.geometryCShape.recalculateContent();
-				// cShapes.geometryCShape.recalculate(); // doesnt work here
 			}
 		} else {
 			// if read cShape not CGroupShape
@@ -2370,38 +2315,11 @@
 				throw new Error("Group handler was called on simple shape");
 			} else {
 				// add shape and text (shapeAndTextGroup or shape) to currentGroupHandling
-
 				if (cShapeOrCGroupShape) {
 					currentGroupHandling.addToSpTree(currentGroupHandling.spTree.length, cShapeOrCGroupShape);
 					currentGroupHandling.spTree[currentGroupHandling.spTree.length-1].setGroup(currentGroupHandling);
-
-					// recalculate positions to local (group) coordinates
-					cShapeOrCGroupShape.recalculateLocalTransform(cShapeOrCGroupShape.transform);
-					cShapeOrCGroupShape.recalculate();
-
-
-					// is group
-					if (cShapeOrCGroupShape.Id.endsWith("ShapeAndText")) {
-						let textShape = cShapeOrCGroupShape.spTree[1];
-						textShape.recalculateLocalTransform(textShape.transform);
-						textShape.recalculateTransformText && textShape.recalculateTransformText();
-						textShape.recalculateContent && textShape.recalculateContent();
-
-						let geometryShape = cShapeOrCGroupShape.spTree[0];
-						geometryShape.recalculateLocalTransform(geometryShape.transform);
-						geometryShape.recalculateTransformText && geometryShape.recalculateTransformText();
-						geometryShape.recalculateContent && geometryShape.recalculateContent();
-						geometryShape.recalculate();
-					}
 				}
 			}
-		}
-
-		if (currentGroupHandling) {
-			currentGroupHandling.recalculateLocalTransform(currentGroupHandling.transform);
-			currentGroupHandling.recalculateTransformText && currentGroupHandling.recalculateTransformText();
-			currentGroupHandling.recalculateContent && currentGroupHandling.recalculateContent();
-			currentGroupHandling.recalculate();
 		}
 
 		return currentGroupHandling;
@@ -2441,7 +2359,6 @@
 		shape.spPr.xfrm.setFlipV(flipVertically);
 
 		shape.spPr.setGeometry(shapeGeom);
-		// shape.recalculate();
 		return shape;
 	};
 

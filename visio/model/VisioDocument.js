@@ -560,7 +560,6 @@
 					shapeOrGroup.recalculateTransformText && shapeOrGroup.recalculateTransformText();
 					shapeOrGroup.recalculateLocalTransform(shapeOrGroup.transform);
 					shapeOrGroup.recalculateContent && shapeOrGroup.recalculateContent();
-
 				}
 			}
 		}
@@ -730,6 +729,10 @@
 
 				let topLevelShapesAndGroups = this.convertToCShapesAndGroups(pageInfo, pageContent, drawingPageScale);
 				this.pageShapesCache[pageIndex] = topLevelShapesAndGroups;
+
+				topLevelShapesAndGroups.forEach(function (shapeOrGroup) {
+					shapeOrGroup.recalculate();
+				});
 			}
 		}
 
