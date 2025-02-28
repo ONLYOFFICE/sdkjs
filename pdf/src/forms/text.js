@@ -546,10 +546,73 @@
             return parsedArgs;
         }
 
-        
         if (false == [AscPDF.FormatType.NONE, AscPDF.FormatType.CUSTOM].includes(this.GetFormatType())) {
             let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
             let oActionRunScript    = oFormatTrigger.GetActions()[0]
+            let sScript             = oActionRunScript.GetScript();
+
+            let args = extractArguments(sScript);
+            return args;
+        }
+    };
+    CTextField.prototype.GetValidateType = function() {
+        let oValidateTrigger     = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Validate);
+        let oActionRunScript    = oValidateTrigger ? oValidateTrigger.GetActions()[0] : null;
+        let sScript             = oActionRunScript ? oActionRunScript.GetScript(): "";
+        if (!sScript) {
+            return AscPDF.ValidateType.NONE;
+        }
+
+        if (sScript.startsWith('AFRange_Validate')) {
+            return AscPDF.ValidateType.NUMBER;
+        }
+        else {
+            return AscPDF.ValidateType.CUSTOM;
+        }
+    };
+    CTextField.prototype.GetValidateArgs = function() {
+        function extractArguments(str) {
+            var match = str.match(/\(([^)]+)\)/);
+            if (!match) {
+                return [];
+            }
+        
+            var args = match[1].split(/,\s*/);
+            var parsedArgs = [];
+        
+            for (var i = 0; i < args.length; i++) {
+                var arg = args[i].trim();
+        
+                // Проверяем на булево значение
+                if (arg === "true") {
+                    parsedArgs.push(true);
+                } else if (arg === "false") {
+                    parsedArgs.push(false);
+                }
+                // Проверяем на null
+                else if (arg === "null") {
+                    parsedArgs.push(null);
+                }
+                // Проверяем на число
+                else if (!isNaN(arg) && arg !== "") {
+                    parsedArgs.push(Number(arg));
+                }
+                // Проверяем на строку в кавычках
+                else if ((arg.startsWith('"') && arg.endsWith('"')) || (arg.startsWith("'") && arg.endsWith("'"))) {
+                    parsedArgs.push(arg.slice(1, -1));
+                }
+                // Иначе оставляем как есть
+                else {
+                    parsedArgs.push(arg);
+                }
+            }
+        
+            return parsedArgs;
+        }
+
+        if (false == [AscPDF.ValidateType.NONE, AscPDF.ValidateType.CUSTOM].includes(this.GetValidateType())) {
+            let oValidateTrigger    = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Validate);
+            let oActionRunScript    = oValidateTrigger.GetActions()[0]
             let sScript             = oActionRunScript.GetScript();
 
             let args = extractArguments(sScript);

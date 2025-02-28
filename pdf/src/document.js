@@ -7156,6 +7156,8 @@ var CPresentation = CPresentation || function(){};
         oCommonProps.asc_putStrokeStyle(field.GetBorderStyle());
 
         let oFormatProps;
+        let oValidateProps;
+
         if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(field.GetType())) {
             let nFormatType = field.GetFormatType();
             if (false == [AscPDF.FormatType.NONE, AscPDF.FormatType.CUSTOM].includes(nFormatType)) {
@@ -7189,6 +7191,18 @@ var CPresentation = CPresentation || function(){};
                     }
                 }
             }
+
+            let nValidateType = field.GetValidateType();
+            if (false == [AscPDF.ValidateType.NONE, AscPDF.ValidateType.CUSTOM].includes(nValidateType)) {
+                let aArgs = field.GetValidateArgs();
+
+                oValidateProps = new Asc.asc_CFieldValidateProperty();
+                oValidateProps.asc_putType(AscPDF.ValidateType.NUMBER);
+                oValidateProps.asc_putBeGreaterThen(aArgs[0]);
+                oValidateProps.asc_putGreaterThen(aArgs[1]);
+                oValidateProps.asc_putBeLessThen(aArgs[2]);
+                oValidateProps.asc_putLessThen(aArgs[3]);
+            }
         }
 
         let oFieldProps;
@@ -7200,6 +7214,7 @@ var CPresentation = CPresentation || function(){};
                 oFieldProps.asc_putCharLimit(field.GetCharLimit());
                 oFieldProps.asc_putComb(field.IsComb());
                 oFieldProps.asc_putFormat(oFormatProps);
+                oFieldProps.asc_putValidate(oValidateProps);
                 break;
             }
             case AscPDF.FIELD_TYPES.combobox: {
@@ -7207,6 +7222,7 @@ var CPresentation = CPresentation || function(){};
                 oFieldProps.asc_putOptions(field.GetOptions());
                 oFieldProps.asc_putEditable(field.IsEditable());
                 oFieldProps.asc_putFormat(oFormatProps);
+                oFieldProps.asc_putValidate(oValidateProps);
                 break;
             }
             case AscPDF.FIELD_TYPES.listbox: {

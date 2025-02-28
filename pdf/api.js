@@ -1335,7 +1335,7 @@
 
 		}, AscDFH.historydescription_Pdf_ChangeField, this);
 	};
-	PDFEditorApi.prototype.SetFieldValidateRange = function(bGreaterThan, nGreaterThan, bLessThan, nLessThan) {
+	PDFEditorApi.prototype.SetFieldValidateRange = function(nGreaterThan, nLessThan) {
 		let oDoc = this.getPDFDoc();
 		
 		return oDoc.DoAction(function() {
@@ -1344,6 +1344,9 @@
 				return false;
 			}
 			
+			let bGreaterThan	= nGreaterThan != undefined;
+			let bLessThan		= nLessThan != undefined;
+
 			let aActionsValidate = [{
 				"S": AscPDF.ACTIONS_TYPES.JavaScript,
 				"JS": 'AFRange_Validate(' + bGreaterThan +  ',' + nGreaterThan + ',' + bLessThan + ',' + nLessThan +  ');'

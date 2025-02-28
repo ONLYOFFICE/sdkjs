@@ -3531,6 +3531,7 @@ function (window, undefined) {
 	function asc_CTextFieldProperty() {
 		// format
 		this.format				= null;
+		this.validate			= null;
 
 		// text
 		this.defaultValue		= undefined;
@@ -3575,6 +3576,12 @@ function (window, undefined) {
 	asc_CTextFieldProperty.prototype.asc_putFormat = function (v) {
 		this.format = v;
 	};
+	asc_CTextFieldProperty.prototype.asc_getValidate = function () {
+		return this.validate;
+	};
+	asc_CTextFieldProperty.prototype.asc_putValidate = function (v) {
+		this.validate = v;
+	};
 	
 	//////////////////////////////////////////////////////////////////
 	///// Combobox field
@@ -3582,6 +3589,7 @@ function (window, undefined) {
 	function asc_CComboboxFieldProperty() {
 		// format
 		this.format				= null;
+		this.validate			= null;
 
 		this.options			= null;
 		this.editable			= undefined;
@@ -3598,11 +3606,17 @@ function (window, undefined) {
 	asc_CComboboxFieldProperty.prototype.asc_putEditable = function (v) {
 		this.editable = v;
 	};
-	asc_CTextFieldProperty.prototype.asc_getFormat = function () {
+	asc_CComboboxFieldProperty.prototype.asc_getFormat = function () {
 		return this.format;
 	};
-	asc_CTextFieldProperty.prototype.asc_putFormat = function (v) {
+	asc_CComboboxFieldProperty.prototype.asc_putFormat = function (v) {
 		this.format = v;
+	};
+	asc_CComboboxFieldProperty.prototype.asc_getValidate = function () {
+		return this.validate;
+	};
+	asc_CComboboxFieldProperty.prototype.asc_putValidate = function (v) {
+		this.validate = v;
 	};
 
 	//////////////////////////////////////////////////////////////////
@@ -3841,6 +3855,46 @@ function (window, undefined) {
 	};
 	asc_CFieldSpecialFormatProperty.prototype.asc_putFormat = function (v) {
 		this.format = v;
+	};
+
+	//////////////////////////////////////////////////////////////////
+	///// Validate format
+	//////////////////////////////////////////////////////////////////
+	function asc_CFieldValidateProperty() {
+		this.type			= undefined;
+		this.greaterThen	= undefined;
+		this.lessThen		= undefined;
+	};
+
+	asc_CFieldValidateProperty.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CFieldValidateProperty.prototype.asc_putType = function (v) {
+		this.type = v;
+	};
+	asc_CFieldValidateProperty.prototype.asc_getBeGreaterThen = function () {
+		return this.bGreaterThen;
+	};
+	asc_CFieldValidateProperty.prototype.asc_putBeGreaterThen = function (v) {
+		this.bGreaterThen = v;
+	};
+	asc_CFieldValidateProperty.prototype.asc_getGreaterThen = function () {
+		return this.greaterThen;
+	};
+	asc_CFieldValidateProperty.prototype.asc_putGreaterThen = function (v) {
+		this.greaterThen = v;
+	};
+	asc_CFieldValidateProperty.prototype.asc_getBeLessThen = function () {
+		return this.bLessThen;
+	};
+	asc_CFieldValidateProperty.prototype.asc_putBeLessThen = function (v) {
+		this.bLessThen = v;
+	};
+	asc_CFieldValidateProperty.prototype.asc_getLessThen = function () {
+		return this.lessThen;
+	};
+	asc_CFieldValidateProperty.prototype.asc_putLessThen = function (v) {
+		this.lessThen = v;
 	};
 
 	/** @constructor */
@@ -7184,6 +7238,10 @@ function (window, undefined) {
 	prot["asc_putCharLimit"]			= prot.asc_putCharLimit;
 	prot["asc_getComb"]					= prot.asc_getComb;
 	prot["asc_putComb"]					= prot.asc_putComb;
+	prot["asc_getFormat"]				= prot.asc_getFormat;
+	prot["asc_putFormat"]				= prot.asc_putFormat;
+	prot["asc_getValidate"]				= prot.asc_getValidate;
+	prot["asc_putValidate"]				= prot.asc_putValidate;
 
 	window["Asc"]["asc_CComboboxFieldProperty"] = window["Asc"].asc_CComboboxFieldProperty = asc_CComboboxFieldProperty;
 	prot = asc_CComboboxFieldProperty.prototype;
@@ -7191,6 +7249,10 @@ function (window, undefined) {
 	prot["asc_putOptions"]	= prot.asc_putOptions;
 	prot["asc_getEditable"]	= prot.asc_getEditable;
 	prot["asc_putEditable"]	= prot.asc_putEditable;
+	prot["asc_getFormat"]	= prot.asc_getFormat;
+	prot["asc_putFormat"]	= prot.asc_putFormat;
+	prot["asc_getValidate"]	= prot.asc_getValidate;
+	prot["asc_putValidate"]	= prot.asc_putValidate;
 
 	window["Asc"]["asc_CListboxFieldProperty"] = window["Asc"].asc_CListboxFieldProperty = asc_CListboxFieldProperty;
 	prot = asc_CListboxFieldProperty.prototype;
@@ -7269,6 +7331,19 @@ function (window, undefined) {
 	prot["asc_getFormat"]			= prot.asc_getFormat;
 	prot["asc_putFormat"]			= prot.asc_putFormat;
 	
+	window["Asc"]["asc_CFieldValidateProperty"] = window["Asc"].asc_CFieldValidateProperty = asc_CFieldValidateProperty;
+	prot = asc_CFieldValidateProperty.prototype;
+	prot["asc_getType"]				= prot.asc_getType;
+	prot["asc_putType"]				= prot.asc_putType;
+	prot["asc_getBeGreaterThen"]	= prot.asc_getBeGreaterThen;
+	prot["asc_putBeGreaterThen"]	= prot.asc_putBeGreaterThen;
+	prot["asc_getGreaterThen"]		= prot.asc_getGreaterThen;
+	prot["asc_putGreaterThen"]		= prot.asc_putGreaterThen;
+	prot["asc_getBeLessThen"]		= prot.asc_getBeLessThen;
+	prot["asc_putBeLessThen"]		= prot.asc_putBeLessThen;
+	prot["asc_getLessThen"]			= prot.asc_getLessThen;
+	prot["asc_putLessThen"]			= prot.asc_putLessThen;
+
 	window["Asc"]["asc_CPdfPageProperty"] = window["Asc"].asc_CPdfPageProperty = asc_CPdfPageProperty;
 	prot = asc_CPdfPageProperty.prototype;
 	prot["asc_getDeleteLock"]	= prot.asc_getDeleteLock;

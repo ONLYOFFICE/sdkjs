@@ -118,6 +118,7 @@
         CUSTOM:     5
     }
 
+    FormatType["NONE"]          = FormatType.NONE;
     FormatType["NUMBER"]        = FormatType.NUMBER;
     FormatType["PERCENTAGE"]    = FormatType.PERCENTAGE;
     FormatType["DATE"]          = FormatType.DATE;
@@ -177,14 +178,25 @@
     CalculateType["MIN"]        = CalculateType.MIN;
     CalculateType["MAX"]        = CalculateType.MAX;
 
+    const ValidateType = {
+        NONE:   -1,
+        NUMBER: 0,
+        CUSTOM: 1
+    }
+
+    ValidateType["NONE"]      = ValidateType.NONE;
+    ValidateType["NUMBER"]    = ValidateType.NUMBER;
+    ValidateType["CUSTOM"]    = ValidateType.CUSTOM;
+
     Object.freeze(FIELD_TYPES);
     asc["FIELD_TYPES"]              = asc.FIELD_TYPES               = FIELD_TYPES;
     asc["BORDER_EFFECT_STYLES"]     = asc.BORDER_EFFECT_STYLES      = BORDER_EFFECT_STYLES;
     asc["REF_TO_REASON"]            = asc.REF_TO_REASON             = REF_TO_REASON;
-    asc["FormatType"]              = asc.FormatType                 = FormatType;
+    asc["FormatType"]               = asc.FormatType                = FormatType;
     asc["SpectialFormattingType"]   = asc.SpectialFormattingType    = SpectialFormattingType;
     asc["SeparatorStyle"]           = asc.SeparatorStyle            = SeparatorStyle;
     asc["NegativeStyle"]            = asc.NegativeStyle             = NegativeStyle;
     asc["CalculateType"]            = asc.CalculateType             = CalculateType;
+    asc["ValidateType"]             = asc.ValidateType              = ValidateType;
     asc.CommandType                 = CommandType;
 })();
