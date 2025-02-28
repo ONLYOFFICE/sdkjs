@@ -1907,7 +1907,7 @@ function CreateGeometry(prst, oGeom){
             f.AddAdj('adj3', 15, '20457681');
             f.AddAdj('adj4', 15, '10800000');
             f.AddAdj('adj5', 15, '12500');
-            f.AddGuide('a5', 10, '0', 'adj5', '25000');
+            f.AddGuide('a5', 10, '2', 'adj5', '25000');
             f.AddGuide('maxAdj1', 0, 'a5', '2', '1');
             f.AddGuide('a1', 10, '0', 'adj1', 'maxAdj1');
             f.AddGuide('enAng', 10, '1', 'adj3', '21599999');
