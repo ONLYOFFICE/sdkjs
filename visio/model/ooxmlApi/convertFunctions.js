@@ -1616,6 +1616,12 @@
 		 * @type CUniFill */
 		let uniFillForegnd = null;
 
+		/**
+		 * fill without gradient to handle quick style variation
+		 * @type CUniFill
+		 */
+		let uniFillForegndNoGradient = null;
+
 		/** @type CUniFill */
 		let	uniFillBkgnd = null;
 
@@ -1658,6 +1664,35 @@
 		//
 		// Its better to convert linear FillPattern gradients there. But FillPattern radial gradients seems to be
 		// not like FillGradientDir radial gradients but with different colors
+
+		// Calculate fillForegnd without gradient anyway for handleQuickStyleVariation
+		let fillForegndCell = this.getCell("FillForegnd");
+		if (fillForegndCell) {
+			// AscCommon.consoleLog("FillForegnd was found:", fillForegndCell);
+			uniFillForegndNoGradient = fillForegndCell.calculateValue(this, pageInfo,
+				visioDocument.themes, themeValWasUsedFor, false);
+
+			let fillForegndTransValue = this.getCellNumberValue("FillForegndTrans");
+			if (!isNaN(fillForegndTransValue)) {
+				let fillObj = uniFillForegndNoGradient.fill;
+				if (fillObj.type === Asc.c_oAscFill.FILL_TYPE_PATT) {
+					// pattern fill
+					fillObj.fgClr.color.RGBA.A = fillObj.fgClr.color.RGBA.A * (1 - fillForegndTransValue);
+				} else {
+					fillObj.color.color.RGBA.A = fillObj.color.color.RGBA.A * (1 - fillForegndTransValue);
+				}
+			} else {
+				AscCommon.consoleLog("fillForegndTrans value is themed or something. Not calculated for", this);
+			}
+		} else {
+			AscCommon.consoleLog("fillForegnd cell not found for", this);
+			// try to get from theme
+			// uniFillForegnd = AscVisio.themeval(null, this, pageInfo, visioDocument.themes, "FillColor",
+			// 	undefined, gradientEnabled);
+			// just use white
+			uniFillForegndNoGradient = AscFormat.CreateUnfilFromRGB(255, 255, 255);
+		}
+
 		if (gradientEnabled) {
 			let fillGradientDir = this.getCellNumberValue("FillGradientDir");
 
@@ -1722,32 +1757,7 @@
 				uniFillForegnd = AscFormat.builder_CreateLinearGradient(fillGradientStops, fillGradientAngle);
 			}
 		} else {
-			let fillForegndCell = this.getCell("FillForegnd");
-			if (fillForegndCell) {
-				// AscCommon.consoleLog("FillForegnd was found:", fillForegndCell);
-				uniFillForegnd = fillForegndCell.calculateValue(this, pageInfo,
-					visioDocument.themes, themeValWasUsedFor, gradientEnabled);
-
-				let fillForegndTransValue = this.getCellNumberValue("FillForegndTrans");
-				if (!isNaN(fillForegndTransValue)) {
-					let fillObj = uniFillForegnd.fill;
-					if (fillObj.type === Asc.c_oAscFill.FILL_TYPE_PATT) {
-						// pattern fill
-						fillObj.fgClr.color.RGBA.A = fillObj.fgClr.color.RGBA.A * (1 - fillForegndTransValue);
-					} else {
-						fillObj.color.color.RGBA.A = fillObj.color.color.RGBA.A * (1 - fillForegndTransValue);
-					}
-				} else {
-					AscCommon.consoleLog("fillForegndTrans value is themed or something. Not calculated for", this);
-				}
-			} else {
-				AscCommon.consoleLog("fillForegnd cell not found for", this);
-				// try to get from theme
-				// uniFillForegnd = AscVisio.themeval(null, this, pageInfo, visioDocument.themes, "FillColor",
-				// 	undefined, gradientEnabled);
-				// just use white
-				uniFillForegnd = AscFormat.CreateUnfilFromRGB(255, 255, 255);
-			}
+			uniFillForegnd = uniFillForegndNoGradient;
 		}
 
 
@@ -1782,7 +1792,7 @@
 		}
 
 		// calculate variation before pattern bcs pattern can make NoFillUniFill object without color
-		handleQuickStyleVariation(lineUniFill, uniFillForegnd, this, themeValWasUsedFor);
+		handleQuickStyleVariation(lineUniFill, uniFillForegndNoGradient, this, themeValWasUsedFor);
 
 		let lineWidthEmu = null;
 		let lineWeightCell = this.getCell("LineWeight");
