@@ -2301,6 +2301,12 @@
 
     this.updateTargetForCollaboration();
     this.sendCursor();
+
+	  this.Api.broadcastChannel.postMessage({
+		  type: "SetFormulaEditMode",
+		  id: this.Api.DocInfo.Id /*+ "_" + AscCommon.g_oIdCounter.m_sUserId,*/,
+		  isClose: true
+	  })
   };
 
   WorkbookView.prototype._onEmpty = function() {
@@ -2734,10 +2740,11 @@
         this.isFormulaEditMode = mode;
         this.setSelectionDialogMode(mode ? c_oAscSelectionDialogType.Function : c_oAscSelectionDialogType.None, '');
 
+
 		if (mode) {
 			this.Api.broadcastChannel.postMessage({
 				type: "SetFormulaEditMode",
-				info: mode
+				id: this.Api.DocInfo.Id /*+ "_" + AscCommon.g_oIdCounter.m_sUserId,*/
 			})
 		}
     };
@@ -2864,6 +2871,11 @@
 
 	// Останавливаем ввод данных в редакторе ввода
 	WorkbookView.prototype.closeCellEditor = function (cancel) {
+		this.Api.broadcastChannel.postMessage({
+			type: "SetFormulaEditMode",
+			id: this.Api.DocInfo.Id /*+ "_" + AscCommon.g_oIdCounter.m_sUserId,*/,
+			isClose: true
+		})
 		return this.getCellEditMode() ? this.cellEditor.close(!cancel) : true;
 	};
 

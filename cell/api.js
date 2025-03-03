@@ -9819,12 +9819,29 @@ var editor;
 						console.log("ChangeSelection_on_message")
 					}
 				} else if ("SetFormulaEditMode" === event.data.type) {
+					//if open cell editor and start formula edit mode, then send by all tabs "SetFormulaEditMode" event
+					//event data must contains doc info and current cell text
 					if (wb) {
-						console.log("SetFormulaEditMode_on_message")
+						console.log("SetFormulaEditMode_on_message " + "_isClose: " + event.data.isClose)
+						window.externalFormulaEditMode = !!event.data.isClose;
 					}
 				}
 			}
 		}
+
+		document.onvisibilitychange = function() {
+			if (document.hidden === false) {
+				if (window.externalFormulaEditMode) {
+					//we must open cell editor in formula edit mode and send information about change selection
+					oThis.wb.setFormulaEditMode(true);
+				}
+				console.log("Visibility of page has changed!" + " documentHidden " + document.hidden);
+			} else {
+				if (oThis.wb.getCellEditMode()) {
+					oThis.wb.setFormulaEditMode(false);
+				}
+			}
+		};
 	};
 
 	spreadsheet_api.prototype.asc_SetSmoothScrolling  = function(val) {
