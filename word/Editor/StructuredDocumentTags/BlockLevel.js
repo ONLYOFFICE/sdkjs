@@ -2593,6 +2593,9 @@ CBlockLevelSdt.prototype.GetSpecificType = function()
 	if (this.IsCheckBox())
 		return Asc.c_oAscContentControlSpecificType.CheckBox;
 
+	if (this.IsAI())
+		return Asc.c_oAscContentControlSpecificType.AI;
+
 	if (this.IsPicture())
 		return Asc.c_oAscContentControlSpecificType.Picture;
 
@@ -2780,6 +2783,38 @@ CBlockLevelSdt.prototype.RemoveThisFromParent = function(updatePosition)
 		}
 	}
 };
+/**
+ * Выставляем настройку того, что это контент контрол для ai
+ * @param isPicture {boolean}
+ */
+CBlockLevelSdt.prototype.SetAIPr = function(isAi)
+{
+	if (this.Pr.AI !== isAi)
+	{
+	//	History.Add(new CChangesSdtPrAI(this, this.Pr.AI, isAi));
+		this.Pr.AI = isAi;
+		this.Content.Recalculate();
+	}
+};
+CBlockLevelSdt.prototype.setDefaultData = function ()
+{
+	if (this.defaultData === undefined)
+	{
+		var memory = new AscCommon.CMemory();
+		var context = new AscCommon.XmlWriterContext("word");
+		context.fileType = Asc.c_oAscFileType.DOCX;
+		context.docSaveParams = new DocSaveParams(false, false, false, false);
+		context.imageMap = {};
+		memory.context = context;
+
+		this.toXml(memory, 'opa');
+		this.defaultData = memory;
+		return true;
+	}
+	return false;
+}
+
+
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CBlockLevelSdt = CBlockLevelSdt;

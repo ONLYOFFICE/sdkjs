@@ -50,6 +50,32 @@
 		this.content			= content ? content : null;
 		this.oContentLink		= oContentLink ? oContentLink : null;
 	}
+
+	/**
+	 * Set UID of CustomXML
+	 * @param {uId} itemId
+	 */
+	CustomXml.prototype.setItemId = function ()
+	{
+		this.itemId = AscCommon.CreateGUID();
+	};
+	/**
+	 * Set UID of CustomXML by given data
+	 * @param itemUId {string}
+	 */
+	CustomXml.prototype.setItemIdManually = function (itemUId)
+	{
+		this.itemId = itemUId;
+	};
+	/**
+	 * Add given uri to CustomXMl uri list
+	 * @param uri {string}
+	 */
+	CustomXml.prototype.addUri = function(uri)
+	{
+		if (undefined !== uri && uri !== "")
+			this.uri.push(uri);
+	};
 	/**
 	 * Get CustomXML data by string
 	 * @return {string}
@@ -147,6 +173,10 @@
 		this.addAttribute = function (name, value)
 		{
 			this.attribute[name] = value;
+		};
+		this.getAttribute = function (name)
+		{
+			return this.attribute[name];
 		};
 		this.addContent = function (name)
 		{

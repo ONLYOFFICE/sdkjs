@@ -34,6 +34,13 @@
 
 (function()
 {
+	let oPromptSaveCustomXML = {
+		uri: "http://onlyoffice.com/storage/prompts",
+		content: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<promptData/>",
+		dataBindingPath: "/ns0:promptData",
+		xPath: "/promptData",
+	};
+
 	/**
 	 * Класс представляющий менеджер CustomXMLs
 	 * @param {AscWord.CDocument} document
@@ -43,6 +50,8 @@
 	{
 		this.document	= document;
 		this.xml		= [];
+
+		this.promptSave = false;
 	}
 	CustomXmlManager.prototype.add = function(customXml)
 	{
@@ -58,7 +67,56 @@
 	{
 		return this.xml[index];
 	};
+	CustomXmlManager.prototype.getPromptSaveCustomXML = function ()
+	{
+		return this.promptSave;
+	};
+	CustomXmlManager.prototype.createCustomXml = function()
+	{
+		let oXML = new AscWord.CustomXml();
+		this.add(oXML);
+		return oXML;
+	};
+	CustomXmlManager.prototype.getCustomXMlPromptSave = function () {
+		if (!this.promptSave)
+			this.createCustomXMlPromptSave();
 
+		return this.promptSave;
+	};
+	CustomXmlManager.prototype.createCustomXMlPromptSave = function () {
+		if (!this.promptSave)
+		{
+			let oXML = this.createCustomXml();
+
+			oXML.addContentByXMLString(oPromptSaveCustomXML.content);
+			oXML.setItemId();
+			oXML.addUri(oPromptSaveCustomXML.uri);
+
+			this.promptSave = oXML;
+		}
+
+		return this.promptSave;
+	};
+	CustomXmlManager.prototype.getDataBindingForPromptSave = function (contentControlId)
+	{
+		if (!this.promptSave)
+			return;
+
+		let oCurrentPromptSaveData = this.findElementByXPath(this.promptSave.content, '/promptData');
+		let oCurrentListOfContentControlsData = oCurrentPromptSaveData.content.attribute;
+
+		if (oCurrentListOfContentControlsData['id' + contentControlId])
+			return;
+
+		let oCurrentXmlForPromptSave = this.promptSave;
+		let db = new AscWord.DataBinding(
+			"xmlns:ns0='" + oPromptSaveCustomXML.uri + "'",
+			oCurrentXmlForPromptSave.itemId,
+			oPromptSaveCustomXML.dataBindingPath,
+		);
+
+		return db;
+	};
 	/**
 	 * Find element/attribute of CustomXMl by xpath string
 	 * @param root {AscWord.CustomXmlContent}

@@ -58,6 +58,7 @@ function CSdtPr()
 	this.Date     = undefined;
 	this.Equation = false;
 	this.TextForm = undefined;
+	this.AI       = false;
 
 	this.TextPr = new CTextPr();
 
@@ -91,6 +92,7 @@ CSdtPr.prototype.Copy = function()
 	
 	oPr.BorderColor = this.BorderColor ? this.BorderColor.Copy() : undefined;
 	oPr.ShdColor    = this.ShdColor ? this.ShdColor.Copy() : undefined;
+	oPr.AI			= this.AI;
 
 	if (this.DataBinding)
 		oPr.DataBinding = this.DataBinding.copy();
@@ -430,6 +432,8 @@ function CContentControlPr(nType)
 	this.CCType     = undefined !== nType ? nType : c_oAscSdtLevelType.Inline;
 	
 	this.Temporary  = undefined;
+
+	this.AI			= undefined;
 	
 	// section property
 	this.SectionBreak = undefined;
@@ -502,6 +506,9 @@ CContentControlPr.prototype.FillFromObject = function(oPr)
 	
 	if (undefined !== oPr.BorderColor)
 		this.BorderColor = AscWord.CDocumentColorA.fromObjectRgba(oPr.BorderColor);
+
+	if (undefined !== oPr.AI)
+		this.AI = oPr.AI;
 };
 CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 {
@@ -518,6 +525,7 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 	this.Appearance = oContentControl.GetAppearance();
 	this.Color      = oContentControl.GetColor();
 	this.Temporary  = oContentControl.IsContentControlTemporary();
+	this.AI         = oContentControl.Pr.AI;
 
 	if (oContentControl.IsCheckBox())
 	{
@@ -580,6 +588,9 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 	{
 		oContentControl.GetLogicDocument().OnChangeRadioRequired(oContentControl.GetRadioButtonGroupKey(), this.FormPr.GetRequired());
 	}
+
+	if (undefined !== this.AI)
+		oContentControl.SetAIPr(this.AI);
 	
 	if (undefined !== this.Tag)
 		oContentControl.SetTag(this.Tag);
@@ -806,6 +817,14 @@ CContentControlPr.prototype.GetId = function()
 CContentControlPr.prototype.SetId = function(Id)
 {
 	this.Id = Id;
+};
+CContentControlPr.prototype.GetAI = function()
+{
+	return this.AI;
+};
+CContentControlPr.prototype.SetAI = function(Id)
+{
+	this.AI = AI;
 };
 CContentControlPr.prototype.GetTag = function()
 {

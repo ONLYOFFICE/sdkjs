@@ -385,6 +385,15 @@
         this.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Text, text);
     };
 
+	// todo temp
+	Api.prototype["pluginMethod_PasteImageUrl"] = function(url)
+	{
+		if (!AscCommon.g_clipboardBase)
+			return null;
+
+		this._addImageUrl([url]);
+	};
+
     /**
      * An object containing the data about all the macros from the document.
      * @typedef {Object} Macros
