@@ -66,9 +66,9 @@
             return;
 
         this.recalculateTransform();
-        this.updateTransformMatrix();
         this.recalcGeometry();
         this.recalculate();
+        this.updateTransformMatrix();
         this.SetNeedRecalc(false);
     };
     CPdfChart.prototype.onMouseDown = function(x, y, e) {
