@@ -6265,7 +6265,14 @@ var editor;
 	  if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
      return;
     }
-	  
+
+	  this.broadcastChannel.postMessage({
+		  type: "ChangeSelection",
+		  info: {
+			  aBooks: null
+		  }
+	  })
+
   	let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
@@ -9806,6 +9813,14 @@ var editor;
 								});
 							}
 						}
+					}
+				} else if ("ChangeSelection" === event.data.type) {
+					if (wb) {
+						console.log("ChangeSelection_on_message")
+					}
+				} else if ("SetFormulaEditMode" === event.data.type) {
+					if (wb) {
+						console.log("SetFormulaEditMode_on_message")
 					}
 				}
 			}

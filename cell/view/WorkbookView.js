@@ -2733,6 +2733,13 @@
     WorkbookView.prototype.setFormulaEditMode = function (mode) {
         this.isFormulaEditMode = mode;
         this.setSelectionDialogMode(mode ? c_oAscSelectionDialogType.Function : c_oAscSelectionDialogType.None, '');
+
+		if (mode) {
+			this.Api.broadcastChannel.postMessage({
+				type: "SetFormulaEditMode",
+				info: mode
+			})
+		}
     };
 
 	WorkbookView.prototype.setWizardMode = function (mode) {
