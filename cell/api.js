@@ -9810,7 +9810,7 @@ var editor;
 				} else if ("ExternalChangeSelection" === event.data.type) {
 					oThis.wb && oThis.wb.externalSelectionController.onExternalChangeSelection(event.data);
 				} else if ("SetFormulaEditMode" === event.data.type) {
-					oThis.wb && oThis.wb.externalSelectionController.onSetFormulaMode(event.data);
+					oThis.wb && oThis.wb.externalSelectionController.onExternalSetFormulaMode(event.data);
 				}
 			}
 		}

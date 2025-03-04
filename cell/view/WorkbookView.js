@@ -1474,16 +1474,7 @@
             this.cellEditor.restoreFocus();
         }
 
-		if (window.externalFormulaEditMode && this.isFormulaEditMode && this.isCellEditMode && this.cellEditor) {
-			this.Api.broadcastChannel.postMessage({
-				type: "ExternalChangeSelection",
-				id: this.Api.DocInfo.Id /*+ "_" + AscCommon.g_oIdCounter.m_sUserId,*/,
-				range: ws.model.selectionRange.getLast().getName(),
-				worksheet: ws.model.sName,
-				bookName: this.Api.DocInfo.Title
-			})
-		}
-
+		this.externalSelectionController.externalChangeSelection();
         asc_applyFunction(callback, d);
     };
 
@@ -2315,14 +2306,7 @@
     this.updateTargetForCollaboration();
     this.sendCursor();
 
-	if (!window.externalFormulaEditMode) {
-		this.Api.broadcastChannel.postMessage({
-			type: "SetFormulaEditMode",
-			id: this.Api.DocInfo.Id /*+ "_" + AscCommon.g_oIdCounter.m_sUserId,*/,
-			isClose: true
-		})
-	}
-
+	this.externalSelectionController.externalCloseEditor();
   };
 
   WorkbookView.prototype._onEmpty = function() {
@@ -2755,15 +2739,8 @@
     WorkbookView.prototype.setFormulaEditMode = function (mode) {
         this.isFormulaEditMode = mode;
         this.setSelectionDialogMode(mode ? c_oAscSelectionDialogType.Function : c_oAscSelectionDialogType.None, '');
-
-
 		if (mode) {
-			if (!window.externalFormulaEditMode) {
-				this.Api.broadcastChannel.postMessage({
-					type: "SetFormulaEditMode",
-					id: this.Api.DocInfo.Id /*+ "_" + AscCommon.g_oIdCounter.m_sUserId,*/
-				})
-			}
+			this.externalSelectionController.externalSetFormulaEditMode();
 		}
     };
 
@@ -7198,12 +7175,46 @@
 			this.wb.skipHelpSelector = false;
 		}
 	};
-	CExternalSelectionController.prototype.onSetFormulaMode = function (data) {
+	CExternalSelectionController.prototype.onExternalSetFormulaMode = function (data) {
 		//if open cell editor and start formula edit mode, then send by all tabs "SetFormulaEditMode" event
 		//event data must contains doc info and current cell text
 		console.log("SetFormulaEditMode_on_message " + "_isClose: " + data.isClose)
 		window.externalFormulaEditMode = !data.isClose;
 	};
+	CExternalSelectionController.prototype.externalChangeSelection = function () {
+		let ws = this.wb.model.getActiveWs();
+		if (window.externalFormulaEditMode && this.wb.isFormulaEditMode && this.wb.isCellEditMode && this.wb.cellEditor) {
+			this.sendExternalEvent({
+				type: "ExternalChangeSelection",
+				id: this.wb.Api.DocInfo.Id /*+ "_" + AscCommon.g_oIdCounter.m_sUserId,*/,
+				range: ws.model.selectionRange.getLast().getName(),
+				worksheet: ws.model.sName,
+				bookName: this.wb.Api.DocInfo.Title
+			});
+		}
+	};
+	CExternalSelectionController.prototype.externalCloseEditor = function () {
+		if (!window.externalFormulaEditMode) {
+			this.sendExternalEvent({
+				type: "SetFormulaEditMode",
+				id: this.wb.Api.DocInfo.Id /*+ "_" + AscCommon.g_oIdCounter.m_sUserId,*/,
+				isClose: true
+			})
+		}
+	};
+	CExternalSelectionController.prototype.externalSetFormulaEditMode = function () {
+		if (!window.externalFormulaEditMode) {
+			this.sendExternalEvent({
+				type: "SetFormulaEditMode",
+				id: this.wb.Api.DocInfo.Id /*+ "_" + AscCommon.g_oIdCounter.m_sUserId,*/
+			})
+		}
+	};
+	CExternalSelectionController.prototype.sendExternalEvent = function (data) {
+		this.wb.Api.broadcastChannel.postMessage(data);
+	};
+
+
 
 	//------------------------------------------------------------export---------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
