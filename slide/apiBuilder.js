@@ -719,9 +719,9 @@
      * @memberof Api
      * @typeofeditors ["CPE"]
      * @param {ChartType} [sType="bar"] - The chart type used for the chart display.
-     * @param {Array} aSeries - The array of the data used to build the chart from.
-     * @param {Array} aSeriesNames - The array of the names (the source table column names) used for the data which the chart will be build from.
-     * @param {Array} aCatNames - The array of the names (the source table row names) used for the data which the chart will be build from.
+     * @param {number[][]} aSeries - The array of the data used to build the chart from.
+     * @param {number[] | string[]} aSeriesNames - The array of the names (the source table column names) used for the data which the chart will be build from.
+     * @param {number[] | string[]} aCatNames - The array of the names (the source table row names) used for the data which the chart will be build from.
      * @param {EMU} nWidth - The chart width in English measure units.
      * @param {EMU} nHeight - The chart height in English measure units.
      * @param {number} nStyleIndex - The chart color style index (can be <b>1 - 48</b>, as described in OOXML specification).
@@ -1388,7 +1388,7 @@
 	 * Converts the ApiPresentation object into the JSON object.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
-     * @param {bool} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
+     * @param {boolean} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
 	 * @returns {JSON}
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/ToJSON.js
 	 */
@@ -1403,12 +1403,12 @@
 	 * Converts the slides from the current ApiPresentation object into the JSON objects.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
-     * @param {bool} [nStart=0] - The index to the start slide.
-     * @param {bool} [nStart=ApiPresentation.GetSlidesCount() - 1] - The index to the end slide.
-     * @param {bool} [bWriteLayout=false] - Specifies if the slide layout will be written to the JSON object or not.
-     * @param {bool} [bWriteMaster=false] - Specifies if the slide master will be written to the JSON object or not (bWriteMaster is false if bWriteLayout === false).
-     * @param {bool} [bWriteAllMasLayouts=false] - Specifies if all child layouts from the slide master will be written to the JSON object or not.
-     * @param {bool} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
+     * @param {boolean} [nStart=0] - The index to the start slide.
+     * @param {boolean} [nStart=ApiPresentation.GetSlidesCount() - 1] - The index to the end slide.
+     * @param {boolean} [bWriteLayout=false] - Specifies if the slide layout will be written to the JSON object or not.
+     * @param {boolean} [bWriteMaster=false] - Specifies if the slide master will be written to the JSON object or not (bWriteMaster is false if bWriteLayout === false).
+     * @param {boolean} [bWriteAllMasLayouts=false] - Specifies if all child layouts from the slide master will be written to the JSON object or not.
+     * @param {boolean} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
 	 * @returns {JSON[]}
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/SlidesToJSON.js
 	 */
@@ -1877,7 +1877,7 @@
 	 * Converts the ApiMaster object into the JSON object.
 	 * @memberof ApiMaster
 	 * @typeofeditors ["CPE"]
-     * @param {bool} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
+     * @param {boolean} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
 	 * @returns {JSON}
 	 * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/ToJSON.js
 	 */
@@ -2275,8 +2275,8 @@
 	 * Converts the ApiLayout object into the JSON object.
 	 * @memberof ApiLayout
      * @typeofeditors ["CPE"]
-     * @param {bool} [bWriteMaster=false] - Specifies if the slide master will be written to the JSON object or not.
-     * @param {bool} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
+     * @param {boolean} [bWriteMaster=false] - Specifies if the slide master will be written to the JSON object or not.
+     * @param {boolean} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
 	 * @returns {JSON}
 	 * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/ToJSON.js
 	 */
@@ -3453,10 +3453,10 @@
 	 * Converts the ApiSlide object into the JSON object.
 	 * @memberof ApiSlide
      * @typeofeditors ["CPE"]
-     * @param {bool} [bWriteLayout=false] - Specifies if the slide layout will be written to the JSON object or not.
-     * @param {bool} [bWriteMaster=false] - Specifies if the slide master will be written to the JSON object or not (bWriteMaster is false if bWriteLayout === false).
-     * @param {bool} [bWriteAllMasLayouts=false] - Specifies if all child layouts from the slide master will be written to the JSON object or not.
-	 * @param {bool} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
+     * @param {boolean} [bWriteLayout=false] - Specifies if the slide layout will be written to the JSON object or not.
+     * @param {boolean} [bWriteMaster=false] - Specifies if the slide master will be written to the JSON object or not (bWriteMaster is false if bWriteLayout === false).
+     * @param {boolean} [bWriteAllMasLayouts=false] - Specifies if all child layouts from the slide master will be written to the JSON object or not.
+	 * @param {boolean} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
 	 * @returns {JSON}
 	 * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/ToJSON.js
 	 */
@@ -3835,7 +3835,7 @@
      * Returns the lock value for the specified lock type of the current drawing.
      * @typeofeditors ["CPE"]
 	 * @param {DrawingLockType} sType - Lock type in the string format.
-     * @returns {bool}
+     * @returns {boolean}
      * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLockValue.js
 	 */
 	ApiDrawing.prototype.GetLockValue = function(sType)
@@ -3855,8 +3855,8 @@
      * Sets the lock value to the specified lock type of the current drawing.
      * @typeofeditors ["CPE"]
 	 * @param {DrawingLockType} sType - Lock type in the string format.
-     * @param {bool} bValue - Specifies if the specified lock is applied to the current drawing.
-	 * @returns {bool}
+     * @param {boolean} bValue - Specifies if the specified lock is applied to the current drawing.
+	 * @returns {boolean}
      * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLockValue.js
 	 */
 	ApiDrawing.prototype.SetLockValue = function(sType, bValue)
@@ -4420,7 +4420,7 @@
 	 * Converts the ApiTable object into the JSON object.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
-     * @param {bool} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
+     * @param {boolean} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
 	 * @returns {JSON}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/ToJSON.js
 	 */
