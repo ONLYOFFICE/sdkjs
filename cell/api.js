@@ -6266,13 +6266,6 @@ var editor;
      return;
     }
 
-	  this.broadcastChannel.postMessage({
-		  type: "ChangeSelection",
-		  info: {
-			  aBooks: null
-		  }
-	  })
-
   	let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
@@ -9814,34 +9807,13 @@ var editor;
 							}
 						}
 					}
-				} else if ("ChangeSelection" === event.data.type) {
-					if (wb) {
-						console.log("ChangeSelection_on_message")
-					}
+				} else if ("ExternalChangeSelection" === event.data.type) {
+					oThis.wb && oThis.wb.externalSelectionController.onExternalChangeSelection(event.data);
 				} else if ("SetFormulaEditMode" === event.data.type) {
-					//if open cell editor and start formula edit mode, then send by all tabs "SetFormulaEditMode" event
-					//event data must contains doc info and current cell text
-					if (wb) {
-						console.log("SetFormulaEditMode_on_message " + "_isClose: " + event.data.isClose)
-						window.externalFormulaEditMode = !!event.data.isClose;
-					}
+					oThis.wb && oThis.wb.externalSelectionController.onSetFormulaMode(event.data);
 				}
 			}
 		}
-
-		document.onvisibilitychange = function() {
-			if (document.hidden === false) {
-				if (window.externalFormulaEditMode) {
-					//we must open cell editor in formula edit mode and send information about change selection
-					oThis.wb.setFormulaEditMode(true);
-				}
-				console.log("Visibility of page has changed!" + " documentHidden " + document.hidden);
-			} else {
-				if (oThis.wb.getCellEditMode()) {
-					oThis.wb.setFormulaEditMode(false);
-				}
-			}
-		};
 	};
 
 	spreadsheet_api.prototype.asc_SetSmoothScrolling  = function(val) {

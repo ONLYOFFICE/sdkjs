@@ -306,6 +306,8 @@
 
     this.defNameAllowCreate = true;
 
+    this.externalSelectionController = new CExternalSelectionController(this);
+
     this._init(fontRenderingMode);
 
     this.autoCorrectStore = null;//объект для хранения параметров иконки авторазвертывания таблиц
@@ -1149,6 +1151,7 @@
     this.addEventListeners();
 
     this.initExternalReferenceUpdateTimer();
+	this.externalSelectionController.init();
 
     return this;
   };
@@ -1470,6 +1473,16 @@
             /* set focus to the top formula entry line */
             this.cellEditor.restoreFocus();
         }
+
+		if (window.externalFormulaEditMode && this.isFormulaEditMode && this.isCellEditMode && this.cellEditor) {
+			this.Api.broadcastChannel.postMessage({
+				type: "ExternalChangeSelection",
+				id: this.Api.DocInfo.Id /*+ "_" + AscCommon.g_oIdCounter.m_sUserId,*/,
+				range: ws.model.selectionRange.getLast().getName(),
+				worksheet: ws.model.sName,
+				bookName: this.Api.DocInfo.Title
+			})
+		}
 
         asc_applyFunction(callback, d);
     };
@@ -2302,11 +2315,14 @@
     this.updateTargetForCollaboration();
     this.sendCursor();
 
-	  this.Api.broadcastChannel.postMessage({
-		  type: "SetFormulaEditMode",
-		  id: this.Api.DocInfo.Id /*+ "_" + AscCommon.g_oIdCounter.m_sUserId,*/,
-		  isClose: true
-	  })
+	if (!window.externalFormulaEditMode) {
+		this.Api.broadcastChannel.postMessage({
+			type: "SetFormulaEditMode",
+			id: this.Api.DocInfo.Id /*+ "_" + AscCommon.g_oIdCounter.m_sUserId,*/,
+			isClose: true
+		})
+	}
+
   };
 
   WorkbookView.prototype._onEmpty = function() {
@@ -2742,10 +2758,12 @@
 
 
 		if (mode) {
-			this.Api.broadcastChannel.postMessage({
-				type: "SetFormulaEditMode",
-				id: this.Api.DocInfo.Id /*+ "_" + AscCommon.g_oIdCounter.m_sUserId,*/
-			})
+			if (!window.externalFormulaEditMode) {
+				this.Api.broadcastChannel.postMessage({
+					type: "SetFormulaEditMode",
+					id: this.Api.DocInfo.Id /*+ "_" + AscCommon.g_oIdCounter.m_sUserId,*/
+				})
+			}
 		}
     };
 
@@ -2871,11 +2889,13 @@
 
 	// Останавливаем ввод данных в редакторе ввода
 	WorkbookView.prototype.closeCellEditor = function (cancel) {
-		this.Api.broadcastChannel.postMessage({
-			type: "SetFormulaEditMode",
-			id: this.Api.DocInfo.Id /*+ "_" + AscCommon.g_oIdCounter.m_sUserId,*/,
-			isClose: true
-		})
+		if (!window.externalFormulaEditMode) {
+			this.Api.broadcastChannel.postMessage({
+				type: "SetFormulaEditMode",
+				id: this.Api.DocInfo.Id /*+ "_" + AscCommon.g_oIdCounter.m_sUserId,*/,
+				isClose: true
+			})
+		}
 		return this.getCellEditMode() ? this.cellEditor.close(!cancel) : true;
 	};
 
@@ -7144,6 +7164,45 @@
 
 	CDocumentSearchExcel.prototype.isSpecificRange = function () {
 		return this.props && this.props.specificRange;
+	};
+
+
+	function CExternalSelectionController(wb) {
+		this.wb = wb;
+	}
+	CExternalSelectionController.prototype.init = function () {
+		let oThis = this;
+		document.addEventListener("visibilitychange", function () {
+			if (document.hidden === false) {
+				if (window.externalFormulaEditMode) {
+					//we must open cell editor in formula edit mode and send information about change selection
+					let editorEnterOptions = new AscCommonExcel.CEditorEnterOptions();
+					editorEnterOptions.newText = "="
+					oThis.wb._onEditCell(editorEnterOptions, function () {
+						oThis.wb.setFormulaEditMode(true);
+					});
+				}
+				console.log("Visibility of page has changed!" + " documentHidden " + document.hidden);
+			} else {
+				if (oThis.wb.getCellEditMode()) {
+					oThis.wb.setFormulaEditMode(false);
+				}
+			}
+		});
+	};
+	CExternalSelectionController.prototype.onExternalChangeSelection = function (data) {
+		if (this.wb.isCellEditMode && !this.wb.isWizardMode) {
+			this.wb.skipHelpSelector = true;
+			let val = "[" + data.bookName + "]"  + data.worksheet + "!" + data.range;
+			this.wb.cellEditor.changeCellText(val);
+			this.wb.skipHelpSelector = false;
+		}
+	};
+	CExternalSelectionController.prototype.onSetFormulaMode = function (data) {
+		//if open cell editor and start formula edit mode, then send by all tabs "SetFormulaEditMode" event
+		//event data must contains doc info and current cell text
+		console.log("SetFormulaEditMode_on_message " + "_isClose: " + data.isClose)
+		window.externalFormulaEditMode = !data.isClose;
 	};
 
 	//------------------------------------------------------------export---------------------------------------------------
