@@ -5211,6 +5211,10 @@
 		};
 
 		CShape.prototype.updateSelectionState = function () {
+			if (Asc.editor.isPdfEditor()) {
+				return AscPDF.CPdfShape.prototype.updateSelectionState.call(this);
+			}
+			
 			var drawing_document = this.getDrawingDocument();
 			if (drawing_document) {
 				var content = this.getDocContent();

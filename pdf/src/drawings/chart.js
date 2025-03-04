@@ -86,10 +86,6 @@
 
         oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
     };
-    CPdfChart.prototype.SelectAllText = function() {
-        this.GetDocContent().SelectAll();
-    };
-
     CPdfChart.prototype.onMouseUp = function(x, y, e) {
         let oViewer         = Asc.editor.getDocumentRenderer();
         
@@ -107,7 +103,15 @@
         if (oContent.IsSelectionEmpty())
             oContent.RemoveSelection();
     };
-    
+    CPdfChart.prototype.GetDocContent = function() {
+        let oTextSelection = this.selection.textSelection;
+        if (oTextSelection) {
+            return oTextSelection.getDocContent();
+        }
+
+        return null;
+    };
+
     /////////////////////////////
     /// saving
     ////////////////////////////
@@ -116,176 +120,6 @@
         this.toXml(memory, '');
     };
 
-    /////////////////////////////
-    /// work with text properties
-    ////////////////////////////
-
-    CPdfChart.prototype.SetParaTextPr = function(oParaTextPr) {
-        let oContent = this.GetDocContent();
-        
-        false == this.IsInTextBox() && oContent.SetApplyToAll(true);
-        oContent.AddToParagraph(oParaTextPr.Copy());
-        false == this.IsInTextBox() && oContent.SetApplyToAll(false);
-
-        this.SetNeedRecalc(true);
-    };
-    CPdfChart.prototype.SetAlign = function(nType) {
-        let oContent = this.GetDocContent();
-        oContent.SetParagraphAlign(nType);
-        this.SetNeedRecalc(true);
-    };
-    CPdfChart.prototype.GetAlign = function() {
-        return this.GetDocContent().GetCalculatedParaPr().GetJc();
-    };
-    CPdfChart.prototype.SetBold = function(bBold) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({Bold : bBold}));
-    };
-    CPdfChart.prototype.GetBold = function() {
-        return !!this.GetCalculatedTextPr().GetBold();        
-    };
-    CPdfChart.prototype.SetItalic = function(bItalic) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({Italic : bItalic}));
-    };
-    CPdfChart.prototype.GetItalic = function() {
-        return !!this.GetCalculatedTextPr().GetItalic();
-    };
-    CPdfChart.prototype.SetUnderline = function(bUnderline) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({Underline : bUnderline}));
-    };
-    CPdfChart.prototype.GetUnderline = function() {
-        return !!this.GetCalculatedTextPr().GetUnderline();
-    };
-    CPdfChart.prototype.SetHighlight = function(r, g, b) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({HighlightColor : AscFormat.CreateUniColorRGB(r, g, b)}));
-    };
-    CPdfChart.prototype.SetStrikeout = function(bStrikeout) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({
-			Strikeout  : bStrikeout,
-			DStrikeout : false
-        }));
-    };
-    CPdfChart.prototype.GetStrikeout = function() {
-        return !!this.GetCalculatedTextPr().GetStrikeout();
-    };
-    CPdfChart.prototype.SetBaseline = function(nType) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({VertAlign : nType}));
-    };
-    CPdfChart.prototype.GetBaseline = function() {
-        return this.GetCalculatedTextPr().GetVertAlign();
-    };
-    CPdfChart.prototype.SetFontSize = function(nType) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({FontSize : nType}));
-    };
-    CPdfChart.prototype.GetFontSize = function() {
-        return this.GetCalculatedTextPr().GetFontSize();
-    };
-    CPdfChart.prototype.IncreaseDecreaseFontSize = function(bIncrease) {
-        this.GetDocContent().IncreaseDecreaseFontSize(bIncrease);
-        this.SetNeedRecalc(true);
-    };
-    CPdfChart.prototype.SetSpacing = function(nSpacing) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({Spacing : nSpacing}));
-    };
-    CPdfChart.prototype.GetSpacing = function() {
-        return this.GetCalculatedTextPr().GetSpacing();
-    };
-    CPdfChart.prototype.SetFontFamily = function(sFontFamily) {
-        let oParaTextPr = new AscCommonWord.ParaTextPr();
-		oParaTextPr.Value.RFonts.SetAll(sFontFamily, -1);
-        this.SetParaTextPr(oParaTextPr);
-    };
-    CPdfChart.prototype.GetFontFamily = function() {
-        return this.GetCalculatedTextPr().GetFontFamily();
-    };
-    CPdfChart.prototype.SetTextColor = function(r, g, b) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({Unifill : AscFormat.CreateSolidFillRGB(r, g, b)}));
-    };
-    CPdfChart.prototype.ChangeTextCase = function(nCaseType) {
-        let oContent    = this.GetDocContent();
-        let oState      = oContent.GetSelectionState();
-
-        let oChangeEngine = new AscCommonWord.CChangeTextCaseEngine(nCaseType);
-		oChangeEngine.ProcessParagraphs(this.GetSelectedParagraphs());
-
-        oContent.SetSelectionState(oState);
-        this.SetNeedRecalc(true);
-    };
-    CPdfChart.prototype.GetSelectedParagraphs = function() {
-        let oContent        = this.GetDocContent();
-        let aSelectedParas  = [];
-
-        oContent.GetCurrentParagraph(false, aSelectedParas);
-        return aSelectedParas;
-    };
-    CPdfChart.prototype.SetVertAlign = function(nType) {
-        this.setVerticalAlign(nType);
-        this.SetNeedRecalc(true);
-    };
-
-    CPdfChart.prototype.GetAllFonts = function(aFonts) {
-        let oContent    = this.GetDocContent();
-        let fontMap     = {};
-		aFonts          = aFonts || [];
-
-        if (!oContent)
-            return aFonts;
-
-        let oPara;
-        for (let nPara = 0, nCount = oContent.GetElementsCount(); nPara < nCount; nPara++) {
-            oPara = oContent.GetElement(nPara);
-            oPara.Get_CompiledPr().TextPr.Document_Get_AllFontNames(fontMap);
-
-            let oRun;
-            for (let nRun = 0, nRunCount = oPara.GetElementsCount(); nRun < nRunCount; nRun++) {
-                oRun = oPara.GetElement(nRun);
-                oRun.Get_CompiledTextPr().Document_Get_AllFontNames(fontMap);
-            }
-        }
-		
-        delete fontMap["+mj-lt"];
-        delete fontMap["+mn-lt"];
-        delete fontMap["+mj-ea"];
-        delete fontMap["+mn-ea"];
-        delete fontMap["+mj-cs"];
-        delete fontMap["+mn-cs"];
-
-        for (let key in fontMap) {
-			if (aFonts.includes(key) == false)
-                aFonts.push(key);
-		}
-		
-		return aFonts;
-    };
-
-    CPdfChart.prototype.SetLineSpacing = function(oSpacing) {
-        this.GetDocContent().SetParagraphSpacing(oSpacing);
-        this.SetNeedRecalc(true);
-    };
-    CPdfChart.prototype.GetLineSpacing = function() {
-        let oCalcedPr = this.GetCalculatedParaPr();
-        return {
-            After:  oCalcedPr.GetSpacingAfter(),
-            Before: oCalcedPr.GetSpacingBefor()
-        }
-    };
-    CPdfChart.prototype.SetColumnNumber = function(nColumns) {
-        this.setColumnNumber(nColumns);
-        this.SetNeedRecalc(true);
-    };
-    CPdfChart.prototype.IncreaseDecreaseIndent = function(bIncrease) {
-        // Increase_ParagraphLevel для шейпов из презентаций
-        this.GetDocContent().Increase_ParagraphLevel(bIncrease);
-        this.SetNeedRecalc(true);
-    };
-    CPdfChart.prototype.SetNumbering = function(oBullet) {
-        this.GetDocContent().Set_ParagraphPresentationNumbering(oBullet);
-        this.SetNeedRecalc(true);
-    };
-    CPdfChart.prototype.ClearFormatting = function(bParaPr, bTextText) {
-        this.GetDocContent().ClearParagraphFormatting(bParaPr, bTextText);
-        this.SetNeedRecalc(true);
-    };
-    
     /**
      * Получаем рассчитанные настройки текста (полностью заполненные)
      * @returns {CTextPr}
