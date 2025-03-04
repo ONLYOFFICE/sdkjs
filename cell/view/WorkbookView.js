@@ -289,6 +289,7 @@
     this.selectionDialogMode = false;
     this.dialogAbsName = false;
     this.dialogSheetName = false;
+	this.dialogBookName = false;
     this.copyActiveSheet = -1;
 
     // Комментарии для всего документа
@@ -2728,6 +2729,10 @@
         return this.dialogSheetName || !this.isActive();
     };
 
+	WorkbookView.prototype.getDialogBookName = function () {
+		return this.dialogBookName;
+	};
+
 	WorkbookView.prototype.setCellEditMode = function(mode) {
 		this.isCellEditMode = !!mode;
 		if (!this.isCellEditMode) {
@@ -3519,6 +3524,7 @@
           c_oAscSelectionDialogType.PivotTableReport === selectionDialogType);
       this.dialogAbsName = (c_oAscSelectionDialogType.None !== selectionDialogType &&
           c_oAscSelectionDialogType.Function !== selectionDialogType);
+	  this.dialogBookName = c_oAscSelectionDialogType.Function !== selectionDialogType && window.externalFormulaEditMode;
   };
 
   WorkbookView.prototype.setOleSize = function (oPr) {
@@ -7156,16 +7162,18 @@
 				}
 				console.log("Visibility of page has changed!" + " documentHidden " + document.hidden);
 			} else {
-				if (oThis.wb.getCellEditMode()) {
-					oThis.wb.setFormulaEditMode(false);
-				}
+				/*if (oThis.wb.getCellEditMode()) {
+					oThis.wb.closeCellEditor(true);
+				}*/
 			}
 		});
 	};
 	CExternalSelectionController.prototype.onExternalChangeSelection = function (data) {
 		if (this.wb.isCellEditMode && !this.wb.isWizardMode) {
+			this.wb.setFormulaEditMode(true);
+			this.wb.cellEditor.canEnterCellRange()
 			this.wb.skipHelpSelector = true;
-			let val = "[" + data.bookName + "]"  + data.worksheet + "!" + data.range;
+			let val = /*"[" + data.bookName + "]"  + data.worksheet + "!" +*/ data.range;
 			this.wb.cellEditor.changeCellText(val);
 			this.wb.skipHelpSelector = false;
 		}
@@ -7174,6 +7182,9 @@
 		//if open cell editor and start formula edit mode, then send by all tabs "SetFormulaEditMode" event
 		//event data must contains doc info and current cell text
 		console.log("SetFormulaEditMode_on_message " + "_isClose: " + data.isClose)
+		if (this.wb.getCellEditMode() && window.externalFormulaEditMode && data.isClose) {
+			this.wb.closeCellEditor(true);
+		}
 		window.externalFormulaEditMode = !data.isClose;
 	};
 	CExternalSelectionController.prototype.externalChangeSelection = function () {
@@ -7182,7 +7193,7 @@
 			this.sendExternalEvent({
 				type: "ExternalChangeSelection",
 				id: this.wb.Api.DocInfo.Id /*+ "_" + AscCommon.g_oIdCounter.m_sUserId,*/,
-				range: ws.selectionRange.getLast().getName(),
+				range: this.wb.cellEditor.getText().substring(1),
 				worksheet: ws.sName,
 				bookName: this.wb.Api.DocInfo.Title
 			});

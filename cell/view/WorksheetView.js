@@ -13064,14 +13064,15 @@
 		return y1 / unitDeltaStep;
 	};
 
-	WorksheetView.prototype.getSelectionRangeValue = function (absName, addSheet) {
-		return this.getSelectionRangeValues(absName, addSheet).join(AscCommon.FormulaSeparators.functionArgumentSeparator);
+	WorksheetView.prototype.getSelectionRangeValue = function (absName, addSheet, addBook) {
+		return this.getSelectionRangeValues(absName, addSheet, addBook).join(AscCommon.FormulaSeparators.functionArgumentSeparator);
 	};
-	WorksheetView.prototype.getSelectionRangeValues = function (absName, addSheet) {
+	WorksheetView.prototype.getSelectionRangeValues = function (absName, addSheet, addBook) {
 		// ToDo проблема с выбором целого столбца/строки
 		var name, res = [];
 		absName = absName || this.workbook.dialogAbsName;
 		addSheet = addSheet || this.workbook.getDialogSheetName();
+		addBook = addBook || this.workbook.getDialogBookName();
 		if (this.model.selectionRange) {
 			var ranges = this.model.selectionRange.ranges;
 
@@ -13091,6 +13092,7 @@
 			var name, res = [];
 			absName = absName || this.workbook.dialogAbsName;
 			addSheet = addSheet || this.workbook.getDialogSheetName();
+			addBook = addBook || this.workbook.getDialogBookName();
 			if (this.model.selectionRange) {
 				var ranges = this.model.selectionRange.ranges;
 
@@ -13120,8 +13122,14 @@
 
 				// ToDo проблема с выбором целого столбца/строки
 				name = range.getName(absName ? AscCommonExcel.referenceType.A : AscCommonExcel.referenceType.R);
+				let exPath = "";
+				if (addBook) {
+					let api = this.getApi();
+					let titleName = api.DocInfo.Title;
+					exPath = "[" + titleName + "]"
+				}
 				if (addSheet) {
-					name = parserHelp.get3DRef(this.model.getName(), name);
+					name = parserHelp.get3DRef(exPath + this.model.getName(), name);
 				}
 				res.push(name);
 			}
@@ -13589,7 +13597,7 @@
 
 		if (this.getSelectionDialogMode()) {
             // Смена диапазона
-            this.handlers.trigger("selectionRangeChanged", this.getSelectionRangeValue());
+            this.handlers.trigger("selectionRangeChanged", this.getSelectionRangeValue(window.externalFormulaEditMode, window.externalFormulaEditMode, window.externalFormulaEditMode));
 		} else {
 			this.handlers.trigger("selectionNameChanged", this.getSelectionName(/*bRangeText*/false));
 			if (!isCoord) {
@@ -13743,7 +13751,7 @@
 
             //ToDo this.drawDepCells();
             if (this.getSelectionDialogMode()) {
-                this.handlers.trigger("selectionRangeChanged", this.getSelectionRangeValue());
+                this.handlers.trigger("selectionRangeChanged", this.getSelectionRangeValue(window.externalFormulaEditMode, window.externalFormulaEditMode, window.externalFormulaEditMode));
             } else {
                 this.handlers.trigger("selectionNameChanged", this.getSelectionName(/*bRangeText*/true));
                 if (!isCoord) {
