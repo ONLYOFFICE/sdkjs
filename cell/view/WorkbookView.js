@@ -2866,13 +2866,8 @@
 
 	// Останавливаем ввод данных в редакторе ввода
 	WorkbookView.prototype.closeCellEditor = function (cancel) {
-		if (!window.externalFormulaEditMode) {
-			this.Api.broadcastChannel.postMessage({
-				type: "SetFormulaEditMode",
-				id: this.Api.DocInfo.Id /*+ "_" + AscCommon.g_oIdCounter.m_sUserId,*/,
-				isClose: true
-			})
-		}
+		this.externalSelectionController.externalCloseEditor();
+		
 		return this.getCellEditMode() ? this.cellEditor.close(!cancel) : true;
 	};
 
@@ -7187,8 +7182,8 @@
 			this.sendExternalEvent({
 				type: "ExternalChangeSelection",
 				id: this.wb.Api.DocInfo.Id /*+ "_" + AscCommon.g_oIdCounter.m_sUserId,*/,
-				range: ws.model.selectionRange.getLast().getName(),
-				worksheet: ws.model.sName,
+				range: ws.selectionRange.getLast().getName(),
+				worksheet: ws.sName,
 				bookName: this.wb.Api.DocInfo.Title
 			});
 		}
