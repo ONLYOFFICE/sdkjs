@@ -621,6 +621,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * resizeWindow (only for visual modal plugins)
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias resizeWindow
 	 * @description Defines the method used to change the window size updating the minimum/maximum sizes.
@@ -860,6 +861,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * createInputHelper
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias createInputHelper
 	 * @description Defines the method used to create an {@link inputhelper input helper} - a window that appears and disappears when you type text. Its location is tied to the cursor.
@@ -873,6 +875,7 @@ window.startPluginApi = function() {
     };
 	/**
 	 * getInputHelper
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias getInputHelper
 	 * @description Defines the method used to get the {@link inputhelper InputHelper object}.
@@ -888,6 +891,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * sendToPlugin
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias sendToPlugin
 	 * @description Sends a message from the modal window to the plugin.
