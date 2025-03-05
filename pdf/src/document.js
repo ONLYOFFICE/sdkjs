@@ -7213,6 +7213,11 @@ var CPresentation = CPresentation || function(){};
                 oFieldProps.asc_putMultiline(field.IsMultiline());
                 oFieldProps.asc_putCharLimit(field.GetCharLimit());
                 oFieldProps.asc_putComb(field.IsComb());
+                let oMeta = field.GetMeta();
+                if (oMeta) {
+                    oFieldProps.asc_putPlaceholder(oMeta['placeholder']);
+                }
+                
                 oFieldProps.asc_putFormat(oFormatProps);
                 oFieldProps.asc_putValidate(oValidateProps);
                 break;
@@ -7221,6 +7226,10 @@ var CPresentation = CPresentation || function(){};
                 oFieldProps = new Asc.asc_CComboboxFieldProperty();
                 oFieldProps.asc_putOptions(field.GetOptions());
                 oFieldProps.asc_putEditable(field.IsEditable());
+                let oMeta = field.GetMeta();
+                if (oMeta) {
+                    oFieldProps.asc_putPlaceholder(oMeta['placeholder']);
+                }
                 oFieldProps.asc_putFormat(oFormatProps);
                 oFieldProps.asc_putValidate(oValidateProps);
                 break;

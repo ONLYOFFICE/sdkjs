@@ -3539,6 +3539,7 @@ function (window, undefined) {
 		this.scrollLongText		= undefined;
 		this.charLimit			= undefined;
 		this.comb				= undefined;
+		this.placeholder		= undefined;
 	}
 	asc_CTextFieldProperty.prototype.asc_getDefaultValue = function () {
 		return this.defaultValue;
@@ -3570,6 +3571,12 @@ function (window, undefined) {
 	asc_CTextFieldProperty.prototype.asc_putComb = function (v) {
 		this.comb = v;
 	};
+	asc_CTextFieldProperty.prototype.asc_getPlaceholder = function () {
+		return this.placeholder;
+	};
+	asc_CTextFieldProperty.prototype.asc_putPlaceholder = function (v) {
+		this.placeholder = v;
+	};
 	asc_CTextFieldProperty.prototype.asc_getFormat = function () {
 		return this.format;
 	};
@@ -3593,6 +3600,7 @@ function (window, undefined) {
 
 		this.options			= null;
 		this.editable			= undefined;
+		this.placeholder		= undefined;
 	}
 	asc_CComboboxFieldProperty.prototype.asc_getOptions = function () {
 		return this.options;
@@ -3605,6 +3613,12 @@ function (window, undefined) {
 	};
 	asc_CComboboxFieldProperty.prototype.asc_putEditable = function (v) {
 		this.editable = v;
+	};
+	asc_CComboboxFieldProperty.prototype.asc_getPlaceholder = function () {
+		return this.placeholder;
+	};
+	asc_CComboboxFieldProperty.prototype.asc_putPlaceholder = function (v) {
+		this.placeholder = v;
 	};
 	asc_CComboboxFieldProperty.prototype.asc_getFormat = function () {
 		return this.format;
@@ -7238,6 +7252,8 @@ function (window, undefined) {
 	prot["asc_putCharLimit"]			= prot.asc_putCharLimit;
 	prot["asc_getComb"]					= prot.asc_getComb;
 	prot["asc_putComb"]					= prot.asc_putComb;
+	prot["asc_getPlaceholder"]			= prot.asc_getPlaceholder;
+	prot["asc_putPlaceholder"]			= prot.asc_putPlaceholder;
 	prot["asc_getFormat"]				= prot.asc_getFormat;
 	prot["asc_putFormat"]				= prot.asc_putFormat;
 	prot["asc_getValidate"]				= prot.asc_getValidate;
@@ -7245,14 +7261,16 @@ function (window, undefined) {
 
 	window["Asc"]["asc_CComboboxFieldProperty"] = window["Asc"].asc_CComboboxFieldProperty = asc_CComboboxFieldProperty;
 	prot = asc_CComboboxFieldProperty.prototype;
-	prot["asc_getOptions"]	= prot.asc_getOptions;
-	prot["asc_putOptions"]	= prot.asc_putOptions;
-	prot["asc_getEditable"]	= prot.asc_getEditable;
-	prot["asc_putEditable"]	= prot.asc_putEditable;
-	prot["asc_getFormat"]	= prot.asc_getFormat;
-	prot["asc_putFormat"]	= prot.asc_putFormat;
-	prot["asc_getValidate"]	= prot.asc_getValidate;
-	prot["asc_putValidate"]	= prot.asc_putValidate;
+	prot["asc_getOptions"]		= prot.asc_getOptions;
+	prot["asc_putOptions"]		= prot.asc_putOptions;
+	prot["asc_getEditable"]		= prot.asc_getEditable;
+	prot["asc_putEditable"]		= prot.asc_putEditable;
+	prot["asc_getPlaceholder"]	= prot.asc_getPlaceholder;
+	prot["asc_putPlaceholder"]	= prot.asc_putPlaceholder;
+	prot["asc_getFormat"]		= prot.asc_getFormat;
+	prot["asc_putFormat"]		= prot.asc_putFormat;
+	prot["asc_getValidate"]		= prot.asc_getValidate;
+	prot["asc_putValidate"]		= prot.asc_putValidate;
 
 	window["Asc"]["asc_CListboxFieldProperty"] = window["Asc"].asc_CListboxFieldProperty = asc_CListboxFieldProperty;
 	prot = asc_CListboxFieldProperty.prototype;
