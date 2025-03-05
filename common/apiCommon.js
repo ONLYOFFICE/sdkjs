@@ -3540,6 +3540,7 @@ function (window, undefined) {
 		this.charLimit			= undefined;
 		this.comb				= undefined;
 		this.placeholder		= undefined;
+		this.autoFit			= undefined;
 	}
 	asc_CTextFieldProperty.prototype.asc_getDefaultValue = function () {
 		return this.defaultValue;
@@ -3577,6 +3578,12 @@ function (window, undefined) {
 	asc_CTextFieldProperty.prototype.asc_putPlaceholder = function (v) {
 		this.placeholder = v;
 	};
+	asc_CTextFieldProperty.prototype.asc_getAutoFit = function () {
+		return this.autoFit;
+	};
+	asc_CTextFieldProperty.prototype.asc_putAutoFit = function (v) {
+		this.autoFit = v;
+	};
 	asc_CTextFieldProperty.prototype.asc_getFormat = function () {
 		return this.format;
 	};
@@ -3601,6 +3608,7 @@ function (window, undefined) {
 		this.options			= null;
 		this.editable			= undefined;
 		this.placeholder		= undefined;
+		this.autoFit			= undefined;
 	}
 	asc_CComboboxFieldProperty.prototype.asc_getOptions = function () {
 		return this.options;
@@ -3619,6 +3627,12 @@ function (window, undefined) {
 	};
 	asc_CComboboxFieldProperty.prototype.asc_putPlaceholder = function (v) {
 		this.placeholder = v;
+	};
+	asc_CComboboxFieldProperty.prototype.asc_getAutoFit = function () {
+		return this.autoFit;
+	};
+	asc_CComboboxFieldProperty.prototype.asc_putAutoFit = function (v) {
+		this.autoFit = v;
 	};
 	asc_CComboboxFieldProperty.prototype.asc_getFormat = function () {
 		return this.format;
@@ -7254,6 +7268,8 @@ function (window, undefined) {
 	prot["asc_putComb"]					= prot.asc_putComb;
 	prot["asc_getPlaceholder"]			= prot.asc_getPlaceholder;
 	prot["asc_putPlaceholder"]			= prot.asc_putPlaceholder;
+	prot["asc_getAutoFit"]				= prot.asc_getAutoFit;
+	prot["asc_putAutoFit"]				= prot.asc_putAutoFit;
 	prot["asc_getFormat"]				= prot.asc_getFormat;
 	prot["asc_putFormat"]				= prot.asc_putFormat;
 	prot["asc_getValidate"]				= prot.asc_getValidate;
@@ -7267,6 +7283,8 @@ function (window, undefined) {
 	prot["asc_putEditable"]		= prot.asc_putEditable;
 	prot["asc_getPlaceholder"]	= prot.asc_getPlaceholder;
 	prot["asc_putPlaceholder"]	= prot.asc_putPlaceholder;
+	prot["asc_getAutoFit"]		= prot.asc_getAutoFit;
+	prot["asc_putAutoFit"]		= prot.asc_putAutoFit;
 	prot["asc_getFormat"]		= prot.asc_getFormat;
 	prot["asc_putFormat"]		= prot.asc_putFormat;
 	prot["asc_getValidate"]		= prot.asc_getValidate;
