@@ -1872,6 +1872,7 @@
 
 	/**
 	 * Adds an item to the context menu.
+	 * @undocumented
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @alias AddContextMenuItem
@@ -1888,6 +1889,7 @@
 
 	/**
 	 * Updates an item in the context menu with the specified items.
+	 * @undocumented
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @alias UpdateContextMenuItem
@@ -1944,6 +1946,7 @@
 
 	/**
 	 * Adds an item to the toolbar menu.
+	 * @undocumented
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @alias AddToolbarMenuItem
@@ -1986,6 +1989,7 @@
 
 	/**
 	 * Activates (moves forward) the plugin window/panel.
+	 * @undocumented
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} frameId - The frame ID.
@@ -2000,6 +2004,7 @@
 
 	/**
 	 * Closes the plugin modal window.
+	 * @undocumented
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} frameId - The frame ID.
@@ -2014,6 +2019,7 @@
 
 	/**
 	 * Sends a message to the plugin modal window.
+	 * @undocumented
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} windowID - The frame ID.
@@ -2030,6 +2036,7 @@
 
 	/**
 	 * Resizes the plugin modal window.
+	 * @undocumented
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} frameId - The frame ID.

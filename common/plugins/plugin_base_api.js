@@ -569,6 +569,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * executeMethod
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias executeMethod
 	 * @description Defines the method used to execute certain editor methods using the plugin.
@@ -661,6 +662,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * callCommand
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias callCommand
 	 * @description Defines the method used to send the data back to the editor.
@@ -700,6 +702,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * callModule
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias callModule
 	 * @description Defines the method used to execute a remotely located script following a link.
@@ -733,6 +736,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * loadModule
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias loadModule
 	 * @description Defines the method used to load a remotely located text resource.
@@ -759,6 +763,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * @function attachEvent
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias attachEvent
 	 * @description Defines the method to add an event listener, a function that will be called whenever the specified event is delivered to the target.
@@ -770,6 +775,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * @function attachContextMenuClickEvent
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias attachContextMenuClickEvent
 	 * @description Defines the method to add an event listener, a function that will be called whenever the specified event is clicked in the context menu.
