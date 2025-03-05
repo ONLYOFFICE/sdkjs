@@ -51,6 +51,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Default_Value]	= CChangesPDFFo
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Rect]				= CChangesPDFFormRect;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Actions]			= CChangesPDFFormActions;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Partial_Name]		= CChangesPDFFormPartialName;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Meta]				= CChangesPDFFormMeta;
 
 // text
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Multiline]		= CChangesPDFTextFormMultiline;
@@ -586,6 +587,80 @@ CChangesPDFFormPartialName.prototype.private_SetValue = function(Value)
 {
 	let oField = this.Class;
 	oField._partialName = Value;
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseProperty}
+ */
+function CChangesPDFFormMeta(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFormMeta.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesPDFFormMeta.prototype.constructor = CChangesPDFFormMeta;
+CChangesPDFFormMeta.prototype.Type = AscDFH.historyitem_Pdf_Form_Meta;
+CChangesPDFFormMeta.prototype.private_SetValue = function(Value)
+{
+	var oField = this.Class;
+	oField.SetMeta(Value);
+};
+
+CChangesPDFFormMeta.prototype.WriteToBinary = function(Writer)
+{
+	// Long  : Flag
+	// 1-bit : Подсвечивать ли данные изменения
+	// 2-bit : IsUndefined New
+	// 3-bit : IsUndefined Old
+	// string : New
+	// string : Old
+
+	let nFlags = 0;
+
+	if (false !== this.Color)
+		nFlags |= 1;
+
+	if (undefined === this.New)
+		nFlags |= 2;
+
+	if (undefined === this.Old)
+		nFlags |= 4;
+
+	Writer.WriteLong(nFlags);
+
+	if (undefined !== this.New) {
+		Writer.WriteString2(JSON.stringify(this.New));
+	}
+		
+	if (undefined !== this.Old) {
+		Writer.WriteString2(JSON.stringify(this.Old));
+	}
+};
+CChangesPDFFormMeta.prototype.ReadFromBinary = function(Reader)
+{
+	// Long  : Flag
+	// 1-bit : Подсвечивать ли данные изменения
+	// 2-bit : IsUndefined New
+	// 3-bit : IsUndefined Old
+	// string : New
+	// string : Old
+
+	let nFlags = Reader.GetLong();
+
+	if (nFlags & 1)
+		this.Color = true;
+	else
+		this.Color = false;
+
+	if (nFlags & 2)
+		this.New = undefined;
+	else
+		this.New = JSON.parse(Reader.GetString2());
+
+	if (nFlags & 4)
+		this.Old = undefined;
+	else
+		this.Old = JSON.parse(Reader.GetString2());
 };
 
 //------------------------------------------------------------------------------------------------------------------

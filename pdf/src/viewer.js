@@ -1327,6 +1327,10 @@
 					oForm.AddToChildsMap(oFormInfo["Parent"]);
 				}
 
+				if (oFormInfo["meta"] != null) {
+					oForm.SetMeta(JSON.parse(oFormInfo["meta"]));
+				}
+
 				// appearance
 				if (oFormInfo["border"] != null)
 				{

@@ -4035,6 +4035,7 @@
 	AscDFH.historyitem_Pdf_Form_Rect			= AscDFH.historyitem_type_Pdf_Form | 16;
 	AscDFH.historyitem_Pdf_Form_Actions			= AscDFH.historyitem_type_Pdf_Form | 17;
 	AscDFH.historyitem_Pdf_Form_Partial_Name	= AscDFH.historyitem_type_Pdf_Form | 18;
+	AscDFH.historyitem_Pdf_Form_Meta			= AscDFH.historyitem_type_Pdf_Form | 19;
 	
 	// text
 	AscDFH.historyitem_Pdf_Text_Form_Multiline		= AscDFH.historyitem_type_Pdf_Text_Field | 1;

@@ -225,6 +225,14 @@
         return this._apIdx;
     };
 
+    CBaseField.prototype.SetMeta = function(oMeta) {
+        AscCommon.History.Add(new CChangesPDFFormAddKid(this, this.meta, oMeta))
+
+        this.meta = oMeta;
+    };
+    CBaseField.prototype.GetMeta = function() {
+        return this.meta;
+    };
     CBaseField.prototype.AddToChildsMap = function(nIdx) {
         this.GetDocument().AddFieldToChildsMap(this, nIdx);
     };
@@ -2521,6 +2529,13 @@
         if (sName != null) {
             memory.fieldDataFlags |= (1 << 18);
             memory.WriteString(sName);
+        }
+
+        // meta data
+        let oMeta = this.GetMeta();
+        if (oMeta != null) {
+            memory.fieldDataFlags |= (1 << 20);
+            memory.WriteString(JSON.stringify(oMeta));
         }
 
         // actions
