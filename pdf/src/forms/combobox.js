@@ -872,7 +872,13 @@
 	CComboBoxField.prototype.IsNeedCheckAlign       = AscPDF.CTextField.prototype.IsNeedCheckAlign;
 	CComboBoxField.prototype.GetFormatValue         = AscPDF.CTextField.prototype.GetFormatValue;
 	CComboBoxField.prototype.SetFormatValue         = AscPDF.CTextField.prototype.SetFormatValue;
-	CComboBoxField.prototype.IsNumberFormat         = AscPDF.CTextField.prototype.IsNumberFormat;
+	CComboBoxField.prototype.IsDateFormat           = AscPDF.CTextField.prototype.IsDateFormat;
+    CComboBoxField.prototype.IsNumberFormat         = AscPDF.CTextField.prototype.IsNumberFormat;
+    CComboBoxField.prototype.GetDateFormat          = AscPDF.CTextField.prototype.GetDateFormat;
+    CComboBoxField.prototype.GetFormatType          = AscPDF.CTextField.prototype.GetFormatType;
+    CComboBoxField.prototype.GetFormatArgs          = AscPDF.CTextField.prototype.GetFormatArgs;
+    CComboBoxField.prototype.GetValidateType        = AscPDF.CTextField.prototype.GetValidateType;
+    CComboBoxField.prototype.GetValidateArgs        = AscPDF.CTextField.prototype.GetValidateArgs;
 
 	window["AscPDF"].CComboBoxField = CComboBoxField;
 })();
