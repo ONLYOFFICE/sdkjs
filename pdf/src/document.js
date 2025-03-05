@@ -556,6 +556,7 @@ var CPresentation = CPresentation || function(){};
         
         let oCheckboxField = this.CreateField(sName, AscPDF.FIELD_TYPES.checkbox, aRect);
         oCheckboxField.SetBorderColor([0]);
+        oCheckboxField.SetNoToggleToOff(false);
 
         return oCheckboxField;
     };
