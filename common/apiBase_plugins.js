@@ -584,7 +584,7 @@
     /**
 	 * An object containing the watermark properties.
      * @typedef {Object} watermark_on_draw
-     * @property {float} transparent The watermark transparency degree.
+     * @property {number} transparent The watermark transparency degree.
      * @property {string} type The {@link /docbuilder/global#ShapeType shape type} which specifies the preset shape geometry for the current watermark.
 	 * @property {number} width The watermark width measured in millimeters.
 	 * @property {number} height The watermark height measured in millimeters.
@@ -1187,7 +1187,7 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias ReplaceTextSmart
-     * @param {Array} arrString - An array of replacement strings.
+     * @param {string[]} arrString - An array of replacement strings.
 	 * @param {string} [sParaTab="\t"] - A character which is used to specify the tab in the source text. Any symbol can be used. The default separator is "\t".
      * @param {string} [sParaNewLine="\r\n"] - A character which is used to specify the line break character in the source text. Any symbol can be used. The default separator is "\r\n".
      * @returns {boolean} - Always returns true.
@@ -1968,6 +1968,7 @@
 
 	/**
 	 * Shows the plugin modal window.
+	 * @undocumented
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} frameId - The frame ID.
