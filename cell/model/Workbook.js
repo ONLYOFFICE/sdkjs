@@ -2078,38 +2078,46 @@
 
 			let promises = !this.wb.asyncFormulasManager.isRecalculating() && this.wb.asyncFormulasManager.getPromises();
 			if (promises) {
-				let fPromises = [];
-				for (let i = 0; i < promises.length; i++) {
-					const fPromise = function () {
-						return promises[i].promise;
-					};
-					fPromises.push(fPromise);
-				}
-				const promiseIterator = new AscCommon.CPromiseGetterIterator(fPromises);
-				promiseIterator.forAllSuccessValues(function (streamInfos) {
-					for (let i = 0; i < streamInfos.length; i++) {
-						if (!promises[i].parserFormula.promiseResult) {
-							promises[i].parserFormula.promiseResult = [];
+				let doPromises = function (_promises) {
+					let fPromises = [];
+					for (let i = 0; i < _promises.length; i++) {
+						const fPromise = function () {
+							return _promises[i].promise;
+						};
+						fPromises.push(fPromise);
+					}
+					const promiseIterator = new AscCommon.CPromiseGetterIterator(fPromises);
+					promiseIterator.forAllSuccessValues(function (streamInfos) {
+						for (let i = 0; i < streamInfos.length; i++) {
+							if (!_promises[i].parserFormula.promiseResult) {
+								_promises[i].parserFormula.promiseResult = [];
+							}
+							_promises[i].parserFormula.promiseResult.push(_promises[i].callback(streamInfos[i]));
+							t.wb.dependencyFormulas.addToChangedCell(_promises[i].parserFormula.parent);
 						}
-						promises[i].parserFormula.promiseResult.push(promises[i].callback(streamInfos[i]));
-						t.wb.dependencyFormulas.addToChangedCell(promises[i].parserFormula.parent);
-					}
-					//t.wb.buildDependency();
-					//t.wb.sortDependency();
-					/*t._foreachChanged(function (oCell) {
-						oCell.setIsDirty(true);
-						oCell && oCell._checkDirty();
-					});*/
+						//t.wb.buildDependency();
+						//t.wb.sortDependency();
+						/*t._foreachChanged(function (oCell) {
+							oCell.setIsDirty(true);
+							oCell && oCell._checkDirty();
+						});*/
 
-					t.wb.asyncFormulasManager.setRecalculating(true);
-					t.calcTree();
-					t.wb.handlers && t.wb.handlers.trigger("drawWS");
-					t.wb.asyncFormulasManager.clearPromises();
-					for (let i = 0; i < streamInfos.length; i++) {
-						promises[i].parserFormula.promiseResult = null;
-					}
-					t.wb.asyncFormulasManager.setRecalculating(false);
-				});
+						t.wb.asyncFormulasManager.clearPromises();
+						t.wb.asyncFormulasManager.setRecalculating(true);
+						t.calcTree();
+						t.wb.handlers && t.wb.handlers.trigger("drawWS");
+						for (let i = 0; i < streamInfos.length; i++) {
+							_promises[i].parserFormula.promiseResult = null;
+						}
+						t.wb.asyncFormulasManager.setRecalculating(false);
+
+						promises = !t.wb.asyncFormulasManager.isRecalculating() && t.wb.asyncFormulasManager.getPromises();
+						if (promises) {
+							doPromises(promises);
+						}
+					});
+				};
+				doPromises(promises);
 			}
 
 			if (AscCommonExcel.importRangeLinksState.importRangeLinks) {

@@ -18566,6 +18566,10 @@ function RangeDataManagerElem(bbox, data)
 					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
 				} else {
 					res = _elem.tocNumber();
+					if (res && res.type === AscCommonExcel.cElementType.error) {
+						return res;
+					}
+
 					if (res.type !== AscCommonExcel.cElementType.error) {
 						res = res.toNumber();
 					} else {
@@ -18579,6 +18583,9 @@ function RangeDataManagerElem(bbox, data)
 					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
 				} else {
 					res = _elem.tocString();
+					if (res && res.type === AscCommonExcel.cElementType.error) {
+						return elem;
+					}
 					if (res.type !== AscCommonExcel.cElementType.error) {
 						res = res.toString();
 					} else {
@@ -18592,6 +18599,10 @@ function RangeDataManagerElem(bbox, data)
 					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
 				} else {
 					res = _elem.tocBool();
+					if (res && res.type === AscCommonExcel.cElementType.error) {
+						return elem;
+					}
+
 					if (res.type !== AscCommonExcel.cElementType.error && res.toBool) {
 						res = res.toBool();
 					} else {
@@ -18607,6 +18618,10 @@ function RangeDataManagerElem(bbox, data)
 					if (_elem.type === AscCommonExcel.cElementType.cell || _elem.type === AscCommonExcel.cElementType.cell3D) {
 						_elem = _elem.getValue();
 					}
+					if (_elem && _elem.type === AscCommonExcel.cElementType.error) {
+						return _elem;
+					}
+
 					res = _elem.getValue();
 				}
 				break;
