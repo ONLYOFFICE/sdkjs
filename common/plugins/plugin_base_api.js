@@ -807,6 +807,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * @function createWindow
+	 * @undocumented
 	 * @memberof InputHelper
 	 * @alias createWindow
 	 * @description Creates an input helper window.
@@ -815,6 +816,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * @function getItems
+	 * @undocumented
 	 * @memberof InputHelper
 	 * @alias getItems
 	 * @description Returns an array of the {@link global#InputHelperItem InputHelperItem} objects that contain all the items from the input helper.
@@ -824,6 +826,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * @function setItems
+	 * @undocumented
 	 * @memberof InputHelper
 	 * @alias setItems
 	 * @description Sets the items to the input helper.
@@ -833,6 +836,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * @function show
+	 * @undocumented
 	 * @memberof InputHelper
 	 * @alias show
 	 * @description Shows an input helper.
@@ -844,6 +848,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * @function unShow
+	 * @undocumented
 	 * @memberof InputHelper
 	 * @alias unShow
 	 * @description Hides an input helper.
@@ -852,6 +857,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * @function getScrollSizes
+	 * @undocumented
 	 * @memberof InputHelper
 	 * @alias getScrollSizes
 	 * @description Returns the sizes of the input helper scrolled window. Returns an object with width and height parameters.
