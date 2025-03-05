@@ -337,6 +337,8 @@
 		}
 
 		if (this.isRestrictionView()) {
+			this.SetEditFieldsMode(false);
+
 			let oActiveObj = oDoc.GetActiveObject();
 
 			if (oActiveObj && oActiveObj.IsDrawing()) {
@@ -348,6 +350,8 @@
 			});
 		}
 		else {
+			this.SetEditFieldsMode(true);
+			
 			setTimeout(function() {
 				oDoc.checkDefaultFonts();
 			});
