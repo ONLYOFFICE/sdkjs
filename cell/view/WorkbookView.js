@@ -2443,6 +2443,9 @@
   };
 
   WorkbookView.prototype.getActiveWS = function () {
+	  /*if (window.externalFormulaEditMode) {
+		  return new AscCommonExcel.Worksheet(this.model, this.model.aWorksheets.length);
+	  }*/
       return this.model.getWorksheet(-1 === this.copyActiveSheet ? this.wsActive : this.copyActiveSheet)
   };
 
@@ -2761,6 +2764,9 @@
 	};
 
 	WorkbookView.prototype.isActive = function () {
+		if (window.externalFormulaEditMode) {
+			return false;
+		}
 		return (-1 === this.copyActiveSheet || this.wsActive === this.copyActiveSheet);
 	};
 
@@ -7155,7 +7161,7 @@
 				if (window.externalFormulaEditMode) {
 					//we must open cell editor in formula edit mode and send information about change selection
 					let editorEnterOptions = new AscCommonExcel.CEditorEnterOptions();
-					editorEnterOptions.newText = "="
+					editorEnterOptions.newText = "=" + (oThis.activeTabFormula ? oThis.activeTabFormula : "");
 					oThis.wb._onEditCell(editorEnterOptions, function () {
 						oThis.wb.setFormulaEditMode(true);
 					});
@@ -7167,15 +7173,25 @@
 				}*/
 			}
 		});
+
+		document.addEventListener("focus", function () {
+			console.log("focus")
+		});
 	};
 	CExternalSelectionController.prototype.onExternalChangeSelection = function (data) {
 		if (this.wb.isCellEditMode && !this.wb.isWizardMode) {
-			this.wb.setFormulaEditMode(true);
-			this.wb.cellEditor.canEnterCellRange()
-			this.wb.skipHelpSelector = true;
-			let val = /*"[" + data.bookName + "]"  + data.worksheet + "!" +*/ data.range;
-			this.wb.cellEditor.changeCellText(val);
-			this.wb.skipHelpSelector = false;
+			if (window.externalFormulaEditMode) {
+				if (window.externalFormulaEditMode.id === data.id) {
+					this.activeTabFormula = data.range;
+				}
+			} else {
+				this.wb.setFormulaEditMode(true);
+				this.wb.cellEditor.canEnterCellRange()
+				this.wb.skipHelpSelector = true;
+				let val = /*"[" + data.bookName + "]"  + data.worksheet + "!" +*/ data.range;
+				this.wb.cellEditor.changeCellText(val);
+				this.wb.skipHelpSelector = false;
+			}
 		}
 	};
 	CExternalSelectionController.prototype.onExternalSetFormulaMode = function (data) {
@@ -7185,11 +7201,11 @@
 		if (this.wb.getCellEditMode() && window.externalFormulaEditMode && data.isClose) {
 			this.wb.closeCellEditor(true);
 		}
-		window.externalFormulaEditMode = !data.isClose;
+		window.externalFormulaEditMode = !data.isClose ? {id: data.id} : null;
 	};
 	CExternalSelectionController.prototype.externalChangeSelection = function () {
 		let ws = this.wb.model.getActiveWs();
-		if (window.externalFormulaEditMode && this.wb.isFormulaEditMode && this.wb.isCellEditMode && this.wb.cellEditor) {
+		if (this.wb.isFormulaEditMode && this.wb.isCellEditMode && this.wb.cellEditor) {
 			this.sendExternalEvent({
 				type: "ExternalChangeSelection",
 				id: this.wb.Api.DocInfo.Id /*+ "_" + AscCommon.g_oIdCounter.m_sUserId,*/,
