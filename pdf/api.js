@@ -1417,7 +1417,7 @@
 			return oField.SetName(sName);
 		}, AscDFH.historydescription_Pdf_ChangeField, this);
 	};
-	PDFEditorApi.prototype.GetFieldsNames = function() {
+	PDFEditorApi.prototype.GetAllFieldsNames = function() {
 		let oDoc = this.getPDFDoc();
 		
 		let aWidgets = oDoc.GetAllWidgets();
@@ -1437,6 +1437,25 @@
 				}
 
 				oParent = oParent.GetParent();
+			}
+		});
+
+		return aNames.sort();
+	};
+	PDFEditorApi.prototype.GetAvailableFieldsNames = function(nFieldType) {
+		let oDoc = this.getPDFDoc();
+		
+		let aWidgets = oDoc.GetAllWidgets();
+		let aNames = [];
+
+		aWidgets.forEach(function(widget) {
+			if (widget.GetType() != nFieldType) {
+				return;
+			}
+
+			let sName = widget.GetFullName();
+			if (false == aNames.includes(sName)) {
+				aNames.push(sName);
 			}
 		});
 
@@ -3586,6 +3605,8 @@
 	PDFEditorApi.prototype['SetFieldValidateRange']		= PDFEditorApi.prototype.SetFieldValidateRange;
 	PDFEditorApi.prototype['SetFieldName']				= PDFEditorApi.prototype.SetFieldName;
 	PDFEditorApi.prototype['GetFieldsNames']			= PDFEditorApi.prototype.GetFieldsNames;
+	PDFEditorApi.prototype['GetAllFieldsNames']			= PDFEditorApi.prototype.GetAllFieldsNames;
+	PDFEditorApi.prototype['GetAvailableFieldsNames']	= PDFEditorApi.prototype.GetAvailableFieldsNames;
 	PDFEditorApi.prototype['SetFieldCalculate']			= PDFEditorApi.prototype.SetFieldCalculate;
 	PDFEditorApi.prototype['SetCalculateOrder']			= PDFEditorApi.prototype.SetCalculateOrder;
 	PDFEditorApi.prototype['GetCalculateOrder']			= PDFEditorApi.prototype.GetCalculateOrder;
