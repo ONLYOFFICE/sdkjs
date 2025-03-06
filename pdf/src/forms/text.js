@@ -481,25 +481,28 @@
     };
     CTextField.prototype.GetFormatType = function() {
         let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
-        let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
-        let sScript             = oActionRunScript ? oActionRunScript.GetScript(): "";
-        if (!sScript) {
+        let oKeystrokeTrigger   = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke);
+        let oFormatScript       = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
+        let oKeystrokeScript    = oKeystrokeTrigger ? oKeystrokeTrigger.GetActions()[0] : null;
+        let sFormatScript       = oFormatScript ? oFormatScript.GetScript(): "";
+        let sKeystrokeScript    = oKeystrokeScript ? oKeystrokeScript.GetScript(): "";
+        if (!sFormatScript && (!sKeystrokeScript || !sKeystrokeScript.startsWith('AFSpecial_KeystrokeEx'))) {
             return AscPDF.FormatType.NONE;
         }
 
-        if (sScript.startsWith('AFNumber_Format')) {
+        if (sFormatScript.startsWith('AFNumber_Format')) {
             return AscPDF.FormatType.NUMBER;
         }
-        else if (sScript.startsWith('AFPercent_Format')) {
+        else if (sFormatScript.startsWith('AFPercent_Format')) {
             return AscPDF.FormatType.PERCENTAGE;
         }
-        else if (sScript.startsWith('AFDate_Format') || sScript.startsWith('AFDate_FormatEx')) {
+        else if (sFormatScript.startsWith('AFDate_Format') || sFormatScript.startsWith('AFDate_FormatEx')) {
             return AscPDF.FormatType.DATE;
         }
-        else if (sScript.startsWith('AFTime_Format') || sScript.startsWith('AFTime_FormatEx')) {
+        else if (sFormatScript.startsWith('AFTime_Format') || sFormatScript.startsWith('AFTime_FormatEx')) {
             return AscPDF.FormatType.TIME;
         }
-        else if (sScript.startsWith('AFSpecial_Format')) {
+        else if (sFormatScript.startsWith('AFSpecial_Format') || sKeystrokeScript.startsWith('AFSpecial_KeystrokeEx')) {
             return AscPDF.FormatType.SPECIAL;
         }
         else {
@@ -508,50 +511,50 @@
     };
     CTextField.prototype.GetFormatArgs = function() {
         function extractArguments(str) {
-            var match = str.match(/\(([^)]+)\)/);
-            if (!match) {
+            var start = str.indexOf('(');
+            var end = str.lastIndexOf(')');
+            if (start === -1 || end === -1 || end <= start) {
                 return [];
             }
-        
-            var args = match[1].split(/,\s*/);
+            
+            var argsString = str.slice(start + 1, end);
+            var args = argsString.split(/,\s*/);
             var parsedArgs = [];
         
             for (var i = 0; i < args.length; i++) {
                 var arg = args[i].trim();
         
-                // Проверяем на булево значение
                 if (arg === "true") {
                     parsedArgs.push(true);
                 } else if (arg === "false") {
                     parsedArgs.push(false);
                 }
-                // Проверяем на null
                 else if (arg === "null") {
                     parsedArgs.push(null);
                 }
-                // Проверяем на число
                 else if (!isNaN(arg) && arg !== "") {
                     parsedArgs.push(Number(arg));
                 }
-                // Проверяем на строку в кавычках
                 else if ((arg.startsWith('"') && arg.endsWith('"')) || (arg.startsWith("'") && arg.endsWith("'"))) {
                     parsedArgs.push(arg.slice(1, -1));
                 }
-                // Иначе оставляем как есть
                 else {
                     parsedArgs.push(arg);
                 }
             }
-        
+            
             return parsedArgs;
         }
 
         if (false == [AscPDF.FormatType.NONE, AscPDF.FormatType.CUSTOM].includes(this.GetFormatType())) {
             let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
-            let oActionRunScript    = oFormatTrigger.GetActions()[0]
-            let sScript             = oActionRunScript.GetScript();
+            let oKeystrokeTrigger   = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke);
+            let oFormatScript       = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
+            let oKeystrokeScript    = oKeystrokeTrigger ? oKeystrokeTrigger.GetActions()[0] : null;
+            let sFormatScript       = oFormatScript ? oFormatScript.GetScript(): "";
+            let sKeystrokeScript    = oKeystrokeScript ? oKeystrokeScript.GetScript(): "";
 
-            let args = extractArguments(sScript);
+            let args = extractArguments(sFormatScript || sKeystrokeScript);
             return args;
         }
     };
@@ -618,6 +621,92 @@
             let args = extractArguments(sScript);
             return args;
         }
+    };
+    CTextField.prototype.SetPlaceholder = function(sPlaceholder) {
+        const oCurMeta = this.GetMeta();
+        oCurMeta['placeholder'] = sPlaceholder;
+
+        this.SetMeta(oCurMeta);
+
+        let sFocusScript, sBlurScript;
+        if (sPlaceholder) {
+            sFocusScript = 
+                'var curColor = color.convert(event.target.textColor, "RGB")\n;' +
+                'if ((event.target.value=="' + sPlaceholder + '") && ((Math.abs(curColor[1] - 0.500000) < 0.005 && Math.abs(curColor[2] - 0.500000) < 0.005 && Math.abs(curColor[3] - 0.500000) < 0.005))) {\n' +
+                    'event.target.value = "";\n' +
+                    'event.target.textColor =["RGB", 0.000000, 0.000000, 0.000000];\n' +
+                '}';
+
+            sBlurScript = 
+                'if (event.target.value == "") {\n' +
+                    'event.target.textColor =["RGB", 0.500000, 0.500000, 0.500000];\n' +
+                    'event.target.value = "' + sPlaceholder + '";\n' +
+                '}'
+
+            let aActionsFocus = [{
+                "S": AscPDF.ACTIONS_TYPES.JavaScript,
+                "JS": sFocusScript
+            }];
+            let aActionsBlur = [{
+                "S": AscPDF.ACTIONS_TYPES.JavaScript,
+                "JS": sBlurScript
+            }];
+            this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus, aActionsFocus);
+            this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.OnBlur, aActionsBlur);
+
+            // start on blur action to apply placeholder
+            let oBlurTrigger = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.OnBlur);
+            let oRunScriptAction = oBlurTrigger.GetActions()[0];
+            oRunScriptAction.Do();
+        }
+        else {
+            this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus, []);
+            this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.OnBlur, []);
+        }
+    };
+    CTextField.prototype.SetRegularExp = function(sReg) {
+        const oCurMeta = this.GetMeta();
+        oCurMeta['regular'] = sReg;
+
+        this.SetMeta(oCurMeta);
+
+        let sValidateScript;
+        if (sReg) {
+            sValidateScript = 
+                'var curColor = color.convert(event.target.textColor, "RGB");\n' +
+                'if (Math.abs(curColor[1] - 0.000000) < 0.005 && Math.abs(curColor[2] - 0.000000) < 0.005 && Math.abs(curColor[3] - 0.000000) < 0.005) {\n' +
+                    'var r=/' + sReg + '/;\n' +
+                    'if (event.value) event.rc = !!event.value.match(r)\n;' +
+                '}';
+
+            let aActionsFocus = [{
+                "S": AscPDF.ACTIONS_TYPES.JavaScript,
+                "JS": sValidateScript
+            }];
+            this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Validate, aActionsFocus);
+        }
+        else {
+            this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Validate, []);
+        }
+    };
+    CTextField.prototype.SetArbitaryMask = function(sMask) {
+        if (sMask) {
+            let aActionsKeystroke = [{
+                "S": AscPDF.ACTIONS_TYPES.JavaScript,
+                "JS": 'AFSpecial_KeystrokeEx("' + sMask + '");'
+            }];
+            this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+        }
+        else {
+            this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, []);
+        }
+    };
+    CTextField.prototype.IsSpecialKeystroke = function() {
+        let oKeystrokeTrigger   = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke);
+        let oKeystrokeScript    = oKeystrokeTrigger ? oKeystrokeTrigger.GetActions()[0] : null;
+        let sKeystrokeScript    = oKeystrokeScript ? oKeystrokeScript.GetScript(): "";
+        
+        return sKeystrokeScript.startsWith('AFSpecial_KeystrokeEx');
     };
     CTextField.prototype.ProcessAutoFitContent = function(oContent) {
         let oPara       = oContent.GetElement(0);

@@ -3873,6 +3873,7 @@ function (window, undefined) {
 	function asc_CFieldSpecialFormatProperty() {
 		this.type		= AscPDF.FormatType.SPECIAL;
 		this.format		= undefined;
+		this.mask		= undefined;
 	};
 
 	asc_CFieldSpecialFormatProperty.prototype.asc_getType = function () {
@@ -3883,6 +3884,12 @@ function (window, undefined) {
 	};
 	asc_CFieldSpecialFormatProperty.prototype.asc_putFormat = function (v) {
 		this.format = v;
+	};
+	asc_CFieldSpecialFormatProperty.prototype.asc_getMask = function () {
+		return this.mask;
+	};
+	asc_CFieldSpecialFormatProperty.prototype.asc_putMask = function (v) {
+		this.mask = v;
 	};
 
 	//////////////////////////////////////////////////////////////////
@@ -7366,6 +7373,8 @@ function (window, undefined) {
 	prot["asc_getType"]				= prot.asc_getType;
 	prot["asc_getFormat"]			= prot.asc_getFormat;
 	prot["asc_putFormat"]			= prot.asc_putFormat;
+	prot["asc_getMask"]				= prot.asc_getMask;
+	prot["asc_putMask"]				= prot.asc_putMask;
 	
 	window["Asc"]["asc_CFieldValidateProperty"] = window["Asc"].asc_CFieldValidateProperty = asc_CFieldValidateProperty;
 	prot = asc_CFieldValidateProperty.prototype;

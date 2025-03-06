@@ -129,7 +129,7 @@
         }
 
         this.type           = nType;
-        this._partialName   = sName;
+        this._partialName   = undefined;
         this._kids          = [];
         this._apIdx         = undefined; // индекс формы на странице в исходном файле (в массиве метода getInteractiveForms), используется для получения appearance
         this._borderStyle   = undefined;
@@ -162,7 +162,6 @@
 
         // internal
         this._triggers = new AscPDF.CFormTriggers();
-        this._isWidget = aRect && aRect.length == 4 ? true : false;
         this._curShiftView = { // смещение, когда мы скролим, т.е. активное смещение
             x: 0,
             y: 0
@@ -188,6 +187,8 @@
 		this.compositeInput = null;
 		this.compositeReplaceCount = 0;
         this.Lock = new AscCommon.CLock();
+        this.meta = {};
+        this.SetPartialName(sName);
         this.SetRect(aRect);
     }
 
@@ -401,6 +402,26 @@
         }
 
         return this._partialName ? this._partialName : "";
+    };
+    CBaseField.prototype.SetPartialName = function(sName) {
+        this._partialName = sName;
+        AscCommon.History.Add(new CChangesPDFFormPartialName(this, this._partialName, sName));
+
+        this.SetWasChanged(true);
+
+        if (this.IsEditMode()) {
+            AscCommon.History.StartNoHistoryMode();
+            let oShape = this.GetEditShape();
+            let oContent = oShape.GetDocContent();
+            let oPara = oContent.GetElement(0);
+            let oRun = oPara.GetElement(0);
+            oRun.Remove_FromContent(0, oRun.Content.length);
+            oRun.AddText(this.GetFullName());
+            oShape.recalcContent();
+            oShape.recalculate();
+            this.AddToRedraw();
+            AscCommon.History.EndNoHistoryMode();
+        }
     };
     CBaseField.prototype.GetPartialName = function() {
         return this._partialName;
@@ -718,6 +739,7 @@
             return;
         }
 
+        AscCommon.History.Add(new CChangesPDFObjectSetDocument(this, this._doc, oDoc));
         this._doc = oDoc;
     };
     CBaseField.prototype.GetDocument = function() {
@@ -1703,7 +1725,8 @@
         this.AddToRedraw();
     };
     CBaseField.prototype.IsWidget = function() {
-        return this._isWidget;
+        let aRect = this.GetRect();
+        return aRect && aRect.length == 4;
     };
     CBaseField.prototype.IsNeedRevertShiftView = function() {
         if (this._curShiftView.y != this._oldShiftView.y ||
@@ -2076,6 +2099,8 @@
         }
 
         let oApiColor   = color.convert(oRGB, aApiColor[0]);
+
+        AscCommon.History.Add(new CChangesPDFFormTextColor(this, this._textColor, oApiColor.slice(1)));
         this._textColor = oApiColor.slice(1);
 
         this.SetWasChanged(true);

@@ -879,6 +879,9 @@
     CComboBoxField.prototype.GetFormatArgs          = AscPDF.CTextField.prototype.GetFormatArgs;
     CComboBoxField.prototype.GetValidateType        = AscPDF.CTextField.prototype.GetValidateType;
     CComboBoxField.prototype.GetValidateArgs        = AscPDF.CTextField.prototype.GetValidateArgs;
+    CComboBoxField.prototype.SetPlaceholder         = AscPDF.CTextField.prototype.SetPlaceholder;
+    CComboBoxField.prototype.SetRegularExp          = AscPDF.CTextField.prototype.SetRegularExp;
+    CComboBoxField.prototype.SetArbitaryMask        = AscPDF.CTextField.prototype.SetArbitaryMask;
 
 	window["AscPDF"].CComboBoxField = CComboBoxField;
 })();

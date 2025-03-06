@@ -469,6 +469,10 @@ var CPresentation = CPresentation || function(){};
         this.widgets.forEach(function(field) {
             field.SetEditMode(bEdit);
         });
+
+        if (false == bEdit && this.activeForm) {
+            this.activeForm = null;
+        }
     };
     CPDFDoc.prototype.IsEditFieldsMode = function() {
         return this.editFieldsMode;
@@ -801,7 +805,7 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.GetId = function() {
         return this.Id;
     };
-    CPDFDoc.prototype.GetId = function() {
+    CPDFDoc.prototype.Get_Id = function() {
         return this.Id;
     };
     CPDFDoc.prototype.GetDrawingDocument = function() {
@@ -7026,7 +7030,7 @@ var CPresentation = CPresentation || function(){};
     };
     CActionQueue.prototype.Continue = function() {
         let oNextAction = this.GetNextAction();
-        if (this.callbackAfterFocus && this.curAction.triggerType == AscPDF.FORMS_TRIGGERS_TYPES.OnFocus && (!oNextAction || oNextAction.triggerType != AscPDF.FORMS_TRIGGERS_TYPES.OnFocus))
+        if (this.callbackAfterFocus && this.curAction.GetTriggerType() == AscPDF.FORMS_TRIGGERS_TYPES.OnFocus && (!oNextAction || oNextAction.triggerType != AscPDF.FORMS_TRIGGERS_TYPES.OnFocus))
             this.callbackAfterFocus();
 
         if (oNextAction && this.IsInProgress()) {
@@ -7186,8 +7190,18 @@ var CPresentation = CPresentation || function(){};
                         break;
                     }
                     case AscPDF.FormatType.TIME: {
-                        oFormatProps = new Asc.asc_CFieldSpecialFormatProperty();
+                        oFormatProps = new Asc.asc_CFieldTimeFormatProperty();
                         oFormatProps.asc_putFormat(aArgs[0]);
+                        break;
+                    }
+                    case AscPDF.FormatType.SPECIAL: {
+                        oFormatProps = new Asc.asc_CFieldSpecialFormatProperty();
+                        if (field.IsSpecialKeystroke()) {
+                            oFormatProps.asc_putMask(aArgs[0]);
+                        }
+                        else {
+                            oFormatProps.asc_putFormat(aArgs[0]);
+                        }
                         break;
                     }
                 }

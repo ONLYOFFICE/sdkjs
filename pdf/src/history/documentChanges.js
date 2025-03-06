@@ -40,7 +40,7 @@ AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_DrawingsContent]	= CChange
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_PagesContent]		= CChangesPDFDocumentPagesContent;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RotatePage]		= CChangesPDFDocumentRotatePage;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RecognizePage]	= CChangesPDFDocumentRecognizePage;
-AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_SetDocument]      = CChangesPDFDocumentSetDocument;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_SetDocument]      = CChangesPDFObjectSetDocument;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_PageLocks]        = CChangesPDFDocumentPageLocks;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_PropLocker_ObjectId]	    = CChangesPDFPropLockerObjectId;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_MovePage]         = CChangesPDFDocumentMovePage;
@@ -1079,16 +1079,16 @@ CChangesPDFDocumentRecognizePage.prototype.private_SetValue = function(bRecogniz
  * @constructor
  * @extends {AscDFH.CChangesBaseStringProperty}
  */
-function CChangesPDFDocumentSetDocument(Class, Old, New)
+function CChangesPDFObjectSetDocument(Class, Old, New)
 {
 	let oldId = Old && Old.Get_Id ? Old.Get_Id() : undefined;
 	let newId = New && New.Get_Id ? New.Get_Id() : undefined;
 	AscDFH.CChangesBaseStringProperty.call(this, Class, oldId, newId);
 }
-CChangesPDFDocumentSetDocument.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
-CChangesPDFDocumentSetDocument.prototype.constructor = CChangesPDFDocumentSetDocument;
-CChangesPDFDocumentSetDocument.prototype.Type = AscDFH.historyitem_PDF_Document_SetDocument;
-CChangesPDFDocumentSetDocument.prototype.private_SetValue = function(value)
+CChangesPDFObjectSetDocument.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesPDFObjectSetDocument.prototype.constructor = CChangesPDFObjectSetDocument;
+CChangesPDFObjectSetDocument.prototype.Type = AscDFH.historyitem_PDF_Document_SetDocument;
+CChangesPDFObjectSetDocument.prototype.private_SetValue = function(value)
 {
 	let doc = AscCommon.g_oTableId.Get_ById(value);
 	this.Class.SetDocument(doc);

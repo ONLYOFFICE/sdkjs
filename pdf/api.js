@@ -1118,12 +1118,22 @@
 		let oDoc = this.getPDFDoc();
 		oDoc.SetEditFieldsMode(bEdit);
 	};
-	PDFEditorApi.prototype.AddTextField = function() {
+	PDFEditorApi.prototype.AddTextField = function(oParams) {
 		let oDoc = this.getPDFDoc();
 		
 		return oDoc.DoAction(function() {
 			let oField = oDoc.CreateTextField();
 			oDoc.AddField(oField, oDoc.GetCurPage());
+
+			if (oParams['placeholder']) {
+				oField.SetPlaceholder(oParams['placeholder']);
+			}
+			if (oParams['reg']) {
+				oField.SetRegularExp(oParams['reg']);
+			}
+			if (oParams['mask']) {
+				oField.SetArbitaryMask(oParams['mask']);
+			}
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
@@ -1330,11 +1340,7 @@
 				return false;
 			}
 			
-			let aActionsKeystroke = [{
-				"S": AscPDF.ACTIONS_TYPES.JavaScript,
-				"JS": 'AFSpecial_KeystrokeEx("' + sMask + '");'
-			}];
-			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+			oField.SetArbitaryMask(sMask);
 			return true;
 
 		}, AscDFH.historydescription_Pdf_ChangeField, this);
