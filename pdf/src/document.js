@@ -457,10 +457,6 @@ var CPresentation = CPresentation || function(){};
         }
 
         oField.SetDocument(this);
-        if (this.IsEditFieldsMode()) {
-            oField.SetEditMode(true);
-        }
-
         return oField;
     };
     CPDFDoc.prototype.SetEditFieldsMode = function(bEdit) {
@@ -2741,15 +2737,27 @@ var CPresentation = CPresentation || function(){};
         oField.SetParentPage(oPageInfo);
         return oField;
     };
-    CPDFDoc.prototype.AddField = function(oField, nPage) {
+    CPDFDoc.prototype.AddField = function(oField, nPage, bRecalcPos) {
         let oPagesInfo = this.GetPageInfo(nPage);
         if (!oPagesInfo)
             return;
+
+        if (bRecalcPos) {
+            let nExtX = oField.GetWidth();
+            let nExtY = oField.GetHeight();
+
+            let oPos = this.private_computeFieldAddingPos(nPage, nExtX, nExtY);
+            oField.SetPosition(oPos.x, oPos.y)
+        }
 
         this.widgets.push(oField);
 
         oField.SetDocument(this);
         oPagesInfo.AddField(oField);
+
+        if (this.IsEditFieldsMode()) {
+            oField.SetEditMode(true);
+        }
     };
     /**
 	 * Adds an annot to document by annot props.
@@ -4382,7 +4390,7 @@ var CPresentation = CPresentation || function(){};
 
                     let nExtX   = oXfrm.extX;
                     let nExtY   = oXfrm.extY;
-                    let oPos    = private_computeDrawingAddingPos(nCurPage, nExtX, nExtY);
+                    let oPos    = this.private_computeDrawingAddingPos(nCurPage, nExtX, nExtY);
                     
                     if (nRotAngle != 0) {
                         oXfrm.setRot(-nRotAngle * Math.PI / 180);
@@ -4950,7 +4958,7 @@ var CPresentation = CPresentation || function(){};
 
             aDrToPaste.forEach(function(drawing, index) {
                 let oXfrm = drawing.getXfrm();
-                let oPos = private_computeDrawingAddingPos(nCurPage, oXfrm.extX, oXfrm.extY);
+                let oPos = oThis.private_computeDrawingAddingPos(nCurPage, oXfrm.extX, oXfrm.extY);
                 oXfrm.setOffX(oPos.x);
                 oXfrm.setOffY(oPos.y);
 
@@ -5025,7 +5033,7 @@ var CPresentation = CPresentation || function(){};
         let nExtX = oShape.txBody.getMaxContentWidth(nPageW / 2, true) + oBodyPr.lIns + oBodyPr.rIns;
         let nExtY = oShape.txBody.content.GetSummaryHeight() + oBodyPr.tIns + oBodyPr.bIns;
 
-        let oPos = private_computeDrawingAddingPos(nPage, nExtX, nExtY);
+        let oPos = this.private_computeDrawingAddingPos(nPage, nExtX, nExtY);
 
         oShape.spPr.xfrm.setOffX(oPos.x);
         oShape.spPr.xfrm.setOffY(oPos.y);
@@ -5065,7 +5073,7 @@ var CPresentation = CPresentation || function(){};
 
         let nExtX   = oXfrm.extX;
         let nExtY   = oXfrm.extY;
-        let oPos    = private_computeDrawingAddingPos(nPage, nExtX, nExtY);
+        let oPos    = this.private_computeDrawingAddingPos(nPage, nExtX, nExtY);
 
         if (nRotAngle != 0) {
             oXfrm.setRot(-nRotAngle * Math.PI / 180);
@@ -5106,7 +5114,7 @@ var CPresentation = CPresentation || function(){};
 
         // oSmartArt.changeSize(nExtX / oSmartArt.extX, nExtY / oSmartArt.extY);
         let oXfrm   = oSmartArt.getXfrm();
-        let oPos    = private_computeDrawingAddingPos(nPage, nExtX, nExtY);
+        let oPos    = this.private_computeDrawingAddingPos(nPage, nExtX, nExtY);
 
         if (nRotAngle != 0) {
             oXfrm.setRot(-nRotAngle * Math.PI / 180);
@@ -5162,7 +5170,7 @@ var CPresentation = CPresentation || function(){};
 
         let nExtX   = oXfrm.extX;
         let nExtY   = oXfrm.extY;
-        let oPos    = private_computeDrawingAddingPos(nPage, nExtX, nExtY);
+        let oPos    = this.private_computeDrawingAddingPos(nPage, nExtX, nExtY);
 
         if (oPlaceholder) {
             let oPh = AscCommon.g_oTableId.Get_ById(oPlaceholder.id);
@@ -5232,7 +5240,7 @@ var CPresentation = CPresentation || function(){};
         } else {
             let nExtX   = Width;
             let nExtY   = RowHeight * Rows;
-            let oPos    = private_computeDrawingAddingPos(nPage, nExtX, nExtY);
+            let oPos    = this.private_computeDrawingAddingPos(nPage, nExtX, nExtY);
             
             X = oPos.x;
             Y = oPos.y;
@@ -5543,7 +5551,7 @@ var CPresentation = CPresentation || function(){};
             
             let nNewExtX    = Math.max(5, nExtX * nKoeff); 
             let nNewExtY    = Math.max(5, nExtY * nKoeff); 
-            let oPos        = private_computeDrawingAddingPos(nCurPage, nNewExtX, nNewExtY);
+            let oPos        = this.private_computeDrawingAddingPos(nCurPage, nNewExtX, nNewExtY);
 
             let oImage = new AscPDF.CPdfImage();
             AscFormat.fillImage(oImage, _image.src, 0, 0, nNewExtX, nNewExtY, _image.videoUrl, _image.audioUrl);
@@ -6817,6 +6825,67 @@ var CPresentation = CPresentation || function(){};
 	CPDFDoc.prototype.getDrawingObjects = function() {
 		return null;
 	};
+    CPDFDoc.prototype.private_computeDrawingAddingPos = function(nPage, nExtX, nExtY) {
+        let oDoc        = Asc.editor.getPDFDoc();
+        let oViewRect   = oDoc.Viewer.getViewingRect(nPage);
+        let nRotAngle   = oDoc.Viewer.getPageRotate(nPage);
+        let nPageW      = oDoc.GetPageWidthMM(nPage);
+        let nPageH      = oDoc.GetPageHeightMM(nPage);
+        let nPosX;
+        let nPosY;
+
+        switch (nRotAngle) {
+            case 0:
+                nPosX = nPageW * ((oViewRect.x + oViewRect.r) / 2) - nExtX / 2;
+                nPosY = nPageH * ((oViewRect.y + oViewRect.b) / 2) - nExtY / 2;
+                break;
+            case 90:
+                nPosX = nPageW * ((oViewRect.y + oViewRect.b) / 2) - nExtX / 2;
+                nPosY = nPageH - nPageH * ((oViewRect.x + oViewRect.r) / 2) - nExtY / 2;
+                break;
+            case 180:
+                nPosX = nPageW - nPageW * ((oViewRect.x + oViewRect.r) / 2) - nExtX / 2;
+                nPosY = nPageH - nPageH * ((oViewRect.y + oViewRect.b) / 2) - nExtY / 2;
+                break;
+            case 270:
+                nPosX = nPageW - nPageW * ((oViewRect.y + oViewRect.b) / 2) - nExtX / 2;
+                nPosY = nPageH * ((oViewRect.x + oViewRect.r) / 2) - nExtY / 2;
+                break;
+        }
+
+        return {x: nPosX, y: nPosY}
+    }
+    CPDFDoc.prototype.private_computeFieldAddingPos = function(nPage, nExtX, nExtY) {
+        let oDoc = Asc.editor.getPDFDoc();
+        let oViewRect = oDoc.Viewer.getViewingRect(nPage);
+        let nRotAngle = oDoc.Viewer.getPageRotate(nPage);
+        let nPageW = oDoc.GetPageWidth(nPage);
+        let nPageH = oDoc.GetPageHeight(nPage);
+        let nPosX;
+        let nPosY;
+    
+        switch (nRotAngle) {
+            case 0:
+                nPosX = nPageW * ((oViewRect.x + oViewRect.r) / 2) - nExtX / 2;
+                // Располагаем поле выше центра по вертикали: берем половину расстояния от верхней границы до центра
+                nPosY = nPageH * (oViewRect.y + (oViewRect.b - oViewRect.y) / 4) - nExtY / 2;
+                break;
+            case 90:
+                nPosX = nPageW * ((oViewRect.y + oViewRect.b) / 2) - nExtX / 2;
+                nPosY = nPageH - nPageH * (oViewRect.x + (oViewRect.r - oViewRect.x) / 4) - nExtY / 2;
+                break;
+            case 180:
+                nPosX = nPageW - nPageW * ((oViewRect.x + oViewRect.r) / 2) - nExtX / 2;
+                nPosY = nPageH - nPageH * (oViewRect.y + (oViewRect.b - oViewRect.y) / 4) - nExtY / 2;
+                break;
+            case 270:
+                nPosX = nPageW - nPageW * ((oViewRect.y + oViewRect.b) / 2) - nExtX / 2;
+                nPosY = nPageH * (oViewRect.x + (oViewRect.r - oViewRect.x) / 4) - nExtY / 2;
+                break;
+        }
+    
+        return { x: nPosX, y: nPosY };
+    };
 	CPDFDoc.prototype.checkDefaultFieldFonts = function(callback) {
 		
 		if (1 === this.defaultFontsLoaded)
@@ -7335,37 +7404,6 @@ var CPresentation = CPresentation || function(){};
         return [xMin, yMin, xMax, yMax];
     }
 
-    function private_computeDrawingAddingPos(nPage, nExtX, nExtY) {
-        let oDoc        = Asc.editor.getPDFDoc();
-        let oViewRect   = oDoc.Viewer.getViewingRect(nPage);
-        let nRotAngle   = oDoc.Viewer.getPageRotate(nPage);
-        let nPageW      = oDoc.GetPageWidthMM(nPage);
-        let nPageH      = oDoc.GetPageHeightMM(nPage);
-        let nPosX;
-        let nPosY;
-
-        switch (nRotAngle) {
-            case 0:
-                nPosX = nPageW * ((oViewRect.x + oViewRect.r) / 2) - nExtX / 2;
-                nPosY = nPageH * ((oViewRect.y + oViewRect.b) / 2) - nExtY / 2;
-                break;
-            case 90:
-                nPosX = nPageW * ((oViewRect.y + oViewRect.b) / 2) - nExtX / 2;
-                nPosY = nPageH - nPageH * ((oViewRect.x + oViewRect.r) / 2) - nExtY / 2;
-                break;
-            case 180:
-                nPosX = nPageW - nPageW * ((oViewRect.x + oViewRect.r) / 2) - nExtX / 2;
-                nPosY = nPageH - nPageH * ((oViewRect.y + oViewRect.b) / 2) - nExtY / 2;
-                break;
-            case 270:
-                nPosX = nPageW - nPageW * ((oViewRect.y + oViewRect.b) / 2) - nExtX / 2;
-                nPosY = nPageH * ((oViewRect.x + oViewRect.r) / 2) - nExtY / 2;
-                break;
-        }
-
-        return {x: nPosX, y: nPosY}
-    }
-    
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
 	

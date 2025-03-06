@@ -2217,11 +2217,27 @@
         this.SetWasChanged(true);
         this.SetNeedRecalc(true);
     };
+    CBaseField.prototype.SetPosition = function(x, y) {
+        let nExtX = this.GetWidth();
+        let nExtY = this.GetHeight();
+
+        let aNewRect = [x, y, x + nExtX, y + nExtY];
+
+        this.SetRect(aNewRect);
+    };
     CBaseField.prototype.GetOrigRect = function() {
         return this._origRect;
     };
     CBaseField.prototype.GetRect = function() {
         return this.GetOrigRect();
+    };
+    CBaseField.prototype.GetWidth = function() {
+        let aRect = this.GetRect();
+        return aRect[2] - aRect[0];
+    };
+    CBaseField.prototype.GetHeight = function() {
+        let aRect = this.GetRect();
+        return aRect[3] - aRect[1];
     };
 
     // common triggers

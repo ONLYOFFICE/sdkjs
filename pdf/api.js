@@ -1123,7 +1123,7 @@
 		
 		return oDoc.DoAction(function() {
 			let oField = oDoc.CreateTextField();
-			oDoc.AddField(oField, oDoc.GetCurPage());
+			oDoc.AddField(oField, oDoc.GetCurPage(), true);
 
 			if (oParams['placeholder']) {
 				oField.SetPlaceholder(oParams['placeholder']);
@@ -1142,7 +1142,7 @@
 		
 		return oDoc.DoAction(function() {
 			let oField = oDoc.CreateTextField(true);
-			oDoc.AddField(oField, oDoc.GetCurPage());
+			oDoc.AddField(oField, oDoc.GetCurPage(), true);
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
@@ -1151,7 +1151,7 @@
 		
 		return oDoc.DoAction(function() {
 			let oField = oDoc.CreateButtonField(true);
-			oDoc.AddField(oField, oDoc.GetCurPage());
+			oDoc.AddField(oField, oDoc.GetCurPage(), true);
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
@@ -1160,7 +1160,7 @@
 		
 		return oDoc.DoAction(function() {
 			let oField = oDoc.CreateCheckboxField();
-			oDoc.AddField(oField, oDoc.GetCurPage());
+			oDoc.AddField(oField, oDoc.GetCurPage(), true);
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
@@ -1169,7 +1169,7 @@
 		
 		return oDoc.DoAction(function() {
 			let oField = oDoc.CreateRadiobuttonField(true);
-			oDoc.AddField(oField, oDoc.GetCurPage());
+			oDoc.AddField(oField, oDoc.GetCurPage(), true);
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
@@ -1178,7 +1178,7 @@
 		
 		return oDoc.DoAction(function() {
 			let oField = oDoc.CreateComboboxField(true);
-			oDoc.AddField(oField, oDoc.GetCurPage());
+			oDoc.AddField(oField, oDoc.GetCurPage(), true);
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
@@ -1187,7 +1187,7 @@
 		
 		return oDoc.DoAction(function() {
 			let oField = oDoc.CreateListboxField(true);
-			oDoc.AddField(oField, oDoc.GetCurPage());
+			oDoc.AddField(oField, oDoc.GetCurPage(), true);
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
