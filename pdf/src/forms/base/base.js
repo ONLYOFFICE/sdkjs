@@ -2690,7 +2690,7 @@
 	    window["AscPDF"] = {};
     
 	window["AscPDF"].ALIGN_TYPE         = ALIGN_TYPE;
-	window["AscPDF"].BORDER_TYPES       = BORDER_TYPES;
+	window["AscPDF"].BORDER_TYPES       = window["AscPDF"]["BORDER_TYPES"] = BORDER_TYPES;
     window["AscPDF"].APPEARANCE_TYPE    = APPEARANCE_TYPE;
     window["AscPDF"].VALID_ROTATIONS    = VALID_ROTATIONS;
     window["AscPDF"].MAX_TEXT_SIZE      = MAX_TEXT_SIZE;
