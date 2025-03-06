@@ -125,6 +125,13 @@
 	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/TextPartType.js
 	 */
 
+	/**
+	 * Content control list element
+	 * @typedef {Object} ContentControlListElement
+	 * @property {string} Display - element display text
+	 * @property {string} Value - element value
+	 */
+
     var Api = window["asc_docs_api"];
 
     /**
@@ -697,7 +704,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @alias AddContentControlList
 	 * @param {ContentControlType} type - A numeric value that specifies the content control type. It can have one of the following values: <b>1</b> (combo box), <b>0</b> (dropdown list).
-	 * @param {Array<String, String>}  [List = [{Display, Value}]] - A list of the content control elements that consists of two items: <b>Display</b> - an item that will be displayed to the user in the content control list, <b>Value</b> - a value of each item from the content control list.
+	 * @param {ContentControlListElement[]}  [List] - A list of the content control elements that consists of two items: <b>Display</b> - an item that will be displayed to the user in the content control list, <b>Value</b> - a value of each item from the content control list.
 	 * @param {ContentControlProperties}  [commonPr = {}] - The common content control properties.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddContentControlList.js
 	 */
