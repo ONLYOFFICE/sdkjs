@@ -11106,18 +11106,6 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {SearchData} oSearchData - The search data used to make search.
 	 * @returns {ApiRange | null} - Returns null if the current range does not contain such text.
-	 * @also
-	 * Finds specific information in the current range.
-	 * @memberof ApiRange
-	 * @typeofeditors ["CSE"]
-	 * @param {string | undefined} What - The data to search for.
-	 * @param {ApiRange} After - The cell after which you want the search to begin. If this argument is not specified, the search starts after the cell in the upper-left corner of the range.
-	 * @param {XlFindLookIn} LookIn - Search data type (formulas or values).
-	 * @param {XlLookAt} LookAt - Specifies whether the whole search text or any part of the search text is matched.
-	 * @param {XlSearchOrder} SearchOrder - Range search order - by rows or by columns.
-	 * @param {XlSearchDirection} SearchDirection - Range search direction - next match or previous match.
-	 * @param {boolean} MatchCase - Case sensitive or not. The default value is "false".
-	 * @returns {ApiRange | null} - Returns null if the current range does not contain such text.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Find.js
 	 */
 	ApiRange.prototype.Find = function (oSearchData) {
@@ -11266,17 +11254,6 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ReplaceData} oReplaceData - The data used to make search and replace.
 	 * @returns {ApiRange | null} - Returns null if the current range does not contain such text.
-	 * @also
-	 * Replaces specific information to another one in a range.
-	 * @memberof ApiRange
-	 * @typeofeditors ["CSE"]
-	 * @param {string | undefined} What - The data to search for.
-	 * @param {string} Replacement - The replacement string.
-	 * @param {XlLookAt} LookAt - Specifies whether the whole search text or any part of the search text is matched.
-	 * @param {XlSearchOrder} SearchOrder - Range search order - by rows or by columns.
-	 * @param {XlSearchDirection} SearchDirection - Range search direction - next match or previous match.
-	 * @param {boolean} MatchCase - Case sensitive or not. The default value is "false".
-	 * @param {boolean} ReplaceAll - Specifies if all the found data will be replaced or not. The default value is "true".
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Replace.js
 	 */
 	ApiRange.prototype.Replace = function (oReplaceData) {
