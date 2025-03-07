@@ -1799,6 +1799,9 @@
 			return res;
 		},
 		_broadscastVolatile: function(notifyData) {
+			if (this.wb.asyncFormulasManager.isRecalculating()) {
+				return;
+			}
 			for (var i in this.volatileListeners) {
 				this.volatileListeners[i].notify(notifyData);
 			}
@@ -2079,6 +2082,7 @@
 			let promises = !this.wb.asyncFormulasManager.isRecalculating() && this.wb.asyncFormulasManager.getPromises();
 			if (promises) {
 				let doPromises = function (_promises) {
+					let streamInfos = [];
 					let fPromises = [];
 					for (let i = 0; i < _promises.length; i++) {
 						const fPromise = function () {
@@ -2087,12 +2091,23 @@
 						fPromises.push(fPromise);
 					}
 					const promiseIterator = new AscCommon.CPromiseGetterIterator(fPromises);
-					promiseIterator.forAllSuccessValues(function (streamInfos) {
+					promiseIterator.forEachValue(function (streamInfo) {
+						streamInfos.push(streamInfo);
+					}, function (rejectInfo) {
+						streamInfos.push(null);
+					}, function () {
 						for (let i = 0; i < streamInfos.length; i++) {
 							if (!_promises[i].parserFormula.promiseResult) {
 								_promises[i].parserFormula.promiseResult = [];
 							}
-							_promises[i].parserFormula.promiseResult.push(_promises[i].callback(streamInfos[i]));
+							let resStreamInfo;
+							if (streamInfos[i] == null) {
+								resStreamInfo = new cError(cErrorType.wrong_value_type);
+							} else {
+								resStreamInfo = _promises[i].callback(streamInfos[i]);
+								resStreamInfo = new AscCommonExcel.cNumber(123);
+							}
+							_promises[i].parserFormula.promiseResult.push(resStreamInfo);
 							t.wb.dependencyFormulas.addToChangedCell(_promises[i].parserFormula.parent);
 						}
 						//t.wb.buildDependency();
