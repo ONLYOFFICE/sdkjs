@@ -3092,7 +3092,7 @@
 	/**
 	 * Class representing a document.
 	 * @constructor
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @extends {ApiDocumentContent}
 	 */
 	function ApiDocument(Document)
@@ -6366,7 +6366,7 @@
 	/**
 	 * Returns a list of all tags that are used for all forms in the document.
 	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {String[]}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetTagsOfAllForms.js
 	 */
@@ -6418,9 +6418,9 @@
 	/**
 	 * Returns a list of all forms in the document with the specified tag name.
 	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @param sTag {string} - Form tag.
-	 * @returns {ApiBlockLvlSdt[] | ApiInlineLvlSdt[]}
+	 * @returns {ApiForm[]}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetFormsByTag.js
 	 */
 	ApiDocument.prototype.GetFormsByTag = function(sTag)
@@ -6466,7 +6466,7 @@
 	 * Returns the data from all forms present in the current document.
 	 * If a form was created and not assigned to any part of the document, it won't appear in this list.
 	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {Array.<FormData>}
 	 * @since 8.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetFormsData.js
@@ -6478,7 +6478,7 @@
 	/**
 	 * Sets the data to the specified forms.
 	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @param {Array.<FormData>} arrData - An array of form data to set to the specified forms.
 	 * @since 8.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetFormsData.js
@@ -7052,7 +7052,7 @@
 	/**
 	 * Returns all existing forms in the document.
 	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {ApiForm[]}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetAllForms.js
 	 */
@@ -7074,7 +7074,7 @@
 	/**
 	 * Clears all forms in the document.
 	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/ClearAllFields.js
 	 */
 	ApiDocument.prototype.ClearAllFields = function()
@@ -7089,7 +7089,7 @@
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [bNone=false] - Defines that highlight will not be set.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetFormsHighlight.js
 	 */
 	ApiDocument.prototype.SetFormsHighlight = function(r, g, b, bNone)
