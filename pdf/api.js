@@ -1562,7 +1562,8 @@
 		let aColor = [r / 255, g / 255, b / 255];
 
 		return oDoc.DoAction(function() {
-			oController.selectedObjects.forEach(function(field) {
+			oController.selectedObjects.forEach(function(shape) {
+				let field = shape.GetEditField();
 				field.SetBorderColor(aColor);
 			});
 
@@ -1581,7 +1582,8 @@
 		let aColor = [r / 255, g / 255, b / 255];
 
 		return oDoc.DoAction(function() {
-			oController.selectedObjects.forEach(function(field) {
+			oController.selectedObjects.forEach(function(shape) {
+				let field = shape.GetEditField();
 				field.SetBackgroundColor(aColor);
 			});
 
@@ -1598,7 +1600,8 @@
 		}
 
 		return oDoc.DoAction(function() {
-			oController.selectedObjects.forEach(function(field) {
+			oController.selectedObjects.forEach(function(shape) {
+				let field = shape.GetEditField();
 				field.SetRequired(bValue);
 			});
 
@@ -1616,7 +1619,8 @@
 		}
 
 		return oDoc.DoAction(function() {
-			oController.selectedObjects.forEach(function(field) {
+			oController.selectedObjects.forEach(function(shape) {
+				let field = shape.GetEditField();
 				field.SetMultiline(bValue);
 			});
 
