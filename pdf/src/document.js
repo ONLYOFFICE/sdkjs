@@ -7218,17 +7218,17 @@ var CPresentation = CPresentation || function(){};
         // bg
         let aFillColor  = field.GetBackgroundColor();
         let oFillRGB    = aFillColor ? field.GetRGBColor(aFillColor) : null;
-        let oFill       = oFillRGB ? AscFormat.CreateSolidFillRGBA(oFillRGB.r, oFillRGB.g, oFillRGB.b, 255) : null;
-        if (oFill) {
-            oCommonProps.asc_putFill(AscFormat.CreateAscFill(oFill));
+        let oAscColor   = oFillRGB ? new Asc.asc_CColor(oFillRGB.r, oFillRGB.g, oFillRGB.b) : null;
+        if (oAscColor) {
+            oCommonProps.asc_putFill(oAscColor);
         }
 
         // border
         let aStrokeColor    = field.GetBorderColor();
         let oStrokeRGB      = aStrokeColor ? field.GetRGBColor(aStrokeColor) : null;
-        let oStrokeFill     = oStrokeRGB ? AscFormat.CreateSolidFillRGBA(oStrokeRGB.r, oStrokeRGB.g, oStrokeRGB.b, 255) : null;
-        if (oStrokeFill) {
-            oProps.asc_putStroke(AscFormat.CreateAscStroke(oStrokeFill, true));
+        oAscColor           = oStrokeRGB ? new Asc.asc_CColor(oStrokeRGB.r, oStrokeRGB.g, oStrokeRGB.b) : null;
+        if (oAscColor) {
+            oCommonProps.asc_putStroke(oAscColor);
         }
 
         oCommonProps.asc_putStrokeWidth(field.GetBorderWidth());
