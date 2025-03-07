@@ -1366,49 +1366,56 @@
 
         // удаляем поле из родителя
         let oParent = this.GetParent();
+        let sCurValue = this.GetValue();
         if (oParent) {
+            sCurValue = this.GetParentValue();
             oParent.RemoveKid(this);
         }
 
-        // создаем родительские поля, последнее будет виджет-полем
-        if (aPartNames.length !== 0) {
-            if (oDoc.rootFields.get(aPartNames[0]) == null) { // root поле
-                oDoc.rootFields.set(aPartNames[0], this.CreateField(aPartNames[0], nFieldType, []));
+        let aWidgetForms = oDoc.GetAllWidgets(sName);
+
+        if (aPartNames.length > 0) {
+            let oExistsField = oDoc.GetField(sName);
+            let oParentField;
+
+            if (oExistsField) {
+                if (!oExistsField.IsWidget()) {
+                    if (!oExistsField.IsAllKidsWidgets()) {
+                        return false;
+                    }
+                    else {
+                        oParentField = oExistsField;
+                    }
+                }
             }
 
-            let oParent = oDoc.rootFields.get(aPartNames[0]);
-            
-            for (let i = 0; i < aPartNames.length; i++) {
-                // добавляем виджет-поле (то, которое рисуем)
-                if (i == aPartNames.length - 1) {
-                    oParent.AddKid(this);
+            let bSetParentValue = !oParentField;
+            if (!oParentField) {
+                // создаем вложенные родительские поля, последнее будет виджет-полем
+                for (let i = 0; i < aPartNames.length; i++) {
+                    let oNewParent = oDoc.CreateField(aPartNames[i], nFieldType, []);
 
-                    let sNewPartName = undefined;
-                    if (oParent.GetKids().length == 1) {
-                        sNewPartName = aPartNames[i];
+                    if (oParentField) {
+                        oParentField.AddKid(oNewParent);
                     }
                     
-                    AscCommon.History.Add(new CChangesPDFFormPartialName(this, this._partialName, sNewPartName));
-                    this._partialName = sNewPartName;
-                }
-                else {
-                    // если есть поле с таким именем (part name), то двигаемся дальше, если нет, то создаем
-                    let oExistsField = oParent.GetField(aPartNames[i]);
-                    if (oExistsField)
-                        oParent = oExistsField;
-                    else {
-                        let oNewParent = oDoc.CreateField(aPartNames[i], nFieldType, []);
-                        oParent.AddKid(oNewParent);
-                        oParent = oNewParent;
-                    }
+                    oParentField = oNewParent;
                 }
             }
+
+            if (bSetParentValue) {
+                oParentField.SetParentValue(sCurValue);
+            }
+
+            aWidgetForms.forEach(function(widget) {
+                oParentField.AddKid(widget);
+                widget.SetPartialName(undefined);
+            });
+
+            oParentField.AddKid(this);
+            this.SetPartialName(undefined);
         }
 
-        if (oParent) {
-            oDoc.CheckParentForm(oParent);
-        }
-        
         this.SyncField();
         return true;
     };

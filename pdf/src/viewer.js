@@ -290,7 +290,6 @@
         let oParent = oField.GetParent();
         if (oParent) {
             oParent.RemoveKid(oField);
-            oDoc.CheckParentForm(oParent); // проверяем родителя
         }
 
 		this.RedrawForms();
@@ -5044,10 +5043,16 @@
 			let nPosForParentLenght = oMemory.GetCurPosition();
 			oMemory.Skip(4);
 			let nParents = 0;
-			oDoc.widgetsParents.forEach(function(field) {
-				if (field.IsChanged()) {
-					nParents++;
-					field.WriteToBinaryAsParent(oMemory);
+
+			oDoc.widgets.forEach(function(widget) {
+				let oParent = widget.GetParent();
+				while (oParent) {
+					if (oParent.IsChanged()) {
+						nParents++;
+						oParent.WriteToBinaryAsParent(oMemory);
+					}
+
+					oParent = oParent.GetParent();
 				}
 			});
 

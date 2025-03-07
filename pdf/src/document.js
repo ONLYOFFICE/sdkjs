@@ -121,8 +121,6 @@ var CPresentation = CPresentation || function(){};
         this.annots     = [];
         this.drawings   = []; // из презентаций (чарты, шейпы, картинки)
 
-        this.widgetsParents = []; // все родительские поля
-
         this.maxApIdx               = -1;
         this.CollaborativeEditing   = AscCommon.CollaborativeEditing;
         this.CollaborativeEditing.SetLogicDocument(this);
@@ -612,7 +610,6 @@ var CPresentation = CPresentation || function(){};
                 oParent.SetOptions(aParentsInfo[i]["Opt"]);
 
             oParents[nIdx] = oParent;
-            this.widgetsParents.push(oParent);
         }
 
         for (let nParentIdx in oParents) {
@@ -3448,31 +3445,6 @@ var CPresentation = CPresentation || function(){};
         this.ClearSearch();
     };
     
-    /**
-	 * Checks the parent form and deletes if necessary
-	 * @memberof CPDFDoc
-     * @param {Object} oForm - parent form
-	 * @typeofeditors ["PDF"]
-	 */
-    CPDFDoc.prototype.CheckParentForm = function(oForm) {
-        let aKids   = oForm.GetKids();
-        let oParent = oForm.GetParent();
-
-        if (aKids == 0) {
-            // удаляем поле из массива родительских полей
-            let nIdx = this.widgetsParents.indexOf(oForm);
-            if (nIdx != -1) {
-                this.widgetsParents.splice(nIdx, 1);
-                this.History.Add(new CChangesPDFDocumentFieldsContent(this, -1, [oForm], false))
-            }
-
-            // проверяем родителя этого родителя
-            if (oParent) {
-                oParent.RemoveKid(oForm);
-                this.CheckParentForm(oParent);
-            }
-        }
-    };
     CPDFDoc.prototype.GetDocument = function() {
         return this;
     };
@@ -3562,10 +3534,14 @@ var CPresentation = CPresentation || function(){};
             if (this.widgets[i].GetApIdx() == nIdx) {
                 return this.widgets[i];
             }
-        }
-        for (let i = 0; i < this.widgetsParents.length; i++) {
-            if (this.widgetsParents[i].GetApIdx() == nIdx) {
-                return this.widgetsParents[i];
+            
+            // check parents
+            let oParent = this.widgets[i].GetParent();
+            while (oParent) {
+                if (oParent.GetApIdx() == nIdx) {
+                    return oParent;
+                }
+                oParent = oParent.GetParent();
             }
         }
     };
@@ -3813,11 +3789,22 @@ var CPresentation = CPresentation || function(){};
         }
 
         if (aFields.length == 0) {
-            for (let i = 0; i < this.widgetsParents.length; i++) {
-                if (this.widgetsParents[i].GetFullName() == sName) {
-                    aFields = aFields.concat(this.widgetsParents[i].GetAllWidgets());
-                    break;
+            for (let i = 0; i < this.widgets.length; i++) {
+                let oParent = this.widgets[i].GetParent();
+
+                let isFound = false;
+
+                while (oParent) {
+                    if (oParent.GetFullName() == sName) {
+                        aFields = oParent.GetAllWidgets();
+                        isFound = true;
+                        break;
+                    }
+
+                    oParent = oParent.GetParent();
                 }
+
+                if (isFound) break;
             }
         }
 
@@ -3844,9 +3831,14 @@ var CPresentation = CPresentation || function(){};
 	 * @returns {?CBaseField}
 	 */
     CPDFDoc.prototype.GetField = function(sName) {
-        for (let i = 0; i < this.widgetsParents.length; i++) {
-            if (this.widgetsParents[i].GetFullName() == sName) {
-                return this.widgetsParents[i];
+        for (let i = 0; i < this.widgets.length; i++) {
+            let oParent = this.widgets[i].GetParent();
+
+            while (oParent) {
+                if (oParent.GetFullName() == sName) // checks by full name
+                    return oParent;
+
+                oParent = oParent.GetParent();
             }
         }
 
