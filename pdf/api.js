@@ -1125,15 +1125,18 @@
 			let oField = oDoc.CreateTextField();
 			oDoc.AddField(oField, oDoc.GetCurPage(), true);
 
-			if (oParams['placeholder']) {
-				oField.SetPlaceholder(oParams['placeholder']);
+			if (oParams) {
+				if (oParams['placeholder']) {
+					oField.SetPlaceholder(oParams['placeholder']);
+				}
+				if (oParams['reg']) {
+					oField.SetRegularExp(oParams['reg']);
+				}
+				if (oParams['mask']) {
+					oField.SetArbitaryMask(oParams['mask']);
+				}
 			}
-			if (oParams['reg']) {
-				oField.SetRegularExp(oParams['reg']);
-			}
-			if (oParams['mask']) {
-				oField.SetArbitaryMask(oParams['mask']);
-			}
+			
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
@@ -1246,6 +1249,7 @@
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
+	// fields formats
 	PDFEditorApi.prototype.SetFieldNumberFormat = function(nDemical, nSepStyle, nNegStyle, sCurrency, bCurrencyPrepend) {
 		let oDoc = this.getPDFDoc();
 		
@@ -1294,7 +1298,6 @@
 			return true;
 		}, AscDFH.historydescription_Pdf_ChangeField, this);
 	};
-
 	PDFEditorApi.prototype.SetFieldDateFormat = function(sFormat) {
 		let oDoc = this.getPDFDoc();
 		
@@ -1319,7 +1322,6 @@
 			return true;
 		}, AscDFH.historydescription_Pdf_ChangeField, this);
 	};
-
 	PDFEditorApi.prototype.SetFieldTimeFormat = function(sFormat) {
 		let oDoc = this.getPDFDoc();
 		
@@ -1345,7 +1347,6 @@
 
 		}, AscDFH.historydescription_Pdf_ChangeField, this);
 	};
-
 	PDFEditorApi.prototype.SetFieldSpecialFormat = function(nFormat) {
 		let oDoc = this.getPDFDoc();
 		
@@ -1370,7 +1371,6 @@
 			return true;
 		}, AscDFH.historydescription_Pdf_ChangeField, this);
 	};
-
 	PDFEditorApi.prototype.SetFieldMask = function(sMask) {
 		let oDoc = this.getPDFDoc();
 		
@@ -1405,61 +1405,6 @@
 			return true;
 
 		}, AscDFH.historydescription_Pdf_ChangeField, this);
-	};
-	PDFEditorApi.prototype.SetFieldName = function(sName) {
-		let oDoc = this.getPDFDoc();
-		
-		return oDoc.DoAction(function() {
-			let oField = oDoc.activeForm;
-			if (!oField) {
-				return false;
-			}
-			return oField.SetName(sName);
-		}, AscDFH.historydescription_Pdf_ChangeField, this);
-	};
-	PDFEditorApi.prototype.GetAllFieldsNames = function() {
-		let oDoc = this.getPDFDoc();
-		
-		let aWidgets = oDoc.GetAllWidgets();
-		let aNames = [];
-
-		aWidgets.forEach(function(widget) {
-			let sName = widget.GetFullName();
-			if (false == aNames.includes(sName)) {
-				aNames.push(sName);
-			}
-			
-			let oParent = widget.GetParent();
-			while (oParent) {
-				let sParentName = oParent.GetFullName();
-				if (false == aNames.includes(sParentName)) {
-					aNames.push(sParentName);
-				}
-
-				oParent = oParent.GetParent();
-			}
-		});
-
-		return aNames.sort();
-	};
-	PDFEditorApi.prototype.GetAvailableFieldsNames = function(nFieldType) {
-		let oDoc = this.getPDFDoc();
-		
-		let aWidgets = oDoc.GetAllWidgets();
-		let aNames = [];
-
-		aWidgets.forEach(function(widget) {
-			if (widget.GetType() != nFieldType) {
-				return;
-			}
-
-			let sName = widget.GetFullName();
-			if (false == aNames.includes(sName)) {
-				aNames.push(sName);
-			}
-		});
-
-		return aNames.sort();
 	};
 	PDFEditorApi.prototype.SetFieldCalculate = function(nCalcType, aNames) {
 		let oDoc = this.getPDFDoc();
@@ -1548,6 +1493,135 @@
 		});
 
 		return aNames;
+	};
+	// fields common
+	PDFEditorApi.prototype.SetFieldName = function(sName) {
+		let oDoc = this.getPDFDoc();
+		
+		return oDoc.DoAction(function() {
+			let oField = oDoc.activeForm;
+			if (!oField) {
+				return false;
+			}
+			return oField.SetName(sName);
+		}, AscDFH.historydescription_Pdf_ChangeField, this);
+	};
+	PDFEditorApi.prototype.GetAllFieldsNames = function() {
+		let oDoc = this.getPDFDoc();
+		
+		let aWidgets = oDoc.GetAllWidgets();
+		let aNames = [];
+
+		aWidgets.forEach(function(widget) {
+			let sName = widget.GetFullName();
+			if (false == aNames.includes(sName)) {
+				aNames.push(sName);
+			}
+			
+			let oParent = widget.GetParent();
+			while (oParent) {
+				let sParentName = oParent.GetFullName();
+				if (false == aNames.includes(sParentName)) {
+					aNames.push(sParentName);
+				}
+
+				oParent = oParent.GetParent();
+			}
+		});
+
+		return aNames.sort();
+	};
+	PDFEditorApi.prototype.GetAvailableFieldsNames = function(nFieldType) {
+		let oDoc = this.getPDFDoc();
+		
+		let aWidgets = oDoc.GetAllWidgets();
+		let aNames = [];
+
+		aWidgets.forEach(function(widget) {
+			if (widget.GetType() != nFieldType) {
+				return;
+			}
+
+			let sName = widget.GetFullName();
+			if (false == aNames.includes(sName)) {
+				aNames.push(sName);
+			}
+		});
+
+		return aNames.sort();
+	};
+	PDFEditorApi.prototype.SetFieldStrokeColor = function(r, g, b) {
+		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
+		let oForm = oDoc.activeForm;
+
+		if (!oForm) {
+			return false;
+		}
+
+		let aColor = [r / 255, g / 255, b / 255];
+
+		return oDoc.DoAction(function() {
+			oController.selectedObjects.forEach(function(field) {
+				field.SetBorderColor(aColor);
+			});
+
+			return true;
+        }, AscDFH.historydescription_Pdf_ChangeField);
+	};
+	PDFEditorApi.prototype.SetFieldBgColor = function(r, g, b) {
+		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
+		let oForm = oDoc.activeForm;
+
+		if (!oForm) {
+			return false;
+		}
+
+		let aColor = [r / 255, g / 255, b / 255];
+
+		return oDoc.DoAction(function() {
+			oController.selectedObjects.forEach(function(field) {
+				field.SetBackgroundColor(aColor);
+			});
+
+			return true;
+        }, AscDFH.historydescription_Pdf_ChangeField);
+	};
+	PDFEditorApi.prototype.SetFieldRequired = function(bValue) {
+		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
+		let oForm = oDoc.activeForm;
+
+		if (!oForm) {
+			return false;
+		}
+
+		return oDoc.DoAction(function() {
+			oController.selectedObjects.forEach(function(field) {
+				field.SetRequired(bValue);
+			});
+
+			return true;
+        }, AscDFH.historydescription_Pdf_ChangeField);
+	};
+	// text field
+	PDFEditorApi.prototype.SetTextFieldMultiline = function(bValue) {
+		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
+		let oForm = oDoc.activeForm;
+
+		if (!oForm) {
+			return false;
+		}
+
+		return oDoc.DoAction(function() {
+			oController.selectedObjects.forEach(function(field) {
+				field.SetMultiline(bValue);
+			});
+
+			return true;
+        }, AscDFH.historydescription_Pdf_ChangeField);
 	};
 	/////////////////////////////////////////////////////////////
 	///////// For drawings
@@ -3603,13 +3677,17 @@
 	PDFEditorApi.prototype['SetFieldSpecialFormat']		= PDFEditorApi.prototype.SetFieldSpecialFormat;
 	PDFEditorApi.prototype['SetFieldMask']				= PDFEditorApi.prototype.SetFieldMask;
 	PDFEditorApi.prototype['SetFieldValidateRange']		= PDFEditorApi.prototype.SetFieldValidateRange;
+	PDFEditorApi.prototype['SetFieldCalculate']			= PDFEditorApi.prototype.SetFieldCalculate;
+	PDFEditorApi.prototype['SetCalculateOrder']			= PDFEditorApi.prototype.SetCalculateOrder;
+	PDFEditorApi.prototype['GetCalculateOrder']			= PDFEditorApi.prototype.GetCalculateOrder;
 	PDFEditorApi.prototype['SetFieldName']				= PDFEditorApi.prototype.SetFieldName;
 	PDFEditorApi.prototype['GetFieldsNames']			= PDFEditorApi.prototype.GetFieldsNames;
 	PDFEditorApi.prototype['GetAllFieldsNames']			= PDFEditorApi.prototype.GetAllFieldsNames;
 	PDFEditorApi.prototype['GetAvailableFieldsNames']	= PDFEditorApi.prototype.GetAvailableFieldsNames;
-	PDFEditorApi.prototype['SetFieldCalculate']			= PDFEditorApi.prototype.SetFieldCalculate;
-	PDFEditorApi.prototype['SetCalculateOrder']			= PDFEditorApi.prototype.SetCalculateOrder;
-	PDFEditorApi.prototype['GetCalculateOrder']			= PDFEditorApi.prototype.GetCalculateOrder;
+	PDFEditorApi.prototype['SetFieldStrokeColor']		= PDFEditorApi.prototype.SetFieldStrokeColor;
+	PDFEditorApi.prototype['SetFieldBgColor']			= PDFEditorApi.prototype.SetFieldBgColor;
+	PDFEditorApi.prototype['SetFieldRequired']			= PDFEditorApi.prototype.SetFieldRequired;
+	PDFEditorApi.prototype['SetTextFieldMultiline']		= PDFEditorApi.prototype.SetTextFieldMultiline;
 	
 	// drawings
 	PDFEditorApi.prototype['AddTextArt']							= PDFEditorApi.prototype.AddTextArt;

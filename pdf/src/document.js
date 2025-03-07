@@ -117,7 +117,6 @@ var CPresentation = CPresentation || function(){};
 	 * @constructor
 	 */
     function CPDFDoc(viewer) {
-        this.rootFields = new Map(); // root поля форм
         this.widgets    = []; // непосредственно сами поля, которые отрисовываем (дочерние без потомков)
         this.annots     = [];
         this.drawings   = []; // из презентаций (чарты, шейпы, картинки)
@@ -613,7 +612,6 @@ var CPresentation = CPresentation || function(){};
                 oParent.SetOptions(aParentsInfo[i]["Opt"]);
 
             oParents[nIdx] = oParent;
-            this.rootFields.set(oParent.GetPartialName(), oParent);
             this.widgetsParents.push(oParent);
         }
 
@@ -7224,8 +7222,23 @@ var CPresentation = CPresentation || function(){};
         oCommonProps.asc_putReadOnly(field.IsReadOnly());
         // oCommonProps.asc_putRot(field.GetRot());
         oCommonProps.asc_putDisplay(field.GetDisplay());
-        oCommonProps.asc_putFill(field.GetBackgroundColor());
-        oCommonProps.asc_putStroke(field.GetBorderColor());
+
+        // bg
+        let aFillColor  = field.GetBackgroundColor();
+        let oFillRGB    = aFillColor ? field.GetRGBColor(aFillColor) : null;
+        let oFill       = oFillRGB ? AscFormat.CreateSolidFillRGBA(oFillRGB.r, oFillRGB.g, oFillRGB.b, 255) : null;
+        if (oFill) {
+            oCommonProps.asc_putFill(AscFormat.CreateAscFill(oFill));
+        }
+
+        // border
+        let aStrokeColor    = field.GetBorderColor();
+        let oStrokeRGB      = aStrokeColor ? field.GetRGBColor(aStrokeColor) : null;
+        let oStrokeFill     = oStrokeRGB ? AscFormat.CreateSolidFillRGBA(oStrokeRGB.r, oStrokeRGB.g, oStrokeRGB.b, 255) : null;
+        if (oStrokeFill) {
+            oProps.asc_putStroke(AscFormat.CreateAscStroke(oStrokeFill, true));
+        }
+
         oCommonProps.asc_putStrokeWidth(field.GetBorderWidth());
         oCommonProps.asc_putStrokeStyle(field.GetBorderStyle());
 
