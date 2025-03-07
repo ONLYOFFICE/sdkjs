@@ -76,7 +76,7 @@ $(function () {
         ws = wb.getWorksheet(wb.getActive());
         AscCommonExcel.getFormulasInfo();
     }
-    wb.dependencyFormulas.lockRecal();
+    //wb.dependencyFormulas.lockRecal();
     // Goal Seek
     CGoalSeek.prototype.resume = function() {
         this.setIsPause(false);
@@ -1028,7 +1028,7 @@ $(function () {
         oParams.setChangingCells("Sheet1!$D$3:$D$6");
         oParams.addConstraint(0, {cellRef: "Sheet1!$D$3:$D$6", operator: c_oAscOperator['='], constraint: "integer"});
         oParams.addConstraint(1, {cellRef: "Sheet1!$D$3:$D$6", operator: c_oAscOperator['>='], constraint: "0"});
-        oParams.addConstraint(2, {cellRef: "Sheet1!$A$1", operator: c_oAscOperator['='], constraint: "1000"});
+        oParams.addConstraint(2, {cellRef: "Sheet1!$D$7", operator: c_oAscOperator['='], constraint: "1000"});
         oParams.addConstraint(3, {cellRef: "Sheet1!$F$7", operator: c_oAscOperator['<='], constraint: "Sheet1!$A$2"});
         oParams.setVariablesNonNegative(false);
         oParams.setSolvingMethod(c_oAscSolvingMethod.grgNonlinear);
@@ -1048,7 +1048,7 @@ $(function () {
         assert.ok(oSolver, "Solver is created");
         // Checking attributes of Solver
         let bIsParserFormulaObject = oSolver.getParsedFormula() instanceof CParserFormula;
-        assert.strictEqual(bIsParserFormulaObject , true, "Check Solver attributes: Objective cell is parserFormula object");
+        assert.strictEqual(bIsParserFormulaObject, true, "Check Solver attributes: Objective cell is parserFormula object");
         assert.strictEqual(oSolver.getChangingCell().getName(), "$D$3:$D$6", "Check Solver attributes: Changing cells is D3:D6");
         assert.strictEqual(isNaN(oSolver.getMaxIterations()), true, "Check Solver attributes: Max iterations is NaN");
         assert.strictEqual(oSolver.getSolvingMethod(), c_oAscSolvingMethod.grgNonlinear, "Check Solver attributes: Solving method is grgNonlinear");
@@ -1058,7 +1058,7 @@ $(function () {
         const aExpectedData = [
             {cellRef: "$D$3:$D$6", operator: c_oAscOperator['='], constraint: "integer"},
             {cellRef: "$D$3:$D$6", operator: c_oAscOperator['>='],constraint: 0},
-            {cellRef: "$A$1", operator: c_oAscOperator['='], constraint: 1000},
+            {cellRef: "$D$7", operator: c_oAscOperator['='], constraint: 1000},
             {cellRef: "$F$7", operator: c_oAscOperator['<='], constraint: "$A$2"}
         ];
         aConstraints.forEach(function(oConstraint, index) {
@@ -1067,7 +1067,14 @@ $(function () {
             assert.strictEqual(oConstraint.getOperator(), aExpectedData[index].operator, `Check Solver attributes: Constraint element #${index} operator is ${aExpectedData[index].operator}`);
             assert.strictEqual(constraint, aExpectedData[index].constraint, `Check Solver attributes: Constraint element #${index} constraint is ${aExpectedData[index].constraint}`);
         });
+        // Checking calculateConstraints method
+        const aConstraintsResult = oSolver.calculateConstraints();
+        const aExpectedConstraintsResult = [true, true, false, true];
+        aConstraintsResult.forEach(function(bResult, index) {
+            assert.strictEqual(bResult, aExpectedConstraintsResult[index], `Check Solver calculateConstraints method: Constraint element #${index} result is ${aExpectedConstraintsResult[index]}`);
+        })
         // Checking calculate logic
+        oSolver.calculate();
 
-    })
+    });
 });

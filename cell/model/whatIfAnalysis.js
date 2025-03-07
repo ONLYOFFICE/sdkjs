@@ -63,13 +63,10 @@ function (window, undefined) {
 		'>=': 0,
 		'=': 1,
 		'<=': 2,
-		'int': 3,
-		'bin': 4,
-		'dif': 5
 	};
 
 	/**
-	 * c
+	 * Class representing base attributes and methods for features of analysis.
 	 * @param {parserFormula} oParsedFormula - Formula object
 	 * @param {Range} oChangingCell - Changing cells.
 	 * For Goal Seek feature it's 1-1 object, for Solver 1-*.
@@ -82,6 +79,9 @@ function (window, undefined) {
 		this.nIntervalId = null;
 		this.bIsPause = false;
 		this.nDelay = 70; // in ms for interval.
+		this.nCurAttempt = 0;
+		this.bIsSingleStep = false;
+		this.nPrevFactValue = null;
 		// todo add value from settings
 		this.nMaxIterations = 100; // max iterations of goal seek. Default value is 100
 	}
@@ -89,17 +89,19 @@ function (window, undefined) {
 	/**
 	 * Returns a result of formula with picked changing value.
 	 * @memberof CBaseAnalysis
-	 * @param {number} nChangingVal
-	 * @param {Range} oChangingCell
+	 * @param {number} [nChangingVal]
+	 * @param {Range} [oChangingCell]
 	 * @returns {number} nFactValue
 	 */
 	CBaseAnalysis.prototype.calculateFormula = function(nChangingVal, oChangingCell) {
 		let oParsedFormula = this.getParsedFormula();
-		let sRegNumDecimalSeparator = this.getRegNumDecimalSeparator();
 		let nFactValue = null;
 
-		oChangingCell.setValue(String(nChangingVal).replace('.', sRegNumDecimalSeparator));
-		oChangingCell.worksheet.workbook.dependencyFormulas.unlockRecal();
+		if (nChangingVal !== undefined && oChangingCell) {
+			let sRegNumDecimalSeparator = this.getRegNumDecimalSeparator();
+			oChangingCell.setValue(String(nChangingVal).replace('.', sRegNumDecimalSeparator));
+			oChangingCell.worksheet.workbook.dependencyFormulas.unlockRecal();
+		}
 		oParsedFormula.parse();
 		nFactValue = oParsedFormula.calculate().getValue();
 		// If result of formula returns type cNumber, convert to Number
@@ -182,6 +184,53 @@ function (window, undefined) {
 		return this.nDelay;
 	};
 	/**
+	 * Returns a number of the current attempt.
+	 * @memberof CBaseAnalysis
+	 * @returns {number}
+	 */
+	CBaseAnalysis.prototype.getCurrentAttempt = function() {
+		return this.nCurAttempt;
+	};
+	/**
+	 * Increases a value of the current attempt.
+	 * @memberof CBaseAnalysis
+	 */
+	CBaseAnalysis.prototype.increaseCurrentAttempt = function() {
+		this.nCurAttempt += 1;
+	};
+	/**
+	 * Returns a flag who recognizes goal seek is runs in "single step" mode. Uses for "step" method.
+	 * @memberof CBaseAnalysis
+	 * @returns {boolean}
+	 */
+	CBaseAnalysis.prototype.getIsSingleStep = function() {
+		return this.bIsSingleStep;
+	};
+	/**
+	 * Sets a flag who recognizes goal seek is runs in "single step" mode.
+	 * @memberof CBaseAnalysis
+	 * @param {boolean} bIsSingleStep
+	 */
+	CBaseAnalysis.prototype.setIsSingleStep = function(bIsSingleStep) {
+		this.bIsSingleStep = bIsSingleStep;
+	};
+	/**
+	 * Returns previous value of formula result.
+	 * @memberof CBaseAnalysis
+	 * @returns {number}
+	 */
+	CBaseAnalysis.prototype.getPrevFactValue = function() {
+		return this.nPrevFactValue;
+	};
+	/**
+	 * Sets previous value of formula result.
+	 * @memberof CBaseAnalysis
+	 * @param {number} nPrevFactValue
+	 */
+	CBaseAnalysis.prototype.setPrevFactValue = function(nPrevFactValue) {
+		this.nPrevFactValue = nPrevFactValue;
+	};
+	/**
 	 * Returns max iterations.
 	 * @memberof CBaseAnalysis
 	 * @returns {number}
@@ -213,15 +262,12 @@ function (window, undefined) {
 		this.sFormulaCellName = null;
 		this.nStepDirection = null;
 		this.nFirstChangingVal = null;
-		this.nCurAttempt = 0;
 		this.nChangingVal = null;
 		this.nPrevValue = null;
-		this.nPrevFactValue = null;
 		this.bReverseCompare = null;
 		this.bEnabledRidder = false;
 		this.nLow = null;
 		this.nHigh = null;
-		this.bIsSingleStep = false;
 
 		this.nRelativeError = 1e-4; // relative error of goal seek. Default value is 1e-4
 	}
@@ -448,21 +494,6 @@ function (window, undefined) {
 		this.nFirstChangingVal = sChangingVal ? Number(sChangingVal) : null;
 	};
 	/**
-	 * Returns a number of the current attempt goal seek.
-	 * @memberof CGoalSeek
-	 * @returns {number}
-	 */
-	CGoalSeek.prototype.getCurrentAttempt = function() {
-		return this.nCurAttempt;
-	};
-	/**
-	 * Increases a value of the current attempt goal seek.
-	 * @memberof CGoalSeek
-	 */
-	CGoalSeek.prototype.increaseCurrentAttempt = function() {
-		this.nCurAttempt += 1;
-	};
-	/**
 	 * Returns a value of changing cell.
 	 * @memberof CGoalSeek
 	 * @returns {number}
@@ -493,22 +524,6 @@ function (window, undefined) {
 	 */
 	CGoalSeek.prototype.setPrevValue = function(nPrevValue) {
 		this.nPrevValue = nPrevValue;
-	};
-	/**
-	 * Returns previous value of formula result.
-	 * @memberof CGoalSeek
-	 * @returns {number}
-	 */
-	CGoalSeek.prototype.getPrevFactValue = function() {
-		return this.nPrevFactValue;
-	};
-	/**
-	 * Sets previous value of formula result.
-	 * @memberof CGoalSeek
-	 * @param {number} nPrevFactValue
-	 */
-	CGoalSeek.prototype.setPrevFactValue = function(nPrevFactValue) {
-		this.nPrevFactValue = nPrevFactValue;
 	};
 	/**
 	 * Returns a flag who recognizes should be use compare reverse (when result of calculation formula is less than expected) or not.
@@ -580,22 +595,6 @@ function (window, undefined) {
 	 */
 	CGoalSeek.prototype.setHighBorder = function(nHigh) {
 		this.nHigh = nHigh;
-	};
-	/**
-	 * Returns a flag who recognizes goal seek is runs in "single step" mode. Uses for "step" method.
-	 * @memberof CGoalSeek
-	 * @returns {boolean}
-	 */
-	CGoalSeek.prototype.getIsSingleStep = function() {
-		return this.bIsSingleStep;
-	};
-	/**
-	 * Sets a flag who recognizes goal seek is runs in "single step" mode.
-	 * @memberof CGoalSeek
-	 * @param bIsSingleStep
-	 */
-	CGoalSeek.prototype.setIsSingleStep = function(bIsSingleStep) {
-		this.bIsSingleStep = bIsSingleStep;
 	};
 	/**
 	 * Returns error type
@@ -705,6 +704,7 @@ function (window, undefined) {
 		this.sObjectiveFunction = null;
 		this.sChangingCells = null;
 		this.nOptimizeResultTo = null;
+		this.sValueOf = null;
 		this.aConstraints = new Map();
 		this.bVariablesNonNegative = false;
 		this.nSolvingMethod = null;
@@ -762,6 +762,22 @@ function (window, undefined) {
 	asc_CSolverParams.prototype.setOptimizeResultTo = function (optimizeResultTo) {
 		this.nOptimizeResultTo = optimizeResultTo;
 	};
+	/**
+	 * Returns value of "Value of" input field.
+	 * @memberof asc_CSolverParams
+	 * @param {string} sValueOf
+	 */
+	asc_CSolverParams.prototype.setValueOf = function (sValueOf) {
+		this.sValueOf = sValueOf;
+	};
+	/**
+	 * Sets value of "Value of" input field.
+	 * @memberof {asc_CSolverParams}
+	 * @returns {string}
+	 */
+	asc_CSolverParams.prototype.getValueOf = function () {
+		return this.sValueOf;
+	}
 	/**
 	 * Returns value of "Subject to the Constraints" parameter.
 	 * @memberof asc_CSolverParams
@@ -1224,9 +1240,14 @@ function (window, undefined) {
 
 		// Solver parameters
 		this.nOptimizeResultTo = oParams.getOptimizeResultTo();
+		this.nValueOf = oParams.getValueOf() !== null ? parseFloat(oParams.getValueOf().replace(/,/g, ".")) : null;
 		this.aConstraints = this.initConstraints(oParams.getConstraints(), oWs);
 		this.bIsVarsNonNegative = oParams.getVariablesNonNegative();
 		this.nSolvingMethod = oParams.getSolvingMethod();
+
+		// Attributes for calculating logic
+		this.nStartTime = null;
+		this.nCurrentSubProblem = null;
 
 		// Calculating option
 		this.oOptions = oParams.getOptions();
@@ -1238,11 +1259,27 @@ function (window, undefined) {
 	CSolver.prototype = Object.create(CBaseAnalysis.prototype);
 	CSolver.prototype.constructor = CSolver;
 	/**
+	 * Main logic of solver calculating.
+	 * Runs only in sync or async loop.
 	 * @memberof CSolver
+	 * @returns {boolean} The flag who recognizes end a loop of solver calculation. True - stop a loop, false - continue a loop.
 	 */
 	CSolver.prototype.calculate = function () {
+		const aConstraintsResult = this.calculateConstraints();
+		const nSolutionMethod = this.getSolvingMethod();
 
-	}
+		if (this.isFinishCalculating(aConstraintsResult)) {
+			return true;
+		}
+		switch (nSolutionMethod) {
+			case c_oAscSolvingMethod.grgNonlinear:
+				return this.grgOptimization();
+			case c_oAscSolvingMethod.simplexLP:
+				return this.simplexOptimization();
+			case c_oAscSolvingMethod.evolutionary:
+				return this.evolutionOptimization();
+		}
+	};
 	/**
 	 * Converts cell reference from UI to Cell object.
 	 * @memberof CSolver
@@ -1289,13 +1326,131 @@ function (window, undefined) {
 		return aConstraints;
 	};
 	/**
+	 * Calculates and returns an array of constraint results.
+	 * @memberof CSolver
+	 * @returns {boolean[]}
+	 */
+	CSolver.prototype.calculateConstraints = function () {
+		const oThis = this;
+		/** @type {boolean[]} */
+		const aConstraintsResult = [];
+		const aConstraints = this.getConstraints();
+		const oOptions = this.getOptions();
+		const nConstraintPrecision = Number(oOptions.getConstraintPrecision().replace(/,/g, "."));
+		const bIgnoreIntConstraints = oOptions.getIgnoreIntConstraints();
+
+		for (let i = 0, length = aConstraints.length; i < length; i++) {
+			const oConstraintCell = aConstraints[i].getCell();
+			let bResult = false;
+			/** @type {Cell} */
+			let oPrevConstraintCell = null;
+
+			oConstraintCell._foreachNoEmpty(function (oElem, nIndex, nCol, nStartRow) {
+				if (oElem.getNumberValue() !== null) {
+					const constraintData = aConstraints[i].getConstraint();
+					const nOperator = aConstraints[i].getOperator();
+					const oWs = oElem.ws;
+					let constraintValue = typeof constraintData === 'object' ? oThis.convertToCell(constraintData.getName(), oWs).getNumberValue() : constraintData;
+					if (constraintValue === 'integer' && !bIgnoreIntConstraints) {
+						bResult = oElem.getNumberValue() === parseInt(oElem.getNumberValue());
+					} else if (constraintValue === 'binary' && !bIgnoreIntConstraints) {
+						bResult = oElem.getNumberValue() === 0 || oElem.getNumberValue() === 1;
+					} else if (constraintValue === 'AllDifferent' && !bIgnoreIntConstraints && nIndex !== nStartRow) {
+						bResult = oPrevConstraintCell.getNumberValue() !== oElem.getNumberValue();
+					} else {
+						switch (nOperator) {
+							case c_oAscOperator['=']:
+								let nDiff = constraintValue - oElem.getNumberValue();
+								bResult = nDiff < nConstraintPrecision;
+								break;
+							case c_oAscOperator['>=']:
+								bResult = oElem.getNumberValue() >= constraintValue - nConstraintPrecision;
+								break;
+							case c_oAscOperator['<=']:
+								bResult = oElem.getNumberValue() <= constraintValue + nConstraintPrecision;
+								break;
+						}
+					}
+					oPrevConstraintCell = oElem;
+					if (!bResult) {
+						return true; // break loop
+					}
+				}
+			});
+			aConstraintsResult.push(bResult);
+		}
+
+		return aConstraintsResult;
+	};
+	/**
+	 *
+	 * @param aConstraintsResult
+	 * @returns {boolean}
+	 */
+	CSolver.prototype.isFinishCalculating = function (aConstraintsResult) {
+		const nCurrentTime = Date.now();
+		const bConstraintsIsSatisfied = !aConstraintsResult.includes(false);
+		const nMaxIterations = this.getMaxIterations();
+		const oOptions = this.getOptions();
+		const nTimeMax = parseFloat(oOptions.getMaxTime());
+		const nConvergence = parseFloat(oOptions.getConvergence().replace(/,/g, "."));
+		const nValue = this.getValueOf();
+		const nMaxSubproblems = parseFloat(oOptions.getMaxSubproblems());
+		const nPrevFactValue = this.getPrevFactValue();
+
+		let nFactValue = this.calculateFormula();
+		let nDiff = nFactValue - nPrevFactValue;
+		let bIsSatisfied = bConstraintsIsSatisfied && (!!nPrevFactValue && nDiff < nConvergence);
+		let bIsTimeMax = true;
+		if (!isNaN(nTimeMax)) {
+			bIsTimeMax = nCurrentTime - this.getStartTime() < nTimeMax * 1000;
+		}
+		let bIterationIsReached = true;
+		if (!isNaN(nMaxIterations)) {
+			bIterationIsReached = this.getCurrentAttempt() >= nMaxIterations;
+		}
+		let bMaxSubproblems = true;
+		if (!isNaN(nMaxSubproblems)) {
+			bMaxSubproblems = this.getCurrentSubProblem() >= nMaxSubproblems;
+		}
+
+		return bIsSatisfied && bIsTimeMax && bIterationIsReached && bMaxSubproblems;
+	};
+	CSolver.prototype.grgOptimization = function () {
+		const oChangingCells = this.getChangingCell();
+		const aConstraints = this.getConstraints();
+		const nOptimizeResultTo = this.getOptimizeResultTo();
+		const oOptions = this.getOptions();
+		const nDerivatives = oOptions.getDerivatives();
+
+		oChangingCells._foreachNoEmpty(function (oChangingCell) {
+
+		});
+
+
+	};
+	CSolver.prototype.simplexOptimization = function () {
+
+	};
+	CSolver.prototype.evolutionOptimization = function () {
+
+	};
+	/**
 	 * Returns value of "Optimize to" parameter
 	 * @memberof CSolver
-	 * @returns {number}
+	 * @returns {c_oAscOptimizeTo}
 	 */
 	CSolver.prototype.getOptimizeResultTo = function () {
 		return this.nOptimizeResultTo;
 	};
+	/**
+	 * Returns converted to number type value of "Value of" input field from "To" parameter.
+	 * @memberof CSolver
+	 * @returns {null|number}
+	 */
+	CSolver.prototype.getValueOf = function () {
+		return this.nValueOf;
+	}
 	/**
 	 * Returns the array of constraints.
 	 * @memberof CSolver
@@ -1315,7 +1470,7 @@ function (window, undefined) {
 	/**
 	 * Returns the solving method.
 	 * @memberof CSolver
-	 * @returns {number}
+	 * @returns {c_oAscSolvingMethod}
 	 */
 	CSolver.prototype.getSolvingMethod = function () {
 		return this.nSolvingMethod;
@@ -1323,10 +1478,48 @@ function (window, undefined) {
 	/**
 	 * Returns solver options.
 	 * @memberof CSolver
-	 * @returns {Object}
+	 * @returns {asc_COptions}
 	 */
 	CSolver.prototype.getOptions = function () {
 		return this.oOptions;
+	};
+	/**
+	 * Sets time from start calculation process.
+	 * @memberof CSolver
+	 * @param {number} nStartTime
+	 */
+	CSolver.prototype.setStartTime = function (nStartTime) {
+		this.nStartTime = nStartTime;
+	};
+	/**
+	 * Returns time from start calculation process.
+	 * @returns {number}
+	 */
+	CSolver.prototype.getStartTime = function () {
+		return this.nStartTime;
+	};
+	/**
+	 * Sets current number of subproblem.
+	 * @memberof CSolver
+	 * @param {number} nCurrentSubProblem
+	 */
+	CSolver.prototype.setCurrentSubProblem = function (nCurrentSubProblem) {
+		this.nCurrentSubProblem = nCurrentSubProblem;
+	};
+	/**
+	 * Returns current number of subproblem.
+	 * @memberof CSolver
+	 * @returns {number}
+	 */
+	CSolver.prototype.getCurrentSubProblem = function () {
+		return this.nCurrentSubProblem;
+	};
+	/**
+	 * Increases number of subproblem.
+	 * @memberof CSolver
+	 */
+	CSolver.prototype.increaseCurrentSubProblem = function () {
+		this.nCurrentSubProblem++;
 	};
 
 	// Export
