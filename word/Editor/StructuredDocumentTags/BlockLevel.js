@@ -1647,6 +1647,10 @@ CBlockLevelSdt.prototype.GetDataBinding = function ()
 {
 	return this.Pr.DataBinding;
 };
+CBlockLevelSdt.prototype.IsDataBinding = function ()
+{
+	return this.Pr.DataBinding !== undefined;
+};
 CBlockLevelSdt.prototype.GetColor = function()
 {
 	return this.Pr.Color;

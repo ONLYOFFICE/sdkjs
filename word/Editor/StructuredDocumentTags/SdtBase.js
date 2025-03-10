@@ -1326,41 +1326,15 @@ CSdtBase.prototype.IsAI = function ()
 {
 	return !!((this.Pr.AI));
 }
-CSdtBase.prototype.SetDataBindingForSavePrompt = function (oCustomXMlManager)
-{
-	oCustomXMlManager.getCustomXMlPromptSave();
-	let db = oCustomXMlManager.getDataBindingForPromptSave(this.Id);
-
-	if (db)
-		this.setDataBinding(db);
-};
-CSdtBase.prototype.SetPromptToCustomXML = function (strPrompt)
+CSdtBase.prototype.GetCustomXMlByDataBinding = function (addXpath)
 {
 	let oLogicDocument		= this.GetLogicDocument();
-	let oCustomXMlManager	= oLogicDocument.getCustomXmlManager();
-	let xmlPromptSave		= oCustomXMlManager.getCustomXMlPromptSave();
-
-	this.SetDataBindingForSavePrompt(oCustomXMlManager);
-	oCustomXMlManager.getDataBindingForPromptSave(this.Id);
-
-	let cusXMLPromptsData	= oCustomXMlManager.findElementByXPath(xmlPromptSave.content, '/promptData');
-	let cusXMLPromptContent	= cusXMLPromptsData.content;
-	cusXMLPromptContent.addAttribute("id" + this.Id, strPrompt);
-};
-CSdtBase.prototype.GetPromptTextFromCustomXML = function ()
-{
-	let oLogicDocument		= this.GetLogicDocument();
-	let oCustomXMlManager	= oLogicDocument.getCustomXmlManager();
-	let xmlPromptSave		= oCustomXMlManager.getCustomXMlPromptSave();
-	let cusXMLPromptsData	= oCustomXMlManager.findElementByXPath(xmlPromptSave.content, '/promptData');
-	let cusXMLPromptContent	= cusXMLPromptsData.content;
-
-	return cusXMLPromptContent.getAttribute('id' + this.Id);
-};
-CSdtBase.prototype.IsDataBindingToSavePrompt = function ()
-{
-	let oLogicDocument		= this.GetLogicDocument() ? this.GetLogicDocument() : editor.WordControl.m_oLogicDocument;
-	let oCustomXMlManager	= oLogicDocument.getCustomXmlManager();
-	let xmlPromptSave		= oCustomXMlManager.getCustomXMlPromptSave();
-	return (this.Pr.DataBinding !== undefined && this.Pr.DataBinding.storeItemID === xmlPromptSave.itemId);
+ 	let oCustomXMlManager	= oLogicDocument.getCustomXmlManager();
+ 	let oDataBinding = this.getDataBinding();
+ 	let xml = oCustomXMlManager.getExactXml(oDataBinding.storeItemID, oDataBinding.prefixMappings);
+ 	if (xml)
+	{
+		let el = oCustomXMlManager.findElementByXPath(xml.content, oDataBinding.xpath + addXpath)
+		return el.content;
+	}
 };

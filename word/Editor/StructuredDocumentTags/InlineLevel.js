@@ -3779,6 +3779,10 @@ CInlineLevelSdt.prototype.SetAIPr = function(isAi)
 		this.Pr.AI = isAi;
 	}
 };
+CInlineLevelSdt.prototype.GetDataBinding = function ()
+{
+	return this.Pr.DataBinding;
+};
 CInlineLevelSdt.prototype.setDefaultData = function ()
 {
 	if (this.defaultData === undefined)

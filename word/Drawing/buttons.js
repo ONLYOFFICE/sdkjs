@@ -912,10 +912,19 @@
 		Image			: 2,
 		Combo			: 3,
 		Date			: 4,
-		RegenerateAi	: 5,
-		DiscardAi		: 6,
-		AcceptAi		: 7,
 	};
+
+	let PluginButtons = []
+	function RegisterCCButtonType(name, type)
+	{
+		AscCommon.CCButtonType[name] = type;
+		PluginButtons.push(type);
+	}
+
+	// AscCommon.CheckButtonsFromPlugin = function () {
+	//
+	// }
+	AscCommon.RegisterCCButtonType = RegisterCCButtonType;
 
 	var exportObj = AscCommon.CCButtonType;
 	AscCommon["CCButtonType"] = exportObj;
@@ -923,9 +932,6 @@
 	exportObj["Toc"] = exportObj.Toc;
 	exportObj["Combo"] = exportObj.Combo;
 	exportObj["Date"] = exportObj.Date;
-	exportObj["RegenerateAi"] = exportObj.RegenerateAi;
-	exportObj["DiscardAi"] = exportObj.DiscardAi;
-	exportObj["AcceptAi"] = exportObj.AcceptAi;
 
 	AscCommon.ContentControlTrack = {
 		Hover : 0,
@@ -1274,18 +1280,25 @@
 		if (this.IsNoUseButtons())
 			return;
 
+		if (this.base.Pr.AI)
+		{
+			let arr;
+			let xmlEl = this.base.GetCustomXMlByDataBinding('/buttons');
+			if (xmlEl && xmlEl.name === "buttons")
+				arr =  xmlEl.textContent.trim().split(',');
+
+			if (arr && arr.length > 0)
+			{
+				for (let i = 0; i < arr.length; i++)
+					this.Buttons.push(arr[i])
+			}
+		}
+
 		switch (this.type)
 		{
 			case Asc.c_oAscContentControlSpecificType.TOC:
 			{
 				this.Buttons.push(AscCommon.CCButtonType.Toc);
-				break;
-			}
-			case Asc.c_oAscContentControlSpecificType.AI:
-			{
-				this.Buttons.push(AscCommon.CCButtonType.RegenerateAi);
-				this.Buttons.push(AscCommon.CCButtonType.AcceptAi);
-				this.Buttons.push(AscCommon.CCButtonType.DiscardAi);
 				break;
 			}
 			case Asc.c_oAscContentControlSpecificType.Picture:
@@ -1656,10 +1669,6 @@
 
 		this.icons = new CCIcons();
 		this.icons.register(AscCommon.CCButtonType.Toc, "toc");
-		this.icons.register(AscCommon.CCButtonType.RegenerateAi, "toc");
-		this.icons.register(AscCommon.CCButtonType.AcceptAi, "acceptai");
-		this.icons.register(AscCommon.CCButtonType.DiscardAi, "discardai");
-
 		this.icons.register(AscCommon.CCButtonType.Image, "img");
 		this.icons.generateComboImages();
 
@@ -1677,6 +1686,11 @@
 			this.ContentControlObjects = [];
 			this.ContentControlObjectsLast = [];
 		};
+
+		this.registerIcon = function (type, url)
+		{
+			this.icons.register(type, url);
+		}
 
 		this.getFont = function(koef)
 		{
@@ -2721,8 +2735,8 @@
 						var posOnScreen = this.document.ConvertCoordsToCursorWR(xCC, yCC, _object.Pos.Page);
 						let oButtonData = _object.GetButtonObj(indexButton);
 
-						if (this.isAiButton(oButtonData.type))
-							this.proceedAiButtons(oButtonData);
+						if (this.isPluginButton(oButtonData.button))
+							this.ProceedPluginButtons(oButtonData);
 						else
 							_sendEventToApi(oWordControl.m_oApi, oButtonData, posOnScreen.X, posOnScreen.Y);
 					}
@@ -2773,75 +2787,17 @@
 			return false;
 		};
 
-		this.proceedAiButtons = function (oButtonData)
+		this.ProceedPluginButtons = function (oButtonData)
 		{
 			let oBlock = oButtonData.obj;
 
-			if (oButtonData.button === AscCommon.CCButtonType.RegenerateAi)
-			{
-				oBlock.SelectContentControl();
-
-				//todo save
-				oBlock.setDefaultData();
-
-				let strPrompt = oBlock.GetPromptTextFromCustomXML();
-				if (strPrompt === undefined || strPrompt === "")
-					return;
-
-				window.g_asc_plugins.onPluginEvent2(
-					"onRegenerateContentControlContent",
-					{
-						"prompt": strPrompt,
-						"isPicture": oBlock.IsPicture(),
-						"id": oBlock.Id
-					},
-					{"asc.{9DC93CDB-B576-4F0C-B55E-FCC9C48DD007}": true}
-				);
-			}
-			else if (oButtonData.button === AscCommon.CCButtonType.AcceptAi)
-			{
-				oBlock.RemoveContentControlWrapper();
-				this.document.m_oWordControl.m_oLogicDocument.Recalculate()
-			}
-			else if (oButtonData.button === AscCommon.CCButtonType.DiscardAi)
-			{
-				//todo restore
-				if (oBlock.defaultData)
+			window.g_asc_plugins.onPluginEvent2(
+				"onContentControlButtonClick",
 				{
-					let str = fromUtf8(oBlock.defaultData.data, 0, oBlock.defaultData.pos);
-					str = str.substring(5);
-					str = str.substring(0, str.length - 6)
-
-					let data = new AscCommon.StaxParser(str);
-
-					let context = new AscCommon.XmlWriterContext(AscCommon.c_oEditorId.Word);
-					context.fileType = Asc.c_oAscFileType.DOCX;
-					context.docSaveParams = new DocSaveParams(false, false, false, false);
-					context.oReadResult = new DocReadResult();
-					context.oReadResult.bCopyPaste = false
-					context.oReadResult.disableRevisions = false;
-					data.context = context;
-
-					//	let jsZlib						= new AscCommon.ZLib();
-					//jsZlib.create();
-					//this.document.m_oLogicDocument.toZip(jsZlib, context);
-					//let openDoc						= new AscCommon.openXml.OpenXmlPackage(jsZlib, null);
-					//data.rels = openDoc;
-
-					if (oBlock instanceof CInlineLevelSdt)
-					{
-						oBlock.SelectAll();
-						oBlock.Remove(1);
-					}
-
-					oBlock.fromXml(data);
-
-					if (oBlock instanceof CBlockLevelSdt)
-						oBlock.Content.Recalculate();
-					else
-						this.document.m_oWordControl.m_oLogicDocument.Recalculate();
+					"oCC": oBlock.Id,
+					"type": oButtonData.button
 				}
-			}
+			);
 		};
 
 		function fromUtf8(buffer, start, len)
@@ -2884,9 +2840,9 @@
 			return result;
 		}
 
-		this.isAiButton = function (type)
+		this.isPluginButton = function (type)
 		{
-			return type === Asc.c_oAscContentControlSpecificType.AI;
+			return PluginButtons.includes(type);
 		};
 
 		this.onPointerLeave = function()

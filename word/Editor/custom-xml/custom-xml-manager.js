@@ -50,14 +50,33 @@
 	{
 		this.document	= document;
 		this.xml		= [];
-
-		this.promptSave = false;
 	}
 	CustomXmlManager.prototype.add = function(customXml)
 	{
 		// TODO: Надо будет сделать этот метод с сохранением в историю, когда
 		//       будем реализовывать возможность добавления таких xml во время работы
 		this.xml.push(customXml);
+	};
+	CustomXmlManager.prototype.isXmlExist = function(uid, prefix)
+	{
+		for (let nXmlCounter = 0; nXmlCounter < this.getCount(); nXmlCounter++)
+		{
+			let customXml = this.getCustomXml(nXmlCounter);
+
+			if (uid === customXml.itemId || customXml.checkUrl(prefix))
+				return true;
+		}
+		return false;
+	}
+	CustomXmlManager.prototype.getExactXml = function (uId, prefix)
+	{
+		for (let nXmlCounter = 0; nXmlCounter < this.getCount(); nXmlCounter++)
+		{
+			let customXml = this.getCustomXml(nXmlCounter);
+
+			if (uId === customXml.itemId || customXml.checkUrl(prefix))
+				return customXml;
+		}
 	};
 	CustomXmlManager.prototype.getCount = function()
 	{
@@ -67,55 +86,17 @@
 	{
 		return this.xml[index];
 	};
-	CustomXmlManager.prototype.getPromptSaveCustomXML = function ()
-	{
-		return this.promptSave;
-	};
-	CustomXmlManager.prototype.createCustomXml = function()
+	CustomXmlManager.prototype.createCustomXml = function(content, uri)
 	{
 		let oXML = new AscWord.CustomXml();
 		this.add(oXML);
-		return oXML;
-	};
-	CustomXmlManager.prototype.getCustomXMlPromptSave = function () {
-		if (!this.promptSave)
-			this.createCustomXMlPromptSave();
 
-		return this.promptSave;
-	};
-	CustomXmlManager.prototype.createCustomXMlPromptSave = function () {
-		if (!this.promptSave)
-		{
-			let oXML = this.createCustomXml();
-
+		if (content)
 			oXML.addContentByXMLString(oPromptSaveCustomXML.content);
-			oXML.setItemId();
+		if (uri)
 			oXML.addUri(oPromptSaveCustomXML.uri);
 
-			this.promptSave = oXML;
-		}
-
-		return this.promptSave;
-	};
-	CustomXmlManager.prototype.getDataBindingForPromptSave = function (contentControlId)
-	{
-		if (!this.promptSave)
-			return;
-
-		let oCurrentPromptSaveData = this.findElementByXPath(this.promptSave.content, '/promptData');
-		let oCurrentListOfContentControlsData = oCurrentPromptSaveData.content.attribute;
-
-		if (oCurrentListOfContentControlsData['id' + contentControlId])
-			return;
-
-		let oCurrentXmlForPromptSave = this.promptSave;
-		let db = new AscWord.DataBinding(
-			"xmlns:ns0='" + oPromptSaveCustomXML.uri + "'",
-			oCurrentXmlForPromptSave.itemId,
-			oPromptSaveCustomXML.dataBindingPath,
-		);
-
-		return db;
+		return oXML;
 	};
 	/**
 	 * Find element/attribute of CustomXMl by xpath string

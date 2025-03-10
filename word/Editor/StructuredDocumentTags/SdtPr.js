@@ -59,6 +59,7 @@ function CSdtPr()
 	this.Equation = false;
 	this.TextForm = undefined;
 	this.AI       = false;
+	this.DataBinding = false;
 
 	this.TextPr = new CTextPr();
 
@@ -432,6 +433,7 @@ function CContentControlPr(nType)
 	this.CCType     = undefined !== nType ? nType : c_oAscSdtLevelType.Inline;
 	
 	this.Temporary  = undefined;
+	this.DataBinding = undefined;
 
 	this.AI			= undefined;
 	
@@ -509,6 +511,13 @@ CContentControlPr.prototype.FillFromObject = function(oPr)
 
 	if (undefined !== oPr.AI)
 		this.AI = oPr.AI;
+
+	if (undefined !== oPr.DataBinding)
+	{
+		let oDataBinding = new AscWord.DataBinding(oPr.DataBinding);
+		oDataBinding.fillFromObject(oPr.DataBinding);
+		this.DataBinding = oDataBinding;
+	}
 };
 CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 {
@@ -526,6 +535,9 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 	this.Color      = oContentControl.GetColor();
 	this.Temporary  = oContentControl.IsContentControlTemporary();
 	this.AI         = oContentControl.Pr.AI;
+
+	if (oContentControl.Pr.DataBinding)
+		this.DataBinding = oContentControl.GetDataBinding();
 
 	if (oContentControl.IsCheckBox())
 	{

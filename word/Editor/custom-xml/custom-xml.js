@@ -49,6 +49,8 @@
 		this.itemId				= itemId ? itemId : "";
 		this.content			= content ? content : null;
 		this.oContentLink		= oContentLink ? oContentLink : null;
+
+		this.setItemId();
 	}
 
 	/**

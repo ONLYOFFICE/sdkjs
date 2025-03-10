@@ -48,6 +48,13 @@
 	{
 		return new DataBinding(this.prefixMappings, this.storeItemID, this.xpath, this.storeItemCheckSum);
 	};
+	DataBinding.prototype.fillFromObject = function (obj)
+	{
+		this.prefixMappings		= obj.prefixMappings;
+		this.storeItemID 		= obj.storeItemID;
+		this.xpath				= obj.xpath;
+		this.storeItemCheckSum	= obj.storeItemCheckSum;
+	};
 	DataBinding.prototype.recalculateCheckSum = function (stringOfCustomXMlContent)
 	{
 	};

@@ -1894,6 +1894,90 @@
 		if (items["items"]) correctItemsWithData(items["items"], baseUrl);
 		this.onPluginAddContextMenuItem(items);
 	};
+	Api.prototype["pluginMethod_RegisterCCButtonType"] = function (name, type)
+	{
+		AscCommon.RegisterCCButtonType(name, type);
+	};
+	Api.prototype["pluginMethod_RegisterContentControlsIcon"] = function (name, url)
+	{
+		this.WordControl.m_oLogicDocument.DrawingDocument.contentControls.registerIcon(name, url);
+	};
+	Api.prototype["pluginMethod_GetCustomXMLContentByDataBinding"] = function(dataBinding)
+	{
+		let oLogicDocument		= this.private_GetLogicDocument();
+		let oCustomXmlManager	= oLogicDocument.getCustomXmlManager();
+		if (!oLogicDocument)
+			return;
+
+		return oCustomXmlManager.getContentByDataBinding(dataBinding);
+	};
+
+	Api.prototype["pluginMethod_CreateCustomXML"] = function(content, uri)
+	{
+		window.g_asc_plugins.setPluginMethodReturnAsync();
+		let oLogicDocument		= this.private_GetLogicDocument();
+		let oCustomXmlManager	= oLogicDocument.getCustomXmlManager();
+		if (!oLogicDocument)
+			return;
+
+		let xml = oCustomXmlManager.createCustomXml(content, uri)
+		window.g_asc_plugins.onPluginMethodReturn(xml.itemId);
+	};
+	Api.prototype["pluginMethod_IsCustomXmlExist"] = function(prefix, uId)
+	{
+		window.g_asc_plugins.setPluginMethodReturnAsync();
+		let oLogicDocument		= this.private_GetLogicDocument();
+		let oCustomXmlManager	= oLogicDocument.getCustomXmlManager();
+		let isExist = oCustomXmlManager.isXmlExist(uId, prefix);
+		window.g_asc_plugins.onPluginMethodReturn(isExist);
+	};
+	Api.prototype["pluginMethod_AddContentToCustomXml"] = function(uId, prefix, xpath, arrContent)
+	{
+		let oLogicDocument		= this.private_GetLogicDocument();
+		let oCustomXmlManager	= oLogicDocument.getCustomXmlManager();
+		let oXML = oCustomXmlManager.getExactXml(uId, prefix);
+
+		let xml;
+		let cusXMLData	= oCustomXmlManager.findElementByXPath(oXML.content, xpath);
+		if (cusXMLData)
+			xml = cusXMLData.content;
+
+		for (let i = 0; i < arrContent.length; i++)
+		{
+			let oCurContent = arrContent[i];
+			let type = oCurContent.type;
+			let name = oCurContent.name;
+			let value = oCurContent.value;
+
+			if (type === 'attribute')
+			{
+				xml.addAttribute(name, value);
+			}
+			else
+			{
+				let item = xml.addContent(name);
+
+				for (let j = 0; j < value.length; j++)
+				{
+					let oCurrentData = value[j];
+
+					if (typeof oCurrentData.value === 'string')
+						oCurrentData.value = oCurrentData.value.replaceAll('"', "'");
+
+					if (oCurrentData.type === 'block')
+					{
+						let oCurEl = item.addContent(oCurrentData.name);
+						oCurEl.setTextContent(oCurrentData.value);
+
+					}
+					else if (oCurrentData.type === "attribute")
+					{
+						item.addAttribute(oCurrentData.name, oCurrentData.value);
+					}
+				}
+			}
+		}
+	};
 
 	/**
 	 * Updates an item in the context menu with the specified items.

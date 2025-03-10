@@ -3202,7 +3202,6 @@ window.AscCommon.g_cIsBeta = "false";
 
 		TOC          : 10,
 		Complex      : 11,
-		AI : 12,
 		
 		toString : function(type)
 		{
@@ -5835,7 +5834,6 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['None']         = c_oAscContentControlSpecificType.None;
 	prot['CheckBox']     = c_oAscContentControlSpecificType.CheckBox;
 	prot['Picture']      = c_oAscContentControlSpecificType.Picture;
-	prot['AI']           = c_oAscContentControlSpecificType.AI;
 	prot['ComboBox']     = c_oAscContentControlSpecificType.ComboBox;
 	prot['DropDownList'] = c_oAscContentControlSpecificType.DropDownList;
 	prot['DateTime']     = c_oAscContentControlSpecificType.DateTime;
