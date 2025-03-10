@@ -514,7 +514,7 @@
         let aCurIdxs = this.GetCurIdxs();
         let aApiIdxs = this.GetParentCurIdxs();
 
-        let isChanged = false;
+        let isChanged = this.GetValue() != this.GetParentValue();
         for (let i = 0; i < aCurIdxs.length; i++) {
             if (!aApiIdxs || aCurIdxs[i] === undefined || aApiIdxs[i] === undefined || aCurIdxs[i] !== aApiIdxs[i]) {
                 isChanged = true;
@@ -721,7 +721,7 @@
             }
         }
         
-        return -1;
+        return [];
     };
 	
     CComboBoxField.prototype.ProcessAutoFitContent = function(oContent) {
