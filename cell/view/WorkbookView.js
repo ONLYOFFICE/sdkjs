@@ -834,6 +834,7 @@
 			  }, "updated": function () {
 				  self.Api.checkLastWork();
 				  self._onUpdateCellEditor.apply(self, arguments);
+				  self.externalSelectionController && self.externalSelectionController.externalChangeSelection();
 			  }, "gotFocus": function (hasFocus) {
 				  self.controller.setFocus(!hasFocus);
 			  }, "updateFormulaEditMod": function (val) {
@@ -1475,7 +1476,7 @@
             this.cellEditor.restoreFocus();
         }
 
-		this.externalSelectionController.externalChangeSelection();
+		//this.externalSelectionController.externalChangeSelection();
         asc_applyFunction(callback, d);
     };
 
@@ -2878,7 +2879,6 @@
 	// Останавливаем ввод данных в редакторе ввода
 	WorkbookView.prototype.closeCellEditor = function (cancel) {
 		this.externalSelectionController.externalCloseEditor();
-		
 		return this.getCellEditMode() ? this.cellEditor.close(!cancel) : true;
 	};
 
@@ -7160,11 +7160,19 @@
 			if (document.hidden === false) {
 				if (window.externalFormulaEditMode) {
 					//we must open cell editor in formula edit mode and send information about change selection
-					let editorEnterOptions = new AscCommonExcel.CEditorEnterOptions();
-					editorEnterOptions.newText = "=" + (oThis.activeTabFormula ? oThis.activeTabFormula : "");
-					oThis.wb._onEditCell(editorEnterOptions, function () {
+					if (!oThis.wb.getCellEditMode()) {
+						let editorEnterOptions = new AscCommonExcel.CEditorEnterOptions();
+						editorEnterOptions.newText = "=" + (oThis.activeTabFormula ? oThis.activeTabFormula : "");
+						oThis.wb._onEditCell(editorEnterOptions, function () {
+							oThis.wb.setFormulaEditMode(true);
+						});
+					} else {
+						oThis.wb.skipHelpSelector = true;
+						let val = oThis.activeTabFormula ? oThis.activeTabFormula : "";
+						oThis.wb.cellEditor.changeCellText(val);
+						oThis.wb.skipHelpSelector = false;
 						oThis.wb.setFormulaEditMode(true);
-					});
+					}
 				}
 				console.log("Visibility of page has changed!" + " documentHidden " + document.hidden);
 			} else {
@@ -7198,10 +7206,10 @@
 		//if open cell editor and start formula edit mode, then send by all tabs "SetFormulaEditMode" event
 		//event data must contains doc info and current cell text
 		console.log("SetFormulaEditMode_on_message " + "_isClose: " + data.isClose)
-		if (this.wb.getCellEditMode() && window.externalFormulaEditMode && data.isClose) {
+		window.externalFormulaEditMode = !data.isClose ? {id: data.id} : null;
+		if (this.wb.getCellEditMode() /*&& window.externalFormulaEditMode*/ && data.isClose) {
 			this.wb.closeCellEditor(true);
 		}
-		window.externalFormulaEditMode = !data.isClose ? {id: data.id} : null;
 	};
 	CExternalSelectionController.prototype.externalChangeSelection = function () {
 		let ws = this.wb.model.getActiveWs();

@@ -372,6 +372,11 @@ function (window, undefined) {
 		var opt = this.options;
 		var t = this;
 
+		if (window.externalFormulaEditMode) {
+			callback && callback(false);
+			return;
+		}
+
 		var api = window["Asc"]["editor"];
 		if (api && !api.canUndoRedoByRestrictions()) {
 			saveValue = false;
