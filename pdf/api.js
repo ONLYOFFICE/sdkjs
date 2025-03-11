@@ -1194,61 +1194,6 @@
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
-	PDFEditorApi.prototype.AddListFieldOption = function(option, nPos) {
-		let oDoc = this.getPDFDoc();
-
-		return oDoc.DoAction(function() {
-			let oField = oDoc.activeForm;
-			if (!oField) {
-				return false;
-			}
-			if (oField && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(oField.GetType())) {
-				oField.AddOption(option, nPos);
-			}
-
-			return true;
-		}, AscDFH.historydescription_Pdf_AddField, this);
-	};
-	PDFEditorApi.prototype.RemoveListFieldOption = function(nPos) {
-		let oDoc = this.getPDFDoc();
-
-		return oDoc.DoAction(function() {
-			let oField = oDoc.activeForm;
-			if (!oField) {
-				return false;
-			}
-			if (oField && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(oField.GetType())) {
-				oField.RemoveOption(nPos);
-			}
-
-			return true;
-		}, AscDFH.historydescription_Pdf_AddField, this);
-	};
-	PDFEditorApi.prototype.MoveListFieldOption = function(nPos, bUp) {
-		let oDoc = this.getPDFDoc();
-
-		return oDoc.DoAction(function() {
-			let oField = oDoc.activeForm;
-			if (!oField) {
-				return false;
-			}
-
-			let aOptions = oField.GetOptions();
-			if (bUp && nPos == 0) {
-				return false;
-			}
-			else if (!bUp && nPos == aOptions.length -1) {
-				return false;
-			}
-
-			if (oField && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(oField.GetType())) {
-				let opt = oField.RemoveOption(nPos);
-				oField.AddOption(opt, bUp ? nPos - 1 : nPos + 1)
-			}
-
-			return true;
-		}, AscDFH.historydescription_Pdf_AddField, this);
-	};
 	// fields formats
 	PDFEditorApi.prototype.SetFieldNumberFormat = function(nDemical, nSepStyle, nNegStyle, sCurrency, bCurrencyPrepend) {
 		let oDoc = this.getPDFDoc();
@@ -1683,6 +1628,82 @@
 			return true;
         }, AscDFH.historydescription_Pdf_ChangeField);
 	};
+	// baselist field
+	PDFEditorApi.prototype.AddListFieldOption = function(option, nPos) {
+		let oDoc = this.getPDFDoc();
+
+		return oDoc.DoAction(function() {
+			let oField = oDoc.activeForm;
+			if (!oField) {
+				return false;
+			}
+			if (oField && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(oField.GetType())) {
+				oField.AddOption(option, nPos);
+			}
+
+			return true;
+		}, AscDFH.historydescription_Pdf_AddField, this);
+	};
+	PDFEditorApi.prototype.RemoveListFieldOption = function(nPos) {
+		let oDoc = this.getPDFDoc();
+
+		return oDoc.DoAction(function() {
+			let oField = oDoc.activeForm;
+			if (!oField) {
+				return false;
+			}
+			if (oField && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(oField.GetType())) {
+				oField.RemoveOption(nPos);
+			}
+
+			return true;
+		}, AscDFH.historydescription_Pdf_AddField, this);
+	};
+	PDFEditorApi.prototype.MoveListFieldOption = function(nPos, bUp) {
+		let oDoc = this.getPDFDoc();
+
+		return oDoc.DoAction(function() {
+			let oField = oDoc.activeForm;
+			if (!oField) {
+				return false;
+			}
+
+			let aOptions = oField.GetOptions();
+			if (bUp && nPos == 0) {
+				return false;
+			}
+			else if (!bUp && nPos == aOptions.length -1) {
+				return false;
+			}
+
+			if (oField && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(oField.GetType())) {
+				let opt = oField.RemoveOption(nPos);
+				oField.AddOption(opt, bUp ? nPos - 1 : nPos + 1)
+			}
+
+			return true;
+		}, AscDFH.historydescription_Pdf_AddField, this);
+	};
+	// combobox
+	PDFEditorApi.prototype.SetComboboxFieldEditable = function(bValue) {
+		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
+		let oForm = oDoc.activeForm;
+
+		if (!oForm) {
+			return false;
+		}
+
+		return oDoc.DoAction(function() {
+			oController.selectedObjects.forEach(function(shape) {
+				let field = shape.GetEditField();
+				field.SetEditable(bValue);
+			});
+
+			return true;
+        }, AscDFH.historydescription_Pdf_ChangeField);
+	};
+
 	/////////////////////////////////////////////////////////////
 	///////// For drawings
 	////////////////////////////////////////////////////////////
@@ -3727,9 +3748,6 @@
 	PDFEditorApi.prototype['AddRadiobuttonField']		= PDFEditorApi.prototype.AddRadiobuttonField;
 	PDFEditorApi.prototype['AddComboboxField']			= PDFEditorApi.prototype.AddComboboxField;
 	PDFEditorApi.prototype['AddListboxField']			= PDFEditorApi.prototype.AddListboxField;
-	PDFEditorApi.prototype['AddListFieldOption']		= PDFEditorApi.prototype.AddListFieldOption;
-	PDFEditorApi.prototype['RemoveListFieldOption']		= PDFEditorApi.prototype.RemoveListFieldOption;
-	PDFEditorApi.prototype['MoveListFieldOption']		= PDFEditorApi.prototype.MoveListFieldOption;
 	PDFEditorApi.prototype['SetFieldNumberFormat']		= PDFEditorApi.prototype.SetFieldNumberFormat;
 	PDFEditorApi.prototype['SetFieldPercentageFormat']	= PDFEditorApi.prototype.SetFieldPercentageFormat;
 	PDFEditorApi.prototype['SetFieldDateFormat']		= PDFEditorApi.prototype.SetFieldDateFormat;
@@ -3749,7 +3767,14 @@
 	PDFEditorApi.prototype['SetFieldStrokeStyle']		= PDFEditorApi.prototype.SetFieldStrokeStyle;
 	PDFEditorApi.prototype['SetFieldBgColor']			= PDFEditorApi.prototype.SetFieldBgColor;
 	PDFEditorApi.prototype['SetFieldRequired']			= PDFEditorApi.prototype.SetFieldRequired;
+	// text field
 	PDFEditorApi.prototype['SetTextFieldMultiline']		= PDFEditorApi.prototype.SetTextFieldMultiline;
+	// baselist field
+	PDFEditorApi.prototype['AddListFieldOption']		= PDFEditorApi.prototype.AddListFieldOption;
+	PDFEditorApi.prototype['RemoveListFieldOption']		= PDFEditorApi.prototype.RemoveListFieldOption;
+	PDFEditorApi.prototype['MoveListFieldOption']		= PDFEditorApi.prototype.MoveListFieldOption;
+	// combobox field
+	PDFEditorApi.prototype['SetComboboxFieldEditable']	= PDFEditorApi.prototype.SetComboboxFieldEditable;
 	
 	// drawings
 	PDFEditorApi.prototype['AddTextArt']							= PDFEditorApi.prototype.AddTextArt;

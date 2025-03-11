@@ -164,7 +164,6 @@
             if (aFields[i] != this) {
                 this.SetMultipleSelection(aFields[i].IsMultipleSelection());
                 this.SetCommitOnSelChange(aFields[i].IsCommitOnSelChange());
-                this.SetOptions(aFields[i].GetOptions());
 
                 this.content.Internal_Content_RemoveAll();
                 for (let nItem = 0; nItem < aFields[i].content.Content.length; nItem++) {

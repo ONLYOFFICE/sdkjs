@@ -455,7 +455,6 @@
                 this.SetCalcOrderIndex(aFields[i].GetCalcOrderIndex());
                 this.SetDoNotSpellCheck(aFields[i].IsDoNotSpellCheck());
                 this.SetEditable(aFields[i].IsEditable());
-                this.SetOptions(aFields[i].GetOptions());
 
                 let _t = this;
                 Object.values(AscPDF.ACTIONS_TYPES).forEach(function(type) {
@@ -609,7 +608,7 @@
     };
     
     CComboBoxField.prototype.SetEditable = function(bValue) {
-        AscCommon.History.Add(new CChangesPDFListOption(this, nPos, this._editable, bValue));
+        AscCommon.History.Add(new CChangesPDFComboboxFieldEditable(this, this._editable, bValue));
 
         this._editable = bValue;
 

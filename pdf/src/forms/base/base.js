@@ -437,44 +437,46 @@
 	 */
     CBaseField.prototype.SetActions = function(nTriggerType, aActionsInfo) {
         let aActions = [];
-        for (let i = 0; i < aActionsInfo.length; i++) {
-            let oAction;
-            switch (aActionsInfo[i]["S"]) {
-                case AscPDF.ACTIONS_TYPES.JavaScript:
-                    oAction = new AscPDF.CActionRunScript(aActionsInfo[i]["JS"]);
-                    aActions.push(oAction);
-                    break;
-                case AscPDF.ACTIONS_TYPES.ResetForm:
-                    oAction = new AscPDF.CActionReset(aActionsInfo[i]["Fields"], Boolean(aActionsInfo[i]["Flags"]));
-                    aActions.push(oAction);
-                    break;
-                case AscPDF.ACTIONS_TYPES.URI:
-                    oAction = new AscPDF.CActionURI(aActionsInfo[i]["URI"]);
-                    aActions.push(oAction);
-                    break;
-                case AscPDF.ACTIONS_TYPES.HideShow:
-                    oAction = new AscPDF.CActionHideShow(Boolean(aActionsInfo[i]["H"]), aActionsInfo[i]["T"]);
-                    aActions.push(oAction);
-                    break;
-                case AscPDF.ACTIONS_TYPES.GoTo:
-                    let oRect = {
-                        top:    aActionsInfo[i]["top"],
-                        right:  aActionsInfo[i]["right"],
-                        bottom: aActionsInfo[i]["bottom"],
-                        left:   aActionsInfo[i]["left"]
-                    }
-                    if (aActionsInfo[i]["bottom"] != null && aActionsInfo[i]["top"] != null) {
-                        oRect.top = aActionsInfo[i]["bottom"];
-                        oRect.bottom = aActionsInfo[i]["top"];
-                    }
-
-                    oAction = new AscPDF.CActionGoTo(aActionsInfo[i]["page"], aActionsInfo[i]["kind"], aActionsInfo[i]["zoom"], oRect);
-                    aActions.push(oAction);
-                    break;
-                case AscPDF.ACTIONS_TYPES.Named:
-                    oAction = new AscPDF.CActionNamed(AscPDF.CActionNamed.GetInternalType(aActionsInfo[i]["N"]));
-                    aActions.push(oAction);
-                    break;
+        if (aActionsInfo) {
+            for (let i = 0; i < aActionsInfo.length; i++) {
+                let oAction;
+                switch (aActionsInfo[i]["S"]) {
+                    case AscPDF.ACTIONS_TYPES.JavaScript:
+                        oAction = new AscPDF.CActionRunScript(aActionsInfo[i]["JS"]);
+                        aActions.push(oAction);
+                        break;
+                    case AscPDF.ACTIONS_TYPES.ResetForm:
+                        oAction = new AscPDF.CActionReset(aActionsInfo[i]["Fields"], Boolean(aActionsInfo[i]["Flags"]));
+                        aActions.push(oAction);
+                        break;
+                    case AscPDF.ACTIONS_TYPES.URI:
+                        oAction = new AscPDF.CActionURI(aActionsInfo[i]["URI"]);
+                        aActions.push(oAction);
+                        break;
+                    case AscPDF.ACTIONS_TYPES.HideShow:
+                        oAction = new AscPDF.CActionHideShow(Boolean(aActionsInfo[i]["H"]), aActionsInfo[i]["T"]);
+                        aActions.push(oAction);
+                        break;
+                    case AscPDF.ACTIONS_TYPES.GoTo:
+                        let oRect = {
+                            top:    aActionsInfo[i]["top"],
+                            right:  aActionsInfo[i]["right"],
+                            bottom: aActionsInfo[i]["bottom"],
+                            left:   aActionsInfo[i]["left"]
+                        }
+                        if (aActionsInfo[i]["bottom"] != null && aActionsInfo[i]["top"] != null) {
+                            oRect.top = aActionsInfo[i]["bottom"];
+                            oRect.bottom = aActionsInfo[i]["top"];
+                        }
+    
+                        oAction = new AscPDF.CActionGoTo(aActionsInfo[i]["page"], aActionsInfo[i]["kind"], aActionsInfo[i]["zoom"], oRect);
+                        aActions.push(oAction);
+                        break;
+                    case AscPDF.ACTIONS_TYPES.Named:
+                        oAction = new AscPDF.CActionNamed(AscPDF.CActionNamed.GetInternalType(aActionsInfo[i]["N"]));
+                        aActions.push(oAction);
+                        break;
+                }
             }
         }
         
@@ -776,6 +778,10 @@
         if (oParent && this.IsWidget() && oParent.IsAllKidsWidgets())
             oParent.SetParentValue(value);
         else {
+            if (this._value === value) {
+                return;
+            }
+            
             this.SetWasChanged(true);
             let oDoc = this.GetDocument();
             oDoc.History.Add(new CChangesPDFFormParentValue(this, this._value, value));
@@ -1343,8 +1349,9 @@
         }
     };
     CBaseField.prototype.SetName = function(sName) {
-        let oDoc = this.GetDocument();
-        let nFieldType = this.GetType();
+        let oDoc        = this.GetDocument();
+        let nFieldType  = this.GetType();
+        let isList      = [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(nFieldType);
 
         while (sName.indexOf('..') != -1)
             sName = sName.replace(new RegExp("\.\.", "g"), ".");
@@ -1367,6 +1374,8 @@
         // удаляем поле из родителя
         let oParent = this.GetParent();
         let sCurValue = this.GetValue();
+        let aCurOptions = isList ? this.GetOptions() : null;
+                    
         if (oParent) {
             sCurValue = this.GetParentValue();
             oParent.RemoveKid(this);
@@ -1379,6 +1388,9 @@
             let oParentField;
 
             if (oExistsField) {
+                sCurValue = oExistsField.GetParentValue();
+                aCurOptions = isList ? oExistsField.GetOptions() : null;
+
                 if (!oExistsField.IsWidget()) {
                     if (!oExistsField.IsAllKidsWidgets()) {
                         return false;
@@ -1404,6 +1416,10 @@
             }
 
             if (bSetParentValue) {
+                if (isList) {
+                    oParentField.SetOptions(aCurOptions);
+                }
+
                 oParentField.SetParentValue(sCurValue);
             }
 
