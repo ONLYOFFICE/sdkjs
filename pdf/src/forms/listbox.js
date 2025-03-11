@@ -374,6 +374,11 @@
         }
     };
     CListBoxField.prototype.RemoveOption = function(nPos) {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() == this.GetType())
+            return oParent.RemoveOption(nPos);
+
+        // to do
         if (Number.isInteger(nPos) && nPos >= 0 && nPos < this._options.length) {
             let option = this._options.splice(nPos, 1);
             AscCommon.History.Add(new CChangesPDFListOption(this, nPos, option, false));

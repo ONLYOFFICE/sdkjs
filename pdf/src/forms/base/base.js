@@ -2711,6 +2711,66 @@
             }
         }
 
+        // combobox/listbox
+        let aOptions = [];
+        if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
+            nFlags |= (1 << 6);
+
+            aOptions = this.GetOptions(false);
+            if (aOptions) {
+                memory.WriteLong(aOptions.length);
+                for (let i = 0; i < aOptions.length; i++) {
+                    memory.WriteString(Array.isArray(aOptions[i]) ? aOptions[i][1] : "");
+                    memory.WriteString(Array.isArray(aOptions[i]) ? aOptions[i][0] : aOptions[i]);
+                }
+            }
+        }
+
+        // флаги полей
+        nFlags |= (1 << 7);
+
+        let nWidgetFlags = 0;
+        if (this.IsReadOnly && this.IsReadOnly()) {
+            nWidgetFlags |= (1 << 0);
+        }
+        if (this.IsRequired && this.IsRequired()) {
+            nWidgetFlags |= (1 << 1);
+        }
+        if (this.IsNoExport && this.IsNoExport()) {
+            nWidgetFlags |= (1 << 2);
+        }
+        if (this.IsMultiline && this.IsMultiline()) {
+            nWidgetFlags |= (1 << 12);
+        }
+        if (this.IsPassword && this.IsPassword()) {
+            nWidgetFlags |= (1 << 13);
+        }
+        if (this.IsNoToggleToOff && this.IsNoToggleToOff()) {
+            nWidgetFlags |= (1 << 14);
+        }
+        if (this.IsEditable && this.IsEditable()) {
+            nWidgetFlags |= (1 << 18);
+        }
+        if (this.IsFileSelect && this.IsFileSelect()) {
+            nWidgetFlags |= (1 << 20);
+        }
+        if (this.IsMultipleSelection && this.IsMultipleSelection()) {
+            nWidgetFlags |= (1 << 21);
+        }
+        if (this.IsDoNotSpellCheck && this.IsDoNotSpellCheck()) {
+            nWidgetFlags |= (1 << 22);
+        }
+        if (this.IsDoNotScroll && this.IsDoNotScroll()) {
+            nWidgetFlags |= (1 << 23);
+        }
+        if (this.IsComb && this.IsComb()) {
+            nWidgetFlags |= (1 << 24);
+        }
+        if (this.IsCommitOnSelChange && this.IsCommitOnSelChange()) {
+            nWidgetFlags |= (1 << 26);
+        }
+        memory.WriteLong(nFlags);
+
         // write flags
         let nEndPos = memory.GetCurPosition();
         memory.Seek(nStartPos);

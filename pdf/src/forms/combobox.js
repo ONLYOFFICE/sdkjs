@@ -670,6 +670,10 @@
         this.SetNeedRecalc(true);
     };
     CComboBoxField.prototype.RemoveOption = function(nPos) {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() == this.GetType())
+            return oParent.RemoveOption(nPos);
+
         if (Number.isInteger(nPos) && nPos >= 0 && nPos < this._options.length) {
             if (this.GetCurIdxs().includes(nPos)) {
                 let oPara = this.content.GetElement(0);
@@ -834,7 +838,7 @@
             memory.widgetFlags |= (1 << 18);
         }
         if (this.IsDoNotSpellCheck()) {
-            memory.fieldDataFlags |= (1 << 22);
+            memory.widgetFlags |= (1 << 22);
         }
         if (this.IsCommitOnSelChange()) {
             memory.widgetFlags |= (1 << 26);

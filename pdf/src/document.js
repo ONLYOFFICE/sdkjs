@@ -606,8 +606,10 @@ var CPresentation = CPresentation || function(){};
                 oParent.SetApIdx(aParentsInfo[i]["i"]);
             if (aParentsInfo[i]["curIdxs"])
                 oParent.SetParentCurIdxs(aParentsInfo[i]["curIdxs"]);
-            if (aParentsInfo[i]["Opt"])
-                oParent.SetOptions(aParentsInfo[i]["Opt"]);
+            if (aParentsInfo[i]["opt"])
+                oParent.SetOptions(aParentsInfo[i]["opt"]);
+
+            // flags
             if (aParentsInfo[i]["editable"])
                 oParent.SetEditable(true);
             if (aParentsInfo[i]["multiline"])
