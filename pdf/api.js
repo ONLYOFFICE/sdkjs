@@ -1608,6 +1608,42 @@
 			return true;
         }, AscDFH.historydescription_Pdf_ChangeField);
 	};
+	PDFEditorApi.prototype.SetTextFieldCharLimit = function(nChars) {
+		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
+		let oForm = oDoc.activeForm;
+
+		if (!oForm) {
+			return false;
+		}
+
+		return oDoc.DoAction(function() {
+			oController.selectedObjects.forEach(function(shape) {
+				let field = shape.GetEditField();
+				field.SetCharLimit(nChars);
+			});
+
+			return true;
+        }, AscDFH.historydescription_Pdf_ChangeField);
+	};
+	PDFEditorApi.prototype.SetTextFieldComb = function(bValue) {
+		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
+		let oForm = oDoc.activeForm;
+
+		if (!oForm) {
+			return false;
+		}
+
+		return oDoc.DoAction(function() {
+			oController.selectedObjects.forEach(function(shape) {
+				let field = shape.GetEditField();
+				field.SetComb(bValue);
+			});
+
+			return true;
+        }, AscDFH.historydescription_Pdf_ChangeField);
+	};
 	PDFEditorApi.prototype.SetFieldPlaceholder = function(sText) {
 		let oDoc = this.getPDFDoc();
 		let oController = oDoc.GetController();
@@ -3769,6 +3805,8 @@
 	PDFEditorApi.prototype['SetFieldRequired']			= PDFEditorApi.prototype.SetFieldRequired;
 	// text field
 	PDFEditorApi.prototype['SetTextFieldMultiline']		= PDFEditorApi.prototype.SetTextFieldMultiline;
+	PDFEditorApi.prototype['SetTextFieldCharLimit']		= PDFEditorApi.prototype.SetTextFieldCharLimit;
+	PDFEditorApi.prototype['SetTextFieldComb']			= PDFEditorApi.prototype.SetTextFieldComb;
 	// baselist field
 	PDFEditorApi.prototype['AddListFieldOption']		= PDFEditorApi.prototype.AddListFieldOption;
 	PDFEditorApi.prototype['RemoveListFieldOption']		= PDFEditorApi.prototype.RemoveListFieldOption;
