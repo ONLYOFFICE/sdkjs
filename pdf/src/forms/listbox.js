@@ -368,8 +368,10 @@
         if (Number.isInteger(nPos) && nPos >= 0 && nPos < this._options.length) {
             AscCommon.History.Add(new CChangesPDFListOption(this, nPos, option, false));
 
-            this._options.splice(nPos, 1);
+            let option = this._options.splice(nPos, 1);
             this.content.Internal_Content_Remove(nPos);
+
+            return opt;
         }
     };
     CListBoxField.prototype.SetOptions = function(aOpt) {

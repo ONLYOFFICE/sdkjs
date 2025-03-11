@@ -670,6 +670,8 @@
 
             this.SetWasChanged(true);
             this.SetNeedRecalc(true);
+
+            return option;
         }
     };
     CComboBoxField.prototype.SetOptions = function(aOpt) {

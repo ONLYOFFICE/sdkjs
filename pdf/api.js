@@ -1242,8 +1242,8 @@
 			}
 
 			if (oField && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(oField.GetType())) {
-				oField.RemoveOption(nPos);
-				oField.AddOption(bUp ? nPos - 1 : nPos + 1)
+				let opt = oField.RemoveOption(nPos);
+				oField.AddOption(opt, bUp ? nPos - 1 : nPos + 1)
 			}
 
 			return true;
