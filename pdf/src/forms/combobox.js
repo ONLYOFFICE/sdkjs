@@ -513,7 +513,8 @@
         let aCurIdxs = this.GetCurIdxs();
         let aApiIdxs = this.GetParentCurIdxs();
 
-        let isChanged = this.GetValue() != this.GetParentValue();
+        let sNewValue = this.GetValue();
+        let isChanged = sNewValue !== this.GetParentValue();
         for (let i = 0; i < aCurIdxs.length; i++) {
             if (!aApiIdxs || aCurIdxs[i] === undefined || aApiIdxs[i] === undefined || aCurIdxs[i] !== aApiIdxs[i]) {
                 isChanged = true;
@@ -545,7 +546,12 @@
                 }
             }
                 
-            aFields[i].SetCurIdxs(aCurIdxs);
+            if (aCurIdxs && aCurIdxs.length != 0) {
+                aFields[i].SetCurIdxs(aCurIdxs);
+            }
+            else {
+                aFields[i].SetValue(sNewValue);
+            }
             aFields[i].SetNeedRecalc(true);
         }
 
