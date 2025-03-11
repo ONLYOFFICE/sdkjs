@@ -73,26 +73,27 @@
     CTextField.prototype.SetComb = function(bComb) {
         let oParent = this.GetParent();
         if (oParent && oParent.GetType() === this.GetType()) {
-            oParent.SetComb(bComb);
-            return;
+            return oParent.SetComb(bComb);
         }
 
         if (this.IsComb() == bComb) {
-            return;
+            return false;
         }
 
-        if (this.GetCharLimit() != 0)
-            return;
-
-        AscCommon.History.Add(new CChangesPDFTextComb(this, this._comb, bComb));
-            
+        let bOld = this._comb;
+        
         if (bComb == true) {
+            if (this.GetCharLimit() == 0)
+                return false;
+
             this._comb = true;
             this._doNotScroll = true;
         }
         else {
             this._comb = false;
         }
+
+        AscCommon.History.Add(new CChangesPDFTextComb(this, bOld, bComb));
 
         function updateMeasure(widget) {
             widget.content.GetElement(0).Content.forEach(function(run) {
@@ -114,6 +115,8 @@
 
         this.SetNeedRecalc(true);
         this.SetWasChanged(true);
+
+        return true;
     };
     CTextField.prototype.IsComb = function() {
         let oParent = this.GetParent();
@@ -135,11 +138,11 @@
         let oParent = this.GetParent();
         if (oParent && oParent.GetType() === this.GetType()) {
             oParent.SetCharLimit(nChars);
-            return;
+            return false;
         }
 
         if (this.GetCharLimit() == nChars) {
-            return;
+            return false;
         }
 
         let oViewer = editor.getDocumentRenderer();
@@ -164,6 +167,8 @@
         } else {
             this.GetAllWidgets().forEach(updateContent);
         }
+
+        return true;
     };
     CTextField.prototype.GetCharLimit = function() {
         let oParent = this.GetParent();

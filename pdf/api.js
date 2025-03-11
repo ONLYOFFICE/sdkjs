@@ -1638,6 +1638,13 @@
 		return oDoc.DoAction(function() {
 			oController.selectedObjects.forEach(function(shape) {
 				let field = shape.GetEditField();
+				if (bValue) {
+					field.SetCharLimit(10);
+				}
+				else {
+					field.SetCharLimit(0);
+				}
+				
 				field.SetComb(bValue);
 			});
 
