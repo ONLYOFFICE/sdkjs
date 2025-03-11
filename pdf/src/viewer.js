@@ -5044,12 +5044,14 @@
 			oMemory.Skip(4);
 			let nParents = 0;
 
+			let aWritedParents = [];
 			oDoc.widgets.forEach(function(widget) {
 				let oParent = widget.GetParent();
 				while (oParent) {
-					if (oParent.IsChanged()) {
+					if (oParent.IsChanged() && !aWritedParents.includes(oParent)) {
 						nParents++;
 						oParent.WriteToBinaryAsParent(oMemory);
+						aWritedParents.push(oParent);
 					}
 
 					oParent = oParent.GetParent();

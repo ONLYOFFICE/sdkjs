@@ -798,7 +798,7 @@
 
         // элементы списка выбора
         let aOptions = this.GetOptions(false);
-        if (aOptions) {
+        if (aOptions && aOptions.length !== 0) {
             memory.fieldDataFlags |= (1 << 10);
             memory.WriteLong(aOptions.length);
             for (let i = 0; i < aOptions.length; i++) {
