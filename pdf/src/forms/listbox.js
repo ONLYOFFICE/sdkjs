@@ -378,13 +378,24 @@
         if (oParent && oParent.GetType() == this.GetType())
             return oParent.RemoveOption(nPos);
 
-        // to do
+        function updateContent(widget) {
+            widget.content.Internal_Content_Remove(nPos);
+
+            widget.SetNeedRecalc(true);
+            widget.SetWasChanged(true);
+        };
+    
         if (Number.isInteger(nPos) && nPos >= 0 && nPos < this._options.length) {
             let option = this._options.splice(nPos, 1);
             AscCommon.History.Add(new CChangesPDFListOption(this, nPos, option, false));
-            this.content.Internal_Content_Remove(nPos);
 
-            return opt;
+            if (this.IsWidget()) {
+                updateContent(this);
+            } else {
+                this.GetAllWidgets().forEach(updateContent);
+            }
+
+            return option;
         }
     };
     CListBoxField.prototype.SetOptions = function(aOpt) {
