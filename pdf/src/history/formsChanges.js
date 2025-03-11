@@ -52,6 +52,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Rect]				= CChangesPDFFormRect
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Actions]			= CChangesPDFFormActions;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Partial_Name]		= CChangesPDFFormPartialName;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Meta]				= CChangesPDFFormMeta;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Read_Only]		= CChangesPDFFormReadOnly;
 
 // text
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Multiline]		= CChangesPDFTextFormMultiline;
@@ -663,6 +664,24 @@ CChangesPDFFormMeta.prototype.ReadFromBinary = function(Reader)
 		this.Old = undefined;
 	else
 		this.Old = JSON.parse(Reader.GetString2());
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFFormReadOnly(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFormReadOnly.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFFormReadOnly.prototype.constructor = CChangesPDFFormReadOnly;
+CChangesPDFFormReadOnly.prototype.Type = AscDFH.historyitem_Pdf_Form_Read_Only;
+CChangesPDFFormReadOnly.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm._readOnly = Value;
+	oForm.AddToRedraw();
 };
 
 //------------------------------------------------------------------------------------------------------------------

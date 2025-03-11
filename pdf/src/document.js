@@ -593,9 +593,9 @@ var CPresentation = CPresentation || function(){};
             if (!oChilds[nIdx])
                 continue;
 
-            let sType = oChilds[nIdx][0].GetType();
+            let nType = oChilds[nIdx][0].GetType();
 
-            let oParent = this.CreateField(aParentsInfo[i]["name"], sType);
+            let oParent = this.CreateField(aParentsInfo[i]["name"], nType);
             if (aParentsInfo[i]["value"] != null)
                 oParent.SetParentValue(aParentsInfo[i]["value"]);
             if (aParentsInfo[i]["Parent"] != null)
@@ -608,6 +608,24 @@ var CPresentation = CPresentation || function(){};
                 oParent.SetParentCurIdxs(aParentsInfo[i]["curIdxs"]);
             if (aParentsInfo[i]["Opt"])
                 oParent.SetOptions(aParentsInfo[i]["Opt"]);
+            if (aParentsInfo[i]["editable"])
+                oParent.SetEditable(true);
+            if (aParentsInfo[i]["multiline"])
+                oParent.SetMultiline(true);
+            if (aParentsInfo[i]["comb"])
+                oParent.SetComb(true);
+            if (aParentsInfo[i]["required"])
+                oParent.SetRequired(true);
+            if (aParentsInfo[i]["commitOnSelChange"])
+                oParent.SetCommitOnSelChange(true);
+            if (aParentsInfo[i]["NoToggleToOff"])
+                oParent.SetNoToggleToOff(true);
+            if (aParentsInfo[i]["doNotScroll"])
+                oParent.SetDoNotScroll(true);
+            if (aParentsInfo[i]["multipleSelection"])
+                oParent.SetMultipleSelection(true);
+            if (aParentsInfo[i]["password"])
+                oParent.SetPassword(true);
 
             oParents[nIdx] = oParent;
         }

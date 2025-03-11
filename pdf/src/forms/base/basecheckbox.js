@@ -447,6 +447,12 @@
         return this._exportValue;
     };
     CBaseCheckBoxField.prototype.SetNoToggleToOff = function(bValue) {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() === this.GetType()) {
+            oParent.SetNoToggleToOff(bValue);
+            return;
+        }
+
         let oDoc = this.GetDocument();
         oDoc.History.Add(new CChangesPDFCheckboxNoToggleToOff(this, this._noToggleToOff, bValue));
 
@@ -454,6 +460,10 @@
         this.SetWasChanged(true);
     };
     CBaseCheckBoxField.prototype.IsNoToggleToOff = function() {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() == this.GetType())
+            return oParent.IsNoToggleToOff();
+
         return this._noToggleToOff;
     };
     /**

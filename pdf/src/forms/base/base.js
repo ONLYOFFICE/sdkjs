@@ -1542,9 +1542,34 @@
     };
 
     CBaseField.prototype.SetReadOnly = function(bReadOnly) {
-        this._readonly = bReadOnly;
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() == this.GetType())
+            return oParent.SetReadOnly(bReadOnly);
+
+        if (this.GetType() != AscPDF.FIELD_TYPES.button && this.IsRequired() != bReadOnly) {
+            AscCommon.History.Add(new CChangesPDFFormRequired(this, this._readonly, bReadOnly));
+
+            function update(widget) {
+                widget.SetWasChanged(true);
+                widget.AddToRedraw();
+            };
+        
+            if (this.IsWidget()) {
+                update(this);
+            } else {
+                this.GetAllWidgets().forEach(update);
+            }
+
+            this._readonly = bReadOnly;
+            this.SetWasChanged(true);
+            this.AddToRedraw();
+        }
     };
     CBaseField.prototype.IsReadOnly = function() {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() == this.GetType())
+            return oParent.IsReadOnly();
+
         return this._readonly;
     };
 
@@ -1556,8 +1581,23 @@
     };
     
     CBaseField.prototype.SetRequired = function(bRequired) {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() == this.GetType())
+            return oParent.SetRequired(bRequired);
+
         if (this.GetType() != AscPDF.FIELD_TYPES.button && this.IsRequired() != bRequired) {
             AscCommon.History.Add(new CChangesPDFFormRequired(this, this._required, bRequired));
+
+            function update(widget) {
+                widget.SetWasChanged(true);
+                widget.AddToRedraw();
+            };
+        
+            if (this.IsWidget()) {
+                update(this);
+            } else {
+                this.GetAllWidgets().forEach(update);
+            }
 
             this._required = bRequired;
             this.SetWasChanged(true);
@@ -1565,6 +1605,10 @@
         }
     };
     CBaseField.prototype.IsRequired = function() {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() == this.GetType())
+            return oParent.IsRequired();
+
         return this._required;
     };
     CBaseField.prototype.SetBorderColor = function(aColor) {

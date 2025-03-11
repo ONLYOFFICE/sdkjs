@@ -259,6 +259,12 @@
     };
     
     CListBoxField.prototype.SetMultipleSelection = function(bValue) {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() === this.GetType()) {
+            oParent.SetMultipleSelection(bValue);
+            return;
+        }
+
         let oDoc = this.GetDocument();
         oDoc.History.Add(new CChangesPDFListMultipleSelection(this, this._multipleSelection, bValue));
 
@@ -266,6 +272,10 @@
         this.SetWasChanged(true);
     };
     CListBoxField.prototype.IsMultipleSelection = function() {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() == this.GetType())
+            return oParent.IsMultipleSelection();
+
         return this._multipleSelection;
     };
 

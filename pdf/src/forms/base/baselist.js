@@ -81,6 +81,12 @@
     };
 
     CBaseListField.prototype.SetCommitOnSelChange = function(bValue) {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() === this.GetType()) {
+            oParent.SetCommitOnSelChange(bValue);
+            return;
+        }
+
         let oDoc = this.GetDocument();
         oDoc.History.Add(new CChangesPDFListCommitOnSelChange(this, this._commitOnSelChange, bValue));
 
@@ -88,6 +94,10 @@
         this.SetWasChanged(true);
     };
     CBaseListField.prototype.IsCommitOnSelChange = function() {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() == this.GetType())
+            return oParent.IsCommitOnSelChange();
+
         return this._commitOnSelChange;
     };
 
