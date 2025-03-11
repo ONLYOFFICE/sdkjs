@@ -36,7 +36,7 @@
 	 * Class representing a pdf text shape.
 	 * @constructor
     */
-    function CPdfChart()
+    function CPdfChartSpace()
     {
         AscFormat.CChartSpace.call(this);
                 
@@ -54,14 +54,14 @@
         this._hasOriginView         = false; // имеет ли внешний вид из файла
     }
     
-    CPdfChart.prototype.constructor = CPdfChart;
-    CPdfChart.prototype = Object.create(AscFormat.CChartSpace.prototype);
-    Object.assign(CPdfChart.prototype, AscPDF.PdfDrawingPrototype.prototype);
+    CPdfChartSpace.prototype.constructor = CPdfChartSpace;
+    CPdfChartSpace.prototype = Object.create(AscFormat.CChartSpace.prototype);
+    Object.assign(CPdfChartSpace.prototype, AscPDF.PdfDrawingPrototype.prototype);
 
-    CPdfChart.prototype.IsChart = function() {
+    CPdfChartSpace.prototype.IsChart = function() {
         return true;
     };
-    CPdfChart.prototype.Recalculate = function() {
+    CPdfChartSpace.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
             return;
 
@@ -71,7 +71,7 @@
         this.updateTransformMatrix();
         this.SetNeedRecalc(false);
     };
-    CPdfChart.prototype.onMouseDown = function(x, y, e) {
+    CPdfChartSpace.prototype.onMouseDown = function(x, y, e) {
         let oViewer             = Asc.editor.getDocumentRenderer();
         let oDoc                = this.GetDocument();
         let oDrawingObjects     = oDoc.Viewer.DrawingObjects;
@@ -86,7 +86,7 @@
 
         oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
     };
-    CPdfChart.prototype.onMouseUp = function(x, y, e) {
+    CPdfChartSpace.prototype.onMouseUp = function(x, y, e) {
         let oViewer         = Asc.editor.getDocumentRenderer();
         
         this.selectStartPage    = this.GetPage();
@@ -103,7 +103,7 @@
         if (oContent.IsSelectionEmpty())
             oContent.RemoveSelection();
     };
-    CPdfChart.prototype.GetDocContent = function() {
+    CPdfChartSpace.prototype.GetDocContent = function() {
         let oTextSelection = this.selection.textSelection;
         if (oTextSelection) {
             return oTextSelection.getDocContent();
@@ -116,7 +116,7 @@
     /// saving
     ////////////////////////////
 
-    CPdfChart.prototype.WriteToBinary = function(memory) {
+    CPdfChartSpace.prototype.WriteToBinary = function(memory) {
         this.toXml(memory, '');
     };
 
@@ -124,10 +124,10 @@
      * Получаем рассчитанные настройки текста (полностью заполненные)
      * @returns {CTextPr}
      */
-    CPdfChart.prototype.GetCalculatedTextPr = function() {
+    CPdfChartSpace.prototype.GetCalculatedTextPr = function() {
         return this.GetDocContent().GetCalculatedTextPr();
     };
-    CPdfChart.prototype.GetCalculatedParaPr = function() {
+    CPdfChartSpace.prototype.GetCalculatedParaPr = function() {
         return this.GetDocContent().GetCalculatedParaPr();
     };
 
@@ -135,13 +135,71 @@
     ///// Overrides
     /////////////////////////////////////////////////////////////////////////////
     
-    CPdfChart.prototype.getLogicDocument = function() {
+    CPdfChartSpace.prototype.getLogicDocument = function() {
         return this.GetDocument();
     };
-    CPdfChart.prototype.IsThisElementCurrent = function() {
+    CPdfChartSpace.prototype.IsThisElementCurrent = function() {
         return true;
     };
+    CPdfChartSpace.prototype.copy = function (oPr) {
+		let drawingDocument = oPr && oPr.drawingDocument;
+		let copy = new CPdfChartSpace();
+		if (this.chart) {
+			copy.setChart(this.chart.createDuplicate(drawingDocument));
+		}
+		if (this.clrMapOvr) {
+			copy.setClrMapOvr(this.clrMapOvr.createDuplicate());
+		}
+		copy.setDate1904(this.date1904);
+		if (this.externalData) {
+			copy.setExternalData(this.externalData.createDuplicate());
+		}
+		copy.setLang(this.lang);
+		if (this.pivotSource) {
+			copy.setPivotSource(this.pivotSource.createDuplicate());
+		}
+		if (this.printSettings) {
+			copy.setPrintSettings(this.printSettings.createDuplicate());
+		}
+		if (this.protection) {
+			copy.setProtection(this.protection.createDuplicate());
+		}
+		copy.setRoundedCorners(this.roundedCorners);
+		if (this.spPr) {
+			copy.setSpPr(this.spPr.createDuplicate());
+			copy.spPr.setParent(copy);
+		}
+		copy.setStyle(this.style);
+		if (this.txPr) {
+			copy.setTxPr(this.txPr.createDuplicate(oPr))
+		}
+		for (let i = 0; i < this.userShapes.length; ++i) {
+			copy.addUserShape(undefined, this.userShapes[i].copy(oPr));
+		}
+		copy.setThemeOverride(this.themeOverride);
+		copy.setBDeleted(this.bDeleted);
+		copy.setLocks(this.locks);
+		if (this.chartStyle && this.chartColors) {
+			copy.setChartStyle(this.chartStyle.createDuplicate());
+			copy.setChartColors(this.chartColors.createDuplicate());
+		}
+		if (this.macro !== null) {
+			copy.setMacro(this.macro);
+		}
+		if (this.textLink !== null) {
+			copy.setTextLink(this.textLink);
+		}
+		if(this.chartData) {
+			copy.setChartData(this.chartData.createDuplicate());
+		}
+		if (!oPr || false !== oPr.cacheImage) {
+			copy.cachedImage = this.getBase64Img();
+			copy.cachedPixH = this.cachedPixH;
+			copy.cachedPixW = this.cachedPixW;
+		}
+		return copy;
+	};
 
-    window["AscPDF"].CPdfChart = CPdfChart;
+    window["AscPDF"].CPdfChartSpace = CPdfChartSpace;
 })();
 
