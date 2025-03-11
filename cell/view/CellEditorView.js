@@ -1231,13 +1231,17 @@ function (window, undefined) {
 		if (!this.options || !this.options.fragments) {
 			return;
 		}
+
 		this._expand();
 		this._cleanText();
-		this._cleanSelection();
-		this._adjustCanvas();
-		this._showCanvas();
-		this._calculateCanvasSize();
-		this._renderText();
+		if (!window.externalFormulaEditMode) {
+			this._cleanSelection();
+			this._adjustCanvas();
+			this._showCanvas();
+			this._calculateCanvasSize();
+			this._renderText();
+		}
+
 		if (!this.getMenuEditorMode()) {
 			for (var i = 0; i < this.options.fragments.length; i++) {
 				this.options.fragments[i].initText();
@@ -1625,6 +1629,10 @@ function (window, undefined) {
 		if (!this.isSelectMode) {
 			this.handlers.trigger("onSelectionEnd");
 		}
+		//TODO add to events
+		const oApi = window["Asc"]["editor"];
+		oApi.wb.externalSelectionController && oApi.wb.externalSelectionController.externalChangeSelection();
+
 		return selection;
 	};
 
@@ -3334,6 +3342,17 @@ function (window, undefined) {
 		}
 
 		return type !== null ? {type: type, obj: {text: text}} : null;
+	};
+
+	CellEditor.prototype.setSelectionState = function (obj) {
+		if (!obj) {
+			return;
+		}
+		this.selectionBegin = obj.selectionBegin;
+		this.selectionEnd = obj.selectionEnd;
+		this.lastRangePos = obj.lastRangePos;
+		this.lastRangeLength = obj.lastRangeLength;
+		this.cursorPos = obj.cursorPos;
 	};
 
 	CellEditor.prototype.startAction = function () {

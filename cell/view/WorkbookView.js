@@ -7162,19 +7162,23 @@
 					//we must open cell editor in formula edit mode and send information about change selection
 					if (!oThis.wb.getCellEditMode()) {
 						let editorEnterOptions = new AscCommonExcel.CEditorEnterOptions();
-						editorEnterOptions.newText = "=" + (oThis.activeTabFormula ? oThis.activeTabFormula : "");
+						editorEnterOptions.newText = "=" + (oThis.activeTabFormula ? oThis.activeTabFormula.range : "");
 						oThis.wb._onEditCell(editorEnterOptions, function () {
 							oThis.wb.setFormulaEditMode(true);
+							oThis.wb.cellEditor._topLineGotFocus();
+							oThis.wb.cellEditor.setSelectionState(oThis.activeTabFormula);
 						});
 					} else {
 						oThis.wb.skipHelpSelector = true;
-						let val = oThis.activeTabFormula ? oThis.activeTabFormula : "";
-						oThis.wb.cellEditor.changeCellText(val);
+						let val = "=" + (oThis.activeTabFormula ? oThis.activeTabFormula.range : "");
+						oThis.wb.cellEditor.selectAll();
+						oThis.wb.cellEditor._addChars(val);
+						oThis.wb.cellEditor.setSelectionState(oThis.activeTabFormula);
 						oThis.wb.skipHelpSelector = false;
 						oThis.wb.setFormulaEditMode(true);
 					}
 				}
-				console.log("Visibility of page has changed!" + " documentHidden " + document.hidden);
+				//console.log("Visibility of page has changed!" + " documentHidden " + document.hidden);
 			} else {
 				/*if (oThis.wb.getCellEditMode()) {
 					oThis.wb.closeCellEditor(true);
@@ -7187,17 +7191,23 @@
 		});
 	};
 	CExternalSelectionController.prototype.onExternalChangeSelection = function (data) {
+		console.log("onExternalChangeSelection: text: " + data.range + " this.ID: " + this.wb.Api.DocInfo.Id + " data.ID: " + data.id)
+		this.activeTabFormula = data;
 		if (this.wb.isCellEditMode && !this.wb.isWizardMode) {
 			if (window.externalFormulaEditMode) {
-				if (window.externalFormulaEditMode.id === data.id) {
-					this.activeTabFormula = data.range;
-				}
+				//if (window.externalFormulaEditMode.id === data.id) {
+
+				//}
 			} else {
+				this.activeTabFormula = data;
+
 				this.wb.setFormulaEditMode(true);
-				this.wb.cellEditor.canEnterCellRange()
+				//this.wb.cellEditor.canEnterCellRange()
 				this.wb.skipHelpSelector = true;
-				let val = /*"[" + data.bookName + "]"  + data.worksheet + "!" +*/ data.range;
-				this.wb.cellEditor.changeCellText(val);
+				let val = "=" + data.range;
+				this.wb.cellEditor.selectAll();
+				this.wb.cellEditor._addChars(val);
+				this.wb.cellEditor.setSelectionState(data);
 				this.wb.skipHelpSelector = false;
 			}
 		}
@@ -7205,13 +7215,14 @@
 	CExternalSelectionController.prototype.onExternalSetFormulaMode = function (data) {
 		//if open cell editor and start formula edit mode, then send by all tabs "SetFormulaEditMode" event
 		//event data must contains doc info and current cell text
-		console.log("SetFormulaEditMode_on_message " + "_isClose: " + data.isClose)
+		//console.log("SetFormulaEditMode_on_message " + "_isClose: " + data.isClose)
 		window.externalFormulaEditMode = !data.isClose ? {id: data.id} : null;
 		if (this.wb.getCellEditMode() /*&& window.externalFormulaEditMode*/ && data.isClose) {
 			this.wb.closeCellEditor(true);
 		}
 	};
 	CExternalSelectionController.prototype.externalChangeSelection = function () {
+		console.log("externalChangeSelection: text " + this.wb.cellEditor.getText() + " ID: " + this.wb.Api.DocInfo.Id)
 		let ws = this.wb.model.getActiveWs();
 		if (this.wb.isFormulaEditMode && this.wb.isCellEditMode && this.wb.cellEditor) {
 			this.sendExternalEvent({
@@ -7219,7 +7230,12 @@
 				id: this.wb.Api.DocInfo.Id /*+ "_" + AscCommon.g_oIdCounter.m_sUserId,*/,
 				range: this.wb.cellEditor.getText().substring(1),
 				worksheet: ws.sName,
-				bookName: this.wb.Api.DocInfo.Title
+				bookName: this.wb.Api.DocInfo.Title,
+				selectionBegin: this.wb.cellEditor.selectionBegin,
+				selectionEnd: this.wb.cellEditor.selectionEnd,
+				lastRangePos: this.wb.cellEditor.lastRangePos,
+				lastRangeLength: this.wb.cellEditor.lastRangeLength,
+				cursorPos: this.wb.cellEditor.cursorPos
 			});
 		}
 	};
