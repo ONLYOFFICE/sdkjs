@@ -7300,6 +7300,7 @@ var CPresentation = CPresentation || function(){};
                 oFieldProps = new Asc.asc_CTextFieldProperty();
                 oFieldProps.asc_putDefaultValue(field.GetDefaultValue());
                 oFieldProps.asc_putMultiline(field.IsMultiline());
+                oFieldProps.asc_putScrollLongText(!field.IsDoNotScroll());
                 oFieldProps.asc_putCharLimit(field.GetCharLimit());
                 oFieldProps.asc_putComb(field.IsComb());
                 let oMeta = field.GetMeta();
