@@ -212,7 +212,7 @@
             return;
         }
 
-        if (this.IsFileSelect() == bMultiline) {
+        if (this.IsFileSelect() == bFileSelect) {
             return;
         }
 
@@ -283,7 +283,7 @@
             return;
         }
 
-        AscCommon.History.Add(new CChangesPDFTextFormPassword(this, this._password, bNot));
+        AscCommon.History.Add(new CChangesPDFTextFormPassword(this, this._password, bPassword));
         if (bPassword === true && this.fileSelect != true) {
             this._password = true;
         }

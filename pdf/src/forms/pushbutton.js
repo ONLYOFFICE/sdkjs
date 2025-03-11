@@ -433,7 +433,7 @@
      * @typeofeditors ["PDF"]
      */
     CPushButtonField.prototype.SetHighlight = function(nType) {
-        AscCommon.History.Add(new CChangesPDFPushbuttonHighlightType(this, _highlight, nType));
+        AscCommon.History.Add(new CChangesPDFPushbuttonHighlightType(this, this._highlight, nType));
 
         this._highlight = nType;
         this.SetWasChanged(true);
@@ -1377,7 +1377,7 @@
     };
     CPushButtonField.prototype.SetButtonFitBounds = function(bValue) {
         if (this._buttonFitBounds != bValue) {
-            AscCommon.History.Add(new CChangesPDFPushbuttonFitBounds(this, this._buttonFitBounds, nType));
+            AscCommon.History.Add(new CChangesPDFPushbuttonFitBounds(this, this._buttonFitBounds, bValue));
 
             this._buttonFitBounds = bValue;
             this.SetWasChanged(true);

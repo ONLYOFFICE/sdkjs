@@ -1065,7 +1065,7 @@
                 content.UpdateCursorType(tx, ty, 0);
                 ret.updated = true;
             } else if (this.drawingObjects) {
-                check_hyperlink = fCheckObjectHyperlink(object, x, y);
+                check_hyperlink = AscFormat.fCheckObjectHyperlink(object, x, y);
                 if (isRealObject(check_hyperlink)) {
                     ret.hyperlink = check_hyperlink;
                 }
