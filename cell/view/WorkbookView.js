@@ -7153,6 +7153,7 @@
 
 	function CExternalSelectionController(wb) {
 		this.wb = wb;
+		this.lockChangeSelection = null;
 	}
 	CExternalSelectionController.prototype.init = function () {
 		let oThis = this;
@@ -7163,11 +7164,31 @@
 					if (!oThis.wb.getCellEditMode()) {
 						let editorEnterOptions = new AscCommonExcel.CEditorEnterOptions();
 						editorEnterOptions.newText = "=" + (oThis.activeTabFormula ? oThis.activeTabFormula.range : "");
-						oThis.wb._onEditCell(editorEnterOptions, function () {
+						/*oThis.wb._onEditCell(editorEnterOptions, function () {
 							oThis.wb.setFormulaEditMode(true);
 							oThis.wb.cellEditor._topLineGotFocus();
 							oThis.wb.cellEditor.setSelectionState(oThis.activeTabFormula);
-						});
+						});*/
+
+
+						this.lockChangeSelection = true;
+						oThis.wb.input && oThis.wb.input.focus();
+
+						oThis.wb.setCellEditMode(true);
+
+						var ws = oThis.wb.getWorksheet();
+						var selectionRange = ws.model.selectionRange && ws.model.selectionRange.clone();
+
+						ws.openCellEditor(oThis.wb.cellEditor, editorEnterOptions, selectionRange);
+						oThis.wb.setFormulaEditMode(true);
+						oThis.wb.cellEditor._topLineGotFocus();
+						oThis.wb.cellEditor.setSelectionState(oThis.activeTabFormula);
+						oThis.wb.input.disabled = false;
+						this.lockChangeSelection = false;
+
+
+
+
 					} else {
 						oThis.wb.skipHelpSelector = true;
 						let val = "=" + (oThis.activeTabFormula ? oThis.activeTabFormula.range : "");
@@ -7191,15 +7212,33 @@
 		});
 	};
 	CExternalSelectionController.prototype.onExternalChangeSelection = function (data) {
-		console.log("onExternalChangeSelection: text: " + data.range + " this.ID: " + this.wb.Api.DocInfo.Id + " data.ID: " + data.id)
+		if (this.lockChangeSelection) {
+			return;
+		}
+
+
+		console.log("onExternalChangeSelection: text: " + data.range + " this.ID: " + this.wb.Api.DocInfo.Id + " data.ID: " + data.id + " selectionBegin: "  + data.selectionBegin + " selectionEnd: "  + data.selectionEnd + " lastRangePos: "  + data.lastRangePos + " lastRangeLength: "  + data.lastRangeLength + " cursorPos: "  + data.cursorPos)
 		this.activeTabFormula = data;
+
+		let oThis = this;
+		let isEqualState = function () {
+			if (data.range === oThis.wb.cellEditor.getText().substring(1) && oThis.wb.cellEditor.selectionBegin === data.selectionBegin
+				&& oThis.wb.cellEditor.selectionEnd === data.selectionEnd && oThis.wb.cellEditor.lastRangePos === data.lastRangePos
+				&& oThis.wb.cellEditor.lastRangeLength === data.lastRangeLength && oThis.wb.cellEditor.cursorPos === data.cursorPos) {
+				return true;
+			}
+			return false;
+		};
+
 		if (this.wb.isCellEditMode && !this.wb.isWizardMode) {
 			if (window.externalFormulaEditMode) {
 				//if (window.externalFormulaEditMode.id === data.id) {
 
 				//}
 			} else {
-				this.activeTabFormula = data;
+				if (isEqualState()) {
+					return;
+				}
 
 				this.wb.setFormulaEditMode(true);
 				//this.wb.cellEditor.canEnterCellRange()
@@ -7222,7 +7261,12 @@
 		}
 	};
 	CExternalSelectionController.prototype.externalChangeSelection = function () {
-		console.log("externalChangeSelection: text " + this.wb.cellEditor.getText() + " ID: " + this.wb.Api.DocInfo.Id)
+		//console.log("externalChangeSelection: text " + this.wb.cellEditor.getText() + " ID: " + this.wb.Api.DocInfo.Id)
+
+		/*if (this.lockChangeSelection) {
+			return;
+		}*/
+
 		let ws = this.wb.model.getActiveWs();
 		if (this.wb.isFormulaEditMode && this.wb.isCellEditMode && this.wb.cellEditor) {
 			this.sendExternalEvent({
