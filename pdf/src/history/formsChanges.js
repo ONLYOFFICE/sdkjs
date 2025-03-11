@@ -59,6 +59,8 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Align]			= CChangesPDFTex
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Char_Limit]		= CChangesPDFTextCharLimit;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Comb]			= CChangesPDFTextComb;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_DoNot_Scroll]	= CChangesPDFTextFormDoNotScroll;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Password]		= CChangesPDFTextFormPassword;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_File_Select]		= CChangesPDFTextFormFileSelect;
 
 // combobox
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Combobox_Form_Editable]	= CChangesPDFComboboxFieldEditable;
@@ -752,6 +754,40 @@ CChangesPDFTextFormDoNotScroll.prototype.private_SetValue = function(Value)
 {
 	let oForm = this.Class;
 	oForm.SetDoNotScroll(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFTextFormPassword(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFTextFormPassword.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFTextFormPassword.prototype.constructor = CChangesPDFTextFormPassword;
+CChangesPDFTextFormPassword.prototype.Type = AscDFH.historyitem_Pdf_Text_Form_Password;
+CChangesPDFTextFormPassword.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm.SetPassword(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFTextFormFileSelect(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFTextFormFileSelect.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFTextFormFileSelect.prototype.constructor = CChangesPDFTextFormFileSelect;
+CChangesPDFTextFormFileSelect.prototype.Type = AscDFH.historyitem_Pdf_Text_Form_File_Select;
+CChangesPDFTextFormFileSelect.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm.SetFileSelect(Value);
 };
 
 //------------------------------------------------------------------------------------------------------------------

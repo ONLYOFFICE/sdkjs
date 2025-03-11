@@ -71,7 +71,17 @@
     AscFormat.InitClass(CTextField, AscPDF.CBaseField, AscDFH.historyitem_type_Pdf_Text_Field);
 
     CTextField.prototype.SetComb = function(bComb) {
-        if (this._comb == bComb && this.GetCharLimit() != 0)
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() === this.GetType()) {
+            oParent.SetComb(bComb);
+            return;
+        }
+
+        if (this.IsComb() == bComb) {
+            return;
+        }
+
+        if (this.GetCharLimit() != 0)
             return;
 
         AscCommon.History.Add(new CChangesPDFTextComb(this, this._comb, bComb));
@@ -84,17 +94,34 @@
             this._comb = false;
         }
 
-        this.content.GetElement(0).Content.forEach(function(run) {
-            run.RecalcInfo.Measure = true;
-        });
-        this.contentFormat.GetElement(0).Content.forEach(function(run) {
-            run.RecalcInfo.Measure = true;
-        });
+        function updateMeasure(widget) {
+            widget.content.GetElement(0).Content.forEach(function(run) {
+                run.RecalcInfo.Measure = true;
+            });
+            widget.contentFormat.GetElement(0).Content.forEach(function(run) {
+                run.RecalcInfo.Measure = true;
+            });
+
+            widget.SetNeedRecalc(true);
+            widget.SetWasChanged(true);
+        };
+    
+        if (this.IsWidget()) {
+            updateMeasure(this);
+        } else {
+            this.GetAllWidgets().forEach(updateMeasure);
+        }
 
         this.SetNeedRecalc(true);
         this.SetWasChanged(true);
     };
     CTextField.prototype.IsComb = function() {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() === this.GetType()) {
+            oParent.IsComb();
+            return;
+        }
+
         return this._comb;
     };
     CTextField.prototype.IsCanEditText = function() {
@@ -105,36 +132,66 @@
         return false;
     };
     CTextField.prototype.SetCharLimit = function(nChars) {
-        AscCommon.History.Add(new CChangesPDFTextCharLimit(this, this._charLimit, nChars));
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() === this.GetType()) {
+            oParent.SetCharLimit(nChars);
+            return;
+        }
+
+        if (this.GetCharLimit() == nChars) {
+            return;
+        }
 
         let oViewer = editor.getDocumentRenderer();
+        AscCommon.History.Add(new CChangesPDFTextCharLimit(this, this._charLimit, nChars));
+        this._charLimit = nChars;
 
-        if (typeof(nChars) == "number" && nChars <= 500 && nChars > 0 && this.IsFileSelect() === false) {
-            nChars = Math.round(nChars);
-            if (this._charLimit != nChars) {
-
+        function updateContent(widget) {
+            if (typeof(nChars) == "number" && nChars <= 500 && nChars > 0 && widget.IsFileSelect() === false) {
+                nChars = Math.round(nChars);
                 if (oViewer.IsOpenFormsInProgress != true) {
-                    let sText = this.content.GetElement(0).GetText({ParaEndToSpace: false});
-                    this.content.replaceAllText(sText.slice(0, Math.min(nChars, sText.length)));
+                    let sText = widget.content.GetElement(0).GetText({ParaEndToSpace: false});
+                    widget.content.replaceAllText(sText.slice(0, Math.min(nChars, sText.length)));
                 }
+                
+                widget.SetNeedRecalc(true);
+                widget.SetWasChanged(true);
             }
-
-            this._charLimit = nChars;
-            this.SetNeedRecalc(true);
-            this.SetWasChanged(true);
+        };
+    
+        if (this.IsWidget()) {
+            updateContent(this);
+        } else {
+            this.GetAllWidgets().forEach(updateContent);
         }
     };
     CTextField.prototype.GetCharLimit = function() {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() === this.GetType()) {
+            oParent.GetCharLimit();
+            return;
+        }
+
         return this._charLimit;
     };
     CTextField.prototype.SetDoNotScroll = function(bNot) {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() === this.GetType()) {
+            oParent.SetDoNotScroll(bNot);
+            return;
+        }
+    
         AscCommon.History.Add(new CChangesPDFTextFormDoNotScroll(this, this._doNotScroll, bNot));
-
         this._doNotScroll = bNot;
+    
         this.SetWasChanged(true);
-        this.AddToRedraw();
+        this.SetNeedRecalc(true);
     };
     CTextField.prototype.IsDoNotScroll = function() {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() == this.GetType())
+            return oParent.IsDoNotScroll();
+
         return this._doNotScroll;
     };
     CTextField.prototype.SetDoNotSpellCheck = function(bNot) {
@@ -144,47 +201,99 @@
         return this._doNotSpellCheck;
     };
     CTextField.prototype.SetFileSelect = function(bFileSelect) {
-        if (bFileSelect === true && this.IsMultiline() != true && this._charLimit === 0
-            && this.password != true && this.defaultValue == "") {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() === this.GetType()) {
+            oParent.SetFileSelect(bFileSelect);
+            return;
+        }
+
+        if (this.IsFileSelect() == bMultiline) {
+            return;
+        }
+
+        if (bFileSelect === true && this.IsMultiline() != true && this.GetCharLimit() === 0
+            && this.IsPassword() != true && this.GetDefaultValue() == "") {
+                AscCommon.History.Add(new CChangesPDFTextFormMultiline(this, this._fileSelect, bFileSelect));
                 this._fileSelect = true;
             }
         else if (bFileSelect === false) {
+            AscCommon.History.Add(new CChangesPDFTextFormMultiline(this, this._fileSelect, bFileSelect));
             this._fileSelect = false;
         }
+
+        this.SetWasChanged(true);
+        this.SetNeedRecalc(true);
     };
     CTextField.prototype.IsFileSelect = function() {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() == this.GetType())
+            return oParent.IsFileSelect();
+
         return this._fileSelect;
     };
     CTextField.prototype.SetMultiline = function(bMultiline) {
-        AscCommon.History.Add(new CChangesPDFTextFormMultiline(this, this._multiline, bMultiline));
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() === this.GetType()) {
+            oParent.SetMultiline(bMultiline);
+            return;
+        }
 
-        if (bMultiline == true && this.fileSelect != true) {
-            this.content.SetUseXLimit(true);
-            this.contentFormat.SetUseXLimit(true);
-            this._multiline = true;
-            this.SetWasChanged(true);
-            this.SetNeedRecalc(true);
+        if (this.IsMultiline() == bMultiline) {
+            return;
         }
-        else if (bMultiline === false) {
-            this.content.SetUseXLimit(false);
-            this.contentFormat.SetUseXLimit(false);
-            this._multiline = false;
-            this.SetWasChanged(true);
-            this.SetNeedRecalc(true);
+    
+        AscCommon.History.Add(new CChangesPDFTextFormMultiline(this, this._multiline, bMultiline));
+        this._multiline = bMultiline;
+    
+        function updateXLimit(widget) {
+            let useXLimit = bMultiline && !this.fileSelect;
+            widget.content.SetUseXLimit(useXLimit);
+            widget.contentFormat.SetUseXLimit(useXLimit);
+            widget.SetWasChanged(true);
+            widget.SetNeedRecalc(true);
+        };
+    
+        if (this.IsWidget()) {
+            updateXLimit(this);
+        } else {
+            this.GetAllWidgets().forEach(updateXLimit);
         }
+    
+        this.SetWasChanged(true);
+        this.SetNeedRecalc(true);
     };
     CTextField.prototype.IsMultiline = function() {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() == this.GetType())
+            return oParent.IsMultiline();
+
         return this._multiline;
     };
     CTextField.prototype.SetPassword = function(bPassword) {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() == this.GetType())
+            return oParent.SetPassword(bPassword);
+        
+        if (this.IsPassword() == bPassword) {
+            return;
+        }
+
+        AscCommon.History.Add(new CChangesPDFTextFormPassword(this, this._password, bNot));
         if (bPassword === true && this.fileSelect != true) {
             this._password = true;
         }
         else if (bPassword === false) {
             this._password = false;
         }
+
+        this.SetWasChanged(true);
+        this.SetNeedRecalc(true);
     };
     CTextField.prototype.IsPassword = function() {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() == this.GetType())
+            return oParent.IsPassword();
+
         return this._password;
     };
     CTextField.prototype.SetRichText = function(bRichText) {

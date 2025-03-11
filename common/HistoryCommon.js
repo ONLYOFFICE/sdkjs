@@ -4043,6 +4043,8 @@
 	AscDFH.historyitem_Pdf_Text_Form_Char_Limit		= AscDFH.historyitem_type_Pdf_Text_Field | 3;
 	AscDFH.historyitem_Pdf_Text_Form_Comb			= AscDFH.historyitem_type_Pdf_Text_Field | 4;
 	AscDFH.historyitem_Pdf_Text_Form_DoNot_Scroll	= AscDFH.historyitem_type_Pdf_Text_Field | 5;
+	AscDFH.historyitem_Pdf_Text_Form_Password		= AscDFH.historyitem_type_Pdf_Text_Field | 6;
+	AscDFH.historyitem_Pdf_Text_Form_File_Select	= AscDFH.historyitem_type_Pdf_Text_Field | 7;
 	
 	// combobox
 	AscDFH.historyitem_Pdf_Combobox_Form_Editable = AscDFH.historyitem_type_Pdf_Combobox_Field | 1;

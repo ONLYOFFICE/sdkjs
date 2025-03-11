@@ -608,13 +608,22 @@
     };
     
     CComboBoxField.prototype.SetEditable = function(bValue) {
-        AscCommon.History.Add(new CChangesPDFComboboxFieldEditable(this, this._editable, bValue));
-
-        this._editable = bValue;
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() == this.GetType()) {
+            oParent.SetEditable(bValue);
+        }
+        else {
+            AscCommon.History.Add(new CChangesPDFComboboxFieldEditable(this, this._editable, bValue));
+            this._editable = bValue;
+        }
 
         this.SetWasChanged(true);
     };
     CComboBoxField.prototype.IsEditable = function() {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() == this.GetType())
+            return oParent.IsEditable();
+
         return this._editable;
     };
     CComboBoxField.prototype.IsCanEditText = function() {
