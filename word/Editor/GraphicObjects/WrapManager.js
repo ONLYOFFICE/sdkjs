@@ -763,6 +763,12 @@ CWrapPolygon.prototype =
             p.y = (local_point.y + y);
             this.calculatedPoints.push(p);
         }
+
+        const shape = this.wordGraphicObject.GraphicObj;
+        if (shape) {
+            shape.recalculateWrapPolygon();
+        }
+
         this.left   = this.localLeft + x;
         this.top    = this.localTop + y;
         this.right  = this.localRight + x;
