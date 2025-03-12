@@ -651,7 +651,7 @@
     };
     CAnnotationBase.prototype.IsHidden = function() {
         let nType = this.GetDisplay();
-        if (nType == window["AscPDF"].Api.Objects.display["hidden"] || nType == window["AscPDF"].Api.Objects.display["noView"])
+        if (nType == window["AscPDF"].Api.Types.display["hidden"] || nType == window["AscPDF"].Api.Types.display["noView"])
             return true;
 
         return false;
@@ -680,7 +680,7 @@
         oReply.SetCreationDate(AscPDF.ParsePDFDate(oReplyInfo["CreationDate"]).getTime());
         oReply.SetModDate(AscPDF.ParsePDFDate(oReplyInfo["LastModified"]).getTime());
         oReply.SetAuthor(oReplyInfo["User"]);
-        oReply.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
+        oReply.SetDisplay(window["AscPDF"].Api.Types.display["visible"]);
         oReply.SetPopupIdx(oReplyInfo["Popup"]);
         oReply.SetSubject(oReplyInfo["Subj"]);
         oReply.SetUserId(oReplyInfo["OUserID"]);

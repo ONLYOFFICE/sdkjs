@@ -2794,7 +2794,7 @@ var CPresentation = CPresentation || function(){};
         let oAnnot = AscPDF.CreateAnnotByProps(oProps, this);
         
         oAnnot.SetNeedRecalc(true);
-        oAnnot.SetDisplay(this.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
+        oAnnot.SetDisplay(this.IsAnnotsHidden() ? window["AscPDF"].Api.Types.display["hidden"] : window["AscPDF"].Api.Types.display["visible"]);
         
         this.annots.push(oAnnot);
         oPageInfo.AddAnnot(oAnnot);
@@ -3746,9 +3746,9 @@ var CPresentation = CPresentation || function(){};
                 let aFields = oThis.GetAllWidgets(name);
                 aFields.forEach(function(field) {
                     if (bHidden)
-                        field.SetDisplay(window["AscPDF"].Api.Objects.display["hidden"]);
+                        field.SetDisplay(window["AscPDF"].Api.Types.display["hidden"]);
                     else
-                        field.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
+                        field.SetDisplay(window["AscPDF"].Api.Types.display["visible"]);
                     
                     field.AddToRedraw();
                 });
@@ -3757,9 +3757,9 @@ var CPresentation = CPresentation || function(){};
         else {
             this.widgets.forEach(function(field) {
                 if (bHidden)
-                    field.SetDisplay(window["AscPDF"].Api.Objects.display["hidden"]);
+                    field.SetDisplay(window["AscPDF"].Api.Types.display["hidden"]);
                 else
-                    field.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
+                    field.SetDisplay(window["AscPDF"].Api.Types.display["visible"]);
 
                 field.AddToRedraw();
             });
@@ -3779,7 +3779,7 @@ var CPresentation = CPresentation || function(){};
         let oController = this.GetController();
 
         this.annots.forEach(function(annot) {
-            annot.SetDisplay(bHidden ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
+            annot.SetDisplay(bHidden ? window["AscPDF"].Api.Types.display["hidden"] : window["AscPDF"].Api.Types.display["visible"]);
             annot.AddToRedraw();
         });
 
@@ -7194,7 +7194,7 @@ var CPresentation = CPresentation || function(){};
         oAnnot.SetCreationDate(sCrDate);
         oAnnot.SetModDate(sModDate);
         oAnnot.SetAuthor(sAuthor);
-        oAnnot.SetDisplay(isHidden ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
+        oAnnot.SetDisplay(isHidden ? window["AscPDF"].Api.Types.display["hidden"] : window["AscPDF"].Api.Types.display["visible"]);
         oAnnot.SetContents(sText);
         oAnnot.SetUserId(sUserId);
 

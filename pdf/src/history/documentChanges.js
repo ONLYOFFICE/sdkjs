@@ -173,7 +173,7 @@ CChangesPDFDocumentAnnotsContent.prototype.Undo = function()
             oItem._page = oPage.GetIndex();
             oItem.selectStartPage = oItem._page;
 
-            oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
+            oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Types.display["hidden"] : window["AscPDF"].Api.Types.display["visible"]);
             oViewer.DrawingObjects.resetSelection();
             oItem.AddToRedraw();
             oDocument.CheckComment(oItem);
@@ -202,7 +202,7 @@ CChangesPDFDocumentAnnotsContent.prototype.Redo = function()
             oItem._page = oPage.GetIndex();
             oItem.selectStartPage = oItem._page;
 
-            oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
+            oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Types.display["hidden"] : window["AscPDF"].Api.Types.display["visible"]);
             oViewer.DrawingObjects.resetSelection();
             oItem.AddToRedraw();
             oDocument.CheckComment(oItem);
@@ -270,7 +270,7 @@ CChangesPDFDocumentAnnotsContent.prototype.private_InsertInArrayLoad = function(
 
         oDocument.CheckComment(oItem);
 
-        oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
+        oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Types.display["hidden"] : window["AscPDF"].Api.Types.display["visible"]);
         oViewer.DrawingObjects.resetSelection();
         oItem.AddToRedraw();
     }
