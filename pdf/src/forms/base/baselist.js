@@ -93,9 +93,9 @@
         this._commitOnSelChange = bValue;
         this.SetWasChanged(true);
     };
-    CBaseListField.prototype.IsCommitOnSelChange = function() {
+    CBaseListField.prototype.IsCommitOnSelChange = function(bInherit) {
         let oParent = this.GetParent();
-        if (oParent && oParent.GetType() == this.GetType())
+        if (bInherit !== false && oParent && oParent.GetType() === this.GetType())
             return oParent.IsCommitOnSelChange();
 
         return this._commitOnSelChange;

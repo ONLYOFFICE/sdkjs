@@ -53,15 +53,17 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Actions]			= CChangesPDFFormAc
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Partial_Name]		= CChangesPDFFormPartialName;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Meta]				= CChangesPDFFormMeta;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Read_Only]		= CChangesPDFFormReadOnly;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_No_Export]		= CChangesPDFFormNoExport;
 
 // text
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Multiline]		= CChangesPDFTextFormMultiline;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Align]			= CChangesPDFTextFormAlign;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Char_Limit]		= CChangesPDFTextCharLimit;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Comb]			= CChangesPDFTextComb;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_DoNot_Scroll]	= CChangesPDFTextFormDoNotScroll;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Password]		= CChangesPDFTextFormPassword;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_File_Select]		= CChangesPDFTextFormFileSelect;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Multiline]			= CChangesPDFTextFormMultiline;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Align]				= CChangesPDFTextFormAlign;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Char_Limit]			= CChangesPDFTextCharLimit;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Comb]				= CChangesPDFTextComb;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_DoNot_Scroll]		= CChangesPDFTextFormDoNotScroll;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Password]			= CChangesPDFTextFormPassword;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_File_Select]			= CChangesPDFTextFormFileSelect;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_DoNot_Spell_Check]	= CChangesPDFTextFormDoNotSpellCheck;
 
 // combobox
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Combobox_Form_Editable]	= CChangesPDFComboboxFieldEditable;
@@ -684,6 +686,24 @@ CChangesPDFFormReadOnly.prototype.private_SetValue = function(Value)
 	oForm.AddToRedraw();
 };
 
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFFormNoExport(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFormNoExport.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFFormNoExport.prototype.constructor = CChangesPDFFormNoExport;
+CChangesPDFFormNoExport.prototype.Type = AscDFH.historyitem_Pdf_Form_No_Export;
+CChangesPDFFormNoExport.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm._noExport = Value;
+	oForm.AddToRedraw();
+};
+
 //------------------------------------------------------------------------------------------------------------------
 //
 // Text Form
@@ -807,6 +827,23 @@ CChangesPDFTextFormFileSelect.prototype.private_SetValue = function(Value)
 {
 	let oForm = this.Class;
 	oForm.SetFileSelect(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFTextFormDoNotSpellCheck(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFTextFormDoNotSpellCheck.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFTextFormDoNotSpellCheck.prototype.constructor = CChangesPDFTextFormDoNotSpellCheck;
+CChangesPDFTextFormDoNotSpellCheck.prototype.Type = AscDFH.historyitem_Pdf_Text_Form_DoNot_Spell_Check;
+CChangesPDFTextFormDoNotSpellCheck.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm.SetDoNotSpellCheck(Value);
 };
 
 //------------------------------------------------------------------------------------------------------------------

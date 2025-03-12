@@ -149,7 +149,7 @@
         this._display       = AscPDF.Api.Objects.display["visible"];
         this._hidden        = false;             // This property has been superseded by the display property and its use is discouraged.
         this._print         = true;        // This property has been superseded by the display property and its use is discouraged.
-        this._readonly      = false;
+        this._readOnly      = false;
         this._required      = false;       // for all except button
         
         this._delay         = false;
@@ -1543,11 +1543,11 @@
 
     CBaseField.prototype.SetReadOnly = function(bReadOnly) {
         let oParent = this.GetParent();
-        if (oParent && oParent.GetType() == this.GetType())
+        if (oParent && oParent.GetType() === this.GetType())
             return oParent.SetReadOnly(bReadOnly);
 
         if (this.GetType() != AscPDF.FIELD_TYPES.button && this.IsRequired() != bReadOnly) {
-            AscCommon.History.Add(new CChangesPDFFormRequired(this, this._readonly, bReadOnly));
+            AscCommon.History.Add(new CChangesPDFFormReadOnly(this, this._readOnly, bReadOnly));
 
             function update(widget) {
                 widget.SetWasChanged(true);
@@ -1560,29 +1560,43 @@
                 this.GetAllWidgets().forEach(update);
             }
 
-            this._readonly = bReadOnly;
+            this._readOnly = bReadOnly;
             this.SetWasChanged(true);
             this.AddToRedraw();
         }
     };
-    CBaseField.prototype.IsReadOnly = function() {
+    CBaseField.prototype.IsReadOnly = function(bInherit) {
         let oParent = this.GetParent();
-        if (oParent && oParent.GetType() == this.GetType())
+        if (bInherit !== false && oParent && oParent.GetType() === this.GetType())
             return oParent.IsReadOnly();
 
-        return this._readonly;
+        return this._readOnly;
     };
 
     CBaseField.prototype.SetNoExport = function(bNoExport) {
-        this._noExport = bNoExport;
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() === this.GetType()) {
+            oParent.SetNoExport(bNoExport);
+            return;
+        }
+    
+        AscCommon.History.Add(new CChangesPDFFormNoExport(this, this._noExport, bNot));
+        this._noExport = bNot;
+    
+        this.SetWasChanged(true);
+        this.SetNeedRecalc(true);
     };
-    CBaseField.prototype.IsNoExport = function() {
+    CBaseField.prototype.IsNoExport = function(bInherit) {
+        let oParent = this.GetParent();
+        if (bInherit !== false && oParent && oParent.GetType() === this.GetType())
+            return oParent.IsNoExport();
+
         return this._noExport;
     };
     
     CBaseField.prototype.SetRequired = function(bRequired) {
         let oParent = this.GetParent();
-        if (oParent && oParent.GetType() == this.GetType())
+        if (oParent && oParent.GetType() === this.GetType())
             return oParent.SetRequired(bRequired);
 
         if (this.GetType() != AscPDF.FIELD_TYPES.button && this.IsRequired() != bRequired) {
@@ -1604,9 +1618,9 @@
             this.AddToRedraw();
         }
     };
-    CBaseField.prototype.IsRequired = function() {
+    CBaseField.prototype.IsRequired = function(bInherit) {
         let oParent = this.GetParent();
-        if (oParent && oParent.GetType() == this.GetType())
+        if (bInherit !== false && oParent && oParent.GetType() === this.GetType())
             return oParent.IsRequired();
 
         return this._required;
@@ -2558,15 +2572,15 @@
         memory.posForWidgetFlags  = memory.GetCurPosition();
         memory.Skip(4);
         
-        if (this.IsReadOnly()) {
+        if (this.IsReadOnly(false)) {
             memory.widgetFlags |= (1 << 0);
         }
 
-        if (this.IsRequired()) {
+        if (this.IsRequired(false)) {
             memory.widgetFlags |= (1 << 1);
         }
 
-        if (this.IsNoExport()) {
+        if (this.IsNoExport(false)) {
             memory.widgetFlags |= (1 << 2);
         }
 

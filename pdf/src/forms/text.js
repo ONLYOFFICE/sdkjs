@@ -118,9 +118,9 @@
 
         return true;
     };
-    CTextField.prototype.IsComb = function() {
+    CTextField.prototype.IsComb = function(bInherit) {
         let oParent = this.GetParent();
-        if (oParent && oParent.GetType() === this.GetType()) {
+        if (bInherit !== false && oParent && oParent.GetType() === this.GetType()) {
             oParent.IsComb();
             return;
         }
@@ -170,9 +170,9 @@
 
         return true;
     };
-    CTextField.prototype.GetCharLimit = function() {
+    CTextField.prototype.GetCharLimit = function(bInherit) {
         let oParent = this.GetParent();
-        if (oParent && oParent.GetType() === this.GetType()) {
+        if (bInherit !== false && oParent && oParent.GetType() === this.GetType()) {
             oParent.GetCharLimit();
             return;
         }
@@ -192,17 +192,31 @@
         this.SetWasChanged(true);
         this.SetNeedRecalc(true);
     };
-    CTextField.prototype.IsDoNotScroll = function() {
+    CTextField.prototype.IsDoNotScroll = function(bInherit) {
         let oParent = this.GetParent();
-        if (oParent && oParent.GetType() == this.GetType())
+        if (bInherit !== false && oParent && oParent.GetType() === this.GetType())
             return oParent.IsDoNotScroll();
 
         return this._doNotScroll;
     };
     CTextField.prototype.SetDoNotSpellCheck = function(bNot) {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() === this.GetType()) {
+            oParent.SetDoNotScroll(bNot);
+            return;
+        }
+    
+        AscCommon.History.Add(new CChangesPDFTextFormDoNotSpellCheck(this, this._doNotSpellCheck, bNot));
         this._doNotSpellCheck = bNot;
+    
+        this.SetWasChanged(true);
+        this.SetNeedRecalc(true);
     };
-    CTextField.prototype.IsDoNotSpellCheck = function() {
+    CTextField.prototype.IsDoNotSpellCheck = function(bInherit) {
+        let oParent = this.GetParent();
+        if (bInherit !== false && oParent && oParent.GetType() === this.GetType())
+            return oParent.IsDoNotSpellCheck();
+
         return this._doNotSpellCheck;
     };
     CTextField.prototype.SetFileSelect = function(bFileSelect) {
@@ -229,9 +243,9 @@
         this.SetWasChanged(true);
         this.SetNeedRecalc(true);
     };
-    CTextField.prototype.IsFileSelect = function() {
+    CTextField.prototype.IsFileSelect = function(bInherit) {
         let oParent = this.GetParent();
-        if (oParent && oParent.GetType() == this.GetType())
+        if (bInherit !== false && oParent && oParent.GetType() === this.GetType())
             return oParent.IsFileSelect();
 
         return this._fileSelect;
@@ -267,16 +281,16 @@
         this.SetWasChanged(true);
         this.SetNeedRecalc(true);
     };
-    CTextField.prototype.IsMultiline = function() {
+    CTextField.prototype.IsMultiline = function(bInherit) {
         let oParent = this.GetParent();
-        if (oParent && oParent.GetType() == this.GetType())
+        if (bInherit !== false && oParent && oParent.GetType() === this.GetType())
             return oParent.IsMultiline();
 
         return this._multiline;
     };
     CTextField.prototype.SetPassword = function(bPassword) {
         let oParent = this.GetParent();
-        if (oParent && oParent.GetType() == this.GetType())
+        if (oParent && oParent.GetType() === this.GetType())
             return oParent.SetPassword(bPassword);
         
         if (this.IsPassword() == bPassword) {
@@ -294,9 +308,9 @@
         this.SetWasChanged(true);
         this.SetNeedRecalc(true);
     };
-    CTextField.prototype.IsPassword = function() {
+    CTextField.prototype.IsPassword = function(bInherit) {
         let oParent = this.GetParent();
-        if (oParent && oParent.GetType() == this.GetType())
+        if (bInherit !== false && oParent && oParent.GetType() === this.GetType())
             return oParent.IsPassword();
 
         return this._password;
@@ -1928,7 +1942,7 @@
             memory.WriteString(sValue);
         }
 
-        let nCharLimit = this.GetCharLimit();
+        let nCharLimit = this.GetCharLimit(false);
         if (nCharLimit != 0) {
             memory.fieldDataFlags |= (1 << 10);
             memory.WriteLong(nCharLimit);
@@ -1941,22 +1955,22 @@
         // rich value
         //
 
-        if (this.IsMultiline()) {
+        if (this.IsMultiline(false)) {
             memory.widgetFlags |= (1 << 12);
         }
-        if (this.IsPassword()) {
+        if (this.IsPassword(false)) {
             memory.widgetFlags |= (1 << 13);
         }
-        if (this.IsFileSelect()) {
+        if (this.IsFileSelect(false)) {
             memory.widgetFlags |= (1 << 20);
         }
-        if (this.IsDoNotSpellCheck()) {
+        if (this.IsDoNotSpellCheck(false)) {
             memory.widgetFlags |= (1 << 22);
         }
-        if (this.IsDoNotScroll()) {
+        if (this.IsDoNotScroll(false)) {
             memory.widgetFlags |= (1 << 23);
         }
-        if (this.IsComb()) {
+        if (this.IsComb(false)) {
             memory.widgetFlags |= (1 << 24);
         }
         // if (this.IsRichText()) {

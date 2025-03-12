@@ -271,9 +271,9 @@
         this._multipleSelection = bValue;
         this.SetWasChanged(true);
     };
-    CListBoxField.prototype.IsMultipleSelection = function() {
+    CListBoxField.prototype.IsMultipleSelection = function(bInherit) {
         let oParent = this.GetParent();
-        if (oParent && oParent.GetType() == this.GetType())
+        if (bInherit !== false && oParent && oParent.GetType() === this.GetType())
             return oParent.IsMultipleSelection();
 
         return this._multipleSelection;
@@ -324,7 +324,7 @@
     };
     CListBoxField.prototype.AddOption = function(option, nPos) {
         let oParent = this.GetParent();
-        if (oParent && oParent.GetType() == this.GetType())
+        if (oParent && oParent.GetType() === this.GetType())
             return oParent.AddOption(option, nPos);
 
         if (option == null) return;
@@ -375,7 +375,7 @@
     };
     CListBoxField.prototype.RemoveOption = function(nPos) {
         let oParent = this.GetParent();
-        if (oParent && oParent.GetType() == this.GetType())
+        if (oParent && oParent.GetType() === this.GetType())
             return oParent.RemoveOption(nPos);
 
         function updateContent(widget) {
@@ -1065,11 +1065,11 @@
         // top index
         //
 
-        if (this.IsMultipleSelection()) {
+        if (this.IsMultipleSelection(false)) {
             memory.widgetFlags |= (1 << 21);
         }
 
-        if (this.IsCommitOnSelChange()) {
+        if (this.IsCommitOnSelChange(false)) {
             memory.widgetFlags |= (1 << 26);
         }
 

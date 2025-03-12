@@ -459,9 +459,9 @@
         this._noToggleToOff = bValue;
         this.SetWasChanged(true);
     };
-    CBaseCheckBoxField.prototype.IsNoToggleToOff = function() {
+    CBaseCheckBoxField.prototype.IsNoToggleToOff = function(bInherit) {
         let oParent = this.GetParent();
-        if (oParent && oParent.GetType() == this.GetType())
+        if (bInherit !== false && oParent && oParent.GetType() === this.GetType())
             return oParent.IsNoToggleToOff();
 
         return this._noToggleToOff;
@@ -598,12 +598,12 @@
             memory.WriteString(sExportValue);
         }
 
-        if (this.IsNoToggleToOff()) {
+        if (this.IsNoToggleToOff(false)) {
             memory.widgetFlags |= (1 << 14);
         }
 
         if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton) {
-            if (this.IsRadiosInUnison()) {
+            if (this.IsRadiosInUnison(false)) {
                 memory.widgetFlags |= (1 << 25);
             }
         }

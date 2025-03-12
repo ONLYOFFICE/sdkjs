@@ -154,13 +154,21 @@
     };
     
     CRadioButtonField.prototype.SetRadiosInUnison = function(bValue) {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() === this.GetType())
+            return oParent.SetRadiosInUnison(bValue);
+
         let oDoc = this.GetDocument();
         oDoc.History.Add(new CChangesPDFRadiobuttonIsUnison(this, this._radiosInUnison, bValue));
 
         this._radiosInUnison = bValue;
         this.SetWasChanged(true);
     };
-    CRadioButtonField.prototype.IsRadiosInUnison = function() {
+    CRadioButtonField.prototype.IsRadiosInUnison = function(bInherit) {
+        let oParent = this.GetParent();
+        if (bInherit !== false && oParent && oParent.GetType() === this.GetType())
+            return oParent.IsRadiosInUnison();
+
         return this._radiosInUnison;
     };
 
