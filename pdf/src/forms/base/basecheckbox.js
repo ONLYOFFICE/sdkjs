@@ -440,6 +440,8 @@
         this.SetNeedCommit(false);
     };
     CBaseCheckBoxField.prototype.SetExportValue = function(sValue) {
+        AscCommon.History.Add(new CChangesPDFCheckboxStyle(this, this._exportValue, sValue));
+
         this._exportValue = sValue;
         this.SetWasChanged(true);
     };
@@ -473,6 +475,8 @@
      * @typeofeditors ["PDF"]
      */
     CBaseCheckBoxField.prototype.SetStyle = function(nType) {
+        AscCommon.History.Add(new CChangesPDFCheckboxStyle(this, this._chStyle, nType));
+
         this._chStyle = nType;
         this.SetWasChanged(true);
         this.AddToRedraw(true);

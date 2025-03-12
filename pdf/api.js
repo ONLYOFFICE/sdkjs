@@ -1778,7 +1778,91 @@
 		return oDoc.DoAction(function() {
 			oController.selectedObjects.forEach(function(shape) {
 				let field = shape.GetEditField();
-				field.SetEditable(bValue);
+				if (AscPDF.FIELD_TYPES.combobox == field.GetType()) {
+					field.SetEditable(bValue);
+				}
+			});
+
+			return true;
+        }, AscDFH.historydescription_Pdf_ChangeField);
+	};
+	// checkbox
+	PDFEditorApi.prototype.SetCheckboxFieldStyle = function(nStyle) {
+		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
+		let oForm = oDoc.activeForm;
+
+		if (!oForm) {
+			return false;
+		}
+
+		return oDoc.DoAction(function() {
+			oController.selectedObjects.forEach(function(shape) {
+				let field = shape.GetEditField();
+				if ([AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton].includes(field.GetType())) {
+					field.SetStyle(nStyle);
+				}
+			});
+
+			return true;
+        }, AscDFH.historydescription_Pdf_ChangeField);
+	};
+	PDFEditorApi.prototype.SetCheckboxFieldExpValue = function(sValue) {
+		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
+		let oForm = oDoc.activeForm;
+
+		if (!oForm) {
+			return false;
+		}
+
+		return oDoc.DoAction(function() {
+			oController.selectedObjects.forEach(function(shape) {
+				let field = shape.GetEditField();
+				if ([AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton].includes(field.GetType())) {
+					field.SetExportValue(sValue);
+				}
+			});
+
+			return true;
+        }, AscDFH.historydescription_Pdf_ChangeField);
+	};
+	PDFEditorApi.prototype.SetCheckboxFieldToggleToOff = function(bValue) {
+		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
+		let oForm = oDoc.activeForm;
+
+		if (!oForm) {
+			return false;
+		}
+
+		return oDoc.DoAction(function() {
+			oController.selectedObjects.forEach(function(shape) {
+				let field = shape.GetEditField();
+				if ([AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton].includes(field.GetType())) {
+					field.SetNoToggleToOff(!bValue);
+				}
+			});
+
+			return true;
+        }, AscDFH.historydescription_Pdf_ChangeField);
+	};
+	// radiobutton
+	PDFEditorApi.prototype.SetRadioFieldInUnison = function(bValue) {
+		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
+		let oForm = oDoc.activeForm;
+
+		if (!oForm) {
+			return false;
+		}
+
+		return oDoc.DoAction(function() {
+			oController.selectedObjects.forEach(function(shape) {
+				let field = shape.GetEditField();
+				if (AscPDF.FIELD_TYPES.radiobutton == field.GetType()) {
+					field.SetRadiosInUnison(!bValue);
+				}
 			});
 
 			return true;
@@ -3861,7 +3945,13 @@
 	PDFEditorApi.prototype['MoveListFieldOption']		= PDFEditorApi.prototype.MoveListFieldOption;
 	// combobox field
 	PDFEditorApi.prototype['SetComboboxFieldEditable']	= PDFEditorApi.prototype.SetComboboxFieldEditable;
-	
+	// checkbox field
+	PDFEditorApi.prototype['SetCheckboxFieldStyle']			= PDFEditorApi.prototype.SetCheckboxFieldStyle;
+	PDFEditorApi.prototype['SetCheckboxFieldExpValue']		= PDFEditorApi.prototype.SetCheckboxFieldExpValue;
+	PDFEditorApi.prototype['SetCheckboxFieldToggleToOff']	= PDFEditorApi.prototype.SetCheckboxFieldToggleToOff;
+	// radiobutton field
+	PDFEditorApi.prototype['SetRadioFieldInUnison']			= PDFEditorApi.prototype.SetRadioFieldInUnison;
+
 	// drawings
 	PDFEditorApi.prototype['AddTextArt']							= PDFEditorApi.prototype.AddTextArt;
 	PDFEditorApi.prototype['StartAddShape']							= PDFEditorApi.prototype.StartAddShape;

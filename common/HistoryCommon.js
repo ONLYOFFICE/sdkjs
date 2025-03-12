@@ -4070,7 +4070,9 @@
 	AscDFH.historyitem_Pdf_Pushbutton_Fit_Bounds		= AscDFH.historyitem_type_Pdf_Pushbutton | 7;
 	
 	// checkbox/radio
-	AscDFH.historyitem_Pdf_Checkbox_No_Toggle_To_Off = AscDFH.historyitem_type_Pdf_Checkbox_Field | 1;
+	AscDFH.historyitem_Pdf_Checkbox_No_Toggle_To_Off	= AscDFH.historyitem_type_Pdf_Checkbox_Field | 1;
+	AscDFH.historyitem_Pdf_Checkbox_Style				= AscDFH.historyitem_type_Pdf_Checkbox_Field | 2;
+	AscDFH.historyitem_Pdf_Checkbox_Export_Value		= AscDFH.historyitem_type_Pdf_Checkbox_Field | 3;
 
 	// radio
 	AscDFH.historyitem_Pdf_Radiobutton_Is_Unison = AscDFH.historyitem_type_Pdf_Radiobutton_Field | 1;

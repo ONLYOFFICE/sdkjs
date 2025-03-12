@@ -87,7 +87,9 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Fit_Bounds]		= CChangesP
 
 
 // checbox/radio
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Checkbox_No_Toggle_To_Off] = CChangesPDFCheckboxNoToggleToOff;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Checkbox_No_Toggle_To_Off]	= CChangesPDFCheckboxNoToggleToOff;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Checkbox_Style]			= CChangesPDFCheckboxStyle;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Checkbox_Export_Value]		= CChangesPDFCheckboxExpValue;
 
 
 // radio
@@ -1413,6 +1415,40 @@ CChangesPDFCheckboxNoToggleToOff.prototype.private_SetValue = function(Value)
 {
 	let oForm = this.Class;
 	oForm._noToggleToOff = Value;
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFCheckboxStyle(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFCheckboxStyle.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFCheckboxStyle.prototype.constructor = CChangesPDFCheckboxStyle;
+CChangesPDFCheckboxStyle.prototype.Type = AscDFH.historyitem_Pdf_Checkbox_Style;
+CChangesPDFCheckboxStyle.prototype.private_SetValue = function(Value)
+{
+	let oField = this.Class;
+	oField.SetStyle(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesPDFCheckboxExpValue(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFCheckboxExpValue.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesPDFCheckboxExpValue.prototype.constructor = CChangesPDFCheckboxExpValue;
+CChangesPDFCheckboxExpValue.prototype.Type = AscDFH.historyitem_Pdf_Checkbox_Export_Value;
+CChangesPDFCheckboxExpValue.prototype.private_SetValue = function(Value)
+{
+	let oField = this.Class;
+	oField.SetExportValue(Value);
 };
 
 

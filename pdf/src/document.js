@@ -7357,6 +7357,7 @@ var CPresentation = CPresentation || function(){};
                 oFieldProps.asc_putCheckStyle(field.GetStyle());
                 oFieldProps.asc_putExportValue(field.GetExportValue());
                 oFieldProps.asc_putDefaultChecked(field.GetDefaultValue() == field.GetExportValue());
+                oFieldProps.asc_putToggleToOff(!field.IsNoToggleToOff());
                 break;
             }
             case AscPDF.FIELD_TYPES.radiobutton: {

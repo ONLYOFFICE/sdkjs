@@ -3676,15 +3676,16 @@ function (window, undefined) {
 	///// Checkbox
 	//////////////////////////////////////////////////////////////////
 	function asc_CCheckboxFieldProperty() {
-		this.checkStyle		= undefined;
+		this.checkboxStyle	= undefined;
 		this.exportValue	= undefined;
 		this.defaultChecked	= undefined;
+		this.toggleToOff	= undefined;
 	}
-	asc_CCheckboxFieldProperty.prototype.asc_getCheckStyle = function () {
-		return this.checkStyle;
+	asc_CCheckboxFieldProperty.prototype.asc_getCheckboxStyle = function () {
+		return this.checkboxStyle;
 	};
-	asc_CCheckboxFieldProperty.prototype.asc_putCheckStyle = function (v) {
-		this.checkStyle = v;
+	asc_CCheckboxFieldProperty.prototype.asc_putCheckboxStyle = function (v) {
+		this.checkboxStyle = v;
 	};
 	asc_CCheckboxFieldProperty.prototype.asc_getExportValue = function () {
 		return this.exportValue;
@@ -3698,6 +3699,13 @@ function (window, undefined) {
 	asc_CCheckboxFieldProperty.prototype.asc_putDefaultChecked = function (v) {
 		this.defaultChecked = v;
 	};
+	asc_CCheckboxFieldProperty.prototype.asc_getToggleToOff = function () {
+		return this.toggleToOff;
+	};
+	asc_CCheckboxFieldProperty.prototype.asc_putToggleToOff = function (v) {
+		this.toggleToOff = v;
+	};
+	
 	//////////////////////////////////////////////////////////////////
 	///// Radiobutton
 	//////////////////////////////////////////////////////////////////
@@ -7308,12 +7316,14 @@ function (window, undefined) {
 
 	window["Asc"]["asc_CCheckboxFieldProperty"] = window["Asc"].asc_CCheckboxFieldProperty = asc_CCheckboxFieldProperty;
 	prot = asc_CCheckboxFieldProperty.prototype;
-	prot["asc_getCheckStyle"]		= prot.asc_getCheckStyle;
-	prot["asc_putCheckStyle"]		= prot.asc_putCheckStyle;
+	prot["asc_getCheckboxStyle"]		= prot.asc_getCheckboxStyle;
+	prot["asc_putCheckboxStyle"]		= prot.asc_putCheckboxStyle;
 	prot["asc_getExportValue"]		= prot.asc_getExportValue;
 	prot["asc_putExportValue"]		= prot.asc_putExportValue;
 	prot["asc_getDefaultChecked"]	= prot.asc_getDefaultChecked;
 	prot["asc_putDefaultChecked"]	= prot.asc_putDefaultChecked;
+	prot["asc_getToggleToOff"]		= prot.asc_getToggleToOff;
+	prot["asc_putToggleToOff"]		= prot.asc_putToggleToOff;
 
 	window["Asc"]["asc_CRadiobuttonFieldProperty"] = window["Asc"].asc_CRadiobuttonFieldProperty = asc_CRadiobuttonFieldProperty;
 	prot = asc_CRadiobuttonFieldProperty.prototype;
