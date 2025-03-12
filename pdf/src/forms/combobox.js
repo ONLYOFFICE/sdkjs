@@ -284,7 +284,10 @@
 
             var pageObject = oViewer.getPageByCoords(x, y);
 
-            if (pageObject.x >= this._markRect.x1 && pageObject.x <= this._markRect.x2 && pageObject.y >= this._markRect.y1 && pageObject.y <= this._markRect.y2 && this.GetOptions()) {
+            let aOptions = this.GetOptions();
+            let hasOptions = aOptions && aOptions.length != 0;
+
+            if (pageObject.x >= this._markRect.x1 && pageObject.x <= this._markRect.x2 && pageObject.y >= this._markRect.y1 && pageObject.y <= this._markRect.y2 && hasOptions) {
                 editor.sendEvent("asc_onShowPDFFormsActions", this, x, y);
                 this.content.MoveCursorToStartPos();
             }
@@ -322,7 +325,8 @@
     CComboBoxField.prototype.SelectOption = function(nIdx) {
         if (this.GetCurIdxs() == nIdx)
             return;
-
+        
+        let oDoc = this.GetDocument();
         let oPara = this.content.GetElement(0);
         let oRun = oPara.GetElement(0);
 
@@ -344,6 +348,11 @@
         this.content.MoveCursorToStartPos();
         if (!Asc.editor.getDocumentRenderer().IsOpenFormsInProgress)
             this.SetNeedCheckAlign(true);
+
+        this._bAutoShiftContentView = true;
+        if (this.IsCommitOnSelChange() == true) {
+            oDoc.EnterDownActiveField();
+        }
     };
     CComboBoxField.prototype.SetCurIdxs = function(aIdxs) {
         if (this.IsWidget()) {

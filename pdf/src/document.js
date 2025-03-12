@@ -2052,8 +2052,11 @@ var CPresentation = CPresentation || function(){};
                     case AscPDF.FIELD_TYPES.combobox: {
                         cursorType = "text";
     
+                        let aOptions = oMouseMoveField.GetOptions();
+                        let hasOptions = aOptions && aOptions.length != 0;
+
                         // попадание в mark выбора элементов списка
-                        if (pageObject.x >= oMouseMoveField._markRect.x1 && pageObject.x <= oMouseMoveField._markRect.x2 && pageObject.y >= oMouseMoveField._markRect.y1 && pageObject.y <= oMouseMoveField._markRect.y2 && oMouseMoveField._options.length != 0) {
+                        if (pageObject.x >= oMouseMoveField._markRect.x1 && pageObject.x <= oMouseMoveField._markRect.x2 && pageObject.y >= oMouseMoveField._markRect.y1 && pageObject.y <= oMouseMoveField._markRect.y2 && hasOptions) {
                             cursorType = "pointer";
                         }
                         break;
@@ -7335,6 +7338,7 @@ var CPresentation = CPresentation || function(){};
             case AscPDF.FIELD_TYPES.combobox: {
                 oFieldProps = new Asc.asc_CComboboxFieldProperty();
                 oFieldProps.asc_putOptions(field.GetOptions());
+                oFieldProps.asc_putCommitOnSelChange(field.IsCommitOnSelChange());
                 oFieldProps.asc_putEditable(field.IsEditable());
                 let oMeta = field.GetMeta();
                 if (oMeta) {

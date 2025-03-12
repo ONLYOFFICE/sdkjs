@@ -202,7 +202,7 @@
     CTextField.prototype.SetDoNotSpellCheck = function(bNot) {
         let oParent = this.GetParent();
         if (oParent && oParent.GetType() === this.GetType()) {
-            oParent.SetDoNotScroll(bNot);
+            oParent.SetDoNotSpellCheck(bNot);
             return;
         }
     

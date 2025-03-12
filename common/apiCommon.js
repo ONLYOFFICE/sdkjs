@@ -3606,6 +3606,7 @@ function (window, undefined) {
 		this.validate			= null;
 
 		this.options			= null;
+		this.commitOnSelChange	= undefined;
 		this.editable			= undefined;
 		this.placeholder		= undefined;
 		this.autoFit			= undefined;
@@ -3615,6 +3616,12 @@ function (window, undefined) {
 	};
 	asc_CComboboxFieldProperty.prototype.asc_putOptions = function (v) {
 		this.options = v;
+	};
+	asc_CComboboxFieldProperty.prototype.asc_getCommitOnSelChange = function () {
+		return this.commitOnSelChange;
+	};
+	asc_CComboboxFieldProperty.prototype.asc_putCommitOnSelChange = function (v) {
+		this.commitOnSelChange = v;
 	};
 	asc_CComboboxFieldProperty.prototype.asc_getEditable = function () {
 		return this.editable;
@@ -7292,18 +7299,20 @@ function (window, undefined) {
 
 	window["Asc"]["asc_CComboboxFieldProperty"] = window["Asc"].asc_CComboboxFieldProperty = asc_CComboboxFieldProperty;
 	prot = asc_CComboboxFieldProperty.prototype;
-	prot["asc_getOptions"]		= prot.asc_getOptions;
-	prot["asc_putOptions"]		= prot.asc_putOptions;
-	prot["asc_getEditable"]		= prot.asc_getEditable;
-	prot["asc_putEditable"]		= prot.asc_putEditable;
-	prot["asc_getPlaceholder"]	= prot.asc_getPlaceholder;
-	prot["asc_putPlaceholder"]	= prot.asc_putPlaceholder;
-	prot["asc_getAutoFit"]		= prot.asc_getAutoFit;
-	prot["asc_putAutoFit"]		= prot.asc_putAutoFit;
-	prot["asc_getFormat"]		= prot.asc_getFormat;
-	prot["asc_putFormat"]		= prot.asc_putFormat;
-	prot["asc_getValidate"]		= prot.asc_getValidate;
-	prot["asc_putValidate"]		= prot.asc_putValidate;
+	prot["asc_getOptions"]				= prot.asc_getOptions;
+	prot["asc_putOptions"]				= prot.asc_putOptions;
+	prot["asc_getCommitOnSelChange"]	= prot.asc_getCommitOnSelChange;
+	prot["asc_putCommitOnSelChange"]	= prot.asc_putCommitOnSelChange;
+	prot["asc_getEditable"]				= prot.asc_getEditable;
+	prot["asc_putEditable"]				= prot.asc_putEditable;
+	prot["asc_getPlaceholder"]			= prot.asc_getPlaceholder;
+	prot["asc_putPlaceholder"]			= prot.asc_putPlaceholder;
+	prot["asc_getAutoFit"]				= prot.asc_getAutoFit;
+	prot["asc_putAutoFit"]				= prot.asc_putAutoFit;
+	prot["asc_getFormat"]				= prot.asc_getFormat;
+	prot["asc_putFormat"]				= prot.asc_putFormat;
+	prot["asc_getValidate"]				= prot.asc_getValidate;
+	prot["asc_putValidate"]				= prot.asc_putValidate;
 
 	window["Asc"]["asc_CListboxFieldProperty"] = window["Asc"].asc_CListboxFieldProperty = asc_CListboxFieldProperty;
 	prot = asc_CListboxFieldProperty.prototype;
