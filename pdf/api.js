@@ -1602,7 +1602,9 @@
 		return oDoc.DoAction(function() {
 			oController.selectedObjects.forEach(function(shape) {
 				let field = shape.GetEditField();
-				field.SetMultiline(bValue);
+				if (AscPDF.FIELD_TYPES.text == field.GetType()) {
+					field.SetMultiline(bValue);
+				}
 			});
 
 			return true;
@@ -1620,7 +1622,9 @@
 		return oDoc.DoAction(function() {
 			oController.selectedObjects.forEach(function(shape) {
 				let field = shape.GetEditField();
-				field.SetCharLimit(nChars);
+				if (AscPDF.FIELD_TYPES.text == field.GetType()) {
+					field.SetCharLimit(nChars);
+				}
 			});
 
 			return true;
@@ -1638,14 +1642,16 @@
 		return oDoc.DoAction(function() {
 			oController.selectedObjects.forEach(function(shape) {
 				let field = shape.GetEditField();
-				if (bValue) {
-					field.SetCharLimit(10);
+				if (AscPDF.FIELD_TYPES.text == field.GetType()) {
+					if (bValue) {
+						field.SetCharLimit(10);
+					}
+					else {
+						field.SetCharLimit(0);
+					}
+
+					field.SetComb(bValue);
 				}
-				else {
-					field.SetCharLimit(0);
-				}
-				
-				field.SetComb(bValue);
 			});
 
 			return true;
@@ -1663,7 +1669,9 @@
 		return oDoc.DoAction(function() {
 			oController.selectedObjects.forEach(function(shape) {
 				let field = shape.GetEditField();
-				field.SetDoNotScroll(!bValue);
+				if (AscPDF.FIELD_TYPES.text == field.GetType()) {
+					field.SetDoNotScroll(!bValue);
+				}
 			});
 
 			return true;
