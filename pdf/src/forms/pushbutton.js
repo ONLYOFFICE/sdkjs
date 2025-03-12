@@ -33,10 +33,10 @@
 (function(){
         
     // api objects
-    let position    = AscPDF.Api.Objects.position;
-    let scaleWhen   = AscPDF.Api.Objects.scaleWhen;
-    let scaleHow    = AscPDF.Api.Objects.scaleHow;
-    let highlight   = AscPDF.Api.Objects.highlight;
+    let position    = AscPDF.Api.Types.position;
+    let scaleWhen   = AscPDF.Api.Types.scaleWhen;
+    let scaleHow    = AscPDF.Api.Types.scaleHow;
+    let highlight   = AscPDF.Api.Types.highlight;
 
     // internal types
     let BUTTON_HIGHLIGHT_TYPES = {
@@ -135,7 +135,7 @@
 
         oDoc.DoAction(function() {
             aFields.forEach(function(field) {
-                if (field.GetHeaderPosition() == position["textOnly"])
+                if (field.GetLayout() == position["textOnly"])
                     return;
     
                 field.SetWasChanged(true);
@@ -153,7 +153,7 @@
             
             if (oViewer.IsOpenFormsInProgress == false) {
                 aFields.forEach(function(field) {
-                    if (field.GetHeaderPosition() == position["textOnly"])
+                    if (field.GetLayout() == position["textOnly"])
                         return;
     
                     field.SetNeedRecalc(true);
@@ -250,7 +250,7 @@
         let nContentW = 0;
         let nContentH = 0;
 
-        let nHeaderPos = this.GetHeaderPosition();
+        let nHeaderPos = this.GetLayout();
         switch (nHeaderPos) {
             case position["textOnly"]:
                 return;
@@ -448,7 +448,7 @@
      */
     CPushButtonField.prototype.Internal_CorrectContentPos = function() {
         const oRect = this.IsButtonFitBounds() ? this.getFormRect() : this.getFormRelRect();
-        let nButtonPos  = this.GetHeaderPosition();
+        let nButtonPos  = this.GetLayout();
 
         let oDrawing = this.GetDrawing();
 
@@ -643,7 +643,7 @@
         oGraphicsWord.AddClipRect(oClipRect.X, oClipRect.Y, oClipRect.W, oClipRect.H);
 
         // draw behind doc
-        if (this.GetHeaderPosition() == position["overlay"]) {
+        if (this.GetLayout() == position["overlay"]) {
             let oDrawing = this.GetDrawing();
             if (oDrawing)
                 oDrawing.GraphicObj.draw(oGraphicsWord);
@@ -1412,8 +1412,8 @@
      * @param {number} nType
      * @typeofeditors ["PDF"]
      */
-    CPushButtonField.prototype.SetHeaderPosition = function(nType) {
-        AscCommon.History.Add(new CChangesPDFPushbuttonHeaderPos(this, this.GetHeaderPosition(), nType));
+    CPushButtonField.prototype.SetLayout = function(nType) {
+        AscCommon.History.Add(new CChangesPDFPushbuttonHeaderPos(this, this.GetLayout(), nType));
 
         switch (nType) {
             case position["textOnly"]:
@@ -1442,7 +1442,7 @@
         this.SetWasChanged(true);
         this.SetNeedRecalc(true);
     };
-    CPushButtonField.prototype.GetHeaderPosition = function() {
+    CPushButtonField.prototype.GetLayout = function() {
         return this._buttonPosition;
     };
     CPushButtonField.prototype.SetIconPosition = function(X, Y) {
@@ -1953,7 +1953,7 @@
         }
 
         // button header position position
-        let nButtonPosition = this.GetHeaderPosition();
+        let nButtonPosition = this.GetLayout();
         if (nButtonPosition != null) {
             memory.fieldDataFlags |= (1 << 13);
             memory.WriteByte(nButtonPosition);

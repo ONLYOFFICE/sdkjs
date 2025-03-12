@@ -71,10 +71,10 @@
         "thick":  3
     }
 
-    const highlight     = AscPDF.Api.Objects.highlight;
-    const style         = AscPDF.Api.Objects.style;
-    const display       = AscPDF.Api.Objects.display;
-    const border        = AscPDF.Api.Objects.border;
+    const highlight     = AscPDF.Api.Types.highlight;
+    const style         = AscPDF.Api.Types.style;
+    const display       = AscPDF.Api.Types.display;
+    const border        = AscPDF.Api.Types.border;
 
     /**
 	 * A string that sets the trigger for the action. Values are:

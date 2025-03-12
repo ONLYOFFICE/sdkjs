@@ -712,7 +712,7 @@
         };
         Object.freeze(oApiConsole);
     
-        let oApiObjects = AscPDF.Api.Objects;
+        let oApiObjects = AscPDF.Api.Types;
         let aArgsNamesPdfApi = [
             "event",
             "color",

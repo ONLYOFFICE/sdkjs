@@ -78,7 +78,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Multiple_Selection]	= CCh
 
 // button
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Image]			= CChangesPDFPushbuttonImage;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Header_Pos]		= CChangesPDFPushbuttonHeaderPos;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Layout]			= CChangesPDFPushbuttonLayout;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Icon_Pos]		= CChangesPDFPushbuttonIconPos;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Highlight_Type]	= CChangesPDFPushbuttonHighlightType;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Scale_When_Type]= CChangesPDFPushbuttonScaleWhenType;
@@ -1302,17 +1302,17 @@ CChangesPDFPushbuttonImage.prototype.ReadFromBinary = function(Reader)
  * @constructor
  * @extends {AscDFH.CChangesBaseLongProperty}
  */
-function CChangesPDFPushbuttonHeaderPos(Class, Old, New, Color)
+function CChangesPDFPushbuttonLayout(Class, Old, New, Color)
 {
 	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
 }
-CChangesPDFPushbuttonHeaderPos.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
-CChangesPDFPushbuttonHeaderPos.prototype.constructor = CChangesPDFPushbuttonHeaderPos;
-CChangesPDFPushbuttonHeaderPos.prototype.Type = AscDFH.historyitem_Pdf_Pushbutton_Header_Pos;
-CChangesPDFPushbuttonHeaderPos.prototype.private_SetValue = function(Value)
+CChangesPDFPushbuttonLayout.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFPushbuttonLayout.prototype.constructor = CChangesPDFPushbuttonLayout;
+CChangesPDFPushbuttonLayout.prototype.Type = AscDFH.historyitem_Pdf_Pushbutton_Layout;
+CChangesPDFPushbuttonLayout.prototype.private_SetValue = function(Value)
 {
 	let oField = this.Class;
-	oField.SetHeaderPosition(Value);
+	oField.SetLayout(Value);
 };
 
 /**

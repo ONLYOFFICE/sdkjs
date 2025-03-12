@@ -1369,7 +1369,7 @@
 
 				// button
 				if (oFormInfo["position"] != null) {
-					oForm.SetHeaderPosition(oFormInfo["position"]);
+					oForm.SetLayout(oFormInfo["position"]);
 				}
 				if (oFormInfo["caption"] != null && oForm["type"] == AscPDF.FIELD_TYPES.button) {
 					oForm.SetCaption(oFormInfo["caption"]);

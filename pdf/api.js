@@ -1935,6 +1935,107 @@
 			return true;
         }, AscDFH.historydescription_Pdf_ChangeField);
 	};
+	// pushbutton
+	PDFEditorApi.prototype.SetButtonLayout = function(nType) {
+		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
+		let oForm = oDoc.activeForm;
+
+		if (!oForm) {
+			return false;
+		}
+
+		return oDoc.DoAction(function() {
+			oController.selectedObjects.forEach(function(shape) {
+				let field = shape.GetEditField();
+				if (AscPDF.FIELD_TYPES.button == field.GetType()) {
+					field.SetLayout(nType);
+				}
+			});
+
+			return true;
+        }, AscDFH.historydescription_Pdf_ChangeField);
+	};
+	PDFEditorApi.prototype.SetButtonScaleWhen = function(nType) {
+		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
+		let oForm = oDoc.activeForm;
+
+		if (!oForm) {
+			return false;
+		}
+
+		return oDoc.DoAction(function() {
+			oController.selectedObjects.forEach(function(shape) {
+				let field = shape.GetEditField();
+				if (AscPDF.FIELD_TYPES.button == field.GetType()) {
+					field.SetScaleWhen(nType);
+				}
+			});
+
+			return true;
+        }, AscDFH.historydescription_Pdf_ChangeField);
+	};
+	PDFEditorApi.prototype.SetButtonScaleHow = function(nType) {
+		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
+		let oForm = oDoc.activeForm;
+
+		if (!oForm) {
+			return false;
+		}
+
+		return oDoc.DoAction(function() {
+			oController.selectedObjects.forEach(function(shape) {
+				let field = shape.GetEditField();
+				if (AscPDF.FIELD_TYPES.button == field.GetType()) {
+					field.SetScaleHow(nType);
+				}
+			});
+
+			return true;
+        }, AscDFH.historydescription_Pdf_ChangeField);
+	};
+	PDFEditorApi.prototype.SetButtonFitBounds = function(bValue) {
+		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
+		let oForm = oDoc.activeForm;
+
+		if (!oForm) {
+			return false;
+		}
+
+		return oDoc.DoAction(function() {
+			oController.selectedObjects.forEach(function(shape) {
+				let field = shape.GetEditField();
+				if (AscPDF.FIELD_TYPES.button == field.GetType()) {
+					field.SetButtonFitBounds(bValue);
+				}
+			});
+
+			return true;
+        }, AscDFH.historydescription_Pdf_ChangeField);
+	};
+	PDFEditorApi.prototype.SetButtonIconPos = function(X, Y) {
+		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
+		let oForm = oDoc.activeForm;
+
+		if (!oForm) {
+			return false;
+		}
+
+		return oDoc.DoAction(function() {
+			oController.selectedObjects.forEach(function(shape) {
+				let field = shape.GetEditField();
+				if (AscPDF.FIELD_TYPES.button == field.GetType()) {
+					field.SetIconPosition(X, Y);
+				}
+			});
+
+			return true;
+        }, AscDFH.historydescription_Pdf_ChangeField);
+	};
 
 	/////////////////////////////////////////////////////////////
 	///////// For drawings
@@ -4023,6 +4124,12 @@
 	PDFEditorApi.prototype['SetCheckboxFieldToggleToOff']	= PDFEditorApi.prototype.SetCheckboxFieldToggleToOff;
 	// radiobutton field
 	PDFEditorApi.prototype['SetRadioFieldInUnison']			= PDFEditorApi.prototype.SetRadioFieldInUnison;
+	// button field
+	PDFEditorApi.prototype['SetButtonLayout']		= PDFEditorApi.prototype.SetButtonLayout;
+	PDFEditorApi.prototype['SetButtonScaleWhen']	= PDFEditorApi.prototype.SetButtonScaleWhen;
+	PDFEditorApi.prototype['SetButtonScaleHow']		= PDFEditorApi.prototype.SetButtonScaleHow;
+	PDFEditorApi.prototype['SetButtonFitBounds']	= PDFEditorApi.prototype.SetButtonFitBounds;
+	PDFEditorApi.prototype['SetButtonIconPos']		= PDFEditorApi.prototype.SetButtonIconPos;
 
 	// drawings
 	PDFEditorApi.prototype['AddTextArt']							= PDFEditorApi.prototype.AddTextArt;

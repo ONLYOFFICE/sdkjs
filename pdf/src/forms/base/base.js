@@ -146,7 +146,7 @@
         this._textSize      = 10;
         this._fontStyle     = 0;    // информация о стиле шрифта (bold, italic)
 
-        this._display       = AscPDF.Api.Objects.display["visible"];
+        this._display       = AscPDF.Api.Types.display["visible"];
         this._hidden        = false;             // This property has been superseded by the display property and its use is discouraged.
         this._print         = true;        // This property has been superseded by the display property and its use is discouraged.
         this._readOnly      = false;
@@ -2167,7 +2167,7 @@
         if ([AscPDF.FIELD_TYPES.radiobutton, AscPDF.FIELD_TYPES.checkbox].includes(this.GetType()))
             return;
 
-        let color = AscPDF.Api.Objects.color;
+        let color = AscPDF.Api.Types.color;
 
         let oRGB = color.convert(aApiColor, "RGB");
         if (this.content) {

@@ -4062,7 +4062,7 @@
 
 	// button
 	AscDFH.historyitem_Pdf_Pushbutton_Image				= AscDFH.historyitem_type_Pdf_Pushbutton | 1;
-	AscDFH.historyitem_Pdf_Pushbutton_Header_Pos		= AscDFH.historyitem_type_Pdf_Pushbutton | 2;
+	AscDFH.historyitem_Pdf_Pushbutton_Layout		= AscDFH.historyitem_type_Pdf_Pushbutton | 2;
 	AscDFH.historyitem_Pdf_Pushbutton_Icon_Pos			= AscDFH.historyitem_type_Pdf_Pushbutton | 3;
 	AscDFH.historyitem_Pdf_Pushbutton_Highlight_Type	= AscDFH.historyitem_type_Pdf_Pushbutton | 4;
 	AscDFH.historyitem_Pdf_Pushbutton_Scale_When_Type	= AscDFH.historyitem_type_Pdf_Pushbutton | 5;

@@ -259,15 +259,15 @@
     };
 
     color["convert"] = color.convert;
-    window["AscPDF"].Api.Objects = {
-        border:     border,
-        position:   position,
-        scaleHow:   scaleHow,
-        scaleWhen:  scaleWhen,
-        display:    display,
-        style:      style,
-        highlight:  highlight,
-        color:      color
+    window["AscPDF"]["Api"]["Types"] = window.AscPDF.Api.Types = {
+        "border":     border,
+        "position":   position,
+        "scaleHow":   scaleHow,
+        "scaleWhen":  scaleWhen,
+        "display":    display,
+        "style":      style,
+        "highlight":  highlight,
+        "color":      color
     };
 })();
 

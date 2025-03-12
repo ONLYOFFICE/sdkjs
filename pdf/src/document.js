@@ -538,7 +538,7 @@ var CPresentation = CPresentation || function(){};
                 "JS": "event.target.buttonImportIcon();"
             }]);
 
-            oButtonField.SetHeaderPosition(AscPDF.Api.Objects.position['iconOnly']);
+            oButtonField.SetLayout(AscPDF.Api.Types.position['iconOnly']);
             oButtonField.SetBorderColor([0.7529]);
         }
         else {
@@ -7375,7 +7375,7 @@ var CPresentation = CPresentation || function(){};
             case AscPDF.FIELD_TYPES.button: {
                 oFieldProps = new Asc.asc_CButtonFieldProperty();
                 oFieldProps.asc_putHighlight(field.GetHighlight());
-                oFieldProps.asc_putLayout(field.GetHeaderPosition());
+                oFieldProps.asc_putLayout(field.GetLayout());
                 oFieldProps.asc_putScaleWhen(field.GetScaleWhen());
                 oFieldProps.asc_putScaleHow(field.GetScaleHow());
                 oFieldProps.asc_putFitBounds(field.IsButtonFitBounds());
