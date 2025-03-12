@@ -2789,7 +2789,7 @@
         if (this.IsCommitOnSelChange && this.IsCommitOnSelChange()) {
             nWidgetFlags |= (1 << 26);
         }
-        memory.WriteLong(nFlags);
+        memory.WriteLong(nWidgetFlags);
 
         // write flags
         let nEndPos = memory.GetCurPosition();
