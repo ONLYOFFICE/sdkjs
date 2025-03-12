@@ -9811,6 +9811,8 @@ var editor;
 					oThis.wb && oThis.wb.externalSelectionController.onExternalChangeSelection(event.data);
 				} else if ("SetFormulaEditMode" === event.data.type) {
 					oThis.wb && oThis.wb.externalSelectionController.onExternalSetFormulaMode(event.data);
+				} else if ("CloseTab" === event.data.type) {
+					console.log("closeTab")
 				}
 			}
 		}

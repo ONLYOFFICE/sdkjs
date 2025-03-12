@@ -7183,6 +7183,10 @@
 						oThis.wb.setFormulaEditMode(true);
 						oThis.wb.cellEditor._topLineGotFocus();
 						oThis.wb.cellEditor.setSelectionState(oThis.activeTabFormula);
+						if (oThis.wb.cellEditor.lastRangePos == null || oThis.wb.cellEditor.lastRangeLength == null) {
+							oThis.wb.cellEditor.lastRangePos = 1;
+							oThis.wb.cellEditor.lastRangeLength = editorEnterOptions.newText.length;
+						}
 						oThis.wb.input.disabled = false;
 						this.lockChangeSelection = false;
 
@@ -7201,14 +7205,28 @@
 				}
 				//console.log("Visibility of page has changed!" + " documentHidden " + document.hidden);
 			} else {
-				/*if (oThis.wb.getCellEditMode()) {
+				if (window.externalFormulaEditMode && oThis.wb.getCellEditMode()) {
+					window.externalFormulaEditMode = false;
 					oThis.wb.closeCellEditor(true);
-				}*/
+					window.externalFormulaEditMode = true;
+				}
 			}
 		});
 
-		document.addEventListener("focus", function () {
-			console.log("focus")
+
+		let isClosing = false;
+		window.addEventListener('beforeunload', function (event) {
+			if (!window.externalFormulaEditMode) {
+				isClosing = true;
+				event.preventDefault();
+				event.returnValue = '';
+			}
+		});
+
+		window.addEventListener('unload', function (event) {
+			if (isClosing) {
+				oThis.externalCloseEditor();
+			}
 		});
 	};
 	CExternalSelectionController.prototype.onExternalChangeSelection = function (data) {
@@ -7217,7 +7235,7 @@
 		}
 
 
-		console.log("onExternalChangeSelection: text: " + data.range + " this.ID: " + this.wb.Api.DocInfo.Id + " data.ID: " + data.id + " selectionBegin: "  + data.selectionBegin + " selectionEnd: "  + data.selectionEnd + " lastRangePos: "  + data.lastRangePos + " lastRangeLength: "  + data.lastRangeLength + " cursorPos: "  + data.cursorPos)
+		//console.log("onExternalChangeSelection: text: " + data.range + " this.ID: " + this.wb.Api.DocInfo.Id + " data.ID: " + data.id + " selectionBegin: "  + data.selectionBegin + " selectionEnd: "  + data.selectionEnd + " lastRangePos: "  + data.lastRangePos + " lastRangeLength: "  + data.lastRangeLength + " cursorPos: "  + data.cursorPos)
 		this.activeTabFormula = data;
 
 		let oThis = this;
@@ -7255,8 +7273,9 @@
 		//if open cell editor and start formula edit mode, then send by all tabs "SetFormulaEditMode" event
 		//event data must contains doc info and current cell text
 		//console.log("SetFormulaEditMode_on_message " + "_isClose: " + data.isClose)
+		let isExternalFormulaEditMode = window.externalFormulaEditMode;
 		window.externalFormulaEditMode = !data.isClose ? {id: data.id} : null;
-		if (this.wb.getCellEditMode() /*&& window.externalFormulaEditMode*/ && data.isClose) {
+		if (this.wb.getCellEditMode() && data.isClose && isExternalFormulaEditMode) {
 			this.wb.closeCellEditor(true);
 		}
 	};

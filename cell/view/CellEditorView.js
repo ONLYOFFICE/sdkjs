@@ -682,6 +682,9 @@ function (window, undefined) {
 		this._addChars(str, undefined, /*isRange*/true);
 		this.lastRangeLength = str.length;
 		this.skipTLUpdate = true;
+
+		const oApi = window["Asc"]["editor"];
+		oApi.wb.externalSelectionController && oApi.wb.externalSelectionController.externalChangeSelection();
 	};
 
 	CellEditor.prototype.insertFormula = function (functionName, isDefName, sRange) {
