@@ -7177,7 +7177,11 @@
 					oThis.wb.setCellEditMode(true);
 
 					let ws = oThis.wb.getWorksheet();
-					let selectionRange = ws.model.selectionRange?.clone();
+					/*let wb = new AscCommonExcel.Workbook(undefined, undefined, false);
+					let wsModel = new AscCommonExcel.Worksheet(wb);
+					wsModel.initPostOpen();
+					let ws = oThis.wb._createWorksheetView(wsModel);*/
+					let selectionRange = ws.model.selectionRange && ws.model.selectionRange.clone();
 
 					ws.openCellEditor(oThis.wb.cellEditor, editorEnterOptions, selectionRange);
 					oThis.wb.setFormulaEditMode(true);
@@ -7251,8 +7255,13 @@
 	};
 
 	CExternalSelectionController.prototype._isEqualEditorState = function(data) {
+		if (!data) {
+			return false;
+		}
 		const editor = this.wb.cellEditor;
-		return data.range === editor.getText().substring(1) &&
+		let editorText = editor && editor.getText();
+		editorText = editorText && editorText.substring(1);
+		return data.range ===editorText &&
 			editor.selectionBegin === data.selectionBegin &&
 			editor.selectionEnd === data.selectionEnd &&
 			editor.lastRangePos === data.lastRangePos &&
