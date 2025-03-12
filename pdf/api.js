@@ -1589,6 +1589,24 @@
 			return true;
         }, AscDFH.historydescription_Pdf_ChangeField);
 	};
+	PDFEditorApi.prototype.SetFieldDefaultValue = function(sValue) {
+		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
+		let oForm = oDoc.activeForm;
+
+		if (!oForm) {
+			return false;
+		}
+
+		return oDoc.DoAction(function() {
+			oController.selectedObjects.forEach(function(shape) {
+				let field = shape.GetEditField();
+				field.SetDefaultValue(sValue);
+			});
+
+			return true;
+        }, AscDFH.historydescription_Pdf_ChangeField);
+	};
 	// text field
 	PDFEditorApi.prototype.SetTextFieldMultiline = function(bValue) {
 		let oDoc = this.getPDFDoc();
@@ -1815,7 +1833,7 @@
 			return true;
         }, AscDFH.historydescription_Pdf_ChangeField);
 	};
-	PDFEditorApi.prototype.SetCheckboxFieldExpValue = function(sValue) {
+	PDFEditorApi.prototype.SetCheckboxFieldExportValue = function(sValue) {
 		let oDoc = this.getPDFDoc();
 		let oController = oDoc.GetController();
 		let oForm = oDoc.activeForm;
@@ -3940,6 +3958,7 @@
 	PDFEditorApi.prototype['SetFieldStrokeStyle']		= PDFEditorApi.prototype.SetFieldStrokeStyle;
 	PDFEditorApi.prototype['SetFieldBgColor']			= PDFEditorApi.prototype.SetFieldBgColor;
 	PDFEditorApi.prototype['SetFieldRequired']			= PDFEditorApi.prototype.SetFieldRequired;
+	PDFEditorApi.prototype['SetFieldDefaultValue']		= PDFEditorApi.prototype.SetFieldDefaultValue;
 	// text field
 	PDFEditorApi.prototype['SetTextFieldMultiline']		= PDFEditorApi.prototype.SetTextFieldMultiline;
 	PDFEditorApi.prototype['SetTextFieldCharLimit']		= PDFEditorApi.prototype.SetTextFieldCharLimit;
@@ -3955,7 +3974,7 @@
 	PDFEditorApi.prototype['SetComboboxFieldEditable']	= PDFEditorApi.prototype.SetComboboxFieldEditable;
 	// checkbox field
 	PDFEditorApi.prototype['SetCheckboxFieldStyle']			= PDFEditorApi.prototype.SetCheckboxFieldStyle;
-	PDFEditorApi.prototype['SetCheckboxFieldExpValue']		= PDFEditorApi.prototype.SetCheckboxFieldExpValue;
+	PDFEditorApi.prototype['SetCheckboxFieldExportValue']	= PDFEditorApi.prototype.SetCheckboxFieldExportValue;
 	PDFEditorApi.prototype['SetCheckboxFieldToggleToOff']	= PDFEditorApi.prototype.SetCheckboxFieldToggleToOff;
 	// radiobutton field
 	PDFEditorApi.prototype['SetRadioFieldInUnison']			= PDFEditorApi.prototype.SetRadioFieldInUnison;

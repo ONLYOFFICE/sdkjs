@@ -1676,6 +1676,12 @@
         return this._defaultValue;
     };
     CBaseField.prototype.SetDefaultValue = function(value) {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() === this.GetType())
+            return oParent.SetDefaultValue(value);
+
+        AscCommon.History.Add(new CChangesPDFFormDefaultValue(this, this._defaultValue, value));
+
         this._defaultValue = value;
         this.SetWasChanged(true);
     };
