@@ -7358,7 +7358,7 @@ var CPresentation = CPresentation || function(){};
             }
             case AscPDF.FIELD_TYPES.checkbox: {
                 oFieldProps = new Asc.asc_CCheckboxFieldProperty();
-                oFieldProps.asc_putCheckStyle(field.GetStyle());
+                oFieldProps.asc_putCheckboxStyle(field.GetStyle());
                 oFieldProps.asc_putExportValue(field.GetExportValue());
                 oFieldProps.asc_putDefaultChecked(field.GetDefaultValue() == field.GetExportValue());
                 oFieldProps.asc_putToggleToOff(!field.IsNoToggleToOff());
@@ -7366,7 +7366,7 @@ var CPresentation = CPresentation || function(){};
             }
             case AscPDF.FIELD_TYPES.radiobutton: {
                 oFieldProps = new Asc.asc_CRadiobuttonFieldProperty();
-                oFieldProps.asc_putCheckStyle(field.GetStyle());
+                oFieldProps.asc_putCheckboxStyle(field.GetStyle());
                 oFieldProps.asc_putExportValue(field.GetExportValue());
                 oFieldProps.asc_putDefaultChecked(field.GetDefaultValue() == field.GetExportValue());
                 oFieldProps.asc_putRadiosInUnison(field.IsRadiosInUnison());

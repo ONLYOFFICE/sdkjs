@@ -1928,7 +1928,7 @@
 			oController.selectedObjects.forEach(function(shape) {
 				let field = shape.GetEditField();
 				if (AscPDF.FIELD_TYPES.radiobutton == field.GetType()) {
-					field.SetRadiosInUnison(!bValue);
+					field.SetRadiosInUnison(bValue);
 				}
 			});
 
