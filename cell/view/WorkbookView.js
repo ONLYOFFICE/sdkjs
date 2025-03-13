@@ -7208,9 +7208,11 @@
 				}
 			} else {
 				if (window.externalFormulaEditMode && oThis.wb.getCellEditMode()) {
+					oThis.dontSendChangeEditMode = true;
 					window.externalFormulaEditMode = false;
 					oThis.wb.closeCellEditor(true);
 					window.externalFormulaEditMode = true;
+					oThis.dontSendChangeEditMode = false;
 				}
 			}
 		});
@@ -7236,12 +7238,14 @@
 			return;
 		}
 
+		console.log(" onExternalChangeSelection: lastRangePos " + data.lastRangePos + " lastRangeLength: " + data.lastRangeLength + " range: " + data.range)
+
 		this.activeTabFormula = data;
 
 		if (!this.wb.isCellEditMode || this.wb.isWizardMode) {
 			return;
 		}
-
+		this.isApplyTest = true;
 		if (!window.externalFormulaEditMode && !this._isEqualEditorState(data)) {
 			this.wb.setFormulaEditMode(true);
 			this.wb.skipHelpSelector = true;
@@ -7252,6 +7256,7 @@
 
 			this.wb.skipHelpSelector = false;
 		}
+		this.isApplyTest = false;
 	};
 
 	CExternalSelectionController.prototype._isEqualEditorState = function(data) {
@@ -7279,6 +7284,9 @@
 	};
 
 	CExternalSelectionController.prototype.externalChangeSelection = function() {
+		if (this.isApplyTest) {
+			return;
+		}
 		const ws = this.wb.model.getActiveWs();
 		if (!this.wb.isFormulaEditMode || !this.wb.isCellEditMode || !this.wb.cellEditor) {
 			return;
@@ -7299,6 +7307,9 @@
 	};
 
 	CExternalSelectionController.prototype.externalCloseEditor = function() {
+		if (this.dontSendChangeEditMode) {
+			return;
+		}
 		if (!window.externalFormulaEditMode) {
 			this.sendExternalEvent({
 				type: "SetFormulaEditMode",
@@ -7309,6 +7320,9 @@
 	};
 
 	CExternalSelectionController.prototype.externalSetFormulaEditMode = function() {
+		if (this.dontSendChangeEditMode) {
+			return;
+		}
 		if (!window.externalFormulaEditMode) {
 			this.sendExternalEvent({
 				type: "SetFormulaEditMode",
