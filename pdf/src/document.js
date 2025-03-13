@@ -557,6 +557,8 @@ var CPresentation = CPresentation || function(){};
         
         let oCheckboxField = this.CreateField(sName, AscPDF.FIELD_TYPES.checkbox, aRect);
         oCheckboxField.SetBorderColor([0]);
+        oCheckboxField.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
+        oCheckboxField.SetBorderWidth(1);
         oCheckboxField.SetNoToggleToOff(false);
 
         return oCheckboxField;
@@ -569,6 +571,7 @@ var CPresentation = CPresentation || function(){};
 
         oRadiobuttonField.SetBorderColor([0]);
         oRadiobuttonField.SetBorderStyle(AscPDF.BORDER_TYPES.inset);
+        oRadiobuttonField.SetBorderWidth(1);
 
         return oRadiobuttonField;
     };

@@ -1510,6 +1510,15 @@
 			oController.selectedObjects.forEach(function(shape) {
 				let field = shape.GetEditField();
 				field.SetBorderColor(aColor);
+
+				if (aColor) {
+					if (field.GetBorderStyle() == undefined) {
+						field.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
+					}
+					if (field.GetBorderWidth() == undefined) {
+						field.SetBorderWidth(1);
+					}
+				}
 			});
 
 			return true;
