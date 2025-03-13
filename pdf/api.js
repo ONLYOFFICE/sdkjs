@@ -1892,6 +1892,12 @@
 			return false;
 		}
 
+		// call update interface to get asc selected elemets
+		if (!sValue) {
+			oDoc.UpdateInterface();
+			return false;
+		}
+
 		return oDoc.DoAction(function() {
 			oController.selectedObjects.forEach(function(shape) {
 				let field = shape.GetEditField();
