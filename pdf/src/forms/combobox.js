@@ -865,6 +865,8 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
+
+        this.CheckWidgetFlags(memory);
     };
 	CComboBoxField.prototype.IsDoNotScroll = function() {
 		return true;

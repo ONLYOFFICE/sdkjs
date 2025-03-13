@@ -2449,6 +2449,15 @@
         memory.WriteLong(annotFlags);
         memory.Seek(nEndPos);
     };
+    CBaseField.prototype.CheckWidgetFlags = function(memory) {
+        let oParent = this.GetParent();
+        if (oParent && oParent.GetType() === this.GetType()) {
+            let nCurPos = memory.GetCurPosition();
+            memory.Seek(memory.posForWidgetFlags);
+            memory.WriteLong(-1);
+            memory.Seek(nCurPos);
+        }
+    };
     CBaseField.prototype.GetFontSizeAP = function(oContent) {
         let oPara   = oContent.GetElement(0);
         let oRun    = oPara.GetElement(0);
@@ -2749,7 +2758,27 @@
         // флаги полей
         nFlags |= (1 << 7);
 
+        let nFieldType = this.GetType();
+        let bWriteType = this.IsAllKidsWidgets();
+
         let nWidgetFlags = 0;
+        if (bWriteType) {
+            switch (nFieldType) {
+                case AscPDF.FIELD_TYPES.radiobutton: {
+                    nWidgetFlags |= (1 << 15);
+                    break;
+                }
+                case AscPDF.FIELD_TYPES.button: {
+                    nWidgetFlags |= (1 << 16);
+                    break;
+                }
+                case AscPDF.FIELD_TYPES.combobox: {
+                    nWidgetFlags |= (1 << 17);
+                    break;
+                }
+            }    
+        }
+
         if (this.IsReadOnly && this.IsReadOnly()) {
             nWidgetFlags |= (1 << 0);
         }

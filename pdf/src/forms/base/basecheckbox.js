@@ -623,6 +623,8 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
+
+        this.CheckWidgetFlags(memory);
     };
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
