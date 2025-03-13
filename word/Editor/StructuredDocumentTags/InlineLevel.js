@@ -3775,7 +3775,7 @@ CInlineLevelSdt.prototype.SetAIPr = function(isAi)
 {
 	if (this.Pr.AI !== isAi)
 	{
-		//History.Add(new CChangesSdtPrAI(this, this.Pr.AI, isAi));
+		History.Add(new CChangesSdtPrAI(this, this.Pr.AI, isAi));
 		this.Pr.AI = isAi;
 	}
 };

@@ -48,14 +48,25 @@
 	 */
 	function CustomXmlManager(document)
 	{
+		this.Id = AscCommon.g_oIdCounter.Get_NewId();
 		this.document	= document;
 		this.xml		= [];
+		this.m_arrXmlById = {};
+
+		AscCommon.g_oTableId.Add(this, this.Id);
 	}
-	CustomXmlManager.prototype.add = function(customXml)
+	CustomXmlManager.prototype.Get_Id = function()
 	{
-		// TODO: Надо будет сделать этот метод с сохранением в историю, когда
-		//       будем реализовывать возможность добавления таких xml во время работы
-		this.xml.push(customXml);
+		return this.Id;
+	}
+	CustomXmlManager.prototype.add = function(oCustomXml)
+	{
+		let sId = oCustomXml.GetId();
+
+		AscCommon.History.Add(new CChangesCustomXmlAdd(this, sId, oCustomXml));
+		this.m_arrXmlById[sId] = oCustomXml;
+
+		this.xml.push(oCustomXml);
 	};
 	CustomXmlManager.prototype.isXmlExist = function(uid, prefix)
 	{
@@ -78,6 +89,20 @@
 				return customXml;
 		}
 	};
+	CustomXmlManager.prototype.deleteExactXml = function (uId, prefix)
+	{
+		for (let nXmlCounter = 0; nXmlCounter < this.getCount(); nXmlCounter++)
+		{
+			let customXml = this.getCustomXml(nXmlCounter);
+
+			if (uId === customXml.itemId || customXml.checkUrl(prefix))
+			{
+				this.xml.splice(nXmlCounter, 1);
+				return true;
+			}
+		}
+		return false;
+	};
 	CustomXmlManager.prototype.getCount = function()
 	{
 		return this.xml.length;
@@ -88,13 +113,14 @@
 	};
 	CustomXmlManager.prototype.createCustomXml = function(content, uri)
 	{
-		let oXML = new AscWord.CustomXml();
-		this.add(oXML);
+		let oXML = new AscWord.CustomXml(false, false, false, this);
 
 		if (content)
 			oXML.addContentByXMLString(oPromptSaveCustomXML.content);
 		if (uri)
 			oXML.addUri(oPromptSaveCustomXML.uri);
+
+		this.add(oXML);
 
 		return oXML;
 	};
@@ -235,12 +261,8 @@
 		else
 			this.setContentByDataBinding(dataBinding, contentControl.GetInnerText());
 	};
-	/**
-	 * Write linear xml data of content control in CustomXML
-	 * @param oCC {CBlockLevelSdt}
-	 */
-	CustomXmlManager.prototype.updateRichTextCustomXML = function (oCC)
-	{
+
+	CustomXmlManager.prototype.GetRichTextContentToWrite = function (oCC, fCallback) {
 		function replaceSubstring(originalString, startPoint, endPoint, insertionString)
 		{
 			if (startPoint < 0 || endPoint >= originalString.length || startPoint > endPoint)
@@ -252,17 +274,17 @@
 			return prefix + insertionString + suffix;
 		}
 
-		AscCommon.ExecuteNoHistory(function() {
+		return AscCommon.ExecuteNoHistory(function() {
 			let doc 						= new AscWord.CDocument(null, false);
 			let oSdtContent					= oCC.GetContent().Copy();
 			let jsZlib						= new AscCommon.ZLib();
-			
+
 			let copyContent = [];
 			for (let i = 0, count = oSdtContent.GetElementsCount(); i < count; ++i)
 			{
 				copyContent.push(oSdtContent.GetElement(i).Copy());
 			}
-			
+
 			doc.ReplaceContent(copyContent);
 			jsZlib.create();
 			doc.toZip(jsZlib, new AscCommon.XmlWriterContext(AscCommon.c_oEditorId.Word));
@@ -315,8 +337,33 @@
 			outputUString	+= "</pkg:package>";
 			outputUString	= outputUString.replaceAll("<", "&lt;");
 			outputUString	= outputUString.replaceAll(">", "&gt;");
-			this.setContentByDataBinding(oCC.Pr.DataBinding, outputUString);
+
+			if (fCallback)
+				fCallback(outputUString, this);
+
+			return outputUString;
 		}, this.document, this, []);
+	};
+
+	CustomXmlManager.prototype.GetTextContentToWrite = function (contentControl) {
+		if (!this.isSupported())
+			return;
+
+		if (contentControl instanceof AscWord.CBlockLevelSdt)
+			return this.GetRichTextContentToWrite(contentControl);
+		else if (contentControl.GetInnerText)
+			return contentControl.GetInnerText();
+
+	};
+	/**
+	 * Write linear xml data of content control in CustomXML
+	 * @param oCC {CBlockLevelSdt}
+	 */
+	CustomXmlManager.prototype.updateRichTextCustomXML = function (oCC)
+	{
+		this.GetRichTextContentToWrite(oCC, function (resultStr, oThis) {
+			oThis.setContentByDataBinding(oCC.Pr.DataBinding, resultStr);
+		})
 	};
 	/**
 	 * Proceed linear xml from CustomXMl attribute or element for fill content control
@@ -337,7 +384,8 @@
 			strLinearXML = strLinearXML.replaceAll("&amp;", "&");
 			strLinearXML = strLinearXML.replaceAll("&quot;", "\"");
 			strLinearXML = strLinearXML.replaceAll("&#039;", "'");
-			
+			strLinearXML = strLinearXML.replaceAll("'", "\"");
+
 			let zLib = new AscCommon.ZLib;
 			zLib.create();
 			zLib.addFile('[Content_Types].xml', AscCommon.Utf8.encode('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
@@ -463,6 +511,10 @@
 	CustomXmlManager.prototype.isSupported = function()
 	{
 		return window['Asc'] && window['Asc']['Addons'] && true === window['Asc']['Addons']['ooxml'];
+	};
+	CustomXmlManager.prototype.Refresh_RecalcData = function(Data)
+	{
+
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.CustomXmlManager = CustomXmlManager;

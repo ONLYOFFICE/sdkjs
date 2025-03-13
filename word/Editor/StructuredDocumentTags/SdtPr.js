@@ -296,6 +296,12 @@ CSdtPr.prototype.Write_ToBinary = function(Writer)
 		Flags |= (1 << 25);
 	}
 
+	if (this.AI)
+	{
+		Writer.WriteBool(this.AI);
+		Flags |= (1 << 26);
+	}
+
 	var EndPos = Writer.GetCurPosition();
 	Writer.Seek(StartPos);
 	Writer.WriteLong(Flags);
@@ -409,6 +415,9 @@ CSdtPr.prototype.Read_FromBinary = function(Reader)
 	
 	if (Flags & (1 << 25))
 		this.ShdColor = AscWord.CDocumentColorA.fromBinary(Reader);
+
+	if (Flags & (1 << 26))
+		this.AI = Reader.GetBool();
 };
 CSdtPr.prototype.IsBuiltInDocPart = function()
 {

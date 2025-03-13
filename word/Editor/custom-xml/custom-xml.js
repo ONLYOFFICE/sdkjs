@@ -43,15 +43,94 @@
 	 * Класс представляющий CustomXML
 	 * @constructor
 	 */
-	function CustomXml(uri, itemId, content, oContentLink)
+	function CustomXml(uri, itemId, content, oParent)
 	{
+		this.Id = AscCommon.g_oIdCounter.Get_NewId();
+
 		this.uri				= uri ? uri : [];
 		this.itemId				= itemId ? itemId : "";
 		this.content			= content ? content : null;
-		this.oContentLink		= oContentLink ? oContentLink : null;
+		this.Parent				= oParent;
 
 		this.setItemId();
+		AscCommon.g_oTableId.Add(this, this.Id);
 	}
+
+	CustomXml.prototype.Copy = function ()
+	{
+		let strXml = this.getText();
+
+		let oCopy = new CustomXml(
+			this.uri,
+			this.itemId,
+			undefined,
+			this.Parent
+		);
+
+		oCopy.addContentByXMLString(strXml);
+
+		return oCopy;
+	};
+	CustomXml.prototype.Get_Id = function ()
+	{
+		return this.Id;
+	};
+	CustomXml.prototype.GetId = function()
+	{
+		return this.Id;
+	};
+	CustomXml.prototype.Refresh_RecalcData = function(Data)
+	{
+		// Ничего не делаем (если что просто будет перерисовка)
+	};
+	CustomXml.prototype.Update = function (oldCustomXML)
+	{
+		AscCommon.History.Add(new CChangesCustomXMLChange(this, oldCustomXML, this));
+	}
+	CustomXml.prototype.Write_ToBinary2 = function(Writer)
+	{
+		debugger
+		Writer.WriteLong(AscDFH.historyitem_type_CustomXML);
+
+		// String : Id
+		// Long   : Количество элементов
+		// Array of Strings : массив с Id элементов
+
+		Writer.WriteString2(this.Id);
+		Writer.WriteString2(this.itemId);
+		Writer.WriteString2(this.getText());
+
+		var Count = this.uri.length - 1;
+		Writer.WriteLong(Count);
+
+		for (var Index = 0; Index < Count; Index++)
+			Writer.WriteString2(this.uri[Index]);
+	};
+	CustomXml.prototype.Read_FromBinary2 = function(Reader)
+	{
+		debugger
+		// String : Id
+		// Long   : Количество элементов
+		// Array of Strings : массив с Id элементов
+
+		this.Id = Reader.GetString2();
+		this.itemId = Reader.GetString2();
+		this.addContentByXMLString(Reader.GetString2());
+
+		var Count = Reader.GetLong();
+		for (var Index = 0; Index < Count; Index++)
+			this.uri.push(Reader.GetString2());
+	};
+	CustomXml.prototype.Write_ToBinary = function(Writer)
+	{
+		// Long   : Type
+		// String : Id
+
+		debugger
+
+		Writer.WriteLong(this.Type);
+		Writer.WriteString2(this.Id);
+	};
 
 	/**
 	 * Set UID of CustomXML
@@ -84,7 +163,10 @@
 	 */
 	CustomXml.prototype.getText = function ()
 	{
-		return this.content.getStringFromBuffer();
+		if (this.content)
+			return this.content.getStringFromBuffer();
+		else
+			return "";
 	};
 	/**
 	 * Find url in uri array

@@ -10066,6 +10066,19 @@ background-repeat: no-repeat;\
 		if (!this.isLongAction())
 			oLogicDocument.RecalculateFromStart();
 	};
+	asc_docs_api.prototype.asc_AddCustomXml = function(content, uri)
+	{
+		let oLogicDocument = this.WordControl.m_oLogicDocument;
+		if (!oLogicDocument)
+			return null;
+
+		let oCustomXmlManager = oLogicDocument.getCustomXmlManager();
+
+		this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_AddCustomXML);
+		let xml = oCustomXmlManager.createCustomXml(content, uri);
+		this.WordControl.m_oLogicDocument.FinalizeAction();
+		return xml.itemId;
+	}
 	//----------------------------------------------------------------------------------------------------------------------
 	// Работаем с ContentControl
 	//----------------------------------------------------------------------------------------------------------------------

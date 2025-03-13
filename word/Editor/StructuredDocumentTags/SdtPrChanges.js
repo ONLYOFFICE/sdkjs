@@ -60,6 +60,7 @@ AscDFH.changesFactory[AscDFH.historyitem_SdtPr_OForm]            = CChangesSdtPr
 AscDFH.changesFactory[AscDFH.historyitem_SdtPr_DataBinding]      = CChangesSdtPrDataBinding;
 AscDFH.changesFactory[AscDFH.historyitem_SdtPr_ShdColor]         = CChangesSdtPrShdColor;
 AscDFH.changesFactory[AscDFH.historyitem_SdtPr_BorderColor]      = CChangesSdtPrBorderColor;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_AI]               = CChangesSdtPrAI;
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
 //----------------------------------------------------------------------------------------------------------------------
@@ -145,6 +146,9 @@ AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_ShdColor] = [
 ];
 AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_BorderColor] = [
 	AscDFH.historyitem_SdtPr_BorderColor
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_AI] = [
+	AscDFH.historyitem_SdtPr_AI
 ];
 
 function private_SdtPrChangesCheckLock(lockData)
@@ -653,6 +657,23 @@ CChangesSdtPrShowingPlcHdr.prototype.private_SetValue = function(Value)
 	this.Class.Pr.ShowingPlcHdr = Value;
 };
 CChangesSdtPrShowingPlcHdr.prototype.CheckLock = private_SdtPrChangesCheckLock;
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesSdtPrAI(Class, Old, New)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New);
+}
+CChangesSdtPrAI.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesSdtPrAI.prototype.constructor = CChangesSdtPrAI;
+CChangesSdtPrAI.prototype.Type = AscDFH.historyitem_SdtPr_AI;
+CChangesSdtPrAI.prototype.private_SetValue = function(Value)
+{
+	this.Class.Pr.AI = Value;
+};
+CChangesSdtPrAI.prototype.CheckLock = private_SdtPrChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseBoolProperty}

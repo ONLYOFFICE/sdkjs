@@ -184,7 +184,7 @@ CBlockLevelSdt.prototype.Reset_RecalculateCache = function()
 };
 CBlockLevelSdt.prototype.Write_ToBinary2 = function(Writer)
 {
-	Writer.WriteLong(AscDFH.historyitem_type_BlockLevelSdt);
+	Writer.WriteLong(AscDFH.historyitem_type_CustomXML);
 	// String : Id
 	// String : Content id
 	Writer.WriteString2(this.GetId());
@@ -2795,9 +2795,8 @@ CBlockLevelSdt.prototype.SetAIPr = function(isAi)
 {
 	if (this.Pr.AI !== isAi)
 	{
-	//	History.Add(new CChangesSdtPrAI(this, this.Pr.AI, isAi));
+		History.Add(new CChangesSdtPrAI(this, this.Pr.AI, isAi));
 		this.Pr.AI = isAi;
-		this.Content.Recalculate();
 	}
 };
 CBlockLevelSdt.prototype.setDefaultData = function ()

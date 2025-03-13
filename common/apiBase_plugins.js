@@ -1920,7 +1920,7 @@
 		if (!oLogicDocument)
 			return;
 
-		let xml = oCustomXmlManager.createCustomXml(content, uri)
+		let xml = oCustomXmlManager.createCustomXml(content, uri);
 		window.g_asc_plugins.onPluginMethodReturn(xml.itemId);
 	};
 	Api.prototype["pluginMethod_IsCustomXmlExist"] = function(prefix, uId)
@@ -1931,6 +1931,7 @@
 		let isExist = oCustomXmlManager.isXmlExist(uId, prefix);
 		window.g_asc_plugins.onPluginMethodReturn(isExist);
 	};
+	//temp
 	Api.prototype["pluginMethod_AddContentToCustomXml"] = function(uId, prefix, xpath, arrContent)
 	{
 		let oLogicDocument		= this.private_GetLogicDocument();
@@ -1941,6 +1942,8 @@
 		let cusXMLData	= oCustomXmlManager.findElementByXPath(oXML.content, xpath);
 		if (cusXMLData)
 			xml = cusXMLData.content;
+		let isChange = false;
+		let oldCustomXML = oXML.Copy();
 
 		for (let i = 0; i < arrContent.length; i++)
 		{
@@ -1952,6 +1955,7 @@
 			if (type === 'attribute')
 			{
 				xml.addAttribute(name, value);
+				isChange = true;
 			}
 			else
 			{
@@ -1968,14 +1972,21 @@
 					{
 						let oCurEl = item.addContent(oCurrentData.name);
 						oCurEl.setTextContent(oCurrentData.value);
+						isChange = true;
 
 					}
 					else if (oCurrentData.type === "attribute")
 					{
 						item.addAttribute(oCurrentData.name, oCurrentData.value);
+						isChange = true;
 					}
 				}
 			}
+		}
+
+		if (isChange)
+		{
+			oXML.Update(oldCustomXML);
 		}
 	};
 

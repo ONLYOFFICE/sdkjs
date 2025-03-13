@@ -1242,7 +1242,8 @@
 		};
 		this.WriteXmlNullable = function(val, name)
 		{
-			if (val) {
+			//temp fix
+			if (val && val.toXml) {
 				val.toXml(this, name);
 			}
 		};
@@ -1316,7 +1317,8 @@
 		};
 		this.WriteXmlNullableAttributeInt = function(name, val)
 		{
-			if (null !== val && undefined !== val) {
+			//temp fix
+			if (null !== val && undefined !== val && "" !== val) {
 				this.WriteXmlAttributeInt(name, val)
 			}
 		};
