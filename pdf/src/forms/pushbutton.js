@@ -1413,7 +1413,7 @@
      * @typeofeditors ["PDF"]
      */
     CPushButtonField.prototype.SetLayout = function(nType) {
-        AscCommon.History.Add(new CChangesPDFPushbuttonHeaderPos(this, this.GetLayout(), nType));
+        AscCommon.History.Add(new CChangesPDFPushbuttonLayout(this, this.GetLayout(), nType));
 
         switch (nType) {
             case position["textOnly"]:
