@@ -831,7 +831,9 @@
             }
         })
         
-        oActionsQueue.Start();
+        if (oActionsQueue.actions.length !== 0) {
+            oActionsQueue.Start();
+        }
     };
     CBaseField.prototype.IsUseInDocument = function() {
         let oDoc = Asc.editor.getPDFDoc();
@@ -1900,9 +1902,9 @@
     
     CBaseField.prototype.SetBorderStyle = function(nStyle) {
         if (this._borderStyle != nStyle) {
-            this._borderStyle = nStyle;
-
             AscCommon.History.Add(new CChangesPDFFormBorderStyle(this, this._borderStyle, nStyle));
+
+            this._borderStyle = nStyle;
 
             this.SetWasChanged(true);
             this.SetNeedRecalc(true);
@@ -1918,6 +1920,8 @@
     };
     CBaseField.prototype.SetBorderWidth = function(nWidth) {
         if (this._borderWidth != nWidth) {
+            AscCommon.History.Add(new CChangesPDFFormBorderWidth(this, this._borderWidth, nWidth));
+
             this._borderWidth = nWidth;
             this._lineWidth = nWidth;
 
@@ -2303,6 +2307,21 @@
         this._origRect = aOrigRect;
         this.SetWasChanged(true);
         this.SetNeedRecalc(true);
+
+        if (this.IsEditMode()) {
+            let oShape = this.GetEditShape();
+
+            let offX = aOrigRect[0] * g_dKoef_pt_to_mm;
+            let offY = aOrigRect[1] * g_dKoef_pt_to_mm;
+            let extX = (aOrigRect[2] - aOrigRect[0]) * g_dKoef_pt_to_mm;
+            let extY = (aOrigRect[3] - aOrigRect[1]) * g_dKoef_pt_to_mm;
+
+            let oXfrm = oShape.getXfrm();
+            oXfrm.setExtX(extX);
+            oXfrm.setExtY(extY);
+            oXfrm.setOffX(offX);
+            oXfrm.setOffY(offY);
+        }
     };
     CBaseField.prototype.SetPosition = function(x, y) {
         let nExtX = this.GetWidth();

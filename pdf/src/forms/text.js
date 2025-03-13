@@ -264,18 +264,33 @@
         AscCommon.History.Add(new CChangesPDFTextFormMultiline(this, this._multiline, bMultiline));
         this._multiline = bMultiline;
     
-        function updateXLimit(widget) {
+        function updateWidget(widget) {
             let useXLimit = bMultiline && !this.fileSelect;
             widget.content.SetUseXLimit(useXLimit);
             widget.contentFormat.SetUseXLimit(useXLimit);
+
+            if (bMultiline == false) {
+                let sText = widget.GetValue();
+                if (sText && sText.search("\r") !== -1) {
+                    widget.UpdateDisplayValue(sText.split("\r").join(""), true);
+                }
+            }
+
             widget.SetWasChanged(true);
             widget.SetNeedRecalc(true);
         };
     
         if (this.IsWidget()) {
-            updateXLimit(this);
+            updateWidget(this);
         } else {
-            this.GetAllWidgets().forEach(updateXLimit);
+            this.GetAllWidgets().forEach(updateWidget);
+
+            if (bMultiline == false) {
+                let sText = this.GetParentValue();
+                if (sText && sText.search("\r") !== -1) {
+                    this.SetParentValue(sText.split("\r").join(""));
+                }
+            }
         }
     
         this.SetWasChanged(true);

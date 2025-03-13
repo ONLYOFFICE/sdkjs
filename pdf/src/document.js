@@ -459,6 +459,10 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.SetEditFieldsMode = function(bEdit) {
         this.editFieldsMode = bEdit;
         
+        if (this.activeForm) {
+            this.BlurActiveObject();
+        }
+        
         this.widgets.forEach(function(field) {
             field.SetEditMode(bEdit);
         });
@@ -1395,10 +1399,7 @@ var CPresentation = CPresentation || function(){};
         this.Viewer.file.removeSelection();
 
         if (oObject.IsForm && oObject.IsForm()) {
-            // если попали в другую форму, то выход из текущей
-            if (this.mouseDownAnnot != this.activeForm) {
-                bBlurActive !== false && this.BlurActiveObject();
-            }
+            bBlurActive !== false && this.BlurActiveObject();
 
             this.mouseDownField         = oObject;
             this.mouseDownAnnot         = null;
@@ -1406,9 +1407,7 @@ var CPresentation = CPresentation || function(){};
             this.mouseDownLinkObject    = null;
         }
         else if (oObject.IsAnnot && oObject.IsAnnot()) {
-            if (oObject != this.mouseDownAnnot) {
-                bBlurActive !== false && this.BlurActiveObject();
-            }
+            bBlurActive !== false && this.BlurActiveObject();
 
             this.mouseDownField         = null;
             this.mouseDownAnnot         = oObject;
@@ -1416,9 +1415,7 @@ var CPresentation = CPresentation || function(){};
             this.mouseDownLinkObject    = null;
         }
         else if (oObject.IsDrawing && oObject.IsDrawing()) {
-            if (oObject != this.activeDrawing) {
-                bBlurActive !== false && this.BlurActiveObject();
-            }
+            bBlurActive !== false && this.BlurActiveObject();
 
             this.mouseDownField         = null;
             this.mouseDownAnnot         = null;
@@ -2139,11 +2136,11 @@ var CPresentation = CPresentation || function(){};
         if (this.mouseDownField) {
             if (this.IsEditFieldsMode()) {
                 oController.OnMouseUp(e, X, Y, pageObject.index);
-                return;
             }
-
-            if (oMouseUpField == this.mouseDownField) {
-                this.OnMouseUpField(oMouseUpField, e);
+            else {
+                if (oMouseUpField == this.mouseDownField) {
+                    this.OnMouseUpField(oMouseUpField, e);
+                }
             }
         }
         else if (this.mouseDownAnnot) {
@@ -6369,7 +6366,8 @@ var CPresentation = CPresentation || function(){};
         switch (nCheckType) {
             // check selected object lock
             case AscCommon.changestype_Drawing_Props:
-            case AscCommon.changestype_Delete: {
+            case AscCommon.changestype_Delete:
+            case AscDFH.historydescription_Pdf_ChangeField: {
                 let selected_objects = oController.selectedObjects.slice();
                 if (oController.selection.groupSelection) {
                     selected_objects.push(oController.selection.groupSelection);
@@ -6404,14 +6402,19 @@ var CPresentation = CPresentation || function(){};
                 }
 
                 for (let i = 0; i < selected_objects.length; ++i) {
+                    let obj = selected_objects[i];
+                    if (obj.IsEditFieldShape()) {
+                        obj = obj.GetEditField();
+                    }
+
                     let check_obj = {
                         "type":     AscLockTypeElemPDF.Object,
                         "pageId":   oCurPageInfo.GetId(),
-                        "objId":    selected_objects[i].GetId(),
-                        "guid":     selected_objects[i].GetId()
+                        "objId":    obj.GetId(),
+                        "guid":     obj.GetId()
                     };
 
-                    selected_objects[i].Lock.Check(check_obj);
+                    obj.Lock.Check(check_obj);
                 }
 
                 break;

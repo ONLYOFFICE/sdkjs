@@ -54,6 +54,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Partial_Name]		= CChangesPDFFo
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Meta]				= CChangesPDFFormMeta;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Read_Only]		= CChangesPDFFormReadOnly;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_No_Export]		= CChangesPDFFormNoExport;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Border_Width]		= CChangesPDFFormBorderWidth;
 
 // text
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Multiline]			= CChangesPDFTextFormMultiline;
@@ -704,6 +705,23 @@ CChangesPDFFormNoExport.prototype.private_SetValue = function(Value)
 	let oForm = this.Class;
 	oForm._noExport = Value;
 	oForm.AddToRedraw();
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFFormBorderWidth(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFormBorderWidth.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFFormBorderWidth.prototype.constructor = CChangesPDFFormBorderWidth;
+CChangesPDFFormBorderWidth.prototype.Type = AscDFH.historyitem_Pdf_Form_Border_Width;
+CChangesPDFFormBorderWidth.prototype.private_SetValue = function(Value)
+{
+	let oField = this.Class;
+	oField.SetBorderWidth(Value);
 };
 
 //------------------------------------------------------------------------------------------------------------------

@@ -4038,6 +4038,7 @@
 	AscDFH.historyitem_Pdf_Form_Meta			= AscDFH.historyitem_type_Pdf_Form | 19;
 	AscDFH.historyitem_Pdf_Form_Read_Only		= AscDFH.historyitem_type_Pdf_Form | 20;
 	AscDFH.historyitem_Pdf_Form_No_Export		= AscDFH.historyitem_type_Pdf_Form | 21;
+	AscDFH.historyitem_Pdf_Form_Border_Width	= AscDFH.historyitem_type_Pdf_Form | 22;
 	
 	// text
 	AscDFH.historyitem_Pdf_Text_Form_Multiline			= AscDFH.historyitem_type_Pdf_Text_Field | 1;
