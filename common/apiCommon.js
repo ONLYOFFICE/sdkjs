@@ -3736,7 +3736,7 @@ function (window, undefined) {
 		this.highlight		= undefined;
 		this.layout			= undefined;
 		this.scaleWhen		= undefined;
-		this.scalehow		= undefined;
+		this.scaleHow		= undefined;
 		this.fitBounds		= undefined;
 		this.iconPos		= null;
 		this.behavior		= undefined;
@@ -3763,16 +3763,16 @@ function (window, undefined) {
 		this.layout = v;
 	};
 	asc_CButtonFieldProperty.prototype.asc_getScaleWhen = function () {
-		return this.scalewhen;
+		return this.scaleWhen;
 	};
 	asc_CButtonFieldProperty.prototype.asc_putScaleWhen = function (v) {
 		this.scaleWhen = v;
 	};
 	asc_CButtonFieldProperty.prototype.asc_getScaleHow = function () {
-		return this.scalehow;
+		return this.scaleHow;
 	};
 	asc_CButtonFieldProperty.prototype.asc_putScaleHow = function (v) {
-		this.scalehow = v;
+		this.scaleHow = v;
 	};
 	asc_CButtonFieldProperty.prototype.asc_getFitBounds = function () {
 		return this.fitBounds;
