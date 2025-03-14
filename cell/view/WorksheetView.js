@@ -18782,6 +18782,7 @@
 		this.model.workbook.handlers.trigger("cleanCopyData", true);
 
 		editor.open({
+			cellsTop: this.cellsTop,
 			enterOptions: enterOptions,
 			fragments: fragments,
 			flags: fl,

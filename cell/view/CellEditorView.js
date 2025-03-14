@@ -324,6 +324,8 @@ function (window, undefined) {
 	CellEditor.prototype.open = function (options) {
 		this._setEditorState(c_oAscCellEditorState.editStart);
 
+		this.cellsTop = options.cellsTop;
+
 		var b = this.input.selectionStart;
 
 		this.isOpened = true;
@@ -1520,16 +1522,24 @@ function (window, undefined) {
 			}
 		}
 
+
+		let _top = 0;
+		if (top < this.cellsTop) {
+			_top = this.cellsTop + top;
+			top = this.cellsTop;
+		}
+
 		this.canvasOuterStyle.left = left + 'px';
 		this.canvasOuterStyle.top = top + 'px';
 		this.canvasOuterStyle.width = widthStyle + 'px';
 		this.canvasOuterStyle.height = heightStyle + 'px';
 		if (!this.getMenuEditorMode()) {
-			this.canvasOuterStyle.zIndex = this.top < 0 ? -1 : z;
+			this.canvasOuterStyle.zIndex = /*this.top < 0 ? -1 :*/ z;
 		}
 
 		this.canvas.style.width = this.canvasOverlay.style.width = widthStyle + 'px';
 		this.canvas.style.height = this.canvasOverlay.style.height = heightStyle + 'px';
+		this.canvas.style.top = this.canvasOverlay.style.top = _top + 'px';
 	};
 
 	CellEditor.prototype._calculateCanvasSize = function () {
