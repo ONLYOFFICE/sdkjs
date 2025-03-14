@@ -112,6 +112,9 @@
     AscFormat.InitClass(CPushButtonField, AscPDF.CBaseField, AscDFH.historyitem_type_Pdf_Button_Field);
 
     CPushButtonField.prototype.AddImage = function(oImgData, nAPType) {
+        // set via right panel 
+        Asc.editor.asc_addImageState = undefined;
+
         if (!oImgData) {
             return;
         }

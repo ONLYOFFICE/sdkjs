@@ -7382,7 +7382,7 @@ var CPresentation = CPresentation || function(){};
                 break;
             }
             case AscPDF.FIELD_TYPES.button: {
-                oFieldProps = new Asc.asc_CButtonFieldProperty();
+                oFieldProps = new Asc.asc_CButtonFieldProperty(field);
                 oFieldProps.asc_putHighlight(field.GetHighlight());
                 oFieldProps.asc_putLayout(field.GetLayout());
                 oFieldProps.asc_putScaleWhen(field.GetScaleWhen());

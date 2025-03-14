@@ -3732,7 +3732,9 @@ function (window, undefined) {
 	//////////////////////////////////////////////////////////////////
 	///// Pushbutton
 	//////////////////////////////////////////////////////////////////
-	function asc_CButtonFieldProperty() {
+	function asc_CButtonFieldProperty(buttonField) {
+		this.parentField	= buttonField;
+
 		this.highlight		= undefined;
 		this.layout			= undefined;
 		this.scaleWhen		= undefined;
@@ -3750,6 +3752,9 @@ function (window, undefined) {
 
 		this.DivId			= undefined;
 	}
+	asc_CButtonFieldProperty.prototype.getParentField = function () {
+		return this.parentField;
+	};
 	asc_CButtonFieldProperty.prototype.asc_getHighlight = function () {
 		return this.highlight;
 	};
@@ -3930,62 +3935,57 @@ function (window, undefined) {
 		}
 	};
 	asc_CButtonFieldProperty.prototype.put_ImageUrl = function (sUrl, nState) {
-		let self = this;
-		AscCommon.sendImgUrls(Asc.editor, [sUrl], function(data) {
-			if (data && data[0] && data[0].url !== "error")
-			{
-				var url = AscCommon.g_oDocumentUrls.imagePath2Local(data[0].path);
-				Asc.editor.ImageLoader.LoadImagesWithCallback([AscCommon.getFullImageSrc2(url)], function(){
-				});
-			}
-		}, undefined, token);
-	};
-	asc_CButtonFieldProperty.prototype.showFileDialog = function (nState) {
-		if(!this.DivId){
+		if (!this.DivId){
 			return;
 		}
-		let oApi = Asc.editor;
-		let self = this;
-		AscCommon.ShowImageFileDialog(oApi.documentId, oApi.documentUserId, oApi.CoAuthoringApi.get_jwt(), oApi.documentShardKey, oApi.documentWopiSrc, oApi.documentUserSessionId, function(error, files)
-			{
-				if (Asc.c_oAscError.ID.No !== error)
-				{
-					oApi.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
-				}
-				else
-				{
-					oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
-					AscCommon.UploadImageFiles(files, oApi.documentId, oApi.documentUserId, oApi.CoAuthoringApi.get_jwt(), oApi.documentShardKey, oApi.documentWopiSrc, oApi.documentUserSessionId, function(error, urls)
-					{
-						if (Asc.c_oAscError.ID.No !== error)
-						{
-							oApi.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
-							oApi.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
-						}
-						else
-						{
-							oApi.ImageLoader.LoadImagesWithCallback(urls, function(){
-								if(urls.length > 0)
-								{
-									self.ImageUrl = urls[0];
-									self.Type = Asc.c_oAscWatermarkType.Image;
-									self.drawTexture();
-									oApi.sendEvent("asc_onWatermarkImageLoaded");
-								}
-								oApi.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
-							});
-						}
-					});
-				}
-			},
-			function(error)
-			{
-				if (Asc.c_oAscError.ID.No !== error)
-				{
-					oApi.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
-				}
-				oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
-			});
+		let Api = Asc.editor;
+
+		// set to field state to add image (will clear after set image)
+		let oField = this.getParentField();
+		oField.asc_addImageState = nState;
+
+		Api._addImageUrl([sUrl], oField);
+	};
+	asc_CButtonFieldProperty.prototype.showFileDialog = function (nState) {
+		if (!this.DivId){
+			return;
+		}
+		let Api = Asc.editor;
+
+		// set to field state to add image (will clear after set image)
+		let oField = this.getParentField();
+		oField.asc_addImageState = nState;
+
+		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
+            window["AscDesktopEditor"]["OpenFilenameDialog"]("images", false, function(_file) {
+                var file = _file;
+                if (Array.isArray(file))
+                    file = file[0];
+        
+                var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](file);
+                editor._addImageUrl([AscCommon.g_oDocumentUrls.getImageUrl(_url)], oField);
+            });
+        }
+        else {
+            AscCommon.ShowImageFileDialog(Api.documentId, Api.documentUserId, undefined, Api.documentShardKey, Api.documentWopiSrc, Api.documentUserSessionId, function(error, files) {
+                if (error.canceled == true) {
+                    oActionsQueue.Continue();
+                }
+                else {
+                    Api._uploadCallback(error, files, oField);
+                }
+
+				AscCommon.global_mouseEvent.UnLockMouse();
+
+            }, function(error) {
+                if (c_oAscError.ID.No !== error) {
+                    Api.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
+                }
+
+                Api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+                AscCommon.global_mouseEvent.UnLockMouse();
+            });
+        }
 	};
 	//////////////////////////////////////////////////////////////////
 	///// Number format

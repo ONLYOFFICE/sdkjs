@@ -2852,7 +2852,7 @@
 					}
 
 					if (oOptionObject.GetType && oOptionObject.GetType() === AscPDF.FIELD_TYPES.button) {
-						oOptionObject.AddImage(oImage);
+						oOptionObject.AddImage(oImage, oOptionObject.asc_addImageState);
 					}
 					else if (oOptionObject.isStamp) {
 						oDoc.AddStampAnnot(AscPDF.STAMP_TYPES.Image, oDoc.Viewer.currentPage, oImage);
