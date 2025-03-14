@@ -7774,7 +7774,7 @@ background-repeat: no-repeat;\
 			return true;
 		return false;
 	};
-	asc_docs_api.prototype.StartDemonstration = function(div_id, slidestart_num, reporterStartObject)
+	asc_docs_api.prototype.StartDemonstration = function(div_id, slidestart_num, reporterStartObject, bIgnoreFirstHiddenSlide)
 	{
 		if (window.g_asc_plugins)
 			window.g_asc_plugins.stopWorked();
@@ -7788,6 +7788,13 @@ background-repeat: no-repeat;\
 
 		if (bIsReporter)
 			this.DemonstrationReporterStart(reporterStartObject);
+
+		if (bIgnoreFirstHiddenSlide) {
+			const allSlides = Asc.editor.getLogicDocument().GetSlides();
+			while (!allSlides[slidestart_num].show) {
+				slidestart_num += 1;
+			}
+		}
 
 		if (bIsReporter && (this.reporterWindow || window["AscDesktopEditor"]))
 			this.WordControl.DemonstrationManager.StartWaitReporter(div_id, slidestart_num, true);
