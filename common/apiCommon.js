@@ -3733,12 +3733,15 @@ function (window, undefined) {
 	///// Pushbutton
 	//////////////////////////////////////////////////////////////////
 	function asc_CButtonFieldProperty() {
-		this.highlight	= undefined;
-		this.layout		= undefined;
-		this.scaleWhen	= undefined;
-		this.scalehow	= undefined;
-		this.fitBounds	= undefined;
-		this.iconPos	= null;
+		this.highlight		= undefined;
+		this.layout			= undefined;
+		this.scaleWhen		= undefined;
+		this.scalehow		= undefined;
+		this.fitBounds		= undefined;
+		this.iconPos		= null;
+		this.normalCaption	= undefined;
+		this.hoverCaption	= undefined;
+		this.downCaption	= undefined;
 	}
 	asc_CButtonFieldProperty.prototype.asc_getHighlight = function () {
 		return this.highlight;
@@ -3771,10 +3774,28 @@ function (window, undefined) {
 		this.fitBounds = v;
 	};
 	asc_CButtonFieldProperty.prototype.asc_getIconPos = function () {
-		return this.fitBounds;
+		return this.iconPos;
 	};
 	asc_CButtonFieldProperty.prototype.asc_putIconPos = function (v) {
-		this.fitBounds = v;
+		this.iconPos = v;
+	};
+	asc_CButtonFieldProperty.prototype.asc_getNormalCaption = function () {
+		return this.normalCaption;
+	};
+	asc_CButtonFieldProperty.prototype.asc_putNormalCaption = function (v) {
+		this.normalCaption = v;
+	};
+	asc_CButtonFieldProperty.prototype.asc_getHoverCaption = function () {
+		return this.hoverCaption;
+	};
+	asc_CButtonFieldProperty.prototype.asc_putHoverCaption = function (v) {
+		this.hoverCaption = v;
+	};
+	asc_CButtonFieldProperty.prototype.asc_getDownCaption = function () {
+		return this.downCaption;
+	};
+	asc_CButtonFieldProperty.prototype.asc_putDownCaption = function (v) {
+		this.downCaption = v;
 	};
 	//////////////////////////////////////////////////////////////////
 	///// Number format
@@ -7351,6 +7372,14 @@ function (window, undefined) {
 	prot["asc_putScaleHow"]		= prot.asc_putScaleHow;
 	prot["asc_getFitBounds"]	= prot.asc_getFitBounds;
 	prot["asc_putFitBounds"]	= prot.asc_putFitBounds;
+	prot["asc_getIconPos"]		= prot.asc_getIconPos;
+	prot["asc_putIconPos"]		= prot.asc_putIconPos;
+	prot["asc_getNormalCaption"]= prot.asc_getNormalCaption;
+	prot["asc_putNormalCaption"]= prot.asc_putNormalCaption;
+	prot["asc_getHoverCaption"]	= prot.asc_getHoverCaption;
+	prot["asc_putHoverCaption"]	= prot.asc_putHoverCaption;
+	prot["asc_getDownCaption"]	= prot.asc_getDownCaption;
+	prot["asc_putDownCaption"]	= prot.asc_putDownCaption;
 
 	window["Asc"]["asc_CFieldNumberFormatProperty"] = window["Asc"].asc_CFieldNumberFormatProperty = asc_CFieldNumberFormatProperty;
 	prot = asc_CFieldNumberFormatProperty.prototype;

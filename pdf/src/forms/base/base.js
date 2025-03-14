@@ -2311,16 +2311,18 @@
         if (this.IsEditMode()) {
             let oShape = this.GetEditShape();
 
-            let offX = aOrigRect[0] * g_dKoef_pt_to_mm;
-            let offY = aOrigRect[1] * g_dKoef_pt_to_mm;
-            let extX = (aOrigRect[2] - aOrigRect[0]) * g_dKoef_pt_to_mm;
-            let extY = (aOrigRect[3] - aOrigRect[1]) * g_dKoef_pt_to_mm;
+            if (aOrigRect) {
+                let offX = aOrigRect[0] * g_dKoef_pt_to_mm;
+                let offY = aOrigRect[1] * g_dKoef_pt_to_mm;
+                let extX = (aOrigRect[2] - aOrigRect[0]) * g_dKoef_pt_to_mm;
+                let extY = (aOrigRect[3] - aOrigRect[1]) * g_dKoef_pt_to_mm;
 
-            let oXfrm = oShape.getXfrm();
-            oXfrm.setExtX(extX);
-            oXfrm.setExtY(extY);
-            oXfrm.setOffX(offX);
-            oXfrm.setOffY(offY);
+                let oXfrm = oShape.getXfrm();
+                oXfrm.setExtX(extX);
+                oXfrm.setExtY(extY);
+                oXfrm.setOffX(offX);
+                oXfrm.setOffY(offY);
+            }
         }
     };
     CBaseField.prototype.SetPosition = function(x, y) {

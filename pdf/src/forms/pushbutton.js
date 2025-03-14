@@ -534,19 +534,16 @@
      * @typeofeditors ["PDF"]
      */
     CPushButtonField.prototype.GetCaption = function(nFace) {
-        if (nFace == null)
-            nFace = 0;
-
         switch (nFace) {
-            case 0:
+            case CAPTION_TYPES.normal:
                 return this._buttonCaption;
-            case 1:
+            case CAPTION_TYPES.mouseDown:
                 return this._downCaption;
-            case 2:
+            case CAPTION_TYPES.rollover:
                 return this._rollOverCaption;
+            default:
+                return this._buttonCaption;
         }
-
-        return undefined;
     };
     /**
      * Sets the caption associated with a button.
@@ -1045,7 +1042,7 @@
         }
 
         if (this.IsPressed() && this.IsHovered() && this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.push) {
-            if (this._buttonFitBounds == true) {
+            if (this.IsButtonFitBounds() == true) {
                 contentX += oMargins.left * g_dKoef_pt_to_mm;
                 contentY += oMargins.top * g_dKoef_pt_to_mm;
             }
@@ -1380,8 +1377,10 @@
             AscCommon.History.Add(new CChangesPDFPushbuttonFitBounds(this, this._buttonFitBounds, bValue));
 
             this._buttonFitBounds = bValue;
+            this._needUpdateImage = true;
+            this.CalculateContentClipRect();
             this.SetWasChanged(true);
-            this.SetNeedRecalc(true);
+            this._UpdateImage();
         }
     };
     CPushButtonField.prototype.IsButtonFitBounds = function() {
@@ -1391,7 +1390,9 @@
         AscCommon.History.Add(new CChangesPDFPushbuttonScaleWhenType(this, this._buttonScaleWhen, nType));
 
         this._buttonScaleWhen = nType;
+        this._needUpdateImage = true;
         this.SetWasChanged(true);
+        this._UpdateImage();
     };
     CPushButtonField.prototype.GetScaleWhen = function() {
         return this._buttonScaleWhen;
@@ -1400,7 +1401,9 @@
         AscCommon.History.Add(new CChangesPDFPushbuttonScaleHowType(this, this._buttonScaleHow, nType));
 
         this._buttonScaleHow = nType;
+        this._needUpdateImage = true;
         this.SetWasChanged(true);
+        this._UpdateImage();
     };
     CPushButtonField.prototype.GetScaleHow = function() {
         return this._buttonScaleHow;

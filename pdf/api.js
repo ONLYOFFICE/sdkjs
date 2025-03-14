@@ -2051,6 +2051,26 @@
 			return true;
         }, AscDFH.historydescription_Pdf_ChangeField);
 	};
+	PDFEditorApi.prototype.SetButtonLabel = function(sLabel, nType) {
+		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
+		let oForm = oDoc.activeForm;
+
+		if (!oForm) {
+			return false;
+		}
+
+		return oDoc.DoAction(function() {
+			oController.selectedObjects.forEach(function(shape) {
+				let field = shape.GetEditField();
+				if (AscPDF.FIELD_TYPES.button == field.GetType()) {
+					field.SetCaption(sLabel, nType);
+				}
+			});
+
+			return true;
+        }, AscDFH.historydescription_Pdf_ChangeField);
+	};
 
 	/////////////////////////////////////////////////////////////
 	///////// For drawings
@@ -4145,6 +4165,7 @@
 	PDFEditorApi.prototype['SetButtonScaleHow']		= PDFEditorApi.prototype.SetButtonScaleHow;
 	PDFEditorApi.prototype['SetButtonFitBounds']	= PDFEditorApi.prototype.SetButtonFitBounds;
 	PDFEditorApi.prototype['SetButtonIconPos']		= PDFEditorApi.prototype.SetButtonIconPos;
+	PDFEditorApi.prototype['SetButtonLabel']		= PDFEditorApi.prototype.SetButtonLabel;
 
 	// drawings
 	PDFEditorApi.prototype['AddTextArt']							= PDFEditorApi.prototype.AddTextArt;

@@ -549,6 +549,9 @@ var CPresentation = CPresentation || function(){};
             oButtonField.SetBackgroundColor([0.7529]);
         }
 
+        oButtonField.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
+        oButtonField.SetBorderWidth(1);
+
         return oButtonField;
     };
     CPDFDoc.prototype.CreateCheckboxField = function() {
@@ -7386,7 +7389,9 @@ var CPresentation = CPresentation || function(){};
                 oFieldProps.asc_putScaleHow(field.GetScaleHow());
                 oFieldProps.asc_putFitBounds(field.IsButtonFitBounds());
                 oFieldProps.asc_putIconPos(field.GetIconPosition());
-                oFieldProps
+                oFieldProps.asc_putNormalCaption(field.GetCaption());
+                oFieldProps.asc_putHoverCaption(field.GetCaption(AscPDF.CAPTION_TYPES.rollover));
+                oFieldProps.asc_putDownCaption(field.GetCaption(AscPDF.CAPTION_TYPES.mouseDown));
                 break;
             }
         }
