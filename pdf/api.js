@@ -2024,7 +2024,7 @@
 			oController.selectedObjects.forEach(function(shape) {
 				let field = shape.GetEditField();
 				if (AscPDF.FIELD_TYPES.button == field.GetType()) {
-					field.SetButtonFieldFitBounds(bValue);
+					field.SetButtonFitBounds(bValue);
 				}
 			});
 
