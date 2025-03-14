@@ -1951,7 +1951,7 @@
         }, AscDFH.historydescription_Pdf_ChangeField);
 	};
 	// pushbutton
-	PDFEditorApi.prototype.SetButtonLayout = function(nType) {
+	PDFEditorApi.prototype.SetButtonFieldLayout = function(nType) {
 		let oDoc = this.getPDFDoc();
 		let oController = oDoc.GetController();
 		let oForm = oDoc.activeForm;
@@ -1971,7 +1971,7 @@
 			return true;
         }, AscDFH.historydescription_Pdf_ChangeField);
 	};
-	PDFEditorApi.prototype.SetButtonScaleWhen = function(nType) {
+	PDFEditorApi.prototype.SetButtonFieldScaleWhen = function(nType) {
 		let oDoc = this.getPDFDoc();
 		let oController = oDoc.GetController();
 		let oForm = oDoc.activeForm;
@@ -1991,7 +1991,7 @@
 			return true;
         }, AscDFH.historydescription_Pdf_ChangeField);
 	};
-	PDFEditorApi.prototype.SetButtonScaleHow = function(nType) {
+	PDFEditorApi.prototype.SetButtonFieldScaleHow = function(nType) {
 		let oDoc = this.getPDFDoc();
 		let oController = oDoc.GetController();
 		let oForm = oDoc.activeForm;
@@ -2011,7 +2011,7 @@
 			return true;
         }, AscDFH.historydescription_Pdf_ChangeField);
 	};
-	PDFEditorApi.prototype.SetButtonFitBounds = function(bValue) {
+	PDFEditorApi.prototype.SetButtonFieldFitBounds = function(bValue) {
 		let oDoc = this.getPDFDoc();
 		let oController = oDoc.GetController();
 		let oForm = oDoc.activeForm;
@@ -2024,14 +2024,14 @@
 			oController.selectedObjects.forEach(function(shape) {
 				let field = shape.GetEditField();
 				if (AscPDF.FIELD_TYPES.button == field.GetType()) {
-					field.SetButtonFitBounds(bValue);
+					field.SetButtonFieldFitBounds(bValue);
 				}
 			});
 
 			return true;
         }, AscDFH.historydescription_Pdf_ChangeField);
 	};
-	PDFEditorApi.prototype.SetButtonIconPos = function(X, Y) {
+	PDFEditorApi.prototype.SetButtonFieldIconPos = function(X, Y) {
 		let oDoc = this.getPDFDoc();
 		let oController = oDoc.GetController();
 		let oForm = oDoc.activeForm;
@@ -2051,7 +2051,27 @@
 			return true;
         }, AscDFH.historydescription_Pdf_ChangeField);
 	};
-	PDFEditorApi.prototype.SetButtonLabel = function(sLabel, nType) {
+	PDFEditorApi.prototype.SetButtonFieldBehavior = function(nType) {
+		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
+		let oForm = oDoc.activeForm;
+
+		if (!oForm) {
+			return false;
+		}
+
+		return oDoc.DoAction(function() {
+			oController.selectedObjects.forEach(function(shape) {
+				let field = shape.GetEditField();
+				if (AscPDF.FIELD_TYPES.button == field.GetType()) {
+					field.SetHighlight(nType);
+				}
+			});
+
+			return true;
+        }, AscDFH.historydescription_Pdf_ChangeField);
+	};
+	PDFEditorApi.prototype.SetButtonFieldLabel = function(sLabel, nType) {
 		let oDoc = this.getPDFDoc();
 		let oController = oDoc.GetController();
 		let oForm = oDoc.activeForm;
@@ -4160,12 +4180,13 @@
 	// radiobutton field
 	PDFEditorApi.prototype['SetRadioFieldInUnison']			= PDFEditorApi.prototype.SetRadioFieldInUnison;
 	// button field
-	PDFEditorApi.prototype['SetButtonLayout']		= PDFEditorApi.prototype.SetButtonLayout;
-	PDFEditorApi.prototype['SetButtonScaleWhen']	= PDFEditorApi.prototype.SetButtonScaleWhen;
-	PDFEditorApi.prototype['SetButtonScaleHow']		= PDFEditorApi.prototype.SetButtonScaleHow;
-	PDFEditorApi.prototype['SetButtonFitBounds']	= PDFEditorApi.prototype.SetButtonFitBounds;
-	PDFEditorApi.prototype['SetButtonIconPos']		= PDFEditorApi.prototype.SetButtonIconPos;
-	PDFEditorApi.prototype['SetButtonLabel']		= PDFEditorApi.prototype.SetButtonLabel;
+	PDFEditorApi.prototype['SetButtonFieldLayout']		= PDFEditorApi.prototype.SetButtonFieldLayout;
+	PDFEditorApi.prototype['SetButtonFieldScaleWhen']	= PDFEditorApi.prototype.SetButtonFieldScaleWhen;
+	PDFEditorApi.prototype['SetButtonFieldScaleHow']	= PDFEditorApi.prototype.SetButtonFieldScaleHow;
+	PDFEditorApi.prototype['SetButtonFieldFitBounds']	= PDFEditorApi.prototype.SetButtonFieldFitBounds;
+	PDFEditorApi.prototype['SetButtonFieldIconPos']		= PDFEditorApi.prototype.SetButtonFieldIconPos;
+	PDFEditorApi.prototype['SetButtonFieldBehavior']	= PDFEditorApi.prototype.SetButtonFieldBehavior;
+	PDFEditorApi.prototype['SetButtonFieldLabel']		= PDFEditorApi.prototype.SetButtonFieldLabel;
 
 	// drawings
 	PDFEditorApi.prototype['AddTextArt']							= PDFEditorApi.prototype.AddTextArt;

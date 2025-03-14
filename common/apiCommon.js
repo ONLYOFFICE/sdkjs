@@ -3739,9 +3739,16 @@ function (window, undefined) {
 		this.scalehow		= undefined;
 		this.fitBounds		= undefined;
 		this.iconPos		= null;
+		this.behavior		= undefined;
+		this.currentState	= undefined;
 		this.normalCaption	= undefined;
 		this.hoverCaption	= undefined;
 		this.downCaption	= undefined;
+		this.normalImage	= undefined;
+		this.hoverImage		= undefined;
+		this.downImage		= undefined;
+
+		this.DivId			= undefined;
 	}
 	asc_CButtonFieldProperty.prototype.asc_getHighlight = function () {
 		return this.highlight;
@@ -3779,11 +3786,23 @@ function (window, undefined) {
 	asc_CButtonFieldProperty.prototype.asc_putIconPos = function (v) {
 		this.iconPos = v;
 	};
+	asc_CButtonFieldProperty.prototype.asc_getBehavior = function () {
+		return this.behavior;
+	};
+	asc_CButtonFieldProperty.prototype.asc_putBehavior = function (v) {
+		this.behavior = v;
+	};
 	asc_CButtonFieldProperty.prototype.asc_getNormalCaption = function () {
 		return this.normalCaption;
 	};
 	asc_CButtonFieldProperty.prototype.asc_putNormalCaption = function (v) {
 		this.normalCaption = v;
+	};
+	asc_CButtonFieldProperty.prototype.asc_getNormalImage = function () {
+		return this.normalImage;
+	};
+	asc_CButtonFieldProperty.prototype.asc_putNormalImage = function (v) {
+		this.normalImage = v;
 	};
 	asc_CButtonFieldProperty.prototype.asc_getHoverCaption = function () {
 		return this.hoverCaption;
@@ -3791,11 +3810,182 @@ function (window, undefined) {
 	asc_CButtonFieldProperty.prototype.asc_putHoverCaption = function (v) {
 		this.hoverCaption = v;
 	};
+	asc_CButtonFieldProperty.prototype.asc_getHoverImage = function () {
+		return this.hoverImage;
+	};
+	asc_CButtonFieldProperty.prototype.asc_putHoverImage = function (v) {
+		this.hoverImage = v;
+	};
 	asc_CButtonFieldProperty.prototype.asc_getDownCaption = function () {
 		return this.downCaption;
 	};
 	asc_CButtonFieldProperty.prototype.asc_putDownCaption = function (v) {
 		this.downCaption = v;
+	};
+	asc_CButtonFieldProperty.prototype.asc_getDownImage = function () {
+		return this.downImage;
+	};
+	asc_CButtonFieldProperty.prototype.asc_putDownImage = function (v) {
+		this.downImage = v;
+	};
+	asc_CButtonFieldProperty.prototype.asc_putCurrentState = function(v) {
+		this.currentState = v;
+		this.drawTexture(v);
+	};
+	asc_CButtonFieldProperty.prototype.asc_getCurrentState = function(v) {
+		return this.currentState;
+	};
+	asc_CButtonFieldProperty.prototype.put_DivId = function (v) {
+		this.DivId = v;
+		this.drawTexture();
+	};
+	asc_CButtonFieldProperty.prototype.drawTexture = function (nState) {
+		let sImageRasterId;
+		switch (nState) {
+			case AscPDF.APPEARANCE_TYPES.normal:
+				sImageRasterId = this.normalImage;
+				break;
+			case AscPDF.APPEARANCE_TYPES.mouseDown:
+				sImageRasterId = this.downImage;
+				break;
+			case AscPDF.APPEARANCE_TYPES.rollover:
+				sImageRasterId = this.hoverImage;
+				break;
+		}
+
+		var oDiv = document.getElementById(this.DivId);
+		if(!oDiv){
+			return;
+		}
+
+		var aChildren = oDiv.children;
+		var oCanvas = null;
+		for(var i = 0; i < aChildren.length; ++i){
+			if(aChildren[i].nodeName && aChildren[i].nodeName.toUpperCase() === 'CANVAS'){
+				oCanvas = aChildren[i];
+				break;
+			}
+		}
+		var nWidth = oDiv.clientWidth;
+		var nHeight = oDiv.clientHeight;
+		if(null === oCanvas){
+			oCanvas = document.createElement('canvas');
+			oCanvas.width = parseInt(nWidth);
+			oCanvas.height = parseInt(nHeight);
+			oDiv.appendChild(oCanvas);
+		}
+		var oContext = oCanvas.getContext('2d');
+		oContext.clearRect(0, 0, oCanvas.width, oCanvas.height);
+		if (!sImageRasterId) {
+			return;
+		}
+		
+		var _img = this.Api.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(sImageRasterId)];
+		if (_img != undefined && _img.Image != null && _img.Status != AscFonts.ImageLoadStatus.Loading)
+		{
+			var _x = 0;
+			var _y = 0;
+			var _w = Math.max(_img.Image.width, 1);
+			var _h = Math.max(_img.Image.height, 1);
+
+			var dAspect1 = nWidth / nHeight;
+			var dAspect2 = _w / _h;
+
+			_w = nWidth;
+			_h = nHeight;
+			if (dAspect1 >= dAspect2)
+			{
+				_w = dAspect2 * nHeight;
+				_x = (nWidth - _w) / 2;
+			}
+			else
+			{
+				_h = _w / dAspect2;
+				_y = (nHeight - _h) / 2;
+			}
+			oContext.drawImage(_img.Image, _x, _y, _w, _h);
+		}
+		else if (!_img || !_img.Image)
+		{
+			oContext.lineWidth = 1;
+
+			oContext.beginPath();
+			oContext.moveTo(0, 0);
+			oContext.lineTo(nWidth, nHeight);
+			oContext.moveTo(nWidth, 0);
+			oContext.lineTo(0, nHeight);
+			oContext.strokeStyle = "#FF0000";
+			oContext.stroke();
+
+			oContext.beginPath();
+			oContext.moveTo(0, 0);
+			oContext.lineTo(nWidth, 0);
+			oContext.lineTo(nWidth, nHeight);
+			oContext.lineTo(0, nHeight);
+			oContext.closePath();
+
+			oContext.strokeStyle = "#000000";
+			oContext.stroke();
+			oContext.beginPath();
+		}
+	};
+	asc_CButtonFieldProperty.prototype.put_ImageUrl = function (sUrl, nState) {
+		let self = this;
+		AscCommon.sendImgUrls(Asc.editor, [sUrl], function(data) {
+			if (data && data[0] && data[0].url !== "error")
+			{
+				var url = AscCommon.g_oDocumentUrls.imagePath2Local(data[0].path);
+				Asc.editor.ImageLoader.LoadImagesWithCallback([AscCommon.getFullImageSrc2(url)], function(){
+				});
+			}
+		}, undefined, token);
+	};
+	asc_CButtonFieldProperty.prototype.showFileDialog = function (nState) {
+		if(!this.DivId){
+			return;
+		}
+		let oApi = Asc.editor;
+		let self = this;
+		AscCommon.ShowImageFileDialog(oApi.documentId, oApi.documentUserId, oApi.CoAuthoringApi.get_jwt(), oApi.documentShardKey, oApi.documentWopiSrc, oApi.documentUserSessionId, function(error, files)
+			{
+				if (Asc.c_oAscError.ID.No !== error)
+				{
+					oApi.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
+				}
+				else
+				{
+					oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+					AscCommon.UploadImageFiles(files, oApi.documentId, oApi.documentUserId, oApi.CoAuthoringApi.get_jwt(), oApi.documentShardKey, oApi.documentWopiSrc, oApi.documentUserSessionId, function(error, urls)
+					{
+						if (Asc.c_oAscError.ID.No !== error)
+						{
+							oApi.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
+							oApi.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+						}
+						else
+						{
+							oApi.ImageLoader.LoadImagesWithCallback(urls, function(){
+								if(urls.length > 0)
+								{
+									self.ImageUrl = urls[0];
+									self.Type = Asc.c_oAscWatermarkType.Image;
+									self.drawTexture();
+									oApi.sendEvent("asc_onWatermarkImageLoaded");
+								}
+								oApi.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+							});
+						}
+					});
+				}
+			},
+			function(error)
+			{
+				if (Asc.c_oAscError.ID.No !== error)
+				{
+					oApi.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
+				}
+				oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+			});
 	};
 	//////////////////////////////////////////////////////////////////
 	///// Number format
@@ -7374,12 +7564,26 @@ function (window, undefined) {
 	prot["asc_putFitBounds"]	= prot.asc_putFitBounds;
 	prot["asc_getIconPos"]		= prot.asc_getIconPos;
 	prot["asc_putIconPos"]		= prot.asc_putIconPos;
+	prot["asc_getBehavior"]		= prot.asc_getBehavior;
+	prot["asc_putBehavior"]		= prot.asc_putBehavior;
 	prot["asc_getNormalCaption"]= prot.asc_getNormalCaption;
 	prot["asc_putNormalCaption"]= prot.asc_putNormalCaption;
+	prot["asc_getNormalImage"]	= prot.asc_getNormalImage;
+	prot["asc_putNormalImage"]	= prot.asc_putNormalImage;
 	prot["asc_getHoverCaption"]	= prot.asc_getHoverCaption;
 	prot["asc_putHoverCaption"]	= prot.asc_putHoverCaption;
+	prot["asc_getHoverImage"]	= prot.asc_getHoverImage;
+	prot["asc_putHoverImage"]	= prot.asc_putHoverImage;
 	prot["asc_getDownCaption"]	= prot.asc_getDownCaption;
 	prot["asc_putDownCaption"]	= prot.asc_putDownCaption;
+	prot["asc_getDownImage"]	= prot.asc_getDownImage;
+	prot["asc_putDownImage"]	= prot.asc_putDownImage;
+	prot["asc_putCurrentState"]	= prot.asc_putCurrentState;
+	prot["asc_getCurrentState"]	= prot.asc_getCurrentState;
+	prot["put_DivId"]			= prot.put_DivId;
+	prot["drawTexture"]			= prot.drawTexture;
+	prot["put_ImageUrl"]		= prot.put_ImageUrl;
+	prot["showFileDialog"]		= prot.showFileDialog;
 
 	window["Asc"]["asc_CFieldNumberFormatProperty"] = window["Asc"].asc_CFieldNumberFormatProperty = asc_CFieldNumberFormatProperty;
 	prot = asc_CFieldNumberFormatProperty.prototype;

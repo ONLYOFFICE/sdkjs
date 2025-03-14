@@ -1375,10 +1375,10 @@
 					oForm.SetCaption(oFormInfo["caption"]);
 				}
 				if (oFormInfo["alternateCaption"] != null && oForm["type"] == AscPDF.FIELD_TYPES.button) {
-					oForm.SetCaption(oFormInfo["alternateCaption"], AscPDF.CAPTION_TYPES.mouseDown);
+					oForm.SetCaption(oFormInfo["alternateCaption"], AscPDF.APPEARANCE_TYPES.mouseDown);
 				}
 				if (oFormInfo["rolloverCaption"] != null && oForm["type"] == AscPDF.FIELD_TYPES.button) {
-					oForm.SetCaption(oFormInfo["rolloverCaption"], AscPDF.CAPTION_TYPES.rollover);
+					oForm.SetCaption(oFormInfo["rolloverCaption"], AscPDF.APPEARANCE_TYPES.rollover);
 				}
 				
 				if (oFormInfo["highlight"] != null) {

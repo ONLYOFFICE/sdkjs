@@ -46,11 +46,11 @@
         outline:    3
     }
 
-    let CAPTION_TYPES = {
+    let APPEARANCE_TYPES = {
         normal:     0,
         mouseDown:  1,
         rollover:   2
-    }
+    };
 
     let PUSHBUTTON_BG = {
         r: 191,
@@ -144,7 +144,7 @@
                 field.SetImageRasterId(AscFormat.checkRasterImageId(oImgData.src), nAPType);
     
                 let sTargetSrc;
-                if (nAPType != AscPDF.APPEARANCE_TYPE.rollover && nAPType != AscPDF.APPEARANCE_TYPE.mouseDown) {
+                if (nAPType != AscPDF.APPEARANCE_TYPES.rollover && nAPType != AscPDF.APPEARANCE_TYPES.mouseDown) {
                     sTargetSrc = oImgData.src;
                 }
     
@@ -167,22 +167,22 @@
     };
     CPushButtonField.prototype.IsImageChanged = function(nAPType) {
         switch (nAPType) {
-            case AscPDF.APPEARANCE_TYPE.rollover:
+            case AscPDF.APPEARANCE_TYPES.rollover:
                 return this._imgData.changedInfo.rollover;
-            case AscPDF.APPEARANCE_TYPE.mouseDown:
+            case AscPDF.APPEARANCE_TYPES.mouseDown:
                 return this._imgData.changedInfo.mouseDown;
-            case AscPDF.APPEARANCE_TYPE.normal:
+            case AscPDF.APPEARANCE_TYPES.normal:
             default:
                 return this._imgData.changedInfo.normal;
         }
     };
     CPushButtonField.prototype.GetImageRasterId = function(nAPType) {
         switch (nAPType) {
-            case AscPDF.APPEARANCE_TYPE.rollover:
+            case AscPDF.APPEARANCE_TYPES.rollover:
                 return this._imgData.rollover;
-            case AscPDF.APPEARANCE_TYPE.mouseDown:
+            case AscPDF.APPEARANCE_TYPES.mouseDown:
                 return this._imgData.mouseDown;
-            case AscPDF.APPEARANCE_TYPE.normal:
+            case AscPDF.APPEARANCE_TYPES.normal:
             default:
                 return this._imgData.normal;
         }
@@ -535,11 +535,11 @@
      */
     CPushButtonField.prototype.GetCaption = function(nFace) {
         switch (nFace) {
-            case CAPTION_TYPES.normal:
+            case APPEARANCE_TYPES.normal:
                 return this._buttonCaption;
-            case CAPTION_TYPES.mouseDown:
+            case APPEARANCE_TYPES.mouseDown:
                 return this._downCaption;
-            case CAPTION_TYPES.rollover:
+            case APPEARANCE_TYPES.rollover:
                 return this._rollOverCaption;
             default:
                 return this._buttonCaption;
@@ -738,21 +738,21 @@
         let oDoc    = this.GetDocument();
 
         if (undefined == nAPType) {
-            nAPType = AscPDF.APPEARANCE_TYPE.normal;
+            nAPType = AscPDF.APPEARANCE_TYPES.normal;
         }
 
         switch (nAPType) {
-            case AscPDF.APPEARANCE_TYPE.rollover:
+            case AscPDF.APPEARANCE_TYPES.rollover:
                 sPrevRasterId           = this._imgData.rollover;
                 this._imgData.rollover  = sRasterId;
                 this._imgData.changedInfo.rollover = true;
                 break;
-            case AscPDF.APPEARANCE_TYPE.mouseDown:
+            case AscPDF.APPEARANCE_TYPES.mouseDown:
                 sPrevRasterId           = this._imgData.mouseDown;
                 this._imgData.mouseDown = sRasterId;
                 this._imgData.changedInfo.mouseDown = true;
                 break;
-            case AscPDF.APPEARANCE_TYPE.normal:
+            case AscPDF.APPEARANCE_TYPES.normal:
                 sPrevRasterId           = this._imgData.normal;
                 this._imgData.normal    = sRasterId;
                 this._imgData.changedInfo.normal = true;
@@ -775,8 +775,8 @@
              
         let sTargetCaption;
         let sTargetImgRasterId;
-        let sMouseDownCaption   = this.GetCaption(CAPTION_TYPES.mouseDown);
-        let sNormalCaption      = this.GetCaption(CAPTION_TYPES.normal);
+        let sMouseDownCaption   = this.GetCaption(APPEARANCE_TYPES.mouseDown);
+        let sNormalCaption      = this.GetCaption(APPEARANCE_TYPES.normal);
         let oCaptionRun         = this.GetCaptionRun();
 
         if (this._imgData.mouseDown || sMouseDownCaption) {
@@ -812,12 +812,12 @@
             return;
         }
         
-        if (this._imgData.mouseDown || this.GetCaption(CAPTION_TYPES.normal) || this.GetCaption(CAPTION_TYPES.rollover)) {
-            let sTargetImgRasterId = this.IsHovered() && this.GetCaption(CAPTION_TYPES.rollover) ? this._imgData.rollover : this._imgData.normal;
-            let sTargetCaption = this.IsHovered() && this.GetCaption(CAPTION_TYPES.rollover) ? this.GetCaption(CAPTION_TYPES.rollover) : this.GetCaption(CAPTION_TYPES.normal);
+        if (this._imgData.mouseDown || this.GetCaption(APPEARANCE_TYPES.normal) || this.GetCaption(APPEARANCE_TYPES.rollover)) {
+            let sTargetImgRasterId = this.IsHovered() && this.GetCaption(APPEARANCE_TYPES.rollover) ? this._imgData.rollover : this._imgData.normal;
+            let sTargetCaption = this.IsHovered() && this.GetCaption(APPEARANCE_TYPES.rollover) ? this.GetCaption(APPEARANCE_TYPES.rollover) : this.GetCaption(APPEARANCE_TYPES.normal);
 
             let oCaptionRun         = this.GetCaptionRun();
-            let sDefaultCaption     = this.GetCaption(CAPTION_TYPES.normal);
+            let sDefaultCaption     = this.GetCaption(APPEARANCE_TYPES.normal);
 
             AscCommon.History.StartNoHistoryMode();
             if (oCaptionRun && sDefaultCaption && sTargetCaption) {
@@ -864,7 +864,7 @@
             return;
         }
 
-        let sRolloverCaption = this.GetCaption(CAPTION_TYPES.rollover);
+        let sRolloverCaption = this.GetCaption(APPEARANCE_TYPES.rollover);
 
         if (this._imgData.rollover || sRolloverCaption) {
             AscCommon.History.StartNoHistoryMode();
@@ -894,12 +894,12 @@
             return;
         }
         
-        if (this._imgData.rollover || this.GetCaption(CAPTION_TYPES.rollover)) {
+        if (this._imgData.rollover || this.GetCaption(APPEARANCE_TYPES.rollover)) {
             AscCommon.History.StartNoHistoryMode();
 
             let oCaptionRun         = this.GetCaptionRun();
-            let sRolloverCaption    = this.GetCaption(CAPTION_TYPES.rollover);
-            let sDefaultCaption     = this.GetCaption(CAPTION_TYPES.normal);
+            let sRolloverCaption    = this.GetCaption(APPEARANCE_TYPES.rollover);
+            let sDefaultCaption     = this.GetCaption(APPEARANCE_TYPES.normal);
             if (sDefaultCaption && sRolloverCaption) {
                 oCaptionRun.ClearContent();
                 oCaptionRun.AddText(sDefaultCaption);
@@ -1142,10 +1142,10 @@
         
         let nImgType;
         if (this.IsPressed()) {
-            nImgType = AscPDF.APPEARANCE_TYPE.mouseDown;
+            nImgType = AscPDF.APPEARANCE_TYPES.mouseDown;
         }
         else if (this.IsHovered()) {
-            nImgType = AscPDF.APPEARANCE_TYPE.rollover;
+            nImgType = AscPDF.APPEARANCE_TYPES.rollover;
         }
         else
             nImgType = undefined;
@@ -1935,21 +1935,21 @@
         memory.Skip(4);
         
         // normal caption
-        let sCaption = this.GetCaption(CAPTION_TYPES.normal);
+        let sCaption = this.GetCaption(APPEARANCE_TYPES.normal);
         if (sCaption != null) {
             memory.fieldDataFlags |= (1 << 10);
             memory.WriteString(sCaption);
         }
 
         // rollover caption
-        let sRolloverCaption = this.GetCaption(CAPTION_TYPES.rollover);
+        let sRolloverCaption = this.GetCaption(APPEARANCE_TYPES.rollover);
         if (sRolloverCaption != null) {
             memory.fieldDataFlags |= (1 << 11);
             memory.WriteString(sRolloverCaption);
         }
 
         // mouseDown caption
-        let sDownCaption = this.GetCaption(CAPTION_TYPES.mouseDown);
+        let sDownCaption = this.GetCaption(APPEARANCE_TYPES.mouseDown);
         if (sDownCaption != null) {
             memory.fieldDataFlags |= (1 << 12);
             memory.WriteString(sDownCaption);
@@ -2002,18 +2002,18 @@
         }
 
         // запись картинок. добавляем в уникальный массив, далее пишем картинки на уровне родителей
-        if (this.IsImageChanged(AscPDF.APPEARANCE_TYPE.normal)) {
+        if (this.IsImageChanged(AscPDF.APPEARANCE_TYPES.normal)) {
             nButtonFlags |= (1 << 5);
-            WriteImage.call(this, memory, AscPDF.APPEARANCE_TYPE.normal);
+            WriteImage.call(this, memory, AscPDF.APPEARANCE_TYPES.normal);
             
         }
-        if (this.IsImageChanged(AscPDF.APPEARANCE_TYPE.mouseDown)) {
+        if (this.IsImageChanged(AscPDF.APPEARANCE_TYPES.mouseDown)) {
             nButtonFlags |= (1 << 6);
-            WriteImage.call(this, memory, AscPDF.APPEARANCE_TYPE.mouseDown);
+            WriteImage.call(this, memory, AscPDF.APPEARANCE_TYPES.mouseDown);
         }
-        if (this.IsImageChanged(AscPDF.APPEARANCE_TYPE.rollover)) {
+        if (this.IsImageChanged(AscPDF.APPEARANCE_TYPES.rollover)) {
             nButtonFlags |= (1 << 7);
-            WriteImage.call(this, memory, AscPDF.APPEARANCE_TYPE.rollover);
+            WriteImage.call(this, memory, AscPDF.APPEARANCE_TYPES.rollover);
         }
 
         let nEndPos = memory.GetCurPosition();
@@ -2053,11 +2053,11 @@
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
 
-	window["AscPDF"].CPushButtonField = CPushButtonField;
+	window["AscPDF"].CPushButtonField       = CPushButtonField;
+    window["AscPDF"].APPEARANCE_TYPES       = APPEARANCE_TYPES;
 	window["AscPDF"].BUTTON_HIGHLIGHT_TYPES = BUTTON_HIGHLIGHT_TYPES;
-	window["AscPDF"].CAPTION_TYPES = CAPTION_TYPES;
-	window["AscPDF"].PUSHBUTTON_BG = PUSHBUTTON_BG;
-	window["AscPDF"].MakeColorMoreGray = MakeColorMoreGray;
+	window["AscPDF"].PUSHBUTTON_BG          = PUSHBUTTON_BG;
+	window["AscPDF"].MakeColorMoreGray      = MakeColorMoreGray;
     
 })();
 

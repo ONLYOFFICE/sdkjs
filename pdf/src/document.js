@@ -756,13 +756,13 @@ var CPresentation = CPresentation || function(){};
                 let oBtnField = oDoc.GetFieldByApIdx(oIconsInfo["MK"][nBtn]["i"]);
 
                 if (oIconsInfo["MK"][nBtn]["I"]) {
-                    oBtnField.SetImageRasterId(oIconsInfo["MK"][nBtn]["I"].src, AscPDF.APPEARANCE_TYPE.normal);
+                    oBtnField.SetImageRasterId(oIconsInfo["MK"][nBtn]["I"].src, AscPDF.APPEARANCE_TYPES.normal);
                 }
                 if (oIconsInfo["MK"][nBtn]["RI"]) {
-                    oBtnField.SetImageRasterId(oIconsInfo["MK"][nBtn]["RI"].src, AscPDF.APPEARANCE_TYPE.rollover);
+                    oBtnField.SetImageRasterId(oIconsInfo["MK"][nBtn]["RI"].src, AscPDF.APPEARANCE_TYPES.rollover);
                 }
                 if (oIconsInfo["MK"][nBtn]["IX"]) {
-                    oBtnField.SetImageRasterId(oIconsInfo["MK"][nBtn]["IX"].src, AscPDF.APPEARANCE_TYPE.mouseDown);
+                    oBtnField.SetImageRasterId(oIconsInfo["MK"][nBtn]["IX"].src, AscPDF.APPEARANCE_TYPES.mouseDown);
                 }
             }
             oViewer.isRepaint = true;
@@ -7389,9 +7389,14 @@ var CPresentation = CPresentation || function(){};
                 oFieldProps.asc_putScaleHow(field.GetScaleHow());
                 oFieldProps.asc_putFitBounds(field.IsButtonFitBounds());
                 oFieldProps.asc_putIconPos(field.GetIconPosition());
+                oFieldProps.asc_putBehavior(field.GetHighlight());
+                oFieldProps.asc_putCurrentState(AscPDF.APPEARANCE_TYPES.normal);
                 oFieldProps.asc_putNormalCaption(field.GetCaption());
-                oFieldProps.asc_putHoverCaption(field.GetCaption(AscPDF.CAPTION_TYPES.rollover));
-                oFieldProps.asc_putDownCaption(field.GetCaption(AscPDF.CAPTION_TYPES.mouseDown));
+                oFieldProps.asc_putNormalImage(field.GetImageRasterId());
+                oFieldProps.asc_putHoverCaption(field.GetCaption(AscPDF.APPEARANCE_TYPES.rollover));
+                oFieldProps.asc_putHoverImage(field.GetImageRasterId(AscPDF.APPEARANCE_TYPES.rollover));
+                oFieldProps.asc_putDownCaption(field.GetCaption(AscPDF.APPEARANCE_TYPES.mouseDown));
+                oFieldProps.asc_putDownImage(field.GetImageRasterId(AscPDF.APPEARANCE_TYPES.mouseDown));
                 break;
             }
         }

@@ -75,12 +75,6 @@
         right:  2
     };
 
-    let APPEARANCE_TYPE = {
-        normal:     0,
-        rollover:   1,
-        mouseDown:  2
-    };
-
     const CHAR_LIM_MAX = 500; // to do проверить
 
     // For Span attributes (start)
@@ -1935,7 +1929,7 @@
     /**
      * Returns a canvas with origin view (from appearance stream) of current form.
 	 * @memberof CBaseField
-     * @param {number} nAPType - APPEARANCE_TYPE (type of AP)
+     * @param {number} nAPType - AscPDF.APPEARANCE_TYPES (type of AP)
 	 * @typeofeditors ["PDF"]
      * @returns {canvas}
 	 */
@@ -1960,11 +1954,11 @@
         }
 
         switch (nAPType) {
-            case APPEARANCE_TYPE.normal:
+            case AscPDF.APPEARANCE_TYPES.normal:
                 oApInfoTmp = oApearanceInfo["N"];
                 oSavedView = this._originView.normal;
                 break;
-            case APPEARANCE_TYPE.rollover:
+            case AscPDF.APPEARANCE_TYPES.rollover:
                 if (oApearanceInfo["R"]) {
                     oApInfoTmp = oApearanceInfo["R"]
                     oSavedView = this._originView.rollover;
@@ -1974,7 +1968,7 @@
                     oSavedView = this._originView.normal;
                 }
                 break;
-            case APPEARANCE_TYPE.mouseDown:
+            case AscPDF.APPEARANCE_TYPES.mouseDown:
                 if (oApearanceInfo["D"]) {
                     oApInfoTmp = oApearanceInfo["D"]
                     oSavedView = this._originView.mouseDown;
@@ -2027,10 +2021,10 @@
         oViewer.file.free(oApInfoTmp["retValue"]);
 
         switch (nAPType) {
-            case APPEARANCE_TYPE.normal:
+            case AscPDF.APPEARANCE_TYPES.normal:
                 this._originView.normal = canvas;
                 break;
-            case APPEARANCE_TYPE.rollover:
+            case AscPDF.APPEARANCE_TYPES.rollover:
                 if (oApearanceInfo["R"]) {
                     this._originView.rollover = canvas;
                 }
@@ -2038,7 +2032,7 @@
                     this._originView.normal = canvas;
                 }
                 break;
-            case APPEARANCE_TYPE.mouseDown:
+            case AscPDF.APPEARANCE_TYPES.mouseDown:
                 if (oApearanceInfo["D"]) {
                     this._originView.mouseDown = canvas;
                 }
@@ -2101,7 +2095,7 @@
 	};
 
     CBaseField.prototype.DrawFromStream = function(oGraphicsPDF, oGraphicsWord) {
-        let nAPType = this.IsHovered && this.IsHovered() ? AscPDF.APPEARANCE_TYPE.rollover : undefined;
+        let nAPType = this.IsHovered && this.IsHovered() ? AscPDF.AscPDF.APPEARANCE_TYPES.rollover : undefined;
 
         let originView = this.GetOriginView(nAPType, oGraphicsPDF.GetDrawingPageW(), oGraphicsPDF.GetDrawingPageH());
 
@@ -2888,7 +2882,6 @@
     
 	window["AscPDF"].ALIGN_TYPE         = ALIGN_TYPE;
 	window["AscPDF"].BORDER_TYPES       = window["AscPDF"]["BORDER_TYPES"] = BORDER_TYPES;
-    window["AscPDF"].APPEARANCE_TYPE    = APPEARANCE_TYPE;
     window["AscPDF"].VALID_ROTATIONS    = VALID_ROTATIONS;
     window["AscPDF"].MAX_TEXT_SIZE      = MAX_TEXT_SIZE;
     window["AscPDF"].FONT_STRETCH       = FONT_STRETCH;

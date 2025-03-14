@@ -292,13 +292,13 @@
         let nRetValue, oApInfoTmp;
 
         switch (nAPType) {
-            case AscPDF.APPEARANCE_TYPE.normal:
+            case AscPDF.APPEARANCE_TYPES.normal:
                 oApInfoTmp = oApearanceInfo["N"];
                 break;
-            case AscPDF.APPEARANCE_TYPE.rollover:
+            case AscPDF.APPEARANCE_TYPES.rollover:
                 oApInfoTmp = oApearanceInfo["R"] ? oApearanceInfo["R"] : oApearanceInfo["N"];
                 break;
-            case AscPDF.APPEARANCE_TYPE.mouseDown:
+            case AscPDF.APPEARANCE_TYPES.mouseDown:
                 oApInfoTmp = oApearanceInfo["D"] ? oApearanceInfo["D"] : oApearanceInfo["N"];
                 break;
             default:
