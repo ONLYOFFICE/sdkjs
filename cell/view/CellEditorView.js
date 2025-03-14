@@ -1525,7 +1525,7 @@ function (window, undefined) {
 
 		let _top = 0;
 		if (top < this.cellsTop) {
-			_top = this.cellsTop + top;
+			top = top < 0 ? -(this.cellsTop + Math.abs(top)) : top - this.cellsTop;
 			top = this.cellsTop;
 		}
 
@@ -1739,6 +1739,12 @@ function (window, undefined) {
 		curLeft = AscCommon.AscBrowser.convertToRetinaValue(curLeft);
 		curTop = AscCommon.AscBrowser.convertToRetinaValue(curTop);
 		curHeight = AscCommon.AscBrowser.convertToRetinaValue(curHeight);
+
+		//TODO check retina!
+		let _top = this.top;
+		if (_top < this.cellsTop) {
+			curTop += _top < 0 ? -(this.cellsTop + Math.abs(_top)) : _top - this.cellsTop;
+		}
 
 		this.curLeft = curLeft;
 		this.curTop = curTop;
