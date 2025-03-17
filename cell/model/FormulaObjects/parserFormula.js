@@ -573,6 +573,9 @@ function getMaxDate () {
 	return AscCommon.bDate1904 ? c_nMaxDate1904 : c_nMaxDate1900; 	// Maximum date used in calculations in ms (equivalent 31/12/9999)
 }
 
+let fIsPromise = function (val) {
+	return val && val.promise && val.promise.then;
+};
 
 // set type weight of base types
 let cElementTypeWeight =  new Map();
@@ -8807,8 +8810,10 @@ function parserFormula( formula, parent, _ws ) {
 							return false;
 						} else {
 							// if operator - check whether each of the arguments is a range or an array
+
 							let isOperator = currentElement.type === cElementType.operator;
 							let arg = [];
+							let _isPromise = false;
 							for (let i = 0; i < argumentsCount + defNameArgCount; i++) {
 								if ("number" === typeof(elemArr[elemArr.length - 1])) {
 									elemArr.pop();
@@ -8818,8 +8823,16 @@ function parserFormula( formula, parent, _ws ) {
 									isRef = true;
 								}
 
+								if (fIsPromise(tempElem)) {
+									_isPromise = true;
+									break;
+								}
 								// arg.unshift(elemArr.pop());
 								arg.unshift(tempElem);
+							}
+
+							if (_isPromise) {
+								continue;
 							}
 
 							let isCanExpand = null;
@@ -8882,10 +8895,6 @@ function parserFormula( formula, parent, _ws ) {
 			opt_bbox = new Asc.Range(0, 0, 0, 0);
 		}
 
-		let isPromise = function (val) {
-			return val && val.promise && val.promise.then;
-		};
-
 		let promiseCounter = 0;
 		var elemArr = [], _tmp, numFormat = cNumFormatFirstCell, currentElement = null, bIsSpecialFunction, argumentsCount, defNameCalcArr, defNameArgCount = 0;
 		for (var i = 0; i < this.outStack.length; i++) {
@@ -8937,11 +8946,21 @@ function parserFormula( formula, parent, _ws ) {
 					return this.value;
 				} else {
 					var arg = [];
+					let _isPromise = false;
 					for (var ind = 0; ind < argumentsCount + defNameArgCount; ind++) {
 						if("number" === typeof(elemArr[elemArr.length - 1])){
 							elemArr.pop();
 						}
-						arg.unshift(elemArr.pop());
+						let _elem = elemArr.pop();
+						arg.unshift(_elem);
+						if (fIsPromise(_elem)) {
+							_isPromise = true;
+							break;
+						}
+					}
+
+					if (_isPromise) {
+						break;
 					}
 
 					//***array-formula***
@@ -8969,8 +8988,8 @@ function parserFormula( formula, parent, _ws ) {
 					}
 
 					//check promise
-					if (isPromise(_tmp)) {
-						if (this.promiseResult) {
+					if (fIsPromise(_tmp)) {
+						if (this.promiseResult && this.promiseResult[promiseCounter]) {
 							_tmp = this.promiseResult[promiseCounter];
 						} else {
 							_tmp.parserFormula = this;
@@ -9015,7 +9034,7 @@ function parserFormula( formula, parent, _ws ) {
 			}
 		}
 
-		if (promiseCounter && !this.promiseResult) {
+		if (promiseCounter && /*!this.promiseResult*/ this.wb.asyncFormulasManager.isPromises()) {
 			this.value = new cError(cErrorType.busy);
 			this._endCalculate();
 			return this.value;

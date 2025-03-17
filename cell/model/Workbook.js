@@ -2105,7 +2105,6 @@
 								resStreamInfo = new cError(cErrorType.wrong_value_type);
 							} else {
 								resStreamInfo = _promises[i].callback(streamInfos[i]);
-								resStreamInfo = new AscCommonExcel.cNumber(123);
 							}
 							_promises[i].parserFormula.promiseResult.push(resStreamInfo);
 							t.wb.dependencyFormulas.addToChangedCell(_promises[i].parserFormula.parent);
@@ -2121,9 +2120,9 @@
 						t.wb.asyncFormulasManager.setRecalculating(true);
 						t.calcTree();
 						t.wb.handlers && t.wb.handlers.trigger("drawWS");
-						for (let i = 0; i < streamInfos.length; i++) {
+						/*for (let i = 0; i < streamInfos.length; i++) {
 							_promises[i].parserFormula.promiseResult = null;
-						}
+						}*/
 						t.wb.asyncFormulasManager.setRecalculating(false);
 
 						promises = !t.wb.asyncFormulasManager.isRecalculating() && t.wb.asyncFormulasManager.getPromises();
@@ -2924,10 +2923,13 @@
 		this.promises.push(val);
 	};
 	AsyncFormulasManager.prototype.getPromise = function (index) {
-		return this.promises[index];
+		return this.promise && this.promises[index];
 	};
 	AsyncFormulasManager.prototype.getPromises = function () {
 		return this.promises;
+	};
+	AsyncFormulasManager.prototype.isPromises = function () {
+		return this.promises && this.promises.length;
 	};
 	AsyncFormulasManager.prototype.clearPromises = function () {
 		this.promises = null;
@@ -3891,6 +3893,7 @@
 		this.dependencyFormulas.forEachFormula(function (fP) {
 			if (fP && fP.bUnknownOrCustomFunction) {
 				fP.isParsed = false;
+				fP.outStack = [];
 				fP.parse();
 				if (/*DefName*/fP.parent.getNodeId) {
 					t.dependencyFormulas.addToChangedDefName(fP.parent);
@@ -3902,6 +3905,7 @@
 			ws.forEachFormula(function (fP) {
 				if (fP && fP.bUnknownOrCustomFunction) {
 					fP.isParsed = false;
+					fP.outStack = [];
 					fP.parse();
 					if (/*CCellWithFormula*/fP.parent.nCol != null) {
 						t.dependencyFormulas.addToChangedCell(fP.parent);
