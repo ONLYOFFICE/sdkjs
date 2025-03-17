@@ -1337,6 +1337,12 @@ var CPresentation = CPresentation || function(){};
             oActiveObj.OnBlur();
         }
         else if (oActiveObj.IsForm()) {
+            if (this.IsEditFieldsMode()) {
+                this.activeForm = null;
+                oActiveObj.asc_curImageState = undefined;
+                return;
+            }
+
             oContent = oActiveObj.GetDocContent();
 
             oActiveObj.SetDrawHighlight(true);
@@ -1963,7 +1969,7 @@ var CPresentation = CPresentation || function(){};
                 return;
             
             // действия mouseEnter и mouseExit у полей
-            if (oMouseMoveField != this.mouseMoveField) {
+            if (oMouseMoveField != this.mouseMoveField && false == this.IsEditFieldsMode()) {
                 if (this.mouseMoveField) {
                     this.mouseMoveField.onMouseExit();
                 }
@@ -7390,13 +7396,13 @@ var CPresentation = CPresentation || function(){};
                 oFieldProps.asc_putFitBounds(field.IsButtonFitBounds());
                 oFieldProps.asc_putIconPos(field.GetIconPosition());
                 oFieldProps.asc_putBehavior(field.GetHighlight());
-                oFieldProps.asc_putCurrentState(AscPDF.APPEARANCE_TYPES.normal);
                 oFieldProps.asc_putNormalCaption(field.GetCaption());
                 oFieldProps.asc_putNormalImage(field.GetImageRasterId());
                 oFieldProps.asc_putHoverCaption(field.GetCaption(AscPDF.APPEARANCE_TYPES.rollover));
                 oFieldProps.asc_putHoverImage(field.GetImageRasterId(AscPDF.APPEARANCE_TYPES.rollover));
                 oFieldProps.asc_putDownCaption(field.GetCaption(AscPDF.APPEARANCE_TYPES.mouseDown));
                 oFieldProps.asc_putDownImage(field.GetImageRasterId(AscPDF.APPEARANCE_TYPES.mouseDown));
+                oFieldProps.asc_putCurrentState(field.asc_curImageState || AscPDF.APPEARANCE_TYPES.normal);
                 break;
             }
         }

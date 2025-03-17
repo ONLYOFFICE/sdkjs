@@ -2091,6 +2091,26 @@
 			return true;
         }, AscDFH.historydescription_Pdf_ChangeField);
 	};
+	PDFEditorApi.prototype.ClearButtonFieldImage = function(nState) {
+		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
+		let oForm = oDoc.activeForm;
+
+		if (!oForm) {
+			return false;
+		}
+
+		return oDoc.DoAction(function() {
+			oController.selectedObjects.forEach(function(shape) {
+				let field = shape.GetEditField();
+				if (AscPDF.FIELD_TYPES.button == field.GetType()) {
+					field.SetImageRasterId('', nState);
+				}
+			});
+
+			return true;
+        }, AscDFH.historydescription_Pdf_ChangeField);
+	};
 
 	/////////////////////////////////////////////////////////////
 	///////// For drawings
@@ -2852,7 +2872,7 @@
 					}
 
 					if (oOptionObject.GetType && oOptionObject.GetType() === AscPDF.FIELD_TYPES.button) {
-						oOptionObject.AddImage(oImage, oOptionObject.asc_addImageState);
+						oOptionObject.AddImage(oImage, oOptionObject.asc_curImageState);
 					}
 					else if (oOptionObject.isStamp) {
 						oDoc.AddStampAnnot(AscPDF.STAMP_TYPES.Image, oDoc.Viewer.currentPage, oImage);
@@ -4187,6 +4207,7 @@
 	PDFEditorApi.prototype['SetButtonFieldIconPos']		= PDFEditorApi.prototype.SetButtonFieldIconPos;
 	PDFEditorApi.prototype['SetButtonFieldBehavior']	= PDFEditorApi.prototype.SetButtonFieldBehavior;
 	PDFEditorApi.prototype['SetButtonFieldLabel']		= PDFEditorApi.prototype.SetButtonFieldLabel;
+	PDFEditorApi.prototype['ClearButtonFieldImage']		= PDFEditorApi.prototype.ClearButtonFieldImage;
 
 	// drawings
 	PDFEditorApi.prototype['AddTextArt']							= PDFEditorApi.prototype.AddTextArt;

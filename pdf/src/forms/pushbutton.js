@@ -112,9 +112,6 @@
     AscFormat.InitClass(CPushButtonField, AscPDF.CBaseField, AscDFH.historyitem_type_Pdf_Button_Field);
 
     CPushButtonField.prototype.AddImage = function(oImgData, nAPType) {
-        // set via right panel 
-        Asc.editor.asc_addImageState = undefined;
-
         if (!oImgData) {
             return;
         }
@@ -439,6 +436,13 @@
         AscCommon.History.Add(new CChangesPDFPushbuttonHighlightType(this, this._highlight, nType));
 
         this._highlight = nType;
+
+        if (nType != BUTTON_HIGHLIGHT_TYPES.push) {
+            this.asc_curImageState = undefined;
+            this.SetImageRasterId('', APPEARANCE_TYPES.mouseDown);
+            this.SetImageRasterId('', APPEARANCE_TYPES.rollover);
+        }
+        
         this.SetWasChanged(true);
     };
     CPushButtonField.prototype.GetHighlight = function() {

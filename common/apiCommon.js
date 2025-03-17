@@ -3842,7 +3842,7 @@ function (window, undefined) {
 	};
 	asc_CButtonFieldProperty.prototype.put_DivId = function (v) {
 		this.DivId = v;
-		this.drawTexture();
+		this.drawTexture(this.currentState);
 	};
 	asc_CButtonFieldProperty.prototype.drawTexture = function (nState) {
 		let sImageRasterId;
@@ -3885,7 +3885,7 @@ function (window, undefined) {
 			return;
 		}
 		
-		var _img = this.Api.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(sImageRasterId)];
+		var _img = Asc.editor.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(sImageRasterId)];
 		if (_img != undefined && _img.Image != null && _img.Status != AscFonts.ImageLoadStatus.Loading)
 		{
 			var _x = 0;
@@ -3942,7 +3942,7 @@ function (window, undefined) {
 
 		// set to field state to add image (will clear after set image)
 		let oField = this.getParentField();
-		oField.asc_addImageState = nState;
+		oField.asc_curImageState = nState;
 
 		Api._addImageUrl([sUrl], oField);
 	};
@@ -3954,7 +3954,7 @@ function (window, undefined) {
 
 		// set to field state to add image (will clear after set image)
 		let oField = this.getParentField();
-		oField.asc_addImageState = nState;
+		oField.asc_curImageState = nState;
 
 		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
             window["AscDesktopEditor"]["OpenFilenameDialog"]("images", false, function(_file) {
