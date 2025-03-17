@@ -442,7 +442,7 @@
             this.SetImageRasterId('', APPEARANCE_TYPES.mouseDown);
             this.SetImageRasterId('', APPEARANCE_TYPES.rollover);
         }
-        
+
         this.SetWasChanged(true);
     };
     CPushButtonField.prototype.GetHighlight = function() {
@@ -571,8 +571,10 @@
         
         AscFonts.FontPickerByCharacter.getFontsByString(cCaption);
 
+        let sPrevCaption;
         switch (nFace) {
             case 0:
+                sPrevCaption = this._buttonCaption;
                 this._buttonCaption = cCaption;
                 let oCaptionRun;
                 let oPara = this.content.GetElement(0);
@@ -621,12 +623,19 @@
                 AscCommon.History.EndNoHistoryMode();
                 break;
             case 1:
+                sPrevCaption = this._downCaption;
                 this._downCaption = cCaption;
                 break;
             case 2:
+                sPrevCaption = this._rollOverCaption;
                 this._rollOverCaption = cCaption;
                 break;
         }
+
+        AscCommon.History.Add(new CChangesPDFPushbuttonCaption(this, sPrevCaption, cCaption, nFace));
+
+        this.SetWasChanged(true);
+        this.SetNeedRecalc(true);
     };
     CPushButtonField.prototype.SetValue = function() {
         return;

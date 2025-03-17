@@ -3835,6 +3835,11 @@ function (window, undefined) {
 	};
 	asc_CButtonFieldProperty.prototype.asc_putCurrentState = function(v) {
 		this.currentState = v;
+
+		// set to field state to add image (will clear after set image)
+		let oField = this.getParentField();
+		oField.asc_curImageState = v;
+
 		this.drawTexture(v);
 	};
 	asc_CButtonFieldProperty.prototype.asc_getCurrentState = function(v) {
@@ -3942,7 +3947,6 @@ function (window, undefined) {
 
 		// set to field state to add image (will clear after set image)
 		let oField = this.getParentField();
-		oField.asc_curImageState = nState;
 
 		Api._addImageUrl([sUrl], oField);
 	};
@@ -3954,8 +3958,7 @@ function (window, undefined) {
 
 		// set to field state to add image (will clear after set image)
 		let oField = this.getParentField();
-		oField.asc_curImageState = nState;
-
+		
 		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
             window["AscDesktopEditor"]["OpenFilenameDialog"]("images", false, function(_file) {
                 var file = _file;

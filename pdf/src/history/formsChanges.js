@@ -85,6 +85,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Highlight_Type]	= CChang
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Scale_When_Type]= CChangesPDFPushbuttonScaleWhenType;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Scale_How_Type]	= CChangesPDFPushbuttonScaleHowType;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Fit_Bounds]		= CChangesPDFPushbuttonFitBounds;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Caption]		= CChangesPDFPushbuttonCaption;
 
 
 // checbox/radio
@@ -1416,6 +1417,90 @@ CChangesPDFPushbuttonFitBounds.prototype.private_SetValue = function(Value)
 {
 	let oForm = this.Class;
 	oForm.SetButtonFitBounds(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesPDFPushbuttonCaption(Class, sOldRasterId, sNewRasterId, nAPType, Color)
+{
+	AscDFH.CChangesBaseStringProperty.call(this, Class, sOldRasterId, sNewRasterId, Color);
+	this.APType = nAPType;
+}
+CChangesPDFPushbuttonCaption.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesPDFPushbuttonCaption.prototype.constructor = CChangesPDFPushbuttonCaption;
+CChangesPDFPushbuttonCaption.prototype.Type = AscDFH.historyitem_Pdf_Pushbutton_Caption;
+CChangesPDFPushbuttonCaption.prototype.CreateReverseChange = function() {
+	return new this.constructor(this.Class, this.New, this.Old, this.APType, this.Color);
+};
+CChangesPDFPushbuttonCaption.prototype.private_SetValue = function(Value)
+{
+	let oField = this.Class;
+	oField.SetCaption(Value, this.APType);
+};
+
+CChangesPDFPushbuttonCaption.prototype.WriteToBinary = function(Writer)
+{
+	let nFlags = 0;
+
+	if (false !== this.Color)
+		nFlags |= 1;
+
+	if (undefined === this.APType)
+		nFlags |= 2;
+
+	if (undefined === this.New)
+		nFlags |= 4;
+
+	if (undefined === this.Old)
+		nFlags |= 8;
+	
+
+	Writer.WriteLong(nFlags);
+
+	if (undefined !== this.APType)
+		Writer.WriteLong(this.APType);
+
+	if (undefined !== this.New)
+		Writer.WriteString2(this.New);
+
+	if (undefined !== this.Old)
+		Writer.WriteString2(this.Old);
+};
+CChangesPDFPushbuttonCaption.prototype.ReadFromBinary = function(Reader)
+{
+	this.FromLoad = true;
+
+	// Long  : Flag
+	// 1-bit : Подсвечивать ли данные изменения
+	// 2-bit : IsUndefined New
+	// 3-bit : IsUndefined Old
+	// long : New
+	// long : Old
+
+
+	var nFlags = Reader.GetLong();
+
+	if (nFlags & 1)
+		this.Color = true;
+	else
+		this.Color = false;
+
+	if (nFlags & 2)
+		this.APType = undefined;
+	else
+		this.APType = Reader.GetLong();
+
+	if (nFlags & 4)
+		this.New = undefined;
+	else
+		this.New = Reader.GetString2();
+
+	if (nFlags & 8)
+		this.Old = undefined;
+	else
+		this.Old = Reader.GetString2();
 };
 
 /**

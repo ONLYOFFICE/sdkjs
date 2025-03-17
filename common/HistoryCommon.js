@@ -4063,12 +4063,13 @@
 
 	// button
 	AscDFH.historyitem_Pdf_Pushbutton_Image				= AscDFH.historyitem_type_Pdf_Pushbutton | 1;
-	AscDFH.historyitem_Pdf_Pushbutton_Layout		= AscDFH.historyitem_type_Pdf_Pushbutton | 2;
+	AscDFH.historyitem_Pdf_Pushbutton_Layout			= AscDFH.historyitem_type_Pdf_Pushbutton | 2;
 	AscDFH.historyitem_Pdf_Pushbutton_Icon_Pos			= AscDFH.historyitem_type_Pdf_Pushbutton | 3;
 	AscDFH.historyitem_Pdf_Pushbutton_Highlight_Type	= AscDFH.historyitem_type_Pdf_Pushbutton | 4;
 	AscDFH.historyitem_Pdf_Pushbutton_Scale_When_Type	= AscDFH.historyitem_type_Pdf_Pushbutton | 5;
 	AscDFH.historyitem_Pdf_Pushbutton_Scale_How_Type	= AscDFH.historyitem_type_Pdf_Pushbutton | 6;
 	AscDFH.historyitem_Pdf_Pushbutton_Fit_Bounds		= AscDFH.historyitem_type_Pdf_Pushbutton | 7;
+	AscDFH.historyitem_Pdf_Pushbutton_Caption			= AscDFH.historyitem_type_Pdf_Pushbutton | 8;
 	
 	// checkbox/radio
 	AscDFH.historyitem_Pdf_Checkbox_No_Toggle_To_Off	= AscDFH.historyitem_type_Pdf_Checkbox_Field | 1;
