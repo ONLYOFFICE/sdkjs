@@ -1248,6 +1248,7 @@ function (window, undefined) {
 		// Attributes for calculating logic
 		this.nStartTime = null;
 		this.nCurrentSubProblem = null;
+		this.nGradient = null;
 
 		// Calculating option
 		this.oOptions = oParams.getOptions();
@@ -1273,12 +1274,17 @@ function (window, undefined) {
 		}
 		switch (nSolutionMethod) {
 			case c_oAscSolvingMethod.grgNonlinear:
-				return this.grgOptimization();
+				this.grgOptimization();
+				break;
 			case c_oAscSolvingMethod.simplexLP:
-				return this.simplexOptimization();
+				this.simplexOptimization();
+				break;
 			case c_oAscSolvingMethod.evolutionary:
-				return this.evolutionOptimization();
+				this.evolutionOptimization();
+				break;
 		}
+
+		return false;
 	};
 	/**
 	 * Converts cell reference from UI to Cell object.
@@ -1383,8 +1389,9 @@ function (window, undefined) {
 		return aConstraintsResult;
 	};
 	/**
-	 *
-	 * @param aConstraintsResult
+	 * Checks whether finish calculating.
+	 * @memberof CSolver
+	 * @param {boolean[]} aConstraintsResult
 	 * @returns {boolean}
 	 */
 	CSolver.prototype.isFinishCalculating = function (aConstraintsResult) {
@@ -1520,6 +1527,22 @@ function (window, undefined) {
 	 */
 	CSolver.prototype.increaseCurrentSubProblem = function () {
 		this.nCurrentSubProblem++;
+	};
+	/**
+	 * Sets result of gradient for determine direction of motion for nonbasic variables.
+	 * @memberof CSolver
+	 * @param {number} nGradient
+	 */
+	CSolver.prototype.setGradient = function (nGradient) {
+		this.nGradient = nGradient;
+	};
+	/**
+	 * Returns result of gradient for determine direction of motion for nonbasic variables.
+	 * @memberof CSolver
+	 * @returns {number}
+	 */
+	CSolver.prototype.getGradient = function () {
+		return this.nGradient;
 	};
 
 	// Export
