@@ -128,17 +128,17 @@
     FormatType["REGULAR"]       = FormatType.REGULAR;
     FormatType["CUSTOM"]        = FormatType.CUSTOM;
 
-    const SpectialFormattingType = {
+    const SpectialFormatType = {
         ZIP_CODE: 0,       // Почтовый индекс (ZIP Code)
         ZIP_PLUS_4: 1,     // Почтовый индекс + 4 (ZIP + 4)
         PHONE: 2,          // Телефонный номер
         SSN: 3             // Социальное страхование (SSN)
     }
 
-    SpectialFormattingType["ZIP_CODE"] = SpectialFormattingType.ZIP_CODE;
-    SpectialFormattingType["ZIP_PLUS_4"] = SpectialFormattingType.ZIP_PLUS_4;
-    SpectialFormattingType["PHONE"] = SpectialFormattingType.PHONE;
-    SpectialFormattingType["SSN"] = SpectialFormattingType.SSN;
+    SpectialFormatType["ZIP_CODE"] = SpectialFormatType.ZIP_CODE;
+    SpectialFormatType["ZIP_PLUS_4"] = SpectialFormatType.ZIP_PLUS_4;
+    SpectialFormatType["PHONE"] = SpectialFormatType.PHONE;
+    SpectialFormatType["SSN"] = SpectialFormatType.SSN;
 
     const SeparatorStyle = {
         COMMA_DOT: 0,       // 1,234.56
@@ -195,7 +195,7 @@
     asc["BORDER_EFFECT_STYLES"]     = asc.BORDER_EFFECT_STYLES      = BORDER_EFFECT_STYLES;
     asc["REF_TO_REASON"]            = asc.REF_TO_REASON             = REF_TO_REASON;
     asc["FormatType"]               = asc.FormatType                = FormatType;
-    asc["SpectialFormattingType"]   = asc.SpectialFormattingType    = SpectialFormattingType;
+    asc["SpectialFormatType"]   = asc.SpectialFormatType    = SpectialFormatType;
     asc["SeparatorStyle"]           = asc.SeparatorStyle            = SeparatorStyle;
     asc["NegativeStyle"]            = asc.NegativeStyle             = NegativeStyle;
     asc["CalculateType"]            = asc.CalculateType             = CalculateType;
