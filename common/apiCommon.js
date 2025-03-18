@@ -4122,6 +4122,24 @@ function (window, undefined) {
 	};
 
 	//////////////////////////////////////////////////////////////////
+	///// Regular (our custom) format
+	//////////////////////////////////////////////////////////////////
+	function asc_CFieldRegularFormatProperty() {
+		this.type		= AscPDF.FormatType.REGULAR;
+		this.regExp		= undefined;
+	};
+
+	asc_CFieldRegularFormatProperty.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CFieldRegularFormatProperty.prototype.asc_getRegExp = function () {
+		return this.regExp;
+	};
+	asc_CFieldRegularFormatProperty.prototype.asc_putRegExp = function (v) {
+		this.regExp = v;
+	};
+
+	//////////////////////////////////////////////////////////////////
 	///// Validate format
 	//////////////////////////////////////////////////////////////////
 	function asc_CFieldValidateProperty() {
@@ -7630,6 +7648,12 @@ function (window, undefined) {
 	prot["asc_putFormat"]			= prot.asc_putFormat;
 	prot["asc_getMask"]				= prot.asc_getMask;
 	prot["asc_putMask"]				= prot.asc_putMask;
+	
+	window["Asc"]["asc_CFieldRegularFormatProperty"] = window["Asc"].asc_CFieldRegularFormatProperty = asc_CFieldRegularFormatProperty;
+	prot = asc_CFieldRegularFormatProperty.prototype;
+	prot["asc_getType"]				= prot.asc_getType;
+	prot["asc_getRegExp"]			= prot.asc_getRegExp;
+	prot["asc_putRegExp"]			= prot.asc_putRegExp;
 	
 	window["Asc"]["asc_CFieldValidateProperty"] = window["Asc"].asc_CFieldValidateProperty = asc_CFieldValidateProperty;
 	prot = asc_CFieldValidateProperty.prototype;

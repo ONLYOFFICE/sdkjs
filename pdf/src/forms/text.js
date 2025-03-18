@@ -629,6 +629,13 @@
         let oKeystrokeScript    = oKeystrokeTrigger ? oKeystrokeTrigger.GetActions()[0] : null;
         let sFormatScript       = oFormatScript ? oFormatScript.GetScript(): "";
         let sKeystrokeScript    = oKeystrokeScript ? oKeystrokeScript.GetScript(): "";
+
+        let oMeta = this.GetMeta();
+        // our custom format
+        if (oMeta['regular']) {
+            return AscPDF.FormatType.REGULAR;
+        }
+
         if (!sFormatScript && (!sKeystrokeScript || !sKeystrokeScript.startsWith('AFSpecial_KeystrokeEx'))) {
             return AscPDF.FormatType.NONE;
         }
@@ -689,6 +696,12 @@
             return parsedArgs;
         }
 
+        let oMeta = this.GetMeta();
+        // our custom format
+        if (oMeta['regular']) {
+            return [oMeta['regular']];
+        }
+        
         if (false == [AscPDF.FormatType.NONE, AscPDF.FormatType.CUSTOM].includes(this.GetFormatType())) {
             let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
             let oKeystrokeTrigger   = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke);
@@ -826,7 +839,10 @@
                 "S": AscPDF.ACTIONS_TYPES.JavaScript,
                 "JS": sValidateScript
             }];
+            
             this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Validate, aActionsFocus);
+            this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, []);
+            this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, []);
         }
         else {
             this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Validate, []);
@@ -839,6 +855,7 @@
                 "JS": 'AFSpecial_KeystrokeEx("' + sMask + '");'
             }];
             this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+            this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, []);
         }
         else {
             this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, []);

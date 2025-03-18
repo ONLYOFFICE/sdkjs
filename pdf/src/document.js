@@ -7316,6 +7316,12 @@ var CPresentation = CPresentation || function(){};
                         }
                         break;
                     }
+                    // our custom format
+                    case AscPDF.FormatType.REGULAR: {
+                        oFormatProps = new Asc.asc_CFieldRegularFormatProperty();
+                        oFormatProps.asc_putRegExp(aArgs[0]);
+                        break;
+                    }
                 }
             }
 

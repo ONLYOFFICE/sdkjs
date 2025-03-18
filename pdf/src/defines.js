@@ -115,7 +115,8 @@
         DATE:       2,
         TIME:       3,
         SPECIAL:    4,
-        CUSTOM:     5
+        REGULAR:    5,
+        CUSTOM:     6
     }
 
     FormatType["NONE"]          = FormatType.NONE;
@@ -124,6 +125,7 @@
     FormatType["DATE"]          = FormatType.DATE;
     FormatType["TIME"]          = FormatType.TIME;
     FormatType["SPECIAL"]       = FormatType.SPECIAL;
+    FormatType["REGULAR"]       = FormatType.REGULAR;
     FormatType["CUSTOM"]        = FormatType.CUSTOM;
 
     const SpectialFormattingType = {

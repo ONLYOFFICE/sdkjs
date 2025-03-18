@@ -1195,6 +1195,22 @@
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
 	// fields formats
+	PDFEditorApi.prototype.ClearFieldFormat = function() {
+		let oDoc = this.getPDFDoc();
+		
+		return oDoc.DoAction(function() {
+			let oField = oDoc.activeForm;
+			if (!oField || false == [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oField.GetType())) {
+				return false;
+			}
+
+			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, []);
+			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, []);
+			oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Validate, []);
+
+			return true;
+		}, AscDFH.historydescription_Pdf_ChangeField, this);
+	};
 	PDFEditorApi.prototype.SetFieldNumberFormat = function(nDemical, nSepStyle, nNegStyle, sCurrency, bCurrencyPrepend) {
 		let oDoc = this.getPDFDoc();
 		
@@ -1326,6 +1342,20 @@
 			}
 			
 			oField.SetArbitaryMask(sMask);
+			return true;
+
+		}, AscDFH.historydescription_Pdf_ChangeField, this);
+	};
+	PDFEditorApi.prototype.SetFieldRegularExp = function(sReg) {
+		let oDoc = this.getPDFDoc();
+		
+		return oDoc.DoAction(function() {
+			let oField = oDoc.activeForm;
+			if (!oField || false == [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oField.GetType())) {
+				return false;
+			}
+			
+			oField.SetRegularExp(sReg);
 			return true;
 
 		}, AscDFH.historydescription_Pdf_ChangeField, this);
@@ -4156,12 +4186,14 @@
 	PDFEditorApi.prototype['AddRadiobuttonField']		= PDFEditorApi.prototype.AddRadiobuttonField;
 	PDFEditorApi.prototype['AddComboboxField']			= PDFEditorApi.prototype.AddComboboxField;
 	PDFEditorApi.prototype['AddListboxField']			= PDFEditorApi.prototype.AddListboxField;
+	PDFEditorApi.prototype['ClearFieldFormat']			= PDFEditorApi.prototype.ClearFieldFormat;
 	PDFEditorApi.prototype['SetFieldNumberFormat']		= PDFEditorApi.prototype.SetFieldNumberFormat;
 	PDFEditorApi.prototype['SetFieldPercentageFormat']	= PDFEditorApi.prototype.SetFieldPercentageFormat;
 	PDFEditorApi.prototype['SetFieldDateFormat']		= PDFEditorApi.prototype.SetFieldDateFormat;
 	PDFEditorApi.prototype['SetFieldTimeFormat']		= PDFEditorApi.prototype.SetFieldTimeFormat;
 	PDFEditorApi.prototype['SetFieldSpecialFormat']		= PDFEditorApi.prototype.SetFieldSpecialFormat;
 	PDFEditorApi.prototype['SetFieldMask']				= PDFEditorApi.prototype.SetFieldMask;
+	PDFEditorApi.prototype['SetFieldRegularExp']		= PDFEditorApi.prototype.SetFieldRegularExp;
 	PDFEditorApi.prototype['SetFieldValidateRange']		= PDFEditorApi.prototype.SetFieldValidateRange;
 	PDFEditorApi.prototype['SetFieldCalculate']			= PDFEditorApi.prototype.SetFieldCalculate;
 	PDFEditorApi.prototype['SetCalculateOrder']			= PDFEditorApi.prototype.SetCalculateOrder;
