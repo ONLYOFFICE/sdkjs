@@ -744,7 +744,7 @@ function(window, undefined) {
 				this.aLabels[i].updatePosition(x, y);
 		}
 	};
-	CLabelsBox.prototype.layoutHorNormal = function (fAxisY, fDistance, fXStart, fInterval, bOnTickMark, fForceContentWidth, oLabelParams) {
+	CLabelsBox.prototype.layoutHorNormal = function (fAxisY, fDistance, fXStart, fInterval, bOnTickMark, fForceContentWidth, oLabelParams, scaler) {
 		this.bRotated = false;
 		this.align = (fDistance >= 0);
 		let fMaxHeight = 0.0;
@@ -763,7 +763,8 @@ function(window, undefined) {
 		if (Array.isArray(this.aLabels) && this.aLabels.length > 0) {
 			let loopsCount = 0;
 			let jump = 0;
-			for (let i = 0; i < this.aLabels.length; i += jump) {
+			const end = this.aLabels.length > 0 && scaler ? this.aLabels.length - 1 : this.aLabels.length;
+			for (let i = 0; i < end; i += jump) {
 				if (this.aLabels[i]) {
 					var oLabel = this.aLabels[i];
 					var oContent = oLabel.tx.rich.content;
@@ -802,7 +803,7 @@ function(window, undefined) {
 				}
 
 				jump = skipCond(oLabelParams, loopsCount);
-				fCurX += (jump * fInterval);
+				fCurX += (jump * (fInterval * (scaler ? scaler : 1)));
 				loopsCount++;
 			}
 		}
@@ -1651,6 +1652,8 @@ function(window, undefined) {
 
 			//check whether rotation is applied or not
 			let statement = oLabelParams.valid ? oLabelParams.isRotated() : fMaxMinWidth > fCheckInterval;
+
+			let scaler = oLabelsBox.axis.scaling.max && !oLabelsBox.axis.scaling.logBase && oLabelsBox.axis.scaling.max < oLabelsBox.axis.scale[oLabelsBox.axis.scale.length -1] ? oLabelsBox.axis.scale[oLabelsBox.axis.scale.length -1] / oLabelsBox.axis.scaling.max : null;
 			if (oLabelParams.valid) {
 				// if oLabelParams is valid then one label = axis length / (number of labels); number of labels = allLabels / labelsTickSkip
 				const fLabelWidth =  fAxisLength / Math.ceil(oLabelParams.nLabelsCount / oLabelParams.nLblTickSkip);
@@ -1663,7 +1666,7 @@ function(window, undefined) {
 			if (statement) {
 				oLabelsBox.layoutHorRotated(fY, fDistance, fXStart, fXEnd, fInterval, bOnTickMark_, oLabelParams);
 			} else {
-				oLabelsBox.layoutHorNormal(fY, fDistance, fXStart, fInterval, bOnTickMark_, fForceContentWidth_, oLabelParams);
+				oLabelsBox.layoutHorNormal(fY, fDistance, fXStart, fInterval, bOnTickMark_, fForceContentWidth_, oLabelParams, scaler);
 			}
 		}
 	}
@@ -1791,7 +1794,7 @@ function(window, undefined) {
 		this.aStrings = [];
 	}
 
-	CAxisGrid.prototype.calculatePoints = function(aPoints, bOnTickMark, aScale) {
+	CAxisGrid.prototype.calculatePoints = function(aPoints, bOnTickMark, aScale, max) {
 		if(!Array.isArray(aPoints)) {
 			return;
 		}
@@ -1799,10 +1802,12 @@ function(window, undefined) {
 		if(!this.bOnTickMark) {
 			fStartSeriesPos = this.fStride / 2.0;
 		}
+		let lastIndex= aScale.length - 1;
+		let jump = max && max < aScale[lastIndex] ? this.fStride * (aScale[lastIndex] / max) : this.fStride;
 		for(let j = 0; j < this.aStrings.length; ++j) {
 			aPoints.push({
 				val: aScale[j],
-				pos: this.fStart + j * this.fStride + fStartSeriesPos
+				pos: this.fStart + j * jump + fStartSeriesPos
 			})
 		}
 	};
@@ -5481,7 +5486,7 @@ function(window, undefined) {
 				}
 
 				if (null !== aPoints) {
-					oCurAxis.grid.calculatePoints(aPoints, bOnTickMark, oCurAxis.scale);
+					oCurAxis.grid.calculatePoints(aPoints, bOnTickMark, oCurAxis.scale, oCurAxis.scaling.max && !oCurAxis.scaling.logBase ? oCurAxis.scaling.max : null);
 				}
 			}
 			else {//vertical axis
