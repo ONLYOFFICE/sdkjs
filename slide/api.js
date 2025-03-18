@@ -7774,38 +7774,47 @@ background-repeat: no-repeat;\
 			return true;
 		return false;
 	};
-	asc_docs_api.prototype.StartDemonstration = function(div_id, slidestart_num, reporterStartObject, bIgnoreFirstHiddenSlide)
-	{
+	asc_docs_api.prototype.StartDemonstrationFromCurrentSlide = function (divId, reporterStartObject) {
+		const slideIndex = Asc.editor.getLogicDocument().Get_CurPage() || 0;
+		return this.StartDemonstration(divId, slideIndex, reporterStartObject);
+	};
+	asc_docs_api.prototype.StartDemonstrationFromBeginning = function (divId, reporterStartObject) {
+		const allSlides = Asc.editor.getLogicDocument().GetSlides();
+		const slideCount = allSlides.length;
+
+		let slideIndex = 0;
+		for (let i = 0; i < slideCount; i++) {
+			if (allSlides[i].show) {
+				slideIndex = i;
+				break;
+			}
+		}
+
+		return this.StartDemonstration(divId, slideIndex, reporterStartObject);
+	};
+	asc_docs_api.prototype.StartDemonstration = function (div_id, slidestart_num, reporterStartObject) {
+		console.log(div_id, reporterStartObject)
 		if (window.g_asc_plugins)
 			window.g_asc_plugins.stopWorked();
 
 		const bIsReporter = (reporterStartObject && !this.isReporterMode);
 
-		if (!bIsReporter)
-		{
+		if (!bIsReporter) {
 			this.turnOffSpecialModes();
 		}
 
 		if (bIsReporter)
 			this.DemonstrationReporterStart(reporterStartObject);
 
-		if (bIgnoreFirstHiddenSlide) {
-			const allSlides = Asc.editor.getLogicDocument().GetSlides();
-			while (!allSlides[slidestart_num].show) {
-				slidestart_num += 1;
-			}
-		}
-
 		if (bIsReporter && (this.reporterWindow || window["AscDesktopEditor"]))
 			this.WordControl.DemonstrationManager.StartWaitReporter(div_id, slidestart_num, true);
 		else
 			this.WordControl.DemonstrationManager.Start(div_id, slidestart_num, true);
 
-        if (undefined !== this.EndShowMessage)
-        {
-            this.WordControl.DemonstrationManager.EndShowMessage = this.EndShowMessage;
-            this.EndShowMessage = undefined;
-        }
+		if (undefined !== this.EndShowMessage) {
+			this.WordControl.DemonstrationManager.EndShowMessage = this.EndShowMessage;
+			this.EndShowMessage = undefined;
+		}
 	};
 
 	asc_docs_api.prototype.EndDemonstration = function(isNoUseFullScreen)
