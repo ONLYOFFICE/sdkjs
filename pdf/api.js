@@ -1200,7 +1200,7 @@
 		
 		return oDoc.DoAction(function() {
 			let oField = oDoc.activeForm;
-			if (!oField || false == [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oField.GetType()) || false == oField.IsNumberFormat()) {
+			if (!oField || false == [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oField.GetType())) {
 				return false;
 			}
 
@@ -1224,7 +1224,7 @@
 		
 		return oDoc.DoAction(function() {
 			let oField = oDoc.activeForm;
-			if (!oField || false == [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oField.GetType()) || false == oField.IsNumberFormat()) {
+			if (!oField || false == [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oField.GetType())) {
 				return false;
 			}
 
@@ -1248,7 +1248,7 @@
 		
 		return oDoc.DoAction(function() {
 			let oField = oDoc.activeForm;
-			if (!oField || false == [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oField.GetType()) || false == oField.IsNumberFormat()) {
+			if (!oField || false == [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oField.GetType())) {
 				return false;
 			}
 
@@ -1272,7 +1272,7 @@
 		
 		return oDoc.DoAction(function() {
 			let oField = oDoc.activeForm;
-			if (!oField || false == [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oField.GetType()) || false == oField.IsNumberFormat()) {
+			if (!oField || false == [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oField.GetType())) {
 				return false;
 			}
 
@@ -1297,7 +1297,7 @@
 		
 		return oDoc.DoAction(function() {
 			let oField = oDoc.activeForm;
-			if (!oField || false == [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oField.GetType()) || false == oField.IsNumberFormat()) {
+			if (!oField || false == [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oField.GetType())) {
 				return false;
 			}
 
@@ -1321,7 +1321,7 @@
 		
 		return oDoc.DoAction(function() {
 			let oField = oDoc.activeForm;
-			if (!oField || false == [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oField.GetType()) || false == oField.IsNumberFormat()) {
+			if (!oField || false == [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oField.GetType())) {
 				return false;
 			}
 			
