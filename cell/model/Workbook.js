@@ -1799,9 +1799,9 @@
 			return res;
 		},
 		_broadscastVolatile: function(notifyData) {
-			if (this.wb.asyncFormulasManager.isRecalculating()) {
+			/*if (this.wb.asyncFormulasManager.isRecalculating()) {
 				return;
-			}
+			}*/
 			for (var i in this.volatileListeners) {
 				this.volatileListeners[i].notify(notifyData);
 			}
@@ -2106,8 +2106,9 @@
 							} else {
 								resStreamInfo = _promises[i].callback(streamInfos[i]);
 							}
-							_promises[i].parserFormula.promiseResult.push(resStreamInfo);
+							_promises[i].parserFormula.promiseResult[_promises[i].index] = resStreamInfo;
 							t.wb.dependencyFormulas.addToChangedCell(_promises[i].parserFormula.parent);
+							t.wb.asyncFormulasManager.addPromiseParserFormula(_promises[i].parserFormula);
 						}
 						//t.wb.buildDependency();
 						//t.wb.sortDependency();
@@ -2128,6 +2129,8 @@
 						promises = !t.wb.asyncFormulasManager.isRecalculating() && t.wb.asyncFormulasManager.getPromises();
 						if (promises) {
 							doPromises(promises);
+						} else {
+							t.wb.asyncFormulasManager.cleanPromiseParserFormula();
 						}
 					});
 				};
@@ -2914,6 +2917,7 @@
 		this.wb = wb;
 		this.promises = null;
 		this.calcProcess = null;
+		this.aParserFormulas = null;
 	}
 
 	AsyncFormulasManager.prototype.addPromise = function (val) {
@@ -2923,7 +2927,7 @@
 		this.promises.push(val);
 	};
 	AsyncFormulasManager.prototype.getPromise = function (index) {
-		return this.promise && this.promises[index];
+		return this.promises && this.promises[index];
 	};
 	AsyncFormulasManager.prototype.getPromises = function () {
 		return this.promises;
@@ -2940,6 +2944,21 @@
 	AsyncFormulasManager.prototype.isRecalculating = function () {
 		return this.calcProcess;
 	};
+	AsyncFormulasManager.prototype.addPromiseParserFormula = function (elem) {
+		if (!this.aParserFormulas) {
+			this.aParserFormulas = [];
+		}
+		this.aParserFormulas.push(elem);
+	};
+	AsyncFormulasManager.prototype.cleanPromiseParserFormula = function () {
+		if (this.aParserFormulas) {
+			for (let i = 0; i < this.aParserFormulas.length; i++) {
+				this.aParserFormulas[i].promiseResult = null;
+			}
+			this.aParserFormulas = null;
+		}
+	};
+
 
 
 	function ForwardTransformationFormula(elem, formula, parsed) {

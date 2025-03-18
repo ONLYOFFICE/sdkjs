@@ -8981,7 +8981,9 @@ function parserFormula( formula, parent, _ws ) {
 						bIsSpecialFunction = true;
 					}
 
-					if(formulaArray) {
+					if (this.promiseResult && this.promiseResult[i]) {
+						_tmp = this.promiseResult[i];
+					} else if(formulaArray) {
 						_tmp = formulaArray;
 					} else {
 						_tmp = currentElement.Calculate(arg, opt_bbox, opt_defName, this.ws, bIsSpecialFunction);
@@ -8993,6 +8995,7 @@ function parserFormula( formula, parent, _ws ) {
 							_tmp = this.promiseResult[promiseCounter];
 						} else {
 							_tmp.parserFormula = this;
+							_tmp.index = i;
 							this.wb.asyncFormulasManager.addPromise(_tmp);
 						}
 						promiseCounter++;
