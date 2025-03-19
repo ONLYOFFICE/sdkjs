@@ -8986,7 +8986,10 @@ function parserFormula( formula, parent, _ws ) {
 					} else if(formulaArray) {
 						_tmp = formulaArray;
 					} else {
-						_tmp = currentElement.Calculate(arg, opt_bbox, opt_defName, this.ws, bIsSpecialFunction);
+						_tmp = this.wb.asyncFormulasManager.getPromiseByIndex(this._index, i);
+						if (!_tmp) {
+							_tmp = currentElement.Calculate(arg, opt_bbox, opt_defName, this.ws, bIsSpecialFunction);
+						}
 					}
 
 					//check promise
