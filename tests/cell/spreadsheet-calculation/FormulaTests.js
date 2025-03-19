@@ -35302,7 +35302,7 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: base operation: number\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function simpleFunc(arg1, arg2) {
+			fCustomFunc = function simpleFunc1(arg1, arg2) {
 				return arg2;
 			};
 
@@ -35449,7 +35449,7 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: base operation: number[][]\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function simpleFunc(arg1) {
+			fCustomFunc = function simpleFunc2(arg1) {
 				return arg1;
 			};
 
@@ -35541,7 +35541,7 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: base operation: string\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function simpleFunc(arg1) {
+			fCustomFunc = function simpleFunc3(arg1) {
 				return arg1;
 			};
 
@@ -35617,7 +35617,7 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: base operation: string[][]\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function simpleFunc(arg1) {
+			fCustomFunc = function simpleFunc4(arg1) {
 				return arg1;
 			};
 
@@ -35693,7 +35693,7 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: base operation: boolean\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function simpleFunc(arg1) {
+			fCustomFunc = function simpleFunc5(arg1) {
 				return arg1;
 			};
 
@@ -35770,7 +35770,7 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: base operation: boolean[][]\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function simpleFunc(arg1) {
+			fCustomFunc = function simpleFunc6(arg1) {
 				return arg1;
 			};
 
@@ -35879,7 +35879,7 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: base operation: any\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function simpleFunc(arg1) {
+			fCustomFunc = function simpleFunc7(arg1) {
 				return arg1;
 			};
 
@@ -35970,7 +35970,7 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: base operation: any[][]\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function simpleFunc(arg1) {
+			fCustomFunc = function simpleFunc8(arg1) {
 				return arg1;
 			};
 
@@ -36049,7 +36049,7 @@ $(function () {
 			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
 
 			//empty function
-			fCustomFunc = function simpleFunc() {
+			fCustomFunc = function simpleFunc9() {
 			};
 
 			initParamsCustomFunction([], "number");
@@ -36068,7 +36068,7 @@ $(function () {
 			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! empty  function !");
 
 			//return null
-			fCustomFunc = function simpleFunc() {
+			fCustomFunc = function simpleFunc10() {
 				return null;
 			};
 
@@ -36088,7 +36088,7 @@ $(function () {
 			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! return null !");
 
 			//return undefined
-			fCustomFunc = function simpleFunc() {
+			fCustomFunc = function simpleFunc11() {
 				return undefined;
 			};
 
@@ -36108,7 +36108,7 @@ $(function () {
 			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! return undefined !");
 
 			//return NaN
-			fCustomFunc = function simpleFunc() {
+			fCustomFunc = function simpleFunc12() {
 				return NaN;
 			};
 
@@ -36127,7 +36127,7 @@ $(function () {
 
 			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! return NaN !");
 
-			fCustomFunc = function simpleFunc(arg1, arg2) {
+			fCustomFunc = function simpleFunc13(arg1, arg2) {
 				return arg2;
 			};
 
@@ -36161,7 +36161,7 @@ $(function () {
 
 			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! init args params count more then function contain!");
 
-			fCustomFunc = function simpleFunc(arg1, arg2, arg3) {
+			fCustomFunc = function simpleFunc14(arg1, arg2, arg3) {
 				return arg2;
 			};
 
@@ -36198,7 +36198,7 @@ $(function () {
 
 			//defaultvalue
 			//ms ignore defaultValue option, while skip
-			fCustomFunc = function simpleFunc(arg1, arg2, arg3) {
+			fCustomFunc = function simpleFunc15(arg1, arg2, arg3) {
 				return arg3;
 			};
 
@@ -36216,7 +36216,7 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: number+number->number\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function add(arg1, arg2) {
+			fCustomFunc = function add1(arg1, arg2) {
 				return arg1 + arg2;
 			};
 
@@ -36275,7 +36275,7 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: string+number->number\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function add(arg1, arg2) {
+			fCustomFunc = function add2(arg1, arg2) {
 				return arg1 + arg2;
 			};
 
@@ -36355,7 +36355,7 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: string+string->number\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function add(arg1, arg2) {
+			fCustomFunc = function add3(arg1, arg2) {
 				return arg1 + arg2;
 			};
 
@@ -36601,7 +36601,7 @@ $(function () {
 			// Create async custom function
 			fCustomFunc = async function simpleAsyncFunc(arg1, arg2) {
 				// Simulate async operation
-				await new Promise(resolve => setTimeout(resolve, 100));
+				await new Promise(resolve => setTimeout(resolve, 10));
 				return arg2;
 			};
 
@@ -36632,6 +36632,108 @@ $(function () {
 
 			// Execute and verify async result
 			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "_ASYNC_TEST", _callback);
+		}, function (trueWb) {
+			let api = window["Asc"]["editor"];
+			api.wb = trueWb;
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+	QUnit.test("Test: \"Custom function test: async operations\"", function (assert) {
+		let done;
+		executeCustomFunction(function (_callback, trueWb) {
+			// Async function that returns promise
+			fCustomFunc = async function asyncPromiseFunc(arg1, arg2) {
+				return new Promise((resolve) => {
+					setTimeout(() => {
+						resolve(arg1 + arg2);
+					}, 10);
+				});
+			};
+
+			let typeToArgMap = {
+				"number": 10,
+				"stringNumber": '"1"',
+				"string": '"test"',
+				"bool": "TRUE",
+				"error": "#REF!",
+				"array": "{1,2,3}",
+				"ref": "A100",
+				"range": "A100:B101"
+			};
+
+			// Initialize with number parameters
+			initParamsCustomFunction(
+				[{type: "number"}, {type: "number"}],
+				"number"
+			);
+
+			// Setup async test
+			done = assert.async();
+
+			let aTasks = [
+				{
+					paramsType: ["number", "number"],
+					result: "20"  // 10 + 10
+				},
+				{
+					paramsType: ["string", "number"],
+					result: "test10"
+				},
+				{
+					paramsType: ["number", "error"],
+					result: "#REF!"
+				}
+			];
+
+			// Execute tests with callback
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap,
+				fCustomFunc.name.toUpperCase(), "_ASYNC_PROMISE_TEST", _callback);
+		}, function (trueWb) {
+			let api = window["Asc"]["editor"];
+			api.wb = trueWb;
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+	QUnit.test("Test: \"Custom function test: async multiple operations\"", function (assert) {
+		let done;
+		executeCustomFunction(function (_callback, trueWb) {
+			// Async function with multiple awaits
+			fCustomFunc = async function asyncMultipleFunc(arg1, arg2) {
+				await new Promise(resolve => setTimeout(resolve, 5));
+				let temp = arg1 * 2;
+				await new Promise(resolve => setTimeout(resolve, 5));
+				return temp + arg2;
+			};
+
+			let typeToArgMap = {
+				"number": 5,
+				"stringNumber": '"1"',
+				"string": '"test"',
+				"bool": "TRUE",
+				"error": "#REF!",
+				"array": "{1,2,3}",
+				"ref": "A100",
+				"range": "A100:B101"
+			};
+
+			initParamsCustomFunction(
+				[{type: "number"}, {type: "number"}],
+				"number"
+			);
+
+			done = assert.async();
+
+			let aTasks = [{
+				paramsType: ["number", "number"],
+				result: "15"  // (5 * 2) + 5
+			}];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap,
+				fCustomFunc.name.toUpperCase(), "_ASYNC_MULTIPLE_TEST", _callback);
 		}, function (trueWb) {
 			let api = window["Asc"]["editor"];
 			api.wb = trueWb;
