@@ -1195,6 +1195,8 @@ CSdtBase.prototype.checkDataBinding = function()
 	let content = customXmlManager.getContentByDataBinding(this.Pr.DataBinding, this);
 	if (!content)
 		return;
+
+	content = content.textContent;
 	
 	if (this.IsPicture())
 	{
