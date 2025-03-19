@@ -1936,30 +1936,24 @@
 	{
 		let oLogicDocument		= this.private_GetLogicDocument();
 		let oCustomXmlManager	= oLogicDocument.getCustomXmlManager();
-		let oXML = oCustomXmlManager.getExactXml(uId, prefix);
+		let oXML				= oCustomXmlManager.getExactXml(uId, prefix);
+		let oXmlElement			= oXML.findElementByXPath(xpath);
 
-		let xml;
-		let cusXMLData	= oCustomXmlManager.findElementByXPath(oXML.content, xpath);
-		if (cusXMLData)
-			xml = cusXMLData.content;
-		let isChange = false;
-		let oldCustomXML = oXML.Copy();
-
+		oXML.beforeChange();
 		for (let i = 0; i < arrContent.length; i++)
 		{
-			let oCurContent = arrContent[i];
-			let type = oCurContent.type;
-			let name = oCurContent.name;
-			let value = oCurContent.value;
+			let oCurContent		= arrContent[i];
+			let type			= oCurContent.type;
+			let name			= oCurContent.name;
+			let value			= oCurContent.value;
 
 			if (type === 'attribute')
 			{
-				xml.addAttribute(name, value);
-				isChange = true;
+				oXmlElement.addAttribute(name, value);
 			}
 			else
 			{
-				let item = xml.addContent(name);
+				let item = oXmlElement.addContent(name);
 
 				for (let j = 0; j < value.length; j++)
 				{
@@ -1972,22 +1966,15 @@
 					{
 						let oCurEl = item.addContent(oCurrentData.name);
 						oCurEl.setTextContent(oCurrentData.value);
-						isChange = true;
-
 					}
 					else if (oCurrentData.type === "attribute")
 					{
 						item.addAttribute(oCurrentData.name, oCurrentData.value);
-						isChange = true;
 					}
 				}
 			}
 		}
-
-		if (isChange)
-		{
-			oXML.Update(oldCustomXML);
-		}
+		oXML.afterChange();
 	};
 
 	/**

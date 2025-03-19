@@ -302,6 +302,12 @@ CSdtPr.prototype.Write_ToBinary = function(Writer)
 		Flags |= (1 << 26);
 	}
 
+	if (this.DataBinding)
+	{
+		this.DataBinding.toBinary(Writer);
+		Flags |= (1 << 27);
+	}
+
 	var EndPos = Writer.GetCurPosition();
 	Writer.Seek(StartPos);
 	Writer.WriteLong(Flags);
@@ -418,6 +424,9 @@ CSdtPr.prototype.Read_FromBinary = function(Reader)
 
 	if (Flags & (1 << 26))
 		this.AI = Reader.GetBool();
+
+	if (Flags & (1 << 27))
+		this.DataBinding = AscWord.DataBinding.fromBinary(Reader);
 };
 CSdtPr.prototype.IsBuiltInDocPart = function()
 {

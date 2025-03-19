@@ -184,7 +184,7 @@ CBlockLevelSdt.prototype.Reset_RecalculateCache = function()
 };
 CBlockLevelSdt.prototype.Write_ToBinary2 = function(Writer)
 {
-	Writer.WriteLong(AscDFH.historyitem_type_CustomXML);
+	Writer.WriteLong(AscDFH.historyitem_type_BlockLevelSdt);
 	// String : Id
 	// String : Content id
 	Writer.WriteString2(this.GetId());

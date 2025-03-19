@@ -58,6 +58,10 @@
 	DataBinding.prototype.recalculateCheckSum = function (stringOfCustomXMlContent)
 	{
 	};
+	DataBinding.prototype.Refresh_RecalcData = function(Data)
+	{
+		// Ничего не делаем
+	};
 	DataBinding.prototype.toBinary = function(writer)
 	{
 		return this.Write_ToBinary(writer);
@@ -82,7 +86,7 @@
 		
 		if (undefined !== this.storeItemID)
 		{
-			writer.WriteLong(this.storeItemID);
+			writer.WriteString2(this.storeItemID);
 			flags |= 2;
 		}
 		

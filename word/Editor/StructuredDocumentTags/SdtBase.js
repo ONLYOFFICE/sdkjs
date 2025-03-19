@@ -1330,11 +1330,9 @@ CSdtBase.prototype.GetCustomXMlByDataBinding = function (addXpath)
 {
 	let oLogicDocument		= this.GetLogicDocument();
  	let oCustomXMlManager	= oLogicDocument.getCustomXmlManager();
- 	let oDataBinding = this.getDataBinding();
- 	let xml = oCustomXMlManager.getExactXml(oDataBinding.storeItemID, oDataBinding.prefixMappings);
+ 	let oDataBinding		= this.getDataBinding();
+ 	let xml					= oCustomXMlManager.getExactXml(oDataBinding.storeItemID, oDataBinding.prefixMappings);
+
  	if (xml)
-	{
-		let el = oCustomXMlManager.findElementByXPath(xml.content, oDataBinding.xpath + addXpath)
-		return el.content;
-	}
+		return  xml.findElementByXPath(oDataBinding.xpath + addXpath);
 };

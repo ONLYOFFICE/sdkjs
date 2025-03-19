@@ -6856,9 +6856,6 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		}
 		if (undefined !== val.storeItemCheckSum)
 		{
-			//let strCustomXmlContent = this.Document.customXml.getContentByDataBinding(val);
-			//val.recalculateCheckSum(strCustomXmlContent);
-
 			this.memory.WriteByte(c_oSerSdt.StoreItemCheckSum);
 			this.memory.WriteString2(val.storeItemCheckSum);
 		}

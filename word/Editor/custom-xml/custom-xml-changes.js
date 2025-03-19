@@ -32,11 +32,24 @@
 
 "use strict";
 
-AscDFH.changesFactory[AscDFH.historyitem_type_ChangeCustomXML]    = CChangesCustomXMLChange
-AscDFH.changesFactory[AscDFH.historyitem_type_CustomXML]       = CChangesCustomXmlAdd;
+AscDFH.changesFactory[AscDFH.historyitem_type_CustomXML_Add]			= CChangesCustomXmlAdd;
+AscDFH.changesFactory[AscDFH.historyitem_type_CustomXML_Remove]			= CChangesCustomXmlRemove;
 
-AscDFH.changesRelationMap[AscDFH.historyitem_type_ChangeCustomXML] = [AscDFH.historyitem_type_ChangeCustomXML];
-AscDFH.changesRelationMap[AscDFH.historyitem_type_CustomXML]    = [AscDFH.historyitem_type_CustomXML];
+AscDFH.changesFactory[AscDFH.historyitem_type_ChangeCustomXML]			= CChangesCustomXMLChange;
+
+AscDFH.changesRelationMap[AscDFH.historyitem_type_ChangeCustomXML]		= [
+	AscDFH.historyitem_type_ChangeCustomXML
+];
+
+AscDFH.changesRelationMap[AscDFH.historyitem_type_CustomXML_Add]		= [
+	AscDFH.historyitem_type_CustomXML_Add,
+	AscDFH.historyitem_type_CustomXML_Remove
+];
+
+AscDFH.changesRelationMap[AscDFH.historyitem_type_CustomXML_Remove]		= [
+	AscDFH.historyitem_type_CustomXML_Add,
+	AscDFH.historyitem_type_CustomXML_Remove
+];
 
 /**
  * @constructor
@@ -48,12 +61,11 @@ function CChangesCustomXMLChange(Class, Old, New)
 }
 CChangesCustomXMLChange.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
 CChangesCustomXMLChange.prototype.constructor = CChangesCustomXMLChange;
-CChangesCustomXMLChange.prototype.Type = AscDFH.historyitem_Comment_Change;
+CChangesCustomXMLChange.prototype.Type = AscDFH.historyitem_type_ChangeCustomXML;
 CChangesCustomXMLChange.prototype.WriteToBinary = function(Writer)
 {
 	// Variable : New data
 	// Variable : Old data
-
 	this.New.Write_ToBinary2(Writer);
 	this.Old.Write_ToBinary2(Writer);
 };
@@ -61,19 +73,15 @@ CChangesCustomXMLChange.prototype.ReadFromBinary = function(Reader)
 {
 	// Variable : New data
 	// Variable : Old data
-
-	debugger
-	this.New = new AscCommon.CCommentData();
-	this.Old = new AscCommon.CCommentData();
+	this.New = new AscWord.CustomXmlContent();
+	this.Old = new AscWord.CustomXmlContent();
 	this.New.Read_FromBinary2(Reader);
 	this.Old.Read_FromBinary2(Reader);
 };
 CChangesCustomXMLChange.prototype.private_SetValue = function(Value)
 {
-	this.Class.Data = Value;
-	editor.sync_ChangeCommentData(this.Class.Id, Value);
+	this.Class.content = Value;
 };
-
 
 /**
  * @constructor
@@ -88,41 +96,109 @@ function CChangesCustomXmlAdd(Class, Id, xml)
 }
 CChangesCustomXmlAdd.prototype = Object.create(AscDFH.CChangesBase.prototype);
 CChangesCustomXmlAdd.prototype.constructor = CChangesCustomXmlAdd;
-CChangesCustomXmlAdd.prototype.Type = AscDFH.historyitem_type_CustomXML;
+CChangesCustomXmlAdd.prototype.Type = AscDFH.historyitem_type_CustomXML_Add;
 CChangesCustomXmlAdd.prototype.Undo = function()
 {
-	// var oComment = this.Class.m_arrCommentsById[this.Id];
-	// if (oComment)
-	// {
-	// 	delete this.Class.m_arrCommentsById[this.Id];
-	// 	var oChangedComments = this.Class.UpdateCommentPosition(oComment);
-	// 	editor.sync_RemoveComment(this.Id);
-	// 	editor.sync_ChangeCommentLogicalPosition(oChangedComments, this.Class.GetCommentsPositionsCount());
-	// }
+	let oXml = this.Class.m_arrXmlById[this.Id];
+	if (oXml)
+	{
+		delete this.Class.m_arrXmlById[this.Id];
+		for (let i = 0; i < this.Class.xml.length; i++)
+		{
+			if (this.Class.xml[i] === oXml)
+			{
+				this.Class.xml.splice(i, 1);
+			}
+		}
+	}
 };
 CChangesCustomXmlAdd.prototype.Redo = function()
 {
-	// this.Class.m_arrCommentsById[this.Id] = this.Comment;
-	// var oChangedComments = this.Class.UpdateCommentPosition(this.Comment);
-	// editor.sync_AddComment(this.Id, this.Comment.Data);
-	// editor.sync_ChangeCommentLogicalPosition(oChangedComments, this.Class.GetCommentsPositionsCount());
+	this.Class.m_arrXmlById[this.Id] = this.xml;
+	this.Class.xml.push(this.xml);
 };
 CChangesCustomXmlAdd.prototype.WriteToBinary = function(Writer)
 {
-	// String : Id комментария
+	// String : Id customXML
 	Writer.WriteString2(this.Id);
 };
 CChangesCustomXmlAdd.prototype.ReadFromBinary = function(Reader)
 {
-	// String : Id комментария
+	// String : Id customXML
 	this.Id      = Reader.GetString2();
 	this.xml = AscCommon.g_oTableId.Get_ById(this.Id);
 };
 CChangesCustomXmlAdd.prototype.CreateReverseChange = function()
 {
-	//return new CChangesCommentsRemove(this.Class, this.Id, this.Comment);
+	return new CChangesCustomXmlRemove(this.Class, this.Id, this.xml);
 };
 CChangesCustomXmlAdd.prototype.Merge = function(oChange)
 {
+	if (this.Class !== oChange.Class)
+		return true;
 
+	if ((AscDFH.historyitem_type_CustomXML_Add === oChange.Type || AscDFH.historyitem_type_CustomXML_Remove === oChange.Type) && this.Id === oChange.Id)
+		return false;
+
+	return true;
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBase}
+ */
+function CChangesCustomXmlRemove(Class, Id, xml)
+{
+	AscDFH.CChangesBase.call(this, Class);
+
+	this.Id		= Id;
+	this.xml	= xml;
+}
+CChangesCustomXmlRemove.prototype = Object.create(AscDFH.CChangesBase.prototype);
+CChangesCustomXmlRemove.prototype.constructor = CChangesCustomXmlRemove;
+CChangesCustomXmlRemove.prototype.Type = AscDFH.historyitem_type_CustomXML_Remove;
+CChangesCustomXmlRemove.prototype.Undo = function()
+{
+	this.Class.m_arrXmlById[this.Id] = this.xml;
+	this.Class.xml.push(this.xml);
+};
+CChangesCustomXmlRemove.prototype.Redo = function()
+{
+	let xml = this.Class.m_arrXmlById[this.Id];
+	if (xml)
+	{
+		delete this.Class.m_arrXmlById[this.Id];
+		for (let i = 0; i < this.Class.xml.length; i++)
+		{
+			if (this.Class.xml[i] === xml)
+			{
+				this.Class.xml.splice(i, 1);
+			}
+		}
+	}
+};
+CChangesCustomXmlRemove.prototype.WriteToBinary = function(Writer)
+{
+	// String : Id customXML
+	Writer.WriteString2(this.Id);
+};
+CChangesCustomXmlRemove.prototype.ReadFromBinary = function(Reader)
+{
+	// String : Id customXML
+	this.Id		= Reader.GetString2();
+	this.xml	= AscCommon.g_oTableId.Get_ById(this.Id);
+};
+CChangesCustomXmlRemove.prototype.CreateReverseChange = function()
+{
+	return new CChangesCustomXmlAdd(this.Class, this.Id, this.xml);
+};
+CChangesCustomXmlRemove.prototype.Merge = function(oChange)
+{
+	if (this.Class !== oChange.Class)
+		return true;
+
+	if ((AscDFH.historyitem_type_CustomXML_Add === oChange.Type || AscDFH.historyitem_type_CustomXML_Remove === oChange.Type) && this.Id === oChange.Id)
+		return false;
+
+	return true;
 };
