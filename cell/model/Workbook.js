@@ -2863,6 +2863,8 @@
 		this.promiseMap = null;
 		this.calcProcess = null;
 		this.aParserFormulas = null;
+
+		this.endCallback = null;
 	}
 
 	AsyncFormulasManager.prototype.addPromise = function (val) {
@@ -2978,6 +2980,7 @@
 						doPromises(promises);
 					} else {
 						t.cleanPromiseParserFormula();
+						t.endCallback && t.endCallback();
 					}
 				});
 			};

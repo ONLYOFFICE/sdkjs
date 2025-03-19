@@ -35234,7 +35234,7 @@ $(function () {
 		oDoc["returnInfo"] = {"type": sReturnType, "description": "description_return"};
 	}
 
-	function doCustomFunctionTasks(assert, aTasks, typeToArgMap, funcName, _descArgs) {
+	function doCustomFunctionTasks(assert, aTasks, typeToArgMap, funcName, _descArgs, _callback) {
 		//generate ->
 		// let desc = "Custom_function_ADD_@NUMBER_@NUMBER_INPUT_NUMBER_NUMBER";
 		// calcCustomFunction(func, sJsDoc, oDoc, function (_desc) {
@@ -35257,23 +35257,33 @@ $(function () {
 			sFunc += ")";
 
 			calcCustomFunction(fCustomFunc, sJsDoc, oDoc, function (_desc) {
-				oParser = new parserFormula(prefix + sFunc, 'A2', ws);
-				assert.ok(oParser.parse(), "parse_ " + desc + "_" + _desc);
-				let calculateRes = oParser.calculate();
-				if (typeof task.result === "object") {
-					for (let i = 0; i < task.result.length; i++) {
-						for (let j = 0; j < task.result[i].length; j++) {
-							assert.strictEqual(calculateRes.getElementRowCol(i, j).getValue(), task.result[i][j], desc + "_" + _desc);
-						}
-					}
+				if (_callback) {
+					wb.asyncFormulasManager.endCallback = function () {
+						let calculateRes = ws.getRange2("A1");
+						assert.strictEqual(calculateRes.getValue(), task.result, desc + "_" + _desc);
+						_callback && _callback();
+						wb.asyncFormulasManager.endCallback = null;
+					};
+					ws.getRange2("A1").setValue("=" + prefix + sFunc);
 				} else {
-					assert.strictEqual(calculateRes.getValue(), task.result, desc + "_" + _desc);
+					oParser = new parserFormula(prefix + sFunc, new AscCommonExcel.CCellWithFormula(ws, 1, 0), ws);
+					assert.ok(oParser.parse(), "parse_ " + desc + "_" + _desc);
+					let calculateRes = oParser.calculate();
+					if (typeof task.result === "object") {
+						for (let i = 0; i < task.result.length; i++) {
+							for (let j = 0; j < task.result[i].length; j++) {
+								assert.strictEqual(calculateRes.getElementRowCol(i, j).getValue(), task.result[i][j], desc + "_" + _desc);
+							}
+						}
+					} else {
+						assert.strictEqual(calculateRes.getValue(), task.result, desc + "_" + _desc);
+					}
 				}
 			});
 		}
 	}
 
-	function executeCustomFunction (_func) {
+	function executeCustomFunction (_func, callback) {
 		wb.dependencyFormulas.unlockRecal();
 		initCustomFunctionData();
 
@@ -35281,10 +35291,12 @@ $(function () {
 		let trueWb = api.wb;
 		api.wb = {addCustomFunction: AscCommonExcel.WorkbookView.prototype.addCustomFunction, initCustomEngine: AscCommonExcel.WorkbookView.prototype.initCustomEngine};
 
-		_func();
+		_func(callback);
 
-		api.wb = trueWb;
-		ws.getRange2("A1:Z10000").cleanAll();
+		if (!callback) {
+			api.wb = trueWb;
+			ws.getRange2("A1:Z10000").cleanAll();
+		}
 	}
 
 	QUnit.test("Test: \"Custom function test: base operation: number\"", function (assert) {
@@ -36581,6 +36593,51 @@ $(function () {
 			//doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "_@number[][]_@number");
 		});
 
+	});
+
+	QUnit.test("Test: \"Custom function test: async function\"", function (assert) {
+		let done;
+		executeCustomFunction(function (_callback, trueWb) {
+			// Create async custom function
+			fCustomFunc = async function simpleAsyncFunc(arg1, arg2) {
+				// Simulate async operation
+				await new Promise(resolve => setTimeout(resolve, 100));
+				return arg2;
+			};
+
+			let typeToArgMap = {
+				"number": 10,
+				"stringNumber": '"1"',
+				"string": '"test"',
+				"bool": "TRUE",
+				"error": "#REF!",
+				"array": "{1,2,3}",
+				"ref": "A100",
+				"range": "A100:B101"
+			};
+
+			// Initialize custom function with number parameters
+			initParamsCustomFunction(
+				[{type: "number"}, {type: "number"}],
+				"number"
+			);
+
+			// Test async function
+			done = assert.async();
+
+			let aTasks = [{
+				paramsType: ["number", "number"],
+				result: "10"
+			}];
+
+			// Execute and verify async result
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "_ASYNC_TEST", _callback);
+		}, function (trueWb) {
+			let api = window["Asc"]["editor"];
+			api.wb = trueWb;
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
 	});
 
 	QUnit.test("Test: \"3d_ref_tests\"", function (assert) {
