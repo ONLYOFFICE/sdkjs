@@ -607,6 +607,867 @@ $(function () {
 		clearData(0, 0, AscCommon.gc_nMaxCol, AscCommon.gc_nMaxRow);
 	});
 
+	QUnit.test("Test: \"Shift and insert cells/row\"", function (assert) {
+		ws.getRange2("A1:Z999").cleanAll();
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+		
+		let resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		let insertRange = ws.getRange3(99, 0, 99, 0);
+		let count = insertRange.bbox.r2 - insertRange.bbox.r1 + 1;
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A100 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 before row shifted");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A101 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 before row shifted");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A102 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 before row shifted");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A103 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 before row shifted");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A104 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 before row shifted");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in A105 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell A105 before row shifted");
+
+		assert.ok(1, "Row shifted from A100 cell selection");
+		ws.insertRowsBefore(insertRange.bbox.r1, count);
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "", "Value for edit in A100 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 after 1 row shifted");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A101 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 after 1 row shifted");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A102 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 after 1 row shifted");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A103 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 after 1 row shifted");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A104 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 after 1 row shifted");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A105 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A105 after 1 row shifted");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A101:A105)", "Value for edit in A105 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "SUM(A101:A105)", "Formula in cell A105 after 1 row shifted");
+		ws.getRange2("A99:B110").cleanAll();
+
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+		
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		insertRange = ws.getRange3(101, 0, 101, 0);
+		count = insertRange.bbox.r2 - insertRange.bbox.r1 + 1;
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A100 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 before row shifted");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A101 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 before row shifted");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A102 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 before row shifted");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A103 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 before row shifted");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A104 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 before row shifted");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in A105 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell A105 before row shifted");
+
+		assert.ok(1, "Row shifted from A102 cell selection");
+		ws.insertRowsBefore(insertRange.bbox.r1, count);
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A100 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 after 1 row shifted");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A101 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 after 1 row shifted");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "", "Value for edit in A102 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 after 1 row shifted");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A103 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 after 1 row shifted");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A104 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 after 1 row shifted");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A105 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A105 after 1 row shifted");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A105)", "Value for edit in A105 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A105)", "Formula in cell A105 after 1 row shifted");
+		ws.getRange2("A99:B110").cleanAll();
+
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+		
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		insertRange = ws.getRange3(103, 0, 103, 0);
+		count = insertRange.bbox.r2 - insertRange.bbox.r1 + 1;
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A100 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 before row shifted");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A101 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 before row shifted");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A102 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 before row shifted");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A103 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 before row shifted");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A104 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 before row shifted");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in A105 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell A105 before row shifted");
+
+		assert.ok(1, "Row shifted from A104 cell selection");
+		ws.insertRowsBefore(insertRange.bbox.r1, count);
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A100 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 after" + count + " row shifted");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A101 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 after" + count + " row shifted");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A102 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 after" + count + " row shifted");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A103 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 after" + count + " row shifted");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "", "Value for edit in A104 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 after" + count + " row shifted");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A105 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A105 after" + count + " row shifted");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A105)", "Value for edit in A105 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A105)", "Formula in cell A105 after" + count + " row shifted");
+		ws.getRange2("A99:B110").cleanAll();
+
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+		
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		insertRange = ws.getRange3(104, 0, 104, 0);
+		count = insertRange.bbox.r2 - insertRange.bbox.r1 + 1;
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A100 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 before row shifted");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A101 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 before row shifted");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A102 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 before row shifted");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A103 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 before row shifted");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A104 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 before row shifted");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in A105 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell A105 before row shifted");
+
+		assert.ok(1, "Row shifted from A105 cell selection");
+		ws.insertRowsBefore(insertRange.bbox.r1, count);
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A100 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 after" + count + " row shifted");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A101 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 after" + count + " row shifted");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A102 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 after" + count + " row shifted");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A103 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 after" + count + " row shifted");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A104 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 after" + count + " row shifted");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "", "Value for edit in A105 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A105 after" + count + " row shifted");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in A105 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell A105 after" + count + " row shifted");
+		ws.getRange2("A99:B110").cleanAll();
+
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+		
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		insertRange = ws.getRange3(99, 0, 101, 0);
+		count = insertRange.bbox.r2 - insertRange.bbox.r1 + 1;
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A100 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 before row shifted");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A101 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 before row shifted");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A102 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 before row shifted");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A103 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 before row shifted");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A104 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 before row shifted");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in A105 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell A105 before row shifted");
+
+		assert.ok(1, "Row shifted from A100:A102 cell selection");
+		ws.insertRowsBefore(insertRange.bbox.r1, count);
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "", "Value for edit in A100 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 after" + count + " row shifted");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "", "Value for edit in A101 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 after" + count + " row shifted");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "", "Value for edit in A102 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 after" + count + " row shifted");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A103 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 after" + count + " row shifted");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A104 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 after" + count + " row shifted");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A105 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A105 after" + count + " row shifted");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A106 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A106 after" + count + " row shifted");
+
+		resCell = ws.getRange4(106, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A107 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A107 after" + count + " row shifted");
+
+		resCell = ws.getRange4(107, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A103:A107)", "Value for edit in A108 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "SUM(A103:A107)", "Formula in cell A108 after" + count + " row shifted");
+		ws.getRange2("A99:B110").cleanAll();
+
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+		
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		insertRange = ws.getRange3(104, 0, 105, 0);
+		count = insertRange.bbox.r2 - insertRange.bbox.r1 + 1;
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A100 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 before row shifted");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A101 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 before row shifted");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A102 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 before row shifted");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A103 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 before row shifted");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A104 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 before row shifted");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in A105 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell A105 before row shifted");
+
+		assert.ok(1, "Row shifted from A105:A106 cell selection");
+		ws.insertRowsBefore(insertRange.bbox.r1, count);
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A100 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 after" + count + " row shifted");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A101 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 after" + count + " row shifted");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A102 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 after" + count + " row shifted");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A103 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 after" + count + " row shifted");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A104 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 after" + count + " row shifted");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "", "Value for edit in A105 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A105 after" + count + " row shifted");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "", "Value for edit in A106 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A106 after" + count + " row shifted");
+
+		resCell = ws.getRange4(106, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in A107 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell A107 after" + count + " row shifted");
+		ws.getRange2("A99:B110").cleanAll();
+
+		ws.getRange2("A1:Z999").cleanAll();
+	});
+
+	QUnit.test("Test: \"Shift/move cells after create a table\"", function (assert) {
+		// let testData = [
+		// 	["1", "row1col2", "row1col3", "row1col4", "row1col5", "row1col6"],
+		// 	["2", "row2col2", "row2col3", "row2col4", "row2col5", "row2col6"],
+		// 	["3", "row3col2", "row3col3", "row3col4", "row3col5", "row3col6"],
+		// 	["4", "row4col2", "row4col3", "row4col4", "row4col5", "row4col6"],
+		// 	["5", "row5col2", "row5col3", "row5col4", "row5col5", "row5col6"],
+		// ];
+
+		// for bug 39883
+		let array;
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+
+		let resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A100 before table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 before table is created");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A101 before table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 before table is created");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A102 before table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 before table is created");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A103 before table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 before table is created");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A104 before table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 before table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in A105 before table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell A105 before table is created");
+
+		let cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		let oParser = new AscCommonExcel.parserFormula("SUM(A100:A104)", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		oParser.buildDependencies();
+		array = oParser.calculate();
+
+		let tableOptions = new AscCommonExcel.AddFormatTableOptions();
+		tableOptions.range = "A100:A104";
+		// create table in A100:A104 range
+		tableOptions.isTitle = false;
+		api.asc_addAutoFilter("TableStyleMedium2", tableOptions);
+
+		let tables = wsView.model.autoFilters.getTablesIntersectionRange(new Asc.Range(0, 100, 0, 100));
+		assert.strictEqual(tables.length, 1, "Table was created without selection of formula. Compare tables length");
+
+		let table = tables[0];
+		let tableName = table.DisplayName;
+		// wsView.af_changeFormatTableInfo(tableName, Asc.c_oAscChangeTableStyleInfo.rowTotal, true);
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "Column1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A101:A105)", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A101:A105)", "Formula in cell after table is created");
+
+		tables.length = 0;
+		clearData(0, 0, 200, 200);
+
+
+		/* create table with header/title and with the same data as the previous test*/
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell before table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell before table is created");
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula("SUM(A100:A104)", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		oParser.buildDependencies();
+		array = oParser.calculate();
+
+		tableOptions = new AscCommonExcel.AddFormatTableOptions();
+		tableOptions.range = "A100:A104";
+		tableOptions.isTitle = true;
+		api.asc_addAutoFilter("TableStyleMedium2", tableOptions);
+
+		tables = wsView.model.autoFilters.getTablesIntersectionRange(new Asc.Range(0, 100, 0, 100));
+		assert.strictEqual(tables.length, 1, "Table was created without selection of formula.compare tables length");
+
+		table = tables[0];
+		tableName = table.DisplayName;
+		// wsView.af_changeFormatTableInfo(tableName, Asc.c_oAscChangeTableStyleInfo.rowTotal, true);
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in after table with title is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table with title is created");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in after table with title is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table with title is created");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in after table with title is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table with title is created");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in after table with title is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table with title is created");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in after table with title is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table with title is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in after table with title is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell after table with title is created");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table with title is created");
+
+		tables.length = 0;
+		clearData(0, 0, 200, 200);
+
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell before table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell before table is created");
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula("SUM(A100:A104)", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		oParser.buildDependencies();
+		array = oParser.calculate();
+
+		tableOptions = new AscCommonExcel.AddFormatTableOptions();
+		tableOptions.range = "A100:A105";
+		tableOptions.isTitle = false;
+		api.asc_addAutoFilter("TableStyleMedium2", tableOptions);
+
+		tables = wsView.model.autoFilters.getTablesIntersectionRange(new Asc.Range(0, 100, 0, 100));
+		assert.strictEqual(tables.length, 1, "Table was created with selection of formula. Compare tables length");
+
+		table = tables[0];
+		tableName = table.DisplayName;
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "Column1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A101:A105)", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A101:A105)", "Formula in cell after table is created");
+
+		tables.length = 0;
+		clearData(0, 0, 200, 200);
+
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell before table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell before table is created");
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula("SUM(A100:A104)", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		oParser.buildDependencies();
+		array = oParser.calculate();
+
+		tableOptions = new AscCommonExcel.AddFormatTableOptions();
+		tableOptions.range = "A100:A103";
+		tableOptions.isTitle = false;
+		api.asc_addAutoFilter("TableStyleMedium2", tableOptions);
+
+		tables = wsView.model.autoFilters.getTablesIntersectionRange(new Asc.Range(0, 100, 0, 100));
+		assert.strictEqual(tables.length, 1, "Table was created without selection of formula. Compare tables length");
+
+		table = tables[0];
+		tableName = table.DisplayName;
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "Column1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A101:A105)", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A101:A105)", "Formula in cell after table is created");
+
+		tables.length = 0;
+		clearData(0, 0, 200, 200);
+
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell before table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell before table is created");
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula("SUM(A100:A104)", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		oParser.buildDependencies();
+		array = oParser.calculate();
+		
+		tableOptions = new AscCommonExcel.AddFormatTableOptions();
+		tableOptions.range = "A102:A105";
+		tableOptions.isTitle = false;
+		api.asc_addAutoFilter("TableStyleMedium2", tableOptions);
+		
+		tables = wsView.model.autoFilters.getTablesIntersectionRange(new Asc.Range(0, 103, 0, 103));
+		assert.strictEqual(tables.length, 1, "Table was created with selection of formula. Compare tables length");
+
+		table = tables[0];
+		tableName = table.DisplayName;
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "Column1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A105)", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A105)", "Formula in cell after table is created");
+
+		tables.length = 0;
+		clearData(0, 0, 200, 200);
+		ws.getRange2("A99:B110").cleanAll();
+
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell before table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell before table is created");
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula("SUM(A100:A104)", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		oParser.buildDependencies();
+		array = oParser.calculate();
+		
+		tableOptions = new AscCommonExcel.AddFormatTableOptions();
+		tableOptions.range = "A102:A103";
+		tableOptions.isTitle = false;
+		api.asc_addAutoFilter("TableStyleMedium2", tableOptions);
+		
+		tables = wsView.model.autoFilters.getTablesIntersectionRange(new Asc.Range(0, 102, 0, 102));
+		assert.strictEqual(tables.length, 1, "Table was created with selection of formula. Compare tables length");
+
+		table = tables[0];
+		tableName = table.DisplayName;
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "Column1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A105)", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A105)", "Formula in cell after table is created");
+
+		tables.length = 0;
+		clearData(0, 0, 200, 200);
+		ws.getRange2("A99:B110").cleanAll();
+
+	});
+
 	QUnit.test('Autofill - Asc horizontal sequence: Days of the weeks', function (assert) {
 		let testData = [
 			['Sunday'],
@@ -2697,6 +3558,47 @@ $(function () {
 		
 		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[@Column1]", "Value for edit in cell after Table[[#This Row],[Column1]] is typed");
 		assert.strictEqual(resCell.getFormula(), tableName + "[[#This Row],[Column1]]", "Formula in cell after Table[[#This Row],[Column1]] is typed");
+
+
+		// calc res check
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 101, 30);
+		oParser = new AscCommonExcel.parserFormula(tableName + "[[Column1]:[Column2]]", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getValueByRowCol(0, 0).getValue(), 1, 'Result of Table[[Column1]:[Column2]][0,0]');
+		assert.strictEqual(array.getValueByRowCol(0, 1).getValue(), 1, 'Result of Table[[Column1]:[Column2]][0,1]');
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(101, 30);
+		resCell.setValue("=" + tableName +"[[Column1]:[Column2]]");
+		
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[[Column1]:[Column2]]", "Value for edit in cell after Table[[Column1]:[Column2]] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[[Column1]:[Column2]]", "Formula in cell after Table[[Column1]:[Column2]] is typed");
+
+
+		// calc res check
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 101, 30);
+		oParser = new AscCommonExcel.parserFormula(tableName + "[[Column1]:[Column2]]", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getValueByRowCol(0, 0).getValue(), 1, 'Result of Table[[Column1]:[Column3]][0,0]');
+		assert.strictEqual(array.getValueByRowCol(0, 1).getValue(), 1, 'Result of Table[[Column1]:[Column3]][0,1]');
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(101, 30);
+		resCell.setValue("=" + tableName +"[[Column1]:[Column3]]");
+		
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[[Column1]:[Column3]]", "Value for edit in cell after Table[[Column1]:[Column3]] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[[Column1]:[Column3]]", "Formula in cell after Table[[Column1]:[Column3]] is typed");
+
+
+		// calc res check
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 101, 30);
+		oParser = new AscCommonExcel.parserFormula(tableName + "[[Column1]:[Column345]]", cellWithFormula, ws);
+		assert.ok(oParser.parse() === false);
+		array = oParser.calculate();
+		assert.strictEqual(array.type, AscCommonExcel.cElementType.error, 'Result of Table[[Column1]:[Column345]]');
+		assert.strictEqual(array.value, "#NAME?", 'Result of Table[[Column1]:[Column345]]');
 
 
 		// calc res check

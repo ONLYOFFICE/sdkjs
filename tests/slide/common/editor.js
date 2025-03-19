@@ -130,6 +130,7 @@
 		return oPresentation.GetSlidesCount();
 	};
 	editor.initCollaborativeEditing = AscCommon.SlideEditorApi.prototype.initCollaborativeEditing.bind(editor);
+	editor.getThumbnailsPosition  = AscCommon.SlideEditorApi.prototype.getThumbnailsPosition.bind(editor);
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.DrawingDocument = editor.WordControl.m_oDrawingDocument;
 	AscTest.Editor = editor;

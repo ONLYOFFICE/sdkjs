@@ -40,6 +40,7 @@
 	AscTest.DrawingDocument.Thumbnails.isThumbnailsShown = function () { return true; };
 	AscTest.DrawingDocument.Thumbnails.m_oWordControl = AscTest.DrawingDocument;
 	AscTest.DrawingDocument.Thumbnails.OnUpdateOverlay = function () {};
+	AscTest.DrawingDocument.Thumbnails.ShowPage = function () {};
 
 	AscTest.DrawingDocument.m_oThumbnails.Name = "id_th";
 	AscTest.DrawingDocument.m_oThumbnails.HtmlElement = document.createElement('canvas');

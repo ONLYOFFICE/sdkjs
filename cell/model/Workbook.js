@@ -789,9 +789,9 @@
 			this.buildDependency();
 			return this._shiftMoveDelete(c_oNotifyType.Shift, sheetId, bbox, offset);
 		},
-		move: function(sheetId, bboxFrom, offset, sheetIdTo) {
+		move: function(sheetId, bboxFrom, offset, sheetIdTo, isTableCreated) {
 			this.buildDependency();
-			this._shiftMoveDelete(c_oNotifyType.Move, sheetId, bboxFrom, offset, sheetIdTo);
+			this._shiftMoveDelete(c_oNotifyType.Move, sheetId, bboxFrom, offset, sheetIdTo, isTableCreated);
 			this.addToChangedRange(sheetId, bboxFrom);
 		},
 		prepareChangeSheet: function(sheetId, data, tableNamesMap) {
@@ -1945,6 +1945,19 @@
 						}
 						let oStartCellIndex = g_cCalcRecursion.getStartCellIndex();
 						if (oStartCellIndex) {
+							/** Checks static formulas with ca flag - false. For iterative calc static formulas that
+							 	participate in recursive formulas must be calculated before calculating dependent cells.**/
+							if (!oFormulaParsed.ca) {
+								oCell.changeLinkedCell(function (oLinkedCell) {
+									const oFormulaParsed = oLinkedCell.getFormulaParsed();
+									if (!oFormulaParsed.ca) {
+										oLinkedCell.setIsDirty(true);
+										oLinkedCell._checkDirty();
+									}
+								}, true);
+								oCell.setIsDirty(true);
+								oCell._checkDirty();
+							}
 							// Fill 0 value for empty cells with recursive formula.
 							if (oCell.getNumberValue() == null && (oCell.getValueText() == null || oCell.getValueText() === '#NUM!')) {
 								if (oCell.getType() !== CellValueType.Number) {
@@ -2047,30 +2060,34 @@
 			AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = false;
 
 			this._foreachChanged(function (oCell) {
-				oCell && oCell._checkDirty();
-				if (oCell.formulaParsed && AscCommonExcel.bIsSupportDynamicArrays && (oCell.formulaParsed.getDynamicRef() || oCell.formulaParsed.getArrayFormulaRef()) && oCell.formulaParsed.aca && oCell.formulaParsed.ca) {
-					t.addToVolatileArrays(oCell.formulaParsed);
-				}
-				// Enable calculating formula for next cell in chain
-				if (g_cCalcRecursion.getIsEnabledRecursion() && oCell.isFormula()) {
-					const nThisCellIndex = getCellIndex(oCell.nRow, oCell.nCol);
-					const sCellWsName = oCell.ws.getName().toLowerCase();
-					const aRecursiveCells = g_cCalcRecursion.getRecursiveCells(oCell);
-					let bLinkedCell = aRecursiveCells.some(function (oCellIndex) {
-						return oCellIndex.cellId === nThisCellIndex && oCellIndex.wsName === sCellWsName;
-					});
-					if (aRecursiveCells.length && bLinkedCell) {
-						oCell.changeLinkedCell(function (oCell) {
-							const nCellIndex = getCellIndex(oCell.nRow, oCell.nCol);
-							const sCellWsName = oCell.ws.getName().toLowerCase();
-							let bLinkedCell = aRecursiveCells.some(function (oCellIndex) {
-								return oCellIndex.cellId === nCellIndex && oCellIndex.wsName === sCellWsName;
-							});
-							if (bLinkedCell && !oCell.getIsDirty()) {
-								oCell.setIsDirty(true);
-							}
-						}, false);
-						g_cCalcRecursion.calcDiffBetweenIter(oCell);
+				if (oCell) {
+					oCell._checkDirty();
+					if (oCell.formulaParsed && AscCommonExcel.bIsSupportDynamicArrays && (oCell.formulaParsed.getDynamicRef() || oCell.formulaParsed.getArrayFormulaRef()) && oCell.formulaParsed.aca && oCell.formulaParsed.ca) {
+						t.addToVolatileArrays(oCell.formulaParsed);
+					}
+					// Enable calculating formula for next cell in chain
+					const oFormulaParsed = oCell.getFormulaParsed();
+					if (g_cCalcRecursion.getIsEnabledRecursion() && oCell.isFormula() && oFormulaParsed.ca === true) {
+						const nThisCellIndex = getCellIndex(oCell.nRow, oCell.nCol);
+						const sCellWsName = oCell.ws.getName().toLowerCase();
+						const aRecursiveCells = g_cCalcRecursion.getRecursiveCells(oCell);
+						let bLinkedCell = aRecursiveCells.some(function (oCellIndex) {
+							return oCellIndex.cellId === nThisCellIndex && oCellIndex.wsName === sCellWsName;
+						});
+						if (aRecursiveCells.length && bLinkedCell) {
+							oCell.changeLinkedCell(function (oCell) {
+								const oFormulaParsed = oCell.getFormulaParsed();
+								const nCellIndex = getCellIndex(oCell.nRow, oCell.nCol);
+								const sCellWsName = oCell.ws.getName().toLowerCase();
+								let bLinkedCell = aRecursiveCells.some(function (oCellIndex) {
+									return oCellIndex.cellId === nCellIndex && oCellIndex.wsName === sCellWsName;
+								});
+								if (bLinkedCell && oFormulaParsed.ca === true && !oCell.getIsDirty()) {
+									oCell.setIsDirty(true);
+								}
+							}, false);
+							g_cCalcRecursion.calcDiffBetweenIter(oCell);
+						}
 					}
 				}
 			});
@@ -2156,7 +2173,7 @@
 				}
 			}
 		},
-		_shiftMoveDelete: function(notifyType, sheetId, bbox, offset, sheetIdTo) {
+		_shiftMoveDelete: function(notifyType, sheetId, bbox, offset, sheetIdTo, isTableCreated) {
 			var listeners = {};
 			var res = {changed: listeners, shiftedShared: {}};
 			var sheetContainer = this.sheetListeners[sheetId];
@@ -2184,7 +2201,7 @@
 				for (var areaIndex in sheetContainer.areaMap) {
 					var areaMapElem = sheetContainer.areaMap[areaIndex];
 					if (c_oNotifyType.Shift === notifyType) {
-						isIntersect = bboxShift.isIntersect(areaMapElem.bbox)
+						isIntersect = bboxShift.isIntersect(areaMapElem.bbox);
 					} else if (c_oNotifyType.Move === notifyType || c_oNotifyType.Delete === notifyType) {
 						isIntersect = bbox.isIntersect(areaMapElem.bbox);
 					}
@@ -2195,7 +2212,7 @@
 					}
 				}
 				var notifyData = {
-					type: notifyType, sheetId: sheetId, sheetIdTo: sheetIdTo, bbox: bbox, offset: offset, shiftedShared: res.shiftedShared
+					type: notifyType, sheetId: sheetId, sheetIdTo: sheetIdTo, bbox: bbox, offset: offset, shiftedShared: res.shiftedShared, isTableCreated: isTableCreated
 				};
 				for (var listenerId in listeners) {
 					listeners[listenerId].notify(notifyData);
@@ -8605,9 +8622,9 @@
 				this.workbook.dependencyFormulas.deleteNodes(wsTo.getId(), range.getBBox0());
 		}
 	};
-	Worksheet.prototype._moveFormulas = function(oBBoxFrom, oBBoxTo, copyRange, wsTo, offset) {
+	Worksheet.prototype._moveFormulas = function(oBBoxFrom, oBBoxTo, copyRange, wsTo, offset, isTableCreated) {
 		if(!copyRange){
-			this.workbook.dependencyFormulas.move(this.Id, oBBoxFrom, offset, wsTo.getId());
+			this.workbook.dependencyFormulas.move(this.Id, oBBoxFrom, offset, wsTo.getId(), isTableCreated);
 		}
 		//todo avoid double getRange3
 		this.getRange3(oBBoxFrom.r1, oBBoxFrom.c1, oBBoxFrom.r2, oBBoxFrom.c2)._foreachNoEmpty(function(cell) {
@@ -8763,7 +8780,7 @@
 		}
 		return formula;
 	};
-	Worksheet.prototype._moveRange=function(oBBoxFrom, oBBoxTo, copyRange, wsTo){
+	Worksheet.prototype._moveRange=function(oBBoxFrom, oBBoxTo, copyRange, wsTo, isTableCreated){
 		if (!wsTo) {
 			wsTo = this;
 		}
@@ -8778,8 +8795,8 @@
 		var prepared = this._moveMergedAndHyperlinksPrepare(oBBoxFrom, oBBoxTo, copyRange, wsTo, offset);
 		this._movePivots(oBBoxFrom, oBBoxTo, copyRange, offset, wsTo);
 		this._moveCleanRanges(oBBoxFrom, oBBoxTo, copyRange, wsTo);
-		this._moveFormulas(oBBoxFrom, oBBoxTo, copyRange, wsTo, offset);
-		this._moveCells(oBBoxFrom, oBBoxTo, copyRange, wsTo, offset);
+		this._moveFormulas(oBBoxFrom, oBBoxTo, copyRange, wsTo, offset, isTableCreated);
+		this._moveCells(oBBoxFrom, oBBoxTo, copyRange, wsTo, offset, isTableCreated);
 		this._moveMergedAndHyperlinks(prepared, oBBoxFrom, oBBoxTo, copyRange, wsTo, offset);
 		this._moveDataValidation(oBBoxFrom, oBBoxTo, copyRange, offset, wsTo);
 		this.moveConditionalFormatting(oBBoxFrom, oBBoxTo, copyRange, offset, wsTo);

@@ -885,7 +885,7 @@
 								wsView.shiftCellWatches(true, c_oAscInsertOptions.InsertCellsAndShiftDown, shiftRange.bbox);
 								moveToRange = new Asc.Range(filterRange.c1, filterRange.r1 + 1, filterRange.c2, filterRange.r2);
 							}
-							worksheet._moveRange(rangeWithoutDiff, moveToRange);
+							worksheet._moveRange(rangeWithoutDiff, moveToRange, null, null, true/* table created */);
 							wsView.cellCommentator.moveRangeComments(rangeWithoutDiff, moveToRange);
 							wsView.moveCellWatches(rangeWithoutDiff, moveToRange);
 						} else if (!addNameColumn && styleName) {

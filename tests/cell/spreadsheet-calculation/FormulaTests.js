@@ -1243,7 +1243,7 @@ $(function () {
 		ws.getRange2("D1035").setValue("=IF($A$1034=0, C1035, -(($A$1032*$A$1033*$A$1033-(D1036-D1034)*(B1036-B1034)/4)/B1035-(D1036+D1034))/2)"); // u
 		ws.getRange2("B1036").setValue("10"); // mu
 		ws.getRange2("C1036").setValue("0"); // u start
-		ws.getRange2('D1036').setValue("=C1035"); // u
+		ws.getRange2('D1036').setValue("=C1036"); // u
 		assert.strictEqual(ws.getRange2("D1033").getValue(), "7.499457849531321", "Test: Sequence-loop chain. D1033 <-> D1034, D1034 <-> D1035 etc. D1033 - 7.499728735325547");
 		assert.strictEqual(ws.getRange2("D1034").getValue(), "4.999457849531321", "Test: Sequence-loop chain. D1033 <-> D1034, D1034 <-> D1035 etc. D1034 - 4.999728735325547");
 		assert.strictEqual(ws.getRange2("D1035").getValue(), "2.4997289247656607", "Test: Sequence-loop chain. D1033 <-> D1034, D1034 <-> D1035 etc. D1035 - 2.4998643676627736");
@@ -1759,6 +1759,49 @@ $(function () {
 		assert.strictEqual(bCellHasRecursion, false, "Test: Chain without recursion. B1074 <- A1075 <- D1075 <- E1075 <- F1075. With disabled Iterative calculation setting. Case from bug-71996. F1075 - false");
 		bCellHasRecursion = null;
 		g_cCalcRecursion.setStartCellIndex(null);
+		// - Case: Chain with recursion. A1076->B1076. B1076 is simple formula without ca flag.
+		// Enable recursion setting
+		g_cCalcRecursion.setIsEnabledRecursion(true);
+		ws.getRange2("A1076").setValue("=A1076+B1076");
+		ws.getRange2("B1076").setValue("=1");
+		assert.strictEqual(ws.getRange2("A1076").getValue(), "15", "Test: Chain with recursion. A1076->B1076. B1076 is simple formula without ca flag. A1076 - 15");
+		bCaFromSelectedCell = getCaFromSelectedCell("A1076");
+		assert.strictEqual(bCaFromSelectedCell, true, "Test: Chain with recursion. A1076->B1076. B1076 is simple formula without ca flag. A1076 - flag ca: true");
+		bCaFromSelectedCell = null;
+		bCaFromSelectedCell = getCaFromSelectedCell("B1076");
+		assert.strictEqual(bCaFromSelectedCell, false, "Test: Chain with recursion. A1076->B1076. B1076 is simple formula without ca flag. B1076 - flag ca: false");
+		// - Case: Chain with recursion. A1077 -> B1077. B1077 is simple formula without ca flag.
+		ws.getRange2("A1077").setValue("=A1077+B1077");
+		ws.getRange2("B1077").setValue("=1+2");
+		assert.strictEqual(ws.getRange2("A1077").getValue(), "45", "Test: Chain with recursion. A1077 -> B1077. B1077 is simple formula without ca flag. A1077 - 45");
+		bCaFromSelectedCell = getCaFromSelectedCell("A1077");
+		assert.strictEqual(bCaFromSelectedCell, true, "Test: Chain with recursion. A1077 -> B1077. B1077 is simple formula without ca flag. A1077 - flag ca: true");
+		bCaFromSelectedCell = null;
+		bCaFromSelectedCell = getCaFromSelectedCell("B1077");
+		assert.strictEqual(bCaFromSelectedCell, false, "Test: Chain with recursion. A1077 -> B1077. B1077 is simple formula without ca flag. B1077 - flag ca: false");
+		bCaFromSelectedCell = null;
+		// - Case: Chain with recursion. A1078 -> B1078 -> C1078. When B1078 has a ref to C1078 and C1078 - value.
+		ws.getRange2("A1078").setValue("=A1078+B1078");
+		ws.getRange2("B1078").setValue("=C1078");
+		ws.getRange2("C1078").setValue("1");
+		assert.strictEqual(ws.getRange2("A1078").getValue(), "15", "Test: Chain with recursion. A1078 -> B1078 -> C1078. When B1078 has a ref to C1078 and C1078 - value. A1078 - 15");
+		bCaFromSelectedCell = getCaFromSelectedCell("A1078");
+		assert.strictEqual(bCaFromSelectedCell, true, "Test: Chain with recursion. A1078 -> B1078 -> C1078. When B1078 has a ref to C1078 and C1078 - value. A1078 - flag ca: true");
+		bCaFromSelectedCell = null;
+		bCaFromSelectedCell = getCaFromSelectedCell("B1078");
+		assert.strictEqual(bCaFromSelectedCell, false, "Test: Chain with recursion. A1078 -> B1078 -> C1078. When B1078 has a ref to C1078 and C1078 - value. B1078 - flag ca: false");
+		bCaFromSelectedCell = null;
+		// - Case: Chain with recursion. A1079 -> B1079 -> C1079. When B1079 has a ref to C1079. C1079 - simple formula.
+		ws.getRange2("A1079").setValue("=A1079+B1079");
+		ws.getRange2("B1079").setValue("=C1079");
+		ws.getRange2("C1079").setValue("=1");
+		assert.strictEqual(ws.getRange2("A1079").getValue(), "15", "Test: Chain with recursion. A1079 -> B1079 -> C1079. When B1079 has a ref to C1079. C1079 - simple formula. A1079 - 15");
+		bCaFromSelectedCell = getCaFromSelectedCell("A1079");
+		assert.strictEqual(bCaFromSelectedCell, true, "Test: Chain with recursion. A1079 -> B1079 -> C1079. When B1079 has a ref to C1079. C1079 - simple formula. A1079 - flag ca: true");
+		bCaFromSelectedCell = null;
+		bCaFromSelectedCell = getCaFromSelectedCell("B1079");
+		assert.strictEqual(bCaFromSelectedCell, false, "Test: Chain with recursion. A1079 -> B1079 -> C1079. When B1079 has a ref to C1079. C1079 - simple formula. B1079 - flag ca: false");
+		bCaFromSelectedCell = null;
 		// -- Test changeLinkedCell method.
 		oCell = selectCell("A1000");
 		let oCellNeedEnableRecalc = selectCell("B1000");

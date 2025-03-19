@@ -6547,7 +6547,7 @@ function parserFormula( formula, parent, _ws ) {
 			var needAssemble = true;
 			if (AscCommon.c_oNotifyType.Shift === data.type || AscCommon.c_oNotifyType.Move === data.type ||
 				AscCommon.c_oNotifyType.Delete === data.type) {
-				this.shiftCells(data.type, data.sheetId, data.bbox, data.offset, data.sheetIdTo);
+				this.shiftCells(data.type, data.sheetId, data.bbox, data.offset, data.sheetIdTo, data.opt_isPivot, data.isTableCreated);
 			} else if (AscCommon.c_oNotifyType.ChangeDefName === data.type) {
 				if (!data.to) {
 					this.removeTableName(data.from, data.bConvertTableFormulaToRef);
@@ -9217,7 +9217,19 @@ function parserFormula( formula, parent, _ws ) {
 			}
 		}
 	};
-	parserFormula.prototype.shiftCells = function(notifyType, sheetId, bbox, offset, opt_sheetIdTo, opt_isPivot) {
+	/**
+	 * Shifts the cells on the sheet in accordance with the specified parameters.
+	 * 
+	 * @param {number} notifyType - The type of notification or action triggering the cell shift.
+	 * @param {string} sheetId - The ID of the sheet where the cells are being shifted.
+	 * @param {Object} bbox - An object describing the range of the area to be shifted from.
+	 * @param {Object} offset - An object describing the offset for shifting the cells.
+	 * @param {string} [opt_sheetIdTo] - Optional ID of the sheet to which the cells will be shifted.
+	 * @param {boolean} [opt_isPivot] - Optional flag indicating whether the shift is part of working with a pivot table.
+	 * @param {boolean} [isTableCreated] - Optional flag indicating whether the table has been created and the shift must be made according to special conditions.
+	 * @returns {boolean} Returns true if the cell shift is successful, and false otherwise.
+	 */
+	parserFormula.prototype.shiftCells = function(notifyType, sheetId, bbox, offset, opt_sheetIdTo, opt_isPivot, isTableCreated) {
 		var res = false;
 		var elem, bboxCell;
 		var wb = this.ws.workbook;
@@ -9249,12 +9261,17 @@ function parserFormula( formula, parent, _ws ) {
 					_cellsBbox = elem.getBBox0();
 				}
 			}
+			let tableOffset = null;
 			if (_cellsRange || _cellsBbox) {
 				var isIntersect;
 				if (AscCommon.c_oNotifyType.Shift === notifyType) {
 					isIntersect = bbox.isIntersectForShift(_cellsBbox, offset);
 				} else if (AscCommon.c_oNotifyType.Move === notifyType) {
 					isIntersect = bbox.containsRange(_cellsBbox);
+					if (isTableCreated && !isIntersect && bbox.isIntersect(_cellsBbox)) {
+						isIntersect = true;
+						tableOffset = true;
+					}
 				} else if (AscCommon.c_oNotifyType.Delete === notifyType) {
 					isIntersect = bbox.isIntersect(_cellsBbox);
 				}
@@ -9263,7 +9280,20 @@ function parserFormula( formula, parent, _ws ) {
 					if (AscCommon.c_oNotifyType.Shift === notifyType) {
 						isNoDelete = _cellsBbox.forShift(bbox, offset, this.wb.bUndoChanges);
 					} else if (AscCommon.c_oNotifyType.Move === notifyType) {
-						_cellsBbox.setOffset(offset);
+						if (tableOffset) {
+							// If we select only the first or last cell, then we make a shift by +-1
+							if (bbox.r1 === _cellsBbox.r1) {
+								_cellsBbox.setOffsetFirst(offset);
+							} else if (bbox.r2 === _cellsBbox.r2) {
+								_cellsBbox.setOffsetLast(offset);
+							} else if (bbox.r1 > _cellsBbox.r1 && bbox.r2 < _cellsBbox.r2) {
+							} else {
+								// otherwise do shift with forshift method
+								_cellsBbox.forShift(bbox, offset, this.wb.bUndoChanges);
+							}
+						} else {
+							_cellsBbox.setOffset(offset);
+						}
 						isNoDelete = true;
 					} else if (AscCommon.c_oNotifyType.Delete === notifyType) {
 						if (bbox.containsRange(_cellsBbox)) {

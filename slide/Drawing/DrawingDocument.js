@@ -5813,40 +5813,8 @@ function CThumbnailsManager(editorPage)
 		this.m_arrPages[pageNum].IsSelected = true;
 		this.m_bIsUpdate = bIsUpdate;
 
-		const scrollApi = this.m_oWordControl.m_oScrollThumbApi;
-		if (!bIsUpdate || scrollApi == null)
-			return;
-
-		const isHorizontalThumbnails = Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.bottom;
-		const isRightToLeft = Asc.editor.isRTLInterface;
-
-		let startCoord, endCoord, visibleAreaSize, scrollTo, scrollBy;
-		if (isHorizontalThumbnails) {
-			startCoord = this.m_arrPages[pageNum].left - this.const_border_w;
-			endCoord = this.m_arrPages[pageNum].right + this.const_border_w
-			visibleAreaSize = this.m_oWordControl.m_oThumbnails.HtmlElement.width;
-
-			scrollTo = scrollApi.scrollToX.bind(scrollApi);
-			scrollBy = scrollApi.scrollByX.bind(scrollApi);
-		} else {
-			startCoord = this.m_arrPages[pageNum].top - this.const_border_w;
-			endCoord = this.m_arrPages[pageNum].bottom + this.const_border_w;
-			visibleAreaSize = this.m_oWordControl.m_oThumbnails.HtmlElement.height;
-
-			scrollTo = scrollApi.scrollToY.bind(scrollApi);
-			scrollBy = scrollApi.scrollByY.bind(scrollApi);
-		}
-
-		if (startCoord < 0) {
-			const size = endCoord - startCoord;
-			const shouldReversePageIndexes = isRightToLeft && isHorizontalThumbnails;
-			const pos = shouldReversePageIndexes
-				? (size + this.const_border_w) * (this.m_arrPages.length - pageNum - 1)
-				: (size + this.const_border_w) * pageNum;
-			scrollTo(pos);
-		} else if (endCoord > visibleAreaSize) {
-			const pos = endCoord + this.const_border_w - visibleAreaSize;
-			scrollBy(pos);
+		if (bIsUpdate) {
+			this.ShowPage(pageNum);
 		}
 	};
 
