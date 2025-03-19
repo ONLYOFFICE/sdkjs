@@ -263,6 +263,9 @@ CChartsDrawer.prototype =
 		} else {
 			for (let i = 0; i < plotArea.charts.length; i++) {
 				let chart = plotArea.charts[i];
+				if (chart && Array.isArray(chart.series) && chart.series.length === 0) {
+					continue;
+				}
 				switch (this._getChartType(chart)) {
 					case c_oChartTypes.Bar: {
 						newChart = new drawBarChart(chart, this);
@@ -309,7 +312,7 @@ CChartsDrawer.prototype =
 						break;
 					}
 				}
-				if (i === 0) {
+				if (!this.charts) {
 					this.chart = newChart;
 					this.charts = {};
 				}
@@ -6393,7 +6396,7 @@ drawBarChart.prototype = {
 
 		this.sortZIndexPaths = [];
 
-		var countSeries = this.cChartDrawer.calculateCountSeries(this.chart);
+		const countSeries = this.cChartDrawer.calculateCountSeries(this.chart);
 		this.seriesCount = countSeries.series;
 		this.ptCount = countSeries.points;
 		this.subType = this.cChartDrawer.getChartGrouping(this.chart);

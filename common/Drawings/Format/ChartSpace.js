@@ -4487,8 +4487,8 @@ function(window, undefined) {
 				var series = chart_type.series;
 				var nChartType = chart_type.getObjectType();
 				var nSeriesLength = (nChartType === AscDFH.historyitem_type_PieChart || nChartType === AscDFH.historyitem_type_DoughnutChart) && this.chart.plotArea.charts.length === 1 ? Math.min(1, series.length) : series.length;
-				if (this.isEmptySeries(series, nSeriesLength)) {
-					return true;
+				if (!this.isEmptySeries(series, nSeriesLength)) {
+					return false;
 				}
 			}
 			return t < 1;
