@@ -46,7 +46,7 @@
 	 * @global
 	 * @class
 	 * @name Api
-	 * @property {Array} Sheets - Returns the Sheets collection that represents all the sheets in the active workbook.
+	 * @property {ApiWorksheet[]} Sheets - Returns the Sheets collection that represents all the sheets in the active workbook.
 	 * @property {ApiWorksheet} ActiveSheet - Returns an object that represents the active sheet.
 	 * @property {ApiRange} Selection - Returns an object that represents the selected range.
 	 * @property {ApiComment[]} Comments - Returns all comments related to the whole workbook.
@@ -85,8 +85,8 @@
 	 * @property {PageOrientation} PageOrientation - Returns or sets the page orientation.
 	 * @property {boolean} PrintHeadings - Returns or sets the page PrintHeadings property.
 	 * @property {boolean} PrintGridlines - Returns or sets the page PrintGridlines property.
-	 * @property {Array} Defnames - Returns an array of the ApiName objects.
-	 * @property {Array} Comments - Returns all comments from the current worksheet.
+	 * @property {ApiName[]} Defnames - Returns an array of the ApiName objects.
+	 * @property {ApiComment[]} Comments - Returns all comments from the current worksheet.
 	 * @property {ApiFreezePanes} FreezePanes - Returns the freeze panes for the current worksheet.
 	 * @property {ApiProtectedRange[]} AllProtectedRanges - Returns all protected ranges from the current worksheet.
 	 * @property {ApiPivotTable[]} PivotTables - Returns all pivot tables from the current worksheet.
@@ -171,16 +171,6 @@
 
 	ApiImage.prototype = Object.create(ApiDrawing.prototype);
 	ApiImage.prototype.constructor = ApiImage;
-
-	/**
-     * Class representing a group of drawings.
-     * @constructor
-     */
-    function ApiGroup(oGroup){
-		ApiDrawing.call(this, oGroup);
-    }
-	ApiGroup.prototype = Object.create(ApiDrawing.prototype);
-	ApiGroup.prototype.constructor = ApiGroup;
 
 	/**
 	 * Class representing an OLE object.
@@ -304,14 +294,8 @@
 
 	/**
      * Any valid drawing element.
-     * @typedef {(ApiShape | ApiImage | ApiGroup | ApiOleObject | ApiChart )} Drawing
+     * @typedef {(ApiShape | ApiImage | ApiOleObject | ApiChart )} Drawing
 	 * @see office-js-api/Examples/Enumerations/Drawing.js
-	 */
-
-	/**
-     * Available drawing element for grouping.
-     * @typedef {(ApiShape | ApiGroup | ApiImage | ApiChart)} DrawingForGroup
-	 * @see office-js-api/Examples/Enumerations/DrawingForGroup.js
 	 */
 
 	/**
@@ -610,7 +594,7 @@
 	/**
 	 * Creates a new custom function.
 	 * The description of the function parameters and result is specified using JSDoc. The <em>@customfunction</em> tag is required in JSDoc.
-	 * Parameters and results can be specified as the <em>number / string / bool / any / number[][] / string[][] / bool[][] / any[][]</em> types.
+	 * Parameters and results can be specified as the <em>number / string / boolean / any / number[][] / string[][] / bobooleanol[][] / any[][]</em> types.
 	 * Parameters can be required or optional. A user can also set a default value.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
@@ -683,7 +667,7 @@
 							 "name": "first",
 							 "optional": false,
 							 "parentName": "",
-							 "type": "number" // "string", "bool"
+							 "type": "number" // "string", "boolean"
 						 },
 						 {
 							 "defaultValue": "",
@@ -712,7 +696,7 @@
 	/**
 	 * Registers a new custom functions library (see the <b>SetCustomFunctions</b> plugin method).
 	 * The description of the function parameters and result is specified using JSDoc. The <em>@customfunction</em> tag is required in JSDoc.
-	 * Parameters and results can be specified as the <em>number / string / bool / any / number[][] / string[][] / bool[][] / any[][]</em> types.
+	 * Parameters and results can be specified as the <em>number / string / boolean / any / number[][] / string[][] / boolean[][] / any[][]</em> types.
 	 * Parameters can be required or optional. A user can also set a default value.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
@@ -1808,7 +1792,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number | string} arg1 - A number, a reference to a cell containing a number, or a formula that returns a number.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - A number of digits to the right of the decimal point. The number is rounded as necessary.
+	 * @param {ApiRange | ApiName | number} [arg2] - A number of digits to the right of the decimal point. The number is rounded as necessary.
 	 * If it is omitted, the function will assume it to be 2.
 	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DOLLAR.js
@@ -1835,7 +1819,7 @@
 	 * @param {ApiRange | ApiName | string} arg1 - The text to find. Use double quotes (empty text) to match the first character in the search string.
 	 * Wildcard characters are not allowed.
 	 * @param {ApiRange | ApiName | string} arg2 - The text containing the text to find.
-	 * @param {?ApiRange | ?ApiName | ?number} arg3 - Specifies the character at which to start the search. The first character in the search string is character number 1.
+	 * @param {ApiRange | ApiName | number} [arg3] - Specifies the character at which to start the search. The first character in the search string is character number 1.
 	 * If omitted, this parameter is equal to 1.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FIND.js
@@ -1850,7 +1834,7 @@
 	 * @param {ApiRange | ApiName | string} arg1 - The text to find. Use double quotes (empty text) to match the first character in the search string.
 	 * Wildcard characters are not allowed.
 	 * @param {ApiRange | ApiName | string} arg2 - The text containing the text to find.
-	 * @param {?ApiRange | ?ApiName | ?number} arg3 - Specifies the character at which to start the search. The first character in the search string is character number 1.
+	 * @param {ApiRange | ApiName | number} [arg3] - Specifies the character at which to start the search. The first character in the search string is character number 1.
 	 * If omitted, this parameter is equal to 1.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FINDB.js
@@ -1863,8 +1847,8 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The number to round and convert to text.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - The number of digits to the right of the decimal point. If omitted, the function will assume it to be 2.
-	 * @param {?ApiRange | ?ApiName | ?boolean} arg3 - Specifies whether do display commas in the returned text (<b>false</b> or omitted) or not (<b>true</b>).
+	 * @param {ApiRange | ApiName | number} [arg2] - The number of digits to the right of the decimal point. If omitted, the function will assume it to be 2.
+	 * @param {ApiRange | ApiName | boolean} [arg3] - Specifies whether do display commas in the returned text (<b>false</b> or omitted) or not (<b>true</b>).
 	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FIXED.js
 	 */
@@ -1876,7 +1860,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | string} arg1 - The text string containing the characters to extract.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - A number of the substring characters. It must be greater than or equal to 0.
+	 * @param {ApiRange | ApiName | number} [arg2] - A number of the substring characters. It must be greater than or equal to 0.
 	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LEFT.js
 	 */
@@ -1888,7 +1872,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | string} arg1 - The text string containing the characters to extract.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - A number of the substring characters, based on bytes.
+	 * @param {ApiRange | ApiName | number} [arg2] - A number of the substring characters, based on bytes.
 	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LEFTB.js
 	 */
@@ -1959,8 +1943,8 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | string} arg1 - The string representing a number to convert.
-	 * @param {?ApiRange | ?ApiName | ?string} arg2 - The character used as the decimal separator in the string.
-	 * @param {?ApiRange | ?ApiName | ?string} arg3 - The character used as the group separator in the string.
+	 * @param {ApiRange | ApiName | string} [arg2] - The character used as the decimal separator in the string.
+	 * @param {ApiRange | ApiName | string} [arg3] - The character used as the group separator in the string.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/NUMBERVALUE.js
 	 */
@@ -2023,7 +2007,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | string} arg1 - The text string that contains the characters to extract.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - A number of the substring characters. If it is omitted, the function will assume it to be 1.
+	 * @param {ApiRange | ApiName | number} [arg2] - A number of the substring characters. If it is omitted, the function will assume it to be 1.
 	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/RIGHT.js
 	 */
@@ -2035,7 +2019,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | string} arg1 - The text string that contains the characters to extract.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - A number of the substring characters, based on bytes.
+	 * @param {ApiRange | ApiName | number} [arg2] - A number of the substring characters, based on bytes.
 	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/RIGHTB.js
 	 */
@@ -2048,7 +2032,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | string} arg1 - The text to find. The ? and * wildcard characters can be used. Use ~? and ~* to find the ? and * characters.
 	 * @param {ApiRange | ApiName | string} arg2 - The text where to search for the specified text.
-	 * @param {?ApiRange | ?ApiName | ?number} arg3 - The character number in the search text, counting from the left, at which to start searching. If omitted, 1 is used.
+	 * @param {ApiRange | ApiName | number} [arg3] - The character number in the search text, counting from the left, at which to start searching. If omitted, 1 is used.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SEARCH.js
 	 */
@@ -2061,7 +2045,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | string} arg1 - The text to find. The ? and * wildcard characters can be used. Use ~? and ~* to find the ? and * characters.
 	 * @param {ApiRange | ApiName | string} arg2 - The text where to search for the specified text.
-	 * @param {?ApiRange | ApiName | ?number} arg3 - The character number in the search text, counting from the left, at which to start searching. If omitted, 1 is used.
+	 * @param {ApiRange | ApiName | number} [arg3] - The character number in the search text, counting from the left, at which to start searching. If omitted, 1 is used.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SEARCHB.js
 	 */
@@ -2075,7 +2059,7 @@
 	 * @param {ApiRange | ApiName | string} arg1 - The text or the reference to a cell containing text in which the characters will be substituted.
 	 * @param {ApiRange | ApiName | string} arg2 - The existing text to replace. If the case of the original text does not match the case of text, the function will not replace the text.
 	 * @param {ApiRange | ApiName | string} arg3 - The text to replace the original text with.
-	 * @param {?ApiRange | ?ApiName | ?string} arg4 - Specifies which occurrence of the original text to replace. If omitted, every instance of the original text will be replaced.
+	 * @param {ApiRange | ApiName | string} [arg4] - Specifies which occurrence of the original text to replace. If omitted, every instance of the original text will be replaced.
 	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SUBSTITUTE.js
 	 */
@@ -2202,7 +2186,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName} arg1 - The range of cells which will be evaluated.
 	 * @param {ApiRange | ApiName | number | string} arg2 - The condition or criteria in the form of a number, expression, or text that defines which cells will be used to find the average.
-	 * @param {?ApiRange | ?ApiName} arg3 - The actual cells to be used to find the average. If omitted, the cells in the range are used.
+	 * @param {ApiRange | ApiName} [arg3] - The actual cells to be used to find the average. If omitted, the cells in the range are used.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/AVERAGEIF.js
 	 */
@@ -2215,10 +2199,10 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName} arg1 - The range of cells which will be evaluated.
 	 * @param {ApiRange | ApiName | number | string} arg2 - The first condition or criteria in the form of a number, expression, or text that defines which cells will be used to find the average.
-	 * @param {?ApiRange | ?ApiName} arg3 - The actual cells to be used to find the average. If omitted, the cells in the range are used.
-	 * @param {?ApiRange | ?ApiName | ?number | ?string} arg4 - Up to 127 additional conditions or criteria in the form of a number, expression, or text that defines which cells will be used to find the average.
+	 * @param {ApiRange | ApiName} [arg3] - The actual cells to be used to find the average. If omitted, the cells in the range are used.
+	 * @param {ApiRange | ApiName | number | string} [arg4] - Up to 127 additional conditions or criteria in the form of a number, expression, or text that defines which cells will be used to find the average.
 	 * These arguments are optional.
-	 * @param {?ApiRange | ?ApiName} arg5 - Up to 127 actual ranges to be used to find the average. If omitted, the cells in the range are used. These arguments are optional.
+	 * @param {ApiRange | ApiName} [arg5] - Up to 127 actual ranges to be used to find the average. If omitted, the cells in the range are used. These arguments are optional.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/AVERAGEIFS.js
 	 */
@@ -2232,8 +2216,8 @@
 	 * @param {ApiRange | ApiName | number} arg1 - The value between A and B at which to evaluate the function.
 	 * @param {ApiRange | ApiName | number} arg2 - The alpha parameter of the distribution which must be greater than 0.
 	 * @param {ApiRange | ApiName | number} arg3 - The beta parameter of the distribution which must be greater than 0.
-	 * @param {?ApiRange | ?ApiName | ?number} arg4 - An optional lower bound to the interval of x (A). If omitted, it is equal to 0.
-	 * @param {?ApiRange | ?ApiName | ?number} arg5 - An optional upper bound to the interval of x (B). If omitted, it is equal to 1.
+	 * @param {ApiRange | ApiName | number} [arg4] - An optional lower bound to the interval of x (A). If omitted, it is equal to 0.
+	 * @param {ApiRange | ApiName | number} [arg5] - An optional upper bound to the interval of x (B). If omitted, it is equal to 1.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BETADIST.js
 	 */
@@ -2248,8 +2232,8 @@
 	 * @param {ApiRange | ApiName | number} arg2 - The alpha parameter of the distribution which must be greater than 0.
 	 * @param {ApiRange | ApiName | number} arg3 - The beta parameter of the distribution which must be greater than 0.
 	 * @param {ApiRange | ApiName | boolean} arg4 - Specifies if this is the cumulative distribution function (<b>true</b>) or the probability density function (<b>false</b>).
-	 * @param {?ApiRange | ?ApiName | ?number} arg5 - An optional lower bound to the interval of x (A). If omitted, it is equal to 0.
-	 * @param {?ApiRange | ?ApiName | ?number} arg6 - An optional upper bound to the interval of x (B). If omitted, it is equal to 1.
+	 * @param {ApiRange | ApiName | number} [arg5] - An optional lower bound to the interval of x (A). If omitted, it is equal to 0.
+	 * @param {ApiRange | ApiName | number} [arg6] - An optional upper bound to the interval of x (B). If omitted, it is equal to 1.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BETA_DIST.js
 	 */
@@ -2263,8 +2247,8 @@
 	 * @param {ApiRange | ApiName | number} arg1 - A probability associated with the beta distribution.
 	 * @param {ApiRange | ApiName | number} arg2 - The alpha parameter of the distribution which must be greater than 0.
 	 * @param {ApiRange | ApiName | number} arg3 - The beta parameter of the distribution which must be greater than 0.
-	 * @param {?ApiRange | ?ApiName | ?number} arg4 - An optional lower bound to the interval of x (A). If omitted, it is equal to 0.
-	 * @param {?ApiRange | ?ApiName | ?number} arg5 - An optional upper bound to the interval of x (B). If omitted, it is equal to 1.
+	 * @param {ApiRange | ApiName | number} [arg4] - An optional lower bound to the interval of x (A). If omitted, it is equal to 0.
+	 * @param {ApiRange | ApiName | number} [arg5] - An optional upper bound to the interval of x (B). If omitted, it is equal to 1.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BETA_INV.js
 	 */
@@ -2278,8 +2262,8 @@
 	 * @param {ApiRange | ApiName | number} arg1 - A probability associated with the beta distribution.
 	 * @param {ApiRange | ApiName | number} arg2 - The alpha parameter of the distribution which must be greater than 0.
 	 * @param {ApiRange | ApiName | number} arg3 - The beta parameter of the distribution which must be greater than 0.
-	 * @param {?ApiRange | ?ApiName | ?number} arg4 - An optional lower bound to the interval of x (A). If omitted, it is equal to 0.
-	 * @param {?ApiRange | ?ApiName | ?number} arg5 - An optional upper bound to the interval of x (B). If omitted, it is equal to 1.
+	 * @param {ApiRange | ApiName | number} [arg4] - An optional lower bound to the interval of x (A). If omitted, it is equal to 0.
+	 * @param {ApiRange | ApiName | number} [arg5] - An optional upper bound to the interval of x (B). If omitted, it is equal to 1.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BETAINV.js
 	 */
@@ -2321,7 +2305,7 @@
 	 * @param {ApiRange | ApiName | number} arg1 - The number of independent trials.
 	 * @param {ApiRange | ApiName | number} arg2 - The probability of success on each trial.
 	 * @param {ApiRange | ApiName | number} arg3 - The minimum number of successes in the trials to calculate probability for, a numeric value greater than or equal to 0.
-	 * @param {?ApiRange | ?ApiName | ?number} arg4 - The maximum number of successes in the trials to calculate probability for,
+	 * @param {ApiRange | ApiName | number} [arg4] - The maximum number of successes in the trials to calculate probability for,
 	 * a numeric value greater than the minimum number of successes and less than or equal to trials.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BINOM_DIST_RANGE.js
@@ -2510,7 +2494,7 @@
 	 * Counts a number of cells in a range that contains numbers ignoring empty cells or those contaning text.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string | number | boolean | ApiRange | array | ApiName} args - Up to 255 items, or ranges to count numbers.
+	 * @param {string | number | boolean | Array<string | number | boolean> | ApiRange | ApiName} args - Up to 255 items, or ranges to count numbers.
 	 * The first argument is required, subsequent arguments are optional. Arguments can be numbers, logical values and text representations of numbers, ranges, names, or arrays.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COUNT.js
@@ -2522,7 +2506,7 @@
 	 * Counts a number of cells in a range that are not empty.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string | number | boolean | ApiRange | array | ApiName} args - Up to 255 items, or ranges to count values.
+	 * @param {string | number | boolean | Array<string | number | boolean> | ApiRange | ApiName} args - Up to 255 items, or ranges to count values.
 	 * The first argument is required, subsequent arguments are optional. Arguments can be numbers, logical values, text strings, ranges, names, or arrays.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COUNTA.js
@@ -2795,10 +2779,10 @@
 	 * @param {ApiRange | ApiName | number[]} arg2 - A range or an array of numeric data that determines the historical values for which a new point will be predicted.
 	 * @param {ApiRange | ApiName} arg3 - A range of date/time values that correspond to the historical values.
 	 * The timeline range must be of the same size as the second argument. Date/time values must have a constant step between them and can't be zero.
-	 * @param {?ApiRange | ?ApiName | ?number} arg4 - An optional numeric value that specifies the length of the seasonal pattern. The default value of 1 indicates seasonality is detected automatically.
+	 * @param {ApiRange | ApiName | number} [arg4] - An optional numeric value that specifies the length of the seasonal pattern. The default value of 1 indicates seasonality is detected automatically.
 	 * The 0 value means no seasonality.
-	 * @param {?ApiRange | ?ApiName | ?number} arg5 - An optional numeric value to handle missing values. The default value of 1 replaces missing values by interpolation, and 0 replaces them with zeros.
-	 * @param {?ApiRange | ?ApiName | ?number} arg6 - An optional numeric value to aggregate multiple values with the same time stamp.
+	 * @param {ApiRange | ApiName | number} [arg5] - An optional numeric value to handle missing values. The default value of 1 replaces missing values by interpolation, and 0 replaces them with zeros.
+	 * @param {ApiRange | ApiName | number} [arg6] - An optional numeric value to aggregate multiple values with the same time stamp.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FORECAST_ETS.js
 	 */
@@ -2813,11 +2797,11 @@
 	 * @param {ApiRange | ApiName | number[]} arg2 - A range or an array of numeric data that determines the historical values for which a new point will be predicted.
 	 * @param {ApiRange | ApiName} arg3 - A range of date/time values that correspond to the historical values.
 	 * The timeline range must be of the same size as the second argument. Date/time values must have a constant step between them and can't be zero.
-	 * @param {?ApiRange | ?ApiName | ?number} arg4 - A number between 0 and 1 that shows the confidence level for the calculated confidence interval. The default value is .95.
-	 * @param {?ApiRange | ?ApiName | ?number} arg5 - An optional numeric value that specifies the length of the seasonal pattern. The default value of 1 indicates seasonality is detected automatically.
+	 * @param {ApiRange | ApiName | number} [arg4] - A number between 0 and 1 that shows the confidence level for the calculated confidence interval. The default value is .95.
+	 * @param {ApiRange | ApiName | number} [arg5] - An optional numeric value that specifies the length of the seasonal pattern. The default value of 1 indicates seasonality is detected automatically.
 	 * The 0 value means no seasonality.
-	 * @param {?ApiRange | ?ApiName | ?number} arg6 - An optional numeric value to handle missing values. The default value of 1 replaces missing values by interpolation, and 0 replaces them with zeros.
-	 * @param {?ApiRange | ?ApiName | ?number} arg7 - An optional numeric value to aggregate multiple values with the same time stamp.
+	 * @param {ApiRange | ApiName | number} [arg6] - An optional numeric value to handle missing values. The default value of 1 replaces missing values by interpolation, and 0 replaces them with zeros.
+	 * @param {ApiRange | ApiName | number} [arg7] - An optional numeric value to aggregate multiple values with the same time stamp.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FORECAST_ETS_CONFINT.js
 	 */
@@ -2831,8 +2815,8 @@
 	 * @param {ApiRange | ApiName | number[]} arg1 - A range or an array of numeric data that determines the historical values for which a new point will be predicted.
 	 * @param {ApiRange | ApiName} arg2 - A range of date/time values that correspond to the historical values.
 	 * The timeline range must be of the same size as the second argument. Date/time values must have a constant step between them and can't be zero.
-	 * @param {?ApiRange | ?ApiName | ?number} arg3 - An optional numeric value to handle missing values. The default value of 1 replaces missing values by interpolation, and 0 replaces them with zeros.
-	 * @param {?ApiRange | ?ApiName | ?number} arg4 - An optional numeric value to aggregate multiple values with the same time stamp.
+	 * @param {ApiRange | ApiName | number} [arg3] - An optional numeric value to handle missing values. The default value of 1 replaces missing values by interpolation, and 0 replaces them with zeros.
+	 * @param {ApiRange | ApiName | number} [arg4] - An optional numeric value to aggregate multiple values with the same time stamp.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FORECAST_ETS_SEASONALITY.js
 	 */
@@ -2862,10 +2846,10 @@
 	 * @param {ApiRange | ApiName} arg2 - A range of date/time values that correspond to the historical values.
 	 * The timeline range must be of the same size as the second argument. Date/time values must have a constant step between them and can't be zero.
 	 * @param {ApiRange | ApiName | number} arg3 - A number between 1 and 8, indicating which statistic will be returned for the calculated forecast.
-	 * @param {?ApiRange | ?ApiName | ?number} arg4 - An optional numeric value that specifies the length of the seasonal pattern. The default value of 1 indicates seasonality is detected automatically.
+	 * @param {ApiRange | ApiName | number} [arg4] - An optional numeric value that specifies the length of the seasonal pattern. The default value of 1 indicates seasonality is detected automatically.
 	 * The 0 value means no seasonality.
-	 * @param {?ApiRange | ?ApiName | ?number} arg5 - An optional numeric value to handle missing values. The default value of 1 replaces missing values by interpolation, and 0 replaces them with zeros.
-	 * @param {?ApiRange | ?ApiName | ?number} arg6 - An optional numeric value to aggregate multiple values with the same time stamp.
+	 * @param {ApiRange | ApiName | number} [arg5] - An optional numeric value to handle missing values. The default value of 1 replaces missing values by interpolation, and 0 replaces them with zeros.
+	 * @param {ApiRange | ApiName | number} [arg6] - An optional numeric value to aggregate multiple values with the same time stamp.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FORECAST_ETS_STAT.js
 	 */
@@ -3038,9 +3022,9 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number[]} arg1 - The set of y-values from the <em>y = b*m^x</em> equation, an array or range of positive numbers.
-	 * @param {?ApiRange | ?ApiName | ?number[]} arg2 - An optional set of x-values from the <em>y = b*m^x</em> equation, an array or range of positive numbers that has the same size as the set of y-values.
-	 * @param {?ApiRange | ?ApiName | ?number[]} arg3 - New x-values for which the function will return the corresponding y-values.
-	 * @param {?ApiRange | ?ApiName | ?boolean} arg4 - A logical value: the constant <em>b</em> is calculated normally if this parameter is set to <b>true</b>,
+	 * @param {ApiRange | ApiName | number[]} [arg2] - An optional set of x-values from the <em>y = b*m^x</em> equation, an array or range of positive numbers that has the same size as the set of y-values.
+	 * @param {ApiRange | ApiName | number[]} [arg3] - New x-values for which the function will return the corresponding y-values.
+	 * @param {ApiRange | ApiName | boolean} [arg4] - A logical value: the constant <em>b</em> is calculated normally if this parameter is set to <b>true</b>,
 	 * and <em>b</em> is set equal to 1 if the parameter is <b>false</b> or omitted.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/GROWTH.js
@@ -3131,10 +3115,10 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName} arg1 - The set of y-values from the <em>y = mx + b</em> equation.
-	 * @param {?ApiRange | ?ApiName} arg2 - An optional set of x-values from the <em>y = mx + b</em> equation.
-	 * @param {?ApiRange | ?ApiName | ?boolean} arg3 - A logical value: the constant <em>b</em> is calculated normally if this parameter is set to <b>true</b> or omitted,
+	 * @param {ApiRange | ApiName} [arg2] - An optional set of x-values from the <em>y = mx + b</em> equation.
+	 * @param {ApiRange | ApiName | boolean} [arg3] - A logical value: the constant <em>b</em> is calculated normally if this parameter is set to <b>true</b> or omitted,
 	 * and <em>b</em> is set equal to 0 if the parameter is <b>false</b>.
-	 * @param {?ApiRange | ?ApiName | ?boolean} arg4 - A logical value: return additional regression statistics if this parameter is set to <b>true</b>,
+	 * @param {ApiRange | ApiName | boolean} [arg4] - A logical value: return additional regression statistics if this parameter is set to <b>true</b>,
 	 * and return m-coefficients and the constant <em>b</em> if the parameter is <b>false</b> or omitted.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LINEST.js
@@ -3147,10 +3131,10 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | ApiRange} arg1 - The set of y-values from the <em>y = b*m^x</em> equation.
-	 * @param {?ApiRange | ?ApiName | ?ApiRange} arg2 - An optional set of x-values from the <em>y = b*m^x</em> equation.
-	 * @param {?ApiRange | ?ApiName | ?boolean} arg3 - A logical value: the constant <em>b</em> is calculated normally if this parameter is set to <b>true</b> or omitted,
+	 * @param {ApiRange | ApiName | ApiRange} [arg2] - An optional set of x-values from the <em>y = b*m^x</em> equation.
+	 * @param {ApiRange | ApiName | boolean} [arg3] - A logical value: the constant <em>b</em> is calculated normally if this parameter is set to <b>true</b> or omitted,
 	 * and <em>b</em> is set equal to 1 if the parameter is <b>false</b>.
-	 * @param {?ApiRange | ?ApiName | ?boolean} arg4 - A logical value: return additional regression statistics if this parameter is set to <b>true</b>,
+	 * @param {ApiRange | ApiName | boolean} [arg4] - A logical value: return additional regression statistics if this parameter is set to <b>true</b>,
 	 * and return m-coefficients and the constant <em>b</em> if the parameter is <b>false</b> or omitted.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LOGEST.js
@@ -3217,7 +3201,7 @@
 	 * Returns the largest value in a set of values. Ignores logical values and text.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | array | ApiRange | ApiName} args - Up to 255 numeric values for which the largest number will be returned.
+	 * @param {number | number[] | ApiRange | ApiName} args - Up to 255 numeric values for which the largest number will be returned.
 	 * The first argument is required, subsequent arguments are optional. Arguments can be numbers, names, ranges, or arrays of numbers.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MAX.js
@@ -3229,7 +3213,7 @@
 	 * Returns the largest value in a set of values. Does not ignore logical values and text.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | boolean | ApiRange | array | ApiName} args - Up to 255 values (number, text, logical value) for which the largest value will be returned.
+	 * @param {number | string | boolean | Array<number | string | boolean> | ApiRange | ApiName} args - Up to 255 values (number, text, logical value) for which the largest value will be returned.
 	 * The first argument is required, subsequent arguments are optional. Arguments can be numbers, logical values and text representations of numbers, names, ranges, or arrays.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MAXA.js
@@ -3241,7 +3225,7 @@
 	 * Returns the median, or the number in the middle of the set of given numbers.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | ApiRange | array | ApiName} args - Up to 255 numeric values for which the median will be calculated.
+	 * @param {number | number[] | ApiRange | ApiName} args - Up to 255 numeric values for which the median will be calculated.
 	 * The first argument is required, subsequent arguments are optional. Arguments can be numbers, names, ranges, or arrays of numbers.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MEDIAN.js
@@ -3253,7 +3237,7 @@
 	 * Returns the smallest number in a set of values. Ignores logical values and text.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | ApiRange | array | ApiName} args - Up to 255 numeric values for which the smallest number will be returned.
+	 * @param {number | number[] | ApiRange | ApiName} args - Up to 255 numeric values for which the smallest number will be returned.
 	 * The first argument is required, subsequent arguments are optional. Arguments can be numbers, names, ranges, or arrays of numbers.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MIN.js
@@ -3265,7 +3249,7 @@
 	 * Returns the smallest value in a set of values. Does not ignore logical values and text.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | boolean | ApiRange | array | ApiName} args - Up to 255 values (number, text, logical value) for which the smallest value will be returned.
+	 * @param {number | string | boolean | Array<number | string | boolean> | ApiRange | ApiName} args - Up to 255 values (number, text, logical value) for which the smallest value will be returned.
 	 * The first argument is required, subsequent arguments are optional. Arguments can be numbers, logical values and text representations of numbers, names, ranges, or arrays.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MINA.js
@@ -3492,7 +3476,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number[]} arg1 - The array or range of data with numeric values that defines relative standing.
 	 * @param {ApiRange | ApiName | number} arg2 - The value for which the rank will be returned.
-	 * @param {?ApiRange | ?ApiName | ?number} arg3 - An optional value that identifies the number of significant digits for the returned percentage, three digits if omitted (0.xxx%).
+	 * @param {ApiRange | ApiName | number} [arg3] - An optional value that identifies the number of significant digits for the returned percentage, three digits if omitted (0.xxx%).
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PERCENTRANK.js
 	 */
@@ -3505,7 +3489,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number[]} arg1 - The array or range of data with numeric values that defines relative standing.
 	 * @param {ApiRange | ApiName | number} arg2 - The value for which the rank will be returned.
-	 * @param {?ApiRange | ?ApiName | ?number} arg3 - An optional value that identifies the number of significant digits for the returned percentage, three digits if omitted (0.xxx%).
+	 * @param {ApiRange | ApiName | number} [arg3] - An optional value that identifies the number of significant digits for the returned percentage, three digits if omitted (0.xxx%).
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PERCENTRANK_EXC.js
 	 */
@@ -3518,7 +3502,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number[]} arg1 - The array or range of data with numeric values that defines relative standing.
 	 * @param {ApiRange | ApiName | number} arg2 - The value for which the rank will be returned.
-	 * @param {?ApiRange | ?ApiName | ?number} arg3 - An optional value that identifies the number of significant digits for the returned percentage, three digits if omitted (0.xxx%).
+	 * @param {ApiRange | ApiName | number} [arg3] - An optional value that identifies the number of significant digits for the returned percentage, three digits if omitted (0.xxx%).
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PERCENTRANK_INC.js
 	 */
@@ -3598,7 +3582,7 @@
 	//  * @param {any} arg1 Is the range of numeric values of x with which there are associated probabilities.
 	//  * @param {any} arg2 Is the set of probabilities associated with values in X_range, values between 0 and 1 and excluding 0.
 	//  * @param {ApiRange | ApiName | number} arg3 Is the lower bound on the value for which you want a probability.
-	//  * @param {?ApiRange | ?ApiName | ?number} arg4 Is the optional upper bound on the value. If omitted, PROB returns the probability that X_range values are equal to Lower_limit.
+	//  * @param {ApiRange | ApiName | number} [arg4] Is the optional upper bound on the value. If omitted, PROB returns the probability that X_range values are equal to Lower_limit.
 	//  * @returns {number | string | boolean}
 	//  */
 	// ApiWorksheetFunction.prototype.PROB = function (arg1, arg2, arg3, arg4) {
@@ -3646,7 +3630,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The number for which the rank will be returned.
 	 * @param {ApiRange | ApiName | number[]} arg2 - An array or range of numbers. Nonnumeric values are ignored.
-	 * @param {?ApiRange | ?ApiName | ?boolean} arg3 - The numeric value that specifyes how to order the numbers. If it is 0 or omitted, the rank in the list will be sorted in descending order.
+	 * @param {ApiRange | ApiName | boolean} [arg3] - The numeric value that specifyes how to order the numbers. If it is 0 or omitted, the rank in the list will be sorted in descending order.
 	 * Any other numeric value means that the rank in the list will be sorted in ascending order.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/RANK.js
@@ -3660,7 +3644,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The number for which the rank will be returned.
 	 * @param {ApiRange | ApiName | number[]} arg2 - An array or range of numbers. Nonnumeric values are ignored.
-	 * @param {?ApiRange | ?ApiName | ?boolean} arg3 - The numeric value that specifyes how to order the numbers. If it is 0 or omitted, the rank in the list will be sorted in descending order.
+	 * @param {ApiRange | ApiName | boolean} [arg3] - The numeric value that specifyes how to order the numbers. If it is 0 or omitted, the rank in the list will be sorted in descending order.
 	 * Any other numeric value means that the rank in the list will be sorted in ascending order.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/RANK_AVG.js
@@ -3674,7 +3658,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The number for which the rank will be returned.
 	 * @param {ApiRange | ApiName | number[]} arg2 - An array or range of numbers. Nonnumeric values are ignored.
-	 * @param {?ApiRange | ?ApiName | ?boolean} arg3 - The numeric value that specifyes how to order the numbers. If it is 0 or omitted, the rank in the list will be sorted in descending order.
+	 * @param {ApiRange | ApiName | boolean} [arg3] - The numeric value that specifyes how to order the numbers. If it is 0 or omitted, the rank in the list will be sorted in descending order.
 	 * Any other numeric value means that the rank in the list will be sorted in ascending order.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/RANK_EQ.js
@@ -3934,9 +3918,9 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number[]} arg1 - A range or array of y-values from the <em>y = mx + b</em> equation.
-	 * @param {?ApiRange | ?ApiName | number[]} arg2 - An optional range or array of x-values from the <em>y = mx + b</em> equation, an array of the same size as an array of y-values.
-	 * @param {?ApiRange | ?ApiName | number[]} arg3 - A range or array of new x-values for which this function will return corresponding y-values.
-	 * @param {?ApiRange | ?ApiName | ?boolean} arg4 - A logical value: the constant <em>b</em> is calculated normally if this parameter is set to <b>true</b> or omitted,
+	 * @param {ApiRange | ApiName | number[]} [arg2] - An optional range or array of x-values from the <em>y = mx + b</em> equation, an array of the same size as an array of y-values.
+	 * @param {ApiRange | ApiName | number[]} [arg3] - A range or array of new x-values for which this function will return corresponding y-values.
+	 * @param {ApiRange | ApiName | boolean} [arg4] - A logical value: the constant <em>b</em> is calculated normally if this parameter is set to <b>true</b> or omitted,
 	 * and <em>b</em> is set equal to 0 if the parameter is <b>false</b>.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TREND.js
@@ -4000,7 +3984,7 @@
 	 * Estimates variance based on a sample, including logical values and text. Text and the <b>false</b> logical value have the value 0; the <b>true</b> logical value has the value 1.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | boolean | ApiRange | array | ApiName} args - Up to 255 values for which the variance will be calculated.
+	 * @param {number | string | boolean | Array<number | string | boolean> | ApiRange | ApiName} args - Up to 255 values for which the variance will be calculated.
 	 * The first argument is required, subsequent arguments are optional. Arguments can be numbers, logical values or text representations of numbers, names, ranges, or arrays.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/VARA.js
@@ -4048,7 +4032,7 @@
 	 * Calculates variance based on the entire population, including logical values and text. Text and the <b>false</b> logical value have the value 0; the <b>true</b> logical value has the value 1.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | boolean | ApiRange | array | ApiName} args - Up to 255 values for which the variance will be calculated.
+	 * @param {number | string | boolean | Array<number | string | boolean> | ApiRange | ApiName} args - Up to 255 values for which the variance will be calculated.
 	 * The first argument is required, subsequent arguments are optional. Arguments can be numbers, logical values or text representations of numbers, names, ranges, or arrays.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/VARPA.js
@@ -4094,7 +4078,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number[] | ApiRange | ApiName} arg1 - The array or range of data against which to test X.
 	 * @param {ApiRange | ApiName | number} arg2 - The value to test.
-	 * @param {?ApiRange | ?ApiName | ?number} arg3 - The population (known) standard deviation. If omitted, the sample standard deviation is used.
+	 * @param {ApiRange | ApiName | number} [arg3] - The population (known) standard deviation. If omitted, the sample standard deviation is used.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ZTEST.js
 	 */
@@ -4107,7 +4091,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number[] | ApiRange} arg1 - The array or range of data against which to test X.
 	 * @param {ApiRange | ApiName | number} arg2 - The value to test.
-	 * @param {?ApiRange | ?ApiName | ?number} arg3 - The population (known) standard deviation. If omitted, the sample standard deviation is used.
+	 * @param {ApiRange | ApiName | number} [arg3] - The population (known) standard deviation. If omitted, the sample standard deviation is used.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/Z_TEST.js
 	 */
@@ -4167,7 +4151,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - Start date from which days will be counted.
 	 * @param {ApiRange | ApiName | number} arg2 - End date until which days will be counted.
-	 * @param {?ApiRange | ?ApiName | ?boolean} arg3 - A logical value that specifies whether to use the U.S. (NASD) (false or omitted) or European (true) method in the calculation.
+	 * @param {ApiRange | ApiName | boolean} [arg3] - A logical value that specifies whether to use the U.S. (NASD) (false or omitted) or European (true) method in the calculation.
 	 * According to the European method, the start and end dates that occur on the 31st of a month become equal to the 30th of the same month.
 	 * According to the U.S. method, the start date is the last day of a month, it becomes equal to the 30th of the same month.
 	 * If the end date is the last day of a month and the start date is earlier than the 30th of a month, the end date becomes equal to the 1st of the next month.
@@ -4252,7 +4236,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A serial date number that represents the start date.
 	 * @param {ApiRange | ApiName | number} arg2 - A serial date number that represents the end date.
-	 * @param {?ApiRange | number[]} arg3 - An optional range or array of one or more serial date numbers to exclude from the working calendar, such as state and federal holidays and floating holidays.
+	 * @param {ApiRange | number[]} [arg3] - An optional range or array of one or more serial date numbers to exclude from the working calendar, such as state and federal holidays and floating holidays.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/NETWORKDAYS.js
 	 */
@@ -4265,8 +4249,8 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A serial date number that represents the start date.
 	 * @param {ApiRange | ApiName | number} arg2 - A serial date number that represents the end date.
-	 * @param {?ApiRange | ?ApiName | ?number | ?string} arg3 - A number or string specifying when weekends occur.
-	 * @param {?ApiRange | number[]} arg4 - An optional range or array of one or more serial date numbers to exclude from the working calendar, such as state and federal holidays and floating holidays.
+	 * @param {ApiRange | ApiName | number | string} [arg3] - A number or string specifying when weekends occur.
+	 * @param {ApiRange | number[]} [arg4] - An optional range or array of one or more serial date numbers to exclude from the working calendar, such as state and federal holidays and floating holidays.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/NETWORKDAYS_INTL.js
 	 */
@@ -4333,7 +4317,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A number that represents a date, or a result of other formulas or functions.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - A number that determines the type of return value: <b>1</b> - returns a number from 1 (Sunday) to 7 (Saturday);
+	 * @param {ApiRange | ApiName | number} [arg2] - A number that determines the type of return value: <b>1</b> - returns a number from 1 (Sunday) to 7 (Saturday);
 	 * <b>2</b> - returns a number from 1 (Monday) to 7 (Sunday); <b>3</b> - returns a number from 0 (Monday) to 6 (Sunday).
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/WEEKDAY.js
@@ -4346,7 +4330,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The date-time code used for date and time calculation.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - A number (1 or 2) that determines the type of the return value: Sunday (1) or Monday (2).
+	 * @param {ApiRange | ApiName | number} [arg2] - A number (1 or 2) that determines the type of the return value: Sunday (1) or Monday (2).
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/WEEKNUM.js
 	 */
@@ -4359,7 +4343,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A serial date number that represents the start date.
 	 * @param {ApiRange | ApiName | number} arg2 - The number of nonweekend and non-holiday days before or after the start date. A positive value for days yields a future date; a negative value yields a past date.
-	 * @param {?ApiRange | ApiName | number[]} arg3 - An optional range or array of one or more serial date numbers to exclude from the working calendar, such as state and federal holidays and floating holidays.
+	 * @param {ApiRange | ApiName | number[]} [arg3] - An optional range or array of one or more serial date numbers to exclude from the working calendar, such as state and federal holidays and floating holidays.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/WORKDAY.js
 	 */
@@ -4372,8 +4356,8 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A serial date number that represents the start date.
 	 * @param {ApiRange | ApiName | number} arg2 - The number of nonweekend and non-holiday days before or after the start date. A positive value for days yields a future date; a negative value yields a past date.
-	 * @param {?ApiRange | ?ApiName | ?number | ?string} arg3 - A number or string specifying when weekends occur.
-	 * @param {?ApiRange | ?ApiName | ?number[]} arg4 - An optional range or array of one or more serial date numbers to exclude from the working calendar, such as state and federal holidays and floating holidays.
+	 * @param {ApiRange | ApiName | number | string} [arg3] - A number or string specifying when weekends occur.
+	 * @param {ApiRange | ApiName | number[]} [arg4] - An optional range or array of one or more serial date numbers to exclude from the working calendar, such as state and federal holidays and floating holidays.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/WORKDAY_INTL.js
 	 */
@@ -4397,7 +4381,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A serial date number that represents the start date.
 	 * @param {ApiRange | ApiName | number} arg2 - A serial date number that represents the end date.
-	 * @param {?ApiRange | ?ApiName | ?number} arg3 - The type of day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg3] - The type of day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/YEARFRAC.js
 	 */
@@ -4468,7 +4452,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The binary number which will be convertrd.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - The number of characters to use.
+	 * @param {ApiRange | ApiName | number} [arg2] - The number of characters to use.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BIN2HEX.js
 	 */
@@ -4480,7 +4464,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The binary number which will be convertrd.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - The number of characters to use.
+	 * @param {ApiRange | ApiName | number} [arg2] - The number of characters to use.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BIN2OCT.js
 	 */
@@ -4553,7 +4537,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The real coefficient of the complex number.
 	 * @param {ApiRange | ApiName | number} arg2 - The imaginary coefficient of the complex number.
-	 * @param {?ApiRange | ?ApiName | ?string} arg3 - The suffix for the imaginary component of the complex number. It can be either "i" or "j" in lowercase.
+	 * @param {ApiRange | ApiName | string} [arg3] - The suffix for the imaginary component of the complex number. It can be either "i" or "j" in lowercase.
 	 * If it is omitted, the function will assume suffix to be "i".
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COMPLEX.js
@@ -4579,7 +4563,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The decimal integer to convert.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - The number of characters to use.
+	 * @param {ApiRange | ApiName | number} [arg2] - The number of characters to use.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DEC2BIN.js
 	 */
@@ -4591,7 +4575,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The decimal integer to convert.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - The number of characters to use.
+	 * @param {ApiRange | ApiName | number} [arg2] - The number of characters to use.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DEC2HEX.js
 	 */
@@ -4603,7 +4587,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - Te decimal integer to convert.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - The number of characters to use.
+	 * @param {ApiRange | ApiName | number} [arg2] - The number of characters to use.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DEC2OCT.js
 	 */
@@ -4615,7 +4599,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The first number.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - The second number.
+	 * @param {ApiRange | ApiName | number} [arg2] - The second number.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DELTA.js
 	 */
@@ -4627,7 +4611,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The lower bound for integrating the error function.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - The upper bound for integrating the error function.
+	 * @param {ApiRange | ApiName | number} [arg2] - The upper bound for integrating the error function.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ERF.js
 	 */
@@ -4672,7 +4656,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The value to test against step.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - The threshold value.
+	 * @param {ApiRange | ApiName | number} [arg2] - The threshold value.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/GESTEP.js
 	 */
@@ -4684,7 +4668,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The hexadecimal number to convert.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - The number of characters to use.
+	 * @param {ApiRange | ApiName | number} [arg2] - The number of characters to use.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/HEX2BIN.js
 	 */
@@ -4707,7 +4691,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The hexadecimal number to convert.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - The number of characters to use.
+	 * @param {ApiRange | ApiName | number} [arg2] - The number of characters to use.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/HEX2OCT.js
 	 */
@@ -4997,7 +4981,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The octal number to convert.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - The number of characters to use.
+	 * @param {ApiRange | ApiName | number} [arg2] - The number of characters to use.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/OCT2BIN.js
 	 */
@@ -5020,7 +5004,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The octal number to convert.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 -The number of characters to use.
+	 * @param {ApiRange | ApiName | number} [arg2] -The number of characters to use.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/OCT2HEX.js
 	 */
@@ -5193,8 +5177,8 @@
 	 * @param {ApiRange | ApiName | number} arg4 - The annual coupon rate of the security.
 	 * @param {ApiRange | ApiName | number} arg5 - The par value of the security.
 	 * @param {ApiRange | ApiName | number} arg6 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
-	 * @param {?ApiRange | ?ApiName | ?number} arg7 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
-	 * @param {?ApiRange | ?ApiName | ?number} arg8 - A logical value: <b>true</b> (1) or omitted returns the accrued interest from the issue date to the settlement date.
+	 * @param {ApiRange | ApiName | number} [arg7] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg8] - A logical value: <b>true</b> (1) or omitted returns the accrued interest from the issue date to the settlement date.
 	 * <b>false</b> (0) returns the accrued interest from the first interest date to the settlement date.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ACCRINT.js
@@ -5210,7 +5194,7 @@
 	 * @param {ApiRange | ApiName | number} arg2 - The maturity date of the security, expressed as a serial date number.
 	 * @param {ApiRange | ApiName | number} arg3 - The annual coupon rate of the security.
 	 * @param {ApiRange | ApiName | number} arg4 - The par value of the security.
-	 * @param {?ApiRange | ?ApiName | ?number} arg5 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg5] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ACCRINTM.js
 	 */
@@ -5227,7 +5211,7 @@
 	 * @param {ApiRange | ApiName | number} arg4 - The salvage value of the asset at the end of its lifetime.
 	 * @param {ApiRange | ApiName | number} arg5 - The period for which the depreciation will be calculated.
 	 * @param {ApiRange | ApiName | number} arg6 - The rate of depreciation.
-	 * @param {?ApiRange | ?ApiName | ?number} arg7 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg7] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/AMORDEGRC.js
 	 */
@@ -5244,7 +5228,7 @@
 	 * @param {ApiRange | ApiName | number} arg4 - The salvage value of the asset at the end of its lifetime.
 	 * @param {ApiRange | ApiName | number} arg5 - The period for which the depreciation will be calculated.
 	 * @param {ApiRange | ApiName | number} arg6 - The rate of depreciation.
-	 * @param {?ApiRange | ?ApiName | ?number} arg7 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg7] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/AMORLINC.js
 	 */
@@ -5258,7 +5242,7 @@
 	 * @param {ApiRange | ApiName | number} arg1 - The security settlement date, expressed as a serial date number.
 	 * @param {ApiRange | ApiName | number} arg2 - The maturity date of the security, expressed as a serial date number.
 	 * @param {ApiRange | ApiName | number} arg3 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
-	 * @param {?ApiRange | ?ApiName | ?number} arg4 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg4] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COUPDAYBS.js
 	 */
@@ -5272,7 +5256,7 @@
 	 * @param {ApiRange | ApiName | number} arg1 - The security settlement date, expressed as a serial date number.
 	 * @param {ApiRange | ApiName | number} arg2 - The maturity date of the security, expressed as a serial date number.
 	 * @param {ApiRange | ApiName | number} arg3 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
-	 * @param {?ApiRange | ?ApiName | ?number} arg4 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg4] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COUPDAYS.js
 	 */
@@ -5286,7 +5270,7 @@
 	 * @param {ApiRange | ApiName | number} arg1 - The security settlement date, expressed as a serial date number.
 	 * @param {ApiRange | ApiName | number} arg2 - The maturity date of the security, expressed as a serial date number.
 	 * @param {ApiRange | ApiName | number} arg3 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
-	 * @param {?ApiRange | ?ApiName | ?number} arg4 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg4] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COUPDAYSNC.js
 	 */
@@ -5300,7 +5284,7 @@
 	 * @param {ApiRange | ApiName | number} arg1 - The security settlement date, expressed as a serial date number.
 	 * @param {ApiRange | ApiName | number} arg2 - The maturity date of the security, expressed as a serial date number.
 	 * @param {ApiRange | ApiName | number} arg3 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
-	 * @param {?ApiRange | ?ApiName | ?number} arg4 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg4] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COUPNCD.js
 	 */
@@ -5314,7 +5298,7 @@
 	 * @param {ApiRange | ApiName | number} arg1 - The security settlement date, expressed as a serial date number.
 	 * @param {ApiRange | ApiName | number} arg2 - The maturity date of the security, expressed as a serial date number.
 	 * @param {ApiRange | ApiName | number} arg3 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
-	 * @param {?ApiRange | ?ApiName | ?number} arg4 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg4] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COUPNUM.js
 	 */
@@ -5328,7 +5312,7 @@
 	 * @param {ApiRange | ApiName | number} arg1 - The security settlement date, expressed as a serial date number.
 	 * @param {ApiRange | ApiName | number} arg2 - The maturity date of the security, expressed as a serial date number.
 	 * @param {ApiRange | ApiName | number} arg3 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
-	 * @param {?ApiRange | ?ApiName | ?number} arg4 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg4] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COUPPCD.js
 	 */
@@ -5375,7 +5359,7 @@
 	 * @param {ApiRange | ApiName | number} arg2 - The salvage value of the asset at the end of its lifetime.
 	 * @param {ApiRange | ApiName | number} arg3 - The number of periods over which the asset is being depreciated (sometimes called the useful life of the asset).
 	 * @param {ApiRange | ApiName | number} arg4 - The period for which the depreciation will be calculated. Period must use the same units as the useful life of the asset.
-	 * @param {?ApiRange | ?ApiName | ?number} arg5 - The number of months in the first year. If this parameter is omitted, it is assumed to be 12.
+	 * @param {ApiRange | ApiName | number} [arg5] - The number of months in the first year. If this parameter is omitted, it is assumed to be 12.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DB.js
 	 */
@@ -5390,7 +5374,7 @@
 	 * @param {ApiRange | ApiName | number} arg2 - The salvage value of the asset at the end of its lifetime.
 	 * @param {ApiRange | ApiName | number} arg3 - The number of periods over which the asset is being depreciated (sometimes called the useful life of the asset).
 	 * @param {ApiRange | ApiName | number} arg4 - The period for which the depreciation will be calculated. Period must use the same units as the useful life of the asset.
-	 * @param {?ApiRange | ?ApiName | ?number} arg5 - The rate at which the balance declines. If this parameter is omitted, it is assumed to be 2 (the double-declining balance method).
+	 * @param {ApiRange | ApiName | number} [arg5] - The rate at which the balance declines. If this parameter is omitted, it is assumed to be 2 (the double-declining balance method).
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DDB.js
 	 */
@@ -5405,7 +5389,7 @@
 	 * @param {ApiRange | ApiName | number} arg2 - The maturity date of the security, expressed as a serial date number.
 	 * @param {ApiRange | ApiName | number} arg3 - The purchase price of the security, per $100 par value.
 	 * @param {ApiRange | ApiName | number} arg4 - The redemption value of the security, per $100 par value.
-	 * @param {?ApiRange | ?ApiName | ?number} arg5 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg5] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DISC.js
 	 */
@@ -5445,7 +5429,7 @@
 	 * @param {ApiRange | ApiName | number} arg3 - The annual coupon rate of the security.
 	 * @param {ApiRange | ApiName | number} arg4 - The annual yield of the security.
 	 * @param {ApiRange | ApiName | number} arg5 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
-	 * @param {?ApiRange | ?ApiName | ?number} arg6 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg6] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DURATION.js
 	 */
@@ -5471,8 +5455,8 @@
 	 * @param {ApiRange | ApiName | number} arg1 - The interest rate per period. For example, use 6%/4 for quarterly payments at 6% APR.
 	 * @param {ApiRange | ApiName | number} arg2 - The total number of payment periods in the investment.
 	 * @param {ApiRange | ApiName | number} arg3 - The payment made each period; it cannot change over the life of the investment.
-	 * @param {?ApiRange | ?ApiName | ?number} arg4 - The present value, or the lump-sum amount that a series of future payments is worth now. If omitted, it is equal to 0.
-	 * @param {?ApiRange | ?ApiName | ?number} arg5 - A value representing the timing of payment: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
+	 * @param {ApiRange | ApiName | number} [arg4] - The present value, or the lump-sum amount that a series of future payments is worth now. If omitted, it is equal to 0.
+	 * @param {ApiRange | ApiName | number} [arg5] - A value representing the timing of payment: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FV.js
 	 */
@@ -5499,7 +5483,7 @@
 	 * @param {ApiRange | ApiName | number} arg2 - The maturity date of the security, expressed as a serial date number.
 	 * @param {ApiRange | ApiName | number} arg3 - The amount invested in the security.
 	 * @param {ApiRange | ApiName | number} arg4 - The amount to be received at maturity.
-	 * @param {?ApiRange | ?ApiName | ?number} arg6 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg6] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/INTRATE.js
 	 */
@@ -5514,8 +5498,8 @@
 	 * @param {ApiRange | ApiName | number} arg2 - The period for which the interest will be returned. It must be in the range from 1 to the total number of payments.
 	 * @param {ApiRange | ApiName | number} arg3 - The total number of payment periods in an investment.
 	 * @param {ApiRange | ApiName | number} arg4 - The present value, or the lump-sum amount that a series of future payments is worth now.
-	 * @param {?ApiRange | ?ApiName | ?number} arg5 - The future value, or a cash balance which will be attained after the last payment is made. If omitted, it is equal to 0.
-	 * @param {?ApiRange | ?ApiName | ?number} arg6 - A logical value representing the timing of payment: at the end of the period = 0 or omitted, at the beginning of the period = 1.
+	 * @param {ApiRange | ApiName | number} [arg5] - The future value, or a cash balance which will be attained after the last payment is made. If omitted, it is equal to 0.
+	 * @param {ApiRange | ApiName | number} [arg6] - A logical value representing the timing of payment: at the end of the period = 0 or omitted, at the beginning of the period = 1.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IPMT.js
 	 */
@@ -5527,7 +5511,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {number[] | ApiRange} arg1 - A range or array of cells that contain numbers for which the internal rate of return will be calculated.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - An estimate at what the internal rate of return will be. If it is omitted, the function will assume guess to be 0.1 (10 percent).
+	 * @param {ApiRange | ApiName | number} [arg2] - An estimate at what the internal rate of return will be. If it is omitted, the function will assume guess to be 0.1 (10 percent).
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IRR.js
 	 */
@@ -5557,7 +5541,7 @@
 	 * @param {ApiRange | ApiName | number} arg3 - The annual coupon rate of the security.
 	 * @param {ApiRange | ApiName | number} arg4 - The annual yield of the security.
 	 * @param {ApiRange | ApiName | number} arg5 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
-	 * @param {?ApiRange | ?ApiName | ?number} arg6 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg6] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MDURATION.js
 	 */
@@ -5596,8 +5580,8 @@
 	 * @param {ApiRange | ApiName | number} arg1 - The interest rate per period. For example, use 6%/4 for quarterly payments at 6% APR.
 	 * @param {ApiRange | ApiName | number} arg2 - The payment made each period; it cannot change over the life of the investment.
 	 * @param {ApiRange | ApiName | number} arg3 - Te present value, or the lump-sum amount that a series of future payments is worth now.
-	 * @param {?ApiRange | ?ApiName | ?number} arg4 - The future value, or a cash balance which will be attained after the last payment is made. If omitted, zero is used.
-	 * @param {?ApiRange | ?ApiName | ?number} arg5 - A logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
+	 * @param {ApiRange | ApiName | number} [arg4] - The future value, or a cash balance which will be attained after the last payment is made. If omitted, zero is used.
+	 * @param {ApiRange | ApiName | number} [arg5] - A logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/NPER.js
 	 */
@@ -5629,7 +5613,7 @@
 	 * @param {ApiRange | ApiName | number} arg6 - The annual yield of the security.
 	 * @param {ApiRange | ApiName | number} arg7 - The redemption value of the security, per $100 face value.
 	 * @param {ApiRange | ApiName | number} arg8 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
-	 * @param {?ApiRange | ?ApiName | ?number} arg9 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg9] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ODDFPRICE.js
 	 */
@@ -5648,7 +5632,7 @@
 	 * @param {ApiRange | ApiName | number} arg6 - The purchase price of the security, per $100 par value.
 	 * @param {ApiRange | ApiName | number} arg7 - The redemption value of the security, per $100 par value.
 	 * @param {ApiRange | ApiName | number} arg8 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
-	 * @param {?ApiRange | ?ApiName | ?number} arg9 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg9] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ODDFYIELD.js
 	 */
@@ -5666,7 +5650,7 @@
 	 * @param {ApiRange | ApiName | number} arg5 - The annual yield of the security.
 	 * @param {ApiRange | ApiName | number} arg6 - The redemption value of the security, per $100 par value.
 	 * @param {ApiRange | ApiName | number} arg8 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
-	 * @param {?ApiRange | ?ApiName | ?number} arg9 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg9] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ODDLPRICE.js
 	 */
@@ -5684,7 +5668,7 @@
 	 * @param {ApiRange | ApiName | number} arg6 - The purchase price of the security, per $100 par value.
 	 * @param {ApiRange | ApiName | number} arg6 - The redemption value of the security, per $100 par value.
 	 * @param {ApiRange | ApiName | number} arg8 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
-	 * @param {?ApiRange | ?ApiName | ?number} arg9 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg9] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ODDLYIELD.js
 	 */
@@ -5711,8 +5695,8 @@
 	 * @param {ApiRange | ApiName | number} arg1 - The interest rate per period for the loan. For example, use 6%/4 for quarterly payments at 6% APR.
 	 * @param {ApiRange | ApiName | number} arg2 - The total number of payments for the loan.
 	 * @param {ApiRange | ApiName | number} arg3 - The present value: the total amount that a series of future payments is worth now.
-	 * @param {?ApiRange | ?ApiName | ?number} arg4 - The future value, or a cash balance which will be attained after the last payment is made. If omitted, it is equal to 0.
-	 * @param {?ApiRange | ?ApiName | ?number} arg5 - A logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
+	 * @param {ApiRange | ApiName | number} [arg4] - The future value, or a cash balance which will be attained after the last payment is made. If omitted, it is equal to 0.
+	 * @param {ApiRange | ApiName | number} [arg5] - A logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PMT.js
 	 */
@@ -5727,8 +5711,8 @@
 	 * @param {ApiRange | ApiName | number} arg2 - The period for which the principal payment will be returned. It must be in the range from 1 to to the total number of payment periods.
 	 * @param {ApiRange | ApiName | number} arg3 - The total number of payment periods in an investment.
 	 * @param {ApiRange | ApiName | number} arg4 - The present value: the total amount that a series of future payments is worth now.
-	 * @param {?ApiRange | ?ApiName | ?number} arg5 - The future value, or cash balance which will be attained after the last payment is made.
-	 * @param {?ApiRange | ?ApiName | ?number} arg6 - A logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
+	 * @param {ApiRange | ApiName | number} [arg5] - The future value, or cash balance which will be attained after the last payment is made.
+	 * @param {ApiRange | ApiName | number} [arg6] - A logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PPMT.js
 	 */
@@ -5745,7 +5729,7 @@
 	 * @param {ApiRange | ApiName | number} arg4 - The annual yield of the security.
 	 * @param {ApiRange | ApiName | number} arg5 - The redemption value of the security, per $100 par value.
 	 * @param {ApiRange | ApiName | number} arg6 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
-	 * @param {?ApiRange | ?ApiName | ?number} arg7 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg7] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PRICE.js
 	 */
@@ -5760,7 +5744,7 @@
 	 * @param {ApiRange | ApiName | number} arg2 - The maturity date of the security, expressed as a serial date number.
 	 * @param {ApiRange | ApiName | number} arg3 - The discount rate of the security.
 	 * @param {ApiRange | ApiName | number} arg4 - The redemption value of the security, per $100 par value.
-	 * @param {?ApiRange | ?ApiName | ?number} arg5 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg5] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PRICEDISC.js
 	 */
@@ -5776,7 +5760,7 @@
 	 * @param {ApiRange | ApiName | number} arg3 - The issue date of the security, expressed as a serial date number.
 	 * @param {ApiRange | ApiName | number} arg4 - The security interest rate at the issue date.
 	 * @param {ApiRange | ApiName | number} arg5 - The annual yield of the security.
-	 * @param {?ApiRange | ?ApiName | ?number} arg6 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg6] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PRICEMAT.js
 	 */
@@ -5790,8 +5774,8 @@
 	 * @param {ApiRange | ApiName | number} arg1 - The interest rate per period. For example, use 6%/4 for quarterly payments at 6% APR.
 	 * @param {ApiRange | ApiName | number} arg2 - The total number of payment periods in an investment.
 	 * @param {ApiRange | ApiName | number} arg3 - The payment made each period and cannot change over the life of the investment.
-	 * @param {?ApiRange | ?ApiName | ?number} arg4 - The future value, or a cash balance which will be attained after the last payment is made. If omitted, it is equal to 0.
-	 * @param {?ApiRange | ?ApiName | ?number} arg5 - A logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
+	 * @param {ApiRange | ApiName | number} [arg4] - The future value, or a cash balance which will be attained after the last payment is made. If omitted, it is equal to 0.
+	 * @param {ApiRange | ApiName | number} [arg5] - A logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PV.js
 	 */
@@ -5805,9 +5789,9 @@
 	 * @param {ApiRange | ApiName | number} arg1 - The total number of payment periods for the loan or investment.
 	 * @param {ApiRange | ApiName | number} arg2 - The payment made each period and cannot change over the life of the loan or investment.
 	 * @param {ApiRange | ApiName | number} arg3 - The present value: the total amount that a series of future payments is worth now.
-	 * @param {?ApiRange | ?ApiName | ?number} arg4 - The future value, or a cash balance which will be attained after the last payment is made. If omitted, it is equal to 0.
-	 * @param {?ApiRange | ?ApiName | ?number} arg5 - A logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
-	 * @param {?ApiRange | ?ApiName | ?number} arg6 - An estimate at what the rate will be. If it is omitted, the function will assume guess to be 0.1 (10 percent).
+	 * @param {ApiRange | ApiName | number} [arg4] - The future value, or a cash balance which will be attained after the last payment is made. If omitted, it is equal to 0.
+	 * @param {ApiRange | ApiName | number} [arg5] - A logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
+	 * @param {ApiRange | ApiName | number} [arg6] - An estimate at what the rate will be. If it is omitted, the function will assume guess to be 0.1 (10 percent).
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/RATE.js
 	 */
@@ -5822,7 +5806,7 @@
 	 * @param {ApiRange | ApiName | number} arg2 - The maturity date of the security, expressed as a serial date number.
 	 * @param {ApiRange | ApiName | number} arg3 - The amount invested in the security.
 	 * @param {ApiRange | ApiName | number} arg4 - 	The security discount rate.
-	 * @param {?ApiRange | ?ApiName | ?number} arg6 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg6] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/RECEIVED.js
 	 */
@@ -5917,8 +5901,8 @@
 	 * @param {ApiRange | ApiName | number} arg3 - The number of periods over which the asset is being depreciated (sometimes called the useful life of the asset).
 	 * @param {ApiRange | ApiName | number} arg4 - The starting period for which the depreciation will be calculated, in the same units as the useful life of the asset.
 	 * @param {ApiRange | ApiName | number} arg5 - The ending period for which the depreciation will be calculated, in the same units as the useful life of the asset.
-	 * @param {?ApiRange | ?ApiName | ?number} arg6 - The rate at which the balance declines. If it is omitted, the function will assume it to be 2
-	 * @param {?ApiRange | ?ApiName | ?boolean} arg7 - Specifies whether to use straight-line depreciation when depreciation is greater than the declining balance calculation (<b>false</b> or omitted).
+	 * @param {ApiRange | ApiName | number} [arg6] - The rate at which the balance declines. If it is omitted, the function will assume it to be 2
+	 * @param {ApiRange | ApiName | boolean} [arg7] - Specifies whether to use straight-line depreciation when depreciation is greater than the declining balance calculation (<b>false</b> or omitted).
 	 * If it is set to <b>true</b>, the function uses the declining balance method.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/VDB.js
@@ -5932,7 +5916,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName} arg1 - A range that contains the series of cash flows that corresponds to a schedule of payments in dates.
 	 * @param {ApiRange | ApiName} arg2 - A range that contains the schedule of payment dates that corresponds to the cash flow payments.
-	 * @param {?ApiRange | ?ApiName | ?number} arg3 - An estimate at what the internal rate of return will be. If it is omitted, the function will assume guess to be 0.1 (10 percent).
+	 * @param {ApiRange | ApiName | number} [arg3] - An estimate at what the internal rate of return will be. If it is omitted, the function will assume guess to be 0.1 (10 percent).
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/XIRR.js
 	 */
@@ -5962,7 +5946,7 @@
 	 * @param {ApiRange | ApiName | number} arg4 - The purchase price of the security, per $100 par value.
 	 * @param {ApiRange | ApiName | number} arg5 - The redemption value of the security, per $100 par value.
 	 * @param {ApiRange | ApiName | number} arg6 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
-	 * @param {?ApiRange | ?ApiName | ?number} arg7 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg7] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/YIELD.js
 	 */
@@ -5977,7 +5961,7 @@
 	 * @param {ApiRange | ApiName | number} arg2 - The maturity date of the Treasury bill, expressed as a serial date number.
 	 * @param {ApiRange | ApiName | number} arg3 - The purchase price of the security, per $100 par value.
 	 * @param {ApiRange | ApiName | number} arg4 - The redemption value of the security, per $100 par value.
-	 * @param {?ApiRange | ?ApiName | ?number} arg5 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg5] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/YIELDDISC.js
 	 */
@@ -5993,7 +5977,7 @@
 	 * @param {ApiRange | ApiName | number} arg3 - The issue date of the security, expressed as a serial date number.
 	 * @param {ApiRange | ApiName | number} arg4 - The interest rate of the security at the issue date.
 	 * @param {ApiRange | ApiName | number} arg5 - The purchase price of the security, per $100 par value.
-	 * @param {?ApiRange | ?ApiName | ?number} arg6 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {ApiRange | ApiName | number} [arg6] - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/YIELDMAT.js
 	 */
@@ -6147,7 +6131,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The number to convert.
 	 * @param {ApiRange | ApiName | number} arg2 - The base radix into which the number will be converted. An integer greater than or equal to 2 and less than or equal to 36.
-	 * @param {?ApiRange | ?ApiName | ?number} arg3 - The minimum length of the returned string. An integer greater than or equal to 0 and less than 256. If omitted, leading zeros are not added to the result.
+	 * @param {ApiRange | ApiName | number} [arg3] - The minimum length of the returned string. An integer greater than or equal to 0 and less than 256. If omitted, leading zeros are not added to the result.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BASE.js
 	 */
@@ -6171,8 +6155,8 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The value to round up.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - The multiple of significance to round up to. If it is omitted, the default value of 1 is used.
-	 * @param {?ApiRange | ?ApiName | ?number} arg3 - Specifies if negative numbers are rounded towards or away from zero. If it is omitted or set to 0, negative numbers are rounded towards zero.
+	 * @param {ApiRange | ApiName | number} [arg2] - The multiple of significance to round up to. If it is omitted, the default value of 1 is used.
+	 * @param {ApiRange | ApiName | number} [arg3] - Specifies if negative numbers are rounded towards or away from zero. If it is omitted or set to 0, negative numbers are rounded towards zero.
 	 * If any other numeric value is specified, negative numbers are rounded away from zero.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CEILING_MATH.js
@@ -6185,7 +6169,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The value to round up.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - The multiple of significance to round up to. If it is omitted, the default value of 1 is used. If it is set to zero, the function returns 0.
+	 * @param {ApiRange | ApiName | number} [arg2] - The multiple of significance to round up to. If it is omitted, the default value of 1 is used. If it is set to zero, the function returns 0.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CEILING_PRECISE.js
 	 */
@@ -6378,7 +6362,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The numeric value to round down.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - The multiple of significance to round down to. If it is omitted, the default value of 1 is used. If it is set to zero, the function returns 0.
+	 * @param {ApiRange | ApiName | number} [arg2] - The multiple of significance to round down to. If it is omitted, the default value of 1 is used. If it is set to zero, the function returns 0.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FLOOR_PRECISE.js
 	 */
@@ -6390,8 +6374,8 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The numeric value to round down.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - The multiple of significance to round down to. If it is omitted, the default value of 1 is used.
-	 * @param {?ApiRange | ?ApiName | ?number} arg3 - Specifies if negative numbers are rounded towards or away from zero. If it is omitted or set to 0, negative numbers are rounded away from zero.
+	 * @param {ApiRange | ApiName | number} [arg2] - The multiple of significance to round down to. If it is omitted, the default value of 1 is used.
+	 * @param {ApiRange | ApiName | number} [arg3] - Specifies if negative numbers are rounded towards or away from zero. If it is omitted or set to 0, negative numbers are rounded away from zero.
 	 * If any other numeric value is specified, negative numbers are rounded towards zero.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FLOOR_MATH.js
@@ -6427,7 +6411,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The numeric value to round up.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - The multiple of significance to round up to. If it is omitted, the default value of 1 is used. If it is set to zero, the function returns 0.
+	 * @param {ApiRange | ApiName | number} [arg2] - The multiple of significance to round up to. If it is omitted, the default value of 1 is used. If it is set to zero, the function returns 0.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ISO_CEILING.js
 	 */
@@ -6461,7 +6445,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The positive real number for which the logarithm will be returned.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - The logarithm base. If omitted, it is equal to 10.
+	 * @param {ApiRange | ApiName | number} [arg2] - The logarithm base. If omitted, it is equal to 10.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LOG.js
 	 */
@@ -6654,7 +6638,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A numeric value greater than or equal to 1 and less than 3999.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - A roman numeral type: <b>0</b> - classic, <b>1</b> - more concise, <b>2</b> - more concise, <b>3</b> - more concise, <b>4</b> - simplified.
+	 * @param {ApiRange | ApiName | number} [arg2] - A roman numeral type: <b>0</b> - classic, <b>1</b> - more concise, <b>2</b> - more concise, <b>3</b> - more concise, <b>4</b> - simplified.
 	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ROMAN.js
 	 */
@@ -6812,7 +6796,7 @@
 	 * Adds all the numbers in a range of cells.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | string | number | boolean | array} args - Up to 255 numeric values to add. The first argument is required, subsequent arguments are optional.
+	 * @param {ApiRange | ApiName | string | number | boolean | Array<string | number | boolean>} args - Up to 255 numeric values to add. The first argument is required, subsequent arguments are optional.
 	 * Arguments can be numbers, logical values, text representations of numbers, ranges, or arrays.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SUM.js
@@ -6826,7 +6810,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName} arg1 - The range of cells to be evaluated.
 	 * @param {ApiRange | ApiName | number | string} arg2 - The condition or criteria in the form of a number, expression, or text that defines which cells will be added.
-	 * @param {?ApiRange | ?ApiName} arg3 - The range to sum. If omitted, the cells in range are used.
+	 * @param {ApiRange | ApiName} [arg3] - The range to sum. If omitted, the cells in range are used.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SUMIF.js
 	 */
@@ -6839,10 +6823,10 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName} arg1 - The range of cells to be evaluated.
 	 * @param {ApiRange | ApiName | number | string} arg2 - The first condition or criteria in the form of a number, expression, or text that defines which cells will be added.
-	 * @param {?ApiRange | ?ApiName} arg3 - The first range to sum. If omitted, the cells in range are used.
+	 * @param {ApiRange | ApiName} [arg3] - The first range to sum. If omitted, the cells in range are used.
 	 * @param {ApiRange | ApiName | number | string} arg4 - Up to 127 additional conditions or criteria in the form of a number, expression, or text that defines which cells will be added.
 	 * These arguments are optional.
-	 * @param {?ApiRange | ?ApiName} arg5 - Up to 127 actual ranges to be used to be added. If omitted, the cells in the range are used. These arguments are optional.
+	 * @param {ApiRange | ApiName} [arg5] - Up to 127 actual ranges to be used to be added. If omitted, the cells in the range are used. These arguments are optional.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SUMIFS.js
 	 */
@@ -6863,7 +6847,7 @@
 	 * Returns the sum of the squares of the arguments.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | number | string | boolean | ApiName | array} args - Up to 255 numeric values for which the sum of the squares will be calculated.
+	 * @param {ApiRange | ApiName | number | string | boolean | Array<number | string | boolean>} args - Up to 255 numeric values for which the sum of the squares will be calculated.
 	 * The first argument is required, subsequent arguments are optional.
 	 * The arguments can be numbers, names, logical values or text representations of numbers, ranges of cells that contain numbers, or arrays.
 	 * @returns {number}
@@ -6935,7 +6919,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The number which will be truncated.
-	 * @param {?ApiRange | ?ApiName | ?number} arg2 - A number specifying the precision of the truncation. If this argument is omitted, it is equal to 0 (zero).
+	 * @param {ApiRange | ApiName | number} [arg2] - A number specifying the precision of the truncation. If this argument is omitted, it is equal to 0 (zero).
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TRUNC.js
 	 */
@@ -6974,7 +6958,7 @@
 	 * @param {ApiRange | ApiName} arg2 - A table of text, numbers, or logical values in which data is looked up. The data is sorted in ascending order.
 	 * This argument can be a range of cells or a range name.
 	 * @param {ApiRange | ApiName | number} arg3 - The row number in data table from which the matching value should be returned. The first row of values in the table is row 1.
-	 * @param {?ApiRange | ?ApiName | ?boolean} arg4 - A logical value which specifies whether to find the closest match in the top row (sorted in ascending order) (<b>true</b> or omitted)
+	 * @param {ApiRange | ApiName | boolean} [arg4] - A logical value which specifies whether to find the closest match in the top row (sorted in ascending order) (<b>true</b> or omitted)
 	 * or find an exact match (<b>false</b>).
 	 * @returns {number | string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/HLOOKUP.js
@@ -6987,7 +6971,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {string | ApiRange | ApiName} arg1 - The text giving the path and file name to the document to be opened, a hard drive location, UNC address, or URL path.
-	 * @param {?string | ?ApiRange | ?number | ?ApiName} arg2 - Text or a number that is displayed in the cell. If omitted, the cell displays the link location text.
+	 * @param {string | ApiRange | number | ApiName} [arg2] - Text or a number that is displayed in the cell. If omitted, the cell displays the link location text.
 	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/HYPERLINK.js
 	 */
@@ -6998,10 +6982,10 @@
 	 * Returns a value or reference of the cell at the intersection of a particular row and column, in a given range.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | array} arg1 - A range of cells or an array constant.
+	 * @param {ApiRange | ApiName | number[]} arg1 - A range of cells or an array constant.
 	 * @param {ApiRange | ApiName | number} arg2 - The row in the range from which to return a value. If omitted, the column number is required.
-	 * @param {?ApiRange | ?ApiName | ?number} arg3 - The column in the range from which to return a value. If omitted, the row number is required.
-	 * @param {?ApiRange | ?ApiName | ?number} arg4 - An area to use in case the range contains several ranges. If it is omitted, the function will assume argument to be 1.
+	 * @param {ApiRange | ApiName | number} [arg3] - The column in the range from which to return a value. If omitted, the row number is required.
+	 * @param {ApiRange | ApiName | number} [arg4] - An area to use in case the range contains several ranges. If it is omitted, the function will assume argument to be 1.
 	 * @returns {number | string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/INDEX.js
 	 */
@@ -7014,7 +6998,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | boolean | ApiRange | ApiName} arg1 - A value that is searched for in the first vector. It can be a number, text, a logical value, or a name or reference to a value.
 	 * @param {ApiRange | ApiName} arg2 - A range that contains only one row or one column of text, numbers, or logical values, placed in ascending order.
-	 * @param {?ApiRange | ?ApiName} arg3 - A range that contains only one row or column. It must be the same size as the first vector.
+	 * @param {ApiRange | ApiName} [arg3] - A range that contains only one row or column. It must be the same size as the first vector.
 	 * @returns {number | string | boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LOOKUP.js
 	 */
@@ -7035,8 +7019,8 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | boolean | ApiRange | ApiName} arg1 - The value to be matched in the range. It can be a number, text, or logical value, or a reference to one of these.
-	 * @param {ApiRange | ApiName | array} arg2 - A contiguous range of cells or an array containing possible lookup values.
-	 * @param {?ApiRange | ?ApiName | ?number} arg3 - A number 1, 0, or -1 indicating which value to return.
+	 * @param {ApiRange | ApiName | Array<number | string | boolean>} arg2 - A contiguous range of cells or an array containing possible lookup values.
+	 * @param {ApiRange | ApiName | number} [arg3] - A number 1, 0, or -1 indicating which value to return.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MATCH.js
 	 */
@@ -7047,7 +7031,7 @@
 	 * Returns the number of rows in a range.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | array} arg1 - A range of cells or an array for which the number of rows will be returned.
+	 * @param {ApiRange | ApiName | Array<number | string | boolean>} arg1 - A range of cells or an array for which the number of rows will be returned.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ROWS.js
 	 */
@@ -7058,7 +7042,7 @@
 	 * Converts a vertical range of cells to a horizontal range, or vice versa.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | array} arg1 - A range of cells on a worksheet or an array that will be transposed.
+	 * @param {ApiRange | ApiName | Array<number | string | boolean>} arg1 - A range of cells on a worksheet or an array that will be transposed.
 	 * @returns {ApiRange}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TRANSPOSE.js
 	 */
@@ -7072,7 +7056,7 @@
 	 * @param {number | string | ApiRange | ApiName} arg1 - The value to be found in the first column of the table. It can be a value, a reference, or a text string.
 	 * @param {ApiRange | ApiName} arg2 - A table of text, numbers, or logical values, in which data is retrieved. It can be a range of cells.
 	 * @param {ApiRange | ApiName | number} arg3 - The column number in the data table from which the matching value should be returned. The first column of values in the table is column 1.
-	 * @param {?ApiRange | ?ApiName | ?boolean} arg4 - A logical value that specifies whether to find the closest match in the first column (sorted in ascending order) (<b>true</b> or omitted)
+	 * @param {ApiRange | ApiName | boolean} [arg4] - A logical value that specifies whether to find the closest match in the first column (sorted in ascending order) (<b>true</b> or omitted)
 	 * or find an exact match (<b>false</b>).
 	 * @returns {number | string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/VLOOKUP.js
@@ -7260,7 +7244,7 @@
 	 * Returns the sheet number of the reference sheet.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {?string | ?ApiRange | ?ApiName} arg1 - The name of a sheet or a reference for which the sheet number will be returned. If omitted the number of the sheet containing the function is returned.
+	 * @param {string | ApiRange | ApiName} [arg1] - The name of a sheet or a reference for which the sheet number will be returned. If omitted the number of the sheet containing the function is returned.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SHEET.js
 	 */
@@ -7271,7 +7255,7 @@
 	 * Returns the number of sheets in a reference.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {?ApiRange | ?ApiName} arg1 - A reference for which the number of sheets will be returned. If omitted the number of sheets in the workbook containing the function is returned.
+	 * @param {ApiRange | ApiName} [arg1] - A reference for which the number of sheets will be returned. If omitted the number of sheets in the workbook containing the function is returned.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SHEETS.js
 	 */
@@ -7282,7 +7266,7 @@
 	 * Returns an integer representing the data type of a value: number = 1; text = 2; logical value = 4; error value = 16; array = 64; compound data = 128.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | boolean | array | ApiRange | ApiName} arg1 - A value to test.
+	 * @param {number | string | boolean | Array<number | string | boolean> | ApiRange | ApiName} arg1 - A value to test.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TYPE.js
 	 */
@@ -7316,7 +7300,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | ApiRange | ApiName | boolean} arg1 - Any value or expression that can be evaluated to <b>true</b> or <b>false</b>.
 	 * @param {number | string | ApiRange | ApiName | boolean} arg2 - The value that is returned if the condition is <b>true</b>. If omitted, <b>true</b> is returned. You can nest up to seven IF functions.
-	 * @param {?ApiRange | ?ApiName | ?number | ?string | ?boolean} arg3 - The value that is returned if the condition is <b>false</b>. If omitted, <b>false</b> is returned.
+	 * @param {ApiRange | ApiName | number | string | boolean} [arg3] - The value that is returned if the condition is <b>false</b>. If omitted, <b>false</b> is returned.
 	 * @returns {number | string | boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IF.js
 	 */
@@ -7383,15 +7367,13 @@
 	 * Returns the logical <b>Exclusive Or</b> value of all arguments. The function returns <b>true</b> when the number of <b>true</b> inputs is odd and <b>false</b> when the number of <b>true</b> inputs is even.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | boolean | array} args - The conditions to check.
+	 * @param {ApiRange | ApiName | boolean | boolean[]} args - The conditions to check.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/XOR.js
 	 */
 	ApiWorksheetFunction.prototype.XOR = function () {
 		return this.private_calculateFunction("XOR", arguments);
 	};
-
-
 
 	/**
 	 * Returns an object that represents the range of the specified sheet using the maximum and minimum row/column coordinates.
@@ -7613,7 +7595,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} dataRef - The source data range.
 	 * @param {ApiRange} pivotRef - A range in which the pivot table will be located.
-	 * @param {bool} confirmation - Specifies whether to replace the data in the specified pivot table range (if it exists) or create a dialog box for this (if it exists).
+	 * @param {boolean} confirmation - Specifies whether to replace the data in the specified pivot table range (if it exists) or create a dialog box for this (if it exists).
 	 * @returns {ApiPivotTable}
 	 * @since 8.2.0
 	 * @see office-js-api/Examples/Cell/Api/Methods/InsertPivotExistingWorksheet.js
@@ -8755,29 +8737,43 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sRange - The range where the hyperlink will be added to.
 	 * @param {string} sAddress - The link address.
-	 * @param {string} subAddress - The link subaddress to insert internal sheet hyperlinks.
-	 * @param {string} sScreenTip - The screen tip text.
-	 * @param {string} sTextToDisplay - The link text that will be displayed on the sheet.
+	 * @param {string} [subAddress] - The link subaddress to insert internal sheet hyperlinks.
+	 * @param {string} [sScreenTip] - The screen tip text.
+	 * @param {string} [sTextToDisplay] - The link text that will be displayed on the sheet.
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetHyperlink.js
 	 */
 	ApiWorksheet.prototype.SetHyperlink = function (sRange, sAddress, subAddress, sScreenTip, sTextToDisplay) {
+		// Validate required parameters
+		if (!sRange || !sAddress) {
+			throwException(new Error('Incorrect required parameters'));
+			return false;
+		}
+
 		var range = new ApiRange(this.worksheet.getRange2(sRange));
 		var address;
-		if (range && range.range.isOneCell() && (sAddress || subAddress)) {
+		if (range && range.range.isOneCell()) {
 			var externalLink = sAddress ? AscCommon.rx_allowedProtocols.test(sAddress) : false;
 			if (externalLink && AscCommonExcel.getFullHyperlinkLength(sAddress) > Asc.c_nMaxHyperlinkLength) {
 				throwException(new Error('Incorrect "sAddress".'));
+				return false;
 			}
 			if (!externalLink) {
-				address = subAddress.split("!");
-				if (address.length == 1)
-					address.unshift(this.GetName());
-				else if (this.worksheet.workbook.getWorksheetByName(address[0]) === null) {
+				if (!subAddress) {
 					throwException(new Error('Invalid "subAddress".'));
+					return false;
+				}
+
+				address = subAddress.split("!");
+				if (address.length === 1) {
+					address.unshift(this.GetName());
+				} else if (this.worksheet.workbook.getWorksheetByName(address[0]) === null) {
+					throwException(new Error('Invalid "subAddress".'));
+					return false;
 				}
 				var res = this.worksheet.workbook.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.FormatTable, address[1], false);
 				if (res === Asc.c_oAscError.ID.DataRangeError) {
 					throwException(new Error('Invalid "subAddress".'));
+					return false;
 				}
 			}
 			this.worksheet.selectionRange.assign2(range.range.bbox);
@@ -8890,55 +8886,6 @@
 	};
 
 	/**
-     * Groups an array of drawings in the current worksheet.
-     * @memberof ApiWorksheet
-     * @typeofeditors ["CSE"]
-     * @param {DrawingForGroup[]} aDrawings - An array of drawings to group.
-     * @returns {ApiGroup}
-	 * @since 8.3.0
-     * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GroupDrawings.js
-	 */
-    ApiWorksheet.prototype.GroupDrawings = function(aDrawings) {
-        if (!Array.isArray(aDrawings) || aDrawings.length == 0)
-            return null;
-
-		let _t = this;
-		let aSheets = Asc.editor.GetSheets();
-		let nSheetIdx = aSheets.findIndex(function(sheet) {
-			return sheet.worksheet == _t.worksheet;
-		});
-
-		let oSheetView = Asc['editor'].wb.getWorksheet(nSheetIdx);
-        let oGraphicObjects = oSheetView.objectRender.controller;
-
-        if (aDrawings.find(function(drawing) {
-            return !drawing.Drawing.IsUseInDocument();
-        }))
-            return null;
-        
-		oGraphicObjects.resetSelection();
-
-        aDrawings.forEach(function(drawing) {
-            oGraphicObjects.selectObject(drawing.Drawing, drawing.Drawing.Get_AbsolutePage());
-        });
-        
-        let canGroup = oGraphicObjects.canGroup();
-        if (!canGroup)
-            return null;
-
-        aDrawings.forEach(function(drawing) {
-            drawing.Drawing.recalculate();
-        });
-
-        let oGroup = oGraphicObjects.createGroup();
-        if (!oGroup) {
-            return null;
-        }
-
-        return new ApiGroup(oGroup);
-    };
-	
-	/**
 	 * Adds a Text Art object to the current sheet with the parameters specified.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
@@ -9033,7 +8980,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetAllDrawings.js
 	 */
 	ApiWorksheet.prototype.GetAllDrawings = function () {
-		return AscBuilder.GetApiDrawings(this.worksheet.Drawings.map(function(drawingBase) { return drawingBase.graphicObject }));
+		return GetApiDrawings(this.worksheet.Drawings.map(function(drawingBase) { return drawingBase.graphicObject }));
 	};
 
 	/**
@@ -9637,7 +9584,7 @@
 	 * @param {boolean} ColAbs - Defines if the link to the column is absolute or not.
 	 * @param {string} RefStyle - The reference style.
 	 * @param {boolean} External - Defines if the range is in the current file or not.
-	 * @param {range} RelativeTo - The range which the current range is relative to.
+	 * @param {ApiRange} RelativeTo - The range which the current range is relative to.
 	 * @returns {string | null} - returns address of range as string.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetAddress.js
 	 */
@@ -9755,7 +9702,7 @@
 	 * Sets a value to the current cell or cell range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {string | bool | number | Array[] | Array[][]} data - The general value for the cell or cell range.
+	 * @param {string | boolean | number | Array<string | boolean | number> | Array<Array<string | boolean | number>>} data - The general value for the cell or cell range.
 	 * @returns {boolean} - returns false if such a range does not exist.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetValue.js
 	 */
@@ -10745,7 +10692,7 @@
 	 * Deletes the Range object.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {?DeleteShiftDirection} shift - Specifies how to shift cells to replace the deleted cells.
+	 * @param {DeleteShiftDirection} [shift] - Specifies how to shift cells to replace the deleted cells.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Delete.js
 	 */
 	ApiRange.prototype.Delete = function (shift) {
@@ -10784,7 +10731,7 @@
 	 * Inserts a cell or a range of cells into the worksheet or macro sheet and shifts other cells away to make space.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {?string} shift - Specifies which way to shift the cells ("right", "down").
+	 * @param {string} [shift] - Specifies which way to shift the cells ("right", "down").
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Insert.js
 	 */
 	ApiRange.prototype.Insert = function (shift) {
@@ -10806,8 +10753,8 @@
 	 * Changes the width of the columns or the height of the rows in the range to achieve the best fit.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {?bool} bRows - Specifies if the width of the columns will be autofit.
-	 * @param {?bool} bCols - Specifies if the height of the rows will be autofit.
+	 * @param {boolean} [bRows] - Specifies if the width of the columns will be autofit.
+	 * @param {boolean} [bCols] - Specifies if the height of the rows will be autofit.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/AutoFit.js
 	 */
 	ApiRange.prototype.AutoFit = function (bRows, bCols) {
@@ -11108,18 +11055,6 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {SearchData} oSearchData - The search data used to make search.
 	 * @returns {ApiRange | null} - Returns null if the current range does not contain such text.
-	 * @also
-	 * Finds specific information in the current range.
-	 * @memberof ApiRange
-	 * @typeofeditors ["CSE"]
-	 * @param {string | undefined} What - The data to search for.
-	 * @param {ApiRange} After - The cell after which you want the search to begin. If this argument is not specified, the search starts after the cell in the upper-left corner of the range.
-	 * @param {XlFindLookIn} LookIn - Search data type (formulas or values).
-	 * @param {XlLookAt} LookAt - Specifies whether the whole search text or any part of the search text is matched.
-	 * @param {XlSearchOrder} SearchOrder - Range search order - by rows or by columns.
-	 * @param {XlSearchDirection} SearchDirection - Range search direction - next match or previous match.
-	 * @param {boolean} MatchCase - Case sensitive or not. The default value is "false".
-	 * @returns {ApiRange | null} - Returns null if the current range does not contain such text.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Find.js
 	 */
 	ApiRange.prototype.Find = function (oSearchData) {
@@ -11268,17 +11203,6 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ReplaceData} oReplaceData - The data used to make search and replace.
 	 * @returns {ApiRange | null} - Returns null if the current range does not contain such text.
-	 * @also
-	 * Replaces specific information to another one in a range.
-	 * @memberof ApiRange
-	 * @typeofeditors ["CSE"]
-	 * @param {string | undefined} What - The data to search for.
-	 * @param {string} Replacement - The replacement string.
-	 * @param {XlLookAt} LookAt - Specifies whether the whole search text or any part of the search text is matched.
-	 * @param {XlSearchOrder} SearchOrder - Range search order - by rows or by columns.
-	 * @param {XlSearchDirection} SearchDirection - Range search direction - next match or previous match.
-	 * @param {boolean} MatchCase - Case sensitive or not. The default value is "false".
-	 * @param {boolean} ReplaceAll - Specifies if all the found data will be replaced or not. The default value is "true".
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Replace.js
 	 */
 	ApiRange.prototype.Replace = function (oReplaceData) {
@@ -11402,12 +11326,12 @@
 	 * Adds an AutoFilter to the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {?number} Field - The integer offset of the field on which you want to base the filter (from the left of the list; the leftmost field is field one).
-	 * @param {?string | string[] | ApiColor | XlDynamicFilterCriteria} Criteria1 - The criteria (a string; for example, "101"). Use "=" to find blank fields, "<>" to find non-blank fields, and "><" to select (No Data) fields in data types.
+	 * @param {number} [Field] - The integer offset of the field on which you want to base the filter (from the left of the list; the leftmost field is field one).
+	 * @param {string | string[] | ApiColor | XlDynamicFilterCriteria} [Criteria1] - The criteria (a string; for example, "101"). Use "=" to find blank fields, "<>" to find non-blank fields, and "><" to select (No Data) fields in data types.
 	 * If this argument is omitted, the criteria is All. If Operator is xlTop10Items, Criteria1 specifies the number of items (for example, "10").
-	 * @param {?XlAutoFilterOperator} Operator - An XlAutoFilterOperator constant specifying the type of filter.
-	 * @param {?string} Criteria2 - The second criteria (a string). Used with Criteria1 and Operator to construct compound criteria.
-	 * @param {?boolean} VisibleDropDown - True to display the AutoFilter drop-down arrow for the filtered field. False to hide the AutoFilter drop-down arrow for the filtered field. True by default.
+	 * @param {XlAutoFilterOperator} [Operator] - An XlAutoFilterOperator constant specifying the type of filter.
+	 * @param {string} [Criteria2] - The second criteria (a string). Used with Criteria1 and Operator to construct compound criteria.
+	 * @param {boolean} [VisibleDropDown] - True to display the AutoFilter drop-down arrow for the filtered field. False to hide the AutoFilter drop-down arrow for the filtered field. True by default.
 	 * @since 8.3.0
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetAutoFilter.js
 	 */
@@ -12010,7 +11934,7 @@
 	 * Returns the lock value for the specified lock type of the current drawing.
 	 * @typeofeditors ["CSE"]
 	 * @param {DrawingLockType} sType - Lock type in the string format.
-	 * @returns {bool}
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLockValue.js
 	 */
 	ApiDrawing.prototype.GetLockValue = function (sType) {
@@ -12029,8 +11953,8 @@
 	 * Sets the lock value to the specified lock type of the current drawing.
 	 * @typeofeditors ["CSE"]
 	 * @param {DrawingLockType} sType - Lock type in the string format.
-	 * @param {bool} bValue - Specifies if the specified lock is applied to the current drawing.
-	 * @returns {bool}
+	 * @param {boolean} bValue - Specifies if the specified lock is applied to the current drawing.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLockValue.js
 	 */
 	ApiDrawing.prototype.SetLockValue = function (sType, bValue) {
@@ -12064,57 +11988,44 @@
 		return null;
 	};
 
-	//------------------------------------------------------------------------------------------------------------------
-    //
-    // ApiGroup
-    //
-    //------------------------------------------------------------------------------------------------------------------
-
-    /**
-     * Returns a type of the ApiGroup class.
-     * @memberof ApiGroup
-     * @typeofeditors ["CSE"]
-     * @returns {"group"}
-	 * @since 8.3.0
-     * @see office-js-api/Examples/{Editor}/ApiGroup/Methods/GetClassType.js
-     */
-    ApiGroup.prototype.GetClassType = function() {
-        return "group";
-    };
-
-    /**
-     * Ungroups the current group of drawings.
-     * @memberof ApiGroup
+	/**
+     * Sets the rotation angle to the current drawing object.
+     * @memberof ApiDrawing
+     * @param {number} nRotAngle - new drawing rot angle
      * @typeofeditors ["CSE"]
      * @returns {boolean}
-	 * @since 8.3.0
-     * @see office-js-api/Examples/{Editor}/ApiGroup/Methods/Ungroup.js
-     */
-    ApiGroup.prototype.Ungroup = function() {
-        let oSheet = this.GetParentSheet();
-		if (!oSheet) {
+     * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetRotation.js
+	 */
+	ApiDrawing.prototype.SetRotation = function(nRotAngle)
+	{
+		if (!this.Drawing.canRotate()) {
 			return false;
 		}
 
-		let aSheets = Asc.editor.GetSheets();
-		let nSheetIdx = aSheets.findIndex(function(sheet) {
-			return sheet.worksheet == oSheet.worksheet;
-		});
+		let oXfrm = this.Drawing.getXfrm();
+		oXfrm.setRot(nRotAngle * Math.PI / 180);
+		this.Drawing.checkDrawingBaseCoords();
+		
+		return true;
+	};
+	/**
+     * Gets the rotation angle of the current drawing object.
+     * @memberof ApiDrawing
+     * @typeofeditors ["CSE"]
+     * @returns {number}
+     * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetRotation.js
+	 */
+	ApiDrawing.prototype.GetRotation = function()
+	{
+		if (!this.Drawing.canRotate()) {
+			return 0;
+		}
 
-		let oSheetView = Asc['editor'].wb.getWorksheet(nSheetIdx);
-        let oGraphicObjects = oSheetView.objectRender.controller;
+		let oXfrm = this.Drawing.getXfrm();
+		let nRad = oXfrm.getRot();
 
-        oGraphicObjects.resetSelection();
-        oGraphicObjects.selectObject(this.Drawing, this.Drawing.Get_AbsolutePage())
-        
-        let canUngroup = oGraphicObjects.canUnGroup();
-        if (!canUngroup) {
-            return false;
-        }
-
-        oGraphicObjects.unGroupCallback();
-        return true;
-    };
+		return nRad * 180 / Math.PI
+	};
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -14487,7 +14398,7 @@
 	 * @memberof ApiProtectedRange
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sId - The user ID.
-	 * @returns {bool}
+	 * @returns {boolean}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiProtectedRange/Methods/DeleteUser.js
 	 */
@@ -14550,7 +14461,7 @@
 	 * @memberof ApiProtectedRange
 	 * @typeofeditors ["CSE"]
 	 * @param {ProtectedRangeUserType} protectedRangeUserType - The user type of the protected range.
-	 * @returns {bool}
+	 * @returns {boolean}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiProtectedRange/Methods/SetAnyoneType.js
 	 */
@@ -17771,7 +17682,6 @@
 	ApiWorksheet.prototype["AddChart"] = ApiWorksheet.prototype.AddChart;
 	ApiWorksheet.prototype["AddShape"] = ApiWorksheet.prototype.AddShape;
 	ApiWorksheet.prototype["AddImage"] = ApiWorksheet.prototype.AddImage;
-	ApiWorksheet.prototype["GroupDrawings"] = ApiWorksheet.prototype.GroupDrawings;
 	ApiWorksheet.prototype["AddOleObject"] = ApiWorksheet.prototype.AddOleObject;
 	ApiWorksheet.prototype["ReplaceCurrentImage"] = ApiWorksheet.prototype.ReplaceCurrentImage;
 	ApiWorksheet.prototype["AddWordArt"] = ApiWorksheet.prototype.AddWordArt;
@@ -17866,6 +17776,8 @@
 	ApiDrawing.prototype["GetLockValue"]               =  ApiDrawing.prototype.GetLockValue;
 	ApiDrawing.prototype["SetLockValue"]               =  ApiDrawing.prototype.SetLockValue;
 	ApiDrawing.prototype["GetParentSheet"]             =  ApiDrawing.prototype.GetParentSheet;
+	ApiDrawing.prototype["SetRotation"]                =  ApiDrawing.prototype.SetRotation;
+	ApiDrawing.prototype["GetRotation"]                =  ApiDrawing.prototype.GetRotation;
 
 	ApiImage.prototype["GetClassType"]                 =  ApiImage.prototype.GetClassType;
 
@@ -17873,9 +17785,6 @@
 	ApiShape.prototype["GetDocContent"]                =  ApiShape.prototype.GetDocContent;
 	ApiShape.prototype["GetContent"]                   =  ApiShape.prototype.GetContent;
 	ApiShape.prototype["SetVerticalTextAlign"]         =  ApiShape.prototype.SetVerticalTextAlign;
-
-	ApiGroup.prototype["GetClassType"]	= ApiGroup.prototype.GetClassType;
-	ApiGroup.prototype["Ungroup"]		= ApiGroup.prototype.Ungroup;
 
 	ApiChart.prototype["SetSeriaValues"]              =  ApiChart.prototype.SetSeriaValues;
 	ApiChart.prototype["SetSeriaXValues"]             =  ApiChart.prototype.SetSeriaXValues;
@@ -18709,9 +18618,9 @@
 	function private_ValidateParamsForCustomFunction(jsdoc) {
 		let result = true;
 		const types = [
-			'number', 'string', 'boolean', 'bool', 'any',
-			'number[]', 'string[]', 'boolean[]', 'bool[]', 'any[]',
-			'number[][]', 'string[][]', 'boolean[][]', 'bool[][]', 'any[][]'
+			'number', 'string', 'boolean', 'boolean', 'any',
+			'number[]', 'string[]', 'boolean[]', 'boolean[]', 'any[]',
+			'number[][]', 'string[][]', 'boolean[][]', 'boolean[][]', 'any[][]'
 		];
 
 		if (jsdoc.returnInfo && !types.includes(jsdoc.returnInfo.type)) {
@@ -18773,13 +18682,36 @@
 		oldSelection && oldSelection.Select(true);
 	}
 
+	function GetApiDrawings(drawingObjects) {
+		return drawingObjects.map(function(drawing) {
+			return GetApiDrawing(drawing);
+		}).filter(function(apiDrawing) {
+			return !!apiDrawing;
+		});
+	}
+	
+	function GetApiDrawing(drawing) {
+        switch (drawing.getObjectType()) {
+            case AscDFH.historyitem_type_Shape:
+                return new AscBuilder.ApiShape(drawing);
+            case AscDFH.historyitem_type_ImageShape:
+                return new AscBuilder.ApiImage(drawing);
+            case AscDFH.historyitem_type_OleObject:
+                return new AscBuilder.ApiOleObject(drawing);
+			case AscDFH.historyitem_type_GroupShape:
+                return new ApiDrawing(drawing);
+			case AscDFH.historyitem_type_ChartSpace:
+				return new AscBuilder.ApiChart(drawing);
+        }
+        return null;
+    }
+
 	function private_MakeError(message) {
 		console.error(new Error(message) );
 	}
 	window['AscBuilder'] = window['AscBuilder'] || {};
 	window['AscBuilder'].ApiShape           = ApiShape;
 	window['AscBuilder'].ApiImage           = ApiImage;
-	window['AscBuilder'].ApiGroup           = ApiGroup;
 	window['AscBuilder'].ApiOleObject       = ApiOleObject;
 
 }(window, null));

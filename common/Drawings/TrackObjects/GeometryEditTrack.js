@@ -484,75 +484,82 @@
         return {XLT: dXLT, XRB: dXRB, YLT: dYLT, YRB: dYRB }
     };
 
-    EditShapeGeometryTrack.prototype.getXfrmOffset = function() {
-        var oRectBounds = this.getRectBounds();
-        var dExtX = this.xMax - this.xMin;
-        var dExtY = this.yMax - this.yMin;
-        var dXLT = oRectBounds.XLT;
-        var dXRB = oRectBounds.XRB;
-        var dYLT = oRectBounds.YLT;
-        var dYRB = oRectBounds.YRB;
-        var dXC = (dXLT + dXRB) / 2.0;
-        var dYC = (dYLT + dYRB) / 2.0;
-        var dOffX = dXC - dExtX / 2.0;
-        var dOffY = dYC - dExtY / 2.0;
-        var oGroup = this.originalObject.group;
-        if(oGroup) {
-            dOffX -= oGroup.transform.tx;
-            dOffY -= oGroup.transform.ty;
-        }
-        return {OffX: dOffX, OffY: dOffY};
+	EditShapeGeometryTrack.prototype.getXfrmOffset = function () {
+		const oRectBounds = this.getRectBounds();
+		const dXLT = oRectBounds.XLT;
+		const dXRB = oRectBounds.XRB;
+		const dYLT = oRectBounds.YLT;
+		const dYRB = oRectBounds.YRB;
 
-    };
-		EditShapeGeometryTrack.prototype.checkDrawingPartWithHistory = function () {
-			if (this.originalObject.checkDrawingPartWithHistory) {
-				const newObject = this.originalObject.checkDrawingPartWithHistory();
-				if (newObject) {
-					this.originalObject = newObject;
-					this.originalShape = newObject;
-				}
+		const dExtX = this.xMax - this.xMin;
+		const dExtY = this.yMax - this.yMin;
+		const dXC = (dXLT + dXRB) / 2.0;
+		const dYC = (dYLT + dYRB) / 2.0;
+
+		let dOffX = dXC - dExtX / 2.0;
+		let dOffY = dYC - dExtY / 2.0;
+
+		const oGroup = this.originalObject.group;
+		if (oGroup) {
+			dOffX -= oGroup.transform.tx;
+			dOffY -= oGroup.transform.ty;
+		}
+
+		return { OffX: dOffX, OffY: dOffY };
+	};
+	EditShapeGeometryTrack.prototype.checkDrawingPartWithHistory = function () {
+		if (this.originalObject.checkDrawingPartWithHistory) {
+			const newObject = this.originalObject.checkDrawingPartWithHistory();
+			if (newObject) {
+				this.originalObject = newObject;
+				this.originalShape = newObject;
 			}
-		};
-    EditShapeGeometryTrack.prototype.trackEnd = function(bWord) {
-        this.addCommandsInPathInfo();
-        //set new extents
-        var dExtX = this.xMax - this.xMin;
-        var dExtY = this.yMax - this.yMin;
-        var oSpPr = this.originalObject.spPr;
-        var oXfrm = oSpPr.xfrm;
-        var oOffset;
-        if(this.originalObject.animMotionTrack) {
-            oOffset = this.getXfrmOffset();
-            this.originalObject.updateAnimation(oOffset.OffX, oOffset.OffY, dExtX, dExtY, 0, this.geometry, true);
-        }
-        else {
-            oXfrm.setExtX(dExtX);
-            oXfrm.setExtY(dExtY);
-            oXfrm.setRot(0);
-            //set new position
-            if(bWord && !this.originalObject.group) {
-                oXfrm.setOffX(0);
-                oXfrm.setOffY(0);
-            }
-            else {
-                oOffset = this.getXfrmOffset();
-                oXfrm.setOffX(oOffset.OffX);
-                oXfrm.setOffY(oOffset.OffY);
-            }
-            oSpPr.setGeometry(this.geometry.createDuplicate());
-            this.originalObject.checkDrawingBaseCoords();
-        }
+		}
+	};
+	EditShapeGeometryTrack.prototype.trackEnd = function (bWord) {
+		this.addCommandsInPathInfo();
 
-        if(this.addedPointIdx !== null) {
-            var oGmSelection = this.getGmSelection();
-            if(oGmSelection) {
-                oGmSelection.setGmEditPointIdx(this.addedPointIdx);
-            }
-        }
-        if(this.drawingObjects) {
-            this.drawingObjects.resetConnectors([this.originalObject]);
-        }
-    };
+		const oSpPr = this.originalObject.spPr;
+		const oXfrm = oSpPr.xfrm;
+
+		const dExtX = this.xMax - this.xMin;
+		const dExtY = this.yMax - this.yMin;
+
+		if (this.originalObject.animMotionTrack) {
+			const oOffset = this.getXfrmOffset();
+			this.originalObject.updateAnimation(oOffset.OffX, oOffset.OffY, dExtX, dExtY, 0, this.geometry, true);
+		} else {
+			oXfrm.setExtX(dExtX);
+			oXfrm.setExtY(dExtY);
+
+			if (!AscFormat.isRealNumber(oXfrm.rot)) {
+				oXfrm.setRot(0);
+			}
+
+			if (bWord && !this.originalObject.group) {
+				oXfrm.setOffX(0);
+				oXfrm.setOffY(0);
+			} else {
+				const oOffset = this.getXfrmOffset();
+				oXfrm.setOffX(oOffset.OffX);
+				oXfrm.setOffY(oOffset.OffY);
+			}
+
+			oSpPr.setGeometry(this.geometry.createDuplicate());
+			this.originalObject.checkDrawingBaseCoords();
+		}
+
+		if (this.addedPointIdx !== null) {
+			const oGmSelection = this.getGmSelection();
+			if (oGmSelection) {
+				oGmSelection.setGmEditPointIdx(this.addedPointIdx);
+			}
+		}
+
+		if (this.drawingObjects) {
+			this.drawingObjects.resetConnectors([this.originalObject]);
+		}
+	};
 
     EditShapeGeometryTrack.prototype.convertToBezier = function() {
         var geometry = this.geometry;

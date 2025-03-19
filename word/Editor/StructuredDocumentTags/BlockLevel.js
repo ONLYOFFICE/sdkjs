@@ -201,9 +201,11 @@ CBlockLevelSdt.prototype.Read_FromBinary2 = function(Reader)
 };
 CBlockLevelSdt.prototype.Draw = function(CurPage, oGraphics)
 {
+	let logicDocument = this.GetLogicDocument();
+	
 	let shdColor = this.getShdColor();
-	if (!shdColor && (this.LogicDocument.GetSdtGlobalShowHighlight() && !oGraphics.isPdf()))
-		shdColor = AscWord.CDocumentColorA.fromObjectRgb(this.LogicDocument.GetSdtGlobalColor());
+	if (logicDocument && !shdColor && (logicDocument.GetSdtGlobalShowHighlight() && !oGraphics.isPdf()))
+		shdColor = AscWord.CDocumentColorA.fromObjectRgb(logicDocument.GetSdtGlobalColor());
 	
 	if (shdColor)
 	{

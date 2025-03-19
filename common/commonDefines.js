@@ -3671,10 +3671,10 @@ window.AscCommon.g_cIsBeta = "false";
 	var availableIdeographLanguages = ['zh-CN', 'vi-VN', 'ko-KR', 'ja-JP', 'zh-Hans', 'zh-TW', 'zh-CN', 'zh-HK', 'zh-SG',
 		'zh-MO', 'zh-Hant', 'zh'];
 	var availableBidiLanguages = [];
-	var document_compatibility_mode_Word11 = 11;
+	var document_compatibility_mode_Word11 = 11; // 2003 (doc)
 	var document_compatibility_mode_Word12 = 12;
-	var document_compatibility_mode_Word14 = 14;
-	var document_compatibility_mode_Word15 = 15;
+	var document_compatibility_mode_Word14 = 14; // 2010
+	var document_compatibility_mode_Word15 = 15; // 2013/2015/2019
 
 	var document_compatibility_mode_Current = document_compatibility_mode_Word12;
 
@@ -3712,6 +3712,12 @@ window.AscCommon.g_cIsBeta = "false";
 			SzScreen16x9: 14,
 			SzScreen4x3: 15,
 			SzWidescreen: 16
+	};
+
+	const thumbnailsPositionMap = {
+		left: 0,
+		right: 1,
+		bottom: 2,
 	};
 
 	var c_oAscPictureFormScaleFlag = {
@@ -5890,6 +5896,11 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['SzScreen16x9'] = prot.SzScreen16x9;
 	prot['SzScreen4x3'] = prot.SzScreen4x3;
 	prot['SzWidescreen'] = prot.SzWidescreen;
+
+	prot = window['AscCommon']['thumbnailsPositionMap'] = window['AscCommon'].thumbnailsPositionMap = thumbnailsPositionMap;
+	prot['left']   = prot.left;
+	prot['right']  = prot.right;
+	prot['bottom'] = prot.bottom;
 
 	prot = window['Asc']['c_oAscPictureFormScaleFlag'] = window['Asc'].c_oAscPictureFormScaleFlag = c_oAscPictureFormScaleFlag;
 	prot['Always']  = prot.Always;

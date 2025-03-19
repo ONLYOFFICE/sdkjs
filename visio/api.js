@@ -85,6 +85,15 @@
 				editor = window.editor;
 		}
 
+		this.thumbnailsPosition = AscCommon.thumbnailsPositionMap.left;
+		if(config["thumbnails-position"] === "bottom") {
+			this.thumbnailsPosition = AscCommon.thumbnailsPositionMap.bottom;
+		}
+		else if(config["thumbnails-position"] === "right") {
+			this.thumbnailsPosition = AscCommon.thumbnailsPositionMap.right;
+		}
+
+
 		this._init();
 		return this;
 	}
@@ -977,6 +986,25 @@
 		window["AscDesktopEditor"]["Print"](JSON.stringify(desktopOptions));
 		return true;
 	};
+
+	VisioEditorApi.prototype.asc_SetThumbnailsPosition = function (pos) {
+		this.thumbnailsPosition = pos;
+	};
+	VisioEditorApi.prototype.getThumbnailsPosition = function () {
+		if(!this.isRTLInterface) {
+			return this.thumbnailsPosition;
+		}
+		if(this.thumbnailsPosition === AscCommon.thumbnailsPositionMap.left) {
+			return AscCommon.thumbnailsPositionMap.right;
+		}
+		return this.thumbnailsPosition;
+	};
+
+	VisioEditorApi.prototype.onUpdateThumbnailsPosition = function () {
+	};
+	VisioEditorApi.prototype.onChangeRTLInterface = function () {
+		this.onUpdateThumbnailsPosition();
+	};
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};
 	window['Asc']['VisioEditorApi']                                       = VisioEditorApi;
@@ -1051,6 +1079,7 @@
 	prot['asc_SetFastCollaborative']             	= prot.asc_SetFastCollaborative;
 	prot['asc_DownloadAs']             				= prot.asc_DownloadAs;
 	prot['asc_getPageName']             			= prot.asc_getPageName;
+	prot['asc_SetThumbnailsPosition']             	= prot.asc_SetThumbnailsPosition;
 	prot['InitEditor']                          	= prot.InitEditor;
 	prot['isDocumentModified']             			= prot.isDocumentModified;
 	prot['SetDrawingFreeze']             			= prot.SetDrawingFreeze;

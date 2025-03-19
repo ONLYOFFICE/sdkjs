@@ -5621,7 +5621,19 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
                     // У нас Flow-объект. Если он с обтеканием, тогда мы останавливаем пересчет и
                     // запоминаем текущий объект. В функции Internal_Recalculate_2 пересчитываем
                     // его позицию и сообщаем ее внешнему классу.
-
+					
+					// Не учитываем обтекание, если у нас на странице больше 100 объектов с обтеканием (баг 73462)
+					if (isUseWrap
+						&& DrawingObjects && DrawingObjects.graphicPages
+						&& DrawingObjects.graphicPages[PageAbs]
+						&& DrawingObjects.graphicPages[PageAbs].beforeTextObjects.length >= 100)
+					{
+						isUseWrap = false;
+						let LDRecalcInfo  = Para.Parent.RecalcInfo;
+						if (LDRecalcInfo.FlowObject)
+							LDRecalcInfo.Reset();
+					}
+					
                     if (isUseWrap)
                     {
                         var LogicDocument = Para.Parent;
@@ -5631,7 +5643,9 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
 							// Обновляем позицию объекта
 							Item.Update_Position(PRSA.Paragraph, new CParagraphLayout( PRSA.X, PRSA.Y , PageAbs, PRSA.LastW, ColumnStartX, ColumnEndX, X_Left_Margin, X_Right_Margin, Page_Width, Top_Margin, Bottom_Margin, Page_H, PageFields.X, PageFields.Y, Para.Pages[CurPage].Y + Para.Lines[_CurLine].Y - Para.Lines[_CurLine].Metrics.Ascent, Para.Pages[_CurPage].Y), PageLimits, PageLimitsOrigin, _CurLine);
 							
-							if (PRSA.getCompatibilityMode() >= AscCommon.document_compatibility_mode_Word15
+							// For headers we do not check for exceeding lower bound in this case
+							if (!isInHdrFtr
+								&& PRSA.getCompatibilityMode() >= AscCommon.document_compatibility_mode_Word15
 								&& 0 === CurPage
 								&& Item.Get_Bounds().Bottom >= Y_Bottom_Field
 								&& Item.IsMoveWithTextVertically())
@@ -9630,27 +9644,26 @@ function CParaRunLine()
     this.Ranges[0]    = new CParaRunRange( 0, 0 );
     this.RangesLength = 0;
 }
+CParaRunLine.prototype.addRange = function(RangeIndex, StartPos, EndPos)
+{
+	if (0 !== RangeIndex)
+	{
+		this.Ranges[RangeIndex] = new CParaRunRange(StartPos, EndPos);
+		this.RangesLength       = RangeIndex + 1;
+	}
+	else
+	{
+		this.Ranges[0].StartPos = StartPos;
+		this.Ranges[0].EndPos   = EndPos;
+		this.RangesLength       = 1;
+	}
+	
+	if (this.Ranges.length > this.RangesLength)
+		this.Ranges.legth = this.RangesLength;
+};
 
 CParaRunLine.prototype =
 {
-    Add_Range : function(RangeIndex, StartPos, EndPos)
-    {
-        if ( 0 !== RangeIndex )
-        {
-            this.Ranges[RangeIndex] = new CParaRunRange( StartPos, EndPos );
-            this.RangesLength  = RangeIndex + 1;
-        }
-        else
-        {
-            this.Ranges[0].StartPos = StartPos;
-            this.Ranges[0].EndPos   = EndPos;
-            this.RangesLength = 1;
-        }
-
-        if ( this.Ranges.length > this.RangesLength )
-            this.Ranges.legth = this.RangesLength;
-    },
-
     Copy : function()
     {
         var NewLine = new CParaRunLine();

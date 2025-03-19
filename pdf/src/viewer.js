@@ -2254,7 +2254,7 @@
 		};
 		this.canInteract = function() {
 			// не даем взаимодействовать с документом пока не произошла отрисовка
-			return this.scheduledRepaintTimer == null && this.isRepaint != true;
+			return this.scheduledRepaintTimer == null && this.isRepaint != true && this.initPaintDone == true;
 		};
 		this.getPageDrawingByMouse = function()
 		{
@@ -3227,6 +3227,8 @@
 			
 			// Обязательно делаем в конце, т.к. во время отрисовки происходит пересчет
 			this._checkTargetUpdate();
+
+			this.initPaintDone = true;
 		};
 		this.updatePageDetector = function() {
 			this.pageDetector = new CCurrentPageDetector(this.canvas.width, this.canvas.height);

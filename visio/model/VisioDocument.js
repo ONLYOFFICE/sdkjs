@@ -458,6 +458,18 @@
 	 * @param {number} pageIndex
 	 */
 	CVisioDocument.prototype.draw = function(Zoom, pGraphics, pageIndex) {
+		/**
+		 *
+		 * @param graphics
+		 * @param {(CShape | CGroupShape)} shapeOrGroup
+		 * @param baseMatrix
+		 * @param baseTextMatrix
+		 * @param isRecalculateTextY
+		 * @param isFlipImages
+		 * @param isAdditionalRecalculate
+		 * @param logic_h_mm
+		 * @param {CGroupShape?} currentGroupHandling
+		 */
 		function drawShapeOrGroupRecursively(graphics, shapeOrGroup, baseMatrix, baseTextMatrix,
 											 isRecalculateTextY, isFlipImages, isAdditionalRecalculate, logic_h_mm, currentGroupHandling) {
 			// see sdkjs/common/Shapes/Serialize.js this.ReadGroupShape = function(type) to
@@ -548,7 +560,6 @@
 					shapeOrGroup.recalculateTransformText && shapeOrGroup.recalculateTransformText();
 					shapeOrGroup.recalculateLocalTransform(shapeOrGroup.transform);
 					shapeOrGroup.recalculateContent && shapeOrGroup.recalculateContent();
-
 				}
 			}
 		}
@@ -718,6 +729,10 @@
 
 				let topLevelShapesAndGroups = this.convertToCShapesAndGroups(pageInfo, pageContent, drawingPageScale);
 				this.pageShapesCache[pageIndex] = topLevelShapesAndGroups;
+
+				topLevelShapesAndGroups.forEach(function (shapeOrGroup) {
+					shapeOrGroup.recalculate();
+				});
 			}
 		}
 
@@ -867,6 +882,9 @@
 	CVisioDocument.prototype.GetSlidesCount = function () {
 		return this.getCountPages();
 	};
+	CVisioDocument.prototype.GetAllSlides = function () {
+		return this.pages.page;
+	};
 	CVisioDocument.prototype.Recalculate = function (RecalcData) {
 		//todo
 		this.DrawingDocument.OnStartRecalculate(this.GetSlidesCount());
@@ -909,6 +927,9 @@
 		return nIdx + 1;
 	};
 	CVisioDocument.prototype.isSlideAnimated = function () {
+		return false;
+	};
+	CVisioDocument.prototype.isSlidePreserved = function () {
 		return false;
 	};
 	CVisioDocument.prototype.CheckTargetUpdate = function () {

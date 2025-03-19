@@ -277,8 +277,16 @@ function CEditorPage(api)
 
 		// panel right --------------------------------------------------------------
 		this.m_oPanelRight = AscCommon.CreateControlContainer("id_panel_right");
-		this.m_oPanelRight.Bounds.SetParams(0, 0, 1000, 0, false, true, false, true, scrollWidthMm, -1);
-		this.m_oPanelRight.Anchor = (g_anchor_top | g_anchor_right | g_anchor_bottom);
+		if (!this.m_oApi.isRtlInterface)
+		{
+			this.m_oPanelRight.Bounds.SetParams(0, 0, 1000, 0, false, true, false, true, scrollWidthMm, -1);
+			this.m_oPanelRight.Anchor = (g_anchor_top | g_anchor_right | g_anchor_bottom);
+		}
+		else
+		{
+			this.m_oPanelRight.Bounds.SetParams(0, 0, 0, 0, false, true, false, true, scrollWidthMm, -1);
+			this.m_oPanelRight.Anchor = (g_anchor_top | g_anchor_left | g_anchor_bottom);
+		}
 
 		this.m_oBody.AddControl(this.m_oPanelRight);
 		if (this.m_oApi.isMobileVersion)
@@ -328,18 +336,44 @@ function CEditorPage(api)
 		// main content -------------------------------------------------------------
 		this.m_oMainContent = AscCommon.CreateControlContainer("id_main");
 		if (!this.m_oApi.isMobileVersion)
-			this.m_oMainContent.Bounds.SetParams(0, 0, scrollWidthMm, 0, false, true, true, true, -1, -1);
+		{
+			if (!this.m_oApi.isRtlInterface)
+				this.m_oMainContent.Bounds.SetParams(0, 0, scrollWidthMm, 0, false, true, true, true, -1, -1);
+			else
+				this.m_oMainContent.Bounds.SetParams(scrollWidthMm, 0, 0, 0, true, true, true, true, -1, -1);
+		}
 		else
+		{
 			this.m_oMainContent.Bounds.SetParams(0, 0, 0, 0, false, true, true, true, -1, -1);
+		}
 		this.m_oMainContent.Anchor = (g_anchor_left | g_anchor_top | g_anchor_right | g_anchor_bottom);
 		this.m_oBody.AddControl(this.m_oMainContent);
 
 		// --- left ---
-		this.m_oLeftRuler = AscCommon.CreateControlContainer("id_panel_left");
-		this.m_oLeftRuler.Bounds.SetParams(0, 0, 1000, 1000, false, false, false, false, 5, -1);
-		this.m_oLeftRuler.Anchor = (g_anchor_left | g_anchor_top | g_anchor_bottom);
-		this.m_oMainContent.AddControl(this.m_oLeftRuler);
+		if (!this.m_oApi.isRtlInterface)
+		{
+			this.m_oLeftRuler = AscCommon.CreateControlContainer("id_panel_left");
+			this.m_oLeftRuler.Bounds.SetParams(0, 0, 1000, 1000, false, false, false, false, 5, -1);
+			this.m_oLeftRuler.Anchor = (g_anchor_left | g_anchor_top | g_anchor_bottom);
+			this.m_oMainContent.AddControl(this.m_oLeftRuler);
 
+			this.m_oMainView = AscCommon.CreateControlContainer("id_main_view");
+			this.m_oMainView.Bounds.SetParams(5, 7, 1000, 1000, true, true, false, false, -1, -1);
+			this.m_oMainView.Anchor = (g_anchor_left | g_anchor_right | g_anchor_top | g_anchor_bottom);
+			this.m_oMainContent.AddControl(this.m_oMainView);
+		}
+		else
+		{
+			this.m_oLeftRuler = AscCommon.CreateControlContainer("id_panel_left");
+			this.m_oLeftRuler.Bounds.SetParams(0, 0, 1000, 1000, false, false, false, false, 5, -1);
+			this.m_oLeftRuler.Anchor = (g_anchor_right | g_anchor_top | g_anchor_bottom);
+			this.m_oMainContent.AddControl(this.m_oLeftRuler);
+
+			this.m_oMainView = AscCommon.CreateControlContainer("id_main_view");
+			this.m_oMainView.Bounds.SetParams(0, 7, 5, 1000, false, true, true, false, -1, -1);
+			this.m_oMainView.Anchor = (g_anchor_left | g_anchor_right | g_anchor_top | g_anchor_bottom);
+			this.m_oMainContent.AddControl(this.m_oMainView);
+		}
 		this.m_oLeftRuler_buttonsTabs = AscCommon.CreateControl("id_buttonTabs");
 		this.m_oLeftRuler_buttonsTabs.Bounds.SetParams(0, 0.8, 1000, 1000, false, true, false, false, -1, 5);
 		this.m_oLeftRuler_buttonsTabs.Anchor = (g_anchor_left | g_anchor_top | g_anchor_right);
@@ -352,21 +386,26 @@ function CEditorPage(api)
 		// ------------
 
 		// --- top ----
-		this.m_oTopRuler = AscCommon.CreateControlContainer("id_panel_top");
-		this.m_oTopRuler.Bounds.SetParams(5, 0, 1000, 1000, true, false, false, false, -1, 7);
-		this.m_oTopRuler.Anchor = (g_anchor_left | g_anchor_top | g_anchor_right);
-		this.m_oMainContent.AddControl(this.m_oTopRuler);
+		if (!this.m_oApi.isRtlInterface)
+		{
+			this.m_oTopRuler = AscCommon.CreateControlContainer("id_panel_top");
+			this.m_oTopRuler.Bounds.SetParams(5, 0, 1000, 1000, true, false, false, false, -1, 7);
+			this.m_oTopRuler.Anchor = (g_anchor_left | g_anchor_top | g_anchor_right);
+			this.m_oMainContent.AddControl(this.m_oTopRuler);
+		}
+		else
+		{
+			this.m_oTopRuler = AscCommon.CreateControlContainer("id_panel_top");
+			this.m_oTopRuler.Bounds.SetParams(0, 0, 5, 1000, false, false, true, false, -1, 7);
+			this.m_oTopRuler.Anchor = (g_anchor_left | g_anchor_top | g_anchor_right);
+			this.m_oMainContent.AddControl(this.m_oTopRuler);
+		}
 
 		this.m_oTopRuler_horRuler = AscCommon.CreateControl("id_hor_ruler");
 		this.m_oTopRuler_horRuler.Bounds.SetParams(0, 0, 1000, 1000, false, false, false, false, -1, -1);
 		this.m_oTopRuler_horRuler.Anchor = (g_anchor_left | g_anchor_right | g_anchor_top | g_anchor_bottom);
 		this.m_oTopRuler.AddControl(this.m_oTopRuler_horRuler);
 		// ------------
-
-		this.m_oMainView = AscCommon.CreateControlContainer("id_main_view");
-		this.m_oMainView.Bounds.SetParams(5, 7, 1000, 1000, true, true, false, false, -1, -1);
-		this.m_oMainView.Anchor = (g_anchor_left | g_anchor_right | g_anchor_top | g_anchor_bottom);
-		this.m_oMainContent.AddControl(this.m_oMainView);
 
 		// проблема с фокусом fixed-позиционированного элемента внутри (bug 63194)
 		this.m_oMainView.HtmlElement.onscroll = function() {
@@ -705,7 +744,11 @@ function CEditorPage(api)
 			this.m_oLeftRuler.HtmlElement.style.display = 'block';
 			this.m_oTopRuler.HtmlElement.style.display  = 'block';
 
-			this.m_oMainView.Bounds.L = 5;
+			if (!this.m_oApi.isRtlInterface)
+				this.m_oMainView.Bounds.L = 5;
+			else
+				this.m_oMainView.Bounds.R = 5;
+
 			this.m_oMainView.Bounds.T = 7;
 		}
 		else
@@ -713,7 +756,11 @@ function CEditorPage(api)
 			this.m_oLeftRuler.HtmlElement.style.display = 'none';
 			this.m_oTopRuler.HtmlElement.style.display  = 'none';
 
-			this.m_oMainView.Bounds.L = 0;
+			if (!this.m_oApi.isRtlInterface)
+				this.m_oMainView.Bounds.L = 0;
+			else
+				this.m_oMainView.Bounds.R = 0;
+
 			this.m_oMainView.Bounds.T = 0;
 		}
 	};
@@ -1758,11 +1805,9 @@ function CEditorPage(api)
 		var _xOffset = oWordControl.X;
 		var _yOffset = oWordControl.Y;
 
-		if (true === oWordControl.m_bIsRuler)
-		{
-			_xOffset += (5 * g_dKoef_mm_to_pix);
-			_yOffset += (7 * g_dKoef_mm_to_pix);
-		}
+		let offsets = oWordControl.m_oDrawingDocument.GetMainOffset();
+		_xOffset += offsets.x;
+		_yOffset += offsets.y;
 
 		if (window['closeDialogs'] != undefined)
 			window['closeDialogs']();
@@ -3793,6 +3838,10 @@ function CEditorPage(api)
 	this.GetMainContentBounds = function()
 	{
 		return this.m_oMainContent.AbsolutePosition;
+	};
+	this.GetVertRulerLeft = function()
+	{
+		return this.m_oLeftRuler.AbsolutePosition.L;
 	};
 
 	// mobile ---

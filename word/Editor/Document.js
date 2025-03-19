@@ -6934,8 +6934,18 @@ CDocument.prototype.MoveCursorLeft = function(AddToSelect, Word)
 
 	if (undefined === Word || null === Word)
 		Word = false;
-
-	this.Controller.MoveCursorLeft(AddToSelect, Word);
+	
+	let isRtl = false;
+	if (!this.IsSelectionUse() || this.IsTextSelectionUse())
+	{
+		let curPara = this.GetCurrentParagraph(true);
+		isRtl = (curPara ? curPara.isRtlDirection() : false);
+	}
+	
+	if (isRtl)
+		this.Controller.MoveCursorRight(AddToSelect, Word);
+	else
+		this.Controller.MoveCursorLeft(AddToSelect, Word);
 
 	this.CorrectCursorPosition(false);
 	this.Document_UpdateInterfaceState();
@@ -6949,8 +6959,18 @@ CDocument.prototype.MoveCursorRight = function(AddToSelect, Word, FromPaste)
 
 	if (undefined === Word || null === Word)
 		Word = false;
-
-	this.Controller.MoveCursorRight(AddToSelect, Word, FromPaste);
+	
+	let isRtl = false;
+	if (!this.IsSelectionUse() || this.IsTextSelectionUse())
+	{
+		let curPara = this.GetCurrentParagraph(true);
+		isRtl = (curPara ? curPara.isRtlDirection() : false);
+	}
+	
+	if (isRtl)
+		this.Controller.MoveCursorLeft(AddToSelect, Word);
+	else
+		this.Controller.MoveCursorRight(AddToSelect, Word, FromPaste);
 
 	this.CorrectCursorPosition(true);
 	this.Document_UpdateInterfaceState();

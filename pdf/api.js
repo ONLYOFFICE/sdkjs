@@ -342,16 +342,18 @@
 			if (oActiveObj && oActiveObj.IsDrawing()) {
 				oDoc.BlurActiveObject();
 			}
-
-			oDoc.drawings.forEach(function(drawing) {
-				drawing.AddToRedraw();
-			});
 		}
 		else {
 			setTimeout(function() {
 				oDoc.checkDefaultFonts();
 			});
 		}
+
+		oDoc.drawings.forEach(function(drawing) {
+			if (drawing.IsShape() && drawing.IsFromScan()) {
+				drawing.AddToRedraw();
+			}
+		});
 	};
 	PDFEditorApi.prototype.sync_CanUndoCallback = function(canUndo) {
 		this.sendEvent("asc_onCanUndo", canUndo);
@@ -1678,7 +1680,7 @@
 		oParaPr.ListType	= AscFormat.fGetListTypeFromBullet(oParaPr.Bullet);
 
 		this.sync_ParaSpacingLine(oParaPr.Spacing);
-		this.Update_ParaInd(oParaPr.Ind);
+		this.Update_ParaInd(oParaPr.Ind, false);
 		this.sync_PrAlignCallBack(oParaPr.Jc);
 		this.sync_ParaStyleName(oParaPr.StyleName);
 		this.sync_ListType(oParaPr.ListType);

@@ -4189,6 +4189,29 @@ function CDrawingDocument()
 		return {X: _x, Y: _y, Error: false};
 	};
 
+	this.GetMainOffset = function(isUseRuler)
+	{
+		let result = {
+			x : 0,
+			y : 0
+		};
+
+		if (this.m_oWordControl.m_oApi.isMobileVersion)
+			return result;
+
+		if (this.m_oWordControl.m_oApi.isRtlInterface)
+			result.x += this.m_oWordControl.ScrollsWidthPx;
+
+		if (true === this.m_oWordControl.m_bIsRuler && isUseRuler !== false)
+		{
+			if (!this.m_oWordControl.m_oApi.isRtlInterface)
+				result.x += (5 * g_dKoef_mm_to_pix);
+
+			result.y += (7 * g_dKoef_mm_to_pix);
+		}
+		return result;
+	}
+
 	this.ConvertCoordsFromCursor2 = function (x, y, zoomVal, isRulers)
 	{
 		var _x = x;
@@ -4203,11 +4226,9 @@ function CDrawingDocument()
 			var _xOffset = this.m_oWordControl.X;
 			var _yOffset = this.m_oWordControl.Y;
 
-			if (true === this.m_oWordControl.m_bIsRuler)
-			{
-				_xOffset += (5 * g_dKoef_mm_to_pix);
-				_yOffset += (7 * g_dKoef_mm_to_pix);
-			}
+			let offsets = this.GetMainOffset();
+			_xOffset += offsets.x;
+			_yOffset += offsets.y;
 
 			_x = x - _xOffset;
 			_y = y - _yOffset;
@@ -4340,11 +4361,9 @@ function CDrawingDocument()
 			_x = this.m_oWordControl.X;
 			_y = this.m_oWordControl.Y;
 
-			if (this.m_oWordControl.m_bIsRuler)
-			{
-				_x += 5 * g_dKoef_mm_to_pix;
-				_y += 7 * g_dKoef_mm_to_pix;
-			}
+			let offsets = this.GetMainOffset();
+			_x += offsets.x;
+			_y += offsets.y;
 		}
 		return this.private_ConvertCoordsToCursor(x, y, pageIndex, true, _x + 0.5, _y + 0.5);
 	};
@@ -4358,11 +4377,10 @@ function CDrawingDocument()
 	{
 		var _x = 0;
 		var _y = 0;
-		if (true == this.m_oWordControl.m_bIsRuler && (id_ruler_no_use !== false))
-		{
-			_x = 5 * g_dKoef_mm_to_pix;
-			_y = 7 * g_dKoef_mm_to_pix;
-		}
+
+		let offsets = this.GetMainOffset(id_ruler_no_use);
+		_x += offsets.x;
+		_y += offsets.y;
 
 		return this.private_ConvertCoordsToCursor(x, y, pageIndex, true, _x, _y, transform);
 	};

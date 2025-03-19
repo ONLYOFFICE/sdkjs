@@ -2054,6 +2054,36 @@ Paragraph.prototype.getTextOnLine = function(line)
 	
 	return this.GetTextOnLine(line);
 };
+/**
+ * @param {number} line
+ * @return {number}
+ */
+Paragraph.prototype.getRangeCount = function(line)
+{
+	return this.Lines[line] ? this.Lines[line].Ranges.length : 0;
+};
+Paragraph.prototype.getRange = function(line, range)
+{
+	return this.Lines[line] && this.Lines[line].Ranges[range] ? this.Lines[line].Ranges[range] : null;
+};
+Paragraph.prototype.getTextInLineRange = function(line, range)
+{
+	if (!this.IsRecalculated() || !this.Lines[line] || !this.Lines[line].Ranges[range])
+		return "";
+	
+	let paraState = this.SaveSelectionState();
+	
+	let startPos = this.Get_StartRangePos2(line, range);
+	let endPos   = this.Get_EndRangePos2(line, range);
+	
+	this.Selection.Use   = true;
+	this.Selection.Start = false;
+	this.SetSelectionContentPos(startPos, endPos);
+	
+	let result = this.GetSelectedText(false, {Numbering : false});
+	this.LoadSelectionState(paraState);
+	return result;
+};
 Paragraph.prototype.Reset_RecalculateCache = function()
 {
 

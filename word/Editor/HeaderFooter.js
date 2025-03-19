@@ -205,8 +205,12 @@ CHeaderFooter.prototype =
 
         var CurPage = 0;
         var RecalcResult = recalcresult2_NextPage;
-        while ( recalcresult2_End != RecalcResult  )
-            RecalcResult = this.Content.Recalculate_Page( CurPage++, true );
+		while (recalcresult2_End !== RecalcResult)
+		{
+			RecalcResult = this.Content.Recalculate_Page(CurPage, true);
+			if (RecalcResult !== recalcresult2_CurPage)
+				++CurPage;
+		}
         
         this.RecalcInfo.RecalcObj[Page_abs]   = this.Content.SaveRecalculateObject();
         this.RecalcInfo.PageNumInfo[Page_abs] = this.LogicDocument.Get_SectionPageNumInfo(Page_abs);
@@ -316,10 +320,14 @@ CHeaderFooter.prototype =
 		this.Content.Set_StartPage(nPageAbs);
 		this.Content.PrepareRecalculateObject();
 
-		var nCurPage      = 0;
-		var nRecalcResult = recalcresult2_NextPage;
-		while (recalcresult2_End !== nRecalcResult)
-			nRecalcResult = this.Content.Recalculate_Page(nCurPage++, true);
+		var curPage      = 0;
+		var recalcResult = recalcresult2_NextPage;
+		while (recalcresult2_End !== recalcResult)
+		{
+			recalcResult = this.Content.Recalculate_Page(curPage, true);
+			if (recalcResult === recalcresult2_NextPage)
+				++curPage;
+		}
 
 		this.OnEndRecalculate();
     },
@@ -1305,8 +1313,9 @@ CHeaderFooter.prototype =
 
         this.Id      = Reader.GetString2();
         this.Type    = Reader.GetLong();
-
-        this.Content = AscCommon.g_oTableId.Get_ById( Reader.GetString2() );
+		
+		this.Content = AscCommon.g_oTableId.Get_ById(Reader.GetString2());
+		this.Content.SetParent(this);
     },
 //-----------------------------------------------------------------------------------
 // Функции для работы с комментариями

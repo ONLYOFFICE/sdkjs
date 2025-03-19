@@ -97,9 +97,7 @@ $(function () {
 		}
 
 		api.isOpenOOXInBrowser = false;
-		api.openingEnd.xlsx = true;
-		api.openingEnd.data = AscCommon.Base64.decode(file["Editor.xlsx"]);
-		api._openDocument(AscCommon.Base64.decode(file["Editor.bin"]));
+		api.OpenDocumentFromBin(null, AscCommon.Base64.decode(file["Editor.bin"]));
 		api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,
 			api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
 		return api.wbModel;

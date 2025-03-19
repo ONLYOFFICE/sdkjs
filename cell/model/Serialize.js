@@ -8933,11 +8933,13 @@
 		this.ReadPivotCache = function(type, length, pivotCache)
 		{
 			var res = c_oSerConstants.ReadOk;
-			if ( c_oSer_PivotTypes.id == type ) {
+			if ( c_oSer_PivotTypes.id === type ) {
 				pivotCache.id = this.stream.GetLong();
-			} else if ( c_oSer_PivotTypes.cache == type ) {
+			} else if ( c_oSer_PivotTypes.cache === type ) {
+				let idOld = pivotCache.id;
 				new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(this.stream, length), pivotCache);
-			} else if ( c_oSer_PivotTypes.record == type ) {
+				pivotCache.id = idOld;
+			} else if ( c_oSer_PivotTypes.record === type ) {
 				var cacheRecords = new Asc.CT_PivotCacheRecords();
 				new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(this.stream, length), cacheRecords);
 				pivotCache.cacheRecords = cacheRecords;
@@ -12594,11 +12596,11 @@
 				if (!this.InitOpenManager.copyPasteObj.isCopyPaste) {
 					this.InitOpenManager.PostLoadPrepare(wb);
 				}
-                wb.init(this.InitOpenManager.oReadResult.tableCustomFunc, this.InitOpenManager.oReadResult.tableIds, this.InitOpenManager.oReadResult.sheetIds, false, true);
+                wb.init(this.InitOpenManager.oReadResult, false, true);
             } else {
 				bwtr.ReadSheetDataExternal(true);
 				if(Asc["editor"] && Asc["editor"].wb) {
-					wb.init(this.InitOpenManager.oReadResult.tableCustomFunc, this.InitOpenManager.oReadResult.tableIds, this.InitOpenManager.oReadResult.sheetIds, true);
+					wb.init(this.InitOpenManager.oReadResult, true);
 				}
             }
             return res;
@@ -14488,34 +14490,6 @@
         this.slicerCachesIds = [];
         this.newDefinedNames = [];
     }
-
-    CT_Workbook.prototype.fromXmlSimple = function (reader) {
-        if (!reader.ReadNextNode()) {
-            return;
-        }
-        if ("workbook" !== reader.GetNameNoNS()) {
-            if (!reader.ReadNextNode()) {
-                return;
-            }
-        }
-
-        var t = this, val;
-        if ("workbook" === reader.GetNameNoNS()) {
-            var depth = reader.GetDepth();
-            while (reader.ReadNextSiblingNode(depth)) {
-                var name = reader.GetNameNoNS();
-                if ("sheets" === name) {
-                    var sheets = new AscCommonExcel.CT_Sheets(this.wb);
-                    sheets.fromXml(reader);
-                    this.sheets = sheets.sheets;
-                } else if ("pivotCaches" === name) {
-                    var pivotCaches = new AscCommonExcel.CT_PivotCaches();
-                    pivotCaches.fromXml(reader);
-                    this.pivotCaches = pivotCaches.pivotCaches;
-                }
-            }
-        }
-    };
 
     function CT_Sheets(wb) {
         this.wb = wb;

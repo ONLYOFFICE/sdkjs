@@ -207,7 +207,7 @@
 	// When the IX attribute is not present, the index of the element is calculated implicitly
 	// by counting the number of  preceding Section_Type elements with the same N attribute in the containing
 	// Sheet_Type.
-
+	let lastIx = 0;
 	function createKeyFromSheetObject(object) {
 		let key;
 		if (object.kind === c_oVsdxSheetStorageKind.Cell_Type) {
@@ -217,8 +217,11 @@
 				key = object.n;
 			} else if (object.iX !== null) {
 				key = object.iX;
+				lastIx = object.iX;
 			} else {
-				AscCommon.consoleLog("Cant calculate key to store object", object);
+				key = lastIx;
+				lastIx++;
+				AscCommon.consoleLog("Ix key is generated to store object", object);
 			}
 		} else if (object.kind === c_oVsdxSheetStorageKind.Section_Type)	{
 			if (object.n === "Geometry") {
@@ -567,9 +570,9 @@
 				resultArr.push(element);
 			}
 		}
-		resultArr.sort(function (a, b) {
-			return a.iX - b.iX;
-		});
+		// resultArr.sort(function (a, b) {
+		// 	return a.iX - b.iX;
+		// });
 		return resultArr;
 	}
 
@@ -892,7 +895,7 @@
 					// This simple type represents an angle in 60,000ths of a degree. Positive angles are clockwise (i.e., towards the
 					// positive y axis); negative angles are counter-clockwise (i.e., towards the negative y axis)
 					// direction is considered in global transform
-					let stAngle = angleRads / Math.PI * 180 * 60000;
+					let stAngle = angleRads / Math.PI * 180 * AscFormat.degToC;
 					if (!isNaN(stAngle)) {
 						angle = stAngle;
 					} else {
@@ -1714,6 +1717,9 @@
 		this.associatedPage = null;
 		this.pageSheet = null;
 		this.rel = null;
+
+		//todo objectId
+		this.deleteLock = new AscVisio.PropLocker(undefined);
 		return this;
 	}
 
@@ -1830,7 +1836,52 @@
 	ShapeSheet_Type.prototype = Object.create(SheetStorageAndStyles.prototype);
 	ShapeSheet_Type.prototype.constructor = ShapeSheet_Type;
 
+	//todo move to commons
+	function PropLocker(objectId)
+	{
+		this.objectId = null;
+		this.Lock = new AscCommon.CLock();
+		this.Id = AscCommon.g_oIdCounter.Get_NewId();
+		g_oTableId.Add(this, this.Id);
 
+		if(typeof  objectId === "string")
+		{
+			this.setObjectId(objectId);
+		}
+
+	}
+
+	PropLocker.prototype = {
+
+		getObjectType: function()
+		{
+			return AscDFH.historyitem_type_PropLocker;
+		},
+		setObjectId: function(id)
+		{
+			//todo
+			//History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_PropLockerSetId, this.objectId, id));
+			this.objectId = id;
+		},
+		Get_Id: function()
+		{
+			return this.Id;
+		},
+		Write_ToBinary2: function(w)
+		{
+			w.WriteLong(AscDFH.historyitem_type_PropLocker);
+			w.WriteString2(this.Id);
+		},
+
+		Read_FromBinary2: function(r)
+		{
+			this.Id = r.GetString2();
+		},
+
+		Refresh_RecalcData: function()
+		{}
+
+	};
 
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']            = window['Asc'] || {};
@@ -1857,6 +1908,7 @@
 	window['AscVisio'].DocumentSheet_Type = DocumentSheet_Type;
 	window['AscVisio'].StyleSheet_Type = StyleSheet_Type;
 	window['AscVisio'].ShapeSheet_Type = ShapeSheet_Type;
+	window['AscVisio'].PropLocker = PropLocker;
 	window['AscVisio'].createKeyFromSheetObject = createKeyFromSheetObject;
 
 })(window, window.document);

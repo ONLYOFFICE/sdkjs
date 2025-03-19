@@ -6146,7 +6146,7 @@ StyleManager.prototype =
 	};
 	Hyperlink.prototype.getProperty = function (nType) {
 		switch (nType) {
-			case this.Properties.Ref: return parserHelp.get3DRef(this.Ref.worksheet.getName(), this.Ref.getName());
+			case this.Properties.Ref: return this.Ref && parserHelp.get3DRef(this.Ref.worksheet.getName(), this.Ref.getName()) || null;
 			case this.Properties.Location: return this.getLocation();
 			case this.Properties.Hyperlink: return this.Hyperlink;
 			case this.Properties.Tooltip: return this.Tooltip;
@@ -13324,10 +13324,10 @@ function RangeDataManagerElem(bbox, data)
 		}
 	};
 
-	asc_CPageSetup.prototype.asc_setScale = function (newVal) {
+	asc_CPageSetup.prototype.asc_setScale = function (newVal, isNotHistory) {
 		var oldVal = this.scale;
 		this.scale = newVal;
-		if (this.ws && AscCommon.History.Is_On() && oldVal !== this.scale) {
+		if (!isNotHistory && this.ws && AscCommon.History.Is_On() && oldVal !== this.scale) {
 			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Scale, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}

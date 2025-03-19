@@ -2991,7 +2991,7 @@
 	/**
 	 * Class representing a document.
 	 * @constructor
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @extends {ApiDocumentContent}
 	 */
 	function ApiDocument(Document)
@@ -4274,8 +4274,13 @@
 
 	/**
 	 * The watermark direction.
-	 * @typedef {("horizontal" | "clockwise45" | "counterclockwise45")} WatermarkDirection
+	 * @typedef {("horizontal" | "clockwise45" | "counterclockwise45" | "clockwise90" | "counterclockwise90")} WatermarkDirection
 	 * @see office-js-api/Examples/Enumerations/WatermarkDirection.js
+	 */
+
+	/**
+	 * @typedef {string} Base64Img Base64 image string
+	 * @example "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgA..."
 	 */
 
 	/**
@@ -4479,9 +4484,9 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {ChartType} [chartType="bar"] - The chart type used for the chart display.
-	 * @param {Array} series - The array of the data used to build the chart from.
-	 * @param {Array} seriesNames - The array of the names (the source table column names) used for the data which the chart will be build from.
-	 * @param {Array} catNames - The array of the names (the source table row names) used for the data which the chart will be build from.
+	 * @param {number[][]} series - The array of the data used to build the chart from.
+	 * @param {number[] | string[]} seriesNames - The array of the names (the source table column names) used for the data which the chart will be build from.
+	 * @param {number[] | string[]} catNames - The array of the names (the source table row names) used for the data which the chart will be build from.
 	 * @param {EMU} width - The chart width in English measure units.
 	 * @param {EMU} height - The chart height in English measure units.
 	 * @param {number} styleIndex - The chart color style index (can be 1 - 48, as described in OOXML specification).
@@ -4594,7 +4599,7 @@
 	 * Creates a linear gradient fill to apply to the object using the selected linear gradient as the object background.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {Array} gradientStops - The array of gradient color stops measured in 1000th of percent.
+	 * @param {number[]} gradientStops - The array of gradient color stops measured in 1000th of percent.
 	 * @param {PositiveFixedAngle} angle - The angle measured in 60000th of a degree that will define the gradient direction.
 	 * @returns {ApiFill}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateLinearGradientFill.js
@@ -4609,7 +4614,7 @@
 	 * Creates a radial gradient fill to apply to the object using the selected radial gradient as the object background.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {Array} gradientStops - The array of gradient color stops measured in 1000th of percent.
+	 * @param {number[]} gradientStops - The array of gradient color stops measured in 1000th of percent.
 	 * @returns {ApiFill}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateRadialGradientFill.js
 	 */
@@ -4710,7 +4715,7 @@
 	/**
 	 * Creates a bullet for a paragraph with the numbering character or symbol specified with the numType parameter.
 	 * @memberof Api
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CPE", "CSE"]
 	 * @param {BulletType} numType - The numbering type the paragraphs will be numbered with.
 	 * @param {number} startAt - The number the first numbered paragraph will start with.
 	 * @returns {ApiBullet}
@@ -5527,7 +5532,7 @@
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} bGetCopies - Specifies if the copies of the document elements will be returned or not.
-	 * @returns {Array}
+	 * @returns {DocumentElement[]}
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetContent.js
 	 */
 	ApiDocumentContent.prototype.GetContent = function(bGetCopies)
@@ -6020,30 +6025,42 @@
 	};
 	
 	/**
-	 * Record of one comment.
+	 * Represents a single comment record.
 	 * @typedef {Object} CommentReportRecord
-	 * @property {boolean} [IsAnswer=false] - Specifies whether this is an initial comment or a reply to another comment.
-	 * @property {string} CommentMessage - The text of the current comment.
-	 * @property {number} Date - The time when this change was made in local time.
-	 * @property {number} DateUTC - The time when this change was made in UTC.
-	 * @property {string} [QuoteText=undefined] - The text to which this comment is related.
-	 * @see office-js-api/Examples/Enumerations/CommentReportRecord.js
+	 * @property {boolean} IsAnswer Whether the comment is a response.
+	 * @property {string} CommentMessage The comment text.
+	 * @property {number} Date Local timestamp of the comment.
+	 * @property {number} DateUTC UTC timestamp of the comment.
+	 * @property {string} [QuoteText] The quoted text (if available).
 	 */
-	
+
 	/**
-	 * Report on all comments.
-	 * This is a dictionary where the keys are usernames.
-	 * @typedef {Object.<string, Array.<CommentReportRecord>>} CommentReport
-	 * @example
-	 *  {
-	 *    "John Smith" : [{IsAnswer: false, CommentMessage: 'Good text', Date: 1688588002698, DateUTC: 1688570002698, QuoteText: 'Some text'},
-	 *      {IsAnswer: true, CommentMessage: "I don't think so", Date: 1688588012661, DateUTC: 1688570012661}],
-	 *
-	 *    "Mark Pottato" : [{IsAnswer: false, CommentMessage: 'Need to change this part', Date: 1688587967245, DateUTC: 1688569967245, QuoteText: 'The quick brown fox jumps over the lazy dog'},
-	 *      {IsAnswer: false, CommentMessage: 'We need to add a link', Date: 1688587967245, DateUTC: 1688569967245, QuoteText: 'OnlyOffice'}]
-	 *  }
-	 * @see office-js-api/Examples/Enumerations/CommentReport.js
+	 * Represents a user's comment history.
+	 * @typedef {Object} UserComments
+	 * @property {CommentReportRecord[]} comments List of comments.
 	 */
+
+	/**
+	 * A dictionary of users and their comments.
+	 * @typedef {Object} CommentReport
+	 * @property {UserComments} [username] Comments grouped by username.
+	 * @example
+	 * {
+	 *   "John Smith": {
+	 *     comments: [
+	 *       { IsAnswer: false, CommentMessage: "Good text", Date: 1688588002698, DateUTC: 1688570002698, QuoteText: "Some text" },
+	 *       { IsAnswer: true, CommentMessage: "I don't think so", Date: 1688588012661, DateUTC: 1688570012661 }
+	 *     ]
+	 *   },
+	 *   "Mark Pottato": {
+	 *     comments: [
+	 *       { IsAnswer: false, CommentMessage: "Need to change this part", Date: 1688587967245, DateUTC: 1688569967245, QuoteText: "The quick brown fox jumps over the lazy dog" },
+	 *       { IsAnswer: false, CommentMessage: "We need to add a link", Date: 1688587967245, DateUTC: 1688569967245, QuoteText: "OnlyOffice" }
+	 *     ]
+	 *   }
+	 * }
+	 */
+
 	
 	
 	/**
@@ -6104,28 +6121,41 @@
 	 */
 	
 	/**
-	 * Record of one review change.
+	 * Represents a single review change record.
 	 * @typedef {Object} ReviewReportRecord
-	 * @property {ReviewReportRecordType} Type - Review record type.
-	 * @property {string} [Value=undefined] - Review change value that is set for the "TextAdd" and "TextRem" types only.
-	 * @property {number} Date - The time when this change was made.
-	 * @property {ApiParagraph | ApiTable} ReviewedElement - Element that has been reviewed.
-	 * @see office-js-api/Examples/Enumerations/ReviewReportRecord.js
+	 * @property {ReviewReportRecordType} Type Review record type.
+	 * @property {string} [Value] Review change value (only for "TextAdd" and "TextRem" types).
+	 * @property {number} Date Timestamp of when the change was made.
+	 * @property {ApiParagraph | ApiTable} ReviewedElement The element that was reviewed.
 	 */
-	
+
 	/**
-	 * Report on all review changes.
-	 * This is a dictionary where the keys are usernames.
-	 * @typedef {Object.<string, Array.<ReviewReportRecord>>} ReviewReport
-	 * @example
-	 * 	{
-	 * 	  "John Smith" : [{Type: 'TextRem', Value: 'Hello, Mark!', Date: 1679941734161, Element: ApiParagraph},
-	 * 	                {Type: 'TextAdd', Value: 'Dear Mr. Pottato.', Date: 1679941736189, Element: ApiParagraph}],
-	 * 	  "Mark Pottato" : [{Type: 'ParaRem', Date: 1679941755942, ReviewedElement: ApiParagraph},
-	 * 	                  {Type: 'TextPr', Date: 1679941757832, ReviewedElement: ApiParagraph}]
-	 * 	}
-	 * @see office-js-api/Examples/Enumerations/ReviewReport.js
+	 * Represents a user's review history.
+	 * @typedef {Object} UserReviewChanges
+	 * @property {ReviewReportRecord[]} reviews List of review records.
 	 */
+
+	/**
+	 * A dictionary of users and their review changes.
+	 * @typedef {Object} ReviewReport
+	 * @property {UserReviewChanges} [username] Review changes grouped by username.
+	 * @example
+	 * {
+	 *   "John Smith": {
+	 *     reviews: [
+	 *       { Type: "TextRem", Value: "Hello, Mark!", Date: 1679941734161, ReviewedElement: ApiParagraph },
+	 *       { Type: "TextAdd", Value: "Dear Mr. Pottato.", Date: 1679941736189, ReviewedElement: ApiParagraph }
+	 *     ]
+	 *   },
+	 *   "Mark Pottato": {
+	 *     reviews: [
+	 *       { Type: "ParaRem", Date: 1679941755942, ReviewedElement: ApiParagraph },
+	 *       { Type: "TextPr", Date: 1679941757832, ReviewedElement: ApiParagraph }
+	 *     ]
+	 *   }
+	 * }
+	 */
+
 	
 	/**
 	 * Returns a report about every change which was made to the document in the review mode.
@@ -6305,7 +6335,7 @@
 	/**
 	 * Returns a list of all tags that are used for all forms in the document.
 	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {String[]}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetTagsOfAllForms.js
 	 */
@@ -6357,9 +6387,9 @@
 	/**
 	 * Returns a list of all forms in the document with the specified tag name.
 	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @param sTag {string} - Form tag.
-	 * @returns {ApiBlockLvlSdt[] | ApiInlineLvlSdt[]}
+	 * @returns {ApiForm[]}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetFormsByTag.js
 	 */
 	ApiDocument.prototype.GetFormsByTag = function(sTag)
@@ -6405,7 +6435,7 @@
 	 * Returns the data from all forms present in the current document.
 	 * If a form was created and not assigned to any part of the document, it won't appear in this list.
 	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {Array.<FormData>}
 	 * @since 8.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetFormsData.js
@@ -6417,7 +6447,7 @@
 	/**
 	 * Sets the data to the specified forms.
 	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @param {Array.<FormData>} arrData - An array of form data to set to the specified forms.
 	 * @returns {boolean}
 	 * @since 8.0.0
@@ -6739,12 +6769,20 @@
 	 * Inserts a watermark on each document page.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {?string} [sText="WATERMARK"] - Watermark text.
-	 * @param {?boolean} [bIsDiagonal=false] - Specifies if the watermark is placed diagonally (true) or horizontally (false).
-	 * @returns {?ApiDrawing} - The object which represents the inserted watermark. Returns null if the watermark type is "none".
+	 * @param {string} [sText="WATERMARK"] - Watermark text.
+	 * @param {boolean} [bIsDiagonal=false] - Specifies if the watermark is placed diagonally (true) or horizontally (false).
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/InsertWatermark.js
 	 */
 	ApiDocument.prototype.InsertWatermark = function(sText, bIsDiagonal){
+		if (typeof(sText) != "string") {
+			sText = "WATERMARK";
+		}
+		if (typeof(bIsDiagonal) != "boolean") {
+			sText = false;
+		}
+
+		let bRes = false;
 		var oSectPrMap = {};
 		if(this.Document.SectPr){
 			oSectPrMap[this.Document.SectPr.Get_Id()] = this.Document.SectPr;
@@ -6780,8 +6818,11 @@
 		for(sId in oHeadersMap){
 			if(oHeadersMap.hasOwnProperty(sId)){
 				privateInsertWatermarkToContent(this.Document.Api, oHeadersMap[sId], sText, bIsDiagonal);
+				bRes = true;
 			}
 		}
+
+		return bRes;
 	};
 
 
@@ -7008,7 +7049,7 @@
 	/**
 	 * Returns all existing forms in the document.
 	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {ApiForm[]}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetAllForms.js
 	 */
@@ -7030,7 +7071,7 @@
 	/**
 	 * Clears all forms in the document.
 	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/ClearAllFields.js
 	 */
@@ -7047,7 +7088,7 @@
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [bNone=false] - Defines that highlight will not be set.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetFormsHighlight.js
 	 */
@@ -10568,7 +10609,7 @@
 	/**
 	 * Sets a style to the current run.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {ApiStyle} oStyle - The style which must be applied to the text run.
 	 * @returns {ApiTextPr}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetStyle.js
@@ -12660,14 +12701,14 @@
 	 * Removes a column containing the current cell.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CDE"]
-	 * @returns {bool | null} Is the table empty after removing. Returns null if parent table doesn't exist.
+	 * @returns {boolean} - removes false if table doen't exist
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/RemoveColumn.js
 	 */
 	ApiTableCell.prototype.RemoveColumn = function()
 	{
 		var oTable = this.GetParentTable();
 		if (!oTable)
-			return null;
+			return false;
 
 		return oTable.RemoveColumn(this);
 	};
@@ -16435,7 +16476,7 @@
      * Returns the lock value for the specified lock type of the current drawing.
      * @typeofeditors ["CDE"]
 	 * @param {DrawingLockType} sType - Lock type in the string format.
-     * @returns {bool}
+     * @returns {boolean}
      * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLockValue.js
 	 */
 	ApiDrawing.prototype.GetLockValue = function(sType)
@@ -16455,8 +16496,8 @@
      * Sets the lock value to the specified lock type of the current drawing.
      * @typeofeditors ["CDE"]
 	 * @param {DrawingLockType} sType - Lock type in the string format.
-     * @param {bool} bValue - Specifies if the specified lock is applied to the current drawing.
-	 * @returns {bool}
+     * @param {boolean} bValue - Specifies if the specified lock is applied to the current drawing.
+	 * @returns {boolean}
      * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLockValue.js
 	 */
 	ApiDrawing.prototype.SetLockValue = function(sType, bValue)
@@ -16491,6 +16532,44 @@
 
 		this.getParaDrawing().SetDrawingPrFromDrawing(oAnotherDrawing.getParaDrawing());
 		return true;
+	};
+
+	/**
+     * Sets the rotation angle to the current drawing object.
+     * @memberof ApiDrawing
+     * @param {number} nRotAngle - new drawing rot angle
+     * @typeofeditors ["CDE"]
+     * @returns {boolean}
+     * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetRotation.js
+	 */
+	ApiDrawing.prototype.SetRotation = function(nRotAngle)
+	{
+		if (!this.Drawing.canRotate()) {
+			return false;
+		}
+
+		let oXfrm = this.Drawing.getXfrm();
+		oXfrm.setRot(nRotAngle * Math.PI / 180);
+
+		return true;
+	};
+	/**
+     * Gets the rotation angle of the current drawing object.
+     * @memberof ApiDrawing
+     * @typeofeditors ["CDE"]
+     * @returns {number}
+     * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetRotation.js
+	 */
+	ApiDrawing.prototype.GetRotation = function()
+	{
+		if (!this.Drawing.canRotate()) {
+			return 0;
+		}
+
+		let oXfrm = this.Drawing.getXfrm();
+		let nRad = oXfrm.getRot();
+
+		return nRad * 180 / Math.PI
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -16840,7 +16919,7 @@
 	 *  @typeofeditors ["CDE", "CSE", "CPE"]
 	 *  @param {string} sTitle - The title which will be displayed for the current chart.
 	 *  @param {pt} nFontSize - The text size value measured in points.
-	 *  @param {?bool} bIsBold - Specifies if the chart title is written in bold font or not.
+	 *  @param {boolean} bIsBold - Specifies if the chart title is written in bold font or not.
 	 * 	@returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetTitle.js
 	 */
@@ -16856,7 +16935,7 @@
 	 *  @typeofeditors ["CDE", "CSE", "CPE"]
 	 *  @param {string} sTitle - The title which will be displayed for the horizontal axis of the current chart.
 	 *  @param {pt} nFontSize - The text size value measured in points.
-	 *  @param {?bool} bIsBold - Specifies if the horizontal axis title is written in bold font or not.
+	 *  @param {boolean} bIsBold - Specifies if the horizontal axis title is written in bold font or not.
 	 *	@returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisTitle.js
 	 */
@@ -16872,7 +16951,7 @@
 	 *  @typeofeditors ["CDE", "CSE", "CPE"]
 	 *  @param {string} sTitle - The title which will be displayed for the vertical axis of the current chart.
 	 *  @param {pt} nFontSize - The text size value measured in points.
-	 *  @param {?bool} bIsBold - Specifies if the vertical axis title is written in bold font or not.
+	 *  @param {boolean} bIsBold - Specifies if the vertical axis title is written in bold font or not.
 	 *	@returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVerAxisTitle.js
 	 */
@@ -18694,7 +18773,7 @@
 	 * Adds a new value to the combo box / dropdown list content control.
 	 * @memberof ApiContentControlList
 	 * @param {string} sText - The display text for the list item.
-	 * @param {string} [sValue=sText] - The list item value.
+	 * @param {string} sValue - The list item value. By default is equal to sText parameter
 	 * @param {number} [nIndex=this.GetElementsCount()] - A position where a new value will be added.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -20623,7 +20702,7 @@
 	 * Returns an image in the base64 format from the current picture form.
 	 * @memberof ApiPictureForm
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @returns {base64img}
+	 * @returns {Base64Img}
 	 * @see office-js-api/Examples/{Editor}/ApiPictureForm/Methods/GetImage.js
 	 */
 	ApiPictureForm.prototype.GetImage = function()
@@ -20926,7 +21005,43 @@
 			return true;
 		}, this);
 	};
-
+	/**
+	 * Get the choice name for the current radio button.
+	 * @memberof ApiCheckBoxForm
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @since 8.3.2
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiCheckBoxForm/Methods/GetChoiceName.js
+	 * */
+	ApiCheckBoxForm.prototype.GetChoiceName = function()
+	{
+		if (this.Sdt.IsRadioButton())
+			return this.Sdt.GetFormKey();
+		else
+			return "";
+	};
+	/**
+	 * Set the choice name for the current radio button.
+	 * @memberof ApiCheckBoxForm
+	 * @param {string} choiceName - Radio button choice name.
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @since 8.3.2
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiCheckBoxForm/Methods/SetChoiceName.js
+	 * */
+	ApiCheckBoxForm.prototype.SetChoiceName = function(choiceName)
+	{
+		return executeNoFormLockCheck(function() {
+			let formPr = this.Sdt.GetFormPr();
+			if (!formPr || typeof (choiceName) !== "string" || "" === choiceName || !this.Sdt.IsRadioButton())
+				return false;
+			
+			formPr = formPr.Copy();
+			formPr.SetKey(choiceName);
+			this.Sdt.SetFormPr(formPr);
+			return true;
+		}, this);
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiDateForm
@@ -21076,7 +21191,7 @@
 	 * Replaces each paragraph (or text in cell) in the select with the corresponding text from an array of strings.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {Array} textStrings - An array of replacement strings.
+	 * @param {string[]} textStrings - An array of replacement strings.
 	 * @param {string} [tab="\t"] - A character which is used to specify the tab in the source text.
 	 * @param {string} [newLine="\r\n"] - A character which is used to specify the line break character in the source text.
 	 * @returns {boolean}
@@ -22164,6 +22279,16 @@
 				this.Settings.put_Angle(-45);
 				break;
 			}
+			case "clockwise90":
+			{
+				this.Settings.put_Angle(90);
+				break;
+			}
+			case "counterclockwise90":
+			{
+				this.Settings.put_Angle(-90);
+				break;
+			}
 			default:
 				return false;
 		}
@@ -23080,6 +23205,8 @@
 	ApiDrawing.prototype["GetLockValue"]             = ApiDrawing.prototype.GetLockValue;
 	ApiDrawing.prototype["SetLockValue"]             = ApiDrawing.prototype.SetLockValue;
 	ApiDrawing.prototype["SetDrawingPrFromDrawing"]  = ApiDrawing.prototype.SetDrawingPrFromDrawing;
+	ApiDrawing.prototype["SetRotation"]  			 = ApiDrawing.prototype.SetRotation;
+	ApiDrawing.prototype["GetRotation"]  			 = ApiDrawing.prototype.GetRotation;
 
 	ApiDrawing.prototype["ToJSON"]                   = ApiDrawing.prototype.ToJSON;
 
@@ -23337,6 +23464,8 @@
 	ApiCheckBoxForm.prototype["IsRadioButton"] = ApiCheckBoxForm.prototype.IsRadioButton;
 	ApiCheckBoxForm.prototype["GetRadioGroup"] = ApiCheckBoxForm.prototype.GetRadioGroup;
 	ApiCheckBoxForm.prototype["SetRadioGroup"] = ApiCheckBoxForm.prototype.SetRadioGroup;
+	ApiCheckBoxForm.prototype["GetChoiceName"] = ApiCheckBoxForm.prototype.GetChoiceName;
+	ApiCheckBoxForm.prototype["SetChoiceName"] = ApiCheckBoxForm.prototype.SetChoiceName;
 	ApiCheckBoxForm.prototype["Copy"]          = ApiCheckBoxForm.prototype.Copy;
 
 	ApiComment.prototype["GetClassType"]	= ApiComment.prototype.GetClassType;

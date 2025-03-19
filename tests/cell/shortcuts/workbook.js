@@ -171,8 +171,7 @@
 		editor._onEndLoadSdk();
 		AscFormat.initStyleManager();
 		editor.isOpenOOXInBrowser = false;
-		editor._openDocument(AscCommon.getEmpty());
-		editor._openOnClient();
+		editor.OpenDocumentFromBin(null, AscCommon.getEmpty());
 		editor.initCollaborativeEditing({});
 		editor.wb = new AscCommonExcel.WorkbookView(editor.wbModel, editor.controller, editor.handlers, editor.HtmlElement,
 			editor.topLineEditorElement, editor, editor.collaborativeEditing, editor.fontRenderingMode);

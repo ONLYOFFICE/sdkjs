@@ -96,13 +96,16 @@ $(function() {
 	var api = new Asc.spreadsheet_api({
 		'id-view': 'editor_sdk'
 	});
+	api.FontLoader = {
+		LoadDocumentFonts: function () {
+		}
+	};
 
 	function openDocument(){
 		AscCommon.g_oTableId.init();
 		api._onEndLoadSdk();
 		api.isOpenOOXInBrowser = false;
-		api._openDocument(AscCommon.getEmpty());
-		api._openOnClient();
+		api.OpenDocumentFromBin(null, AscCommon.getEmpty());
 	}
 
 	api.HtmlElement = document.createElement("div");

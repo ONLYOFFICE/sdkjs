@@ -683,7 +683,7 @@
 		};
 
 		CImageShape.prototype.hasCrop = function () {
-			if(this.blipFill && this.blipFill.srcRect) {
+			if(this.blipFill && this.blipFill.srcRect || this.isShapeCrop()) {
 				return true;
 			}
 			return false;
@@ -920,6 +920,16 @@
 				return (oSrcRect.r - oSrcRect.l) / 100;
 			}
 			return 1;
+		};
+
+		CImageShape.prototype.isShapeCrop = function() {
+			if (this.spPr && this.spPr.geometry) {
+				const sPresetType = this.spPr.geometry.preset;
+				if (sPresetType === 'rect') {
+					return false;
+				}
+			}
+			return true;
 		};
 
 		function CreateBrushFromBlipFill(oBlipFill) {

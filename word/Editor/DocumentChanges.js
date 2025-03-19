@@ -1226,3 +1226,4 @@ CChangesDocumentDisconnectEveryone.prototype.Redo = function()
 	editorApi.setViewModeDisconnect(true);
 	editorApi.asc_coAuthoringDisconnect();
 };
+AscDFH.CChangesDocumentDisconnectEveryone = CChangesDocumentDisconnectEveryone;

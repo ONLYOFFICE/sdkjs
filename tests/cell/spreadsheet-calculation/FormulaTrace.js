@@ -71,6 +71,8 @@ $(function() {
 
 	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function() {
 	};
+	Asc.ReadDefTableStyles = function () {
+	};
 
 	let g_oIdCounter = AscCommon.g_oIdCounter;
 
@@ -85,7 +87,6 @@ $(function() {
 
 		api.FontLoader = {
 			LoadDocumentFonts: function() {
-				setTimeout(startTests, 0)
 			}
 		};
 
@@ -100,8 +101,7 @@ $(function() {
 		}
 		api._onEndLoadSdk();
 		api.isOpenOOXInBrowser = false;
-		api._openDocument(AscCommon.getEmpty());	// this func set api.wbModel
-		// api._openOnClient();
+		api.OpenDocumentFromBin(null, AscCommon.getEmpty());	// this func set api.wbModel
 		api.initCollaborativeEditing({});
 		wb = api.wbModel;
 

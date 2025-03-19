@@ -223,6 +223,8 @@
 		this.skinObject = config['skin'];
 		this.isDarkMode = false;
 
+		this.isRtlInterface = config['isRtlInterface'] === true;
+
 		this.Shortcuts = new AscCommon.CShortcuts();
 		this.initDefaultShortcuts();
 
@@ -240,6 +242,12 @@
 		this.eyedropper = new AscCommon.CEyedropper(this);
 		this.inkDrawer = new AscCommon.CInkDrawer(this);
 		this._correctEmbeddedWork();
+
+
+		this.isRTLInterface = false;
+		if (config['isRtlInterface'] === true) {
+			this.isRTLInterface = true;
+		}
 
 		return this;
 	}
@@ -1219,9 +1227,6 @@
 	{
 		this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.Open);
 	};
-	baseEditorsApi.prototype._openOnClient                       = function()
-	{
-	};
 	baseEditorsApi.prototype._onOpenCommand                      = function(data)
 	{
 		var t = this;
@@ -1237,7 +1242,6 @@
 			}
 			t.onEndLoadFile(result);
 		});
-		this._openOnClient();
 	};
 	baseEditorsApi.prototype.openFileCryptCallback               = function (stream)
 	{
@@ -2952,9 +2956,6 @@
 	baseEditorsApi.prototype.openDocument  = function(file)
 	{
 	};
-	baseEditorsApi.prototype.openDocumentFromZip  = function()
-	{
-	};
 	baseEditorsApi.prototype.saveLogicDocumentToZip  = function(fileType, options, callback)
 	{
 		//todo common getLogicDocument
@@ -3405,6 +3406,11 @@
 	{
 		if (null != this.pluginsManager)
 			this.pluginsManager.buttonClick(id, guid, windowId);
+	};
+	baseEditorsApi.prototype.asc_pluginButtonDockChanged = function(type, guid, windowId, callback)
+	{
+		if (null != this.pluginsManager)
+			this.pluginsManager.onPluginWindowDockChanged(type, guid, windowId, callback);
 	};
 
 	baseEditorsApi.prototype.asc_pluginEnableMouseEvents = function(isEnable)
@@ -5492,6 +5498,13 @@
 		return text_data.data;
 	};
 
+	baseEditorsApi.prototype.asc_SetRTLInterface = function(isRTL) {
+		this.isRTLInterface = isRTL;
+		this.onChangeRTLInterface();
+	};
+	baseEditorsApi.prototype.onChangeRTLInterface = function() {
+	};
+
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
 	window['AscCommon'].baseEditorsApi = baseEditorsApi;
@@ -5573,6 +5586,7 @@
 	prot['asc_getInputLanguage'] = prot.asc_getInputLanguage;
 
 	prot['setPluginsOptions'] = prot.setPluginsOptions;
+	prot['asc_pluginButtonDockChanged'] = prot.asc_pluginButtonDockChanged;
 
 	// passwords
 	prot["asc_setCurrentPassword"] = prot.asc_setCurrentPassword;
@@ -5601,7 +5615,10 @@
 	prot["asc_removeCustomProperty"] = prot.asc_removeCustomProperty;
 	
 	prot["asc_setPdfViewer"] = prot.asc_setPdfViewer;
+
 	prot["asc_mergeSelectedShapes"] = prot.asc_mergeSelectedShapes;
+
+	prot["asc_SetRTLInterface"] = prot.asc_SetRTLInterface;
 
 	prot["callCommand"] = prot.callCommand;
 	prot["callMethod"] = prot.callMethod;

@@ -3634,7 +3634,8 @@
 		if (oParsedSheet["protectedRanges"] != null)
 			oWorksheet.protectedRanges = this.ProtectedRangesFromJSON(oParsedSheet["protectedRanges"]);
 
-		oWorksheet.initPostOpenZip(this.pivotCaches, this.oNumFmtsOpen);
+		//todo test. other params?
+		oWorksheet.initPostOpen(oWorkbook.wsHandlers, {}, {}, this.pivotCaches, oWorkbook.oNumFmtsOpen, oWorkbook.dxfsOpen);
 		History.TurnOn();
 
 		return oWorksheet;

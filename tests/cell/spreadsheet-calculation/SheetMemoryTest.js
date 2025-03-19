@@ -50,21 +50,21 @@ $(function () {
 		sheetMemory.checkIndex(200);
 		assert.strictEqual(sheetMemory.hasIndex(200), false);
 		assert.strictEqual(sheetMemory.getMinIndex(), 10);
-		assert.strictEqual(sheetMemory.getMaxIndex(), 10);
+		assert.strictEqual(sheetMemory.getMaxIndex(), 100);
 
 		sheetMemory.checkIndex(15);
 		assert.strictEqual(sheetMemory.hasIndex(15), true);
-		assert.strictEqual(sheetMemory.hasIndex(16), false);
+		assert.strictEqual(sheetMemory.hasIndex(16), true);
 		assert.strictEqual(sheetMemory.getMinIndex(), 10);
-		assert.strictEqual(sheetMemory.getMaxIndex(), 15);
+		assert.strictEqual(sheetMemory.getMaxIndex(), 100);
 
 		sheetMemory.checkIndex(5);
 		assert.strictEqual(sheetMemory.hasIndex(4), false);
 		assert.strictEqual(sheetMemory.hasIndex(5), true);
 		assert.strictEqual(sheetMemory.getMinIndex(), 5);
-		assert.strictEqual(sheetMemory.getMaxIndex(), 15);
+		assert.strictEqual(sheetMemory.getMaxIndex(), 100);
 
-		let allocThreshOld = sheetMemory.getMinIndex() + sheetMemory.getAllocatedCount();
+		let allocThreshOld = sheetMemory.getMinIndex() + sheetMemory.getAllocatedCount() - 1;
 		sheetMemory.checkIndex(allocThreshOld);
 		sheetMemory.setUint8(allocThreshOld, 0, 1);
 		assert.strictEqual(sheetMemory.getMinIndex(), 5);

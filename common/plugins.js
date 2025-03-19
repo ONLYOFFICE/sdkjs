@@ -162,6 +162,8 @@
 			"onDocumentContentReady" : true
 		};
 		this.mainEvents = {};
+
+		this.dockCallbacks = {};
 	}
 
 	CPluginsManager.prototype =
@@ -679,6 +681,24 @@
 				}
 			}
 			return needsGuids;
+		},
+
+		onPluginWindowDockChanged : function(type, guid, windowId, callback)
+		{
+			let runObject = this.runnedPluginsMap[guid];
+			if (!runObject)
+				return;
+
+			this.dockCallbacks[guid + "_" + windowId] = callback;
+
+			let pluginData = new CPluginData();
+			pluginData.setAttribute("guid", guid);
+			pluginData.setAttribute("type", "onWindowEvent");
+			pluginData.setAttribute("windowID",  windowId);
+			pluginData.setAttribute("eventName", "onDockedChanged");
+			pluginData.setAttribute("eventData", type);
+
+			this.sendMessageToFrame(runObject.isConnector ? "" : runObject.frameId, pluginData);
 		},
 
 		getPluginOptions : function(guid)

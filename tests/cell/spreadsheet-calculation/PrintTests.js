@@ -129,8 +129,7 @@ $(function() {
 		AscCommon.g_oTableId.init();
 		api._onEndLoadSdk();
 		api.isOpenOOXInBrowser = false;
-		api._openDocument(binaryData);
-		api._openOnClient();
+		api.OpenDocumentFromBin(null, binaryData);
 	}
 
 	api.HtmlElement = document.createElement("div");

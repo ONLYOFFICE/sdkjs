@@ -82,12 +82,12 @@
 		if (this.group && this.group.IsUseInDocument)
 			return this.group.IsUseInDocument();
 		
-        let oDoc = this.GetDocument();
-        if (!oDoc) {
-            return false;
+        let oPage = this.GetParentPage();
+        if (oPage && oPage.drawings.includes(this)) {
+            return true;
         }
 
-		return (-1 !== oDoc.drawings.indexOf(this));
+		return false;
 	};
     CPdfDrawingPrototype.prototype.OnBlur = function() {
         AscCommon.History.ForbidUnionPoint();

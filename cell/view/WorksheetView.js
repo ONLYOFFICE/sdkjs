@@ -2098,21 +2098,48 @@
         let arCopy = null;
         let arHistorySelect = ar.clone(true);
         let vr = this.visibleRange;
-        // First top cell
+        // First top cell with data
         let topCell = null;
-        // First left cell
+        // First left cell with data
         let leftCell = null;
 
         let r = activeCell.row - 1;
         let c = activeCell.col - 1;
         let cell, cellType, isNumberFormat;
         let result = {};
-        // let hasNumber = this._getValuesPositionsInRange(true);
         let hasNumber = !callFromWizard && this._getAutocompleteValues();		// Get all valid values ​​for autocomplete according to the cell format and type
 
-        // Get all non-empty values ​​in the range
-        // let realValues = this._getValuesPositionsInRange();
-        let val, text;
+		let functionAction = null;
+		let changedRange = null;
+		const onAutoCompleteFormula = function (isSuccess) {
+			if (false === isSuccess) {
+				return;
+			}
+
+			History.Create_NewPoint();
+			History.SetSelection(arHistorySelect.clone());
+			History.SetSelectionRedo(arCopy.clone());
+			History.StartTransaction();
+
+			asc_applyFunction(functionAction);
+
+			History.EndTransaction();
+
+			t.getSelectionMathInfo(function (info) {
+				t.handlers.trigger("selectionMathInfoChanged", info);
+			});
+
+			let selectionType = ar.getType && ar.getType();
+			if (selectionType === c_oAscSelectionType.RangeCol) {
+				t.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
+			} else if (selectionType === c_oAscSelectionType.RangeRow) {
+				t.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
+			} else if (selectionType === c_oAscSelectionType.RangeMax) {
+				t.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical | AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
+			}
+
+			t.draw();
+		};
 
         /*
             If the first value in the select is a string, then:
@@ -2127,8 +2154,12 @@
             or the number of numeric values ​​in the column is 1
         */
 
+        let val, text, merged;
         let firstCell = this._getCellTextCache(ar.c1, ar.r1, true);
         let lastCell = this._getCellTextCache(ar.c2, ar.r2, true);
+
+		let isSingleCellSelection = (ar.r1 === ar.r2) && (ar.c1 === ar.c2);
+		let isSingleRowColSelection =  (ar.r1 === ar.r2) || (ar.c1 === ar.c2);
 
         if (hasNumber) {
             let i;
@@ -2227,9 +2258,6 @@
 
 			if (!breakExec){
 				arCopy = ar.clone(true);
-
-				let functionAction = null;
-				let changedRange = null;
 	
 				if (false === hasNumberInLastColumn && false === hasNumberInLastRow) {
 					// Значений нет ни в последней строке ни в последнем столбце (значит нужно сделать формулы в каждой последней ячейке)
@@ -2336,36 +2364,6 @@
 					}
 				}
 	
-				const onAutoCompleteFormula = function (isSuccess) {
-					if (false === isSuccess) {
-						return;
-					}
-	
-					History.Create_NewPoint();
-					History.SetSelection(arHistorySelect.clone());
-					History.SetSelectionRedo(arCopy.clone());
-					History.StartTransaction();
-	
-					asc_applyFunction(functionAction);
-	
-					History.EndTransaction();
-	
-					t.getSelectionMathInfo(function (info) {
-						t.handlers.trigger("selectionMathInfoChanged", info);
-					});
-	
-					let selectionType = ar.getType && ar.getType();
-					if (selectionType === c_oAscSelectionType.RangeCol) {
-						t.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
-					} else if (selectionType === c_oAscSelectionType.RangeRow) {
-						t.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
-					} else if (selectionType === c_oAscSelectionType.RangeMax) {
-						t.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical | AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
-					}
-	
-					t.draw();
-				};
-	
 				// Можно ли применять автоформулу
 				this._isLockedCells(changedRange, /*subType*/null, onAutoCompleteFormula);
 	
@@ -2375,7 +2373,7 @@
 		} else {
 			if (!result.text && !result.notEditCell) {
 				let supposedCell = this.model.getCell3(activeCell.row, activeCell.col);
-				let merged = supposedCell && supposedCell.hasMerged();
+				merged = supposedCell && supposedCell.hasMerged();
 				if (merged) {
 					selection.setActiveCell(merged.r1, merged.c1);
 				} else if (firstCell && (firstCell.cellType === CellValueType.String) && lastCell && (lastCell.cellType === CellValueType.String)) {
@@ -2436,12 +2434,12 @@
         }
 
         if (leftCell) {
-            // Идем влево до первой не числовой ячейки
+            // Move to the left until the first non-numeric cell
             --c;
             for (; c >= 0; --c) {
                 cell = this._getCellTextCache(c, activeCell.row);
                 if (!cell) {
-                    // Могут быть еще не закешированные данные
+                    // There may still be uncached data
                     this._addCellTextToCache(c, activeCell.row);
                     cell = this._getCellTextCache(c, activeCell.row);
                     if (!cell) {
@@ -2454,14 +2452,45 @@
                     break;
                 }
             }
-            // Мы ушли чуть дальше
+            // We have gone a little further
             ++c;
-            // Диапазон или только 1 ячейка
+
+			// If we have one line or column in the selection and we found not empty cells to the left or on top, 
+			// then we need to add the formula with the result for the entire selection with a shift for each cell
+			// if we select only one cell, we must only get the formula for editing without writing in the cell
+			if (!isSingleCellSelection && !merged && isSingleRowColSelection) {
+				changedRange = new asc_Range(c, ar.r1, activeCell.col - 1, leftCell.r);
+				arCopy = !arCopy ? ar.clone(true) : arCopy;
+				functionAction = function () {
+					let byCol = arHistorySelect.c1 === arHistorySelect.c2 ? true : false;
+					if (byCol) {
+						for (let row = arHistorySelect.r1; row <= arHistorySelect.r2; ++row) {
+							cell = t._getVisibleCell(arHistorySelect.c2, row);
+							text = (new asc_Range(c, row, arHistorySelect.c2 - 1, row)).getName();
+							val = t.generateAutoCompleteFormula(functionName, text);
+							cell.setValue(val);
+						}
+					} else {
+						for (let col = arHistorySelect.c1, colShift = 0; col <= arHistorySelect.c2; ++col, ++colShift) {
+							cell = t._getVisibleCell(col, arHistorySelect.r2);
+							text = (new asc_Range(c + (colShift), ar.r1, col - 1, ar.r1)).getName();
+							val = t.generateAutoCompleteFormula(functionName, text);
+							cell.setValue(val);
+						}
+					}
+				};
+
+				this._isLockedCells(changedRange, /*subType*/null, onAutoCompleteFormula);
+
+				result.notEditCell = true;
+				return result;
+			}
+
             if (activeCell.col - 1 !== c) {
-                // Диапазон
+                // Range
                 result = new asc_Range(c, leftCell.r, activeCell.col - 1, leftCell.r);
             } else {
-                // Одна ячейка
+                // Single cell
                 result = new asc_Range(c, leftCell.r, c, leftCell.r);
             }
             this._fixSelectionOfMergedCells(result);
@@ -2469,12 +2498,12 @@
         }
 
         if (topCell) {
-            // Идем вверх до первой не числовой ячейки
+            // Move up until the first non-numeric cell
             --r;
             for (; r >= 0; --r) {
                 cell = this._getCellTextCache(activeCell.col, r);
                 if (!cell) {
-                    // Могут быть еще не закешированные данные
+                    // There may still be uncached data
                     this._addCellTextToCache(activeCell.col, r);
                     cell = this._getCellTextCache(activeCell.col, r);
                     if (!cell) {
@@ -2487,14 +2516,44 @@
                     break;
                 }
             }
-            // Мы ушли чуть дальше
+            // We have gone a little further
             ++r;
-            // Диапазон или только 1 ячейка
+
+			if (!isSingleCellSelection && !merged && isSingleRowColSelection) {
+				changedRange = new asc_Range(ar.c1, r, topCell.c, activeCell.row - 1);
+				arCopy = !arCopy ? ar.clone(true) : arCopy;
+				functionAction = function () {
+					let byCol = arHistorySelect.c1 === arHistorySelect.c2 ? true : false;
+					if (byCol) {
+						// go down the lines and together with the rowShift, add the formula to the cells inside the select
+						for (let row = arHistorySelect.r1, rowShift = 0; row <= arHistorySelect.r2; ++row, ++rowShift) {
+							cell = t._getVisibleCell(arHistorySelect.c1, row);
+							text = (new asc_Range(arHistorySelect.c2, r + rowShift, arHistorySelect.c2, row - 1)).getName();
+							val = t.generateAutoCompleteFormula(functionName, text);
+							cell.setValue(val);
+						}
+					} else {
+						// go along the line to the right and add the formula to the cells inside the select without shift
+						for (let col = arHistorySelect.c1; col <= arHistorySelect.c2; ++col) {
+							cell = t._getVisibleCell(col, arHistorySelect.r2);
+							text = (new asc_Range(col, r, col, arHistorySelect.r2 - 1)).getName();
+							val = t.generateAutoCompleteFormula(functionName, text);
+							cell.setValue(val);
+						}
+					}
+				};
+
+				this._isLockedCells(changedRange, /*subType*/null, onAutoCompleteFormula);
+				
+				result.notEditCell = true;
+				return result;
+			}
+
             if (activeCell.row - 1 !== r) {
-                // Диапазон
+                // Range
                 result = new asc_Range(topCell.c, r, topCell.c, activeCell.row - 1);
             } else {
-                // Одна ячейка
+                // Single cell
                 result = new asc_Range(topCell.c, r, topCell.c, r);
             }
             this._fixSelectionOfMergedCells(result);
@@ -4151,10 +4210,11 @@
 
 		var calcScale = this.calcPrintScale(width, height);
 		if(!isNaN(calcScale)) {
+			let viewMode = this.handlers.trigger('getViewMode');
 			let realLockDraw = this.lockDraw;
 			//TODO add lock draw here. need review all draw calls(try to replace on recalculate)
 			this.lockDraw = true;
-			this._setPrintScale(calcScale);
+			this._setPrintScale(calcScale, viewMode);
 			this.lockDraw = realLockDraw;
 		}
 
@@ -4275,7 +4335,7 @@
 		}
 	};
 
-	WorksheetView.prototype._setPrintScale = function (val) {
+	WorksheetView.prototype._setPrintScale = function (val, isNotHistory) {
 		var pageOptions = this.model.PagePrintOptions;
 		var pageSetup = pageOptions.asc_getPageSetup();
 		var oldScale = pageSetup.asc_getScale();
@@ -4284,7 +4344,7 @@
 			History.Create_NewPoint();
 			History.StartTransaction();
 
-			pageSetup.asc_setScale(val);
+			pageSetup.asc_setScale(val, isNotHistory);
 
 			History.EndTransaction();
 		}
@@ -12019,7 +12079,9 @@
 							res = {cursor: kCurAutoFilter, target: c_oTargetType.FilterObject, col: c.col, row: r.row, isDataValidation: _isDataValidation};
 						} else if (_isPivot && pivotButton) {
 							if(pivotButton.idPivotCollapse) {
-								res = {cursor: kCurHyperlink, target: c_oTargetType.FilterObject, col: c.col, row: r.row, idPivotCollapse: pivotButton.idPivotCollapse};
+								if (!pivotButton.idPivotCollapse.hidden) {
+									res = {cursor: kCurHyperlink, target: c_oTargetType.FilterObject, col: c.col, row: r.row, idPivotCollapse: pivotButton.idPivotCollapse};
+								}
 							} else {
 								res = {cursor: kCurAutoFilter, target: c_oTargetType.FilterObject, col: c.col, row: r.row, idPivot: pivotButton.idPivot};
 							}
@@ -18368,7 +18430,7 @@
 
 	WorksheetView.prototype._saveCellValueAfterEdit = function (c, val, flags, isNotHistory, lockDraw) {
 		const t = this;
-		const ws = t.model
+		const ws = t.model;
 		let bbox = c.bbox;
 
 		let ctrlKey = flags && flags.ctrlKey;
@@ -28634,7 +28696,9 @@
 
 				pastedRangeProps.hidden = newVal.getHidden();
 
-				pastedRangeProps.locked = newVal.getLocked();
+				if (!t.ws.model.getSheetProtection()) {
+					pastedRangeProps.locked = newVal.getLocked();
+				}
 			}
 
 			var tableDxf = getTableDxf(fromRow, fromCol, newVal);

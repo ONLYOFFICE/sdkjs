@@ -2313,14 +2313,14 @@ CGraphicObjects.prototype =
         let oDrawing = this.getMajorParaDrawing();
         if(oDrawing)
         {
-            let oParagraph = oDrawing.Get_ParentParagraph(), ParaPr;
+            let oParagraph = oDrawing.Get_ParentParagraph();
             if(oParagraph)
             {
                 let oParaPr = oParagraph.Get_CompiledPr2(true).ParaPr;
                 if (oParaPr)
                 {
                     editor.sync_ParaSpacingLine( oParaPr.Spacing );
-                    editor.Update_ParaInd(oParaPr.Ind);
+                    editor.Update_ParaInd(oParaPr.Ind, oParaPr.Bidi);
                     editor.sync_PrAlignCallBack(oParaPr.Jc);
                     editor.sync_ParaStyleName(oParaPr.StyleName);
                 }
@@ -2390,7 +2390,7 @@ CGraphicObjects.prototype =
        // editor.UpdateTextPr(oTextPr);
 		editor.Update_ParaTab(AscCommonWord.Default_Tab_Stop, new CParaTabs());
         editor.sync_ParaSpacingLine( new CParaSpacing() );
-        editor.Update_ParaInd(new CParaInd());
+        editor.Update_ParaInd(new CParaInd(), false);
         editor.sync_PrAlignCallBack(null);
         editor.sync_ParaStyleName(null);
     },

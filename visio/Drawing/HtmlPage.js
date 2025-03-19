@@ -566,6 +566,10 @@ function CEditorPage(api)
 	{
 		return this.m_oMainParent.AbsolutePosition;
 	};
+	this.GetVertRulerLeft = function()
+	{
+		return 0;
+	};
 
 	// splitter
 	this.createSplitterElement = function()

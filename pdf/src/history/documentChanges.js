@@ -156,6 +156,7 @@ CChangesPDFDocumentAnnotsContent.prototype.Redo = function()
             oItem._page = -1;
             oItem.selectStartPage = -1;
 
+            oViewer.DrawingObjects.resetSelection();
             oItem.AddToRedraw();
             Asc.editor.sync_RemoveComment(oItem.GetId());
         }

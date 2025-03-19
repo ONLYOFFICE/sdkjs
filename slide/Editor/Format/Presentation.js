@@ -8727,6 +8727,7 @@ CPresentation.prototype.Refresh_RecalcData2 = function (Data) {
 			break;
 		}
 		case AscDFH.historyitem_ThemeSetColorScheme: {
+			this.bNeedUpdateThemes = true;
 			History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, Theme: true, ThemeObj: Data.Theme});
 			break;
 		}
@@ -11289,7 +11290,7 @@ CPresentation.prototype.resetSlideBackground = function(arrSlides) {
 	if (this.Document_Is_SelectionLocked(AscCommon.changestype_SlideBg, arrSlides) === false) {
 		this.StartAction(AscDFH.historydescription_Presentation_ResetSlideBackground);
 		for(let nIdx = 0; nIdx < arrSlides.length; ++nIdx) {
-			let oSlide = arrSlides[i];
+			let oSlide = arrSlides[nIdx];
 			if(!oSlide.isMaster()) {
 				oSlide.changeBackground(null);
 			}

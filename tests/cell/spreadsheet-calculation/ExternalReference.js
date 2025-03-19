@@ -615,6 +615,10 @@ $(function () {
 		let api = new Asc.spreadsheet_api({
 			'id-view': 'editor_sdk'
 		});
+		api.FontLoader = {
+			LoadDocumentFonts: function () {
+			}
+		};
 
 		let docInfo = new Asc.asc_CDocInfo();
 		docInfo.asc_putTitle("TeSt.xlsx");

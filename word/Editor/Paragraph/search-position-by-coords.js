@@ -446,12 +446,25 @@
 			return 0;
 		
 		let range = 0;
-		for (; range < rangeCount - 1; ++range)
+		if (p.isRtlDirection())
 		{
-			let currRange = p.Lines[this.line].Ranges[range];
-			let nextRange = p.Lines[this.line].Ranges[range + 1];
-			if (x < (currRange.XEnd + nextRange.X) / 2 || currRange.WEnd > 0.001)
-				break;
+			for (; range < rangeCount - 1; ++range)
+			{
+				let currRange = p.Lines[this.line].Ranges[range];
+				let nextRange = p.Lines[this.line].Ranges[range + 1];
+				if (x > (currRange.X + nextRange.XEnd) / 2 || currRange.WEnd > 0.001)
+					break;
+			}
+		}
+		else
+		{
+			for (; range < rangeCount - 1; ++range)
+			{
+				let currRange = p.Lines[this.line].Ranges[range];
+				let nextRange = p.Lines[this.line].Ranges[range + 1];
+				if (x < (currRange.XEnd + nextRange.X) / 2 || currRange.WEnd > 0.001)
+					break;
+			}
 		}
 		
 		return Math.max(0, Math.min(range, rangeCount - 1));

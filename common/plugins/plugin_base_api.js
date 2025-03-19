@@ -569,6 +569,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * executeMethod
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias executeMethod
 	 * @description Defines the method used to execute certain editor methods using the plugin.
@@ -620,6 +621,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * resizeWindow (only for visual modal plugins)
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias resizeWindow
 	 * @description Defines the method used to change the window size updating the minimum/maximum sizes.
@@ -661,6 +663,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * callCommand
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias callCommand
 	 * @description Defines the method used to send the data back to the editor.
@@ -700,6 +703,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * callModule
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias callModule
 	 * @description Defines the method used to execute a remotely located script following a link.
@@ -733,6 +737,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * loadModule
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias loadModule
 	 * @description Defines the method used to load a remotely located text resource.
@@ -759,6 +764,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * @function attachEvent
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias attachEvent
 	 * @description Defines the method to add an event listener, a function that will be called whenever the specified event is delivered to the target.
@@ -770,6 +776,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * @function attachContextMenuClickEvent
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias attachContextMenuClickEvent
 	 * @description Defines the method to add an event listener, a function that will be called whenever the specified event is clicked in the context menu.
@@ -800,6 +807,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * @function createWindow
+	 * @undocumented
 	 * @memberof InputHelper
 	 * @alias createWindow
 	 * @description Creates an input helper window.
@@ -808,6 +816,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * @function getItems
+	 * @undocumented
 	 * @memberof InputHelper
 	 * @alias getItems
 	 * @description Returns an array of the {@link global#InputHelperItem InputHelperItem} objects that contain all the items from the input helper.
@@ -817,6 +826,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * @function setItems
+	 * @undocumented
 	 * @memberof InputHelper
 	 * @alias setItems
 	 * @description Sets the items to the input helper.
@@ -826,6 +836,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * @function show
+	 * @undocumented
 	 * @memberof InputHelper
 	 * @alias show
 	 * @description Shows an input helper.
@@ -837,6 +848,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * @function unShow
+	 * @undocumented
 	 * @memberof InputHelper
 	 * @alias unShow
 	 * @description Hides an input helper.
@@ -845,6 +857,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * @function getScrollSizes
+	 * @undocumented
 	 * @memberof InputHelper
 	 * @alias getScrollSizes
 	 * @description Returns the sizes of the input helper scrolled window. Returns an object with width and height parameters.
@@ -854,6 +867,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * createInputHelper
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias createInputHelper
 	 * @description Defines the method used to create an {@link inputhelper input helper} - a window that appears and disappears when you type text. Its location is tied to the cursor.
@@ -867,6 +881,7 @@ window.startPluginApi = function() {
     };
 	/**
 	 * getInputHelper
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias getInputHelper
 	 * @description Defines the method used to get the {@link inputhelper InputHelper object}.
@@ -882,6 +897,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * sendToPlugin
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias sendToPlugin
 	 * @description Sends a message from the modal window to the plugin.

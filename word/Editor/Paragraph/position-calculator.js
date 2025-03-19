@@ -52,10 +52,13 @@
 		this.x = 0;
 		this.y = 0;
 		
+		this.startX = 0;
+		
 		this.bidi = new AscWord.BidiFlow(this);
 		
 		this.isNextCurrent = false;
 		this.nextRun       = null;
+		this.stop          = false;
 		
 		this.posInfo = {
 			x     : 0,
@@ -66,13 +69,14 @@
 		
 		// Track prev element for the case when cursor is placed between elements with different directions
 		this.prev = {
-			x        : 0,
-			y        : 0,
-			run      : null,
-			element  : null,
-			inRunPos : 0,
-			find     : false,
-			usePos   : false
+			x         : 0,
+			y         : 0,
+			run       : null,
+			element   : null,
+			inRunPos  : 0,
+			find      : false,
+			usePos    : false,
+			direction : AscBidi.DIRECTION.L
 		};
 		
 		this.complexFields = new AscWord.ParagraphComplexFieldStack();
@@ -84,6 +88,7 @@
 		
 		this.isNextCurrent = false;
 		this.nextRun       = null;
+		this.stop          = false;
 		
 		this.page  = page;
 		this.line  = line;
@@ -93,6 +98,8 @@
 		
 		this.x = p.Lines[line].Ranges[range].XVisible;
 		this.y = p.Pages[page].Y + p.Lines[line].Y;
+		
+		this.startX = this.x;
 		
 		if (p.Numbering.checkRange(range, line))
 			this.x += p.Numbering.WidthVisible;
@@ -140,8 +147,8 @@
 		if (this.isNextCurrent)
 		{
 			isCurrent = true;
-			this.isNextCurrent = false;
 			run = this.nextRun;
+			this.isNextCurrent = false;
 			this.nextRun = null;
 		}
 		
@@ -150,10 +157,11 @@
 		
 		if (!this.prev.find)
 		{
-			this.prev.element  = element;
-			this.prev.run      = run;
-			this.prev.inRunPos = inRunPos;
-			this.prev.usePos   = false;
+			this.prev.element   = element;
+			this.prev.run       = run;
+			this.prev.inRunPos  = inRunPos;
+			this.prev.usePos    = false;
+			this.prev.direction = (element.getBidiType() & AscBidi.FLAG.RTL) ? AscBidi.DIRECTION.R : AscBidi.DIRECTION.L;
 		}
 		
 		this.bidi.add([element, run, isCurrent, isNearFootnoteRef], element.getBidiType());
@@ -166,43 +174,46 @@
 		
 		if (element === this.prev.element)
 		{
-			this.prev.x      = this.x;
-			this.prev.y      = this.y;
-			this.prev.usePos = true;
+			this.prev.x         = this.x;
+			this.prev.y         = this.y;
+			this.prev.usePos    = true;
+			this.prev.direction = direction;
 		}
 		
 		let w = element.GetWidthVisible();
-		if (isCurrent)
+
+		// If we encountered the last entered element then we place the cursor after it
+		let lastElement = this.prev.element && this.prev.find && this.prev.usePos && this.prev.element.IsText() ? this.prev.element : null;
+		if (lastElement && AscWord.checkAsYouTypeEnterText(this.prev.run, this.prev.inRunPos + 1, lastElement.GetCodePoint()))
 		{
-			let lastElement = this.prev.element && this.prev.find && this.prev.usePos && this.prev.element.IsText() ? this.prev.element : null;
-			if (lastElement && AscWord.checkAsYouTypeEnterText(this.prev.run, this.prev.inRunPos + 1, lastElement.GetCodePoint()))
-			{
-				this.posInfo.x = this.prev.x;
-				this.posInfo.y = this.prev.y;
-				
-				if (!(lastElement.getBidiType() & AscBidi.FLAG.RTL))
-					this.posInfo.x += lastElement.GetWidthVisible();
-				
-				this.posInfo.run = this.prev.run;
-				
-				// for comb forms
-				if (element.LGap)
-					this.posInfo.x += element.LGap;
-			}
-			else
-			{
-				this.posInfo.x = this.x;
-				this.posInfo.y = this.y;
-				
-				if (direction === AscBidi.DIRECTION.R)
-					this.posInfo.x += w;
-				
-				this.posInfo.run = run;
-				
-				// for comb forms
-				if (element.LGap)
-					this.posInfo.x += element.LGap;
-			}
+			this.posInfo.x = this.prev.x;
+			this.posInfo.y = this.prev.y;
+			
+			if (AscBidi.DIRECTION.L === this.prev.direction)
+				this.posInfo.x += lastElement.GetWidthVisible();
+			
+			this.posInfo.run = this.prev.run;
+			
+			// for comb forms
+			if (element.LGap)
+				this.posInfo.x += element.LGap;
+			
+			this.stop = true;
+		}
+		
+		if (isCurrent && !this.stop)
+		{
+			this.posInfo.x = this.x;
+			this.posInfo.y = this.y;
+			
+			if (direction === AscBidi.DIRECTION.R)
+				this.posInfo.x += w;
+			
+			this.posInfo.run = run;
+			
+			// for comb forms
+			if (element.LGap)
+				this.posInfo.x += element.LGap;
 		}
 		
 		this.x += w;
@@ -211,7 +222,7 @@
 	{
 		this.bidi.end();
 		
-		if (this.isNextCurrent)
+		if (this.isNextCurrent && !this.stop)
 		{
 			this.posInfo.x   = this.x;
 			this.posInfo.y   = this.y;
@@ -369,9 +380,9 @@
 	{
 		this.bidi.end();
 		
-		if (this.isNextCurrent)
+		if (this.isNextCurrent && !this.stop)
 		{
-			this.posInfo.x   = this.x;
+			this.posInfo.x   = this.paragraph.isRtlDirection() ? this.startX : this.x;
 			this.posInfo.y   = this.y;
 			this.posInfo.run = this.nextRun;
 			

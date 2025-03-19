@@ -658,6 +658,7 @@ window['AscCommonWord'].CTextToTableEngine = CTextToTableEngine;
 	window['AscWord'].sortByDocumentPosition   = sortByDocumentPosition;
 	window['AscWord'].checkAsYouTypeEnterText  = checkAsYouTypeEnterText;
 	
+	window['AscWord'].EPSILON                  = 0.001;
 	window['AscWord'].MAX_MM_VALUE             = 558.7;
 	window['AscWord'].Direction                = Direction;
 

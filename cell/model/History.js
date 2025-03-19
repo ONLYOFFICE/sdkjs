@@ -611,7 +611,7 @@ CHistory.prototype.RedoAdd = function(oRedoObjectParam, Class, Type, sheetid, ra
 	}
 	var curPoint = this.Points[this.Index];
 	//if(Class)
-	this.Add(Class, Type, sheetid, range, Data, LocalChange);
+	this.Add(Class, Type, sheetid, range, Data, LocalChange, true);
 	if(bNeedOff)
 		this.TurnOff();
 
@@ -1188,7 +1188,7 @@ CHistory.prototype.Create_NewPoint = function()
 // Регистрируем новое изменение:
 // Class - объект, в котором оно произошло
 // Data  - сами изменения
-CHistory.prototype.Add = function(Class, Type, sheetid, range, Data, LocalChange)
+CHistory.prototype.Add = function(Class, Type, sheetid, range, Data, LocalChange, isRedoAdd)
 {
 	if (!this.CanAddChanges())
 		return;
@@ -1231,7 +1231,9 @@ CHistory.prototype.Add = function(Class, Type, sheetid, range, Data, LocalChange
 	if(null != LocalChange)
 		Item.LocalChange = LocalChange;
 
-	this.Refresh_SpreadsheetChanges(Item);
+	if (!isRedoAdd) {
+		this.Refresh_SpreadsheetChanges(Item);
+	}
 
     var curPoint = this.Points[this.Index];
 	curPoint.Items.push( Item );
