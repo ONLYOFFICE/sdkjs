@@ -7650,7 +7650,7 @@
 
 			newSheetName = name;
 		}
-		var pivot = this.asc_insertPivotNewWorksheet(dataRef, newSheetName);
+		var pivot = this.asc_insertPivащкьotNewWorksheet(dataRef, newSheetName);
 		if (pivot) {
 			return new ApiPivotTable(pivot, this);
 		}
