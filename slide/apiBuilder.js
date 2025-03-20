@@ -1110,7 +1110,6 @@
         return -1;
     };
 
-
     /**
      * Returns a slide by its position in the presentation.
      * @memberof ApiPresentation
@@ -1137,6 +1136,39 @@
         return this.GetSlideByIndex(this.GetCurSlideIndex());
     };
 
+	/**
+	 * Returns the current visible slide, layout or master.
+	 * @typeofeditors ["CPE"]
+	 * @memberof ApiPresentation
+	 * @returns {ApiSlide | ApiLayout | ApiMaster | null} - returns null if the current slide is not found.
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetCurrentVisibleSlide.js
+	 */
+	ApiPresentation.prototype.GetCurrentVisibleSlide = function () {
+		const slideIndex = this.GetCurSlideIndex();
+
+		if (!Asc.editor.isMasterMode()) {
+			return this.GetSlideByIndex(slideIndex);
+		}
+
+		const aMasters = this.GetAllSlideMasters();
+		let accumulatedIndex = 0;
+
+		for (let i = 0; i < aMasters.length; i++) {
+			const master = aMasters[i];
+			if (accumulatedIndex === slideIndex) {
+				return master;
+			}
+
+			const layouts = master.GetAllLayouts();
+			if (slideIndex < accumulatedIndex + layouts.length + 1) {
+				return layouts[slideIndex - accumulatedIndex - 1];
+			}
+
+			accumulatedIndex += layouts.length + 1;
+		}
+
+		return null;
+	};
 
     /**
      * Appends a new slide to the end of the presentation.
@@ -1151,8 +1183,6 @@
             this.Presentation.insertSlide(this.Presentation.Slides.length, oSlide.Slide);
         }
     };
-
-
 
     /**
      * Sets the size to the current presentation.
