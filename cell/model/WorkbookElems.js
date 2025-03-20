@@ -18967,6 +18967,525 @@ function RangeDataManagerElem(bbox, data)
 		return this.index;
 	};
 
+	function CMapInfo() {
+		this.SelectionNamespaces = null;
+		this.arrItems = [];
+	}
+
+	CMapInfo.prototype.fromXml = function(reader) {
+		if (!reader.ReadNextNode()) {
+			return;
+		}
+
+		this.readAttr(reader);
+		if (reader.IsEmptyNode()) {
+			return;
+		}
+
+		var depth = reader.GetDepth();
+		while (reader.ReadNextSiblingNode(depth)) {
+			var name = reader.GetNameNoNS();
+			var pItem = null;
+
+			if ("Schema" === name) {
+				pItem = new CSchema();
+			} else if ("Map" === name) {
+				pItem = new CMap();
+			}
+
+			if (pItem) {
+				pItem.fromXml(reader);
+				this.arrItems.push(pItem);
+			}
+		}
+	};
+
+	CMapInfo.prototype.readAttr = function(reader) {
+		while (reader.MoveToNextAttribute()) {
+			if ("SelectionNamespaces" === reader.GetName()) {
+				this.SelectionNamespaces = reader.GetValue();
+			}
+		}
+	};
+
+	CMapInfo.prototype.toXml = function(writer) {
+		writer.WriteXmlString('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>');
+		writer.WriteXmlNodeStart("MapInfo");
+		writer.WriteXmlString(' xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"');
+
+		writer.WriteXmlNullableAttributeStringEncode("SelectionNamespaces", this.SelectionNamespaces);
+		writer.WriteXmlAttributesEnd();
+
+		for (var i = 0; i < this.arrItems.length; ++i) {
+			this.arrItems[i].toXml(writer);
+		}
+
+		writer.WriteXmlNodeEnd("MapInfo");
+	};
+
+	CMapInfo.prototype.toPPTY = function(writer) {
+		writer.WriteByte(AscCommon.g_nodeAttributeStart);
+		writer.WriteString2(0, this.SelectionNamespaces);
+		writer.WriteByte(AscCommon.g_nodeAttributeEnd);
+
+		for (var i = 0; i < this.arrItems.length; ++i) {
+			var type = 0xff;
+			switch (this.m_arrItems[i].getType()) {
+				case AscDFH.historyitem_type_Schema:
+					type = 0;
+					break;
+				case AscDFH.historyitem_type_Map:
+					type = 1;
+					break;
+			}
+			if (type !== 0xff) {
+				writer.WriteRecord2(type, this.arrItems[i]);
+			}
+		}
+	};
+
+	CMapInfo.prototype.fromPPTY = function(reader) {
+		var _end_rec = reader.GetPos() + reader.GetRecordSize() + 4;
+
+		reader.Skip(1); // start attributes
+		while (true) {
+			var _at = reader.GetUChar();
+			if (_at === AscCommon.g_nodeAttributeEnd)
+				break;
+
+			switch (_at) {
+				case 0:
+					this.SelectionNamespaces = reader.GetString2();
+					break;
+			}
+		}
+
+		while (reader.GetPos() < _end_rec) {
+			var _rec = reader.GetUChar();
+
+			switch (_rec) {
+				case 0:
+					var schema = new CSchema();
+					schema.fromPPTY(reader);
+					this.arrItems.push(schema);
+					break;
+				case 1:
+					var map = new CMap();
+					map.fromPPTY(reader);
+					this.arrItems.push(map);
+					break;
+				default:
+					reader.SkipRecord();
+					break;
+			}
+		}
+		reader.Seek(_end_rec);
+	};
+
+	/**
+	 * @constructor
+	 */
+	function CMap() {
+		this.ID = null;
+		this.Name = null;
+		this.RootElement = null;
+		this.SchemaID = null;
+		this.ShowImportExportValidationErrors = null;
+		this.AutoFit = null;
+		this.Append = null;
+		this.PreserveSortAFLayout = null;
+		this.PreserveFormat = null;
+		this.DataBinding = null;
+	}
+
+	/**
+	 * @returns {AscDFH.historyitem_type}
+	 */
+	CMap.prototype.getType = function() {
+		return AscDFH.historyitem_type_Map;
+	};
+
+	CMap.prototype.ReadAttributes = function(oReader) {
+		if (oReader.GetAttributeCount() <= 0)
+			return;
+
+		var ID = oReader.GetAttribute("ID");
+		if (null !== ID)
+			this.ID = ID;
+
+		var Name = oReader.GetAttribute("Name");
+		if (null !== Name)
+			this.Name = Name;
+
+		var RootElement = oReader.GetAttribute("RootElement");
+		if (null !== RootElement)
+			this.RootElement = RootElement;
+
+		var SchemaID = oReader.GetAttribute("SchemaID");
+		if (null !== SchemaID)
+			this.SchemaID = SchemaID;
+
+		var ShowImportExportValidationErrors = oReader.GetAttribute("ShowImportExportValidationErrors");
+		if (null !== ShowImportExportValidationErrors)
+			this.ShowImportExportValidationErrors = AscCommon.getBoolFromXml(ShowImportExportValidationErrors);
+
+		var AutoFit = oReader.GetAttribute("AutoFit");
+		if (null !== AutoFit)
+			this.AutoFit = AscCommon.getBoolFromXml(AutoFit);
+
+		var Append = oReader.GetAttribute("Append");
+		if (null !== Append)
+			this.Append = AscCommon.getBoolFromXml(Append);
+
+		var PreserveSortAFLayout = oReader.GetAttribute("PreserveSortAFLayout");
+		if (null !== PreserveSortAFLayout)
+			this.PreserveSortAFLayout = AscCommon.getBoolFromXml(PreserveSortAFLayout);
+
+		var PreserveFormat = oReader.GetAttribute("PreserveFormat");
+		if (null !== PreserveFormat)
+			this.PreserveFormat = AscCommon.getBoolFromXml(PreserveFormat);
+	};
+
+	CMap.prototype.fromXML = function(oReader) {
+		this.ReadAttributes(oReader);
+		if (oReader.IsEmptyNode())
+			return;
+
+		var nParentDepth = oReader.GetDepth();
+		while (oReader.ReadNextSiblingNode(nParentDepth)) {
+			var sName = oReader.GetName();
+
+			if ("DataBinding" === sName) {
+				this.DataBinding = new CDataBinding();
+				this.DataBinding.fromXML(oReader);
+			}
+		}
+	};
+
+	CMap.prototype.toPPTY = function(pWriter) {
+		pWriter.WriteByte(AscCommon.g_nodeAttributeStart);
+		pWriter.WriteUInt2(0, this.ID);
+		pWriter.WriteString2(1, this.Name);
+		pWriter.WriteString2(2, this.RootElement);
+		pWriter.WriteString2(3, this.SchemaID);
+		pWriter.WriteBool2(4, this.ShowImportExportValidationErrors);
+		pWriter.WriteBool2(5, this.AutoFit);
+		pWriter.WriteBool2(6, this.Append);
+		pWriter.WriteBool2(7, this.PreserveSortAFLayout);
+		pWriter.WriteBool2(8, this.PreserveFormat);
+		pWriter.WriteByte(AscCommon.g_nodeAttributeEnd);
+
+		if (this.DataBinding) {
+			pWriter.WriteRecord2(0, this.DataBinding);
+		}
+	};
+
+	CMap.prototype.fromPPTY = function(pReader) {
+		var _end_rec = pReader.GetPos() + pReader.GetRecordSize() + 4;
+		pReader.Skip(1); // start attributes
+
+		while (true) {
+			var _at = pReader.GetUChar();
+			if (_at === AscCommon.g_nodeAttributeEnd)
+				break;
+
+			switch (_at) {
+				case 0:
+					this.ID = pReader.GetULong();
+					break;
+				case 1:
+					this.Name = pReader.GetString2();
+					break;
+				case 2:
+					this.RootElement = pReader.GetString2();
+					break;
+				case 3:
+					this.SchemaID = pReader.GetString2();
+					break;
+				case 4:
+					this.ShowImportExportValidationErrors = pReader.GetBool();
+					break;
+				case 5:
+					this.AutoFit = pReader.GetBool();
+					break;
+				case 6:
+					this.Append = pReader.GetBool();
+					break;
+				case 7:
+					this.PreserveSortAFLayout = pReader.GetBool();
+					break;
+				case 8:
+					this.PreserveFormat = pReader.GetBool();
+					break;
+			}
+		}
+
+		while (pReader.GetPos() < _end_rec) {
+			var _rec = pReader.GetUChar();
+
+			switch (_rec) {
+				case 0:
+					this.DataBinding = new CDataBinding();
+					this.DataBinding.fromPPTY(pReader);
+					break;
+				default:
+					pReader.SkipRecord();
+					break;
+			}
+		}
+
+		pReader.Seek(_end_rec);
+	};
+
+	CMap.prototype.toXmlWriter = function(pWriter) {
+		pWriter.StartNode("Map");
+		pWriter.StartAttributes();
+		pWriter.WriteAttribute2("ID", this.ID);
+		pWriter.WriteAttribute2("RootElement", this.RootElement);
+		pWriter.WriteAttribute2("Name", this.Name);
+		pWriter.WriteAttribute2("SchemaID", this.SchemaID);
+		pWriter.WriteAttribute("ShowImportExportValidationErrors", this.ShowImportExportValidationErrors);
+		pWriter.WriteAttribute("AutoFit", this.AutoFit);
+		pWriter.WriteAttribute("Append", this.Append);
+		pWriter.WriteAttribute("PreserveSortAFLayout", this.PreserveSortAFLayout);
+		pWriter.WriteAttribute("PreserveFormat", this.PreserveFormat);
+		pWriter.EndAttributes();
+
+		if (this.DataBinding) {
+			this.DataBinding.toXmlWriter(pWriter);
+		}
+
+		pWriter.WriteNodeEnd("Map");
+	};
+
+	/**
+	 * @constructor
+	 */
+	function CDataBinding() {
+		this.ConnectionID = null;
+		this.DataBindingName = null;
+		this.FileBindingName = null;
+		this.SchemaID = null;
+		this.FileBinding = null;
+		this.DataBindingLoadMode = null;
+		this.content = null;
+	}
+
+	/**
+	 * @returns {AscDFH.historyitem_type}
+	 */
+	CDataBinding.prototype.getType = function() {
+		return AscDFH.historyitem_type_DataBinding;
+	};
+
+	CDataBinding.prototype.ReadAttributes = function(oReader) {
+		if (oReader.GetAttributeCount() <= 0)
+			return;
+
+		var ConnectionID = oReader.GetAttribute("ConnectionID");
+		if (null !== ConnectionID)
+			this.ConnectionID = ConnectionID;
+
+		var DataBindingName = oReader.GetAttribute("DataBindingName");
+		if (null !== DataBindingName)
+			this.DataBindingName = DataBindingName;
+
+		var FileBindingName = oReader.GetAttribute("FileBindingName");
+		if (null !== FileBindingName)
+			this.FileBindingName = FileBindingName;
+
+		var SchemaID = oReader.GetAttribute("SchemaID");
+		if (null !== SchemaID)
+			this.SchemaID = SchemaID;
+
+		var FileBinding = oReader.GetAttribute("FileBinding");
+		if (null !== FileBinding)
+			this.FileBinding = AscCommon.getBoolFromXml(FileBinding);
+
+		var DataBindingLoadMode = oReader.GetAttribute("DataBindingLoadMode");
+		if (null !== DataBindingLoadMode)
+			this.DataBindingLoadMode = DataBindingLoadMode;
+	};
+
+	CDataBinding.prototype.fromXML = function(oReader) {
+		this.ReadAttributes(oReader);
+		if (oReader.IsEmptyNode())
+			return;
+
+		this.content = oReader.GetInnerXml();
+	};
+
+	CDataBinding.prototype.toPPTY = function(pWriter) {
+		pWriter.WriteByte(AscCommon.g_nodeAttributeStart);
+		pWriter.WriteUInt2(0, this.ConnectionID);
+		pWriter.WriteString2(1, this.DataBindingName);
+		pWriter.WriteString2(2, this.FileBindingName);
+		pWriter.WriteString2(3, this.SchemaID);
+		pWriter.WriteBool2(4, this.FileBinding);
+		pWriter.WriteUInt2(5, this.DataBindingLoadMode);
+		pWriter.WriteString2(6, this.content);
+		pWriter.WriteByte(AscCommon.g_nodeAttributeEnd);
+	};
+
+	CDataBinding.prototype.fromPPTY = function(pReader) {
+		var _end_rec = pReader.GetPos() + pReader.GetRecordSize() + 4;
+		pReader.Skip(1); // start attributes
+
+		while (true) {
+			var _at = pReader.GetUChar();
+			if (_at === AscCommon.g_nodeAttributeEnd)
+				break;
+
+			switch (_at) {
+				case 0:
+					this.ConnectionID = pReader.GetULong();
+					break;
+				case 1:
+					this.DataBindingName = pReader.GetString2();
+					break;
+				case 2:
+					this.FileBindingName = pReader.GetString2();
+					break;
+				case 3:
+					this.SchemaID = pReader.GetString2();
+					break;
+				case 4:
+					this.FileBinding = pReader.GetBool();
+					break;
+				case 5:
+					this.DataBindingLoadMode = pReader.GetULong();
+					break;
+				case 6:
+					this.content = pReader.GetString2();
+					break;
+			}
+		}
+
+		pReader.Seek(_end_rec);
+	};
+
+	CDataBinding.prototype.toXmlWriter = function(pWriter) {
+		pWriter.StartNode("DataBinding");
+		pWriter.StartAttributes();
+		pWriter.WriteAttribute2("ConnectionID", this.ConnectionID);
+		pWriter.WriteAttribute2("DataBindingName", this.DataBindingName);
+		pWriter.WriteAttribute2("FileBindingName", this.FileBindingName);
+		pWriter.WriteAttribute2("SchemaID", this.SchemaID);
+		pWriter.WriteAttribute("FileBinding", this.FileBinding);
+		pWriter.WriteAttribute2("DataBindingLoadMode", this.DataBindingLoadMode);
+		pWriter.EndAttributes();
+
+		if (this.content !== null) {
+			pWriter.WriteString(this.content);
+		}
+
+		pWriter.WriteNodeEnd("DataBinding");
+	};
+
+	/**
+	 * @constructor
+	 */
+	function CSchema() {
+		this.ID = null;
+		this.SchemaRef = null;
+		this.Namespace = null;
+		this.SchemaLanguage = null;
+		this.content = null;
+	}
+
+	/**
+	 * @returns {AscDFH.historyitem_type}
+	 */
+	CSchema.prototype.getType = function() {
+		return AscDFH.historyitem_type_Schema;
+	};
+
+	CSchema.prototype.ReadAttributes = function(oReader) {
+		if (oReader.GetAttributeCount() <= 0)
+			return;
+
+		var ID = oReader.GetAttribute("ID");
+		if (null !== ID)
+			this.ID = ID;
+
+		var SchemaRef = oReader.GetAttribute("SchemaRef");
+		if (null !== SchemaRef)
+			this.SchemaRef = SchemaRef;
+
+		var Namespace = oReader.GetAttribute("Namespace");
+		if (null !== Namespace)
+			this.Namespace = Namespace;
+
+		var SchemaLanguage = oReader.GetAttribute("SchemaLanguage");
+		if (null !== SchemaLanguage)
+			this.SchemaLanguage = SchemaLanguage;
+	};
+
+	CSchema.prototype.fromXML = function(oReader) {
+		this.ReadAttributes(oReader);
+		if (oReader.IsEmptyNode())
+			return;
+
+		this.content = oReader.GetInnerXml();
+	};
+
+	CSchema.prototype.toPPTY = function(pWriter) {
+		pWriter.WriteByte(AscCommon.g_nodeAttributeStart);
+		pWriter.WriteString2(0, this.ID);
+		pWriter.WriteString2(1, this.SchemaRef);
+		pWriter.WriteString2(2, this.Namespace);
+		pWriter.WriteString2(3, this.SchemaLanguage);
+		pWriter.WriteString2(4, this.content);
+		pWriter.WriteByte(AscCommon.g_nodeAttributeEnd);
+	};
+
+	CSchema.prototype.fromPPTY = function(pReader) {
+		var _end_rec = pReader.GetPos() + pReader.GetRecordSize() + 4;
+		pReader.Skip(1); // start attributes
+
+		while (true) {
+			var _at = pReader.GetUChar();
+			if (_at === AscCommon.g_nodeAttributeEnd)
+				break;
+
+			switch (_at) {
+				case 0:
+					this.ID = pReader.GetString2();
+					break;
+				case 1:
+					this.SchemaRef = pReader.GetString2();
+					break;
+				case 2:
+					this.Namespace = pReader.GetString2();
+					break;
+				case 3:
+					this.SchemaLanguage = pReader.GetString2();
+					break;
+				case 4:
+					this.content = pReader.GetString2();
+					break;
+			}
+		}
+
+		pReader.Seek(_end_rec);
+	};
+
+	CSchema.prototype.toXmlWriter = function(pWriter) {
+		pWriter.StartNode("Schema");
+		pWriter.StartAttributes();
+		pWriter.WriteAttribute2("ID", this.ID);
+		pWriter.WriteAttribute2("SchemaRef", this.SchemaRef);
+		pWriter.WriteAttribute2("Namespace", this.Namespace);
+		pWriter.WriteAttribute2("SchemaLanguage", this.SchemaLanguage);
+		pWriter.EndAttributes();
+
+		if (this.content !== null) {
+			pWriter.WriteString(this.content);
+		}
+
+		pWriter.WriteNodeEnd("Schema");
+	};
+
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
 	window['Asc'] = window['Asc'] || {};
