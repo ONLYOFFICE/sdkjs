@@ -1225,10 +1225,10 @@
     this.handlers.trigger("asc_onSelectionMathChanged", info);
   };
 
-  WorkbookView.prototype._onSelectionRangeChanged = function (val) {
+  WorkbookView.prototype._onSelectionRangeChanged = function (val, sheetTitleSelected) {
       if (this.isFormulaEditMode && !this.isWizardMode) {
           this.skipHelpSelector = true;
-          this.cellEditor.changeCellText(val);
+          this.cellEditor.changeCellText(val, sheetTitleSelected);
           this.skipHelpSelector = false;
       }
       this.handlers.trigger("asc_onSelectionRangeChanged", val);
@@ -2501,7 +2501,13 @@
       // выбирать ячейки для формулы
       if (!this._checkStopCellEditorInFormulas()) {
           index = this.copyActiveSheet;
-      }
+      } else {
+		// todo вызывать смену селекта для аргумента в формуле с текущим индексом тут или после после смены активного листа?
+		let wsByIndex = this.model.getWorksheet(index);
+		let sheetStr = wsByIndex.getName() + "!";
+		// this.handlers.trigger("selectionRangeChanged", sheetStr);
+		this._onSelectionRangeChanged(sheetStr, true);
+	  }
       // Делаем очистку селекта
       ws.cleanSelection();
       this.stopTarget(ws);
