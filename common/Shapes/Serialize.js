@@ -10703,6 +10703,7 @@ function BinaryPPTYLoader()
                         oThis.bcr.Read1(nDocLength, function(t,l){
                             return oBinary_DocumentTableReader.ReadDocumentContent(t,l, content_arr);
                         });
+	                    oThis.oReadResult.checkDocumentContentReviewType(content_arr);
                         this.ParaDrawing = oCurParaDrawing;
                         for(var i = 0, length = content_arr.length; i < length; ++i){
                             if(i == length - 1)

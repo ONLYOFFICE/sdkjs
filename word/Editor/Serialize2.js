@@ -11321,16 +11321,20 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
     this.ReadAsTable = function(OpenContent)
     {
         var oThis = this;
-        return this.bcr.ReadTable(function(t, l){
+        const res = this.bcr.ReadTable(function(t, l){
                 return oThis.ReadDocumentContent(t, l, OpenContent);
             });
+	    this.oReadResult.checkDocumentContentReviewType(OpenContent);
+			return res;
     };
 	this.Read = function(length, OpenContent)
     {
         var oThis = this;
-        return this.bcr.Read1(length, function(t, l){
+        const res = this.bcr.Read1(length, function(t, l){
                 return oThis.ReadDocumentContent(t, l, OpenContent);
             });
+	    this.oReadResult.checkDocumentContentReviewType(OpenContent);
+			return res;
     };
     this.ReadDocumentContent = function(type, length, Content)
     {
@@ -11342,10 +11346,8 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
             res = this.bcr.Read1(length, function(t, l){
                 return oThis.ReadParagraph(t,l, oNewParagraph);
             });
-			if (reviewtype_Common === oNewParagraph.GetReviewType() || this.oReadResult.checkReadRevisions()) {
 				oNewParagraph.Correct_Content();
 				Content.push(oNewParagraph);
-			}
         }
         else if ( c_oSerParType.Table === type )
         {
@@ -17694,6 +17696,28 @@ DocReadResult.prototype = {
 				elem.SetNumPrToPrChange(numId, iLvl);
 			else
 				elem.SetNumPr(numId, iLvl);
+		}
+	},
+	checkDocumentContentReviewType: function (arrContent) {
+		if (!arrContent.length) {
+			return;
+		}
+		if (this.disableRevisions) {
+			const oLastElement = arrContent[arrContent.length - 1];
+			if (oLastElement instanceof AscWord.Paragraph && oLastElement.GetReviewType() === reviewtype_Remove) {
+				oLastElement.SetReviewType(reviewtype_Common);
+			}
+			for (let i = arrContent.length - 2; i >= 0; i -= 1) {
+				const oPrevElement = arrContent[i];
+				const oNextElement = arrContent[i + 1];
+				if (oPrevElement instanceof AscWord.Paragraph && oPrevElement.GetReviewType() === reviewtype_Remove) {
+					oPrevElement.SetReviewType(reviewtype_Common);
+					if (oNextElement instanceof AscWord.Paragraph) {
+						oPrevElement.Concat(oNextElement);
+						arrContent.splice(i + 1, 1);
+					}
+				}
+			}
 		}
 	}
 };
