@@ -835,6 +835,8 @@ ParaRun.prototype.Add = function(oItem)
 	var nFlags = 0;
 	if (para_Run === oRun.Type && (nFlags = oItem.GetAutoCorrectFlags()))
 		oRun.ProcessAutoCorrect(oRun.State.ContentPos - 1, nFlags);
+
+	return oRun;
 };
 /**
  * Ищем подходящий ран для добавления текста в режиме рецензирования (если нужно создаем новый), если возвращается

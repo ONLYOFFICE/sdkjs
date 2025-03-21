@@ -21201,7 +21201,9 @@
 	{
 		let sParaTab     = GetStringParameter(tab, "\t");
 		let sParaNewLine = GetStringParameter(newLine, "\r\n");
-		
+		let oDocument	 = this.GetDocument();
+		let isTrackRevisions = oDocument && oDocument.IsTrackRevisions && oDocument.IsTrackRevisions();
+
 		var allRunsInfo      = null;
 		var textDelta        = null;
 		var arrSelectedParas = null;
@@ -21215,6 +21217,10 @@
 
 			if (oRun.IsSelectionUse() && oRun.State.Selection.StartPos !== oRun.State.Selection.EndPos)
 			{
+				if (isTrackRevisions && !oRun.CanDeleteInReviewMode() && reviewtype_Remove === oRun.GetReviewType()) {
+					return;
+				}
+
 				var runInfo = {
 					Run : oRun,
 					StartPos : null,
@@ -21390,37 +21396,80 @@
 			}
 		}
 
+		function countRunChars(run)
+		{
+			let nCount = 0;
+
+			run.Content.forEach(function(elm)
+			{
+				if ([para_Text, para_Space, para_Tab, para_NewLine].includes(elm.Type))
+					nCount++;		
+			});
+
+			return nCount;
+		}
+
 		function DelInsertChars()
 		{
-			for (var nChange = textDelta.length - 1; nChange >= 0; nChange--)
+			for (let nChange = textDelta.length - 1; nChange >= 0; nChange--)
 			{
-				var oChange = textDelta[nChange];
-				var DelCount = oChange.deleteCount;
-				var infoToAdd = null;
-				for (var nInfo = 0; nInfo < allRunsInfo.length; nInfo++)
+				let oChange = textDelta[nChange];
+				let nDeleteCount = oChange.deleteCount;
+				let oInfoToAdd = null;
+
+				for (let nInfo = 0; nInfo < allRunsInfo.length; nInfo++)
 				{
-					var oInfo = allRunsInfo[nInfo];
-					if (oChange.pos >= oInfo.GlobStartPos || oChange.pos + DelCount > oInfo.GlobStartPos)
+					let oRunInfo = Object.assign({}, allRunsInfo[nInfo]);
+					if (oChange.pos >= oRunInfo.GlobStartPos || oChange.pos + nDeleteCount > oRunInfo.GlobStartPos)
 					{
-						var nPosToDel   = Math.max(0, oChange.pos - oInfo.GlobStartPos + oInfo.StartPos);
-						var nPosToAdd   = nPosToDel
-						var nCharsToDel = Math.min(oChange.deleteCount, oInfo.StringCount);
+						let nPosToDel   = Math.max(0, oChange.pos - oRunInfo.GlobStartPos + oRunInfo.StartPos);
+						let nPosToAdd   = nPosToDel
+						let nCharsToDel = Math.min(oChange.deleteCount, oRunInfo.StringCount);
 						
-						if ((nPosToDel >= oInfo.StartPos + oInfo.StringCount && nCharsToDel !== 0) || (nCharsToDel === 0 && oChange.deleteCount !== 0)
-							|| nPosToAdd > oInfo.StartPos + oInfo.StringCount)
+						if ((nPosToDel >= oRunInfo.StartPos + oRunInfo.StringCount && nCharsToDel !== 0) || (nCharsToDel === 0 && oChange.deleteCount !== 0)
+							|| nPosToAdd > oRunInfo.StartPos + oRunInfo.StringCount)
 							continue;
 
-						for (var nChar = 0; nChar < nCharsToDel; nChar++)
+						let isRunHasEnoughCharsToDel = oRunInfo.StringCount >= nCharsToDel;
+						for (let nChar = 0; nChar < nCharsToDel; nChar++)
 						{
-							if (!oInfo.Run.Content[nPosToDel])
-								break;
-								
-							if (para_Text === oInfo.Run.Content[nPosToDel].Type || para_Space === oInfo.Run.Content[nPosToDel].Type || para_Tab === oInfo.Run.Content[nPosToDel].Type || para_NewLine === oInfo.Run.Content[nPosToDel].Type)
+							if (!oRunInfo.Run.Content[nPosToDel] || (isTrackRevisions && reviewtype_Remove === oRunInfo.Run.GetReviewType()))
 							{
-								oInfo.Run.RemoveFromContent(nPosToDel, 1);
+								if (isTrackRevisions && isRunHasEnoughCharsToDel)
+								{
+									let oPara = oRunInfo.Run.Paragraph;
+									let nNextRunIdx = oPara.Content.indexOf(oRunInfo.Run) + 1;
+									let oNextRun = oPara.Content[nNextRunIdx];
+
+									while (reviewtype_Remove === oNextRun.GetReviewType() || countRunChars(oNextRun) == 0)
+									{
+										nNextRunIdx++;
+										oNextRun = oPara.Content[nNextRunIdx];
+									}
+
+									oRunInfo.Run = oNextRun;
+									nCharsToDel = Math.min(oChange.deleteCount, countRunChars(oRunInfo.Run));
+									nPosToDel = 0;
+								}
+								else
+									break;
+							}
+								
+							if ([para_Text, para_Space, para_Tab, para_NewLine].includes(oRunInfo.Run.Content[nPosToDel].Type))
+							{
+								let oApiRun = new ApiRun(oRunInfo.Run);
+								oApiRun.MoveCursorToPos(nPosToDel);
+								oRunInfo.Run.Remove(1);
+
 								nChar--;
 								oChange.deleteCount--;
 								nCharsToDel--;
+
+								if (isTrackRevisions && !oRunInfo.Run.CanDeleteInReviewMode() && reviewtype_Remove === oRunInfo.Run.GetReviewType())
+								{
+									if (oChange.deleteCount == 0)
+										nPosToAdd = oRunInfo.Run.Content.length;
+								}
 							}
 							else
 							{
@@ -21434,17 +21483,21 @@
 
 						if (oChange.deleteCount !== 0)
 						{
-							infoToAdd = 
+							oInfoToAdd = 
 							{
-								Run: oInfo.Run,
+								Run: oRunInfo.Run,
 								Pos: nPosToAdd
 							};
 							continue;
 						}
 						
-						for (nChar = 0; nChar < oChange.insert.length; nChar++)
+						let bChangeInsertRun = false;
+						if (isTrackRevisions && oChange.insert.length > 0 && textDelta[nChange - 1] && 0 == textDelta[nChange - 1].deleteCount)
+							bChangeInsertRun = true;
+
+						for (let nChar = 0; nChar < oChange.insert.length; nChar++)
 						{
-							var itemText = null;
+							let itemText = null;
 							if (oChange.insert[nChar] === 160)
 								oChange.insert[nChar] = 32;
 
@@ -21455,18 +21508,39 @@
 							else
 								itemText = new AscWord.CRunText(oChange.insert[nChar]);
 
-							itemText.Parent = oInfo.Run.GetParagraph();
-							if (oInfo.Run.Content.length === 0 && infoToAdd)
+							itemText.Parent = oRunInfo.Run.GetParagraph();
+							
+							if (oRunInfo.Run.Content.length === 0 && oInfoToAdd)
 							{
-								infoToAdd.Run.AddToContent(infoToAdd.Pos, itemText);
-								infoToAdd.Pos++;
+								let oApiRun = new ApiRun(oInfoToAdd.Run);
+								if (reviewtype_Add === oInfoToAdd.Run.GetReviewType()) {
+									bChangeInsertRun = false;
+								}
+
+								oApiRun.MoveCursorToPos(oInfoToAdd.Pos);
+								oInfoToAdd.Run = oInfoToAdd.Run.Add(itemText);
+								oInfoToAdd.Pos++;
 							}
 							else
-								oInfo.Run.AddToContent(nPosToAdd, itemText);
+							{
+								let oApiRun = new ApiRun(oRunInfo.Run);
+								if (reviewtype_Add === oRunInfo.Run.GetReviewType()) {
+									bChangeInsertRun = false;
+								}
+
+								oApiRun.MoveCursorToPos(nPosToAdd);
+								oRunInfo.Run = oRunInfo.Run.Add(itemText);
+							}
 
 							oChange.insert.shift();
 							nChar--;
 							nPosToAdd++;
+						}
+
+						if (isTrackRevisions && bChangeInsertRun) {
+							let oPara = oRunInfo.Run.Paragraph;
+							let nReviewRunIdx = oPara.Content.indexOf(oRunInfo.Run);
+							oRunInfo.Run = oPara.Content[nReviewRunIdx - 1] || oPara.Content[nReviewRunIdx + 1];
 						}
 					}
 				}
@@ -21576,7 +21650,6 @@
 		}
 		else 
 		{
-			var oDocument = this.GetDocument();
 			arrSelectedParas = oDocument.Document.GetSelectedParagraphs();
 			if(arrSelectedParas.length <= 0 )
 			{
