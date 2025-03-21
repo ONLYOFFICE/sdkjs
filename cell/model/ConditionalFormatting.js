@@ -1256,7 +1256,7 @@
 			//генерируем массив
 			this.aRuleElements = [];
 			this.aRuleElements[0] = new CFormulaCF();
-			this.aRuleElements[0].Text = this.getFormulaByType(val);
+			this.aRuleElements[0].Text = this.getFormulaByType(val, true);
 			this.aRuleElements[1] = new CFormulaCF();
 			this.aRuleElements[1].Text = val;
 			this.text = null;
@@ -1268,7 +1268,7 @@
 		}
 	};
 
-	CConditionalFormattingRule.prototype.getFormulaByType = function (val) {
+	CConditionalFormattingRule.prototype.getFormulaByType = function (val, isFormulaVal) {
 		var t = this;
 		var _generateTimePeriodFunction = function () {
 			switch (t.timePeriod) {
@@ -1307,7 +1307,7 @@
 
 		var res = null;
 		var range;
-		if (val !== null && val !== undefined) {
+		if (val !== null && val !== undefined && !isFormulaVal) {
 			val = addQuotes(val);
 		}
 		if (this.ranges && this.ranges[0]) {
