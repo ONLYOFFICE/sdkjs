@@ -705,7 +705,6 @@ function (window, undefined) {
 							let arg = activeFunc.args[argI];
 							if (arg.start <= pos && arg.end >= pos - 1) {
 								lookingArgPos = activeFunc.args[argI];
-								// break;
 								if (lookingArgPos.start === lookingArgPos.end) {
 									forceStop = true;
 									break;
@@ -715,15 +714,14 @@ function (window, undefined) {
 					}
 
 					if (lookingArgPos && !forceStop && lookingArgPos.start !== lookingArgPos.end) {
-						currentArg = currentText.slice(lookingArgPos.start, lookingArgPos.end + 1);
+						currentArg = currentText.slice(lookingArgPos.start, lookingArgPos.end);
 						currentTextArr = currentArg && currentArg.split("!");
 						if (currentTextArr && currentTextArr[1]) {
 							newText = str.concat(currentTextArr[1].replace(/\)/g, ""));
 						}
 					}
 				} else if (this.selectionBegin !== this.selectionEnd) {
-					// TODO select за скобку?
-					currentArg = currentText.slice(this.selectionBegin, this.selectionEnd + 1);
+					currentArg = currentText.slice(this.selectionBegin, this.selectionEnd);
 					currentTextArr = currentArg && currentArg.split("!");
 					if (currentTextArr && currentTextArr[1]) {
 						newText = str.concat(currentTextArr[1].replace(/\)/g, ""));

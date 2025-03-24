@@ -2502,7 +2502,7 @@
       if (!this._checkStopCellEditorInFormulas()) {
           index = this.copyActiveSheet;
       } else {
-		// todo вызывать смену селекта для аргумента в формуле с текущим индексом тут или после после смены активного листа?
+		// TODO the position of the cursor in formulaEdit changes to the end of the line
 		let wsByIndex = this.model.getWorksheet(index);
 		let sheetStr = wsByIndex.getName() + "!";
 		// this.handlers.trigger("selectionRangeChanged", sheetStr);
