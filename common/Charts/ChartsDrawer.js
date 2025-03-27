@@ -2584,7 +2584,10 @@ CChartsDrawer.prototype =
 	_getArrayAxisValues: function (minUnit, axisMin, axisMax, step, manualMin, manualMax) {
 		var arrayValues = [];
 		var stackedPerMax = null !== manualMax ? manualMax : 100;
+		// some value after which it is not recommended to increase axis max for more steps
+		const stepLimit = 50;
 
+		const is3D = this._isSwitchCurrent3DChart(this.cChartSpace)
 		if (this.calcProp.subType === 'stackedPer' && step > stackedPerMax) {
 			stackedPerMax = step;
 		}
@@ -2599,7 +2602,10 @@ CChartsDrawer.prototype =
 
 			if (axisMax === 0 && axisMin < 0 && arrayValues[i] === axisMax || (this.calcProp.type === c_oChartTypes.Radar && arrayValues[i] === axisMax)) {
 				break;
-			} else if ((manualMax != null && arrayValues[i] >= axisMax) || (manualMax == null && arrayValues[i] > axisMax)) {
+			} else if (
+				((is3D || manualMax !== null ) && arrayValues[i] >= axisMax) ||
+				(manualMax === null && arrayValues[i] > axisMax)
+			) {
 				if (this.calcProp.subType === 'stackedPer') {
 					arrayValues[i] = arrayValues[i];
 				}
@@ -16068,7 +16074,7 @@ axisChart.prototype = {
 		var top = (this.chartProp.chartGutter._top - 1) / this.chartProp.pxToMM;
 		var right = this.chartProp.trueWidth / this.chartProp.pxToMM;
 		var bottom = this.chartProp.trueHeight / this.chartProp.pxToMM;
-		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(left, top, right, bottom);
+		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(left, top, right + 1, bottom + 1);
 
 		if (this.paths.minorGridLines) {
 			path = this.paths.minorGridLines;
