@@ -11926,7 +11926,7 @@ function(window, undefined) {
 			case (AscDFH.historyitem_type_DateAx):
 				return 1.939;
 			case (AscDFH.historyitem_type_ValAx):
-				return 3.8;
+				return 5.8;
 			default:
 				return 0;
 		}
@@ -12126,8 +12126,8 @@ function(window, undefined) {
 		}
 
 		const createNewScale = function (newStep, oLabelsBox, nMultiplicator) {
-			const axisMin = oLabelsBox.axis.min;
-			const axisMax = oLabelsBox.axis.max;
+			let axisMin = oLabelsBox.axis.min;
+			let axisMax = oLabelsBox.axis.max;
 			let manualMin = oLabelsBox.axis.scaling && oLabelsBox.axis.scaling.min !== null ? oLabelsBox.axis.scaling.min : null;
 			let manualMax = oLabelsBox.axis.scaling && oLabelsBox.axis.scaling.max !== null ? oLabelsBox.axis.scaling.max : null;
 
@@ -12135,6 +12135,30 @@ function(window, undefined) {
 				// find max that is higher than axis max
 				const newMax = Math.ceil(oLabelsBox.axis.scale[oLabelsBox.axis.scale.length - 1] / (nMultiplicator)) * nMultiplicator;
 				return [oLabelsBox.axis.scale[0], newMax]
+			} else if (oLabelsBox.chartSpace.chart.plotArea.charts) {
+				let grouping, isStackedType, isScatterType, isCombinationChartTypes;
+				const axisCharts = oLabelsBox.chartSpace.chart.plotArea.charts;
+				const t = oLabelsBox.chartSpace.chartObj;
+				for (let i = 0; i < axisCharts.length; i++) {
+					grouping = t.getChartGrouping(axisCharts[i]);
+					if (AscDFH.historyitem_type_ScatterChart === axisCharts[i].getObjectType()) {
+						isScatterType = true;
+					}
+					if ("stackedPer" === grouping && !isStackedType) {
+						isStackedType = true;
+					}
+				}
+				for (let i = 0; i < axisCharts.length; i++) {
+					grouping = t.getChartGrouping(axisCharts[i]);
+
+					if (grouping === "stacked" && isStackedType) {
+						isStackedType = false;
+					}
+				}
+				const minMaxResult = t._getTrueMinMax(axisMin, axisMax, isStackedType, isScatterType, manualMax);
+				axisMax = manualMax !== null && manualMax !== undefined ? manualMax : minMaxResult.max;
+				axisMin = manualMin !== null && manualMin !== undefined ? manualMin : minMaxResult.min;
+				return t._getArrayDataValues(newStep, axisMin, axisMax, manualMin, manualMax, false);
 			} else {
 				return oLabelsBox.chartSpace.chartObj._getArrayDataValues(newStep, axisMin, axisMax, manualMin, manualMax, false);
 			}
