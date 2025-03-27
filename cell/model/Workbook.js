@@ -15455,7 +15455,7 @@
 			return false;
 		}
 		let bContainsInFormula = false;
-		_foreachRefElements(function (oRange) {
+		foreachRefElements(function (oRange) {
 			if (oRange.containCell2(oThis)) {
 				bContainsInFormula = true;
 				return true;
@@ -15591,9 +15591,8 @@
 	 * Iterative extract reference elements from outStack attribute of parserFormula class.
 	 * @param {Function} fAction - Action with reference element
 	 * @param {[]} aRefElements
-	 * @private
 	 */
-	function _foreachRefElements (fAction, aRefElements) {
+	function foreachRefElements (fAction, aRefElements) {
 		if (!aRefElements.length) {
 			return;
 		}
@@ -15706,7 +15705,7 @@
 		const oThis = this;
 		let bRecursiveFormula = false;
 		aPassedCell = aPassedCell || [];
-		_foreachRefElements(function (oRange) {
+		foreachRefElements(function (oRange) {
 			oRange._foreachNoEmpty(function (oCell) {
 				let bCellIsPassed = aPassedCell.some(function (oElem) {
 					return oCell.compareCellIndex(oElem);
@@ -15761,7 +15760,7 @@
 		}
 
 		const aRefElements = _getRefElements(oFormulaParsed);
-		_foreachRefElements(function (oRange, nLastRefElemIndex, nIndex) {
+		foreachRefElements(function (oRange, nLastRefElemIndex, nIndex) {
 			oRange._foreachNoEmpty(function(oCell) {
 				let nCellIndex = getCellIndex(oCell.nRow, oCell.nCol);
 				let sCellWsName = oCell.ws.getName().toLowerCase();
@@ -23849,5 +23848,6 @@
 	window['AscCommonExcel'].CSerial = CSerial;
 	window['AscCommonExcel'].SweepLineRowIterator = SweepLineRowIterator;
 	window['AscCommonExcel'].BroadcastHelper = BroadcastHelper;
+	window['AscCommonExcel'].foreachRefElements = foreachRefElements;
 
 })(window);

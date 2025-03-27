@@ -1023,43 +1023,43 @@ $(function () {
         oRange.fillData(testData);
         // Imitating of filling dialogue window of Solver tool
         const oParams = new asc_CSolverParams();
-        oParams.setObjectiveFunction("Sheet1!$E$7");
+        oParams.setObjectiveFunction('Sheet1!$E$7');
         oParams.setOptimizeResultTo(c_oAscOptimizeTo.min);
-        oParams.setChangingCells("Sheet1!$D$3:$D$6");
-        oParams.addConstraint(0, {cellRef: "Sheet1!$D$3:$D$6", operator: c_oAscOperator['='], constraint: "integer"});
-        oParams.addConstraint(1, {cellRef: "Sheet1!$D$3:$D$6", operator: c_oAscOperator['>='], constraint: "0"});
-        oParams.addConstraint(2, {cellRef: "Sheet1!$D$7", operator: c_oAscOperator['='], constraint: "1000"});
-        oParams.addConstraint(3, {cellRef: "Sheet1!$F$7", operator: c_oAscOperator['<='], constraint: "Sheet1!$A$2"});
+        oParams.setChangingCells('Sheet1!$D$3:$D$6');
+        oParams.addConstraint(0, {cellRef: 'Sheet1!$D$3:$D$6', operator: c_oAscOperator['='], constraint: 'integer'});
+        oParams.addConstraint(1, {cellRef: 'Sheet1!$D$3:$D$6', operator: c_oAscOperator['>='], constraint: '0'});
+        oParams.addConstraint(2, {cellRef: 'Sheet1!$D$7', operator: c_oAscOperator['='], constraint: '1000'});
+        oParams.addConstraint(3, {cellRef: 'Sheet1!$F$7', operator: c_oAscOperator['<='], constraint: 'Sheet1!$A$2'});
         oParams.setVariablesNonNegative(false);
         oParams.setSolvingMethod(c_oAscSolvingMethod.grgNonlinear);
         // Filling options for calculation
         const oOptions = oParams.getOptions();
-        oOptions.setConstraintPrecision("0,000001");
-        oOptions.setIntOptimal("1");
-        oOptions.setConvergence("0,0001");
+        oOptions.setConstraintPrecision('0,000001');
+        oOptions.setIntOptimal('1');
+        oOptions.setConvergence('0,0001');
         oOptions.setDerivatives(c_oAscDerivativeType.forward);
-        oOptions.setPopulationSize("0");
-        oOptions.setRandomSeed("0");
-        oOptions.setMutationRate("0,075");
-        oOptions.setEvoMaxTime("30");
-        assert.ok(oParams, "Params is created");
+        oOptions.setPopulationSize('0');
+        oOptions.setRandomSeed('0');
+        oOptions.setMutationRate('0,075');
+        oOptions.setEvoMaxTime('30');
+        assert.ok(oParams, 'Params is created');
         // Creating Solver object for calculate example.
         oSolver = new CSolver(oParams, ws);
-        assert.ok(oSolver, "Solver is created");
+        assert.ok(oSolver, 'Solver is created');
         // Checking attributes of Solver
         let bIsParserFormulaObject = oSolver.getParsedFormula() instanceof CParserFormula;
-        assert.strictEqual(bIsParserFormulaObject, true, "Check Solver attributes: Objective cell is parserFormula object");
-        assert.strictEqual(oSolver.getChangingCell().getName(), "$D$3:$D$6", "Check Solver attributes: Changing cells is D3:D6");
-        assert.strictEqual(isNaN(oSolver.getMaxIterations()), true, "Check Solver attributes: Max iterations is NaN");
-        assert.strictEqual(oSolver.getSolvingMethod(), c_oAscSolvingMethod.grgNonlinear, "Check Solver attributes: Solving method is grgNonlinear");
-        assert.strictEqual(oSolver.getOptimizeResultTo(), c_oAscOptimizeTo.min, "Check Solver attributes: Optimize result to is min");
-        assert.strictEqual(oSolver.getVariablesNonNegative(), false, "Check Solver attributes: Variables non negative is false");
+        assert.strictEqual(bIsParserFormulaObject, true, 'Check Solver attributes: Objective cell is parserFormula object');
+        assert.strictEqual(oSolver.getChangingCell().getName(), '$D$3:$D$6', 'Check Solver attributes: Changing cells is D3:D6');
+        assert.strictEqual(isNaN(oSolver.getMaxIterations()), true, 'Check Solver attributes: Max iterations is NaN');
+        assert.strictEqual(oSolver.getSolvingMethod(), c_oAscSolvingMethod.grgNonlinear, 'Check Solver attributes: Solving method is grgNonlinear');
+        assert.strictEqual(oSolver.getOptimizeResultTo(), c_oAscOptimizeTo.min, 'Check Solver attributes: Optimize result to is min');
+        assert.strictEqual(oSolver.getVariablesNonNegative(), false, 'Check Solver attributes: Variables non negative is false');
         const aConstraints = oSolver.getConstraints();
         const aExpectedData = [
-            {cellRef: "$D$3:$D$6", operator: c_oAscOperator['='], constraint: "integer"},
-            {cellRef: "$D$3:$D$6", operator: c_oAscOperator['>='],constraint: 0},
-            {cellRef: "$D$7", operator: c_oAscOperator['='], constraint: 1000},
-            {cellRef: "$F$7", operator: c_oAscOperator['<='], constraint: "$A$2"}
+            {cellRef: '$D$3:$D$6', operator: c_oAscOperator['='], constraint: 'integer'},
+            {cellRef: '$D$3:$D$6', operator: c_oAscOperator['>='],constraint: 0},
+            {cellRef: '$D$7', operator: c_oAscOperator['='], constraint: 1000},
+            {cellRef: '$F$7', operator: c_oAscOperator['<='], constraint: '$A$2'}
         ];
         aConstraints.forEach(function(oConstraint, index) {
             let constraint = oConstraint.getConstraint() instanceof AscCommonExcel.Range ? oConstraint.getConstraint().getName() : oConstraint.getConstraint();
@@ -1075,6 +1075,154 @@ $(function () {
         })
         // Checking calculate logic
         oSolver.calculate();
-
+        clearData(0, 0, 6, 7);
+    });
+    QUnit.test('Test: Example - Delivery goods in stores. Linear programming', function(assert) {
+        // Filling data
+        const testData = [
+            // Cost of good delivery in stores
+            // Store 1, Store 2, Store 3, Store 4, Store 5
+            ['55', '41', '28', '11', '25'], // Warehouse 1
+            ['40', '50', '8', '32', '30'],  // Warehouse 2
+            ['45', '25', '60', '38', '20'], // Warehouse 3
+            ['', '', '', '', '', ''], // Separator
+            // Routes of delivery
+            // Store 1, Store 2, Store 3, Store 4, Store 5, Total, Warehouse capacity
+            ['0', '0', '0', '0', '0', '=SUM(A5:E5)', '400'], // Warehouse 1 Row: 5
+            ['0', '0', '0', '0', '0', '=SUM(A6:E6)', '700'], // Warehouse 2
+            ['0', '0', '0', '0', '0', '=SUM(A7:E7)', '300'], // Warehouse 3
+            ['=SUM(A5:A7)', '=SUM(B5:B7)', '=SUM(C5:C7)', '=SUM(D5:D7)', '=SUM(E5:E7)'], // Total
+            ['300', '230', '150', '320', '400'], // Demand
+            ['=SUMPRODUCT(A1:E3,A5:E6)'] // Total cost of delivery
+        ];
+        let oRange = ws.getRange4(0, 0);
+        oRange.fillData(testData);
+        // Imitating of filling dialogue window of Solver tool
+        const oParams = new asc_CSolverParams();
+        oParams.setObjectiveFunction('Sheet1!$A$10');
+        oParams.setOptimizeResultTo(c_oAscOptimizeTo.min);
+        oParams.setChangingCells('Sheet1!$A$5:$E$7');
+        oParams.addConstraint(0, {cellRef: 'Sheet1!$A$8:$E$8', operator: c_oAscOperator['='], constraint: 'Sheet1!$A$9:$E$9'});
+        oParams.addConstraint(1, {cellRef: 'Sheet1!$F$5:$F$7', operator: c_oAscOperator['<='], constraint: 'Sheet1!$G$5:$G$7'});
+        // Todo for mvp non-negative variables make as additional constraint. Later replace to checkbox setting.
+        oParams.addConstraint(2, {cellRef: 'Sheet1!$A$5:$E$7', operator: c_oAscOperator['>='], constraint: '0'});
+        oParams.setVariablesNonNegative(false);
+        oParams.setSolvingMethod(c_oAscSolvingMethod.simplexLP);
+        // Filling options for calculation. It's default option
+        const oOptions = oParams.getOptions();
+        oOptions.setConstraintPrecision('0,000001');
+        oOptions.setIntOptimal('1');
+        oOptions.setConvergence('0,0001');
+        oOptions.setDerivatives(c_oAscDerivativeType.forward);
+        oOptions.setPopulationSize('0');
+        oOptions.setRandomSeed('0');
+        oOptions.setMutationRate('0,075');
+        oOptions.setEvoMaxTime('30');
+        assert.ok(oParams, 'Params is created');
+        // Creating Solver object for calculate example.
+        oSolver = new CSolver(oParams, ws);
+        assert.ok(oSolver, 'Solver is created');
+        // Checking attributes of Solver
+        let bIsParserFormulaObject = oSolver.getParsedFormula() instanceof CParserFormula;
+        assert.strictEqual(bIsParserFormulaObject, true, 'Check Solver attributes: Objective cell is parserFormula object');
+        assert.strictEqual(oSolver.getChangingCell().getName(), '$A$5:$E$7', 'Check Solver attributes: Changing cells is D3:D6');
+        assert.strictEqual(isNaN(oSolver.getMaxIterations()), true, 'Check Solver attributes: Max iterations is NaN');
+        assert.strictEqual(oSolver.getSolvingMethod(), c_oAscSolvingMethod.simplexLP, 'Check Solver attributes: Solving method is grgNonlinear');
+        assert.strictEqual(oSolver.getOptimizeResultTo(), c_oAscOptimizeTo.min, 'Check Solver attributes: Optimize result to is min');
+        assert.strictEqual(oSolver.getVariablesNonNegative(), false, 'Check Solver attributes: Variables non negative is false');
+        const aConstraints = oSolver.getConstraints();
+        const aExpectedData = [
+            {cellRef: '$A$8:$E$8', operator: c_oAscOperator['='], constraint: '$A$9:$E$9'},
+            {cellRef: '$F$5:$F$7', operator: c_oAscOperator['<='], constraint: '$G$5:$G$7'},
+            {cellRef: '$A$5:$E$7', operator: c_oAscOperator['>='],constraint: 0}
+        ];
+        aConstraints.forEach(function(oConstraint, index) {
+            let constraint = oConstraint.getConstraint() instanceof AscCommonExcel.Range ? oConstraint.getConstraint().getName() : oConstraint.getConstraint();
+            assert.strictEqual(oConstraint.getCell().getName(), aExpectedData[index].cellRef, `Check Solver attributes: Constraint element #${index} cell is ${aExpectedData[index].cellRef}`);
+            assert.strictEqual(oConstraint.getOperator(), aExpectedData[index].operator, `Check Solver attributes: Constraint element #${index} operator is ${aExpectedData[index].operator}`);
+            assert.strictEqual(constraint, aExpectedData[index].constraint, `Check Solver attributes: Constraint element #${index} constraint is ${aExpectedData[index].constraint}`);
+        });
+        // Checking prepare data for solving logic
+        oSolver.prepare();
+        // Checking prepare data for calculate by Simplex. Check whole CSimplexTableau class.
+       let oSimplexTableau = oSolver.getSimplexTableau();
+       assert.ok(oSimplexTableau, 'Check prepare data for calculate by Simplex. CSimplexTableau is created.');
+       assert.strictEqual(oSimplexTableau.getAvailableIndexes().length, 0, 'Check prepare data for calculate by Simplex. Check availableIndexes attribute size - 0');
+       assert.strictEqual(oSimplexTableau.bBounded, true, 'Check prepare data for calculate by Simplex. Check bBounded attribute is true');
+       assert.strictEqual(oSimplexTableau.nBranchAndCutIters, 0, 'Check prepare data for calculate by Simplex. Check nBranchAndCutIters attribute is 0');
+       // Checking colByVarIndex array
+        let aColByVarIndex = oSimplexTableau.getColByVarIndex();
+        let aColByVarIndexExpected = [
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1 ,-1 ,-1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1, 1, 2,
+             3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+        ];
+        assert.deepEqual(aColByVarIndex, aColByVarIndexExpected, 'Check prepare data for calculate by Simplex. Check colByVarIndex attribute');
+        assert.strictEqual(oSimplexTableau.nCostRowIndex, 0, 'Check prepare data for calculate by Simplex. Check nCostRowIndex attribute is 0');
+        assert.strictEqual(oSimplexTableau.nEvaluation, 0, 'Check prepare data for calculate by Simplex. Check nEvaluation attribute is 0');
+        assert.strictEqual(oSimplexTableau.bFeasible, true, 'Check prepare data for calculate by Simplex. Check bFeasible attribute is true');
+        assert.strictEqual(oSimplexTableau.getHeight(), 29, 'Check prepare data for calculate by Simplex. Check height attribute is 29');
+        assert.strictEqual(oSimplexTableau.getLastElementIndex(), 43, 'Check prepare data for calculate by Simplex. Check lastElementIndex attribute is 43');
+        assert.strictEqual(oSimplexTableau.getVarsCount(), 43, 'Check prepare data for calculate by Simplex. Check varsCount attribute is 43');
+        assert.strictEqual(oSimplexTableau.nPrecision, 1e-8, 'Check prepare data for calculate by Simplex. Check nPrecision attribute is 1e-8');
+        assert.strictEqual(oSimplexTableau.nRhsColumn, 0, 'Check prepare data for calculate by Simplex. Check nRhsColumn attribute is 0');
+        assert.strictEqual(oSimplexTableau.getWidth(), 16, 'Check prepare data for calculate by Simplex. Check width attribute is 16');
+        // Checking rowByVarIndex
+        let aRowByVarIndex = oSimplexTableau.getRowByVarIndex();
+        let aRowByVarIndexExpected = [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+            21, 22, 23, 24, 25, 26, 27, 28, -1, -1,
+            -1, -1, -1, -1, -1, -1 ,-1 ,-1 ,-1 ,-1,
+            -1, -1, -1
+        ];
+        assert.deepEqual(aRowByVarIndex, aRowByVarIndexExpected, 'Check prepare data for calculate by Simplex. Check rowByVarIndex attribute');
+        // Checking varIndexByCol
+        let aVarIndexByCol = oSimplexTableau.getVarIndexByCol();
+        let aVarIndexByColExpected = [-1, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42];
+        assert.deepEqual(aVarIndexByCol, aVarIndexByColExpected, 'Check prepare data for calculate by Simplex. Check varIndexByCol attribute');
+        // Checking varIndexByRow
+        let aVarIndexByRow = oSimplexTableau.getVarIndexByRow();
+        let aVarIndexByRowExpected = [
+            -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+            21, 22, 23, 24, 25, 26, 27
+        ];
+        assert.deepEqual(aVarIndexByRow, aVarIndexByRowExpected, 'Check prepare data for calculate by Simplex. Check varIndexByRow attribute');
+        // Checking matrix
+        let aMatrix = oSimplexTableau.getMatrix();
+        let aMatrixExpected = [
+            [0, -55, -41, -28, -11, -25, -40, -50, -8, -32, -30, -45, -25, -60, -38, -20],
+            [-300, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0],
+            [300, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+            [-230, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0],
+            [230, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0],
+            [-150, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0],
+            [150, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0],
+            [-320, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0],
+            [320, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0],
+            [-400, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1],
+            [400, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+            [400, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [700, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+            [300, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+            [0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1]
+        ];
+        assert.deepEqual(aMatrix, aMatrixExpected, 'Check prepare data for calculate by Simplex. Check matrix attribute');
     });
 });

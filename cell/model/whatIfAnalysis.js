@@ -1211,18 +1211,488 @@ function (window, undefined) {
 	/**
 	 * Returns comparison operator.
 	 * @memberof CConstraint
-	 * @returns {number}
+	 * @returns {c_oAscOperator}
 	 */
 	CConstraint.prototype.getOperator = function() {
 		return this.nOperator;
 	};
 	/**
+	 * Sets comparison operator
+	 * @param {c_oAscOperator} nOperator
+	 */
+	CConstraint.prototype.setOperator = function(nOperator) {
+		this.nOperator = nOperator;
+	};
+	/**
 	 * Returns constraint. Element that comparisons with reference cell.
 	 * @memberof CConstraint
-	 * @returns {Range|number}
+	 * @returns {Range|number|string}
 	 */
 	CConstraint.prototype.getConstraint = function() {
 		return this.constraint;
+	};
+
+	/**
+	 * Class representing logic of solving linear programming by Simplex method.
+	 * @param {CSolver} oModel
+	 * @constructor
+	 */
+	function CSimplexTableau (oModel) {
+		this.oModel = oModel;
+
+		this.aMatrix = null;
+		this.nWidth = 0;
+		this.nHeight = 0;
+
+		this.nCostRowIndex = 0;
+		this.nRhsColumn = 0;
+
+		this.aVariablesPerIndex = []; // ?
+		this.oUnrestrictedVars = null;
+
+		// Solution attributes
+		this.bFeasible = true; // until proven guilty
+		this.nEvaluation = 0;
+		this.nSimplexIters = 0; // ?
+
+		this.aVarIndexByRow = null;
+		this.aVarIndexByCol = null;
+
+		this.aRowByVarIndex = null;
+		this.aColByVarIndex = null;
+
+		this.nPrecision = 1e-8;
+
+		this.aOptionalObjectives = []; // ?
+		this.oObjectivesByPriority = {}; // ?
+
+		this.savedState = null;
+
+		this.aAvailableIndexes = [];
+		this.nLastElementIndex = 0;
+
+		this.oVariables = null;
+		this.nVars = 0;
+
+		this.bBounded = true;
+		this.unboundedVarIndex = null;
+
+		this.nBranchAndCutIters = 0;
+	}
+
+	/**
+	 * Initializes a start data for calculating logic.
+	 * @memberof CSimplexTableau
+	 */
+	CSimplexTableau.prototype.init = function () {
+		const oThis = this;
+		const oModel = this.getModel();
+		const oChangingCells = oModel.getChangingCell();
+		const oBboxChangingCells = oChangingCells.bbox;
+		const nTotalCountVariables = oBboxChangingCells.getWidth() * oBboxChangingCells.getHeight();
+		const aConstraints = oModel.getConstraints();
+		let nTotalCountConstraints = 0;
+
+
+		this.setVariables(oChangingCells);
+		// Init width and height of matrix.
+		this.setWidth(nTotalCountVariables + 1);
+		for (let index = 0; index < aConstraints.length; index++) {
+			const oConstraint = aConstraints[index];
+			const nOperator = oConstraint.getOperator();
+			const oRefCellsRange =  oConstraint.getCell();
+			const oRefCellsBbox = oRefCellsRange.bbox;
+			const nCountConstraint = oRefCellsBbox.getWidth() * oRefCellsBbox.getHeight();
+			if (nOperator === c_oAscOperator['=']) { // Changes the equal constraint to 2 constraints - ">=" and "<=".
+				oConstraint.setOperator(c_oAscOperator['>=']);
+				let oNewConstraint = new CConstraint(oRefCellsRange, c_oAscOperator['<='], oConstraint.getConstraint());
+				aConstraints.splice(index + 1, 0, oNewConstraint);
+			}
+			nTotalCountConstraints += nCountConstraint;
+		}
+		this.setHeight(nTotalCountConstraints + 1);
+
+		//Init variable and constraints indexes
+		const aVariablesIndexes = [];
+		const aConstraintsIndexes = [];
+		let nLastIndexElement = 0;
+		for (let i = 0; i < nTotalCountConstraints; i++) {
+			aConstraintsIndexes.push(i);
+			nLastIndexElement = i;
+		}
+		for (let j = 0; j < nTotalCountVariables; j++) {
+			nLastIndexElement++;
+			aVariablesIndexes.push(nLastIndexElement);
+		}
+
+		// Init matrix
+		const aMatrix = this.createMatrix();
+
+		const nHeight = this.getHeight();
+		const nWidth = this.getWidth();
+		this.setVarIndexByRow(new Array(nHeight));
+		this.setVarIndexByCol(new Array(nWidth));
+		this.addVarIndexByRowElem(-1, 0);
+		this.addVarIndexByColElem(-1, 0);
+
+		this.setVarsCount(nWidth + nHeight - 2);
+		this.setRowByVarIndex(new Array(this.getVarsCount()));
+		this.setColByVarIndex(new Array(this.getVarsCount()));
+
+		this.setLastElementIndex(this.getVarsCount());
+		// TODO divide logic into methods. Method too large
+		// Fills matrix
+		const aObjectiveFuncRow = aMatrix[0];
+		const nCoeff = oModel.getOptimizeResultTo() === c_oAscOptimizeTo.min ? -1 : 1;
+		// Extracts coefficients from objective function
+		const oObjectiveFunc = oModel.getParsedFormula();
+		let nIter = 0;
+		// Fills the matrix's first row coefficients of the objective function
+		// TODO Too many nested cycles. Need rework to more optimal way if it's possible.
+		AscCommonExcel.foreachRefElements(function (oRange) {
+			oRange._foreachNoEmpty(function (oCell) {
+				let nVarIndex = aVariablesIndexes[nIter];
+				if (oCell.isFormula() && !oCell.getNumberValue()) {
+					// Tries to find the coefficient in linked cells
+					const oParsedFormula = oCell.getFormulaParsed();
+					AscCommonExcel.foreachRefElements(function (oLinkedRange) {
+						let valueIsFound = null;
+						oLinkedRange._foreachNoEmpty(function (oLinkedCell) {
+							const nValue = oLinkedCell.getNumberValue();
+							if (nValue) {
+								aObjectiveFuncRow[nIter + 1] = nValue * nCoeff;
+								oThis.addRowByVarIndexElem(-1, nVarIndex);
+								oThis.addColByVarIndexElem(nIter + 1, nVarIndex);
+								oThis.addVarIndexByColElem(nVarIndex, nIter + 1);
+								valueIsFound = true;
+							}
+						})
+						return valueIsFound;
+					}, oParsedFormula.outStack);
+				} else if (oCell.getNumberValue()) {
+					aObjectiveFuncRow[nIter + 1] = oCell.getNumberValue() * nCoeff;
+					oThis.addRowByVarIndexElem(-1, nVarIndex);
+					oThis.addColByVarIndexElem(nIter + 1, nVarIndex);
+					oThis.addVarIndexByColElem(nVarIndex, nIter + 1);
+				}
+				nIter++;
+			});
+		}, oObjectiveFunc.outStack);
+		// Links variable with variable's index
+		nIter = 0;
+		const oVarIndexByCellName = {};
+		oChangingCells._foreachNoEmpty(function (oCell) {
+			let nVarIndex = aVariablesIndexes[nIter];
+			oVarIndexByCellName[oCell.getName()] = nVarIndex;
+			nIter++;
+		});
+		// Fills remain matrix's rows by constraints
+		nIter = 0;
+		const aColByVarIndex = this.getColByVarIndex();
+		let nRowIndex = 1;
+		let coefficient = 1;
+		aConstraints.forEach(function (oConstraint) {
+			const nOperator = oConstraint.getOperator();
+			const oRefCells = oConstraint.getCell();
+			const constraintData = oConstraint.getConstraint();
+			/** @type {number[]} */
+			let oRow = null;
+			let nColumn = null;
+			oRefCells._foreachNoEmpty(function (oCell) {
+				function getVariable(oCell) {
+					nColumn = aColByVarIndex[oVarIndexByCellName[oCell.getName()]];
+					if (nOperator === c_oAscOperator['<=']) {
+						oRow[nColumn] = coefficient;
+					} else if (nOperator === c_oAscOperator['>=']) {
+						oRow[nColumn] = -coefficient;
+					}
+				}
+				const nConstraintIndex = aConstraintsIndexes[nIter];
+				oThis.addRowByVarIndexElem(nRowIndex, nConstraintIndex);
+				oThis.addColByVarIndexElem(-1, nConstraintIndex);
+				oThis.addVarIndexByRowElem(nConstraintIndex, nRowIndex);
+
+				oRow = aMatrix[nRowIndex++];
+				// Work with variables
+				if (oCell.isFormula()) {
+					const oParsedFormula = oCell.getFormulaParsed();
+					// TODO Too many nested cycles. Need rework to more optimal way if it's possible.
+					AscCommonExcel.foreachRefElements(function (oRange) {
+						oRange._foreachNoEmpty(function (oLinkedCell) {
+							if (oChangingCells.bbox.contains(oLinkedCell.nCol, oLinkedCell.nRow)) {
+								if (oLinkedCell.isFormula()) { // Try to find coefficient for variable
+									const oParsedFormula = oCell.getFormulaParsed();
+									AscCommonExcel.foreachRefElements(function (oLinkedRange) {
+										let valueIsFound = null;
+										oLinkedRange._foreachNoEmpty(function (oElem) {
+											if (oElem.getNumberValue()) {
+												coefficient = oElem.getNumberValue();
+												valueIsFound = true;
+											}
+										})
+										return valueIsFound;
+									}, oParsedFormula.outStack);
+								}
+								getVariable(oLinkedCell);
+							}
+						})
+					}, oParsedFormula.outStack);
+				} else if (oChangingCells.bbox.contains2(oCell)) {
+					getVariable(oCell);
+				}
+				if (typeof constraintData !== 'object' && typeof constraintData !== 'string') {
+					oRow[0] = nOperator === c_oAscOperator['<='] ? constraintData : -constraintData;
+				}
+				nIter++;
+			});
+			// Work with constraint value
+			if (typeof constraintData === 'object') {
+				nRowIndex = 1;
+				constraintData._foreachNoEmpty(function (oConstraintCell) {
+					if(oConstraintCell.getNumberValue()) {
+						const nValue = oConstraintCell.getNumberValue();
+						oRow = aMatrix[nRowIndex++];
+						oRow[0] = nOperator === c_oAscOperator['<='] ? nValue : -nValue;
+					}
+				})
+			}
+		});
+	};
+	/**
+	 * @returns {CSolver}
+	 */
+	CSimplexTableau.prototype.getModel = function () {
+		return this.oModel;
+	};
+	/**
+	 * Returns variables of model. It's the changing variable cells.
+	 * @memberof CSimplexTableau
+	 * @returns {Range}
+	 */
+	CSimplexTableau.prototype.getVariables = function () {
+		return this.oVariables;
+	};
+	/**
+	 * Sets variables of model. It's the changing variable cells.
+	 * @memberof CSimplexTableau
+	 * @param {Range} oVariables
+	 */
+	CSimplexTableau.prototype.setVariables = function (oVariables) {
+		this.oVariables = oVariables;
+	};
+	/**
+	 * Returns width of matrix.
+	 * @memberof
+	 * @returns {number}
+	 */
+	CSimplexTableau.prototype.getWidth = function () {
+		return this.nWidth;
+	};
+	/**
+	 * Sets width of matrix.
+	 * @memberof
+	 * @param {number} nWidth
+	 */
+	CSimplexTableau.prototype.setWidth = function (nWidth) {
+		this.nWidth = nWidth;
+	};
+	/**
+	 * Returns height of matrix.
+	 * @memberof CSimplexTableau
+	 * @returns {number}
+	 */
+	CSimplexTableau.prototype.getHeight = function () {
+		return this.nHeight;
+	};
+	/**
+	 * Sets height of matrix.
+	 * @memberof CSimplexTableau
+	 * @param {number} nHeight
+	 */
+	CSimplexTableau.prototype.setHeight = function (nHeight) {
+		this.nHeight = nHeight;
+	};
+	/**
+	 * @memberof CSimplexTableau
+	 * @returns {number[][]}
+	 */
+	CSimplexTableau.prototype.getMatrix = function () {
+		return this.aMatrix;
+	};
+	/**
+	 * Sets empty matrix that needs to be filled using addRow method.
+	 * @memberof CSimplexTableau
+	 * @param {[]}aMatrix
+	 */
+	CSimplexTableau.prototype.setMatrix = function (aMatrix) {
+		this.aMatrix = aMatrix;
+	};
+	/**
+	 * Adds rows for filling matrix.
+	 * @memberof CSimplexTableau
+	 * @param {number[]} aRow
+	 * @param {number} nRowIndex
+	 */
+	CSimplexTableau.prototype.addRow = function (aRow, nRowIndex) {
+		const aMatrix = this.getMatrix();
+		aMatrix[nRowIndex] = aRow;
+	};
+	/**
+	 * Builds an empty matrix.
+	 * @memberof CSimplexTableau
+	 * @returns {number[][]}
+	 */
+	CSimplexTableau.prototype.createMatrix = function () {
+		const nWidth = this.getWidth();
+		const nHeight = this.getHeight();
+		const tmpRow = new Array(nWidth);
+		for (let i = 0, length = nWidth; i < length; i++) {
+			tmpRow[i] = 0;
+		}
+		this.setMatrix(new Array(nHeight));
+		for (let j = 0, length = nHeight; j < length; j++) {
+			this.addRow(tmpRow.slice(), j);
+		}
+
+		return this.getMatrix();
+	};
+	/**
+	 * @memberof CSimplexTableau
+	 * @returns {number[]}
+	 */
+	CSimplexTableau.prototype.getVarIndexByRow = function () {
+		return this.aVarIndexByRow;
+	};
+	/**
+	 * Sets an empty array for attribute aVarIndexByRow
+	 * @memberof CSimplexTableau
+	 * @param {number[]} aVarIndexByRow
+	 */
+	CSimplexTableau.prototype.setVarIndexByRow = function (aVarIndexByRow) {
+		this.aVarIndexByRow = aVarIndexByRow;
+	};
+	/**
+	 * Adds element to varIndexByRow array.
+	 * @memberof CSimplexTableau
+	 * @param {number} nValue
+	 * @param {number} nIndex
+	 */
+	CSimplexTableau.prototype.addVarIndexByRowElem = function (nValue, nIndex) {
+		this.aVarIndexByRow[nIndex] = nValue;
+	};
+	/**
+	 * Returns array of indexes of variables by matrix's columns.
+	 * @memberof CSimplexTableau
+	 * @returns {number[]}
+	 */
+	CSimplexTableau.prototype.getVarIndexByCol = function () {
+		return this.aVarIndexByCol;
+	};
+	/**
+	 * Sets an empty array for attribute aVarIndexByCol.
+	 * @memberOf CSimplexTableau
+	 * @param {[]} aVarIndexByCol
+	 */
+	CSimplexTableau.prototype.setVarIndexByCol = function (aVarIndexByCol) {
+		this.aVarIndexByCol = aVarIndexByCol;
+	};
+	/**
+	 * Adds element to varIndexByCol array.
+	 * @memberof CSimplexTableau
+	 * @param {number} nValue
+	 * @param {number} nIndex
+	 */
+	CSimplexTableau.prototype.addVarIndexByColElem = function (nValue, nIndex) {
+		this.aVarIndexByCol[nIndex] = nValue;
+	};
+	/**
+	 * Returns total count of variables including constraints.
+	 * @memberof CSimplexTableau
+	 * @returns {number}
+	 */
+	CSimplexTableau.prototype.getVarsCount = function () {
+		return this.nVars;
+	};
+	/**
+	 * Sets total count of variables including constraints.
+	 * @memberof CSimplexTableau
+	 * @param {number} nVars
+	 */
+	CSimplexTableau.prototype.setVarsCount = function (nVars) {
+		this.nVars = nVars;
+	};
+	/**
+	 * Returns array of row's indexes by variable' index. Shows which row of matrix located variable.
+	 * @memberof CSimplexTableau
+	 * @returns {number[]}
+	 */
+	CSimplexTableau.prototype.getRowByVarIndex = function () {
+		return this.aRowByVarIndex;
+	};
+	/**
+	 * Sets empty array of row's indexes by variable' index. Shows which row of matrix located variable.
+	 * @memberof CSimplexTableau
+	 * @param {[]}aRowByVarIndex
+	 */
+	CSimplexTableau.prototype.setRowByVarIndex = function (aRowByVarIndex) {
+		this.aRowByVarIndex = aRowByVarIndex;
+	};
+	/**
+	 * Adds element to array of row's indexes by variable' index. Shows which row of matrix located variable.
+	 * @memberof CSimplexTableau
+	 * @param {number} nValue
+	 * @param {number} nIndex
+	 */
+	CSimplexTableau.prototype.addRowByVarIndexElem = function (nValue, nIndex) {
+		this.aRowByVarIndex[nIndex] = nValue;
+	};
+	/**
+	 * Returns array of column's indexes by variable' index. Shows which column of matrix located variable.
+	 * @memberof CSimplexTableau
+	 * @returns {number[]}
+	 */
+	CSimplexTableau.prototype.getColByVarIndex = function () {
+		return this.aColByVarIndex;
+	};
+	/**
+	 * Sets empty array of column's indexes by variable' index. Shows which column of matrix located variable.
+	 * @param {[]} aColByVarIndex
+	 */
+	CSimplexTableau.prototype.setColByVarIndex = function (aColByVarIndex) {
+		this.aColByVarIndex = aColByVarIndex;
+	};
+	/**
+	 * Adds element to array of column's indexes by variable' index. Shows which column of matrix located variable.
+	 * @memberof CSimplexTableau
+	 * @param {number} nValue
+	 * @param {number} nIndex
+	 */
+	CSimplexTableau.prototype.addColByVarIndexElem = function (nValue, nIndex) {
+		this.aColByVarIndex[nIndex] = nValue;
+	}
+	/**
+	 * Returns available indexes.
+	 * @memberof CSimplexTableau
+	 * @returns {[]}
+	 */
+	CSimplexTableau.prototype.getAvailableIndexes = function () {
+		return this.aAvailableIndexes;
+	};
+	/**
+	 * Returns index of the matrix's last element.
+	 * @memberof CSimplexTableau
+	 * @returns {number}
+	 */
+	CSimplexTableau.prototype.getLastElementIndex = function () {
+		return this.nLastElementIndex;
+	};
+	/**
+	 * Sets index of the matrix's last element.
+	 * @memberof CSimplexTableau
+	 * @param {number} nLastElementIndex
+	 */
+	CSimplexTableau.prototype.setLastElementIndex = function (nLastElementIndex) {
+		this.nLastElementIndex = nLastElementIndex;
 	};
 
 	// Main class of solver feature
@@ -1249,6 +1719,7 @@ function (window, undefined) {
 		this.nStartTime = null;
 		this.nCurrentSubProblem = null;
 		this.nGradient = null;
+		this.oSimplexTableau = null;
 
 		// Calculating option
 		this.oOptions = oParams.getOptions();
@@ -1259,6 +1730,27 @@ function (window, undefined) {
 
 	CSolver.prototype = Object.create(CBaseAnalysis.prototype);
 	CSolver.prototype.constructor = CSolver;
+	/**
+	 * Prepares data for calculating.
+	 * @memberof CSolver
+	 */
+	CSolver.prototype.prepare = function () {
+		const aConstraints = this.getConstraints();
+		const nSolutionMethod = this.getSolvingMethod();
+
+		switch (nSolutionMethod) {
+			case c_oAscSolvingMethod.grgNonlinear:
+				break;
+			case c_oAscSolvingMethod.simplexLP:
+				this.setSimplexTableau(new CSimplexTableau(this))
+				const oSimplexTableau = this.getSimplexTableau();
+				oSimplexTableau.init(aConstraints);
+				break;
+			case  c_oAscSolvingMethod.evolutionary:
+				break;
+		}
+
+	};
 	/**
 	 * Main logic of solver calculating.
 	 * Runs only in sync or async loop.
@@ -1336,7 +1828,7 @@ function (window, undefined) {
 	 * @memberof CSolver
 	 * @returns {boolean[]}
 	 */
-	CSolver.prototype.calculateConstraints = function () {
+	CSolver.prototype.calculateConstraints = function () { // todo Need to rework.
 		const oThis = this;
 		/** @type {boolean[]} */
 		const aConstraintsResult = [];
@@ -1394,7 +1886,7 @@ function (window, undefined) {
 	 * @param {boolean[]} aConstraintsResult
 	 * @returns {boolean}
 	 */
-	CSolver.prototype.isFinishCalculating = function (aConstraintsResult) {
+	CSolver.prototype.isFinishCalculating = function (aConstraintsResult) { //todo: Need to rework
 		const nCurrentTime = Date.now();
 		const bConstraintsIsSatisfied = !aConstraintsResult.includes(false);
 		const nMaxIterations = this.getMaxIterations();
@@ -1544,6 +2036,22 @@ function (window, undefined) {
 	CSolver.prototype.getGradient = function () {
 		return this.nGradient;
 	};
+	/**
+	 * Sets simplex tableau object. Using for calculating by simplex method.
+	 * @memberof CSolver
+	 * @param {CSimplexTableau} oSimplexTableau
+	 */
+	CSolver.prototype.setSimplexTableau = function (oSimplexTableau) {
+		this.oSimplexTableau = oSimplexTableau;
+	};
+	/**
+	 * Gets simplex tableau object. Using for calculating by simplex method.
+	 * @memberof CSolver
+	 * @returns {CSimplexTableau}
+	 */
+	CSolver.prototype.getSimplexTableau = function () {
+		return this.oSimplexTableau;
+	}
 
 	// Export
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
