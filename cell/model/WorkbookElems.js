@@ -19486,6 +19486,96 @@ function RangeDataManagerElem(bbox, data)
 		pWriter.WriteNodeEnd("Schema");
 	};
 
+	/**
+	 * @constructor
+	 */
+	function CXmlColumnPr() {
+		this.mapId = null;
+		this.xpath = null;
+		this.denormalized = null;
+		this.xmlDataType = null;
+	}
+
+	CXmlColumnPr.prototype.clone = function() {
+		let res = new CXmlColumnPr();
+
+		res.mapId = this.mapId;
+		res.xpath = this.xpath;
+		res.denormalized = this.denormalized;
+		res.xmlDataType = this.xmlDataType ? Object.assign({}, this.xmlDataType) : null;
+
+		return res;
+	};
+
+	CXmlColumnPr.prototype.getType = function() {
+		return AscDFH.historyitem_type_XmlColumnPr;
+	};
+
+	CXmlColumnPr.prototype.Write_ToBinary2 = function(writer) {
+		writer.WriteByte(AscCommon.g_nodeAttributeStart);
+
+		if (this.mapId !== null) {
+			writer.WriteUInt2(0, this.mapId);
+		}
+
+		if (this.xpath !== null) {
+			writer.WriteString2(1, this.xpath);
+		}
+
+		if (this.denormalized !== null) {
+			writer.WriteBool2(2, this.denormalized);
+		}
+
+		if (this.xmlDataType !== null) {
+			writer.WriteByte2(3, this.xmlDataType.val);
+		}
+
+		writer.WriteByte(AscCommon.g_nodeAttributeEnd);
+	};
+
+	CXmlColumnPr.prototype.Read_FromBinary2 = function(reader) {
+		var _end_rec = reader.GetPos() + reader.GetRecordSize() + 4;
+		reader.Skip(1); // Start attributes
+
+		while (true) {
+			var _at = reader.GetUChar();
+			if (_at === AscCommon.g_nodeAttributeEnd)
+				break;
+
+			switch (_at) {
+				case 0:
+					this.mapId = reader.GetULongLE();
+					break;
+				case 1:
+					this.xpath = reader.GetString2();
+					break;
+				case 2:
+					this.denormalized = reader.GetBool();
+					break;
+				case 3:
+					if (!this.xmlDataType) {
+						this.xmlDataType = {};
+					}
+					this.xmlDataType.val = reader.GetUChar();
+					break;
+			}
+		}
+
+		reader.Seek(_end_rec);
+		return this;
+	};
+
+	CXmlColumnPr.prototype.setXmlDataType = function(val) {
+		if (!this.xmlDataType) {
+			this.xmlDataType = {};
+		}
+		this.xmlDataType.val = val;
+	};
+
+	CXmlColumnPr.prototype.getXmlDataType = function() {
+		return this.xmlDataType ? this.xmlDataType.val : null;
+	};
+
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
 	window['Asc'] = window['Asc'] || {};
@@ -20059,7 +20149,8 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_getName"] = prot.asc_getName;
 	prot["asc_getIndex"] = prot.asc_getIndex;
 
-
+	window['AscCommonExcel'].CMapInfo = CMapInfo;
+	window['AscCommonExcel'].CXmlColumnPr = CXmlColumnPr;
 
 
 })(window);

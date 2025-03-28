@@ -3757,6 +3757,35 @@
 			if (this.wb.metadata) {
 				this.bs.WriteItem(c_oSerWorkbookTypes.Metadata, function () {oThis.WriteMetadata(oThis.wb.metadata);});
 			}
+            var xmlMaps =  this.wb.xmlMaps;
+            if (xmlMaps) {
+                var nCurPos = this.bs.WriteItemStart(c_oSerWorkbookTypes.XmlMap);
+                this.bs.m_oStream.StartRecord(0);
+                xmlMaps.toPPTY(this.bs.m_oStream);
+                this.bs.m_oStream.EndRecord();
+                this.bs.WriteItemWithLengthEnd(nCurPos);
+
+
+                //TODO up need write as down
+                /*if (ws.aNamedSheetViews.length > 0) {
+                    this.bs.WriteItem(c_oSerWorksheetsTypes.NamedSheetView, function () {
+                        var namedSheetViews = new Asc.CT_NamedSheetViews();
+                        namedSheetViews.namedSheetView = ws.aNamedSheetViews;
+
+                        var old = new AscCommon.CMemory(true);
+                        pptx_content_writer.BinaryFileWriter.ExportToMemory(old);
+                        pptx_content_writer.BinaryFileWriter.ImportFromMemory(oThis.memory);
+
+                        pptx_content_writer.BinaryFileWriter.StartRecord(0);
+                        namedSheetViews.toStream(pptx_content_writer.BinaryFileWriter, oThis.InitSaveManager.getTableIds());
+                        pptx_content_writer.BinaryFileWriter.EndRecord();
+
+                        pptx_content_writer.BinaryFileWriter.ExportToMemory(oThis.memory);
+                        pptx_content_writer.BinaryFileWriter.ImportFromMemory(old);
+                    });
+                }*/
+
+            }
 
         };
         this.WriteWorkbookPr = function()
@@ -5108,6 +5137,36 @@
 
             if (ws.timelines && ws.timelines.length > 0) {
                 this.bs.WriteItem(c_oSerWorksheetsTypes.TimelinesList, function(){oThis.WriteTimelines(ws.timelines);});
+            }
+
+            let pTableSingleCells = ws.TableSingleCells;
+            if (pTableSingleCells) {
+                var nCurPos = this.bs.WriteItemStart(c_oSerWorksheetsTypes.TableSingleCells);
+                this.bs.m_oStream.StartRecord(0);
+                pTableSingleCells.toPPTY(this.bs.m_oStream);
+                this.bs.m_oStream.EndRecord();
+                this.bs.WriteItemWithLengthEnd(nCurPos);
+
+
+                //TODO up need write as down
+                /*if (ws.aNamedSheetViews.length > 0) {
+                    this.bs.WriteItem(c_oSerWorksheetsTypes.NamedSheetView, function () {
+                        var namedSheetViews = new Asc.CT_NamedSheetViews();
+                        namedSheetViews.namedSheetView = ws.aNamedSheetViews;
+
+                        var old = new AscCommon.CMemory(true);
+                        pptx_content_writer.BinaryFileWriter.ExportToMemory(old);
+                        pptx_content_writer.BinaryFileWriter.ImportFromMemory(oThis.memory);
+
+                        pptx_content_writer.BinaryFileWriter.StartRecord(0);
+                        namedSheetViews.toStream(pptx_content_writer.BinaryFileWriter, oThis.InitSaveManager.getTableIds());
+                        pptx_content_writer.BinaryFileWriter.EndRecord();
+
+                        pptx_content_writer.BinaryFileWriter.ExportToMemory(oThis.memory);
+                        pptx_content_writer.BinaryFileWriter.ImportFromMemory(old);
+                    });
+                }*/
+
             }
         };
 		this.WriteDataValidations = function(dataValidations)
@@ -7663,9 +7722,40 @@
                 oTableColumn.uniqueName = this.stream.GetString2LE(length);
             } else if (c_oSer_TableColumns.Id === type) {
                 oTableColumn.id = this.stream.GetULongLE();
+            } else if (c_oSer_TableColumns.XmlColumnPr === type) {
+                if (!oTableColumn.xmlColumnPr) {
+                    oTableColumn.xmlColumnPr = new AscCommonExcel.CXmlColumnPr();
+                }
+                this.bcr.Read2Spreadsheet(length, function(t, l) {
+                    return this.ReadTableXmlColumnPr(t, l, oTableColumn.xmlColumnPr);
+                }, this);
             } else {
                 res = c_oSerConstants.ReadUnknown;
             }
+            return res;
+        };
+        this.ReadTableXmlColumnPr = function(type, length, oXmlColumnPr) {
+            var res = c_oSerConstants.ReadOk;
+
+            if (c_oSer_TableColumns.MapId === type) {
+                oXmlColumnPr.mapId = this.stream.GetLong();
+            }
+            else if (c_oSer_TableColumns.Xpath === type) {
+                oXmlColumnPr.xpath = this.stream.GetString4(length);
+            }
+            else if (c_oSer_TableColumns.Denormalized === type) {
+                oXmlColumnPr.denormalized = this.stream.GetBool();
+            }
+            else if (c_oSer_TableColumns.XmlDataType === type) {
+                if (!oXmlColumnPr.xmlDataType) {
+                    oXmlColumnPr.xmlDataType = {};
+                }
+                oXmlColumnPr.xmlDataType.val = this.stream.GetUChar();
+            }
+            else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+
             return res;
         };
         this.ReadTableColumns = function(type, length, aTableColumns)
@@ -8931,6 +9021,19 @@
                     return oThis.ReadMetadata(t, l, oThis.oWorkbook.metadata);
                 });
             }*/
+            else if (c_oSerWorkbookTypes.XmlMap === type) {
+                //m_oBufferedStream.Skip(1); //skip type
+
+                // Create CMapInfo object
+                var oXmlMap = new AscCommonExcel.CMapInfo();
+                oXmlMap.fromPPTY(this.stream);
+
+                // Add to workbook
+                if (this.oWorkbook.xmlMaps == null) {
+                    this.oWorkbook.xmlMaps = [];
+                }
+                this.oWorkbook.xmlMaps.push(oXmlMap);
+            }
             else
                 res = c_oSerConstants.ReadUnknown;
             return res;
@@ -10162,6 +10265,13 @@
                 res = this.bcr.Read1(length, function(t, l) {
                     return oThis.ReadTimelinesList(t, l, oWorksheet.timelines);
                 });
+            } else if (c_oSerWorksheetsTypes.TableSingleCells === type) {
+                this.stream.Skip(1); //skip type
+
+                var pTableSingleCellsFile = new CTableSingleCellsFile();
+                pTableSingleCellsFile.fromPPTY(this.stream);
+
+                oWorksheet.TableSingleCells = pTableSingleCellsFile;
             } else
 				res = c_oSerConstants.ReadUnknown;
 			return res;
