@@ -15971,6 +15971,7 @@
 		return g_oDefaultFormat.Align;
 	};
 	Cell.prototype._adjustCellFormat = function() {
+		// 
 		var t = this;
 		this.processFormula(function(parsed) {
 			var valueCalc = parsed.value;
@@ -15995,6 +15996,25 @@
 								t.setNumFormat(sNewFormat);
 							}
 						}
+					}
+				}
+			}
+		});
+	};
+	Cell.prototype._adjustCellFormat2 = function() {
+		const t = this;
+		this.processFormula(function(parsed) {
+			var valueCalc = parsed.value;
+			if (valueCalc) {
+				if (0 <= valueCalc.numFormat) {
+					if (aStandartNumFormatsId[t.getNumFormatStr()] == 0) {
+						t.setNum(new AscCommonExcel.Num({id: valueCalc.numFormat}));
+					}
+				} else if (typeof valueCalc.numFormat === "string") {
+					t.setNum(new AscCommonExcel.Num({f: valueCalc.numFormat}));
+				} else if (AscCommonExcel.cNumFormatFirstCell === valueCalc.numFormat) {
+					if (parsed.sFormatType) {
+						t.setNumFormat(parsed.sFormatType);
 					}
 				}
 			}

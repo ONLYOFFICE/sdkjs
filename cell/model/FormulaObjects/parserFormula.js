@@ -582,6 +582,86 @@ let cElementTypeWeight =  new Map();
 	cElementTypeWeight.set(cElementType.error, 3);
 
 
+/**
+ * Определяет формат на основе переданных аргументов и предыдущего типа формата
+ * @param {Array} arg - Массив объектов с данными для анализа
+ * @param {number} prevFormatType - Числовое значение предыдущего типа формата
+ * @returns {{sFormat: string, numFormatType: number}} Объект содержащий тип и строковое представление итогового формата
+ */
+function getFuncFormatByArgs (arg, prevFormatType) {
+	/* for base operators */
+	if (!arg || arg.length < 2) {
+		return;
+	}
+
+	if (!prevFormatType) {
+		prevFormatType = Asc.c_oAscNumFormatType.General;
+	}
+	
+	let arg0 = arg[0], arg1 = arg[1];
+
+	let arg0Format, arg0FormatType, arg1Format, arg1FormatType;
+	let	resFormatInfo = {
+			sFormat: null,
+			numFormatType: null
+		};
+	
+	// todo cellsRange3D
+	if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
+		arg0Format = arg0.range && arg0.range.getNumFormat && arg0.range.getNumFormat();
+		arg0FormatType = arg0Format.getType();
+	} else {
+		arg0FormatType = prevFormatType;
+	}
+
+	if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+		arg1Format = arg1.range && arg1.range.getNumFormat && arg1.range.getNumFormat();
+		arg1FormatType = arg1Format.getType();
+	} else {
+		arg1FormatType = prevFormatType;
+	}
+
+	if (arg0FormatType === arg1FormatType) {
+		if (arg0FormatType === Asc.c_oAscNumFormatType.Time || arg0FormatType === Asc.c_oAscNumFormatType.Percent 
+			|| arg0FormatType === Asc.c_oAscNumFormatType.Fraction || arg0FormatType === Asc.c_oAscNumFormatType.Scientific) {
+			resFormatInfo = {
+				sFormat: arg0Format.sFormat,
+				numFormatType: arg0FormatType
+			}
+		} else {
+			resFormatInfo = {
+				sFormat: null,
+				numFormatType: Asc.c_oAscNumFormatType.None
+			}
+		}
+	} else if (arg0FormatType === Asc.c_oAscNumFormatType.General || arg0FormatType === Asc.c_oAscNumFormatType.None) {
+		resFormatInfo = {
+			sFormat: arg1Format.sFormat,
+			numFormatType: arg1FormatType
+		}
+	} else if (arg1FormatType === Asc.c_oAscNumFormatType.General || arg1FormatType === Asc.c_oAscNumFormatType.None) {
+		resFormatInfo = {
+			sFormat: arg0Format.sFormat,
+			numFormatType: arg0FormatType
+		}
+	} else {
+		resFormatInfo.sFormat = arg0Format.sFormat;
+		resFormatInfo.numFormatType = arg0FormatType;
+
+		if ( arg0FormatType === Asc.c_oAscNumFormatType.Date || arg1FormatType === Asc.c_oAscNumFormatType.Date ||
+			arg0FormatType === Asc.c_oAscNumFormatType.Time || arg1FormatType === Asc.c_oAscNumFormatType.Time ) {
+			if ( arg0FormatType === Asc.c_oAscNumFormatType.Time || arg1FormatType === Asc.c_oAscNumFormatType.Time ) {
+				// date + time = custom type
+				resFormatInfo = {
+					sFormat: "m/d/yyyy h:mm",
+					numFormatType: Asc.c_oAscNumFormatType.Date
+				}
+			}
+		}
+	}
+
+	return resFormatInfo;
+}
 
 
 Math.fmod = function ( a, b ) {
@@ -8871,6 +8951,7 @@ function parserFormula( formula, parent, _ws ) {
 			opt_bbox = new Asc.Range(0, 0, 0, 0);
 		}
 
+		let sFormatType;
 		var elemArr = [], _tmp, numFormat = cNumFormatFirstCell, currentElement = null, bIsSpecialFunction, argumentsCount, defNameCalcArr, defNameArgCount = 0;
 		for (var i = 0; i < this.outStack.length; i++) {
 			currentElement = this.outStack[i];
@@ -8953,6 +9034,18 @@ function parserFormula( formula, parent, _ws ) {
 					}
 
 					//_tmp = currentElement.Calculate(arg, opt_bbox, opt_defName, this.ws, bIsSpecialFunction);
+					if (false && currentElement.type === cElementType.operator && _tmp) {
+						// todo get function format by default?
+						let cellFormat;
+						if (arg && arg.length > 1) {
+							cellFormat = getFuncFormatByArgs(arg, sFormatType ? sFormatType.numFormatType : null);
+						}
+
+						if (cellFormat) {
+							sFormatType = cellFormat;
+						}
+					}
+
 					if (cNumFormatNull !== _tmp.numFormat) {
 						numFormat = _tmp.numFormat;
 					} else if (0 > numFormat || cNumFormatNone === currentElement.numFormat) {
@@ -9035,6 +9128,7 @@ function parserFormula( formula, parent, _ws ) {
 			}
 
 			this.value.numFormat = numFormat;
+			this.sFormatType = sFormatType && sFormatType.sFormat;
 			//***array-formula***
 			//для обработки формулы массива
 			//передаётся последним параметром cell и временно подменяется parent у parserFormula для того, чтобы поменялось значение в элементе массива
@@ -9692,6 +9786,7 @@ function parserFormula( formula, parent, _ws ) {
 			isDefName = this.parent.onFormulaEvent(AscCommon.c_oNotifyParentType.IsDefName);
 		}
 
+		// записывать форматы тут или же при вычислении в pf?
 		for (var i = 0; i < this.outStack.length; i++) {
 			ref = this.outStack[i];
 
