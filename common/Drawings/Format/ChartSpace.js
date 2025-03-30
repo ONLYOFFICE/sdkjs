@@ -11927,7 +11927,7 @@ function(window, undefined) {
 			case (AscDFH.historyitem_type_DateAx):
 				return 1.939;
 			case (AscDFH.historyitem_type_ValAx):
-				return 0;
+				return 1;
 			default:
 				return 0;
 		}
@@ -12137,30 +12137,30 @@ function(window, undefined) {
 				// find max that is higher than axis max
 				const newMax = Math.ceil(oLabelsBox.axis.scale[oLabelsBox.axis.scale.length - 1] / (nMultiplicator)) * nMultiplicator;
 				return [oLabelsBox.axis.scale[0], newMax]
-			// } else if (oLabelsBox.chartSpace.chart.plotArea.charts) {
-			// 	let grouping, isStackedType, isScatterType, isCombinationChartTypes;
-			// 	const axisCharts = oLabelsBox.chartSpace.chart.plotArea.charts;
-			// 	const t = oLabelsBox.chartSpace.chartObj;
-			// 	for (let i = 0; i < axisCharts.length; i++) {
-			// 		grouping = t.getChartGrouping(axisCharts[i]);
-			// 		if (AscDFH.historyitem_type_ScatterChart === axisCharts[i].getObjectType()) {
-			// 			isScatterType = true;
-			// 		}
-			// 		if ("stackedPer" === grouping && !isStackedType) {
-			// 			isStackedType = true;
-			// 		}
-			// 	}
-			// 	for (let i = 0; i < axisCharts.length; i++) {
-			// 		grouping = t.getChartGrouping(axisCharts[i]);
-			//
-			// 		if (grouping === "stacked" && isStackedType) {
-			// 			isStackedType = false;
-			// 		}
-			// 	}
-			// 	const minMaxResult = t._getTrueMinMax(axisMin, axisMax, isStackedType, isScatterType, manualMax);
-			// 	axisMax = manualMax !== null && manualMax !== undefined ? manualMax : minMaxResult.max;
-			// 	axisMin = manualMin !== null && manualMin !== undefined ? manualMin : minMaxResult.min;
-			// 	return t._getArrayDataValues(newStep, axisMin, axisMax, manualMin, manualMax, false);
+			} else if (oLabelsBox.chartSpace.chart.plotArea.charts) {
+				let grouping, isStackedType, isScatterType, isCombinationChartTypes;
+				const axisCharts = oLabelsBox.chartSpace.chart.plotArea.charts;
+				const t = oLabelsBox.chartSpace.chartObj;
+				for (let i = 0; i < axisCharts.length; i++) {
+					grouping = t.getChartGrouping(axisCharts[i]);
+					if (AscDFH.historyitem_type_ScatterChart === axisCharts[i].getObjectType()) {
+						isScatterType = true;
+					}
+					if ("stackedPer" === grouping && !isStackedType) {
+						isStackedType = true;
+					}
+				}
+				for (let i = 0; i < axisCharts.length; i++) {
+					grouping = t.getChartGrouping(axisCharts[i]);
+
+					if (grouping === "stacked" && isStackedType) {
+						isStackedType = false;
+					}
+				}
+				const minMaxResult = t._getTrueMinMax(axisMin, axisMax, isStackedType, isScatterType, manualMax);
+				axisMax = manualMax !== null && manualMax !== undefined ? manualMax : minMaxResult.max;
+				axisMin = manualMin !== null && manualMin !== undefined ? manualMin : minMaxResult.min;
+				return t._getArrayDataValues(newStep, axisMin, axisMax, manualMin, manualMax, false);
 			} else {
 				return oLabelsBox.chartSpace.chartObj._getArrayDataValues(newStep, axisMin, axisMax, manualMin, manualMax, false);
 			}
@@ -12229,7 +12229,8 @@ function(window, undefined) {
 
 				// crossAxis should also be affected by restructured valAx
 				if (oCrossAx) {
-					oCrossAx.posX = (((startingPoint - oLabelsBox.axis.scale[0]) / newStep) * oGrid.fStride + oGrid.fStart);
+					const stepBetween = newStep ? newStep : oLabelsBox.axis.scale.length > 1 ? oLabelsBox.axis.scale[1] - oLabelsBox.axis.scale[0] : 1;
+					oCrossAx.posX = (((startingPoint - oLabelsBox.axis.scale[0]) / stepBetween) * oGrid.fStride + oGrid.fStart);
 					if (oCrossAx.labels && oCrossAx.labels.extX) {
 						oCrossAx.labels.setX(oCrossAx.posX - startingPointForAxis);
 					}
