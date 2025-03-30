@@ -13926,6 +13926,7 @@ drawScatterChart.prototype = {
 		let seria, yVal, xVal, points, yNumCache, compiledMarkerSize, compiledMarkerSymbol, yPoint, idx, xPoint;
 		let dispBlanksAs =  this.cChartSpace.chart.dispBlanksAs;
 		let isLog;
+		const catMin = this.catAx && this.catAx.scaling ? this.catAx.scaling.min : null;
 
 		let t = this;
 		let _initObjs = function (_index) {
@@ -13985,7 +13986,7 @@ drawScatterChart.prototype = {
 
 					_initObjs(i);
 
-					if (yVal != null && ((isLog && yVal !== 0) || !isLog)) {
+					if (yVal != null && ((isLog && yVal !== 0) || !isLog) && !(catMin && yVal <= catMin)) {
 						let x = this.cChartDrawer.getYPosition(xVal, this.catAx, true);
 						let y = this.cChartDrawer.getYPosition(yVal, this.valAx, true);
 						this.paths.points[i].push(this.cChartDrawer.calculatePoint(x, y, compiledMarkerSize, compiledMarkerSymbol));

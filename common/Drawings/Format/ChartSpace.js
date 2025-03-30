@@ -11916,6 +11916,7 @@ function(window, undefined) {
 		// fSpaceBetweenLabels stands for the amount of additional space that label should have, other than the width of its content;
 		// left space + right space = this.fSpaceBetweenLabels
 		this.fSpaceBetweenLabels = this.getSpaceBetweenLabels();
+		this.minLabelWidth = 6.48;
 		// the max width default is 20000;
 		this.maxLabelWidth = 20000;
 	}
@@ -11926,7 +11927,7 @@ function(window, undefined) {
 			case (AscDFH.historyitem_type_DateAx):
 				return 1.939;
 			case (AscDFH.historyitem_type_ValAx):
-				return 5.8;
+				return 0;
 			default:
 				return 0;
 		}
@@ -11972,7 +11973,8 @@ function(window, undefined) {
 		if (this.nLblTickSkip && this.nLabelsCount !== 0) {
 			// valAxis has additional space between labels, therefore its calculations are different
 			if (this.nAxisType === AscDFH.historyitem_type_ValAx) {
-				return this.bCalculated = Math.ceil(this.nLabelsCount / this.nLblTickSkip) * (this.fLabelWidth + this.fSpaceBetweenLabels) >= (fAxisLength + this.fSpaceBetweenLabels);
+				const fNewLabelWidth = Math.max(this.fLabelWidth, this.maxLabelWidth);
+				return this.bCalculated = Math.ceil(this.nLabelsCount / this.nLblTickSkip) * fNewLabelWidth >= fAxisLength;
 			} else {
 				return this.bCalculated = Math.ceil(this.nLabelsCount / this.nLblTickSkip) * this.fLabelWidth >= fAxisLength;
 			}
@@ -12169,11 +12171,11 @@ function(window, undefined) {
 		const nMultiplicator = getMultiplicator(nStep);
 
 		// adjust labelWidth and fAxisLength by alpha
-		const labelWidth = oLabelsBox.maxMinWidth + this.fSpaceBetweenLabels;
-		const fNewAxisLength = (fAxisLength + this.fSpaceBetweenLabels);
+		const labelWidth = Math.max(oLabelsBox.maxMinWidth, this.minLabelWidth);
+
 
 		// find nLabelCount
-		const nLabelCount = fAxisLength > 0 && fAxisLength >= labelWidth ? Math.floor( fNewAxisLength/ labelWidth) : 1;
+		const nLabelCount = fAxisLength > 0 && fAxisLength >= labelWidth ? Math.floor( fAxisLength/ labelWidth) : 1;
 
 		// find minimum tick skip
 		const lastNum = oLabelsBox.axis.scale[oLabelsBox.axis.scale.length - 1];
