@@ -2585,7 +2585,6 @@ CChartsDrawer.prototype =
 		var arrayValues = [];
 		var stackedPerMax = null !== manualMax ? manualMax : 100;
 		// some value after which it is not recommended to increase axis max for more steps
-		const stepLimit = 50;
 
 		const is3D = this._isSwitchCurrent3DChart(this.cChartSpace)
 		if (this.calcProp.subType === 'stackedPer' && step > stackedPerMax) {
