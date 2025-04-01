@@ -921,129 +921,120 @@ function CStatistics(LogicDocument)
     this.Id       = null; // Id таймера для подсчета всего кроме страниц
     this.PagesId  = null; // Id таймера для подсчета страниц
 
-    this.StartPos = 0;
-
-    this.Pages           = 0;
-    this.Words           = 0;
-    this.Paragraphs      = 0;
-    this.SymbolsWOSpaces = 0;
-    this.SymbolsWhSpaces = 0;
+    this.Reset();
 }
 
-CStatistics.prototype =
-{
 //-----------------------------------------------------------------------------------
 // Функции для запуска и остановки сбора статистики
 //-----------------------------------------------------------------------------------
-    Start : function()
-    {
-        this.StartPos = 0;
-        this.CurPage  = 0;
 
-        this.Pages           = 0;
-        this.Words           = 0;
-        this.Paragraphs      = 0;
-        this.SymbolsWOSpaces = 0;
-        this.SymbolsWhSpaces = 0;
+CStatistics.prototype.Reset = function()
+{
+	this.StartPos = 0;
+	this.CurPage  = 0;
 
+	this.Pages           = 0;
+	this.Words           = 0;
+	this.Paragraphs      = 0;
+	this.SymbolsWOSpaces = 0;
+	this.SymbolsWhSpaces = 0;
+};
+CStatistics.prototype.Start = function()
+{
+	this.Reset();
 
-        var LogicDocument = this.LogicDocument;
-        this.PagesId = setTimeout(function(){LogicDocument.Statistics_GetPagesInfo();}, 1);
-        this.Id      = setTimeout(function(){LogicDocument.Statistics_GetParagraphsInfo();}, 1);
-        this.Send();
-    },
+	var LogicDocument = this.LogicDocument;
+	this.PagesId = setTimeout(function(){LogicDocument.Statistics_GetPagesInfo();}, 1);
+	this.Id      = setTimeout(function(){LogicDocument.Statistics_GetParagraphsInfo();}, 1);
+	this.Send();
+};
+CStatistics.prototype.Stop = function()
+{
+	this.Reset();
+	this.Stop_PagesInfo();
+	this.Stop_ParagraphsInfo();
+};
+CStatistics.prototype.Next_ParagraphsInfo = function(StartPos)
+{
+	this.StartPos = StartPos;
+	var LogicDocument = this.LogicDocument;
+	clearTimeout(this.Id);
+	this.Id = setTimeout(function(){LogicDocument.Statistics_GetParagraphsInfo();}, 1);
+	this.Send();
+};
+CStatistics.prototype.Next_PagesInfo = function()
+{
+	var LogicDocument = this.LogicDocument;
+	clearTimeout(this.PagesId);
+	this.PagesId = setTimeout(function(){LogicDocument.Statistics_GetPagesInfo();}, 100);
+	this.Send();
+};
+CStatistics.prototype.Stop_PagesInfo = function()
+{
+	if (null !== this.PagesId)
+	{
+		clearTimeout(this.PagesId);
+		this.PagesId = null;
+	}
 
-    Next_ParagraphsInfo : function(StartPos)
-    {
-        this.StartPos = StartPos;
-        var LogicDocument = this.LogicDocument;
-        clearTimeout(this.Id);
-        this.Id = setTimeout(function(){LogicDocument.Statistics_GetParagraphsInfo();}, 1);
-        this.Send();
-    },
+	this.Check_Stop();
+};
+CStatistics.prototype.Stop_ParagraphsInfo = function()
+{
+	if (null != this.Id)
+	{
+		clearTimeout(this.Id);
+		this.Id = null;
+	}
 
-    Next_PagesInfo : function()
-    {
-        var LogicDocument = this.LogicDocument;
-        clearTimeout(this.PagesId);
-        this.PagesId = setTimeout(function(){LogicDocument.Statistics_GetPagesInfo();}, 100);
-        this.Send();
-    },
+	this.Check_Stop();
+};
+CStatistics.prototype.Check_Stop = function()
+{
+	if (null === this.Id && null === this.PagesId)
+	{
+		this.Send();
+		this.Api.sync_GetDocInfoEndCallback();
+	}
+};
+CStatistics.prototype.Send = function()
+{
+	var Stats =
+	{
+		PageCount      : this.Pages,
+		WordsCount     : this.Words,
+		ParagraphCount : this.Paragraphs,
+		SymbolsCount   : this.SymbolsWOSpaces,
+		SymbolsWSCount : this.SymbolsWhSpaces
+	};
 
-    Stop_PagesInfo : function()
-    {
-        if (null !== this.PagesId)
-        {
-            clearTimeout(this.PagesId);
-            this.PagesId = null;
-        }
+	this.Api.sync_DocInfoCallback(Stats);
+};
+CStatistics.prototype.Add_Paragraph = function (Count)
+{
+	if ( "undefined" != typeof( Count ) )
+		this.Paragraphs += Count;
+	else
+		this.Paragraphs++;
+};
+CStatistics.prototype.Add_Word = function(Count)
+{
+	if ( "undefined" != typeof( Count ) )
+		this.Words += Count;
+	else
+		this.Words++;
+};
 
-        this.Check_Stop();
-    },
+CStatistics.prototype.Update_Pages = function(PagesCount)
+{
+	this.Pages = PagesCount;
+};
 
-    Stop_ParagraphsInfo : function()
-    {
-        if (null != this.Id)
-        {
-            clearTimeout(this.Id);
-            this.Id = null;
-        }
-
-        this.Check_Stop();
-    },
-
-    Check_Stop : function()
-    {
-        if (null === this.Id && null === this.PagesId)
-        {
-            this.Send();
-            this.Api.sync_GetDocInfoEndCallback();
-        }
-    },
-
-    Send : function()
-    {
-        var Stats =
-        {
-            PageCount      : this.Pages,
-            WordsCount     : this.Words,
-            ParagraphCount : this.Paragraphs,
-            SymbolsCount   : this.SymbolsWOSpaces,
-            SymbolsWSCount : this.SymbolsWhSpaces
-        };
-
-        this.Api.sync_DocInfoCallback(Stats);
-    },
-//-----------------------------------------------------------------------------------
-// Функции для пополнения статистики
-//-----------------------------------------------------------------------------------
-    Add_Paragraph : function (Count)
-    {
-        if ( "undefined" != typeof( Count ) )
-            this.Paragraphs += Count;
-        else
-            this.Paragraphs++;
-    },
-
-    Add_Word : function(Count)
-    {
-        if ( "undefined" != typeof( Count ) )
-            this.Words += Count;
-        else
-            this.Words++;
-    },
-
-    Update_Pages : function(PagesCount)
-    {
-        this.Pages = PagesCount;
-    },
-
-    Add_Symbol : function(bSpace)
-    {
-        this.SymbolsWhSpaces++;
-        if ( true != bSpace )
-            this.SymbolsWOSpaces++;
-    }
+CStatistics.prototype.Add_Symbol = function(bSpace)
+{
+	this.SymbolsWhSpaces++;
+	if ( true != bSpace )
+		this.SymbolsWOSpaces++;
 };
 
 function CDocumentRecalcInfo()

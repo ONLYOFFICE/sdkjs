@@ -7267,7 +7267,7 @@
 		oThis.lockSendChangeSelection = true;
 		ws.openCellEditor(oThis.wb.cellEditor, editorEnterOptions, selectionRange);
 		oThis.wb.setFormulaEditMode(true);
-		oThis.wb.cellEditor._topLineGotFocus();
+		//oThis.wb.cellEditor._topLineGotFocus();
 		oThis.wb.cellEditor.setSelectionState(oThis.activeTabFormula);
 		oThis.lockSendChangeSelection = false;
 
