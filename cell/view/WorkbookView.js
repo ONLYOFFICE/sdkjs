@@ -7187,7 +7187,7 @@
 		let oThis = this;
 
 		if (this.supportVisibilityChangeOption) {
-			document.addEventListener("visibilitychange", function() {
+			document.addEventListener && document.addEventListener("visibilitychange", function() {
 				if (document.hidden === false) {
 					// Document has become visible
 					if (!oThis.getExternalFormulaEditMode()) {
@@ -7230,7 +7230,7 @@
 
 		// Handle page unload when in formula mode
 		let isClosing = false;
-		window.addEventListener('beforeunload', function(event) {
+		window.addEventListener && window.addEventListener('beforeunload', function(event) {
 			if (!!oThis.getExternalFormulaEditMode()) {
 				isClosing = true;
 				event.preventDefault();
@@ -7238,7 +7238,7 @@
 			}
 		});
 
-		window.addEventListener('unload', function() {
+		window.addEventListener && window.addEventListener('unload', function() {
 			if (isClosing) {
 				oThis.sendExternalCloseEditor();
 			}
