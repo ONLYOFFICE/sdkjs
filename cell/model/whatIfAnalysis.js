@@ -1317,6 +1317,38 @@ function (window, undefined) {
 		this.fillMatrix(aMatrix, aSimplexConstraints);
 	};
 	/**
+	 * Calculates solution using Simplex LP method.
+	 * @memberof CSimplexTableau
+	 * @returns {boolean}
+	 */
+	CSimplexTableau.prototype.calculate = function () {
+		let bContinueCalculating = false;
+		this.phase1();
+		 if (this.getFeasible()) {
+			 // current solution is feasible
+			 bContinueCalculating = this.phase2();
+		 }
+	};
+	/**
+	 * Obtains a Basic Feasible Solution (BFS)
+	 * Convert a non-standard form tableau to a standard form tableau by eliminating
+	 * all negative values on the Right Hand Side (RHS)
+	 * This results in a Basic Feasible Solution (BFS)
+	 * @memberof CSimplexTableau
+	 */
+	CSimplexTableau.prototype.phase1 = function () {
+
+	};
+	/**
+	 * Runs simplex on Initial Basic Feasible Solution (BFS)
+	 * Apply simplex to obtain optimal solution used as phase2 of the simplex
+	 * @memberof CSimplexTableau
+	 * @returns {boolean}
+	 */
+	CSimplexTableau.prototype.phase2 = function () {
+
+	}
+	/**
 	 * @returns {CSolver}
 	 */
 	CSimplexTableau.prototype.getModel = function () {
@@ -1794,6 +1826,38 @@ function (window, undefined) {
 	CSimplexTableau.prototype.setLastElementIndex = function (nLastElementIndex) {
 		this.nLastElementIndex = nLastElementIndex;
 	};
+	/**
+	 * Returns bounded attribute
+	 * @memberof CSimplexTableau
+	 * @returns {boolean}
+	 */
+	CSimplexTableau.prototype.getBounded = function () {
+		return this.bBounded;
+	};
+	/**
+	 * Sets bounded attribute
+	 * @memberof CSimplexTableau
+	 * @param {boolean} bBounded
+	 */
+	CSimplexTableau.prototype.setBounded = function (bBounded) {
+		this.bBounded = bBounded;
+	};
+	/**
+	 * Returns feasible attribute
+	 * @memberof CSimplexTableau
+	 * @returns {boolean}
+	 */
+	CSimplexTableau.prototype.getFeasible = function () {
+		return this.bFeasible;
+	};
+	/**
+	 * Sets feasible attribute
+	 * @memberof CSimplexTableau
+	 * @param {boolean} bFeasible
+	 */
+	CSimplexTableau.prototype.setFeasible = function (bFeasible) {
+		this.bFeasible = bFeasible;
+	};
 
 	// Main class of solver feature
 	/**
@@ -2038,7 +2102,8 @@ function (window, undefined) {
 
 	};
 	CSolver.prototype.simplexOptimization = function () {
-
+		const oSimplexTableau = this.getSimplexTableau();
+		oSimplexTableau.calculate();
 	};
 	CSolver.prototype.evolutionOptimization = function () {
 

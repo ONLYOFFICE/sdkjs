@@ -1224,6 +1224,5 @@ $(function () {
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1]
         ];
         assert.deepEqual(aMatrix, aMatrixExpected, 'Check prepare data for calculate by Simplex. Check matrix attribute');
-        console.table(aMatrix);
     });
 });
