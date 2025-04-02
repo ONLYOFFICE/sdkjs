@@ -263,10 +263,10 @@
 		return !!((AscWord.IsBulletedNumbering(format) && AscWord.IsBulletedNumbering(numFormat))
 				|| (AscWord.IsNumberedNumbering(format) && AscWord.IsNumberedNumbering(numFormat)));
 	};
-	CNumbering.prototype.Draw    = function(sNumId, nLvl, nX, nY, oContext, oNumInfo, oTextPr, oTheme)
+	CNumbering.prototype.Draw    = function(sNumId, nLvl, nX, nY, oContext, oNumInfo, oTextPr, oTheme, isRtl)
 	{
 		var oNum = this.GetNum(sNumId);
-		return oNum.Draw(nX, nY, oContext, nLvl, oNumInfo, oTextPr, oTheme);
+		return oNum.Draw(nX, nY, oContext, nLvl, oNumInfo, oTextPr, oTheme, isRtl);
 	};
 	CNumbering.prototype.Measure = function(sNumId, nLvl, oContext, oNumInfo, oTextPr, oTheme)
 	{

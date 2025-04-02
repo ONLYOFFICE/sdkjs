@@ -86,7 +86,7 @@
 		
 		this.x = this.paragraph.Lines[this.line].Ranges[this.range].XVisible;
 		
-		if (this.paragraph.Numbering.checkRange(this.line, this.range))
+		if (this.paragraph.Numbering.checkRange(this.line, this.range) && !this.paragraph.isRtlDirection())
 			this.x += this.paragraph.Numbering.WidthVisible;
 		
 		this.bidi.begin(this.paragraph.isRtlDirection());

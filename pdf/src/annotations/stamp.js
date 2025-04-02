@@ -296,16 +296,16 @@
         this.SetNeedRecalc(true);
         this.SetWasChanged(true);
     };
-    CAnnotationStamp.prototype.SetRect = function(aRect, bUpdateShapeSizes) {
+    CAnnotationStamp.prototype.SetRect = function(aRect, isOnRotate) {
         let oViewer     = editor.getDocumentRenderer();
         let oDoc        = oViewer.getPDFDoc();
         let aCurRect    = this.GetRect();
 
-        oDoc.History.Add(new CChangesPDFAnnotRect(this, aCurRect, aRect));
+        oDoc.History.Add(new CChangesPDFAnnotStampRect(this, aCurRect, aRect, isOnRotate));
         this._origRect = aRect;
 
         this.SetWasChanged(true);
-        this.SetNeedRecalcSizes(!!bUpdateShapeSizes);
+        this.SetNeedRecalcSizes(!isOnRotate);
     };
     CAnnotationStamp.prototype.SetNeedRecalcSizes = function(bRecalc) {
         this._needRecalcSizes = bRecalc;
@@ -377,7 +377,7 @@
 
         let oNewStamp = new CAnnotationStamp(AscCommon.CreateGUID(), this.GetOrigRect().slice(), oDoc);
 
-        oNewStamp.inRect = this.inRect;
+        oNewStamp.SetInRect(this.inRect);
         oNewStamp.lazyCopy = true;
 
         this.fillObject(oNewStamp);
@@ -396,6 +396,7 @@
         oNewStamp.SetWidth(this.GetWidth());
         oNewStamp.SetOpacity(this.GetOpacity());
         oNewStamp.recalcGeometry()
+        oNewStamp.SetNeedRecalcSizes(false);
         oNewStamp.Recalculate(true);
         oNewStamp.SetIconType(this.GetIconType());
         oNewStamp.SetRenderStructure(this.GetRenderStructure());
@@ -462,7 +463,7 @@
         aNewRect[2] = Math.round(oGrBounds.r) * g_dKoef_mm_to_pt;
         aNewRect[3] = Math.round(oGrBounds.b) * g_dKoef_mm_to_pt;
 
-        this.SetRect(aNewRect, false);
+        this.SetRect(aNewRect, true);
     };
     CAnnotationStamp.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);

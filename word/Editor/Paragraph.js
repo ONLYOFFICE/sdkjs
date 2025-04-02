@@ -3013,7 +3013,6 @@ Paragraph.prototype.drawRunContentElements = function(CurPage, pGraphics, drawSt
 	var StartLine = this.Pages[CurPage].StartLine;
 	var EndLine   = this.Pages[CurPage].EndLine;
 	
-	let BgColor  = drawState.getBgColor();
 	let Theme    = drawState.getTheme();
 	let ColorMap = drawState.getColorMap();
 	let Pr       = drawState.getParagraphCompiledPr();
@@ -3048,262 +3047,11 @@ Paragraph.prototype.drawRunContentElements = function(CurPage, pGraphics, drawSt
 			
 			var StartPos = Range.StartPos;
 			var EndPos   = Range.EndPos;
-
-			// Отрисовка нумерации
-			if (true === this.Numbering.checkRange(CurRange, CurLine))
-			{
-				var nReviewType  = this.GetReviewType();
-				var oReviewColor = this.GetReviewColor();
-
-				var NumberingItem = this.Numbering;
-				if (para_Numbering === NumberingItem.Type)
-				{
-					var isHavePrChange = this.HavePrChange();
-					var oPrevNumPr     = this.GetPrChangeNumPr();
-
-					var NumPr = Pr.ParaPr.NumPr;
-
-					var isHaveNumbering = false;
-					if ((undefined === this.Get_SectionPr()
-						|| true !== this.IsEmpty())
-						&& (!this.Parent || !this.Parent.IsEmptyParagraphAfterTableInTableCell(this.GetIndex()))
-						&& ((NumPr
-						&& undefined !== NumPr.NumId
-						&& 0 !== NumPr.NumId
-						&& "0" !== NumPr.NumId)
-						|| (oPrevNumPr
-						&& undefined !== oPrevNumPr.NumId
-						&& undefined !== oPrevNumPr.Lvl
-						&& 0 !== oPrevNumPr.NumId
-						&& "0" !== oPrevNumPr.NumId)))
-					{
-						isHaveNumbering = true;
-					}
-
-					if (!isHaveNumbering || (!NumPr && !oPrevNumPr))
-					{
-						// Ничего не делаем
-					}
-					else
-					{
-						var oNumbering = this.Parent.GetNumbering();
-
-						var oNumLvl = null;
-						if (NumPr)
-							oNumLvl = oNumbering.GetNum(NumPr.NumId).GetLvl(NumPr.Lvl);
-						else if (oPrevNumPr)
-							oNumLvl = oNumbering.GetNum(oPrevNumPr.NumId).GetLvl(oPrevNumPr.Lvl);
-
-						var nNumSuff   = oNumLvl.GetSuff();
-						var nNumJc     = oNumLvl.GetJc();
-						var oNumTextPr = this.GetNumberingTextPr();
-
-						var oPrevNumTextPr = oPrevNumPr ? this.Get_CompiledPr2(false).TextPr.Copy() : null;
-						if (oPrevNumTextPr && (oPrevNumPr
-							&& undefined !== oPrevNumPr.NumId
-							&& undefined !== oPrevNumPr.Lvl
-							&& 0 !== oPrevNumPr.NumId
-							&& "0" !== oPrevNumPr.NumId))
-						{
-							var oPrevNumLvl = oNumbering.GetNum(oPrevNumPr.NumId).GetLvl(oPrevNumPr.Lvl);
-							oPrevNumTextPr.Merge(this.TextPr.Value.Copy());
-							oPrevNumTextPr.Merge(oPrevNumLvl.GetTextPr());
-						}
-
-						var X_start = X;
-
-						if (align_Right === nNumJc)
-							X_start = X - NumberingItem.WidthNum;
-						else if (align_Center === nNumJc)
-							X_start = X - NumberingItem.WidthNum / 2;
-
-						var AutoColor = ( undefined != BgColor && false === BgColor.Check_BlackAutoColor() ? new CDocumentColor(255, 255, 255, false) : new CDocumentColor(0, 0, 0, false) );
-
-						var RGBA;
-						if (oNumTextPr.Unifill)
-						{
-							oNumTextPr.Unifill.check(PDSE.Theme, PDSE.ColorMap);
-							RGBA = oNumTextPr.Unifill.getRGBAColor();
-							pGraphics.b_color1(RGBA.R, RGBA.G, RGBA.B, 255);
-						}
-						else
-						{
-							if (true === oNumTextPr.Color.Auto)
-							{
-								if(oNumTextPr.FontRef && oNumTextPr.FontRef.Color)
-								{
-									oNumTextPr.FontRef.Color.check(Theme, ColorMap);
-									RGBA = oNumTextPr.FontRef.Color.RGBA;
-									pGraphics.b_color1(RGBA.R, RGBA.G, RGBA.B, 255);
-								}
-								else
-								{
-									pGraphics.b_color1(AutoColor.r, AutoColor.g, AutoColor.b, 255);
-								}
-							}
-							else
-							{
-								pGraphics.b_color1(oNumTextPr.Color.r, oNumTextPr.Color.g, oNumTextPr.Color.b, 255);
-							}
-						}
-
-						if (NumberingItem.HaveSourceNumbering() || reviewtype_Common !== nReviewType)
-						{
-							if (reviewtype_Common === nReviewType)
-								pGraphics.b_color1(REVIEW_NUMBERING_COLOR.r, REVIEW_NUMBERING_COLOR.g, REVIEW_NUMBERING_COLOR.b, 255);
-							else
-								pGraphics.b_color1(oReviewColor.r, oReviewColor.g, oReviewColor.b, 255);
-						}
-						else if (isHavePrChange && NumPr && !oPrevNumPr)
-						{
-							var oPrReviewColor = this.GetPrReviewColor();
-							pGraphics.b_color1(oPrReviewColor.r, oPrReviewColor.g, oPrReviewColor.b, 255);
-						}
-
-						var TempY = Y;
-						switch (oNumTextPr.VertAlign)
-						{
-							case AscCommon.vertalign_SubScript:
-							{
-								Y -= AscCommon.vaKSub * oNumTextPr.FontSize * g_dKoef_pt_to_mm;
-								break;
-							}
-							case AscCommon.vertalign_SuperScript:
-							{
-								Y -= AscCommon.vaKSuper * oNumTextPr.FontSize * g_dKoef_pt_to_mm;
-								break;
-							}
-						}
-
-						// Рисуется только сам символ нумерации
-						switch (nNumJc)
-						{
-							case align_Right:
-								NumberingItem.Draw(X - NumberingItem.WidthNum, Y, pGraphics, oNumbering, oNumTextPr, PDSE.Theme, oPrevNumTextPr);
-								break;
-
-							case align_Center:
-								NumberingItem.Draw(X - NumberingItem.WidthNum / 2, Y, pGraphics, oNumbering, oNumTextPr, PDSE.Theme, oPrevNumTextPr);
-								break;
-
-							case align_Left:
-							default:
-								NumberingItem.Draw(X, Y, pGraphics, oNumbering, oNumTextPr, PDSE.Theme, oPrevNumTextPr);
-								break;
-						}
-
-						if (true === oNumTextPr.Strikeout || true === oNumTextPr.Underline)
-						{
-							if (oNumTextPr.Unifill)
-							{
-								pGraphics.p_color(RGBA.R, RGBA.G, RGBA.B, 255);
-							}
-							else
-							{
-								if (true === oNumTextPr.Color.Auto)
-									pGraphics.p_color(AutoColor.r, AutoColor.g, AutoColor.b, 255);
-								else
-									pGraphics.p_color(oNumTextPr.Color.r, oNumTextPr.Color.g, oNumTextPr.Color.b, 255);
-							}
-						}
-
-						if (NumberingItem.HaveSourceNumbering() || reviewtype_Common !== nReviewType)
-						{
-							var nSourceWidth = NumberingItem.GetSourceWidth();
-
-							if (reviewtype_Common === nReviewType)
-								pGraphics.p_color(REVIEW_NUMBERING_COLOR.r, REVIEW_NUMBERING_COLOR.g, REVIEW_NUMBERING_COLOR.b, 255);
-							else
-								pGraphics.p_color(oReviewColor.r, oReviewColor.g, oReviewColor.b, 255);
-
-							// Либо у нас есть удаленная часть, либо у нас одновременно добавлен и удален параграф, тогда мы зачеркиваем суффикс
-							if (NumberingItem.HaveSourceNumbering() || (!NumberingItem.HaveSourceNumbering() && !NumberingItem.HaveFinalNumbering()))
-							{
-								if (NumberingItem.HaveFinalNumbering())
-									pGraphics.drawHorLine(0, (Y - oNumTextPr.FontSize * g_dKoef_pt_to_mm * 0.27), X_start, X_start + nSourceWidth, (oNumTextPr.FontSize / 18) * g_dKoef_pt_to_mm);
-								else
-									pGraphics.drawHorLine(0, (Y - oNumTextPr.FontSize * g_dKoef_pt_to_mm * 0.27), X_start, X_start + nSourceWidth + NumberingItem.WidthSuff, (oNumTextPr.FontSize / 18) * g_dKoef_pt_to_mm);
-							}
-
-							if (NumberingItem.HaveFinalNumbering())
-								pGraphics.drawHorLine(0, (Y + this.Lines[CurLine].Metrics.TextDescent * 0.4), X_start + nSourceWidth, X_start + NumberingItem.WidthNum + NumberingItem.WidthSuff, (oNumTextPr.FontSize / 18) * g_dKoef_pt_to_mm);
-						}
-						else if (isHavePrChange && NumPr && !oPrevNumPr)
-						{
-							var oPrReviewColor = this.GetPrReviewColor();
-							pGraphics.p_color(oPrReviewColor.r, oPrReviewColor.g, oPrReviewColor.b, 255);
-							pGraphics.drawHorLine(0, (Y + this.Lines[CurLine].Metrics.TextDescent * 0.4), X_start, X_start + NumberingItem.WidthNum + NumberingItem.WidthSuff, (oNumTextPr.FontSize / 18) * g_dKoef_pt_to_mm);
-						}
-						else
-						{
-							if (true === oNumTextPr.Strikeout)
-								pGraphics.drawHorLine(0, (Y - oNumTextPr.FontSize * g_dKoef_pt_to_mm * 0.27), X_start, X_start + NumberingItem.WidthNum, (oNumTextPr.FontSize / 18) * g_dKoef_pt_to_mm);
-
-							if (true === oNumTextPr.Underline)
-								pGraphics.drawHorLine(0, (Y + this.Lines[CurLine].Metrics.TextDescent * 0.4), X_start, X_start + NumberingItem.WidthNum, (oNumTextPr.FontSize / 18) * g_dKoef_pt_to_mm);
-						}
-
-						Y = TempY;
-
-						if (true === editor.ShowParaMarks && (Asc.c_oAscNumberingSuff.Tab === nNumSuff || oNumLvl.IsLegacy()))
-						{
-							var TempWidth     = NumberingItem.WidthSuff;
-							var TempRealWidth = 3.143; // ширина символа "стрелка влево" в шрифте Wingding3,10
-
-							var X1 = X;
-							switch (nNumJc)
-							{
-								case align_Right:
-									break;
-
-								case align_Center:
-									X1 += NumberingItem.WidthNum / 2;
-									break;
-
-								case align_Left:
-								default:
-									X1 += NumberingItem.WidthNum;
-									break;
-							}
-
-							var X0 = TempWidth / 2 - TempRealWidth / 2;
-
-							pGraphics.SetFont({
-								FontFamily : {Name : "ASCW3", Index : -1},
-								FontSize   : 10,
-								Italic     : false,
-								Bold       : false
-							});
-
-							if (X0 > 0)
-								pGraphics.FillText2(X1 + X0, Y, String.fromCharCode(tab_Symbol), 0, TempWidth);
-							else
-								pGraphics.FillText2(X1, Y, String.fromCharCode(tab_Symbol), TempRealWidth - TempWidth, TempWidth);
-						}
-					}
-				}
-				else if (para_PresentationNumbering === this.Numbering.Type)
-				{
-					var bIsEmpty = this.IsEmpty();
-					if (!bIsEmpty ||
-						this.IsThisElementCurrent() ||
-						this.Parent.IsSelectionUse() && this.Parent.IsSelectionEmpty() && this.Parent.Selection.StartPos === this.Index)
-					{
-						if (Pr.ParaPr.Ind.FirstLine < 0)
-							NumberingItem.Draw(X, Y, pGraphics, PDSE);
-						else
-							NumberingItem.Draw(this.Pages[CurPage].X  + Pr.ParaPr.Ind.Left, Y, pGraphics, PDSE);
-					}
-				}
-
-				PDSE.X += NumberingItem.WidthVisible;
-			}
-
+			
 			for (var Pos = StartPos; Pos <= EndPos; Pos++)
 			{
 				var Item = this.Content[Pos];
 				PDSE.CurPos.Update(Pos, 0);
-
 				Item.Draw_Elements(PDSE);
 			}
 			
@@ -3364,7 +3112,7 @@ Paragraph.prototype.drawRunContentLines = function(CurPage, pGraphics, drawState
 			var EndPos   = Range.EndPos;
 
 			// TODO: Нумерация подчеркивается и зачеркивается в Draw_Elements, неплохо бы сюда перенести
-			if (true === this.Numbering.checkRange(CurRange, CurLine))
+			if (this.Numbering.checkRange(CurRange, CurLine) && !this.isRtlDirection())
 				PDSL.X += this.Numbering.WidthVisible;
 
 			for (var Pos = StartPos; Pos <= EndPos; Pos++)
@@ -8412,10 +8160,20 @@ Paragraph.prototype.Selection_SetStart = function(X, Y, CurPage, bTableBorder)
 	this.Set_ParaContentPos(pos2, true, line, range);
 	this.Set_SelectionContentPos(pos2, pos2, true, line, range, line, range);
 	
-	if (SearchPosXY2.isNumbering() && undefined !== this.GetNumPr())
+	if (SearchPosXY2.isNumbering())
 	{
-		this.Set_ParaContentPos(this.Get_StartPos(), true, -1, -1);
-		this.Parent.SelectNumbering(this.GetNumPr(), this);
+		let numPr = this.GetNumPr();
+		let prevNumPr = this.GetPrChangeNumPr();
+		if (numPr && numPr.IsValid())
+		{
+			this.Set_ParaContentPos(this.Get_StartPos(), true, -1, -1);
+			this.Parent.SelectNumbering(numPr, this);
+		}
+		else if (prevNumPr && prevNumPr.IsValid())
+		{
+			this.Set_ParaContentPos(this.Get_StartPos(), true, -1, -1);
+			this.Parent.SelectNumberingSingleParagraph(this);
+		}
 	}
 };
 /**
@@ -8900,42 +8658,68 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage, clipInfo)
 			var SelectX = this.Lines[CurLine].Ranges[CurRange].XVisible;
 			var SelectW = ParaNum.WidthVisible;
 			var SelectH = this.Lines[CurLine].Bottom - this.Lines[CurLine].Top;
+			
+			let SelectX2 = SelectX;
+			let SelectW2 = ParaNum.WidthNum;
 
-			var SelectW2 = SelectW;
-
-			var oNumPr = this.GetNumPr();
-			if (!oNumPr)
+			let numLvl    = null;
+			let numPr     = this.GetNumPr();
+			let prevNumPr = this.GetPrChangeNumPr();
+			if (numPr)
+				numLvl = this.Parent.GetNumbering().GetNum(numPr.NumId).GetLvl(numPr.Lvl);
+			else if (prevNumPr)
+				numLvl = this.Parent.GetNumbering().GetNum(prevNumPr.NumId).GetLvl(undefined !== prevNumPr.Lvl && null !== prevNumPr.Lvl ? prevNumPr.Lvl : 0);
+			
+			if (!numLvl)
 				break;
-
-			var nNumJc = this.Parent.GetNumbering().GetNum(oNumPr.NumId).GetLvl(oNumPr.Lvl).GetJc();
-
-			switch (nNumJc)
+			
+			let numJc = numLvl.GetJc();
+			
+			if (this.isRtlDirection())
 			{
-				case align_Center:
+				let xEnd = this.Lines[CurLine].Ranges[CurRange].XEndVisible;
+				SelectX = xEnd - ParaNum.WidthVisible;
+				if (AscCommon.align_Center === numJc)
 				{
-					SelectX = this.Lines[CurLine].Ranges[CurRange].XVisible - ParaNum.WidthNum / 2;
+					SelectW  = ParaNum.WidthVisible + ParaNum.WidthNum / 2;
+					SelectX2 = xEnd - ParaNum.WidthNum / 2;
+				}
+				else if (AscCommon.align_Right === numJc)
+				{
+					SelectW  = ParaNum.WidthVisible + ParaNum.WidthNum;
+					SelectX2 = xEnd;
+				}
+				else // if (AscCommon.align_Left === numJc)
+				{
+					SelectW  = ParaNum.WidthVisible;
+					SelectX2 = xEnd - ParaNum.WidthNum;
+				}
+			}
+			else
+			{
+				let xStart = this.Lines[CurLine].Ranges[CurRange].XVisible;
+				if (AscCommon.align_Center === numJc)
+				{
+					SelectX = xStart - ParaNum.WidthNum / 2;
 					SelectW = ParaNum.WidthVisible + ParaNum.WidthNum / 2;
-					break;
 				}
-				case align_Right:
+				else if (AscCommon.align_Right === numJc)
 				{
-					SelectX = this.Lines[CurLine].Ranges[CurRange].XVisible - ParaNum.WidthNum;
+					SelectX = xStart - ParaNum.WidthNum;
 					SelectW = ParaNum.WidthVisible + ParaNum.WidthNum;
-					break;
 				}
-				case align_Left:
-				default:
+				else // if (AscCommon.align_Left === numJc)
 				{
-					SelectX = this.Lines[CurLine].Ranges[CurRange].XVisible;
+					SelectX = xStart;
 					SelectW = ParaNum.WidthVisible;
-					break;
 				}
+				SelectX2 = SelectX;
 			}
 			
 			AscWord.drawSelectionOnPage(drawingDocument, clipInfo, PageAbs, SelectX, SelectY, SelectW, SelectH);
 			
 			if (selectionflag_NumberingCur === this.Selection.Flag && drawingDocument.AddPageSelection2)
-				AscWord.drawSelectionOnPage(drawingDocument, clipInfo, PageAbs, SelectX, SelectY, SelectW2, SelectH, true);
+				AscWord.drawSelectionOnPage(drawingDocument, clipInfo, PageAbs, SelectX2, SelectY, SelectW2, SelectH, true);
 			
 			break;
 		}
@@ -9086,9 +8870,9 @@ Paragraph.prototype.Selection_SelectNumbering = function()
 		this.Selection.Flag = selectionflag_Numbering;
 	}
 };
-Paragraph.prototype.SelectNumbering = function(isCurrent)
+Paragraph.prototype.SelectNumbering = function(isCurrent, isForce)
 {
-	if (this.HaveNumbering())
+	if (this.HaveNumbering() || isForce)
 	{
 		this.Selection.Use  = true;
 		this.Selection.Flag = isCurrent ? selectionflag_NumberingCur : selectionflag_Numbering;

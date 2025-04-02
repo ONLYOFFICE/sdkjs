@@ -10807,7 +10807,11 @@ drawHBarChart.prototype = {
 
 	_drawBars: function () {
 		this.cChartDrawer.cShapeDrawer.Graphics.SaveGrState();
-		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect((this.chartProp.chartGutter._left - 1) / this.chartProp.pxToMM, (this.chartProp.chartGutter._top - 1) / this.chartProp.pxToMM, this.chartProp.trueWidth / this.chartProp.pxToMM, this.chartProp.trueHeight / this.chartProp.pxToMM);
+		const left = (this.chartProp.chartGutter._left - 1) / this.chartProp.pxToMM;
+		const top = (this.chartProp.chartGutter._top - 1) / this.chartProp.pxToMM;
+		const right = this.chartProp.trueWidth / this.chartProp.pxToMM;
+		const bottom = this.chartProp.trueHeight / this.chartProp.pxToMM;
+		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(left, top, right, bottom);
 		this.cChartDrawer.drawPaths(this.paths, this.chart.series, null, null, true);
 		this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
 	},
@@ -16048,6 +16052,7 @@ axisChart.prototype = {
 	},
 
 	_drawGridLines: function () {
+
 		var pen;
 		var path;
 		if (!this.paths.gridLines) {
@@ -16057,6 +16062,14 @@ axisChart.prototype = {
 			return;
 		}
 		this.cChartDrawer.cShapeDrawer.bDrawSmartAttack = true;
+
+		this.cChartDrawer.cShapeDrawer.Graphics.SaveGrState();
+		var left = (this.chartProp.chartGutter._left - 1) / this.chartProp.pxToMM;
+		var top = (this.chartProp.chartGutter._top - 1) / this.chartProp.pxToMM;
+		var right = this.chartProp.trueWidth / this.chartProp.pxToMM;
+		var bottom = this.chartProp.trueHeight / this.chartProp.pxToMM;
+		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(left, top, right, bottom);
+
 		if (this.paths.minorGridLines) {
 			path = this.paths.minorGridLines;
 			pen = this.axis.compiledMinorGridLines;
@@ -16067,6 +16080,9 @@ axisChart.prototype = {
 			path = this.paths.gridLines;
 			this.cChartDrawer.drawPath(path, pen);
 		}
+
+		this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
+
 		this.cChartDrawer.cShapeDrawer.bDrawSmartAttack = false;
 	},
 

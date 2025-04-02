@@ -372,6 +372,17 @@ function (window, undefined) {
 		var opt = this.options;
 		var t = this;
 
+		let externalSelectionController = this.handlers.trigger("getExternalSelectionController");
+		if (externalSelectionController.getExternalFormulaEditMode()) {
+			if (!externalSelectionController.supportVisibilityChangeOption) {
+				externalSelectionController.sendExternalCloseEditor(saveValue);
+				saveValue = false;
+			} else {
+				callback && callback(false);
+				return;
+			}
+		}
+
 		var api = window["Asc"]["editor"];
 		if (api && !api.canUndoRedoByRestrictions()) {
 			saveValue = false;
@@ -677,6 +688,9 @@ function (window, undefined) {
 		this._addChars(str, undefined, /*isRange*/true);
 		this.lastRangeLength = str.length;
 		this.skipTLUpdate = true;
+
+		let externalSelectionController = this.handlers.trigger("getExternalSelectionController");
+		externalSelectionController && externalSelectionController.sendExternalChangeSelection();
 	};
 
 	CellEditor.prototype.insertFormula = function (functionName, isDefName, sRange) {
@@ -1226,13 +1240,19 @@ function (window, undefined) {
 		if (!this.options || !this.options.fragments) {
 			return;
 		}
+
 		this._expand();
 		this._cleanText();
-		this._cleanSelection();
-		this._adjustCanvas();
-		this._showCanvas();
-		this._calculateCanvasSize();
-		this._renderText();
+
+		let externalSelectionController = this.handlers.trigger("getExternalSelectionController");
+		if (!externalSelectionController.getExternalFormulaEditMode()) {
+			this._cleanSelection();
+			this._adjustCanvas();
+			this._showCanvas();
+			this._calculateCanvasSize();
+			this._renderText();
+		}
+
 		if (!this.getMenuEditorMode()) {
 			for (var i = 0; i < this.options.fragments.length; i++) {
 				this.options.fragments[i].initText();
@@ -1620,6 +1640,10 @@ function (window, undefined) {
 		if (!this.isSelectMode) {
 			this.handlers.trigger("onSelectionEnd");
 		}
+
+		let externalSelectionController = this.handlers.trigger("getExternalSelectionController");
+		externalSelectionController && externalSelectionController.sendExternalChangeSelection();
+
 		return selection;
 	};
 
@@ -3329,6 +3353,17 @@ function (window, undefined) {
 		}
 
 		return type !== null ? {type: type, obj: {text: text}} : null;
+	};
+
+	CellEditor.prototype.setSelectionState = function (obj) {
+		if (!obj) {
+			return;
+		}
+		this.selectionBegin = obj.selectionBegin;
+		this.selectionEnd = obj.selectionEnd;
+		this.lastRangePos = obj.lastRangePos;
+		this.lastRangeLength = obj.lastRangeLength;
+		this.cursorPos = obj.cursorPos;
 	};
 
 	CellEditor.prototype.startAction = function () {

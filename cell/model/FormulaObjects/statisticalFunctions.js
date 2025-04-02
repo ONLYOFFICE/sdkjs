@@ -4106,8 +4106,13 @@ function (window, undefined) {
 	cAVERAGEIFS.prototype.constructor = cAVERAGEIFS;
 	cAVERAGEIFS.prototype.name = 'AVERAGEIFS';
 	cAVERAGEIFS.prototype.argumentsMin = 3;
-	//TODO все нечетные - на вход должны приходить как array/area
 	cAVERAGEIFS.prototype.arrayIndexes = {0: 1, 1: 1, 3: 1, 5: 1, 7: 1, 9: 1};
+	cAVERAGEIFS.prototype.getArrayIndex = function (index) {
+		if (index === 0) {
+			return 1;
+		}
+		return index % 2 !== 0 ? 1 : undefined;
+	};
 	cAVERAGEIFS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.area_to_ref;
 	cAVERAGEIFS.prototype.argumentsType = [argType.reference, [argType.reference, argType.any]];
 	cAVERAGEIFS.prototype.Calculate = function (arg) {
@@ -5173,8 +5178,10 @@ function (window, undefined) {
 	cCOUNTIFS.prototype.argumentsMin = 2;
 	cCOUNTIFS.prototype.argumentsMax = 254;
 	cCOUNTIFS.prototype.numFormat = AscCommonExcel.cNumFormatNone;
-	//TODO все четные - на вход должны приходить как array/area
 	cCOUNTIFS.prototype.arrayIndexes = {0: 1, 2: 1, 4: 1, 6: 1, 8: 1};
+	cCOUNTIFS.prototype.getArrayIndex = function (index) {
+		return index % 2 === 0 ? 1 : undefined;
+	};
 	cCOUNTIFS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.area_to_ref;
 	cCOUNTIFS.prototype.argumentsType = [[argType.reference, argType.any]];
 	cCOUNTIFS.prototype.Calculate = function (arg) {
@@ -8057,8 +8064,13 @@ function (window, undefined) {
 	cMAXIFS.prototype.name = 'MAXIFS';
 	cMAXIFS.prototype.argumentsMin = 3;
 	cMAXIFS.prototype.isXLFN = true;
-	//TODO все нечетные массивы
 	cMAXIFS.prototype.arrayIndexes = {0: 1, 1: 1, 3: 1, 5: 1, 7: 1, 9: 1};
+	cMAXIFS.prototype.getArrayIndex = function (index) {
+		if (index === 0) {
+			return 1;
+		}
+		return index % 2 !== 0 ? 1 : undefined;
+	};
 	cMAXIFS.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
@@ -8164,8 +8176,13 @@ function (window, undefined) {
 	cMINIFS.prototype.name = 'MINIFS';
 	cMINIFS.prototype.argumentsMin = 3;
 	cMINIFS.prototype.isXLFN = true;
-	//TODO все нечетные массивы
 	cMINIFS.prototype.arrayIndexes = {0: 1, 1: 1, 3: 1, 5: 1, 7: 1, 9: 1};
+	cMINIFS.prototype.getArrayIndex = function (index) {
+		if (index === 0) {
+			return 1;
+		}
+		return index % 2 !== 0 ? 1 : undefined;
+	};
 	cMINIFS.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&

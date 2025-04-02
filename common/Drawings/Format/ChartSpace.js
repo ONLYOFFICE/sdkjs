@@ -492,6 +492,24 @@ function(window, undefined) {
 		}
 	}
 
+	// function that increases the step between the labels
+	function getScaler(scale, logBase, max) {
+		let size = scale.length;
+		let scaler = null;
+		if (max && max < scale[size - 1]) {
+			if (logBase) {
+				let normalMin = scale && scale.length > 1 ? scale[size - 2] : 0;
+				let logMin = normalMin > 0 ? normalMin : 1;
+				let logScaleMax = Math.log(scale[size - 1]) / Math.log(logBase);
+				let logScaleMin = Math.log(normalMin) / Math.log(logBase);
+				let logMaxMin = (Math.log(max / logMin) / Math.log(logBase));
+				scaler = logScaleMax / (logScaleMin + logMaxMin);
+			} else {
+				scaler = scale[size - 1] / max;
+			}
+		}
+		return scaler;
+	}
 
 	function CPathMemory() {
 		this.size = 1000;
@@ -744,7 +762,7 @@ function(window, undefined) {
 				this.aLabels[i].updatePosition(x, y);
 		}
 	};
-	CLabelsBox.prototype.layoutHorNormal = function (fAxisY, fDistance, fXStart, fInterval, bOnTickMark, fForceContentWidth, oLabelParams) {
+	CLabelsBox.prototype.layoutHorNormal = function (fAxisY, fDistance, fXStart, fInterval, bOnTickMark, fForceContentWidth, oLabelParams, scaler) {
 		this.bRotated = false;
 		this.align = (fDistance >= 0);
 		let fMaxHeight = 0.0;
@@ -763,7 +781,8 @@ function(window, undefined) {
 		if (Array.isArray(this.aLabels) && this.aLabels.length > 0) {
 			let loopsCount = 0;
 			let jump = 0;
-			for (let i = 0; i < this.aLabels.length; i += jump) {
+			const end = this.aLabels.length > 0 && scaler ? this.aLabels.length - 1 : this.aLabels.length;
+			for (let i = 0; i < end; i += jump) {
 				if (this.aLabels[i]) {
 					var oLabel = this.aLabels[i];
 					var oContent = oLabel.tx.rich.content;
@@ -802,7 +821,7 @@ function(window, undefined) {
 				}
 
 				jump = skipCond(oLabelParams, loopsCount);
-				fCurX += (jump * fInterval);
+				fCurX += (jump * (fInterval * (scaler ? scaler : 1)));
 				loopsCount++;
 			}
 		}
@@ -820,7 +839,7 @@ function(window, undefined) {
 					fLastLabelCenterX + fLastLabelContentWidth / 2.0, fXStart, fXStart + fInterval * (this.aLabels.length - 1));
 			} else {
 				x0 = Math.min(fFirstLabelCenterX - fFirstLabelContentWidth / 2.0, fXStart, fXStart + fInterval * (this.aLabels.length - 1));
-				x1 = Math.max(fXStart, fXStart + fInterval * (this.aLabels.length));
+				x1 = Math.max(fXStart, fXStart + fInterval * (scaler && this.aLabels.length > 0 ? this.aLabels.length - 1 : this.aLabels.length));
 			}
 		} else {
 			x0 = Math.min(fXStart, fXStart + fInterval * (this.aLabels.length));
@@ -1651,6 +1670,8 @@ function(window, undefined) {
 
 			//check whether rotation is applied or not
 			let statement = oLabelParams.valid ? oLabelParams.isRotated() : fMaxMinWidth > fCheckInterval;
+
+			const scaler = getScaler(oLabelsBox.axis.scale, oLabelsBox.axis.scaling.logBase, oLabelsBox.axis.scaling.max);
 			if (oLabelParams.valid) {
 				// if oLabelParams is valid then one label = axis length / (number of labels); number of labels = allLabels / labelsTickSkip
 				const fLabelWidth =  fAxisLength / Math.ceil(oLabelParams.nLabelsCount / oLabelParams.nLblTickSkip);
@@ -1663,7 +1684,7 @@ function(window, undefined) {
 			if (statement) {
 				oLabelsBox.layoutHorRotated(fY, fDistance, fXStart, fXEnd, fInterval, bOnTickMark_, oLabelParams);
 			} else {
-				oLabelsBox.layoutHorNormal(fY, fDistance, fXStart, fInterval, bOnTickMark_, fForceContentWidth_, oLabelParams);
+				oLabelsBox.layoutHorNormal(fY, fDistance, fXStart, fInterval, bOnTickMark_, fForceContentWidth_, oLabelParams, scaler);
 			}
 		}
 	}
@@ -1791,7 +1812,7 @@ function(window, undefined) {
 		this.aStrings = [];
 	}
 
-	CAxisGrid.prototype.calculatePoints = function(aPoints, bOnTickMark, aScale) {
+	CAxisGrid.prototype.calculatePoints = function(aPoints, bOnTickMark, aScale, scaler) {
 		if(!Array.isArray(aPoints)) {
 			return;
 		}
@@ -1799,10 +1820,12 @@ function(window, undefined) {
 		if(!this.bOnTickMark) {
 			fStartSeriesPos = this.fStride / 2.0;
 		}
+		let lastIndex= aScale.length - 1;
+		let jump = scaler ? this.fStride * scaler : this.fStride;
 		for(let j = 0; j < this.aStrings.length; ++j) {
 			aPoints.push({
 				val: aScale[j],
-				pos: this.fStart + j * this.fStride + fStartSeriesPos
+				pos: this.fStart + j * jump + fStartSeriesPos
 			})
 		}
 	};
@@ -5250,6 +5273,9 @@ function(window, undefined) {
 		const oPlotArea = this.getPlotArea();
 		const bWithoutLabels = isLayoutSizes && this.chart.plotArea.layout.layoutTarget === AscFormat.LAYOUT_TARGET_INNER;
 		let bCorrected = false;
+		// width and height of rect can not be negative!
+		oRect.w = Math.max(0, oRect.w);
+		oRect.h = Math.max(0, oRect.h);
 		let fL = oRect.x, fT = oRect.y, fR = oRect.x + oRect.w, fB = oRect.y + oRect.h;
 		const isChartEx = this.isChartEx();
 		let fHorPadding = 0.0;
@@ -5481,7 +5507,8 @@ function(window, undefined) {
 				}
 
 				if (null !== aPoints) {
-					oCurAxis.grid.calculatePoints(aPoints, bOnTickMark, oCurAxis.scale);
+					const scaler = getScaler(oCurAxis.scale, oCurAxis.scaling.logBase, oCurAxis.scaling.max);
+					oCurAxis.grid.calculatePoints(aPoints, bOnTickMark, oCurAxis.scale, scaler);
 				}
 			}
 			else {//vertical axis

@@ -605,13 +605,20 @@
 
 					_elem2.classList.remove("btn-pointer");
 					_elem2.classList.add("btn-pointer-active");
+
+					const elements = this.elementReporterDrawMenu.querySelectorAll("a[data-ratio]")
+					for (let i = 0; i < elements.length; i++) {
+						delete elements[i].dataset["checked"];
+					}
+					Asc.editor.asc_StopInkDrawer();
+					this.toggleElementReporterDrawMenuButton(false);
 				}
 
 				_wordControl.reporterPointer = !_wordControl.reporterPointer;
 
 				if (!_wordControl.reporterPointer)
 					_wordControl.DemonstrationManager.PointerRemove();
-			};
+			}.bind(this);
 
 			function createSolidPen(color, size, opacity) {
 				color = parseInt(color, 16);
@@ -649,16 +656,10 @@
 			this.elementReporterDrawMenu = document.getElementById("dem_id_draw_menu");
 			this.elementReporterDrawMenu.onclick = function (e) {
 				if (e.target.hasAttribute("data-ratio")) {
-					const btnIcon = document.getElementById("dem_id_draw_menu_trigger_span");
-
 					if (!!e.target.getAttribute("data-checked")) {
 						delete e.target.dataset["checked"];
 						Asc.editor.asc_StopInkDrawer();
-
-						this.elementReporterDrawMenuTrigger.classList.remove("btn-text-default-img2");
-						this.elementReporterDrawMenuTrigger.classList.add("btn-text-default-img");
-						btnIcon.classList.remove("btn-pen-active");
-						btnIcon.classList.add("btn-pen");
+						this.toggleElementReporterDrawMenuButton(false);
 					} else {
 						const elements = this.elementReporterDrawMenu.querySelectorAll("a[data-ratio]")
 						for (let i = 0; i < elements.length; i++) {
@@ -684,18 +685,16 @@
 								break;
 						}
 
-						this.elementReporterDrawMenuTrigger.classList.add("btn-text-default-img2");
-						this.elementReporterDrawMenuTrigger.classList.remove("btn-text-default-img");
-						btnIcon.classList.add("btn-pen-active");
-						btnIcon.classList.remove("btn-pen");
+						this.toggleElementReporterDrawMenuButton(true);
 					}
+
+					this.elementReporterDrawMenu.style.display = "none";
 				}
 
 				if (e.target.getAttribute("data-tool") === "erase-all") {
 					Asc.editor.asc_EraseAllInksOnSlide();
+					this.elementReporterDrawMenu.style.display = "none";
 				}
-
-				this.elementReporterDrawMenu.style.display = "none";
 			}.bind(this);
 
 			let isMenuHovered = false;
@@ -729,6 +728,32 @@
 				"padding": "5px"
 			});
 
+			this.toggleElementReporterDrawMenuButton = function(state, icon = "btn-pen") {
+				const btnIcon = document.getElementById("dem_id_draw_menu_trigger_span");
+
+				let currentIcon;
+				const classList = btnIcon.classList;
+				for (let i = 0; i < classList.length; i++) {
+					if (classList[i].indexOf("btn-") !== -1) {
+						currentIcon = classList[i];
+						break;
+					}
+				}
+
+				if (currentIcon) {
+					btnIcon.classList.remove(currentIcon);
+				}
+
+				if (state) {
+					this.elementReporterDrawMenuTrigger.classList.add("btn-text-default-img2");
+					this.elementReporterDrawMenuTrigger.classList.remove("btn-text-default-img");
+				} else {
+					this.elementReporterDrawMenuTrigger.classList.remove("btn-text-default-img2");
+					this.elementReporterDrawMenuTrigger.classList.add("btn-text-default-img");
+				}
+				btnIcon.classList.add(state ? icon + "-active" : icon);
+			}.bind(this);
+
 			this.elementReporterDrawColorsMenu.on('click', function (e) {
 				const checkedMenuItem = this.elementReporterDrawMenu.querySelector("a[data-checked]");
 				this.currentDrawColor = e.target.getAttribute("data-value");
@@ -743,12 +768,8 @@
 						delete elements[i].dataset["checked"];
 					}
 
-					const btnIcon = document.getElementById("dem_id_draw_menu_trigger_span");
+					this.toggleElementReporterDrawMenuButton(true);
 					this.elementReporterDrawMenu.querySelector("a[data-tool=\"pen\"]").dataset["checked"] = "true";
-					this.elementReporterDrawMenuTrigger.classList.add("btn-text-default-img2");
-					this.elementReporterDrawMenuTrigger.classList.remove("btn-text-default-img");
-					btnIcon.classList.add("btn-pen-active");
-					btnIcon.classList.remove("btn-pen");
 				} else {
 					if (checkedMenuItem.getAttribute("data-tool") === "pen") {
 						Asc.editor.asc_StartDrawInk(createSolidPen(this.currentDrawColor, 1, 100));
@@ -761,17 +782,30 @@
 			}.bind(this));
 
 			this.elementReporterDrawMenuTrigger = document.getElementById("dem_id_draw_menu_trigger");
-			this.elementReporterDrawMenuTrigger.onclick = function () {
-				var drawMenu = document.getElementById("dem_id_draw_menu");
-				var _draw_menu_trigger = document.getElementById("dem_id_draw_menu_trigger");
-				var _draw_menu_trigger_offset = AscCommon.UI.getBoundingClientRect(_draw_menu_trigger);
+			this.elementReporterDrawMenuTrigger.onclick = function (e) {
+				e.stopPropagation();
 
-				if (drawMenu.style.display == "block") {
+				const drawMenu = document.getElementById("dem_id_draw_menu");
+				const _draw_menu_trigger = document.getElementById("dem_id_draw_menu_trigger");
+				const _draw_menu_trigger_offset = AscCommon.UI.getBoundingClientRect(_draw_menu_trigger);
+
+				function handleOutsideClose(e) {
+					if (drawMenu.contains(e.target) || drawMenu === e.target) {
+						return;
+					}
+
+					drawMenu.style.display = "none";
+					window.removeEventListener('click', handleOutsideClose);
+				}
+
+				if (drawMenu.style.display === "block") {
 					drawMenu.style.display = "none";
 				} else {
 					drawMenu.style.display = "block";
 					drawMenu.style.left = _draw_menu_trigger_offset.left + (_draw_menu_trigger.offsetWidth - drawMenu.offsetWidth) / 2 + "px";
 					drawMenu.style.top = _draw_menu_trigger_offset.top - _draw_menu_trigger.offsetHeight - drawMenu.offsetHeight + "px";
+
+					window.addEventListener('click', handleOutsideClose);
 				}
 			};
 

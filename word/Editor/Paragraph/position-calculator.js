@@ -101,7 +101,7 @@
 		
 		this.startX = this.x;
 		
-		if (p.Numbering.checkRange(range, line))
+		if (p.Numbering.checkRange(range, line) && !p.isRtlDirection())
 			this.x += p.Numbering.WidthVisible;
 		
 		this.bidi.begin(this.paragraph.isRtlDirection());

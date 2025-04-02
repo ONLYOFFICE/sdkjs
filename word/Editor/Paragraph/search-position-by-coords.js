@@ -131,7 +131,9 @@
 		this.curX = paraRange.XVisible;
 		this.curY = 0;
 		
-		this.checkNumbering();
+		let isRtl = para.isRtlDirection();
+		if (para.Numbering.checkRange(this.range, this.line) && !isRtl)
+			this.checkNumbering(isRtl);
 		
 		let startPos = paraRange.StartPos;
 		let endPos   = paraRange.EndPos;
@@ -155,6 +157,9 @@
 		}
 		
 		this.bidiFlow.end();
+		
+		if (para.Numbering.checkRange(this.range, this.line) && isRtl)
+			this.checkNumbering(isRtl);
 		
 		this.checkRangeBounds(x, paraRange);
 		
@@ -469,38 +474,59 @@
 		
 		return Math.max(0, Math.min(range, rangeCount - 1));
 	};
-	ParagraphSearchPositionXY.prototype.checkNumbering = function()
+	ParagraphSearchPositionXY.prototype.checkNumbering = function(isRtl)
 	{
 		let p = this.paragraph;
-		if (!p.Numbering.checkRange(this.range, this.line))
-			return;
-		
 		let numPr = p.GetNumPr();
-		if (para_Numbering === p.Numbering.Type && numPr && numPr.IsValid())
+		let prevNumPr = p.GetPrChangeNumPr();
+		let numLvl = null;
+		if (numPr && numPr.IsValid())
+			numLvl = p.Parent.GetNumbering().GetNum(numPr.NumId).GetLvl(numPr.Lvl);
+		else if (prevNumPr && prevNumPr.IsValid())
+			numLvl = p.Parent.GetNumbering().GetNum(prevNumPr.NumId).GetLvl(undefined !== prevNumPr.Lvl && null !== prevNumPr.Lvl ? prevNumPr.Lvl : 0);
+		
+		let numWidthVisible = p.Numbering.WidthVisible;
+		if (para_Numbering === p.Numbering.Type && numLvl)
 		{
-			let numJc = p.Parent.GetNumbering().GetNum(numPr.NumId).GetLvl(numPr.Lvl).GetJc();
+			let numJc = numLvl.GetJc();
 			
 			let numX0 = this.curX;
 			let numX1 = this.curX;
 			
-			switch (numJc)
+			let numWidth = p.Numbering.WidthNum;
+			if (isRtl)
 			{
-				case align_Right:
+				numX0 += numWidthVisible;
+				numX1 += numWidthVisible;
+				
+				if (AscCommon.align_Right === numJc)
 				{
-					numX0 -= p.Numbering.WidthNum;
-					break;
+					numX1 += numWidth;
 				}
-				case align_Center:
+				else if (AscCommon.align_Center === numJc)
 				{
-					numX0 -= p.Numbering.WidthNum / 2;
-					numX1 += p.Numbering.WidthNum / 2;
-					break;
+					numX0 -= numWidth / 2;
+					numX1 += numWidth / 2;
 				}
-				case align_Left:
-				default:
+				else// if (AscCommon.align_Left === numJc)
 				{
-					numX1 += p.Numbering.WidthNum;
-					break;
+					numX0 -= numWidth;
+				}
+			}
+			else
+			{
+				if (AscCommon.align_Right === numJc)
+				{
+					numX0 -= numWidth;
+				}
+				else if (AscCommon.align_Center === numJc)
+				{
+					numX0 -= numWidth / 2;
+					numX1 += numWidth / 2;
+				}
+				else// if (AscCommon.align_Left === numJc)
+				{
+					numX1 += numWidth;
 				}
 			}
 			
@@ -508,7 +534,7 @@
 				this.numbering = true;
 		}
 		
-		this.curX += p.Numbering.WidthVisible;
+		this.curX += numWidthVisible;
 	};
 	ParagraphSearchPositionXY.prototype.checkPosition = function(diff)
 	{

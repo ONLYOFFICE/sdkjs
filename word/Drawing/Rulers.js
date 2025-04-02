@@ -1221,30 +1221,26 @@ function CHorRuler()
 				word_control.m_oOverlayApi.VertLine(pos);
 				break;
 			}
-            case AscWord.RULER_DRAG_TYPE.tab:
-            {
-                var newVal = RulerCorrectPosition(this, _x, _margin_left);
-
-                this.m_dCurrentTabNewPosition = newVal - _margin_left;
-
-                var pos = left + (_margin_left + this.m_dCurrentTabNewPosition) * dKoef_mm_to_pix;
-
-                if (_y <= 3 || _y > 5.6)
-                {
-                    this.IsDrawingCurTab = false;
-                    word_control.OnUpdateOverlay();
-                }
-                else
-                {
-                    this.IsDrawingCurTab = true;
-                }
-
-                word_control.UpdateHorRulerBack();
-
-                if (this.IsDrawingCurTab)
-                    word_control.m_oOverlayApi.VertLine(pos);
-                break;
-            }
+			case AscWord.RULER_DRAG_TYPE.tab:
+			{
+				let newVal = RulerCorrectPosition(this, _x, this.m_bRtl ? _margin_right : _margin_left);
+				
+				this.m_dCurrentTabNewPosition = this.m_bRtl ? _margin_right - newVal : newVal - _margin_left;
+				if (_y <= 3 || _y > 5.6)
+				{
+					this.IsDrawingCurTab = false;
+					word_control.OnUpdateOverlay();
+				}
+				else
+				{
+					this.IsDrawingCurTab = true;
+					let offset = this.m_bRtl ? _margin_right - this.m_dCurrentTabNewPosition : _margin_left + this.m_dCurrentTabNewPosition;
+					let pos    = left + offset * dKoef_mm_to_pix;
+					word_control.m_oOverlayApi.VertLine(pos);
+				}
+				word_control.UpdateHorRulerBack();
+				break;
+			}
             case AscWord.RULER_DRAG_TYPE.table:
             {
                 var newVal = RulerCorrectPosition(this, _x, this.TableMarginLeftTrackStart);
@@ -1509,10 +1505,9 @@ function CHorRuler()
             // tabs
             if (y >= 3 && y <= _bottom)
             {
-                var _count_tabs = this.m_arrTabs.length;
-                for (var i = 0; i < _count_tabs; i++)
+                for (let i = 0, tabCount = this.m_arrTabs.length; i < tabCount; ++i)
                 {
-                    var _pos = _margin_left + this.m_arrTabs[i].pos;
+                    var _pos = this.m_bRtl ? _margin_right - this.m_arrTabs[i].pos : _margin_left + this.m_arrTabs[i].pos;
                     if ((x >= (_pos - 1)) && (x <= (_pos + 1)))
                     {
                         if (true === isMouseDown)
@@ -1928,13 +1923,14 @@ function CHorRuler()
 				this.m_dIndentRight_old = this.m_dIndentRight;
 				break;
 			}
-            case AscWord.RULER_DRAG_TYPE.tab:
-            {
-                var pos = left + (_margin_left + this.m_arrTabs[this.m_lCurrentTab].pos) * dKoef_mm_to_pix;
-                this.m_dCurrentTabNewPosition = this.m_arrTabs[this.m_lCurrentTab].pos;
-                word_control.m_oOverlayApi.VertLine(pos);
-                break;
-            }
+			case AscWord.RULER_DRAG_TYPE.tab:
+			{
+				let offset = this.m_bRtl ? (_margin_right - this.m_arrTabs[this.m_lCurrentTab].pos) : (_margin_left + this.m_arrTabs[this.m_lCurrentTab].pos);
+				let pos    = left + offset * dKoef_mm_to_pix;
+				word_control.m_oOverlayApi.VertLine(pos);
+				this.m_dCurrentTabNewPosition = this.m_arrTabs[this.m_lCurrentTab].pos;
+				break;
+			}
             case AscWord.RULER_DRAG_TYPE.table:
             {
                 var markup = this.m_oTableMarkup;
@@ -2019,49 +2015,40 @@ function CHorRuler()
                 break;
             }
         }
-
-        if (AscWord.RULER_DRAG_TYPE.none === this.DragType)
-        {
-            // посмотрим - может это добавляется таб
-            var _top = 1.8;
-            var _bottom = 5.2;
-
-            // tabs
-            if (_y >= 3 && _y <= _bottom && _x >= (_margin_left + this.m_dIndentLeft) && _x <= (_margin_right - this.m_dIndentRight))
-            {
-                var mm_1_4 = 10 / 4;
-                var mm_1_8 = mm_1_4 / 2;
-
-                var _new_tab_pos = RulerCorrectPosition(this, _x, _margin_left);
-                _new_tab_pos -= _margin_left;
-
-                this.m_arrTabs[this.m_arrTabs.length] = new CTab(_new_tab_pos, word_control.m_nTabsType);
-                //this.CorrectTabs();
-                word_control.UpdateHorRuler();
-
-                this.m_lCurrentTab = this.m_arrTabs.length - 1;
-                /*
-                var _len = this.m_arrTabs.length;
-                for (var i = 0; i < _len; i++)
-                {
-                    if (this.m_arrTabs[i].pos == _new_tab_pos)
-                    {
-                        this.m_lCurrentTab = i;
-                        break;
-                    }
-                }
-                */
-
-                this.DragType = AscWord.RULER_DRAG_TYPE.tab;
-                this.m_dCurrentTabNewPosition = _new_tab_pos;
-
-                var pos = left + (_margin_left + _new_tab_pos) * dKoef_mm_to_pix;
-                word_control.m_oOverlayApi.VertLine(pos);
-            }
-        }
-
-        word_control.m_oDrawingDocument.LockCursorTypeCur();
-    }
+		
+		if (AscWord.RULER_DRAG_TYPE.none === this.DragType)
+		{
+			let posT = 3;
+			let posB = 5.2;
+			let posL = this.m_bRtl ? _margin_left + this.m_dIndentRight : _margin_left + this.m_dIndentLeft;
+			let posR = this.m_bRtl ? _margin_right - this.m_dIndentRight : _margin_right - this.m_dIndentLeft;
+			if (posT <= _y && _y <= posB && posL <= _x && _x <= posR)
+			{
+				let newVal  = RulerCorrectPosition(this, _x, this.m_bRtl ? _margin_right : _margin_left);
+				let tabPos  = this.m_bRtl ? _margin_right - newVal : newVal - _margin_left;
+				let tabType = word_control.m_nTabsType;
+				if (this.m_bRtl)
+				{
+					if (tab_Left === tabType)
+						tabType = tab_Right;
+					else if (tab_Right === tabType)
+						tabType = tab_Left;
+				}
+				this.m_arrTabs[this.m_arrTabs.length] = new CTab(tabPos, tabType);
+				word_control.UpdateHorRuler();
+				
+				this.m_lCurrentTab = this.m_arrTabs.length - 1;
+				
+				this.DragType                 = AscWord.RULER_DRAG_TYPE.tab;
+				this.m_dCurrentTabNewPosition = tabPos;
+				
+				let pos = left + newVal * dKoef_mm_to_pix;
+				word_control.m_oOverlayApi.VertLine(pos);
+			}
+		}
+		
+		word_control.m_oDrawingDocument.LockCursorTypeCur();
+	}
     this.OnMouseUp = function(left, top, e)
     {
         var word_control = this.m_oWordControl;
@@ -2109,17 +2096,17 @@ function CHorRuler()
             case AscWord.RULER_DRAG_TYPE.tab:
             {
                 // смотрим, сохраняем ли таб
-                var _y = (global_mouseEvent.Y - word_control.Y) * g_dKoef_pix_to_mm;
-                if (_y <= 3 || _y > 5.6 || this.m_dCurrentTabNewPosition < this.m_dIndentLeft || (this.m_dCurrentTabNewPosition + _margin_left) > (_margin_right - this.m_dIndentRight))
-                {
-					if (-1 != this.m_lCurrentTab)
+				var _y = (global_mouseEvent.Y - word_control.Y) * g_dKoef_pix_to_mm;
+				if (_y <= 3 || _y > 5.6 || this.m_dCurrentTabNewPosition < this.m_dIndentLeft || this.m_dCurrentTabNewPosition > _margin_right - _margin_left - this.m_dIndentRight)
+				{
+					if (-1 !== this.m_lCurrentTab)
 						this.m_arrTabs.splice(this.m_lCurrentTab, 1);
-                }
-                else
-                {
+				}
+				else
+				{
 					if (this.m_lCurrentTab < this.m_arrTabs.length)
 						this.m_arrTabs[this.m_lCurrentTab].pos = this.m_dCurrentTabNewPosition;
-                }
+				}
 
                 this.m_lCurrentTab = -1;
                 this.CorrectTabs();
@@ -2203,9 +2190,9 @@ function CHorRuler()
             {
                 // смотрим, сохраняем ли таб
                 var _y = (global_mouseEvent.Y - word_control.Y) * g_dKoef_pix_to_mm;
-                if (_y <= 3 || _y > 5.6 || this.m_dCurrentTabNewPosition < this.m_dIndentLeft || (this.m_dCurrentTabNewPosition + _margin_left) > (_margin_right - this.m_dIndentRight))
+                if (_y <= 3 || _y > 5.6 || this.m_dCurrentTabNewPosition < this.m_dIndentLeft || this.m_dCurrentTabNewPosition > _margin_right - _margin_left - this.m_dIndentRight)
                 {
-					if (-1 != this.m_lCurrentTab)
+					if (-1 !== this.m_lCurrentTab)
 						this.m_arrTabs.splice(this.m_lCurrentTab, 1);
                 }
                 else
@@ -2425,8 +2412,6 @@ function CHorRuler()
             var var2 = 0;
             var var3 = 0;
 
-            var _positon_y = this.m_nBottom - 5 * dPR;
-
             // не менять!!!
             var2 = 5 * dPR;//(1.4 * g_dKoef_mm_to_pix) >> 0;
             var3 = 3 * dPR;//(1 * g_dKoef_mm_to_pix) >> 0;
@@ -2437,6 +2422,7 @@ function CHorRuler()
 			var _1mm_to_pix = g_dKoef_mm_to_pix * dPR;
 			let top    = this.m_nTop;
 			let bottom = this.m_nBottom;
+			let isRtl  = this.m_bRtl;
 			
 			function blitLeftInd(ind, isRtl)
 			{
@@ -2514,6 +2500,64 @@ function CHorRuler()
 				context.stroke();
 			}
 			
+			function blitLeftTab(x, y)
+			{
+				context.beginPath();
+				context.moveTo(x, y);
+				context.lineTo(x, y + Math.round(5 * dPR));
+				context.lineTo(x + Math.round(5 * dPR), y + Math.round(5 * dPR));
+				context.stroke();
+			}
+			
+			function blitRightTab(x, y)
+			{
+				context.beginPath();
+				context.moveTo(x, y);
+				context.lineTo(x, y + Math.round(5 * dPR));
+				context.lineTo(x - Math.round(5 * dPR), y + Math.round(5 * dPR));
+				context.stroke();
+			}
+			
+			function blitCenterTab(x, y)
+			{
+				context.beginPath();
+				context.moveTo(x, y);
+				context.lineTo(x, y + Math.round(5 * dPR));
+				context.moveTo(x - Math.round(5 * dPR), y + Math.round(5 * dPR));
+				context.lineTo(x + Math.round(5 * dPR), y + Math.round(5 * dPR));
+				context.stroke();
+			}
+			
+			function blitTab(tabPos, tabType)
+			{
+				let x = parseInt((isRtl ? (_margin_right - tabPos) : (_margin_left + tabPos)) * dKoef_mm_to_pix) + left;
+				let y = bottom - 5 * dPR;
+				
+				let lineW = context.lineWidth;
+				context.lineWidth = 2 * roundDPR;
+				
+				if (tab_Left === tabType)
+				{
+					if (isRtl)
+						blitRightTab(x, y);
+					else
+						blitLeftTab(x, y);
+				}
+				else if (tab_Right === tabType)
+				{
+					if (isRtl)
+						blitLeftTab(x, y);
+					else
+						blitRightTab(x, y);
+				}
+				else if (tab_Center === tab_Center)
+				{
+					blitCenterTab(x, y);
+				}
+				
+				context.lineWidth = lineW;
+			}
+			
 			// old position --------------------------------------
 			context.strokeStyle = GlobalSkin.RulerMarkersOutlineColorOld;
 			context.fillStyle   = GlobalSkin.RulerMarkersFillColorOld;
@@ -2525,51 +2569,13 @@ function CHorRuler()
 			
 			if (-10000 !== this.m_dIndentRight_old && this.m_dIndentRight_old !== this.m_dIndentRight)
 				blitRightInd(this.m_dIndentRight_old, this.m_bRtl);
-
+			
 			context.strokeStyle = GlobalSkin.RulerTabsColorOld;
-            if (-1 != this.m_lCurrentTab && this.m_lCurrentTab < this.m_arrTabs.length)
-            {
-                var _tab = this.m_arrTabs[this.m_lCurrentTab];
-                var _x = parseInt((_margin_left + _tab.pos) * dKoef_mm_to_pix) + left;
-
-                var _old_w = context.lineWidth;
-                context.lineWidth = 2 * roundDPR;
-                switch (_tab.type)
-                {
-                    case tab_Left:
-                    {
-                        context.beginPath();
-                        context.moveTo(_x, _positon_y);
-                        context.lineTo(_x, _positon_y + Math.round(5 * dPR));
-                        context.lineTo(_x + Math.round(5 * dPR), _positon_y + Math.round(5 * dPR));
-                        context.stroke();
-                        break;
-                    }
-                    case tab_Right:
-                    {
-                        context.beginPath();
-                        context.moveTo(_x, _positon_y);
-                        context.lineTo(_x, _positon_y + Math.round(5 * dPR));
-                        context.lineTo(_x - Math.round(5 * dPR), _positon_y + Math.round(5 * dPR));
-                        context.stroke();
-                        break;
-                    }
-                    case tab_Center:
-                    {
-                        context.beginPath();
-                        context.moveTo(_x, _positon_y);
-                        context.lineTo(_x, _positon_y + Math.round(5 * dPR));
-                        context.moveTo(_x - Math.round(5 * dPR), _positon_y + Math.round(5 * dPR));
-                        context.lineTo(_x + Math.round(5 * dPR), _positon_y + Math.round(5 * dPR));
-                        context.stroke();
-                        break;
-                    }
-                    default:
-                        break;
-                }
-
-                context.lineWidth = _old_w;
-            }
+			if (-1 !== this.m_lCurrentTab && this.m_lCurrentTab < this.m_arrTabs.length)
+			{
+				var _tab = this.m_arrTabs[this.m_lCurrentTab];
+				blitTab(_tab.pos, _tab.type);
+			}
             
             // ---------------------------------------------------
 
@@ -2597,7 +2603,7 @@ function CHorRuler()
             // теперь рисуем табы ----------------------------------------
             // default
             var position_default_tab = this.m_dDefaultTab;
-            _positon_y = this.m_nBottom + Math.round(1.5 * dPR);
+            let _positon_y = this.m_nBottom + Math.round(1.5 * dPR);
 
             var _min_default_value = Math.max(0, this.m_dMaxTab);
 			if (this.m_dDefaultTab > 0.01)
@@ -2640,75 +2646,31 @@ function CHorRuler()
 						position_default_tab += this.m_dDefaultTab;
 					}
 				}
-            }
-
-            // custom tabs
-            var _len_tabs = this.m_arrTabs.length;
-            if (0 != _len_tabs)
-            {
-                context.strokeStyle = GlobalSkin.RulerTabsColor;
-                context.lineWidth = 2 * roundDPR;
-
-                _positon_y = this.m_nBottom - Math.round(5 * dPR);
-                for (var i = 0; i < _len_tabs; i++)
-                {
-                    var tab = this.m_arrTabs[i];
-                    var _x = 0;
-
-                    if (i == this.m_lCurrentTab)
-                    {
-                        if (!this.IsDrawingCurTab)
-                            continue;
-                        // рисуем вместо него - позицию нового
-                        _x = parseInt((_margin_left + this.m_dCurrentTabNewPosition) * dKoef_mm_to_pix) + left;
-                    }
-                    else
-                    {
-                        //if (tab.pos < 0 || tab.pos > this.m_dMarginRight)
-                        if (tab.pos < this.m_dIndentLeft || (tab.pos + _margin_left) > (_margin_right - this.m_dIndentRight))
-                            continue;
-
-                        _x = parseInt((_margin_left + tab.pos) * dKoef_mm_to_pix) + left;
-                    }
-
-                    switch (tab.type)
-                    {
-                        case tab_Left:
-                        {
-                            context.beginPath();
-                            context.moveTo(_x, _positon_y);
-                            context.lineTo(_x, _positon_y + Math.round(5 * dPR));
-                            context.lineTo(_x + Math.round(5 * dPR), _positon_y + Math.round(5 * dPR));
-                            context.stroke();
-                            break;
-                        }
-                        case tab_Right:
-                        {
-                            context.beginPath();
-                            context.moveTo(_x, _positon_y);
-                            context.lineTo(_x, _positon_y + Math.round(5 * dPR));
-                            context.lineTo(_x - Math.round(5 * dPR), _positon_y + Math.round(5 * dPR));
-                            context.stroke();
-                            break;
-                        }
-                        case tab_Center:
-                        {
-                            context.beginPath();
-                            context.moveTo(_x, _positon_y);
-                            context.lineTo(_x, _positon_y + Math.round(5 * dPR));
-                            context.moveTo(_x - Math.round(5 * dPR), _positon_y + Math.round(5 * dPR));
-                            context.lineTo(_x + Math.round(5 * dPR), _positon_y + Math.round(5 * dPR));
-                            context.stroke();
-                            break;
-                        }
-                        default:
-                            break;
-                    }
-                }
-            }
-            // -----------------------------------------------------------
-        }
-    }
+			}
+			
+			// custom tabs
+			context.strokeStyle = GlobalSkin.RulerTabsColor;
+			for (let i = 0, tabCount = this.m_arrTabs.length; i < tabCount; ++i)
+			{
+				let tab    = this.m_arrTabs[i];
+				let tabPos = tab.pos;
+				
+				if (i === this.m_lCurrentTab)
+				{
+					if (!this.IsDrawingCurTab)
+						continue;
+					// рисуем вместо него - позицию нового
+					tabPos = this.m_dCurrentTabNewPosition;
+				}
+				else if (tab.pos < this.m_dIndentLeft || tab.pos > (_margin_right - _margin_left - this.m_dIndentRight))
+				{
+					continue;
+				}
+				blitTab(tabPos, tab.type);
+			}
+			// -----------------------------------------------------------
+		}
+	}
 	
 	this.UpdateParaInd = function(paraInd, isRtl)
 	{

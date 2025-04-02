@@ -536,70 +536,54 @@ CNum.prototype.private_GetNumberedLvlText = function(nLvl, nNumShift, isForceAra
  * @param oNumInfo
  * @param oNumTextPr
  * @param oTheme
+ * @param isRtl {boolean}
  */
-CNum.prototype.Draw = function(nX, nY, oContext, nLvl, oNumInfo, oNumTextPr, oTheme)
+CNum.prototype.Draw = function(nX, nY, oContext, nLvl, oNumInfo, oNumTextPr, oTheme, isRtl)
 {
 	var oLvl    = this.GetLvl(nLvl);
 	var arrText = oLvl.GetLvlText();
 	var dKoef   = oNumTextPr.VertAlign !== AscCommon.vertalign_Baseline ? AscCommon.vaKSize : 1;
-
-
+	
 	oContext.SetTextPr(oNumTextPr, oTheme);
-	oContext.SetFontSlot(AscWord.fontslot_ASCII, dKoef);
 	g_oTextMeasurer.SetTextPr(oNumTextPr, oTheme);
-	g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII, dKoef);
-
-	for (var nTextIndex = 0, nTextLen = arrText.length; nTextIndex < nTextLen; ++nTextIndex)
+	
+	let numDraw = new AscWord.NumBidiDraw();
+	numDraw.begin(nX, nY, oContext, g_oTextMeasurer, oNumTextPr, isRtl);
+	
+	for (let i = 0, count = arrText.length; i < count; ++i)
 	{
-		switch (arrText[nTextIndex].Type)
+		let element = arrText[i];
+		if (numbering_lvltext_Text === element.Type)
 		{
-			case numbering_lvltext_Text:
+			let strValue  = element.Value;
+			let codePoint = strValue.charCodeAt(0);
+			let curCoef   = dKoef;
+			
+			let info;
+			if ((info = this.ApplyTextPrToCodePoint(codePoint, oNumTextPr)))
 			{
-				let strValue  = arrText[nTextIndex].Value;
-				let codePoint = strValue.charCodeAt(0);
-				let curCoef   = dKoef;
-
-				let info;
-				if ((info = this.ApplyTextPrToCodePoint(codePoint, oNumTextPr)))
-				{
-					curCoef *= info.FontCoef;
-					codePoint = info.CodePoint;
-					strValue  = String.fromCodePoint(codePoint);
-				}
-
-				var FontSlot = AscWord.GetFontSlotByTextPr(codePoint, oNumTextPr);
-
-				oContext.SetFontSlot(FontSlot, curCoef);
-				g_oTextMeasurer.SetFontSlot(FontSlot, curCoef);
-
-				oContext.FillText(nX, nY, strValue);
-				nX += g_oTextMeasurer.Measure(strValue).Width;
-
-				break;
+				curCoef  *= info.FontCoef;
+				codePoint = info.CodePoint;
+				strValue  = String.fromCodePoint(codePoint);
 			}
-			case numbering_lvltext_Num:
-			{
-				oContext.SetFontSlot(AscWord.fontslot_ASCII, dKoef);
-				g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII, dKoef);
-				var langForTextNumbering = oNumTextPr.Lang;
-
-				var nCurLvl = arrText[nTextIndex].Value;
-				var T = "";
-
-				if (nCurLvl < oNumInfo.length)
-					T = this.private_GetNumberedLvlText(nCurLvl, oNumInfo[nCurLvl], oLvl.IsLegalStyle() && nCurLvl < nLvl, langForTextNumbering);
-
-				for (var iter = T.getUnicodeIterator(); iter.check(); iter.next())
-				{
-					var CharCode = iter.value();
-					oContext.FillTextCode(nX, nY, CharCode);
-					nX += g_oTextMeasurer.MeasureCode(CharCode).Width;
-				}
-
-				break;
-			}
+			
+			numDraw.addTextString(strValue, curCoef);
+		}
+		else if (numbering_lvltext_Num === element.Type)
+		{
+			var langForTextNumbering = oNumTextPr.Lang;
+			
+			var nCurLvl = element.Value;
+			var T       = "";
+			
+			if (nCurLvl < oNumInfo.length)
+				T = this.private_GetNumberedLvlText(nCurLvl, oNumInfo[nCurLvl], oLvl.IsLegalStyle() && nCurLvl < nLvl, langForTextNumbering);
+			
+			numDraw.addTextString(T, dKoef);
 		}
 	}
+
+	numDraw.end();
 };
 /**
  * Функция пересчета заданного уровня нумерации
@@ -1114,6 +1098,71 @@ CLvlOverride.prototype.ReadFromBinary = function(oReader)
 		this.NumberingLvl.ReadFromBinary(oReader);
 	}
 };
+
+(function(){
+	
+	/**
+	 * Class for rendering num
+	 * @constructor
+	 */
+	function NumBidiDraw()
+	{
+		this.bidiFlow = new AscWord.BidiFlow(this);
+		
+		this.x = 0;
+		this.y = 0;
+		
+		this.graphics = null;
+		this.measurer = null;
+		this.textPr   = null;
+	}
+	
+	NumBidiDraw.prototype.begin = function(x, y, graphics, measurer, textPr, isRtl)
+	{
+		this.x = x;
+		this.y = y;
+		
+		this.graphics = graphics;
+		this.measurer = measurer;
+		this.textPr   = textPr;
+		
+		this.bidiFlow.begin(isRtl);
+	};
+	NumBidiDraw.prototype.addTextString = function(text, fontCoeff)
+	{
+		for (let iter = text.getUnicodeIterator(); iter.check(); iter.next())
+		{
+			this.addCodePoint(iter.value(), fontCoeff);
+		}
+	};
+	NumBidiDraw.prototype.addCodePoint = function(codePoint, fontCoeff)
+	{
+		this.bidiFlow.add([codePoint, fontCoeff], AscBidi.getType(codePoint));
+	};
+	NumBidiDraw.prototype.end = function()
+	{
+		this.bidiFlow.end();
+	};
+	NumBidiDraw.prototype.handleBidiFlow = function(data, direction)
+	{
+		let codePoint = data[0];
+		let fontCoeff = data[1];
+		
+		if (AscBidi.DIRECTION.R === direction && AscBidi.isPairedBracket(codePoint))
+			codePoint = AscBidi.getPairedBracket(codePoint);
+		
+		let fontSlot = AscWord.GetFontSlotByTextPr(codePoint, this.textPr);
+		
+		this.graphics.SetFontSlot(fontSlot, fontCoeff);
+		this.graphics.FillTextCode(this.x, this.y, codePoint);
+		
+		this.measurer.SetFontSlot(fontSlot, fontCoeff);
+		this.x += this.measurer.MeasureCode(codePoint).Width;
+	};
+	
+	//--------------------------------------------------------export----------------------------------------------------
+	AscWord.NumBidiDraw = NumBidiDraw;
+})();
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

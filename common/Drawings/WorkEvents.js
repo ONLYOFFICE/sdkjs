@@ -97,6 +97,15 @@
 		var _type = AscCommon.getPtrEvtType(type);
 		return elem[_type];
 	};
+	AscCommon.capturePointer = function(e, elem)
+	{
+		if (e.pointerType === "mouse" && elem.setPointerCapture)
+		{
+			try {
+				elem.setPointerCapture(e.pointerId);
+			} catch (e) {}
+		}
+	};
 
 	function CMouseEventHandler()
 	{
@@ -458,6 +467,8 @@
 
 		if (!global_mouseEvent.IsLocked || !global_mouseEvent.Sender)
 			global_mouseEvent.Sender = (e.srcElement) ? e.srcElement : e.target;
+
+		AscCommon.capturePointer(e, global_mouseEvent.Sender);
 
 		if (isClicks)
 		{

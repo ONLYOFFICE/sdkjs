@@ -1641,6 +1641,7 @@
 			}
 
 			AscCommon.global_mouseEvent.LockMouse();
+			AscCommon.capturePointer(event, this.element);
 
 			if (t.view.Api.isEyedropperStarted()) {
 				return;

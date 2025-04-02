@@ -6192,7 +6192,7 @@ var editor;
 	  if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
      return;
     }
-	  
+
   	let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
@@ -9734,6 +9734,12 @@ var editor;
 							}
 						}
 					}
+				} else if ("ExternalChangeSelection" === event.data.type) {
+					oThis.wb && oThis.wb.externalSelectionController.onExternalChangeSelection(event.data);
+				} else if ("SetFormulaEditMode" === event.data.type) {
+					oThis.wb && oThis.wb.externalSelectionController.onExternalSetFormulaMode(event.data);
+				} else if ("CloseTab" === event.data.type) {
+					console.log("closeTab")
 				}
 			}
 		}

@@ -1168,6 +1168,37 @@
 		var nFirstCharCode = sText.charCodeAt(0);
 
 		var sValue = sText.slice(0, sText.length - 1);
+		
+		function _getDigit(code)
+		{
+			return ((48 <= code && code <= 57) ? code - 48 : -1);
+		}
+		
+		function _getHindiDigit(code)
+		{
+			return ((0x0660 <= code && code <= 0x0669) ? code - 0x0660 : -1);
+		}
+		
+		function _parseInt(text)
+		{
+			let val = 0;
+			let pos = 0;
+			
+			for (; pos < text.length; ++pos)
+			{
+				let c = text.codePointAt(pos);
+				let d = _getDigit(c);
+				if (-1 === d)
+					d = _getHindiDigit(c);
+				
+				if (-1 === d)
+					break;
+				
+				val = val * 10 + d;
+			}
+			
+			return 0 === pos ? null : val;
+		}
 
 		function private_ParseNextInt(sText, nPos)
 		{
@@ -1188,16 +1219,16 @@
 				nEndPos = Math.min(nNextDotPos, nNextParaPos);
 
 			var sValue = sText.slice(nPos, nEndPos);
-			var nValue = parseInt(sValue);
+			var nValue = _parseInt(sValue);
 
-			if (isNaN(nValue))
+			if (null === nValue)
 				return null;
 
 			return {Value : nValue, Char : sText.charAt(nEndPos), Pos : nEndPos + 1};
 		}
 
 		// Проверяем, либо у нас все числовое, либо у нас все буквенное (все заглавные, либо все не заглавные)
-		if (48 <= nFirstCharCode && nFirstCharCode <= 57)
+		if ((48 <= nFirstCharCode && nFirstCharCode <= 57) || (0x0660 <= nFirstCharCode && nFirstCharCode <= 0x0669))
 		{
 
 			var arrResult = [], nPos = 0;

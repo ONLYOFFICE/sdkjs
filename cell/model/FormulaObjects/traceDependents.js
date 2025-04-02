@@ -1299,7 +1299,7 @@ function (window, undefined) {
 				ref = formulaParsed.ref,
 				coords = AscCommonExcel.getFromCellIndex(cellIndex, true),
 				row = coords.row, col = coords.col, shared, base,
-				length = formulaParsed.outStack.length, isPartOfFunc, numberOfArgs, funcReturnType, funcArrayIndexes;
+				length = formulaParsed.outStack.length, isPartOfFunc, numberOfArgs, funcReturnType, funcArray;
 
 			if (formulaParsed.shared !== null) {
 				shared = formulaParsed.getShared();
@@ -1312,7 +1312,7 @@ function (window, undefined) {
 					continue;
 				}
 				if (numberOfArgs <= 0) {
-					funcArrayIndexes = null;
+					funcArray = null;
 					isPartOfFunc = null;
 				}
 
@@ -1323,9 +1323,9 @@ function (window, undefined) {
 						if (funcReturnType === AscCommonExcel.cReturnFormulaType.array) {
 							// range refers to formula, add property inFormulaRef = true
 							inFormulaRef = true;
-						} else if (funcArrayIndexes) {
+						} else if (funcArray) {
 							// if have no returnType check for arrayIndexes and if element pass in raw form(as array, range) to argument
-							if (funcArrayIndexes[numberOfArgs - 1]) {
+							if (funcArray.getArrayIndex(numberOfArgs - 1)) {
 								inFormulaRef = true;
 							}
 						}
@@ -1336,7 +1336,7 @@ function (window, undefined) {
 					isPartOfFunc = true;
 					numberOfArgs = formulaParsed.outStack[i - 1];
 					funcReturnType = elem.returnValueType;
-					funcArrayIndexes = elem.arrayIndexes;
+					funcArray = elem;
 				}
 
 				let is3D = elemType === cElementType.cell3D || elemType === cElementType.cellsRange3D || elemType === cElementType.name3D,

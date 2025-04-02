@@ -90,8 +90,11 @@
 		RLI : FLAG.NEUTRAL | FLAG.ISOLATE | FLAG.RTL,
 		FSI : FLAG.NEUTRAL | FLAG.ISOLATE | FLAG.FS,
 		PDI : FLAG.NEUTRAL | FLAG.WEAK | FLAG.ISOLATE,
+		CD  : FLAG.STRONG, // strong with main direction of the text (tab)
 		PM  : FLAG.STRONG // Paragraph end mark
 	};
+	
+	// TODO: Unite CD and PM Types
 	
 	const DIRECTION = {
 		L : TYPE.L,

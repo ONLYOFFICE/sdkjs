@@ -64,6 +64,7 @@ AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_FreeText_RC]			= CChange
 AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_FreeText_Align]			= CChangesPDFFreeTextAlign;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Stamp_Type]						= CChangesPDFAnnotStampType;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Stamp_InRect]						= CChangesPDFAnnotStampInRect;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Stamp_Rect]						= CChangesPDFAnnotStampRect;
 
 
 function CChangesAnnotArrayOfDoubleProperty(Class, Old, New) {
@@ -930,6 +931,40 @@ CChangesPDFAnnotStampInRect.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
 	oAnnot.SetInRect(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesAnnotArrayOfDoubleProperty}
+ */
+function CChangesPDFAnnotStampRect(Class, Old, New, isOnRotate, Color)
+{
+	AscDFH.CChangesAnnotArrayOfDoubleProperty.call(this, Class, Old, New, isOnRotate, Color);
+	this.isOnRotate = !!isOnRotate;
+}
+CChangesPDFAnnotStampRect.prototype = Object.create(AscDFH.CChangesAnnotArrayOfDoubleProperty.prototype);
+CChangesPDFAnnotStampRect.prototype.constructor = CChangesPDFAnnotStampRect;
+CChangesPDFAnnotStampRect.prototype.Type = AscDFH.historyitem_Pdf_Stamp_Rect;
+CChangesPDFAnnotStampRect.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot.SetRect(Value, this.isOnRotate);
+};
+
+CChangesPDFAnnotStampRect.prototype.WriteToBinary = function(Writer)
+{
+	CChangesAnnotArrayOfDoubleProperty.prototype.WriteToBinary.call(this, Writer);
+	Writer.WriteBool(this.isOnRotate);
+};
+CChangesPDFAnnotStampRect.prototype.ReadFromBinary = function(Reader)
+{
+	CChangesAnnotArrayOfDoubleProperty.prototype.ReadFromBinary.call(this, Reader);
+	this.isOnRotate = Reader.GetBool();
+};
+
+CChangesAnnotArrayOfDoubleProperty.prototype.Load = function(){
+	this.Redo();
+	this.RefreshRecalcData();
 };
 
 /**

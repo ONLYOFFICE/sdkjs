@@ -7774,15 +7774,32 @@ background-repeat: no-repeat;\
 			return true;
 		return false;
 	};
-	asc_docs_api.prototype.StartDemonstration = function(div_id, slidestart_num, reporterStartObject)
-	{
+	asc_docs_api.prototype.StartDemonstrationFromCurrentSlide = function (divId, reporterStartObject) {
+		const slideIndex = Asc.editor.getLogicDocument().Get_CurPage() || 0;
+		return this.StartDemonstration(divId, slideIndex, reporterStartObject);
+	};
+	asc_docs_api.prototype.StartDemonstrationFromBeginning = function (divId, reporterStartObject) {
+		const allSlides = Asc.editor.getLogicDocument().GetSlides();
+		const slideCount = allSlides.length;
+
+		let slideIndex = 0;
+		for (let i = 0; i < slideCount; i++) {
+			if (allSlides[i].show) {
+				slideIndex = i;
+				break;
+			}
+		}
+
+		return this.StartDemonstration(divId, slideIndex, reporterStartObject);
+	};
+	asc_docs_api.prototype.StartDemonstration = function (div_id, slidestart_num, reporterStartObject) {
+		console.log(div_id, reporterStartObject)
 		if (window.g_asc_plugins)
 			window.g_asc_plugins.stopWorked();
 
 		const bIsReporter = (reporterStartObject && !this.isReporterMode);
 
-		if (!bIsReporter)
-		{
+		if (!bIsReporter) {
 			this.turnOffSpecialModes();
 		}
 
@@ -7794,11 +7811,10 @@ background-repeat: no-repeat;\
 		else
 			this.WordControl.DemonstrationManager.Start(div_id, slidestart_num, true);
 
-        if (undefined !== this.EndShowMessage)
-        {
-            this.WordControl.DemonstrationManager.EndShowMessage = this.EndShowMessage;
-            this.EndShowMessage = undefined;
-        }
+		if (undefined !== this.EndShowMessage) {
+			this.WordControl.DemonstrationManager.EndShowMessage = this.EndShowMessage;
+			this.EndShowMessage = undefined;
+		}
 	};
 
 	asc_docs_api.prototype.EndDemonstration = function(isNoUseFullScreen)
@@ -10081,6 +10097,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['sync_endDemonstration']               = asc_docs_api.prototype.sync_endDemonstration;
 	asc_docs_api.prototype['sync_DemonstrationSlideChanged']      = asc_docs_api.prototype.sync_DemonstrationSlideChanged;
 	asc_docs_api.prototype['StartDemonstration']                  = asc_docs_api.prototype.StartDemonstration;
+	asc_docs_api.prototype['StartDemonstrationFromBeginning']     = asc_docs_api.prototype.StartDemonstrationFromBeginning;
+	asc_docs_api.prototype['StartDemonstrationFromCurrentSlide']  = asc_docs_api.prototype.StartDemonstrationFromCurrentSlide;
 	asc_docs_api.prototype['EndDemonstration']                    = asc_docs_api.prototype.EndDemonstration;
 	asc_docs_api.prototype['DemonstrationPlay']                   = asc_docs_api.prototype.DemonstrationPlay;
 	asc_docs_api.prototype['DemonstrationPause']                  = asc_docs_api.prototype.DemonstrationPause;

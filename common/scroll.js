@@ -1929,6 +1929,8 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 
 		this.that.mouseDown = true;
 
+		AscCommon.capturePointer(e, this.that.canvas);
+
 		//arrow pressed
 		if (this.that.settings.showArrows && arrowHover) {
 			this.that.mouseDownArrow = true;

@@ -4514,7 +4514,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     WordLen = 0;
 
                     var TabPos   = Para.private_RecalculateGetTabPos(PRS, X, ParaPr, PRS.Page, false);
-                    var NewX     = TabPos.NewX;
+                    var NewX     = X + TabPos.TabWidth;
                     var TabValue = TabPos.TabValue;
 
                     Item.SetLeader(TabPos.TabLeader, this.Get_CompiledPr(false));
@@ -5763,7 +5763,7 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
             case para_End:
             {
 				Item.CheckMark(PRSA.Paragraph, PRSA.XEnd - PRSA.X);
-                PRSA.X += Item.GetWidth();
+                PRSA.X += Item.GetWidthVisible();
 
                 break;
             }
