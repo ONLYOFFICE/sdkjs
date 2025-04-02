@@ -5392,6 +5392,179 @@ $(function () {
 		ws.getRange2("A1:Z100").cleanAll();
 	});
 
+ 
+	QUnit.test('Num format inheritance ', function (assert) {
+		let cellWithFormula, fillRange, oParser;
+
+		const accountingUSFormat = "_([$$-409]* #,##0.00_);_([$$-409]* \\(#,##0.00\\);_([$$-409]* \"-\"??_);_(@_)",
+			percentUSFormat = '0.00%',
+			currencyUSFormat = '[$$-409]#,##0.00',
+			dateUSFormat = "m/d/yyyy",
+			timeUSFormat = '[$-F400]h:mm:ss AM/PM';
+		const cellTypesUS = [
+				{ cell: 'A1', type: 'number', format: '0.00' },
+				{ cell: 'A2', type: 'scientific', format: '0.00E+00' },
+				{ cell: 'A3', type: 'accounting', format: accountingUSFormat },
+				{ cell: 'A4', type: 'currency', format: currencyUSFormat },
+				{ cell: 'A5', type: 'date', format: dateUSFormat },
+				{ cell: 'A6', type: 'time', format: timeUSFormat },
+				{ cell: 'A7', type: 'percent', format: percentUSFormat },
+				{ cell: 'A8', type: 'fraction', format: '# ?/?' }
+			];
+
+		// set united states locale
+		window["Asc"]["editor"].asc_setLocale(AscCommon.g_oDefaultCultureInfo.LCID);
+			
+		ws.getRange2("A1:A10").setValue("1234");
+		ws.getRange2("A1").setNumFormat("0.00");	// number
+		ws.getRange2("A2").setNumFormat("0.00E+00");	// scientific
+		ws.getRange2("A3").setNumFormat(accountingUSFormat);	// accounting
+		ws.getRange2("A4").setNumFormat(currencyUSFormat);	// currency
+		ws.getRange2("A5").setNumFormat(dateUSFormat);	// short date
+		ws.getRange2("A6").setNumFormat("[$-F400]h:mm:ss AM/PM");	// time
+		ws.getRange2("A7").setNumFormat(percentUSFormat);	// percent
+		ws.getRange2("A8").setNumFormat("# ?/?");	// fraction
+
+		// set russian locale
+		// window["Asc"]["editor"].asc_setLocale(1049);
+		
+		// let resCell = ws.getRange2("B1");
+		// resCell.setValue("=A1+A1");
+		// assert.strictEqual(resCell.getNumFormatStr(), "0.00", "Format string after num + num sum");
+		// assert.strictEqual(resCell.getNumFormatType(), Asc.c_oAscNumFormatType.Number, "Format type after num + num sum");
+
+		oParser = new AscCommonExcel.parserFormula('A1+A1', "B1", ws);
+		assert.ok(oParser.parse(), "A1+A1 - number+number");
+		assert.ok(oParser.calculate(), "A1+A1 - number+number calculate");
+		assert.strictEqual(oParser.sFormatType, "0.00", "sFormat type after number+number calculation");
+
+		oParser = new AscCommonExcel.parserFormula('A2+A2', "B1", ws);
+		assert.ok(oParser.parse(), "A2+A2 - scientific+scientific");
+		assert.ok(oParser.calculate(), "A2+A2 - scientific+scientific calculate");
+		assert.strictEqual(oParser.sFormatType, "0.00E+00", "sFormat type after scientific+scientific calculation");
+
+		oParser = new AscCommonExcel.parserFormula('A3+A3', "B1", ws);
+		assert.ok(oParser.parse(), "A3+A3 - accounting+accounting");
+		assert.ok(oParser.calculate(), "A3+A3 - accounting+accounting calculate");
+		console.log(oParser.sFormatType);
+		assert.strictEqual(oParser.sFormatType, accountingUSFormat, "sFormat type after accounting+accounting calculation");
+
+		oParser = new AscCommonExcel.parserFormula('A4+A4', "B1", ws);
+		assert.ok(oParser.parse(), "A4+A4 - currency+currency");
+		assert.ok(oParser.calculate(), "A4+A4 - currency+currency calculate");
+		assert.strictEqual(oParser.sFormatType, "[$$-409]#,##0.00", "sFormat type after currency+currency calculation");
+
+		// date+date
+		oParser = new AscCommonExcel.parserFormula('A5+A5', "B1", ws);
+		assert.ok(oParser.parse(), "A5+A5 - date+date");
+		assert.ok(oParser.calculate(), "A5+A5 - date+date calculate");
+		assert.strictEqual(oParser.sFormatType, "General", "sFormat type after date+date calculation");
+
+		// date+date+date
+		oParser = new AscCommonExcel.parserFormula('A5+A5+A5', "B1", ws);
+		assert.ok(oParser.parse(), "A5+A5+A5 - date+date+date");
+		assert.ok(oParser.calculate(), "A5+A5+A5 - date+date+date calculate");
+		assert.strictEqual(oParser.sFormatType, dateUSFormat, "sFormat type after date+date+date calculation");
+		
+		// date+date+date+date
+		oParser = new AscCommonExcel.parserFormula('A5+A5+A5+A5', "B1", ws);
+		assert.ok(oParser.parse(), "A5+A5+A5+A5 - date+date+date+date");
+		assert.ok(oParser.calculate(), "A5+A5+A5+A5 - date+date+date+date calculate");
+		assert.strictEqual(oParser.sFormatType, "General", "sFormat type after date+date+date+date calculation");
+
+		oParser = new AscCommonExcel.parserFormula('A6+A6', "B1", ws);
+		assert.ok(oParser.parse(), "A6+A6 - time+time");
+		assert.ok(oParser.calculate(), "A6+A6 - time+time calculate");
+		assert.strictEqual(oParser.sFormatType, "[$-F400]h:mm:ss AM/PM", "sFormat type after time+time calculation");
+
+		oParser = new AscCommonExcel.parserFormula('A7+A7', "B1", ws);
+		assert.ok(oParser.parse(), "A7+A7 - percent+percent");
+		assert.ok(oParser.calculate(), "A7+A7 - percent+percent calculate");
+		assert.strictEqual(oParser.sFormatType, "0.00%", "sFormat type after percent+percent calculation");
+
+		oParser = new AscCommonExcel.parserFormula('A8+A8', "B1", ws);
+		assert.ok(oParser.parse(), "A8+A8 - fraction+fraction");
+		assert.ok(oParser.calculate(), "A8+A8 - fraction+fraction calculate");
+		assert.strictEqual(oParser.sFormatType, "# ?/?", "sFormat type after fraction+fraction calculation");
+
+		// percent + other formats
+		for (let i = 0; i < cellTypesUS.length; i++) {
+			const { cell, type, format } = cellTypesUS[i];
+			oParser = new AscCommonExcel.parserFormula('A7+' + cell, "B1", ws);
+			assert.ok(oParser.parse(), 'A7+' + cell+ '- percent+'+type);
+			debugger
+			assert.ok(oParser.calculate(), 'A7+' + cell + '- percent+' + type + 'calculate');
+			assert.strictEqual(oParser.sFormatType, "0.00%", 'sFormat type after percent+' + type + ' calculation');
+		}
+
+		// other + percent
+		for (let i = 0; i < cellTypesUS.length; i++) {
+			const { cell, type, format } = cellTypesUS[i];
+			oParser = new AscCommonExcel.parserFormula(cell + '+A7', "B1", ws);
+			assert.ok(oParser.parse(), cell + '+A7 - ' + type + '+percent');
+			assert.ok(oParser.calculate(), cell + '+A7 - ' + type + '+percent calculate');
+			switch (format) {
+				case dateUSFormat:
+					assert.strictEqual(oParser.sFormatType, dateUSFormat, 'sFormat type after ' + type + '+percent calculation');
+					break;
+				case accountingUSFormat:
+					assert.strictEqual(oParser.sFormatType, accountingUSFormat, 'sFormat type after ' + type + '+percent calculation');
+					break;
+				case currencyUSFormat:
+					assert.strictEqual(oParser.sFormatType, currencyUSFormat, 'sFormat type after ' + type + '+percent calculation');
+					break;
+				case timeUSFormat:
+					assert.strictEqual(oParser.sFormatType, timeUSFormat, 'sFormat type after ' + type + '+percent calculation');
+					break;
+				default: 
+					assert.strictEqual(oParser.sFormatType, percentUSFormat, 'sFormat type after ' + type + '+percent calculation');
+					break;
+			}
+		}
+
+		// date + other formats
+		for (let i = 0; i < cellTypesUS.length; i++) {
+			const { cell, type, format } = cellTypesUS[i];
+			oParser = new AscCommonExcel.parserFormula('A5+' + cell, "B1", ws);
+			assert.ok(oParser.parse(), 'A5+' + cell + ' - date+' + type);
+			assert.ok(oParser.calculate(), 'A5+' + cell + ' - date+' + type + ' calculate');
+			switch (format) {
+				case dateUSFormat:
+					assert.strictEqual(oParser.sFormatType, "General", 'sFormat type after date+' + type + ' calculation');
+					break;
+				case timeUSFormat:
+					assert.strictEqual(oParser.sFormatType, "m/d/yyyy h:mm", 'sFormat type after date+' + type + ' calculation');
+					break;
+				default: 
+					assert.strictEqual(oParser.sFormatType, dateUSFormat, 'sFormat type after date+' + type + ' calculation');
+					break;
+			}
+		}
+
+		// other + date
+		for (let i = 0; i < cellTypesUS.length; i++) {
+			const { cell, type, format } = cellTypesUS[i];
+			oParser = new AscCommonExcel.parserFormula(cell + '+A5', "B1", ws);
+			assert.ok(oParser.parse(), cell + '+A5 - ' + type + '+date');
+			assert.ok(oParser.calculate(), cell + '+A5 - ' + type + '+date calculate');
+			// assert.strictEqual(oParser.sFormatType, format, 'sFormat type after ' + type + '+date calculation');
+			switch (format) {
+				case dateUSFormat:
+					assert.strictEqual(oParser.sFormatType, "General", 'sFormat type after date+' + type + ' calculation');
+					break;
+				case timeUSFormat:
+					assert.strictEqual(oParser.sFormatType, "m/d/yyyy h:mm", 'sFormat type after date+' + type + ' calculation');
+					break;
+				default: 
+					assert.strictEqual(oParser.sFormatType, format, 'sFormat type after ' + type + '+date calculation');
+					break;
+			}
+		}
+
+		// todo adjusment cell check adn calculate with wsView._saveCellValueAfterEdit?
+		ws.getRange2("A1:Z100").cleanAll();
+	});
+
 	QUnit.test('sortRangeTest', function (assert) {
 		let range, expectedRes;
 

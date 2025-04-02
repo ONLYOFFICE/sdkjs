@@ -583,79 +583,147 @@ let cElementTypeWeight =  new Map();
 
 
 /**
- * Определяет формат на основе переданных аргументов и предыдущего типа формата
- * @param {Array} arg - Массив объектов с данными для анализа
- * @param {number} prevFormatType - Числовое значение предыдущего типа формата
- * @returns {{sFormat: string, numFormatType: number}} Объект содержащий тип и строковое представление итогового формата
+ * Defines the format based on the conveyed arguments and the previous type of format
+ * @param {Array} arg - Array of objects with data for analysis
+ * @param {Object} prevFormatType - Object containing numtype and string representation of the previous format
+ * @returns {{sFormat: string, numFormatType: number}|undefined} Object containing type and string representation of the final format
  */
-function getFuncFormatByArgs (arg, prevFormatType) {
+function getFuncFormatByArgs (arg, currentFuncFormat) {
 	/* for base operators */
 	if (!arg || arg.length < 2) {
 		return;
 	}
 
-	if (!prevFormatType) {
-		prevFormatType = Asc.c_oAscNumFormatType.General;
-	}
-	
 	let arg0 = arg[0], arg1 = arg[1];
-
-	let arg0Format, arg0FormatType, arg1Format, arg1FormatType;
-	let	resFormatInfo = {
+	let arg0Format, arg0sFormat, arg0FormatType, 
+		arg1Format, arg1sFormat, arg1FormatType,
+		resFormatInfo = {
 			sFormat: null,
 			numFormatType: null
 		};
 	
-	// todo cellsRange3D
-	if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
+	let currencyType, percentType, accountingType;
+
+	/* First arg check and assignement*/
+	if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D || 
+		arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 		arg0Format = arg0.range && arg0.range.getNumFormat && arg0.range.getNumFormat();
+
+		arg0sFormat = arg0Format.sFormat;
 		arg0FormatType = arg0Format.getType();
 	} else {
-		arg0FormatType = prevFormatType;
+		arg0sFormat = arg0.sFormat ? arg0.sFormat : currentFuncFormat.sFormat;
+		arg0FormatType = arg0.numFormatType ? arg0.numFormatType : currentFuncFormat.numFormatType;
 	}
 
-	if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+	switch (arg0FormatType) {
+		case Asc.c_oAscNumFormatType.Percent:
+			percentType = arg0sFormat;
+			break;
+		case Asc.c_oAscNumFormatType.Currency:
+			currencyType = arg0sFormat;
+			break;
+		case Asc.c_oAscNumFormatType.Accounting:
+			accountingType = arg0sFormat;
+			break;
+		default: break;
+	}
+
+	/* Second arg check and assignement*/
+	if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D || 
+		arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
 		arg1Format = arg1.range && arg1.range.getNumFormat && arg1.range.getNumFormat();
+
+		arg1sFormat = arg1Format.sFormat;
 		arg1FormatType = arg1Format.getType();
 	} else {
-		arg1FormatType = prevFormatType;
+		arg1sFormat = arg1.sFormat ? arg1.sFormat : currentFuncFormat.sFormat;
+		arg1FormatType = arg1.numFormatType ? arg1.numFormatType : currentFuncFormat.numFormatType;
 	}
 
-	if (arg0FormatType === arg1FormatType) {
-		if (arg0FormatType === Asc.c_oAscNumFormatType.Time || arg0FormatType === Asc.c_oAscNumFormatType.Percent 
-			|| arg0FormatType === Asc.c_oAscNumFormatType.Fraction || arg0FormatType === Asc.c_oAscNumFormatType.Scientific) {
-			resFormatInfo = {
-				sFormat: arg0Format.sFormat,
-				numFormatType: arg0FormatType
-			}
-		} else {
-			resFormatInfo = {
-				sFormat: null,
-				numFormatType: Asc.c_oAscNumFormatType.None
-			}
+	if (!percentType && !currencyType && !accountingType) {
+		switch (arg1FormatType) {
+			case Asc.c_oAscNumFormatType.Percent:
+				percentType = arg1sFormat;
+				break;
+			case Asc.c_oAscNumFormatType.Currency:
+				currencyType = arg1sFormat;
+				break;
+			case Asc.c_oAscNumFormatType.Accounting:
+				accountingType = arg1sFormat;
+				break;
+			default: break;
 		}
+	}
+
+	/* Args types(cellType) compare and assignement result */
+	if (arg0FormatType !== Asc.c_oAscNumFormatType.Date && arg0FormatType !== Asc.c_oAscNumFormatType.Time && (percentType || currencyType || accountingType)) {
+		// currency,percent,accounting has priority return only with non date/time format
+		resFormatInfo = percentType ? {
+			sFormat: percentType,
+			numFormatType: Asc.c_oAscNumFormatType.Percent
+		} : currencyType ? {
+			sFormat: currencyType,
+			numFormatType: Asc.c_oAscNumFormatType.Currency
+		} : accountingType ? {
+			sFormat: accountingType,
+			numFormatType: Asc.c_oAscNumFormatType.Accounting
+		} : resFormatInfo;
+	} else if (arg0FormatType === arg1FormatType) {
+		/* MS res */
+		switch (arg0FormatType) {
+			// date+date = prev/default format(ms)
+			case Asc.c_oAscNumFormatType.Date:
+			case Asc.c_oAscNumFormatType.None:
+			case Asc.c_oAscNumFormatType.General:
+				resFormatInfo = {
+					sFormat: "General",
+					numFormatType: Asc.c_oAscNumFormatType.General
+					// sFormat: currentFuncFormat.sFormat,
+					// numFormatType: currentFuncFormat.numFormatType
+				}
+				break;
+			default: 
+				resFormatInfo = {
+					sFormat: arg0Format.sFormat,
+					numFormatType: arg0FormatType
+				}
+				break;
+		}
+		
+		/* LO res */
+		// if (arg0FormatType === Asc.c_oAscNumFormatType.Time || arg0FormatType === Asc.c_oAscNumFormatType.Percent 
+		// 	|| arg0FormatType === Asc.c_oAscNumFormatType.Fraction || arg0FormatType === Asc.c_oAscNumFormatType.Scientific) {
+		// 	resFormatInfo = {
+		// 		sFormat: arg0Format.sFormat,
+		// 		numFormatType: arg0FormatType
+		// 	}
+		// } 
+		// else {
+		// 	resFormatInfo = {
+		// 		sFormat: null,
+		// 		numFormatType: Asc.c_oAscNumFormatType.None
+		// 	}
+		// }
 	} else if (arg0FormatType === Asc.c_oAscNumFormatType.General || arg0FormatType === Asc.c_oAscNumFormatType.None) {
 		resFormatInfo = {
-			sFormat: arg1Format.sFormat,
+			sFormat: arg1sFormat,
 			numFormatType: arg1FormatType
 		}
 	} else if (arg1FormatType === Asc.c_oAscNumFormatType.General || arg1FormatType === Asc.c_oAscNumFormatType.None) {
 		resFormatInfo = {
-			sFormat: arg0Format.sFormat,
+			sFormat: arg0sFormat,
 			numFormatType: arg0FormatType
 		}
 	} else {
-		resFormatInfo.sFormat = arg0Format.sFormat;
+		resFormatInfo.sFormat = arg0sFormat;
 		resFormatInfo.numFormatType = arg0FormatType;
 
-		if ( arg0FormatType === Asc.c_oAscNumFormatType.Date || arg1FormatType === Asc.c_oAscNumFormatType.Date ||
-			arg0FormatType === Asc.c_oAscNumFormatType.Time || arg1FormatType === Asc.c_oAscNumFormatType.Time ) {
-			if ( arg0FormatType === Asc.c_oAscNumFormatType.Time || arg1FormatType === Asc.c_oAscNumFormatType.Time ) {
-				// date + time = custom type
-				resFormatInfo = {
-					sFormat: "m/d/yyyy h:mm",
-					numFormatType: Asc.c_oAscNumFormatType.Date
-				}
+		if ((arg0FormatType === Asc.c_oAscNumFormatType.Date && arg1FormatType === Asc.c_oAscNumFormatType.Time) ||
+			(arg0FormatType === Asc.c_oAscNumFormatType.Time && arg1FormatType === Asc.c_oAscNumFormatType.Date)) {
+			resFormatInfo = {
+				sFormat: "m/d/yyyy h:mm",
+				numFormatType: Asc.c_oAscNumFormatType.Date
 			}
 		}
 	}
@@ -8951,7 +9019,13 @@ function parserFormula( formula, parent, _ws ) {
 			opt_bbox = new Asc.Range(0, 0, 0, 0);
 		}
 
-		let sFormatType;
+		let currentFuncFormatStr;	// формат функции(которая была ранее или позже)
+		let currentFuncFormat = {	
+			// default format for function result
+			sFormat: "General",
+			numFormatType: Asc.c_oAscNumFormatType.General
+		}
+
 		var elemArr = [], _tmp, numFormat = cNumFormatFirstCell, currentElement = null, bIsSpecialFunction, argumentsCount, defNameCalcArr, defNameArgCount = 0;
 		for (var i = 0; i < this.outStack.length; i++) {
 			currentElement = this.outStack[i];
@@ -9033,16 +9107,29 @@ function parserFormula( formula, parent, _ws ) {
 						_tmp = currentElement.Calculate(arg, opt_bbox, opt_defName, this.ws, bIsSpecialFunction);
 					}
 
+					if (currentElement.type === cElementType.func && _tmp) {
+						let r = this.getFirstRangeByArgs(arg);
+						if (r && r.getNumFormatStr && r.getNumFormatType) {
+							// let formatInfo = r.getNumFormat();
+							currentFuncFormatStr = r.getNumFormatStr();
+							// currentFuncFormatStr = formatInfo.getNumFormatStr();
+							// todo проверить отсутствие ссылки в функцкиях(sum(123))
+							// todo сингловая функция не возвращает тип(SIN(A1), но SIN(A1)+SIN(A1) - возвращает)
+							_tmp.sFormat = currentFuncFormatStr;
+							_tmp.numFormatType = r.getNumFormatType();
+						}
+					}
 					//_tmp = currentElement.Calculate(arg, opt_bbox, opt_defName, this.ws, bIsSpecialFunction);
-					if (false && currentElement.type === cElementType.operator && _tmp) {
-						// todo get function format by default?
+					else if (currentElement.type === cElementType.operator && _tmp) {
+						// внешние функции определяют формат всей формулы ?
 						let cellFormat;
 						if (arg && arg.length > 1) {
-							cellFormat = getFuncFormatByArgs(arg, sFormatType ? sFormatType.numFormatType : null);
+							cellFormat = getFuncFormatByArgs(arg, currentFuncFormat);
+							// console.log(window["Asc"]["editor"].GetLocale());
 						}
 
 						if (cellFormat) {
-							sFormatType = cellFormat;
+							currentFuncFormat = cellFormat;
 						}
 					}
 
@@ -9128,7 +9215,7 @@ function parserFormula( formula, parent, _ws ) {
 			}
 
 			this.value.numFormat = numFormat;
-			this.sFormatType = sFormatType && sFormatType.sFormat;
+			this.sFormatType = currentFuncFormat && currentFuncFormat.sFormat;
 			//***array-formula***
 			//для обработки формулы массива
 			//передаётся последним параметром cell и временно подменяется parent у parserFormula для того, чтобы поменялось значение в элементе массива
@@ -9990,6 +10077,19 @@ function parserFormula( formula, parent, _ws ) {
 		var res;
 		for (var i = 0; i < this.outStack.length; i++) {
 			var elem = this.outStack[i];
+			if (cElementType.cell === elem.type || cElementType.cell3D === elem.type ||
+				cElementType.cellsRange === elem.type || cElementType.cellsRange3D === elem.type
+				|| cElementType.table === elem.type) {
+				res = elem.getRange();
+				break;
+			}
+		}
+		return res;
+	};
+	parserFormula.prototype.getFirstRangeByArgs = function(arg) {
+		let res;
+		for (let i = 0; i < arg.length; i++) {
+			let elem = arg[i];
 			if (cElementType.cell === elem.type || cElementType.cell3D === elem.type ||
 				cElementType.cellsRange === elem.type || cElementType.cellsRange3D === elem.type
 				|| cElementType.table === elem.type) {
