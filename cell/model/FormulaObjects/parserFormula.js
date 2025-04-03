@@ -9108,15 +9108,21 @@ function parserFormula( formula, parent, _ws ) {
 					}
 
 					if (currentElement.type === cElementType.func && _tmp) {
-						let r = this.getFirstRangeByArgs(arg);
-						if (r && r.getNumFormatStr && r.getNumFormatType) {
-							currentFuncFormatStr = r.getNumFormatStr();
-							// todo the single function should not return a new format =SIN(B24+B25)
-
-							// записываем информацию о формате прямо в аргумент для чтения в getFuncFormatByArgs
-							// чтобы не создавать доп.структуру с привязкой формата к аргументу
-							_tmp.sFormat = currentFuncFormatStr;
-							_tmp.numFormatType = r.getNumFormatType();
+						if (currentElement.name === "SUM") {
+							let r = this.getFirstRangeByArgs(arg);
+							if (r && r.getNumFormatStr && r.getNumFormatType) {
+								currentFuncFormatStr = r.getNumFormatStr();
+								// todo in ms SIN(A2)+SIN(A2) compare the formats of functions by special rules:
+								// date=percent=time=currency=accounting - these formats are compared in special, in other cases the format does not change
+	
+								// Record information about the format directly into the argument for reading in GetfuncformatByargs
+								// in order not to create an additional structure with a format binding to the argument
+								_tmp.sFormat = currentFuncFormatStr;
+								_tmp.numFormatType = r.getNumFormatType();
+							}
+						} else {
+							_tmp.sFormat = currentFuncFormat.sFormat = "General";
+							_tmp.numFormatType = currentFuncFormat.numFormatType = Asc.c_oAscNumFormatType.General;
 						}
 					}
 					//_tmp = currentElement.Calculate(arg, opt_bbox, opt_defName, this.ws, bIsSpecialFunction);

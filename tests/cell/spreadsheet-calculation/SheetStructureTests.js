@@ -5611,6 +5611,94 @@ $(function () {
 			}
 		}
 
+		// function + ref
+		oParser = new AscCommonExcel.parserFormula('SIN(A2)+A1', "B1", ws);
+		assert.ok(oParser.parse(), "SIN(A2)+A1 - func(scientific)+number");
+		assert.ok(oParser.calculate(), "SIN(A2)+A1 - func(scientific)+number calculate");
+		assert.strictEqual(oParser.sFormatType, numberUSFormat, "sFormat type after func(scientific)+number calculation");
+
+		oParser = new AscCommonExcel.parserFormula('SIN(A2)+A6', "B1", ws);
+		assert.ok(oParser.parse(), "SIN(A2)+A6 - func(scientific)+time");
+		assert.ok(oParser.calculate(), "SIN(A2)+A6 - func(scientific)+time calculate");
+		assert.strictEqual(oParser.sFormatType, timeUSFormat, "sFormat type after func(scientific)+time calculation");
+
+		oParser = new AscCommonExcel.parserFormula('SIN(A2)+A7', "B1", ws);
+		assert.ok(oParser.parse(), "SIN(A2)+A7 - func(scientific)+percent");
+		assert.ok(oParser.calculate(), "SIN(A2)+A7 - func(scientific)+percent calculate");
+		assert.strictEqual(oParser.sFormatType, percentUSFormat, "sFormat type after func(scientific)+percent calculation");
+
+		oParser = new AscCommonExcel.parserFormula('SUM(A2)+A7', "B1", ws);
+		assert.ok(oParser.parse(), "SUM(A2)+A7 - func(scientific)+percent");
+		assert.ok(oParser.calculate(), "SUM(A2)+A7 - func(scientific)+percent calculate");
+		assert.strictEqual(oParser.sFormatType, percentUSFormat, "sFormat type after func(scientific)+percent calculation");
+
+		oParser = new AscCommonExcel.parserFormula('SUM(A4)+A7', "B1", ws);
+		assert.ok(oParser.parse(), "SUM(A4)+A7 - func(currency)+percent");
+		assert.ok(oParser.calculate(), "SUM(A4)+A7 - func(currency)+percent calculate");
+		assert.strictEqual(oParser.sFormatType, currencyUSFormat, "sFormat type after func(currency)+percent calculation");
+
+		oParser = new AscCommonExcel.parserFormula('SUM(A5)+A7', "B1", ws);
+		assert.ok(oParser.parse(), "SUM(A5)+A7 - func(date)+percent");
+		assert.ok(oParser.calculate(), "SUM(A5)+A7 - func(date)+percent calculate");
+		assert.strictEqual(oParser.sFormatType, dateUSFormat, "sFormat type after func(date)+percent calculation");
+
+		oParser = new AscCommonExcel.parserFormula('SUM(A6)+A7', "B1", ws);
+		assert.ok(oParser.parse(), "SUM(A6)+A7 - func(time)+percent");
+		assert.ok(oParser.calculate(), "SUM(A6)+A7 - func(time)+percent calculate");
+		assert.strictEqual(oParser.sFormatType, timeUSFormat, "sFormat type after func(time)+percent calculation");
+
+		oParser = new AscCommonExcel.parserFormula('SUM(A8)+A7', "B1", ws);
+		assert.ok(oParser.parse(), "SUM(A8)+A7 - func(fraction)+percent");
+		assert.ok(oParser.calculate(), "SUM(A8)+A7 - func(fraction)+percent calculate");
+		assert.strictEqual(oParser.sFormatType, percentUSFormat, "sFormat type after func(fraction)+percent calculation");
+
+		// ref + function
+		oParser = new AscCommonExcel.parserFormula('A2+SIN(A7)', "B1", ws);
+		assert.ok(oParser.parse(), "A2+SIN(A7) - scientific+func(percent)");
+		assert.ok(oParser.calculate(), "A2+SIN(A7) - scientific+func(percent) calculate");
+		assert.strictEqual(oParser.sFormatType, scientificUSFormat, "sFormat type after scientific+func(percent) calculation");
+
+		oParser = new AscCommonExcel.parserFormula('A7+SIN(A2)', "B1", ws);
+		assert.ok(oParser.parse(), "A7+SIN(A2) - percent+func(scientific)");
+		assert.ok(oParser.calculate(), "A7+SIN(A2) - percent+func(scientific) calculate");
+		assert.strictEqual(oParser.sFormatType, percentUSFormat, "sFormat type after percent+func(scientific) calculation");
+
+		oParser = new AscCommonExcel.parserFormula('A2+SUM(A7)', "B1", ws);
+		assert.ok(oParser.parse(), "A2+SUM(A7) - scientific+func(percent)");
+		assert.ok(oParser.calculate(), "A2+SUM(A7) - scientific+func(percent) calculate");
+		assert.strictEqual(oParser.sFormatType, percentUSFormat, "sFormat type after scientific+func(percent) calculation");
+
+		oParser = new AscCommonExcel.parserFormula('A7+SUM(A2)', "B1", ws);
+		assert.ok(oParser.parse(), "A7+SUM(A2) - percent+func(scientific)");
+		assert.ok(oParser.calculate(), "A7+SUM(A2) - percent+func(scientific) calculate");
+		assert.strictEqual(oParser.sFormatType, percentUSFormat, "sFormat type after percent+func(scientific) calculation");
+
+		// func(ref + ref) inside function
+		oParser = new AscCommonExcel.parserFormula('SIN(A1+A2)', "B1", ws);
+		assert.ok(oParser.parse(), "SIN(A1+A2) - func(number+scientific)");
+		assert.ok(oParser.calculate(), "SIN(A1+A2) - func(number+scientific) calculate");
+		assert.strictEqual(oParser.sFormatType, "General", "sFormat type after func(number+scientific) calculation");
+
+		oParser = new AscCommonExcel.parserFormula('SIN(A3+A4)', "B1", ws);
+		assert.ok(oParser.parse(), "SIN(A3+A4) - func(accounting+currency)");
+		assert.ok(oParser.calculate(), "SIN(A3+A4) - func(accounting+currency) calculate");
+		assert.strictEqual(oParser.sFormatType, "General", "sFormat type after func(accounting+currency) calculation");
+
+		oParser = new AscCommonExcel.parserFormula('SIN(A7+A7+A7)', "B1", ws);
+		assert.ok(oParser.parse(), "SIN(A7+A7+A7) - func(percent+percent+percent)");
+		assert.ok(oParser.calculate(), "SIN(A7+A7+A7) - func(percent+percent+percent) calculate");
+		assert.strictEqual(oParser.sFormatType, "General", "sFormat type after func(percent+percent+percent) calculation");
+
+		// todo in ms SIN(A2)+SIN(A2) compare the formats of functions by special rules:
+		// date=percent=time=currency=accounting - these formats are compared in special, in other cases the format does not change
+
+		// function + function
+		// oParser = new AscCommonExcel.parserFormula('SIN(A3)+SIN(A4)', "B1", ws);
+		// assert.ok(oParser.parse(), "SIN(A3)+SIN(A4) - func(accounting+currency)");
+		// assert.ok(oParser.calculate(), "SIN(A3)+SIN(A4) - func(accounting+currency) calculate");
+		// assert.strictEqual(oParser.sFormatType, accountingUSFormat, "sFormat type after func(accounting+currency) calculation");
+
+
 		// todo adjusment cell check adn calculate with wsView._saveCellValueAfterEdit?
 		ws.getRange2("A1:Z100").cleanAll();
 	});
