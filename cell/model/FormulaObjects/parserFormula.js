@@ -607,10 +607,11 @@ function getFuncFormatByArgs (arg, currentFuncFormat) {
 	/* First arg check and assignement*/
 	if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D || 
 		arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
-		arg0Format = arg0.range && arg0.range.getNumFormat && arg0.range.getNumFormat();
 
-		arg0sFormat = arg0Format.sFormat;
-		arg0FormatType = arg0Format.getType();
+		arg0Format = arg0.range && arg0.range.getNumFormat && arg0.range.getNumFormat();
+		arg0sFormat = arg0Format && arg0Format.sFormat;
+		arg0FormatType = arg0Format && arg0Format.getType();
+
 	} else {
 		arg0sFormat = arg0.sFormat ? arg0.sFormat : currentFuncFormat.sFormat;
 		arg0FormatType = arg0.numFormatType ? arg0.numFormatType : currentFuncFormat.numFormatType;
@@ -632,10 +633,11 @@ function getFuncFormatByArgs (arg, currentFuncFormat) {
 	/* Second arg check and assignement*/
 	if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D || 
 		arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
-		arg1Format = arg1.range && arg1.range.getNumFormat && arg1.range.getNumFormat();
 
-		arg1sFormat = arg1Format.sFormat;
-		arg1FormatType = arg1Format.getType();
+		arg1Format = arg1.range && arg1.range.getNumFormat && arg1.range.getNumFormat();
+		arg1sFormat = arg1Format && arg1Format.sFormat;
+		arg1FormatType = arg1Format && arg1Format.getType();
+		
 	} else {
 		arg1sFormat = arg1.sFormat ? arg1.sFormat : currentFuncFormat.sFormat;
 		arg1FormatType = arg1.numFormatType ? arg1.numFormatType : currentFuncFormat.numFormatType;
@@ -654,6 +656,10 @@ function getFuncFormatByArgs (arg, currentFuncFormat) {
 				break;
 			default: break;
 		}
+	}
+
+	if (arg0FormatType === undefined && arg1FormatType === undefined) {
+		return currentFuncFormat;
 	}
 
 	/* Args types(cellType) compare and assignement result */
@@ -690,27 +696,12 @@ function getFuncFormatByArgs (arg, currentFuncFormat) {
 				}
 				break;
 		}
-		
-		/* LO res */
-		// if (arg0FormatType === Asc.c_oAscNumFormatType.Time || arg0FormatType === Asc.c_oAscNumFormatType.Percent 
-		// 	|| arg0FormatType === Asc.c_oAscNumFormatType.Fraction || arg0FormatType === Asc.c_oAscNumFormatType.Scientific) {
-		// 	resFormatInfo = {
-		// 		sFormat: arg0Format.sFormat,
-		// 		numFormatType: arg0FormatType
-		// 	}
-		// } 
-		// else {
-		// 	resFormatInfo = {
-		// 		sFormat: null,
-		// 		numFormatType: Asc.c_oAscNumFormatType.None
-		// 	}
-		// }
-	} else if (arg0FormatType === Asc.c_oAscNumFormatType.General || arg0FormatType === Asc.c_oAscNumFormatType.None) {
+	} else if (arg0FormatType === Asc.c_oAscNumFormatType.General || arg0FormatType === Asc.c_oAscNumFormatType.None || arg0FormatType === Asc.c_oAscNumFormatType.Number) {
 		resFormatInfo = {
 			sFormat: arg1sFormat,
 			numFormatType: arg1FormatType
 		}
-	} else if (arg1FormatType === Asc.c_oAscNumFormatType.General || arg1FormatType === Asc.c_oAscNumFormatType.None) {
+	} else if (arg1FormatType === Asc.c_oAscNumFormatType.General || arg1FormatType === Asc.c_oAscNumFormatType.None || arg1FormatType === Asc.c_oAscNumFormatType.Number) {
 		resFormatInfo = {
 			sFormat: arg0sFormat,
 			numFormatType: arg0FormatType
@@ -9119,22 +9110,21 @@ function parserFormula( formula, parent, _ws ) {
 					if (currentElement.type === cElementType.func && _tmp) {
 						let r = this.getFirstRangeByArgs(arg);
 						if (r && r.getNumFormatStr && r.getNumFormatType) {
-							// let formatInfo = r.getNumFormat();
 							currentFuncFormatStr = r.getNumFormatStr();
-							// currentFuncFormatStr = formatInfo.getNumFormatStr();
-							// todo проверить отсутствие ссылки в функцкиях(sum(123))
-							// todo сингловая функция не возвращает тип(SIN(A1), но SIN(A1)+SIN(A1) - возвращает)
+							// todo отсутствие ссылки в функцкиях(sum(123))
+							// todo сингловая функция не должна возвращать новый формат =SIN(B24+B25)
+							
+							// записываем информацию о формате прямо в аргумент для чтения в getFuncFormatByArgs
+							// чтобы не создавать доп.структуру с привязкой формата к аргументу
 							_tmp.sFormat = currentFuncFormatStr;
 							_tmp.numFormatType = r.getNumFormatType();
 						}
 					}
 					//_tmp = currentElement.Calculate(arg, opt_bbox, opt_defName, this.ws, bIsSpecialFunction);
 					else if (currentElement.type === cElementType.operator && _tmp) {
-						// внешние функции определяют формат всей формулы ?
 						let cellFormat;
 						if (arg && arg.length > 1) {
 							cellFormat = getFuncFormatByArgs(arg, currentFuncFormat);
-							// console.log(window["Asc"]["editor"].GetLocale());
 						}
 
 						if (cellFormat) {
@@ -10099,9 +10089,8 @@ function parserFormula( formula, parent, _ws ) {
 		let res;
 		for (let i = 0; i < arg.length; i++) {
 			let elem = arg[i];
-			if (cElementType.cell === elem.type || cElementType.cell3D === elem.type ||
-				cElementType.cellsRange === elem.type || cElementType.cellsRange3D === elem.type
-				|| cElementType.table === elem.type) {
+			if (elem && elem.type && (cElementType.cell === elem.type || cElementType.cell3D === elem.type ||
+				cElementType.cellsRange === elem.type || cElementType.cellsRange3D === elem.type || cElementType.table === elem.type)) {
 				res = elem.getRange();
 				break;
 			}

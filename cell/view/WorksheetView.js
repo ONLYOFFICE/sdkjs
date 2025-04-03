@@ -18727,13 +18727,13 @@
 		endTransaction();
 
 		if(isFormula && !applyByArray) {
-			c._foreach(function(cell){
-				cell._adjustCellFormat();
-			});
-
 			// c._foreach(function(cell){
-			// 	cell._adjustCellFormat2();
+			// 	cell._adjustCellFormat();
 			// });
+
+			c._foreach(function(cell){
+				cell._adjustCellFormat2();
+			});
 		}
 
 		var emptyValue = val && val.length === 1 && val[0] && val[0].text === "";
