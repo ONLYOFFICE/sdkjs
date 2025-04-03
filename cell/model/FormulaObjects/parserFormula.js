@@ -9111,9 +9111,8 @@ function parserFormula( formula, parent, _ws ) {
 						let r = this.getFirstRangeByArgs(arg);
 						if (r && r.getNumFormatStr && r.getNumFormatType) {
 							currentFuncFormatStr = r.getNumFormatStr();
-							// todo отсутствие ссылки в функцкиях(sum(123))
-							// todo сингловая функция не должна возвращать новый формат =SIN(B24+B25)
-							
+							// todo the single function should not return a new format =SIN(B24+B25)
+
 							// записываем информацию о формате прямо в аргумент для чтения в getFuncFormatByArgs
 							// чтобы не создавать доп.структуру с привязкой формата к аргументу
 							_tmp.sFormat = currentFuncFormatStr;

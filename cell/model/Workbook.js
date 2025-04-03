@@ -15971,7 +15971,6 @@
 		return g_oDefaultFormat.Align;
 	};
 	Cell.prototype._adjustCellFormat = function() {
-		// 
 		var t = this;
 		this.processFormula(function(parsed) {
 			var valueCalc = parsed.value;

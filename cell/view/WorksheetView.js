@@ -18727,11 +18727,8 @@
 		endTransaction();
 
 		if(isFormula && !applyByArray) {
-			// c._foreach(function(cell){
-			// 	cell._adjustCellFormat();
-			// });
-
 			c._foreach(function(cell){
+				// cell._adjustCellFormat();
 				cell._adjustCellFormat2();
 			});
 		}
