@@ -21389,8 +21389,15 @@
 		var textDelta        = null;
 		var arrSelectedParas = null;
 
+		let oDocument = this.GetDocument();
+		let isTrackRevisions = oDocument.IsTrackRevisions();
+
 		function GetRunInfo(oRun)
 		{
+			if (isTrackRevisions && !oRun.CanDeleteInReviewMode() && reviewtype_Remove === oRun.GetReviewType()) {
+				return;
+			}
+
 			var StartPos = 0;
 			var EndPos   = 0;
 			var Item;
@@ -21575,32 +21582,63 @@
 
 		function DelInsertChars()
 		{
-			for (var nChange = textDelta.length - 1; nChange >= 0; nChange--)
+			for (let nChange = textDelta.length - 1; nChange >= 0; nChange--)
 			{
-				var oChange = textDelta[nChange];
-				var DelCount = oChange.deleteCount;
-				var infoToAdd = null;
-				for (var nInfo = 0; nInfo < allRunsInfo.length; nInfo++)
+				let oChange = textDelta[nChange];
+				let DelCount = oChange.deleteCount;
+				let oRunInfoToAdd = null;
+
+				for (let nInfo = 0; nInfo < allRunsInfo.length; nInfo++)
 				{
-					var oInfo = allRunsInfo[nInfo];
-					if (oChange.pos >= oInfo.GlobStartPos || oChange.pos + DelCount > oInfo.GlobStartPos)
+					let oRunInfo = Object.assign({}, allRunsInfo[nInfo]);
+					
+					let oDeleteReviewRun = null;
+					let oInsertReviewRun = null;
+
+					if (oChange.pos >= oRunInfo.GlobStartPos || oChange.pos + DelCount > oRunInfo.GlobStartPos)
 					{
-						var nPosToDel   = Math.max(0, oChange.pos - oInfo.GlobStartPos + oInfo.StartPos);
-						var nPosToAdd   = nPosToDel
-						var nCharsToDel = Math.min(oChange.deleteCount, oInfo.StringCount);
+						let nPosToDel   = Math.max(0, oChange.pos - oRunInfo.GlobStartPos + oRunInfo.StartPos);
+						let nPosToAdd   = nPosToDel
+						let nCharsToDel = Math.min(oChange.deleteCount, oRunInfo.StringCount);
 						
-						if ((nPosToDel >= oInfo.StartPos + oInfo.StringCount && nCharsToDel !== 0) || (nCharsToDel === 0 && oChange.deleteCount !== 0)
-							|| nPosToAdd > oInfo.StartPos + oInfo.StringCount)
+						if ((nPosToDel >= oRunInfo.StartPos + oRunInfo.StringCount && nCharsToDel !== 0) || (nCharsToDel === 0 && oChange.deleteCount !== 0)
+							|| nPosToAdd > oRunInfo.StartPos + oRunInfo.StringCount)
 							continue;
 
-						for (var nChar = 0; nChar < nCharsToDel; nChar++)
+						for (let nChar = 0; nChar < nCharsToDel; nChar++)
 						{
-							if (!oInfo.Run.Content[nPosToDel])
+							if (!oRunInfo.Run.Content[nPosToDel])
 								break;
 								
-							if (para_Text === oInfo.Run.Content[nPosToDel].Type || para_Space === oInfo.Run.Content[nPosToDel].Type || para_Tab === oInfo.Run.Content[nPosToDel].Type || para_NewLine === oInfo.Run.Content[nPosToDel].Type)
+							if ([para_Text, para_Space, para_Tab, para_NewLine].includes(oRunInfo.Run.Content[nPosToDel].Type))
 							{
-								oInfo.Run.RemoveFromContent(nPosToDel, 1);
+								if (isTrackRevisions) {
+									if (!oRunInfo.Run.CanDeleteInReviewMode()) {
+										if (null == oDeleteReviewRun) {
+											let oPara = oRunInfo.Run.Paragraph;
+
+											// split cur run
+											let nCurRunReviewType = oRunInfo.Run.GetReviewType();
+											let oCurReviewInfo = oRunInfo.Run.GetReviewInfo();
+											let nCurRunIdx = oPara.Content.indexOf(oRunInfo.Run);
+											oRunInfo.Run = oRunInfo.Run.Split_Run(nPosToDel);
+											oRunInfo.Run.SetReviewTypeWithInfo(nCurRunReviewType, oCurReviewInfo);
+											oPara.AddToContent(nCurRunIdx + 1, oRunInfo.Run);
+											nPosToDel = 0;
+
+											// create del review run
+											oDeleteReviewRun = new ParaRun(oRunInfo.Run.Paragraph, false);
+											oDeleteReviewRun.Set_Pr(oRunInfo.Run.Pr.Copy(true));
+											oDeleteReviewRun.SetReviewType(reviewtype_Remove);
+											oPara.AddToContent(nCurRunIdx + 1, oDeleteReviewRun);
+										}
+	
+										oDeleteReviewRun.AddToContentToEnd(oRunInfo.Run.Content[nPosToDel].Copy());
+									}
+								}
+								
+								oRunInfo.Run.RemoveFromContent(nPosToDel, 1);
+
 								nChar--;
 								oChange.deleteCount--;
 								nCharsToDel--;
@@ -21617,17 +21655,30 @@
 
 						if (oChange.deleteCount !== 0)
 						{
-							infoToAdd = 
+							oRunInfoToAdd = 
 							{
-								Run: oInfo.Run,
+								Run: oRunInfo.Run,
 								Pos: nPosToAdd
 							};
 							continue;
 						}
 						
-						for (nChar = 0; nChar < oChange.insert.length; nChar++)
+						let oRunToAdd = oRunInfo.Run.Content.length === 0 && oRunInfoToAdd ? oRunInfoToAdd.Run : oRunInfo.Run;
+						nPosToAdd = oRunInfo.Run.Content.length === 0 && oRunInfoToAdd ? oRunInfoToAdd.Pos : nPosToAdd;
+
+						// creting review add run
+						if (oDeleteReviewRun) {
+							let oPara = oDeleteReviewRun.Paragraph;
+							oRunToAdd = new ParaRun(oPara, false);
+							oRunToAdd.Set_Pr(oDeleteReviewRun.Pr.Copy(true));
+							oRunToAdd.SetReviewType(reviewtype_Add);
+							oPara.AddToContent(oPara.Content.indexOf(oDeleteReviewRun) + 1, oRunToAdd);
+							nPosToAdd = 0;
+						}
+
+						for (let nChar = 0; nChar < oChange.insert.length; nChar++)
 						{
-							var itemText = null;
+							let itemText = null;
 							if (oChange.insert[nChar] === 160)
 								oChange.insert[nChar] = 32;
 
@@ -21638,14 +21689,7 @@
 							else
 								itemText = new AscWord.CRunText(oChange.insert[nChar]);
 
-							itemText.Parent = oInfo.Run.GetParagraph();
-							if (oInfo.Run.Content.length === 0 && infoToAdd)
-							{
-								infoToAdd.Run.AddToContent(infoToAdd.Pos, itemText);
-								infoToAdd.Pos++;
-							}
-							else
-								oInfo.Run.AddToContent(nPosToAdd, itemText);
+							oRunToAdd.AddToContent(nPosToAdd, itemText);
 
 							oChange.insert.shift();
 							nChar--;
@@ -21759,7 +21803,6 @@
 		}
 		else 
 		{
-			var oDocument = this.GetDocument();
 			arrSelectedParas = oDocument.Document.GetSelectedParagraphs();
 			if(arrSelectedParas.length <= 0 )
 			{

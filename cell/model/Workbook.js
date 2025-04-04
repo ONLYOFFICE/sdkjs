@@ -1607,6 +1607,9 @@
 					g_cCalcRecursion.incIterStep();
 				}
 			} while (g_cCalcRecursion.needRecursiveCall());
+
+			this.wb.asyncFormulasManager.calculatePromises();
+
 			g_cCalcRecursion.resetIterStep();
 			g_cCalcRecursion.setStartCellIndex(null);
 			g_cCalcRecursion.setGroupChangedCells(null);
@@ -1799,6 +1802,9 @@
 			return res;
 		},
 		_broadscastVolatile: function(notifyData) {
+			if (this.wb.asyncFormulasManager.isRecalculating()) {
+				return;
+			}
 			for (var i in this.volatileListeners) {
 				this.volatileListeners[i].notify(notifyData);
 			}
@@ -2868,6 +2874,144 @@
 		this.nextRow();
 	};
 
+	function AsyncFormulasManager(wb) {
+		this.wb = wb;
+		this.promises = null;
+		this.promiseMap = null;
+		this.calcProcess = null;
+		this.aParserFormulas = null;
+
+		this.endCallback = null;
+	}
+
+	AsyncFormulasManager.prototype.addPromise = function (val, reWrite) {
+		if (!this.promises) {
+			this.promises = [];
+		}
+		let isAdded = false;
+		if (this.getPromiseByIndex(val.parserFormula._index, val.index)) {
+			isAdded = true;
+		}
+		if (!isAdded) {
+			this.promises.push(val);
+			if (!this.promiseMap) {
+				this.promiseMap = {};
+			}
+			if (!this.promiseMap[val.parserFormula._index]) {
+				this.promiseMap[val.parserFormula._index] = {};
+			}
+			this.promiseMap[val.parserFormula._index][val.index] = this.promises.length - 1;
+		} else if (reWrite) {
+			this.promises[this.promiseMap[val.parserFormula._index][val.index]] = val;
+		}
+	};
+	AsyncFormulasManager.prototype.getPromiseByIndex = function (indexParserFormula, stackIndex) {
+		let indexArray =  this.promiseMap && this.promiseMap[indexParserFormula] && this.promiseMap[indexParserFormula][stackIndex];
+		if (indexArray != null && this.promises) {
+			return this.promises[indexArray];
+		}
+		return null;
+	};
+	AsyncFormulasManager.prototype.getPromise = function (index) {
+		return this.promises && this.promises[index];
+	};
+	AsyncFormulasManager.prototype.getPromises = function () {
+		return this.promises;
+	};
+	AsyncFormulasManager.prototype.isPromises = function () {
+		return this.promises && this.promises.length;
+	};
+	AsyncFormulasManager.prototype.clearPromises = function () {
+		this.promises = null;
+		this.promiseMap = null;
+	};
+	AsyncFormulasManager.prototype.setRecalculating = function (val) {
+		this.calcProcess = val;
+	};
+	AsyncFormulasManager.prototype.isRecalculating = function () {
+		return this.calcProcess;
+	};
+	AsyncFormulasManager.prototype.addPromiseParserFormula = function (elem) {
+		if (!this.aParserFormulas) {
+			this.aParserFormulas = [];
+		}
+		this.aParserFormulas.push(elem);
+	};
+	AsyncFormulasManager.prototype.cleanPromiseParserFormula = function () {
+		if (this.aParserFormulas) {
+			for (let i = 0; i < this.aParserFormulas.length; i++) {
+				this.aParserFormulas[i].promiseResult = null;
+			}
+			this.aParserFormulas = null;
+		}
+	};
+	AsyncFormulasManager.prototype.calculatePromises = function () {
+		let t = this;
+		let promises = !this.isRecalculating() && this.getPromises();
+		if (promises) {
+			let doPromises = function (_promises) {
+				let streamInfos = [];
+				let fPromises = [];
+				for (let i = 0; i < _promises.length; i++) {
+					const fPromise = function () {
+						return _promises[i].promise;
+					};
+					fPromises.push(fPromise);
+				}
+				const promiseIterator = new AscCommon.CPromiseGetterIterator(fPromises);
+				promiseIterator.forEachValue(function (streamInfo) {
+					streamInfos.push(streamInfo);
+				}, function (rejectInfo) {
+					streamInfos.push(null);
+				}, function () {
+					for (let i = 0; i < streamInfos.length; i++) {
+						if (!_promises[i].parserFormula.promiseResult) {
+							_promises[i].parserFormula.promiseResult = [];
+						}
+						let resStreamInfo;
+						if (streamInfos[i] == null) {
+							resStreamInfo = new cError(cErrorType.wrong_value_type);
+						} else {
+							resStreamInfo = _promises[i].callback(streamInfos[i]);
+						}
+						_promises[i].parserFormula.promiseResult[_promises[i].index] = resStreamInfo;
+						t.wb.dependencyFormulas.addToChangedCell(_promises[i].parserFormula.parent);
+						t.addPromiseParserFormula(_promises[i].parserFormula);
+					}
+					//t.wb.buildDependency();
+					//t.wb.sortDependency();
+					/*t._foreachChanged(function (oCell) {
+						oCell.setIsDirty(true);
+						oCell && oCell._checkDirty();
+					});*/
+
+					t.clearPromises();
+					t.setRecalculating(true);
+					t.wb.dependencyFormulas.calcTree();
+					t.wb.handlers && t.wb.handlers.trigger("drawWS");
+					/*for (let i = 0; i < streamInfos.length; i++) {
+						_promises[i].parserFormula.promiseResult = null;
+					}*/
+					t.setRecalculating(false);
+
+					promises = !t.isRecalculating() && t.getPromises();
+					if (promises) {
+						doPromises(promises);
+					} else {
+						t.cleanPromiseParserFormula();
+						t.endCallback && t.endCallback();
+					}
+				});
+			};
+			doPromises(promises);
+		} else {
+			//t.endCallback && t.endCallback()
+		}
+	};
+
+
+
+
 	function ForwardTransformationFormula(elem, formula, parsed) {
 		this.elem = elem;
 		this.formula = formula;
@@ -2928,6 +3072,7 @@
 		this.MainDocument = false !== isMainLogicDocument;
 		this.handlers = eventsHandlers;
 		this.dependencyFormulas = new DependencyGraph(this);
+		this.asyncFormulasManager = new AsyncFormulasManager(this);
 		this.nActive = 0;
 		this.showVerticalScroll = null;
 		this.showHorizontalScroll = null;
@@ -3810,6 +3955,7 @@
 		this.dependencyFormulas.forEachFormula(function (fP) {
 			if (fP && fP.bUnknownOrCustomFunction) {
 				fP.isParsed = false;
+				fP.outStack = [];
 				fP.parse();
 				if (/*DefName*/fP.parent.getNodeId) {
 					t.dependencyFormulas.addToChangedDefName(fP.parent);
@@ -3821,6 +3967,7 @@
 			ws.forEachFormula(function (fP) {
 				if (fP && fP.bUnknownOrCustomFunction) {
 					fP.isParsed = false;
+					fP.outStack = [];
 					fP.parse();
 					if (/*CCellWithFormula*/fP.parent.nCol != null) {
 						t.dependencyFormulas.addToChangedCell(fP.parent);
@@ -15467,11 +15614,14 @@
 				const aExcludeFormulas = AscCommonExcel.aExcludeRecursiveFormulas;
 				const oCycleCells = new Map();
 
-				_foreachRefElements(function (oElem, nIndex) {
+				_foreachRefElements(function (oElem, nIndex, nLastIndex) {
 					if (oElem.containCell2(oListenerCell)) {
 						const nIndexWithFunction = nIndex + 2;
+						if (nIndexWithFunction > nLastIndex) {
+							return;
+						}
 						const oElemWithFunction = aOutStack[nIndexWithFunction];
-						if (oElemWithFunction.type === cElementType.func && aExcludeFormulas.includes(oElemWithFunction.name)) {
+						if (oElemWithFunction && oElemWithFunction.type === cElementType.func && aExcludeFormulas.includes(oElemWithFunction.name)) {
 							oCycleCells.set(true, nIndex);
 							return;
 						}
@@ -16559,6 +16709,9 @@
 				break;
 			case cErrorOrigin["spill"]:
 				return cErrorLocal["spill"];
+				break;
+			case cErrorOrigin["busy"]:
+				return cErrorLocal["busy"];
 				break;
 		}
 		return cErrorLocal["nil"];

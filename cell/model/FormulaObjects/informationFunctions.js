@@ -239,8 +239,17 @@ function (window, undefined) {
 				case "filename":
 				case _cCellFunctionLocal["filename"]: {
 					//TODO без пути
-					let docInfo = window["Asc"]["editor"].DocInfo;
-					let fileName = docInfo ? docInfo.get_Title() : "";
+					let api = window["Asc"]["editor"];
+					let printOptionsJson = api && api.wb && api.wb.getPrintOptionsJson && api.wb.getPrintOptionsJson();
+					let spreadsheetLayout = printOptionsJson && printOptionsJson["spreadsheetLayout"];
+					let fileName;
+					if (spreadsheetLayout && spreadsheetLayout["formulaProps"] && spreadsheetLayout["formulaProps"]["docTitle"]) {
+						fileName = spreadsheetLayout["formulaProps"]["docTitle"];
+					} else {
+						let docInfo = api.DocInfo;
+						fileName = docInfo ? docInfo.get_Title() : "";
+					}
+
 					let _ws = arg1.getWS();
 					let sheetName = _ws ? _ws.getName() : null;
 					if (sheetName) {

@@ -35281,7 +35281,7 @@ $(function () {
 		oDoc["returnInfo"] = {"type": sReturnType, "description": "description_return"};
 	}
 
-	function doCustomFunctionTasks(assert, aTasks, typeToArgMap, funcName, _descArgs) {
+	function doCustomFunctionTasks(assert, aTasks, typeToArgMap, funcName, _descArgs, _callback) {
 		//generate ->
 		// let desc = "Custom_function_ADD_@NUMBER_@NUMBER_INPUT_NUMBER_NUMBER";
 		// calcCustomFunction(func, sJsDoc, oDoc, function (_desc) {
@@ -35304,23 +35304,33 @@ $(function () {
 			sFunc += ")";
 
 			calcCustomFunction(fCustomFunc, sJsDoc, oDoc, function (_desc) {
-				oParser = new parserFormula(prefix + sFunc, 'A2', ws);
-				assert.ok(oParser.parse(), "parse_ " + desc + "_" + _desc);
-				let calculateRes = oParser.calculate();
-				if (typeof task.result === "object") {
-					for (let i = 0; i < task.result.length; i++) {
-						for (let j = 0; j < task.result[i].length; j++) {
-							assert.strictEqual(calculateRes.getElementRowCol(i, j).getValue(), task.result[i][j], desc + "_" + _desc);
-						}
-					}
+				if (_callback) {
+					wb.asyncFormulasManager.endCallback = function () {
+						let calculateRes = ws.getRange2("A1");
+						assert.strictEqual(calculateRes.getValue(), task.result, desc + "_" + _desc);
+						_callback && _callback();
+						wb.asyncFormulasManager.endCallback = null;
+					};
+					ws.getRange2("A1").setValue("=" + prefix + sFunc);
 				} else {
-					assert.strictEqual(calculateRes.getValue(), task.result, desc + "_" + _desc);
+					oParser = new parserFormula(prefix + sFunc, new AscCommonExcel.CCellWithFormula(ws, 1, 0), ws);
+					assert.ok(oParser.parse(), "parse_ " + desc + "_" + _desc);
+					let calculateRes = oParser.calculate();
+					if (typeof task.result === "object") {
+						for (let i = 0; i < task.result.length; i++) {
+							for (let j = 0; j < task.result[i].length; j++) {
+								assert.strictEqual(calculateRes.getElementRowCol(i, j).getValue(), task.result[i][j], desc + "_" + _desc);
+							}
+						}
+					} else {
+						assert.strictEqual(calculateRes.getValue(), task.result, desc + "_" + _desc);
+					}
 				}
 			});
 		}
 	}
 
-	function executeCustomFunction (_func) {
+	function executeCustomFunction (_func, callback) {
 		wb.dependencyFormulas.unlockRecal();
 		initCustomFunctionData();
 
@@ -35328,16 +35338,18 @@ $(function () {
 		let trueWb = api.wb;
 		api.wb = {addCustomFunction: AscCommonExcel.WorkbookView.prototype.addCustomFunction, initCustomEngine: AscCommonExcel.WorkbookView.prototype.initCustomEngine};
 
-		_func();
+		_func(callback);
 
-		api.wb = trueWb;
-		ws.getRange2("A1:Z10000").cleanAll();
+		if (!callback) {
+			api.wb = trueWb;
+			ws.getRange2("A1:Z10000").cleanAll();
+		}
 	}
 
 	QUnit.test("Test: \"Custom function test: base operation: number\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function simpleFunc(arg1, arg2) {
+			fCustomFunc = function simpleFunc1(arg1, arg2) {
 				return arg2;
 			};
 
@@ -35484,7 +35496,7 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: base operation: number[][]\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function simpleFunc(arg1) {
+			fCustomFunc = function simpleFunc2(arg1) {
 				return arg1;
 			};
 
@@ -35576,7 +35588,7 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: base operation: string\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function simpleFunc(arg1) {
+			fCustomFunc = function simpleFunc3(arg1) {
 				return arg1;
 			};
 
@@ -35652,7 +35664,7 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: base operation: string[][]\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function simpleFunc(arg1) {
+			fCustomFunc = function simpleFunc4(arg1) {
 				return arg1;
 			};
 
@@ -35728,7 +35740,7 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: base operation: boolean\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function simpleFunc(arg1) {
+			fCustomFunc = function simpleFunc5(arg1) {
 				return arg1;
 			};
 
@@ -35805,7 +35817,7 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: base operation: boolean[][]\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function simpleFunc(arg1) {
+			fCustomFunc = function simpleFunc6(arg1) {
 				return arg1;
 			};
 
@@ -35914,7 +35926,7 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: base operation: any\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function simpleFunc(arg1) {
+			fCustomFunc = function simpleFunc7(arg1) {
 				return arg1;
 			};
 
@@ -36005,7 +36017,7 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: base operation: any[][]\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function simpleFunc(arg1) {
+			fCustomFunc = function simpleFunc8(arg1) {
 				return arg1;
 			};
 
@@ -36084,7 +36096,7 @@ $(function () {
 			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
 
 			//empty function
-			fCustomFunc = function simpleFunc() {
+			fCustomFunc = function simpleFunc9() {
 			};
 
 			initParamsCustomFunction([], "number");
@@ -36103,7 +36115,7 @@ $(function () {
 			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! empty  function !");
 
 			//return null
-			fCustomFunc = function simpleFunc() {
+			fCustomFunc = function simpleFunc10() {
 				return null;
 			};
 
@@ -36123,7 +36135,7 @@ $(function () {
 			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! return null !");
 
 			//return undefined
-			fCustomFunc = function simpleFunc() {
+			fCustomFunc = function simpleFunc11() {
 				return undefined;
 			};
 
@@ -36143,7 +36155,7 @@ $(function () {
 			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! return undefined !");
 
 			//return NaN
-			fCustomFunc = function simpleFunc() {
+			fCustomFunc = function simpleFunc12() {
 				return NaN;
 			};
 
@@ -36162,7 +36174,7 @@ $(function () {
 
 			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! return NaN !");
 
-			fCustomFunc = function simpleFunc(arg1, arg2) {
+			fCustomFunc = function simpleFunc13(arg1, arg2) {
 				return arg2;
 			};
 
@@ -36196,7 +36208,7 @@ $(function () {
 
 			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! init args params count more then function contain!");
 
-			fCustomFunc = function simpleFunc(arg1, arg2, arg3) {
+			fCustomFunc = function simpleFunc14(arg1, arg2, arg3) {
 				return arg2;
 			};
 
@@ -36233,7 +36245,7 @@ $(function () {
 
 			//defaultvalue
 			//ms ignore defaultValue option, while skip
-			fCustomFunc = function simpleFunc(arg1, arg2, arg3) {
+			fCustomFunc = function simpleFunc15(arg1, arg2, arg3) {
 				return arg3;
 			};
 
@@ -36251,7 +36263,7 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: number+number->number\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function add(arg1, arg2) {
+			fCustomFunc = function add1(arg1, arg2) {
 				return arg1 + arg2;
 			};
 
@@ -36310,7 +36322,7 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: string+number->number\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function add(arg1, arg2) {
+			fCustomFunc = function add2(arg1, arg2) {
 				return arg1 + arg2;
 			};
 
@@ -36390,7 +36402,7 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: string+string->number\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function add(arg1, arg2) {
+			fCustomFunc = function add3(arg1, arg2) {
 				return arg1 + arg2;
 			};
 
@@ -36630,6 +36642,550 @@ $(function () {
 
 	});
 
+	QUnit.test("Test: \"Custom function test: async function\"", function (assert) {
+		let done;
+		executeCustomFunction(function (_callback, trueWb) {
+			// Create async custom function
+			fCustomFunc = async function simpleAsyncFunc(arg1, arg2) {
+				// Simulate async operation
+				await new Promise(resolve => setTimeout(resolve, 10));
+				return arg2;
+			};
+
+			let typeToArgMap = {
+				"number": 10,
+				"stringNumber": '"1"',
+				"string": '"test"',
+				"bool": "TRUE",
+				"error": "#REF!",
+				"array": "{1,2,3}",
+				"ref": "A100",
+				"range": "A100:B101"
+			};
+
+			// Initialize custom function with number parameters
+			initParamsCustomFunction(
+				[{type: "number"}, {type: "number"}],
+				"number"
+			);
+
+			// Test async function
+			done = assert.async();
+
+			let aTasks = [{
+				paramsType: ["number", "number"],
+				result: "10"
+			}];
+
+			// Execute and verify async result
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "_ASYNC_TEST", _callback);
+		}, function (trueWb) {
+			let api = window["Asc"]["editor"];
+			api.wb = trueWb;
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+	QUnit.test("Test: \"Custom function test: async operations\"", function (assert) {
+		let done;
+		executeCustomFunction(function (_callback, trueWb) {
+			// Async function that returns promise
+			fCustomFunc = async function asyncPromiseFunc(arg1, arg2) {
+				return new Promise((resolve) => {
+					setTimeout(() => {
+						resolve(arg1 + arg2);
+					}, 10);
+				});
+			};
+
+			let typeToArgMap = {
+				"number": 10,
+				"stringNumber": '"1"',
+				"string": '"test"',
+				"bool": "TRUE",
+				"error": "#REF!",
+				"array": "{1,2,3}",
+				"ref": "A100",
+				"range": "A100:B101"
+			};
+
+			// Initialize with number parameters
+			initParamsCustomFunction(
+				[{type: "number"}, {type: "number"}],
+				"number"
+			);
+
+			// Setup async test
+			done = assert.async();
+
+			let aTasks = [
+				{
+					paramsType: ["number", "number"],
+					result: "20"  // 10 + 10
+				},
+				{
+					paramsType: ["string", "number"],
+					result: "test10"
+				},
+				{
+					paramsType: ["number", "error"],
+					result: "#REF!"
+				}
+			];
+
+			// Execute tests with callback
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap,
+				fCustomFunc.name.toUpperCase(), "_ASYNC_PROMISE_TEST", _callback);
+		}, function (trueWb) {
+			let api = window["Asc"]["editor"];
+			api.wb = trueWb;
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+	QUnit.test("Test: \"Custom function test: async multiple operations\"", function (assert) {
+		let done;
+		executeCustomFunction(function (_callback, trueWb) {
+			// Async function with multiple awaits
+			fCustomFunc = async function asyncMultipleFunc(arg1, arg2) {
+				await new Promise(resolve => setTimeout(resolve, 5));
+				let temp = arg1 * 2;
+				await new Promise(resolve => setTimeout(resolve, 5));
+				return temp + arg2;
+			};
+
+			let typeToArgMap = {
+				"number": 5,
+				"stringNumber": '"1"',
+				"string": '"test"',
+				"bool": "TRUE",
+				"error": "#REF!",
+				"array": "{1,2,3}",
+				"ref": "A100",
+				"range": "A100:B101"
+			};
+
+			initParamsCustomFunction(
+				[{type: "number"}, {type: "number"}],
+				"number"
+			);
+
+			done = assert.async();
+
+			let aTasks = [{
+				paramsType: ["number", "number"],
+				result: "15"  // (5 * 2) + 5
+			}];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap,
+				fCustomFunc.name.toUpperCase(), "_ASYNC_MULTIPLE_TEST", _callback);
+		}, function (trueWb) {
+			let api = window["Asc"]["editor"];
+			api.wb = trueWb;
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+	/**
+	 * Tests async function calculation with cell dependencies
+	 * A1 = number + asyncFunc
+	 * B1 = A1 + B2 + asyncFunc2
+	 * B2 = C2 + asyncFunc3
+	 * C2 = A1 + asyncFunc4
+	 */
+	QUnit.test('Async formula calculation', function(assert) {
+		const done = assert.async(); // For async test completion
+
+		// Setup initial values and async functions
+		const asyncFunc = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve(10);
+				}, 1);
+			});
+		};
+
+		const asyncFunc2 = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve(20);
+				}, 1);
+			});
+		};
+
+		const asyncFunc3 = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve(30);
+				}, 1);
+			});
+		};
+
+		const asyncFunc4 = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve(40);
+				}, 1);
+			});
+		};
+
+		// Register async functions
+		initParamsCustomFunction(
+			[{type: "number"}, {type: "number"}],
+			"number"
+		);
+
+		executeCustomFunction(function (callback) {
+			let api = window["Asc"]["editor"];
+			let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+			api.addCustomFunction(asyncFunc, oJsDoc[0]);
+			api.addCustomFunction(asyncFunc2, oJsDoc[0]);
+			api.addCustomFunction(asyncFunc3, oJsDoc[0]);
+			api.addCustomFunction(asyncFunc4, oJsDoc[0]);
+
+			wb.asyncFormulasManager.endCallback = function () {
+				// Check final calculated values
+				assert.strictEqual(ws.getRange2("A1").getValue(), "15", "A1 calculated correctly");
+				assert.strictEqual(ws.getRange2("C2").getValue(), "55", "C2 calculated correctly");
+				assert.strictEqual(ws.getRange2("B2").getValue(), "85", "B2 calculated correctly");
+				assert.strictEqual(ws.getRange2("B1").getValue(), "120", "B1 calculated correctly");
+				callback();
+				wb.asyncFormulasManager.endCallback = null;
+			};
+
+			// Set cell formulas
+			ws.getRange2("A1").setValue("=5+ASYNCFUNC()");
+			ws.getRange2("B1").setValue("=A1+B2+ASYNCFUNC2()");
+			ws.getRange2("B2").setValue("=C2+ASYNCFUNC3()");
+			ws.getRange2("C2").setValue("=A1+ASYNCFUNC4()");
+
+			// Expected calculation sequence:
+			// 1. A1 = 5 + 10 = 15
+			// 2. C2 = 15 + 40 = 55
+			// 3. B2 = 55 + 30 = 85
+			// 4. B1 = 15 + 85 + 20 = 120
+
+			// Check initial state - cells should show loading state
+			assert.strictEqual(ws.getRange2("A1").getValue(), "#BUSY!", "A1 shows loading state");
+			assert.strictEqual(ws.getRange2("B1").getValue(), "#BUSY!", "B1 shows loading state");
+			assert.strictEqual(ws.getRange2("B2").getValue(), "#BUSY!", "B2 shows loading state");
+			assert.strictEqual(ws.getRange2("C2").getValue(), "#BUSY!", "C2 shows loading state");
+		}, function () {
+			done(); // Complete async test
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+	/**
+	 * Tests complex async function calculation with multiple cell dependencies
+	 * A1 = number + GetCurrentPrice()
+	 * B1 = A1 + C1 + CalculateTax()
+	 * C1 = D1 + GetShippingCost()
+	 * D1 = A2 + B2 + GetDiscountValue()
+	 * A2 = FetchStockQuantity() + GetWarehouseStock()
+	 * B2 = C2 + CalculateHandlingFee()
+	 * C2 = GetSupplierPrice() * GetMarkupRate()
+	 * D2 = (A1 + B1) * GetCurrencyRate()
+	 * E1 = SUM(A1:D1) + CalculateInsurance()
+	 * E2 = AVERAGE(A2:D2) + GetServiceFee()
+	 */
+	QUnit.test('Complex async formula calculation with business logic', function(assert) {
+		const done = assert.async();
+
+		const GetCurrentPrice = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve(10);
+				}, 1);
+			});
+		};
+
+		const CalculateTax = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve(20);
+				}, 1);
+			});
+		};
+
+		// Функция расчета стоимости доставки
+		const GetShippingCost = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve(30);
+				}, 1);
+			});
+		};
+
+		const GetDiscountValue = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve(40); // Значение скидки
+				}, 1);
+			});
+		};
+
+		const FetchStockQuantity = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve(50);
+				}, 1);
+			});
+		};
+
+		const GetWarehouseStock = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve(60);
+				}, 1);
+			});
+		};
+
+		const CalculateHandlingFee = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve(70);
+				}, 1);
+			});
+		};
+
+		const GetSupplierPrice = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve(80);
+				}, 1);
+			});
+		};
+
+		const GetMarkupRate = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve(90);
+				}, 1);
+			});
+		};
+
+		const GetCurrencyRate = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve(100);
+				}, 1);
+			});
+		};
+
+		const CalculateInsurance = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve(110);
+				}, 1);
+			});
+		};
+
+		const GetServiceFee = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve(120);
+				}, 1);
+			});
+		};
+
+		// Register async functions
+		initParamsCustomFunction(
+			[{type: "number"}, {type: "number"}],
+			"number"
+		);
+
+		executeCustomFunction(function (callback) {
+			let api = window["Asc"]["editor"];
+			let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+
+			// Register all async functions
+			const asyncFunctions = {
+				GetCurrentPrice,
+				CalculateTax,
+				GetShippingCost,
+				GetDiscountValue,
+				FetchStockQuantity,
+				GetWarehouseStock,
+				CalculateHandlingFee,
+				GetSupplierPrice,
+				GetMarkupRate,
+				GetCurrencyRate,
+				CalculateInsurance,
+				GetServiceFee
+			};
+
+			Object.entries(asyncFunctions).forEach(([_, func]) => {
+				api.addCustomFunction(func, oJsDoc[0]);
+			});
+
+			wb.asyncFormulasManager.endCallback = function () {
+				// Check final calculated values
+				// A1 = 5 + 10 = 15
+				assert.strictEqual(ws.getRange2("A1").getValue(), "15", "A1 calculated correctly");
+
+				// A2 = 50 + 60 = 110
+				assert.strictEqual(ws.getRange2("A2").getValue(), "110", "A2 calculated correctly");
+
+				// C2 = 80 * 90 = 7200
+				assert.strictEqual(ws.getRange2("C2").getValue(), "7200", "C2 calculated correctly");
+
+				// B2 = 7200 + 70 = 7270
+				assert.strictEqual(ws.getRange2("B2").getValue(), "7270", "B2 calculated correctly");
+
+				// D1 = 110 + 7270 + 40 = 7420
+				assert.strictEqual(ws.getRange2("D1").getValue(), "7420", "D1 calculated correctly");
+
+				// C1 = 7420 + 30 = 7450
+				assert.strictEqual(ws.getRange2("C1").getValue(), "7450", "C1 calculated correctly");
+
+				// B1 = 15 + 7450 + 20 = 7485
+				assert.strictEqual(ws.getRange2("B1").getValue(), "7485", "B1 calculated correctly");
+
+				// D2 = (15 + 7485) * 100 = 750000
+				assert.strictEqual(ws.getRange2("D2").getValue(), "750000", "D2 calculated correctly");
+
+				// E1 = (15 + 7485 + 7450 + 7420) + 110 = 22480
+				assert.strictEqual(ws.getRange2("E1").getValue(), "22480", "E1 calculated correctly");
+
+				// E2 = AVERAGE(110, 7270, 7200, 750000) + 120 = 191265
+				assert.strictEqual(ws.getRange2("E2").getValue(), "191265", "E2 calculated correctly");
+
+				callback();
+				wb.asyncFormulasManager.endCallback = null;
+			};
+
+			// Set cell formulas with complex dependencies
+			ws.getRange2("A1").setValue("=5+GetCurrentPrice()");
+			ws.getRange2("A2").setValue("=FetchStockQuantity()+GetWarehouseStock()");
+			ws.getRange2("C2").setValue("=GetSupplierPrice()*GetMarkupRate()");
+			ws.getRange2("B2").setValue("=C2+CalculateHandlingFee()");
+			ws.getRange2("D1").setValue("=A2+B2+GetDiscountValue()");
+			ws.getRange2("C1").setValue("=D1+GetShippingCost()");
+			ws.getRange2("B1").setValue("=A1+C1+CalculateTax()");
+			ws.getRange2("D2").setValue("=(A1+B1)*GetCurrencyRate()");
+			ws.getRange2("E1").setValue("=SUM(A1:D1)+CalculateInsurance()");
+			ws.getRange2("E2").setValue("=AVERAGE(A2:D2)+GetServiceFee()");
+
+			// Check initial loading states
+			const rangesToCheck = ["A1", "B1", "C1", "D1", "A2", "B2", "C2", "D2", "E1", "E2"];
+			rangesToCheck.forEach(range => {
+				assert.strictEqual(
+					ws.getRange2(range).getValue(),
+					"#BUSY!",
+					`${range} shows loading state`
+				);
+			});
+
+		}, function () {
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+	QUnit.test('Chain of dependent async functions with arguments', function(assert) {
+		const done = assert.async();
+
+		// Setup async functions
+		const asyncFunc1 = function(value) {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve(value + 10);
+				}, 1);
+			});
+		};
+
+		const asyncFunc2 = function(value) {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve(value + 20);
+				}, 1);
+			});
+		};
+
+		const asyncFunc3 = function(value) {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve(value + 30);
+				}, 1);
+			});
+		};
+
+		const asyncFunc4 = function(value) {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve(value + 40);
+				}, 1);
+			});
+		};
+
+		const asyncFunc5 = function(value) {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve(value + 50);
+				}, 1);
+			});
+		};
+
+		// Register async functions
+		initParamsCustomFunction(
+			[{type: "number"}, {type: "number"}],
+			"number"
+		);
+
+		executeCustomFunction(function (callback) {
+			let api = window["Asc"]["editor"];
+			let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+			api.addCustomFunction(asyncFunc1, oJsDoc[0]);
+			api.addCustomFunction(asyncFunc2, oJsDoc[0]);
+			api.addCustomFunction(asyncFunc3, oJsDoc[0]);
+			api.addCustomFunction(asyncFunc4, oJsDoc[0]);
+			api.addCustomFunction(asyncFunc5, oJsDoc[0]);
+
+			wb.asyncFormulasManager.endCallback = function () {
+				// Check final calculated values
+				// A5 = ASYNCFUNC5(5) = 5 + 50 = 55
+				// A4 = ASYNCFUNC4(55) = 55 + 40 = 95
+				// A3 = ASYNCFUNC3(95) = 95 + 30 = 125
+				// A2 = ASYNCFUNC2(125) = 125 + 20 = 145
+				// A1 = ASYNCFUNC1(145) = 145 + 10 = 155
+				assert.strictEqual(ws.getRange2("A5").getValue(), "55", "A5 calculated correctly");
+				assert.strictEqual(ws.getRange2("A4").getValue(), "95", "A4 calculated correctly");
+				assert.strictEqual(ws.getRange2("A3").getValue(), "125", "A3 calculated correctly");
+				assert.strictEqual(ws.getRange2("A2").getValue(), "145", "A2 calculated correctly");
+				assert.strictEqual(ws.getRange2("A1").getValue(), "155", "A1 calculated correctly");
+				callback();
+				wb.asyncFormulasManager.endCallback = null;
+			};
+
+			// Set cell formulas with chain dependency through function arguments
+			ws.getRange2("A5").setValue("=ASYNCFUNC5(5)");
+			ws.getRange2("A4").setValue("=ASYNCFUNC4(A5)");
+			ws.getRange2("A3").setValue("=ASYNCFUNC3(A4)");
+			ws.getRange2("A2").setValue("=ASYNCFUNC2(A3)");
+			ws.getRange2("A1").setValue("=ASYNCFUNC1(A2)");
+
+			// Expected calculation sequence:
+			// 1. A5 = ASYNCFUNC5(5) = 55
+			// 2. A4 = ASYNCFUNC4(55) = 95
+			// 3. A3 = ASYNCFUNC3(95) = 125
+			// 4. A2 = ASYNCFUNC2(125) = 145
+			// 5. A1 = ASYNCFUNC1(145) = 155
+
+			// Check initial state - cells should show loading state
+			/*assert.strictEqual(ws.getRange2("A1").getValue(), "#BUSY!", "A1 shows loading state");
+			assert.strictEqual(ws.getRange2("A2").getValue(), "#BUSY!", "A2 shows loading state");
+			assert.strictEqual(ws.getRange2("A3").getValue(), "#BUSY!", "A3 shows loading state");
+			assert.strictEqual(ws.getRange2("A4").getValue(), "#BUSY!", "A4 shows loading state");
+			assert.strictEqual(ws.getRange2("A5").getValue(), "#BUSY!", "A5 shows loading state");*/
+
+		}, function () {
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
 	QUnit.test("Test: \"3d_ref_tests\"", function (assert) {
 		let cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 1, 0);
 		let wsName = "हरियाणवी";
