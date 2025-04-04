@@ -680,7 +680,7 @@ function getFuncFormatByArgs (arg, currentFuncFormat) {
 			numFormatType: Asc.c_oAscNumFormatType.Accounting
 		} : resFormatInfo;
 	} else if (arg0FormatType === arg1FormatType) {
-		/* MS res */
+		/* MS type compare res */
 		switch (arg0FormatType) {
 			// date+date = prev/default format(ms)
 			case Asc.c_oAscNumFormatType.Date:
@@ -689,8 +689,6 @@ function getFuncFormatByArgs (arg, currentFuncFormat) {
 				resFormatInfo = {
 					sFormat: "General",
 					numFormatType: Asc.c_oAscNumFormatType.General
-					// sFormat: currentFuncFormat.sFormat,
-					// numFormatType: currentFuncFormat.numFormatType
 				}
 				break;
 			default: 
@@ -9054,7 +9052,7 @@ function parserFormula( formula, parent, _ws ) {
 			opt_bbox = new Asc.Range(0, 0, 0, 0);
 		}
 
-		let currentFuncFormatStr;	// формат функции(которая была ранее или позже)
+		let currentFuncFormatStr;	// format for the argument as a result of calculating the function
 		let currentFuncFormat = {	
 			// default format for function result
 			sFormat: "General",
@@ -9188,9 +9186,7 @@ function parserFormula( formula, parent, _ws ) {
 							_tmp.sFormat = currentFuncFormat.sFormat = "General";
 							_tmp.numFormatType = currentFuncFormat.numFormatType = Asc.c_oAscNumFormatType.General;
 						}
-					}
-					//_tmp = currentElement.Calculate(arg, opt_bbox, opt_defName, this.ws, bIsSpecialFunction);
-					else if (currentElement.type === cElementType.operator && _tmp) {
+					} else if (currentElement.type === cElementType.operator && _tmp) {
 						let cellFormat;
 						if (arg && arg.length > 1) {
 							cellFormat = getFuncFormatByArgs(arg, currentFuncFormat);
@@ -9952,7 +9948,6 @@ function parserFormula( formula, parent, _ws ) {
 			isDefName = this.parent.onFormulaEvent(AscCommon.c_oNotifyParentType.IsDefName);
 		}
 
-		// записывать форматы тут или же при вычислении в pf?
 		for (var i = 0; i < this.outStack.length; i++) {
 			ref = this.outStack[i];
 
