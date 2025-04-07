@@ -748,7 +748,6 @@
                 }
                 break;
             default:
-                sFormat = ptf;
                 break;
         }
 

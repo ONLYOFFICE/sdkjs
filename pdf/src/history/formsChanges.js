@@ -1795,7 +1795,7 @@ CChangesPDFPushbuttonFitBounds.prototype.Type = AscDFH.historyitem_Pdf_Pushbutto
 CChangesPDFPushbuttonFitBounds.prototype.private_SetValue = function(Value)
 {
 	let oForm = this.Class;
-	oForm.SetButtonFitBounds(Value);
+	oForm.SetFitBounds(Value);
 };
 
 /**

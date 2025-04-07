@@ -282,14 +282,15 @@
     CListBoxField.prototype.SetMultipleSelection = function(bValue) {
         let oParent = this.GetParent(true);
         if (oParent) {
-            oParent.SetMultipleSelection(bValue);
-            return;
+            return oParent.SetMultipleSelection(bValue);
         }
 
         AscCommon.History.Add(new CChangesPDFListMultipleSelection(this, this._multipleSelection, bValue));
 
         this._multipleSelection = bValue;
         this.SetWasChanged(true);
+
+        return true;
     };
     CListBoxField.prototype.IsMultipleSelection = function(bInherit) {
         let oParent = this.GetParent(true);
@@ -349,7 +350,7 @@
         if (oParent)
             return oParent.AddOption(option, nPos);
 
-        if (option == null) return;
+        if (option == null) return false;
         
         let formattedOption;
         let sCaption = "";
@@ -405,7 +406,10 @@
             }
 
             this.SetWasChanged(true);
+            return true;
         }
+
+        return false;
     };
     CListBoxField.prototype.RemoveOption = function(nPos) {
         let oParent = this.GetParent(true);
@@ -433,6 +437,8 @@
 
             return option;
         }
+
+        return null;
     };
     CListBoxField.prototype.SetOptions = function(aOpt) {
         while (this.GetOptions().length > 0) {

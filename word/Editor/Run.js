@@ -3415,7 +3415,10 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 	{
 		isKeepWidth = true;
 		nMaxComb = oTextFormPDF.GetCharLimit();
-		nCombWidth = oTextFormPDF.getFormRelRect().W / nMaxComb;
+		let formRelRect = oTextFormPDF.getFormRelRect();
+		if (formRelRect) {
+			nCombWidth = formRelRect.W / nMaxComb;
+		}
 	}
 
 	if (nCombWidth && nMaxComb > 1)

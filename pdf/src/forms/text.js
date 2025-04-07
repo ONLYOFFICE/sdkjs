@@ -180,15 +180,20 @@
     CTextField.prototype.SetDoNotScroll = function(bNot) {
         let oParent = this.GetParent(true);
         if (oParent) {
-            oParent.SetDoNotScroll(bNot);
-            return;
+            return oParent.SetDoNotScroll(bNot);
         }
     
+        if (this.IsComb()) {
+            return false;
+        }
+
         AscCommon.History.Add(new CChangesPDFTextFormDoNotScroll(this, this._doNotScroll, bNot));
         this._doNotScroll = bNot;
     
         this.SetWasChanged(true);
         this.SetNeedRecalc(true);
+
+        return true;
     };
     CTextField.prototype.IsDoNotScroll = function(bInherit) {
         let oParent = this.GetParent(true);
@@ -251,15 +256,14 @@
     CTextField.prototype.SetMultiline = function(bMultiline) {
         let oParent = this.GetParent(true);
         if (oParent) {
-            oParent.SetMultiline(bMultiline);
-            return;
+            return oParent.SetMultiline(bMultiline);
         }
 
         let nFormatType = this.GetFormatType();
         if (this.IsMultiline() == bMultiline ||
             (bMultiline && (this.IsPassword() || this.IsComb())) ||
             (nFormatType !== AscPDF.FormatType.NONE && nFormatType !== AscPDF.FormatType.CUSTOM)) {
-            return;
+            return true;
         }
     
         AscCommon.History.Add(new CChangesPDFTextFormMultiline(this, this._multiline, bMultiline));
@@ -296,6 +300,8 @@
     
         this.SetWasChanged(true);
         this.SetNeedRecalc(true);
+
+        return true;
     };
     CTextField.prototype.IsMultiline = function(bInherit) {
         let oParent = this.GetParent(true);
@@ -1009,6 +1015,12 @@
             this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.OnFocus, []);
             this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.OnBlur, []);
         }
+
+        return true;
+    };
+    CTextField.prototype.GetPlaceholder = function() {
+        const oCurMeta = this.GetMeta();
+        return oCurMeta['placeholder'];
     };
     CTextField.prototype.SetRegularExp = function(sReg) {
         const oCurMeta = this.GetMeta();
@@ -1037,6 +1049,10 @@
         else {
             this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Validate, []);
         }
+    };
+    CTextField.prototype.GetRegularExp = function() {
+        const oCurMeta = this.GetMeta();
+        return oCurMeta['regular'];
     };
     CTextField.prototype.SetArbitaryMask = function(sMask) {
         if (sMask) {
@@ -1173,6 +1189,7 @@
 
         this.RecalcMeasureContent();
         
+        let isChangedRect = false == this.RecalculateContentRect();
         if (this.GetTextSize() == 0) {
             if (null == this.getFormRelRect()) {
                 this.CalculateContentClipRect();
@@ -1180,8 +1197,8 @@
             this.ProcessAutoFitContent(this.content);
             this.ProcessAutoFitContent(this.contentFormat);
         }
-
-        if (false == this.RecalculateContentRect()) {
+        
+        if (isChangedRect) {
             this.contentFormat.Content.forEach(function(element) {
                 element.Recalculate_Page(0);
             });

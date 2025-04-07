@@ -1993,6 +1993,8 @@
         this._strokeColor = this._borderColor = aColor;
         this.SetWasChanged(true);
         this.AddToRedraw();
+
+        return true;
     };
     CBaseField.prototype.GetBorderColor = function() {
         return this._strokeColor;
@@ -2666,6 +2668,8 @@
 
         this.SetWasChanged(true);
         this.SetNeedRecalc(true);
+
+        return true;
     };
     CBaseField.prototype.GetTextSize = function() {
         return this._textSize;

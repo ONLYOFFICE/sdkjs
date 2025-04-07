@@ -408,25 +408,22 @@
         let oDoc = this.GetDocument();
         let oViewer = oDoc.Viewer;
 
-        if (this.IsReadOnly()) {
+		if (this.IsReadOnly()) {
             return;
-        }
-
-        let oThis = this;
-        let bCommit = false;
-        if (oThis.IsChecked()) {
-            if (oThis.IsNoToggleToOff() == false) {
-                oThis.SetChecked(false);
+        }        let bCommit = false;
+        if (this.IsChecked()) {
+            if (this.IsNoToggleToOff() == false) {
+                this.SetChecked(false);
                 bCommit = true;
             }
         }
         else {
-            oThis.SetChecked(true);
+            this.SetChecked(true);
             bCommit = true;
         }
         
         if (bCommit) {
-            oThis.SetNeedCommit(true);
+            this.SetNeedCommit(true);
         }
         
         this.DrawUnpressed();

@@ -293,6 +293,18 @@
         outline:    3
     }
 
+    const BORDER_WIDTH = {
+        none:   0,
+        thin:   1,
+        medium: 2,
+        thick:  3
+    }
+
+    BORDER_WIDTH["none"]    = BORDER_WIDTH.none;
+    BORDER_WIDTH["thin"]    = BORDER_WIDTH.thin;
+    BORDER_WIDTH["medium"]  = BORDER_WIDTH.medium;
+    BORDER_WIDTH["thick"]   = BORDER_WIDTH.thick;
+
     BUTTON_HIGHLIGHT_TYPES["none"]      = BUTTON_HIGHLIGHT_TYPES.none;
     BUTTON_HIGHLIGHT_TYPES["invert"]    = BUTTON_HIGHLIGHT_TYPES.invert;
     BUTTON_HIGHLIGHT_TYPES["push"]      = BUTTON_HIGHLIGHT_TYPES.push;

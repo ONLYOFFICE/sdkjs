@@ -445,6 +445,8 @@
 			"word/Editor/Styles/FixedFormDefaults.js",
 			"word/Editor/Styles/default-styles.js",
 			
+			word/fromToJSON.js",
+			"pdf/apiBuilder.js",
 			"common/versionHistory.js",
 			"common/clipboard_base.js",
 			"common/text_input2.js",

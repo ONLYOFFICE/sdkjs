@@ -82,14 +82,15 @@
     CBaseListField.prototype.SetCommitOnSelChange = function(bValue) {
         let oParent = this.GetParent(true);
         if (oParent) {
-            oParent.SetCommitOnSelChange(bValue);
-            return;
+            return oParent.SetCommitOnSelChange(bValue);
         }
 
         AscCommon.History.Add(new CChangesPDFListCommitOnSelChange(this, this._commitOnSelChange, bValue));
 
         this._commitOnSelChange = bValue;
         this.SetWasChanged(true);
+
+        return true;
     };
     CBaseListField.prototype.IsCommitOnSelChange = function(bInherit) {
         let oParent = this.GetParent(true);
