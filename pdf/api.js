@@ -1179,7 +1179,7 @@
 		let oDoc = this.getPDFDoc();
 		
 		return oDoc.DoAction(function() {
-			let oField = oDoc.CreateRadiobuttonField(true);
+			let oField = oDoc.CreateRadiobuttonField();
 			oDoc.AddField(oField, oDoc.GetCurPage(), true);
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
@@ -1188,7 +1188,7 @@
 		let oDoc = this.getPDFDoc();
 		
 		return oDoc.DoAction(function() {
-			let oField = oDoc.CreateComboboxField(true);
+			let oField = oDoc.CreateComboboxField();
 			oDoc.AddField(oField, oDoc.GetCurPage(), true);
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
@@ -1197,7 +1197,7 @@
 		let oDoc = this.getPDFDoc();
 		
 		return oDoc.DoAction(function() {
-			let oField = oDoc.CreateListboxField(true);
+			let oField = oDoc.CreateListboxField();
 			oDoc.AddField(oField, oDoc.GetCurPage(), true);
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
@@ -2145,7 +2145,7 @@
 			oController.selectedObjects.forEach(function(shape) {
 				let field = shape.GetEditField();
 				if (AscPDF.FIELD_TYPES.button == field.GetType()) {
-					field.SetButtonFitBounds(bValue);
+					field.SetFitBounds(bValue);
 				}
 			});
 

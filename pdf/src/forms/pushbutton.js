@@ -1401,7 +1401,7 @@
     CPushButtonField.prototype.GetDrawing = function() {
         return this.content.GetAllDrawingObjects()[0];
     };
-    CPushButtonField.prototype.SetButtonFitBounds = function(bValue) {
+    CPushButtonField.prototype.SetFitBounds = function(bValue) {
         if (this._buttonFitBounds != bValue) {
             AscCommon.History.Add(new CChangesPDFPushbuttonFitBounds(this, this._buttonFitBounds, bValue));
 

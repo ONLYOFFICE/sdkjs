@@ -79,8 +79,7 @@
     CBaseListField.prototype.SetCommitOnSelChange = function(bValue) {
         let oParent = this.GetParent();
         if (oParent && oParent.GetType() === this.GetType()) {
-            oParent.SetCommitOnSelChange(bValue);
-            return;
+            return oParent.SetCommitOnSelChange(bValue);
         }
 
         let oDoc = this.GetDocument();
@@ -88,6 +87,8 @@
 
         this._commitOnSelChange = bValue;
         this.SetWasChanged(true);
+
+        return true;
     };
     CBaseListField.prototype.IsCommitOnSelChange = function(bInherit) {
         let oParent = this.GetParent();

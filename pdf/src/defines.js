@@ -230,6 +230,18 @@
         outline:    3
     }
 
+    const BORDER_WIDTH = {
+        none:   0,
+        thin:   1,
+        medium: 2,
+        thick:  3
+    }
+
+    BORDER_WIDTH["none"]    = BORDER_WIDTH.none;
+    BORDER_WIDTH["thin"]    = BORDER_WIDTH.thin;
+    BORDER_WIDTH["medium"]  = BORDER_WIDTH.medium;
+    BORDER_WIDTH["thick"]   = BORDER_WIDTH.thick;
+
     BUTTON_HIGHLIGHT_TYPES["none"]      = BUTTON_HIGHLIGHT_TYPES.none;
     BUTTON_HIGHLIGHT_TYPES["invert"]    = BUTTON_HIGHLIGHT_TYPES.invert;
     BUTTON_HIGHLIGHT_TYPES["push"]      = BUTTON_HIGHLIGHT_TYPES.push;
@@ -256,6 +268,7 @@
     asc["ValidateType"]             = asc.ValidateType              = ValidateType;
     asc["CHECKBOX_STYLES"]          = asc.CHECKBOX_STYLES           = CHECKBOX_STYLES;
     asc["BORDER_TYPES"]             = asc.BORDER_TYPES              = BORDER_TYPES;
+    asc["BORDER_WIDTH"]             = asc.BORDER_WIDTH              = BORDER_WIDTH;
     asc["BUTTON_HIGHLIGHT_TYPES"]   = asc.BUTTON_HIGHLIGHT_TYPES    = BUTTON_HIGHLIGHT_TYPES;
     asc["APPEARANCE_TYPES"]         = asc.APPEARANCE_TYPES          = APPEARANCE_TYPES;
     asc.CommandType                 = CommandType;
