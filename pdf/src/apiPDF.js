@@ -1341,7 +1341,7 @@
                 }
             }
             else {
-                throw Error("InvalidSetError: Set not possible, invalid value.");
+                throw Error("InvalidSetError: Get not possible, invalid value.");
             }
         }
         else {

@@ -204,6 +204,12 @@ var CPresentation = CPresentation || function(){};
         this.checkDefaultFonts();
     }
 
+    CPDFDoc.prototype.GetViewer = function() {
+        return this.Viewer;
+    };
+    CPDFDoc.prototype.GetFile = function() {
+        return this.Viewer.file;
+    };
 	CPDFDoc.prototype.RecalculateAll = function() {
 		let fontMap = {};
 		
@@ -2610,7 +2616,7 @@ var CPresentation = CPresentation || function(){};
         let oController = this.GetController();
         
         if (oFile.pages.length == 1)
-            return false;
+            return;
         if (!AscCommon.isNumber(nPos) || nPos < 0)
             nPos = 0;
 
@@ -3607,7 +3613,7 @@ var CPresentation = CPresentation || function(){};
         });
 
         if (!oForm || !oForm.IsWidget())
-            return;
+            return false;
 
         // удаляем поле из виджетов и со страницы
         let nPos = this.widgets.indexOf(oForm);
@@ -3622,6 +3628,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         this.ClearSearch();
+        return true;
     };
     
     CPDFDoc.prototype.GetDocument = function() {
@@ -4029,7 +4036,7 @@ var CPresentation = CPresentation || function(){};
         let sPartName = aPartNames[0];
         for (let i = 0; i < aPartNames.length; i++) {
             for (let j = 0; j < this.widgets.length; j++) {
-                if (this.widgets[j].GetFullName() == sPartName) // checks by fully name
+                if (this.widgets[j].GetFullName() == sPartName) // checks by full name
                     return this.widgets[j];
             }
             sPartName += "." + aPartNames[i + 1];
@@ -6591,6 +6598,9 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.GetCurrentParagraph = function() {};
     CPDFDoc.prototype.StopRecalculate = function() {};
     CPDFDoc.prototype.StopSpellCheck = function() {};
+    CPDFDoc.prototype.LockPanelStyles = function() {};
+    CPDFDoc.prototype.UnlockPanelStyles = function() {};
+    CPDFDoc.prototype.OnEndLoadScript = function() {};
     CPDFDoc.prototype.Check_GraphicFrameRowHeight = function(oGrFrame) {
         return this.GetController().Check_GraphicFrameRowHeight(oGrFrame);
     };
@@ -7062,7 +7072,36 @@ var CPresentation = CPresentation || function(){};
 		this.NeedUpdateTarget = false;
 	};
     CPDFDoc.prototype.SetWordSelection = function(){};
-    
+    CPDFDoc.prototype.Get_AllImageUrls = function(aImages) {
+        if (!Array.isArray(aImages)) {
+            aImages = [];
+        }
+
+        this.drawings.forEach(function(drawing) {
+            drawing.getAllRasterImages(aImages);
+        });
+
+        this.widgets.forEach(function(widget) {
+            if (widget.GetType() == AscPDF.FIELD_TYPES.button) {
+                Object.values(AscPDF.APPEARANCE_TYPES).forEach(function(type) {
+                    let sRasterId = widget.GetImageRasterId(type);
+                    if (sRasterId && !aImages.includes(sRasterId)) {
+                        aImages.push(sRasterId);
+                    }
+                });
+            }
+        });
+
+        return aImages;
+    };
+    CPDFDoc.prototype.Reassign_ImageUrls = function(oImages) {
+        this.widgets.forEach(function(widget) {
+            widget.GetType() == AscPDF.FIELD_TYPES.button && widget.Reassign_ImageUrls(oImages);
+        });
+    };
+    CPDFDoc.prototype.Document_Get_AllFontNames = function() {
+        return [];
+    };
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Extension required for CTextBoxContent
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

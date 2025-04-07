@@ -419,6 +419,7 @@
 			"word/Editor/Styles/default-styles.js",
 			
 			"word/apiBuilder.js",
+			"pdf/apiBuilder.js",
 
 			"word/fromToJSON.js",
 			"common/versionHistory.js",

@@ -1373,7 +1373,7 @@
 				}
 				if (oFormInfo["IF"] != null) {
 					if (oFormInfo["IF"]["FB"] != null)
-						oForm.SetButtonFitBounds(Boolean(oFormInfo["IF"]["FB"]));
+						oForm.SetFitBounds(Boolean(oFormInfo["IF"]["FB"]));
 					if (oFormInfo["IF"]["SW"] != null)
 						oForm.SetScaleWhen(oFormInfo["IF"]["SW"]);
 					if (oFormInfo["IF"]["A"] != null)

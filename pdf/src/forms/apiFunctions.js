@@ -242,8 +242,8 @@
         if (oCurForm.GetType() == AscPDF.FIELD_TYPES.text) {
             sCurValue = oCurForm.GetValue();
         } else if (oCurForm.GetType() == AscPDF.FIELD_TYPES.combobox) {
-            let nCurIdx = oCurForm.GetCurIdxs();
-            sCurValue = nCurIdx == -1 ? oCurForm.GetValue() : oCurForm.api.getItemAt(nCurIdx, false);
+            let nCurIdx = oCurForm.GetCurIdxs()[0];
+            sCurValue = nCurIdx == undefined ? oCurForm.GetValue() : oCurForm.api.getItemAt(nCurIdx, false);
         }
 
         const sRes = FormatNumberValue(sCurValue, nDec, sepStyle, negStyle, strCurrency, bCurrencyPrepend);
@@ -334,8 +334,8 @@
         if (oCurForm.GetType() === AscPDF.FIELD_TYPES.text) {
             sCurValue = oCurForm.GetValue();
         } else if (oCurForm.GetType() === AscPDF.FIELD_TYPES.combobox) {
-            let nCurIdx = oCurForm.GetCurIdxs();
-            sCurValue = nCurIdx === -1 ? oCurForm.GetValue() : oCurForm.api.getItemAt(nCurIdx, false);
+            let nCurIdx = oCurForm.GetCurIdxs()[0];
+            sCurValue = nCurIdx == undefined ? oCurForm.GetValue() : oCurForm.api.getItemAt(nCurIdx, false);
         }
     
         const sRes = FormatPercentValue(sCurValue, nDec, sepStyle);
@@ -428,8 +428,8 @@
         if (oCurForm.GetType() == AscPDF.FIELD_TYPES.text)
             sCurValue = oCurForm.GetValue();
         else if (oCurForm.GetType() == AscPDF.FIELD_TYPES.combobox) {
-            let nCurIdx = oCurForm.GetCurIdxs();
-            sCurValue = nCurIdx == -1 ? oCurForm.GetValue() : oCurForm.api.getItemAt(nCurIdx, false);
+            let nCurIdx = oCurForm.GetCurIdxs()[0];
+            sCurValue = nCurIdx == undefined ? oCurForm.GetValue() : oCurForm.api.getItemAt(nCurIdx, false);
         }
 
         let oFormatParser = AscCommon.g_oFormatParser;
@@ -543,8 +543,8 @@
         if (oForm.GetType() == AscPDF.FIELD_TYPES.text)
             sCurValue = oForm.GetValue();
         else if (oForm.GetType() == AscPDF.FIELD_TYPES.combobox) {
-            let nCurIdx = oForm.GetCurIdxs();
-            sCurValue = nCurIdx == -1 ? oForm.GetValue() : oForm.GetFormApi().getItemAt(nCurIdx, false);
+            let nCurIdx = oForm.GetCurIdxs()[0];
+            sCurValue = nCurIdx == undefined ? oForm.GetValue() : oForm.GetFormApi().getItemAt(nCurIdx, false);
         }
 
         let oFormatParser = AscCommon.g_oFormatParser;
@@ -687,8 +687,8 @@
         if (oForm.GetType() == AscPDF.FIELD_TYPES.text)
             sCurValue = oForm.GetValue();
         else if (oForm.GetType() == AscPDF.FIELD_TYPES.combobox) {
-            let nCurIdx = oForm.GetCurIdxs();
-            sCurValue = nCurIdx == -1 ? oForm.GetValue() : oForm.api.getItemAt(nCurIdx, false);
+            let nCurIdx = oForm.GetCurIdxs()[0];
+            sCurValue = nCurIdx == undefined ? oForm.GetValue() : oForm.api.getItemAt(nCurIdx, false);
         }
         
         if (sCurValue == "")
@@ -765,7 +765,6 @@
                 }
                 break;
             default:
-                sFormat = ptf;
                 break;
         }
 
@@ -776,8 +775,8 @@
         if (oForm.GetType() == AscPDF.FIELD_TYPES.text)
             sCurValue = oForm.GetValue();
         else if (oForm.GetType() == AscPDF.FIELD_TYPES.combobox) {
-            let nCurIdx = oForm.GetCurIdxs();
-            sCurValue = nCurIdx == -1 ? oForm.GetValue() : oForm.api.getItemAt(nCurIdx, false);
+            let nCurIdx = oForm.GetCurIdxs()[0];
+            sCurValue = nCurIdx == undefined ? oForm.GetValue() : oForm.api.getItemAt(nCurIdx, false);
         }
         
        if (fIsValidTime && fIsValidTime(sCurValue) == false) {
@@ -823,8 +822,8 @@
         if (oCurForm.GetType() == AscPDF.FIELD_TYPES.text)
             sCurValue = oCurForm.GetValue();
         else if (oCurForm.GetType() == AscPDF.FIELD_TYPES.combobox) {
-            let nCurIdx = oCurForm.GetCurIdxs();
-            sCurValue = nCurIdx == -1 ? oCurForm.GetValue() : oCurForm.api.getItemAt(nCurIdx, false);
+            let nCurIdx = oCurForm.GetCurIdxs()[0];
+            sCurValue = nCurIdx == undefined ? oCurForm.GetValue() : oCurForm.api.getItemAt(nCurIdx, false);
         }
 
         let oTargetRun = oCurForm.contentFormat.GetElement(0).GetElement(0);

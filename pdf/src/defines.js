@@ -141,6 +141,13 @@
     SpecialFormatType["PHONE"] = SpecialFormatType.PHONE;
     SpecialFormatType["SSN"] = SpecialFormatType.SSN;
 
+    const TimeFormatType = {
+        "24HR:MM": 0,   // [ 14:30 ]
+        "12HR:MM": 1,   // [ 2:30 PM ]
+        "24HR:MM:SS": 2,// [ 14:30:15 ]
+        "12HR:MM:SS": 3 // [ 2:30:15 PM ]
+    }
+
     const SeparatorStyle = {
         COMMA_DOT: 0,       // 1,234.56
         NO_SEPARATOR: 1,    // 1234.56
@@ -230,6 +237,18 @@
         outline:    3
     }
 
+    const BORDER_WIDTH = {
+        none:   0,
+        thin:   1,
+        medium: 2,
+        thick:  3
+    }
+
+    BORDER_WIDTH["none"]    = BORDER_WIDTH.none;
+    BORDER_WIDTH["thin"]    = BORDER_WIDTH.thin;
+    BORDER_WIDTH["medium"]  = BORDER_WIDTH.medium;
+    BORDER_WIDTH["thick"]   = BORDER_WIDTH.thick;
+
     BUTTON_HIGHLIGHT_TYPES["none"]      = BUTTON_HIGHLIGHT_TYPES.none;
     BUTTON_HIGHLIGHT_TYPES["invert"]    = BUTTON_HIGHLIGHT_TYPES.invert;
     BUTTON_HIGHLIGHT_TYPES["push"]      = BUTTON_HIGHLIGHT_TYPES.push;
@@ -250,12 +269,14 @@
     asc["REF_TO_REASON"]            = asc.REF_TO_REASON             = REF_TO_REASON;
     asc["FormatType"]               = asc.FormatType                = FormatType;
     asc["SpecialFormatType"]        = asc.SpecialFormatType         = SpecialFormatType;
+    asc["TimeFormatType"]           = asc.TimeFormatType            = TimeFormatType;
     asc["SeparatorStyle"]           = asc.SeparatorStyle            = SeparatorStyle;
     asc["NegativeStyle"]            = asc.NegativeStyle             = NegativeStyle;
     asc["CalculateType"]            = asc.CalculateType             = CalculateType;
     asc["ValidateType"]             = asc.ValidateType              = ValidateType;
     asc["CHECKBOX_STYLES"]          = asc.CHECKBOX_STYLES           = CHECKBOX_STYLES;
     asc["BORDER_TYPES"]             = asc.BORDER_TYPES              = BORDER_TYPES;
+    asc["BORDER_WIDTH"]             = asc.BORDER_WIDTH              = BORDER_WIDTH;
     asc["BUTTON_HIGHLIGHT_TYPES"]   = asc.BUTTON_HIGHLIGHT_TYPES    = BUTTON_HIGHLIGHT_TYPES;
     asc["APPEARANCE_TYPES"]         = asc.APPEARANCE_TYPES          = APPEARANCE_TYPES;
     asc.CommandType                 = CommandType;

@@ -1701,6 +1701,8 @@
         this._strokeColor = this._borderColor = aColor;
         this.SetWasChanged(true);
         this.AddToRedraw();
+
+        return true;
     };
     CBaseField.prototype.GetBorderColor = function() {
         return this._strokeColor;
@@ -1771,7 +1773,7 @@
                 oWidget.SetValue(value);
                 oWidget.Commit();
             }
-            else if (value && (!this.GetParentValue() || (this.GetType() == AscPDF.FIELD_TYPES.checkbox && this.GetParentValue() == "Off"))) {
+            else if (value && (!this.GetParentValue() || ([AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton].includes(this.GetType()) && this.GetParentValue() == "Off"))) {
                 oWidget.SetValue(value);
                 oWidget.Commit();
             }
@@ -2352,6 +2354,8 @@
         
         this.SetWasChanged(true);
         this.SetNeedRecalc();
+
+        return true;
     };
     CBaseField.prototype.GetTextSize = function() {
         return this._textSize;
