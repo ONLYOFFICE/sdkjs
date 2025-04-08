@@ -9052,13 +9052,7 @@ function parserFormula( formula, parent, _ws ) {
 			opt_bbox = new Asc.Range(0, 0, 0, 0);
 		}
 
-		let currentFuncFormatStr;	// format for the argument as a result of calculating the function
-		let currentFuncFormat = {	
-			// default format for function result
-			sFormat: "General",
-			numFormatType: Asc.c_oAscNumFormatType.General
-		}
-
+		let currentFuncFormat = null;
 		let promiseCounter = 0;
 		var elemArr = [], _tmp, numFormat = cNumFormatFirstCell, currentElement = null, bIsSpecialFunction, argumentsCount, defNameCalcArr, defNameArgCount = 0;
 		for (var i = 0; i < this.outStack.length; i++) {
@@ -9169,17 +9163,24 @@ function parserFormula( formula, parent, _ws ) {
 						promiseCounter++;
 					}
 
+					if (!currentFuncFormat) {
+						currentFuncFormat = {	
+							// default format for function result
+							sFormat: "General",
+							numFormatType: Asc.c_oAscNumFormatType.General
+						}
+					}
+
 					if (currentElement.type === cElementType.func && _tmp) {
 						if (currentElement.name === "SUM") {
 							let r = this.getFirstRangeByArgs(arg);
 							if (r && r.getNumFormatStr && r.getNumFormatType) {
-								currentFuncFormatStr = r.getNumFormatStr();
 								// todo in ms SIN(A2)+SIN(A2) compare the formats of functions by special rules:
 								// date=percent=time=currency=accounting - these formats are compared in special, in other cases the format does not change
 	
 								// Record information about the format directly into the argument for reading in GetfuncformatByargs
 								// in order not to create an additional structure with a format binding to the argument
-								_tmp.sFormat = currentFuncFormatStr;
+								_tmp.sFormat = r.getNumFormatStr();
 								_tmp.numFormatType = r.getNumFormatType();
 							}
 						} else {

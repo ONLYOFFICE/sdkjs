@@ -5394,7 +5394,7 @@ $(function () {
 
  
 	QUnit.test('Num format inheritance ', function (assert) {
-		let cellWithFormula, fillRange, oParser;
+		let cellWithFormula, fillRange, oParser, firstRefFormat;
 
 		const accountingUSFormat = "_([$$-409]* #,##0.00_);_([$$-409]* \\(#,##0.00\\);_([$$-409]* \"-\"??_);_(@_)",
 			percentUSFormat = '0.00%',
@@ -5437,6 +5437,81 @@ $(function () {
 		// resCell.setValue("=A1+A1");
 		// assert.strictEqual(resCell.getNumFormatStr(), "0.00", "Format string after num + num sum");
 		// assert.strictEqual(resCell.getNumFormatType(), Asc.c_oAscNumFormatType.Number, "Format type after num + num sum");
+
+		
+		
+		oParser = new AscCommonExcel.parserFormula('A1', "B1", ws);
+		assert.ok(oParser.parse(), "A1 - number format link");
+		assert.ok(oParser.calculate(), "A1 - link to number format calculate");
+
+		firstRefFormat = oParser.getFirstRange();
+		if (firstRefFormat && firstRefFormat.getNumFormatStr) {
+			// fRefFormat.getNumFormatStr();
+			assert.strictEqual(firstRefFormat.getNumFormatStr(), numberUSFormat, "sFormat type after link to number format calculation");
+		}
+
+		oParser = new AscCommonExcel.parserFormula('A2', "B1", ws);
+		assert.ok(oParser.parse(), "A2 - scientific format link");
+		assert.ok(oParser.calculate(), "A2 - link to scientific format calculate");
+
+		firstRefFormat = oParser.getFirstRange();
+		if (firstRefFormat && firstRefFormat.getNumFormatStr) {
+			assert.strictEqual(firstRefFormat.getNumFormatStr(), scientificUSFormat, "sFormat type after link to scientific format calculation");
+		}
+
+		oParser = new AscCommonExcel.parserFormula('A3', "B1", ws);
+		assert.ok(oParser.parse(), "A3 - accounting format link");
+		assert.ok(oParser.calculate(), "A3 - link to accounting format calculate");
+
+		firstRefFormat = oParser.getFirstRange();
+		if (firstRefFormat && firstRefFormat.getNumFormatStr) {
+			assert.strictEqual(firstRefFormat.getNumFormatStr(), accountingUSFormat, "sFormat type after link to accounting format calculation");
+		}
+
+		oParser = new AscCommonExcel.parserFormula('A4', "B1", ws);
+		assert.ok(oParser.parse(), "A4 - currency format link");
+		assert.ok(oParser.calculate(), "A4 - link to currency format calculate");
+
+		firstRefFormat = oParser.getFirstRange();
+		if (firstRefFormat && firstRefFormat.getNumFormatStr) {
+			assert.strictEqual(firstRefFormat.getNumFormatStr(), currencyUSFormat, "sFormat type after link to currency format calculation");
+		}
+
+		oParser = new AscCommonExcel.parserFormula('A5', "B1", ws);
+		assert.ok(oParser.parse(), "A5 - date format link");
+		assert.ok(oParser.calculate(), "A5 - link to date format calculate");
+
+		firstRefFormat = oParser.getFirstRange();
+		if (firstRefFormat && firstRefFormat.getNumFormatStr) {
+			assert.strictEqual(firstRefFormat.getNumFormatStr(), dateUSFormat, "sFormat type after link to date format calculation");
+		}
+
+		oParser = new AscCommonExcel.parserFormula('A6', "B1", ws);
+		assert.ok(oParser.parse(), "A6 - time format link");
+		assert.ok(oParser.calculate(), "A6 - link to time format calculate");
+
+		firstRefFormat = oParser.getFirstRange();
+		if (firstRefFormat && firstRefFormat.getNumFormatStr) {
+			assert.strictEqual(firstRefFormat.getNumFormatStr(), timeUSFormat, "sFormat type after link to time format calculation");
+		}
+
+		oParser = new AscCommonExcel.parserFormula('A7', "B1", ws);
+		assert.ok(oParser.parse(), "A7 - percent format link");
+		assert.ok(oParser.calculate(), "A7 - link to percent format calculate");
+
+		firstRefFormat = oParser.getFirstRange();
+		if (firstRefFormat && firstRefFormat.getNumFormatStr) {
+			assert.strictEqual(firstRefFormat.getNumFormatStr(), percentUSFormat, "sFormat type after link to percent format calculation");
+		}
+
+		oParser = new AscCommonExcel.parserFormula('A8', "B1", ws);
+		assert.ok(oParser.parse(), "A8 - fraction format link");
+		assert.ok(oParser.calculate(), "A8 - link to fraction format calculate");
+
+		firstRefFormat = oParser.getFirstRange();
+		if (firstRefFormat && firstRefFormat.getNumFormatStr) {
+			assert.strictEqual(firstRefFormat.getNumFormatStr(), fractionUSFormat, "sFormat type after link to fraction format calculation");
+		}
 
 		oParser = new AscCommonExcel.parserFormula('A1+A1', "B1", ws);
 		assert.ok(oParser.parse(), "A1+A1 - number+number");

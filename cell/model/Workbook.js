@@ -16164,6 +16164,17 @@
 				} else if (AscCommonExcel.cNumFormatFirstCell === valueCalc.numFormat) {
 					if (parsed.sFormatType) {
 						t.setNumFormat(parsed.sFormatType);
+					} else {
+						let r = parsed.getFirstRange();
+						if (r && r.getNumFormatStr) {
+							let sCurFormat = t.getNumFormatStr();
+							if (g_oDefaultFormat.Num.getFormat() == sCurFormat) {
+								let sNewFormat = r.getNumFormatStr();
+								if (sCurFormat != sNewFormat) {
+									t.setNumFormat(sNewFormat);
+								}
+							}
+						}
 					}
 				}
 			}
