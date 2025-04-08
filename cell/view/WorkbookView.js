@@ -2502,11 +2502,15 @@
       if (!this._checkStopCellEditorInFormulas()) {
           index = this.copyActiveSheet;
       } else {
+		let callFromShowWS = true;
 		// TODO the position of the cursor in formulaEdit changes to the end of the line
 		let wsByIndex = this.model.getWorksheet(index);
 		let sheetStr = wsByIndex.getName() + "!";
 		// this.handlers.trigger("selectionRangeChanged", sheetStr);
 		this._onSelectionRangeChanged(sheetStr, true);
+		// todo selectionEnd у input меняется на конец строки из-за отстутствия диапазона который можно было бы сохранить
+		// стоит ли использовать функцию как при смене celleditor.input напрямую?
+		// wb._onChangeSelection(false, null, null, isCoord, false/*isCtrl*/, null, callFromShowWS);
 	  }
       // Делаем очистку селекта
       ws.cleanSelection();

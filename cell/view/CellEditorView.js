@@ -676,14 +676,15 @@ function (window, undefined) {
 		}
 
 		let newText;
-		if (sheetTitleSelected && this.options && this.cursorPos !== undefined && this.cursorPos !== -1) {
+		if (false && sheetTitleSelected && this.options && this.cursorPos !== undefined && this.cursorPos !== -1) {
 			let currentText = this.options && this.options.fragments[0] && this.options.fragments[0].text;
 
 			let pos = this.cursorPos;
 			let f = this._findFragmentToInsertInto(pos);
-			let currentArg, currentTextArr
+			let currentArg, currentTextArr;
 
 			if (f) {
+				// look through args or refs?
 				let activeFunc;
 				if (this._parseResult.allFunctionsPos && this._parseResult.allFunctionsPos.length > 0) {
 					for (let i = 0; i < this._parseResult.allFunctionsPos.length; ++i) {
@@ -717,6 +718,8 @@ function (window, undefined) {
 						currentArg = currentText.slice(lookingArgPos.start, lookingArgPos.end);
 						currentTextArr = currentArg && currentArg.split("!");
 						if (currentTextArr && currentTextArr[1]) {
+							let separatorIndex = currentTextArr[1].indexOf("+");
+							// todo либо использовать регулярку либо цикл с сохранением индекса и дальнейшим substring
 							newText = str.concat(currentTextArr[1].replace(/\)/g, ""));
 						}
 					}
