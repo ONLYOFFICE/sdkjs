@@ -12604,6 +12604,7 @@ drawPieChart.prototype = {
 
 	_drawPie3D: function () {
 		var numCache = this._getFirstRealNumCache(true);
+		let alpha = 2 - (1 / (numCache.ptCount));
 		var t = this;
 		var shade = "shade";
 		var shadeValue = 35000;
@@ -12642,6 +12643,9 @@ drawPieChart.prototype = {
 				var point = numCache.getPtByIndex(i);
 				var brush = point ? point.brush : null;
 				var pen = point ? point.pen : null;
+				if (pen){
+					pen.w /= alpha;
+				}
 				var path = t.paths.series[i];
 
 				if (path) {
