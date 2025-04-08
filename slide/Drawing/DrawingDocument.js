@@ -6260,10 +6260,18 @@ function CThumbnailsManager(editorPage)
 				wordControl.m_oScrollThumb_ = new AscCommon.ScrollObject('id_vertical_scroll_thmbnl', settings);
 				wordControl.m_oScrollThumbApi = wordControl.m_oScrollThumb_;
 
-				const eventName = isHorizontalOrientation ? 'scrollhorizontal' : 'scrollvertical';
-				wordControl.m_oScrollThumb_.bind(eventName, function (evt) {
+				const scrollEventName = isHorizontalOrientation ? 'scrollhorizontal' : 'scrollvertical';
+				wordControl.m_oScrollThumb_.bind(scrollEventName, function (evt) {
 					const maxScrollPosition = isHorizontalOrientation ? evt.maxScrollX : evt.maxScrollY;
 					oThis.thumbnailsScroll(this, evt.scrollD, maxScrollPosition);
+				});
+
+				const endEventName = isHorizontalOrientation ? 'scrollHEnd' : 'scrollVEnd';
+				wordControl.m_oScrollThumb_.bind(endEventName, function (evt) {
+					if (oThis.m_dScrollY === oThis.m_dScrollY_max) {
+						oThis.m_dScrollY = evt.pos;
+						oThis.m_dScrollY_max = evt.pos;
+					}
 				});
 			}
 			wordControl.m_oScrollThumb_.isHorizontalScroll = isHorizontalOrientation;
