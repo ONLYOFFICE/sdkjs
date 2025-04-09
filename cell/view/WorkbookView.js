@@ -1225,10 +1225,10 @@
     this.handlers.trigger("asc_onSelectionMathChanged", info);
   };
 
-  WorkbookView.prototype._onSelectionRangeChanged = function (val, sheetTitleSelected) {
+  WorkbookView.prototype._onSelectionRangeChanged = function (val) {
       if (this.isFormulaEditMode && !this.isWizardMode) {
           this.skipHelpSelector = true;
-          this.cellEditor.changeCellText(val, sheetTitleSelected);
+          this.cellEditor.changeCellText(val);
           this.skipHelpSelector = false;
       }
       this.handlers.trigger("asc_onSelectionRangeChanged", val);
@@ -2502,17 +2502,12 @@
       if (!this._checkStopCellEditorInFormulas()) {
           index = this.copyActiveSheet;
       } else {
-		let callFromShowWS = true;
-		// TODO the position of the cursor in formulaEdit changes to the end of the line
 		let wsByIndex = this.model.getWorksheet(index);
 		let sheetStr = wsByIndex.getName() + "!";
 		let editModeRange = ws.model.selectionRange && ws.model.selectionRange.getLast();
 		let rangeStr = editModeRange ? editModeRange.getName() : "";
-		// this.handlers.trigger("selectionRangeChanged", sheetStr);
-		this._onSelectionRangeChanged(sheetStr + rangeStr, true);
-		// todo selectionEnd у input меняется на конец строки из-за отстутствия диапазона который можно было бы сохранить
-		// стоит ли использовать функцию как при смене celleditor.input напрямую?
-		// wb._onChangeSelection(false, null, null, isCoord, false/*isCtrl*/, null, callFromShowWS);
+		// TODO the position of the cursor in formulaEdit changes to the end of the line
+		this._onSelectionRangeChanged(sheetStr + rangeStr);
 	  }
       // Делаем очистку селекта
       ws.cleanSelection();

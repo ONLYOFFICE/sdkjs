@@ -668,73 +668,15 @@ function (window, undefined) {
 		this.skipTLUpdate = true;
 	};
 
-	CellEditor.prototype.changeCellText = function (str, sheetTitleSelected) {
+	CellEditor.prototype.changeCellText = function (str) {
 		this.skipTLUpdate = false;
 		this._moveCursor(kPosition, this.lastRangePos);
 		if (this.lastRangeLength) {
 			this._selectChars(kPositionLength, this.lastRangeLength);
 		}
 
-		let newText;
-		if (false && sheetTitleSelected && this.options && this.cursorPos !== undefined && this.cursorPos !== -1) {
-			let currentText = this.options && this.options.fragments[0] && this.options.fragments[0].text;
-
-			let pos = this.cursorPos;
-			let f = this._findFragmentToInsertInto(pos);
-			let currentArg, currentTextArr;
-
-			if (f) {
-				// look through args or refs?
-				let activeFunc;
-				if (this._parseResult.allFunctionsPos && this._parseResult.allFunctionsPos.length > 0) {
-					for (let i = 0; i < this._parseResult.allFunctionsPos.length; ++i) {
-						let func = this._parseResult.allFunctionsPos[i];
-						if (func.start <= pos && func.end >= pos - 1) {
-							activeFunc = this._parseResult.allFunctionsPos[i];
-							break;
-						}
-					}
-				}
-
-				// work with function inside
-				// get active function, then get active arg by cursorPos
-				if (activeFunc) {
-					let lookingArgPos = null;
-					let forceStop;
-					if (activeFunc && activeFunc.args && activeFunc.args.length > 0) {
-						for (let argI = 0; argI < activeFunc.args.length; ++argI) {
-							let arg = activeFunc.args[argI];
-							if (arg.start <= pos && arg.end >= pos - 1) {
-								lookingArgPos = activeFunc.args[argI];
-								if (lookingArgPos.start === lookingArgPos.end) {
-									forceStop = true;
-									break;
-								}
-							}
-						}
-					}
-
-					if (lookingArgPos && !forceStop && lookingArgPos.start !== lookingArgPos.end) {
-						currentArg = currentText.slice(lookingArgPos.start, lookingArgPos.end);
-						currentTextArr = currentArg && currentArg.split("!");
-						if (currentTextArr && currentTextArr[1]) {
-							let separatorIndex = currentTextArr[1].indexOf("+");
-							// todo либо использовать регулярку либо цикл с сохранением индекса и дальнейшим substring
-							newText = str.concat(currentTextArr[1].replace(/\)/g, ""));
-						}
-					}
-				} else if (this.selectionBegin !== this.selectionEnd) {
-					currentArg = currentText.slice(this.selectionBegin, this.selectionEnd);
-					currentTextArr = currentArg && currentArg.split("!");
-					if (currentTextArr && currentTextArr[1]) {
-						newText = str.concat(currentTextArr[1].replace(/\)/g, ""));
-					}
-				}
-			}
-		}
-
-		this._addChars(newText ? newText : str, undefined, /*isRange*/true);
-		this.lastRangeLength = newText ? newText.length : str.length;
+		this._addChars(str, undefined, /*isRange*/true);
+		this.lastRangeLength = str.length;
 		this.skipTLUpdate = true;
 	};
 
