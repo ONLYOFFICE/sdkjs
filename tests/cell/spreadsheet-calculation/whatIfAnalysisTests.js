@@ -1147,8 +1147,7 @@ $(function () {
         // Checking prepare data for calculate by Simplex. Check whole CSimplexTableau class.
        let oSimplexTableau = oSolver.getSimplexTableau();
        assert.ok(oSimplexTableau, 'Check prepare data for calculate by Simplex. CSimplexTableau is created.');
-       assert.strictEqual(oSimplexTableau.getAvailableIndexes().length, 0, 'Check prepare data for calculate by Simplex. Check availableIndexes attribute size - 0');
-       assert.strictEqual(oSimplexTableau.bBounded, true, 'Check prepare data for calculate by Simplex. Check bBounded attribute is true');
+       assert.strictEqual(oSimplexTableau.getBounded(), true, 'Check prepare data for calculate by Simplex. Check bBounded attribute is true');
        assert.strictEqual(oSimplexTableau.nBranchAndCutIters, 0, 'Check prepare data for calculate by Simplex. Check nBranchAndCutIters attribute is 0');
        // Checking colByVarIndex array
         let aColByVarIndex = oSimplexTableau.getColByVarIndex();
@@ -1159,14 +1158,14 @@ $(function () {
              3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
         ];
         assert.deepEqual(aColByVarIndex, aColByVarIndexExpected, 'Check prepare data for calculate by Simplex. Check colByVarIndex attribute');
-        assert.strictEqual(oSimplexTableau.nCostRowIndex, 0, 'Check prepare data for calculate by Simplex. Check nCostRowIndex attribute is 0');
-        assert.strictEqual(oSimplexTableau.nEvaluation, 0, 'Check prepare data for calculate by Simplex. Check nEvaluation attribute is 0');
-        assert.strictEqual(oSimplexTableau.bFeasible, true, 'Check prepare data for calculate by Simplex. Check bFeasible attribute is true');
+        assert.strictEqual(oSimplexTableau.getObjectiveRowIndex(), 0, 'Check prepare data for calculate by Simplex. Check nCostRowIndex attribute is 0');
+        assert.strictEqual(oSimplexTableau.getSolutionIsFound(), false, 'Check prepare data for calculate by Simplex. Check nEvaluation attribute is 0');
+        assert.strictEqual(oSimplexTableau.getFeasible(), true, 'Check prepare data for calculate by Simplex. Check bFeasible attribute is true');
         assert.strictEqual(oSimplexTableau.getHeight(), 29, 'Check prepare data for calculate by Simplex. Check height attribute is 29');
         assert.strictEqual(oSimplexTableau.getLastElementIndex(), 43, 'Check prepare data for calculate by Simplex. Check lastElementIndex attribute is 43');
         assert.strictEqual(oSimplexTableau.getVarsCount(), 43, 'Check prepare data for calculate by Simplex. Check varsCount attribute is 43');
-        assert.strictEqual(oSimplexTableau.nPrecision, 1e-8, 'Check prepare data for calculate by Simplex. Check nPrecision attribute is 1e-8');
-        assert.strictEqual(oSimplexTableau.nRhsColumn, 0, 'Check prepare data for calculate by Simplex. Check nRhsColumn attribute is 0');
+        assert.strictEqual(oSimplexTableau.getPrecision(), 1e-6, 'Check prepare data for calculate by Simplex. Check nPrecision attribute is 1e-8');
+        assert.strictEqual(oSimplexTableau.getRhsColumn(), 0, 'Check prepare data for calculate by Simplex. Check nRhsColumn attribute is 0');
         assert.strictEqual(oSimplexTableau.getWidth(), 16, 'Check prepare data for calculate by Simplex. Check width attribute is 16');
         // Checking rowByVarIndex
         let aRowByVarIndex = oSimplexTableau.getRowByVarIndex();

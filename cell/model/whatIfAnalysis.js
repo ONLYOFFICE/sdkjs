@@ -66,6 +66,7 @@ function (window, undefined) {
 		'<=': 2,
 	};
 
+	// Common class
 	/**
 	 * Class representing base attributes and methods for features of analysis.
 	 * @param {parserFormula} oParsedFormula - Formula object
@@ -248,6 +249,7 @@ function (window, undefined) {
 		this.nMaxIterations = nMaxIterations;
 	};
 
+	// Goal seek
 	/**
 	 * Class representing a goal seek feature
 	 * @param {parserFormula} oParsedFormula - Formula object.
@@ -1240,16 +1242,20 @@ function (window, undefined) {
 		this.aVariablesIndexes = null;
 		this.aConstraintsIndexes = null;
 
-		this.nCostRowIndex = 0;
+		this.nObjectiveRowIndex = 0;
 		this.nRhsColumn = 0;
 
 		this.aVariablesPerIndex = []; // ?
 		this.oUnrestrictedVars = null;
 
 		// Solution attributes
+		this.nLastColumnId = null;
+		this.nLastRowId = null;
+		this.aVarIndexesCycle = [];
+		this.mRepeatedVars = new Map();
+
 		this.bFeasible = true; // until proven guilty
-		this.nEvaluation = 0;
-		this.nSimplexIters = 0; // ?
+		this.bSolutionIsFound = false;
 
 		this.aVarIndexByRow = null;
 		this.aVarIndexByCol = null;
@@ -1259,19 +1265,13 @@ function (window, undefined) {
 
 		this.nPrecision = 1e-8;
 
-		this.aOptionalObjectives = []; // ?
-		this.oObjectivesByPriority = {}; // ?
-
-		this.savedState = null;
-
-		this.aAvailableIndexes = [];
 		this.nLastElementIndex = 0;
 
 		this.oVariables = null;
 		this.nVars = 0;
 
 		this.bBounded = true;
-		this.unboundedVarIndex = null;
+		this.nUnboundedVarIndex = null;
 
 		this.nBranchAndCutIters = 0;
 	}
@@ -1282,13 +1282,18 @@ function (window, undefined) {
 	 */
 	CSimplexTableau.prototype.init = function () {
 		const oModel = this.getModel();
+		const oOptions = oModel.getOptions();
 		const oChangingCells = oModel.getChangingCell();
 		const oBboxChangingCells = oChangingCells.bbox;
 		const nTotalCountVariables = oBboxChangingCells.getWidth() * oBboxChangingCells.getHeight();
 		const aConstraints = oModel.getConstraints();
 		const aSimplexConstraints = this.getSimplexConstraints(aConstraints);
 		const nTotalCountConstraints = aSimplexConstraints.length;
+		const nOptionPrecision = Number(oOptions.getConstraintPrecision().replace(/,/g, "."));
 
+		if (!isNaN(nOptionPrecision)) {
+			this.setPrecision(nOptionPrecision);
+		}
 		this.setVariables(oChangingCells);
 		// Init width and height of matrix.
 		this.setWidth(nTotalCountVariables + 1);
@@ -1315,19 +1320,26 @@ function (window, undefined) {
 
 		// Fills matrix
 		this.fillMatrix(aMatrix, aSimplexConstraints);
+		// Init last index row and column of matrix
+		this.setLastColumnIndex(nWidth - 1);
+		this.setLastRowIndex(nHeight - 1);
 	};
 	/**
 	 * Calculates solution using Simplex LP method.
 	 * @memberof CSimplexTableau
-	 * @returns {boolean}
+	 * @returns {boolean} The flag who recognizes end a loop of solver calculation. True - stop a loop, false - continue a loop.
+	 * @see {@link https://en.wikibooks.org/wiki/Operations_Research/The_Simplex_Method#The_Simplex_method|Theory material}
 	 */
 	CSimplexTableau.prototype.calculate = function () {
-		let bContinueCalculating = false;
-		this.phase1();
-		 if (this.getFeasible()) {
-			 // current solution is feasible
-			 bContinueCalculating = this.phase2();
-		 }
+		const oOption = this.getModel().getOptions();
+		let bContinueCalculating = this.phase1();
+		if (this.getFeasible()) {
+			// current solution is feasible
+			bContinueCalculating = this.phase2();
+		}
+		// TODO logic for filling value and updating objective val result
+
+		return bContinueCalculating;
 	};
 	/**
 	 * Obtains a Basic Feasible Solution (BFS)
@@ -1335,24 +1347,175 @@ function (window, undefined) {
 	 * all negative values on the Right Hand Side (RHS)
 	 * This results in a Basic Feasible Solution (BFS)
 	 * @memberof CSimplexTableau
+	 * @returns {boolean} The flag who recognizes end a loop of solver calculation. True - stop a loop, false - continue a loop.
 	 */
 	CSimplexTableau.prototype.phase1 = function () {
+		const oModel = this.getModel();
+		const aMatrix = this.getMatrix();
+		const nRhsColumnId = this.getRhsColumn();
+		const nLastColumnId = this.getLastColumnIndex();
+		const nLastRowId = this.getLastRowIndex();
+		const aVarIndexesCycle = this.getVarIndexesCycle();
 
+		let nLeavingRowIndex = 0;
+		let nRhsValue = -this.getPrecision();
+		// Step 1: Find pivot row. Selecting leaving variable (feasibility condition). Basic variable with most negative value.
+		for (let i = 0; i < nLastRowId; i++) {
+			const nValue = aMatrix[i][nRhsColumnId];
+			if (nValue < nRhsValue) {
+				nRhsValue = nValue;
+				nLeavingRowIndex = i;
+			}
+		}
+		// If the leaving row isn't found, for 1st phase, found a feasible solution.  Finished 1st phase.
+		if (nLeavingRowIndex === 0) {
+			this.setFeasible(true);
+			return false;
+		}
+
+		// Step 2: Find pivot column. Selecting entering variable.
+		const aObjectiveRow = aMatrix[this.getObjectiveRowIndex()];
+		const aLeavingRow = aMatrix[nLeavingRowIndex];
+		let nEnteringColumnIndex = 0;
+		let nMaxQuotient = -Infinity;
+		for (let i = 0; i < nLastColumnId; i++) {
+			const nCoefficient = aLeavingRow[i];
+			if (nCoefficient < -this.getPrecision()) {
+				const nQuotient = -aObjectiveRow[i] / nCoefficient;
+				if (nMaxQuotient < nQuotient) {
+					nMaxQuotient = nQuotient;
+					nEnteringColumnIndex = i;
+				}
+			}
+		}
+		// If the entering row isn't found, feasible solution isn't found too.
+		if (nEnteringColumnIndex === 0) {
+			this.setFeasible(false);
+			//TODO call api to show error about solution isn't found
+			return true;
+		}
+
+		// Check for cycles
+		const aVarIndexByRow = this.getVarIndexByRow();
+		const aVarIndexByCol = this.getVarIndexByCol();
+		aVarIndexesCycle.push([aVarIndexByRow[nLeavingRowIndex], aVarIndexByCol[nEnteringColumnIndex]]);
+		if (this.checkForCycles(aVarIndexesCycle)) {
+			this.setFeasible(false);
+			this.clearVarIndexesCycle();
+			this.getRepeatedVars().clear();
+			//TODO call api to show error about solution isn't found
+			return true
+		}
+
+		this.pivot(nLeavingRowIndex, nEnteringColumnIndex);
+		oModel.increaseCurrentAttempt();
+
+		return false;
 	};
 	/**
 	 * Runs simplex on Initial Basic Feasible Solution (BFS)
 	 * Apply simplex to obtain optimal solution used as phase2 of the simplex
 	 * @memberof CSimplexTableau
-	 * @returns {boolean}
+	 * @returns {boolean} The flag who recognizes end a loop of solver calculation. True - stop a loop, false - continue a loop.
 	 */
 	CSimplexTableau.prototype.phase2 = function () {
+		const oModel = this.getModel();
+		const aMatrix = this.getMatrix();
+		const nRhsColumnId = this.getRhsColumn();
+		const nLastColumnId = this.getLastColumnIndex();
+		const nLastRowId = this.getLastRowIndex();
+		const aVarIndexesCycle = this.getVarIndexesCycle();
+		const nPrecision = this.getPrecision();
+		const aObjectiveRow = aMatrix[this.getObjectiveRowIndex()];
 
-	}
+		let nEnteringColumnIndex = 0;
+		let nEnteringValue = nPrecision;
+		let bReducedCostNegative = false;
+
+		for (let col = 1; col < nLastColumnId; col++) {
+			const nObjectiveCoefValue = aObjectiveRow[col];
+			if (nObjectiveCoefValue > nEnteringValue) {
+				nEnteringValue = nObjectiveCoefValue;
+				nEnteringColumnIndex = col;
+				bReducedCostNegative = false;
+			}
+		}
+		// If no entering column could be found we're done with phase 2. Solution has been found.
+		if (nEnteringColumnIndex === 0) {
+			this.setSolutionIsFound(true);
+			oModel.increaseCurrentFeasibleCount();
+			return true;
+		}
+		// Selecting leaving variable
+		let nLeavingRowIndex = 0;
+		let nMinQuotient = Infinity;
+
+		for (let row = 1; row < nLastRowId; row++) {
+			const aRow = aMatrix[row];
+			const nRhsValue = aRow[nRhsColumnId];
+			const nColValue = aRow[nEnteringColumnIndex];
+
+			if (-nPrecision < nColValue && nColValue < nPrecision) {
+				continue;
+			}
+			if (nColValue > 0 && nPrecision > nRhsValue && nRhsValue > -nPrecision) {
+				nMinQuotient = 0;
+				nLeavingRowIndex = row;
+				break;
+			}
+			const nQuotient = bReducedCostNegative ? -nRhsValue / nColValue : nRhsValue / nColValue;
+			if (nQuotient > nPrecision && nMinQuotient > nQuotient) {
+				nMinQuotient = nQuotient;
+				nLeavingRowIndex = row;
+			}
+		}
+
+		if (nMinQuotient === Infinity) {
+			// Optimal value is -Infinity or solution hasn't been found.
+			this.setSolutionIsFound(false);
+			this.setBounded(false);
+			this.setUnboundVarIndex(this.getVarIndexByCol()[nEnteringColumnIndex]);
+			return true;
+		}
+
+		// Check for cycles
+		const aVarIndexByRow = this.getVarIndexByRow();
+		const aVarIndexByCol = this.getVarIndexByCol();
+		aVarIndexesCycle.push([aVarIndexByRow[nLeavingRowIndex], aVarIndexByCol[nEnteringColumnIndex]]);
+		if (this.checkForCycles(aVarIndexesCycle)) {
+			this.setFeasible(false);
+			this.clearVarIndexesCycle();
+			this.getRepeatedVars().clear();
+			//TODO call api to show error about solution isn't found
+			return true
+		}
+
+		this.pivot(nLeavingRowIndex, nEnteringColumnIndex);
+		oModel.increaseCurrentAttempt();
+
+		return false;
+	};
 	/**
 	 * @returns {CSolver}
 	 */
 	CSimplexTableau.prototype.getModel = function () {
 		return this.oModel;
+	};
+	/**
+	 * Returns constraint precision.
+	 * @memberof CSimplexTableau
+	 * @returns {number}
+	 */
+	CSimplexTableau.prototype.getPrecision = function () {
+		return this.nPrecision;
+	};
+	/**
+	 * Sets constraint precision.
+	 * @memberof CSimplexTableau
+	 * @param {number} nPrecision
+	 */
+	CSimplexTableau.prototype.setPrecision = function (nPrecision) {
+		this.nPrecision = nPrecision;
 	};
 	/**
 	 * Returns variables of model. It's the changing variable cells.
@@ -1803,14 +1966,6 @@ function (window, undefined) {
 		this.aColByVarIndex[nIndex] = nValue;
 	}
 	/**
-	 * Returns available indexes.
-	 * @memberof CSimplexTableau
-	 * @returns {[]}
-	 */
-	CSimplexTableau.prototype.getAvailableIndexes = function () {
-		return this.aAvailableIndexes;
-	};
-	/**
 	 * Returns index of the matrix's last element.
 	 * @memberof CSimplexTableau
 	 * @returns {number}
@@ -1826,6 +1981,38 @@ function (window, undefined) {
 	CSimplexTableau.prototype.setLastElementIndex = function (nLastElementIndex) {
 		this.nLastElementIndex = nLastElementIndex;
 	};
+	/**
+	 * Returns the index of last column in matrix.
+	 * @memberof CSimplexTableau
+	 * @returns {number}
+	 */
+	CSimplexTableau.prototype.getLastColumnIndex = function () {
+		return this.nLastColumnId
+	};
+	/**
+	 * Sets the index of last column in matrix.
+	 * @memberof CSimplexTableau
+	 * @param {number} nLastColumnIndex
+	 */
+	CSimplexTableau.prototype.setLastColumnIndex = function (nLastColumnIndex) {
+		this.nLastColumnId = nLastColumnIndex;
+	};
+	/**
+	 * Returns the index of last row in matrix.
+	 * @memberof CSimplexTableau
+	 * @returns {number}
+	 */
+	CSimplexTableau.prototype.getLastRowIndex = function () {
+		return this.nLastRowId;
+	};
+	/**
+	 * Sets the index of last row in matrix.
+	 * @memberof CSimplexTableau
+	 * @param {number} nLastRowIndex
+	 */
+	CSimplexTableau.prototype.setLastRowIndex = function (nLastRowIndex) {
+		this.nLastRowId = nLastRowIndex;
+	}
 	/**
 	 * Returns bounded attribute
 	 * @memberof CSimplexTableau
@@ -1858,6 +2045,193 @@ function (window, undefined) {
 	CSimplexTableau.prototype.setFeasible = function (bFeasible) {
 		this.bFeasible = bFeasible;
 	};
+	/**
+	 * Returns the index's column with the right-hand side value of the constraint or objective function.
+	 * @memberof CSimplexTableau
+	 * @returns {number}
+	 */
+	CSimplexTableau.prototype.getRhsColumn = function () {
+		return this.nRhsColumn;
+	};
+	/**
+	 * Returns an array with the index's variables in cycle.
+	 * @memberof CSimplexTableau
+	 * @returns {[number,number][]}
+	 */
+	CSimplexTableau.prototype.getVarIndexesCycle = function () {
+		return this.aVarIndexesCycle;
+	};
+	/**
+	 * Clears elements of array with the index's variables in cycle
+	 */
+	CSimplexTableau.prototype.clearVarIndexesCycle = function () {
+		this.aVarIndexesCycle = [];
+	}
+	/**
+	 * Returns repeated basic vars.
+	 * This Map is used for checking basic variables are repeated.
+	 * If the whole basic table is repeated. It's a cycle
+	 * The map stores here indexes of repeated basic variables.
+	 * @memberof CSimplexTableau
+	 * @returns {Map<number, []>}
+	 */
+	CSimplexTableau.prototype.getRepeatedVars = function () {
+		return this.mRepeatedVars;
+	};
+	/**
+	 * Checks whether the same sequence of basic variables occurred twice in a row.
+	 * @memberOf CSimplexTableau
+	 * @param {[number,number][]} aVarIndexesCycle
+	 * @returns {boolean}
+	 */
+	CSimplexTableau.prototype.checkForCycles = function (aVarIndexesCycle) {
+		const mRepeatedVars = this.getRepeatedVars();
+
+		for (let firstIndex = 0, len1 = aVarIndexesCycle.length - 1; firstIndex < len1; firstIndex++) {
+			for (let secondIndex = firstIndex + 1, len2 = aVarIndexesCycle.length; secondIndex < len2; secondIndex++) {
+				const aFirstVarIndexes = aVarIndexesCycle[firstIndex];
+				const aSecondVarIndexes = aVarIndexesCycle[secondIndex];
+				if (aFirstVarIndexes[0] === aSecondVarIndexes[0] && aFirstVarIndexes[1] === aSecondVarIndexes[1]) {
+					// Continues the logic of recognizing a cycle only when the whole basic variable is repeated the second time in a row.
+					if (secondIndex - firstIndex > len2 - secondIndex) {
+						// Check and fill (if it's missing) the indexes of repeated basic variables.
+						if (!mRepeatedVars.has(firstIndex + secondIndex)) {
+							mRepeatedVars.set(firstIndex + secondIndex, [firstIndex, secondIndex]);
+						}
+						break;
+					}
+					let bCycleFound = true;
+					// Checks whether the last indexes of the basic variable from the first loop (presumably)
+					// and the last indexes from the whole array of passed basic variables are equal.
+					const aFirstLastIdsVar = aVarIndexesCycle[secondIndex - 1];
+					const aSecondLastIdsVar = aVarIndexesCycle[len2 - 1];
+					if (aFirstLastIdsVar[0] !== aSecondLastIdsVar[0] && aFirstLastIdsVar[1] !== aSecondLastIdsVar[1]) {
+						bCycleFound = false;
+						continue;
+					}
+					// Check and fill (if it's missing) the last  indexed  of repeated basic variables.
+					if (!mRepeatedVars.has((secondIndex - 1) - (len2 - 1))) {
+						mRepeatedVars.set((secondIndex - 1) - (len2 - 1), [secondIndex - 1, len2 - 1]);
+					}
+					if (bCycleFound && len2 - secondIndex === mRepeatedVars.size) {
+						return true;
+					}
+				}
+			}
+		}
+
+		return false;
+	};
+	/**
+	 * Executes pivot operations over a matrix, on a given row and column.
+	 * @memberof CSimplexTableau
+	 * @param {number} nLeavingRowIndex
+	 * @param {number} nEnteringColumnIndex
+	 */
+	CSimplexTableau.prototype.pivot = function (nLeavingRowIndex, nEnteringColumnIndex) {
+		const aMatrix = this.getMatrix();
+		const aPivotRow = aMatrix[nLeavingRowIndex];
+		const nQuotient = aMatrix[nLeavingRowIndex][nEnteringColumnIndex];
+
+		const nLastRow = this.getLastRowIndex();
+		const nLastColumn = this.getLastColumnIndex();
+
+		const aVarIndexByRow = this.getVarIndexByRow();
+		const aVarIndexByCol = this.getVarIndexByCol();
+		const aRowByVarIndex = this.getRowByVarIndex();
+		const aColByVarIndex = this.getColByVarIndex();
+
+		const nLeavingBasicIndex = aVarIndexByRow[nLeavingRowIndex];
+		const nEnteringBasicIndex = aVarIndexByCol[nEnteringColumnIndex];
+
+		aVarIndexByRow[nLeavingRowIndex] = nEnteringBasicIndex;
+		aVarIndexByCol[nEnteringColumnIndex] = nLeavingBasicIndex;
+		aRowByVarIndex[nEnteringBasicIndex] = nLeavingRowIndex;
+		aRowByVarIndex[nLeavingBasicIndex] = -1;
+		aColByVarIndex[nEnteringBasicIndex] = -1;
+		aColByVarIndex[nLeavingBasicIndex] = nEnteringColumnIndex;
+		// Step 1: Transforming pivot row. Calculate new pivot row using formula: newPivotRowElem = oldPivotRowElem / quotient (leading element)
+		/** @type {number[]} */
+		const aNonZeroColumns = [];
+		let nNonZeroColumnId = 0;
+		for (let col = 0; col <= nLastColumn; col++) {
+			// Checks that the value of pivotRow isn't zero, considering variation in calculation.
+			if (!(aPivotRow[col] >= -1e-16 && aPivotRow[col] <= 1e-16)) {
+				aPivotRow[col] /= nQuotient;
+				aNonZeroColumns[nNonZeroColumnId++] = col;
+			} else {
+				aPivotRow[col] = 0;
+			}
+		}
+		aPivotRow[nEnteringColumnIndex] = 1 / nQuotient;
+
+		// Step 2: Calculate new rows using formula: newRow = oldRow - oldCoeffOfEnteringVar * newPivotRow
+		for (let row = 0; row < nLastRow; row++) {
+			if (row === nLeavingRowIndex) {
+				continue;
+			}
+			// Checks that the value of row isn't zero, considering variation in calculation.
+			if (aMatrix[row][nEnteringColumnIndex] >= -1e-16 && aMatrix[row][nEnteringColumnIndex] <= 1e-16) {
+				continue;
+			}
+			const aRow = aMatrix[row];
+			const nCoefficient = aRow[nEnteringColumnIndex];
+			if (!(nCoefficient >= -1e-16 && nCoefficient <= 1e-16)) {
+				for (let nonZeroColId = 0; nonZeroColId < nNonZeroColumnId; nonZeroColId++) {
+					let nCol = aNonZeroColumns[nonZeroColId];
+					const nPivotRowElem = aPivotRow[nCol];
+					if (!(nPivotRowElem >= -1e-16 && nPivotRowElem <= 1e-16)) {
+						aRow[nCol] -= nCoefficient * nPivotRowElem;
+					} else if (nPivotRowElem !== 0) {
+						aPivotRow[nCol] = 0;
+					}
+				}
+				aRow[nEnteringColumnIndex] = -nCoefficient / nQuotient;
+			} else if (nCoefficient !== 0) {
+				aRow[nEnteringColumnIndex] = 0;
+			}
+		}
+	};
+	/**
+	 * Returns index of row with objective function data.
+	 * @memberof CSimplexTableau
+	 * @returns {number}
+	 */
+	CSimplexTableau.prototype.getObjectiveRowIndex = function () {
+		return this.nObjectiveRowIndex;
+	};
+	/**
+	 * Returns a flag whether a solution has been found.
+	 * @memberof CSimplexTableau
+	 * @returns {boolean}
+	 */
+	CSimplexTableau.prototype.getSolutionIsFound = function () {
+		return this.bSolutionIsFound;
+	};
+	/**
+	 * Sets a flag whether a solution has been found.
+	 * @memberof CSimplexTableau
+	 * @param {boolean} bSolutionIsFound
+	 */
+	CSimplexTableau.prototype.setSolutionIsFound = function (bSolutionIsFound) {
+		this.bSolutionIsFound = bSolutionIsFound;
+	};
+	/**
+	 * Returns unbounded index of variable.
+	 * @memberof CSimplexTableau
+	 * @returns {number}
+	 */
+	CSimplexTableau.prototype.getUnboundVarIndex = function () {
+		return this.nUnboundedVarIndex;
+	};
+	/**
+	 * Sets unbounded index of variable.
+	 * @memberof CSimplexTableau
+	 * @param {number} nUnboundVarIndex
+	 */
+	CSimplexTableau.prototype.setUnboundVarIndex = function (nUnboundVarIndex) {
+		this.nUnboundedVarIndex = nUnboundVarIndex;
+	};
 
 	// Main class of solver feature
 	/**
@@ -1882,6 +2256,7 @@ function (window, undefined) {
 		// Attributes for calculating logic
 		this.nStartTime = null;
 		this.nCurrentSubProblem = null;
+		this.nCurrentFeasibleCount = null;
 		this.nGradient = null;
 		this.oSimplexTableau = null;
 
@@ -1931,25 +2306,19 @@ function (window, undefined) {
 	 * @returns {boolean} The flag who recognizes end a loop of solver calculation. True - stop a loop, false - continue a loop.
 	 */
 	CSolver.prototype.calculate = function () {
-		const aConstraintsResult = this.calculateConstraints();
 		const nSolutionMethod = this.getSolvingMethod();
 
-		if (this.isFinishCalculating(aConstraintsResult)) {
+		if (this.isFinishCalculating()) {
 			return true;
 		}
 		switch (nSolutionMethod) {
 			case c_oAscSolvingMethod.grgNonlinear:
-				this.grgOptimization();
-				break;
+				return this.grgOptimization();
 			case c_oAscSolvingMethod.simplexLP:
-				this.simplexOptimization();
-				break;
+				return this.simplexOptimization();
 			case c_oAscSolvingMethod.evolutionary:
-				this.evolutionOptimization();
-				break;
+				return this.evolutionOptimization();
 		}
-
-		return false;
 	};
 	/**
 	 * Converts cell reference from UI to Cell object.
@@ -2001,7 +2370,7 @@ function (window, undefined) {
 	 * @memberof CSolver
 	 * @returns {boolean[]}
 	 */
-	CSolver.prototype.calculateConstraints = function () { // todo Need to rework.
+	CSolver.prototype.calculateConstraints = function () { // todo Need to rework. Is it needed?
 		const oThis = this;
 		/** @type {boolean[]} */
 		const aConstraintsResult = [];
@@ -2054,40 +2423,45 @@ function (window, undefined) {
 		return aConstraintsResult;
 	};
 	/**
-	 * Checks whether finish calculating.
+	 * Checks whether limits are exceeded from options.
+	 * e.g., exceeds of maximum: iterations, time, subproblems, etc.
 	 * @memberof CSolver
-	 * @param {boolean[]} aConstraintsResult
 	 * @returns {boolean}
 	 */
-	CSolver.prototype.isFinishCalculating = function (aConstraintsResult) { //todo: Need to rework
+	CSolver.prototype.isFinishCalculating = function () {
 		const nCurrentTime = Date.now();
-		const bConstraintsIsSatisfied = !aConstraintsResult.includes(false);
 		const nMaxIterations = this.getMaxIterations();
 		const oOptions = this.getOptions();
 		const nTimeMax = parseFloat(oOptions.getMaxTime());
-		const nConvergence = parseFloat(oOptions.getConvergence().replace(/,/g, "."));
-		const nValue = this.getValueOf();
 		const nMaxSubproblems = parseFloat(oOptions.getMaxSubproblems());
-		const nPrevFactValue = this.getPrevFactValue();
+		const nMaxFeasibleSolution = parseFloat(oOptions.getMaxFeasibleSolution());
 
-		let nFactValue = this.calculateFormula();
-		let nDiff = nFactValue - nPrevFactValue;
-		let bIsSatisfied = bConstraintsIsSatisfied && (!!nPrevFactValue && nDiff < nConvergence);
-		let bIsTimeMax = true;
+		let bIsTimeMax = false;
+		let bIterationIsReached = false;
+		let bMaxSubproblems = false;
+		let bMaxFeasibleSolution = false;
+
 		if (!isNaN(nTimeMax)) {
 			bIsTimeMax = nCurrentTime - this.getStartTime() < nTimeMax * 1000;
 		}
-		let bIterationIsReached = true;
 		if (!isNaN(nMaxIterations)) {
 			bIterationIsReached = this.getCurrentAttempt() >= nMaxIterations;
 		}
-		let bMaxSubproblems = true;
 		if (!isNaN(nMaxSubproblems)) {
 			bMaxSubproblems = this.getCurrentSubProblem() >= nMaxSubproblems;
 		}
+		if (!isNaN(nMaxFeasibleSolution)) {
+			bMaxFeasibleSolution = this.getCurrentFeasibleCount() >= nMaxFeasibleSolution;
+		}
 
-		return bIsSatisfied && bIsTimeMax && bIterationIsReached && bMaxSubproblems;
+		return bIsTimeMax || bIterationIsReached || bMaxSubproblems || bMaxFeasibleSolution;
 	};
+	/**
+	 * Tries to find solution by GRG (Generalized reduced gradient) method.
+	 * Uses for non-linear programming tasks.
+	 * @memberof CSolver
+	 * @returns {boolean} The flag who recognizes end a loop of solver calculation. True - stop a loop, false - continue a loop.
+	 */
 	CSolver.prototype.grgOptimization = function () {
 		const oChangingCells = this.getChangingCell();
 		const aConstraints = this.getConstraints();
@@ -2101,9 +2475,15 @@ function (window, undefined) {
 
 
 	};
+	/**
+	 * Tries to find solution by Simplex method.
+	 * Uses for LP tasks.
+	 * @memberof CSolver
+	 * @returns {boolean} The flag who recognizes end a loop of solver calculation. True - stop a loop, false - continue a loop.
+	 */
 	CSolver.prototype.simplexOptimization = function () {
 		const oSimplexTableau = this.getSimplexTableau();
-		oSimplexTableau.calculate();
+		return oSimplexTableau.calculate();
 	};
 	CSolver.prototype.evolutionOptimization = function () {
 
@@ -2195,6 +2575,21 @@ function (window, undefined) {
 		this.nCurrentSubProblem++;
 	};
 	/**
+	 * Return current count of feasible solution.
+	 * @memberof CSolver
+	 * @returns {number}
+	 */
+	CSolver.prototype.getCurrentFeasibleCount = function () {
+		return this.nCurrentFeasibleCount;
+	};
+	/**
+	 * Increases current count of feasible solution.
+	 * @memberof CSolver
+	 */
+	CSolver.prototype.increaseCurrentFeasibleCount = function () {
+		this.nCurrentFeasibleCount++;
+	};
+	/**
 	 * Sets result of gradient for determine direction of motion for nonbasic variables.
 	 * @memberof CSolver
 	 * @param {number} nGradient
@@ -2225,7 +2620,7 @@ function (window, undefined) {
 	 */
 	CSolver.prototype.getSimplexTableau = function () {
 		return this.oSimplexTableau;
-	}
+	};
 
 	// Export
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
