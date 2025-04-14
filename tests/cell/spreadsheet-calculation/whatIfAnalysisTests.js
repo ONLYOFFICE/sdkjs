@@ -1160,7 +1160,7 @@ $(function () {
         assert.deepEqual(aColByVarIndex, aColByVarIndexExpected, 'Check prepare data for calculate by Simplex. Check colByVarIndex attribute');
         assert.strictEqual(oSimplexTableau.getObjectiveRowIndex(), 0, 'Check prepare data for calculate by Simplex. Check nCostRowIndex attribute is 0');
         assert.strictEqual(oSimplexTableau.getSolutionIsFound(), false, 'Check prepare data for calculate by Simplex. Check nEvaluation attribute is 0');
-        assert.strictEqual(oSimplexTableau.getFeasible(), true, 'Check prepare data for calculate by Simplex. Check bFeasible attribute is true');
+        assert.strictEqual(oSimplexTableau.getFeasible(), false, 'Check prepare data for calculate by Simplex. Check bFeasible attribute is true');
         assert.strictEqual(oSimplexTableau.getHeight(), 29, 'Check prepare data for calculate by Simplex. Check height attribute is 29');
         assert.strictEqual(oSimplexTableau.getLastElementIndex(), 43, 'Check prepare data for calculate by Simplex. Check lastElementIndex attribute is 43');
         assert.strictEqual(oSimplexTableau.getVarsCount(), 43, 'Check prepare data for calculate by Simplex. Check varsCount attribute is 43');
@@ -1223,5 +1223,45 @@ $(function () {
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1]
         ];
         assert.deepEqual(aMatrix, aMatrixExpected, 'Check prepare data for calculate by Simplex. Check matrix attribute');
+        // Check calculate logic
+        while (true) {
+           let bCompleteCalculation = oSolver.calculate();
+           if (bCompleteCalculation) {
+               break;
+           }
+        }
+        aMatrix = oSimplexTableau.getMatrix();
+        aMatrixExpected = [
+            [33370, -20, -11, -25, -16, -10, -40, -15, -8, -16, -5, -15, -35, -62, -32, -30],
+            [300, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [230, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+            [150, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+            [320, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [70, 0, -1, 0, 0, 1, 0, -1, 0, 0, 0, 1, 1, 1, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [250, -1, 0, -1, -1, -1, 0, 1, 0, 1, -1, -1, -1, -1, 0, -1],
+            [0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1],
+            [80, 1, 1, 1, 1, 0, 0, 0, 0, -1, 1, 0, 0, 0, -1, 0],
+            [-0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [-0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [-0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [320, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0],
+            [80, 1, 1, 1, 1, 0, 0, 0, 0, -1, 1, 0, 0, 0, -1, 0],
+            [300, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+            [-0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [150, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0],
+            [-0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0],
+            [250, -1, 0, -1, -1, -1, 0, 1, 0, 1, -1, -1, -1, -1, 0, -1],
+            [-0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0],
+            [230, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0],
+            [-0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0],
+            [-0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0],
+            [70, 0, -1, 0, 0, 1, 0, -1, 0, 0, 0, 1, 1, 1, 1, 0]
+        ];
+        assert.deepEqual(aMatrix, aMatrixExpected, 'Check calculate logic. Check updated matrix attribute');
     });
 });

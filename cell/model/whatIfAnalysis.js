@@ -1254,7 +1254,7 @@ function (window, undefined) {
 		this.aVarIndexesCycle = [];
 		this.mRepeatedVars = new Map();
 
-		this.bFeasible = true; // until proven guilty
+		this.bFeasible = false;
 		this.bSolutionIsFound = false;
 
 		this.aVarIndexByRow = null;
@@ -1331,15 +1331,17 @@ function (window, undefined) {
 	 * @see {@link https://en.wikibooks.org/wiki/Operations_Research/The_Simplex_Method#The_Simplex_method|Theory material}
 	 */
 	CSimplexTableau.prototype.calculate = function () {
-		const oOption = this.getModel().getOptions();
-		let bContinueCalculating = this.phase1();
-		if (this.getFeasible()) {
-			// current solution is feasible
-			bContinueCalculating = this.phase2();
-		}
-		// TODO logic for filling value and updating objective val result
+		let bStopCalculating = false;
 
-		return bContinueCalculating;
+		if (!this.getFeasible() && !bStopCalculating) {
+			bStopCalculating = this.phase1();
+		}
+		if (this.getFeasible() && !bStopCalculating) {
+			// current solution is feasible
+			bStopCalculating = this.phase2();
+		}
+
+		return bStopCalculating;
 	};
 	/**
 	 * Obtains a Basic Feasible Solution (BFS)
@@ -1360,7 +1362,7 @@ function (window, undefined) {
 		let nLeavingRowIndex = 0;
 		let nRhsValue = -this.getPrecision();
 		// Step 1: Find pivot row. Selecting leaving variable (feasibility condition). Basic variable with most negative value.
-		for (let i = 0; i < nLastRowId; i++) {
+		for (let i = 1; i <= nLastRowId; i++) {
 			const nValue = aMatrix[i][nRhsColumnId];
 			if (nValue < nRhsValue) {
 				nRhsValue = nValue;
@@ -1378,7 +1380,7 @@ function (window, undefined) {
 		const aLeavingRow = aMatrix[nLeavingRowIndex];
 		let nEnteringColumnIndex = 0;
 		let nMaxQuotient = -Infinity;
-		for (let i = 0; i < nLastColumnId; i++) {
+		for (let i = 1; i <= nLastColumnId; i++) {
 			const nCoefficient = aLeavingRow[i];
 			if (nCoefficient < -this.getPrecision()) {
 				const nQuotient = -aObjectiveRow[i] / nCoefficient;
@@ -1432,7 +1434,7 @@ function (window, undefined) {
 		let nEnteringValue = nPrecision;
 		let bReducedCostNegative = false;
 
-		for (let col = 1; col < nLastColumnId; col++) {
+		for (let col = 1; col <= nLastColumnId; col++) {
 			const nObjectiveCoefValue = aObjectiveRow[col];
 			if (nObjectiveCoefValue > nEnteringValue) {
 				nEnteringValue = nObjectiveCoefValue;
@@ -1450,7 +1452,7 @@ function (window, undefined) {
 		let nLeavingRowIndex = 0;
 		let nMinQuotient = Infinity;
 
-		for (let row = 1; row < nLastRowId; row++) {
+		for (let row = 1; row <= nLastRowId; row++) {
 			const aRow = aMatrix[row];
 			const nRhsValue = aRow[nRhsColumnId];
 			const nColValue = aRow[nEnteringColumnIndex];
@@ -2166,7 +2168,7 @@ function (window, undefined) {
 		aPivotRow[nEnteringColumnIndex] = 1 / nQuotient;
 
 		// Step 2: Calculate new rows using formula: newRow = oldRow - oldCoeffOfEnteringVar * newPivotRow
-		for (let row = 0; row < nLastRow; row++) {
+		for (let row = 0; row <= nLastRow; row++) {
 			if (row === nLeavingRowIndex) {
 				continue;
 			}
@@ -2306,19 +2308,34 @@ function (window, undefined) {
 	 * @returns {boolean} The flag who recognizes end a loop of solver calculation. True - stop a loop, false - continue a loop.
 	 */
 	CSolver.prototype.calculate = function () {
+		if (this.getIsPause()) {
+			return true;
+		}
+
 		const nSolutionMethod = this.getSolvingMethod();
+		let bCompleteCalculation = false;
 
 		if (this.isFinishCalculating()) {
 			return true;
 		}
 		switch (nSolutionMethod) {
 			case c_oAscSolvingMethod.grgNonlinear:
-				return this.grgOptimization();
+				bCompleteCalculation = this.grgOptimization();
+				break;
 			case c_oAscSolvingMethod.simplexLP:
-				return this.simplexOptimization();
+				bCompleteCalculation = this.simplexOptimization();
+				break;
 			case c_oAscSolvingMethod.evolutionary:
-				return this.evolutionOptimization();
+				bCompleteCalculation = this.evolutionOptimization();
+				break;
 		}
+		if (this.getIsSingleStep()) {
+			this.setIsPause(true);
+			this.setIsSingleStep(false);
+			return true;
+		}
+
+		return bCompleteCalculation;
 	};
 	/**
 	 * Converts cell reference from UI to Cell object.
@@ -2472,8 +2489,6 @@ function (window, undefined) {
 		oChangingCells._foreachNoEmpty(function (oChangingCell) {
 
 		});
-
-
 	};
 	/**
 	 * Tries to find solution by Simplex method.
@@ -2483,11 +2498,35 @@ function (window, undefined) {
 	 */
 	CSolver.prototype.simplexOptimization = function () {
 		const oSimplexTableau = this.getSimplexTableau();
-		return oSimplexTableau.calculate();
+		const oOptions = this.getOptions();
+		const bShowIterResults = oOptions.getShowIterResults();
+
+		let bCompleteCalculation = oSimplexTableau.calculate();
+		// TODO logic for filling value and updating objective val result
+		if (bShowIterResults && !bCompleteCalculation) {
+
+		}
+		if (bCompleteCalculation) {
+
+		}
+
+		return bCompleteCalculation;
 	};
 	CSolver.prototype.evolutionOptimization = function () {
 
 	};
+	CSolver.prototype.step = function () {
+		let oSolver = this;
+
+		this.setIsPause(false);
+		this.setIsSingleStep(true);
+		this.setIntervalId(setInterval(function() {
+			let bIsFinish = oSolver.calculate();
+			if (bIsFinish) {
+				clearInterval(oSolver.getIntervalId());
+			}
+		}, this.getDelay()));
+	}
 	/**
 	 * Returns value of "Optimize to" parameter
 	 * @memberof CSolver
