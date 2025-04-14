@@ -2834,7 +2834,7 @@ CChartsDrawer.prototype =
 			case AscFormat.SERIES_LAYOUT_BOX_WHISKER:
 				return new CCachedBoxWhisker(type, seria, numLit, strLit, axisProperties);
 			case AscFormat.SERIES_LAYOUT_SUNBURST:
-				return new CCachedSunburst(type, seria, numLit, strLit, axisProperties);
+				return new CCachedSunburst(type, numLit, strLit);
 			default:
 				return null;
 		}
@@ -7918,148 +7918,135 @@ drawParetoChart.prototype.drawParetoLine = function () {
 	}
 };
 
-	function drawSunburstChart(chart, chartsDrawer) {
-		this.chartProp = chartsDrawer.calcProp;
-		this.cChartDrawer = chartsDrawer;
-		this.cChartSpace = chartsDrawer.cChartSpace;
+function drawSunburstChart(chart, chartsDrawer) {
+	this.chartProp = chartsDrawer.calcProp;
+	this.cChartDrawer = chartsDrawer;
+	this.cChartSpace = chartsDrawer.cChartSpace;
 
-		this.paths = {};
-	}
+	this.paths = {};
+}
 
-	drawSunburstChart.prototype = {
-		constructor : drawSunburstChart,
-		recalculate : function () {
-			const cachedData = this.cChartSpace ? this.cChartSpace.getCachedData() : null;
-			if (!cachedData) {
-				return;
+drawSunburstChart.prototype = {
+	constructor : drawSunburstChart,
+	recalculate : function () {
+		const cachedData = this.cChartSpace ? this.cChartSpace.getCachedData() : null;
+
+		if (cachedData) {
+			const trueWidth = this.chartProp.trueWidth;
+			const trueHeight = this.chartProp.trueHeight;
+
+			const diagramRadius = Math.min(trueHeight, trueWidth) / 2;
+			const coords = {
+				x : this.chartProp.chartGutter._left + trueWidth / 2,
+				y : this.chartProp.chartGutter._top + trueHeight / 2
 			}
-			if (cachedData.data.length > 0 && this.chartProp && this.chartProp.chartGutter) {
-				const trueWidth = this.chartProp.trueWidth;
-				const trueHeight = this.chartProp.trueHeight;
 
-				const diagramRadius = Math.min(trueHeight, trueWidth) / 2;
-				const coords = {
-					x : this.chartProp.chartGutter._left + trueWidth / 2,
-					y : this.chartProp.chartGutter._top + trueHeight / 2
-				}
+			const ringWidth = diagramRadius / (cachedData.layersCount + 1);
 
-				const ringWidth = diagramRadius / (cachedData.layersCount + 1);
-				let innerRadius = ringWidth;
-				let outerRadius = ringWidth * 2;
-				let startingAngle = Math.PI / 2;
-				let elems = 0;
-				let nextLayer = 1;
-				let layersCounter = 0;
-				for (let i = 0; i < cachedData.data.length; i++) {
-					if (!this.paths[i]) {
-						this.paths[i] = [];
+			let head = cachedData.data;
+			let indexesStack = [];
+			let anglesStack = [];
+			let startingAngle = Math.PI / 2;
+			let i = 0;
+			let currentLayer= 1;
+			while (i <= head.length) {
+				if (i === head.length) {
+					if (indexesStack.length !== 0) {
+						i = indexesStack.pop() + 1;
+						startingAngle = anglesStack.pop();
+						head = head[0].parent;
+						currentLayer -= 1;
+					} else {
+						i++;
 					}
-					for (let j = 0; j < cachedData.data[i].length; j++) {
-						const angle = cachedData.data[i][j].pVal * Math.PI * 2;
-						if (cachedData.data[i][j].name !== null) {
-							this.paths[i].push(this._calculateSegment(startingAngle, angle, outerRadius, innerRadius, coords));
-						}
+				} else {
+					const angle = head[i].pVal * Math.PI * 2;
+					this.paths[head[i].idx] = this._calculateSegment(startingAngle, angle, ringWidth * currentLayer, ringWidth * (currentLayer + 1), coords);
+					if (head[i].children && head[i].children.length > 0) {
+						indexesStack.push(i);
+						currentLayer += 1;
+						anglesStack.push(startingAngle + angle);
+						head = head[i].children;
+						i = 0;
+					} else {
 						startingAngle += angle;
-						elems += 1;
-					}
-					nextLayer -= 1;
-					if (nextLayer === 0) {
-						layersCounter += 1;
-						if (layersCounter === cachedData.layersCount) {
-							break;
-						}
-						nextLayer = elems;
-						elems = 0;
-						innerRadius = outerRadius;
-						outerRadius = innerRadius + ringWidth;
-					}
-				}
-				// let j = 0;
-				// let totalAngle = Math.PI / 2;
-				// for (let i = 0; i < sunburst.data.length; i++) {
-				// 	if (i === sunburst.layersCount[j]) {
-				// 		innerRadius = outerRadius;
-				// 		outerRadius = innerRadius + ringWidth;
-				// 		j++;
-				// 	}
-				// 	const angle = (sunburst.data[i].pVal * Math.PI * 2);
-				// 	this.paths[i] = this._calculateSegment(totalAngle, angle,  outerRadius, innerRadius, coords);
-				// 	totalAngle += angle;
-				// }
-			}
-		},
-
-		_calculateSegment : function (stAngle, swAngle, outerRadius, innerRadius, coords) {
-			if (!AscFormat.isRealNumber(stAngle) || !AscFormat.isRealNumber(swAngle) || !AscFormat.isRealNumber(outerRadius) || !AscFormat.isRealNumber(innerRadius) || !coords || !AscFormat.isRealNumber(coords.x) || !AscFormat.isRealNumber(coords.y)) {
-				return;
-			}
-
-			const pathId = this.cChartSpace.AllocPath();
-			const path = this.cChartSpace.GetPath(pathId);
-
-			const pathH = this.chartProp.pathH;
-			const pathW = this.chartProp.pathW;
-
-			const pxToMm = this.chartProp.pxToMM;
-
-			const xRight = coords.x + outerRadius * Math.cos(stAngle + swAngle);
-			const yRight = coords.y - outerRadius * Math.sin(stAngle + swAngle);
-
-			const xLeft = coords.x + innerRadius * Math.cos(stAngle);
-			const yLeft = coords.y - innerRadius * Math.sin(stAngle);
-
-			path.moveTo(xLeft / pxToMm * pathW, yLeft / pxToMm * pathH);
-			path.arcTo(innerRadius / pxToMm * pathW, innerRadius / pxToMm * pathH, -1 * stAngle * cToDeg, -1 * swAngle * cToDeg);
-			path.lnTo(xRight / pxToMm * pathW, yRight / pxToMm * pathH);
-			path.arcTo(outerRadius / pxToMm * pathW, outerRadius / pxToMm * pathH, -1 * (stAngle + swAngle) * cToDeg, swAngle * cToDeg);
-			path.lnTo(xLeft / pxToMm * pathW, yLeft / pxToMm * pathH);
-
-			return pathId;
-		},
-		draw : function () {
-			if (!this.cChartDrawer || !this.cChartDrawer.calcProp || !this.cChartDrawer.cShapeDrawer || !this.cChartDrawer.cShapeDrawer.Graphics || !this.cChartDrawer.calcProp.chartGutter) {
-				return;
-			}
-
-			// find chart starting coordinates, width and height;
-			let leftRect = this.cChartDrawer.calcProp.chartGutter._left / this.cChartDrawer.calcProp.pxToMM;
-			let topRect = (this.cChartDrawer.calcProp.chartGutter._top) / this.cChartDrawer.calcProp.pxToMM;
-			let rightRect = this.cChartDrawer.calcProp.trueWidth / this.cChartDrawer.calcProp.pxToMM;
-			let bottomRect = (this.cChartDrawer.calcProp.trueHeight) / this.cChartDrawer.calcProp.pxToMM;
-
-			if (!AscFormat.isRealNumber(leftRect) || !AscFormat.isRealNumber(topRect) || !AscFormat.isRealNumber(rightRect) || !AscFormat.isRealNumber(bottomRect) ) {
-				return;
-			}
-
-			this.cChartDrawer.cShapeDrawer.Graphics.SaveGrState();
-			this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(leftRect, topRect, rightRect, bottomRect);
-
-			let series = this.cChartSpace.chart.plotArea.plotAreaRegion.series;
-
-			let oSeries = series[0];
-			if(oSeries) {
-				for (let i in this.paths) {
-					if (this.paths.hasOwnProperty(i) && this.paths[i]) {
-						for (let j in this.paths[i]) {
-							let nPtIdx = parseInt(i);
-							let pen = oSeries.getPtPen(nPtIdx);
-							let brush = oSeries.getPtBrush(nPtIdx);
-							pen.Fill = brush.createDuplicate();
-							pen.Fill.fill.color.RGBA.B = 255;
-							pen.Fill.fill.color.RGBA.G = 255;
-							pen.Fill.fill.color.RGBA.R = 255;
-							this.cChartDrawer.drawPath(this.paths[i][j], pen, brush);
-						}
+						i++;
 					}
 				}
 			}
-
-			this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
-		},
-		_calculateDLbl : function () {
-			return {x: null, y: null}
 		}
+	},
+
+	_calculateSegment : function (stAngle, swAngle, innerRadius, outerRadius, coords) {
+		if (!AscFormat.isRealNumber(stAngle) || !AscFormat.isRealNumber(swAngle) || !AscFormat.isRealNumber(outerRadius) || !AscFormat.isRealNumber(innerRadius) || !coords || !AscFormat.isRealNumber(coords.x) || !AscFormat.isRealNumber(coords.y)) {
+			return;
+		}
+
+		const pathId = this.cChartSpace.AllocPath();
+		const path = this.cChartSpace.GetPath(pathId);
+
+		const pathH = this.chartProp.pathH;
+		const pathW = this.chartProp.pathW;
+
+		const pxToMm = this.chartProp.pxToMM;
+
+		const xRight = coords.x + outerRadius * Math.cos(stAngle + swAngle);
+		const yRight = coords.y - outerRadius * Math.sin(stAngle + swAngle);
+
+		const xLeft = coords.x + innerRadius * Math.cos(stAngle);
+		const yLeft = coords.y - innerRadius * Math.sin(stAngle);
+
+		path.moveTo(xLeft / pxToMm * pathW, yLeft / pxToMm * pathH);
+		path.arcTo(innerRadius / pxToMm * pathW, innerRadius / pxToMm * pathH, -1 * stAngle * cToDeg, -1 * swAngle * cToDeg);
+		path.lnTo(xRight / pxToMm * pathW, yRight / pxToMm * pathH);
+		path.arcTo(outerRadius / pxToMm * pathW, outerRadius / pxToMm * pathH, -1 * (stAngle + swAngle) * cToDeg, swAngle * cToDeg);
+		path.lnTo(xLeft / pxToMm * pathW, yLeft / pxToMm * pathH);
+
+		return pathId;
+	},
+	draw : function () {
+		if (!this.cChartDrawer || !this.cChartDrawer.calcProp || !this.cChartDrawer.cShapeDrawer || !this.cChartDrawer.cShapeDrawer.Graphics || !this.cChartDrawer.calcProp.chartGutter) {
+			return;
+		}
+
+		// find chart starting coordinates, width and height;
+		let leftRect = this.cChartDrawer.calcProp.chartGutter._left / this.cChartDrawer.calcProp.pxToMM;
+		let topRect = (this.cChartDrawer.calcProp.chartGutter._top) / this.cChartDrawer.calcProp.pxToMM;
+		let rightRect = this.cChartDrawer.calcProp.trueWidth / this.cChartDrawer.calcProp.pxToMM;
+		let bottomRect = (this.cChartDrawer.calcProp.trueHeight) / this.cChartDrawer.calcProp.pxToMM;
+
+		if (!AscFormat.isRealNumber(leftRect) || !AscFormat.isRealNumber(topRect) || !AscFormat.isRealNumber(rightRect) || !AscFormat.isRealNumber(bottomRect) ) {
+			return;
+		}
+
+		this.cChartDrawer.cShapeDrawer.Graphics.SaveGrState();
+		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(leftRect, topRect, rightRect, bottomRect);
+
+		let series = this.cChartSpace.chart.plotArea.plotAreaRegion.series;
+
+		let oSeries = series[0];
+		if(oSeries) {
+			for (let i in this.paths) {
+				if (this.paths.hasOwnProperty(i) && this.paths[i]) {
+					let nPtIdx = parseInt(i);
+					let pen = oSeries.getPtPen(nPtIdx);
+					let brush = oSeries.getPtBrush(nPtIdx);
+					pen.Fill = brush.createDuplicate();
+					pen.Fill.fill.color.RGBA.B = 255;
+					pen.Fill.fill.color.RGBA.G = 255;
+					pen.Fill.fill.color.RGBA.R = 255;
+					this.cChartDrawer.drawPath(this.paths[i], pen, brush);
+				}
+			}
+		}
+
+		this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
+	},
+
+	_calculateDLbl: function (compiledDlb) {
+		return {x: 0, y: 0};
 	}
+}
 
 /** @constructor */
 function drawWaterfallChart(chart, chartsDrawer) {
@@ -19844,28 +19831,66 @@ CColorObj.prototype =
 		this.ends.push(this.data.length - 1);
 	}
 
-	function CCachedSunburst(type, seria, numLit, strLit) {
+	function CSunburstNode() {
+		AscFormat.CBaseFormatNoIdObject.call(this); // Call base constructor
+
+		this.name = null;
+		this.pVal = 0;
+		this.idx = -1;
+		this.stIdx = -1;
+		this.endIdx = -1;
+		this.children = [];
+	}
+	AscFormat.InitClassWithoutType(CSunburstNode, AscFormat.CBaseFormatNoIdObject);
+
+	// Override getChildren
+	CSunburstNode.prototype.getChildren = function () {
+		return this.children;
+	};
+
+	// Proper fillObject override
+	CSunburstNode.prototype.fillObject = function (oCopy, oIdMap) {
+		oCopy.name = this.name;
+		oCopy.pVal = this.pVal;
+		oCopy.idx = this.idx;
+		oCopy.stIdx = this.stIdx;
+		oCopy.endIdx = this.endIdx;
+
+		oCopy.children = [];
+		for (let i = 0; i < this.children.length; ++i) {
+			const child = this.children[i];
+			const childCopy = child.createDuplicate(oIdMap); // uses CBaseFormatNoIdObject logic
+			childCopy.parent = oCopy;
+			oCopy.children.push(childCopy);
+		}
+	};
+
+	function CCachedSunburst(type, numLit, strLit ) {
 		CCachedChartExData.call(this, type, []);
-		this.layersCount = null;
-		this._calculate(seria, numLit, strLit);
+		this.layersCount = 0;
+		this._calculate(numLit, strLit);
 	}
 
 	AscFormat.InitClassWithoutType(CCachedSunburst, CCachedChartExData);
 
-	CCachedSunburst.prototype._calculate = function (seria, numLit, strLit) {
-		const numArr = numLit && numLit.pts;
-		if (!numArr ) {
+	CCachedSunburst.prototype._calculate = function (numLit, strLit) {
+		if (!numLit || !numLit.pts) {
 			return;
 		}
 
+		this.createSunburst(numLit.pts, strLit);
+		this.sortSunburstAndCountLayers();
+	}
+
+	CCachedSunburst.prototype.createSunburst = function (numArr, strLit) {
 		// Find index of last layer
-		const getLastLayer = function (strCache) {
-			if (!strCache || strCache.length <= 1) {
+		const getLastLayer = function (strLit) {
+			if (!strLit || strLit.length <= 1) {
 				return null;
 			}
 
-			for (let i = strCache.length - 1; i >= 0; i--) {
-				if (strCache[i].pts.length > 0) {
+			for (let i = strLit.length - 1; i >= 0; i--) {
+				if (strLit[i].pts.length > 0) {
 					return i;
 				}
 			}
@@ -19873,15 +19898,15 @@ CColorObj.prototype =
 		}
 
 		// Normalize all elements that either negative or have no corresponding label to zero
-		const normalizeNumArr = function (numArr, strCache, lastLayer) {
+		const normalizeNumArr = function (numArr, strLit, lastLayer) {
 			// turn all elements that have no corresponding label into zero
 			const verifiedIdxs = {};
 
-			// Populate `verifiedIdxs` if there are labels in `strCache`
+			// Populate `verifiedIdxs` if there are labels in `strLit`
 			if (lastLayer !== null) {
-				for (let i = 0; i < strCache.length; i++) {
-					for (let j = 0; j < strCache[i].pts.length; j++) {
-						verifiedIdxs[strCache[i].pts[j].idx] = true;
+				for (let i = 0; i < strLit.length; i++) {
+					for (let j = 0; j < strLit[i].pts.length; j++) {
+						verifiedIdxs[strLit[i].pts[j].idx] = true;
 					}
 				}
 			}
@@ -19908,258 +19933,253 @@ CColorObj.prototype =
 			return sum;
 		}
 
-		// function to find number of layers before constructing the sunburst.data
-		// const getLayersCount = function (strCache, lastLayer) {
-		// 	if (lastLayer === null) {
-		// 		return 1;
-		// 	}
-		// 	const indexes = [];
-		// 	for (let i = 0; i < strCache.length; i++) {
-		// 		indexes.push(0);
-		// 	}
-		// 	let maxLayer = 0;
-		// 	for (let i = 0; i < strCache[lastLayer].ptCount; i++) {
-		// 		let layersCount = 0;
-		// 		for (let j = 0; j <= lastLayer; j++) {
-		// 			if (indexes[j] < strCache[j].pts.length && strCache[j].pts[indexes[j]].idx === i) {
-		// 				layersCount += 1;
-		// 				indexes[j] += 1;
-		// 			}
-		// 		}
-		// 		maxLayer = Math.max(maxLayer, layersCount);
-		// 	}
-		// 	return maxLayer;
-		//
-		// }
-
-		// Transform strCache and numArr into a sunburst
-		const createSunburst = function (numArr, strCache, totalValue, lastLayer) {
-			const resultingArr = [[]];
-			let layersCount = 0;
-
-			if (lastLayer !== null) {
-				let numIndex = 0;
+		// Transform strLit and numArr into a sunburst
+		const createSunburst = function (numArr, strLit, totalValue, lastLayer) {
+			const treeHead = [];
+			if (lastLayer != null) {
+				let head = treeHead;
+				let parent = null;
+				const strItIndexes = [0];
+				const numIndexes = [0];
+				const strRealIndexes = [0];
+				let realIndex = null;
+				let strArr = strLit[0].pts;
+				let prevVal = strArr[0].idx === 0 ? strArr[0].val : null;
+				let row = prevVal !== null ? 1 : 0;
+				const nullIndexes = [];
 				let col = 0;
-				let currentCol = 0;
-				let currentRow = 0;
-				let nullSkip = 0;
-				let start = 0;
-				let prevVal = null;
-				const ptCount = strCache[lastLayer].ptCount;
-				let layerReady = true;
+				let currIdx = 0;
 
-				const createCell = function (name, start, end, cellPos) {
-					const pVal = getPVal(end);
-					return {name: name, pVal: pVal, start: start, end: end, pos: cellPos}
+				// function to update all indexes of current column
+				const updateCurrentColumn = function () {
+					strItIndexes[col] = row;
+					strRealIndexes[col] = realIndex;
+					nullIndexes[col] = prevVal === null;
 				}
 
-				const getPVal = function (end) {
+				const goNextColumn = function () {
+
+					let nextRow = null;
+					do {
+						// failed to go to the next column;
+						if (nextRow !== null && col >= lastLayer) {
+							return false;
+						}
+
+						// handle cases when we skipped more than one column
+						if (nextRow !== null) {
+							strRealIndexes[col] = strRealIndexes[col - 1];
+							nullIndexes[col] = true;
+						}
+
+						// updateColumn;
+						col += 1;
+
+						// if it is the first time in this column then add new indexes
+						if (col === strItIndexes.length) {
+							strItIndexes.push(0);
+							numIndexes.push(0);
+							strRealIndexes.push(0);
+							nullIndexes.push(true);
+						}
+
+						// update strArr and nextRow;
+						strArr = strLit[col].pts;
+						nextRow = strItIndexes[col];
+
+					} while (nextRow >= strArr.length);
+
+					// prepare prevVal and currentRow for next column
+					prevVal = nextRow < strArr.length && strArr[nextRow].idx === strRealIndexes[col] ? strArr[nextRow].val : null;
+					row = prevVal !== null ? nextRow : nextRow - 1;
+					return true;
+				}
+
+				const handleFailedTrial = function () {
+					// col is currently in last layer;
+					// update numindexes for last layer;
+					numIndexes[col] = numArr[numIndexes[col]].idx < realIndex ? numIndexes[col] + 1 : numIndexes[col];
+
+					// go to the previous layer
+					col -= 1;
+
+					// if prevVal then we are currently in empty branch
+					// if not then update numIndexes, because we are returned to previous layer
+					if (prevVal !== null) {
+						head = parent
+						parent = head.length > 0 ? head[head.length - 1].parent : null;
+					} else {
+						numIndexes[col] = Math.max(numIndexes[col], numIndexes[col + 1]);
+					}
+
+					// return to prev strArr
+					strArr = strLit[col].pts;
+					const prevRow = strItIndexes[col];
+					if (prevRow === strArr.length) {
+						row = prevRow;
+						return;
+					}
+					prevVal = prevRow < strArr.length && strArr[prevRow].idx === strRealIndexes[col] ? strArr[prevRow].val : null;
+					row = prevVal !== null ? prevRow : prevRow - 1;
+				}
+
+				const updateNumIndexes = function () {
+					if (prevVal === null) {
+						numIndexes[col] = numArr[numIndexes[col]].idx < realIndex ? numIndexes[col] + 1 : numIndexes[col];
+					}
+					prevVal = row < strArr.length ? strArr[row].val : null;
+				}
+
+				const getPercent = function (end) {
+					let start = numIndexes[col];
 					let sum = 0;
-					for (let i = numIndex; i < numArr.length; i++) {
-						const item = numArr[i];
-						if (item.idx < end) {
-							sum += item.val;
-						} else {
-							numIndex = i;
+					for (; start < numArr.length; start++) {
+						if (numArr[start].idx >= end) {
+							numIndexes[col] = start;
 							break;
 						}
+						sum += numArr[start].val;
 					}
 					return sum / totalValue;
 				}
 
-				const copyAndRenameCell = function (cell) {
-					return {name: null, pVal: cell.pVal, start: cell.start, end: cell.end, pos: cell.pos}
-				}
-
-				const isParentExist = function (val) {
-					val = val ? val : 0;
-					return col > 0 && currentCol < resultingArr.length && (currentRow + val) < resultingArr[currentCol].length
-				}
-
-				const handleNextIndex = function (j, arr, ptCount, isLastLayer) {
-					if (j === arr.length) {
-						return isLastLayer ? arr[arr.length - 1].idx + 1 : ptCount;
-					}
-					if (isParentExist() && arr[j].idx > resultingArr[currentCol][currentRow].end) {
-						prevVal = null;
-						return resultingArr[currentCol][currentRow].end;
-					}
-					prevVal = arr[j].val;
-					return arr[j].idx;
-				}
-
-				const updateGroupPositions = function (arr, start, val) {
-					for (let i = start; i < arr.length; i++) {
-						arr[i].pos = val + i;
+				const createCell = function () {
+					return {
+						stIdx : strRealIndexes[col],
+						endIdx : realIndex,
+						idx : currIdx++,
+						name : prevVal,
+						pVal : getPercent(realIndex),
+						parent : parent,
+						children : [],
 					}
 				}
 
-				for (let i = 0; i <= lastLayer; i++) {
-					const strArr = strCache[i].pts;
-					prevVal = strArr.length > 0 && strArr[0].idx === 0 ? strArr[0].val : null;
-					let j = (prevVal === null) ? 0 : 1;
-					const isLastLayer = i === lastLayer;
-					let cellPos = 0;
-					for (; j <= strArr.length; j++) {
-						let isLastElem = (j === strArr.length);
-						const isNewLabel = isLastElem || prevVal !== strArr[j].val;
-						const isOutOfCurrentGroup = isParentExist() && (isLastElem || strArr[j].idx >= resultingArr[currentCol][currentRow].end);
-
-						if (isNewLabel || isOutOfCurrentGroup || isLastLayer) {
-							// find the ending index, it should be either the end of the current group or the end of the parent layer
-							const name = prevVal;
-							let end = handleNextIndex(j, strArr, ptCount, isLastLayer);
-
-
-							const cell = createCell(name, start, start < end ? end : end + 1, cellPos, isLastLayer);
-
-							if (isParentExist() && resultingArr[currentCol][currentRow].name === null && !(resultingArr[currentCol][currentRow].end === cell.end && resultingArr[currentCol][currentRow].start === cell.start)) {
-								nullSkip += 1;
-								resultingArr[currentCol].splice(currentRow + nullSkip, 0, cell);
-								resultingArr[col].push(copyAndRenameCell(cell));
-							} else {
-								// new Layer is starting
-								if (layerReady) {
-									layersCount += 1;
-									layerReady = false;
-								}
-
-								if (isLastElem && isLastLayer && strArr[j - 1].idx < ptCount - 1) {
-									const fakeCell = {idx: ptCount - 1, val: null, fake: true};
-									prevVal = null;
-									strArr.push(fakeCell);
-									isLastElem = false;
-								}
-
-								if (start === ptCount - 1 && strArr[strArr.length - 1].fake) {
-									strArr.pop();
-									isLastElem = true;
-								}
-								resultingArr[col].push(cell);
-							}
-
-							cellPos+=1;
-							start = end;
-						}
-
-						if (nullSkip && isOutOfCurrentGroup) {
-							const lastPos = resultingArr[currentCol][currentRow].pos;
-							resultingArr[currentCol].splice(currentRow, 1);
-							updateGroupPositions(resultingArr[currentCol], currentRow, lastPos - currentRow);
-							currentRow += nullSkip - 1;
-							nullSkip = 0;
-						}
-
-						if (isLastElem || (isParentExist(nullSkip) && strArr[j].idx >= resultingArr[currentCol][currentRow + nullSkip].end)) {
-							// underConsideration
-							if (resultingArr[resultingArr.length - 1].length > 0) {
-								resultingArr.push([]);
-								col += 1;
-							}
-							if (currentRow === resultingArr[currentCol].length - 1) {
-								currentCol += 1;
-								currentRow = 0;
-							} else if (!nullSkip) {
-								currentRow += 1;
-							}
-						}
-
-						// start loop again from the same position, as prevVal changed
-						if (!isLastElem && prevVal === null) {
-							j--;
-						}
-
-					}
-					numIndex = 0;
-					layerReady = true;
-					currentRow = 0;
-					start = 0;
-				}
-				if (resultingArr[resultingArr.length - 1].length === 0) {
-					resultingArr.pop();
-				}
-			} else {
-				const isStrCache = strCache && strCache.length > 0;
-				layersCount = 1;
-				for (let i = 0; i < numArr.length; i++) {
-					// search label in strCache if found get name, and increase labelCounter
-					let name = isStrCache && numArr[i].idx === strCache[0].pts[0].idx ? strCache[0].pts[0].val : numArr[i].idx;
-					resultingArr[0].push({name: name, pVal: numArr[i].val / totalValue, start: i, end: i + 1, pos: i});
-				}
-			}
-
-			return {data : resultingArr, layersCount : layersCount};
-
-		}
-
-		const sortSunburst = function (arr) {
-			// sort group inside each layer
-			for (let i = 0; i < arr.length; i++) {
-				arr[i].sort(function(a, b) {
-					// Move items with null names to the end
-					if (a.name === null && b.name !== null) return 1;
-					if (a.name !== null && b.name === null) return -1;
-
-					// If both names are non-null, or both are null, sort by pVal
-					return a.pVal - b.pVal;
-				});
-			}
-		}
-
-		const normalizeSunburst = function (data, layerCount) {
-			if (layerCount === 1) {
-				return;
-			}
-			// switch groups to the correct position
-			let currIndex = 0;
-			let elems = 0;
-			let nextLayer = 1;
-			// positions of some indexes were changed after swapping
-			const positionsStore = [];
-			let layersCounter = 1;
-
-			for (let i = 0; i < data.length; i++) {
-				positionsStore.push(data[i]);
-			}
-
-			for (let i = 0; i < data.length; i++) {
-				for (let j = 0; j < data[i].length; j++) {
-					const pos = data[i][j].pos;
-					const nextIndex = currIndex + 1 + elems;
-					let targetIndex = currIndex + 1 + pos;
-
-
-
-					// change two indexes
-					if (nextIndex !== targetIndex) {
-						data[nextIndex] = positionsStore[targetIndex];
-					}
-					elems += 1;
-				}
-				nextLayer -= 1;
-				if (nextLayer === 0) {
-					layersCounter += 1;
-					if (layersCounter === layerCount) {
+				const goBack = function () {
+					if (col === 0) {
 						return;
 					}
-					nextLayer = elems;
-					currIndex += elems;
-					elems = 0;
+
+					// go back both in columns and in tree
+					let index = col - 1;
+					let lastIdx = strRealIndexes[index];
+					do {
+						if (!nullIndexes[index]) {
+							head = parent
+							parent = head.length > 0 ? head[head.length - 1].parent : null;
+						}
+						numIndexes[index] = Math.max(numIndexes[index], numIndexes[col]);
+
+						index -= 1;
+					} while (index >= 0 && strRealIndexes[index] === lastIdx)
+
+					//updateCurrentCol
+					col = index + 1;
+
+					// return to prevStrArr
+					strArr = strLit[col].pts;
+					const prevRow = strItIndexes[col];
+					if (prevRow === strArr.length) {
+						row = prevRow;
+						return;
+					}
+					prevVal = (prevRow < strArr.length && strArr[prevRow].idx === strRealIndexes[col]) ? strArr[prevRow].val : null;
+					row = prevVal !== null ? prevRow : prevRow - 1;
+				}
+
+				const updateTree = function (cell, isLastLayer) {
+					head.push(cell);
+					if (!isLastLayer) {
+						parent = head;
+						head = cell.children;
+					}
+				}
+
+				for (;row <= strArr.length; row++) {
+					const isLastElem = row === strArr.length;
+					const isOutOfGroup = !isLastElem && col > 0 && strArr[row].idx >= strRealIndexes[col - 1];
+					const isLastLayer = col === lastLayer;
+					const isNewLabel = !isLastElem && strArr[row].val !== prevVal;
+
+					if (isLastElem || isNewLabel || isLastLayer || isOutOfGroup) {
+						realIndex = ( isLastElem || isOutOfGroup )? (col > 0 ? strRealIndexes[col - 1] : strLit[col].ptCount): strArr[row].idx;
+						if (prevVal !== null) {
+							const cell = createCell();
+							updateTree(cell, isLastLayer);
+						}
+						updateCurrentColumn()
+						if (!isLastLayer) {
+							const isSuccess = goNextColumn();
+							// if jumped to next column then don need to handle next functions
+							if (isSuccess) {
+								continue;
+							}
+							handleFailedTrial();
+						} else {
+							updateNumIndexes();
+						}
+					}
+
+					if (isOutOfGroup || isLastElem) {
+						goBack();
+					}
+				}
+			} else {
+				const isStrLit = strLit;
+				let labelCounter = 0;
+				for (let i = 0; i < numArr.length; i++) {
+					// search label in strLit if found get name, and increase labelCounter
+					let name = isStrLit && numArr[i].idx === strLit[0].pts[labelCounter].idx ? strLit[0].pts[0].val : null;
+					labelCounter = name !== null ? labelCounter + 1 : labelCounter;
+					treeHead.push({name: name, pVal: numArr[i].val / totalValue, start: i, end: i + 1, pos: i, idx: i});
 				}
 			}
+			return treeHead;
 		}
-
 		const lastLayer = getLastLayer(strLit);
 		const newNumArr = normalizeNumArr(numArr, strLit, lastLayer);
 		const totalValue = getTotalValue(newNumArr);
-		// const layersCount = getLayersCount(strCache, lastLayer);
-		const sunburst = createSunburst(newNumArr, strLit, totalValue, lastLayer);
-		sortSunburst(sunburst.data);
-		normalizeSunburst(sunburst.data, sunburst.layersCount);
-		console.log(sunburst);
-		this.data = sunburst.data;
-		this.layersCount = sunburst.layersCount;
+		this.data = createSunburst(newNumArr, strLit, totalValue, lastLayer);
+	}
 
+	CCachedSunburst.prototype.sortSunburstAndCountLayers = function () {
+		if (this.data.length === 0) {
+			this.layersCount = 0;
+		}
+		const sortArr = function (arr) {
+			arr.sort(function(a, b) {
+				// sort by pVal;
+				return a.pVal - b.pVal;
+			});
+		}
+
+		let head = this.data;
+		let indexesStack = [];
+		let i = 0;
+		let additionalLayers = 0;
+		while (i <= head.length) {
+			if (i === head.length) {
+				sortArr(head);
+				if (indexesStack.length !== 0) {
+					i = indexesStack.pop() + 1;
+					head = head[0].parent;
+				} else {
+					i++;
+				}
+			} else {
+				if (head[i].children && head[i].children.length > 0) {
+					indexesStack.push(i);
+					additionalLayers = Math.max(additionalLayers, indexesStack.length);
+					head = head[i].children;
+					i = 0;
+				} else {
+					i++;
+				}
+			}
+		}
+
+		// 1 layer plus maximum number of children
+		this.layersCount = 1 + additionalLayers;
 	}
 
 

@@ -3385,8 +3385,12 @@ function (window, undefined) {
 		if (aCatDim.length > 0) {
 			let oDim = aCatDim[0];
 			if (oDim) {
-				let index = (type === AscFormat.SERIES_LAYOUT_WATERFALL || type === AscFormat.SERIES_LAYOUT_FUNNEL) ? oDim.levelData.length - 1 : 0;
-				return oDim.levelData[index] || null;
+				if (type === AscFormat.SERIES_LAYOUT_SUNBURST) {
+					return oDim.levelData;
+				} else {
+					let index = (type === AscFormat.SERIES_LAYOUT_WATERFALL || type === AscFormat.SERIES_LAYOUT_FUNNEL) ? oDim.levelData.length - 1 : 0;
+					return oDim.levelData[index] || null;
+				}
 			}
 		}
 		return null;
