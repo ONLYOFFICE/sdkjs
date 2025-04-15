@@ -2817,7 +2817,6 @@ CChartsDrawer.prototype =
 			calculateExtremums(type, axisProperties, numLit);
 			plotArea.plotAreaRegion.setCachedData(this._createCachedData(type, seria, numLit, strLit, axisProperties, secondType, width, height));
 			this._chartExHandleAxesConfigurations(plotArea.axId, axisProperties);
-			console.log("here");
 		}
 	},
 
@@ -7930,7 +7929,6 @@ drawSunburstChart.prototype = {
 	constructor : drawSunburstChart,
 	recalculate : function () {
 		const cachedData = this.cChartSpace ? this.cChartSpace.getCachedData() : null;
-
 		if (cachedData) {
 			const trueWidth = this.chartProp.trueWidth;
 			const trueHeight = this.chartProp.trueHeight;
@@ -7943,7 +7941,7 @@ drawSunburstChart.prototype = {
 
 			const ringWidth = diagramRadius / (cachedData.layersCount + 1);
 
-			let head = cachedData.data;
+			let head = cachedData.data.getChildren();
 			let indexesStack = [];
 			let anglesStack = [];
 			let startingAngle = Math.PI / 2;
@@ -8636,40 +8634,34 @@ drawBoxWhiskerChart.prototype = {
 					case cachedData.pointType:
 						// Point
 						this.paths[index] = [this.createPoint(catPoint, valPoint, 18 * gapWidth), false];
-						console.log(valPoint)
 						break;
 					case cachedData.tailType:
 						// Tail
 						const boxEdgeValPoint = this.cChartDrawer.getYPosition(data[i].val2, valAxis, true);
 						this.paths[index] = [this.createTail(catPoint, valPoint, boxEdgeValPoint, tailWidth), true];
-						console.log(valPoint, boxEdgeValPoint)
 						break;
 					case cachedData.bottomBoxType:
 						// Bottom of the box
 						const medianValPointTop = this.cChartDrawer.getYPosition(data[i].val2, valAxis, true) * this.chartProp.pxToMM;
 						valPoint *= this.chartProp.pxToMM
 						this.paths[index] = [this.cChartDrawer._calculateRect(catPoint - (barWidth / 2), valPoint, barWidth, valPoint - medianValPointTop ), true];
-						console.log(valPoint, medianValPointTop)
 						break;
 					case cachedData.medianType:
 						// Median of the box
 						valPoint *= this.chartProp.pxToMM
 						this.paths[index] = [this._createLine([[catPoint - (barWidth / 2), valPoint], [catPoint + (barWidth / 2), valPoint]]), true];
-						console.log(valPoint)
 						break;
 					case cachedData.topBoxType:
 						// Top of the box
 						const medianValPointBottom = this.cChartDrawer.getYPosition(data[i].val2, valAxis, true) * this.chartProp.pxToMM;
 						valPoint *= this.chartProp.pxToMM
 						this.paths[index] = [this.cChartDrawer._calculateRect(catPoint - (barWidth / 2), medianValPointBottom, barWidth, medianValPointBottom - valPoint), true];
-						console.log(valPoint, medianValPointBottom)
 						break;
 					case cachedData.meanType:
 						// Mean
 						valPoint *= this.chartProp.pxToMM
 						meanLine.push([catPoint, valPoint]);
 						this.paths[index] = [this._createMeanMarker(catPoint, valPoint, 32 * gapWidth), false];
-						console.log(valPoint)
 						break;
 				}
 
@@ -8684,7 +8676,6 @@ drawBoxWhiskerChart.prototype = {
 			if (cachedData.meanLine) {
 				this.linePath = this._createLine(meanLine);
 			}
-			console.log("here");
 		}
 	},
 
@@ -19654,7 +19645,6 @@ CColorObj.prototype =
 		const lastLayer = getLastLayer(strLit)
 		const newNumArr = normalizeNumArr(numArr, strLit, lastLayer, width * height);
 		this.data = createTreemap(newNumArr, strLit, lastLayer, width, height);
-		console.log(this.data);
 	}
 
 	function CCachedBoxWhisker(type, seria, numLit, strLit, axisProperties) {
@@ -19831,24 +19821,33 @@ CColorObj.prototype =
 		this.ends.push(this.data.length - 1);
 	}
 
-	function CSunburstNode() {
-		AscFormat.CBaseFormatNoIdObject.call(this); // Call base constructor
-
-		this.name = null;
-		this.pVal = 0;
-		this.idx = -1;
-		this.stIdx = -1;
-		this.endIdx = -1;
-		this.children = [];
+	/*
+	 * Sunburst
+	 *
+	 * @param {string} name - The name of the node.
+	 * @param {number} pVal - The parent value of the node.
+	 * @param {number} idx - The index of the node.
+	 * @param {CSunburstNode || null} parent - The parent node.
+	 * @param {Array} children - The child nodes.
+	 * @param {number} stIdx - The start index of the node.
+	 * @param {number} endIdx - The end index of the node.
+	 */
+	function CSunburstNode(name, pVal, idx, parent, children, stIdx, endIdx) {
+		AscFormat.CBaseFormatNoIdObject.call(this);
+		this.name = name;
+		this.pVal = pVal;
+		this.idx = idx;
+		this.parent = parent;
+		this.children = children || [];
+		this.stIdx = stIdx;
+		this.endIdx = endIdx;
 	}
 	AscFormat.InitClassWithoutType(CSunburstNode, AscFormat.CBaseFormatNoIdObject);
 
-	// Override getChildren
 	CSunburstNode.prototype.getChildren = function () {
 		return this.children;
 	};
 
-	// Proper fillObject override
 	CSunburstNode.prototype.fillObject = function (oCopy, oIdMap) {
 		oCopy.name = this.name;
 		oCopy.pVal = this.pVal;
@@ -19856,13 +19855,11 @@ CColorObj.prototype =
 		oCopy.stIdx = this.stIdx;
 		oCopy.endIdx = this.endIdx;
 
-		oCopy.children = [];
-		for (let i = 0; i < this.children.length; ++i) {
-			const child = this.children[i];
-			const childCopy = child.createDuplicate(oIdMap); // uses CBaseFormatNoIdObject logic
-			childCopy.parent = oCopy;
-			oCopy.children.push(childCopy);
-		}
+		oCopy.children = this.children.map(child => {
+			let oChildCopy = child.createDuplicate(oIdMap);
+			oChildCopy.parent = oCopy;
+			return oChildCopy;
+		});
 	};
 
 	function CCachedSunburst(type, numLit, strLit ) {
@@ -19883,6 +19880,21 @@ CColorObj.prototype =
 	}
 
 	CCachedSunburst.prototype.createSunburst = function (numArr, strLit) {
+
+		// first columns of strLit can be null for all rows
+		const normalizeStrLit = function (strLit) {
+			if (!strLit) {
+				return [];
+			}
+			const newStrLit = [];
+			for (let i = 0; i < strLit.length; i++) {
+				if (strLit[i].pts.length > 0) {
+					newStrLit.push(strLit[i]);
+				}
+			}
+			return newStrLit;
+		}
+
 		// Find index of last layer
 		const getLastLayer = function (strLit) {
 			if (!strLit || strLit.length <= 1) {
@@ -19934,10 +19946,10 @@ CColorObj.prototype =
 		}
 
 		// Transform strLit and numArr into a sunburst
-		const createSunburst = function (numArr, strLit, totalValue, lastLayer) {
-			const treeHead = [];
+		const _createSunburst = function (numArr, strLit, totalValue, lastLayer) {
+			const treeHead = new CSunburstNode("root", totalValue, -1, null, [], 0, 0);;
 			if (lastLayer != null) {
-				let head = treeHead;
+				let head = treeHead.children;
 				let parent = null;
 				const strItIndexes = [0];
 				const numIndexes = [0];
@@ -19946,8 +19958,8 @@ CColorObj.prototype =
 				let strArr = strLit[0].pts;
 				let prevVal = strArr[0].idx === 0 ? strArr[0].val : null;
 				let row = prevVal !== null ? 1 : 0;
-				const nullIndexes = [];
 				let col = 0;
+				const nullIndexes = [];
 				let currIdx = 0;
 
 				// function to update all indexes of current column
@@ -20044,15 +20056,15 @@ CColorObj.prototype =
 				}
 
 				const createCell = function () {
-					return {
-						stIdx : strRealIndexes[col],
-						endIdx : realIndex,
-						idx : currIdx++,
-						name : prevVal,
-						pVal : getPercent(realIndex),
-						parent : parent,
-						children : [],
-					}
+					return new CSunburstNode(
+						prevVal,
+						getPercent(realIndex),
+						currIdx++,
+						parent,
+						[],
+						strRealIndexes[col],
+						realIndex,
+					)
 				}
 
 				const goBack = function () {
@@ -20091,7 +20103,7 @@ CColorObj.prototype =
 					head.push(cell);
 					if (!isLastLayer) {
 						parent = head;
-						head = cell.children;
+						head = cell.getChildren()
 					}
 				}
 
@@ -20125,25 +20137,39 @@ CColorObj.prototype =
 					}
 				}
 			} else {
-				const isStrLit = strLit;
+				// cheeck if labels exist
+				const isStrLit = strLit.length !== 0;
 				let labelCounter = 0;
+				const head = treeHead.getChildren();
 				for (let i = 0; i < numArr.length; i++) {
 					// search label in strLit if found get name, and increase labelCounter
-					let name = isStrLit && numArr[i].idx === strLit[0].pts[labelCounter].idx ? strLit[0].pts[0].val : null;
+					let name = isStrLit && labelCounter < strLit[0].pts.length && numArr[i].idx === strLit[0].pts[labelCounter].idx ? strLit[0].pts[labelCounter].val : null;
 					labelCounter = name !== null ? labelCounter + 1 : labelCounter;
-					treeHead.push({name: name, pVal: numArr[i].val / totalValue, start: i, end: i + 1, pos: i, idx: i});
+					head.push(
+						new CSunburstNode(
+							name,
+							numArr[i].val / totalValue,
+							i,
+							null,
+							[],
+							i,
+							i+1
+						)
+					);
 				}
 			}
 			return treeHead;
 		}
-		const lastLayer = getLastLayer(strLit);
-		const newNumArr = normalizeNumArr(numArr, strLit, lastLayer);
+		const newStrLit = normalizeStrLit(strLit);
+		const lastLayer = getLastLayer(newStrLit);
+		const newNumArr = normalizeNumArr(numArr, newStrLit, lastLayer);
 		const totalValue = getTotalValue(newNumArr);
-		this.data = createSunburst(newNumArr, strLit, totalValue, lastLayer);
+		this.data = _createSunburst(newNumArr, newStrLit, totalValue, lastLayer);
 	}
 
 	CCachedSunburst.prototype.sortSunburstAndCountLayers = function () {
-		if (this.data.length === 0) {
+		let head = this.data.getChildren();
+		if (head.length === 0) {
 			this.layersCount = 0;
 		}
 		const sortArr = function (arr) {
@@ -20153,7 +20179,6 @@ CColorObj.prototype =
 			});
 		}
 
-		let head = this.data;
 		let indexesStack = [];
 		let i = 0;
 		let additionalLayers = 0;
