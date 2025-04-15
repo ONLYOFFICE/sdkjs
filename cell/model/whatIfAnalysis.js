@@ -469,7 +469,7 @@ function (window, undefined) {
 	 */
 	CGoalSeek.prototype.getFormulaCellName = function() {
 		return this.sFormulaCellName;
-	}
+	};
 	/**
 	 * Sets formula cell name.
 	 * @param {parserFormula} oParsedFormula
@@ -479,7 +479,7 @@ function (window, undefined) {
 		let ws = oParsedFormula.getWs();
 
 		this.sFormulaCellName = ws.getRange4(oCellWithFormula.nRow, oCellWithFormula.nCol).getName();
-	}
+	};
 	/**
 	 * Returns first changing cell value in number type.
 	 * @memberof CGoalSeek
@@ -487,7 +487,7 @@ function (window, undefined) {
 	 */
 	CGoalSeek.prototype.getFirstChangingValue = function() {
 		return this.nFirstChangingVal;
-	}
+	};
 	/**
 	 * Sets first changing cell value in number type.
 	 * @memberof CGoalSeek
@@ -747,7 +747,7 @@ function (window, undefined) {
 	 */
 	asc_CSolverParams.prototype.setChangingCells = function (changingCells) {
 		this.sChangingCells = changingCells;
-	}
+	};
 	/**
 	 * Returns value of "To" parameter.
 	 * @memberof asc_CSolverParams
@@ -780,7 +780,7 @@ function (window, undefined) {
 	 */
 	asc_CSolverParams.prototype.getValueOf = function () {
 		return this.sValueOf;
-	}
+	};
 	/**
 	 * Returns value of "Subject to the Constraints" parameter.
 	 * @memberof asc_CSolverParams
@@ -937,7 +937,7 @@ function (window, undefined) {
 	 */
 	asc_COptions.prototype.getIterations = function () {
 		return this.sIterations;
-	}
+	};
 	/**
 	 * Returns value of "Max Subproblems" parameter.
 	 * @memberof asc_COptions
@@ -1073,7 +1073,7 @@ function (window, undefined) {
 	 */
 	asc_COptions.prototype.setIterations = function (iterations) {
 		this.sIterations = iterations;
-	}
+	};
 	/**
 	 * Sets value of "Max Subproblems" parameter.
 	 * @memberof asc_COptions
@@ -1245,7 +1245,7 @@ function (window, undefined) {
 		this.nObjectiveRowIndex = 0;
 		this.nRhsColumn = 0;
 
-		this.aVariablesPerIndex = []; // ?
+		this.oVarIndexByCellName = null;
 		this.oUnrestrictedVars = null;
 
 		// Solution attributes
@@ -1477,6 +1477,7 @@ function (window, undefined) {
 			this.setSolutionIsFound(false);
 			this.setBounded(false);
 			this.setUnboundVarIndex(this.getVarIndexByCol()[nEnteringColumnIndex]);
+			//TODO call api to show error about solution isn't found
 			return true;
 		}
 
@@ -1498,6 +1499,8 @@ function (window, undefined) {
 		return false;
 	};
 	/**
+	 * Returns the main model object with the necessary data for solving a task by the Simplex method.
+	 * @memberof CSimplexTableau
 	 * @returns {CSolver}
 	 */
 	CSimplexTableau.prototype.getModel = function () {
@@ -1763,6 +1766,18 @@ function (window, undefined) {
 		return aArgsFormula;
 	};
 	/**
+	 * Returns an object that stores the variable index by cell name key.
+	 * @memberof CSimplexTableau
+	 * @returns {{}}
+	 */
+	CSimplexTableau.prototype.getVarIndexByCellName = function () {
+		if (!this.oVarIndexByCellName) {
+			this.oVarIndexByCellName = {};
+		}
+
+		return this.oVarIndexByCellName;
+	};
+	/**
 	 * Fills matrix by variable and constraints data.
 	 * @memberof CSimplexTableau
 	 * @param {number[][]} aMatrix
@@ -1782,7 +1797,7 @@ function (window, undefined) {
 
 		// Links variable with variable's index
 		let nIter = 0;
-		const oVarIndexByCellName = {};
+		const oVarIndexByCellName = this.getVarIndexByCellName();
 		oVariables._foreachNoEmpty(function (oCell) {
 			oVarIndexByCellName[oCell.getName()] = aVariablesIndexes[nIter];
 			nIter++;
@@ -1966,7 +1981,7 @@ function (window, undefined) {
 	 */
 	CSimplexTableau.prototype.addColByVarIndexElem = function (nValue, nIndex) {
 		this.aColByVarIndex[nIndex] = nValue;
-	}
+	};
 	/**
 	 * Returns index of the matrix's last element.
 	 * @memberof CSimplexTableau
@@ -2014,7 +2029,7 @@ function (window, undefined) {
 	 */
 	CSimplexTableau.prototype.setLastRowIndex = function (nLastRowIndex) {
 		this.nLastRowId = nLastRowIndex;
-	}
+	};
 	/**
 	 * Returns bounded attribute
 	 * @memberof CSimplexTableau
@@ -2068,7 +2083,7 @@ function (window, undefined) {
 	 */
 	CSimplexTableau.prototype.clearVarIndexesCycle = function () {
 		this.aVarIndexesCycle = [];
-	}
+	};
 	/**
 	 * Returns repeated basic vars.
 	 * This Map is used for checking basic variables are repeated.
@@ -2233,6 +2248,28 @@ function (window, undefined) {
 	 */
 	CSimplexTableau.prototype.setUnboundVarIndex = function (nUnboundVarIndex) {
 		this.nUnboundedVarIndex = nUnboundVarIndex;
+	};
+	/**
+	 * Updates "Changing variables Cells" values.
+	 * @memberof CSimplexTableau
+	 */
+	CSimplexTableau.prototype.updateVariableValues = function () {
+		const oVariablesCells = this.getVariables();
+		const nRoundingCoefficient = Math.round(1 / this.getPrecision());
+		const oVarIndexByCellName = this.getVarIndexByCellName();
+		const aRowByVarIndex = this.getRowByVarIndex();
+		const nRhsColumn = this.getRhsColumn();
+		const aMatrix = this.getMatrix();
+
+		oVariablesCells._foreachNoEmpty(function (oCell) {
+			const sCellName = oCell.getName();
+			const nVarIndex = oVarIndexByCellName[sCellName];
+			const nRowId = aRowByVarIndex[nVarIndex];
+			if (nRowId !== -1) {
+				const nVarValue =  aMatrix[nRowId][nRhsColumn];
+				oCell.setValue(String(Math.round((nVarValue + Number.EPSILON) * nRoundingCoefficient) / nRoundingCoefficient));
+			}
+		});
 	};
 
 	// Main class of solver feature
@@ -2502,19 +2539,28 @@ function (window, undefined) {
 		const bShowIterResults = oOptions.getShowIterResults();
 
 		let bCompleteCalculation = oSimplexTableau.calculate();
-		// TODO logic for filling value and updating objective val result
 		if (bShowIterResults && !bCompleteCalculation) {
-
+			this.fillResult();
 		}
-		if (bCompleteCalculation) {
-
+		if (bCompleteCalculation && oSimplexTableau.getSolutionIsFound()) {
+			this.fillResult();
 		}
 
 		return bCompleteCalculation;
 	};
+	/**
+	 * Tries to find solution by Evolutionary method.
+	 * Uses for non-smooth solver problems.
+	 * @memberof CSolver
+	 * @returns {boolean} The flag who recognizes end a loop of solver calculation. True - stop a loop, false - continue a loop.
+	 */
 	CSolver.prototype.evolutionOptimization = function () {
 
 	};
+	/**
+	 * Resumes calculation by one step than pause it again.
+	 * @memberof CSolver
+	 */
 	CSolver.prototype.step = function () {
 		let oSolver = this;
 
@@ -2526,7 +2572,25 @@ function (window, undefined) {
 				clearInterval(oSolver.getIntervalId());
 			}
 		}, this.getDelay()));
-	}
+	};
+	/**
+	 * Fills "Changing Variable Cells" values from result of calculation.
+	 * @memberOf CSolver
+	 */
+	CSolver.prototype.fillResult = function () {
+		const nSolutionMethod = this.getSolvingMethod();
+
+		switch (nSolutionMethod) {
+			case c_oAscSolvingMethod.grgNonlinear:
+				break;
+			case c_oAscSolvingMethod.simplexLP:
+				const oSimplexTableau = this.getSimplexTableau();
+				oSimplexTableau.updateVariableValues();
+				break;
+			case  c_oAscSolvingMethod.evolutionary:
+				break;
+		}
+	};
 	/**
 	 * Returns value of "Optimize to" parameter
 	 * @memberof CSolver
@@ -2542,7 +2606,7 @@ function (window, undefined) {
 	 */
 	CSolver.prototype.getValueOf = function () {
 		return this.nValueOf;
-	}
+	};
 	/**
 	 * Returns the array of constraints.
 	 * @memberof CSolver
@@ -2666,6 +2730,7 @@ function (window, undefined) {
 	window['AscCommonExcel'].CGoalSeek = CGoalSeek;
 	window['AscCommonExcel'].CSolver = CSolver;
 
+	// Collections and classes for UI part
 	window['AscCommonExcel'].c_oAscDerivativeType = c_oAscDerivativeType;
 	window['AscCommonExcel'].c_oAscOperator = c_oAscOperator;
 	window['AscCommonExcel'].c_oAscOptimizeTo = c_oAscOptimizeTo;

@@ -1093,7 +1093,7 @@ $(function () {
             ['0', '0', '0', '0', '0', '=SUM(A7:E7)', '300'], // Warehouse 3
             ['=SUM(A5:A7)', '=SUM(B5:B7)', '=SUM(C5:C7)', '=SUM(D5:D7)', '=SUM(E5:E7)'], // Total
             ['300', '230', '150', '320', '400'], // Demand
-            ['=SUMPRODUCT(A1:E3,A5:E6)'] // Total cost of delivery
+            ['=SUMPRODUCT(A1:E3,A5:E7)'] // Total cost of delivery
         ];
         let oRange = ws.getRange4(0, 0);
         oRange.fillData(testData);
@@ -1263,5 +1263,32 @@ $(function () {
             [70, 0, -1, 0, 0, 1, 0, -1, 0, 0, 0, 1, 1, 1, 1, 0]
         ];
         assert.deepEqual(aMatrix, aMatrixExpected, 'Check calculate logic. Check updated matrix attribute');
+        // Checks fill of cells  from "By Changing Variable Cells"
+        const oVarIndexByCellName = oSimplexTableau.getVarIndexByCellName();
+        const ExpectedChangingCells = {
+            'A5': '0',
+            'A6': '300',
+            'A7': '0',
+            'B5': '0',
+            'B6': '0',
+            'B7': '230',
+            'C5': '0',
+            'C6': '150',
+            'C7': '0',
+            'D5': '320',
+            'D6': '0',
+            'D7': '0',
+            'E5': '80',
+            'E6': '250',
+            'E7': '70'
+
+        }
+        for (let sCellName in oVarIndexByCellName) {
+            const sCellVal = ws.getCell2(sCellName).getValue();
+            assert.strictEqual(sCellVal, ExpectedChangingCells[sCellName], `Check fill of cells from "By Changing Variable Cells" Cell: ${sCellName}. Value: ${sCellVal}`);
+        }
+        // Checks result of objective formula.
+        const sObjectiveFormula = ws.getCell2('A10').getValue();
+        assert.strictEqual(sObjectiveFormula, '33370', `Check result of objective formula. Cell: A10. Value: ${sObjectiveFormula}`);
     });
 });
