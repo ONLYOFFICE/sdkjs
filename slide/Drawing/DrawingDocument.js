@@ -5960,6 +5960,14 @@ function CThumbnailsManager(editorPage)
 			startOffset = this.const_offset_x;
 		}
 
+		if (this.m_bIsScrollVisible) {
+			const scrollApi = editor.WordControl.m_oScrollThumbApi;
+			if (scrollApi) {
+				this.m_dScrollY_max = isVerticalThumbnails ? scrollApi.getMaxScrolledY() : scrollApi.getMaxScrolledX();
+				this.m_dScrollY = isVerticalThumbnails ? scrollApi.getCurScrolledY() : scrollApi.getCurScrolledX();
+			}
+		}
+
 		const currentScrollPx = isRightToLeft && !isVerticalThumbnails
 			? this.m_dScrollY_max - this.m_dScrollY >> 0
 			: this.m_dScrollY >> 0;
@@ -6222,7 +6230,9 @@ function CThumbnailsManager(editorPage)
 				wordControl.m_oThumbnails_scroll.HtmlElement.style.display = 'none';
 			}
 			this.m_bIsScrollVisible = false;
-			this.m_dScrollY = isHorizontalOrientation ? this.m_dScrollY_max : 0;
+			this.m_dScrollY = isHorizontalOrientation && Asc.editor.isRtlInterface
+				? this.m_dScrollY_max
+				: 0;
 
 		} else {
 			// Scrollbar is needed
@@ -6260,18 +6270,10 @@ function CThumbnailsManager(editorPage)
 				wordControl.m_oScrollThumb_ = new AscCommon.ScrollObject('id_vertical_scroll_thmbnl', settings);
 				wordControl.m_oScrollThumbApi = wordControl.m_oScrollThumb_;
 
-				const scrollEventName = isHorizontalOrientation ? 'scrollhorizontal' : 'scrollvertical';
-				wordControl.m_oScrollThumb_.bind(scrollEventName, function (evt) {
+				const eventName = isHorizontalOrientation ? 'scrollhorizontal' : 'scrollvertical';
+				wordControl.m_oScrollThumb_.bind(eventName, function (evt) {
 					const maxScrollPosition = isHorizontalOrientation ? evt.maxScrollX : evt.maxScrollY;
 					oThis.thumbnailsScroll(this, evt.scrollD, maxScrollPosition);
-				});
-
-				const endEventName = isHorizontalOrientation ? 'scrollHEnd' : 'scrollVEnd';
-				wordControl.m_oScrollThumb_.bind(endEventName, function (evt) {
-					if (oThis.m_dScrollY === oThis.m_dScrollY_max) {
-						oThis.m_dScrollY = evt.pos;
-						oThis.m_dScrollY_max = evt.pos;
-					}
 				});
 			}
 			wordControl.m_oScrollThumb_.isHorizontalScroll = isHorizontalOrientation;
