@@ -20170,7 +20170,7 @@ CColorObj.prototype =
 	CCachedSunburst.prototype.sortSunburstAndCountLayers = function () {
 		let head = this.data.getChildren();
 		if (head.length === 0) {
-			this.layersCount = 1;
+			this.layersCount = 0;
 		}
 		const sortArr = function (arr) {
 			arr.sort(function(a, b) {
