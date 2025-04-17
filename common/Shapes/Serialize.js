@@ -175,6 +175,7 @@ function BinaryPPTYLoader()
 	this.fields = [];
 	this.smartarts = [];
 
+	this.aSlideJumpHyperlinks = [];
 
 	this.ClearConnectedObjects = function(){
         this.oConnectedObjects = {};
@@ -191,6 +192,30 @@ function BinaryPPTYLoader()
         }
         this.ClearConnectedObjects();
     };
+
+	this.AddSlideJumpHyperlink = function (oHyperlink) {
+		this.aSlideJumpHyperlinks.push(oHyperlink);
+	};
+	this.ClearSlideJumpHyperlinks = function () {
+		this.aSlideHyperlinks = [];
+	};
+	this.CorrectSlideJumpHyperlinks = function (aSlides) {
+		this.aSlideJumpHyperlinks.forEach(function (oHyperlink) {
+			let slideIndex = parseInt(oHyperlink.id.replace("slide", "").replace(".xml", "")) - 1;
+			if (!AscFormat.isRealNumber(slideIndex) || slideIndex < 0) {
+				slideIndex = 0;
+			}
+
+			const slide = aSlides[slideIndex];
+			if (!slide) {
+				oHyperlink.id = null;
+				return;
+			}
+
+			oHyperlink.id = 'ppaction://hlinksldjump?jump=' + slide.Id;
+		});
+		this.ClearSlideJumpHyperlinks();
+	};
 
     this.Start_UseFullUrl = function(insertDocumentUrlsData)
     {
@@ -507,10 +532,13 @@ function BinaryPPTYLoader()
                     bOldVal = this.Api.bNoSendComments;
                     this.Api.bNoSendComments = true;
                 }
-                for (var i = 0; i < _s_count; i++)
-                {
-                    this.presentation.insertSlide(i, this.ReadSlide(i)) ;
-                }
+
+				for (let i = 0; i < _s_count; i++) {
+					const slide = this.ReadSlide(i);
+					this.presentation.insertSlide(i, slide);
+				}
+				this.CorrectSlideJumpHyperlinks(this.presentation.Slides);
+
                 if(this.Api)
                 {
                     this.Api.bNoSendComments = bOldVal;
@@ -8904,31 +8932,9 @@ function BinaryPPTYLoader()
             else if (hyper.action == "ppaction://hlinkshowjump?jump=previousslide")
                 hyper.id = "ppaction://hlinkshowjump?jump=previousslide";
             else if (hyper.action == "ppaction://hlinksldjump")
-            {
-                if (hyper.id != null && hyper.id.indexOf("slide") == 0)
-                {
-                    var _url = hyper.id.substring(5);
-                    var _indexXml = _url.indexOf(".");
-                    if (-1 != _indexXml)
-                        _url = _url.substring(0, _indexXml);
-
-                    var _slideNum = parseInt(_url);
-                    if (isNaN(_slideNum))
-                        _slideNum = 1;
-
-                    --_slideNum;
-
-                    hyper.id = hyper.action + "slide" + _slideNum;
-                }
-                else
-                {
-                    hyper.id = null;
-                }
-            }
+                this.AddSlideJumpHyperlink(hyper);
             else
-            {
                 hyper.id = null;
-            }
         }
 
         if (hyper.id == null)

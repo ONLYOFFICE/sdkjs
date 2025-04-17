@@ -6860,14 +6860,16 @@ background-repeat: no-repeat;\
 				{
 					Data.Hyperlink.Value = AscCommon.translateManager.getValue("Previous Slide");
 				}
-				else
-				{
-					let mask     = "ppaction://hlinksldjumpslide";
-					let indSlide = Url.indexOf(mask);
-					if (0 === indSlide)
-					{
-						let slideNum = parseInt(Url.substring(mask.length));
-						Data.Hyperlink.Value = AscCommon.translateManager.getValue("Slide") + " " + (slideNum + 1);
+				else {
+					const mask = 'ppaction://hlinksldjump?jump=';
+					const slideIdPos = Url.indexOf(mask);
+					if (0 == slideIdPos) {
+						const slideId = Url.substring(mask.length);
+						const slide = Asc.editor.getLogicDocument().GetSlideById(slideId);
+						if (slide) {
+							const slideNum = slide.getSlideIndex() + 1;
+							Data.Hyperlink.Value = AscCommon.translateManager.getValue("Slide") + " " + slideNum;
+						}
 					}
 				}
 			}
@@ -7549,15 +7551,17 @@ background-repeat: no-repeat;\
 			{
 				this.WordControl.onPrevPage();
 			}
-			else
-			{
-				var mask     = "ppaction://hlinksldjumpslide";
-				var indSlide = Url.indexOf(mask);
-				if (0 == indSlide)
-				{
-					var slideNum = parseInt(Url.substring(mask.length));
-					if (slideNum >= 0 && slideNum < this.WordControl.GetSlidesCount())
-						this.WordControl.GoToPage(slideNum);
+			else {
+				const mask = 'ppaction://hlinksldjump?jump=';
+				const slideIdPos = Url.indexOf(mask);
+				if (0 == slideIdPos) {
+					const slideId = Url.substring(mask.length);
+					const slide = Asc.editor.getLogicDocument().GetSlideById(slideId);
+					if (slide) {
+						const slideNum = slide.getSlideIndex();
+						if (slideNum >= 0 && slideNum < this.WordControl.GetSlidesCount())
+							this.WordControl.GoToPage(slideNum);
+					}
 				}
 			}
 			return;

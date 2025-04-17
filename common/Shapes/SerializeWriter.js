@@ -2027,17 +2027,19 @@ function CBinaryFileWriter()
             action = url;
             url = "";
         }
-        else
-        {
-            var mask = "ppaction://hlinksldjumpslide";
-            var indSlide = url.indexOf(mask);
-            if (0 == indSlide)
-            {
-                var slideNum = parseInt(url.substring(mask.length));
-                url = "slide" + (slideNum + 1) + ".xml";
-                action = "ppaction://hlinksldjump";
-            }
-        }
+		else {
+			const mask = 'ppaction://hlinksldjump?jump=';
+			const slideIdPos = url.indexOf(mask);
+			if (0 == slideIdPos) {
+				action = 'ppaction://hlinksldjump';
+
+				const slideId = url.substring(mask.length);
+				const slide = Asc.editor.getLogicDocument().GetSlideById(slideId);
+				url = slide
+					? 'slide' + (slide.getSlideIndex() + 1) + '.xml'
+					: '';
+			}
+		}
 
         oThis._WriteString1(0, url);
         oThis._WriteString2(2, action);
@@ -4284,17 +4286,19 @@ function CBinaryFileWriter()
         }
         else
         {
-            if(typeof id === "string")
-            {
-                var mask = "ppaction://hlinksldjumpslide";
-                var indSlide = id.indexOf(mask);
-                if (0 === indSlide)
-                {
-                    var slideNum = parseInt(id.substring(mask.length));
-                    id = "slide" + (slideNum + 1) + ".xml";
-                    action = "ppaction://hlinksldjump";
-                }
-            }
+			if (typeof id === "string") {
+				const mask = 'ppaction://hlinksldjump?jump=';
+				const slideIdPos = id.indexOf(mask);
+				if (0 == slideIdPos) {
+					action = 'ppaction://hlinksldjump';
+
+					const slideId = id.substring(mask.length);
+					const slide = Asc.editor.getLogicDocument().GetSlideById(slideId);
+					id = slide
+						? 'slide' + (slide.getSlideIndex() + 1) + '.xml'
+						: '';
+				}
+			}
         }
 
         oThis._WriteString2(0, id);

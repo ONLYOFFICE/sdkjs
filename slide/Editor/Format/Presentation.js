@@ -2032,6 +2032,16 @@ CPresentation.prototype.GetAllSlides = function () {
 	}
 	return this.GetSlides();
 };
+CPresentation.prototype.GetSlideById = function (sId) {
+    const aSlides = this.GetAllSlides();
+    for (let i = 0; i < aSlides.length; i++) {
+        const oSlide = aSlides[i];
+        if (oSlide.Id === sId) {
+            return oSlide;
+        }
+    }
+    return null;
+};
 CPresentation.prototype.GetSlide = function (nIndex) {
 	let aSlides = this.GetAllSlides();
 	if (aSlides[nIndex]) {
