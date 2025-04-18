@@ -722,13 +722,22 @@
 			if (!sId || typeof sId !== 'string' || !sId.startsWith('ppaction://hlinksldjump'))
 				return null;
 
+			const archaicIdMask = 'ppaction://hlinksldjumpslide';
+			if (sId.indexOf(archaicIdMask) === 0) {
+				sId = sId.replace(archaicIdMask, 'ppaction://hlinksldjump?jump=');
+			}
+
 			const queryStr = sId.split('?')[1];
 			if (!queryStr)
 				return null;
 
 			const params = queryStr.split('&');
-			const slideIndex = parseInt(params[0].substring('jump='.length));
-			const slideId = params[1].substring('slide='.length);
+			const slideIndex = params[0]
+				? parseInt(params[0].substring('jump='.length))
+				: null;
+			const slideId = params[1]
+				? params[1].substring('slide='.length)
+				: null;
 
 			const presentation = Asc.editor.getLogicDocument();
 			const slide = presentation.GetSlideById(slideId);
