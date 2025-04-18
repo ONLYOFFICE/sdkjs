@@ -263,13 +263,15 @@ ParaHyperlink.prototype.GetToolTip = function()
 			else if (this.Value == "ppaction://hlinkshowjump?jump=previousslide") {
 				return AscCommon.translateManager.getValue("Previous Page");
 			}
-			else {
-				let mask	= "ppaction://hlinksldjumpslide";
-				let posStr	= this.Value.indexOf(mask);
+			else if (typeof this.Value === 'string' && this.Value.indexOf('ppaction://hlinksldjump') === 0) {
+				const correctUrl = AscFormat.getCorrectSlideJumpHyperlinkId(this.Value);
 
-				if (0 == posStr) {
-					let pageNum = parseInt(this.Value.substring(mask.length));
-					return AscCommon.translateManager.getValue("Page " + (pageNum + 1));
+				if (correctUrl) {
+					const queryStr = correctUrl.split('?')[1];
+					const params = queryStr.split('&');
+					const slideIndex = parseInt(params[0].substring('jump='.length));
+
+					return AscCommon.translateManager.getValue('Page') + ' ' + (slideIndex + 1);
 				}
 			}
         }

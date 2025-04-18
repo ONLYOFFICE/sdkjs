@@ -718,6 +718,35 @@
 			return ret;
 		};
 
+		function getCorrectSlideJumpHyperlinkId(sId) {
+			if (!sId || typeof sId !== 'string' || !sId.startsWith('ppaction://hlinksldjump'))
+				return null;
+
+			const queryStr = sId.split('?')[1];
+			if (!queryStr)
+				return null;
+
+			const params = queryStr.split('&');
+			const slideIndex = parseInt(params[0].substring('jump='.length));
+			const slideId = params[1].substring('slide='.length);
+
+			const presentation = Asc.editor.getLogicDocument();
+			const slide = presentation.GetSlideById(slideId);
+			if (!AscCommon.isRealObject(slide)) {
+				const actualSlide = presentation.GetSlide(slideIndex);
+				if (AscCommon.isRealObject(actualSlide)) {
+					const actualSlideId = actualSlide.Id;
+					return 'ppaction://hlinksldjump?jump=' + slideIndex + '&slide=' + actualSlideId;
+				}
+				return null;
+			}
+
+			const actualSlideIndex = slide.getSlideIndex();
+			if (actualSlideIndex !== slideIndex) {
+				return 'ppaction://hlinksldjump?jump=' + actualSlideIndex + '&slide=' + slideId;
+			}
+			return sId;
+		};
 
 		var drawingsChangesMap = window['AscDFH'].drawingsChangesMap;
 		var drawingConstructorsMap = window['AscDFH'].drawingsConstructorsMap;
@@ -19338,6 +19367,7 @@
 		window['AscFormat'].CNvUniSpPr = CNvUniSpPr;
 		window['AscFormat'].UniMedia = UniMedia;
 		window['AscFormat'].CT_Hyperlink = CT_Hyperlink;
+		window['AscFormat'].getCorrectSlideJumpHyperlinkId =  getCorrectSlideJumpHyperlinkId;
 
 
 		window['AscFormat'].builder_CreateShape = builder_CreateShape;

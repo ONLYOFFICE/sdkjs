@@ -6860,16 +6860,15 @@ background-repeat: no-repeat;\
 				{
 					Data.Hyperlink.Value = AscCommon.translateManager.getValue("Previous Slide");
 				}
-				else {
-					const mask = 'ppaction://hlinksldjump?jump=';
-					const slideIdPos = Url.indexOf(mask);
-					if (0 == slideIdPos) {
-						const slideId = Url.substring(mask.length);
-						const slide = Asc.editor.getLogicDocument().GetSlideById(slideId);
-						if (slide) {
-							const slideNum = slide.getSlideIndex() + 1;
-							Data.Hyperlink.Value = AscCommon.translateManager.getValue("Slide") + " " + slideNum;
-						}
+				else if (typeof Url === 'string' && Url.indexOf('ppaction://hlinksldjump') === 0) {
+					const correctUrl = AscFormat.getCorrectSlideJumpHyperlinkId(Url);
+
+					if (correctUrl) {
+						const queryStr = correctUrl.split('?')[1];
+						const params = queryStr.split('&');
+						const slideIndex = parseInt(params[0].substring('jump='.length));
+
+						Data.Hyperlink.Value = AscCommon.translateManager.getValue('Slide') + ' ' + (slideIndex + 1);
 					}
 				}
 			}
@@ -7034,11 +7033,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.sync_HyperlinkPropCallback = function(hyperProp)
 	{
 		this.SelectedObjectsStack[this.SelectedObjectsStack.length] = new asc_CSelectedObject(c_oAscTypeSelectElement.Hyperlink, new Asc.CHyperlinkProperty(hyperProp));
-	};
-
-	asc_docs_api.prototype.sync_HyperlinkClickCallback = function(Url)
-	{
-		this.sendEvent("asc_onHyperlinkClick", Url);
 	};
 
 	asc_docs_api.prototype.sync_CanAddHyperlinkCallback = function(bCanAdd)
@@ -7551,17 +7545,16 @@ background-repeat: no-repeat;\
 			{
 				this.WordControl.onPrevPage();
 			}
-			else {
-				const mask = 'ppaction://hlinksldjump?jump=';
-				const slideIdPos = Url.indexOf(mask);
-				if (0 == slideIdPos) {
-					const slideId = Url.substring(mask.length);
-					const slide = Asc.editor.getLogicDocument().GetSlideById(slideId);
-					if (slide) {
-						const slideNum = slide.getSlideIndex();
-						if (slideNum >= 0 && slideNum < this.WordControl.GetSlidesCount())
-							this.WordControl.GoToPage(slideNum);
-					}
+			else if (typeof Url === 'string' && Url.indexOf('ppaction://hlinksldjump') === 0) {
+				const correctUrl = AscFormat.getCorrectSlideJumpHyperlinkId(Url);
+
+				if (correctUrl) {
+					const queryStr = correctUrl.split('?')[1];
+					const params = queryStr.split('&');
+					const slideIndex = parseInt(params[0].substring('jump='.length));
+
+					if (slideIndex >= 0 && slideIndex < this.WordControl.GetSlidesCount())
+						this.WordControl.GoToPage(slideIndex);
 				}
 			}
 			return;
@@ -10080,7 +10073,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['ClearFormating']                      = asc_docs_api.prototype.ClearFormating;
 	asc_docs_api.prototype['SetDeviceInputHelperId']              = asc_docs_api.prototype.SetDeviceInputHelperId;
 	asc_docs_api.prototype['asc_setViewMode']                     = asc_docs_api.prototype.asc_setViewMode;
-	asc_docs_api.prototype['sync_HyperlinkClickCallback']         = asc_docs_api.prototype.sync_HyperlinkClickCallback;
 	asc_docs_api.prototype['UpdateInterfaceState']                = asc_docs_api.prototype.UpdateInterfaceState;
 	asc_docs_api.prototype['OnMouseUp']                           = asc_docs_api.prototype.OnMouseUp;
 	asc_docs_api.prototype['asyncImageEndLoaded2']                = asc_docs_api.prototype.asyncImageEndLoaded2;

@@ -2908,14 +2908,15 @@ Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawStat
 							{
 								pGraphics.AddLink(_l, _t, _r - _l, _b - _t, 0, 0, nCurPage - 1);
 							}
-							else
-							{
-								let mask	= "ppaction://hlinksldjumpslide";
-								let posNum	= sValue.indexOf(mask);
-								if (0 == posNum)
-								{
-									let pageNum = parseInt(sValue.substring(mask.length));
-									pGraphics.AddLink(_l, _t, _r - _l, _b - _t, 0, 0, pageNum);
+							else if (typeof sValue === 'string' && sValue.indexOf('ppaction://hlinksldjump') === 0) {
+								const correctUrl = AscFormat.getCorrectSlideJumpHyperlinkId(this.Value);
+
+								if (correctUrl) {
+									const queryStr = correctUrl.split('?')[1];
+									const params = queryStr.split('&');
+									const slideIndex = parseInt(params[0].substring('jump='.length));
+
+									pGraphics.AddLink(_l, _t, _r - _l, _b - _t, 0, 0, slideIndex);
 								}
 							}
 						}

@@ -2027,18 +2027,23 @@ function CBinaryFileWriter()
             action = url;
             url = "";
         }
-		else {
-			const mask = 'ppaction://hlinksldjump?jump=';
-			const slideIdPos = url.indexOf(mask);
-			if (0 == slideIdPos) {
-				action = 'ppaction://hlinksldjump';
+		else if (typeof url === 'string' && url.indexOf('ppaction://hlinksldjump') === 0) {
+			const correctUrl = AscFormat.getCorrectSlideJumpHyperlinkId(url);
 
-				const slideId = url.substring(mask.length);
-				const slide = Asc.editor.getLogicDocument().GetSlideById(slideId);
-				url = slide
-					? 'slide' + (slide.getSlideIndex() + 1) + '.xml'
-					: '';
+			if (correctUrl) {
+				const queryStr = correctUrl.split('?')[1];
+				const params = queryStr.split('&');
+				const slideIndex = parseInt(params[0].substring('jump='.length));
+
+				action = 'ppaction://hlinksldjump';
+				url = 'slide' + (slideIndex + 1) + '.xml';
+			} else {
+				action = null;
+				url = null;
 			}
+		} else {
+			action = null;
+			url = null;
 		}
 
         oThis._WriteString1(0, url);
@@ -4284,22 +4289,24 @@ function CBinaryFileWriter()
             action = id;
             id = "";
         }
-        else
-        {
-			if (typeof id === "string") {
-				const mask = 'ppaction://hlinksldjump?jump=';
-				const slideIdPos = id.indexOf(mask);
-				if (0 == slideIdPos) {
-					action = 'ppaction://hlinksldjump';
+		else if (typeof id === 'string' && id.indexOf('ppaction://hlinksldjump') === 0) {
+			const correctUrl = AscFormat.getCorrectSlideJumpHyperlinkId(id);
 
-					const slideId = id.substring(mask.length);
-					const slide = Asc.editor.getLogicDocument().GetSlideById(slideId);
-					id = slide
-						? 'slide' + (slide.getSlideIndex() + 1) + '.xml'
-						: '';
-				}
+			if (correctUrl) {
+				const queryStr = correctUrl.split('?')[1];
+				const params = queryStr.split('&');
+				const slideIndex = parseInt(params[0].substring('jump='.length));
+
+				action = 'ppaction://hlinksldjump';
+				id = 'slide' + (slideIndex + 1) + '.xml';
+			} else {
+				action = null;
+				id = null;
 			}
-        }
+		} else {
+			action = null;
+			id = null;
+		}
 
         oThis._WriteString2(0, id);
         oThis._WriteString2(1, hyper.invalidUrl);

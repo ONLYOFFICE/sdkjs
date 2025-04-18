@@ -209,10 +209,15 @@ function BinaryPPTYLoader()
 			const slide = aSlides[slideIndex];
 			if (!slide) {
 				oHyperlink.id = null;
+				oHyperlink.action = null;
 				return;
 			}
 
-			oHyperlink.id = 'ppaction://hlinksldjump?jump=' + slide.Id;
+			oHyperlink.id = 'ppaction://hlinksldjump?jump=' + slideIndex + '&slide=' + slide.Id;
+
+			if (oHyperlink.dependentParaHyperLink) {
+				oHyperlink.dependentParaHyperLink.Value = oHyperlink.id;
+			}
 		});
 		this.ClearSlideJumpHyperlinks();
 	};
@@ -10104,10 +10109,7 @@ function BinaryPPTYLoader()
                                         if (_run.hlink.tooltip) {
                                           hyperlink.SetToolTip(_run.hlink.tooltip);
                                         }
-                                        // if(!_run.Unifill)
-                                        // {
-                                        //     _run.Unifill = AscFormat.CreateUniFillSchemeColorWidthTint(11, 0);
-                                        // }
+                                        _run.hlink.dependentParaHyperLink = hyperlink;
                                         _run.Underline = true;
                                     }
                                     text_pr.Set_FromObject(_run);
@@ -10244,6 +10246,7 @@ function BinaryPPTYLoader()
                                         if (_run.hlink.tooltip) {
                                           hyperlink.SetToolTip(_run.hlink.tooltip);
                                         }
+                                        _run.hlink.dependentParaHyperLink = hyperlink;
                                     }
                                     var text_pr = new CTextPr();
                                     if(_run.Unifill && !_run.Unifill.fill)
