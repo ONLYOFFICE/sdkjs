@@ -3442,7 +3442,7 @@
 											if(HyperProps.Value.startsWith("ppaction")) {
 												oHyper.action = HyperProps.Value;
 											}
-											oHyper.id = HyperProps.Value;
+											oHyper.id = AscFormat.getCorrectSlideJumpHyperlinkId(HyperProps.Value);
 											oHyper.tooltip = HyperProps.ToolTip;
 											oNvPr.setHlinkClick(oHyper);
 										}
@@ -3488,7 +3488,7 @@
 											if(HyperProps.Value.startsWith("ppaction")) {
 												oHyper.action = HyperProps.Value;
 											}
-											oHyper.id = HyperProps.Value;
+											oHyper.id = AscFormat.getCorrectSlideJumpHyperlinkId(HyperProps.Value);
 											oHyper.tooltip = HyperProps.ToolTip;
 											oNvPr.setHlinkClick(oHyper);
 										}
