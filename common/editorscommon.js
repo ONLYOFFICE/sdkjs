@@ -14969,7 +14969,9 @@
 		}
 	}
 
-	function CTree() {}
+	function CTree(children) {
+		this.children = children || [];
+	}
 
 	CTree.prototype = {
 		constructor: CTree,

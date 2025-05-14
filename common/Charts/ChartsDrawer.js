@@ -19868,7 +19868,7 @@ CColorObj.prototype =
 	 * @param {number} endIdx - The end index of the node.
 	 */
 	function CSunburstNode(name, pVal, idx, parent, children, stIdx, endIdx) {
-		AscFormat.CBaseFormatNoIdObject.call(this);
+		AscCommon.CTree.call(this, children);
 		this.name = name;
 		this.pVal = pVal;
 		this.idx = idx;
