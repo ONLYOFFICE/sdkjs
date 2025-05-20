@@ -67,6 +67,9 @@
 	};
 	CTextFormFormat.prototype.IsEqual = function(format)
 	{
+		if (!format)
+			return false;
+		
 		return (this.BaseFormat === format.BaseFormat
 			&& (FormatType.RegExp !== this.BaseFormat || format.RegExp === this.RegExp)
 			&& (FormatType.Mask !== this.BaseFormat || format.Mask.Get() === this.Mask.Get()));

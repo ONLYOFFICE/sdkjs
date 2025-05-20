@@ -878,6 +878,10 @@ CMathText.prototype.Draw = function(x, y, pGraphics, InfoTextPr)
 
 	pGraphics.transform(sx, shy, shx, sy, 0, 0);*/
 
+	if (pGraphics.m_bIsTextDrawer)
+    {
+		pGraphics.CheckAddNewPath(X, Y, this);
+	}
 	if(this.bJDraw)
 	{
 		pGraphics.FillTextCode(X, Y, this.RecalcInfo.StyleCode);    //на отрисовку символа отправляем положение baseLine

@@ -66,6 +66,10 @@ CWordCollaborativeEditing.prototype.Clear = function()
 	AscCommon.CCollaborativeEditingBase.prototype.Clear.apply(this, arguments);
 	this.Remove_AllForeignCursors();
 };
+CWordCollaborativeEditing.prototype.Apply_OtherChanges = function()
+{
+	AscCommon.executeNoRevisions(AscCommon.CCollaborativeEditingBase.prototype.Apply_OtherChanges, this.GetLogicDocument(), this, arguments);
+};
 CWordCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalInfo, IsUpdateInterface, isAfterAskSave)
 {
 	if (!this.canSendChanges())

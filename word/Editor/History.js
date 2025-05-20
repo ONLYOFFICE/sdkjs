@@ -440,9 +440,8 @@ CHistory.prototype =
     // Data  - сами изменения
 	Add : function(_Class, Data)
 	{
-		let Class = _Class ? _Class.GetClass() : undefined;
-		if (Class && Class.SetIsRecalculated && (!_Class || _Class.IsNeedRecalculate()))
-			Class.SetIsRecalculated(false);
+		if (_Class && _Class.CheckNeedRecalculate)
+			_Class.CheckNeedRecalculate();
 		
 		if (!this.CanAddChanges())
 			return;
@@ -455,7 +454,8 @@ CHistory.prototype =
 			this.RecIndex = this.Index - 1;
 
 		var Binary_Pos = this.BinaryWriter.GetCurPosition();
-
+		
+		let Class = _Class ? _Class.GetClass() : undefined;
 		if (_Class)
 		{
             Data = _Class;
@@ -1634,10 +1634,10 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 	CHistory.prototype.checkAsYouTypeEnterText = function(run, inRunPos, codePoint)
 	{
 		this.CheckUnionLastPoints();
-
+		
 		if (this.Points.length <= 0 || this.Index !== this.Points.length - 1)
 			return false;
-
+		
 		let point = this.Points[this.Index];
 		let description = point.Description;
 		if (AscDFH.historydescription_Document_AddLetter !== description
@@ -1648,13 +1648,18 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 			&& AscDFH.historydescription_Document_CompositeInputReplace !== description
 			&& AscDFH.historydescription_Presentation_ParagraphAdd !== description)
 			return false;
-
+		
 		let changes = point.Items;
-		if (!changes.length)
-			return false;
-
-		let lastChange = changes[changes.length - 1].Data;
-		return (AscDFH.historyitem_ParaRun_AddItem === lastChange.Type
+		let lastChange = null;
+		for (let i = changes.length - 1; i >= 0; --i)
+		{
+			lastChange = changes[i].Data;
+			if (lastChange.IsContentChange())
+				break;
+		}
+		
+		return (lastChange
+			&& AscDFH.historyitem_ParaRun_AddItem === lastChange.Type
 			&& lastChange.Class === run
 			&& lastChange.Pos === inRunPos - 1
 			&& lastChange.Items.length
@@ -1844,6 +1849,7 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 			if (item.Data)
 			{
 				item.Data.Undo();
+				item.Data.CheckNeedRecalculate();
 				changes.push(item.Data);
 			}
 			this.private_UpdateContentChangesOnUndo(item);
@@ -1858,6 +1864,7 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 			if (item.Data)
 			{
 				item.Data.Redo();
+				item.Data.CheckNeedRecalculate();
 				changes.push(item.Data);
 			}
 			this.private_UpdateContentChangesOnRedo(item);

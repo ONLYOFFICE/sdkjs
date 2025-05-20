@@ -1199,6 +1199,17 @@
 					Left : tw2mm(1760)
 				}
 			}
+		},
+		{
+			StyleId    : "PlaceholderText",
+			Type       : AscWord.styletype_Character,
+			Name       : "Placeholder Text",
+			BasedOn    : "DefaultParagraphFont",
+			UiPriority : 99,
+			SemiHidden : true,
+			TextPr     : {
+				Color : {r : 0x66, g : 0x66, b : 0x66}
+			}
 		}
 	];
 	

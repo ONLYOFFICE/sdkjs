@@ -42,10 +42,42 @@
     
     CPdfShape.prototype.constructor = CPdfShape;
     CPdfShape.prototype = Object.create(AscFormat.CShape.prototype);
-    Object.assign(CPdfShape.prototype, AscPDF.PdfDrawingPrototype.prototype);
+    Object.assign(CPdfShape.prototype, AscPDF.CPdfDrawingPrototype.prototype);
     
     CPdfShape.prototype.IsShape = function() {
         return true;
+    };
+    CPdfShape.prototype.SetEditField = function(oForm) {
+        this.editField = oForm;
+    };
+    CPdfShape.prototype.IsEditFieldShape = function() {
+        return !!this.editField;
+    };
+    CPdfShape.prototype.GetEditField = function() {
+        return this.editField;
+    };
+    CPdfShape.prototype.hitInTextRect = function(x, y) {
+        if (this.IsEditFieldShape()) {
+            return false;
+        }
+        
+        return this.hitInTextRectWord(x, y);
+    };
+    CPdfShape.prototype.GetDocument = function() {
+        if (this.IsEditFieldShape()) {
+            return this.editField.GetDocument();
+        }
+        else {
+            return AscPDF.CPdfDrawingPrototype.prototype.GetDocument.call(this);
+        }
+    };
+    CPdfShape.prototype.GetPage = function() {
+        if (this.IsEditFieldShape()) {
+            return this.editField.GetPage();
+        }
+        else {
+            return AscPDF.CPdfDrawingPrototype.prototype.GetPage.call(this);
+        }
     };
     CPdfShape.prototype.ShouldDrawImaginaryBorder = function(graphicsWord) {
         let bDraw = !!(this.spPr && this.spPr.hasNoFill() && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)));
@@ -77,6 +109,10 @@
 		}
 
         if (this.group && this.group.IsAnnot()) {
+            return false;
+        }
+
+        if (this.IsEditFieldShape()) {
             return false;
         }
 

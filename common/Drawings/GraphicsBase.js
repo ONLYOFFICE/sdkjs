@@ -871,6 +871,10 @@
 	CGraphicsBase.prototype.End_Command = function(commandId)
 	{
 	};
+	
+	CGraphicsBase.prototype.SetBorder = function(border)
+	{
+	};
 
 	//------------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};

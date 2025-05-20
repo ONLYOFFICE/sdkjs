@@ -871,6 +871,21 @@
             return Asc.editor.private_GetLogicDocument();
         return null;
     };
+		CDrawingDocContent.prototype.Remove = function (Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord) {
+			const res = CDocumentContent.prototype.Remove.call(this, Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord);
+			const oShape = this.Is_DrawingShape(true);
+			if (oShape) {
+				oShape.onRemoveContent();
+			}
+			return res;
+		}
+		CDrawingDocContent.prototype.getCharContentLength = function () {
+			let nContentLength = 0;
+			this.CheckRunContent(function (oRun) {
+				nContentLength += oRun.Content.length;
+			});
+			return nContentLength;
+		};
     // TODO: сделать по-нормальному!!!
     function CDocument_prototype_private_GetElementPageIndexByXY(ElementPos, X, Y, PageIndex)
     {

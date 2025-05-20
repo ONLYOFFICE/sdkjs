@@ -4590,6 +4590,14 @@ var g_oFontProperties = {
 	CellXfs.prototype.isNormalFill = function () {
 		return g_StyleCache.firstXf === this || g_StyleCache.normalXf.fill === this.fill;
 	};
+	/**
+	 * Checks if number format is affecting text display
+	 * @returns {boolean} Returns true if number format affects text display
+	 */
+	CellXfs.prototype.isAffectingText = function () {
+		//todo check isGeneralFormat
+		return !!(this.num && AscCommon.g_cGeneralFormat !== this.num.f);
+	};
     CellXfs.prototype.merge = function (xfs, isTable, isTableBorders) {
         var xfIndexNumber = xfs.getIndexNumber();
         if (undefined === xfIndexNumber) {
@@ -5867,7 +5875,7 @@ StyleManager.prototype =
 			}
 		}
 	};
-	SheetMergedStyles.prototype.getStyle = function(hiddenManager, row, col, opt_ws) {
+	SheetMergedStyles.prototype.getStyle = function(hiddenManager, row, col, opt_ws, opt_AffectingText) {
 		var res = {table: [], conditional: []};
 		if (opt_ws) {
 			opt_ws._updateConditionalFormatting();
@@ -5885,6 +5893,12 @@ StyleManager.prototype =
 			return v2.rule.priority - v1.rule.priority;
 		});
 		for (var i = 0; i < rules.length; ++i) {
+			if (opt_AffectingText) {
+				let rule = rules[i].rule;
+				if (!(rule && rule.dxf && rule.dxf.isAffectingText())) {
+					continue;
+				}
+			}
 			var xf = rules[i].formula(row, col);
 			if (xf) {
 				res.conditional.push(xf);
@@ -5894,6 +5908,9 @@ StyleManager.prototype =
 			var style = this.stylesTablePivot[i];
 			var borderIndex;
 			var xf = style.xf;
+			if (opt_AffectingText && !(xf && xf.isAffectingText())) {
+				continue;
+			}
 			if (style.range.contains(col, row) && (borderIndex = this._getBorderIndex(hiddenManager, style.range, style.stripe, row, col, xf)) >= 0) {
 				if (borderIndex > 0) {
 					if (!style.borders) {
@@ -6628,16 +6645,8 @@ StyleManager.prototype =
 		return this.collapsed;
 	};
 
-	//TODO удалить!
-	/*var g_nRowOffsetFlag = 0;
-	var g_nRowOffsetXf = g_nRowOffsetFlag + 1;
-	var g_nRowOffsetHeight = g_nRowOffsetXf + 4;
-	var g_nRowStructSize = g_nRowOffsetHeight + 8;*/
-	var g_nRowOffsetFlag = 0;
-	var g_nRowOffsetXf = g_nRowOffsetFlag + 1;
-	var g_nRowOutlineLevel = g_nRowOffsetXf + 4;
-	var g_nRowOffsetHeight = g_nRowOutlineLevel + 1;
-	var g_nRowStructSize = g_nRowOffsetHeight + 8;
+
+	var g_nRowStructSize = 4 + 4 + 8;
 
 	var g_nRowFlag_empty = 0;
 	var g_nRowFlag_init = 1;
@@ -6682,10 +6691,9 @@ StyleManager.prototype =
 				flagToSave |= g_nRowFlag_NullHeight;
 				heightToSave = 0;
 			}
-			sheetMemory.setUint8(this.index, g_nRowOffsetFlag, flagToSave);
-			sheetMemory.setUint32(this.index, g_nRowOffsetXf, xfSave);
-			sheetMemory.setUint8(this.index, g_nRowOutlineLevel, this.outlineLevel);
-			sheetMemory.setFloat64(this.index, g_nRowOffsetHeight, heightToSave);
+			sheetMemory.setInt32(this.index, 0, flagToSave | (this.outlineLevel << 8));
+			sheetMemory.setInt32(this.index, 4, xfSave);
+			sheetMemory.setFloat64(this.index, 8, heightToSave);
 		}
 	};
 	Row.prototype.loadContent = function (index) {
@@ -6694,15 +6702,16 @@ StyleManager.prototype =
 		this.index = index;
 		var sheetMemory = this.ws.rowsData;
 		if (sheetMemory.hasIndex(this.index)) {
-			this.flags = sheetMemory.getUint8(this.index, g_nRowOffsetFlag);
+			const mix = sheetMemory.getInt32(this.index, 0);
+			this.flags = mix & 0xff;
 			if (0 != (g_nRowFlag_init & this.flags)) {
-				this.xfs = g_StyleCache.getXf(sheetMemory.getUint32(this.index, g_nRowOffsetXf));
-				this.outlineLevel = sheetMemory.getUint8(this.index, g_nRowOutlineLevel);
+				this.xfs = g_StyleCache.getXf(sheetMemory.getInt32(this.index, 4));
+				this.outlineLevel = (mix >> 8) & 0xff;
 				if (0 !== (g_nRowFlag_NullHeight & this.flags)) {
 					this.flags &= ~g_nRowFlag_NullHeight;
 					this.h = null;
 				} else {
-					this.h = sheetMemory.getFloat64(this.index, g_nRowOffsetHeight);
+					this.h = sheetMemory.getFloat64(this.index, 8);
 				}
 				res = true;
 			}
@@ -18270,7 +18279,8 @@ function RangeDataManagerElem(bbox, data)
 			console.log("Registration custom function \"" +  funcName + "\" warning. Invalid return type. The following types must be used: number, string, boolean, any, number[][], string[][], boolean[][], any[][].");
 		}
 
-		let returnValueType = supportedArrTypes[returnInfo.type] ? AscCommonExcel.cReturnFormulaType.array : null;
+		let returnValueType = returnInfo && supportedArrTypes[returnInfo.type] ? AscCommonExcel.cReturnFormulaType.array : null;
+		let calculateCell = (options && options.tags && options.tags["calculateCell"]) ? true : null;
 
 		/**
 		 * @constructor
@@ -18288,6 +18298,7 @@ function RangeDataManagerElem(bbox, data)
 		//argumentsType - other arguments type, need convert
 		newFunc.prototype.argumentsType = argumentsType;
 		newFunc.prototype.returnValueType = returnValueType;
+		newFunc.prototype.ca = calculateCell;
 		newFunc.prototype.Calculate = function (arg) {
 			try {
 
@@ -18331,7 +18342,7 @@ function RangeDataManagerElem(bbox, data)
 
 				//prepare result
 				let returnInfo = options.returnInfo;
-				return oThis.prepareResult(res, returnInfo.type);
+				return oThis.prepareResult(res, returnInfo ? returnInfo.type : null);
 			} catch (e) {
 				console.log("ERROR CUSTOM FUNCTION CALCULATE");
 				return  new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
@@ -18444,6 +18455,7 @@ function RangeDataManagerElem(bbox, data)
 		let translations = params.nameLocale;
 		let description = params.description;
 		let args = params.params;
+		let tags = params.tags;
 
 		let funcName = newFunc.prototype.name;
 
@@ -18498,6 +18510,8 @@ function RangeDataManagerElem(bbox, data)
 			this.funcsMapInfo[funcName].addLocalization = true;
 			this.funcsMapInfo[funcName].description = description;
 		}
+
+		this.funcsMapInfo[funcName].replaceFormulaToVal = tags["replaceFormulaToVal"];
 
 		AscCommonExcel.cFormulaFunctionGroup["Custom"].push(newFunc);
 		AscCommonExcel.addNewFunction(newFunc);

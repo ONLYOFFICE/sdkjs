@@ -2138,7 +2138,33 @@ NumFormat.prototype =
             }
             var hasSign = false;
             var nReadState = FormatStates.Decimal;
-            var nFormatLength = this.aRawFormat.length;    
+            var nFormatLength = this.aRawFormat.length;
+			let isArabic = (lcid_ar === cultureInfoLCID.LCID
+				|| lcid_arSY === cultureInfoLCID.LCID
+				|| lcid_arSA === cultureInfoLCID.LCID
+				|| lcid_arAE === cultureInfoLCID.LCID
+				|| lcid_arBH === cultureInfoLCID.LCID
+				|| lcid_arDZ === cultureInfoLCID.LCID
+				|| lcid_arEG === cultureInfoLCID.LCID
+				|| lcid_arIQ === cultureInfoLCID.LCID
+				|| lcid_arJO === cultureInfoLCID.LCID
+				|| lcid_arKW === cultureInfoLCID.LCID
+				|| lcid_arQA === cultureInfoLCID.LCID
+			);
+			
+			let _t = this;
+			function checkRLM(prev)
+			{
+				if (!isArabic)
+					return;
+				
+				if (undefined === prev
+					|| prev < 0
+					|| (numFormat_TimeSeparator !== _t.aRawFormat[prev].type
+						&& (numFormat_Text !== _t.aRawFormat[prev].type || ":" !== _t.aRawFormat[prev].val)))
+					oCurText.text += "‏";
+			}
+			
             for(var i = 0; i < nFormatLength; ++i)
             {
                 var item = this.aRawFormat[i];
@@ -2178,7 +2204,11 @@ NumFormat.prototype =
                 }
                 else if(numFormat_Text == item.type)
                 {
-                    oCurText.text += item.val;
+					if(',' === item.val && isArabic) {
+						oCurText.text += "،";
+					} else {
+						oCurText.text += item.val;
+					}
                 }
                 else if(numFormat_TextPlaceholder == item.type)
                 {
@@ -2272,12 +2302,14 @@ NumFormat.prototype =
 					}
 					else
 					{
+						checkRLM();
 						oCurText.text += 'a'.repeat(item.val);
 					}
 				}
                 else if(numFormat_Year == item.type)
                 {
                   if (item.val > 0) {
+					  checkRLM();
                     if (item.val <= 2) {
 						oCurText.text += (oParsedNumber.date.year.toString().slice(-2));
                     } else {
@@ -2291,10 +2323,13 @@ NumFormat.prototype =
                 else if(numFormat_Month == item.type)
                 {
                     var m = oParsedNumber.date.month;
-                    if(item.val == 1)
-                        oCurText.text += m + 1;
-                    else if(item.val == 2)
-                        oCurText.text += this._ZeroPad(m + 1);
+					if (item.val === 1) {
+						checkRLM();
+						oCurText.text += m + 1;
+					} else if (item.val === 2) {
+						checkRLM();
+						oCurText.text += this._ZeroPad(m + 1);
+					}
                     else if (item.val == 3) {
                         if (this.bDay && cultureInfoLCID.AbbreviatedMonthGenitiveNames.length > 0)
                             oCurText.text += cultureInfoLCID.AbbreviatedMonthGenitiveNames[m];
@@ -2315,10 +2350,13 @@ NumFormat.prototype =
                 }
                 else if(numFormat_Day == item.type)
                 {
-                    if(item.val == 1)
-                        oCurText.text += oParsedNumber.date.d;
-                    else if(item.val == 2)
-                        oCurText.text += this._ZeroPad(oParsedNumber.date.d);
+                    if(item.val == 1) {
+						checkRLM();
+						oCurText.text += oParsedNumber.date.d;
+					} else if(item.val === 2) {
+						checkRLM();
+						oCurText.text += this._ZeroPad(oParsedNumber.date.d);
+					}
                     else if(item.val == 3)
                         oCurText.text += cultureInfoLCID.AbbreviatedDayNames[oParsedNumber.date.dayWeek];
                     else if(item.val > 0)
@@ -2332,21 +2370,27 @@ NumFormat.prototype =
                         h = oParsedNumber.date.countDay*24 + oParsedNumber.date.hour;
                     if(this.bTimePeriod === true)
                         h = h%12||12;
-
-                    if(item.val == 1)
-                        oCurText.text += h;
-                    else if(item.val > 0)
-                        oCurText.text += this._ZeroPad(h);
+					
+					if (item.val > 0) {
+						checkRLM(i - 1);
+						if (item.val === 1)
+							oCurText.text += h;
+						else
+							oCurText.text += this._ZeroPad(h);
+					}
                 }
                 else if(numFormat_Minute == item.type)
                 {
                     var min = oParsedNumber.date.min;
                     if(item.bElapsed === true)
                         min = oParsedNumber.date.countDay*24*60 + oParsedNumber.date.hour*60 + oParsedNumber.date.min;
-                    if(item.val == 1)
-                        oCurText.text += min;
-                    else if(item.val > 0)
-                        oCurText.text += this._ZeroPad(min);
+					if (item.val > 0) {
+						checkRLM(i - 1);
+						if (item.val === 1)
+							oCurText.text += min;
+						else
+							oCurText.text += this._ZeroPad(min);
+					}
                 }
                 else if(numFormat_Second == item.type)
                 {
@@ -2355,11 +2399,14 @@ NumFormat.prototype =
                         s = oParsedNumber.date.sec + Math.round(oParsedNumber.date.ms/1000);
                     if(item.bElapsed === true)
                         s = oParsedNumber.date.countDay*24*60*60 + oParsedNumber.date.hour*60*60 + oParsedNumber.date.min*60 + s;
-
-                    if(item.val == 1)
-                        oCurText.text += s;
-                    else if(item.val > 0)
-                        oCurText.text += this._ZeroPad(s);
+	
+					if (item.val > 0) {
+						checkRLM(i - 1);
+						if (item.val === 1)
+							oCurText.text += s;
+						else
+							oCurText.text += this._ZeroPad(s);
+					}
                 }
                 else if (numFormat_AmPm == item.type) {
                     if (cultureInfoLCID.AMDesignator.length > 0 && cultureInfoLCID.PMDesignator.length > 0)
@@ -2384,6 +2431,7 @@ NumFormat.prototype =
                     else if (dMs < 100)
                         nExponent = -1;
                     var aMilSec = this._FormatNumber(dMs, nExponent, item.format.concat(), FormatStates.Frac, cultureInfo);
+					checkRLM(i - 1);
                     for (var k = 0; k < aMilSec.length; k++)
                         this._AddDigItem(res, oCurText, aMilSec[k]);
                 }

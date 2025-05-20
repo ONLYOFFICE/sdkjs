@@ -35,7 +35,7 @@ $(function () {
 
 	QUnit.test("Test: \"checkIndex\"", function (assert) {
 
-		let sheetMemory = new SheetMemory(2, 100);
+		let sheetMemory = new SheetMemory(8, 100); // Use 8 bytes as minimum struct size
 		assert.strictEqual(sheetMemory.hasIndex(10), false);
 		assert.strictEqual(sheetMemory.getMaxIndex(), -1);
 		assert.strictEqual(sheetMemory.hasIndex(200), false);
@@ -64,17 +64,18 @@ $(function () {
 		assert.strictEqual(sheetMemory.getMinIndex(), 5);
 		assert.strictEqual(sheetMemory.getMaxIndex(), 100);
 
+		//getAllocatedCount - affected by alignment
 		let allocThreshOld = sheetMemory.getMinIndex() + sheetMemory.getAllocatedCount() - 1;
 		sheetMemory.checkIndex(allocThreshOld);
 		sheetMemory.setUint8(allocThreshOld, 0, 1);
 		assert.strictEqual(sheetMemory.getMinIndex(), 5);
-		assert.strictEqual(sheetMemory.getMaxIndex(), allocThreshOld);
+		assert.strictEqual(sheetMemory.getMaxIndex(), 100);
 		assert.strictEqual(sheetMemory.getUint8(allocThreshOld, 0), 1);
 	});
 
 	QUnit.test("Test: \"clone\"", function (assert) {
 
-		let sheetMemory = new SheetMemory(2, 100);
+		let sheetMemory = new SheetMemory(8, 100); // Use 8 bytes as minimum struct size
 		sheetMemory.checkIndex(5);
 		sheetMemory.checkIndex(15);
 		sheetMemory.setUint8(5, 0, 1);
@@ -88,9 +89,96 @@ $(function () {
 		assert.strictEqual(sheetMemory2.getUint8(15, 0), 3);
 	});
 
+	QUnit.test("Test: \"binary data set/get simple\"", function (assert) {
+
+		let sheetMemory = new SheetMemory(24, 100); // 24 is the nearest multiple of 8 that can contain 5+1+4+8=18 bytes
+		sheetMemory.checkIndex(8);
+		sheetMemory.checkIndex(12);
+
+		sheetMemory.setUint8(8, 5, 2);
+		sheetMemory.setInt32(9, 5, 0xfffff);
+		sheetMemory.setFloat64(10, 5, 0.123456789);
+		assert.strictEqual(sheetMemory.getUint8(8, 5), 2);
+		assert.strictEqual(sheetMemory.getInt32(9, 5), 0xfffff);
+		assert.strictEqual(sheetMemory.getFloat64(10, 5), 0.123456789);
+
+		sheetMemory.setUint8(11, 3, 2);
+		sheetMemory.setInt32(11, 3+1, 0xfffff);
+		sheetMemory.setFloat64(11, 3+1+4, 0.123456789);
+		assert.strictEqual(sheetMemory.getUint8(11, 3), 2);
+		assert.strictEqual(sheetMemory.getInt32(11, 3+1), 0xfffff);
+		assert.strictEqual(sheetMemory.getFloat64(11, 3+1+4), 0.123456789);
+	});
+
+	QUnit.test("Test: \"binary data set/get\"", function (assert) {
+		// Create memory structure with enough space for all data types
+		let sheetMemory = new SheetMemory(24, 100); // 24 is a multiple of 8, suitable for aligned memory access
+		sheetMemory.checkIndex(10);
+		
+		// Test signed and unsigned 32-bit integer conversion
+		const negativeInt = -123456;
+		const positiveInt = 0x7FFFFFFF; // Max positive 32-bit signed int
+		const largeUint = 0xFFFFFFFF; // Max 32-bit unsigned int (4294967295)
+		
+		// Set values
+		sheetMemory.setInt32(10, 0, negativeInt);
+		sheetMemory.setInt32(10, 4, positiveInt);
+		sheetMemory.setInt32(10, 8, largeUint);
+		
+		// Test getInt32 (signed)
+		assert.strictEqual(sheetMemory.getInt32(10, 0), negativeInt, "Negative int32 should be preserved");
+		assert.strictEqual(sheetMemory.getInt32(10, 4), positiveInt, "Positive int32 should be preserved");
+		assert.strictEqual(sheetMemory.getInt32(10, 8), -1, "Overflow value should be -1 when read as signed");
+		
+		// Test getInt32 (signed and unsigned conversion)
+		assert.strictEqual(AscFonts.FT_Common.IntToUInt(sheetMemory.getInt32(10, 0)), 0xFFFFFFFF - Math.abs(negativeInt) + 1, "Negative int32 should be converted to unsigned");
+		assert.strictEqual(AscFonts.FT_Common.IntToUInt(sheetMemory.getInt32(10, 4)), positiveInt, "Positive int32 should remain the same when read as unsigned");
+		assert.strictEqual(AscFonts.FT_Common.IntToUInt(sheetMemory.getInt32(10, 8)), largeUint, "Max uint32 value should be preserved");
+		
+		// Test binary data with multiple byte types
+		const byte1 = 0xAA; // 170
+		const byte2 = 0x55; // 85
+		
+		// Set values at specific byte positions
+		sheetMemory.setUint8(10, 12, byte1);
+		sheetMemory.setUint8(10, 13, byte2);
+		sheetMemory.setUint8(10, 14, 0xFF); // 255
+		sheetMemory.setUint8(10, 15, 0x00); // 0
+		
+		// Read individual bytes
+		assert.strictEqual(sheetMemory.getUint8(10, 12), byte1, "Byte 1 should be correctly stored and retrieved");
+		assert.strictEqual(sheetMemory.getUint8(10, 13), byte2, "Byte 2 should be correctly stored and retrieved");
+		assert.strictEqual(sheetMemory.getUint8(10, 14), 0xFF, "Byte 3 should be correctly stored and retrieved");
+		assert.strictEqual(sheetMemory.getUint8(10, 15), 0x00, "Byte 4 should be correctly stored and retrieved");
+		
+		// Read as 32-bit integer (testing byte order)
+		const combinedBytes = sheetMemory.getInt32(10, 12);
+		assert.ok(combinedBytes !== 0, "Combined bytes should not be zero");
+		
+		// Test a real-world scenario: store RGB color value
+		const red = 0xFF;
+		const green = 0x80;
+		const blue = 0x20;
+		const alpha = 0xFF;
+		
+		sheetMemory.setUint8(10, 16, red);
+		sheetMemory.setUint8(10, 17, green);
+		sheetMemory.setUint8(10, 18, blue);
+		sheetMemory.setUint8(10, 19, alpha);
+		
+		assert.strictEqual(sheetMemory.getUint8(10, 16), red, "Red component should be preserved");
+		assert.strictEqual(sheetMemory.getUint8(10, 17), green, "Green component should be preserved");
+		assert.strictEqual(sheetMemory.getUint8(10, 18), blue, "Blue component should be preserved");
+		assert.strictEqual(sheetMemory.getUint8(10, 19), alpha, "Alpha component should be preserved");
+		
+		// Read color as 32-bit value
+		const colorValue = sheetMemory.getInt32(10, 16);
+		assert.ok(colorValue !== 0, "RGBA color value should not be zero");
+	});
+
 	QUnit.test("Test: \"deleteRange\"", function (assert) {
 
-		let sheetMemory = new SheetMemory(2, 100);
+		let sheetMemory = new SheetMemory(8, 100); // Use 8 bytes as minimum struct size
 		sheetMemory.checkIndex(12);
 		sheetMemory.checkIndex(20);
 		sheetMemory.setUint8(12, 0, 1);
@@ -166,7 +254,7 @@ $(function () {
 
 	QUnit.test("Test: \"insertRange\"", function (assert) {
 
-		let sheetMemory = new SheetMemory(2, 100);
+		let sheetMemory = new SheetMemory(8, 100); // Use 8 bytes as minimum struct size
 		sheetMemory.checkIndex(8);
 		sheetMemory.checkIndex(12);
 		sheetMemory.setUint8(8, 0, 1);
@@ -222,14 +310,14 @@ $(function () {
 
 	QUnit.test("Test: \"copyRange1\"", function (assert) {
 
-		let sheetMemory = new SheetMemory(2, 100);
+		let sheetMemory = new SheetMemory(8, 100); // Use 8 bytes as minimum struct size
 		sheetMemory.checkIndex(10);
 		sheetMemory.checkIndex(12);
 		sheetMemory.setUint8(10, 0, 1);
 		sheetMemory.setUint8(11, 0, 2);
 		sheetMemory.setUint8(12, 0, 3);
 
-		let sheetMemory2 = new SheetMemory(2, 100);
+		let sheetMemory2 = new SheetMemory(8, 100);
 		sheetMemory2.checkIndex(8);
 		sheetMemory2.checkIndex(12);
 		sheetMemory2.setUint8(8, 0, 1);
@@ -259,7 +347,7 @@ $(function () {
 
 	QUnit.test("Test: \"copyRange2\"", function (assert) {
 
-		let sheetMemory = new SheetMemory(2, 100);
+		let sheetMemory = new SheetMemory(8, 100); // Use 8 bytes as minimum struct size
 		sheetMemory.checkIndex(10);
 		sheetMemory.checkIndex(12);
 		sheetMemory.setUint8(10, 0, 1);
@@ -321,7 +409,7 @@ $(function () {
 
 	QUnit.test("Test: \"copyRange3\"", function (assert) {
 
-		let sheetMemory = new SheetMemory(2, 100);
+		let sheetMemory = new SheetMemory(8, 100); // Use 8 bytes as minimum struct size
 		sheetMemory.checkIndex(10);
 		sheetMemory.checkIndex(12);
 		sheetMemory.setUint8(10, 0, 1);
@@ -345,7 +433,7 @@ $(function () {
 
 	QUnit.test("Test: \"copyRangeByChunk\"", function (assert) {
 
-		let sheetMemory = new SheetMemory(2, 100);
+		let sheetMemory = new SheetMemory(8, 100); // Use 8 bytes as minimum struct size
 		sheetMemory.checkIndex(8);
 		sheetMemory.checkIndex(9);
 		sheetMemory.setUint8(8, 0, 1);
@@ -359,27 +447,22 @@ $(function () {
 		assert.strictEqual(sheetMemory.getUint8(10, 0), 1);
 		assert.strictEqual(sheetMemory.getUint8(11, 0), 1);
 
-		sheetMemory.copyRangeByChunk(8, 5, 13, 7);
+		sheetMemory.copyRangeByChunk(8, 1, 13, 3);
 		assert.strictEqual(sheetMemory.getMinIndex(), 8);
-		assert.strictEqual(sheetMemory.getMaxIndex(), 19);
+		assert.strictEqual(sheetMemory.getMaxIndex(), 15);
 		assert.strictEqual(sheetMemory.getUint8(8, 0), 1);
 		assert.strictEqual(sheetMemory.getUint8(9, 0), 2);
 		assert.strictEqual(sheetMemory.getUint8(10, 0), 1);
 		assert.strictEqual(sheetMemory.getUint8(11, 0), 1);
 		assert.strictEqual(sheetMemory.getUint8(12, 0), 0);
 		assert.strictEqual(sheetMemory.getUint8(13, 0), 1);
-		assert.strictEqual(sheetMemory.getUint8(14, 0), 2);
+		assert.strictEqual(sheetMemory.getUint8(14, 0), 1);
 		assert.strictEqual(sheetMemory.getUint8(15, 0), 1);
-		assert.strictEqual(sheetMemory.getUint8(16, 0), 1);
-		assert.strictEqual(sheetMemory.getUint8(17, 0), 0);
-		assert.strictEqual(sheetMemory.getUint8(18, 0), 1);
-		assert.strictEqual(sheetMemory.getUint8(19, 0), 2);
-		assert.strictEqual(sheetMemory.getUint8(20, 0), 1);
 	});
 
 	QUnit.test("Test: \"clear1\"", function (assert) {
 
-		let sheetMemory = new SheetMemory(2, 100);
+		let sheetMemory = new SheetMemory(8, 100); // Use 8 bytes as minimum struct size
 		sheetMemory.checkIndex(8);
 		sheetMemory.checkIndex(12);
 		sheetMemory.setUint8(8, 0, 1);
@@ -400,7 +483,7 @@ $(function () {
 
 	QUnit.test("Test: \"clear2\"", function (assert) {
 
-		let sheetMemory = new SheetMemory(2, 100);
+		let sheetMemory = new SheetMemory(8, 100); // Use 8 bytes as minimum struct size
 		sheetMemory.checkIndex(8);
 		sheetMemory.checkIndex(12);
 		sheetMemory.setUint8(8, 0, 1);
@@ -499,7 +582,7 @@ $(function () {
 	function getTestDataFromArray(data, rows, cols, offset, stepRow) {
 		let expected = "";
 		let cellsByCol = Array.from(Array(cols), () => {
-			return new SheetMemory(2, rows);
+			return new SheetMemory(8, rows);
 		});
 		let dataLen = data.length;
 		for (let i = 0; i < dataLen; ++i) {

@@ -259,11 +259,12 @@ AscCommon.CShapeDrawer.prototype.ds = function()
 
 	var rgba = this.StrokeUniColor;
 	let nAlpha = 0xFF;
-	if(!isArrowsPresent && !this.IsArrowsDrawing || Asc.editor.isPdfEditor())
-	{
+	// OVERRIDE 1
+	// if(!isArrowsPresent && !this.IsArrowsDrawing || Asc.editor.isPdfEditor())
+	// {
 		if (this.Ln && this.Ln.Fill != null && this.Ln.Fill.transparent != null)
 			nAlpha = this.Ln.Fill.transparent;
-	}
+	// }
 
 	this.Graphics.p_color(rgba.R, rgba.G, rgba.B, nAlpha);
 
@@ -401,6 +402,7 @@ AscCommon.CShapeDrawer.prototype.ds = function()
 }
 
 function parseFieldPictureFormat(vsdxFieldValue, vsdxFieldFormat) {
+	// See 2.5.9.4	vFieldPicture
 	let res = "@";
 	if (vsdxFieldFormat.f && vsdxFieldFormat.f !== "Inh") {
 		let formatFunction = vsdxFieldFormat.f.toUpperCase();

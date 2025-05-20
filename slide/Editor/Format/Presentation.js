@@ -1175,7 +1175,18 @@ CPresentation.prototype.setHFProperties = function (oProps, bAll) {
 			let oSp = oSlideLikeObject.getMatchingShape(nPhType, null, false, {});
 			let oContent = oSp && oSp.getDocContent && oSp.getDocContent();
 			if (oContent) {
+				let oParaPr = null;
+				let oFirstParaOld = oContent.GetFirstParagraph();
+				if (oFirstParaOld) {
+					oParaPr = oFirstParaOld.GetDirectParaPr();
+				}
 				AscFormat.CheckContentTextAndAdd(oContent, sText);
+				if(oParaPr) {
+					let oFirstParaNew = oContent.GetFirstParagraph();
+					if (oFirstParaNew) {
+						oFirstParaNew.SetPr(oParaPr);
+					}
+				}
 			}
 		}
 	}
@@ -2760,6 +2771,8 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 					}
 					let parent = oDrawingObject.parent;
 					if(oDrawingObject instanceof AscFormat.CTheme) {
+						b_check_layout = true;
+						bAttack = true;
 						let oThemeObjects = this.GetSlideObjectsWithTheme(oDrawingObject);
 						if(!this.IsMasterMode()) {
 							for(let nIdx = 0; nIdx < oThemeObjects.masters.length; ++nIdx) {
@@ -5889,6 +5902,20 @@ CPresentation.prototype.EnterText = function (value) {
 	}
 	return bRetValue;
 };
+
+CPresentation.prototype.GetCurrentParagraph = function(bIgnoreSelection, bReturnSelectedArray, oPr) {
+
+	let oController = this.GetCurrentController();
+	if (!oController) {
+		return null;
+	}
+	let oContent = oController.getTargetDocContent();
+	if(!oContent) {
+		return null;
+	}
+	return oContent.GetCurrentParagraph(bIgnoreSelection, bReturnSelectedArray, oPr);
+};
+
 CPresentation.prototype.CorrectEnterText = function (oldValue, newValue) {
 	if (undefined === oldValue
 		|| null === oldValue
@@ -9359,7 +9386,7 @@ CPresentation.prototype.changeTheme = function (themeInfo, arrInd) {
 			}
 		}
 		bReplace = true;
-		if(oCurMaster.Theme.name === "Blank" || oCurMaster.Theme.name === "Office Theme") {
+		if(oCurMaster.Theme.name === "Blank" || oCurMaster.Theme.name === "Office Theme" || oCurMaster.isPreserve()) {
 			bReplace = false;
 		}
 		arr_ind = [];
@@ -9504,6 +9531,9 @@ CPresentation.prototype.changeTheme = function (themeInfo, arrInd) {
 	for(let nMaster = 0; nMaster < aReplacedMasters.length; ++nMaster) {
 		let oMaster = aReplacedMasters[nMaster];
 		let bFound = false;
+		if (oMaster.isPreserve()) {
+			continue;
+		}
 		for(let nSlide = 0; nSlide < this.Slides.length; ++nSlide) {
 			if(this.Slides[nSlide].getMaster() === oMaster) {
 				bFound = true;

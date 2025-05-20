@@ -363,7 +363,9 @@
 				// IMAGE
 				if (_formats & AscCommon.c_oAscClipboardDataFormat.Image) {
 					let imageData = this.drawSelectedArea(ws, true);
-					_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Image, imageData);
+					if (imageData) {
+						_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Image, imageData);
+					}
 				}
 
 				//TEXT
@@ -408,10 +410,10 @@
 					//в данном случае не вырезаем, а записываем
 					if (!ws.isNeedSelectionCut() && false === ws.isMultiSelect()) {
 						ws.workbook.cutIdSheet = ws.model.Id;
-						ws.copyCutRange = [ws.model.selectionRange.getLast()];
+						ws.setCutRange([ws.model.selectionRange.getLast()]);
 					}
 				} else if (!ws.objectRender.selectedGraphicObjectsExists()) {
-					ws.copyCutRange = ws.model.selectionRange.ranges;
+					ws.setCutRange(ws.model.selectionRange.ranges);
 				}
 			}
 		};
@@ -528,8 +530,8 @@
 
 		Clipboard.prototype.drawSelectedArea = function (ws, opt_get_bytes) {
 			let activeRange = ws.model.selectionRange.getLast();
-			let range = ws.getCellMetrics(activeRange.c1, activeRange.r1, true);
-			let rangeEnd = ws.getCellMetrics(activeRange.c2, activeRange.r2, true);
+			let range = ws.getCellMetrics(activeRange.c1, activeRange.r1, true, true);
+			let rangeEnd = ws.getCellMetrics(activeRange.c2, activeRange.r2, true, true);
 
 			if (!range || !rangeEnd) {
 				return;
@@ -538,6 +540,12 @@
 			// Calculate dimensions
 			let width = rangeEnd.left + rangeEnd.width - range.left;
 			let height = rangeEnd.top + rangeEnd.height - range.top;
+
+			//TODO while add 1000px limit
+			let maxSize = 1000;
+			if (width > maxSize || height > maxSize) {
+				return;
+			}
 
 			// Create canvas and context
 			let canvas = document.createElement('canvas');
@@ -568,7 +576,7 @@
 			oCtx.isNotDrawBackground = true;
 
 			// Draw worksheet elements
-			ws._drawGrid(oCtx, activeRange, offsetX, offsetY);
+			ws._drawGrid(oCtx, activeRange, offsetX, offsetY, undefined, undefined, undefined, true, true);
 			ws._drawCellsAndBorders(oCtx, activeRange, offsetX, offsetY);
 
 			ctx.restore();
@@ -1960,7 +1968,7 @@
 				var pasteInOriginalDoc = this._checkPastedInOriginalDoc(pastedWb);
 				if (pasteInOriginalDoc && null !== window["Asc"]["editor"].wb.cutIdSheet) {
 					var wsFrom = window["Asc"]["editor"].wb.getWorksheetById(window["Asc"]["editor"].wb.cutIdSheet);
-					var fromRange = wsFrom ? wsFrom.copyCutRange : null;
+					var fromRange = wsFrom ? wsFrom.getCutRange() : null;
 					if (fromRange) {
 						fromRange = fromRange[0];
 						var aRange = ws.model.selectionRange.getLast();
@@ -3138,11 +3146,17 @@
 
 					//при специальной вставке в firefox _getComputedStyle возвращает null
 					//TODO пересмотреть функцию _getComputedStyle
-					if (window['AscCommon'].g_specialPasteHelper.specialPasteStart && window['AscCommon'].g_specialPasteHelper.specialPasteData.aContent) {
+					let specialPasteHelper = window['AscCommon'].g_specialPasteHelper;
+					let specialPasteProps = specialPasteHelper.specialPasteProps;
+					let props = specialPasteProps ? specialPasteProps.property : null;
+
+					if (window['AscCommon'].g_specialPasteHelper.specialPasteStart && window['AscCommon'].g_specialPasteHelper.specialPasteData.aContent && props !== Asc.c_oSpecialPasteProps.picture) {
 						oPasteProcessor.aContent = window['AscCommon'].g_specialPasteHelper.specialPasteData.aContent;
 					} else {
 						oPasteProcessor._Execute(node, {}, true, true, false);
-						window['AscCommon'].g_specialPasteHelper.specialPasteData.aContent = oPasteProcessor.aContent;
+						if (props !== Asc.c_oSpecialPasteProps.picture) {
+							window['AscCommon'].g_specialPasteHelper.specialPasteData.aContent = oPasteProcessor.aContent;
+						}
 					}
 
 					editor = oOldEditor;

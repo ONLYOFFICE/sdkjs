@@ -1171,12 +1171,19 @@
 		
 		function _getDigit(code)
 		{
-			return ((48 <= code && code <= 57) ? code - 48 : -1);
+			if (0x0030 <= code && code <= 0x0039) // DIGIT
+				return code - 0x0030;
+			else if (0x0660 <= code && code <= 0x0669) // ARABIC-INDIC
+				return code - 0x0660;
+			else if (0x06F0 <= code && code <= 0x06F9) // EXTENDED ARABIC-INDIC
+				return code - 0x06f0;
+			
+			return -1;
 		}
 		
-		function _getHindiDigit(code)
+		function _isDigit(code)
 		{
-			return ((0x0660 <= code && code <= 0x0669) ? code - 0x0660 : -1);
+			return -1 !== _getDigit(code);
 		}
 		
 		function _parseInt(text)
@@ -1188,9 +1195,6 @@
 			{
 				let c = text.codePointAt(pos);
 				let d = _getDigit(c);
-				if (-1 === d)
-					d = _getHindiDigit(c);
-				
 				if (-1 === d)
 					break;
 				
@@ -1228,7 +1232,7 @@
 		}
 
 		// Проверяем, либо у нас все числовое, либо у нас все буквенное (все заглавные, либо все не заглавные)
-		if ((48 <= nFirstCharCode && nFirstCharCode <= 57) || (0x0660 <= nFirstCharCode && nFirstCharCode <= 0x0669))
+		if (_isDigit(nFirstCharCode))
 		{
 
 			var arrResult = [], nPos = 0;

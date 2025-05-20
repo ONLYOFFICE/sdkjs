@@ -2516,34 +2516,40 @@ ParaRun.prototype.IsContentSuitableForParagraphSimpleChanges = function()
 // Возвращаем строку и отрезок, в котором произошли простейшие изменения
 ParaRun.prototype.Get_SimpleChanges_ParaPos = function(Type, Pos)
 {
-    var CurLine  = 0;
-    var CurRange = 0;
-
-    var LinesCount = this.protected_GetLinesCount();
-    for (; CurLine < LinesCount; CurLine++)
-    {
-        var RangesCount = this.protected_GetRangesCount(CurLine);
-        for (CurRange = 0; CurRange < RangesCount; CurRange++)
-        {
-            var RangeStartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-            var RangeEndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-
-            if  ( ( AscDFH.historyitem_ParaRun_AddItem === Type && Pos < RangeEndPos && Pos >= RangeStartPos ) || ( AscDFH.historyitem_ParaRun_RemoveItem === Type && Pos < RangeEndPos && Pos >= RangeStartPos ) || ( AscDFH.historyitem_ParaRun_RemoveItem === Type && Pos >= RangeEndPos && CurLine === LinesCount - 1 && CurRange === RangesCount - 1 ) )
-            {
-                // Если отрезок остается пустым, тогда надо все заново пересчитывать
-                if ( RangeStartPos === RangeEndPos )
-                    return null;
-
-                return new CParaPos( ( CurLine === 0 ? CurRange + this.StartRange : CurRange ), CurLine + this.StartLine, 0, 0 );
-            }
-        }
-    }
-
-    // Если отрезок остается пустым, тогда надо все заново пересчитывать
-    if (this.protected_GetRangeStartPos(0, 0) === this.protected_GetRangeEndPos(0, 0))
-        return null;
-
-    return new CParaPos( this.StartRange, this.StartLine, 0, 0 );
+	if (AscDFH.historyitem_ParaRun_AddItem !== Type && AscDFH.historyitem_ParaRun_RemoveItem !== Type)
+		return null;
+	
+	if (Pos < this.protected_GetRangeStartPos(0, 0))
+	{
+		// Если отрезок остается пустым, тогда надо все заново пересчитывать
+		if (this.protected_GetRangeStartPos(0, 0) === this.protected_GetRangeEndPos(0, 0))
+			return null;
+		
+		return new CParaPos(this.StartRange, this.StartLine, 0, 0);
+	}
+	else
+	{
+		for (let curLine = 0, lineCount = this.protected_GetLinesCount(); curLine < lineCount; ++curLine)
+		{
+			for (let curRange = 0, rangeCount = this.protected_GetRangesCount(curLine); curRange < rangeCount; ++curRange)
+			{
+				let rangeStartPos = this.protected_GetRangeStartPos(curLine, curRange);
+				let rangeEndPos   = this.protected_GetRangeEndPos(curLine, curRange);
+				
+				if ((rangeStartPos <= Pos && Pos < rangeEndPos)
+					|| (Pos >= rangeEndPos && curLine === lineCount - 1 && curRange === rangeCount - 1))
+				{
+					// Если отрезок остается пустым, тогда надо все заново пересчитывать
+					if (rangeStartPos === rangeEndPos)
+						return null;
+					
+					return new CParaPos((curLine === 0 ? curRange + this.StartRange : curRange), curLine + this.StartLine, 0, 0);
+				}
+			}
+		}
+	}
+	
+	return null;
 };
 
 ParaRun.prototype.Split = function (ContentPos, Depth)
@@ -3352,6 +3358,9 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 	var nCombWidth  = null;
 	var oTextForm   = this.GetTextForm();
 	let oTextFormPDF = this.GetFormPDF();
+	if (oTextFormPDF && oTextFormPDF.GetType() !== AscPDF.FIELD_TYPES.text)
+		oTextFormPDF = null;
+	
 	let isKeepWidth = false;
 	if (oTextForm && oTextForm.IsComb())
 	{
@@ -3389,10 +3398,10 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 
 	}
 	// for pdf text forms
-	else if (oTextFormPDF && oTextFormPDF._comb == true)
+	else if (oTextFormPDF && oTextFormPDF.IsComb() == true)
 	{
 		isKeepWidth = true;
-		nMaxComb = oTextFormPDF._charLimit;
+		nMaxComb = oTextFormPDF.GetCharLimit();
 		nCombWidth = oTextFormPDF.getFormRelRect().W / nMaxComb;
 	}
 
@@ -4535,8 +4544,11 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 
 						// В Word2013 и раньше, если не левый таб заканчивается правее правой границы, тогда у параграфа
 						// правая граница имеет максимально возможное значение (55см)
-						if (AscCommon.MMToTwips(TabPos.NewX) > AscCommon.MMToTwips(XEnd) && nCompatibilityMode <= AscCommon.document_compatibility_mode_Word14)
+						if (AscCommon.MMToTwips(NewX) > AscCommon.MMToTwips(XEnd) && nCompatibilityMode <= AscCommon.document_compatibility_mode_Word14)
 						{
+							// TODO: Временно сделаем так. По-хорошему надо помечать промежуток, что в нем не учитывается границы при расчете переносов,
+							//  а XEnd не менять
+							Para.Lines[PRS.Line].Ranges[PRS.Range].XEndOrigin = Para.Lines[PRS.Line].Ranges[PRS.Range].XEnd;
 							Para.Lines[PRS.Line].Ranges[PRS.Range].XEnd = 558.7;
 							XEnd                                        = 558.7;
 							PRS.XEnd                                    = XEnd;
@@ -11411,6 +11423,9 @@ ParaRun.prototype.GetLineByPosition = function(nPos)
  */
 ParaRun.prototype.PreDelete = function(isDeep)
 {
+	if (this.Paragraph && this.Paragraph.isPreventedPreDelete())
+		return;
+	
 	// TODO: Перенести это, когда удаляется непосредственно элемент из класса
 	//       Сейчас работает не совсем корректно, потому что при большой вложенности у элементов чистится Parent,
 	//       хотя по факту он должен чистится только у первого уровня элементов, с которых начинается удаление
@@ -11508,23 +11523,12 @@ ParaRun.prototype.GetAllFields = function(isUseSelection, arrFields)
 		var oItem = this.Content[nPos];
 		if (para_FieldChar === oItem.Type)
 		{
-			var oComplexField = oItem.GetComplexField();
-
-			// Поле еще может быть не собрано на данный момент
-			if (oComplexField)
+			let complexField = oItem.GetComplexField();
+			if (complexField
+				&& complexField.IsValid()
+				&& -1 === arrFields.indexOf(complexField))
 			{
-				var isNeedAdd = true;
-				for (var nFieldIndex = 0, nFieldsCount = arrFields.length; nFieldIndex < nFieldsCount; ++nFieldIndex)
-				{
-					if (oComplexField === arrFields[nFieldIndex])
-					{
-						isNeedAdd = false;
-						break;
-					}
-				}
-
-				if (isNeedAdd)
-					arrFields.push(oComplexField);
+				arrFields.push(complexField);
 			}
 		}
 		else if (para_Drawing === oItem.Type)
@@ -11546,7 +11550,7 @@ ParaRun.prototype.GetAllSeqFieldsByType = function(sType, aFields)
 		if (para_FieldChar === oItem.Type)
 		{
 			let complexField = oItem.GetComplexField();
-			let instruction  = complexField ? complexField.GetInstruction() : null;
+			let instruction  = complexField && complexField.IsValid() ? complexField.GetInstruction() : null;
 			if (instruction
 				&& instruction.Type === AscWord.fieldtype_SEQ
 				&& instruction.CheckId(sType)
@@ -12601,9 +12605,9 @@ ParaRun.prototype.GetFontSlotByPosition = function(nPos)
 
 	return nFontSlot;
 };
-ParaRun.prototype.SetIsRecalculated = function(isRecalcuted)
+ParaRun.prototype.SetIsRecalculated = function(isRecalculated)
 {
-	if (!isRecalcuted && this.Paragraph)
+	if (!isRecalculated && this.Paragraph)
 		this.Paragraph.SetIsRecalculated(false);
 };
 

@@ -1495,4 +1495,28 @@
 			clearInterval(window.renderIntervalId);
 		}
 	};
+
+	/*
+	UNCOMMENT FOR DETECT FOCUS INITIALIZER
+	{
+		focusHtmlElement = function(element)
+		{
+			window.disableFocusDebugger = true;
+			element.focus();
+			delete window.disableFocusDebugger;
+		}
+
+		const originalFocus = HTMLElement.prototype.focus;
+
+		HTMLElement.prototype.focus = function(...args)
+		{
+			if (!window.disableFocusDebugger)
+				debugger;
+
+			console.log("FOCUS:", this);
+			originalFocus.apply(this, args);
+		};
+	}
+	*/
+
 })(window);

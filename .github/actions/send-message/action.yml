@@ -1,0 +1,34 @@
+name: 'Send message to telegram'
+description: 'Send message to telegram'
+inputs:
+  token:
+    required: true
+  chat:
+    required: true
+  message:
+    required: false
+    default: |
+      Workflow: ${{ github.workflow }}
+      Github job: ${{ github.job }}
+      Github job status: '❌' - ${{ job.status }}
+      
+
+      See action run logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_number }}
+runs:
+  using: "composite"
+  steps:
+    - name: Send message to telegram
+      shell: bash
+      env:
+        MESSAGE: ${{ inputs.message }}
+      run: |
+        MESSAGE=$(echo "$MESSAGE" | sed 's/"/\\"/g')
+        curl -s -X POST "https://api.telegram.org/bot${{ inputs.token }}/sendMessage" \
+          -H "Content-Type: application/json" \
+          -d "{
+            \"chat_id\": \"${{ inputs.chat }}\",
+            \"text\": \"$MESSAGE\",
+            \"parse_mode\": \"Markdown\",
+            \"disable_notification\": true,
+            \"disable_web_page_preview\": true
+          }"

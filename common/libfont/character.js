@@ -157,6 +157,9 @@
 			{
 				this.FontsByRange[_range.Name] = _range.Name;
 				this.FontsByRangeCount++;
+
+				if (window["onLogPickFont"])
+					window["onLogPickFont"]("FontBySymbol: " + _char + " => " + _range.Name);
 			}
 
 			return _range.Name;

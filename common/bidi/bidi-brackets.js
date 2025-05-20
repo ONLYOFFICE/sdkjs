@@ -165,8 +165,9 @@
 		0xFF63 : 0xFF62, // c # HALFWIDTH RIGHT CORNER BRACKET
 		
 		0x003E : 0x003C, // o
-		0x003C : 0x003E  // c
-		
+		0x003C : 0x003E, // c
+		0x00AB : 0x00BB, // o # «
+		0x00BB : 0x00AB  // c # »
 	};
 	
 	let pairedGraphemes = {};

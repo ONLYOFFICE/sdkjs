@@ -4645,7 +4645,7 @@ CT_pivotTableDefinition.prototype.getPivotFieldButtonCompact = function(range, b
 	let res = null;
 	let i = 0;
 	const pivotRange = this.getRange();
-	if (pivotRange.containsRange(range)) {
+	if (pivotRange.containsRange(range) && this.worksheet.selectionRange) {
 		const activeCell = this.worksheet.selectionRange.activeCell;
 		const pivotIndex = this.rangeMapper.getPivotIndexByCell(activeCell, row, col);
 		if (pivotIndex !== null) {
@@ -9310,7 +9310,7 @@ PivotRangeMapper.prototype.getPivotIndexByCell = function (activeCell, row, col)
 	const rowRange = this.getRowRange();
 	if (rowRange && rowRange.bbox.contains(activeCell.col, activeCell.row)) {
 		const rowLabelsRange = this.getRowLabelsRange();
-		if (rowLabelsRange.bbox.contains(activeCell.col, activeCell.row) && col < range.c1 + location.firstDataCol) {
+		if (rowItems && rowLabelsRange.bbox.contains(activeCell.col, activeCell.row) && col < range.c1 + location.firstDataCol) {
 			const rowItem = rowItems[rowItemIndex];
 			const rowFieldsOffset = this.getRowFieldsOffset();
 			const labelCol = activeCell.col - range.c1;
@@ -9323,7 +9323,7 @@ PivotRangeMapper.prototype.getPivotIndexByCell = function (activeCell, row, col)
 	const colRange = this.getColRange();
 	if (colRange && colRange.bbox.contains(activeCell.col, activeCell.row)) {
 		const colLabelsRange = this.getColLabelsRange()
-		if (colLabelsRange && colLabelsRange.bbox.contains(activeCell.col, activeCell.row) && row < range.r1 + location.firstDataRow) {
+		if (colItems && colLabelsRange && colLabelsRange.bbox.contains(activeCell.col, activeCell.row) && row < range.r1 + location.firstDataRow) {
 			const colItem = colItems[colItemIndex];
 			const xIndex = activeCell.row - (range.r1 + location.firstHeaderRow) - colItem.getR();
 			const colField = colFields[xIndex + colItem.getR()];
@@ -13723,6 +13723,15 @@ CT_Location.prototype.clone = function() {
 	res.rowPageCount = this.rowPageCount;
 	res.colPageCount = this.colPageCount;
 	return res;
+};
+CT_Location.prototype.isEqual = function(location) {
+	return (null === this.ref && null === location.ref ||
+		this.ref && location.ref && this.ref.isEqual(location.ref)) &&
+		this.firstHeaderRow === location.firstHeaderRow &&
+		this.firstDataRow === location.firstDataRow &&
+		this.firstDataCol === location.firstDataCol &&
+		this.rowPageCount === location.rowPageCount &&
+		this.colPageCount === location.colPageCount;
 };
 CT_Location.prototype.readAttributes = function(attr, uq) {
 	if (attr()) {

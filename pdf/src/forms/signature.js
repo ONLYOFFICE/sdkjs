@@ -37,14 +37,14 @@
 	 * @constructor
      * @extends {CBaseField}
 	 */
-    function CSignatureField(sName, nPage, aRect, oDoc)
+    function CSignatureField(sName, aRect)
     {
-        AscPDF.CBaseField.call(this, sName, AscPDF.FIELD_TYPES.signature, nPage, aRect, oDoc);
+        AscPDF.CBaseField.call(this, sName, AscPDF.FIELD_TYPES.signature, aRect);
         this._filled = false;
     };
 
-    CSignatureField.prototype = Object.create(AscPDF.CBaseField.prototype);
     CSignatureField.prototype.constructor = CSignatureField;
+    AscFormat.InitClass(CSignatureField, AscPDF.CBaseField, AscDFH.historyitem_type_Pdf_Signature_Field);
     
     CSignatureField.prototype.SetValue = function() {
         return;
@@ -89,7 +89,7 @@
      * @memberof CSignatureField
      * @typeofeditors ["PDF"]
      */
-    CSignatureField.prototype.SyncField = function() {
+    CSignatureField.prototype.SyncValue = function() {
     };
     /**
      * Applies value of this field to all field with the same name.

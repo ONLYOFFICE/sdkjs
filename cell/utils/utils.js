@@ -2204,6 +2204,13 @@
 			AscCommonExcel.g_R1C1Mode = oldMode;
 		}
 
+		function lockCustomFunctionRecalculate(mode, runFunction) {
+			var oldMode = AscCommonExcel.g_LockCustomFunctionRecalculate;
+			AscCommonExcel.g_LockCustomFunctionRecalculate = mode;
+			runFunction();
+			AscCommonExcel.g_LockCustomFunctionRecalculate = oldMode;
+		}
+
 		function checkFilteringMode(f, oThis, args) {
 			if (!window['AscCommonExcel'].filteringMode) {
 				AscCommon.History.LocalChange = true;
@@ -4030,6 +4037,7 @@
 		window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 		window['AscCommonExcel'].g_ActiveCell = null; // Active Cell for calculate (in R1C1 mode for relative cell)
 		window['AscCommonExcel'].g_R1C1Mode = false; // No calculate in R1C1 mode
+		window['AscCommonExcel'].g_LockCustomFunctionRecalculate = false;
 		window["AscCommonExcel"].recalcType = recalcType;
 		window["AscCommonExcel"].sizePxinPt = sizePxinPt;
 		window['AscCommonExcel'].c_sPerDay = c_sPerDay;
@@ -4074,6 +4082,7 @@
 		window["AscCommonExcel"].convertUnicodeToSimpleString = convertUnicodeToSimpleString;
 		window['AscCommonExcel'].executeInR1C1Mode = executeInR1C1Mode;
 		window['AscCommonExcel'].checkFilteringMode = checkFilteringMode;
+		window['AscCommonExcel'].lockCustomFunctionRecalculate = lockCustomFunctionRecalculate;
 		window["Asc"].getEndValueRange = getEndValueRange;
 		window["AscCommonExcel"].checkStylesNames = checkStylesNames;
 		window["AscCommonExcel"].generateCellStyles = generateCellStyles;

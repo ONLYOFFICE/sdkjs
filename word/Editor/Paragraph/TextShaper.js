@@ -99,9 +99,14 @@
 
 		return AscWord.GetFontSlotByTextPr(nUnicode, oTextPr);
 	};
-	CParagraphTextShaper.prototype.GetLigaturesType = function()
+	CParagraphTextShaper.prototype.GetLigaturesType = function(textScript)
 	{
-		return this.Ligatures;
+		// bug-73560 
+		let result = this.Ligatures;
+		if (AscFonts.HB_SCRIPT.HB_SCRIPT_ARABIC === textScript)
+			result |= Asc.LigaturesType.Standard;
+		
+		return result;
 	};
 	CParagraphTextShaper.prototype.Shape = function(oParagraph)
 	{
@@ -272,7 +277,7 @@
 			&& t.RTL === oTextPr.RTL
 			&& t.Vanish === oTextPr.Vanish
 			&& t.Ligatures === oTextPr.Ligatures
-			&& t.RFonts.IsEqual(oTextPr.RFonts));
+			&& t.RFonts.IsEqualSlot(oTextPr.RFonts, this.FontSlot));
 	};
 	CParagraphTextShaper.prototype.GetTextScript = function(nUnicode)
 	{

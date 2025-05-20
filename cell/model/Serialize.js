@@ -3871,7 +3871,7 @@
 		this.WritePivotCache = function(id, pivotCache) {
 			var oThis = this;
 			var oldId = pivotCache.id;
-			pivotCache.id = null;
+			pivotCache.id = "rId1";
 			this.bs.WriteItem(c_oSer_PivotTypes.id, function() {
 				oThis.memory.WriteLong(id - 0);
 			});
@@ -10086,9 +10086,15 @@
 					return oThis.ReadPivotCopyPaste(t, l, data);
 				});
 				var cacheDefinition = this.InitOpenManager.oReadResult.pivotCacheDefinitions[data.cacheId];
-				if(data.table && cacheDefinition){
-					data.table.cacheDefinition = cacheDefinition;
-					oWorksheet.insertPivotTable(data.table);
+				if (data.table && cacheDefinition) {
+					//ignore duplicate pivot tables(from 8.3.2). dont compare by name, excel can change it
+					const pivotIndex = oWorksheet.pivotTables.findIndex(function(elem){
+						return elem.location && data.table.location && elem.location.isEqual(data.table.location);
+					});
+					if (pivotIndex === -1) {
+						data.table.cacheDefinition = cacheDefinition;
+						oWorksheet.insertPivotTable(data.table);
+					}
 				}
             } else if (c_oSerWorksheetsTypes.Slicers === type || c_oSerWorksheetsTypes.SlicersExt === type) {
                 res = this.bcr.Read1(length, function(t, l) {

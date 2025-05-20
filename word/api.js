@@ -899,8 +899,6 @@
 		this.CollaborativeMarksShowType = c_oAscCollaborativeMarksShowType.All;
 		
 		this.stylePainter = null;
-		
-		this.forceSaveDisconnectRequest = false;
 
 		// объекты, нужные для отправки в тулбар (шрифты, стили)
 		this._gui_control_colors = null;
@@ -2280,6 +2278,15 @@ background-repeat: no-repeat;\
 		{
 			let paragraph = logicDocument.GetCurrentParagraph(false, false, {FirstInSelection : true});
 			bidi = paragraph ? paragraph.GetParagraphBidi() : undefined;
+			
+			ParaPr.Jc = undefined;
+		}
+		else if (bidi)
+		{
+			if (AscCommon.align_Left === ParaPr.Jc)
+				ParaPr.Jc = AscCommon.align_Right;
+			else if (AscCommon.align_Right === ParaPr.Jc)
+				ParaPr.Jc = AscCommon.align_Left;
 		}
 		
 		this.sendEvent("asc_onTextDirection", bidi);
@@ -2662,7 +2669,10 @@ background-repeat: no-repeat;\
 		// Принимаем чужие изменения
 		var HaveOtherChanges = AscCommon.CollaborativeEditing.Have_OtherChanges();
 		AscCommon.CollaborativeEditing.Apply_Changes();
-
+		
+		// Собираем тут события, которые нужно послать на завершении сохранения
+		let onSaveEnd = [];
+		
 		this.CoAuthoringApi.onUnSaveLock = function()
 		{
 			t.CoAuthoringApi.onUnSaveLock = null;
@@ -2695,6 +2705,8 @@ background-repeat: no-repeat;\
 			if (t.canUnlockDocument) {
 				t._unlockDocument();
 			}
+			
+			onSaveEnd.forEach(function(f){f();});
 		};
 
 		let cursorInfo = null;
@@ -2724,18 +2736,30 @@ background-repeat: no-repeat;\
 			sendChanges();
 			this._sendForm();
 		}
+		else if (this.forceSaveOformRequest)
+		{
+			this.forceSaveOformRequest = false;
+			AscCommon.CollaborativeEditing.Set_GlobalLock(false);
+			sendChanges();
+			onSaveEnd.push(function(){
+				t.sendEvent("asc_onCompletePreparingOForm");
+			});
+		}
 		else
 		{
 			sendChanges();
-			
-			if (this.forceSaveDisconnectRequest)
-			{
-				this.forceSaveDisconnectRequest = false;
-				AscCommon.CollaborativeEditing.Set_GlobalLock(false);
-				this.setViewModeDisconnect(true);
-				this.asc_coAuthoringDisconnect();
-				this.sendEvent("asc_onDisconnectEveryone");
-			}
+		}
+		
+		// Этот флаг может быть включен дополнительно к любому другому
+		if (this.forceSaveDisconnectRequest)
+		{
+			this.forceSaveDisconnectRequest = false;
+			AscCommon.CollaborativeEditing.Set_GlobalLock(false);
+			this.setViewModeDisconnect(true);
+			this.asc_coAuthoringDisconnect();
+			onSaveEnd.push(function(){
+				t.sendEvent("asc_onDisconnectEveryone");
+			});
 		}
 	};
 	asc_docs_api.prototype._autoSaveInner = function () {
@@ -8210,6 +8234,8 @@ background-repeat: no-repeat;\
 
 		// Меняем тип состояния (на никакое)
 		this.advancedOptionsAction = c_oAscAdvancedOptionsAction.None;
+
+		this.initBroadcastChannelListeners();
 	};
 
 	asc_docs_api.prototype.UpdateInterfaceState = function()
@@ -9503,11 +9529,52 @@ background-repeat: no-repeat;\
 			});
 		}
 	};
-	asc_docs_api.prototype.asc_StartMailMergeByList        = function(aList)
-	{
+	function trimMailMergeList(aList) {
+		// Handle empty or invalid lists
 		if (!aList || !aList.length || aList.length <= 0)
 			aList = [[]];
 
+		const isEmptyRow = function(row) {
+			if (!row || row.length === 0) {
+				return true;
+			}
+			for (let i = 0; i < row.length; i++) {
+				if (row[i] !== "") {
+					return false;
+				}
+			}
+			return true;
+		};
+
+		// Find first non-empty row index (from start)
+		let startIndex = 0;
+		while (startIndex < aList.length && isEmptyRow(aList[startIndex])) {
+			startIndex++;
+		}
+
+		if (startIndex >= aList.length) {
+			aList = [[]];
+		} else {
+			// Find last non-empty row index (from end)
+			let endIndex = aList.length - 1;
+			while (endIndex > startIndex && isEmptyRow(aList[endIndex])) {
+				endIndex--;
+			}
+			
+			// Only create new array if we're actually trimming
+			if (startIndex > 0 || endIndex < aList.length - 1) {
+				aList = aList.slice(startIndex, endIndex + 1);
+			}
+		}
+		return aList;
+	}
+	/**
+	 * Starts mail merge using a provided list.
+	 * @param {Array<Array<string>>} aList - The list of data for mail merge. The first row should contain the field names (headers). Example: [["Field1", "Field2"], ["Value1", "Value2"]]
+	 */
+	asc_docs_api.prototype.asc_StartMailMergeByList        = function(aList)
+	{
+		aList = trimMailMergeList(aList);
 		var aFields = aList[0];
 		if (!aFields || !aFields.length || aFields.length <= 0)
 			aFields = [];
@@ -11333,12 +11400,10 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.asc_IsAllRequiredFormsFilled = function(checkAll)
 	{
 		let oFormsManager = this.private_GetFormsManager();
-		let oform = this.asc_GetOForm();
 		if (!oFormsManager)
 			return true;
 		
-		let roleName = !checkAll && oform ? oform.getCurrentRole() : null;
-		return oFormsManager.IsAllRequiredFormsFilled(roleName);
+		return oFormsManager.IsAllRequiredFormsFilled(checkAll);
 	};
 	asc_docs_api.prototype.sync_OnAllRequiredFormsFilled = function(isFilled)
 	{
@@ -11466,8 +11531,11 @@ background-repeat: no-repeat;\
 		{
 			this.forceSaveDisconnectRequest = true;
 			AscCommon.CollaborativeEditing.Set_GlobalLock(true);
-			this.asc_Save(false);
 		}
+		
+		this.forceSaveOformRequest = true;
+		AscCommon.CollaborativeEditing.Set_GlobalLock(true);
+		this.asc_Save(false);
 	};
 	
 
@@ -12228,24 +12296,26 @@ background-repeat: no-repeat;\
 		return sRet;
 	};
 
-	asc_docs_api.prototype.asc_addDateTime = function(oPr)
+	asc_docs_api.prototype.asc_addDateTime = function(dateTimePr)
 	{
-		var sTextForCheck = null;
-		if (!oPr.get_Update())
-			sTextForCheck = oPr.get_String();
-
-		var oLogicDocument = this.private_GetLogicDocument();
-		if (sTextForCheck)
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		return new Promise(function(resolve)
 		{
-			AscFonts.FontPickerByCharacter.checkText(sTextForCheck, this, function()
-			{
-				oLogicDocument.AddDateTime(oPr);
-			});
-		}
-		else
+			AscCommon.CollaborativeEditing.Set_GlobalLock(true);
+			
+			let textToCheck = dateTimePr.get_String();
+			if (textToCheck)
+				AscFonts.FontPickerByCharacter.checkText(textToCheck, this, resolve);
+			else
+				resolve();
+		}).then(function()
 		{
-			oLogicDocument.AddDateTime(oPr);
-		}
+			AscCommon.CollaborativeEditing.Set_GlobalLock(false);
+			logicDocument.AddDateTime(dateTimePr);
+		});
 	};
 
 	asc_docs_api.prototype.asc_AddObjectCaption = function(oPr)
@@ -12610,6 +12680,16 @@ background-repeat: no-repeat;\
 			return false;
 
 		return oMath.IsInlineMode();
+	};
+	asc_docs_api.prototype.asc_AddMathML = function(xml)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		AscCommon.g_font_loader.LoadFonts(["Cambria Math"],
+			function()
+			{
+				logicDocument.AddMathML(xml);
+			}
+		);
 	};
 	asc_docs_api.prototype.asc_GetAllNumberedParagraphs = function()
 	{
@@ -13808,6 +13888,9 @@ background-repeat: no-repeat;\
 				drawingDocument.FirePaint();
 			}
 		}
+		
+		if (oLogicDocument.IsFillingOFormMode())
+			AscCommon.CollaborativeEditing.Remove_AllForeignCursors();
 	};
 	asc_docs_api.prototype.isShowShapeAdjustments = function()
 	{
@@ -14347,6 +14430,35 @@ background-repeat: no-repeat;\
 		if(!oLogicDocument)
 			return;
 		oLogicDocument.RemoveCustomProperty(idx);
+	};
+	asc_docs_api.prototype.onPluginClose = function(guid)
+	{
+		AscCommon.baseEditorsApi.prototype.onPluginClose.call(this, guid);
+		this.WordControl.m_oLogicDocument.DrawingDocument.contentControls.removePluginButtons(guid);
+	};
+	asc_docs_api.prototype.onAttachPluginEvent = function(guid, name)
+	{
+		AscCommon.baseEditorsApi.prototype.onAttachPluginEvent.call(this, guid, name);
+		
+		if ("onShowContentControlTrack" === name
+			&& this.WordControl
+			&& this.WordControl.m_oDrawingDocument)
+			this.WordControl.m_oDrawingDocument.contentControls.onAttachPluginEvent(guid);
+	};
+	asc_docs_api.prototype.initBroadcastChannelListeners = function() {
+		let oThis = this;
+		let docInfo = this.DocInfo;
+		let wb = oThis.wbModel;
+		let broadcastChannel = this.broadcastChannel;
+		if (broadcastChannel) {
+			broadcastChannel.onmessage = function(event) {
+				if ("ClipboardChange" === event.data.type) {
+					if (event.data.editor === oThis.getEditorId()) {
+						AscCommon.g_clipboardBase.ChangeLastCopy(event.data.data);
+					}
+				}
+			}
+		}
 	};
 	
 	//-------------------------------------------------------------export---------------------------------------------------
@@ -15073,7 +15185,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_ConvertEquationToMath']                 = asc_docs_api.prototype.asc_ConvertEquationToMath;
 	asc_docs_api.prototype['asc_ConvertMathDisplayMode']                = asc_docs_api.prototype.asc_ConvertMathDisplayMode;
 	asc_docs_api.prototype['asc_IsInlineMath']                          = asc_docs_api.prototype.asc_IsInlineMath;
-
+	asc_docs_api.prototype['asc_AddMathML']                             = asc_docs_api.prototype.asc_AddMathML;
 
 	//cross-references
 	asc_docs_api.prototype['asc_GetAllNumberedParagraphs']              = asc_docs_api.prototype.asc_GetAllNumberedParagraphs;

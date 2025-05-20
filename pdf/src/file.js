@@ -208,6 +208,8 @@
 
     CFile.prototype.getText = function(pageIndex)
     {
+        if (this.type === 1)
+            return [];
         return this.nativeFile ? this.nativeFile["getGlyphs"](pageIndex) : [];
     };
 

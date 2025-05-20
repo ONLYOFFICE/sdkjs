@@ -719,6 +719,9 @@ CDrawingsController.prototype.IsSelectionLocked = function(checkType)
 			&& (AscCommon.changestype_Remove === checkType
 				|| AscCommon.changestype_Delete === checkType))
 		{
+			if (!contentControl.CanBeDeleted())
+				return AscCommon.CollaborativeEditing.Add_CheckLock(true);
+			
 			contentControl.SkipSpecialContentControlLock(true);
 			contentControl.Document_Is_SelectionLocked(checkType);
 			contentControl.SkipSpecialContentControlLock(false);

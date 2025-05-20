@@ -66,7 +66,6 @@
 		this.updateIndex--;
 		if (this.updateIndex < 0)
 			this.updateIndex = 0;
-
 		if (this.updateIndex != 0)
 		{
 			// обновится, когда все загрузятся
@@ -108,6 +107,7 @@
 
 		this.images = [];
 		this.images_active = [];
+		this.images_hover = [];
 		this.url = "";
 		this.baseUrl = "";
 	}
@@ -156,9 +156,15 @@
 	};
 
 	// стартовые загрузки
-	BaseImageCtrl.prototype.load = function(type, url)
+	BaseImageCtrl.prototype.load = function(type, url, index)
 	{
 		this.url = url;
+		if (index !== undefined)
+		{
+			this._loadByIndex(index, url);
+			return;
+		}
+
 		if (!this.isLoadAllSizes)
 		{
 			this._loadIndex();
@@ -169,8 +175,13 @@
 			this._loadIndex(i);
 		}
 	};
-	BaseImageCtrl.prototype.loadActive = function()
+	BaseImageCtrl.prototype.loadActive = function(url, index)
 	{
+		if (index !== undefined)
+		{
+			this._loadActiveByIndex(index, url);
+			return;
+		}
 		if (!this.isLoadAllSizes)
 		{
 			this._loadActiveIndex();
@@ -181,11 +192,40 @@
 			this._loadActiveIndex(i);
 		}
 	};
+	BaseImageCtrl.prototype.loadHover = function(url, index)
+	{
+		if (index !== undefined)
+		{
+			this._loadHoverByIndex(index, url);
+			return;
+		}
+		if (!this.isLoadAllSizes)
+		{
+			this._loadHoverByIndex(index, url);
+			return;
+		}
+		for (var i = 0, len = this.support.length; i < len; i++)
+		{
+			this._loadHoverByIndex(i, url);
+		}
+	};
 
 	// берем картинку. если ее нет - то грузим, если не готова - то просто после загрузки - обновляем оверлей
-	BaseImageCtrl.prototype.get = function(isActive)
+	BaseImageCtrl.prototype.get = function(isActive, isHover)
 	{
-		if (isActive) return this.getActive();
+		if (isActive)
+		{
+			let activeImg = this.getActive();
+			if (activeImg)
+				return activeImg;
+		}
+
+		if (isHover)
+		{
+			let hoverImg = this.getHover();
+			if (hoverImg)
+				return hoverImg;
+		}
 
 		var index = this.getIndex();
 		if (!this.images[index])
@@ -217,7 +257,47 @@
 		}
 		return this.images_active[index];
 	};
-
+	BaseImageCtrl.prototype.getHover = function()
+	{
+		var index = this.getIndex();
+		if (!this.images_hover[index])
+		{
+			AscCommon.g_imageControlsStorage.needUpdate();
+			this._loadHoverByIndex(index);
+			return null;
+		}
+		if (!this.images_hover[index].asc_complete)
+		{
+			AscCommon.g_imageControlsStorage.needUpdate();
+			return null;
+		}
+		return this.images_hover[index];
+	};
+	BaseImageCtrl.prototype._loadImg = function(url)
+	{
+		let img = new Image();
+		img.src = url;
+		if (img.complete)
+		{
+			img.asc_complete = true;
+		}
+		else
+		{
+			AscCommon.g_imageControlsStorage.updateLater();
+			img.onload = function()
+			{
+				this.asc_complete = true;
+				AscCommon.g_imageControlsStorage.updateOverlay();
+			};
+			img.onerror = function()
+			{
+				this.asc_complete = false;
+				AscCommon.g_imageControlsStorage.updateOverlay();
+			};
+			AscCommon.backoffOnErrorImg(img);
+		}
+		return img;
+	};
 	// загрузка картинки по индексу. если индекса нет - то текущий
 	BaseImageCtrl.prototype._loadIndex = function(index)
 	{
@@ -225,14 +305,7 @@
 			index = this.getIndex();
 
 		if (!this.images[index])
-		{
-			var img = new Image();
-			AscCommon.g_imageControlsStorage.updateLater();
-			img.onload = function() { this.asc_complete = true; AscCommon.g_imageControlsStorage.updateOverlay(); };
-			img.src = this.baseUrl + "/" + this.url + this.getAddon(this.support[index]) + ".png";
-			AscCommon.backoffOnErrorImg(img);
-			this.images[index] = img;
-		}
+			this.images[index] = this._loadImg(this.baseUrl + "/" + this.url + this.getAddon(this.support[index]) + ".png");
 	};
 	BaseImageCtrl.prototype._loadActiveIndex = function(index)
 	{
@@ -240,17 +313,189 @@
 			index = this.getIndex();
 
 		if (!this.images_active[index])
-		{
-			var img = new Image();
-			AscCommon.g_imageControlsStorage.updateLater();
-			img.onload = function() { this.asc_complete = true; AscCommon.g_imageControlsStorage.updateOverlay(); };
-			img.src = this.baseUrl + "/" + this.url + "_active" + this.getAddon(this.support[index]) + ".png";
-			AscCommon.backoffOnErrorImg(img);
-			this.images_active[index] = img;
-		}
+			this.images_active[index] = this._loadImg(this.baseUrl + "/" + this.url + "_active" + this.getAddon(this.support[index]) + ".png");
+	};
+	BaseImageCtrl.prototype._loadHoverIndex = function(index)
+	{
+		if (undefined === index)
+			index = this.getIndex();
+		
+		if (!this.images_hover[index])
+			this.images_hover[index] = this._loadImg(this.baseUrl + "/" + this.url + "_hover" + this.getAddon(this.support[index]) + ".png");
+	};
+	BaseImageCtrl.prototype._loadByIndex = function(index, url)
+	{
+		if (undefined === index)
+			index = this.getIndex();
+
+		if (!this.images[index])
+			this.images[index] = this._loadImg(this.baseUrl + url);
+	};
+	BaseImageCtrl.prototype._loadActiveByIndex = function(index, url)
+	{
+		if (undefined === index)
+			index = this.getIndex();
+		
+		if (!this.images_active[index])
+			this.images_active[index] = this._loadImg(this.baseUrl + url);
+	};
+	BaseImageCtrl.prototype._loadHoverByIndex = function(index, url)
+	{
+		if (undefined === index)
+			index = this.getIndex();
+		
+		if (!this.images_hover[index])
+			this.images_hover[index] = this._loadImg(this.baseUrl + url);
 	};
 
 	AscCommon.BaseImageCtrl = BaseImageCtrl;
+
+	function iconsStr2IconsObj (icons) {
+		if (typeof icons !== 'string')
+			return icons;
+
+		/*
+			valid params:
+			theme-type - {string} theme type (light|dark|common)
+			theme-name - {string} the name of theme
+			state - {string} state of icons for different situations (normal|hover|active)
+			scale - {string} list of avaliable scales (100|125|150|175|200|default|extended)
+			extension - {string} use it after symbol "." (png|jpeg|svg)
+
+			Example: "resources/%theme-type%(light|dark)/icon%state%(normal|hover)%scale%(default).%extension%(png)"
+		*/
+		let params_array = {
+			"theme-name" : { origin : "", values : [""] },
+			"theme-type" : { origin : "", values : [""] },
+			"state" : { origin : "", values : ["normal"] },
+			"scale" : { origin : "", values : [] },
+			"extension" : { origin : "", values : [] }
+		};
+
+		// For bug in version <= 8.2.0
+		let initScaleAddon = "";
+
+		let param_parse = function(name) {
+			let posOrigin = icons.indexOf("%" + name + "%");
+			if (posOrigin === -1)
+				return;
+			let pos = posOrigin + name.length + 2;
+			let pos1 = icons.indexOf("(", pos);
+			if (pos1 != pos)
+				return;
+			let pos2 = icons.indexOf(")", pos1);
+			params_array[name].origin = icons.substring(posOrigin, pos2 + 1);
+			params_array[name].values = icons.substring(pos1 + 1, pos2).split("|");
+
+			if ("scale" === name && posOrigin > 0 && icons.charCodeAt(posOrigin - 1) == 47)
+				initScaleAddon = "icon";
+		};
+
+		for (let name in params_array)
+			param_parse(name);
+
+		for (let styleIndex = 0, stylesLen = params_array["scale"].values.length; styleIndex < stylesLen; styleIndex++) {
+			if ("default" === params_array["scale"].values[styleIndex])
+				params_array["scale"].values.splice(styleIndex, 1, "100", "125", "150", "175", "200");
+		}
+
+		let rasterExt = "";
+		let isSvgPresent = false;
+
+		for (let extIndex = 0, extsLen = params_array["extension"].values.length; extIndex < extsLen; extIndex++) {
+			if ("svg" === params_array["extension"].values[extIndex])
+				isSvgPresent = true;
+			else
+				rasterExt = params_array["extension"].values[extIndex];
+		}
+		if (isSvgPresent && rasterExt === "")
+			rasterExt = "svg";
+
+		let iconsObject = [];
+		for (let themeNameIndex = 0, themeNamesLen = params_array["theme-name"].values.length; themeNameIndex < themeNamesLen; themeNameIndex++) {
+			let themeName = params_array["theme-name"].values[themeNameIndex];
+			for (let themeTypeIndex = 0, themeTypesLen = params_array["theme-type"].values.length; themeTypeIndex < themeTypesLen; themeTypeIndex++) {
+				let url = icons;
+				let themeType = params_array["theme-type"].values[themeTypeIndex];
+
+				let obj = {};
+				if ("" !== themeName)
+					obj["theme"] = themeName;
+
+				if ("" !== themeType)
+					obj["style"] = themeType;
+
+				if ("" != params_array["theme-name"].origin)
+					url = url.replaceAll(params_array["theme-name"].origin, themeName);
+				if ("" != params_array["theme-type"].origin)
+					url = url.replaceAll(params_array["theme-type"].origin, themeType);
+
+				let scalesLen = params_array["scale"].values.length;
+				if (0 == scalesLen) {
+					params_array["scale"].values.push("100");
+					scalesLen++;
+				}
+				for (let scaleIndex = 0; scaleIndex < scalesLen; scaleIndex++) {
+					let scaleValue = params_array["scale"].values[scaleIndex];
+					let isAll = false;
+
+					if (scaleValue.length > 0) {
+						if (scaleValue === "*")
+							isAll = true;
+						else if (scaleValue.charAt(scaleValue.length - 1) === "%")
+							scaleValue = scaleValue.substring(0, scaleValue.length - 1);
+					} else {
+						isAll = true;
+						scaleValue = "*";
+					}
+
+					let addonScale = "";
+					if (!isAll) {
+						let intScale = parseInt(scaleValue);
+						if (intScale !== 100) {
+							let addon100 = intScale % 100;
+							addonScale = "@" + ((intScale / 100) >> 0);
+							if (addon100 !== 0) {
+								if (0 === (addon100 % 10))
+									addon100 /= 10;
+								addonScale += ("." + addon100);
+							}
+							addonScale += "x";
+						}
+						scaleValue = scaleValue + "%";
+					}
+
+					let urlAll = url;
+					if (params_array["scale"].origin != "")
+						urlAll = urlAll.replaceAll(params_array["scale"].origin, initScaleAddon + addonScale);
+					if (params_array["extension"].origin != "")
+						urlAll = urlAll.replaceAll(params_array["extension"].origin, (isAll && isSvgPresent) ? "svg" : rasterExt);
+
+					obj[scaleValue] = {};
+					let states =  params_array["state"].values;
+					for (let stateIndex = 0, statesLen = states.length; stateIndex < statesLen; stateIndex++) {
+						let stateValue = params_array["state"].values[stateIndex];
+						if (params_array["state"].origin !== "") {
+							if ("normal" === stateValue) {
+								let statePos = urlAll.indexOf(params_array["state"].origin);
+								obj[scaleValue][stateValue] = urlAll.replace(params_array["state"].origin, "");
+								if (obj[scaleValue][stateValue].charAt(statePos) == "/")
+									obj[scaleValue][stateValue] = obj[scaleValue][stateValue].substring(0, statePos) + obj[scaleValue][stateValue].substring(statePos + 1);
+							} else {
+								obj[scaleValue][stateValue] = urlAll.replace(params_array["state"].origin, "_" + stateValue);
+							}
+						} else
+							obj[scaleValue][stateValue] = urlAll;
+					}
+				}
+				iconsObject.push(obj);
+			}
+		}
+
+		return iconsObject;
+	}
+
+	AscCommon.IconsStr2IconsObj = iconsStr2IconsObj;
 
 })(window);
 
@@ -953,26 +1198,126 @@
 		 * @constructor
 		 * @extends {AscCommon.BaseImageCtrl}
 		 */
-		function CCI()
+		function CCI(baseUrl)
 		{
 			AscCommon.BaseImageCtrl.call(this);
-			this.baseUrl = "../../../../sdkjs/common/Images/content_controls";
+			this.baseUrl = baseUrl ? baseUrl : "../../../../sdkjs/common/Images/content_controls";
 		}
 		CCI.prototype = Object.create(AscCommon.BaseImageCtrl.prototype);
 		CCI.prototype.constructor = CCI;
 
 		this.images = [];
+		this.pluginImages = {};
 
-		this.register = function(type, url)
+		this.registerIconObj = function(type, images, baseUrl)
 		{
-			var image = new CCI();
+			for (let i = 0; i < images.length; i++)
+			{
+				let image					= new CCI(baseUrl);
+				let oCurrentThemeImages		= images[i];
+				let style					= oCurrentThemeImages.style || "default";
+				let theme					= oCurrentThemeImages.theme || "default";
+
+				delete oCurrentThemeImages.style;
+				delete oCurrentThemeImages.theme;
+
+				let keys = Object.keys(oCurrentThemeImages);
+
+				for (let j = 0; j < keys.length; j++)
+				{
+					let key		= keys[j];
+					let index	= this.calculateIndex(key, image)
+					let icon	= oCurrentThemeImages[keys[j]];
+
+					this.registerExternalIcon(image, index,{
+						type: type,
+						style: style,
+						theme: theme,
+						icon: icon,
+					});
+				}
+			}
+		};
+		this.calculateIndex = function (index, image)
+		{
+			if (index)
+				index = index.slice(0, -1); // delete %
+
+			index = index/100;
+
+			if (typeof index === 'number')
+			{
+				for (let p = 0; p < image.support.length; p++)
+				{
+					if (image.support[p] === index)
+					{
+						return p;
+					}
+				}
+			}
+			return false;
+		};
+		this.registerExternalIcon = function(image, index, data)
+		{
+			if (index === false)
+				return;
+
+			let type	= data.type; // id of icon
+			let style	= data.style;// type of theme
+			let theme	= data.theme;// name of theme
+			let icon	= data.icon; // {normal_url | active_url | hover_url}
+
+			if (image.support[index])
+			{
+				image.load(type, icon["normal"], index);
+
+				if (icon["active"])
+					image.loadActive(icon["active"], index);
+
+				if (icon["hover"])
+					image.loadHover(icon["hover"], index);
+
+				if (!this.pluginImages[type])
+					this.pluginImages[type] = {};
+
+				if (!this.pluginImages[type][style])
+					this.pluginImages[type][style] = {};
+
+				this.pluginImages[type][style][theme] = image;
+			}
+		};
+
+		this.register = function(type, url, baseUrl)
+		{
+			var image = new CCI(baseUrl);
+
 			image.load(type, url);
 			image.loadActive();
 			this.images[type] = image;
 		};
 
-		this.getImage = function(type, isActive)
+		this.getImage = function(type, isActive, isHover)
 		{
+			let pluginImage = this.pluginImages[type];
+			if (pluginImage)
+			{
+				let skinType  = AscCommon.GlobalSkin.Type;
+				let skinStyle = AscCommon.GlobalSkin.Name;
+
+				if (pluginImage[skinType] && pluginImage[skinType][skinStyle])
+				{
+					return pluginImage[skinType][skinStyle].get(isActive, isHover);
+				}
+				else if (pluginImage[skinType] && pluginImage[skinType]['default'])
+				{
+					return pluginImage[skinType]['default'].get(isActive, isHover);
+				}
+				else if (pluginImage['default']['default'])
+				{
+					return pluginImage['default']['default'].get(isActive, isHover);
+				}
+			}
+
 			if (!this.images[type])
 				return null;
 
@@ -1069,6 +1414,7 @@
 
 		this.ComboRect = null;
 		this.Buttons = []; // header buttons
+		this.pluginButtons = [];
 
 		this.Name = this.base.GetAlias();
 		if (this.base.IsBuiltInTableOfContents && this.base.IsBuiltInTableOfContents())
@@ -1093,7 +1439,7 @@
 
 		this.UpdateGeom(geom);
 	}
-
+	
 	CContentControlTrack.prototype.UpdateTransform = function()
 	{
 		this.OffsetX = 0;
@@ -1286,6 +1632,8 @@
 			default:
 				break;
 		}
+		
+		this.Buttons = this.Buttons.concat(this.pluginButtons);
 	};
 	CContentControlTrack.prototype.CalculateComboRect = function(koefX, koefY)
 	{
@@ -1414,9 +1762,16 @@
 				}
 			}
 		}
-
-		// сортировка по Y
+		
+		let curPage = this.parent.getCurrentPage();
 		arrY.sort(function(a, b){
+			if (curPage === a.Page && curPage !== b.Page)
+				return -1;
+			else if (curPage !== a.Page && curPage !== b.Page)
+				return 1;
+			else if (a.Page !== b.Page)
+				return a.Page - b.Page;
+			
 			return a.Y - b.Y;
 		});
 
@@ -1526,7 +1881,10 @@
 	};
 	CContentControlTrack.prototype.Copy = function()
 	{
-		return new CContentControlTrack(this.parent, this.base, this.state, this.geom);
+		let newCCTrack = new CContentControlTrack(this.parent, this.base, this.state, this.geom);
+		newCCTrack.pluginButtons = this.pluginButtons.slice();
+		newCCTrack.visualState   = this.visualState;
+		return newCCTrack;
 	};
 
 	CContentControlTrack.prototype.isFormFullOneButtonHover = function()
@@ -1618,8 +1976,109 @@
 		return {
 			index : indexButton,
 			x : resX,
-			y : resY
+			y : resY,
+			button : this.Buttons[indexButton]
 		};
+	};
+	CContentControlTrack.prototype.isEqual = function(track)
+	{
+		if (this.base.GetId() !== track.base.GetId())
+			return false;
+		
+		if (this.state !== track.state)
+			return false;
+		
+		if (this.rects && track.rects)
+		{
+			let count1 = this.rects.length;
+			let count2 = track.rects.length;
+			
+			if (count1 !== count2)
+				return false;
+			
+			for (let j = 0; j < count1; ++j)
+			{
+				if (this.rects[j].Page !== track.rects[j].Page
+					|| Math.abs(this.rects[j].X - track.rects[j].X) > 0.00001
+					|| Math.abs(this.rects[j].Y - track.rects[j].Y) > 0.00001
+					|| Math.abs(this.rects[j].R - track.rects[j].R) > 0.00001
+					|| Math.abs(this.rects[j].B - track.rects[j].B) > 0.00001)
+				{
+					return false;
+				}
+			}
+		}
+		else if (this.path && track.path)
+		{
+			let count1 = this.paths.length;
+			let count2 = track.paths.length;
+			
+			if (count1 !== count2)
+				return false;
+			
+			for (var j = 0; j < count1; j++)
+			{
+				if (this.paths[j].Page !== track.paths[j].Page)
+					return false;
+				
+				let _points1 = this.paths[j].Points;
+				let _points2 = track.paths[j].Points;
+				
+				if (_points1.length !== _points2.length)
+					return false;
+				
+				for (var k = 0; k < _points1.length; k++)
+				{
+					if (Math.abs(_points1[k].X - _points2[k].X) > 0.00001 || Math.abs(_points1[k].Y - _points2[k].Y) > 0.00001)
+						return false;
+				}
+			}
+		}
+		else
+		{
+			return false;
+		}
+		
+		return true;
+	};
+	CContentControlTrack.prototype.addPluginButtons = function(buttons, pluginGuid, baseUrl)
+	{
+		let result = 0;
+		for (let i = 0; i < buttons.length; ++i)
+		{
+			let buttonId = buttons[i]["id"];
+			if (this.pluginButtons.includes(buttonId))
+				continue;
+			
+			this.parent.registerPluginButton(buttons[i], pluginGuid, baseUrl);
+			
+			this.Buttons.push(buttonId);
+			this.pluginButtons.push(buttonId);
+			result += 1;
+		}
+		return result;
+	};
+	CContentControlTrack.prototype.isPluginButton = function(buttonId)
+	{
+		return this.pluginButtons.includes(buttonId);
+	};
+	CContentControlTrack.prototype.isPluginButtonActive = function()
+	{
+		let index = this.ActiveButtonIndex;
+		if (index < 0 || index >= this.Buttons.length)
+			return false;
+		
+		return this.isPluginButton(this.Buttons[index]);
+	};
+	CContentControlTrack.prototype.removePluginButton = function(buttonId)
+	{
+		let pos = this.Buttons.indexOf(buttonId);
+		if (-1 !== pos)
+			this.Buttons.splice(pos, 1);
+		
+		pos = this.pluginButtons.indexOf(buttonId);
+		if (-1 !== pos)
+			this.pluginButtons.splice(pos, 1);
 	};
 
 	// draw methods
@@ -1655,10 +2114,84 @@
 
 		this.measures = {};
 
+		this.pluginButtons = {};
+
 		this.clearAttack = function()
 		{
 			this.ContentControlObjects = [];
 			this.ContentControlObjectsLast = [];
+		};
+		
+		this.addPluginButtons = function(pluginButtons)
+		{
+			let pluginGuid = pluginButtons["guid"];
+			let baseUrl    = pluginButtons["baseUrl"];
+			let items      = pluginButtons["items"];
+
+			let added = 0;
+			for (let ccId in items)
+			{
+				let buttons = items[ccId];
+				for (let i = 0; i < this.ContentControlObjects.length; i++)
+				{
+					let ccTrack = this.ContentControlObjects[i];
+					if (ccTrack.base.GetId() === ccId)
+					{
+						added += ccTrack.addPluginButtons(buttons, pluginGuid, baseUrl);
+						break;
+					}
+				}
+			}
+			
+			if (added)
+				this.updateOverlay();
+		};
+		
+		this.registerPluginButton = function(button, pluginGuid, baseUrl)
+		{
+			if (!this.pluginButtons[pluginGuid])
+				this.pluginButtons[pluginGuid] = {};
+			
+			let buttonId = button["id"];
+			if (this.pluginButtons[pluginGuid][buttonId])
+				return;
+			
+			this.pluginButtons[pluginGuid][buttonId] = true;
+			let icons = AscCommon.IconsStr2IconsObj(button["icons"]);
+			this.icons.registerIconObj(button["id"], icons, baseUrl);
+		};
+		
+		this.onClickPluginButton = function(buttonId, ccTrack)
+		{
+			if (!ccTrack || !ccTrack.base)
+				return;
+			
+			window.g_asc_plugins.onPluginEvent2(
+				"onContentControlButtonClick",
+				{
+					"buttonId": buttonId,
+					"contentControlId": ccTrack.base.GetId()
+				}
+			);
+		};
+		
+		this.removePluginButtons = function(pluginGuid)
+		{
+			if (!this.pluginButtons[pluginGuid])
+				return;
+			
+			for (let buttonId in this.pluginButtons[pluginGuid])
+			{
+				for (let i = 0, len = this.ContentControlObjects.length; i < len; ++i)
+				{
+					let ccTrack = this.ContentControlObjects[i];
+					if (AscCommon.ContentControlTrack.In === ccTrack.state)
+						ccTrack.removePluginButton(buttonId);
+				}
+			}
+			
+			delete this.pluginButtons[pluginGuid];
+			this.updateOverlay();
 		};
 
 		this.getFont = function(koef)
@@ -1700,77 +2233,70 @@
 		// смотрим, сменилось ли тут чего-то
 		this.ContentControlsCheckLast = function()
 		{
-			var _len1 = this.ContentControlObjects.length;
-			var _len2 = this.ContentControlObjectsLast.length;
+			let _len1 = this.ContentControlObjects.length;
+			let _len2 = this.ContentControlObjectsLast.length;
 
-			if (_len1 != _len2)
+			if (_len1 !== _len2)
 				return true;
 
-			var count1, count2;
 			for (var i = 0; i < _len1; i++)
 			{
-				var _obj1 = this.ContentControlObjects[i];
-				var _obj2 = this.ContentControlObjectsLast[i];
-
-				if (_obj1.base.GetId() != _obj2.base.GetId())
+				let _obj1 = this.ContentControlObjects[i];
+				let _obj2 = this.ContentControlObjectsLast[i];
+				
+				if (!_obj1.isEqual(_obj2))
 					return true;
-				if (_obj1.state != _obj2.state)
-					return true;
-
-				if (_obj1.rects && _obj2.rects)
-				{
-					count1 = _obj1.rects.length;
-					count2 = _obj2.rects.length;
-
-					if (count1 != count2)
-						return true;
-
-					for (var j = 0; j < count1; j++)
-					{
-						if (Math.abs(_obj1.rects[j].X - _obj2.rects[j].X) > 0.00001 ||
-							Math.abs(_obj1.rects[j].Y - _obj2.rects[j].Y) > 0.00001 ||
-							Math.abs(_obj1.rects[j].R - _obj2.rects[j].R) > 0.00001 ||
-							Math.abs(_obj1.rects[j].B - _obj2.rects[j].B) > 0.00001 ||
-							_obj1.rects[j].Page != _obj2.rects[j].Page)
-						{
-							return true;
-						}
-					}
-				}
-				else if (_obj1.path && _obj2.path)
-				{
-					count1 = _obj1.paths.length;
-					count2 = _obj2.paths.length;
-
-					if (count1 != count2)
-						return true;
-
-					var _points1, _points2;
-					for (var j = 0; j < count1; j++)
-					{
-						if (_obj1.paths[j].Page != _obj2.paths[j].Page)
-							return true;
-
-						_points1 = _obj1.paths[j].Points;
-						_points2 = _obj2.paths[j].Points;
-
-						if (_points1.length != _points2.length)
-							return true;
-
-						for (var k = 0; k < _points1.length; k++)
-						{
-							if (Math.abs(_points1[k].X - _points2[k].X) > 0.00001 || Math.abs(_points1[k].Y - _points2[k].Y) > 0.00001)
-								return true;
-						}
-					}
-				}
-				else
-				{
-					return true;
-				}
 			}
 
 			return false;
+		};
+		
+		this._getContentControlsForTrackIn = function(tracks)
+		{
+			let result = {};
+			for (let i = 0, len = tracks.length; i < len; ++i)
+			{
+				if (AscCommon.ContentControlTrack.In === tracks[i].state)
+					result[tracks[i].base.GetId()] = tracks[i].base;
+			}
+			return result;
+		};
+		
+		this.sendShowHidePluginEvent = function()
+		{
+			let prev = this._getContentControlsForTrackIn(this.lastTracks);
+			let curr = this._getContentControlsForTrackIn(this.ContentControlObjects);
+			
+			let hide = [];
+			for (let id in prev)
+			{
+				if (!curr[id])
+					hide.push(id);
+			}
+			
+			let show = [];
+			for (let id in curr)
+			{
+				if (!prev[id])
+					show.push(id);
+			}
+			
+			if (hide.length)
+				window.g_asc_plugins.onPluginEvent("onHideContentControlTrack", hide);
+			
+			if (show.length)
+				window.g_asc_plugins.onPluginEvent("onShowContentControlTrack", show);
+		};
+		
+		this.onAttachPluginEvent = function(pluginGuid)
+		{
+			let controls = Object.keys(this._getContentControlsForTrackIn(this.ContentControlObjects));
+			
+			let guids = {};
+			guids[pluginGuid] = true;
+			
+			if (controls.length)
+				window.g_asc_plugins.onPluginEvent2("onShowContentControlTrack", controls, guids);
 		};
 
 		// отрисовка
@@ -1786,11 +2312,13 @@
 			var _geom;
 			if (_pageStart < 0)
 				return;
-
+			
 			var _x, _y, _r, _b;
 			var _koefX = (_pages[_pageStart].drawingPage.right - _pages[_pageStart].drawingPage.left) / _pages[_pageStart].width_mm;
 			var _koefY = (_pages[_pageStart].drawingPage.bottom - _pages[_pageStart].drawingPage.top) / _pages[_pageStart].height_mm;
 			var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+
+			let arrDraw = [];
 
 			for (var nIndexContentControl = 0; nIndexContentControl < this.ContentControlObjects.length; nIndexContentControl++)
 			{
@@ -2137,12 +2665,12 @@
 
 									if (isFill)
 									{
-										ctx.rect(xText + widthName + CONTENT_CONTROL_TRACK_H * nIndexB, _y, cctw, cctw);
+										ctx.rect(xText + widthName + rPR * CONTENT_CONTROL_TRACK_H * nIndexB, _y, cctw, cctw);
 										ctx.fill();
 										ctx.beginPath();
 									}
 
-									var image = this.icons.getImage(_object.Buttons[nIndexB], nIndexB == _object.ActiveButtonIndex);
+									var image = this.icons.getImage(_object.Buttons[nIndexB], nIndexB == _object.ActiveButtonIndex, nIndexB === _object.HoverButtonIndex);
 									if (image)
 										ctx.drawImage(image, (xText + widthName + rPR * CONTENT_CONTROL_TRACK_H * nIndexB) >> 0, _y >> 0, cctw, cctw);
 								}
@@ -2153,6 +2681,11 @@
 								ctx.rect(_x, _y, widthHeader, cctw);
 								ctx.stroke();
 								ctx.beginPath();
+
+								if (!arrDraw.includes(_object.base.GetId()))
+								{
+									arrDraw.push(_object.base.GetId());
+								}
 							}
 
 							// есть ли комбо-кнопка?
@@ -2408,10 +2941,14 @@
 					}
 				}
 			}
-
+			
 			this.ContentControlsSaveLast();
 		};
 		
+		this.getCurrentPage = function()
+		{
+			return this.document.m_oWordControl && this.document.m_oWordControl.m_oLogicDocument ? this.document.m_oWordControl.m_oLogicDocument.CurPage : 0;
+		};
 		this.startCollectTracks = function()
 		{
 			// We can have many Track.In and just one Track.Hover
@@ -2420,6 +2957,7 @@
 			this.lastActive = null;
 			this.lastHover  = null;
 			this.lastInline = null;
+			this.lastTracks = this.ContentControlObjects.slice();
 			
 			for (let i = 0; i < this.ContentControlObjects.length; ++i)
 			{
@@ -2430,7 +2968,7 @@
 				if (AscCommon.ContentControlTrack.Hover === ccTrack.state)
 					this.lastHover = ccTrack;
 				
-				if (-1 !== ccTrack.visualState)
+				if (1 === ccTrack.visualState)
 				{
 					this.lastInline = ccTrack;
 					this.ContentControlObjects.length = i + 1;
@@ -2453,7 +2991,19 @@
 			}
 			else
 			{
-				this.ContentControlObjects.push(new CContentControlTrack(this, obj, AscCommon.ContentControlTrack.In, geom));
+				let lastTrack = this.findTrackInLast(obj);
+				
+				let newTrack;
+				if (lastTrack)
+				{
+					newTrack = lastTrack.Copy();
+					newTrack.UpdateGeom(geom);
+				}
+				else
+				{
+					newTrack = new CContentControlTrack(this, obj, AscCommon.ContentControlTrack.In, geom);
+				}
+				this.ContentControlObjects.push(newTrack);
 			}
 			
 		};
@@ -2487,9 +3037,12 @@
 			if (!this.lastInline)
 				this.ContentControlObjects = this.ContentControlObjects.reverse();
 			
+			this.sendShowHidePluginEvent();
+			
 			this.lastHover  = null;
 			this.lastActive = null;
 			this.lastInline = null;
+			this.lastTracks = [];
 		};
 		this.addTrackHover = function(obj, geom)
 		{
@@ -2523,6 +3076,19 @@
 				if (AscCommon.ContentControlTrack.Hover === this.ContentControlObjects[i].state)
 					this.ContentControlObjects.splice(i, 1);
 			}
+		};
+		this.findTrackInLast = function(obj)
+		{
+			let objId = obj.GetId();
+			for (let i = 0; i < this.lastTracks.length; ++i)
+			{
+				let ccTrack = this.lastTracks[i];
+				if (ccTrack.state === AscCommon.ContentControlTrack.In
+					&& ccTrack.base
+					&& ccTrack.base.GetId() === objId)
+					return ccTrack;
+			}
+			return null;
 		};
 
 		this.checkSmallChanges = function(pos)
@@ -2609,7 +3175,6 @@
 		this.onPointerDown = function(pos)
 		{
 			var oWordControl = this.document.m_oWordControl;
-
 			for (var i = this.ContentControlObjects.length - 1; i >= 0; --i)
 			{
 				let _object = this.ContentControlObjects[i];
@@ -2625,7 +3190,6 @@
 				
 				if (_object.isHitInMoveRect(xPos, yPos, koefX, koefY))
 				{
-					oWordControl.m_oLogicDocument.SelectContentControl(_object.base.GetId());
 					_object.visualState = 1;
 					this.ContentControlSmallChangesCheck.X = pos.X;
 					this.ContentControlSmallChangesCheck.Y = pos.Y;
@@ -2640,6 +3204,8 @@
 					oWordControl.EndUpdateOverlay();
 
 					this.document.LockCursorType("default");
+					// Важно селектить контрол после всех действий, т.к. селект вызывает перерисовку треков и текущий стек измениться
+					oWordControl.m_oLogicDocument.SelectContentControl(_object.base.GetId());
 					return true;
 				}
 				
@@ -2702,7 +3268,10 @@
 						}
 
 						var posOnScreen = this.document.ConvertCoordsToCursorWR(xCC, yCC, _object.Pos.Page);
-						_sendEventToApi(oWordControl.m_oApi, _object.GetButtonObj(indexButton), posOnScreen.X, posOnScreen.Y);
+						let oButtonData = _object.GetButtonObj(indexButton);
+
+						if (!_object.isPluginButton(oButtonData.button))
+							_sendEventToApi(oWordControl.m_oApi, oButtonData, posOnScreen.X, posOnScreen.Y);
 					}
 
 					oWordControl.ShowOverlay();
@@ -2866,8 +3435,11 @@
 						return true;
 					}
 					
-					let buttonInfo =  (isWithoutCoords !== true) ? _object.getButton(xPos, yPos, koefX, koefY) : null;
-					if (buttonInfo && 1 !== buttonInfo.index)
+					let buttonInfo = (isWithoutCoords !== true)
+						? _object.getButton(xPos, yPos, koefX, koefY)
+						: null;
+
+					if (buttonInfo)
 					{
 						_object.HoverButtonIndex = buttonInfo.index;
 						oWordControl.ShowOverlay();
@@ -2905,37 +3477,70 @@
 
 		this.onPointerUp = function(pos)
 		{
-			var oWordControl = this.document.m_oWordControl;
-
 			var oldContentControlSmall = this.ContentControlSmallChangesCheck.IsSmall;
 			this.ContentControlSmallChangesCheck.IsSmall = true;
-
-			let ccTrack = this.getInlineMoveTrack();
-			if (!ccTrack)
-				return false;
 			
-			ccTrack.visualState = -1;
-			if (this.document.InlineTextTrackEnabled)
+			let updateOverlay = false;
+			let moveTrack = this.getInlineMoveTrack();
+			let result;
+			if (!moveTrack)
 			{
-				if (this.document.InlineTextTrack && !oldContentControlSmall) // значит был MouseMove
+				for (let i = 0; i < this.ContentControlObjects.length; ++i)
 				{
-					this.document.InlineTextTrack = oWordControl.m_oLogicDocument.Get_NearestPos(pos.Page, pos.X, pos.Y);
-					this.document.m_oLogicDocument.OnContentControlTrackEnd(ccTrack.base.GetId(), this.document.InlineTextTrack, AscCommon.global_keyboardEvent.CtrlKey);
-					this.document.InlineTextTrackEnabled = false;
-					this.document.InlineTextTrack = null;
-					this.document.InlineTextTrackPage = -1;
+					let ccTrack = this.ContentControlObjects[i];
+					if (ccTrack.state !== AscCommon.ContentControlTrack.In)
+						continue;
+					
+					if (ccTrack.isPluginButtonActive())
+					{
+						let _pos = this._getTrackRelativePos(pos, ccTrack);
+						let buttonInfo = ccTrack.getButton(_pos.xPos, _pos.yPos, _pos.koefX, _pos.koefY);
+						if (buttonInfo && buttonInfo.index === ccTrack.ActiveButtonIndex)
+							this.onClickPluginButton(buttonInfo.button, ccTrack);
+						
+						ccTrack.ActiveButtonIndex = -2;
+						updateOverlay = true;
+					}
 				}
-				else
+				result = false;
+			}
+			else
+			{
+				moveTrack.visualState = -1;
+				if (this.document.InlineTextTrackEnabled)
 				{
-					this.document.InlineTextTrackEnabled = false;
+					if (this.document.InlineTextTrack && !oldContentControlSmall) // значит был MouseMove
+					{
+						this.document.InlineTextTrack = this.document.m_oLogicDocument.Get_NearestPos(pos.Page, pos.X, pos.Y);
+						this.document.m_oLogicDocument.OnContentControlTrackEnd(moveTrack.base.GetId(), this.document.InlineTextTrack, AscCommon.global_keyboardEvent.CtrlKey);
+						this.document.InlineTextTrackEnabled = false;
+						this.document.InlineTextTrack        = null;
+						this.document.InlineTextTrackPage    = -1;
+					}
+					else
+					{
+						this.document.InlineTextTrackEnabled = false;
+					}
 				}
+				this.onPointerMove(pos);
+				result = true;
+				updateOverlay = true;
 			}
 			
-			oWordControl.ShowOverlay();
-			oWordControl.OnUpdateOverlay();
-			oWordControl.EndUpdateOverlay();
-			return true;
-		}
+			if (updateOverlay)
+				this.updateOverlay();
+			
+			return result;
+		};
+		
+		this.updateOverlay = function()
+		{
+			let wordControl = this.document.m_oWordControl;
+			wordControl.ShowOverlay();
+			wordControl.StartUpdateOverlay();
+			wordControl.OnUpdateOverlay();
+			wordControl.EndUpdateOverlay();
+		};
 	}
 
 	AscCommon.DrawingContentControls = ContentControls;

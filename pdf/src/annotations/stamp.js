@@ -300,6 +300,15 @@
         let oViewer     = editor.getDocumentRenderer();
         let oDoc        = oViewer.getPDFDoc();
         let aCurRect    = this.GetRect();
+        
+        if (this.GetRotate() != 0 && this.getXfrm() && !isOnRotate) {
+            oDoc.History.Add(new CChangesPDFAnnotStampRect(this, aCurRect, aRect, isOnRotate));
+            this._origRect = aRect;
+
+            this.SetNeedRecalcSizes(!isOnRotate);
+            this.handleUpdateRot();
+            return;
+        }
 
         oDoc.History.Add(new CChangesPDFAnnotStampRect(this, aCurRect, aRect, isOnRotate));
         this._origRect = aRect;
@@ -308,6 +317,11 @@
         this.SetNeedRecalcSizes(!isOnRotate);
     };
     CAnnotationStamp.prototype.SetNeedRecalcSizes = function(bRecalc) {
+        let oDoc = Asc.editor.getPDFDoc();
+        if (oDoc.Viewer.IsOpenAnnotsInProgress) {
+            return;
+        }
+
         this._needRecalcSizes = bRecalc;
         this.recalcGeometry();
     };
@@ -353,11 +367,11 @@
             let extX = ((aRect[2] - aRect[0])) * g_dKoef_pt_to_mm;
             let extY = ((aRect[3] - aRect[1])) * g_dKoef_pt_to_mm;
 
-            this.spPr.xfrm.offX = (aRect[0]) * g_dKoef_pt_to_mm;
-            this.spPr.xfrm.offY = (aRect[1]) * g_dKoef_pt_to_mm;
+            this.spPr.xfrm.setOffX(aRect[0] * g_dKoef_pt_to_mm);
+            this.spPr.xfrm.setOffY(aRect[1] * g_dKoef_pt_to_mm);
 
-            this.spPr.xfrm.extX = extX;
-            this.spPr.xfrm.extY = extY;
+            this.spPr.xfrm.setExtX(extX);
+            this.spPr.xfrm.setExtY(extY);
 
             this.SetNeedRecalcSizes(false);
         }
@@ -499,6 +513,25 @@
             this._bDrawFromStream = true;
         }
     };
+    CAnnotationStamp.prototype.GetAllFonts = function(fontMap) {
+        if (this.IsNeedDrawFromStream() || this.fontsChecked) {
+            return fontMap;
+        }
+
+        let oContent = this.getDocContent();
+        if (!oContent) {
+            return fontMap;
+        }
+        
+        oContent.SetApplyToAll(true);
+        AscFonts.FontPickerByCharacter.getFontsByString(oContent.GetSelectedText());
+        oContent.SetApplyToAll(false);
+        this.fontsChecked = true;
+        this.renderStructure = null;
+        this.AddToRedraw()
+
+        return fontMap;
+    };
     CAnnotationStamp.prototype.WriteRenderToBinary = function(memory) {
         // пока только для основанных на фигурах
         if (this.IsNeedDrawFromStream()) {
@@ -522,8 +555,6 @@
         return true;
     };
     CAnnotationStamp.prototype.Init = function() {
-        AscCommon.History.StartNoHistoryMode();
-
         let aOrigRect = this.GetRect();
         let aAnnotRectMM = aOrigRect ? aOrigRect.map(function(measure) {
             return measure * g_dKoef_pt_to_mm;
@@ -552,8 +583,6 @@
         this.setStyle(AscFormat.CreateDefaultShapeStyle());
         this.setBDeleted(false);
         this.recalculate();
-        
-        AscCommon.History.EndNoHistoryMode();
     };
     
     window["AscPDF"].CAnnotationStamp = CAnnotationStamp;

@@ -1,11 +1,15 @@
-name: common_check
+name: Check sdkjs
 on:
   push:
-    branches-ignore:
+    branches:
       - develop
+      - 'release/**'
+      - 'hotfix/**'
   pull_request:
-    branches-ignore:
+    branches:
       - develop
+      - 'release/**'
+      - 'hotfix/**'
 jobs:
   code-style:
     runs-on: ubuntu-latest
@@ -16,10 +20,11 @@ jobs:
       - name: setup python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.10'
 
       - name: execute check styles
         run: python tests/code-style/check.py
+
   unit-tests:
     runs-on: ubuntu-latest
     steps:
@@ -29,12 +34,12 @@ jobs:
           sudo apt-get install -y libatk1.0-0 libcups2 libatk-bridge2.0-0 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libnss3 libgbm1 libasound2t64
 
       - name: check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Use Node.js 18
-        uses: actions/setup-node@v1
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
         with:
-            node-version: 18
+            node-version: 20
       
       - name: Run unit tests
         run: |
@@ -51,12 +56,12 @@ jobs:
           node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/autoFilterTests.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/UserProtectedRangesTest.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/FormulaTrace.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/GoalSeekTests.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/NumFormatParse.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/DataValidationTests.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/conditionalFormattingTests.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/ExternalReference.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/SheetMemoryTest.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/whatIfAnalysisTests.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/word/unit-tests/paragraphContentPos.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/word/unit-tests/deleted-text-recovery.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/word/content-control/block-level/cursorAndSelection.html 30000 "--no-sandbox"
@@ -90,10 +95,18 @@ jobs:
           node node_modules/node-qunit-puppeteer/cli.js tests/word/merge-documents/mergeDocuments.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/word/math-autocorrection/math-autocorrection.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/word/change-case/change-case.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/builder/api/replace-text-smart 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/builder/api/replace-text-smart.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/word/shortcuts/shortcuts.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/slide/shortcuts/shortcuts.html 30000 "--no-sandbox"
-  builder-tests:
+
+      - name: Send message to telegram if failure
+        if: failure()
+        uses: ./.github/actions/send-message
+        with:
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          chat: ${{ secrets.TELEGRAM_TO }}
+
+  build-test:
     runs-on: ubuntu-latest
     steps:
       - name: check out repository
@@ -119,19 +132,20 @@ jobs:
           path: sdkjs-forms
           ref: master
 
-      - name: Use Node.js 18
-        uses: actions/setup-node@v1
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
 
-      - name: Run builder tests
+      - name: Run build sdkjs
         run: |
           cd sdkjs
           npm install grunt-cli
           npm install --prefix build
-          node node_modules/grunt-cli/bin/grunt --level=WHITESPACE_ONLY --addon=sdkjs-forms --base build --gruntfile build/Gruntfile.js
-          docker run -v $PWD/deploy/sdkjs/common:/opt/onlyoffice/documentbuilder/sdkjs/common \
-                     -v $PWD/deploy/sdkjs/word:/opt/onlyoffice/documentbuilder/sdkjs/word \
-                     -v $PWD/deploy/sdkjs/cell:/opt/onlyoffice/documentbuilder/sdkjs/cell \
-                     -v $PWD/deploy/sdkjs/slide:/opt/onlyoffice/documentbuilder/sdkjs/slide \
-                     onlyoffice/doc-builder-testing:next-release rspec_critical
+
+      - name: Send message to telegram if failure
+        if: failure()
+        uses: ./sdkjs/.github/actions/send-message
+        with:
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          chat: ${{ secrets.TELEGRAM_TO }}

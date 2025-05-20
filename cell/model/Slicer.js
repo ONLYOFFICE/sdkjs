@@ -1386,9 +1386,7 @@
 					if (-1 !== fieldIndex) {
 						let pivotField;
 						if (pivotTables.length > 0) {
-							const slicerCachePivotTable = this.pivotTables[0];
-							const pivotTable = slicerCachePivotTable.getPivotTable(wb);
-							pivotField = pivotTable.asc_getPivotFields()[fieldIndex];
+							pivotField = pivotTables[0].asc_getPivotFields()[fieldIndex];
 						}
 						var cacheField = cacheDefinition.getFields()[fieldIndex];
 						res = {

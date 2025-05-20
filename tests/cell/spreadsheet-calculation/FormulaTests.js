@@ -9793,6 +9793,81 @@ $(function () {
 
 	});
 
+	QUnit.test("Test: \"SUMIFS with multiple criteria ranges\"", function (assert) {
+		// Setup test data with 5 columns for testing
+		ws.getRange2("E2").setValue("10");
+		ws.getRange2("E3").setValue("20");
+		ws.getRange2("E4").setValue("30");
+		ws.getRange2("E5").setValue("40");
+		ws.getRange2("E6").setValue("50");
+		ws.getRange2("E7").setValue("60");
+
+		ws.getRange2("F2").setValue("Red");
+		ws.getRange2("F3").setValue("Blue");
+		ws.getRange2("F4").setValue("Green");
+		ws.getRange2("F5").setValue("Red");
+		ws.getRange2("F6").setValue("Blue");
+		ws.getRange2("F7").setValue("Green");
+
+		ws.getRange2("G2").setValue("Small");
+		ws.getRange2("G3").setValue("Medium");
+		ws.getRange2("G4").setValue("Large");
+		ws.getRange2("G5").setValue("Large");
+		ws.getRange2("G6").setValue("Medium");
+		ws.getRange2("G7").setValue("Small");
+
+		ws.getRange2("H2").setValue("2023");
+		ws.getRange2("H3").setValue("2023");
+		ws.getRange2("H4").setValue("2024");
+		ws.getRange2("H5").setValue("2024");
+		ws.getRange2("H6").setValue("2025");
+		ws.getRange2("H7").setValue("2025");
+
+		ws.getRange2("I2").setValue("A");
+		ws.getRange2("I3").setValue("B");
+		ws.getRange2("I4").setValue("C");
+		ws.getRange2("I5").setValue("A");
+		ws.getRange2("I6").setValue("B");
+		ws.getRange2("I7").setValue("C");
+
+		// Test with 11 arguments (1 sum_range + 5 criteria pairs)
+		oParser = new parserFormula("SUMIFS(E2:E7, F2:F7, \"Red\", G2:G7, \"Large\", H2:H7, 2024, I2:I7, \"A\", I2:I7, \"*\")", "A1", ws);
+		assert.ok(oParser.parse(), "SUMIFS with 5 criteria pairs");
+		assert.strictEqual(oParser.calculate().getValue(), 40, "SUMIFS with 5 criteria pairs");
+
+		// Test with 11 arguments where none match all criteria
+		oParser = new parserFormula("SUMIFS(E2:E7, F2:F7, \"Red\", G2:G7, \"Small\", H2:H7, 2024, I2:I7, \"A\", I2:I7, \"Z\")", "A1", ws);
+		assert.ok(oParser.parse(), "SUMIFS with 5 criteria pairs - no match");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "SUMIFS with 5 criteria pairs - no match");
+
+		// Test with OR condition using multiple SUMIFS with max params
+		oParser = new parserFormula("SUMIFS(E2:E7, F2:F7, \"Red\", G2:G7, \"Large\", H2:H7, 2024, I2:I7, \"A\")" +
+			"+SUMIFS(E2:E7, F2:F7, \"Blue\", G2:G7, \"Medium\", H2:H7, 2025, I2:I7, \"B\")", "A1", ws);
+		assert.ok(oParser.parse(), "Multiple SUMIFS with 4 criteria pairs");
+		assert.strictEqual(oParser.calculate().getValue(), 40 + 50, "Multiple SUMIFS with 4 criteria pairs");
+
+
+		// Test with cell references for criteria
+		ws.getRange2("J2").setValue("Red");
+		ws.getRange2("J3").setValue("Large");
+		ws.getRange2("J4").setValue("2024");
+		ws.getRange2("J5").setValue("A");
+		oParser = new parserFormula("SUMIFS(E2:E7, F2:F7, J2, G2:G7, J3, H2:H7, J4, I2:I7, J5, I2:I7, \"*\")", "A1", ws);
+		assert.ok(oParser.parse(), "SUMIFS with cell references for all criteria");
+		assert.strictEqual(oParser.calculate().getValue(), 40, "SUMIFS with cell references for all criteria");
+
+		// Test with complex criteria expressions
+		oParser = new parserFormula("SUMIFS(E2:E7, F2:F7, \"Red\", G2:G7, \"*\", H2:H7, \">\" & 2023, I2:I7, \"A\", I2:I7, \"<>Z\")", "A1", ws);
+		assert.ok(oParser.parse(), "SUMIFS with complex criteria expressions");
+		assert.strictEqual(oParser.calculate().getValue(), 40, "SUMIFS with complex criteria expressions");
+
+
+		// Test with criteria that select a single row
+		oParser = new parserFormula("SUMIFS(E2:E7, F2:F7, \"Red\", G2:G7, \"Large\", H2:H7, 2024, I2:I7, \"A\", E2:E7, 40)", "A1", ws);
+		assert.ok(oParser.parse(), "SUMIFS with criteria selecting one row");
+		assert.strictEqual(oParser.calculate().getValue(), 40, "SUMIFS with criteria selecting one row");
+	});
+
 	QUnit.test("Test: \"MAXIFS\"", function (assert) {
 
 		ws.getRange2("AAA2").setValue("10");
@@ -9829,6 +9904,78 @@ $(function () {
 		testArrayFormulaEqualsValues(assert, "1,0,0,#N/A;2,0,0,#N/A;#N/A,#N/A,#N/A,#N/A", "MAXIFS(A1:C2,A1:C2,A1:A2,A1:C2,A1:C2,A1:C2,A1:C2)");
 	});
 
+	QUnit.test("Test: \"MAXIFS with multiple criteria ranges\"", function (assert) {
+		// Setup test data with 5 columns for testing
+		ws.getRange2("E2").setValue("10");
+		ws.getRange2("E3").setValue("20");
+		ws.getRange2("E4").setValue("30");
+		ws.getRange2("E5").setValue("40");
+		ws.getRange2("E6").setValue("50");
+		ws.getRange2("E7").setValue("60");
+
+		ws.getRange2("F2").setValue("Red");
+		ws.getRange2("F3").setValue("Blue");
+		ws.getRange2("F4").setValue("Green");
+		ws.getRange2("F5").setValue("Red");
+		ws.getRange2("F6").setValue("Blue");
+		ws.getRange2("F7").setValue("Green");
+
+		ws.getRange2("G2").setValue("Small");
+		ws.getRange2("G3").setValue("Medium");
+		ws.getRange2("G4").setValue("Large");
+		ws.getRange2("G5").setValue("Large");
+		ws.getRange2("G6").setValue("Medium");
+		ws.getRange2("G7").setValue("Small");
+
+		ws.getRange2("H2").setValue("2023");
+		ws.getRange2("H3").setValue("2023");
+		ws.getRange2("H4").setValue("2024");
+		ws.getRange2("H5").setValue("2024");
+		ws.getRange2("H6").setValue("2025");
+		ws.getRange2("H7").setValue("2025");
+
+		ws.getRange2("I2").setValue("A");
+		ws.getRange2("I3").setValue("B");
+		ws.getRange2("I4").setValue("C");
+		ws.getRange2("I5").setValue("A");
+		ws.getRange2("I6").setValue("B");
+		ws.getRange2("I7").setValue("C");
+
+		// Test with 11 arguments (1 max_range + 5 criteria pairs)
+		oParser = new parserFormula("MAXIFS(E2:E7, F2:F7, \"Red\", G2:G7, \"Large\", H2:H7, 2024, I2:I7, \"A\", I2:I7, \"*\")", "A1", ws);
+		assert.ok(oParser.parse(), "MAXIFS with 5 criteria pairs");
+		assert.strictEqual(oParser.calculate().getValue(), 40, "MAXIFS with 5 criteria pairs");
+
+		// Test multiple conditions that match different values
+		oParser = new parserFormula("MAXIFS(E2:E7, F2:F7, \"Blue\", G2:G7, \"Medium\")", "A1", ws);
+		assert.ok(oParser.parse(), "MAXIFS with multiple matching values");
+		assert.strictEqual(oParser.calculate().getValue(), 50, "MAXIFS with multiple matching values");
+
+		// Test with cell references for criteria
+		ws.getRange2("J2").setValue("Red");
+		ws.getRange2("J3").setValue("Large");
+		ws.getRange2("J4").setValue("2024");
+		ws.getRange2("J5").setValue("A");
+		oParser = new parserFormula("MAXIFS(E2:E7, F2:F7, J2, G2:G7, J3, H2:H7, J4, I2:I7, J5, I2:I7, \"*\")", "A1", ws);
+		assert.ok(oParser.parse(), "MAXIFS with cell references for all criteria");
+		assert.strictEqual(oParser.calculate().getValue(), 40, "MAXIFS with cell references for all criteria");
+
+		// Test with complex criteria expressions
+		oParser = new parserFormula("MAXIFS(E2:E7, F2:F7, \"Red\", G2:G7, \"*\", H2:H7, \">\" & 2023, I2:I7, \"A\", I2:I7, \"<>Z\")", "A1", ws);
+		assert.ok(oParser.parse(), "MAXIFS with complex criteria expressions");
+		assert.strictEqual(oParser.calculate().getValue(), 40, "MAXIFS with complex criteria expressions");
+
+		// Test with criteria that select a single row
+		oParser = new parserFormula("MAXIFS(E2:E7, F2:F7, \"Red\", G2:G7, \"Large\", H2:H7, 2024, I2:I7, \"A\", E2:E7, 40)", "A1", ws);
+		assert.ok(oParser.parse(), "MAXIFS with criteria selecting one row");
+		assert.strictEqual(oParser.calculate().getValue(), 40, "MAXIFS with criteria selecting one row");
+
+		// Test finding maximum value for a specific color
+		oParser = new parserFormula("MAXIFS(E2:E7, F2:F7, \"Green\")", "A1", ws);
+		assert.ok(oParser.parse(), "MAXIFS with single color criteria");
+		assert.strictEqual(oParser.calculate().getValue(), 60, "MAXIFS with single color criteria");
+	});
+
 	QUnit.test("Test: \"MINIFS\"", function (assert) {
 
 		ws.getRange2("AAA2").setValue("10");
@@ -9863,6 +10010,73 @@ $(function () {
 		testArrayFormulaEqualsValues(assert, "1,3.123,-4,#N/A;2,4,5,#N/A;#N/A,#N/A,#N/A,#N/A", "MINIFS(A1:C2,A1:C2,A1:C2,A1:C2, A1:C2,A1:C2,A1:C2)");
 		testArrayFormulaEqualsValues(assert, "1,0,0,#N/A;0,0,0,#N/A;#N/A,#N/A,#N/A,#N/A", "MINIFS(A1:C2,A1:C2,A1:A1,A1:C2,A1:C2,A1:C2,A1:C2)");
 		testArrayFormulaEqualsValues(assert, "1,0,0,#N/A;2,0,0,#N/A;#N/A,#N/A,#N/A,#N/A", "MINIFS(A1:C2,A1:C2,A1:A2,A1:C2,A1:C2,A1:C2,A1:C2)");
+	});
+
+	QUnit.test("Test: \"MINIFS with multiple criteria ranges\"", function (assert) {
+		// Setup test data with 5 columns for testing
+		ws.getRange2("E2").setValue("10");
+		ws.getRange2("E3").setValue("20");
+		ws.getRange2("E4").setValue("30");
+		ws.getRange2("E5").setValue("40");
+		ws.getRange2("E6").setValue("50");
+		ws.getRange2("E7").setValue("60");
+
+		ws.getRange2("F2").setValue("Red");
+		ws.getRange2("F3").setValue("Blue");
+		ws.getRange2("F4").setValue("Green");
+		ws.getRange2("F5").setValue("Red");
+		ws.getRange2("F6").setValue("Blue");
+		ws.getRange2("F7").setValue("Green");
+
+		ws.getRange2("G2").setValue("Small");
+		ws.getRange2("G3").setValue("Medium");
+		ws.getRange2("G4").setValue("Large");
+		ws.getRange2("G5").setValue("Large");
+		ws.getRange2("G6").setValue("Medium");
+		ws.getRange2("G7").setValue("Small");
+
+		ws.getRange2("H2").setValue("2023");
+		ws.getRange2("H3").setValue("2023");
+		ws.getRange2("H4").setValue("2024");
+		ws.getRange2("H5").setValue("2024");
+		ws.getRange2("H6").setValue("2025");
+		ws.getRange2("H7").setValue("2025");
+
+		ws.getRange2("I2").setValue("A");
+		ws.getRange2("I3").setValue("B");
+		ws.getRange2("I4").setValue("C");
+		ws.getRange2("I5").setValue("A");
+		ws.getRange2("I6").setValue("B");
+		ws.getRange2("I7").setValue("C");
+
+		// Test with 11 arguments (1 min_range + 5 criteria pairs)
+		oParser = new parserFormula("MINIFS(E2:E7, F2:F7, \"Red\", G2:G7, \"Large\", H2:H7, 2024, I2:I7, \"A\", I2:I7, \"*\")", "A1", ws);
+		assert.ok(oParser.parse(), "MINIFS with 5 criteria pairs");
+		assert.strictEqual(oParser.calculate().getValue(), 40, "MINIFS with 5 criteria pairs");
+
+		// Test multiple conditions that match different values
+		oParser = new parserFormula("MINIFS(E2:E7, F2:F7, \"Blue\", G2:G7, \"Medium\")", "A1", ws);
+		assert.ok(oParser.parse(), "MINIFS with multiple matching values");
+		assert.strictEqual(oParser.calculate().getValue(), 20, "MINIFS with multiple matching values");
+
+		// Test with cell references for criteria
+		ws.getRange2("J2").setValue("Red");
+		ws.getRange2("J3").setValue("Large");
+		ws.getRange2("J4").setValue("2024");
+		ws.getRange2("J5").setValue("A");
+		oParser = new parserFormula("MINIFS(E2:E7, F2:F7, J2, G2:G7, J3, H2:H7, J4, I2:I7, J5, I2:I7, \"*\")", "A1", ws);
+		assert.ok(oParser.parse(), "MINIFS with cell references for all criteria");
+		assert.strictEqual(oParser.calculate().getValue(), 40, "MINIFS with cell references for all criteria");
+
+		// Test with complex criteria expressions
+		oParser = new parserFormula("MINIFS(E2:E7, F2:F7, \"Red\", G2:G7, \"*\", H2:H7, \">\" & 2023, I2:I7, \"A\", I2:I7, \"<>Z\")", "A1", ws);
+		assert.ok(oParser.parse(), "MINIFS with complex criteria expressions");
+		assert.strictEqual(oParser.calculate().getValue(), 40, "MINIFS with complex criteria expressions");
+
+		// Test with criteria that select a single row
+		oParser = new parserFormula("MINIFS(E2:E7, F2:F7, \"Red\", G2:G7, \"Large\", H2:H7, 2024, I2:I7, \"A\", E2:E7, 40)", "A1", ws);
+		assert.ok(oParser.parse(), "MINIFS with criteria selecting one row");
+		assert.strictEqual(oParser.calculate().getValue(), 40, "MINIFS with criteria selecting one row");
 	});
 
 	QUnit.test("Test: \"TEXT\"", function (assert) {
@@ -17327,6 +17541,84 @@ $(function () {
 		testArrayFormulaEqualsValues(assert, "1,#DIV/0!,#DIV/0!,#N/A;2,#DIV/0!,#DIV/0!,#N/A;#N/A,#N/A,#N/A,#N/A", "AVERAGEIFS(A1:C2,A1:C2,A1:A2,A1:C2,A1:C2,A1:C2,A1:C2)");
 	});
 
+	QUnit.test("Test: \"AVERAGEIFS with multiple criteria ranges\"", function (assert) {
+        // Setup test data with 5 columns for testing
+        ws.getRange2("E2").setValue("10");
+        ws.getRange2("E3").setValue("20");
+        ws.getRange2("E4").setValue("30");
+        ws.getRange2("E5").setValue("40");
+        ws.getRange2("E6").setValue("50");
+        ws.getRange2("E7").setValue("60");
+
+        ws.getRange2("F2").setValue("Red");
+        ws.getRange2("F3").setValue("Blue");
+        ws.getRange2("F4").setValue("Green");
+        ws.getRange2("F5").setValue("Red");
+        ws.getRange2("F6").setValue("Blue");
+        ws.getRange2("F7").setValue("Green");
+
+        ws.getRange2("G2").setValue("Small");
+        ws.getRange2("G3").setValue("Medium");
+        ws.getRange2("G4").setValue("Large");
+        ws.getRange2("G5").setValue("Large");
+        ws.getRange2("G6").setValue("Medium");
+        ws.getRange2("G7").setValue("Small");
+
+        ws.getRange2("H2").setValue("2023");
+        ws.getRange2("H3").setValue("2023");
+        ws.getRange2("H4").setValue("2024");
+        ws.getRange2("H5").setValue("2024");
+        ws.getRange2("H6").setValue("2025");
+        ws.getRange2("H7").setValue("2025");
+
+        ws.getRange2("I2").setValue("A");
+        ws.getRange2("I3").setValue("B");
+        ws.getRange2("I4").setValue("C");
+        ws.getRange2("I5").setValue("A");
+        ws.getRange2("I6").setValue("B");
+        ws.getRange2("I7").setValue("C");
+
+        // Test with 11 arguments (1 average_range + 5 criteria pairs)
+        oParser = new parserFormula("AVERAGEIFS(E2:E7, F2:F7, \"Red\", G2:G7, \"Large\", H2:H7, 2024, I2:I7, \"A\", I2:I7, \"*\")", "A1", ws);
+        assert.ok(oParser.parse(), "AVERAGEIFS with 5 criteria pairs");
+        assert.strictEqual(oParser.calculate().getValue(), 40, "AVERAGEIFS with 5 criteria pairs"); // Only E5 (40) matches all criteria
+
+        // Test with 11 arguments where none match all criteria
+        oParser = new parserFormula("AVERAGEIFS(E2:E7, F2:F7, \"Red\", G2:G7, \"Small\", H2:H7, 2024, I2:I7, \"A\", I2:I7, \"Z\")", "A1", ws);
+        assert.ok(oParser.parse(), "AVERAGEIFS with 5 criteria pairs - no match");
+        assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", "AVERAGEIFS with 5 criteria pairs - no match should return #DIV/0!");
+
+
+        // Test with cell references for criteria
+        ws.getRange2("J2").setValue("Red");
+        ws.getRange2("J3").setValue("Large");
+        ws.getRange2("J4").setValue("2024");
+        ws.getRange2("J5").setValue("A");
+        oParser = new parserFormula("AVERAGEIFS(E2:E7, F2:F7, J2, G2:G7, J3, H2:H7, J4, I2:I7, J5, I2:I7, \"*\")", "A1", ws);
+        assert.ok(oParser.parse(), "AVERAGEIFS with cell references for criteria");
+        assert.strictEqual(oParser.calculate().getValue(), 40, "AVERAGEIFS with cell references for criteria");
+
+        // Test with numeric criteria and comparison operators
+        oParser = new parserFormula("AVERAGEIFS(E2:E7, H2:H7, \">2023\", E2:E7, \">=30\")", "A1", ws);
+        assert.ok(oParser.parse(), "AVERAGEIFS with numeric criteria");
+        assert.strictEqual(oParser.calculate().getValue(), 45, "AVERAGEIFS with numeric criteria"); // Average of 30, 40, 50, 60
+
+
+        // Test with blank criteria
+        ws.getRange2("F4").setValue("");
+        oParser = new parserFormula("AVERAGEIFS(E2:E7, F2:F7, \"\")", "A1", ws);
+        assert.ok(oParser.parse(), "AVERAGEIFS with blank criteria");
+        assert.strictEqual(oParser.calculate().getValue(), 30, "AVERAGEIFS with blank criteria");
+
+        // Test with error handling - mismatched ranges
+        oParser = new parserFormula("AVERAGEIFS(E2:E7, F2:F6, \"Red\")", "A1", ws);
+        assert.ok(oParser.parse(), "AVERAGEIFS with mismatched ranges");
+        assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "AVERAGEIFS with mismatched ranges should return #VALUE!");
+
+        // Cleanup
+        ws.getRange2("F4").setValue("Green"); // Restore original value
+    });
+
 	QUnit.test("Test: \"AGGREGATE\"", function (assert) {
 
 		ws.getRange2("A101").setValue("TEST");
@@ -17705,6 +17997,18 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 1);
 
+		oParser = new parserFormula("COUNT({\"7\",true,false,4,5})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2);
+
+		oParser = new parserFormula("COUNT({\"7\", true, false, false})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
+
+		oParser = new parserFormula("COUNT({\"7\", true, false, false; \"7\", true, false, 2})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1);
+
 		testArrayFormula2(assert, "COUNT", 2, 2, null, true);
 	});
 
@@ -18079,6 +18383,107 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), 3, 'Result of COUNTIFS(C200:C220,"=externe", D200:D220, "=1", F200:F220, "=1")');
 
 	});
+
+	QUnit.test("Test: \"COUNTIFS with multiple criteria ranges\"", function (assert) {
+        // Setup test data with 5 columns for testing
+        ws.getRange2("E2").setValue("10");
+        ws.getRange2("E3").setValue("20");
+        ws.getRange2("E4").setValue("30");
+        ws.getRange2("E5").setValue("40");
+        ws.getRange2("E6").setValue("50");
+        ws.getRange2("E7").setValue("60");
+
+        ws.getRange2("F2").setValue("Red");
+        ws.getRange2("F3").setValue("Blue");
+        ws.getRange2("F4").setValue("Green");
+        ws.getRange2("F5").setValue("Red");
+        ws.getRange2("F6").setValue("Blue");
+        ws.getRange2("F7").setValue("Green");
+
+        ws.getRange2("G2").setValue("Small");
+        ws.getRange2("G3").setValue("Medium");
+        ws.getRange2("G4").setValue("Large");
+        ws.getRange2("G5").setValue("Large");
+        ws.getRange2("G6").setValue("Medium");
+        ws.getRange2("G7").setValue("Small");
+
+        ws.getRange2("H2").setValue("2023");
+        ws.getRange2("H3").setValue("2023");
+        ws.getRange2("H4").setValue("2024");
+        ws.getRange2("H5").setValue("2024");
+        ws.getRange2("H6").setValue("2025");
+        ws.getRange2("H7").setValue("2025");
+
+        ws.getRange2("I2").setValue("A");
+        ws.getRange2("I3").setValue("B");
+        ws.getRange2("I4").setValue("C");
+        ws.getRange2("I5").setValue("A");
+        ws.getRange2("I6").setValue("B");
+        ws.getRange2("I7").setValue("C");
+
+        // Test with 10 arguments (5 criteria pairs)
+        oParser = new parserFormula("COUNTIFS(F2:F7, \"Red\", G2:G7, \"Large\", H2:H7, 2024, I2:I7, \"A\", I2:I7, \"*\")", "A1", ws);
+        assert.ok(oParser.parse(), "COUNTIFS with 5 criteria pairs");
+        assert.strictEqual(oParser.calculate().getValue(), 1, "COUNTIFS with 5 criteria pairs"); // Only one row matches all criteria
+
+        // Test with 10 arguments where none match all criteria
+        oParser = new parserFormula("COUNTIFS(F2:F7, \"Red\", G2:G7, \"Small\", H2:H7, 2024, I2:I7, \"A\", I2:I7, \"Z\")", "A1", ws);
+        assert.ok(oParser.parse(), "COUNTIFS with 5 criteria pairs - no match");
+        assert.strictEqual(oParser.calculate().getValue(), 0, "COUNTIFS with 5 criteria pairs - no match");
+
+        // Test with numeric criteria and comparison operators
+        oParser = new parserFormula("COUNTIFS(E2:E7, \">20\", H2:H7, \">=2024\")", "A1", ws);
+        assert.ok(oParser.parse(), "COUNTIFS with numeric criteria");
+        assert.strictEqual(oParser.calculate().getValue(), 4, "COUNTIFS with numeric criteria"); // Count values >20 in years >=2024
+
+        // Test with cell references for criteria
+        ws.getRange2("J2").setValue("Red");
+        ws.getRange2("J3").setValue("Large");
+        ws.getRange2("J4").setValue("2024");
+        ws.getRange2("J5").setValue("A");
+        oParser = new parserFormula("COUNTIFS(F2:F7, J2, G2:G7, J3, H2:H7, J4, I2:I7, J5, I2:I7, \"*\")", "A1", ws);
+        assert.ok(oParser.parse(), "COUNTIFS with cell references for criteria");
+        assert.strictEqual(oParser.calculate().getValue(), 1, "COUNTIFS with cell references for criteria");
+
+        // Test with wildcard criteria
+        oParser = new parserFormula("COUNTIFS(F2:F7, \"*e*\", G2:G7, \"*arge\")", "A1", ws);
+        assert.ok(oParser.parse(), "COUNTIFS with wildcard criteria");
+        assert.strictEqual(oParser.calculate().getValue(), 2, "COUNTIFS with wildcard criteria"); // Red/Green with Large
+
+        // Test with multiple criteria for same range
+        oParser = new parserFormula("COUNTIFS(H2:H7, \">2023\", H2:H7, \"<=2024\", G2:G7, \"Large\")", "A1", ws);
+        assert.ok(oParser.parse(), "COUNTIFS with multiple criteria for same range");
+        assert.strictEqual(oParser.calculate().getValue(), 2, "COUNTIFS with multiple criteria for same range");
+
+        // Test with blank criteria
+        ws.getRange2("F4").setValue("");
+        oParser = new parserFormula("COUNTIFS(F2:F7, \"\")", "A1", ws);
+        assert.ok(oParser.parse(), "COUNTIFS with blank criteria");
+        assert.strictEqual(oParser.calculate().getValue(), 1, "COUNTIFS with blank criteria");
+
+        // Test with error handling - mismatched ranges
+        oParser = new parserFormula("COUNTIFS(F2:F7, \"Red\", G2:G6, \"Large\")", "A1", ws);
+        assert.ok(oParser.parse(), "COUNTIFS with mismatched ranges");
+        assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "COUNTIFS with mismatched ranges should return #VALUE!");
+
+        // Test counting specific patterns
+        oParser = new parserFormula("COUNTIFS(G2:G7, \"*\", F2:F7, \"=Red\")", "A1", ws);
+        assert.ok(oParser.parse(), "COUNTIFS with pattern matching");
+        assert.strictEqual(oParser.calculate().getValue(), 2, "COUNTIFS with pattern matching"); // Count all Red entries
+
+        // Test with complex criteria combinations
+        oParser = new parserFormula("COUNTIFS(E2:E7, \">30\", F2:F7, \"<>Red\", G2:G7, \"=Medium\", H2:H7, \">=2024\")", "A1", ws);
+        assert.ok(oParser.parse(), "COUNTIFS with complex criteria combinations");
+        assert.strictEqual(oParser.calculate().getValue(), 1, "COUNTIFS with complex criteria combinations");
+
+        // Test with range of numbers
+        oParser = new parserFormula("COUNTIFS(E2:E7, \">=20\", E2:E7, \"<=40\", H2:H7, \"2024\")", "A1", ws);
+        assert.ok(oParser.parse(), "COUNTIFS with number range");
+        assert.strictEqual(oParser.calculate().getValue(), 2, "COUNTIFS with number range");
+
+        // Cleanup
+        ws.getRange2("F4").setValue("Green"); // Restore original value
+    });
 
 	QUnit.test("Test: \"COUNTIF\"", function (assert) {
 
@@ -31053,6 +31458,59 @@ $(function () {
 
 	});
 
+	QUnit.test("Test: \"SUBTOTAL with multiple ranges\"", function (assert) {
+        // Setup test data with 5 columns for testing
+        ws.getRange2("E2").setValue("10");
+        ws.getRange2("E3").setValue("20");
+        ws.getRange2("E4").setValue("30");
+        ws.getRange2("E5").setValue("40");
+        ws.getRange2("E6").setValue("50");
+        ws.getRange2("E7").setValue("60");
+
+        ws.getRange2("F2").setValue("Red");
+        ws.getRange2("F3").setValue("Blue");
+        ws.getRange2("F4").setValue("Green");
+        ws.getRange2("F5").setValue("Red");
+        ws.getRange2("F6").setValue("Blue");
+        ws.getRange2("F7").setValue("Green");
+
+        ws.getRange2("G2").setValue("Small");
+        ws.getRange2("G3").setValue("Medium");
+        ws.getRange2("G4").setValue("Large");
+        ws.getRange2("G5").setValue("Large");
+        ws.getRange2("G6").setValue("Medium");
+        ws.getRange2("G7").setValue("Small");
+
+        ws.getRange2("H2").setValue("15");
+        ws.getRange2("H3").setValue("25");
+        ws.getRange2("H4").setValue("35");
+        ws.getRange2("H5").setValue("45");
+        ws.getRange2("H6").setValue("55");
+        ws.getRange2("H7").setValue("65");
+
+        // Test SUBTOTAL with multiple ranges
+
+        // Function 2 (COUNT) with multiple ranges
+        oParser = new parserFormula("SUBTOTAL(2, E2:E4, F2:F4, G2:G4, H2:H4, E5:E7, F5:F7, G5:G7, H5:H7)", "A1", ws);
+        assert.ok(oParser.parse(), "SUBTOTAL COUNT with multiple ranges");
+        assert.strictEqual(oParser.calculate().getValue(), 12, "SUBTOTAL COUNT with multiple ranges");
+
+        // Function 3 (COUNTA) with multiple ranges
+        oParser = new parserFormula("SUBTOTAL(3, E2:E4, F2:F4, G2:G4, H2:H4, E5:E7, F5:F7, G5:G7, H5:H7)", "A1", ws);
+        assert.ok(oParser.parse(), "SUBTOTAL COUNTA with multiple ranges");
+        assert.strictEqual(oParser.calculate().getValue(), 24, "SUBTOTAL COUNTA with multiple ranges");
+
+        // Function 4 (MAX) with multiple ranges
+        oParser = new parserFormula("SUBTOTAL(4, E2:E4, F2:F4, G2:G4, H2:H4, E5:E7, F5:F7, G5:G7, H5:H7)", "A1", ws);
+        assert.ok(oParser.parse(), "SUBTOTAL MAX with multiple ranges");
+        assert.strictEqual(oParser.calculate().getValue(), 65, "SUBTOTAL MAX with multiple ranges");
+
+        // Function 5 (MIN) with multiple ranges
+        oParser = new parserFormula("SUBTOTAL(5, E2:E4, F2:F4, G2:G4, H2:H4, E5:E7, F5:F7, G5:G7, H5:H7)", "A1", ws);
+        assert.ok(oParser.parse(), "SUBTOTAL MIN with multiple ranges");
+        assert.strictEqual(oParser.calculate().getValue(), 10, "SUBTOTAL MIN with multiple ranges");
+    });
+
 	QUnit.test("Test: \"MID\"", function (assert) {
 		ws.getRange2("A101").setValue("Fluid Flow");
 
@@ -35217,6 +35675,84 @@ $(function () {
 		
 	});
 
+	QUnit.test("Long string splitting", function (assert) {
+		// Test case for long string (300 chars - should split into 2 parts)
+		let originalString = "a".repeat(300);
+		ws.getRange2("A1").setValue("=\"" + originalString + "\"");
+		let formula = ws.getRange2("A1").getFormula();
+		let expectedSplits = Math.ceil(originalString.length / 255) - 1;
+		let actualSplits = (formula.match(/&/g) || []).length;
+		assert.equal(actualSplits, expectedSplits, "300-char string should have exactly 1 concatenation");
+		assert.equal(ws.getRange2("A1").getValue(), originalString, "Result should match original 300-char string");
+
+		// Test very long string (600 chars - should split into 3 parts)
+		let longString = "b".repeat(600);
+		ws.getRange2("A2").setValue("=\"" + longString + "\"");
+		formula = ws.getRange2("A2").getFormula();
+		expectedSplits = Math.ceil(longString.length / 255) - 1;
+		actualSplits = (formula.match(/&/g) || []).length;
+		assert.equal(actualSplits, expectedSplits, "600-char string should have exactly 2 concatenations");
+		assert.equal(ws.getRange2("A2").getValue(), longString, "Result should match original 600-char string");
+
+		// Test mixed content string (480 chars - should split into 2 parts)
+		let mixedString = "Hello world! ".repeat(40); // 480 characters
+		ws.getRange2("A3").setValue("=\"" + mixedString + "\"");
+		formula = ws.getRange2("A3").getFormula();
+		expectedSplits = Math.ceil(mixedString.length / 255) - 1;
+		actualSplits = (formula.match(/&/g) || []).length;
+		assert.equal(actualSplits, expectedSplits, "480-char string should have exactly 1 concatenation");
+		assert.equal(ws.getRange2("A3").getValue(), mixedString, "Result should match original mixed string");
+
+		// Test boundary case (255 chars - should not split)
+		let boundaryString = "c".repeat(255);
+		ws.getRange2("A4").setValue("=\"" + boundaryString + "\"");
+		formula = ws.getRange2("A4").getFormula();
+		actualSplits = (formula.match(/&/g) || []).length;
+		assert.equal(actualSplits, 0, "255-char string should have no concatenations");
+		assert.equal(ws.getRange2("A4").getValue(), boundaryString, "Result should match original boundary string");
+
+		// Test string with quotes (360 chars with quotes - should split into 2 parts)
+		let quotedString = "Test\"\"Quote".repeat(30); // 12 chars * 30 = 360 chars
+		ws.getRange2("A5").setValue("=\"" + quotedString + "\"");
+		formula = ws.getRange2("A5").getFormula();
+		expectedSplits = Math.ceil(quotedString.length / 255) - 1;
+		actualSplits = (formula.match(/&/g) || []).length;
+		assert.equal(actualSplits, expectedSplits, "360-char quoted string should have exactly 1 concatenation");
+		assert.equal(ws.getRange2("A5").getValue(), quotedString.replace(/\"\"/g, "\""), "Result should match original quoted string");
+	});
+
+	QUnit.test("Long string splitting in functions", function (assert) {
+		// Test CONCATENATE with long strings (300 + 200 chars)
+		let string1 = "a".repeat(300);
+		let string2 = "b".repeat(200);
+		ws.getRange2("B1").setValue("=\"" + string2 + "\"");
+		ws.getRange2("A1").setValue("=CONCATENATE(\"" + string1 + "\", B1)");
+		let formula = ws.getRange2("A1").getFormula();
+		let expectedSplits = Math.ceil(string1.length / 255) - 1;
+		let actualSplits = (formula.match(/&/g) || []).length;
+		assert.equal(actualSplits, expectedSplits, "CONCATENATE with 300-char string should have exactly 1 concatenation");
+		assert.equal(ws.getRange2("A1").getValue(), string1 + string2, "CONCATENATE result should match combined strings");
+
+		// Test FIND with long strings (300 chars search in 600 chars text)
+		let searchString = "needle".repeat(50); // 300 chars
+		let haystackString = "needle".repeat(100); // 600 chars
+		ws.getRange2("A2").setValue("=FIND(\"" + searchString + "\", \"" + haystackString + "\")");
+		formula = ws.getRange2("A2").getFormula();
+		expectedSplits = Math.ceil(searchString.length / 255) - 1 + Math.ceil(haystackString.length / 255) - 1;
+		actualSplits = (formula.match(/&/g) || []).length;
+		assert.equal(actualSplits, expectedSplits, "FIND with long strings should have exactly 3 concatenations");
+		assert.equal(ws.getRange2("A2").getValue(), 1, "FIND should work with split strings");
+
+		// Test nested functions (400 chars)
+		let nestedString = "nested_text".repeat(40); // 400 chars
+		ws.getRange2("A4").setValue("=LEN(UPPER(\"" + nestedString + "\"))");
+		formula = ws.getRange2("A4").getFormula();
+		expectedSplits = Math.ceil(nestedString.length / 255) - 1;
+		actualSplits = (formula.match(/&/g) || []).length;
+		assert.equal(actualSplits, expectedSplits, "Nested function with 400-char string should have exactly 1 concatenation");
+		assert.equal(ws.getRange2("A4").getValue(), nestedString.length, "Nested functions should work with split strings");
+	});
+
 	function calcCustomFunction (innerFunc, jsDoc, oDoc, fCompare) {
 		let api = window["Asc"]["editor"];
 		if (jsDoc) {
@@ -36857,10 +37393,12 @@ $(function () {
 			};
 
 			// Set cell formulas
+			wb.dependencyFormulas.lockRecal();
 			ws.getRange2("A1").setValue("=5+ASYNCFUNC()");
 			ws.getRange2("B1").setValue("=A1+B2+ASYNCFUNC2()");
 			ws.getRange2("B2").setValue("=C2+ASYNCFUNC3()");
 			ws.getRange2("C2").setValue("=A1+ASYNCFUNC4()");
+			wb.dependencyFormulas.unlockRecal();
 
 			// Expected calculation sequence:
 			// 1. A1 = 5 + 10 = 15
@@ -37059,6 +37597,7 @@ $(function () {
 			};
 
 			// Set cell formulas with complex dependencies
+			wb.dependencyFormulas.lockRecal();
 			ws.getRange2("A1").setValue("=5+GetCurrentPrice()");
 			ws.getRange2("A2").setValue("=FetchStockQuantity()+GetWarehouseStock()");
 			ws.getRange2("C2").setValue("=GetSupplierPrice()*GetMarkupRate()");
@@ -37069,6 +37608,7 @@ $(function () {
 			ws.getRange2("D2").setValue("=(A1+B1)*GetCurrencyRate()");
 			ws.getRange2("E1").setValue("=SUM(A1:D1)+CalculateInsurance()");
 			ws.getRange2("E2").setValue("=AVERAGE(A2:D2)+GetServiceFee()");
+			wb.dependencyFormulas.unlockRecal();
 
 			// Check initial loading states
 			const rangesToCheck = ["A1", "B1", "C1", "D1", "A2", "B2", "C2", "D2", "E1", "E2"];

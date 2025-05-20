@@ -592,7 +592,7 @@ CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
 		var charCode = iter.value();
 		if (Context.m_bIsTextDrawer === true)
 		{
-			Context.CheckAddNewPath(X, Y, charCode);
+			Context.CheckAddNewPath(X, Y, new AscWord.CRunText(charCode), true);
 		}
 		Context.FillTextCode( X, Y, charCode );
 		X += g_oTextMeasurer.MeasureCode(charCode).Width;

@@ -97,6 +97,11 @@
 	 */
 	function private_checkRelativePos(firstPos, secondPos)
 	{
+		if (!firstPos || !Array.isArray(firstPos))
+			return 1;
+		else if (!secondPos || !Array.isArray(secondPos))
+			return -1;
+		
 		for (var nPos = 0, nLen = Math.min(firstPos.length, secondPos.length); nPos < nLen; ++nPos)
 		{
 			if (!secondPos[nPos] || !firstPos[nPos] || firstPos[nPos].Class !== secondPos[nPos].Class)
@@ -461,14 +466,14 @@
 			oResultObj = this.SerImage(oGraphicObj);
 		else if (oGraphicObj instanceof AscFormat.CShape)
 		{
-			if (oGraphicObj.constructor.name === "CConnectionShape")
+			if (oGraphicObj.getObjectType() === AscDFH.historyitem_type_Cnx)
 			{
 				var oShapeObj = this.SerShape(oGraphicObj);
 				oShapeObj["type"] = "connectShape";
 
 				oResultObj = oShapeObj;
 			}
-			else if (oGraphicObj.constructor.name === "CSlicer")
+			else if (oGraphicObj.getObjectType() === AscDFH.historyitem_type_SlicerView)
 				oResultObj = this.SerSlicerDrawing(oGraphicObj)
 			else
 				oResultObj = this.SerShape(oGraphicObj);
@@ -479,8 +484,10 @@
 			oResultObj = this.SerSmartArt(oGraphicObj);
 		else if (oGraphicObj instanceof AscFormat.CLockedCanvas)
 			oResultObj = this.SerLockedCanvas(oGraphicObj);
-		else if (oGraphicObj instanceof AscFormat.CGroupShape && oGraphicObj.constructor.name === "CGroupShape")
+		else if (oGraphicObj instanceof AscFormat.CGroupShape && oGraphicObj.getObjectType() === AscDFH.historyitem_type_GroupShape)
 			oResultObj = this.SerGroupShape(oGraphicObj);
+		else
+			return undefined;
 		
 		oResultObj["id"] = oGraphicObj.Id;
 
@@ -7934,7 +7941,7 @@
 			var oTempElm   = null;
 			var arrContent = [];
 
-			if (oMathContent.constructor.name === "CDenominator" || oMathContent.constructor.name === "CNumerator")
+			if (oMathContent instanceof AscCommonWord.CDenominator || oMathContent instanceof AscCommonWord.CNumerator)
 				arrContent.push(SerFracArg.call(this, oMathContent));
 			else 
 			{
@@ -8018,9 +8025,9 @@
 				return oFractionArg;
 
 			var sArgType = "";
-			if (oFractionArg.constructor.name === "CDenominator")
+			if (oFractionArg instanceof AscCommonWord.CDenominator)
 				sArgType = "den";
-			else if (oFractionArg.constructor.name === "CNumerator")
+			else if (oFractionArg instanceof AscCommonWord.CNumerator)
 				sArgType = "num";
 
 			return {

@@ -891,18 +891,16 @@ CComplexField.prototype.private_InsertContent = function(oSelectedContent)
 CComplexField.prototype.private_UpdateFORMULA = function()
 {
 	this.Instruction.Calculate(this.LogicDocument);
-	if(this.Instruction.ErrStr !== null)
+	if (this.Instruction.ErrStr !== null)
 	{
 		var oTextPr = new CTextPr();
-		oTextPr.Set_FromObject({Bold: true});
+		oTextPr.Set_FromObject({Bold : true});
 		this.private_InsertMessage(this.Instruction.ErrStr, oTextPr);
 	}
-	else
+	else if (null !== this.Instruction.ResultStr)
 	{
-		if(this.Instruction.ResultStr !== null)
-		{
-			this.private_InsertMessage(this.Instruction.ResultStr, null);
-		}
+		
+		this.private_InsertMessage(this.Instruction.GetResultString(), null);
 	}
 };
 CComplexField.prototype.private_CalculateFORMULA = function()

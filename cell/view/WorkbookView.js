@@ -876,6 +876,8 @@
 			      return self.isWizardMode;
               }, "getActiveWS": function () {
 			      return self.getActiveWS();
+			  }, "getActiveWSView": function () {
+				  return self.getWorksheet();
 			  }, "updateEditorSelectionInfo": function (xfs) {
 				  self.handlers.trigger("asc_onEditorSelectionChanged", xfs);
 			  }, "onContextMenu": function (event) {
@@ -4827,7 +4829,7 @@
 			}
 
 			if(ws) {
-				ws.copyCutRange = null;
+				ws.setCutRange(null);
 			}
 			this.cutIdSheet = null;
 
@@ -4847,16 +4849,16 @@
 		if(this.cutIdSheet == null) {
 			var activeWs = this.wsViews[this.wsActive];
 
-			var needUpdateSelection = bDrawSelection && activeWs && activeWs.copyCutRange;
+			var needUpdateSelection = bDrawSelection && activeWs && activeWs.getCutRange();
 			if(needUpdateSelection) {
 				activeWs.cleanSelection();
 			}
 
 			var isCopyHighlighted = false;
 			for(var i in this.wsViews) {
-				if (this.wsViews[i].copyCutRange != null) {
+				if (this.wsViews[i].getCutRange() != null) {
 					isCopyHighlighted = true;
-					this.wsViews[i].copyCutRange = null;
+					this.wsViews[i].setCutRange(null);
 				}
 			}
 
@@ -6184,6 +6186,152 @@
 	WorkbookView.prototype.stepGoalSeek = function() {
 		this.model.stepGoalSeek();
 	};
+
+	// Solver
+	/**
+	 * Returns solver parameters and options object.
+	 * @memberof WorkbookView
+	 * @returns {asc_CSolverParams}
+	 */
+	WorkbookView.prototype.getSolverParams = function() {
+		//open history point
+		History.Create_NewPoint();
+		History.StartTransaction();
+
+		const solverParams = new AscCommonExcel.asc_CSolverParams();
+		solverParams.getDefNames(this.model);
+
+		return solverParams;
+	}
+	/**
+	 * Starts find optimal solution.
+	 * @memberof WorkbookView
+	 * @param {asc_CSolverParams} oSolverParams
+	 */
+	WorkbookView.prototype.startSolver = function(oSolverParams) {
+		if (!this.model) {
+			return;
+		}
+
+		const CSolver = AscCommonExcel.CSolver;
+		const wbModel = this.model;
+		const ws = wbModel.getActiveWs();
+		const t = this;
+		let oSolver;
+
+		const callback = function (isSuccess) {
+			if (!isSuccess) {
+				t.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellSolver, c_oAscError.Level.NoCritical);
+				return;
+			}
+			//open history point
+			History.Create_NewPoint();
+			History.StartTransaction();
+			// Init CSolver object
+			wbModel.setSolver(new CSolver(oSolverParams, ws))
+			oSolver = wbModel.getSolver();
+			oSolver.prepare();
+			// Run solver
+			if (oSolverParams.getOptions().getShowIterResults()) {
+				oSolver.step();
+			} else {
+				oSolver.setIntervalId(setInterval(function () {
+					let bIsFinish = oSolver.calculate();
+					if (bIsFinish) {
+						clearInterval(oSolver.getIntervalId());
+					}
+				}, oSolver.getDelay()));
+			}
+		};
+
+		//need lock
+		const aLocksInfo = [];
+		//cells locks info
+		const wsChangingCell = AscCommonExcel.actualWsByRef(oSolverParams.getChangingCells(), ws);
+		const sChangingCell = AscCommonExcel.convertToAbsoluteRef(oSolverParams.getChangingCells());
+		const oChangingCell = wsChangingCell && wsChangingCell.getRange2(sChangingCell);
+		if (oChangingCell) {
+			aLocksInfo.push(this.collaborativeEditing.getLockInfo(AscCommonExcel.c_oAscLockTypeElem.Range, null, wsChangingCell.getId(),
+				new AscCommonExcel.asc_CCollaborativeRange(oChangingCell.bbox.c1, oChangingCell.bbox.r1, oChangingCell.bbox.c2, oChangingCell.bbox.r2)));
+		}
+
+		const wsFormula = AscCommonExcel.actualWsByRef(oSolverParams.getObjectiveFunction(), ws);
+		const sFormulaCell = AscCommonExcel.convertToAbsoluteRef(oSolverParams.getObjectiveFunction());
+		const oFormulaCell = wsFormula && wsFormula.getRange2(sFormulaCell);
+		if (oFormulaCell) {
+			aLocksInfo.push(this.collaborativeEditing.getLockInfo(AscCommonExcel.c_oAscLockTypeElem.Range, null, wsFormula.getId(),
+				new AscCommonExcel.asc_CCollaborativeRange(oFormulaCell.bbox.c1, oFormulaCell.bbox.r1, oFormulaCell.bbox.c2, oFormulaCell.bbox.r2)));
+		}
+
+		this.collaborativeEditing.lock(aLocksInfo, callback);
+
+		const oChangedCell = oSolver && oSolver.getChangingCell();
+		if (oChangedCell) {
+			// update worksheet field
+			let ws = this.getWorksheetById(oChangedCell.worksheet.Id);
+			ws._updateRange(oChangedCell.bbox);
+			ws.draw();
+		}
+	};
+
+	/**
+	 * @memberof WorkbookView
+	 * @param {boolean} bSave true - save result of calculation, false - discard changes.
+	 * @param {asc_CSolverParams} oSolverParams - uses for saving Solver parameters.
+	 */
+	WorkbookView.prototype.closeSolver = function(bSave, oSolverParams) {
+		if (!this.model) {
+			return;
+		}
+
+		const oSolver = this.model.getSolver();
+		const oChangedCells = oSolver && oSolver.getChangingCell();
+
+		if (!bSave) {
+			const oStartChangedCells = oSolver && oSolver.getStartChangingCells();
+			oChangedCells && oChangedCells._foreachNoEmpty(function (oCell) {
+				const sOriginalValue = oStartChangedCells[oCell.getName()];
+				oCell.setValue(sOriginalValue);
+			});
+		}
+		oSolverParams.createDefNames(this.model);
+		if (oSolver) {
+			this.model.setSolver(null);
+		}
+
+		// close history point
+		History.EndTransaction();
+
+		if (oChangedCells) {
+			// update worksheet field
+			let ws = this.getWorksheetById(oChangedCells.worksheet.Id);
+			ws._updateRange(oChangedCells.bbox);
+			ws.draw();
+		}
+	};
+
+	/**
+	 * Runs only one iteration of solver calculation.
+	 * Uses when "Show iteration results" option is enabled.
+	 * @memberof WorkbookView
+	 */
+	WorkbookView.prototype.stepSolver = function() {
+		if (!this.model) {
+			return;
+		}
+
+		const oSolver = this.model.getSolver();
+		const oChangedCells = oSolver && oSolver.getChangingCell();
+
+		oSolver && oSolver.step();
+		if (oChangedCells) {
+			// update worksheet field
+			let ws = this.getWorksheetById(oChangedCells.worksheet.Id);
+			ws._updateRange(oChangedCells.bbox);
+			ws.draw();
+		}
+	};
+
 	WorkbookView.prototype.addToHistoryChangedRanges = function(sheetId, range, userColor) {
 		if (!range) {
 			return;

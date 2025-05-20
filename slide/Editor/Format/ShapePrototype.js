@@ -739,6 +739,12 @@ CShape.prototype.OnContentReDraw = function(){
         }
         return 0;
     };
+		CShape.prototype.onRemoveContent = function () {
+			const oPresentation = this.getLogicDocument();
+			if (oPresentation && oPresentation.timing) {
+				oPresentation.timing.onRemoveContent(this.GetId());
+			}
+		};
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].editorDeleteDrawingBase = editorDeleteDrawingBase;

@@ -204,11 +204,18 @@
 	};
 	/**
 	 * Все ли обязательные поля заполнены
-	 * @param {string} [roleName]
+	 * @param {boolean} [checkAll=false]
 	 * @returns {boolean}
 	 */
-	CFormsManager.prototype.IsAllRequiredFormsFilled = function(roleName)
+	CFormsManager.prototype.IsAllRequiredFormsFilled = function(checkAll)
 	{
+		let roleName = null;
+		if (true !== checkAll)
+		{
+			let oform = this.LogicDocument ? this.LogicDocument.GetOFormDocument() : null;
+			roleName = oform ? oform.getCurrentRole() : null;
+		}
+		
 		// TODO: Сейчас у нас здесь идет проверка и на правильность заполнения форм с форматом
 		// Возможно стоит разделить на 2 разные проверки и добавить одну общую проверку на правильность
 		// заполненности формы, куда будут входить обе предыдущие проверки

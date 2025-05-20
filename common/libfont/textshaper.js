@@ -118,7 +118,7 @@
 
 		this.FontSize = oFontInfo.Size;
 
-		AscFonts.HB_ShapeString(this, nFontId, oFontInfo.Style, this.FontId, this.GetLigaturesType(), nScript, this.Direction, "en");
+		AscFonts.HB_ShapeString(this, nFontId, oFontInfo.Style, this.FontId, this.GetLigaturesType(nScript), nScript, this.Direction, "en");
 
 		// Значит шрифт был подобран, возвращаем назад состояние отрисовщика
 		if (this.FontId.m_pFaceInfo.family_name !== oFontInfo.Name)
@@ -129,7 +129,7 @@
 
 		this.ClearBuffer();
 	};
-	CTextShaper.prototype.GetLigaturesType = function()
+	CTextShaper.prototype.GetLigaturesType = function(textScript)
 	{
 		return Asc.LigaturesType.None;
 	};

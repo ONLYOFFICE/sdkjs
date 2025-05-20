@@ -77,6 +77,11 @@ function (window, undefined) {
 	var importRangeLinksState = {importRangeLinks: null, startBuildImportRangeLinks: null};
 	const aExcludeRecursiveFormulas = ['ISFORMULA', 'SHEETS', 'AREAS', 'COLUMN', 'COLUMNS', 'ROW', 'ROWS', 'CELL', 'INDIRECT'];
 
+	const cReplaceFormulaType = {
+		val: 1,
+		formula: 2
+	};
+
 	function getArrayCopy(arr) {
 		var newArray = [];
 		for (var i = 0; i < arr.length; i++) {
@@ -6555,9 +6560,10 @@ function parserFormula( formula, parent, _ws ) {
 	this.ref = null;
 
 	this.promiseResult = null;
+	this.replaceFormulaAfterCalc = null;
 
-	//mark function, when need reparse and recalculate on custom function change change
-	this.bUnknownOrCustomFunction = null;
+	//mark function, when need reparse and recalculate on custom function change
+	this.unknownOrCustomFunction = null;
 
 	if (AscFonts.IsCheckSymbols) {
 		AscFonts.FontPickerByCharacter.getFontsByString(this.Formula);
@@ -8276,6 +8282,56 @@ function parserFormula( formula, parent, _ws ) {
 		var parseOperands = function () {
 			found_operand = null;
 
+			let needSplitString = true;
+			let _doSplitString = function(str) {
+				// Cache concatenation operator to avoid repeated lookups
+				const concatOperator = cFormulaOperators["&"].prototype;
+
+				// Process first part of string
+				let currentPos = 0;
+				const strLength = str.length;
+
+				while (currentPos < strLength) {
+					// If this is not the first part of string, add concatenation operator
+					if (currentPos > 0) {
+						// Add concatenation operator
+						parseResult.operand_expected = true;
+
+						// Handle operator precedence
+						while (elemArr.length > 0 &&
+						(concatOperator.rightAssociative ?
+							(concatOperator.priority < elemArr[elemArr.length - 1].priority) :
+							(concatOperator.priority <= elemArr[elemArr.length - 1].priority))) {
+							t.outStack.push(elemArr.pop());
+						}
+
+						elemArr.push(concatOperator);
+						parseResult.addElem(concatOperator);
+					}
+
+					// Calculate length of current part
+					const partLength = Math.min(g_nFormulaStringMaxLength, strLength - currentPos);
+					const part = str.slice(currentPos, currentPos + partLength);
+
+					// Create string operand
+					const stringOperand = new cString(part);
+
+					// If this is the last part of string
+					if (currentPos + partLength === strLength) {
+						found_operand = stringOperand;
+						break;
+					}
+
+					// Add operand to stack
+					t.outStack.push(stringOperand);
+					parseResult.addElem(stringOperand);
+					parseResult.operand_expected = false;
+
+					// Move to next part
+					currentPos += partLength;
+				}
+			}
+
 			if (wasRigthParentheses) {
 				parseResult.operand_expected = true;
 			}
@@ -8307,30 +8363,32 @@ function parserFormula( formula, parent, _ws ) {
 				if (!_checkReferenceCount(2)) {
 					return false;
 				}
-
-				/*if (found_operand.type !== cElementType.error) {
-					parseResult.addRefPos(ph.pCurrPos - ph.operand_str.length, ph.pCurrPos, t.outStack.length, found_operand, true);
-				}*/
-
 			} else if (parserHelp.isBoolean.call(ph, t.Formula, ph.pCurrPos, local)) {
 				if (!_checkReferenceCount(0.5)) {
 					return false;
 				}
 				found_operand = new cBool(ph.operand_str);
-			}
-
-			/* Strings */ else if (parserHelp.isString.call(ph, t.Formula, ph.pCurrPos)) {
+			} else if (parserHelp.isString.call(ph, t.Formula, ph.pCurrPos)) { /* Strings */
 				if (ph.operand_str.length > g_nFormulaStringMaxLength) {
-					parseResult.setError(c_oAscError.ID.FrmlMaxTextLength);
-					if (!ignoreErrors) {
-						t.outStack = [];
-						return false;
+					if (needSplitString) {
+						if (!_checkReferenceCount(ph.operand_str.length * 0.25 + 0.5)) {
+							return false;
+						}
+						_doSplitString(ph.operand_str);
+					} else {
+						parseResult.setError(c_oAscError.ID.FrmlMaxTextLength);
+						if (!ignoreErrors) {
+							t.outStack = [];
+							return false;
+						}
 					}
 				}
-				if (!_checkReferenceCount(ph.operand_str.length * 0.25 + 0.5)) {
-					return false;
+				if (!found_operand) {
+					if (!_checkReferenceCount(ph.operand_str.length * 0.25 + 0.5)) {
+						return false;
+					}
+					found_operand = new cString(ph.operand_str);
 				}
-				found_operand = new cString(ph.operand_str);
 			}
 
 			/* Errors */ else if (parserHelp.isError.call(ph, t.Formula, ph.pCurrPos, local)) {
@@ -8651,13 +8709,13 @@ function parserFormula( formula, parent, _ws ) {
 					found_operator.isXLFN = (ph.operand_str.indexOf(xlfnFrefix) === 0);
 					found_operator.isXLWS = found_operator.isXLFN && xlfnFrefix.length === ph.operand_str.indexOf(xlwsFrefix);
 
-					t.bUnknownOrCustomFunction = true;
+					t.unknownOrCustomFunction = operandStr;
 				}
 
-				//mark function, when need reparse and recalculate on custom function change change
+				//mark function, when need reparse and recalculate on custom function change
 				let wb = Asc["editor"] && Asc["editor"].wb;
 				if (wb && wb.customFunctionEngine && wb.customFunctionEngine.getFunc(operandStr)) {
-					t.bUnknownOrCustomFunction = true;
+					t.unknownOrCustomFunction = operandStr;
 				}
 
 				if (found_operator !== null) {
@@ -9003,6 +9061,9 @@ function parserFormula( formula, parent, _ws ) {
 								isRef = true;
 							} else {
 								/* results of SEQUENCE, RANDARRAY etc... can return an array when using regular values ​​in arguments */
+								if (this.unknownOrCustomFunction && currentElement.returnValueType !== AscCommonExcel.cReturnFormulaType.array) {
+									return false;
+								}
 								_tmp = currentElement.Calculate(arg, opt_bbox, null, this.ws, bIsSpecialFunction);
 							}
 
@@ -9040,6 +9101,9 @@ function parserFormula( formula, parent, _ws ) {
 		}
 	};
 	parserFormula.prototype.calculate = function (opt_defName, opt_bbox, opt_offset, checkMultiSelect, opt_oCalculateResult, opt_pivotCallback) {
+		if (AscCommonExcel.g_LockCustomFunctionRecalculate && this.unknownOrCustomFunction) {
+			return;
+		}
 		if (this.outStack.length < 1) {
 			this.value = new cError(cErrorType.wrong_name);
 			this._endCalculate();
@@ -9144,7 +9208,7 @@ function parserFormula( formula, parent, _ws ) {
 					} else if(formulaArray) {
 						_tmp = formulaArray;
 					} else {
-						//if recursion - we must rewrite promise, because arguments can changed
+						//if recursion - we must rewrite promise, because arguments can change
 						_tmp = !g_cCalcRecursion.getIsEnabledRecursion() && this.wb.asyncFormulasManager.getPromiseByIndex(this._index, i);
 						if (!_tmp) {
 							_tmp = currentElement.Calculate(arg, opt_bbox, opt_defName, this.ws, bIsSpecialFunction);
@@ -9161,6 +9225,34 @@ function parserFormula( formula, parent, _ws ) {
 							this.wb.asyncFormulasManager.addPromise(_tmp, true);
 						}
 						promiseCounter++;
+					}
+
+					if (this.unknownOrCustomFunction) {
+						/*
+						  \@\@\ - perceive it as text, remove the \. do not delete the first formula. The result of the calculation will be ("\@\@\text" -> "@@...text").
+
+						  @@ - special case. delete the first formula and add the result to the cell without @@. ("@@text" -> "text")
+
+						  @@\= - special case. remove the \. delete the first formula and add the result to the cell without @@. ("@@\=text" -> "=text")
+
+						  @@= - special case. delete the formula and add a new formula(result cell) to the cell without @@. ("@@=formula" -> "=formula")
+
+						  For other combinations \@@=, @\@,\@\@\=,@\@\= do not react. Just text result, do not change formula
+						*/
+						if (_tmp && _tmp.type === cElementType.string) {
+							if (0 === _tmp.value.indexOf("@@\\=")) {
+								_tmp.value = _tmp.value.slice(3);
+								this.replaceFormulaAfterCalc = cReplaceFormulaType.val;
+							} else if (0 === _tmp.value.indexOf("\\@\\@")) {
+								_tmp.value = "@@" + _tmp.value.slice(4);
+							} else if (0 === _tmp.value.indexOf("@@=")) {
+								_tmp.value = _tmp.value.slice(2);
+								this.replaceFormulaAfterCalc = cReplaceFormulaType.formula;
+							} else if (0 === _tmp.value.indexOf("@@")) {
+								_tmp.value = _tmp.value.slice(2);
+								this.replaceFormulaAfterCalc = cReplaceFormulaType.val;
+							}
+						}
 					}
 
 					if (!currentFuncFormat) {
@@ -9271,6 +9363,26 @@ function parserFormula( formula, parent, _ws ) {
 			this._endCalculate();
 		} else {
 			let res = elemArr.pop();
+
+			if (this.replaceFormulaAfterCalc === cReplaceFormulaType.formula) {
+				if (res && res.type === cElementType.string) {
+					if (0 === res.value.indexOf("=")) {
+						this.Formula = _tmp.value.slice(1);
+						this.isParsed = false;
+						this.outStack = [];
+						this.unknownOrCustomFunction = null;
+						this.parse();
+						this.isInDependencies = false;
+						this.buildDependencies();
+						this.wb.asyncFormulasManager.addReplacedFormula(this);
+					} else {
+						this.replaceFormulaAfterCalc = null;
+					}
+				} else {
+					this.replaceFormulaAfterCalc = null;
+				}
+			}
+
 			if (cElementType.error === res.type && res.errorType === cErrorType.busy) {
 				this._endCalculate();
 				return;
@@ -10493,6 +10605,7 @@ function parserFormula( formula, parent, _ws ) {
 		this.oRecursionCells = null;
 		this.nCellPasteValue = null; // for paste recursive cell
 		this.bIsCellEdited = false;
+		this.bIsSheetCreating = false;
 
 		this.bIsEnabledRecursion = null;
 		this.nMaxIterations = null; // Max iterations of recursion calculations. Default value: 100.
@@ -11180,7 +11293,27 @@ function parserFormula( formula, parent, _ws ) {
 	 */
 	CalcRecursion.prototype.getIsCellEdited = function () {
 		return this.bIsCellEdited;
-	}
+	};
+	/**
+	 * Method gets the flag that checks whether the editor is making an "Add sheet" operation.
+	 * * true - Editor is making an "Add sheet" operation.
+	 * * false - Editor isn't making an "Add sheet" operation.
+	 * @memberof CalcRecursion
+	 * @returns {boolean}
+	 */
+	CalcRecursion.prototype.getIsSheetCreating = function () {
+		return this.bIsSheetCreating;
+	};
+	/**
+	 * Method sets the flag that checks whether the editor is making an "Add sheet" operation.
+	 * * true - Editor is making an "Add sheet" operation.
+	 * * false - Editor isn't making an "Add sheet" operation.
+	 * @memberof CalcRecursion
+	 * @param {boolean} bIsSheetCreating
+	 */
+	CalcRecursion.prototype.setIsSheetCreating = function (bIsSheetCreating) {
+		this.bIsSheetCreating = bIsSheetCreating;
+	};
 
 	const g_cCalcRecursion = new CalcRecursion();
 
@@ -11921,6 +12054,9 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].bIsSupportDynamicArrays = bIsSupportDynamicArrays;
 
 	window['AscCommonExcel'].aExcludeRecursiveFormulas = aExcludeRecursiveFormulas;
+
+	window['AscCommonExcel'].cReplaceFormulaType = cReplaceFormulaType;
+
 
 	window['AscCommonExcel'].cNumber = cNumber;
 	window['AscCommonExcel'].cString = cString;

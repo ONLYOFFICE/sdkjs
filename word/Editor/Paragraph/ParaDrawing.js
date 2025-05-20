@@ -1828,7 +1828,6 @@ ParaDrawing.prototype.Get_DrawingType = function()
 };
 ParaDrawing.prototype.Is_Inline = function()
 {
-
 	if(this.Parent &&
 		this.Parent.Get_ParentTextTransform &&
 		this.Parent.Get_ParentTextTransform())
@@ -1847,11 +1846,25 @@ ParaDrawing.prototype.Is_Inline = function()
 		return true;
 	}
 
-	return ( drawing_Inline === this.DrawingType ? true : false );
+	return drawing_Inline === this.DrawingType;
 };
 ParaDrawing.prototype.IsInline = function()
 {
 	return this.Is_Inline();
+};
+ParaDrawing.prototype.MakeInline = function()
+{
+	if (drawing_Inline === this.Get_DrawingType())
+		return;
+	
+	this.Set_DrawingType(drawing_Inline);
+	
+	if (AscCommon.isRealObject(this.GraphicObj.bounds)
+		&& AscFormat.isRealNumber(this.GraphicObj.bounds.w)
+		&& AscFormat.isRealNumber(this.GraphicObj.bounds.h))
+	{
+		this.CheckWH();
+	}
 };
 ParaDrawing.prototype.IsForm = function()
 {
@@ -4272,3 +4285,7 @@ CAnchorPosition.prototype.Calculate_Y_Value = function(RelativeFrom)
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].ParaDrawing = ParaDrawing;
+
+window['AscWord'] = window['AscWord'] || {};
+window['AscWord'].ParaDrawing = ParaDrawing;
+

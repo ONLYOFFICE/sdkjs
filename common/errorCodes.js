@@ -144,6 +144,7 @@
 			SessionToken: -122,
 
 			LockedCellGoalSeek          : -200,
+			LockedCellSolver			: -201,
 
 			/* для формул */
 			FrmlMaxReference            : -297,

@@ -413,7 +413,7 @@
 			style.innerHTML = styleContent;
 			_head.appendChild(style);
 
-			this.reporterTranslates = ["Reset", "Slide {0} of {1}", "End slideshow", "Pen", "Highlighter", "Ink color", "Eraser", "Erase screen"];
+			this.reporterTranslates = [ "Reset", "Slide {0} of {1}", "End slideshow", "The end of slide preview. Click to exit.", "Pen", "Highlighter", "Ink color", "Eraser", "Erase screen" ];
 			var _translates = this.m_oApi.reporterTranslates;
 			if (_translates) {
 				this.reporterTranslates[0] = _translates[0];
@@ -424,6 +424,7 @@
 				this.reporterTranslates[5] = _translates[5];
 				this.reporterTranslates[6] = _translates[6];
 				this.reporterTranslates[7] = _translates[7];
+				this.reporterTranslates[8] = _translates[8];
 
 				if (_translates[3])
 					this.m_oApi.DemonstrationEndShowMessage(_translates[3]);
@@ -827,7 +828,7 @@
 			this.setMouseMode(this.m_oApi.mouseMode);
 			window.addEventListener && window.addEventListener(
 				"beforeunload",
-				function (e) { window.editor.EndDemonstration(); }
+				function (e) {window.editor.DemonstrationReporterEnd();}
 			);
 
 			this.m_oBody.HtmlElement.oncontextmenu = function (e) {

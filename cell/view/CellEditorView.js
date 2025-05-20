@@ -88,6 +88,8 @@ function (window, undefined) {
 	/** @const */
 	var codeNewLine = 0x00A;
 	var codeEqually = 0x3D;
+	var codeUnarPlus = 0x2B;
+	var codeUnarMinus = 0x2D;
 
 
 	/**
@@ -196,7 +198,7 @@ function (window, undefined) {
 		this.sAutoComplete = null;
 
 		if (null != this.element) {
-			var ceMenuEditor = this.getMenuEditorMode() ? '-menu' : '';
+			var ceMenuEditor = this.getMenuEditorMode() ? '-menu' : ''
 			var ceCanvasOuterId = "ce-canvas-outer" + ceMenuEditor;
 			var ceCanvasId = "ce-canvas" + ceMenuEditor;
 			var ceCanvasOverlay = "ce-canvas-overlay" + ceMenuEditor;
@@ -322,7 +324,7 @@ function (window, undefined) {
 	 */
 	CellEditor.prototype.open = function (options) {
 		this._setEditorState(c_oAscCellEditorState.editStart);
-
+		
 		var b = this.input.selectionStart;
 
 		this.isOpened = true;
@@ -874,8 +876,16 @@ function (window, undefined) {
 	};
 
 	CellEditor.prototype._isFormula = function () {
-		var fragments = this.options.fragments;
-		return fragments && fragments.length > 0 && fragments[0].getCharCodesLength() > 0 && fragments[0].getCharCode(0) === codeEqually;
+		let fragments = this.options.fragments;
+		if (fragments && fragments.length > 0 && fragments[0].getCharCodesLength() > 0) {
+			let firstSymbolCode = fragments[0].getCharCode(0);
+			let isEqualSign = firstSymbolCode === codeEqually;
+			let unarSign = isEqualSign ? false : (firstSymbolCode === codeUnarPlus || firstSymbolCode === codeUnarMinus);
+
+			return isEqualSign || unarSign;
+		}
+
+		return false;
 	};
 	CellEditor.prototype.isFormula = function () {
 		return c_oAscCellEditorState.editFormula === this.m_nEditorState;
@@ -1290,7 +1300,7 @@ function (window, undefined) {
 	CellEditor.prototype._fireUpdated = function () {
 		//TODO I save the text!
 		var s = AscCommonExcel.getFragmentsText(this.options.fragments);
-		var isFormula = -1 === this.beginCompositePos && s.charAt(0) === "=";
+		var isFormula = -1 === this.beginCompositePos && (s.charAt(0) === "=" || s.charAt(0) === "+" || s.charAt(0) === "-");
 		var api = window["Asc"]["editor"];
 		var fPos, fName, match, fCurrent;
 
@@ -1320,6 +1330,25 @@ function (window, undefined) {
 	};
 
 	CellEditor.prototype._getFunctionByString = function (cursorPos, s) {
+		let isInString = false;
+		let isEscaped = false;
+
+		if ('"' === s[cursorPos - 1]) {
+			return {fPos: undefined, fName: undefined};
+		}
+
+		for (let i = 0; i < cursorPos; i++) {
+			if (s[i] === '"') {
+				if (!isEscaped) {
+					isInString = !isInString;
+				}
+			}
+		}
+
+		if (isInString) {
+			return {fPos: undefined, fName: undefined};
+		}
+		
 		let fPos = asc_lastidx(s, this.reNotFormula, cursorPos) + 1;
 		let match;
 		if (fPos > 0) {
@@ -1537,16 +1566,28 @@ function (window, undefined) {
 			}
 		}
 
+		// Calculate canvas offset inside container
+		let ws = this.handlers.trigger("getActiveWSView");
+		let canvasTop = 0;
+		let cellsTop = ws && AscCommon.AscBrowser.convertToRetinaValue(ws.cellsTop);
+		if (ws && top < cellsTop) {
+			// If editor position is above data area
+			canvasTop = top < 0 ? -(cellsTop + Math.abs(top)) : top - cellsTop;
+			// Fix container at headers level
+			top = cellsTop;
+		}
+
 		this.canvasOuterStyle.left = left + 'px';
 		this.canvasOuterStyle.top = top + 'px';
 		this.canvasOuterStyle.width = widthStyle + 'px';
 		this.canvasOuterStyle.height = heightStyle + 'px';
 		if (!this.getMenuEditorMode()) {
-			this.canvasOuterStyle.zIndex = this.top < 0 ? -1 : z;
+			this.canvasOuterStyle.zIndex = /*this.top < 0 ? -1 :*/ z;
 		}
 
 		this.canvas.style.width = this.canvasOverlay.style.width = widthStyle + 'px';
 		this.canvas.style.height = this.canvasOverlay.style.height = heightStyle + 'px';
+		this.canvas.style.top = this.canvasOverlay.style.top = canvasTop + 'px';
 	};
 
 	CellEditor.prototype._calculateCanvasSize = function () {
@@ -1756,8 +1797,12 @@ function (window, undefined) {
 		this.curHeight = curHeight;
 
 		if (!window['IS_NATIVE_EDITOR']) {
+
+			// update cursor position
+			let scrollDiff = parseFloat(this.canvas.style.top);
+
 			this.cursorStyle.left = curLeft + "px";
-			this.cursorStyle.top = curTop + "px";
+			this.cursorStyle.top = curTop + scrollDiff + "px";
 
 			this.cursorStyle.width = (((2 * AscCommon.AscBrowser.retinaPixelRatio) >> 0) / AscCommon.AscBrowser.retinaPixelRatio) + "px";
 			this.cursorStyle.height = curHeight + "px";

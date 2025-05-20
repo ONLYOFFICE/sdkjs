@@ -105,12 +105,166 @@
         addPage:    1,
         removePage: 2,
         widgetInfo: 3,
-        movePage:   4
+        movePage:   4,
+        mergePages: 5
     }
 
+    const FormatType = {
+        NONE:       -1,
+        NUMBER:     0,
+        PERCENTAGE: 1,
+        DATE:       2,
+        TIME:       3,
+        SPECIAL:    4,
+        REGULAR:    5,
+        CUSTOM:     6
+    }
+
+    FormatType["NONE"]          = FormatType.NONE;
+    FormatType["NUMBER"]        = FormatType.NUMBER;
+    FormatType["PERCENTAGE"]    = FormatType.PERCENTAGE;
+    FormatType["DATE"]          = FormatType.DATE;
+    FormatType["TIME"]          = FormatType.TIME;
+    FormatType["SPECIAL"]       = FormatType.SPECIAL;
+    FormatType["REGULAR"]       = FormatType.REGULAR;
+    FormatType["CUSTOM"]        = FormatType.CUSTOM;
+
+    const SpecialFormatType = {
+        ZIP_CODE: 0,       // Почтовый индекс (ZIP Code)
+        ZIP_PLUS_4: 1,     // Почтовый индекс + 4 (ZIP + 4)
+        PHONE: 2,          // Телефонный номер
+        SSN: 3             // Социальное страхование (SSN)
+    }
+
+    SpecialFormatType["ZIP_CODE"] = SpecialFormatType.ZIP_CODE;
+    SpecialFormatType["ZIP_PLUS_4"] = SpecialFormatType.ZIP_PLUS_4;
+    SpecialFormatType["PHONE"] = SpecialFormatType.PHONE;
+    SpecialFormatType["SSN"] = SpecialFormatType.SSN;
+
+    const SeparatorStyle = {
+        COMMA_DOT: 0,       // 1,234.56
+        NO_SEPARATOR: 1,    // 1234.56
+        DOT_COMMA: 2,       // 1.234,56
+        NO_SEPARATOR_COMMA: 3, // 1234,56
+        APOSTROPHE_DOT: 4   // 1'234.56
+    };
+
+    SeparatorStyle["COMMA_DOT"] = SeparatorStyle.COMMA_DOT;
+    SeparatorStyle["NO_SEPARATOR"] = SeparatorStyle.NO_SEPARATOR;
+    SeparatorStyle["DOT_COMMA"] = SeparatorStyle.DOT_COMMA;
+    SeparatorStyle["NO_SEPARATOR_COMMA"] = SeparatorStyle.NO_SEPARATOR_COMMA;
+    SeparatorStyle["APOSTROPHE_DOT"] = SeparatorStyle.APOSTROPHE_DOT;
+
+    const TimeFormatType = {
+        "HH:MM":        0,
+        "h:MM tt":      1,
+        "HH:MM:ss":     2,
+        "h:MM:ss tt":   3
+    }
+
+    const NegativeStyle = {
+        BLACK_MINUS: 0,   // black minus
+        RED_MINUS: 1,     // red minus
+        PARENS_BLACK: 2,  // black parens
+        PARENS_RED: 3     // red parens
+    }
+
+    NegativeStyle["BLACK_MINUS"] = NegativeStyle.BLACK_MINUS;
+    NegativeStyle["RED_MINUS"] = NegativeStyle.RED_MINUS;
+    NegativeStyle["PARENS_BLACK"] = NegativeStyle.PARENS_BLACK;
+    NegativeStyle["PARENS_RED"] = NegativeStyle.PARENS_RED;
+
+    const CalculateType = {
+        SUM:        0,
+        PRODUCT:    1,
+        AVERAGE:    2,
+        MIN:        3,
+        MAX:        4
+    }
+
+    CalculateType["SUM"]        = CalculateType.SUM;
+    CalculateType["PRODUCT"]    = CalculateType.PRODUCT;
+    CalculateType["AVERAGE"]    = CalculateType.AVERAGE;
+    CalculateType["MIN"]        = CalculateType.MIN;
+    CalculateType["MAX"]        = CalculateType.MAX;
+
+    const ValidateType = {
+        NONE:   -1,
+        NUMBER: 0,
+        CUSTOM: 1
+    }
+
+    ValidateType["NONE"]      = ValidateType.NONE;
+    ValidateType["NUMBER"]    = ValidateType.NUMBER;
+    ValidateType["CUSTOM"]    = ValidateType.CUSTOM;
+
     Object.freeze(FIELD_TYPES);
-    asc["FIELD_TYPES"]          = asc.FIELD_TYPES            = FIELD_TYPES;
-    asc["BORDER_EFFECT_STYLES"] = asc.BORDER_EFFECT_STYLES   = BORDER_EFFECT_STYLES;
-    asc["REF_TO_REASON"]        = asc.REF_TO_REASON          = REF_TO_REASON;
-    asc.CommandType             = CommandType;
+
+    const CHECKBOX_STYLES = {
+        check:      0,
+        cross:      1,
+        diamond:    2,
+        circle:     3,
+        star:       4,
+        square:     5
+    }
+
+    CHECKBOX_STYLES["check"]    = CHECKBOX_STYLES.check;
+    CHECKBOX_STYLES["cross"]    = CHECKBOX_STYLES.cross;
+    CHECKBOX_STYLES["diamond"]  = CHECKBOX_STYLES.diamond;
+    CHECKBOX_STYLES["circle"]   = CHECKBOX_STYLES.circle;
+    CHECKBOX_STYLES["star"]     = CHECKBOX_STYLES.star;
+    CHECKBOX_STYLES["square"]   = CHECKBOX_STYLES.square;
+
+    const BORDER_TYPES = {
+        solid:      0,
+        beveled:    1,
+        dashed:     2,
+        inset:      3,
+        underline:  4
+    };
+
+    BORDER_TYPES["solid"]       = BORDER_TYPES.solid;
+    BORDER_TYPES["beveled"]     = BORDER_TYPES.beveled;
+    BORDER_TYPES["dashed"]      = BORDER_TYPES.dashed;
+    BORDER_TYPES["inset"]       = BORDER_TYPES.inset;
+    BORDER_TYPES["underline"]   = BORDER_TYPES.underline;
+
+    const BUTTON_HIGHLIGHT_TYPES = {
+        none:       0,
+        invert:     1,
+        push:       2,
+        outline:    3
+    }
+
+    BUTTON_HIGHLIGHT_TYPES["none"]      = BUTTON_HIGHLIGHT_TYPES.none;
+    BUTTON_HIGHLIGHT_TYPES["invert"]    = BUTTON_HIGHLIGHT_TYPES.invert;
+    BUTTON_HIGHLIGHT_TYPES["push"]      = BUTTON_HIGHLIGHT_TYPES.push;
+    BUTTON_HIGHLIGHT_TYPES["outline"]   = BUTTON_HIGHLIGHT_TYPES.outline;
+
+    const APPEARANCE_TYPES = {
+        normal:     0,
+        mouseDown:  1,
+        rollover:   2
+    };
+
+    APPEARANCE_TYPES["normal"]      = APPEARANCE_TYPES.normal;
+    APPEARANCE_TYPES["mouseDown"]   = APPEARANCE_TYPES.mouseDown;
+    APPEARANCE_TYPES["rollover"]    = APPEARANCE_TYPES.rollover;
+
+    asc["FIELD_TYPES"]              = asc.FIELD_TYPES               = FIELD_TYPES;
+    asc["BORDER_EFFECT_STYLES"]     = asc.BORDER_EFFECT_STYLES      = BORDER_EFFECT_STYLES;
+    asc["REF_TO_REASON"]            = asc.REF_TO_REASON             = REF_TO_REASON;
+    asc["FormatType"]               = asc.FormatType                = FormatType;
+    asc["SpecialFormatType"]        = asc.SpecialFormatType         = SpecialFormatType;
+    asc["SeparatorStyle"]           = asc.SeparatorStyle            = SeparatorStyle;
+    asc["TimeFormatType"]           = asc.TimeFormatType            = TimeFormatType;
+    asc["NegativeStyle"]            = asc.NegativeStyle             = NegativeStyle;
+    asc["CalculateType"]            = asc.CalculateType             = CalculateType;
+    asc["ValidateType"]             = asc.ValidateType              = ValidateType;
+    asc["CHECKBOX_STYLES"]          = asc.CHECKBOX_STYLES           = CHECKBOX_STYLES;
+    asc["BORDER_TYPES"]             = asc.BORDER_TYPES              = BORDER_TYPES;
+    asc["BUTTON_HIGHLIGHT_TYPES"]   = asc.BUTTON_HIGHLIGHT_TYPES    = BUTTON_HIGHLIGHT_TYPES;
+    asc["APPEARANCE_TYPES"]         = asc.APPEARANCE_TYPES          = APPEARANCE_TYPES;
+    asc.CommandType                 = CommandType;
 })();

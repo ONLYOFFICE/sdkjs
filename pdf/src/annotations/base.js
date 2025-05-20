@@ -100,6 +100,9 @@
     CAnnotationBase.prototype = Object.create(AscFormat.CBaseNoIdObject.prototype);
 	CAnnotationBase.prototype.constructor = CAnnotationBase;
     
+    CAnnotationBase.prototype.IsEditFieldShape = function() {
+        return false;
+    };
     CAnnotationBase.prototype.SetUserId = function(sUID) {
         if (this.uid == sUID) {
             return;
@@ -645,7 +648,7 @@
             return;
         }
 
-        AscCommon.History.Add(new CChangesPDFDocumentSetDocument(this, this._doc, oDoc));
+        AscCommon.History.Add(new CChangesPDFObjectSetDocument(this, this._doc, oDoc));
         this._doc = oDoc;
     };
     CAnnotationBase.prototype.GetDocument = function() {
@@ -653,7 +656,7 @@
     };
     CAnnotationBase.prototype.IsHidden = function() {
         let nType = this.GetDisplay();
-        if (nType == window["AscPDF"].Api.Objects.display["hidden"] || nType == window["AscPDF"].Api.Objects.display["noView"])
+        if (nType == window["AscPDF"].Api.Types.display["hidden"] || nType == window["AscPDF"].Api.Types.display["noView"])
             return true;
 
         return false;
@@ -682,7 +685,7 @@
         oReply.SetCreationDate(AscPDF.ParsePDFDate(oReplyInfo["CreationDate"]).getTime());
         oReply.SetModDate(AscPDF.ParsePDFDate(oReplyInfo["LastModified"]).getTime());
         oReply.SetAuthor(oReplyInfo["User"]);
-        oReply.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
+        oReply.SetDisplay(window["AscPDF"].Api.Types.display["visible"]);
         oReply.SetPopupIdx(oReplyInfo["Popup"]);
         oReply.SetSubject(oReplyInfo["Subj"]);
         oReply.SetUserId(oReplyInfo["OUserID"]);

@@ -31,11 +31,86 @@
  */
 
 $(function () {
+    // Mocks necessary methods for work api and disable collaborative methods.
+    Asc.spreadsheet_api.prototype._init = function () {
+        this._loadModules();
+    };
+    Asc.spreadsheet_api.prototype._loadFonts = function (fonts, callback) {
+        callback();
+    };
+    AscCommonExcel.WorkbookView.prototype._calcMaxDigitWidth = function () {
+    };
+    AscCommonExcel.WorkbookView.prototype._init = function () {
+    };
+    AscCommonExcel.WorkbookView.prototype._isLockedUserProtectedRange = function (callback) {
+        callback(true);
+    };
+    AscCommonExcel.WorkbookView.prototype._onWSSelectionChanged = function () {
+    };
+    AscCommonExcel.WorkbookView.prototype.showWorksheet = function () {
+    };
+    AscCommonExcel.WorkbookView.prototype.recalculateDrawingObjects = function () {
+    };
+    AscCommonExcel.WorkbookView.prototype.restoreFocus = function () {
+    };
+    AscCommonExcel.WorksheetView.prototype._init = function () {
+    };
+    AscCommonExcel.WorksheetView.prototype.updateRanges = function () {
+    };
+    AscCommonExcel.WorksheetView.prototype._autoFitColumnsWidth = function () {
+    };
+    AscCommonExcel.WorksheetView.prototype.cleanSelection = function () {
+    };
+    AscCommonExcel.WorksheetView.prototype._drawSelection = function () {
+    };
+    AscCommonExcel.WorksheetView.prototype._scrollToRange = function () {
+    };
+    AscCommonExcel.WorksheetView.prototype.draw = function () {
+    };
+    AscCommonExcel.WorksheetView.prototype._prepareDrawingObjects = function () {
+    };
+    AscCommonExcel.WorksheetView.prototype._initCellsArea = function () {
+    };
+    AscCommonExcel.WorksheetView.prototype.getZoom = function () {
+    };
+    AscCommonExcel.WorksheetView.prototype._prepareCellTextMetricsCache = function () {
+    };
+
+    AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function () {
+    };
+    AscCommonExcel.WorksheetView.prototype._isLockedCells = function (oFromRange, subType, callback) {
+        callback(true);
+        return true;
+    };
+    AscCommonExcel.WorksheetView.prototype._isLockedAll = function (callback) {
+        callback(true);
+    };
+    AscCommonExcel.WorksheetView.prototype._isLockedFrozenPane = function (callback) {
+        callback(true);
+    };
+    AscCommonExcel.WorksheetView.prototype._updateVisibleColsCount = function () {
+    };
+    AscCommonExcel.WorksheetView.prototype._calcActiveCellOffset = function () {
+    };
+
+    AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function () {
+    };
+    Asc.ReadDefTableStyles = function () {
+    };
+    //Goal Seek
     let CGoalSeek = AscCommonExcel.CGoalSeek;
     let CParserFormula = AscCommonExcel.parserFormula;
     let g_oIdCounter = AscCommon.g_oIdCounter;
     let sData = AscCommon.getEmpty();
     let wb, ws, oParserFormula, oGoalSeek, nResult, nChangingVal, nExpectedVal, api;
+    // Solver
+    let CSolver = AscCommonExcel.CSolver;
+    let asc_CSolverParams = AscCommonExcel.asc_CSolverParams;
+    let c_oAscOperator = AscCommonExcel.c_oAscOperator;
+    let c_oAscDerivativeType = AscCommonExcel.c_oAscDerivativeType;
+    let c_oAscSolvingMethod = AscCommonExcel.c_oAscSolvingMethod;
+    let c_oAscOptimizeTo = AscCommonExcel.c_oAscOptimizeTo;
+    let oSolver;
 
     if (AscCommon.c_oSerFormat.Signature === sData.substring(0, AscCommon.c_oSerFormat.Signature.length)) {
         Asc.spreadsheet_api.prototype._init = function() {
@@ -47,6 +122,27 @@ $(function () {
             LoadDocumentFonts: function () {
             }
         };
+        window["Asc"]["editor"] = api;
+        AscCommon.g_oTableId.init();
+        api._onEndLoadSdk();
+        api.isOpenOOXInBrowser = false;
+        api.OpenDocumentFromBin(null, AscCommon.getEmpty());
+        api.initCollaborativeEditing({});
+        api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,
+            api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
+        wb = api.wbModel;
+        wb.handlers.add("getSelectionState", function () {
+            return null;
+        });
+        wb.handlers.add("getLockDefNameManagerStatus", function () {
+            return true;
+        });
+        wb.handlers.add("asc_onConfirmAction", function (test1, callback) {
+            callback(true);
+        });
+        let wsView = api.wb.getWorksheet(0);
+        wsView.handlers = api.handlers;
+        wsView.objectRender = new AscFormat.DrawingObjects();
 
         let docInfo = new Asc.asc_CDocInfo();
         docInfo.asc_putTitle("TeSt.xlsx");
@@ -55,7 +151,7 @@ $(function () {
         window["Asc"]["editor"] = api;
 
         AscCommon.g_oTableId.init();
-        wb = new AscCommonExcel.Workbook(new AscCommonExcel.asc_CHandlersList(), api, true);
+        /*wb = new AscCommonExcel.Workbook(new AscCommonExcel.asc_CHandlersList(), api, true);*/
         AscCommon.History.init(wb);
         wb.maxDigitWidth = 7;
         wb.paddingPlusBorder = 5;
@@ -71,7 +167,8 @@ $(function () {
         ws = wb.getWorksheet(wb.getActive());
         AscCommonExcel.getFormulasInfo();
     }
-    wb.dependencyFormulas.lockRecal();
+    //wb.dependencyFormulas.lockRecal();
+    // Goal Seek
     CGoalSeek.prototype.resume = function() {
         this.setIsPause(false);
         while (true) {
@@ -146,6 +243,105 @@ $(function () {
         nChangingVal = Number(oGoalSeek.getChangingCell().getValue());
 
         return [nResult, nChangingVal];
+    };
+    // Solver
+    const getHiddenDefinedNamesWS = function(oDependencyFormulas) {
+        const oActiveWS = oDependencyFormulas.wb.getActiveWs();
+        const aHiddenDefNames = [];
+
+        oDependencyFormulas._foreachDefNameSheet(oActiveWS.getId(), function(oDefName) {
+            if (oDefName.hidden) {
+                aHiddenDefNames.push(oDefName);
+            }
+        });
+
+        return aHiddenDefNames;
+    };
+    // Mock the method that starts the solver calculation. Replaces async loop to sync loop
+    AscCommonExcel.WorkbookView.prototype.startSolver = function(oSolverParams) {
+        if (!this.model) {
+            return;
+        }
+
+        const CSolver = AscCommonExcel.CSolver;
+        const wbModel = this.model;
+        const ws = wbModel.getActiveWs();
+        const t = this;
+        let oSolver;
+
+        const callback = function (isSuccess) {
+            if (!isSuccess) {
+                t.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellGoalSeek, c_oAscError.Level.NoCritical);
+                return;
+            }
+            //open history point
+            History.Create_NewPoint();
+            History.StartTransaction();
+            // Init CSolver object
+            wbModel.setSolver(new CSolver(oSolverParams, ws))
+            oSolver = wbModel.getSolver();
+            oSolver.prepare();
+            // Run solver
+            if (oSolverParams.getOptions().getShowIterResults()) {
+                oSolver.step();
+            } else {
+                while (true) {
+                    let bIsFinish = oSolver.calculate();
+                    if (bIsFinish) {
+                        break;
+                    }
+                }
+            }
+        };
+
+        //need lock
+        const aLocksInfo = [];
+        //cells locks info
+        const wsChangingCell = AscCommonExcel.actualWsByRef(oSolverParams.getChangingCells(), ws);
+        const sChangingCell = AscCommonExcel.convertToAbsoluteRef(oSolverParams.getChangingCells());
+        const oChangingCell = wsChangingCell && wsChangingCell.getRange2(sChangingCell);
+        if (oChangingCell) {
+            aLocksInfo.push(this.collaborativeEditing.getLockInfo(AscCommonExcel.c_oAscLockTypeElem.Range, null, wsChangingCell.getId(),
+                new AscCommonExcel.asc_CCollaborativeRange(oChangingCell.bbox.c1, oChangingCell.bbox.r1, oChangingCell.bbox.c2, oChangingCell.bbox.r2)));
+        }
+
+        const wsFormula = AscCommonExcel.actualWsByRef(oSolverParams.getObjectiveFunction(), ws);
+        const sFormulaCell = AscCommonExcel.convertToAbsoluteRef(oSolverParams.getObjectiveFunction());
+        const oFormulaCell = wsFormula && wsFormula.getRange2(sFormulaCell);
+        if (oFormulaCell) {
+            aLocksInfo.push(this.collaborativeEditing.getLockInfo(AscCommonExcel.c_oAscLockTypeElem.Range, null, wsFormula.getId(),
+                new AscCommonExcel.asc_CCollaborativeRange(oFormulaCell.bbox.c1, oFormulaCell.bbox.r1, oFormulaCell.bbox.c2, oFormulaCell.bbox.r2)));
+        }
+
+        this.collaborativeEditing.lock(aLocksInfo, callback);
+
+        const oChangedCell = oSolver.getChangingCell();
+        if (oChangedCell) {
+            // update worksheet field
+            let ws = this.getWorksheetById(oChangedCell.worksheet.Id);
+            ws._updateRange(oChangedCell.bbox);
+            ws.draw();
+        }
+    };
+    CSolver.prototype.step = function() {
+        let oSolver = this;
+
+        this.setIsPause(false);
+        this.setIsSingleStep(true);
+        while (true) {
+            let bIsFinish = oSolver.calculate();
+            if (bIsFinish) {
+                break;
+            }
+        }
+    };
+    const checkUndoRedo = function(fBefore, fAfter, desc) {
+        fAfter("after_" + desc);
+        AscCommon.History.Undo();
+        fBefore("undo_" + desc);
+        AscCommon.History.Redo();
+        fAfter("redo_" + desc);
+        AscCommon.History.Undo();
     };
 
     QUnit.module('Goal seek');
@@ -1000,5 +1196,477 @@ $(function () {
        assert.strictEqual(Number(nResult.toFixed(0)), nExpectedVal, `Case: Trying to find first parameter for Financial formula Bug #65864. Result formula: ${nResult}`);
        assert.strictEqual(Number(nChangingVal.toFixed(0)), 185714, `Case: Trying to find first parameter for Financial formula Bug #65864. Result ChangingVal: ${nChangingVal}`);
        clearData(0, 0, 3, 4);
+    });
+    QUnit.module('Solver');
+    QUnit.test('Test: Example - Order distribution task', function(assert) {
+        // Filling data
+        const testData = [
+            ['1000'],
+            ['30'],
+            ['Worker 1', '15', '2500', '0', '=C3*D3', '=D3/B3'],
+            ['Worker 2', '7', '900', '0', '=C4*D4', '=D4/B4'],
+            ['Worker 3', '10', '1550', '0', '=C5*D5', '=D5/B5'],
+            ['Worker 4', '12', '2150', '0', '=C6*D6', '=D6/B6'],
+            ['Total', '=SUM(B3:B6)', '', '=SUM(D3:D6)', '=SUM(E3:E6)', '=MAX(F3:F6)']
+        ];
+        let oRange = ws.getRange4(0, 0);
+        oRange.fillData(testData);
+        // Imitating of filling dialogue window of Solver tool
+        const oParams = new asc_CSolverParams();
+        oParams.setObjectiveFunction('Sheet1!$E$7');
+        oParams.setOptimizeResultTo(c_oAscOptimizeTo.min);
+        oParams.setChangingCells('Sheet1!$D$3:$D$6');
+        oParams.addConstraint(0, {cellRef: 'Sheet1!$D$3:$D$6', operator: c_oAscOperator['='], constraint: 'integer'});
+        oParams.addConstraint(1, {cellRef: 'Sheet1!$D$3:$D$6', operator: c_oAscOperator['>='], constraint: '0'});
+        oParams.addConstraint(2, {cellRef: 'Sheet1!$D$7', operator: c_oAscOperator['='], constraint: '1000'});
+        oParams.addConstraint(3, {cellRef: 'Sheet1!$F$7', operator: c_oAscOperator['<='], constraint: 'Sheet1!$A$2'});
+        oParams.setVariablesNonNegative(false);
+        oParams.setSolvingMethod(c_oAscSolvingMethod.grgNonlinear);
+        // Filling options for calculation
+        const oOptions = oParams.getOptions();
+        oOptions.setConstraintPrecision('0,000001');
+        oOptions.setIntOptimal('1');
+        oOptions.setConvergence('0,0001');
+        oOptions.setDerivatives(c_oAscDerivativeType.forward);
+        oOptions.setPopulationSize('0');
+        oOptions.setRandomSeed('0');
+        oOptions.setMutationRate('0,075');
+        oOptions.setEvoMaxTime('30');
+        assert.ok(oParams, 'Params is created');
+        // Creating Solver object for calculate example.
+        oSolver = new CSolver(oParams, ws);
+        assert.ok(oSolver, 'Solver is created');
+        // Checking attributes of Solver
+        let bIsParserFormulaObject = oSolver.getParsedFormula() instanceof CParserFormula;
+        assert.strictEqual(bIsParserFormulaObject, true, 'Check Solver attributes: Objective cell is parserFormula object');
+        assert.strictEqual(oSolver.getChangingCell().getName(), '$D$3:$D$6', 'Check Solver attributes: Changing cells is D3:D6');
+        assert.strictEqual(isNaN(oSolver.getMaxIterations()), false, 'Check Solver attributes: Max iterations is not NaN');
+        assert.strictEqual(oSolver.getSolvingMethod(), c_oAscSolvingMethod.grgNonlinear, 'Check Solver attributes: Solving method is grgNonlinear');
+        assert.strictEqual(oSolver.getOptimizeResultTo(), c_oAscOptimizeTo.min, 'Check Solver attributes: Optimize result to is min');
+        assert.strictEqual(oSolver.getVariablesNonNegative(), false, 'Check Solver attributes: Variables non negative is false');
+        const aConstraints = oSolver.getConstraints();
+        const aExpectedData = [
+            {cellRef: '$D$3:$D$6', operator: c_oAscOperator['='], constraint: 'integer'},
+            {cellRef: '$D$3:$D$6', operator: c_oAscOperator['>='],constraint: 0},
+            {cellRef: '$D$7', operator: c_oAscOperator['='], constraint: 1000},
+            {cellRef: '$F$7', operator: c_oAscOperator['<='], constraint: '$A$2'}
+        ];
+        aConstraints.forEach(function(oConstraint, index) {
+            let constraint = oConstraint.getConstraint() instanceof AscCommonExcel.Range ? oConstraint.getConstraint().getName() : oConstraint.getConstraint();
+            assert.strictEqual(oConstraint.getCell().getName(), aExpectedData[index].cellRef, `Check Solver attributes: Constraint element #${index} cell is ${aExpectedData[index].cellRef}`);
+            assert.strictEqual(oConstraint.getOperator(), aExpectedData[index].operator, `Check Solver attributes: Constraint element #${index} operator is ${aExpectedData[index].operator}`);
+            assert.strictEqual(constraint, aExpectedData[index].constraint, `Check Solver attributes: Constraint element #${index} constraint is ${aExpectedData[index].constraint}`);
+        });
+        // Checking calculateConstraints method
+        const aConstraintsResult = oSolver.calculateConstraints();
+        const aExpectedConstraintsResult = [true, true, false, true];
+        aConstraintsResult.forEach(function(bResult, index) {
+            assert.strictEqual(bResult, aExpectedConstraintsResult[index], `Check Solver calculateConstraints method: Constraint element #${index} result is ${aExpectedConstraintsResult[index]}`);
+        })
+        // Checking calculate logic
+        oSolver.calculate();
+        clearData(0, 0, 6, 7);
+    });
+    QUnit.test('Test: Example - Delivery goods in stores. Linear programming', function(assert) {
+        // Filling data
+        const testData = [
+            // Cost of good delivery in stores
+            // Store 1, Store 2, Store 3, Store 4, Store 5
+            ['55', '41', '28', '11', '25'], // Warehouse 1
+            ['40', '50', '8', '32', '30'],  // Warehouse 2
+            ['45', '25', '60', '38', '20'], // Warehouse 3
+            ['', '', '', '', '', ''], // Separator
+            // Routes of delivery
+            // Store 1, Store 2, Store 3, Store 4, Store 5, Total, Warehouse capacity
+            ['0', '0', '0', '0', '0', '=SUM(A5:E5)', '400'], // Warehouse 1 Row: 5
+            ['0', '0', '0', '0', '0', '=SUM(A6:E6)', '700'], // Warehouse 2
+            ['0', '0', '0', '0', '0', '=SUM(A7:E7)', '300'], // Warehouse 3
+            ['=SUM(A5:A7)', '=SUM(B5:B7)', '=SUM(C5:C7)', '=SUM(D5:D7)', '=SUM(E5:E7)'], // Total
+            ['300', '230', '150', '320', '400'], // Demand
+            ['=SUMPRODUCT(A1:E3,A5:E7)'] // Total cost of delivery
+        ];
+        let oRange = ws.getRange4(0, 0);
+        oRange.fillData(testData);
+        // Imitating of filling dialogue window of Solver tool
+        const oParams = new asc_CSolverParams();
+        oParams.setObjectiveFunction('Sheet1!$A$10');
+        oParams.setOptimizeResultTo(c_oAscOptimizeTo.min);
+        oParams.setChangingCells('Sheet1!$A$5:$E$7');
+        oParams.addConstraint(0, {cellRef: 'Sheet1!$A$8:$E$8', operator: c_oAscOperator['='], constraint: 'Sheet1!$A$9:$E$9'});
+        oParams.addConstraint(1, {cellRef: 'Sheet1!$F$5:$F$7', operator: c_oAscOperator['<='], constraint: 'Sheet1!$G$5:$G$7'});
+        // Todo for mvp non-negative variables make as additional constraint. Later replace to checkbox setting.
+        oParams.addConstraint(2, {cellRef: 'Sheet1!$A$5:$E$7', operator: c_oAscOperator['>='], constraint: '0'});
+        oParams.setVariablesNonNegative(false);
+        oParams.setSolvingMethod(c_oAscSolvingMethod.simplexLP);
+        // Filling options for calculation. It's default option
+        const oOptions = oParams.getOptions();
+        oOptions.setConstraintPrecision('0,000001');
+        oOptions.setIntOptimal('1');
+        oOptions.setConvergence('0,0001');
+        oOptions.setDerivatives(c_oAscDerivativeType.forward);
+        oOptions.setPopulationSize('0');
+        oOptions.setRandomSeed('0');
+        oOptions.setMutationRate('0,075');
+        oOptions.setEvoMaxTime('30');
+        assert.ok(oParams, 'Params is created');
+        // Creating Solver object for calculate example.
+        oSolver = new CSolver(oParams, ws);
+        assert.ok(oSolver, 'Solver is created');
+        // Checking attributes of Solver
+        let bIsParserFormulaObject = oSolver.getParsedFormula() instanceof CParserFormula;
+        assert.strictEqual(bIsParserFormulaObject, true, 'Check Solver attributes: Objective cell is parserFormula object');
+        assert.strictEqual(oSolver.getChangingCell().getName(), '$A$5:$E$7', 'Check Solver attributes: Changing cells is D3:D6');
+        assert.strictEqual(isNaN(oSolver.getMaxIterations()), false, 'Check Solver attributes: Max iterations is not NaN');
+        assert.strictEqual(oSolver.getSolvingMethod(), c_oAscSolvingMethod.simplexLP, 'Check Solver attributes: Solving method is grgNonlinear');
+        assert.strictEqual(oSolver.getOptimizeResultTo(), c_oAscOptimizeTo.min, 'Check Solver attributes: Optimize result to is min');
+        assert.strictEqual(oSolver.getVariablesNonNegative(), false, 'Check Solver attributes: Variables non negative is false');
+        const aConstraints = oSolver.getConstraints();
+        const aExpectedData = [
+            {cellRef: '$A$8:$E$8', operator: c_oAscOperator['='], constraint: '$A$9:$E$9'},
+            {cellRef: '$F$5:$F$7', operator: c_oAscOperator['<='], constraint: '$G$5:$G$7'},
+            {cellRef: '$A$5:$E$7', operator: c_oAscOperator['>='],constraint: 0}
+        ];
+        aConstraints.forEach(function(oConstraint, index) {
+            let constraint = oConstraint.getConstraint() instanceof AscCommonExcel.Range ? oConstraint.getConstraint().getName() : oConstraint.getConstraint();
+            assert.strictEqual(oConstraint.getCell().getName(), aExpectedData[index].cellRef, `Check Solver attributes: Constraint element #${index} cell is ${aExpectedData[index].cellRef}`);
+            assert.strictEqual(oConstraint.getOperator(), aExpectedData[index].operator, `Check Solver attributes: Constraint element #${index} operator is ${aExpectedData[index].operator}`);
+            assert.strictEqual(constraint, aExpectedData[index].constraint, `Check Solver attributes: Constraint element #${index} constraint is ${aExpectedData[index].constraint}`);
+        });
+        // Checking prepare data for solving logic
+        oSolver.prepare();
+        // Checking prepare data for calculate by Simplex. Check whole CSimplexTableau class.
+       let oSimplexTableau = oSolver.getSimplexTableau();
+       assert.ok(oSimplexTableau, 'Check prepare data for calculate by Simplex. CSimplexTableau is created.');
+       assert.strictEqual(oSimplexTableau.getBounded(), true, 'Check prepare data for calculate by Simplex. Check bBounded attribute is true');
+       assert.strictEqual(oSimplexTableau.nBranchAndCutIters, 0, 'Check prepare data for calculate by Simplex. Check nBranchAndCutIters attribute is 0');
+       // Checking colByVarIndex array
+        let aColByVarIndex = oSimplexTableau.getColByVarIndex();
+        let aColByVarIndexExpected = [
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1 ,-1 ,-1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1, 1, 2,
+             3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+        ];
+        assert.deepEqual(aColByVarIndex, aColByVarIndexExpected, 'Check prepare data for calculate by Simplex. Check colByVarIndex attribute');
+        assert.strictEqual(oSimplexTableau.getObjectiveRowIndex(), 0, 'Check prepare data for calculate by Simplex. Check nCostRowIndex attribute is 0');
+        assert.strictEqual(oSimplexTableau.getSolutionIsFound(), false, 'Check prepare data for calculate by Simplex. Check nEvaluation attribute is 0');
+        assert.strictEqual(oSimplexTableau.getFeasible(), false, 'Check prepare data for calculate by Simplex. Check bFeasible attribute is true');
+        assert.strictEqual(oSimplexTableau.getHeight(), 29, 'Check prepare data for calculate by Simplex. Check height attribute is 29');
+        assert.strictEqual(oSimplexTableau.getLastElementIndex(), 43, 'Check prepare data for calculate by Simplex. Check lastElementIndex attribute is 43');
+        assert.strictEqual(oSimplexTableau.getVarsCount(), 43, 'Check prepare data for calculate by Simplex. Check varsCount attribute is 43');
+        assert.strictEqual(oSimplexTableau.getPrecision(), 1e-6, 'Check prepare data for calculate by Simplex. Check nPrecision attribute is 1e-8');
+        assert.strictEqual(oSimplexTableau.getRhsColumn(), 0, 'Check prepare data for calculate by Simplex. Check nRhsColumn attribute is 0');
+        assert.strictEqual(oSimplexTableau.getWidth(), 16, 'Check prepare data for calculate by Simplex. Check width attribute is 16');
+        // Checking rowByVarIndex
+        let aRowByVarIndex = oSimplexTableau.getRowByVarIndex();
+        let aRowByVarIndexExpected = [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+            21, 22, 23, 24, 25, 26, 27, 28, -1, -1,
+            -1, -1, -1, -1, -1, -1 ,-1 ,-1 ,-1 ,-1,
+            -1, -1, -1
+        ];
+        assert.deepEqual(aRowByVarIndex, aRowByVarIndexExpected, 'Check prepare data for calculate by Simplex. Check rowByVarIndex attribute');
+        // Checking varIndexByCol
+        let aVarIndexByCol = oSimplexTableau.getVarIndexByCol();
+        let aVarIndexByColExpected = [-1, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42];
+        assert.deepEqual(aVarIndexByCol, aVarIndexByColExpected, 'Check prepare data for calculate by Simplex. Check varIndexByCol attribute');
+        // Checking varIndexByRow
+        let aVarIndexByRow = oSimplexTableau.getVarIndexByRow();
+        let aVarIndexByRowExpected = [
+            -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+            21, 22, 23, 24, 25, 26, 27
+        ];
+        assert.deepEqual(aVarIndexByRow, aVarIndexByRowExpected, 'Check prepare data for calculate by Simplex. Check varIndexByRow attribute');
+        // Checking matrix
+        let aMatrix = oSimplexTableau.getMatrix();
+        let aMatrixExpected = [
+            [0, -55, -41, -28, -11, -25, -40, -50, -8, -32, -30, -45, -25, -60, -38, -20],
+            [-300, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0],
+            [300, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+            [-230, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0],
+            [230, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0],
+            [-150, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0],
+            [150, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0],
+            [-320, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0],
+            [320, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0],
+            [-400, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1],
+            [400, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+            [400, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [700, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+            [300, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+            [0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1]
+        ];
+        assert.deepEqual(aMatrix, aMatrixExpected, 'Check prepare data for calculate by Simplex. Check matrix attribute');
+        // Check calculate logic
+        oSolver.setStartTime(Date.now());
+        while (true) {
+           let bCompleteCalculation = oSolver.calculate();
+           if (bCompleteCalculation) {
+               break;
+           }
+        }
+        aMatrix = oSimplexTableau.getMatrix();
+        aMatrixExpected = [
+            [33370, -20, -11, -25, -16, -10, -40, -15, -8, -16, -5, -15, -35, -62, -32, -30],
+            [300, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [230, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+            [150, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+            [320, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [70, 0, -1, 0, 0, 1, 0, -1, 0, 0, 0, 1, 1, 1, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [250, -1, 0, -1, -1, -1, 0, 1, 0, 1, -1, -1, -1, -1, 0, -1],
+            [0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1],
+            [80, 1, 1, 1, 1, 0, 0, 0, 0, -1, 1, 0, 0, 0, -1, 0],
+            [-0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [-0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [-0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [320, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0],
+            [80, 1, 1, 1, 1, 0, 0, 0, 0, -1, 1, 0, 0, 0, -1, 0],
+            [300, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+            [-0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [150, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0],
+            [-0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0],
+            [250, -1, 0, -1, -1, -1, 0, 1, 0, 1, -1, -1, -1, -1, 0, -1],
+            [-0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0],
+            [230, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0],
+            [-0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0],
+            [-0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0],
+            [70, 0, -1, 0, 0, 1, 0, -1, 0, 0, 0, 1, 1, 1, 1, 0]
+        ];
+        assert.deepEqual(aMatrix, aMatrixExpected, 'Check calculate logic. Check updated matrix attribute');
+        // Checks fill of cells  from "By Changing Variable Cells"
+        const oVarIndexByCellName = oSimplexTableau.getVarIndexByCellName();
+        const oExpectedChangingCells = {
+            'A5': '0',
+            'A6': '300',
+            'A7': '0',
+            'B5': '0',
+            'B6': '0',
+            'B7': '230',
+            'C5': '0',
+            'C6': '150',
+            'C7': '0',
+            'D5': '320',
+            'D6': '0',
+            'D7': '0',
+            'E5': '80',
+            'E6': '250',
+            'E7': '70'
+
+        };
+        for (let sCellName in oVarIndexByCellName) {
+            const sCellVal = ws.getCell2(sCellName).getValue();
+            assert.strictEqual(sCellVal, oExpectedChangingCells[sCellName], `Check fill of cells from "By Changing Variable Cells" Cell: ${sCellName}. Value: ${sCellVal}`);
+        }
+        // Checks result of objective formula.
+        const sObjectiveFormula = ws.getCell2('A10').getValue();
+        assert.strictEqual(sObjectiveFormula, '33370', `Check result of objective formula. Cell: A10. Value: ${sObjectiveFormula}`);
+        clearData(0, 0, 100, 100);
+    });
+    QUnit.test('Check API', function (assert) {
+        // Filling data
+        const testData = [
+            // Cost of good delivery in stores
+            // Store 1, Store 2, Store 3, Store 4, Store 5
+            ['55', '41', '28', '11', '25'], // Warehouse 1
+            ['40', '50', '8', '32', '30'],  // Warehouse 2
+            ['45', '25', '60', '38', '20'], // Warehouse 3
+            ['', '', '', '', '', ''], // Separator
+            // Routes of delivery
+            // Store 1, Store 2, Store 3, Store 4, Store 5, Total, Warehouse capacity
+            ['0', '0', '0', '0', '0', '=SUM(A5:E5)', '400'], // Warehouse 1 Row: 5
+            ['0', '0', '0', '0', '0', '=SUM(A6:E6)', '700'], // Warehouse 2
+            ['0', '0', '0', '0', '0', '=SUM(A7:E7)', '300'], // Warehouse 3
+            ['=SUM(A5:A7)', '=SUM(B5:B7)', '=SUM(C5:C7)', '=SUM(D5:D7)', '=SUM(E5:E7)'], // Total
+            ['300', '230', '150', '320', '400'], // Demand
+            ['=SUMPRODUCT(A1:E3,A5:E7)'] // Total cost of delivery
+        ];
+        let oRange = ws.getRange4(0, 0);
+        oRange.fillData(testData);
+
+        // Testing api. Test saving Solver params. Test GetSolverParams and CloseSolver api. Options have default values
+        let solverParams = api.asc_GetSolverParams();
+        assert.ok(solverParams, 'Check API. asc_GetSolverParams is created. Open Solver params dialogue window');
+        assert.strictEqual(solverParams.getObjectiveFunction(), null, 'Check API. asc_GetSolverParams. objectiveFunction is null');
+        assert.strictEqual(solverParams.getOptimizeResultTo(), c_oAscOptimizeTo.max, 'Check API. asc_GetSolverParams. optimizeResultTo is max');
+        assert.strictEqual(solverParams.getValueOf(), '0', 'Check API. asc_GetSolverParams. valueOf is 0');
+        assert.strictEqual(solverParams.getChangingCells(), null, 'Check API. asc_GetSolverParams. changingCells is null');
+        assert.strictEqual(solverParams.getConstraints().size, 0, 'Check API. asc_GetSolverParams. constraints is empty');
+        assert.strictEqual(solverParams.getVariablesNonNegative(), true, 'Check API. asc_GetSolverParams. bVariablesNonNegative is false');
+        assert.strictEqual(solverParams.getSolvingMethod(), c_oAscSolvingMethod.simplexLP, 'Check API. asc_GetSolverParams. solvingMethod is simplexLP');
+        // Fills field from Solver params
+        solverParams.setObjectiveFunction('Sheet1!$A$10');
+        solverParams.setOptimizeResultTo(c_oAscOptimizeTo.min);
+        solverParams.setChangingCells('Sheet1!$A$5:$E$7');
+        solverParams.addConstraint(1, {cellRef: 'Sheet1!$A$8:$E$8', operator: c_oAscOperator['='], constraint: 'Sheet1!$A$9:$E$9'});
+        solverParams.addConstraint(2, {cellRef: 'Sheet1!$F$5:$F$7', operator: c_oAscOperator['<='], constraint: 'Sheet1!$G$5:$G$7'});
+        solverParams.addConstraint(3, {cellRef: 'Sheet1!$A$5:$E$7', operator: c_oAscOperator['>='], constraint: '0'});
+        solverParams.setVariablesNonNegative(false);
+        api.asc_CloseSolver(false, solverParams);
+        solverParams = null;
+        assert.strictEqual(solverParams, null, 'Check API. asc_CloseSolver is closed. Solver params is null');
+        solverParams = api.asc_GetSolverParams();
+        assert.ok(solverParams, 'Check API. asc_GetSolverParams is created with saved data. Reopen Solver params dialogue window after closing');
+        assert.strictEqual(solverParams.getObjectiveFunction(), 'Sheet1!$A$10', 'Check API. asc_GetSolverParams. objectiveFunction is Sheet1!$A$10');
+        assert.strictEqual(solverParams.getOptimizeResultTo(), c_oAscOptimizeTo.min, 'Check API. asc_GetSolverParams. optimizeResultTo is min');
+        assert.strictEqual(solverParams.getValueOf(), '0', 'Check API. asc_GetSolverParams. valueOf is 0');
+        assert.strictEqual(solverParams.getChangingCells(), 'Sheet1!$A$5:$E$7', 'Check API. asc_GetSolverParams. changingCells is Sheet1!$A$5:$E$7');
+        assert.strictEqual(solverParams.getConstraints().size, 3, 'Check API. asc_GetSolverParams. constraints has 3 elements');
+        assert.strictEqual(solverParams.getVariablesNonNegative(), false, 'Check API. asc_GetSolverParams. bVariablesNonNegative is false');
+        assert.strictEqual(solverParams.getSolvingMethod(), c_oAscSolvingMethod.simplexLP, 'Check API. asc_GetSolverParams. solvingMethod is simplexLP');
+        // Checks define names
+        let aDefNames = getHiddenDefinedNamesWS(wb.dependencyFormulas);
+        assert.strictEqual(aDefNames.length, 36, 'Check API. Define names is created. Count of define names is 36');
+        // Checks start solve with enabled Show iterative result.
+        solverParams = api.asc_GetSolverParams();
+        solverParams.getOptions().setShowIterResults(true);
+        api.asc_StartSolver(solverParams);
+
+        let oSimplexTableau = wb.getSolver().getSimplexTableau();
+        let oVarIndexByCellName = oSimplexTableau.getVarIndexByCellName();
+        let oExpectedChangingCells = {
+            'A5': '0',
+            'A6': '0',
+            'A7': '0',
+            'B5': '0',
+            'B6': '0',
+            'B7': '0',
+            'C5': '0',
+            'C6': '0',
+            'C7': '0',
+            'D5': '0',
+            'D6': '0',
+            'D7': '0',
+            'E5': '0',
+            'E6': '0',
+            'E7': '400'
+
+        };
+        for (let sCellName in oVarIndexByCellName) {
+            const sCellVal = ws.getCell2(sCellName).getValue();
+            assert.strictEqual(sCellVal, oExpectedChangingCells[sCellName], `StartSolver API. Check fill of cells from "By Changing Variable Cells" with enabled "Show iteration result" 1st iteration. Cell: ${sCellName}. Value: ${sCellVal}`);
+        }
+        api.asc_StepSolver();
+
+        oExpectedChangingCells = {
+            'A5': '0',
+            'A6': '0',
+            'A7': '0',
+            'B5': '0',
+            'B6': '0',
+            'B7': '0',
+            'C5': '0',
+            'C6': '0',
+            'C7': '0',
+            'D5': '320',
+            'D6': '0',
+            'D7': '0',
+            'E5': '0',
+            'E6': '0',
+            'E7': '400'
+
+        };
+        for (let sCellName in oVarIndexByCellName) {
+            const sCellVal = ws.getCell2(sCellName).getValue();
+            assert.strictEqual(sCellVal, oExpectedChangingCells[sCellName], `StepSolver API. Check fill of cells from "By Changing Variable Cells" with enabled "Show iteration result" 2nd iteration. Cell: ${sCellName}. Value: ${sCellVal}`);
+        }
+        // Close solver without saving result
+        api.asc_CloseSolver(false, solverParams);
+
+        oExpectedChangingCells = {
+            'A5': '0',
+            'A6': '0',
+            'A7': '0',
+            'B5': '0',
+            'B6': '0',
+            'B7': '0',
+            'C5': '0',
+            'C6': '0',
+            'C7': '0',
+            'D5': '0',
+            'D6': '0',
+            'D7': '0',
+            'E5': '0',
+            'E6': '0',
+            'E7': '0'
+
+        };
+        for (let sCellName in oVarIndexByCellName) {
+            const sCellVal = ws.getCell2(sCellName).getValue();
+            assert.strictEqual(sCellVal, oExpectedChangingCells[sCellName], `CloseSolver API. isSave - false. Check fill of cells from "By Changing Variable Cells" Original values. Cell: ${sCellName}. Value: ${sCellVal}`);
+        }
+        solverParams = null;
+        // Check start solver with final result
+        solverParams = api.asc_GetSolverParams();
+        solverParams.getOptions().setShowIterResults(false);
+        api.asc_StartSolver(solverParams);
+        let oUndoExpectedChangingCells = {
+            'A5': '0',
+            'A6': '0',
+            'A7': '0',
+            'B5': '0',
+            'B6': '0',
+            'B7': '0',
+            'C5': '0',
+            'C6': '0',
+            'C7': '0',
+            'D5': '0',
+            'D6': '0',
+            'D7': '0',
+            'E5': '0',
+            'E6': '0',
+            'E7': '0'
+        }
+        oExpectedChangingCells = {
+            'A5': '0',
+            'A6': '300',
+            'A7': '0',
+            'B5': '0',
+            'B6': '0',
+            'B7': '230',
+            'C5': '0',
+            'C6': '150',
+            'C7': '0',
+            'D5': '320',
+            'D6': '0',
+            'D7': '0',
+            'E5': '80',
+            'E6': '250',
+            'E7': '70'
+
+        };
+        // Close solver with saving result.
+        api.asc_CloseSolver(true, solverParams);
+        checkUndoRedo(function (_desc) {
+            for (let sCellName in oVarIndexByCellName) {
+                const sCellVal = ws.getCell2(sCellName).getValue();
+                assert.strictEqual(sCellVal, oUndoExpectedChangingCells[sCellName], _desc + `Cell: ${sCellName}. Value: ${sCellVal}`);
+            }
+        }, function (_desc) {
+            for (let sCellName in oVarIndexByCellName) {
+                const sCellVal = ws.getCell2(sCellName).getValue();
+                assert.strictEqual(sCellVal, oExpectedChangingCells[sCellName], _desc + `Cell: ${sCellName}. Value: ${sCellVal}`);
+            }
+        },`CloseSolver API with final result. isSave - true. Check fill of cells from "By Changing Variable Cells".`);
     });
 });

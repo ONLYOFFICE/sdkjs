@@ -85,10 +85,7 @@
             if (true === CollaborativeEditing.private_AddOverallChange(oChange))
             {
                 oChange.Load(this.m_oColor);
-
-                if (oChange.GetClass() && oChange.GetClass().SetIsRecalculated && oChange.IsNeedRecalculate())
-                    oChange.GetClass().SetIsRecalculated(false);
-
+				oChange.CheckNeedRecalculate();
             }
 
             return true;
@@ -508,8 +505,7 @@
 				if (this.private_AddOverallChange(change))
 				{
 					change.Load(color);
-					if (change.GetClass() && change.GetClass().SetIsRecalculated && change.IsNeedRecalculate())
-						change.GetClass().SetIsRecalculated(false);
+					change.CheckNeedRecalculate();
 				}
 
 				counter++;

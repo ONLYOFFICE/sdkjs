@@ -89,7 +89,7 @@
 		let pointsArray = getValueSafe(argumentsObject.points, []);
 
 		let shape = new AscVisio.ShapeSheet_Type();
-		shape.type = "Shape";
+		shape.type = AscVisio.SHAPE_TYPES_SHAPE;
 		shape.lineStyle = 0;
 		shape.fillStyle = 0;
 		shape.textStyle = 0;
@@ -103,18 +103,18 @@
 
 		let section = new AscVisio.Section_Type();
 		section.n = "Geometry";
-		section.iX = 0;
+		section.ix = 0;
 
 		for (let i = 0; i < pointsArray.length; i++) {
 			let row;
 			if (i === 0) {
 				row = new AscVisio.Row_Type();
 				row.t = "RelMoveTo";
-				row.iX = 1;
+				row.ix = 1;
 			} else {
 				row = new AscVisio.Row_Type();
 				row.t = "RelLineTo";
-				row.iX = i + 1;
+				row.ix = i + 1;
 			}
 			row.cells.push(createCell("X", pointsArray[i].x));
 			row.cells.push(createCell("Y", pointsArray[i].y));

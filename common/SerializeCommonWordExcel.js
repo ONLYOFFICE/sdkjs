@@ -1452,6 +1452,12 @@ function isRealObject(obj)
       var len = this.GetULong();
       return this.GetString1(len);
     }
+    this.GetString2Utf8 = function()
+    {
+      var len = this.GetULong();
+      return AscCommon.GetStringUtf8(this, len)
+    }
+
     this.GetBuffer = function (length) {
       var res = new Array(length);
       for (var i = 0; i < length; ++i) {

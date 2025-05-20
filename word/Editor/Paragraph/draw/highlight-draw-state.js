@@ -280,11 +280,16 @@
 		let collColor  = data[4];
 		let comments   = data[5];
 		let curComment = data[6];
+		let highlightAdditional;
 		
 		let w = element.GetWidthVisible();
 		
 		this.handleRun(run);
-		this.addHighlight(this.X, this.X + w, flags, hyperlink, collColor, comments, curComment);
+
+		if (this.Graphics.m_bIsTextDrawer) {
+			highlightAdditional = {TextDrawer: {TextElement: element, SplitType: this.Graphics.m_nCurrentSplitOptions}};
+		}
+		this.addHighlight(this.X, this.X + w, flags, hyperlink, collColor, comments, curComment, highlightAdditional);
 		
 		this.X += w;
 	};
@@ -454,7 +459,7 @@
 	/**
 	 *
 	 */
-	ParagraphHighlightDrawState.prototype.addHighlight = function(startX, endX, flags, hyperlink, collColor, comments, curComment)
+	ParagraphHighlightDrawState.prototype.addHighlight = function(startX, endX, flags, hyperlink, collColor, comments, curComment, highlightAdditional)
 	{
 		let startY = this.Y0;
 		let endY   = this.Y1;
@@ -472,7 +477,7 @@
 			this.Comm.Add(startY, endY, startX, endX, 0, 0, 0, 0, {Active : curComment, CommentId : comments});
 		
 		if ((flags & FLAG_HIGHLIGHT) && (this.highlight && highlight_None !== this.highlight))
-			this.High.Add(startY, endY, startX, endX, 0, this.highlight.r, this.highlight.g, this.highlight.b, undefined, this.highlight);
+			this.High.Add(startY, endY, startX, endX, 0, this.highlight.r, this.highlight.g, this.highlight.b, highlightAdditional, this.highlight);
 		
 		if (flags & FLAG_SEARCH)
 			this.Find.Add(startY, endY, startX, endX, 0, 0, 0, 0);

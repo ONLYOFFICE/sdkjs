@@ -30,7 +30,199 @@
  *
  */
 
-(function(){
+(function() {
+
+    function FormatNumberValue(value, nDec, sepStyle, negStyle, strCurrency, bCurrencyPrepend) {
+        value = toString(value, "");
+
+        let oInfoObj = {
+            decimalPlaces: nDec,
+            separator: true,
+            symbol: null,
+            type: Asc.c_oAscNumFormatType.Number
+        };
+    
+        let oCultureInfo = {};
+        Object.assign(oCultureInfo, AscCommon.g_aCultureInfos[oInfoObj.symbol]);
+    
+        switch (sepStyle) {
+            case 0: oCultureInfo.NumberDecimalSeparator = "."; oCultureInfo.NumberGroupSeparator = ","; break;
+            case 1: oCultureInfo.NumberDecimalSeparator = "."; oCultureInfo.NumberGroupSeparator = ""; break;
+            case 2: oCultureInfo.NumberDecimalSeparator = ","; oCultureInfo.NumberGroupSeparator = "."; break;
+            case 3: oCultureInfo.NumberDecimalSeparator = ","; oCultureInfo.NumberGroupSeparator = ""; break;
+            case 4: oCultureInfo.NumberDecimalSeparator = "."; oCultureInfo.NumberGroupSeparator = "'"; break;
+        }
+    
+        oCultureInfo.NumberGroupSizes = [3];
+    
+        const aFormats = AscCommon.getFormatCells(oInfoObj);
+        const oNumFormat = AscCommon.oNumFormatCache.get(aFormats[0]);
+    
+        value = value.replace(",", ".");
+        if (value === "") return null;
+    
+        const formatted = oNumFormat.format(value, 0, AscCommon.gc_nMaxDigCount, true, oCultureInfo, true);
+        if (!formatted || !formatted[0] || !formatted[0].text) return null;
+    
+        let sRes = formatted[0].text;
+    
+        // Обработка валюты
+        sRes = bCurrencyPrepend ? strCurrency + sRes : sRes + strCurrency;
+    
+        // Обработка отрицательных значений
+        if (sRes.includes("-")) {
+            switch (negStyle) {
+                case 2: 
+                case 3: {
+                    sRes = sRes.replace("-", "");
+                    sRes = `(${sRes})`;
+                    break;
+                }
+            }
+        }
+    
+        return sRes;
+    }
+
+    function FormatPercentValue(value, nDec, sepStyle) {
+        value = toString(value, "");
+
+        let oInfoObj = {
+            decimalPlaces: nDec,
+            separator: true,
+            symbol: null,
+            type: Asc.c_oAscNumFormatType.Number
+        };
+    
+        let oCultureInfo = {};
+        Object.assign(oCultureInfo, AscCommon.g_aCultureInfos[oInfoObj.symbol]);
+    
+        switch (sepStyle) {
+            case 0: oCultureInfo.NumberDecimalSeparator = "."; oCultureInfo.NumberGroupSeparator = ","; break;
+            case 1: oCultureInfo.NumberDecimalSeparator = "."; oCultureInfo.NumberGroupSeparator = ""; break;
+            case 2: oCultureInfo.NumberDecimalSeparator = ","; oCultureInfo.NumberGroupSeparator = "."; break;
+            case 3: oCultureInfo.NumberDecimalSeparator = ","; oCultureInfo.NumberGroupSeparator = ""; break;
+            case 4: oCultureInfo.NumberDecimalSeparator = "."; oCultureInfo.NumberGroupSeparator = "'"; break;
+        }
+    
+        oCultureInfo.NumberGroupSizes = [3];
+    
+        const aFormats = AscCommon.getFormatCells(oInfoObj);
+        const oNumFormat = AscCommon.oNumFormatCache.get(aFormats[0]);
+    
+        value = value.replace(",", ".");
+        if (value === "") value = "0";
+    
+        let nValue = parseFloat(value);
+        if (isNaN(nValue)) return null;
+    
+        const percentValue = (nValue * 100).toString();
+        const formatted = oNumFormat.format(percentValue, 0, AscCommon.gc_nMaxDigCount, true, oCultureInfo, true);
+        if (!formatted || !formatted[0] || !formatted[0].text) return null;
+    
+        return formatted[0].text + "%";
+    }
+
+    function FormatDateValue(nValue, sFormat) {
+        let oNumFormat = AscCommon.oNumFormatCache.get(sFormat, AscCommon.NumFormatType.PDFFormDate);
+        oNumFormat.oNegativeFormat.bAddMinusIfNes = false;
+
+        function getShortPattern(aRawFormat) {
+            let dayDone     = false;
+            let monthDone   = false;
+            let yearDone    = false;
+            
+            let sPattern = "";
+
+            let numFormat_Year = 12;
+            let numFormat_Month = 13;
+            let numFormat_Day = 16;
+
+            for (let i = 0; i < aRawFormat.length; i++) {
+                let obj = aRawFormat[i];
+                switch (obj.type) {
+                    case numFormat_Day:
+                        if (dayDone == false) {
+                            sPattern += 1;
+                            dayDone = true;
+                        }
+                        break;
+                    case numFormat_Month:
+                        if (monthDone == false) {
+                            sPattern += 3;
+                            monthDone = true;
+                        }
+                        break;
+                    case numFormat_Year:
+                        if (yearDone == false) {
+                            if (obj.val > 2)
+                                sPattern += 5;
+                            else
+                                sPattern += 4;
+                            yearDone = true;
+                        }
+                        break;
+                            
+                }
+            }
+            return sPattern;
+        }
+
+        let oCultureInfo = {};
+        Object.assign(oCultureInfo, AscCommon.g_aCultureInfos[9]);
+        if (null == oNumFormat.oTextFormat.ShortDatePattern) {
+            oNumFormat.oTextFormat.ShortDatePattern = getShortPattern(oNumFormat.oTextFormat.aRawFormat);
+            oNumFormat.oTextFormat._prepareFormatDatePDF();
+        }
+        oCultureInfo.ShortDatePattern = oNumFormat.oTextFormat.ShortDatePattern;
+
+        if (oCultureInfo.ShortDatePattern.indexOf("1") == -1)
+            oNumFormat.oTextFormat.bDay = false;
+
+        oCultureInfo.AbbreviatedMonthNames.length = 12;
+        oCultureInfo.MonthNames.length = 12;
+
+        let oResParsed = {
+            value: nValue / (86400 * 1000)
+        }
+
+        oNumFormat.oTextFormat.formatType = AscCommon.NumFormatType.PDFFormDate;
+        return oNumFormat.oTextFormat.format(oResParsed.value, 0, AscCommon.gc_nMaxDigCount, oCultureInfo)[0].text;
+    }
+
+    /**
+     * Format the input value based on the specified format type.
+     * @param {string} value - The input value.
+     * @param {number} psf - The format type.
+     * @returns {string} - The formatted value.
+     */
+    function FormatValueSpecial(value, psf) {
+        value = value.replace(/\D/g, ""); // Удаляем все нечисловые символы
+        
+        switch (psf) {
+            case 0:
+                return value.substring(0, 5);
+            case 1:
+                return value.length > 5
+                    ? value.substring(0, 5) + "-" + value.substring(5, 9)
+                    : value;
+            case 2:
+                return value.length > 6
+                    ? "(" + value.substring(0, 3) + ") " + value.substring(3, 6) + "-" + value.substring(6, 10)
+                    : value.length > 3
+                    ? "(" + value.substring(0, 3) + ") " + value.substring(3)
+                    : value;
+            case 3:
+                return value.length > 5
+                    ? value.substring(0, 3) + "-" + value.substring(3, 5) + "-" + value.substring(5, 9)
+                    : value.length > 2
+                    ? value.substring(0, 3) + "-" + value.substring(3)
+                    : value;
+            default:
+                return value;
+        }
+    }
+
     /**
 	 * Convert field value to specific number format.
      * @param {number} nDec = number of decimals
@@ -44,98 +236,25 @@
     function AFNumber_Format(nDec, sepStyle, negStyle, currStyle, strCurrency, bCurrencyPrepend) {
         let oDoc = editor.getDocumentRenderer().doc;
         let oCurForm = oDoc.event["target"].field;
-
-        let oInfoObj = {
-            decimalPlaces: nDec,
-            separator: true,
-            symbol: null,
-            type: Asc.c_oAscNumFormatType.Number
-        }
-
-        let oCultureInfo = {};
-        Object.assign(oCultureInfo, AscCommon.g_aCultureInfos[oInfoObj.symbol]);
-        switch (sepStyle) {
-            case 0:
-                oCultureInfo.NumberDecimalSeparator = ".";
-                oCultureInfo.NumberGroupSeparator = ",";
-                break;
-            case 1:
-                oCultureInfo.NumberDecimalSeparator = ".";
-                oCultureInfo.NumberGroupSeparator = "";
-                break;
-            case 2:
-                oCultureInfo.NumberDecimalSeparator = ",";
-                oCultureInfo.NumberGroupSeparator = ".";
-                break;
-            case 3:
-                oCultureInfo.NumberDecimalSeparator = ",";
-                oCultureInfo.NumberGroupSeparator = "";
-                break;
-            case 4:
-                oCultureInfo.NumberDecimalSeparator = ".";
-                oCultureInfo.NumberGroupSeparator = "'";
-                break;
-        }
-
-        oCultureInfo.NumberGroupSizes = [3];
-        
-        let aFormats = AscCommon.getFormatCells(oInfoObj);
-        let oNumFormat = AscCommon.oNumFormatCache.get(aFormats[0]);
         let oTargetRun = oCurForm.contentFormat.GetElement(0).GetElement(0);
 
-        let sCurValue;
-        if (oCurForm.GetType() == AscPDF.FIELD_TYPES.text)
+        let sCurValue = "";
+        if (oCurForm.GetType() == AscPDF.FIELD_TYPES.text) {
             sCurValue = oCurForm.GetValue();
-        else if (oCurForm.GetType() == AscPDF.FIELD_TYPES.combobox) {
-            let nCurIdx = oCurForm.GetCurIdxs();
-            sCurValue = nCurIdx == -1 ? oCurForm.GetValue() : oCurForm.api.getItemAt(nCurIdx, false);
+        } else if (oCurForm.GetType() == AscPDF.FIELD_TYPES.combobox) {
+            let nCurIdx = oCurForm.GetCurIdxs()[0];
+            sCurValue = nCurIdx == undefined ? oCurForm.GetValue() : oCurForm.api.getItemAt(nCurIdx, false);
         }
 
-        sCurValue = sCurValue.replace(",", ".");
-        if (sCurValue == "") {
-            oTargetRun.ClearContent();
-            return;
-        }
-            
-        let sRes = oNumFormat.format(sCurValue, 0, AscCommon.gc_nMaxDigCount, true, oCultureInfo, true)[0].text;
-
+        const sRes = FormatNumberValue(sCurValue, nDec, sepStyle, negStyle, strCurrency, bCurrencyPrepend);
         if (!sRes) {
             oTargetRun.ClearContent();
             return;
         }
 
-        if (bCurrencyPrepend)
-            sRes = strCurrency + sRes;
-        else
-            sRes = sRes + strCurrency;
-
-        if (sRes.indexOf("-") != - 1) {
-            switch (negStyle) {
-                case 0:
-                    oTargetRun.Pr.Color = private_GetColor(255, 255, 255, true);
-                    break;
-                case 1:
-                    oTargetRun.Pr.Color = private_GetColor(255, 0, 0, false);
-                    break;
-                case 2:
-                    sRes = sRes.replace("-", "");
-                    oTargetRun.Pr.Color = private_GetColor(255, 255, 255, true);
-                    sRes = "(" + sRes + ")";
-                    break;
-                case 3:
-                    sRes = sRes.replace("-", "");
-                    oTargetRun.Pr.Color = private_GetColor(255, 0, 0, false);
-                    sRes = "(" + sRes + ")";
-                    break;
-            }
-        }
-        else {
-            oTargetRun.Pr.Color = private_GetColor(255, 255, 255, true);
-        }
-        
-        oTargetRun.RecalcInfo.TextPr = true
         oCurForm.SetFormatValue(sRes);
     }
+
     /**
 	 * Check can the field accept the char or not.
 	 * @memberof CTextField
@@ -150,7 +269,7 @@
     function AFNumber_Keystroke(nDec, sepStyle, negStyle, currStyle, strCurrency, bCurrencyPrepend) {
         let oDoc    = editor.getDocumentRenderer().doc;
         let oForm   = oDoc.event["target"].field;
-        let sValue  = oDoc.event["value"];
+        let sValue  = toString(oDoc.event["value"], "");
         let sChange = oDoc.event["change"];
         let nSelStart = oDoc.event["selStart"];
         let nSelEnd = oDoc.event["selEnd"];
@@ -160,7 +279,7 @@
         }
 
         let sNewValue = sValue.slice(0, nSelStart) + sChange + sValue.slice(nSelEnd);
-
+        
         // разделитель дробной части, который можно ввести
         switch (sepStyle) {
             case 0:
@@ -187,6 +306,11 @@
                 break;
         }
 
+        // if delete
+        if (!sChange && sNewValue.length < sValue.length) {
+            oDoc.event["rc"] = true;
+        }
+
         if (oDoc.event["rc"] == false && oDoc.event["willCommit"]) {
             oDoc.SetWarningInfo({
                 "target": oForm
@@ -204,64 +328,22 @@
     function AFPercent_Format(nDec, sepStyle) {
         let oDoc = editor.getDocumentRenderer().doc;
         let oCurForm = oDoc.event["target"].field;
-        
-        let oInfoObj = {
-            decimalPlaces: nDec,
-            separator: true,
-            symbol: null,
-            type: Asc.c_oAscNumFormatType.Number
-        }
-
-        let oCultureInfo = {};
-        Object.assign(oCultureInfo, AscCommon.g_aCultureInfos[oInfoObj.symbol]);
-        switch (sepStyle) {
-            case 0:
-                oCultureInfo.NumberDecimalSeparator = ".";
-                oCultureInfo.NumberGroupSeparator = ",";
-                break;
-            case 1:
-                oCultureInfo.NumberDecimalSeparator = ".";
-                oCultureInfo.NumberGroupSeparator = "";
-                break;
-            case 2:
-                oCultureInfo.NumberDecimalSeparator = ",";
-                oCultureInfo.NumberGroupSeparator = ".";
-                break;
-            case 3:
-                oCultureInfo.NumberDecimalSeparator = ",";
-                oCultureInfo.NumberGroupSeparator = "";
-                break;
-            case 4:
-                oCultureInfo.NumberDecimalSeparator = ".";
-                oCultureInfo.NumberGroupSeparator = "'";
-                break;
-        }
-        oCultureInfo.NumberGroupSizes = [3];
-
-        let aFormats = AscCommon.getFormatCells(oInfoObj);
-        let oNumFormat = AscCommon.oNumFormatCache.get(aFormats[0]);
         let oTargetRun = oCurForm.contentFormat.GetElement(0).GetElement(0);
-
-        let sCurValue;
-        if (oCurForm.GetType() == AscPDF.FIELD_TYPES.text)
+    
+        let sCurValue = "";
+        if (oCurForm.GetType() === AscPDF.FIELD_TYPES.text) {
             sCurValue = oCurForm.GetValue();
-        else if (oCurForm.GetType() == AscPDF.FIELD_TYPES.combobox) {
-            let nCurIdx = oCurForm.GetCurIdxs();
-            sCurValue = nCurIdx == -1 ? oCurForm.GetValue() : oCurForm.api.getItemAt(nCurIdx, false);
+        } else if (oCurForm.GetType() === AscPDF.FIELD_TYPES.combobox) {
+            let nCurIdx = oCurForm.GetCurIdxs()[0];
+            sCurValue = nCurIdx == undefined ? oCurForm.GetValue() : oCurForm.api.getItemAt(nCurIdx, false);
         }
-
-        sCurValue = sCurValue.replace(",", ".");
-        if (sCurValue == "")
-            sCurValue = 0;
-            
-        sCurValue = (parseFloat(sCurValue) * 100).toString();
-        let sRes = oNumFormat.format(sCurValue, 0, AscCommon.gc_nMaxDigCount, true, oCultureInfo, true)[0].text;
+    
+        const sRes = FormatPercentValue(sCurValue, nDec, sepStyle);
         if (!sRes) {
             oTargetRun.ClearContent();
             return;
         }
-
-        sRes = sRes + "%";
+    
         oCurForm.SetFormatValue(sRes);
     }
     /**
@@ -274,7 +356,7 @@
     function AFPercent_Keystroke(nDec, sepStyle) {
         let oDoc    = editor.getDocumentRenderer().doc;
         let oForm   = oDoc.event["target"].field;
-        let sValue  = oDoc.event["value"];
+        let sValue  = toString(oDoc.event["value"], "");
         let sChange = oDoc.event["change"];
         let nSelStart = oDoc.event["selStart"];
         let nSelEnd = oDoc.event["selEnd"];
@@ -312,6 +394,11 @@
                 break;
         }
 
+        // if delete
+        if (!sChange && sNewValue.length < sValue.length) {
+            oDoc.event["rc"] = true;
+        }
+        
         if (oDoc.event["rc"] == false) {
             oDoc.SetWarningInfo({
                 "target": oForm
@@ -341,8 +428,8 @@
         if (oCurForm.GetType() == AscPDF.FIELD_TYPES.text)
             sCurValue = oCurForm.GetValue();
         else if (oCurForm.GetType() == AscPDF.FIELD_TYPES.combobox) {
-            let nCurIdx = oCurForm.GetCurIdxs();
-            sCurValue = nCurIdx == -1 ? oCurForm.GetValue() : oCurForm.api.getItemAt(nCurIdx, false);
+            let nCurIdx = oCurForm.GetCurIdxs()[0];
+            sCurValue = nCurIdx == undefined ? oCurForm.GetValue() : oCurForm.api.getItemAt(nCurIdx, false);
         }
 
         let oFormatParser = AscCommon.g_oFormatParser;
@@ -433,73 +520,6 @@
         oCurForm.SetFormatValue(sRes);
     }
 
-    function FormatDateValue(sFormat, nValue) {
-        let oNumFormat = AscCommon.oNumFormatCache.get(sFormat, AscCommon.NumFormatType.PDFFormDate);
-        oNumFormat.oNegativeFormat.bAddMinusIfNes = false;
-
-        function getShortPattern(aRawFormat) {
-            let dayDone     = false;
-            let monthDone   = false;
-            let yearDone    = false;
-            
-            let sPattern = "";
-
-            let numFormat_Year = 12;
-            let numFormat_Month = 13;
-            let numFormat_Day = 16;
-
-            for (let i = 0; i < aRawFormat.length; i++) {
-                let obj = aRawFormat[i];
-                switch (obj.type) {
-                    case numFormat_Day:
-                        if (dayDone == false) {
-                            sPattern += 1;
-                            dayDone = true;
-                        }
-                        break;
-                    case numFormat_Month:
-                        if (monthDone == false) {
-                            sPattern += 3;
-                            monthDone = true;
-                        }
-                        break;
-                    case numFormat_Year:
-                        if (yearDone == false) {
-                            if (obj.val > 2)
-                                sPattern += 5;
-                            else
-                                sPattern += 4;
-                            yearDone = true;
-                        }
-                        break;
-                            
-                }
-            }
-            return sPattern;
-        }
-
-        let oCultureInfo = {};
-        Object.assign(oCultureInfo, AscCommon.g_aCultureInfos[9]);
-        if (null == oNumFormat.oTextFormat.ShortDatePattern) {
-            oNumFormat.oTextFormat.ShortDatePattern = getShortPattern(oNumFormat.oTextFormat.aRawFormat);
-            oNumFormat.oTextFormat._prepareFormatDatePDF();
-        }
-        oCultureInfo.ShortDatePattern = oNumFormat.oTextFormat.ShortDatePattern;
-
-        if (oCultureInfo.ShortDatePattern.indexOf("1") == -1)
-            oNumFormat.oTextFormat.bDay = false;
-
-        oCultureInfo.AbbreviatedMonthNames.length = 12;
-        oCultureInfo.MonthNames.length = 12;
-
-        let oResParsed = {
-            value: nValue / (86400 * 1000)
-        }
-
-        oNumFormat.oTextFormat.formatType = AscCommon.NumFormatType.PDFFormDate;
-        return oNumFormat.oTextFormat.format(oResParsed.value, 0, AscCommon.gc_nMaxDigCount, oCultureInfo)[0].text;
-    }
-
     /**
 	 * Check can the field accept the char or not.
 	 * @memberof CTextField
@@ -523,8 +543,8 @@
         if (oForm.GetType() == AscPDF.FIELD_TYPES.text)
             sCurValue = oForm.GetValue();
         else if (oForm.GetType() == AscPDF.FIELD_TYPES.combobox) {
-            let nCurIdx = oForm.GetCurIdxs();
-            sCurValue = nCurIdx == -1 ? oForm.GetValue() : oForm.GetFormApi().getItemAt(nCurIdx, false);
+            let nCurIdx = oForm.GetCurIdxs()[0];
+            sCurValue = nCurIdx == undefined ? oForm.GetValue() : oForm.GetFormApi().getItemAt(nCurIdx, false);
         }
 
         let oFormatParser = AscCommon.g_oFormatParser;
@@ -667,8 +687,8 @@
         if (oForm.GetType() == AscPDF.FIELD_TYPES.text)
             sCurValue = oForm.GetValue();
         else if (oForm.GetType() == AscPDF.FIELD_TYPES.combobox) {
-            let nCurIdx = oForm.GetCurIdxs();
-            sCurValue = nCurIdx == -1 ? oForm.GetValue() : oForm.api.getItemAt(nCurIdx, false);
+            let nCurIdx = oForm.GetCurIdxs()[0];
+            sCurValue = nCurIdx == undefined ? oForm.GetValue() : oForm.api.getItemAt(nCurIdx, false);
         }
         
         if (sCurValue == "")
@@ -756,8 +776,8 @@
         if (oForm.GetType() == AscPDF.FIELD_TYPES.text)
             sCurValue = oForm.GetValue();
         else if (oForm.GetType() == AscPDF.FIELD_TYPES.combobox) {
-            let nCurIdx = oForm.GetCurIdxs();
-            sCurValue = nCurIdx == -1 ? oForm.GetValue() : oForm.api.getItemAt(nCurIdx, false);
+            let nCurIdx = oForm.GetCurIdxs()[0];
+            sCurValue = nCurIdx == undefined ? oForm.GetValue() : oForm.api.getItemAt(nCurIdx, false);
         }
         
        if (fIsValidTime && fIsValidTime(sCurValue) == false) {
@@ -786,15 +806,15 @@
     let AFTime_KeystrokeEx = AFTime_Keystroke;
 
     /**
-	 * Convert field value to specific special format.
-	 * @memberof CTextField
+     * Convert field value to specific special format.
+     * @memberof CTextField
      * @param {number} psf – psf is the type of formatting to use:
      *  0 = zip code
      *  1 = zip + 4
      *  2 = phone
      *  3 = SSN
-	 * @typeofeditors ["PDF"]
-	 */
+     * @typeofeditors ["PDF"]
+     */
     function AFSpecial_Format(psf) {
         let oDoc = editor.getDocumentRenderer().doc;
         let oCurForm = oDoc.event["target"].field;
@@ -803,93 +823,22 @@
         if (oCurForm.GetType() == AscPDF.FIELD_TYPES.text)
             sCurValue = oCurForm.GetValue();
         else if (oCurForm.GetType() == AscPDF.FIELD_TYPES.combobox) {
-            let nCurIdx = oCurForm.GetCurIdxs();
-            sCurValue = nCurIdx == -1 ? oCurForm.GetValue() : oCurForm.api.getItemAt(nCurIdx, false);
+            let nCurIdx = oCurForm.GetCurIdxs()[0];
+            sCurValue = nCurIdx == undefined ? oCurForm.GetValue() : oCurForm.api.getItemAt(nCurIdx, false);
         }
 
         let oTargetRun = oCurForm.contentFormat.GetElement(0).GetElement(0);
 
-        function isValidZipCode(zipCode) {
-            let regex = /^\d{5}$/;
-            return regex.test(zipCode);
-        }
-        function isValidZipCode4(zip) {
-            let regex = /^\d{5}[-\s.]?(\d{4})?$/;
-            return regex.test(zip);
-        }
-        function isValidPhoneNumber(number) {
-            let regex = /^\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/;
-            return regex.test(number);
-        }
-        function isValidSSN(ssn) {
-            let regex = /^\d{3}[-\s.]?\d{2}[-\s.]?\d{4}$/;
-            return regex.test(ssn);
-        }
-
-        if (sCurValue == "")
+        if (sCurValue == "") {
             oTargetRun.ClearContent();
-            
-        switch (psf) {
-            case 0:
-                if (isValidZipCode(sCurValue) == false) {
-                    oTargetRun.ClearContent();
-                    return;
-                }
-                break;
-            case 1:
-                if (isValidZipCode4(sCurValue) == false) {
-                    oTargetRun.ClearContent();
-                    return;
-                }
-                break;
-            case 2:
-                if (isValidPhoneNumber(sCurValue) == false) {
-                    oTargetRun.ClearContent();
-                    return;
-                }
-                break;
-            case 3:
-                if (isValidSSN(sCurValue) == false) {
-                    oTargetRun.ClearContent();
-                    return;
-                }
-                break;
+            return;
         }
 
-        sCurValue = sCurValue.replace(/\D/g, ""); // delete all except no digit chars
-        let sFormatValue = "";
-
+        let sFormatValue = FormatValueSpecial(sCurValue, psf);
         oTargetRun.ClearContent();
-
-        switch (psf) {
-            case 0:
-                sFormatValue = sCurValue.substring(0, 5);
-                break;
-            case 1:
-                sFormatValue = sCurValue.substring(0, 9);
-                if (sFormatValue[4])
-                    sFormatValue = sCurValue.substring(0, 5) + "-" + sCurValue.substring(5);
-                break;
-            case 2: 
-                let x = sCurValue.substring(0, 10);
-                sFormatValue = x.length > 6
-                    ? "(" + x.substring(0, 3) + ") " + x.substring(3, 6) + "-" + x.substring(6, 10)
-                    : x.length > 3
-                    ? "(" + x.substring(0, 3) + ") " + x.substring(3)
-                    : x;
-                break;
-            case 3:
-                let y = sCurValue.substring(0, 9);
-                sFormatValue = y.length > 5
-                ? y.substring(0, 3) + "-" + y.substring(3, 5) + "-" + y.substring(5, 9)
-                : y.length > 2
-                ? y.substring(0, 3) + "-" + x.substring(3)
-                : x;
-                break;
-        }
-
         oCurForm.SetFormatValue(sFormatValue);
     }
+
     /**
 	 * Check can the field accept the char or not.
 	 * @memberof CTextField
@@ -902,7 +851,7 @@
 	 */
     function AFSpecial_Keystroke(psf) {
         let oDoc    = editor.getDocumentRenderer().doc;
-        let sValue  = oDoc.event["value"];
+        let sValue  = toString(oDoc.event["value"], "");
         let sChange = oDoc.event["change"];
         let nSelStart = oDoc.event["selStart"];
         let nSelEnd = oDoc.event["selEnd"];
@@ -964,7 +913,13 @@
                 break;
         }
 
-        oDoc.event["rc"] = canAdd;
+        oDoc.event["rc"] = canAdd || sNewValue == undefined || sNewValue == "";
+
+        // if delete
+        if (!sChange && sNewValue.length < sValue.length) {
+            oDoc.event["rc"] = true;
+        }
+
         if (canAdd == false && oDoc.event["willCommit"]) {
             oDoc.SetWarningInfo({
                 "target": oDoc.event["target"].field
@@ -980,7 +935,7 @@
     function AFSpecial_KeystrokeEx(mask) {
         let oDoc    = editor.getDocumentRenderer().doc;
         let oForm   = oDoc.event["target"].field;
-        let sValue  = oDoc.event["value"];
+        let sValue  = toString(oDoc.event["value"], "");
         let sChange = oDoc.event["change"];
         let nSelStart = oDoc.event["selStart"];
         let nSelEnd = oDoc.event["selEnd"];
@@ -1191,8 +1146,10 @@
     function AFRange_Validate(bGreaterThan, nGreaterThan, bLessThan, nLessThan) {
         let oDoc = editor.getDocumentRenderer().doc;
 
+        let fieldValue = toString(oDoc.event["value"], "0");
+
         if (bGreaterThan && bLessThan) {
-            oDoc.event["rc"] = oDoc.event["value"] >= nGreaterThan && oDoc.event["value"] <= nLessThan;
+            oDoc.event["rc"] = fieldValue >= nGreaterThan && fieldValue <= nLessThan;
             if (oDoc.event["rc"] == false) {
                 oDoc.SetWarningInfo({
                     "greater": nGreaterThan,
@@ -1202,7 +1159,7 @@
             }
         }
         else if (bGreaterThan) {
-            oDoc.event["rc"] = oDoc.event["value"] >= nGreaterThan;
+            oDoc.event["rc"] = fieldValue >= nGreaterThan;
             if (oDoc.event["rc"] == false) {
                 oDoc.SetWarningInfo({
                     "greater": nGreaterThan,
@@ -1211,7 +1168,7 @@
             }
         }
         else if (bLessThan) {
-            oDoc.event["rc"] = oDoc.event["value"] <= nLessThan;
+            oDoc.event["rc"] = fieldValue <= nLessThan;
             if (oDoc.event["rc"] == false) {
                 oDoc.SetWarningInfo({
                     "less": nLessThan,
@@ -1221,32 +1178,39 @@
         }
     }
 	
-    function private_GetColor(r, g, b, Auto)
-	{
-		return new AscCommonWord.CDocumentColor(r, g, b, Auto ? Auto : false);
-	}
-    
-    window["AscPDF"].FormatDateValue = FormatDateValue;
-    window["AscPDF"].Api = {
-        Functions: {
-            AFNumber_Format:        AFNumber_Format,
-            AFNumber_Keystroke:     AFNumber_Keystroke,
-            AFPercent_Format:       AFPercent_Format,
-            AFPercent_Keystroke:    AFPercent_Keystroke,
-            AFDate_Format:          AFDate_Format,
-            AFDate_Keystroke:       AFDate_Keystroke,
-            AFDate_FormatEx:        AFDate_FormatEx,
-            AFDate_KeystrokeEx:     AFDate_KeystrokeEx,
-            AFTime_Format:          AFTime_Format,
-            AFTime_Keystroke:       AFTime_Keystroke,
-            AFTime_FormatEx:        AFTime_FormatEx,
-            AFTime_KeystrokeEx:     AFTime_KeystrokeEx,
-            AFSpecial_Format:       AFSpecial_Format,
-            AFSpecial_Keystroke:    AFSpecial_Keystroke,
-            AFSpecial_KeystrokeEx:  AFSpecial_KeystrokeEx,
-            AFSimple_Calculate:     AFSimple_Calculate,
-            AFRange_Validate:       AFRange_Validate,
+    function toString(value, defValue) {
+        if (value && value.toString) {
+            return value.toString();
+        }
+        else {
+            return defValue;
         }
     }
+
+    window["AscPDF"].FormatDateValue = FormatDateValue;
+    window["AscPDF"].FormatNumberValue = FormatNumberValue;
+    window["AscPDF"].FormatPercentValue = FormatPercentValue;
+    window["AscPDF"].FormatValueSpecial = FormatValueSpecial;
+
+    window["AscPDF"]["Api"] = AscPDF.Api = {};
+    window["AscPDF"]["Api"]["Functions"] = AscPDF.Api.Functions = {
+        "AFNumber_Format":        AFNumber_Format,
+        "AFNumber_Keystroke":     AFNumber_Keystroke,
+        "AFPercent_Format":       AFPercent_Format,
+        "AFPercent_Keystroke":    AFPercent_Keystroke,
+        "AFDate_Format":          AFDate_Format,
+        "AFDate_Keystroke":       AFDate_Keystroke,
+        "AFDate_FormatEx":        AFDate_FormatEx,
+        "AFDate_KeystrokeEx":     AFDate_KeystrokeEx,
+        "AFTime_Format":          AFTime_Format,
+        "AFTime_Keystroke":       AFTime_Keystroke,
+        "AFTime_FormatEx":        AFTime_FormatEx,
+        "AFTime_KeystrokeEx":     AFTime_KeystrokeEx,
+        "AFSpecial_Format":       AFSpecial_Format,
+        "AFSpecial_Keystroke":    AFSpecial_Keystroke,
+        "AFSpecial_KeystrokeEx":  AFSpecial_KeystrokeEx,
+        "AFSimple_Calculate":     AFSimple_Calculate,
+        "AFRange_Validate":       AFRange_Validate,
+    };
 })();
 

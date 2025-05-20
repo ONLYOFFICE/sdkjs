@@ -354,11 +354,8 @@
 
 		for (let index = 0, count = reverseChanges.length; index < count; ++index)
 		{
-			let oClass = reverseChanges[index].GetClass();
 			reverseChanges[index].Load();
-
-			if (oClass && oClass.SetIsRecalculated && (!reverseChanges[index] || reverseChanges[index].IsNeedRecalculate()))
-				oClass.SetIsRecalculated(false);
+			reverseChanges[index].CheckNeedRecalculate();
 		}
 
 		// Создаем точку в истории. Делаем действия через обычные функции (с отключенным пересчетом), которые пишут в

@@ -938,7 +938,8 @@
 		if ((!oForm.IsTextForm() && !oForm.IsComboBox()))
 			return;
 
-		let sInsertedText = this.GetText({ParaSeparator : ""});
+		let newLineSep = oForm.IsMultiLineForm() ? "\n" : "";
+		let sInsertedText = this.GetText({ParaSeparator : "", NewLineSeparator : newLineSep});
 		if (!sInsertedText || !sInsertedText.length)
 			return;
 

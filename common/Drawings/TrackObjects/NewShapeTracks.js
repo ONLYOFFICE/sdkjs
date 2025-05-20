@@ -662,7 +662,6 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
             _sp_pr.setParent(shape);
 
             var nv_sp_pr = new AscFormat.UniNvPr();
-            nv_sp_pr.cNvPr.setId(0);
             shape.setNvSpPr(nv_sp_pr);
 
             var nvUniSpPr = new AscFormat.CNvUniSpPr();

@@ -1103,7 +1103,6 @@
         return -1;
     };
 
-
     /**
      * Returns a slide by its position in the presentation.
      * @memberof ApiPresentation
@@ -1130,6 +1129,39 @@
         return this.GetSlideByIndex(this.GetCurSlideIndex());
     };
 
+	/**
+	 * Returns the current visible slide, layout or master.
+	 * @typeofeditors ["CPE"]
+	 * @memberof ApiPresentation
+	 * @returns {ApiSlide | ApiLayout | ApiMaster | null} - returns null if the current slide is not found.
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetCurrentVisibleSlide.js
+	 */
+	ApiPresentation.prototype.GetCurrentVisibleSlide = function () {
+		const slideIndex = this.GetCurSlideIndex();
+
+		if (!Asc.editor.isMasterMode()) {
+			return this.GetSlideByIndex(slideIndex);
+		}
+
+		const aMasters = this.GetAllSlideMasters();
+		let accumulatedIndex = 0;
+
+		for (let i = 0; i < aMasters.length; i++) {
+			const master = aMasters[i];
+			if (accumulatedIndex === slideIndex) {
+				return master;
+			}
+
+			const layouts = master.GetAllLayouts();
+			if (slideIndex < accumulatedIndex + layouts.length + 1) {
+				return layouts[slideIndex - accumulatedIndex - 1];
+			}
+
+			accumulatedIndex += layouts.length + 1;
+		}
+
+		return null;
+	};
 
     /**
      * Appends a new slide to the end of the presentation.
@@ -1144,8 +1176,6 @@
             this.Presentation.insertSlide(this.Presentation.Slides.length, oSlide.Slide);
         }
     };
-
-
 
     /**
      * Sets the size to the current presentation.
@@ -1440,6 +1470,91 @@
 	};
 
 	/**
+	 * Private method to collect all objects of a specific type from the presentation (OleObjects, Charts, Shapes, Images).
+	 * Calls 'getObjectsMethod' method on each slide, master and layout to get the objects.
+	 */
+	ApiPresentation.prototype._collectAllObjects = function (getObjectsMethod) {
+		const aObjects = [];
+
+		function collectObjects(aSource) {
+			aSource.forEach(function (oSource) {
+				oSource[getObjectsMethod]().forEach(function (oObject) {
+					aObjects.push(oObject);
+				});
+			});
+		}
+
+		const aSlides = this.GetAllSlides();
+		const aMasters = this.GetAllSlideMasters();
+
+		// Can't use flatMap because it's not supported in IE11
+		const aLayouts = aMasters.reduce(function (acc, oMaster) {
+			return acc.concat(oMaster.GetAllLayouts());
+		}, []);
+
+		collectObjects(aSlides);
+		collectObjects(aMasters);
+		collectObjects(aLayouts);
+
+		return aObjects;
+	};
+
+	/**
+	 * Returns an array with all the OLE objects from the current presentation.
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiOleObject[]}
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetAllOleObjects.js
+	 */
+	ApiPresentation.prototype.GetAllOleObjects = function () {
+		return this._collectAllObjects('GetAllOleObjects');
+	};
+
+	/**
+	 * Returns an array with all the chart objects from the current presentation.
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiChart[]}
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetAllCharts.js
+	 */
+	ApiPresentation.prototype.GetAllCharts = function () {
+		return this._collectAllObjects('GetAllCharts');
+	};
+
+	/**
+	 * Returns an array with all the shape objects from the current presentation.
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiShape[]}
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetAllShapes.js
+	 */
+	ApiPresentation.prototype.GetAllShapes = function () {
+		return this._collectAllObjects('GetAllShapes');
+	};
+
+	/**
+	 * Returns an array with all the image objects from the current presentation.
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiImage[]}
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetAllImages.js
+	 */
+	ApiPresentation.prototype.GetAllImages = function () {
+		return this._collectAllObjects('GetAllImages');
+	};
+
+	/**
+	 * Returns an array with all the drawing objects from the current presentation.
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @returns {Drawing[]}
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetAllDrawings.js
+	 */
+	ApiPresentation.prototype.GetAllDrawings = function () {
+		return this._collectAllObjects('GetAllDrawings');
+	};
+
+	/**
 	 * Returns the document information:
 	 * <b>Application</b> - the application the document has been created with.
 	 * <b>CreatedRaw</b> - the date and time when the file was created.
@@ -1447,7 +1562,7 @@
 	 * <b>LastModifiedRaw</b> - the date and time when the file was last modified.
 	 * <b>LastModified</b> - the parsed date and time when the file was last modified.
 	 * <b>LastModifiedBy</b> - the name of the user who has made the latest change to the document.
-	 * <b>Autrors</b> - the persons who has created the file.
+	 * <b>Authors</b> - the persons who has created the file.
 	 * <b>Title</b> - this property allows you to simplify your documents classification.
 	 * <b>Tags</b> - this property allows you to simplify your documents classification.
 	 * <b>Subject</b> - this property allows you to simplify your documents classification.
@@ -1460,23 +1575,23 @@
 	ApiPresentation.prototype.GetDocumentInfo = function()
 	{
 		const oDocInfo = {
-			Application: '',
-			CreatedRaw: null,
-			Created: '',
-			LastModifiedRaw: null,
-			LastModified: '',
-			LastModifiedBy: '',
-			Autrors: [],
-			Title: '',
-			Tags: '',
-			Subject: '',
-			Comment: ''
+			"Application": '',
+			"CreatedRaw": null,
+			"Created": '',
+			"LastModifiedRaw": null,
+			"LastModified": '',
+			"LastModifiedBy": '',
+			"Authors": [],
+			"Title": '',
+			"Tags": '',
+			"Subject": '',
+			"Comment": ''
 		};
 		const api = this.Presentation.Api;
-
+		
 		let props = (api) ? api.asc_getAppProps() : null;
-		oDocInfo.Application = (props.asc_getApplication() || '') + (props.asc_getAppVersion() ? ' ' : '') + (props.asc_getAppVersion() || '');
-
+		oDocInfo["Application"] = (props.asc_getApplication() || '') + (props.asc_getAppVersion() ? ' ' : '') + (props.asc_getAppVersion() || '');
+		
 		let langCode = 1033; // en-US
 		let langName = 'en-us';
 		if (api.asc_getLocale) {
@@ -1490,36 +1605,36 @@
 		}
 
 		props = api.asc_getCoreProps();
-		oDocInfo.CreatedRaw = props.asc_getCreated();
-		oDocInfo.LastModifiedRaw = props.asc_getModified();
-
+		oDocInfo["CreatedRaw"] = props.asc_getCreated();
+		oDocInfo["LastModifiedRaw"] = props.asc_getModified();
+		
 		try {
-			if (oDocInfo.CreatedRaw)
-				oDocInfo.Created = (oDocInfo.CreatedRaw.toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' +oDocInfo. CreatedRaw.toLocaleString(langName, {timeStyle: 'short'}));
+			if (oDocInfo["CreatedRaw"])
+				oDocInfo["Created"] = (oDocInfo["CreatedRaw"].toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo["CreatedRaw"].toLocaleString(langName, {timeStyle: 'short'}));
 			
-			if (oDocInfo.LastModifiedRaw)
-				oDocInfo.LastModified = (oDocInfo.LastModifiedRaw.toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo.LastModifiedRaw.toLocaleString(langName, {timeStyle: 'short'}));
+			if (oDocInfo["LastModifiedRaw"])
+				oDocInfo["LastModified"] = (oDocInfo["LastModifiedRaw"].toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo["LastModifiedRaw"].toLocaleString(langName, {timeStyle: 'short'}));
 		} catch (e) {
 			langName = 'en';
-			if (oDocInfo.CreatedRaw)
-				oDocInfo.Created = (oDocInfo.CreatedRaw.toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo.CreatedRaw.toLocaleString(langName, {timeStyle: 'short'}));
-
-			if (oDocInfo.LastModifiedRaw)
-				oDocInfo.LastModified = (oDocInfo.LastModifiedRaw.toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo.LastModifiedRaw.toLocaleString(langName, {timeStyle: 'short'}));
+			if (oDocInfo["CreatedRaw"])
+				oDocInfo["Created"] = (oDocInfo["CreatedRaw"].toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo["CreatedRaw"].toLocaleString(langName, {timeStyle: 'short'}));
+			
+			if (oDocInfo["LastModifiedRaw"])
+				oDocInfo["LastModified"] = (oDocInfo["LastModifiedRaw"].toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo["LastModifiedRaw"].toLocaleString(langName, {timeStyle: 'short'}));
 		}
-
+		
 		const LastModifiedBy = props.asc_getLastModifiedBy();
-		oDocInfo.LastModifiedBy = AscCommon.UserInfoParser.getParsedName(LastModifiedBy);
-
-		oDocInfo.Title = (props.asc_getTitle() || '');
-		oDocInfo.Tags = (props.asc_getKeywords() || '');
-		oDocInfo.Subject = (props.asc_getSubject() || '');
-		oDocInfo.Comment = (props.asc_getDescription() || '');
-
+		oDocInfo["LastModifiedBy"] = AscCommon.UserInfoParser.getParsedName(LastModifiedBy);
+		
+		oDocInfo["Title"] = (props.asc_getTitle() || '');
+		oDocInfo["Tags"] = (props.asc_getKeywords() || '');
+		oDocInfo["Subject"] = (props.asc_getSubject() || '');
+		oDocInfo["Comment"] = (props.asc_getDescription() || '');
+		
 		const authors = props.asc_getCreator();
 		if (authors)
-			oDocInfo.Autrors = authors.split(/\s*[,;]\s*/);
-
+			oDocInfo["Authors"] = authors.split(/\s*[,;]\s*/);
+		
 		return oDocInfo;
 	};
 
@@ -1539,6 +1654,21 @@
     {
         return "master";
     };
+
+	/**
+	 * Returns all layouts from the slide master
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiLayout[]} - returns an empty array if the slide master doesn't have layouts.
+	 * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/GetAllLayouts.js
+	 */
+	ApiMaster.prototype.GetAllLayouts = function () {
+		const aLayouts = this.Master.sldLayoutLst;
+		const aApiLayouts = [];
+		aLayouts.forEach(function (oLayout) {
+			aApiLayouts.push(new ApiLayout(oLayout));
+		});
+		return aApiLayouts;
+	};
 
     /**
      * Returns a layout of the specified slide master by its position.
@@ -4872,6 +5002,7 @@
     ApiPresentation.prototype["GetCurSlideIndex"]         = ApiPresentation.prototype.GetCurSlideIndex;
     ApiPresentation.prototype["GetSlideByIndex"]          = ApiPresentation.prototype.GetSlideByIndex;
     ApiPresentation.prototype["GetCurrentSlide"]          = ApiPresentation.prototype.GetCurrentSlide;
+    ApiPresentation.prototype["GetCurrentVisibleSlide"]   = ApiPresentation.prototype.GetCurrentVisibleSlide;
     ApiPresentation.prototype["AddSlide"]                 = ApiPresentation.prototype.AddSlide;
     ApiPresentation.prototype["CreateNewHistoryPoint"]    = ApiPresentation.prototype.CreateNewHistoryPoint;
     ApiPresentation.prototype["SetSizes"]                 = ApiPresentation.prototype.SetSizes;
@@ -4889,9 +5020,13 @@
     ApiPresentation.prototype["GetHeight"]                = ApiPresentation.prototype.GetHeight;
     ApiPresentation.prototype["GetAllComments"]           = ApiPresentation.prototype.GetAllComments;
     ApiPresentation.prototype["GetDocumentInfo"]          = ApiPresentation.prototype.GetDocumentInfo;
-
     ApiPresentation.prototype["SlidesToJSON"]             = ApiPresentation.prototype.SlidesToJSON;
     ApiPresentation.prototype["ToJSON"]                   = ApiPresentation.prototype.ToJSON;
+    ApiPresentation.prototype["GetAllOleObjects"]         = ApiPresentation.prototype.GetAllOleObjects;
+    ApiPresentation.prototype["GetAllCharts"]             = ApiPresentation.prototype.GetAllCharts;
+    ApiPresentation.prototype["GetAllShapes"]             = ApiPresentation.prototype.GetAllShapes;
+    ApiPresentation.prototype["GetAllImages"]             = ApiPresentation.prototype.GetAllImages;
+    ApiPresentation.prototype["GetAllDrawings"]           = ApiPresentation.prototype.GetAllDrawings;
 
     ApiMaster.prototype["GetClassType"]                   = ApiMaster.prototype.GetClassType;
     ApiMaster.prototype["GetLayout"]                      = ApiMaster.prototype.GetLayout;

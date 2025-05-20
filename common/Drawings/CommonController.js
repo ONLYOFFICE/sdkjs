@@ -758,10 +758,13 @@
 
 					var oNvPr;
 					if (this.document || this.drawingObjects && this.drawingObjects.cSld) {
-						var bCheckTextHyperlink = false;
-						if (this.isSlideShow()) {
-							bCheckTextHyperlink = true;
-						}
+						// var bCheckTextHyperlink = false;
+						// if (this.isSlideShow()) {
+						// 	bCheckTextHyperlink = true;
+						// }
+
+						const bCheckTextHyperlink = true;
+
 						var sHyperlink = null;
 						var sTooltip = "";
 						var oTextHyperlink;
@@ -7346,7 +7349,7 @@
 						drawing = drawings[i];
 
 						// skip sticky note for pdf editor
-						if (drawing.IsAnnot && drawing.IsAnnot() && drawing.IsComment()) {
+						if (drawing.IsAnnot && drawing.IsAnnot() && drawing.IsComment() || drawing.IsEditFieldShape && drawing.IsEditFieldShape()) {
 							continue;
 						}
 
@@ -8007,25 +8010,27 @@
 					}
 
 					let hyperlink_properties = null;
-					if(drawings.length === 1) {
-						let oDrawing = drawings[0];
-						let isStickyNote = oDrawing.IsAnnot && oDrawing.IsAnnot() && oDrawing.IsComment(); // skip pdf text annot
+					if (drawings.length === 1) {
+						const oDrawing = drawings[0];
 
-						if(!isStickyNote && (oDrawing.isShape() || oDrawing.isImage())) {
+						const oDrawingObjectsController = oDrawing.getDrawingObjectsController && oDrawing.getDrawingObjectsController();
+						const oTargetDocContent = oDrawingObjectsController && oDrawingObjectsController.getTargetDocContent();
 
-							let oNvPr = oDrawing.getCNvProps();
-							if (oNvPr) {
-								let oHyper = oNvPr.hlinkClick;
-								if(oHyper && oHyper.id) {
-									hyperlink_properties = new Asc.CHyperlinkProperty();
-									hyperlink_properties.Text = null;
-									hyperlink_properties.Value = oHyper.id;
-									hyperlink_properties.ToolTip = oHyper.tooltip;
+						const isValidType = oDrawing.isShape() || oDrawing.isImage();
+						const isStickyNote = oDrawing.IsAnnot && oDrawing.IsAnnot() && oDrawing.IsComment() ||
+							drawing.IsEditFieldShape && oDrawing.IsEditFieldShape(); // skip pdf text annot and form
 
-								}
+						if (!isStickyNote && isValidType && !oTargetDocContent) {
+							const oNvPr = oDrawing.getCNvProps();
+							if (oNvPr && oNvPr.hlinkClick && oNvPr.hlinkClick.id) {
+								hyperlink_properties = new Asc.CHyperlinkProperty();
+								hyperlink_properties.Text = null;
+								hyperlink_properties.Value = oNvPr.hlinkClick.id;
+								hyperlink_properties.ToolTip = oNvPr.hlinkClick.tooltip;
 							}
 						}
 					}
+
 					return {
 						imageProps: image_props,
 						shapeProps: shape_props,
@@ -11854,7 +11859,11 @@
 				const paraDrawing = new ParaDrawing(5, 5, null, graphicController.drawingDocument, null, null);
 				paraDrawing.Set_GraphicObject(newShape);
 				paraDrawing.Set_DrawingType(drawing_Anchor);
-				paraDrawing.Set_WrappingType(WRAPPING_TYPE_NONE);
+
+				paraDrawing.Set_WrappingType(referenceShape.parent.wrappingType || WRAPPING_TYPE_NONE);
+				paraDrawing.Set_BehindDoc(referenceShape.parent.behindDoc);
+				paraDrawing.Check_WrapPolygon();
+
 				paraDrawing.setExtent(newShape.spPr.xfrm.extX, newShape.spPr.xfrm.extY);
 
 				const nearestPos = graphicController.document.Get_NearestPos(pageIndex, dOffX, dOffY, true, paraDrawing);

@@ -432,12 +432,24 @@ CStylesPainter.prototype.get_MergedStyles = function ()
 			_dc.Internal_Content_Add(0, par, false);
 			par.Add_ToContent(0, run);
 			par.Style_Add(style.Id, false);
-			par.Set_Align(AscCommon.align_Left);
 			par.Set_Tabs(new CParaTabs());
+			
+			let isRtl = this.api.isRtlInterface;
+			if (isRtl)
+			{
+				par.SetParagraphBidi(true);
+				par.SetParagraphAlign(AscCommon.align_Right);
+			}
+			else
+			{
+				par.SetParagraphBidi(false);
+				par.SetParagraphAlign(AscCommon.align_Left);
+			}
 			
 			if (!textPr.Color || (255 === textPr.Color.r && 255 === textPr.Color.g && 255 === textPr.Color.b))
 				run.Set_Color(new CDocumentColor(0, 0, 0, false));
 			
+			let brdShift = 0;
 			var _brdL = style.ParaPr.Brd.Left;
 			if (undefined !== _brdL && null !== _brdL)
 			{
@@ -445,6 +457,8 @@ CStylesPainter.prototype.get_MergedStyles = function ()
 				brdL.Set_FromObject(_brdL);
 				brdL.Space = 0;
 				par.Set_Border(brdL, AscDFH.historyitem_Paragraph_Borders_Left);
+				if (!isRtl)
+					brdShift = brdL.GetWidth();
 			}
 			
 			var _brdT = style.ParaPr.Brd.Top;
@@ -472,6 +486,9 @@ CStylesPainter.prototype.get_MergedStyles = function ()
 				brd.Set_FromObject(_brdR);
 				brd.Space = 0;
 				par.Set_Border(brd, AscDFH.historyitem_Paragraph_Borders_Right);
+				
+				if (isRtl)
+					brdShift = brd.GetWidth();
 			}
 			
 			var _ind = new CParaInd();
@@ -492,7 +509,9 @@ CStylesPainter.prototype.get_MergedStyles = function ()
 			_dc.Reset(0, 0, 10000, 10000);
 			_dc.Recalculate_Page(0, true);
 			
-			_dc.Reset(0, 0, par.Lines[0].Ranges[0].W + 0.001, 10000);
+			let contentW = par.getRange(0, 0).W;
+			
+			_dc.Reset(0, 0, contentW + AscWord.EPSILON, 10000);
 			_dc.Recalculate_Page(0, true);
 			
 			var y = 0;
@@ -500,21 +519,20 @@ CStylesPainter.prototype.get_MergedStyles = function ()
 			var w = dKoefToMM * this.STYLE_THUMBNAIL_WIDTH;
 			var off = 10 * dKoefToMM;
 			var off2 = 5 * dKoefToMM;
-			var off3 = 1 * dKoefToMM;
+			var off3 = 2 * dKoefToMM;
 			
 			graphics.transform(1, 0, 0, 1, 0, 0);
 			graphics.save();
 			graphics._s();
 			graphics._m(off2, y + off3);
-			graphics._l(w - off, y + off3);
-			graphics._l(w - off, b - off3);
+			graphics._l(w - off2, y + off3);
+			graphics._l(w - off2, b - off3);
 			graphics._l(off2, b - off3);
 			graphics._z();
 			graphics.clip();
 			
-			//graphics.t(style.Name, off + 0.5, y + 0.75 * (b - y));
 			var baseline = par.Lines[0].Y;
-			par.Shift(0, off + 0.5, y + 0.75 * (b - y) - baseline);
+			par.Shift(0, (isRtl ? w - off - contentW - brdShift : off + brdShift), y + 0.75 * (b - y) - baseline);
 			par.Draw(0, graphics);
 			
 			graphics.restore();

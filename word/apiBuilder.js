@@ -1249,11 +1249,9 @@
 			if (nStartPos === undefined)
 				nStartPos = 0;
 
-			if (nEndPos === undefined)
-			{
-				oElement.CheckRunContent(calcSumPos);
+			oElement.CheckRunContent(calcSumPos);
+			if (nEndPos === undefined || nEndPos > nPosCount)
 				nEndPos = nPosCount;
-			}
 		}
 		correctPositions(oElement);
 
@@ -5005,10 +5003,11 @@
 		var oDocument = this.GetDocument();
 		var oParsedObj  = JSON.parse(message);
 		var oResult = null;
-		if (oParsedObj["styles"])
-			oReader.StylesFromJSON(oParsedObj["styles"]);
+		
 		if (oParsedObj["numbering"])
 			oReader.parsedNumbering = oParsedObj["numbering"];
+		if (oParsedObj["styles"])
+			oReader.StylesFromJSON(oParsedObj["styles"]);
 
 		switch (oParsedObj["type"])
 		{
@@ -5641,7 +5640,7 @@
 	 * Returns an array of all tables from the current document content.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
-	 * @return {ApiParagraph[]}
+	 * @return {ApiTable[]}
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetAllTables.js
 	 */
 	ApiDocumentContent.prototype.GetAllTables = function()
@@ -6614,7 +6613,7 @@
 	 * process to arrange tables on the specified page.</note>
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {number} nPage - The page number.
+	 * @param {number} nPage - The page index.
 	 * @return {ApiTable[]}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetAllTablesOnPage.js
 	 */
@@ -6633,15 +6632,15 @@
 		return arrApiAllTables;
 	};
 	/**
-	 * Adds a shape to the specified page.
+	 * Adds a drawing to the specified page.
 	 * <note>This method can be a little bit slow, because it runs the document calculation
 	 * process to arrange tables on the specified page.</note>
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param oDrawing {ApiDrawing} - A shape to add to the page.
-	 * @param nPage {number} - The page number.
-	 * @param x {EMU} - The X coordinate in English measure units.
-	 * @param y {EMU} - The Y coordinate in English measure units.
+	 * @param {ApiDrawing} oDrawing - A drawing to add to the page.
+	 * @param {number} nPage - The page index.
+	 * @param {EMU} x - The X coordinate in English measure units.
+	 * @param {EMU} y - The Y coordinate in English measure units.
 	 * @return {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddDrawingToPage.js
 	 */
@@ -6777,7 +6776,7 @@
 			sText = "WATERMARK";
 		}
 		if (typeof(bIsDiagonal) != "boolean") {
-			sText = false;
+			bIsDiagonal = false;
 		}
 
 		let bRes = false;
@@ -7800,22 +7799,22 @@
 	ApiDocument.prototype.GetDocumentInfo = function()
 	{
 		const oDocInfo = {
-			Application: '',
-			CreatedRaw: null,
-			Created: '',
-			LastModifiedRaw: null,
-			LastModified: '',
-			LastModifiedBy: '',
-			Authors: [],
-			Title: '',
-			Tags: '',
-			Subject: '',
-			Comment: ''
+			"Application": '',
+			"CreatedRaw": null,
+			"Created": '',
+			"LastModifiedRaw": null,
+			"LastModified": '',
+			"LastModifiedBy": '',
+			"Authors": [],
+			"Title": '',
+			"Tags": '',
+			"Subject": '',
+			"Comment": ''
 		};
 		const api = this.Document.Api;
 
 		let props = (api) ? api.asc_getAppProps() : null;
-		oDocInfo.Application = (props.asc_getApplication() || '') + (props.asc_getAppVersion() ? ' ' : '') + (props.asc_getAppVersion() || '');
+		oDocInfo["Application"] = (props.asc_getApplication() || '') + (props.asc_getAppVersion() ? ' ' : '') + (props.asc_getAppVersion() || '');
 		
 		let langCode = 1033; // en-US
 		let langName = 'en-us';
@@ -7832,35 +7831,35 @@
 		}
 
 		props = api.asc_getCoreProps();
-		oDocInfo.CreatedRaw = props.asc_getCreated();
-		oDocInfo.LastModifiedRaw = props.asc_getModified();
+		oDocInfo["CreatedRaw"] = props.asc_getCreated();
+		oDocInfo["LastModifiedRaw"] = props.asc_getModified();
 
 		try {
-			if (oDocInfo.CreatedRaw)
-				oDocInfo.Created = (oDocInfo.CreatedRaw.toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' +oDocInfo. CreatedRaw.toLocaleString(langName, {timeStyle: 'short'}));
+			if (oDocInfo["CreatedRaw"])
+				oDocInfo["Created"] = (oDocInfo["CreatedRaw"].toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo["CreatedRaw"].toLocaleString(langName, {timeStyle: 'short'}));
 			
-			if (oDocInfo.LastModifiedRaw)
-				oDocInfo.LastModified = (oDocInfo.LastModifiedRaw.toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo.LastModifiedRaw.toLocaleString(langName, {timeStyle: 'short'}));
+			if (oDocInfo["LastModifiedRaw"])
+				oDocInfo["LastModified"] = (oDocInfo["LastModifiedRaw"].toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo["LastModifiedRaw"].toLocaleString(langName, {timeStyle: 'short'}));
 		} catch (e) {
 			langName = 'en';
-			if (oDocInfo.CreatedRaw)
-				oDocInfo.Created = (oDocInfo.CreatedRaw.toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo.CreatedRaw.toLocaleString(langName, {timeStyle: 'short'}));
+			if (oDocInfo["CreatedRaw"])
+				oDocInfo["Created"] = (oDocInfo["CreatedRaw"].toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo["CreatedRaw"].toLocaleString(langName, {timeStyle: 'short'}));
 
-			if (oDocInfo.LastModifiedRaw)
-				oDocInfo.LastModified = (oDocInfo.LastModifiedRaw.toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo.LastModifiedRaw.toLocaleString(langName, {timeStyle: 'short'}));
+			if (oDocInfo["LastModifiedRaw"])
+				oDocInfo["LastModified"] = (oDocInfo["LastModifiedRaw"].toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo["LastModifiedRaw"].toLocaleString(langName, {timeStyle: 'short'}));
 		}
 
 		const LastModifiedBy = props.asc_getLastModifiedBy();
-		oDocInfo.LastModifiedBy = AscCommon.UserInfoParser.getParsedName(LastModifiedBy);
+		oDocInfo["LastModifiedBy"] = AscCommon.UserInfoParser.getParsedName(LastModifiedBy);
 
-		oDocInfo.Title = (props.asc_getTitle() || '');
-		oDocInfo.Tags = (props.asc_getKeywords() || '');
-		oDocInfo.Subject = (props.asc_getSubject() || '');
-		oDocInfo.Comment = (props.asc_getDescription() || '');
+		oDocInfo["Title"] = (props.asc_getTitle() || '');
+		oDocInfo["Tags"] = (props.asc_getKeywords() || '');
+		oDocInfo["Subject"] = (props.asc_getSubject() || '');
+		oDocInfo["Comment"] = (props.asc_getDescription() || '');
 
 		const authors = props.asc_getCreator();
 		if (authors)
-			oDocInfo.Authors = authors.split(/\s*[,;]\s*/);
+			oDocInfo["Authors"] = authors.split(/\s*[,;]\s*/);
 
 		return oDocInfo;
 	};
@@ -21389,8 +21388,7 @@
 		var textDelta        = null;
 		var arrSelectedParas = null;
 
-		let oDocument = this.GetDocument();
-		let isTrackRevisions = oDocument.IsTrackRevisions();
+		let isTrackRevisions = null;
 
 		function GetRunInfo(oRun)
 		{
@@ -21803,6 +21801,8 @@
 		}
 		else 
 		{
+			let oDocument = this.GetDocument();
+			isTrackRevisions = oDocument && oDocument.IsTrackRevisions();
 			arrSelectedParas = oDocument.Document.GetSelectedParagraphs();
 			if(arrSelectedParas.length <= 0 )
 			{

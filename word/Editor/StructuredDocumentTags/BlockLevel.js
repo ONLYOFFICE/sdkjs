@@ -229,18 +229,18 @@ CBlockLevelSdt.prototype.Draw = function(CurPage, oGraphics)
 		}]], 0, 0);
 	}
 
-	var isPlaceHolder = this.IsPlaceHolder();
-	var nTextAlpha;
-	if (isPlaceHolder && oGraphics.setTextGlobalAlpha)
+	let placeholderAlpha = this.IsPlaceHolder() && this.IsForm();
+	let textAlpha;
+	if (placeholderAlpha)
 	{
-		nTextAlpha = oGraphics.getTextGlobalAlpha();
+		textAlpha = oGraphics.getTextGlobalAlpha();
 		oGraphics.setTextGlobalAlpha(0.5);
 	}
 
 	this.Content.Draw(CurPage, oGraphics);
 
-	if (isPlaceHolder && oGraphics.setTextGlobalAlpha)
-		oGraphics.setTextGlobalAlpha(nTextAlpha);
+	if (placeholderAlpha)
+		oGraphics.setTextGlobalAlpha(textAlpha);
 
 	if (AscCommon.c_oAscLockTypes.kLockTypeNone !== this.Lock.Get_Type())
 	{
@@ -1838,13 +1838,13 @@ CBlockLevelSdt.prototype.private_FillPlaceholderContent = function()
 {
 	this.Content.RemoveFromContent(0, this.Content.GetElementsCount(), false);
 
-	var oLogicDocument = this.GetLogicDocument() ? this.GetLogicDocument() : editor.WordControl.m_oLogicDocument;
-	var oDocPart       = oLogicDocument.GetGlossaryDocument().GetDocPartByName(this.GetPlaceholder());
-	if (oDocPart)
+	let logicDocument = this.GetLogicDocument();
+	let docPart       = logicDocument ? logicDocument.GetGlossaryDocument().GetDocPartByName(this.GetPlaceholder()) : null;
+	if (docPart)
 	{
 		if (this.IsContentControlEquation())
 		{
-			var oFirstParagraph = oDocPart.GetFirstParagraph();
+			var oFirstParagraph = docPart.GetFirstParagraph();
 
 			var oNewParagraph = oFirstParagraph.Copy();
 			oNewParagraph.RemoveFromContent(0, oNewParagraph.GetElementsCount());
@@ -1859,9 +1859,21 @@ CBlockLevelSdt.prototype.private_FillPlaceholderContent = function()
 		}
 		else
 		{
-			for (var nIndex = 0, nCount = oDocPart.GetElementsCount(); nIndex < nCount; ++nIndex)
+			for (var nIndex = 0, nCount = docPart.GetElementsCount(); nIndex < nCount; ++nIndex)
 			{
-				this.Content.AddToContent(0, oDocPart.GetElement(nIndex).Copy());
+				this.Content.AddToContent(0, docPart.GetElement(nIndex).Copy());
+			}
+			
+			// Change the color of the paragraph end mark for default placeholders
+			if (logicDocument.GetGlossaryDocument().IsDefaultDocPart(docPart)
+				&& 1 === this.Content.GetElementsCount()
+				&& this.Content.GetElement(0).IsParagraph()
+				&& !this.IsForm())
+			{
+				let para = this.Content.GetElement(0);
+				let run  = para.GetElement(0);
+				if (run && run.GetRStyle())
+					para.TextPr.SetRStyle(run.GetRStyle());
 			}
 		}
 	}

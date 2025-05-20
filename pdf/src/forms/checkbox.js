@@ -36,16 +36,17 @@
 	 * @constructor
      * @extends {CBaseCheckBoxField}
 	 */
-    function CCheckBoxField(sName, nPage, aRect, oDoc)
+    function CCheckBoxField(sName, aRect, oDoc)
     {
-        AscPDF.CBaseCheckBoxField.call(this, sName, AscPDF.FIELD_TYPES.checkbox, nPage, aRect, oDoc);
+        AscPDF.CBaseCheckBoxField.call(this, sName, AscPDF.FIELD_TYPES.checkbox, aRect, oDoc);
 
-        this._chStyle   = AscPDF.CHECKBOX_STYLES.check;
-        this._caption   = undefined;
+        this._noToggleToOff = false;
+        this._chStyle       = AscPDF.CHECKBOX_STYLES.check;
+        this._caption       = undefined;
     }
-    CCheckBoxField.prototype = Object.create(AscPDF.CBaseCheckBoxField.prototype);
-	CCheckBoxField.prototype.constructor = CCheckBoxField;
-
+    CCheckBoxField.prototype.constructor = CCheckBoxField;
+    AscFormat.InitClass(CCheckBoxField, AscPDF.CBaseCheckBoxField, AscDFH.historyitem_type_Pdf_Checkbox_Field);
+    
     /**
 	 * Applies value of this field to all field with the same name
      * Note: Uses after mouseUp action.
@@ -75,15 +76,6 @@
         });
     };
 
-    /**
-	 * Synchronizes this field with fields with the same name.
-	 * @memberof CCheckBoxField
-	 * @typeofeditors ["PDF"]
-	 */
-    CCheckBoxField.prototype.SyncField = function() {
-        // to do
-    };
-	
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
         

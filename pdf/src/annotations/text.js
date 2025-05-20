@@ -137,7 +137,7 @@
         oReply.SetModDate(CommentData.m_sOOTime);
         oReply.SetAuthor(CommentData.m_sUserName);
         oReply.SetUserId(CommentData.m_sUserId);
-        oReply.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
+        oReply.SetDisplay(window["AscPDF"].Api.Types.display["visible"]);
         oReply.SetReplyTo(this.GetReplyTo() || this);
         CommentData.SetUserData(oReply.GetId());
         oReply.SetContents(CommentData.m_sText);

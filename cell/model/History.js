@@ -719,7 +719,9 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 	}
 
 	AscCommonExcel.executeInR1C1Mode(false, function () {
-		t.workbook.dependencyFormulas.unlockRecal();
+		AscCommonExcel.lockCustomFunctionRecalculate(true, function () {
+			t.workbook.dependencyFormulas.unlockRecal();
+		});
 	});
 
 	if (null != Point) {
@@ -1392,30 +1394,45 @@ CHistory.prototype.StartTransaction = function()
 };
 CHistory.prototype.EndTransaction = function(checkLockLastAction)
 {
-	if (1 === this.Transaction && !this.Is_LastPointEmpty()) {
-		var api = this.workbook && this.workbook.oApi;
-		var wsView = api && api.wb && api.wb.getWorksheet();
-		if (wsView) {
-			wsView.updateTopLeftCell();
+	let t = this;
+	let doEndTransaction = function (skipRecal) {
+		if (1 === t.Transaction && !t.Is_LastPointEmpty()) {
+			var api = t.workbook && t.workbook.oApi;
+			var wsView = api && api.wb && api.wb.getWorksheet();
+			if (wsView) {
+				wsView.updateTopLeftCell();
+			}
+			t.workbook && t.workbook.handlers.trigger("EndTransactionCheckSize");
 		}
-		this.workbook && this.workbook.handlers.trigger("EndTransactionCheckSize");
+		t.Transaction--;
+		if(t.Transaction < 0)
+			t.Transaction = 0;
+		if (t.IsEndTransaction() && t.workbook) {
+			if (!skipRecal && AscCommonExcel.g_cCalcRecursion) {
+				AscCommonExcel.g_cCalcRecursion.setIsCellEdited(true);
+			}
+			!skipRecal && t.workbook.dependencyFormulas.unlockRecal();
+			t.workbook.handlers.trigger("updateCellWatches");
+			t.workbook.oApi.sendEvent("asc_onUserActionEnd");
+
+			if (t.Is_LastPointEmpty()) {
+				t.Remove_LastPoint();
+			} else if (checkLockLastAction && t.isActionLock()) {
+				t.Undo();
+			}
+		}
 	}
-	this.Transaction--;
-	if(this.Transaction < 0)
-		this.Transaction = 0;
-	if (this.IsEndTransaction() && this.workbook) {
+
+	//for custom function - add value in history
+	if (1 === this.Transaction) {
 		if (AscCommonExcel.g_cCalcRecursion) {
 			AscCommonExcel.g_cCalcRecursion.setIsCellEdited(true);
 		}
-		this.workbook.dependencyFormulas.unlockRecal();
-		this.workbook.handlers.trigger("updateCellWatches");
-		this.workbook.oApi.sendEvent("asc_onUserActionEnd");
-
-		if (this.Is_LastPointEmpty()) {
-			this.Remove_LastPoint();
-		} else if (checkLockLastAction && this.isActionLock()) {
-			this.Undo();
-		}
+		this.workbook.dependencyFormulas.unlockRecal(null, function () {
+			doEndTransaction(true);
+		});
+	} else {
+		doEndTransaction();
 	}
 };
 /** @returns {boolean} */

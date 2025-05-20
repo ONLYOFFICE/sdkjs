@@ -155,6 +155,29 @@ CFieldInstructionFORMULA.prototype.SetComplexField = function(oComplexField){
 		}
 	}
 };
+CFieldInstructionFORMULA.prototype.GetResultString = function()
+{
+	if (!this.ResultStr)
+		return this.ResultStr;
+	
+	return this.applyNumericFormat(this.ResultStr);
+};
+CFieldInstructionFORMULA.prototype.applyNumericFormat = function(strValue)
+{
+	if (!this.haveNumericFormat())
+		return strValue;
+	
+	let numValue = parseFloat(strValue);
+	if (isNaN(numValue))
+		return strValue;
+	
+	numValue = Math.trunc(numValue + 0.5);
+	let textPr = null;
+	if (this.ComplexField && this.ComplexField.BeginChar && this.ComplexField.BeginChar.GetRun())
+		textPr = this.ComplexField.BeginChar.GetRun().getCompiledPr();
+	
+	return "" + AscCommon.IntToNumberFormat(numValue, this.getNumericFormat(), {lang: textPr && textPr.Lang, isFromField: true, isSkipFractPart: true});
+};
 
 /**
  * PAGE field
@@ -1595,6 +1618,10 @@ CFieldInstructionParser.prototype.private_ReadFORMULA = function()
 			if ('#' === this.Buffer.charAt(1))
 			{
 				bNumFormat = true;
+			}
+			else
+			{
+				this.private_ReadGeneralFormatSwitch();
 			}
 		}
 		else

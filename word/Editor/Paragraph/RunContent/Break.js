@@ -82,7 +82,7 @@
 
 		if(Context.m_bIsTextDrawer)
 		{
-			Context.CheckSpaceDraw();
+			Context.CheckSpaceDraw(this);
 		}
 		if (undefined !== editor && editor.ShowParaMarks)
 		{
@@ -357,6 +357,10 @@
 	CRunBreak.prototype.GetFontSlot = function(oTextPr)
 	{
 		return AscWord.fontslot_Unknown;
+	};
+	CRunBreak.prototype.getBidiType = function()
+	{
+		return AscBidi.TYPE.PM;
 	};
 
 	//--------------------------------------------------------export----------------------------------------------------

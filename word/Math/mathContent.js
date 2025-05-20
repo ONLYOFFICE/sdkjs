@@ -3668,7 +3668,7 @@ CMathContent.prototype.Add_Text = function(text, paragraph, mathStyle, oAddition
 	if (this.Content[this.Content.length - 1] !== oMathRun)
 	{
 		this.AddToContent(this.Content.length, oMathRun, false);
-		this.CurPos = this.Content.length;
+		this.CurPos = this.Content.length + 1;
 	}
 };
 CMathContent.prototype.Add_ToPrevParaRun = function(text)
@@ -6365,6 +6365,18 @@ CMathContent.prototype.GetTextContent = function(bSelectedText, isLaTeX)
 
 	let strContent = oMathText.GetText();
 	return {str: strContent, content: oMathText};
+};
+CMathContent.prototype.fromMathML = function(reader)
+{
+	let depth = reader.GetDepth();
+	while (reader.ReadNextSiblingNode(depth))
+	{
+		let elements = AscWord.ParaMath.readMathMLNode(reader);
+		for (let i = 0; i < elements.length; ++i)
+		{
+			this.addElementToContent(elements[i]);
+		}
+	}
 };
 
 var g_DefaultAutoCorrectMathFuncs =

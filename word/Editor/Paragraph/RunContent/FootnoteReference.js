@@ -291,14 +291,17 @@
 		let run = this.GetRun();
 		let paragraph = run ? run.GetParagraph() : null;
 		
-		if (!paragraph || !(paragraph.GetTopDocumentContent() instanceof AscWord.CDocument))
+		let logicDocument = paragraph ? paragraph.GetTopDocumentContent() : null;
+		if (!logicDocument
+			|| !(logicDocument instanceof AscWord.CDocument)
+			|| false === logicDocument.ClearNotesOnPreDelete)
 			return;
 		
-		var oFootnote = this.Footnote;
-		if (oFootnote)
+		let footnote = this.Footnote;
+		if (footnote)
 		{
-			oFootnote.PreDelete();
-			oFootnote.ClearContent(true);
+			footnote.PreDelete();
+			footnote.ClearContent(true);
 		}
 	};
 	CRunFootnoteReference.prototype.IsReference = function()

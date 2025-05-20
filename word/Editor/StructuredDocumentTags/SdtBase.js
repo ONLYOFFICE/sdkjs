@@ -1037,7 +1037,11 @@ CSdtBase.prototype.GetFieldMaster = function()
  */
 CSdtBase.prototype.GetFormRole = function()
 {
-	let fieldMaster = this.GetFieldMaster();
+	let mainForm = this.GetMainForm();
+	if (!mainForm)
+		mainForm = this;
+	
+	let fieldMaster = mainForm.GetFieldMaster();
 	let userMaster  = fieldMaster ? fieldMaster.getFirstUser() : null;
 	return userMaster ? userMaster.getRole() : "";
 };

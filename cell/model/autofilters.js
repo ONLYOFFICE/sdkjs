@@ -1778,7 +1778,7 @@
 						if (!_doAdd)//добавляем фильтр
 						{
 							if (cloneData.TableStyleInfo) {
-								worksheet.addTablePart.push(cloneData);
+								worksheet.addTablePart(cloneData);
 								t._setColorStyleTable(cloneData.Ref, cloneData, null, true);
 								t.updateSlicer(cloneData.DisplayName);
 							} else {

@@ -111,7 +111,8 @@ var c_oAscSelectionDialogType = {
   ConditionalFormattingRule: 11,
   ImportXml: 12,
   GoalSeek_Cell: 13,
-  GoalSeek_ChangingCell: 14
+  GoalSeek_ChangingCell: 14,
+  Solver_ObjectiveCell: 15
 };
 
 var c_oAscScrollType = {

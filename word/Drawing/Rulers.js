@@ -2662,7 +2662,7 @@ function CHorRuler()
 					// рисуем вместо него - позицию нового
 					tabPos = this.m_dCurrentTabNewPosition;
 				}
-				else if (tab.pos < this.m_dIndentLeft || tab.pos > (_margin_right - _margin_left - this.m_dIndentRight))
+				else if (tab.pos < this.m_dIndentLeft)
 				{
 					continue;
 				}

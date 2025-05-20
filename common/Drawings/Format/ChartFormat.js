@@ -2137,6 +2137,15 @@
     }
 
     InitClass(CBaseChartObject, CBaseFormatObject, AscDFH.historyitem_type_Unknown);
+		CBaseChartObject.prototype.getBrush = function() {
+			return this.brush;
+		};
+	CBaseChartObject.prototype.getPen = function() {
+		return this.pen;
+	};
+	CBaseChartObject.prototype.onRemoveContent = function() {};
+	CBaseChartObject.prototype.forEachAnimationDrawing = function(fCallback) {};
+	CBaseChartObject.prototype.forEachObjectToDraw = function(fCallback) {};
 	CBaseChartObject.prototype.generateSmartArtDrawingPart = function () {};
     CBaseChartObject.prototype.notAllowedWithoutId = function() {
         return true;

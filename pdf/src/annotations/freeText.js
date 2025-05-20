@@ -980,6 +980,16 @@
             }
         }
         else {
+            let pageObject = oDoc.Viewer.getPageByCoords2(x, y);
+            if (!pageObject)
+                return false;
+
+            let oTextBoxShape = this.GetTextBoxShape();
+            if (false == oTextBoxShape.hitInTextRect(pageObject.x, pageObject.y)) {
+                this.Blur();
+                return;
+            }
+
             if (e.ShiftKey) {
                 this.GetDocContent().StartSelectionFromCurPos();
                 oDoc.SelectionSetEnd(x, y, e);
@@ -1052,8 +1062,12 @@
             this._prevCallout = undefined;
         }
 
-        if (false == this.IsChanged()) {
-            this.SetDrawFromStream(!isIn);
+        if (this.IsNeedDrawFromStream()) {
+            this.SetDrawFromStream(false);
+            this.AddToRedraw();
+        }
+        else if (this.IsChanged() == false && !isIn) {
+            this.SetDrawFromStream(true);
             this.AddToRedraw();
         }
         
@@ -1100,17 +1114,6 @@
 		this.OnChangeTextContent();
 		return result;
 	};
-	CAnnotationFreeText.prototype.CorrectEnterText = function(oldValue, newValue) {
-		let doc = this.GetDocument();
-		let docContent = this.GetDocContent();
-		
-		// TODO: Нужно реализовать метод checkAsYouType, чтобы он проверял что иммено сейчас происходил ввод в данном месте
-		let result = docContent.CorrectEnterText(oldValue, newValue, function(run, inRunPos, codePoint){
-			return true;
-		});
-		this.OnChangeTextContent();
-		return result;
-	};
 	CAnnotationFreeText.prototype.canBeginCompositeInput = function() {
 		return true;
 	};
@@ -1152,7 +1155,7 @@
         let oContent    = this.GetDocContent();
 
         oContent.SetApplyToAll(true);
-		let sText = oContent.GetSelectedText(false, {ParaSeparator: '\r'}).replace('\r', '');
+		let sText = oContent.GetSelectedText(false, {ParaSeparator: ''});
 		oContent.SetApplyToAll(false);
 
         let isNeedUpdateRC = this.IsNeedUpdateRC();
@@ -1347,7 +1350,8 @@
                 let yContent    = oTransform.TransformPointY(0, Y);
 
                 oController.resetSelection();
-
+                oController.selection.groupSelection = this;
+                
                 if (this.IsInTextBox() == false && false == this.Lock.Is_Locked()) {
                     oDoc.SetGlobalHistory();
                     oDoc.DoAction(function() {

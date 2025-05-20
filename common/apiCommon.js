@@ -275,7 +275,16 @@ function (window, undefined) {
 				});
 			}
 
-	
+			const tagRegex = /@(\w+)(?:\s+(.+))?/g;
+			const tags = [];
+			let tagMatch;
+			while ((tagMatch = tagRegex.exec(commentBlock)) !== null) {
+				const tagName = tagMatch[1];
+				if (!['param', 'property', 'returns', 'return', 'nameLocale'].includes(tagName)) {
+					tags[tagName] = 1;
+				}
+			}
+
 			// Parsing function description
 			const descriptionRegex = /\*\s*(.*)/g;
 			const descriptionMatch = descriptionRegex.exec(commentBlock);
@@ -286,6 +295,7 @@ function (window, undefined) {
 			parsedData.returnInfo = returnInfo;
 			parsedData.description = description;
 			parsedData.nameLocale = nameLocale;
+			parsedData.tags = tags;
 			result.push(parsedData);
 		}
 	
@@ -3437,6 +3447,748 @@ function (window, undefined) {
 	};
 	asc_CAnnotProperty.prototype.asc_setCanEditText = function (v) {
 		this.canEditText = v;
+	};
+
+	//////////////////////////////////////////////////////////////////
+	///// Common field
+	/////////////////////////////////////////////////////////////////
+	function asc_CBaseFieldProperty() {
+		// common
+		this.type				= undefined;
+		
+		this.name				= undefined;
+		this.required			= undefined;
+		this.readOnly			= undefined;
+		this.rot				= undefined;
+		this.display			= undefined;
+		this.fill				= null;
+		this.stroke				= null;
+		this.strokeWidth		= undefined;
+		this.strokeStyle		= undefined;
+		this.Locked				= false;
+
+		this.fieldProps	= null;
+	}
+	asc_CBaseFieldProperty.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CBaseFieldProperty.prototype.asc_putType = function (v) {
+		this.type = v;
+	};
+	asc_CBaseFieldProperty.prototype.asc_getName = function () {
+		return this.name;
+	};
+	asc_CBaseFieldProperty.prototype.asc_putName = function (v) {
+		this.name = v;
+	};
+	asc_CBaseFieldProperty.prototype.asc_getRequired = function () {
+		return this.required;
+	};
+	asc_CBaseFieldProperty.prototype.asc_putRequired = function (v) {
+		this.required = v;
+	};
+	asc_CBaseFieldProperty.prototype.asc_getReadOnly = function () {
+		return this.readOnly;
+	};
+	asc_CBaseFieldProperty.prototype.asc_putReadOnly = function (v) {
+		this.readOnly = v;
+	};
+	asc_CBaseFieldProperty.prototype.asc_getRot = function () {
+		return this.rot;
+	};
+	asc_CBaseFieldProperty.prototype.asc_putRot = function (v) {
+		this.rot = v;
+	};
+	asc_CBaseFieldProperty.prototype.asc_getDisplay = function () {
+		return this.display;
+	};
+	asc_CBaseFieldProperty.prototype.asc_putDisplay = function (v) {
+		this.display = v;
+	};
+	asc_CBaseFieldProperty.prototype.asc_getFill = function () {
+		return this.fill;
+	};
+	asc_CBaseFieldProperty.prototype.asc_putFill = function (v) {
+		this.fill = v;
+	};
+	asc_CBaseFieldProperty.prototype.asc_getStroke = function () {
+		return this.stroke;
+	};
+	asc_CBaseFieldProperty.prototype.asc_putStroke = function (v) {
+		this.stroke = v;
+	};
+	asc_CBaseFieldProperty.prototype.asc_getStrokeWidth = function () {
+		return this.strokeWidth;
+	};
+	asc_CBaseFieldProperty.prototype.asc_putStrokeWidth = function (v) {
+		this.strokeWidth = v;
+	};
+	asc_CBaseFieldProperty.prototype.asc_getStrokeStyle = function () {
+		return this.strokeStyle;
+	};
+	asc_CBaseFieldProperty.prototype.asc_putStrokeStyle = function (v) {
+		this.strokeStyle = v;
+	};
+	asc_CBaseFieldProperty.prototype.asc_getFieldProps = function () {
+		return this.fieldProps;
+	};
+	asc_CBaseFieldProperty.prototype.asc_putFieldProps = function (v) {
+		this.fieldProps = v;
+	};
+	//////////////////////////////////////////////////////////////////
+	///// Text field
+	//////////////////////////////////////////////////////////////////
+	function asc_CTextFieldProperty() {
+		// format
+		this.format				= null;
+		this.validate			= null;
+
+		// text
+		this.defaultValue		= undefined;
+		this.multiline			= undefined;
+		this.scrollLongText		= undefined;
+		this.charLimit			= undefined;
+		this.comb				= undefined;
+		this.placeholder		= undefined;
+		this.autoFit			= undefined;
+	}
+	asc_CTextFieldProperty.prototype.asc_getDefaultValue = function () {
+		return this.defaultValue;
+	};
+	asc_CTextFieldProperty.prototype.asc_putDefaultValue = function (v) {
+		this.defaultValue = v;
+	};
+	asc_CTextFieldProperty.prototype.asc_getMultiline = function () {
+		return this.multiline;
+	};
+	asc_CTextFieldProperty.prototype.asc_putMultiline = function (v) {
+		this.multiline = v;
+	};
+	asc_CTextFieldProperty.prototype.asc_getScrollLongText = function () {
+		return this.scrollLongText;
+	};
+	asc_CTextFieldProperty.prototype.asc_putScrollLongText = function (v) {
+		this.scrollLongText = v;
+	};
+	asc_CTextFieldProperty.prototype.asc_getCharLimit = function () {
+		return this.charLimit;
+	};
+	asc_CTextFieldProperty.prototype.asc_putCharLimit = function (v) {
+		this.charLimit = v;
+	};
+	asc_CTextFieldProperty.prototype.asc_getComb = function () {
+		return this.comb;
+	};
+	asc_CTextFieldProperty.prototype.asc_putComb = function (v) {
+		this.comb = v;
+	};
+	asc_CTextFieldProperty.prototype.asc_getPlaceholder = function () {
+		return this.placeholder;
+	};
+	asc_CTextFieldProperty.prototype.asc_putPlaceholder = function (v) {
+		this.placeholder = v;
+	};
+	asc_CTextFieldProperty.prototype.asc_getAutoFit = function () {
+		return this.autoFit;
+	};
+	asc_CTextFieldProperty.prototype.asc_putAutoFit = function (v) {
+		this.autoFit = v;
+	};
+	asc_CTextFieldProperty.prototype.asc_getFormat = function () {
+		return this.format;
+	};
+	asc_CTextFieldProperty.prototype.asc_putFormat = function (v) {
+		this.format = v;
+	};
+	asc_CTextFieldProperty.prototype.asc_getValidate = function () {
+		return this.validate;
+	};
+	asc_CTextFieldProperty.prototype.asc_putValidate = function (v) {
+		this.validate = v;
+	};
+	
+	//////////////////////////////////////////////////////////////////
+	///// Combobox field
+	//////////////////////////////////////////////////////////////////
+	function asc_CComboboxFieldProperty() {
+		// format
+		this.format				= null;
+		this.validate			= null;
+
+		this.options			= null;
+		this.commitOnSelChange	= undefined;
+		this.editable			= undefined;
+		this.placeholder		= undefined;
+		this.autoFit			= undefined;
+	}
+	asc_CComboboxFieldProperty.prototype.asc_getOptions = function () {
+		return this.options;
+	};
+	asc_CComboboxFieldProperty.prototype.asc_putOptions = function (v) {
+		this.options = v;
+	};
+	asc_CComboboxFieldProperty.prototype.asc_getCommitOnSelChange = function () {
+		return this.commitOnSelChange;
+	};
+	asc_CComboboxFieldProperty.prototype.asc_putCommitOnSelChange = function (v) {
+		this.commitOnSelChange = v;
+	};
+	asc_CComboboxFieldProperty.prototype.asc_getEditable = function () {
+		return this.editable;
+	};
+	asc_CComboboxFieldProperty.prototype.asc_putEditable = function (v) {
+		this.editable = v;
+	};
+	asc_CComboboxFieldProperty.prototype.asc_getPlaceholder = function () {
+		return this.placeholder;
+	};
+	asc_CComboboxFieldProperty.prototype.asc_putPlaceholder = function (v) {
+		this.placeholder = v;
+	};
+	asc_CComboboxFieldProperty.prototype.asc_getAutoFit = function () {
+		return this.autoFit;
+	};
+	asc_CComboboxFieldProperty.prototype.asc_putAutoFit = function (v) {
+		this.autoFit = v;
+	};
+	asc_CComboboxFieldProperty.prototype.asc_getFormat = function () {
+		return this.format;
+	};
+	asc_CComboboxFieldProperty.prototype.asc_putFormat = function (v) {
+		this.format = v;
+	};
+	asc_CComboboxFieldProperty.prototype.asc_getValidate = function () {
+		return this.validate;
+	};
+	asc_CComboboxFieldProperty.prototype.asc_putValidate = function (v) {
+		this.validate = v;
+	};
+
+	//////////////////////////////////////////////////////////////////
+	///// Listbox field
+	//////////////////////////////////////////////////////////////////
+	function asc_CListboxFieldProperty() {
+		this.commitOnSelChange	= undefined;
+		this.multipleSelection	= undefined;
+	}
+	asc_CListboxFieldProperty.prototype.asc_getOptions = function () {
+		return this.options;
+	};
+	asc_CListboxFieldProperty.prototype.asc_putOptions = function (v) {
+		this.options = v;
+	};
+	asc_CListboxFieldProperty.prototype.asc_getCommitOnSelChange = function () {
+		return this.commitOnSelChange;
+	};
+	asc_CListboxFieldProperty.prototype.asc_putCommitOnSelChange = function (v) {
+		this.commitOnSelChange = v;
+	};
+	asc_CListboxFieldProperty.prototype.asc_getMultipleSelection = function () {
+		return this.multipleSelection;
+	};
+	asc_CListboxFieldProperty.prototype.asc_putMultipleSelection = function (v) {
+		this.multipleSelection = v;
+	};
+	//////////////////////////////////////////////////////////////////
+	///// Checkbox
+	//////////////////////////////////////////////////////////////////
+	function asc_CCheckboxFieldProperty() {
+		this.checkboxStyle	= undefined;
+		this.exportValue	= undefined;
+		this.defaultChecked	= undefined;
+		this.toggleToOff	= undefined;
+	}
+	asc_CCheckboxFieldProperty.prototype.asc_getCheckboxStyle = function () {
+		return this.checkboxStyle;
+	};
+	asc_CCheckboxFieldProperty.prototype.asc_putCheckboxStyle = function (v) {
+		this.checkboxStyle = v;
+	};
+	asc_CCheckboxFieldProperty.prototype.asc_getExportValue = function () {
+		return this.exportValue;
+	};
+	asc_CCheckboxFieldProperty.prototype.asc_putExportValue = function (v) {
+		this.exportValue = v;
+	};
+	asc_CCheckboxFieldProperty.prototype.asc_getDefaultChecked = function () {
+		return this.defaultChecked;
+	};
+	asc_CCheckboxFieldProperty.prototype.asc_putDefaultChecked = function (v) {
+		this.defaultChecked = v;
+	};
+	asc_CCheckboxFieldProperty.prototype.asc_getToggleToOff = function () {
+		return this.toggleToOff;
+	};
+	asc_CCheckboxFieldProperty.prototype.asc_putToggleToOff = function (v) {
+		this.toggleToOff = v;
+	};
+	
+	//////////////////////////////////////////////////////////////////
+	///// Radiobutton
+	//////////////////////////////////////////////////////////////////
+	function asc_CRadiobuttonFieldProperty() {
+		asc_CCheckboxFieldProperty.call(this);
+		this.radiosInUnison	= undefined;
+	}
+	asc_CRadiobuttonFieldProperty.prototype = Object.create(asc_CCheckboxFieldProperty.prototype);
+	asc_CRadiobuttonFieldProperty.prototype.constructor = asc_CRadiobuttonFieldProperty;
+
+	asc_CRadiobuttonFieldProperty.prototype.asc_getRadiosInUnison = function () {
+		return this.radiosInUnison;
+	};
+	asc_CRadiobuttonFieldProperty.prototype.asc_putRadiosInUnison = function (v) {
+		this.radiosInUnison = v;
+	};
+	//////////////////////////////////////////////////////////////////
+	///// Pushbutton
+	//////////////////////////////////////////////////////////////////
+	function asc_CButtonFieldProperty(buttonField) {
+		this.parentField	= buttonField;
+
+		this.highlight		= undefined;
+		this.layout			= undefined;
+		this.scaleWhen		= undefined;
+		this.scaleHow		= undefined;
+		this.fitBounds		= undefined;
+		this.iconPos		= null;
+		this.behavior		= undefined;
+		this.currentState	= undefined;
+		this.normalCaption	= undefined;
+		this.hoverCaption	= undefined;
+		this.downCaption	= undefined;
+		this.normalImage	= undefined;
+		this.hoverImage		= undefined;
+		this.downImage		= undefined;
+
+		this.DivId			= undefined;
+	}
+	asc_CButtonFieldProperty.prototype.getParentField = function () {
+		return this.parentField;
+	};
+	asc_CButtonFieldProperty.prototype.asc_getHighlight = function () {
+		return this.highlight;
+	};
+	asc_CButtonFieldProperty.prototype.asc_putHighlight = function (v) {
+		this.highlight = v;
+	};
+	asc_CButtonFieldProperty.prototype.asc_getLayout = function () {
+		return this.layout;
+	};
+	asc_CButtonFieldProperty.prototype.asc_putLayout = function (v) {
+		this.layout = v;
+	};
+	asc_CButtonFieldProperty.prototype.asc_getScaleWhen = function () {
+		return this.scaleWhen;
+	};
+	asc_CButtonFieldProperty.prototype.asc_putScaleWhen = function (v) {
+		this.scaleWhen = v;
+	};
+	asc_CButtonFieldProperty.prototype.asc_getScaleHow = function () {
+		return this.scaleHow;
+	};
+	asc_CButtonFieldProperty.prototype.asc_putScaleHow = function (v) {
+		this.scaleHow = v;
+	};
+	asc_CButtonFieldProperty.prototype.asc_getFitBounds = function () {
+		return this.fitBounds;
+	};
+	asc_CButtonFieldProperty.prototype.asc_putFitBounds = function (v) {
+		this.fitBounds = v;
+	};
+	asc_CButtonFieldProperty.prototype.asc_getIconPos = function () {
+		return this.iconPos;
+	};
+	asc_CButtonFieldProperty.prototype.asc_putIconPos = function (v) {
+		this.iconPos = v;
+	};
+	asc_CButtonFieldProperty.prototype.asc_getBehavior = function () {
+		return this.behavior;
+	};
+	asc_CButtonFieldProperty.prototype.asc_putBehavior = function (v) {
+		this.behavior = v;
+	};
+	asc_CButtonFieldProperty.prototype.asc_getNormalCaption = function () {
+		return this.normalCaption;
+	};
+	asc_CButtonFieldProperty.prototype.asc_putNormalCaption = function (v) {
+		this.normalCaption = v;
+	};
+	asc_CButtonFieldProperty.prototype.asc_getNormalImage = function () {
+		return this.normalImage;
+	};
+	asc_CButtonFieldProperty.prototype.asc_putNormalImage = function (v) {
+		this.normalImage = v;
+	};
+	asc_CButtonFieldProperty.prototype.asc_getHoverCaption = function () {
+		return this.hoverCaption;
+	};
+	asc_CButtonFieldProperty.prototype.asc_putHoverCaption = function (v) {
+		this.hoverCaption = v;
+	};
+	asc_CButtonFieldProperty.prototype.asc_getHoverImage = function () {
+		return this.hoverImage;
+	};
+	asc_CButtonFieldProperty.prototype.asc_putHoverImage = function (v) {
+		this.hoverImage = v;
+	};
+	asc_CButtonFieldProperty.prototype.asc_getDownCaption = function () {
+		return this.downCaption;
+	};
+	asc_CButtonFieldProperty.prototype.asc_putDownCaption = function (v) {
+		this.downCaption = v;
+	};
+	asc_CButtonFieldProperty.prototype.asc_getDownImage = function () {
+		return this.downImage;
+	};
+	asc_CButtonFieldProperty.prototype.asc_putDownImage = function (v) {
+		this.downImage = v;
+	};
+	asc_CButtonFieldProperty.prototype.asc_putCurrentState = function(v) {
+		this.currentState = v;
+
+		// set to field state to add image (will clear after set image)
+		let oField = this.getParentField();
+		oField.asc_curImageState = v;
+
+		this.drawTexture(v);
+	};
+	asc_CButtonFieldProperty.prototype.asc_getCurrentState = function(v) {
+		return this.currentState;
+	};
+	asc_CButtonFieldProperty.prototype.put_DivId = function (v) {
+		this.DivId = v;
+		this.drawTexture(this.currentState);
+	};
+	asc_CButtonFieldProperty.prototype.drawTexture = function (nState) {
+		let sImageRasterId;
+		switch (nState) {
+			case AscPDF.APPEARANCE_TYPES.normal:
+				sImageRasterId = this.normalImage;
+				break;
+			case AscPDF.APPEARANCE_TYPES.mouseDown:
+				sImageRasterId = this.downImage;
+				break;
+			case AscPDF.APPEARANCE_TYPES.rollover:
+				sImageRasterId = this.hoverImage;
+				break;
+		}
+
+		var oDiv = document.getElementById(this.DivId);
+		if(!oDiv){
+			return;
+		}
+
+		var aChildren = oDiv.children;
+		var oCanvas = null;
+		for(var i = 0; i < aChildren.length; ++i){
+			if(aChildren[i].nodeName && aChildren[i].nodeName.toUpperCase() === 'CANVAS'){
+				oCanvas = aChildren[i];
+				break;
+			}
+		}
+		var nWidth = oDiv.clientWidth;
+		var nHeight = oDiv.clientHeight;
+		if(null === oCanvas){
+			oCanvas = document.createElement('canvas');
+			oCanvas.width = parseInt(nWidth);
+			oCanvas.height = parseInt(nHeight);
+			oDiv.appendChild(oCanvas);
+		}
+		var oContext = oCanvas.getContext('2d');
+		oContext.clearRect(0, 0, oCanvas.width, oCanvas.height);
+		if (!sImageRasterId) {
+			return;
+		}
+		
+		var _img = Asc.editor.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(sImageRasterId)];
+		if (_img != undefined && _img.Image != null && _img.Status != AscFonts.ImageLoadStatus.Loading)
+		{
+			var _x = 0;
+			var _y = 0;
+			var _w = Math.max(_img.Image.width, 1);
+			var _h = Math.max(_img.Image.height, 1);
+
+			var dAspect1 = nWidth / nHeight;
+			var dAspect2 = _w / _h;
+
+			_w = nWidth;
+			_h = nHeight;
+			if (dAspect1 >= dAspect2)
+			{
+				_w = dAspect2 * nHeight;
+				_x = (nWidth - _w) / 2;
+			}
+			else
+			{
+				_h = _w / dAspect2;
+				_y = (nHeight - _h) / 2;
+			}
+			oContext.drawImage(_img.Image, _x, _y, _w, _h);
+		}
+		else if (!_img || !_img.Image)
+		{
+			oContext.lineWidth = 1;
+
+			oContext.beginPath();
+			oContext.moveTo(0, 0);
+			oContext.lineTo(nWidth, nHeight);
+			oContext.moveTo(nWidth, 0);
+			oContext.lineTo(0, nHeight);
+			oContext.strokeStyle = "#FF0000";
+			oContext.stroke();
+
+			oContext.beginPath();
+			oContext.moveTo(0, 0);
+			oContext.lineTo(nWidth, 0);
+			oContext.lineTo(nWidth, nHeight);
+			oContext.lineTo(0, nHeight);
+			oContext.closePath();
+
+			oContext.strokeStyle = "#000000";
+			oContext.stroke();
+			oContext.beginPath();
+		}
+	};
+	asc_CButtonFieldProperty.prototype.put_ImageUrl = function (sUrl, nState) {
+		if (!this.DivId){
+			return;
+		}
+		let Api = Asc.editor;
+
+		// set to field state to add image (will clear after set image)
+		let oField = this.getParentField();
+
+		Api._addImageUrl([sUrl], oField);
+	};
+	asc_CButtonFieldProperty.prototype.showFileDialog = function (nState) {
+		if (!this.DivId){
+			return;
+		}
+		let Api = Asc.editor;
+
+		// set to field state to add image (will clear after set image)
+		let oField = this.getParentField();
+		let oDoc = oField.GetDocument();
+		let oActionsQueue = oDoc.GetActionsQueue();
+
+		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
+            window["AscDesktopEditor"]["OpenFilenameDialog"]("images", false, function(_file) {
+                var file = _file;
+                if (Array.isArray(file))
+                    file = file[0];
+        
+                var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](file);
+                editor._addImageUrl([AscCommon.g_oDocumentUrls.getImageUrl(_url)], oField);
+            });
+        }
+        else {
+            AscCommon.ShowImageFileDialog(Api.documentId, Api.documentUserId, undefined, Api.documentShardKey, Api.documentWopiSrc, Api.documentUserSessionId, function(error, files) {
+                if (error.canceled == true) {
+                    oActionsQueue.Continue();
+                }
+                else {
+                    Api._uploadCallback(error, files, oField);
+                }
+
+				AscCommon.global_mouseEvent.UnLockMouse();
+
+            }, function(error) {
+                if (c_oAscError.ID.No !== error) {
+                    Api.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
+                }
+
+                Api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+                AscCommon.global_mouseEvent.UnLockMouse();
+            });
+        }
+	};
+	//////////////////////////////////////////////////////////////////
+	///// Number format
+	//////////////////////////////////////////////////////////////////
+	function asc_CFieldNumberFormatProperty() {
+		this.type				= AscPDF.FormatType.NUMBER;
+		this.decimals			= undefined;
+		this.sepStyle			= undefined;
+		this.negStyle			= undefined;
+		this.currency			= undefined;
+		this.currencyPrepend	= undefined;
+	};
+
+	asc_CFieldNumberFormatProperty.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CFieldNumberFormatProperty.prototype.asc_getDecimals = function () {
+		return this.decimals;
+	};
+	asc_CFieldNumberFormatProperty.prototype.asc_putDecimals = function (v) {
+		this.decimals = v;
+	};
+	asc_CFieldNumberFormatProperty.prototype.asc_getSepStyle = function () {
+		return this.sepStyle;
+	};
+	asc_CFieldNumberFormatProperty.prototype.asc_putSepStyle = function (v) {
+		this.sepStyle = v;
+	};
+	asc_CFieldNumberFormatProperty.prototype.asc_getNegStyle = function () {
+		return this.negStyle;
+	};
+	asc_CFieldNumberFormatProperty.prototype.asc_putNegStyle = function (v) {
+		this.negStyle = v;
+	};
+	asc_CFieldNumberFormatProperty.prototype.asc_getCurrency = function () {
+		return this.currency;
+	};
+	asc_CFieldNumberFormatProperty.prototype.asc_putCurrency = function (v) {
+		this.currency = v;
+	};
+	asc_CFieldNumberFormatProperty.prototype.asc_getCurrencyPrepend = function () {
+		return this.currencyPrepend;
+	};
+	asc_CFieldNumberFormatProperty.prototype.asc_putCurrencyPrepend = function (v) {
+		this.currencyPrepend = v;
+	};
+	//////////////////////////////////////////////////////////////////
+	///// Percentage format
+	//////////////////////////////////////////////////////////////////
+	function asc_CFieldPercentageFormatProperty() {
+		this.type		= AscPDF.FormatType.PERCENTAGE;
+		this.decimals	= undefined;
+		this.sepStyle	= undefined;
+	};
+
+	asc_CFieldPercentageFormatProperty.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CFieldPercentageFormatProperty.prototype.asc_getDecimals = function () {
+		return this.decimals;
+	};
+	asc_CFieldPercentageFormatProperty.prototype.asc_putDecimals = function (v) {
+		this.decimals = v;
+	};
+	asc_CFieldPercentageFormatProperty.prototype.asc_getSepStyle = function () {
+		return this.sepStyle;
+	};
+	asc_CFieldPercentageFormatProperty.prototype.asc_putSepStyle = function (v) {
+		this.sepStyle = v;
+	};
+
+	//////////////////////////////////////////////////////////////////
+	///// Date format
+	//////////////////////////////////////////////////////////////////
+	function asc_CFieldDateFormatProperty() {
+		this.type		= AscPDF.FormatType.DATE;
+		this.format		= undefined;
+	};
+
+	asc_CFieldDateFormatProperty.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CFieldDateFormatProperty.prototype.asc_getFormat = function () {
+		return this.format;
+	};
+	asc_CFieldDateFormatProperty.prototype.asc_putFormat = function (v) {
+		this.format = v;
+	};
+	
+	//////////////////////////////////////////////////////////////////
+	///// Time format
+	//////////////////////////////////////////////////////////////////
+	function asc_CFieldTimeFormatProperty() {
+		this.type		= AscPDF.FormatType.TIME;
+		this.format		= undefined;
+	};
+
+	asc_CFieldTimeFormatProperty.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CFieldTimeFormatProperty.prototype.asc_getFormat = function () {
+		return this.format;
+	};
+	asc_CFieldTimeFormatProperty.prototype.asc_putFormat = function (v) {
+		this.format = v;
+	};
+
+	//////////////////////////////////////////////////////////////////
+	///// Special format
+	//////////////////////////////////////////////////////////////////
+	function asc_CFieldSpecialFormatProperty() {
+		this.type		= AscPDF.FormatType.SPECIAL;
+		this.format		= undefined;
+		this.mask		= undefined;
+	};
+
+	asc_CFieldSpecialFormatProperty.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CFieldSpecialFormatProperty.prototype.asc_getFormat = function () {
+		return this.format;
+	};
+	asc_CFieldSpecialFormatProperty.prototype.asc_putFormat = function (v) {
+		this.format = v;
+	};
+	asc_CFieldSpecialFormatProperty.prototype.asc_getMask = function () {
+		return this.mask;
+	};
+	asc_CFieldSpecialFormatProperty.prototype.asc_putMask = function (v) {
+		this.mask = v;
+	};
+
+	//////////////////////////////////////////////////////////////////
+	///// Regular (our custom) format
+	//////////////////////////////////////////////////////////////////
+	function asc_CFieldRegularFormatProperty() {
+		this.type		= AscPDF.FormatType.REGULAR;
+		this.regExp		= undefined;
+	};
+
+	asc_CFieldRegularFormatProperty.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CFieldRegularFormatProperty.prototype.asc_getRegExp = function () {
+		return this.regExp;
+	};
+	asc_CFieldRegularFormatProperty.prototype.asc_putRegExp = function (v) {
+		this.regExp = v;
+	};
+
+	//////////////////////////////////////////////////////////////////
+	///// Validate format
+	//////////////////////////////////////////////////////////////////
+	function asc_CFieldValidateProperty() {
+		this.type			= undefined;
+		this.greaterThen	= undefined;
+		this.lessThen		= undefined;
+	};
+
+	asc_CFieldValidateProperty.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CFieldValidateProperty.prototype.asc_putType = function (v) {
+		this.type = v;
+	};
+	asc_CFieldValidateProperty.prototype.asc_getBeGreaterThen = function () {
+		return this.bGreaterThen;
+	};
+	asc_CFieldValidateProperty.prototype.asc_putBeGreaterThen = function (v) {
+		this.bGreaterThen = v;
+	};
+	asc_CFieldValidateProperty.prototype.asc_getGreaterThen = function () {
+		return this.greaterThen;
+	};
+	asc_CFieldValidateProperty.prototype.asc_putGreaterThen = function (v) {
+		this.greaterThen = v;
+	};
+	asc_CFieldValidateProperty.prototype.asc_getBeLessThen = function () {
+		return this.bLessThen;
+	};
+	asc_CFieldValidateProperty.prototype.asc_putBeLessThen = function (v) {
+		this.bLessThen = v;
+	};
+	asc_CFieldValidateProperty.prototype.asc_getLessThen = function () {
+		return this.lessThen;
+	};
+	asc_CFieldValidateProperty.prototype.asc_putLessThen = function (v) {
+		this.lessThen = v;
 	};
 
 	/** @constructor */
@@ -6806,6 +7558,191 @@ function (window, undefined) {
 	prot["asc_setSubject"]			= prot.asc_setSubject;
 	prot["asc_getCanEditText"]		= prot.asc_getCanEditText;
 	prot["asc_setCanEditText"]		= prot.asc_setCanEditText;
+
+	window["Asc"]["asc_CBaseFieldProperty"] = window["Asc"].asc_CBaseFieldProperty = asc_CBaseFieldProperty;
+	prot = asc_CBaseFieldProperty.prototype;
+	prot["asc_getType"]			= prot.asc_getType;
+	prot["asc_putType"]			= prot.asc_putType;
+	prot["asc_getName"]			= prot.asc_getName;
+	prot["asc_putName"]			= prot.asc_putName;
+	prot["asc_getRequired"]		= prot.asc_getRequired;
+	prot["asc_putRequired"]		= prot.asc_putRequired;
+	prot["asc_getReadOnly"]		= prot.asc_getReadOnly;
+	prot["asc_putReadOnly"]		= prot.asc_putReadOnly;
+	prot["asc_getRot"]			= prot.asc_getRot;
+	prot["asc_putRot"]			= prot.asc_putRot;
+	prot["asc_getDisplay"]		= prot.asc_getDisplay;
+	prot["asc_putDisplay"]		= prot.asc_putDisplay;
+	prot["asc_getFill"]			= prot.asc_getFill;
+	prot["asc_putFill"]			= prot.asc_putFill;
+	prot["asc_getStroke"]		= prot.asc_getStroke;
+	prot["asc_putStroke"]		= prot.asc_putStroke;
+	prot["asc_getStrokeWidth"]	= prot.asc_getStrokeWidth;
+	prot["asc_putStrokeWidth"]	= prot.asc_putStrokeWidth;
+	prot["asc_getStrokeStyle"]	= prot.asc_getStrokeStyle;
+	prot["asc_putStrokeStyle"]	= prot.asc_putStrokeStyle;
+	prot["asc_getFieldProps"]	= prot.asc_getFieldProps;
+	prot["asc_putFieldProps"]	= prot.asc_putFieldProps;
+
+	window["Asc"]["asc_CTextFieldProperty"] = window["Asc"].asc_CTextFieldProperty = asc_CTextFieldProperty;
+	prot = asc_CTextFieldProperty.prototype;
+	prot["asc_getDefaultValue"]			= prot.asc_getDefaultValue;
+	prot["asc_putDefaultValue"]			= prot.asc_putDefaultValue;
+	prot["asc_getMultiline"]			= prot.asc_getMultiline;
+	prot["asc_putMultiline"]			= prot.asc_putMultiline;
+	prot["asc_getScrollLongText"]		= prot.asc_getScrollLongText;
+	prot["asc_putScrollLongText"]		= prot.asc_putScrollLongText;
+	prot["asc_getCharLimit"]			= prot.asc_getCharLimit;
+	prot["asc_putCharLimit"]			= prot.asc_putCharLimit;
+	prot["asc_getComb"]					= prot.asc_getComb;
+	prot["asc_putComb"]					= prot.asc_putComb;
+	prot["asc_getPlaceholder"]			= prot.asc_getPlaceholder;
+	prot["asc_putPlaceholder"]			= prot.asc_putPlaceholder;
+	prot["asc_getAutoFit"]				= prot.asc_getAutoFit;
+	prot["asc_putAutoFit"]				= prot.asc_putAutoFit;
+	prot["asc_getFormat"]				= prot.asc_getFormat;
+	prot["asc_putFormat"]				= prot.asc_putFormat;
+	prot["asc_getValidate"]				= prot.asc_getValidate;
+	prot["asc_putValidate"]				= prot.asc_putValidate;
+
+	window["Asc"]["asc_CComboboxFieldProperty"] = window["Asc"].asc_CComboboxFieldProperty = asc_CComboboxFieldProperty;
+	prot = asc_CComboboxFieldProperty.prototype;
+	prot["asc_getOptions"]				= prot.asc_getOptions;
+	prot["asc_putOptions"]				= prot.asc_putOptions;
+	prot["asc_getCommitOnSelChange"]	= prot.asc_getCommitOnSelChange;
+	prot["asc_putCommitOnSelChange"]	= prot.asc_putCommitOnSelChange;
+	prot["asc_getEditable"]				= prot.asc_getEditable;
+	prot["asc_putEditable"]				= prot.asc_putEditable;
+	prot["asc_getPlaceholder"]			= prot.asc_getPlaceholder;
+	prot["asc_putPlaceholder"]			= prot.asc_putPlaceholder;
+	prot["asc_getAutoFit"]				= prot.asc_getAutoFit;
+	prot["asc_putAutoFit"]				= prot.asc_putAutoFit;
+	prot["asc_getFormat"]				= prot.asc_getFormat;
+	prot["asc_putFormat"]				= prot.asc_putFormat;
+	prot["asc_getValidate"]				= prot.asc_getValidate;
+	prot["asc_putValidate"]				= prot.asc_putValidate;
+
+	window["Asc"]["asc_CListboxFieldProperty"] = window["Asc"].asc_CListboxFieldProperty = asc_CListboxFieldProperty;
+	prot = asc_CListboxFieldProperty.prototype;
+	prot["asc_getOptions"]				= prot.asc_getOptions;
+	prot["asc_putOptions"]				= prot.asc_putOptions;
+	prot["asc_getCommitOnSelChange"]	= prot.asc_getCommitOnSelChange;
+	prot["asc_putCommitOnSelChange"]	= prot.asc_putCommitOnSelChange;
+	prot["asc_getMultipleSelection"]	= prot.asc_getMultipleSelection;
+	prot["asc_putMultipleSelection"]	= prot.asc_putMultipleSelection;
+
+	window["Asc"]["asc_CCheckboxFieldProperty"] = window["Asc"].asc_CCheckboxFieldProperty = asc_CCheckboxFieldProperty;
+	prot = asc_CCheckboxFieldProperty.prototype;
+	prot["asc_getCheckboxStyle"]		= prot.asc_getCheckboxStyle;
+	prot["asc_putCheckboxStyle"]		= prot.asc_putCheckboxStyle;
+	prot["asc_getExportValue"]		= prot.asc_getExportValue;
+	prot["asc_putExportValue"]		= prot.asc_putExportValue;
+	prot["asc_getDefaultChecked"]	= prot.asc_getDefaultChecked;
+	prot["asc_putDefaultChecked"]	= prot.asc_putDefaultChecked;
+	prot["asc_getToggleToOff"]		= prot.asc_getToggleToOff;
+	prot["asc_putToggleToOff"]		= prot.asc_putToggleToOff;
+
+	window["Asc"]["asc_CRadiobuttonFieldProperty"] = window["Asc"].asc_CRadiobuttonFieldProperty = asc_CRadiobuttonFieldProperty;
+	prot = asc_CRadiobuttonFieldProperty.prototype;
+	prot["asc_getRadiosInUnison"]	= prot.asc_getRadiosInUnison;
+	prot["asc_putRadiosInUnison"]	= prot.asc_putRadiosInUnison;
+
+	window["Asc"]["asc_CButtonFieldProperty"] = window["Asc"].asc_CButtonFieldProperty = asc_CButtonFieldProperty;
+	prot = asc_CButtonFieldProperty.prototype;
+	prot["asc_getHighlight"]	= prot.asc_getHighlight;
+	prot["asc_putHighlight"]	= prot.asc_putHighlight;
+	prot["asc_getLayout"]		= prot.asc_getLayout;
+	prot["asc_putLayout"]		= prot.asc_putLayout;
+	prot["asc_getScaleWhen"]	= prot.asc_getScaleWhen;
+	prot["asc_putScaleWhen"]	= prot.asc_putScaleWhen;
+	prot["asc_getScaleHow"]		= prot.asc_getScaleHow;
+	prot["asc_putScaleHow"]		= prot.asc_putScaleHow;
+	prot["asc_getFitBounds"]	= prot.asc_getFitBounds;
+	prot["asc_putFitBounds"]	= prot.asc_putFitBounds;
+	prot["asc_getIconPos"]		= prot.asc_getIconPos;
+	prot["asc_putIconPos"]		= prot.asc_putIconPos;
+	prot["asc_getBehavior"]		= prot.asc_getBehavior;
+	prot["asc_putBehavior"]		= prot.asc_putBehavior;
+	prot["asc_getNormalCaption"]= prot.asc_getNormalCaption;
+	prot["asc_putNormalCaption"]= prot.asc_putNormalCaption;
+	prot["asc_getNormalImage"]	= prot.asc_getNormalImage;
+	prot["asc_putNormalImage"]	= prot.asc_putNormalImage;
+	prot["asc_getHoverCaption"]	= prot.asc_getHoverCaption;
+	prot["asc_putHoverCaption"]	= prot.asc_putHoverCaption;
+	prot["asc_getHoverImage"]	= prot.asc_getHoverImage;
+	prot["asc_putHoverImage"]	= prot.asc_putHoverImage;
+	prot["asc_getDownCaption"]	= prot.asc_getDownCaption;
+	prot["asc_putDownCaption"]	= prot.asc_putDownCaption;
+	prot["asc_getDownImage"]	= prot.asc_getDownImage;
+	prot["asc_putDownImage"]	= prot.asc_putDownImage;
+	prot["asc_putCurrentState"]	= prot.asc_putCurrentState;
+	prot["asc_getCurrentState"]	= prot.asc_getCurrentState;
+	prot["put_DivId"]			= prot.put_DivId;
+	prot["drawTexture"]			= prot.drawTexture;
+	prot["put_ImageUrl"]		= prot.put_ImageUrl;
+	prot["showFileDialog"]		= prot.showFileDialog;
+
+	window["Asc"]["asc_CFieldNumberFormatProperty"] = window["Asc"].asc_CFieldNumberFormatProperty = asc_CFieldNumberFormatProperty;
+	prot = asc_CFieldNumberFormatProperty.prototype;
+	prot["asc_getType"]				= prot.asc_getType;
+	prot["asc_getDecimals"]			= prot.asc_getDecimals;
+	prot["asc_putDecimals"]			= prot.asc_putDecimals;
+	prot["asc_getSepStyle"]			= prot.asc_getSepStyle;
+	prot["asc_putSepStyle"]			= prot.asc_putSepStyle;
+	prot["asc_getNegStyle"]			= prot.asc_getNegStyle;
+	prot["asc_putNegStyle"]			= prot.asc_putNegStyle;
+	prot["asc_getCurrency"]			= prot.asc_getCurrency;
+	prot["asc_putCurrency"]			= prot.asc_putCurrency;
+	prot["asc_getCurrencyPrepend"]	= prot.asc_getCurrencyPrepend;
+	prot["asc_putCurrencyPrepend"]	= prot.asc_putCurrencyPrepend;
+
+	
+	window["Asc"]["asc_CFieldPercentageFormatProperty"] = window["Asc"].asc_CFieldPercentageFormatProperty = asc_CFieldPercentageFormatProperty;
+	prot = asc_CFieldPercentageFormatProperty.prototype;
+	prot["asc_getType"]				= prot.asc_getType;
+	prot["asc_getDecimals"]			= prot.asc_getDecimals;
+	prot["asc_putDecimals"]			= prot.asc_putDecimals;
+	prot["asc_getSepStyle"]			= prot.asc_getSepStyle;
+	prot["asc_putSepStyle"]			= prot.asc_putSepStyle;
+
+	window["Asc"]["asc_CFieldDateFormatProperty"] = window["Asc"].asc_CFieldDateFormatProperty = asc_CFieldDateFormatProperty;
+	prot = asc_CFieldDateFormatProperty.prototype;
+	prot["asc_getType"]				= prot.asc_getType;
+	prot["asc_getFormat"]			= prot.asc_getFormat;
+	prot["asc_putFormat"]			= prot.asc_putFormat;
+	
+	window["Asc"]["asc_CFieldTimeFormatProperty"] = window["Asc"].asc_CFieldTimeFormatProperty = asc_CFieldTimeFormatProperty;
+	prot = asc_CFieldTimeFormatProperty.prototype;
+	prot["asc_getType"]				= prot.asc_getType;
+	prot["asc_getFormat"]			= prot.asc_getFormat;
+	prot["asc_putFormat"]			= prot.asc_putFormat;
+	
+	window["Asc"]["asc_CFieldSpecialFormatProperty"] = window["Asc"].asc_CFieldSpecialFormatProperty = asc_CFieldSpecialFormatProperty;
+	prot = asc_CFieldSpecialFormatProperty.prototype;
+	prot["asc_getType"]				= prot.asc_getType;
+	prot["asc_getFormat"]			= prot.asc_getFormat;
+	prot["asc_putFormat"]			= prot.asc_putFormat;
+	prot["asc_getMask"]				= prot.asc_getMask;
+	prot["asc_putMask"]				= prot.asc_putMask;
+	
+	window["Asc"]["asc_CFieldRegularFormatProperty"] = window["Asc"].asc_CFieldRegularFormatProperty = asc_CFieldRegularFormatProperty;
+	prot = asc_CFieldRegularFormatProperty.prototype;
+	prot["asc_getType"]				= prot.asc_getType;
+	prot["asc_getRegExp"]			= prot.asc_getRegExp;
+	prot["asc_putRegExp"]			= prot.asc_putRegExp;
+	
+	window["Asc"]["asc_CFieldValidateProperty"] = window["Asc"].asc_CFieldValidateProperty = asc_CFieldValidateProperty;
+	prot = asc_CFieldValidateProperty.prototype;
+	prot["asc_getType"]				= prot.asc_getType;
+	prot["asc_putType"]				= prot.asc_putType;
+	prot["asc_getBeGreaterThen"]	= prot.asc_getBeGreaterThen;
+	prot["asc_putBeGreaterThen"]	= prot.asc_putBeGreaterThen;
+	prot["asc_getGreaterThen"]		= prot.asc_getGreaterThen;
+	prot["asc_putGreaterThen"]		= prot.asc_putGreaterThen;
+	prot["asc_getBeLessThen"]		= prot.asc_getBeLessThen;
+	prot["asc_putBeLessThen"]		= prot.asc_putBeLessThen;
+	prot["asc_getLessThen"]			= prot.asc_getLessThen;
+	prot["asc_putLessThen"]			= prot.asc_putLessThen;
 
 	window["Asc"]["asc_CPdfPageProperty"] = window["Asc"].asc_CPdfPageProperty = asc_CPdfPageProperty;
 	prot = asc_CPdfPageProperty.prototype;

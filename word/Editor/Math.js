@@ -739,6 +739,29 @@ ParaMath.prototype.Add = function(Item)
 		NewElement.add(32);
 		Run.Add(NewElement, true);
 	}
+	else if (Item instanceof AscWord.ParaMath)
+	{
+		let contentPos = new AscWord.CParagraphContentPos();
+		
+		if (this.bSelectionUse)
+			this.Get_ParaContentPos(true, true, contentPos);
+		else
+			this.Get_ParaContentPos(false, false, contentPos);
+		
+		let rightRun = Run.Split2(Run.State.ContentPos);
+		
+		let pos = StartPos + 1;
+		for (let i = 0; i < Item.Root.Content.length; ++i, ++pos)
+		{
+			oContent.Internal_Content_Add(pos, Item.Root.Content[i], false);
+		}
+		
+		oContent.Internal_Content_Add(pos, rightRun, false);
+		oContent.CurPos = pos;
+		rightRun.MoveCursorToStartPos();
+		
+		oContent.Correct_ContentCurPos();
+	}
 	else if (para_Math === Type)
 	{
 		var ContentPos = new AscWord.CParagraphContentPos();
@@ -2518,7 +2541,9 @@ ParaMath.prototype.Draw_Elements = function(PDSE)
     this.Root.Draw_Elements(PDSE);
 
     PDSE.X = X + this.Root.GetWidth(PDSE.Line, PDSE.Range);
-
+		if (PDSE.Graphics.m_bIsTextDrawer) {
+			PDSE.Graphics.CheckSpaceDraw(null, true);
+		}
     /*PDSE.Graphics.p_color(255,0,0, 255);
      PDSE.Graphics.drawHorLine(0, PDSE.Y - this.Ascent + this.Height, PDSE.X - 30, PDSE.X + this.Width + 30 , 1);*/
 };
@@ -2572,8 +2597,10 @@ ParaMath.prototype.Draw_Lines = function(PDSL)
         var Bound = this.Root.Get_LineBound(PDSL.Line, PDSL.Range),
             Width = Bound.W;
 
-        if ( true === FirstRPrp.Underline )
-            aUnderline.Add( UnderlineY, UnderlineY, X, X + Width, LineW, CurColor.r, CurColor.g, CurColor.b );
+        if ( true === FirstRPrp.Underline ) {
+					aUnderline.set(UnderlineY, LineW);
+	        aUnderline.Add(X, X + Width, CurColor);
+        }
 
 
         this.Root.Draw_Lines(PDSL);
@@ -3302,6 +3329,98 @@ ParaMath.prototype.IsContentControlEquation = function()
 ParaMath.prototype.ProcessingOldEquationConvert = function()
 {
 	this.Root.ProcessingOldEquationConvert();
+};
+ParaMath.fromMathML = function(xml, textPr)
+{
+	let paraMath = new ParaMath();
+	
+	let reader = new StaxParser(xml);
+	
+	if (!reader.ReadNextNode() || "math" !== reader.GetNameNoNS())
+	{
+		paraMath.Root.Correct_Content();
+		return paraMath;
+	}
+	
+	paraMath.Root.fromMathML(reader);
+	paraMath.Root.Correct_Content();
+	paraMath.SetParagraph(null);
+	
+	if (textPr)
+	{
+		textPr.RFonts.SetAll("Cambria Math");
+		paraMath.ApplyTextPr(textPr, undefined, true);
+	}
+	
+	return paraMath;
+};
+ParaMath.readMathMLNode = function(reader)
+{
+	let elements = [];
+	let name = reader.GetNameNoNS();
+	switch (name)
+	{
+		case 'mi':
+		case 'mo':
+		case 'mn':
+			let text = reader.GetText();
+			text = text.replaceAll(String.fromCharCode(8290), ""); // invisible *
+			text = text.replaceAll(String.fromCharCode(8292), ""); // invisible +
+			if (text && text.length)
+			{
+				elements.push(new AscWord.Run(null, true));
+				elements[0].AddText(text);
+			}
+			break;
+		case 'msub':
+			elements.push(new AscMath.Degree.fromMathML(reader, DEGREE_SUBSCRIPT));
+			break;
+		case 'msup':
+			elements.push(new AscMath.Degree.fromMathML(reader, DEGREE_SUPERSCRIPT));
+			break;
+		case 'msubsup':
+		case 'munderover':
+			elements.push(new AscMath.DegreeSubSup.fromMathML(reader, DEGREE_SubSup));
+			break;
+		case 'mfrac':
+			elements.push(AscMath.Fraction.fromMathML(reader));
+			break;
+		case 'msqrt':
+			elements.push(AscMath.Radical.fromMathML(reader, false));
+			break;
+		case 'mroot':
+			elements.push(AscMath.Radical.fromMathML(reader, true));
+			break;
+		case 'mrow':
+		case 'semantics':
+			elements = AscWord.ParaMath.readMathMLMRow(reader);
+			break;
+	}
+	
+	return elements;
+};
+ParaMath.readMathMLMRow = function(reader)
+{
+	let result = []
+	let depth = reader.GetDepth();
+	while (reader.ReadNextSiblingNode(depth))
+	{
+		result = result.concat(AscWord.ParaMath.readMathMLNode(reader));
+	}
+	return result;
+};
+ParaMath.readMathMLContent = function(reader)
+{
+	let mathContent = new CMathContent();
+	let elements = AscWord.ParaMath.readMathMLNode(reader);
+	
+	for (let i = 0; i < elements.length; ++i)
+	{
+		mathContent.addElementToContent(elements[i]);
+	}
+	
+	mathContent.Correct_Content(true);
+	return mathContent;
 };
 
 function MatGetKoeffArgSize(FontSize, ArgSize)

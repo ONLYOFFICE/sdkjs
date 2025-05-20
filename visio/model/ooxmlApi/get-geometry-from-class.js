@@ -277,6 +277,7 @@
 			let prevCommandName;
 
 			let commandRows = geometrySection.getRows();
+			let rowMaxIndex = commandRows.length - 1;
 
 			for (let j = 0; j < commandRows.length; j++) {
 				let commandRow = commandRows[j];
@@ -672,7 +673,7 @@
 						// https://learn.microsoft.com/en-us/office/client-developer/visio/splinestart-row-geometry-section
 
 						let secondControlPointY = commandRow.getCellNumberValue("Y", 0);
-						let degree = commandRow.getCellNumberValue("D", 0); // not angle
+						let degree = commandRow.getCellNumberValue("D", 0); // not angle - curve order
 
 						if (isInvertCoords) {
 							secondControlPointY = shapeHeight - secondControlPointY;
@@ -822,8 +823,7 @@
 					}
 				}
 				if (prevCommandName === "SplineKnot" &&
-					(commandName !== "SplineKnot" || j === geometrySection.getElements().length - 1) &&
-					splineStartCommandData !== undefined) {
+					(commandName !== "SplineKnot" || j === rowMaxIndex) && splineStartCommandData !== undefined) {
 					// draw spline
 
 					/** @type {{x: Number, y: Number}[]} */

@@ -153,7 +153,7 @@
 
 	const customFunctionsStorageId = "cell-custom-functions-library";
 
-	Api.prototype.registerCustomFunctionsLibrary = function(obj)
+	Api.prototype.registerCustomFunctionsLibrary = function(obj, isNotUpdate)
 	{
 		// DISABLE FOR NATIVE VERSION
 		if (window["NATIVE_EDITOR_ENJINE"])
@@ -183,7 +183,7 @@
 			}
 		}
 
-		this.recalculateCustomFunctions();
+		this.recalculateCustomFunctions(isNotUpdate);
 	};
 
 	Api.prototype.addCustomFunctionsLibrary = function(sName, Func)

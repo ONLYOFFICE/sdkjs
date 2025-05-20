@@ -195,7 +195,10 @@
 		}
 		
 		this.addCompositeInputLine(element, run, inRunPos);
-		
+		let oTextDrawerInfo;
+		if (this.Graphics.m_bIsTextDrawer) {
+			oTextDrawerInfo = {TextDrawer: {SplitType: this.Graphics.m_nCurrentSplitOptions, TextElement: element}};
+		}
 		let startX = this.X;
 		let endX   = this.X + element.GetWidthVisible();
 		switch (element.Type)
@@ -215,7 +218,7 @@
 			case para_Math_BreakOperator:
 			case para_Math_Ampersand:
 			case para_Math_Placeholder:
-				this.addLines(startX, endX);
+				this.addLines(startX, endX, undefined, oTextDrawerInfo);
 				break;
 			case para_Space:
 				if (this.paraLineRange)
@@ -227,22 +230,22 @@
 				if (this.Spaces > 0 || this.ulTrailSpace)
 				{
 					--this.Spaces;
-					this.addLines(startX, endX);
+					this.addLines(startX, endX, undefined, oTextDrawerInfo);
 				}
 				break;
 			case para_Drawing:
 				if (element.IsInline())
-					this.addLines(startX, endX, false);
+					this.addLines(startX, endX, false, oTextDrawerInfo);
 				break;
 			case para_End:
 				this.isUnderline  = false;
 				this.isStrikeout  = false;
 				this.isDStrikeout = false;
-				this.addLines(startX, endX);
+				this.addLines(startX, endX, undefined, oTextDrawerInfo);
 				break;
 			case para_FieldChar:
 				if (element.IsVisual())
-					this.addLines(startX, endX);
+					this.addLines(startX, endX, undefined, oTextDrawerInfo);
 				break;
 		}
 		
@@ -550,7 +553,7 @@
 	 * @param endX {number}
 	 * @param drawStrikeout {boolean}
 	 */
-	ParagraphLineDrawState.prototype.addLines = function(startX, endX, drawStrikeout)
+	ParagraphLineDrawState.prototype.addLines = function(startX, endX, drawStrikeout, oTextDrawerInfo)
 	{
 		if (endX - startX < 0.001)
 			return;
@@ -560,33 +563,33 @@
 			if (this.reviewRem)
 			{
 				if (this.reviewMove)
-					this.DStrikeout.Add(startX, endX, this.reviewColor);
+					this.DStrikeout.Add(startX, endX, this.reviewColor, oTextDrawerInfo);
 				else
-					this.Strikeout.Add(startX, endX, this.reviewColor);
-				
+					this.Strikeout.Add(startX, endX, this.reviewColor, oTextDrawerInfo);
+
 				if (this.reviewRemAdd)
-					this.Underline.Add(startX, endX, this.reviewRemAddColor);
+					this.Underline.Add(startX, endX, this.reviewRemAddColor, oTextDrawerInfo);
 			}
 			else if (this.isDStrikeout)
 			{
-				this.DStrikeout.Add(startX, endX, this.color, undefined, this.textPr);
+				this.DStrikeout.Add(startX, endX, this.color, oTextDrawerInfo, this.textPr);
 			}
 			else if (this.isStrikeout)
 			{
-				this.Strikeout.Add(startX, endX, this.color, undefined, this.textPr);
+				this.Strikeout.Add(startX, endX, this.color, oTextDrawerInfo, this.textPr);
 			}
 		}
-		
+
 		if (this.reviewAdd)
 		{
 			if (this.reviewMove)
-				this.DUnderline.Add(startX, endX, this.reviewColor);
+				this.DUnderline.Add(startX, endX, this.reviewColor, oTextDrawerInfo);
 			else
-				this.Underline.Add(startX, endX, this.reviewColor);
+				this.Underline.Add(startX, endX, this.reviewColor, oTextDrawerInfo);
 		}
 		else if (this.isUnderline)
 		{
-			this.Underline.Add(startX, endX, this.color, undefined, this.textPr);
+			this.Underline.Add(startX, endX, this.color, oTextDrawerInfo, this.textPr);
 		}
 	};
 	ParagraphLineDrawState.prototype.addCompositeInputLine = function(element, run, inRunPos)

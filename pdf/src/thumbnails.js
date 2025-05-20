@@ -987,6 +987,8 @@
         AscCommon.check_MouseDownEvent(e, true);
         AscCommon.global_mouseEvent.LockMouse();
     
+        this.isInFocus = true;
+
         let dp = this.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
         if (!dp) {
             // Клик вне страницы
@@ -1007,6 +1009,8 @@
         }
     
         AscCommon.stopEvent(e);
+        Asc.editor.getPDFDoc().UpdateCopyCutState();
+        
         return false;
     };
     
@@ -1106,8 +1110,10 @@
             if (dp) {
                 // Выполняем логику выделения по shift/ctrl/одиночному клику
                 if (this._shiftPressed) {
-                    let minp = Math.min(...this.selectedPages.concat(dp.num));
-                    let maxp = Math.max(...this.selectedPages.concat(dp.num));
+                    let allPages = this.selectedPages.concat(dp.num);
+                    let minp = Math.min.apply(null, allPages);
+                    let maxp = Math.max.apply(null, allPages);
+
                     this.resetSelection();
                     for (let i = minp; i <= maxp; i++) {
                         this.selectedPages.push(i);

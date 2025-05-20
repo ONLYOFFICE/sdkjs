@@ -185,7 +185,7 @@ function OverlayObject(geometry, extX, extY, brush, pen, transform )
     };
 }
 
-function ObjectToDraw(brush, pen, extX, extY, geometry, transform, x, y, oComment, Code)
+function ObjectToDraw(brush, pen, extX, extY, geometry, transform, x, y, oComment, TextElement, oLineStructure, nId, bIsBulletSymbol)
 {
     this.extX = extX;
     this.extY = extY;
@@ -194,13 +194,17 @@ function ObjectToDraw(brush, pen, extX, extY, geometry, transform, x, y, oCommen
     this.geometry = geometry;
     this.parentShape = null;
     this.Comment = oComment;
-    this.Code = Code;
+    this.TextElement = TextElement;
     this.pen = pen;
     this.brush = brush;
-
+		this.lineStructure = oLineStructure;
+		this.isBulletSymbol = bIsBulletSymbol;
+		this.SpaceTextElements = [];
 	/*позиция символа*/
     this.x = x;
     this.y = y;
+
+		this.id = nId;
 }
 ObjectToDraw.prototype =
 {
@@ -222,7 +226,7 @@ ObjectToDraw.prototype =
         }
     },
 
-    resetBrushPen: function(brush, pen, x, y, Code)
+    resetBrushPen: function(brush, pen, x, y, TextElement, isBulletSymbol)
     {
         this.brush = brush;
         this.pen = pen;
@@ -232,10 +236,13 @@ ObjectToDraw.prototype =
             this.x = x;
             this.y = y;
         }
-        if(AscFormat.isRealNumber(Code))
+        if(TextElement)
         {
-            this.Code = Code;
+            this.TextElement = TextElement;
         }
+				if (AscFormat.isRealBool(isBulletSymbol)) {
+					this.isBulletSymbol = isBulletSymbol;
+				}
     },
 
     Recalculate: function(oTheme, oColorMap, dWidth, dHeight, oShape, bResetPathsInfo)
@@ -352,9 +359,17 @@ ObjectToDraw.prototype =
     createDuplicate: function()
     {
     },
+	getTextElementCode: function () {
+		if (this.TextElement && this.TextElement.GetCharCode) {
+			return this.TextElement.GetCharCode();
+		}
+	},
+	addSpaceTextElement: function (oElement) {
+		this.SpaceTextElements.push(oElement);
+	},
 
     compareForMorph: function(oDrawingToCheck, oCurCandidate) {
-        if(AscFormat.isRealNumber(this.Code) && oDrawingToCheck.Code === this.Code) {
+        if(AscFormat.isRealNumber(this.getTextElementCode()) && oDrawingToCheck.getTextElementCode() === this.getTextElementCode()) {
             return oDrawingToCheck;
         }
         return oCurCandidate;

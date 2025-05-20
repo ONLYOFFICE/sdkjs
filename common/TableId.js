@@ -448,10 +448,13 @@
 
 		if (editor && editor.isPdfEditor())
 		{
+			// drawings
 			this.m_oFactoryClass[AscDFH.historyitem_type_Shape]					= AscPDF.CPdfShape;
 			this.m_oFactoryClass[AscDFH.historyitem_type_GraphicFrame]			= AscPDF.CPdfGraphicFrame;
 			this.m_oFactoryClass[AscDFH.historyitem_type_ImageShape]			= AscPDF.CPdfImage;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Cnx]					= AscPDF.CPdfConnectionShape;
+
+			// annots
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Text]		= AscPDF.CAnnotationText;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Ink]			= AscPDF.CAnnotationInk;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Highlight]	= AscPDF.CAnnotationHighlight;
@@ -459,6 +462,17 @@
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Strikeout]	= AscPDF.CAnnotationStrikeout;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_FreeText]	= AscPDF.CAnnotationFreeText;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Stamp]		= AscPDF.CAnnotationStamp;
+
+			//forms
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Checkbox_Field]	= AscPDF.CCheckBoxField;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Combobox_Field]	= AscPDF.CComboBoxField;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Listbox_Field]		= AscPDF.CListBoxField;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Button_Field]		= AscPDF.CPushButtonField;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Radiobutton_Field]	= AscPDF.CRadioButtonField;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Signature_Field]	= AscPDF.CSignatureField;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Text_Field]		= AscPDF.CTextField;
+
+			// other
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Page]				= AscPDF.CPageInfo;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_PropLocker]        = AscPDF.PropLocker;
 		}

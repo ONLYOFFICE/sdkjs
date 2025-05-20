@@ -130,7 +130,7 @@
 		this.AddToParagraph(new AscWord.ParaTextPr({Italic : bItalic}));
 		this.SetApplyToAll(false);
 	};
-	CTextBoxContent.prototype.replaceAllText = function(value) {
+	CTextBoxContent.prototype.replaceAllText = function(value, bIgnoreCount) {
 		let codePoints = typeof(value) === "string" ? value.codePointsArray() : value;
 		
 		let paragraph = this.GetElement(0);
@@ -150,7 +150,7 @@
 				let isOnOpen    = oDoc.Viewer.IsOpenFormsInProgress;
 				let nCharLimit	= this.ParentPDF.GetCharLimit();
 				
-				if (false == isOnOpen) {
+				if (false == isOnOpen && bIgnoreCount !== true) {
 					let nCharsCount = AscWord.GraphemesCounter.GetCount(codePoints, this.GetCalculatedTextPr());
 					
 					if (nCharsCount > nCharLimit)
@@ -215,7 +215,7 @@
 			return "";
 		
 		paragraph.SetApplyToAll(true);
-		let text = paragraph.GetSelectedText(true);
+		let text = paragraph.GetSelectedText(true, {ParaSeparator: ""});
 		paragraph.SetApplyToAll(false);
 		return text;
 	};

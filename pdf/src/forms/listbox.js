@@ -42,9 +42,9 @@
 	 * @constructor
      * @extends {CBaseListField}
 	 */
-    function CListBoxField(sName, nPage, aRect, oDoc)
+    function CListBoxField(sName, aRect, oDoc)
     {
-        AscPDF.CBaseListField.call(this, sName, AscPDF.FIELD_TYPES.listbox, nPage, aRect, oDoc);
+        AscPDF.CBaseListField.call(this, sName, AscPDF.FIELD_TYPES.listbox, aRect, oDoc);
 
         this._multipleSelection = false;
 
@@ -55,12 +55,17 @@
         this._internalMargins = {
             bottom: undefined
         }
+
+        AscCommon.History.StartNoHistoryMode();
+		this.content = new AscPDF.CTextBoxContent(this, oDoc);
+        this.content.Internal_Content_RemoveAll();
+        AscCommon.History.EndNoHistoryMode();
     };
-    CListBoxField.prototype = Object.create(AscPDF.CBaseListField.prototype);
 	CListBoxField.prototype.constructor = CListBoxField;
+    AscFormat.InitClass(CListBoxField, AscPDF.CBaseListField, AscDFH.historyitem_type_Pdf_Listbox_Field);
 
     CListBoxField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
-        if (this.IsHidden() == true)
+        if (this.IsHidden() && !this.IsEditMode())
             return;
 
         // когда выравнивание посередине или справа, то после того
@@ -85,15 +90,14 @@
         this.DrawBorders(oGraphicsPDF);
 
         this.DrawLocks(oGraphicsPDF);
+        this.DrawEdit(oGraphicsWord);
     };
     CListBoxField.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
             return;
 
         if (!this.RecalculateContentRect()) {
-            this.content.Content.forEach(function(element) {
-                element.Recalculate_Page(0);
-            });
+            this.content.Recalculate_Page(0, true);
         }
 
         this.SetNeedRecalc(false);
@@ -135,7 +139,11 @@
         if (!this.content)
             return;
 
-        let aRect       = this.GetOrigRect();
+        let aRect = this.GetOrigRect();
+        if (!aRect) {
+            return;
+        }
+
         let X           = aRect[0];
         let Y           = aRect[1];
         let nWidth      = aRect[2] - aRect[0];
@@ -158,34 +166,32 @@
 	 * @memberof CListBoxField
 	 * @typeofeditors ["PDF"]
 	 */
-    CListBoxField.prototype.SyncField = function() {
+    CListBoxField.prototype.SyncValue = function() {
         let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         
-        let oDoc = this.GetDocument();
-        oDoc.StartNoHistoryMode();
-
         for (let i = 0; i < aFields.length; i++) {
             if (aFields[i] != this) {
-                this.SetMultipleSelection(aFields[i].IsMultipleSelection());
-                this.content.Internal_Content_RemoveAll();
-                for (let nItem = 0; nItem < aFields[i].content.Content.length; nItem++) {
-                    this.content.Internal_Content_Add(nItem, aFields[i].content.Content[nItem].Copy());
-                }
-                
-                this._options = aFields[i]._options.slice();
-                this._currentValueIndices = aFields.multipleSelection ? aFields[i]._currentValueIndices.slice() : aFields[i]._currentValueIndices;
-
-                let oPara;
-                for (let i = 0; i < this.content.Content.length; i++) {
-                    oPara = this.content.GetElement(i);
-                    if (oPara.Pr.Shd && oPara.Pr.Shd.IsNil() == false)
-                        oPara.RecalcCompiledPr(true);
-                }
+                this.SetOptions(aFields[i].GetOptions().slice());
+                this.SetCurIdxs(aFields[i].GetParentCurIdxs());
+                this.SetNeedRecalc(true);
                 break;
             }
         }
+    };
+    CListBoxField.prototype.DrainLogicFrom = function(oFieldToInherit, bClearFrom) {
+        AscPDF.CBaseField.prototype.DrainLogicFrom.call(this, oFieldToInherit, bClearFrom);
 
-        oDoc.EndNoHistoryMode();
+        this.SetMultipleSelection(oFieldToInherit.IsMultipleSelection());
+        this.SetCommitOnSelChange(oFieldToInherit.IsCommitOnSelChange());
+        this.SetOptions(oFieldToInherit.GetOptions());
+        this.SetParentCurIdxs(oFieldToInherit.GetParentCurIdxs());
+
+        if (bClearFrom !== false) {
+            oFieldToInherit.SetMultipleSelection(false);
+            oFieldToInherit.SetCommitOnSelChange(false);
+            oFieldToInherit.SetOptions([]);
+            oFieldToInherit.SetParentCurIdxs([]);
+        }
     };
     /**
 	 * Applies value of this field to all fields with the same name.
@@ -202,7 +208,7 @@
         this.ScrollVerticalEnd(true);
         let isChanged = false;
         for (let i = 0; i < aCurIdxs.length; i++) {
-            if (aCurIdxs[i] === undefined || aApiIdxs[i] === undefined || aCurIdxs[i] !== aApiIdxs[i]) {
+            if (!aApiIdxs || aCurIdxs[i] === undefined || aApiIdxs[i] === undefined || aCurIdxs[i] !== aApiIdxs[i]) {
                 isChanged = true;
                 break;
             }
@@ -230,7 +236,7 @@
         this._bAutoShiftContentView = true;
         
         this.SetParentValue(this.GetValue());
-        this.SetApiCurIdxs(aCurIdxs);
+        this.SetParentCurIdxs(aCurIdxs);
     };
     CListBoxField.prototype.UpdateTopIndex = function() {
         let oParaBounds     = this.content.GetElement(0).GetPageBounds(0);
@@ -263,14 +269,23 @@
     };
     
     CListBoxField.prototype.SetMultipleSelection = function(bValue) {
-        if (bValue == true) {
-            this._multipleSelection = true;
+        let oParent = this.GetParent();
+        if (oParent && oParent.IsAllKidsWidgets()) {
+            oParent.SetMultipleSelection(bValue);
+            return;
         }
-        else {
-            this._multipleSelection = false;
-        }
+
+        let oDoc = this.GetDocument();
+        oDoc.History.Add(new CChangesPDFListMultipleSelection(this, this._multipleSelection, bValue));
+
+        this._multipleSelection = bValue;
+        this.SetWasChanged(true);
     };
-    CListBoxField.prototype.IsMultipleSelection = function() {
+    CListBoxField.prototype.IsMultipleSelection = function(bInherit) {
+        let oParent = this.GetParent();
+        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+            return oParent.IsMultipleSelection();
+
         return this._multipleSelection;
     };
 
@@ -317,47 +332,114 @@
         oApiPara.Paragraph.RecalcCompiledPr(true);
         this.SetNeedRecalc(true);
     };
-    CListBoxField.prototype.SetOptions = function(aOpt) {
-        this.content.Internal_Content_RemoveAll();
-        for (let i = 0; i < aOpt.length; i++) {
-            if (aOpt[i] == null)
-                continue;
-            let sCaption = "";
-            if (typeof(aOpt[i]) == "string" && aOpt[i] != "") {
-                sCaption = aOpt[i];
-                this._options.push(aOpt[i]);
+    CListBoxField.prototype.AddOption = function(option, nPos) {
+        let oParent = this.GetParent();
+        if (oParent && oParent.IsAllKidsWidgets())
+            return oParent.AddOption(option, nPos);
+
+        if (option == null) return;
+        
+        let formattedOption;
+        let sCaption = "";
+        let aInnerColor = this.GetTextColor();
+        let oRGB = this.GetRGBColor(aInnerColor);
+        let oDocColor = new AscCommonWord.CDocumentColor(oRGB.r, oRGB.g, oRGB.b, false);
+
+        if (typeof option === "string" && option !== "") {
+            formattedOption = option;
+            sCaption = option;
+        }
+        else if (Array.isArray(option) && option[0] !== undefined && option[1] !== undefined) {
+            if (option[0].toString && option[1].toString) {
+                formattedOption = [option[0].toString(), option[1].toString()];
+                sCaption = option[0].toString();
             }
-            else if (Array.isArray(aOpt[i]) && aOpt[i][0] != undefined && aOpt[i][1] != undefined) {
-                if (aOpt[i][0].toString && aOpt[i][1].toString) {
-                    this._options.push([aOpt[i][0].toString(), aOpt[i][1].toString()]);
-                    sCaption = aOpt[i][0].toString();
-                }
-            }
-            else if (typeof(aOpt[i]) != "string" && aOpt[i].toString) {
-                this._options.push(aOpt[i].toString());
-                sCaption = aOpt[i].toString();
+        }
+        else if (option.toString) {
+            formattedOption = option.toString();
+            sCaption = option.toString();
+        }
+        
+        if (formattedOption !== undefined) {
+            if (nPos == undefined) {
+                nPos = this._options.length;
             }
 
+            AscCommon.History.Add(new CChangesPDFListOption(this, nPos, [formattedOption], true));
+            this._options.splice(nPos, 0, formattedOption);
             if (sCaption !== "") {
-                AscFonts.FontPickerByCharacter.getFontsByString(sCaption);
+                let aFields = this.GetAllWidgets();
 
-                let oPara = new AscWord.Paragraph(this.content, false);
-                let oRun = new AscWord.ParaRun(oPara, false);
-                this.content.Internal_Content_Add(i, oPara);
-                oPara.Add(oRun);
-                oRun.AddText(sCaption);
+                aFields.forEach(function(field) {
+                    AscCommon.History.StartNoHistoryMode();
+
+                    AscFonts.FontPickerByCharacter.getFontsByString(sCaption);
+                    let oPara = new AscWord.Paragraph(this.content, false);
+                    let oRun = new AscWord.ParaRun(oPara, false);
+                    field.content.Internal_Content_Add(nPos, oPara);
+                    oPara.Add(oRun);
+                    oRun.AddText(sCaption);
+
+                    oPara.SetApplyToAll(true);
+                    oPara.Add(new ParaTextPr({Color: oDocColor}));
+                    oPara.RecalcCompiledPr(true);
+                    oPara.SetApplyToAll(false);
+
+                    AscCommon.History.EndNoHistoryMode();
+
+                    field.SetWasChanged(true);
+                    field.SetNeedRecalc(true);
+                });
             }
+
+            this.SetWasChanged(true);
+        }
+    };
+    CListBoxField.prototype.RemoveOption = function(nPos) {
+        let oParent = this.GetParent();
+        if (oParent && oParent.IsAllKidsWidgets())
+            return oParent.RemoveOption(nPos);
+
+        function updateContent(widget) {
+            AscCommon.History.StartNoHistoryMode();
+            widget.content.Internal_Content_Remove(nPos, 1, false);
+            AscCommon.History.EndNoHistoryMode();
+
+            widget.SetNeedRecalc(true);
+            widget.SetWasChanged(true);
+        };
+    
+        if (Number.isInteger(nPos) && nPos >= 0 && nPos < this._options.length) {
+            let option = this._options.splice(nPos, 1);
+            AscCommon.History.Add(new CChangesPDFListOption(this, nPos, [option], false));
+
+            if (this.IsWidget()) {
+                updateContent(this);
+            } else {
+                this.GetAllWidgets().forEach(updateContent);
+            }
+
+            return option;
+        }
+    };
+    CListBoxField.prototype.SetOptions = function(aOpt) {
+        while (this.GetOptions().length > 0) {
+            this.RemoveOption(0);
+        }
+        for (let i = 0; i < aOpt.length; i++) {
+            this.AddOption(aOpt[i]);
         }
     };
     CListBoxField.prototype.SetValue = function(value) {
         let aIndexes = [];
+        let aOptions = this.GetOptions();
         if (this.IsWidget()) {
             if (Array.isArray(value)) {
                 for (let i = 0; i < value.length; i++) {
                     let sVal = value[i];
                     let isFound = false;
-                    for (let i = 0; i < this._options.length; i++) {
-                        if (Array.isArray(this._options[i]) && this._options[i][1] == sVal) {
+                    for (let i = 0; i < aOptions.length; i++) {
+                        if (Array.isArray(aOptions[i]) && aOptions[i][1] == sVal) {
                             if (aIndexes.includes(i))
                                 continue;
                             else {
@@ -368,8 +450,8 @@
                         }
                     }
                     if (isFound == false) {
-                        for (let i = 0; i < this._options.length; i++) {
-                            if (this._options[i] == sVal) {
+                        for (let i = 0; i < aOptions.length; i++) {
+                            if (aOptions[i] == sVal) {
                                 if (aIndexes.includes(i))
                                     continue;
                                 else {
@@ -382,15 +464,15 @@
                 }
             }
             else {
-                for (let i = 0; i < this._options.length; i++) {
-                    if (this._options[i][1] && this._options[i][1] == value) {
+                for (let i = 0; i < aOptions.length; i++) {
+                    if (aOptions[i][1] && aOptions[i][1] == value) {
                         aIndexes.push(i);
                         break;
                     }
                 }
                 if (aIndexes.length == 0) {
-                    for (let i = 0; i < this._options.length; i++) {
-                        if (this._options[i] == value) {
+                    for (let i = 0; i < aOptions.length; i++) {
+                        if (aOptions[i] == value) {
                             aIndexes.push(i);
                             break;
                         }
@@ -416,33 +498,17 @@
 
             if (editor.getDocumentRenderer().IsOpenFormsInProgress) {
                 this.SetParentValue(value);
-                this.SetApiCurIdxs(aIndexes);
+                this.SetParentCurIdxs(aIndexes);
             }
                 
         }
         else {
             this.SetParentValue(value);
-            this.SetApiCurIdxs(aIndexes);
+            this.SetParentCurIdxs(aIndexes);
         }
     };
     CListBoxField.prototype.private_SetValue = CListBoxField.prototype.SetValue;
-    CListBoxField.prototype.InsertOption = function(sName, sExport, nIdx) {
-        let optToInsert = sExport ? [sName, sExport] : sName;
-        if (nIdx == -1 || nIdx > this._options.length) {
-            nIdx = this._options.length;
-        }
-
-        let oIdxItem = this.content.GetElement(nIdx);
-
-        this._options = this._options.splice(nIdx, 0, optToInsert);
-        
-        let oPara = new AscWord.Paragraph(this.content, false);
-        let oRun = new AscWord.ParaRun(oPara, false);
-        this.content.Internal_Content_Add(nIdx, oPara);
-        oPara.Add(oRun);
-        oRun.AddText(sName);
-    };
-
+    
     CListBoxField.prototype.onMouseDown = function(x, y, e) {
         let oDoc            = this.GetDocument();
         let oDrDoc          = oDoc.GetDrawingDocument();
@@ -455,11 +521,25 @@
         
         oDoc.activeForm = this;
 
+        if (oDoc.IsEditFieldsMode()) {
+            let oController = oDoc.GetController();
+            this.editShape.select(oController, this.GetPage());
+            this.editShape.onMouseDown(x, y, e);
+            return;
+        }
+
+        if (this.IsReadOnly()) {
+            return;
+        }
+        
+        if (!this._anchorIdx && this.GetCurIdxs().length)
+            this._anchorIdx = this.GetCurIdxs()[0];
+
         function callbackAfterFocus(x, y, e) {
             this.SetInForm(true);
             this.SetDrawHighlight(false);
 
-            if (this._options.length == 0)
+            if (this.GetOptions().length == 0)
                 return;
 
             let oPos    = AscPDF.GetPageCoordsByGlobalCoords(x, y, this.GetPage());
@@ -479,21 +559,32 @@
                 this.AddToRedraw();
             }
 
-            if (this.IsMultipleSelection() == true) {
-                if (e.CtrlKey == true) {
-                    if (oShd && oShd.IsNil() == false) {
-                        this.UnselectOption(nPos);
+            if (this.IsMultipleSelection()) {
+                if (e.ShiftKey) {
+                    let anchor = (typeof this._anchorIdx === "number" ? this._anchorIdx : nPos);
+                    let start  = Math.min(anchor, nPos);
+                    let end    = Math.max(anchor, nPos);
+                    this.SelectOption(start, true);
+                    for (let i = start + 1; i <= end; i++) {
+                        this.SelectOption(i, false);
                     }
-                    else {
-                        this.SelectOption(nPos, false);
-                    }
+                }
+                else if (e.CtrlKey) {
+                    if (oShd && !oShd.IsNil())  this.UnselectOption(nPos);
+                    else                        this.SelectOption(nPos, false);
+
+                    if (typeof this._anchorIdx !== "number")
+                        this._anchorIdx = nPos;
                 }
                 else {
                     this.SelectOption(nPos, true);
+                    this._anchorIdx = nPos;
                 }
             }
             else {
+                // single-select
                 this.SelectOption(nPos, true);
+                this._anchorIdx = nPos;
             }
 
             if (this.IsNeedCommit()) {
@@ -549,6 +640,10 @@
         this.UpdateScroll(true);
     };
     CListBoxField.prototype.UpdateScroll = function(bShow) {
+        if (bShow && this.IsEditMode()) {
+            return;
+        }
+        
         let oContentBounds  = this.content.GetContentBounds(0);
         let oContentRect    = this.getFormRelRect();
         let aOrigRect       = this.GetOrigRect();
@@ -820,13 +915,14 @@
 	 */
     CListBoxField.prototype.GetValue = function() {
         let oPara, oShd;
+        let aOptions = this.GetOptions();
         if (this.IsMultipleSelection()) {
             let aValues = [];
             for (let i = 0, nCount = this.content.GetElementsCount(); i < nCount; i++) {
                 oPara = this.content.GetElement(i);
                 oShd = oPara.Pr.Shd;
                 if (oShd && oShd.IsNil() == false)
-                    aValues.push(Array.isArray(this._options[i]) ? this._options[i][1] : this._options[i]);
+                    aValues.push(Array.isArray(aOptions[i]) ? aOptions[i][1] : aOptions[i]);
             }
 
             return aValues;
@@ -836,7 +932,7 @@
                 oPara = this.content.GetElement(i);
                 oShd = oPara.Pr.Shd;
                 if (oShd && oShd.IsNil() == false)
-                    return Array.isArray(this._options[i]) ? this._options[i][1] : this._options[i];
+                    return Array.isArray(aOptions[i]) ? aOptions[i][1] : aOptions[i];
             }
         }
     };
@@ -886,10 +982,10 @@
             
             oDoc.History.EndNoHistoryMode();
             if (editor.getDocumentRenderer().IsOpenFormsInProgress)
-                this.SetApiCurIdxs(aIdxs);
+                this.SetParentCurIdxs(aIdxs);
         }
         else {
-            this.SetApiCurIdxs(aIdxs);
+            this.SetParentCurIdxs(aIdxs);
         }
 
         this.SetNeedCommit(false);
@@ -963,7 +1059,7 @@
 
         // элементы списка выбора
         let aOptions = this.GetOptions();
-        if (aOptions) {
+        if (aOptions && aOptions.length !== 0) {
             memory.fieldDataFlags |= (1 << 10);
             memory.WriteLong(aOptions.length);
             for (let i = 0; i < aOptions.length; i++) {
@@ -1001,11 +1097,11 @@
         // top index
         //
 
-        if (this.IsMultipleSelection()) {
+        if (this.IsMultipleSelection(false)) {
             memory.widgetFlags |= (1 << 21);
         }
 
-        if (this.IsCommitOnSelChange()) {
+        if (this.IsCommitOnSelChange(false)) {
             memory.widgetFlags |= (1 << 26);
         }
 
@@ -1021,6 +1117,8 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
+
+        this.CheckWidgetFlags(memory);
     };
 
     function getPdfAlignType(nPdfAlign) {

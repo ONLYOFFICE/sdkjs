@@ -318,8 +318,8 @@ function (window, undefined) {
 		return getLogGammaHelper(fZ + 2) - Math.log(fZ + 1) - Math.log(fZ);
 	}
 
-	function getPercentile(values, alpha) {
-		values.sort(fSortAscending);
+	function getPercentile(values, alpha, isSorted) {
+		values = isSorted ? values : values.sort(fSortAscending);
 
 		var nSize = values.length;
 		if (nSize === 0) {
@@ -339,8 +339,8 @@ function (window, undefined) {
 		}
 	}
 
-	function getPercentileExclusive(values, alpha) {
-		values.sort(fSortAscending);
+	function getPercentileExclusive(values, alpha, isSorted) {
+		values = isSorted ? values : values.sort(fSortAscending);
 
 		var nSize1 = values.length + 1;
 		if (nSize1 == 1) {
@@ -5061,7 +5061,7 @@ function (window, undefined) {
 				}
 			} else if (cElementType.array === _arg.type) {
 				_arg.foreach(function (elem) {
-					if (cElementType.number === elem.tocNumber().type) {
+					if (cElementType.number === elem.type) {
 						count++;
 					}
 				})
@@ -12125,6 +12125,8 @@ function (window, undefined) {
 	window['AscCommonExcel'].gauss = gauss;
 	window['AscCommonExcel'].gaussinv = gaussinv;
 	window['AscCommonExcel'].getPercentile = getPercentile;
+	window['AscCommonExcel'].getMedian = getMedian;
+	window['AscCommonExcel'].getPercentileExclusive = getPercentileExclusive;
 
 	window['AscCommonExcel'].cAVERAGE = cAVERAGE;
 	window['AscCommonExcel'].cCOUNT = cCOUNT;

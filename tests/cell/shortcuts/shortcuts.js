@@ -1523,12 +1523,12 @@ QUnit.config.autostart = false;
 		Select(0, 0, 0, 0, 0, 0);
 		editor.asc_SelectionCut();
 		ExecuteTableHotkey(tableHotkeyTypes.reset);
-		assert.strictEqual(wsView.copyCutRange, null, 'Check resetting cut range');
+		assert.strictEqual(wsView.getCutRange(), null, 'Check resetting cut range');
 
 		Select(0, 0, 0, 0, 0, 0);
 		editor.asc_Copy();
 		ExecuteTableHotkey(tableHotkeyTypes.reset);
-		assert.strictEqual(wsView.copyCutRange, null, 'Check resetting copy range');
+		assert.strictEqual(wsView.getCutRange(), null, 'Check resetting copy range');
 	});
 
 

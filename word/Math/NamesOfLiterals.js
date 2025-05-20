@@ -125,10 +125,15 @@
 		"\\double": 12,
 	}
 
-	function SetIsAllowAutoCorrect (isAllow)
+	function SetIsAllowAutoCorrect(isAllow)
 	{
 		isAllowAutoCorrect = isAllow;
 	}
+	function GetIsAllowAutoCorrect()
+	{
+		return isAllowAutoCorrect;
+	}
+
 
 	// List of MathFont
 	const GetMathFontChar = {
@@ -8040,4 +8045,6 @@
 	window["AscMath"].oStandardFont					= oStandardFont;
 	window["AscMath"].GetTypeFont					= GetTypeFont;
 	window["AscMath"].ConvertWord					= ConvertWord;
+	window["AscMath"].SetIsAllowAutoCorrect			= SetIsAllowAutoCorrect;
+	window["AscMath"].GetIsAllowAutoCorrect			= GetIsAllowAutoCorrect;
 })(window);

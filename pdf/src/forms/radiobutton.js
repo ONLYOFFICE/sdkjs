@@ -36,26 +36,18 @@
 	 * @constructor
      * @extends {CBaseCheckBoxField}
 	 */
-    function CRadioButtonField(sName, nPage, aRect, oDoc)
+    function CRadioButtonField(sName, aRect, oDoc)
     {
-        AscPDF.CBaseCheckBoxField.call(this, sName, AscPDF.FIELD_TYPES.radiobutton, nPage, aRect, oDoc);
+        AscPDF.CBaseCheckBoxField.call(this, sName, AscPDF.FIELD_TYPES.radiobutton, aRect, oDoc);
         
+        this._exportValue   = "Choice1";
         this._radiosInUnison = false;
         this._noToggleToOff = true;
 
         this._chStyle       = AscPDF.CHECKBOX_STYLES.circle;
     }
-    CRadioButtonField.prototype = Object.create(AscPDF.CBaseCheckBoxField.prototype);
 	CRadioButtonField.prototype.constructor = CRadioButtonField;
-    
-    /**
-	 * Synchronizes this field with fields with the same name.
-	 * @memberof CRadioButtonField
-	 * @typeofeditors ["PDF"]
-	 */
-    CRadioButtonField.prototype.SyncField = function() {
-        // to do
-    };
+    AscFormat.InitClass(CRadioButtonField, AscPDF.CBaseCheckBoxField, AscDFH.historyitem_type_Pdf_Radiobutton_Field);
     
     /**
 	 * Updates all field with this field name.
@@ -163,10 +155,27 @@
     };
     
     CRadioButtonField.prototype.SetRadiosInUnison = function(bValue) {
+        let oParent = this.GetParent();
+        if (oParent && oParent.IsAllKidsWidgets())
+            return oParent.SetRadiosInUnison(bValue);
+
+        if (this._radiosInUnison === bValue) {
+            return true;
+        }
+        
+        let oDoc = this.GetDocument();
+        oDoc.History.Add(new CChangesPDFRadiobuttonIsUnison(this, this._radiosInUnison, bValue));
+
         this._radiosInUnison = bValue;
         this.SetWasChanged(true);
+
+        return true;
     };
-    CRadioButtonField.prototype.IsRadiosInUnison = function() {
+    CRadioButtonField.prototype.IsRadiosInUnison = function(bInherit) {
+        let oParent = this.GetParent();
+        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+            return oParent.IsRadiosInUnison();
+
         return this._radiosInUnison;
     };
 

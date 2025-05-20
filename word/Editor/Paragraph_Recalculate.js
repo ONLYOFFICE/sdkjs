@@ -1648,18 +1648,26 @@ Paragraph.prototype.private_RecalculateLineBottomBound = function(CurLine, CurPa
 
 Paragraph.prototype.private_RecalculateLineCheckRanges = function(CurLine, CurPage, PRS, ParaPr)
 {
-    var Right   = this.Pages[CurPage].XLimit - ParaPr.Ind.Right;
     var Top     = PRS.LineTop;
     var Bottom  = PRS.LineBottom;
     var Top2    = PRS.LineTop2;
     var Bottom2 = PRS.LineBottom2;
-
-    var Left;
-
-    if(true === PRS.MathNotInline)
-        Left = this.Pages[CurPage].X;
-    else
-        Left = false === PRS.UseFirstLine ? this.Pages[CurPage].X + ParaPr.Ind.Left : this.Pages[CurPage].X + ParaPr.Ind.Left + ParaPr.Ind.FirstLine;
+	
+	var Left  = this.Pages[CurPage].X;
+	var Right = this.Pages[CurPage].XLimit;
+	if (!PRS.MathNotInline)
+	{
+		if (ParaPr.Bidi)
+		{
+			Left += ParaPr.Ind.Right;
+			Right -= PRS.UseFirstLine ? ParaPr.Ind.Left + ParaPr.Ind.FirstLine : ParaPr.Ind.Left;
+		}
+		else
+		{
+			Right -= ParaPr.Ind.Right;
+			Left  += PRS.UseFirstLine ? ParaPr.Ind.Left + ParaPr.Ind.FirstLine : ParaPr.Ind.Left;
+		}
+	}
 
 	var PageFields = null;
     if (this.bFromDocument && PRS.GetTopDocument() === this.LogicDocument && !PRS.IsInTable())
@@ -2332,7 +2340,8 @@ Paragraph.prototype.private_RecalculateGetTabPos = function(PRS, X, ParaPr, CurP
 	
 	if (this.isRtlDirection())
 	{
-		let pageLimits = this.Parent.Get_PageLimits(PRS.PageAbs);
+		let pageRel = this.private_GetRelativePageIndex(CurPage);
+		let pageLimits = this.Parent.Get_PageLimits(pageRel);
 		
 		let range = this.Lines[PRS.Line].Ranges[PRS.Range];
 		X = X - range.X + pageLimits.XLimit - range.XEnd;
@@ -2556,6 +2565,7 @@ Paragraph.prototype.private_CheckNeedBeforeSpacing = function(CurPage, Parent, P
 
 		return (!oPrevElement
 			|| oPrevElement.GetAbsolutePage(oPrevElement.GetPagesCount() - 1) >= PageAbs
+			|| !oPrevElement.IsParagraph()
 			|| oPrevElement.Get_SectionPr());
 	}
 
@@ -3092,6 +3102,9 @@ CParaLineRange.prototype =
 		this.XEnd        += Dx;
 		this.XVisible    += Dx;
 		this.XEndVisible += Dx;
+		
+		if (this.XEndOrigin)
+			this.XEndOrigin += Dx;
     },
 
     Copy : function()
@@ -3106,6 +3119,9 @@ CParaLineRange.prototype =
         NewRange.EndPos      = this.EndPos;
         NewRange.W           = this.W;
         NewRange.Spaces      = this.Spaces;
+		
+		if (this.XEndOrigin)
+			NewRange.XEndOrigin = this.XEndOrigin;
 
         return NewRange;
     }
@@ -3125,6 +3141,10 @@ CParaLineRange.prototype.CorrectX = function(nX)
 CParaLineRange.prototype.IsZeroRange = function()
 {
 	return ((this.XEnd - this.X) < 0.001);
+};
+CParaLineRange.prototype.getXEndOrigin = function()
+{
+	return (undefined !== this.XEndOrigin ? this.XEndOrigin : this.XEnd);
 };
 AscWord.CParaLineRange = CParaLineRange;
 

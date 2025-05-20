@@ -3634,6 +3634,7 @@ function BinaryPPTYLoader()
 
     this.ReadClrScheme = function(clrscheme)
     {
+        const t = this;
         var s = this.stream;
         var _e = s.cur + s.GetULong() + 4;
 
@@ -3652,8 +3653,45 @@ function BinaryPPTYLoader()
         while (s.cur < _e)
         {
             var _rec = s.GetUChar();
-
-            clrscheme.addColor(_rec,this.ReadUniColor());
+            if (_rec === 20)
+            {
+                AscFormat.CBaseFormatNoIdObject.prototype.fromPPTY.call({
+                    readChildren: AscFormat.CBaseFormatNoIdObject.prototype.readChildren,
+                    readChild: function(elementType, pReader) {
+                        if (elementType === 0) {
+                            if (!clrscheme.clrSchemeExtLst) {
+                                clrscheme.clrSchemeExtLst = new AscFormat.CClrSchemeExtLst();
+                            }
+                            clrscheme.clrSchemeExtLst.background = new AscFormat.CVarColor();
+                            clrscheme.clrSchemeExtLst.background.unicolor = t.ReadUniColor();
+                            return true;
+                        }
+                        return false;
+                    }
+                }, this);
+            }
+            else if (_rec === 21)
+            {
+                AscFormat.CBaseFormatNoIdObject.prototype.fromPPTY.call({
+                    readChildren: AscFormat.CBaseFormatNoIdObject.prototype.readChildren,
+                    readChild: function(elementType, pReader) {
+                        if (elementType === 0) {
+                            if (!clrscheme.clrSchemeExtLst) {
+                                clrscheme.clrSchemeExtLst = new AscFormat.CClrSchemeExtLst();
+                            }
+                            let variationClrScheme = new AscFormat.CVariationClrScheme();
+                            variationClrScheme.fromPPTY(pReader);
+                            clrscheme.clrSchemeExtLst.variationClrSchemeLst.push(variationClrScheme);
+                            return true;
+                        }
+                        return false;
+                    }
+                }, this);
+            }
+            else
+            {
+                clrscheme.addColor(_rec,this.ReadUniColor());
+            }
         }
 
         s.Seek2(_e);
@@ -4391,11 +4429,11 @@ function BinaryPPTYLoader()
                 var _spd = s.GetUChar();
                 if (!_presentDuration)
                 {
-                    _transition.TransitionDuration = 250;
+                    _transition.TransitionDuration = 500;
                     if (_spd == 1)
-                        _transition.TransitionDuration = 500;
-                    else if (_spd == 2)
                         _transition.TransitionDuration = 750;
+                    else if (_spd == 2)
+                        _transition.TransitionDuration = 1000;
                 }
             }
         }
@@ -4886,7 +4924,7 @@ function BinaryPPTYLoader()
                     theme.setFontScheme(themeElements.fontScheme);
                     theme.setFormatScheme(themeElements.fmtScheme);
                     theme.setColorScheme(themeElements.clrScheme);
-
+                    theme.setThemeExt(themeElements.themeExt);
                     break;
                 }
                 case 1:
@@ -4923,6 +4961,7 @@ function BinaryPPTYLoader()
 
     this.ReadThemeElements = function(thelems)
     {
+        let t = this;
         var s = this.stream;
 
         var _rec_start = s.cur;
@@ -4946,6 +4985,152 @@ function BinaryPPTYLoader()
                 case 2:
                 {
                     this.ReadFmtScheme(thelems.fmtScheme);
+                    break;
+                }
+                case 3:
+                {
+                    if (!thelems.themeExt)
+                    {
+                        thelems.themeExt = new AscFormat.CThemeExt();
+                    }
+                    thelems.themeExt.fmtConnectorScheme = new AscFormat.FmtScheme();
+                    this.ReadFmtScheme(thelems.themeExt.fmtConnectorScheme);
+                    break;
+                }
+                case 4:
+                {
+                    if (!thelems.themeExt)
+                    {
+                        thelems.themeExt = new AscFormat.CThemeExt();
+                    }
+                    AscFormat.CBaseFormatNoIdObject.prototype.fromPPTY.call({
+                        readChildren: AscFormat.CBaseFormatNoIdObject.prototype.readChildren,
+                        readChild: function(elementType, pReader) {
+                            if (elementType === 0) {
+                                AscFormat.CBaseFormatNoIdObject.prototype.fromPPTY.call({
+                                    readChildren: AscFormat.CBaseFormatNoIdObject.prototype.readChildren,
+                                    readAttributes: AscFormat.CBaseFormatNoIdObject.prototype.readAttributes,
+                                    readAttribute: function(attrType, pReader) {
+                                        if (attrType === 0) {
+                                            thelems.themeExt.fillStyles.push({pattern: pReader.stream.GetULong()});
+                                            return true;
+                                        }
+                                        return false;
+                                    }
+                                }, t);
+                                return true;
+                            }
+                            return false;
+                        }
+                    }, this);
+                    break;
+                }
+                case 5:
+                {
+                    if (!thelems.themeExt)
+                    {
+                        thelems.themeExt = new AscFormat.CThemeExt();
+                    }
+                    AscFormat.CBaseFormatNoIdObject.prototype.fromPPTY.call({
+                        readAttributes: AscFormat.CBaseFormatNoIdObject.prototype.readAttributes,
+                        readChildren: AscFormat.CBaseFormatNoIdObject.prototype.readChildren,
+                        readChild: function(elementType, pReader) {
+                            if (elementType === 0) {
+                                AscFormat.CBaseFormatNoIdObject.prototype.fromPPTY.call({
+                                    readChildren: AscFormat.CBaseFormatNoIdObject.prototype.readChildren,
+                                    readChild: function(elementType, pReader) {
+                                        if (elementType === 0) {
+                                            const lineStyle = new AscFormat.CLineStyle();
+                                            lineStyle.fromPPTY(pReader);
+                                            thelems.themeExt.lineStyles.fmtConnectorSchemeLineStyles.push(lineStyle);
+                                            return true;
+                                        }
+                                        return false;
+                                    }
+                                }, t);
+                                return true;
+                            } else  if (elementType === 1) {
+                                AscFormat.CBaseFormatNoIdObject.prototype.fromPPTY.call({
+                                    readChildren: AscFormat.CBaseFormatNoIdObject.prototype.readChildren,
+                                    readChild: function(elementType, pReader) {
+                                        if (elementType === 0) {
+                                            const lineStyle = new AscFormat.CLineStyle();
+                                            lineStyle.fromPPTY(pReader);
+                                            thelems.themeExt.lineStyles.fmtSchemeLineStyles.push(lineStyle);
+                                            return true;
+                                        }
+                                        return false;
+                                    }
+                                }, t);
+                                return true;
+                            }
+                            return false;
+                        }
+                    }, this);
+                    break;
+                }
+                case 6:
+                {
+                    if (!thelems.themeExt)
+                    {
+                        thelems.themeExt = new AscFormat.CThemeExt();
+                    }
+                    AscFormat.CBaseFormatNoIdObject.prototype.fromPPTY.call({
+                        readChildren: AscFormat.CBaseFormatNoIdObject.prototype.readChildren,
+                        readChild: function(elementType, pReader) {
+                            if (elementType === 0) {
+                                AscFormat.CBaseFormatNoIdObject.prototype.fromPPTY.call({
+                                    readChildren: AscFormat.CBaseFormatNoIdObject.prototype.readChildren,
+                                    readChild: function(elementType, pReader) {
+                                        if (elementType === 0) {
+                                            const fontProps = new AscFormat.CFontProps();
+                                            fontProps.fromPPTY(pReader);
+                                            thelems.themeExt.fontStylesGroup.connectorFontStyles.push(fontProps);
+                                            return true;
+                                        }
+                                        return false;
+                                    }
+                                }, t);
+                                return true;
+                            } else  if (elementType === 1) {
+                                AscFormat.CBaseFormatNoIdObject.prototype.fromPPTY.call({
+                                    readChildren: AscFormat.CBaseFormatNoIdObject.prototype.readChildren,
+                                    readChild: function(elementType, pReader) {
+                                        if (elementType === 0) {
+                                            const fontProps = new AscFormat.CFontProps();
+                                            fontProps.fromPPTY(pReader);
+                                            thelems.themeExt.fontStylesGroup.fontStyles.push(fontProps);
+                                            return true;
+                                        }
+                                        return false;
+                                    }
+                                }, t);
+
+                                return true;
+                            }
+                            return false;
+                        }
+                    }, this);
+                    break;
+                }
+                case 7:
+                {
+                    if (!thelems.themeExt)
+                    {
+                        thelems.themeExt = new AscFormat.CThemeExt();
+                    }
+                    AscFormat.CBaseFormatNoIdObject.prototype.fromPPTY.call({
+                        readChildren: AscFormat.CBaseFormatNoIdObject.prototype.readChildren,
+                        readChild: function(elementType, pReader) {
+                            if (elementType === 0) {
+                                const variationStyleScheme = new AscFormat.CVariationStyleScheme();
+                                variationStyleScheme.fromPPTY(pReader);
+                                thelems.themeExt.variationStyleSchemeLst.push(variationStyleScheme);
+                                return true;
+                            }
+                            return false;
+                        }
+                    }, this);
                     break;
                 }
                 default:
@@ -5155,8 +5340,13 @@ function BinaryPPTYLoader()
                 }
                 case 2:
                 {
-                    var _len = s.GetULong();
-                    s.Skip2(_len);
+									s.Skip2(4); // len
+                    var _c = s.GetULong();
+                    for (let i = 0; i < _c; i += 1) {
+											s.Skip2(1);
+											fmt.effectStyleLst[i] = new AscFormat.CEffectStyle();
+											fmt.effectStyleLst[i].fromPPTY(this);
+										}
                     break;
                 }
                 case 3:
@@ -6757,8 +6947,16 @@ function BinaryPPTYLoader()
                             continue;
 
                         _object = this.ReadSpTreeElement();
+
                         if(_object)
                         {
+                            const objectId = _object.getFormatId();
+                            const objectCNvProps = _object.getCNvProps();
+                            if (objectId !== null && objectCNvProps !== null) {
+                                if (this.map_shapes_by_id[objectCNvProps.id]) {
+                                    objectCNvProps.setId(AscCommon.CreateDurableId());
+                                }
+                            }
                             shapes[shapes.length] = _object;
                         }
                     }
@@ -10703,6 +10901,7 @@ function BinaryPPTYLoader()
                         oThis.bcr.Read1(nDocLength, function(t,l){
                             return oBinary_DocumentTableReader.ReadDocumentContent(t,l, content_arr);
                         });
+	                    oThis.oReadResult.checkDocumentContentReviewType(content_arr);
                         this.ParaDrawing = oCurParaDrawing;
                         for(var i = 0, length = content_arr.length; i < length; ++i){
                             if(i == length - 1)

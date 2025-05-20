@@ -37,6 +37,15 @@
 	const NON_LETTER_SYMBOLS = [];
 	NON_LETTER_SYMBOLS[0x00A0] = 1;
 	NON_LETTER_SYMBOLS[0x00AE] = 1;
+	
+	function isNonLetter(code)
+	{
+		if (0x2070 <= code && code <= 0x209F)
+			return true;
+		
+		return !!NON_LETTER_SYMBOLS[code];
+	}
+	
 
 	const CHECKED_LIMIT = 2000;
 	
@@ -256,7 +265,7 @@
 	};
 	CParagraphSpellCheckerCollector.prototype.IsWordLetter = function(oElement)
 	{
-		return (oElement.IsText() && !this.IsPunctuation(oElement) && !NON_LETTER_SYMBOLS[oElement.GetCodePoint()]);
+		return (oElement.IsText() && !this.IsPunctuation(oElement) && !isNonLetter(oElement.GetCodePoint()));
 	};
 	CParagraphSpellCheckerCollector.prototype.IsApostrophe = function(oElement)
 	{

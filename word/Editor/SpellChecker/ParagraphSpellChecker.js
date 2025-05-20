@@ -34,6 +34,20 @@
 
 (function(window, undefined)
 {
+	const DIGITS = {
+		0x00B2 : 1,
+		0x00B3 : 1,
+		0x00B9 : 1,
+		0x00BC : 1,
+		0x00BD : 1,
+		0x00BE : 1
+	};
+	
+	function isDigit(code)
+	{
+		return AscCommon.IsDigit(code) || (!!DIGITS[code]);
+	}
+	
 	const IGNORE_UPPERCASE = 0x0001;
 	const IGNORE_NUMBERS   = 0x0002;
 
@@ -383,7 +397,7 @@
 			for (var oIterator = sWord.getUnicodeIterator(); oIterator.check(); oIterator.next())
 			{
 				let nCharCode = oIterator.value();
-				if (AscCommon.IsDigit(nCharCode))
+				if (isDigit(nCharCode))
 					return false;
 			}
 		}

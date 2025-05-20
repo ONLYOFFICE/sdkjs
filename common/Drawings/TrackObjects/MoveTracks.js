@@ -73,6 +73,11 @@ function MoveShapeImageTrack(originalObject)
             this.brush = originalObject.brush;
         }
         this.pen = originalObject.pen;
+
+        if (originalObject.GetEditField && originalObject.GetEditField()) {
+            this.brush = null;
+            this.pen = null;
+        }
     }
     if(this.originalObject.cropObject && this.brush)
     {

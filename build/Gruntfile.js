@@ -235,7 +235,7 @@ module.exports = function(grunt) {
 			cwd: '../pdf/',
 			src: [
 				'src/engine/*',
-				'src/annotations/stamps.json'
+				'src/annotations/stamps/*.json'
 			],
 			dest: path.join(deploy, 'pdf'),
 			name: 'pdf'
