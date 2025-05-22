@@ -5890,6 +5890,24 @@
 	};
 
 	/**
+	 * Returns the content control with the specified Internal ID.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @since 9.0.0
+	 * @param {string} Id - The internal identifier of the content control to retrieve.
+	 * @returns {ApiBlockLvlSdt | ApiInlineLvlSdt | null}
+	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetContentControlById.js
+	 */
+	ApiDocumentContent.prototype.GetContentControlById = function(Id)
+	{
+		if (!Id)
+			return null;
+
+		let contentControl = this.Document.TableId.Get_ById(Id);
+		return contentControl ? ToApiContentControl(contentControl) : null;
+	};
+
+	/**
 	 * Class representing a custom XML manager, which provides methods to manage custom XML parts in the document.
 	 * @param doc
 	 * @constructor
