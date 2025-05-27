@@ -5782,7 +5782,7 @@ function(window, undefined) {
 					}
 				}
 			}
-			this.chartObj.preCalculateData(this);
+			this.chartObj.preCalculateData(this, false, oRect);
 			for (i in oChartsToAxesCount) {
 				if (oChartsToAxesCount.hasOwnProperty(i)) {
 					oChart = AscCommon.g_oTableId.Get_ById(i);

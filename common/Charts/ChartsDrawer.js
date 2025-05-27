@@ -2710,7 +2710,7 @@ CChartsDrawer.prototype =
 
 
 	//****functions for UP Functions****
-	preCalculateData: function (chartSpace, notCalcExtremum) {
+	preCalculateData: function (chartSpace, notCalcExtremum, predefinedRect) {
 		this._calculateChangeAxisMap(chartSpace);
 		this.cChartSpace = chartSpace;
 		this.calcProp.pxToMM = 1 / AscCommon.g_dKoef_pix_to_mm;
@@ -2733,7 +2733,7 @@ CChartsDrawer.prototype =
 				//calculate calcProp -> /min/max/ymax/ymin/
 				this._calculateExtremumAllCharts(chartSpace);
 			} else {
-				this._prepChartExData(chartSpace)
+				this._prepChartExData(chartSpace, predefinedRect);
 			}
 		}
 
@@ -2782,7 +2782,7 @@ CChartsDrawer.prototype =
 		}
 	},
 
-	_prepChartExData: function (chartSpace) {
+	_prepChartExData: function (chartSpace, oRect) {
 		// plotArea: CPlotArea
 		// data: CNumericPoint
 		if (!chartSpace || !chartSpace.chart || !chartSpace.chart.plotArea || !chartSpace.chart.plotArea.plotAreaRegion || !chartSpace.chart.plotArea.plotAreaRegion.series) {
@@ -2798,8 +2798,8 @@ CChartsDrawer.prototype =
 		const secondType = 1 < plotArea.plotAreaRegion.series.length ? plotArea.plotAreaRegion.series[1].layoutId : null;
 		const strLit = seria.getCatLit(type);
 		const numLit = seria.getValLit();
-		const width = plotArea.extX;
-		const height = plotArea.extY;
+		const width = oRect ? oRect.w : 0;
+		const height = oRect ? oRect.h : 0;
 
 		if (numLit && numLit.pts && numLit.ptCount > 0) {
 
@@ -19611,12 +19611,20 @@ CColorObj.prototype =
 			for (let k = 0; k < arr.length; k++) {
 				arr[k].val = (arr[k].val / sum) * area;
 			}
+
+			arr.sort(function(a, b) {
+				return b.val - a.val;
+			});
+
 			return arr;
 		}
 
 		const createTreemap = function (numArr, strLit, lastLayer, width, height) {
 
 			const getAspectRatio = function(currentAreasSum, lastElementArea, predefinedSide, isVert){
+				if (predefinedSide === 0) {
+					return
+				}
 				const totalArea = currentAreasSum + lastElementArea;
 				let newWidth = null;
 				let newHeight = null;
@@ -19627,17 +19635,23 @@ CColorObj.prototype =
 					newHeight = totalArea / predefinedSide;
 					newWidth = lastElementArea / newHeight;
 				}
+				console.log(Math.max(newWidth, newHeight) / Math.min(newWidth, newHeight), newWidth, newHeight, totalArea)
 				return Math.max(newWidth, newHeight) / Math.min(newWidth, newHeight);
 			}
 
 			const squarify = function(areas, newWidth, newHeight){
 				const resArr = [];
-				let oldHeight, oldWidth
+				let oldHeight, oldWidth;
 				for (let i = 0; i < areas.length; i++){
 					const area = areas[i].val;
 					const lastElem = resArr.length !== 0 ? resArr[resArr.length - 1] : null;
-					const newPredefinedSize = lastElem && lastElem.position ? newWidth : newHeight;
-					if (lastElem && newPredefinedSize !== 0 && getAspectRatio(lastElem.totalSum, area, lastElem.predefinedSize, lastElem.position) < getAspectRatio(0, area, newPredefinedSize, !lastElem.position)){
+					console.log("old")
+					const oldAspectRatio = lastElem && getAspectRatio(lastElem.totalSum, area, lastElem.predefinedSize, lastElem.position);
+					console.log("vert")
+					const newVerticalAspectRatio = getAspectRatio(0, area, newHeight, true);
+					console.log("hor")
+					const newHorizontalAspectRatio = getAspectRatio(0, area, newWidth, false);
+					if (oldAspectRatio && oldAspectRatio < newHorizontalAspectRatio && oldAspectRatio < newVerticalAspectRatio){
 						lastElem.array.push(area);
 						lastElem.totalSum += area;
 						if (lastElem.position) {
@@ -19648,7 +19662,7 @@ CColorObj.prototype =
 					}else {
 						oldHeight = newHeight;
 						oldWidth = newWidth;
-						if (getAspectRatio(0, area, oldHeight, true) < getAspectRatio(0, area, oldWidth, false)){
+						if (newVerticalAspectRatio < newHorizontalAspectRatio){
 							resArr.push({position: true, array: [area], totalSum: area, predefinedSize: oldHeight});
 							newWidth = oldWidth - (area / oldHeight);
 						} else {
@@ -19662,7 +19676,7 @@ CColorObj.prototype =
 
 
 			if (lastLayer != null) {
-				return null;
+				return [];
 			} else {
 				// const isStrLit = strLit;
 				// let labelCounter = 0;
@@ -19680,6 +19694,8 @@ CColorObj.prototype =
 		const lastLayer = getLastLayer(strLit)
 		const newNumArr = normalizeNumArr(numArr, strLit, lastLayer, width * height);
 		this.data = createTreemap(newNumArr, strLit, lastLayer, width, height);
+		console.log('totalArea', width * height, width, height);
+		console.log("treemap", this.data)
 	}
 
 	function CCachedBoxWhisker(type, seria, numLit, strLit, axisProperties) {
