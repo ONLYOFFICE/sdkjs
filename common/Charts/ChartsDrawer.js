@@ -8487,49 +8487,38 @@ drawTreemapChart.prototype = {
 		if (!cachedData) {
 			return;
 		}
-		if (cachedData.data.length > 0 && this.chartProp && this.chartProp.chartGutter) {
-
-			// getYPoints will not work?
-			// I should find the end of cat and val Axis
-			// get each row inside cahcedData
-			// for each row calculate the x and y component of the resulting block
-
-			// if Row is true then I should add the width to totalX, and for each element add its height
-			// if Row is false then I should add the height to totalY, and for each element add its width
-
-			// for (let i = 0; i < cachedData.data.length; i++) {
-			// 	let x = cachedData.data[i].start.x;
-			// 	let y = cachedData.data[i].start.y;
-			// 	for (let j = 0; j < cachedData.data[i].coords.length; j++) {
-			// 		this.paths[i] = this.cChartDrawer._calculateRect(x, y, cachedData.data[i].coords[j].w, cachedData.data[i].coords[j].h);
-			// 		if (cachedData.data[i].isVert) {
-			// 			y += cachedData.data[i].coords[j].h;
-			// 		} else {
-			// 			x += cachedData.data[i].coords[j].w;
-			// 		}
-			// 	}
-			// }
-			// const plotArea = this.cChartSpace.chart.plotArea;
-			// const x = plotArea.x;
-			// const y = plotArea.y;
-			// // this.paths[0] = this.cChartDrawer._calculateRect(x, y + 54, 100, 54, true);
-			// let pos = 0;
-			// for (let i = 0; i < cachedData.data.length; i++) {
-			// 	let direction = cachedData.data[i].position;
-			// 	// let startX = cachedData.data[i].position ? x + cachedData.data[i].array[0] : x;
-			// 	// let startY = cachedData.data[i].position ? y + cachedData.data[i].array[0] : y;
-			// 	let startX = x;
-			// 	let startY = y;
-			// 	for( let j = 0; j < cachedData.data[i].array.length; j++) {
-			// 		this.paths[pos] = this.cChartDrawer._calculateRect(startX, startY + cachedData.data[i].coords[j].h, cachedData.data[i].coords[j].w, cachedData.data[i].coords[j].h, true);
-			// 		if (direction) {
-			// 			startY += cachedData.data[i].array[j];
-			// 		} else {
-			// 			startX += cachedData.data[i].array[j];
-			// 		}
-			// 		pos += 1;
-			// 	}
-			// }
+		const plotArea = this.cChartSpace && this.cChartSpace.chart && this.cChartSpace.chart.plotArea;
+		if (cachedData.data.length > 0 && this.chartProp && this.chartProp.chartGutter && plotArea) {
+			let x = plotArea.x;
+			let y = plotArea.y;
+			// this.paths[0] = this.cChartDrawer._calculateRect(x, y + 54, 100, 54, true);
+			let pos = 0;
+			console.log(cachedData.data, plotArea.extX, plotArea.extY);
+			for (let i = 0; i < cachedData.data.length; i++) {
+				let direction = cachedData.data[i].position;
+				let startX = x;
+				let startY = y;
+				const rect = cachedData.data[i]
+				// predefinedSize tells about the height of the whole array, however if array contains multiple elements, then to find the width of one element, we can divide totalArea by height
+				const weekSide = rect.totalSum/ rect.predefinedSize;
+				for( let j = 0; j < rect.array.length; j++) {
+					// vertical arrays weekSide is width and horizontal arrays weekSide is height;
+					const w = direction? weekSide : rect.array[j] / weekSide;
+					const h = direction ? rect.array[j] / weekSide : weekSide;
+					this.paths[pos] = this.cChartDrawer._calculateRect(startX, startY + h, w, h , true);
+					if (direction) {
+						startY += h;
+					} else {
+						startX += w;
+					}
+					pos += 1;
+				}
+				if (direction) {
+					x += weekSide;
+				} else {
+					y += weekSide;
+				}
+			}
 		}
 	},
 
@@ -8559,7 +8548,7 @@ drawTreemapChart.prototype = {
 				if (this.paths.hasOwnProperty(i) && this.paths[i]) {
 					let nPtIdx = parseInt(i);
 					let pen = oSeries.getPtPen(nPtIdx);
-					if (pen) {
+					if (pen && pen.Fill && pen.Fill.fill && pen.Fill.fill.color) {
 						pen.Fill.fill.color.RGBA.R = 255;
 						pen.Fill.fill.color.RGBA.G = 0;
 						pen.Fill.fill.color.RGBA.B = 0;
@@ -19623,7 +19612,7 @@ CColorObj.prototype =
 
 			const getAspectRatio = function(currentAreasSum, lastElementArea, predefinedSide, isVert){
 				if (predefinedSide === 0) {
-					return
+					return null;
 				}
 				const totalArea = currentAreasSum + lastElementArea;
 				let newWidth = null;
@@ -19635,7 +19624,6 @@ CColorObj.prototype =
 					newHeight = totalArea / predefinedSide;
 					newWidth = lastElementArea / newHeight;
 				}
-				console.log(Math.max(newWidth, newHeight) / Math.min(newWidth, newHeight), newWidth, newHeight, totalArea)
 				return Math.max(newWidth, newHeight) / Math.min(newWidth, newHeight);
 			}
 
@@ -19645,19 +19633,16 @@ CColorObj.prototype =
 				for (let i = 0; i < areas.length; i++){
 					const area = areas[i].val;
 					const lastElem = resArr.length !== 0 ? resArr[resArr.length - 1] : null;
-					console.log("old")
 					const oldAspectRatio = lastElem && getAspectRatio(lastElem.totalSum, area, lastElem.predefinedSize, lastElem.position);
-					console.log("vert")
 					const newVerticalAspectRatio = getAspectRatio(0, area, newHeight, true);
-					console.log("hor")
 					const newHorizontalAspectRatio = getAspectRatio(0, area, newWidth, false);
 					if (oldAspectRatio && oldAspectRatio < newHorizontalAspectRatio && oldAspectRatio < newVerticalAspectRatio){
 						lastElem.array.push(area);
 						lastElem.totalSum += area;
 						if (lastElem.position) {
-							newWidth = (lastElem.totalSum / oldHeight);
+							newWidth = newWidth - (area / oldHeight);
 						} else {
-							newHeight = (lastElem.totalSum / oldWidth);
+							newHeight = newHeight - (area / oldWidth);
 						}
 					}else {
 						oldHeight = newHeight;
@@ -19665,6 +19650,7 @@ CColorObj.prototype =
 						if (newVerticalAspectRatio < newHorizontalAspectRatio){
 							resArr.push({position: true, array: [area], totalSum: area, predefinedSize: oldHeight});
 							newWidth = oldWidth - (area / oldHeight);
+							console.log("width changed", newWidth, area)
 						} else {
 							resArr.push({position: false, array: [area], totalSum: area, predefinedSize: oldWidth});
 							newHeight = oldHeight - (area / oldWidth);
@@ -19694,8 +19680,6 @@ CColorObj.prototype =
 		const lastLayer = getLastLayer(strLit)
 		const newNumArr = normalizeNumArr(numArr, strLit, lastLayer, width * height);
 		this.data = createTreemap(newNumArr, strLit, lastLayer, width, height);
-		console.log('totalArea', width * height, width, height);
-		console.log("treemap", this.data)
 	}
 
 	function CCachedBoxWhisker(type, seria, numLit, strLit, axisProperties) {
