@@ -1198,20 +1198,24 @@ CTable.prototype.private_RecalculateBorders = function()
 
             var VMergeCount = this.Internal_GetVertMergeCount( CurRow, CurGridCol, GridSpan );
 
-            var CellMargins = Cell.GetMargins();
+            var CellMargins;
+	        var CellBorders;
 			if(!this.bPresentation)
 			{
+				CellMargins = Cell.GetMargins();
+				CellBorders = Cell.Get_Borders();
 				if ( CellMargins.Bottom.W > MaxBotMargin[CurRow + VMergeCount - 1] )
 					MaxBotMargin[CurRow + VMergeCount - 1] = CellMargins.Bottom.W;
 			}
 			else
 			{
 				let oTopCell = this.Internal_Get_StartMergedCell(CurRow, CurGridCol, GridSpan);
+				CellMargins = oTopCell.GetMargins();
+				CellBorders = oTopCell.Get_Borders();
 				let oTopMargins = oTopCell.GetMargins();
 				MaxBotMargin[CurRow] = Math.max(MaxBotMargin[CurRow], oTopMargins.Bottom.W);
 			}
 
-            var CellBorders = Cell.Get_Borders();
             if ( true === bSpacing_Top )
             {
                 if ( border_Single === CellBorders.Top.Value && MaxTopBorder[CurRow] < CellBorders.Top.Size )
@@ -1238,8 +1242,8 @@ CTable.prototype.private_RecalculateBorders = function()
                 }
                 else
                 {
-					var oCellTopInfo       = this.private_RecalculateCellTopBorder(this.GetRow(CurRow - 1), CurRow, CurGridCol, GridSpan, TableBorders, CellBorders);
-					var oCellTopHeaderInfo = oHeaderLastRow ? this.private_RecalculateCellTopBorder(oHeaderLastRow, CurRow, CurGridCol, GridSpan, TableBorders, CellBorders) : oCellTopInfo;
+					var oCellTopInfo       = this.private_RecalculateCellTopBorder(this.GetRow(CurRow - 1), CurRow, CurGridCol, GridSpan, TableBorders, CellBorders, this.bPresentation);
+					var oCellTopHeaderInfo = oHeaderLastRow ? this.private_RecalculateCellTopBorder(oHeaderLastRow, CurRow, CurGridCol, GridSpan, TableBorders, CellBorders, this.bPresentation) : oCellTopInfo;
 
 					if (MaxTopBorder[CurRow] < oCellTopInfo.Max)
 						MaxTopBorder[CurRow] = oCellTopInfo.Max;
@@ -1250,7 +1254,7 @@ CTable.prototype.private_RecalculateBorders = function()
             }
 
             var CellBordersBottom = CellBorders.Bottom;
-            if (VMergeCount > 1)
+            if (VMergeCount > 1 && !this.bPresentation)
             {
                 // Берем нижнюю границу нижней ячейки вертикального объединения.
                 var BottomCell = this.Internal_Get_EndMergedCell(CurRow, CurGridCol, GridSpan);
@@ -1483,6 +1487,8 @@ CTable.prototype.private_RecalculateBorders = function()
 						Left_Max  : 0
 					};
 
+					const oTopMergedCell = this.bPresentation ? this.Internal_Get_StartMergedCell(CurRow, CurGridCol, GridSpan) : null;
+					let oTempCellBorders = oTopMergedCell ? oTopMergedCell.GetBorders() : null;
 					for (var nTempCurRow = 0; nTempCurRow < VMergeCount; ++nTempCurRow)
 					{
 						var oTempRow = this.GetRow(CurRow + nTempCurRow);
@@ -1491,8 +1497,9 @@ CTable.prototype.private_RecalculateBorders = function()
 						if (nTempCurCell < 0)
 							continue;
 
-						var oTempCell        = oTempRow.GetCell(nTempCurCell);
-						var oTempCellBorders = oTempCell.GetBorders();
+						if (!oTopMergedCell) {
+							oTempCellBorders = oTempRow.GetCell(nTempCurCell).GetBorders();
+						}
 
 						// Обработка левой границы
 						if (0 === nTempCurCell)
@@ -1505,7 +1512,8 @@ CTable.prototype.private_RecalculateBorders = function()
 						}
 						else
 						{
-							var oLeftBorder = this.private_ResolveBordersConflict(oTempRow.GetCell(nTempCurCell - 1).GetBorders().Right, oTempCellBorders.Left, false, false);
+							const oLeftCell = this.bPresentation ? this.GetStartMergedCell(nTempCurCell - 1, CurRow + nTempCurRow) : oTempRow.GetCell(nTempCurCell - 1);
+							const oLeftBorder = this.private_ResolveBordersConflict(oLeftCell.GetBorders().Right, oTempCellBorders.Left, false, false);
 							if (border_Single === oLeftBorder.Value && oLeftBorder.Size > Max_l_w)
 								Max_l_w = oLeftBorder.Size;
 
@@ -1523,7 +1531,8 @@ CTable.prototype.private_RecalculateBorders = function()
 						}
 						else
 						{
-							var oRightBorder = this.private_ResolveBordersConflict(oTempRow.GetCell(nTempCurCell + 1).GetBorders().Left, oTempCellBorders.Right, false, false);
+							const oRightCell = this.bPresentation ? this.GetStartMergedCell(nTempCurCell + 1, CurRow + nTempCurRow) : oTempRow.GetCell(nTempCurCell + 1);
+							const oRightBorder = this.private_ResolveBordersConflict(oRightCell.GetBorders().Left, oTempCellBorders.Right, false, false);
 							if (border_Single === oRightBorder.Value && oRightBorder.Size > Max_r_w)
 								Max_r_w = oRightBorder.Size;
 
@@ -1589,7 +1598,7 @@ CTable.prototype.private_RecalculateBorders = function()
 
     this.RecalcInfo.TableBorders = false;
 };
-CTable.prototype.private_RecalculateCellTopBorder = function(oPrevRow, nCurRow, nCurGridCol, nGridSpan, oTableBorders, oCellBorders)
+CTable.prototype.private_RecalculateCellTopBorder = function(oPrevRow, nCurRow, nCurGridCol, nGridSpan, oTableBorders, oCellBorders, bCheckTopMergedCell)
 {
 	// Ищем в предыдущей строке первую ячейку, пересекающуюся с [nCurGridCol, nCurGridCol + nGridSpan]
 
@@ -1640,8 +1649,16 @@ CTable.prototype.private_RecalculateCellTopBorder = function(oPrevRow, nCurRow, 
 			// в этом объединении, но в не в случае, когда мы расчитываем границу соприкасающуюся с заголовком таблицы
 			// TODO: Надо проверить, зачем вообще это тут добавлено, т.к. ячейка предыдущей строки по логике
 			//       не должны быть не последней в своем вертикальном объединении
-			if (vmerge_Continue === oPrevCell.GetVMerge() && oPrevRow === this.GetRow(nCurRow - 1))
-				oPrevCell = this.Internal_Get_EndMergedCell(nCurRow - 1, nPrevGridCol, nPrevGridSpan);
+			if (oPrevRow === this.GetRow(nCurRow - 1) && vmerge_Continue === oPrevCell.GetVMerge()) {
+				if (bCheckTopMergedCell)
+				{
+					oPrevCell = this.Internal_Get_StartMergedCell(nCurRow - 1, nPrevGridCol, nPrevGridSpan);
+				}
+				else
+				{
+					oPrevCell = this.Internal_Get_EndMergedCell(nCurRow - 1, nPrevGridCol, nPrevGridSpan);
+				}
+			}
 
 			var oPrevBottom = oPrevCell.GetBorders().Bottom;
 
