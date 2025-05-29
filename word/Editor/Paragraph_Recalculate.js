@@ -1283,7 +1283,7 @@ Paragraph.prototype.private_RecalculateLineMetrics     = function(CurLine, CurPa
 
     // Строка пустая, у нее надо выставить ненулевую высоту. Делаем как Word, выставляем высоту по размеру
     // текста, на котором закончилась данная строка.
-    if ( true === PRS.EmptyLine || PRS.LineAscent < 0.001 || (true === PRS.End && true !== PRS.TextOnLine))
+    if (PRS.EmptyPresentationCellLine && (true === PRS.EmptyLine || (true === PRS.End && true !== PRS.TextOnLine)) || PRS.LineAscent < 0.001)
 	{
 		var LastItem = (true === PRS.End ? this.Content[this.Content.length - 1] : this.Content[this.Lines[CurLine].Ranges[this.Lines[CurLine].Ranges.length - 1].EndPos]);
 
@@ -3467,6 +3467,9 @@ function CParagraphRecalculateStateWrap()
     this.bContinueRecalc     = false;
     this.bMathRangeY         = false; // используется для переноса формулы под картинку
     this.MathNotInline       = null;
+
+		this.IsPresentationCellContent = false;
+	this.EmptyPresentationCellLine = true;
 }
 CParagraphRecalculateStateWrap.prototype = Object.create(ParagraphRecalculateStateBase.prototype);
 CParagraphRecalculateStateWrap.prototype.constructor = CParagraphRecalculateStateWrap;
@@ -3508,6 +3511,9 @@ CParagraphRecalculateStateWrap.prototype.Reset_Page = function(Paragraph, CurPag
 	this.ComplexFields.resetPage(Paragraph, CurPage);
 	this.alignState.ComplexFields.resetPage(Paragraph, CurPage);
 	this.counterState.ComplexFields.resetPage(Paragraph, CurPage);
+
+	this.IsPresentationCellContent = Paragraph.IsPresentationTableCellContent();
+
 };
 CParagraphRecalculateStateWrap.prototype.Reset_Line = function()
 {
@@ -3554,6 +3560,8 @@ CParagraphRecalculateStateWrap.prototype.Reset_Line = function()
 	this.bBreakPosInLWord    = true;
 	
 	this.MathNotInline = null;
+
+	this.EmptyPresentationCellLine = true;
 	
 	this.LineY.length = this.Line + 1;
 	if (this.Line >= 0)

@@ -3722,6 +3722,8 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
     var bNoOneBreakOperator = PRS.bNoOneBreakOperator;
     var bForcedBreak        = PRS.bForcedBreak;
 
+		let EmptyPresentationCellLine = PRS.EmptyPresentationCellLine;
+
     var Pos = RangeStartPos;
 
     var ContentLen = this.Content.length;
@@ -4156,7 +4158,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                         SpaceLen = 0;
                         WordLen = 0;
                     }
-
+										EmptyPresentationCellLine = false;
                     // На пробеле не делаем перенос. Перенос строки или внутристрочный
                     // перенос делаем при добавлении любого непробельного символа
                     SpaceLen += Item.GetWidth();
@@ -4654,7 +4656,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 
                     StartWord = true;
                     Word = true;
-
+										EmptyPresentationCellLine = false;
                     break;
                 }
                 case para_NewLine:
@@ -4951,6 +4953,8 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
     PRS.bNoOneBreakOperator = bNoOneBreakOperator;
     PRS.bForcedBreak        = bForcedBreak;
 
+		PRS.EmptyPresentationCellLine = PRS.IsPresentationCellContent ? EmptyPresentationCellLine && EmptyLine : true;
+
 
 	if (this.Type == para_Math_Run)
 	{
@@ -5120,7 +5124,9 @@ ParaRun.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _Cur
 				break;
 			}
 			case para_Space:
+			case para_Tab:
 			{
+				UpdateLineMetricsText = PRS.IsPresentationCellContent;
 				break;
 			}
 			case para_Drawing:

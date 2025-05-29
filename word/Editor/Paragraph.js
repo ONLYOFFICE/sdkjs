@@ -17476,6 +17476,17 @@ Paragraph.prototype.IsLastParagraphInCell = function()
 	return (this === oCellContent.GetLastParagraph());
 };
 /**
+ * Проверяем лежит ли данный параграф в таблице в редакторе презентаций
+ * @returns {boolean}
+ */
+Paragraph.prototype.IsPresentationTableCellContent = function(bReturnCell)
+{
+	if (Asc.editor && Asc.editor.isPresentationEditor) {
+		return this.IsTableCellContent(bReturnCell);
+	}
+	return bReturnCell ? null : false;
+};
+/**
  * Получаем элемент содержимого параграфа
  * @param nIndex
  * @returns {?CParagraphContentBase}
