@@ -1496,9 +1496,9 @@ CTable.prototype.private_RecalculateBorders = function()
 						var nTempCurCell = this.private_GetCellIndexByStartGridCol(CurRow + nTempCurRow, CurGridCol);
 						if (nTempCurCell < 0)
 							continue;
-
+						const oTempCell = oTempRow.GetCell(nTempCurCell);
 						if (!oTopMergedCell) {
-							oTempCellBorders = oTempRow.GetCell(nTempCurCell).GetBorders();
+							oTempCellBorders = oTempCell.GetBorders();
 						}
 
 						// Обработка левой границы
@@ -1512,8 +1512,14 @@ CTable.prototype.private_RecalculateBorders = function()
 						}
 						else
 						{
-							const oLeftCell = this.bPresentation ? this.GetStartMergedCell(nTempCurCell - 1, CurRow + nTempCurRow) : oTempRow.GetCell(nTempCurCell - 1);
-							const oLeftBorder = this.private_ResolveBordersConflict(oLeftCell.GetBorders().Right, oTempCellBorders.Left, false, false);
+							let oLeftBorder;
+							const oLeftCell = oTempRow.GetCell(nTempCurCell - 1);
+							if (this.bPresentation) {
+								const oLeftTopCell = this.GetStartMergedCell(nTempCurCell - 1, CurRow + nTempCurRow);
+								oLeftBorder = this.private_ResolveBordersConflict(oLeftCell.GetBorders().Right, oTempCellBorders.Left, false, false, oLeftCell === oLeftTopCell, oTempCell === oTopMergedCell);
+							} else {
+								oLeftBorder = this.private_ResolveBordersConflict(oLeftCell.GetBorders().Right, oTempCellBorders.Left, false, false);
+							}
 							if (border_Single === oLeftBorder.Value && oLeftBorder.Size > Max_l_w)
 								Max_l_w = oLeftBorder.Size;
 
@@ -1531,8 +1537,14 @@ CTable.prototype.private_RecalculateBorders = function()
 						}
 						else
 						{
-							const oRightCell = this.bPresentation ? this.GetStartMergedCell(nTempCurCell + 1, CurRow + nTempCurRow) : oTempRow.GetCell(nTempCurCell + 1);
-							const oRightBorder = this.private_ResolveBordersConflict(oRightCell.GetBorders().Left, oTempCellBorders.Right, false, false);
+							let oRightBorder;
+							const oRightCell = oTempRow.GetCell(nTempCurCell + 1);
+							if (this.bPresentation) {
+								const oRightTopCell = this.GetStartMergedCell(nTempCurCell + 1, CurRow + nTempCurRow);
+								oRightBorder = this.private_ResolveBordersConflict(oRightCell.GetBorders().Left, oTempCellBorders.Right,false, false, oRightCell === oRightTopCell, oTopMergedCell === oTempCell);
+							} else {
+								oRightBorder = this.private_ResolveBordersConflict(oRightCell.GetBorders().Left, oTempCellBorders.Right, false, false);
+							}
 							if (border_Single === oRightBorder.Value && oRightBorder.Size > Max_r_w)
 								Max_r_w = oRightBorder.Size;
 
