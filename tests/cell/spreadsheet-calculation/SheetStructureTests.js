@@ -7518,6 +7518,62 @@ $(function () {
 		assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Value in A4 after =A2:B2+{1,2} calculate");
 		assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2+{1,2}", "Formula in A4 after =A2:B2+{1,2} calculate");
 
+		// base operators
+		fragment[0].setFragmentText("=X2:Z2-{1,2}");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Value in A4 after =A2:B2+{1,2} calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2-{1,2}", "Formula in A4 after =A2:B2+{1,2} calculate");
+
+		fragment[0].setFragmentText("=X2:Z2*{1,2}");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Value in A4 after =X2:Z2*{1,2} calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2*{1,2}", "Formula in A4 after =X2:Z2*{1,2} calculate");
+
+		fragment[0].setFragmentText("=X2:Z2/{1,2}");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Value in A4 after =X2:Z2/{1,2} calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2/{1,2}", "Formula in A4 after =X2:Z2/{1,2} calculate");
+
+		fragment[0].setFragmentText("=X2:Z2^{1,2}");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in A4 after =X2:Z2^{1,2} calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2^{1,2}", "Formula in A4 after =X2:Z2^{1,2} calculate");
+
+		fragment[0].setFragmentText("=X2:Z2&{1,2}");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Value in A4 after =X2:Z2&{1,2} calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2&{1,2}", "Formula in A4 after =X2:Z2&{1,2} calculate");
+
+		fragment[0].setFragmentText("=X2:Z2={1,2}");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "FALSE", "Value in A4 after =X2:Z2={1,2} calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2={1,2}", "Formula in A4 after =X2:Z2={1,2} calculate");
+
+		fragment[0].setFragmentText("=X2:Z2<>{1,2}");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "TRUE", "Value in A4 after =X2:Z2<>{1,2} calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2<>{1,2}", "Formula in A4 after =X2:Z2<>{1,2} calculate");
+
+		fragment[0].setFragmentText("=X2:Z2<{1,2}");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "FALSE", "Value in A4 after =X2:Z2<{1,2} calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2<{1,2}", "Formula in A4 after =X2:Z2<{1,2} calculate");
+
+		fragment[0].setFragmentText("=X2:Z2<={1,2}");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "FALSE", "Value in A4 after =X2:Z2<={1,2} calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2<={1,2}", "Formula in A4 after =X2:Z2<={1,2} calculate");
+
+		fragment[0].setFragmentText("=X2:Z2>={1,2}");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "FALSE", "Value in A4 after =X2:Z2>={1,2}} calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2>={1,2}", "Formula in A4 after =X2:Z2>={1,2} calculate");
+
+		fragment[0].setFragmentText("=X2:Z2>{1,2}");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "FALSE", "Value in A4 after =X2:Z2>{1,2} calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2>{1,2}", "Formula in A4 after =X2:Z2>{1,2} calculate");
+
 		// formulas
 		fragment[0].setFragmentText("=SUM(A2:Z2)");
 		resCell = ws.getRange2("D10");

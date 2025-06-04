@@ -36572,10 +36572,6 @@ $(function () {
 		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 2, bboxParent.c1 + 2).getValue(), "#N/A", "Result of =A100:B101 [2,2]");
 		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 2, bboxParent.c1 + 3).getValue(), "#N/A", "Result of =A100:B101 [2,3]");
 
-		
-		// todo name, arrays, areas and formulas with it(all formulas from arraySpecialFunctions object сделать с помощью gp)
-		// 
-		debugger
 		ws.getRange2("B200").setValue("=2:2+2");
 		bboxParent = ws.getRange2("B200").bbox;
 		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bboxParent.r1, bboxParent.c1);

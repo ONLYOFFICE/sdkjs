@@ -4549,6 +4549,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			var convertArgs = this._convertAreaToArray([arg0, arg1]);
 			arg0 = convertArgs[0];
 			arg1 = convertArgs[1];
+		} else if (arg0.type === cElementType.array && (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D)) {
+			arg0 = arg0.getValue2(0,0);
+		} else if (arg1.type === cElementType.array && (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D)) {
+			arg1 = arg1.getValue2(0,0);
 		}
 
 		if (arg0 instanceof cArea) {
@@ -4647,6 +4651,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			var convertArgs = this._convertAreaToArray([arg0, arg1]);
 			arg0 = convertArgs[0];
 			arg1 = convertArgs[1];
+		} else if (arg0.type === cElementType.array && (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D)) {
+			arg0 = arg0.getValue2(0,0);
+		} else if (arg1.type === cElementType.array && (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D)) {
+			arg1 = arg1.getValue2(0,0);
 		}
 
 		if (arg0 instanceof cArea) {
@@ -4684,6 +4692,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			var convertArgs = this._convertAreaToArray([arg0, arg1]);
 			arg0 = convertArgs[0];
 			arg1 = convertArgs[1];
+		} else if (arg0.type === cElementType.array && (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D)) {
+			arg0 = arg0.getValue2(0,0);
+		} else if (arg1.type === cElementType.array && (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D)) {
+			arg1 = arg1.getValue2(0,0);
 		}
 
 		if (arg0 instanceof cArea) {
@@ -4764,6 +4776,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			var convertArgs = this._convertAreaToArray([arg0, arg1]);
 			arg0 = convertArgs[0];
 			arg1 = convertArgs[1];
+		} else if (arg0.type === cElementType.array && (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D)) {
+			arg0 = arg0.getValue2(0,0);
+		} else if (arg1.type === cElementType.array && (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D)) {
+			arg1 = arg1.getValue2(0,0);
 		}
 
 		if (cElementType.cellsRange === arg0.type) {
@@ -4802,6 +4818,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			var convertArgs = this._convertAreaToArray([arg0, arg1]);
 			arg0 = convertArgs[0];
 			arg1 = convertArgs[1];
+		} else if (arg0.type === cElementType.array && (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D)) {
+			arg0 = arg0.getValue2(0,0);
+		} else if (arg1.type === cElementType.array && (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D)) {
+			arg1 = arg1.getValue2(0,0);
 		}
 
 		if (cElementType.cellsRange === arg0.type) {
@@ -4841,6 +4861,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			var convertArgs = this._convertAreaToArray([arg0, arg1]);
 			arg0 = convertArgs[0];
 			arg1 = convertArgs[1];
+		} else if (arg0.type === cElementType.array && (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D)) {
+			arg0 = arg0.getValue2(0,0);
+		} else if (arg1.type === cElementType.array && (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D)) {
+			arg1 = arg1.getValue2(0,0);
 		}
 
 		if (cElementType.cellsRange === arg0.type) {
@@ -4880,6 +4904,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			var convertArgs = this._convertAreaToArray([arg0, arg1]);
 			arg0 = convertArgs[0];
 			arg1 = convertArgs[1];
+		} else if (arg0.type === cElementType.array && (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D)) {
+			arg0 = arg0.getValue2(0,0);
+		} else if (arg1.type === cElementType.array && (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D)) {
+			arg1 = arg1.getValue2(0,0);
 		}
 
 		if (cElementType.cellsRange === arg0.type) {
@@ -4918,6 +4946,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			var convertArgs = this._convertAreaToArray([arg0, arg1]);
 			arg0 = convertArgs[0];
 			arg1 = convertArgs[1];
+		} else if (arg0.type === cElementType.array && (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D)) {
+			arg0 = arg0.getValue2(0,0);
+		} else if (arg1.type === cElementType.array && (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D)) {
+			arg1 = arg1.getValue2(0,0);
 		}
 
 		if (cElementType.cellsRange === arg0.type) {
@@ -4956,6 +4988,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			var convertArgs = this._convertAreaToArray([arg0, arg1]);
 			arg0 = convertArgs[0];
 			arg1 = convertArgs[1];
+		} else if (arg0.type === cElementType.array && (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D)) {
+			arg0 = arg0.getValue2(0,0);
+		} else if (arg1.type === cElementType.array && (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D)) {
+			arg1 = arg1.getValue2(0,0);
 		}
 
 		if (cElementType.cellsRange === arg0.type) {
