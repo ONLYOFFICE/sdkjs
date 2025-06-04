@@ -569,6 +569,7 @@ const arraySpecialFunctions = {
 	"LOGEST": 1,
 	"LINEST": 1,
 	"TRANSPOSE": 1,
+	"FREQUENCY": 1
 }
 
 var cExcelSignificantDigits = 15; //количество цифр в числе после запятой

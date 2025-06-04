@@ -7812,6 +7812,26 @@ $(function () {
 		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in E11 after =FILTER(A1:A2,1) calculate");
 		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in E11 after FILTER(A1:A2,1) calculate");
 
+		ws.getRange2("D10:E11").cleanAll();
+
+		resCell = ws.getRange2("D10");
+		fragment[0].setFragmentText("=FREQUENCY(A1:A2,A1:A2)");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in D10 after =FREQUENCY(A1:A2,A1:A2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=FREQUENCY(A1:A2,A1:A2)", "Formula in D10 after FREQUENCY(A1:A2,A1:A2) calculate");
+		resCell = ws.getRange2("D11");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in D11 after =FREQUENCY(A1:A2,A1:A2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=FREQUENCY(A1:A2,A1:A2)", "Formula in D11 after FREQUENCY(A1:A2,A1:A2) calculate");
+		resCell = ws.getRange2("D12");
+		assert.strictEqual(resCell.getValueWithFormat(), "0", "Value in D12 after =FREQUENCY(A1:A2,A1:A2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=FREQUENCY(A1:A2,A1:A2)", "Formula in D12 after FREQUENCY(A1:A2,A1:A2) calculate");
+		resCell = ws.getRange2("E10");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in E10 after =FREQUENCY(A1:A2,A1:A2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in E10 after FREQUENCY(A1:A2,A1:A2) calculate");
+		resCell = ws.getRange2("E11");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in E11 after =FREQUENCY(A1:A2,A1:A2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in E11 after FREQUENCY(A1:A2,A1:A2) calculate");
+
 		ws.getRange2("A1:Z20").cleanAll();
 	});
 
