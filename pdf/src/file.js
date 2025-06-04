@@ -1246,34 +1246,30 @@ void main() {\n\
             }
         }
     };
-    CFile.prototype.copySelection = function(pageIndex, _text_format)
-    {
+    CFile.prototype.copySelection = function(pageIndex, _text_format) {
         let stream = this.getPageTextStream(pageIndex);
         if (!stream || !this.isSelectionUse())
             return "";
 
-        let selection = this.sortSelection();
-        let Page1 = selection.Page1;
-        let Page2 = selection.Page2;
-        let Line1 = selection.Line1;
-        let Line2 = selection.Line2;
-        let Glyph1 = selection.Glyph1;
-        let Glyph2 = selection.Glyph2;
+        let sel = this.sortSelection();
+        let Page1 = sel.Page1, Page2 = sel.Page2;
+        let Line1 = sel.Line1, Line2 = sel.Line2;
+        let Glyph1 = sel.Glyph1, Glyph2 = sel.Glyph2;
 
         if (Page1 > pageIndex || Page2 < pageIndex)
             return "";
 
-        let ret = "";
+        let retHTML = "";
+        let currentPara = "";
+        let prevY = null, prevX = null, prevLineHeight = null;
         let iLine = -1;
 
-        let startLine = pageIndex == Page1 ? Line1 : 0;
-        let endLine   = pageIndex == Page2 ? Line2 : Infinity;
+        let startLine = (pageIndex === Page1 ? Line1 : 0);
+        let endLine   = (pageIndex === Page2 ? Line2 : Infinity);
 
-        while (stream.pos < stream.size)
-        {
+        while (stream.pos < stream.size) {
             iLine++;
-            if (iLine < startLine)
-            {
+            if (iLine < startLine) {
                 stream.Skip(8);
                 if (stream.GetChar())
                     stream.Skip(8);
@@ -1284,55 +1280,80 @@ void main() {\n\
             if (iLine > endLine)
                 break;
 
-            let startChar = pageIndex == Page1 && iLine == Line1 ? Glyph1 : 0;
-            let endChar   = pageIndex == Page2 && iLine == Line2 ? Glyph2 : Infinity;
-
-            if (startChar == -2)
-                startChar = 0;
-            else if (startChar == -1)
-                startChar = Infinity;
-
-            if (endChar == -2)
-                endChar = 0;
-            else if (endChar == -1)
-                endChar = Infinity;
-
-            if (endChar <= startChar)
-                continue;
-
-            let textLine = "<p><span>";
-
-            stream.Skip(8);
-            if (stream.GetChar())
-                stream.Skip(8);
-            stream.Skip(12);
+            let lineX = stream.GetDouble();
+            let lineY = stream.GetDouble();
+            if (stream.GetChar()) {
+                stream.Skip(8); // lineEx, lineEy
+            }
+            let ascent  = stream.GetDouble();
+            let descent = stream.GetDouble();
+            let width   = stream.GetDouble();
 
             let nChars = stream.GetLong();
-            for (let i = 0; i < nChars; ++i)
-            {
-                if (i)
+            let startChar = (pageIndex === Page1 && iLine === Line1) ? Glyph1 : 0;
+            let endChar   = (pageIndex === Page2 && iLine === Line2) ? Glyph2 : Infinity;
+            if (startChar === -2) startChar = 0;
+            else if (startChar === -1) startChar = Infinity;
+            if (endChar === -2) endChar = 0;
+            else if (endChar === -1) endChar = Infinity;
+            if (endChar <= startChar) {
+                for (let k = 0; k < nChars; k++) {
+                    if (k) stream.Skip(4);
                     stream.Skip(4);
-                let nChar = stream.GetLong();
-                stream.Skip(4);
-
-                if (i < startChar || i >= endChar)
-                    continue;
-
-                let _char = nChar == 0xFFFF ? ' ' : String.fromCodePoint(nChar);
-                textLine += _char;
-
-                if (_text_format)
-                    _text_format.Text += _char;
+                    stream.Skip(4);
+                }
+                continue;
             }
 
-            textLine += "</span></p>";
-
+            let lineText = "";
+            for (let k = 0; k < nChars; k++) {
+                if (k) stream.Skip(4);
+                let nChar = stream.GetLong();
+                stream.Skip(4);
+                if (k < startChar || k >= endChar)
+                    continue;
+                let ch = (nChar === 0xFFFF ? " " : String.fromCodePoint(nChar));
+                lineText += ch;
+                if (_text_format)
+                    _text_format.Text += ch;
+            }
             if (_text_format)
                 _text_format.Text += "\n";
 
-            ret += textLine;
+            let lineHeight = ascent + descent;
+            let isNewParagraph = false;
+
+            if (prevY !== null) {
+                if (Math.abs(lineY - prevY) > lineHeight) {
+                    isNewParagraph = true;
+                }
+                else if (Math.abs(lineX - prevX) > lineHeight && (lineY - prevY) > descent) {
+                    isNewParagraph = true;
+                }
+            }
+
+            if (isNewParagraph) {
+                retHTML += "<p><span>" + currentPara.trimEnd() + "</span></p>";
+                currentPara = "";
+            }
+            else {
+                if (currentPara && !/\s$/.test(currentPara)) {
+                    currentPara += " ";
+                }
+            }
+
+            currentPara += lineText;
+
+            prevY = lineY;
+            prevX = lineX;
+            prevLineHeight = lineHeight;
         }
-        return ret;
+
+        if (currentPara) {
+            retHTML += "<p><span>" + currentPara.trimEnd() + "</span></p>";
+        }
+
+        return retHTML;
     };
     CFile.prototype.copy = function(_text_format)
     {
