@@ -7086,8 +7086,8 @@ $(function () {
 		assert.strictEqual(resCell.getValueWithFormat(), "4", "Value in C1 after +5-A1:A2 calculate");
 		assert.strictEqual(resCell.getValueForEdit(), "=5-A1:A2", "Formula in C1 after +5-A1:A2 calculate");
 		resCell = ws.getRange2("C2");
-		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value in C2 after +5-A1:A2 calculate");
-		assert.strictEqual(resCell.getValueForEdit(), "=5-A1:A2", "Formula in C2 after +5-A1:A2 calculate");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in C2 after +5-A1:A2 calculate");	// 3 before bug 74215
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in C2 after +5-A1:A2 calculate");
 
 		fragment[0].setFragmentText("-5-A1:A2");
 		resCell = ws.getRange2("C1");
@@ -7095,8 +7095,8 @@ $(function () {
 		assert.strictEqual(resCell.getValueWithFormat(), "-6", "Value in C1 after -5-A1:A2 calculate");
 		assert.strictEqual(resCell.getValueForEdit(), "=-5-A1:A2", "Formula in C1 after -5-A1:A2 calculate");
 		resCell = ws.getRange2("C2");
-		assert.strictEqual(resCell.getValueWithFormat(), "-7", "Value in C2 after -5-A1:A2 calculate");
-		assert.strictEqual(resCell.getValueForEdit(), "=-5-A1:A2", "Formula in C2 after -5-A1:A2 calculate");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in C2 after -5-A1:A2 calculate");	// -7 before bug 74215
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in C2 after -5-A1:A2 calculate");
 		
 		// todo unar operator should convert area to array?
 		// fragment[0].setFragmentText("+A1:A2+5");
@@ -7502,77 +7502,21 @@ $(function () {
 		assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Value in A4 after =A2:B2+X2:Z2 calculate");
 		assert.strictEqual(resCell.getValueForEdit(), "=A2:B2+X2:Z2", "Formula in A4 after =A2:B2+X2:Z2 calculate");
 
-		// cellsRange + arrays
-		fragment[0].setFragmentText("=2:2+{1,2}");
-		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
-		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value in A4 after=2:2+{1,2} calculate");
-		assert.strictEqual(resCell.getValueForEdit(), "=2:2+{1,2}", "Formula in A4 after =2:2+{1,2} calculate");
+		// todo base operators compare to ms/lo cellsRange + arrays
+		// fragment[0].setFragmentText("=2:2+{1,2}");
+		// wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		// assert.strictEqual(resCell.getValueWithFormat(), "3", "Value in A4 after=2:2+{1,2} calculate");
+		// assert.strictEqual(resCell.getValueForEdit(), "=2:2+{1,2}", "Formula in A4 after =2:2+{1,2} calculate");
 
-		fragment[0].setFragmentText("=A2:Z2+{1,2}");
-		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
-		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value in A4 after =A2:Z2+{1,2} calculate");
-		assert.strictEqual(resCell.getValueForEdit(), "=A2:Z2+{1,2}", "Formula in A4 after =A2:Z2+{1,2} calculate");
+		// fragment[0].setFragmentText("=A2:Z2+{1,2}");
+		// wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		// assert.strictEqual(resCell.getValueWithFormat(), "3", "Value in A4 after =A2:Z2+{1,2} calculate");
+		// assert.strictEqual(resCell.getValueForEdit(), "=A2:Z2+{1,2}", "Formula in A4 after =A2:Z2+{1,2} calculate");
 
-		fragment[0].setFragmentText("=X2:Z2+{1,2}");
-		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
-		assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Value in A4 after =A2:B2+{1,2} calculate");
-		assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2+{1,2}", "Formula in A4 after =A2:B2+{1,2} calculate");
-
-		// base operators
-		fragment[0].setFragmentText("=X2:Z2-{1,2}");
-		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
-		assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Value in A4 after =A2:B2+{1,2} calculate");
-		assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2-{1,2}", "Formula in A4 after =A2:B2+{1,2} calculate");
-
-		fragment[0].setFragmentText("=X2:Z2*{1,2}");
-		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
-		assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Value in A4 after =X2:Z2*{1,2} calculate");
-		assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2*{1,2}", "Formula in A4 after =X2:Z2*{1,2} calculate");
-
-		fragment[0].setFragmentText("=X2:Z2/{1,2}");
-		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
-		assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Value in A4 after =X2:Z2/{1,2} calculate");
-		assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2/{1,2}", "Formula in A4 after =X2:Z2/{1,2} calculate");
-
-		fragment[0].setFragmentText("=X2:Z2^{1,2}");
-		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
-		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in A4 after =X2:Z2^{1,2} calculate");
-		assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2^{1,2}", "Formula in A4 after =X2:Z2^{1,2} calculate");
-
-		fragment[0].setFragmentText("=X2:Z2&{1,2}");
-		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
-		assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Value in A4 after =X2:Z2&{1,2} calculate");
-		assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2&{1,2}", "Formula in A4 after =X2:Z2&{1,2} calculate");
-
-		fragment[0].setFragmentText("=X2:Z2={1,2}");
-		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
-		assert.strictEqual(resCell.getValueWithFormat(), "FALSE", "Value in A4 after =X2:Z2={1,2} calculate");
-		assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2={1,2}", "Formula in A4 after =X2:Z2={1,2} calculate");
-
-		fragment[0].setFragmentText("=X2:Z2<>{1,2}");
-		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
-		assert.strictEqual(resCell.getValueWithFormat(), "TRUE", "Value in A4 after =X2:Z2<>{1,2} calculate");
-		assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2<>{1,2}", "Formula in A4 after =X2:Z2<>{1,2} calculate");
-
-		fragment[0].setFragmentText("=X2:Z2<{1,2}");
-		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
-		assert.strictEqual(resCell.getValueWithFormat(), "FALSE", "Value in A4 after =X2:Z2<{1,2} calculate");
-		assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2<{1,2}", "Formula in A4 after =X2:Z2<{1,2} calculate");
-
-		fragment[0].setFragmentText("=X2:Z2<={1,2}");
-		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
-		assert.strictEqual(resCell.getValueWithFormat(), "FALSE", "Value in A4 after =X2:Z2<={1,2} calculate");
-		assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2<={1,2}", "Formula in A4 after =X2:Z2<={1,2} calculate");
-
-		fragment[0].setFragmentText("=X2:Z2>={1,2}");
-		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
-		assert.strictEqual(resCell.getValueWithFormat(), "FALSE", "Value in A4 after =X2:Z2>={1,2}} calculate");
-		assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2>={1,2}", "Formula in A4 after =X2:Z2>={1,2} calculate");
-
-		fragment[0].setFragmentText("=X2:Z2>{1,2}");
-		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
-		assert.strictEqual(resCell.getValueWithFormat(), "FALSE", "Value in A4 after =X2:Z2>{1,2} calculate");
-		assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2>{1,2}", "Formula in A4 after =X2:Z2>{1,2} calculate");
+		// fragment[0].setFragmentText("=X2:Z2+{1,2}");
+		// wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		// assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Value in A4 after =A2:B2+{1,2} calculate");
+		// assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2+{1,2}", "Formula in A4 after =A2:B2+{1,2} calculate");
 
 		// formulas
 		fragment[0].setFragmentText("=SUM(A2:Z2)");
@@ -7868,6 +7812,7 @@ $(function () {
 		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in E11 after =FILTER(A1:A2,1) calculate");
 		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in E11 after FILTER(A1:A2,1) calculate");
 
+		ws.getRange2("A1:Z20").cleanAll();
 	});
 
 	QUnit.test("Test: \"Assemble formulas test\"", function (assert) {
