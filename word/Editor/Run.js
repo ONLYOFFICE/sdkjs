@@ -5134,7 +5134,10 @@ ParaRun.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _Cur
 			case para_Space:
 			case para_Tab:
 			{
-				UpdateLineMetricsText = PRS.IsPresentationCellContent;
+				if (PRS.IsPresentationCellContent)
+				{
+					UpdateLineMetricsText = true;
+				}
 				break;
 			}
 			case para_Drawing:

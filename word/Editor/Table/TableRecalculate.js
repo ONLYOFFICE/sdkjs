@@ -1212,8 +1212,7 @@ CTable.prototype.private_RecalculateBorders = function()
 				let oTopCell = this.Internal_Get_StartMergedCell(CurRow, CurGridCol, GridSpan);
 				CellMargins = oTopCell.GetMargins();
 				CellBorders = oTopCell.Get_Borders();
-				let oTopMargins = oTopCell.GetMargins();
-				MaxBotMargin[CurRow] = Math.max(MaxBotMargin[CurRow], oTopMargins.Bottom.W);
+				MaxBotMargin[CurRow] = Math.max(MaxBotMargin[CurRow], CellMargins.Bottom.W);
 			}
 
             if ( true === bSpacing_Top )
@@ -1242,8 +1241,8 @@ CTable.prototype.private_RecalculateBorders = function()
                 }
                 else
                 {
-					var oCellTopInfo       = this.private_RecalculateCellTopBorder(this.GetRow(CurRow - 1), CurRow, CurGridCol, GridSpan, TableBorders, CellBorders, this.bPresentation);
-					var oCellTopHeaderInfo = oHeaderLastRow ? this.private_RecalculateCellTopBorder(oHeaderLastRow, CurRow, CurGridCol, GridSpan, TableBorders, CellBorders, this.bPresentation) : oCellTopInfo;
+					var oCellTopInfo       = this.private_RecalculateCellTopBorder(this.GetRow(CurRow - 1), CurRow, CurGridCol, GridSpan, TableBorders, CellBorders);
+					var oCellTopHeaderInfo = oHeaderLastRow ? this.private_RecalculateCellTopBorder(oHeaderLastRow, CurRow, CurGridCol, GridSpan, TableBorders, CellBorders) : oCellTopInfo;
 
 					if (MaxTopBorder[CurRow] < oCellTopInfo.Max)
 						MaxTopBorder[CurRow] = oCellTopInfo.Max;
@@ -1516,7 +1515,7 @@ CTable.prototype.private_RecalculateBorders = function()
 							const oLeftCell = oTempRow.GetCell(nTempCurCell - 1);
 							if (this.bPresentation) {
 								const oLeftTopCell = this.GetStartMergedCell(nTempCurCell - 1, CurRow + nTempCurRow);
-								oLeftBorder = this.private_ResolveBordersConflict(oLeftCell.GetBorders().Right, oTempCellBorders.Left, false, false, oLeftCell === oLeftTopCell, oTempCell === oTopMergedCell);
+								oLeftBorder = this.private_ResolveBordersConflict(oLeftTopCell.GetBorders().Right, oTempCellBorders.Left, false, false, oLeftCell === oLeftTopCell, oTempCell === oTopMergedCell);
 							} else {
 								oLeftBorder = this.private_ResolveBordersConflict(oLeftCell.GetBorders().Right, oTempCellBorders.Left, false, false);
 							}
@@ -1541,7 +1540,7 @@ CTable.prototype.private_RecalculateBorders = function()
 							const oRightCell = oTempRow.GetCell(nTempCurCell + 1);
 							if (this.bPresentation) {
 								const oRightTopCell = this.GetStartMergedCell(nTempCurCell + 1, CurRow + nTempCurRow);
-								oRightBorder = this.private_ResolveBordersConflict(oRightCell.GetBorders().Left, oTempCellBorders.Right,false, false, oRightCell === oRightTopCell, oTopMergedCell === oTempCell);
+								oRightBorder = this.private_ResolveBordersConflict(oRightTopCell.GetBorders().Left, oTempCellBorders.Right,false, false, oRightCell === oRightTopCell, oTopMergedCell === oTempCell);
 							} else {
 								oRightBorder = this.private_ResolveBordersConflict(oRightCell.GetBorders().Left, oTempCellBorders.Right, false, false);
 							}
@@ -1610,7 +1609,7 @@ CTable.prototype.private_RecalculateBorders = function()
 
     this.RecalcInfo.TableBorders = false;
 };
-CTable.prototype.private_RecalculateCellTopBorder = function(oPrevRow, nCurRow, nCurGridCol, nGridSpan, oTableBorders, oCellBorders, bCheckTopMergedCell)
+CTable.prototype.private_RecalculateCellTopBorder = function(oPrevRow, nCurRow, nCurGridCol, nGridSpan, oTableBorders, oCellBorders)
 {
 	// Ищем в предыдущей строке первую ячейку, пересекающуюся с [nCurGridCol, nCurGridCol + nGridSpan]
 
@@ -1662,7 +1661,7 @@ CTable.prototype.private_RecalculateCellTopBorder = function(oPrevRow, nCurRow, 
 			// TODO: Надо проверить, зачем вообще это тут добавлено, т.к. ячейка предыдущей строки по логике
 			//       не должны быть не последней в своем вертикальном объединении
 			if (oPrevRow === this.GetRow(nCurRow - 1) && vmerge_Continue === oPrevCell.GetVMerge()) {
-				if (bCheckTopMergedCell)
+				if (this.bPresentation)
 				{
 					oPrevCell = this.Internal_Get_StartMergedCell(nCurRow - 1, nPrevGridCol, nPrevGridSpan);
 				}
@@ -1671,18 +1670,12 @@ CTable.prototype.private_RecalculateCellTopBorder = function(oPrevRow, nCurRow, 
 					oPrevCell = this.Internal_Get_EndMergedCell(nCurRow - 1, nPrevGridCol, nPrevGridSpan);
 				}
 			}
-
-			var oPrevBottom = oPrevCell.GetBorders().Bottom;
-
-			var oBorder  = this.private_ResolveBordersConflict(oPrevBottom, oCellBorders.Top, false, false);
-			var nBorderW = oBorder.GetWidth();
-			if (nMaxTopBorder < nBorderW)
-				nMaxTopBorder = nBorderW;
-
+			let bCheckPrevTopMergedCell = false;
 			// Надо добавить столько раз, сколько колонок находится в пересечении этих двух ячееки
 			var nGridCount = 0;
 			if (nPrevGridCol >= nCurGridCol)
 			{
+				bCheckPrevTopMergedCell = true;
 				if (nPrevGridCol + nPrevGridSpan - 1 > nCurGridCol + nGridSpan - 1)
 					nGridCount = nCurGridCol + nGridSpan - nPrevGridCol;
 				else
@@ -1696,9 +1689,29 @@ CTable.prototype.private_RecalculateCellTopBorder = function(oPrevRow, nCurRow, 
 			{
 				nGridCount = nPrevGridCol + nPrevGridSpan - nCurGridCol;
 			}
+			var oPrevBottom = oPrevCell.GetBorders().Bottom;
+			if (this.bPresentation)
+			{
+				for (var nCurGrid = 0; nCurGrid < nGridCount; ++nCurGrid)
+				{
+					var oBorder  = this.private_ResolveBordersConflict(oPrevBottom, oCellBorders.Top, false, false, bCheckPrevTopMergedCell ? !nCurGrid : false, !arrBorderTopInfo.length);
+					var nBorderW = oBorder.GetWidth();
+					if (nMaxTopBorder < nBorderW)
+						nMaxTopBorder = nBorderW;
+					arrBorderTopInfo.push(oBorder);
+				}
 
-			for (var nCurGrid = 0; nCurGrid < nGridCount; ++nCurGrid)
-				arrBorderTopInfo.push(oBorder);
+			}
+			else
+			{
+				var oBorder  = this.private_ResolveBordersConflict(oPrevBottom, oCellBorders.Top, false, false);
+				var nBorderW = oBorder.GetWidth();
+				if (nMaxTopBorder < nBorderW)
+					nMaxTopBorder = nBorderW;
+
+				for (var nCurGrid = 0; nCurGrid < nGridCount; ++nCurGrid)
+					arrBorderTopInfo.push(oBorder);
+			}
 
 			nPrevPos++;
 			nPrevGridCol += nPrevGridSpan;
