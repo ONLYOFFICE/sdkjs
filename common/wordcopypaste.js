@@ -95,19 +95,8 @@ function GetObjectsForImageDownload(aBuilderImages, bSameDoc)
 		let sUrl = oBuilderImg.Url;
         if(!g_oDocumentUrls.getImageLocal(sUrl) && !g_oDocumentUrls.isThemeUrl(sUrl))
         {
-            if(!Array.isArray(oMapImages[sUrl]))
-            {
-                oMapImages[sUrl] = [];
-            }
-            oMapImages[sUrl].push(oBuilderImg);
-        }
-    }
-    for(var key in oMapImages)
-    {
-        if(oMapImages.hasOwnProperty(key))
-        {
-            aUrls.push(key);
-            aBuilderImagesByUrl.push(oMapImages[key]);
+			aUrls.push(sUrl);
+			aBuilderImagesByUrl.push([oBuilderImg]);
         }
     }
     if(bSameDoc !== true){
@@ -2825,47 +2814,71 @@ PasteProcessor.prototype =
         }
         return oDocument;
     },
-    _CalcMaxWidthByCell : function(cell)
-    {
-        var row = cell.Row;
-        var table = row.Table;
-        var grid = table.TableGrid;
-        var nGridBefore = 0;
-        if(null != row.Pr && null != row.Pr.GridBefore)
-            nGridBefore = row.Pr.GridBefore;
-        var nCellIndex = cell.Index;
-        var nCellGrid = 1;
-        if(null != cell.Pr && null != cell.Pr.GridSpan)
-            nCellGrid = cell.Pr.GridSpan;
-        var nMarginLeft = 0;
-        if(null != cell.Pr && null != cell.Pr.TableCellMar && null != cell.Pr.TableCellMar.Left && tblwidth_Mm === cell.Pr.TableCellMar.Left.Type && null != cell.Pr.TableCellMar.Left.W)
-            nMarginLeft = cell.Pr.TableCellMar.Left.W;
-        else if(null != table.Pr && null != table.Pr.TableCellMar && null != table.Pr.TableCellMar.Left && tblwidth_Mm === table.Pr.TableCellMar.Left.Type && null != table.Pr.TableCellMar.Left.W)
-            nMarginLeft = table.Pr.TableCellMar.Left.W;
-        var nMarginRight = 0;
-        if(null != cell.Pr && null != cell.Pr.TableCellMar && null != cell.Pr.TableCellMar.Right && tblwidth_Mm === cell.Pr.TableCellMar.Right.Type && null != cell.Pr.TableCellMar.Right.W)
-            nMarginRight = cell.Pr.TableCellMar.Right.W;
-        else if(null != table.Pr && null != table.Pr.TableCellMar && null != table.Pr.TableCellMar.Right && tblwidth_Mm === table.Pr.TableCellMar.Right.Type && null != table.Pr.TableCellMar.Right.W)
-            nMarginRight = table.Pr.TableCellMar.Right.W;
-        var nPrevSumGrid = nGridBefore;
-        for(var i = 0; i < nCellIndex; ++i)
-        {
-            var oTmpCell = row.Content[i];
-            var nGridSpan = 1;
-            if(null != cell.Pr && null != cell.Pr.GridSpan)
-                nGridSpan = cell.Pr.GridSpan;
-            nPrevSumGrid += nGridSpan;
-        }
-        var dCellWidth = 0;
-        for(var i = nPrevSumGrid, length = grid.length; i < nPrevSumGrid + nCellGrid && i < length; ++i)
-            dCellWidth += grid[i];
+	_CalcMaxWidthByCell: function(cell) {
+		const row = cell.Row;
+		const table = row.Table;
+		const grid = table.TableGrid;
 
-        if(dCellWidth - nMarginLeft - nMarginRight <= 0)
-            dCellWidth = 4;
-        else
-            dCellWidth -= nMarginLeft + nMarginRight;
-        return dCellWidth;
-    },
+		let nGridBefore = 0;
+		if (row.Pr !== null && row.Pr.GridBefore !== null) {
+			nGridBefore = row.Pr.GridBefore;
+		}
+
+		const nCellIndex = cell.Index;
+		let nCellGrid = 1;
+		if (cell.Pr !== null && cell.Pr.GridSpan !== null) {
+			nCellGrid = cell.Pr.GridSpan;
+		}
+
+		let nMarginLeft = 0;
+		if (cell.Pr !== null && cell.Pr.TableCellMar !== null &&
+			cell.Pr.TableCellMar.Left !== null &&
+			tblwidth_Mm === cell.Pr.TableCellMar.Left.Type &&
+			cell.Pr.TableCellMar.Left.W !== null) {
+			nMarginLeft = cell.Pr.TableCellMar.Left.W;
+		} else if (table.Pr !== null && table.Pr.TableCellMar !== null &&
+			table.Pr.TableCellMar.Left !== null &&
+			tblwidth_Mm === table.Pr.TableCellMar.Left.Type &&
+			table.Pr.TableCellMar.Left.W !== null) {
+			nMarginLeft = table.Pr.TableCellMar.Left.W;
+		}
+
+		let nMarginRight = 0;
+		if (cell.Pr !== null && cell.Pr.TableCellMar !== null &&
+			cell.Pr.TableCellMar.Right !== null &&
+			tblwidth_Mm === cell.Pr.TableCellMar.Right.Type &&
+			cell.Pr.TableCellMar.Right.W !== null) {
+			nMarginRight = cell.Pr.TableCellMar.Right.W;
+		} else if (table.Pr !== null && table.Pr.TableCellMar !== null &&
+			table.Pr.TableCellMar.Right !== null &&
+			tblwidth_Mm === table.Pr.TableCellMar.Right.Type &&
+			table.Pr.TableCellMar.Right.W !== null) {
+			nMarginRight = table.Pr.TableCellMar.Right.W;
+		}
+
+		let nPrevSumGrid = nGridBefore;
+		for (let i = 0; i < nCellIndex; ++i) {
+			const oTmpCell = row.Content[i];
+			let nGridSpan = 1;
+			if (oTmpCell !== null && oTmpCell.Pr !== null && oTmpCell.Pr.GridSpan !== null) {
+				nGridSpan = oTmpCell.Pr.GridSpan;
+			}
+			nPrevSumGrid += nGridSpan;
+		}
+
+		let dCellWidth = 0;
+		for (let i = nPrevSumGrid, length = grid.length; i < nPrevSumGrid + nCellGrid && i < length; ++i) {
+			dCellWidth += grid[i];
+		}
+
+		if (dCellWidth - nMarginLeft - nMarginRight <= 0) {
+			dCellWidth = 4;
+		} else {
+			dCellWidth -= nMarginLeft + nMarginRight;
+		}
+
+		return dCellWidth;
+	},
 	CheckCopyDrawingsBeforePaste: function () {
 			const allDrawings = [];
 		for (let i = 0; i < this.aContent.length; i += 1) {
@@ -10248,10 +10261,10 @@ PasteProcessor.prototype =
 		if (nRowCount > 0 && nMaxColCount > 0) {
 			var bUseScaleKoef = this.bUseScaleKoef;
 			var dScaleKoef = this.dScaleKoef;
-			if (dMaxSum * dScaleKoef > this.dMaxWidth) {
+			/*if (dMaxSum * dScaleKoef > this.dMaxWidth) {
 				dScaleKoef = dScaleKoef * this.dMaxWidth / dMaxSum;
 				bUseScaleKoef = true;
-			}
+			}*/
 			//строим Grid
 			var aGrid = [];
 			var nPrevIndex = null;

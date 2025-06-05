@@ -112,6 +112,14 @@
         this.Slide = oSlide;
     }
 
+	/**
+	 * Class representing a notes page.
+	 * @constructor
+	 */
+	function ApiNotesPage(oNotes) {
+		this.NotesPage = oNotes;
+	}
+
     /**
      * Class representing a graphical object.
      * @constructor
@@ -1130,37 +1138,17 @@
     };
 
 	/**
-	 * Returns the current visible slide, layout or master.
+	 * Returns the current visible slide.
 	 * @typeofeditors ["CPE"]
 	 * @memberof ApiPresentation
-	 * @returns {ApiSlide | ApiLayout | ApiMaster | null} - returns null if the current slide is not found.
+	 * @returns {ApiSlide | null} - returns null if the current slide is not found or not visible.
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetCurrentVisibleSlide.js
 	 */
 	ApiPresentation.prototype.GetCurrentVisibleSlide = function () {
-		const slideIndex = this.GetCurSlideIndex();
-
-		if (!Asc.editor.isMasterMode()) {
-			return this.GetSlideByIndex(slideIndex);
+		if (!Asc.editor.isNormalMode()) {
+			return null;
 		}
-
-		const aMasters = this.GetAllSlideMasters();
-		let accumulatedIndex = 0;
-
-		for (let i = 0; i < aMasters.length; i++) {
-			const master = aMasters[i];
-			if (accumulatedIndex === slideIndex) {
-				return master;
-			}
-
-			const layouts = master.GetAllLayouts();
-			if (slideIndex < accumulatedIndex + layouts.length + 1) {
-				return layouts[slideIndex - accumulatedIndex - 1];
-			}
-
-			accumulatedIndex += layouts.length + 1;
-		}
-
-		return null;
+		return this.GetSlideByIndex(this.GetCurSlideIndex());
 	};
 
     /**
@@ -1636,6 +1624,80 @@
 			oDocInfo["Authors"] = authors.split(/\s*[,;]\s*/);
 		
 		return oDocInfo;
+	};
+
+	/**
+	 * Returns the core properties interface for the current presentation.
+	 * Use this to view or modify standard metadata such as title, author, and keywords.
+	 *
+	 * @memberof ApiPresentation
+	 * @returns {ApiCore}
+	 * @typeofeditors ["CPE"]
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetCore.js
+	 */
+	ApiPresentation.prototype.GetCore = function () {
+		return new AscBuilder.ApiCore(this.Presentation.Core);
+	};
+
+	/**
+	 * Returns the custom properties of the presentation.
+	 *
+	 * @memberof ApiPresentation
+	 * @returns {ApiCustomProperties}
+	 * @typeofeditors ["CPE"]
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetCustomProperties.js
+	 */
+	ApiPresentation.prototype.GetCustomProperties = function () {
+		return new AscBuilder.ApiCustomProperties(this.Presentation.CustomProperties);
+	};
+
+	/**
+	* Adds a math equation to the current document.
+	* @memberof ApiPresentation
+	* @typeofeditors ["CPE"]
+	* @param {string} sText - The math equation text.
+	* @param {string} sFormat - The math equation format. Possible values are "unicode" and "latex".
+	* @returns {boolean}
+	* @since 9.0.0
+	* @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/AddMathEquation.js
+	*/
+	ApiPresentation.prototype.AddMathEquation = function (sText, sFormat) {
+		if (!Asc.editor) {
+			return false;
+		}
+
+		Asc.editor.addBuilderFont('Cambria Math');
+		Asc.editor.loadBuilderFonts(insertMathEquation);
+
+		function insertMathEquation() {
+			const format = AscBuilder.GetStringParameter(sFormat, "unicode");
+			const text = AscBuilder.GetStringParameter(sText, "");
+
+			const logicDocument = Asc.editor.getLogicDocument();
+			logicDocument.RemoveBeforePaste();
+			logicDocument.RemoveSelection();
+
+			const mathPr = new AscCommonWord.MathMenu(c_oAscMathType.Default_Text, logicDocument.GetDirectTextPr());
+			mathPr.SetText(text);
+
+			logicDocument.AddToParagraph(mathPr);
+
+			const targetDocContent = editor.getGraphicController().getSelectedArray()[0].txBody.content;
+			const info = new CSelectedElementsInfo();
+			targetDocContent.GetSelectedElementsInfo(info);
+
+			const paraMath = info.GetMath();
+			if (!paraMath) {
+				return;
+			}
+
+			paraMath.ConvertView(false, 'latex' === format ? Asc.c_oAscMathInputType.LaTeX : Asc.c_oAscMathInputType.Unicode);
+
+			const graphicController = Asc.editor.getGraphicController();
+			graphicController.startRecalculate();
+		}
+
+		return true;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -3670,6 +3732,123 @@
 
         return new ApiGroup(oGroup);
     };
+
+	/**
+	 * Returns the notes page of the slide.
+	 * @typeofeditors ["CPE"]
+	 * @memberof ApiSlide
+	 * @returns {ApiNotesPage | null}
+	 * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetNotesPage.js
+	  */
+	ApiSlide.prototype.GetNotesPage = function () {
+		if (this.Slide && this.Slide.notes) {
+			return new ApiNotesPage(this.Slide.notes);
+		}
+		return null;
+	};
+
+	/**
+	 * Adds text to the notes page of the slide.
+	 * @typeofeditors ["CPE"]
+	 * @memberof ApiSlide
+	 * @param {string} sText - The text to be added to the notes page.
+	 * @returns {boolean} - Returns true if text was added successfully, otherwise false.
+	 * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/AddNotesText.js
+	 */
+	ApiSlide.prototype.AddNotesText = function (sText) {
+		let oNotesPage = this.GetNotesPage();
+		if (!oNotesPage) {
+			const presentation = private_GetPresentation();
+			const notes = AscCommonSlide.CreateNotes();
+			notes.setNotesMaster(presentation.notesMasters[0]);
+
+			notes.setSlide(this);
+			this.setNotes(notes);
+
+			oNotesPage = new ApiNotesPage(notes);
+		}
+
+		const oBodyShape = oNotesPage.GetBodyShape();
+		if (oBodyShape) {
+
+			const oDocContent = oBodyShape.GetDocContent();
+			if (oDocContent) {
+
+				const oParagraph = oDocContent.GetElement(0);
+				if (oParagraph) {
+
+					oParagraph.AddText(sText);
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiNotesPage
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Returns the type of the ApiNotesPage class.
+	 *
+	 * @typeofeditors ["CPE"]
+	 * @returns {"notesPage"}
+	 * @see office-js-api/Examples/{Editor}/ApiNotesPage/Methods/GetClassType.js
+	 */
+	ApiNotesPage.prototype.GetClassType = function () {
+		return "notesPage";
+	};
+
+	/**
+	 * Returns the shape with attribute type="body" from the current notes page
+	 * @typeofeditors ["CPE"]
+	 * @memberof ApiNotesPage
+	 * @returns {ApiShape | null}
+	 * @see office-js-api/Examples/{Editor}/ApiNotesPage/Methods/GetBodyShape.js
+	 */
+	ApiNotesPage.prototype.GetBodyShape = function () {
+		if (this.NotesPage) {
+
+			let bodyShape = this.NotesPage.getBodyShape();
+			if (!bodyShape) {
+				bodyShape = this.NotesPage.createBodyShape();
+			}
+
+			return new ApiShape(bodyShape);
+		}
+		return null;
+	};
+
+	/**
+	 * Adds text to the body shape of the current notes page.
+	 * @typeofeditors ["CPE"]
+	 * @memberof ApiNotesPage
+	 * @param {string} sText - The text to be added to the body shape.
+	 * @returns {boolean} - Returns true if text was added successfully, otherwise false.
+	 * @see office-js-api/Examples/{Editor}/ApiNotesPage/Methods/AddBodyShapeText.js
+	 */
+	ApiNotesPage.prototype.AddBodyShapeText = function (sText) {
+		const oBodyShape = this.GetBodyShape();
+		if (oBodyShape) {
+
+			const oDocContent = oBodyShape.GetDocContent();
+			if (oDocContent) {
+
+				const oParagraph = oDocContent.GetElement(0);
+				if (oParagraph) {
+
+					oParagraph.AddText(sText);
+					return true;
+				}
+			}
+		}
+
+		return false;
+	};
+
     //------------------------------------------------------------------------------------------------------------------
     //
     // ApiDrawing
@@ -5020,6 +5199,7 @@
     ApiPresentation.prototype["GetHeight"]                = ApiPresentation.prototype.GetHeight;
     ApiPresentation.prototype["GetAllComments"]           = ApiPresentation.prototype.GetAllComments;
     ApiPresentation.prototype["GetDocumentInfo"]          = ApiPresentation.prototype.GetDocumentInfo;
+    ApiPresentation.prototype["AddMathEquation"]          = ApiPresentation.prototype.AddMathEquation;
     ApiPresentation.prototype["SlidesToJSON"]             = ApiPresentation.prototype.SlidesToJSON;
     ApiPresentation.prototype["ToJSON"]                   = ApiPresentation.prototype.ToJSON;
     ApiPresentation.prototype["GetAllOleObjects"]         = ApiPresentation.prototype.GetAllOleObjects;
@@ -5027,6 +5207,8 @@
     ApiPresentation.prototype["GetAllShapes"]             = ApiPresentation.prototype.GetAllShapes;
     ApiPresentation.prototype["GetAllImages"]             = ApiPresentation.prototype.GetAllImages;
     ApiPresentation.prototype["GetAllDrawings"]           = ApiPresentation.prototype.GetAllDrawings;
+    ApiPresentation.prototype["GetCore"]                  = ApiPresentation.prototype.GetCore;
+    ApiPresentation.prototype["GetCustomProperties"]      = ApiPresentation.prototype.GetCustomProperties;
 
     ApiMaster.prototype["GetClassType"]                   = ApiMaster.prototype.GetClassType;
     ApiMaster.prototype["GetLayout"]                      = ApiMaster.prototype.GetLayout;
@@ -5138,7 +5320,12 @@
     ApiSlide.prototype["GetDrawingsByPlaceholderType"]    = ApiSlide.prototype.GetDrawingsByPlaceholderType;
     ApiSlide.prototype["Select"]                          = ApiSlide.prototype.Select;
     ApiSlide.prototype["GroupDrawings"]                   = ApiSlide.prototype.GroupDrawings;
+	ApiSlide.prototype["GetNotesPage"]                    = ApiSlide.prototype.GetNotesPage;
+	ApiSlide.prototype["AddNotesText"]                    = ApiSlide.prototype.AddNotesText;
 
+	ApiNotesPage.prototype["GetClassType"]                = ApiNotesPage.prototype.GetClassType;
+	ApiNotesPage.prototype["AddBodyShapeText"]            = ApiNotesPage.prototype.AddBodyShapeText;
+	ApiNotesPage.prototype["GetBodyShape"]                = ApiNotesPage.prototype.GetBodyShape;
 
     ApiDrawing.prototype["GetClassType"]                  = ApiDrawing.prototype.GetClassType;
     ApiDrawing.prototype["SetSize"]                       = ApiDrawing.prototype.SetSize;

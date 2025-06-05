@@ -7816,87 +7816,88 @@ function CAnimationPaneDrawer(page, htmlElement)
 			// Here we need to check if all animEffects havent been changed
 			// If they were - recalculate corresponding elements
 			// If they were not - redraw animItems based on "selected" state of effects
+			return AscFormat.ExecuteNoHistory(function () {
+				const seqListContainer = oThis.list.Control;
+				if (!seqListContainer) { return; }
 
-			const seqListContainer = oThis.list.Control;
-			if (!seqListContainer) { return; }
+				// Compare number of sequences (main and interactive ones)
+				const timing = seqListContainer.getTiming();
+				const newSeqList = timing ? timing.getRootSequences() : [];
+				const oldSeqList = seqListContainer.seqList
+					? seqListContainer.seqList.children.map(function (animSequence) {
+						return animSequence.getSeq();
+					})
+					: [];
 
-			// Compare number of sequences (main and interactive ones)
-			const timing = seqListContainer.getTiming();
-			const newSeqList = timing ? timing.getRootSequences() : [];
-			const oldSeqList = seqListContainer.seqList
-				? seqListContainer.seqList.children.map(function (animSequence) {
-					return animSequence.getSeq();
-				})
-				: [];
-
-			if (oldSeqList.length !== newSeqList.length) {
-				recalculateSeqListContainer();
-				return;
-			}
-
-			oldSeqList.some(function (_, nSeq) {
-				// Compare sequences by Id
-				const oldSeq = oldSeqList[nSeq];
-				const newSeq = newSeqList[nSeq];
-
-				if (oldSeq.Id !== newSeq.Id) {
+				if (oldSeqList.length !== newSeqList.length) {
 					recalculateSeqListContainer();
-					return true;
+					return;
 				}
 
-				// Compare number of groups in current sequence
-				const oldSeqGroups = seqListContainer.seqList.children[nSeq].animGroups.map(function (animGroup) {
-					return animGroup.effects;
-				});
-				const newSeqGroupsAsObject = AscFormat.groupBy(
-					newSeq.getAllEffects(),
-					function (effect) { return effect.getIndexInSequence(); }
-				);
-				const newSeqGroups = Object.keys(newSeqGroupsAsObject).map(function (groupIndex) {
-					return newSeqGroupsAsObject[groupIndex];
-				})
+				oldSeqList.some(function (_, nSeq) {
+					// Compare sequences by Id
+					const oldSeq = oldSeqList[nSeq];
+					const newSeq = newSeqList[nSeq];
 
-				if (oldSeqGroups.length !== newSeqGroups.length) {
-					recalculateSeqListContainer();
-					return true;
-				}
-
-				for (let nGroup = 0; nGroup < oldSeqGroups.length; ++nGroup) {
-					// Compare number of effects in current group
-					const oldSeqGroup = oldSeqGroups[nGroup];
-					const newSeqGroup = newSeqGroups[nGroup];
-
-					if (oldSeqGroup.length !== newSeqGroup.length) {
+					if (oldSeq.Id !== newSeq.Id) {
 						recalculateSeqListContainer();
 						return true;
 					}
 
-					for (let nEffect = 0; nEffect < oldSeqGroup.length; ++nEffect) {
-						// Compare effects in currect group by Id
-						const oldEffect = oldSeqGroup[nEffect];
-						const newEffect = newSeqGroup[nEffect];
+					// Compare number of groups in current sequence
+					const oldSeqGroups = seqListContainer.seqList.children[nSeq].animGroups.map(function (animGroup) {
+						return animGroup.effects;
+					});
+					const newSeqGroupsAsObject = AscFormat.groupBy(
+						newSeq.getAllEffects(),
+						function (effect) { return effect.getIndexInSequence(); }
+					);
+					const newSeqGroups = Object.keys(newSeqGroupsAsObject).map(function (groupIndex) {
+						return newSeqGroupsAsObject[groupIndex];
+					})
 
-						if (oldEffect.Id !== newEffect.Id) {
+					if (oldSeqGroups.length !== newSeqGroups.length) {
+						recalculateSeqListContainer();
+						return true;
+					}
+
+					for (let nGroup = 0; nGroup < oldSeqGroups.length; ++nGroup) {
+						// Compare number of effects in current group
+						const oldSeqGroup = oldSeqGroups[nGroup];
+						const newSeqGroup = newSeqGroups[nGroup];
+
+						if (oldSeqGroup.length !== newSeqGroup.length) {
 							recalculateSeqListContainer();
 							return true;
 						}
+
+						for (let nEffect = 0; nEffect < oldSeqGroup.length; ++nEffect) {
+							// Compare effects in currect group by Id
+							const oldEffect = oldSeqGroup[nEffect];
+							const newEffect = newSeqGroup[nEffect];
+
+							if (oldEffect.Id !== newEffect.Id) {
+								recalculateSeqListContainer();
+								return true;
+							}
+						}
 					}
+
+					seqListContainer.seqList.forEachAnimItem(function (animItem) {
+						animItem.onUpdate();
+					})
+
+					return false;
+				});
+
+				function recalculateSeqListContainer() {
+					oThis.list.Control.seqList.recalculateChildren();
+					oThis.list.Control.seqList.recalculateChildrenLayout();
+					oThis.list.Control.recalculateChildrenLayout();
+					oThis.list.Control.onUpdate();
+					oThis.list.CheckScroll();
 				}
-
-				seqListContainer.seqList.forEachAnimItem(function (animItem) {
-					animItem.onUpdate();
-				})
-
-				return false;
-			});
-
-			function recalculateSeqListContainer() {
-				oThis.list.Control.seqList.recalculateChildren();
-				oThis.list.Control.seqList.recalculateChildrenLayout();
-				oThis.list.Control.recalculateChildrenLayout();
-				oThis.list.Control.onUpdate();
-				oThis.list.CheckScroll();
-			}
+			}, this, []);
 		});
 
 		Asc.editor.asc_registerCallback('asc_onFocusObject', function () {
@@ -7905,19 +7906,21 @@ function CAnimationPaneDrawer(page, htmlElement)
 				(when shape name has been changed)
 			*/
 
-			if (!oThis.list.Control) return;
+			AscFormat.ExecuteNoHistory(function () {
+				if (!oThis.list.Control) return;
 
-			let changedLabelsCount = 0;
-			oThis.list.Control.seqList.forEachAnimItem(function (animItem) {
-				if (animItem.effectLabel.string !== animItem.getEffectLabelText()) {
-					animItem.effectLabel.string = animItem.getEffectLabelText();
-					changedLabelsCount++;
+				let changedLabelsCount = 0;
+				oThis.list.Control.seqList.forEachAnimItem(function (animItem) {
+					if (animItem.effectLabel.string !== animItem.getEffectLabelText()) {
+						animItem.effectLabel.string = animItem.getEffectLabelText();
+						changedLabelsCount++;
+					}
+				});
+
+				if (changedLabelsCount > 0) {
+					oThis.list.Control.recalculateChildrenLayout();
 				}
-			});
-
-			if (changedLabelsCount > 0) {
-				oThis.list.Control.recalculateChildrenLayout();
-			}
+			}, this, []);
 		});
 	};
 	oThis.onMouseDown = function (e)

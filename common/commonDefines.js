@@ -3207,6 +3207,7 @@ window.AscCommon.g_cIsBeta = "false";
 
 		TOC          : 10,
 		Complex      : 11,
+		Signature    : 12,
 		
 		toString : function(type)
 		{
@@ -3228,6 +3229,8 @@ window.AscCommon.g_cIsBeta = "false";
 					return "toc";
 				case c_oAscContentControlSpecificType.Complex:
 					return "complex";
+				case c_oAscContentControlSpecificType.Signature:
+					return "signature";
 			}
 			
 			return "unknown";
@@ -3252,6 +3255,8 @@ window.AscCommon.g_cIsBeta = "false";
 					return c_oAscContentControlSpecificType.TOC;
 				case "complex":
 					return c_oAscContentControlSpecificType.Complex;
+				case "signature":
+					return c_oAscContentControlSpecificType.Signature;
 			}
 			
 			return c_oAscContentControlSpecificType.None;

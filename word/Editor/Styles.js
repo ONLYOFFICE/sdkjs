@@ -8188,7 +8188,10 @@ CStyles.prototype =
 		PassedStyles.push(StyleId);
 
 		var Style = this.Style[StyleId];
-		if (undefined == StyleId || undefined === Style)
+		if (Style && Style.Type !== Type)
+			Style = undefined;
+		
+		if (!StyleId || !Style)
 		{
 			if (true === bUseDefault)
 			{
@@ -14877,12 +14880,21 @@ CTextPr.prototype.SetPosition = function(nPosition)
 {
 	this.Position = nPosition;
 };
-CTextPr.prototype.GetFontFamily = function()
+CTextPr.prototype.GetFontFamily = function(fontSlot)
 {
-    if (this.RFonts && this.RFonts.Ascii && this.RFonts.Ascii.Name)
-        return this.RFonts.Ascii.Name;
-
-    return undefined;
+	if (!this.RFonts)
+		return undefined;
+	
+	if (AscWord.fontslot_CS === fontSlot && this.RFonts.CS)
+		return this.RFonts.CS.Name;
+	else if (AscWord.fontslot_HAnsi === fontSlot && this.RFonts.HAnsi)
+		return this.RFonts.HAnsi.Name;
+	else if (AscWord.fontslot_EastAsia === fontSlot && this.RFonts.EastAsia)
+		return this.RFonts.EastAsia.Name;
+	else if (this.RFonts.Ascii)
+		return this.RFonts.Ascii.Name;
+	
+	return undefined;
 };
 CTextPr.prototype.SetFontFamily = function(sFontName)
 {

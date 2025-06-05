@@ -117,7 +117,8 @@
 				const currentNoRaster = this.blipFill && this.blipFill.createDuplicateNoRaster();
 				AscCommon.History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ImageShapeSetBlipFill, currentNoRaster, prNoRaster));
 				const rasterChunks = createRasterImageHistoryChunks(this, this.blipFill ? this.blipFill.RasterImageId : "", pr.RasterImageId, 1048576);
-				for (const chunk of rasterChunks) {
+				for (let chunkIdx = 0; chunkIdx < rasterChunks.length; ++chunkIdx) {
+					let chunk = rasterChunks[chunkIdx];
 					AscCommon.History.Add(chunk);
 				}
 				AscCommon.History.Add(new AscDFH.CChangesImageIdEnd(this));
@@ -138,7 +139,7 @@
 			}
 
 			return changes;
-		};
+		}
 
 		CImageShape.prototype.setParent = function (pr) {
 			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetParent, this.parent, pr));

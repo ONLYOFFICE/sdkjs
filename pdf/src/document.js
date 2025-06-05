@@ -504,23 +504,42 @@ var CPresentation = CPresentation || function(){};
         oField.SetDocument(this);
         return oField;
     };
-    CPDFDoc.prototype.SetEditFieldsMode = function(bEdit) {
-        this.editFieldsMode = bEdit;
-        
+    CPDFDoc.prototype.onUpdateRestrictions = function() {
+        let _t = this;
+        let isEditMode = false;
+
+        if (false == Asc.editor.isRestrictionView()) {
+            isEditMode = true;
+        }
+
         if (this.activeForm) {
             this.BlurActiveObject();
         }
         
         this.widgets.forEach(function(field) {
-            field.SetEditMode(bEdit);
+            field.SetEditMode(isEditMode);
         });
 
-        if (false == bEdit && this.activeForm) {
-            this.activeForm = null;
+        if (isEditMode) {
+            setTimeout(function() {
+				_t.checkDefaultFonts();
+			});
         }
+        else {
+            let oActiveObj = this.GetActiveObject();
+			if (oActiveObj && oActiveObj.IsDrawing()) {
+				this.BlurActiveObject();
+			}
+        }
+
+        this.drawings.forEach(function(drawing) {
+			if (drawing.IsShape() && drawing.IsFromScan()) {
+				drawing.AddToRedraw();
+			}
+		});
     };
     CPDFDoc.prototype.IsEditFieldsMode = function() {
-        return this.editFieldsMode;
+        return false == Asc.editor.isRestrictionView();
     };
     CPDFDoc.prototype.CreateNewFieldName = function(nFieldType) {
         let sFormType = "";
@@ -559,9 +578,9 @@ var CPresentation = CPresentation || function(){};
 
         while (true) {
             const fullName = sFormType + nFormNumber;
-            const oField = Object.values(AscCommon.g_oTableId.m_aPairs).find(elm =>
-                elm.IsForm?.() && elm.GetFullName() === fullName
-            );
+            const oField = Object.values(AscCommon.g_oTableId.m_aPairs).find(function(elm) {
+                elm.IsForm && elm.IsForm() && elm.GetFullName() === fullName
+            });
         
             if (!oField) break;
         
@@ -767,11 +786,6 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.FillButtonsIconsOnOpen = function() {
 		let oViewer = editor.getDocumentRenderer();
-		if (window["NATIVE_EDITOR_ENJINE"]) {
-			oViewer.IsOpenFormsInProgress = false;
-			return;
-		}
-		
         let oDoc = this;
 
         let aIconsToLoad = [];
@@ -780,11 +794,11 @@ var CPresentation = CPresentation || function(){};
             "View": []
         };
 
-        for (let i = 0; i < oViewer.pagesInfo.pages.length; i++) {
-            let oPage = oViewer.drawingPages[i];
-
-            let w = (oPage.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-            let h = (oPage.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        for (let i = 0; i < oViewer.file.pages.length; i++) {
+            let oPage = oViewer.file.pages[i];
+            
+            let w = (((oPage.W * 96 / oPage.Dpi) >> 0) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+            let h = (((oPage.H * 96 / oPage.Dpi) >> 0) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
             let oFile = oViewer.file;
             let oPageIconsInfo = oFile.nativeFile["getButtonIcons"](i, w, h, undefined, true);
@@ -826,9 +840,7 @@ var CPresentation = CPresentation || function(){};
             return;
         }
 
-        editor.ImageLoader.LoadImagesWithCallback(aIconsToLoad.map(function(info) {
-            return info.src;
-        }), function() {
+        function onLoadImages() {
             // выставляем только ImageData. Форму пересчитаем и добавим картинку после того, как форма изменится, чтобы не грузить шрифты
             for (let nBtn = 0; nBtn < oIconsInfo["MK"].length; nBtn++) {
                 let oBtnField = oDoc.GetFieldByApIdx(oIconsInfo["MK"][nBtn]["i"]);
@@ -845,7 +857,16 @@ var CPresentation = CPresentation || function(){};
             }
             oViewer.isRepaint = true;
             oViewer.IsOpenFormsInProgress = false;
-        });
+        }
+        
+        if (window["NATIVE_EDITOR_ENJINE"]) {
+			onLoadImages();
+		}
+        else {
+            Asc.editor.ImageLoader.LoadImagesWithCallback(aIconsToLoad.map(function(info) {
+                return info.src;
+            }), onLoadImages);
+        }
     };
     
     ////////////////////////////////////
@@ -1268,7 +1289,7 @@ var CPresentation = CPresentation || function(){};
         let oViewer = this.Viewer;
         if (!oViewer.canInteract()) {
             let oDoc = this;
-            oViewer.onRepaintFinishCallbacks.push(function() {
+            oViewer.paint(null, function() {
                 oDoc.OnMouseDown(x, y, e);
             });
             return;
@@ -2665,34 +2686,18 @@ var CPresentation = CPresentation || function(){};
 	 * @returns {boolean}
 	 */
     CPDFDoc.prototype.RemovePage = function(nPos) {
-        let oThis       = this;
         let oViewer     = editor.getDocumentRenderer();
         let oFile       = oViewer.file;
         let oController = this.GetController();
         
+        this.BlurActiveObject();
+
         if (oFile.pages.length == 1)
             return null;
         if (!AscCommon.isNumber(nPos) || nPos < 0)
             nPos = 0;
 
         oFile.removeSelection();
-        
-        // сначала удаляем все объекты со страницы
-        if (oViewer.pagesInfo.pages[nPos].fields) {
-            oViewer.pagesInfo.pages[nPos].fields.slice().forEach(function(field) {
-                oThis.RemoveField(field.GetId());
-            });
-        }
-        if (oViewer.pagesInfo.pages[nPos].annots) {
-            oViewer.pagesInfo.pages[nPos].annots.slice().forEach(function(annot) {
-                oThis.RemoveAnnot(annot.GetId());
-            });
-        }
-        if (oViewer.pagesInfo.pages[nPos].drawings) {
-            oViewer.pagesInfo.pages[nPos].drawings.slice().forEach(function(drawing) {
-                oThis.RemoveDrawing(drawing.GetId());
-            });
-        }
         
         // убираем информацию о странице
         let aPages = oFile.removePage(nPos);
@@ -4906,6 +4911,14 @@ var CPresentation = CPresentation || function(){};
 
         oController.checkSelectedObjectsAndCallback(oController.setParagraphAlign, [Align], false, AscDFH.historydescription_Presentation_SetParagraphAlign);
     };
+	CPDFDoc.prototype.SetParagraphBidi = function(isRtl) {
+		let oController = this.GetController();
+		if (oController.getSelectedArray().find(function(obj) { return obj.IsAnnot()})) {
+			return false;
+		}
+		
+		oController.checkSelectedObjectsAndCallback(oController.setParagraphBidi, [isRtl], false, AscDFH.historydescription_Document_SetParagraphBidi);
+	};
     CPDFDoc.prototype.SetVerticalAlign = function(Align) {
         let oController = this.GetController();
         if (oController.getSelectedArray().find(function(obj) { return obj.IsAnnot()})) {
@@ -5032,16 +5045,22 @@ var CPresentation = CPresentation || function(){};
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// For drawings
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
     CPDFDoc.prototype.EditPage = function(nPage, aSpsXmls) {
         if (null == this.Viewer.pagesInfo.pages[nPage] || this.Viewer.file.pages[nPage].isRecognized) {
             return false;
         }
 
-        let oFile = this.Viewer.file;
-        let nOriginIndex = oFile.pages[nPage].originIndex;
-        if (nOriginIndex == undefined) {
+        const oFile = this.Viewer.file;
+        const nOriginIndex = oFile.pages[nPage].originIndex;
+        if (nOriginIndex === undefined) {
             return false;
         }
+
+        const isOOXML = Asc.editor.getShapeSerializeType() === "xml";
+        if (aSpsXmls && !isOOXML)
+            return false;
 
         this.BlurActiveObject();
 
@@ -5051,138 +5070,192 @@ var CPresentation = CPresentation || function(){};
             return false;
         }
 
+        const _this = this;
         Asc.editor.canSave = false;
-        let oDrDoc = this.GetDrawingDocument();
-
-        let oPageInfo = this.GetPageInfo(nPage);
+        const oDrDoc = this.GetDrawingDocument();
+        const oPageInfo = this.GetPageInfo(nPage);
         oPageInfo.SetRecognized(true);
-        
-        if (!aSpsXmls)
-            aSpsXmls = oFile.nativeFile["scanPage"](nOriginIndex, 1);
 
-        let oParserContext  = new AscCommon.XmlParserContext();
-        let oTableStyles    = this.GetTableStyles();
-        Object.keys(this.TableStylesIdMap).forEach(function(styleId) {
-            oParserContext.addTableStyle(oTableStyles.Get(styleId).GetStyleId(), oTableStyles.Get(styleId));
-        });
-        let aPageDrawings   = [];
-        let oXmlReader;
-        
-        oParserContext.DrawingDocument = oDrDoc;
+        const aPageDrawings = [];
+        const allImages = [];
+        const oImageMap = {};
 
-        for (let i = 0; i < aSpsXmls.length; i++) {
-            oXmlReader = new AscCommon.StaxParser(aSpsXmls[i], undefined, oParserContext);
-            oXmlReader.parseNode(0);
+        function configureDrawing(oDrawing) {
+            oDrawing.setBDeleted(false);
+            oDrawing.CheckTextOnOpen();
 
-            let _t = this;
-            let oDrawing;
-            oXmlReader.rels = {
-                getRelationship : function(rId) {
-                    let url =  _t.Viewer.file.nativeFile["getImageBase64"](parseInt(rId.substring(3)));
-                    if ("data:" === url.substring(0, 5)) {
-                        return {
-                            targetMode : "InternalBase64",
-                            base64 : url,
-                            drawing: oDrawing
-                        }
-                    } else {
-                        return {
-                            targetMode: "InternalLoaded",
-                            targetFullName: url,
-                            drawing: oDrawing
-                        }
+            if (oDrawing.IsShape && oDrawing.IsShape()) {
+                let new_body_pr = oDrawing.getBodyPr();
+                if (new_body_pr) {
+                    new_body_pr = new_body_pr.createDuplicate();
+                    new_body_pr.textFit = new AscFormat.CTextFit();
+                    new_body_pr.textFit.type = AscFormat.text_fit_Auto;
+
+                    if (oDrawing.txBody) {
+                        oDrawing.txBody.setBodyPr(new_body_pr);
                     }
-                }
-            };
-
-            switch (oXmlReader.GetName()) {
-                case 'p:sp': {
-                    oDrawing = new AscPDF.CPdfShape();
-                    break;
-                }
-                case 'p:graphicFrame': {
-                    oDrawing = new AscPDF.CPdfGraphicFrame();
-                    break;
-                }
-                case 'p:pic': {
-                    oDrawing = new AscPDF.CPdfImage();
-                    break;
-                }
-            }
-            
-            if (oDrawing) {
-                oDrawing.fromXml(oXmlReader);
-                if (oDrawing.IsShape()) {
-                    let new_body_pr = oDrawing.getBodyPr();
-                    if (new_body_pr) {
-                        new_body_pr = new_body_pr.createDuplicate();
-                        new_body_pr.textFit = new AscFormat.CTextFit();
-                        new_body_pr.textFit.type = AscFormat.text_fit_Auto;
-
-                        if (oDrawing.txBody) {
-                            oDrawing.txBody.setBodyPr(new_body_pr);
-                        }
-                    }
-                }
-                
-                oDrawing.setBDeleted(false);
-                aPageDrawings.push(oDrawing);
-                oDrawing.CheckTextOnOpen();
-            }
-        }
-
-        let _t = this;
-        let oImageMap = oParserContext.imageMap;
-        let aUrls = [];
-        let aBase64Img = []
-        for(let sImg in oImageMap) {
-            if(oImageMap.hasOwnProperty(sImg)) {
-                aUrls.push(sImg);
-                let aImg = oImageMap[sImg];
-                for(let nIdx = 0; nIdx < aImg.length; ++nIdx) {
-                    let oImg = aImg[nIdx];
-                    aBase64Img.push(new AscCommon.CBuilderImages(oImg.blipFill, sImg, oImg.drawing, null, null));
                 }
             }
         }
 
-        let fEndCallback = function () {
-            aPageDrawings.forEach(function(drawing, idx) {
-                drawing.SetFromScan(true);
-                _t.AddDrawing(drawing, nPage, idx);
-                drawing.SetNeedRecalc(true);
+        const aResetBuilderImages = [];
+        if (isOOXML) {
+            if (!aSpsXmls)
+                aSpsXmls = oFile.nativeFile["scanPage"](nOriginIndex, 1);
+
+            const oParserContext = new AscCommon.XmlParserContext();
+            const oTableStyles = this.GetTableStyles();
+            const oTableStylesIdMap = this.TableStylesIdMap;
+
+            Object.keys(oTableStylesIdMap).forEach(function(styleId) {
+                oParserContext.addTableStyle(oTableStyles.Get(styleId).GetStyleId(), oTableStyles.Get(styleId));
             });
-            _t.FinalizeAction();
-            _t.Viewer.file.removeSelection();
-            _t.Viewer.paint(function() {
-                _t.Viewer.thumbnails._repaintPage(nPage);
+
+            let oXmlReader;
+            oParserContext.DrawingDocument = oDrDoc;
+
+            for (let i = 0; i < aSpsXmls.length; i++) {
+                oXmlReader = new AscCommon.StaxParser(aSpsXmls[i], undefined, oParserContext);
+                oXmlReader.parseNode(0);
+
+                let oDrawing;
+                switch (oXmlReader.GetName()) {
+                    case 'p:sp':
+                        oDrawing = new AscPDF.CPdfShape();
+                        break;
+                    case 'p:graphicFrame':
+                        oDrawing = new AscPDF.CPdfGraphicFrame();
+                        break;
+                    case 'p:pic':
+                        oDrawing = new AscPDF.CPdfImage();
+                        break;
+                }
+
+                if (oDrawing) {
+                    oXmlReader.rels = {
+                        getRelationship: function(rId) {
+                            const url = _this.Viewer.file.nativeFile["getImageBase64"](parseInt(rId.substring(3)));
+                            if ("data:" === url.substring(0, 5)) {
+                                return {
+                                    targetMode: "InternalBase64",
+                                    base64: url,
+                                    drawing: oDrawing
+                                }
+                            } else {
+                                return {
+                                    targetMode: "InternalLoaded",
+                                    targetFullName: url,
+                                    drawing: oDrawing
+                                }
+                            }
+                        }
+                    };
+                    oDrawing.fromXml(oXmlReader);
+                    configureDrawing(oDrawing);
+                    aPageDrawings.push(oDrawing);
+                }
+            }
+
+            const imageMap = oParserContext.imageMap;
+            for (const sImg in imageMap) {
+                if (imageMap.hasOwnProperty(sImg) && "data:" === sImg.substring(0, 5)) {
+                    allImages.push(sImg);
+                    const aImg = imageMap[sImg];
+                    for(let nIdx = 0; nIdx < aImg.length; ++nIdx) {
+                        const oImg = aImg[nIdx];
+                        aResetBuilderImages.push(new AscCommon.CBuilderImages(oImg.blipFill, sImg, oImg.drawing, null, null));
+                    }
+                }
+            }
+        } else {
+            const loader = new AscCommon.BinaryPPTYLoader();
+            loader.Start_UseFullUrl();
+            loader.ClearConnectedObjects();
+            AscCommon.pptx_content_loader.Reader.Start_UseFullUrl();
+
+            const binShapesData = oFile.nativeFile["scanPage"](nOriginIndex, 2);
+            const binShapesStream = new AscCommon.FileStream(binShapesData, binShapesData.length);
+            const binShapesLen = binShapesStream.GetULong();
+
+            loader.stream = binShapesStream;
+            loader.presentation = Asc.editor.getLogicDocument();
+            loader.DrawingDocument = Asc.editor.getDrawingDocument();
+
+            for (let i = 0; i < binShapesLen; i++) {
+                const oDrawing = loader.ReadGraphicObject();
+                configureDrawing(oDrawing);
+                aPageDrawings.push(oDrawing);
+            }
+
+            const aReaderImages = AscCommon.pptx_content_loader.Reader.End_UseFullUrl();
+            const aLoaderImages = loader.End_UseFullUrl();
+            loader.AssignConnectedObjects();
+
+            const allBuilderImages = aReaderImages.concat(aLoaderImages);
+
+            for (let imgIdx = 0; imgIdx < allBuilderImages.length; ++imgIdx) {
+                let embed = null;
+                const builderImage = allBuilderImages[imgIdx];
+                const blipFill = builderImage.BlipFill;
+
+                if (blipFill && blipFill.embed) {
+                    embed = blipFill.embed;
+                    const url = _this.Viewer.file.nativeFile["getImageBase64"](parseInt(embed.substring(3)));
+                    builderImage.BlipFill.RasterImageId = url;
+                    builderImage.Url = url;
+                    delete builderImage.BlipFill.embed;
+
+                    if(url.indexOf("data:") === 0) {
+                        aResetBuilderImages.push(builderImage);
+                        allImages.push(url);
+                    }
+                }
+            }
+        }
+
+        const fEndCallback = function() {
+            for (let idx = 0; idx < aPageDrawings.length; idx++) {
+                const drawing = aPageDrawings[idx];
+                drawing.SetFromScan(true);
+                _this.AddDrawing(drawing, nPage, idx);
+                drawing.SetNeedRecalc(true);
+            }
+
+            _this.FinalizeAction();
+            _this.Viewer.file.removeSelection();
+            _this.Viewer.paint(function() {
+                _this.Viewer.thumbnails._repaintPage(nPage);
             });
             Asc.editor.canSave = true;
         };
-        if(aUrls.length > 0) {
-            AscCommon.sendImgUrls(Asc.editor, aUrls, function (data) {
-                let oObjectsForDownload = AscCommon.GetObjectsForImageDownload(aBase64Img);
-                AscCommon.ResetNewUrls(data, aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
-                let aLoadUrls = [];
-                for(let nIdx = 0; nIdx < data.length; ++nIdx) {
+
+        if (allImages.length > 0) {
+            AscCommon.sendImgUrls(Asc.editor, allImages, function(data) {
+                let oObjectsForDownload = AscCommon.GetObjectsForImageDownload(aResetBuilderImages);
+                AscCommon.ResetNewUrls(data, allImages, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
+
+                const aLoadUrls = [];
+                for (let nIdx = 0; nIdx < data.length; ++nIdx) {
                     if(data[nIdx].url) {
                         aLoadUrls.push(data[nIdx].url);
                     }
                 }
+
                 Asc.editor.ImageLoader.LoadImagesWithCallback(aLoadUrls, fEndCallback, []);
 
-                let _file = _t.Viewer.file;
-                for (let url in aUrls) {
-                    _file.nativeFile["changeImageUrl"](aUrls[url], oImageMap[url]);
+                let _file = _this.Viewer.file;
+                for (let nIdx = 0; nIdx < data.length; ++nIdx) {
+                    _file.nativeFile["changeImageUrl"](allImages[nIdx], AscCommon.g_oDocumentUrls.imagePath2Local(data[nIdx].path));
                 }
             });
-        }
-        else {
+        } else {
             fEndCallback();
         }
 
         return true;
     };
+
+
     CPDFDoc.prototype.InsertContent2 = function(aSelContent, nIndex) {
         let nCurPage    = this.GetCurPage();
         let oPageInfo   = this.GetPageInfo(nCurPage);
@@ -5308,7 +5381,14 @@ var CPresentation = CPresentation || function(){};
         let oThumbnails = this.Viewer.thumbnails;
         if (oThumbnails && oThumbnails.isInFocus) {
             if (oSelContent.MergePagesInfo && oSelContent.MergePagesInfo.binaryData) {
-                let nInsertPos = Math.min.apply(null, oThumbnails.selectedPages) + 1;
+                let nInsertPos;
+                if (true === Asc.editor.pastePageBefore) {
+                    nInsertPos = Math.min.apply(null, oThumbnails.selectedPages);
+                    delete Asc.editor.pastePageBefore;
+                }
+                else {
+                    nInsertPos = Math.max.apply(null, oThumbnails.selectedPages) + 1;
+                }
                 
                 this.MergePagesBinary(nInsertPos, oSelContent.MergePagesInfo.binaryData);
 
@@ -6262,6 +6342,7 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.MergePagesBinary = function(nInsertPos, aUint8Array) {
         let oFile = this.Viewer.file;
         let sMergeName = "Merged_" + this.mergedPagesData.length;
+        let nNavigateTo = nInsertPos;
 
         this.UpdateMaxApIdx(oFile.nativeFile["getStartID"]());
         this.SetMergedBinaryData(aUint8Array, AscCommon.g_oIdCounter.m_nIdCounterEdit, sMergeName);
@@ -6270,7 +6351,6 @@ var CPresentation = CPresentation || function(){};
 
         if (res) {
             let aPages = oFile.nativeFile["getPagesInfo"]();
-            
             for (let i = oFile.originalPagesCount; i < aPages.length; i++) {
                 let page = aPages[i];
                 
@@ -6289,7 +6369,8 @@ var CPresentation = CPresentation || function(){};
         }
 
         this.Viewer.checkLoadCMap();
-        
+        this.Viewer.navigateToPage(nNavigateTo);
+
         return res;
     };
     CPDFDoc.prototype.SetMergedBinaryData = function(aUint8Array, nMaxIdx, sMergeName) {
@@ -6725,8 +6806,11 @@ var CPresentation = CPresentation || function(){};
         let oController = this.GetController();
 
         this.SetMouseDownObject(oState.activeObject);
+        if (oState.activeObject && oState.activeObject.IsForm && oState.activeObject.IsForm()) {
+            this.activeForm = oState.activeObject;
+        }
+        
         oController.setSelectionState(oState.drawingSelection);
-
         if (oState.CurPage != -1 && oState.CurPage != this.Viewer.currentPage)
 	        this.Viewer.navigateToPage(oState.CurPage);
     };

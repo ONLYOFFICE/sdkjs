@@ -76,6 +76,7 @@
 		let isFillIdx = false;
 		let isLineIdx = false;
 		let isFontIdx = false;
+		let isEffectIdx = false;
 
 		if (themeValue === "LineColor") {
 			cellName = "LineColor";
@@ -193,6 +194,21 @@
 			// isFillIdx = true;
 
 			initialDefaultValue = "Calibri";
+		} else if (cellName === "ShdwPattern") {
+			// calculate color. what if there will be placeholder color in effects
+			quickStyleCellName = "QuickStyleShadowColor";
+			quickStyleModifiersCellName = "QuickStyleEffectsMatrix";
+			getModifiersMethod = themes[0].getOuterShdw;
+			isEffectIdx = true;
+
+			initialDefaultValue = 0;
+		} else if (cellName === "ShdwForegnd") {
+			quickStyleCellName = "QuickStyleShadowColor";
+			quickStyleModifiersCellName = "QuickStyleEffectsMatrix";
+			getModifiersMethod = themes[0].getOuterShdw;
+			isEffectIdx = true;
+
+			initialDefaultValue = AscFormat.CreateUniColorRGB(255,255,255);
 		} else {
 			AscCommon.consoleLog("themeval argument error. cell name: " + cellName + " is unknown. return undefined.");
 			return undefined;
@@ -382,6 +398,8 @@
 							styleId = varStyle.lineIdx;
 						} else if (isFontIdx) {
 							styleId = varStyle.fontIdx;
+						} else if (isEffectIdx) {
+							styleId = varStyle.effectIdx;
 						}
 					}
 					if (null !== styleId) {
@@ -478,6 +496,12 @@
 			} else if (cellName === "FillPattern") {
 				let fillPattern = getMedifiersResult && getMedifiersResult.pattern;
 				result = Number(fillPattern);
+			} else if (cellName === "ShdwPattern") {
+				let shdwPattern = Boolean(getMedifiersResult);
+				result = Number(shdwPattern);
+			} else if (cellName === "ShdwForegnd") {
+				let shadowColor = getMedifiersResult && getMedifiersResult.color;
+				result = shadowColor;
 			} else {
 				AscCommon.consoleLog("Error in themeval. result is not changed to appropriate type or quickStyleCellName is not set.");
 			}
@@ -521,29 +545,6 @@
 			AscCommon.consoleLog("Unknown themeval error. Return initialDefaultValue");
 			return initialDefaultValue;
 		}
-		// code below never calls. result is always calculated. Default values are set above are returned if
-		// default theme is used
-		// if (calculatedColor !== null) {
-		// 	let fromColorResult = null;
-		// 	if (cellName === "LineColor" || cellName === "FillForegnd" || cellName === "FillBkgnd") {
-		// 		fromColorResult = AscFormat.CreateUniFillByUniColor(calculatedColor);
-		// 	} else if (cellName === "Color") {
-		// 		fromColorResult = calculatedColor;
-		// 	}
-		//
-		// 	return calculateOnTheme(result, theme);
-		// } else {
-		// 	if (cellName === "LineColor" || cellName === "FillForegnd" || cellName === "FillBkgnd") {
-		// 		AscCommon.consoleLog("no color found. so painting lt1.");
-		// 		calculatedColor = AscFormat.CreateUniFillByUniColor(AscFormat.builder_CreateSchemeColor("lt1"));
-		// 	} else if (cellName === "Color") {
-		// 		// for text color
-		// 		AscCommon.consoleLog("no text color found. so painting dk1.");
-		// 		calculatedColor = AscFormat.builder_CreateSchemeColor("dk1");
-		// 	}
-		//
-		// 	return calculateOnTheme(result, theme);
-		// }
 	}
 
 	//-------------------------------------------------------------export---------------------------------------------------

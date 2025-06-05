@@ -70,34 +70,6 @@ AscFormat.CGroupShape.prototype.getParentObjects = CShape.prototype.getParentObj
 AscFormat.CImageShape.prototype.getParentObjects = CShape.prototype.getParentObjects;
 
 /**
- * @memberof AscFormat.CGraphicObjectBase
- * @param outerShdw
- * @param mainShape
- * @return {CMatrix}
- */
-AscFormat.CGraphicObjectBase.prototype.getShdwTransform = function(outerShdw, mainShape) {
-	var oTransform = new AscCommon.CMatrix();
-	var dist = outerShdw.dist ? outerShdw.dist / 36000 : 0;
-	var dir = outerShdw.dir ? outerShdw.dir : 0;
-	// if(this.extX < mainShape.extX && this.extY < mainShape.extY) {
-	oTransform.tx = dist * Math.cos(AscFormat.cToRad * dir);
-	oTransform.ty = dist * Math.sin(AscFormat.cToRad * dir);
-	// }
-	// else {
-	// 	oTransform.tx = dist * Math.cos(AscFormat.cToRad * dir) - (this.extX - mainShape.extX) / 2.0;
-	// 	oTransform.ty = dist * Math.sin(AscFormat.cToRad * dir) - (this.extY - mainShape.extY) / 2.0;
-	// }
-	if(this.flipH) {
-		oTransform.tx -= this.extX;
-	}
-	if(this.flipV) {
-		oTransform.ty += this.extY;
-	}
-	global_MatrixTransformer.MultiplyAppend(oTransform, mainShape.transform);
-	return  oTransform;
-};
-
-/**
  * Draw editor.
  * @memberof AscFormat.CShape
  */

@@ -140,7 +140,10 @@
       };
       this._CoAuthoringApi.onLicenseChanged = function(res) {
         t.callback_OnLicenseChanged(res);
-	  };
+      };
+      this._CoAuthoringApi.onAiPluginSettings = function(res) {
+        t.callback_OnAiPluginSettings(res);
+      };
 
       this._CoAuthoringApi.init(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo, shardKey, wopiSrc, userSessionId, headingsColor, openCmd);
       this._onlineWork = true;
@@ -547,6 +550,11 @@
   CDocsCoApi.prototype.callback_OnLicenseChanged = function(res) {
     if (this.onLicenseChanged) {
       this.onLicenseChanged(res);
+    }
+  };
+  CDocsCoApi.prototype.callback_OnAiPluginSettings = function(res) {
+    if (this.onAiPluginSettings) {
+      this.onAiPluginSettings(res);
     }
   };
 
@@ -1500,6 +1508,9 @@
     if (!this.isLicenseInit) {
       this.isLicenseInit = true;
       this.onLicense(data['license']);
+      if (this.onAiPluginSettings) {
+        this.onAiPluginSettings(data['aiPluginSettings']);
+      }
     }
   };
 

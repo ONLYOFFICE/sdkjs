@@ -2163,40 +2163,58 @@
 
 		// set shadow
 		// ShdwPattern = 1 means shadow is visible
-		let isShadowVisible = this.getCellNumberValue("ShdwPattern") === 1;
-		let isShadowTypeSupported = this.getCellNumberValue("ShapeShdwType") === 1 ||
-				this.getCellNumberValue("ShapeShdwType") === 2;
+		let shadowPatternCell = this.getCell("ShdwPattern");
+		let shadowPattern = shadowPatternCell ? shadowPatternCell.calculateValue(this, pageInfo,
+				visioDocument.themes, undefined, false) : 0;
+		let isShadowVisible = shadowPattern === 1;
+
+		let shapeShadowTypeCell = this.getCell("ShapeShdwType");
+		let isShadowTypeSupported = shapeShadowTypeCell ? (shapeShadowTypeCell.getNumberValue("ShapeShdwType") === 1 ||
+				shapeShadowTypeCell.getNumberValue("ShapeShdwType") === 2 ||
+				shapeShadowTypeCell.getStringValue() === "Themed") : false;
 		if (isShadowVisible && isShadowTypeSupported) {
 			let shadow = new AscFormat.COuterShdw();
-			// shadow.sx = 200;
-			// shadow.sy = 200
-			// shadow.color = new AscFormat.CUniColor();
-			// shadow.algn = 7;
-			// shadow.blurRad = 50800 * 10;
 
 			// get color for shadow
-			// Calculate fillForegnd without gradient anyway for handleQuickStyleVariation
 			let shadowForegndCell = this.getCell("ShdwForegnd");
 			let shadowColor;
 			if (shadowForegndCell) {
 				// AscCommon.consoleLog("FillForegnd was found:", fillForegndCell);
-				let shadowUniFill = shadowForegndCell.calculateValue(this, pageInfo,
-						visioDocument.themes, undefined, false);
+				shadowColor = shadowForegndCell.calculateValue(this, pageInfo,
+						visioDocument.themes, undefined, false);;
 
-				shadowColor = shadowUniFill.fill.color;
+				let mainFillAlphaCoef = 1;
+				let fillForegndTransValue = this.getCellNumberValue("FillForegndTrans");
+				if (!isNaN(fillForegndTransValue)) {
+					mainFillAlphaCoef = 1 - fillForegndTransValue;
+				}
 
-				let shadowTransValue = this.getCellNumberValue("ShdwForegndTrans");
+				let shadowTransValue = 0;
+				let shadowTransCell = this.getCell("ShdwForegndTrans");
+				// if themed alpha is included in shadowColor already
+				if (shadowTransCell.getStringValue() !== "Themed") {
+					shadowTransValue = shadowTransCell.getNumberValue("ShdwForegndTrans");
 
-				let oMod = new AscFormat.CColorMod("alpha", (1 - shadowTransValue) * 100 * 1000 + 0.5 >> 0);
+					let shadowAlpha = (1 - shadowTransValue) * mainFillAlphaCoef;
+					if (shadowAlpha !== 1) {
+						let oMod = new AscFormat.CColorMod("alpha", shadowAlpha  * 100 * 1000 + 0.5 >> 0);
+						shadowColor.addColorMod(oMod);
+					}
+				} else {
+					// check if alpha is set already
+					let alphaMod = shadowColor.Mods && shadowColor.Mods.Mods.find(function (mod) {
+						return mod.name === "alpha";
+					});
+					if (alphaMod) {
+						alphaMod.val = alphaMod.val * mainFillAlphaCoef;
+					} else {
+						let oMod = new AscFormat.CColorMod("alpha", mainFillAlphaCoef  * 100 * 1000 + 0.5 >> 0);
+						shadowColor.addColorMod(oMod);
+					}
+				}
 
-				shadowColor.addColorMod(oMod);
 			} else {
 				AscCommon.consoleLog("shadow foreground cell not found for", this);
-				// try to get from theme
-				// uniFillForegnd = AscVisio.themeval(null, this, pageInfo, visioDocument.themes, "FillColor",
-				// 	undefined, fillGradientEnabled);
-				// just use white
-				uniFillForegndNoGradient = AscFormat.CreateUnfilFromRGB(255, 255, 255);
 			}
 			// shadow.color = AscFormat.CreateUniColorRGB(100,100,100);
 			// shadow.color.color = new AscFormat.CPrstColor();
@@ -2204,13 +2222,15 @@
 			// shadow.putTransparency(60);
 			shadow.color = shadowColor;
 
-			let shadowOffsetX = this.getCellNumberValue("ShapeShdwOffsetX") * g_dKoef_in_to_mm;
-			let shadowOffsetY = this.getCellNumberValue("ShapeShdwOffsetY") * g_dKoef_in_to_mm;
+			let shadowOffsetX_inch = this.getCellNumberValue("ShapeShdwOffsetX");
+			let shadowOffsetY_inch = this.getCellNumberValue("ShapeShdwOffsetY");
+			let shadowOffsetX = shadowOffsetX_inch === undefined ? 0 : shadowOffsetX_inch * g_dKoef_in_to_mm;
+			let shadowOffsetY = shadowOffsetY_inch === undefined ? 0 : shadowOffsetY_inch * g_dKoef_in_to_mm;
 			let atan = Math.atan2(shadowOffsetY, shadowOffsetX);
 			shadow.dist = Math.hypot(shadowOffsetX, shadowOffsetY) * 36000;
 			shadow.dir =  -atan * AscFormat.radToDeg * AscFormat.degToC;
 
-			shadow.rotWithShape = this;
+			shadow.rotWithShape = true;
 			// cShape.spPr.changeShadow(shadow);
 			cShape.spPr.effectProps = new AscFormat.CEffectProperties();
 			cShape.spPr.effectProps.EffectLst = new AscFormat.CEffectLst();

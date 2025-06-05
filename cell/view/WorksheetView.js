@@ -317,6 +317,7 @@
         this.textAlign = null;
         this.ctrlKey = null;
         this.shiftKey = null;
+        this.ReadingOrder = null;
     }
 
     CellFlags.prototype.clone = function () {
@@ -326,6 +327,7 @@
         oRes.merged = this.merged ? this.merged.clone() : null;
         oRes.textAlign = this.textAlign;
         oRes.verticalText = this.verticalText;
+        oRes.ReadingOrder = this.ReadingOrder;
         return oRes;
     };
     CellFlags.prototype.isMerged = function () {
@@ -333,6 +335,9 @@
     };
 	CellFlags.prototype.getMergeType = function () {
 	    return getMergeType(this.merged);
+	};
+	CellFlags.prototype.getReadingOrder = function () {
+		return this.ReadingOrder;
 	};
 
     function CellBorderObject(borders, mergeInfo, col, row) {
@@ -4637,10 +4642,10 @@
 
 				let rowsCount = this.model.getRowsCount();
 				let colsCount = this.model.getColsCount();
-				if (rowsCount > nMaxPrintRows) {
+				/*if (rowsCount > nMaxPrintRows) {
 					maxCol = colsCount - 1;
 					maxRow = rowsCount - 1;
-				} else {
+				} else {*/
 					var range = new asc_Range(0, 0, colsCount - 1, rowsCount - 1);
 					var maxCell = this._calculateMaxPrintRange(range);
 					var maxCol = maxCell.col;
@@ -4659,7 +4664,7 @@
 						maxCol = Math.max(maxCol, maxCell.col);
 						maxRow = Math.max(maxRow, maxCell.row);
 					}
-				}
+				//}
 
 				//TODO print area
 				wScale = doCalcScaleWidth(0, maxCol);
@@ -25760,7 +25765,7 @@
 			const table = tableInfo.table;
 			var res = [];
 			for (var j = 0; j < table.TableColumns.length; j++) {
-				res.push(table.TableColumns[j].Name);
+				res.push(table.TableColumns[j].getTableColumnName());
 			}
 			return res;
 		}
@@ -26668,9 +26673,9 @@
 	WorksheetView.prototype.getMaxRowColWithData = function (doNotRecalc) {
 		let modelRowsCount = this.model.getRowsCount();
 		let modelColsCount = this.model.getColsCount();
-		if (modelRowsCount > nMaxPrintRows) {
+		/*if (modelRowsCount > nMaxPrintRows) {
 			return null;
-		}
+		}*/
 		let range = new asc_Range(0, 0, modelColsCount - 1, modelRowsCount - 1);
 		let maxCell = this._calculateMaxPrintRange(range, doNotRecalc/*, modelRowsCount > nMaxPrintRows*/);
 		/*if (!maxCell) {

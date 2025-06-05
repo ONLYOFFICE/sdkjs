@@ -561,7 +561,7 @@
 		".select2-container--default .select2-selection--single .select2-selection__rendered" : { "color" : "text-normal" },
 		".select2-results" : { "background-color" : "background-normal" },
 		".select2-container--default .select2-results__option--highlighted[aria-selected]" : { "background-color" : "highlight-button-hover !important"},
-		".select2-container--default .select2-results__option[aria-selected=true]" : { "background-color" : "highlight-button-pressed !important"},
+		".select2-container--default .select2-results__option[aria-selected=true]" : { "background-color" : "highlight-button-pressed !important", "color" : "text-normal-pressed"},
 		".select2-dropdown, .select2-container--default .select2-selection--single" : { "border-color" : "border-regular-control !important"},
 		".select2-container--default.select2-container--open .select2-selection--single" : { "border-color" : "border-control-focus !important"},
 		".select2-container--default.select2-container--focus:not(.select2-container--open) .select2-selection--single" : { "border-color" : "border-regular-control !important"},

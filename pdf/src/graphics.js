@@ -85,7 +85,7 @@
         }
 
         if (this.m_oContext)
-            this.m_oContext.strokeStyle = "rgb(" + r + "," + g + "," + b + "," + a / 255 +")";
+            this.m_oContext.strokeStyle = "rgba(" + r + "," + g + "," + b + "," + a / 255 +")";
 
         this.strokeStyle = {
             r: r,

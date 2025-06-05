@@ -4207,7 +4207,7 @@ function (window, undefined) {
 	cROUNDDOWN.prototype.argumentsType = [argType.number, argType.number];
 	cROUNDDOWN.prototype.Calculate = function (arg) {
 		function rounddownHelper(number, num_digits) {
-			num_digits = Math.sign(num_digits) * Math.floor(Math.abs(num_digits));
+			num_digits = Math.trunc(num_digits);
 			if (num_digits > AscCommonExcel.cExcelMaxExponent) {
 				if (Math.abs(number) >= 1e-100 || num_digits <= 98303) { // The values are obtained experimentally
 					return new cNumber(number);
@@ -4220,13 +4220,13 @@ function (window, undefined) {
 				return new cNumber(0);
 			}
 
-			var significance = Math.pow(10, -(num_digits | num_digits));
+			var significance = Math.pow(10, -num_digits);
 
 			if (Number.POSITIVE_INFINITY == Math.abs(number / significance)) {
 				return new cNumber(number);
 			}
 			var x = number * Math.pow(10, num_digits);
-			x = x | x;
+			x = Math.trunc(x);
 			return new cNumber(x * significance);
 		}
 

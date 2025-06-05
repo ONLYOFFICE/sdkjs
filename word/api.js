@@ -10062,6 +10062,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype._onEndBuilderScript = function(callback)
 	{
 		let logicDocument = this.getLogicDocument();
+		logicDocument.CollaborativeEditing.Clear_DocumentPositions();
 		logicDocument.Recalculate();
 		logicDocument.UpdateSelection();
 		logicDocument.UpdateInterface();
@@ -11246,6 +11247,12 @@ background-repeat: no-repeat;\
 				break;
 			case Asc.c_oAscContentControlSpecificType.Complex:
 				pr.Complex = true;
+				break;
+			case Asc.c_oAscContentControlSpecificType.DateTime:
+				pr.DateTime = true;
+				break;
+			case Asc.c_oAscContentControlSpecificType.Signature:
+				pr.Signature = true;
 				break;
 			default:
 				pr.Text         = true;
@@ -13861,12 +13868,6 @@ background-repeat: no-repeat;\
 			oLogicDocument.UpdateCursorType(oLogicDocument.CurPos.RealX, oLogicDocument.CurPos.RealY, oLogicDocument.CurPage, new AscCommon.CMouseEventHandler());
 		}
 		
-		if (!oLogicDocument.IsFillingFormMode() && oLogicDocument.FocusCC && oLogicDocument.FocusCC.IsForm())
-			oLogicDocument.FocusCC.SelectContentControl();
-
-		oLogicDocument.private_CheckCursorPosInFillingFormMode();
-		oLogicDocument.UpdateSelection();
-		oLogicDocument.UpdateInterface();
 		
 		let oform = oLogicDocument.GetOFormDocument();
 		if (oform)
@@ -13888,6 +13889,13 @@ background-repeat: no-repeat;\
 				drawingDocument.FirePaint();
 			}
 		}
+		
+		if (!oLogicDocument.IsFillingFormMode() && oLogicDocument.FocusCC && oLogicDocument.FocusCC.IsForm())
+			oLogicDocument.FocusCC.SelectContentControl();
+		
+		oLogicDocument.private_CheckCursorPosInFillingFormMode();
+		oLogicDocument.UpdateSelection();
+		oLogicDocument.UpdateInterface();
 		
 		if (oLogicDocument.IsFillingOFormMode())
 			AscCommon.CollaborativeEditing.Remove_AllForeignCursors();
@@ -14434,7 +14442,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.onPluginClose = function(guid)
 	{
 		AscCommon.baseEditorsApi.prototype.onPluginClose.call(this, guid);
-		this.WordControl.m_oLogicDocument.DrawingDocument.contentControls.removePluginButtons(guid);
+		if (this.WordControl && this.WordControl.m_oLogicDocument && this.WordControl.m_oLogicDocument.DrawingDocument)
+			this.WordControl.m_oLogicDocument.DrawingDocument.contentControls.removePluginButtons(guid);
 	};
 	asc_docs_api.prototype.onAttachPluginEvent = function(guid, name)
 	{

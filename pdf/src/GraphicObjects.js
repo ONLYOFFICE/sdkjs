@@ -1623,7 +1623,10 @@
                                 oField.SetAlign(AscPDF.getPdfTypeAlignByInternal(args[0]));
                             }
                             else if (f == CDocumentContent.prototype.IncreaseDecreaseFontSize) {
-                                let nCurFontSize = oField.GetTextSize();
+                                let oContent = oField.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format) ? oField.contentFormat : oField.content;
+                                let oCalcedTextPr = oContent.GetCalculatedTextPr();
+                                
+                                let nCurFontSize = oCalcedTextPr.GetFontSize();
                                 let oTextPr = new AscWord.CTextPr();
                                 oTextPr.SetFontSize(nCurFontSize);
                                 oField.SetTextSize(oTextPr.GetIncDecFontSize(args[0]));

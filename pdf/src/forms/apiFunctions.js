@@ -75,7 +75,7 @@
                 case 2: 
                 case 3: {
                     sRes = sRes.replace("-", "");
-                    sRes = `(${sRes})`;
+                    sRes = "(" + sRes + ")";
                     break;
                 }
             }

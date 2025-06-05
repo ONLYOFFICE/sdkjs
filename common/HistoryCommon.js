@@ -2235,6 +2235,7 @@
 	window['AscDFH'].historyitem_ParaRun_Ligatures             = window['AscDFH'].historyitem_type_ParaRun | 52;
 	window['AscDFH'].historyitem_ParaRun_CS                    = window['AscDFH'].historyitem_type_ParaRun | 53;
 	window['AscDFH'].historyitem_ParaRun_RTL                   = window['AscDFH'].historyitem_type_ParaRun | 54;
+	window['AscDFH'].historyitem_ParaRun_MathMetaData          = window['AscDFH'].historyitem_type_ParaRun | 55;
 
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CSectionPr

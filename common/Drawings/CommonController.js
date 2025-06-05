@@ -832,6 +832,13 @@
 									if (oDD) {
 										var MMData = new AscCommon.CMouseMoveData();
 										var Coords = oDD.ConvertCoordsToCursorWR(x, y, pageIndex, null);
+
+										if (Asc.editor.isPdfEditor()) {
+											let oPoint = AscPDF.GetGlobalCoordsByPageCoords(x * g_dKoef_mm_to_pt, y * g_dKoef_mm_to_pt, pageIndex);
+											Coords.X = oPoint.X;
+											Coords.Y = oPoint.Y;
+										}
+
 										MMData.X_abs = Coords.X;
 										MMData.Y_abs = Coords.Y;
 										MMData.Type = Asc.c_oAscMouseMoveDataTypes.Hyperlink;

@@ -298,8 +298,10 @@
         this._kids.push(oField);
         oField._parent = this;
 
-        if (oField.IsWidget()) {
-            oField.SyncValue();
+        if (false == Asc.editor.getDocumentRenderer().IsOpenFormsInProgress) {
+            if (oField.IsWidget()) {
+                oField.SyncValue();
+            }
         }
     };
     CBaseField.prototype.GetKids = function() {
@@ -401,7 +403,9 @@
         this._needUpdateEditShape = bUpdate;
     };
     CBaseField.prototype.IsNeedUpdateEditShape = function() {
-        return this._needUpdateEditShape;
+        let oDoc = this.GetDocument();
+
+        return this._needUpdateEditShape || oDoc.IsEditFieldsMode() && !this.GetEditShape();
     };
     CBaseField.prototype.GetPartialName = function() {
         return this._partialName;
@@ -1543,7 +1547,13 @@
     };
 
     CBaseField.prototype.DrawEdit = function(oGraphicsWord) {
-        if (this.IsEditMode() && !oGraphicsWord.isSkipEditShapes) {
+        let oDoc = this.GetDocument();
+
+        if (this.IsNeedUpdateEditShape()) {
+            this.UpdateEditShape();
+        }
+        
+        if (oDoc.IsEditFieldsMode() && !oGraphicsWord.isSkipEditShapes) {
             this.editShape.Draw(oGraphicsWord);
         }
     };
@@ -2326,7 +2336,7 @@
 			this.contentFormat.SetFont(sFontName);
         
         this.SetWasChanged(true);
-        this.SetNeedRecalc();
+        this.SetNeedRecalc(true);
     };
     CBaseField.prototype.GetTextFontActual = function() {
         return this._textFontActual;
@@ -2373,7 +2383,7 @@
         }
 
         this.SetWasChanged(true);
-        this.SetNeedRecalc();
+        this.SetNeedRecalc(true);
     };
     CBaseField.prototype.GetTextSize = function() {
         return this._textSize;
@@ -2650,10 +2660,20 @@
         this.AddToRedraw();
     };
     CBaseField.prototype.UpdateEditShape = function() {
+        let oDoc = this.GetDocument();
+
         if (!this.editShape) {
+            if (oDoc.IsEditFieldsMode()) {
+                this.SetEditMode(true);
+                this.SetNeedUpdateEditShape(false);
+                return true;
+            }
+            
             this.SetNeedUpdateEditShape(false);
             return false;
         }
+
+        AscCommon.History.StartNoHistoryMode();
 
         let aOrigRect = this.GetRect();
         let aRectMM = aOrigRect ? aOrigRect.map(function(measure) {
@@ -2665,7 +2685,7 @@
         let nExtX = aRectMM[2] - aRectMM[0];
         let nExtY = aRectMM[3] - aRectMM[1];
 
-        let oDoc = this.GetDocument();
+        
         let nPage = this.GetPage();
         let nPageRotate = oDoc.Viewer.getPageRotate(nPage);
         if (nPageRotate === 90 || nPageRotate === 270) {
@@ -2695,6 +2715,9 @@
 
         this.SetNeedUpdateEditShape(false);
         this.AddToRedraw();
+
+        AscCommon.History.EndNoHistoryMode();
+        
         return true;
     };
     CBaseField.prototype.IsEditMode = function() {

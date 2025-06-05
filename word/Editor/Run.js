@@ -2086,6 +2086,7 @@ ParaRun.prototype.ConcatToContent = function(arrNewItems)
  * Добавляем в конец рана заданную строку
  * @param {string} sString
  * @param {number} [nPos=-1] если позиция не задана (или значение -1), то добавляем в конец
+ * @returns {number} Позиция после добавленных элементов
  */
 ParaRun.prototype.AddText = function(sString, nPos)
 {
@@ -2156,19 +2157,26 @@ ParaRun.prototype.AddText = function(sString, nPos)
 				this.AddToContent(nCharPos++, new AscWord.CRunText(nCharCode), true);
 		}
 	}
+	return nCharPos;
 };
 /**
  * Добавляем в конец рана заданную инструкцию для сложного поля
  * @param {string} sString
  * @param {number} [nPos=-1] если позиция не задана (или значение -1), то добавляем в конец
+ * @returns {AscWord.ParaInstrText[]}
  */
 ParaRun.prototype.AddInstrText = function(sString, nPos)
 {
+	let items = [];
 	var nCharPos = undefined !== nPos && null !== nPos && -1 !== nPos ? nPos : this.Content.length;
 	for (var oIterator = sString.getUnicodeIterator(); oIterator.check(); oIterator.next())
 	{
-		this.AddToContent(nCharPos++, new ParaInstrText(oIterator.value()));
+		let instrText = new AscWord.ParaInstrText(oIterator.value());
+		this.AddToContent(nCharPos++, instrText);
+		items.push(instrText);
 	}
+	
+	return items;
 };
 
 // Определим строку и отрезок текущей позиции
@@ -10835,6 +10843,12 @@ ParaRun.prototype.SetThisElementCurrentInParagraph = function()
 	oContentPos.Add(this.State.ContentPos);
 	this.Paragraph.Set_ParaContentPos(oContentPos, true, -1, -1, false);
 };
+ParaRun.prototype.GetDocumentPositionForCurrentPosition = function()
+{
+	let docPos = this.GetDocumentPositionFromObject();
+	docPos.push({Class : this, Position : this.State.ContentPos});
+	return docPos;
+};
 ParaRun.prototype.GetAllParagraphs = function(Props, ParaArray)
 {
     var ContentLen = this.Content.length;
@@ -11836,6 +11850,23 @@ ParaRun.prototype.CollectTextToUnicode = function(ListForUnicode, oSettings)
 			if (HandleItem(this, pos))
 				break;
 		}
+	}
+};
+ParaRun.prototype.SetMathMetaData = function(oMathMetaData)
+{
+	if (!oMathMetaData)
+		return;
+
+	if (this.math_autocorrection)
+	{
+		let oOldMetaData = oMathMetaData.Copy();
+		this.math_autocorrection.Set(oMathMetaData);
+		AscCommon.History.Add(new CChangesRunMathMetaData(this, oOldMetaData, this.math_autocorrection));
+	}
+	else
+	{
+		this.math_autocorrection = oMathMetaData.Copy();
+		AscCommon.History.Add(new CChangesRunMathMetaData(this, false, this.math_autocorrection));
 	}
 };
 ParaRun.prototype.UpdateBookmarks = function(oManager)

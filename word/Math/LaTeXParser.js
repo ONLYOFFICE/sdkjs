@@ -46,6 +46,7 @@
 		this.isReceiveOneTokenAtTime	= false;
 		this.isNowMatrix				= false;
 		this.EscapeSymbol				= "";
+		this.isOneSymbol				= false;
 	}
 	CLaTeXParser.prototype.IsNotEscapeSymbol = function ()
 	{
@@ -60,7 +61,7 @@
 		let isOne = this.isReceiveOneTokenAtTime;
 		let isSymbol;
 
-		if (isOne && this.oLookahead.class === arrTypeOfLiteral.id)
+		if ((isOne || this.isOneSymbol) && this.oLookahead.class === arrTypeOfLiteral.id)
 		{
 			let oItem		= this.oLookahead;
 			let strValue	= this.EatToken(arrTypeOfLiteral.id).data;
@@ -72,6 +73,9 @@
 					: GetMathFontChar[strValue][this.intMathFontType];
 
 			styles.push(oStyle);
+
+			if (this.isOneSymbol)
+				this.isOneSymbol = false;
 		}
 		else
 		{
@@ -95,7 +99,7 @@
 					if (this.isMathRm)
 					{
 						let metaData = oStyle.GetMathMetaData();
-						metaData.setIsMathRm();
+						metaData.setIsMathRm(true);
 					}
 				}
 
@@ -129,14 +133,17 @@
 		this.oLookahead = this.oTokenizer.GetNextToken();
 		return this.GetASTTree();
 	};
-	CLaTeXParser.prototype.GetASTTree = function ()
+	CLaTeXParser.prototype.GetASTTree2 = function(isEndFunc)
 	{
 		let arrExp = [];
 		while (this.oLookahead.data)
 		{
+			if (isEndFunc && isEndFunc())
+				return arrExp;
+
 			if (this.IsElementLiteral())
 			{
-				arrExp.push(this.GetExpressionLiteral())
+				arrExp.push(this.GetExpressionLiteral(undefined, isEndFunc))
 			}
 			else
 			{
@@ -159,9 +166,14 @@
 				})
 			}
 		}
+
+		return arrExp;
+	}
+	CLaTeXParser.prototype.GetASTTree = function ()
+	{
 		return {
 			type: "LaTeXEquation",
-			body: arrExp,
+			body: this.GetASTTree2()
 		};
 	};
 	CLaTeXParser.prototype.GetCharLiteral = function ()
@@ -536,7 +548,9 @@
 			this.oLookahead.class === Literals.other.id ||
 			this.oLookahead.class === Literals.operand.id ||
 			this.IsHorizontalArrowLiteral() ||
-			this.oLookahead.class === Literals.punct.id
+			this.oLookahead.class === Literals.punct.id || 
+			this.IsUnderOverSet() ||
+			this.IsOperatorName()
 		);
 	};
 	CLaTeXParser.prototype.IsSpecialSymbol = function ()
@@ -669,6 +683,14 @@
 		{
 			return this.GetTextLiteral();
 		}
+		else if (this.IsUnderOverSet())
+		{
+			return this.GetUnderOverSetLiteral();
+		}
+		else if (this.IsOperatorName())
+		{
+			return this.GetOperatorName();
+		}
 		else if (this.oLookahead.data === "/")
 		{
 			this.EatToken(this.oLookahead.class);
@@ -676,6 +698,44 @@
 				type: Struc.char,
 				value: "/",
 			}
+		}
+	};
+	CLaTeXParser.prototype.IsOperatorName = function ()
+	{
+		return this.oLookahead.data === "\\operatorname"
+	};
+	CLaTeXParser.prototype.GetOperatorName = function ()
+	{
+		let style = this.oLookahead.style;
+		this.EatToken(this.oLookahead.class);
+
+		let arg = this.GetArguments(1);
+
+		return {
+			type: Struc.func_lim,
+			value: arg.value,
+			style: style, 
+		}
+	};
+	CLaTeXParser.prototype.IsUnderOverSet = function ()
+	{
+		return this.oLookahead.data ===  "\\underset"
+			|| this.oLookahead.data === "\\overset";
+	};
+	CLaTeXParser.prototype.GetUnderOverSetLiteral = function()
+	{
+		let style = this.oLookahead.style;
+		let isUnder = this.oLookahead.data === "\\underset";
+		this.EatToken(this.oLookahead.class); // skip name of function;
+
+		let args = this.GetArguments(2);
+
+		return {
+			type: Struc.limit,
+			base: args[1],
+			value: args[0],
+			isBelow: (isUnder === true) ? VJUST_TOP :  VJUST_BOT,
+			style: style,
 		}
 	};
 	CLaTeXParser.prototype.IsHorizontalArrowLiteral = function()
@@ -725,7 +785,7 @@
 		this.EatToken(this.oLookahead.class);
 		let oContent = this.GetArguments(1);
 
-		if(base && base.type === Struc.func)
+		if(base && base.type === Struc.func || base.type === Struc.func_lim)
 		{
 			this.SkipFreeSpace();
 			let third = this.GetArguments(1);
@@ -733,7 +793,7 @@
 				type: Struc.func_lim,
 				value: {
 					type: Struc.char,
-					value: base.value,
+					value: base.type === Struc.func_lim ? base.value.value : base.value,
 					style: base.style
 				},
 				up: isBelow ? oContent : undefined,
@@ -766,7 +826,7 @@
 		let oContent = this.GetTextArgument();
 
 		let metaData = style.GetMathMetaData();
-		metaData.setIsText();
+		metaData.setIsText(true);
 
 		return {
 			type: Struc.char,
@@ -794,11 +854,12 @@
 	{
 		return this.oLookahead.class === Literals.func.id || this.oLookahead.class === Literals.nary.id
 	};
-	CLaTeXParser.prototype.GetFuncLiteral = function ()
+	CLaTeXParser.prototype.GetFuncLiteral = function (oFunc)
 	{
-		let oFuncContent			= this.EatToken(this.oLookahead.class);
+		let oFuncContent			= oFunc ? oFunc : this.EatToken(this.oLookahead.class);
 		let oPr						= oFuncContent.style;
 		let oThirdStyle;
+		let isNoLimits				= false;
 		let SetStyleAndGetArgument	= function (oThis)
 		{
 			oThirdStyle = oThis.oLookahead.style;
@@ -808,6 +869,12 @@
 		if (this.oLookahead.class === "\\limits")
 			this.EatToken("\\limits");
 
+		if (this.oLookahead.class === "\\nolimits")
+		{
+			isNoLimits = true;
+			this.EatToken("\\nolimits")
+		}
+
 		if (this.oLookahead.data === " ")
 			this.EatToken(this.oLookahead.class);
 
@@ -815,24 +882,37 @@
 			? SetStyleAndGetArgument(this)
 			: undefined;
 
-		let name = oFuncContent.data;
+		let name = oFuncContent.data ? oFuncContent.data : oFuncContent.value;
+
+		this.SkipOneSpace();
 
 		if (oFuncContent.class === Literals.nary.id)
 		{
+			if(AscMath.MathLiterals.func.IsLaTeXIncludeLimit(name) && !isNoLimits)
+			{
+				let metaData = oPr.GetMathMetaData();
+				metaData.setIsLimitNary(true);
+			}
+
 			return {
 				type: Struc.nary,
-				value: Literals.nary.LaTeX[oFuncContent.data],
+				value: Literals.nary.LaTeX[name],
 				style: oPr,
 				third: oThirdContent,
-				thirdStyle: oThirdStyle,
+				thirdStyle: oThirdStyle
 			}
 		}
-		else if (!oThirdContent)
+		else if (AscMath.MathLiterals.func.IsLaTeXIncludeLimit(name) && (this.IsSubSup() || this.IsGetBelowAboveLiteral() || this.oLookahead.data === '\\limits'))
 		{
 			return {
-				type: Struc.func,
-				value: oFuncContent.data.slice(1),
-				style: oPr
+				type: Struc.func_lim,
+				value: {
+					type: Struc.char,
+					value: name.slice(1),
+					style: oPr
+				},
+				style: oPr,
+				third: oThirdContent
 			}
 		}
 		else if (AscMath.MathLiterals.func.IsLaTeXIncludeNormal(name))
@@ -841,24 +921,19 @@
 				type: Struc.func,
 				value: {
 					type: Struc.char,
-					value: oFuncContent.data.slice(1),
+					value: name.slice(1),
 					style: oPr
 				},
 				style: oPr,
 				third: oThirdContent
 			}
 		}
-		else if (AscMath.MathLiterals.func.IsLaTeXIncludeLimit(name))
+		else if (!oThirdContent)
 		{
 			return {
-				type: Struc.func_lim,
-				value: {
-					type: Struc.char,
-					value: oFuncContent.data.slice(1),
-					style: oPr
-				},
-				style: oPr,
-				third: oThirdContent
+				type: Struc.func,
+				value: name.slice(1),
+				style: oPr
 			}
 		}
 	};
@@ -973,25 +1048,28 @@
 		{
 			let oWrapperContent = this.GetElementLiteral();
 
-			if (this.IsSubSup() || this.oLookahead.class === "\\limits")
+			if (oWrapperContent)
 			{
-				while (this.IsSubSup())
+				if (this.IsSubSup() || this.oLookahead.class === "\\limits")
 				{
-					oWrapperContent = this.GetSubSupLiteral(oWrapperContent);
+					while (this.IsSubSup())
+					{
+						oWrapperContent = this.GetSubSupLiteral(oWrapperContent);
+					}
+					return oWrapperContent;
 				}
-				return oWrapperContent;
-			}
-			else if (this.oLookahead.class === Literals.accent.id)
-			{
-				return this.GetAccentLiteral(oWrapperContent);
-			}
-			else if (this.IsGetBelowAboveLiteral())
-			{
-				return this.GetBelowAboveLiteral(oWrapperContent)
-			}
-			else if (this.IsOverLikeLiteral())
-			{
-				return this.GetOverLikeLiteral(oWrapperContent);
+				//else if (this.oLookahead.class === Literals.accent.id)
+				//{
+				//	return this.GetAccentLiteral(oWrapperContent);
+				//}
+				else if (this.IsGetBelowAboveLiteral())
+				{
+					return this.GetBelowAboveLiteral(oWrapperContent)
+				}
+				else if (this.IsOverLikeLiteral())
+				{
+					return this.GetOverLikeLiteral(oWrapperContent);
+				}
 			}
 
 			return oWrapperContent;
@@ -999,6 +1077,7 @@
 	};
 	CLaTeXParser.prototype.GetWrapperElement2 = function ()
 	{
+		this.isOneSymbol = true;
 		let oWrapperContent = this.GetElementLiteral();
 
 		if (this.oLookahead.class === Literals.accent.id)
@@ -1029,9 +1108,14 @@
 		{
 			oBaseContent = this.GetElementLiteral();
 		}
+
 		if (this.oLookahead.class === "\\limits")
 		{
 			this.EatToken("\\limits");
+			isLimits = true;
+		}
+		else if (oBaseContent.type === Struc.func_lim || oBaseContent.isLimits)
+		{
 			isLimits = true;
 		}
 
@@ -1052,6 +1136,7 @@
 		{
 			oSubStyle = this.oLookahead.style;
 			oDownContent = this.GetPartOfSupSup();
+			this.SkipFreeSpace();
 			if (this.oLookahead.data === "^" && isSingle !== true)
 			{
 				oSupStyle = this.oLookahead.style;
@@ -1066,6 +1151,7 @@
 		{
 			oSupStyle = this.oLookahead.style;
 			oUpContent = this.GetPartOfSupSup();
+			this.SkipFreeSpace();
 			if (this.oLookahead.data === "_" && isSingle !== true)
 			{
 				oSubStyle = this.oLookahead.style;
@@ -1082,6 +1168,13 @@
 			this.SkipOneSpace();
 			oThirdContent = this.GetArguments(1);
 		}
+
+		if (oBaseContent.type === Struc.func_lim && oUpContent && oDownContent)
+		{
+			oBaseContent.type = Struc.func;
+			isLimits = false;
+		}
+	
 
 		return {
 			type: Struc.sub_sub,
@@ -1290,9 +1383,10 @@
 		}
 
 		return {
-			type:	Struc.array,
+			type:	Struc.matrix,
 			value:	data.value,
 			style:	data.style,
+			strMatrixType: ""
 		}
 	}
 
@@ -1460,7 +1554,12 @@
 
 			if (this.oLookahead.data !== "&")
 			{
-				arrRow.push(this.GetExpressionLiteral(["&", "\\\\"]));
+				const checkIsEndFunc = function()
+				{
+					return this.IsEndMatrixLiteral() || this.IsEndArrayLiteral() ||  this.oLookahead.data === '&' || this.oLookahead.data === '\\\\' 
+				}.bind(this);
+
+				arrRow.push(this.GetASTTree2(checkIsEndFunc));
 				intLength++;
 				isAlreadyGetContent = true;
 				this.SkipFreeSpace();
@@ -1519,12 +1618,12 @@
 			&& isEndOfExp
 			&& this.IsElementLiteral();
 	};
-	CLaTeXParser.prototype.GetExpressionLiteral = function (arrBreakSymbol)
+	CLaTeXParser.prototype.GetExpressionLiteral = function (arrBreakSymbol, fBreak)
 	{
 		this.EscapeSymbol = arrBreakSymbol;
 		const arrExpList = [];
 
-		while (this.IsExpressionLiteral(arrBreakSymbol))
+		while (this.IsExpressionLiteral(arrBreakSymbol) && (!fBreak || !fBreak()))
 		{
 			if (this.IsPreScript())
 			{

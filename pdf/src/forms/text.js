@@ -516,6 +516,9 @@
     CTextField.prototype.DrawMarker = function(oCtx) {
         if (this.IsHidden()) return;  // don't draw if field is hidden
 
+        oCtx.globalAlpha = 1;
+        oCtx.globalCompositeOperation = "source-over";
+        
         // 1. Base parameters
         let oViewer   = editor.getDocumentRenderer();
         let nPage     = this.GetPage();
@@ -614,30 +617,46 @@
         }
 
         // 11. Compute actual axis-aligned bounding box of marker
-        let x1 = markX, y1 = markY;
-        let x2 = markX + markW, y2 = markY + markH;
+        let x1, y1, x2, y2;
         if (angleRad !== 0) {
-            let cos = Math.cos(-angleRad), sin = Math.sin(-angleRad);
-            let rot = (x, y) => {
-                let dx = x - cx, dy = y - cy;
+            let cos = Math.cos(-angleRad);
+            let sin = Math.sin(-angleRad);
+
+            function rot(x, y) {
+                let dx = x - cx;
+                let dy = y - cy;
                 return {
                     x: dx * cos - dy * sin + cx,
                     y: dx * sin + dy * cos + cy
                 };
-            };
+            }
+
             let pts = [
-                rot(markX,           markY),
-                rot(markX + markW,   markY),
-                rot(markX + markW,   markY + markH),
-                rot(markX,           markY + markH)
+                rot(markX, markY),
+                rot(markX + markW, markY),
+                rot(markX + markW, markY + markH),
+                rot(markX, markY + markH)
             ];
-            x1 = Math.min(...pts.map(p => p.x));
-            y1 = Math.min(...pts.map(p => p.y));
-            x2 = Math.max(...pts.map(p => p.x));
-            y2 = Math.max(...pts.map(p => p.y));
+
+            x1 = pts[0].x;
+            y1 = pts[0].y;
+            x2 = pts[0].x;
+            y2 = pts[0].y;
+
+            for (let i = 1; i < pts.length; i++) {
+                if (pts[i].x < x1) { x1 = pts[i].x; }
+                if (pts[i].y < y1) { y1 = pts[i].y; }
+                if (pts[i].x > x2) { x2 = pts[i].x; }
+                if (pts[i].y > y2) { y2 = pts[i].y; }
+            }
+        }
+        else {
+            x1 = markX;
+            y1 = markY;
+            x2 = markX + markW;
+            y2 = markY + markH;
         }
 
-        // 12. Save marker rect in document coordinates
         this._markRect = {
             x1: (x1 - indLeft) / scale,
             y1: (y1 - indTop)  / scale,
@@ -1061,10 +1080,6 @@
         return g_oTextMeasurer.GetHeight();
     };
     CTextField.prototype.Recalculate = function() {
-        if (this.IsNeedUpdateEditShape()) {
-            this.UpdateEditShape();
-        }
-        
         if (this.IsNeedRecalc() == false)
             return;
 

@@ -57,10 +57,6 @@
     CBaseCheckBoxField.prototype.constructor = CBaseCheckBoxField;
 
     CBaseCheckBoxField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
-        if (this.IsNeedUpdateEditShape()) {
-            this.UpdateEditShape();
-        }
-        
         if (this.IsHidden() && !this.IsEditMode())
             return;
 
@@ -534,7 +530,7 @@
         if (oParent && sValue !== undefined) {
             let aWidgets        = oParent.GetAllWidgets();
             let nIndex          = aWidgets.indexOf(this);
-            let aExpValues      = aWidgets.map(w => w.GetExportValue());
+            let aExpValues      = aWidgets.map(function(w) { return w.GetExportValue() });
             let aCurOptions     = oParent.GetOptions();
 
             const newValues = aExpValues.slice();

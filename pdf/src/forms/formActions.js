@@ -135,7 +135,8 @@
     }
     CFormTrigger.prototype.Copy = function(oParentField) {
         let aActionsCopies = [];
-        for (let action of this.Actions) {
+        for (let i = 0; i < this.Actions.length; i++) {
+            let action = this.Actions[i];
             aActionsCopies.push(action.Copy());
         }
 
@@ -508,7 +509,7 @@
             return;
         }
 
-        editor.sendEvent("asc_onOpenLinkPdfForm", this.uri, this.OpenLink.bind(this), oActionsQueue.Continue.bind(oActionsQueue));
+        Asc.editor.sendEvent("asc_onOpenLinkPdfForm", this.uri, this.OpenLink.bind(this), oActionsQueue.Continue.bind(oActionsQueue));
     };
     CActionURI.prototype.GetURI = function() {
         return this.uri;

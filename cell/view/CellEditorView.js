@@ -2686,7 +2686,7 @@ function (window, undefined) {
 		}
 
 		oThis._setSkipKeyPress(false);
-		oThis.skipTLUpdate = true;
+		oThis.skipTLUpdate = false;
 
 		// hieroglyph input definition
 		const bHieroglyph = oThis.isTopLineActive && AscCommonExcel.getFragmentsLength(oThis.options.fragments) !== oThis.input.value.length;
@@ -2898,8 +2898,8 @@ function (window, undefined) {
 
 		if (nRetValue & keydownresult_PreventKeyPress) {
 			oThis._setSkipKeyPress(true);
-			oThis.skipTLUpdate = false;
 		}
+		oThis.skipTLUpdate = true;
 		return nRetValue;
 	};
 

@@ -142,6 +142,7 @@ jobs:
           cd sdkjs
           npm install grunt-cli
           npm install --prefix build
+          node node_modules/grunt-cli/bin/grunt --gruntfile build/Gruntfile.js
 
       - name: Send message to telegram if failure
         if: failure()

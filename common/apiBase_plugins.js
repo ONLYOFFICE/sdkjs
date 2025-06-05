@@ -195,7 +195,7 @@
      * @param {OLEProperties} data - The OLE object properties.
     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddOleObject.js
 	 */
-    Api.prototype["pluginMethod_AddOleObject"] = function(data) { return this.asc_addOleObject(data); };
+    Api.prototype["pluginMethod_AddOleObject"] = function(data) { return this.asc_addOleObject(data, true); };
 
     /**
      * Edits an OLE object in the document.

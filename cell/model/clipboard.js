@@ -1910,10 +1910,10 @@
 						}
 
 						_ranges.sort(function sortArr(a, b) {
-							if (byCol) {
-								return a.c1 > b.c1 ? -1 : 1;
+							if (!byCol) {
+								return a.c1 > b.c1 ? 1 : -1;
 							} else {
-								return a.r1 > b.r1 ? -1 : 1;
+								return a.r1 > b.r1 ? 1 : -1;
 							}
 						});
 

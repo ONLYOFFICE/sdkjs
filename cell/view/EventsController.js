@@ -1081,6 +1081,9 @@
 			let bIsNeedCheckActiveCellChanged = null;
 			let oActiveCell;
 
+			const oWb = window["Asc"]["editor"].wb;
+			const oWs = oWb.getWorksheet();
+			const isRightToLeft = oWs && oWs.getRightToLeft();
 
 			const oShortcutRes = this.executeShortcut(nShortcutAction);
 			if (oShortcutRes) {
@@ -1222,6 +1225,9 @@
 						nDeltaColumn = oEvent.CtrlKey ? -1.5 : -1;  // Movement with arrows (left-right, up-down)
 						bIsNeedCheckActiveCellChanged = true;
 						nRetValue = keydownresult_PreventAll;                          // Disable the browser's standard handling of pressing left
+						if (isRightToLeft) {
+							nDeltaColumn = -nDeltaColumn;
+						}
 						break;
 
 					case 38: // up
@@ -1237,6 +1243,9 @@
 						nDeltaColumn = oEvent.CtrlKey ? +1.5 : +1;  // Movement with arrows (left-right, up-down)
 						bIsNeedCheckActiveCellChanged = true;
 						nRetValue = keydownresult_PreventAll;                           // Disable the browser's standard handling of pressing right
+						if (isRightToLeft) {
+							nDeltaColumn = -nDeltaColumn;
+						}
 						break;
 
 					case 40: // down
@@ -1305,11 +1314,6 @@
 			};
 
 			if ((nDeltaColumn !== 0 || nDeltaRow !== 0) && false === oThis.handlers.trigger("isGlobalLockEditCell")) {
-				const oWb = window["Asc"]["editor"].wb;
-				let oWs = oWb.getWorksheet();
-				if (oWs && oWs.getRightToLeft()) {
-					nDeltaColumn = -nDeltaColumn;
-				}
 				const bIsChangeVisibleAreaMode = this.view.Api.isEditVisibleAreaOleEditor;
 				if (bIsChangeVisibleAreaMode) {
 					oThis.handlers.trigger("changeVisibleArea", !bIsSelect, nDeltaColumn, nDeltaRow, false, function (d) {

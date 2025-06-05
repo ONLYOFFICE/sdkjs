@@ -2392,19 +2392,15 @@
 			format.setSize(nSize);
 
 			var tm;
-			if (!opt_cf_preview) {
-				tm = sr.measureString(sStyleName);
-			} else {
-				var cellFlags = new AscCommonExcel.CellFlags();
-				cellFlags.textAlign = oStyle.xfs.align && oStyle.xfs.align.hor;
+			var cellFlags = new AscCommonExcel.CellFlags();
+			cellFlags.textAlign = oStyle.xfs.align && oStyle.xfs.align.hor;
 
-				var fragments = [];
-				var tempFragment = new AscCommonExcel.Fragment();
-				tempFragment.setFragmentText(sStyleName);
-				tempFragment.format = format;
-				fragments.push(tempFragment);
-				tm = sr.measureString(fragments, cellFlags, width);
-			}
+			var fragments = [];
+			var tempFragment = new AscCommonExcel.Fragment();
+			tempFragment.setFragmentText(sStyleName);
+			tempFragment.format = format;
+			fragments.push(tempFragment);
+			tm = sr.measureString(fragments, cellFlags, width);
 
 			var width_padding = 4;
 			if (oStyle.xfs && oStyle.xfs.align && oStyle.xfs.align.hor === AscCommon.align_Center) {
@@ -2414,9 +2410,10 @@
 			// Текст будем рисовать по центру (в Excel чуть по другому реализовано, у них постоянный отступ снизу)
 			var textY = Asc.round(0.5 * (height - tm.height));
 			if (!opt_cf_preview) {
-				ctx.setFont(format);
-				ctx.setFillStyle(oStyle.getFontColor() || new AscCommon.CColor(0, 0, 0));
-				ctx.fillText(sStyleName, width_padding, textY + tm.baseline);
+				let oldCtx = sr.drawingCtx;
+				sr.drawingCtx = ctx;
+				sr.render(ctx, width_padding, textY, tm.width, oStyle.getFontColor() || new AscCommon.CColor(0, 0, 0));
+				sr.drawingCtx = oldCtx;
 			} else {
 				sr.render(ctx, width_padding, textY, tm.width, oStyle.getFontColor() || new AscCommon.CColor(0, 0, 0));
 			}

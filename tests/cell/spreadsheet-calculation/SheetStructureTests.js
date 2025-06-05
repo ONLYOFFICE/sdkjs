@@ -7430,6 +7430,50 @@ $(function () {
 
 	});
 
+	QUnit.test("Test: \"Assemble formulas test\"", function (assert) {
+		let cellWithFormula, fillRange, array;
+			
+		ws.getRange2("A1:F100").cleanAll();
+		
+		// set flags for CSE formula call
+		let flags = wsView._getCellFlags(0, 2);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// set selection C1
+		fillRange = ws.getRange2("A100");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+
+
+		ws.getRange2("A1").setValue("1");
+		ws.getRange2("A2").setValue("2");
+		ws.getRange2("A3").setValue("3");
+		ws.getRange2("B1").setValue("4");
+		ws.getRange2("C1").setValue("5");
+		
+		let resCell = ws.getRange2("A100");
+
+		// TAKE formula check
+		resCell.setValue("=TAKE({1,2,3},2,1)");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after TAKE({1,2,3},2,1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=TAKE({1,2,3},2,1)", "Value for edit with TAKE({1,2,3},2,1) formula");
+
+		resCell.setValue("=TAKE({1;2;3},2,1)");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after TAKE({1,2,3},2,1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=TAKE({1;2;3},2,1)", "Value for edit with TAKE({1;2;3},2,1) formula");
+
+		resCell.setValue("=TAKE(A1:A3,2,1)");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after TAKE(A1:A3,2,1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=TAKE(A1:A3,2,1)", "Value for edit with TAKE(A1:A3,2,1) formula");
+
+		resCell.setValue("=TAKE(A1:C1,2,1)");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after TAKE(A1:C1,2,1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=TAKE(A1:C1,2,1)", "Value for edit with TAKE(A1:C1,2,1) formula");
+		
+	});
+
 	QUnit.test('All selection test', function (assert) {
 
 		ws.getRange2("A1:Z100").cleanAll();

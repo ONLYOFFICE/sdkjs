@@ -1398,6 +1398,46 @@
 		logicDocument.LoadDocumentState(docState);
 		return textPr;
 	};
+	ApiRange.prototype.private_GetLogicDocument = function()
+	{
+		return private_GetLogicDocument();
+	};
+	ApiRange.prototype._trackPositions = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || !logicDocument.IsDocumentEditor())
+			return;
+		
+		if (this.StartPos)
+			logicDocument.CollaborativeEditing.Add_DocumentPosition(this.StartPos);
+		
+		if (this.EndPos)
+			logicDocument.CollaborativeEditing.Add_DocumentPosition(this.EndPos);
+	};
+	ApiRange.prototype._updatePositions = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || !logicDocument.IsDocumentEditor())
+			return;
+		
+		if (this.StartPos)
+			logicDocument.CollaborativeEditing.Update_DocumentPosition(this.StartPos);
+		
+		if (this.EndPos)
+			logicDocument.CollaborativeEditing.Update_DocumentPosition(this.EndPos);
+	};
+	ApiRange.prototype._untrackPositions = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || !logicDocument.IsDocumentEditor())
+			return;
+		
+		if (this.StartPos)
+			logicDocument.CollaborativeEditing.Remove_DocumentPosition(this.StartPos);
+		
+		if (this.EndPos)
+			logicDocument.CollaborativeEditing.Remove_DocumentPosition(this.EndPos);
+	};
 	
 	/**
 	 * Returns a type of the ApiRange class.
@@ -1468,88 +1508,75 @@
 	 * Adds a text to the specified position.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {String} sText - The text that will be added.
-	 * @param {string} [sPosition = "after"] - The position where the text will be added ("before" or "after" the range specified).
-	 * @return {boolean} - returns false if range is empty or sText isn't string value.
+	 * @param {String} text - The text that will be added.
+	 * @param {"after" | "before"} [position = "after"] - The position where the text will be added ("before" or "after" the range specified).
+	 * @return {boolean} - returns true if the text was successfully added.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/AddText.js
 	 */	
-	ApiRange.prototype.AddText = function(sText, sPosition)
+	ApiRange.prototype.AddText = function(text, position)
 	{
-		private_RefreshRangesPosition();
+		this._updatePositions();
 
-		let oDocument = private_GetLogicDocument();
-		oDocument.RemoveSelection();
+		let logicDocument = private_GetLogicDocument();
+		logicDocument.RemoveSelection();
 
-		if (typeof(sText) !== "string")
+		text = GetStringParameter(text, "");
+		if ("" === text)
 			return false;
-
-		if (sPosition !== "after" && sPosition !== "before")
-			sPosition = "after";
 		
-		if (sPosition === "after")
+		position = GetStringParameter(position, "after");
+		
+		if ("after" === position)
 		{
-			let oTargetRun	= this.EndPos[this.EndPos.length - 1].Class;
-			let oPrevApiRun	= null;
+			let run      = this.EndPos[this.EndPos.length - 1].Class;
+			let inRunPos = this.EndPos[this.EndPos.length - 1].Position;
+			
+			if (!run || !(run instanceof AscWord.Run) || -1 === inRunPos)
+				return false;
 
-			if (oTargetRun.IsParaEndRun())
+			run.SetCursorPosition(inRunPos);
+			let newRun = run.CheckRunBeforeAdd();
+			if (newRun)
 			{
-				oPrevApiRun = new ApiRun(oTargetRun).private_GetPreviousInParent();
-				
-				if (oPrevApiRun)
-				{
-					oTargetRun = oPrevApiRun.Run;
-				}
-				else
-				{
-					oTargetRun = null;
-				}
-			}
-
-			if (!oTargetRun)
-			{
-				return false; 	
-			}
-
-			let nPosInRun		= this.EndPos[this.EndPos.length - 1].Position;
-			let nRunPosInParent	= this.EndPos[this.EndPos.length - 2].Position;
-			let oRunParent		= oTargetRun.GetParent();
-			let nNewPosInRun	= nPosInRun;
-
-			if (nPosInRun === 0)
-			{
-				if (nRunPosInParent - 1 >= 0)
-				{
-					nRunPosInParent--;
-					oTargetRun		= oRunParent.GetElement(nRunPosInParent);
-					nPosInRun	= oTargetRun.Content.length;
-				}
-			}
-			else {
-				for (let oIterator = sText.getUnicodeIterator(); oIterator.check(); oIterator.next())
-					nNewPosInRun++;
-			}
-
-			// если ран окончания параграфа, позиция в нём не изменится
-			if (null == oPrevApiRun) {
-				oTargetRun.AddText(sText, nPosInRun);
-				this.EndPos[this.EndPos.length - 1].Class = oTargetRun;
-				this.EndPos[this.EndPos.length - 1].Position = nNewPosInRun;
-				this.EndPos[this.EndPos.length - 2].Position = nRunPosInParent;
-			}
-			else {
-				nPosInRun = oTargetRun.Content.length;
-				oTargetRun.AddText(sText, nPosInRun);
+				run = newRun;
+				inRunPos = 0;
 			}
 			
-			private_TrackRangesPositions(true);
+			let newInRunPos = run.AddText(text, inRunPos);
+			run.SetCursorPosition(newInRunPos);
+			
+			this._untrackPositions();
+			this.EndPos = run.GetDocumentPositionForCurrentPosition();
+			this._trackPositions();
 		}
-		else if (sPosition === "before")
+		else
 		{
-			let oTargetRun	= this.StartPos[this.StartPos.length - 1].Class;
-			let nPosInRun	= this.StartPos[this.StartPos.length - 1].Position;
-			oTargetRun.AddText(sText, nPosInRun);
+			let run      = this.StartPos[this.StartPos.length - 1].Class;
+			let inRunPos = this.StartPos[this.StartPos.length - 1].Position;
+			
+			if (!run || !(run instanceof AscWord.Run) || -1 === inRunPos)
+				return false;
+			
+			run.SetCursorPosition(inRunPos);
+			let newRun = run.CheckRunBeforeAdd();
+			if (newRun)
+			{
+				run = newRun;
+				inRunPos = 0;
+			}
+			
+			let newInRunPos = run.AddText(text, inRunPos);
+			run.SetCursorPosition(newInRunPos);
+			
+			if (newRun)
+			{
+				this._untrackPositions();
+				run.SetCursorPosition(0);
+				this.StartPos = run.GetDocumentPositionForCurrentPosition();
+				this._trackPositions();
+			}
 		}
-
+		
 		return true;
 	};
 
@@ -2035,10 +2062,14 @@
 		}
 		else
 		{
-			var Unifill        = new AscFormat.CUniFill();
-			Unifill.fill       = new AscFormat.CSolidFill();
-			Unifill.fill.color = AscFormat.CorrectUniColor(color, Unifill.fill.color, 1);
-			ParaTextPr = new AscCommonWord.ParaTextPr({Unifill : Unifill});
+			ParaTextPr = new AscCommonWord.ParaTextPr({
+				Color      : {
+					Auto : false,
+					r    : r,
+					g    : g,
+					b    : b
+				}, Unifill : undefined
+			});
 			Document.AddToParagraph(ParaTextPr);
 		}
 
@@ -2317,7 +2348,7 @@
 			return null;
 		}
 
-		var ParaTextPr = new AscCommonWord.ParaTextPr({Spacing : nSpacing});
+		var ParaTextPr = new AscCommonWord.ParaTextPr({Spacing : private_Twips2MM(nSpacing)});
 		Document.AddToParagraph(ParaTextPr);
 		
 		Document.LoadDocumentState(oldSelectionInfo);
@@ -2446,7 +2477,7 @@
 			return null;
 		}
 
-		var ParaTextPr = new AscCommonWord.ParaTextPr({Position : nPosition});
+		var ParaTextPr = new AscCommonWord.ParaTextPr({Position : private_PtToMM(private_GetHps(nPosition))});
 		Document.AddToParagraph(ParaTextPr);
 		
 		Document.LoadDocumentState(oldSelectionInfo);
@@ -3777,6 +3808,22 @@
 	{
 		this.Settings = oSettings;
 	}
+
+	/**
+	 * Class representing document properties (similar to BuiltInDocumentProperties in VBA)
+	 * @constructor
+	 */
+	function ApiCore(oCore) {
+		this.Core = oCore;
+	}
+
+	/**
+	 * Class representing custom properties of the document.
+	 * @constructor
+	 */
+	function ApiCustomProperties(oCustomProperties) {
+		this.CustomProperties = oCustomProperties;
+	};
 
 
 	/**
@@ -7205,6 +7252,106 @@
 		return arrResult;
 	};
 	/**
+	 * Returns a list of all forms in the document with the specified role name.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @param role {string} - Form role.
+	 * @returns {ApiForm[]}
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetFormsByRole.js
+	 */
+	ApiDocument.prototype.GetFormsByRole = function(role)
+	{
+		role = GetStringParameter(role, "");
+		if (!role)
+			return [];
+		
+		let result = [];
+		let forms = this.Document.GetFormsManager().GetAllFormsByRole(role);
+		for (let i = 0, count = forms.length; i < count; ++i)
+		{
+			let apiForm = ToApiForm(forms[i]);
+			if (apiForm)
+				result.push(apiForm);
+		}
+		
+		return result;
+	};
+	/**
+	 * Returns a list of all forms in the document with the specified key.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @param key {string} - Key.
+	 * @returns {ApiForm[]}
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetFormsByKey.js
+	 */
+	ApiDocument.prototype.GetFormsByKey = function(key)
+	{
+		key = GetStringParameter(key, "");
+		if (!key)
+			return [];
+		
+		let result = [];
+		let forms = this.Document.GetFormsManager().GetAllFormsByKey(key);
+		let isRadio = false; // Don't return radiobuttons by key since it's a Choice but not a Key
+		if (0 === forms.length)
+		{
+			forms = this.Document.GetFormsManager().GetRadioButtons(key);
+			isRadio = true;
+		}
+		
+		for (let i = 0, count = forms.length; i < count; ++i)
+		{
+			let apiForm = ToApiForm(forms[i]);
+			if (apiForm && isRadio === forms[i].IsRadioButton())
+				result.push(apiForm);
+		}
+		
+		return result;
+	};
+	/**
+	 * Returns a list of all form keys for the specified role.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @param role {string} - Role.
+	 * @returns {string[]}
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetFormKeysByRole.js
+	 */
+	ApiDocument.prototype.GetFormKeysByRole = function(role)
+	{
+		role = GetStringParameter(role, "");
+		if (!role)
+			return [];
+		
+		let keys = {};
+		let forms = this.Document.GetFormsManager().GetAllForms();
+		for (let i = 0, count = forms.length; i < count; ++i)
+		{
+			let apiForm = ToApiForm(forms[i]);
+			if (apiForm && role === apiForm.GetRole())
+				keys[apiForm.GetFormKey()] = 1;
+		}
+		
+		return Object.keys(keys);
+	};
+	/**
+	 * Returns the form value for the specified key.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @param key {string} - Form key.
+	 * @returns {null | boolean | string} true/false for checkboxes and string for other form types. Returns null if
+	 * there is no form with the specified key.
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetFormValueByKey.js
+	 */
+	ApiDocument.prototype.GetFormValueByKey = function(key)
+	{
+		let forms = this.GetFormsByKey(key);
+		if (!forms.length)
+			return null;
+		
+		return this.Document.GetFormsManager().GetFormValue(forms[0].Sdt);
+	};
+	
+	/**
 	 * The specific form type.
 	 * @typedef {("text" | "checkBox" | "picture" | "comboBox" | "dropDownList" | "dateTime" | "radio")} FormSpecificType
 	 * @see office-js-api/Examples/Enumerations/FormSpecificType.js
@@ -8973,6 +9120,31 @@
 		return new ApiCustomXmlParts(this.Document);
 	};
 
+	/**
+	 * Retrieves the core properties interface for the current document.
+	 * Use this to view or modify standard metadata such as title, author, and keywords.
+	 *
+	 * @memberof ApiDocument
+	 * @returns {ApiCore} - Core document properties object.
+	 * @typeofeditors ["CDE"]
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetCore.js
+	 */
+	ApiDocument.prototype.GetCore = function () {
+		return new ApiCore(this.Document.Core);
+	};
+
+	/**
+	 * Retrieves the custom properties of the document.
+	 *
+	 * @memberof ApiDocument
+	 * @returns {ApiCustomProperties}
+	 * @typeofeditors ["CDE"]
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetCustomProperties.js
+	 */
+	ApiDocument.prototype.GetCustomProperties = function () {
+		return new ApiCustomProperties(this.Document.CustomProperties);
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiParagraph
@@ -9600,10 +9772,15 @@
 		}
 		else
 		{
-			var Unifill        = new AscFormat.CUniFill();
-			Unifill.fill       = new AscFormat.CSolidFill();
-			Unifill.fill.color = AscFormat.CorrectUniColor(color, Unifill.fill.color, 1);
-			this.Paragraph.Add(new AscCommonWord.ParaTextPr({Unifill : Unifill}));
+			this.Paragraph.Add(new AscCommonWord.ParaTextPr({
+				Color      : {
+					Auto : false,
+					r    : r,
+					g    : g,
+					b    : b
+				}, Unifill : undefined
+			}));
+			
 		}
 		this.Paragraph.SetApplyToAll(false);
 		
@@ -9757,7 +9934,7 @@
 	ApiParagraph.prototype.SetPosition = function(nPosition)
 	{
 		this.Paragraph.SetApplyToAll(true);
-		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Position : nPosition}));
+		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Position : private_PtToMM(private_GetHps(nPosition))}));
 		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
@@ -9793,7 +9970,7 @@
 	ApiParagraph.prototype.SetSpacing = function(nSpacing)
 	{
 		this.Paragraph.SetApplyToAll(true);
-		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Spacing : nSpacing}));
+		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Spacing : private_Twips2MM(nSpacing)}));
 		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
@@ -10063,7 +10240,7 @@
 		return this.Paragraph.GetText(oProp);
 	};
 	/**
-	 * Returns the paragraph text properties.
+	 * Returns the text properties for end of paragraph mark.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiTextPr}  
@@ -14281,7 +14458,7 @@
 	{
 		let textPr = this.TextPr;
 		let logicDocument = private_GetLogicDocument();
-		if (logicDocument)
+		if (logicDocument && logicDocument.IsDocumentEditor())
 		{
 			textPr = textPr.Copy();
 			textPr.ReplaceThemeFonts(logicDocument.GetTheme().themeElements.fontScheme);
@@ -14297,7 +14474,7 @@
 		else if ("cs" === fontSlot)
 			fs = AscWord.fontslot_CS;
 		
-		return textPr.GetFontInfo(fs).Name;
+		return textPr.GetFontFamily(fs);
 	};
 
 	/**
@@ -22009,6 +22186,59 @@
 			return new this.constructor(oSdt);
 		}, this);
 	};
+	/**
+	 * Returns the tag attribute for the current form.
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE" | "CFE"]
+	 * @since 9.0.0
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/GetTag.js
+	 */
+	ApiFormBase.prototype.GetTag = function()
+	{
+		return this.Sdt.GetTag();
+	};
+	/**
+	 * Sets the tag attribute to the current form.
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE" | "CFE"]
+	 * @since 9.0.0
+	 * @param {string} tag - The tag which will be added to the current container.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetTag.js
+	 */
+	ApiFormBase.prototype.SetTag = function(tag)
+	{
+		this.Sdt.SetTag(tag);
+		return true;
+	};
+	
+	/**
+	 * Returns the role of the current form.
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE" | "CFE"]
+	 * @since 9.0.0
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/GetRole.js
+	 */
+	ApiFormBase.prototype.GetRole = function()
+	{
+		return this.Sdt.GetFormRole();
+	};
+	/**
+	 * Sets the role of the current form.
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE" | "CFE"]
+	 * @since 9.0.0
+	 * @param {string} role - The role which will be attached to the current form.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetRole.js
+	 */
+	ApiFormBase.prototype.SetRole = function(role)
+	{
+		this.Sdt.SetFormRole(role);
+		return true;
+	};
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -22858,7 +23088,56 @@
 			return true;
 		}, this);
 	};
-
+	
+	/**
+	 * Sets the date to the current form.
+	 * @memberof ApiDateForm
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @param {Date | string} date - Date object.
+	 * @returns {boolean}
+	 * @since 9.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiDateForm/Methods/SetDate.js
+	 */
+	ApiDateForm.prototype.SetDate = function(date)
+	{
+		return executeNoFormLockCheck(function(){
+			if (undefined !== date && typeof(date) === "string")
+			{
+				try
+				{
+					date = new Date(date);
+				}
+				catch (err)
+				{
+					date = new Date();
+				}
+			}
+			
+			if (!(date instanceof Date))
+				return false;
+			
+			let oNewDatePr = this.Sdt.GetDatePickerPr().Copy();
+			oNewDatePr.SetFullDate(date);
+			
+			this.Sdt.ApplyDatePickerPr(oNewDatePr, true);
+			return true;
+		}, this);
+	};
+	
+	/**
+	 * Gets the date of the current form.
+	 * @memberof ApiDateForm
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @returns {Date}
+	 * @since 9.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiDateForm/Methods/GetDate.js
+	 */
+	ApiDateForm.prototype.GetDate = function()
+	{
+		let fullDate = this.Sdt.GetDatePickerPr().GetFullDate();
+		return new Date(fullDate);
+	};
+	
 	/**
 	 * Converts the ApiBlockLvlSdt object into the JSON object.
 	 * @memberof ApiBlockLvlSdt
@@ -24313,6 +24592,458 @@
 		return true;
 	};
 
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiCore
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Returns a type of the ApiCore class.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {"core"}
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/GetClassType.js
+	 */
+	ApiCore.prototype.GetClassType = function () {
+		return "core";
+	};
+
+	/**
+	 * Sets the document category.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} sCategory
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/SetCategory.js
+	 */
+	ApiCore.prototype.SetCategory = function (sCategory) {
+		this.Core.setCategory(sCategory);
+	};
+
+	/**
+	 * Returns the document category.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/GetCategory.js
+	 */
+	ApiCore.prototype.GetCategory = function () {
+		return this.Core.asc_getCategory();
+	};
+
+	/**
+	 * Sets the document status.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} sStatus
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/SetContentStatus.js
+	 */
+	ApiCore.prototype.SetContentStatus = function (sStatus) {
+		this.Core.setContentStatus(sStatus);
+	};
+
+	/**
+	 * Returns the document status.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/GetContentStatus.js
+	 */
+	ApiCore.prototype.GetContentStatus = function () {
+		return this.Core.asc_getContentStatus();
+	};
+
+	/**
+	 * Sets the document creation date.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {Date} oCreated
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/SetCreated.js
+	 */
+	ApiCore.prototype.SetCreated = function (oCreated) {
+		this.Core.setCreated(oCreated);
+	};
+
+	/**
+	 * Returns the document creation date.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {Date}
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/GetCreated.js
+	 */
+	ApiCore.prototype.GetCreated = function () {
+		return this.Core.asc_getCreated();
+	};
+
+	/**
+	 * Sets the document author.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} sCreator
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/SetCreator.js
+	 */
+	ApiCore.prototype.SetCreator = function (sCreator) {
+		this.Core.setCreator(sCreator);
+	};
+
+	/**
+	 * Returns the document author.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/GetCreator.js
+	 */
+	ApiCore.prototype.GetCreator = function () {
+		return this.Core.asc_getCreator();
+	};
+
+	/**
+	 * Sets the document description.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} sDescription
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/SetDescription.js
+	 */
+	ApiCore.prototype.SetDescription = function (sDescription) {
+		this.Core.setDescription(sDescription);
+	};
+
+	/**
+	 * Returns the document description.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/GetDescription.js
+	 */
+	ApiCore.prototype.GetDescription = function () {
+		return this.Core.asc_getDescription();
+	};
+
+	/**
+	 * Sets the document identifier.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} sIdentifier
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/SetIdentifier.js
+	 */
+	ApiCore.prototype.SetIdentifier = function (sIdentifier) {
+		this.Core.setIdentifier(sIdentifier);
+	};
+
+	/**
+	 * Returns the document identifier.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/GetIdentifier.js
+	 */
+	ApiCore.prototype.GetIdentifier = function () {
+		return this.Core.asc_getIdentifier();
+	};
+
+	/**
+	 * Sets the document tags.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} sKeywords - A string of keywords.
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/SetKeywords.js
+	 *
+	 */
+	ApiCore.prototype.SetKeywords = function (sKeywords) {
+		this.Core.setKeywords(sKeywords);
+	};
+
+	/**
+	 * Returns the document tags.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/GetKeywords.js
+	 */
+	ApiCore.prototype.GetKeywords = function () {
+		return this.Core.asc_getKeywords();
+	};
+
+	/**
+	 * Sets the document language.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} sLanguage
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/SetLanguage.js
+	 */
+	ApiCore.prototype.SetLanguage = function (sLanguage) {
+		this.Core.setLanguage(sLanguage);
+	};
+
+	/**
+	 * Returns the document language.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/GetLanguage.js
+	 */
+	ApiCore.prototype.GetLanguage = function () {
+		return this.Core.asc_getLanguage();
+	};
+
+	/**
+	 * Sets the name of the user who last modified the document.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} sLastModifiedBy
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/SetLastModifiedBy.js
+	 */
+	ApiCore.prototype.SetLastModifiedBy = function (sLastModifiedBy) {
+		this.Core.setLastModifiedBy(sLastModifiedBy);
+	};
+
+	/**
+	 * Returns the name of the user who last modified the document.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/GetLastModifiedBy.js
+	 */
+	ApiCore.prototype.GetLastModifiedBy = function () {
+		return this.Core.asc_getLastModifiedBy();
+	};
+
+	/**
+	 * Sets the date when the document was last printed.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {Date} oLastPrinted
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/SetLastPrinted.js
+	 */
+	ApiCore.prototype.SetLastPrinted = function (oLastPrinted) {
+		this.Core.setLastPrinted(oLastPrinted);
+	};
+
+	/**
+	 * Returns the date when the document was last printed.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {Date}
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/GetLastPrinted.js
+	 */
+	ApiCore.prototype.GetLastPrinted = function () {
+		return this.Core.asc_getLastPrinted();
+	};
+
+	/**
+	 * Sets the document modified date.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {Date} oModified
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/SetModified.js
+	 */
+	ApiCore.prototype.SetModified = function (oModified) {
+		this.Core.setModified(oModified);
+	};
+
+	/**
+	 * Returns the document modified date.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {Date}
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/GetModified.js
+	 */
+	ApiCore.prototype.GetModified = function () {
+		return this.Core.asc_getModified();
+	};
+
+	/**
+	 * Sets the document revision.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} sRevision
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/SetRevision.js
+	 */
+	ApiCore.prototype.SetRevision = function (sRevision) {
+		this.Core.setRevision(sRevision);
+	};
+
+	/**
+	 * Returns the document revision.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/GetRevision.js
+	 */
+	ApiCore.prototype.GetRevision = function () {
+		return this.Core.asc_getRevision();
+	};
+
+	/**
+	 * Sets the document subject.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} sSubject
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/SetSubject.js
+	 */
+	ApiCore.prototype.SetSubject = function (sSubject) {
+		this.Core.setSubject(sSubject);
+	};
+
+	/**
+	 * Returns the document subject.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/GetSubject.js
+	 */
+	ApiCore.prototype.GetSubject = function () {
+		return this.Core.asc_getSubject();
+	};
+
+	/**
+	 * Sets the document title.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} sTitle
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/SetTitle.js
+	 */
+	ApiCore.prototype.SetTitle = function (sTitle) {
+		this.Core.setTitle(sTitle);
+	};
+
+	/**
+	 * Returns the document title.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/GetTitle.js
+	 */
+	ApiCore.prototype.GetTitle = function () {
+		return this.Core.asc_getTitle();
+	};
+
+	/**
+	 * Sets the document version.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} sVersion
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/SetVersion.js
+	 */
+	ApiCore.prototype.SetVersion = function (sVersion) {
+		this.Core.setVersion(sVersion);
+	};
+
+	/**
+	 * Returns the document version.
+	 *
+	 * @memberof ApiCore
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiCore/Methods/GetVersion.js
+	 */
+	ApiCore.prototype.GetVersion = function () {
+		return this.Core.asc_getVersion();
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiCustomProperties
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Returns a type of the ApiCustomProperties class.
+	 *
+	 * @memberof ApiCustomProperties
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {"customProperties"}
+	 * @see office-js-api/Examples/{Editor}/ApiCustomProperties/Methods/GetClassType.js
+	 */
+	ApiCustomProperties.prototype.GetClassType = function () {
+		return 'customProperties';
+	};
+
+	/**
+	 * Adds a custom property to the document with automatic type detection.
+	 *
+	 * @memberof ApiCustomProperties
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} name
+	 * @param {string | number | boolean | Date} value
+	 * @returns {boolean} - Returns false if the type is unsupported.
+	 * @see office-js-api/Examples/{Editor}/ApiCustomProperties/Methods/Add.js
+	 */
+	ApiCustomProperties.prototype.Add = function (name, value) {
+		if (typeof value === 'string') {
+			this.CustomProperties.AddProperty(name, AscCommon.c_oVariantTypes.vtLpwstr, value);
+			return true;
+		}
+
+		if (typeof value === 'boolean') {
+			this.CustomProperties.AddProperty(name, AscCommon.c_oVariantTypes.vtBool, value);
+			return true;
+		}
+
+		if (typeof value === 'number') {
+			const type = Number.isInteger(value)
+				? AscCommon.c_oVariantTypes.vtI4
+				: AscCommon.c_oVariantTypes.vtR8;
+			this.CustomProperties.AddProperty(name, type, value);
+			return true;
+		}
+
+		if (value instanceof Date && !isNaN(value.getTime())) {
+			this.CustomProperties.AddProperty(name, AscCommon.c_oVariantTypes.vtFiletime, value);
+			return true;
+		}
+
+		return false;
+	};
+
+	/**
+	 * Returns the value of a custom property by its name.
+	 *
+	 * @memberof ApiCustomProperties
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} name
+	 * @returns {string | number | Date | boolean | null} - The value of the custom property or null if the property does not exist.
+	 * @see office-js-api/Examples/{Editor}/ApiCustomProperties/Methods/Get.js
+	 */
+	ApiCustomProperties.prototype.Get = function (name) {
+		let property = null;
+		this.CustomProperties.getAllProperties().forEach(function (prop) {
+			if (prop.asc_getName() === name) {
+				property = prop;
+			}
+		});
+		return property ? property.asc_getValue() : null;
+	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export
@@ -24457,6 +25188,10 @@
 	ApiDocument.prototype["GetTagsOfAllForms"]             = ApiDocument.prototype.GetTagsOfAllForms;
 	ApiDocument.prototype["GetContentControlsByTag"]       = ApiDocument.prototype.GetContentControlsByTag;
 	ApiDocument.prototype["GetFormsByTag"]                 = ApiDocument.prototype.GetFormsByTag;
+	ApiDocument.prototype["GetFormsByRole"]                = ApiDocument.prototype.GetFormsByRole;
+	ApiDocument.prototype["GetFormsByKey"]                 = ApiDocument.prototype.GetFormsByKey;
+	ApiDocument.prototype["GetFormKeysByRole"]             = ApiDocument.prototype.GetFormKeysByRole;
+	ApiDocument.prototype["GetFormValueByKey"]             = ApiDocument.prototype.GetFormValueByKey;
 	ApiDocument.prototype["GetFormsData"]                  = ApiDocument.prototype.GetFormsData;
 	ApiDocument.prototype["SetFormsData"]                  = ApiDocument.prototype.SetFormsData;
 	ApiDocument.prototype["SetTrackRevisions"]             = ApiDocument.prototype.SetTrackRevisions;
@@ -24521,6 +25256,8 @@
 	ApiDocument.prototype["AddDropDownListContentControl"] = ApiDocument.prototype.AddDropDownListContentControl;
 	ApiDocument.prototype["AddPictureContentControl"]      = ApiDocument.prototype.AddPictureContentControl;
 	ApiDocument.prototype["GetCustomXmlParts"]             = ApiDocument.prototype.GetCustomXmlParts;
+	ApiDocument.prototype["GetCore"]                     = ApiDocument.prototype.GetCore;
+	ApiDocument.prototype["GetCustomProperties"]         = ApiDocument.prototype.GetCustomProperties;
 
 	ApiParagraph.prototype["GetClassType"]           = ApiParagraph.prototype.GetClassType;
 	ApiParagraph.prototype["AddText"]                = ApiParagraph.prototype.AddText;
@@ -25186,26 +25923,30 @@
 	ApiBlockLvlSdt.prototype["GetAppearance"]           = ApiBlockLvlSdt.prototype.GetAppearance;
 	
 	
-	ApiFormBase.prototype["GetClassType"]        = ApiFormBase.prototype.GetClassType;
-	ApiFormBase.prototype["GetFormType"]         = ApiFormBase.prototype.GetFormType;
-	ApiFormBase.prototype["GetFormKey"]          = ApiFormBase.prototype.GetFormKey;
-	ApiFormBase.prototype["SetFormKey"]          = ApiFormBase.prototype.SetFormKey;
-	ApiFormBase.prototype["GetTipText"]          = ApiFormBase.prototype.GetTipText;
-	ApiFormBase.prototype["SetTipText"]          = ApiFormBase.prototype.SetTipText;
-	ApiFormBase.prototype["IsRequired"]          = ApiFormBase.prototype.IsRequired;
-	ApiFormBase.prototype["SetRequired"]         = ApiFormBase.prototype.SetRequired;
-	ApiFormBase.prototype["IsFixed"]             = ApiFormBase.prototype.IsFixed;
-	ApiFormBase.prototype["ToFixed"]             = ApiFormBase.prototype.ToFixed;
-	ApiFormBase.prototype["ToInline"]            = ApiFormBase.prototype.ToInline;
-	ApiFormBase.prototype["SetBorderColor"]      = ApiFormBase.prototype.SetBorderColor;
-	ApiFormBase.prototype["SetBackgroundColor"]  = ApiFormBase.prototype.SetBackgroundColor;
-	ApiFormBase.prototype["GetText"]             = ApiFormBase.prototype.GetText;
-	ApiFormBase.prototype["Clear"]               = ApiFormBase.prototype.Clear;
-	ApiFormBase.prototype["GetWrapperShape"]     = ApiFormBase.prototype.GetWrapperShape;
-	ApiFormBase.prototype["SetPlaceholderText"]  = ApiFormBase.prototype.SetPlaceholderText;
-	ApiFormBase.prototype["SetTextPr"]           = ApiFormBase.prototype.SetTextPr;
-	ApiFormBase.prototype["GetTextPr"]           = ApiFormBase.prototype.GetTextPr;
-	ApiFormBase.prototype["MoveCursorOutside"]   = ApiFormBase.prototype.MoveCursorOutside;
+	ApiFormBase.prototype["GetClassType"]       = ApiFormBase.prototype.GetClassType;
+	ApiFormBase.prototype["GetFormType"]        = ApiFormBase.prototype.GetFormType;
+	ApiFormBase.prototype["GetFormKey"]         = ApiFormBase.prototype.GetFormKey;
+	ApiFormBase.prototype["SetFormKey"]         = ApiFormBase.prototype.SetFormKey;
+	ApiFormBase.prototype["GetTipText"]         = ApiFormBase.prototype.GetTipText;
+	ApiFormBase.prototype["SetTipText"]         = ApiFormBase.prototype.SetTipText;
+	ApiFormBase.prototype["IsRequired"]         = ApiFormBase.prototype.IsRequired;
+	ApiFormBase.prototype["SetRequired"]        = ApiFormBase.prototype.SetRequired;
+	ApiFormBase.prototype["IsFixed"]            = ApiFormBase.prototype.IsFixed;
+	ApiFormBase.prototype["ToFixed"]            = ApiFormBase.prototype.ToFixed;
+	ApiFormBase.prototype["ToInline"]           = ApiFormBase.prototype.ToInline;
+	ApiFormBase.prototype["SetBorderColor"]     = ApiFormBase.prototype.SetBorderColor;
+	ApiFormBase.prototype["SetBackgroundColor"] = ApiFormBase.prototype.SetBackgroundColor;
+	ApiFormBase.prototype["GetText"]            = ApiFormBase.prototype.GetText;
+	ApiFormBase.prototype["Clear"]              = ApiFormBase.prototype.Clear;
+	ApiFormBase.prototype["GetWrapperShape"]    = ApiFormBase.prototype.GetWrapperShape;
+	ApiFormBase.prototype["SetPlaceholderText"] = ApiFormBase.prototype.SetPlaceholderText;
+	ApiFormBase.prototype["SetTextPr"]          = ApiFormBase.prototype.SetTextPr;
+	ApiFormBase.prototype["GetTextPr"]          = ApiFormBase.prototype.GetTextPr;
+	ApiFormBase.prototype["MoveCursorOutside"]  = ApiFormBase.prototype.MoveCursorOutside;
+	ApiFormBase.prototype["GetTag"]             = ApiFormBase.prototype.GetTag;
+	ApiFormBase.prototype["SetTag"]             = ApiFormBase.prototype.SetTag;
+	ApiFormBase.prototype["GetRole"]            = ApiFormBase.prototype.GetRole;
+	ApiFormBase.prototype["SetRole"]            = ApiFormBase.prototype.SetRole;
 
 	ApiTextForm.prototype["IsAutoFit"]           = ApiTextForm.prototype.IsAutoFit;
 	ApiTextForm.prototype["SetAutoFit"]          = ApiTextForm.prototype.SetAutoFit;
@@ -25237,6 +25978,8 @@
 	ApiDateForm.prototype["SetLanguage"] = ApiDateForm.prototype.SetLanguage;
 	ApiDateForm.prototype["GetTime"]     = ApiDateForm.prototype.GetTime;
 	ApiDateForm.prototype["SetTime"]     = ApiDateForm.prototype.SetTime;
+	ApiDateForm.prototype["SetDate"]     = ApiDateForm.prototype.SetDate;
+	ApiDateForm.prototype["GetDate"]     = ApiDateForm.prototype.GetDate;
 	ApiDateForm.prototype["Copy"]        = ApiDateForm.prototype.Copy;
 
 	ApiComboBoxForm.prototype["GetListValues"]       = ApiComboBoxForm.prototype.GetListValues;
@@ -25357,6 +26100,42 @@
 	ApiCustomXmlNode.prototype["UpdateAttribute"] = ApiCustomXmlNode.prototype.UpdateAttribute;
 	ApiCustomXmlNode.prototype["GetClassType"]    = ApiCustomXmlNode.prototype.GetClassType;
 
+	ApiCore.prototype["GetClassType"] = ApiCore.prototype.GetClassType;
+	ApiCore.prototype["SetCategory"] = ApiCore.prototype.SetCategory;
+	ApiCore.prototype["GetCategory"] = ApiCore.prototype.GetCategory;
+	ApiCore.prototype["SetContentStatus"] = ApiCore.prototype.SetContentStatus;
+	ApiCore.prototype["GetContentStatus"] = ApiCore.prototype.GetContentStatus;
+	ApiCore.prototype["SetCreated"] = ApiCore.prototype.SetCreated;
+	ApiCore.prototype["GetCreated"] = ApiCore.prototype.GetCreated;
+	ApiCore.prototype["SetCreator"] = ApiCore.prototype.SetCreator;
+	ApiCore.prototype["GetCreator"] = ApiCore.prototype.GetCreator;
+	ApiCore.prototype["SetDescription"] = ApiCore.prototype.SetDescription;
+	ApiCore.prototype["GetDescription"] = ApiCore.prototype.GetDescription;
+	ApiCore.prototype["SetIdentifier"] = ApiCore.prototype.SetIdentifier;
+	ApiCore.prototype["GetIdentifier"] = ApiCore.prototype.GetIdentifier;
+	ApiCore.prototype["SetKeywords"] = ApiCore.prototype.SetKeywords;
+	ApiCore.prototype["GetKeywords"] = ApiCore.prototype.GetKeywords;
+	ApiCore.prototype["SetLanguage"] = ApiCore.prototype.SetLanguage;
+	ApiCore.prototype["GetLanguage"] = ApiCore.prototype.GetLanguage;
+	ApiCore.prototype["SetLastModifiedBy"] = ApiCore.prototype.SetLastModifiedBy;
+	ApiCore.prototype["GetLastModifiedBy"] = ApiCore.prototype.GetLastModifiedBy;
+	ApiCore.prototype["SetLastPrinted"] = ApiCore.prototype.SetLastPrinted;
+	ApiCore.prototype["GetLastPrinted"] = ApiCore.prototype.GetLastPrinted;
+	ApiCore.prototype["SetModified"] = ApiCore.prototype.SetModified;
+	ApiCore.prototype["GetModified"] = ApiCore.prototype.GetModified;
+	ApiCore.prototype["SetRevision"] = ApiCore.prototype.SetRevision;
+	ApiCore.prototype["GetRevision"] = ApiCore.prototype.GetRevision;
+	ApiCore.prototype["SetSubject"] = ApiCore.prototype.SetSubject;
+	ApiCore.prototype["GetSubject"] = ApiCore.prototype.GetSubject;
+	ApiCore.prototype["SetTitle"] = ApiCore.prototype.SetTitle;
+	ApiCore.prototype["GetTitle"] = ApiCore.prototype.GetTitle;
+	ApiCore.prototype["SetVersion"] = ApiCore.prototype.SetVersion;
+	ApiCore.prototype["GetVersion"] = ApiCore.prototype.GetVersion;
+
+	ApiCustomProperties.prototype["GetClassType"] = ApiCustomProperties.prototype.GetClassType;
+	ApiCustomProperties.prototype["Add"] = ApiCustomProperties.prototype.Add;
+	ApiCustomProperties.prototype["Get"] = ApiCustomProperties.prototype.Get;
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export for internal usage
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25396,6 +26175,8 @@
 	window['AscBuilder'].ApiComboBoxForm    = ApiComboBoxForm;
 	window['AscBuilder'].ApiCheckBoxForm    = ApiCheckBoxForm;
 	window['AscBuilder'].ApiComplexForm     = ApiComplexForm;
+	window['AscBuilder'].ApiCore            = ApiCore;
+	window['AscBuilder'].ApiCustomProperties = ApiCustomProperties;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Area for internal usage
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25671,7 +26452,7 @@
 
 	function private_GetLogicDocument()
 	{
-		return editor.WordControl.m_oLogicDocument;
+		return editor && editor.WordControl ? editor.WordControl.m_oLogicDocument : null;
 	}
 	
 	function LoadFont(fontName)
@@ -26351,6 +27132,7 @@
 	ApiParagraph.prototype.OnChangeParaPr = function(oApiParaPr)
 	{
 		this.Paragraph.Set_Pr(oApiParaPr.ParaPr);
+		this.ParaPr = this.Paragraph.Pr.Copy();
 		oApiParaPr.ParaPr = this.Paragraph.Pr.Copy();
 	};
 	ApiParagraph.prototype.OnChangeTextPr = function(oApiTextPr)
@@ -26412,6 +27194,7 @@
 	ApiRun.prototype.OnChangeTextPr = function(oApiTextPr)
 	{
 		this.Run.Set_Pr(oApiTextPr.TextPr);
+		this.TextPr = this.Run.Pr.Copy();
 		oApiTextPr.TextPr = this.Run.Pr.Copy();
 	};
 	ApiTable.prototype.private_GetImpl = function()
@@ -26421,6 +27204,7 @@
 	ApiTable.prototype.OnChangeTablePr = function(oApiTablePr)
 	{
 		this.Table.Set_Pr(oApiTablePr.TablePr);
+		this.TablePr = this.Table.Pr.Copy();
 		oApiTablePr.TablePr = this.Table.Pr.Copy();
 	};
 	ApiTable.prototype.private_PrepareTableForActions = function()
@@ -26551,11 +27335,13 @@
 	ApiTableRow.prototype.OnChangeTableRowPr = function(oApiTableRowPr)
 	{
 		this.Row.Set_Pr(oApiTableRowPr.RowPr);
+		this.RowPr = this.Row.Pr.Copy();
 		oApiTableRowPr.RowPr = this.Row.Pr.Copy();
 	};
 	ApiTableCell.prototype.OnChangeTableCellPr = function(oApiTableCellPr)
 	{
 		this.Cell.Set_Pr(oApiTableCellPr.CellPr);
+		this.CellPr = this.Cell.Pr.Copy();
 		oApiTableCellPr.CellPr = this.Cell.Pr.Copy();
 	};
 	ApiTextPr.prototype.private_OnChange = function()

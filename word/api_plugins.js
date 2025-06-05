@@ -897,8 +897,7 @@
 		oPluginData["data"] = NewObject["Data"];
 		oPluginData["guid"] = NewObject["ApplicationId"];
 		oPluginData["select"] = bSelect;
-		oPluginData["plugin"] = true;
-		this.asc_addOleObject(oPluginData);
+		this.asc_addOleObject(oPluginData, true);
 	};
 
 

@@ -244,6 +244,13 @@
 		else
 			this.transform = transform;
 	};
+	CTextBoxContent.prototype.GetCalculatedTextPr = function(skipFontCalculator) {
+		if (this.Content.length == 0) {
+			return null;
+		}
+
+		return AscWord.CDocumentContent.prototype.GetCalculatedTextPr.call(this, skipFontCalculator);
+	}
 	
 	function getInternalAlignByPdfType(nPdfType) {
 		let nInternalType = AscCommon.align_Left;

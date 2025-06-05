@@ -3017,7 +3017,7 @@
 							if (null !== sTableInner) {
 								var _str, j;
 								for (let j = 0; j < table.TableColumns.length; j++) {
-									_str = table.TableColumns[j].Name;
+									_str = table.TableColumns[j].getTableColumnName();
 									_type = c_oAscPopUpSelectorType.TableColumnName;
 
 									let newStr;

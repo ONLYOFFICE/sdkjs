@@ -248,6 +248,21 @@
 		this.DemonstrationGoToSlide(nSlideIndex - 1);
 	};
 
+	/**
+	 * Sets the active slide in the editor by index.
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @alias GoToSlide
+	 * @param {number} slideNumber
+	 * @since 9.0.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GoToSlide.js
+	 */
+	Api.prototype["pluginMethod_GoToSlide"] = function (slideNumber) {
+		if (AscFormat.isRealNumber(slideNumber) || slideNumber > 0) {
+			this.goToPage(slideNumber - 1);
+		}
+	};
+
 })(window);
 
 

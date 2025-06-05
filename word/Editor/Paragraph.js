@@ -3104,11 +3104,13 @@ Paragraph.prototype.drawRunContentLines = function(CurPage, pGraphics, drawState
 	var arrRunReviewAreasColors = [];
 	var arrRunReviewAreas       = [];
 	var arrRunReviewRects       = [];
+	let runReviewLineW          = [];
 
 	var oCurForm = null;
 	var arrFormAreasColors = [];
 	var arrFormAreas       = [];
 	var arrFormRects       = [];
+	let formLineW          = [];
 	
 	let drawRunPrReview = !pGraphics.isPrintMode && !pGraphics.isPdf();
 
@@ -3261,6 +3263,7 @@ Paragraph.prototype.drawRunContentLines = function(CurPage, pGraphics, drawState
 					arrRunReviewRects = [];
 					arrRunReviewAreas.push(arrRunReviewRects);
 					arrRunReviewAreasColors.push(new AscWord.CDocumentColorA(Element.r, Element.g, Element.b, 255));
+					runReviewLineW.push(0);
 				}
 
 				arrRunReviewRectsLine.push({
@@ -3404,6 +3407,7 @@ Paragraph.prototype.drawRunContentLines = function(CurPage, pGraphics, drawState
 							arrFormRects = [];
 							arrFormAreas.push(arrFormRects);
 							arrFormAreasColors.push(new AscWord.CDocumentColorA(Element.r, Element.g, Element.b, Element.a));
+							formLineW.push(Element.w);
 						}
 
 						arrFormRectsLine.push({
@@ -3424,15 +3428,15 @@ Paragraph.prototype.drawRunContentLines = function(CurPage, pGraphics, drawState
 		pGraphics.End_Command();
 	}
 	
-	this.drawPolygons(pGraphics, arrRunReviewAreas, arrRunReviewAreasColors, 0, 0);
-	this.drawPolygons(pGraphics, arrFormAreas, arrFormAreasColors, 0, 0);
+	this.drawPolygons(pGraphics, arrRunReviewAreas, arrRunReviewAreasColors, runReviewLineW, 0);
+	this.drawPolygons(pGraphics, arrFormAreas, arrFormAreasColors, formLineW, 0);
 };
 Paragraph.prototype.drawPolygons = function(graphics, areas, colors, lineWidth, shift)
 {
 	for (let i = 0, areaCount = areas.length; i < areaCount; ++i)
 	{
 		graphics.p_color(colors[i].r, colors[i].g, colors[i].b, colors[i].a);
-		graphics.drawPolygonByRects(areas[i], lineWidth, shift);
+		graphics.drawPolygonByRects(areas[i], lineWidth[i], shift);
 	}
 };
 Paragraph.prototype.drawHorizontalBorder = function(graphics, curLine, border, lineAlign, y, isEmptyPara, X_left, X_right, leftMW, rightMW)

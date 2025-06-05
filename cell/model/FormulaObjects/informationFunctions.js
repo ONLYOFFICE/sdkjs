@@ -194,6 +194,10 @@ function (window, undefined) {
 				if (cElementType.array === arg1.type) {
 					arg1 = arg1.getElementRowCol(0, 0);
 				}
+				if (str === "contents") {
+					// Save ref for recursion check
+					AscCommonExcel.g_cCalcRecursion.saveFunctionResult(this.name, arg1);
+				}
 
 				let isRangeArg1 = cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type;
 				if (isRangeArg1 || cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {

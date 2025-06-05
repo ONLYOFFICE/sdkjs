@@ -1043,7 +1043,9 @@ CBlockLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurPa
 			arrRects[i].B += padding;
 		}
 	}
-
+	if (AscCommon.ContentControlTrack.Hover === nType)
+		oLogicDocument.HoverCC.addCC(this);
+	
 	oDrawingDocument.addContentControlTrack(this, nType, arrRects);
 	return true;
 };

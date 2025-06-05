@@ -6885,6 +6885,9 @@ background-repeat: no-repeat;\
 				{
 					Data.Hyperlink.Value = AscCommon.translateManager.getValue("Previous Slide");
 				}
+				else if (Url.indexOf("ppaction://hlinkfile") === 0) {
+					Data.Hyperlink.Value = Url.substring("ppaction://hlinkfile?file=".length);
+				}
 				else
 				{
 					let mask     = "ppaction://hlinksldjumpslide";
@@ -7013,6 +7016,11 @@ background-repeat: no-repeat;\
 			return false;
 		}
 
+		const aSelectedArray = oController.getSelectedArray();
+		if (aSelectedArray.length !== 1) {
+			return false;
+		}
+
 		const oTargetContent = oController.getTargetDocContent();
 		const bCheckInHyperlink = AscCommon.isRealObject(oTargetContent);
 		const bCanAdd = oPresentation.CanAddHyperlink(bCheckInHyperlink);
@@ -7021,9 +7029,12 @@ background-repeat: no-repeat;\
 			return false;
 		}
 
-		return oTargetContent
-			? oPresentation.GetSelectedText(true)
-			: false;
+		if (oTargetContent) {
+			return oPresentation.GetSelectedText(true);
+		}
+
+		const value = AscCommon.isRealObject(aSelectedArray[0].nvSpPr.cNvPr.hlinkClick);
+		return value ? false : null;
 	};
 
 	// HyperProps - объект CHyperlinkProperty
