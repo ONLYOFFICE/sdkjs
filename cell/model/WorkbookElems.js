@@ -5074,6 +5074,34 @@ var g_oFontProperties = {
 		this.num = new AscCommonExcel.Num({f:val});
 	};
 
+
+	/** @enum */
+	var c_oSerAligmentTypes =
+		{
+			Horizontal: 0,
+			Indent: 1,
+			JustifyLastLine: 2,
+			ReadingOrder: 3,
+			RelativeIndent: 4,
+			ShrinkToFit: 5,
+			TextRotation: 6,
+			Vertical: 7,
+			WrapText: 8
+	};
+
+
+	window['Asc']['c_oSerAligmentTypes'] = window['Asc'].c_oSerAligmentTypes = c_oSerAligmentTypes;
+	prot = c_oSerAligmentTypes;
+	prot['Horizontal'] = prot.Horizontal;
+	prot['Indent'] = prot.Indent;
+	prot['JustifyLastLine'] = prot.JustifyLastLine;
+	prot['ReadingOrder'] = prot.ReadingOrder;
+	prot['RelativeIndent'] = prot.RelativeIndent;
+	prot['ShrinkToFit'] = prot.ShrinkToFit;
+	prot['TextRotation'] = prot.TextRotation;
+	prot['Vertical'] = prot.Vertical;
+	prot['WrapText'] = prot.WrapText;
+
 	/** @constructor */
 	function Align(val) {
 		if (null == val) {
