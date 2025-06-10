@@ -7585,6 +7585,10 @@ background-repeat: no-repeat;\
 			{
 				this.WordControl.onPrevPage();
 			}
+			else if (Url.indexOf('ppaction://hlinkfile') == 0)
+			{
+				this.sendEvent("asc_onHyperlinkClick", Url.replace("ppaction://hlinkfile?file=", "file://"));
+			}
 			else
 			{
 				var mask     = "ppaction://hlinksldjumpslide";
