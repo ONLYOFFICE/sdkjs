@@ -91,7 +91,7 @@
 			return this.group.IsUseInDocument();
 		
         let oPage = this.GetParentPage();
-        if (oPage && oPage.drawings.includes(this)) {
+        if (oPage && oPage.drawings.includes(this) && oPage.GetIndex() !== -1) {
             return true;
         }
 
@@ -102,7 +102,8 @@
             }
         }
         
-        return false;	};
+        return false;
+    };
     CPdfDrawingPrototype.prototype.OnBlur = function() {
         AscCommon.History.ForbidUnionPoint();
     };
@@ -453,7 +454,14 @@
     ////////////////////////////
 
     CPdfDrawingPrototype.prototype.WriteToBinary = function(memory) {
-        this.toXml(memory, '');
+        if (Asc.editor.getShapeSerializeType() === "xml") {
+            this.toXml(memory, '');
+        } else {
+            // Write base64 binaryData
+            let writer = new AscCommon.CBinaryFileWriter();
+            writer.WriteSpTreeElem(this);
+            memory.WriteXmlString(writer.GetBase64Memory());
+        }
     };
 
     window["AscPDF"].CPdfDrawingPrototype = CPdfDrawingPrototype;

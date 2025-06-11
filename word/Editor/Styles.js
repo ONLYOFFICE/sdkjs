@@ -8188,7 +8188,10 @@ CStyles.prototype =
 		PassedStyles.push(StyleId);
 
 		var Style = this.Style[StyleId];
-		if (undefined == StyleId || undefined === Style)
+		if (Style && Style.Type !== Type)
+			Style = undefined;
+		
+		if (!StyleId || !Style)
 		{
 			if (true === bUseDefault)
 			{

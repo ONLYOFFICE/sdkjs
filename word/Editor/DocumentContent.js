@@ -4780,6 +4780,49 @@ CDocumentContent.prototype.SetParagraphPr = function(oParaPr)
 		}
 	}
 };
+CDocumentContent.prototype.SetParagraphBidi = function(bidi)
+{
+	if (this.IsApplyToAll())
+	{
+		for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+		{
+			var oItem = this.Content[nIndex];
+			oItem.SetApplyToAll(true);
+			oItem.SetParagraphBidi(bidi);
+			oItem.SetApplyToAll(false);
+		}
+		
+		return;
+	}
+	
+	if (docpostype_DrawingObjects === this.GetDocPosType())
+	{
+		//return this.LogicDocument.DrawingObjects.setParagraphBidi(bidi);
+	}
+	else
+	{
+		if (this.Selection.Use)
+		{
+			var nStartPos = this.Selection.StartPos;
+			var nEndPos   = this.Selection.EndPos;
+			if (nEndPos < nStartPos)
+			{
+				var nTemp = nStartPos;
+				nStartPos = nEndPos;
+				nEndPos   = nTemp;
+			}
+			
+			for (var nIndex = nStartPos; nIndex <= nEndPos; ++nIndex)
+			{
+				this.Content[nIndex].SetParagraphBidi(bidi);
+			}
+		}
+		else
+		{
+			this.Content[this.CurPos.ContentPos].SetParagraphBidi(bidi);
+		}
+	}
+};
 CDocumentContent.prototype.SetParagraphAlign = function(Align)
 {
 	if (true === this.ApplyToAll)

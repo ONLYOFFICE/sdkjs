@@ -1593,6 +1593,24 @@ function CBinaryFileWriter()
                 }
                 oThis.EndRecord();
             }
+            if (themeExt.themeSchemeSchemeEnum)
+            {
+                oThis.StartRecord(8);
+                oThis.WriteExtScheme(themeExt.themeSchemeSchemeEnum);
+                oThis.EndRecord();
+            }
+            if (themeExt.fmtSchemeExSchemeEnum)
+            {
+                oThis.StartRecord(9);
+                oThis.WriteExtScheme(themeExt.fmtSchemeExSchemeEnum);
+                oThis.EndRecord();
+            }
+            if (themeExt.fmtConnectorSchemeExSchemeEnum)
+            {
+                oThis.StartRecord(10);
+                oThis.WriteExtScheme(themeExt.fmtConnectorSchemeExSchemeEnum);
+                oThis.EndRecord();
+            }
         }
     };
     this.WriteFontScheme = function(fontScheme)
@@ -1769,7 +1787,25 @@ function CBinaryFileWriter()
                 }
                 oThis.EndRecord();
             }
+            if (null !==scheme.clrSchemeExtLst.schemeEnum)
+            {
+                oThis.StartRecord(22);
+                oThis.WriteExtSchemeId(scheme.clrSchemeExtLst.schemeEnum);
+                oThis.EndRecord();
+            }
         }
+    };
+    this.WriteExtSchemeId = function(schemeEnum)
+    {
+        oThis.WriteUChar(g_nodeAttributeStart);
+        oThis._WriteUInt2(0, schemeEnum);
+        oThis.WriteUChar(g_nodeAttributeEnd);
+    };
+    this.WriteExtScheme = function(schemeEnum)
+    {
+        oThis.StartRecord(0);
+        oThis.WriteExtSchemeId(schemeEnum);
+        oThis.EndRecord();
     };
     this.WriteClrMapOvr = function(clrmapovr)
     {
@@ -2190,6 +2226,12 @@ function CBinaryFileWriter()
             action = url;
             url = "";
         }
+		else if (url.indexOf("ppaction://hlinkfile") == 0) {
+			// "ppaction://hlinkfile?file=name.ext";
+			const parts = url.split('?file=');
+			action = parts[0];
+			url = parts[1];
+		}
         else
         {
             var mask = "ppaction://hlinksldjumpslide";
@@ -3248,7 +3290,7 @@ function CBinaryFileWriter()
                 }
                 case para_Hyperlink:
                 {
-                    var _hObj = { Value : _elem.GetValue(), tooltip: _elem.GetToolTip()};
+                    var _hObj = { Value : _elem.GetValue(), tooltip: _elem.ToolTip};
                     var _content_len_h = _elem.Content.length;
 
                     for (var hi = 0; hi < _content_len_h; hi++)
@@ -4445,6 +4487,12 @@ function CBinaryFileWriter()
             action = id;
             id = "";
         }
+		else if (id.indexOf("ppaction://hlinkfile") == 0) {
+			// "ppaction://hlinkfile?file=name.ext";
+			const parts = id.split('?file=');
+			action = parts[0];
+			id = parts[1];
+		}
         else
         {
             if(typeof id === "string")

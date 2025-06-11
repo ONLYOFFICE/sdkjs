@@ -43,7 +43,8 @@
 	 */
 	function ParagraphDrawSelectionState(paragraph)
 	{
-		this.paragraph = paragraph
+		this.paragraph     = paragraph;
+		this.logicDocument = paragraph ? paragraph.GetLogicDocument() : null;
 		
 		this.y = 0;
 		this.h = 0;
@@ -131,6 +132,14 @@
 				this.anchoredObjects.push(element);
 			
 			return;
+		}
+		
+		if (element.IsParaEnd()
+			&& this.logicDocument
+			&& this.logicDocument.IsSelectParagraphEndMark
+			&& !this.logicDocument.IsSelectParagraphEndMark())
+		{
+			isSelected = false;
 		}
 		
 		if (isSelected)

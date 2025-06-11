@@ -676,9 +676,13 @@
 			var isViewerTask = oThis.isRepaint;
 			if (oThis.isRepaint)
 			{
-				oThis._paint();
+				let res = oThis._paint();
 				oThis.onUpdateOverlay();
 				oThis.isRepaint = false;
+
+				if (res) {
+					oThis.afterPaintCallbacks();
+				}
 			}
 			else if (oThis.checkPagesLinks())
 			{
@@ -1441,13 +1445,11 @@
 				if (oFormInfo["locked"])
 					oForm.SetLocked(Boolean(oFormInfo["locked"]));
 				
-				if (oFormInfo["curIdxs"])
+				if (Array.isArray(oFormInfo["curIdxs"]) && oFormInfo["curIdxs"].length != 0)
 				{
 					oForm.SetCurIdxs(oFormInfo["curIdxs"]);
 					if (oFormInfo["value"] != null)
-					{
-						oForm._value = oFormInfo["value"];
-					}
+						oForm.SetParentValue(oFormInfo["value"]);
 				}
 				else if (oFormInfo["value"] != null && oForm.GetType() != AscPDF.FIELD_TYPES.button)
 				{
@@ -2160,7 +2162,8 @@
 		};
 		this.canInteract = function() {
 			// не даем взаимодействовать с документом пока не произошла отрисовка
-			return this.scheduledRepaintTimer == null && this.isRepaint != true && this.initPaintDone == true && !this.isCMapLoading && !Asc.editor.getPDFDoc().CollaborativeEditing.Get_GlobalLock();
+			return this.scheduledRepaintTimer == null && this.isRepaint != true && this.initPaintDone == true && !this.isCMapLoading &&
+				(!Asc.editor.getPDFDoc().CollaborativeEditing.Get_GlobalLock() || Asc.editor.isViewMode);
 		};
 		this.getPageDrawingByMouse = function()
 		{
@@ -2204,8 +2207,10 @@
 
 		this.onMouseDown = function(e)
 		{
-			if (oThis.thumbnails) {
+			let oDoc = oThis.getPDFDoc();
+			if (oThis.thumbnails && oThis.thumbnails.isInFocus) {
 				oThis.thumbnails.isInFocus = false;
+				Asc.editor.sendEvent('asc_onCanPastePage', true);
 			}
 
 			Asc.editor.checkInterfaceElementBlur();
@@ -2225,7 +2230,6 @@
 			oThis.isFocusOnThumbnails = false;
 			AscCommon.stopEvent(e);
 
-			let oDoc = oThis.getPDFDoc();
 			oDoc.HideComments();
 
 			var mouseButton = AscCommon.getMouseButton(e || {});
@@ -2953,12 +2957,12 @@
 			
 			if (oDoc.fontLoader.isFontLoadInProgress() || this.IsOpenFormsInProgress || AscCommon.CollaborativeEditing.waitingImagesForLoad || this.isCMapLoading) {
 				this.paint();
-				return;
+				return false;
 			}
 			
 			if (!this.file || !this.file.isValid() || !this.canvas) {
 				this.paint();
-				return;
+				return false;
 			}
 
 			oDoc.UpdatePagesTransform();
@@ -2977,7 +2981,7 @@
 			
 			if (this._checkFontsOnPages(this.startVisiblePage, this.endVisiblePage) == false) {
 				this.paint();
-				return;
+				return false;
 			}
 
 			this.canvas.width = this.canvas.width;
@@ -3139,7 +3143,7 @@
 
 			this.initPaintDone = true;
 
-			this.afterPaintCallbacks();
+			return true;
 		};
 		this.afterPaintCallbacks = function() {
 			this.onAfterPaintCallback.forEach(function(callback) {
@@ -3247,9 +3251,7 @@
 		};
 		this.isLandscapePage = function(nPage) {
 			const angle = this.getPageRotate(nPage);
-			// Углы поворота, указывающие на ландшафтную ориентацию
-			const landscapeAngles = [90, -90, 270, -270];
-			return landscapeAngles.includes(angle);
+			return (0 !== angle % 180);
 		};
 		this.Get_PageLimits = function(nPage) {
 			let oPage = this.file.pages[nPage] || this.file.pages[0];
@@ -4259,6 +4261,9 @@
 		image.requestWidth = nWidthPx;
 		image.requestHeight = nHeightPx;
 
+		if (oFile.type !== 0)
+			return image;
+
 		let ctx = image.getContext('2d');
 
 		this._drawDrawingsOnCtx(nPage, ctx, true);
@@ -4932,20 +4937,20 @@
 			let nRotAngle		= oFile.pages[nPage].Rotate;
 
 			let bNeedEdit = false;
-			bNeedEdit ||= nRotAngle != nOrigRotAngle;
-			bNeedEdit ||= aDrawings.length != 0;
-			bNeedEdit ||= aAnnots.find(function(annot) {
+
+			if (nRotAngle != nOrigRotAngle) bNeedEdit = true;
+			if (aDrawings.length != 0) bNeedEdit = true;
+			if (aAnnots.find(function(annot) {
 				let aReplies = annot.GetReplies();
-
-				return annot.IsChanged() || aReplies.find(function(reply) { return reply.IsChanged()});
-			});
-			bNeedEdit ||= aForms.find(function(form) {
-
+				return annot.IsChanged() || aReplies.find(function(reply) {
+					return reply.IsChanged();
+				});
+			})) bNeedEdit = true;
+			if (aForms.find(function(form) {
 				return form.IsChanged();
-			});
-			bNeedEdit ||= aDeletedObj.length != 0;
-			
-			bNeedEdit &&= nOriginIndex != undefined;
+			})) bNeedEdit = true;
+			if (aDeletedObj.length != 0) bNeedEdit = true;
+			if (bNeedEdit && nOriginIndex !== undefined) bNeedEdit = true;
 
 			return bNeedEdit;
 		}
@@ -5234,20 +5239,21 @@
 			let nRotAngle		= oFile.pages[nPage].Rotate;
 
 			let bNeedEdit = false;
-			bNeedEdit ||= nRotAngle != nOrigRotAngle;
-			bNeedEdit ||= aDrawings.length != 0;
-			bNeedEdit ||= aAnnots.find(function(annot) {
+
+			if (nRotAngle != nOrigRotAngle) bNeedEdit = true;
+			if (aDrawings.length != 0) bNeedEdit = true;
+			if (aAnnots.some(function(annot) {
 				let aReplies = annot.GetReplies();
-
-				return annot.IsChanged() || aReplies.find(function(reply) { return reply.IsChanged()});
-			});
-			bNeedEdit ||= aForms.find(function(form) {
-
+				return annot.IsChanged() || aReplies.some(function(reply) {
+					return reply.IsChanged();
+				});
+			})) bNeedEdit = true;
+			if (aForms.some(function(form) {
 				return form.IsChanged();
-			});
-			bNeedEdit ||= aDeletedObj.length != 0;
-			
-			bNeedEdit &&= nOriginIndex != undefined;
+			})) bNeedEdit = true;
+			if (aDeletedObj.length != 0) bNeedEdit = true;
+
+			if (bNeedEdit && nOriginIndex === undefined) bNeedEdit = false;
 
 			return bNeedEdit;
 		}

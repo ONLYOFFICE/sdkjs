@@ -213,14 +213,18 @@
 		pWriter.WriteRecordPPTY(12, this.validation);
 		
 		// Write commentsPart
-		pWriter.StartRecord(13);
-		pWriter.WriteRecordPPTY(0, this.commentsPart);
-		pWriter.EndRecord();
+		if (this.commentsPart) {
+			pWriter.StartRecord(13);
+			pWriter.WriteRecordPPTY(0, this.commentsPart);
+			pWriter.EndRecord();
+		}
 		
 		// Write windows
-		pWriter.StartRecord(14);
-		pWriter.WriteRecordPPTY(0, this.windows);
-		pWriter.EndRecord();
+		if (this.windows) {
+			pWriter.StartRecord(14);
+			pWriter.WriteRecordPPTY(0, this.windows);
+			pWriter.EndRecord();
+		}
 
 		if (this.themes) {
 			for (let i = 0; i < this.themes.length; i++) {

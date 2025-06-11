@@ -594,7 +594,7 @@
 	/**
 	 * Creates a new custom function.
 	 * The description of the function parameters and result is specified using JSDoc. The <em>@customfunction</em> tag is required in JSDoc.
-	 * Parameters and results can be specified as the <em>number / string / boolean / any / number[][] / string[][] / bobooleanol[][] / any[][]</em> types.
+	 * Parameters and results can be specified as the <em>number / string / boolean / any / number[][] / string[][] / boolean[][] / any[][]</em> types.
 	 * Parameters can be required or optional. A user can also set a default value.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
@@ -8029,6 +8029,32 @@
 
 		return oDocInfo;
 	};
+
+	/**
+	 * Returns the core properties interface for the workbook.
+	 * Use this to view or modify standard metadata such as title, author, and keywords.
+	 *
+	 * @memberof Api
+	 * @returns {ApiCore}
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetCore.js
+	 */
+	Api.prototype.GetCore = function () {
+		return new AscBuilder.ApiCore(this.wbModel.Core);
+	};
+
+	/**
+	 * Returns the custom properties of the workbook.
+	 *
+	 * @memberof Api
+	 * @returns {ApiCustomProperties}
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetCustomProperties.js
+	 */
+	Api.prototype.GetCustomProperties = function () {
+		return new AscBuilder.ApiCustomProperties(this.wbModel.CustomProperties);
+	};
+
 	/**
 	 * Returns the state of sheet visibility.
 	 * @memberof ApiWorksheet
@@ -17727,6 +17753,8 @@
 	Api.prototype["SetFreezePanesType"] = Api.prototype.SetFreezePanesType;
 	Api.prototype["GetFreezePanesType"] = Api.prototype.GetFreezePanesType;
 	Api.prototype["GetDocumentInfo"] = Api.prototype.GetDocumentInfo;
+	Api.prototype["GetCore"] = Api.prototype.GetCore;
+	Api.prototype["GetCustomProperties"] = Api.prototype.GetCustomProperties;
 
 	Api.prototype["AddCustomFunction"] = Api.prototype.AddCustomFunction;
 	Api.prototype["RemoveCustomFunction"] = Api.prototype.RemoveCustomFunction;

@@ -3141,6 +3141,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                             _this.controller.resetSelection();
                             _this.controller.selectObject(oNewChartSpace, 0);
                             _this.controller.updateSelectionState();
+	                          worksheet.setSelectionShape(true);
                             _this.sendGraphicObjectProps();
                             if(aImagesSync.length > 0)
                             {

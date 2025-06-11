@@ -89,3 +89,6 @@ WebAssembly.Memory;
 function grow(){}
 
 var VBArray;
+
+var CreateEmbedObject;
+var FreeEmbedObject;

@@ -889,7 +889,7 @@ CNary.prototype.GetTextOfElement = function(oMathText)
 		{
 			let oAddData	= startChar.GetAdditionalData();
 			let oMetaData	= oAddData.GetMathMetaData();
-			oMetaData.setIsLimitNary();
+			oMetaData.setIsLimitNary(true);
 		}
 
 		let oLastPos = oMathText.AddText(startChar);

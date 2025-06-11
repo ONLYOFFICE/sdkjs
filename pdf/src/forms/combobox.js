@@ -85,10 +85,6 @@
         this.DrawEdit(oGraphicsWord);
     };
     CComboBoxField.prototype.Recalculate = function() {
-        if (this.IsNeedUpdateEditShape()) {
-            this.UpdateEditShape();
-        }
-        
         if (this.IsNeedRecalc() == false)
             return;
 
@@ -415,7 +411,11 @@
 			return false;
 		
 		let doc = this.GetDocument();
-		aChars = AscWord.CTextFormFormat.prototype.GetBuffer(doc.event["change"]);
+		let oKeystrokeTrigger = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke);
+        if (oKeystrokeTrigger) {
+            aChars = AscWord.CTextFormFormat.prototype.GetBuffer(doc.event["change"]);
+        }
+        
 		if (!aChars.length)
 			return false;
 		
@@ -505,7 +505,6 @@
         });
 
         this.SetNeedCommit(false);
-        this.needValidate = true;
     };
 	CComboBoxField.prototype.InsertChars = function(aChars) {
 		this.content.EnterText(aChars);
@@ -678,7 +677,14 @@
         return [];
     };
     CComboBoxField.prototype.SyncValue = function() {
-        this.SetCurIdxs(this.GetParentCurIdxs());
+        const aCurIdxs = this.GetParentCurIdxs();
+        if (aCurIdxs.length != 0) {
+            this.SetCurIdxs(aCurIdxs);
+        }
+        else {
+            this.SetValue(this.GetParentValue());
+        }
+
         this.SetFormatValue(this.GetFormatValue());
         
         this.SetNeedRecalc(true);

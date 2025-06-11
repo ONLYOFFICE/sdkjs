@@ -317,6 +317,7 @@
         this.textAlign = null;
         this.ctrlKey = null;
         this.shiftKey = null;
+        this.ReadingOrder = null;
     }
 
     CellFlags.prototype.clone = function () {
@@ -326,6 +327,7 @@
         oRes.merged = this.merged ? this.merged.clone() : null;
         oRes.textAlign = this.textAlign;
         oRes.verticalText = this.verticalText;
+        oRes.ReadingOrder = this.ReadingOrder;
         return oRes;
     };
     CellFlags.prototype.isMerged = function () {
@@ -333,6 +335,9 @@
     };
 	CellFlags.prototype.getMergeType = function () {
 	    return getMergeType(this.merged);
+	};
+	CellFlags.prototype.getReadingOrder = function () {
+		return this.ReadingOrder;
 	};
 
     function CellBorderObject(borders, mergeInfo, col, row) {
@@ -4637,10 +4642,10 @@
 
 				let rowsCount = this.model.getRowsCount();
 				let colsCount = this.model.getColsCount();
-				if (rowsCount > nMaxPrintRows) {
+				/*if (rowsCount > nMaxPrintRows) {
 					maxCol = colsCount - 1;
 					maxRow = rowsCount - 1;
-				} else {
+				} else {*/
 					var range = new asc_Range(0, 0, colsCount - 1, rowsCount - 1);
 					var maxCell = this._calculateMaxPrintRange(range);
 					var maxCol = maxCell.col;
@@ -4659,7 +4664,7 @@
 						maxCol = Math.max(maxCol, maxCell.col);
 						maxRow = Math.max(maxRow, maxCell.row);
 					}
-				}
+				//}
 
 				//TODO print area
 				wScale = doCalcScaleWidth(0, maxCol);
@@ -6310,7 +6315,7 @@
 		if (this.getRightToLeft()) {
 			rect._x = this.getCtxWidth(ctx) - rect._x - rect._width;
 		}
-		rect._x = this._calcTextHorizPos(rect._x, rect._x + rect._width, tm, cellHA);
+		rect._x = this._calcTextHorizPos(rect._x, rect._x + rect._width, tm, cellHA, true);
 		rect._y = this._calcTextVertPos(rect._y, rect._height, bl, tm, align.getAlignVertical());
 		var dScale = asc_getcvt(0, 3, this._getPPIX());
 		rect._x *= dScale;
@@ -10348,8 +10353,8 @@
         return tm;
     };
 
-    WorksheetView.prototype._calcTextHorizPos = function (x1, x2, tm, align) {
-        if (this.getRightToLeft()) {
+    WorksheetView.prototype._calcTextHorizPos = function (x1, x2, tm, align, skipRtl) {
+        if (this.getRightToLeft() && !skipRtl) {
 			if (align === AscCommon.align_Right) {
 				align = AscCommon.align_Left;
 			} else if (align === AscCommon.align_Left) {
@@ -13121,8 +13126,19 @@
 
     WorksheetView.prototype.getSelectionName = function (bRangeText) {
         if (this.isSelectOnShape) {
+					const oController = this.objectRender.controller;
+					if (oController && oController.selectedObjects.length === 1) {
+							const oGroupSelection = oController.selection.groupSelection;
+							if (oGroupSelection) {
+								if (oGroupSelection.selectedObjects.length === 1) {
+									return oGroupSelection.selectedObjects[0].getObjectName();
+								}
+							} else {
+								return oController.selectedObjects[0].getObjectName();
+							}
+					}
             return " ";
-        }	// Пока отправим пустое имя(с пробелом, пустое не воспринимаем в меню..) ToDo
+        }
 
         var selection = this.model.selectionRange || this.model.copySelection;
         var ar = selection.getLast();
@@ -22125,10 +22141,10 @@
 			//если тело колоки заполнено УФ, тогда расширяем его диапазон на ячейки ниже
 			//ms ещё изменяет УФ при уменьшении ф/т, что мне кажется может мешать работе, пока не реализую
 			if (tablePart && newRange.containsRange(oldRange)) {
-				var aRules = t.model.aConditionalFormattingRules;
-				if (aRules && aRules.length) {
+				var aRules = t.model.getConditionalFormattingRules();
+				if (aRules) {
 
-					for (var j = 0; j < aRules.length; j++) {
+					for (var j in aRules) {
 						var oRule = aRules[j];
 						var ranges = oRule && oRule.ranges;
 						if (ranges) {
@@ -25487,13 +25503,6 @@
 		var selection = t.model.selectionRange.getLast();
 		var activeCell = t.model.selectionRange.activeCell.clone();
 
-		/*var temp = this.model.aConditionalFormattingRules[0].clone();
-		temp.id = this.model.aConditionalFormattingRules[0].id;
-		//temp.ranges.push(Asc.Range(1,1,1,1));
-
-		this.deleteCF([temp]);
-		return;*/
-
 		var revertSelection = function() {
 			t.cleanSelection();
 			t.model.selectionRange.getLast().assign2(props.selection.clone());
@@ -26255,8 +26264,8 @@
 				for (j = 0; j < deleteIdArr.length; j++) {
 					var _oRule = t.model.getCFRuleById(deleteIdArr[j]);
 					var _ranges;
-					if (_oRule && _oRule.val) {
-						_ranges = _oRule.val.ranges;
+					if (_oRule) {
+						_ranges = _oRule.ranges;
 					}
 					t.model.deleteCFRule(deleteIdArr[j], true);
 
@@ -26298,14 +26307,14 @@
 				if (_rule.priority === null) {
 					_rule.priority = 1;
 					//двигаем приоритет у всех остальных и добавляем их в список измененных
-					if (t.model.aConditionalFormattingRules) {
-						for (i = 0; i < t.model.aConditionalFormattingRules.length; i++) {
-							var _id = t.model.aConditionalFormattingRules[i].id;
-							var oRule = t.model.aConditionalFormattingRules[i].clone();
+					if (t.model.isConditionalFormattingRules()) {
+						t.model.forEachConditionalFormattingRules(function (val) {
+							var _id = val.id;
+							var oRule = val.clone();
 							oRule.id = _id;
 							oRule.priority++;
 							arr[nActive].push(oRule);
-						}
+						})
 					}
 				}
 				if (_rule.ranges === null) {
@@ -26669,9 +26678,9 @@
 	WorksheetView.prototype.getMaxRowColWithData = function (doNotRecalc) {
 		let modelRowsCount = this.model.getRowsCount();
 		let modelColsCount = this.model.getColsCount();
-		if (modelRowsCount > nMaxPrintRows) {
+		/*if (modelRowsCount > nMaxPrintRows) {
 			return null;
-		}
+		}*/
 		let range = new asc_Range(0, 0, modelColsCount - 1, modelRowsCount - 1);
 		let maxCell = this._calculateMaxPrintRange(range, doNotRecalc/*, modelRowsCount > nMaxPrintRows*/);
 		/*if (!maxCell) {

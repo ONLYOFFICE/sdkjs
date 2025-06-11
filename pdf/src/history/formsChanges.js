@@ -1749,7 +1749,7 @@ CChangesPDFCheckboxExpValue.prototype.Type = AscDFH.historyitem_Pdf_Checkbox_Exp
 CChangesPDFCheckboxExpValue.prototype.private_SetValue = function(Value)
 {
 	let oField = this.Class;
-	oField.SetExportValue(Value);
+	oField._exportValue = Value;
 };
 
 

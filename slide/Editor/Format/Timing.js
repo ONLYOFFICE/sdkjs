@@ -11769,6 +11769,21 @@
     function CTexturesCache() {
         this.map = {};
     }
+		CTexturesCache.prototype.clearImageCache = function(sImageSrc) {
+			for (let sId in this.map) {
+				const oDrawing = AscCommon.g_oTableId.Get_ById(sId);
+				if (oDrawing && oDrawing.getAllRasterImages) {
+					const arrImages = [];
+					oDrawing.getAllRasterImages(arrImages);
+					for (let i = 0; i < arrImages.length; i++) {
+						if (AscCommon.getFullImageSrc2(arrImages[i]) === sImageSrc) {
+							this.removeTexture(sId);
+							break;
+						}
+					}
+				}
+			}
+		};
     CTexturesCache.prototype.checkTexture = function (oDrawing, fScale, bMorph, bCheckSize, oAnimParams, bNoText, oBrushPen) {
         let bCreate = false;
 				const sId = oDrawing.GetId();
@@ -11888,7 +11903,9 @@
 			this.generateParagraphCaches()
         this.collectHiddenObjects();
     }
-
+		CAnimationDrawer.prototype.clearImageCache = function(sImageSrc) {
+			this.texturesCache.clearImageCache(sImageSrc);
+		};
     CAnimationDrawer.prototype.clearSandwiches = function () {
         this.sandwiches = {};
     };
@@ -11958,7 +11975,11 @@
         oSlide.draw(oGraphics);
         oGraphics.RestoreGrState();
 
-        oSlide.getDrawingDocument().m_oWordControl.DemonstrationManager.CheckWatermarkInternal(oGraphics.m_oContext, oRect);
+				const oDemonstrationManager = oSlide.getDrawingDocument().m_oWordControl.DemonstrationManager;
+				if (oDemonstrationManager) {
+					oDemonstrationManager.CheckWatermarkInternal(oGraphics.m_oContext, oRect);
+					oDemonstrationManager.CheckAnnotationsInternal(oGraphics, oSlide);
+				}
     };
     CAnimationDrawer.prototype.isDrawingVisible = function(sDrawingId, oSandwich) {
         oSandwich = oSandwich || this.getSandwich(sDrawingId);
@@ -12230,6 +12251,9 @@
         this.timer = new CAnimationTimer(this);
         this.drawer = drawer;
     }
+		CAnimationPlayer.prototype.clearImageCache = function(sImageSrc) {
+			this.animationDrawer.clearImageCache(sImageSrc);
+		};
     CAnimationPlayer.prototype.createGraphics = function (oCanvas, oRect) {
         return this.animationDrawer.createGraphics(oCanvas, oRect);
     };

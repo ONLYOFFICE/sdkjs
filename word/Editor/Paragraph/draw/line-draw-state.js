@@ -314,7 +314,7 @@
 			if (!form.IsMainForm())
 				form = form.GetMainForm();
 			
-			if (form.IsFormRequired() && this.logicDocument.IsHighlightRequiredFields() && !this.Graphics.isPrintMode)
+			if (form.IsFormRequired() && form.CheckOFormUserMaster() && this.logicDocument.IsHighlightRequiredFields() && !this.Graphics.isPrintMode)
 				formBorder = this.logicDocument.GetRequiredFieldsBorder();
 			else if (form.GetFormPr().GetBorder())
 				formBorder = form.GetFormPr().GetBorder();

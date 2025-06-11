@@ -765,8 +765,8 @@
 		}
 		return res;
 	};
-	CConditionalFormattingRule.prototype.getFormulaCellIs = function () {
-		return null === this.text && this.aRuleElements[1];
+	CConditionalFormattingRule.prototype.getFormulaCellIs = function (opt_getFirstRule) {
+		return null === this.text && this.aRuleElements[opt_getFirstRule ? 0 : 1];
 	};
 	CConditionalFormattingRule.prototype.cellIs = function (operator, cell, v1, v2) {
 		if (operator === AscCommonExcel.ECfOperator.Operator_beginsWith ||
@@ -1113,14 +1113,12 @@
 			var isActive = true, sheet;
 			for (var i = 0; i < wb.aWorksheets.length; i++) {
 				if (i !== wb.nActive) {
-					wb.aWorksheets[i].aConditionalFormattingRules.forEach(function (item) {
-						if (item.id === t.id) {
-							isActive = false;
-						}
-					});
+					if (wb.aWorksheets[i].getCFRuleById(t.id)) {
+						isActive = false;
+					}
 					if (!isActive) {
 						sheet = wb.aWorksheets[i];
-						break;
+						return true;
 					}
 				}
 			}

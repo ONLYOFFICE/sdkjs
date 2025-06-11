@@ -1626,6 +1626,80 @@
 		return oDocInfo;
 	};
 
+	/**
+	 * Returns the core properties interface for the current presentation.
+	 * Use this to view or modify standard metadata such as title, author, and keywords.
+	 *
+	 * @memberof ApiPresentation
+	 * @returns {ApiCore}
+	 * @typeofeditors ["CPE"]
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetCore.js
+	 */
+	ApiPresentation.prototype.GetCore = function () {
+		return new AscBuilder.ApiCore(this.Presentation.Core);
+	};
+
+	/**
+	 * Returns the custom properties of the presentation.
+	 *
+	 * @memberof ApiPresentation
+	 * @returns {ApiCustomProperties}
+	 * @typeofeditors ["CPE"]
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetCustomProperties.js
+	 */
+	ApiPresentation.prototype.GetCustomProperties = function () {
+		return new AscBuilder.ApiCustomProperties(this.Presentation.CustomProperties);
+	};
+
+	/**
+	* Adds a math equation to the current document.
+	* @memberof ApiPresentation
+	* @typeofeditors ["CPE"]
+	* @param {string} sText - The math equation text.
+	* @param {string} sFormat - The math equation format. Possible values are "unicode" and "latex".
+	* @returns {boolean}
+	* @since 9.0.0
+	* @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/AddMathEquation.js
+	*/
+	ApiPresentation.prototype.AddMathEquation = function (sText, sFormat) {
+		if (!Asc.editor) {
+			return false;
+		}
+
+		Asc.editor.addBuilderFont('Cambria Math');
+		Asc.editor.loadBuilderFonts(insertMathEquation);
+
+		function insertMathEquation() {
+			const format = AscBuilder.GetStringParameter(sFormat, "unicode");
+			const text = AscBuilder.GetStringParameter(sText, "");
+
+			const logicDocument = Asc.editor.getLogicDocument();
+			logicDocument.RemoveBeforePaste();
+			logicDocument.RemoveSelection();
+
+			const mathPr = new AscCommonWord.MathMenu(c_oAscMathType.Default_Text, logicDocument.GetDirectTextPr());
+			mathPr.SetText(text);
+
+			logicDocument.AddToParagraph(mathPr);
+
+			const targetDocContent = editor.getGraphicController().getSelectedArray()[0].txBody.content;
+			const info = new CSelectedElementsInfo();
+			targetDocContent.GetSelectedElementsInfo(info);
+
+			const paraMath = info.GetMath();
+			if (!paraMath) {
+				return;
+			}
+
+			paraMath.ConvertView(false, 'latex' === format ? Asc.c_oAscMathInputType.LaTeX : Asc.c_oAscMathInputType.Unicode);
+
+			const graphicController = Asc.editor.getGraphicController();
+			graphicController.startRecalculate();
+		}
+
+		return true;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
     //
     // ApiMaster
@@ -3056,6 +3130,35 @@
 
         return false;
     };
+
+	/**
+	 * Adds a comment to the current slide.
+	 *
+	 * @typeofeditors ["CPE"]
+	 * @memberof ApiSlide
+	 * @param {string} text - The text of the comment (required).
+	 * @param {string} author - The author of the comment (optional, defaults to the current user name).
+	 * @param {string} userId - The user ID of the comment author (optional, defaults to the current user ID).
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/AddComment.js
+	 */
+	ApiSlide.prototype.AddComment = function (text, author, userId) {
+		if (!text || typeof text !== 'string') return false;
+
+		const currentDate = new Date();
+
+		const commentData = new AscCommon.CCommentData();
+		commentData.m_sText = text;
+		commentData.m_sUserName = author || AscCommon.UserInfoParser.getCurrentName();
+		commentData.m_sUserId = userId || Asc.editor.documentUserId;
+		commentData.m_sOOTime = currentDate.getTime().toString();
+		commentData.m_nTimeZoneBias = currentDate.getTimezoneOffset();
+		commentData.m_sTime = (currentDate.getTime() - currentDate.getTimezoneOffset() * 60 * 1000).toString();
+		commentData.m_sGuid = AscCommon.CreateGUID();
+
+		const comment = this.Slide.presentation.AddComment(commentData);
+		return Boolean(comment);
+	};
 
     /**
      * Removes objects (image, shape or chart) from the current slide.
@@ -5125,6 +5228,7 @@
     ApiPresentation.prototype["GetHeight"]                = ApiPresentation.prototype.GetHeight;
     ApiPresentation.prototype["GetAllComments"]           = ApiPresentation.prototype.GetAllComments;
     ApiPresentation.prototype["GetDocumentInfo"]          = ApiPresentation.prototype.GetDocumentInfo;
+    ApiPresentation.prototype["AddMathEquation"]          = ApiPresentation.prototype.AddMathEquation;
     ApiPresentation.prototype["SlidesToJSON"]             = ApiPresentation.prototype.SlidesToJSON;
     ApiPresentation.prototype["ToJSON"]                   = ApiPresentation.prototype.ToJSON;
     ApiPresentation.prototype["GetAllOleObjects"]         = ApiPresentation.prototype.GetAllOleObjects;
@@ -5132,6 +5236,8 @@
     ApiPresentation.prototype["GetAllShapes"]             = ApiPresentation.prototype.GetAllShapes;
     ApiPresentation.prototype["GetAllImages"]             = ApiPresentation.prototype.GetAllImages;
     ApiPresentation.prototype["GetAllDrawings"]           = ApiPresentation.prototype.GetAllDrawings;
+    ApiPresentation.prototype["GetCore"]                  = ApiPresentation.prototype.GetCore;
+    ApiPresentation.prototype["GetCustomProperties"]      = ApiPresentation.prototype.GetCustomProperties;
 
     ApiMaster.prototype["GetClassType"]                   = ApiMaster.prototype.GetClassType;
     ApiMaster.prototype["GetLayout"]                      = ApiMaster.prototype.GetLayout;
@@ -5216,6 +5322,7 @@
     ApiSlide.prototype["GetClassType"]                    = ApiSlide.prototype.GetClassType;
     ApiSlide.prototype["RemoveAllObjects"]                = ApiSlide.prototype.RemoveAllObjects;
     ApiSlide.prototype["AddObject"]                       = ApiSlide.prototype.AddObject;
+    ApiSlide.prototype["AddComment"]                      = ApiSlide.prototype.AddComment;
     ApiSlide.prototype["RemoveObject"]                    = ApiSlide.prototype.RemoveObject;
     ApiSlide.prototype["SetBackground"]                   = ApiSlide.prototype.SetBackground;
     ApiSlide.prototype["GetVisible"]                      = ApiSlide.prototype.GetVisible;

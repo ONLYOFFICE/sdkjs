@@ -5834,10 +5834,9 @@ function (window, undefined) {
 		}
 
 		var collaborativeEditing = this.wb.oApi.collaborativeEditing;
-		var cfRule = oModel.getCFRuleById(Data.id);
-		if (cfRule && cfRule.val) {
+		let cfRule = oModel.getCFRuleById(Data.id, true)
+		if (cfRule) {
 			var value = bUndo ? Data.from : Data.to;
-			cfRule = cfRule.val;
 
 			switch (Type) {
 				case AscCH.historyitem_CFRule_SetAboveAverage: {

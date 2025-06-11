@@ -1423,7 +1423,20 @@
                 }
                 this.checkShowMediaControlOnSelect();
                 if (!object.IsFreeText || !object.IsFreeText() || !object.IsInTextBox()) {
-                    oDoc.SetMouseDownObject(object, this.selectedObjects.length == 0);
+                    let oAcitveObj = oDoc.GetActiveObject();
+                    if (oAcitveObj) {
+                        let oPrev = this.selectedObjects[0];
+
+                        // edit field shape
+                        if (object.IsDrawing() && object.IsEditFieldShape() && oAcitveObj == object.GetEditField()) {
+                            oDoc.SetMouseDownObject(oPrev && oPrev.GetEditField() || null, false);
+                            oDoc.activeForm = oPrev && oPrev.GetEditField() || null;
+                        }
+                        // other objects
+                        else if (oAcitveObj == object) {
+                            oDoc.SetMouseDownObject(oPrev || null, false);
+                        }
+                    }
                 }
                 return;
             }

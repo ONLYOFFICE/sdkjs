@@ -832,6 +832,13 @@
 									if (oDD) {
 										var MMData = new AscCommon.CMouseMoveData();
 										var Coords = oDD.ConvertCoordsToCursorWR(x, y, pageIndex, null);
+
+										if (Asc.editor.isPdfEditor()) {
+											let oPoint = AscPDF.GetGlobalCoordsByPageCoords(x * g_dKoef_mm_to_pt, y * g_dKoef_mm_to_pt, pageIndex);
+											Coords.X = oPoint.X;
+											Coords.Y = oPoint.Y;
+										}
+
 										MMData.X_abs = Coords.X;
 										MMData.Y_abs = Coords.Y;
 										MMData.Type = Asc.c_oAscMouseMoveDataTypes.Hyperlink;
@@ -2781,35 +2788,7 @@
 
 
 				setParagraphBidi: function (isRtl) {
-					let oTargetContent = this.getTargetDocContent(false, true);
-					if (!oTargetContent) {
-						return [];
-					}
-					let paragraphs = [];
-					oTargetContent.GetCurrentParagraph(false, paragraphs, {});
-					for (let i = 0; i < paragraphs.length; ++i)
-					{
-						let paragraph = paragraphs[i];
-						let isRtlParagraph = paragraph.GetParagraphBidi();
-						paragraph.SetParagraphBidi(isRtl);
-						if(isRtl !== isRtlParagraph)
-						{
-							let jc = paragraph.GetParagraphAlign();
-							switch (jc)
-							{
-								case AscCommon.align_Left :
-								{
-									paragraph.SetParagraphAlign(AscCommon.align_Right);
-									break;
-								}
-								case AscCommon.align_Right:
-								{
-									paragraph.SetParagraphAlign(AscCommon.align_Left);
-									break;
-								}
-							}
-						}
-					}
+					this.applyDocContentFunction(CDocumentContent.prototype.SetParagraphBidi, [isRtl], CTable.prototype.SetParagraphBidi);
 				},
 
 				setParagraphTabs: function (Tabs) {

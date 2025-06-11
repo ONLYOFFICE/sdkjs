@@ -206,69 +206,125 @@
 
 		this.content = CustomXmlCreateContent(strCustomXml, this);
 	};
-	CustomXml.prototype.findElementByXPath = function (xpath)
-	{
-		// add namespace support in the future
-		let arrParts		= xpath.split('/');
-		let currentElement	= this.content;
-		let arrResult		= [];
-		arrParts.shift();
+	CustomXml.prototype.findElementByXPath = function (xpath) {
+		function getDescendantsByTagName(node, tagName) {
+			let result = [];
 
-		for (let i = 0; i < arrParts.length; i++)
-		{
-			let namespaceAndTag,
-				index,
-				tagName,
-				part = arrParts[i];
+			function recurse(current) {
+				for (let i = 0; i < current.childNodes.length; i++)
+				{
+					let child = current.childNodes[i];
+					let nameParts = child.nodeName.split(':');
+					let pureName = nameParts.length > 1 ? nameParts[1] : nameParts[0];
 
-			if (part.includes("*"))
-			{
-				currentElement.childNodes.forEach(function (node) {arrResult.push(node)})
-				return arrResult;
-			}
+					if (pureName === tagName || tagName === '*')
+						result.push(child);
 
-			if (part.includes("@"))
-			{
-				let strAttributeName = part.slice(1);
-
-				return {
-					content: currentElement,
-					attribute: strAttributeName
+					if (child.childNodes && child.childNodes.length)
+						recurse(child);
 				}
 			}
-			else if (part.includes("["))
+
+			recurse(node);
+			return result;
+		}
+
+		function parseSteps(xpath) {
+			let steps = [];
+
+			const marker = '#DOUBLE_SLASH#';
+			let temp = xpath.replace(/\/\//g, function() {return '/' + marker + '/'});
+			let parts = temp.split('/').filter(function(el) {return el !== ""});
+			let deepNext = false;
+
+			for (let i = 0; i < parts.length; i++) {
+				let part = parts[i];
+				if (part === marker) {
+					deepNext = true;
+					continue;
+				}
+				steps.push({ part, deepNext });
+				deepNext = false;
+			}
+			return steps;
+		}
+
+		function findMatchingNodes(elements, steps) {
+			
+			if (steps.length === 0)
+				return elements;
+			
+			let step = steps[0];
+			let part = step.part;
+			let deep = step.deepNext;
+			let restSteps = steps.slice(1);
+
+			let tagName = null;
+			let index = null;
+
+			if (part[0] === '@')
 			{
-				namespaceAndTag				= part.split('[')[0];
-				let partBeforeCloseBracket	= part.split(']')[0];
-				index						= partBeforeCloseBracket.slice(-1) - 1;
+				let attrName = part.slice(1);
+				return elements.map(function (el) {
+					if (el.getAttribute(attrName))
+						return el
+				});
+			}
+
+			if (part === '*')
+			{
+				tagName = '*';
 			}
 			else
 			{
-				namespaceAndTag				= part;
-				index						= 0;
+				let bracketOpen = part.indexOf('[');
+				let bracketClose = part.indexOf(']');
+			
+				if (bracketOpen !== -1 && bracketClose !== -1 && bracketClose > bracketOpen)
+				{
+					let rawTag		= part.slice(0, bracketOpen);
+					let rawIndex	= part.slice(bracketOpen + 1, bracketClose);
+					tagName			= rawTag.includes(':') ? rawTag.split(':')[1] : rawTag;
+					index			= parseInt(rawIndex, 10) - 1;
+				}
+				else
+				{
+					tagName = part.includes(':') ? part.split(':')[1] : part;
+				}
 			}
 
-			tagName = namespaceAndTag.includes(":")
-				? namespaceAndTag.split(':')[1]
-				: namespaceAndTag;
+			let matched = [];
 
-			let matchingChildren = currentElement.childNodes.filter(function (child) {
-				let arr = child.nodeName.split(":");
+			for (let i = 0; i < elements.length; i++)
+			{
+				let el = elements[i];
+				let candidates = deep
+					? getDescendantsByTagName(el, tagName)
+					: el.childNodes.filter(function(child) {
+						let nameParts	= child.nodeName.split(':');
+						let pureName	= nameParts.length > 1 ? nameParts[1] : nameParts[0];
+						return tagName === '*' || pureName === tagName;
+					});
 
-				if (arr.length > 1)
-					return arr[1] === tagName;
+				if (index !== null)
+				{
+					if (index >= 0 && index < candidates.length)
+					{
+						matched.push(candidates[index]);
+					}
+				}
 				else
-					return arr[0] === tagName;
-			});
+				{
+					matched = matched.concat(candidates);
+				}
+			}
 
-			if (matchingChildren.length <= index)
-				return false;
-
-			currentElement = matchingChildren[index];
+			return findMatchingNodes(matched, restSteps);
 		}
 
-		arrResult.push(currentElement);
-		return arrResult;
+		let steps = parseSteps(xpath);
+		let result = findMatchingNodes([this.content], steps);
+		return result;
 	};
 	CustomXml.prototype.deleteAttribute = function(xPath, name)
 	{
@@ -422,9 +478,39 @@
 		{
 			return this.text;
 		};
+		this.getXPath = function ()
+		{
+			let parent		= this.getParent();
+			let parentText	= parent ? parent.getXPath() + "/" : "/";
+			let curNodeName = this.getNodeName();
+			let count		= parent ? parent.getPosOfChilderNode(this) : null;
+			let textOfCount = count !== null ? "[" + count + "]" : "";
+
+			if (!curNodeName)
+				return '';
+
+			return parentText + curNodeName + textOfCount;
+		};
 		this.getChildNodesCount = function()
 		{
 			return this.childNodes.length;
+		};
+		this.getPosOfChilderNode = function(childNode)
+		{
+			if (!childNode || !(childNode instanceof CustomXmlContent) || this.childNodes.length <= 1)
+				return null;
+
+			let childNameNodes = this.childNodes.filter(function(node){return node.nodeName === childNode.nodeName});
+
+			if (childNameNodes.length <= 1)
+				return null;
+
+			for (let i = 0; i < childNameNodes.length; i++)
+			{
+				let node = childNameNodes[i];
+				if (node === childNode)
+					return i + 1;
+			}
 		};
 		this.deleteChild = function (childNode)
 		{

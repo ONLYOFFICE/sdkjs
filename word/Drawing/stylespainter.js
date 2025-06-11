@@ -318,9 +318,9 @@ CStylesPainter.prototype.get_MergedStyles = function ()
 		if (!logicDocument)
 			return;
 		
-		let isShowParaMarks = _api.get_ShowParaMarks();
-		if (isShowParaMarks)
-			_api.put_ShowParaMarks(false);
+		let isShowParaMarks = _api.ShowParaMarks;
+		if (false !== isShowParaMarks)
+			_api.ShowParaMarks = false;
 		
 		let oldTabStop = AscCommonWord.Default_Tab_Stop;
 		AscCommonWord.Default_Tab_Stop = 1;
@@ -336,8 +336,8 @@ CStylesPainter.prototype.get_MergedStyles = function ()
 		
 		AscCommonWord.Default_Tab_Stop = oldTabStop;
 		
-		if (isShowParaMarks)
-			_api.put_ShowParaMarks(isShowParaMarks);
+		if (false !== isShowParaMarks)
+			_api.ShowParaMarks = isShowParaMarks;
 	};
 	StylePreviewGenerator.prototype._drawStyle = function(_api, graphics, style, styleName)
 	{

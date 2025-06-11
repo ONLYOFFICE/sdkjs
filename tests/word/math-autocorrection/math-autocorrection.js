@@ -1591,6 +1591,7 @@ $(function () {
 		Test("1\\ 2", [["ParaRun", "1\\ 2"]], true, "Check LaTeX words");
 		Test("\\dot{}\\lim\\below{n\\rightarrow\\infty}{\\left(1+\\frac{1}{n}\\right)^n}", [["ParaRun", ""], ["CAccent", "\\dot{}"], ["ParaRun", ""], ["CMathFunc", "\\lim\\below{n\\to\\infty}{\\left(1+\\frac{1}{n}\\right)^n}"],], true, "Check LaTeX words");
 		Test("\\quad \\text { with } \\quad", [["ParaRun", "\\quad"], ["ParaRun", "\\text{ with }"], ["ParaRun", "\\quad"]], true, "Check text mode");
+		Test("\\operatorname{P}_1^2(x)", [["ParaRun", ""], ["CMathFunc", "P_1^2{\\left(x\\right)}"], ["ParaRun", ""]], true, "Check text mode");
 
 		QUnit.module( "accent", function ()
 		{
@@ -1676,6 +1677,8 @@ $(function () {
 			Test("n^(2) ", [["ParaRun", ""], ["CDegree", "n^{\\left(2\\right)}"], ["ParaRun", ""]], true, "Check LaTeX degree");
 			Test("n^{2+1}_y", [["ParaRun", ""], ["CDegreeSubSup", "n_y^{2+1}"], ["ParaRun", ""]], true, "Check LaTeX degree");
 			Test("E^{\\prime}", [["ParaRun", ""], ["CDegree", "E^{\\prime}"], ["ParaRun", ""]], true, "Check LaTeX degree with prime");
+			Test("x_xy", [["ParaRun", ""], ["CDegree", "x_x"], ["ParaRun", "y"]], true, "Check get one letter without {} brackets");
+			Test("x_12", [["ParaRun", ""], ["CDegree", "x_1"], ["ParaRun", "2"]], true, "Check get one number without {} brackets");
 		})
 
 		QUnit.module( "prescript", function ()
@@ -1804,8 +1807,10 @@ $(function () {
 				Test("\\begin{pmatrix}1&2\\\\3&4\\\\\\end{pmatrix}", [["ParaRun", ""], ["CDelimiter", "\\left(\\begin{matrix}1&2\\\\3&4\\\\\\end{matrix}\\right)"]], true, "Check bug #61007 pmatrix");
 				Test("\\left[\\begin{matrix}1&2\\\\3&4\\\\\\end{matrix}\\right]", [["ParaRun", ""], ["CDelimiter", "\\left[\\begin{matrix}1&2\\\\3&4\\\\\\end{matrix}\\right]"]], true, "Check bug #61007 pmatrix");
 				Test("\\begin{matrix}&&\\\\&&\\\\&&\\\\&&\\end{matrix}", [["ParaRun", ""], ["CMathMatrix", "\\begin{matrix}&&\\\\&&\\\\&&\\\\&&\\\\\\end{matrix}"]], true, "Check matrix bug #71892");
-				Test("\\begin{array}{l} n + 1\\end{array}", [["ParaRun", ""], ["CEqArray", "\\matrix{n+1}"]], true, "Check matrix bug #71892");
-				Test("\\begin{cases}\\frac{3 I N}{8} & I<0 \\\\ -\\frac{I N}{8}(N-1) & I>0\\end{cases}", [["ParaRun", ""], ["CDelimiter", '\\left\\{\\begin{matrix}\\frac{3IN}{8}&I<0\\\\-\\frac{IN}{8}\\left(N-1\\right)&I>0\\\\\\end{matrix}\\right.']], true, "Check \\begin{cases} processing");
+				Test("\\begin{array}{l} n + 1\\end{array}", [["ParaRun", ""], ["CMathMatrix", "\\begin{matrix}n+1\\\\\\end{matrix}"]], true, "Check matrix bug #71892");
+				Test("\\begin{cases}\\frac{3 I N}{8} & I<0 \\\\ -\\frac{I N}{8}(N-1) & I>0\\end{cases}", [["ParaRun", ""], ["CDelimiter", '\\left\\{\\begin{matrix}\\frac{3IN}{8}&I<0\\\\-\\frac{IN}{8}\\left(N-1\\right)&I>0\\\\\\end{matrix}\\right.']], true, "Check \\begin{cases} processing");	
+				Test("\\begin{aligned}1\\\\2\\\\3\\end{aligned}", [["ParaRun", ""], ["CMathMatrix", "\\begin{matrix}1\\\\2\\\\3\\\\\\end{matrix}"]], true, "Check matrix bug with aligned type");
+				Test("\\begin{aligned}\\in]\\end{aligned}", [["ParaRun", ""], ["CMathMatrix", "\\begin{matrix}\\in]\\\\\\end{matrix}"]], true, "Check array with close bracket - prevents crashing");
 			})
 
 			QUnit.module( "Check bug #67181", function ()

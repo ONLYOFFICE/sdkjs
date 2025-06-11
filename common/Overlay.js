@@ -838,22 +838,14 @@
     };
     CAutoshapeTrack.prototype.transformPageMatrix = function(m)
     {
-        if(!this.Graphics)
+        if (!this.Graphics)
         {
             return m;
         }
         let t = this.CanvasTransform;
-        if(t)
+        if (t)
         {
-            let t3;
-            if(m)
-            {
-                t3 = m.CreateDublicate();
-            }
-            else
-            {
-                t3 = new AscCommon.CMatrix();
-            }
+            let t3 = m ? m.CreateDublicate() : new AscCommon.CMatrix();
             AscCommon.global_MatrixTransformer.MultiplyAppend(t3, this.Graphics.m_oCoordTransform);
             AscCommon.global_MatrixTransformer.MultiplyAppend(t3, t);
             let oInvCoord = AscCommon.global_MatrixTransformer.Invert(this.Graphics.m_oCoordTransform)
@@ -907,33 +899,25 @@
 
     CAutoshapeTrack.prototype.GetCanvasTransform = function(nPageIndex)
     {
-        if(Asc.editor.isPdfEditor())
+        if (Asc.editor.isPdfEditor())
         {
             let oDocument = Asc.editor.getPDFDoc();
             let oPageTransform = oDocument.pagesTransform[nPageIndex];
-            if(oPageTransform)
+            if (oPageTransform)
             {
-                // if(oPageTransform.normal.GetRotation() === 0)
-                // {
-                //     return null;
-                // }
-                let c = this.Graphics.m_oCoordTransform;
-                let oInvertC = AscCommon.global_MatrixTransformer.Invert(c);
-                let ScaleRetina = new AscCommon.CMatrix();
-                let r = AscCommon.AscBrowser.retinaPixelRatio;
-                AscCommon.global_MatrixTransformer.ScaleAppend(ScaleRetina, r, r);
-                let inchC = (25.4 / Asc.editor.getDocumentRenderer().file.pages[nPageIndex].Dpi);
-                let ScaleInch = new AscCommon.CMatrix();
-                AscCommon.global_MatrixTransformer.ScaleAppend(ScaleInch, inchC, inchC);
-                let ScaleRetinaInv = AscCommon.global_MatrixTransformer.Invert(ScaleRetina);
-                let M = new AscCommon.CMatrix();
-                AscCommon.global_MatrixTransformer.MultiplyAppend(M, ScaleRetinaInv);
-                AscCommon.global_MatrixTransformer.MultiplyAppend(M, oPageTransform.normal);
-                AscCommon.global_MatrixTransformer.MultiplyAppend(M, ScaleInch);
-                let MInvert = AscCommon.global_MatrixTransformer.Invert(M);
-                let oCanvasT = oInvertC.CreateDublicate();
-                AscCommon.global_MatrixTransformer.MultiplyAppend(oCanvasT, MInvert);
-                return oCanvasT;
+                let canvasTransform = AscCommon.global_MatrixTransformer.Invert(this.Graphics.m_oCoordTransform);
+
+                let scaleFactor = (25.4 / Asc.editor.getDocumentRenderer().file.pages[nPageIndex].Dpi);
+                let retinaFactor = 1 / AscCommon.AscBrowser.retinaPixelRatio;
+
+                let pageTransform = new AscCommon.CMatrix();
+                AscCommon.global_MatrixTransformer.ScaleAppend(pageTransform, retinaFactor, retinaFactor);
+                AscCommon.global_MatrixTransformer.MultiplyAppend(pageTransform, oPageTransform.normal);
+                AscCommon.global_MatrixTransformer.ScaleAppend(pageTransform, scaleFactor, scaleFactor);
+
+                let pageTransformInvert = AscCommon.global_MatrixTransformer.Invert(pageTransform);
+                AscCommon.global_MatrixTransformer.MultiplyAppend(canvasTransform, pageTransformInvert);
+                return canvasTransform;
             }
         }
         return null;
@@ -941,7 +925,7 @@
     CAutoshapeTrack.prototype.CheckCanvasTransform = function()
     {
         this.CanvasTransform = this.GetCanvasTransform(this.PageIndex);
-        if(this.CanvasTransform)
+        if (this.CanvasTransform)
         {
             let m = this.CanvasTransform;
             this.m_oContext.setTransform(m.sx,m.shy,m.shx,m.sy,m.tx,m.ty);
@@ -970,6 +954,13 @@
 
         this.Graphics.m_oCoordTransform.tx = _scale * drawPage.left;
         this.Graphics.m_oCoordTransform.ty = _scale * drawPage.top;
+
+        if (Asc.editor.isPdfEditor())
+        {
+            // TODO: Do not use the renderer matrix to calculate logical coordinates!!!
+            this.Graphics.m_oCoordTransform.sx = _scale * (drawPage.right - drawPage.left) / oPage.width_mm;
+            this.Graphics.m_oCoordTransform.sy = _scale * (drawPage.bottom - drawPage.top) / oPage.height_mm;
+        }
 
 
         this.Graphics.globalAlpha = 0.5;

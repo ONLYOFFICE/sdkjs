@@ -47,6 +47,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Start_Merge_Pages]= CChang
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Part_Merge_Pages] = CChangesPDFDocumentPartMergePages;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_End_Merge_Pages]  = CChangesPDFDocumentEndMergePages;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Calc_Order]       = CChangesPDFCalcOrder;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_Locks]            = CChangesPDFDocumentLocks;
 
 function CChangesPDFArrayOfDoubleProperty(Class, Old, New) {
 	AscDFH.CChangesBaseProperty.call(this, Class, Old, New);
@@ -243,7 +244,6 @@ CChangesPDFDocumentAnnotsContent.prototype.Undo = function()
         }
     }
 
-    oDocument.SetMouseDownObject(null);
     oDocument.private_UpdateTargetForCollaboration(true);
 };
 CChangesPDFDocumentAnnotsContent.prototype.Redo = function()
@@ -287,7 +287,6 @@ CChangesPDFDocumentAnnotsContent.prototype.Redo = function()
         }
     }
 
-    oDocument.SetMouseDownObject(null);
     oDocument.private_UpdateTargetForCollaboration(true);
 };
 CChangesPDFDocumentAnnotsContent.prototype.Load = function() {
@@ -331,7 +330,6 @@ CChangesPDFDocumentAnnotsContent.prototype.private_InsertInArrayLoad = function(
         oItem.AddToRedraw();
     }
 
-    oDocument.SetMouseDownObject(null);
     oDocument.private_UpdateTargetForCollaboration(true);
 };
 CChangesPDFDocumentAnnotsContent.prototype.private_RemoveInArrayLoad = function()
@@ -369,7 +367,6 @@ CChangesPDFDocumentAnnotsContent.prototype.private_RemoveInArrayLoad = function(
         oViewer.DrawingObjects.resetSelection();
     }
 
-    oDocument.SetMouseDownObject(null);
     oDocument.private_UpdateTargetForCollaboration(true);
 };
 CChangesPDFDocumentAnnotsContent.prototype.private_GetContentChanges = function() {
@@ -661,7 +658,6 @@ CChangesPDFDocumentDrawingsContent.prototype.Undo = function()
         }
     }
 
-    oDocument.SetMouseDownObject(null);
     oDocument.private_UpdateTargetForCollaboration(true);
 };
 CChangesPDFDocumentDrawingsContent.prototype.Redo = function()
@@ -702,7 +698,6 @@ CChangesPDFDocumentDrawingsContent.prototype.Redo = function()
         }
     }
 
-    oDocument.SetMouseDownObject(null);
     oDocument.private_UpdateTargetForCollaboration(true);
 };
 CChangesPDFDocumentDrawingsContent.prototype.Load = function() {
@@ -741,7 +736,6 @@ CChangesPDFDocumentDrawingsContent.prototype.private_InsertInArrayLoad = functio
         oItem.AddToRedraw();
     }
 
-    oDocument.SetMouseDownObject(null);
     oDocument.private_UpdateTargetForCollaboration(true);
 };
 CChangesPDFDocumentDrawingsContent.prototype.private_RemoveInArrayLoad = function()
@@ -776,7 +770,6 @@ CChangesPDFDocumentDrawingsContent.prototype.private_RemoveInArrayLoad = functio
         oViewer.DrawingObjects.resetSelection();
     }
 
-    oDocument.SetMouseDownObject(null);
     oDocument.private_UpdateTargetForCollaboration(true);
 };
 CChangesPDFDocumentDrawingsContent.prototype.private_GetContentChanges = function() {
@@ -837,7 +830,6 @@ CChangesPDFDocumentPagesContent.prototype.Undo = function() {
     }
 	
 	
-	oDocument.SetMouseDownObject(null);
 	oDrDoc.TargetEnd();
 };
 CChangesPDFDocumentPagesContent.prototype.Redo = function() {
@@ -858,8 +850,6 @@ CChangesPDFDocumentPagesContent.prototype.Redo = function() {
         }
     }
 	
-
-	oDocument.SetMouseDownObject(null);
 	oDrDoc.TargetEnd();
 };
 CChangesPDFDocumentPagesContent.prototype.Load = function()
@@ -1325,4 +1315,43 @@ CChangesPDFCalcOrder.prototype.private_SetValue = function(Value)
 {
 	let oCalcInfo = this.Class;
 	oCalcInfo.ids = Value;
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseProperty}
+ */
+function CChangesPDFDocumentLocks(Class, mergeLock) {
+    this.mergeLock = mergeLock;
+    AscDFH.CChangesBaseProperty.call(this, Class);
+};
+
+CChangesPDFDocumentLocks.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesPDFDocumentLocks.prototype.constructor = CChangesPDFDocumentLocks;
+CChangesPDFDocumentLocks.prototype.Type = AscDFH.historyitem_PDF_Document_Locks;
+
+CChangesPDFDocumentLocks.prototype.WriteToBinary = function(Writer){
+    AscFormat.writeObject(Writer, this.mergeLock);
+};
+
+CChangesPDFDocumentLocks.prototype.ReadFromBinary = function(Reader){
+    this.mergeLock = AscFormat.readObject(Reader);
+};
+
+CChangesPDFDocumentLocks.prototype.Undo = function(){
+    let oDoc = this.Class;
+    oDoc.locks.merge = null;
+};
+
+CChangesPDFDocumentLocks.prototype.Redo = function(){
+    let oDoc = this.Class;
+    oDoc.locks.merge = this.mergeLock;
+};
+CChangesPDFDocumentLocks.prototype.Load = function(){
+    this.Redo();
+    this.RefreshRecalcData();
+};
+CChangesPDFDocumentLocks.prototype.CreateReverseChange = function()
+{
+    return new this.constructor(this.Class, null, null, null, null, null, null);
 };

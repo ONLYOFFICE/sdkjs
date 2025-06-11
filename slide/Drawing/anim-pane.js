@@ -425,10 +425,12 @@
 		return this.spPr.xfrm.extY;
 	};
 	CControl.prototype.getBounds = function () {
-		this.recalculateBounds();
-		this.recalculateTransform();
-		this.recalculateTransformText();
-		return this.bounds;
+		return AscFormat.ExecuteNoHistory(function () {
+			this.recalculateBounds();
+			this.recalculateTransform();
+			this.recalculateTransformText();
+			return this.bounds;
+		}, this, []);
 	};
 	CControl.prototype.convertRelToAbs = function (oPos) {
 		var oAbsPos = { x: oPos.x, y: oPos.y };
@@ -774,8 +776,10 @@
 		this.initStringContent();
 	};
 	CLabel.prototype.initStringContent = function() {
-		this.txBody.checkContentFit(this.getString());
-		this.cachedMaxWidth = this.txBody.content.RecalculateMinMaxContentWidth().Max;
+		AscFormat.ExecuteNoHistory(function () {
+			this.txBody.checkContentFit(this.getString());
+			this.cachedMaxWidth = this.txBody.content.RecalculateMinMaxContentWidth().Max;
+		}, this, []);
 	};
 	CLabel.prototype.canHandleEvents = function () {
 		return false;
@@ -806,8 +810,10 @@
 	};
 
 	CLabel.prototype.getContentOneStringSizes = function () {
-		this.recalculateContent();
-		return this.txBody.getContentOneStringSizes();
+		return AscFormat.ExecuteNoHistory(function () {
+			this.recalculateContent();
+			return this.txBody.getContentOneStringSizes();
+		}, this, []);
 	};
 
 	CLabel.prototype.setLayout = function (dX, dY, dExtX, dExtY) {
@@ -1028,10 +1034,12 @@
 		return sPlayButtonIcon;
 	};
 	CAnimPaneHeader.prototype.checkLayout = function() {
-		if(this.playButton.label.string !== this.getPlayButtonText()) {
-			this.recalculateChildrenLayout();
-			this.onUpdate();
-		}
+		AscFormat.ExecuteNoHistory(function () {
+			if(this.playButton.label.string !== this.getPlayButtonText()) {
+				this.recalculateChildrenLayout();
+				this.onUpdate();
+			}
+		}, this, []);
 	};
 	CAnimPaneHeader.prototype.recalculateChildrenLayout = function () {
 		let gap;
@@ -1425,25 +1433,27 @@
 		return this.cacheLabel(nTime, scale);
 	};
 	CTimeline.prototype.cacheLabel = function (nTime, scale) {
-		var oLabel = new CLabel(this, this.getTimeString(nTime), TIMELINE_LABEL_FONTSIZE, false, AscCommon.align_Center);
-		var oContent = oLabel.txBody.content;
-		oLabel.setLayout(0, 0, TIMELINE_LABEL_WIDTH, this.getHeight());
-		if (this.cachedParaPr) {
-			oContent.Content[0].CompiledPr = this.cachedParaPr;
-		} else {
-			oContent.SetApplyToAll(true);
-			oContent.SetParagraphAlign(AscCommon.align_Center);
-			oContent.SetApplyToAll(false);
-		}
-		oLabel.recalculate();
-		if (!this.cachedParaPr) {
-			this.cachedParaPr = oContent.Content[0].CompiledPr;
-		}
-		var oBaseTexture = oLabel.getAnimTexture(scale);
-		if (oBaseTexture) {
-			this.labels[nTime] = new CAnimTexture(this, oBaseTexture.canvas, oBaseTexture.scale, oBaseTexture.x, oBaseTexture.y);
-		}
-		return this.labels[nTime];
+		return AscFormat.ExecuteNoHistory(function () {
+			var oLabel = new CLabel(this, this.getTimeString(nTime), TIMELINE_LABEL_FONTSIZE, false, AscCommon.align_Center);
+			var oContent = oLabel.txBody.content;
+			oLabel.setLayout(0, 0, TIMELINE_LABEL_WIDTH, this.getHeight());
+			if (this.cachedParaPr) {
+				oContent.Content[0].CompiledPr = this.cachedParaPr;
+			} else {
+				oContent.SetApplyToAll(true);
+				oContent.SetParagraphAlign(AscCommon.align_Center);
+				oContent.SetApplyToAll(false);
+			}
+			oLabel.recalculate();
+			if (!this.cachedParaPr) {
+				this.cachedParaPr = oContent.Content[0].CompiledPr;
+			}
+			var oBaseTexture = oLabel.getAnimTexture(scale);
+			if (oBaseTexture) {
+				this.labels[nTime] = new CAnimTexture(this, oBaseTexture.canvas, oBaseTexture.scale, oBaseTexture.x, oBaseTexture.y);
+			}
+			return this.labels[nTime];
+		}, this, []);
 	};
 	CTimeline.prototype.getTimeString = function (nTime) {
 		if (nTime < 60) {
@@ -1645,36 +1655,40 @@
 	}
 
 	CTimeline.prototype.onPreviewStart = function() {
-		this.tmpScrollOffset = 0;
-		this.setStartTime(0);
+		AscFormat.ExecuteNoHistory(function () {
+			this.tmpScrollOffset = 0;
+			this.setStartTime(0);
 
-		const previewTimings = Asc.editor.WordControl.m_oLogicDocument.previewPlayer.timings;
-		this.demoTiming = previewTimings[0]; // effects are smoothed to follow each other
-		this.rawDemoTiming = previewTimings[1]; // timing with only effects for preview (without smoothing)
+			const previewTimings = Asc.editor.WordControl.m_oLogicDocument.previewPlayer.timings;
+			this.demoTiming = previewTimings[0]; // effects are smoothed to follow each other
+			this.rawDemoTiming = previewTimings[1]; // timing with only effects for preview (without smoothing)
 
-		const oPaneApi = Asc.editor.WordControl.m_oAnimPaneApi;
-		oPaneApi.list.Control.recalculateByTiming(this.rawDemoTiming);
+			const oPaneApi = Asc.editor.WordControl.m_oAnimPaneApi;
+			oPaneApi.list.Control.recalculateByTiming(this.rawDemoTiming);
 
-		oPaneApi.header.Control.recalculateChildrenLayout();
-		oPaneApi.header.OnPaint();
-		oPaneApi.timeline.OnPaint();
-		oPaneApi.list.OnPaint();
-		// this.onUpdate();
+			oPaneApi.header.Control.recalculateChildrenLayout();
+			oPaneApi.header.OnPaint();
+			oPaneApi.timeline.OnPaint();
+			oPaneApi.list.OnPaint();
+			// this.onUpdate();
+		}, this, []);
 	}
 	CTimeline.prototype.onPreviewStop = function() {
-		this.demoTiming = null;
-		this.rawDemoTiming = null;
-		this.tmpScrollOffset = null;
-		this.setStartTime(0);
+		AscFormat.ExecuteNoHistory(function () {
+			this.demoTiming = null;
+			this.rawDemoTiming = null;
+			this.tmpScrollOffset = null;
+			this.setStartTime(0);
 
-		const oPaneApi = Asc.editor.WordControl.m_oAnimPaneApi;
-		oPaneApi.list.Control.recalculateByTiming(this.getTiming());
+			const oPaneApi = Asc.editor.WordControl.m_oAnimPaneApi;
+			oPaneApi.list.Control.recalculateByTiming(this.getTiming());
 
-		oPaneApi.header.Control.recalculateChildrenLayout();
-		oPaneApi.header.OnPaint();
-		oPaneApi.timeline.OnPaint();
-		oPaneApi.list.OnPaint();
-		// this.onUpdate();
+			oPaneApi.header.Control.recalculateChildrenLayout();
+			oPaneApi.header.OnPaint();
+			oPaneApi.timeline.OnPaint();
+			oPaneApi.list.OnPaint();
+			// this.onUpdate();
+		}, this, []);
 	}
 	CTimeline.prototype.onPreview = function(elapsedTicks) {
 		if (this.tmpScrollOffset === null) { return; }
@@ -1868,12 +1882,14 @@
 		this.setLayout(0, 0, this.getWidth(), this.seqList.getHeight());
 	};
 	CSeqListContainer.prototype.recalculateByTiming = function (customTiming) {
-		if (!customTiming) { return; }
-		this.seqList.recalculateChildren(customTiming);
-		this.seqList.recalculateChildrenLayout();
-		this.seqList.parentControl.recalculateChildrenLayout();
-		this.seqList.parentControl.onUpdate();
-		this.seqList.parentControl.drawer.CheckScroll();
+		AscFormat.ExecuteNoHistory(function () {
+			if (!customTiming) { return; }
+			this.seqList.recalculateChildren(customTiming);
+			this.seqList.recalculateChildrenLayout();
+			this.seqList.parentControl.recalculateChildrenLayout();
+			this.seqList.parentControl.onUpdate();
+			this.seqList.parentControl.drawer.CheckScroll();
+		}, this, []);
 	};
 	CSeqListContainer.prototype.onScroll = function () {
 		this.onUpdate();

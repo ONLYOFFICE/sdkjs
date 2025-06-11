@@ -70,34 +70,6 @@ AscFormat.CGroupShape.prototype.getParentObjects = CShape.prototype.getParentObj
 AscFormat.CImageShape.prototype.getParentObjects = CShape.prototype.getParentObjects;
 
 /**
- * @memberof AscFormat.CGraphicObjectBase
- * @param outerShdw
- * @param mainShape
- * @return {CMatrix}
- */
-AscFormat.CGraphicObjectBase.prototype.getShdwTransform = function(outerShdw, mainShape) {
-	var oTransform = new AscCommon.CMatrix();
-	var dist = outerShdw.dist ? outerShdw.dist / 36000 : 0;
-	var dir = outerShdw.dir ? outerShdw.dir : 0;
-	// if(this.extX < mainShape.extX && this.extY < mainShape.extY) {
-	oTransform.tx = dist * Math.cos(AscFormat.cToRad * dir);
-	oTransform.ty = dist * Math.sin(AscFormat.cToRad * dir);
-	// }
-	// else {
-	// 	oTransform.tx = dist * Math.cos(AscFormat.cToRad * dir) - (this.extX - mainShape.extX) / 2.0;
-	// 	oTransform.ty = dist * Math.sin(AscFormat.cToRad * dir) - (this.extY - mainShape.extY) / 2.0;
-	// }
-	if(this.flipH) {
-		oTransform.tx -= this.extX;
-	}
-	if(this.flipV) {
-		oTransform.ty += this.extY;
-	}
-	global_MatrixTransformer.MultiplyAppend(oTransform, mainShape.transform);
-	return  oTransform;
-};
-
-/**
  * Draw editor.
  * @memberof AscFormat.CShape
  */
@@ -752,10 +724,10 @@ AscCommonWord.CPresentationField.prototype.private_GetString = function()
 	var oDateTime;
 	if(typeof this.FieldType === 'string')
 	{
-		// let format;
-		// if (this.vsdxFieldFormat) {
-		// 	format = parseFieldPictureFormat(this.vsdxFieldValue, this.vsdxFieldFormat);
-		// }
+		let format;
+		if (this.vsdxFieldFormat) {
+			format = parseFieldPictureFormat(this.vsdxFieldValue, this.vsdxFieldFormat);
+		}
 		let logicDocument = this.Paragraph && this.Paragraph.GetLogicDocument();
 		const sFieldType = this.FieldType.toUpperCase();
 
@@ -808,7 +780,7 @@ AscCommonWord.CPresentationField.prototype.private_GetString = function()
 		// 	//leave value
 		// }
 		else if ((this.vsdxFieldValue.u === "STR" || !this.vsdxFieldValue.u) && (sFieldType === "INH" || !sFieldType)
-			&& !this.vsdxFieldFormat) {
+			&& (!this.vsdxFieldFormat || "General" === format || "@" === format)) {
 		// else if (this.vsdxFieldValue.u === "STR" && (sFieldType === "INH" || !sFieldType)) {
 			// handle simple values. consider is function is INH value is calculated correctly already
 			// like
@@ -835,10 +807,6 @@ AscCommonWord.CPresentationField.prototype.private_GetString = function()
 		// 	// const oFormat = AscCommon.oNumFormatCache.get(format, AscCommon.NumFormatType.Excel);
 		// 	// sStr =  format._formatToText(val, AscCommon.CellValueType.String, 15, oCultureInfo);
 		// } else {
-		let format;
-		if (this.vsdxFieldFormat) {
-			format = parseFieldPictureFormat(this.vsdxFieldValue, this.vsdxFieldFormat);
-		}
 		const oFormat = AscCommon.oNumFormatCache.get(format, AscCommon.NumFormatType.Excel);
 		sStr =  oFormat._formatToText(val, AscCommon.CellValueType.String, 15, oCultureInfo);
 		// sStr = val + "";

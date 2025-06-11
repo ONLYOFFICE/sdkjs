@@ -8110,6 +8110,27 @@ CTable.prototype.SetParagraphPr = function(oParaPr)
 		this.CurCell.GetContent().SetParagraphPr(oParaPr);
 	}
 };
+CTable.prototype.SetParagraphBidi = function(bidi)
+{
+	if (this.IsCellSelection())
+	{
+		let selectionArray = this.GetSelectionArray();
+		for (let i = 0; i < selectionArray.length; ++i)
+		{
+			let row = this.GetRow([selectionArray[i].Row]);
+			let cell = row.GetCell(selectionArray[i].Cell);
+			
+			let docContent = cell.GetContent();
+			docContent.SetApplyToAll(true);
+			docContent.SetParagraphBidi(bidi);
+			docContent.SetApplyToAll(false);
+		}
+	}
+	else
+	{
+		return this.CurCell.Content.SetParagraphBidi(bidi);
+	}
+};
 CTable.prototype.IncreaseDecreaseFontSize = function(bIncrease)
 {
 	if (this.IsCellSelection())

@@ -2608,7 +2608,7 @@
 		});
 	};
 
-	baseEditorsApi.prototype.asc_addOleObject = function(oPluginData)
+	baseEditorsApi.prototype.asc_addOleObject = function(oPluginData, bPlugin)
 	{
 		if(this.isViewMode || this.isPdfEditor())
 		{
@@ -2623,7 +2623,6 @@
 		let sData      = oPluginData["data"];
 		let sGuid      = oPluginData["guid"];
 		let bSelect    = (oPluginData["select"] === true || oPluginData["select"] === false) ? oPluginData["select"] : true;
-		let bPlugin    = oPluginData["plugin"] === true && !!window.g_asc_plugins;
 		if (typeof sImgSrc === "string" && sImgSrc.length > 0 && typeof sData === "string"
 			&& typeof sGuid === "string" && sGuid.length > 0
 			/*&& AscFormat.isRealNumber(nWidthPix) && AscFormat.isRealNumber(nHeightPix)*/

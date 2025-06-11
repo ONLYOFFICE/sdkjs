@@ -10672,6 +10672,10 @@ CPresentation.prototype.GetCurTiming = function () {
 	return oTiming;
 };
 CPresentation.prototype.CanStartAnimationPreview = function () {
+	if (window['IS_NATIVE_EDITOR']) {
+		return false;
+	}
+
 	var oTiming = this.GetCurTiming();
 	if (!oTiming) {
 		return false;

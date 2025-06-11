@@ -71,10 +71,11 @@
 			}
 		};
 
-		LineInfo.prototype.initStartX = function (lineWidth ,x, maxWidth, align) {
+
+		LineInfo.prototype.initStartX = function (lineWidth, x, maxWidth, align) {
 			var x_ = x;
 			if (align === AscCommon.align_Right) {
-				x_ = x + maxWidth - lineWidth - 1/*px*/;
+				x_ = x + maxWidth - lineWidth - 1;
 			} else if (align === AscCommon.align_Center) {
 				x_ = x + 0.5 * (maxWidth - lineWidth);
 			}
@@ -147,81 +148,35 @@
 			
 			this.font           = null;
 			this.stringRenderer = null;
-			this.charIndex      = 0;
 		}
 		FragmentShaper.prototype = Object.create(AscFonts.CTextShaper.prototype);
 		FragmentShaper.prototype.constructor = FragmentShaper;
+		FragmentShaper.prototype.GetCodePoint = function(oItem)
+		{
+			return oItem.char;
+		};
 		FragmentShaper.prototype.shapeFragment = function(chars, font, stringRenderer, beginIndex) {
 			this.font           = font;
 			this.stringRenderer = stringRenderer;
-			this.charIndex      = beginIndex;
-			
+
 			this.StartString();
-			
-			let char, isNL, isSP;
 			for (let i = 0; i < chars.length; ++i) {
-				
-				char = chars[i];
-				isNL = stringRenderer.codesHypNL[char];
-				isSP = !isNL ? stringRenderer.codesHypSp[char] : false;
-				
+				let char = chars[i];
+				let isNL = stringRenderer.codesHypNL[char];
+				let isSP = !isNL ? stringRenderer.codesHypSp[char] : false;
+
 				if (isNL || isSP) {
 					this.FlushWord();
-					this._handleSpace(char);
+					this.AppendToString({idx: beginIndex + i, char: char});
 				} else {
-					this.AppendToString(char);
+					this.AppendToString({idx: beginIndex + i, char: char});
 				}
 			}
-			this.FlushWord();
-		};
-		FragmentShaper.prototype._handleSpace = function(char) {
-			let st = this.stringRenderer;
-			let _width = this.stringRenderer.drawingCtx.measureChar(null, 0, char).width;
-			
-			st._getCharPropAt(this.charIndex).grapheme = AscFonts.NO_GRAPHEME;
-			st.charWidths[this.charIndex] = _width;
-			st.chars[this.charIndex] = char;
-			++this.charIndex;
-		};
-		FragmentShaper.prototype.FlushGrapheme = function(grapheme, width, codePointCount, isLigature) {
-			if (codePointCount <= 0)
-				return;
-			
-			let st = this.stringRenderer;
-			
-			let _width = asc_round(width * this.font.getSize() / 25.4 * this.stringRenderer.drawingCtx.getPPIY());
 
-			// Make all widths integer values
-			let w = Math.trunc(_width / codePointCount);
-			let r = Math.max(0, _width - w * codePointCount);
-			
-			// TODO: RTL
-			st._getCharPropAt(this.charIndex).grapheme = grapheme;
-			st.charWidths[this.charIndex] = w;
-			st.chars[this.charIndex] = this.Buffer[this.BufferIndex];
-			++this.charIndex;
-			
-			for (let i = 1; i < codePointCount; ++i)
-			{
-				st._getCharPropAt(this.charIndex).grapheme = AscFonts.NO_GRAPHEME;
-				st.charWidths[this.charIndex] = w + (r ? 1 : 0);
-				st.chars[this.charIndex] = this.Buffer[this.BufferIndex + i];
-				++this.charIndex;
-				
-				if (r)
-					--r;
-			}
-			
-			if (this.IsRtlDirection())
-				this.BufferIndex -= codePointCount;
-			else
-				this.BufferIndex += codePointCount;
+			this.FlushWord();
 		};
 		FragmentShaper.prototype.GetFontSlot = function() {
 			return AscWord.fontslot_ASCII;
-		};
-		FragmentShaper.prototype.GetDirection = function(script) {
-			return AscFonts.HB_DIRECTION.HB_DIRECTION_LTR;
 		};
 		FragmentShaper.prototype.GetFontInfo = function() {
 			return {
@@ -230,7 +185,71 @@
 				Style : (this.font.getBold() ? 1 : 0) | (this.font.getItalic() ? 2 : 0)
 			};
 		};
-		
+		FragmentShaper.prototype.FlushGrapheme = function(grapheme, width, codePointCount, isLigature) {
+			if (codePointCount <= 0)
+				return;
+
+			let charIndex = 0;
+
+			if (this.IsRtlDirection())
+			{
+				if (this.BufferIndex - codePointCount < 0)
+					return;
+
+				this.BufferIndex -= codePointCount;
+				charIndex = this.BufferIndex;
+			}
+			else
+			{
+				if (this.BufferIndex + codePointCount - 1 >= this.Buffer.length)
+					return;
+
+				charIndex = this.BufferIndex;
+				this.BufferIndex += codePointCount;
+			}
+			let _width = asc_round(width * this.font.getSize() / 25.4 * this.stringRenderer.drawingCtx.getPPIY());
+
+			let w = Math.trunc(_width / codePointCount);
+			let r = Math.max(0, _width - w * codePointCount);
+
+
+			if (1 === codePointCount)
+			{
+				this.private_HandleItem(this.Buffer[charIndex], grapheme, w);
+			}
+			else
+			{
+				if (this.IsRtlDirection())
+				{
+					this.private_HandleItem(this.Buffer[charIndex], AscFonts.NO_GRAPHEME, w);
+					this.private_HandleItem(this.Buffer[charIndex + codePointCount - 1], grapheme, w);
+				}
+				else
+				{
+					this.private_HandleItem(this.Buffer[charIndex], grapheme, w);
+					this.private_HandleItem(this.Buffer[charIndex + codePointCount - 1], AscFonts.NO_GRAPHEME, w);
+				}
+
+				for (let nIndex = 1; nIndex < codePointCount - 1; ++nIndex)
+				{
+					++charIndex;
+					this.private_HandleItem(this.Buffer[charIndex], AscFonts.NO_GRAPHEME, w + (r ? 1 : 0));
+					if (r)
+						--r;
+				}
+			}
+		};
+		FragmentShaper.prototype.private_HandleItem = function(oItem, grapheme, w) {
+
+			let st = this.stringRenderer;
+			let pr = st._getCharPropAt(oItem.idx);
+			pr.grapheme = grapheme;
+			pr.idx = oItem.idx;
+			st.charWidths[oItem.idx] = w;
+			st.chars[oItem.idx] = oItem.char;
+
+		};
+
 		/**
 		 * Formatted text render
 		 * -----------------------------------------------------------------------------
@@ -242,6 +261,8 @@
 		function StringRender(drawingCtx) {
 			this.drawingCtx = drawingCtx;
 			this.fragmentShaper = new FragmentShaper();
+
+			this.drawState = new TableCellDrawState(this);
 
 			/** @type Array */
 			this.fragments = undefined;
@@ -930,6 +951,8 @@
 			var i, j, fr, fmt, chars, p, p_ = {}, pIndex, startCh;
 			var tw = 0, nlPos = 0, isEastAsian, hpPos = undefined, isSP_ = true, delta = 0;
 			let frShaper = this.fragmentShaper;
+
+			this.drawState.reset(null, null, this.flags, this.angle);
 			
 			function measureFragment(_chars, format) {
 				
@@ -1135,27 +1158,21 @@
 		 * @param {Number} maxWidth
 		 * @param {String} textColor
 		 */
+
 		StringRender.prototype._doRender = function (drawingCtx, x, y, maxWidth, textColor) {
-			var self = this;
-			var ctx = drawingCtx || this.drawingCtx;
-			var zoom = ctx.getZoom();
-			var ppiy = ctx.getPPIY();
-			var align = this.flags ? this.flags.textAlign : null;
-			var i, j, p, p_, strBeg;
-			var n = 0, l = this.lines[0], x1 = l ? this.initStartX(0, l, x, maxWidth) : 0, y1 = y, dx = l ? computeWordDeltaX() : 0;
-			
+			let self = this;
+			let ctx = drawingCtx || this.drawingCtx;
+			let zoom = ctx.getZoom();
+			let ppiy = ctx.getPPIY();
+			this.drawState.reset(drawingCtx, textColor, this.flags, this.angle);
+			let drawState = this.drawState;
+			let align = this.getEffectiveAlign();
+			let i, j, p, p_, strBeg;
+			let n = 0, l = this.lines[0], x1 = l ? this.initStartX(0, l, x, maxWidth) : 0, y1 = y, dx = l ? computeWordDeltaX() : 0;
+
 			ctx.setTextRotated(!!this.angle);
-			
-			function initX(startPos) {
-				var x_ = x;
-				if (align === AscCommon.align_Right) {
-					x_ = x + maxWidth - self._calcLineWidth(startPos) - 1/*px*/;
-				} else if (align === AscCommon.align_Center) {
-					x_ = x + 0.5 * (maxWidth - self._calcLineWidth(startPos));
-				}
-				l.startX = x_;
-				return x_;
-			}
+			self.textColor = textColor;
+
 
 			function computeWordDeltaX() {
 				if (align !== AscCommon.align_Justify || n === self.lines.length - 1) {
@@ -1171,7 +1188,6 @@
 					for (let i = l.beg; i <= l.end; ++i) {
 						let p = self.charProps[i];
 						let isSpace = self.codesHypSp[self.chars[i]];
-
 
 						if (p && p.wrd && isLastWordSpace) {
 							++wordCount;
@@ -1209,58 +1225,48 @@
 				}
 			}
 
-			function renderGraphemes(begin, end, x, y, fontSize) {
-				
-				for (let charPos = begin; charPos < end; ++charPos) {
-					
-					let gr = self._getCharPropAt(charPos).grapheme;
-					if (AscFonts.NO_GRAPHEME !== gr)
-						AscFonts.DrawGrapheme(gr, ctx, x, y, fontSize, ppiy / 25.4);
-
-					x += self.charWidths[charPos];
-				}
-				
-				return x;
-			}
-			
 			function renderFragment(begin, end, prop, angle) {
 				var dh = prop && prop.lm && prop.lm.bl2 > 0 ? prop.lm.bl2 - prop.lm.bl : 0;
 				var dw = self._calcCharsWidth(strBeg, end - 1);
 				var so = prop.font.getStrikeout();
 				var ul = Asc.EUnderline.underlineNone !== prop.font.getUnderline();
 				var isSO = so === true;
-				var fsz, x2, y, lw, dy, i, b, x_, cp;
+				var fsz, x2, y, lw, dy, i, b, cp;
 				var bl = asc_round(l.bl * zoom);
-				
+
 				if (begin > end)
-					return;
-				
+					return 0;
+
 				let fontSize = prop.font.getSize();
 				y = y1 + bl + dh;
+
+				let startX = drawState.x;
+				x1 = startX;
 				if (align !== AscCommon.align_Justify || dx < 0.000001) {
-					renderGraphemes(begin, end, x1, y, fontSize);
+					renderGraphemes(begin, end, drawState.x, y, fontSize);
 				} else {
-					for (i = b = begin, x_ = x1; i < end; ++i) {
+					for (i = b = begin; i < end; ++i) {
 						cp = self.charProps[i];
 						if (cp && cp.wrd && i > b) {
-							renderGraphemes(b, i, x_, y, fontSize);
-							x_ += self._calcCharsWidth(b, i - 1) + dx;
+							x1 = drawState.x;
+							renderGraphemes(b, i, drawState.x, y, fontSize);
+							x1 += self._calcCharsWidth(b, i - 1) + dx;
+							drawState.x = x1;
 							dw += dx;
 							b = i;
 						}
 					}
-					if (i > b) { // draw remainder of text
-						renderGraphemes(b, i, x_, y, fontSize);
+					if (i > b) {
+						renderGraphemes(b, i, drawState.x, y, fontSize);
 					}
 				}
-				
+
 
 				if (isSO || ul) {
-
 					if (angle && window["IS_NATIVE_EDITOR"])
 						ctx.nativeTextDecorationTransform(true);
 
-					x2 = x1 + dw;
+					x2 = startX + dw;
 					fsz = prop.font.getSize();
 					lw = asc_round(fsz * ppiy / 72 / 18) || 1;
 					ctx.setStrokeStyle(prop.c || textColor)
@@ -1270,12 +1276,12 @@
 					dy = dy >> 0;
 					if (ul) {
 						y = asc_round(y1 + bl + prop.lm.d * 0.4 * zoom);
-						ctx.lineHor(x1, y + dy, x2 + 1/*px*/); // ToDo вопрос тут
+						ctx.lineHor(startX, y + dy, x2 + 1);
 					}
 					if (isSO) {
 						dy += 1;
 						y = asc_round(y1 + bl - prop.lm.a * 0.275 * zoom);
-						ctx.lineHor(x1, y - dy, x2 + 1/*px*/); // ToDo вопрос тут
+						ctx.lineHor(startX, y - dy, x2 + 1);
 					}
 					ctx.stroke();
 
@@ -1285,14 +1291,20 @@
 
 				return dw;
 			}
-			
+
+			function renderGraphemes(begin, end, x, y) {
+				drawState.y = y;
+				drawState.beginFragment(begin, end, p_);
+			}
+
+
+			drawState.beginLine(l, x1, y);
 			for (i = 0, strBeg = 0; i < this.chars.length; ++i) {
 				p = this.charProps[i];
 
 				if (p && (p.font || p.nl || p.hp || p.skip > 0)) {
 					if (strBeg < i) {
-						// render fragment
-						x1 += renderFragment(strBeg, i, p_, this.angle);
+						renderFragment(strBeg, i, p_, this.angle);
 						strBeg = i;
 					}
 					if (p.nl) {
@@ -1300,36 +1312,34 @@
 					}
 
 					if (p.font) {
-						// change canvas font style
-						this._setFont(ctx, p.font);
-						ctx.setFillStyle(p.c || textColor);
 						p_ = p;
 					}
 					if (p.skip > 0) {
-						// skip invisible chars
 						j = i + p.skip - 1;
-						x1 += this._calcCharsWidth(i, j);
+						drawState.x += this._calcCharsWidth(i, j);
 						strBeg = j + 1;
 						i = j;
 						continue;
 					}
 					if (p.nl || p.hp) {
-						// begin new line
+						drawState.endLine();
 						y1 += asc_round(l.th * zoom);
 						l = self.lines[++n];
-						x1 = self.initStartX(i, l, x, maxWidth);
+						drawState.x = self.initStartX(i, l, x, maxWidth);
 						dx = computeWordDeltaX();
+						drawState.beginLine(l, drawState.x, y);
 					}
 				}
 			}
 			if (strBeg < i) {
-				// render text remainder
 				renderFragment(strBeg, i, p_, this.angle);
 			}
-		};
 
+			drawState.endLine();
+		};
 		StringRender.prototype.initStartX = function (startPos, l, x, maxWidth, initAllLines) {
-			let align = this.flags ? this.flags.textAlign : null;
+			let align = this.getEffectiveAlign();
+
 			if (initAllLines) {
 				if (this.lines) {
 					for (let i = 0; i < this.lines.length; ++i) {
@@ -1341,7 +1351,6 @@
 				return l.initStartX(this._calcLineWidth(startPos), x, maxWidth, align);
 			}
 		};
-
 		StringRender.prototype.getInternalState = function () {
 			return {
 				/** @type Object */
@@ -1353,7 +1362,6 @@
 				lines: this.lines
 			};
 		};
-
 		StringRender.prototype.restoreInternalState = function (state) {
 			this.flags = state.flags;
 			this.chars = state.chars;
@@ -1362,20 +1370,168 @@
 			this.lines = state.lines;
 			return this;
 		};
-
 		StringRender.prototype._setFont = function (ctx, font) {
+			let oldColor = font.c;
+			if(this.textColor) font.c = this.textColor;
 			ctx.setFont(font, this.angle);
+			font.c = oldColor;
 		};
-		
 		StringRender.prototype._isCombinedChar = function(pos) {
 			let p = this._getCharPropAt(pos);
 			let c = this.chars[pos];
 			return !p.nl && !this.codesSpace[c] && (AscFonts.NO_GRAPHEME === p.grapheme);
 		};
+		StringRender.prototype.getEffectiveAlign = function() {
+			let align = this.flags ? this.flags.textAlign : null;
+			let isRtl = this.drawState.getMainDirection() === AscBidi.TYPE.R;
 
+			if (!isRtl) {
+				return align;
+			}
 
+			if (align === AscCommon.align_Left) {
+				return AscCommon.align_Right;
+			} else if (align === AscCommon.align_Right) {
+				return AscCommon.align_Left;
+			}
+			else if(align === null) {
+				return AscCommon.align_Right;
+			}
+
+			return align;
+		};
 		//------------------------------------------------------------export---------------------------------------------------
 		window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 		window["AscCommonExcel"].StringRender = StringRender;
+
+
+		function TableCellDrawState(stringRender) {
+			this.stringRender = stringRender;
+			this.bidiFlow = new AscWord.BidiFlow(this);
+			this.drawingCtx = this.stringRender.drawingCtx;
+			this.x = 0;
+			this.y = 0;
+			this.baseY = 0;
+			this.zoom = 1;
+			this.ppiy = 96;
+			this.currentFont = null;
+			this.currentColor = null;
+			this.textColor = null;
+			this.angle = 0;
+			this.currentLine = null;
+			this.startIdx = 0;
+		}
+
+
+		TableCellDrawState.prototype.endLine = function() {
+			this.bidiFlow.end();
+		};
+		TableCellDrawState.prototype.getBidiType = function(char, charProp) {
+			if (charProp && charProp.nl) {
+				return AscBidi.TYPE.B;
+			}
+			if (this.stringRender.codesHypSp[char]) {
+				return AscBidi.TYPE.WS;
+			}
+			return  AscBidi.getType(char);
+		};
+		TableCellDrawState.prototype.beginFragment = function(begin, end, prop) {
+			let i = begin;
+			while (i < end) {
+				let charProp = this.stringRender.charProps[i];
+				if (charProp && charProp.skip) {
+					i++;
+					continue;
+				}
+				let char = this.stringRender.chars[i];
+				let bidiType = this.getBidiType(char, charProp);
+
+				this.stringRender._setFont(this.drawingCtx, prop.font);
+				this.drawingCtx.setFillStyle(prop.c || this.stringRender.textColor);
+				// this.handleBidiFlow({
+				// 	charIndex: i,
+				// 	charProp: charProp,
+				// 	fragmentProp: prop
+				// }, bidiType);
+				this.bidiFlow.add({
+					charIndex: i,
+					charProp: charProp,
+					fragmentProp: prop
+				}, bidiType);
+				i++;
+			}
+		};
+
+		TableCellDrawState.prototype.handleBidiFlow = function(data, direction) {
+			let charIndex = data.charIndex;
+			let charProp = data.charProp;
+			let char = this.stringRender.chars[charIndex];
+			let width = this.stringRender.charWidths[charIndex];
+			let grapheme = charProp ? charProp.grapheme : AscFonts.NO_GRAPHEME;
+
+			if (direction === AscBidi.DIRECTION.R && AscBidi.isPairedBracket(char)) {
+				if (grapheme !== AscFonts.NO_GRAPHEME) {
+					grapheme = AscBidi.getPairedBracketGrapheme(grapheme);
+				}
+			}
+
+			let fontSize = data.fragmentProp && data.fragmentProp.font ? data.fragmentProp.font.getSize() : 10;
+			let y = this.y;
+
+			if (grapheme !== AscFonts.NO_GRAPHEME) {
+				AscFonts.DrawGrapheme(grapheme, this.drawingCtx, this.x, y, fontSize, this.ppiy / 25.4);
+			}
+
+			this.x += width;
+		};
+
+		TableCellDrawState.prototype.beginLine = function(line, x, y) {
+			this.currentLine = line;
+			this.x = x;
+			this.y = y;
+			this.baseY = y;
+
+			this.bidiFlow.begin(this.getMainDirection() === AscBidi.TYPE.R);
+		};
+
+
+
+		TableCellDrawState.prototype.reset = function(drawingCtx, textColor, flags, angle) {
+			this.drawingCtx = drawingCtx || this.stringRender.drawingCtx;
+			this.x = 0;
+			this.y = 0;
+			this.baseY = 0;
+			this.currentFont = null;
+			this.currentColor = null;
+			this.currentLine = null;
+			this.startIdx = 0;
+			this.textColor = textColor || null;
+			this.angle = angle || 0;
+			this.zoom = this.drawingCtx.getZoom();
+			this.ppiy = this.drawingCtx.getPPIY();
+		};
+		TableCellDrawState.prototype.getMainDirection = function() {
+			let readingOrder = this.stringRender.flags ? this.stringRender.flags.getReadingOrder() : null;
+			if (readingOrder === 1) {
+				return AscBidi.TYPE.L;
+			} else if (readingOrder === 2) {
+				return AscBidi.TYPE.R;
+			}
+			for (let i = 0; i < this.stringRender.chars.length; ++i) {
+				let char = this.stringRender.chars[i];
+				let type = AscBidi.getType(char);
+				if (type & AscBidi.FLAG.STRONG) {
+					if (type & AscBidi.FLAG.RTL) {
+						return AscBidi.TYPE.R;
+					} else {
+						return AscBidi.TYPE.L;
+					}
+				}
+			}
+
+			return AscBidi.TYPE.L;
+		};
 	}
+
+
 )(window);

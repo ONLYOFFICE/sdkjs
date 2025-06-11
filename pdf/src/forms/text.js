@@ -394,23 +394,24 @@
 
         AscCommon.History.StartNoHistoryMode();
 
-        AscFonts.FontPickerByCharacter.getFontsByString(displayValue);
-        if (!oDoc.checkFieldFont(this, function() {
-            _t.UpdateDisplayValue(displayValue);
-        })) {
-            AscCommon.History.EndNoHistoryMode();
-            return;
-        }
+        if (isOnOpen == false && typeof(displayValue) == "string" && Asc.editor.isDocumentLoadComplete) {
+            if (!oDoc.checkFieldFont(this, function() {
+                _t.UpdateDisplayValue(displayValue);
+            })) {
+                AscCommon.History.EndNoHistoryMode();
+                return;
+            }
 
-        if (isOnOpen == false && this.GetType() == AscPDF.FIELD_TYPES.text && typeof(displayValue) == "string" && Asc.editor.isDocumentLoadComplete) {
-            let aChars      = displayValue.codePointsArray();
-            let nCharsCount = AscWord.GraphemesCounter.GetCount(aChars, this.content.GetCalculatedTextPr());
-            let nCharLimit  = this.GetCharLimit();
+            if (this.GetType() == AscPDF.FIELD_TYPES.text) {
+                let aChars      = displayValue.codePointsArray();
+                let nCharsCount = AscWord.GraphemesCounter.GetCount(aChars, this.content.GetCalculatedTextPr());
+                let nCharLimit  = this.GetCharLimit();
 
-            if (0 !== nCharLimit && nCharsCount > nCharLimit)
-                aChars.length = nCharLimit;
-            
-            displayValue = String.fromCharCode.apply(null, aChars);
+                if (0 !== nCharLimit && nCharsCount > nCharLimit)
+                    aChars.length = nCharLimit;
+                
+                displayValue = String.fromCharCode.apply(null, aChars);
+            }
         }
 
         if (displayValue === this._displayValue && this._useDisplayValue == true) {
@@ -516,6 +517,9 @@
     CTextField.prototype.DrawMarker = function(oCtx) {
         if (this.IsHidden()) return;  // don't draw if field is hidden
 
+        oCtx.globalAlpha = 1;
+        oCtx.globalCompositeOperation = "source-over";
+        
         // 1. Base parameters
         let oViewer   = editor.getDocumentRenderer();
         let nPage     = this.GetPage();
@@ -614,30 +618,46 @@
         }
 
         // 11. Compute actual axis-aligned bounding box of marker
-        let x1 = markX, y1 = markY;
-        let x2 = markX + markW, y2 = markY + markH;
+        let x1, y1, x2, y2;
         if (angleRad !== 0) {
-            let cos = Math.cos(-angleRad), sin = Math.sin(-angleRad);
-            let rot = (x, y) => {
-                let dx = x - cx, dy = y - cy;
+            let cos = Math.cos(-angleRad);
+            let sin = Math.sin(-angleRad);
+
+            function rot(x, y) {
+                let dx = x - cx;
+                let dy = y - cy;
                 return {
                     x: dx * cos - dy * sin + cx,
                     y: dx * sin + dy * cos + cy
                 };
-            };
+            }
+
             let pts = [
-                rot(markX,           markY),
-                rot(markX + markW,   markY),
-                rot(markX + markW,   markY + markH),
-                rot(markX,           markY + markH)
+                rot(markX, markY),
+                rot(markX + markW, markY),
+                rot(markX + markW, markY + markH),
+                rot(markX, markY + markH)
             ];
-            x1 = Math.min(...pts.map(p => p.x));
-            y1 = Math.min(...pts.map(p => p.y));
-            x2 = Math.max(...pts.map(p => p.x));
-            y2 = Math.max(...pts.map(p => p.y));
+
+            x1 = pts[0].x;
+            y1 = pts[0].y;
+            x2 = pts[0].x;
+            y2 = pts[0].y;
+
+            for (let i = 1; i < pts.length; i++) {
+                if (pts[i].x < x1) { x1 = pts[i].x; }
+                if (pts[i].y < y1) { y1 = pts[i].y; }
+                if (pts[i].x > x2) { x2 = pts[i].x; }
+                if (pts[i].y > y2) { y2 = pts[i].y; }
+            }
+        }
+        else {
+            x1 = markX;
+            y1 = markY;
+            x2 = markX + markW;
+            y2 = markY + markH;
         }
 
-        // 12. Save marker rect in document coordinates
         this._markRect = {
             x1: (x1 - indLeft) / scale,
             y1: (y1 - indTop)  / scale,
@@ -1061,10 +1081,6 @@
         return g_oTextMeasurer.GetHeight();
     };
     CTextField.prototype.Recalculate = function() {
-        if (this.IsNeedUpdateEditShape()) {
-            this.UpdateEditShape();
-        }
-        
         if (this.IsNeedRecalc() == false)
             return;
 
@@ -1586,6 +1602,8 @@
         }
     };
 	CTextField.prototype.EnterText = function(aChars, isOnCorrect) {
+        let doc = this.GetDocument();
+
         let nEnteredCharsCount = aChars.length;
 
         AscCommon.History.ForbidUnionPoint();
@@ -1606,9 +1624,12 @@
         
         if (!this.DoKeystrokeAction(aChars))
 			return false;
-
-		let doc = this.GetDocument();
-		aChars = AscWord.CTextFormFormat.prototype.GetBuffer(doc.event["change"]);
+		
+        let oKeystrokeTrigger = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke);
+        if (oKeystrokeTrigger) {
+            aChars = AscWord.CTextFormFormat.prototype.GetBuffer(doc.event["change"]);
+        }
+		
 		if (0 === aChars.length)
 			return false;
 		
@@ -1739,8 +1760,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CTextField.prototype.Commit = function() {
-        let oDoc        = this.GetDocument();
-        let aFields     = this.GetDocument().GetAllWidgets(this.GetFullName());
+        let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
 
         if (this.DoFormatAction() == false) {
             this.UndoNotAppliedChanges();
@@ -1751,11 +1771,6 @@
         }
         
         let sNewValue = this.GetValue();
-        if (oDoc.event["rc"] == false) {
-            this.needValidate = true;
-            return;
-        }
-
         for (let i = 0; i < aFields.length; i++) {
             if (aFields[i].IsChanged() == false)
                 aFields[i].SetWasChanged(true); // фиксируем, что форма была изменена
@@ -1792,7 +1807,6 @@
         });
 
         this.SetNeedCommit(false);
-        this.needValidate = true;
     };
 	CTextField.prototype.SetAlign = function(nAlignType) {
         AscCommon.History.Add(new CChangesPDFTextFormAlign(this, this._alignment, nAlignType));
@@ -1848,7 +1862,12 @@
         let oDoc = this.GetDocument();
         
         // set invoker field
-        oKeystrokeTrigger && oKeystrokeTrigger.SetCallerField(this);
+        if (!oKeystrokeTrigger) {
+            oDoc.SetEvent({});
+            return true;
+        }
+
+        oKeystrokeTrigger.SetCallerField(this);
 
         let isCanEnter = true;
 
@@ -1869,7 +1888,7 @@
             return {nSelStart : preText.length, nSelEnd : preText.length + selectedText.length};
         }
 
-        let sValue = this.GetValue(true);
+        let sValue      = this.GetValue(true);
         let oSelRange   = GetSelectionRange(this.content.GetElement(0));
         let nSelStart   = oSelRange.nSelStart;
         let nSelEnd     = oSelRange.nSelEnd;
@@ -1897,22 +1916,26 @@
             }
         }
 
-        this.GetDocument().SetEvent({
-            "target":   this.GetFormApi(),
-            "value":    sValue,
-            "change":   aChars.map(function(char) {
+        let oEventPr = {
+            "name":         AscPDF.CFormTrigger.GetName(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke),
+            "target":       this.GetFormApi(),
+            "value":        sValue,
+            "change":       aChars.map(function(char) {
                 return String.fromCharCode(char);
             }).join(""),
-            "willCommit": !!isOnCommit,
-            "selStart": nSelStart,
-            "selEnd": nSelEnd
-        });
+            "willCommit":   !!isOnCommit,
+            "selStart":     nSelStart,
+            "selEnd":       nSelEnd
+        }
 
         if (!sValue && aChars.length == 0) {
+            oEventPr["rc"] = true;
+            oDoc.SetEvent(oEventPr);
             return isCanEnter;
         }
+        
         if (oActionRunScript) {
-            oActionRunScript.RunScript();
+            oActionRunScript.RunScript(oEventPr);
             isCanEnter = oDoc.event["rc"];
         }
 
@@ -1921,12 +1944,6 @@
     CTextField.prototype.DoValidateAction = function(value) {
         let oDoc = this.GetDocument();
 
-        oDoc.SetEvent({
-            "taget": this.GetFormApi(),
-            "rc": true,
-            "value": value
-        });
-
         let oValidateTrigger = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Validate);
         let oValidateScript = oValidateTrigger ? oValidateTrigger.GetActions()[0] : null;
 
@@ -1934,7 +1951,12 @@
             return true;
 
         oDoc.isOnValidate = true;
-        oValidateScript.RunScript();
+        oValidateScript.RunScript({
+            "name": AscPDF.CFormTrigger.GetName(AscPDF.FORMS_TRIGGERS_TYPES.Validate),
+            "target": this.GetFormApi(),
+            "rc": true,
+            "value": value
+        });
         let isValid = oDoc.event["rc"];
         oDoc.isOnValidate = false;
 
@@ -1969,11 +1991,13 @@
 		let oDoc = this.GetDocument();
 		this.UpdateSelectionByEvent();
 		
-		if (this.content.IsSelectionUse())
-			this.content.Remove(nDirection, true, false, false, isCtrlKey);
+        this.content.Remove(nDirection, true, false, false, isCtrlKey);
 
         // скрипт keystroke мог поменять change значение, поэтому
-        this.InsertChars(AscWord.CTextFormFormat.prototype.GetBuffer(oDoc.event["change"].toString()));
+        let oKeystrokeTrigger = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke);
+        if (oKeystrokeTrigger) {
+            this.InsertChars(AscWord.CTextFormFormat.prototype.GetBuffer(oDoc.event["change"].toString()));
+        }
 
         if (false == AscCommon.History.Is_LastPointEmpty()) {
             this._bAutoShiftContentView = true && this.IsDoNotScroll() == false;
@@ -2163,10 +2187,14 @@
 	CTextField.prototype.UpdateSelectionByEvent = function() {
 		// убираем селект, выставляем из nSelStart/nSelEnd
 		let doc = this.GetDocument();
-		
+
 		let selStart = doc.event["selStart"];
 		let selEnd   = doc.event["selEnd"];
 		
+        if (selStart == undefined || selEnd == undefined) {
+            return;
+        }
+        
 		let docPos = this.CalcDocPos(selStart, selEnd);
 		let startPos = docPos.startPos;
 		let endPos   = docPos.endPos;
@@ -2246,21 +2274,26 @@
 	};
 	CTextField.prototype.removeBeforePaste = function() {
 		let pdfDoc = this.GetDocument();
-		
+
 		let selStart = pdfDoc.event["selStart"];
 		let selEnd   = pdfDoc.event["selEnd"];
 		
-		this.content.RemoveSelection();
+        if (selStart !== undefined && selEnd !== undefined) {
+            this.content.RemoveSelection();
 		
-		let docPos = this.CalcDocPos(selStart, selEnd);
-		
-		if (selStart === selEnd) {
-			this.content.SetContentPosition(docPos.startPos, 0, 0);
-		}
-		else {
-			this.content.SetSelectionByContentPositions(docPos.startPos, docPos.endPos);
-			this.content.Remove(-1, true, false, false, false);
-		}
+            let docPos = this.CalcDocPos(selStart, selEnd);
+            
+            if (selStart === selEnd) {
+                this.content.SetContentPosition(docPos.startPos, 0, 0);
+            }
+            else {
+                this.content.SetSelectionByContentPositions(docPos.startPos, docPos.endPos);
+                this.content.Remove(-1, true, false, false, false);
+            }
+        }
+        else if (this.content.IsSelectionUse() && !this.content.IsSelectionEmpty()) {
+            this.content.Remove(-1, true, false, false, false);
+        }
 		
 		this.SetNeedRecalc(true);
 	};

@@ -2093,9 +2093,7 @@ function (window, undefined) {
 	CellEditor.prototype._addNewLine = function () {
 		this._wrapText();
 		let sNewLine = "\n";
-		AscFonts.FontPickerByCharacter.checkText(sNewLine, this, function () {
-			this._addChars( /*codeNewLine*/sNewLine);
-		});
+		this._addChars( /*codeNewLine*/sNewLine);
 	};
 
 	CellEditor.prototype._removeChars = function (pos, length, isRange) {
@@ -3123,7 +3121,9 @@ function (window, undefined) {
 			return true;
 		}
 		this.loadFonts = true;
-		AscFonts.FontPickerByCharacter.checkText(this.input.value, this, function () {
+
+		let checkedText = this.input.value.replace(/[\r\n]+/g, '');
+		AscFonts.FontPickerByCharacter.checkText(checkedText, this, function () {
 			t.loadFonts = false;
 			t.skipTLUpdate = true;
 			var length = t.replaceText(0, t.textRender.getEndOfText(), t.input.value);

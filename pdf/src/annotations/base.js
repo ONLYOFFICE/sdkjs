@@ -283,7 +283,11 @@
         let oViewer = Asc.editor.getDocumentRenderer();
         let oDoc = Asc.editor.getPDFDoc();
         let canChange = !oViewer.IsOpenAnnotsInProgress && oDoc.History.CanAddChanges();
-        if ((this._wasChanged == isChanged && this._wasChanged !== this.IsNeedDrawFromStream()) || !canChange) {
+        if (this._wasChanged == isChanged || !canChange) {
+            if (canChange && this._prevDrawFromStreamState !== this.IsNeedDrawFromStream()) {
+                this.SetDrawFromStream(!isChanged)
+            }
+            
             return;
         }
 
@@ -570,13 +574,14 @@
     };
     CAnnotationBase.prototype.SetDrawFromStream = function(bFromStream) {
         let oDoc = Asc.editor.getPDFDoc();
-
-        if (false == this.IsChanged()) {
-            this._prevDrawFromStreamState = this._bDrawFromStream;
-        }
-
+        let oViewer = Asc.editor.getDocumentRenderer();
+        
         if (this._prevDrawFromStreamState) {
             oDoc.History.Add(new CChangesPDFAnnotChangedView(this, this._prevDrawFromStreamState, bFromStream));
+        }
+
+        if (false == oViewer.IsOpenAnnotsInProgress) {
+            this._prevDrawFromStreamState = this._bDrawFromStream;
         }
 
         this._bDrawFromStream = bFromStream;

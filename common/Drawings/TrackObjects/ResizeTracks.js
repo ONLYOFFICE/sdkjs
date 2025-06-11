@@ -1102,8 +1102,8 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             global_MatrixTransformer.TranslateAppend(_transform, -_horizontal_center, -_vertical_center);
 
             // no flip inside FreeText annot
-            let isInFreeTextAnnot = this.originalObject.group && this.originalObject.group.IsFreeText && this.originalObject.group.IsFreeText();
-            if (!isInFreeTextAnnot)
+            let isInFreeTextBody = this.originalObject.group && this.originalObject.group.IsFreeText && this.originalObject.group.IsFreeText() && this.originalObject.group.GetTextBoxShape() == this.originalObject;
+            if (!isInFreeTextBody)
             {
                 if(this.resizedflipH)
                 {

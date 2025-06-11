@@ -86,6 +86,7 @@ AscDFH.changesFactory[AscDFH.historyitem_ParaRun_FontSizeCS]            = CChang
 AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Ligatures]             = CChangesRunLigatures;
 AscDFH.changesFactory[AscDFH.historyitem_ParaRun_CS]                    = CChangesRunCS;
 AscDFH.changesFactory[AscDFH.historyitem_ParaRun_RTL]                   = CChangesRunRTL;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_MathMetaData]          = CChangesRunMathMetaData;
 
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
@@ -243,6 +244,7 @@ AscDFH.changesRelationMap[AscDFH.historyitem_ParaRun_RTL] = [
 	AscDFH.historyitem_ParaRun_TextPr,
 	AscDFH.historyitem_ParaRun_RTL
 ];
+AscDFH.changesRelationMap[AscDFH.historyitem_ParaRun_MathMetaData] = [AscDFH.historyitem_ParaRun_MathMetaData];
 
 /**
  * Общая функция для загрузки измнения настроек текста
@@ -2748,3 +2750,75 @@ CChangesRunRTL.prototype.private_SetValue = function(Value)
 CChangesRunRTL.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunRTL.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
 CChangesRunRTL.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseProperty}
+ */
+function CChangesRunMathMetaData(Class, Old, New)
+{
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New);
+}
+CChangesRunMathMetaData.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesRunMathMetaData.prototype.constructor = CChangesRunMathMetaData;
+CChangesRunMathMetaData.prototype.Type = AscDFH.historyitem_ParaRun_MathMetaData;
+CChangesRunMathMetaData.prototype.Undo = function()
+{
+	var oRun = this.Class;
+	oRun.math_autocorrection = this.Old;
+};
+CChangesRunMathMetaData.prototype.Redo = function()
+{
+	var oRun = this.Class;
+	oRun.math_autocorrection = this.New;
+};
+CChangesRunMathMetaData.prototype.WriteToBinary = function(Writer)
+{
+	if (this.New)
+	{
+		Writer.WriteBool(false);
+		this.New.Write_ToBinary(Writer);
+	}
+	else
+	{
+		Writer.WriteBool(true);
+	}
+
+	if (this.Old)
+	{
+		Writer.WriteBool(false);
+		this.Old.Write_ToBinary(Writer);
+	}
+	else
+	{
+		Writer.WriteBool(true);
+	}
+};
+CChangesRunMathMetaData.prototype.ReadFromBinary = function(Reader)
+{
+	if (!Reader.GetBool())
+	{
+		let oMetaData = new AscMath.MathMetaData();
+		oMetaData.Read_FromBinary(Reader);
+		this.New = oMetaData;
+	}
+
+	if (!Reader.GetBool())
+	{
+		let oOldMetaData = new AscMath.MathMetaData();
+		oOldMetaData.Read_FromBinary(Reader);
+		this.Old = oOldMetaData;
+	}
+};
+CChangesRunMathMetaData.prototype.Load = function(Color)
+{
+	this.Redo();
+};
+CChangesRunMathMetaData.prototype.IsRelated = function(oChanges)
+{
+};
+CChangesRunMathMetaData.prototype.CreateReverseChange = function()
+{
+	return new CChangesRunMathMetaData(this.Class, this.New, this.Old);
+};
+CChangesRunMathMetaData.prototype.CheckLock = private_ParagraphContentChangesCheckLock;

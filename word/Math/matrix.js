@@ -1686,7 +1686,7 @@ CEqArray.prototype.GetTextOfElement = function (oMathText)
 
 	if (oMathText.IsLaTeX())
 	{
-		oMathText.AddText(new AscMath.MathText("\\matrix{", this.Content[0]), true);
+		oMathText.AddText(new AscMath.MathText("\\array{", this.Content[0]), true);
 	}
 	else
 	{

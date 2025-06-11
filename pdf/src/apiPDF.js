@@ -104,6 +104,28 @@
         return null;        
     };
 
+    /**
+     * Gets event object
+     * @memberof ApiDocument
+     * @typeofeditors ["PDF"]
+     */
+    Object.defineProperty(ApiDocument.prototype, "event", {
+        get: function() {
+            return this.doc.event;
+        }
+    });
+    
+    /**
+     * The base file name, with extension, of the document referenced by the Doc
+     * @memberof ApiDocument
+     * @typeofeditors ["PDF"]
+     */
+    Object.defineProperty(ApiDocument.prototype, "documentFileName", {
+        get: function() {
+            return Asc.editor.documentTitle;
+        }
+    });
+
     // base form class with attributes and method for all types of forms
 	function ApiBaseField(oField)
     {
@@ -1250,7 +1272,6 @@
                         if (isValid) {
                             oWidget.SetValue(value);
 
-                            oWidget.needValidate = false; 
                             oWidget.Commit();
                             if (oCalcInfo.IsInProgress() == false) {
                                 if (oDoc.event["rc"] !== false && oDoc.IsNeedDoCalculate()) {
@@ -1449,7 +1470,6 @@
 
                     if (isValid) {
                         oWidget.SetCurIdxs([nIdx]);
-                        oWidget.needValidate = false; 
                         oWidget.Commit();
                         if (oCalcInfo.IsInProgress() == false) {
                             if (oDoc.event["rc"] !== false && oDoc.IsNeedDoCalculate()) {
@@ -1537,7 +1557,6 @@
 
                         if (isValid) {
                             oWidget.SetValue(value);
-                            oWidget.needValidate = false; 
                             oWidget.Commit();
                             if (oCalcInfo.IsInProgress() == false) {
                                 if (oDoc.event["rc"] !== false && oDoc.IsNeedDoCalculate()) {

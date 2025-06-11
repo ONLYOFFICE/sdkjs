@@ -3207,6 +3207,7 @@ window.AscCommon.g_cIsBeta = "false";
 
 		TOC          : 10,
 		Complex      : 11,
+		Signature    : 12,
 		
 		toString : function(type)
 		{
@@ -3228,6 +3229,8 @@ window.AscCommon.g_cIsBeta = "false";
 					return "toc";
 				case c_oAscContentControlSpecificType.Complex:
 					return "complex";
+				case c_oAscContentControlSpecificType.Signature:
+					return "signature";
 			}
 			
 			return "unknown";
@@ -3252,6 +3255,8 @@ window.AscCommon.g_cIsBeta = "false";
 					return c_oAscContentControlSpecificType.TOC;
 				case "complex":
 					return c_oAscContentControlSpecificType.Complex;
+				case "signature":
+					return c_oAscContentControlSpecificType.Signature;
 			}
 			
 			return c_oAscContentControlSpecificType.None;
@@ -3853,6 +3858,16 @@ window.AscCommon.g_cIsBeta = "false";
 	window['Asc']['ST_DisplacedByCustomXml'] = window['Asc'].ST_DisplacedByCustomXml = ST_DisplacedByCustomXml;
 	ST_DisplacedByCustomXml['next'] = ST_DisplacedByCustomXml.next;
 	ST_DisplacedByCustomXml['prev'] = ST_DisplacedByCustomXml.prev;
+	
+	const c_oNumeralType = {
+		arabic  : 0,
+		hindi   : 1,
+		context : 2
+	};
+	window['Asc']['c_oNumeralType'] = window['Asc'].c_oNumeralType = c_oNumeralType;
+	c_oNumeralType["arabic"]  = c_oNumeralType.arabic;
+	c_oNumeralType["hindi"]   = c_oNumeralType.hindi;
+	c_oNumeralType["context"] = c_oNumeralType.context;
 	
 	
 	var c_oAscDateTimeFormat = {};
@@ -5851,6 +5866,7 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['DateTime']     = c_oAscContentControlSpecificType.DateTime;
 	prot['TOC']          = c_oAscContentControlSpecificType.TOC;
 	prot['Complex']      = c_oAscContentControlSpecificType.Complex;
+	prot['Signature']    = c_oAscContentControlSpecificType.Signature;
 
 	window['Asc']['c_oAscDefNameType'] = window['Asc'].c_oAscDefNameType = c_oAscDefNameType;
 	prot = c_oAscDefNameType;

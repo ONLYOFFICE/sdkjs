@@ -2986,7 +2986,9 @@
 							resStreamInfo = _promises[i].callback(streamInfos[i]);
 						}
 						_promises[i].parserFormula.promiseResult[_promises[i].index] = resStreamInfo;
-						t.wb.dependencyFormulas.addToChangedCell(_promises[i].parserFormula.parent);
+						if (_promises[i].parserFormula.parent) {
+							t.wb.dependencyFormulas.addToChangedCell(_promises[i].parserFormula.parent);
+						}
 						t.addPromiseParserFormula(_promises[i].parserFormula);
 					}
 					//t.wb.buildDependency();
@@ -5200,7 +5202,11 @@
 				break;
 		}
 		if (sheet) {
-			var aRules = sheet.aConditionalFormattingRules.sort(function(v1, v2) {
+			let _aRules = [];
+			 sheet.forEachConditionalFormattingRules(function (elem) {
+				_aRules.push(elem);
+			});
+			var aRules = _aRules.sort(function(v1, v2) {
 				return v1.priority - v2.priority;
 			});
 
@@ -6070,7 +6076,8 @@
 		});
 		this.hyperlinkManager.setDependenceManager(this.mergeManager);
 		this.sheetViews = [];
-		this.aConditionalFormattingRules = [];
+		this.aConditionalFormattingRules = null;
+
 		this.conditionalFormattingRangeIterator = null;
 		this.updateConditionalFormattingRange = null;
 		this.dataValidations = null;
@@ -6303,8 +6310,11 @@
 		for (i = 0; i < wsFrom.sheetViews.length; ++i) {
 			this.sheetViews.push(wsFrom.sheetViews[i].clone());
 		}
-		for (i = 0; i < wsFrom.aConditionalFormattingRules.length; ++i) {
-			this.aConditionalFormattingRules.push(wsFrom.aConditionalFormattingRules[i].clone());
+		if (wsFrom.isConditionalFormattingRules()) {
+			let t = this;
+			wsFrom.forEachConditionalFormattingRules(function (val) {
+				t.addConditionalFormattingRule(val);
+			})
 		}
 		if (wsFrom.sheetPr)
 			this.sheetPr = wsFrom.sheetPr.clone();
@@ -6585,6 +6595,7 @@
 		}
 		if (this.updateConditionalFormattingRange) {
 			this.updateConditionalFormattingRange.union2(range);
+			this.updateConditionalFormattingRange = new AscCommonExcel.MultiplyRange([this.updateConditionalFormattingRange.getUnionRange()]);
 		} else {
 			this.updateConditionalFormattingRange = range.clone();
 		}
@@ -6596,7 +6607,11 @@
 		var range = this.updateConditionalFormattingRange;
 		this.updateConditionalFormattingRange = null;
 		var t = this;
-		var aRules = this.aConditionalFormattingRules.sort(function(v1, v2) {
+		let _aRules = [];
+		this.forEachConditionalFormattingRules(function (val) {
+			_aRules.push(val);
+		});
+		var aRules = _aRules.sort(function(v1, v2) {
 			return v2.priority - v1.priority;
 		});
 		var oGradient1, oGradient2, aWeights, oRule, oRuleElement, bboxCf, formulaParent, parsed1, parsed2;
@@ -6801,7 +6816,7 @@
 										break;
 								}
 								formulaParent = new AscCommonExcel.CConditionalFormattingFormulaParent(this, oRule, true);
-								oRuleElement = oRule.getFormulaCellIs();
+								oRuleElement =  oRule.getFormulaCellIs(Asc.ECfType.notContainsText === oRule.type || Asc.ECfType.containsText === oRule.type);
 								parsed1 = oRuleElement && oRuleElement.getFormula && oRuleElement.getFormula(this, formulaParent);
 								if (parsed1 && parsed1.hasRelativeRefs()) {
 									bboxCf = oRule.getBBox();
@@ -12245,21 +12260,32 @@
 		}
 		var changedRule = this.getCFRuleById(val.id);
 		if (changedRule) {
-			this.changeCFRule(changedRule.val, val, true);
+			this.changeCFRule(changedRule, val, true);
 		} else {
 			this.addCFRule(val, true);
 		}
 	};
 
 	Worksheet.prototype.getCFRuleById = function (id) {
-		if (this.aConditionalFormattingRules) {
-			for (var i = 0; i < this.aConditionalFormattingRules.length; i++) {
-				if (this.aConditionalFormattingRules[i].id === id) {
-					return {val: this.aConditionalFormattingRules[i], index: i};
-				}
-			}
+		if (this.isConditionalFormattingRules()) {
+			return this.aConditionalFormattingRules[id];
 		}
 		return null;
+	};
+
+	Worksheet.prototype.isConditionalFormattingRules = function () {
+		return this.aConditionalFormattingRules != null;
+	};
+
+	Worksheet.prototype.getConditionalFormattingRules = function () {
+		return this.aConditionalFormattingRules;
+	};
+
+	Worksheet.prototype.addConditionalFormattingRule = function (rule) {
+		if (!this.isConditionalFormattingRules()) {
+			this.aConditionalFormattingRules = {};
+		}
+		this.aConditionalFormattingRules[rule.id] = rule;
 	};
 
 	Worksheet.prototype.changeCFRule = function (from, to, addToHistory) {
@@ -12300,7 +12326,7 @@
 
 
 		val.recalcInterfaceFormula(this);
-		this.aConditionalFormattingRules.push(val);
+		this.addConditionalFormattingRule(val);
 		this.cleanConditionalFormattingRangeIterator();
 		if (addToHistory) {
 			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_CFRuleAdd, this.getId(), val.getUnionRange(), new AscCommonExcel.UndoRedoData_CF(val.id, null, val.clone ? val.clone() : val));
@@ -12351,17 +12377,17 @@
 	};
 
 	Worksheet.prototype.deleteCFRule = function (id, addToHistory) {
-		var oRule = this.getCFRuleById(id);
+		let oRule = this.getCFRuleById(id);
 		if (oRule) {
-			this.aConditionalFormattingRules.splice(oRule.index, 1);
+			delete this.aConditionalFormattingRules[id];
 			this.cleanConditionalFormattingRangeIterator();
 			if (addToHistory) {
-				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_CFRuleDelete, this.getId(), oRule.val.getUnionRange(),
-					new AscCommonExcel.UndoRedoData_CF(id, oRule.val));
+				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_CFRuleDelete, this.getId(), oRule.getUnionRange(),
+					new AscCommonExcel.UndoRedoData_CF(id, oRule));
 			}
 			if (oRule.ranges) {
 				this.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange(oRule.ranges));
-		}
+			}
 		}
 	};
 
@@ -12376,21 +12402,21 @@
 	};
 
 	Worksheet.prototype.updateConditionalFormattingOffset = function (range, offset) {
+		let t = this;
 		if (offset.row < 0 || offset.col < 0) {
-			for (var i = 0; i < this.aConditionalFormattingRules.length; ++i) {
-				if (this.aConditionalFormattingRules[i].containsIntoRange(range)) {
-					this.deleteCFRule(this.aConditionalFormattingRules[i].id, true);
+			this.forEachConditionalFormattingRules(function (val) {
+				if (val.containsIntoRange(range)) {
+					t.deleteCFRule(val.id, true);
 				}
-			}
+			});
 		}
 		this.setConditionalFormattingOffset(range, offset);
 	};
 	Worksheet.prototype.setConditionalFormattingOffset = function (range, offset) {
-		var oRule;
-		for (var i = 0; i < this.aConditionalFormattingRules.length; ++i) {
-			oRule = this.aConditionalFormattingRules[i];
-			oRule.setOffset(offset, range, this, true);
-		}
+		let t = this;
+		this.forEachConditionalFormattingRules(function (oRule) {
+			oRule.setOffset(offset, range, t, true);
+		});
 	};
 	Worksheet.prototype.moveConditionalFormatting = function (oBBoxFrom, oBBoxTo, copyRange, offset, wsTo, wsFrom, bTransposeTo) {
 		var t = this;
@@ -12464,19 +12490,23 @@
 	};
 
 	Worksheet.prototype.clearConditionalFormattingRulesByRanges = function (ranges, exceptionRange) {
-		for (var i = 0; i < this.aConditionalFormattingRules.length; ++i) {
-			var isExcept = exceptionRange && this.aConditionalFormattingRules[i].getIntersections(exceptionRange);
-			if (!isExcept && this.tryClearCFRule(this.aConditionalFormattingRules[i], ranges)) {
-				i--;
+		let t = this;
+		this.forEachConditionalFormattingRules(function (oRule) {
+			var isExcept = exceptionRange && oRule.getIntersections(exceptionRange);
+			if (!isExcept) {
+				t.tryClearCFRule(oRule, ranges);
 			}
-		}
+		});
 	};
 
 	Worksheet.prototype.forEachConditionalFormattingRules = function (callback) {
-		for (var i = 0, l = this.aConditionalFormattingRules.length; i < l; ++i) {
+		if (!this.isConditionalFormattingRules()) {
+			return;
+		}
+		for (let i in this.aConditionalFormattingRules) {
 			if (callback(this.aConditionalFormattingRules[i], i)) {
 				break;
-		}
+			}
 		}
 	};
 	Worksheet.prototype.cleanConditionalFormattingRangeIterator = function() {
@@ -12484,11 +12514,17 @@
 	};
 	Worksheet.prototype.getConditionalFormattingRangeIterator = function() {
 		if (!this.conditionalFormattingRangeIterator) {
-			this.aConditionalFormattingRules.sort(function(v1, v2) {
+			let aRules = [];
+			if (this.isConditionalFormattingRules()) {
+				this.forEachConditionalFormattingRules(function (val) {
+					aRules.push(val);
+				})
+			}
+			aRules.sort(function(v1, v2) {
 				return v2.priority - v1.priority;
 			});
 			this.conditionalFormattingRangeIterator = new AscCommon.RangeTopBottomIterator();
-			this.conditionalFormattingRangeIterator.init(this.aConditionalFormattingRules, function(rule) {
+			this.conditionalFormattingRangeIterator.init(aRules, function(rule) {
 				return rule.ranges || [];
 			});
 		}
@@ -15420,6 +15456,9 @@
 		if (!sFunctionName) {
 			return false;
 		}
+		if (!aExcludeFormulas.includes(sFunctionName)) {
+			return false;
+		}
 		aOutStack.forEach(function (oElem) {
 			if (oElem.type === cElementType.func || (oElem.type === cElementType.operator && !aUnOperators.includes(oElem.name))) {
 				nFuncCount++;
@@ -16052,7 +16091,7 @@
 						} else {
 							parsed.calculate();
 						}
-						if (g_cCalcRecursion.getFunctionsResult().length && g_cCalcRecursion.getIterStep() === 1) {
+						if (g_cCalcRecursion.getFunctionsResult().length && g_cCalcRecursion.getIterStep() === 1 && g_cCalcRecursion.getLevel() === 1) {
 							const functionsResult = g_cCalcRecursion.getFunctionsResult();
 							const isEnabledRecursion = g_cCalcRecursion.getIsEnabledRecursion();
 							let isCycleCell = false;
@@ -21534,10 +21573,10 @@
 			}
 
 			var aRules;
-			if (wsTo.aConditionalFormattingRules && wsTo.aConditionalFormattingRules.length) {
+			if (wsTo.isConditionalFormattingRules()) {
 				wsTo.clearConditionalFormattingRulesByRanges([to])
 		}
-			if (wsFrom.aConditionalFormattingRules && wsFrom.aConditionalFormattingRules.length) {
+			if (wsFrom.isConditionalFormattingRules()) {
 				aRules = wsFrom.getIntersectionRules(from);
 			}
 			if(aRules && aRules.length > 0) {

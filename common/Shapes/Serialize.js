@@ -3074,7 +3074,9 @@ function BinaryPPTYLoader()
                 case 11:
                 {
                     // id. embed / link
-                    s.GetString2();
+                    uni_fill.fill.embed = s.GetString2();
+                    if (this.IsUseFullUrl)
+                        this.RebuildImages.push(new CBuilderImages(uni_fill.fill, null, oImageShape, oSpPr, oLn, undefined, undefined, undefined, oParagraph, oBullet));
                     break;
                 }
                 case 2:
@@ -3688,6 +3690,10 @@ function BinaryPPTYLoader()
                     }
                 }, this);
             }
+            else if (_rec === 22)
+            {
+                clrscheme.clrSchemeExtLst.schemeEnum = this.ReadExtSchemeId();
+            }
             else
             {
                 clrscheme.addColor(_rec,this.ReadUniColor());
@@ -3695,6 +3701,42 @@ function BinaryPPTYLoader()
         }
 
         s.Seek2(_e);
+    };
+
+    this.ReadExtSchemeId = function()
+    {
+        let schemeEnum = null;
+        AscFormat.CBaseFormatNoIdObject.prototype.fromPPTY.call({
+            readChildren: AscFormat.CBaseFormatNoIdObject.prototype.readChildren,
+            readAttributes: AscFormat.CBaseFormatNoIdObject.prototype.readAttributes,
+            readAttribute: function(attrType, pReader) {
+                if (attrType === 0) {
+                    schemeEnum = pReader.stream.GetLong();
+                } else if(attrType == 1) {
+                    //todo schemeGUID
+                    pReader.stream.GetString2();
+                } else {
+                    return false;
+                }
+                return true;
+            }
+        }, this);
+        return schemeEnum;
+    };
+
+    this.ReadExtScheme = function()
+    {
+        let schemeEnum = null;
+        AscFormat.CBaseFormatNoIdObject.prototype.fromPPTY.call({
+            readChildren: AscFormat.CBaseFormatNoIdObject.prototype.readChildren,
+            readChild: function(elementType, pReader) {
+                if (elementType === 0) {
+                    schemeEnum = pReader.ReadExtSchemeId();
+                }
+                return false;
+            }
+        }, this);
+        return schemeEnum;
     };
 
     this.ReadClrMap = function(clrmap)
@@ -5131,6 +5173,33 @@ function BinaryPPTYLoader()
                             return false;
                         }
                     }, this);
+                    break;
+                }
+                case 8:
+                {
+                    if (!thelems.themeExt)
+                    {
+                        thelems.themeExt = new AscFormat.CThemeExt();
+                    }
+                    thelems.themeExt.themeSchemeSchemeEnum = this.ReadExtScheme();
+                    break;
+                }
+                case 9:
+                {
+                    if (!thelems.themeExt)
+                    {
+                        thelems.themeExt = new AscFormat.CThemeExt();
+                    }
+                    thelems.themeExt.fmtSchemeExSchemeEnum = this.ReadExtScheme();
+                    break;
+                }
+                case 10:
+                {
+                    if (!thelems.themeExt)
+                    {
+                        thelems.themeExt = new AscFormat.CThemeExt();
+                    }
+                    thelems.themeExt.fmtConnectorSchemeExSchemeEnum = this.ReadExtScheme();
                     break;
                 }
                 default:
@@ -6651,6 +6720,13 @@ function BinaryPPTYLoader()
                     shape.readMacro(s);
                     break;
                 }
+                case 0x64:
+                {
+                    let lenRec = s.GetULong();
+                    let rIdOverride = s.GetString2();
+                    this.ResetImageId(shape, rIdOverride);
+                    break;
+                }
                 default:
                 {
                     s.SkipRecord();
@@ -6665,6 +6741,19 @@ function BinaryPPTYLoader()
         s.Seek2(_end_rec);
         return shape;
     };
+
+    this.ResetImageId = function(drawing, rIdOverride) {
+        if (this.IsUseFullUrl) {
+            for (let idx = 0; idx < this.RebuildImages.length; ++idx) {
+                let builderImage = this.RebuildImages[idx];
+                if (builderImage.ImageShape === drawing || builderImage.SpPr && builderImage.SpPr.parent === drawing) {
+                    if (builderImage.BlipFill) {
+                        builderImage.BlipFill.embed = rIdOverride;
+                    }
+                }
+            }
+        }
+    }
 
     this.CheckGroupXfrm = function(oGroup){
         if(!oGroup){
@@ -7079,6 +7168,13 @@ function BinaryPPTYLoader()
                 case 0xA1:
                 {
                     pic.readMacro(s);
+                    break;
+                }
+                case 0x64:
+                {
+                    let lenRec = s.GetULong();
+                    let rIdOverride = s.GetString2();
+                    this.ResetImageId(pic, rIdOverride);
                     break;
                 }
                 default:
@@ -9019,6 +9115,44 @@ function BinaryPPTYLoader()
         return rPr;
     };
 
+	this.CorrectHyperlink = function (hyper) {
+		if (hyper.action == null || hyper.action == "") {
+			return;
+		}
+
+		switch (hyper.action) {
+			case "ppaction://hlinkshowjump?jump=firstslide":
+			case "ppaction://hlinkshowjump?jump=lastslide":
+			case "ppaction://hlinkshowjump?jump=nextslide":
+			case "ppaction://hlinkshowjump?jump=previousslide":
+				hyper.id = hyper.action;
+				break;
+
+			case "ppaction://hlinksldjump":
+				if (hyper.id == null || hyper.id.indexOf("slide") != 0) {
+					hyper.id = null;
+					break;
+				}
+
+				const regex = /^slide(\d+)\.xml$/;
+				const match = hyper.id.match(regex);
+
+				let slideNum = match ? parseInt(match[1]) : 1;
+				if (isNaN(slideNum))
+					slideNum = 1;
+
+				hyper.id = hyper.action + "slide" + (slideNum - 1);
+				break;
+
+			case "ppaction://hlinkfile":
+				hyper.id = hyper.action + '?file=' + hyper.id;
+				break;
+
+			default:
+				hyper.id = null;
+		}
+	};
+
     this.ReadHyperlink = function()
     {
         var hyper = new AscFormat.CT_Hyperlink();
@@ -9082,44 +9216,7 @@ function BinaryPPTYLoader()
 
         s.Seek2(_end_rec);
 
-        // correct hyperlink
-        if (hyper.action != null && hyper.action != "")
-        {
-            if (hyper.action == "ppaction://hlinkshowjump?jump=firstslide")
-                hyper.id = "ppaction://hlinkshowjump?jump=firstslide";
-            else if (hyper.action == "ppaction://hlinkshowjump?jump=lastslide")
-                hyper.id = "ppaction://hlinkshowjump?jump=lastslide";
-            else if (hyper.action == "ppaction://hlinkshowjump?jump=nextslide")
-                hyper.id = "ppaction://hlinkshowjump?jump=nextslide";
-            else if (hyper.action == "ppaction://hlinkshowjump?jump=previousslide")
-                hyper.id = "ppaction://hlinkshowjump?jump=previousslide";
-            else if (hyper.action == "ppaction://hlinksldjump")
-            {
-                if (hyper.id != null && hyper.id.indexOf("slide") == 0)
-                {
-                    var _url = hyper.id.substring(5);
-                    var _indexXml = _url.indexOf(".");
-                    if (-1 != _indexXml)
-                        _url = _url.substring(0, _indexXml);
-
-                    var _slideNum = parseInt(_url);
-                    if (isNaN(_slideNum))
-                        _slideNum = 1;
-
-                    --_slideNum;
-
-                    hyper.id = hyper.action + "slide" + _slideNum;
-                }
-                else
-                {
-                    hyper.id = null;
-                }
-            }
-            else
-            {
-                hyper.id = null;
-            }
-        }
+		this.CorrectHyperlink(hyper);
 
         if (hyper.id == null)
             return null;

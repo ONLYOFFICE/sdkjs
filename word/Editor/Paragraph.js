@@ -3104,11 +3104,13 @@ Paragraph.prototype.drawRunContentLines = function(CurPage, pGraphics, drawState
 	var arrRunReviewAreasColors = [];
 	var arrRunReviewAreas       = [];
 	var arrRunReviewRects       = [];
+	let runReviewLineW          = [];
 
 	var oCurForm = null;
 	var arrFormAreasColors = [];
 	var arrFormAreas       = [];
 	var arrFormRects       = [];
+	let formLineW          = [];
 	
 	let drawRunPrReview = !pGraphics.isPrintMode && !pGraphics.isPdf();
 
@@ -3261,6 +3263,7 @@ Paragraph.prototype.drawRunContentLines = function(CurPage, pGraphics, drawState
 					arrRunReviewRects = [];
 					arrRunReviewAreas.push(arrRunReviewRects);
 					arrRunReviewAreasColors.push(new AscWord.CDocumentColorA(Element.r, Element.g, Element.b, 255));
+					runReviewLineW.push(0);
 				}
 
 				arrRunReviewRectsLine.push({
@@ -3404,6 +3407,7 @@ Paragraph.prototype.drawRunContentLines = function(CurPage, pGraphics, drawState
 							arrFormRects = [];
 							arrFormAreas.push(arrFormRects);
 							arrFormAreasColors.push(new AscWord.CDocumentColorA(Element.r, Element.g, Element.b, Element.a));
+							formLineW.push(Element.w);
 						}
 
 						arrFormRectsLine.push({
@@ -3424,15 +3428,15 @@ Paragraph.prototype.drawRunContentLines = function(CurPage, pGraphics, drawState
 		pGraphics.End_Command();
 	}
 	
-	this.drawPolygons(pGraphics, arrRunReviewAreas, arrRunReviewAreasColors, 0, 0);
-	this.drawPolygons(pGraphics, arrFormAreas, arrFormAreasColors, 0, 0);
+	this.drawPolygons(pGraphics, arrRunReviewAreas, arrRunReviewAreasColors, runReviewLineW, 0);
+	this.drawPolygons(pGraphics, arrFormAreas, arrFormAreasColors, formLineW, 0);
 };
 Paragraph.prototype.drawPolygons = function(graphics, areas, colors, lineWidth, shift)
 {
 	for (let i = 0, areaCount = areas.length; i < areaCount; ++i)
 	{
 		graphics.p_color(colors[i].r, colors[i].g, colors[i].b, colors[i].a);
-		graphics.drawPolygonByRects(areas[i], lineWidth, shift);
+		graphics.drawPolygonByRects(areas[i], lineWidth[i], shift);
 	}
 };
 Paragraph.prototype.drawHorizontalBorder = function(graphics, curLine, border, lineAlign, y, isEmptyPara, X_left, X_right, leftMW, rightMW)
@@ -8612,12 +8616,6 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage, clipInfo)
 					
 					drawSelectionState.beginRange(iRange);
 					
-					if (rangeEnd === this.Content.length - 1
-						&& this.GetLogicDocument()
-						&& this.GetLogicDocument().IsSelectParagraphEndMark
-						&& !this.GetLogicDocument().IsSelectParagraphEndMark())
-						--rangeEnd;
-					
 					for (let pos = rangeStart; pos <= rangeEnd; ++pos)
 					{
 						this.Content[pos].drawSelectionInRange(iLine, iRange, drawSelectionState);
@@ -9056,12 +9054,6 @@ Paragraph.prototype.GetSelectionBounds = function()
 				
 				if (StartPos > rangeEnd || EndPos < rangeStart)
 					continue;
-				
-				if (rangeEnd === this.Content.length - 1
-					&& this.GetLogicDocument()
-					&& this.GetLogicDocument().IsSelectParagraphEndMark
-					&& !this.GetLogicDocument().IsSelectParagraphEndMark())
-					--rangeEnd;
 				
 				drawSelectionState.beginRange(iRange);
 				for (var CurPos = rangeStart; CurPos <= rangeEnd; CurPos++)
@@ -16454,6 +16446,15 @@ Paragraph.prototype.SetParagraphBidi = function(isRtl)
 	
 	this.private_AddPrChange();
 	AscCommon.AddAndExecuteChange(new CChangesParagraphBidi(this, this.Pr.Bidi, isRtl));
+	
+	if (!this.bFromDocument)
+	{
+		let jc = this.GetParagraphAlign();
+		if (AscCommon.align_Left === jc)
+			this.Set_Align(AscCommon.align_Right);
+		else if (AscCommon.align_Right === jc)
+			this.Set_Align(AscCommon.align_Left);
+	}
 };
 Paragraph.prototype.GetParagraphBidi = function()
 {

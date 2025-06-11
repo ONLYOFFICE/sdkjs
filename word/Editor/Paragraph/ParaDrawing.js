@@ -1883,6 +1883,21 @@ ParaDrawing.prototype.SetForm = function(isForm)
 	History.Add(new CChangesParaDrawingForm(this, this.DrawingType, isForm));
 	this.Form = isForm;
 }
+ParaDrawing.prototype.IsInForm = function()
+{
+	let run = this.GetRun();
+	if (!run)
+		return false;
+	
+	let parentCCs = run.GetParentContentControls();
+	for (let i = 0; i < parentCCs.length; ++i)
+	{
+		if (parentCCs[i].IsForm())
+			return true;
+	}
+	
+	return false;
+};
 ParaDrawing.prototype.GetInnerForm = function()
 {
 	return this.GraphicObj ? this.GraphicObj.getInnerForm() : null;

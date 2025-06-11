@@ -2235,6 +2235,7 @@
 	window['AscDFH'].historyitem_ParaRun_Ligatures             = window['AscDFH'].historyitem_type_ParaRun | 52;
 	window['AscDFH'].historyitem_ParaRun_CS                    = window['AscDFH'].historyitem_type_ParaRun | 53;
 	window['AscDFH'].historyitem_ParaRun_RTL                   = window['AscDFH'].historyitem_type_ParaRun | 54;
+	window['AscDFH'].historyitem_ParaRun_MathMetaData          = window['AscDFH'].historyitem_type_ParaRun | 55;
 
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CSectionPr
@@ -4163,6 +4164,7 @@
 	window['AscDFH'].historyitem_Pdf_Document_Part_Merge_Pages	= window['AscDFH'].historyitem_type_PDF_Document | 11;
 	window['AscDFH'].historyitem_Pdf_Document_End_Merge_Pages	= window['AscDFH'].historyitem_type_PDF_Document | 12;
 	window['AscDFH'].historyitem_Pdf_Document_Calc_Order		= window['AscDFH'].historyitem_type_PDF_Document | 13;
+	window['AscDFH'].historyitem_PDF_Document_Locks				= window['AscDFH'].historyitem_type_PDF_Document | 14;
 
 
 	AscDFH.historyitem_CustomPropertiesAddProperty = AscDFH.historyitem_type_CustomProperties | 0;

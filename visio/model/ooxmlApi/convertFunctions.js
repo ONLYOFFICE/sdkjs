@@ -2164,14 +2164,14 @@
 		// set shadow
 		// ShdwPattern = 1 means shadow is visible
 		let shadowPatternCell = this.getCell("ShdwPattern");
-		let shadowPattern = shadowPatternCell.calculateValue(this, pageInfo,
-				visioDocument.themes, undefined, false);
+		let shadowPattern = shadowPatternCell ? shadowPatternCell.calculateValue(this, pageInfo,
+				visioDocument.themes, undefined, false) : 0;
 		let isShadowVisible = shadowPattern === 1;
 
 		let shapeShadowTypeCell = this.getCell("ShapeShdwType");
-		let isShadowTypeSupported = shapeShadowTypeCell.getNumberValue("ShapeShdwType") === 1 ||
+		let isShadowTypeSupported = shapeShadowTypeCell ? (shapeShadowTypeCell.getNumberValue("ShapeShdwType") === 1 ||
 				shapeShadowTypeCell.getNumberValue("ShapeShdwType") === 2 ||
-				shapeShadowTypeCell.getStringValue() === "Themed";
+				shapeShadowTypeCell.getStringValue() === "Themed") : false;
 		if (isShadowVisible && isShadowTypeSupported) {
 			let shadow = new AscFormat.COuterShdw();
 
@@ -2202,10 +2202,10 @@
 					}
 				} else {
 					// check if alpha is set already
-					let alphaMod = shadowColor.Mods.Mods.find(function (mod) {
+					let alphaMod = shadowColor.Mods && shadowColor.Mods.Mods.find(function (mod) {
 						return mod.name === "alpha";
 					});
-					if (alphaMod !== undefined) {
+					if (alphaMod) {
 						alphaMod.val = alphaMod.val * mainFillAlphaCoef;
 					} else {
 						let oMod = new AscFormat.CColorMod("alpha", mainFillAlphaCoef  * 100 * 1000 + 0.5 >> 0);

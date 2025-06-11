@@ -57,6 +57,7 @@ function CInlineLevelSdt()
 	this.SkipSpecialLock  = 0;
 	this.SkipFillFormLock = 0;
 	this.Current          = false;
+	this.isHover          = false;
 }
 
 CInlineLevelSdt.prototype = Object.create(CParagraphContentWithParagraphLikeContent.prototype);
@@ -97,7 +98,7 @@ CInlineLevelSdt.prototype.Add = function(Item)
 	{
 		if (para_Tab === Item.Type)
 			return CParagraphContentWithParagraphLikeContent.prototype.Add.call(this, new AscWord.CRunSpace());
-		else if (Item.Type !== para_Text && Item.Type !== para_Space && (!(Item instanceof AscWord.CRunBreak) || !Item.IsLineBreak() || !this.IsMultiLineForm()))
+		else if (Item.Type !== para_Text && Item.Type !== para_Space && (!(Item instanceof AscWord.CRunBreak) || !Item.IsLineBreak() || (!this.IsMultiLineForm() && this.IsFixedForm())))
 			return;
 
 		oTextFormRun = this.MakeSingleRunElement(false);
@@ -580,6 +581,8 @@ CInlineLevelSdt.prototype.Draw_Elements = function(PDSE)
 		
 		if (this.IsSignatureForm())
 			this.DrawSignatureSign(PDSE.Graphics);
+		else if (this.IsPictureForm())
+			this.DrawPictureSign(PDSE.Graphics);
 	}
 };
 CInlineLevelSdt.prototype.Draw_Lines = function(PDSL)
@@ -595,7 +598,7 @@ CInlineLevelSdt.prototype.Draw_Lines = function(PDSL)
 CInlineLevelSdt.prototype.DrawSignatureSign = function(graphics)
 {
 	let logicDocument = this.GetLogicDocument();
-	if (!this.IsSignatureForm() || !logicDocument)
+	if (!this.IsSignatureForm() || !logicDocument || !this.IsPlaceHolder())
 		return;
 	
 	let _t = this;
@@ -613,7 +616,7 @@ CInlineLevelSdt.prototype.DrawSignatureSign = function(graphics)
 	
 	AscCommon.ExecuteNoHistory(function() {
 		let intGrid = graphics.GetIntegerGrid();
-		graphics.SetIntegerGrid(true);
+		graphics.SetIntegerGrid(false);
 		
 		let zoomCoeff = (drawingDocument.m_oWordControl.m_nZoomValue * 1.0 / 100);
 		
@@ -683,6 +686,51 @@ CInlineLevelSdt.prototype.DrawSignatureSign = function(graphics)
 			if (image)
 				graphics.drawImage2(image, imageX, boundsH / 2 - imageH_mm / 2, imageW_mm, imageH_mm);
 		}
+		
+		graphics.SetIntegerGrid(intGrid);
+	}, logicDocument);
+};
+CInlineLevelSdt.prototype.DrawPictureSign = function(graphics)
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!this.IsPictureForm() || !logicDocument)
+		return;
+	
+	let _t = this;
+	
+	let parentShape = this.Paragraph && this.Paragraph.Parent ? this.Paragraph.Parent.Is_DrawingShape(true) : null;
+	if (!parentShape)
+		return;
+	
+	let boundsW = parentShape.getXfrmExtX();
+	let boundsH = parentShape.getXfrmExtY();
+	
+	let drawingDocument = logicDocument.getDrawingDocument();
+	let icons = drawingDocument.contentControls.icons;
+	
+	AscCommon.ExecuteNoHistory(function() {
+		let intGrid = graphics.GetIntegerGrid();
+		graphics.SetIntegerGrid(false);
+		
+		let zoomCoeff = (drawingDocument.m_oWordControl.m_nZoomValue * 1.0 / 100);
+		
+		const imageH_px = 20;
+		const imageW_px = 20;
+		
+		let imageH_mm = imageH_px * AscCommon.g_dKoef_pix_to_mm / zoomCoeff;
+		let imageW_mm = imageW_px * AscCommon.g_dKoef_pix_to_mm / zoomCoeff;
+	
+		if (_t.isHover)
+		{
+			let rgb = AscCommon.RgbaHexToRGBA(AscCommon.GlobalSkin.ContentControlsHover)
+			graphics.b_color1(rgb.R, rgb.G, rgb.B, 255);
+			graphics.rect(boundsW / 2 - imageW_mm / 2, boundsH / 2 - imageH_mm / 2, imageW_mm, imageH_mm);
+			graphics.df();
+		}
+		
+		let image = icons.getImage(AscCommon.CCButtonType.Image);
+		if (image)
+			graphics.drawImage2(image, boundsW / 2 - imageW_mm / 2, boundsH / 2 - imageH_mm / 2, imageW_mm, imageH_mm);
 		
 		graphics.SetIntegerGrid(intGrid);
 	}, logicDocument);
@@ -1263,6 +1311,9 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurP
 			logicDocument.GetApi().sync_MouseMoveCallback(oMMData);
 		}
 	}
+	
+	if (AscCommon.ContentControlTrack.Hover === nType)
+		logicDocument.HoverCC.addCC(this);
 
 	var oShape = this.Paragraph.Parent ? this.Paragraph.Parent.Is_DrawingShape(true) : null;
 	if (this.IsForm() && oShape && oShape.isForm())
@@ -1619,7 +1670,7 @@ CInlineLevelSdt.prototype.private_FillPlaceholderContent = function()
 		if (this.IsContentControlEquation())
 		{
 			var oParaMath = new ParaMath();
-			oParaMath.Root.Load_FromMenu(c_oAscMathType.Default_Text, this.GetParagraph(), null, oFirstParagraph.GetText({ParaSeparator : "", TableRowSeparator : "", TableCellSeparator : ""}));
+			oParaMath.Root.Load_FromMenu(c_oAscMathType.Default_Text, this.GetParagraph(), oFirstParagraph.GetFirstRunPr().Copy(), oFirstParagraph.GetText({ParaSeparator : "", TableRowSeparator : "", TableCellSeparator : ""}));
 			oParaMath.Root.Correct_Content(true);
 			this.AddToContent(0, oParaMath);
 		}
@@ -2741,6 +2792,9 @@ CInlineLevelSdt.prototype.GetSpecificType = function()
 
 	if (this.IsCheckBox())
 		return Asc.c_oAscContentControlSpecificType.CheckBox;
+	
+	if (this.IsSignatureForm())
+		return Asc.c_oAscContentControlSpecificType.Signature;
 
 	if (this.IsPicture())
 		return Asc.c_oAscContentControlSpecificType.Picture;
@@ -3175,6 +3229,9 @@ CInlineLevelSdt.prototype.ConvertFormToFixed = function(nW, nH)
 		nW = Math.max(nW, 150 * g_dKoef_pt_to_mm);
 		nH = Math.max(nH, 22 * g_dKoef_pt_to_mm);
 	}
+	
+	// Удаляем переносы строк и все лишнее, т.к. изначально конвертим в однострочную форму
+	this.CorrectSingleLineFormContent();
 	
 	// Для билдера, чтобы мы могли конвертить форму, даже если она нигде не лежит
 	if (!oParent)
@@ -3860,7 +3917,8 @@ CInlineLevelSdt.prototype.SetInnerText = function(sText)
 CInlineLevelSdt.prototype.GetInnerText = function()
 {
 	var oText = {
-		Text: ""
+		Text: "",
+		NewLineSeparator : "\r\n"
 	};
 
 	this.Get_Text(oText);

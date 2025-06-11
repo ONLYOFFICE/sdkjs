@@ -5074,15 +5074,33 @@ var g_oFontProperties = {
 		this.num = new AscCommonExcel.Num({f:val});
 	};
 
-	var g_oAlignProperties = {
-		hor: 0,
-		indent: 1,
-		RelativeIndent: 2,
-		shrink: 3,
-		angle: 4,
-		ver: 5,
-		wrap: 6
+
+	/** @enum */
+	var c_oSerAligmentTypes =
+		{
+			Horizontal: 0,
+			Indent: 1,
+			JustifyLastLine: 2,
+			ReadingOrder: 3,
+			RelativeIndent: 4,
+			ShrinkToFit: 5,
+			TextRotation: 6,
+			Vertical: 7,
+			WrapText: 8
 	};
+
+
+	window['Asc']['c_oSerAligmentTypes'] = window['Asc'].c_oSerAligmentTypes = c_oSerAligmentTypes;
+	prot = c_oSerAligmentTypes;
+	prot['Horizontal'] = prot.Horizontal;
+	prot['Indent'] = prot.Indent;
+	prot['JustifyLastLine'] = prot.JustifyLastLine;
+	prot['ReadingOrder'] = prot.ReadingOrder;
+	prot['RelativeIndent'] = prot.RelativeIndent;
+	prot['ShrinkToFit'] = prot.ShrinkToFit;
+	prot['TextRotation'] = prot.TextRotation;
+	prot['Vertical'] = prot.Vertical;
+	prot['WrapText'] = prot.WrapText;
 
 	/** @constructor */
 	function Align(val) {
@@ -5092,6 +5110,7 @@ var g_oFontProperties = {
 		this.hor = val.hor;
 		this.indent = val.indent;
 		this.RelativeIndent = val.RelativeIndent;
+		this.ReadingOrder = val.ReadingOrder;
 		this.shrink = val.shrink;
 		this.angle = val.angle;
 		this.ver = val.ver;
@@ -5101,10 +5120,10 @@ var g_oFontProperties = {
 		this._index;
 	}
 
-	Align.prototype.Properties = g_oAlignProperties;
+	Align.prototype.Properties = Asc.c_oSerAligmentTypes;
 	Align.prototype.getHash = function () {
 		if (!this._hash) {
-			this._hash = this.hor + '|' + this.indent + '|' + this.RelativeIndent + '|' + this.shrink + '|' +
+			this._hash = this.hor + '|' + this.indent + '|' + this.ReadingOrder + '|' + this.RelativeIndent + '|' + this.shrink + '|' +
 				this.angle + '|' + this.ver + '|' + this.wrap;
 		}
 		return this._hash;
@@ -5127,6 +5146,7 @@ var g_oFontProperties = {
 		var oRes = new Align();
 		oRes.hor = this._mergeProperty(this.hor, align.hor, defaultAlign.hor);
 		oRes.indent = this._mergeProperty(this.indent, align.indent, defaultAlign.indent);
+		oRes.ReadingOrder = this._mergeProperty(this.ReadingOrder, align.ReadingOrder, defaultAlign.ReadingOrder);
 		oRes.RelativeIndent = this._mergeProperty(this.RelativeIndent, align.RelativeIndent, defaultAlign.RelativeIndent);
 		oRes.shrink = this._mergeProperty(this.shrink, align.shrink, defaultAlign.shrink);
 		oRes.angle = this._mergeProperty(this.angle, align.angle, defaultAlign.angle);
@@ -5149,6 +5169,11 @@ var g_oFontProperties = {
 		}
 		if (this.RelativeIndent == val.RelativeIndent) {
 			oRes.RelativeIndent = null;
+		} else {
+			bEmpty = false;
+		}
+		if (this.ReadingOrder == val.ReadingOrder) {
+			oRes.ReadingOrder = null;
 		} else {
 			bEmpty = false;
 		}
@@ -5178,7 +5203,7 @@ var g_oFontProperties = {
 		return oRes;
 	};
 	Align.prototype.isEqual = function (val) {
-		return this.hor == val.hor && this.indent == val.indent && this.RelativeIndent == val.RelativeIndent && this.shrink == val.shrink &&
+		return this.hor == val.hor && this.indent == val.indent && this.ReadingOrder == val.ReadingOrder && this.RelativeIndent == val.RelativeIndent && this.shrink == val.shrink &&
 			this.angle == val.angle && this.ver == val.ver && this.wrap == val.wrap;
 	};
 	Align.prototype.clone = function () {
@@ -5192,50 +5217,50 @@ var g_oFontProperties = {
 	};
 	Align.prototype.getProperty = function (nType) {
 		switch (nType) {
-			case this.Properties.hor:
+			case this.Properties.Horizontal:
 				return this.hor;
 				break;
-			case this.Properties.indent:
+			case this.Properties.Indent:
 				return this.indent;
 				break;
 			case this.Properties.RelativeIndent:
 				return this.RelativeIndent;
 				break;
-			case this.Properties.shrink:
+			case this.Properties.ShrinkToFit:
 				return this.shrink;
 				break;
-			case this.Properties.angle:
+			case this.Properties.TextRotation:
 				return this.angle;
 				break;
-			case this.Properties.ver:
+			case this.Properties.Vertical:
 				return this.ver;
 				break;
-			case this.Properties.wrap:
+			case this.Properties.WrapText:
 				return this.wrap;
 				break;
 		}
 	};
 	Align.prototype.setProperty = function (nType, value) {
 		switch (nType) {
-			case this.Properties.hor:
+			case this.Properties.Horizontal:
 				this.hor = value;
 				break;
-			case this.Properties.indent:
+			case this.Properties.Indent:
 				this.indent = value;
 				break;
 			case this.Properties.RelativeIndent:
 				this.RelativeIndent = value;
 				break;
-			case this.Properties.shrink:
+			case this.Properties.ShrinkToFit:
 				this.shrink = value;
 				break;
-			case this.Properties.angle:
+			case this.Properties.TextRotation:
 				this.angle = value;
 				break;
-			case this.Properties.ver:
+			case this.Properties.Vertical:
 				this.ver = value;
 				break;
-			case this.Properties.wrap:
+			case this.Properties.WrapText:
 				this.wrap = value;
 				break;
 		}
@@ -5264,6 +5289,12 @@ var g_oFontProperties = {
 	};
 	Align.prototype.setShrinkToFit = function (val) {
 		this.shrink = val;
+	};
+	Align.prototype.getReadingOrder = function () {
+		return this.ReadingOrder;
+	};
+	Align.prototype.setReadingOrder = function (val) {
+		this.ReadingOrder = val;
 	};
 	Align.prototype.getAlignHorizontal = function () {
 		return this.hor;
@@ -5316,6 +5347,10 @@ var g_oFontProperties = {
 			val = vals["relativeIndent"];
 			if (undefined !== val) {
 				this.RelativeIndent = val - 0;
+			}
+			val = vals["readingOrder"];
+			if (undefined !== val) {
+				this.ReadingOrder = val - 0;
 			}
 			val = vals["shrinkToFit"];
 			if (undefined !== val) {
@@ -9023,6 +9058,10 @@ function RangeDataManagerElem(bbox, data)
 			}
 		};
 
+		function _getStrucTableReservedLocalWords (type) {
+			return parserHelp.getColumnNameByType(type, true);
+		}
+
 		if (this.Ref.containsRange(handleSelectionRange)) {
 
 			let argsSeparator = AscCommon.FormulaSeparators.functionArgumentSeparator;
@@ -9035,11 +9074,11 @@ function RangeDataManagerElem(bbox, data)
 
 			if (this.Ref.isEqual(handleSelectionRange)) {
 				//Table1[#All]
-				return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.all + "]";
+				return this.DisplayName + "[" + _getStrucTableReservedLocalWords(FormulaTablePartInfo.all) + "]";
 			} else if (this.Ref.r1 === handleSelectionRange.r1 && this.Ref.r2 === handleSelectionRange.r2) {
 				//Table1[[#All];[Column1]]
 				//Table1[[#All];[Column1]:[Column2]]
-				return this.DisplayName + "[" + "[" + AscCommon.cStrucTableReservedWords.all + "]" + argsSeparator + getColumnNameRange(startCol, endCol, true) + "]";
+				return this.DisplayName + "[" + "[" + _getStrucTableReservedLocalWords(FormulaTablePartInfo.all) + "]" + argsSeparator + getColumnNameRange(startCol, endCol, true) + "]";
 			}
 
 			let dataContains = this._isDataTableContainsRange(handleSelectionRange);
@@ -9083,9 +9122,9 @@ function RangeDataManagerElem(bbox, data)
 			//4. only totals - Table4[[#Totals];[Column1]:[Column2]]
 			if (!dataContains && totalContains && !headerContains) {
 				if (totalContains.all) {
-					return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.totals + "]";
+					return this.DisplayName + "[" + _getStrucTableReservedLocalWords(FormulaTablePartInfo.totals) + "]";
 				} else {
-					return this.DisplayName + "[" + "[" +  AscCommon.cStrucTableReservedWords.totals + "]" + argsSeparator + getColumnNameRange(startCol, endCol, true) + "]";
+					return this.DisplayName + "[" + "[" +  _getStrucTableReservedLocalWords(FormulaTablePartInfo.totals) + "]" + argsSeparator + getColumnNameRange(startCol, endCol, true) + "]";
 				}
 			}
 
@@ -9093,9 +9132,9 @@ function RangeDataManagerElem(bbox, data)
 			//6. only headers - Table4[[#Headers];[Column1]:[Column2]]
 			if (!dataContains && !totalContains && headerContains) {
 				if (headerContains.all) {
-					return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.headers + "]";
+					return this.DisplayName + "[" + _getStrucTableReservedLocalWords(FormulaTablePartInfo.headers) + "]";
 				} else {
-					return this.DisplayName + "[" + "[" +  AscCommon.cStrucTableReservedWords.headers + "]" + argsSeparator + getColumnNameRange(startCol, endCol, true) + "]";
+					return this.DisplayName + "[" + "[" +  _getStrucTableReservedLocalWords(FormulaTablePartInfo.headers) + "]" + argsSeparator + getColumnNameRange(startCol, endCol, true) + "]";
 				}
 			}
 
@@ -9115,7 +9154,7 @@ function RangeDataManagerElem(bbox, data)
 				let res = this.DisplayName + "[";
 				let needDelimiter = false;
 				if (headerContains) {
-					res += "[" + AscCommon.cStrucTableReservedWords.headers + "]";
+					res += "[" + _getStrucTableReservedLocalWords(FormulaTablePartInfo.headers) + "]";
 					needDelimiter = true;
 					if (headerContains.all) {
 						isAll = true;
@@ -9125,7 +9164,7 @@ function RangeDataManagerElem(bbox, data)
 					if (needDelimiter) {
 						res += argsSeparator;
 					}
-					res += "[" + AscCommon.cStrucTableReservedWords.data + "]";
+					res += "[" + _getStrucTableReservedLocalWords(FormulaTablePartInfo.data) + "]";
 					needDelimiter = true;
 					if (dataContains.all) {
 						isAll = true;
@@ -9135,7 +9174,7 @@ function RangeDataManagerElem(bbox, data)
 					if (needDelimiter) {
 						res += argsSeparator;
 					}
-					res += "[" + AscCommon.cStrucTableReservedWords.totals + "]";
+					res += "[" + _getStrucTableReservedLocalWords(FormulaTablePartInfo.totals) + "]";
 					needDelimiter = true;
 					if (totalContains.all) {
 						isAll = true;

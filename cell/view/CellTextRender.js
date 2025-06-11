@@ -302,6 +302,43 @@
 			
 			return resultPos;
 		};
+
+		CellTextRender.prototype.getCharPosByXY = function(x, y, topLine, zoom) {
+			let line = this.getLineByY(y, topLine, zoom);
+			if (line < 0) {
+				return -1;
+			}
+
+			let lineInfo = this.getLineInfo(line);
+			let _x = lineInfo.startX;
+			let dist = Math.abs(x - _x);
+			let resultPos = lineInfo.beg;
+
+			for (let charPos = lineInfo.beg; charPos <= lineInfo.end; ++charPos) {
+
+				if (!this._isCombinedChar(charPos) && dist > Math.abs(x - _x)) {
+					dist = Math.abs(x - _x);
+					resultPos = charPos;
+				}
+
+				_x += this.getCharWidth(charPos);
+			}
+
+			if (Math.abs(x - _x) < dist)
+				resultPos = line === this.getLinesCount() - 1 ?  lineInfo.end + 1 : lineInfo.end;
+
+			// Если текст обрабатывался как bidi, корректируем позицию
+			if (this.bidiProcessed && this.baseDirection === AscFonts.HB_DIRECTION.HB_DIRECTION_RTL) {
+				let line = this.getLineByY(y, topLine, zoom);
+				if (line >= 0) {
+					let lineInfo = this.getLineInfo(line);
+					// Для RTL строк логика поиска позиции может быть скорректирована
+					// Пока оставляем базовую логику, но это место для дальнейших улучшений
+				}
+			}
+
+			return resultPos;
+		};
 		
 		CellTextRender.prototype.getLineByY = function(y, topLine, zoom) {
 			let lineCount = this.getLinesCount();

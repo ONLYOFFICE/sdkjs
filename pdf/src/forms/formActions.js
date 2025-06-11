@@ -95,6 +95,7 @@
         this.Calculate = null; 
         this.Format = null;
     }
+    
     CFormTriggers.prototype.Copy = function(oParentField) {
         let oCopy = new CFormTriggers();
         if (this.MouseUp != null)
@@ -133,9 +134,44 @@
             action.SetParent(_t);
         });
     }
+    CFormTrigger.GetName = function(nType) {
+        switch (nType) {
+            case AscPDF.FORMS_TRIGGERS_TYPES.MouseUp: {
+                return "Mouse Up";
+            }
+            case AscPDF.FORMS_TRIGGERS_TYPES.MouseDown: {
+                return "Mouse Down";
+            }
+            case AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter: {
+                return "Mouse Enter";
+            }
+            case AscPDF.FORMS_TRIGGERS_TYPES.MouseExit: {
+                return "Mouse Exit";
+            }
+            case AscPDF.FORMS_TRIGGERS_TYPES.OnFocus: {
+                return "Focus";
+            }
+            case AscPDF.FORMS_TRIGGERS_TYPES.OnBlur: {
+                return "Blur";
+            }
+            case AscPDF.FORMS_TRIGGERS_TYPES.Keystroke: {
+                return "Keystroke";
+            }
+            case AscPDF.FORMS_TRIGGERS_TYPES.Validate: {
+                return "Validate";
+            }
+            case AscPDF.FORMS_TRIGGERS_TYPES.Calculate: {
+                return "Calculate";
+            }
+            case AscPDF.FORMS_TRIGGERS_TYPES.Format: {
+                return "Format";
+            }
+        }
+    };
     CFormTrigger.prototype.Copy = function(oParentField) {
         let aActionsCopies = [];
-        for (let action of this.Actions) {
+        for (let i = 0; i < this.Actions.length; i++) {
+            let action = this.Actions[i];
             aActionsCopies.push(action.Copy());
         }
 
@@ -230,7 +266,13 @@
         if (oTrigger) {
             return oTrigger.GetType();
         }
-    }
+    };
+    CActionBase.prototype.GetTriggerName = function() {
+        let oTrigger = this.GetParent();
+        if (oTrigger) {
+            return CFormTrigger.GetName(oTrigger.GetType());
+        }
+    };
 
     function CActionGoTo(nPage, nGoToType, nZoom, oRect) {
         CActionBase.call(this, ACTIONS_TYPES.GoTo);
@@ -651,6 +693,7 @@
         }
 
         oDoc.SetEvent({
+            "name": this.GetTriggerName(),
             "target": oField.GetFormApi(),
             "rc": true
         });
@@ -666,15 +709,20 @@
             oActionsQueue.Continue();
     };
 
-    CActionRunScript.prototype.RunScript = function() {
+    CActionRunScript.prototype.RunScript = function(oEventPr) {
         let oField = this.GetCallerFiled();
         let oDoc = oField.GetDocument();
 
-        oDoc.SetEvent({
-            "target": oField.GetFormApi(),
-            "rc": true
-        });
+        if (!oEventPr) {
+            oEventPr = {
+                "name": this.GetTriggerName(),
+                "target": oField.GetFormApi(),
+                "rc": true
+            }
+        }
 
+        oDoc.SetEvent(oEventPr);
+        
         try {
             EvalScript(this.script, oDoc);
         }

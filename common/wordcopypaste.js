@@ -95,19 +95,8 @@ function GetObjectsForImageDownload(aBuilderImages, bSameDoc)
 		let sUrl = oBuilderImg.Url;
         if(!g_oDocumentUrls.getImageLocal(sUrl) && !g_oDocumentUrls.isThemeUrl(sUrl))
         {
-            if(!Array.isArray(oMapImages[sUrl]))
-            {
-                oMapImages[sUrl] = [];
-            }
-            oMapImages[sUrl].push(oBuilderImg);
-        }
-    }
-    for(var key in oMapImages)
-    {
-        if(oMapImages.hasOwnProperty(key))
-        {
-            aUrls.push(key);
-            aBuilderImagesByUrl.push(oMapImages[key]);
+			aUrls.push(sUrl);
+			aBuilderImagesByUrl.push([oBuilderImg]);
         }
     }
     if(bSameDoc !== true){
@@ -2837,33 +2826,37 @@ PasteProcessor.prototype =
 
 		const nCellIndex = cell.Index;
 		let nCellGrid = 1;
-		if (cell.Pr !== null && cell.Pr.GridSpan !== null) {
+		if (cell.Pr && undefined !== cell.Pr.GridSpan) {
 			nCellGrid = cell.Pr.GridSpan;
 		}
 
 		let nMarginLeft = 0;
-		if (cell.Pr !== null && cell.Pr.TableCellMar !== null &&
-			cell.Pr.TableCellMar.Left !== null &&
-			tblwidth_Mm === cell.Pr.TableCellMar.Left.Type &&
-			cell.Pr.TableCellMar.Left.W !== null) {
+		if (cell.Pr
+			&& cell.Pr.TableCellMar
+			&& cell.Pr.TableCellMar.Left
+			&& tblwidth_Mm === cell.Pr.TableCellMar.Left.Type
+			&& undefined !== cell.Pr.TableCellMar.Left.W) {
 			nMarginLeft = cell.Pr.TableCellMar.Left.W;
-		} else if (table.Pr !== null && table.Pr.TableCellMar !== null &&
-			table.Pr.TableCellMar.Left !== null &&
-			tblwidth_Mm === table.Pr.TableCellMar.Left.Type &&
-			table.Pr.TableCellMar.Left.W !== null) {
+		} else if (table.Pr
+			&& table.Pr.TableCellMar
+			&& table.Pr.TableCellMar.Left
+			&& tblwidth_Mm === table.Pr.TableCellMar.Left.Type
+			&& undefined !== table.Pr.TableCellMar.Left.W) {
 			nMarginLeft = table.Pr.TableCellMar.Left.W;
 		}
 
 		let nMarginRight = 0;
-		if (cell.Pr !== null && cell.Pr.TableCellMar !== null &&
-			cell.Pr.TableCellMar.Right !== null &&
-			tblwidth_Mm === cell.Pr.TableCellMar.Right.Type &&
-			cell.Pr.TableCellMar.Right.W !== null) {
+		if (cell.Pr
+			&& cell.Pr.TableCellMar
+			&& cell.Pr.TableCellMar.Right
+			&& tblwidth_Mm === cell.Pr.TableCellMar.Right.Type
+			&& undefined !== cell.Pr.TableCellMar.Right.W) {
 			nMarginRight = cell.Pr.TableCellMar.Right.W;
-		} else if (table.Pr !== null && table.Pr.TableCellMar !== null &&
-			table.Pr.TableCellMar.Right !== null &&
-			tblwidth_Mm === table.Pr.TableCellMar.Right.Type &&
-			table.Pr.TableCellMar.Right.W !== null) {
+		} else if (table.Pr
+			&& table.Pr.TableCellMar
+			&& table.Pr.TableCellMar.Right
+			&& tblwidth_Mm === table.Pr.TableCellMar.Right.Type
+			&& undefined !== table.Pr.TableCellMar.Right.W) {
 			nMarginRight = table.Pr.TableCellMar.Right.W;
 		}
 
@@ -2871,7 +2864,7 @@ PasteProcessor.prototype =
 		for (let i = 0; i < nCellIndex; ++i) {
 			const oTmpCell = row.Content[i];
 			let nGridSpan = 1;
-			if (oTmpCell !== null && oTmpCell.Pr !== null && oTmpCell.Pr.GridSpan !== null) {
+			if (oTmpCell && oTmpCell.Pr && undefined !== oTmpCell.Pr.GridSpan) {
 				nGridSpan = oTmpCell.Pr.GridSpan;
 			}
 			nPrevSumGrid += nGridSpan;

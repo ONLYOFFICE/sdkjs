@@ -231,19 +231,6 @@
         Locked: 1
     };
     /** @enum */
-    var c_oSerAligmentTypes =
-    {
-        Horizontal: 0,
-        Indent: 1,
-        JustifyLastLine: 2,
-        ReadingOrder: 3,
-        RelativeIndent: 4,
-        ShrinkToFit: 5,
-        TextRotation: 6,
-        Vertical: 7,
-        WrapText: 8
-    };
-    /** @enum */
     var c_oSerFillTypes =
     {
         Pattern: 0,
@@ -1445,7 +1432,6 @@
 		NameIndex: 0,
 		Index: 1
 	};
-	
 
     /** @enum */
     var EBorderStyle =
@@ -3373,43 +3359,49 @@
                     case AscCommon.align_Right :ha = 7;break;
                     case AscCommon.align_CenterContinuous :ha = 8;break;
                 }
-                this.memory.WriteByte(c_oSerAligmentTypes.Horizontal);
+                this.memory.WriteByte(Asc.c_oSerAligmentTypes.Horizontal);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
                 this.memory.WriteByte(ha);
             }
             if(null != align.indent)
             {
-                this.memory.WriteByte(c_oSerAligmentTypes.Indent);
+                this.memory.WriteByte(Asc.c_oSerAligmentTypes.Indent);
                 this.memory.WriteByte(c_oSerPropLenType.Long);
                 this.memory.WriteLong(align.indent);
             }
+            if(null != align.ReadingOrder)
+            {
+                this.memory.WriteByte(Asc.c_oSerAligmentTypes.ReadingOrder);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(align.ReadingOrder);
+            }
             if(null != align.RelativeIndent)
             {
-                this.memory.WriteByte(c_oSerAligmentTypes.RelativeIndent);
+                this.memory.WriteByte(Asc.c_oSerAligmentTypes.RelativeIndent);
                 this.memory.WriteByte(c_oSerPropLenType.Long);
                 this.memory.WriteLong(align.RelativeIndent);
             }
             if(null != align.shrink)
             {
-                this.memory.WriteByte(c_oSerAligmentTypes.ShrinkToFit);
+                this.memory.WriteByte(Asc.c_oSerAligmentTypes.ShrinkToFit);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
                 this.memory.WriteBool(align.shrink);
             }
             if(null != align.angle)
             {
-                this.memory.WriteByte(c_oSerAligmentTypes.TextRotation);
+                this.memory.WriteByte(Asc.c_oSerAligmentTypes.TextRotation);
                 this.memory.WriteByte(c_oSerPropLenType.Long);
                 this.memory.WriteLong(align.angle);
             }
             if(null != align.ver)
             {
-                this.memory.WriteByte(c_oSerAligmentTypes.Vertical);
+                this.memory.WriteByte(Asc.c_oSerAligmentTypes.Vertical);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
                 this.memory.WriteByte(align.ver);
             }
             if(null != align.wrap)
             {
-                this.memory.WriteByte(c_oSerAligmentTypes.WrapText);
+                this.memory.WriteByte(Asc.c_oSerAligmentTypes.WrapText);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
                 this.memory.WriteBool(align.wrap);
             }
@@ -5049,9 +5041,9 @@
                 this.bs.WriteItem(c_oSerWorksheetsTypes.SparklineGroups, function(){oThis.WriteSparklineGroups(ws.aSparklineGroups);});
             }
             // ToDo combine rules for matching ranges
-			for (i = 0; i < ws.aConditionalFormattingRules.length; ++i) {
-				this.bs.WriteItem(c_oSerWorksheetsTypes.ConditionalFormatting, function(){oThis.WriteConditionalFormatting(ws.aConditionalFormattingRules[i]);});
-			}
+            ws.forEachConditionalFormattingRules(function (elem) {
+                oThis.bs.WriteItem(c_oSerWorksheetsTypes.ConditionalFormatting, function(){oThis.WriteConditionalFormatting(elem);});
+            });
 			for (i = 0; i < ws.pivotTables.length; ++i) {
 				this.bs.WriteItem(c_oSerWorksheetsTypes.PivotTable, function(){oThis.WritePivotTable(ws.pivotTables[i], oThis.isCopyPaste)});
 			}
@@ -8435,7 +8427,7 @@
         this.ReadAligment = function(type, length, oAligment)
         {
             var res = c_oSerConstants.ReadOk;
-            if ( c_oSerAligmentTypes.Horizontal == type )
+            if ( Asc.c_oSerAligmentTypes.Horizontal == type )
             {
                 switch(this.stream.GetUChar())
                 {
@@ -8450,21 +8442,23 @@
                     case 8 : oAligment.hor = AscCommon.align_CenterContinuous;break;
                 }
             }
-            else if ( c_oSerAligmentTypes.Indent == type ) {
+            else if ( Asc.c_oSerAligmentTypes.Indent == type ) {
                 oAligment.indent = this.stream.GetULongLE();
                 if (oAligment.indent < 0) {
                     oAligment.indent = 0;
                 }
             }
-            else if ( c_oSerAligmentTypes.RelativeIndent == type )
+            else if ( Asc.c_oSerAligmentTypes.ReadingOrder == type )
+                oAligment.ReadingOrder = this.stream.GetULongLE();
+            else if ( Asc.c_oSerAligmentTypes.RelativeIndent == type )
                 oAligment.RelativeIndent = this.stream.GetULongLE();
-            else if ( c_oSerAligmentTypes.ShrinkToFit == type )
+            else if ( Asc.c_oSerAligmentTypes.ShrinkToFit == type )
                 oAligment.shrink = this.stream.GetBool();
-            else if ( c_oSerAligmentTypes.TextRotation == type )
+            else if ( Asc.c_oSerAligmentTypes.TextRotation == type )
                 oAligment.angle = this.stream.GetULongLE();
-            else if ( c_oSerAligmentTypes.Vertical == type )
+            else if ( Asc.c_oSerAligmentTypes.Vertical == type )
                 oAligment.ver = this.stream.GetUChar();
-            else if ( c_oSerAligmentTypes.WrapText == type )
+            else if ( Asc.c_oSerAligmentTypes.WrapText == type )
                 oAligment.wrap= this.stream.GetBool();
             else
                 res = c_oSerConstants.ReadUnknown;
@@ -14232,7 +14226,9 @@
     InitOpenManager.prototype.prepareConditionalFormatting = function (oWorksheet, oConditionalFormatting) {
         if (oConditionalFormatting && oConditionalFormatting.isValid()) {
             oConditionalFormatting.initRules();
-            oWorksheet.aConditionalFormattingRules = oWorksheet.aConditionalFormattingRules.concat(oConditionalFormatting.aRules);
+            for (let i = 0; i < oConditionalFormatting.aRules.length; i++) {
+                oWorksheet.addConditionalFormattingRule(oConditionalFormatting.aRules[i]);
+            }
         }
     };
     InitOpenManager.prototype.putSheetAfterRead = function (wb, oNewWorksheet) {
@@ -15017,6 +15013,7 @@
     prot['notView'] = prot.notView;
     prot['view'] = prot.view;
     prot['edit'] = prot.edit;
+
 
     window['Asc']['EUpdateLinksType'] = window['Asc'].EUpdateLinksType = EUpdateLinksType;
     prot = EUpdateLinksType;

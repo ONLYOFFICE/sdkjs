@@ -373,24 +373,7 @@
 			return;
 		}
 
-		if (this.isRestrictionView()) {
-			let oActiveObj = oDoc.GetActiveObject();
-
-			if (oActiveObj && oActiveObj.IsDrawing()) {
-				oDoc.BlurActiveObject();
-			}
-		}
-		else {
-			setTimeout(function() {
-				oDoc.checkDefaultFonts();
-			});
-		}
-
-		oDoc.drawings.forEach(function(drawing) {
-			if (drawing.IsShape() && drawing.IsFromScan()) {
-				drawing.AddToRedraw();
-			}
-		});
+		oDoc.onUpdateRestrictions();
 	};
 	PDFEditorApi.prototype.sync_CanUndoCallback = function(canUndo) {
 		this.sendEvent("asc_onCanUndo", canUndo);
@@ -572,6 +555,15 @@
 	PDFEditorApi.prototype.getCurrentPage = function() {
 		return this.DocumentRenderer ? this.DocumentRenderer.currentPage : 0;
 	};
+	PDFEditorApi.prototype.getSelectedPages = function() {
+		const oThumbnails = this.DocumentRenderer.thumbnails;
+		if (oThumbnails) {
+			return oThumbnails.getSelectedPages().slice();
+		}
+		else {
+			return [this.getCurrentPage()];
+		}
+	};
 	PDFEditorApi.prototype.asc_getPdfProps = function() {
 		return  this.DocumentRenderer ? this.DocumentRenderer.getDocumentInfo() : null;
 	};
@@ -720,17 +712,13 @@
 		
 		oDoc.EditPage(oViewer.currentPage);
 	};
-	PDFEditorApi.prototype.asc_AddPage = function(bBefore) {
+	PDFEditorApi.prototype.asc_AddPage = function(nPos) {
 		let oViewer = this.getDocumentRenderer();
 		let oFile	= oViewer.file;
 		let oDoc 	= this.getPDFDoc();
 
-		let oThumbnails = oViewer.thumbnails;
-		let aIndexes = oThumbnails.getSelectedPages();
-		let nPos = bBefore ? Math.min.apply(null, aIndexes) : Math.max.apply(null, aIndexes) + 1;
-
 		oDoc.DoAction(function() {
-			let oPageToClone = bBefore ? oFile.pages[oViewer.currentPage] : (oFile.pages[oViewer.currentPage + 1] || oFile.pages[oViewer.currentPage]);
+			let oPageToClone = oFile.pages[nPos - 1] || oFile.pages[nPos];
 			let oPage = {
 				fonts: [],
 				Rotate: 0,
@@ -762,7 +750,14 @@
 		let oDoc = this.getPDFDoc();
 
 		let oThumbnails = oViewer.thumbnails;
-		aPages = aPages != undefined ? aPages : oThumbnails.getSelectedPages().slice();
+		if (undefined == aPages) {
+			if (oThumbnails) {
+				aPages = oThumbnails.getSelectedPages().slice();
+			}
+			else {
+				aPages = [oDoc.GetCurPage()];
+			}
+		}
 
 		let nPagesCount = oDoc.GetPagesCount();
 		let canDelete = false;
@@ -792,7 +787,14 @@
 		let oDoc = this.getPDFDoc();
 
 		let oThumbnails = oViewer.thumbnails;
-		aPages = aPages != undefined ? aPages : oThumbnails.getSelectedPages().slice();
+		if (undefined == aPages) {
+			if (oThumbnails) {
+				aPages = oThumbnails.getSelectedPages().slice();
+			}
+			else {
+				aPages = [oDoc.GetCurPage()];
+			}
+		}
 		
 		let canDelete = true;
 
@@ -806,6 +808,10 @@
 		}
 
 		return canDelete;
+	};
+	PDFEditorApi.prototype.asc_CanPastePage = function() {
+		const oDoc = this.getPDFDoc();
+		return !oDoc.IsMergeLock();
 	};
 	PDFEditorApi.prototype.asc_GetSelectedText = function(bClearText, select_Pr) {
 		if (!this.DocumentRenderer)
@@ -1248,10 +1254,6 @@
 	/////////////////////////////////////////////////////////////
 	///////// For filed
 	////////////////////////////////////////////////////////////
-	PDFEditorApi.prototype.SetEditFieldsMode = function(bEdit) {
-		let oDoc = this.getPDFDoc();
-		oDoc.SetEditFieldsMode(bEdit);
-	};
 	PDFEditorApi.prototype.AddTextField = function(oParams) {
 		let oDoc = this.getPDFDoc();
 		
@@ -1337,7 +1339,8 @@
 		}
 
 		if (Array.isArray(AscCommon.g_aAdditionalCurrencySymbols)) {
-			for (let symbol of AscCommon.g_aAdditionalCurrencySymbols) {
+			for (let i = 0; i < AscCommon.g_aAdditionalCurrencySymbols.length; i++) {
+				let symbol = AscCommon.g_aAdditionalCurrencySymbols[i];
 				symbolsSet.add(symbol);
 			}
 		}
@@ -3057,6 +3060,15 @@
 	PDFEditorApi.prototype.put_PrAlign = function(nType) {
 		this.getPDFDoc().SetParagraphAlign(nType);
 	};
+	PDFEditorApi.prototype.asc_setRtlTextDirection = function(isRtl) {
+		this.getPDFDoc().SetParagraphBidi(isRtl);
+	};
+	PDFEditorApi.prototype.asc_isRtlTextDirection = function() {
+		let textController = this.getPDFDoc().getTextController();
+		let docContent = textController ? textController.GetDocContent() : null;
+		let paragraph = docContent ? docContent.GetCurrentParagraph() : null;
+		return paragraph ? paragraph.isRtlDirection() : false;
+	};
 	PDFEditorApi.prototype.setVerticalAlign = function(nType) {
 		this.getPDFDoc().SetVerticalAlign(nType);
 	};
@@ -3098,6 +3110,15 @@
 		oParaPr.TextSpacing = TextPr.Spacing;
 		oParaPr.Position    = TextPr.Position;
 		oParaPr.ListType	= AscFormat.fGetListTypeFromBullet(oParaPr.Bullet);
+		
+		let bidi = oParaPr.Bidi;
+		if (undefined === bidi)
+		{
+			let paragraph = oDoc.GetCurrentParagraph(false, false, {FirstInSelection : true});
+			bidi = paragraph ? paragraph.GetParagraphBidi() : undefined;
+		}
+		
+		this.sendEvent("asc_onTextDirection", bidi);
 
 		this.sync_ParaSpacingLine(oParaPr.Spacing);
 		this.Update_ParaInd(oParaPr.Ind, false);
@@ -3149,7 +3170,6 @@
 	/////////////////////////////////////////////////////////////
 	///////// For text
 	////////////////////////////////////////////////////////////
-
 	PDFEditorApi.prototype.sync_ListType = function(NumPr) {
 		this.sendEvent("asc_onListType", new AscCommon.asc_CListType(NumPr));
 	};
@@ -3918,11 +3938,12 @@
 			this.sendEvent("asc_onTextColor", color);
 		}
 	};
-	PDFEditorApi.prototype.asc_RotatePage = function(nAngle) {
+	PDFEditorApi.prototype.asc_RotatePage = function(nAngle, aPages) {
 		let oDoc = this.getPDFDoc();
-		let oThumbnails = oDoc.Viewer.Thumbnails;
 
-		let aPages = oThumbnails.getSelectedPages();
+		let oThumbnails = oDoc.Viewer.Thumbnails;
+		aPages = aPages != undefined ? aPages : oThumbnails.getSelectedPages().slice();
+
 		oDoc.DoAction(function() {
 			oDoc.RotatePages(aPages, nAngle);
 			oThumbnails.keepSelectedPages = true;
@@ -4064,12 +4085,16 @@
 		let oDoc			= oViewer.getPDFDoc();
 		let oActiveForm		= oDoc.activeForm;
         let oActiveAnnot	= oDoc.mouseDownAnnot;
+		let oThumbnails		= oDoc.GetThumbnails();
 
 		if (oActiveForm && oActiveForm.IsCanEditText()) {
 			oActiveForm.SelectAllText();
 		}
 		else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
             oActiveAnnot.SelectAllText();
+		}
+		else if (oThumbnails && oThumbnails.isInFocus) {
+			oThumbnails.selectAll();
 		}
 		else {
 			oViewer.file.selectAll();
@@ -4437,10 +4462,13 @@
 	PDFEditorApi.prototype.isLiveViewer = function() {
 		return this.isPdfViewer && AscCommon.CollaborativeEditing.Is_Fast() && !this.VersionHistory;
 	};
-	PDFEditorApi.prototype.asc_setRtlTextDirection = function(isRtl) {
-	};
-	PDFEditorApi.prototype.asc_isRtlTextDirection = function() {
-		return false;
+
+	PDFEditorApi.prototype.getShapeSerializeType = function() {
+		if (!this["asc_isSupportFeature"]("ooxml"))
+			return "binary";
+
+		// NOW USE ALWAYS BINARY DATA
+		return "binary";
 	};
 	
 	function CPdfContextMenuData(obj) {
@@ -4513,6 +4541,7 @@
 	PDFEditorApi.prototype['goToPage']						= PDFEditorApi.prototype.goToPage;
 	PDFEditorApi.prototype['getCountPages']					= PDFEditorApi.prototype.getCountPages;
 	PDFEditorApi.prototype['getCurrentPage']				= PDFEditorApi.prototype.getCurrentPage;
+	PDFEditorApi.prototype['getSelectedPages']				= PDFEditorApi.prototype.getSelectedPages;
 	PDFEditorApi.prototype['asc_getPdfProps']				= PDFEditorApi.prototype.asc_getPdfProps;
 	PDFEditorApi.prototype['asc_enterText']					= PDFEditorApi.prototype.asc_enterText;
 	PDFEditorApi.prototype['asc_correctEnterText']			= PDFEditorApi.prototype.asc_correctEnterText;
@@ -4543,6 +4572,7 @@
 	PDFEditorApi.prototype['asc_RemovePage']			   = PDFEditorApi.prototype.asc_RemovePage;
 	PDFEditorApi.prototype['asc_CanRemovePages']           = PDFEditorApi.prototype.asc_CanRemovePages;
 	PDFEditorApi.prototype['asc_CanRotatePages']           = PDFEditorApi.prototype.asc_CanRotatePages;
+	PDFEditorApi.prototype['asc_CanPastePage']             = PDFEditorApi.prototype.asc_CanPastePage;
 	PDFEditorApi.prototype['asc_createSmartArt']		   = PDFEditorApi.prototype.asc_createSmartArt;
 	PDFEditorApi.prototype['asc_undoAllChanges']		   = PDFEditorApi.prototype.asc_undoAllChanges;
 
@@ -4585,6 +4615,8 @@
 	PDFEditorApi.prototype['put_TextColor']					= PDFEditorApi.prototype.put_TextColor;
 	PDFEditorApi.prototype['asc_ChangeTextCase']			= PDFEditorApi.prototype.asc_ChangeTextCase;
 	PDFEditorApi.prototype['put_PrAlign']					= PDFEditorApi.prototype.put_PrAlign;
+	PDFEditorApi.prototype['asc_setRtlTextDirection']       = PDFEditorApi.prototype.asc_setRtlTextDirection;
+	PDFEditorApi.prototype['asc_isRtlTextDirection']        = PDFEditorApi.prototype.asc_isRtlTextDirection;
 	PDFEditorApi.prototype['setVerticalAlign']				= PDFEditorApi.prototype.setVerticalAlign;
 	PDFEditorApi.prototype['IncreaseIndent']				= PDFEditorApi.prototype.IncreaseIndent;
 	PDFEditorApi.prototype['DecreaseIndent']				= PDFEditorApi.prototype.DecreaseIndent;
@@ -4614,7 +4646,6 @@
 	PDFEditorApi.prototype['AddFreeTextAnnot']	= PDFEditorApi.prototype.AddFreeTextAnnot;
 
 	// forms
-	PDFEditorApi.prototype['SetEditFieldsMode']			= PDFEditorApi.prototype.SetEditFieldsMode;
 	PDFEditorApi.prototype['AddTextField']				= PDFEditorApi.prototype.AddTextField;
 	PDFEditorApi.prototype['AddDateField']				= PDFEditorApi.prototype.AddDateField;
 	PDFEditorApi.prototype['AddImageField']				= PDFEditorApi.prototype.AddImageField;
@@ -4726,5 +4757,7 @@
 	PDFEditorApi.prototype['asc_setPdfViewer']		        = PDFEditorApi.prototype.asc_setPdfViewer;
 
 	PDFEditorApi.prototype['asc_GetTableOfContentsPr']      = PDFEditorApi.prototype.asc_GetTableOfContentsPr;
+	
+	window["PDFEditorApi"] = PDFEditorApi;
 
 })(window, window.document);

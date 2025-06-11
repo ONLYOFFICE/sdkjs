@@ -54,7 +54,7 @@
      * @class
      * @name Api
      */
-    let Api = window["asc_docs_api"];
+    let Api = window["PDFEditorApi"];
 
 	/**
      * Gets current page index

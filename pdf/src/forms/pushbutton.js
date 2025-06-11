@@ -947,10 +947,10 @@
 
         if (this._imgData.rollover || sRolloverCaption) {
             AscCommon.History.StartNoHistoryMode();
-
+            
+            let oCaptionRun = this.GetCaptionRun();
             // сначала добавляем текст, т.к. учитывается его размер при добавлении картинки
-            if (sRolloverCaption) {
-                let oCaptionRun = this.GetCaptionRun();
+            if (oCaptionRun && sRolloverCaption) {
                 oCaptionRun.ClearContent();
                 oCaptionRun.AddText(sRolloverCaption);
             }
@@ -979,7 +979,7 @@
             let oCaptionRun         = this.GetCaptionRun();
             let sRolloverCaption    = this.GetCaption(AscPDF.APPEARANCE_TYPES.rollover);
             let sDefaultCaption     = this.GetCaption(AscPDF.APPEARANCE_TYPES.normal);
-            if (sDefaultCaption && sRolloverCaption) {
+            if (oCaptionRun && sDefaultCaption && sRolloverCaption) {
                 oCaptionRun.ClearContent();
                 oCaptionRun.AddText(sDefaultCaption);
             }
@@ -1031,9 +1031,9 @@
             let sImgRasterId = this._imgData.normal;
             if (sImgRasterId)
                 this.SetImage(sImgRasterId);
-
-            this.imageChecked = true;
         }
+
+        this.imageChecked = true;
     };
     CPushButtonField.prototype.CalculateContentClipRect = function() {
         if (!this.content)
@@ -1084,13 +1084,11 @@
         return true;
     };
     CPushButtonField.prototype.Recalculate = function() {
-        if (this.IsNeedUpdateEditShape()) {
-            this.UpdateEditShape();
-        }
-        
         if (this.IsNeedRecalc() == false)
             return;
 
+        this.CheckTextFont();
+        
         if (false == this.RecalculateContentRect()) {
             this.Internal_CorrectContentPos();
             this.content.Recalculate_Page(0, false);
@@ -1489,9 +1487,8 @@
 
             this._buttonFitBounds = bValue;
             this.SetNeedUpdateImage(true);
-            this.CalculateContentClipRect();
+            this.SetNeedRecalc(true);
             this.SetWasChanged(true);
-            this._UpdateImage();
         }
     };
     CPushButtonField.prototype.IsButtonFitBounds = function() {
@@ -1662,18 +1659,17 @@
         if (this._buttonPosition == position["iconOnly"])
             return;
 
-        this._buttonPosition = position["iconOnly"];
-        this._buttonCaption  = undefined;
-
         AscCommon.History.StartNoHistoryMode();
 
         let oPara;
         if (this.content.Content.length == 2) {
-            for (let i = 0; i < this.content.Content.length; i++) {
-                oPara = this.content.GetElement(i);
-    
-                if (oPara.GetAllDrawingObjects().length == 0) {
-                    this.content.RemoveFromContent(i, 1, false);
+            switch (this._buttonPosition) {
+                case position["iconTextV"]: {
+                    this.content.RemoveFromContent(1, 1, false);
+                    break;
+                }
+                case position["textIconV"]: {
+                    this.content.RemoveFromContent(0, 1, false);
                     break;
                 }
             }
@@ -1706,6 +1702,8 @@
             oPara.CorrectContent();
         }
 
+        this._buttonPosition = position["iconOnly"];
+        
         AscCommon.History.EndNoHistoryMode();
 
         this.SetNeedUpdateImage(true);
@@ -1746,6 +1744,7 @@
                 nPosInPara = oPara1.Content.indexOf(oRun);
                 oPara1.Remove_FromContent(nPosInPara, 1, true);
             }
+            oPara1.CorrectContent();
 
             let oNewPara = new AscWord.Paragraph(this.content, false);
             oNewPara.CorrectContent();
@@ -1808,7 +1807,8 @@
                 nPosInPara = oPara1.Content.indexOf(oRun);
                 oPara1.Remove_FromContent(nPosInPara, 1, true);
             }
-
+            oPara1.CorrectContent();
+            
             let oNewPara = new AscWord.Paragraph(this.content, false);
             oNewPara.CorrectContent();
             this.content.AddToContent(0, oNewPara);
