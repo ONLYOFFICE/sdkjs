@@ -343,6 +343,8 @@
         this.SetNeedRecalc(true);
     };
     CListBoxField.prototype.AddOption = function(option, nPos) {
+        let _t = this;
+
         let oParent = this.GetParent();
         if (oParent && oParent.IsAllKidsWidgets())
             return oParent.AddOption(option, nPos);
@@ -384,7 +386,7 @@
                     AscCommon.History.StartNoHistoryMode();
 
                     AscFonts.FontPickerByCharacter.getFontsByString(sCaption);
-                    let oPara = new AscWord.Paragraph(this.content, false);
+                    let oPara = new AscWord.Paragraph(_t.content, false);
                     let oRun = new AscWord.ParaRun(oPara, false);
                     field.content.Internal_Content_Add(nPos, oPara);
                     oPara.Add(oRun);
@@ -392,7 +394,7 @@
 
                     oPara.SetApplyToAll(true);
                     oPara.Add(new ParaTextPr({Color: oDocColor}));
-                    oPara.RecalcCompiledPr(true);
+                    oPara.SetParagraphBidi(_t.IsRTL());
                     oPara.SetApplyToAll(false);
 
                     AscCommon.History.EndNoHistoryMode();
@@ -1196,13 +1198,13 @@
                 let oPara = this.content.GetElement(i);
 
                 if (this.IsParaOutOfForm(oPara)) {
-                    if (getPdfAlignType(oPara.GetParagraphAlign()) != AscPDF.ALIGN_TYPE.left) {
-                        oPara.SetParagraphAlign(getInternalAlignType(AscPDF.ALIGN_TYPE.left));
+                    if (AscPDF.getPdfTypeAlignByInternal(oPara.GetParagraphAlign(), this.IsRTL()) != AscPDF.ALIGN_TYPE.left) {
+                        oPara.SetParagraphAlign(AscPDF.getInternalAlignByPdfType(AscPDF.ALIGN_TYPE.left, this.IsRTL()));
                         this.SetNeedRecalc(true);
                     }
                 }
-                else if (getPdfAlignType(oPara.GetParagraphAlign()) != this.GetAlign()) {
-                    oPara.SetParagraphAlign(getInternalAlignType(this.GetAlign()));
+                else if (AscPDF.getPdfTypeAlignByInternal(oPara.GetParagraphAlign(), this.IsRTL()) != this.GetAlign()) {
+                    oPara.SetParagraphAlign(AscPDF.getInternalAlignByPdfType(this.GetAlign(), this.IsRTL()));
                     this.SetNeedRecalc(true);
                 }
             }
@@ -1288,30 +1290,6 @@
         this.CheckWidgetFlags(memory);
     };
 
-    function getPdfAlignType(nPdfAlign) {
-        switch (nPdfAlign) {
-			case align_Left: return AscPDF.ALIGN_TYPE.left;
-			case align_Center: return AscPDF.ALIGN_TYPE.center;
-			case align_Right: return AscPDF.ALIGN_TYPE.right;
-		}
-    }
-
-    function getInternalAlignType(nInternalAlign) {
-        let _alignType = AscCommon.align_Left;
-		switch (nInternalAlign) {
-			case AscPDF.ALIGN_TYPE.left:
-				_alignType = AscCommon.align_Left;
-				break;
-			case AscPDF.ALIGN_TYPE.center:
-				_alignType = AscCommon.align_Center;
-				break;
-			case AscPDF.ALIGN_TYPE.right:
-				_alignType = AscCommon.align_Right;
-				break;
-		}
-
-        return _alignType;
-    }
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
         

@@ -1429,6 +1429,10 @@
 				}
 
 				// common
+				if (oFormInfo["MEOptions"])
+				{
+					oForm.SetMEOptions(oFormInfo["MEOptions"]);
+				}
 				if (oFormInfo["alignment"] != null && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.listbox].includes(oFormInfo["type"]))
 				{
 					oForm.SetAlign(oFormInfo["alignment"]);
