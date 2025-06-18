@@ -4048,6 +4048,7 @@
 	AscDFH.historyitem_Pdf_Form_Border_Width	= AscDFH.historyitem_type_Pdf_Form | 22;
 	AscDFH.historyitem_Pdf_Form_Locked			= AscDFH.historyitem_type_Pdf_Form | 23;
 	AscDFH.historyitem_Pdf_Form_Rotate			= AscDFH.historyitem_type_Pdf_Form | 24;
+	AscDFH.historyitem_Pdf_Form_ME_Options		= AscDFH.historyitem_type_Pdf_Form | 25;
 	
 	// text
 	AscDFH.historyitem_Pdf_Text_Form_Multiline			= AscDFH.historyitem_type_Pdf_Text_Field | 1;

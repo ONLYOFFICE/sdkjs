@@ -502,6 +502,11 @@ var CPresentation = CPresentation || function(){};
         }
 
         oField.SetDocument(this);
+
+        if (Asc.editor.isRtlInterface) {
+            oField.SetMEOptions(0b001);
+        }
+
         return oField;
     };
     CPDFDoc.prototype.onUpdateRestrictions = function() {

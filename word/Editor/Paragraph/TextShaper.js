@@ -312,6 +312,15 @@
 	};
 	CParagraphTextShaper.prototype.private_IsReplaceToHindiDigits = function()
 	{
+		if (Asc.editor.isPdfEditor()) {
+			let oParent = this.Paragraph.GetParent();
+			if (oParent.ParentPDF && oParent.ParentPDF.IsForm()) {
+				return oParent.ParentPDF.IsHindiDigits();
+			}
+
+			return false;
+		}
+
 		let logicDocument = this.Paragraph ? this.Paragraph.GetLogicDocument() : undefined;
 		return (logicDocument
 			&& logicDocument.IsDocumentEditor()
