@@ -2070,12 +2070,21 @@
 		}
 
 		let linePattern = this.getCell("LinePattern");
+		let linePatternMaster;
 		if (linePattern) {
 			// see ECMA-376-1 - L.4.8.5.2 Line Dash Properties and [MS-VSDX]-220215 (1) - 2.4.4.180	LinePattern
 			let linePatternNumber = linePattern.calculateValue(this, pageInfo, visioDocument.themes);
 			if (isNaN(linePatternNumber)) {
 				oStroke.setPrstDash(oStroke.GetDashCode("vsdxSolid"));
-			} else {
+			} else if (linePatternNumber === 254) {
+				// custom line pattern
+				let masterName = linePattern.f.match(/\("(.*)"\)/)[1];
+				let master = visioDocument.masters.master.find(function(master) {
+					return master.name === masterName;
+				});
+				linePatternMaster = master;
+			}
+			else {
 				let shift = 11;
 				let dashTypeName = oStroke.GetDashByCode(linePatternNumber + shift);
 				if (dashTypeName !== null) {
@@ -2315,8 +2324,8 @@
 			}
 		}
 
-		// combine textCShape and geometryCShape to group
-		if (textCShape !== null) {
+		// combine textCShape and geometryCShape and custom line pattern shapes to group
+		if (textCShape !== null || linePatternMaster) {
 			let groupShape = new AscFormat.CGroupShape();
 			// this.graphicObjectsController = new AscFormat.DrawingObjectsController();
 			// let groupShape = AscFormat.builder_CreateGroup();
@@ -2341,31 +2350,55 @@
 			groupShape.bounds = cShape.bounds;
 			groupShape.localTransform = cShape.localTransform;
 			groupShape.pen = cShape.pen;
-			groupShape.Id = cShape.Id + "ShapeAndText";
+			groupShape.Id = cShape.Id + "ShapeAndOther";
 
 			groupShape.addToSpTree(groupShape.spTree.length, cShape);
 			groupShape.spTree[groupShape.spTree.length - 1].setGroup(groupShape);
 			cShape.spPr.xfrm.setOffX(0);
 			cShape.spPr.xfrm.setOffY(0);
 
+			// handle custom line pattern
+			if (linePatternMaster) {
+				if (linePatternMaster.content.shapes.length === 1) {
+					let masterShape = linePatternMaster.content.shapes[0];
 
-			groupShape.addToSpTree(groupShape.spTree.length, textCShape);
-			groupShape.spTree[groupShape.spTree.length - 1].setGroup(groupShape);
-			textCShape.spPr.xfrm.setOffX(textCShape.spPr.xfrm.offX - groupShape.spPr.xfrm.offX);
-			textCShape.spPr.xfrm.setOffY(textCShape.spPr.xfrm.offY - groupShape.spPr.xfrm.offY);
-			textCShape.spPr.xfrm.flipH = false;
-			textCShape.spPr.xfrm.flipV = false;
+					// inherit styles
+					let stylesWithRealizedInheritance = new Set();
+					masterShape.realizeStyleInheritanceRecursively(visioDocument.styleSheets, stylesWithRealizedInheritance);
 
-			// In power point presentations on flipV text is position is flipped + text
-			// is mirrored horizontally and vertically (https://disk.yandex.ru/d/Hi8OCMITgb730Q)
-			// below we remove text mirror. In visio text is never mirrored. (https://disk.yandex.ru/d/JjbNzzZLDIAEuQ)
-			// (on flipH in power point presentation text is not mirrored)
-			let currentFlip = groupShape.spPr.xfrm.flipV;
-			let groupFlip = currentGroupHandling && currentGroupHandling.getFullFlipVSpPr();
-			let flip = groupFlip ? !currentFlip : currentFlip;
-			if (flip) {
-				textCShape.spPr.xfrm.setRot(Math.PI + textCShape.spPr.xfrm.rot);
+					let masterCShape = masterShape.convertShape(visioDocument, pageInfo,
+							drawingPageScale, groupShape);
+
+					groupShape.addToSpTree(groupShape.spTree.length, masterCShape);
+					groupShape.spTree[groupShape.spTree.length - 1].setGroup(groupShape);
+					// textCShape.spPr.xfrm.setOffX(textCShape.spPr.xfrm.offX - groupShape.spPr.xfrm.offX);
+					// textCShape.spPr.xfrm.setOffY(textCShape.spPr.xfrm.offY - groupShape.spPr.xfrm.offY);
+				} else {
+					AscCommon.consoleLog("Unknown error: linePatternMaster.content.shapes.length > 1");
+				}
 			}
+
+
+			if (textCShape) {
+				groupShape.addToSpTree(groupShape.spTree.length, textCShape);
+				groupShape.spTree[groupShape.spTree.length - 1].setGroup(groupShape);
+				textCShape.spPr.xfrm.setOffX(textCShape.spPr.xfrm.offX - groupShape.spPr.xfrm.offX);
+				textCShape.spPr.xfrm.setOffY(textCShape.spPr.xfrm.offY - groupShape.spPr.xfrm.offY);
+				textCShape.spPr.xfrm.flipH = false;
+				textCShape.spPr.xfrm.flipV = false;
+
+				// In power point presentations on flipV text is position is flipped + text
+				// is mirrored horizontally and vertically (https://disk.yandex.ru/d/Hi8OCMITgb730Q)
+				// below we remove text mirror. In visio text is never mirrored. (https://disk.yandex.ru/d/JjbNzzZLDIAEuQ)
+				// (on flipH in power point presentation text is not mirrored)
+				let currentFlip = groupShape.spPr.xfrm.flipV;
+				let groupFlip = currentGroupHandling && currentGroupHandling.getFullFlipVSpPr();
+				let flip = groupFlip ? !currentFlip : currentFlip;
+				if (flip) {
+					textCShape.spPr.xfrm.setRot(Math.PI + textCShape.spPr.xfrm.rot);
+				}
+			}
+
 
 			groupShape.setParent2(visioDocument);
 
