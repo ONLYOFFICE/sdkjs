@@ -572,7 +572,7 @@
         // 5. Marker dimensions and position inside the field
         let markW = 18;
         let markH = Hf - 2 * borders.top * scale;
-        let markX = X + Wf - borders.left * scale - markW;
+        let markX = this.IsRTL() ? X + borders.left * scale : X + Wf - borders.left * scale - markW;
         let markY = Y + borders.top * scale;
 
         let cx = X + Wf / 2, cy = Y + Hf / 2;

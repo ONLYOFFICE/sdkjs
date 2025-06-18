@@ -57,6 +57,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Border_Width]		= CChangesPDFFo
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Locked]			= CChangesPDFFormLocked;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Rotate]			= CChangesPDFFormRotate;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Tooltip]			= CChangesPDFFormTooltip;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_ME_Options]		= CChangesPDFFormMEOptions;
 
 // text
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Multiline]			= CChangesPDFTextFormMultiline;
@@ -814,6 +815,25 @@ CChangesPDFFormTooltip.prototype.private_SetValue = function(Value)
 	let oForm = this.Class;
 	oForm._tooltip = Value;
 	oForm.AddToRedraw();
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFFormMEOptions(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFormMEOptions.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFFormMEOptions.prototype.constructor = CChangesPDFFormMEOptions;
+CChangesPDFFormMEOptions.prototype.Type = AscDFH.historyitem_Pdf_Form_ME_Options;
+CChangesPDFFormMEOptions.prototype.private_SetValue = function(Value)
+{
+	let oField = this.Class;
+	oField._meOptions = Value;
+	oField.SetNeedRecalc(true);
+	oField.UpdateMEOptions();
 };
 
 

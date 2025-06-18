@@ -114,6 +114,7 @@
         this._textFontActual= undefined;    // фактический используемый
         this._textSize      = 10;
         this._fontStyle     = 0;    // информация о стиле шрифта (bold, italic)
+        this._meOptions     = 0;    // middle-east text options (flags)
 
         this._display       = AscPDF.Api.Types.display["visible"];
         this._hidden        = false;             // This property has been superseded by the display property and its use is discouraged.
@@ -199,7 +200,43 @@
 
         return this._apIdx;
     };
+    CBaseField.prototype.SetMEOptions = function(nFlags) {
+        if (this._meOptions === nFlags) {
+            return true;
+        }
 
+        AscCommon.History.Add(new CChangesPDFFormMEOptions(this, this._meOptions, nFlags));
+        this._meOptions = nFlags;
+
+        this.UpdateMEOptions();
+        this.SetWasChanged(true);
+        this.SetNeedRecalc(true);
+    };
+    CBaseField.prototype.UpdateMEOptions = function() {
+        AscCommon.History.StartNoHistoryMode();
+
+        if (this.content) {
+            this.content.SetApplyToAll(true);
+            this.content.SetParagraphBidi(this.IsRTL());
+            this.content.SetApplyToAll(false);
+        }
+        if (this.contentFormat) {
+            this.contentFormat.SetApplyToAll(true);
+            this.contentFormat.SetParagraphBidi(this.IsRTL());
+            this.contentFormat.SetApplyToAll(false);
+        }
+
+        AscCommon.History.EndNoHistoryMode();
+    };
+    CBaseField.prototype.GetMEOptions = function() {
+        return this._meOptions;
+    };
+    CBaseField.prototype.IsRTL = function() {
+        return !!(this._meOptions & 1 << 0);
+    };
+    CBaseField.prototype.IsHindiDigits = function() {
+        return !!(this._meOptions & 1 << 2);
+    };
     CBaseField.prototype.SetMeta = function(oMeta) {
         AscCommon.History.Add(new CChangesPDFFormMeta(this, this.meta, oMeta))
 
