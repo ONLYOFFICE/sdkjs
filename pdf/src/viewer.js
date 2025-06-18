@@ -1442,6 +1442,10 @@
 				{
 					oForm.SetRequired(Boolean(oFormInfo["required"]));
 				}
+				if (oFormInfo["MEOptions"])
+				{
+					oForm.SetMEOptions(oFormInfo["MEOptions"]);
+				}
 				if (oFormInfo["locked"])
 					oForm.SetLocked(Boolean(oFormInfo["locked"]));
 				
