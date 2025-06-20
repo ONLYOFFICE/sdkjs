@@ -10045,6 +10045,8 @@
 								if (curFormula.ca || cell.isNullTextString()) {
 									tmp.ws.workbook.dependencyFormulas.addToChangedCell(cell);
 								}
+								// add to the buildCell for the correct setting dependencies in the newly removed formula
+								tmp.ws.workbook.dependencyFormulas.addToBuildDependencyCell(cell);
 							});
 						}
 					}
