@@ -9494,34 +9494,24 @@ function(window, undefined) {
 		return oChartStyleCache.getStyleIdx(this.getChartType(), this.chartStyle.id);
 	};
 	CChartSpace.prototype.getDisplayTrendlinesEquation = function () {
-		let aSeries = this.getAllSeries();
-		let bResult = null;
-		if(aSeries.length === 0) {
-			return bResult;
-		}
-		let aAllTrendlines = [];
-		let oTrendline;
-		for(let nSer = 0; nSer < aSeries.length; ++nSer) {
-			oTrendline = aSeries[nSer].trendline;
-			if(oTrendline) {
-				aAllTrendlines.push(oTrendline);
-			}
-		}
-		if(aAllTrendlines.length === 0) {
-			return null;
-		}
-		if(!oTrendline) {
-			return bResult;
-		}
-		oTrendline = aAllTrendlines[0];
-		bResult = oTrendline.trendlineLbl !== null;
-		for(let nIdx = 1; nIdx < aAllTrendlines.length; ++nIdx) {
-			let bLbl = aAllTrendlines[nIdx].trendlineLbl !== null;
-			if(bResult !== bLbl) {
-				return undefined;
-			}
-		}
-		return bResult;
+		const allSeries = this.getAllSeries();
+		if (allSeries.length === 0) return null;
+
+		const allTrendlines = allSeries
+			.map(function (ser) { return ser.trendline; })
+			.filter(Boolean);
+		if (allTrendlines.length === 0) return null;
+
+		const areAllWithLabel = allTrendlines.every(function (trendline) {
+			return trendline.trendlineLbl !== null;
+		});
+		const areAllWithoutLabel = allTrendlines.every(function (trendline) {
+			return trendline.trendlineLbl === null;
+		});
+
+		if (areAllWithLabel) return true;
+		if (areAllWithoutLabel) return false;
+		return undefined;
 	};
 	CChartSpace.prototype.setDisplayTrendlinesEquation = function (bValue) {
 		if(bValue === this.getDisplayTrendlinesEquation()) {
