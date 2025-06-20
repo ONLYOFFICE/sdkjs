@@ -28954,6 +28954,22 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
 
+		oParser = new parserFormula("MDETERM({1,2;10,11})", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), -9);
+		
+		let ws2 = wb.createWorksheet(0, "Sheet2");
+		let ws2Name = ws2.getName();
+
+		ws2.getRange2("A1").setValue("1");
+		ws2.getRange2("A2").setValue("2");
+		ws2.getRange2("B1").setValue("3");
+		ws2.getRange2("B2").setValue("4");
+
+		oParser = new parserFormula("MDETERM("+ws2Name+"!A1:B2)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), -2);
+
 	});
 
 	QUnit.test("Test: \"SYD\"", function (assert) {

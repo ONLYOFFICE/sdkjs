@@ -7662,6 +7662,55 @@ $(function () {
 		api.wb.selectionDialogMode = false;
 	});
 
+	QUnit.test("Test: \"Formulas calc test\"", function (assert) {
+		let cellWithFormula, fillRange, array;
+			
+		// wb.dependencyFormulas.unlockRecal();
+
+		ws.getRange2("A1:F10").cleanAll();
+		ws.getRange2("A1").setValue("1");
+		ws.getRange2("A2").setValue("2");
+		ws.getRange2("A3").setValue("3");
+		ws.getRange2("B1").setValue("+5");
+		ws.getRange2("B2").setValue("+5+5");
+		ws.getRange2("B3").setValue("-5");
+		ws.getRange2("B4").setValue("-5-5");
+
+		// set flags for CSE formula call
+		let flags = wsView._getCellFlags(0, 2);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// set selection C1
+		fillRange = ws.getRange2("C1");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+
+		let fragment = ws.getRange2("C1").getValueForEdit2();
+		let resCell = ws.getRange2("C1");
+		
+		// MDETERM
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in C1 before =MDETERM({1,2,3,4}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in C1 before =MDETERM({1,2,3,4}) calculate");
+		fragment[0].setFragmentText("=MDETERM({1,2,3,4})");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Value in C1 after =MDETERM({1,2,3,4}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=MDETERM({1,2,3,4})", "Formula in C1 after =MDETERM({1,2,3,4}) calculate");
+
+
+		assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Value in C1 before =MDETERM({1,2;10,11}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=MDETERM({1,2,3,4})", "Formula in C1 before =MDETERM({1,2;10,11}) calculate");
+		fragment[0].setFragmentText("=MDETERM({1,2;10,11})");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "-9", "Value in C1 after =MDETERM({1,2;10,11}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=MDETERM({1,2;10,11})", "Formula in C1 after =MDETERM({1,2;10,11}) calculate");
+
+		
+	});
+
 		QUnit.module("Sheet structure");
 });
 
