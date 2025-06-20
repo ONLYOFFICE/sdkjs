@@ -56,6 +56,66 @@ $(function () {
 	};
 	AscCommonExcel.WorkbookView.prototype.restoreFocus = function () {
 	};
+	AscCommonExcel.WorkbookView.prototype._onChangeSelection = function (isStartPoint, dc, dr, isCoord, isCtrl, callback) {
+        if (!this._checkStopCellEditorInFormulas()) {
+            return;
+        }
+
+        var ws = this.getWorksheet();
+		if (ws.model.getSheetProtection(Asc.c_oAscSheetProtectType.selectUnlockedCells)) {
+			return;
+		}
+		if (ws.model.getSheetProtection(Asc.c_oAscSheetProtectType.selectLockedCells)) {
+			//TODO _getRangeByXY ?
+			var newRange = isCoord ? ws._getRangeByXY(dc, dr) :
+				ws._calcSelectionEndPointByOffset(dc, dr);
+			var lockedCell = ws.model.getLockedCell(newRange.c2, newRange.r2);
+			if (lockedCell || lockedCell === null) {
+				return;
+			}
+		}
+
+        if (this.selectionDialogMode && !ws.model.selectionRange) {
+            if (isCoord) {
+                ws.model.selectionRange = new AscCommonExcel.SelectionRange(ws.model);
+
+				// remove first range if we paste argument with ctrl key
+				if (isCtrl && ws.model.selectionRange.ranges && Array.isArray(ws.model.selectionRange.ranges)) {
+					ws.model.selectionRange.ranges.shift();
+				}
+
+                isStartPoint = true;
+            } else {
+                ws.model.selectionRange = ws.model.copySelection.clone();
+            }
+        }
+
+        var t = this;
+        var d = isStartPoint ? ws.changeSelectionStartPoint(dc, dr, isCoord, isCtrl) :
+            ws.changeSelectionEndPoint(dc, dr, isCoord, isCoord && this.keepType);
+        if (!isCoord && !isStartPoint) {
+            // Выделение с зажатым shift
+            this.canUpdateAfterShiftUp = true;
+        }
+        this.keepType = isCoord;
+        // if (isCoord && !this.timerEnd && this.timerId === null) {
+        //     this.timerId = setTimeout(function () {
+        //         var arrClose = [];
+        //         arrClose.push(new asc_CMM({type: c_oAscMouseMoveType.None}));
+        //         t.handlers.trigger("asc_onMouseMove", arrClose);
+        //         t._onUpdateCursor(AscCommon.Cursors.CellCur);
+        //         t.timerId = null;
+        //         t.timerEnd = true;
+        //     }, 1000);
+        // }
+
+        if (this.isFormulaEditMode && this.isCellEditMode && this.cellEditor && this.cellEditor.openFromTopLine) {
+            /* set focus to the top formula entry line */
+            this.cellEditor.restoreFocus();
+        }
+
+        AscCommonExcel.applyFunction(callback, d);
+    };
 	AscCommonExcel.WorksheetView.prototype._init = function () {
 	};
 	AscCommonExcel.WorksheetView.prototype.updateRanges = function () {
@@ -432,6 +492,13 @@ $(function () {
 		autoFillRange = getRange(13, autofillR1, 13, r2To);
 		autoFillAssert(assert, autoFillRange, expectedDataShortLower, `Case: ${descSequenceType} Short name Camel-registry - su.`);
 
+	}
+
+	function CacheColumn() {
+	    this.left = 0;
+		this.width = 0;
+
+		this._widthForPrint = null;
 	}
 
 	QUnit.test("Test: \"Move rows/cols\"", function (assert) {
@@ -7927,6 +7994,77 @@ $(function () {
 		assert.strictEqual(ws.selectionRange.getLast().getName(), "A1:C3");
 		api.wb._onSelectAllByRange();
 		assert.strictEqual(ws.selectionRange.getLast().getType(), Asc.c_oAscSelectionType.RangeMax);
+	});
+
+	QUnit.test('Selection in formulas test', function (assert) {
+
+		ws.getRange2("A1:Z100").cleanAll();
+
+		// remove all data from selection
+		let selectedRange = ws.getRange2("A1:Z100");
+		wsView.setSelection(selectedRange.bbox);
+		wsView.emptySelection(Asc.c_oAscCleanOptions.All);
+
+		// remove defnames from wb
+		wb.dependencyFormulas._foreachDefName(function(defName) {
+			wb.dependencyFormulas.removeDefName(undefined, defName.name);
+		});
+
+		ws.getRange2("A1").setValue("1");
+		ws.getRange2("A2").setValue("2");
+		ws.getRange2("B1").setValue("3");
+		ws.getRange2("B2").setValue("4");
+		ws.getRange2("C2").setValue("5");
+
+		api.wb.cellEditor =  {
+			data : {},
+			changeCellText: function () {},
+			canEnterCellRange: function () {
+				return true;
+			},
+			getText: function () {
+				return "";
+			}
+		};
+
+		// set params to correct function start
+		api.wb.wsActive = ws.getIndex();
+		api.wb.setCellEditMode(true);
+		api.wb.isFormulaEditMode = true;
+		api.wb.selectionDialogMode = true;
+
+		ws.selectionRange = null;
+
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		wsView.cols[0] = new CacheColumn();
+
+		let isStartPoint = true, isCoord = true, isCtrl = true;
+		let dc = 0, dr = 0, callback;
+
+		// selection check with ctrl
+		assert.strictEqual(ws.selectionRange, null, "Ranges before cell select by coords with ctrl=true");
+		api.wb._onChangeSelection(isStartPoint, dc, dr, isCoord, isCtrl, callback);
+		assert.strictEqual(ws.selectionRange.ranges.length, 1, "Ranges after first cell select by dc: " + dc + " dr: " + dr + " coords with ctrl=true");
+		assert.strictEqual(wsView.getSelectionRangeValue(), "A1", "Selection in cell format by dc: " + dc + " dr: " + dr + " coords with ctrl=true");
+
+		api.wb._onChangeSelection(isStartPoint, dc, dr, isCoord, isCtrl, callback);
+		assert.strictEqual(ws.selectionRange.ranges.length, 2, "Ranges after second cell select by dc: " + dc + " dr: " + dr + " coords with ctrl=true");
+		assert.strictEqual(wsView.getSelectionRangeValue(), "A1,A1", "Selection in cell format by dc: " + dc + " dr: " + dr + " coords with ctrl=true");
+
+		api.wb._onChangeSelection(isStartPoint, dc, dr, isCoord, isCtrl, callback);
+		assert.strictEqual(ws.selectionRange.ranges.length, 3, "Ranges after third cell select by dc: " + dc + " dr: " + dr + " coords with ctrl=true");
+		assert.strictEqual(wsView.getSelectionRangeValue(), "A1,A1,A1", "Selection in cell format by dc: " + dc + " dr: " + dr + " coords with ctrl=true");
+
+		isCtrl = false;
+		api.wb._onChangeSelection(isStartPoint, dc, dr, isCoord, isCtrl, callback);
+		assert.strictEqual(ws.selectionRange.ranges.length, 1, "Ranges after fourth cell select by dc: " + dc + " dr: " + dr + " coords with ctrl=false");
+		assert.strictEqual(wsView.getSelectionRangeValue(), "A1", "Selection in cell format by dc: " + dc + " dr: " + dr + " coords with ctrl=false");
+		
+		// todo add more coords to test in _onChangeSelection?
+		
+		api.wb.isFormulaEditMode = false;
+		api.wb.selectionDialogMode = false;
 	});
 
 		QUnit.module("Sheet structure");

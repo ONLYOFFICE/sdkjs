@@ -1405,7 +1405,9 @@
 				}
 
 				oField.ClearFormat();
-				oField.Commit();
+				if (oField.IsCanCommit()) {
+					oField.Commit();
+				}
 
 				res = true;
 			});
@@ -1444,7 +1446,9 @@
 				}];
 				oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 
-				oField.Commit();
+				if (oField.IsCanCommit()) {
+					oField.Commit();
+				}
 				res = true;
 			});
 
@@ -1481,7 +1485,9 @@
 					"JS": "AFPercent_Keystroke(" + nDemical + "," + nSepStyle + ");"
 				}];
 				oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
-				oField.Commit();
+				if (oField.IsCanCommit()) {
+					oField.Commit();
+				}
 
 				res = true;
 			});
@@ -1519,7 +1525,9 @@
 					"JS": 'AFDate_Keystroke("' + sFormat + '");'
 				}];
 				oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
-				oField.Commit();
+				if (oField.IsCanCommit()) {
+					oField.Commit();
+				}
 
 				res = true;
 			});
@@ -1557,7 +1565,9 @@
 					"JS": 'AFTime_Keystroke(' + nFormat + ');'
 				}];
 				oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
-				oField.Commit();
+				if (oField.IsCanCommit()) {
+					oField.Commit();
+				}
 
 				res = true;
 			});
@@ -1595,7 +1605,9 @@
 					"JS": "AFSpecial_Keystroke(" + nFormat + ");"
 				}];
 				oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
-				oField.Commit();
+				if (oField.IsCanCommit()) {
+					oField.Commit();
+				}
 
 				res = true;
 			});
@@ -1622,7 +1634,9 @@
 				
 				oField.ClearFormat();
 				oField.SetArbitaryMask(sMask);
-				oField.Commit();
+				if (oField.IsCanCommit()) {
+					oField.Commit();
+				}
 
 				res = true;
 			});
@@ -1649,7 +1663,9 @@
 				
 				oField.ClearFormat();
 				oField.SetRegularExp(sReg);
-				oField.Commit();
+				if (oField.IsCanCommit()) {
+					oField.Commit();
+				}
 				
 				res = true;
 			});
@@ -3469,11 +3485,11 @@
 			}
 		}
 	};
-	PDFEditorApi.prototype.asc_Save = function (isAutoSave, isIdle) {
+	PDFEditorApi.prototype.asc_Save = function (isAutoSave, isIdle, isResaveAttack) {
 		let oDoc = this.getPDFDoc();
 		if (!isAutoSave)
 			oDoc.BlurActiveObject();
-		return AscCommon.DocumentEditorApi.prototype.asc_Save.call(this, isAutoSave, isIdle);
+		return AscCommon.DocumentEditorApi.prototype.asc_Save.call(this, isAutoSave, isIdle, isResaveAttack);
 	};
 	PDFEditorApi.prototype._onEndLoadSdk = function() {
 		AscCommon.DocumentEditorApi.prototype._onEndLoadSdk.call(this);

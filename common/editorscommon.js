@@ -14975,6 +14975,115 @@
 		}
 	}
 
+	function CTree() {
+	}
+
+	CTree.prototype = {
+		constructor: CTree,
+		getChildren: function () {
+			return [];
+		},
+		fillObject: function (oCopy, oIdMap) {},
+		traverse: function (fCallback, bReverseOrder) {
+			if (fCallback(this)) {
+				return true;
+			}
+			let aChildren = this.getChildren();
+			if(bReverseOrder === undefined || bReverseOrder === true) {
+				for (let nChild = aChildren.length - 1; nChild > -1; --nChild) {
+					let oChild = aChildren[nChild];
+					if (oChild && oChild.traverse) {
+						if (oChild.traverse(fCallback, bReverseOrder)) {
+							return true;
+						}
+					}
+				}
+			}
+			else {
+				for (let nChild = 0; nChild < aChildren.length; ++nChild) {
+					let oChild = aChildren[nChild];
+					if (oChild && oChild.traverse) {
+						if (oChild.traverse(fCallback, bReverseOrder)) {
+							return true;
+						}
+					}
+				}
+			}
+			return false;
+		},
+		isEqual: function (oOther) {
+			if (!oOther) {
+				return false;
+			}
+			if (this.getObjectType() !== oOther.getObjectType()) {
+				return false;
+			}
+			var aThisChildren = this.getChildren();
+			var aOtherChildren = oOther.getChildren();
+			if (aThisChildren.length !== aOtherChildren.length) {
+				return false;
+			}
+			for (var nChild = 0; nChild < aThisChildren.length; ++nChild) {
+				var oThisChild = aThisChildren[nChild];
+				var oOtherChild = aOtherChildren[nChild];
+				if (oThisChild !== this.checkEqualChild(oThisChild, oOtherChild)) {
+					return false;
+				}
+			}
+			return true;
+		},
+		checkEqualChild: function (oThisChild, oOtherChild) {
+			if (AscCommon.isRealObject(oThisChild) && oThisChild.isEqual) {
+				if (!oThisChild.isEqual(oOtherChild)) {
+					return undefined;
+				}
+			} else {
+				if (oThisChild !== oOtherChild) {
+					return undefined;
+				}
+			}
+			return oThisChild;
+		},
+		preorderTraverse : function(nextLayerCallback, backtrackCallback, context) {
+			var stack = [];
+			var nodes = this.getChildren();
+			var i = 0;
+
+			while (i <= nodes.length) {
+				if (i === nodes.length) {
+					// backtrack
+					if (stack.length !== 0) {
+						let state = stack.pop();
+						nodes = state.nodes;
+						i = state.index + 1;
+						if (backtrackCallback) {
+							backtrackCallback();
+						}
+					} else {
+						break;
+					}
+				} else {
+					var node = nodes[i];
+
+					// Call the callback for the current node
+					if (nextLayerCallback) {
+						nextLayerCallback(context, node);
+					}
+
+					if (node.children && node.children.length > 0) {
+						// Save current state and go deeper
+						stack.push({ nodes: nodes, index: i });
+						nodes = node.children;
+						i = 0;
+					} else {
+						// Leaf node, move to next sibling
+						i++;
+					}
+				}
+			}
+		}
+	}
+
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].consoleLog = consoleLog;
@@ -15043,6 +15152,7 @@
 	window["AscCommon"].CLock = CLock;
 	window["AscCommon"].CContentChanges = CContentChanges;
 	window["AscCommon"].CContentChangesElement = CContentChangesElement;
+	window["AscCommon"].CTree = CTree;
 
 	window["AscCommon"].CorrectMMToTwips = CorrectMMToTwips;
 	window["AscCommon"].TwipsToMM = TwipsToMM;

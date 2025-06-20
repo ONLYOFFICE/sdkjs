@@ -320,7 +320,7 @@
 	CParagraphTextShaper.prototype.private_HandleHindiDigit = function(oItem)
 	{
 		let oFontInfo = this.TextPr.GetFontInfo(AscWord.fontslot_ASCII);
-		let nGrapheme = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(oItem.GetCodePoint() + (0x06f0 - 0x0030), oFontInfo.Name, oFontInfo.Style);
+		let nGrapheme = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(oItem.GetCodePoint() + (0x0660 - 0x0030), oFontInfo.Name, oFontInfo.Style);
 		this.private_HandleItem(oItem, nGrapheme, AscFonts.GetGraphemeWidth(nGrapheme), oFontInfo.Size, AscWord.fontslot_ASCII, false, false, false);
 	};
 	

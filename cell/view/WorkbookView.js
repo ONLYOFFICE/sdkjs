@@ -1450,6 +1450,12 @@
         if (this.selectionDialogMode && !ws.model.selectionRange) {
             if (isCoord) {
                 ws.model.selectionRange = new AscCommonExcel.SelectionRange(ws.model);
+
+				// remove first range if we paste argument with ctrl key
+				if (isCtrl && ws.model.selectionRange.ranges && Array.isArray(ws.model.selectionRange.ranges)) {
+					ws.model.selectionRange.ranges.shift();
+				}
+
                 isStartPoint = true;
             } else {
                 ws.model.selectionRange = ws.model.copySelection.clone();
@@ -2635,16 +2641,15 @@
   };
 
   WorkbookView.prototype._canResize = function() {
-	  let showVerticalScroll = this.Api.isMobileVersion || this.getShowVerticalScroll();
-	  let showHorizontalScroll = this.Api.isMobileVersion || this.getShowHorizontalScroll();
+    let showVerticalScroll = this.getShowVerticalScroll();
+    let showHorizontalScroll = this.getShowHorizontalScroll();
 
-	  let styleWidth, styleHeight;
-	  styleWidth = this.element.offsetWidth - (this.Api.isMobileVersion || !showVerticalScroll ? 0 : this.defaults.scroll.widthPx);
-	  styleHeight = this.element.offsetHeight - (this.Api.isMobileVersion || !showHorizontalScroll ? 0 : this.defaults.scroll.heightPx);
-	  
-	  this.canvasOverlay.parentNode.style.right = !showVerticalScroll ? 0 : 14 + 'px';
-	  this.canvasOverlay.parentNode.style.bottom = !showHorizontalScroll ? 0 : 14 + 'px';
+    let styleWidth, styleHeight;
+    styleWidth = this.element.offsetWidth - (this.Api.isMobileVersion || !showVerticalScroll ? 0 : this.defaults.scroll.widthPx);
+    styleHeight = this.element.offsetHeight - (this.Api.isMobileVersion || !showHorizontalScroll ? 0 : this.defaults.scroll.heightPx);
 
+    this.canvasOverlay.parentNode.style.right = (this.Api.isMobileVersion || !showVerticalScroll) ? 0 : this.defaults.scroll.widthPx + 'px';
+    this.canvasOverlay.parentNode.style.bottom = (this.Api.isMobileVersion || !showHorizontalScroll) ? 0 : this.defaults.scroll.heightPx + 'px';
 
 
     this.isInit = true;

@@ -213,7 +213,15 @@ window["DesktopOfflineAppDocumentEndLoad"] = function(_url, _data, _len)
 //////////////       IMAGES      ////////////////////////
 /////////////////////////////////////////////////////////
 
-let isOverrideDocumentUrls = window['Asc']['VisioEditorApi'] ? false : true;
+let isOverrideDocumentUrls = true;//window['Asc']['VisioEditorApi'] ? false : true;
+
+function getCorrectImageUrl(path)
+{
+	if (!window['Asc']['VisioEditorApi'])
+		return path;
+
+	return window["AscDesktopEditor"]["LocalFileGetImageUrlCorrect"](path);
+}
 
 if (isOverrideDocumentUrls)
 {
@@ -240,7 +248,8 @@ if (isOverrideDocumentUrls)
 		if (window.editor && window.editor.ThemeLoader && window.editor.ThemeLoader.ThemesUrl != "" && strPath.indexOf(window.editor.ThemeLoader.ThemesUrl) == 0)
 			return null;
 
-		return this.documentUrl + "/media/" + strPath;
+		let url = this.documentUrl + "/media/" + strPath;
+		return getCorrectImageUrl(url);
 	};
 	prot.getImageLocal = function(_url)
 	{

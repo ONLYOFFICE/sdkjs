@@ -10523,13 +10523,14 @@
         return this.drawingCtx.getHeight() - visibleHeight;
     };
 
-    WorksheetView.prototype._updateVisibleRowsCount = function (skipScrollReinit) {
+    WorksheetView.prototype._updateVisibleRowsCount = function (skipScrollReinit, fChangeRowsCount) {
         this._calcVisibleRows();
         if (gc_nMaxRow !== this.nRowsCount && !this.model.isDefaultHeightHidden()) {
 			var missingHeight = this._getMissingHeight();
 			if (0 < missingHeight) {
 				var rowHeight = Asc.round(this.defaultRowHeightPx * this.getZoom());
 				this.nRowsCount = Math.min(this.nRowsCount + Asc.ceil(missingHeight / rowHeight), gc_nMaxRow);
+				fChangeRowsCount && fChangeRowsCount();
 				this._calcVisibleRows();
 				if (!skipScrollReinit) {
 					this.handlers.trigger("reinitializeScroll", AscCommonExcel.c_oAscScrollType.ScrollVertical);
@@ -10539,13 +10540,14 @@
         this._updateDrawingArea();
     };
 
-    WorksheetView.prototype._updateVisibleColsCount = function (skipScrollReinit) {
+    WorksheetView.prototype._updateVisibleColsCount = function (skipScrollReinit, fChangeRowsCount) {
         this._calcVisibleColumns();
 		if (gc_nMaxCol !== this.nColsCount && !this.model.isDefaultWidthHidden()) {
 			var missingWidth = this._getMissingWidth();
 			if (0 < missingWidth) {
 				var colWidth = Asc.round(this.defaultColWidthPx * this.getZoom(true) * this.getRetinaPixelRatio());
 				this.setColsCount(Math.min(this.nColsCount + Asc.ceil(missingWidth / colWidth), gc_nMaxCol));
+				fChangeRowsCount && fChangeRowsCount();
 				this._calcVisibleColumns();
 				if (!skipScrollReinit) {
 					this.handlers.trigger("reinitializeScroll", AscCommonExcel.c_oAscScrollType.ScrollHorizontal);
@@ -10692,7 +10694,21 @@
 
         // ToDo стоит тут переделать весь scroll
         vr.r1 = start;
-        this._updateVisibleRowsCount();
+		let _beforeRowsCount = this.nRowsCount;
+        this._updateVisibleRowsCount(undefined, function () {
+			if (!t.workbook.getSmoothScrolling()) {
+				return;
+			}
+			let _expandRowsHeight = 30 * t.defaultRowHeightPx;
+			let nRowsHeightDiff = t._getRowTop(t.nRowsCount) - t._getRowTop(_beforeRowsCount);
+
+			if (nRowsHeightDiff > 0 && nRowsHeightDiff < _expandRowsHeight) {
+				while (nRowsHeightDiff < _expandRowsHeight) {
+					nRowsHeightDiff += t._getRowHeight(t.nRowsCount);
+					t.nRowsCount++;
+				}
+			}
+		});
         // Это необходимо для того, чтобы строки, у которых высота по тексту, рассчитались
         if (!oldVR.intersectionSimple(vr)) {
             // Полностью обновилась область
@@ -10954,6 +10970,7 @@
         var vr = this.visibleRange;
         var fixStartCol = new asc_Range(vr.c1, vr.r1, vr.c1, vr.r2);
 
+		let t = this;
 		let isReverse = delta < 0;
 		let unitDeltaStep = Asc.round(this.getHScrollStep());
 
@@ -11093,7 +11110,21 @@
 
         // ToDo стоит тут переделать весь scroll
         vr.c1 = start;
-        this._updateVisibleColsCount();
+		let _beforeColsCount = this.nColsCount;
+		this._updateVisibleColsCount(undefined, function () {
+			if (!t.workbook.getSmoothScrolling()) {
+				return;
+			}
+			let _expandColsWidth = 30 * t.defaultColWidthPx;
+			let nColsWidthDiff = t._getColLeft(t.nColsCount) - t._getColLeft(_beforeColsCount);
+
+			if (nColsWidthDiff > 0 && nColsWidthDiff < _expandColsWidth) {
+				while (nColsWidthDiff < _expandColsWidth) {
+					nColsWidthDiff += t._getColumnWidth(t.nColsCount);
+					t.nColsCount++;
+				}
+			}
+		});
         // Это необходимо для того, чтобы строки, у которых высота по тексту, рассчитались
         if (!oldVR.intersectionSimple(vr)) {
             // Полностью обновилась область

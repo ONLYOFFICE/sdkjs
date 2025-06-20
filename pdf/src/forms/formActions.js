@@ -692,17 +692,20 @@
             return;
         }
 
-        oDoc.SetEvent({
+        const oEvent = oDoc.CreateEvent({
             "name": this.GetTriggerName(),
             "target": oField.GetFormApi(),
             "rc": true
         });
 
         try {
-            EvalScript(this.script, oDoc);
+            EvalScript(this.script, oDoc, oEvent);
         }
         catch (err) {
             console.log(err);
+        }
+        finally {
+            oDoc.event = oDoc.eventsStack.pop();
         }
 
         if (this.bContinueAfterEval == true)
@@ -721,14 +724,19 @@
             }
         }
 
-        oDoc.SetEvent(oEventPr);
+        const oEvent = oDoc.CreateEvent(oEventPr);
         
         try {
-            EvalScript(this.script, oDoc);
+            EvalScript(this.script, oDoc, oEvent);
         }
         catch (err) {
             console.log(err);
         }
+        finally {
+            oDoc.event = oDoc.eventsStack.pop();
+        }
+
+        return oEvent;
     };
 
     CActionRunScript.prototype.GetScript = function() {
@@ -740,7 +748,7 @@
         memory.WriteString(this.script);
     };
 	
-    function EvalScript(str, oParentDoc) {
+    function EvalScript(str, oParentDoc, oEvent) {
         let aArgsNamesToDelete = [
             "window",
             "setTimeout",
@@ -790,9 +798,16 @@
             "AFRange_Validate",
         ];
     
+        if (!oParentDoc.globalEventStack) {
+            oParentDoc.globalEventStack = [];    
+        }
+
+        oParentDoc.globalEventStack.push(oParentDoc.event);
+        oParentDoc.event = oEvent;
+
         let oApiFunc = AscPDF.Api.Functions;
         let aArgsPdfApi = [
-            oParentDoc.event,
+            oEvent,
             oApiObjects["color"],
 
             oApiFunc["AFNumber_Format"],

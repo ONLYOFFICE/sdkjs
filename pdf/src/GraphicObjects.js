@@ -1422,7 +1422,7 @@
                     this.lastSelectedObject = object;
                 }
                 this.checkShowMediaControlOnSelect();
-                if (!object.IsFreeText || !object.IsFreeText() || !object.IsInTextBox()) {
+                if (!object.IsFreeText || !object.IsFreeText()) {
                     let oAcitveObj = oDoc.GetActiveObject();
                     if (oAcitveObj) {
                         let oPrev = this.selectedObjects[0];

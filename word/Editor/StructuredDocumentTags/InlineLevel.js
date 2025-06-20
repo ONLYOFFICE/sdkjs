@@ -3230,6 +3230,10 @@ CInlineLevelSdt.prototype.ConvertFormToFixed = function(nW, nH)
 		nH = Math.max(nH, 22 * g_dKoef_pt_to_mm);
 	}
 	
+	// TODO: Разобраться, почему мы посылаем useWrap=true, хотя по факту не true
+	// Обязательно вызываем до любого изменения параграфа
+	let layout = oParagraph ? oParagraph.GetLayout(this.GetStartPosInParagraph(), true) : null;
+	
 	// Удаляем переносы строк и все лишнее, т.к. изначально конвертим в однострочную форму
 	this.CorrectSingleLineFormContent();
 	
@@ -3248,8 +3252,6 @@ CInlineLevelSdt.prototype.ConvertFormToFixed = function(nW, nH)
 	let x = 0;
 	let y = 0;
 	
-	// TODO: Разобраться, почему мы посылаем useWrap=true, хотя по факту не true
-	let layout = oParagraph.GetLayout(this.GetStartPosInParagraph(), true);
 	if (layout)
 	{
 		let anchorPosition = new CAnchorPosition();

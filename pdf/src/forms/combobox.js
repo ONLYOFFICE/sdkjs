@@ -407,13 +407,13 @@
         }
     };
 	CComboBoxField.prototype.EnterText = function(aChars) {
-		if (!this.DoKeystrokeAction(aChars))
+        let oKeystrokeEvent = this.DoKeystrokeAction(aChars);
+		if (!oKeystrokeEvent["rc"])
 			return false;
 		
-		let doc = this.GetDocument();
 		let oKeystrokeTrigger = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke);
         if (oKeystrokeTrigger) {
-            aChars = AscWord.CTextFormFormat.prototype.GetBuffer(doc.event["change"]);
+            aChars = AscWord.CTextFormFormat.prototype.GetBuffer(oKeystrokeEvent["change"]);
         }
         
 		if (!aChars.length)
@@ -452,13 +452,7 @@
             return;
         }
 
-        if (this.DoFormatAction() == false) {
-            this.UndoNotAppliedChanges();
-            if (this.IsChanged() == false)
-                this.SetDrawFromStream(true);
-
-            return;
-        }
+        this.DoFormatAction();
 
         for (let i = 0; i < aFields.length; i++) {
             aFields[i].SetWasChanged(true);
@@ -471,10 +465,9 @@
                 }
             }
             
-            // not skip current field for history
-            // if (aFields[i] == this) {
-            //     continue;
-            // }
+            if (aFields[i] == this) {
+                aFields[i]._useDisplayValue = true;
+            }
 
             if (aCurIdxs && aCurIdxs.length != 0) {
                 aFields[i].SetCurIdxs(aCurIdxs);
@@ -511,10 +504,6 @@
 	};
 	CComboBoxField.prototype.canBeginCompositeInput = function() {
 		return this.IsEditable();
-	};
-	CComboBoxField.prototype.beforeCompositeInput = function() {
-		this.DoKeystrokeAction();
-		this.content.Remove(1, true, false, false);
 	};
 	/**
 	 * Checks curValueIndex, corrects it and return.
@@ -854,6 +843,8 @@
     CComboBoxField.prototype.ClearFormat            = AscPDF.CTextField.prototype.ClearFormat;
     CComboBoxField.prototype.SetDrawFromStream      = AscPDF.CTextField.prototype.SetDrawFromStream;
     CComboBoxField.prototype.DrawMarker             = AscPDF.CTextField.prototype.DrawMarker;
+    CComboBoxField.prototype.beforeCompositeInput   = AscPDF.CTextField.prototype.beforeCompositeInput;
+    CComboBoxField.prototype.IsCanCommit            = AscPDF.CTextField.prototype.IsCanCommit;
 
 	window["AscPDF"].CComboBoxField = CComboBoxField;
 })();

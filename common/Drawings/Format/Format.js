@@ -77,7 +77,7 @@
 		function CBaseNoIdObject() {
 		}
 
-
+		InitClass(CBaseNoIdObject, AscCommon.CTree, AscDFH.historyitem_type_Unknown);
 		CBaseNoIdObject.prototype.classType = AscDFH.historyitem_type_Unknown;
 		CBaseNoIdObject.prototype.notAllowedWithoutId = function () {
 			return false;
@@ -292,69 +292,7 @@
 				this.writeRecord1(pWriter, nType, oChild);
 			}
 		};
-		CBaseFormatNoIdObject.prototype.getChildren = function () {
-			return [];
-		};
-		CBaseFormatNoIdObject.prototype.traverse = function (fCallback, bReverseOrder) {
-			if (fCallback(this)) {
-				return true;
-			}
-			let aChildren = this.getChildren();
-			if(bReverseOrder === undefined || bReverseOrder === true) {
-				for (let nChild = aChildren.length - 1; nChild > -1; --nChild) {
-					let oChild = aChildren[nChild];
-					if (oChild && oChild.traverse) {
-						if (oChild.traverse(fCallback, bReverseOrder)) {
-							return true;
-						}
-					}
-				}
-			}
-			else {
-				for (let nChild = 0; nChild < aChildren.length; ++nChild) {
-					let oChild = aChildren[nChild];
-					if (oChild && oChild.traverse) {
-						if (oChild.traverse(fCallback, bReverseOrder)) {
-							return true;
-						}
-					}
-				}
-			}
-			return false;
-		};
-		CBaseFormatNoIdObject.prototype.isEqual = function (oOther) {
-			if (!oOther) {
-				return false;
-			}
-			if (this.getObjectType() !== oOther.getObjectType()) {
-				return false;
-			}
-			var aThisChildren = this.getChildren();
-			var aOtherChildren = oOther.getChildren();
-			if (aThisChildren.length !== aOtherChildren.length) {
-				return false;
-			}
-			for (var nChild = 0; nChild < aThisChildren.length; ++nChild) {
-				var oThisChild = aThisChildren[nChild];
-				var oOtherChild = aOtherChildren[nChild];
-				if (oThisChild !== this.checkEqualChild(oThisChild, oOtherChild)) {
-					return false;
-				}
-			}
-			return true;
-		};
-		CBaseFormatNoIdObject.prototype.checkEqualChild = function (oThisChild, oOtherChild) {
-			if (AscCommon.isRealObject(oThisChild) && oThisChild.isEqual) {
-				if (!oThisChild.isEqual(oOtherChild)) {
-					return undefined;
-				}
-			} else {
-				if (oThisChild !== oOtherChild) {
-					return undefined;
-				}
-			}
-			return oThisChild;
-		};
+
 		function CBaseFormatObject() {
 			CBaseFormatNoIdObject.call(this);
 			this.Id = null;

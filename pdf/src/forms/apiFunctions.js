@@ -1129,11 +1129,13 @@
                 break;
         }
 
-        oField.DoValidateAction(String(nResult));
-        
-        if (oDoc.event["rc"]) {
-            oField.SetValue(String(nResult));
-            oField.SetNeedCommit(true);
+        let oWidget = oField.GetKid(0);
+        let sRes = String(nResult);
+
+        let isCanCommit = oWidget.IsCanCommit(sRes);
+        if (isCanCommit) {
+            oWidget.SetValue(sRes);
+            oWidget.SetNeedCommit(true);
         }
     }
 

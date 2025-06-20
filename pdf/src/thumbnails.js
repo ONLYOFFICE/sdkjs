@@ -735,8 +735,8 @@
         AscCommon.calculateCanvasSize(this.canvasOverlay);
 
         var canvasBounds = this.canvas.getBoundingClientRect();
-        this.coordsOffset.x = canvasBounds ? canvasBounds.left : 0;
-        this.coordsOffset.y = canvasBounds ? canvasBounds.top : 0;
+        this.coordsOffset.x = canvasBounds ? canvasBounds.left * AscCommon.AscBrowser.zoom : 0;
+        this.coordsOffset.y = canvasBounds ? canvasBounds.top * AscCommon.AscBrowser.zoom : 0;
 
         var scrollV = document.getElementById("id_vertical_scroll_th");
         scrollV.style.display = "none";
@@ -1046,7 +1046,7 @@
             // Вместо выбора страницы - просто запомним, что было нажато.
             this._mouseDownPage  = dp.num;
             this._shiftPressed   = e.shiftKey;
-            this._ctrlPressed    = e.ctrlKey;
+            this._ctrlPressed    = e.ctrlKey || e.metaKey;
     
             // Готовимся к потенциальному drag&drop
             this.pendingDrag = true;
@@ -1208,8 +1208,7 @@
         if (e && e.preventDefault) e.preventDefault();
 
         const oDoc = Asc.editor.getPDFDoc();
-        oDoc.UpdateCopyCutState();
-        
+        oDoc.UpdateInterface();
         return false;
     };
 
@@ -1226,83 +1225,85 @@
     // Create "ghost" for dragging
     CDocument.prototype.prepareDragGhost = function(dp, countPages) {
         if (!this.dragCanvas) return;
-    
-        // Reduce the "ghost" to 70% of the original page size
-        let w = dp.pageRect.w * 0.7;
-        let h = dp.pageRect.h * 0.7;
-    
-        this.dragCanvas.width  = w + 15;
-        this.dragCanvas.height = h + 15;
-        this.dragCanvas.style.display = "block";
-    
-        // Set opacity
+
+        // 1. Compute target size in device pixels (includes browser zoom/Retina)
+        const devW  = dp.pageRect.w * 0.8;
+        const devH  = dp.pageRect.h * 0.8;
+        // 2. Convert to CSS pixels so the element stays the same on-screen
+        const ratio = AscCommon.AscBrowser.retinaPixelRatio;
+        const cssW  = devW  / ratio >> 0;
+        const cssH  = devH  / ratio >> 0;
+        const pad   = 15;  // extra padding for borders, etc.
+
+        // 3. Set up canvas buffer at full resolution, but CSS size at logical pixels
+        this.dragCanvas.width  = (cssW + pad) * ratio;
+        this.dragCanvas.height = (cssH + pad) * ratio;
+        this.dragCanvas.style.width  = (cssW + pad) + "px";
+        this.dragCanvas.style.height = (cssH + pad) + "px";
         this.dragCanvas.style.opacity = 0.95;
+        this.dragCanvas.style.display = "block";
 
-        // Clear the canvas
-        this.dragCtx.clearRect(0, 0, this.dragCanvas.width, this.dragCanvas.height);
-    
-        // If a stack of pages needs to be created
-        if (countPages && countPages > 1) {
-            let offsets = [];
-            if (countPages === 2) {
-                // For two pages — one additional copy
-                offsets.push({ x: 5, y: 5 });
-            } else if (countPages >= 3) {
-                // For three or more — two additional copies
-                offsets.push({ x: 10, y: 10 });
-                offsets.push({ x: 5, y: 5 });
-            }
-    
-            // Draw additional copies (background pages)
-            for (let i = 0; i < offsets.length; i++) {
-                let offset = offsets[i];
+        // 4. Reset any transforms and scale context so draws use CSS coordinates
+        const ctx = this.dragCtx;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(ratio, ratio);
+        ctx.clearRect(0, 0, cssW + pad, cssH + pad);
+        ctx.imageSmoothingEnabled = false;
 
-                this.dragCtx.fillStyle = PageStyle.emptyColor;
-                this.dragCtx.fillRect(offset.x, offset.y, w, h);
-                this.dragCtx.strokeRect(offset.x, offset.y, w, h);
-            }
-        }
-    
-        // Draw the main page on top (without offset)
+        // 5. Draw background pages for stack effect
+        const offsets = countPages > 2
+            ? [{ x: 10, y: 10 }, { x: 5, y: 5 }]
+            : countPages === 2
+            ? [{ x: 5, y: 5 }]
+            : [];
+        offsets.forEach(function(off) {
+            ctx.fillStyle = PageStyle.emptyColor;
+            ctx.fillRect(off.x, off.y, cssW, cssH);
+            ctx.strokeRect(off.x, off.y, cssW, cssH);
+        });
+
+        // 6. Draw the main page image or placeholder
         if (dp.page.image) {
-            this.dragCtx.drawImage(dp.page.image, 0, 0, w, h);
-        } else {
-            this.dragCtx.fillStyle = PageStyle.emptyColor;
-            this.dragCtx.fillRect(0, 0, w, h);
-        }
-        this.dragCtx.strokeRect(0, 0, w, h);
-    
-        // If more than one page is being dragged, display text with the number of pages
-        if (countPages && countPages > 1) {
-            let text = countPages + " pages";
-            let fontSize = 16; // can be parsed from ctx.font
-            this.dragCtx.font = fontSize + "px Arial";
-    
-            // Calculate text dimensions
-            let metrics = this.dragCtx.measureText(text);
-            let textWidth = metrics.width;
-            let textHeight = fontSize;
-            let textX = (w - textWidth) / 2;
-            let textY = (h - textHeight);
-            let padding = 4;
-            let centerX = w / 2;
-    
-            // Draw background for text
-            this.dragCtx.fillStyle = "rgba(255, 255, 255, 1)";
-            this.dragCtx.fillRect(
-                centerX - textWidth / 2 - padding,
-                textY - textHeight,
-                textWidth + padding * 2,
-                textHeight + padding * 2
+            ctx.drawImage(
+                dp.page.image,
+                0, 0, dp.page.image.width, dp.page.image.height,
+                0, 0, cssW, cssH
             );
-    
-            // Draw text
-            this.dragCtx.fillStyle = "rgba(0, 0, 0, 1)";
-            this.dragCtx.fillText(text, textX, textY);
         }
-    
-        // Move the "ghost" to the cursor position
-        this.moveDragGhost(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+        else {
+            ctx.fillStyle = PageStyle.emptyColor;
+            ctx.fillRect(0, 0, cssW, cssH);
+        }
+        ctx.strokeRect(0, 0, cssW, cssH);
+
+        // 7. If multiple pages, overlay count text centered at bottom
+        if (countPages > 1) {
+            const text     = `${countPages} pages`;
+            const fontSize = 16;
+            ctx.font       = `${fontSize}px Arial`;
+            const m        = ctx.measureText(text);
+            const tx       = (cssW - m.width) / 2;
+            const ty       = cssH - fontSize;
+            const textPad  = 4;
+
+            // white background for text
+            ctx.fillStyle = "rgba(255,255,255,1)";
+            ctx.fillRect(
+                (cssW / 2) - m.width / 2 - textPad,
+                ty - fontSize,
+                m.width + textPad * 2,
+                fontSize + textPad * 2
+            );
+            // draw the text
+            ctx.fillStyle = "rgba(0,0,0,1)";
+            ctx.fillText(text, tx, ty);
+        }
+
+        // 8. Finally, position the ghost at the current mouse coordinates
+        this.moveDragGhost(
+            AscCommon.global_mouseEvent.X,
+            AscCommon.global_mouseEvent.Y
+        );
     };
     
     CDocument.prototype.moveDragGhost = function(mx, my) {
@@ -1410,11 +1411,11 @@
 
         // здесь - имитируем моус мув ---------------------------
         var _e   = {};
-        _e.pageX = AscCommon.global_mouseEvent.X;
-        _e.pageY = AscCommon.global_mouseEvent.Y;
+        _e.pageX = AscCommon.global_mouseEvent.X / AscCommon.AscBrowser.zoom;
+        _e.pageY = AscCommon.global_mouseEvent.Y / AscCommon.AscBrowser.zoom;
 
-        _e.clientX = AscCommon.global_mouseEvent.X;
-        _e.clientY = AscCommon.global_mouseEvent.Y;
+        _e.clientX = AscCommon.global_mouseEvent.X / AscCommon.AscBrowser.zoom;
+        _e.clientY = AscCommon.global_mouseEvent.Y / AscCommon.AscBrowser.zoom;
 
         _e.altKey   = AscCommon.global_mouseEvent.AltKey;
         _e.shiftKey = AscCommon.global_mouseEvent.ShiftKey;

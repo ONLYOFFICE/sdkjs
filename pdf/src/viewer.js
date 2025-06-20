@@ -1112,6 +1112,8 @@
 			}
 
 			this.isDocumentReady = true;
+			
+			AscCommon.g_oIdCounter.Set_Load(false);
 		};
 
 		this.open = function(data, password)
@@ -1208,8 +1210,6 @@
 			g_fontApplication.LoadFont = g_fontApplication.LoadFontWithEmbed;
 
 			this.checkLoadCMap();
-
-			AscCommon.g_oIdCounter.Set_Load(false); // to do возможно не тут стоит выключать флаг
 
 			if (this.file && !this.file.isNeedPassword() && !this.file.isValid())
 				this.Api.sendEvent("asc_onError", Asc.c_oAscError.ID.ConvertationOpenError, Asc.c_oAscError.Level.Critical);

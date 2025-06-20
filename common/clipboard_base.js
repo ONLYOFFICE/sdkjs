@@ -982,6 +982,13 @@
 			}
 		},
 
+		isSupportExecCommand : function(type)
+		{
+			if (AscCommon.AscBrowser.isSafariMacOs && !AscCommon.AscBrowser.isAppleDevices)
+				return false;
+			return true;
+		},
+
 		isUseNewCopy : function()
 		{
 			if (navigator.clipboard) {
@@ -1174,7 +1181,8 @@
 			var _ret = false;
 			try
 			{
-				_ret = document.execCommand("copy");
+				if (this.isSupportExecCommand("copy"))
+					_ret = document.execCommand("copy");
 			}
 			catch (err)
 			{
@@ -1219,7 +1227,8 @@
 			var _ret = false;
 			try
 			{
-				_ret = document.execCommand("cut");
+				if (this.isSupportExecCommand("cut"))
+					_ret = document.execCommand("cut");
 			}
 			catch (err)
 			{
@@ -1267,7 +1276,8 @@
 			var _ret = false;
 			try
 			{
-				_ret = document.execCommand("paste");
+				if (this.isSupportExecCommand("paste"))
+					_ret = document.execCommand("paste");
 			}
 			catch (err)
 			{

@@ -1513,6 +1513,9 @@
 
         if (!isChanged)
             this.SetWasChanged(false);
+        
+        if (this.IsChanged() == false)
+            this.SetDrawFromStream(true);
     };
 
     CBaseField.prototype.ClearCache = function() {

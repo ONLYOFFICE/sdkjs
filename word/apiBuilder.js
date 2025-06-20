@@ -2742,9 +2742,9 @@
 	 * Adds a comment to the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText - The comment text (required).
-	 * @param {string} sAuthor - The author's name (optional).
-	 * @param {string} sUserId - The user ID of the comment author (optional).
+	 * @param {string} sText - The comment text.
+	 * @param {string} [sAuthor] - The author's name.
+	 * @param {string} [sUserId] - The user ID of the comment author.
 	 * @returns {?ApiComment} - Returns null if the comment was not added.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/AddComment.js
 	 */
@@ -5434,9 +5434,9 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiRun[] | DocumentElement} element - The element where the comment will be added. It may be applied to any element which has the *AddComment* method.
-	 * @param {string} text - The comment text (required).
-	 * @param {string} author - The author's name (optional).
-	 * @param {string} userId - The user ID of the comment author (optional).
+	 * @param {string} text - The comment text.
+	 * @param {string} [author] - The author's name.
+	 * @param {string} [userId] - The user ID of the comment author.
 	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddComment.js
 	 */
@@ -8864,9 +8864,9 @@
 	 * Adds a comment to the current document selection, or to the current word if no text is selected.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText - The comment text (required).
-	 * @param {string} sAuthor - The author's name (optional).
-	 * @param {string} sUserId - The user ID of the comment author (optional).
+	 * @param {string} sText - The comment text.
+	 * @param {string} [sAuthor] - The author's name.
+	 * @param {string} [sUserId] - The user ID of the comment author.
 	 * @returns {?ApiComment} - Returns null if the comment was not added.
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddComment.js
 	 */
@@ -9545,9 +9545,9 @@
 	 * <note>Please note that this paragraph must be in the document.</note>
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText - The comment text (required).
-	 * @param {string} sAuthor - The author's name (optional).
-	 * @param {string} sUserId - The user ID of the comment author (optional).
+	 * @param {string} sText - The comment text.
+	 * @param {string} [sAuthor] - The author's name.
+	 * @param {string} [sUserId] - The user ID of the comment author.
 	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/AddComment.js
 	 */
@@ -11790,9 +11790,9 @@
 	 * <note>Please note that this run must be in the document.</note>
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText - The comment text (required).
-	 * @param {string} sAuthor - The author's name (optional).
-	 * @param {string} sUserId - The user ID of the comment author (optional).
+	 * @param {string} sText - The comment text.
+	 * @param {string} [sAuthor] - The author's name.
+	 * @param {string} [sUserId] - The user ID of the comment author.
 	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/AddComment.js
 	 */
@@ -13207,9 +13207,9 @@
 	 * <note>Please note that this table must be in the document.</note>
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText - The comment text (required).
-	 * @param {string} sAuthor - The author's name (optional).
-	 * @param {string} sUserId - The user ID of the comment author (optional).
+	 * @param {string} sText - The comment text.
+	 * @param {string} [sAuthor] - The author's name.
+	 * @param {string} [sUserId] - The user ID of the comment author.
 	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/AddComment.js
 	 */
@@ -19775,9 +19775,9 @@
 	 * <note>Please note that this inline content control must be in the document.</note>
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText - The comment text (required).
-	 * @param {string} sAuthor - The author's name (optional).
-	 * @param {string} sUserId - The user ID of the comment author (optional).
+	 * @param {string} sText - The comment text.
+	 * @param {string} [sAuthor] - The author's name.
+	 * @param {string} [sUserId] - The user ID of the comment author.
 	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/AddComment.js
 	 */
@@ -21535,9 +21535,9 @@
 	 * <note>Please note that the current block content control must be in the document.</note>
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {string} text - The comment text (required).
-	 * @param {string} author - The author's name (optional).
-	 * @param {string} userId - The user ID of the comment author (optional).
+	 * @param {string} text - The comment text.
+	 * @param {string} [author] - The author's name.
+	 * @param {string} [userId] - The user ID of the comment author.
 	 * @returns {?ApiComment} - Returns null if the comment was not added.
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/AddComment.js
 	 */
@@ -21796,6 +21796,19 @@
 	 */
 	ApiFormBase.prototype.GetClassType = function()
 	{
+		if (this instanceof ApiTextForm)
+			return "textForm";
+		else if (this instanceof ApiComboBoxForm)
+			return "comboBoxForm";
+		else if (this instanceof ApiDateForm)
+			return "dateForm";
+		else if (this instanceof ApiCheckBoxForm)
+			return "checkBoxForm";
+		else if (this instanceof ApiPictureForm)
+			return "pictureForm";
+		else if (this instanceof ApiComplexForm)
+			return "complexForm";
+		
 		return "form";
 	};
 	/**
@@ -22142,19 +22155,17 @@
 	 *Used if possible for this type of form*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @param {ApiTextPr} oTextPr - The text properties that will be set to the current form.
+	 * @param {ApiTextPr} textPr - The text properties that will be set to the current form.
 	 * @return {boolean}  
 	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetTextPr.js
 	 */
-	ApiFormBase.prototype.SetTextPr = function(oTextPr)
+	ApiFormBase.prototype.SetTextPr = function(textPr)
 	{
-		if (oTextPr && oTextPr.GetClassType && oTextPr.GetClassType() === "textPr")
-		{
-			this.Sdt.Apply_TextPr(oTextPr.TextPr);
-			return true;
-		}
-
-		return false;
+		if (!textPr || !(textPr instanceof ApiTextPr))
+			throwException("The textPr parameter must be an instance of ApiTextPr");
+		
+		this.Sdt.Apply_TextPr(textPr.TextPr, undefined, true);
+		return true;
 	};
 	/**
 	 * Returns the text properties from the current form.
@@ -26122,6 +26133,7 @@
 	ApiComplexForm.prototype["Add"]          = ApiComplexForm.prototype.Add;
 	ApiComplexForm.prototype["GetSubForms"]  = ApiComplexForm.prototype.GetSubForms;
 	ApiComplexForm.prototype["ClearContent"] = ApiComplexForm.prototype.ClearContent;
+	ApiComplexForm.prototype["Copy"]         = ApiComplexForm.prototype.Copy;
 
 	ApiComboBoxForm.prototype["GetListValues"]       = ApiComboBoxForm.prototype.GetListValues;
 	ApiComboBoxForm.prototype["SetListValues"]       = ApiComboBoxForm.prototype.SetListValues;
@@ -27567,7 +27579,7 @@
 	};
 	ApiFormBase.prototype.OnChangeTextPr  = function(oApiTextPr)
 	{
-		this.Sdt.Apply_TextPr(oApiTextPr.TextPr);
+		this.Sdt.Apply_TextPr(oApiTextPr.TextPr, undefined, true);
 		oApiTextPr.TextPr = this.Sdt.Pr.TextPr;
 	};
 	ApiFormBase.prototype.OnChangeValue = function()
