@@ -18380,12 +18380,17 @@
 
 			if (!oneUser && isSC) {
 				needLockCell = false;
+				++options.indexInArray;
 				const cellValue = t._getVisibleCell(cell.c1, cell.r1).getValueForEdit();
 				const newCellValue = AscCommonExcel.replaceSpellCheckWords(cellValue, options);
 				if (cellValue !== newCellValue) {
 					needLockCell = true;
 				}
+				--options.indexInArray;
 			}
+
+			index++;
+			options.indexInArray = index;
 
 			// Check for protected ranges
 			if (cell && this.model.isUserProtectedRangesIntersection(cell)) {
@@ -18434,15 +18439,85 @@
 				t.draw(lockDraw);
 				return callback(options);
 			}
-
-			index++;
-			options.indexInArray = index;
 		}
 
 		// After processing all cells, unlock calculation and draw
 		this.model.workbook.dependencyFormulas.unlockRecal();
 		this.draw(lockDraw);
 		return callback(options);
+	};
+
+	WorksheetView.prototype._replaceCellText1 = function (aReplaceCells, options, lockDraw, callback, oneUser) {
+		var t = this;
+		var needLockCell = !oneUser;
+		var isSC = options.isSpellCheck;
+		if (options.indexInArray >= aReplaceCells.length) {
+			//49467 - проблема в том, что пересчёт запускается после отрисовки на endTransaction
+			this.model.workbook.dependencyFormulas.unlockRecal();
+			this.draw(lockDraw);
+			return callback(options);
+		}
+		if (!oneUser && isSC) {
+			needLockCell = false;
+			var cell = aReplaceCells[options.indexInArray];
+			++options.indexInArray;
+			var cellValue = t._getVisibleCell(cell.c1, cell.r1).getValueForEdit();
+			var newCellValue = AscCommonExcel.replaceSpellCheckWords(cellValue, options);
+			if (cellValue !== newCellValue) {
+				needLockCell = true;
+			}
+			--options.indexInArray;
+		}
+		var onReplaceCallback = function (isSuccess) {
+			var cell = aReplaceCells[options.indexInArray];
+			++options.indexInArray;
+			if (false !== isSuccess) {
+				var c = t._getVisibleCell(cell.c1, cell.r1);
+				var cellValue = c.getValueForEdit();
+				var v, newValue, oldCellValue = cellValue;
+				// Check replace cell for spell. Replace full cell to fix skip first words (otherwise replace)
+				if (!isSC) {
+					cellValue = cellValue.replace(options.findRegExp, function () {
+						++options.countReplace;
+						return options.replaceWith;
+					});
+				} else {
+					cellValue = AscCommonExcel.replaceSpellCheckWords(cellValue, options);
+				}
+
+				var isNeedToSave = oldCellValue === cellValue ? false : true;
+				// get first fragment and change its text
+				v = c.getValueForEdit2().slice(0, 1);
+				// Создаем новый массив, т.к. getValueForEdit2 возвращает ссылку
+				newValue = [];
+				newValue[0] = new AscCommonExcel.Fragment({text: cellValue, format: v[0].format.clone()});
+
+				if (isNeedToSave &&
+					!t._saveCellValueAfterEdit(c, newValue, /*flags*/undefined, /*isNotHistory*/true, /*lockDraw*/
+						true)) {
+					options.error = true;
+					t.draw(lockDraw);
+					return callback(options);
+				}
+
+				//***searchEngine
+				if (isNeedToSave) {
+					t.workbook.SearchEngine.removeFromSearchElems(cell.c1, cell.r1, t.model);
+				}
+			}
+
+			window.setTimeout(function () {
+				t._replaceCellText(aReplaceCells, options, lockDraw, callback, oneUser);
+			}, 1);
+		};
+
+		if (aReplaceCells[options.indexInArray] && this.model.isUserProtectedRangesIntersection(aReplaceCells[options.indexInArray])) {
+			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
+			return callback ? callback(options) : null;
+		}
+
+		return !needLockCell ? onReplaceCallback(true) :
+			this._isLockedCells(aReplaceCells[options.indexInArray], /*subType*/null, onReplaceCallback);
 	};
 
 	WorksheetView.prototype.findCell = function (reference) {
