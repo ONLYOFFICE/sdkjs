@@ -8843,12 +8843,13 @@
 	 */
 	ApiWorksheet.prototype.AddChart =
 		function (sDataRange, bInRows, sType, nStyleIndex, nExtX, nExtY, nFromCol, nColOffset, nFromRow, nRowOffset) {
-			var settings = new Asc.asc_ChartSettings();
+			const settings = new Asc.asc_ChartSettings();
 			settings.type = AscFormat.ChartBuilderTypeToInternal(sType);
 			settings.style = nStyleIndex;
 			settings.inColumns = !bInRows;
 			settings.putRange(sDataRange);
-			var oChart = AscFormat.DrawingObjectsController.prototype.getChartSpace(settings);
+			settings.bUseActiveWorksheet = true;
+			const oChart = AscFormat.DrawingObjectsController.prototype.getChartSpace(settings);
 			if (arguments.length === 8) {//support old variant
 				oChart.setBDeleted(false);
 				oChart.setWorksheet(this.worksheet);

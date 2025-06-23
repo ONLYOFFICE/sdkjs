@@ -1120,6 +1120,8 @@ function (window, undefined) {
 
 		this.view3D = null;
 
+		this.bUseActiveWorksheet = false;
+
 		this.displayTrendlinesEquation = false;
 	}
 

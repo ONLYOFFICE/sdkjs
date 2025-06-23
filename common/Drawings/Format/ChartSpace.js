@@ -11840,7 +11840,10 @@ function(window, undefined) {
 		let nChartType = options.getType();
 		let bScatter = AscFormat.isScatterChartType(nChartType);
 		let oDataRange = new AscFormat.CChartDataRefs(null);
-		let aSeriesRefs = oDataRange.getSeriesRefsFromUnionRefs(AscFormat.fParseChartFormulaExternal(sRange), bHorValues, bScatter, nChartType);
+		let aSeriesRefs = oDataRange.getSeriesRefsFromUnionRefs(
+			AscFormat.fParseChartFormulaExternal(sRange, options.bUseActiveWorksheet),
+			bHorValues, bScatter, nChartType
+		);
 		if (!Array.isArray(aSeriesRefs)) {
 			return [];
 		}
