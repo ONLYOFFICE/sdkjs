@@ -5579,6 +5579,7 @@ function (window, undefined) {
 		this.IsEnabledPlugins = true;
 		this.IsEnabledMacroses = true;
 		this.IsWebOpening = false;
+		this.IsForm = null;
 		this.SupportsOnSaveDocument = false;
 		this.Wopi = null;
 		this.shardkey = null;
@@ -5832,6 +5833,12 @@ function (window, undefined) {
 	};
 	prot.get_ShowHorizontalScroll = prot.asc_getShowHorizontalScroll = function () {
 		return this.showHorizontalScroll;
+	};
+	prot.put_IsForm = prot.asc_putIsForm = function (v) {
+		this.IsForm = v;
+	};
+	prot.get_IsForm = prot.asc_getIsForm = function () {
+		return this.IsForm;
 	};
 
 	function COpenProgress() {
@@ -8142,6 +8149,8 @@ function (window, undefined) {
 	prot["get_ShowVerticalScroll"] = prot["get_getShowVerticalScroll"] = prot.get_getShowVerticalScroll;
 	prot["put_ShowHorizontalScroll"] = prot["asc_putShowHorizontalScroll"] = prot.asc_putShowHorizontalScroll;
 	prot["get_ShowHorizontalScroll"] = prot["get_getShowHorizontalScroll"] = prot.get_getShowHorizontalScroll;
+	prot["put_IsForm"] = prot["asc_putIsForm"] = prot.asc_putIsForm;
+	prot["get_IsForm"] = prot["asc_getIsForm"] = prot.asc_getIsForm;
 
 	window["AscCommon"].COpenProgress = COpenProgress;
 	prot = COpenProgress.prototype;
