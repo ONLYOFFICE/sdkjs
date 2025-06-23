@@ -1528,148 +1528,23 @@
 
 			this.IsOpenAnnotsInProgress = true;
 
-			let oAnnotInfo, oAnnot, aRect;
 			for (let i = 0; i < aAnnotsInfo.length; i++) {
-				oAnnotInfo = aAnnotsInfo[i];
+				let oAnnotInfo = aAnnotsInfo[i];
 
 				if (oAnnotInfo["Type"] == AscPDF.ANNOTATIONS_TYPES.Popup) {
 					continue;
 				}
 
-				aRect = [oAnnotInfo["rect"]["x1"], oAnnotInfo["rect"]["y1"], oAnnotInfo["rect"]["x2"], oAnnotInfo["rect"]["y2"]];
-
 				if (oAnnotInfo["RefTo"] == null || oAnnotInfo["Type"] != AscPDF.ANNOTATIONS_TYPES.Text) {
-					let creationDate	= oAnnotInfo["CreationDate"] ? AscPDF.ParsePDFDate(oAnnotInfo["CreationDate"]) : null;
-					let creationStamp	= creationDate ? String(creationDate.getTime()) : undefined;
-					let modDate			= oAnnotInfo["LastModified"] ? AscPDF.ParsePDFDate(oAnnotInfo["LastModified"]) : null;
-					let modStamp		= modDate ? String(modDate.getTime()) : undefined;
-
-					oAnnot = oDoc.AddAnnotByProps({
-						page:			oAnnotInfo["page"],
-						name:			oAnnotInfo["UniqueName"], 
-						creationDate:	creationStamp,
-						modDate:		modStamp,
-						contents:		oAnnotInfo["Contents"],
-						author:			oAnnotInfo["User"],
-						rect:			aRect,
-						type:			oAnnotInfo["Type"],
-						apIdx:			oAnnotInfo["AP"]["i"],
-						uid:			oAnnotInfo["OUserID"]
-					});
-	
-					oAnnot.SetDrawFromStream(Boolean(oAnnotInfo["AP"]["have"]));
-					oAnnot.SetOriginPage(oAnnotInfo["page"]);
+					let oAnnot = AscPDF.ReadAnnotFromJSON(oAnnotInfo, oDoc);
+					oDoc.AddAnnot(oAnnot, oAnnot.GetPage());
 
 					if (oAnnotInfo["RefTo"] == null)
 						oAnnotsMap[oAnnotInfo["AP"]["i"]] = oAnnot;
-					
-					if (oAnnotInfo["IT"] != null)
-						oAnnot.SetIntent(oAnnotInfo["IT"]);
-
-					if (oAnnotInfo["InkList"]) {
-						oAnnot.SetInkPoints(oAnnotInfo["InkList"]);
-					}
-					else if (oAnnotInfo["L"]) {
-						oAnnot.SetLinePoints(oAnnotInfo["L"]);
-					}
-					else if (oAnnotInfo["Vertices"]) {
-						oAnnot.SetVertices(oAnnotInfo["Vertices"]);
-					}
-
-					if (oAnnotInfo["LE"] != null) {
-						if (Array.isArray(oAnnotInfo["LE"])) {
-							oAnnot.SetLineStart(oAnnotInfo["LE"][0]);
-							oAnnot.SetLineEnd(oAnnotInfo["LE"][1]);
-						}
-						else
-							oAnnot.SetLineEnd(oAnnotInfo["LE"]);
-					}
-
-					if (oAnnotInfo["Icon"] != null)
-                        oAnnot.SetIconType(oAnnotInfo["Icon"]);
-					if (oAnnotInfo["RefToReason"] != null)
-						oAnnot.SetRefType(oAnnotInfo["RefToReason"]);
-					if (oAnnotInfo["Popup"] != null)
-						oAnnot.SetPopupIdx(oAnnotInfo["Popup"]);
-					if (oAnnotInfo["Subj"])
-						oAnnot.SetSubject(oAnnotInfo["Subj"]);
-					if (oAnnotInfo["CL"])
-						oAnnot.SetCallout(oAnnotInfo["CL"]);
-					if (oAnnotInfo["RC"])
-						oAnnot.SetRichContents(oAnnotInfo["RC"]);
-					if (oAnnotInfo["RD"])
-						oAnnot.SetRectangleDiff(oAnnotInfo["RD"]);
-					if (oAnnotInfo["display"])
-						oAnnot.SetDisplay(oAnnotInfo["display"]);
-					if (oAnnotInfo["locked"] != null)
-						oAnnot.SetLock(Boolean(oAnnotInfo["locked"]));
-					if (oAnnotInfo["lockedC"] != null)
-						oAnnot.SetLockContent(Boolean(oAnnotInfo["lockedC"]));
-					if (oAnnotInfo["IC"] != null)
-						oAnnot.SetFillColor(oAnnotInfo["IC"]);
-					if (oAnnotInfo["dashed"] != null)
-						oAnnot.SetDash(oAnnotInfo["dashed"]);
-					if (oAnnotInfo["border"] != null)
-						oAnnot.SetBorder(oAnnotInfo["border"]);
-					if (oAnnotInfo["Icon"] != null)
-						oAnnot.SetIconType(oAnnotInfo["Icon"]);
-					if (oAnnotInfo["noRotate"] != null)
-						oAnnot.SetNoRotate(Boolean(oAnnotInfo["noRotate"]));
-					if (oAnnotInfo["noZoom"] != null)
-						oAnnot.SetNoZoom(Boolean(oAnnotInfo["noZoom"]));
-					if (oAnnotInfo["Sy"] != null)
-						oAnnot.SetCaretSymbol(oAnnotInfo["Sy"]);
-					if (oAnnotInfo["LL"] != null)
-						oAnnot.SetLeaderLength(oAnnotInfo["LL"]);
-					if (oAnnotInfo["LLE"] != null)
-						oAnnot.SetLeaderExtend(oAnnotInfo["LLE"]);
-					if (oAnnotInfo["Cap"] != null)
-						oAnnot.SetDoCaption(Boolean(oAnnotInfo["Cap"]));
-
-					// FreeText/Redact
-					if (oAnnotInfo["alignment"] != null)
-						oAnnot.SetAlign(oAnnotInfo["alignment"]);
-
-					// FreeText
-					if (oAnnotInfo["defaultStyle"] != null)
-						oAnnot.SetDefaultStyle(oAnnotInfo["defaultStyle"]);
-
-					if (oAnnotInfo["Rotate"] != null)
-						oAnnot.SetRotate(oAnnotInfo["Rotate"]);
-					if (oAnnotInfo["InRect"] != null)
-						oAnnot.SetInRect(oAnnotInfo["InRect"]);
-					
-					// border effect
-					if (oAnnotInfo["BE"] != null) {
-						if (oAnnotInfo["BE"]["I"] != null)
-							oAnnot.SetBorderEffectIntensity(oAnnotInfo["BE"]["I"]);
-						if (oAnnotInfo["BE"]["S"] != null)
-							oAnnot.SetBorderEffectStyle(oAnnotInfo["BE"]["S"]);
-					}
-					
-					oAnnot.SetStrokeColor(oAnnotInfo["C"]);
-					
-					if (oAnnotInfo["CA"] != null) {
-						oAnnot.SetOpacity(oAnnotInfo["CA"]);
-					}
-					if (oAnnotInfo["borderWidth"] != null) {
-						oAnnot.SetWidth(oAnnotInfo["borderWidth"]);
-					}
-					else {
-						oAnnot.SetWidth(1);
-					}
-
-					if (oAnnotInfo["QuadPoints"] != null) {
-						let aSepQuads = [];
-						for (let i = 0; i < oAnnotInfo["QuadPoints"].length; i+=8)
-							aSepQuads.push(oAnnotInfo["QuadPoints"].slice(i, i+8));
-
-						oAnnot.SetQuads(aSepQuads);
-					}
 				}
 				else {
-					if (oAnnotInfo["StateModel"] != AscPDF.TEXT_ANNOT_STATE_MODEL.Review && oAnnotsMap[oAnnotInfo["RefTo"]] && oAnnotsMap[oAnnotInfo["RefTo"]]._AddReplyOnOpen)
-						oAnnotsMap[oAnnotInfo["RefTo"]]._AddReplyOnOpen(oAnnotInfo);
+					if (oAnnotInfo["StateModel"] != AscPDF.TEXT_ANNOT_STATE_MODEL.Review && oAnnotsMap[oAnnotInfo["RefTo"]])
+						AscPDF.ReadAnnotReplyJSON(oAnnotsMap[oAnnotInfo["RefTo"]], oAnnotInfo);
 				}
 			}
 
@@ -4802,9 +4677,6 @@
 			if (oPageInfo.annots) {
 				for (let nAnnot = 0; nAnnot < oPageInfo.annots.length; nAnnot++) {
 					oPageInfo.annots[nAnnot].IsChanged() && oPageInfo.annots[nAnnot].WriteToBinary(oMemory);
-					oPageInfo.annots[nAnnot].GetReplies().forEach(function(reply) {
-						reply.IsChanged() && reply.WriteToBinary(oMemory); 
-					});
 				}
 			}
 
@@ -5172,6 +5044,18 @@
 				return;
 			}
 			
+			let oPageInfo = aPagesInfo[curIndex];
+			let oRenderer = this.InitDocRenderer(oMemory, curIndex);
+			
+			// annots
+			if (oPageInfo.annots) {
+				for (let nAnnot = 0; nAnnot < oPageInfo.annots.length; nAnnot++) {
+					oPageInfo.annots[nAnnot].IsChanged() && oPageInfo.annots[nAnnot].WriteToBinary(oMemory);
+					oPageInfo.annots[nAnnot].GetReplies().forEach(function(reply) {
+						reply.IsChanged() && reply.WriteToBinary(oMemory); 
+					});
+				}
+			}
 			if (aDeleted[originIndex]) {
 				for (let j = 0; j < aDeleted[originIndex].length; j++) {
 					oMemory.WriteByte(AscCommon.CommandType.ctAnnotFieldDelete);

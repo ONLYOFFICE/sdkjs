@@ -1314,7 +1314,7 @@ CopyProcessor.prototype =
 		//DocContent/ Drawings
 
 		if (elementsContent && elementsContent.length) {
-			if (elementsContent[0].DocContent || (elementsContent[0].Drawings && elementsContent[0].Drawings.length) || elementsContent[0].Pages.length) {
+			if (elementsContent[0].DocContent || (elementsContent[0].Drawings && elementsContent[0].Drawings.length) || (elementsContent[0].Annots && elementsContent[0].Annots.length) || elementsContent[0].Pages.length) {
 				this.oPDFWriter.WriteString2(this.api.documentId);
 				//флаг о том, что множественный контент в буфере
 				this.oPDFWriter.WriteBool(true);
@@ -1479,6 +1479,23 @@ CopyProcessor.prototype =
 			oThis.oPDFWriter.End_UseFullUrl();
 
 		};
+		let copyAnnots = function(){
+			let elements = elementsContent.Annots;
+
+			//пишем метку и длину
+			oThis.oPDFWriter.WriteString2("Annots");
+			oThis.oPDFWriter.WriteULong(elements.length);
+
+			oThis.oPDFWriter.Start_UseFullUrl();
+			for (let i = 0; i < elements.length; ++i) {
+				oThis.CopyPDFAnnotObject(elements[i]);
+
+				//TODO записывать base64 у картинок для разных контентов в единственном экземпляре
+				oThis.oPDFWriter.WriteString2("");
+			}
+			oThis.oPDFWriter.End_UseFullUrl();
+
+		};
 
 		let copyPages = function() {
 			if (oDomTarget) {
@@ -1532,6 +1549,10 @@ CopyProcessor.prototype =
 		//Drawings
 		if (elementsContent.Drawings) {
 			copyDrawings(elementsContent.Drawings);
+		}
+		//Annots
+		if (elementsContent.Annots && elementsContent.Annots.length) {
+			copyAnnots();
 		}
 	},
 
@@ -1940,6 +1961,7 @@ CopyProcessor.prototype =
 			selectedContent = oDocument.GetSelectedContent2();
 			if (!selectedContent[0].DocContent && (!selectedContent[0].Drawings ||
 				(selectedContent[0].Drawings && !selectedContent[0].Drawings.length))
+				&& (!selectedContent[0].Annots || (selectedContent[0].Annots && !selectedContent[0].Annots.length))
 				&& selectedContent[0].Pages.length == 0) {
 				return false;
 			}
@@ -2316,6 +2338,9 @@ CopyProcessor.prototype =
 			oDomTarget.addChild(oImg);
 		}
 		this.oPDFWriter.WriteSpTreeElem(oGraphicObj);
+	},
+	CopyPDFAnnotObject: function (oAnnotCopyObject) {
+		this.oPDFWriter.WriteAnnotTreeElem(oAnnotCopyObject.Annot);
 	},
 
 	CopyFootnotes: function (oDomTarget, aFootnotes) {
@@ -5775,6 +5800,27 @@ PasteProcessor.prototype =
 			arr_Images = arr_Images.concat(objects.arrImages);
 		};
 
+		let readAnnots = function () {
+			if (PasteElementsId.g_bIsDocumentCopyPaste) {
+				History.TurnOff();
+			}
+			let objects = oThis.ReadPDFAnnots(stream);
+			if (PasteElementsId.g_bIsDocumentCopyPaste) {
+				History.TurnOn();
+			}
+
+			oPDFSelContent.MergePagesInfo.pagesDrawings.push(objects.arrShapes);
+
+			let arr_shapes = objects.arrShapes;
+			for (let i = 0; i < arr_shapes.length; ++i) {
+				if (arr_shapes[i].Drawing.getAllFonts) {
+					arr_shapes[i].Drawing.getAllFonts(oFontMap);
+				}
+			}
+
+			arr_Images = arr_Images.concat(objects.arrImages);
+		};
+
 		let readPageDrawings = function () {
 			stream.GetString2(); // drawings
 
@@ -5844,6 +5890,10 @@ PasteProcessor.prototype =
 						readDrawings();
 						break;
 					}
+					case "Annots": {
+						readAnnots();
+						break;
+					}
 				}
 			}
 		}
@@ -5857,6 +5907,34 @@ PasteProcessor.prototype =
 		}
 
 		return {content: oPDFSelContent, fonts: fonts, images: arr_Images};
+	},
+
+	ReadPDFAnnots: function (stream) {
+		let nCountAnnots = stream.GetULong();
+
+		let oDoc = Asc.editor.getPDFDoc();
+		let oNativeFile = Asc.editor.getDocumentRenderer().file.nativeFile;
+		let aAnnotsInfo = oNativeFile.readAnnotationsInfoFromBinary(stream.data.slice(stream.cur));
+
+		let oAnnotsMap = {};
+		let aAnnots = [];
+		for (let i = 0; i < aAnnotsInfo.length; i++) {
+			let oAnnotInfo = aAnnotsInfo[i];
+
+			if (oAnnotInfo["RefTo"] == null || oAnnotInfo["Type"] != AscPDF.ANNOTATIONS_TYPES.Text) {
+				let oAnnot = AscPDF.ReadAnnotFromJSON(oAnnotInfo, oDoc);
+				if (oAnnotInfo["RefTo"] == null)
+					oAnnotsMap[oAnnotInfo["AP"]["i"]] = oAnnot;
+
+				aAnnots.push(new AscPDF.AnnotCopyObject(oAnnot));
+			}
+			else {
+				if (oAnnotInfo["StateModel"] != AscPDF.TEXT_ANNOT_STATE_MODEL.Review && oAnnotsMap[oAnnotInfo["RefTo"]])
+					AscPDF.ReadAnnotReplyJSON(oAnnotsMap[oAnnotInfo["RefTo"]], oAnnotInfo);
+			}
+		}
+
+		return {arrAnnots: aAnnots};
 	},
 
 	//from PRESENTATION to PRESENTATION

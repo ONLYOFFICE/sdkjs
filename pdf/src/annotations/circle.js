@@ -75,6 +75,7 @@
         let aFillColor      = this.GetFillColor();
         let aRD             = this.GetRectangleDiff();
 
+        oCircle._copyApIdx = this._copyApIdx;
         oCircle._apIdx = this._apIdx;
         oCircle._originView = this._originView;
         oCircle.SetOriginPage(this.GetOriginPage());
@@ -91,6 +92,43 @@
         oCircle.Recalculate(true);
 
         oDoc.EndNoHistoryMode();
+        return oCircle;
+    };
+    CAnnotationCircle.prototype.Copy = function() {
+        let oDoc = this.GetDocument();
+
+        let oCircle = new CAnnotationCircle(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+        let sDate = ((new Date).getTime()).toString();
+
+        this.fillObject(oCircle);
+
+        let aStrokeColor    = this.GetStrokeColor();
+        let aFillColor      = this.GetFillColor();
+        let aRD             = this.GetRectangleDiff();
+
+        oCircle.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
+        oCircle.SetOriginPage(this.GetOriginPage());
+        oCircle.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
+        oCircle.SetModDate(sDate);
+        oCircle.SetCreationDate(sDate);
+        aStrokeColor && oCircle.SetStrokeColor(aStrokeColor.slice());
+        aFillColor && oCircle.SetFillColor(aFillColor.slice());
+        oCircle.SetWidth(this.GetWidth());
+        oCircle.SetOpacity(this.GetOpacity());
+        oCircle.SetBorderEffectStyle(this.GetBorderEffectStyle());
+        oCircle.SetBorderEffectIntensity(this.GetBorderEffectIntensity());
+        oCircle.recalcGeometry()
+        aRD && oCircle.SetRectangleDiff(aRD.slice(), true);
+        oCircle.SetDash(this.GetDash());
+        oCircle.Recalculate(true);
+
+        this.FillCommentsDataTo(oCircle);
+
+        if ((this.IsUseInDocument() && this.IsNeedDrawFromStream()) || !this.IsChanged() || this.GetCopyOfApIdx() != -1) {
+            oCircle.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
+            oCircle.SetDrawFromStream(true);
+        }
+
         return oCircle;
     };
     CAnnotationCircle.prototype.RefillGeometry = function(oGeometry, aShapeRectInMM) {
@@ -210,6 +248,10 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
+
+        this.GetReplies().forEach(function(reply) {
+            (reply.IsChanged() || !memory.docRenderer) && reply.WriteToBinary(memory); 
+        });
     };
     
     function generateCloudyGeometry(arrPoints, aBounds, oGeometry, nIntensity) {

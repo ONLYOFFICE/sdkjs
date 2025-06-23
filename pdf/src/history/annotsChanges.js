@@ -51,7 +51,11 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Stroke]			= CChangesPDFAnnotS
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Fill]			= CChangesPDFAnnotFill;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_StrokeWidth]		= CChangesPDFAnnotStrokeWidth;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Opacity]			= CChangesPDFAnnotOpacity;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Border_Style]	= CChangesPDFAnnotBorderEffect;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Border_Intensity]= CChangesPDFAnnotBorderIntensity;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Copy_ApIdx]		= CChangesPDFAnnotCopyApIdx;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Comment_Data]			= CChangesPDFCommentData;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Comment_Icon]			= CChangesPDFCommentIcon;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Ink_Points]			= CChangesPDFInkPoints;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Quads]			= CChangesPDFAnnotQuads;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Ink_FlipV]				= CChangesPDFInkFlipV;
@@ -94,7 +98,24 @@ CChangesPDFCommentData.prototype.private_CreateObject = function()
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesPDFArrayOfDoubleProperty}
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFCommentIcon(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFCommentIcon.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFCommentIcon.prototype.constructor = CChangesPDFCommentIcon;
+CChangesPDFCommentIcon.prototype.Type = AscDFH.historyitem_Pdf_Comment_Icon;
+CChangesPDFCommentIcon.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot.SetIconType(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesAnnotArrayOfDoubleProperty}
  */
 function CChangesPDFInkPoints(Class, Pos, Items, isAdd) {
 	AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, isAdd);
@@ -494,7 +515,61 @@ CChangesPDFAnnotRD.prototype.private_SetValue = function(Value)
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesPDFArrayOfDoubleProperty}
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFAnnotBorderEffect(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFAnnotBorderEffect.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFAnnotBorderEffect.prototype.constructor = CChangesPDFAnnotBorderEffect;
+CChangesPDFAnnotBorderEffect.prototype.Type = AscDFH.historyitem_Pdf_Annot_Border_Style;
+CChangesPDFAnnotBorderEffect.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot._borderEffectStyle = Value;
+	oAnnot.AddToRedraw();
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseDoubleProperty}
+ */
+function CChangesPDFAnnotBorderIntensity(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseDoubleProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFAnnotBorderIntensity.prototype = Object.create(AscDFH.CChangesBaseDoubleProperty.prototype);
+CChangesPDFAnnotBorderIntensity.prototype.constructor = CChangesPDFAnnotBorderIntensity;
+CChangesPDFAnnotBorderIntensity.prototype.Type = AscDFH.historyitem_Pdf_Annot_Border_Intensity;
+CChangesPDFAnnotBorderIntensity.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot._borderEffectIntensity = Value;
+	oAnnot.AddToRedraw();
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFAnnotCopyApIdx(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFAnnotCopyApIdx.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFAnnotCopyApIdx.prototype.constructor = CChangesPDFAnnotCopyApIdx;
+CChangesPDFAnnotCopyApIdx.prototype.Type = AscDFH.historyitem_Pdf_Annot_Copy_ApIdx;
+CChangesPDFAnnotCopyApIdx.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot._copyApIdx = Value;
+	oAnnot.AddToRedraw();
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesAnnotArrayOfDoubleProperty}
  */
 function CChangesFreeTextCallout(Class, Old, New, Color)
 {

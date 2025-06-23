@@ -178,7 +178,13 @@
     };
 
     CAnnotationText.prototype.SetIconType = function(nType) {
+        if (nType == this._noteIcon) {
+            return;
+        }
+
+        AscCommon.History.Add(new CChangesPDFCommentIcon(this, this._noteIcon, nType));
         this._noteIcon = nType;
+        this.SetWasChanged(true);
     };
     CAnnotationText.prototype.GetIconType = function() {
         return this._noteIcon;
@@ -244,6 +250,22 @@
 
         oDoc.EndNoHistoryMode();
 
+        return oNewAnnot;
+    };
+    CAnnotationText.prototype.Copy = function() {
+        let oNewAnnot = new CAnnotationText(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), this.GetDocument());
+        let sDate = ((new Date).getTime()).toString();
+
+        let aFillColor = this.GetFillColor();
+        aFillColor && oNewAnnot.SetFillColor(aFillColor.slice());
+        oNewAnnot.SetOriginPage(this.GetOriginPage());
+        oNewAnnot.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
+        oNewAnnot.SetModDate(sDate);
+        oNewAnnot.SetCreationDate(sDate);
+        oNewAnnot.SetContents(this.GetContents());
+        oNewAnnot.SetIconType(this.GetIconType());
+
+        this.FillCommentsDataTo(oNewAnnot);
         return oNewAnnot;
     };
     CAnnotationText.prototype.Draw = function(oGraphics) {
@@ -400,7 +422,39 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
+
+        this.GetReplies().forEach(function(reply) {
+            (reply.IsChanged() || !memory.docRenderer) && reply.WriteToBinary(memory);
+        });
     };
+    CAnnotationText.prototype.ReadFromBinary = function(reader) {
+        reader.CommandType = reader.GetUChar();
+        
+        reader.Skip(4);
+    
+        this.ReadFromBinaryBase(reader);
+        this.ReadFromBinaryBase2(reader);
+    
+        // icon
+        if (reader.annotFlags & (1 << 16)) {
+            let nIconType = reader.GetUChar();
+            this.SetIconType(nIconType);
+        }
+    
+        // state model
+        if (reader.annotFlags & (1 << 17)) {
+            let nStateModel = reader.GetUChar();
+            this.SetStateModel(nStateModel);
+        }
+    
+        // state
+        if (reader.annotFlags & (1 << 18)) {
+            let nState = reader.GetUChar();
+            this.SetState(nState);
+        }
+    };
+    
+    
     
     window["AscPDF"].CAnnotationText            = CAnnotationText;
     window["AscPDF"].TEXT_ANNOT_STATE           = TEXT_ANNOT_STATE;
