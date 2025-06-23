@@ -492,6 +492,7 @@
         let aCallout        = this.GetCallout();
         let aRD             = this.GetRectangleDiff();
 
+        oFreeText._copyApIdx = this._copyApIdx;
         oFreeText._apIdx = this._apIdx;
         oFreeText._originView = this._originView;
         oFreeText.SetOriginPage(this.GetOriginPage());
@@ -510,6 +511,42 @@
         oFreeText.recalcGeometry();
         
         oDoc.EndNoHistoryMode();
+        return oFreeText;
+    };
+    CAnnotationFreeText.prototype.Copy = function() {
+        let oDoc = this.GetDocument();
+
+        let oFreeText = new CAnnotationFreeText(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+        let sDate = ((new Date).getTime()).toString();
+
+        let aStrokeColor    = this.GetStrokeColor();
+        let aFillColor      = this.GetFillColor();
+        let aCallout        = this.GetCallout();
+        let aRD             = this.GetRectangleDiff();
+
+        oFreeText.SetOriginPage(this.GetOriginPage());
+        oFreeText.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
+        oFreeText.SetModDate(sDate);
+        oFreeText.SetCreationDate(sDate);
+        oFreeText.SetContents(this.GetContents());
+        aStrokeColor && oFreeText.SetStrokeColor(aStrokeColor.slice());
+        aFillColor && oFreeText.SetFillColor(aFillColor.slice());
+        oFreeText.SetWidth(this.GetWidth());
+        oFreeText.SetLineEnd(this.GetLineEnd());
+        oFreeText.SetOpacity(this.GetOpacity());
+        oFreeText.SetAlign(this.GetAlign());
+        aCallout && oFreeText.SetCallout(aCallout.slice());
+        aRD && oFreeText.SetRectangleDiff(aRD.slice());
+        oFreeText.SetWasChanged(oFreeText.IsChanged());
+        oFreeText.recalcGeometry();
+        
+        this.FillCommentsDataTo(oFreeText);
+
+        if ((this.IsUseInDocument() && this.IsNeedDrawFromStream()) || !this.IsChanged() || this.GetCopyOfApIdx() != -1) {
+            oFreeText.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
+            oFreeText.SetDrawFromStream(true);
+        }
+
         return oFreeText;
     };
     CAnnotationFreeText.prototype.Recalculate = function() {
@@ -1532,6 +1569,10 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
+
+        this.GetReplies().forEach(function(reply) {
+            (reply.IsChanged() || !memory.docRenderer) && reply.WriteToBinary(memory);
+        });
     };
     CAnnotationFreeText.prototype.SetPosition = function(x, y) {
         let oDoc        = this.GetDocument();

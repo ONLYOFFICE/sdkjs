@@ -72,6 +72,7 @@
         let aFillColor      = this.GetFillColor();
         let aRD             = this.GetRectangleDiff();
 
+        oSquare._copyApIdx = this._copyApIdx;
         oSquare._apIdx = this._apIdx;
         oSquare._originView = this._originView;
         oSquare.SetOriginPage(this.GetOriginPage());
@@ -88,6 +89,39 @@
 
         oDoc.EndNoHistoryMode();
 
+        return oSquare;
+    };
+    CAnnotationSquare.prototype.Copy = function() {
+        let oDoc = this.GetDocument();
+
+        let oSquare = new CAnnotationSquare(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+        let sDate = ((new Date).getTime()).toString();
+
+        this.fillObject(oSquare);
+
+        let aStrokeColor    = this.GetStrokeColor();
+        let aFillColor      = this.GetFillColor();
+        let aRD             = this.GetRectangleDiff();
+
+        oSquare.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
+        oSquare.SetOriginPage(this.GetOriginPage());
+        oSquare.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
+        oSquare.SetModDate(sDate);
+        oSquare.SetCreationDate(sDate);
+        aStrokeColor && oSquare.SetStrokeColor(aStrokeColor.slice());
+        aFillColor && oSquare.SetFillColor(aFillColor.slice());
+        oSquare.SetWidth(this.GetWidth());
+        oSquare.SetOpacity(this.GetOpacity());
+        oSquare.recalcGeometry()
+        aRD && oSquare.SetRectangleDiff(aRD.slice(), true);
+        oSquare.Recalculate(true);
+
+        this.FillCommentsDataTo(oSquare);
+
+        if ((this.IsUseInDocument() && this.IsNeedDrawFromStream()) || !this.IsChanged() || this.GetCopyOfApIdx() != -1) {
+            oSquare.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
+            oSquare.SetDrawFromStream(true);
+        }
         return oSquare;
     };
     CAnnotationSquare.prototype.RefillGeometry = function(oGeometry, aShapeRectInMM) {
@@ -224,6 +258,10 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
+
+        this.GetReplies().forEach(function(reply) {
+            (reply.IsChanged() || !memory.docRenderer) && reply.WriteToBinary(memory);
+        });
     };
 
     window["AscPDF"].CAnnotationSquare = CAnnotationSquare;

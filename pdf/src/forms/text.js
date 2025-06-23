@@ -2236,9 +2236,12 @@
             memory.WriteLong(nCharLimit);
         }
 
-        memory.fieldDataFlags |= (1 << 13);
+        // render
+        let nCurPos = memory.GetCurPosition();
         this.WriteRenderToBinary(memory);
-
+        if (nCurPos != memory.GetCurPosition())
+            memory.fieldDataFlags |= (1 << 13);
+        
         // if (this.IsRichText()) {
         //     memory.widgetFlags |= (1 << 11);
         // }

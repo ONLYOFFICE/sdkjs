@@ -148,6 +148,7 @@
         let aFillColor      = this.GetFillColor();
         let aVertices       = this.GetVertices();
 
+        oPolyline._copyApIdx = this._copyApIdx;
         oPolyline._apIdx = this._apIdx;
         oPolyline._originView = this._originView;
         oPolyline.SetOriginPage(this.GetOriginPage());
@@ -166,6 +167,42 @@
         oPolyline.recalcInfo.recalculateGeometry = true;
         
         oDoc.EndNoHistoryMode();
+
+        return oPolyline;
+    };
+    CAnnotationPolyLine.prototype.Copy = function() {
+        let oDoc = this.GetDocument();
+
+        let oPolyline = new CAnnotationPolyLine(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+        let sDate = ((new Date).getTime()).toString();
+
+        this.fillObject(oPolyline);
+
+        let aStrokeColor    = this.GetStrokeColor();
+        let aFillColor      = this.GetFillColor();
+        let aVertices       = this.GetVertices();
+
+        oPolyline.SetOriginPage(this.GetOriginPage());
+        oPolyline.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
+        oPolyline.SetModDate(sDate);
+        oPolyline.SetCreationDate(sDate);
+        oPolyline.SetContents(this.GetContents());
+        aStrokeColor && oPolyline.SetStrokeColor(aStrokeColor.slice());
+        aFillColor && oPolyline.SetFillColor(aFillColor.slice());
+        oPolyline.SetWidth(this.GetWidth());
+        oPolyline.SetLineStart(this.GetLineStart());
+        oPolyline.SetLineEnd(this.GetLineEnd());
+        oPolyline.SetOpacity(this.GetOpacity());
+        aVertices && oPolyline.SetVertices(aVertices.slice());
+        oPolyline.SetWasChanged(oPolyline.IsChanged());
+        oPolyline.recalcInfo.recalculateGeometry = true;
+        
+        this.FillCommentsDataTo(oPolyline);
+
+        if ((this.IsUseInDocument() && this.IsNeedDrawFromStream()) || !this.IsChanged() || this.GetCopyOfApIdx() != -1) {
+            oPolyline.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
+            oPolyline.SetDrawFromStream(true);
+        }
 
         return oPolyline;
     };
@@ -443,6 +480,10 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
+
+        this.GetReplies().forEach(function(reply) {
+            (reply.IsChanged() || !memory.docRenderer) && reply.WriteToBinary(memory);
+        });
     };
     
     function fillShapeByPoints(arrOfArrPoints, aShapeRect, oParentAnnot) {

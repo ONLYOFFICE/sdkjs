@@ -350,6 +350,7 @@
 
         let aStrokeColor = this.GetStrokeColor();
 
+        oNewInk._copyApIdx = this._copyApIdx;
         oNewInk._apIdx = this._apIdx;
         oNewInk._originView = this._originView;
         oNewInk.SetOriginPage(this.GetOriginPage());
@@ -365,6 +366,37 @@
         oNewInk.recalcGeometry();
 
         oDoc.EndNoHistoryMode();
+        return oNewInk;
+    };
+    CAnnotationInk.prototype.Copy = function() {
+        let oDoc = this.GetDocument();
+
+        let oNewInk = new CAnnotationInk(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+        let sDate = ((new Date).getTime()).toString();
+
+        this.fillObject(oNewInk);
+
+        let aStrokeColor = this.GetStrokeColor();
+
+        oNewInk.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
+        oNewInk.SetOriginPage(this.GetOriginPage());
+        oNewInk.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
+        oNewInk.SetModDate(sDate);
+        oNewInk.SetCreationDate(sDate);
+        aStrokeColor && oNewInk.SetStrokeColor(aStrokeColor.slice());
+        oNewInk.SetWidth(this.GetWidth());
+        oNewInk.SetOpacity(this.GetOpacity());
+        oNewInk.SetInkPoints(this.GetInkPoints().slice());
+        oNewInk.SetContents(this.GetContents());
+        oNewInk.recalcGeometry();
+
+        this.FillCommentsDataTo(oNewInk);
+
+        if ((this.IsUseInDocument() && this.IsNeedDrawFromStream()) || !this.IsChanged() || this.GetCopyOfApIdx() != -1) {
+            oNewInk.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
+            oNewInk.SetDrawFromStream(true);
+        }
+
         return oNewInk;
     };
     CAnnotationInk.prototype.GetRelativePaths = function() {
@@ -405,6 +437,10 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
+
+        this.GetReplies().forEach(function(reply) {
+            (reply.IsChanged() || !memory.docRenderer) && reply.WriteToBinary(memory);
+        });
     };
     
     function fillShapeByPoints(arrOfArrPoints, aShapeRect, oParentAnnot) {

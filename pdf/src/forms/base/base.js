@@ -3158,7 +3158,7 @@
     };
     CBaseField.prototype.WriteRenderToBinary = function(memory) {
         // пока только для text, combobox
-        if (false == [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
+        if (true == memory.isForSplit || null == this.content) {
             return;
         }
 

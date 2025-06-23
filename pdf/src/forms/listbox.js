@@ -1257,8 +1257,11 @@
             }
         }
         
-        memory.fieldDataFlags |= (1 << 15);
+        // render
+        let nCurPos = memory.GetCurPosition();
         this.WriteRenderToBinary(memory);
+        if (nCurPos != memory.GetCurPosition())
+            memory.fieldDataFlags |= (1 << 15);
         
         //
         // top index

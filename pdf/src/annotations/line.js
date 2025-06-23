@@ -204,6 +204,7 @@
         let aFillColor      = this.GetFillColor();
         let aLinePoints     = this.GetLinePoints();
 
+        oLine._copyApIdx = this._copyApIdx;
         oLine._apIdx = this._apIdx;
         oLine._originView = this._originView;
         oLine.SetOriginPage(this.GetOriginPage());
@@ -222,6 +223,43 @@
         oLine.recalculate();
 
         oDoc.EndNoHistoryMode();
+        return oLine;
+    };
+    CAnnotationLine.prototype.Copy = function() {
+        let oDoc = this.GetDocument();
+
+        let oLine = new CAnnotationLine(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+        let sDate = ((new Date).getTime()).toString();
+
+        this.fillObject(oLine);
+
+        let aStrokeColor    = this.GetStrokeColor();
+        let aFillColor      = this.GetFillColor();
+        let aLinePoints     = this.GetLinePoints();
+
+        oLine.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
+        oLine.SetOriginPage(this.GetOriginPage());
+        oLine.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
+        oLine.SetModDate(sDate);
+        oLine.SetCreationDate(sDate);
+        aStrokeColor && oLine.SetStrokeColor(aStrokeColor.slice());
+        oLine.SetWidth(this.GetWidth());
+        oLine.SetLineStart(this.GetLineStart());
+        oLine.SetLineEnd(this.GetLineEnd());
+        oLine.SetContents(this.GetContents());
+        aFillColor && oLine.SetFillColor(aFillColor.slice());
+        oLine.SetOpacity(this.GetOpacity());
+        aLinePoints && oLine.SetLinePoints(aLinePoints.slice());
+        oLine.recalcInfo.recalculateGeometry = true;
+        oLine.recalculate();
+
+        this.FillCommentsDataTo(oLine);
+
+        if ((this.IsUseInDocument() && this.IsNeedDrawFromStream()) || !this.IsChanged() || this.GetCopyOfApIdx() != -1) {
+            oLine.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
+            oLine.SetDrawFromStream(true);
+        }
+
         return oLine;
     };
     CAnnotationLine.prototype.IsLine = function() {
@@ -558,6 +596,10 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
+
+        this.GetReplies().forEach(function(reply) {
+            (reply.IsChanged() || !memory.docRenderer) && reply.WriteToBinary(memory);
+        });
     };
 
     function getMinRect(aPoints) {
