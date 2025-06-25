@@ -297,12 +297,9 @@
 		this._loadModules();
 
 		const noop = function () { };
-		if (!this.isPdfEditor())
-		{
-			AscCommon.loadChartStyles(noop, function (err) {
-				t.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingScriptError, c_oAscError.Level.NoCritical);
-			});
-		}
+		AscCommon.loadChartStyles(noop, function (err) {
+			t.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingScriptError, c_oAscError.Level.NoCritical);
+		});
 		const sendUnhandledError  = function(errorMsg, url, lineNumber, column, stack) {
 			let editorInfo = t.getEditorErrorInfo();
 			let memoryInfo = AscCommon.getMemoryInfo();

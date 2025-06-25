@@ -7420,6 +7420,10 @@ function BinaryPPTYLoader()
                 case 1:
                 {
                     _xfrm = this.ReadXfrm();
+                    // has no rotate in other editors
+                    if (false == Asc.editor.isPdfEditor()) {
+                        _xfrm.setRot(0);
+                    }
                     break;
                 }
                 case 2:
@@ -7439,7 +7443,7 @@ function BinaryPPTYLoader()
                         _stream.pos = s.pos;
                         _stream.cur = s.cur;
                         _stream.size = s.size;
-                        _chart = new AscFormat.CChartSpace();
+                        _chart = Asc.editor.isPdfEditor() ? new AscPDF.CPdfChartSpace() : new AscFormat.CChartSpace();
                         _chart.setBDeleted(false);
                         AscCommon.pptx_content_loader.ImageMapChecker = this.ImageMapChecker;
                         AscCommon.pptx_content_loader.Reader.ImageMapChecker = this.ImageMapChecker;

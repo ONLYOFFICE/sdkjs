@@ -2554,7 +2554,7 @@
 
 					let arr_shapes = content.Drawings;
 					if (arr_shapes && arr_shapes.length && !(window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor)) {
-						if (content.Drawings.length === selectedContent2[1].content.Drawings.length) {
+						if (content.Drawings.length === pasteObj.content.Drawings.length) {
 							let oEndContent = {
 								Drawings: []
 							};
@@ -2563,7 +2563,7 @@
 							};
 							for (i = 0; i < content.Drawings.length; ++i) {
 								oEndContent.Drawings.push({Drawing: content.Drawings[i].graphicObject});
-								oSourceContent.Drawings.push({Drawing: selectedContent2[1].content.Drawings[i].graphicObject});
+								oSourceContent.Drawings.push({Drawing: pasteObj.content.Drawings[i].graphicObject});
 							}
 							AscFormat.checkDrawingsTransformBeforePaste(oEndContent, oSourceContent, null);
 						}
