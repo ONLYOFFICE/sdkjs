@@ -1740,6 +1740,7 @@
 				let fillGradientStopsSection = this.getSection("FillGradient");
 				let rows = fillGradientStopsSection.getElements();
 				let fillGradientStops = [];
+				let prevPos = invertGradient ? 100000 : 0;
 				for (const rowKey in rows) {
 					let row = rows[rowKey];
 					if (row.del) {
@@ -1765,6 +1766,12 @@
 					let pos = gradientStopPositionCell.calculateValue(this, pageInfo,
 						visioDocument.themes, undefined, fillGradientEnabled, rowKey);
 					pos = invertGradient ? 100000 - pos : pos;
+
+					// if new pos < prevPos break
+					if (!invertGradient && pos < prevPos || invertGradient && pos > prevPos) {
+						break;
+					}
+					prevPos = pos;
 
 					colorStop.setColor(color);
 					colorStop.setPos(pos);
@@ -2169,7 +2176,8 @@
 		let isShadowVisible = shadowPattern === 1;
 
 		let shapeShadowTypeCell = this.getCell("ShapeShdwType");
-		let isShadowTypeSupported = shapeShadowTypeCell ? (shapeShadowTypeCell.getNumberValue("ShapeShdwType") === 1 ||
+		let isShadowTypeSupported = shapeShadowTypeCell ? (
+				shapeShadowTypeCell.getNumberValue("ShapeShdwType") === 1 ||
 				shapeShadowTypeCell.getNumberValue("ShapeShdwType") === 2 ||
 				shapeShadowTypeCell.getStringValue() === "Themed") : false;
 		if (isShadowVisible && isShadowTypeSupported) {
