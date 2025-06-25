@@ -39,7 +39,6 @@ window['AscWord'] = window['AscWord'] || {};
 
 var align_Left = AscCommon.align_Left;
 var align_Right = AscCommon.align_Right;
-var History = AscCommon.History;
 
 var linerule_Auto = Asc.linerule_Auto;
 var c_oAscShdClear = Asc.c_oAscShdClear;
@@ -389,7 +388,7 @@ CStyle.prototype =
 
 		this.TextPr = New;
 
-		History.Add(new CChangesStyleTextPr(this, Old, New));
+		AscCommon.History.Add(new CChangesStyleTextPr(this, Old, New));
 	},
 
 	Set_ParaPr : function(Value, isHandleNumbering)
@@ -432,7 +431,7 @@ CStyle.prototype =
 
 		this.TablePr = New;
 
-		History.Add(new CChangesStyleTablePr(this, Old, New));
+		AscCommon.History.Add(new CChangesStyleTablePr(this, Old, New));
 	},
 
 	Set_TableRowPr : function(Value)
@@ -443,7 +442,7 @@ CStyle.prototype =
 
 		this.TableRowPr = New;
 
-		History.Add(new CChangesStyleTableRowPr(this, Old, New));
+		AscCommon.History.Add(new CChangesStyleTableRowPr(this, Old, New));
 	},
 
 	Set_TableCellPr : function(Value)
@@ -454,7 +453,7 @@ CStyle.prototype =
 
 		this.TableCellPr = New;
 
-		History.Add(new CChangesStyleTableCellPr(this, Old, New));
+		AscCommon.History.Add(new CChangesStyleTableCellPr(this, Old, New));
 	},
 
 	Set_TableBand1Horz : function(Value)
@@ -465,7 +464,7 @@ CStyle.prototype =
 
 		this.TableBand1Horz = New;
 
-		History.Add(new CChangesStyleTableBand1Horz(this, Old, New));
+		AscCommon.History.Add(new CChangesStyleTableBand1Horz(this, Old, New));
 	},
 
 	Set_TableBand1Vert : function(Value)
@@ -476,7 +475,7 @@ CStyle.prototype =
 
 		this.TableBand1Vert = New;
 
-		History.Add(new CChangesStyleTableBand1Vert(this, Old, New));
+		AscCommon.History.Add(new CChangesStyleTableBand1Vert(this, Old, New));
 	},
 
     Set_TableBand2Horz : function(Value)
@@ -487,7 +486,7 @@ CStyle.prototype =
 
         this.TableBand2Horz = New;
 
-        History.Add(new CChangesStyleTableBand2Horz(this, Old, New));
+        AscCommon.History.Add(new CChangesStyleTableBand2Horz(this, Old, New));
     },
 
 	Set_TableBand2Vert : function(Value)
@@ -498,7 +497,7 @@ CStyle.prototype =
 
 		this.TableBand2Vert = New;
 
-		History.Add(new CChangesStyleTableBand2Vert(this, Old, New));
+		AscCommon.History.Add(new CChangesStyleTableBand2Vert(this, Old, New));
 	},
 
 	Set_TableFirstCol : function(Value)
@@ -509,7 +508,7 @@ CStyle.prototype =
 
 		this.TableFirstCol = New;
 
-		History.Add(new CChangesStyleTableFirstCol(this, Old, New));
+		AscCommon.History.Add(new CChangesStyleTableFirstCol(this, Old, New));
 	},
 
 	Set_TableFirstRow : function(Value)
@@ -520,7 +519,7 @@ CStyle.prototype =
 
 		this.TableFirstRow = New;
 
-		History.Add(new CChangesStyleTableFirstRow(this, Old, New));
+		AscCommon.History.Add(new CChangesStyleTableFirstRow(this, Old, New));
 	},
 
 	Set_TableLastCol : function(Value)
@@ -531,7 +530,7 @@ CStyle.prototype =
 
 		this.TableLastCol = New;
 
-		History.Add(new CChangesStyleTableLastCol(this, Old, New));
+		AscCommon.History.Add(new CChangesStyleTableLastCol(this, Old, New));
 	},
 
 	Set_TableLastRow : function(Value)
@@ -542,7 +541,7 @@ CStyle.prototype =
 
 		this.TableLastRow = New;
 
-		History.Add(new CChangesStyleTableLastRow(this, Old, New));
+		AscCommon.History.Add(new CChangesStyleTableLastRow(this, Old, New));
 	},
 
 	Set_TableTLCell : function(Value)
@@ -553,7 +552,7 @@ CStyle.prototype =
 
 		this.TableTLCell = New;
 
-		History.Add(new CChangesStyleTableTLCell(this, Old, New));
+		AscCommon.History.Add(new CChangesStyleTableTLCell(this, Old, New));
 	},
 
 	Set_TableTRCell : function(Value)
@@ -564,7 +563,7 @@ CStyle.prototype =
 
 		this.TableTRCell = New;
 
-		History.Add(new CChangesStyleTableTRCell(this, Old, New));
+		AscCommon.History.Add(new CChangesStyleTableTRCell(this, Old, New));
 	},
 
 	Set_TableBLCell : function(Value)
@@ -575,7 +574,7 @@ CStyle.prototype =
 
 		this.TableBLCell = New;
 
-		History.Add(new CChangesStyleTableBLCell(this, Old, New));
+		AscCommon.History.Add(new CChangesStyleTableBLCell(this, Old, New));
 	},
 
 	Set_TableBRCell : function(Value)
@@ -586,7 +585,7 @@ CStyle.prototype =
 
 		this.TableBRCell = New;
 
-		History.Add(new CChangesStyleTableBRCell(this, Old, New));
+		AscCommon.History.Add(new CChangesStyleTableBRCell(this, Old, New));
 	},
 
 	Set_TableWholeTable : function(Value)
@@ -597,12 +596,12 @@ CStyle.prototype =
 
 		this.TableWholeTable = New;
 
-		History.Add(new CChangesStyleTableWholeTable(this, Old, New));
+		AscCommon.History.Add(new CChangesStyleTableWholeTable(this, Old, New));
 	},
 
 	Set_Name : function(Value)
 	{
-		History.Add(new CChangesStyleName(this, this.Name, Value));
+		AscCommon.History.Add(new CChangesStyleName(this, this.Name, Value));
 		this.Name = Value;
 	},
 
@@ -613,7 +612,7 @@ CStyle.prototype =
 
 	Set_BasedOn : function(Value)
 	{
-		History.Add(new CChangesStyleBasedOn(this, this.BasedOn, Value));
+		AscCommon.History.Add(new CChangesStyleBasedOn(this, this.BasedOn, Value));
 		this.BasedOn = Value;
 	},
 
@@ -624,7 +623,7 @@ CStyle.prototype =
 
 	Set_Next : function(Value)
 	{
-		History.Add(new CChangesStyleNext(this, this.Next, Value));
+		AscCommon.History.Add(new CChangesStyleNext(this, this.Next, Value));
 		this.Next = Value;
 	},
 
@@ -635,7 +634,7 @@ CStyle.prototype =
 
 	Set_Link : function(Value)
 	{
-		History.Add(new CChangesStyleLink(this, this.Link, Value));
+		AscCommon.History.Add(new CChangesStyleLink(this, this.Link, Value));
 		this.Link = Value;
 	},
 
@@ -646,7 +645,7 @@ CStyle.prototype =
 
 	Set_Type : function(Value)
 	{
-		History.Add(new CChangesStyleType(this, this.Type, Value));
+		AscCommon.History.Add(new CChangesStyleType(this, this.Type, Value));
 		this.Type = Value;
 	},
 
@@ -657,31 +656,31 @@ CStyle.prototype =
 
 	Set_QFormat : function(Value)
 	{
-		History.Add(new CChangesStyleQFormat(this, this.qFormat, Value));
+		AscCommon.History.Add(new CChangesStyleQFormat(this, this.qFormat, Value));
 		this.qFormat = Value;
 	},
 
 	Set_UiPriority : function(Value)
 	{
-		History.Add(new CChangesStyleUiPriority(this, this.uiPriority, Value));
+		AscCommon.History.Add(new CChangesStyleUiPriority(this, this.uiPriority, Value));
 		this.uiPriority = Value;
 	},
 
 	Set_Hidden : function(Value)
 	{
-		History.Add(new CChangesStyleHidden(this, this.hidden, Value));
+		AscCommon.History.Add(new CChangesStyleHidden(this, this.hidden, Value));
 		this.hidden = Value;
 	},
 
 	Set_SemiHidden : function(Value)
 	{
-		History.Add(new CChangesStyleSemiHidden(this, this.semiHidden, Value));
+		AscCommon.History.Add(new CChangesStyleSemiHidden(this, this.semiHidden, Value));
 		this.semiHidden = Value;
 	},
 
 	Set_UnhideWhenUsed : function(Value)
 	{
-		History.Add(new CChangesStyleUnhideWhenUsed(this, this.unhideWhenUsed, Value));
+		AscCommon.History.Add(new CChangesStyleUnhideWhenUsed(this, this.unhideWhenUsed, Value));
 		this.unhideWhenUsed = Value;
 	},
 
@@ -6049,7 +6048,7 @@ CStyle.prototype =
 
 	Refresh_RecalcData2 : function()
 	{
-		var oHistory = History;
+		var oHistory = AscCommon.History;
 		if (!oHistory)
 			return;
 
@@ -6059,7 +6058,7 @@ CStyle.prototype =
 
 	RecalculateRelatedParagraphs : function()
 	{
-		var oHistory = History;
+		var oHistory = AscCommon.History;
 		if (!oHistory)
 			return;
 
@@ -6479,7 +6478,7 @@ CStyle.prototype.SetStyleId = function(styleId)
 	if (styleId === this.StyleId)
 		return;
 
-	History.Add(new CChangesStyleStyleId(this, this.StyleId, styleId));
+	AscCommon.History.Add(new CChangesStyleStyleId(this, this.StyleId, styleId));
 	this.StyleId = styleId;
 };
 CStyle.prototype.GetStyleId = function()
@@ -7078,7 +7077,7 @@ CStyle.prototype.IsExpressStyle = function(oStyles)
  */
 CStyle.prototype.SetCustom = function(isCustom)
 {
-	History.Add(new CChangesStyleCustom(this, this.Name, isCustom));
+	AscCommon.History.Add(new CChangesStyleCustom(this, this.Name, isCustom));
 	this.Custom = isCustom;
 };
 /**
@@ -7918,7 +7917,7 @@ CStyles.prototype =
 	Add : function(Style)
 	{
 		var Id = Style.Get_Id();
-		History.Add(new CChangesStylesAdd(this, Id, Style));
+		AscCommon.History.Add(new CChangesStylesAdd(this, Id, Style));
 		this.Style[Id] = Style;
 		Style.SetParent(this);
 		this.Update_Interface(Id);
@@ -7941,7 +7940,7 @@ CStyles.prototype =
 			return;
 		
 		this.Style[Id].SetParent(null);
-		History.Add(new CChangesStylesRemove(this, Id, this.Style[Id]));
+		AscCommon.History.Add(new CChangesStylesRemove(this, Id, this.Style[Id]));
 		delete this.Style[Id];
 		this.Update_Interface(Id);
 	},
@@ -7991,7 +7990,7 @@ CStyles.prototype =
 
 	Set_DefaultParaPr : function(ParaPr)
 	{
-		History.Add(new CChangesStylesChangeDefaultParaPr(this, this.Default.ParaPr, ParaPr));
+		AscCommon.History.Add(new CChangesStylesChangeDefaultParaPr(this, this.Default.ParaPr, ParaPr));
 		this.Default.ParaPr.InitDefault();
 		this.Default.ParaPr.Merge(ParaPr);
 
@@ -8006,7 +8005,7 @@ CStyles.prototype =
 
 	Set_DefaultTextPr : function(TextPr)
 	{
-		History.Add(new CChangesStylesChangeDefaultTextPr(this, this.Default.TextPr, TextPr));
+		AscCommon.History.Add(new CChangesStylesChangeDefaultTextPr(this, this.Default.TextPr, TextPr));
 		this.Default.TextPr = new AscWord.CTextPr();
 		this.Default.TextPr.InitDefault();
 		this.Default.TextPr.Merge(TextPr);

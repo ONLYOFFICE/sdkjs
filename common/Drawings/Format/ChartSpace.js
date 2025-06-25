@@ -3983,6 +3983,15 @@ function(window, undefined) {
 		copy.setParent(null);
 		return copy;
 	};
+	CChartSpace.prototype.convertToPdf = function (drawingDocument, worksheet) {
+		let oPr = new AscFormat.CCopyObjectProperties();
+		oPr.drawingDocument = drawingDocument;
+		let copy = AscPDF.CPdfChartSpace.prototype.copy.call(this, oPr);
+		copy.setBDeleted(false);
+		copy.setWorksheet(worksheet);
+		copy.setParent(null);
+		return copy;
+	};
 	CChartSpace.prototype.handleUpdateType = function () {
 		this.recalcInfo.recalculateChart = true;
 		this.recalcInfo.recalculateSeriesColors = true;
