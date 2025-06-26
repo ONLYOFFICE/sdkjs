@@ -1618,16 +1618,9 @@
 
         AscCommon.History.Add(new CChangesPDFFormReadOnly(this, this._readOnly, bReadOnly));
 
-        function update(widget) {
-            widget.SetWasChanged(true);
+        this.GetAllWidgets().forEach(function(widget) {
             widget.AddToRedraw();
-        };
-    
-        if (this.IsWidget()) {
-            update(this);
-        } else {
-            this.GetAllWidgets().forEach(update);
-        }
+        });
 
         this._readOnly = bReadOnly;
         this.SetWasChanged(true);
@@ -1684,16 +1677,9 @@
 
         AscCommon.History.Add(new CChangesPDFFormRequired(this, this._required, bRequired));
 
-        function update(widget) {
-            widget.SetWasChanged(true);
+        this.GetAllWidgets().forEach(function(widget) {
             widget.AddToRedraw();
-        };
-    
-        if (this.IsWidget()) {
-            update(this);
-        } else {
-            this.GetAllWidgets().forEach(update);
-        }
+        });
 
         this._required = bRequired;
         this.SetWasChanged(true);

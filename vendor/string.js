@@ -201,22 +201,22 @@
 		};
 	}
 
-	function CUnicodeIterator(str)
+	function CUnicodeIteratorOld(str)
 	{
 		this._position = 0;
 		this._index = 0;
 		this._str = str;
 	}
 
-	CUnicodeIterator.prototype.isOutside = function()
+	CUnicodeIteratorOld.prototype.isOutside = function()
 	{
 		return (this._index >= this._str.length);
 	};
-	CUnicodeIterator.prototype.isInside = function()
+	CUnicodeIteratorOld.prototype.isInside = function()
 	{
 		return (this._index < this._str.length);
 	};
-	CUnicodeIterator.prototype.value = function()
+	CUnicodeIteratorOld.prototype.value = function()
 	{
 		if (this._index >= this._str.length)
 			return 0;
@@ -231,7 +231,7 @@
 		var nTrailingChar = this._str.charCodeAt(this._index + 1);
 		return AscCommon.decodeSurrogateChar(nCharCode, nTrailingChar);
 	};
-	CUnicodeIterator.prototype.next = function()
+	CUnicodeIteratorOld.prototype.next = function()
 	{
 		if (this._index >= this._str.length)
 			return;
@@ -251,11 +251,55 @@
 
 		this._index += 2;
 	};
-	CUnicodeIterator.prototype.position = function()
+	CUnicodeIteratorOld.prototype.position = function()
 	{
 		return this._position;
 	};
-	CUnicodeIterator.prototype.check = CUnicodeIterator.prototype.isInside;
+	CUnicodeIteratorOld.prototype.check = CUnicodeIteratorOld.prototype.isInside;
+
+	var CUnicodeIteratorNew = null;
+
+	if (String.prototype.codePointAt && (typeof Symbol === 'function') && ('iterator' in Symbol))
+	{
+		CUnicodeIteratorNew = function(str)
+		{
+			this._position = 0;
+			this._str = str;
+			this._iterator = str[Symbol.iterator]();
+			this._current = this._iterator.next();
+		}
+
+		CUnicodeIteratorNew.prototype.isOutside = function()
+		{
+			return this._current.done;
+		};
+		CUnicodeIteratorNew.prototype.isInside = function()
+		{
+			return !this._current.done;
+		};
+		CUnicodeIteratorNew.prototype.value = function()
+		{
+			if (this._current.done)
+				return 0;
+
+			return this._current.value.codePointAt(0);
+		};
+		CUnicodeIteratorNew.prototype.next = function()
+		{
+			if (this._current.done)
+				return;
+
+			this._position++;
+			this._current = this._iterator.next();
+		};
+		CUnicodeIteratorNew.prototype.position = function()
+		{
+			return this._position;
+		};
+		CUnicodeIteratorNew.prototype.check = CUnicodeIteratorNew.prototype.isInside;
+	}
+
+	var CUnicodeIterator = CUnicodeIteratorNew ? CUnicodeIteratorNew : CUnicodeIteratorOld;
 
 	/**
 	 * @returns {CUnicodeIterator}

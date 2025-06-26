@@ -439,7 +439,10 @@ CChangesPDFFormRequired.prototype.private_SetValue = function(Value)
 {
 	let oForm = this.Class;
 	oForm._required = Value;
-	oForm.AddToRedraw();
+
+	oForm.GetAllWidgets().forEach(function(widget) {
+		widget.AddToRedraw();
+	});
 };
 
 /**
@@ -718,7 +721,10 @@ CChangesPDFFormReadOnly.prototype.private_SetValue = function(Value)
 {
 	let oForm = this.Class;
 	oForm._readOnly = Value;
-	oForm.AddToRedraw();
+
+	oForm.GetAllWidgets().forEach(function(widget) {
+		widget.AddToRedraw();
+	});
 };
 
 /**

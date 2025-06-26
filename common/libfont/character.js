@@ -176,7 +176,11 @@
 			var oldCount = this.FontsByRangeCount;
 			for (var i = _text.getUnicodeIterator(); i.check(); i.next())
 			{
-				AscFonts.FontPickerByCharacter.getFontBySymbol(i.value());
+				let _char = i.value();
+				if (this.LastRange && this.LastRange.Start <= _char && _char <= this.LastRange.End)
+					continue;
+
+				this.getFontBySymbol(_char);
 			}
 			return (this.FontsByRangeCount != oldCount);
 		},
@@ -194,7 +198,7 @@
 			{
 				if (32 === _array[i])
 					continue;
-				AscFonts.FontPickerByCharacter.getFontBySymbol(_array[i]);
+				this.getFontBySymbol(_array[i]);
 			}
 			return (this.FontsByRangeCount != oldCount);
 		},

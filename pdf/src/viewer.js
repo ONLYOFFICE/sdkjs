@@ -4987,6 +4987,25 @@
 			writePageInfo.call(this, aOrder[i], undefined);
 		}
 
+		if (!oMemory) {
+			let isParentsChanged = false;
+			oDoc.widgets.forEach(function(widget) {
+				let oParent = widget.GetParent();
+				while (oParent) {
+					if (oParent.IsChanged()) {
+						isParentsChanged = true;
+						break;
+					}
+
+					oParent = oParent.GetParent();
+				}
+			});
+
+			if (isParentsChanged) {
+				checkMemory();
+			}
+		}
+
 		if (oMemory) {
 			let nStartPos = oMemory.GetCurPosition();
 			oMemory.Skip(4);
@@ -5288,6 +5307,25 @@
 		// пишем по порядку
 		for (let i = 0; i < aOrder.length; i++) {
 			writePageInfo.call(this, aOrder[i], undefined);
+		}
+
+		if (!oMemory) {
+			let isParentsChanged = false;
+			oDoc.widgets.forEach(function(widget) {
+				let oParent = widget.GetParent();
+				while (oParent) {
+					if (oParent.IsChanged()) {
+						isParentsChanged = true;
+						break;
+					}
+
+					oParent = oParent.GetParent();
+				}
+			});
+
+			if (isParentsChanged) {
+				checkMemory();
+			}
 		}
 
 		if (oMemory) {
