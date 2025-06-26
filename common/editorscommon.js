@@ -15049,6 +15049,28 @@
 		return null;
 	}
 
+	function applyElementDirection(element) {
+		if (AscCommon.AscBrowser.isIE) {
+			this.topLineEditorElement.addEventListener('input', function () {
+				const text = element.textContent || element.innerText || '';
+				let dir = 'ltr';
+				for (let iter = text.getUnicodeIterator(); iter.check(); iter.next()) {
+					let dir = AscCommon.getCharStrongDir(iter.value());
+					if (dir !== null) {
+						if (dir === AscBidi.TYPE.R) {
+							dir = 'rtl';
+						}
+						break;
+					}
+				}
+				element.dir = dir;
+			});
+		}
+		else {
+			element.dir = 'auto';
+		}
+	}
+
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].consoleLog = consoleLog;
@@ -15115,6 +15137,7 @@
 	window["AscCommon"].getRTLString = getRTLString;
 	window["AscCommon"].stripDirectionMarks = stripDirectionMarks;
 	window["AscCommon"].getCharStrongDir = getCharStrongDir;
+	window["AscCommon"].applyElementDirection = applyElementDirection;
 
 	window["AscCommon"].DocumentUrls = DocumentUrls;
 	window["AscCommon"].OpenFileResult = OpenFileResult;
