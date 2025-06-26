@@ -15099,6 +15099,11 @@
 		if(AscCommon.History.Is_On() && oRes.oldVal != oRes.newVal)
 			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_AlignHorizontal, this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new UndoRedoData_CellSimpleData(this.nRow, this.nCol, oRes.oldVal, oRes.newVal));
 	};
+	Cell.prototype.setReadingOrder=function(val){
+		var oRes = this.ws.workbook.oStyleManager.setReadingOrder(this, val);
+		if(AscCommon.History.Is_On() && oRes.oldVal != oRes.newVal)
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_ReadingOrder, this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new UndoRedoData_CellSimpleData(this.nRow, this.nCol, oRes.oldVal, oRes.newVal));
+	};
 	Cell.prototype.setFill=function(val){
 		var oRes = this.ws.workbook.oStyleManager.setFill(this, val);
 		if(AscCommon.History.Is_On() && oRes.oldVal != oRes.newVal)
@@ -18364,6 +18369,28 @@
 							  cell.setAlignHorizontal(val);
 						  });
 	};
+	Range.prototype.setReadingOrder=function(val){
+		AscCommon.History.Create_NewPoint();
+		this.createCellOnRowColCross();
+		var fSetProperty = this._setProperty;
+		var nRangeType = this._getRangeType();
+		if(c_oRangeType.All == nRangeType)
+		{
+			this.worksheet.getAllCol().setReadingOrder(val);
+			fSetProperty = this._setPropertyNoEmpty;
+		}
+		fSetProperty.call(this, function(row){
+							  if(c_oRangeType.All == nRangeType && null == row.xfs)
+								  return;
+							  row.setReadingOrder(val);
+						  },
+						  function(col){
+							  col.setReadingOrder(val);
+						  },
+						  function(cell){
+							  cell.setReadingOrder(val);
+						  });
+	};
 	Range.prototype.setFill=function(val){
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
@@ -18750,6 +18777,15 @@
 
 		this._setPropertyNoEmpty(null, null,function(cell){
 			cell.changeTextCase(type);
+		});
+		AscCommon.History.EndTransaction();
+	};
+	Range.prototype.changeReadingOrder=function(readingOrder){
+		AscCommon.History.Create_NewPoint();
+		AscCommon.History.StartTransaction();
+
+		this._setPropertyNoEmpty(null, null,function(cell){
+			cell.changeTextCase(readingOrder);
 		});
 		AscCommon.History.EndTransaction();
 	};

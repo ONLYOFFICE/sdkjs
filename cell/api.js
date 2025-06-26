@@ -6214,6 +6214,8 @@ var editor;
     }
   };
 
+
+
   spreadsheet_api.prototype.asc_setCellItalic = function(isItalic) {
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return;
@@ -6283,6 +6285,22 @@ var editor;
       this.wb.restoreFocus();
     }
   };
+
+
+	spreadsheet_api.prototype.asc_setCellReadingOrder = function(readingOrder) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return;
+		}
+
+		let ws = this.wb.getWorksheet();
+		if (ws.objectRender.selectedGraphicObjectsExists()) {
+			let isRTL = readingOrder === Asc.c_oReadingOrderTypes.RTL;
+			ws.objectRender.controller.setParagraphBidi(isRTL);
+		} else {
+			this.wb.getWorksheet().setSelectionInfo("readingOrder", readingOrder);
+			this.wb.restoreFocus();
+		}
+	};
 
   spreadsheet_api.prototype.asc_setCellAlign = function(align) {
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
@@ -10277,6 +10295,7 @@ var editor;
   prot["asc_setCellStrikeout"] = prot.asc_setCellStrikeout;
   prot["asc_setCellSubscript"] = prot.asc_setCellSubscript;
   prot["asc_setCellSuperscript"] = prot.asc_setCellSuperscript;
+  prot["asc_setCellReadingOrder"] = prot.asc_setCellReadingOrder;
   prot["asc_setCellAlign"] = prot.asc_setCellAlign;
   prot["asc_setCellVertAlign"] = prot.asc_setCellVertAlign;
   prot["asc_setCellTextWrap"] = prot.asc_setCellTextWrap;

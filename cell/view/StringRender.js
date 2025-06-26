@@ -1519,9 +1519,9 @@
 		};
 		TableCellDrawState.prototype.getMainDirection = function() {
 			let readingOrder = this.stringRender.flags ? this.stringRender.flags.getReadingOrder() : null;
-			if (readingOrder === 1) {
+			if (readingOrder === Asc.c_oReadingOrderTypes.LTR) {
 				return AscBidi.TYPE.L;
-			} else if (readingOrder === 2) {
+			} else if (readingOrder === Asc.c_oReadingOrderTypes.RTL) {
 				return AscBidi.TYPE.R;
 			}
 			for (let i = 0; i < this.stringRender.chars.length; ++i) {

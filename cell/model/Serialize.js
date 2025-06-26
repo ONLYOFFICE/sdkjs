@@ -3369,11 +3369,11 @@
                 this.memory.WriteByte(c_oSerPropLenType.Long);
                 this.memory.WriteLong(align.indent);
             }
-            if(null != align.ReadingOrder)
+            if(null != align.readingOrder)
             {
                 this.memory.WriteByte(Asc.c_oSerAligmentTypes.ReadingOrder);
                 this.memory.WriteByte(c_oSerPropLenType.Long);
-                this.memory.WriteLong(align.ReadingOrder);
+                this.memory.WriteLong(align.readingOrder);
             }
             if(null != align.RelativeIndent)
             {
@@ -8449,7 +8449,7 @@
                 }
             }
             else if ( Asc.c_oSerAligmentTypes.ReadingOrder == type )
-                oAligment.ReadingOrder = this.stream.GetULongLE();
+                oAligment.readingOrder = this.stream.GetULongLE();
             else if ( Asc.c_oSerAligmentTypes.RelativeIndent == type )
                 oAligment.RelativeIndent = this.stream.GetULongLE();
             else if ( Asc.c_oSerAligmentTypes.ShrinkToFit == type )

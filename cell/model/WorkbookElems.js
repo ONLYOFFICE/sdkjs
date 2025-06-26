@@ -5089,6 +5089,17 @@ var g_oFontProperties = {
 			WrapText: 8
 	};
 
+	const c_oReadingOrderTypes = {
+		Context: 0,
+		LTR: 1,
+		RTL: 2
+	};
+
+	window['Asc']['c_oReadingOrderTypes'] = window['Asc'].c_oReadingOrderTypes = c_oReadingOrderTypes;
+	prot = c_oReadingOrderTypes;
+	prot['Context'] = prot.Context;
+	prot['LTR'] = prot.LTR;
+	prot['RTL'] = prot.RTL;
 
 	window['Asc']['c_oSerAligmentTypes'] = window['Asc'].c_oSerAligmentTypes = c_oSerAligmentTypes;
 	prot = c_oSerAligmentTypes;
@@ -5110,7 +5121,7 @@ var g_oFontProperties = {
 		this.hor = val.hor;
 		this.indent = val.indent;
 		this.RelativeIndent = val.RelativeIndent;
-		this.ReadingOrder = val.ReadingOrder;
+		this.readingOrder = val.readingOrder;
 		this.shrink = val.shrink;
 		this.angle = val.angle;
 		this.ver = val.ver;
@@ -5123,7 +5134,7 @@ var g_oFontProperties = {
 	Align.prototype.Properties = Asc.c_oSerAligmentTypes;
 	Align.prototype.getHash = function () {
 		if (!this._hash) {
-			this._hash = this.hor + '|' + this.indent + '|' + this.ReadingOrder + '|' + this.RelativeIndent + '|' + this.shrink + '|' +
+			this._hash = this.hor + '|' + this.indent + '|' + this.readingOrder + '|' + this.RelativeIndent + '|' + this.shrink + '|' +
 				this.angle + '|' + this.ver + '|' + this.wrap;
 		}
 		return this._hash;
@@ -5146,7 +5157,7 @@ var g_oFontProperties = {
 		var oRes = new Align();
 		oRes.hor = this._mergeProperty(this.hor, align.hor, defaultAlign.hor);
 		oRes.indent = this._mergeProperty(this.indent, align.indent, defaultAlign.indent);
-		oRes.ReadingOrder = this._mergeProperty(this.ReadingOrder, align.ReadingOrder, defaultAlign.ReadingOrder);
+		oRes.readingOrder = this._mergeProperty(this.readingOrder, align.readingOrder, defaultAlign.readingOrder);
 		oRes.RelativeIndent = this._mergeProperty(this.RelativeIndent, align.RelativeIndent, defaultAlign.RelativeIndent);
 		oRes.shrink = this._mergeProperty(this.shrink, align.shrink, defaultAlign.shrink);
 		oRes.angle = this._mergeProperty(this.angle, align.angle, defaultAlign.angle);
@@ -5172,8 +5183,8 @@ var g_oFontProperties = {
 		} else {
 			bEmpty = false;
 		}
-		if (this.ReadingOrder == val.ReadingOrder) {
-			oRes.ReadingOrder = null;
+		if (this.readingOrder == val.readingOrder) {
+			oRes.readingOrder = null;
 		} else {
 			bEmpty = false;
 		}
@@ -5203,7 +5214,7 @@ var g_oFontProperties = {
 		return oRes;
 	};
 	Align.prototype.isEqual = function (val) {
-		return this.hor == val.hor && this.indent == val.indent && this.ReadingOrder == val.ReadingOrder && this.RelativeIndent == val.RelativeIndent && this.shrink == val.shrink &&
+		return this.hor == val.hor && this.indent == val.indent && this.readingOrder == val.readingOrder && this.RelativeIndent == val.RelativeIndent && this.shrink == val.shrink &&
 			this.angle == val.angle && this.ver == val.ver && this.wrap == val.wrap;
 	};
 	Align.prototype.clone = function () {
@@ -5291,10 +5302,10 @@ var g_oFontProperties = {
 		this.shrink = val;
 	};
 	Align.prototype.getReadingOrder = function () {
-		return this.ReadingOrder;
+		return this.readingOrder;
 	};
 	Align.prototype.setReadingOrder = function (val) {
-		this.ReadingOrder = val;
+		this.readingOrder = val;
 	};
 	Align.prototype.getAlignHorizontal = function () {
 		return this.hor;
@@ -5350,7 +5361,7 @@ var g_oFontProperties = {
 			}
 			val = vals["readingOrder"];
 			if (undefined !== val) {
-				this.ReadingOrder = val - 0;
+				this.readingOrder = val - 0;
 			}
 			val = vals["shrinkToFit"];
 			if (undefined !== val) {
@@ -5665,6 +5676,10 @@ StyleManager.prototype =
 	setAlignHorizontal : function(oItemWithXfs, val)
 	{
 		return this._setAlignProperty(oItemWithXfs, val, "alignHorizontal", Align.prototype.getAlignHorizontal, Align.prototype.setAlignHorizontal);
+	},
+	setReadingOrder : function(oItemWithXfs, val)
+	{
+		return this._setAlignProperty(oItemWithXfs, val, "readingOrder", Align.prototype.getReadingOrder, Align.prototype.setReadingOrder);
 	},
 	setShrinkToFit : function(oItemWithXfs, val)
 	{
@@ -6561,6 +6576,13 @@ StyleManager.prototype =
 				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, false, oRes.oldVal, oRes.newVal));
 		}
 	};
+	Col.prototype.setReadingOrder = function (val) {
+		var oRes = this.ws.workbook.oStyleManager.setReadingOrder(this, val);
+		if (AscCommon.History.Is_On() && oRes.oldVal != oRes.newVal) {
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoCol, AscCH.historyitem_RowCol_ReadingOrder, this.ws.getId(),
+				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, false, oRes.oldVal, oRes.newVal));
+		}
+	};
 	Col.prototype.setFill = function (val) {
 		var oRes = this.ws.workbook.oStyleManager.setFill(this, val);
 		if (AscCommon.History.Is_On() && oRes.oldVal != oRes.newVal) {
@@ -6960,6 +6982,13 @@ StyleManager.prototype =
 		var oRes = this.ws.workbook.oStyleManager.setAlignHorizontal(this, val);
 		if (AscCommon.History.Is_On() && oRes.oldVal != oRes.newVal) {
 			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoRow, AscCH.historyitem_RowCol_AlignHorizontal, this.ws.getId(),
+				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, true, oRes.oldVal, oRes.newVal));
+		}
+	};
+	Row.prototype.setReadingOrder = function (val) {
+		var oRes = this.ws.workbook.oStyleManager.setReadingOrder(this, val);
+		if (AscCommon.History.Is_On() && oRes.oldVal != oRes.newVal) {
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoRow, AscCH.historyitem_RowCol_ReadingOrder, this.ws.getId(),
 				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, true, oRes.oldVal, oRes.newVal));
 		}
 	};

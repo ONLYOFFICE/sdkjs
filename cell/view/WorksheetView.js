@@ -317,7 +317,7 @@
         this.textAlign = null;
         this.ctrlKey = null;
         this.shiftKey = null;
-        this.ReadingOrder = null;
+        this.readingOrder = null;
     }
 
     CellFlags.prototype.clone = function () {
@@ -327,7 +327,7 @@
         oRes.merged = this.merged ? this.merged.clone() : null;
         oRes.textAlign = this.textAlign;
         oRes.verticalText = this.verticalText;
-        oRes.ReadingOrder = this.ReadingOrder;
+        oRes.readingOrder = this.readingOrder;
         return oRes;
     };
     CellFlags.prototype.isMerged = function () {
@@ -337,7 +337,7 @@
 	    return getMergeType(this.merged);
 	};
 	CellFlags.prototype.getReadingOrder = function () {
-		return this.ReadingOrder;
+		return this.readingOrder;
 	};
 
     function CellBorderObject(borders, mergeInfo, col, row) {
@@ -13578,6 +13578,7 @@
         var objectInfo = new asc_CCellInfo();
         var xfs = new AscCommonExcel.CellXfs();
         var horAlign = null, vertAlign = null, angle = null;
+		let readingOrder = null;
 
         var graphicObjects = this.objectRender.getSelectedGraphicObjects();
         if (graphicObjects.length) {
@@ -13606,7 +13607,8 @@
             objectInfo.text = oController.GetSelectedText(true);
 
             horAlign = paraPr.Jc;
-            vertAlign = Asc.c_oAscVAlign.Center;
+			readingOrder = paraPr.Bidi === true ? Asc.c_oReadingOrderTypes.RTL : null;
+			vertAlign = Asc.c_oAscVAlign.Center;
             var shape_props = oController.getDrawingProps().shapeProps;
             if (shape_props) {
                 switch (shape_props.verticalTextAlign) {
@@ -13663,6 +13665,7 @@
 
         var align = new AscCommonExcel.Align();
         align.setAlignHorizontal(horAlign);
+        align.setReadingOrder(readingOrder);
         align.setAlignVertical(vertAlign);
         align.setAngle(angle);
         xfs.setAlign(align);
@@ -16136,6 +16139,9 @@
 							range.setIndent(0);
 						}
                         range.setAlignHorizontal(val);
+                        break;
+                    case "readingOrder":
+                        range.setReadingOrder(val);
                         break;
                     case "va":
                         range.setAlignVertical(val);
@@ -29566,6 +29572,12 @@
 		if (undefined !== rangeStyle.alignHorizontal && specialPasteProps.alignHorizontal) {
 			if (!align || align.getAlignHorizontal() !== rangeStyle.alignHorizontal) {
 				range.setAlignHorizontal(rangeStyle.alignHorizontal);
+			}
+		}
+		//readingOrder
+		if (undefined !== rangeStyle.readingOrder && specialPasteProps.readingOrder) {
+			if (!align || align.getReadingOrder() !== rangeStyle.readingOrder) {
+				range.setReadingOrder(rangeStyle.readingOrder);
 			}
 		}
 		//fontSize
