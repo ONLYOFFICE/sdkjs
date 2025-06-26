@@ -1527,17 +1527,15 @@
 			for (let i = 0; i < this.stringRender.chars.length; ++i) {
 				let char = this.stringRender.chars[i];
 				let type = AscBidi.getType(char);
-				if (type & AscBidi.FLAG.STRONG) {
-					if (type & AscBidi.FLAG.RTL) {
-						return AscBidi.TYPE.R;
-					} else {
-						return AscBidi.TYPE.L;
-					}
+				let strongDir = AscCommon.getCharStrongDir(char);
+				if (strongDir !== null) {
+					return strongDir;
 				}
 			}
 
 			return AscBidi.TYPE.L;
 		};
+
 	}
 
 

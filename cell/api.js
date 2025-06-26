@@ -150,6 +150,26 @@ var editor;
   spreadsheet_api.prototype._init = function() {
     AscCommon.baseEditorsApi.prototype._init.call(this);
     this.topLineEditorElement = document.getElementById(this.topLineEditorName);
+	 let el = this.topLineEditorElement;
+	if (AscCommon.AscBrowser.isIE) {
+		this.topLineEditorElement.addEventListener('input', function () {
+			const text = el.textContent || el.innerText || '';
+			let dir = 'ltr';
+			for (let iter = text.getUnicodeIterator(); iter.check(); iter.next()) {
+				let dir = AscCommon.getCharStrongDir(iter.value());
+				if (dir !== null) {
+					if (dir === AscBidi.TYPE.R) {
+						dir = 'rtl';
+					}
+					break;
+				}
+			}
+			el.dir = dir;
+		});
+	}
+	else {
+		el.dir = 'auto';
+	}
     // ToDo нужно ли это
     asc['editor'] = ( asc['editor'] || this );
   };
