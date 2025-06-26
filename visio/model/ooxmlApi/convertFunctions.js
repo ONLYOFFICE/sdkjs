@@ -1767,7 +1767,8 @@
 						visioDocument.themes, undefined, fillGradientEnabled, rowKey);
 					pos = invertGradient ? 100000 - pos : pos;
 
-					// if new pos < prevPos break
+					// Stop reading when the position decreases.
+					// Whether it's zeros at the end or a confused position.
 					if (!invertGradient && pos < prevPos || invertGradient && pos > prevPos) {
 						break;
 					}
