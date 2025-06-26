@@ -4924,6 +4924,9 @@ var g_oFontProperties = {
 	CellXfs.prototype.asc_getShrinkToFit = function () {
 		return this.getAlign2().getShrinkToFit();
 	};
+	CellXfs.prototype.asc_getReadingOrder = function () {
+		return this.getAlign2().getReadingOrder();
+	};
 	CellXfs.prototype.asc_getPreview = function (api, text, width, height) {
 		return AscCommonExcel.generateXfsStyle(width, height, api.wb, this, text);
 	};
@@ -20132,6 +20135,7 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_getIndent"] = prot.asc_getIndent;
 	prot["asc_getWrapText"] = prot.asc_getWrapText;
 	prot["asc_getShrinkToFit"] = prot.asc_getShrinkToFit;
+	prot["asc_getReadingOrder"] = prot.asc_getReadingOrder;
 	prot["asc_getPreview"] = prot.asc_getPreview;
 	prot["asc_getLocked"] = prot.asc_getLocked;
 	prot["asc_getHidden"] = prot.asc_getHidden;
