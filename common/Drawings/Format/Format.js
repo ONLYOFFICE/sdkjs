@@ -2122,8 +2122,7 @@
 					}
 					const HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
-
-					HSL.S = AscCommon.trimMinMaxValue(HSL.S * val, 0, max_hls);
+					HSL.S = HSL.S * val;
 					this.HSL2RGB(HSL, RGBA);
 				} else if (colorMod.name === "satOff") {
 					if (val === 0) {
