@@ -4659,7 +4659,39 @@
     // ApiTable
     //
     //------------------------------------------------------------------------------------------------------------------
-    /**
+
+	// Это работает для уже созданных таблиц.
+	// То ест:
+	// 1. удаляем все drawings со слайда (можно руками, можно через макрос),
+	// 2. оставляем одну только таблицу,
+	// 3. а потом запускаем вот этот пример:
+	/*
+		const slide = Api.GetPresentation().GetSlideByIndex(0);
+		slide.GetAllDrawings()[0].SetSize(50);
+	*/
+	ApiTable.prototype.SetSize = function (width, height) {
+		return this.Drawing
+			? this.Drawing.resize(width, height)
+			: false;
+	};
+
+	// Удаляем все объекты со слайда, запускаем этот пример:
+	/*
+		const slide = Api.GetPresentation().GetSlideByIndex(0)
+		const table = Api.CreateTable(3, 2);
+		slide.AddObject(table);
+
+		slide.GetAllDrawings()[0].SetSize(50);
+	*/
+	ApiTable.prototype.SetSize = function (width, height) {
+		const obj = {
+			"Type": tblwidth_Mm,
+			"W": width
+		};
+		this.Table.Pr.TableW.Set_FromObject(obj);
+	};
+
+	/**
      * Returns the type of the ApiTable object.
      * @typeofeditors ["CPE"]
      * @returns {"table"}
