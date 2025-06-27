@@ -2129,11 +2129,24 @@
 					if (val === 0) {
 						continue;
 					}
-					const HSL = {H: 0, S: 0, L: 0};
-					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
-					const res = HSL.S + val * max_hls;
-					HSL.S = AscCommon.trimMinMaxValue(res, 0, max_hls);
-					this.HSL2RGB(HSL, RGBA);
+					if (RGBA.R === RGBA.G && RGBA.R === RGBA.B) {
+						const nVal = RGBA.R;
+						if (nVal <= 127) {
+							RGBA.R = AscFormat.ClampColor(nVal * (1 + val));
+							RGBA.G = AscFormat.ClampColor(nVal * (1 - val));
+							RGBA.B = AscFormat.ClampColor(nVal * (1 - 5 * val));
+						} else {
+							RGBA.R = AscFormat.ClampColor((nVal + (255 - nVal) * val));
+							RGBA.G = AscFormat.ClampColor((nVal - (255 - nVal) * val));
+							RGBA.B = AscFormat.ClampColor((nVal - 5 * (255 - nVal) * val));
+						}
+					} else {
+						const HSL = {H: 0, S: 0, L: 0};
+						this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
+						const res = HSL.S + val * max_hls;
+						HSL.S = AscCommon.trimMinMaxValue(res, 0, max_hls);
+						this.HSL2RGB(HSL, RGBA);
+					}
 				} else if (colorMod.name === "wordShade") {
 					if (colorMod.val === 255) {
 						continue;

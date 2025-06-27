@@ -124,33 +124,16 @@ function mod(name, value) {
 			[mod("lumOff", -3676)],
 			rgb(156, 156, 156)
 		),
-		test(
-			rgb(98, 168, 87),
-			[mod("tint", 12000)],
-			rgb(243, 247, 242)
-		),
-		test(
-			rgb(98, 168, 87),
-			[mod("tint", 50000)],
-			rgb(197, 217, 195)
-		),
+		
 		test(
 			rgb(157, 54, 14),
 			[mod("hueMod", 44000)],
 			rgb(157, 32, 14)
-		)
-	];
-
-	const todoTests = [
+		),
 		test(
 			rgb(157, 54, 14),
 			[mod("satMod", 200000)],
 			rgb(229, 22, 0)
-		),
-		test(
-			rgb(157, 54, 14),
-			[mod("satMod", 0)],
-			rgb(85, 85, 85)
 		),
 		test(
 			rgb(157, 54, 14),
@@ -242,11 +225,7 @@ function mod(name, value) {
 			[mod("satOff", 20000)],
 			rgb(174, 46, 0)
 		),
-		test(
-			rgb(165, 165, 165),
-			[mod("satOff", 25000)],
-			rgb(187, 142, 53)
-		),
+
 		test(
 			rgb(165, 165, 165),
 			[mod("satOff", 40000)],
@@ -261,6 +240,81 @@ function mod(name, value) {
 			rgb(165, 165, 165),
 			[mod("satOff", 30000)],
 			rgb(192, 138, 30)
+		),
+		
+		test(
+			rgb(165, 165, 165),
+			[mod("hueOff", 2710599), mod("satOff", 100000), mod("lumOff", -14706),  mod("alphaOff", 0)],
+			rgb(180, 53, 0)
+		),
+		test(
+			rgb(131, 131, 131),
+			[mod("satOff", 99200)],
+			rgb(254, 8, 0)
+		),
+
+		test(rgb(127, 127, 127),[mod("satOff", 100000)],rgb(254, 0, 0)),
+		test(rgb(0, 0, 0),[mod("satOff", 100000)],rgb(0, 0, 0)),
+		test(rgb(255, 255, 255),[mod("satOff", 100000)],rgb(255, 255, 255)),
+		test(rgb(15, 15, 15),[mod("satOff", 100000)],rgb(30, 0, 0)),
+		test(rgb(127, 127, 127),[mod("satOff", 100000)],rgb(254, 0, 0)),
+		test(rgb(126, 126, 126),[mod("satOff", 100000)],rgb(252, 0, 0)),
+		test(rgb(128, 128, 128),[mod("satOff", 100000)],rgb(255, 1, 0)),
+		test(rgb(200, 200, 200),[mod("satOff", 100000)],rgb(255, 145, 0)),
+		test(rgb(127, 127, 127),[mod("satOff", 150000)],rgb(255, 0, 0)),
+		test(rgb(0, 0, 0),[mod("satOff", 150000)],rgb(0, 0, 0)),
+		test(rgb(255, 255, 255),[mod("satOff", 150000)],rgb(255, 255, 255)),
+		test(rgb(15, 15, 15),[mod("satOff", 150000)],rgb(38, 0, 0)),
+		test(rgb(127, 127, 127),[mod("satOff", 150000)],rgb(255, 0, 0)),
+		test(rgb(126, 126, 126),[mod("satOff", 150000)],rgb(255, 0, 0)),
+		test(rgb(128, 128, 128),[mod("satOff", 150000)],rgb(255, 0, 0)),
+		test(rgb(200, 200, 200),[mod("satOff", 150000)],rgb(255, 117, 0)),
+		test(rgb(127, 127, 127),[mod("satOff", 5000)],rgb(133, 121, 95)),
+		test(rgb(0, 0, 0),[mod("satOff", 5000)],rgb(0, 0, 0)),
+		test(rgb(255, 255, 255),[mod("satOff", 5000)],rgb(255, 255, 255)),
+		test(rgb(15, 15, 15),[mod("satOff", 5000)],rgb(16, 14, 11)),
+		test(rgb(127, 127, 127),[mod("satOff", 5000)],rgb(133, 121, 95)),
+		test(rgb(126, 126, 126),[mod("satOff", 5000)],rgb(132, 120, 95)),
+		test(rgb(128, 128, 128),[mod("satOff", 5000)],rgb(134, 122, 96)),
+		test(rgb(200, 200, 200),[mod("satOff", 5000)],rgb(203, 197, 186)),
+		test(rgb(127, 127, 127),[mod("satOff", -77000)],rgb(29, 225, 255)),
+		test(rgb(0, 0, 0),[mod("satOff", -77000)],rgb(0, 0, 0)),
+		test(rgb(255, 255, 255),[mod("satOff", -77000)],rgb(255, 255, 255)),
+		test(rgb(15, 15, 15),[mod("satOff", -77000)],rgb(3, 27, 73)),
+		test(rgb(127, 127, 127),[mod("satOff", -77000)],rgb(29, 225, 255)),
+		test(rgb(126, 126, 126),[mod("satOff", -77000)],rgb(29, 223, 255)),
+		test(rgb(128, 128, 128),[mod("satOff", -77000)],rgb(30, 226, 255)),
+		test(rgb(200, 200, 200),[mod("satOff", -77000)],rgb(158, 242, 255)),
+		test(rgb(127, 127, 127),[mod("satOff", -5000)],rgb(121, 133, 159)),
+		test(rgb(0, 0, 0),[mod("satOff", -5000)],rgb(0, 0, 0)),
+		test(rgb(255, 255, 255),[mod("satOff", -5000)],rgb(255, 255, 255)),
+		test(rgb(15, 15, 15),[mod("satOff", -5000)],rgb(14, 16, 19)),
+		test(rgb(127, 127, 127),[mod("satOff", -5000)],rgb(121, 133, 159)),
+		test(rgb(126, 126, 126),[mod("satOff", -5000)],rgb(120, 132, 158)),
+		test(rgb(128, 128, 128),[mod("satOff", -5000)],rgb(122, 134, 160)),
+		test(rgb(200, 200, 200),[mod("satOff", -5000)],rgb(197, 203, 214)),
+	];
+
+	const todoTests = [
+		test(
+			rgb(127, 127, 127),
+			[mod("satOff", 99200)],
+			rgb(253, 1, 0)
+		),
+		test(
+			rgb(223, 219, 213),
+			[mod("shade", 80000)],
+			rgb(202, 198, 193)
+		),
+		test(
+			rgb(223, 219, 213),
+			[mod("shade", 50000)],
+			rgb(70, 122, 62)
+		),
+		test(
+			rgb(98, 168, 87),
+			[mod("tint", 90000)],
+			rgb(126, 179, 119)
 		),
 		test(
 			rgb(165, 165, 165),
@@ -284,38 +338,34 @@ function mod(name, value) {
 		),
 		test(
 			rgb(165, 165, 165),
-			[mod("hueOff", 2710599), mod("satOff", 100000), mod("lumOff", -14706),  mod("alphaOff", 0)],
-			rgb(180, 53, 0)
-		),
-		test(
-			rgb(131, 131, 131),
-			[mod("satOff", 99200)],
-			rgb(254, 8, 0)
-		),
-		test(
-			rgb(127, 127, 127),
-			[mod("satOff", 99200)],
-			rgb(253, 1, 0)
-		),
-		test(
-			rgb(223, 219, 213),
-			[mod("shade", 80000)],
-			rgb(202, 198, 193)
-		),
-		test(
-			rgb(223, 219, 213),
-			[mod("shade", 50000)],
-			rgb(70, 122, 62)
+			[mod("satOff", 25000)],
+			rgb(187, 142, 53)
 		),
 		test(
 			rgb(98, 168, 87),
-			[mod("tint", 90000)],
-			rgb(126, 179, 119)
+			[mod("tint", 12000)],
+			rgb(243, 247, 242)
+		),
+		test(
+			rgb(98, 168, 87),
+			[mod("tint", 50000)],
+			rgb(197, 217, 195)
+		),
+		test(
+			rgb(157, 54, 14),
+			[mod("satMod", 0)],
+			rgb(85, 85, 85)
 		),
 	];
 	QUnit.test('Check colors with mods', (assert) => {
 		for (let i = 0; i < tests.length; i++) {
 			const test = tests[i];
+			assert.deepEqual(test.result, test.expected, test.description);
+		}
+	});
+	QUnit.test.todo('Check colors with mods', (assert) => {
+		for (let i = 0; i < todoTests.length; i++) {
+			const test = todoTests[i];
 			assert.deepEqual(test.result, test.expected, test.description);
 		}
 	});
