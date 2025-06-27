@@ -2142,7 +2142,7 @@
 						const HSL = {H: 0, S: 0, L: 0};
 						this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 						const res = HSL.S + val * max_hls;
-						HSL.S = AscCommon.trimMinMaxValue(res, 0, max_hls);
+						HSL.S = res;
 						this.HSL2RGB(HSL, RGBA);
 					}
 				} else if (colorMod.name === "wordShade") {
