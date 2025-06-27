@@ -907,9 +907,12 @@
     CCollaborativeEditingBase.prototype.Clear_DocumentPositions = function(){
         this.m_aDocumentPositions.Clear_DocumentPositions();
     };
-    CCollaborativeEditingBase.prototype.Add_DocumentPosition = function(DocumentPos){
-        this.m_aDocumentPositions.Add_DocumentPosition(DocumentPos);
-    };
+    CCollaborativeEditingBase.prototype.Add_DocumentPosition = function(docPos) {
+		if (!docPos)
+			return;
+		
+		this.m_aDocumentPositions.Add_DocumentPosition(docPos);
+	};
 	CCollaborativeEditingBase.prototype.Remove_DocumentPosition = function(docPos)
 	{
 		this.m_aDocumentPositions.Remove_DocumentPosition(docPos);
@@ -956,6 +959,13 @@
     CCollaborativeEditingBase.prototype.Update_DocumentPosition = function(DocPos){
         this.m_aDocumentPositions.Update_DocumentPosition(DocPos);
     };
+	CCollaborativeEditingBase.prototype.UpdateAndRemoveDocumentPosition = function(docPos) {
+		if (!docPos)
+			return;
+		
+		this.m_aDocumentPositions.Update_DocumentPosition(docPos);
+		this.m_aDocumentPositions.Remove_DocumentPosition(docPos);
+	};
     CCollaborativeEditingBase.prototype.Update_ForeignCursorPosition = function(UserId, Run, InRunPos, isRemoveLabel) {
     };
     CCollaborativeEditingBase.prototype.Update_ForeignCursorsPositions = function(){
@@ -1100,58 +1110,42 @@
             this.Refresh_ForeignCursors();
         }
     };
-    CCollaborativeEditingBase.prototype.WatchDocumentPositionsByState = function(DocState)
-	{
-        this.Clear_DocumentPositions();
-
-        if (DocState.Pos)
-            this.Add_DocumentPosition(DocState.Pos);
-        if (DocState.StartPos)
-            this.Add_DocumentPosition(DocState.StartPos);
-        if (DocState.EndPos)
-            this.Add_DocumentPosition(DocState.EndPos);
-
-		if (DocState.AnchorPos)
-			this.Add_DocumentPosition(DocState.AnchorPos);
-
-        if (DocState.FootnotesStart && DocState.FootnotesStart.Pos)
-            this.Add_DocumentPosition(DocState.FootnotesStart.Pos);
-        if (DocState.FootnotesStart && DocState.FootnotesStart.StartPos)
-            this.Add_DocumentPosition(DocState.FootnotesStart.StartPos);
-        if (DocState.FootnotesStart && DocState.FootnotesStart.EndPos)
-            this.Add_DocumentPosition(DocState.FootnotesStart.EndPos);
-        if (DocState.FootnotesEnd && DocState.FootnotesEnd.Pos)
-            this.Add_DocumentPosition(DocState.FootnotesEnd.Pos);
-        if (DocState.FootnotesEnd && DocState.FootnotesEnd.StartPos)
-            this.Add_DocumentPosition(DocState.FootnotesEnd.StartPos);
-        if (DocState.FootnotesEnd && DocState.FootnotesEnd.EndPos)
-            this.Add_DocumentPosition(DocState.FootnotesEnd.EndPos);
-    };
-    CCollaborativeEditingBase.prototype.UpdateDocumentPositionsByState = function(DocState)
-	{
-        if (DocState.Pos)
-            this.Update_DocumentPosition(DocState.Pos);
-        if (DocState.StartPos)
-            this.Update_DocumentPosition(DocState.StartPos);
-        if (DocState.EndPos)
-            this.Update_DocumentPosition(DocState.EndPos);
-
-		if (DocState.AnchorPos)
-			this.Update_DocumentPosition(DocState.AnchorPos);
-
-        if (DocState.FootnotesStart && DocState.FootnotesStart.Pos)
-            this.Update_DocumentPosition(DocState.FootnotesStart.Pos);
-        if (DocState.FootnotesStart && DocState.FootnotesStart.StartPos)
-            this.Update_DocumentPosition(DocState.FootnotesStart.StartPos);
-        if (DocState.FootnotesStart && DocState.FootnotesStart.EndPos)
-            this.Update_DocumentPosition(DocState.FootnotesStart.EndPos);
-        if (DocState.FootnotesEnd && DocState.FootnotesEnd.Pos)
-            this.Update_DocumentPosition(DocState.FootnotesEnd.Pos);
-        if (DocState.FootnotesEnd && DocState.FootnotesEnd.StartPos)
-            this.Update_DocumentPosition(DocState.FootnotesEnd.StartPos);
-        if (DocState.FootnotesEnd && DocState.FootnotesEnd.EndPos)
-            this.Update_DocumentPosition(DocState.FootnotesEnd.EndPos);
-    };
+	CCollaborativeEditingBase.prototype.WatchDocumentPositionsByState  = function(docState) {
+		this.Add_DocumentPosition(docState.Pos);
+		this.Add_DocumentPosition(docState.StartPos);
+		this.Add_DocumentPosition(docState.EndPos);
+		this.Add_DocumentPosition(docState.AnchorPos);
+		
+		if (docState.FootnotesStart) {
+			this.Add_DocumentPosition(docState.FootnotesStart.Pos);
+			this.Add_DocumentPosition(docState.FootnotesStart.StartPos);
+			this.Add_DocumentPosition(docState.FootnotesStart.EndPos);
+		}
+		
+		if (docState.FootnotesEnd) {
+			this.Add_DocumentPosition(docState.FootnotesEnd.Pos);
+			this.Add_DocumentPosition(docState.FootnotesEnd.StartPos);
+			this.Add_DocumentPosition(docState.FootnotesEnd.EndPos);
+		}
+	};
+	CCollaborativeEditingBase.prototype.UpdateDocumentPositionsByState = function(docState) {
+		if (docState.FootnotesEnd) {
+			this.UpdateAndRemoveDocumentPosition(docState.FootnotesEnd.EndPos);
+			this.UpdateAndRemoveDocumentPosition(docState.FootnotesEnd.StartPos);
+			this.UpdateAndRemoveDocumentPosition(docState.FootnotesEnd.Pos);
+		}
+		
+		if (docState.FootnotesStart) {
+			this.UpdateAndRemoveDocumentPosition(docState.FootnotesStart.EndPos);
+			this.UpdateAndRemoveDocumentPosition(docState.FootnotesStart.StartPos);
+			this.UpdateAndRemoveDocumentPosition(docState.FootnotesStart.Pos);
+		}
+		
+		this.UpdateAndRemoveDocumentPosition(docState.AnchorPos);
+		this.UpdateAndRemoveDocumentPosition(docState.EndPos);
+		this.UpdateAndRemoveDocumentPosition(docState.StartPos);
+		this.UpdateAndRemoveDocumentPosition(docState.Pos);
+	};
     CCollaborativeEditingBase.prototype.Update_ForeignCursorLabelPosition = function(UserId, X, Y, Color)
     {
         var oApi = this.GetEditorApi();
@@ -1404,14 +1398,21 @@
     {
         if (!NewRun)
             return;
+		
+		// TODO: Проверить, есть ли уже есть замапеная позиция, то изменить её,а не добавлять новую
 
         for (var PosIndex = 0, PosCount = this.m_aDocumentPositionsSplit.length; PosIndex < PosCount; ++PosIndex)
         {
             var NewDocPos = [];
             NewDocPos.push({Class : NewRun, Position : this.m_aDocumentPositionsSplit[PosIndex].NewRunPos});
             this.m_aDocumentPositions.push(NewDocPos);
-            this.m_aDocumentPositionsMap.push({StartPos : this.m_aDocumentPositionsSplit[PosIndex].DocPos, EndPos : NewDocPos});
+            this.m_aDocumentPositionsMap.push({
+				StartPos : this.m_aDocumentPositionsSplit[PosIndex].DocPos,
+				EndPos : NewDocPos
+			});
         }
+	
+		this.m_aDocumentPositionsSplit = [];
     };
     CDocumentPositionsManager.prototype.Update_DocumentPosition = function(DocPos)
     {
@@ -1449,17 +1450,36 @@
             }
         }
     };
-    CDocumentPositionsManager.prototype.Remove_DocumentPosition = function(DocPos)
-    {
-        for (var Pos = 0, Count = this.m_aDocumentPositions.length; Pos < Count; ++Pos)
-        {
-            if (this.m_aDocumentPositions[Pos] === DocPos)
-            {
-                this.m_aDocumentPositions.splice(Pos, 1);
-                return;
-            }
-        }
-    };
+	CDocumentPositionsManager.prototype.Remove_DocumentPosition = function(docPos)
+	{
+		for (let i = this.m_aDocumentPositionsMap.length - 1; i >= 0; --i)
+		{
+			if (this.m_aDocumentPositionsMap[i].StartPos === docPos)
+			{
+				let mappedPos = this.m_aDocumentPositionsMap[i].EndPos;
+				let pos = this.m_aDocumentPositions.indexOf(mappedPos);
+				if (pos === this.m_aDocumentPositions.length - 1)
+					--this.m_aDocumentPositions.length;
+				else
+					this.m_aDocumentPositions.splice(pos, 1);
+				
+				if (i === this.m_aDocumentPositionsMap.length - 1)
+					--this.m_aDocumentPositionsMap.length;
+				else
+					this.m_aDocumentPositionsMap.splice(i, 1);
+			}
+		}
+		
+		if (this.m_aDocumentPositions.length && docPos === this.m_aDocumentPositions[this.m_aDocumentPositions.length - 1])
+		{
+			--this.m_aDocumentPositions.length;
+			return;
+		}
+		
+		let pos = this.m_aDocumentPositions.indexOf(docPos);
+		if (-1 !== pos)
+			this.m_aDocumentPositions.splice(pos, 1);
+	};
     //--------------------------------------------------------export----------------------------------------------------
     window['AscCommon'] = window['AscCommon'] || {};
     window['AscCommon'].FOREIGN_CURSOR_LABEL_HIDETIME = FOREIGN_CURSOR_LABEL_HIDETIME;

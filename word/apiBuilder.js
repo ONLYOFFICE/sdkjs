@@ -1211,7 +1211,9 @@
 			this.EndPos = End;
 		}
 		else
+		{
 			this.private_UpdateDocPos(Start, End, oElement);
+		}
 
 		if (this.StartPos === null || this.EndPos === null)
 		{
@@ -1220,11 +1222,7 @@
 		}
 		
 		this.private_CheckController();
-		
-		private_RefreshRangesPosition();
-		arrApiRanges.push(this);
-		this.private_RemoveEqual();
-		private_TrackRangesPositions(true);
+		this._trackPositions();
 	}
 
 	ApiRange.prototype.constructor = ApiRange;
@@ -1584,26 +1582,24 @@
 	 * Adds a bookmark to the specified range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {String} sName - The bookmark name.
+	 * @param {String} name - The bookmark name.
 	 * @return {boolean} - returns false if range is empty.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/AddBookmark.js
 	 */	
-	ApiRange.prototype.AddBookmark = function(sName)
+	ApiRange.prototype.AddBookmark = function(name)
 	{
-		private_RefreshRangesPosition();
+		let _name = GetStringParameter(name, null);
+		if (!_name)
+			return false;
+		
+		this._updatePositions();
 
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
 		this.Select(false);
-		if (typeof(sName) !== "string")
-		{
-			Document.LoadDocumentState(oldSelectionInfo);
-			return false;
-		}
-		private_TrackRangesPositions();
 
-		Document.GetBookmarksManager().AddBookmark(sName);
+		Document.GetBookmarksManager().AddBookmark(_name);
 
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
@@ -1705,6 +1701,7 @@
 	 */	
 	ApiRange.prototype.GetAllParagraphs = function()
 	{
+		this._updatePositions();
 		private_RefreshRangesPosition();
 
 		let oDoc			= private_GetLogicDocument();
