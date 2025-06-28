@@ -2073,13 +2073,14 @@
 				} else if (colorMod.name === "redOff") {
 					RGBA.R = AscFormat.ClampColor(RGBA.R + val * 255);
 				} else if (colorMod.name === "hueMod") {
+					val = Math.max(0, val);
 					if (val === 1) {
 						continue;
 					}
 					const HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
-					HSL.H = AscCommon.trimMinMaxValue(HSL.H * val, 0, max_hls);
-
+					const _H = HSL.H * val;
+					HSL.H = _H - Math.floor(_H / 255) * 255;
 					this.HSL2RGB(HSL, RGBA);
 				} else if (colorMod.name === "hueOff") {
 					if (val === 0) {
