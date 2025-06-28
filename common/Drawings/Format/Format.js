@@ -1832,10 +1832,6 @@
 		var cd23 = 2.0 / 3.0;
 		var max_hls = 255.0;
 
-		var DEC_GAMMA = 2.23;
-		var INC_GAMMA = 0.45;
-		var MAX_PERCENT = 100000;
-
 		function CColorModifiers() {
 			this.Mods = [];
 		}
@@ -2009,35 +2005,30 @@
 				return v1 + (v2 - v1) * (cd23 - vH) * 6.0;
 			return v1;
 		};
-		CColorModifiers.prototype.lclRgbCompToCrgbComp = function (value) {
-			return (value * MAX_PERCENT / 255);
-		};
-		CColorModifiers.prototype.lclCrgbCompToRgbComp = function (value) {
-			return (value * 255 / MAX_PERCENT);
-		};
-		CColorModifiers.prototype.lclGamma = function (nComp, fGamma) {
-			return AscFormat.ClampColor(Math.pow(nComp / 255, fGamma) * 255);
-		};
+		CColorModifiers.prototype.standardToLinear = function(nColorValue) {
+			if (nColorValue <= 0.04045) {
+				return nColorValue / 12.92;
+			}
+			return Math.pow((nColorValue + 0.055) / 1.055, 2.4);
+		}
+		CColorModifiers.prototype.linearToStandard = function(nColorValue) {
+			if (nColorValue <= 0.0031308) {
+				return  12.92 * nColorValue;
+			}
+			return 1.055 * Math.pow(nColorValue, 1 / 2.4) - 0.055;
+		}
 		CColorModifiers.prototype.RgbtoCrgb = function (RGBA) {
-			//RGBA.R = this.lclGamma(this.lclRgbCompToCrgbComp(RGBA.R), DEC_GAMMA);
-			//RGBA.G = this.lclGamma(this.lclRgbCompToCrgbComp(RGBA.G), DEC_//GAMMA);
-			//RGBA.B = this.lclGamma(this.lclRgbCompToCrgbComp(RGBA.B), DEC_GAMMA);
-
 			if (this.isUsePow) {
-				RGBA.R = (Math.pow(RGBA.R / 255, DEC_GAMMA) * MAX_PERCENT + 0.5) >> 0;
-				RGBA.G = (Math.pow(RGBA.G / 255, DEC_GAMMA) * MAX_PERCENT + 0.5) >> 0;
-				RGBA.B = (Math.pow(RGBA.B / 255, DEC_GAMMA) * MAX_PERCENT + 0.5) >> 0;
+				RGBA.R = this.standardToLinear(RGBA.R / 255);
+				RGBA.G = this.standardToLinear(RGBA.G / 255);
+				RGBA.B = this.standardToLinear(RGBA.B / 255);
 			}
 		};
 		CColorModifiers.prototype.CrgbtoRgb = function (RGBA) {
-			//RGBA.R = (this.lclCrgbCompToRgbComp(this.lclGamma(RGBA.R, INC_GAMMA)) + 0.5) >> 0;
-			//RGBA.G = (this.lclCrgbCompToRgbComp(this.lclGamma(RGBA.G, INC_GAMMA)) + 0.5) >> 0;
-			//RGBA.B = (this.lclCrgbCompToRgbComp(this.lclGamma(RGBA.B, INC_GAMMA)) + 0.5) >> 0;
-
 			if (this.isUsePow) {
-				RGBA.R = Math.pow(RGBA.R / 100000, INC_GAMMA) * 255;
-				RGBA.G = Math.pow(RGBA.G / 100000, INC_GAMMA) * 255;
-				RGBA.B = Math.pow(RGBA.B / 100000, INC_GAMMA) * 255;
+				RGBA.R = this.linearToStandard(RGBA.R) * 255;
+				RGBA.G = this.linearToStandard(RGBA.G) * 255;
+				RGBA.B = this.linearToStandard(RGBA.B) * 255;
 			}
 			RGBA.R = AscFormat.ClampColor(RGBA.R);
 			RGBA.G = AscFormat.ClampColor(RGBA.G);
@@ -2190,20 +2181,19 @@
 					this.CrgbtoRgb(RGBA);
 				} else if (colorMod.name === "tint") {
 					this.RgbtoCrgb(RGBA);
-					if (val < 0) val = 0;
-					if (val > 1) val = 1;
-					RGBA.R = (MAX_PERCENT - (MAX_PERCENT - RGBA.R) * val);
-					RGBA.G = (MAX_PERCENT - (MAX_PERCENT - RGBA.G) * val);
-					RGBA.B = (MAX_PERCENT - (MAX_PERCENT - RGBA.B) * val);
+					if (val < 0||val > 1) val = 0;
+					RGBA.R = (1 - (1 - RGBA.R) * val);
+					RGBA.G = (1 - (1 - RGBA.G) * val);
+					RGBA.B = (1 - (1 - RGBA.B) * val);
 					this.CrgbtoRgb(RGBA);
 				} else if (colorMod.name === "gamma") {
-					RGBA.R = this.lclGamma(RGBA.R, INC_GAMMA);
-					RGBA.G = this.lclGamma(RGBA.G, INC_GAMMA);
-					RGBA.B = this.lclGamma(RGBA.B, INC_GAMMA);
+					RGBA.R = AscFormat.ClampColor(this.linearToStandard(RGBA.R / 255) * 255);
+					RGBA.G = AscFormat.ClampColor(this.linearToStandard(RGBA.G / 255) * 255);
+					RGBA.B = AscFormat.ClampColor(this.linearToStandard(RGBA.B / 255) * 255);
 				} else if (colorMod.name === "invGamma") {
-					RGBA.R = this.lclGamma(RGBA.R, DEC_GAMMA);
-					RGBA.G = this.lclGamma(RGBA.G, DEC_GAMMA);
-					RGBA.B = this.lclGamma(RGBA.B, DEC_GAMMA);
+					RGBA.R = AscFormat.ClampColor(this.standardToLinear(RGBA.R / 255) * 255);
+					RGBA.G = AscFormat.ClampColor(this.standardToLinear(RGBA.G / 255) * 255);
+					RGBA.B = AscFormat.ClampColor(this.standardToLinear(RGBA.B / 255) * 255);
 				}
 			}
 		};
