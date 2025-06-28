@@ -7275,7 +7275,7 @@
         oHSL.L = Math.min(255, Math.max(0, 255 * (oFormatHSL.L + 100000) / 200000));
         var oRGBColor = {R: 255, G: 255, B: 255, A: 255};
         var oColorModifiers = new AscFormat.CColorModifiers();
-        oColorModifiers.HSL2RGB(oHSL, oRGBColor);
+        oColorModifiers.HSL2RGB(oHSL, oRGBColor, true);
         return oRGBColor;
     };
     CAnimClr.prototype.alignNumber = function (dVal, dMax) {

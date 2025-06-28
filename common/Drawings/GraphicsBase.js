@@ -59,7 +59,7 @@
 		AscFormat.CColorModifiers.prototype.RGB2HSL(r, g, b, oHSL);
 		var dKoefL = (255 - 58) / 255;
 		oHSL.L = 255 - ((dKoefL * oHSL.L) >> 0);
-		AscFormat.CColorModifiers.prototype.HSL2RGB(oHSL, oRGB);
+		AscFormat.CColorModifiers.prototype.HSL2RGB(oHSL, oRGB, true);
 		return oRGB;
 	};
 

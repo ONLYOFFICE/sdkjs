@@ -362,7 +362,7 @@ ThemeColor.prototype =
 					HSL.L = HSL.L * (1 - this.tint) + (g_nHSLMaxValue - g_nHSLMaxValue * (1 - this.tint));
 				HSL.L >>= 0;
 				var RGB = {R: 0, G: 0, B: 0};
-				oCColorModifiers.HSL2RGB(HSL, RGB);
+				oCColorModifiers.HSL2RGB(HSL, RGB, true);
 				r = RGB.R;
 				g = RGB.G;
 				b = RGB.B;

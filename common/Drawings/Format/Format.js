@@ -1965,9 +1965,9 @@
 			HLS.S = S;
 			HLS.L = L;
 		};
-		CColorModifiers.prototype.HSL2RGB = function (HSL, RGB) {
+		CColorModifiers.prototype.HSL2RGB = function (HSL, RGB, bRoundValues) {
 			if (HSL.S == 0) {
-				const clampL = AscFormat.ClampColor(HSL.L);
+				const clampL = bRoundValues ? AscFormat.ClampColor(HSL.L) : HSL.L;
 				RGB.R = clampL;
 				RGB.G = clampL;
 				RGB.B = clampL;
@@ -1987,9 +1987,15 @@
 				var G = (255 * this.Hue_2_RGB(v1, v2, H));
 				var B = (255 * this.Hue_2_RGB(v1, v2, H - cd13));
 
-				RGB.R = AscFormat.ClampColor(R);
-				RGB.G = AscFormat.ClampColor(G);
-				RGB.B = AscFormat.ClampColor(B);
+				if (bRoundValues) {
+					RGB.R = AscFormat.ClampColor(R);
+					RGB.G = AscFormat.ClampColor(G);
+					RGB.B = AscFormat.ClampColor(B);
+				} else {
+					RGB.R = R;
+					RGB.G = G;
+					RGB.B = B;
+				}
 			}
 		};
 		CColorModifiers.prototype.Hue_2_RGB = function (v1, v2, vH) {
@@ -2030,9 +2036,9 @@
 				RGBA.G = this.linearToStandard(RGBA.G) * 255;
 				RGBA.B = this.linearToStandard(RGBA.B) * 255;
 			}
-			RGBA.R = AscFormat.ClampColor(RGBA.R);
-			RGBA.G = AscFormat.ClampColor(RGBA.G);
-			RGBA.B = AscFormat.ClampColor(RGBA.B);
+			RGBA.R = RGBA.R;
+			RGBA.G = RGBA.G;
+			RGBA.B = RGBA.B;
 		};
 		CColorModifiers.prototype.Apply = function (RGBA) {
 			if (null == this.Mods)
@@ -2044,25 +2050,25 @@
 				let val = colorMod.val / 100000.0;
 
 				if (colorMod.name === "alpha") {
-					RGBA.A = AscFormat.ClampColor(255 * val);
+					RGBA.A = 255 * val;
 				} else if (colorMod.name === "blue") {
-					RGBA.B = AscFormat.ClampColor(255 * val);
+					RGBA.B = 255 * val;
 				} else if (colorMod.name === "blueMod") {
-					RGBA.B = AscFormat.ClampColor(RGBA.B * val);
+					RGBA.B = RGBA.B * val;
 				} else if (colorMod.name === "blueOff") {
-					RGBA.B = AscFormat.ClampColor(RGBA.B + val * 255);
+					RGBA.B = RGBA.B + val * 255;
 				} else if (colorMod.name === "green") {
-					RGBA.G = AscFormat.ClampColor(255 * val);
+					RGBA.G = 255 * val;
 				} else if (colorMod.name === "greenMod") {
-					RGBA.G = AscFormat.ClampColor(RGBA.G * val);
+					RGBA.G = RGBA.G * val;
 				} else if (colorMod.name === "greenOff") {
-					RGBA.G = AscFormat.ClampColor(RGBA.G + val * 255);
+					RGBA.G = RGBA.G + val * 255;
 				} else if (colorMod.name === "red") {
-					RGBA.R = AscFormat.ClampColor(255 * val);
+					RGBA.R = 255 * val;
 				} else if (colorMod.name === "redMod") {
-					RGBA.R = AscFormat.ClampColor(RGBA.R * val);
+					RGBA.R = RGBA.R * val;
 				} else if (colorMod.name === "redOff") {
-					RGBA.R = AscFormat.ClampColor(RGBA.R + val * 255);
+					RGBA.R = RGBA.R + val * 255;
 				} else if (colorMod.name === "hueMod") {
 					val = Math.max(0, val);
 					if (val === 1) {
@@ -2122,13 +2128,13 @@
 					if (RGBA.R === RGBA.G && RGBA.R === RGBA.B) {
 						const nVal = RGBA.R;
 						if (nVal <= 127) {
-							RGBA.R = AscFormat.ClampColor(nVal * (1 + val));
-							RGBA.G = AscFormat.ClampColor(nVal * (1 - val));
-							RGBA.B = AscFormat.ClampColor(nVal * (1 - 5 * val));
+							RGBA.R = nVal * (1 + val);
+							RGBA.G = nVal * (1 - val);
+							RGBA.B = nVal * (1 - 5 * val);
 						} else {
-							RGBA.R = AscFormat.ClampColor((nVal + (255 - nVal) * val));
-							RGBA.G = AscFormat.ClampColor((nVal - (255 - nVal) * val));
-							RGBA.B = AscFormat.ClampColor((nVal - 5 * (255 - nVal) * val));
+							RGBA.R = (nVal + (255 - nVal) * val);
+							RGBA.G = (nVal - (255 - nVal) * val);
+							RGBA.B = (nVal - 5 * (255 - nVal) * val);
 						}
 					} else {
 						const HSL = {H: 0, S: 0, L: 0};
@@ -2142,15 +2148,6 @@
 						continue;
 					}
 					const val_ = colorMod.val / 255;
-					//GBA.R = Math.max(0, (RGBA.R * (1 - val_)) >> 0);
-					//GBA.G = Math.max(0, (RGBA.G * (1 - val_)) >> 0);
-					//GBA.B = Math.max(0, (RGBA.B * (1 - val_)) >> 0);
-
-
-					//RGBA.R = Math.max(0,  ((1 - val_)*(- RGBA.R) + RGBA.R) >> 0);
-					//RGBA.G = Math.max(0,  ((1 - val_)*(- RGBA.G) + RGBA.G) >> 0);
-					//RGBA.B = Math.max(0,  ((1 - val_)*(- RGBA.B) + RGBA.B) >> 0);
-
 					const HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 
@@ -2161,10 +2158,6 @@
 						continue;
 					}
 					const _val = colorMod.val / 255;
-					//RGBA.R = Math.max(0,  ((1 - _val)*(255 - RGBA.R) + RGBA.R) >> 0);
-					//RGBA.G = Math.max(0,  ((1 - _val)*(255 - RGBA.G) + RGBA.G) >> 0);
-					//RGBA.B = Math.max(0,  ((1 - _val)*(255 - RGBA.B) + RGBA.B) >> 0);
-
 					const HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 
@@ -2187,14 +2180,19 @@
 					RGBA.B = (1 - (1 - RGBA.B) * val);
 					this.CrgbtoRgb(RGBA);
 				} else if (colorMod.name === "gamma") {
-					RGBA.R = AscFormat.ClampColor(this.linearToStandard(RGBA.R / 255) * 255);
-					RGBA.G = AscFormat.ClampColor(this.linearToStandard(RGBA.G / 255) * 255);
-					RGBA.B = AscFormat.ClampColor(this.linearToStandard(RGBA.B / 255) * 255);
+					RGBA.R = this.linearToStandard(RGBA.R / 255) * 255;
+					RGBA.G = this.linearToStandard(RGBA.G / 255) * 255;
+					RGBA.B = this.linearToStandard(RGBA.B / 255) * 255;
 				} else if (colorMod.name === "invGamma") {
-					RGBA.R = AscFormat.ClampColor(this.standardToLinear(RGBA.R / 255) * 255);
-					RGBA.G = AscFormat.ClampColor(this.standardToLinear(RGBA.G / 255) * 255);
-					RGBA.B = AscFormat.ClampColor(this.standardToLinear(RGBA.B / 255) * 255);
+					RGBA.R = this.standardToLinear(RGBA.R / 255) * 255;
+					RGBA.G = this.standardToLinear(RGBA.G / 255) * 255;
+					RGBA.B = this.standardToLinear(RGBA.B / 255) * 255;
 				}
+			}
+			if (_len) {
+				RGBA.R = AscFormat.ClampColor(RGBA.R);
+				RGBA.G = AscFormat.ClampColor(RGBA.G);
+				RGBA.B = AscFormat.ClampColor(RGBA.B);
 			}
 		};
 		CColorModifiers.prototype.Merge = function (oOther) {
@@ -2777,7 +2775,7 @@
 		};
 		CRGBColor.prototype.checkHSL = function () {
 			if (this.h !== null && this.s !== null && this.l !== null) {
-				CColorModifiers.prototype.HSL2RGB.call(this, {H: this.h, S: this.s, L: this.l}, this.RGBA);
+				CColorModifiers.prototype.HSL2RGB.call(this, {H: this.h, S: this.s, L: this.l}, this.RGBA, true);
 				this.h = null;
 				this.s = null;
 				this.l = null;
