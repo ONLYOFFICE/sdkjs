@@ -30,7 +30,7 @@
  *
  */
 
-const IS_APPROX_EQUALS = false;
+const IS_APPROX_EQUALS = true;
 $(function () {
 function rgb(r, g, b, a) {
 	a = typeof a === 'number' ? a : 255;
@@ -4813,5 +4813,64 @@ function mod(name, value) {
 		testResult = test(rgb(46, 139, 87),[mod("satOff", -1)],rgb(46, 139, 87));
 		fTestFunction(testResult);
 
+	});
+	
+	QUnit.test("Test gamma mod", (assert) => {
+		const fTestFunction = assertTest(assert);
+		let testResult;
+		testResult = test(rgb(0,0,0),[mod("gamma", 0)],rgb(0, 0, 0));
+		fTestFunction(testResult);
+		testResult = test(rgb(126,126,126),[mod("gamma", 0)],rgb(187, 187, 187));
+		fTestFunction(testResult);
+		testResult = test(rgb(127,127,127),[mod("gamma", 0)],rgb(187, 187, 187));
+		fTestFunction(testResult);
+		testResult = test(rgb(128,128,128),[mod("gamma", 0)],rgb(188, 188, 188));
+		fTestFunction(testResult);
+		testResult = test(rgb(200,200,200),[mod("gamma", 0)],rgb(229, 229, 229));
+		fTestFunction(testResult);
+		testResult = test(rgb(255,255,255),[mod("gamma", 0)],rgb(255, 255, 255));
+		fTestFunction(testResult);
+		testResult = test(rgb(100,100,100),[mod("gamma", 0)],rgb(168, 168, 168));
+		fTestFunction(testResult);
+		testResult = test(rgb(34, 139, 34),[mod("gamma", 0)],rgb(102, 195, 102));
+		fTestFunction(testResult);
+		testResult = test(rgb(255, 99, 71),[mod("gamma", 0)],rgb(255, 167, 144));
+		fTestFunction(testResult);
+		testResult = test(rgb(75, 0, 130),[mod("gamma", 0)],rgb(148, 0, 189));
+		fTestFunction(testResult);
+		testResult = test(rgb(220, 20, 60),[mod("gamma", 0)],rgb(239, 79, 133));
+		fTestFunction(testResult);
+		testResult = test(rgb(0, 191, 255),[mod("gamma", 0)],rgb(0, 224, 255));
+		fTestFunction(testResult);
+		testResult = test(rgb(255, 215, 0),[mod("gamma", 0)],rgb(255, 237, 0));
+		fTestFunction(testResult);
+		testResult = test(rgb(138, 43, 226),[mod("gamma", 0)],rgb(194, 114, 242));
+		fTestFunction(testResult);
+		testResult = test(rgb(50, 205, 50),[mod("gamma", 0)],rgb(122, 232, 122));
+		fTestFunction(testResult);
+		testResult = test(rgb(255, 69, 0),[mod("gamma", 0)],rgb(255, 142, 0));
+		fTestFunction(testResult);
+		testResult = test(rgb(0, 128, 128),[mod("gamma", 0)],rgb(0, 188, 188));
+		fTestFunction(testResult);
+		testResult = test(rgb(218, 112, 214),[mod("gamma", 0)],rgb(238, 177, 236));
+		fTestFunction(testResult);
+		testResult = test(rgb(70, 130, 180),[mod("gamma", 0)],rgb(143, 189, 219));
+		fTestFunction(testResult);
+		testResult = test(rgb(255, 165, 0),[mod("gamma", 0)],rgb(255, 210, 0));
+		fTestFunction(testResult);
+		testResult = test(rgb(147, 112, 219),[mod("gamma", 0)],rgb(200, 177, 238));
+		fTestFunction(testResult);
+		testResult = test(rgb(60, 179, 113),[mod("gamma", 0)],rgb(133, 218, 178));
+		fTestFunction(testResult);
+		testResult = test(rgb(210, 105, 30),[mod("gamma", 0)],rgb(234, 172, 96));
+		fTestFunction(testResult);
+		testResult = test(rgb(123, 104, 238),[mod("gamma", 0)],rgb(185, 171, 247));
+		fTestFunction(testResult);
+		testResult = test(rgb(0, 206, 209),[mod("gamma", 0)],rgb(0, 232, 234));
+		fTestFunction(testResult);
+		testResult = test(rgb(255, 105, 180),[mod("gamma", 0)],rgb(255, 172, 219));
+		fTestFunction(testResult);
+		testResult = test(rgb(46, 139, 87),[mod("gamma", 0)],rgb(118, 195, 158));
+		fTestFunction(testResult);
 	});
 });

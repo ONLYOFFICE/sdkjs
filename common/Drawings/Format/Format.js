@@ -1833,7 +1833,7 @@
 		var max_hls = 255.0;
 
 		var DEC_GAMMA = 2.3;
-		var INC_GAMMA = 1.0 / DEC_GAMMA;
+		var INC_GAMMA = 0.45;
 		var MAX_PERCENT = 100000;
 
 		function CColorModifiers() {
@@ -2196,11 +2196,9 @@
 					RGBA.B = (MAX_PERCENT - (MAX_PERCENT - RGBA.B) * val);
 					this.CrgbtoRgb(RGBA);
 				} else if (colorMod.name === "gamma") {
-					this.RgbtoCrgb(RGBA);
-					RGBA.R = this.lclGamma(RGBA.R, INC_GAMMA);
-					RGBA.G = this.lclGamma(RGBA.G, INC_GAMMA);
-					RGBA.B = this.lclGamma(RGBA.B, INC_GAMMA);
-					this.CrgbtoRgb(RGBA);
+					RGBA.R = AscFormat.ClampColor(Math.pow(RGBA.R / 255, INC_GAMMA) * 255);
+					RGBA.G = AscFormat.ClampColor(Math.pow(RGBA.G / 255, INC_GAMMA) * 255);
+					RGBA.B = AscFormat.ClampColor(Math.pow(RGBA.B / 255, INC_GAMMA) * 255);
 				} else if (colorMod.name === "invGamma") {
 					this.RgbtoCrgb(RGBA);
 					RGBA.R = this.lclGamma(RGBA.R, DEC_GAMMA);
