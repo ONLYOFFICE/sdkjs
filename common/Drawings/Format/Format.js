@@ -2079,7 +2079,9 @@
 						break;
 					}
 					case"greenMod": {
+						RGBA.G = this.RgbtoCrgbColor(RGBA.G);
 						RGBA.G = RGBA.G * val;
+						RGBA.G = this.CrgbtoRgbColor(RGBA.G);
 						break;
 					}
 					case"greenOff": {
