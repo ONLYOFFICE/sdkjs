@@ -2229,6 +2229,14 @@
 						RGBA.B = this.standardToLinear(RGBA.B / 255) * 255;
 						break;
 					}
+					case "comp": {
+						const HSL = {H: 0, S: 0, L: 0};
+						this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
+						const _H = (HSL.H + 0.5 * max_hls) % max_hls;
+						HSL.H = _H;
+						this.HSL2RGB(HSL, RGBA);
+						break;
+					}
 				}
 				RGBA.R = AscCommon.trimMinMaxValue(RGBA.R, 0, 255);
 				RGBA.G = AscCommon.trimMinMaxValue(RGBA.G, 0, 255);
