@@ -18143,6 +18143,8 @@
 				}
 			}
             if (r2 < r) {
+                t._updateRange(new Asc.Range(0, r1, gc_nMaxCol0, r2));
+                t.draw();
             	return;
 			}
 
