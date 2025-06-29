@@ -2073,6 +2073,10 @@
 						RGBA.A = 255 * val;
 						break;
 					}
+					case "alphaMod": {
+						RGBA.A = RGBA.A * val;
+						break;
+					}
 					case"blue": {
 						RGBA.B = this.CrgbtoRgbColor(val);
 						break;
