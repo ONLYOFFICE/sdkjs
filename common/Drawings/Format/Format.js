@@ -2091,15 +2091,19 @@
 						break;
 					}
 					case"red": {
-						RGBA.R = 255 * val;
+						RGBA.R = this.CrgbtoRgbColor(val);
 						break;
 					}
 					case"redMod": {
+						RGBA.R = this.RgbtoCrgbColor(RGBA.R);
 						RGBA.R = RGBA.R * val;
+						RGBA.R = this.CrgbtoRgbColor(RGBA.R);
 						break;
 					}
 					case"redOff": {
-						RGBA.R = RGBA.R + val * 255;
+						RGBA.R = this.RgbtoCrgbColor(RGBA.R);
+						RGBA.R = RGBA.R + val;
+						RGBA.R = this.CrgbtoRgbColor(RGBA.R);
 						break;
 					}
 					case"hueMod": {
