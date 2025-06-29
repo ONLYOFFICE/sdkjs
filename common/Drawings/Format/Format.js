@@ -2044,14 +2044,14 @@
 			const _len = this.Mods.length;
 			for (let i = 0; i < _len; i++) {
 				const colorMod = this.Mods[i];
-				let val = colorMod.val / 100000.0;
+				let val = colorMod.val / 100000;
 				switch (colorMod.name) {
 					case "alpha": {
 						RGBA.A = 255 * val;
 						break;
 					}
 					case"blue": {
-						RGBA.B = 255 * val;
+						RGBA.B = this.linearToStandard(val) * 255;
 						break;
 					}
 					case"blueMod": {
