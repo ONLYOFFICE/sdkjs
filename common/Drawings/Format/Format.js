@@ -2036,9 +2036,6 @@
 				RGBA.G = this.linearToStandard(RGBA.G) * 255;
 				RGBA.B = this.linearToStandard(RGBA.B) * 255;
 			}
-			RGBA.R = RGBA.R;
-			RGBA.G = RGBA.G;
-			RGBA.B = RGBA.B;
 		};
 		CColorModifiers.prototype.Apply = function (RGBA) {
 			if (null == this.Mods)
@@ -2048,146 +2045,194 @@
 			for (let i = 0; i < _len; i++) {
 				const colorMod = this.Mods[i];
 				let val = colorMod.val / 100000.0;
-
-				if (colorMod.name === "alpha") {
-					RGBA.A = 255 * val;
-				} else if (colorMod.name === "blue") {
-					RGBA.B = 255 * val;
-				} else if (colorMod.name === "blueMod") {
-					RGBA.B = RGBA.B * val;
-				} else if (colorMod.name === "blueOff") {
-					RGBA.B = RGBA.B + val * 255;
-				} else if (colorMod.name === "green") {
-					RGBA.G = 255 * val;
-				} else if (colorMod.name === "greenMod") {
-					RGBA.G = RGBA.G * val;
-				} else if (colorMod.name === "greenOff") {
-					RGBA.G = RGBA.G + val * 255;
-				} else if (colorMod.name === "red") {
-					RGBA.R = 255 * val;
-				} else if (colorMod.name === "redMod") {
-					RGBA.R = RGBA.R * val;
-				} else if (colorMod.name === "redOff") {
-					RGBA.R = RGBA.R + val * 255;
-				} else if (colorMod.name === "hueMod") {
-					val = Math.max(0, val);
-					if (val === 1) {
-						continue;
+				switch (colorMod.name) {
+					case "alpha": {
+						RGBA.A = 255 * val;
+						break;
 					}
-					const HSL = {H: 0, S: 0, L: 0};
-					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
-					const _H = HSL.H * val;
-					HSL.H = _H - Math.floor(_H / 255) * 255;
-					this.HSL2RGB(HSL, RGBA);
-				} else if (colorMod.name === "hueOff") {
-					if (val === 0) {
-						continue;
+					case"blue": {
+						RGBA.B = 255 * val;
+						break;
 					}
-					const HSL = {H: 0, S: 0, L: 0};
-					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
-					val = (colorMod.val / 60000) * (max_hls / 360);
-					const res = HSL.H + val;
-					HSL.H = AscCommon.trimMinMaxValue(res, 0, max_hls);
-
-					this.HSL2RGB(HSL, RGBA);
-				} else if (colorMod.name === "inv") {
-					RGBA.R ^= 0xFF;
-					RGBA.G ^= 0xFF;
-					RGBA.B ^= 0xFF;
-				} else if (colorMod.name === "lumMod") {
-					if (val === 1) {
-						continue;
+					case"blueMod": {
+						RGBA.B = RGBA.B * val;
+						break;
 					}
-					const HSL = {H: 0, S: 0, L: 0};
-					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
-
-					HSL.L = AscCommon.trimMinMaxValue(HSL.L * val, 0, max_hls);
-					this.HSL2RGB(HSL, RGBA);
-				} else if (colorMod.name === "lumOff") {
-					if (val === 0) {
-						continue;
+					case"blueOff": {
+						RGBA.B = RGBA.B + val * 255;
+						break;
 					}
-					const HSL = {H: 0, S: 0, L: 0};
-					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
-					const res = HSL.L + val * max_hls;
-					HSL.L = res;
-
-					this.HSL2RGB(HSL, RGBA);
-				} else if (colorMod.name === "satMod") {
-					if (val === 1) {
-						continue;
+					case"green": {
+						RGBA.G = 255 * val;
+						break;
 					}
-					const HSL = {H: 0, S: 0, L: 0};
-					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
-					HSL.S = HSL.S * val;
-					this.HSL2RGB(HSL, RGBA);
-				} else if (colorMod.name === "satOff") {
-					if (val === 0) {
-						continue;
+					case"greenMod": {
+						RGBA.G = RGBA.G * val;
+						break;
 					}
-					if (RGBA.R === RGBA.G && RGBA.R === RGBA.B) {
-						const nVal = RGBA.R;
-						if (nVal <= 127) {
-							RGBA.R = nVal * (1 + val);
-							RGBA.G = nVal * (1 - val);
-							RGBA.B = nVal * (1 - 5 * val);
-						} else {
-							RGBA.R = (nVal + (255 - nVal) * val);
-							RGBA.G = (nVal - (255 - nVal) * val);
-							RGBA.B = (nVal - 5 * (255 - nVal) * val);
+					case"greenOff": {
+						RGBA.G = RGBA.G + val * 255;
+						break;
+					}
+					case"red": {
+						RGBA.R = 255 * val;
+						break;
+					}
+					case"redMod": {
+						RGBA.R = RGBA.R * val;
+						break;
+					}
+					case"redOff": {
+						RGBA.R = RGBA.R + val * 255;
+						break;
+					}
+					case"hueMod": {
+						val = Math.max(0, val);
+						if (val === 1) {
+							continue;
 						}
-					} else {
 						const HSL = {H: 0, S: 0, L: 0};
 						this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
-						const res = HSL.S + val * max_hls;
-						HSL.S = res;
+						const _H = HSL.H * val;
+						HSL.H = _H - Math.floor(_H / 255) * 255;
 						this.HSL2RGB(HSL, RGBA);
+						break;
 					}
-				} else if (colorMod.name === "wordShade") {
-					if (colorMod.val === 255) {
-						continue;
-					}
-					const val_ = colorMod.val / 255;
-					const HSL = {H: 0, S: 0, L: 0};
-					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
+					case"hueOff": {
+						if (val === 0) {
+							continue;
+						}
+						const HSL = {H: 0, S: 0, L: 0};
+						this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
+						val = (colorMod.val / 60000) * (max_hls / 360);
+						const res = HSL.H + val;
+						HSL.H = res;
 
-					HSL.L = AscCommon.trimMinMaxValue(HSL.L * val_, 0, max_hls);
-					this.HSL2RGB(HSL, RGBA);
-				} else if (colorMod.name === "wordTint") {
-					if (colorMod.val === 255) {
-						continue;
+						this.HSL2RGB(HSL, RGBA);
+						break;
 					}
-					const _val = colorMod.val / 255;
-					const HSL = {H: 0, S: 0, L: 0};
-					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
+					case"inv": {
+						RGBA.R ^= 0xFF;
+						RGBA.G ^= 0xFF;
+						RGBA.B ^= 0xFF;
+						break;
+					}
+					case"lumMod": {
+						if (val === 1) {
+							continue;
+						}
+						const HSL = {H: 0, S: 0, L: 0};
+						this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 
-					const L_ = HSL.L * _val + (255 - colorMod.val);
-					HSL.L = AscCommon.trimMinMaxValue(L_, 0, max_hls);
-					this.HSL2RGB(HSL, RGBA);
-				} else if (colorMod.name === "shade") {
-					this.RgbtoCrgb(RGBA);
-					if (val < 0) val = 0;
-					if (val > 1) val = 1;
-					RGBA.R = (RGBA.R * val);
-					RGBA.G = (RGBA.G * val);
-					RGBA.B = (RGBA.B * val);
-					this.CrgbtoRgb(RGBA);
-				} else if (colorMod.name === "tint") {
-					this.RgbtoCrgb(RGBA);
-					if (val < 0||val > 1) val = 0;
-					RGBA.R = (1 - (1 - RGBA.R) * val);
-					RGBA.G = (1 - (1 - RGBA.G) * val);
-					RGBA.B = (1 - (1 - RGBA.B) * val);
-					this.CrgbtoRgb(RGBA);
-				} else if (colorMod.name === "gamma") {
-					RGBA.R = this.linearToStandard(RGBA.R / 255) * 255;
-					RGBA.G = this.linearToStandard(RGBA.G / 255) * 255;
-					RGBA.B = this.linearToStandard(RGBA.B / 255) * 255;
-				} else if (colorMod.name === "invGamma") {
-					RGBA.R = this.standardToLinear(RGBA.R / 255) * 255;
-					RGBA.G = this.standardToLinear(RGBA.G / 255) * 255;
-					RGBA.B = this.standardToLinear(RGBA.B / 255) * 255;
+						HSL.L = HSL.L * val;
+						this.HSL2RGB(HSL, RGBA);
+						break;
+					}
+					case"lumOff": {
+						if (val === 0) {
+							continue;
+						}
+						const HSL = {H: 0, S: 0, L: 0};
+						this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
+						const res = HSL.L + val * max_hls;
+						HSL.L = res;
+
+						this.HSL2RGB(HSL, RGBA);
+						break;
+					}
+					case"satMod": {
+						if (val === 1) {
+							continue;
+						}
+						const HSL = {H: 0, S: 0, L: 0};
+						this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
+						HSL.S = HSL.S * val;
+						this.HSL2RGB(HSL, RGBA);
+						break;
+					}
+					case"satOff": {
+						if (val === 0) {
+							continue;
+						}
+						if (RGBA.R === RGBA.G && RGBA.R === RGBA.B) {
+							const nVal = RGBA.R;
+							if (nVal < 127) {
+								RGBA.R = nVal * (1 + val);
+								RGBA.G = nVal * (1 - val);
+								RGBA.B = nVal * (1 - 5 * val);
+							} else {
+								RGBA.R = (nVal + (255 - nVal) * val);
+								RGBA.G = (nVal - (255 - nVal) * val);
+								RGBA.B = (nVal - 5 * (255 - nVal) * val);
+							}
+						} else {
+							const HSL = {H: 0, S: 0, L: 0};
+							this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
+							const res = HSL.S + val * max_hls;
+							HSL.S = res;
+							this.HSL2RGB(HSL, RGBA);
+						}
+						break;
+					}
+					case"wordShade": {
+						if (colorMod.val === 255) {
+							continue;
+						}
+						const val_ = colorMod.val / 255;
+						const HSL = {H: 0, S: 0, L: 0};
+						this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
+
+						HSL.L = AscCommon.trimMinMaxValue(HSL.L * val_, 0, max_hls);
+						this.HSL2RGB(HSL, RGBA);
+						break;
+					}
+					case"wordTint": {
+						if (colorMod.val === 255) {
+							continue;
+						}
+						const _val = colorMod.val / 255;
+						const HSL = {H: 0, S: 0, L: 0};
+						this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
+
+						const L_ = HSL.L * _val + (255 - colorMod.val);
+						HSL.L = AscCommon.trimMinMaxValue(L_, 0, max_hls);
+						this.HSL2RGB(HSL, RGBA);
+						break;
+					}
+					case"shade": {
+						this.RgbtoCrgb(RGBA);
+						if (val < 0 || val > 1) val = 0;
+						RGBA.R = (RGBA.R * val);
+						RGBA.G = (RGBA.G * val);
+						RGBA.B = (RGBA.B * val);
+						this.CrgbtoRgb(RGBA);
+						break;
+					}
+					case"tint": {
+						this.RgbtoCrgb(RGBA);
+						if (val < 0 || val > 1) val = 0;
+						RGBA.R = (1 - (1 - RGBA.R) * val);
+						RGBA.G = (1 - (1 - RGBA.G) * val);
+						RGBA.B = (1 - (1 - RGBA.B) * val);
+						this.CrgbtoRgb(RGBA);
+						break;
+					}
+					case"gamma": {
+						RGBA.R = this.linearToStandard(RGBA.R / 255) * 255;
+						RGBA.G = this.linearToStandard(RGBA.G / 255) * 255;
+						RGBA.B = this.linearToStandard(RGBA.B / 255) * 255;
+						break;
+					}
+					case"invGamma": {
+						RGBA.R = this.standardToLinear(RGBA.R / 255) * 255;
+						RGBA.G = this.standardToLinear(RGBA.G / 255) * 255;
+						RGBA.B = this.standardToLinear(RGBA.B / 255) * 255;
+						break;
+					}
 				}
+				RGBA.R = AscCommon.trimMinMaxValue(RGBA.R, 0, 255);
+				RGBA.G = AscCommon.trimMinMaxValue(RGBA.G, 0, 255);
+				RGBA.B = AscCommon.trimMinMaxValue(RGBA.B, 0, 255);
 			}
 			if (_len) {
 				RGBA.R = AscFormat.ClampColor(RGBA.R);
