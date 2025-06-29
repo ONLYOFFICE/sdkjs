@@ -2128,9 +2128,11 @@
 						break;
 					}
 					case"inv": {
-						RGBA.R ^= 0xFF;
-						RGBA.G ^= 0xFF;
-						RGBA.B ^= 0xFF;
+						this.RgbtoCrgb(RGBA);
+						RGBA.R = 1 - RGBA.R;
+						RGBA.G = 1 - RGBA.G;
+						RGBA.B = 1 - RGBA.B;
+						this.CrgbtoRgb(RGBA);
 						break;
 					}
 					case"lumMod": {
