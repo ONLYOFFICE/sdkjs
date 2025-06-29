@@ -2152,7 +2152,10 @@
 						const HSL = {H: 0, S: 0, L: 0};
 						this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 						val = (colorMod.val / 60000) * (max_hls / 360);
-						const res = HSL.H + val;
+						let res = HSL.H + val;
+						if (res > max_hls || res < 0) {
+							res -= Math.floor(res / max_hls) * max_hls;
+						}
 						HSL.H = res;
 
 						this.HSL2RGB(HSL, RGBA);
