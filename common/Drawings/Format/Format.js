@@ -2075,7 +2075,7 @@
 						break;
 					}
 					case"green": {
-						RGBA.G = 255 * val;
+						RGBA.G = this.CrgbtoRgbColor(val);
 						break;
 					}
 					case"greenMod": {
