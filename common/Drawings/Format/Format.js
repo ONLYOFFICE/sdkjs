@@ -2281,6 +2281,14 @@
 						}
 						break;
 					}
+					case "lum": {
+						const HSL = {H: 0, S: 0, L: 0};
+						this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
+						const res = val * max_hls;
+						HSL.L = res;
+						this.HSL2RGB(HSL, RGBA);
+						break;
+					}
 				}
 				RGBA.R = AscCommon.trimMinMaxValue(RGBA.R, 0, 255);
 				RGBA.G = AscCommon.trimMinMaxValue(RGBA.G, 0, 255);
