@@ -2047,7 +2047,7 @@
 		};
 		CColorModifiers.prototype.graySaturation = function(RGBA, nSat) {
 			const L = RGBA.R;
-			if (L < 127) {
+			if (L < 128) {
 				RGBA.R = L * (1 + nSat);
 				RGBA.G = L * (1 - nSat);
 				RGBA.B = L * (1 - 5 * nSat);
@@ -2067,6 +2067,9 @@
 				let val = colorMod.val / 100000;
 				switch (colorMod.name) {
 					case "alpha": {
+						if (val < 0 || val > 1) {
+							val = 0;
+						}
 						RGBA.A = 255 * val;
 						break;
 					}
@@ -2293,11 +2296,13 @@
 				RGBA.R = AscCommon.trimMinMaxValue(RGBA.R, 0, 255);
 				RGBA.G = AscCommon.trimMinMaxValue(RGBA.G, 0, 255);
 				RGBA.B = AscCommon.trimMinMaxValue(RGBA.B, 0, 255);
+				RGBA.A = AscCommon.trimMinMaxValue(RGBA.A, 0, 255);
 			}
 			if (_len) {
 				RGBA.R = AscFormat.ClampColor(RGBA.R);
 				RGBA.G = AscFormat.ClampColor(RGBA.G);
 				RGBA.B = AscFormat.ClampColor(RGBA.B);
+				RGBA.A = AscFormat.ClampColor(RGBA.A);
 			}
 		};
 		CColorModifiers.prototype.Merge = function (oOther) {

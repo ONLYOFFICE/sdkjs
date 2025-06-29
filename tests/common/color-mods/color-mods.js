@@ -17312,4 +17312,17 @@ function mod(name, value) {
 		testResult = test(rgb(46, 139, 87),[mod("lum", -1)],rgb(0, 0, 0));
 		fTestFunction(testResult);
 	});
+
+	QUnit.test("Test alpha mod", (assert) => {
+		const fTestFunction = assertTest(assert);
+		let testResult;
+		testResult = test(rgb(68, 114, 196, 255),[mod("alpha", 50000)],rgb(68, 114, 196, 128));
+		fTestFunction(testResult);
+		testResult = test(rgb(68, 114, 196, 255),[mod("alpha", 75000)],rgb(68, 114, 196, 191));
+		fTestFunction(testResult);
+		testResult = test(rgb(68, 114, 196, 255),[mod("alpha", 200000)],rgb(68, 114, 196, 0));
+		fTestFunction(testResult);
+		testResult = test(rgb(68, 114, 196, 255),[mod("alpha", -100000)],rgb(68, 114, 196, 0));
+		fTestFunction(testResult);
+	});
 });
