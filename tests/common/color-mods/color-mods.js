@@ -17325,7 +17325,7 @@ function mod(name, value) {
 		testResult = test(rgb(68, 114, 196, 255),[mod("alpha", -100000)],rgb(68, 114, 196, 0));
 		fTestFunction(testResult);
 	});
-	QUnit.test("Test alpha mod", (assert) => {
+	QUnit.test("Test alphaMod mod", (assert) => {
 		const fTestFunction = assertTest(assert);
 		let testResult;
 		testResult = test(rgb(68, 114, 196, 128),[mod("alphaMod", 50000)],rgb(68, 114, 196, 64));
@@ -17339,6 +17339,22 @@ function mod(name, value) {
 		testResult = test(rgb(68, 114, 196, 128),[mod("alphaMod", -50000)],rgb(68, 114, 196, 0));
 		fTestFunction(testResult);
 		testResult = test(rgb(68, 114, 196, 128),[mod("alphaMod", 200000)],rgb(68, 114, 196, 255));
+		fTestFunction(testResult);
+	});
+	QUnit.test("Test alphaOff mod", (assert) => {
+		const fTestFunction = assertTest(assert);
+		let testResult;
+		testResult = test(rgb(68, 114, 196, 128),[mod("alphaOff", 50000)],rgb(68, 114, 196, 255));
+		fTestFunction(testResult);
+		testResult = test(rgb(68, 114, 196, 128),[mod("alphaOff", 0)],rgb(68, 114, 196, 128));
+		fTestFunction(testResult);
+		testResult = test(rgb(68, 114, 196, 128),[mod("alphaOff", 25000)],rgb(68, 114, 196, 191));
+		fTestFunction(testResult);
+		testResult = test(rgb(68, 114, 196, 128),[mod("alphaOff", 100000)],rgb(68, 114, 196, 255));
+		fTestFunction(testResult);
+		testResult = test(rgb(68, 114, 196, 128),[mod("alphaOff", -50000)],rgb(68, 114, 196, 0));
+		fTestFunction(testResult);
+		testResult = test(rgb(68, 114, 196, 128),[mod("alphaOff", 200000)],rgb(68, 114, 196, 0));
 		fTestFunction(testResult);
 	});
 });

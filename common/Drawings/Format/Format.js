@@ -2077,6 +2077,14 @@
 						RGBA.A = RGBA.A * val;
 						break;
 					}
+					case "alphaOff": {
+						if (val < 0 || val > 1) {
+							RGBA.A = 0;
+						} else {
+							RGBA.A = RGBA.A + 255 * val;
+						}
+						break;
+					}
 					case"blue": {
 						RGBA.B = this.CrgbtoRgbColor(val);
 						break;
