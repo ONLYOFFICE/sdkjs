@@ -2023,19 +2023,27 @@
 			}
 			return 1.055 * Math.pow(nColorValue, 1 / 2.4) - 0.055;
 		}
-		CColorModifiers.prototype.RgbtoCrgb = function (RGBA) {
+		CColorModifiers.prototype.RgbtoCrgbColor = function (c) {
 			if (this.isUsePow) {
-				RGBA.R = this.standardToLinear(RGBA.R / 255);
-				RGBA.G = this.standardToLinear(RGBA.G / 255);
-				RGBA.B = this.standardToLinear(RGBA.B / 255);
+				return this.standardToLinear(c / 255);
 			}
+			return c / 255;
+		};
+		CColorModifiers.prototype.RgbtoCrgb = function (RGBA) {
+				RGBA.R = this.RgbtoCrgbColor(RGBA.R);
+				RGBA.G = this.RgbtoCrgbColor(RGBA.G);
+				RGBA.B = this.RgbtoCrgbColor(RGBA.B);
+		};
+		CColorModifiers.prototype.CrgbtoRgbColor = function (c) {
+			if (this.isUsePow) {
+			return this.linearToStandard(c) * 255;
+			}
+			return c * 255;
 		};
 		CColorModifiers.prototype.CrgbtoRgb = function (RGBA) {
-			if (this.isUsePow) {
-				RGBA.R = this.linearToStandard(RGBA.R) * 255;
-				RGBA.G = this.linearToStandard(RGBA.G) * 255;
-				RGBA.B = this.linearToStandard(RGBA.B) * 255;
-			}
+				RGBA.R = this.CrgbtoRgbColor(RGBA.R);
+				RGBA.G = this.CrgbtoRgbColor(RGBA.G);
+				RGBA.B = this.CrgbtoRgbColor(RGBA.B);
 		};
 		CColorModifiers.prototype.Apply = function (RGBA) {
 			if (null == this.Mods)
@@ -2051,17 +2059,19 @@
 						break;
 					}
 					case"blue": {
-						RGBA.B = this.linearToStandard(val) * 255;
+						RGBA.B = this.CrgbtoRgbColor(val);
 						break;
 					}
 					case"blueMod": {
-						this.RgbtoCrgb(RGBA);
+						RGBA.B = this.RgbtoCrgbColor(RGBA.B);
 						RGBA.B = RGBA.B * val;
-						this.CrgbtoRgb(RGBA);
+						RGBA.B = this.CrgbtoRgbColor(RGBA.B);
 						break;
 					}
 					case"blueOff": {
-						RGBA.B = RGBA.B + val * 255;
+						RGBA.B = this.RgbtoCrgbColor(RGBA.B);
+						RGBA.B = RGBA.B + val;
+						RGBA.B = this.CrgbtoRgbColor(RGBA.B);
 						break;
 					}
 					case"green": {
