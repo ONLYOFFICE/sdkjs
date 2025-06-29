@@ -2158,6 +2158,16 @@
 						this.HSL2RGB(HSL, RGBA);
 						break;
 					}
+					case"hue": {
+						const HSL = {H: 0, S: 0, L: 0};
+						this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
+						val = (colorMod.val / 60000) * (max_hls / 360);
+						const res = AscCommon.trimMinMaxValue(val, 0, max_hls);
+						HSL.H = res;
+
+						this.HSL2RGB(HSL, RGBA);
+						break;
+					}
 					case"inv": {
 						this.RgbtoCrgb(RGBA);
 						RGBA.R = 1 - RGBA.R;
