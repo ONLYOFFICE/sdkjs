@@ -2045,6 +2045,18 @@
 				RGBA.G = this.CrgbtoRgbColor(RGBA.G);
 				RGBA.B = this.CrgbtoRgbColor(RGBA.B);
 		};
+		CColorModifiers.prototype.graySaturation = function(RGBA, nSat) {
+			const L = RGBA.R;
+			if (L < 127) {
+				RGBA.R = L * (1 + nSat);
+				RGBA.G = L * (1 - nSat);
+				RGBA.B = L * (1 - 5 * nSat);
+			} else {
+				RGBA.R = (L + (255 - L) * nSat);
+				RGBA.G = (L - (255 - L) * nSat);
+				RGBA.B = (L - 5 * (255 - L) * nSat);
+			}
+		};
 		CColorModifiers.prototype.Apply = function (RGBA) {
 			if (null == this.Mods)
 				return;
@@ -2177,16 +2189,7 @@
 							continue;
 						}
 						if (RGBA.R === RGBA.G && RGBA.R === RGBA.B) {
-							const nVal = RGBA.R;
-							if (nVal < 127) {
-								RGBA.R = nVal * (1 + val);
-								RGBA.G = nVal * (1 - val);
-								RGBA.B = nVal * (1 - 5 * val);
-							} else {
-								RGBA.R = (nVal + (255 - nVal) * val);
-								RGBA.G = (nVal - (255 - nVal) * val);
-								RGBA.B = (nVal - 5 * (255 - nVal) * val);
-							}
+							this.graySaturation(RGBA, val);
 						} else {
 							const HSL = {H: 0, S: 0, L: 0};
 							this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
@@ -2264,6 +2267,18 @@
 						RGBA.R = gray;
 						RGBA.G = gray;
 						RGBA.B = gray;
+						break;
+					}
+					case "sat": {
+						if (RGBA.R === RGBA.G && RGBA.R === RGBA.B) {
+							this.graySaturation(RGBA, val);
+						} else {
+							const HSL = {H: 0, S: 0, L: 0};
+							this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
+							const res = val * max_hls;
+							HSL.S = res;
+							this.HSL2RGB(HSL, RGBA);
+						}
 						break;
 					}
 				}
