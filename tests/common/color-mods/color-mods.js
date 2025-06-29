@@ -347,9 +347,6 @@ function mod(name, value) {
 		test(rgb(126, 126, 126),[mod("satMod", -5000)],rgb(126, 126, 126)),
 		test(rgb(128, 128, 128),[mod("satMod", -5000)],rgb(128, 128, 128)),
 		test(rgb(200, 200, 200),[mod("satMod", -5000)],rgb(200, 200, 200)),
-	];
-
-	const todoTests = [
 		test(
 			rgb(127, 127, 127),
 			[mod("satOff", 99200)],
@@ -363,7 +360,7 @@ function mod(name, value) {
 		test(
 			rgb(223, 219, 213),
 			[mod("shade", 50000)],
-			rgb(70, 122, 62)
+			rgb(164, 161, 156)
 		),
 		test(
 			rgb(98, 168, 87),
@@ -411,17 +408,11 @@ function mod(name, value) {
 			rgb(85, 85, 85)
 		),
 	];
+
 	QUnit.test('Check colors with mods', (assert) => {
 		const fTestFunction = assertTest(assert);
 		for (let i = 0; i < tests.length; i++) {
 			const test = tests[i];
-			fTestFunction(test);
-		}
-	});
-	QUnit.test.todo('Check colors with mods', (assert) => {
-		const fTestFunction = assertTest(assert);
-		for (let i = 0; i < todoTests.length; i++) {
-			const test = todoTests[i];
 			fTestFunction(test);
 		}
 	});
