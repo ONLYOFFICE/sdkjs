@@ -2249,6 +2249,13 @@
 						this.HSL2RGB(HSL, RGBA);
 						break;
 					}
+					case "gray": {
+						const gray = 0.2126 * RGBA.R + 0.7152 * RGBA.G + 0.0722 * RGBA.B;
+						RGBA.R = gray;
+						RGBA.G = gray;
+						RGBA.B = gray;
+						break;
+					}
 				}
 				RGBA.R = AscCommon.trimMinMaxValue(RGBA.R, 0, 255);
 				RGBA.G = AscCommon.trimMinMaxValue(RGBA.G, 0, 255);
