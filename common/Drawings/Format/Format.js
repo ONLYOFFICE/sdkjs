@@ -2055,7 +2055,9 @@
 						break;
 					}
 					case"blueMod": {
+						this.RgbtoCrgb(RGBA);
 						RGBA.B = RGBA.B * val;
+						this.CrgbtoRgb(RGBA);
 						break;
 					}
 					case"blueOff": {
