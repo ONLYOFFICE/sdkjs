@@ -8496,9 +8496,7 @@ drawTreemapChart.prototype = {
 		if (cachedData.data.length > 0 && this.chartProp && this.chartProp.chartGutter && plotArea) {
 			let x = plotArea.x;
 			let y = plotArea.y;
-			// this.paths[0] = this.cChartDrawer._calculateRect(x, y + 54, 100, 54, true);
 			let pos = 0;
-			console.log(cachedData.data, plotArea.extX, plotArea.extY);
 			for (let i = 0; i < cachedData.data.length; i++) {
 				let direction = cachedData.data[i].position;
 				let startX = x;
@@ -8553,22 +8551,81 @@ drawTreemapChart.prototype = {
 				if (this.paths.hasOwnProperty(i) && this.paths[i]) {
 					let nPtIdx = parseInt(i);
 					let pen = oSeries.getPtPen(nPtIdx);
-					if (pen && pen.Fill && pen.Fill.fill && pen.Fill.fill.color) {
-						pen.Fill.fill.color.RGBA.R = 255;
-						pen.Fill.fill.color.RGBA.G = 0;
-						pen.Fill.fill.color.RGBA.B = 0;
-					}
 					let brush = oSeries.getPtBrush(nPtIdx);
+					
+					if (!brush || !brush.Fill) {
+						brush = this._getDefaultTreemapBrush(nPtIdx);
+					}
+					
+					if (!pen) {
+						pen = this._getDefaultTreemapPen();
+					}
+					
 					this.cChartDrawer.drawPath(this.paths[i], pen, brush);
 				}
 			}
 		}
-
-		// this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
 	},
 
 	_calculateDLbl: function (compiledDlb) {
 		return {x: null, y: null}
+	},
+
+	_getDefaultTreemapBrush: function(index) {
+		const excelTreemapColors = [
+			{r: 68, g: 114, b: 196},
+			{r: 237, g: 125, b: 49},
+			{r: 165, g: 165, b: 165},
+			{r: 255, g: 192, b: 0},
+			{r: 91, g: 155, b: 213},
+			{r: 112, g: 173, b: 71},
+			{r: 158, g: 72, b: 14},
+			{r: 99, g: 99, b: 99},
+			{r: 153, g: 115, b: 0},
+			{r: 67, g: 104, b: 43}
+		];
+		
+		const colorIndex = index % excelTreemapColors.length;
+		const color = excelTreemapColors[colorIndex];
+
+		const brush = new AscFormat.CUniFill();
+		const solidFill = new AscFormat.CSolidFill();
+		const uniColor = new AscFormat.CUniColor();
+		const rgbColor = new AscFormat.CRGBColor();
+		
+		rgbColor.setR(color.r);
+		rgbColor.setG(color.g);
+		rgbColor.setB(color.b);
+		
+		uniColor.setColor(rgbColor);
+		solidFill.setColor(uniColor);
+		brush.setFill(solidFill);
+
+		let props = this.cChartSpace.getParentObjects();
+		brush.calculate(props.theme, props.slide, props.layout, props.master, new AscFormat.CUniColor().RGBA, this.cChartSpace.clrMapOvr);
+		
+		return brush;
+	},
+
+	_getDefaultTreemapPen: function() {
+		const pen = new AscFormat.CLn();
+		pen.setW(AscFormat.g_dKoef_pt_to_emu * 0.75);
+		
+		const penFill = new AscFormat.CUniFill();
+		const solidFill = new AscFormat.CSolidFill();
+		const uniColor = new AscFormat.CUniColor();
+		const rgbColor = new AscFormat.CRGBColor();
+		
+		rgbColor.setR(255);
+		rgbColor.setG(255);
+		rgbColor.setB(255);
+		
+		uniColor.setColor(rgbColor);
+		solidFill.setColor(uniColor);
+		penFill.setFill(solidFill);
+		pen.setFill(penFill);
+		
+		return pen;
 	}
 }
 
