@@ -1671,6 +1671,20 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
         }
         return true;
     };
+    Geometry.prototype.Write_ToBinary = function(writer) {
+        writer.WriteLong(this.pathLst.length);
+        for(let pathIdx = 0; pathIdx < this.pathLst.length; ++pathIdx) {
+            this.pathLst[pathIdx].Write_ToBinary(writer);
+        }
+    };
+    Geometry.prototype.Read_FromBinary = function(reader) {
+        let pathCount = reader.GetLong();
+        for(let pathIdx = 0; pathIdx < pathCount; ++pathIdx) {
+            let path = new AscFormat.Path2();
+            path.Read_FromBinary(reader);
+            this.pathLst.push(path);
+        }
+    };
 
 
     function CAvLst(oGeometry, bAdjustments) {

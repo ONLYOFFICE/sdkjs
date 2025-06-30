@@ -254,6 +254,18 @@
 
                     oClass.Lock.Check(check_obj);
                 }
+                // lock merge
+                else if (oClass instanceof AscPDF.CPDFDoc && point.Items[changeIndex].Data instanceof CChangesPDFDocumentStartMergePages) {
+                    const oLocker = oClass.locks.merge; 
+                    let sId = oLocker.GetId();
+                    let oCheckData = {
+                        "type":     AscPDF.AscLockTypeElemPDF.Document,
+                        "objId":    sId,
+                        "guid":     sId
+                    };
+                        
+                    oLocker.Lock.Check(oCheckData);
+                }
  			}
 		}
 	};

@@ -1031,7 +1031,7 @@
 	CGraphicObjectBase.prototype.Reassign_ImageUrls = function (mapUrl) {
 		var blip_fill;
 		if (this.blipFill) {
-			if (mapUrl[this.blipFill.RasterImageId]) {
+			if (mapUrl[this.blipFill.RasterImageId] && mapUrl[this.blipFill.RasterImageId] !== this.blipFill.RasterImageId) {
 				if (this.setBlipFill) {
 					blip_fill = this.blipFill.createDuplicate();
 					blip_fill.setRasterImageId(mapUrl[this.blipFill.RasterImageId]);
@@ -1040,7 +1040,7 @@
 			}
 		}
 		if (this.spPr && this.spPr.Fill && this.spPr.Fill.fill && this.spPr.Fill.fill.RasterImageId) {
-			if (mapUrl[this.spPr.Fill.fill.RasterImageId]) {
+			if (mapUrl[this.spPr.Fill.fill.RasterImageId] && mapUrl[this.spPr.Fill.fill.RasterImageId] !== this.spPr.Fill.fill.RasterImageId) {
 				blip_fill = this.spPr.Fill.fill.createDuplicate();
 				blip_fill.setRasterImageId(mapUrl[this.spPr.Fill.fill.RasterImageId]);
 				var oUniFill = this.spPr.Fill.createDuplicate();
@@ -1186,7 +1186,7 @@
 					oSpPr.ln = AscFormat.CreateNoFillLine();
 				}
 				let penW = 0;
-				if (this.pen) {
+				if (this.pen && this.pen.isVisible() && this.brush && this.brush.isVisible()) {
 					penW = this.pen.w ? this.pen.w / 36000.0 : 12700.0 / 36000.0;
 				}
 				let W = this.extX + penW;
@@ -1206,8 +1206,10 @@
 
 				let dist = outerShdw.dist ? outerShdw.dist / 36000 : 0;
 				if(AscFormat.fApproxEqual(W, W0) && AscFormat.fApproxEqual(H, H0) && AscFormat.fApproxEqual(dist, 0)) {
-					W += 1;
-					H += 1;
+					const nAppendValue = 1;
+					W += nAppendValue;
+					H += nAppendValue;
+					penW += nAppendValue;
 				}
 				let oXfrm = oSpPr.xfrm;
 				oXfrm.setExtX(W);
@@ -1220,6 +1222,7 @@
 					shape.setParent(this.parent);
 				}
 				shape.recalculate();
+				shape.shdwPenW = penW;
 				this.shdwSp = shape;
 			}, this, []);
 		}
@@ -1305,25 +1308,126 @@
 		}
 	};
 	CGraphicObjectBase.prototype.getShdwTransform = function(outerShdw, mainShape) {
-		var oTransform = new AscCommon.CMatrix();
-		var dist = outerShdw.dist ? outerShdw.dist / 36000 : 0;
-		var dir = outerShdw.dir ? outerShdw.dir : 0;
-		if(this.extX < mainShape.extX && this.extY < mainShape.extY) {
-			oTransform.tx = dist * Math.cos(AscFormat.cToRad * dir);
-			oTransform.ty = dist * Math.sin(AscFormat.cToRad * dir);
-		}
-		else {
-			oTransform.tx = dist * Math.cos(AscFormat.cToRad * dir) - (this.extX - mainShape.extX) / 2.0;
-			oTransform.ty = dist * Math.sin(AscFormat.cToRad * dir) - (this.extY - mainShape.extY) / 2.0;
-		}
+		const oTransform = new AscCommon.CMatrix();
 		if(this.flipH) {
-			oTransform.tx -= this.extX;
+			AscCommon.global_MatrixTransformer.ScaleAppend(oTransform , -1, 1);
 		}
 		if(this.flipV) {
-			oTransform.ty += this.extY;
+			AscCommon.global_MatrixTransformer.ScaleAppend(oTransform , 1, -1);
 		}
 		global_MatrixTransformer.MultiplyAppend(oTransform, mainShape.transform);
-		return  oTransform;
+		const oShdwBounds = this.getGeometryBounds(oTransform);
+		const oMainBounds = mainShape.getGeometryBounds(mainShape.transform);
+
+		const nMainW = oMainBounds.w;
+		const nMainH = oMainBounds.h;
+		const dMainX = oMainBounds.x;
+		const dMainY = oMainBounds.y;
+
+		const nShwdPenW = this.shdwPenW || 0;
+		const nShdwW = oShdwBounds.w - nShwdPenW;
+		const nShdwH = oShdwBounds.h - nShwdPenW;
+		const dShdwX = oShdwBounds.x + nShwdPenW / 2;
+		const dShdwY = oShdwBounds.y + nShwdPenW / 2;
+
+		let dX;
+		let dY;
+		switch (outerShdw.algn) {
+			case AscFormat.RECT_ALIGN_BL: {
+				dX = dMainX - dShdwX;
+				dY = dMainY + nMainH - (dShdwY + nShdwH);
+				break;
+			}
+			case AscFormat.RECT_ALIGN_BR: {
+				dX = (dMainX + nMainW) - (dShdwX + nShdwW);
+				dY = dMainY + nMainH - (dShdwY + nShdwH);
+				break;
+			}
+			case AscFormat.RECT_ALIGN_CTR: {
+				dX = (dMainX + nMainW / 2) - (dShdwX + nShdwW / 2);
+				dY = (dMainY + nMainH / 2) - (dShdwY + nShdwH / 2);
+				break;
+			}
+			case AscFormat.RECT_ALIGN_L: {
+				dX = dMainX - dShdwX;
+				dY = (dMainY + nMainH / 2) - (dShdwY + nShdwH / 2);
+				break;
+			}
+			case AscFormat.RECT_ALIGN_R: {
+				dX = (dMainX + nMainW) - (dShdwX + nShdwW);
+				dY = (dMainY + nMainH / 2) - (dShdwY + nShdwH / 2);
+				break;
+			}
+			case AscFormat.RECT_ALIGN_T: {
+				dX = (dMainX + nMainW / 2) - (dShdwX + nShdwW / 2);
+				dY = dMainY - dShdwY;
+				break;
+			}
+			case AscFormat.RECT_ALIGN_TL: {
+				dX = dMainX - dShdwX;
+				dY = dMainY - dShdwY;
+				break;
+			}
+			case AscFormat.RECT_ALIGN_TR: {
+				dX = (dMainX + nMainW) - (dShdwX + nShdwW);
+				dY = dMainY - dShdwY;
+				break;
+			}
+			case AscFormat.RECT_ALIGN_B:
+			default: {
+				dX = (dMainX + nMainW / 2) - (dShdwX + nShdwW / 2);
+				dY = dMainY + nMainH - (dShdwY + nShdwH);
+				break;
+			}
+		}
+		if(this.flipH) {
+			switch (outerShdw.algn) {
+				case AscFormat.RECT_ALIGN_L:
+				case AscFormat.RECT_ALIGN_TL:
+				case AscFormat.RECT_ALIGN_BL: {
+					dX -= nShdwW;
+					break;
+				}
+				case AscFormat.RECT_ALIGN_R:
+				case AscFormat.RECT_ALIGN_TR:
+				case AscFormat.RECT_ALIGN_BR: {
+					dX += nShdwW;
+					break;
+				}
+				default:
+					break;
+			}
+		}
+		if(this.flipV) {
+			switch (outerShdw.algn) {
+				case AscFormat.RECT_ALIGN_CTR:
+				case AscFormat.RECT_ALIGN_L:
+				case AscFormat.RECT_ALIGN_R: {
+					break;
+				}
+				case AscFormat.RECT_ALIGN_T:
+				case AscFormat.RECT_ALIGN_TL:
+				case AscFormat.RECT_ALIGN_TR: {
+					dY -= nShdwH;
+					break;
+				}
+				case AscFormat.RECT_ALIGN_B:
+				case AscFormat.RECT_ALIGN_BL:
+				case AscFormat.RECT_ALIGN_BR:
+				default: {
+					dY += nShdwH;
+					break;
+				}
+			}
+		}
+
+		var dist = outerShdw.dist ? outerShdw.dist / 36000 : 0;
+		var dir = outerShdw.dir ? outerShdw.dir : 0;
+		dX += dist * Math.cos(AscFormat.cToRad * dir);
+		dY += dist * Math.sin(AscFormat.cToRad * dir);
+		oTransform.tx += dX;
+		oTransform.ty += dY;
+		return oTransform;
 	};
 	CGraphicObjectBase.prototype.drawAdjustments = function (drawingDocument) {
 	};
@@ -1420,12 +1524,6 @@
 		this.spPr.xfrm.setOffY(y);
 		this.spPr.xfrm.setExtX(extX);
 		this.spPr.xfrm.setExtY(extY);
-		if (this.isGroupObject()) {
-			this.spPr.xfrm.setChOffX(0);
-			this.spPr.xfrm.setChOffY(0);
-			this.spPr.xfrm.setChExtX(extX);
-			this.spPr.xfrm.setChExtY(extY);
-		}
 		this.spPr.xfrm.setRot(rot);
 		this.spPr.xfrm.setFlipH(flipH);
 		this.spPr.xfrm.setFlipV(flipV);
@@ -1549,6 +1647,8 @@
 	};
 	CGraphicObjectBase.prototype.recalcContent2 = function () {
 	};
+	CGraphicObjectBase.prototype.applySpecialPasteProps = function () {};
+	CGraphicObjectBase.prototype.getSpecialPasteProps = function () {};
 
 	CGraphicObjectBase.prototype.checkDrawingBaseCoords = function () {
 		if (this.drawingBase && this.spPr && this.spPr.xfrm && !this.group) {
@@ -2620,75 +2720,67 @@
 				return;
 			}
 			var srcRect = oBlipFill.srcRect;
-			if (srcRect) {
-				var sRasterImageId = oBlipFill.RasterImageId;
-				var _l = srcRect.l ? srcRect.l : 0;
-				var _t = srcRect.t ? srcRect.t : 0;
-				var _r = srcRect.r ? srcRect.r : 100;
-				var _b = srcRect.b ? srcRect.b : 100;
-				var oShapeDrawer = new AscCommon.CShapeDrawer();
-				oShapeDrawer.bIsCheckBounds = true;
-				oShapeDrawer.Graphics = new AscFormat.CSlideBoundsChecker();
-				this.check_bounds(oShapeDrawer);
-				var boundsW = oShapeDrawer.max_x - oShapeDrawer.min_x;
-				var boundsH = oShapeDrawer.max_y - oShapeDrawer.min_y;
-				var wpct = (_r - _l) / 100.0;
-				var hpct = (_b - _t) / 100.0;
-				var extX = boundsW / wpct;
-				var extY = boundsH / hpct;
-				var DX = -extX * _l / 100.0 + oShapeDrawer.min_x;
-				var DY = -extY * _t / 100.0 + oShapeDrawer.min_y;
-				var XC = DX + extX / 2.0;
-				var YC = DY + extY / 2.0;
+			var sRasterImageId = oBlipFill.RasterImageId;
+			var _l = srcRect && srcRect.l ? srcRect.l : 0;
+			var _t = srcRect && srcRect.t ? srcRect.t : 0;
+			var _r = srcRect && srcRect.r ? srcRect.r : 100;
+			var _b = srcRect && srcRect.b ? srcRect.b : 100;
+			var oShapeDrawer = new AscCommon.CShapeDrawer();
+			oShapeDrawer.bIsCheckBounds = true;
+			oShapeDrawer.Graphics = new AscFormat.CSlideBoundsChecker();
+			this.check_bounds(oShapeDrawer);
+			var boundsW = oShapeDrawer.max_x - oShapeDrawer.min_x;
+			var boundsH = oShapeDrawer.max_y - oShapeDrawer.min_y;
+			var wpct = (_r - _l) / 100.0;
+			var hpct = (_b - _t) / 100.0;
+			var extX = boundsW / wpct;
+			var extY = boundsH / hpct;
+			var DX = -extX * _l / 100.0 + oShapeDrawer.min_x;
+			var DY = -extY * _t / 100.0 + oShapeDrawer.min_y;
+			var XC = DX + extX / 2.0;
+			var YC = DY + extY / 2.0;
 
-				var oTransform = this.transform.CreateDublicate();
-				// if(this.group)
-				// {
-				//     AscCommon.global_MatrixTransformer.MultiplyAppend(oTransform, this.group.invertTransform);
-				// }
+			var oTransform = this.transform.CreateDublicate();
 
-				var XC_ = oTransform.TransformPointX(XC, YC);
-				var YC_ = oTransform.TransformPointY(XC, YC);
+			var XC_ = oTransform.TransformPointX(XC, YC);
+			var YC_ = oTransform.TransformPointY(XC, YC);
 
-				var X = XC_ - extX / 2.0;
-				var Y = YC_ - extY / 2.0;
+			var X = XC_ - extX / 2.0;
+			var Y = YC_ - extY / 2.0;
 
-				var oImage = AscFormat.DrawingObjectsController.prototype.createImage(sRasterImageId, X, Y, extX, extY);
-				oImage.isCrop = true;
-				oImage.parentCrop = this;
-				oImage.worksheet = this.worksheet;
-				oImage.drawingBase = this.drawingBase;
-				oImage.spPr.xfrm.setRot(this.rot);
-				oImage.spPr.xfrm.setFlipH(this.flipH);
-				oImage.spPr.xfrm.setFlipV(this.flipV);
-				// oImage.setGroup(this.group);
+			var oImage = AscFormat.DrawingObjectsController.prototype.createImage(sRasterImageId, X, Y, extX, extY);
+			oImage.isCrop = true;
+			oImage.parentCrop = this;
+			oImage.worksheet = this.worksheet;
+			oImage.drawingBase = this.drawingBase;
+			oImage.spPr.xfrm.setRot(this.rot);
+			oImage.spPr.xfrm.setFlipH(this.flipH);
+			oImage.spPr.xfrm.setFlipV(this.flipV);
 
 
-				oImage.setParent(this.parent);
-				oImage.recalculate();
-				oImage.setParent(null);
-				oImage.recalculateTransform();
-				oImage.recalculateGeometry();
-				oImage.invertTransform = AscCommon.global_MatrixTransformer.Invert(oImage.transform);
-				oImage.recalculateBounds();
-				oImage.setParent(this.parent);
-				oImage.selectStartPage = this.selectStartPage;
-				oImage.cropBrush = AscFormat.CreateUnfilFromRGB(128, 128, 128);
-				oImage.cropBrush.transparent = 100;
-				oImage.pen = AscFormat.CreatePenBrushForChartTrack().pen;
-				oImage.parent = this.parent;
-				var oParentObjects = this.getParentObjects();
-				oImage.cropBrush.calculate(oParentObjects.theme, oParentObjects.slide, oParentObjects.layout, oParentObjects.master, {
-					R: 0,
-					G: 0,
-					B: 0,
-					A: 255,
-					needRecalc: true
-				}, AscFormat.GetDefaultColorMap());
-				this.cropObject = oImage;
-				return true;
-			}
-			return false;
+			oImage.setParent(this.parent);
+			oImage.recalculate();
+			oImage.setParent(null);
+			oImage.recalculateTransform();
+			oImage.recalculateGeometry();
+			oImage.invertTransform = AscCommon.global_MatrixTransformer.Invert(oImage.transform);
+			oImage.recalculateBounds();
+			oImage.setParent(this.parent);
+			oImage.selectStartPage = this.selectStartPage;
+			oImage.cropBrush = AscFormat.CreateUnfilFromRGB(128, 128, 128);
+			oImage.cropBrush.transparent = 100;
+			oImage.pen = AscFormat.CreatePenBrushForChartTrack().pen;
+			oImage.parent = this.parent;
+			var oParentObjects = this.getParentObjects();
+			oImage.cropBrush.calculate(oParentObjects.theme, oParentObjects.slide, oParentObjects.layout, oParentObjects.master, {
+				R:          0,
+				G:          0,
+				B:          0,
+				A:          255,
+				needRecalc: true
+			}, AscFormat.GetDefaultColorMap());
+			this.cropObject = oImage;
+			return true;
 		}, this, []);
 	};
 	CGraphicObjectBase.prototype.clearCropObject = function () {
@@ -2719,10 +2811,24 @@
 	CGraphicObjectBase.prototype.setSrcRect = function (srcRect) {
 
 		if (this.getObjectType() === AscDFH.historyitem_type_ImageShape) {
+			if (this.blipFill.srcRect) {
+				if (this.blipFill.srcRect.isEqual(srcRect)) {
+					return;
+				}
+			} else if (srcRect.isFullRect()) {
+				return;
+			}
 			var blipFill = this.blipFill.createDuplicate();
 			blipFill.srcRect = srcRect;
 			this.setBlipFill(blipFill);
 		} else {
+			if (this.brush.fill.srcRect) {
+				if (this.brush.fill.srcRect.isEqual(srcRect)) {
+					return;
+				}
+			} else if (srcRect.isFullRect()) {
+				return;
+			}
 			var brush = this.brush.createDuplicate();
 			brush.fill.srcRect = srcRect;
 			this.spPr.setFill(brush);
@@ -3863,6 +3969,25 @@
 	};
 	CGraphicObjectBase.prototype.getPen = function() {
 		return this.pen;
+	};
+	CGraphicObjectBase.prototype.getGeometryBounds = function(oTransform) {
+		const oGeometry = this.getGeometry();
+		const oBoundsChecker = new AscFormat.CSlideBoundsChecker();
+		oBoundsChecker.transform3(oTransform);
+		if (!oGeometry || oGeometry.isEmpty() || !oBoundsChecker.IsShapeNeedBounds(oGeometry.preset)) {
+			oBoundsChecker._s();
+			oBoundsChecker._m(0, 0);
+			oBoundsChecker._l(this.extX, 0);
+			oBoundsChecker._l(this.extX, this.extY);
+			oBoundsChecker._l(0, this.extY);
+			oBoundsChecker._e();
+		} else {
+			oGeometry.check_bounds(oBoundsChecker);
+		}
+		const oBounds = oBoundsChecker.Bounds;
+		const oGraphicBounds = new CGraphicBounds(0, 0, 0, 0);
+		oGraphicBounds.reset(oBounds.min_x, oBounds.min_y, oBounds.max_x, oBounds.max_y);
+		return oGraphicBounds;
 	};
 	var ANIM_LABEL_WIDTH_PIX = 22;
 	var ANIM_LABEL_HEIGHT_PIX = 17;

@@ -43,9 +43,14 @@
 		0x00BE : 1
 	};
 	
+	function isHindiDigit(code)
+	{
+		return (0x0660 <= code && code <= 0x0669) || (0x06F0 <= code && code <= 0x06F9);
+	}
+	
 	function isDigit(code)
 	{
-		return AscCommon.IsDigit(code) || (!!DIGITS[code]);
+		return AscCommon.IsDigit(code) || isHindiDigit(code) || (!!DIGITS[code]);
 	}
 	
 	const IGNORE_UPPERCASE = 0x0001;
@@ -400,6 +405,22 @@
 				if (isDigit(nCharCode))
 					return false;
 			}
+		}
+		else
+		{
+			let nonNumber = false;
+			for (let iter = sWord.getUnicodeIterator(); iter.check(); iter.next())
+			{
+				let codePoint = iter.value();
+				if (!isDigit(codePoint))
+				{
+					nonNumber = true;
+					break;
+				}
+			}
+			
+			if (!nonNumber)
+				return false;
 		}
 
 		return true;

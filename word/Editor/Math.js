@@ -3330,9 +3330,39 @@ ParaMath.prototype.ProcessingOldEquationConvert = function()
 {
 	this.Root.ProcessingOldEquationConvert();
 };
+ParaMath.fromLatex = function(latex, textPr)
+{
+	let paraMath = new ParaMath();
+
+	latex = latex.replaceAll('&amp;', '&');
+	latex = latex.replaceAll('&lt;', '<');
+	latex = latex.replaceAll('&gt;', '>');
+	
+	let run = new AscWord.Run(null, true);
+	run.AddText(latex);
+	
+	paraMath.Root.addElementToContent(run);
+	paraMath.Root.Correct_Content();
+	paraMath.SetParagraph(null);
+	
+	paraMath.ConvertView(false, Asc.c_oAscMathInputType.LaTeX);
+	
+	if (textPr)
+	{
+		textPr.RFonts.SetAll("Cambria Math");
+		paraMath.ApplyTextPr(textPr, undefined, true);
+	}
+	
+	return paraMath;
+};
 ParaMath.fromMathML = function(xml, textPr)
 {
 	let paraMath = new ParaMath();
+
+	this.mathMLData = {
+		'mo-linebreak-todo': [],
+		'mo-id': {}
+	};
 	
 	let reader = new StaxParser(xml);
 	
@@ -3360,17 +3390,140 @@ ParaMath.readMathMLNode = function(reader)
 	let name = reader.GetNameNoNS();
 	switch (name)
 	{
+		case 'ci':
+		case 'csymbol':
 		case 'mi':
 		case 'mo':
 		case 'mn':
+		case 'mspace':
+		case 'mtext':
+			function decodeHexEntities(str) {
+				var result = '';
+				for (var i = 0; i < str.length; ) {
+					if (
+						str.charAt(i) === '&' &&
+						str.charAt(i + 1) === '#' &&
+						str.charAt(i + 2).toLowerCase() === 'x'
+					) {
+						var j = i + 3;
+						var hex = '';
+						while (j < str.length && str.charAt(j) !== ';') {
+							hex += str.charAt(j);
+							j++;
+						}
+						if (str.charAt(j) === ';') {
+							var code = parseInt(hex, 16);
+							if (!isNaN(code)) {
+								result += String.fromCharCode(code);
+								i = j + 1;
+								continue;
+							}
+						}
+					}
+
+					result += str.charAt(i);
+					i++;
+				}
+
+				return result;
+			}
+			
+			function proceedAttributes(name, text, attributes)
+			{
+				const GetMathFontChar = AscMath.GetMathFontChar;
+				switch (name)
+				{
+					case 'mi':
+					{
+						let type = -1;
+						switch (attributes['mathvariant'])
+						{
+							case 'bold':					type = 0; break;
+							case 'italic':					type = 1; break;
+							case 'bold-italic':				type = 2; break;
+							case 'double-struck':			type = 12; break;
+							case 'bold-fraktur':			type = 10; break;
+							case 'script':					type = 7; break;
+							case 'bold-script':				type = 8; break;
+							case 'fraktur':					type = 9; break;
+							case 'sans-serif':				type = 3; break;
+							case 'bold-sans-serif':			type = 4; break;
+							case 'sans-serif-italic':		type = 5; break;
+							case 'sans-serif-bold-italic':	type = 6; break;
+							case 'monospace':				type = 11; break;
+							default:						type = -1; break;
+						}
+						
+						// single character must be italic
+						if (text.length === 1 && type === -1)
+							type = 1;
+						
+						let convertedText = "";
+						for (let oIter = text.getUnicodeIterator(); oIter.check(); oIter.next())
+						{
+							let currentChar = String.fromCodePoint(oIter.value());
+							
+							if (GetMathFontChar[currentChar] && GetMathFontChar[currentChar][type])
+								convertedText += GetMathFontChar[currentChar][type];
+							else
+								convertedText += currentChar;
+						}
+						text = convertedText;
+						break;
+					}
+					case 'mo':
+					{
+						if (attributes['id'])
+							this.mathMLData['mo-id'][attributes['id']] = elements[0];
+						
+						if (name === 'mo' && attributes['linebreak'])
+						{
+							this.mathMLData['mo-linebreak-todo'].push({
+								element: elements[0],
+								type: attributes['linebreak'],
+								indentalign: attributes['indentalign'] === "id",
+								indenttarget: attributes['indenttarget']
+							});
+						}
+						
+						// indent
+						
+						break;
+					}
+					case 'mspace':
+					{
+						// for now skip spaces
+						text = " ";
+						break;
+					}
+				}
+				return text;
+			}
+			let attributes = reader.GetAttributes();
+
 			let text = reader.GetText();
+			text = text.trim();
 			text = text.replaceAll(String.fromCharCode(8290), ""); // invisible *
 			text = text.replaceAll(String.fromCharCode(8292), ""); // invisible +
-			if (text && text.length)
+			text = text.replaceAll("\n", "");
+			text = text.replaceAll("\r", "");
+			text = decodeHexEntities(text);
+			
+			text = proceedAttributes(name, text, attributes);
+			if (text)
 			{
 				elements.push(new AscWord.Run(null, true));
 				elements[0].AddText(text);
 			}
+			
+			
+			break;
+		case 'merror':
+		case 'menclose':
+			elements.push(new AscMath.BorderBox.fromMathML(reader));
+			break;
+		case 'mphantom':
+			elements.push(new AscMath.Phantom.fromMathML(reader));
 			break;
 		case 'msub':
 			elements.push(new AscMath.Degree.fromMathML(reader, DEGREE_SUBSCRIPT));
@@ -3391,14 +3544,112 @@ ParaMath.readMathMLNode = function(reader)
 		case 'mroot':
 			elements.push(AscMath.Radical.fromMathML(reader, true));
 			break;
+		case 'mpadded':
+		case 'mstyle':
 		case 'mrow':
 		case 'semantics':
 			elements = AscWord.ParaMath.readMathMLMRow(reader);
 			break;
+		case 'munder':
+		{
+			let attributes = reader.GetAttributes();
+
+			if (attributes['accentunder'] && attributes['accentunder'] === 'false')
+				elements.push(AscMath.GroupCharacter.fromMathML(reader, VJUST_BOT));
+			else
+				elements.push(AscMath.Accent.fromMathML(reader, VJUST_TOP));
+
+			break;
+		}
+		case 'mover':
+		{
+			let attributes = reader.GetAttributes();
+
+			if (attributes['accent'] && attributes['accent'] === 'false')
+				elements.push(AscMath.GroupCharacter.fromMathML(reader, VJUST_TOP));
+			else
+				elements.push(AscMath.Accent.fromMathML(reader, VJUST_BOT));
+			break;
+		}
+		case 'mtable':
+			elements.push(AscMath.Matrix.fromMathML(reader));
+			break;
+		// case 'mstack':
+		// 	elements.push(AscMath.EqArray.fromMathML(reader, true));
+		// 	break;
+		case 'mtr':
+			elements.push(AscMath.Matrix.fromMathML_mtr(reader));
+			break;
+		case 'mtd':
+			elements.push(AscMath.Matrix.fromMathML_mtd(reader))
+			break;
+		case 'mfenced':
+			elements.push(AscMath.Delimiter.fromMathML(reader));
+			break;
+		// case 'apply':
+		// 	elements = AscWord.ParaMath.proceedApply(reader);
+		// 	break;
 	}
 	
 	return elements;
 };
+ParaMath.proceedApply = function (reader)
+{
+	let operands = [];
+	let depth = reader.GetDepth();
+	while (reader.ReadNextSiblingNode(depth))
+	{
+		let node = AscWord.ParaMath.readMathMLNode(reader);
+
+		if (node.length > 1)
+		{
+			let box = new CBox({});
+			let content = box.getBase();
+
+			for (let i = 0; i < node.length; i++)
+			{
+				content.addElementToContent(node[i]);
+			}
+
+			operands.push(box)
+		}
+		else
+			operands.push(node[0]);
+	}
+
+	let operator = operands.shift();
+	let strOperator = (operator instanceof CBox) ? "" : operator.GetTextOfElement().GetText();
+	switch (strOperator)
+	{
+		case 'plus':
+		case 'minus':
+		case 'times':
+		{
+			let mathContent = [];
+			for (let i = 0; i < operands.length; i++)
+			{
+				mathContent.push(operands[i]);
+				if (i !== operands.length - 1)
+				{
+					let run = new AscWord.Run(null, true);
+
+					switch (strOperator)
+					{
+						case 'plus': run.AddText('+'); break;
+						case 'minus': run.AddText('-'); break;
+						case 'times': run.AddText('*'); break;
+					}
+
+					mathContent.push(run);
+				}
+
+			}
+
+			return mathContent;
+			break;
+		}
+	}
+}
 ParaMath.readMathMLMRow = function(reader)
 {
 	let result = []
@@ -3409,6 +3660,26 @@ ParaMath.readMathMLMRow = function(reader)
 	}
 	return result;
 };
+ParaMath.checkAfterAddContent = function()
+{
+};
+ParaMath.checkLinebreak = function (element)
+{
+	for (let i = 0; i < this.mathMLData['mo-linebreak-todo'].length; i++)
+	{
+		let current = this.mathMLData['mo-linebreak-todo'][i];
+		let el = current.element;
+		if (element === el)
+		{
+			this.mathMLData['mo-linebreak-todo'].splice(i, 1);
+			let element =  this.mathMLData['mo-id'][current.indenttarget];
+			return element.private_GetPosInParent();
+			// todo -> to operators
+		}
+	}
+	return null;
+};
+
 ParaMath.readMathMLContent = function(reader)
 {
 	let mathContent = new CMathContent();
@@ -3416,12 +3687,39 @@ ParaMath.readMathMLContent = function(reader)
 	
 	for (let i = 0; i < elements.length; ++i)
 	{
-		mathContent.addElementToContent(elements[i]);
+		let current = elements[i];
+		mathContent.addElementToContent(current);
+
+		let breakPos = this.checkLinebreak(current)
+		if (breakPos !== null)
+		{
+			current.Set_MathForcedBreak(true, undefined);
+		}
 	}
 	
 	mathContent.Correct_Content(true);
+	this.checkAfterAddContent();
 	return mathContent;
 };
+ParaMath.readMathMLContentOnLevel = function (reader)
+{
+	let content = [];
+	let mathContent = new CMathContent();
+	let depth = reader.GetDepth();
+
+	while (reader.ReadNextSiblingNode(depth))
+	{
+		content = content.concat(AscWord.ParaMath.readMathMLNode(reader));
+	}
+
+	for (let i = 0; i < content.length; i++)
+	{
+		mathContent.addElementToContent(content[i]);
+	}
+
+	mathContent.Correct_Content(true);
+	return mathContent;
+}
 
 function MatGetKoeffArgSize(FontSize, ArgSize)
 {

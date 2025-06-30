@@ -91,7 +91,7 @@
 			return this.group.IsUseInDocument();
 		
         let oPage = this.GetParentPage();
-        if (oPage && oPage.drawings.includes(this)) {
+        if (oPage && oPage.drawings.includes(this) && oPage.GetIndex() !== -1) {
             return true;
         }
 
@@ -102,7 +102,8 @@
             }
         }
         
-        return false;	};
+        return false;
+    };
     CPdfDrawingPrototype.prototype.OnBlur = function() {
         AscCommon.History.ForbidUnionPoint();
     };
@@ -127,7 +128,6 @@
     CPdfDrawingPrototype.prototype.GetSelectionQuads = function() {
         let oDoc        = this.GetDocument();
         let oViewer     = oDoc.Viewer;
-        let oFile       = oViewer.file;
         let oDrDoc      = oDoc.GetDrawingDocument();
         let oContent    = this.GetDocContent();
         let aInfo       = [];
@@ -139,7 +139,11 @@
 
         let nStart = oContent.Selection.StartPos;
         let nEnd   = oContent.Selection.EndPos;
-        if (nStart > nEnd) [nStart, nEnd] = [nEnd, nStart];
+        if (nStart > nEnd) {
+            let temp = nStart;
+            nStart = nEnd;
+            nEnd = temp;
+        }
 
         let oInfo = {
             page: nPage,
@@ -151,7 +155,11 @@
 
             let nStartInPara = oPara.Selection.StartPos;
             let nEndInPara   = oPara.Selection.EndPos;
-            if (nStartInPara > nEndInPara) [nStartInPara, nEndInPara] = [nEndInPara, nStartInPara];
+            if (nStartInPara > nEndInPara) {
+                let temp = nStartInPara;
+                nStartInPara = nEndInPara;
+                nEndInPara = temp;
+            }
 
             let nStartLine = oPara.Pages[0].StartLine;
 			let nEndLine   = oPara.Pages[0].EndLine;
@@ -446,7 +454,14 @@
     ////////////////////////////
 
     CPdfDrawingPrototype.prototype.WriteToBinary = function(memory) {
-        this.toXml(memory, '');
+        if (Asc.editor.getShapeSerializeType() === "xml") {
+            this.toXml(memory, '');
+        } else {
+            // Write base64 binaryData
+            let writer = new AscCommon.CBinaryFileWriter();
+            writer.WriteSpTreeElem(this);
+            memory.WriteXmlString(writer.GetBase64Memory());
+        }
     };
 
     window["AscPDF"].CPdfDrawingPrototype = CPdfDrawingPrototype;

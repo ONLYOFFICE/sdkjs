@@ -65,8 +65,12 @@ AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_FreeText_Align]			= CCha
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Stamp_Type]						= CChangesPDFAnnotStampType;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Stamp_InRect]						= CChangesPDFAnnotStampInRect;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Stamp_Rect]						= CChangesPDFAnnotStampRect;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Stamp_RenderStructure]				= AscDFH.CChangesDrawingsObjectNoId;
 
-
+AscDFH.drawingsChangesMap[AscDFH.historyitem_Pdf_Stamp_RenderStructure] = function(oClass, value) {
+	oClass.renderStructure = value;
+};
+AscDFH.drawingsConstructorsMap[AscDFH.historyitem_Pdf_Stamp_RenderStructure] = AscFormat.CShapeStructure;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectProperty}

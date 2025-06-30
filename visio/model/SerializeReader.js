@@ -2004,18 +2004,25 @@
 					}
 					uni_fill.fill.setRasterImageId(sReadPath);
 
-					// TEST version ---------------
-					var _s = sReadPath;
-					var indS = _s.lastIndexOf("emf");
-					if (indS == -1)
-						indS = _s.lastIndexOf("wmf");
-
-					if (indS != -1 && (indS == (_s.length - 3)))
-					{
-						_s = _s.substring(0, indS);
-						_s += "svg";
-						sReadPath = _s;
-						uni_fill.fill.setRasterImageId(_s);
+					//todo common function
+					const allowExt = ["png","jpg", "jpeg", "jpe"];
+					var ext = AscCommon.GetFileExtension(sReadPath);
+					if (ext === "emf" || ext === "wmf") {
+						sReadPath = AscCommon.changeFileExtention(sReadPath, "svg");
+						uni_fill.fill.setRasterImageId(sReadPath);
+					} else if (allowExt.indexOf(ext) === -1) {
+						var images = AscCommon.g_oDocumentUrls.getImagesWithOtherExtension(sReadPath);
+						if (images.length > 0) {
+							for (var i = 0; i < images.length; i++) {
+								var image = images[i];
+								var ext = AscCommon.GetFileExtension(image);
+								if (allowExt.indexOf(ext) !== -1) {
+									sReadPath = image;
+									uni_fill.fill.setRasterImageId(sReadPath);
+									break;
+								}
+							}
+						}	
 					}
 					// ----------------------------
 

@@ -1333,6 +1333,14 @@ StaxParser.prototype.MoveToNextAttribute = function() {
     this.isInAttr = false;
     return false;
 };
+StaxParser.prototype.GetAttributes = function() {
+	let attributes = {};
+	while (this.MoveToNextAttribute()) {
+		attributes[this.GetName()] = this.GetValue();
+	}
+	
+	return attributes;
+};
 StaxParser.prototype.SkipAttributes = function() {
     var i = this.xml.indexOf('>', this.index);
     if (i === -1) { // error  ...> // не нашел знак закрытия тега

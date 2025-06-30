@@ -5074,15 +5074,33 @@ var g_oFontProperties = {
 		this.num = new AscCommonExcel.Num({f:val});
 	};
 
-	var g_oAlignProperties = {
-		hor: 0,
-		indent: 1,
-		RelativeIndent: 2,
-		shrink: 3,
-		angle: 4,
-		ver: 5,
-		wrap: 6
+
+	/** @enum */
+	var c_oSerAligmentTypes =
+		{
+			Horizontal: 0,
+			Indent: 1,
+			JustifyLastLine: 2,
+			ReadingOrder: 3,
+			RelativeIndent: 4,
+			ShrinkToFit: 5,
+			TextRotation: 6,
+			Vertical: 7,
+			WrapText: 8
 	};
+
+
+	window['Asc']['c_oSerAligmentTypes'] = window['Asc'].c_oSerAligmentTypes = c_oSerAligmentTypes;
+	prot = c_oSerAligmentTypes;
+	prot['Horizontal'] = prot.Horizontal;
+	prot['Indent'] = prot.Indent;
+	prot['JustifyLastLine'] = prot.JustifyLastLine;
+	prot['ReadingOrder'] = prot.ReadingOrder;
+	prot['RelativeIndent'] = prot.RelativeIndent;
+	prot['ShrinkToFit'] = prot.ShrinkToFit;
+	prot['TextRotation'] = prot.TextRotation;
+	prot['Vertical'] = prot.Vertical;
+	prot['WrapText'] = prot.WrapText;
 
 	/** @constructor */
 	function Align(val) {
@@ -5092,6 +5110,7 @@ var g_oFontProperties = {
 		this.hor = val.hor;
 		this.indent = val.indent;
 		this.RelativeIndent = val.RelativeIndent;
+		this.ReadingOrder = val.ReadingOrder;
 		this.shrink = val.shrink;
 		this.angle = val.angle;
 		this.ver = val.ver;
@@ -5101,10 +5120,10 @@ var g_oFontProperties = {
 		this._index;
 	}
 
-	Align.prototype.Properties = g_oAlignProperties;
+	Align.prototype.Properties = Asc.c_oSerAligmentTypes;
 	Align.prototype.getHash = function () {
 		if (!this._hash) {
-			this._hash = this.hor + '|' + this.indent + '|' + this.RelativeIndent + '|' + this.shrink + '|' +
+			this._hash = this.hor + '|' + this.indent + '|' + this.ReadingOrder + '|' + this.RelativeIndent + '|' + this.shrink + '|' +
 				this.angle + '|' + this.ver + '|' + this.wrap;
 		}
 		return this._hash;
@@ -5127,6 +5146,7 @@ var g_oFontProperties = {
 		var oRes = new Align();
 		oRes.hor = this._mergeProperty(this.hor, align.hor, defaultAlign.hor);
 		oRes.indent = this._mergeProperty(this.indent, align.indent, defaultAlign.indent);
+		oRes.ReadingOrder = this._mergeProperty(this.ReadingOrder, align.ReadingOrder, defaultAlign.ReadingOrder);
 		oRes.RelativeIndent = this._mergeProperty(this.RelativeIndent, align.RelativeIndent, defaultAlign.RelativeIndent);
 		oRes.shrink = this._mergeProperty(this.shrink, align.shrink, defaultAlign.shrink);
 		oRes.angle = this._mergeProperty(this.angle, align.angle, defaultAlign.angle);
@@ -5149,6 +5169,11 @@ var g_oFontProperties = {
 		}
 		if (this.RelativeIndent == val.RelativeIndent) {
 			oRes.RelativeIndent = null;
+		} else {
+			bEmpty = false;
+		}
+		if (this.ReadingOrder == val.ReadingOrder) {
+			oRes.ReadingOrder = null;
 		} else {
 			bEmpty = false;
 		}
@@ -5178,7 +5203,7 @@ var g_oFontProperties = {
 		return oRes;
 	};
 	Align.prototype.isEqual = function (val) {
-		return this.hor == val.hor && this.indent == val.indent && this.RelativeIndent == val.RelativeIndent && this.shrink == val.shrink &&
+		return this.hor == val.hor && this.indent == val.indent && this.ReadingOrder == val.ReadingOrder && this.RelativeIndent == val.RelativeIndent && this.shrink == val.shrink &&
 			this.angle == val.angle && this.ver == val.ver && this.wrap == val.wrap;
 	};
 	Align.prototype.clone = function () {
@@ -5192,50 +5217,50 @@ var g_oFontProperties = {
 	};
 	Align.prototype.getProperty = function (nType) {
 		switch (nType) {
-			case this.Properties.hor:
+			case this.Properties.Horizontal:
 				return this.hor;
 				break;
-			case this.Properties.indent:
+			case this.Properties.Indent:
 				return this.indent;
 				break;
 			case this.Properties.RelativeIndent:
 				return this.RelativeIndent;
 				break;
-			case this.Properties.shrink:
+			case this.Properties.ShrinkToFit:
 				return this.shrink;
 				break;
-			case this.Properties.angle:
+			case this.Properties.TextRotation:
 				return this.angle;
 				break;
-			case this.Properties.ver:
+			case this.Properties.Vertical:
 				return this.ver;
 				break;
-			case this.Properties.wrap:
+			case this.Properties.WrapText:
 				return this.wrap;
 				break;
 		}
 	};
 	Align.prototype.setProperty = function (nType, value) {
 		switch (nType) {
-			case this.Properties.hor:
+			case this.Properties.Horizontal:
 				this.hor = value;
 				break;
-			case this.Properties.indent:
+			case this.Properties.Indent:
 				this.indent = value;
 				break;
 			case this.Properties.RelativeIndent:
 				this.RelativeIndent = value;
 				break;
-			case this.Properties.shrink:
+			case this.Properties.ShrinkToFit:
 				this.shrink = value;
 				break;
-			case this.Properties.angle:
+			case this.Properties.TextRotation:
 				this.angle = value;
 				break;
-			case this.Properties.ver:
+			case this.Properties.Vertical:
 				this.ver = value;
 				break;
-			case this.Properties.wrap:
+			case this.Properties.WrapText:
 				this.wrap = value;
 				break;
 		}
@@ -5264,6 +5289,12 @@ var g_oFontProperties = {
 	};
 	Align.prototype.setShrinkToFit = function (val) {
 		this.shrink = val;
+	};
+	Align.prototype.getReadingOrder = function () {
+		return this.ReadingOrder;
+	};
+	Align.prototype.setReadingOrder = function (val) {
+		this.ReadingOrder = val;
 	};
 	Align.prototype.getAlignHorizontal = function () {
 		return this.hor;
@@ -5316,6 +5347,10 @@ var g_oFontProperties = {
 			val = vals["relativeIndent"];
 			if (undefined !== val) {
 				this.RelativeIndent = val - 0;
+			}
+			val = vals["readingOrder"];
+			if (undefined !== val) {
+				this.ReadingOrder = val - 0;
 			}
 			val = vals["shrinkToFit"];
 			if (undefined !== val) {
@@ -8517,9 +8552,8 @@ function RangeDataManagerElem(bbox, data)
 						tableColumn = new TableColumn();
 						let cell = autoFilters.worksheet.getCell3(headerRow, i);
 						if (!cell.isNullText()) {
-							tableColumn.Name =
-								autoFilters.checkTableColumnName(newTableColumns.concat(this.TableColumns),
-									cell.getValueWithoutFormat());
+							tableColumn.setTableColumnName(autoFilters.checkTableColumnName(newTableColumns.concat(this.TableColumns),
+								cell.getValueWithoutFormat()));
 						}
 					}
 
@@ -8531,8 +8565,8 @@ function RangeDataManagerElem(bbox, data)
 					if (!tableColumn) {
 						tableColumn = newTableColumns[j] = new TableColumn();
 					}
-					if (tableColumn.Name === null) {
-						tableColumn.Name = autoFilters._generateColumnName2(newTableColumns);
+					if (tableColumn.getTableColumnName() === null) {
+						tableColumn.setTableColumnName(autoFilters._generateColumnName2(newTableColumns));
 					}
 				}
 
@@ -8618,7 +8652,7 @@ function RangeDataManagerElem(bbox, data)
 			//todo undo
 			let deletedMap = {};
 			for (let i = 0; i < deleted.length; ++i) {
-				deletedMap[deleted[i].Name] = 1;
+				deletedMap[deleted[i].getTableColumnName()] = 1;
 			}
 			this.handlers.trigger("deleteColumnTablePart", this.DisplayName, deletedMap);
 
@@ -8649,8 +8683,8 @@ function RangeDataManagerElem(bbox, data)
 
 		for (let j = 0; j < newTableColumns.length; j++) {
 			let tableColumn = newTableColumns[j];
-			if (tableColumn.Name === null) {
-				tableColumn.Name = autoFilters._generateColumnName2(newTableColumns);
+			if (tableColumn.getTableColumnName() === null) {
+				tableColumn.setTableColumnName(autoFilters._generateColumnName2(newTableColumns));
 			}
 		}
 
@@ -8683,7 +8717,7 @@ function RangeDataManagerElem(bbox, data)
 		this.removeDependencies();
 		let newTableColumns = this.TableColumns;
 		newTableColumns.push(new TableColumn());
-		newTableColumns[newTableColumns.length - 1].Name = autoFilters._generateColumnName2(newTableColumns);
+		newTableColumns[newTableColumns.length - 1].setTableColumnName(autoFilters._generateColumnName2(newTableColumns));
 
 		this.TableColumns = newTableColumns;
 		if (this.QueryTable) {
@@ -8777,10 +8811,10 @@ function RangeDataManagerElem(bbox, data)
 			return res;
 		}
 
+		let _name = name.toLowerCase();
 		for (let i = 0; i < this.TableColumns.length; i++) {
-			if (name.toLowerCase() === this.TableColumns[i].Name.toLowerCase()) {
-				res = i;
-				break;
+			if (_name === this.TableColumns[i].getTableColumnName(true)) {
+				return i;
 			}
 		}
 
@@ -8793,10 +8827,10 @@ function RangeDataManagerElem(bbox, data)
 			return res;
 		}
 
+		let _name = name.toLowerCase();
 		for (let i = 0; i < this.TableColumns.length; i++) {
-			if (name.toLowerCase() === this.TableColumns[i].Name.toLowerCase()) {
-				res = new Asc.Range(this.Ref.c1 + i, this.Ref.r1, this.Ref.c1 + i, this.Ref.r2);
-				break;
+			if (_name === this.TableColumns[i].getTableColumnName(true)) {
+				return new Asc.Range(this.Ref.c1 + i, this.Ref.r1, this.Ref.c1 + i, this.Ref.r2);
 			}
 		}
 
@@ -8810,7 +8844,7 @@ function RangeDataManagerElem(bbox, data)
 		}
 
 		if (this.TableColumns[index]) {
-			res = this.TableColumns[index].Name;
+			res = this.TableColumns[index].getTableColumnName();
 		}
 
 		return res;
@@ -8822,10 +8856,10 @@ function RangeDataManagerElem(bbox, data)
 			return res;
 		}
 
+		let _name = name.toLowerCase();
 		for (let i = 0; i < this.TableColumns.length; i++) {
-			if (name.toLowerCase() === this.TableColumns[i].Name.toLowerCase()) {
-				res = i;
-				break;
+			if (_name === this.TableColumns[i].getTableColumnName(true)) {
+				return i;
 			}
 		}
 
@@ -8999,7 +9033,7 @@ function RangeDataManagerElem(bbox, data)
 
 	TablePart.prototype.getColIdByName = function (name) {
 		for (let i = 0; i < this.TableColumns.length; i++) {
-			if (name === this.TableColumns[i].Name) {
+			if (name === this.TableColumns[i].getTableColumnName()) {
 				return i;
 			}
 		}
@@ -9024,6 +9058,10 @@ function RangeDataManagerElem(bbox, data)
 			}
 		};
 
+		function _getStrucTableReservedLocalWords (type) {
+			return parserHelp.getColumnNameByType(type, true);
+		}
+
 		if (this.Ref.containsRange(handleSelectionRange)) {
 
 			let argsSeparator = AscCommon.FormulaSeparators.functionArgumentSeparator;
@@ -9036,11 +9074,11 @@ function RangeDataManagerElem(bbox, data)
 
 			if (this.Ref.isEqual(handleSelectionRange)) {
 				//Table1[#All]
-				return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.all + "]";
+				return this.DisplayName + "[" + _getStrucTableReservedLocalWords(FormulaTablePartInfo.all) + "]";
 			} else if (this.Ref.r1 === handleSelectionRange.r1 && this.Ref.r2 === handleSelectionRange.r2) {
 				//Table1[[#All];[Column1]]
 				//Table1[[#All];[Column1]:[Column2]]
-				return this.DisplayName + "[" + "[" + AscCommon.cStrucTableReservedWords.all + "]" + argsSeparator + getColumnNameRange(startCol, endCol, true) + "]";
+				return this.DisplayName + "[" + "[" + _getStrucTableReservedLocalWords(FormulaTablePartInfo.all) + "]" + argsSeparator + getColumnNameRange(startCol, endCol, true) + "]";
 			}
 
 			let dataContains = this._isDataTableContainsRange(handleSelectionRange);
@@ -9084,9 +9122,9 @@ function RangeDataManagerElem(bbox, data)
 			//4. only totals - Table4[[#Totals];[Column1]:[Column2]]
 			if (!dataContains && totalContains && !headerContains) {
 				if (totalContains.all) {
-					return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.totals + "]";
+					return this.DisplayName + "[" + _getStrucTableReservedLocalWords(FormulaTablePartInfo.totals) + "]";
 				} else {
-					return this.DisplayName + "[" + "[" +  AscCommon.cStrucTableReservedWords.totals + "]" + argsSeparator + getColumnNameRange(startCol, endCol, true) + "]";
+					return this.DisplayName + "[" + "[" +  _getStrucTableReservedLocalWords(FormulaTablePartInfo.totals) + "]" + argsSeparator + getColumnNameRange(startCol, endCol, true) + "]";
 				}
 			}
 
@@ -9094,9 +9132,9 @@ function RangeDataManagerElem(bbox, data)
 			//6. only headers - Table4[[#Headers];[Column1]:[Column2]]
 			if (!dataContains && !totalContains && headerContains) {
 				if (headerContains.all) {
-					return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.headers + "]";
+					return this.DisplayName + "[" + _getStrucTableReservedLocalWords(FormulaTablePartInfo.headers) + "]";
 				} else {
-					return this.DisplayName + "[" + "[" +  AscCommon.cStrucTableReservedWords.headers + "]" + argsSeparator + getColumnNameRange(startCol, endCol, true) + "]";
+					return this.DisplayName + "[" + "[" +  _getStrucTableReservedLocalWords(FormulaTablePartInfo.headers) + "]" + argsSeparator + getColumnNameRange(startCol, endCol, true) + "]";
 				}
 			}
 
@@ -9116,7 +9154,7 @@ function RangeDataManagerElem(bbox, data)
 				let res = this.DisplayName + "[";
 				let needDelimiter = false;
 				if (headerContains) {
-					res += "[" + AscCommon.cStrucTableReservedWords.headers + "]";
+					res += "[" + _getStrucTableReservedLocalWords(FormulaTablePartInfo.headers) + "]";
 					needDelimiter = true;
 					if (headerContains.all) {
 						isAll = true;
@@ -9126,7 +9164,7 @@ function RangeDataManagerElem(bbox, data)
 					if (needDelimiter) {
 						res += argsSeparator;
 					}
-					res += "[" + AscCommon.cStrucTableReservedWords.data + "]";
+					res += "[" + _getStrucTableReservedLocalWords(FormulaTablePartInfo.data) + "]";
 					needDelimiter = true;
 					if (dataContains.all) {
 						isAll = true;
@@ -9136,7 +9174,7 @@ function RangeDataManagerElem(bbox, data)
 					if (needDelimiter) {
 						res += argsSeparator;
 					}
-					res += "[" + AscCommon.cStrucTableReservedWords.totals + "]";
+					res += "[" + _getStrucTableReservedLocalWords(FormulaTablePartInfo.totals) + "]";
 					needDelimiter = true;
 					if (totalContains.all) {
 						isAll = true;
@@ -9900,6 +9938,8 @@ function RangeDataManagerElem(bbox, data)
 		this.rowNumbers = null;
 
 		this.id = null;
+		
+		this._lowerCaseName = null;
 		//формируется на сохранения
 		//this.tableColumnId = null;
 	}
@@ -10111,7 +10151,7 @@ function RangeDataManagerElem(bbox, data)
 		var endRow = (includeTotal && tablePart.isTotalsRow()) || (!tablePart.isTotalsRow()) ? ref.r2 : ref.r2 - 1;
 		var col = null;
 		for (var i = 0; i < tablePart.TableColumns.length; i++) {
-			if (this.Name === tablePart.TableColumns[i].Name) {
+			if (this.getTableColumnName() === tablePart.TableColumns[i].getTableColumnName()) {
 				col = ref.c1 + i;
 				break;
 			}
@@ -10123,6 +10163,20 @@ function RangeDataManagerElem(bbox, data)
 
 		return res;
 	};
+	TableColumn.prototype.getTableColumnName = function (toLowerCase) {
+		if (toLowerCase && this.Name) {
+			if (!this._lowerCaseName) {
+				this._lowerCaseName = this.Name.toLowerCase();
+			}
+			return this._lowerCaseName;
+		}
+		return this.Name;
+	};
+	TableColumn.prototype.setTableColumnName = function (val) {
+		this.Name = val;
+		this._lowerCaseName = this.Name && this.Name.toLowerCase();
+	};
+
 
 	/** @constructor */
 	function TableStyleInfo() {
@@ -14869,13 +14923,10 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	//external reference
-	function ExternalReference() {
-		this.DefinedNames = [];
+	function ExternalReferenceBase()
+	{
 		this.Id = null;
-		this.SheetDataSet = [];
-		this.SheetNames = [];
 		this.Type = 0;
-
 		//дополнительная информация, которая приходит при copy/paste
 		//необходимо её добавлять в ooxml
 		//fileId
@@ -14885,8 +14936,218 @@ function RangeDataManagerElem(bbox, data)
 		//temp for update
 		this.sKey = null;
 
+	}
+	ExternalReferenceBase.prototype.getKey = function() {
+		return this.sKey;
+	};
+	ExternalReferenceBase.prototype.setKey = function(val) {
+		this.sKey = val;
+	};
+	ExternalReferenceBase.prototype.createDuplicate = function ()
+	{
+		const oCopy = new this.constructor();
+		oCopy.Id = this.Id;
+		oCopy.Type = this.Type;
+		if (null != this.referenceData)
+		{
+			oCopy.referenceData = {};
+			oCopy.referenceData["fileKey"] = this.referenceData["fileKey"];
+			oCopy.referenceData["instanceId"] = this.referenceData["instanceId"];
+		}
+		return oCopy;
+	}
+	ExternalReferenceBase.prototype.convertToExternalReference = function ()
+	{
+		const oExternalReference = new ExternalReference();
+		if (this.referenceData)
+		{
+			oExternalReference.setReferenceData(this.referenceData["fileKey"], this.referenceData["instanceId"]);
+		}
+		oExternalReference.Id = this.Id;
+		oExternalReference.Type = this.Type;
+		return oExternalReference;
+	}
+	ExternalReferenceBase.prototype.isExternalLink = function() {
+		if (!this.Id)
+			return false;
+		var p = /^(?:http:\/\/|https:\/\/)/;
+		return this.Id.match(p);
+	};
+
+	ExternalReferenceBase.prototype.isXlsx = function() {
+		if (!this.Id)
+			return false;
+		var p = /^.*\.(xlsx)$/i;
+		return this.Id.match(p);
+	};
+
+	//TODO внешние источники данных, как в файле из бага https://bugzilla.onlyoffice.com/show_bug.cgi?id=38646
+
+	ExternalReferenceBase.prototype.getAscLink = function () {
+
+		// вот так, если это из файла прилетело, в т.ч. из буфера
+		// onRequestReferenceData({data:{referenceData:config.document.referenceData}})
+		//
+		//
+		// вот так, если это будет ссылка на редактор файла в тестовом как в onedrive
+		// onRequestReferenceData({data:{link:"http://192.168.1.1/editor?fileName=new.docx"}})
+		//
+		// вот так, если б это было просто путь к файлу как в MS:
+		// 	onRequestReferenceData({data:{path: "new.docx"}})
+
+
+		var res = new asc_CExternalReference();
+
+		if (this.referenceData) {
+			res.type = Asc.c_oAscExternalReferenceType.referenceData;
+			res.data = this.referenceData;
+		} else if (this.isExternalLink()) {
+			res.type = Asc.c_oAscExternalReferenceType.link;
+			res.data = this.Id;
+		} else {
+			res.type = Asc.c_oAscExternalReferenceType.path;
+			res.data = this.Id;
+		}
+
+		res.externalReference = this;
+
+		return res;
+	};
+
+
+	ExternalReferenceBase.prototype.setReferenceData = function (fileId, portalName) {
+		if (!fileId || !portalName) {
+			return;
+		}
+		if (!this.referenceData) {
+			this.referenceData = {};
+		}
+		this.referenceData["instanceId"] = portalName;
+		this.referenceData["fileKey"] = fileId + "";
+	};
+
+	ExternalReferenceBase.prototype.setId = function (id) {
+		if (!id) {
+			return;
+		}
+
+		this.Id = id;
+	};
+
+	ExternalReferenceBase.prototype.initFromObj = function (obj) {
+		//directUrl:
+		//fileType:
+		//token:
+		//url
+		//path
+		//referenceData
+		if (obj["path"] !== this.Id) {
+			this.setId(this._checkAndCorrectPath(obj["path"], obj["filePath"]));
+		}
+
+		if (obj["referenceData"] && (!this.referenceData || this.referenceData["instanceId"] !== obj["referenceData"]["instanceId"] ||
+			this.referenceData["instanceId"] !== obj["referenceData"]["fileKey"])) {
+			this.setReferenceData(obj["referenceData"]["fileKey"], obj["referenceData"]["instanceId"]);
+		}
+	};
+
+	ExternalReferenceBase.prototype._checkAndCorrectPath = function (sPath, sAbsolutePath) {
+		if (!sPath || 1 === sPath.indexOf("../")) {
+			// sPath -> ../../from.xlsx
+			//sAbsolutePath - > C:\root\from.xlsx
+			// need -> /root/from.xlsx
+			if (sAbsolutePath) {
+				sPath = sAbsolutePath.substring(sAbsolutePath.indexOf("\\"))
+				sPath = sPath.replace(/\\/g,"/")
+			}
+		} else if (sPath && -1 !== sPath.indexOf(":/")) {
+			// sPath -> C:/root/from1.xlsx
+			//need -> file:///C:\root\from1.xlsx
+			sPath = sPath.replace(/\//g,"\\");
+			sPath = "file:///" + sPath;
+		} else if (sPath && -1 === sPath.indexOf("file:///")) {
+			sPath = "file:///" + sPath;
+		}
+
+		return sPath;
+	};
+
+	function CChartExternalReference(chart)
+	{
+		ExternalReferenceBase.call(this);
+		this.chart = chart;
+	}
+	AscFormat.InitClassWithoutType(CChartExternalReference, ExternalReferenceBase);
+
+	CChartExternalReference.prototype.Write_ToBinary = function(writer) {
+		this.WriteToBinary(writer);
+	};
+	CChartExternalReference.prototype.Read_FromBinary = function(writer) {
+		this.ReadFromBinary(writer);
+	};
+	CChartExternalReference.prototype.WriteToBinary = function(writer) {
+		AscFormat.writeString(writer, this.Id);
+		AscFormat.writeLong(writer, this.Type);
+		writer.WriteBool(isRealObject(this.referenceData));
+		if (this.referenceData)
+		{
+			AscFormat.writeString(writer, this.referenceData["instanceId"]);
+			AscFormat.writeString(writer, this.referenceData["fileKey"]);
+		}
+	};
+	CChartExternalReference.prototype.ReadFromBinary = function(reader) {
+		this.Id = AscFormat.readString(reader);
+		this.Type = AscFormat.readLong(reader);
+		if (reader.GetBool())
+		{
+			this.referenceData = {};
+			this.referenceData["instanceId"] = AscFormat.readString(reader);
+			this.referenceData["fileKey"] = AscFormat.readString(reader);
+		}
+	};
+	CChartExternalReference.prototype.setReferenceData = function (fileId, portalName) {
+		ExternalReferenceBase.prototype.setReferenceData.call(this, fileId, portalName);
+		try {
+			this.Id = JSON.parse(fileId)["fileName"];
+		} catch (e) {
+		}
+	};
+	CChartExternalReference.prototype.updateData = function (wb, oPortalData) {
+		Asc.editor.wbModel = wb;
+		this.chart.worksheet = wb.getWorksheet(0);
+		this.chart.recalculateReferences(true);
+
+		const oReferenceData = oPortalData && oPortalData["referenceData"];
+		let oCopy;
+		if (oReferenceData && (!this.referenceData || (this.referenceData["instanceId"] !== oReferenceData["instanceId"] || this.referenceData["fileKey"] !== oReferenceData["fileKey"]))) {
+			oCopy = this.createDuplicate();
+			oCopy.setReferenceData(oReferenceData["fileKey"], oReferenceData["instanceId"]);
+		}
+
+		var path = oPortalData && oPortalData["path"];
+		if (path && this.Id !== path) {
+			oCopy = oCopy ? oCopy : this.createDuplicate();
+			oCopy.setId(path);
+		}
+
+		if (oCopy) {
+			this.chart.setExternalReference(oCopy);
+		}
+
+		this.chart.worksheet = undefined;
+		delete Asc.editor.wbModel;
+	};
+	AscDFH.drawingsConstructorsMap[AscDFH.historyitem_ChartSpace_SetExternalReference] = CChartExternalReference;
+
+	function ExternalReference() {
+		ExternalReferenceBase.call(this);
+		this.DefinedNames = [];
+		this.SheetDataSet = [];
+		this.SheetNames = [];
+
 		this.worksheets = {};
 	}
+	AscFormat.InitClassWithoutType(ExternalReference, ExternalReferenceBase);
 
 	ExternalReference.prototype.getType = function() {
 		return AscCommonExcel.UndoRedoDataTypes.externalReference;
@@ -15044,7 +15305,12 @@ function RangeDataManagerElem(bbox, data)
 				this.DefinedNames[i].parent = this;
 			}
 		}
+		this.initExternalReference();
 
+		return res;
+	};
+
+	ExternalReference.prototype.initExternalReference = function () {
 		let api = Asc.editor || editor;
 		let originalWb = api.wbModel;
 		originalWb && originalWb.dependencyFormulas.lockRecal();
@@ -15054,8 +15320,6 @@ function RangeDataManagerElem(bbox, data)
 		this.prepareDefNames();
 
 		originalWb && originalWb.dependencyFormulas.unlockRecal();
-
-		return res;
 	};
 
 	ExternalReference.prototype.getDefinedNamesBySheetIndex = function (index, wb) {
@@ -15148,7 +15412,7 @@ function RangeDataManagerElem(bbox, data)
 				this.SheetDataSet.splice(index, 1);
 				delete this.worksheets[sheetName];
 
-				// shift all dataset indexes 
+				// shift all dataset indexes
 				this.shiftData();
 			}
 		}
@@ -15158,7 +15422,7 @@ function RangeDataManagerElem(bbox, data)
 		var t = this;
 		var isChanged = false;
 		var cloneER = this.clone();
-		
+
 		let existedWsArray = [];
 		for (var i = 0; i < arr.length; i++) {
 			//если есть this.worksheets, если нет - проверить и обработать
@@ -15269,49 +15533,6 @@ function RangeDataManagerElem(bbox, data)
 		}
 	};
 
-	//TODO внешние источники данных, как в файле из бага https://bugzilla.onlyoffice.com/show_bug.cgi?id=38646
-
-	ExternalReference.prototype.getAscLink = function () {
-
-		// вот так, если это из файла прилетело, в т.ч. из буфера
-		// onRequestReferenceData({data:{referenceData:config.document.referenceData}})
-		//
-		//
-		// вот так, если это будет ссылка на редактор файла в тестовом как в onedrive
-		// onRequestReferenceData({data:{link:"http://192.168.1.1/editor?fileName=new.docx"}})
-		//
-		// вот так, если б это было просто путь к файлу как в MS:
-		// 	onRequestReferenceData({data:{path: "new.docx"}})
-
-
-		var res = new asc_CExternalReference();
-
-		if (this.referenceData) {
-			res.type = Asc.c_oAscExternalReferenceType.referenceData;
-			res.data = this.referenceData;
-		} else if (this.isExternalLink()) {
-			res.type = Asc.c_oAscExternalReferenceType.link;
-			res.data = this.Id;
-		} else {
-			res.type = Asc.c_oAscExternalReferenceType.path;
-			res.data = this.Id;
-		}
-
-		res.externalReference = this;
-
-		return res;
-	};
-
-	ExternalReference.prototype.isExternalLink = function() {
-		var p = /^(?:http:\/\/|https:\/\/)/;
-		return this.Id.match(p);
-	};
-
-	ExternalReference.prototype.isXlsx = function() {
-		var p = /^.*\.(xlsx)$/i;
-		return this.Id.match(p);
-	};
-
 	ExternalReference.prototype.addSheetName = function (name, generateDefaultStructure, addSheetObj) {
 		this.SheetNames.push(name);
 		if (generateDefaultStructure) {
@@ -15395,7 +15616,7 @@ function RangeDataManagerElem(bbox, data)
 			}
 		}
 	};
-	
+
 	ExternalReference.prototype.initWorksheet = function (sheetName) {
 		var ws = this.worksheets[sheetName];
 		if (!this.worksheets[sheetName]) {
@@ -15420,12 +15641,14 @@ function RangeDataManagerElem(bbox, data)
 				var wb = this.getWb();
 				if (!wb) {
 					wb = new AscCommonExcel.Workbook(null, window["Asc"]["editor"], false);
+					wb.dependencyFormulas.lockRecal();
 				}
-				ws = new AscCommonExcel.Worksheet(wb, wb.aWorksheets.length);
+				ws = new AscCommonExcel.Worksheet(wb);
 				ws.sName = sheetName;
+				wb.aWorksheets.push(ws);
+				ws._setIndex(wb.aWorksheets.length - 1);
 
 				this.worksheets[sheetName] = ws;
-				wb.aWorksheets.push(ws);
 			}
 
 
@@ -15465,46 +15688,54 @@ function RangeDataManagerElem(bbox, data)
 		}
 	};
 
-	ExternalReference.prototype.initWorkbook = function () {
-		if (this.DefinedNames) {
-			let wb = this.getWb();
-			for (let i = 0; i < this.DefinedNames.length; i++) {
-				let defName = this.DefinedNames[i];
-				let ws = this.getSheetByIndex(defName.SheetId);
-				if (!ws && defName.RefersTo) {
-					// try to find sheetname by RefersTo string
-					let exclamationMarkIndex = defName.RefersTo.lastIndexOf("!");
-					if (exclamationMarkIndex !== -1) {
-						let sheetNamePart = defName.RefersTo.slice(0, exclamationMarkIndex);
-						// remove equal sign
-						if (sheetNamePart[0] === "=") {
-							sheetNamePart = sheetNamePart.substring(1);
-						}
-
-						// regex to find string enclosed in single qoutes
-						let regex = /^'(.*)'$/;
-						let match = regex.exec(sheetNamePart);
-						if (match && match[1]) {
-							sheetNamePart = match[1];
-						}
-
-						ws = this.worksheets[sheetNamePart];
+	ExternalReference.prototype.initDefinedNamesInWorkbook = function (definedNames) {
+		let wb = this.getWb();
+		const workbookDefinedNames = [];
+		for (let i = 0; i < definedNames.length; i++) {
+			let defName = definedNames[i];
+			let ws = this.getSheetByIndex(defName.SheetId);
+			if (!ws && defName.RefersTo) {
+				// try to find sheetname by RefersTo string
+				let exclamationMarkIndex = defName.RefersTo.lastIndexOf("!");
+				if (exclamationMarkIndex !== -1) {
+					let sheetNamePart = defName.RefersTo.slice(0, exclamationMarkIndex);
+					// remove equal sign
+					if (sheetNamePart[0] === "=") {
+						sheetNamePart = sheetNamePart.substring(1);
 					}
-				}
 
-				if (ws != null) {
-					//on parse name3d use g_DefNameWorksheet
-					let RealDefNameWorksheet = AscCommonExcel.g_DefNameWorksheet;
-					AscCommonExcel.g_DefNameWorksheet = ws;
-					let stringToParse;
-					if (defName && defName.RefersTo && defName.RefersTo[0] === "=") {
-						stringToParse = defName.RefersTo.substring(1);
+					// regex to find string enclosed in single qoutes
+					let regex = /^'(.*)'$/;
+					let match = regex.exec(sheetNamePart);
+					if (match && match[1]) {
+						sheetNamePart = match[1];
 					}
-					let oDefName = new Asc.asc_CDefName(defName.Name, stringToParse ? stringToParse : defName.RefersTo);
-					wb && wb.editDefinesNames(null, oDefName);
-					AscCommonExcel.g_DefNameWorksheet = RealDefNameWorksheet;	
+
+					ws = this.worksheets[sheetNamePart];
 				}
 			}
+
+			if (ws != null) {
+				//on parse name3d use g_DefNameWorksheet
+				let RealDefNameWorksheet = AscCommonExcel.g_DefNameWorksheet;
+				AscCommonExcel.g_DefNameWorksheet = ws;
+				let stringToParse;
+				if (defName && defName.RefersTo && defName.RefersTo[0] === "=") {
+					stringToParse = defName.RefersTo.substring(1);
+				}
+				let oDefName = new Asc.asc_CDefName(defName.Name, stringToParse ? stringToParse : defName.RefersTo);
+				const workbookDefName = wb && wb.editDefinesNames(null, oDefName);
+				if  (workbookDefName) {
+					workbookDefinedNames.push(workbookDefName);
+				}
+				AscCommonExcel.g_DefNameWorksheet = RealDefNameWorksheet;
+			}
+		}
+		return workbookDefinedNames;
+	};
+	ExternalReference.prototype.initWorkbook = function () {
+		if (this.DefinedNames) {
+			this.initDefinedNamesInWorkbook(this.DefinedNames);
 		}
 	};
 
@@ -15579,9 +15810,16 @@ function RangeDataManagerElem(bbox, data)
 		if (!val) {
 			return;
 		}
+		this.initDefinedNameFromObj({worksheetName: val.ws.sName, defName: val.value, shortLink: val.shortLink, ref: null});
+	};
 
-		const index = this.getSheetByName(val.ws.sName);
-		const name = val.value;
+	ExternalReference.prototype.initDefinedNameFromObj = function (val) {
+		if (!val) {
+			return;
+		}
+
+		const index = this.getSheetByName(val.worksheetName);
+		const name = val.defName;
 
 		//check on exist
 		// if (this.getDefName(name, index)) {
@@ -15594,7 +15832,24 @@ function RangeDataManagerElem(bbox, data)
 		let defName = new ExternalDefinedName(this);
 		defName.Name = name;
 		defName.SheetId = val.shortLink ? null : index;
+		defName.RefersTo = val.ref || null;
 		this.addDefName(defName);
+		return defName;
+	};
+	ExternalReference.prototype.initDefinedNamesOnCopyPaste = function (definedNameInfos) {
+		const externalDefinedNames = [];
+		for (let i = 0; i < definedNameInfos.length; i++) {
+			const defNameInfo = definedNameInfos[i];
+			const oExternalDefName = this.initDefinedNameFromObj(defNameInfo);
+			if (oExternalDefName) {
+				externalDefinedNames.push(oExternalDefName);
+			}
+		}
+		const workbookDefNames = this.initDefinedNamesInWorkbook(externalDefinedNames);
+		for (let i = 0; i < workbookDefNames.length; i += 1) {
+			const workbookDefName = workbookDefNames[i];
+			workbookDefName.parsedRef.parse();
+		}
 	};
 
 	ExternalReference.prototype.addDefName = function (defName) {
@@ -15630,62 +15885,6 @@ function RangeDataManagerElem(bbox, data)
 			}
 		}
 	};
-
-	ExternalReference.prototype.setReferenceData = function (fileId, portalName) {
-		if (!fileId || !portalName) {
-			return;
-		}
-		if (!this.referenceData) {
-			this.referenceData = {};
-		}
-		this.referenceData["instanceId"] = portalName;
-		this.referenceData["fileKey"] = fileId + "";
-	};
-
-	ExternalReference.prototype.setId = function (id) {
-		if (!id) {
-			return;
-		}
-
-		this.Id = id;
-	};
-
-	ExternalReference.prototype.initFromObj = function (obj) {
-		//directUrl:
-		//fileType:
-		//token:
-		//url
-		//path
-		//referenceData
-		if (obj["path"] !== this.Id) {
-			this.setId(this._checkAndCorrectPath(obj["path"], obj["filePath"]));
-		}
-
-		if (obj["referenceData"] && (!this.referenceData || this.referenceData["instanceId"] !== obj["referenceData"]["instanceId"] ||
-			this.referenceData["instanceId"] !== obj["referenceData"]["fileKey"])) {
-			this.setReferenceData(obj["referenceData"]["fileKey"], obj["referenceData"]["instanceId"]);
-		}
-	};
-
-	ExternalReference.prototype._checkAndCorrectPath = function (sPath, sAbsolutePath) {
-		if (!sPath || 1 === sPath.indexOf("../")) {
-			// sPath -> ../../from.xlsx
-			//sAbsolutePath - > C:\root\from.xlsx
-			// need -> /root/from.xlsx
-			if (sAbsolutePath) {
-				sPath = sAbsolutePath.substring(sAbsolutePath.indexOf("\\"))
-				sPath = sPath.replace(/\\/g,"/")
-			}
-		} else if (sPath && -1 !== sPath.indexOf(":/")) {
-			// sPath -> C:/root/from1.xlsx
-			//need -> file:///C:\root\from1.xlsx
-			sPath = sPath.replace(/\//g,"\\");
-			sPath = "file:///" + sPath;
-		}
-
-		return sPath;
-	};
-
 	ExternalReference.prototype.addDataSetFrom = function (eR) {
 		if (!eR.SheetDataSet) {
 			return;
@@ -15705,9 +15904,8 @@ function RangeDataManagerElem(bbox, data)
 			}
 		}
 	};
+	ExternalReference.prototype.addDefNameFromInfo = function (defNameInfo) {
 
-	ExternalReference.prototype.getKey = function() {
-		return this.sKey;
 	};
 	ExternalReference.prototype.shiftData = function () {
 		/* shift data to 1 position left */
@@ -15717,10 +15915,6 @@ function RangeDataManagerElem(bbox, data)
 				dataSet.SheetId--;
 			}
 		}
-	};
-
-	ExternalReference.prototype.setKey = function(val) {
-		this.sKey = val;
 	};
 
 	function asc_CExternalReference() {
@@ -15864,6 +16058,10 @@ function RangeDataManagerElem(bbox, data)
 		if (sheet) {
 			var t = this;
 
+			var api_sheet = Asc['editor'];
+			var wb = api_sheet.wbModel;
+			var wbView = api_sheet.wb;
+			const aRanges = [];
 			//TODO пока обновлю ячейки по одной, в дальнейшем нужно объединить ячейки в диапазоны
 			for (var i = 0; i < this.Row.length; i++) {
 				var row = this.Row[i];
@@ -15876,16 +16074,13 @@ function RangeDataManagerElem(bbox, data)
 						continue;
 					}
 					var range = sheet.getRange2(externalCell.Ref);
+					aRanges.push(range);
 					range._foreach(function (cell) {
 
 						let changedCell = externalCell.initFromCell(cell, true, noData);
 						if (!isChanged) {
 							isChanged = changedCell;
 						}
-
-						var api_sheet = Asc['editor'];
-						var wb = api_sheet.wbModel;
-						
 						/* if we haven't received data from an external source, put #REF error for all cells */
 						if (noData) {
 							cell._setValue("#REF!");
@@ -15895,6 +16090,7 @@ function RangeDataManagerElem(bbox, data)
 					});
 				}
 			}
+			wbView && wbView.handleChartsOnWorkbookChange(aRanges);
 		}
 		return isChanged;
 	};
@@ -18312,11 +18508,22 @@ function RangeDataManagerElem(bbox, data)
 					}
 				}
 
+				let oContext = {};
+				oContext["address"] = arguments[1] && arguments[1].getName();
+				oContext["argsInfo"] = [];
+
 				//prepare arguments
 				let args = [];
 				for (let i = 0; i < argsInfo.length; i++) {
 					let type = argsInfo[i].type;
 					let defaultValue = argsInfo[i].defaultValue;
+
+					if (arg[i] && (arg[i].type === AscCommonExcel.cElementType.cell || arg[i].type === AscCommonExcel.cElementType.cell3D
+						|| arg[i].type === AscCommonExcel.cElementType.cellsRange || arg[i].type === AscCommonExcel.cElementType.cellsRange3D)) {
+						let _range = arg[i].getRange();
+						oContext["argsInfo"][i] = {"address": _range.getName(), "startCol": _range.bbox.c1, "endCol": _range.bbox.c2, "startRow": _range.bbox.r1, "endRow": _range.bbox.r2};
+					}
+
 
 					if (!arg[i] && !defaultValue) {
 						continue;
@@ -18338,6 +18545,8 @@ function RangeDataManagerElem(bbox, data)
 					}
 				}
 
+
+				window["context"] = oContext;
 				let res = func.apply(this, args);
 
 				//prepare result
@@ -18681,7 +18890,7 @@ function RangeDataManagerElem(bbox, data)
 
 		return this.funcsMapInfo[name];
 	};
-	
+
 	CCustomFunctionEngine.prototype.getDescription = function (name, ignoreLocale) {
 		let res = null;
 
@@ -19009,6 +19218,924 @@ function RangeDataManagerElem(bbox, data)
 	CWorksheetInfo.prototype.asc_getIndex = function () {
 		return this.index;
 	};
+
+	function CMapInfo() {
+		this.SelectionNamespaces = null;
+		this.arrItems = [];
+	}
+
+	CMapInfo.prototype.fromXml = function(reader) {
+		if (!reader.ReadNextNode()) {
+			return;
+		}
+
+		this.readAttr(reader);
+		if (reader.IsEmptyNode()) {
+			return;
+		}
+
+		var depth = reader.GetDepth();
+		while (reader.ReadNextSiblingNode(depth)) {
+			var name = reader.GetNameNoNS();
+			var pItem = null;
+
+			if ("Schema" === name) {
+				pItem = new CSchema();
+			} else if ("Map" === name) {
+				pItem = new CMap();
+			}
+
+			if (pItem) {
+				pItem.fromXml(reader);
+				this.arrItems.push(pItem);
+			}
+		}
+	};
+
+	CMapInfo.prototype.readAttr = function(reader) {
+		while (reader.MoveToNextAttribute()) {
+			if ("SelectionNamespaces" === reader.GetName()) {
+				this.SelectionNamespaces = reader.GetValue();
+			}
+		}
+	};
+
+	CMapInfo.prototype.toXml = function(writer) {
+		writer.WriteXmlString('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>');
+		writer.WriteXmlNodeStart("MapInfo");
+		writer.WriteXmlString(' xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"');
+
+		writer.WriteXmlNullableAttributeStringEncode("SelectionNamespaces", this.SelectionNamespaces);
+		writer.WriteXmlAttributesEnd();
+
+		for (var i = 0; i < this.arrItems.length; ++i) {
+			this.arrItems[i].toXml(writer);
+		}
+
+		writer.WriteXmlNodeEnd("MapInfo");
+	};
+
+	CMapInfo.prototype.toPPTY = function(writer) {
+		writer.WriteUChar(AscCommon.g_nodeAttributeStart);
+		writer._WriteString2(0, this.SelectionNamespaces);
+		writer.WriteUChar(AscCommon.g_nodeAttributeEnd);
+
+		for (var i = 0; i < this.arrItems.length; ++i) {
+			var type = 0xff;
+			switch (this.arrItems[i].getType()) {
+				case oMapInfoTypes.Schema:
+					type = 0;
+					break;
+				case oMapInfoTypes.Map:
+					type = 1;
+					break;
+			}
+			if (type !== 0xff) {
+				let oThis = this;
+				writer.WriteRecord2(type, writer, function(writer){
+					oThis.arrItems[i].toPPTY(writer);
+				});
+			}
+		}
+	};
+
+	CMapInfo.prototype.fromPPTY = function(reader) {
+		var _len = reader.GetULong();
+		var _start_pos = reader.cur;
+		var _end_pos = _len + _start_pos;
+		// attributes
+		reader.GetUChar();
+		//reader.Skip(1); // start attributes
+		while (true) {
+			var _at = reader.GetUChar();
+			if (_at === AscCommon.g_nodeAttributeEnd)
+				break;
+
+			switch (_at) {
+				case 0:
+					this.SelectionNamespaces = reader.GetString2();
+					break;
+			}
+		}
+
+		while (reader.cur < _end_pos) {
+			var _rec = reader.GetUChar();
+
+			switch (_rec) {
+				case 0:
+					var schema = new CSchema();
+					schema.fromPPTY(reader);
+					this.arrItems.push(schema);
+					break;
+				case 1:
+					var map = new CMap();
+					map.fromPPTY(reader);
+					this.arrItems.push(map);
+					break;
+				default:
+					reader.SkipRecord();
+					break;
+			}
+		}
+		reader.Seek2(_end_pos);
+	};
+
+	/**
+	 * @constructor
+	 */
+	function CMap() {
+		this.ID = null;
+		this.Name = null;
+		this.RootElement = null;
+		this.SchemaID = null;
+		this.ShowImportExportValidationErrors = null;
+		this.AutoFit = null;
+		this.Append = null;
+		this.PreserveSortAFLayout = null;
+		this.PreserveFormat = null;
+		this.DataBinding = null;
+	}
+
+	/**
+	 * @returns {AscDFH.historyitem_type}
+	 */
+	CMap.prototype.getType = function() {
+		return oMapInfoTypes.Map;
+	};
+
+	CMap.prototype.ReadAttributes = function(oReader) {
+		if (oReader.GetAttributeCount() <= 0)
+			return;
+
+		var ID = oReader.GetAttribute("ID");
+		if (null !== ID)
+			this.ID = ID;
+
+		var Name = oReader.GetAttribute("Name");
+		if (null !== Name)
+			this.Name = Name;
+
+		var RootElement = oReader.GetAttribute("RootElement");
+		if (null !== RootElement)
+			this.RootElement = RootElement;
+
+		var SchemaID = oReader.GetAttribute("SchemaID");
+		if (null !== SchemaID)
+			this.SchemaID = SchemaID;
+
+		var ShowImportExportValidationErrors = oReader.GetAttribute("ShowImportExportValidationErrors");
+		if (null !== ShowImportExportValidationErrors)
+			this.ShowImportExportValidationErrors = AscCommon.getBoolFromXml(ShowImportExportValidationErrors);
+
+		var AutoFit = oReader.GetAttribute("AutoFit");
+		if (null !== AutoFit)
+			this.AutoFit = AscCommon.getBoolFromXml(AutoFit);
+
+		var Append = oReader.GetAttribute("Append");
+		if (null !== Append)
+			this.Append = AscCommon.getBoolFromXml(Append);
+
+		var PreserveSortAFLayout = oReader.GetAttribute("PreserveSortAFLayout");
+		if (null !== PreserveSortAFLayout)
+			this.PreserveSortAFLayout = AscCommon.getBoolFromXml(PreserveSortAFLayout);
+
+		var PreserveFormat = oReader.GetAttribute("PreserveFormat");
+		if (null !== PreserveFormat)
+			this.PreserveFormat = AscCommon.getBoolFromXml(PreserveFormat);
+	};
+
+	CMap.prototype.fromXML = function(oReader) {
+		this.ReadAttributes(oReader);
+		if (oReader.IsEmptyNode())
+			return;
+
+		var nParentDepth = oReader.GetDepth();
+		while (oReader.ReadNextSiblingNode(nParentDepth)) {
+			var sName = oReader.GetName();
+
+			if ("DataBinding" === sName) {
+				this.DataBinding = new CDataBinding();
+				this.DataBinding.fromXML(oReader);
+			}
+		}
+	};
+
+	CMap.prototype.toPPTY = function(pWriter) {
+		pWriter.WriteUChar(AscCommon.g_nodeAttributeStart);
+		pWriter._WriteUInt2(0, this.ID);
+		pWriter._WriteString2(1, this.Name);
+		pWriter._WriteString2(2, this.RootElement);
+		pWriter._WriteString2(3, this.SchemaID);
+		pWriter._WriteBool2(4, this.ShowImportExportValidationErrors);
+		pWriter._WriteBool2(5, this.AutoFit);
+		pWriter._WriteBool2(6, this.Append);
+		pWriter._WriteBool2(7, this.PreserveSortAFLayout);
+		pWriter._WriteBool2(8, this.PreserveFormat);
+		pWriter.WriteUChar(AscCommon.g_nodeAttributeEnd);
+
+		if (this.DataBinding) {
+			let oThis = this;
+			pWriter.WriteRecord2(0, pWriter, function(writer){
+				oThis.DataBinding.toPPTY(writer);
+			});
+		}
+	};
+
+	CMap.prototype.fromPPTY = function(pReader) {
+		var _len = pReader.GetULong();
+		var _start_pos = pReader.cur;
+		var end = _len + _start_pos;
+
+		pReader.GetUChar();
+
+		while (true) {
+			var _at = pReader.GetUChar();
+			if (_at === AscCommon.g_nodeAttributeEnd)
+				break;
+
+			switch (_at) {
+				case 0:
+					this.ID = pReader.GetULong();
+					break;
+				case 1:
+					this.Name = pReader.GetString();
+					break;
+				case 2:
+					this.RootElement = pReader.GetString();
+					break;
+				case 3:
+					this.SchemaID = pReader.GetString();
+					break;
+				case 4:
+					this.ShowImportExportValidationErrors = pReader.GetBool();
+					break;
+				case 5:
+					this.AutoFit = pReader.GetBool();
+					break;
+				case 6:
+					this.Append = pReader.GetBool();
+					break;
+				case 7:
+					this.PreserveSortAFLayout = pReader.GetBool();
+					break;
+				case 8:
+					this.PreserveFormat = pReader.GetBool();
+					break;
+			}
+		}
+
+		while (pReader.cur < end) {
+			var _rec = pReader.GetUChar();
+
+			switch (_rec) {
+				case 0:
+					this.DataBinding = new CDataBinding();
+					this.DataBinding.fromPPTY(pReader);
+					break;
+				default:
+					pReader.SkipRecord();
+					break;
+			}
+		}
+
+		pReader.Seek2(end);
+	};
+
+	CMap.prototype.toXmlWriter = function(pWriter) {
+		pWriter.StartNode("Map");
+		pWriter.StartAttributes();
+		pWriter.WriteAttribute2("ID", this.ID);
+		pWriter.WriteAttribute2("RootElement", this.RootElement);
+		pWriter.WriteAttribute2("Name", this.Name);
+		pWriter.WriteAttribute2("SchemaID", this.SchemaID);
+		pWriter.WriteAttribute("ShowImportExportValidationErrors", this.ShowImportExportValidationErrors);
+		pWriter.WriteAttribute("AutoFit", this.AutoFit);
+		pWriter.WriteAttribute("Append", this.Append);
+		pWriter.WriteAttribute("PreserveSortAFLayout", this.PreserveSortAFLayout);
+		pWriter.WriteAttribute("PreserveFormat", this.PreserveFormat);
+		pWriter.EndAttributes();
+
+		if (this.DataBinding) {
+			this.DataBinding.toXmlWriter(pWriter);
+		}
+
+		pWriter.WriteNodeEnd("Map");
+	};
+
+	/**
+	 * @constructor
+	 */
+	function CDataBinding() {
+		this.ConnectionID = null;
+		this.DataBindingName = null;
+		this.FileBindingName = null;
+		this.SchemaID = null;
+		this.FileBinding = null;
+		this.DataBindingLoadMode = null;
+		this.content = null;
+	}
+
+	/**
+	 * @returns {AscDFH.historyitem_type}
+	 */
+	CDataBinding.prototype.getType = function() {
+		return AscDFH.historyitem_type_DataBinding;
+	};
+
+	CDataBinding.prototype.ReadAttributes = function(oReader) {
+		if (oReader.GetAttributeCount() <= 0)
+			return;
+
+		var ConnectionID = oReader.GetAttribute("ConnectionID");
+		if (null !== ConnectionID)
+			this.ConnectionID = ConnectionID;
+
+		var DataBindingName = oReader.GetAttribute("DataBindingName");
+		if (null !== DataBindingName)
+			this.DataBindingName = DataBindingName;
+
+		var FileBindingName = oReader.GetAttribute("FileBindingName");
+		if (null !== FileBindingName)
+			this.FileBindingName = FileBindingName;
+
+		var SchemaID = oReader.GetAttribute("SchemaID");
+		if (null !== SchemaID)
+			this.SchemaID = SchemaID;
+
+		var FileBinding = oReader.GetAttribute("FileBinding");
+		if (null !== FileBinding)
+			this.FileBinding = AscCommon.getBoolFromXml(FileBinding);
+
+		var DataBindingLoadMode = oReader.GetAttribute("DataBindingLoadMode");
+		if (null !== DataBindingLoadMode)
+			this.DataBindingLoadMode = DataBindingLoadMode;
+	};
+
+	CDataBinding.prototype.fromXML = function(oReader) {
+		this.ReadAttributes(oReader);
+		if (oReader.IsEmptyNode())
+			return;
+
+		this.content = oReader.GetInnerXml();
+	};
+
+	CDataBinding.prototype.toPPTY = function(pWriter) {
+		pWriter.WriteUChar(AscCommon.g_nodeAttributeStart);
+		pWriter._WriteUInt2(0, this.ConnectionID);
+		pWriter._WriteString2(1, this.DataBindingName);
+		pWriter._WriteString2(2, this.FileBindingName);
+		pWriter._WriteString2(3, this.SchemaID);
+		pWriter._WriteBool2(4, this.FileBinding);
+		pWriter._WriteUInt2(5, this.DataBindingLoadMode);
+		pWriter._WriteString2(6, this.content);
+		pWriter.WriteUChar(AscCommon.g_nodeAttributeEnd);
+	};
+
+	CDataBinding.prototype.fromPPTY = function(pReader) {
+		var _len = pReader.GetULong();
+		var _start_pos = pReader.cur;
+		var end = _len + _start_pos;
+
+		pReader.GetUChar();
+
+		while (true) {
+			var _at = pReader.GetUChar();
+			if (_at === AscCommon.g_nodeAttributeEnd)
+				break;
+
+			switch (_at) {
+				case 0:
+					this.ConnectionID = pReader.GetULong();
+					break;
+				case 1:
+					this.DataBindingName = pReader.GetString();
+					break;
+				case 2:
+					this.FileBindingName = pReader.GetString();
+					break;
+				case 3:
+					this.SchemaID = pReader.GetString();
+					break;
+				case 4:
+					this.FileBinding = pReader.GetBool();
+					break;
+				case 5:
+					this.DataBindingLoadMode = pReader.GetULong();
+					break;
+				case 6:
+					this.content = pReader.GetString();
+					break;
+			}
+		}
+
+		pReader.Seek2(end);
+	};
+
+	CDataBinding.prototype.toXmlWriter = function(pWriter) {
+		pWriter.StartNode("DataBinding");
+		pWriter.StartAttributes();
+		pWriter.WriteAttribute2("ConnectionID", this.ConnectionID);
+		pWriter.WriteAttribute2("DataBindingName", this.DataBindingName);
+		pWriter.WriteAttribute2("FileBindingName", this.FileBindingName);
+		pWriter.WriteAttribute2("SchemaID", this.SchemaID);
+		pWriter.WriteAttribute("FileBinding", this.FileBinding);
+		pWriter.WriteAttribute2("DataBindingLoadMode", this.DataBindingLoadMode);
+		pWriter.EndAttributes();
+
+		if (this.content !== null) {
+			pWriter.WriteString(this.content);
+		}
+
+		pWriter.WriteNodeEnd("DataBinding");
+	};
+
+	let oMapInfoTypes = {
+		Schema: 0,
+		Map: 1
+	};
+
+	/**
+	 * @constructor
+	 */
+	function CSchema() {
+		this.ID = null;
+		this.SchemaRef = null;
+		this.Namespace = null;
+		this.SchemaLanguage = null;
+		this.content = null;
+	}
+
+	/**
+	 * @returns {AscDFH.historyitem_type}
+	 */
+	CSchema.prototype.getType = function() {
+		return oMapInfoTypes.Schema;
+	};
+
+	CSchema.prototype.ReadAttributes = function(oReader) {
+		if (oReader.GetAttributeCount() <= 0)
+			return;
+
+		var ID = oReader.GetAttribute("ID");
+		if (null !== ID)
+			this.ID = ID;
+
+		var SchemaRef = oReader.GetAttribute("SchemaRef");
+		if (null !== SchemaRef)
+			this.SchemaRef = SchemaRef;
+
+		var Namespace = oReader.GetAttribute("Namespace");
+		if (null !== Namespace)
+			this.Namespace = Namespace;
+
+		var SchemaLanguage = oReader.GetAttribute("SchemaLanguage");
+		if (null !== SchemaLanguage)
+			this.SchemaLanguage = SchemaLanguage;
+	};
+
+	CSchema.prototype.fromXML = function(oReader) {
+		this.ReadAttributes(oReader);
+		if (oReader.IsEmptyNode())
+			return;
+
+		this.content = oReader.GetInnerXml();
+	};
+
+	CSchema.prototype.toPPTY = function(pWriter) {
+		pWriter.WriteUChar(AscCommon.g_nodeAttributeStart);
+		pWriter._WriteString2(0, this.ID);
+		pWriter._WriteString2(1, this.SchemaRef);
+		pWriter._WriteString2(2, this.Namespace);
+		pWriter._WriteString2(3, this.SchemaLanguage);
+		pWriter._WriteString2(4, this.content);
+		pWriter.WriteUChar(AscCommon.g_nodeAttributeEnd);
+	};
+
+	CSchema.prototype.fromPPTY = function(pReader) {
+		var _len = pReader.GetULong();
+		var _start_pos = pReader.cur;
+		var end = _len + _start_pos;
+
+		pReader.GetUChar();
+
+		while (true) {
+			var _at = pReader.GetUChar();
+			if (_at === AscCommon.g_nodeAttributeEnd)
+				break;
+
+			switch (_at) {
+				case 0:
+					this.ID = pReader.GetString();
+					break;
+				case 1:
+					this.SchemaRef = pReader.GetString();
+					break;
+				case 2:
+					this.Namespace = pReader.GetString();
+					break;
+				case 3:
+					this.SchemaLanguage = pReader.GetString();
+					break;
+				case 4:
+					this.content = pReader.GetString();
+					break;
+			}
+		}
+
+		pReader.Seek2(end);
+	};
+
+	CSchema.prototype.toXmlWriter = function(pWriter) {
+		pWriter.StartNode("Schema");
+		pWriter.StartAttributes();
+		pWriter.WriteAttribute2("ID", this.ID);
+		pWriter.WriteAttribute2("SchemaRef", this.SchemaRef);
+		pWriter.WriteAttribute2("Namespace", this.Namespace);
+		pWriter.WriteAttribute2("SchemaLanguage", this.SchemaLanguage);
+		pWriter.EndAttributes();
+
+		if (this.content !== null) {
+			pWriter.WriteString(this.content);
+		}
+
+		pWriter.WriteNodeEnd("Schema");
+	};
+
+	/**
+	 * @constructor
+	 */
+	function CXmlColumnPr() {
+		this.mapId = null;
+		this.xpath = null;
+		this.denormalized = null;
+		this.xmlDataType = null;
+	}
+
+	CXmlColumnPr.prototype.clone = function() {
+		let res = new CXmlColumnPr();
+
+		res.mapId = this.mapId;
+		res.xpath = this.xpath;
+		res.denormalized = this.denormalized;
+		res.xmlDataType = this.xmlDataType ? Object.assign({}, this.xmlDataType) : null;
+
+		return res;
+	};
+
+	CXmlColumnPr.prototype.getType = function() {
+		return AscDFH.historyitem_type_XmlColumnPr;
+	};
+
+	CXmlColumnPr.prototype.Write_ToBinary2 = function(writer) {
+		writer.WriteUChar(AscCommon.g_nodeAttributeStart);
+
+		if (this.mapId !== null) {
+			writer._WriteUInt2(0, this.mapId);
+		}
+
+		if (this.xpath !== null) {
+			writer.WriteString(1, this.xpath);
+		}
+
+		if (this.denormalized !== null) {
+			writer._WriteBool2(2, this.denormalized);
+		}
+
+		if (this.xmlDataType !== null) {
+			writer.WriteByte2(3, this.xmlDataType.val);
+		}
+
+		writer.WriteUChar(AscCommon.g_nodeAttributeEnd);
+	};
+
+	CXmlColumnPr.prototype.Read_FromBinary2 = function(reader) {
+		var _end_rec = reader.pos + reader.size + 4;
+		reader.Skip(1); // Start attributes
+
+		while (true) {
+			var _at = reader.GetUChar();
+			if (_at === AscCommon.g_nodeAttributeEnd)
+				break;
+
+			switch (_at) {
+				case 0:
+					this.mapId = reader.GetULongLE();
+					break;
+				case 1:
+					this.xpath = reader.GetString2();
+					break;
+				case 2:
+					this.denormalized = reader.GetBool();
+					break;
+				case 3:
+					if (!this.xmlDataType) {
+						this.xmlDataType = {};
+					}
+					this.xmlDataType.val = reader.GetUChar();
+					break;
+			}
+		}
+
+		reader.Seek(_end_rec);
+		return this;
+	};
+
+	CXmlColumnPr.prototype.setXmlDataType = function(val) {
+		if (!this.xmlDataType) {
+			this.xmlDataType = {};
+		}
+		this.xmlDataType.val = val;
+	};
+
+	CXmlColumnPr.prototype.getXmlDataType = function() {
+		return this.xmlDataType ? this.xmlDataType.val : null;
+	};
+
+	function CXmlPr() {
+		this.mapId = null;
+		this.xpath = null;
+		this.xmlDataType = null;
+	}
+
+	CXmlPr.prototype.getType = function() {
+		return "et_x_xmlPr";
+	};
+
+	CXmlPr.prototype.fromXML = function(reader) {
+		while (reader.MoveToNextAttribute()) {
+			var name = reader.GetName();
+			if ("mapId" === name) {
+				this.mapId = reader.GetValue();
+			} else if ("xpath" === name) {
+				this.xpath = reader.GetValue();
+			} else if ("xmlDataType" === name) {
+				this.xmlDataType = reader.GetValue();
+			}
+		}
+	};
+
+	CXmlPr.prototype.toPPTY = function(writer) {
+		writer.WriteUChar(AscCommon.g_nodeAttributeStart);
+		writer._WriteUInt2(0, this.mapId);
+		writer._WriteString2(1, this.xpath);
+		if (this.xmlDataType != null) {
+			writer.WriteUChar(2);
+			writer.WriteUChar(this.xmlDataType);
+		}
+		writer.WriteUChar(AscCommon.g_nodeAttributeEnd);
+	};
+
+	CXmlPr.prototype.fromPPTY = function(reader) {
+		var _len = reader.GetULong();
+		var _start_pos = reader.cur;
+		var end = _len + _start_pos;
+
+		reader.GetUChar();
+
+		while (true) {
+			let at = reader.GetUChar();
+			if (at === AscCommon.g_nodeAttributeEnd)
+				break;
+
+			switch (at) {
+				case 0:
+					this.mapId = reader.GetULong();
+					break;
+				case 1:
+					this.xpath = reader.GetString();
+					break;
+				case 2:
+					this.xmlDataType = reader.GetUChar();
+					break;
+			}
+		}
+		reader.Seek(end);
+	};
+
+	function CXmlCellPr() {
+		this.uniqueName = null;
+		this.id = null;
+		this.xmlPr = null;
+	}
+
+	CXmlCellPr.prototype.getType = function() {
+		return "et_x_xmlCellPr";
+	};
+
+	CXmlCellPr.prototype.fromXML = function(reader) {
+		while (reader.MoveToNextAttribute()) {
+			var name = reader.GetName();
+			if ("uniqueName" === name) {
+				this.uniqueName = reader.GetValue();
+			} else if ("id" === name) {
+				this.id = reader.GetValue();
+			}
+		}
+
+		if (!reader.IsEmptyNode()) {
+			var depth = reader.GetDepth();
+			while (reader.ReadNextSiblingNode(depth)) {
+				var name = reader.GetNameNoNS();
+				if ("xmlPr" === name) {
+					this.xmlPr = new CXmlPr();
+					this.xmlPr.fromXML(reader);
+				}
+			}
+		}
+	};
+
+	CXmlCellPr.prototype.toPPTY = function(writer) {
+		writer.WriteUChar(AscCommon.g_nodeAttributeStart);
+		writer._WriteString2(0, this.uniqueName);
+		writer._WriteUInt2(1, this.id);
+		writer.WriteUChar(AscCommon.g_nodeAttributeEnd);
+
+		let oThis = this;
+		if (this.xmlPr) {
+			writer.WriteRecord2(0, writer, function(writer){
+				oThis.xmlPr.toPPTY(writer);
+			});
+		}
+	};
+
+	CXmlCellPr.prototype.fromPPTY = function(reader) {
+		var _len = reader.GetULong();
+		var _start_pos = reader.cur;
+		var end = _len + _start_pos;
+
+		while (true) {
+			let at = reader.GetUChar();
+			if (at === AscCommon.g_nodeAttributeEnd)
+				break;
+
+			switch (at) {
+				case 0:
+					this.uniqueName = reader.GetString();
+					break;
+				case 1:
+					this.id = reader.GetULong();
+					break;
+			}
+		}
+
+		while (reader.cur < end) {
+			let rec = reader.GetUChar();
+			switch (rec) {
+				case 0:
+					this.xmlPr = new CXmlPr();
+					this.xmlPr.fromPPTY(reader);
+					break;
+				default:
+					reader.SkipRecord();
+					break;
+			}
+		}
+		reader.Seek(end);
+	};
+
+	function CSingleXmlCell() {
+		this.connectionId = null;
+		this.id = null;
+		this.r = null;
+		this.xmlCellPr = null;
+	}
+
+	CSingleXmlCell.prototype.getType = function() {
+		return "et_x_SingleXmlCell";
+	};
+
+	CSingleXmlCell.prototype.fromXML = function(reader) {
+		while (reader.MoveToNextAttribute()) {
+			var name = reader.GetName();
+			if ("connectionId" === name) {
+				this.connectionId = reader.GetValue();
+			} else if ("id" === name) {
+				this.id = reader.GetValue();
+			} else if ("r" === name) {
+				this.r = reader.GetValue();
+			}
+		}
+
+		if (!reader.IsEmptyNode()) {
+			var depth = reader.GetDepth();
+			while (reader.ReadNextSiblingNode(depth)) {
+				if ("xmlCellPr" === reader.GetNameNoNS()) {
+					this.xmlCellPr = new CXmlCellPr();
+					this.xmlCellPr.fromXML(reader);
+				}
+			}
+		}
+	};
+
+	CSingleXmlCell.prototype.toPPTY = function(writer) {
+		writer.WriteUChar(AscCommon.g_nodeAttributeStart);
+		writer._WriteUInt2(0, this.connectionId);
+		writer._WriteUInt2(1, this.id);
+		writer._WriteString2(2, this.r);
+		writer.WriteUChar(AscCommon.g_nodeAttributeEnd);
+
+		let oThis = this;
+		if (this.xmlCellPr) {
+			writer.WriteRecord2(0, writer, function(writer){
+				oThis.xmlCellPr.toPPTY(writer);
+			});
+		}
+	};
+
+	CSingleXmlCell.prototype.fromPPTY = function(reader) {
+		var _len = reader.GetULong();
+		var _start_pos = reader.cur;
+		var end = _len + _start_pos;
+
+		reader.GetUChar();
+
+		while (true) {
+			let at = reader.GetUChar();
+			if (at === AscCommon.g_nodeAttributeEnd)
+				break;
+
+			switch (at) {
+				case 0:
+					this.connectionId = reader.GetULong();
+					break;
+				case 1:
+					this.id = reader.GetULong();
+					break;
+				case 2:
+					this.r = reader.GetString();
+					break;
+			}
+		}
+
+		while (reader.cur < end) {
+			let rec = reader.GetUChar();
+			switch (rec) {
+				case 0:
+					this.xmlCellPr = new CXmlCellPr();
+					this.xmlCellPr.fromPPTY(reader);
+					break;
+				default:
+					reader.SkipRecord();
+					break;
+			}
+		}
+		reader.Seek(end);
+	};
+
+	function CSingleXmlCells() {
+		this.items = [];
+	}
+
+	CSingleXmlCells.prototype.getType = function() {
+		return "et_x_SingleXmlCells";
+	};
+
+	CSingleXmlCells.prototype.fromXML = function(reader) {
+		if (!reader.IsEmptyNode()) {
+			var depth = reader.GetDepth();
+			while (reader.ReadNextSiblingNode(depth)) {
+				if ("singleXmlCell" === reader.GetNameNoNS()) {
+					var cell = new CSingleXmlCell();
+					cell.fromXML(reader);
+					this.items.push(cell);
+				}
+			}
+		}
+	};
+
+	CSingleXmlCells.prototype.toPPTY = function(writer) {
+		let oThis = this;
+		for (var i = 0; i < this.items.length; i++) {
+			writer.WriteRecord2(0, writer, function(writer){
+				oThis.items[i].toPPTY(writer);
+			});
+		}
+	};
+
+	CSingleXmlCells.prototype.fromPPTY = function(reader) {
+		var _len = reader.GetULong();
+		var _start_pos = reader.cur;
+		var end = _len + _start_pos;
+
+		//reader.GetUChar();
+
+		while (reader.cur < end) {
+			let rec = reader.GetUChar();
+			switch (rec) {
+				case 0:
+					var cell = new CSingleXmlCell();
+					cell.fromPPTY(reader);
+					this.items.push(cell);
+					break;
+				default:
+					reader.SkipRecord();
+					break;
+			}
+		}
+		reader.Seek(end);
+	};
+
+
 
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
@@ -19406,6 +20533,7 @@ function RangeDataManagerElem(bbox, data)
 	window["AscCommonExcel"].CT_Connection = CT_Connection;
 	window["AscCommonExcel"].CT_Filter = CT_Filter;
 
+	window["AscCommonExcel"].CChartExternalReference = CChartExternalReference;
 	window["AscCommonExcel"].ExternalReference = ExternalReference;
 	window["AscCommonExcel"].ExternalSheetDataSet = ExternalSheetDataSet;
 	window["AscCommonExcel"].ExternalRow = ExternalRow;
@@ -19583,7 +20711,9 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_getName"] = prot.asc_getName;
 	prot["asc_getIndex"] = prot.asc_getIndex;
 
-
+	window['AscCommonExcel'].CMapInfo = CMapInfo;
+	window['AscCommonExcel'].CXmlColumnPr = CXmlColumnPr;
+	window['AscCommonExcel'].CSingleXmlCells = CSingleXmlCells;
 
 
 })(window);

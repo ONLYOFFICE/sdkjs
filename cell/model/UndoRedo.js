@@ -3026,7 +3026,7 @@ function (window, undefined) {
 					wb.delDefinesNamesUndoRedo(oldName);
 					wb.handlers.trigger("asc_onDelDefName")
 				} else {
-					wb.editDefinesNamesUndoRedo(oldName, newName);
+					wb.editDefinesNamesUndoRedo(oldName, newName, true);
 					wb.handlers.trigger("asc_onEditDefName", oldName, newName);
 				}
 				// clear traces
@@ -3052,7 +3052,7 @@ function (window, undefined) {
 			var externalReferenceIndex;
 
 			if (from && !to) {//удаление
-				from.initWorksheetsFromSheetDataSet();
+				from.initExternalReference();
 				/* the first call is a search by referenceData, if we get null, we make a second call to search by Id below and then add or re-assign the link */
 				externalReferenceIndex = wb.getExternalReferenceByReferenceData(from.referenceData, true);
 				if (!externalReferenceIndex) {
@@ -3083,8 +3083,23 @@ function (window, undefined) {
 				}
 
 				if (externalReferenceIndex !== null) {
+					for (let ws in to.worksheets) {
+						let externalSheet = to.worksheets[ws];
+						if (externalSheet) {
+							let externalSheetId = externalSheet.getId();
+							wb.dependencyFormulas.forEachSheetListeners(externalSheetId, function (parsed) {
+								let cell = parsed && parsed.parent;
+								if (cell && cell && cell.nCol != null && cell.nRow != null) {
+									// endListeningRange for previous external source
+									let bbox = new Asc.Range(cell.nCol, cell.nRow, cell.nCol, cell.nRow);
+									parsed._buildDependenciesRef(externalSheetId, bbox, null, null);
+								}
+							});
+						}
+					}
+
 					from.worksheets = wb.externalReferences[externalReferenceIndex - 1].worksheets;
-					from.initWorksheetsFromSheetDataSet();
+					from.initExternalReference();
 					from.putToChangedCells();
 					wb.externalReferences[externalReferenceIndex - 1] = from;
 				}
@@ -5819,10 +5834,9 @@ function (window, undefined) {
 		}
 
 		var collaborativeEditing = this.wb.oApi.collaborativeEditing;
-		var cfRule = oModel.getCFRuleById(Data.id);
-		if (cfRule && cfRule.val) {
+		let cfRule = oModel.getCFRuleById(Data.id, true)
+		if (cfRule) {
 			var value = bUndo ? Data.from : Data.to;
-			cfRule = cfRule.val;
 
 			switch (Type) {
 				case AscCH.historyitem_CFRule_SetAboveAverage: {

@@ -424,13 +424,6 @@ ParaFieldChar.prototype.IsValid = function()
 	var oRun = this.GetRun();
 	return (oRun && oRun.IsUseInDocument() && -1 !== oRun.GetElementPosition(this));
 };
-ParaFieldChar.prototype.RemoveThisFromDocument = function()
-{
-	var oRun = this.GetRun();
-	var nInRunPos = oRun.GetElementPosition(this);
-	if (-1 !== nInRunPos)
-		oRun.RemoveFromContent(nInRunPos, 1);
-};
 ParaFieldChar.prototype.PreDelete = function()
 {
 	if (this.LogicDocument && this.ComplexField)
@@ -570,6 +563,7 @@ ParaInstrText.prototype.GetReplacementItem = function()
 {
 	return this.Replacement;
 };
+AscWord.ParaInstrText = ParaInstrText;
 
 function CComplexField(logicDocument)
 {
@@ -584,6 +578,7 @@ function CComplexField(logicDocument)
 
 	this.InstructionLineSrc = "";
 	this.InstructionCF      = [];
+	this.InstructionItems   = [];
 
 	this.StartUpdate = false;
 }
@@ -616,6 +611,7 @@ CComplexField.prototype.SetInstruction = function(oParaInstr)
 {
 	this.InstructionLine += oParaInstr.GetValue();
 	this.InstructionLineSrc += oParaInstr.GetValue();
+	this.InstructionItems.push(oParaInstr);
 };
 CComplexField.prototype.SetInstructionCF = function(oCF)
 {
@@ -654,6 +650,7 @@ CComplexField.prototype.SetBeginChar = function(oChar)
 
 	this.InstructionLineSrc = "";
 	this.InstructionCF      = [];
+	this.InstructionItems   = [];
 };
 CComplexField.prototype.SetEndChar = function(oChar)
 {
@@ -1995,6 +1992,11 @@ CComplexField.prototype.RemoveFieldChars = function()
 
 	if (this.SeparateChar)
 		this.SeparateChar.RemoveThisFromDocument();
+	
+	for (let i = this.InstructionItems.length - 1; i >= 0; --i)
+	{
+		this.InstructionItems[i].RemoveThisFromDocument();
+	}
 };
 /**
  * Выставляем свойства для данного поля
@@ -2021,7 +2023,8 @@ CComplexField.prototype.SetPr = function(oPr)
 
 	var oRun      = this.BeginChar.GetRun();
 	var nInRunPos = oRun.GetElementPosition(this.BeginChar) + 1;
-	oRun.AddInstrText(sNewInstruction, nInRunPos);
+	
+	this.InstructionItems = oRun.AddInstrText(sNewInstruction, nInRunPos);
 };
 /**
  * Изменяем строку инструкции у поля
@@ -2041,12 +2044,13 @@ CComplexField.prototype.ChangeInstruction = function(sNewInstruction)
 
 	var oRun      = this.BeginChar.GetRun();
 	var nInRunPos = oRun.GetElementPosition(this.BeginChar) + 1;
-	oRun.AddInstrText(sNewInstruction, nInRunPos);
+	let items     = oRun.AddInstrText(sNewInstruction, nInRunPos);
 
 	this.Instruction        = null;
 	this.InstructionLine    = sNewInstruction;
 	this.InstructionLineSrc = sNewInstruction;
 	this.InstructionCF      = [];
+	this.InstructionItems   = items;
 	this.private_UpdateInstruction();
 };
 CComplexField.prototype.CheckType = function(type)

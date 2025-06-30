@@ -594,7 +594,7 @@
 	/**
 	 * Creates a new custom function.
 	 * The description of the function parameters and result is specified using JSDoc. The <em>@customfunction</em> tag is required in JSDoc.
-	 * Parameters and results can be specified as the <em>number / string / boolean / any / number[][] / string[][] / bobooleanol[][] / any[][]</em> types.
+	 * Parameters and results can be specified as the <em>number / string / boolean / any / number[][] / string[][] / boolean[][] / any[][]</em> types.
 	 * Parameters can be required or optional. A user can also set a default value.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
@@ -8029,6 +8029,32 @@
 
 		return oDocInfo;
 	};
+
+	/**
+	 * Returns the core properties interface for the workbook.
+	 * This method is used to view or modify standard metadata such as title, author, and keywords.
+	 * @memberof Api
+	 * @returns {ApiCore}
+	 * @typeofeditors ["CSE"]
+	 * @since 9.0.0
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetCore.js
+	 */
+	Api.prototype.GetCore = function () {
+		return new AscBuilder.ApiCore(this.wbModel.Core);
+	};
+
+	/**
+	 * Returns the workbook custom properties.
+	 * @memberof Api
+	 * @returns {ApiCustomProperties}
+	 * @typeofeditors ["CSE"]
+	 * @since 9.0.0
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetCustomProperties.js
+	 */
+	Api.prototype.GetCustomProperties = function () {
+		return new AscBuilder.ApiCustomProperties(this.wbModel.CustomProperties);
+	};
+
 	/**
 	 * Returns the state of sheet visibility.
 	 * @memberof ApiWorksheet
@@ -11841,11 +11867,12 @@
 	};
 
 	/**
-	 * Sets the array formula of a range
+	 * Sets an array formula to the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {string | boolean | number} data - The general value for the cell or cell range.
-	 * @returns {boolean} - returns false if such a range does not exist.
+	 * @returns {boolean} - Returns false if such a range does not exist.
+	 * @since 9.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFormulaArray.js
 	 */
 	ApiRange.prototype.SetFormulaArray = function (data) {
@@ -11878,10 +11905,11 @@
 	};
 
 	/**
-	 * Returns the array formula of a range
+	 * Returns an array formula from the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {string | null}
+	 * @since 9.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetFormulaArray.js
 	 */
 	ApiRange.prototype.GetFormulaArray = function () {
@@ -12096,9 +12124,10 @@
 	/**
      * Sets the rotation angle to the current drawing object.
      * @memberof ApiDrawing
-     * @param {number} nRotAngle - new drawing rot angle
+     * @param {number} nRotAngle - New drawing rotation angle.
      * @typeofeditors ["CSE"]
      * @returns {boolean}
+	 * @since 9.0.0
      * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetRotation.js
 	 */
 	ApiDrawing.prototype.SetRotation = function(nRotAngle)
@@ -12112,10 +12141,11 @@
 		return true;
 	};
 	/**
-     * Gets the rotation angle of the current drawing object.
+     * Returns the rotation angle of the current drawing object.
      * @memberof ApiDrawing
      * @typeofeditors ["CSE"]
      * @returns {number}
+	 * @since 9.0.0
      * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetRotation.js
 	 */
 	ApiDrawing.prototype.GetRotation = function()
@@ -17727,6 +17757,8 @@
 	Api.prototype["SetFreezePanesType"] = Api.prototype.SetFreezePanesType;
 	Api.prototype["GetFreezePanesType"] = Api.prototype.GetFreezePanesType;
 	Api.prototype["GetDocumentInfo"] = Api.prototype.GetDocumentInfo;
+	Api.prototype["GetCore"] = Api.prototype.GetCore;
+	Api.prototype["GetCustomProperties"] = Api.prototype.GetCustomProperties;
 
 	Api.prototype["AddCustomFunction"] = Api.prototype.AddCustomFunction;
 	Api.prototype["RemoveCustomFunction"] = Api.prototype.RemoveCustomFunction;
@@ -17868,6 +17900,8 @@
 	ApiRange.prototype["PasteSpecial"] = ApiRange.prototype.PasteSpecial;
 	ApiRange.prototype["GetPivotTable"] = ApiRange.prototype.GetPivotTable;
 	ApiRange.prototype["SetAutoFilter"] = ApiRange.prototype.SetAutoFilter;
+	ApiRange.prototype["SetFormulaArray"] = ApiRange.prototype.SetFormulaArray;
+	ApiRange.prototype["GetFormulaArray"] = ApiRange.prototype.GetFormulaArray;
 
 
 

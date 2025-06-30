@@ -912,8 +912,10 @@
                         oBrush.fill.srcRect.b = this.getValBetween(b1, b2);
                     }
 
-                    const dTransparent1 = isN(oBrush1.transparent) ? oBrush1.transparent : 255;
-                    const dTransparent2 = isN(oBrush2.transparent) ? oBrush2.transparent : 255;
+                    let dTransparent1 = oBrush1.fill.getTransparent();
+										dTransparent1 = dTransparent1 === null ? 255 : dTransparent1;
+                    let dTransparent2 = oBrush2.fill.getTransparent();
+	                dTransparent2 = dTransparent2 === null ? 255 : dTransparent2;
                     const dTransparent = this.getValBetween(dTransparent1, dTransparent2);
                     oBrush.transparent = dTransparent;
                     return oBrush;

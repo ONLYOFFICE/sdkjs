@@ -758,8 +758,36 @@ $(function () {
 		ws.getRange2("A2").setValue('=importrange(\"http://localhost/editor?fileName=new%20(51).xlsx\",\"Sheet1!A2\"');
 		assert.strictEqual(wb.externalReferences.length, 1, 'IMPORTRANGE_1_external_reference_length_after_remove_value');
 
-		ws.getRange2("A2").setValue("1");
-		assert.strictEqual(wb.externalReferences.length, 0, 'IMPORTRANGE_1_external_reference_length_after_remove_value');
+		// change source of reference
+
+		let fromER = wb.externalReferences[0];
+		let fromERWorksheetName = fromER.SheetNames && fromER.SheetNames[0];
+		let fromERWorksheet = fromER.worksheets && fromER.worksheets[fromERWorksheetName];
+		let fromERId = fromER.Id;
+		let toER = fromER.clone(true);
+		let index = wb.getExternalLinkIndexByName(fromERId);
+		toER.setId("new (104).xlsx");
+
+		ws.getRange2("A2").setValue('=importrange(\"http://localhost/editor?fileName=new%20(51).xlsx\",\"Sheet1!A2\"');
+		ws.getRange2("B2").setValue('=importrange(\"http://localhost/editor?fileName=new%20(51).xlsx\",\"A3\"');
+		ws.getRange2("C2").setValue('=importrange(\"http://localhost/editor?fileName=new%20(51).xlsx\",\"A4\"');
+
+		assert.strictEqual(ws.getRange2("A2").getValueForEdit(), '=IMPORTRANGE("http://localhost/editor?fileName=new%20(51).xlsx","Sheet1!A2")', 'Import range function in A2 before source change');
+		assert.strictEqual(ws.getRange2("B2").getValueForEdit(), '=IMPORTRANGE("http://localhost/editor?fileName=new%20(51).xlsx","A3")', 'Import range function in B2 before source change');
+		assert.strictEqual(ws.getRange2("C2").getValueForEdit(), '=IMPORTRANGE("http://localhost/editor?fileName=new%20(51).xlsx","A4")', 'Import range function in C2 before source change');
+		assert.ok(Object.keys(wb.dependencyFormulas.sheetListeners[fromERWorksheet.Id].areaMap).length > 0, 'Listeners count in dep. formula before change source');
+
+
+		wb.changeExternalReference(index, toER);
+		assert.ok(Object.keys(wb.dependencyFormulas.sheetListeners[fromERWorksheet.Id].areaMap).length === 0, 'Listeners count in dep. formula after change source');
+
+		assert.strictEqual(ws.getRange2("A2").getValueForEdit(), '=IMPORTRANGE("new (104).xlsx","Sheet1!A2")', 'Import range function after source change');
+		assert.strictEqual(ws.getRange2("B2").getValueForEdit(), '=IMPORTRANGE("new (104).xlsx","A3")', 'Import range function in B2 after source change');
+		assert.strictEqual(ws.getRange2("C2").getValueForEdit(), '=IMPORTRANGE("new (104).xlsx","A4")', 'Import range function in C2 after source change');
+
+		// remove changed reference
+		wb.removeExternalReferences([wb.externalReferences[0].getAscLink()]);
+		assert.strictEqual(wb.externalReferences.length, 0, 'IMPORTRANGE_1_external_reference_length_after_remove_er');
 	});
 
 	QUnit.test("Test: \"add/remove external reference\"", function (assert) {

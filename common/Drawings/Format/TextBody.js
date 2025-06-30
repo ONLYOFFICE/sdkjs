@@ -457,15 +457,19 @@
     };
     CTextBody.prototype.checkContentFit = function(sText) {
         var oContent = this.content;
-        if(!oContent.Is_Empty()) {
-            var oFirstPara = oContent.Content[0];
-            oFirstPara.Content = [oFirstPara.Content[oFirstPara.Content.length - 1]];
-        }
-        AscFormat.AddToContentFromString(oContent, sText);
+        this.replaceContentFitText(sText);
         AscFormat.CShape.prototype.recalculateContent.call(this.parent);
         var oFirstParagraph = oContent.Content[0];
         return oFirstParagraph.Lines.length === 1;
     };
+	CTextBody.prototype.replaceContentFitText = function (sText) {
+		var oContent = this.content;
+		if(!oContent.Is_Empty()) {
+			var oFirstPara = oContent.Content[0];
+			oFirstPara.Content = [oFirstPara.Content[oFirstPara.Content.length - 1]];
+		}
+		AscFormat.AddToContentFromString(oContent, sText);
+	};
     CTextBody.prototype.recalculateOneString = function(sText) {
         if(this.checkContentFit(sText)) {
             this.bFit = true;

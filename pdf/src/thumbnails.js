@@ -55,27 +55,35 @@
 
         isDrawCurrentRect : true,
         drawCurrentColor : "#888888",
-        drawCurrentWidth : 2
+        drawCurrentWidth : 2,
+
+        oldRetinaPixelRatio : 0,
+        numberFontHeightValue : 7
     };
 
     var ThumbnailsStyle = {
         backgroundColor : "#F1F1F1"
     };
 
-    PageStyle.numberFontHeight = (function(){
+    PageStyle.numberFontHeight = function() {
         if (window["NATIVE_EDITOR_ENJINE"])
             return 7;
+
+        if (Math.abs(this.oldRetinaPixelRatio - AscCommon.AscBrowser.retinaPixelRatio) < 0.01)
+            return this.numberFontHeightValue;
+
+        this.oldRetinaPixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
+
         var testCanvas = document.createElement("canvas");
         var w = 100;
         var h = 100;
         testCanvas.width = w;
         testCanvas.height = h;
         var ctx = testCanvas.getContext("2d");
-        ctx.font = PageStyle.numberFont;
         ctx.fillStyle = "#FFFFFF";
         ctx.fillRect(0, 0, w, h);
         ctx.fillStyle = "#000000";
-        ctx.font = PageStyle.numberFont;
+        ctx.font = PageStyle.font();
         ctx.fillText("123456789", 0, h);
         var pixels = ctx.getImageData(0, 0, w, h).data;
         var index = 0;
@@ -91,8 +99,9 @@
                 break;
             index += 4;
         }
-        return h - ((index / (4 * w)) >> 0);
-    })();
+        this.numberFontHeightValue = h - ((index / (4 * w)) >> 0);
+        return this.numberFontHeightValue;
+    };
 
     PageStyle.font = function()
     {
@@ -201,7 +210,9 @@
             ctx.strokeRect(pixX + offsetW, pixY + offsetW, pixR - pixX - 2 * offsetW, pixB - pixY - 2 * offsetW);
         }
 
+        ctx.font = PageStyle.font();
         ctx.fillStyle = PageStyle.numberColor;
+        ctx.textAlign = "center";
         ctx.fillText("" + (this.num + 1), this.numRect.x + this.numRect.w / 2, this.numRect.y + this.numRect.h - offsetV);
     };
 
@@ -213,58 +224,89 @@
         this.bottom;
     }
 
-    CBlock.prototype.getHeight = function(columnW, startOffset, betweenPages, zoom)
-    {
+    CBlock.prototype.getHeight = function(columnW, startOffset, betweenPages, zoom) {
+        let oDoc = Asc.editor.getPDFDoc();
+        let oThumnails = oDoc.GetThumbnails();
         let oViewer = Asc.editor.getDocumentRenderer();
+        let EPS = 1e-3;
 
-        var maxPageHeight = 0;
-        for (var i = 0, len = this.pages.length; i < len; i++)
-        {
-            let isLandscape = oViewer.isLandscapePage(this.pages[i].num);
+        // Height reserved for the page number label
+        let numberBlockH = AscCommon.AscBrowser.convertToRetinaValue(PageStyle.numberFontOffset, true) 
+                        + PageStyle.numberFontHeight();
 
-            if (isLandscape) {
-                if (this.pages[i].page.width > maxPageHeight)
-                    maxPageHeight = this.pages[i].page.width;
-            }
-            else {
-                if (this.pages[i].page.height > maxPageHeight)
-                    maxPageHeight = this.pages[i].page.height;
+        // First pass: find the maximum “oriented” height among all pages
+        let maxOrig = 0;
+        for (let i = 0; i < oThumnails.pages.length; i++) {
+            let drPage = oThumnails.pages[i];
+            let isLandscape = oViewer.isLandscapePage(drPage.num);
+            let origH = isLandscape ? drPage.width : drPage.height;
+            if (origH > maxOrig) {
+                maxOrig = origH;
             }
         }
 
-        var blockHeight = (maxPageHeight * zoom) >> 0;
-        var numberBlockH = AscCommon.AscBrowser.convertToRetinaValue(PageStyle.numberFontOffset + PageStyle.numberFontHeight, true);
-        blockHeight += numberBlockH;
+        // Second pass: compute each page’s rendered width/height (pW, pH),
+        // and track blockHeightRaw (max pH) and blockHeight (max (pH + numberBlockH))
+        let blockHeightRaw = 0;
+        let blockHeight = 0;
+        let sizes = new Array(this.pages.length);
+        for (let j = 0; j < this.pages.length; j++) {
+            let drPage = this.pages[j];
+            let isLandscape = oViewer.isLandscapePage(drPage.num);
 
-        var currentPosX = startOffset;
-        for (var i = 0, len = this.pages.length; i < len; i++)
-        {
-            let oViewer = Asc.editor.getDocumentRenderer();
-            let isLandscape = oViewer.isLandscapePage(this.pages[i].num);
-
-            var drPage = this.pages[i];
-            var pW = (drPage.page.width * zoom) >> 0;
-            var pH = (drPage.page.height * zoom) >> 0;
-            if (isLandscape)
-            {
-                let tmp = pW;
-                pW = pH;
-                pH = tmp;
+            // Compute scale so that all pages align by their largest side
+            let localScale = maxOrig / drPage.page.height;
+            if (Math.abs(localScale - 1) < EPS) {
+                localScale = 1;
             }
 
-            var curPageHeight = pH + PageStyle.numberFontOffset + PageStyle.numberFontHeight;
+            let s = localScale * zoom;
+            let rawW = drPage.page.width * s;
+            let rawH = drPage.page.height * s;
 
-            drPage.pageRect.y = this.top + ((blockHeight - curPageHeight) >> 1);
-            drPage.pageRect.h = pH;
-            drPage.pageRect.x = currentPosX + ((columnW - pW) >> 1);
-            drPage.pageRect.w = pW;
+            // Swap dimensions if page is landscape
+            if (isLandscape) {
+                let tmp = rawW;
+                rawW = rawH;
+                rawH = tmp;
+            }
 
-            drPage.numRect.y = (drPage.pageRect.y + drPage.pageRect.h);
+            // Floor to integer
+            let pW = rawW | 0;
+            let pH = rawH | 0;
+            sizes[j] = { w: pW, h: pH };
+
+            if (pH > blockHeightRaw) {
+                blockHeightRaw = pH;
+            }
+            let combinedH = pH + numberBlockH;
+            if (combinedH > blockHeight) {
+                blockHeight = combinedH;
+            }
+        }
+
+        // Third pass: set the pageRect and numRect for each page
+        let currentPosX = startOffset;
+        for (let k = 0; k < this.pages.length; k++) {
+            let drPage = this.pages[k];
+            let pW3 = sizes[k].w;
+            let pH3 = sizes[k].h;
+
+            // Center vertically within blockHeightRaw
+            drPage.pageRect.y = this.top + ((blockHeightRaw - pH3) >> 1);
+            drPage.pageRect.h = pH3;
+
+            // Center horizontally within the column width
+            drPage.pageRect.x = currentPosX + ((columnW - pW3) >> 1);
+            drPage.pageRect.w = pW3;
+
+            // Place page number label directly below the thumbnail
+            drPage.numRect.y = drPage.pageRect.y + pH3;
             drPage.numRect.h = numberBlockH;
             drPage.numRect.x = drPage.pageRect.x;
-            drPage.numRect.w = drPage.pageRect.w;
+            drPage.numRect.w = pW3;
 
-            currentPosX += (columnW + betweenPages);
+            currentPosX += columnW + betweenPages;
         }
 
         return blockHeight;
@@ -385,8 +427,8 @@
 
         var parent = document.getElementById(this.id);
         var elements = "";
-        elements += "<canvas id=\"id_viewer_th\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
-        elements += "<canvas id=\"id_overlay_th\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
+        elements += "<canvas id=\"id_viewer_th\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;touch-action:none;-ms-touch-action: none;-webkit-user-select: none;\"></canvas>";
+        elements += "<canvas id=\"id_overlay_th\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;touch-action:none;-ms-touch-action: none;-webkit-user-select: none;\"></canvas>";
         elements += "<div id=\"id_vertical_scroll_th\" class=\"block_elem\" style=\"display:none;left:0px;top:0px;width:0px;height:0px;\"></div>";
         elements += '<canvas id="id_drag_canvas" style="position:absolute;display:none;z-index:999;pointer-events:none;"></canvas>';
 
@@ -555,23 +597,28 @@
                     oImage = this.viewer.GetPageForThumbnails(needPage.num, needPage.pageRect.w, needPage.pageRect.h);
                 }
 
-                // Создание нового canvas с изменёнными размерами
-                const rotatedCanvas = document.createElement('canvas');
-                rotatedCanvas.width = needPage.pageRect.w;
-                rotatedCanvas.height = needPage.pageRect.h;
-                const rotatedContext = rotatedCanvas.getContext('2d');
-                
-                // Поворот canvas
-                rotatedContext.save();
-                rotatedContext.translate(rotatedCanvas.width / 2 >> 0, rotatedCanvas.height / 2 >> 0);
-                rotatedContext.rotate(angle * Math.PI / 180);
-                rotatedContext.drawImage(oImage, -oImage.width / 2 >> 0, -oImage.height / 2 >> 0);
-                rotatedContext.restore();
+                if (0 === angle)
+                {
+                    needPage.page.image = oImage;
+                } else {
+                    // Создание нового canvas с изменёнными размерами
+                    const rotatedCanvas = document.createElement('canvas');
+                    rotatedCanvas.width = needPage.pageRect.w;
+                    rotatedCanvas.height = needPage.pageRect.h;
+                    const rotatedContext = rotatedCanvas.getContext('2d');
 
-                rotatedCanvas.requestWidth = rotatedCanvas.width;
-                rotatedCanvas.requestHeight = rotatedCanvas.height;
+                    // Поворот canvas
+                    rotatedContext.save();
+                    rotatedContext.translate(rotatedCanvas.width / 2 >> 0, rotatedCanvas.height / 2 >> 0);
+                    rotatedContext.rotate(angle * Math.PI / 180);
+                    rotatedContext.drawImage(oImage, -oImage.width / 2 >> 0, -oImage.height / 2 >> 0);
+                    rotatedContext.restore();
 
-                needPage.page.image = rotatedCanvas;
+                    rotatedCanvas.requestWidth = rotatedCanvas.width;
+                    rotatedCanvas.requestHeight = rotatedCanvas.height;
+
+                    needPage.page.image = rotatedCanvas;
+                }
 
                 needPage.page.needRedraw = false;
                 this.isRepaint = true;
@@ -688,8 +735,8 @@
         AscCommon.calculateCanvasSize(this.canvasOverlay);
 
         var canvasBounds = this.canvas.getBoundingClientRect();
-        this.coordsOffset.x = canvasBounds ? canvasBounds.left : 0;
-        this.coordsOffset.y = canvasBounds ? canvasBounds.top : 0;
+        this.coordsOffset.x = canvasBounds ? canvasBounds.left * AscCommon.AscBrowser.zoom : 0;
+        this.coordsOffset.y = canvasBounds ? canvasBounds.top * AscCommon.AscBrowser.zoom : 0;
 
         var scrollV = document.getElementById("id_vertical_scroll_th");
         scrollV.style.display = "none";
@@ -999,7 +1046,7 @@
             // Вместо выбора страницы - просто запомним, что было нажато.
             this._mouseDownPage  = dp.num;
             this._shiftPressed   = e.shiftKey;
-            this._ctrlPressed    = e.ctrlKey;
+            this._ctrlPressed    = e.ctrlKey || e.metaKey;
     
             // Готовимся к потенциальному drag&drop
             this.pendingDrag = true;
@@ -1009,7 +1056,6 @@
         }
     
         AscCommon.stopEvent(e);
-        Asc.editor.getPDFDoc().UpdateCopyCutState();
         
         return false;
     };
@@ -1032,7 +1078,7 @@
                 if (!this.selectedPages.includes(dp.num)) {
                     this.resetSelection();
                     this.selectedPages.push(dp.num);
-                    this.viewer.navigateToPage(dp.num);
+                    this.viewer.navigateToPage(dp.num, undefined, this.viewer.scrollMaxX / 2);
                 }
 
                 this.prepareDragGhost(dp, this.selectedPages.length);
@@ -1096,7 +1142,7 @@
                     selected = [this.dragPageIndex];
                 }
                 // Сортируем и убираем дубли, если нужно
-                selected = Array.from(new Set(selected)).sort((a, b) => a - b);
+                selected = Array.from(new Set(selected)).sort(function(a, b) { return a - b });
     
                 this.reorderPagesMultiple(selected, this.dropInsertPosition);
             }
@@ -1123,16 +1169,17 @@
                     let idx = this.selectedPages.indexOf(dp.num);
                     if (idx === -1) {
                         this.selectedPages.push(dp.num);
-                    } else {
+                        this.repaint();
+                    } else if (this.selectedPages.length > 1) {
                         this.selectedPages.splice(idx, 1);
+                        this.repaint();
                     }
-                    this.repaint();
                 } else {
                     // Обычный клик без модификаторов
                     if (!this.selectedPages.includes(dp.num) || this.selectedPages.length > 1) {
                         this.resetSelection();
                         this.selectedPages.push(dp.num);
-                        this.viewer.navigateToPage(dp.num);
+                        this.viewer.navigateToPage(dp.num, undefined, this.viewer.scrollMaxX / 2);
                         this.repaint();
                     }
                 }
@@ -1159,87 +1206,104 @@
         this._ctrlPressed = false;
     
         if (e && e.preventDefault) e.preventDefault();
+
+        const oDoc = Asc.editor.getPDFDoc();
+        oDoc.UpdateInterface();
         return false;
+    };
+
+    CDocument.prototype.selectAll = function() {
+        this.resetSelection();
+        
+        for (let i = 0; i < this.pages.length; i++) {
+            this.selectedPages.push(i);
+        }
+
+        this.repaint();
     };
     
     // Create "ghost" for dragging
     CDocument.prototype.prepareDragGhost = function(dp, countPages) {
         if (!this.dragCanvas) return;
-    
-        // Reduce the "ghost" to 70% of the original page size
-        let w = dp.pageRect.w * 0.7;
-        let h = dp.pageRect.h * 0.7;
-    
-        this.dragCanvas.width  = w + 15;
-        this.dragCanvas.height = h + 15;
-        this.dragCanvas.style.display = "block";
-    
-        // Set opacity
-        this.dragCanvas.style.opacity = 0.95;
 
-        // Clear the canvas
-        this.dragCtx.clearRect(0, 0, this.dragCanvas.width, this.dragCanvas.height);
-    
-        // If a stack of pages needs to be created
-        if (countPages && countPages > 1) {
-            let offsets = [];
-            if (countPages === 2) {
-                // For two pages — one additional copy
-                offsets.push({ x: 5, y: 5 });
-            } else if (countPages >= 3) {
-                // For three or more — two additional copies
-                offsets.push({ x: 10, y: 10 });
-                offsets.push({ x: 5, y: 5 });
-            }
-    
-            // Draw additional copies (background pages)
-            for (let offset of offsets) {
-                this.dragCtx.fillStyle = PageStyle.emptyColor;
-                this.dragCtx.fillRect(offset.x, offset.y, w, h);
-                this.dragCtx.strokeRect(offset.x, offset.y, w, h);
-            }
-        }
-    
-        // Draw the main page on top (without offset)
+        // 1. Compute target size in device pixels (includes browser zoom/Retina)
+        const devW  = dp.pageRect.w * 0.8;
+        const devH  = dp.pageRect.h * 0.8;
+        // 2. Convert to CSS pixels so the element stays the same on-screen
+        const ratio = AscCommon.AscBrowser.retinaPixelRatio;
+        const cssW  = devW  / ratio >> 0;
+        const cssH  = devH  / ratio >> 0;
+        const pad   = 15;  // extra padding for borders, etc.
+
+        // 3. Set up canvas buffer at full resolution, but CSS size at logical pixels
+        this.dragCanvas.width  = (cssW + pad) * ratio;
+        this.dragCanvas.height = (cssH + pad) * ratio;
+        this.dragCanvas.style.width  = (cssW + pad) + "px";
+        this.dragCanvas.style.height = (cssH + pad) + "px";
+        this.dragCanvas.style.opacity = 0.95;
+        this.dragCanvas.style.display = "block";
+
+        // 4. Reset any transforms and scale context so draws use CSS coordinates
+        const ctx = this.dragCtx;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(ratio, ratio);
+        ctx.clearRect(0, 0, cssW + pad, cssH + pad);
+        ctx.imageSmoothingEnabled = false;
+
+        // 5. Draw background pages for stack effect
+        const offsets = countPages > 2
+            ? [{ x: 10, y: 10 }, { x: 5, y: 5 }]
+            : countPages === 2
+            ? [{ x: 5, y: 5 }]
+            : [];
+        offsets.forEach(function(off) {
+            ctx.fillStyle = PageStyle.emptyColor;
+            ctx.fillRect(off.x, off.y, cssW, cssH);
+            ctx.strokeRect(off.x, off.y, cssW, cssH);
+        });
+
+        // 6. Draw the main page image or placeholder
         if (dp.page.image) {
-            this.dragCtx.drawImage(dp.page.image, 0, 0, w, h);
-        } else {
-            this.dragCtx.fillStyle = PageStyle.emptyColor;
-            this.dragCtx.fillRect(0, 0, w, h);
-        }
-        this.dragCtx.strokeRect(0, 0, w, h);
-    
-        // If more than one page is being dragged, display text with the number of pages
-        if (countPages && countPages > 1) {
-            let text = countPages + " pages";
-            let fontSize = 16; // can be parsed from ctx.font
-            this.dragCtx.font = fontSize + "px Arial";
-    
-            // Calculate text dimensions
-            let metrics = this.dragCtx.measureText(text);
-            let textWidth = metrics.width;
-            let textHeight = fontSize;
-            let textX = (w - textWidth) / 2;
-            let textY = (h - textHeight);
-            let padding = 4;
-            let centerX = w / 2;
-    
-            // Draw background for text
-            this.dragCtx.fillStyle = "rgba(255, 255, 255, 1)";
-            this.dragCtx.fillRect(
-                centerX - textWidth / 2 - padding,
-                textY - textHeight,
-                textWidth + padding * 2,
-                textHeight + padding * 2
+            ctx.drawImage(
+                dp.page.image,
+                0, 0, dp.page.image.width, dp.page.image.height,
+                0, 0, cssW, cssH
             );
-    
-            // Draw text
-            this.dragCtx.fillStyle = "rgba(0, 0, 0, 1)";
-            this.dragCtx.fillText(text, textX, textY);
         }
-    
-        // Move the "ghost" to the cursor position
-        this.moveDragGhost(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+        else {
+            ctx.fillStyle = PageStyle.emptyColor;
+            ctx.fillRect(0, 0, cssW, cssH);
+        }
+        ctx.strokeRect(0, 0, cssW, cssH);
+
+        // 7. If multiple pages, overlay count text centered at bottom
+        if (countPages > 1) {
+            const text     = `${countPages} pages`;
+            const fontSize = 16;
+            ctx.font       = `${fontSize}px Arial`;
+            const m        = ctx.measureText(text);
+            const tx       = (cssW - m.width) / 2;
+            const ty       = cssH - fontSize;
+            const textPad  = 4;
+
+            // white background for text
+            ctx.fillStyle = "rgba(255,255,255,1)";
+            ctx.fillRect(
+                (cssW / 2) - m.width / 2 - textPad,
+                ty - fontSize,
+                m.width + textPad * 2,
+                fontSize + textPad * 2
+            );
+            // draw the text
+            ctx.fillStyle = "rgba(0,0,0,1)";
+            ctx.fillText(text, tx, ty);
+        }
+
+        // 8. Finally, position the ghost at the current mouse coordinates
+        this.moveDragGhost(
+            AscCommon.global_mouseEvent.X,
+            AscCommon.global_mouseEvent.Y
+        );
     };
     
     CDocument.prototype.moveDragGhost = function(mx, my) {
@@ -1278,7 +1342,7 @@
 
         oDoc.DoAction(function() {
 			oDoc.MovePages(selectedIndices, toIndex);
-            oDoc.Viewer.navigateToPage(toIndex);
+            oDoc.Viewer.navigateToPage(toIndex, undefined, oDoc.Viewer.scrollMaxX / 2);
 
         }, AscDFH.historydescription_Pdf_MovePage, null, aToCheckLock);
     };
@@ -1347,11 +1411,11 @@
 
         // здесь - имитируем моус мув ---------------------------
         var _e   = {};
-        _e.pageX = AscCommon.global_mouseEvent.X;
-        _e.pageY = AscCommon.global_mouseEvent.Y;
+        _e.pageX = AscCommon.global_mouseEvent.X / AscCommon.AscBrowser.zoom;
+        _e.pageY = AscCommon.global_mouseEvent.Y / AscCommon.AscBrowser.zoom;
 
-        _e.clientX = AscCommon.global_mouseEvent.X;
-        _e.clientY = AscCommon.global_mouseEvent.Y;
+        _e.clientX = AscCommon.global_mouseEvent.X / AscCommon.AscBrowser.zoom;
+        _e.clientY = AscCommon.global_mouseEvent.Y / AscCommon.AscBrowser.zoom;
 
         _e.altKey   = AscCommon.global_mouseEvent.AltKey;
         _e.shiftKey = AscCommon.global_mouseEvent.ShiftKey;

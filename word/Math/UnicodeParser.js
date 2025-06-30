@@ -167,7 +167,7 @@
 		if (this.oLookahead.class === Literals.of.id)
 		{
 			oOfStyle = this.oLookahead.style;
-			this.EatToken( Literals.of.id);
+			this.EatToken(Literals.of.id);
 
 			if (this.oLookahead.data === "〖" )
 				oContent = this.GetExpBracketLiteral();

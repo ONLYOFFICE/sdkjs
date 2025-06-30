@@ -2177,6 +2177,10 @@ function CDrawingDocument()
 
 	this.CheckTargetDraw = function (x, y)
 	{
+		function roundPxForScale(value) {
+			return ((value * AscCommon.AscBrowser.retinaPixelRatio) >> 0) / AscCommon.AscBrowser.retinaPixelRatio;
+		}
+
 		var oldW = this.TargetHtmlElement.width_old;
 		var oldH = this.TargetHtmlElement.height_old;
 
@@ -2187,7 +2191,7 @@ function CDrawingDocument()
 
 		if (oldW !== newW || oldH !== newH)
 		{
-			var pixNewW = ((newW * AscCommon.AscBrowser.retinaPixelRatio) >> 0) / AscCommon.AscBrowser.retinaPixelRatio;
+			var pixNewW = roundPxForScale(newW);
 
 			this.TargetHtmlElement.style.width = pixNewW + "px";
 			this.TargetHtmlElement.style.height = newH + "px";
@@ -2215,15 +2219,15 @@ function CDrawingDocument()
 			}
 
 			var pos = this.ConvertCoordsToCursor4(x, y, this.m_lCurrentPage, true);
-			this.TargetHtmlElementLeft = pos.X >> 0;
-			this.TargetHtmlElementTop = (pos.Y + 0.5) >> 0;
+			this.TargetHtmlElementLeft = roundPxForScale(pos.X);
+			this.TargetHtmlElementTop = roundPxForScale(pos.Y + 0.5);
 
 			this.TargetHtmlElement.style["transform"] = "";
 			this.TargetHtmlElement.style["msTransform"] = "";
 			this.TargetHtmlElement.style["mozTransform"] = "";
 			this.TargetHtmlElement.style["webkitTransform"] = "";
 
-			if ((!this.m_oWordControl.MobileTouchManager && !AscCommon.AscBrowser.isSafariMacOs) || !AscCommon.AscBrowser.isWebkit)
+			if ((!this.m_oWordControl.m_oApi.isMobileVersion && !AscCommon.AscBrowser.isSafariMacOs) || !AscCommon.AscBrowser.isWebkit)
 			{
 				this.TargetHtmlElement.style.left = this.TargetHtmlElementLeft + "px";
 				this.TargetHtmlElement.style.top = this.TargetHtmlElementTop + "px";
@@ -2232,7 +2236,7 @@ function CDrawingDocument()
 			{
 				this.TargetHtmlElement.style.left = "0px";
 				this.TargetHtmlElement.style.top = "0px";
-				this.TargetHtmlElement.style["webkitTransform"] = "matrix(1, 0, 0, 1, " + oThis.TargetHtmlElementLeft + "," + oThis.TargetHtmlElementTop + ")";
+				this.TargetHtmlElement.style["webkitTransform"] = "matrix(1, 0, 0, 1, " + this.TargetHtmlElementLeft + "," + this.TargetHtmlElementTop + ")";
 			}
 		}
 		else

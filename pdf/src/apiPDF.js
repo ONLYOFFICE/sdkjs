@@ -104,6 +104,17 @@
         return null;        
     };
 
+    /**
+     * The base file name, with extension, of the document referenced by the Doc
+     * @memberof ApiDocument
+     * @typeofeditors ["PDF"]
+     */
+    Object.defineProperty(ApiDocument.prototype, "documentFileName", {
+        get: function() {
+            return Asc.editor.documentTitle;
+        }
+    });
+
     // base form class with attributes and method for all types of forms
 	function ApiBaseField(oField)
     {
@@ -1246,14 +1257,12 @@
                             return;
 
                         let oWidget = this.field.GetKid(0);
-                        let isValid = oWidget.DoValidateAction(value);
-                        if (isValid) {
+                        let isCanCommit = oWidget.IsCanCommit(value);
+                        if (isCanCommit) {
                             oWidget.SetValue(value);
-
-                            oWidget.needValidate = false; 
                             oWidget.Commit();
                             if (oCalcInfo.IsInProgress() == false) {
-                                if (oDoc.event["rc"] !== false && oDoc.IsNeedDoCalculate()) {
+                                if (oDoc.IsNeedDoCalculate()) {
                                     oDoc.DoCalculateFields(this.field);
                                     oDoc.AddFieldToCommit(oWidget);
                                     oDoc.CommitFields();
@@ -1445,14 +1454,13 @@
                         return;
 
                     let sDisplayValue = this.getItemAt(nIdx, false);
-                    let isValid = oWidget.DoValidateAction(sDisplayValue);
+                    let isCanCommit = oWidget.IsCanCommit(sDisplayValue);
 
-                    if (isValid) {
+                    if (isCanCommit) {
                         oWidget.SetCurIdxs([nIdx]);
-                        oWidget.needValidate = false; 
                         oWidget.Commit();
                         if (oCalcInfo.IsInProgress() == false) {
-                            if (oDoc.event["rc"] !== false && oDoc.IsNeedDoCalculate()) {
+                            if (oDoc.IsNeedDoCalculate()) {
                                 oDoc.DoCalculateFields(this.field);
                                 oDoc.AddFieldToCommit(oWidget);
                                 oDoc.CommitFields();
@@ -1533,14 +1541,31 @@
                             return;
                         
                         let oWidget = this.field.GetKid(0);
-                        let isValid = oWidget.DoValidateAction(value);
+                        let aOptions = oWidget.GetOptions();
+                        let sDisplayValue;
 
-                        if (isValid) {
+                        aOptions.forEach(function(option) {
+                            if (Array.isArray(option)) {
+                                if (option[1] == value) {
+                                    sDisplayValue = option[0];
+                                }
+                            }
+                            else if (option == value) {
+                                sDisplayValue = value;
+                            }
+                        });
+
+                        if (sDisplayValue == undefined) {
+                            sDisplayValue = value;
+                        }
+
+                        let isCanCommit = oWidget.IsCanCommit(value);
+
+                        if (isCanCommit) {
                             oWidget.SetValue(value);
-                            oWidget.needValidate = false; 
                             oWidget.Commit();
                             if (oCalcInfo.IsInProgress() == false) {
-                                if (oDoc.event["rc"] !== false && oDoc.IsNeedDoCalculate()) {
+                                if (oDoc.IsNeedDoCalculate()) {
                                     oDoc.DoCalculateFields(this.field);
                                     oDoc.AddFieldToCommit(oWidget);
                                     oDoc.CommitFields();
@@ -1665,7 +1690,7 @@
 
                 oWidget.Commit();
                 if (oCalcInfo.IsInProgress() == false) {
-                    if (oDoc.event["rc"] !== false && oDoc.IsNeedDoCalculate()) {
+                    if (oDoc.IsNeedDoCalculate()) {
                         oDoc.DoCalculateFields(this.field);
                         oDoc.AddFieldToCommit(oWidget);
                         oDoc.CommitFields();

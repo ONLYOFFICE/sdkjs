@@ -116,7 +116,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CRadioButtonField.prototype.Commit2 = function() {
-        let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
+        let aFields = this.GetAllWidgets();
         let oThis = this;
 
         if (false == this.IsRadiosInUnison()) {
@@ -124,7 +124,7 @@
                 if (field == oThis)
                     return;
 
-                if (field.IsChecked() == true && oThis.IsChecked()) {
+                if (field.IsChecked() == true) {
                     field.SetChecked(false);
                     field.SetNeedRecalc(true);
                 }

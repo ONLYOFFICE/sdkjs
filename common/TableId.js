@@ -353,6 +353,7 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_CEffectProperties ]     = AscFormat.CEffectProperties;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ParagraphPermStart]     = AscWord.ParagraphPermStart;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ParagraphPermEnd  ]     = AscWord.ParagraphPermEnd;
+		this.m_oFactoryClass[AscDFH.historyitem_type_CustomXml         ]     = AscWord.CustomXml;
 
 		if (window['AscCommonSlide'])
 		{

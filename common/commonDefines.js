@@ -639,11 +639,12 @@ window.AscCommon.g_cIsBeta = "false";
 	var c_oAscFrameDataType = {
 		SendImageUrls: 0,
 		GetLoadedImages: 1,
-		OpenFrame: 2,
-		ShowImageDialogInFrame: 3,
-		GetUrlsFromImageDialog: 4,
-		SkipStartEndAction: 5,
-		StartUploadImageAction: 6
+		ShowImageDialogInFrame: 2,
+		GetUrlsFromImageDialog: 3,
+		SkipStartEndAction: 4,
+		StartUploadImageAction: 5,
+		UpdateDiagramInGeneral: 6,
+		UpdateIsOpenOnClient: 7
 	};
 
 	var CellValueType = {
@@ -2477,6 +2478,7 @@ window.AscCommon.g_cIsBeta = "false";
 
 	var offlineMode = '_offline_';
 	var chartMode = '_chart_';
+	var oleMode = '_ole_';
 	var dataMode = '_data_';
 
 	var c_oSpecialPasteProps = {
@@ -2513,7 +2515,12 @@ window.AscCommon.g_cIsBeta = "false";
 		useTextImport: 25,
 
 		comments: 26,
-		columnWidth: 27
+		columnWidth: 27,
+
+		sourceFormattingEmbedding: 28,
+		destinationFormattingEmbedding: 29,
+		sourceFormattingLink: 30,
+		destinationFormattingLink: 31
 	};
 
 	var c_oSpecialPasteOperation = {
@@ -3207,6 +3214,7 @@ window.AscCommon.g_cIsBeta = "false";
 
 		TOC          : 10,
 		Complex      : 11,
+		Signature    : 12,
 		
 		toString : function(type)
 		{
@@ -3228,6 +3236,8 @@ window.AscCommon.g_cIsBeta = "false";
 					return "toc";
 				case c_oAscContentControlSpecificType.Complex:
 					return "complex";
+				case c_oAscContentControlSpecificType.Signature:
+					return "signature";
 			}
 			
 			return "unknown";
@@ -3252,6 +3262,8 @@ window.AscCommon.g_cIsBeta = "false";
 					return c_oAscContentControlSpecificType.TOC;
 				case "complex":
 					return c_oAscContentControlSpecificType.Complex;
+				case "signature":
+					return c_oAscContentControlSpecificType.Signature;
 			}
 			
 			return c_oAscContentControlSpecificType.None;
@@ -3853,6 +3865,16 @@ window.AscCommon.g_cIsBeta = "false";
 	window['Asc']['ST_DisplacedByCustomXml'] = window['Asc'].ST_DisplacedByCustomXml = ST_DisplacedByCustomXml;
 	ST_DisplacedByCustomXml['next'] = ST_DisplacedByCustomXml.next;
 	ST_DisplacedByCustomXml['prev'] = ST_DisplacedByCustomXml.prev;
+	
+	const c_oNumeralType = {
+		arabic  : 0,
+		hindi   : 1,
+		context : 2
+	};
+	window['Asc']['c_oNumeralType'] = window['Asc'].c_oNumeralType = c_oNumeralType;
+	c_oNumeralType["arabic"]  = c_oNumeralType.arabic;
+	c_oNumeralType["hindi"]   = c_oNumeralType.hindi;
+	c_oNumeralType["context"] = c_oNumeralType.context;
 	
 	
 	var c_oAscDateTimeFormat = {};
@@ -4585,6 +4607,19 @@ window.AscCommon.g_cIsBeta = "false";
 		"HH:mm:ss"
 	];
 
+
+
+	const c_oAscExternalReferenceType = {
+		referenceData: 0,
+		link: 1,
+		path: 2
+	};
+
+	var c_oAscCalcMode = {
+		auto: 0,
+		autoNoTable: 1,
+		manual: 2
+	};
 
 	//------------------------------------------------------------export--------------------------------------------------
 	var prot;
@@ -5408,6 +5443,7 @@ window.AscCommon.g_cIsBeta = "false";
 	window["AscCommon"].offlineMode = offlineMode;
 	window["AscCommon"].chartMode = chartMode;
 	window["AscCommon"].dataMode = dataMode;
+	window["AscCommon"].oleMode = oleMode;
 
 	window['AscCommon']['align_Right'] = window['AscCommon'].align_Right = align_Right;
 	window['AscCommon']['align_Left'] = window['AscCommon'].align_Left = align_Left;
@@ -5451,6 +5487,10 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['useTextImport'] = prot.useTextImport;
 	prot['comments'] = prot.comments;
 	prot['columnWidth'] = prot.columnWidth;
+	prot['sourceFormattingEmbedding'] = prot.sourceFormattingEmbedding;
+	prot['destinationFormattingEmbedding'] = prot.destinationFormattingEmbedding;
+	prot['sourceFormattingLink'] = prot.sourceFormattingLink;
+	prot['destinationFormattingLink'] = prot.destinationFormattingLink;
 
 	window['Asc']['c_oSpecialPasteOperation'] = window['Asc'].c_oSpecialPasteOperation = c_oSpecialPasteOperation;
 	prot = c_oSpecialPasteOperation;
@@ -5851,6 +5891,7 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['DateTime']     = c_oAscContentControlSpecificType.DateTime;
 	prot['TOC']          = c_oAscContentControlSpecificType.TOC;
 	prot['Complex']      = c_oAscContentControlSpecificType.Complex;
+	prot['Signature']    = c_oAscContentControlSpecificType.Signature;
 
 	window['Asc']['c_oAscDefNameType'] = window['Asc'].c_oAscDefNameType = c_oAscDefNameType;
 	prot = c_oAscDefNameType;
@@ -6045,5 +6086,15 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['OleObject'] = prot.OleObject;
 
 	window['Asc']['c_oAscDateTimeFormat'] = window['Asc'].c_oAscDateTimeFormat = c_oAscDateTimeFormat;
+
+	prot = window['Asc']['c_oAscExternalReferenceType'] = window['Asc'].c_oAscExternalReferenceType = c_oAscExternalReferenceType;
+	prot['referenceData'] = prot.referenceData;
+	prot['link'] = prot.link;
+	prot['path'] = prot.path;
+
+	prot = window['Asc']['c_oAscCalcMode'] = window['Asc'].c_oAscCalcMode = c_oAscCalcMode;
+	prot['auto'] = prot.auto;
+	prot['autoNoTable'] = prot.autoNoTable;
+	prot['manual'] = prot.manual;
 
 })(window);

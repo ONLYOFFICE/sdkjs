@@ -1951,8 +1951,7 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
             Item.Recalculate_Range_Width( PRSC, CurLine, CurRange );
         }
 		
-		
-		let jc = ParaPr.Jc;
+
         var JustifyWord  = 0;
         var JustifySpace = 0;
         var RangeWidth   = Range.XEnd - Range.X;
@@ -1960,6 +1959,16 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
         var X = 0;
 		
 		let rtlShift = PRSC.SpaceLen + Range.WBreak + PRSC.Range.WEnd;
+		let bRtlAlign = ParaPr.Bidi;
+		let jc = ParaPr.Jc;
+		
+		if(!this.bFromDocument && bRtlAlign)
+		{
+			if(jc === AscCommon.align_Left)
+				jc = AscCommon.align_Right;
+			else if(jc === AscCommon.align_Right)
+				jc = AscCommon.align_Left;
+		}
 
         // Если данный отрезок содержит только формулу, тогда прилегание данного отрезка определяется формулой
         var ParaMath = this.Check_Range_OnlyMath(CurRange, CurLine);
@@ -1974,7 +1983,7 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
         {
 			if (this.Lines[CurLine].Info & paralineinfo_BadLeftTab)
 			{
-				if (ParaPr.Bidi)
+				if (bRtlAlign)
 					X = Range.X + RangeWidth - Range.W - rtlShift;
 				else
 					X = Range.X;
@@ -1989,7 +1998,7 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 				{
 					case AscCommon.align_Left :
 					{
-						if (ParaPr.Bidi)
+						if (bRtlAlign)
 						{
 							X = Range.X + RangeWidth - Range.W - rtlShift;
 							if (this.IsUseXLimit())
@@ -2003,7 +2012,7 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 					}
 					case AscCommon.align_Right:
 					{
-						if (ParaPr.Bidi)
+						if (bRtlAlign)
 						{
 							X = Range.X - rtlShift;
 							if (this.IsUseXLimit())
@@ -2020,7 +2029,7 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 					}
 					case AscCommon.align_Center:
 					{
-						if (ParaPr.Bidi)
+						if (bRtlAlign)
 						{
 							X = Range.X + (RangeWidth - Range.W) / 2 - rtlShift;
 							if (this.IsUseXLimit())
@@ -2038,7 +2047,7 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 					{
 						if (Range.WEnd > AscWord.EPSILON || (Range.WBreak > AscWord.EPSILON && isDoNotExpandShiftReturn))
 						{
-							if (ParaPr.Bidi)
+							if (bRtlAlign)
 								X = Range.X + RangeWidth - Range.W - rtlShift;
 							else
 								X = Range.X;
@@ -2050,7 +2059,7 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
                         {
 							// Проверяем по количеству пробелов, т.к., например, в китайском языке пробелов нет, но
 							// каждый иероглиф как отдельное слово идет.
-                            if (1 === RangesCount && !(Line.Info & paralineinfo_End) && !ParaPr.Bidi)
+                            if (1 === RangesCount && !(Line.Info & paralineinfo_End) && !bRtlAlign)
                             {
 								X = Range.X;
                                 // Либо слово целиком занимает строку, либо не целиком, но разница очень мала
@@ -2063,21 +2072,21 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
                                 // TODO: Здесь нужно улучшить проверку, т.к. отключено выравнивание по центру для всей
                                 //       последней строки, а нужно отключить для последнего отрезка, в котором идет
                                 //       конец параграфа.
-								if (ParaPr.Bidi)
+								if (bRtlAlign)
 									X = Range.X + RangeWidth - Range.W - rtlShift;
 								else
 									X = Range.X;
 							}
 							else if (CurRange === RangesCount - 1)
 							{
-								if (ParaPr.Bidi)
+								if (bRtlAlign)
 									X = Range.X - rtlShift;
 								else
 									X = Range.X + RangeWidth - Range.W;
 							}
 							else
 							{
-								if (ParaPr.Bidi)
+								if (bRtlAlign)
 									X = Range.X + (RangeWidth - Range.W) / 2 - rtlShift;
 								else
 									X = Range.X + (RangeWidth - Range.W) / 2;
@@ -2090,7 +2099,7 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 							// Последний промежуток последней строки не надо растягивать по ширине.
 							if (PRSC.Spaces > 0 && (!(Line.Info & paralineinfo_End) || CurRange !== Line.Ranges.length - 1))
 							{
-								if (ParaPr.Bidi)
+								if (bRtlAlign)
 									X = Range.X - rtlShift;
 								else
 									X = Range.X;
@@ -2099,7 +2108,7 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 							}
 							else
 							{
-								if (ParaPr.Bidi)
+								if (bRtlAlign)
 									X = Range.X + RangeWidth - Range.W - rtlShift;
 								else
 									X = Range.X;
@@ -2111,7 +2120,7 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 					}
 					default:
 					{
-						if (ParaPr.Bidi)
+						if (bRtlAlign)
 							X = Range.X + RangeWidth - Range.W - rtlShift;
 						else
 							X = Range.X;
@@ -3725,15 +3734,22 @@ CParagraphRecalculateStateWrap.prototype.Recalculate_Numbering = function(Item, 
 			
 			var oNumbering = Para.Parent.GetNumbering();
 			
-			var oNumLvl = null;
+			var oNumLvl  = null;
+			let nNumSuff = Asc.c_oAscNumberingSuff.None;
 			
 			if (NumPr)
-				oNumLvl = oNumbering.GetNum(NumPr.NumId).GetLvl(NumPr.Lvl);
+			{
+				oNumLvl  = oNumbering.GetNum(NumPr.NumId).GetLvl(NumPr.Lvl);
+				nNumSuff = oNumLvl.GetSuff();
+			}
 			else if (oPrevNumPr)
-				oNumLvl = oNumbering.GetNum(oPrevNumPr.NumId).GetLvl(oPrevNumPr.Lvl);
+			{
+				// MSWord uses tab instead of suff from PrevNum (74525)
+				oNumLvl  = oNumbering.GetNum(oPrevNumPr.NumId).GetLvl(oPrevNumPr.Lvl);
+				nNumSuff = Asc.c_oAscNumberingSuff.Tab;
+			}
 			
 			var oNumTextPr = Para.GetNumberingTextPr();
-			var nNumSuff   = oNumLvl.GetSuff();
 			var nNumJc     = oNumLvl.GetJc();
 			
 			// Здесь измеряется только ширина символов нумерации, без суффикса

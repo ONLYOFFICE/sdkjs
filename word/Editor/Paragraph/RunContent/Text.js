@@ -469,6 +469,10 @@
 	{
 		return !!(this.Flags & FLAGS_SPACEAFTER);
 	};
+	CRunText.prototype.IsSpaceBefore = function()
+	{
+		return AscCommon.isEastAsianScript(this.Value);
+	};
 	CRunText.prototype.isHyphenAfter = function()
 	{
 		return !!(this.Flags & FLAGS_HYPHEN_AFTER);

@@ -2157,6 +2157,8 @@
         }
         return false;
     };
+	CBaseChartObject.prototype.applySpecialPasteProps = function () {};
+	CBaseChartObject.prototype.getSpecialPasteProps = function () {};
     CBaseChartObject.prototype.getChartSpace = function() {
         var oCurElement = this;
         while(oCurElement) {
@@ -2388,6 +2390,21 @@
         }
         return {min: null, max: null};
     }
+	function getStepBetweenPoints(aPoints) {
+		if(Array.isArray(aPoints) && aPoints.length > 1) {
+			const bCheckFirstValues = isRealObject(aPoints[0]) && AscFormat.isRealNumber(aPoints[0].val) && isRealObject(aPoints[1]) && AscFormat.isRealNumber(aPoints[1].val);
+			const bCheckLastValues = isRealObject(aPoints[aPoints.length - 1]) && AscFormat.isRealNumber(aPoints[aPoints.length - 1].val) && isRealObject(aPoints[aPoints.length - 2]) && AscFormat.isRealNumber(aPoints[aPoints.length - 2].val);
+
+			if(bCheckFirstValues && bCheckLastValues) {
+				return Math.min(Math.abs(aPoints[0].val - aPoints[1].val), Math.abs(aPoints[aPoints.length - 1].val - aPoints[aPoints.length - 2].val));
+			} else if (bCheckFirstValues) {
+				return Math.abs(aPoints[0].val - aPoints[1].val);
+			} else if (bCheckLastValues) {
+				return Math.abs(aPoints[aPoints.length - 1].val - aPoints[aPoints.length - 2].val);
+			}
+		}
+		return null;
+	}
 
     var SCALE_INSET_COEFF = 1.016;//Возможно придется уточнять
     function CDLbl() {
@@ -3803,22 +3820,22 @@
     };
     CSeriesBase.prototype.updateData = function(displayEmptyCellsAs, displayHidden) {
         if(this.val) {
-            this.val.update(displayEmptyCellsAs, displayHidden, this);
+            this.val.updateWithHistory(displayEmptyCellsAs, displayHidden, this);
         }
         if(this.yVal) {
-            this.yVal.update(displayEmptyCellsAs, displayHidden, this);
+            this.yVal.updateWithHistory(displayEmptyCellsAs, displayHidden, this);
         }
         if(this.cat) {
-            this.cat.update(this);
+            this.cat.updateWithHistory(this);
         }
         if(this.xVal) {
-            this.xVal.update(this);
+            this.xVal.updateWithHistory(this);
         }
         if(this.tx) {
-            this.tx.update();
+            this.tx.updateWithHistory();
         }
         for(let nIdx = 0; nIdx < this.errBars.length; ++nIdx) {
-            this.errBars[nIdx].update();
+            this.errBars[nIdx].updateWithHistory();
         }
     };
     CSeriesBase.prototype.Refresh_RecalcData = function(oData) {
@@ -8831,13 +8848,8 @@
             ret.putLogScale(false);
         }
 
-        var oMinMaxOnAxis;
-        if(this.axPos === AX_POS_L || this.axPos === AX_POS_R) {
-            oMinMaxOnAxis = getMinMaxFromArrPoints(this.yPoints);
-        }
-        else {
-            oMinMaxOnAxis = getMinMaxFromArrPoints(this.xPoints);
-        }
+				const aPoints = this.isVertical() ? this.yPoints : this.xPoints;
+        const oMinMaxOnAxis = getMinMaxFromArrPoints(aPoints);
         //настроки максимального значения по оси
         if(scaling && AscFormat.isRealNumber(scaling.max)) {
             ret.putMaxValRule(c_oAscValAxisRule.fixed);
@@ -8934,6 +8946,22 @@
         ret.putLabel(this.getLabelSetting());
         ret.putNumFmt(new AscCommon.asc_CAxNumFmt(this));
 	    ret.putIsRadarAxis(this.isRadarAxis());
+
+			if (this.majorUnit === null) {
+				ret.putMajorUnit(getStepBetweenPoints(aPoints));
+				ret.putMajorUnitRule(c_oAscValAxisRule.auto);
+			} else {
+				ret.putMajorUnit(this.majorUnit);
+				ret.putMajorUnitRule(c_oAscValAxisRule.fixed);
+			}
+
+			if (this.minorUnit === null) {
+				ret.putMinorUnit(null);
+				ret.putMinorUnitRule(c_oAscValAxisRule.auto);
+			} else {
+				ret.putMinorUnit(this.minorUnit);
+				ret.putMinorUnitRule(c_oAscValAxisRule.fixed);
+			}
         return ret;
     };
     CValAx.prototype.setMenuProps = function(props) {
@@ -9045,6 +9073,40 @@
             this.setTickLblPos(props.tickLabelsPos);
             bChanged = true;
         }
+			if (AscFormat.isRealNumber(props.minorUnitRule)) {
+				if (props.minorUnitRule === c_oAscValAxisRule.auto) {
+					if (AscFormat.isRealNumber(this.minorUnit)) {
+						this.setMinorUnit(null);
+						bChanged = true;
+					}
+				} else {
+					if (AscFormat.isRealNumber(props.minorUnit)) {
+						if (!(props.majorUnitRule === c_oAscValAxisRule.fixed && props.majorUnit < props.minorUnit) && this.minorUnit !== props.minorUnit) {
+							this.setMinorUnit(props.minorUnit);
+							bChanged = true;
+						}
+					}
+				}
+			}
+
+			if (AscFormat.isRealNumber(props.majorUnitRule)) {
+				if (props.majorUnitRule === c_oAscValAxisRule.auto) {
+					if (AscFormat.isRealNumber(this.majorUnit)) {
+						this.setMajorUnit(null);
+						bChanged = true;
+					}
+				} else {
+					if (AscFormat.isRealNumber(props.majorUnit)) {
+						if (!AscFormat.isRealNumber(this.minorUnit) || this.minorUnit < props.majorUnit) {
+							if (this.majorUnit !== props.majorUnit) {
+								this.setMajorUnit(props.majorUnit);
+								bChanged = true;
+							}
+						}
+					}
+				}
+			}
+
 
         if(AscFormat.isRealNumber(props.crossesRule) && isRealObject(this.crossAx)) {
             if(props.crossesRule === c_oAscCrossesRule.auto) {
@@ -9519,11 +9581,16 @@
         this.onChangeDataRefs();
         this.setParentToChild(pr);
     };
-    CChartText.prototype.update = function() {
-        if(this.strRef) {
-            this.strRef.updateCache();
-        }
-    };
+	CChartText.prototype.update = function () {
+		if (this.strRef) {
+			this.strRef.updateCache();
+		}
+	};
+	CChartText.prototype.updateWithHistory = function () {
+		if (this.strRef) {
+			this.strRef.updateCacheWithHistory();
+		}
+	};
     CChartText.prototype.clearDataCache = function() {
         if(this.strRef) {
             this.strRef.clearDataCache();
@@ -10234,6 +10301,14 @@
             this.minus.update();
         }
     };
+	CErrBars.prototype.updateWithHistory = function () {
+		if (this.plus) {
+			this.plus.updateWithHistory();
+		}
+		if (this.minus) {
+			this.minus.updateWithHistory();
+		}
+	};
     CErrBars.prototype.clearDataCache = function() {
         if(this.plus) {
             this.plus.clearDataCache();
@@ -11358,6 +11433,11 @@
             this.numRef.updateCache();
         }
     };
+	CMinusPlus.prototype.updateWithHistory = function () {
+		if (this.numRef) {
+			this.numRef.updateCacheWithHistory();
+		}
+	};
     CMinusPlus.prototype.clearDataCache = function() {
         if(this.numRef) {
             this.numRef.clearDataCache();
@@ -11406,114 +11486,118 @@
         History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_MultiLvlStrCache_SetPtCount, this.ptCount, pr));
         this.ptCount = pr;
     };
-    CMultiLvlStrCache.prototype.update = function(sFormula, oSeries) {
-        if(!(typeof sFormula === "string" && sFormula.length > 0)) {
-            return false;
-        }
-        var nPtCount = 0;
-        var aParsedRef = AscFormat.fParseChartFormula(sFormula);
-        if(!Array.isArray(aParsedRef) || aParsedRef.length === 0) {
-            return false;
-        }
-        if(aParsedRef.length > 0) {
-            var nRows = 0, nRef, oRef, oBBox, nPtIdx, nCol, oWS, oCell, sVal, nCols = 0, nRow;
-            var nLvl, oLvl;
-            var bLvlsByRows = true;
-            if(oSeries) {
-                var sSeriesFormula = oSeries.getValRefFormula();
+	CMultiLvlStrCache.prototype.update = function (sFormula, oSeries) {
+		return this.updateWithHistory(sFormula, oSeries);
+	};
+	CMultiLvlStrCache.prototype.Refresh_RecalcData = function () {
+		const oChart = this.getChartSpace();
+		oChart && oChart.Refresh_RecalcData({Type: AscDFH.historyitem_type_MultiLvlStrCache});
+	}
+	CMultiLvlStrCache.prototype.updateWithHistory = function (sFormula, oSeries) {
+		if (!(typeof sFormula === "string" && sFormula.length > 0)) {
+			return false;
+		}
+		var nPtCount = 0;
+		var aParsedRef = AscFormat.fParseChartFormula(sFormula);
+		if (!Array.isArray(aParsedRef) || aParsedRef.length === 0) {
+			return false;
+		}
+		if (aParsedRef.length > 0) {
+			var nRows = 0, nRef, oRef, oBBox, nPtIdx, nCol, oWS, oCell, sVal, nCols = 0, nRow;
+			var nLvl, oLvl;
+			var bLvlsByRows = true;
+			if (oSeries) {
+				var sSeriesFormula = oSeries.getValRefFormula();
 
-                if(sSeriesFormula) {
-                    if(sSeriesFormula.charAt(0) === '=') {
-                        sSeriesFormula = sSeriesFormula.slice(1);
-                    }
-                    var aParsedSeriesRef = AscFormat.fParseChartFormula(sSeriesFormula);
-                    if(aParsedSeriesRef.length === aParsedRef.length) {
-                        var oSeriesRef;
-                        for(nRef = 0; nRef < aParsedRef.length; ++nRef) {
-                            oRef = aParsedRef[nRef];
-                            oSeriesRef = aParsedSeriesRef[nRef];
+				if (sSeriesFormula) {
+					if (sSeriesFormula.charAt(0) === '=') {
+						sSeriesFormula = sSeriesFormula.slice(1);
+					}
+					var aParsedSeriesRef = AscFormat.fParseChartFormula(sSeriesFormula);
+					if (aParsedSeriesRef.length === aParsedRef.length) {
+						var oSeriesRef;
+						for (nRef = 0; nRef < aParsedRef.length; ++nRef) {
+							oRef = aParsedRef[nRef];
+							oSeriesRef = aParsedSeriesRef[nRef];
 							let oSerBB = oSeriesRef.bbox;
 							let oRefBB = oSeriesRef.bbox;
-							if(oSerBB.r1 > oRefBB.r2 || oRefBB.r1 > oSerBB.r2) {// check empty intersection (bug 59334)
+							if (oSerBB.r1 > oRefBB.r2 || oRefBB.r1 > oSerBB.r2) {// check empty intersection (bug 59334)
 								break;
 							}
-                        }
-                        if(nRef === aParsedRef.length) {
-                            bLvlsByRows = false;
-                        }
-                    }
-                }
-            }
-            if(bLvlsByRows) {
-                for(nRef = 0; nRef < aParsedRef.length; ++nRef) {
-                    oRef = aParsedRef[nRef];
-                    oBBox = oRef.bbox;
-                    nPtCount += (oBBox.c2 - oBBox.c1 + 1);
-                    nRows = Math.max(nRows, oBBox.r2 - oBBox.r1 + 1);
-                }
-                for(nLvl = 0; nLvl < nRows; ++nLvl) {
-                    oLvl = new CStrCache();
-                    nPtIdx = 0;
-                    for(nRef = 0; nRef < aParsedRef.length; ++nRef) {
-                        oRef = aParsedRef[nRef];
-                        oBBox = oRef.bbox;
-                        oWS = oRef.worksheet;
-                        if(nLvl < (oBBox.r2 - oBBox.r1 + 1)) {
-                            for(nCol = oBBox.c1; nCol <= oBBox.c2; ++nCol) {
-                                oCell = oWS.getCell3(nLvl + oBBox.r1, nCol);
-                                sVal = oCell.getValueWithFormat();
-                                if(typeof sVal === "string" && sVal.length > 0) {
-                                    oLvl.addStringPoint(nPtIdx, sVal);
-                                }
-                                ++nPtIdx;
-                            }
-                        }
-                        else {
-                            nPtIdx += (oBBox.c2 - oBBox.c1 + 1);
-                        }
-                    }
-                    nPtCount = Math.max(nPtCount, nPtIdx);
-                    oLvl.setPtCount(nPtIdx);
-                    this.addLvl(oLvl);
-                }
-            }
-            else {
-                for(nRef = 0; nRef < aParsedRef.length; ++nRef) {
-                    oRef = aParsedRef[nRef];
-                    oBBox = oRef.bbox;
-                    nPtCount += (oBBox.r2 - oBBox.r1 + 1);
-                    nCols = Math.max(nCols, oBBox.c2 - oBBox.c1 + 1);
-                }
-                for(nLvl = 0; nLvl < nCols; ++nLvl) {
-                    oLvl = new CStrCache();
-                    nPtIdx = 0;
-                    for(nRef = 0; nRef < aParsedRef.length; ++nRef) {
-                        oRef = aParsedRef[nRef];
-                        oBBox = oRef.bbox;
-                        oWS = oRef.worksheet;
-                        if(nLvl < (oBBox.c2 - oBBox.c1 + 1)) {
-                            for(nRow = oBBox.r1; nRow <= oBBox.r2; ++nRow) {
-                                oCell = oWS.getCell3(nRow, nLvl + oBBox.c1);
-                                sVal = oCell.getValueWithFormat();
-                                if(typeof sVal === "string" && sVal.length > 0) {
-                                    oLvl.addStringPoint(nPtIdx, sVal);
-                                }
-                                ++nPtIdx;
-                            }
-                        }
-                        else {
-                            nPtIdx += (oBBox.r2 - oBBox.r1 + 1);
-                        }
-                    }
-                    nPtCount = Math.max(nPtCount, nPtIdx);
-                    oLvl.setPtCount(nPtIdx);
-                    this.addLvl(oLvl);
-                }
-            }
-        }
-        this.setPtCount(nPtCount);
-        return true;
-    };
+						}
+						if (nRef === aParsedRef.length) {
+							bLvlsByRows = false;
+						}
+					}
+				}
+			}
+			if (bLvlsByRows) {
+				for (nRef = 0; nRef < aParsedRef.length; ++nRef) {
+					oRef = aParsedRef[nRef];
+					oBBox = oRef.bbox;
+					nPtCount += (oBBox.c2 - oBBox.c1 + 1);
+					nRows = Math.max(nRows, oBBox.r2 - oBBox.r1 + 1);
+				}
+				for (nLvl = 0; nLvl < nRows; ++nLvl) {
+					oLvl = new CStrCache();
+					nPtIdx = 0;
+					for (nRef = 0; nRef < aParsedRef.length; ++nRef) {
+						oRef = aParsedRef[nRef];
+						oBBox = oRef.bbox;
+						oWS = oRef.worksheet;
+						if (nLvl < (oBBox.r2 - oBBox.r1 + 1)) {
+							for (nCol = oBBox.c1; nCol <= oBBox.c2; ++nCol) {
+								oCell = oWS.getCell3(nLvl + oBBox.r1, nCol);
+								sVal = oCell.getValueWithFormat();
+								if (typeof sVal === "string" && sVal.length > 0) {
+									oLvl.addStringPoint(nPtIdx, sVal);
+								}
+								++nPtIdx;
+							}
+						} else {
+							nPtIdx += (oBBox.c2 - oBBox.c1 + 1);
+						}
+					}
+					nPtCount = Math.max(nPtCount, nPtIdx);
+					oLvl.setPtCount(nPtIdx);
+					this.addLvl(oLvl);
+				}
+			} else {
+				for (nRef = 0; nRef < aParsedRef.length; ++nRef) {
+					oRef = aParsedRef[nRef];
+					oBBox = oRef.bbox;
+					nPtCount += (oBBox.r2 - oBBox.r1 + 1);
+					nCols = Math.max(nCols, oBBox.c2 - oBBox.c1 + 1);
+				}
+				for (nLvl = 0; nLvl < nCols; ++nLvl) {
+					oLvl = new CStrCache();
+					nPtIdx = 0;
+					for (nRef = 0; nRef < aParsedRef.length; ++nRef) {
+						oRef = aParsedRef[nRef];
+						oBBox = oRef.bbox;
+						oWS = oRef.worksheet;
+						if (nLvl < (oBBox.c2 - oBBox.c1 + 1)) {
+							for (nRow = oBBox.r1; nRow <= oBBox.r2; ++nRow) {
+								oCell = oWS.getCell3(nRow, nLvl + oBBox.c1);
+								sVal = oCell.getValueWithFormat();
+								if (typeof sVal === "string" && sVal.length > 0) {
+									oLvl.addStringPoint(nPtIdx, sVal);
+								}
+								++nPtIdx;
+							}
+						} else {
+							nPtIdx += (oBBox.r2 - oBBox.r1 + 1);
+						}
+					}
+					nPtCount = Math.max(nPtCount, nPtIdx);
+					oLvl.setPtCount(nPtIdx);
+					this.addLvl(oLvl);
+				}
+			}
+		}
+		this.setPtCount(nPtCount);
+		return true;
+	};
     CMultiLvlStrCache.prototype.getValues = function(nMaxValues) {
         var ret = [];
         var nEnd = nMaxValues || this.ptCount;
@@ -11546,6 +11630,21 @@
             }
         }
     };
+
+	CChartRefBase.prototype.updateToExternal = function (oMainExternalReference, arrPastedExternalReferences, oMockWb)
+	{
+		if (typeof this.f === 'string') {
+			const result = updateRefToExternal(this.f, oMainExternalReference, arrPastedExternalReferences, oMockWb);
+			if (result !== null) {
+				this.setF(result);
+			}
+		} else if (this.f && this.f.content) {
+			const result = updateRefToExternal(this.f && this.f.content, oMainExternalReference, arrPastedExternalReferences, oMockWb);
+			if (result !== null) {
+				this.f.setContent(result);
+			}
+		}
+	};
     CChartRefBase.prototype.onUpdateCache = function() {
         var oChartSpace = this.getChartSpace();
         if(oChartSpace) {
@@ -11606,8 +11705,10 @@
             }
         }
     };
-    CChartRefBase.prototype.updateCache = function() {
-    };
+	CChartRefBase.prototype.updateCache = function () {
+	};
+	CChartRefBase.prototype.updateCacheWithHistory = function () {
+	};
     CChartRefBase.prototype.clearDataCache = function() {
     };
     CChartRefBase.prototype.updateCacheAndCat = function() {
@@ -11647,15 +11748,18 @@
             this.setMultiLvlStrCache(null);
         }
     };
-    CMultiLvlStrRef.prototype.updateCache = function(oSeries) {
-        AscFormat.ExecuteNoHistory(function() {
-            let oCache = new CMultiLvlStrCache();
-            if(oCache.update(this.f, oSeries) || !this.multiLvlStrCache) {
-                this.setMultiLvlStrCache(oCache);
-            }
-            this.onUpdateCache();
-        }, this, []);
-    };
+	CMultiLvlStrRef.prototype.updateCache = function (oSeries) {
+		AscFormat.ExecuteNoHistory(function () {
+			this.updateCacheWithHistory(oSeries);
+		}, this, []);
+	};
+	CMultiLvlStrRef.prototype.updateCacheWithHistory = function (oSeries) {
+		let oCache = new CMultiLvlStrCache();
+		if (oCache.updateWithHistory(this.f, oSeries) || !this.multiLvlStrCache) {
+			this.setMultiLvlStrCache(oCache);
+		}
+		this.onUpdateCache();
+	};
     CMultiLvlStrRef.prototype.getValues = function(nMaxValues) {
         if(!this.multiLvlStrCache) {
             this.updateCache();
@@ -11706,35 +11810,36 @@
             this.setNumCache(null);
         }
     };
-    CNumRef.prototype.updateCache = function(displayEmptyCellsAs, displayHidden, ser) {
-        AscFormat.ExecuteNoHistory(function() {
-            if(!this.numCache) {
-                this.setNumCache(new CNumLit());
-                this.numCache.setFormatCode("General");
-                this.numCache.setPtCount(0);
-            }
-            let oSeries = null;
-            if(ser) {
-                oSeries = ser;
-            }
-            else {
-                let oCurObjectForCheck = this;
-                while (!oSeries && oCurObjectForCheck) {
-                    if(isObjectSeries(oCurObjectForCheck)) {
-                        oSeries = oCurObjectForCheck;
-                    }
-                    else {
-                        oCurObjectForCheck = oCurObjectForCheck.parent;
-                    }
-                }
-            }
-            if(oSeries) {
-                oSeries.isHidden = true;
-            }
-            this.numCache.update(this.f, displayEmptyCellsAs, displayHidden, oSeries);
-            this.onUpdateCache();
-        }, this, []);
-    };
+	CNumRef.prototype.updateCache = function (displayEmptyCellsAs, displayHidden, ser) {
+		AscFormat.ExecuteNoHistory(function () {
+			this.updateCacheWithHistory(displayEmptyCellsAs, displayHidden, ser);
+		}, this, []);
+	};
+	CNumRef.prototype.updateCacheWithHistory = function (displayEmptyCellsAs, displayHidden, ser) {
+		if (!this.numCache) {
+			this.setNumCache(new CNumLit());
+			this.numCache.setFormatCode("General");
+			this.numCache.setPtCount(0);
+		}
+		let oSeries = null;
+		if (ser) {
+			oSeries = ser;
+		} else {
+			let oCurObjectForCheck = this;
+			while (!oSeries && oCurObjectForCheck) {
+				if (isObjectSeries(oCurObjectForCheck)) {
+					oSeries = oCurObjectForCheck;
+				} else {
+					oCurObjectForCheck = oCurObjectForCheck.parent;
+				}
+			}
+		}
+		if (oSeries) {
+			oSeries.isHidden = true;
+		}
+		this.numCache.updateWithHistory(this.f, displayEmptyCellsAs, displayHidden, oSeries);
+		this.onUpdateCache();
+	};
     CNumRef.prototype.getValuesCount = function() {
         if(!this.numCache) {
             this.updateCache();
@@ -11795,15 +11900,18 @@
             this.setStrCache(null);
         }
     };
-    CStrRef.prototype.updateCache = function() {
-        AscFormat.ExecuteNoHistory(function() {
-            if(!this.strCache) {
-                this.setStrCache(new CStrCache());
-            }
-            this.strCache.update(this.f);
-            this.onUpdateCache();
-        }, this, []);
-    };
+	CStrRef.prototype.updateCache = function () {
+		AscFormat.ExecuteNoHistory(function () {
+			this.updateCacheWithHistory();
+		}, this, []);
+	};
+	CStrRef.prototype.updateCacheWithHistory = function () {
+		if (!this.strCache) {
+			this.setStrCache(new CStrCache());
+		}
+		this.strCache.update(this.f);
+		this.onUpdateCache();
+	};
     CStrRef.prototype.getText = function(bNoUpdate) {
         if(!this.strCache) {
             if(bNoUpdate !== true) {
@@ -12002,160 +12110,162 @@
         this.addPt(oPt);
         this.setPtCount(Math.max(this.pts.length, idx + 1));
     };
-    CNumLit.prototype.update = function(sFormula, displayEmptyCellsAs, displayHidden, ser) {
-        AscFormat.ExecuteNoHistory(function() {
-            if(!(typeof sFormula === "string" && sFormula.length > 0)) {
-                this.setPtCount(0);
-                this.setFormatCode("General");
-                return;
-            }
-            var aParsedRef = AscFormat.fParseChartFormula(sFormula);
-            if(!Array.isArray(aParsedRef) || aParsedRef.length === 0) {
-                if(ser) {
-                    ser.isHidden = (this.pts.length === 0);
-                }
-                return;
-            }
-            this.removeAllPts();
-            var nRef, oRef, oMinRef, oWS, oBB, nPtIdx, nPtCount, nCount;
-            var oHM, nHidden, nR, nC, oMinBB, oCell, aSpanPoints = [], oStartPoint;
-            var dVal, sVal, oPt, sCellFC, nSpan, nLastNoEmptyIndex, nSpliceIndex;
-            var sCommonFormatCode = null;
-            var bHaveTotalRow;
-            nPtCount = 0;
-            nPtIdx = 0;
-            for(nRef = 0; nRef < aParsedRef.length; ++nRef) {
-                oRef = aParsedRef[nRef];
-                oWS = oRef.worksheet;
-                if(!oWS) {
-                    continue;
-                }
-                oHM = oWS.hiddenManager;
-                oBB = oRef.bbox;
-                if(!oBB) {
-                    continue;
-                }
-                if(displayHidden) {
-                    nHidden = 0;
-                }
-                else {
-                    nHidden = oHM.getHiddenRowsCount(oBB.r1, oBB.r2 + 1) * oBB.getWidth() + oHM.getHiddenColsCount(oBB.c1, oBB.c2 + 1) * oBB.getHeight();
-                }
-                bHaveTotalRow = oWS.isTableTotalRow(new Asc.Range(oBB.c1, oBB.r2, oBB.c1, oBB.r2)) && oBB.r1 !== oBB.r2;
-                if(bHaveTotalRow) {
-                    nHidden += 1;
-                }
-                nCount = Math.max(0, oBB.getHeight() * oBB.getWidth() - nHidden);
-                nPtCount += nCount;
-                oMinRef = oRef.getMinimalCellsRange();
-                if(!oMinRef) {
-                    continue;
-                }
-                oMinBB = oMinRef.bbox;
-                nPtIdx += ((oMinBB.r1 - oBB.r1) * oBB.getWidth() + (oMinBB.c1 - oBB.c1) * oMinBB.getHeight());
-                for(nR = oMinBB.r1; nR <= oMinBB.r2; ++nR) {
-                    if(!displayHidden && oWS.getRowHidden(nR)) {
-                        continue;
-                    }
-                    if(nR === oBB.r2 && bHaveTotalRow) {
-                        continue;
-                    }
-                    for(nC = oMinBB.c1; nC <= oMinBB.c2; ++nC) {
-                        if(!displayHidden && oWS.getColHidden(nC)) {
-                            continue;
-                        }
-                        if(ser) {
-                            ser.isHidden = false;
-                        }
-                        oCell = oWS.getCell3(nR, nC);
-                        dVal = oCell.getNumberValue();
-                        if(!AscFormat.isRealNumber(dVal) && (!AscFormat.isRealNumber(displayEmptyCellsAs) || displayEmptyCellsAs === 1)) {
-                            sVal = oCell.getValueForEdit();
-                            if((typeof sVal === "string") && sVal.length > 0) {
-                                dVal = 0;
-                            }
-                        }
-                        if(AscFormat.isRealNumber(dVal)) {
-                            oPt = new AscFormat.CNumericPoint();
-                            oPt.setIdx(nPtIdx);
-                            oPt.setVal(dVal);
-                            sCellFC = oCell.getNumFormatStr();
-                            oPt.setFormatCode(sCellFC);
-                            if(sCommonFormatCode === null) {
-                                sCommonFormatCode = sCellFC;
-                            }
-                            else {
-                                if(sCommonFormatCode !== undefined) {
-                                    if(sCommonFormatCode !== sCellFC) {
-                                        sCommonFormatCode = undefined;
-                                    }
-                                }
-                            }
-                            this.addPt(oPt);
-                            if(aSpanPoints.length > 0) {
-                                if(AscFormat.isRealNumber(nLastNoEmptyIndex)) {
-                                    oStartPoint = this.getPtByIndex(nLastNoEmptyIndex);
-                                    if(oStartPoint) {
-                                        for(nSpan = 0; nSpan < aSpanPoints.length; ++nSpan) {
-                                            aSpanPoints[nSpan].setVal(oStartPoint.val + ((oPt.val - oStartPoint.val) / (aSpanPoints.length + 1)) * (nSpan + 1));
-                                            this.pts.splice(nSpliceIndex + nSpan, 0, aSpanPoints[nSpan]);
-                                        }
-                                    }
-                                }
-                                aSpanPoints.length = 0;
-                            }
-                            nLastNoEmptyIndex = oPt.idx;
-                            nSpliceIndex = this.pts.length;
-                        }
-                        else {
-                            if(AscFormat.isRealNumber(displayEmptyCellsAs) && displayEmptyCellsAs !== 1) {
-                                sVal = oCell.getValue();
-                                if(displayEmptyCellsAs === 2 || ((typeof sVal === "string") && sVal.length > 0)) {
-                                    oPt = new AscFormat.CNumericPoint();
-                                    oPt.setIdx(nPtIdx);
-                                    oPt.setVal(0);
-                                    this.addPt(oPt);
-                                    if(aSpanPoints.length > 0) {
-                                        if(AscFormat.isRealNumber(nLastNoEmptyIndex)) {
-                                            oStartPoint = this.getPtByIndex(nLastNoEmptyIndex);
-                                            if(oStartPoint) {
-                                                for(nSpan = 0; nSpan < aSpanPoints.length; ++nSpan) {
-                                                    aSpanPoints[nSpan].setVal(oStartPoint.val + ((oPt.val - oStartPoint.val) / (aSpanPoints.length + 1)) * (nSpan + 1));
-                                                    this.pts.splice(nSpliceIndex + nSpan, 0, aSpanPoints[nSpan]);
-                                                }
-                                            }
-                                        }
-                                        aSpanPoints.length = 0;
-                                    }
-                                    nLastNoEmptyIndex = oPt.idx;
-                                    nSpliceIndex = this.pts.length;
-                                }
-                                else if(displayEmptyCellsAs === 0 && ser && ser.getObjectType() === AscDFH.historyitem_type_LineSeries) {
-                                    oPt = new AscFormat.CNumericPoint();
-                                    oPt.setIdx(nPtIdx);
-                                    oPt.setVal(0);
-                                    aSpanPoints.push(oPt);
-                                }
-                            }
-                        }
-                        nPtIdx++;
-                    }
-                }
-            }
-            this.setPtCount(nPtCount);
-            //check format
-            if(sCommonFormatCode) {
-                this.setFormatCode(sCommonFormatCode);
-                for(var nPt = 0; nPt < this.pts.length; ++nPt) {
-                    oPt = this.pts[nPt];
-                    oPt.setFormatCode(null);
-                }
-            }
-            else {
-                this.setFormatCode("General");
-            }
-        }, this, []);
-    };
+	CNumLit.prototype.update = function (sFormula, displayEmptyCellsAs, displayHidden, ser) {
+		AscFormat.ExecuteNoHistory(function () {
+			this.updateWithHistory(sFormula, displayEmptyCellsAs, displayHidden, ser);
+		}, this, []);
+	};
+	CNumLit.prototype.Refresh_RecalcData = function () {
+		const oChart = this.getChartSpace();
+		oChart && oChart.Refresh_RecalcData({Type: AscDFH.historyitem_type_NumLit});
+	}
+	CNumLit.prototype.updateWithHistory = function (sFormula, displayEmptyCellsAs, displayHidden, ser) {
+		if (!(typeof sFormula === "string" && sFormula.length > 0)) {
+			this.setPtCount(0);
+			this.setFormatCode("General");
+			return;
+		}
+		var aParsedRef = AscFormat.fParseChartFormula(sFormula);
+		if (!Array.isArray(aParsedRef) || aParsedRef.length === 0) {
+			if (ser) {
+				ser.isHidden = (this.pts.length === 0);
+			}
+			return;
+		}
+		this.removeAllPts();
+		var nRef, oRef, oMinRef, oWS, oBB, nPtIdx, nPtCount, nCount;
+		var oHM, nHidden, nR, nC, oMinBB, oCell, aSpanPoints = [], oStartPoint;
+		var dVal, sVal, oPt, sCellFC, nSpan, nLastNoEmptyIndex, nSpliceIndex;
+		var sCommonFormatCode = null;
+		var bHaveTotalRow;
+		nPtCount = 0;
+		nPtIdx = 0;
+		for (nRef = 0; nRef < aParsedRef.length; ++nRef) {
+			oRef = aParsedRef[nRef];
+			oWS = oRef.worksheet;
+			if (!oWS) {
+				continue;
+			}
+			oHM = oWS.hiddenManager;
+			oBB = oRef.bbox;
+			if (!oBB) {
+				continue;
+			}
+			if (displayHidden) {
+				nHidden = 0;
+			} else {
+				nHidden = oHM.getHiddenRowsCount(oBB.r1, oBB.r2 + 1) * oBB.getWidth() + oHM.getHiddenColsCount(oBB.c1, oBB.c2 + 1) * oBB.getHeight();
+			}
+			bHaveTotalRow = oWS.isTableTotalRow(new Asc.Range(oBB.c1, oBB.r2, oBB.c1, oBB.r2)) && oBB.r1 !== oBB.r2;
+			if (bHaveTotalRow) {
+				nHidden += 1;
+			}
+			nCount = Math.max(0, oBB.getHeight() * oBB.getWidth() - nHidden);
+			nPtCount += nCount;
+			oMinRef = oRef.getMinimalCellsRange();
+			if (!oMinRef) {
+				continue;
+			}
+			oMinBB = oMinRef.bbox;
+			nPtIdx += ((oMinBB.r1 - oBB.r1) * oBB.getWidth() + (oMinBB.c1 - oBB.c1) * oMinBB.getHeight());
+			for (nR = oMinBB.r1; nR <= oMinBB.r2; ++nR) {
+				if (!displayHidden && oWS.getRowHidden(nR)) {
+					continue;
+				}
+				if (nR === oBB.r2 && bHaveTotalRow) {
+					continue;
+				}
+				for (nC = oMinBB.c1; nC <= oMinBB.c2; ++nC) {
+					if (!displayHidden && oWS.getColHidden(nC)) {
+						continue;
+					}
+					if (ser) {
+						ser.isHidden = false;
+					}
+					oCell = oWS.getCell3(nR, nC);
+					dVal = oCell.getNumberValue();
+					if (!AscFormat.isRealNumber(dVal) && (!AscFormat.isRealNumber(displayEmptyCellsAs) || displayEmptyCellsAs === 1)) {
+						sVal = oCell.getValueForEdit();
+						if ((typeof sVal === "string") && sVal.length > 0) {
+							dVal = 0;
+						}
+					}
+					if (AscFormat.isRealNumber(dVal)) {
+						oPt = new AscFormat.CNumericPoint();
+						oPt.setIdx(nPtIdx);
+						oPt.setVal(dVal);
+						sCellFC = oCell.getNumFormatStr();
+						oPt.setFormatCode(sCellFC);
+						if (sCommonFormatCode === null) {
+							sCommonFormatCode = sCellFC;
+						} else {
+							if (sCommonFormatCode !== undefined) {
+								if (sCommonFormatCode !== sCellFC) {
+									sCommonFormatCode = undefined;
+								}
+							}
+						}
+						this.addPt(oPt);
+						if (aSpanPoints.length > 0) {
+							if (AscFormat.isRealNumber(nLastNoEmptyIndex)) {
+								oStartPoint = this.getPtByIndex(nLastNoEmptyIndex);
+								if (oStartPoint) {
+									for (nSpan = 0; nSpan < aSpanPoints.length; ++nSpan) {
+										aSpanPoints[nSpan].setVal(oStartPoint.val + ((oPt.val - oStartPoint.val) / (aSpanPoints.length + 1)) * (nSpan + 1));
+										this.pts.splice(nSpliceIndex + nSpan, 0, aSpanPoints[nSpan]);
+									}
+								}
+							}
+							aSpanPoints.length = 0;
+						}
+						nLastNoEmptyIndex = oPt.idx;
+						nSpliceIndex = this.pts.length;
+					} else {
+						if (AscFormat.isRealNumber(displayEmptyCellsAs) && displayEmptyCellsAs !== 1) {
+							sVal = oCell.getValue();
+							if (displayEmptyCellsAs === 2 || ((typeof sVal === "string") && sVal.length > 0)) {
+								oPt = new AscFormat.CNumericPoint();
+								oPt.setIdx(nPtIdx);
+								oPt.setVal(0);
+								this.addPt(oPt);
+								if (aSpanPoints.length > 0) {
+									if (AscFormat.isRealNumber(nLastNoEmptyIndex)) {
+										oStartPoint = this.getPtByIndex(nLastNoEmptyIndex);
+										if (oStartPoint) {
+											for (nSpan = 0; nSpan < aSpanPoints.length; ++nSpan) {
+												aSpanPoints[nSpan].setVal(oStartPoint.val + ((oPt.val - oStartPoint.val) / (aSpanPoints.length + 1)) * (nSpan + 1));
+												this.pts.splice(nSpliceIndex + nSpan, 0, aSpanPoints[nSpan]);
+											}
+										}
+									}
+									aSpanPoints.length = 0;
+								}
+								nLastNoEmptyIndex = oPt.idx;
+								nSpliceIndex = this.pts.length;
+							} else if (displayEmptyCellsAs === 0 && ser && ser.getObjectType() === AscDFH.historyitem_type_LineSeries) {
+								oPt = new AscFormat.CNumericPoint();
+								oPt.setIdx(nPtIdx);
+								oPt.setVal(0);
+								aSpanPoints.push(oPt);
+							}
+						}
+					}
+					nPtIdx++;
+				}
+			}
+		}
+		this.setPtCount(nPtCount);
+		//check format
+		if (sCommonFormatCode) {
+			this.setFormatCode(sCommonFormatCode);
+			for (var nPt = 0; nPt < this.pts.length; ++nPt) {
+				oPt = this.pts[nPt];
+				oPt.setFormatCode(null);
+			}
+		} else {
+			this.setFormatCode("General");
+		}
+	};
     CNumLit.prototype.getValues = function(nMaxCount) {
         var ret = [];
 
@@ -13395,11 +13505,16 @@
         }
         return false;
     };
-    CTx.prototype.update = function() {
-        if(this.strRef) {
-            this.strRef.updateCache();
-        }
-    };
+	CTx.prototype.update = function () {
+		if (this.strRef) {
+			this.strRef.updateCache();
+		}
+	};
+	CTx.prototype.updateWithHistory = function () {
+		if (this.strRef) {
+			this.strRef.updateCacheWithHistory();
+		}
+	};
     CTx.prototype.clearDataCache = function() {
         if(this.strRef) {
             this.strRef.clearDataCache();
@@ -13541,106 +13656,110 @@
         History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_StrCache_SetPtCount, this.ptCount, pr));
         this.ptCount = pr;
     };
-    CStrCache.prototype.setName = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_StrCache_SetName, this.name, pr));
-        this.name = pr;
-    };
-    CStrCache.prototype.update = function(sFormula) {
-        AscFormat.ExecuteNoHistory(function() {
-            var str_cache = this;
-            if(!(typeof sFormula === "string" && sFormula.length > 0)) {
-                str_cache.removeAllPts();
-                return;
-            }
-            var pt_index = 0, i, j, cell, pt, value_width_format, row_hidden, col_hidden, nPtCount = 0;
-            var aParsedRef = AscFormat.fParseChartFormula(sFormula);
+	CStrCache.prototype.setName = function(pr) {
+		History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_StrCache_SetName, this.name, pr));
+		this.name = pr;
+	};
+	CStrCache.prototype.update = function (sFormula) {
+		AscFormat.ExecuteNoHistory(function () {
+			this.updateWithHistory(sFormula);
+		}, this, []);
+	};
+	CStrCache.prototype.Refresh_RecalcData = function () {
+		const oChart = this.getChartSpace();
+		oChart && oChart.Refresh_RecalcData({Type: AscDFH.historyitem_type_StrCache});
+	}
+	CStrCache.prototype.updateWithHistory = function (sFormula) {
+		var str_cache = this;
+		if (!(typeof sFormula === "string" && sFormula.length > 0)) {
+			str_cache.removeAllPts();
+			return;
+		}
+		var pt_index = 0, i, j, cell, pt, value_width_format, row_hidden, col_hidden, nPtCount = 0;
+		var aParsedRef = AscFormat.fParseChartFormula(sFormula);
 
-            if(!Array.isArray(aParsedRef) || aParsedRef.length === 0) {
-                return;
-            }
-            str_cache.removeAllPts();
-            var fParseTableDataString = function(oRef, oCache) {
-                if(Array.isArray(oRef)) {
-                    for(var i = 0; i < oRef.length; ++i) {
-                        if(Array.isArray(oRef[i])) {
-                            fParseTableDataString(oRef, oCache);
-                        }
-                        else {
-                            pt = new AscFormat.CStringPoint();
-                            pt.setIdx(pt_index);
-                            pt.setVal(oRef[i].value);
-                            str_cache.addPt(pt);
-                            ++pt_index;
-                            ++nPtCount;
-                        }
-                    }
-                }
-            };
-            for(i = 0; i < aParsedRef.length; ++i) {
-                var oCurRef = aParsedRef[i];
-                var source_worksheet = oCurRef.worksheet;
-                if(source_worksheet) {
-                    var range = oCurRef.bbox;
-                    if(range.r1 === range.r2) {
-                        row_hidden = source_worksheet.getRowHidden(range.r1);
-                        j = range.c1;
-                        while(i === 0 && source_worksheet.getColHidden(j) && j <= range.c2) {
-                            ++j;
-                        }
-                        for(; j <= range.c2; ++j) {
-                            if(!row_hidden && !source_worksheet.getColHidden(j)) {
-                                cell = source_worksheet.getCell3(range.r1, j);
-                                value_width_format = cell.getValueWithFormat();
-                                if(typeof value_width_format === "string" && value_width_format.length > 0) {
-                                    pt = new AscFormat.CStringPoint();
-                                    pt.setIdx(nPtCount);
-                                    pt.setVal(value_width_format);
+		if (!Array.isArray(aParsedRef) || aParsedRef.length === 0) {
+			return;
+		}
+		str_cache.removeAllPts();
+		var fParseTableDataString = function (oRef, oCache) {
+			if (Array.isArray(oRef)) {
+				for (var i = 0; i < oRef.length; ++i) {
+					if (Array.isArray(oRef[i])) {
+						fParseTableDataString(oRef, oCache);
+					} else {
+						pt = new AscFormat.CStringPoint();
+						pt.setIdx(pt_index);
+						pt.setVal(oRef[i].value);
+						str_cache.addPt(pt);
+						++pt_index;
+						++nPtCount;
+					}
+				}
+			}
+		};
+		for (i = 0; i < aParsedRef.length; ++i) {
+			var oCurRef = aParsedRef[i];
+			var source_worksheet = oCurRef.worksheet;
+			if (source_worksheet) {
+				var range = oCurRef.bbox;
+				if (range.r1 === range.r2) {
+					row_hidden = source_worksheet.getRowHidden(range.r1);
+					j = range.c1;
+					while (i === 0 && source_worksheet.getColHidden(j) && j <= range.c2) {
+						++j;
+					}
+					for (; j <= range.c2; ++j) {
+						if (!row_hidden && !source_worksheet.getColHidden(j)) {
+							cell = source_worksheet.getCell3(range.r1, j);
+							value_width_format = cell.getValueWithFormat();
+							if (typeof value_width_format === "string" && value_width_format.length > 0) {
+								pt = new AscFormat.CStringPoint();
+								pt.setIdx(nPtCount);
+								pt.setVal(value_width_format);
 
-                                    if(str_cache.pts.length === 0) {
-                                        pt.formatCode = cell.getNumFormatStr()
-                                    }
-                                    str_cache.addPt(pt);
-                                    //addPointToMap(oThis.pointsMap, source_worksheet, range.r1, j, pt);
-                                }
-                                ++nPtCount;
-                            }
-                            pt_index++;
-                        }
-                    }
-                    else {
-                        col_hidden = source_worksheet.getColHidden(range.c1);
-                        j = range.r1;
-                        while(i === 0 && source_worksheet.getRowHidden(j) && j <= range.r2) {
-                            ++j;
-                        }
-                        for(; j <= range.r2; ++j) {
-                            if(!col_hidden && !source_worksheet.getRowHidden(j)) {
-                                cell = source_worksheet.getCell3(j, range.c1);
-                                value_width_format = cell.getValueWithFormat();
-                                if(typeof value_width_format === "string" && value_width_format.length > 0) {
-                                    pt = new AscFormat.CStringPoint();
-                                    pt.setIdx(nPtCount);
-                                    pt.setVal(cell.getValueWithFormat());
+								if (str_cache.pts.length === 0) {
+									pt.formatCode = cell.getNumFormatStr()
+								}
+								str_cache.addPt(pt);
+								//addPointToMap(oThis.pointsMap, source_worksheet, range.r1, j, pt);
+							}
+							++nPtCount;
+						}
+						pt_index++;
+					}
+				} else {
+					col_hidden = source_worksheet.getColHidden(range.c1);
+					j = range.r1;
+					while (i === 0 && source_worksheet.getRowHidden(j) && j <= range.r2) {
+						++j;
+					}
+					for (; j <= range.r2; ++j) {
+						if (!col_hidden && !source_worksheet.getRowHidden(j)) {
+							cell = source_worksheet.getCell3(j, range.c1);
+							value_width_format = cell.getValueWithFormat();
+							if (typeof value_width_format === "string" && value_width_format.length > 0) {
+								pt = new AscFormat.CStringPoint();
+								pt.setIdx(nPtCount);
+								pt.setVal(cell.getValueWithFormat());
 
-                                    if(str_cache.pts.length === 0) {
-                                        pt.formatCode = cell.getNumFormatStr()
-                                    }
-                                    str_cache.addPt(pt);
-                                    //addPointToMap(oThis.pointsMap, source_worksheet, j, range.c1,  pt);
-                                }
-                                ++nPtCount;
-                            }
-                            pt_index++;
-                        }
-                    }
-                }
-                else {
-                    fParseTableDataString(oCurRef);
-                }
-            }
-            this.setPtCount(nPtCount);
-        }, this, []);
-    };
+								if (str_cache.pts.length === 0) {
+									pt.formatCode = cell.getNumFormatStr()
+								}
+								str_cache.addPt(pt);
+								//addPointToMap(oThis.pointsMap, source_worksheet, j, range.c1,  pt);
+							}
+							++nPtCount;
+						}
+						pt_index++;
+					}
+				}
+			} else {
+				fParseTableDataString(oCurRef);
+			}
+		}
+		this.setPtCount(nPtCount);
+	};
     CStrCache.prototype.addStringPoint = function(idx, sStr) {
         var oPt = new CStringPoint();
         oPt.setIdx(idx);
@@ -13937,6 +14056,15 @@
     CTitle.prototype.convertPixToMM = CDLbl.prototype.convertPixToMM;
     CTitle.prototype.isEmptyPlaceholder = CDLbl.prototype.isEmptyPlaceholder;
     CTitle.prototype.checkShapeChildTransform = CDLbl.prototype.checkShapeChildTransform;
+
+    CTitle.prototype.checkBlipFillRasterImage = function(images) {
+        if(this.spPr) {
+            this.spPr.checkBlipFillRasterImage(images);
+        }
+        if (this.tx && this.tx.rich && this.tx.rich.content) {
+            AscFormat.fCheckContentImages(images, this.tx.rich.content, false);
+        }
+    };
     CTitle.prototype.Refresh_RecalcData = function() {
         this.Refresh_RecalcData2();
     };
@@ -14345,7 +14473,7 @@
     };
     CTitle.prototype.updateReferences = function() {
         if (this.tx) {
-            this.tx.update();
+            this.tx.updateWithHistory();
         }
     };
 
@@ -14783,11 +14911,16 @@
             this.numRef.clearDataCache();
         }
     };
-    CYVal.prototype.update = function(displayEmptyCellsAs, displayHidden, ser) {
-        if(this.numRef) {
-            this.numRef.updateCache(displayEmptyCellsAs, displayHidden, ser);
-        }
-    };
+	CYVal.prototype.update = function (displayEmptyCellsAs, displayHidden, ser) {
+		if (this.numRef) {
+			this.numRef.updateCache(displayEmptyCellsAs, displayHidden, ser);
+		}
+	};
+	CYVal.prototype.updateWithHistory = function (displayEmptyCellsAs, displayHidden, ser) {
+		if (this.numRef) {
+			this.numRef.updateCacheWithHistory(displayEmptyCellsAs, displayHidden, ser);
+		}
+	};
     CYVal.prototype.getSourceNumFormat = function(nPtIdx) {
         if(this.numRef) {
             return this.numRef.getNumFormat(nPtIdx);
@@ -15072,44 +15205,46 @@
             this.multiLvlStrRef.clearDataCache();
         }
     };
-    CCat.prototype.update = function(oSeries) {
-        return AscFormat.ExecuteNoHistory(function(){
-            this.calculatedRef = null;
-            if(this.numRef || this.strRef || this.multiLvlStrRef) {
-                var sFormula = this.getFormula();
-                if(typeof sFormula === "string" && sFormula.length > 0) {
-                    var oTestCat = new CCat();
-                    var oRes = oTestCat.setValues(sFormula);
-                    var oNumRef = oTestCat.numRef;
-                    var oStrRef = oTestCat.strRef;
-                    var oMultiLvlStrRef = oTestCat.multiLvlStrRef;
-                    if(oRes && oRes.error === Asc.c_oAscError.ID.No && (oNumRef || oStrRef || oMultiLvlStrRef)) {
-                        this.calculatedRef = oNumRef || oStrRef || oMultiLvlStrRef;
-                        if(this.calculatedRef) {
-                            if(this.calculatedRef.getObjectType() === AscDFH.historyitem_type_MultiLvlStrRef) {
-                                this.calculatedRef.updateCache(oSeries);
-                            }
-                            else {
-                                this.calculatedRef.updateCache();
-                            }
-                        }
-                    }
-                }
-            }
-            if(this.multiLvlStrRef) {
-                this.multiLvlStrRef.updateCache(oSeries);
-            }
-            if(this.numRef) {
-                this.numRef.updateCache();
-            }
-            if(this.strRef) {
-                this.strRef.updateCache();
-            }
-            if(!this.calculatedRef) {
-                this.calculatedRef = (this.multiLvlStrRef || this.numRef || this.strRef);
-            }
-        }, this, []);
-    };
+	CCat.prototype.update = function (oSeries) {
+		return AscFormat.ExecuteNoHistory(function () {
+			return this.updateWithHistory(oSeries);
+		}, this, []);
+	};
+	CCat.prototype.updateWithHistory = function (oSeries) {
+		this.calculatedRef = null;
+		if (this.numRef || this.strRef || this.multiLvlStrRef) {
+			var sFormula = this.getFormula();
+			if (typeof sFormula === "string" && sFormula.length > 0) {
+				var oTestCat = new CCat();
+				var oRes = oTestCat.setValues(sFormula);
+				var oNumRef = oTestCat.numRef;
+				var oStrRef = oTestCat.strRef;
+				var oMultiLvlStrRef = oTestCat.multiLvlStrRef;
+				if (oRes && oRes.error === Asc.c_oAscError.ID.No && (oNumRef || oStrRef || oMultiLvlStrRef)) {
+					this.calculatedRef = oNumRef || oStrRef || oMultiLvlStrRef;
+					if (this.calculatedRef) {
+						if (this.calculatedRef.getObjectType() === AscDFH.historyitem_type_MultiLvlStrRef) {
+							this.calculatedRef.updateCache(oSeries);
+						} else {
+							this.calculatedRef.updateCache();
+						}
+					}
+				}
+			}
+		}
+		if (this.multiLvlStrRef) {
+			this.multiLvlStrRef.updateCache(oSeries);
+		}
+		if (this.numRef) {
+			this.numRef.updateCache();
+		}
+		if (this.strRef) {
+			this.strRef.updateCache();
+		}
+		if (!this.calculatedRef) {
+			this.calculatedRef = (this.multiLvlStrRef || this.numRef || this.strRef);
+		}
+	};
     CCat.prototype.getSourceNumFormat = function() {
         if(this.calculatedRef) {
             if(this.calculatedRef.getObjectType() === AscDFH.historyitem_type_NumRef) {
@@ -16570,7 +16705,7 @@
         if(!oWS) {
             return [];
         }
-        var aParsed = AscCommonExcel.getRangeByRef(_sFormula, oWS);
+        var aParsed = AscCommonExcel.getRangeByRef(_sFormula, oWS, undefined, true);
         for(var nParsed = aParsed.length - 1; nParsed > -1; nParsed--) {
             if(!aParsed[nParsed].bbox || !aParsed[nParsed].worksheet) {
                 aParsed.splice(nParsed, 1);
@@ -16876,6 +17011,121 @@
             }
         }
     }
+
+	function updateRefToExternal(f, oMainExternalReference, arrPastedExternalReferences, oMockWb) {
+		const oApi = Asc.editor || editor;
+		const oWb = oApi.wbModel;
+		if (!(oWb && typeof f === "string")) {
+			return null;
+		}
+		const ws = oMockWb.getWorksheet(0);
+		let sFormula = f + "";
+		let bFirstBrace = false;
+		let bLastBrace = false;
+		if (sFormula[0] === '(')
+		{
+			bFirstBrace = true;
+			sFormula = sFormula.slice(1);
+		}
+		if (sFormula[sFormula.length - 1] === ')')
+		{
+			bLastBrace = true;
+			sFormula = sFormula.slice(0, -1);
+		}
+
+		const f1 = sFormula;
+		const arrF = f1.split(",");
+		const arrResult = [];
+		for (let i = 0; i < arrF.length; i += 1)
+		{
+			let isWorkbookRef = false;
+        let f = arrF[i];
+        if (f.startsWith('[0]!')) {
+            f = f.slice(4);
+	        isWorkbookRef = true;
+        }
+			var parseResult = new AscCommonExcel.ParseResult([]);
+			var parsed = new AscCommonExcel.parserFormula(f, null, ws);
+			if (parsed.parse(undefined, undefined, parseResult)) {
+				parseResult.refPos.forEach(function(item) {
+					const oper = item.oper;
+					if (oper.externalLink) {
+						const nIndex = oper.externalLink;
+						const oPastedReference = arrPastedExternalReferences[nIndex - 1];
+						if (oPastedReference)
+						{
+							let nExternalReference = null;
+							const oReferenceData = oApi.DocInfo && oApi.DocInfo.ReferenceData;
+							const oPastedReferenceData = oPastedReference.referenceData;
+							let bIsCurDocReference = false;
+							if (oReferenceData && oPastedReferenceData)
+							{
+								bIsCurDocReference = oReferenceData.fileKey === oPastedReferenceData.fileKey && oReferenceData.instanceId === oPastedReferenceData.instanceId;
+							}
+							if (!bIsCurDocReference)
+							{
+								nExternalReference = oWb.getExternalLinkIndexByName(oPastedReference.Id);
+								if (nExternalReference === null)
+								{
+									oWb.addExternalReferences([oPastedReference]);
+									nExternalReference = oWb.externalReferences.length;
+								}
+							}
+              const toStringOper = oper.clone();
+              toStringOper.externalLink = nExternalReference;
+							arrResult.push(toStringOper.toString());
+						}
+					} else {
+						let nDefaultExternalLinIndex;
+						if (oMainExternalReference)
+						{
+							nDefaultExternalLinIndex = oWb.getExternalLinkIndexByName(oMainExternalReference.Id);
+							if (nDefaultExternalLinIndex === null)
+							{
+								oWb.addExternalReferences([oMainExternalReference]);
+								nDefaultExternalLinIndex = oWb.externalReferences.length;
+							}
+
+							let result;
+							if (isWorkbookRef) {
+								result = "[" + nDefaultExternalLinIndex + "]!" + oper.toString();
+							} else {
+								let toStringOper;
+								if (oper.type === AscCommonExcel.cElementType.name) {
+									toStringOper = new AscCommonExcel.cName3D(oper.value, oper.ws);
+								} else if (oper.type === AscCommonExcel.cElementType.cell) {
+									toStringOper = new AscCommonExcel.cRef3D(oper.value, oper.ws);
+								} else if (oper.type === AscCommonExcel.cElementType.cellsRange) {
+									toStringOper = new AscCommonExcel.cArea3D(oper.value, oper.ws);
+								} else {
+									toStringOper = oper.clone();
+								}
+								toStringOper.externalLink = nDefaultExternalLinIndex;
+								result = toStringOper.toString();
+							}
+							arrResult.push(result);
+						}
+						else
+						{
+							let result = oper.toString();
+							if (isWorkbookRef) {
+								result = "[0]!" + result;
+							}
+							arrResult.push(result);
+						}
+					}
+				});
+			}
+		}
+		let sResult = arrResult.join(',');
+		if (bFirstBrace)
+			sResult = '(' + sResult;
+
+		if (bLastBrace)
+			sResult = sResult + ')';
+
+		return sResult;
+	}
 
     var SERIES_FLAG_HOR_VALUE = 1;
     var SERIES_FLAG_VERT_VALUE = 2;
@@ -17345,13 +17595,13 @@
         for(var nRef = 0; nRef < this.aRefs.length; ++nRef) {
             oRef = this.aRefs[nRef];
             oBBox = oRef.bbox;
-            var sWSName = oRef.worksheet.getName();
-            var oCurBounds = oBounds[sWSName];
+            var sId = oRef.worksheet.Id;
+            var oCurBounds = oBounds[sId];
             if(oCurBounds) {
                 oCurBounds.bbox.union2(oBBox);
             }
             else {
-                oBounds[sWSName] = new AscCommonExcel.Range(oRef.worksheet, oBBox.r1, oBBox.c1, oBBox.r2, oBBox.c2);
+                oBounds[sId] = new AscCommonExcel.Range(oRef.worksheet, oBBox.r1, oBBox.c1, oBBox.r2, oBBox.c2);
             }
         }
     };
@@ -18445,8 +18695,8 @@
         return false;
     };
     CChartDataRefs.prototype.hasIntersection = function(oRange) {
-        var sWSName = oRange.worksheet.getName();
-        var oSheetBounds = this.boundsByWS[sWSName];
+        const sId = oRange.worksheet.Id;
+        const oSheetBounds = this.boundsByWS[sId];
         if(!oSheetBounds) {
             return false;
         }

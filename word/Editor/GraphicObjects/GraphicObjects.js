@@ -318,6 +318,7 @@ CGraphicObjects.prototype =
     getOleObject: DrawingObjectsController.prototype.getOleObject,
     getChartObject: DrawingObjectsController.prototype.getChartObject,
     getChartSpace2: DrawingObjectsController.prototype.getChartSpace2,
+    getChartInfo: DrawingObjectsController.prototype.getChartInfo,
     CreateDocContent: DrawingObjectsController.prototype.CreateDocContent,
     isSlideShow: function()
     {
@@ -778,8 +779,10 @@ CGraphicObjects.prototype =
     checkSelectedObjectsForMove: DrawingObjectsController.prototype.checkSelectedObjectsForMove,
 
     getDrawingPropsFromArray: DrawingObjectsController.prototype.getDrawingPropsFromArray,
-    getPropsFromChart: DrawingObjectsController.prototype.getPropsFromChart,
     getSelectedObjectsByTypes: DrawingObjectsController.prototype.getSelectedObjectsByTypes,
+		getChartSettings: DrawingObjectsController.prototype.getChartSettings,
+		editChartDrawingObjects: DrawingObjectsController.prototype.editChartDrawingObjects,
+		editChartCallback: DrawingObjectsController.prototype.editChartCallback,
 
 
     getPageSizesByDrawingObjects: function()
@@ -927,7 +930,6 @@ CGraphicObjects.prototype =
     },
 
     resetTextSelection: DrawingObjectsController.prototype.resetTextSelection,
-    collectPropsFromDLbls: DrawingObjectsController.prototype.collectPropsFromDLbls,
 
     setProps: function(oProps)
     {
@@ -1299,35 +1301,53 @@ CGraphicObjects.prototype =
         }
     },
 
-    editChart: function(chart)
+	getSingleSelectedChart: function ()
+	{
+		const arrByTypes = AscFormat.getObjectsByTypesFromArr(this.selectedObjects, true);
+		const arrSelectedCharts = [];
+
+		for(let i = 0; i < arrByTypes.charts.length; ++i)
+		{
+			if(arrByTypes.charts[i].selected)
+			{
+				arrSelectedCharts.push(arrByTypes.charts[i]);
+			}
+		}
+		if (arrSelectedCharts.length === 1)
+		{
+			return arrSelectedCharts[0];
+		}
+		return null;
+	},
+
+    editChart: function(oBinary)
     {
-        var chart_space = this.getChartSpace2(chart, null), select_start_page;
-        var by_types;
-        by_types = AscFormat.getObjectsByTypesFromArr(this.selectedObjects, true);
+        var chart_space = this.getChartSpace2(oBinary, null), select_start_page;
 
-        var aSelectedCharts = [];
-        for(i = 0; i < by_types.charts.length; ++i)
+				const oSelectedChart  = this.getSingleSelectedChart();
+        if(oSelectedChart)
         {
-            if(by_types.charts[i].selected)
+	        if (!oSelectedChart.isExternal() && oBinary["workbookBinary"])
+	        {
+						const oApi = this.getEditorApi();
+		        chart_space.setXLSX(oApi.frameManager.getDecodedArray(oBinary["workbookBinary"]));
+	        }
+	        if (oBinary['imagesForAddToHistory'])
+	        {
+		        AscDFH.addImagesFromFrame(chart_space, oBinary['imagesForAddToHistory']);
+	        }
+            if(oSelectedChart.group)
             {
-                aSelectedCharts.push(by_types.charts[i]);
-            }
-        }
-
-        if(aSelectedCharts.length === 1)
-        {
-            if(aSelectedCharts[0].group)
-            {
-                var parent_group = aSelectedCharts[0].group;
-                var major_group = aSelectedCharts[0].getMainGroup();
+                var parent_group = oSelectedChart.group;
+                var major_group = oSelectedChart.getMainGroup();
                 for(var i = parent_group.spTree.length -1; i > -1; --i)
                 {
-                    if(parent_group.spTree[i] === aSelectedCharts[0])
+                    if(parent_group.spTree[i] === oSelectedChart)
                     {
                         parent_group.removeFromSpTreeByPos(i);
                         chart_space.setGroup(parent_group);
-                        chart_space.spPr.xfrm.setOffX(aSelectedCharts[0].spPr.xfrm.offX);
-                        chart_space.spPr.xfrm.setOffY(aSelectedCharts[0].spPr.xfrm.offY);
+                        chart_space.spPr.xfrm.setOffX(oSelectedChart.spPr.xfrm.offX);
+                        chart_space.spPr.xfrm.setOffY(oSelectedChart.spPr.xfrm.offY);
                         parent_group.addToSpTree(i, chart_space);
                         major_group.updateCoordinatesAfterInternalResize();
                         major_group.parent.CheckWH();
@@ -1347,21 +1367,53 @@ CGraphicObjects.prototype =
             {
                 chart_space.spPr.xfrm.setOffX(0);
                 chart_space.spPr.xfrm.setOffY(0);
-                select_start_page = aSelectedCharts[0].selectStartPage;
-                chart_space.setParent(aSelectedCharts[0].parent);
-                aSelectedCharts[0].parent.Set_GraphicObject(chart_space);
-                aSelectedCharts[0].parent.docPr.setTitle(chart["cTitle"]);
-                aSelectedCharts[0].parent.docPr.setDescr(chart["cDescription"]);
+                select_start_page = oSelectedChart.selectStartPage;
+                chart_space.setParent(oSelectedChart.parent);
+                oSelectedChart.parent.Set_GraphicObject(chart_space);
                 this.resetSelection();
                 this.selectObject(chart_space, select_start_page);
-                aSelectedCharts[0].parent.CheckWH();
+                oSelectedChart.parent.CheckWH();
                 this.document.Recalculate();
                 this.document.Document_UpdateInterfaceState();
             }
         }
     },
+	loadChartData: function (bNeedRecalculate) {
+		const oChart = this.getSingleSelectedChart();
+		const oApi = this.getEditorApi();
+		if (oChart && oApi) {
+			oApi.frameManager.loadChartData(oChart);
+			if (bNeedRecalculate) {
+				oChart.handleUpdateType();
+				const oRecalcData = new AscCommon.RecalcData();
+				oRecalcData.Drawings.Map[oChart.Id] = oChart;
+				this.document.RecalculateWithParams(oRecalcData);
+			}
+		}
+	},
+	updateChart: function (binary)
+	{
+		const oSelectedChart = this.getSingleSelectedChart();
+		if (oSelectedChart)
+		{
+			const oApi = this.getEditorApi();
+			oApi.frameManager.saveChartData(oSelectedChart);
+			const oChartInfo = this.getChartInfo(binary);
+			const oChart = oChartInfo.chart;
+			const oChartData = oChartInfo.chartData;
+			oSelectedChart.setChart(oChart);
+			if (oChartData) {
+				oSelectedChart.setChartData(oChartData);
+			}
+			oSelectedChart.handleUpdateType();
+      const oRecalcData = new AscCommon.RecalcData();
+			oRecalcData.Drawings.Map[oSelectedChart.Id] = oSelectedChart;
+			this.document.RecalculateWithParams(oRecalcData);
+		}
+	},
 
-    getCompatibilityMode: function(){
+
+	getCompatibilityMode: function(){
         var ret = 0xFF;
         if(this.document && this.document.GetCompatibilityMode){
             ret = this.document.GetCompatibilityMode();
@@ -1718,18 +1770,38 @@ CGraphicObjects.prototype =
     resetChartElementsSelection: DrawingObjectsController.prototype.resetChartElementsSelection,
     checkCurrentTextObjectExtends: DrawingObjectsController.prototype.checkCurrentTextObjectExtends,
 
+		openChartEditor: function ()
+		{
+				const oChart = this.getChartObject();
+				if (oChart)
+				{
+					const oChartLoader = new AscCommon.CFrameDiagramBinaryLoader(oChart);
+					oChartLoader.tryOpen();
+				}
+		},
 
     handleChartDoubleClick: function(drawing, chart, e, x, y, pageIndex)
     {
-        if(false === this.document.Document_Is_SelectionLocked(changestype_Drawing_Props))
-        {
-            editor.asc_doubleClickOnChart(this.getChartObject());
-        }
-        this.clearTrackObjects();
-        this.clearPreTrackObjects();
-        this.changeCurrentState(new AscFormat.NullState(this));
-        this.document.OnMouseUp(e, x, y, pageIndex);
+	    const oApi = this.getEditorApi();
+	    if(oApi && !oApi.isOpenedFrameEditor && false === this.document.Document_Is_SelectionLocked(changestype_Drawing_Props))
+	    {
+		    this.openChartEditor(chart);
+		    this.clearTrackObjects();
+		    this.clearPreTrackObjects();
+		    this.changeCurrentState(new AscFormat.NullState(this));
+		    this.document.OnMouseUp(e, x, y, pageIndex);
+	    }
     },
+
+	openOleEditor: function ()
+	{
+			const oOleObject = this.canEditTableOleObject(true);
+			if (oOleObject)
+			{
+				const oleLoader = new AscCommon.CFrameOleBinaryLoader(oOleObject);
+				oleLoader.tryOpen();
+			}
+	},
 
     handleSignatureDblClick: function(sGuid, width, height){
         editor.sendEvent("asc_onSignatureDblClick", sGuid, width, height);
@@ -1744,7 +1816,7 @@ CGraphicObjects.prototype =
             }
             else if (oleObject.canEditTableOleObject())
             {
-                editor.asc_doubleClickOnTableOleObject(oleObject);
+	            this.openOleEditor();
             }
             else
             {

@@ -33,60 +33,9 @@
 "use strict";
 
 window['AscCommon'] = window['AscCommon'] || {};
-window['AscCommon'].spellcheckGetLanguages = function()
-{
-	return {
-		"1068" : "az_Latn_AZ",
-		"1026" : "bg_BG",
-		"1027" : "ca_ES",
-		"2051" : "ca_ES_valencia",
-		"1029" : "cs_CZ",
-		"1030" : "da_DK",
-		"3079" : "de_AT",
-		"2055" : "de_CH",
-		"1031" : "de_DE",
-		"1032" : "el_GR",
-		"3081" : "en_AU",
-		"4105" : "en_CA",
-		"2057" : "en_GB",
-		"1033" : "en_US",
-		"7177" : "en_ZA",
-		"3082" : "es_ES",
-		"1069" : "eu_ES",
-		"1036" : "fr_FR",
-		"1110" : "gl_ES",
-		"1050" : "hr_HR",
-		"1038" : "hu_HU",
-		"1057" : "id_ID",
-		"1040" : "it_IT",
-		"1087" : "kk_KZ",
-		"1042" : "ko_KR",
-		"1134" : "lb_LU",
-		"1063" : "lt_LT",
-		"1062" : "lv_LV",
-		"1104" : "mn_MN",
-		"1044" : "nb_NO",
-		"1043" : "nl_NL",
-		"2068" : "nn_NO",
-		"1154" : "oc_FR",
-		"1045" : "pl_PL",
-		"1046" : "pt_BR",
-		"2070" : "pt_PT",
-		"1048" : "ro_RO",
-		"1049" : "ru_RU",
-		"1051" : "sk_SK",
-		"1060" : "sl_SI",
-		"10266" : "sr_Cyrl_RS",
-		"9242" : "sr_Latn_RS",
-		"1053" : "sv_SE",
-		"1055" : "tr_TR",
-		"1058" : "uk_UA",
-		"2115" : "uz_Cyrl_UZ",
-		"1091" : "uz_Latn_UZ",
-		"1066" : "vi_VN",
-		"2067" : "nl_NL" // nl_BE
-	};
-};
+
+window['AscCommon']['spellcheckGetLanguages']=function(){return {"10241":{"hyphen":false,"name":"ar"},"1025":{"hyphen":false,"name":"ar"},"1026":{"hyphen":true,"name":"bg_BG"},"10266":{"hyphen":true,"name":"sr_Cyrl_RS"},"1027":{"hyphen":true,"name":"ca_ES"},"1029":{"hyphen":true,"name":"cs_CZ"},"1030":{"hyphen":true,"name":"da_DK"},"1031":{"hyphen":true,"name":"de_DE"},"1032":{"hyphen":true,"name":"el_GR"},"1033":{"hyphen":true,"name":"en_US"},"1036":{"hyphen":true,"name":"fr_FR"},"1038":{"hyphen":true,"name":"hu_HU"},"1040":{"hyphen":true,"name":"it_IT"},"1042":{"hyphen":false,"name":"ko_KR"},"1043":{"hyphen":true,"name":"nl_NL"},"1044":{"hyphen":true,"name":"nb_NO"},"1045":{"hyphen":true,"name":"pl_PL"},"1046":{"hyphen":true,"name":"pt_BR"},"1048":{"hyphen":true,"name":"ro_RO"},"1049":{"hyphen":true,"name":"ru_RU"},"1050":{"hyphen":true,"name":"hr_HR"},"1051":{"hyphen":true,"name":"sk_SK"},"1053":{"hyphen":true,"name":"sv_SE"},"1055":{"hyphen":false,"name":"tr_TR"},"1057":{"hyphen":true,"name":"id_ID"},"1058":{"hyphen":true,"name":"uk_UA"},"1060":{"hyphen":true,"name":"sl_SI"},"1062":{"hyphen":true,"name":"lv_LV"},"1063":{"hyphen":false,"name":"lt_LT"},"1066":{"hyphen":false,"name":"vi_VN"},"1068":{"hyphen":false,"name":"az_Latn_AZ"},"1069":{"hyphen":false,"name":"eu_ES"},"1087":{"hyphen":false,"name":"kk_KZ"},"1091":{"hyphen":false,"name":"uz_Latn_UZ"},"1104":{"hyphen":true,"name":"mn_MN"},"1110":{"hyphen":true,"name":"gl_ES"},"11265":{"hyphen":false,"name":"ar"},"1134":{"hyphen":false,"name":"lb_LU"},"1154":{"hyphen":false,"name":"oc_FR"},"12289":{"hyphen":false,"name":"ar"},"13313":{"hyphen":false,"name":"ar"},"14337":{"hyphen":false,"name":"ar"},"15361":{"hyphen":false,"name":"ar"},"16385":{"hyphen":false,"name":"ar"},"2049":{"hyphen":false,"name":"ar"},"2051":{"hyphen":false,"name":"ca_ES_valencia"},"2055":{"hyphen":true,"name":"de_CH"},"2057":{"hyphen":true,"name":"en_GB"},"2067":{"hyphen":true,"name":"nl_NL"},"2068":{"hyphen":true,"name":"nn_NO"},"2070":{"hyphen":true,"name":"pt_PT"},"2115":{"hyphen":false,"name":"uz_Cyrl_UZ"},"3073":{"hyphen":false,"name":"ar"},"3079":{"hyphen":true,"name":"de_AT"},"3081":{"hyphen":true,"name":"en_AU"},"3082":{"hyphen":true,"name":"es_ES"},"4097":{"hyphen":false,"name":"ar"},"4105":{"hyphen":false,"name":"en_CA"},"5121":{"hyphen":false,"name":"ar"},"6145":{"hyphen":false,"name":"ar"},"7169":{"hyphen":false,"name":"ar"},"7177":{"hyphen":false,"name":"en_ZA"},"8193":{"hyphen":false,"name":"ar"},"9217":{"hyphen":false,"name":"ar"},"9242":{"hyphen":true,"name":"sr_Latn_RS"}}};
+window['AscCommon'].spellcheckGetLanguages = window['AscCommon']['spellcheckGetLanguages'];
 
 function CSpellchecker(settings)
 {
@@ -223,7 +172,14 @@ function CSpellchecker(settings)
 		_port.onmessage = function(message) {
 			_worker.oncommand && _worker.oncommand(message.data);
 		};
-		_port.postMessage({ "type" : "init", "dictionaries_path" : dictionariesPath, "languages" : this.languages });
+		let langs = {};
+		for (let i in this.languages)
+		{
+			if (!this.languages.hasOwnProperty(i))
+				continue;
+			langs[i] = this.languages[i]["name"];
+		}
+		_port.postMessage({ "type" : "init", "dictionaries_path" : dictionariesPath, "languages" : langs });
 
 		this.command = function(message)
 		{

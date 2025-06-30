@@ -40,18 +40,6 @@
 function (window, undefined) {
 
     const SPREADSHEET_APPLICATION_ID = 'Excel.Sheet.12';
-    const BINARY_PART_HISTORY_LIMIT = 1048576;
-
-    function CChangesDrawingsImageId(Class, Type, OldPr, NewPr) {
-        AscDFH.CChangesDrawingsString.call(this, Class, Type, OldPr, NewPr);
-        this.FromLoad = false;
-    }
-    CChangesDrawingsImageId.prototype = Object.create(AscDFH.CChangesDrawingsString.prototype);
-    CChangesDrawingsImageId.prototype.constructor = CChangesDrawingsImageId;
-    CChangesDrawingsImageId.prototype.ReadFromBinary = function (reader) {
-        this.FromLoad = true;
-        AscDFH.CChangesDrawingsString.prototype.ReadFromBinary.call(this, reader);
-    };
 
         function COleSize(w, h){
             this.w = w;
@@ -66,111 +54,31 @@ function (window, undefined) {
             this.h = Reader.GetLong();
         };
 
-        function CChangesStartOleObjectBinary(Class, Old, New, Color) {
-            AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
-        }
-        CChangesStartOleObjectBinary.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
-        CChangesStartOleObjectBinary.prototype.constructor = CChangesStartOleObjectBinary;
+	    function CChangesStartOleObjectBinary(Class, Old, New, Color) {
+		    AscDFH. CChangesStartBinaryData.call(this, Class, Old, New, AscDFH.historyitem_ImageShapeSetStartBinaryData, Color);
+	    }
+	    CChangesStartOleObjectBinary.prototype = Object.create(AscDFH.CChangesStartBinaryData.prototype);
+	    CChangesStartOleObjectBinary.prototype.constructor = CChangesStartOleObjectBinary;
+	    CChangesStartOleObjectBinary.prototype.setBinaryDataToClass = function (oPr)
+	    {
+		    this.Class.m_aBinaryData = oPr;
+	    }
+			
+	    function CChangesPartOleObjectBinary(Class, Old, New, Color) {
+		    AscDFH.CChangesPartBinaryData.call(this, Class, Old, New, AscDFH.historyitem_ImageShapeSetPartBinaryData, Color);
+	    }
+	    CChangesPartOleObjectBinary.prototype = Object.create(AscDFH.CChangesPartBinaryData.prototype);
+	    CChangesPartOleObjectBinary.prototype.constructor = CChangesPartOleObjectBinary;
 
-        CChangesStartOleObjectBinary.prototype.Type = AscDFH.historyitem_ImageShapeSetStartBinaryData;
-
-        CChangesStartOleObjectBinary.prototype.Undo = function () {
-            if (!this.Class.partsOfBinaryData) {
-                return this.Redo();
-            }
-
-            let lenOfAllBinaryData = 0;
-            for (let i = 0; i < this.Class.partsOfBinaryData.length; i += 1) {
-                lenOfAllBinaryData += this.Class.partsOfBinaryData[i].length;
-            }
-
-            this.Class.m_aBinaryData = new Uint8Array(lenOfAllBinaryData);
-            let indexOfInsert = 0;
-            for (let i = this.Class.partsOfBinaryData.length - 1; i >= 0; i -= 1) {
-                const partOfBinaryData = this.Class.partsOfBinaryData[i];
-                for (let j = 0; j < partOfBinaryData.length; j += 1) {
-                    this.Class.m_aBinaryData[indexOfInsert] = partOfBinaryData[j];
-                    indexOfInsert += 1;
-                }
-            }
-            delete this.Class.partsOfBinaryData;
-        }
-
-        CChangesStartOleObjectBinary.prototype.Redo = function () {
-            if (this.Class.partsOfBinaryData) {
-                return this.Undo()
-            }
-            this.Class.partsOfBinaryData = [];
-        }
-
-        function CChangesPartOleObjectBinary(Class, Old, New, Color) {
-            AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
-        }
-        CChangesPartOleObjectBinary.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
-        CChangesPartOleObjectBinary.prototype.constructor = CChangesPartOleObjectBinary;
-        CChangesPartOleObjectBinary.prototype.Type = AscDFH.historyitem_ImageShapeSetPartBinaryData;
-
-
-
-
-
-        CChangesPartOleObjectBinary.prototype.private_SetValue = function (oPr) {
-            if (oPr.length) {
-                this.Class.partsOfBinaryData.push(oPr);
-            }
-        }
-
-        CChangesPartOleObjectBinary.prototype.WriteToBinary = function(Writer)
-        {
-            Writer.WriteLong(this.Old.length);
-            Writer.WriteBuffer(this.Old, 0, this.Old.length);
-
-            Writer.WriteLong(this.New.length);
-            Writer.WriteBuffer(this.New, 0, this.New.length);
-        };
-        CChangesPartOleObjectBinary.prototype.ReadFromBinary = function(Reader)
-        {
-            let length = Reader.GetLong();
-            this.Old = new Uint8Array(Reader.GetBuffer(length));
-
-            length = Reader.GetLong();
-            this.New = new Uint8Array(Reader.GetBuffer(length));
-        };
-
-        function CChangesEndOleObjectBinary(Class, Old, New, Color) {
-            AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
-        }
-        CChangesEndOleObjectBinary.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
-        CChangesEndOleObjectBinary.prototype.constructor = CChangesEndOleObjectBinary;
-        CChangesEndOleObjectBinary.prototype.Type = AscDFH.historyitem_ImageShapeSetEndBinaryData;
-
-        CChangesEndOleObjectBinary.prototype.Undo = function () {
-            if (this.Class.partsOfBinaryData) {
-                return this.Redo();
-            }
-            this.Class.partsOfBinaryData = [];
-        }
-
-        CChangesEndOleObjectBinary.prototype.Redo = function () {
-            if (!this.Class.partsOfBinaryData) {
-                return this.Undo();
-            }
-            let lenOfAllBinaryData = 0;
-            for (let i = 0; i < this.Class.partsOfBinaryData.length; i += 1) {
-                lenOfAllBinaryData += this.Class.partsOfBinaryData[i].length;
-            }
-            this.Class.m_aBinaryData = new Uint8Array(lenOfAllBinaryData);
-
-            let indexOfInsert = 0;
-            for (let i = 0; i < this.Class.partsOfBinaryData.length; i += 1) {
-                const partOfBinaryData = this.Class.partsOfBinaryData[i];
-                for (let j = 0; j < partOfBinaryData.length; j += 1) {
-                    this.Class.m_aBinaryData[indexOfInsert] = partOfBinaryData[j];
-                    indexOfInsert += 1;
-                }
-            }
-            delete this.Class.partsOfBinaryData;
-        }
+	    function CChangesEndOleObjectBinary(Class, Old, New, Color) {
+		    AscDFH.CChangesEndBinaryData.call(this, Class, Old, New, AscDFH.historyitem_ImageShapeSetEndBinaryData, Color);
+	    }
+	    CChangesEndOleObjectBinary.prototype = Object.create(AscDFH.CChangesEndBinaryData.prototype);
+	    CChangesEndOleObjectBinary.prototype.constructor = CChangesEndOleObjectBinary;
+	    CChangesEndOleObjectBinary.prototype.setBinaryDataToClass = function (oPr)
+	    {
+		    this.Class.m_aBinaryData = oPr;
+	    }
 
         AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetData] = AscDFH.CChangesDrawingsString;
         AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetApplicationId] = AscDFH.CChangesDrawingsString;
@@ -184,7 +92,6 @@ function (window, undefined) {
         AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetStartBinaryData] = CChangesStartOleObjectBinary;
         AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetPartBinaryData] = CChangesPartOleObjectBinary;
         AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetEndBinaryData] = CChangesEndOleObjectBinary;
-        AscDFH.changesFactory[AscDFH.historyitem_ImageShapeLoadImagesfromContent] = CChangesDrawingsImageId;
 
         AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetData] = function(oClass, value){oClass.m_sData = value;};
         AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetApplicationId] = function(oClass, value){oClass.m_sApplicationId = value;};
@@ -200,15 +107,6 @@ function (window, undefined) {
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetOleType] = function(oClass, value){oClass.m_nOleType = value;};
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetMathObject] = function(oClass, value){oClass.m_oMathObject = value;};
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetDrawAspect] = function(oClass, value){oClass.m_nDrawAspect = value;};
-		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeLoadImagesfromContent] = function(oClass, sValue, bFromLoad) {
-            if (bFromLoad) {
-                if(AscCommon.CollaborativeEditing) {
-                    if(sValue && sValue.length > 0) {
-                        AscCommon.CollaborativeEditing.Add_NewImage(sValue);
-                    }
-                }
-            }
-        };
 
 
         let EOLEDrawAspect =
@@ -245,14 +143,31 @@ function (window, undefined) {
         AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_ImageShapeSetData, this.m_sData, sData));
         this.m_sData = sData;
     };
+    COleObject.prototype.applySpecialPasteProps = function ()
+    {
+	    if (this.m_aBinaryData.length)
+	    {
+				const oApi = Asc.editor || editor;
+		    if (oApi.isOpenOOXInBrowser && !AscCommon.checkOOXMLSignature(this.m_aBinaryData))
+		    {
+			    const base64 = oApi.frameManager.getEncodedArray(this.m_aBinaryData).toUtf8();
+					const oThis = this;
+			    oApi.getConvertedXLSXFileFromUrl({data: base64}, Asc.c_oAscFileType.XLSX, function (arrBinaryData) {
+				    if (arrBinaryData)
+				    {
+					    oThis.setBinaryData(arrBinaryData);
+				    }
+				    else
+				    {
+					    oThis.setBinaryData(new Uint8Array(0));
+				    }
+			    });
+		    }
+	    }
+    };
     COleObject.prototype.setDrawAspect = function (oPr) {
         AscCommon.History.Add(new AscDFH.CChangesDrawingsLong(this, AscDFH.historyitem_ImageShapeSetDrawAspect, this.m_nDrawAspect, oPr));
         this.m_nDrawAspect = oPr;
-    };
-    COleObject.prototype.loadImagesFromContent = function (arrImagesId) {
-        for (let i = 0; i < arrImagesId.length; i += 1) {
-            AscCommon.History.Add(new CChangesDrawingsImageId(this, AscDFH.historyitem_ImageShapeLoadImagesfromContent, '', arrImagesId[i]));
-        }
     };
     COleObject.prototype.setApplicationId = function(sApplicationId)
     {
@@ -291,19 +206,7 @@ function (window, undefined) {
     };
     COleObject.prototype.setBinaryData = function(aBinaryData)
     {
-        const maxLen = aBinaryData.length > this.m_aBinaryData.length ? aBinaryData.length : this.m_aBinaryData.length;
-        const oldParts = [];
-        const newParts = [];
-        const amountOfParts = Math.ceil(maxLen / BINARY_PART_HISTORY_LIMIT);
-        for (let i = 0; i < amountOfParts; i += 1) {
-            oldParts.push(this.m_aBinaryData.slice(i * BINARY_PART_HISTORY_LIMIT, (i + 1) * BINARY_PART_HISTORY_LIMIT));
-            newParts.push(aBinaryData.slice(i * BINARY_PART_HISTORY_LIMIT, (i + 1) * BINARY_PART_HISTORY_LIMIT));
-        }
-        AscCommon.History.Add(new CChangesStartOleObjectBinary(this, null, null, false));
-        for (let i = 0; i < amountOfParts; i += 1) {
-            AscCommon.History.Add(new CChangesPartOleObjectBinary(this, oldParts[i], newParts[i], false));
-        }
-        AscCommon.History.Add(new CChangesEndOleObjectBinary(this, null, null, false));
+	    AscDFH.addBinaryDataToHistory(this, this.m_aBinaryData, aBinaryData, CChangesStartOleObjectBinary, CChangesPartOleObjectBinary, CChangesEndOleObjectBinary);
         this.m_aBinaryData = aBinaryData;
     };
     COleObject.prototype.setMathObject = function(oMath)
@@ -491,7 +394,7 @@ function (window, undefined) {
 
     COleObject.prototype.editExternal = function(Data, sImageUrl, fWidth, fHeight, nPixWidth, nPixHeight, arrImagesForAddToHistory) {
         if (arrImagesForAddToHistory) {
-            this.loadImagesFromContent(arrImagesForAddToHistory);
+	        AscDFH.addImagesFromFrame(this, arrImagesForAddToHistory);
         }
 
         if(typeof Data === "string" && this.m_sData !== Data) {
@@ -641,53 +544,25 @@ function (window, undefined) {
         if(sId) {
             let rel = reader.rels.getRelationship(sId);
             if (rel) {
-                if ("Internal" === rel.targetMode && rel.targetFullName) {
-                    this.setDataLink(rel.targetFullName.slice(1));
-                }
+            const olePart = reader.rels.pkg.getPartByUri(rel.targetFullName);
+            if (olePart)
+            {
+              const binaryData = olePart.getDocumentContent('object');
+              if (binaryData)
+              {
+                this.setBinaryData(binaryData.slice());
+              }
             }
+          }
         }
     };
 
     COleObject.prototype.getTypeName = function () {
         return AscCommon.translateManager.getValue("Object");
     };
-
-    function asc_putBinaryDataToFrameFromTableOleObject(oOleObject)
-    {
-        if (oOleObject instanceof AscFormat.COleObject) {
-            const oApi = Asc.editor || editor;
-            if (!oApi.isOpenedChartFrame) {
-                oApi.isOleEditor = true;
-                oApi.asc_onOpenChartFrame();
-                const oController = oApi.getGraphicController();
-                if (oController) {
-                    AscFormat.ExecuteNoHistory(function () {
-                        oController.checkSelectedObjectsAndCallback(function () {}, [], false);
-                    }, this, []);
-                }
-            }
-            const nDataSize = oOleObject.m_aBinaryData.length;
-            const sData = AscCommon.Base64.encode(oOleObject.m_aBinaryData);
-            const nImageWidth = oOleObject.extX * AscCommon.g_dKoef_mm_to_pix;
-            const nImageHeight = oOleObject.extY * AscCommon.g_dKoef_mm_to_pix;
-            const documentImageUrls = AscCommon.g_oDocumentUrls.urls;
-
-            return {
-                "binary": "XLSY;v2;" + nDataSize  + ";" + sData,
-                "isFromSheetEditor": !!oOleObject.worksheet,
-                "imageWidth": nImageWidth,
-                "imageHeight": nImageHeight,
-                "documentImageUrls": documentImageUrls
-            };
-        }
-        return {
-            "binary": null
-        };
-    }
     window['Asc'] = window['Asc'] || {};
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].COleObject = COleObject;
-    window['Asc'].asc_putBinaryDataToFrameFromTableOleObject = window['Asc']['asc_putBinaryDataToFrameFromTableOleObject'] = asc_putBinaryDataToFrameFromTableOleObject;
     window['AscFormat'].EOLEDrawAspect = EOLEDrawAspect;
 
 })(window);

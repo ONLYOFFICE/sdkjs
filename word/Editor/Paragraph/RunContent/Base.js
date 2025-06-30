@@ -166,6 +166,19 @@
 	CRunElementBase.prototype.Read_FromBinary = function(Reader)
 	{
 	};
+	CRunElementBase.prototype.RemoveThisFromDocument = function()
+	{
+		let run = this.GetRun();
+		if (!run)
+			return false;
+		
+		let inRunPos = run.GetElementPosition(this);
+		if (-1 === inRunPos)
+			return false;
+		
+		run.RemoveFromContent(inRunPos, 1, true);
+		return true;
+	};
 	/**
 	 * Может ли строка начинаться с данного элемента
 	 * @returns {boolean}
@@ -251,6 +264,14 @@
 	 * @returns {boolean}
 	 */
 	CRunElementBase.prototype.IsSpaceAfter = function()
+	{
+		return false;
+	};
+	/**
+	 * Можно ли ставить разрыв слова перед данным элементом
+	 * @returns {boolean}
+	 */
+	CRunElementBase.prototype.IsSpaceBefore = function()
 	{
 		return false;
 	};

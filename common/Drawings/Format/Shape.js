@@ -5878,8 +5878,12 @@
 				}
 			}
 			var oContent = this.getDocContent();
+			fCheckContentImages(images, oContent, this.bWordShape);
+		};
+
+		function fCheckContentImages(images, oContent, bWord) {
 			if (oContent) {
-				if (this.bWordShape) {
+				if (bWord) {
 					var drawings = oContent.GetAllDrawingObjects();
 					for (var i = 0; i < drawings.length; ++i) {
 						drawings[i].GraphicObj && drawings[i].GraphicObj.getAllRasterImages && drawings[i].GraphicObj.getAllRasterImages(images);
@@ -5897,7 +5901,7 @@
 
 				oContent.CheckRunContent(fCallback);
 			}
-		};
+		}
 		CShape.prototype.getAllDocContents = function (aDocContents) {
 			if (this.textBoxContent) {
 				aDocContents.push(this.textBoxContent);
@@ -7474,4 +7478,5 @@
 		window['AscFormat'].hitToHandles = hitToHandles;
 		window['AscFormat'].pHText = pHText;
 		window['AscFormat'].fitSmartArtShapes = fitSmartArtShapes;
+		window['AscFormat'].fCheckContentImages = fCheckContentImages;
 	})(window);

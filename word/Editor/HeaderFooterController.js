@@ -91,9 +91,33 @@ CHdrFtrController.prototype.AddTextArt = function(nStyle)
 {
 	this.HdrFtr.AddTextArt(nStyle);
 };
+CHdrFtrController.prototype.LoadChartData = function(bNeedRecalculate)
+{
+	this.HdrFtr.LoadChartData(bNeedRecalculate);
+};
 CHdrFtrController.prototype.EditChart = function(Chart)
 {
 	this.HdrFtr.EditChart(Chart);
+};
+CHdrFtrController.prototype.UpdateChart = function(Chart)
+{
+	this.HdrFtr.UpdateChart(Chart);
+};
+CHdrFtrController.prototype.OpenChartEditor = function()
+{
+	this.HdrFtr.OpenChartEditor();
+};
+CHdrFtrController.prototype.ApplyChartSettings = function(oChartSettings)
+{
+	return this.HdrFtr.ApplyChartSettings(oChartSettings);
+};
+CHdrFtrController.prototype.GetChartSettings = function()
+{
+	return this.HdrFtr.GetChartSettings();
+};
+CHdrFtrController.prototype.OpenOleEditor = function()
+{
+	this.HdrFtr.OpenOleEditor();
 };
 CHdrFtrController.prototype.AddInlineTable = function(nCols, nRows, nMode)
 {

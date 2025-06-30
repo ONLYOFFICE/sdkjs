@@ -191,6 +191,7 @@
 
 				break;
 			}
+			case AscCommon.c_oEditorId.Visio:
 			case AscCommon.c_oEditorId.Presentation:
 			{
 				let w_mm = this.api.WordControl.m_oLogicDocument.GetWidthMM();

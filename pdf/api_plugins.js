@@ -35,16 +35,16 @@
 (function(window, undefined)
 {
 	/**
-	 * Options for replace page content by html
+	 * Options to replace the HTML page content.
 	 * @typedef {Object} ReplaceHtmlOptions
-	 * @property {string} content - html content to replace
-	 * @property {boolean} [separateParagraphs=true] - will each paragraph be created a separate shape
+	 * @property {string} content - The HTML content to replace.
+	 * @property {boolean} [separateParagraphs=true] - Specifies whether each paragraph will be created in a separate shape.
 	 */
 
 	/**
-	 * Options for replace page content by html
+	 * Options to replace the XML page content.
 	 * @typedef {Object} ReplaceXmlOptions
-	 * @property {string[]} content - array with xml shapes to replace
+	 * @property {string[]} content - An array with XML shapes to be replaced.
 	 */
 
 
@@ -54,10 +54,10 @@
      * @class
      * @name Api
      */
-    let Api = window["asc_docs_api"];
+    let Api = window["PDFEditorApi"];
 
 	/**
-     * Gets current page index
+     * Returns the current page index.
      * @memberof Api
      * @typeofeditors ["PDFE"]
      * @alias GetCurrentPage
@@ -69,16 +69,16 @@
     };
 
 	/**
-	 * Gets page image
+	 * Returns the page image.
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
 	 * @alias GetPageImage
-	 * @param {number} nPage - page index
-	 * @param {object} [oParams={}] - image params
-	 * @param {number} [oParams.maxSize] - the size of the larger side in pixels
-	 * @param {boolean} [oParams.annotations=false] - will annotations be rendered
-	 * @param {boolean} [oParams.fields=false] - will fields be rendered
-	 * @param {boolean} [oParams.drawings=false] - will drawings be rendered
+	 * @param {number} nPage - The page index.
+	 * @param {object} [oParams={}] - The image parameters.
+	 * @param {number} [oParams.maxSize] - The size of the larger image side in pixels.
+	 * @param {boolean} [oParams.annotations=false] - Specifies whether the annotations will be rendered.
+	 * @param {boolean} [oParams.fields=false] - Specifies whether the fields will be rendered.
+	 * @param {boolean} [oParams.drawings=false] - Specifies whether the drawings will be rendered.
 	 * @returns {canvas}
 	 * @see office-js-api/Examples/Plugins/PDF/Api/Methods/GetPageImage.js
 	 */
@@ -89,7 +89,7 @@
 
 		let oViewer		= this.DocumentRenderer;
 		let oFile		= oViewer.file;
-		let nPt2Px		= g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
+		let nPt2Px		= AscCommonWord.g_dKoef_pt_to_mm * AscCommonWord.g_dKoef_mm_to_pix;
 
 		let nWidthPx	= oFile.pages[nPage].W * nPt2Px;
 		let nHeightPx	= oFile.pages[nPage].H * nPt2Px;
@@ -145,14 +145,14 @@
 	};
 
     /**
-     * Replace page content by params
+     * Replaces the page content with the specified parameters.
      * @memberof Api
      * @typeofeditors ["PDFE"]
      * @alias ReplacePageContent
-	 * @param {number} nPage - page index
-	 * @param {object} oParams - replace params
-	 * @param {"xml" | "html"} oParams.type - type of content to replace (xml / html)
-	 * @param {ReplaceXmlOptions | ReplaceHtmlOptions} oParams.options - replace content options
+	 * @param {number} nPage - The page index.
+	 * @param {object} oParams - The replacement parameters.
+	 * @param {"xml" | "html"} oParams.type - The type of content to be replaced (XML / HTML).
+	 * @param {ReplaceXmlOptions | ReplaceHtmlOptions} oParams.options - The content replacement options.
 	 * @returns {boolean}
      * @see office-js-api/Examples/Plugins/PDF/Api/Methods/ReplacePageContent.js
 	 */
@@ -180,6 +180,36 @@
 
 		return true;
     };
+	/**
+	 * Returns all the comments from the document.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @alias GetAllComments
+	 * @returns {comment[]} - An array of comment objects containing the comment data.
+	 * @see office-js-api/Examples/Plugins/PDF/Api/Methods/GetAllComments.js
+	 */
+	Api.prototype["pluginMethod_GetAllComments"] = function() {
+		let oDoc = this.getPDFDoc();
+		if (!oDoc)
+			return;
+
+		let arrResult = [];
+
+		let aAnnots = oDoc.annots;
+		for (let i = 0; i < aAnnots.length; i++) {
+			let annot = aAnnots[i];
+
+			let oAscCommData = annot.GetAscCommentData();
+			let oCommData = oAscCommData ? new AscCommon.CCommentData() : undefined;
+			oCommData && oCommData.Read_FromAscCommentData(oAscCommData);
+
+			if (oCommData) {
+				arrResult.push({"Id" : annot.GetId(), "Data" : oCommData.ConvertToSimpleObject()});
+			}
+		}
+
+		return arrResult;
+	};
 })(window);
 
 

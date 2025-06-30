@@ -2776,7 +2776,10 @@ function CDemonstrationManager(htmlpage)
         // не кэшируем вотермарк никогда
         let oldWatermark = this.HtmlPage.m_oApi.watermarkDraw;
         this.HtmlPage.m_oApi.watermarkDraw = null;
+				const oOldAnnotations = this.SlideAnnotations;
+	    this.SlideAnnotations = null;
         oPlayer.drawFrame(_image.image, {x:0, y: 0, w: _w, h: _h});
+	    this.SlideAnnotations = oOldAnnotations;
         this.HtmlPage.m_oApi.watermarkDraw = oldWatermark;
         const oSlideImage = new CCacheSlideImage();
         oSlideImage.Image = _image;
@@ -3323,9 +3326,19 @@ function CDemonstrationManager(htmlpage)
             this.HtmlPage.m_oApi.watermarkDraw.Draw(ctx, rect.x, rect.y, rect.w, rect.h);
         }
     };
+	this.CheckAnnotationsInternal = function(oGraphics, oSlide)
+	{
+		const oAnnotations = this.SlideAnnotations;
+		if (oAnnotations)
+		{
+			oAnnotations.draw(oGraphics, oSlide);
+		}
+	};
 
     this.Redraw = function ()
     {
+	    oThis.SlideIndexes[0] = -1;
+	    oThis.SlideIndexes[1] = -1;
         oThis.Clear();
         oThis.OnPaintSlide(true);
     };
@@ -3376,7 +3389,7 @@ function CDemonstrationManager(htmlpage)
         }
 
         oThis.WaitAnimationEnd = false;
-        if (oSlide && oSlide.isAdvanceAfterTransition())
+        if (oSlide && oSlide.isAdvanceAfterTransition() && oThis.CheckSlideDuration === -1)
         {
             oThis.CheckSlideDuration = setTimeout(function()
             {
@@ -3394,11 +3407,18 @@ function CDemonstrationManager(htmlpage)
             }, oSlide.getAdvanceDuration());
         }
     };
-
+		this.EndDrawInk = function() {
+			const oSlide = oThis.GetCurrentSlide();
+			const oController = oSlide && oSlide.graphicObjects;
+			if (oController && oController.curState instanceof AscFormat.CInkDrawState) {
+				oController.curState.onMouseUp({ClickCount : 1, X : 0, Y : 0}, 0, 0, oThis.SlideNum);
+			}
+		};
     this.AdvanceAfter = function()
     {
         if (oThis.IsPlayMode)
         {
+					oThis.EndDrawInk();
             oThis.TmpSlideVisible = oThis.SlideNum;
             oThis.GoToNextVisibleSlide();
             oThis.PauseAnimation(oThis.TmpSlideVisible);

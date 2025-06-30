@@ -119,6 +119,7 @@ function CBinaryFileWriter()
     this.UseContinueWriter = 0;
 
     this.IsUseFullUrl = false;
+	this.CopyPasteOptions = null;
     this.PresentationThemesOrigin = "";
 
     this.max_shape_id = 3;
@@ -154,6 +155,11 @@ function CBinaryFileWriter()
         this.IsUseFullUrl = true;
     };
 
+	this.Start_CopyPaste = function(oCopyPasteOptions)
+	{
+		this.CopyPasteOptions = oCopyPasteOptions;
+	};
+
     this.Start_UseDocumentOrigin = function(origin)
     {
         this.PresentationThemesOrigin = origin;
@@ -163,6 +169,11 @@ function CBinaryFileWriter()
     {
         this.IsUseFullUrl = false;
     };
+
+	this.End_CopyPaste = function()
+	{
+		this.CopyPasteOptions = null;
+	};
 
     this.Copy = function(oMemory, nPos, nLen)
     {
@@ -1499,7 +1510,7 @@ function CBinaryFileWriter()
         this._WriteBool2(1, _note.showMasterSp);
         this.WriteUChar(g_nodeAttributeEnd);
         this.WriteRecord1(0, _note.cSld, this.WriteCSld);
-        this.WriteRecord2(1, _note.clrMap, this.WriteClrMapOvr);
+        this.WriteRecord1(1, _note.clrMap, this.WriteClrMapOvr);
         this.EndRecord();
     };
 
@@ -1591,6 +1602,24 @@ function CBinaryFileWriter()
                 {
                     oThis.WriteRecordPPTY(0, variationStyleSchemeLst[i]);
                 }
+                oThis.EndRecord();
+            }
+            if (themeExt.themeSchemeSchemeEnum)
+            {
+                oThis.StartRecord(8);
+                oThis.WriteExtScheme(themeExt.themeSchemeSchemeEnum);
+                oThis.EndRecord();
+            }
+            if (themeExt.fmtSchemeExSchemeEnum)
+            {
+                oThis.StartRecord(9);
+                oThis.WriteExtScheme(themeExt.fmtSchemeExSchemeEnum);
+                oThis.EndRecord();
+            }
+            if (themeExt.fmtConnectorSchemeExSchemeEnum)
+            {
+                oThis.StartRecord(10);
+                oThis.WriteExtScheme(themeExt.fmtConnectorSchemeExSchemeEnum);
                 oThis.EndRecord();
             }
         }
@@ -1769,7 +1798,25 @@ function CBinaryFileWriter()
                 }
                 oThis.EndRecord();
             }
+            if (null !==scheme.clrSchemeExtLst.schemeEnum)
+            {
+                oThis.StartRecord(22);
+                oThis.WriteExtSchemeId(scheme.clrSchemeExtLst.schemeEnum);
+                oThis.EndRecord();
+            }
         }
+    };
+    this.WriteExtSchemeId = function(schemeEnum)
+    {
+        oThis.WriteUChar(g_nodeAttributeStart);
+        oThis._WriteUInt2(0, schemeEnum);
+        oThis.WriteUChar(g_nodeAttributeEnd);
+    };
+    this.WriteExtScheme = function(schemeEnum)
+    {
+        oThis.StartRecord(0);
+        oThis.WriteExtSchemeId(schemeEnum);
+        oThis.EndRecord();
     };
     this.WriteClrMapOvr = function(clrmapovr)
     {
@@ -1863,6 +1910,7 @@ function CBinaryFileWriter()
         }
 
         oThis._WriteInt2(7, tPr.lvl);
+        oThis._WriteBool2(10, pPr.Bidi);
 
         oThis.WriteUChar(g_nodeAttributeEnd);
 
@@ -2189,6 +2237,12 @@ function CBinaryFileWriter()
             action = url;
             url = "";
         }
+		else if (url.indexOf("ppaction://hlinkfile") == 0) {
+			// "ppaction://hlinkfile?file=name.ext";
+			const parts = url.split('?file=');
+			action = parts[0];
+			url = parts[1];
+		}
         else
         {
             var mask = "ppaction://hlinksldjumpslide";
@@ -3247,7 +3301,7 @@ function CBinaryFileWriter()
                 }
                 case para_Hyperlink:
                 {
-                    var _hObj = { Value : _elem.GetValue(), tooltip: _elem.GetToolTip()};
+                    var _hObj = { Value : _elem.GetValue(), tooltip: _elem.ToolTip};
                     var _content_len_h = _elem.Content.length;
 
                     for (var hi = 0; hi < _content_len_h; hi++)
@@ -3737,9 +3791,9 @@ function CBinaryFileWriter()
 
         var oBinaryChartWriter = new AscCommon.BinaryChartWriter(_memory);
         if (grObj.isChartEx()) {
-            oBinaryChartWriter.WriteCT_ChartExSpace(grObj);
+            oBinaryChartWriter.WriteCT_ChartExSpace(grObj, oThis.CopyPasteOptions);
         } else {
-            oBinaryChartWriter.WriteCT_ChartSpace(grObj);
+            oBinaryChartWriter.WriteCT_ChartSpace(grObj, oThis.CopyPasteOptions);
         }
 
         oThis.data = _memory.data;
@@ -4444,6 +4498,12 @@ function CBinaryFileWriter()
             action = id;
             id = "";
         }
+		else if (id.indexOf("ppaction://hlinkfile") == 0) {
+			// "ppaction://hlinkfile?file=name.ext";
+			const parts = id.split('?file=');
+			action = parts[0];
+			id = parts[1];
+		}
         else
         {
             if(typeof id === "string")
@@ -5206,6 +5266,10 @@ function CBinaryFileWriter()
         {
             this.BinaryFileWriter.Start_UseFullUrl();
         };
+	    this.Start_CopyPaste = function(oCopyPasteOptions)
+	    {
+		    this.BinaryFileWriter.Start_CopyPaste(oCopyPasteOptions);
+	    };
         this.Start_UseDocumentOrigin = function(origin)
         {
             this.BinaryFileWriter.Start_UseDocumentOrigin(origin);
@@ -5214,6 +5278,10 @@ function CBinaryFileWriter()
         {
             return this.BinaryFileWriter.End_UseFullUrl();
         };
+	    this.End_CopyPaste = function()
+	    {
+		    this.BinaryFileWriter.End_CopyPaste();
+	    };
         this._Start = function()
         {
             this.ShapeTextBoxContent = new AscCommon.CMemory();
@@ -5699,4 +5767,5 @@ function CBinaryFileWriter()
     window['AscCommon'].c_oMainTables = c_oMainTables;
     window['AscCommon'].CBinaryFileWriter = CBinaryFileWriter;
     window['AscCommon'].pptx_content_writer = new CPPTXContentWriter();
+    window['AscCommon'].CPPTXContentWriter = CPPTXContentWriter;
 })(window);

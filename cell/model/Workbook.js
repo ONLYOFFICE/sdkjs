@@ -485,7 +485,7 @@
 
 			this.ref = ref;
 			//all ref should be 3d, so worksheet can be anyone
-			this.parsedRef = new parserFormula(ref, this, AscCommonExcel.g_DefNameWorksheet);
+			this.parsedRef = new AscCommonExcel.parserFormula(ref, this, AscCommonExcel.g_DefNameWorksheet);
 			this.parsedRef.setIsTable(this.type);
 			var t = this;
 			if (opt_forceBuild) {
@@ -538,7 +538,7 @@
 			return new Asc.asc_CDefName(this.name, this.getRef(bLocale), index, this.type, this.hidden, this.isLock, this.isXLNM);
 		},
 		getUndoDefName: function() {
-			return new UndoRedoData_DefinedNames(this.name, this.ref, this.sheetId, this.type, this.isXLNM);
+			return new UndoRedoData_DefinedNames(this.name, this.ref, this.sheetId, this.type, this.isXLNM, this.hidden);
 		},
 		setUndoDefName: function(newUndoName, doNotChangeRef) {
 			this.name = newUndoName.name;
@@ -618,7 +618,7 @@
 		//lock
 		this.lockCounter = 0;
 		//defined name
-		this.defNames = {wb: {}, sheet: {}};
+		this.defNames = {wb: {}, sheet: {}, xlchartIndex: null};
 		this.tableNamePattern = "Table";
 		this.tableNameIndex = 0;
 		this.pivotNamePattern = "PivotTable";
@@ -925,7 +925,7 @@
 		//defined name
 		getDefNameByName: function(name, sheetId, opt_exact) {
 			var res = null;
-			var nameIndex = getDefNameIndex(name);
+			let nameIndex = getDefNameIndex(name);
 			if (sheetId) {
 				var sheetContainer = this.defNames.sheet[sheetId];
 				if (sheetContainer) {
@@ -1075,12 +1075,12 @@
 			}
 			this.wb.handlers && this.wb.handlers.trigger("onChangePageSetupProps", sheetId);
 		},
-		editDefinesNames: function(oldUndoName, newUndoName) {
+		editDefinesNames: function(oldUndoName, newUndoName, isFromHistory) {
 			var res = null;
 			var isSlicer = oldUndoName && this.wb.getSlicerCacheByCacheName(oldUndoName.name);
 
-			if (!AscCommon.rx_defName.test(getDefNameIndex(newUndoName.name)) || (!newUndoName.ref && !isSlicer) ||
-				(newUndoName.ref.length === 0 && !isSlicer) || newUndoName.name.length > g_nDefNameMaxLength) {
+			if (!isFromHistory && (!AscCommon.rx_defName.test(getDefNameIndex(newUndoName.name)) || (!newUndoName.ref && !isSlicer) ||
+				(newUndoName.ref.length === 0 && !isSlicer) || newUndoName.name.length > g_nDefNameMaxLength)) {
 				return res;
 			}
 			if (oldUndoName) {
@@ -1253,6 +1253,26 @@
 			return this._foreachDefName(function(defName) {
 				return defName.isLock;
 			});
+		},
+		getNewXlChartIndex: function() {
+			if (this.defNames.xlchartIndex === null) {
+				let startIndex = -1;
+				this._foreachDefNameBook(function(defName) {
+					const name = defName.name;
+					if (name.startsWith("_xlchart")) {
+						const splitName = name.split(".");
+						const index = parseInt(splitName[splitName.length - 1], 10);
+						if (AscFormat.isRealNumber(index) && index > startIndex) {
+							startIndex = index;
+						}
+					}
+				});
+				this.defNames.xlchartIndex = startIndex;
+			}
+			return ++this.defNames.xlchartIndex;
+		},
+		getNewXlChartId: function() {
+			return "_xlchart.v1." + this.getNewXlChartIndex();
 		},
 		//defined name table
 		getNextTableName: function() {
@@ -1579,14 +1599,14 @@
 			this.buildArrayFormula = [];
 			this.buildPivot = [];
 		},
-		calcTree: function(callback) {
+		calcTree: function(callback, forceRecal) {
 			if (this.lockCounter > 0) {
 				callback && callback();
 				return;
 			}
 			this.buildDependency();
 			this.addToChangedHiddenRows();
-			if (!(this.changedCell || this.changedRange || this.changedDefName)) {
+			if (!(this.changedCell || this.changedRange || this.changedDefName) && !forceRecal) {
 				callback && callback();
 				return;
 			}
@@ -1630,6 +1650,7 @@
 			g_cCalcRecursion.setGroupChangedCells(null);
 			g_cCalcRecursion.clearPrevIterResult();
 			g_cCalcRecursion.clearDiffBetweenIter();
+			g_cCalcRecursion.clearCycleCells();
 			this.changedCell = null;
 			this.changedRange = null;
 			this.updateSharedFormulas();
@@ -1949,7 +1970,6 @@
 		 */
 		_calculateDirty: function() {
 			const t = this;
-			const aCycleCells = [];
 			let needUpdateCells = [];
 			this._foreachChanged(function (oCell) {
 				if (oCell && oCell.isFormula()) {
@@ -1960,6 +1980,13 @@
 						const sCellWsName = oCell.ws.getName().toLowerCase();
 						const aRecursiveCells = g_cCalcRecursion.getRecursiveCells(oCell);
 
+						// Fills 0 value for empty cells for potentially recursive formula.
+						if (oCell.getNumberValue() == null && (oCell.getValueText() == null || oCell.getValueText() === '#NUM!')) {
+							if (oCell.getType() !== CellValueType.Number) {
+								oCell.setTypeInternal(CellValueType.Number);
+							}
+							oCell.setValueNumberInternal(0);
+						}
 						g_cCalcRecursion.updateStartCellIndex(aRecursiveCells);
 						if (!g_cCalcRecursion.getStartCellIndex()) {
 							oCell.initStartCellForIterCalc();
@@ -1978,13 +2005,6 @@
 								}, true);
 								oCell.setIsDirty(true);
 								oCell._checkDirty();
-							}
-							// Fill 0 value for empty cells with recursive formula.
-							if (oCell.getNumberValue() == null && (oCell.getValueText() == null || oCell.getValueText() === '#NUM!')) {
-								if (oCell.getType() !== CellValueType.Number) {
-									oCell.setTypeInternal(CellValueType.Number);
-								}
-								oCell.setValueNumberInternal(0);
 							}
 							// Check result of the formula is convergent
 							let nDiffBetweenIter = g_cCalcRecursion.getDiffBetweenIter(oCell);
@@ -2012,29 +2032,7 @@
 							g_cCalcRecursion.setPrevIterResult(oCell);
 							// Fill the array with linked cells from the recursive formula
 							if (!aRecursiveCells.length && oStartCellIndex.cellId === nThisCellIndex && oStartCellIndex.wsName === sCellWsName) {
-								aRecursiveCells.unshift(oStartCellIndex); // The first element of the array is always a start cell.
-								oCell.changeLinkedCell(function (oCell) {
-									let oCellIndex = {
-										cellId: getCellIndex(oCell.nRow, oCell.nCol),
-										wsName: oCell.ws.getName().toLowerCase()
-									};
-									let aPrevRecursiveCell = g_cCalcRecursion.getRecursiveCells(oCell);
-									if (aPrevRecursiveCell.length) {
-										const oPrevStartCellIndex = aPrevRecursiveCell[0];
-										aPrevRecursiveCell = aPrevRecursiveCell.filter(function (oPrevCellIndex) {
-											return oPrevCellIndex.cellId !== oCellIndex.cellId || oPrevCellIndex.wsName !== oCellIndex.wsName;
-										})
-										g_cCalcRecursion.updateRecursiveCells(oPrevStartCellIndex, aPrevRecursiveCell);
-									}
-									let bDuplicateElem = aRecursiveCells.some(function (oElem) {
-										return oElem.cellId === oCellIndex.cellId && oElem.wsName === oCellIndex.wsName;
-									});
-									if (bDuplicateElem) {
-										return true;
-									}
-									aRecursiveCells.push(oCellIndex);
-								}, true);
-								g_cCalcRecursion.addRecursiveCells(oCell, aRecursiveCells);
+								oCell.fillRecursiveCells(aRecursiveCells, oStartCellIndex);
 							}
 							// Disable calculating formula for linked cells
 							let bRecursiveCell = aRecursiveCells.some(function(oCellIndex) {
@@ -2051,7 +2049,7 @@
 					} else if (oFormulaParsed.ca === true) {
 						oCell.initStartCellForIterCalc();
 						if (g_cCalcRecursion.getStartCellIndex()) {
-							aCycleCells.push(oCell);
+							g_cCalcRecursion.addCycleCell(oCell);
 							const oRefRange = oCell.getFormulaParsed().ref;
 							let bEmptyCell = oCell.getNumberValue() == null && (oCell.getValueText() == null || oCell.getValueText() === '#NUM!');
 							let bRefEmptyCell = !!oRefRange && oRefRange.r1 === oCell.nRow && oRefRange.c1 === oCell.nCol && bEmptyCell;
@@ -2070,14 +2068,6 @@
 				}
 			});
 
-			if (aCycleCells.length && g_cCalcRecursion.getShowCycleWarn()) {
-				const oApi = Asc.editor;
-				oApi.sendEvent("asc_onError", c_oAscError.ID.CircularReference, c_oAscError.Level.NoCritical);
-				g_cCalcRecursion.setShowCycleWarn(false);
-			}
-			if (!aCycleCells.length && !g_cCalcRecursion.getShowCycleWarn()) {
-				g_cCalcRecursion.setShowCycleWarn(true);
-			}
 			AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = false;
 
 			this._foreachChanged(function (oCell) {
@@ -2112,6 +2102,15 @@
 					}
 				}
 			});
+
+			if (g_cCalcRecursion.getCycleCells().length && g_cCalcRecursion.getShowCycleWarn()) {
+				const oApi = Asc.editor;
+				oApi.sendEvent("asc_onError", c_oAscError.ID.CircularReference, c_oAscError.Level.NoCritical);
+				g_cCalcRecursion.setShowCycleWarn(false);
+			}
+			if (!g_cCalcRecursion.getCycleCells().length && !g_cCalcRecursion.getShowCycleWarn()) {
+				g_cCalcRecursion.setShowCycleWarn(true);
+			}
 
 			if (AscCommonExcel.importRangeLinksState.importRangeLinks) {
 				//need update
@@ -3007,7 +3006,9 @@
 							resStreamInfo = _promises[i].callback(streamInfos[i]);
 						}
 						_promises[i].parserFormula.promiseResult[_promises[i].index] = resStreamInfo;
-						t.wb.dependencyFormulas.addToChangedCell(_promises[i].parserFormula.parent);
+						if (_promises[i].parserFormula.parent) {
+							t.wb.dependencyFormulas.addToChangedCell(_promises[i].parserFormula.parent);
+						}
 						t.addPromiseParserFormula(_promises[i].parserFormula);
 					}
 					//t.wb.buildDependency();
@@ -3172,7 +3173,7 @@
 		this.lastFindOptions = null;
 		this.lastFindCells = {};
 		this.oleSize = null;
-		if (oApi && oApi.isEditOleMode) {
+		if (oApi && oApi.frameManager.isOleEditor()) {
 			this.oleSize = new AscCommonExcel.OleSizeSelectionRange(null, new Asc.Range(0, 0, 6, 9));
 		}
 
@@ -3891,8 +3892,8 @@
 	Workbook.prototype.editDefinesNames = function (oldName, newName) {
 		return this.editDefinesNamesUndoRedo(this.getUndoDefName(oldName), this.getUndoDefName(newName));
 	};
-	Workbook.prototype.editDefinesNamesUndoRedo = function (oldName, newName) {
-		var res = this.dependencyFormulas.editDefinesNames(oldName, newName);
+	Workbook.prototype.editDefinesNamesUndoRedo = function (oldName, newName, isFromHistory) {
+		var res = this.dependencyFormulas.editDefinesNames(oldName, newName, isFromHistory);
 		this.dependencyFormulas.calcTree();
 		return res;
 	};
@@ -3910,6 +3911,9 @@
 	};
 	Workbook.prototype.checkDefNameLock = function(){
 		return this.dependencyFormulas.checkDefNameLock();
+	};
+	Workbook.prototype.getNewXlChartId = function () {
+		return this.dependencyFormulas.getNewXlChartId();
 	};
 	Workbook.prototype._SerializeHistoryItem = function (oMemory, item) {
 		if (this.oApi.binaryChanges) {
@@ -5221,7 +5225,11 @@
 				break;
 		}
 		if (sheet) {
-			var aRules = sheet.aConditionalFormattingRules.sort(function(v1, v2) {
+			let _aRules = [];
+			 sheet.forEachConditionalFormattingRules(function (elem) {
+				_aRules.push(elem);
+			});
+			var aRules = _aRules.sort(function(v1, v2) {
 				return v1.priority - v2.priority;
 			});
 
@@ -5497,11 +5505,8 @@
 			if (extarnalLink.SheetNames) {
 				for (var i = 0; i < extarnalLink.SheetNames.length; i++) {
 					if (extarnalLink.SheetNames[i] === sheet) {
-						var wb = this.getTemporaryExternalWb();
-						extarnalLink.worksheets[sheet] = new Worksheet(wb, wb.aWorksheets.length);
-						wb.aWorksheets.push(extarnalLink.worksheets[sheet]);
-						extarnalLink.worksheets[sheet].sName = sheet;
-						return extarnalLink.worksheets[sheet];
+						extarnalLink.initWorksheetFromSheetDataSet(sheet);
+						return extarnalLink.worksheets && extarnalLink.worksheets[sheet];
 					}
 				}
 			}
@@ -5659,10 +5664,55 @@
 
 	Workbook.prototype.changeExternalReference = function (index, to) {
 		if (index != null) {
-			var from = this.externalReferences[index - 1].clone();
+			let from = this.externalReferences[index - 1].clone(true);
+			// var from = this.externalReferences[index - 1].clone();
+
+			// change formulas with importRange
+			this.changeImportRangeLinks(index, from, to);
+
 			this.externalReferences[index - 1] = to;
+
 			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
 				null, null, new UndoRedoData_FromTo(from, to));
+		}
+	};
+
+	Workbook.prototype.changeImportRangeLinks = function (index, fromER, toER) {
+		if (index != null && fromER && toER) {
+			let fromLinkStr = fromER.Id;
+			let toLinkStr = toER.Id;
+
+			for (let ws in toER.worksheets) {
+				let changedSheet = toER.worksheets[ws];
+				if (changedSheet) {
+					let changedSheetId = changedSheet.getId();
+
+					this.dependencyFormulas.forEachSheetListeners(changedSheetId, function (parsed) {
+						// we go through the external sheet listeners and change each importRange
+						let cell = parsed && parsed.parent;
+						if (cell && cell && cell.nCol != null && cell.nRow != null && parsed.Formula) {
+							let newFormulaStr = "";
+							let formula = parsed.getFormula();
+							if (formula) {
+								newFormulaStr = formula.split(fromLinkStr).join(toLinkStr);
+							}
+
+							if (newFormulaStr) {
+								let newFP = new AscCommonExcel.parserFormula(newFormulaStr, cell, parsed.ws);
+								let parseResult = new AscCommonExcel.ParseResult();;
+								if (newFP.parse(AscCommonExcel.oFormulaLocaleInfo.Parse, AscCommonExcel.oFormulaLocaleInfo.DigitSep, parseResult)) {
+									parsed.ws._getCellNoEmpty(cell.nRow, cell.nCol, function(cell) {
+										if (cell) {
+											cell.setValue("=" + newFormulaStr, null, null, parsed.ref, null, null, true);
+										}
+									});
+
+								}
+							}
+						}
+					});
+				}
+			}
 		}
 	};
 
@@ -5723,6 +5773,175 @@
 				res.push(this.externalReferences[i].getAscLink());
 			}
 		}
+		return res;
+	};
+
+	Workbook.prototype.getExternalReferenceSheetsFromZip = function (stream) {
+		//TODO зачитать sharedStrings
+		const wb = this;
+		const oApi = Asc.editor;
+		if (!stream || !(oApi && oApi["asc_isSupportFeature"]("ooxml"))) {
+			return null;
+		}
+
+		var openXml = AscCommon.openXml;
+		var StaxParser = AscCommon.StaxParser;
+		var res = [];
+
+		AscFormat.ExecuteNoHistory(function() {
+			var xmlParserContext = new AscCommon.XmlParserContext();
+			xmlParserContext.DrawingDocument = oApi.getDrawingDocument();
+			xmlParserContext.InitOpenManager = AscCommonExcel.InitOpenManager ? new AscCommonExcel.InitOpenManager(null, wb) : null;
+			if (!xmlParserContext.InitOpenManager) {
+				xmlParserContext.InitOpenManager = {};
+			}
+			xmlParserContext.InitOpenManager.aCellXfs = [];
+			xmlParserContext.InitOpenManager.Dxfs = [];
+
+			var wbPart = null;
+			var wbXml = null;
+			if (!window.nativeZlibEngine || !window.nativeZlibEngine.open(stream)) {
+				return false;
+			}
+			xmlParserContext.zip = window.nativeZlibEngine;
+
+			var doc = new openXml.OpenXmlPackage(window.nativeZlibEngine, null);
+
+			//workbook
+			wbPart = doc.getPartByRelationshipType(openXml.Types.workbook.relationType);
+			if (wbPart) {
+				var contentWorkbook = wbPart.getDocumentContent();
+				AscCommonExcel.executeInR1C1Mode(false, function () {
+					wbXml = new AscCommonExcel.CT_Workbook(wb);
+					var reader = new StaxParser(contentWorkbook, wbPart, xmlParserContext);
+					wbXml.fromXml(reader, {"sheets" : 1});
+				});
+			}
+
+			//sharedString
+			var sharedStringPart = wbPart.getPartByRelationshipType(openXml.Types.sharedStringTable.relationType);
+			if (sharedStringPart) {
+				var contentSharedStrings = sharedStringPart.getDocumentContent();
+				if (contentSharedStrings) {
+					var sharedStrings = new AscCommonExcel.CT_SharedStrings();
+					var reader = new StaxParser(contentSharedStrings, sharedStringPart, xmlParserContext);
+					sharedStrings.fromXml(reader);
+				}
+			}
+
+			//sheets
+			if (wbXml && wbXml.sheets) {
+				var wsParts = [];
+
+				wbXml.sheets.forEach(function (wbSheetXml) {
+					//TODO нужно отсеять только необходимые листы
+					if (null !== wbSheetXml.id && wbSheetXml.name) {
+						var wsPart = wbPart.getPartById(wbSheetXml.id);
+						wsParts.push({wsPart: wsPart, id: wbSheetXml.id, name: wbSheetXml.name, bHidden: wbSheetXml.bHidden, sheetId: wbSheetXml.sheetId});
+					}
+				});
+
+				wsParts.forEach(function (wbSheetXml) {
+					//TODO нужно отсеять только необходимые дипапазоны
+					if (null !== wbSheetXml.id && wbSheetXml.name) {
+						var wsPart = wbSheetXml.wsPart;
+						var contentSheetXml = wsPart && wsPart.getDocumentContent();
+						if (contentSheetXml) {
+							var ws = new AscCommonExcel.Worksheet(wb, wb.aWorksheets.length);
+							ws.sName = wbSheetXml.name;
+							if (null !== wbSheetXml.bHidden) {
+								ws.bHidden = wbSheetXml.bHidden;
+							}
+							//var wsView = new AscCommonExcel.asc_CSheetViewSettings();
+							//wsView.pane = new AscCommonExcel.asc_CPane();
+							//ws.sheetViews.push(wsView);
+							if (contentSheetXml) {
+								AscCommonExcel.executeInR1C1Mode(false, function () {
+									var reader = new StaxParser(contentSheetXml, wsPart, xmlParserContext);
+									ws.fromXml(reader);
+								});
+							}
+							xmlParserContext.InitOpenManager.putSheetAfterRead(wb, ws);
+							res.push(ws);
+						}
+					}
+				});
+			}
+
+			if (wbXml && wbXml.newDefinedNames) {
+				xmlParserContext.InitOpenManager.oReadResult.defNames = wbXml.newDefinedNames;
+				xmlParserContext.InitOpenManager.PostLoadPrepareDefNames(wb);
+			}
+
+			var readSheetDataExternal = function (bNoBuildDep) {
+				for (var i = 0; i < xmlParserContext.InitOpenManager.oReadResult.sheetData.length; ++i) {
+					var sheetDataElem = xmlParserContext.InitOpenManager.oReadResult.sheetData[i];
+					var ws = sheetDataElem.ws;
+
+					var tmp = {
+						pos: null,
+						len: null,
+						bNoBuildDep: bNoBuildDep,
+						ws: ws,
+						row: new AscCommonExcel.Row(ws),
+						cell: new AscCommonExcel.Cell(ws),
+						formula: new AscCommonExcel.OpenFormula(),
+						sharedFormulas: {},
+						prevFormulas: {},
+						siFormulas: {},
+						prevRow: -1,
+						prevCol: -1,
+						formulaArray: []
+					};
+
+
+					var sheetData = new AscCommonExcel.CT_SheetData();
+					xmlParserContext.InitOpenManager.tmp = tmp;
+
+					sheetDataElem.reader.setState(sheetDataElem.state);
+					//TODO пересмотреть фунцию fromXml
+					sheetData.fromXml2(sheetDataElem.reader);
+
+					if (!bNoBuildDep) {
+						//TODO возможно стоит делать это в worksheet после полного чтения
+						//***array-formula***
+						//добавление ко всем ячейкам массива головной формулы
+						for (var j = 0; j < tmp.formulaArray.length; j++) {
+							var curFormula = tmp.formulaArray[j];
+							var ref = curFormula.ref;
+							if (ref) {
+								var rangeFormulaArray = tmp.ws.getRange3(ref.r1, ref.c1, ref.r2, ref.c2);
+								rangeFormulaArray._foreach(function (cell) {
+									cell.setFormulaInternal(curFormula);
+									if (curFormula.ca || cell.isNullTextString()) {
+										tmp.ws.workbook.dependencyFormulas.addToChangedCell(cell);
+									}
+								});
+							}
+						}
+						for (var nCol in tmp.prevFormulas) {
+							if (tmp.prevFormulas.hasOwnProperty(nCol)) {
+								var prevFormula = tmp.prevFormulas[nCol];
+								if (!tmp.siFormulas[prevFormula.parsed.getListenerId()]) {
+									prevFormula.parsed.buildDependencies();
+								}
+							}
+						}
+						for (var listenerId in tmp.siFormulas) {
+							if (tmp.siFormulas.hasOwnProperty(listenerId)) {
+								tmp.siFormulas[listenerId].buildDependencies();
+							}
+						}
+					}
+				}
+			};
+
+			xmlParserContext.InitOpenManager.aCellXfs = [];
+			xmlParserContext.InitOpenManager.Dxfs = [];
+
+			readSheetDataExternal(true);
+		}, this, []);
+
 		return res;
 	};
 
@@ -6046,7 +6265,8 @@
 		});
 		this.hyperlinkManager.setDependenceManager(this.mergeManager);
 		this.sheetViews = [];
-		this.aConditionalFormattingRules = [];
+		this.aConditionalFormattingRules = null;
+
 		this.conditionalFormattingRangeIterator = null;
 		this.updateConditionalFormattingRange = null;
 		this.dataValidations = null;
@@ -6279,8 +6499,11 @@
 		for (i = 0; i < wsFrom.sheetViews.length; ++i) {
 			this.sheetViews.push(wsFrom.sheetViews[i].clone());
 		}
-		for (i = 0; i < wsFrom.aConditionalFormattingRules.length; ++i) {
-			this.aConditionalFormattingRules.push(wsFrom.aConditionalFormattingRules[i].clone());
+		if (wsFrom.isConditionalFormattingRules()) {
+			let t = this;
+			wsFrom.forEachConditionalFormattingRules(function (val) {
+				t.addConditionalFormattingRule(val);
+			})
 		}
 		if (wsFrom.sheetPr)
 			this.sheetPr = wsFrom.sheetPr.clone();
@@ -6561,6 +6784,7 @@
 		}
 		if (this.updateConditionalFormattingRange) {
 			this.updateConditionalFormattingRange.union2(range);
+			this.updateConditionalFormattingRange = new AscCommonExcel.MultiplyRange([this.updateConditionalFormattingRange.getUnionRange()]);
 		} else {
 			this.updateConditionalFormattingRange = range.clone();
 		}
@@ -6572,7 +6796,11 @@
 		var range = this.updateConditionalFormattingRange;
 		this.updateConditionalFormattingRange = null;
 		var t = this;
-		var aRules = this.aConditionalFormattingRules.sort(function(v1, v2) {
+		let _aRules = [];
+		this.forEachConditionalFormattingRules(function (val) {
+			_aRules.push(val);
+		});
+		var aRules = _aRules.sort(function(v1, v2) {
 			return v2.priority - v1.priority;
 		});
 		var oGradient1, oGradient2, aWeights, oRule, oRuleElement, bboxCf, formulaParent, parsed1, parsed2;
@@ -6777,7 +7005,7 @@
 										break;
 								}
 								formulaParent = new AscCommonExcel.CConditionalFormattingFormulaParent(this, oRule, true);
-								oRuleElement = oRule.getFormulaCellIs();
+								oRuleElement =  oRule.getFormulaCellIs(Asc.ECfType.notContainsText === oRule.type || Asc.ECfType.containsText === oRule.type);
 								parsed1 = oRuleElement && oRuleElement.getFormula && oRuleElement.getFormula(this, formulaParent);
 								if (parsed1 && parsed1.hasRelativeRefs()) {
 									bboxCf = oRule.getBBox();
@@ -9088,12 +9316,12 @@
 		if(!this.TableParts || !name)
 			return res;
 
+		let _name = name.toLowerCase();
 		for(var i = 0; i < this.TableParts.length; i++)
 		{
-			if(this.TableParts[i].DisplayName.toLowerCase() === name.toLowerCase())
+			if(this.TableParts[i].DisplayName.length === _name.length && this.TableParts[i].DisplayName.toLowerCase() === _name)
 			{
-				res = this.TableParts[i].getTableRangeForFormula(objectParam);
-				break;
+				return this.TableParts[i].getTableRangeForFormula(objectParam);
 			}
 		}
 		return res;
@@ -9103,15 +9331,15 @@
 		if(!this.TableParts || !tableName)
 			return res;
 
+		let _tableName = tableName.toLowerCase();
 		for(var i = 0; i < this.TableParts.length; i++)
 		{
-			if(this.TableParts[i].DisplayName.toLowerCase() === tableName.toLowerCase())
+			if(this.TableParts[i].DisplayName.length === tableName.length && this.TableParts[i].DisplayName.toLowerCase() === _tableName)
 			{
 				/* if there is a quote before a special character (i.e. escaping was used), remove it, while the quote itself is also a special character */
 				columnName = parserHelp.escapeTableCharacters(columnName, false);
 
-				res = this.TableParts[i].getTableIndexColumnByName(columnName);
-				break;
+				return this.TableParts[i].getTableIndexColumnByName(columnName);
 			}
 		}
 		return res;
@@ -9121,9 +9349,10 @@
 		if(!this.TableParts || !tableName)
 			return res;
 
+		let _tableName = tableName.toLowerCase();
 		for(var i = 0; i < this.TableParts.length; i++)
 		{
-			if(this.TableParts[i].DisplayName.toLowerCase() === tableName.toLowerCase())
+			if(this.TableParts[i].DisplayName.length === _tableName.length && this.TableParts[i].DisplayName.toLowerCase() === _tableName)
 			{
 				res = this.TableParts[i].getTableNameColumnByIndex(columnIndex);
 				break;
@@ -9136,9 +9365,10 @@
 		if(!this.TableParts || !tableName)
 			return res;
 
+		let _tableName = tableName.toLowerCase();
 		for(var i = 0; i < this.TableParts.length; i++)
 		{
-			if(this.TableParts[i].DisplayName.toLowerCase() === tableName.toLowerCase())
+			if(this.TableParts[i].DisplayName.length === _tableName.length && this.TableParts[i].DisplayName.toLowerCase() === _tableName)
 			{
 				res = this.TableParts[i];
 				break;
@@ -9151,9 +9381,10 @@
 		if(!this.TableParts || !tableName)
 			return res;
 
+		let _tableName = tableName.toLowerCase();
 		for(var i = 0; i < this.TableParts.length; i++)
 		{
-			if(this.TableParts[i].DisplayName.toLowerCase() === tableName.toLowerCase())
+			if(this.TableParts[i].DisplayName.length === _tableName.length && this.TableParts[i].DisplayName.toLowerCase() === _tableName)
 			{
 				res = this.TableParts[i].getTableRangeColumnByName(columnName);
 				break;
@@ -9913,6 +10144,9 @@
 		const pivotRange = pivotTable.getRange();
 		const location = pivotTable.location;
 		const items = isRowItem ? pivotTable.getRowItems() : pivotTable.getColItems();
+		if (!items) {
+			return;
+		}
 		const itemR = items[itemIndex].getR();
 		const r1 = isRowItem ? pivotRange.r1 + location.firstDataRow : pivotRange.r1 + location.firstHeaderRow;
 		const c1 = isRowItem ? pivotRange.c1 : pivotRange.c1 + location.firstDataCol;
@@ -9951,6 +10185,9 @@
 		const pivotRange = pivotTable.getRange();
 		const location = pivotTable.location;
 		const items = isRowItem ? pivotTable.getRowItems() : pivotTable.getColItems();
+		if (!items) {
+			return;
+		}
 		const itemR = items[itemIndex].getR();
 		const itemSummaryR = itemR + itemXIndex;
 
@@ -9991,6 +10228,9 @@
 	 */
 	Worksheet.prototype._updatePivotTableCellsRowColLablesOffsets = function(pivotTable, rowFieldsOffset, isRowItem, itemIndex, itemXIndex, query) {
 		const items = isRowItem ? pivotTable.getRowItems() : pivotTable.getColItems();
+		if (!items) {
+			return;
+		}
 		query.axis = isRowItem ? Asc.c_oAscAxis.AxisRow : Asc.c_oAscAxis.AxisCol;
 		const item = items[itemIndex];
 		if (item.t === Asc.c_oAscItemType.Data) {
@@ -12100,7 +12340,7 @@
 
 				this.workbook.dependencyFormulas.lockRecal();
 				for (let j = 0; j < table.TableColumns.length; j++) {
-					let tableColName = table.TableColumns[j].Name;
+					let tableColName = table.TableColumns[j].getTableColumnName();
 					this._getCell(table.Ref.r1, table.Ref.c1 + j, function(cell) {
 						let valueData = cell.getValueData();
 						let val = valueData && valueData.value && valueData.value.text;
@@ -12218,21 +12458,32 @@
 		}
 		var changedRule = this.getCFRuleById(val.id);
 		if (changedRule) {
-			this.changeCFRule(changedRule.val, val, true);
+			this.changeCFRule(changedRule, val, true);
 		} else {
 			this.addCFRule(val, true);
 		}
 	};
 
 	Worksheet.prototype.getCFRuleById = function (id) {
-		if (this.aConditionalFormattingRules) {
-			for (var i = 0; i < this.aConditionalFormattingRules.length; i++) {
-				if (this.aConditionalFormattingRules[i].id === id) {
-					return {val: this.aConditionalFormattingRules[i], index: i};
-				}
-			}
+		if (this.isConditionalFormattingRules()) {
+			return this.aConditionalFormattingRules[id];
 		}
 		return null;
+	};
+
+	Worksheet.prototype.isConditionalFormattingRules = function () {
+		return this.aConditionalFormattingRules != null;
+	};
+
+	Worksheet.prototype.getConditionalFormattingRules = function () {
+		return this.aConditionalFormattingRules;
+	};
+
+	Worksheet.prototype.addConditionalFormattingRule = function (rule) {
+		if (!this.isConditionalFormattingRules()) {
+			this.aConditionalFormattingRules = {};
+		}
+		this.aConditionalFormattingRules[rule.id] = rule;
 	};
 
 	Worksheet.prototype.changeCFRule = function (from, to, addToHistory) {
@@ -12273,7 +12524,7 @@
 
 
 		val.recalcInterfaceFormula(this);
-		this.aConditionalFormattingRules.push(val);
+		this.addConditionalFormattingRule(val);
 		this.cleanConditionalFormattingRangeIterator();
 		if (addToHistory) {
 			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_CFRuleAdd, this.getId(), val.getUnionRange(), new AscCommonExcel.UndoRedoData_CF(val.id, null, val.clone ? val.clone() : val));
@@ -12324,17 +12575,17 @@
 	};
 
 	Worksheet.prototype.deleteCFRule = function (id, addToHistory) {
-		var oRule = this.getCFRuleById(id);
+		let oRule = this.getCFRuleById(id);
 		if (oRule) {
-			this.aConditionalFormattingRules.splice(oRule.index, 1);
+			delete this.aConditionalFormattingRules[id];
 			this.cleanConditionalFormattingRangeIterator();
 			if (addToHistory) {
-				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_CFRuleDelete, this.getId(), oRule.val.getUnionRange(),
-					new AscCommonExcel.UndoRedoData_CF(id, oRule.val));
+				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_CFRuleDelete, this.getId(), oRule.getUnionRange(),
+					new AscCommonExcel.UndoRedoData_CF(id, oRule));
 			}
 			if (oRule.ranges) {
 				this.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange(oRule.ranges));
-		}
+			}
 		}
 	};
 
@@ -12349,21 +12600,21 @@
 	};
 
 	Worksheet.prototype.updateConditionalFormattingOffset = function (range, offset) {
+		let t = this;
 		if (offset.row < 0 || offset.col < 0) {
-			for (var i = 0; i < this.aConditionalFormattingRules.length; ++i) {
-				if (this.aConditionalFormattingRules[i].containsIntoRange(range)) {
-					this.deleteCFRule(this.aConditionalFormattingRules[i].id, true);
+			this.forEachConditionalFormattingRules(function (val) {
+				if (val.containsIntoRange(range)) {
+					t.deleteCFRule(val.id, true);
 				}
-			}
+			});
 		}
 		this.setConditionalFormattingOffset(range, offset);
 	};
 	Worksheet.prototype.setConditionalFormattingOffset = function (range, offset) {
-		var oRule;
-		for (var i = 0; i < this.aConditionalFormattingRules.length; ++i) {
-			oRule = this.aConditionalFormattingRules[i];
-			oRule.setOffset(offset, range, this, true);
-		}
+		let t = this;
+		this.forEachConditionalFormattingRules(function (oRule) {
+			oRule.setOffset(offset, range, t, true);
+		});
 	};
 	Worksheet.prototype.moveConditionalFormatting = function (oBBoxFrom, oBBoxTo, copyRange, offset, wsTo, wsFrom, bTransposeTo) {
 		var t = this;
@@ -12428,22 +12679,32 @@
 				}
 			});
 		}
+		wsTo && wsTo.forEachConditionalFormattingRules(function (_rule) {
+			_rule.updateFormulas(wsTo);
+		});
+		wsFrom && wsFrom.forEachConditionalFormattingRules(function (_rule) {
+			_rule.updateFormulas(wsFrom);
+		});
 	};
 
 	Worksheet.prototype.clearConditionalFormattingRulesByRanges = function (ranges, exceptionRange) {
-		for (var i = 0; i < this.aConditionalFormattingRules.length; ++i) {
-			var isExcept = exceptionRange && this.aConditionalFormattingRules[i].getIntersections(exceptionRange);
-			if (!isExcept && this.tryClearCFRule(this.aConditionalFormattingRules[i], ranges)) {
-				i--;
+		let t = this;
+		this.forEachConditionalFormattingRules(function (oRule) {
+			var isExcept = exceptionRange && oRule.getIntersections(exceptionRange);
+			if (!isExcept) {
+				t.tryClearCFRule(oRule, ranges);
 			}
-		}
+		});
 	};
 
 	Worksheet.prototype.forEachConditionalFormattingRules = function (callback) {
-		for (var i = 0, l = this.aConditionalFormattingRules.length; i < l; ++i) {
+		if (!this.isConditionalFormattingRules()) {
+			return;
+		}
+		for (let i in this.aConditionalFormattingRules) {
 			if (callback(this.aConditionalFormattingRules[i], i)) {
 				break;
-		}
+			}
 		}
 	};
 	Worksheet.prototype.cleanConditionalFormattingRangeIterator = function() {
@@ -12451,11 +12712,17 @@
 	};
 	Worksheet.prototype.getConditionalFormattingRangeIterator = function() {
 		if (!this.conditionalFormattingRangeIterator) {
-			this.aConditionalFormattingRules.sort(function(v1, v2) {
+			let aRules = [];
+			if (this.isConditionalFormattingRules()) {
+				this.forEachConditionalFormattingRules(function (val) {
+					aRules.push(val);
+				})
+			}
+			aRules.sort(function(v1, v2) {
 				return v2.priority - v1.priority;
 			});
 			this.conditionalFormattingRangeIterator = new AscCommon.RangeTopBottomIterator();
-			this.conditionalFormattingRangeIterator.init(this.aConditionalFormattingRules, function(rule) {
+			this.conditionalFormattingRangeIterator.init(aRules, function(rule) {
 				return rule.ranges || [];
 			});
 		}
@@ -14406,7 +14673,7 @@
 		this.textIndex = null;
 		this._hasChanged = true;
 	};
-	Cell.prototype.setValue=function(val,callback, isCopyPaste, byRef, ignoreHyperlink, dynamicRange) {
+	Cell.prototype.setValue=function(val,callback, isCopyPaste, byRef, ignoreHyperlink, dynamicRange, skipExternalCheck) {
 		var ws = this.ws;
 		var wb = ws.workbook;
 		var DataOld = null;
@@ -14486,7 +14753,9 @@
 			cell.removeHyperlink();
 		}
 
-		this.checkRemoveExternalReferences(newFP, oldFP);
+		if (!skipExternalCheck) {
+			this.checkRemoveExternalReferences(newFP, oldFP);
+		}
 	};
 
 	Cell.prototype.checkRemoveExternalReferences=function(fNew, fOld) {
@@ -14761,10 +15030,13 @@
 			// this.ws.getRange3(formulaRef.r1, formulaRef.c1, formulaRef.r2, formulaRef.c2)._foreachNoEmpty(function(cell){
 			// 	cell.setFormulaParsed(parser, bHistoryUndo);
 			// });
-			let newFormulaRef = formulaRef.isOneCell ? new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow) : formulaRef;
+			if ((this.nCol !== formulaRef.c1 || this.nRow !== formulaRef.r1) && !formulaRef.isOneCell()) {
+				return;
+			}
+			let newFormulaRef = formulaRef.isOneCell() ? new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow) : formulaRef;
 			parser.setArrayFormulaRef(newFormulaRef);
 			this.ws.getRange3(newFormulaRef.r1, newFormulaRef.c1, newFormulaRef.r2, newFormulaRef.c2)._foreach2(function(cell){
-				cell.setFormulaParsed(parser, bHistoryUndo);
+				cell && cell.setFormulaParsed(parser, bHistoryUndo);
 			});
 		} else {
 			this.setFormulaParsed(parser, bHistoryUndo, caProps);
@@ -15368,13 +15640,56 @@
 	};
 
 	/**
+	 * Checks whether the formula is an exclude formula, which doesn't need recursive check.
+	 * @param {[]} aOutStack
+	 * @param {string} sFunctionName
+	 * @returns {boolean}
+	 * @private
+	 */
+	function _isExcludeFormula(aOutStack, sFunctionName) {
+		const aExcludeFormulas = AscCommonExcel.aExcludeRecursiveFormulas;
+		const aUnOperators = ['un_minus', 'un_plus'];
+		let nFuncCount = 0;
+
+		if (!sFunctionName) {
+			return false;
+		}
+		if (!aExcludeFormulas.includes(sFunctionName)) {
+			return false;
+		}
+		aOutStack.forEach(function (oElem) {
+			if (oElem.type === cElementType.func || (oElem.type === cElementType.operator && !aUnOperators.includes(oElem.name))) {
+				nFuncCount++;
+			}
+		});
+		if (nFuncCount === 1 && aExcludeFormulas.includes(sFunctionName)) {
+			if (sFunctionName === 'CELL') {
+				let oStringElem, nCountArgs = null;
+				aOutStack.forEach(function (oElem) {
+					if (oElem.type === cElementType.string && !oStringElem) {
+						oStringElem = oElem;
+					} else if (nCountArgs === null && typeof oElem === 'number') {
+						nCountArgs = oElem;
+					}
+				});
+				const sValue = oStringElem && oStringElem.toString().toLowerCase();
+				if ((sValue && sValue === 'contents') && (nCountArgs &&  nCountArgs === 2)) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		return false;
+	}
+	/**
 	 * Checks "areaMap" belongs formula that ignores recursion rules
 	 * @param {[]} aOutStack
 	 * @param {object} oAreaMap
 	 * @returns {boolean}
 	 * @private
 	 */
-	function _isExcludeFormula(aOutStack, oAreaMap) {
+	function _areaMapIsExcludeFormula(aOutStack, oAreaMap) {
 		const aExcludeFormulas = AscCommonExcel.aExcludeRecursiveFormulas;
 		for (let i = 0, length = aOutStack.length; i < length; i++) {
 			const oElem = aOutStack[i];
@@ -15399,7 +15714,7 @@
 					}  else {
 						oBbox = oArgElem.getBBox0();
 					}
-					bBelongToFormula = oAreaMap.bbox.containsRange(oBbox);
+					bBelongToFormula = oAreaMap.bbox.isIntersect(oBbox);
 					if (bBelongToFormula) {
 						return true;
 					}
@@ -15415,7 +15730,6 @@
 	Cell.prototype.getListeners = function () {
 		const ws = this.ws;
 		const oDepFormulas = ws.workbook.dependencyFormulas;
-		const aExcludeFormulas = AscCommonExcel.aExcludeRecursiveFormulas;
 
 		if (!oDepFormulas || !oDepFormulas.sheetListeners.hasOwnProperty(ws.Id)) {
 			return null;
@@ -15424,18 +15738,18 @@
 		const nCellIndex = getCellIndex(this.nRow, this.nCol);
 		const oFormulaParsed = this.getFormulaParsed();
 		const sFunctionName = oFormulaParsed && oFormulaParsed.getFunctionName();
-		if (oFormulaParsed && !oFormulaParsed.ca) {
+		if (oFormulaParsed && !oFormulaParsed.ca && !g_cCalcRecursion.getFunctionsResult().length) {
 			return null;
 		}
 		const aOutStack = oFormulaParsed && oFormulaParsed.outStack;
 		const oSheetListeners = oDepFormulas.sheetListeners[ws.Id];
 
-		if (oSheetListeners.cellMap.hasOwnProperty(nCellIndex) && !aExcludeFormulas.includes(sFunctionName)) {
+		if (oSheetListeners.cellMap.hasOwnProperty(nCellIndex) && !_isExcludeFormula(aOutStack, sFunctionName)) {
 			return oSheetListeners.cellMap[nCellIndex];
 		} else if (aOutStack && aOutStack.length && sFunctionName) {
 			for (let nIndex in oSheetListeners.areaMap) {
 				if (oSheetListeners.areaMap[nIndex].bbox.contains(this.nCol, this.nRow)) {
-					return _isExcludeFormula(aOutStack, oSheetListeners.areaMap[nIndex]) ? null : oSheetListeners.areaMap[nIndex];
+					return _areaMapIsExcludeFormula(aOutStack, oSheetListeners.areaMap[nIndex]) ? null : oSheetListeners.areaMap[nIndex];
 				}
 			}
 		}
@@ -15445,10 +15759,11 @@
 	 * Iterative extract listeners of a cell
 	 * @param fAction {Function} Action on the listener.
 	 * @param oCell {Cell}
-	 * @param oListeners {object}
+	 * @param oCellListeners {object}
 	 * @private
 	 */
-	function _foreachListeners(fAction, oCell, oListeners) {
+	function _foreachListeners(fAction, oCell, oCellListeners) {
+		const oListeners = oCellListeners.listeners;
 		for (let i in oListeners) {
 			let oListenerCell = oListeners[i].getParent();
 			if (!oListenerCell) {
@@ -15480,6 +15795,14 @@
 						}
 					})
 				}
+			} else if (oListeners[i].getShared() && !oListeners[i].is3D && oCellListeners.bbox) {
+				const oShared = oListeners[i].getShared();
+				const oCurrentRange = new Asc.Range(oCell.nCol, oCell.nRow, oCell.nCol, oCell.nRow);
+				const oListenerSharedRange = oCellListeners.bbox.getSharedIntersect(oShared.ref, oCurrentRange);
+				oListenerCell.ws._getCell(oListenerSharedRange.r1, oListenerSharedRange.c1, function (oCell) {
+					oListenerCell = oCell;
+				});
+				nListenerCellIndex = getCellIndex(oListenerCell.nRow, oListenerCell.nCol);
 			} else {
 				nListenerCellIndex = getCellIndex(oListenerCell.nRow, oListenerCell.nCol);
 			}
@@ -15489,7 +15812,7 @@
 			if (oListenerCell instanceof Asc.CT_WorksheetSource) {
 				continue;
 			}
-			if (oListeners[i].getFunctionName()) {
+			if (oListeners[i].getFunctionName() && oCell.compareCellIndex(oListenerCell)) {
 				const aOutStack = oListeners[i].outStack;
 				const aExcludeFormulas = AscCommonExcel.aExcludeRecursiveFormulas;
 				const oCycleCells = new Map();
@@ -15557,14 +15880,14 @@
 	};
 	/**
 	 * Method finds a start cell index of recursion formula.
-	 * Uses for only with enabled iterative calculations setting.
+	 * Uses for iterative calculations feature.
 	 * @param {Cell} [oPrevCell] - Previous cell in recursion.
 	 * @param {Cell} [oFirstCell] - First cell in recursion.
 	 * @param {Cell[]} [aPassedCells] - Passed cells in recursion.
 	 * @memberof Cell
 	 */
 	Cell.prototype.initStartCellForIterCalc = function (oPrevCell, oFirstCell, aPassedCells) {
-		if(g_cCalcRecursion.checkRecursionCounter()) {
+		if (g_cCalcRecursion.checkRecursionCounter()) {
 			g_cCalcRecursion.resetRecursionCounter();
 			return;
 		}
@@ -15580,7 +15903,6 @@
 			g_cCalcRecursion.resetRecursionCounter();
 			return;
 		}
-		const oListeners = oCellListeners.listeners;
 		const nCellIndex = getCellIndex(this.nRow, this.nCol);
 		let oCellFromListener = null;
 		let nPrevCellIndex = oPrevCell ? getCellIndex(oPrevCell.nRow, oPrevCell.nCol) : null;
@@ -15636,7 +15958,7 @@
 					return true;
 				}
 			}
-		}, this, oListeners);
+		}, this, oCellListeners);
 		if (!g_cCalcRecursion.getStartCellIndex() && !bBreakFunction) {
 			let oTableStructOperand = oParserFormula && oParserFormula.outStack.find(function (oOperand) {
 				return oOperand.type === cElementType.table;
@@ -15737,7 +16059,6 @@
 			g_cCalcRecursion.resetRecursionCounter();
 			return;
 		}
-		const oListeners = oCellListeners.listeners;
 		_foreachListeners(function (oListenerCellWithFormula, oCell) {
 			const oWs = oCell.ws;
 			let oListenerCell = null;
@@ -15756,7 +16077,7 @@
 			g_cCalcRecursion.incRecursionCounter();
 			_changeCellsFromListener(oListenerCell);
 			}
-		}, oSourceCell, oListeners);
+		}, oSourceCell, oCellListeners);
 		g_cCalcRecursion.resetRecursionCounter();
 	}
 
@@ -15874,7 +16195,6 @@
 					if (!oCellListeners) {
 						return;
 					}
-					const oListeners = oCellListeners.listeners;
 					_foreachListeners(function (oListenerCell, oThis, nListenerCellIndex) {
 						let sThisWsName = oThis.ws.getName().toLowerCase();
 						let sListenerWsName = oListenerCell.ws.getName().toLowerCase();
@@ -15894,11 +16214,43 @@
 							});
 							return true;
 						}
-					}, oCell, oListeners);
+					}, oCell, oCellListeners);
 				}
 			});
 		}, aRefElements);
 		g_cCalcRecursion.resetRecursionCounter();
+	};
+	/**
+	 * Fills array of recursive cells.
+	 * Uses for Iterative calculation.
+	 * @memberof Cell
+	 * @param {{cellId:number, wsName:string}[]}aRecursiveCells
+	 * @param {{cellId:number, wsName:string}}oStartCellIndex
+	 */
+	Cell.prototype.fillRecursiveCells = function (aRecursiveCells, oStartCellIndex) {
+		aRecursiveCells.unshift(oStartCellIndex); // The first element of the array is always a start cell.
+		this.changeLinkedCell(function (oCell) {
+			let oCellIndex = {
+				cellId: getCellIndex(oCell.nRow, oCell.nCol),
+				wsName: oCell.ws.getName().toLowerCase()
+			};
+			let aPrevRecursiveCell = g_cCalcRecursion.getRecursiveCells(oCell);
+			if (aPrevRecursiveCell.length) {
+				const oPrevStartCellIndex = aPrevRecursiveCell[0];
+				aPrevRecursiveCell = aPrevRecursiveCell.filter(function (oPrevCellIndex) {
+					return oPrevCellIndex.cellId !== oCellIndex.cellId || oPrevCellIndex.wsName !== oCellIndex.wsName;
+				})
+				g_cCalcRecursion.updateRecursiveCells(oPrevStartCellIndex, aPrevRecursiveCell);
+			}
+			let bDuplicateElem = aRecursiveCells.some(function (oElem) {
+				return oElem.cellId === oCellIndex.cellId && oElem.wsName === oCellIndex.wsName;
+			});
+			if (bDuplicateElem) {
+				return true;
+			}
+			aRecursiveCells.push(oCellIndex);
+		}, true);
+		g_cCalcRecursion.addRecursiveCells(this, aRecursiveCells);
 	};
 	/**
 	 * Method calculates cells with formula aren't calculated yet.
@@ -15936,6 +16288,63 @@
 							}
 						} else {
 							parsed.calculate();
+						}
+						if (g_cCalcRecursion.getFunctionsResult().length && g_cCalcRecursion.getIterStep() === 1 && g_cCalcRecursion.getLevel() === 1) {
+							const functionsResult = g_cCalcRecursion.getFunctionsResult();
+							const isEnabledRecursion = g_cCalcRecursion.getIsEnabledRecursion();
+							let isCycleCell = false;
+
+							foreachRefElements(function (range) {
+								if (range.bbox.contains(t.nCol, t.nRow)) {
+									if (!parsed.ca) {
+										parsed.ca = true;
+									}
+									isCycleCell = true;
+									!isEnabledRecursion && g_cCalcRecursion.addCycleCell(t);
+								} else {
+									range._foreachNoEmpty(function (cell) {
+										if (cell.isFormula()) {
+											const isRecursiveFormula = cell.checkRecursiveFormula(t);
+											!isRecursiveFormula && cell.initStartCellForIterCalc();
+											if (g_cCalcRecursion.getStartCellIndex() != null || isRecursiveFormula) {
+												if (!cell.getFormulaParsed().ca) {
+													cell.getFormulaParsed().ca = true;
+												}
+												isCycleCell = true;
+												!isEnabledRecursion && g_cCalcRecursion.addCycleCell(cell);
+												g_cCalcRecursion.getStartCellIndex() && g_cCalcRecursion.setStartCellIndex(null);
+												return true;
+											}
+										}
+									});
+								}
+								if (isCycleCell) {
+									return true;
+								}
+							}, functionsResult);
+							if (isCycleCell) {
+								if (isEnabledRecursion) {
+									const recursiveCells = g_cCalcRecursion.getRecursiveCells(t);
+									if (!recursiveCells.length) {
+										const cellIndex = {
+											cellId: getCellIndex(t.nRow, t.nCol),
+											wsName: t.ws.getName().toLowerCase()
+										};
+										t.fillRecursiveCells(recursiveCells, cellIndex);
+									}
+
+								} else {
+									parsed.value = null;
+									t.setIsDirty(false);
+									if (t.getType() !== CellValueType.Number) {
+										t.setTypeInternal(CellValueType.Number);
+									}
+									t.setValueNumberInternal(0);
+								}
+							}
+						}
+						if (g_cCalcRecursion.getFunctionsResult().length) {
+							g_cCalcRecursion.clearFunctionsResult();
 						}
 					}
 				});
@@ -19133,11 +19542,11 @@
 		}
 
 		this.worksheet.workbook.handlers.trigger(
-			"changeDocument", 
-			AscCommonExcel.docChangedType.mergeRange, 
+			"changeDocument",
+			AscCommonExcel.docChangedType.mergeRange,
 			true, /* arg1 */
 			this.bbox, /* arg2 */
-			this.worksheet.getId(), 
+			this.worksheet.getId(),
 			firstMergeCellIndex
 		);
 		//правила работы с гиперссылками во время merge(отличются от Excel в случаем областей, например hyperlink: C3:D3 мержим C2:C3)
@@ -19351,11 +19760,11 @@
 			this.worksheet.clearDataValidation(dataValidationRanges, true);
 		}
 		this.worksheet.workbook.handlers.trigger(
-			"changeDocument", 
-			AscCommonExcel.docChangedType.mergeRange, 
+			"changeDocument",
+			AscCommonExcel.docChangedType.mergeRange,
 			null, /* arg1 */
 			this.bbox, /* arg2 */
-			this.worksheet.getId(), 
+			this.worksheet.getId(),
 			firstMergeCellIndex
 		);
 
@@ -20371,6 +20780,9 @@
 				var nFrom = opt_by_row ? cell.nCol : cell.nRow;
 				var nTo = oSortedIndexes[nFrom];
 				if (null != nTo) {
+					if (!cell.formulaParsed.isParsed) {
+						cell.formulaParsed.parse();
+					}
 					if (opt_by_row) {
 						cell.changeOffset(new AscCommon.CellBase(0, nTo - nFrom), true, true, true);
 					} else {
@@ -21359,10 +21771,10 @@
 			}
 
 			var aRules;
-			if (wsTo.aConditionalFormattingRules && wsTo.aConditionalFormattingRules.length) {
+			if (wsTo.isConditionalFormattingRules()) {
 				wsTo.clearConditionalFormattingRulesByRanges([to])
 		}
-			if (wsFrom.aConditionalFormattingRules && wsFrom.aConditionalFormattingRules.length) {
+			if (wsFrom.isConditionalFormattingRules()) {
 				aRules = wsFrom.getIntersectionRules(from);
 			}
 			if(aRules && aRules.length > 0) {

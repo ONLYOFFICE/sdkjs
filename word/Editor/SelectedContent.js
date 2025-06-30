@@ -485,7 +485,7 @@
 		for (var nIndex = 0, nCount = this.Elements.length; nIndex < nCount; ++nIndex)
 		{
 			var oElement = this.Elements[nIndex].Element;
-			if (oElement.IsParagraph())
+			if (oElement.IsParagraph() || oElement.IsTable() || oElement.IsBlockLevelSdt())
 				sText += oElement.GetText(oPr);
 		}
 		return sText;
@@ -935,14 +935,31 @@
 			return this.private_InsertInline();
 		}
 
-		if ((!oForm.IsTextForm() && !oForm.IsComboBox()))
+		if ((!oForm.IsTextForm() && !oForm.IsComboBox() && !oForm.IsDatePicker()))
 			return;
 
-		let newLineSep = oForm.IsMultiLineForm() ? "\n" : "";
-		let sInsertedText = this.GetText({ParaSeparator : "", NewLineSeparator : newLineSep});
+		let newLineSep = "";
+		if (oForm.IsMultiLineForm() || (oForm.IsTextForm() && !oForm.IsFixedForm()))
+			newLineSep = "\n";
+		
+		let sInsertedText = this.GetText({
+			ParaSeparator : newLineSep,
+			TableCellSeparator : newLineSep,
+			TableRowSeparator : newLineSep,
+			NewLineSeparator : newLineSep
+		});
+		
+		if (sInsertedText
+			&& sInsertedText.length
+			&& newLineSep
+			&& sInsertedText[sInsertedText.length - 1] === newLineSep)
+		{
+			sInsertedText = sInsertedText.slice(0, -1);
+		}
+
 		if (!sInsertedText || !sInsertedText.length)
 			return;
-
+		
 		var isPlaceHolder = oRun.GetParentForm().IsPlaceHolder();
 		if (isPlaceHolder && oRun.GetParent() instanceof CInlineLevelSdt)
 		{

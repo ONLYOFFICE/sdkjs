@@ -868,7 +868,7 @@ CRadical.fromMathML = function(reader, isRoot)
 		}
 		else
 		{
-			// TODO:
+			props.content[0] = mContents[0];
 		}
 	}
 	else

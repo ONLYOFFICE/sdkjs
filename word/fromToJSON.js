@@ -3106,7 +3106,7 @@
 			"tcPr":      this.SerTableCellPr(oPr.TableCellPr),
 			"trPr":      this.SerTableRowPr(oPr.TableRowPr),
 			"styleType": sStyleType,
-			"type":      "tableStyle"
+			"type":      "tableStylePr"
 		}
 	};
 	WriterToJSON.prototype.SerTableMeasurement = function(oMeasurement)

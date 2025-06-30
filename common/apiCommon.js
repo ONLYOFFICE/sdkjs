@@ -609,6 +609,10 @@ function (window, undefined) {
 		this.gridlines = null;
 		this.numFmt = null;
 		this.isRadar = false;
+		this.majorUnit = null;
+		this.minorUnit = null;
+		this.majorUnitRule = false;
+		this.minorUnitRule = false;
 	}
 
 	asc_ValAxisSettings.prototype.isEqual = function (oPr) {
@@ -680,6 +684,18 @@ function (window, undefined) {
 			bEqualNumFmt = (this.numFmt === oPr.numFmt);
 		}
 		if (!bEqualNumFmt) {
+			return false;
+		}
+		if (this.minorUnit !== oPr.minorUnit) {
+			return false;
+		}
+		if (this.majorUnit !== oPr.majorUnit) {
+			return false;
+		}
+		if (this.minorUnitRule !== oPr.minorUnitRule) {
+			return false;
+		}
+		if (this.majorUnitRule !== oPr.majorUnitRule) {
 			return false;
 		}
 		return true;
@@ -783,6 +799,8 @@ function (window, undefined) {
 	asc_ValAxisSettings.prototype.setDefault = function () {
 		this.putMinValRule(Asc.c_oAscValAxisRule.auto);
 		this.putMaxValRule(Asc.c_oAscValAxisRule.auto);
+		this.putMajorUnitRule(Asc.c_oAscValAxisRule.auto);
+		this.putMinorUnitRule(Asc.c_oAscValAxisRule.auto);
 		this.putTickLabelsPos(Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO);
 		this.putInvertValOrder(false);
 		this.putDispUnitsRule(Asc.c_oAscValAxUnits.none);
@@ -820,6 +838,30 @@ function (window, undefined) {
 	};
 	asc_ValAxisSettings.prototype.putIsRadarAxis = function (v) {
 		this.isRadar = v;
+	};
+	asc_ValAxisSettings.prototype.getMajorUnit = function () {
+		return this.majorUnit;
+	};
+	asc_ValAxisSettings.prototype.getMinorUnit = function () {
+		return this.minorUnit;
+	};
+	asc_ValAxisSettings.prototype.putMajorUnit = function (v) {
+		this.majorUnit = v;
+	};
+	asc_ValAxisSettings.prototype.putMinorUnit = function (v) {
+		this.minorUnit = v;
+	};
+	asc_ValAxisSettings.prototype.getMajorUnitRule = function () {
+		return this.majorUnitRule;
+	};
+	asc_ValAxisSettings.prototype.getMinorUnitRule = function () {
+		return this.minorUnitRule;
+	};
+	asc_ValAxisSettings.prototype.putMajorUnitRule = function (v) {
+		this.majorUnitRule = v;
+	};
+	asc_ValAxisSettings.prototype.putMinorUnitRule = function (v) {
+		this.minorUnitRule = v;
 	};
 
 	/** @constructor */
@@ -1065,6 +1107,7 @@ function (window, undefined) {
 
 		this.sRange = null;
 
+		this.fUpdateGeneralChart = null;
 
 		this.showMarker = null;
 		this.bLine = null;
@@ -1088,6 +1131,20 @@ function (window, undefined) {
 		}
 		else {
 			this.horizontalAxes[0] = v;
+		}
+	};
+	asc_ChartSettings.prototype._collectPropsFromDLbls = function (nDefaultDataLabelsPos, data_labels)
+	{
+		this.putShowSerName(data_labels.showSerName === true);
+		this.putShowCatName(data_labels.showCatName === true);
+		this.putShowVal(data_labels.showVal === true);
+		this.putSeparator(data_labels.separator);
+		if (data_labels.bDelete) {
+			this.putDataLabelsPos(Asc.c_oAscChartDataLabelsPos.none);
+		} else if (data_labels.showSerName || data_labels.showCatName || data_labels.showVal || data_labels.showPercent) {
+			this.putDataLabelsPos(AscFormat.isRealNumber(data_labels.dLblPos) ? data_labels.dLblPos : nDefaultDataLabelsPos);
+		} else {
+			this.putDataLabelsPos(Asc.c_oAscChartDataLabelsPos.none);
 		}
 	};
 	asc_ChartSettings.prototype.getHorAxisProps = function () {
@@ -1228,6 +1285,13 @@ function (window, undefined) {
 		this.horizontalAxes.length = 0;
 		this.verticalAxes.length = 0;
 		this.depthAxes.length = 0;
+	};
+	asc_ChartSettings.prototype.getExternalReference = function ()
+	{
+		if (this.chartSpace && this.chartSpace.externalReference)
+		{
+			return this.chartSpace.externalReference.getAscLink();
+		}
 	};
 	asc_ChartSettings.prototype.equalBool = function (a, b) {
 		return ((!!a) === (!!b));
@@ -1641,7 +1705,7 @@ function (window, undefined) {
 		}
 		this.bStartEdit = false;
 		AscCommon.History.EndTransaction();
-		this.updateChart();
+		this.updateChart(true);
 		this.updateInterface();
 	};
 	asc_ChartSettings.prototype.cancelEdit = function () {
@@ -1653,7 +1717,7 @@ function (window, undefined) {
 			AscCommon.History.Clear_Redo();
 		}
 		AscCommon.History._sendCanUndoRedo();
-		this.updateChart();
+		this.updateChart(true);
 		this.updateInterface();
 	};
 	asc_ChartSettings.prototype.startEditData = function () {
@@ -1667,9 +1731,10 @@ function (window, undefined) {
 		AscCommon.History.ClearPointIndex();
 		this.updateChart();
 	};
-	asc_ChartSettings.prototype.updateChart = function () {
+	asc_ChartSettings.prototype.updateChart = function (bSelect) {
 		if (this.chartSpace) {
 			this.chartSpace.onDataUpdate();
+			this.updateGeneralChart(bSelect);
 		}
 	};
 	asc_ChartSettings.prototype.getDisplayTrendlinesEquation = function() {
@@ -1679,6 +1744,16 @@ function (window, undefined) {
 		this.displayTrendlinesEquation = v;
 	};
 
+	asc_ChartSettings.prototype.setFUpdateGeneralChart = function(fUpdate) {
+		this.fUpdateGeneralChart = fUpdate;
+	};
+	asc_ChartSettings.prototype.updateGeneralChart = function (bSelect)
+	{
+		if (this.fUpdateGeneralChart)
+		{
+			this.fUpdateGeneralChart(bSelect);
+		}
+	};
 	/** @constructor */
 	function asc_CRect(x, y, width, height) {
 		// private members
@@ -2788,7 +2863,7 @@ function (window, undefined) {
 			this.CanEditInlineCC = true;
 		}
 	}
-	
+
 	asc_CParagraphProperty.prototype.asc_getRtlDirection = function() {
 		return this.Bidi;
 	};
@@ -3455,7 +3530,7 @@ function (window, undefined) {
 	function asc_CBaseFieldProperty() {
 		// common
 		this.type				= undefined;
-		
+
 		this.name				= undefined;
 		this.required			= undefined;
 		this.readOnly			= undefined;
@@ -3465,7 +3540,7 @@ function (window, undefined) {
 		this.stroke				= null;
 		this.strokeWidth		= undefined;
 		this.strokeStyle		= undefined;
-		this.Locked				= false;
+		this.locked				= false;
 
 		this.fieldProps	= null;
 	}
@@ -3528,6 +3603,18 @@ function (window, undefined) {
 	};
 	asc_CBaseFieldProperty.prototype.asc_putStrokeStyle = function (v) {
 		this.strokeStyle = v;
+	};
+	asc_CBaseFieldProperty.prototype.asc_getPropLocked = function () {
+		return this.locked;
+	};
+	asc_CBaseFieldProperty.prototype.asc_putPropLocked = function (v) {
+		this.locked = v;
+	};
+	asc_CBaseFieldProperty.prototype.get_Locked = function () {
+		return this.coEditLocked;
+	};
+	asc_CBaseFieldProperty.prototype.put_Locked = function (v) {
+		this.coEditLocked = v;
 	};
 	asc_CBaseFieldProperty.prototype.asc_getFieldProps = function () {
 		return this.fieldProps;
@@ -3606,7 +3693,7 @@ function (window, undefined) {
 	asc_CTextFieldProperty.prototype.asc_putValidate = function (v) {
 		this.validate = v;
 	};
-	
+
 	//////////////////////////////////////////////////////////////////
 	///// Combobox field
 	//////////////////////////////////////////////////////////////////
@@ -3722,7 +3809,7 @@ function (window, undefined) {
 	asc_CCheckboxFieldProperty.prototype.asc_putToggleToOff = function (v) {
 		this.toggleToOff = v;
 	};
-	
+
 	//////////////////////////////////////////////////////////////////
 	///// Radiobutton
 	//////////////////////////////////////////////////////////////////
@@ -3899,7 +3986,7 @@ function (window, undefined) {
 		if (!sImageRasterId) {
 			return;
 		}
-		
+
 		var _img = Asc.editor.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(sImageRasterId)];
 		if (_img != undefined && _img.Image != null && _img.Status != AscFonts.ImageLoadStatus.Loading)
 		{
@@ -3976,7 +4063,7 @@ function (window, undefined) {
                 var file = _file;
                 if (Array.isArray(file))
                     file = file[0];
-        
+
                 var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](file);
                 editor._addImageUrl([AscCommon.g_oDocumentUrls.getImageUrl(_url)], oField);
             });
@@ -4089,7 +4176,7 @@ function (window, undefined) {
 	asc_CFieldDateFormatProperty.prototype.asc_putFormat = function (v) {
 		this.format = v;
 	};
-	
+
 	//////////////////////////////////////////////////////////////////
 	///// Time format
 	//////////////////////////////////////////////////////////////////
@@ -6803,6 +6890,45 @@ function (window, undefined) {
 		return 0;
 	};
 
+	/** @constructor */
+	function asc_CFormatCellsInfo() {
+		this.type = Asc.c_oAscNumFormatType.General;
+		this.decimalPlaces = 2;
+		this.separator = false;
+		this.symbol = null;
+		this.currency = null;
+	}
+	asc_CFormatCellsInfo.prototype.asc_setType = function (val) {
+		this.type = val;
+	};
+	asc_CFormatCellsInfo.prototype.asc_setDecimalPlaces = function (val) {
+		this.decimalPlaces = val;
+	};
+	asc_CFormatCellsInfo.prototype.asc_setSeparator = function (val) {
+		this.separator = val;
+	};
+	asc_CFormatCellsInfo.prototype.asc_setSymbol = function (val) {
+		this.symbol = val;
+	};
+	asc_CFormatCellsInfo.prototype.asc_setCurrencySymbol = function (val) {
+		this.currency = val;
+	};
+	asc_CFormatCellsInfo.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CFormatCellsInfo.prototype.asc_getDecimalPlaces = function () {
+		return this.decimalPlaces;
+	};
+	asc_CFormatCellsInfo.prototype.asc_getSeparator = function () {
+		return this.separator;
+	};
+	asc_CFormatCellsInfo.prototype.asc_getSymbol = function () {
+		return this.symbol;
+	};
+	asc_CFormatCellsInfo.prototype.asc_getCurrencySymbol = function () {
+		return this.currency;
+	};
+
 	/**
 	 * @constructor
 	 */
@@ -6853,7 +6979,7 @@ function (window, undefined) {
 	CDocInfoProp.prototype.put_SymbolsWSCount = function (v) {
 		this.SymbolsWSCount = v;
 	};
-	
+
 	/**
 	 * @constructor
 	 */
@@ -7060,6 +7186,14 @@ function (window, undefined) {
 	prot["putNumFmt"] = prot.putNumFmt;
 	prot["getNumFmt"] = prot.getNumFmt;
 	prot["isRadarAxis"] = prot.isRadarAxis;
+	prot["getMajorUnit"] = prot.getMajorUnit;
+	prot["getMinorUnit"] = prot.getMinorUnit;
+	prot["putMajorUnit"] = prot.putMajorUnit;
+	prot["putMinorUnit"] = prot.putMinorUnit;
+	prot["getMajorUnitRule"] = prot.getMajorUnitRule;
+	prot["getMinorUnitRule"] = prot.getMinorUnitRule;
+	prot["putMajorUnitRule"] = prot.putMajorUnitRule;
+	prot["putMinorUnitRule"] = prot.putMinorUnitRule;
 
 	window["AscCommon"].asc_CatAxisSettings = asc_CatAxisSettings;
 	prot = asc_CatAxisSettings.prototype;
@@ -7182,6 +7316,9 @@ function (window, undefined) {
 	prot["setView3d"] = prot.setView3d;
 	prot["getDisplayTrendlinesEquation"] = prot.getDisplayTrendlinesEquation;
 	prot["putDisplayTrendlinesEquation"] = prot.putDisplayTrendlinesEquation;
+
+	prot["getExternalReference"] = prot.getExternalReference;
+
 
 	window["AscCommon"].asc_CRect = asc_CRect;
 	prot = asc_CRect.prototype;
@@ -7581,6 +7718,10 @@ function (window, undefined) {
 	prot["asc_putStrokeWidth"]	= prot.asc_putStrokeWidth;
 	prot["asc_getStrokeStyle"]	= prot.asc_getStrokeStyle;
 	prot["asc_putStrokeStyle"]	= prot.asc_putStrokeStyle;
+	prot["asc_getPropLocked"]	= prot.asc_getPropLocked;
+	prot["asc_putPropLocked"]	= prot.asc_putPropLocked;
+	prot["get_Locked"]			= prot.get_Locked;
+	prot["put_Locked"]			= prot.put_Locked;
 	prot["asc_getFieldProps"]	= prot.asc_getFieldProps;
 	prot["asc_putFieldProps"]	= prot.asc_putFieldProps;
 
@@ -7696,7 +7837,7 @@ function (window, undefined) {
 	prot["asc_getCurrencyPrepend"]	= prot.asc_getCurrencyPrepend;
 	prot["asc_putCurrencyPrepend"]	= prot.asc_putCurrencyPrepend;
 
-	
+
 	window["Asc"]["asc_CFieldPercentageFormatProperty"] = window["Asc"].asc_CFieldPercentageFormatProperty = asc_CFieldPercentageFormatProperty;
 	prot = asc_CFieldPercentageFormatProperty.prototype;
 	prot["asc_getType"]				= prot.asc_getType;
@@ -7710,13 +7851,13 @@ function (window, undefined) {
 	prot["asc_getType"]				= prot.asc_getType;
 	prot["asc_getFormat"]			= prot.asc_getFormat;
 	prot["asc_putFormat"]			= prot.asc_putFormat;
-	
+
 	window["Asc"]["asc_CFieldTimeFormatProperty"] = window["Asc"].asc_CFieldTimeFormatProperty = asc_CFieldTimeFormatProperty;
 	prot = asc_CFieldTimeFormatProperty.prototype;
 	prot["asc_getType"]				= prot.asc_getType;
 	prot["asc_getFormat"]			= prot.asc_getFormat;
 	prot["asc_putFormat"]			= prot.asc_putFormat;
-	
+
 	window["Asc"]["asc_CFieldSpecialFormatProperty"] = window["Asc"].asc_CFieldSpecialFormatProperty = asc_CFieldSpecialFormatProperty;
 	prot = asc_CFieldSpecialFormatProperty.prototype;
 	prot["asc_getType"]				= prot.asc_getType;
@@ -7724,13 +7865,13 @@ function (window, undefined) {
 	prot["asc_putFormat"]			= prot.asc_putFormat;
 	prot["asc_getMask"]				= prot.asc_getMask;
 	prot["asc_putMask"]				= prot.asc_putMask;
-	
+
 	window["Asc"]["asc_CFieldRegularFormatProperty"] = window["Asc"].asc_CFieldRegularFormatProperty = asc_CFieldRegularFormatProperty;
 	prot = asc_CFieldRegularFormatProperty.prototype;
 	prot["asc_getType"]				= prot.asc_getType;
 	prot["asc_getRegExp"]			= prot.asc_getRegExp;
 	prot["asc_putRegExp"]			= prot.asc_putRegExp;
-	
+
 	window["Asc"]["asc_CFieldValidateProperty"] = window["Asc"].asc_CFieldValidateProperty = asc_CFieldValidateProperty;
 	prot = asc_CFieldValidateProperty.prototype;
 	prot["asc_getType"]				= prot.asc_getType;
@@ -8137,7 +8278,7 @@ function (window, undefined) {
 	CDocInfoProp.prototype['put_SymbolsCount'] = CDocInfoProp.prototype.put_SymbolsCount;
 	CDocInfoProp.prototype['get_SymbolsWSCount'] = CDocInfoProp.prototype.get_SymbolsWSCount;
 	CDocInfoProp.prototype['put_SymbolsWSCount'] = CDocInfoProp.prototype.put_SymbolsWSCount;
-	
+
 	window["Asc"]["RangePermProp"] = window["Asc"].RangePermProp = RangePermProp;
 	prot = RangePermProp.prototype;
 	prot["get_canEditText"] = prot.get_canEditText;
@@ -8161,5 +8302,18 @@ function (window, undefined) {
 	{
 		return mm * AscCommon.g_dKoef_mm_to_pix;
 	};
-	
+
+	window["Asc"]["asc_CFormatCellsInfo"] = window["Asc"].asc_CFormatCellsInfo = asc_CFormatCellsInfo;
+	prot = asc_CFormatCellsInfo.prototype;
+	prot["asc_setType"] = prot.asc_setType;
+	prot["asc_setDecimalPlaces"] = prot.asc_setDecimalPlaces;
+	prot["asc_setSeparator"] = prot.asc_setSeparator;
+	prot["asc_setSymbol"] = prot.asc_setSymbol;
+	prot["asc_setCurrencySymbol"] = prot.asc_setCurrencySymbol;
+	prot["asc_getType"] = prot.asc_getType;
+	prot["asc_getDecimalPlaces"] = prot.asc_getDecimalPlaces;
+	prot["asc_getSeparator"] = prot.asc_getSeparator;
+	prot["asc_getSymbol"] = prot.asc_getSymbol;
+	prot["asc_getCurrencySymbol"] = prot.asc_getCurrencySymbol;
+
 })(window);

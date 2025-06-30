@@ -381,10 +381,10 @@ CWordCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
         {
             // Если у нас началось редактирование диаграммы, а вернулось, что ее редактировать нельзя,
             // посылаем сообщение о закрытии редактора диаграмм.
-            if (oEditor.isOpenedChartFrame)
-                oEditor.sync_closeChartEditor();
+            if (oEditor.frameManager.isLoadingChartEditor)
+	            oEditor.sync_closeChartEditor();
 
-          if (oEditor.isOleEditor)
+          if (oEditor.frameManager.isLoadingOleEditor)
             oEditor.sync_closeOleEditor();
 
             // Делаем откат на 1 шаг назад и удаляем из Undo/Redo эту последнюю точку
@@ -392,8 +392,8 @@ CWordCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
             AscCommon.History.Clear_Redo();
         }
 
-        oEditor.isChartEditor = false;
-        oEditor.isOleEditor = false;
+	    oEditor.frameManager.endLoadChartEditor();
+	    oEditor.frameManager.endLoadOleEditor();
     }
 };
 CWordCollaborativeEditing.prototype.AddContentControlForSkippingOnCheckEditingLock = function(oContentControl)

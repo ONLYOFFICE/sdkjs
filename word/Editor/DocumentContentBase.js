@@ -2970,3 +2970,14 @@ CDocumentContentBase.prototype.GetText = function(pr)
 	
 	return text;
 };
+CDocumentContentBase.prototype.GetCurrentContentControl = function()
+{
+	let selectedInfo = this.GetSelectedElementsInfo({SkipTOC : true});
+	
+	let inlineSdt = selectedInfo.GetInlineLevelSdt();
+	if (inlineSdt)
+		return inlineSdt;
+	
+	let blockSdt = selectedInfo.GetBlockLevelSdt();
+	return blockSdt ? blockSdt : null;
+};

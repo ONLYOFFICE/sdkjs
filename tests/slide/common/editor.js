@@ -94,6 +94,11 @@
 	editor.WordControl.m_oApi = editor;
 
 	editor.textArtPreviewManager = drawingDocument;
+	editor.externalChartCollector = {
+		onUpdateExternalList: function () {},
+		checkChart          : function () {}
+	};
+
 	editor.thumbnailsPosition = AscCommon.thumbnailsPositionMap.left;
 	editor.asc_hideComments = function () {};
 	editor.isSlideShow = function () {return false};

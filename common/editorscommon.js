@@ -395,6 +395,17 @@
 			}
 			return res;
 		},
+		getImagesWithOtherExtension: function(imageLocal) {
+			var res = [];
+			var filename = GetFileName(imageLocal);
+			var prefix = this.mediaPrefix + filename + '.';
+			for (var i in this.urls) {
+				if (0 == i.indexOf(prefix) && !i.endsWith(imageLocal)) {
+					res.push(i.substring(this.mediaPrefix.length));
+				}
+			}
+			return res;
+		},
 
 		isThemeUrl: function(sUrl) {
 			return sUrl && (0 === sUrl.indexOf('theme'));
@@ -3781,6 +3792,15 @@
 		}
 		return false;
 	};
+	parserHelper.prototype.isDefName = function(formula, start_pos) {
+		var _isArea = this.isArea(formula, start_pos);
+		var _isRef = !_isArea && this.isRef(formula, start_pos);
+		var _isName = !_isRef && !_isArea && this.isName(formula, start_pos);
+		if (_isName) {
+			return {defname: this.operand_str};
+		}
+		return false;
+	};
 	parserHelper.prototype.isName3D = function (formula, start_pos)
 	{
 		if (this instanceof parserHelper)
@@ -3789,12 +3809,17 @@
 		}
 
 		var _is3DRef = this.is3DRef(formula, start_pos);
-		if(_is3DRef && _is3DRef[0] && _is3DRef[1] && _is3DRef[1].length)
+		if(_is3DRef && _is3DRef[0])
 		{
-			var _startPos = this.pCurrPos;
-			var _isArea = this.isArea(formula, _startPos);
-			var _isRef = !_isArea && this.isRef(formula, _startPos);
-			return !_isRef && !_isArea && this.isName(formula, _startPos);
+			let _isName = false;
+			if (_is3DRef[1] && _is3DRef[1].length) {
+				_isName = this.isDefName(formula, this.pCurrPos);
+			} else {
+				_isName = _is3DRef[4];
+			}
+			if (_isName) {
+				return {defName: _isName.defname, sheet: _is3DRef[1], external: _is3DRef[3]};
+			}
 		}
 
 		return false;
@@ -4007,7 +4032,7 @@
 			if (this.isArea(formula, indexStartRange) || this.isRef(formula, indexStartRange))
 			{
 				if (this.operand_str.length == formula.substring(indexStartRange).length)
-					return {sheet: sheetName, sheet2: is3DRefResult[2], range: this.operand_str};
+					return {sheet: sheetName, sheet2: is3DRefResult[2], range: this.operand_str, external: is3DRefResult[3]};
 				else
 					return null;
 			}
@@ -11024,7 +11049,7 @@
 		for (var oIterator = sWord.getUnicodeIterator(); oIterator.check(); oIterator.next())
 		{
 			var nCharCode = oIterator.value();
-			if (IsHangul(nCharCode) || IsCJKIdeographs(nCharCode))
+			if (IsHangul(nCharCode) || IsCJKIdeographs(nCharCode) || IsComplexScript(nCharCode))
 				return false;
 
 			if (0x73 === nCharCode)
@@ -11738,10 +11763,19 @@
 
 	function isEastAsianScript(value)
 	{
+		// CJK Symbols and Punctuation (3000–303F)
+		// Hiragana (3040-309F)
+		// Katakana (30A0–30FF)
 		// Bopomofo (3100–312F)
+		// Hangul Compatibility Jamo (3130–318F)
+		// Kanbun (3190–319F)
 		// Bopomofo Extended (31A0–31BF)
-		// CJK Unified Ideographs (4E00–9FEA)
+		// CJK Strokes (31C0–31EF)
+		// Katakana Phonetic Extensions (31F0–31FF)
+		// Enclosed CJK Letters and Months (3200-32FF)
+		// CJK Compatibility (3300-33FF)
 		// CJK Unified Ideographs Extension A (3400–4DB5)
+		// CJK Unified Ideographs (4E00–9FEA)
 		// CJK Unified Ideographs Extension B (20000–2A6D6)
 		// CJK Unified Ideographs Extension C (2A700–2B734)
 		// CJK Unified Ideographs Extension D (2B740–2B81D)
@@ -11751,20 +11785,14 @@
 		// CJK Compatibility Ideographs Supplement (2F800–2FA1F)
 		// Kangxi Radicals (2F00–2FDF)
 		// CJK Radicals Supplement (2E80–2EFF)
-		// CJK Strokes (31C0–31EF)
 		// Ideographic Description Characters (2FF0–2FFF)
 		// Hangul Jamo (1100–11FF)
 		// Hangul Jamo Extended-A (A960–A97F)
 		// Hangul Jamo Extended-B (D7B0–D7FF)
-		// Hangul Compatibility Jamo (3130–318F)
 		// Halfwidth and Fullwidth Forms (FF00–FFEF)
 		// Hangul Syllables (AC00–D7AF)
-		// Hiragana (3040–309F)
 		// Kana Extended-A (1B100–1B12F)
 		// Kana Supplement (1B000–1B0FF)
-		// Kanbun (3190–319F)
-		// Katakana (30A0–30FF)
-		// Katakana Phonetic Extensions (31F0–31FF)
 		// Lisu (A4D0–A4FF)
 		// Miao (16F00–16F9F)
 		// Nushu (1B170–1B2FF)
@@ -11772,11 +11800,9 @@
 		// Tangut Components (18800–18AFF)
 		// Yi Syllables (A000–A48F)
 		// Yi Radicals (A490–A4CF)
-
-		return ((0x3100 <= value && value <= 0x312F)
-			|| (0x31A0 <= value && value <= 0x31BF)
+		
+		return ((0x3000 <= value && value <= 0x4DB5)
 			|| (0x4E00 <= value && value <= 0x9FEA)
-			|| (0x3400 <= value && value <= 0x4DB5)
 			|| (0x20000 <= value && value <= 0x2A6D6)
 			|| (0x2A700 <= value && value <= 0x2B734)
 			|| (0x2B740 <= value && value <= 0x2B81D)
@@ -11786,20 +11812,14 @@
 			|| (0x2F800 <= value && value <= 0x2FA1F)
 			|| (0x2F00 <= value && value <= 0x2FDF)
 			|| (0x2E80 <= value && value <= 0x2EFF)
-			|| (0x31C0 <= value && value <= 0x31EF)
 			|| (0x2FF0 <= value && value <= 0x2FFF)
 			|| (0x1100 <= value && value <= 0x11FF)
 			|| (0xA960 <= value && value <= 0xA97F)
 			|| (0xD7B0 <= value && value <= 0xD7FF)
-			|| (0x3130 <= value && value <= 0x318F)
 			|| (0xFF00 <= value && value <= 0xFFEF)
 			|| (0xAC00 <= value && value <= 0xD7AF)
-			|| (0x3040 <= value && value <= 0x309F)
 			|| (0x1B100 <= value && value <= 0x1B12F)
 			|| (0x1B000 <= value && value <= 0x1B0FF)
-			|| (0x3190 <= value && value <= 0x319F)
-			|| (0x30A0 <= value && value <= 0x30FF)
-			|| (0x31F0 <= value && value <= 0x31FF)
 			|| (0xA4D0 <= value && value <= 0xA4FF)
 			|| (0x16F00 <= value && value <= 0x16F9F)
 			|| (0x1B170 <= value && value <= 0x1B2FF)
@@ -12251,7 +12271,7 @@
         this.isChangesHandled = false;
 
         this.cryptoMode = 0; // start crypto mode
-		this.isChartEditor = false;
+		this.isFrameEditor = false;
 
         this.isExistDecryptedChanges = false; // был ли хоть один запрос на расшифровку данных (были ли чужие изменения)
 
@@ -12285,7 +12305,7 @@
             if (!window["AscDesktopEditor"])
                 return false;
 
-            if (this.isChartEditor)
+            if (this.isFrameEditor)
             	return false;
 
             if (2 == this.cryptoMode)

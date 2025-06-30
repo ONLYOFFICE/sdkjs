@@ -132,6 +132,8 @@
 		let isPicture    = oPr && oPr.Picture;
 		let isRadioGroup = oPr && oPr.RadioGroup;
 		let isComplex    = oPr && oPr.Complex;
+		let isDateTime   = oPr && oPr.DateTime;
+		let isSignature  = oPr && oPr.Signature;
 
 		let arrKeys  = [];
 		let arrForms = this.GetAllForms();
@@ -150,7 +152,9 @@
 				|| (isComboBox && oForm.IsComboBox())
 				|| (isDropDown && oForm.IsDropDownList())
 				|| (isCheckBox && oForm.IsCheckBox() && !oForm.IsRadioButton())
-				|| (isPicture && oForm.IsPicture()))
+				|| (isPicture && oForm.IsPicture() && !oForm.IsSignatureForm())
+				|| (isDateTime && oForm.IsDatePicker()
+				|| (isSignature && oForm.IsSignatureForm())))
 			{
 				sKey = oForm.GetFormKey();
 			}
@@ -288,6 +292,23 @@
 			this.OnChangePictureForm(oForm);
 		else
 			this.OnChangeTextForm(oForm);
+	};
+	/**
+	 * Sync all specific form properties for forms with the same key
+	 * @param form
+	 */
+	CFormsManager.prototype.OnChangeFormPr = function(form)
+	{
+		let userMaster = this.GetUserMasterByForm(form);
+		let allForms   = this.GetAllFormsByKey(form.GetFormKey(), form.GetSpecificType());
+		for (let i = 0, count = allForms.length; i < count; ++i)
+		{
+			let _form = allForms[i];
+			if (_form === form || userMaster !== this.GetUserMasterByForm(_form))
+				continue;
+			
+			_form.SyncFormPrWithSameKey(form);
+		}
 	};
 	/**
 	 * Проверяем корректность изменения формы

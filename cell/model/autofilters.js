@@ -3487,9 +3487,9 @@
 
 			checkTableColumnName: function (tableColumns, name) {
 				var res = name;
-
+				let _name = name.toLowerCase();
 				for (var i = 0; i < tableColumns.length; i++) {
-					if (name.toLowerCase() === tableColumns[i].Name.toLowerCase()) {
+					if (_name === tableColumns[i].getTableColumnName(true)) {
 						res = this._generateColumnName2(tableColumns);
 						break;
 					}
@@ -3666,8 +3666,9 @@
 					var res = false;
 
 					if (tableColumns && tableColumns.length) {
+						let _val = val.toLowerCase()
 						for (var i = 0; i < tableColumns.length; i++) {
-							if (tableColumns[i].Name.toLowerCase() === val.toLowerCase() && i !== exeptionCol) {
+							if (tableColumns[i].getTableColumnName(true) === _val && i !== exeptionCol) {
 								res = true;
 								break;
 							}
@@ -3716,20 +3717,20 @@
 								}
 
 								//если не пустая изменяем TableColumns
-								var oldVal = filter.TableColumns[j - tableRange.c1].Name;
+								var oldVal = filter.TableColumns[j - tableRange.c1].getTableColumnName();
 								var newVal = null;
 								//проверка на повторение уже существующих заголовков
 								if (val !== "" && checkRepeateColumnName(val, filter.TableColumns, j - tableRange.c1)) {
-									filter.TableColumns[j - tableRange.c1].Name = "";
+									filter.TableColumns[j - tableRange.c1].setTableColumnName("");
 									generateName = this._generateNextColumnName(filter.TableColumns, val);
 									if (!bUndo) {
 										cell.setValue(generateName);
 										cell.setType(CellValueType.String);
 									}
-									filter.TableColumns[j - tableRange.c1].Name = generateName;
+									filter.TableColumns[j - tableRange.c1].setTableColumnName(generateName);
 									newVal = generateName;
 								} else if (val !== "" && intersection.c1 <= j && intersection.c2 >= j) {
-									filter.TableColumns[j - tableRange.c1].Name = val;
+									filter.TableColumns[j - tableRange.c1].setTableColumnName(val);
 									if (!bUndo) {
 										//если пытаемся вбить формулу в заголовок - оставляем только результат
 										//ms в данном случае генерирует новое имя, начинающееся с 0
@@ -3741,13 +3742,13 @@
 									newVal = val;
 								} else if (val === "")//если пустая изменяем генерируем имя и добавляем его в TableColumns
 								{
-									filter.TableColumns[j - tableRange.c1].Name = "";
+									filter.TableColumns[j - tableRange.c1].setTableColumnName("");
 									generateName = this._generateColumnName(filter.TableColumns);
 									if (!bUndo) {
 										cell.setValue(generateName);
 										cell.setType(CellValueType.String);
 									}
-									filter.TableColumns[j - tableRange.c1].Name = generateName;
+									filter.TableColumns[j - tableRange.c1].setTableColumnName(generateName);
 									newVal = generateName;
 								}
 
@@ -5484,7 +5485,7 @@
 								let cell = this.worksheet.getRange3(ref.r1, ref.c1 + i, ref.r1, ref.c1 + i);
 								cell.setValue(val);
 							}
-							newTableColumn.Name = val;
+							newTableColumn.setTableColumnName(val);
 							tableColumns.push(newTableColumn);
 							isDuplicate = false;
 							break;
@@ -5504,11 +5505,11 @@
 					}
 					var nameStart;
 					var nameEnd;
-					if (tableColumns[indexInsertColumn] && tableColumns[indexInsertColumn].Name) {
-						nameStart = tableColumns[indexInsertColumn].Name.split(columnName);
+					if (tableColumns[indexInsertColumn] && tableColumns[indexInsertColumn].getTableColumnName()) {
+						nameStart = tableColumns[indexInsertColumn].getTableColumnName().split(columnName);
 					}
-					if (tableColumns[indexInsertColumn + 1] && tableColumns[indexInsertColumn + 1].Name) {
-						nameEnd = tableColumns[indexInsertColumn + 1].Name.split(columnName);
+					if (tableColumns[indexInsertColumn + 1] && tableColumns[indexInsertColumn + 1].getTableColumnName()) {
+						nameEnd = tableColumns[indexInsertColumn + 1].getTableColumnName().split(columnName);
 					}
 					if (nameStart && nameStart[1] && nameEnd && nameEnd[1] && !isNaN(parseInt(nameStart[1])) && !isNaN(parseInt(nameEnd[1])) && ((parseInt(nameStart[1]) + 1) == parseInt(nameEnd[1]))) {
 						isSequence = true;
@@ -5518,8 +5519,8 @@
 				var name, i;
 				if (indexInsertColumn == undefined || !isSequence) {
 					for (i = 0; i < tableColumns.length; i++) {
-						if (tableColumns[i].Name) {
-							name = tableColumns[i].Name.split(columnName);
+						if (tableColumns[i].getTableColumnName()) {
+							name = tableColumns[i].getTableColumnName().split(columnName);
 						}
 						if (name && name[1] && !isNaN(parseFloat(name[1])) && index === parseFloat(name[1])) {
 							index++;
@@ -5528,16 +5529,16 @@
 					}
 					return columnName + index;
 				} else {
-					if (tableColumns[indexInsertColumn] && tableColumns[indexInsertColumn].Name) {
-						name = tableColumns[indexInsertColumn].Name.split(columnName);
+					if (tableColumns[indexInsertColumn] && tableColumns[indexInsertColumn].getTableColumnName()) {
+						name = tableColumns[indexInsertColumn].getTableColumnName().split(columnName);
 					}
 					if (name && name[1] && !isNaN(parseFloat(name[1]))) {
 						index = parseFloat(name[1]) + 1;
 					}
 
 					for (i = 0; i < tableColumns.length; i++) {
-						if (tableColumns[i].Name) {
-							name = tableColumns[i].Name.split(columnName);
+						if (tableColumns[i].getTableColumnName()) {
+							name = tableColumns[i].getTableColumnName().split(columnName);
 						}
 						if (name && name[1] && !isNaN(parseFloat(name[1])) && index == parseFloat(name[1])) {
 							index = parseInt((index - 1) + "2");
@@ -5559,7 +5560,7 @@
 			_generateNextColumnName: function (tableColumns, val) {
 				var tableColumnMap = [];
 				for (var i = 0; i < tableColumns.length; i++) {
-					tableColumnMap[tableColumns[i].Name.toLowerCase()] = 1;
+					tableColumnMap[tableColumns[i].getTableColumnName(true)] = 1;
 				}
 				var res = val;
 				var index = 2;
@@ -5601,8 +5602,8 @@
 								range = worksheet.getCell3(bbox.r1, ncol);
 								var num = ncol - bbox.c1;
 								var tableColumn = options.TableColumns[num];
-								if (null != tableColumn && null != tableColumn.Name && headerRowCount > 0) {
-									range.setValue(tableColumn.Name);
+								if (null != tableColumn && null != tableColumn.getTableColumnName() && headerRowCount > 0) {
+									range.setValue(tableColumn.getTableColumnName());
 									range.setType(CellValueType.String);
 								}
 
@@ -5618,7 +5619,7 @@
 									if (null !== formula) {
 										range.setValue("=" + formula, null, true);
 										if (isSetTotalRowType) {
-											var numFormatType = this._getFormatTableColumnRange(options, tableColumn.Name);
+											var numFormatType = this._getFormatTableColumnRange(options, tableColumn.getTableColumnName());
 											if (null !== numFormatType) {
 												range.setNumFormat(numFormatType);
 											}
@@ -6385,7 +6386,7 @@
 						tableColumnsNameMap = {};
 						for (let i = 0; i < tableColumns.length; i++) {
 							if (tableColumns[i]) {
-								tableColumnsNameMap[tableColumns[i].Name] = 1;
+								tableColumnsNameMap[tableColumns[i].getTableColumnName()] = 1;
 							}
 						}
 					}

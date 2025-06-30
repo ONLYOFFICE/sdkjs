@@ -33,11 +33,23 @@
 "use strict";
 
 (function (window) {
+
+	function getLocalFileLink(path) {
+		// todo should we make .replace to the local link here?
+		if (path) {
+			path = path.replace(/^file:\/\/\//, '');
+			path = path.replace(/^file:\/\//, '');
+		}
+		return path;
+	}
+
 	function CExternalDataLoader(arrExternalReference, oApi, fCallback) {
 		this.externalReferences = arrExternalReference || [];
 		this.api = oApi;
 		this.isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
 		this.fCallback = fCallback;
+
+		this.props = null;
 	}
 
 	CExternalDataLoader.prototype.updateExternalData = function () {
@@ -63,7 +75,7 @@
 			//check updated file on server. compare keys. if file not updated - check only collaborative editing
 			let curEr = oThis.externalReferences[i].externalReference;
 			let curErKey = curEr.getKey();
-			oData.notChangedFile = sKey === curEr.getKey();
+			oData.notChangedFile = sKey === curErKey && !(oThis.props && oThis.props.forceUpdate);
 			if (curErKey == null) {
 				curEr.setKey(sKey);
 			}
@@ -87,12 +99,13 @@
 
 					//url - file link
 
-					if (!bTimeout && oResult["code"] === AscCommon.c_oAscServerCommandErrors.NoError) {
-						arrData[i]["directUrl"] = oResult["url"];
-						arrData[i]["url"] = oResult["url"];
-						arrData[i]["fileType"] = "xlsx";
-						arrData[i]["token"] = null;
-						arrData[i].notChangedFile = false;
+					if (!bTimeout && (oResult["code"] === AscCommon.c_oAscServerCommandErrors.NoError ||
+						(!oData.notChangedFile && oResult["code"] === AscCommon.c_oAscServerCommandErrors.NotModified && oResult["url"]))) {
+						oData["directUrl"] = oResult["url"];
+						oData["url"] = oResult["url"];
+						oData["fileType"] = "xlsx";
+						oData["token"] = null;
+						oData.notChangedFile = false;
 					}
 					fResolve();
 				});
@@ -163,16 +176,6 @@
 		});
 	};
 
-	CExternalDataPromiseGetter.prototype.getLocalFileLink = function () {
-		let res = this.externalReference;
-		// todo should we make .replace to the local link here?
-		if (res) {
-			res = res.replace(/^file:\/\/\//, '');
-			res = res.replace(/^file:\/\//, '');
-		}
-		return res;
-	};
-
 	CExternalDataPromiseGetter.prototype.isExternalLink = function () {
 		const p = /^(?:http:|https:)/;
 		return this.externalReference.match(p);
@@ -180,7 +183,7 @@
 
 	CExternalDataPromiseGetter.prototype.getFileUrl = function () {
 		if (this.isLocalDesktop() && !this.isExternalLink()) {
-			return this.getLocalFileLink();
+			return getLocalFileLink(this.externalReference);
 		} else if (this.data && !this.data["error"]) {
 			return this.data["url"];
 		}
@@ -225,15 +228,10 @@
 			const bIsXLSX = sFileType === "xlsx";
 
 			if ((sFileUrl && !bIsXLSX) || !isSupportOOXML) {
-				let bLoad = false;
-				oThis.api.getConvertedXLSXFileFromUrl(sFileUrl, sFileType, sToken, nOutputFormat,
-					function (sFileUrlAfterConvert) {
-						if (sFileUrlAfterConvert) {
-							oThis.loadFileContentFromUrl(sFileUrlAfterConvert, fResolve);
-							bLoad = true;
-						} else if (!bLoad) {
-							oThis.resolveStream(null, fResolve);
-						}
+				const oDocument = {url: sFileUrl, format: sFileType, token: sToken};
+				oThis.api.getConvertedXLSXFileFromUrl(oDocument, nOutputFormat,
+					function (arrBinaryData) {
+						oThis.resolveStream(arrBinaryData, fResolve);
 					});
 			} else if (sDirectUrl || sFileUrl) {
 				oThis.api._downloadOriginalFile(sDirectUrl, sFileUrl, sFileType, sToken, function (arrStream) {
@@ -246,5 +244,7 @@
 	};
 
 	AscCommon.CExternalDataLoader = CExternalDataLoader;
+	AscCommon.getLocalFileLink = getLocalFileLink;
+
 })(window);
 

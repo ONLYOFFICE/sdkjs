@@ -49,6 +49,7 @@ function (window, undefined) {
 	var cBaseFunction = AscCommonExcel.cBaseFunction;
 	var cFormulaFunctionGroup = AscCommonExcel.cFormulaFunctionGroup;
 	var argType = Asc.c_oAscFormulaArgumentType;
+	var cElementType = AscCommonExcel.cElementType;
 
 	var rtl_math_erf = AscCommonExcel.rtl_math_erf;
 
@@ -517,7 +518,8 @@ function (window, undefined) {
 		} else {
 			this.real = r;
 			this.img = i;
-			this.suffix = suffix ? suffix : "i";
+			// this.suffix = suffix ? suffix : "i";
+			this.suffix = suffix ? suffix : {pStr: "i"};
 			return this;
 		}
 	}
@@ -525,8 +527,8 @@ function (window, undefined) {
 	Complex.prototype = {
 
 		constructor: Complex, toString: function () {
-			var res = [];
-			var hasImag = this.img != 0, hasReal = !hasImag || (this.real != 0);
+			let res = [];
+			let hasImag = this.img != 0, hasReal = !hasImag || (this.real != 0);
 
 			let toLocalString = function (val) {
 				let _res = val;
@@ -557,7 +559,15 @@ function (window, undefined) {
 				} else {
 					this.img > 0 && hasReal ? res.push("+" + (toLocalString(this.img))) : res.push(toLocalString(this.img));
 				}
-				res.push(this.suffix ? this.suffix : "i");
+
+				let isObj = typeof this.suffix === 'object' && this.suffix !== null;
+				if (isObj && this.suffix.pStr) {
+					res.push(this.suffix.pStr);
+				} else if (this.suffix) {
+					res.push(this.suffix)
+				} else {
+					res.push("i");
+				}
 			}
 			return res.join("");
 		}, Real: function () {
@@ -824,12 +834,15 @@ function (window, undefined) {
 			}
 		}, ParseString: function (rStr) {
 
-			var pStr = {pStr: rStr}, f = {f: undefined};
+			// todo in future versions, get rid of the use of the "i" string and set the object to a one global variant with type: "i"
+
+			let pStr = {pStr: rStr}, f = {f: undefined};
 
 			if (rStr.length == 0) {
 				this.real = 0;
 				this.img = 0;
-				this.suffix = "i";
+				// this.suffix = "i";
+				this.suffix = {pStr: "i"};
 				return this;
 			}
 
@@ -6346,32 +6359,30 @@ function (window, undefined) {
 	cIMLOG10.prototype.argumentsType = [argType.any];
 	cIMLOG10.prototype.Calculate = function (arg) {
 
-		var arg0 = arg[0];
+		let arg0 = arg[0];
 
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
-		} else if (arg0 instanceof cArray) {
+		} else if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElementRowCol(0, 0);
 		}
 
 		arg0 = arg0.tocString();
-		if (arg0 instanceof cError) {
+		if (arg0.type === cElementType.error) {
 			return arg0;
 		}
 
-		var c = new Complex(arg0.toString());
-
-		if (c instanceof cError) {
+		let c = new Complex(arg0.toString());
+		if (c.type === cElementType.error) {
 			return c;
 		}
 
-		var r = c.Log10();
-
-		if (r instanceof cError) {
+		let r = c.Log10();
+		if (r && r.type === cElementType.error) {
 			return r;
 		}
 
-		var res = new cString(c.toString());
+		let res = new cString(c.toString());
 		res.numFormat = 0;
 
 		return res;
@@ -6395,32 +6406,30 @@ function (window, undefined) {
 	cIMLOG2.prototype.argumentsType = [argType.any];
 	cIMLOG2.prototype.Calculate = function (arg) {
 
-		var arg0 = arg[0];
+		let arg0 = arg[0];
 
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
-		} else if (arg0 instanceof cArray) {
+		} else if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElementRowCol(0, 0);
 		}
 
 		arg0 = arg0.tocString();
-		if (arg0 instanceof cError) {
+		if (arg0.type === cElementType.error) {
 			return arg0;
 		}
 
-		var c = new Complex(arg0.toString());
-
-		if (c instanceof cError) {
+		let c = new Complex(arg0.toString());
+		if (c.type === cElementType.error) {
 			return c;
 		}
 
-		var r = c.Log2();
-
-		if (r instanceof cError) {
+		let r = c.Log2();
+		if (r && r.type === cElementType.error) {
 			return r;
 		}
 
-		var res = new cString(c.toString());
+		let res = new cString(c.toString());
 		res.numFormat = 0;
 
 		return res;

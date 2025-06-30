@@ -701,7 +701,7 @@
                 oRFonts.SetAll(oRCInfo["actual"], -1);
             }
             else if (oRCInfo["name"]) {
-                oRFonts.SetAll(AscFonts.getEmbeddedFontPrefix() + oRCInfo["name"], -1);
+                oRFonts.SetAll(/*AscFonts.getEmbeddedFontPrefix() +*/ oRCInfo["name"], -1);
             }
             else {
                 oRFonts.SetAll(AscPDF.DEFAULT_FIELD_FONT, -1);
@@ -859,7 +859,7 @@
                 fontName = aRCInfo[i]["actual"];
             }
             else if (aRCInfo[i]["name"]) {
-                fontName = AscFonts.getEmbeddedFontPrefix() + aRCInfo[i]["name"];
+                fontName = /*AscFonts.getEmbeddedFontPrefix() +*/ aRCInfo[i]["name"];
             }
             fontMap[fontName] = true;
         }

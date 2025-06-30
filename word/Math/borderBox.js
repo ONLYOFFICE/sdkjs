@@ -605,6 +605,26 @@ CBorderBox.prototype.GetTextOfElement = function(oMathText)
 	return oMathText;
 };
 
+CBorderBox.fromMathML = function(reader)
+{
+	let props = new CMathBorderBoxPr();
+	props.content = [];
+	let mathContent = new CMathContent();
+	props.content.push(mathContent);
+
+	let depth = reader.GetDepth();
+	while (reader.ReadNextSiblingNode(depth))
+	{
+		let elements = AscWord.ParaMath.readMathMLNode(reader);
+		for (let i = 0; i < elements.length; i++)
+		{
+			props.content[0].addElementToContent(elements[i]);
+		}
+	}
+
+	return new CBorderBox(props);
+};
+
 /**
  *
  * @param CMathMenuBorderBox
@@ -1354,6 +1374,53 @@ CPhantom.prototype.fillContent = function()
 {
     this.setDimension(1, 1);
     this.elements[0][0] = this.getBase();
+};
+
+CPhantom.prototype.Draw_Elements = function(PDSE)
+{
+	var X = PDSE.X;
+
+	var PosLine = this.ParaMath.GetLinePosition(PDSE.Line, PDSE.Range);
+
+	if (this.Pr.show)
+		CMathBase.prototype.Draw_Elements.call(this, PDSE);
+
+	PDSE.X = X + this.size.width;
+};
+
+/**
+ *
+ * @param {MathTextAndStyles | boolean} oMathText
+ * @constructor
+ */
+CPhantom.prototype.GetTextOfElement = function(oMathText)
+{
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
+
+	let base = this.getBase();
+
+	if (oMathText.IsLaTeX())
+	{
+		oMathText.AddText(new AscMath.MathText("\\phantom", this));
+		oMathText.Add(base, true, 1);
+	}
+	else
+	{
+		oMathText.AddText(new AscMath.MathText("\\mphantom", this));
+		oMathText.Add(base, true);
+	}
+
+	return oMathText;
+};
+
+CPhantom.fromMathML = function (reader)
+{
+	let props = new CMathPhantomPr();
+	props.show = false;
+	props.transp = true;
+	props.content = [AscWord.ParaMath.readMathMLContentOnLevel(reader)];
+
+	return new CPhantom(props);
 };
 
 //--------------------------------------------------------export----------------------------------------------------

@@ -657,6 +657,10 @@ CBlockLevelSdt.prototype.SetParagraphPr = function(oParaPr)
 {
 	return this.Content.SetParagraphPr(oParaPr);
 };
+CBlockLevelSdt.prototype.SetParagraphBidi = function(bidi)
+{
+	return this.Content.SetParagraphBidi(bidi);
+};
 CBlockLevelSdt.prototype.SetParagraphAlign = function(Align)
 {
 	return this.Content.SetParagraphAlign(Align);
@@ -1043,7 +1047,9 @@ CBlockLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurPa
 			arrRects[i].B += padding;
 		}
 	}
-
+	if (AscCommon.ContentControlTrack.Hover === nType)
+		oLogicDocument.HoverCC.addCC(this);
+	
 	oDrawingDocument.addContentControlTrack(this, nType, arrRects);
 	return true;
 };

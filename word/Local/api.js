@@ -333,6 +333,12 @@ Asc['asc_docs_api'].prototype.asc_isOffline = function()
 	return true;
 };
 
+Asc['asc_docs_api'].prototype.asc_changeExternalReference = function(eR)
+{
+	this._changeDesktopChartExternalReference(eR);
+};
+Asc['asc_docs_api'].prototype["asc_changeExternalReference"] = Asc['asc_docs_api'].prototype.asc_changeExternalReference;
+
 
 Asc['asc_docs_api'].prototype["asc_addImage"] = Asc['asc_docs_api'].prototype.asc_addImage;
 Asc['asc_docs_api'].prototype["AddImageUrl"] = Asc['asc_docs_api'].prototype.AddImageUrl;

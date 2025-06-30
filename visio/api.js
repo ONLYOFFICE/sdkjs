@@ -992,6 +992,42 @@
 		}
 		return "";
 	};
+	// print-preview
+	VisioEditorApi.prototype.asc_initPrintPreview = function(containerId, options)
+	{
+		if (this.printPreview)
+			return;
+		this.printPreview = new AscCommon.CPrintPreview(this, containerId);
+	};
+	VisioEditorApi.prototype.asc_drawPrintPreview = function(index, paperSize)
+	{
+		if (this.printPreview)
+		{
+			this.printPreview.page = index;
+			this.printPreview.update(paperSize);
+		}
+	};
+	VisioEditorApi.prototype.asc_closePrintPreview = function()
+	{
+		if (this.printPreview)
+		{
+			this.printPreview.close();
+			delete this.printPreview;
+		}
+	};
+	VisioEditorApi.prototype.asc_getHeaderFooterProperties = function()
+	{
+		//todo
+		return null;
+	};
+	VisioEditorApi.prototype.asc_setHeaderFooterProperties = function(oProps, bAll)
+	{
+
+	};
+	VisioEditorApi.prototype.asc_getDefaultLanguage = function()
+	{
+		return 1033;
+	};
 	/*callbacks*/
 	VisioEditorApi.prototype.sync_zoomChangeCallback  = function(percent, type)
 	{	//c_oAscZoomType.Current, c_oAscZoomType.FitWidth, c_oAscZoomType.FitPage
@@ -1043,6 +1079,10 @@
 	VisioEditorApi.prototype.getCountSlides = function()
 	{
 		return this.Document.getCountPages();
+	};
+	VisioEditorApi.prototype.getCurrentPage = function()
+	{
+		return this.Document.getCurrentPage();
 	};
 
 	VisioEditorApi.prototype._printDesktop = function (options)
@@ -1147,6 +1187,12 @@
 	prot['asc_SetFastCollaborative']             	= prot.asc_SetFastCollaborative;
 	prot['asc_DownloadAs']             				= prot.asc_DownloadAs;
 	prot['asc_getPageName']             			= prot.asc_getPageName;
+	prot['asc_initPrintPreview']             		= prot.asc_initPrintPreview;
+	prot['asc_drawPrintPreview']             		= prot.asc_drawPrintPreview;
+	prot['asc_closePrintPreview']             		= prot.asc_closePrintPreview;
+	prot['asc_getHeaderFooterProperties']           = prot.asc_getHeaderFooterProperties;
+	prot['asc_setHeaderFooterProperties']           = prot.asc_setHeaderFooterProperties;
+	prot['asc_getDefaultLanguage']             		= prot.asc_getDefaultLanguage;
 	prot['asc_SetThumbnailsPosition']             	= prot.asc_SetThumbnailsPosition;
 	prot['InitEditor']                          	= prot.InitEditor;
 	prot['isDocumentModified']             			= prot.isDocumentModified;
@@ -1163,8 +1209,9 @@
 	prot['Resize']             						= prot.Resize;
 	prot['sendEvent']             					= prot.sendEvent;
 	prot['getCountPages']             				= prot.getCountPages;
+	prot['getCurrentPage']             				= prot.getCurrentPage;
 	prot['GetCurrentVisiblePage']             		= prot.GetCurrentVisiblePage;
 	prot['ShowThumbnails']             				= prot.ShowThumbnails;
-	prot['OnMouseUp']             					= prot.OnMouseUp;
+	prot['EndDemonstration']             			= prot.EndDemonstration;
 
 })(window, window.document);

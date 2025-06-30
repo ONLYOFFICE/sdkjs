@@ -371,7 +371,7 @@ DrawingObjectsController.prototype.handleOleObjectDoubleClick = function(drawing
         if(oleObject.m_oMathObject) {
             Asc.editor.sendEvent("asc_onConvertEquationToMath", oleObject);
         } else if (oleObject.canEditTableOleObject()) {
-            Asc.editor.asc_doubleClickOnTableOleObject(oleObject);
+            Asc.editor.asc_editOleTableInFrameEditor();
         } else {
             oleObject.runPlugin();
         }

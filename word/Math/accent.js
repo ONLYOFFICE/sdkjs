@@ -762,6 +762,65 @@ CAccent.prototype.GetTextOfElement = function(oMathText)
 	return oMathText;
 };
 
+CAccent.fromMathML = function(reader, type)
+{
+	let props = new CMathAccentPr();
+	props.content = [];
+
+	let isNary = false;
+
+	function check(str)
+	{
+		for (let oIter = str.getUnicodeIterator(); oIter.check(); oIter.next())
+		{
+			if (AscMath.MathLiterals.nary.SearchU(String.fromCodePoint(oIter.value())))
+				return true;
+		}
+		return false;
+	}
+
+	let mContents = [];
+	let depth = reader.GetDepth();
+	while (reader.ReadNextSiblingNode(depth))
+	{
+		let current = AscWord.ParaMath.readMathMLContent(reader)
+		let base = current.GetTextOfElement().GetText();
+
+		if (mContents.length === 0 && check(base))
+			isNary = true;
+
+		mContents.push(current);
+	}
+
+	if (isNary)
+	{
+		if (mContents.length > 2)
+			return AscMath.DegreeSubSup.fromMathML(reader, mContents);
+		else
+			return AscMath.Degree.fromMathML(reader, type ===  VJUST_TOP ? DEGREE_SUBSCRIPT : DEGREE_SUPERSCRIPT, mContents);
+	}
+
+	if (mContents.length >= 2)
+	{
+		props.content[0] = mContents[0];
+		if (mContents[1])
+		{
+			let chrText = mContents[1].GetTextOfElement().GetText().trim();
+			if (chrText.length > 1)
+			{
+				return  AscMath.Limit.fromMathML(reader, type, mContents)
+			}
+			props.chr = chrText.charCodeAt(0);
+		}
+	}
+	else
+	{
+		props.content[0] = mContents[0];
+	}
+
+	return new CAccent(props);
+};
+
 /**
  *
  * @param CMathMenuAccent

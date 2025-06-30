@@ -4060,6 +4060,27 @@ CDelimiter.prototype.private_GetRightOperator = function(bHide)
 
     return NewEndCode;
 };
+CDelimiter.fromMathML = function(reader)
+{
+	let attributes = reader.GetAttributes();
+	let props = new CMathDelimiterPr();
+	let open = attributes['open'] || "(";
+	let close = attributes['close'] || ")";
+	let separator = attributes['separators'] || "|"; // For now, left the "|" — the comma is not rendering correctly.
+
+	props.begChr		= open.trim().charCodeAt(0);
+	props.endChr		= close.trim().charCodeAt(0);
+	props.sepChr		= separator[0].trim().charCodeAt(0);
+	props.content		= [];
+
+	let depth = reader.GetDepth();
+	while (reader.ReadNextSiblingNode(depth))
+	{
+		props.content.push(AscWord.ParaMath.readMathMLContent(reader));
+	}
+
+	return new CDelimiter(props);
+};
 CDelimiter.prototype.GetTextOfElement = function(oMathText)
 {
 	oMathText = new AscMath.MathTextAndStyles(oMathText);
@@ -4079,22 +4100,40 @@ CDelimiter.prototype.GetTextOfElement = function(oMathText)
 		strEndSymbol		= this.Pr.endChr === -1 ? "" : String.fromCharCode((this.endOper.code || this.Pr.endChr) || 41);
 	}
 
+	let isBinom = false;
+	// check for binom
+	if (oMathText.IsLaTeX()
+		&& strStartSymbol === "("
+		&& strEndSymbol === ")"
+		&& this.getColumnsCount() === 1
+		&& this.Content[0].Content.length === 3
+		&& this.Content[0].Content[0].Is_Empty()
+		&& this.Content[0].Content[2].Is_Empty()
+		&& this.Content[0].Content[1] instanceof CFraction
+		&& this.Content[0].Content[1].Pr.type === NO_BAR_FRACTION)
+	{
+		isBinom = true;
+	}
+
 	if (oMathText.IsLaTeX())
 	{
-		if (strStartSymbol === "{")
-			strStartSymbol = "\\{";
-		if (strEndSymbol === "}")
-			strEndSymbol = "\\}";
-
-		if (strStartSymbol && !AscMath.MathLiterals.lBrackets.IsSimple(strStartSymbol))
+		if (!isBinom)
 		{
-			let tempStrSymbol = strStartSymbol;
-			strStartSymbol = AscMath.MathLiterals.lBrackets.GetLaTeXWordFromSymbol(strStartSymbol);
-			if (strStartSymbol === undefined)
-				strStartSymbol = tempStrSymbol;
+			if (strStartSymbol === "{")
+				strStartSymbol = "\\{";
+			if (strEndSymbol === "}")
+				strEndSymbol = "\\}";
+
+			if (strStartSymbol && !AscMath.MathLiterals.lBrackets.IsSimple(strStartSymbol))
+			{
+				let tempStrSymbol = strStartSymbol;
+				strStartSymbol = AscMath.MathLiterals.lBrackets.GetLaTeXWordFromSymbol(strStartSymbol);
+				if (strStartSymbol === undefined)
+					strStartSymbol = tempStrSymbol;
+			}
+			oMathText.AddText(new AscMath.MathText("\\left" + strStartSymbol, this), true);
+			oMathText.SetGlobalStyle(this);
 		}
-		oMathText.AddText(new AscMath.MathText("\\left" + strStartSymbol, this), true);
-		oMathText.SetGlobalStyle(this);
 	}
 	else
 	{
@@ -4114,23 +4153,6 @@ CDelimiter.prototype.GetTextOfElement = function(oMathText)
 		oMathText.AddText(oOpenText);
 	}
 
-	// check for binom
-	if (oMathText.IsLaTeX()
-		&& strStartSymbol === "("
-		&& strEndSymbol === ")"
-		&& this.getColumnsCount() === 1
-		&& this.Content[0].Content.length === 3
-		&& this.Content[0].Content[0].Is_Empty()
-		&& this.Content[0].Content[2].Is_Empty()
-		&& this.Content[0].Content[1] instanceof CFraction
-		&& this.Content[0].Content[1].Pr.type === NO_BAR_FRACTION)
-	{
-		let oFirstPos = oMathText.GetFirstPos();
-		oMathText.RemoveByPos(oFirstPos);
-		oMathText.Add(this.Content[0], !oMathText.LaTeX);
-		return oMathText;
-	}
-
 	for (let intCount = 0; intCount < this.getColumnsCount(); intCount++)
 	{
 		let oCurrentPos = oMathText.Add(this.Content[intCount], !oMathText.LaTeX);
@@ -4143,14 +4165,17 @@ CDelimiter.prototype.GetTextOfElement = function(oMathText)
 
 	if (oMathText.IsLaTeX())
 	{
-		if (strEndSymbol && !AscMath.MathLiterals.rBrackets.IsSimple(strEndSymbol))
+		if (!isBinom)
 		{
-			let tempStrSymbol = strEndSymbol;
-			strEndSymbol = AscMath.MathLiterals.rBrackets.GetLaTeXWordFromSymbol(strEndSymbol);
-			if (strEndSymbol === undefined)
-				strEndSymbol = tempStrSymbol;
+			if (strEndSymbol && !AscMath.MathLiterals.rBrackets.IsSimple(strEndSymbol))
+			{
+				let tempStrSymbol = strEndSymbol;
+				strEndSymbol = AscMath.MathLiterals.rBrackets.GetLaTeXWordFromSymbol(strEndSymbol);
+				if (strEndSymbol === undefined)
+					strEndSymbol = tempStrSymbol;
+			}
+			oMathText.AddText(new AscMath.MathText("\\right" + strEndSymbol, this), true);
 		}
-		oMathText.AddText(new AscMath.MathText("\\right" + strEndSymbol, this), true);
 	}
 	else
 	{
@@ -4707,6 +4732,42 @@ CGroupCharacter.prototype.GetTextOfElement = function(oMathText)
 
 	return oMathText;
 };
+
+CGroupCharacter.fromMathML = function(reader, type, content)
+{
+	let props = new CMathGroupChrPr();
+	props.content = content ? content : [];
+	props.pos = type;
+	props.vertJc = (type === VJUST_TOP ) ? VJUST_BOT : undefined;
+
+	let mContents = [];
+	let depth = reader.GetDepth();
+	while (reader.ReadNextSiblingNode(depth))
+	{
+		mContents.push(AscWord.ParaMath.readMathMLContent(reader));
+	}
+
+	if (mContents.length >= 2)
+	{
+		props.content.push(mContents[0]);
+		if (mContents[1])
+		{
+			let chrText = mContents[1].GetTextOfElement().GetText().trim();
+			if (chrText.length > 1)
+			{
+				return AscMath.Limit.fromMathML(reader, type, mContents)
+			}
+
+			props.chr = chrText.charCodeAt(0);
+		}
+	}
+	else
+	{
+		props.content[0] = mContents[0];
+	}
+
+	return new CGroupCharacter(props);
+}
 
 /**
  *

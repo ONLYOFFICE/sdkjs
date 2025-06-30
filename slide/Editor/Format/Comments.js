@@ -618,6 +618,7 @@ function (window, undefined) {
 	CCommentData.prototype.Get_Solved = function () {
 		return this.GetSolved();
 	};
+	CCommentData.prototype.IsSolved = CCommentData.prototype.Get_Solved;
 
 	CCommentData.prototype.Set_Solved = function (Solved) {
 		this.SetSolved(Solved);

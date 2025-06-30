@@ -321,6 +321,7 @@
 			"word/Editor/revisions/review-info.js",
 			"word/Editor/revisions/track-revisions-manager.js",
 			"word/Editor/custom-xml/custom-xml.js",
+			"word/Editor/custom-xml/custom-xml-changes.js",
 			"word/Editor/custom-xml/custom-xml-manager.js",
 			"word/Editor/custom-xml/data-binding.js",
 			

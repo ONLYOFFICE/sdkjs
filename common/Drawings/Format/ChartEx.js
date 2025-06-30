@@ -2574,8 +2574,12 @@ function (window, undefined) {
 		return null;
 	};
 	CDimension.prototype.clearLevelData = function () {
+		const isClear = !!this.levelData.length;
 		for(let nIdx = this.levelData.length; nIdx > -1; --nIdx) {
 			this.removeLevelDataByPos(nIdx)
+		}
+		if (isClear) {
+			this.onUpdateCache();
 		}
 	};
 	CDimension.prototype.removeLevelDataByPos = function (nIdx) {
@@ -2668,11 +2672,18 @@ function (window, undefined) {
 				}
 			}
 		}
+		this.onUpdateCache();
 	};
 	CDimension.prototype.updateCache = function() {
 		AscFormat.ExecuteNoHistory(function () {
 			this.updateReferences();
 		}, this, []);
+	};
+	CDimension.prototype.Refresh_RecalcData = function (data) {
+		const chartSpace = this.getChartSpace();
+		if (chartSpace) {
+			chartSpace.Refresh_RecalcData(data);
+		}
 	};
 	// NumericDimension
 	drawingContentChanges[AscDFH.historyitem_NumericDimension_AddLevelData] =

@@ -44,7 +44,7 @@
 	AscCommon.baseEditorsApi.prototype.onEndLoadFile2 = AscCommon.baseEditorsApi.prototype.onEndLoadFile;
 	AscCommon.baseEditorsApi.prototype.onEndLoadFile = function(result)
 	{
-		if (this.isFrameEditor())
+		if (this.isFrameEditor() || !window["AscDesktopEditor"])
 		{
 			return this.onEndLoadFile2(result);
 		}
@@ -102,6 +102,24 @@
 	AscCommon.baseEditorsApi.prototype["endExternalConvertation"] = function()
 	{
 		this.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
+	};
+
+	AscCommon.baseEditorsApi.prototype._changeDesktopChartExternalReference = function (eR) {
+		const chartCollector = this.externalChartCollector;
+		if (!chartCollector) {
+			return;
+		}
+		window["AscDesktopEditor"]["OpenFilenameDialog"]("cell", false, function(_file) {
+			let file = _file;
+			if (Array.isArray(file))
+				file = file[0];
+			if (!file)
+				return;
+
+			let obj = {};
+			obj["path"] = file;
+			chartCollector.changeExternalReference(eR, obj);
+		});
 	};
 })(window);
 
@@ -213,7 +231,15 @@ window["DesktopOfflineAppDocumentEndLoad"] = function(_url, _data, _len)
 //////////////       IMAGES      ////////////////////////
 /////////////////////////////////////////////////////////
 
-let isOverrideDocumentUrls = window['Asc']['VisioEditorApi'] ? false : true;
+let isOverrideDocumentUrls = true;//window['Asc']['VisioEditorApi'] ? false : true;
+
+function getCorrectImageUrl(path)
+{
+	if (!window['Asc']['VisioEditorApi'])
+		return path;
+
+	return window["AscDesktopEditor"]["LocalFileGetImageUrlCorrect"](path);
+}
 
 if (isOverrideDocumentUrls)
 {
@@ -240,7 +266,8 @@ if (isOverrideDocumentUrls)
 		if (window.editor && window.editor.ThemeLoader && window.editor.ThemeLoader.ThemesUrl != "" && strPath.indexOf(window.editor.ThemeLoader.ThemesUrl) == 0)
 			return null;
 
-		return this.documentUrl + "/media/" + strPath;
+		let url = this.documentUrl + "/media/" + strPath;
+		return getCorrectImageUrl(url);
 	};
 	prot.getImageLocal = function(_url)
 	{
@@ -423,6 +450,13 @@ window["UpdateInstallPlugins"] = function()
 	{
 		var _plugin = _plugins["pluginsData"][i];
 		//_plugin["baseUrl"] = _plugins["url"] + _plugin["guid"].substring(4) + "/";
+
+		if (!_plugin["variations"])
+		{
+			_plugins["pluginsData"].splice(i, 1);
+			--i;
+			continue;
+		}
 
 		var isSystem = false;
 		for (var j = 0; j < _plugin["variations"].length; j++)

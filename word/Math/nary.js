@@ -884,20 +884,28 @@ CNary.prototype.GetTextOfElement = function(oMathText)
 		else
 			strStartCode = String.fromCharCode(this.Pr.chr);
 
-		let oLastPos = oMathText.AddText(new AscMath.MathText(strStartCode, this));
+		let startChar = new AscMath.MathText(strStartCode, this);
+		if (this.Pr.limLoc === NARY_UndOvr)
+		{
+			let oAddData	= startChar.GetAdditionalData();
+			let oMetaData	= oAddData.GetMathMetaData();
+			oMetaData.setIsLimitNary(true);
+		}
+
+		let oLastPos = oMathText.AddText(startChar);
 
 		if (oLower)
 		{
 			oMathText.SetGlobalStyle(this);
+			oMathText.AddText(new AscMath.MathText("_", oLower));
 			oLastPos = oMathText.Add(oLower, true);
-			oMathText.AddBefore(oLastPos, new AscMath.MathText("_", oLower));
 		}
 
 		if (oUpper)
 		{
 			oMathText.SetGlobalStyle(this);
+			oMathText.AddText(new AscMath.MathText("^", oUpper));
 			oLastPos = oMathText.Add(oUpper, true);
-			oMathText.AddBefore(oLastPos, new AscMath.MathText("^", oUpper));
 		}
 
 		if (oBase)
@@ -913,6 +921,28 @@ CNary.prototype.GetTextOfElement = function(oMathText)
 
 	return oMathText;
 };
+
+CNary.fromMathML = function(reader, content, type)
+{
+	let props = new CMathNaryPr();
+	props.content = content ? content : [];
+	props.type = NARY_SubSup;
+
+	props.supHide = type ? type.supHide : false;
+	props.subHide = type ? type.subHide : false;
+
+	let depth = reader.GetDepth();
+	while (reader.ReadNextSiblingNode(depth))
+	{
+		props.content.push(AscWord.ParaMath.readMathMLContent(reader));
+	}
+
+	let firstContent = props.content.shift();
+	let charText = firstContent.GetTextOfElement().GetText();
+	props.chr = charText.charCodeAt(0);
+
+	return new CNary(props);
+}
 
 /**
  *

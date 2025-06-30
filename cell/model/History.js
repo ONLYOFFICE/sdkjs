@@ -709,6 +709,11 @@ CHistory.prototype.RedoExecute = function(Point, oRedoObjectParam)
 };
 CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 	var wsViews, i, oState = null, bCoaut = false, t = this;
+	AscCommonExcel.executeInR1C1Mode(false, function () {
+		AscCommonExcel.lockCustomFunctionRecalculate(true, function () {
+			t.workbook.dependencyFormulas.unlockRecal();
+		});
+	});
 	if (!bUndo && null == Point) {
 		Point = this.Points[this.Index];
 		AscCommon.CollaborativeEditing.Apply_LinkData();
@@ -717,12 +722,6 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 			Asc["editor"].wb.recalculateDrawingObjects(Point, true);
         }
 	}
-
-	AscCommonExcel.executeInR1C1Mode(false, function () {
-		AscCommonExcel.lockCustomFunctionRecalculate(true, function () {
-			t.workbook.dependencyFormulas.unlockRecal();
-		});
-	});
 
 	if (null != Point) {
 		if (oRedoObjectParam.bChangeColorScheme) {

@@ -195,7 +195,7 @@
      * @param {OLEProperties} data - The OLE object properties.
     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddOleObject.js
 	 */
-    Api.prototype["pluginMethod_AddOleObject"] = function(data) { return this.asc_addOleObject(data); };
+    Api.prototype["pluginMethod_AddOleObject"] = function(data) { return this.asc_addOleObject(data, true); };
 
     /**
      * Edits an OLE object in the document.
@@ -1909,7 +1909,7 @@
 	};
 	
 	/**
-	 * Add button to the specified content controls track
+	 * Adds a button to the specified content controls track.
 	 * @undocumented
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
@@ -1993,7 +1993,7 @@
 	};
 
 	/**
-	 * Update an item to the toolbar menu.
+	 * Updates the toolbar menu item.
 	 * @undocumented
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
@@ -2165,7 +2165,7 @@
 	};
 
 	/**
-	 * Catch AI event from plugin
+	 * Catch AI event from plugin.
 	 * @memberof Api
 	 * @undocumented
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDF"]
@@ -2185,7 +2185,7 @@
 	};
 
 	/**
-	 * Get local image path for image.
+	 * Returns the local path to the image.
 	 * @memberof Api
 	 * @undocumented
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDF"]

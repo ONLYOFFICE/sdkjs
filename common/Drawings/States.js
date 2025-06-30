@@ -1034,9 +1034,8 @@ RotateState.prototype =
             var drawingObjects = this.drawingObjects;
             var oThis = this;
             var bIsMoveState = (this instanceof MoveState);
-            var bIsChartFrame = Asc["editor"] && Asc["editor"].isChartEditor === true;
             var bIsTrackInChart = (tracks.length > 0 && (tracks[0] instanceof AscFormat.MoveChartObjectTrack));
-            var bCopyOnMove = e.CtrlKey && bIsMoveState && !bIsChartFrame && !bIsTrackInChart;
+            var bCopyOnMove = e.CtrlKey && bIsMoveState && !bIsTrackInChart;
             var bCopyOnMoveInGroup = (e.CtrlKey && oThis instanceof MoveInGroupState && !oThis.hasObjectInSmartArt);
             var i, j;
             var copy;

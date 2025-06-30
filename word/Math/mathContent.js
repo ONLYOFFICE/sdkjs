@@ -2659,7 +2659,7 @@ CMathContent.prototype.Load_FromMenu = function(Type, Paragraph, TextPr, oSelect
         this.private_LoadFromMenuOperator(Type, Pr, oSelectedContent);
     else if (MainType === c_oAscMathMainType.Matrix)
         this.private_LoadFromMenuMatrix(Type, Pr, oSelectedContent);
-    else if(MainType == c_oAscMathMainType.Empty_Content)
+    else if (MainType === c_oAscMathMainType.Empty_Content)
 		this.private_LoadFromMenuDefaultText(Type, Pr, oSelectedContent);
 };
 CMathContent.prototype.private_LoadFromMenuSymbol = function(Type, Pr)
@@ -3547,9 +3547,9 @@ CMathContent.prototype.private_LoadFromMenuMatrix = function(Type, Pr, oSelected
 CMathContent.prototype.private_LoadFromMenuDefaultText = function(Type, Pr, oSelectedContent)
 {
 	if (oSelectedContent)
-		this.private_FillSelectedContent(oSelectedContent);
+		this.private_FillSelectedContent(oSelectedContent, Pr);
 };
-CMathContent.prototype.private_FillSelectedContent = function(oSelectedContent)
+CMathContent.prototype.private_FillSelectedContent = function(oSelectedContent, Pr)
 {
 	if (oSelectedContent instanceof ParaMath)
 	{
@@ -3558,6 +3558,8 @@ CMathContent.prototype.private_FillSelectedContent = function(oSelectedContent)
 	else if (oSelectedContent)
 	{
 		this.Add_Text(oSelectedContent, this.Paragraph);
+		if (Pr && Pr.ctrPrp)
+			this.Apply_TextPr(Pr.ctrPrp, undefined, true);
 	}
 };
 CMathContent.prototype.Add_Element = function(Element)
@@ -3609,33 +3611,20 @@ CMathContent.prototype.Add_Text = function(text, paragraph, mathStyle, oAddition
 		return;
 
 	let oMathRun = this.Content[this.Content.length - 1];
-
 	if (oMathRun && oMathRun.Content.length === 0 && this.Content.length > 1)
 	{
 		this.Content.splice(this.Content.length - 1, 1);
 		oMathRun = this.Content[this.Content.length - 1];
 	}
 
-	let isEscapedSlash = oAdditionalData
-		?  oAdditionalData.GetMathMetaData().getIsEscapedSlash()
-		: false;
-	let oLastContent = oMathRun
-		? oMathRun.GetTextOfElement().GetLastContent()
-		: false;
-	let isPrevEscapedSlash = oLastContent
-		? oLastContent.GetAdditionalData().GetMathMetaData().getIsEscapedSlash()
-		: false;
-
-	if (isEscapedSlash
-		|| isPrevEscapedSlash
-		|| !oMathRun
-		|| !(oMathRun instanceof AscWord.Run)
-		|| (oAdditionalData	&& !oAdditionalData.IsStyleEqual(oMathRun)))
+	if (!oMathRun || !(oMathRun instanceof AscWord.Run) || (oAdditionalData	&& !oAdditionalData.IsStyleEqual(oMathRun)))
 		oMathRun = new AscWord.Run(undefined, true);
 
 	AscWord.TextToMathRunElements(text, function(item)
 	{
 		oMathRun.private_AddItemToRun(oMathRun.State.ContentPos, item);
+		if (oAdditionalData)
+            oMathRun.SetMathMetaData(oAdditionalData.metaData);
 	});
 
 	if (this.Content[this.Content.length - 1] === oMathRun)
@@ -3668,7 +3657,7 @@ CMathContent.prototype.Add_Text = function(text, paragraph, mathStyle, oAddition
 	if (this.Content[this.Content.length - 1] !== oMathRun)
 	{
 		this.AddToContent(this.Content.length, oMathRun, false);
-		this.CurPos = this.Content.length + 1;
+		this.CurPos = this.Content.length;
 	}
 };
 CMathContent.prototype.Add_ToPrevParaRun = function(text)
@@ -6374,9 +6363,17 @@ CMathContent.prototype.fromMathML = function(reader)
 		let elements = AscWord.ParaMath.readMathMLNode(reader);
 		for (let i = 0; i < elements.length; ++i)
 		{
-			this.addElementToContent(elements[i]);
+			let current = elements[i];
+			this.addElementToContent(current);
+
+			let breakPos = AscWord.ParaMath.checkLinebreak(current)
+			if (breakPos !== null)
+			{
+				current.Set_MathForcedBreak(true, undefined);
+			}
 		}
 	}
+	AscWord.ParaMath.checkAfterAddContent();
 };
 
 var g_DefaultAutoCorrectMathFuncs =

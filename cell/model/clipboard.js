@@ -610,6 +610,70 @@
 		};
 
 
+		function CCopyPasteExcelOptions()
+		{
+			this.isExcel = true;
+			this.wb = null;
+			this.cachedWbBinaryData = null;
+			this.oldWorkbookCoreParameters = {};
+		}
+		CCopyPasteExcelOptions.prototype.setOldWorkbookCoreParameters = function (oldCreator, oldIdentifier, oldLanguage, oldTitle, oldCategory, oldContentStatus)
+		{
+			this.oldWorkbookCoreParameters.oldCreator = oldCreator;
+			this.oldWorkbookCoreParameters.oldIdentifier = oldIdentifier;
+			this.oldWorkbookCoreParameters.oldLanguage = oldLanguage;
+			this.oldWorkbookCoreParameters.oldTitle = oldTitle;
+			this.oldWorkbookCoreParameters.oldCategory = oldCategory;
+			this.oldWorkbookCoreParameters.oldContentStatus = oldContentStatus;
+		};
+		CCopyPasteExcelOptions.prototype.getCachedWorkbookBinaryData = function ()
+		{
+			if (!this.cachedWbBinaryData)
+			{
+				if (this.wb)
+				{
+					const oOldPPTXWriter = AscCommon.pptx_content_writer;
+					AscCommon.pptx_content_writer = new AscCommon.CPPTXContentWriter();
+
+					const newCreator = this.wb.Core.creator;
+					const newIdentifier = this.wb.Core.identifier;
+					const newLanguage = this.wb.Core.language;
+					const newTitle = this.wb.Core.title;
+					const newCategory = this.wb.Core.category;
+					const newContentStatus = this.wb.Core.contentStatus;
+				 this.wb.Core.creator = this.oldWorkbookCoreParameters.oldCreator;
+				 this.wb.Core.identifier = this.oldWorkbookCoreParameters.oldIdentifier;
+				 this.wb.Core.language = this.oldWorkbookCoreParameters.oldLanguage;
+				 this.wb.Core.title = this.oldWorkbookCoreParameters.oldTitle;
+				 this.wb.Core.category = this.oldWorkbookCoreParameters.oldCategory;
+				 this.wb.Core.contentStatus = this.oldWorkbookCoreParameters.oldContentStatus;
+
+
+					var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(this.wb, false);
+					oBinaryFileWriter.Write();
+					this.cachedWbBinaryData = oBinaryFileWriter.Memory.data.slice();
+
+					this.wb.Core.creator = newCreator;
+					this.wb.Core.identifier = newIdentifier;
+					this.wb.Core.language = newLanguage;
+					this.wb.Core.title = newTitle;
+					this.wb.Core.category = newCategory;
+					this.wb.Core.contentStatus = newContentStatus;
+
+					AscCommon.pptx_content_writer = oOldPPTXWriter;
+				}
+			}
+			return this.cachedWbBinaryData;
+		};
+		CCopyPasteExcelOptions.prototype.getChartRangeWithReplaceDefinedName = function(sRange) {
+			const wb = this.wb;
+			if (wb && sRange && sRange.includes("_xlchart")) {
+				const definedName = wb.getDefinesNames(sRange);
+				return definedName ? definedName.ref : sRange;
+			}
+			return sRange;
+		};
+
 
 		function CopyProcessorExcel() {
 
@@ -737,11 +801,21 @@
 
 
 						//WRITE
-						let oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(wb, !ignoreCopyPaste ? selectionRange : false);
+						const oCopyPaste = !ignoreCopyPaste ? selectionRange : false;
+						const oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(wb, !ignoreCopyPaste ? selectionRange : false);
+						if (oCopyPaste)
+						{
+							const oCopyPasteOptions = new CCopyPasteExcelOptions();
+							oCopyPasteOptions.wb = wb;
+							oCopyPasteOptions.setOldWorkbookCoreParameters(oldCreator, oldIdentifier, oldLanguage, oldTitle, oldCategory, oldContentStatus);
+							pptx_content_writer.Start_CopyPaste(oCopyPasteOptions);
+						}
 						sBase64 = "xslData;" + oBinaryFileWriter.Write();
 						pptx_content_writer.End_UseFullUrl();
-
-
+						if (oCopyPaste)
+						{
+							pptx_content_writer.End_CopyPaste();
+						}
 						if (selectAll) {
 							for (let i in unselectedIndexes) {
 								wsModel.Drawings[i].graphicObject.selected = false;
@@ -986,9 +1060,6 @@
 			},
 
 			_generateHtmlImg: function (isSelectedImages, worksheet) {
-				if (window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor) {
-					return false;
-				}
 				let objectRender = worksheet.objectRender;
 
 				objectRender.preCopy();
@@ -1850,7 +1921,7 @@
 									doPasteData();
 								}
 							});
-						} else if (!(window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor)) {
+						} else {
 
 							newFonts = getFontsFromDrawings(pasteData.Drawings);
 
@@ -1910,10 +1981,10 @@
 						}
 
 						_ranges.sort(function sortArr(a, b) {
-							if (byCol) {
-								return a.c1 > b.c1 ? -1 : 1;
+							if (!byCol) {
+								return a.c1 > b.c1 ? 1 : -1;
 							} else {
-								return a.r1 > b.r1 ? -1 : 1;
+								return a.r1 > b.r1 ? 1 : -1;
 							}
 						});
 
@@ -2162,7 +2233,7 @@
 					}
 
 					var arr_shapes = content.Drawings;
-					if (arr_shapes && arr_shapes.length && !(window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor)) {
+					if (arr_shapes && arr_shapes.length) {
 						if (!bSlideObjects && content.Drawings.length === selectedContent2[1].content.Drawings.length) {
 							var oEndContent = {
 								Drawings: []
@@ -2710,7 +2781,6 @@
 					for (i = 0; i < data.Drawings.length; i++) {
 						drawingObject = data.Drawings[i];
 						graphicObject = drawingObject.graphicObject;
-
 						xfrm = graphicObject.spPr.xfrm;
 						if (xfrm) {
 							offX = 0;
@@ -2775,6 +2845,7 @@
 						}
 
 						var _copy = data.Drawings[i].graphicObject.copy(oCopyPr);
+						_copy.applySpecialPasteProps(pastedWb);
 						if (_copy.convertFromSmartArt) {
 							_copy.convertFromSmartArt(true);
 						}
@@ -3170,7 +3241,7 @@
 				var aImagesToDownload = this._getImageFromHtml(node, true);
 				var specialPasteProps = window['AscCommon'].g_specialPasteHelper.specialPasteProps;
 				var api = Asc["editor"];
-				if (!api.isChartEditor && aImagesToDownload !== null &&
+				if (aImagesToDownload !== null &&
 					(!specialPasteProps || (specialPasteProps && specialPasteProps.images)))//load to server
 				{
 					AscCommon.sendImgUrls(api, aImagesToDownload, function (data) {
@@ -3822,7 +3893,7 @@
 					}
 				}
 				var aResult = this._getTableFromText(text, textImport);
-				if (aResult && !(aResult.onlyImages && window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor)) {
+				if (aResult) {
 					if (textImport) {
 						var arn = worksheet.model.selectionRange.getLast().clone();
 						var width = aResult.content && aResult.content[0] ? aResult.content[0].length - 1 : 0;
@@ -4240,20 +4311,6 @@
 				var documentContentBounds = new DocumentContentBounds();
 				var coverDocument = documentContentBounds.getBounds(0, 0, documentContent);
 				AscFormat.ExecuteNoHistory(this._parseChildren, this, [coverDocument]);
-
-				//не вставляем графику в редактор диаграмм
-				//если кроме графики есть ещё данные, то убираем только графику
-				if (window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor) {
-					if (this.aResult.props && this.aResult.props.addImagesFromWord && this.aResult.props.addImagesFromWord.length === 1 && this.aResult.content) {
-						if (1 === this.aResult.content.length && 1 === this.aResult.content[0].length && this.aResult.content[0][0].content && this.aResult.content[0][0].content.length === 0) {
-							window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
-							return;
-						} else {
-							this.aResult.props.addImagesFromWord = [];
-							this.clipboard.alreadyLoadImagesOnServer = true;
-						}
-					}
-				}
 
 				var newFonts = this.fontsNew;
 				if (pasteData.fonts && pasteData.fonts.length) {

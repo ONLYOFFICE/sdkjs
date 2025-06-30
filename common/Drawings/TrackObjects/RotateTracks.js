@@ -185,30 +185,28 @@ function OverlayObject(geometry, extX, extY, brush, pen, transform )
     };
 }
 
-function ObjectToDraw(brush, pen, extX, extY, geometry, transform, x, y, oComment, TextElement, oLineStructure, nId, bIsBulletSymbol)
-{
-    this.extX = extX;
-    this.extY = extY;
-    this.transform = transform;
-    this.TransformMatrix = transform;
-    this.geometry = geometry;
-    this.parentShape = null;
-    this.Comment = oComment;
-    this.TextElement = TextElement;
-    this.pen = pen;
-    this.brush = brush;
-		this.lineStructure = oLineStructure;
-		this.isBulletSymbol = bIsBulletSymbol;
-		this.SpaceTextElements = [];
-	/*позиция символа*/
-    this.x = x;
-    this.y = y;
+    function ObjectToDraw(brush, pen, extX, extY, geometry, transform, x, y, oComment, TextElement, oLineStructure, nId, bIsBulletSymbol)
+    {
+        this.extX = extX;
+        this.extY = extY;
+        this.transform = transform;
+        this.TransformMatrix = transform;
+        this.geometry = geometry;
+        this.parentShape = null;
+        this.Comment = oComment;
+        this.TextElement = TextElement;
+        this.pen = pen;
+        this.brush = brush;
+        this.lineStructure = oLineStructure;
+        this.isBulletSymbol = bIsBulletSymbol;
+        this.SpaceTextElements = [];
+        /*позиция символа*/
+        this.x = x;
+        this.y = y;
 
-		this.id = nId;
-}
-ObjectToDraw.prototype =
-{
-    check_bounds: function(boundsChecker)
+        this.id = nId;
+    }
+    ObjectToDraw.prototype.check_bounds = function(boundsChecker)
     {
         if(this.geometry)
         {
@@ -224,9 +222,8 @@ ObjectToDraw.prototype =
             boundsChecker._z();
             boundsChecker._e();
         }
-    },
-
-    resetBrushPen: function(brush, pen, x, y, TextElement, isBulletSymbol)
+    };
+    ObjectToDraw.prototype.resetBrushPen = function(brush, pen, x, y, TextElement, isBulletSymbol)
     {
         this.brush = brush;
         this.pen = pen;
@@ -243,9 +240,8 @@ ObjectToDraw.prototype =
 				if (AscFormat.isRealBool(isBulletSymbol)) {
 					this.isBulletSymbol = isBulletSymbol;
 				}
-    },
-
-    Recalculate: function(oTheme, oColorMap, dWidth, dHeight, oShape, bResetPathsInfo)
+    };
+    ObjectToDraw.prototype.Recalculate = function(oTheme, oColorMap, dWidth, dHeight, oShape, bResetPathsInfo)
     {
        // if(AscFormat.isRealNumber(this.x) && AscFormat.isRealNumber(this.y))
        // {
@@ -268,9 +264,8 @@ ObjectToDraw.prototype =
             this.geometry.Recalculate(dWidth, dHeight, bResetPathsInfo);
         }
         this.parentShape = oShape;
-    },
-
-    getTransform: function(oTransformMatrix, bNoParentShapeTransform)
+    };
+    ObjectToDraw.prototype.getTransform = function(oTransformMatrix, bNoParentShapeTransform)
     {
 
         var oTransform;
@@ -290,15 +285,13 @@ ObjectToDraw.prototype =
             }
         }
         return oTransform;
-    },
-
-    drawComment2: function(graphics, bNoParentShapeTransform, oTransformMatrix)
+    };
+    ObjectToDraw.prototype.drawComment2 = function(graphics, bNoParentShapeTransform, oTransformMatrix)
     {
         var oTransform = this.getTransform(oTransformMatrix, bNoParentShapeTransform);
         this.DrawComment(graphics, oTransform);
-    },
-
-    DrawComment : function(graphics, oTransform)
+    };
+    ObjectToDraw.prototype.DrawComment  = function(graphics, oTransform)
     {
         if(this.Comment)
         {
@@ -326,9 +319,8 @@ ObjectToDraw.prototype =
                 }
             }
         }
-    },
-
-    draw: function(graphics, bNoParentShapeTransform, oTransformMatrix, oTheme, oColorMap)
+    };
+    ObjectToDraw.prototype.draw = function(graphics, bNoParentShapeTransform, oTransformMatrix, oTheme, oColorMap)
     {
         var oTransform = this.getTransform(oTransformMatrix, bNoParentShapeTransform);
         this.DrawComment(graphics, oTransform);
@@ -354,27 +346,86 @@ ObjectToDraw.prototype =
         }
         shape_drawer.draw(this.geometry);
         graphics.RestoreGrState();
-    },
-
-    createDuplicate: function()
+    };
+    ObjectToDraw.prototype.createDuplicate = function()
     {
-    },
-	getTextElementCode: function () {
+    };
+    ObjectToDraw.prototype.getTextElementCode = function () {
 		if (this.TextElement && this.TextElement.GetCharCode) {
 			return this.TextElement.GetCharCode();
 		}
-	},
-	addSpaceTextElement: function (oElement) {
+	};
+    ObjectToDraw.prototype.addSpaceTextElement = function (oElement) {
 		this.SpaceTextElements.push(oElement);
-	},
-
-    compareForMorph: function(oDrawingToCheck, oCurCandidate) {
+	};
+    ObjectToDraw.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate) {
         if(AscFormat.isRealNumber(this.getTextElementCode()) && oDrawingToCheck.getTextElementCode() === this.getTextElementCode()) {
             return oDrawingToCheck;
         }
         return oCurCandidate;
-    }
-};
+    };
+    ObjectToDraw.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate) {
+        if(AscFormat.isRealNumber(this.getTextElementCode()) && oDrawingToCheck.getTextElementCode() === this.getTextElementCode()) {
+            return oDrawingToCheck;
+        }
+        return oCurCandidate;
+    };
+    ObjectToDraw.prototype.Write_ToBinary = function(writer)
+    {
+        writer.WriteDouble(this.extX);
+        writer.WriteDouble(this.extY);
+        this.geometry.Write_ToBinary(writer);
+
+        if(this.pen)
+        {
+            writer.WriteBool(true);
+            this.pen.Write_ToBinary(writer);
+        }
+        else
+        {
+            writer.WriteBool(false);
+        }
+        if(this.brush)
+        {
+            writer.WriteBool(true);
+            this.brush.Write_ToBinary(writer);
+        }
+        else
+        {
+            writer.WriteBool(false);
+        }
+    };
+    ObjectToDraw.prototype.Read_FromBinary = function(reader)
+    {
+        this.extX = reader.GetDouble();
+        this.extY = reader.GetDouble();
+
+
+        this.geometry = AscFormat.ExecuteNoHistory(function(){ return new AscFormat.Geometry();}, this, []);
+        this.geometry.Read_FromBinary(reader);
+
+        let bPen = reader.GetBool();
+        if(bPen)
+        {
+            this.pen = new AscFormat.CLn();
+            this.pen.Read_FromBinary(reader);
+        }
+        else
+        {
+            this.pen = null;
+        }
+        let bBrush = reader.GetBool();
+        if(bBrush)
+        {
+            this.brush = new AscFormat.CUniFill();
+            this.brush.Read_FromBinary(reader);
+        }
+        else
+        {
+            this.brush = null;
+        }
+        this.transform = this.TransformMatrix = new AscCommon.CMatrix();
+    };
 function RotateTrackShapeImage(originalObject)
 {
     this.bIsTracked = false;

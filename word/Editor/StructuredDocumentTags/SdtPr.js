@@ -292,7 +292,7 @@ CSdtPr.prototype.Write_ToBinary = function(Writer)
 		this.ShdColor.toBinary(Writer);
 		Flags |= (1 << 25);
 	}
-
+	
 	var EndPos = Writer.GetCurPosition();
 	Writer.Seek(StartPos);
 	Writer.WriteLong(Flags);
@@ -430,6 +430,7 @@ function CContentControlPr(nType)
 	this.CCType     = undefined !== nType ? nType : c_oAscSdtLevelType.Inline;
 	
 	this.Temporary  = undefined;
+	this.DataBinding = undefined;
 	
 	// section property
 	this.SectionBreak = undefined;
@@ -502,6 +503,9 @@ CContentControlPr.prototype.FillFromObject = function(oPr)
 	
 	if (undefined !== oPr.BorderColor)
 		this.BorderColor = AscWord.CDocumentColorA.fromObjectRgba(oPr.BorderColor);
+
+	if (undefined !== oPr.DataBinding)
+		this.DataBinding = AscWord.DataBinding.fromObject(oPr.DataBinding);
 };
 CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 {
@@ -518,6 +522,9 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 	this.Appearance = oContentControl.GetAppearance();
 	this.Color      = oContentControl.GetColor();
 	this.Temporary  = oContentControl.IsContentControlTemporary();
+
+	if (oContentControl.Pr.DataBinding)
+		this.DataBinding = oContentControl.GetDataBinding();
 
 	if (oContentControl.IsCheckBox())
 	{
@@ -762,15 +769,21 @@ CContentControlPr.prototype.OnSetKeyToForm = function(newKey, form)
 	
 	let formManager = logicDocument.GetFormsManager();
 	let allForms = formManager.GetAllFormsByKey(newKey, form.GetSpecificType());
+	let firstForm = null;
 	for (let iForm = 0, nForms = allForms.length; iForm < nForms; ++iForm)
 	{
 		if (allForms[iForm] === form)
 			continue;
 		
+		firstForm = allForms[iForm];
+		
 		// Напрямую у formManager не вызываем, т.к. еще может быть не выставлен ключ у текущей формы
 		logicDocument.OnChangeForm(allForms[iForm]);
 		break;
 	}
+	
+	if (firstForm)
+		form.SyncFormPrWithSameKey(firstForm);
 	
 	let role = formManager.GetRoleByKey(newKey, form.GetSpecificType());
 	if (!role)

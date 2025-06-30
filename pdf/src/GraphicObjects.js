@@ -504,6 +504,9 @@
                         if (arr[i].getDocContent) {
                             if (arr[i].IsDrawing() && arr[i].IsEditFieldShape()) {
                                 let oField = arr[i].GetEditField();
+                                let oContent = oField.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format) ? oField.contentFormat : oField.content;
+                                let oCalcedTextPr = oContent ? oContent.GetCalculatedTextPr() : null;
+
                                 cur_pr = new AscWord.CTextPr();
 
                                 // font family
@@ -513,7 +516,7 @@
                                 };
 
                                 // font size
-                                cur_pr.SetFontSize(oField.GetTextSize());
+                                cur_pr.SetFontSize(oCalcedTextPr ? oCalcedTextPr.GetFontSize() : oField.GetTextSize());
                                 
                                 // font color
                                 let aColor = oField.GetTextColor();
@@ -521,9 +524,6 @@
                                 let oUnifill = AscFormat.CreateUnfilFromRGB(oRGB.r, oRGB.g, oRGB.b);
                                 cur_pr.Unifill = oUnifill;
                                 cur_pr.Unifill.fill.color.RGBA = cur_pr.Unifill.fill.color.color.RGBA;
-
-                                // align
-                                cur_pr.Jc = AscPDF.getInternalAlignByPdfType(oField.GetAlign());
                             }
                             else {
                                 content = arr[i].getDocContent();
@@ -1422,8 +1422,21 @@
                     this.lastSelectedObject = object;
                 }
                 this.checkShowMediaControlOnSelect();
-                if (!object.IsFreeText || !object.IsFreeText() || !object.IsInTextBox()) {
-                    oDoc.SetMouseDownObject(object, this.selectedObjects.length == 0);
+                if (!object.IsFreeText || !object.IsFreeText()) {
+                    let oAcitveObj = oDoc.GetActiveObject();
+                    if (oAcitveObj) {
+                        let oPrev = this.selectedObjects[0];
+
+                        // edit field shape
+                        if (object.IsDrawing() && object.IsEditFieldShape() && oAcitveObj == object.GetEditField()) {
+                            oDoc.SetMouseDownObject(oPrev && oPrev.GetEditField() || null, false);
+                            oDoc.activeForm = oPrev && oPrev.GetEditField() || null;
+                        }
+                        // other objects
+                        else if (oAcitveObj == object) {
+                            oDoc.SetMouseDownObject(oPrev || null, false);
+                        }
+                    }
                 }
                 return;
             }
@@ -1623,7 +1636,10 @@
                                 oField.SetAlign(AscPDF.getPdfTypeAlignByInternal(args[0]));
                             }
                             else if (f == CDocumentContent.prototype.IncreaseDecreaseFontSize) {
-                                let nCurFontSize = oField.GetTextSize();
+                                let oContent = oField.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format) ? oField.contentFormat : oField.content;
+                                let oCalcedTextPr = oContent.GetCalculatedTextPr();
+                                
+                                let nCurFontSize = oCalcedTextPr.GetFontSize();
                                 let oTextPr = new AscWord.CTextPr();
                                 oTextPr.SetFontSize(nCurFontSize);
                                 oField.SetTextSize(oTextPr.GetIncDecFontSize(args[0]));
@@ -1748,6 +1764,7 @@
     CGraphicObjects.prototype.getDrawingsPasteShift     = AscFormat.DrawingObjectsController.prototype.getDrawingsPasteShift;
     CGraphicObjects.prototype.removeCallback            = AscFormat.DrawingObjectsController.prototype.removeCallback;
     CGraphicObjects.prototype.getAllSingularDrawings    = AscFormat.DrawingObjectsController.prototype.getAllSingularDrawings;
+    CGraphicObjects.prototype.setParagraphBidi          = AscFormat.DrawingObjectsController.prototype.setParagraphBidi;
     CGraphicObjects.prototype.loadDocumentStateAfterLoadChanges = AscFormat.DrawingObjectsController.prototype.loadDocumentStateAfterLoadChanges;
 
     CGraphicObjects.prototype.startRecalculate = function() {};

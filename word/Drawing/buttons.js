@@ -87,6 +87,15 @@
 			wordControl.StartUpdateOverlay();
 			wordControl.OnUpdateOverlay();
 			wordControl.EndUpdateOverlay();
+			
+			// TODO: Пока временно сделаем так, в будущем надо отделить загрузку и обновление картинок, которые
+			//       рисуются не на оверлее
+			let drawingDocument = wordControl.m_oDrawingDocument;
+			if (drawingDocument)
+			{
+				drawingDocument.ClearCachePages();
+				drawingDocument.FirePaint();
+			}
 		}
 	};
 	StorageBaseImageCtrl.prototype.resize = function()
@@ -1156,7 +1165,8 @@
 		Toc : 1,
 		Image : 2,
 		Combo : 3,
-		Date : 4
+		Date : 4,
+		Signature : 5
 	};
 
 	var exportObj = AscCommon.CCButtonType;
@@ -1165,6 +1175,7 @@
 	exportObj["Toc"] = exportObj.Toc;
 	exportObj["Combo"] = exportObj.Combo;
 	exportObj["Date"] = exportObj.Date;
+	exportObj["Signature"] = exportObj.Signature;
 
 	AscCommon.ContentControlTrack = {
 		Hover : 0,
@@ -1290,9 +1301,15 @@
 		this.register = function(type, url, baseUrl)
 		{
 			var image = new CCI(baseUrl);
-
 			image.load(type, url);
 			image.loadActive();
+			this.images[type] = image;
+		};
+		
+		this.registerNoActive = function(type, url, baseUrl)
+		{
+			var image = new CCI(baseUrl);
+			image.load(type, url);
 			this.images[type] = image;
 		};
 
@@ -1502,6 +1519,7 @@
 					return true;
 				return false;
 			}
+			case Asc.c_oAscContentControlSpecificType.Signature:
 			case Asc.c_oAscContentControlSpecificType.Picture:
 			case Asc.c_oAscContentControlSpecificType.ComboBox:
 			case Asc.c_oAscContentControlSpecificType.DropDownList:
@@ -1619,6 +1637,11 @@
 			case Asc.c_oAscContentControlSpecificType.TOC:
 			{
 				this.Buttons.push(AscCommon.CCButtonType.Toc);
+				break;
+			}
+			case Asc.c_oAscContentControlSpecificType.Signature:
+			{
+				this.Buttons.push(AscCommon.CCButtonType.Signature);
 				break;
 			}
 			case Asc.c_oAscContentControlSpecificType.Picture:
@@ -1889,13 +1912,9 @@
 
 	CContentControlTrack.prototype.isFormFullOneButtonHover = function()
 	{
-		if (!this.IsNoUseButtons() &&
-			this.formInfo &&
-			Asc.c_oAscContentControlSpecificType.Picture === this.type)
-		{
-			return true;
-		}
-		return false;
+		return (!this.IsNoUseButtons()
+			&& this.formInfo
+			&& (Asc.c_oAscContentControlSpecificType.Picture === this.type || Asc.c_oAscContentControlSpecificType.Signature === this.type));
 	};
 	CContentControlTrack.prototype.isHitInMoveRect = function(xPos, yPos, koefX, koefY)
 	{
@@ -2103,6 +2122,7 @@
 		this.icons = new CCIcons();
 		this.icons.register(AscCommon.CCButtonType.Toc, "toc");
 		this.icons.register(AscCommon.CCButtonType.Image, "img");
+		this.icons.registerNoActive(AscCommon.CCButtonType.Signature, "signature");
 		this.icons.generateComboImages();
 
 		this.ContentControlObjects = [];
@@ -2651,6 +2671,9 @@
 								// draw buttons
 								for (var nIndexB = 0; nIndexB < _object.Buttons.length; nIndexB++)
 								{
+									if (_object.Buttons[nIndexB] === AscCommon.CCButtonType.Signature)
+										continue;
+									
 									var isFill = false;
 									if (_object.ActiveButtonIndex == nIndexB)
 									{
@@ -4248,8 +4271,9 @@
 							ctx.drawImage(canvas, xPos, yPos);
 						}
 					}
-
-					if (this.isImage)
+					
+					// Hover and normal states are rendering in the main context
+					if (this.isImage && 0 === object.ActiveButtonIndex)
 					{
 						_x1 = (drPage.left + koefX * (this.bounds.x + object.OffsetX)) * rPR;
 						_y1 = (drPage.top + koefY * (this.bounds.y + object.OffsetY)) * rPR;
@@ -4261,26 +4285,12 @@
 						var xPos = (_x1 + _x4 - imageW) >> 1;
 						var yPos = (_y1 + _y4 - imageH) >> 1;
 
-						var isFill = false;
-						if (object.ActiveButtonIndex === 0)
-						{
-							ctx.fillStyle = AscCommon.GlobalSkin.ContentControlsActive;
-							isFill = true;
-						}
-						else if (object.HoverButtonIndex === 0)
-						{
-							ctx.fillStyle = AscCommon.GlobalSkin.ContentControlsHover;
-							isFill = true;
-						}
+						ctx.fillStyle = AscCommon.GlobalSkin.ContentControlsActive;
+						ctx.rect(xPos, yPos, imageW, imageH);
+						ctx.fill();
+						ctx.beginPath();
 
-						if (isFill)
-						{
-							ctx.rect(xPos, yPos, imageW, imageH);
-							ctx.fill();
-							ctx.beginPath();
-						}
-
-						var image = icons.getImage(AscCommon.CCButtonType.Image, 0 === object.ActiveButtonIndex);
+						var image = icons.getImage(AscCommon.CCButtonType.Image, true);
 						if (image)
 							ctx.drawImage(image, xPos, yPos, imageW, imageH);
 					}
@@ -4525,33 +4535,20 @@
 						}
 					}
 
-					if (this.isImage)
+					// Hover and normal states now are rendering in the main context
+					if (this.isImage && 0 === object.ActiveButtonIndex)
 					{
 						var imageW = CONTENT_CONTROL_TRACK_H / koefX; // 1x scale!
 						var imageH = CONTENT_CONTROL_TRACK_H / koefY;
 						var xPos = this.bounds.x + (this.bounds.w - imageW) / 2;
 						var yPos = this.bounds.y + (this.bounds.h - imageH) / 2;
 
-						var isFill = false;
-						if (object.ActiveButtonIndex === 0)
-						{
-							ctx.fillStyle = AscCommon.GlobalSkin.ContentControlsActive;
-							isFill = true;
-						}
-						else if (object.HoverButtonIndex === 0)
-						{
-							ctx.fillStyle = AscCommon.GlobalSkin.ContentControlsHover;
-							isFill = true;
-						}
+						ctx.fillStyle = AscCommon.GlobalSkin.ContentControlsActive;
+						ctx.rect(xPos, yPos, imageW, imageH);
+						ctx.fill();
+						ctx.beginPath();
 
-						if (isFill)
-						{
-							ctx.rect(xPos, yPos, imageW, imageH);
-							ctx.fill();
-							ctx.beginPath();
-						}
-
-						var image = icons.getImage(AscCommon.CCButtonType.Image, 0 === object.ActiveButtonIndex);
+						var image = icons.getImage(AscCommon.CCButtonType.Image, true);
 						if (image)
 							ctx.drawImage(image, xPos, yPos, imageW, imageH);
 					}

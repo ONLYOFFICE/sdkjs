@@ -877,6 +877,10 @@ function CDrawingDocument()
 
 	this.CheckTargetDraw = function(x, y, isFocusOnSlide)
 	{
+		function roundPxForScale(value) {
+			return ((value * AscCommon.AscBrowser.retinaPixelRatio) >> 0) / AscCommon.AscBrowser.retinaPixelRatio;
+		}
+
 		var isReporter = this.m_oWordControl.m_oApi.isReporterMode;
 		if (this.TargetHtmlElementOnSlide != isFocusOnSlide)
 		{
@@ -916,7 +920,7 @@ function CDrawingDocument()
 
 		if (oldW !== newW || oldH !== newH)
 		{
-			var pixNewW = ((newW * AscCommon.AscBrowser.retinaPixelRatio) >> 0) / AscCommon.AscBrowser.retinaPixelRatio;
+			var pixNewW = roundPxForScale(newW);
 
 			this.TargetHtmlElement.style.width = pixNewW + "px";
 			this.TargetHtmlElement.style.height = newH + "px";
@@ -950,15 +954,15 @@ function CDrawingDocument()
 				pos.Y = y * g_dKoef_mm_to_pix - this.m_oWordControl.m_oNotesApi.Scroll;
 			}
 
-			this.TargetHtmlElementLeft = pos.X >> 0;
-			this.TargetHtmlElementTop = pos.Y >> 0;
+			this.TargetHtmlElementLeft = roundPxForScale(pos.X);
+			this.TargetHtmlElementTop = roundPxForScale(pos.Y);
 
 			this.TargetHtmlElement.style["transform"] = "";
 			this.TargetHtmlElement.style["msTransform"] = "";
 			this.TargetHtmlElement.style["mozTransform"] = "";
 			this.TargetHtmlElement.style["webkitTransform"] = "";
 
-			if ((!this.m_oWordControl.MobileTouchManager && !AscCommon.AscBrowser.isSafariMacOs) || !AscCommon.AscBrowser.isWebkit)
+			if ((!this.m_oWordControl.m_oApi.isMobileVersion && !AscCommon.AscBrowser.isSafariMacOs) || !AscCommon.AscBrowser.isWebkit)
 			{
 				this.TargetHtmlElement.style.left = this.TargetHtmlElementLeft + "px";
 				this.TargetHtmlElement.style.top = this.TargetHtmlElementTop + "px";
@@ -1604,6 +1608,15 @@ function CDrawingDocument()
 
 			this.m_oWordControl.OnScroll();
 			this.m_oWordControl.Thumbnails.LockMainObjType = false;
+		}
+
+		if(Asc.editor.isSlideShow())
+		{
+			let oDemonstration = Asc.editor.getDemoManager();
+			if(oDemonstration && oDemonstration.SlideNum === index)
+			{
+				oDemonstration.Redraw();
+			}
 		}
 	};
 
@@ -3353,11 +3366,22 @@ function CDrawingDocument()
 	this.CheckRasterImageOnScreen = function (src)
 	{
 		const oPresentation = oThis.m_oWordControl.m_oLogicDocument;
+		const oDemonstrationManager = oThis.m_oWordControl.DemonstrationManager;
+		let sCheckImage = AscCommon.getFullImageSrc2(src);
+		if (oDemonstrationManager && oDemonstrationManager.Mode) {
+			const oSlide = oDemonstrationManager.GetCurrentSlide();
+			if (oSlide && oSlide.checkImageDraw(sCheckImage)) {
+				const oPlayer = oSlide.getAnimationPlayer();
+				if (oPlayer) {
+					oPlayer.clearImageCache(sCheckImage);
+				}
+				oDemonstrationManager.Resize(true);
+			}
+		}
 		let oCurSlide = oPresentation.GetCurrentSlide();
 		if(!oCurSlide)
 			return;
 		let bRedraw = false;
-		let sCheckImage = AscCommon.getFullImageSrc2(src);
 		let nCurIdx = oPresentation.GetSlideIndex(oCurSlide);
 		if(oCurSlide.checkImageDraw(sCheckImage))
 		{
@@ -5111,6 +5135,18 @@ function CThumbnailsManager(editorPage)
 
 		ctx.beginPath();
 	};
+	this.OutlineRect = function(_color, ctx, x, y, r, b)
+	{
+			ctx.beginPath();
+			ctx.strokeStyle = "#C0C0C0";
+			const lineW = Math.max(1, Math.round(1 * AscCommon.AscBrowser.retinaPixelRatio));
+			ctx.lineWidth = lineW;
+			const extend = lineW / 2;
+			ctx.rect(x - extend, y - extend, r - x + (2 * extend), b - y + (2 * extend));
+			ctx.stroke();
+
+			ctx.beginPath();
+	};
 
 	this.DrawAnimLabel = function(oGraphics, nX, nY, oColor)
 	{
@@ -5527,6 +5563,8 @@ function CThumbnailsManager(editorPage)
 
 			if (color) {
 				this.FocusRectFlat(color, context, page.left, page.top, page.right, page.bottom, isFocus);
+			} else {
+				this.OutlineRect(color, context, page.left, page.top, page.right, page.bottom);
 			}
 		}
 	};
@@ -7786,87 +7824,88 @@ function CAnimationPaneDrawer(page, htmlElement)
 			// Here we need to check if all animEffects havent been changed
 			// If they were - recalculate corresponding elements
 			// If they were not - redraw animItems based on "selected" state of effects
+			return AscFormat.ExecuteNoHistory(function () {
+				const seqListContainer = oThis.list.Control;
+				if (!seqListContainer) { return; }
 
-			const seqListContainer = oThis.list.Control;
-			if (!seqListContainer) { return; }
+				// Compare number of sequences (main and interactive ones)
+				const timing = seqListContainer.getTiming();
+				const newSeqList = timing ? timing.getRootSequences() : [];
+				const oldSeqList = seqListContainer.seqList
+					? seqListContainer.seqList.children.map(function (animSequence) {
+						return animSequence.getSeq();
+					})
+					: [];
 
-			// Compare number of sequences (main and interactive ones)
-			const timing = seqListContainer.getTiming();
-			const newSeqList = timing ? timing.getRootSequences() : [];
-			const oldSeqList = seqListContainer.seqList
-				? seqListContainer.seqList.children.map(function (animSequence) {
-					return animSequence.getSeq();
-				})
-				: [];
-
-			if (oldSeqList.length !== newSeqList.length) {
-				recalculateSeqListContainer();
-				return;
-			}
-
-			oldSeqList.some(function (_, nSeq) {
-				// Compare sequences by Id
-				const oldSeq = oldSeqList[nSeq];
-				const newSeq = newSeqList[nSeq];
-
-				if (oldSeq.Id !== newSeq.Id) {
+				if (oldSeqList.length !== newSeqList.length) {
 					recalculateSeqListContainer();
-					return true;
+					return;
 				}
 
-				// Compare number of groups in current sequence
-				const oldSeqGroups = seqListContainer.seqList.children[nSeq].animGroups.map(function (animGroup) {
-					return animGroup.effects;
-				});
-				const newSeqGroupsAsObject = AscFormat.groupBy(
-					newSeq.getAllEffects(),
-					function (effect) { return effect.getIndexInSequence(); }
-				);
-				const newSeqGroups = Object.keys(newSeqGroupsAsObject).map(function (groupIndex) {
-					return newSeqGroupsAsObject[groupIndex];
-				})
+				oldSeqList.some(function (_, nSeq) {
+					// Compare sequences by Id
+					const oldSeq = oldSeqList[nSeq];
+					const newSeq = newSeqList[nSeq];
 
-				if (oldSeqGroups.length !== newSeqGroups.length) {
-					recalculateSeqListContainer();
-					return true;
-				}
-
-				for (let nGroup = 0; nGroup < oldSeqGroups.length; ++nGroup) {
-					// Compare number of effects in current group
-					const oldSeqGroup = oldSeqGroups[nGroup];
-					const newSeqGroup = newSeqGroups[nGroup];
-
-					if (oldSeqGroup.length !== newSeqGroup.length) {
+					if (oldSeq.Id !== newSeq.Id) {
 						recalculateSeqListContainer();
 						return true;
 					}
 
-					for (let nEffect = 0; nEffect < oldSeqGroup.length; ++nEffect) {
-						// Compare effects in currect group by Id
-						const oldEffect = oldSeqGroup[nEffect];
-						const newEffect = newSeqGroup[nEffect];
+					// Compare number of groups in current sequence
+					const oldSeqGroups = seqListContainer.seqList.children[nSeq].animGroups.map(function (animGroup) {
+						return animGroup.effects;
+					});
+					const newSeqGroupsAsObject = AscFormat.groupBy(
+						newSeq.getAllEffects(),
+						function (effect) { return effect.getIndexInSequence(); }
+					);
+					const newSeqGroups = Object.keys(newSeqGroupsAsObject).map(function (groupIndex) {
+						return newSeqGroupsAsObject[groupIndex];
+					})
 
-						if (oldEffect.Id !== newEffect.Id) {
+					if (oldSeqGroups.length !== newSeqGroups.length) {
+						recalculateSeqListContainer();
+						return true;
+					}
+
+					for (let nGroup = 0; nGroup < oldSeqGroups.length; ++nGroup) {
+						// Compare number of effects in current group
+						const oldSeqGroup = oldSeqGroups[nGroup];
+						const newSeqGroup = newSeqGroups[nGroup];
+
+						if (oldSeqGroup.length !== newSeqGroup.length) {
 							recalculateSeqListContainer();
 							return true;
 						}
+
+						for (let nEffect = 0; nEffect < oldSeqGroup.length; ++nEffect) {
+							// Compare effects in currect group by Id
+							const oldEffect = oldSeqGroup[nEffect];
+							const newEffect = newSeqGroup[nEffect];
+
+							if (oldEffect.Id !== newEffect.Id) {
+								recalculateSeqListContainer();
+								return true;
+							}
+						}
 					}
+
+					seqListContainer.seqList.forEachAnimItem(function (animItem) {
+						animItem.onUpdate();
+					})
+
+					return false;
+				});
+
+				function recalculateSeqListContainer() {
+					oThis.list.Control.seqList.recalculateChildren();
+					oThis.list.Control.seqList.recalculateChildrenLayout();
+					oThis.list.Control.recalculateChildrenLayout();
+					oThis.list.Control.onUpdate();
+					oThis.list.CheckScroll();
 				}
-
-				seqListContainer.seqList.forEachAnimItem(function (animItem) {
-					animItem.onUpdate();
-				})
-
-				return false;
-			});
-
-			function recalculateSeqListContainer() {
-				oThis.list.Control.seqList.recalculateChildren();
-				oThis.list.Control.seqList.recalculateChildrenLayout();
-				oThis.list.Control.recalculateChildrenLayout();
-				oThis.list.Control.onUpdate();
-				oThis.list.CheckScroll();
-			}
+			}, this, []);
 		});
 
 		Asc.editor.asc_registerCallback('asc_onFocusObject', function () {
@@ -7875,19 +7914,21 @@ function CAnimationPaneDrawer(page, htmlElement)
 				(when shape name has been changed)
 			*/
 
-			if (!oThis.list.Control) return;
+			AscFormat.ExecuteNoHistory(function () {
+				if (!oThis.list.Control) return;
 
-			let changedLabelsCount = 0;
-			oThis.list.Control.seqList.forEachAnimItem(function (animItem) {
-				if (animItem.effectLabel.string !== animItem.getEffectLabelText()) {
-					animItem.effectLabel.string = animItem.getEffectLabelText();
-					changedLabelsCount++;
+				let changedLabelsCount = 0;
+				oThis.list.Control.seqList.forEachAnimItem(function (animItem) {
+					if (animItem.effectLabel.string !== animItem.getEffectLabelText()) {
+						animItem.effectLabel.string = animItem.getEffectLabelText();
+						changedLabelsCount++;
+					}
+				});
+
+				if (changedLabelsCount > 0) {
+					oThis.list.Control.recalculateChildrenLayout();
 				}
-			});
-
-			if (changedLabelsCount > 0) {
-				oThis.list.Control.recalculateChildrenLayout();
-			}
+			}, this, []);
 		});
 	};
 	oThis.onMouseDown = function (e)

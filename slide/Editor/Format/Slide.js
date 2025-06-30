@@ -779,6 +779,9 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
                     if (matching_shape == null && layout.cSld.spTree[j]) {
                         var sp = layout.cSld.spTree[j].copy(undefined);
                         sp.setParent(this);
+											if (sp.txBody) {
+												sp.txBody.setBodyPr(new AscFormat.CBodyPr());
+											}
                         !bIsSpecialPh && sp.clearContent && sp.clearContent();
                         this.addToSpTreeToPos(this.cSld.spTree.length, sp)
                     }
@@ -1102,6 +1105,20 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 			oSp.getAllRasterImages(images);
 		});
     };
+
+	Slide.prototype.getAllRasterImagesOnSlide = function (aImages) {
+		aImages = aImages || [];
+		this.getAllRasterImages(aImages);
+		const oLayout = this.Layout;
+		if (oLayout) {
+			oLayout.getAllRasterImages(aImages);
+			const oMaster = oLayout.Master;
+			if (oMaster) {
+				oMaster.getAllRasterImages(aImages);
+			}
+		}
+		return aImages;
+	};
 
 
     Slide.prototype.getAllRasterImagesForDraw = function(images) {
@@ -1861,13 +1878,14 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         return null;
     };
 
-    Slide.prototype.showChartSettings = function()
-    {
-        editor.asc_onOpenChartFrame();
-        editor.sendEvent("asc_doubleClickOnChart", this.graphicObjects.getChartObject());
-        this.graphicObjects.changeCurrentState(new AscFormat.NullState(this.graphicObjects));
-    };
-
+Slide.prototype.openChartEditor = function()
+{
+	this.graphicObjects.openChartEditor();
+};
+Slide.prototype.openOleEditor = function()
+{
+	this.graphicObjects.openOleEditor();
+};
 
     Slide.prototype.Clear_ContentChanges  = function()
     {

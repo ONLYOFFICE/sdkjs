@@ -577,11 +577,7 @@ var c_oAscPopUpSelectorType = {
   };
 
   var c_nAscMaxAddCellWatchesCount = 10000;
-  var c_oAscExternalReferenceType = {
-    referenceData: 0,
-    link: 1,
-    path: 2
-  };
+
 
   var c_oAscPageBreaksDisableType = {
     none: 0,
@@ -1082,11 +1078,6 @@ var c_oAscPopUpSelectorType = {
   prot['Range'] = prot.Range;
 
   window['Asc']['c_nAscMaxAddCellWatchesCount'] = window['Asc'].c_nAscMaxAddCellWatchesCount = c_nAscMaxAddCellWatchesCount;
-  window['Asc']['c_oAscExternalReferenceType'] = window['Asc'].c_oAscExternalReferenceType = c_oAscExternalReferenceType;
-  prot = c_oAscExternalReferenceType;
-  prot['referenceData'] = prot.referenceData;
-  prot['link'] = prot.link;
-  prot['path'] = prot.path;
 
   window['Asc']['c_oAscPageBreaksDisableType'] = window['Asc'].c_oAscPageBreaksDisableType = c_oAscPageBreaksDisableType;
   prot = c_oAscPageBreaksDisableType;
