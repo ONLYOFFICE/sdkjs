@@ -16502,6 +16502,8 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"TRUNC\"", function (assert) {
+		let array;
+		// https://0.30000000000000004.com/
 		oParser = new parserFormula("TRUNC(PI())", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 3);
@@ -16756,9 +16758,6 @@ $(function () {
 		assert.ok(oParser.parse(), "TRUNC((0.6*3),1)");
 		assert.strictEqual(oParser.calculate().getValue(), 1.8, "Result of TRUNC((0.6*3),1)");
 
-		// TODO fix floating point number precision problem 
-		// TODO in js 0.6 * 3 = 1.7999999999999998 
-		// https://0.30000000000000004.com/
 		oParser = new parserFormula("TRUNC((0.4*1)+(0.6*3),1)", "A1", ws);
 		assert.ok(oParser.parse(), "TRUNC((0.4*1)+(0.6*3),1)");
 		assert.strictEqual(oParser.calculate().getValue(), 2.1, "Result of TRUNC((0.4*1)+(0.6*3),1)");	// 2.2
@@ -16766,6 +16765,62 @@ $(function () {
 		oParser = new parserFormula("TRUNC(0.1+0.2,1)", "A1", ws);
 		assert.ok(oParser.parse(), "TRUNC(0.1+0.2,1)");
 		assert.strictEqual(oParser.calculate().getValue(), 0.3, "Result of TRUNC(0.1+0.2,1)");
+
+		// for bug 41030
+		ws.getRange2("A1:C2").cleanAll();
+
+		oParser = new parserFormula("TRUNC({12,4},{1,2})", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC({12,4},{1,2})");
+		oParser.setArrayFormulaRef(ws.getRange2("A1:C2").bbox);
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 12);
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 4);
+
+		oParser = new parserFormula("TRUNC({12,4},{1,2,3})", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC({12,4},{1,2,3})");
+		oParser.setArrayFormulaRef(ws.getRange2("A1:C2").bbox);
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 12);
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 4);
+
+		oParser = new parserFormula("TRUNC({12,4,2},{1,2})", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC({12,4,2},{1,2})");
+		oParser.setArrayFormulaRef(ws.getRange2("A1:C2").bbox);
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 12);
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 4);
+
+		oParser = new parserFormula("TRUNC({12,4,2},{1,2,3})", "A1", ws);
+		assert.ok(oParser.parse(), "TRUNC({12,4,2},{1,2,3})");
+		oParser.setArrayFormulaRef(ws.getRange2("A1:C2").bbox);
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 12);
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 4);
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 2);
+
+		oParser = new parserFormula('TRUNC({12,"Str",2},{1,2,3})', "A1", ws);
+		assert.ok(oParser.parse(), 'TRUNC({12,"Str",2},{1,2,3})');
+		oParser.setArrayFormulaRef(ws.getRange2("A1:C2").bbox);
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 12);
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 2);
+
+		oParser = new parserFormula('TRUNC({12,4,2},{1,"str",3})', "A1", ws);
+		assert.ok(oParser.parse(), 'TRUNC({12,4,2},{1,"str",3})');
+		oParser.setArrayFormulaRef(ws.getRange2("A1:C2").bbox);
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 12);
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 2);
+
+		oParser = new parserFormula('TRUNC({12,"Str",2},"str")', "A1", ws);
+		assert.ok(oParser.parse(), 'TRUNC({12,"Str",2},"str")');
+		oParser.setArrayFormulaRef(ws.getRange2("A1:C2").bbox);
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "#VALUE!");
 
 		testArrayFormula2(assert, "TRUNC", 1, 2);
 	});
