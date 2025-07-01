@@ -32543,8 +32543,115 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "No");
 
-		//TODO нужна другая функция для тестирования
-		//testArrayFormula2(assert, "IF", 2, 3);
+		oParser = new parserFormula('IF(1,#N/A,#NUM!)', "AA2", ws);
+		assert.ok(oParser.parse(), 'IF(1,#N/A,#NUM!)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+
+		oParser = new parserFormula('IF(0,#N/A,#NUM!)', "AA2", ws);
+		assert.ok(oParser.parse(), 'IF(0,#N/A,#NUM!)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+		oParser = new parserFormula('IF(1,#NUM!,#N/A)', "AA2", ws);
+		assert.ok(oParser.parse(), 'IF(1,#NUM!,#N/A)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+		oParser = new parserFormula('IF(0,#NUM!,#N/A)', "AA2", ws);
+		assert.ok(oParser.parse(), 'IF(0,#NUM!,#N/A)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+
+		ws.getRange2("A1").setValue("0");
+		ws.getRange2("A2").setValue("1");
+		ws.getRange2("A3").setValue("2");
+		ws.getRange2("A4").setValue("3");
+
+		oParser = new parserFormula('IF(A1:A3>0, "Positive", "Non-positive")', "AA2", ws);
+		assert.ok(oParser.parse(), 'IF(A1:A3>0, "Positive", "Non-positive")');
+		oParser.setArrayFormulaRef(ws.getRange2("C10:E12").bbox);
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), "Non-positive");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), "Positive");
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), "Positive");
+
+		oParser = new parserFormula('IF(A1:A3>=0, "Positive", "Non-positive")', "AA2", ws);
+		assert.ok(oParser.parse(), 'IF(A1:A3>=0, "Positive", "Non-positive")');
+		oParser.setArrayFormulaRef(ws.getRange2("C10:E12").bbox);
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), "Positive");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), "Positive");
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), "Positive");
+
+		oParser = new parserFormula('IF(A1:A3<0, "Positive", "Non-positive")', "AA2", ws);
+		assert.ok(oParser.parse(), 'IF(A1:A3<0, "Positive", "Non-positive")');
+		oParser.setArrayFormulaRef(ws.getRange2("C10:E12").bbox);
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), "Non-positive");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), "Non-positive");
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), "Non-positive");
+
+		oParser = new parserFormula('IF(A1:A3<=0, "Positive", "Non-positive")', "AA2", ws);
+		assert.ok(oParser.parse(), 'IF(A1:A3<=0, "Positive", "Non-positive")');
+		oParser.setArrayFormulaRef(ws.getRange2("C10:E12").bbox);
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), "Positive");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), "Non-positive");
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), "Non-positive");
+
+		oParser = new parserFormula('IF(A1:A3<>0, "Positive", "Non-positive")', "AA2", ws);
+		assert.ok(oParser.parse(), 'IF(A1:A3<>0, "Positive", "Non-positive")');
+		oParser.setArrayFormulaRef(ws.getRange2("C10:E12").bbox);
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), "Non-positive");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), "Positive");
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), "Positive");
+
+		oParser = new parserFormula('IF(A1:A3="", "Empty", "Filled")', "AA2", ws);
+		assert.ok(oParser.parse(), 'IF(A1:A3="", "Empty", "Filled")');
+		oParser.setArrayFormulaRef(ws.getRange2("C10:E12").bbox);
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), "Filled");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), "Filled");
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), "Filled");
+		
+		oParser = new parserFormula('IF(A1:A3="Yes", 1, 0)', "AA2", ws);
+		assert.ok(oParser.parse(), 'IIF(A1:A3="Yes", 1, 0)');
+		oParser.setArrayFormulaRef(ws.getRange2("C10:E12").bbox);
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 0);
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 0);
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), 0);
+
+		oParser = new parserFormula('IF(TRUE, A1:A3, A1:A2)', "AA2", ws);
+		assert.ok(oParser.parse(), 'IF(TRUE, A1:A3, A1:A2)');
+		oParser.setArrayFormulaRef(ws.getRange2("C10:E12").bbox);
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 0);
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 1);
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), 2);
+
+		oParser = new parserFormula('IF(FALSE, A1:A3, A1:A2)', "AA2", ws);
+		assert.ok(oParser.parse(), 'IF(FALSE, A1:A3, A1:A2)');
+		oParser.setArrayFormulaRef(ws.getRange2("C10:E12").bbox);
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 0);
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 1);
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), "#N/A");
+
+		oParser = new parserFormula('IF({1,0,1}, {"A","B","C"}, {"X","Y","Z"})', "AA2", ws);
+		assert.ok(oParser.parse(), 'IF({1,0,1}, {"A","B","C"}, {"X","Y","Z"})');
+		oParser.setArrayFormulaRef(ws.getRange2("C10:E12").bbox);
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), "A");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), "Y");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), "C");
+
+		oParser = new parserFormula('IF({TRUE,FALSE,TRUE}, {10,20,30}, {100,200,300})', "AA2", ws);
+		assert.ok(oParser.parse(), 'IF({TRUE,FALSE,TRUE}, {10,20,30}, {100,200,300})');
+		oParser.setArrayFormulaRef(ws.getRange2("C10:E12").bbox);
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 10);
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 200);
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 30);
+
 	});
 
 	QUnit.test("Test: \"COLUMN\"", function (assert) {
