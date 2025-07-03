@@ -421,18 +421,20 @@
 		Clipboard.prototype.pasteData = function (ws, _format, data1, data2, text_data, bIsSpecialPaste, doNotShowButton, isPasteAll, callback) {
 			var t = this;
 			var wb = window["Asc"]["editor"].wb;
+			console.log('heeer')
 			//if open range dialog - return
 			if (ws.getSelectionDialogMode() && (!wb.getCellEditMode() || wb.isWizardMode)) {
 				return;
 			}
+			console.log('heeer2')
 			var cellEditor = wb.cellEditor;
 			t.pasteProcessor.clean();
-
+			console.log('heeer3')
 			if (!window['AscCommon'].g_specialPasteHelper.specialPasteStart) {
 				window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
 			}
 			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start(doNotShowButton);
-
+			console.log('heeer4')
 			if (!bIsSpecialPaste && !wb.getCellEditMode()) {
 				window['AscCommon'].g_specialPasteHelper.specialPasteData.activeRange = ws.model.selectionRange.clone(ws.model);
 				window['AscCommon'].g_specialPasteHelper.specialPasteData.pasteFromWord = false;
@@ -440,6 +442,7 @@
 
 			switch (_format) {
 				case AscCommon.c_oAscClipboardDataFormat.HtmlElement: {
+					console.log('heeer5')
 					if (wb.getCellEditMode()) {
 						//fragments = пока только для плагина вставка символов
 						var fragments;
@@ -447,6 +450,7 @@
 							//проверяем иероглифы внутри
 							fragments = this.pasteProcessor._getFragmentsFromHtml(data1);
 						}
+						console.log(fragments)
 						if (fragments) {
 							var pasteFragments = fragments.fragments;
 							var newFonts = fragments.fonts;
@@ -482,6 +486,7 @@
 							this._pasteTextInCellEditor(this.pasteProcessor.pasteFromBinary(ws, data1, true));
 						}
 					} else {
+						console.log('herer7')
 						t.pasteProcessor.pasteFromBinary(ws, data1, null, isPasteAll);
 					}
 
@@ -3152,6 +3157,7 @@
 			},
 
 			editorPasteExec: function (worksheet, node, isText, cb) {
+				console.log('here6', node)
 				if (node === undefined) {
 					return;
 				}
@@ -3160,7 +3166,10 @@
 				t.alreadyLoadImagesOnServer = false;
 
 				//если находимся внутри шейпа
-				var isIntoShape = worksheet.objectRender.controller.getTargetDocContent();
+				console.log('here7')
+				var objectRender = worksheet.objectRender;
+				var isIntoShape = objectRender && objectRender.controller && objectRender.controller.getTargetDocContent();
+				console.log(isIntoShape, 'thisone')
 				if (isIntoShape) {
 					var callback = function (isSuccess) {
 						if (isSuccess) {
@@ -3311,6 +3320,7 @@
 			},
 
 			_getImageFromHtml: function (html, isGetUrlsArray) {
+				console.log("asdfa")
 				var res = null;
 
 				if (html) {

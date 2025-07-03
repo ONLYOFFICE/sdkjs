@@ -2533,6 +2533,10 @@ function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPastePr
 	{
 		case AscCommon.c_oAscClipboardDataFormat.HtmlElement:
 		{
+            console.log(data1);
+            console.log(JSON.stringify(data1));
+            console.log(data2)
+            console.log(JSON.stringify(data2));
 			oPasteProcessor.Start(data1, data2, null, null, text_data);
 			break;
 		}
