@@ -901,10 +901,16 @@
 
 		this.SelectedObjectsStack[this.SelectedObjectsStack.length] = new AscCommon.asc_CSelectedObject(Asc.c_oAscTypeSelectElement.Annot, obj);
 	};
-	PDFEditorApi.prototype.sync_fieldPropCallback = function(field) {
-		var obj = AscPDF.CreateAscFieldPropFromObj(field);
+	PDFEditorApi.prototype.sync_fieldPropCallback = function(aFields) {
+		let aFieldsProps = aFields.map(function(field) {
+			return AscPDF.CreateAscFieldPropFromObj(field);
+		});
 
-		var _len = this.SelectedObjectsStack.length;
+		for (let i = 1; i < aFieldsProps.length; i++) {
+			aFieldsProps[0].compare(aFieldsProps[i]);
+		}
+
+		let _len = this.SelectedObjectsStack.length;
 		if (_len > 0) {
 			if (this.SelectedObjectsStack[_len - 1].Type == Asc.c_oAscTypeSelectElement.Field) {
 				this.SelectedObjectsStack[_len - 1].Value = obj;
@@ -912,7 +918,7 @@
 			}
 		}
 
-		this.SelectedObjectsStack[this.SelectedObjectsStack.length] = new AscCommon.asc_CSelectedObject(Asc.c_oAscTypeSelectElement.Field, obj);
+		this.SelectedObjectsStack[this.SelectedObjectsStack.length] = new AscCommon.asc_CSelectedObject(Asc.c_oAscTypeSelectElement.Field, aFieldsProps[0]);
 	};
 	PDFEditorApi.prototype.sync_pagePropCallback = function(pageInfo) {
 		let obj = AscPDF.CreateAscPagePropFromObj(pageInfo);
@@ -3349,7 +3355,12 @@
 						return;
 					}
 
-					if (oOptionObject.GetType && oOptionObject.GetType() === AscPDF.FIELD_TYPES.button) {
+					if (Array.isArray(oOptionObject)) {
+						oOptionObject.forEach(function(buttonField) {
+							buttonField.AddImage(oImage, buttonField.asc_curImageState);
+						});
+					}
+					else if (oOptionObject.GetType && oOptionObject.GetType() === AscPDF.FIELD_TYPES.button) {
 						oOptionObject.AddImage(oImage, oOptionObject.asc_curImageState);
 					}
 					else if (oOptionObject.isStamp) {

@@ -3632,6 +3632,51 @@ function (window, undefined) {
 	asc_CBaseFieldProperty.prototype.asc_putFieldProps = function (v) {
 		this.fieldProps = v;
 	};
+	asc_CBaseFieldProperty.prototype.compare = function (pr) {
+		if (this.type !== pr.type) {
+			this.type = null;
+		}
+		if (this.name !== pr.name) {
+			this.name = null;
+		}
+		if (this.required !== pr.required) {
+			this.required = null;
+		}
+		if (this.readOnly !== pr.readOnly) {
+			this.readOnly = null;
+		}
+		if (this.rot !== pr.rot) {
+			this.rot = null;
+		}
+		if (this.display !== pr.display) {
+			this.display = null;
+		}
+		if (!this.fill || !pr.fill || this.fill.r !== pr.fill.r || this.fill.g !== pr.fill.g || this.fill.b !== pr.fill.b) {
+			this.fill = null;
+		}
+		if (this.stroke || !pr.stroke || this.stroke.r !== pr.stroke.r || this.stroke.g !== pr.stroke.g || this.stroke.b !== pr.stroke.b) {
+			this.stroke = null;
+		}
+		if (this.strokeWidth !== pr.strokeWidth) {
+			this.strokeWidth = null;
+		}
+		if (this.strokeStyle !== pr.strokeStyle) {
+			this.strokeStyle = null;
+		}
+		if (this.tooltip !== pr.tooltip) {
+			this.tooltip = null;
+		}
+		if (this.locked !== pr.locked) {
+			this.locked = null;
+		}
+
+		if (this.type != undefined && this.fieldProps && pr.fieldProps) {
+			this.fieldProps.compare(pr.fieldProps);
+		}
+		else {
+			this.fieldProps = null;
+		}
+	};
 	//////////////////////////////////////////////////////////////////
 	///// Text field
 	//////////////////////////////////////////////////////////////////
@@ -3703,6 +3748,43 @@ function (window, undefined) {
 	asc_CTextFieldProperty.prototype.asc_putValidate = function (v) {
 		this.validate = v;
 	};
+	asc_CTextFieldProperty.prototype.compare = function (pr) {
+		if (this.defaultValue !== pr.defaultValue) {
+			this.defaultValue = null;
+		}
+		if (this.multiline !== pr.multiline) {
+			this.multiline = null;
+		}
+		if (this.scrollLongText !== pr.scrollLongText) {
+			this.scrollLongText = null;
+		}
+		if (this.charLimit !== pr.charLimit) {
+			this.charLimit = null;
+		}
+		if (this.comb !== pr.comb) {
+			this.comb = null;
+		}
+		if (this.placeholder !== pr.placeholder) {
+			this.placeholder = null;
+		}
+		if (this.autoFit !== pr.autoFit) {
+			this.autoFit = null;
+		}
+
+		if (this.type != undefined && this.format && pr.format && this.format.type === pr.format.type) {
+			this.format.compare(pr.format);
+		}
+		else {
+			this.format = null;
+		}
+		
+		if (this.type != undefined && this.validate && pr.validate && this.validate.type === pr.validate.type) {
+			this.validate.compare(pr.validate);
+		}
+		else {
+			this.validate = null;
+		}
+	};
 
 	//////////////////////////////////////////////////////////////////
 	///// Combobox field
@@ -3760,11 +3842,42 @@ function (window, undefined) {
 	asc_CComboboxFieldProperty.prototype.asc_putValidate = function (v) {
 		this.validate = v;
 	};
+	asc_CComboboxFieldProperty.prototype.compare = function (pr) {
+		for (let i = 0; i < this.options.length; i++) {
+			let a = this.options[i];
+			let b = pr.options[i];
+
+			if (Array.isArray(a)) {
+				if (!Array.isArray(b) || a[0] !== b[0] || a[1] !== b[1]) {
+					this.options = null;
+					break;
+				}
+			}
+			else if (a !== b) {
+				this.options = null;
+				break;
+			}
+		}
+
+		if (this.commitOnSelChange !== pr.commitOnSelChange) {
+			this.commitOnSelChange = null;
+		}
+		if (this.editable !== pr.editable) {
+			this.editable = null;
+		}
+		if (this.placeholder !== pr.placeholder) {
+			this.placeholder = null;
+		}
+		if (this.autoFit !== pr.autoFit) {
+			this.autoFit = null;
+		}
+	};
 
 	//////////////////////////////////////////////////////////////////
 	///// Listbox field
 	//////////////////////////////////////////////////////////////////
 	function asc_CListboxFieldProperty() {
+		this.options		 	= null;
 		this.commitOnSelChange	= undefined;
 		this.multipleSelection	= undefined;
 	}
@@ -3785,6 +3898,30 @@ function (window, undefined) {
 	};
 	asc_CListboxFieldProperty.prototype.asc_putMultipleSelection = function (v) {
 		this.multipleSelection = v;
+	};
+	asc_CListboxFieldProperty.prototype.compare = function (pr) {
+		for (let i = 0; i < this.options.length; i++) {
+			let a = this.options[i];
+			let b = pr.options[i];
+
+			if (Array.isArray(a)) {
+				if (!Array.isArray(b) || a[0] !== b[0] || a[1] !== b[1]) {
+					this.options = null;
+					break;
+				}
+			}
+			else if (a !== b) {
+				this.options = null;
+				break;
+			}
+		}
+
+		if (this.commitOnSelChange !== pr.commitOnSelChange) {
+			this.commitOnSelChange = null;
+		}
+		if (this.multipleSelection !== pr.multipleSelection) {
+			this.multipleSelection = null;
+		}
 	};
 	//////////////////////////////////////////////////////////////////
 	///// Checkbox
@@ -3819,6 +3956,20 @@ function (window, undefined) {
 	asc_CCheckboxFieldProperty.prototype.asc_putToggleToOff = function (v) {
 		this.toggleToOff = v;
 	};
+	asc_CCheckboxFieldProperty.prototype.compare = function (pr) {
+		if (this.checkboxStyle !== pr.checkboxStyle) {
+			this.checkboxStyle = null;
+		}
+		if (this.exportValue !== pr.exportValue) {
+			this.exportValue = null;
+		}
+		if (this.defaultChecked !== pr.defaultChecked) {
+			this.defaultChecked = null;
+		}
+		if (this.toggleToOff !== pr.toggleToOff) {
+			this.toggleToOff = null;
+		}
+	};
 
 	//////////////////////////////////////////////////////////////////
 	///// Radiobutton
@@ -3836,11 +3987,18 @@ function (window, undefined) {
 	asc_CRadiobuttonFieldProperty.prototype.asc_putRadiosInUnison = function (v) {
 		this.radiosInUnison = v;
 	};
+	asc_CRadiobuttonFieldProperty.prototype.compare = function (pr) {
+		asc_CCheckboxFieldProperty.prototype.compare.call(this, pr);
+
+		if (this.radiosInUnison !== pr.radiosInUnison) {
+			this.radiosInUnison = null;
+		}
+	};
 	//////////////////////////////////////////////////////////////////
 	///// Pushbutton
 	//////////////////////////////////////////////////////////////////
 	function asc_CButtonFieldProperty(buttonField) {
-		this.parentField	= buttonField;
+		this.parentFields	= [buttonField];
 
 		this.highlight		= undefined;
 		this.layout			= undefined;
@@ -3859,8 +4017,8 @@ function (window, undefined) {
 
 		this.DivId			= undefined;
 	}
-	asc_CButtonFieldProperty.prototype.getParentField = function () {
-		return this.parentField;
+	asc_CButtonFieldProperty.prototype.getParentFields = function () {
+		return this.parentFields;
 	};
 	asc_CButtonFieldProperty.prototype.asc_getHighlight = function () {
 		return this.highlight;
@@ -3943,9 +4101,10 @@ function (window, undefined) {
 	asc_CButtonFieldProperty.prototype.asc_putCurrentState = function(v) {
 		this.currentState = v;
 
-		// set to field state to add image (will clear after set image)
-		let oField = this.getParentField();
-		oField.asc_curImageState = v;
+		// set to fields state to add image (will clear after set image)
+		this.getParentFields().forEach(function(field) {
+			field.asc_curImageState = v;
+		});
 
 		this.drawTexture(v);
 	};
@@ -4052,10 +4211,7 @@ function (window, undefined) {
 		}
 		let Api = Asc.editor;
 
-		// set to field state to add image (will clear after set image)
-		let oField = this.getParentField();
-
-		Api._addImageUrl([sUrl], oField);
+		Api._addImageUrl([sUrl], this.getParentFields());
 	};
 	asc_CButtonFieldProperty.prototype.showFileDialog = function (nState) {
 		if (!this.DivId){
@@ -4064,8 +4220,8 @@ function (window, undefined) {
 		let Api = Asc.editor;
 
 		// set to field state to add image (will clear after set image)
-		let oField = this.getParentField();
-		let oDoc = oField.GetDocument();
+		let aFields = this.getParentFields();
+		let oDoc = Asc.editor.getPDFDoc();
 		let oActionsQueue = oDoc.GetActionsQueue();
 
 		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
@@ -4075,16 +4231,13 @@ function (window, undefined) {
                     file = file[0];
 
                 var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](file);
-                editor._addImageUrl([AscCommon.g_oDocumentUrls.getImageUrl(_url)], oField);
+                Asc.editor._addImageUrl([AscCommon.g_oDocumentUrls.getImageUrl(_url)], aFields);
             });
         }
         else {
             AscCommon.ShowImageFileDialog(Api.documentId, Api.documentUserId, undefined, Api.documentShardKey, Api.documentWopiSrc, Api.documentUserSessionId, function(error, files) {
-                if (error.canceled == true) {
-                    oActionsQueue.Continue();
-                }
-                else {
-                    Api._uploadCallback(error, files, oField);
+                if (error.canceled !== true) {
+                    Api._uploadCallback(error, files, aFields);
                 }
 
 				AscCommon.global_mouseEvent.UnLockMouse();
@@ -4098,6 +4251,64 @@ function (window, undefined) {
                 AscCommon.global_mouseEvent.UnLockMouse();
             });
         }
+	};
+	asc_CButtonFieldProperty.prototype.compare = function (pr) {
+		let aFullNames = this.parentFields.map(function(field) {
+			return field.GetFullName();
+		});
+
+		let _t = this;
+		pr.parentFields.forEach(function(field) {
+			if (!aFullNames.includes(field.GetFullName())) {
+				_t.parentFields.push(field);
+			}
+		});
+
+		if (this.highlight !== pr.highlight) {
+			this.highlight = null;
+		}
+		if (this.layout !== pr.layout) {
+			this.layout = null;
+		}
+		if (this.scaleWhen !== pr.scaleWhen) {
+			this.scaleWhen = null;
+		}
+		if (this.scaleHow !== pr.scaleHow) {
+			this.scaleHow = null;
+		}
+		if (this.fitBounds !== pr.fitBounds) {
+			this.fitBounds = null;
+		}
+		if (!this.iconPos || !pr.iconPos || this.iconPos.X !== pr.iconPos.X || this.iconPos.Y !== pr.iconPos.Y) {
+			this.iconPos = null;
+		}
+		if (this.behavior !== pr.behavior) {
+			this.behavior = null;
+		}
+		if (this.currentState !== pr.currentState) {
+			this.currentState = null;
+		}
+		if (this.normalCaption !== pr.normalCaption) {
+			this.normalCaption = null;
+		}
+		if (this.hoverCaption !== pr.hoverCaption) {
+			this.hoverCaption = null;
+		}
+		if (this.downCaption !== pr.downCaption) {
+			this.downCaption = null;
+		}
+		if (this.normalImage !== pr.normalImage) {
+			this.normalImage = null;
+		}
+		if (this.hoverImage !== pr.hoverImage) {
+			this.hoverImage = null;
+		}
+		if (this.downImage !== pr.downImage) {
+			this.downImage = null;
+		}
+		if (this.radiosInUnison !== pr.radiosInUnison) {
+			this.radiosInUnison = null;
+		}
 	};
 	//////////////////////////////////////////////////////////////////
 	///// Number format
@@ -4144,6 +4355,23 @@ function (window, undefined) {
 	asc_CFieldNumberFormatProperty.prototype.asc_putCurrencyPrepend = function (v) {
 		this.currencyPrepend = v;
 	};
+	asc_CFieldNumberFormatProperty.prototype.compare = function (pr) {
+		if (this.decimals !== pr.decimals) {
+			this.decimals = null;
+		}
+		if (this.sepStyle !== pr.sepStyle) {
+			this.sepStyle = null;
+		}
+		if (this.negStyle !== pr.negStyle) {
+			this.negStyle = null;
+		}
+		if (this.currency !== pr.currency) {
+			this.currency = null;
+		}
+		if (this.currencyPrepend !== pr.currencyPrepend) {
+			this.currencyPrepend = null;
+		}
+	};
 	//////////////////////////////////////////////////////////////////
 	///// Percentage format
 	//////////////////////////////////////////////////////////////////
@@ -4168,6 +4396,14 @@ function (window, undefined) {
 	asc_CFieldPercentageFormatProperty.prototype.asc_putSepStyle = function (v) {
 		this.sepStyle = v;
 	};
+	asc_CFieldPercentageFormatProperty.prototype.compare = function (pr) {
+		if (this.decimals !== pr.decimals) {
+			this.decimals = null;
+		}
+		if (this.sepStyle !== pr.sepStyle) {
+			this.sepStyle = null;
+		}
+	};
 
 	//////////////////////////////////////////////////////////////////
 	///// Date format
@@ -4186,6 +4422,11 @@ function (window, undefined) {
 	asc_CFieldDateFormatProperty.prototype.asc_putFormat = function (v) {
 		this.format = v;
 	};
+	asc_CFieldDateFormatProperty.prototype.compare = function (pr) {
+		if (this.format !== pr.format) {
+			this.format = null;
+		}
+	};
 
 	//////////////////////////////////////////////////////////////////
 	///// Time format
@@ -4203,6 +4444,11 @@ function (window, undefined) {
 	};
 	asc_CFieldTimeFormatProperty.prototype.asc_putFormat = function (v) {
 		this.format = v;
+	};
+	asc_CFieldTimeFormatProperty.prototype.compare = function (pr) {
+		if (this.format !== pr.format) {
+			this.format = null;
+		}
 	};
 
 	//////////////////////////////////////////////////////////////////
@@ -4229,6 +4475,14 @@ function (window, undefined) {
 	asc_CFieldSpecialFormatProperty.prototype.asc_putMask = function (v) {
 		this.mask = v;
 	};
+	asc_CFieldSpecialFormatProperty.prototype.compare = function (pr) {
+		if (this.format !== pr.format) {
+			this.format = null;
+		}
+		if (this.mask !== pr.mask) {
+			this.mask = null;
+		}
+	};
 
 	//////////////////////////////////////////////////////////////////
 	///// Regular (our custom) format
@@ -4246,6 +4500,11 @@ function (window, undefined) {
 	};
 	asc_CFieldRegularFormatProperty.prototype.asc_putRegExp = function (v) {
 		this.regExp = v;
+	};
+	asc_CFieldSpecialFormatProperty.prototype.compare = function (pr) {
+		if (this.regExp !== pr.regExp) {
+			this.regExp = null;
+		}
 	};
 
 	//////////////////////////////////////////////////////////////////
@@ -4286,6 +4545,14 @@ function (window, undefined) {
 	};
 	asc_CFieldValidateProperty.prototype.asc_putLessThen = function (v) {
 		this.lessThen = v;
+	};
+	asc_CFieldSpecialFormatProperty.prototype.compare = function (pr) {
+		if (this.greaterThen !== pr.greaterThen) {
+			this.greaterThen = null;
+		}
+		if (this.lessThen !== pr.lessThen) {
+			this.lessThen = null;
+		}
 	};
 
 	/** @constructor */

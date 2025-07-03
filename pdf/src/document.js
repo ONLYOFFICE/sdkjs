@@ -4207,7 +4207,9 @@ var CPresentation = CPresentation || function(){};
                 this.Api.sync_annotPropCallback(oCurObject);
             }
             else if (oCurObject.IsForm() && this.IsEditFieldsMode()) {
-                this.Api.sync_fieldPropCallback(oCurObject);
+                this.Api.sync_fieldPropCallback(oController.getSelectedObjects().map(function(editShape) {
+                    return editShape.GetEditField();
+                }));
             }
         }
         
