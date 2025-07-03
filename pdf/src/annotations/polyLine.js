@@ -84,6 +84,20 @@
             return;
         }
 
+        if (this.IsNeedRecalcSizes()) {
+            let oXfrm = this.getXfrm();
+            if (oXfrm) {
+                let aRect = this.GetRect();
+                
+                AscCommon.History.StartNoHistoryMode();
+                oXfrm.setOffX(aRect[0] * g_dKoef_pt_to_mm);
+                oXfrm.setOffY(aRect[1] * g_dKoef_pt_to_mm);
+                oXfrm.setExtX((aRect[2] - aRect[0]) * g_dKoef_pt_to_mm);
+                oXfrm.setExtY((aRect[3] - aRect[1]) * g_dKoef_pt_to_mm);
+                AscCommon.History.EndNoHistoryMode();
+            }
+        }
+
         if (this.recalcInfo.recalculateGeometry)
             this.RefillGeometry();
 
@@ -106,7 +120,7 @@
             });
         }
         
-        let aShapeRectInMM = this.GetOrigRect().map(function(measure) {
+        let aShapeRectInMM = this.GetRect().map(function(measure) {
             return measure * g_dKoef_pt_to_mm;
         });
 
@@ -118,28 +132,19 @@
         let oViewer     = editor.getDocumentRenderer();
         let oDoc        = oViewer.getPDFDoc();
 
-        oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetOrigRect(), aOrigRect));
+        oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aOrigRect));
 
-        this._origRect = aOrigRect;
+        this._rect = aOrigRect;
 
-        let oXfrm = this.getXfrm();
-        if (oXfrm) {
-            AscCommon.History.StartNoHistoryMode();
-            oXfrm.setOffX(aOrigRect[0] * g_dKoef_pt_to_mm);
-            oXfrm.setOffY(aOrigRect[1] * g_dKoef_pt_to_mm);
-            oXfrm.setExtX((aOrigRect[2] - aOrigRect[0]) * g_dKoef_pt_to_mm);
-            oXfrm.setExtY((aOrigRect[3] - aOrigRect[1]) * g_dKoef_pt_to_mm);
-            AscCommon.History.EndNoHistoryMode();
-        }
-        
-        this.AddToRedraw();
+        this.SetNeedRecalc(true);
+        this.SetNeedRecalcSizes(true);
         this.SetWasChanged(true);
     };
     CAnnotationPolyLine.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();
         oDoc.StartNoHistoryMode();
 
-        let oPolyline = new CAnnotationPolyLine(AscCommon.CreateGUID(), this.GetOrigRect().slice(), oDoc);
+        let oPolyline = new CAnnotationPolyLine(AscCommon.CreateGUID(), this.GetRect().slice(), oDoc);
         oPolyline.lazyCopy = true;
 
         this.fillObject(oPolyline);
@@ -173,7 +178,7 @@
     CAnnotationPolyLine.prototype.Copy = function() {
         let oDoc = this.GetDocument();
 
-        let oPolyline = new CAnnotationPolyLine(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+        let oPolyline = new CAnnotationPolyLine(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
         let sDate = ((new Date).getTime()).toString();
 
         this.fillObject(oPolyline);

@@ -116,7 +116,7 @@
         this.SetNeedRecalc(false);
     };
     CComboBoxField.prototype.RecalculateContentRect = function() {
-        let aOrigRect = this.GetOrigRect();
+        let aOrigRect = this.GetRect();
 
         let X       = aOrigRect[0];
         let Y       = aOrigRect[1];
@@ -158,7 +158,7 @@
         if (!this.content)
             return;
 
-        let aRect = this.GetOrigRect();
+        let aRect = this.GetRect();
         if (!aRect) {
             return;
         }

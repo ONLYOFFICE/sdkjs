@@ -110,7 +110,7 @@
         this.SetNeedRecalc(false);
     };
     CListBoxField.prototype.RecalculateContentRect = function() {
-        let aOrigRect = this.GetOrigRect();
+        let aOrigRect = this.GetRect();
 
         let X       = aOrigRect[0];
         let Y       = aOrigRect[1];
@@ -155,7 +155,7 @@
         if (!this.content)
             return;
 
-        let aRect = this.GetOrigRect();
+        let aRect = this.GetRect();
         if (!aRect) {
             return;
         }
@@ -754,7 +754,7 @@
         
         let oContentBounds  = this.content.GetContentBounds(0);
         let oContentRect    = this.getFormRelRect();
-        let aOrigRect       = this.GetOrigRect();
+        let aOrigRect       = this.GetRect();
 
         let nFormRotAngle = this.GetRotate();
         let dFrmW = oContentRect.W;

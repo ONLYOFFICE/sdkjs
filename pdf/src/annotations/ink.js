@@ -73,6 +73,8 @@
         aSourcePaths.forEach(function(aPath) {
             oThis.AddInkPath(aPath, isOnResize);
         });
+
+        this.recalcGeometry();
     };
     CAnnotationInk.prototype.AddInkPath = function(aInkPath, isOnResize) {
         AscCommon.History.Add(new CChangesPDFInkPoints(this, this._gestures.length, aInkPath, true));
@@ -141,62 +143,51 @@
         let oViewer     = editor.getDocumentRenderer();
         let oDoc        = oViewer.getPDFDoc();
 
-        oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetOrigRect(), aOrigRect));
+        oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aOrigRect));
 
-        this._origRect = aOrigRect;
+        this._rect = aOrigRect;
 
-        let oXfrm = this.getXfrm();
-        if (oXfrm) {
-            let nX1 = aOrigRect[0] * g_dKoef_pt_to_mm;
-            let nX2 = aOrigRect[2] * g_dKoef_pt_to_mm;
-            let nY1 = aOrigRect[1] * g_dKoef_pt_to_mm;
-            let nY2 = aOrigRect[3] * g_dKoef_pt_to_mm;
-
-            this.UpdateGestures([nX1, nY1, nX2, nY2]);
-
-            AscCommon.History.StartNoHistoryMode();
-            
-            this.spPr.xfrm.setExtX(nX2 - nX1);
-            this.spPr.xfrm.setExtY(nY2 - nY1);
-            this.spPr.xfrm.setOffX(nX1);
-            this.spPr.xfrm.setOffY(nY1);
-            
-            this.SetNeedRecalc(true);
-            this.RefillGeometry(this.spPr.geometry, [nX1, nY1, nX2, nY2]);
-            
-            AscCommon.History.EndNoHistoryMode();
-        }
-        
+        this.SetNeedRecalc(true);
+        this.SetNeedRecalcSizes(true);
         this.SetWasChanged(true);
     };
-    CAnnotationInk.prototype.SetFlipV = function(bFlip) {
-        let oDoc = this.GetDocument();
+    CAnnotationInk.prototype.SetFlipV = function() {
         return;
-        
-        if (this.flipV != bFlip) {
-            oDoc.History.Add(new CChangesPDFInkFlipV(this, this.flipV, bFlip));
-            this.changeFlipV(!this.flipV);
-            this.recalculate();
-        }
     };
-    CAnnotationInk.prototype.SetFlipH = function(bFlip) {
-        let oDoc = this.GetDocument();
+    CAnnotationInk.prototype.SetFlipH = function() {
         return;
-        
-        if (this.flipH != bFlip) {
-            oDoc.History.Add(new CChangesPDFInkFlipH(this, this.flipV, bFlip));
-            this.changeFlipH(!this.flipH);
-            this.recalculate();
-        }
     };
     CAnnotationInk.prototype.Recalculate = function(bForce) {
         if (true !== bForce && false == this.IsNeedRecalc()) {
             return;
         }
 
+        if (this.IsNeedRecalcSizes()) {
+            let oXfrm = this.getXfrm();
+            if (oXfrm) {
+                let aRect = this.GetRect();
+                AscCommon.History.StartNoHistoryMode();
+                
+                let nX1 = aRect[0] * g_dKoef_pt_to_mm;
+                let nX2 = aRect[2] * g_dKoef_pt_to_mm;
+                let nY1 = aRect[1] * g_dKoef_pt_to_mm;
+                let nY2 = aRect[3] * g_dKoef_pt_to_mm;
+
+                this.spPr.xfrm.setExtX(nX2 - nX1);
+                this.spPr.xfrm.setExtY(nY2 - nY1);
+                this.spPr.xfrm.setOffX(nX1);
+                this.spPr.xfrm.setOffY(nY1);
+                
+                AscCommon.History.EndNoHistoryMode();
+            }
+        }
+
         if (this._relativePaths.length != this._gestures.length) {
             this.InitGeometry();
             return;
+        }
+        if (this.recalcInfo.recalculateGeometry) {
+            this.RefillGeometry();
         }
         
         this.recalculateTransform();
@@ -222,7 +213,7 @@
             aShapePaths.push(aShapePath);
         }
         
-        let aShapeRectInMM = this.GetOrigRect().map(function(measure) {
+        let aShapeRectInMM = this.GetRect().map(function(measure) {
             return measure * g_dKoef_pt_to_mm;
         });
 
@@ -264,11 +255,12 @@
 
         this.Recalculate(true);
     };
-    CAnnotationInk.prototype.RefillGeometry = function(oGeometry, aBounds) {
+    CAnnotationInk.prototype.RefillGeometry = function() {
         if (!this._relativePaths) {
             return;
         }
 
+        let aBounds         = this.GetRect().map(function(measure) { return measure * g_dKoef_pt_to_mm});
         let aRelPointsPos   = this._relativePaths;
         let aShapePaths     = [];
         
@@ -296,7 +288,7 @@
             aShapePaths.push(aShapePath);
         }
         
-        let geometry = generateGeometry(aShapePaths, aBounds, oGeometry);
+        let geometry = generateGeometry(aShapePaths, aBounds, this.spPr.geometry);
         this.recalcTransform()
         var transform = this.getTransform();
         
@@ -312,7 +304,7 @@
         let aRelPointsPos   = this._relativePaths;
         let aGestures       = [];
         
-        let nLineW = this.GetWidth() * g_dKoef_pt_to_mm;
+        let nLineW = this.GetWidth();
 
         let xMin = aBounds[0] + nLineW;
         let yMin = aBounds[1] + nLineW;
@@ -328,8 +320,8 @@
 
             for (let nPoint = 0; nPoint < aPath.length; nPoint++) {
                 aInkPath.push(
-                    ((nWidthMM) * aPath[nPoint].relX + xMin) * g_dKoef_mm_to_pt,
-                    ((nHeightMM) * aPath[nPoint].relY + yMin) * g_dKoef_mm_to_pt
+                    ((nWidthMM) * aPath[nPoint].relX + xMin),
+                    ((nHeightMM) * aPath[nPoint].relY + yMin)
                 );
             }
             
@@ -342,7 +334,7 @@
         let oDoc = this.GetDocument();
         oDoc.StartNoHistoryMode();
 
-        let oNewInk = new CAnnotationInk(AscCommon.CreateGUID(), this.GetOrigRect().slice(), oDoc);
+        let oNewInk = new CAnnotationInk(AscCommon.CreateGUID(), this.GetRect().slice(), oDoc);
 
         oNewInk.lazyCopy = true;
 
@@ -371,7 +363,7 @@
     CAnnotationInk.prototype.Copy = function() {
         let oDoc = this.GetDocument();
 
-        let oNewInk = new CAnnotationInk(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+        let oNewInk = new CAnnotationInk(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
         let sDate = ((new Date).getTime()).toString();
 
         this.fillObject(oNewInk);
@@ -462,7 +454,7 @@
     }
 
     function initShape(oParentAnnot) {
-        let aOrigRect = oParentAnnot.GetOrigRect();
+        let aOrigRect = oParentAnnot.GetRect();
         let aShapeRectInMM = aOrigRect ? aOrigRect.map(function(measure) {
             return measure * g_dKoef_pt_to_mm;
         }) : [];

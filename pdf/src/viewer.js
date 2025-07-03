@@ -1975,8 +1975,8 @@
 					if (true !== bGetHidden && oAnnot.IsHidden() == true || false == oAnnot.IsComment())
 						continue;
 					
-					if (pageObject.x >= oAnnot._origRect[0] && pageObject.x <= oAnnot._origRect[0] + nAnnotWidth &&
-					pageObject.y >= oAnnot._origRect[1] && pageObject.y <= oAnnot._origRect[1] + nAnnotHeight) {
+					if (pageObject.x >= oAnnot._rect[0] && pageObject.x <= oAnnot._rect[0] + nAnnotWidth &&
+					pageObject.y >= oAnnot._rect[1] && pageObject.y <= oAnnot._rect[1] + nAnnotHeight) {
 						if (bGetHidden) {
 							return oAnnot;
 						}
@@ -1989,8 +1989,8 @@
 				for (let i = page.annots.length -1; i >= 0; i--)
 				{
 					let oAnnot = page.annots[i];
-					let nAnnotWidth		= (oAnnot._origRect[2] - oAnnot._origRect[0]);
-					let nAnnotHeight	= (oAnnot._origRect[3] - oAnnot._origRect[1]);
+					let nAnnotWidth		= (oAnnot._rect[2] - oAnnot._rect[0]);
+					let nAnnotHeight	= (oAnnot._rect[3] - oAnnot._rect[1]);
 					
 					if (true !== bGetHidden && oAnnot.IsHidden() == true || oAnnot.IsComment())
 						continue;
@@ -2002,8 +2002,8 @@
 							return oAnnot;
 					}
 
-					if (pageObject.x >= oAnnot._origRect[0] && pageObject.x <= oAnnot._origRect[0] + nAnnotWidth &&
-						pageObject.y >= oAnnot._origRect[1] && pageObject.y <= oAnnot._origRect[1] + nAnnotHeight)
+					if (pageObject.x >= oAnnot._rect[0] && pageObject.x <= oAnnot._rect[0] + nAnnotWidth &&
+						pageObject.y >= oAnnot._rect[1] && pageObject.y <= oAnnot._rect[1] + nAnnotHeight)
 					{
 						// у маркап аннотаций ищем по quads (т.к. rect too wide)
 						if (oAnnot.IsTextMarkup())

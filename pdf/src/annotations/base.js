@@ -64,7 +64,7 @@
         this._modDate               = undefined;
         this._name                  = undefined;
         this._opacity               = 1;
-        this._origRect              = [];
+        this._rect              = [];
         this._refType               = undefined;
         this._seqNum                = undefined;
         this._strokeColor           = undefined;
@@ -333,14 +333,10 @@
         let oDoc = Asc.editor.getPDFDoc();
         let canChange = !oViewer.IsOpenAnnotsInProgress && oDoc.History.CanAddChanges();
         if (this._wasChanged == isChanged || !canChange) {
-            if (canChange && this._prevDrawFromStreamState !== this.IsNeedDrawFromStream()) {
-                this.SetDrawFromStream(!isChanged)
-            }
-            
             return;
         }
 
-        oDoc.History.Add(new CChangesPDFAnnotChanged(this, [this._wasChanged, !this.IsNeedDrawFromStream()], [isChanged, viewSync]));
+        oDoc.History.Add(new CChangesPDFAnnotChanged(this, this._wasChanged, isChanged));
 
         this._wasChanged = isChanged;
         if (false !== viewSync) {
@@ -357,7 +353,7 @@
         let originView = this.GetOriginView(oGraphicsPDF.GetDrawingPageW(), oGraphicsPDF.GetDrawingPageH());
 
         if (originView) {
-            let aOrigRect = this.GetOrigRect();
+            let aOrigRect = this.GetRect();
             
             let X = aOrigRect[0];
             let Y = aOrigRect[1];
@@ -371,7 +367,7 @@
         }
 
         // oGraphicsPDF.SetLineWidth(1);
-        // let aOringRect  = this.GetOrigRect();
+        // let aOringRect  = this.GetRect();
         // let X       = aOringRect[0];
         // let Y       = aOringRect[1];
         // let nWidth  = aOringRect[2] - aOringRect[0];
@@ -512,7 +508,7 @@
     };
     CAnnotationBase.prototype.SetPosition = function(x, y) {
         let oDoc        = this.GetDocument();
-        let aCurRect    = this.GetOrigRect();
+        let aCurRect    = this.GetRect();
 
         let nOldX = aCurRect[0];
         let nOldY = aCurRect[1];
@@ -563,16 +559,16 @@
 
         let aRD = this.GetRectangleDiff() || [0, 0, 0, 0];
 
-        this._origRect[0] = x;
-        this._origRect[1] = y;
-        this._origRect[2] = x + nWidth;
-        this._origRect[3] = y + nHeight;
+        this._rect[0] = x;
+        this._rect[1] = y;
+        this._rect[2] = x + nWidth;
+        this._rect[3] = y + nHeight;
 
         if (this.IsShapeBased()) {
             let oXfrm = this.getXfrm();
             AscCommon.History.StartNoHistoryMode();
-            oXfrm.setOffX((this._origRect[0] + aRD[0]) * g_dKoef_pt_to_mm);
-            oXfrm.setOffY((this._origRect[1] + aRD[1]) * g_dKoef_pt_to_mm);
+            oXfrm.setOffX((this._rect[0] + aRD[0]) * g_dKoef_pt_to_mm);
+            oXfrm.setOffY((this._rect[1] + aRD[1]) * g_dKoef_pt_to_mm);
             AscCommon.History.EndNoHistoryMode();
         }
 
@@ -629,31 +625,35 @@
     CAnnotationBase.prototype.IsNeedRecalc = function() {
         return this._needRecalc;
     };
-    CAnnotationBase.prototype.GetOrigRect = function() {
-        return this._origRect || (this.GetReplyTo() ? this.GetReplyTo().GetOrigRect() : this._origRect);
+    CAnnotationBase.prototype.GetRect = function() {
+        return this._rect || (this.GetReplyTo() ? this.GetReplyTo().GetRect() : this._rect);
     };
     CAnnotationBase.prototype.IsNeedDrawFromStream = function() {
         return this._bDrawFromStream;
     };
     CAnnotationBase.prototype.SetDrawFromStream = function(bFromStream) {
         let oDoc = Asc.editor.getPDFDoc();
-        let oViewer = Asc.editor.getDocumentRenderer();
         
-        if (this._prevDrawFromStreamState) {
-            oDoc.History.Add(new CChangesPDFAnnotChangedView(this, this._prevDrawFromStreamState, bFromStream));
-        }
-
-        if (false == oViewer.IsOpenAnnotsInProgress) {
-            this._prevDrawFromStreamState = this._bDrawFromStream;
-        }
-
+        oDoc.History.Add(new CChangesPDFAnnotChangedView(this, this._bDrawFromStream, bFromStream));
         this._bDrawFromStream = bFromStream;
     };
     CAnnotationBase.prototype.SetRect = function(aOrigRect) {
-        AscCommon.History.Add(new CChangesPDFAnnotRect(this, this.GetOrigRect(), aOrigRect));
+        AscCommon.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aOrigRect));
 
-        this._origRect = aOrigRect;
+        this._rect = aOrigRect;
         this.SetWasChanged(true);
+    };
+    CAnnotationBase.prototype.SetNeedRecalcSizes = function(bRecalc) {
+        let oDoc = Asc.editor.getPDFDoc();
+        if (oDoc.Viewer.IsOpenAnnotsInProgress) {
+            return;
+        }
+        
+        this._needRecalcSizes = bRecalc;
+        this.recalcGeometry && this.recalcGeometry();
+    };
+    CAnnotationBase.prototype.IsNeedRecalcSizes = function() {
+        return this._needRecalcSizes;
     };
     CAnnotationBase.prototype.IsUseInDocument = function() {
         let oPage = this.GetParentPage();
@@ -664,9 +664,6 @@
         return false;
     };
     
-    CAnnotationBase.prototype.GetRect = function() {
-        return this._origRect;
-    };
     CAnnotationBase.prototype.GetId = function() {
         return this.Id;
     };
@@ -791,7 +788,7 @@
 
         // draw annot rect
         // oGraphicsPDF.SetLineWidth(1);
-        // let aOringRect  = this.GetOrigRect();
+        // let aOringRect  = this.GetRect();
         // let X       = aOringRect[0];
         // let Y       = aOringRect[1];
         // let nWidth  = aOringRect[2] - aOringRect[0];
@@ -1087,12 +1084,12 @@
         let oDoc = this.GetDocument();
         oDoc.StartNoHistoryMode();
 
-        let oNewAnnot = new CAnnotationBase(AscCommon.CreateGUID(), this.type, this.GetOrigRect().slice(), oDoc);
+        let oNewAnnot = new CAnnotationBase(AscCommon.CreateGUID(), this.type, this.GetRect().slice(), oDoc);
 
         oNewAnnot.lazyCopy = true;
         
-        if (this._origRect)
-            oNewAnnot._origRect = this._origRect.slice();
+        if (this._rect)
+            oNewAnnot._rect = this._rect.slice();
 
         oNewAnnot._originView = this._originView;
         oNewAnnot._apIdx = this._apIdx;
@@ -1204,7 +1201,7 @@
         let sModDate        = this.GetModDate(true);
 
         // rect
-        let aOrigRect = this.GetOrigRect();
+        let aOrigRect = this.GetRect();
         if (this.IsStamp() && memory.docRenderer) {
             // for not clipping by half border width
             memory.WriteDouble(aOrigRect[0] - nBorderW / 2); // x1

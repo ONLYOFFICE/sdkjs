@@ -1176,7 +1176,7 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.NavigateToField = function(oField) {
         let oViewer     = Asc.editor.getDocumentRenderer();
-        let aOrigRect   = oField.GetOrigRect();
+        let aOrigRect   = oField.GetRect();
         let nPage       = oField.GetPage();
         
         let oViewRect = oViewer.getViewingRect2(nPage);
@@ -2936,7 +2936,7 @@ var CPresentation = CPresentation || function(){};
         if (!oField)
             return null;
 
-        oField._origRect = aCoords;
+        oField._rect = aCoords;
 
         oField.SetNeedRecalc(true);
 
@@ -3210,7 +3210,7 @@ var CPresentation = CPresentation || function(){};
             let oPos;
             let nPage       = oAnnot.GetPage();
             let nPageRotate = this.Viewer.getPageRotate(nPage);
-            let aOrigRect   = oAnnot.GetOrigRect();
+            let aOrigRect   = oAnnot.GetRect();
             let oTr         = this.pagesTransform[nPage].invert;
             
             let w = aOrigRect[2] - aOrigRect[0];
@@ -3558,7 +3558,7 @@ var CPresentation = CPresentation || function(){};
             let oPos;
             let nPage       = oAnnot.GetPage();
             let nPageRotate = this.Viewer.getPageRotate(nPage);
-            let aOrigRect   = oAnnot.GetOrigRect();
+            let aOrigRect   = oAnnot.GetRect();
             let oTr         = this.pagesTransform[nPage].invert;
             
             let w = aOrigRect[2] - aOrigRect[0];
@@ -3792,7 +3792,7 @@ var CPresentation = CPresentation || function(){};
             return;
 
         let nPage = oAnnot.GetPage();
-        let aRect = oAnnot.GetOrigRect();
+        let aRect = oAnnot.GetRect();
 
         let isVisible = false;
         let oViewRect = this.Viewer.getViewingRect2(nPage);
@@ -6764,7 +6764,7 @@ var CPresentation = CPresentation || function(){};
                     continue;
                 }
                 
-                let aRect = aObjects[i].GetOrigRect();
+                let aRect = aObjects[i].GetRect();
                 let nPage = aObjects[i].GetPage();
                 let nRotRad = aObjects[i].GetRot ? aObjects[i].GetRot() : 0;
 
@@ -6856,7 +6856,7 @@ var CPresentation = CPresentation || function(){};
 			oApi.sync_HideForeignCursorLabel(userId);
 		}, AscCommon.FOREIGN_CURSOR_LABEL_HIDETIME);
 
-        let oOrigRect = foreignSelectObj.GetOrigRect();
+        let oOrigRect = foreignSelectObj.GetRect();
         let nPage = foreignSelectObj.GetPage();
 		let oTr = this.pagesTransform[nPage].invert;
 
@@ -8496,7 +8496,7 @@ var CPresentation = CPresentation || function(){};
 
     /**
 	 * Converts global coords to page coords.
-     * Note: use scaled coordinates like pagePos_ from field, and not original like _origRect from field.
+     * Note: use scaled coordinates like pagePos_ from field, and not original like _rect from field.
      * @param {Number} x
      * @param {Number} y
      * @param {Number} nPage
@@ -8528,7 +8528,7 @@ var CPresentation = CPresentation || function(){};
 
     /**
 	 * Converts page (native) coords to global coords.
-     * Note: use scaled coordinates like pagePos_ from field, and not original like _origRect from field.
+     * Note: use scaled coordinates like pagePos_ from field, and not original like _rect from field.
      * @param {Number} x
      * @param {Number} y
      * @param {Number} nPage

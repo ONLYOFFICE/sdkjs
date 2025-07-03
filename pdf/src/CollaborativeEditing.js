@@ -84,7 +84,7 @@ CPDFCollaborativeEditing.prototype.Check_ForeignSelectedObjectsLabels = function
                 continue;
             }
 
-            let aOrigRect = aObjects[i].GetOrigRect();
+            let aOrigRect = aObjects[i].GetRect();
             if (X >= aOrigRect[0] && X < aOrigRect[2] && Y > aOrigRect[1] && Y < aOrigRect[3]) {
                 let color = AscCommon.getUserColorById(this.m_aForeignCursorsId[UserId], null, true);
                 oDoc.Show_ForeignSelectedObjectLabel(UserId, aObjects[i], color);

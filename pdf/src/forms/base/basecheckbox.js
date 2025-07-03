@@ -115,7 +115,7 @@
         this._hovered = bValue;
     };
     CBaseCheckBoxField.prototype.DrawCheckedSymbol = function(oGraphicsPDF) {
-        let aOrigRect = this.GetOrigRect();
+        let aOrigRect = this.GetRect();
         let nRotAngle = this.GetRotate();
 
         let X       = aOrigRect[0];

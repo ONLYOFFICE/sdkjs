@@ -62,7 +62,7 @@
         let oDoc = this.GetDocument();
         oDoc.StartNoHistoryMode();
 
-        let oSquare = new CAnnotationSquare(AscCommon.CreateGUID(), this.GetOrigRect().slice(), oDoc);
+        let oSquare = new CAnnotationSquare(AscCommon.CreateGUID(), this.GetRect().slice(), oDoc);
 
         oSquare.lazyCopy = true;
 
@@ -94,7 +94,7 @@
     CAnnotationSquare.prototype.Copy = function() {
         let oDoc = this.GetDocument();
 
-        let oSquare = new CAnnotationSquare(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+        let oSquare = new CAnnotationSquare(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
         let sDate = ((new Date).getTime()).toString();
 
         this.fillObject(oSquare);
@@ -129,7 +129,7 @@
             return;
 
         let oDoc        = this.GetDocument();
-        let aOrigRect   = this.GetOrigRect();
+        let aOrigRect   = this.GetRect();
         let aRD         = this.GetRectangleDiff() || [0, 0, 0, 0];
 
         let aPoints;
@@ -167,12 +167,13 @@
         let oViewer = editor.getDocumentRenderer();
         let oDoc    = oViewer.getPDFDoc();
 
-        oDoc.History.Add(new CChangesPDFAnnotRect(this, this._origRect, aOrigRect));
+        oDoc.History.Add(new CChangesPDFAnnotRect(this, this._rect, aOrigRect));
 
-        this._origRect = aOrigRect;
+        this._rect = aOrigRect;
 
-        this.SetWasChanged(true);
+        this.SetNeedRecalc(true);
         this.SetNeedRecalcSizes(true);
+        this.SetWasChanged(true);
     };
     CAnnotationSquare.prototype.SetRectangleDiff = function(aDiff) {
         let oDoc = this.GetDocument();
@@ -184,13 +185,6 @@
         this.SetNeedRecalcSizes(true);
         this.SetNeedRecalc(true);
     };
-    CAnnotationSquare.prototype.SetNeedRecalcSizes = function(bRecalc) {
-        this._needRecalcSizes = bRecalc;
-        this.recalcGeometry();
-    };
-    CAnnotationSquare.prototype.IsNeedRecalcSizes = function() {
-        return this._needRecalcSizes;
-    };
     CAnnotationSquare.prototype.IsSquare = function() {
         return true;
     };
@@ -200,14 +194,14 @@
         }
 
         if (this.IsNeedRecalcSizes()) {
-            let aOrigRect = this.GetOrigRect();
+            let aRect = this.GetRect();
             let aRD = this.GetRectangleDiff();
             
-            let extX = ((aOrigRect[2] - aOrigRect[0]) - aRD[0] - aRD[2]) * g_dKoef_pt_to_mm;
-            let extY = ((aOrigRect[3] - aOrigRect[1]) - aRD[1] - aRD[3]) * g_dKoef_pt_to_mm;
+            let extX = ((aRect[2] - aRect[0]) - aRD[0] - aRD[2]) * g_dKoef_pt_to_mm;
+            let extY = ((aRect[3] - aRect[1]) - aRD[1] - aRD[3]) * g_dKoef_pt_to_mm;
 
-            this.spPr.xfrm.offX = (aOrigRect[0] + aRD[0]) * g_dKoef_pt_to_mm;
-            this.spPr.xfrm.offY = (aOrigRect[1] + aRD[1]) * g_dKoef_pt_to_mm;
+            this.spPr.xfrm.offX = (aRect[0] + aRD[0]) * g_dKoef_pt_to_mm;
+            this.spPr.xfrm.offY = (aRect[1] + aRD[1]) * g_dKoef_pt_to_mm;
 
             this.spPr.xfrm.extX = extX;
             this.spPr.xfrm.extY = extY;

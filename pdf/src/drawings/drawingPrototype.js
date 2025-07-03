@@ -243,7 +243,7 @@
 
         return aInfo;
     };
-    CPdfDrawingPrototype.prototype.GetOrigRect = function() {
+    CPdfDrawingPrototype.prototype.GetRect = function() {
         let oXfrm = this.getXfrm();
 
         return [oXfrm.offX * g_dKoef_mm_to_pt, oXfrm.offY * g_dKoef_mm_to_pt, (oXfrm.offX + this.extX) * g_dKoef_mm_to_pt, (oXfrm.offY + this.extY) * g_dKoef_mm_to_pt];

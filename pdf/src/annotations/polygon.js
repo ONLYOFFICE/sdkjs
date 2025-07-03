@@ -82,6 +82,20 @@
             return;
         }
 
+        if (this.IsNeedRecalcSizes()) {
+            let oXfrm = this.getXfrm();
+            if (oXfrm) {
+                let aRect = this.GetRect();
+
+                AscCommon.History.StartNoHistoryMode();
+                oXfrm.setOffX(aRect[0] * g_dKoef_pt_to_mm);
+                oXfrm.setOffY(aRect[1] * g_dKoef_pt_to_mm);
+                oXfrm.setExtX((aRect[2] - aRect[0]) * g_dKoef_pt_to_mm);
+                oXfrm.setExtY((aRect[3] - aRect[1]) * g_dKoef_pt_to_mm);
+                AscCommon.History.EndNoHistoryMode();
+            }
+        }
+
         if (this.recalcInfo.recalculateGeometry)
             this.RefillGeometry();
 
@@ -127,28 +141,19 @@
         let oViewer     = Asc.editor.getDocumentRenderer();
         let oDoc        = oViewer.getPDFDoc();
 
-        oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetOrigRect(), aOrigRect));
+        oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aOrigRect));
 
-        this._origRect = aOrigRect;
+        this._rect = aOrigRect;
 
-        let oXfrm = this.getXfrm();
-        if (oXfrm) {
-            AscCommon.History.StartNoHistoryMode();
-            oXfrm.setOffX(aOrigRect[0] * g_dKoef_pt_to_mm);
-            oXfrm.setOffY(aOrigRect[1] * g_dKoef_pt_to_mm);
-            oXfrm.setExtX((aOrigRect[2] - aOrigRect[0]) * g_dKoef_pt_to_mm);
-            oXfrm.setExtY((aOrigRect[3] - aOrigRect[1]) * g_dKoef_pt_to_mm);
-            AscCommon.History.EndNoHistoryMode();
-        }
-
-        this.AddToRedraw();
+        this.SetNeedRecalc(true);
+        this.SetNeedRecalcSizes(true);
         this.SetWasChanged(true);
     };
     CAnnotationPolygon.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();
         oDoc.StartNoHistoryMode();
 
-        let oPolygon = new CAnnotationPolygon(AscCommon.CreateGUID(), this.GetOrigRect().slice(), oDoc);
+        let oPolygon = new CAnnotationPolygon(AscCommon.CreateGUID(), this.GetRect().slice(), oDoc);
         oPolygon.lazyCopy = true;
 
         this.fillObject(oPolygon);
@@ -181,7 +186,7 @@
     CAnnotationPolygon.prototype.Copy = function() {
         let oDoc = this.GetDocument();
 
-        let oPolygon = new CAnnotationPolygon(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+        let oPolygon = new CAnnotationPolygon(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
         let sDate = ((new Date).getTime()).toString();
 
         this.fillObject(oPolygon);

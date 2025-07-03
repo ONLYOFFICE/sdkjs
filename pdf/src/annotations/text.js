@@ -131,7 +131,7 @@
         this._replies = [];
     };
     CAnnotationText.prototype.AddReply = function(CommentData, nPos) {
-        let oReply = new CAnnotationText(AscCommon.CreateGUID(), this.GetOrigRect().slice(), this.GetDocument());
+        let oReply = new CAnnotationText(AscCommon.CreateGUID(), this.GetRect().slice(), this.GetDocument());
 
         oReply.SetCreationDate(CommentData.m_sOOTime);
         oReply.SetModDate(CommentData.m_sOOTime);
@@ -233,7 +233,7 @@
         let oDoc = this.GetDocument();
         oDoc.StartNoHistoryMode();
 
-        let oNewAnnot = new CAnnotationText(AscCommon.CreateGUID(), this.GetOrigRect().slice(), oDoc);
+        let oNewAnnot = new CAnnotationText(AscCommon.CreateGUID(), this.GetRect().slice(), oDoc);
 
         oNewAnnot.lazyCopy = true;
         oNewAnnot._originView = this._originView;
@@ -253,7 +253,7 @@
         return oNewAnnot;
     };
     CAnnotationText.prototype.Copy = function() {
-        let oNewAnnot = new CAnnotationText(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), this.GetDocument());
+        let oNewAnnot = new CAnnotationText(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), this.GetDocument());
         let sDate = ((new Date).getTime()).toString();
 
         let aFillColor = this.GetFillColor();
@@ -280,7 +280,7 @@
 
         let oDoc        = this.GetDocument();
         let nPage       = this.GetPage();
-        let aOrigRect   = this.GetOrigRect();
+        let aOrigRect   = this.GetRect();
         let nRotAngle   = oDoc.Viewer.getPageRotate(nPage);
         
         let nX          = aOrigRect[0];

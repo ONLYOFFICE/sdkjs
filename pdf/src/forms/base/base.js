@@ -370,7 +370,7 @@
         return this.contentClipRect;
     };
     CBaseField.prototype.getFormRect = function() {
-        let aOrigRect = this.GetOrigRect();
+        let aOrigRect = this.GetRect();
 
         return {
             X : aOrigRect[0] * g_dKoef_pt_to_mm,
@@ -892,7 +892,7 @@
             indLeft = indLeft + (w - h) / 2;
         }
 
-        let aOrigRect = this.GetOrigRect();
+        let aOrigRect = this.GetRect();
         let X = aOrigRect[0] * nScale + indLeft;
         let Y = aOrigRect[1] * nScale + indTop;
         let W = (aOrigRect[2] - aOrigRect[0]) * nScale;
@@ -933,7 +933,7 @@
         AscPDF.endMultiplyMode(oCtx);
     };
     CBaseField.prototype.DrawBorders = function(oGraphicsPDF) {
-        let aOringRect  = this.GetOrigRect();
+        let aOringRect  = this.GetRect();
         let aBgColor;
         if (this.GetType() == AscPDF.FIELD_TYPES.button)
             aBgColor = this.GetBackgroundColor() || [1];
@@ -1840,7 +1840,7 @@
     };
 
     CBaseField.prototype.DrawBackground = function(oGraphicsPDF) {
-        let aOrigRect       = this.GetOrigRect();
+        let aOrigRect       = this.GetRect();
         let aBgColor        = this.GetBackgroundColor();
         let oBgRGBColor;
 
@@ -2227,7 +2227,7 @@
 
         let originView = this.GetOriginView(nAPType, oGraphicsPDF.GetDrawingPageW(), oGraphicsPDF.GetDrawingPageH());
 
-        let aOringRect = this.GetOrigRect();
+        let aOringRect = this.GetRect();
 
         let X = aOringRect[0];
         let Y = aOringRect[1];
@@ -2401,7 +2401,7 @@
     CBaseField.prototype.SetRect = function(aOrigRect) {
         AscCommon.History.Add(new CChangesPDFFormRect(this, this.GetRect(), aOrigRect));
 
-        this._origRect = aOrigRect;
+        this._rect = aOrigRect;
         this.SetWasChanged(true);
         this.SetNeedRecalc(true);
 		this.RecalcTextTransform();
@@ -2444,11 +2444,8 @@
 
         this.SetRect(aNewRect);
     };
-    CBaseField.prototype.GetOrigRect = function() {
-        return this._origRect;
-    };
     CBaseField.prototype.GetRect = function() {
-        return this.GetOrigRect();
+        return this._rect;
     };
     CBaseField.prototype.GetWidth = function() {
         let aRect = this.GetRect();
@@ -2503,7 +2500,7 @@
         return this.GetPage();
     };
     CBaseField.prototype["getPagePos"] = function() {
-        let aOrigRect = this.GetOrigRect();
+        let aOrigRect = this.GetRect();
         return {
             "x" : aOrigRect[0],
             "y" : aOrigRect[1],
@@ -2553,7 +2550,7 @@
         memory.WriteLong(this.GetOriginPage());
 
         // rect
-        let aOrigRect = this.GetOrigRect();
+        let aOrigRect = this.GetRect();
         memory.WriteDouble(aOrigRect[0]); // x1
         memory.WriteDouble(aOrigRect[1]); // y1
         memory.WriteDouble(aOrigRect[2]); // x2

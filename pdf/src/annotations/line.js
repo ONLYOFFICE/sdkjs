@@ -120,7 +120,7 @@
             });
         }
         
-        let aShapeRectInMM = this.GetOrigRect().map(function(measure) {
+        let aShapeRectInMM = this.GetRect().map(function(measure) {
             return measure * g_dKoef_pt_to_mm;
         });
 
@@ -149,6 +149,18 @@
     CAnnotationLine.prototype.Recalculate = function(bForce) {
         if (true !== bForce && false == this.IsNeedRecalc()) {
             return;
+        }
+
+        if (this.IsNeedRecalcSizes()) {
+            let oXfrm = this.getXfrm();
+            if (oXfrm) {
+                let aRect = this.GetRect();
+
+                AscCommon.History.StartNoHistoryMode();
+                this.spPr.xfrm.setExtX([aRect[2] - aRect[0]] * g_dKoef_pt_to_mm);
+                this.spPr.xfrm.setExtY((aRect[3] - aRect[1]) * g_dKoef_pt_to_mm);
+                AscCommon.History.EndNoHistoryMode();
+            }
         }
 
         if (this.recalcInfo.recalculateGeometry)
@@ -194,7 +206,7 @@
         let oDoc = this.GetDocument();
         oDoc.StartNoHistoryMode();
 
-        let oLine = new CAnnotationLine(AscCommon.CreateGUID(), this.GetOrigRect().slice(), oDoc);
+        let oLine = new CAnnotationLine(AscCommon.CreateGUID(), this.GetRect().slice(), oDoc);
 
         oLine.lazyCopy = true;
 
@@ -228,7 +240,7 @@
     CAnnotationLine.prototype.Copy = function() {
         let oDoc = this.GetDocument();
 
-        let oLine = new CAnnotationLine(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+        let oLine = new CAnnotationLine(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
         let sDate = ((new Date).getTime()).toString();
 
         this.fillObject(oLine);
@@ -331,19 +343,12 @@
         let oViewer     = editor.getDocumentRenderer();
         let oDoc        = oViewer.getPDFDoc();
 
-        oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetOrigRect(), aOrigRect));
+        oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aOrigRect));
 
-        this._origRect = aOrigRect;
-
-        let oXfrm = this.getXfrm();
-        if (oXfrm) {
-            oDoc.StartNoHistoryMode();
-            this.spPr.xfrm.setExtX([aOrigRect[2] - aOrigRect[0]] * g_dKoef_pt_to_mm);
-            this.spPr.xfrm.setExtY((aOrigRect[3] - aOrigRect[1]) * g_dKoef_pt_to_mm);
-            oDoc.EndNoHistoryMode();
-        }
+        this._rect = aOrigRect;
 
         this.SetNeedRecalc(true);
+        this.SetNeedRecalcSizes(true);
         this.SetWasChanged(true);
     };
     CAnnotationLine.prototype.SetStrokeColor = function(aColor) {

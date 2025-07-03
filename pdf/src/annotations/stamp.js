@@ -262,7 +262,7 @@
     };
     CAnnotationStamp.prototype.SetPosition = function(x, y) {
         let oDoc        = this.GetDocument();
-        let aCurRect    = this.GetOrigRect();
+        let aCurRect    = this.GetRect();
 
         let nOldX = aCurRect[0];
         let nOldY = aCurRect[1];
@@ -279,10 +279,10 @@
         let nWidth  = aCurRect[2] - aCurRect[0];
         let nHeight = aCurRect[3] - aCurRect[1];
 
-        this._origRect[0] = x;
-        this._origRect[1] = y;
-        this._origRect[2] = x + nWidth;
-        this._origRect[3] = y + nHeight;
+        this._rect[0] = x;
+        this._rect[1] = y;
+        this._rect[2] = x + nWidth;
+        this._rect[3] = y + nHeight;
         
         let oXfrm = this.getXfrm();
         let nOffX = x - (this.getXfrmExtX() / g_dKoef_pt_to_mm - nWidth) / 2;
@@ -303,7 +303,7 @@
         
         if (this.GetRotate() != 0 && this.getXfrm() && !isOnRotate) {
             oDoc.History.Add(new CChangesPDFAnnotStampRect(this, aCurRect, aRect, isOnRotate));
-            this._origRect = aRect;
+            this._rect = aRect;
 
             this.SetNeedRecalcSizes(!isOnRotate);
             this.handleUpdateRot();
@@ -311,22 +311,10 @@
         }
 
         oDoc.History.Add(new CChangesPDFAnnotStampRect(this, aCurRect, aRect, isOnRotate));
-        this._origRect = aRect;
+        this._rect = aRect;
 
         this.SetWasChanged(true);
         this.SetNeedRecalcSizes(!isOnRotate);
-    };
-    CAnnotationStamp.prototype.SetNeedRecalcSizes = function(bRecalc) {
-        let oDoc = Asc.editor.getPDFDoc();
-        if (oDoc.Viewer.IsOpenAnnotsInProgress) {
-            return;
-        }
-
-        this._needRecalcSizes = bRecalc;
-        this.recalcGeometry();
-    };
-    CAnnotationStamp.prototype.IsNeedRecalcSizes = function() {
-        return this._needRecalcSizes;
     };
     CAnnotationStamp.prototype.canRotate = function() {
         return true;
@@ -389,7 +377,7 @@
         let oDoc = this.GetDocument();
         oDoc.StartNoHistoryMode();
 
-        let oNewStamp = new CAnnotationStamp(AscCommon.CreateGUID(), this.GetOrigRect().slice(), oDoc);
+        let oNewStamp = new CAnnotationStamp(AscCommon.CreateGUID(), this.GetRect().slice(), oDoc);
 
         oNewStamp.SetInRect(this.inRect);
         oNewStamp.lazyCopy = true;
@@ -422,7 +410,7 @@
     CAnnotationStamp.prototype.Copy = function() {
         let oDoc = this.GetDocument();
 
-        let oNewStamp = new CAnnotationStamp(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+        let oNewStamp = new CAnnotationStamp(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
         let sDate = ((new Date).getTime()).toString();
 
         this.fillObject(oNewStamp);

@@ -449,27 +449,16 @@
 		}, undefined, this);
 	};
 	CAnnotationFreeText.prototype.SetRect = function(aOrigRect) {
-		AscCommon.History.Add(new CChangesPDFAnnotRect(this, this.GetOrigRect(), aOrigRect));
+		AscCommon.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aOrigRect));
 		
-		this._origRect = aOrigRect;
-		
-		let oXfrm = this.getXfrm();
-		if (oXfrm) {
-			AscCommon.ExecuteNoHistory(function() {
-				this.spPr.xfrm.extX = (aOrigRect[2] - aOrigRect[0]) * g_dKoef_pt_to_mm;
-				this.spPr.xfrm.extY = (aOrigRect[3] - aOrigRect[1]) * g_dKoef_pt_to_mm;
-				this.spPr.xfrm.offX = aOrigRect[0] * g_dKoef_pt_to_mm;
-				this.spPr.xfrm.offY = aOrigRect[1] * g_dKoef_pt_to_mm;
-				this.updateTransformMatrix();
-				this.recalcGeometry();
-			}, undefined, this);
-		}
+		this._rect = aOrigRect;
 		
 		this.SetNeedRecalc(true);
+        this.SetNeedRecalcSizes(true);
 		this.SetWasChanged(true);
 	};
     CAnnotationFreeText.prototype.GetTextBoxRect = function() {
-        let aOrigRect   = this.GetOrigRect();
+        let aOrigRect   = this.GetRect();
         let aRD         = this.GetRectangleDiff() || [0, 0, 0, 0]; // отступ координат фигуры с текстом от ректа аннотации
 
         let xMin = (aOrigRect[0] + aRD[0]);
@@ -483,7 +472,7 @@
         let oDoc = this.GetDocument();
         oDoc.StartNoHistoryMode();
 
-        let oFreeText = new CAnnotationFreeText(AscCommon.CreateGUID(), this.GetOrigRect().slice(), oDoc);
+        let oFreeText = new CAnnotationFreeText(AscCommon.CreateGUID(), this.GetRect().slice(), oDoc);
 
         oFreeText.lazyCopy = true;
 
@@ -516,7 +505,7 @@
     CAnnotationFreeText.prototype.Copy = function() {
         let oDoc = this.GetDocument();
 
-        let oFreeText = new CAnnotationFreeText(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+        let oFreeText = new CAnnotationFreeText(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
         let sDate = ((new Date).getTime()).toString();
 
         let aStrokeColor    = this.GetStrokeColor();
@@ -553,6 +542,21 @@
         if (this.IsNeedRecalc() == false)
             return;
 
+        if (this.IsNeedRecalcSizes()) {
+            let oXfrm = this.getXfrm();
+            if (oXfrm) {
+                let aRect = this.GetRect();
+                AscCommon.ExecuteNoHistory(function() {
+                    this.spPr.xfrm.extX = (aRect[2] - aRect[0]) * g_dKoef_pt_to_mm;
+                    this.spPr.xfrm.extY = (aRect[3] - aRect[1]) * g_dKoef_pt_to_mm;
+                    this.spPr.xfrm.offX = aRect[0] * g_dKoef_pt_to_mm;
+                    this.spPr.xfrm.offY = aRect[1] * g_dKoef_pt_to_mm;
+                    this.updateTransformMatrix();
+                    this.recalcGeometry();
+                }, undefined, this);
+            }
+        }
+
         if (this.recalcInfo.recalculateGeometry)
             this.RefillGeometry();
 
@@ -571,7 +575,7 @@
         let oViewer = editor.getDocumentRenderer();
         let oDoc    = oViewer.getPDFDoc();
         
-        let aOrigRect   = this.GetOrigRect();
+        let aOrigRect   = this.GetRect();
         let aCallout    = this.GetCallout(); // координаты выходящей стрелки
         let aRD         = this.GetRectangleDiff() || [0, 0, 0, 0]; // отступ координат фигуры с текстом от ректа аннотации
 
@@ -632,7 +636,7 @@
         if (aFreeTextLine90.length != 0)
             aFreeTextPoints.push(aFreeTextLine90);
 
-        let aShapeRectInMM = this.GetOrigRect().map(function(measure) {
+        let aShapeRectInMM = this.GetRect().map(function(measure) {
             return measure * g_dKoef_pt_to_mm;
         });
 
@@ -1576,7 +1580,7 @@
     };
     CAnnotationFreeText.prototype.SetPosition = function(x, y) {
         let oDoc        = this.GetDocument();
-        let aCurRect    = this.GetOrigRect();
+        let aCurRect    = this.GetRect();
 
         let nOldX = aCurRect[0];
         let nOldY = aCurRect[1];
@@ -1601,15 +1605,15 @@
         let nWidth  = aCurRect[2] - aCurRect[0];
         let nHeight = aCurRect[3] - aCurRect[1];
 
-        this._origRect[0] = x;
-        this._origRect[1] = y;
-        this._origRect[2] = x + nWidth;
-        this._origRect[3] = y + nHeight;
+        this._rect[0] = x;
+        this._rect[1] = y;
+        this._rect[2] = x + nWidth;
+        this._rect[3] = y + nHeight;
 	
 		AscCommon.ExecuteNoHistory(function() {
 			let oXfrm = this.getXfrm();
-			oXfrm.setOffX((this._origRect[0]) * g_dKoef_pt_to_mm);
-			oXfrm.setOffY((this._origRect[1]) * g_dKoef_pt_to_mm);
+			oXfrm.setOffX((this._rect[0]) * g_dKoef_pt_to_mm);
+			oXfrm.setOffY((this._rect[1]) * g_dKoef_pt_to_mm);
 		}, undefined, this);
 
         this.SetNeedRecalc(true);
@@ -1829,7 +1833,7 @@
     function initGroupShape(oParentFreeText) {
         AscCommon.History.StartNoHistoryMode();
 
-        let aRect = oParentFreeText.GetOrigRect() || [];
+        let aRect = oParentFreeText.GetRect() || [];
         let aShapeRectInMM = aRect.map(function(measure) {
             return measure * g_dKoef_pt_to_mm;
         });
@@ -1897,7 +1901,7 @@
             oShape.spPr.xfrm.setParent(oShape.spPr);
         }
         
-        let aRect = oParentAnnot.GetOrigRect() || [];
+        let aRect = oParentAnnot.GetRect() || [];
         let aAnnotRect = aRect.map(function(measure) {
             return measure * g_dKoef_pt_to_mm;
         });

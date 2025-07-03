@@ -66,7 +66,7 @@
         let oDoc = this.GetDocument();
         oDoc.StartNoHistoryMode();
 
-        let oCircle = new CAnnotationCircle(AscCommon.CreateGUID(), this.GetOrigRect().slice(), oDoc);
+        let oCircle = new CAnnotationCircle(AscCommon.CreateGUID(), this.GetRect().slice(), oDoc);
         oCircle.lazyCopy = true;
 
         this.fillObject(oCircle);
@@ -97,7 +97,7 @@
     CAnnotationCircle.prototype.Copy = function() {
         let oDoc = this.GetDocument();
 
-        let oCircle = new CAnnotationCircle(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+        let oCircle = new CAnnotationCircle(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
         let sDate = ((new Date).getTime()).toString();
 
         this.fillObject(oCircle);
@@ -136,7 +136,7 @@
         let oDoc    = oViewer.getPDFDoc();
 
         let aRD         = this.GetRectangleDiff() || [0, 0, 0, 0];
-        let aOrigRect   = this.GetOrigRect();
+        let aOrigRect   = this.GetRect();
 
         if (!oGeometry) {
             oGeometry = this.spPr.geometry;
@@ -161,12 +161,13 @@
         let oViewer = editor.getDocumentRenderer();
         let oDoc    = oViewer.getPDFDoc();
 
-        oDoc.History.Add(new CChangesPDFAnnotRect(this, this._origRect, aOrigRect));
+        oDoc.History.Add(new CChangesPDFAnnotRect(this, this._rect, aOrigRect));
 
-        this._origRect = aOrigRect;
+        this._rect = aOrigRect;
         
-        this.SetWasChanged(true);
+        this.SetNeedRecalc(true);
         this.SetNeedRecalcSizes(true);
+        this.SetWasChanged(true);
     };
     CAnnotationCircle.prototype.SetRectangleDiff = function(aDiff, bOnResize) {
         let oDoc = this.GetDocument();
@@ -178,27 +179,20 @@
         this.SetNeedRecalcSizes(true);
         this.SetNeedRecalc(true);
     };
-    CAnnotationCircle.prototype.SetNeedRecalcSizes = function(bRecalc) {
-        this._needRecalcSizes = bRecalc;
-        this.recalcGeometry();
-    };
-    CAnnotationCircle.prototype.IsNeedRecalcSizes = function() {
-        return this._needRecalcSizes;
-    };
     CAnnotationCircle.prototype.Recalculate = function(bForce) {
         if (true !== bForce && false == this.IsNeedRecalc()) {
             return;
         }
 
         if (this.IsNeedRecalcSizes()) {
-            let aOrigRect = this.GetOrigRect();
+            let aRect = this.GetRect();
             let aRD = this.GetRectangleDiff();
 
-            let extX = ((aOrigRect[2] - aOrigRect[0]) - aRD[0] - aRD[2]) * g_dKoef_pt_to_mm;
-            let extY = ((aOrigRect[3] - aOrigRect[1]) - aRD[1] - aRD[3]) * g_dKoef_pt_to_mm;
+            let extX = ((aRect[2] - aRect[0]) - aRD[0] - aRD[2]) * g_dKoef_pt_to_mm;
+            let extY = ((aRect[3] - aRect[1]) - aRD[1] - aRD[3]) * g_dKoef_pt_to_mm;
 
-            this.spPr.xfrm.offX = (aOrigRect[0] + aRD[0]) * g_dKoef_pt_to_mm;
-            this.spPr.xfrm.offY = (aOrigRect[1] + aRD[1]) * g_dKoef_pt_to_mm;
+            this.spPr.xfrm.offX = (aRect[0] + aRD[0]) * g_dKoef_pt_to_mm;
+            this.spPr.xfrm.offY = (aRect[1] + aRD[1]) * g_dKoef_pt_to_mm;
 
             this.spPr.xfrm.extX = extX;
             this.spPr.xfrm.extY = extY;

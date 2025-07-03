@@ -95,7 +95,7 @@
 			return null;
 		}
 
-        let aOrigRect   = oAnnot.GetOrigRect();
+        let aOrigRect   = oAnnot.GetRect();
         let aRD         = oAnnot.GetRectangleDiff() || [0, 0, 0, 0]; // отступ координат фигуры с текстом от ректа аннотации
         let nPage       = oAnnot.GetPage();
 		let oTr			= oDoc.pagesTransform[nPage].invert;

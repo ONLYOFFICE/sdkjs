@@ -917,7 +917,7 @@ RotateState.prototype =
                                 else if (oAnnot.IsCircle() || oAnnot.IsSquare()) {
                                     // aRect in this case is an annot OrigRect - Rectangle Diff
                                     AscCommon.History.StartNoHistoryMode();
-                                    let aCurRect = oAnnot.GetOrigRect().slice();
+                                    let aCurRect = oAnnot.GetRect().slice();
                                     let aCurRD = oAnnot.GetRectangleDiff().slice();
                                     let nLineW = oAnnot.GetWidth() * g_dKoef_pt_to_mm;
                                     oAnnot.SetRect(aRect);
@@ -936,7 +936,7 @@ RotateState.prototype =
                                     aRect[2] = Math.round(oGrBounds.r + nLineW) * g_dKoef_mm_to_pt;
                                     aRect[3] = Math.round(oGrBounds.b + nLineW) * g_dKoef_mm_to_pt;
 
-                                    oAnnot._origRect = aCurRect;
+                                    oAnnot._rect = aCurRect;
                                     oAnnot._rectDiff = aCurRD;
 
                                     oAnnot.SetRect(aRect);
@@ -946,6 +946,10 @@ RotateState.prototype =
                                         Math.round(oGrBounds.r - oShapeBounds.r + nLineW) * g_dKoef_mm_to_pt,
                                         Math.round(oGrBounds.b - oShapeBounds.b + nLineW) * g_dKoef_mm_to_pt
                                     ]);
+                                }
+                                else if (oAnnot.IsInk()) {
+                                    oAnnot.UpdateGestures(aRect);
+                                    oAnnot.SetRect(aRect);
                                 }
                                 else {
                                     oAnnot.SetRect(aRect);

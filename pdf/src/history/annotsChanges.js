@@ -425,7 +425,9 @@ CChangesPDFAnnotRect.prototype.Type = AscDFH.historyitem_Pdf_Annot_Rect;
 CChangesPDFAnnotRect.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
-	oAnnot.SetRect(Value);
+	oAnnot._rect = Value;
+	oAnnot.SetNeedRecalc(true);
+	oAnnot.SetNeedRecalcSizes(true);
 };
 
 /**
@@ -510,7 +512,9 @@ CChangesPDFAnnotRD.prototype.Type = AscDFH.historyitem_Pdf_Annot_RD;
 CChangesPDFAnnotRD.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
-	oAnnot.SetRectangleDiff(Value);
+	oAnnot._rectDiff = Value;
+	oAnnot.SetNeedRecalcSizes && oAnnot.SetNeedRecalcSizes(true);
+	oAnnot.recalcGeometry();
 };
 
 /**
@@ -964,7 +968,7 @@ CChangesPDFAnnotStampRect.prototype.Type = AscDFH.historyitem_Pdf_Stamp_Rect;
 CChangesPDFAnnotStampRect.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
-	oAnnot._origRect = Value;
+	oAnnot._rect = Value;
 };
 
 CChangesPDFAnnotStampRect.prototype.WriteToBinary = function(Writer)
@@ -1036,23 +1040,19 @@ CChangesPDFLinePoints.prototype.private_SetValue = function(Value)
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesPDFArrayOfDoubleProperty}
+ * @extends {AscDFH.CChangesBaseBoolProperty}
  */
 function CChangesPDFAnnotChanged(Class, Old, New, Color)
 {
-	AscDFH.CChangesPDFArrayOfDoubleProperty.call(this, Class, Old, New, Color);
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
 }
-CChangesPDFAnnotChanged.prototype = Object.create(AscDFH.CChangesPDFArrayOfDoubleProperty.prototype);
+CChangesPDFAnnotChanged.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
 CChangesPDFAnnotChanged.prototype.constructor = CChangesPDFAnnotChanged;
 CChangesPDFAnnotChanged.prototype.Type = AscDFH.historyitem_Pdf_Annot_Changed;
 CChangesPDFAnnotChanged.prototype.private_SetValue = function(Value)
 {
 	let Annot = this.Class;
-	Annot._wasChanged = !!Value[0];
-	if (false != Value[1]) {
-		Annot.SetDrawFromStream(!Value[0]);
-	}
-	
+	Annot._wasChanged = Value;
 	Annot.AddToRedraw();
 };
 

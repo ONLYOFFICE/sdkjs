@@ -713,7 +713,7 @@
 
         if (this.IsPressed()) {
             let oViewer     = editor.getDocumentRenderer();
-            let aOrigRect   = this.GetOrigRect();
+            let aOrigRect   = this.GetRect();
             let oTr         = oGraphicsPDF.GetTransform();
 
             let origX   = aOrigRect[0];
@@ -992,7 +992,7 @@
     };
     CPushButtonField.prototype.DrawBackground = function(oGraphicsPDF) {
         
-        let aOrigRect       = this.GetOrigRect();
+        let aOrigRect       = this.GetRect();
         let aBgColor        = this.GetBackgroundColor();
         let oBgRGBColor;
 
@@ -1039,7 +1039,7 @@
         if (!this.content)
             return;
 
-        let aRect = this.GetOrigRect();
+        let aRect = this.GetRect();
         if (!aRect) {
             return;
         }
@@ -1101,7 +1101,7 @@
         this.SetNeedRecalc(false);
     };
     CPushButtonField.prototype.RecalculateContentRect = function() {
-        let aOrigRect = this.GetOrigRect();
+        let aOrigRect = this.GetRect();
         
         let X       = aOrigRect[0];
         let Y       = aOrigRect[1];

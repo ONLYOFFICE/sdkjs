@@ -526,7 +526,7 @@
         let scale     = AscCommon.AscBrowser.retinaPixelRatio
                         * oViewer.zoom
                         * oViewer.getDrawingPageScale(nPage);  // overall scale factor
-        let rect      = this.GetOrigRect();           // [x1, y1, x2, y2] in document coords
+        let rect      = this.GetRect();           // [x1, y1, x2, y2] in document coords
         let borders   = this.GetBordersWidth();       // border widths
         let angleDeg  = this.GetRotate() || 0;        // rotation angle in degrees
         let angleRad  = angleDeg * Math.PI / 180;     // convert to radians
@@ -1119,7 +1119,7 @@
 		return false == this.IsMultiline();
 	};
     CTextField.prototype.RecalculateContentRect = function() {
-        let aOrigRect = this.GetOrigRect();
+        let aOrigRect = this.GetRect();
 
         let X       = aOrigRect[0];
         let Y       = aOrigRect[1];
@@ -1185,7 +1185,7 @@
         if (!this.content)
             return null;
 
-        let aRect = this.GetOrigRect();
+        let aRect = this.GetRect();
         if (!aRect) {
             return null;
         }
@@ -1324,7 +1324,7 @@
         
         let oContentBounds  = this.content.GetContentBounds(0);
         let oContentRect    = this.getFormRelRect();
-        let aOrigRect       = this.GetOrigRect();
+        let aOrigRect       = this.GetRect();
 
         let nFormRotAngle = this.GetRotate();
         let dFrmW = oContentRect.W;

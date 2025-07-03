@@ -4069,7 +4069,7 @@
 		
 
 		if (oDoc.mouseDownAnnot) {
-			let aRect = oDoc.mouseDownAnnot.GetOrigRect();
+			let aRect = oDoc.mouseDownAnnot.GetRect();
 			let oPos = AscPDF.GetGlobalCoordsByPageCoords(aRect[2], aRect[1] + (aRect[3] - aRect[1]) / 2, nPage);
 			return new AscCommon.asc_CRect(oPos["X"], oPos["Y"], 0, 0);
 		}
