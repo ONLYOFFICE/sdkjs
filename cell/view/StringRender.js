@@ -1390,22 +1390,10 @@
 		};
 		StringRender.prototype.getEffectiveAlign = function() {
 			let align = this.flags ? this.flags.textAlign : null;
+
+			if (align !== null) return align;
 			let isRtl = this.drawState.getMainDirection() === AscBidi.DIRECTION_FLAG.RTL;
-
-			if (!isRtl) {
-				return align;
-			}
-
-			if (align === AscCommon.align_Left) {
-				return AscCommon.align_Right;
-			} else if (align === AscCommon.align_Right) {
-				return AscCommon.align_Left;
-			}
-			else if(align === null) {
-				return AscCommon.align_Right;
-			}
-
-			return align;
+			return isRtl ? AscCommon.align_Right : AscCommon.align_Left;
 		};
 		//------------------------------------------------------------export---------------------------------------------------
 		window['AscCommonExcel'] = window['AscCommonExcel'] || {};
