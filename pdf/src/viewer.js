@@ -4769,7 +4769,6 @@
 			}
 			
 			let oPageInfo = aPagesInfo[curIndex];
-			let oRenderer = this.InitDocRenderer(oMemory, curIndex);
 			
 			// annots
 			if (oPageInfo.annots) {

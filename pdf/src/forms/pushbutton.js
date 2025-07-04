@@ -2127,15 +2127,32 @@
             nButtonFlags |= (1 << 4);
         }
 
+        function getBase64FromImage(imgElement) {
+            let canvas = document.createElement('canvas');
+            canvas.width = imgElement.naturalWidth;
+            canvas.height = imgElement.naturalHeight;
+
+            let ctx = canvas.getContext('2d');
+            ctx.drawImage(imgElement, 0, 0);
+
+            return canvas.toDataURL('image/png');
+        }
+
         function WriteImage(memory, nImgType) {
             let sPathToImg = AscCommon.getFullImageSrc2(this.GetImageRasterId(nImgType));
             let nExistIdx = memory.images.indexOf(sPathToImg);
+            if (memory.isForSplit && sPathToImg) {
+                let oImageElm = Asc.editor.ImageLoader.map_image_index[sPathToImg].Image;
+                sPathToImg = getBase64FromImage(oImageElm);
+            }
+            
             if (nExistIdx === -1) {
                 memory.WriteLong(memory.images.length);
                 memory.images.push(sPathToImg);
             }
             else
                 memory.WriteLong(nExistIdx);
+            
         }
 
         // not supported in server side now
