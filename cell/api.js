@@ -6296,7 +6296,13 @@ var editor;
 		let ws = this.wb.getWorksheet();
 		if (ws.objectRender.selectedGraphicObjectsExists()) {
 			let isRTL = readingOrder === Asc.c_oReadingOrderTypes.RTL;
-			ws.objectRender.controller.setParagraphBidi(isRTL);
+			let controller = ws.objectRender.controller;
+			controller.checkSelectedObjectsAndCallback(
+				function () {
+					controller.setParagraphBidi(isRTL);
+				}, [], false,
+				AscDFH.historydescription_Document_SetParagraphBidi
+			);
 		} else {
 			this.wb.getWorksheet().setSelectionInfo("readingOrder", readingOrder);
 			this.wb.restoreFocus();
