@@ -1390,7 +1390,7 @@
 		};
 		StringRender.prototype.getEffectiveAlign = function() {
 			let align = this.flags ? this.flags.textAlign : null;
-			let isRtl = this.drawState.getMainDirection() === AscBidi.TYPE.R;
+			let isRtl = this.drawState.getMainDirection() === AscBidi.DIRECTION_FLAG.RTL;
 
 			if (!isRtl) {
 				return align;
@@ -1498,7 +1498,7 @@
 			this.y = y;
 			this.baseY = y;
 
-			this.bidiFlow.begin(this.getMainDirection() === AscBidi.TYPE.R);
+			this.bidiFlow.begin(this.getMainDirection() === AscBidi.DIRECTION_FLAG.RTL);
 		};
 
 
@@ -1520,20 +1520,18 @@
 		TableCellDrawState.prototype.getMainDirection = function() {
 			let readingOrder = this.stringRender.flags ? this.stringRender.flags.getReadingOrder() : null;
 			if (readingOrder === Asc.c_oReadingOrderTypes.LTR) {
-				return AscBidi.TYPE.L;
+				return AscBidi.DIRECTION_FLAG.LTR;
 			} else if (readingOrder === Asc.c_oReadingOrderTypes.RTL) {
-				return AscBidi.TYPE.R;
+				return AscBidi.DIRECTION_FLAG.RTL;
 			}
 			for (let i = 0; i < this.stringRender.chars.length; ++i) {
 				let char = this.stringRender.chars[i];
-				let type = AscBidi.getType(char);
 				let strongDir = AscCommon.getCharStrongDir(char);
 				if (strongDir !== null) {
 					return strongDir;
 				}
 			}
-
-			return AscBidi.TYPE.L;
+			return AscBidi.DIRECTION_FLAG.RTL;
 		};
 
 	}

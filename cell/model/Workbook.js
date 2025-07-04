@@ -19071,7 +19071,17 @@
 			this.worksheet._getCellNoEmpty(nRow, nCol, function(cell) {
 				if(cell){
 					switch(cell.getType()){
-						case CellValueType.String:align = AscCommon.align_Left;break;
+						case CellValueType.String: {
+
+							let dir = AscCommon.getFirstStrongDirection(cell.text);
+							if (dir === AscBidi.DIRECTION_FLAG.RTL) {
+								align = AscCommon.align_Right;
+							}
+							else {
+								align = AscCommon.align_Left;
+							}
+							break;
+						}
 						case CellValueType.Bool:
 						case CellValueType.Error:align = AscCommon.align_Center;break;
 						default:
