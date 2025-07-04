@@ -1260,265 +1260,14 @@
 		};
 
 		this.openForms = function() {
-			let oThis = this;
-
+			let oDoc = this.getPDFDoc();
 			this.scrollCount = 0;
-			this.IsOpenFormsInProgress = true;
 
-			let aFormsInfo = this.file.nativeFile["getInteractiveFormsInfo"]();
-			
-			let oFormInfo, oForm, oRect;
-			if (aFormsInfo["Fields"] == null) {
-				this.IsOpenFormsInProgress = false;
-				return;
-			}
-			
-			for (let i = 0; i < aFormsInfo["Fields"].length; i++)
-			{
-				oFormInfo	= aFormsInfo["Fields"][i];
-				oRect		= oFormInfo["rect"];
+			let oFormsInfo	= this.file.nativeFile["getInteractiveFormsInfo"]();
+			let nMaxIdx		= this.file.nativeFile["getStartID"]();
 
-				oForm = this.doc.AddFieldByParams(oFormInfo["name"], oFormInfo["type"], oFormInfo["page"], [oRect["x1"], oRect["y1"], oRect["x2"], oRect["y2"]]);
-				
-				if (!oForm) {
-					// console.log("Error while reading form, index " + oFormInfo["AP"]["i"]);
-					continue;
-				}
-
-				if (oFormInfo["AP"] != null) {
-					oForm.SetApIdx(oFormInfo["AP"]["i"]);
-					oForm.SetHasOriginView(Boolean(oFormInfo["AP"]["have"]));
-				}
-
-				oForm.SetOriginPage(oFormInfo["page"]);
-
-				if (oFormInfo["Parent"] != null)
-				{
-					oForm.AddToChildsMap(oFormInfo["Parent"]);
-				}
-
-				if (oFormInfo["meta"] != null) {
-					oForm.SetMeta(JSON.parse(oFormInfo["meta"]));
-				}
-
-				// appearance
-				if (oFormInfo["border"] != null)
-				{
-					oForm.SetBorderStyle(oFormInfo["border"]);
-				}
-
-				if (oFormInfo["borderWidth"] != null)
-				{
-					oForm.SetBorderWidth(oFormInfo["borderWidth"]);
-				}
-				if (oFormInfo["BC"] != null)
-				{
-					oForm.SetBorderColor(oFormInfo["BC"]);
-				}
-				if (oFormInfo["BG"] != null)
-					oForm.SetBackgroundColor(oFormInfo["BG"]);
-
-				// text form
-				if (oFormInfo["multiline"] != null)
-				{
-					oForm.SetMultiline(Boolean(oFormInfo["multiline"]));
-				}
-				if (oFormInfo["maxLen"] != null)
-				{
-					oForm.SetCharLimit(oFormInfo["maxLen"]);
-				}
-				if (oFormInfo["comb"])
-				{
-					oForm.SetComb(Boolean(oFormInfo["comb"]));
-				}
-				if (oFormInfo["richText"])
-				{
-					// to do
-					oForm.SetRichText(Boolean(oFormInfo["richText"]));
-				}
-				if (oFormInfo["password"])
-				{
-					// to do
-					oForm.SetPassword(Boolean(oFormInfo["password"]));
-				}
-
-				// button
-				if (oFormInfo["position"] != null) {
-					oForm.SetLayout(oFormInfo["position"]);
-				}
-				if (oFormInfo["caption"] != null && oForm["type"] == AscPDF.FIELD_TYPES.button) {
-					oForm.SetCaption(oFormInfo["caption"]);
-				}
-				if (oFormInfo["alternateCaption"] != null && oForm["type"] == AscPDF.FIELD_TYPES.button) {
-					oForm.SetCaption(oFormInfo["alternateCaption"], AscPDF.APPEARANCE_TYPES.mouseDown);
-				}
-				if (oFormInfo["rolloverCaption"] != null && oForm["type"] == AscPDF.FIELD_TYPES.button) {
-					oForm.SetCaption(oFormInfo["rolloverCaption"], AscPDF.APPEARANCE_TYPES.rollover);
-				}
-				
-				if (oFormInfo["highlight"] != null) {
-					oForm.SetHighlight(oFormInfo["highlight"]);
-				}
-				if (oFormInfo["IF"] != null) {
-					if (oFormInfo["IF"]["FB"] != null)
-						oForm.SetButtonFitBounds(Boolean(oFormInfo["IF"]["FB"]));
-					if (oFormInfo["IF"]["SW"] != null)
-						oForm.SetScaleWhen(oFormInfo["IF"]["SW"]);
-					if (oFormInfo["IF"]["A"] != null)
-						oForm.SetIconPosition(oFormInfo["IF"]["A"][0], oFormInfo["IF"]["A"][1]);
-					if (oFormInfo["IF"]["S"] != null)
-						oForm.SetScaleHow(oFormInfo["IF"]["S"]);
-				}
-				if (oFormInfo["rotate"] != null)
-					oForm.SetRotate(oFormInfo["rotate"]);
-
-				// combobox - listbox
-				if (oFormInfo["editable"])
-				{
-					oForm.SetEditable(Boolean(oFormInfo["editable"]));
-				}
-				if (oFormInfo["commitOnSelChange"])
-				{
-					// to do
-					oForm.SetCommitOnSelChange(Boolean(oFormInfo["commitOnSelChange"]));
-				}
-				if (oFormInfo["multipleSelection"])
-				{
-					oForm.SetMultipleSelection(Boolean(oFormInfo["multipleSelection"]));
-				}
-				if (oFormInfo["opt"])
-				{
-					oForm.SetOptions(oFormInfo["opt"]);
-				}
-				if (null != oFormInfo["TI"])
-				{
-					oForm.SetTopIndex(oFormInfo["TI"]);
-				}
-
-				// checkbox - radiobutton
-				if (oFormInfo["ExportValue"])
-				{
-					oForm.SetExportValue(oFormInfo["ExportValue"]);
-				}
-				if (oFormInfo["radiosInUnison"])
-				{
-					oForm.SetRadiosInUnison(Boolean(oFormInfo["radiosInUnison"]));
-				}
-				if (oFormInfo["NoToggleToOff"] != null && oFormInfo["type"] != AscPDF.FIELD_TYPES.button)
-				{
-					oForm.SetNoToggleToOff(Boolean(oFormInfo["NoToggleToOff"]));
-				}
-				if (oFormInfo["style"] != null)
-				{
-					oForm.SetStyle(oFormInfo["style"]);
-				}
-
-				// signature
-				if (oFormInfo["Sig"] != null)
-				{
-					oForm.SetFilled(Boolean(oFormInfo["Sig"]));
-				}
-
-				// common
-				if (oFormInfo["alignment"] != null && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.listbox].includes(oFormInfo["type"]))
-				{
-					oForm.SetAlign(oFormInfo["alignment"]);
-				}
-				if (oFormInfo["doNotScroll"] != null)
-				{
-					oForm.SetDoNotScroll(Boolean(oFormInfo["doNotScroll"]));
-				}
-				if (oFormInfo["doNotSpellCheck"] != null && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oFormInfo["type"]))
-				{
-					// to do
-					oForm.SetDoNotSpellCheck(Boolean(oFormInfo["doNotSpellCheck"]));
-				}
-				if (oFormInfo["fileSelect"])
-				{
-					// to do
-					oForm.SetFileSelect(Boolean(oFormInfo["fileSelect"]));
-				}
-				if (oFormInfo["noexport"])
-				{
-					oForm.SetNoExport(Boolean(oFormInfo["noexport"]));
-				}
-				if (oFormInfo["readOnly"])
-				{
-					oForm.SetReadOnly(Boolean(oFormInfo["readOnly"]));
-				}
-				if (oFormInfo["required"])
-				{
-					oForm.SetRequired(Boolean(oFormInfo["required"]));
-				}
-				if (oFormInfo["locked"])
-					oForm.SetLocked(Boolean(oFormInfo["locked"]));
-				
-				if (Array.isArray(oFormInfo["curIdxs"]) && oFormInfo["curIdxs"].length != 0)
-				{
-					oForm.SetCurIdxs(oFormInfo["curIdxs"]);
-					if (oFormInfo["value"] != null)
-						oForm.SetParentValue(oFormInfo["value"]);
-				}
-				else if (oFormInfo["value"] != null && oForm.GetType() != AscPDF.FIELD_TYPES.button)
-				{
-					oForm.SetValue(oFormInfo["value"], true);
-				}
-
-				if (oFormInfo["display"])
-				{
-					// to do
-					oForm.SetDisplay(oFormInfo["display"]);
-				}
-				
-				if (oFormInfo["sort"] != null) {
-					// to do sort
-				}
-				if (oFormInfo["defaultValue"] != null) {
-					oForm.SetDefaultValue(oFormInfo["defaultValue"]);
-				}
-
-				if (oFormInfo["font"]) {
-					if (oFormInfo["font"]["color"] != null)
-						oForm.SetTextColor(oFormInfo["font"]["color"]);
-					if (oFormInfo["font"]["name"])
-						oForm.SetTextFont(oFormInfo["font"]["name"]);
-					if (oForm.GetType() == AscPDF.FIELD_TYPES.button && oFormInfo["font"]["AP"])
-						oForm.SetTextFontActual(oFormInfo["font"]["AP"]);
-					else if (oFormInfo["font"]["actual"]) {
-						oForm.SetTextFontActual(oFormInfo["font"]["actual"]);
-					}
-					else if (oFormInfo["font"]["name"]) {
-						oForm.SetTextFontActual(AscFonts.getEmbeddedFontPrefix() + oFormInfo["font"]["name"]);
-					}
-					else {
-						oForm.SetTextFontActual(AscPDF.DEFAULT_FIELD_FONT);
-					}
-
-					// внутренний ключ для пересылки обратно (зачем? - попросили)
-					oForm.SetFontKey(oFormInfo["font"]["key"]);
-
-					if (oFormInfo["font"]["size"] != null)
-						oForm.SetTextSize(oFormInfo["font"]["size"]);
-
-					if (oFormInfo["font"]["style"] != null) {
-						oForm.SetFontStyle({
-							bold: Boolean((oFormInfo["font"]["style"] >> 0) & 1),
-							italic: Boolean((oFormInfo["font"]["style"] >> 1) & 1),
-						});
-					}
-				}
-				AscPDF.ReadFieldActions(oForm, oFormInfo['AA']);
-			}
-			
-			if (aFormsInfo["Parents"]) {
-				this.doc.FillFormsParents(aFormsInfo["Parents"]);
-				this.doc.OnAfterFillFormsParents();
-			}
-			
-			if (Array.isArray(aFormsInfo["CO"]) && aFormsInfo["CO"].length > 0)
-				this.doc.GetCalculateInfo().SetCalculateOrder(aFormsInfo["CO"]);
-			
-			this.doc.FillButtonsIconsOnOpen();
+			oDoc.private_AddFormsByInfo(oFormsInfo);
+			oDoc.UpdateMaxApIdx(nMaxIdx);
 		};
 		this.openAnnots = function() {
 			let oDoc = this.getPDFDoc();
@@ -5039,6 +4788,14 @@
 				}
 			}
 
+			// forms
+			if (oPageInfo.fields) {
+				for (let nForm = 0; nForm < oPageInfo.fields.length; nForm++) {
+					if (oPageInfo.fields[nForm].IsChanged())
+						oPageInfo.fields[nForm].WriteToBinary(oMemory);
+				}
+			}
+			
 			let nEndPos = oMemory.GetCurPosition();
 			oMemory.Seek(nStartPos);
 			oMemory.WriteLong(nEndPos - nStartPos);

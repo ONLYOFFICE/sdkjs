@@ -208,9 +208,6 @@
     CBaseField.prototype.GetMeta = function() {
         return this.meta;
     };
-    CBaseField.prototype.AddToChildsMap = function(nIdx) {
-        this.GetDocument().AddFieldToChildsMap(this, nIdx);
-    };
     /**
 	 * Can or not enter text into form.
 	 * @memberof CBaseField
@@ -3155,7 +3152,7 @@
     };
     CBaseField.prototype.WriteRenderToBinary = function(memory) {
         // пока только для text, combobox
-        if (true == memory.isForSplit || null == this.content) {
+        if (true == memory.isForSplit || null == this.content || true == memory.isForSplit) {
             return;
         }
 
