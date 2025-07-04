@@ -2734,59 +2734,6 @@ var CPresentation = CPresentation || function(){};
             this.SetPageRotate(aIndexes[i], nNewPageAngle);
         }
     };
-    /**
-	 * Adds an interactive field to document.
-	 * @memberof CPDFDoc
-	 * @typeofeditors ["PDF"]
-     * @param {String} cName - The name of the new field to create.
-     * @param {"button" | "checkbox" | "combobox" | "listbox" | "radiobutton" | "signature" | "text"} cFieldType - The type of form field to create.
-     * @param {Number} nPageNum - The 0-based index of the page to which to add the field.
-     * @param {Array} aCoords - An array of four numbers in rotated user space that specifies the size and placement
-        of the form field. These four numbers are the coordinates of the bounding rectangle,
-        in the following order: upper-left x, upper-left y, lower-right x and lower-right y 
-	 * @returns {AscPDF.CBaseField}
-	 */
-    CPDFDoc.prototype.AddFieldByParams = function(cName, cFieldType, nPageNum, aCoords) {
-        function checkValidParams(cFieldType, nPageNum, aCoords) {
-            if (Object.values(AscPDF.FIELD_TYPES).includes(cFieldType) == false)
-                return false;
-            if (typeof(nPageNum) !== "number" || nPageNum < 0)
-                return false;
-            let isValidRect = true;
-            if (Array.isArray(aCoords)) {
-                for (let i = 0; i < 4; i++) {
-                    if (typeof(aCoords[i]) != "number") {
-                        isValidRect = false;
-                        break;
-                    }
-                }
-            }
-            else
-                isValidRect = false;
-
-            if (!isValidRect)
-                return false;
-        }
-        if (false == checkValidParams(cFieldType, nPageNum, aCoords))
-            return null;
-
-        let oViewer = editor.getDocumentRenderer();
-
-        let oPageInfo = oViewer.pagesInfo.pages[nPageNum];
-        if (!oPageInfo)
-            return null;
-        
-        let oField = this.CreateField(cName, cFieldType, aCoords);
-        if (!oField)
-            return null;
-
-        oField.SetNeedRecalc(true);
-
-        oPageInfo.fields.push(oField);
-
-        oField.SetParentPage(oPageInfo);
-        return oField;
-    };
     CPDFDoc.prototype.AddField = function(oField, nPage, isFromUI) {
         let oPagesInfo = this.GetPageInfo(nPage);
         if (!oPagesInfo)

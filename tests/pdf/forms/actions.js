@@ -40,7 +40,8 @@ $(function ()
 	
 	function CreateTextForm(name)
 	{
-		let oField = pdfDoc.AddFieldByParams(name, AscPDF.FIELD_TYPES.text, 0, [20, 20, 50, 20]);
+		let oField = pdfDoc.CreateField(name, AscPDF.FIELD_TYPES.text, [20, 20, 50, 20]);
+		pdfDoc.AddField(oField, 0);
 		return oField; 
 	}
 	function EnterTextToForm(form, text)
