@@ -3930,10 +3930,10 @@
 
 		const match = XRegExp.exec(subSTR, local ? rx_table_local : rx_table);
 
-		if (match != null && match["tableName"])
-		{
-			this.operand_str = tableIntersection ? "[" + match.columnName1 + "]" : match[0];
-			this.pCurrPos += tableIntersection ? match.columnName1.length + 2 : match[0].length;
+		if (match != null && match.tableName) {
+			let colNameToInsert = match.columnName1 ? match.columnName1 : "";
+			this.operand_str = tableIntersection ? "[" + colNameToInsert + "]" : match[0];
+			this.pCurrPos += tableIntersection ? colNameToInsert.length + 2 : match[0].length;
 			return match;
 		}
 
