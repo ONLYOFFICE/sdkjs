@@ -1292,7 +1292,7 @@ CNaryInlineOperator.prototype.drawTextElem = function(x, y, pGraphics)
     };
 
     pGraphics.SetFont(Font);
-	pGraphics.FillTextCode(x, y, this.Base.RecalcInfo.StyleCode);
+	pGraphics.FillTextCode(x + this.pos.x, y + this.pos.y + this.size.height - (this.size.height - this.size.ascent), this.Base.RecalcInfo.StyleCode);
 };
 CNaryInlineOperator.prototype.Get_TxtPrControlLetter = function()
 {

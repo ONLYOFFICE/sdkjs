@@ -619,11 +619,12 @@
 		const isValidJsDoc = parsedJSDoc ? private_ValidateParamsForCustomFunction(parsedJSDoc) : false;
 		//const isValidOptions = options ? private_ValidateParamsForCustomFunction(options) : false;
 		if (!isValidJsDoc/* && !isValidOptions*/) {
-			throwException(new Error('Invalid parameters type in JSDOC or options.'));
+			logError(new Error('Invalid parameters type in JSDOC or options.'));
+			return null;
 		}
 		// remove it from this class and use it from the variable (only if it was the last)
 		// we don't remove it immediately, because we can have there data for another function
-		if (!this.parsedJSDoc.length) {
+		if (this.parsedJSDoc && !this.parsedJSDoc.length) {
 			delete this.parsedJSDoc;
 		}
 

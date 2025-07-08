@@ -4634,6 +4634,7 @@
 	window['AscDFH'].historydescription_OForm_CompletePreparation                   = 0x01c7;
 	window['AscDFH'].historydescription_Presentation_SetPreserveSlideMaster         = 0x01c8;
 	window['AscDFH'].historydescription_Document_AddMathML                          = 0x01c9;
+	window['AscDFH'].historydescription_OForm_CancelFilling                         = 0x01ca;
 
 	// pdf
 	window['AscDFH'].historydescription_Pdf_AddAnnot			= 0x29a;
@@ -4984,6 +4985,9 @@
 	};
 	CChangesBaseContentChange.prototype.ConvertToSimpleChanges = function()
 	{
+		if (this.UseArray && 1 === this.Items.length)
+			return [this];
+		
 		let arrSimpleActions = this.ConvertToSimpleActions();
 		let arrChanges       = [];
 
@@ -4991,22 +4995,34 @@
 		{
 			let oAction = arrSimpleActions[nIndex];
 			let oChange = new this.constructor(this.Class, oAction.Pos, [oAction.Item], oAction.Add);
+			oChange.Reverted = this.Reverted;
 			arrChanges.push(oChange);
 		}
 
 		return arrChanges;
 	};
-	CChangesBaseContentChange.prototype.ConvertFromSimpleActions = function(arrActions)
+	CChangesBaseContentChange.prototype.ConvertFromSimpleActions = function(arrActions, isReverted)
 	{
 		this.UseArray = true;
 		this.Pos      = 0;
 		this.Items    = [];
 		this.PosArray = [];
 
-		for (var nIndex = 0, nCount = arrActions.length; nIndex < nCount; ++nIndex)
+		if (isReverted)
 		{
-			this.PosArray[nIndex] = arrActions[nIndex].Pos;
-			this.Items[nIndex]    = arrActions[nIndex].Item;
+			for (let i = 0, count = arrActions.length; i < count; ++i)
+			{
+				this.PosArray[i] = arrActions[count - 1 - i].Pos;
+				this.Items[i]    = arrActions[count - 1 - i].Item;
+			}
+		}
+		else
+		{
+			for (var nIndex = 0, nCount = arrActions.length; nIndex < nCount; ++nIndex)
+			{
+				this.PosArray[nIndex] = arrActions[nIndex].Pos;
+				this.Items[nIndex]    = arrActions[nIndex].Item;
+			}
 		}
 	};
 	CChangesBaseContentChange.prototype.IsRelated = function(oChanges)
@@ -5022,13 +5038,23 @@
 
 		oChange.Class    = this.Class;
 		oChange.Pos      = this.Pos;
-		oChange.Items    = this.Items;
+		oChange.Items    = [];
 		oChange.Add      = !this.Add;
 		oChange.UseArray = this.UseArray;
 		oChange.PosArray = [];
 
-		for (var nIndex = 0, nCount = this.PosArray.length; nIndex < nCount; ++nIndex)
-			oChange.PosArray[nIndex] = this.PosArray[nIndex];
+		if (this.UseArray)
+		{
+			for (var nIndex = 0, nCount = this.PosArray.length; nIndex < nCount; ++nIndex)
+			{
+				oChange.PosArray[nCount - 1 - nIndex] = this.PosArray[nIndex];
+				oChange.Items[nCount - 1 - nIndex]    = this.Items[nIndex];
+			}
+		}
+		else
+		{
+			oChange.Items = this.Items.slice();
+		}
 
 		return oChange;
 	};

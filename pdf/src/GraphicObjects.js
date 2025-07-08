@@ -1746,7 +1746,44 @@
         if (this.document) {
             this.document.Recalculate();
         }
-    }
+    };
+
+    CGraphicObjects.prototype.checkRedrawOnChangeCursorPosition = function (oStartContent, oStartPara) {
+        let bRedraw = false;
+
+        let oDocContent = this.getTargetDocContent();
+       
+        let oEndContent = AscFormat.checkEmptyPlaceholderContent(oDocContent);
+        let oEndPara = null;
+        if (oStartContent || oEndContent) {
+            if (oStartContent !== oEndContent) {
+                bRedraw = true;
+            } else {
+                if (oEndContent) {
+                    oEndPara = oEndContent.GetCurrentParagraph();
+                }
+                if (oEndPara !== oStartPara &&
+                    (oStartPara && oStartPara.IsEmptyWithBullet() || oEndPara && oEndPara.IsEmptyWithBullet())) {
+                    bRedraw = true;
+                }
+            }
+        }
+        
+        if (bRedraw) {
+            function redraw(oContent) {
+                let oObject = oContent.GetParent();
+                while (!oObject.AddToRedraw && oObject.GetParent) {
+                    oObject = oObject.GetParent();
+                }
+                
+                oObject.AddToRedraw && oObject.AddToRedraw();
+            }
+
+            oStartContent && redraw(oStartContent);
+            oEndContent && redraw(oEndContent);
+            oDocContent && redraw(oDocContent);
+        }
+    };
 
     // import
     CGraphicObjects.prototype.setEquationTrack          = AscFormat.DrawingObjectsController.prototype.setEquationTrack;

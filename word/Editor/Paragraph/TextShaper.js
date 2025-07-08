@@ -56,6 +56,8 @@
 		this.Ligatures = Asc.LigaturesType.None;
 		this.Spacing   = 0;
 		this.AscFont   = false; // Специальный случай, когда используемый шрифт ASCW3, а не тот, что задан в настройках
+		
+		this.MaskSymbol = null; // Символ, который используется для маскирования текста в полях ввода
 	}
 	CParagraphTextShaper.prototype = Object.create(AscFonts.CTextShaper.prototype);
 	CParagraphTextShaper.prototype.constructor = CParagraphTextShaper;
@@ -74,6 +76,9 @@
 	};
 	CParagraphTextShaper.prototype.GetCodePoint = function(oItem)
 	{
+		if (null !== this.MaskSymbol)
+			return this.MaskSymbol;
+		
 		let nCodePoint = oItem.GetCodePoint();
 
 		if (this.TextPr && (this.TextPr.Caps || this.TextPr.SmallCaps))
@@ -146,6 +151,8 @@
 			if (!oItem.IsText())
 			{
 				this.FlushWord();
+				if (oItem.IsSpace())
+					this.private_HandleSpace(oItem);
 			}
 			else if (oItem.IsNBSP())
 			{
@@ -261,6 +268,21 @@
 			oItem.SetWidth(nWidth);
 		}
 	};
+	CParagraphTextShaper.prototype.private_HandleSpace = function(item)
+	{
+		let codePoint = this.MaskSymbol ? this.MaskSymbol : item.GetCodePoint();
+		
+		let fontInfo   = this.TextPr.GetFontInfo(AscWord.fontslot_ASCII);
+		let grapheme   = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(codePoint, fontInfo.Name, fontInfo.Style);
+		let enGrapheme = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(0x2002, fontInfo.Name, fontInfo.Style);
+		
+		let width   = AscFonts.GetGraphemeWidth(grapheme);
+		let enWidth = (AscFonts.NO_GRAPHEME === enGrapheme ? 25.4 / 72 / 2 : AscFonts.GetGraphemeWidth(enGrapheme));
+		
+		item.SetGrapheme(this.MaskSymbol ? grapheme : AscFonts.NO_GRAPHEME);
+		item.SetMetrics(fontInfo.Size, AscWord.fontslot_ASCII, this.TextPr);
+		item.SetWidth(width, this.TextPr, enWidth);
+	};
 	CParagraphTextShaper.prototype.IsEqualTextPr = function(oTextPr)
 	{
 		// Здесь мы не используем стандартную функцию CTextPr.IsEqual, потому что она сравнивает на полное
@@ -312,6 +334,9 @@
 	};
 	CParagraphTextShaper.prototype.private_IsReplaceToHindiDigits = function()
 	{
+		if (this.MaskSymbol)
+			return false;
+		
 		let logicDocument = this.Paragraph ? this.Paragraph.GetLogicDocument() : undefined;
 		return (logicDocument
 			&& logicDocument.IsDocumentEditor()
@@ -322,6 +347,24 @@
 		let oFontInfo = this.TextPr.GetFontInfo(AscWord.fontslot_ASCII);
 		let nGrapheme = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(oItem.GetCodePoint() + (0x0660 - 0x0030), oFontInfo.Name, oFontInfo.Style);
 		this.private_HandleItem(oItem, nGrapheme, AscFonts.GetGraphemeWidth(nGrapheme), oFontInfo.Size, AscWord.fontslot_ASCII, false, false, false);
+	};
+	CParagraphTextShaper.prototype.SetMaskSymbol = function(maskSymbol)
+	{
+		if (typeof maskSymbol === 'string')
+			this.MaskSymbol = maskSymbol.codePointAt(0);
+		else if (!isNaN(maskSymbol))
+			this.MaskSymbol = maskSymbol;
+		else
+			this.MaskSymbol = null;
+	};
+	CParagraphTextShaper.prototype.GetMaskSymbol = function()
+	{
+		if (typeof maskSymbol === 'string')
+			this.MaskSymbol = maskSymbol.codePointAt(0);
+		else if (!isNaN(maskSymbol))
+			this.MaskSymbol = maskSymbol;
+		else
+			this.MaskSymbol = null;
 	};
 	
 	//--------------------------------------------------------export----------------------------------------------------

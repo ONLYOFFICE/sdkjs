@@ -816,11 +816,20 @@ FT_Stream2.prototype.GetString2 = function() {
 	return this.GetString2LE(Len);
 };
 //String
-FT_Stream2.prototype.GetString2LE = function(len) {
+const global_string_decoder_le = (typeof TextDecoder !== "undefined") ? new TextDecoder('utf-16le') : null;
+FT_Stream2.prototype.GetString2LE = function(len)
+{
 	if (this.cur + len > this.size)
 		return "";
+
+	if (global_string_decoder_le && undefined !== this.data.buffer) {
+		const subdata = new Uint8Array(this.data.buffer, this.data.byteOffset + this.cur, len);
+		this.cur += len;
+		return global_string_decoder_le.decode(subdata);
+	}
+
 	var a = [];
-	for (var i = 0; i + 1 < len; i+=2)
+	for (var i = 0; i + 1 < len; i += 2)
 		a.push(String.fromCharCode(this.data[this.cur + i] | this.data[this.cur + i + 1] << 8));
 	this.cur += len;
 	return a.join("");

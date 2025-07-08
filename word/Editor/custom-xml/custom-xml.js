@@ -243,7 +243,7 @@
 					deepNext = true;
 					continue;
 				}
-				steps.push({ part, deepNext });
+				steps.push({ part : part, deepNext : deepNext });
 				deepNext = false;
 			}
 			return steps;

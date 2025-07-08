@@ -43,6 +43,14 @@
 
     var Api = window["asc_docs_api"];
 
+	/**
+	 * @typedef {Object} comment
+	 * Comment object.
+	 * @property {string} Id - The comment ID.
+	 * @property {CommentData} Data - An object which contains the comment data.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/comment.js
+	 */
+	
     /**
 	 * @typedef {Object} CommentData
 	 * The comment data.

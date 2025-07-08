@@ -44,21 +44,57 @@ var HANDLE_EVENT_MODE_CURSOR = AscFormat.HANDLE_EVENT_MODE_CURSOR;
 var MOVE_DELTA = 1/100000;
 var SNAP_DISTANCE = 1.27;
 
-function checkEmptyPlaceholderContent(content)
-{
-    if(!content || content.Parent && content.Parent.txWarpStruct && content.Parent.recalcInfo.warpGeometry && content.Parent.recalcInfo.warpGeometry.preset !== "textNoShape" )
+function checkEmptyPlaceholderContent(content) {
+    if (!content) {
         return content;
-    var oShape = content.Parent;
-    if (oShape) {
-        if(content && content.Is_Empty()){
-            if(oShape.isPlaceholder && oShape.isPlaceholder()) {
-                return content;
-            }
-            if(content.isDocumentContentInSmartArtShape && content.isDocumentContentInSmartArtShape()) {
+    }
+
+    let isPdf = Asc.editor.isPdfEditor();
+    let shape = isPdf
+        ? (content.Parent && content.Parent.parent)
+        : content.Parent;
+
+    if (!shape) {
+        return null;
+    }
+
+    if (content.Is_Empty && content.Is_Empty()) {
+        if ((shape.isPlaceholder && shape.isPlaceholder()) ||
+            (content.isDocumentContentInSmartArtShape && content.isDocumentContentInSmartArtShape())) {
+            return content;
+        }
+    }
+
+    if (isPdf) {
+        if (shape.txWarpStruct ||
+            (shape.recalcInfo && shape.recalcInfo.warpGeometry)) {
+            return content;
+        }
+
+        if (shape.getBodyPr) {
+            let bodyPr = shape.getBodyPr();
+            if (bodyPr.vertOverflow !== AscFormat.nVOTOverflow) {
                 return content;
             }
         }
+
+        if (content.GetCurrentParagraph) {
+            let para = content.GetCurrentParagraph();
+            if (para && para.IsEmptyWithBullet && para.IsEmptyWithBullet()) {
+                return content;
+            }
+        }
+
+        return null;
     }
+
+    if (shape.txWarpStruct &&
+        shape.recalcInfo &&
+        shape.recalcInfo.warpGeometry &&
+        shape.recalcInfo.warpGeometry.preset !== "textNoShape") {
+        return content;
+    }
+
     return null;
 }
 
@@ -281,6 +317,11 @@ NullState.prototype =
         }
         const oThis = this;
         const fRecalculatePages = function() {
+            if (Asc.editor.isPdfEditor()) {
+                oThis.drawingObjects.checkRedrawOnChangeCursorPosition(start_target_doc_content, null);
+                return;
+            }
+            
             oThis.drawingObjects.checkChartTextSelection(true);
             oThis.drawingObjects.drawingDocument.OnRecalculatePage( pageIndex, oThis.drawingObjects.document.Pages[pageIndex] );
             if (AscFormat.isRealNumber(nStartPage) && pageIndex !== nStartPage) {
@@ -475,8 +516,7 @@ NullState.prototype =
                 {
                     end_target_doc_content = this.drawingObjects.getTargetDocContent();
                     if ((start_target_doc_content || end_target_doc_content) && (start_target_doc_content !== end_target_doc_content)) {
-
-                        this.drawingObjects.checkChartTextSelection();
+                        this.drawingObjects.checkRedrawOnChangeCursorPosition(start_target_doc_content, null);
                     }
                 }
                 return ret;

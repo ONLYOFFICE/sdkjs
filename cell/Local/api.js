@@ -285,6 +285,8 @@ var c_oAscError = Asc.c_oAscError;
 						printOptionsObj["adjustOptions"]["endPageIndex"] =  options.advancedOptions.asc_getEndPageIndex();
 					if (null != options.advancedOptions.asc_getActiveSheetsArray())
 						printOptionsObj["adjustOptions"]["activeSheetsArray"] = options.advancedOptions.asc_getActiveSheetsArray();
+					if (null != options.advancedOptions.asc_getPrintType())
+						printOptionsObj["adjustOptions"]["printType"] = options.advancedOptions.asc_getPrintType();
 				}
 
 				printOptions = JSON.stringify(printOptionsObj);

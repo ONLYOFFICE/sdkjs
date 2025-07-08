@@ -4924,6 +4924,9 @@ var g_oFontProperties = {
 	CellXfs.prototype.asc_getShrinkToFit = function () {
 		return this.getAlign2().getShrinkToFit();
 	};
+	CellXfs.prototype.asc_getReadingOrder = function () {
+		return this.getAlign2().getReadingOrder();
+	};
 	CellXfs.prototype.asc_getPreview = function (api, text, width, height) {
 		return AscCommonExcel.generateXfsStyle(width, height, api.wb, this, text);
 	};
@@ -5089,6 +5092,17 @@ var g_oFontProperties = {
 			WrapText: 8
 	};
 
+	const c_oReadingOrderTypes = {
+		Context: 0,
+		LTR: 1,
+		RTL: 2
+	};
+
+	window['Asc']['c_oReadingOrderTypes'] = window['Asc'].c_oReadingOrderTypes = c_oReadingOrderTypes;
+	prot = c_oReadingOrderTypes;
+	prot['Context'] = prot.Context;
+	prot['LTR'] = prot.LTR;
+	prot['RTL'] = prot.RTL;
 
 	window['Asc']['c_oSerAligmentTypes'] = window['Asc'].c_oSerAligmentTypes = c_oSerAligmentTypes;
 	prot = c_oSerAligmentTypes;
@@ -5110,7 +5124,7 @@ var g_oFontProperties = {
 		this.hor = val.hor;
 		this.indent = val.indent;
 		this.RelativeIndent = val.RelativeIndent;
-		this.ReadingOrder = val.ReadingOrder;
+		this.readingOrder = val.readingOrder;
 		this.shrink = val.shrink;
 		this.angle = val.angle;
 		this.ver = val.ver;
@@ -5123,7 +5137,7 @@ var g_oFontProperties = {
 	Align.prototype.Properties = Asc.c_oSerAligmentTypes;
 	Align.prototype.getHash = function () {
 		if (!this._hash) {
-			this._hash = this.hor + '|' + this.indent + '|' + this.ReadingOrder + '|' + this.RelativeIndent + '|' + this.shrink + '|' +
+			this._hash = this.hor + '|' + this.indent + '|' + this.readingOrder + '|' + this.RelativeIndent + '|' + this.shrink + '|' +
 				this.angle + '|' + this.ver + '|' + this.wrap;
 		}
 		return this._hash;
@@ -5146,7 +5160,7 @@ var g_oFontProperties = {
 		var oRes = new Align();
 		oRes.hor = this._mergeProperty(this.hor, align.hor, defaultAlign.hor);
 		oRes.indent = this._mergeProperty(this.indent, align.indent, defaultAlign.indent);
-		oRes.ReadingOrder = this._mergeProperty(this.ReadingOrder, align.ReadingOrder, defaultAlign.ReadingOrder);
+		oRes.readingOrder = this._mergeProperty(this.readingOrder, align.readingOrder, defaultAlign.readingOrder);
 		oRes.RelativeIndent = this._mergeProperty(this.RelativeIndent, align.RelativeIndent, defaultAlign.RelativeIndent);
 		oRes.shrink = this._mergeProperty(this.shrink, align.shrink, defaultAlign.shrink);
 		oRes.angle = this._mergeProperty(this.angle, align.angle, defaultAlign.angle);
@@ -5172,8 +5186,8 @@ var g_oFontProperties = {
 		} else {
 			bEmpty = false;
 		}
-		if (this.ReadingOrder == val.ReadingOrder) {
-			oRes.ReadingOrder = null;
+		if (this.readingOrder == val.readingOrder) {
+			oRes.readingOrder = null;
 		} else {
 			bEmpty = false;
 		}
@@ -5203,7 +5217,7 @@ var g_oFontProperties = {
 		return oRes;
 	};
 	Align.prototype.isEqual = function (val) {
-		return this.hor == val.hor && this.indent == val.indent && this.ReadingOrder == val.ReadingOrder && this.RelativeIndent == val.RelativeIndent && this.shrink == val.shrink &&
+		return this.hor == val.hor && this.indent == val.indent && this.readingOrder == val.readingOrder && this.RelativeIndent == val.RelativeIndent && this.shrink == val.shrink &&
 			this.angle == val.angle && this.ver == val.ver && this.wrap == val.wrap;
 	};
 	Align.prototype.clone = function () {
@@ -5291,10 +5305,10 @@ var g_oFontProperties = {
 		this.shrink = val;
 	};
 	Align.prototype.getReadingOrder = function () {
-		return this.ReadingOrder;
+		return this.readingOrder;
 	};
 	Align.prototype.setReadingOrder = function (val) {
-		this.ReadingOrder = val;
+		this.readingOrder = val;
 	};
 	Align.prototype.getAlignHorizontal = function () {
 		return this.hor;
@@ -5350,7 +5364,7 @@ var g_oFontProperties = {
 			}
 			val = vals["readingOrder"];
 			if (undefined !== val) {
-				this.ReadingOrder = val - 0;
+				this.readingOrder = val - 0;
 			}
 			val = vals["shrinkToFit"];
 			if (undefined !== val) {
@@ -5665,6 +5679,10 @@ StyleManager.prototype =
 	setAlignHorizontal : function(oItemWithXfs, val)
 	{
 		return this._setAlignProperty(oItemWithXfs, val, "alignHorizontal", Align.prototype.getAlignHorizontal, Align.prototype.setAlignHorizontal);
+	},
+	setReadingOrder : function(oItemWithXfs, val)
+	{
+		return this._setAlignProperty(oItemWithXfs, val, "readingOrder", Align.prototype.getReadingOrder, Align.prototype.setReadingOrder);
 	},
 	setShrinkToFit : function(oItemWithXfs, val)
 	{
@@ -6561,6 +6579,13 @@ StyleManager.prototype =
 				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, false, oRes.oldVal, oRes.newVal));
 		}
 	};
+	Col.prototype.setReadingOrder = function (val) {
+		var oRes = this.ws.workbook.oStyleManager.setReadingOrder(this, val);
+		if (AscCommon.History.Is_On() && oRes.oldVal != oRes.newVal) {
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoCol, AscCH.historyitem_RowCol_ReadingOrder, this.ws.getId(),
+				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, false, oRes.oldVal, oRes.newVal));
+		}
+	};
 	Col.prototype.setFill = function (val) {
 		var oRes = this.ws.workbook.oStyleManager.setFill(this, val);
 		if (AscCommon.History.Is_On() && oRes.oldVal != oRes.newVal) {
@@ -6960,6 +6985,13 @@ StyleManager.prototype =
 		var oRes = this.ws.workbook.oStyleManager.setAlignHorizontal(this, val);
 		if (AscCommon.History.Is_On() && oRes.oldVal != oRes.newVal) {
 			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoRow, AscCH.historyitem_RowCol_AlignHorizontal, this.ws.getId(),
+				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, true, oRes.oldVal, oRes.newVal));
+		}
+	};
+	Row.prototype.setReadingOrder = function (val) {
+		var oRes = this.ws.workbook.oStyleManager.setReadingOrder(this, val);
+		if (AscCommon.History.Is_On() && oRes.oldVal != oRes.newVal) {
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoRow, AscCH.historyitem_RowCol_ReadingOrder, this.ws.getId(),
 				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, true, oRes.oldVal, oRes.newVal));
 		}
 	};
@@ -13221,6 +13253,7 @@ function RangeDataManagerElem(bbox, data)
 		//для превью передаём из интерфейса
 		this.headerFooter = null;
 		this.printArea = null;
+		this.selection = null;
 
 		this.ws = ws;
 
@@ -13471,6 +13504,7 @@ function RangeDataManagerElem(bbox, data)
 		res["pageSetup"]["pageOrder"] = this.pageSetup.pageOrder;
 		res["pageSetup"]["paperUnits"] = this.pageSetup.paperUnits;
 		res["pageSetup"]["printArea"] = this.pageSetup.printArea;
+		res["pageSetup"]["selection"] = this.pageSetup.selection;
 		res["pageSetup"]["scale"] = this.pageSetup.scale;
 		res["pageSetup"]["useFirstPageNumber"] = this.pageSetup.useFirstPageNumber;
 		res["pageSetup"]["usePrinterDefaults"] = this.pageSetup.usePrinterDefaults;
@@ -13529,6 +13563,7 @@ function RangeDataManagerElem(bbox, data)
 		this.pageSetup.pageOrder = checkOnNull(props["pageSetup"]["pageOrder"], this.pageSetup.pageOrder);
 		this.pageSetup.paperUnits = checkOnNull(props["pageSetup"]["paperUnits"], this.pageSetup.paperUnits);
 		this.pageSetup.printArea = checkOnNull(props["pageSetup"]["printArea"], this.pageSetup.printArea);
+		this.pageSetup.selection = checkOnNull(props["pageSetup"]["selection"], this.pageSetup.selection);
 		this.pageSetup.scale = checkOnNull(props["pageSetup"]["scale"], this.pageSetup.scale);
 		this.pageSetup.useFirstPageNumber = checkOnNull(props["pageSetup"]["useFirstPageNumber"], this.pageSetup.useFirstPageNumber);
 		this.pageSetup.usePrinterDefaults = checkOnNull(props["pageSetup"]["usePrinterDefaults"], this.pageSetup.usePrinterDefaults);
@@ -18328,8 +18363,8 @@ function RangeDataManagerElem(bbox, data)
 			argumentsMin = argsInfo.length - optionalCount;
 		}
 
-		let returnInfo = options.returnInfo;
-		if (options.returnInfo && !supportedTypes[returnInfo.type]) {
+		let returnInfo = options && options.returnInfo;
+		if (options && options.returnInfo && !supportedTypes[returnInfo.type]) {
 			console.log("Registration custom function \"" +  funcName + "\" warning. Invalid return type. The following types must be used: number, string, boolean, any, number[][], string[][], boolean[][], any[][].");
 		}
 
@@ -18371,7 +18406,7 @@ function RangeDataManagerElem(bbox, data)
 				oContext["address"] = arguments[1] && arguments[1].getName();
 
 				oContext["address"] = ((ws && ws.getName) ? (AscCommon.parserHelp.getEscapeSheetName(ws.getName()) + "!") : "") + oContext["address"];
-				oContext["argsInfo"] = [];
+				oContext["args"] = [];
 
 				//prepare arguments
 				let args = [];
@@ -18384,7 +18419,7 @@ function RangeDataManagerElem(bbox, data)
 						let _range = arg[i].getRange();
 						let ws = _range.worksheet;
 						let _address = (ws ? AscCommon.parserHelp.getEscapeSheetName(ws.getName()) + "!" : "") + _range.getName();
-						oContext["argsInfo"][i] = {"address": _address, "startCol": _range.bbox.c1, "endCol": _range.bbox.c2, "startRow": _range.bbox.r1, "endRow": _range.bbox.r2};
+						oContext["args"][i] = {"address": _address};
 					}
 
 
@@ -18412,7 +18447,7 @@ function RangeDataManagerElem(bbox, data)
 				let res = func.apply(oContext, args);
 
 				//prepare result
-				let returnInfo = options.returnInfo;
+				let returnInfo = options && options.returnInfo;
 				return oThis.prepareResult(res, returnInfo ? returnInfo.type : null);
 			} catch (e) {
 				console.log("ERROR CUSTOM FUNCTION CALCULATE");
@@ -18523,10 +18558,10 @@ function RangeDataManagerElem(bbox, data)
 	CCustomFunctionEngine.prototype.addToFunctionsList = function (newFunc, params) {
 		AscCommonExcel.cFormulaFunctionGroup['Custom'] = AscCommonExcel.cFormulaFunctionGroup['Custom'] || [];
 
-		let translations = params.nameLocale;
-		let description = params.description;
-		let args = params.params;
-		let tags = params.tags;
+		let translations = params && params.nameLocale;
+		let description = params && params.description;
+		let args = params && params.params;
+		let tags = params && params.tags;
 
 		let funcName = newFunc.prototype.name;
 
@@ -18582,7 +18617,7 @@ function RangeDataManagerElem(bbox, data)
 			this.funcsMapInfo[funcName].description = description;
 		}
 
-		this.funcsMapInfo[funcName].replaceFormulaToVal = tags["replaceFormulaToVal"];
+		this.funcsMapInfo[funcName].replaceFormulaToVal = tags && tags["replaceFormulaToVal"];
 
 		AscCommonExcel.cFormulaFunctionGroup["Custom"].push(newFunc);
 		AscCommonExcel.addNewFunction(newFunc);
@@ -20103,6 +20138,7 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_getIndent"] = prot.asc_getIndent;
 	prot["asc_getWrapText"] = prot.asc_getWrapText;
 	prot["asc_getShrinkToFit"] = prot.asc_getShrinkToFit;
+	prot["asc_getReadingOrder"] = prot.asc_getReadingOrder;
 	prot["asc_getPreview"] = prot.asc_getPreview;
 	prot["asc_getLocked"] = prot.asc_getLocked;
 	prot["asc_getHidden"] = prot.asc_getHidden;

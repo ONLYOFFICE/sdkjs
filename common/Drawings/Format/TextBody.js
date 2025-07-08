@@ -607,6 +607,9 @@
     CTextBody.prototype.getDrawingDocument = function() {
         return Asc.editor.getDrawingDocument();
     };
+    CTextBody.prototype.GetParent = function() {
+        return this.parent;
+    };
 
     function GetContentOneStringSizes(oContent) {
         oContent.Reset(0, 0, 20000, 20000);

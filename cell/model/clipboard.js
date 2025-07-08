@@ -530,59 +530,16 @@
 
 		Clipboard.prototype.drawSelectedArea = function (ws, opt_get_bytes) {
 			let activeRange = ws.model.selectionRange.getLast();
-			let range = ws.getCellMetrics(activeRange.c1, activeRange.r1, true, true);
-			let rangeEnd = ws.getCellMetrics(activeRange.c2, activeRange.r2, true, true);
 
-			if (!range || !rangeEnd) {
-				return;
-			}
+			let base64;
+			//ws.workbook._executeWithoutZoom(function () {
+				let ctx = ws.workbook.printForCopyPaste(ws, activeRange);
+				if (ctx && ctx.canvas) {
+					base64 = ctx.canvas.toDataURL("image/png");
+				}
+			//})
 
-			// Calculate dimensions
-			let width = rangeEnd.left + rangeEnd.width - range.left;
-			let height = rangeEnd.top + rangeEnd.height - range.top;
-
-			//TODO while add 1000px limit
-			let maxSize = 1000;
-			if (width > maxSize || height > maxSize) {
-				return;
-			}
-
-			// Create canvas and context
-			let canvas = document.createElement('canvas');
-			canvas.width = width * ws.getZoom();
-			canvas.height = height * ws.getZoom();
-			let ctx = canvas.getContext('2d');
-
-			//let zoom = ws.getZoom();
-			//ctx.scale(zoom, zoom);
-
-			ctx.save();
-
-			ctx.beginPath();
-			ctx.rect(0, 0, width, height);
-			ctx.clip();
-
-			// Calculate scroll offsets
-			let offsetX = range.left;
-			let offsetY = range.top;
-
-			// Translate context to draw from selected range start
-			//ctx.translate(-offsetX, -offsetY);
-
-			let oCtx = new Asc.DrawingContext({
-				canvas: canvas, units: 0/*px*/, fmgrGraphics: ws.workbook.fmgrGraphics, font: ws.workbook.m_oFont
-			});
-
-			oCtx.isNotDrawBackground = true;
-
-			// Draw worksheet elements
-			ws._drawGrid(oCtx, activeRange, offsetX, offsetY, undefined, undefined, undefined, true, true);
-			ws._drawCellsAndBorders(oCtx, activeRange, offsetX, offsetY);
-
-			ctx.restore();
-
-			let base64 = canvas.toDataURL();
-			if (opt_get_bytes) {
+			if (opt_get_bytes && base64) {
 				// Get base64 data without header
 				let base64Data = base64.split(',')[1];
 

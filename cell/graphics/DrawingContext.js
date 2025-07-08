@@ -756,10 +756,6 @@
 		var _g = val.getG();
 		var _b = val.getB();
 		var _a = val.getA();
-
-		if (this.fillColor && this.fillColor.isEqual(_r, _g, _b, _a)) {
-			return this;
-		}
 		this.fillColor = new AscCommon.CColor(_r, _g, _b, _a);
 		if (this.ctx.fillStyle) {
 			this.ctx.fillStyle = "rgba(" + _r + "," + _g + "," + _b + "," + _a + ")";

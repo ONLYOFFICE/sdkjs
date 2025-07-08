@@ -5140,7 +5140,7 @@ CPresentation.prototype.OnKeyDown = function (e) {
 		case Asc.c_oAscPresentationShortcutType.EuroSign: {
 			if (true === this.CollaborativeEditing.Is_Fast() || this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false) {
 				History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
-				this.AddToParagraph(new AscWord.CRunText("€".charCodeAt(0)));
+				this.AddToParagraph(new AscWord.CRunText("€".charCodeAt(0)), false, true);
 			}
 			bRetValue = keydownresult_PreventAll;
 			break;
@@ -5289,7 +5289,7 @@ CPresentation.prototype.OnKeyDown = function (e) {
 					var Item = new AscWord.CRunText(0x2013);
 					Item.SpaceAfter = false;
 
-					this.AddToParagraph(Item);
+					this.AddToParagraph(Item, false, true);
 				}
 				bRetValue = keydownresult_PreventAll;
 			}
@@ -5358,7 +5358,7 @@ CPresentation.prototype.OnKeyDown = function (e) {
 									}
 								} else {
 									History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
-									this.AddToParagraph(new AscWord.CRunTab());
+									this.AddToParagraph(new AscWord.CRunTab(), false, true);
 								}
 
 
@@ -5437,7 +5437,7 @@ CPresentation.prototype.OnKeyDown = function (e) {
 												this.Recalculate();
 											}
 										} else {
-											this.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Line));
+											this.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Line), false, true);
 										}
 									}
 								}
@@ -5459,7 +5459,7 @@ CPresentation.prototype.OnKeyDown = function (e) {
 													this.Recalculate();
 												}
 											} else {
-												this.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Line));
+												this.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Line), false, true);
 											}
 										}
 									} else {
@@ -5609,7 +5609,7 @@ CPresentation.prototype.OnKeyDown = function (e) {
 				if (true === this.CollaborativeEditing.Is_Fast() || this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false) {
 					if (oController && oController.selectedObjects.length !== 0) {
 						History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
-						this.AddToParagraph(new AscWord.CRunText(0x00A0));
+						this.AddToParagraph(new AscWord.CRunText(0x00A0), false, true);
 					}
 				}
 			} else if (e.CtrlKey) {
@@ -5619,7 +5619,7 @@ CPresentation.prototype.OnKeyDown = function (e) {
 					if (oController && oController.selectedObjects.length !== 0) {
 						History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
 						this.CheckLanguageOnTextAdd = true;
-						this.AddToParagraph(new AscWord.CRunSpace());
+						this.AddToParagraph(new AscWord.CRunSpace(), false, true);
 						this.CheckLanguageOnTextAdd = false;
 					}
 				}

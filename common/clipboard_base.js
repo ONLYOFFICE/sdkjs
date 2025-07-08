@@ -991,6 +991,17 @@
 
 		isUseNewCopy : function()
 		{
+			if (navigator.clipboard) {
+
+				if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["getEngineVersion"])
+				{
+					let nVersion = window["AscDesktopEditor"]["getEngineVersion"]();
+					if (nVersion < 109)
+						return false;
+				}
+
+				return true;
+			}
 			if (this._isUseMobileNewCopy())
 			{
 				return true;

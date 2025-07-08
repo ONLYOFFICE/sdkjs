@@ -150,6 +150,7 @@ var editor;
   spreadsheet_api.prototype._init = function() {
     AscCommon.baseEditorsApi.prototype._init.call(this);
     this.topLineEditorElement = document.getElementById(this.topLineEditorName);
+	AscCommon.applyElementDirection(this.topLineEditorElement);
     // ToDo нужно ли это
     asc['editor'] = ( asc['editor'] || this );
   };
@@ -3575,8 +3576,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_getWorksheetName = function(index) {
-	  let name = this.wbModel.getWorksheet(index).getName();
-    return AscCommon.getLTRString(name);
+	  return this.wbModel.getWorksheet(index).getName();
   };
 
   spreadsheet_api.prototype.asc_getWorksheetTabColor = function(index) {
@@ -6214,6 +6214,8 @@ var editor;
     }
   };
 
+
+
   spreadsheet_api.prototype.asc_setCellItalic = function(isItalic) {
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return;
@@ -6283,6 +6285,28 @@ var editor;
       this.wb.restoreFocus();
     }
   };
+
+
+	spreadsheet_api.prototype.asc_setCellReadingOrder = function(readingOrder) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return;
+		}
+
+		let ws = this.wb.getWorksheet();
+		if (ws.objectRender.selectedGraphicObjectsExists()) {
+			let isRTL = readingOrder === Asc.c_oReadingOrderTypes.RTL;
+			let controller = ws.objectRender.controller;
+			controller.checkSelectedObjectsAndCallback(
+				function () {
+					controller.setParagraphBidi(isRTL);
+				}, [], false,
+				AscDFH.historydescription_Document_SetParagraphBidi
+			);
+		} else {
+			this.wb.getWorksheet().setSelectionInfo("readingOrder", readingOrder);
+			this.wb.restoreFocus();
+		}
+	};
 
   spreadsheet_api.prototype.asc_setCellAlign = function(align) {
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
@@ -7048,6 +7072,7 @@ var editor;
 		   _adjustPrint.asc_setIgnorePrintArea(true);
        }
 
+	   _adjustPrint.asc_setPrintType(Asc.c_oAscPrintType.EntireWorkbook);
 	   if (_options["adjustOptions"])
 	   {
 		   if (_options["adjustOptions"]["startPageIndex"])
@@ -7056,9 +7081,10 @@ var editor;
 			   _adjustPrint.asc_setEndPageIndex(_options["adjustOptions"]["endPageIndex"]);
 		   if (_options["adjustOptions"]["activeSheetsArray"])
 			   _adjustPrint.asc_setActiveSheetsArray(_options["adjustOptions"]["activeSheetsArray"]);
+		   if (_options["adjustOptions"]["printType"])
+			   _adjustPrint.asc_setPrintType(_options["adjustOptions"]["printType"]);
 	   }
 
-	   _adjustPrint.asc_setPrintType(Asc.c_oAscPrintType.EntireWorkbook);
 
        var ws, newPrintOptions;
 	   var _orientation = spreadsheetLayout ? spreadsheetLayout["orientation"] : null;
@@ -10277,6 +10303,7 @@ var editor;
   prot["asc_setCellStrikeout"] = prot.asc_setCellStrikeout;
   prot["asc_setCellSubscript"] = prot.asc_setCellSubscript;
   prot["asc_setCellSuperscript"] = prot.asc_setCellSuperscript;
+  prot["asc_setCellReadingOrder"] = prot.asc_setCellReadingOrder;
   prot["asc_setCellAlign"] = prot.asc_setCellAlign;
   prot["asc_setCellVertAlign"] = prot.asc_setCellVertAlign;
   prot["asc_setCellTextWrap"] = prot.asc_setCellTextWrap;

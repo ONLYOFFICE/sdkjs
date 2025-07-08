@@ -430,20 +430,19 @@ function (window, undefined) {
 
 	/**
 	 * accepts angles in anti-clockwise system
-	 * @param {number} startAngle
-	 * @param {number} endAngle
-	 * @param {number} ctrlAngle
+	 * @param {number} startAngle from -180 to 180
+	 * @param {number} endAngle from -180 to 180
+	 * @param {number} ctrlAngle from -180 to 180
 	 * @returns {number} sweep - positive sweep means anti-clockwise
 	 */
 	function computeSweep(startAngle, endAngle, ctrlAngle) {
-		let sweep;
-
-		startAngle = (360.0 + startAngle) % 360.0;
-		endAngle = (360.0 + endAngle) % 360.0;
-		ctrlAngle = (360.0 + ctrlAngle) % 360.0;
+		// Normalize angles from −180…180 to [0, 360) interval
+		startAngle = (360 + startAngle) % 360;
+		endAngle   = (360 + endAngle)   % 360;
+		ctrlAngle  = (360 + ctrlAngle)  % 360;
 
 		// different sweeps depending on where the control point is
-
+		let sweep;
 		if (startAngle < endAngle) {
 			if (startAngle < ctrlAngle && ctrlAngle < endAngle) {
 				// positive sweep - anti-clockwise
@@ -458,6 +457,9 @@ function (window, undefined) {
 			if (endAngle < ctrlAngle && ctrlAngle < startAngle) {
 				// negative sweep - clockwise
 				sweep = endAngle - startAngle;
+			}
+			else if (startAngle === endAngle && startAngle === ctrlAngle) {
+				sweep = 0;
 			}
 			else {
 				// positive sweep - anti-clockwise
@@ -507,27 +509,6 @@ function (window, undefined) {
 		c = Number(c);
 		d = Number(d);
 
-		// it is not necessary, but I try to avoid imprecise calculations
-		// with points:
-		// 		convert
-		// 				719999.9999999999 			to 720000
-		// 				719999.5555 						to 719999.5555
-		// with angles (see below):
-		// 		convert
-		// 				-90.00000000000006 			to -90
-		// 				6.176024640130164e-15 	to 0
-		// 		but lost precision on convert
-		// 				54.61614630046808 			to 54.6161
-		// can be enhanced by if add: if rounded angle is 0 so round otherwise dont
-
-		// lets save only 4 digits after point coordinates to avoid imprecise calculations to perform correct compares later
-		x0 = Math.round(x0 * 1e4) / 1e4;
-		y0 = Math.round(y0 * 1e4) / 1e4;
-		x = Math.round(x * 1e4) / 1e4;
-		y = Math.round(y * 1e4) / 1e4;
-		a = Math.round(a * 1e4) / 1e4;
-		b = Math.round(b * 1e4) / 1e4;
-
 		// translate points to ellipse angle
 		let startPoint = rotatePointAroundCordsStartClockWise(x0, y0, c);
 		let endPoint = rotatePointAroundCordsStartClockWise(x, y, c);
@@ -548,32 +529,13 @@ function (window, undefined) {
 		let rx = Math.sqrt(Math.pow(x0 - cx, 2) + Math.pow(y0 - cy, 2) * d2);
 		let ry = rx / d;
 
-		// lets NOT save only 4 digits after to avoid precision loss
-		// rx = Math.round(rx * 1e4) / 1e4;
-		// ry = Math.round(ry * 1e4) / 1e4;
-		// cy = Math.round(cy * 1e4) / 1e4;
-
 		let ctrlAngle = Math.atan2(b - cy, a - cx) * radToDeg;
 		let startAngle = Math.atan2(y0 - cy, x0 - cx) * radToDeg;
 		let endAngle = Math.atan2(y - cy, x - cx) * radToDeg;
 
-		// lets save only 4 digits after to avoid imprecise calculations result
-		ctrlAngle = Math.round(ctrlAngle * 1e4) / 1e4;
-		startAngle = Math.round(startAngle * 1e4) / 1e4;
-		endAngle = Math.round(endAngle * 1e4) / 1e4;
-		// set -0 to 0
-		ctrlAngle = ctrlAngle === -0 ? 0 : ctrlAngle;
-		startAngle = startAngle === -0 ? 0 : startAngle;
-		endAngle = endAngle === -0 ? 0 : endAngle;
-
 		let sweep = computeSweep(startAngle, endAngle, ctrlAngle);
 
 		let ellipseRotationAngle = c * radToDeg;
-		ellipseRotationAngle = Math.round(ellipseRotationAngle * 1e4) / 1e4;
-		ellipseRotationAngle = ellipseRotationAngle === -0 ? 0 : ellipseRotationAngle;
-		ellipseRotationAngle = ellipseRotationAngle === 360 ? 0 : ellipseRotationAngle;
-
-		// TODO check results consider sweep sign is important: clockwise or anti-clockwise
 
 		// let mirrorVertically = false;
 		// if (mirrorVertically) {
@@ -599,6 +561,36 @@ function (window, undefined) {
 		let hR = ry;
 
 		return {wR: wR, hR: hR, stAng: stAng, swAng: swAng, ellipseRotation: ellipseRotationInC};
+	}
+
+	/**
+	 * Determines whether three points are collinear using an adaptive tolerance proportional to the coordinate scale.
+	 * @param {number} ax
+	 * @param {number} ay
+	 * @param {number} bx
+	 * @param {number} by
+	 * @param {number} cx
+	 * @param {number} cy
+	 * @returns {boolean}
+	 */
+	const COL_EPS_K = 3.6e-5;
+	function isCollinear(ax, ay, bx, by, cx, cy) {
+		// Fast path: any two points coincide – degenerate triangle considered collinear
+		if ((ax === bx && ay === by) || (ax === cx && ay === cy) || (bx === cx && by === cy)) {
+			return true;
+		}
+
+		// Twice the signed area of the triangle (cross product of edge vectors)
+		const cross = (bx - ax) * (cy - ay) - (cx - ax) * (by - ay);
+
+		// Adaptive tolerance: scales with the largest coordinate delta
+		// Makes the check robust for very small and very large numbers.
+		const scale = Math.max(
+			Math.abs(bx - ax), Math.abs(by - ay),
+			Math.abs(cx - ax), Math.abs(cy - ay)
+		);
+		const tol = COL_EPS_K * (scale || 1);
+		return Math.abs(cross) <= tol;
 	}
 
 	Path.prototype.recalculate = function (gdLst, bResetPathsInfo) {
@@ -807,33 +799,64 @@ function (window, undefined) {
 					}
 
 					// d is fraction
-					d = Number(cmd.d, 10);
+					d = Number(cmd.d);
 
+					// normalize angle (The values are given in degrees)
+					// 360 * n —-> ~0
+					// 270 --> 	-90
+					// -290 -> 	70
+					// -570 ->	150
+					// -286.47888333333333 —-> 73.52111666666667
+					// -572.9577833333333 —-> 147.04221666666672
+					// so c in degrees is from -180 to 180
 					c = Math.atan2(ch * Math.sin(c * cToRad), cw * Math.cos(c * cToRad)) / cToRad;
 
 					let cRadians = c * cToRad2;
 
-					let newParams = transformEllipticalArcParams(lastX, lastY, x, y, a, b, cRadians, d);
-
-					// check if it not ellipse arc in fact but line (three points on one line)
-					// if this case will not be caught there will be NaN in params and
-					// drawing will be unpredictable
-					// inaccuracy may be different
-					// (Ax * (By - Cy) + Bx * (Cy - Ay) + Cx * (Ay - By) ) / 2 - triangle square
 					if (isNaN(lastY)) {
 						lastY = 0;
 					}
 					if (isNaN(lastX)) {
 						lastX = 0;
 					}
-					let triangleSquare = (x * (b - lastY) + a * (lastY - y) + lastX * (y - b)) / 2;
-					let accuracy = 10e4;
-					if (Math.round(triangleSquare * accuracy) === 0 || Math.round(triangleSquare * accuracy) === -0) {
-						AscCommon.consoleLog("tranform ellipticalArcTo to line. 2 catch. Triangle square:", triangleSquare);
+
+					// change ellipticalArcTo params to draw arc using old params
+					let newParams = transformEllipticalArcParams(lastX, lastY, x, y, a, b, cRadians, d);
+
+					// check if command arguments are wrong. Wrong arguments may refer to huge ellipse. It editor it can
+					// break scroll bars. So as visio does let's transform elliptical arc to line.
+					// see bug https://bugzilla.onlyoffice.com/show_bug.cgi?id=75317
+					// files from 4 to 6 should not be caught
+
+					// ~0 swing angle refers to bad arguments. check it
+					// see files:
+					// 1 simple lines and ellipses.vsdx
+					// 2 swAng === 0 check  testFlatCurve Huge D.vsdx
+					// 3 swAng ~=0 testFlatCurve.vsdx
+					let swAngCheck = AscFormat.fApproxEqual(newParams.swAng, 0, 1e-7);
+
+					// NaN in newParams refers to bad arguments.
+					// see files:
+					// 1 simple lines and ellipses.vsdx
+					// 7 triangleSquare === 0 cehck test Diagonal.vsdx
+					// 8 small square + NaN params in result, isCollinear cathces.vsdx
+					let isNaNInParams = isNaN(newParams.swAng) || isNaN(newParams.stAng) ||
+							isNaN(newParams.wR) || isNaN(newParams.hR) || isNaN(newParams.ellipseRotation);
+
+					// three points on one line refers to bad arguments
+					// see files:
+					// 1 simple lines and ellipses.vsdx
+					// 3 swAng ~=0 testFlatCurve.vsdx
+					// 7 triangleSquare === 0 cehck test Diagonal.vsdx
+					// 8 small square + NaN params in result, isCollinear cathces.vsdx
+					let isCollinearCheck = isCollinear(lastX, lastY, a, b, x, y);
+
+					if (swAngCheck || isNaNInParams || isCollinearCheck) {
+						AscCommon.consoleLog("tranform ellipticalArcTo to line. 2 catch.");
+						this.ArrPathCommand.push({id: lineTo, X: a, Y: b}); // go to control point first
 						this.ArrPathCommand.push({id: lineTo, X: x, Y: y});
 					}
 					else {
-						// change ellipticalArcTo params to draw arc easy
 						this.ArrPathCommand.push({
 							id: ellipticalArcTo,
 							stX: lastX,

@@ -8518,18 +8518,26 @@ ParaRun.prototype.Apply_Pr = function(TextPr)
 	{
 		let lcid = TextPr.Lang.Val;
 		let dirFlag = this.GetDirectionFlagInRange(0, this.Content.length);
-		if (AscBidi.DIRECTION_FLAG.LTR & dirFlag)
-			this.Set_Lang_Val(lcid);
-		if (AscBidi.DIRECTION_FLAG.RTL & dirFlag)
-			this.Set_Lang_Bidi(lcid);
-		
-		let paragraph = this.GetParagraph();
-		if (AscBidi.DIRECTION_FLAG.Other === dirFlag && paragraph)
+		if (AscBidi.DIRECTION_FLAG.None === dirFlag)
 		{
-			if (paragraph.isRtlDirection())
-				this.Set_Lang_Bidi(lcid);
-			else
+			this.Set_Lang_Bidi(lcid);
+			this.Set_Lang_Val(lcid);
+		}
+		else
+		{
+			if (AscBidi.DIRECTION_FLAG.LTR & dirFlag)
 				this.Set_Lang_Val(lcid);
+			if (AscBidi.DIRECTION_FLAG.RTL & dirFlag)
+				this.Set_Lang_Bidi(lcid);
+			
+			let paragraph = this.GetParagraph();
+			if (AscBidi.DIRECTION_FLAG.Other === dirFlag && paragraph)
+			{
+				if (paragraph.isRtlDirection())
+					this.Set_Lang_Bidi(lcid);
+				else
+					this.Set_Lang_Val(lcid);
+			}
 		}
 	}
 

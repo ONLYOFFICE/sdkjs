@@ -8897,7 +8897,7 @@
 		const oWrapper = this.getLabelWrapper(sText);
 		const oApi = Asc.editor;
 		if (oWrapper && oApi) {
-			const nScaleValue = 1 / (oApi.WordControl.m_nZoomValue / 100);
+			const nScaleValue = 1 / (oApi.WordControl.getZoomValue());
 			const oT = new AscCommon.CMatrix();
 			oT.sx = nScaleValue;
 			oT.sy = nScaleValue;

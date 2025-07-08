@@ -3954,6 +3954,43 @@ $(function () {
 		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[Column1]", "Value for edit in cell after Table[[Column1]] is typed");
 		assert.strictEqual(resCell.getFormula(), tableName + "[Column1]", "Formula in cell after Table[[Column1]] is typed");
 
+		// short links inside the table(check for correct formula parsing)
+		resCell = ws.getRange2("C101");
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 100, 2);
+		oParser = new AscCommonExcel.parserFormula("[]", cellWithFormula, ws);
+		parseResult = new AscCommonExcel.ParseResult([], []);
+		assert.ok(oParser.parse(true, true, parseResult, true));
+		assert.ok(oParser.outStack && oParser.outStack[0] && (oParser.outStack[0].type === AscCommonExcel.cElementType.table), "=[] Formula parsing Inside the table");
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 100, 2);
+		oParser = new AscCommonExcel.parserFormula("[Column1]", cellWithFormula, ws);
+		parseResult = new AscCommonExcel.ParseResult([], []);
+		assert.ok(oParser.parse(true, true, parseResult, true));
+		assert.ok(oParser.outStack && oParser.outStack[0] && (oParser.outStack[0].type === AscCommonExcel.cElementType.table), "=[Column1] Formula parsing Inside the table");
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 100, 2);
+		oParser = new AscCommonExcel.parserFormula("[[Column1]:[Column2]]", cellWithFormula, ws);
+		parseResult = new AscCommonExcel.ParseResult([], []);
+		assert.ok(oParser.parse(true, true, parseResult, true));
+		assert.ok(oParser.outStack && oParser.outStack[0] && (oParser.outStack[0].type === AscCommonExcel.cElementType.table), "=[[Column1]:[Column2]] Formula parsing Inside the table");
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 100, 2);
+		oParser = new AscCommonExcel.parserFormula("[@]", cellWithFormula, ws);
+		parseResult = new AscCommonExcel.ParseResult([], []);
+		assert.ok(oParser.parse(true, true, parseResult, true));
+		assert.ok(oParser.outStack && oParser.outStack[0] && (oParser.outStack[0].type === AscCommonExcel.cElementType.table), "=[@] Formula parsing Inside the table");
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 100, 2);
+		oParser = new AscCommonExcel.parserFormula("[@Column1]", cellWithFormula, ws);
+		parseResult = new AscCommonExcel.ParseResult([], []);
+		assert.ok(oParser.parse(true, true, parseResult, true));
+		assert.ok(oParser.outStack && oParser.outStack[0] && (oParser.outStack[0].type === AscCommonExcel.cElementType.table), "=[@Column1] Formula parsing Inside the table");
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 100, 2);
+		oParser = new AscCommonExcel.parserFormula("[@[Column1]:[Column2]]", cellWithFormula, ws);
+		parseResult = new AscCommonExcel.ParseResult([], []);
+		assert.ok(oParser.parse(true, true, parseResult, true));
+		assert.ok(oParser.outStack && oParser.outStack[0] && (oParser.outStack[0].type === AscCommonExcel.cElementType.table), "=[@[Column1]:[Column2]] Formula parsing Inside the table");
 
 		clearData(0, 99, 0, 105);
 	});

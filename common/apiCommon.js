@@ -351,6 +351,8 @@ function (window, undefined) {
 		this.date = "";
 		this.isvisible = false;
 		this.isrequested = false;
+		
+		this.isForm = false;
 	}
 
 	asc_CSignatureLine.prototype.correct = function () {
@@ -365,6 +367,7 @@ function (window, undefined) {
 		if (this.image == null) this.image = "";
 		if (this.date == null) this.date = "";
 		if (this.isvisible == null) this.isvisible = false;
+		if (this.isForm === null) this.isForm = false;
 	};
 	asc_CSignatureLine.prototype.asc_getId = function () {
 		return this.id;
@@ -431,6 +434,12 @@ function (window, undefined) {
 	};
 	asc_CSignatureLine.prototype.asc_setRequested = function (v) {
 		this.isrequested = v;
+	};
+	asc_CSignatureLine.prototype.asc_getIsForm = function() {
+		return this.isForm;
+	};
+	asc_CSignatureLine.prototype.asc_setIsForm = function(v) {
+		this.isForm = v;
 	};
 
 	/**
@@ -7046,6 +7055,8 @@ function (window, undefined) {
 	prot["asc_setVisible"] = prot.asc_setVisible;
 	prot["asc_getRequested"] = prot.asc_getRequested;
 	prot["asc_setRequested"] = prot.asc_setRequested;
+	prot["asc_getIsForm"] = prot.asc_getIsForm;
+	prot["asc_setIsForm"] = prot.asc_setIsForm;
 
 	window["AscCommon"].asc_CAscEditorPermissions = asc_CAscEditorPermissions;
 	prot = asc_CAscEditorPermissions.prototype;
@@ -8229,6 +8240,68 @@ function (window, undefined) {
 	window["AscCommon"]["mm2pix"] = window["AscCommon"].mm2pix = function(mm)
 	{
 		return mm * AscCommon.g_dKoef_mm_to_pix;
+	};
+
+	window["Asc"].checkReturnCommand = function(obj, recursionDepth)
+	{
+		let depth = (recursionDepth === undefined) ? 0 : recursionDepth;
+		if (depth > 10)
+			return false;
+
+		switch (typeof obj)
+		{
+			case "undefined":
+			case "boolean":
+			case "number":
+			case "string":
+			case "symbol":
+			case "bigint":
+				return true;
+			case "object":
+			{
+				if (!obj)
+					return true;
+
+				if (Array.isArray(obj))
+				{
+					for (let i = 0, len = obj.length; i < len; i++)
+					{
+						if (!Asc.checkReturnCommand(obj[i], depth + 1))
+							return false;
+					}
+
+					return true;
+				}
+
+				if (Object.getPrototypeOf)
+				{
+					let prot = Object.getPrototypeOf(obj);
+					if (prot && prot.__proto__ && prot.__proto__.constructor && prot.__proto__.constructor.name)
+					{
+						if (prot.__proto__.constructor.name === "TypedArray")
+							return true;
+					}
+				}
+
+				for (let prop in obj)
+				{
+					let isNaturalProp = true;
+					if (obj.hasOwnProperty)
+						isNaturalProp = obj.hasOwnProperty(prop);
+					if (isNaturalProp)
+					{
+						if (!Asc.checkReturnCommand(obj[prop], depth + 1))
+							return false;
+					}
+				}
+
+				return true;
+			}
+			default:
+				break;
+		}
+
+		return false;
 	};
 	
 })(window);

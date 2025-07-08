@@ -19248,24 +19248,27 @@
 	
 	/**
 	 * Sets the lock to the current inline text content control:
+	 * <b>"unlocked"</b> - content can be edited and the container can be deleted.
 	 * <b>"contentLocked"</b> - content cannot be edited.
 	 * <b>"sdtContentLocked"</b> - content cannot be edited and the container cannot be deleted.
 	 * <b>"sdtLocked"</b> - the container cannot be deleted.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {"contentLocked" | "sdtContentLocked" | "sdtLocked"} sLockType - The lock type applied to the inline text content control.
+	 * @param {"unlocked" | "contentLocked" | "sdtContentLocked" | "sdtLocked"} lockType - The lock type applied to the inline text content control.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetLock.js
 	 */
-	ApiInlineLvlSdt.prototype.SetLock = function(sLockType)
+	ApiInlineLvlSdt.prototype.SetLock = function(lockType)
 	{
 		var nLock = c_oAscSdtLockType.Unlocked;
-		if ("contentLocked" === sLockType)
+		if ("contentLocked" === lockType)
 			nLock = c_oAscSdtLockType.ContentLocked;
-		else if ("sdtContentLocked" === sLockType)
+		else if ("sdtContentLocked" === lockType)
 			nLock = c_oAscSdtLockType.SdtContentLocked;
-		else if ("sdtLocked" === sLockType)
+		else if ("sdtLocked" === lockType)
 			nLock = c_oAscSdtLockType.SdtLocked;
+		else if ("unlocked" === lockType)
+			nLock = c_oAscSdtLockType.Unlocked;
 		else
 			return false;
 
@@ -19414,6 +19417,9 @@
 	 */
 	ApiInlineLvlSdt.prototype.RemoveElement = function(nPos)
 	{
+		if (!this._canBeEdited())
+			return false;
+		
 		if (nPos < 0 || nPos >= this.Sdt.Content.length)
 			return false;
 
@@ -19436,6 +19442,9 @@
 	 */
 	ApiInlineLvlSdt.prototype.RemoveAllElements = function()
 	{
+		if (!this._canBeEdited())
+			return false;
+		
 		if (this.Sdt.Content.length > 0)
 		{
 			this.Sdt.RemoveFromContent(0, this.Sdt.Content.length);
@@ -19462,6 +19471,9 @@
 	 */
 	ApiInlineLvlSdt.prototype.AddElement = function(oElement, nPos)
 	{
+		if (!this._canBeEdited())
+			return false;
+		
 		if (!private_IsSupportedParaElement(oElement) || nPos < 0 || nPos > this.Sdt.Content.length)
 			return false;
 
@@ -19497,6 +19509,9 @@
 	 */
 	ApiInlineLvlSdt.prototype.Push = function(oElement)
 	{
+		if (!this._canBeEdited())
+			return false;
+		
 		if (!private_IsSupportedParaElement(oElement))
 			return false;
 
@@ -19525,6 +19540,9 @@
 	 */
 	ApiInlineLvlSdt.prototype.AddText = function(sText)
 	{
+		if (!this._canBeEdited())
+			return false;
+		
 		if (typeof sText === "string")
 		{
 			if (this.Sdt.IsShowingPlcHdr())
@@ -19553,6 +19571,9 @@
 	 */
 	ApiInlineLvlSdt.prototype.Delete = function(keepContent)
 	{
+		if (!this._canBeDeleted())
+			return false;
+		
 		var oParentPara = this.Sdt.GetParagraph();
 		if (oParentPara)
 		{
@@ -20039,6 +20060,9 @@
 	 */
 	ApiInlineLvlSdt.prototype.SetCheckBoxChecked = function(isChecked)
 	{
+		if (!this._canBeEdited())
+			return false;
+		
 		if (this.Sdt.IsCheckBox())
 		{
 			this.Sdt.SetCheckBoxChecked(isChecked);
@@ -20127,7 +20151,7 @@
 	 */
 	ApiInlineLvlSdt.prototype.SetPicture = function(imageUrl)
 	{
-		if (!this.Sdt.IsPicture())
+		if (!this.Sdt.IsPicture() || !this._canBeEdited())
 			return false;
 
 		var oImg, paraDrawing;
@@ -20203,8 +20227,16 @@
 	 */
 	ApiInlineLvlSdt.prototype.SelectListItem = function(name)
 	{
+		if (!this._canBeEdited())
+			return false;
+		
 		if (this.Sdt.IsDropDownList() || this.Sdt.IsComboBox())
+		{
 			this.Sdt.SelectListItem(name);
+			return true;
+		}
+		
+		return false;
 	};
 
 	/**
@@ -20284,15 +20316,13 @@
 	 */
 	ApiInlineLvlSdt.prototype.SetDate = function(date)
 	{
-		if (this.Sdt.Pr.Date)
-		{
-			let dateTimePr = this.Sdt.Pr.Date.Copy();
-			dateTimePr.SetFullDate(date);
-			this.Sdt.ApplyDatePickerPr(dateTimePr, true);
-			return true;
-		}
-
-		return false;
+		if (!this.Sdt.Pr.Date || !this._canBeEdited())
+			return false;
+		
+		let dateTimePr = this.Sdt.Pr.Date.Copy();
+		dateTimePr.SetFullDate(date);
+		this.Sdt.ApplyDatePickerPr(dateTimePr, true);
+		return true;
 	};
 	
 	/**
@@ -20790,30 +20820,18 @@
 	};
 	/**
 	 * Sets the lock to the current block text content control:
+	 * <b>"unlocked"</b> - content can be edited and the container can be deleted.
 	 * <b>"contentLocked"</b> - content cannot be edited.
 	 * <b>"sdtContentLocked"</b> - content cannot be edited and the container cannot be deleted.
 	 * <b>"sdtLocked"</b> - the container cannot be deleted.
+	 * @method
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {"contentLocked" | "sdtContentLocked" | "sdtLocked"} lockType - The type of the lock applied to the block text content control.
+	 * @param {"unlocked" | "contentLocked" | "sdtContentLocked" | "sdtLocked"} lockType - The type of the lock applied to the block text content control.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/SetLock.js
 	 */
-	ApiBlockLvlSdt.prototype.SetLock = function(lockType)
-	{
-		var nLock = c_oAscSdtLockType.Unlocked;
-		if ("contentLocked" === lockType)
-			nLock = c_oAscSdtLockType.ContentLocked;
-		else if ("sdtContentLocked" === lockType)
-			nLock = c_oAscSdtLockType.SdtContentLocked;
-		else if ("sdtLocked" === lockType)
-			nLock = c_oAscSdtLockType.SdtLocked;
-		else
-			return false;
-
-		this.Sdt.SetContentControlLock(nLock);
-		return true;
-	};
+	ApiBlockLvlSdt.prototype.SetLock = ApiInlineLvlSdt.prototype.SetLock;
 
 	/**
 	 * Returns the lock type of the current container.
@@ -20868,7 +20886,7 @@
 	 * Sets the label attribute to the current container.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sLabel - The label which will be added to the current container. Can be a positive or negative integer from <b>-2147483647</b> to <b>2147483647</b>.
+	 * @param {string} label - The label which will be added to the current container. Can be a positive or negative integer from <b>-2147483647</b> to <b>2147483647</b>.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/SetLabel.js
 	 */
@@ -20930,7 +20948,7 @@
 	 */
 	ApiBlockLvlSdt.prototype.SetPicture = function(imageUrl)
 	{
-		if (!this.Sdt.IsPicture())
+		if (!this.Sdt.IsPicture() || !this._canBeEdited())
 			return false;
 
 		var oImg, paraDrawing;
@@ -21159,6 +21177,9 @@
 	 */
 	ApiBlockLvlSdt.prototype.Delete = function(keepContent)
 	{
+		if (!this._canBeDeleted())
+			return false;
+		
 		let posInParent = this.Sdt.GetIndex();
 		if (-1 === posInParent)
 			return false;
@@ -21279,6 +21300,9 @@
 	 */
 	ApiBlockLvlSdt.prototype.Push = function(element)
 	{
+		if (!this._canBeEdited())
+			return false;
+		
 		if (element instanceof ApiParagraph || element instanceof ApiTable || element instanceof ApiBlockLvlSdt)
 		{
 			var oElm = element.private_GetImpl();
@@ -21309,6 +21333,9 @@
 	 */
 	ApiBlockLvlSdt.prototype.AddElement = function(element, pos)
 	{
+		if (!this._canBeEdited())
+			return false;
+		
 		if (element instanceof ApiParagraph || element instanceof ApiTable || element instanceof ApiBlockLvlSdt)
 		{
 			var oElm = element.private_GetImpl();
@@ -21338,6 +21365,9 @@
 	 */
 	ApiBlockLvlSdt.prototype.AddText = function(text)
 	{
+		if (!this._canBeEdited())
+			return false;
+		
 		let _sText = GetStringParameter(text, null);
 		if (null === _sText)
 			return false;
@@ -21499,6 +21529,9 @@
 	 */
 	ApiBlockLvlSdt.prototype.ReplaceByElement = function(oElement)
 	{
+		if (!this._canBeDeleted())
+			return false;
+		
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 		{
 			var oElm = oElement.private_GetImpl();
@@ -27581,10 +27614,22 @@
 	{
 		return this.Sdt;
 	};
+	ApiInlineLvlSdt.prototype._canBeEdited = function()
+	{
+		let lock = this.Sdt.GetContentControlLock();
+		return (Asc.c_oAscSdtLockType.Unlocked === lock || Asc.c_oAscSdtLockType.SdtLocked === lock);
+	};
+	ApiInlineLvlSdt.prototype._canBeDeleted = function()
+	{
+		let lock = this.Sdt.GetContentControlLock();
+		return (Asc.c_oAscSdtLockType.Unlocked === lock || Asc.c_oAscSdtLockType.ContentLocked === lock);
+	};
 	ApiBlockLvlSdt.prototype.private_GetImpl = function()
 	{
 		return this.Sdt;
 	};
+	ApiBlockLvlSdt.prototype._canBeEdited = ApiInlineLvlSdt.prototype._canBeEdited;
+	ApiBlockLvlSdt.prototype._canBeDeleted = ApiInlineLvlSdt.prototype._canBeDeleted;
 	ApiContentControlList.prototype.GetListPr = function()
 	{
 		if (this.Sdt.IsComboBox())

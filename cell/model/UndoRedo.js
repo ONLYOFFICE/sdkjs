@@ -3127,6 +3127,8 @@ function (window, undefined) {
 			wb.setShowVerticalScroll(bUndo ? Data.from : Data.to);
 		} else if (AscCH.historyitem_Workbook_ShowHorizontalScroll === Type) {
 			wb.setShowHorizontalScroll(bUndo ? Data.from : Data.to);
+		} else if (AscCH.historyitem_Workbook_SetCustomFunctions === Type) {
+			wb.oApi["pluginMethod_SetCustomFunctions"] && wb.oApi["pluginMethod_SetCustomFunctions"](bUndo ? Data.from : Data.to);
 		}
 	};
 	UndoRedoWorkbook.prototype.forwardTransformationIsAffect = function (Type) {
@@ -3229,6 +3231,8 @@ function (window, undefined) {
 				cell.setAlignVertical(Val);
 			} else if (AscCH.historyitem_Cell_AlignHorizontal == Type) {
 				cell.setAlignHorizontal(Val);
+			} else if (AscCH.historyitem_Cell_ReadingOrder == Type) {
+				cell.setReadingOrder(Val);
 			} else if (AscCH.historyitem_Cell_Fill == Type) {
 				cell.setFill(Val);
 			} else if (AscCH.historyitem_Cell_Border == Type) {
@@ -4691,6 +4695,8 @@ function (window, undefined) {
 				row.setAlignVertical(Val);
 			} else if (AscCH.historyitem_RowCol_AlignHorizontal == Type) {
 				row.setAlignHorizontal(Val);
+			} else if (AscCH.historyitem_RowCol_ReadingOrder == Type) {
+				row.setReadingOrder(Val);
 			} else if (AscCH.historyitem_RowCol_Fill == Type) {
 				row.setFill(Val);
 			} else if (AscCH.historyitem_RowCol_Border == Type) {

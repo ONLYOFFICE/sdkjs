@@ -675,7 +675,7 @@ CCellCommentator.prototype.isLockedComment = function(oComment, callbackFunc) {
 				this.drawingCtx.fill();
 
 				if (isClip) {
-					this.drawingCtx.RemoveClipRect();
+					this.worksheet._RemoveClipRect(this.drawingCtx);
 				}
 			}
 		}
@@ -1062,7 +1062,7 @@ CCellCommentator.prototype.selectComment = function(id) {
 			this.overlayCtx.ctx.globalAlpha = 1;
 
 			if (isClip) {
-				this.overlayCtx.RemoveClipRect();
+				this.worksheet._RemoveClipRect(this.overlayCtx);
 			}
 		}
 	}

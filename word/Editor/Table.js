@@ -16555,6 +16555,37 @@ CTable.prototype.StartSelectionFromCurPos = function()
 
 	this.CurCell.Content.StartSelectionFromCurPos();
 };
+CTable.prototype.SelectRange = function(startCell, startRow, endCell, endRow)
+{
+	let rowsCount = this.GetRowsCount();
+	if (rowsCount <= 0)
+		return;
+	
+	startRow = Math.max(0, Math.min(startRow, rowsCount - 1));
+	endRow = Math.max(0, Math.min(endRow, rowsCount - 1));
+	
+	startCell = Math.max(0, Math.min(startCell, this.GetRow(startRow).GetCellsCount() - 1));
+	endCell = Math.max(0, Math.min(endCell, this.GetRow(endRow).GetCellsCount() - 1));
+	
+	this.Selection.Use = true;
+	this.Selection.Start = false;
+
+	this.Selection.StartPos.Pos = {
+		Cell : startCell,
+		Row  : startRow
+	};
+	
+	this.Selection.EndPos.Pos = {
+		Cell : endCell,
+		Row  : endRow
+	};
+	
+	this.Selection.Type   = table_Selection_Cell;
+	this.Selection.CurRow = endRow;
+	this.CurCell = this.GetRow(endRow).GetCell(endCell);
+	
+	this.private_UpdateSelectedCellsArray();
+};
 CTable.prototype.GetStyleFromFormatting = function()
 {
     var SelectionArray = this.GetSelectionArray();

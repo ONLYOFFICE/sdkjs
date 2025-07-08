@@ -366,6 +366,19 @@
 		}
 
 		this.initBroadcastChannel();
+		
+		this.asc_registerCallback("asc_onAddSignature", function(guid) {
+			t.sendEvent("asc_onUpdateSignatures", t.asc_getSignatures(), t.asc_getRequestSignatures());
+		});
+		this.asc_registerCallback("asc_onRemoveSignature", function(guid) {
+			t.sendEvent("asc_onUpdateSignatures", t.asc_getSignatures(), t.asc_getRequestSignatures());
+		});
+		this.asc_registerCallback("asc_onUpdateSignatures", function(signatures, requested) {
+			if (0 === signatures.length)
+				t.asc_removeRestriction(Asc.c_oAscRestrictionType.OnlySignatures);
+			else
+				t.asc_addRestriction(Asc.c_oAscRestrictionType.OnlySignatures);
+		});
 	};
 	baseEditorsApi.prototype._correctEmbeddedWork = function()
 	{
@@ -735,6 +748,10 @@
 			//для некоторых действий не хочется показывать модальный loader, который закрывает всю страницу
 			//если для них делать incrementCounterLongAction, то будут проблемы, что не заблокированы линейки, resize окна не работает
 			//И скорее всего другие проблемы, поэтому делается через asc_setRestriction
+			//Пока это используется только при disconnect/reconnect, при disconnect мы хотим, чтобы было отключено любое редактирование.
+			//Поэтому, включаем глобальный лок в совместке. Если поведение будет меняться, то параметр actionRestriction надо делать настройкой,
+			//в которой будет указан новый рестрикшен и нужно ли включать лок на редактирование (и, возможно, лок на селект/курсор)
+			AscCommon.CollaborativeEditing.Set_GlobalLock(true);
 			this.incrementCounterActionRestriction(actionRestriction);
 		}
 	};
@@ -755,6 +772,7 @@
 		}
 		if (undefined !== actionRestriction)
 		{
+			AscCommon.CollaborativeEditing.Set_GlobalLock(false);
 			this.decrementCounterActionRestriction();
 		}
 	};
@@ -1178,7 +1196,8 @@
 				"lcid"          : locale,
 				"nobase64"      : true,
 				"outputformat"  : outputformat,
-				"convertToOrigin" : ""
+				"convertToOrigin" : "",
+				"oformAsPdf" : this.isPdfEditor() ? true : undefined
 			};
 
 			if (this.isUseNativeViewer)
@@ -1799,6 +1818,13 @@
 			if (data) {
 				data.proxy = AscCommon.getBaseUrl() + "../../../../ai-proxy";
 				t.aiPluginSettings = JSON.stringify(data);
+			}
+		};
+		this.CoAuthoringApi.onMiscEvent = function(data)
+		{
+			if (data['type'] === 'updateVersion')
+			{
+				t.sendEvent("updateVersion", data['success']);
 			}
 		};
 		this.CoAuthoringApi.onWarning                 = function(code)
@@ -3789,6 +3815,11 @@
 		return this.signatures;
 	};
 
+	baseEditorsApi.prototype.asc_isFinalizedVersion = function()
+	{
+		return false;
+	};
+
 	baseEditorsApi.prototype.asc_RemoveSignature = function(guid)
 	{
 		if (window["AscDesktopEditor"])
@@ -4904,6 +4935,24 @@
 
 		return true;
     };
+
+    baseEditorsApi.prototype.attachEventWithRpcTimeout = function(name, callback, listenerId, timeout) {
+        const timeoutId = setTimeout(() => {
+            //callback with isTimeout=true as first parameter
+            callback.apply(this, [true]);
+            this.detachEvent(name, listenerId);
+        }, timeout);
+        
+        const wrappedCallback = function() {
+            clearTimeout(timeoutId);
+            //callback with isTimeout=false as first parameter followed by any original arguments
+            const args = Array.prototype.slice.call(arguments);
+            args.unshift(false);
+            callback.apply(this, args);
+            this.detachEvent(name, listenerId);
+        };
+        return this.attachEvent(name, wrappedCallback, listenerId);
+    };
     baseEditorsApi.prototype.detachEvent = function(name, listenerId)
     {
         if (!this.internalEvents.hasOwnProperty(name))
@@ -4928,6 +4977,23 @@
 				obj[prop].apply(this || window, Array.prototype.slice.call(arguments, 1));
 			}
         }
+
+		if (window["AscUserTest"] && window["AscUserTest"]["logEvents"])
+		{
+			let message = "[logEvent] " + name + " [";
+			for (let i = 1, len = arguments.length; i < len; i++)
+			{
+				if (Asc.checkReturnCommand(arguments[i]))
+					message += JSON.stringify(arguments[i]);
+				else
+					message += "{}";
+
+				if (i !== (len - 1))
+					message += ",";
+			}
+			message += "]";
+			console.log(message);
+		}
         return false;
 	};
 

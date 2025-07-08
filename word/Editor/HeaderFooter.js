@@ -2323,12 +2323,27 @@ CHeaderFooterController.prototype =
 		if (this.CurHdrFtr)
 			return this.CurHdrFtr.DrawSelectionOnPage(CurPage);
 	},
-
-    Selection_SetStart : function(X,Y, PageIndex, MouseEvent, bActivate)
-    {
-		var TempHdrFtr = null;
+	
+	Selection_SetStart : function(X, Y, PageIndex, MouseEvent, bActivate)
+	{
+		let TempHdrFtr = null;
+		let logicDocument = this.LogicDocument;
+		
 		// Если мы попадаем в заселекченную автофигуру, пусть она даже выходит за пределы
-		if (true === this.LogicDocument.DrawingObjects.pointInSelectedObject(X, Y, PageIndex)
+		if (logicDocument && logicDocument.DrawingObjects.pointInSelectedObject(X, Y, PageIndex))
+		{
+			let selectedObjects = logicDocument.DrawingObjects.getSelectedObjects();
+			if (selectedObjects.length)
+			{
+				let paraDrawing = selectedObjects[0].GetParaDrawing();
+				TempHdrFtr = paraDrawing ? paraDrawing.isHdrFtrChild(true) : null;
+			}
+			
+			if (!TempHdrFtr)
+				logicDocument.DrawingObjects.resetSelection(undefined, true);
+		}
+		
+		if (TempHdrFtr
 			|| (null !== (TempHdrFtr = this.Pages[PageIndex].Header) && true === TempHdrFtr.Is_PointInFlowTable(X, Y))
 			|| (null !== (TempHdrFtr = this.Pages[PageIndex].Footer) && true === TempHdrFtr.Is_PointInFlowTable(X, Y)))
 		{

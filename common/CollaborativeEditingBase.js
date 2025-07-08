@@ -84,7 +84,11 @@
 
             if (true === CollaborativeEditing.private_AddOverallChange(oChange))
             {
-                oChange.Load(this.m_oColor);
+				// // CollaborativeEditing LOG
+				// if (!(oChange instanceof AscCommon.CChangesTableIdDescription))
+				// 	return true;
+				
+				oChange.Load(this.m_oColor);
 				oChange.CheckNeedRecalculate();
             }
 
