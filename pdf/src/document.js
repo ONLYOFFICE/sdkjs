@@ -8098,8 +8098,10 @@ var CPresentation = CPresentation || function(){};
             oDoc.private_AddFieldToChildsMap(oForm, formJson["Parent"]);
         }
 
+        let oMeta;
         if (formJson["meta"] != null) {
-            oForm.SetMeta(JSON.parse(formJson["meta"]));
+            oMeta = JSON.parse(formJson["meta"]);
+            oForm.SetMeta(oMeta);
         }
 
         // appearance
@@ -8250,30 +8252,31 @@ var CPresentation = CPresentation || function(){};
             oForm.SetDefaultValue(formJson["defaultValue"]);
         }
 
-        if (formJson["font"]) {
-            if (formJson["font"]["color"] != null)
-                oForm.SetTextColor(formJson["font"]["color"]);
-            if (formJson["font"]["name"])
-                oForm.SetTextFont(formJson["font"]["name"]);
-            if (oForm.GetType() == AscPDF.FIELD_TYPES.button && formJson["font"]["AP"])
-                oForm.SetTextFontActual(formJson["font"]["AP"]);
-            else if (formJson["font"]["actual"]) {
-                oForm.SetTextFontActual(formJson["font"]["actual"]);
+        let oFontInfo = oMeta && oMeta["font"] ? oMeta["font"] : formJson["font"];
+        if (oFontInfo) {
+            if (oFontInfo["color"] != null)
+                oForm.SetTextColor(oFontInfo["color"]);
+            if (oFontInfo["name"])
+                oForm.SetTextFont(oFontInfo["name"]);
+            if (oForm.GetType() == AscPDF.FIELD_TYPES.button && oFontInfo["AP"])
+                oForm.SetTextFontActual(oFontInfo["AP"]);
+            else if (oFontInfo["actual"]) {
+                oForm.SetTextFontActual(oFontInfo["actual"]);
             }
-            else if (formJson["font"]["name"]) {
-                oForm.SetTextFontActual(AscFonts.getEmbeddedFontPrefix() + formJson["font"]["name"]);
+            else if (oFontInfo["name"]) {
+                oForm.SetTextFontActual(AscFonts.getEmbeddedFontPrefix() + oFontInfo["name"]);
             }
             else {
                 oForm.SetTextFontActual(AscPDF.DEFAULT_FIELD_FONT);
             }
 
             // внутренний ключ для пересылки обратно (зачем? - попросили)
-            oForm.SetFontKey(formJson["font"]["key"]);
+            oForm.SetFontKey(oFontInfo["key"]);
 
-            if (formJson["font"]["size"] != null)
-                oForm.SetTextSize(formJson["font"]["size"]);
+            if (oFontInfo["size"] != null)
+                oForm.SetTextSize(oFontInfo["size"]);
 
-            if (formJson["font"]["style"] != null) {
+            if (oFontInfo["style"] != null) {
                 oForm.SetFontStyle({
                     bold: Boolean((formJson["font"]["style"] >> 0) & 1),
                     italic: Boolean((formJson["font"]["style"] >> 1) & 1),

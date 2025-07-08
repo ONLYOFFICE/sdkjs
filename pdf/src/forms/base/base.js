@@ -2978,6 +2978,24 @@
         let oMeta = this.GetMeta();
         if (oMeta != null) {
             memory.fieldDataFlags |= (1 << 20);
+            if (memory.isForSplit) {
+                let oStyle = this.GetFontStyle();
+                let nStyle = 0;
+
+                if (oStyle.bold) {
+                    nStyle |= (1 << 0);
+                }
+                if (oStyle.italic) {
+                    nStyle |= (1 << 1);
+                }
+
+                oMeta["font"] = {
+                    "actual": this.GetTextFontActual(),
+                    "size": this.GetTextSize(),
+                    "style": nStyle,
+                    "color": this.GetTextColor()
+                }
+            }
             memory.WriteString(JSON.stringify(oMeta));
         }
 
