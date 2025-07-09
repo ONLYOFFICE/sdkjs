@@ -9002,13 +9002,13 @@
                     return oThis.ReadTimelineCaches(t, l, oThis.oWorkbook.timelineCaches);
                 });
             }
-            /*else if (c_oSerWorkbookTypes.Metadata === type)
+            else if (c_oSerWorkbookTypes.Metadata === type)
             {
                 this.oWorkbook.metadata = new AscCommonExcel.CMetadata();
                 res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadMetadata(t, l, oThis.oWorkbook.metadata);
                 });
-            }*/
+            }
             else if (c_oSerWorkbookTypes.XmlMap === type) {
                 //this.stream.Skip(1); //skip type
 

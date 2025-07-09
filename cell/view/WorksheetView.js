@@ -19255,6 +19255,8 @@ function isAllowPasteLink(pastedWb) {
 						return false;
 					};
 
+					t.model.workbook.metadata.getDynamicArrayProperties(1)
+
 					// let beforeExternalReferences = t.getExternalReferencesByCell(c, null, true);
 					let bRes = t._saveCellValueAfterEdit(c, val, flags, /*isNotHistory*/false, /*lockDraw*/false);
 
