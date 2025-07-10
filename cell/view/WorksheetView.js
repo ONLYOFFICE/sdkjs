@@ -19255,7 +19255,18 @@ function isAllowPasteLink(pastedWb) {
 						return false;
 					};
 
-					t.model.workbook.metadata.getDynamicArrayProperties(1)
+					//index "cm" - indicate metadata link, check dynamic array properties on "XLDAPR" oprion
+					//index "vm" - link on valueMetadata (check "XLRICHVALUE")
+					//flag "aca" - "Array Cannot Assign" - The flag for the inability to assign an array. as a rule - spill error
+					//flag "ca" - "Collapsed Array"
+					t.model._getCell(c.bbox.r1, c.bbox.c1, function (cell) {
+						let test = 1;
+					});
+					let getDynamicArrayProperties = t.model.workbook.metadata.getDynamicArrayProperties(1)
+					if (getDynamicArrayProperties) {
+						console.log(" getDynamicArrayProperties.fCollapsed: " + getDynamicArrayProperties.fCollapsed + " getDynamicArrayProperties.fDynamic: " + getDynamicArrayProperties.fDynamic)
+					}
+
 
 					// let beforeExternalReferences = t.getExternalReferencesByCell(c, null, true);
 					let bRes = t._saveCellValueAfterEdit(c, val, flags, /*isNotHistory*/false, /*lockDraw*/false);

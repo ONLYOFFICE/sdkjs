@@ -18092,28 +18092,36 @@ function RangeDataManagerElem(bbox, data)
 	 * @returns {object|null} - object with fDynamic and fCollapsed properties or null if not found
 	 */
 	CMetadata.prototype.getDynamicArrayProperties = function (cmIndex) {
-		if (!cmIndex || !this.cellMetadata) return null;
+		if (!cmIndex || !this.cellMetadata) {
+			return null;
+		}
 
-		// Шаг 1: Получить cellMetadata блок (индекс с 1)
-		const cellMetadataBlocks = this.cellMetadata.aMetadataBlocks;
-		if (!cellMetadataBlocks || cmIndex > cellMetadataBlocks.length) return null;
+		const cellMetadataBlocks = this.cellMetadata;
+		if (!cellMetadataBlocks || cmIndex > cellMetadataBlocks.length) {
+			return null;
+		}
 		
 		const cellMetadataBlock = cellMetadataBlocks[cmIndex - 1];
-		if (!cellMetadataBlock) return null;
+		if (!cellMetadataBlock) {
+			return null;
+		}
 
-		// Шаг 2: Получить тип и значение из cellMetadata
-		const typeIndex = cellMetadataBlock.type;
-		const valueIndex = cellMetadataBlock.value;
+		const typeIndex = cellMetadataBlock.t - 1;
+		const valueIndex = cellMetadataBlock.v;
 
-		// Шаг 3: Определить тип метаданных
-		const metadataTypes = this.metadataTypes && this.metadataTypes.aMetadataTypes;
-		if (!metadataTypes || typeIndex >= metadataTypes.length) return null;
+		const metadataTypes = this.metadataTypes && this.metadataTypes;
+		if (!metadataTypes || typeIndex >= metadataTypes.length) {
+			return null;
+		}
 
 		const metadataType = metadataTypes[typeIndex];
-		if (!metadataType || metadataType.name !== 'XLDAPR') return null; // Не динамический массив
+		if (!metadataType || metadataType.name !== 'XLDAPR') {
+			return null;
+		}
 
-		// Шаг 4: Найти соответствующий futureMetadata блок
-		if (!this.aFutureMetadata) return null;
+		if (!this.aFutureMetadata) {
+			return null;
+		}
 		
 		let xldaprFutureMetadata = null;
 		for (let i = 0; i < this.aFutureMetadata.length; i++) {
@@ -18123,30 +18131,37 @@ function RangeDataManagerElem(bbox, data)
 			}
 		}
 
-		if (!xldaprFutureMetadata || !xldaprFutureMetadata.futureMetadataBlocks) return null;
+		if (!xldaprFutureMetadata || !xldaprFutureMetadata.futureMetadataBlocks) {
+			return null;
+		}
 
-		const futureBlocks = xldaprFutureMetadata.futureMetadataBlocks.aMetadataBlocks;
-		if (!futureBlocks || valueIndex >= futureBlocks.length) return null;
+		const futureBlocks = xldaprFutureMetadata.futureMetadataBlocks;
+		if (!futureBlocks || valueIndex >= futureBlocks.length) {
+			return null;
+		}
 
 		const futureBlock = futureBlocks[valueIndex];
-		if (!futureBlock) return null;
+		if (!futureBlock) {
+			return null;
+		}
 
-		// Шаг 5: Извлечь параметры динамического массива
-		const extBlocks = futureBlock.aExtBlocks;
-		if (!extBlocks) return null;
+		const extBlocks = futureBlock.extLst;
+		if (!extBlocks) {
+			return null;
+		}
 
 		for (let i = 0; i < extBlocks.length; i++) {
 			const extBlock = extBlocks[i];
-			if (extBlock.uri === '{bdbb8cdc-fa1e-496e-a857-3c3f30c029c3}') {
-				// Найден блок с динамическими массивами
+			//if (extBlock.uri === '{bdbb8cdc-fa1e-496e-a857-3c3f30c029c3}') {
 				const dynamicArrayProps = extBlock.dynamicArrayProperties;
 				if (dynamicArrayProps) {
-					return {
+					return dynamicArrayProps;
+					/*{
 						fDynamic: dynamicArrayProps.fDynamic === true,
 						fCollapsed: dynamicArrayProps.fCollapsed === true
-					};
+					};*/
 				}
-			}
+			//}
 		}
 
 		return null;
