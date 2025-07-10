@@ -3665,9 +3665,9 @@
 				}
 				else if (this.Api.isStartAddShape)
 				{
+					this.DrawingObjects.endTrackNewShape();
 					this.Api.sync_StartAddShapeCallback(false);
 					this.Api.sync_EndAddShape();
-					this.DrawingObjects.endTrackNewShape();
 				}
 				else {
 					const oController = oDoc.GetController();
@@ -3830,6 +3830,12 @@
 				}
 
 				bRetValue = true;
+			}
+			else if (e.KeyCode === 113) {
+				Asc.editor.StartAddAnnot(AscPDF.ANNOTATIONS_TYPES.Line, true);
+			}
+			else if (e.KeyCode === 114) {
+				Asc.editor.StartAddAnnot(AscPDF.ANNOTATIONS_TYPES.PolyLine, true);
 			}
 			
 			oDoc.UpdateCopyCutState();
