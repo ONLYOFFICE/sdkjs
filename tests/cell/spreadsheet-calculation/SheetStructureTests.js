@@ -7123,8 +7123,8 @@ $(function () {
 		assert.strictEqual(resCell.getValueWithFormat(), "4", "Value in C1 after +5-A1:A2 calculate");
 		assert.strictEqual(resCell.getValueForEdit(), "=5-A1:A2", "Formula in C1 after +5-A1:A2 calculate");
 		resCell = ws.getRange2("C2");
-		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value in C2 after +5-A1:A2 calculate");
-		assert.strictEqual(resCell.getValueForEdit(), "=5-A1:A2", "Formula in C2 after +5-A1:A2 calculate");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in C2 after +5-A1:A2 calculate");	// 3 before bug 74215
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in C2 after +5-A1:A2 calculate");
 
 		fragment[0].setFragmentText("-5-A1:A2");
 		resCell = ws.getRange2("C1");
@@ -7132,8 +7132,8 @@ $(function () {
 		assert.strictEqual(resCell.getValueWithFormat(), "-6", "Value in C1 after -5-A1:A2 calculate");
 		assert.strictEqual(resCell.getValueForEdit(), "=-5-A1:A2", "Formula in C1 after -5-A1:A2 calculate");
 		resCell = ws.getRange2("C2");
-		assert.strictEqual(resCell.getValueWithFormat(), "-7", "Value in C2 after -5-A1:A2 calculate");
-		assert.strictEqual(resCell.getValueForEdit(), "=-5-A1:A2", "Formula in C2 after -5-A1:A2 calculate");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in C2 after -5-A1:A2 calculate");	// -7 before bug 74215
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in C2 after -5-A1:A2 calculate");
 		
 		// todo unar operator should convert area to array?
 		// fragment[0].setFragmentText("+A1:A2+5");
@@ -7465,6 +7465,401 @@ $(function () {
 		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in C3 after +{1,2,3} calculate");
 		assert.strictEqual(resCell.getValueForEdit(), "=+{1,2,3}", "Formula in C3 after +{1,2,3} calculate");
 
+	});
+
+	QUnit.test("Test: \"Dynamic arrays/areas tests\"", function (assert) {
+		let fillRange, resCell, arrayRange;
+			
+		// wb.dependencyFormulas.unlockRecal();
+		ws.getRange2("A1:Z10").cleanAll();
+		ws.getRange2("A1").setValue("1");
+		ws.getRange2("A2").setValue("2");
+		ws.getRange2("A3").setValue("#N/A");
+		ws.getRange2("B1").setValue("3");
+		ws.getRange2("B2").setValue("4");
+		ws.getRange2("B3").setValue("str");
+		// ws.getRange2("B4").setValue("-5-5");
+		// set flags for CSE formula call
+		let flags = wsView._getCellFlags(0, 2);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+		// set selection A4
+		resCell = ws.getRange2("A4");
+		wsView.setSelection(resCell.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		let fragment = resCell.getValueForEdit2();
+		// horizontal areas
+		// cellsRange
+		fragment[0].setFragmentText("=2:2");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value in A4 after =2:2 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=2:2", "Formula in A4 after =2:2 calculate");
+		
+		fragment[0].setFragmentText("=A2:Z2");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value in A4 after =A2:Z2 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=A2:Z2", "Formula in A4 after =A2:Z2 calculate");
+
+		// cellsRange + number
+		fragment[0].setFragmentText("=2:2+2");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "4", "Value in A4 after =2:2+2 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=2:2+2", "Formula in A4 after =2:2+2 calculate");
+
+		fragment[0].setFragmentText("=A2:Z2+2");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "4", "Value in A4 after =A2:Z2+2 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=A2:Z2+2", "Formula in A4 after =A2:Z2+2 calculate");
+
+		fragment[0].setFragmentText("=A2:B2+2");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "4", "Value in A4 after =A2:B2+2 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=A2:B2+2", "Formula in A4 after =A2:B2+2 calculate");
+
+		// cellsRange + cellsRange
+		fragment[0].setFragmentText("=2:2+2:2");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "4", "Value in A4 after =2:2+2:2 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=2:2+2:2", "Formula in A4 after =2:2+2:2 calculate");
+
+		fragment[0].setFragmentText("=A2:Z2+A2:Z2");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "4", "Value in A4 after =A2:Z2+A2:Z2 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=A2:Z2+A2:Z2", "Formula in A4 after =A2:Z2+A2:Z2 calculate");
+
+		fragment[0].setFragmentText("=A2:B2+X2:Z2");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Value in A4 after =A2:B2+X2:Z2 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=A2:B2+X2:Z2", "Formula in A4 after =A2:B2+X2:Z2 calculate");
+
+		// todo base operators compare to ms/lo cellsRange + arrays
+		// fragment[0].setFragmentText("=2:2+{1,2}");
+		// wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		// assert.strictEqual(resCell.getValueWithFormat(), "3", "Value in A4 after=2:2+{1,2} calculate");
+		// assert.strictEqual(resCell.getValueForEdit(), "=2:2+{1,2}", "Formula in A4 after =2:2+{1,2} calculate");
+		// fragment[0].setFragmentText("=A2:Z2+{1,2}");
+		// wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		// assert.strictEqual(resCell.getValueWithFormat(), "3", "Value in A4 after =A2:Z2+{1,2} calculate");
+		// assert.strictEqual(resCell.getValueForEdit(), "=A2:Z2+{1,2}", "Formula in A4 after =A2:Z2+{1,2} calculate");
+		// fragment[0].setFragmentText("=X2:Z2+{1,2}");
+		// wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		// assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Value in A4 after =A2:B2+{1,2} calculate");
+		// assert.strictEqual(resCell.getValueForEdit(), "=X2:Z2+{1,2}", "Formula in A4 after =A2:B2+{1,2} calculate");
+		// formulas
+
+		fragment[0].setFragmentText("=SUM(A2:Z2)");
+		resCell = ws.getRange2("D10");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "6", "Value in D10 after =SUM(A2:Z2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A2:Z2)", "Formula in D10 after =SUM(A2:Z2) calculate");
+		fragment[0].setFragmentText("=SIN({0,1})");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "0", "Value in D10 after =SIN({0,1}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SIN({0,1})", "Formula in D10 after =SIN({0,1}) calculate");
+		resCell = ws.getRange2("D11");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in D11 after =SIN({0,1}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in D11 after =SIN({0,1}) calculate");
+		resCell = ws.getRange2("E10");
+		assert.strictEqual(resCell.getValueWithFormat(), "0.841470985", "Value in E10 after =SIN({0,1}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SIN({0,1})", "Formula in E10 after =SIN({0,1}) calculate");
+		resCell = ws.getRange2("E11");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in E11 after =SIN({0,1}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in E11 after =SIN({0,1}) calculate");
+
+		ws.getRange2("D10:E11").cleanAll();
+
+		// array special functions
+		resCell = ws.getRange2("D10");
+		fragment[0].setFragmentText("=SEQUENCE(1,1)");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in D10 after =SEQUENCE(1,1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SEQUENCE(1,1)", "Formula in D10 after =SEQUENCE(1,1) calculate");
+		resCell = ws.getRange2("D11");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in D11 after =SEQUENCE(1,1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in D11 after =SEQUENCE(1,1) calculate");
+		resCell = ws.getRange2("E10");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in E10 after =SEQUENCE(1,1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in E10 after =SEQUENCE(1,1) calculate");
+		resCell = ws.getRange2("E11");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in E11 after =SEQUENCE(1,1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in E11 after =SEQUENCE(1,1) calculate");
+
+		ws.getRange2("D10:E11").cleanAll();
+
+		resCell = ws.getRange2("D10");
+		fragment[0].setFragmentText("=SEQUENCE(2,2)");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in D10 after =SEQUENCE(2,2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SEQUENCE(2,2)", "Formula in D10 after =SEQUENCE(2,2) calculate");
+		resCell = ws.getRange2("D11");
+		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value in D11 after =SEQUENCE(2,2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SEQUENCE(2,2)", "Formula in D11 after =SEQUENCE(2,2) calculate");
+		resCell = ws.getRange2("E10");
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value in E10 after =SEQUENCE(2,2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SEQUENCE(2,2)", "Formula in E10 after =SEQUENCE(2,2) calculate");
+		resCell = ws.getRange2("E11");
+		assert.strictEqual(resCell.getValueWithFormat(), "4", "Value in E11 after =SEQUENCE(2,2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SEQUENCE(2,2)", "Formula in E11 after =SEQUENCE(2,2) calculate");
+
+		ws.getRange2("D10:E11").cleanAll();
+
+		resCell = ws.getRange2("D10");
+		fragment[0].setFragmentText("=SEQUENCE(A1:B2,1)");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in D10 after =SEQUENCE(A1:B2,1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SEQUENCE(A1:B2,1)", "Formula in D10 after =SEQUENCE(A1:B2,1) calculate");
+		resCell = ws.getRange2("D11");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in D11 after =SEQUENCE(A1:B2,1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SEQUENCE(A1:B2,1)", "Formula in D11 after =SEQUENCE(A1:B2,1) calculate");
+		resCell = ws.getRange2("E10");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in E10 after =SEQUENCE(A1:B2,1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SEQUENCE(A1:B2,1)", "Formula in E10 after =SEQUENCE(A1:B2,1) calculate");
+		resCell = ws.getRange2("E11");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in E11 after =SEQUENCE(A1:B2,1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SEQUENCE(A1:B2,1)", "Formula in E11 after =SEQUENCE(A1:B2,1) calculate");
+
+		ws.getRange2("D10:E11").cleanAll();
+
+		resCell = ws.getRange2("D10");
+		fragment[0].setFragmentText("=RANDARRAY(2,2)");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat() !== "", true, "Value in D10 after =RANDARRAY(2,2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=RANDARRAY(2,2)", "Formula in D10 after =RANDARRAY(2,2) calculate");
+		resCell = ws.getRange2("D11");
+		assert.strictEqual(resCell.getValueWithFormat() !== "", true, "Value in D11 after =RANDARRAY(2,2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=RANDARRAY(2,2)", "Formula in D11 after =RANDARRAY(2,2) calculate");
+		resCell = ws.getRange2("E10");
+		assert.strictEqual(resCell.getValueWithFormat() !== "", true, "Value in E10 after =RANDARRAY(2,2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=RANDARRAY(2,2)", "Formula in E10 after =RANDARRAY(2,2) calculate");
+		resCell = ws.getRange2("E11");
+		assert.strictEqual(resCell.getValueWithFormat() !== "", true, "Value in E11 after =RANDARRAY(2,2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=RANDARRAY(2,2)", "Formula in E11 after =RANDARRAY(2,2) calculate");
+
+		ws.getRange2("D10:E11").cleanAll();
+
+		resCell = ws.getRange2("D10");
+		fragment[0].setFragmentText('=EXPAND({1;4}, 2, 2, "-")');
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in D10 after =EXPAND({1,2;3,4},2,2,\"-\") calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=EXPAND({1;4},2,2,\"-\")", "Formula in D10 after EXPAND");
+		resCell = ws.getRange2("D11");
+		assert.strictEqual(resCell.getValueWithFormat(), "4", "Value in D11 after =EXPAND({1,2;3,4},2,2,\"-\") calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=EXPAND({1;4},2,2,\"-\")", "Formula in D11 after EXPAND");
+		resCell = ws.getRange2("E10");
+		assert.strictEqual(resCell.getValueWithFormat(), "-", "Value in E10 after =EXPAND({1,2;3,4},2,2,\"-\") calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=EXPAND({1;4},2,2,\"-\")", "Formula in E10 after EXPAND");
+		resCell = ws.getRange2("E11");
+		assert.strictEqual(resCell.getValueWithFormat(), "-", "Value in E11 after =EXPAND({1,2;3,4},2,2,\"-\") calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=EXPAND({1;4},2,2,\"-\")", "Formula in E11 after EXPAND");
+
+		ws.getRange2("D10:E11").cleanAll();
+
+		resCell = ws.getRange2("D10");
+		fragment[0].setFragmentText("=SORT(A1:B2)");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in D10 after =SORT(A1:B2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SORT(A1:B2)", "Formula in D10 after SORT(A1:B2) calculate");
+		resCell = ws.getRange2("D11");
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value in D11 after =SORT(A1:B2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SORT(A1:B2)", "Formula in D11 after SORT(A1:B2) calculate");
+		resCell = ws.getRange2("E10");
+		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value in E10 after =SORT(A1:B2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SORT(A1:B2)", "Formula in E10 after SORT(A1:B2) calculate");
+		resCell = ws.getRange2("E11");
+		assert.strictEqual(resCell.getValueWithFormat(), "4", "Value in E11 after =SORT(A1:B2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SORT(A1:B2)", "Formula in E11 after SORT(A1:B2) calculate");
+
+		ws.getRange2("D10:E11").cleanAll();
+
+		resCell = ws.getRange2("D10");
+		fragment[0].setFragmentText("=SORTBY(A1:B2, A1:B1, -1)");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value in D10 after =SORTBY(A1:B2, A1:B1, -1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SORTBY(A1:B2,A1:B1,-1)", "Formula in D10 after SORTBY(A1:B2, A1:B1, -1) calculate");
+		resCell = ws.getRange2("D11");
+		assert.strictEqual(resCell.getValueWithFormat(), "4", "Value in D11 after =SORTBY(A1:B2, A1:B1, -1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SORTBY(A1:B2,A1:B1,-1)", "Formula in D11 after SORTBY(A1:B2, A1:B1, -1) calculate");
+		resCell = ws.getRange2("E10");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in E10 after =SORTBY(A1:B2, A1:B1, -1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SORTBY(A1:B2,A1:B1,-1)", "Formula in E10 after SORTBY(A1:B2, A1:B1, -1) calculate");
+		resCell = ws.getRange2("E11");
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value in E11 after =SORTBY(A1:B2, A1:B1, -1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SORTBY(A1:B2,A1:B1,-1)", "Formula in E11 after SORTBY(A1:B2, A1:B1, -1) calculate");
+
+		ws.getRange2("D10:E11").cleanAll();
+
+		resCell = ws.getRange2("D10");
+		fragment[0].setFragmentText("=LOGEST({1,2})");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value in D10 after =LOGEST({1,2}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=LOGEST({1,2})", "Formula in D10 after LOGEST({1,2}) calculate");
+		resCell = ws.getRange2("D11");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in D11 after =LOGEST({1,2}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in D11 after LOGEST({1,2}) calculate");
+		resCell = ws.getRange2("E10");
+		assert.strictEqual(resCell.getValueWithFormat(), "0.5", "Value in E10 after =LOGEST({1,2}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=LOGEST({1,2})", "Formula in E10 after LOGEST({1,2}) calculate");
+		resCell = ws.getRange2("E11");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in E11 after =LOGEST({1,2}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in E11 after LOGEST({1,2}) calculate");
+
+		ws.getRange2("D10:E11").cleanAll();
+
+		resCell = ws.getRange2("D10");
+		fragment[0].setFragmentText("=LOGEST(A1:A2,B1:B2)");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value in D10 after =LOGEST(A1:A2,B1:B2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=LOGEST(A1:A2,B1:B2)", "Formula in D10 after LOGEST(A1:A2,B1:B2) calculate");
+		resCell = ws.getRange2("D11");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in D11 after =LOGEST(A1:A2,B1:B2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in D11 after LOGEST(A1:A2,B1:B2) calculate");
+		resCell = ws.getRange2("E10");
+		assert.strictEqual(resCell.getValueWithFormat(), "0.125", "Value in E10 after =LOGEST(A1:A2,B1:B2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=LOGEST(A1:A2,B1:B2)", "Formula in E10 after LOGEST(A1:A2,B1:B2) calculate");
+		resCell = ws.getRange2("E11");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in E11 after =LOGEST(A1:A2,B1:B2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in E11 after LOGEST(A1:A2,B1:B2) calculate");
+
+		ws.getRange2("D10:E11").cleanAll();
+
+		resCell = ws.getRange2("D10");
+		fragment[0].setFragmentText("=LINEST({1,2})");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in D10 after =LINEST({1,2}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=LINEST({1,2})", "Formula in D10 after LINEST({1,2}) calculate");
+		resCell = ws.getRange2("D11");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in D11 after =LINEST({1,2}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in D11 after LINEST({1,2}) calculate");
+		resCell = ws.getRange2("E10");
+		assert.strictEqual(resCell.getValueWithFormat(), "0", "Value in E10 after =LINEST({1,2}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=LINEST({1,2})", "Formula in E10 after LINEST({1,2}) calculate");
+		resCell = ws.getRange2("E11");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in E11 after =LINEST({1,2}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in E11 after LINEST({1,2}) calculate");
+
+		ws.getRange2("D10:E11").cleanAll();
+
+		resCell = ws.getRange2("D10");
+		fragment[0].setFragmentText("=LINEST(A1:A2,B1:B2)");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in D10 after =LINEST(A1:A2,B1:B2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=LINEST(A1:A2,B1:B2)", "Formula in D10 after LINEST(A1:A2,B1:B2) calculate");
+		resCell = ws.getRange2("D11");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in D11 after =LINEST(A1:A2,B1:B2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in D11 after LINEST(A1:A2,B1:B2) calculate");
+		resCell = ws.getRange2("E10");
+		assert.strictEqual(resCell.getValueWithFormat(), "-2", "Value in E10 after =LINEST(A1:A2,B1:B2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=LINEST(A1:A2,B1:B2)", "Formula in E10 after LINEST(A1:A2,B1:B2) calculate");
+		resCell = ws.getRange2("E11");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in E11 after =LINEST(A1:A2,B1:B2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in E11 after LINEST(A1:A2,B1:B2) calculate");
+
+		ws.getRange2("D10:E11").cleanAll();
+
+		resCell = ws.getRange2("D10");
+		fragment[0].setFragmentText("=TRANSPOSE(A1:B2)");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in D10 after =TRANSPOSE(A1:B2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=TRANSPOSE(A1:B2)", "Formula in D10 after TRANSPOSE(A1:B2) calculate");
+		resCell = ws.getRange2("D11");
+		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value in D11 after =TRANSPOSE(A1:B2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=TRANSPOSE(A1:B2)", "Formula in D11 after TRANSPOSE(A1:B2) calculate");
+		resCell = ws.getRange2("E10");
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value in E10 after =TRANSPOSE(A1:B2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=TRANSPOSE(A1:B2)", "Formula in E10 after TRANSPOSE(A1:B2) calculate");
+		resCell = ws.getRange2("E11");
+		assert.strictEqual(resCell.getValueWithFormat(), "4", "Value in E11 after =TRANSPOSE(A1:B2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=TRANSPOSE(A1:B2)", "Formula in E11 after TRANSPOSE(A1:B2) calculate");
+
+		ws.getRange2("D10:E11").cleanAll();
+
+		resCell = ws.getRange2("D10");
+		fragment[0].setFragmentText("=TRANSPOSE({1,2;3,4})");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in D10 after =TRANSPOSE({1,2;3,4}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=TRANSPOSE({1,2;3,4})", "Formula in D10 after TRANSPOSE({1,2;3,4}) calculate");
+		resCell = ws.getRange2("D11");
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value in D11 after =TRANSPOSE({1,2;3,4}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=TRANSPOSE({1,2;3,4})", "Formula in D11 after TRANSPOSE({1,2;3,4}) calculate");
+		resCell = ws.getRange2("E10");
+		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value in E10 after =TRANSPOSE({1,2;3,4}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=TRANSPOSE({1,2;3,4})", "Formula in E10 after TRANSPOSE({1,2;3,4}) calculate");
+		resCell = ws.getRange2("E11");
+		assert.strictEqual(resCell.getValueWithFormat(), "4", "Value in E11 after =TRANSPOSE({1,2;3,4}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=TRANSPOSE({1,2;3,4})", "Formula in E11 after TRANSPOSE({1,2;3,4}) calculate");
+
+		ws.getRange2("D10:E11").cleanAll();
+
+		resCell = ws.getRange2("D10");
+		fragment[0].setFragmentText("=TRANSPOSE(1)");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in D10 after =TRANSPOSE(1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=TRANSPOSE(1)", "Formula in D10 after TRANSPOSE(1) calculate");
+		resCell = ws.getRange2("D11");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in D11 after =TRANSPOSE(1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in D11 after TRANSPOSE(1) calculate");
+		resCell = ws.getRange2("E10");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in E10 after =TRANSPOSE(1)calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in E10 after TRANSPOSE(1) calculate");
+		resCell = ws.getRange2("E11");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in E11 after =TRANSPOSE(1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in E11 after TRANSPOSE(1) calculate");
+
+		ws.getRange2("D10:E11").cleanAll();
+
+		resCell = ws.getRange2("D10");
+		fragment[0].setFragmentText("=FILTER(1,1)");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in D10 after =FILTER(1,1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=FILTER(1,1)", "Formula in D10 after FILTER(1,1) calculate");
+		resCell = ws.getRange2("D11");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in D11 after =FILTER(1,1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in D11 after FILTER(1,1) calculate");
+		resCell = ws.getRange2("E10");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in E10 after =FILTER(1,1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in E10 after FILTER(1,1) calculate");
+		resCell = ws.getRange2("E11");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in E11 after =FILTER(1,1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in E11 after FILTER(1,1) calculate");
+
+		ws.getRange2("D10:E11").cleanAll();
+
+		resCell = ws.getRange2("D10");
+		fragment[0].setFragmentText("=FILTER(A1:A2,1)");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in D10 after =FILTER(A1:A2,1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=FILTER(A1:A2,1)", "Formula in D10 after FILTER(A1:A2,1) calculate");
+		resCell = ws.getRange2("D11");
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value in D11 after =FILTER(A1:A2,1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=FILTER(A1:A2,1)", "Formula in D11 after FILTER(A1:A2,1) calculate");
+		resCell = ws.getRange2("E10");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in E10 after =FILTER(A1:A2,1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in E10 after FILTER(A1:A2,1) calculate");
+		resCell = ws.getRange2("E11");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in E11 after =FILTER(A1:A2,1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in E11 after FILTER(A1:A2,1) calculate");
+
+		ws.getRange2("D10:E11").cleanAll();
+
+		resCell = ws.getRange2("D10");
+		fragment[0].setFragmentText("=FREQUENCY(A1:A2,A1:A2)");
+		wsView._saveCellValueAfterEdit(resCell, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in D10 after =FREQUENCY(A1:A2,A1:A2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=FREQUENCY(A1:A2,A1:A2)", "Formula in D10 after FREQUENCY(A1:A2,A1:A2) calculate");
+		resCell = ws.getRange2("D11");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in D11 after =FREQUENCY(A1:A2,A1:A2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=FREQUENCY(A1:A2,A1:A2)", "Formula in D11 after FREQUENCY(A1:A2,A1:A2) calculate");
+		resCell = ws.getRange2("D12");
+		assert.strictEqual(resCell.getValueWithFormat(), "0", "Value in D12 after =FREQUENCY(A1:A2,A1:A2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=FREQUENCY(A1:A2,A1:A2)", "Formula in D12 after FREQUENCY(A1:A2,A1:A2) calculate");
+		resCell = ws.getRange2("E10");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in E10 after =FREQUENCY(A1:A2,A1:A2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in E10 after FREQUENCY(A1:A2,A1:A2) calculate");
+		resCell = ws.getRange2("E11");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in E11 after =FREQUENCY(A1:A2,A1:A2) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in E11 after FREQUENCY(A1:A2,A1:A2) calculate");
+		ws.getRange2("A1:Z20").cleanAll();
 	});
 
 	QUnit.test("Test: \"Assemble formulas test\"", function (assert) {

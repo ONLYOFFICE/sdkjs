@@ -36572,6 +36572,16 @@ $(function () {
 		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 2, bboxParent.c1 + 2).getValue(), "#N/A", "Result of =A100:B101 [2,2]");
 		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 2, bboxParent.c1 + 3).getValue(), "#N/A", "Result of =A100:B101 [2,3]");
 		
+		ws.getRange2("B200").setValue("=2:2+2");
+		bboxParent = ws.getRange2("B200").bbox;
+		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bboxParent.r1, bboxParent.c1);
+		oParser = new parserFormula('2:2+2', cellWithFormula, ws);
+		// oParser.setArrayFormulaRef(ws.getRange2("M100:O104").bbox);	
+		assert.ok(oParser.parse(), '2:2+2');
+		array = oParser.calculate();
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 2, bboxParent.c1 + 3).getValue(), "#VALUE!", "Result of 2:2+2");
+		assert.strictEqual(array.getValue(), "#VALUE!", "Result of 2:2+2");
+
 	});
 
 	QUnit.test("Long string splitting", function (assert) {

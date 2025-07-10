@@ -18840,7 +18840,8 @@
 							return;
 						}
 					}
-					canAutoExpand = newFP.findRefByOutStack(true);
+					// canAutoExpand = newFP.findRefByOutStack(true);	// ms version
+					canAutoExpand = newFP.findArrayByOutStack();	// lo version
 					refInfo = canAutoExpand ? ws.getRefDynamicInfo(newFP, calculateResult) : false;
 					if (refInfo) {
 						if (refInfo.cannotChangeFormulaArray) {

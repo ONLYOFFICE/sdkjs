@@ -558,6 +558,20 @@ const arrayIndexesType = {
 	range: 2,
 };
 
+/** An object with functions that can return an array without using an array inside arguments */ 
+const arraySpecialFunctions = {
+	"FILTER": 1,
+	"SEQUENCE": 1,
+	"RANDARRAY": 1,
+	"EXPAND": 1,
+	"SORT": 1,
+	"SORTBY": 1,
+	"LOGEST": 1,
+	"LINEST": 1,
+	"TRANSPOSE": 1,
+	"FREQUENCY": 1
+}
+
 var cExcelSignificantDigits = 15; //количество цифр в числе после запятой
 var cExcelMaxExponent = 308;
 var cExcelMinExponent = -308;
@@ -8992,6 +9006,118 @@ function parserFormula( formula, parent, _ws ) {
 			return false;
 		}
 	};
+
+	parserFormula.prototype.findArrayByOutStackSimple = function () {
+		// using outStack, find the arrays or arraySpecialFunctions
+		if (this.ref) {
+			return true;
+		}
+		if (this.outStack && this.outStack.length > 0) {
+			let currentElement = null;
+			let outStackLength = this.outStack.length;
+			for (let i = 0; i < outStackLength; i++) {
+				currentElement = this.outStack[i];
+				if (!currentElement) {
+					continue;
+				}
+				if ((currentElement.type === cElementType.func && currentElement.name && arraySpecialFunctions[currentElement.name]) ||
+					currentElement.type === cElementType.array) {
+					return true;
+				}
+			}
+			return false;
+		}
+	};
+
+	/* In this function, we are looking for formulas that can return an array or the results of the formulas with the cARRAY type */
+	parserFormula.prototype.findArrayByOutStack = function () {
+		// go through the stack in the same order as .calculate method
+		if (this.ref) {
+			return true;
+		}
+		let outStacklength = this.outStack.length;
+		if (outStacklength && outStacklength > 0) {
+			let elemArr = [], _tmp, currentElement = null, bIsSpecialFunction = false, argumentsCount, defNameCalcArr, defNameArgCount = 0;
+			let isRef, opt_bbox;
+			if (!opt_bbox && this.parent && this.parent.onFormulaEvent) {
+				opt_bbox = this.parent.onFormulaEvent(AscCommon.c_oNotifyParentType.GetRangeCell);
+			}
+			if (!opt_bbox) {
+				opt_bbox = new Asc.Range(0, 0, 0, 0);
+			}
+			for (let i = 0; i < outStacklength; i++) {
+				currentElement = this.outStack[i];
+				if (!currentElement) {
+					continue;
+				}
+				if(currentElement.name === "(" || currentElement.type === cElementType.specialFunctionStart || 
+					currentElement.type === cElementType.specialFunctionEnd || "number" === typeof(currentElement)) {
+					continue;
+				}
+				if (currentElement.name && arraySpecialFunctions[currentElement.name]) {
+					return true;
+				}
+				if (currentElement.type === cElementType.operator || currentElement.type === cElementType.func) {
+					argumentsCount = "number" === typeof(this.outStack[i - 1]) ? this.outStack[i - 1] : currentElement.argumentsCurrent;
+					if (argumentsCount < 0) {
+						argumentsCount = -argumentsCount;
+						currentElement.bArrayFormula = true;
+					}
+					if (elemArr.length < argumentsCount) {
+						return false;
+					} else if (argumentsCount + defNameArgCount > currentElement.argumentsMax) {
+						return false;
+					} else {
+						let arg = [];
+						let _isPromise = false;
+						for (let i = 0; i < argumentsCount + defNameArgCount; i++) {
+							if ("number" === typeof(elemArr[elemArr.length - 1])) {
+								elemArr.pop();
+							}
+							let tempElem = elemArr.pop();
+							if (fIsPromise(tempElem)) {
+								_isPromise = true;
+								break;
+							}
+							arg.unshift(tempElem);
+						}
+						if (_isPromise) {
+							continue;
+						}
+						if (this.unknownOrCustomFunction && currentElement.returnValueType !== AscCommonExcel.cReturnFormulaType.array) {
+							return false;
+						}
+						_tmp = currentElement.Calculate(arg, opt_bbox, null, this.ws, bIsSpecialFunction);
+						if (_tmp && _tmp.type === cElementType.array) {
+							isRef = true;
+						}
+						defNameArgCount = 0;
+						elemArr.push(_tmp);
+					}
+				} else if (currentElement.type === cElementType.name || currentElement.type === cElementType.name3D) {
+					defNameCalcArr = currentElement.Calculate(null, opt_bbox, true);
+					defNameArgCount = [];
+					if(defNameCalcArr && defNameCalcArr.length) {
+						defNameArgCount = defNameCalcArr.length - 1;
+						for (let j = 0; j < defNameCalcArr.length; j++) {
+							elemArr.push(defNameCalcArr[j]);
+						}
+					} else {
+						elemArr.push(defNameCalcArr);
+					}
+				} else if (currentElement.type === cElementType.table) {
+					elemArr.push(currentElement.toRef(opt_bbox));
+				} else if (currentElement.type === cElementType.pivotTable) {
+					elemArr.push(currentElement.Calculate());
+				} else {
+					elemArr.push(currentElement);
+				}
+			}
+			return isRef;
+		}
+		return false;
+	};
+
 	parserFormula.prototype.calculate = function (opt_defName, opt_bbox, opt_offset, checkMultiSelect, opt_oCalculateResult, opt_pivotCallback) {
 		if (AscCommonExcel.g_LockCustomFunctionRecalculate && this.unknownOrCustomFunction) {
 			return;
