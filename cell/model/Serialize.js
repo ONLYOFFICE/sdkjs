@@ -11149,9 +11149,9 @@
                 });
             }
 			else if (c_oSerCellTypes.Value === type) {
-				var val = this.stream.GetDoubleLE();
-				if (CellValueType.String === oCell.getType() || CellValueType.Error === oCell.getType()) {
-					var ss = this.aSharedStrings[val];
+                var val = this.stream.GetDoubleLE();
+                if (CellValueType.String === oCell.getType() || CellValueType.Error === oCell.getType()) {
+                    var ss = this.aSharedStrings[val];
                     if (undefined !== ss) {
                         if (typeof ss === 'string') {
                             oCell.setValueTextInternal(ss);
@@ -11159,18 +11159,14 @@
                             oCell.setValueMultiTextInternal(ss);
                         }
                     }
-				} else {
+                } else {
                     oCell.setValueNumberInternal(val);
-				}
-            }   /*else if (c_oSerCellTypes.CellMetadata === type)
-            {
+                }
+            } else if (c_oSerCellTypes.CellMetadata === type) {
                 oCell.cm = this.stream.GetULong();
-            }
-            else if (c_oSerCellTypes.ValueMetadata === type)
-            {
+            } else if (c_oSerCellTypes.ValueMetadata === type) {
                 oCell.vm = this.stream.GetULong();
-            }*/
-            else
+            } else
                 res = c_oSerConstants.ReadUnknown;
             return res;
         };
