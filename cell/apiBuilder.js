@@ -596,9 +596,13 @@
 	 * The description of the function parameters and result is specified using JSDoc. The *@customfunction* tag is required in JSDoc.
 	 * Parameters and results can be specified as the *number / string / boolean / any / number[][] / string[][] / boolean[][] / any[][]* types.
 	 * Parameters can be required or optional. A user can also set a default value.
+	 * The passed function can be asynchronous (async function or function returning a Promise).
+	 * Inside the passed function, you can access the current cell address where the calculation is performed using *this.address*.
+	 * You can also access the addresses of function arguments using *this.args[0].address*, *this.args[1].address*, etc.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @param {Function} fCustom - A new function for calculating.
+	 * @param {Function} fCustom - A new function for calculating. Can be synchronous or asynchronous.
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddCustomFunction.js
 	 */
 	// Example with description:
 	// Calculates the sum of the specified numbers.
@@ -704,7 +708,7 @@
 	 * @param {string} sName - The library name.
 	 * @param {Function} Func - The custom functions library code.
 	 * @since 8.2.0
-	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddCustomFunction.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddCustomFunctionLibrary.js
 	 */
 	Api.prototype.AddCustomFunctionLibrary = function(sName, Func) {
 		this.addCustomFunctionsLibrary(sName, Func);
