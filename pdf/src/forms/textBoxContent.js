@@ -211,14 +211,7 @@
 		return true;
 	};
 	CTextBoxContent.prototype.getAllText = function() {
-		let paragraph = this.GetElement(0);
-		if (!paragraph || !paragraph.IsParagraph())
-			return "";
-		
-		paragraph.SetApplyToAll(true);
-		let text = paragraph.GetSelectedText(true, {ParaSeparator: ""});
-		paragraph.SetApplyToAll(false);
-		return text;
+		return AscWord.CDocumentContent.prototype.GetText.call(this, {ParaSeparator: ""});
 	};
 	CTextBoxContent.prototype.OnContentChange = function() {
 		if (this.ParentPDF && this.ParentPDF.OnContentChange && this.isFormatContent == false)
