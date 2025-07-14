@@ -1821,6 +1821,7 @@
 	window['AscDFH'].historyitem_type_Pdf_Radiobutton_Field	= 2236 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Signature_Field	= 2237 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Text_Field		= 2238 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Annot_Redact		= 2239 << 16;
 	
 	window['AscDFH'].historyitem_type_CustomProperties      = 2301 << 16;
 

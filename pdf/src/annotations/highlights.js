@@ -657,6 +657,82 @@
         memory.Seek(nEndPos);
     };
 
+    /**
+	 * Class representing a highlight annotation.
+	 * @constructor
+    */
+    function CAnnotationRedact(sName, nPage, aRect, oDoc)
+    {
+        CAnnotationTextMarkup.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Redact, nPage, aRect, oDoc);
+    }
+    CAnnotationRedact.prototype.constructor = CAnnotationRedact;
+    AscFormat.InitClass(CAnnotationRedact, CAnnotationTextMarkup, AscDFH.historyitem_type_Pdf_Annot_Redact);
+
+    CAnnotationRedact.prototype.IsRedact = function() {
+        return true;
+    };
+
+    CAnnotationRedact.prototype.Draw = function(oGraphicsPDF) {
+        if (this.IsHidden() == true)
+            return;
+
+        let oRGBFill = this.GetRGBColor(this.GetStrokeColor());
+
+        let aQuads = this.GetQuads();
+        for (let i = 0; i < aQuads.length; i++) {
+            let aPoints = aQuads[i];
+
+            let oPoint1 = {
+                x: aPoints[0],
+                y: aPoints[1]
+            }
+            let oPoint2 = {
+                x: aPoints[2],
+                y: aPoints[3]
+            }
+            let oPoint3 = {
+                x: aPoints[4],
+                y: aPoints[5]
+            }
+            let oPoint4 = {
+                x: aPoints[6],
+                y: aPoints[7]
+            }
+
+            let dx = oPoint2.x - oPoint1.x;
+            let dy = oPoint2.y - oPoint1.y;
+            let angle1          = Math.atan2(dy, dx);
+            let rotationAngle   = angle1;
+
+            oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
+            AscPDF.startMultiplyMode(oGraphicsPDF.GetContext());
+
+            oGraphicsPDF.BeginPath();
+            oGraphicsPDF.SetFillStyle(oRGBFill.r, oRGBFill.g, oRGBFill.b);
+
+            if (rotationAngle == 0 || rotationAngle == 3/2 * Math.PI) {
+                let aMinRect = getMinRect(aPoints);
+
+                oGraphicsPDF.SetIntegerGrid(true);
+                oGraphicsPDF.Rect(aMinRect[0], aMinRect[1], aMinRect[2] - aMinRect[0], aMinRect[3] - aMinRect[1], true);
+                oGraphicsPDF.SetIntegerGrid(false);
+            }
+            else {
+                oGraphicsPDF.MoveTo(oPoint1.x, oPoint1.y);
+                oGraphicsPDF.LineTo(oPoint2.x, oPoint2.y);
+                oGraphicsPDF.LineTo(oPoint4.x, oPoint4.y);
+                oGraphicsPDF.LineTo(oPoint3.x, oPoint3.y);
+                oGraphicsPDF.ClosePath();
+            }
+
+            oGraphicsPDF.Fill();
+            AscPDF.endMultiplyMode(oGraphicsPDF.GetContext());
+        }
+
+        let aUnitedRegion = this.GetUnitedRegion();
+        oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
+    };
+
     function findMaxSideWithRotation(x1, y1, x2, y2, x3, y3, x4, y4) {
         // Найдите центр поворота
         const x_center = (x1 + x3) / 2;
