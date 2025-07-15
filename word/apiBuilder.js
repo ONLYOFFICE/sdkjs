@@ -25584,6 +25584,23 @@
 	Api.prototype["Px2Emu"]                          = Px2Emu;
 	Api.prototype["Mm2Px"]                           = Mm2Px;
 
+	Api.prototype["PointsToCentimeters"]             = PointsToCentimeters;
+	Api.prototype["PointsToEmus"]                    = PointsToEmus;
+	Api.prototype["PointsToInches"]                  = PointsToInches;
+	Api.prototype["PointsToLines"]                   = PointsToLines;
+	Api.prototype["PointsToMillimeters"]             = PointsToMillimeters;
+	Api.prototype["PointsToPicas"]                   = PointsToPicas;
+	Api.prototype["PointsToPixels"]                  = PointsToPixels;
+	Api.prototype["PointsToTwips"]                   = PointsToTwips;
+	Api.prototype["CentimetersToPoints"]             = CentimetersToPoints;
+	Api.prototype["EmusToPoints"]                    = EmusToPoints;
+	Api.prototype["InchesToPoints"]                  = InchesToPoints;
+	Api.prototype["LinesToPoints"]                   = LinesToPoints;
+	Api.prototype["MillimetersToPoints"]             = MillimetersToPoints;
+	Api.prototype["PicasToPoints"]                   = PicasToPoints;
+	Api.prototype["PixelsToPoints"]                  = PixelsToPoints;
+	Api.prototype["TwipsToPoints"]                   = TwipsToPoints;
+
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 	
 	ApiDocumentContent.prototype["GetClassType"]             = ApiDocumentContent.prototype.GetClassType;
@@ -27158,6 +27175,68 @@
 	function Mm2Px(mm)
 	{
 		return mm * AscCommon.g_dKoef_mm_to_pix;
+	}
+
+	function PointsToCentimeters(pt) {
+		const ptToCm = g_dKoef_pt_to_mm / 10;
+		return pt * ptToCm;
+	}
+	function PointsToEmus(pt) {
+		const ptToEm = g_dKoef_pt_to_mm * g_dKoef_mm_to_emu;
+		return pt * ptToEm;
+	}
+	function PointsToInches(pt) {
+		const ptToIn = g_dKoef_pt_to_mm / g_dKoef_in_to_mm;
+		return pt * ptToIn;
+	}
+	function PointsToLines(pt) {
+		const ptToLines = 1 / 12;
+		return pt * ptToLines;
+	}
+	function PointsToMillimeters(pt) {
+		return pt * g_dKoef_pt_to_mm;
+	}
+	function PointsToPicas(pt) {
+		const ptToPc = g_dKoef_pt_to_mm / g_dKoef_pc_to_mm;
+		return pt * ptToPc;
+	}
+	function PointsToPixels(pt) {
+		const ptToPx = g_dKoef_pt_to_mm / AscCommon.g_dKoef_pix_to_mm;
+		return pt * ptToPx;
+	}
+	function PointsToTwips(pt) {
+		return pt * g_dKoef_pt_to_twips;
+	}
+	function CentimetersToPoints(cm) {
+		const cmToPt = 10 * g_dKoef_mm_to_pt;
+		return cm * cmToPt;
+	}
+	function EmusToPoints(emu) {
+		const emuToPt = g_dKoef_emu_to_mm * g_dKoef_mm_to_pt;
+		return emu * emuToPt;
+	}
+	function InchesToPoints(inches) {
+		const inToPt = g_dKoef_in_to_mm * g_dKoef_mm_to_pt;
+		return inches * inToPt;
+	}
+	function LinesToPoints(lines) {
+		// 1 line == 12 points
+		const linesToPt = 12;
+		return lines * linesToPt;
+	}
+	function MillimetersToPoints(mm) {
+		return mm * g_dKoef_mm_to_pt;
+	}
+	function PicasToPoints(pc) {
+		const pcToPt = g_dKoef_pc_to_mm * g_dKoef_mm_to_pt;
+		return pc * pcToPt;
+	}
+	function PixelsToPoints(px) {
+		const pxToPt = AscCommon.g_dKoef_pix_to_mm * g_dKoef_mm_to_pt;
+		return px * pxToPt;
+	}
+	function TwipsToPoints(twips) {
+		return twips * g_dKoef_twips_to_pt;
 	}
 
 	function private_StartSilentMode()
