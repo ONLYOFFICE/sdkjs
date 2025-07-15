@@ -446,17 +446,38 @@
 
 			if (null != raster_memory.m_oBuffer)
 			{
-				var nIndexDst = 3;
-				var nPitch = 4 * (raster_memory.width - this.nWidth);
-				var dst = raster_memory.m_oBuffer.data;
-				for (var j = 0; j < this.nHeight; j++)
+				if (!AscFonts.raster_memory.color)
 				{
-					for (var i = 0; i < this.nWidth; i++)
+					var nIndexDst = 3;
+					var nPitch = 4 * (raster_memory.width - this.nWidth);
+					var dst = raster_memory.m_oBuffer.data;
+					for (var j = 0; j < this.nHeight; j++)
 					{
-						dst[nIndexDst] = 0;
-						nIndexDst += 4;
+						for (var i = 0; i < this.nWidth; i++)
+						{
+							dst[nIndexDst] = 0;
+							nIndexDst += 4;
+						}
+						nIndexDst += nPitch;
 					}
-					nIndexDst += nPitch;
+				}
+				else
+				{
+					var nIndexDst = 0;
+					var nPitch = 4 * (raster_memory.width - this.nWidth);
+					var dst = raster_memory.m_oBuffer.data;
+					for (var j = 0; j < this.nHeight; j++)
+					{
+						for (var i = 0; i < this.nWidth; i++)
+						{
+							dst[nIndexDst] = 0;
+							dst[nIndexDst + 1] = 0;
+							dst[nIndexDst + 2] = 0;
+							dst[nIndexDst + 3] = 0;
+							nIndexDst += 4;
+						}
+						nIndexDst += nPitch;
+					}
 				}
 			}
 		},
@@ -1131,6 +1152,9 @@
 				if (Math.abs(this.m_arrdTextMatrix[1]) > 0.001 || Math.abs(this.m_arrdTextMatrix[2]) > 0.001)
 					load_mode |= AscFonts.FT_Load_Mode.FT_LOAD_NO_BITMAP;
 			}
+
+			if (isRaster && this.m_pFaceInfo.face_flags & (1 << 14))
+				load_mode |= AscFonts.FT_Load_Mode.FT_LOAD_COLOR;
 
 			if (this.FT_Load_Glyph_Wrapper(this.m_pFace, unGID, load_mode))
 			{

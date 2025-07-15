@@ -386,12 +386,32 @@ function onLoadFontsModule(window, undefined)
 
 		if (rasterInfo.pitch >= rasterInfo.width)
 		{
-			for (let j = 0; j < rasterInfo.rows; ++j, offsetSrc += rasterInfo.pitch)
+			if (rasterInfo.pitch === 4 * rasterInfo.width)
 			{
-				offsetDst = 3 + j * AscFonts.raster_memory.pitch;
-				for (let i = 0; i < rasterInfo.width; i++, offsetDst += 4)
+				AscFonts.raster_memory.color = true;
+				let srcW = 4 * rasterInfo.width;
+				for (let j = 0; j < rasterInfo.rows; ++j, offsetSrc += rasterInfo.pitch)
 				{
-					dstData[offsetDst] = buffer[offsetSrc + i];
+					offsetDst = j * AscFonts.raster_memory.pitch;
+					for (let i = 0; i < srcW; i += 4)
+					{
+						dstData[offsetDst] = buffer[offsetSrc + i + 2];
+						dstData[offsetDst + 1] = buffer[offsetSrc + i + 1];
+						dstData[offsetDst + 2] = buffer[offsetSrc + i + 0];
+						dstData[offsetDst + 3] = buffer[offsetSrc + i + 3];
+						offsetDst += 4;
+					}
+				}
+			}
+			else
+			{
+				for (let j = 0; j < rasterInfo.rows; ++j, offsetSrc += rasterInfo.pitch)
+				{
+					offsetDst = 3 + j * AscFonts.raster_memory.pitch;
+					for (let i = 0; i < rasterInfo.width; i++, offsetDst += 4)
+					{
+						dstData[offsetDst] = buffer[offsetSrc + i];
+					}
 				}
 			}
 		}
