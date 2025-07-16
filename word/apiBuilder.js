@@ -25581,8 +25581,8 @@
 	Api.prototype["FromJSON"]		                 = Api.prototype.FromJSON;
 	Api.prototype["CreateRange"]		             = Api.prototype.CreateRange;
 	
-	Api.prototype["Px2Emu"]                          = Px2Emu;
-	Api.prototype["Mm2Px"]                           = Mm2Px;
+	Api.prototype["PixelsToEmus"] = Api.prototype["Px2Emu"] = Px2Emu;
+	Api.prototype["MillimetersToPixels"] = Api.prototype["Mm2Px"] = Mm2Px;
 
 	Api.prototype["PointsToCentimeters"]             = PointsToCentimeters;
 	Api.prototype["PointsToEmus"]                    = PointsToEmus;
