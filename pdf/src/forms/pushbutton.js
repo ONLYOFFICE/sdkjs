@@ -797,7 +797,6 @@
     CPushButtonField.prototype.SetImageRasterId = function(sRasterId, nAPType) {
         let sPrevRasterId;
         let oViewer = Asc.editor.getDocumentRenderer();
-        let oDoc    = this.GetDocument();
 
         if (undefined == nAPType) {
             nAPType = AscPDF.APPEARANCE_TYPES.normal;
@@ -825,8 +824,8 @@
             return;
         }
 
-        if (oViewer.IsOpenFormsInProgress == false && oDoc.History.UndoRedoInProgress == false) {
-            oDoc.History.Add(new CChangesPDFPushbuttonImage(this, sPrevRasterId, sRasterId, nAPType));
+        if (oViewer.IsOpenFormsInProgress == false && AscCommon.History.UndoRedoInProgress == false) {
+            AscCommon.History.Add(new CChangesPDFPushbuttonImage(this, sPrevRasterId, sRasterId, nAPType));
         }
 
         this.SetNeedUpdateImage(true);

@@ -659,8 +659,8 @@
         this._contents = contents;
         
         if (oViewer.IsOpenAnnotsInProgress == false && contents != sCurContents) {
-            if (oDoc.History.UndoRedoInProgress == false) {
-                oDoc.History.Add(new CChangesPDFAnnotContents(this, sCurContents, contents));
+            if (AscCommon.History.UndoRedoInProgress == false) {
+                AscCommon.History.Add(new CChangesPDFAnnotContents(this, sCurContents, contents));
             }
         }
 

@@ -722,8 +722,8 @@
         if (this.GetContents() == contents)
             return;
 
-        let oViewer         = editor.getDocumentRenderer();
-        let oDoc            = this.GetDocument();
+        let oViewer         = Asc.editor.getDocumentRenderer();
+        let oDoc            = Asc.editor.getPDFDoc();
         let sCurContents    = this.GetContents();
 
         let bSendAddCommentEvent = false;
@@ -732,8 +732,8 @@
         
         this._contents  = contents;
         
-        if (oDoc.History.UndoRedoInProgress == false && oViewer.IsOpenAnnotsInProgress == false) {
-            oDoc.History.Add(new CChangesPDFAnnotContents(this, sCurContents, contents));
+        if (AscCommon.History.UndoRedoInProgress == false && oViewer.IsOpenAnnotsInProgress == false) {
+            AscCommon.History.Add(new CChangesPDFAnnotContents(this, sCurContents, contents));
         }
         
         this.SetWasChanged(true, false);
@@ -741,7 +741,7 @@
             oDoc.CheckComment(this);
         
         if (this._contents == null && this.IsUseInDocument())
-            editor.sync_RemoveComment(this.GetId());
+            Asc.editor.sync_RemoveComment(this.GetId());
     };
     CAnnotationBase.prototype.IsUseContentAsComment = function() {
         return !(this.IsFreeText() || this.IsLine() && this.IsDoCaption());

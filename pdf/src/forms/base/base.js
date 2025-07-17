@@ -1495,13 +1495,12 @@
     CBaseField.prototype.Refresh_RecalcData = function(){};
     CBaseField.prototype.SetWasChanged = function(isChanged) {
         let oViewer = Asc.editor.getDocumentRenderer();
-        let oDoc = Asc.editor.getPDFDoc();
-        let canChange = !oViewer.IsOpenFormsInProgress && !oDoc.History.UndoRedoInProgress;
+        let canChange = !oViewer.IsOpenFormsInProgress && !AscCommon.History.UndoRedoInProgress;
         if (this._wasChanged == isChanged || !canChange) {
             return;
         }
         
-        oDoc.History.Add(new CChangesPDFFormChanged(this, this._wasChanged, isChanged));
+        AscCommon.History.Add(new CChangesPDFFormChanged(this, this._wasChanged, isChanged));
 
         this._wasChanged = isChanged;
         this.IsWidget() && this.SetDrawFromStream(!isChanged);

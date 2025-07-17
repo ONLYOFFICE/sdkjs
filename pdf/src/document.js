@@ -2862,10 +2862,6 @@ var CPresentation = CPresentation || function(){};
             }
         }
 
-        for (let apIdx in oAnnotsMap) {
-            this.CheckComment(oAnnotsMap[apIdx]);
-        }
-
         this.Viewer.IsOpenAnnotsInProgress = false;
     };
     CPDFDoc.prototype.private_AddFormsByInfo = function(oFormsInfo, pageOffset) {
@@ -3075,6 +3071,7 @@ var CPresentation = CPresentation || function(){};
         
         oPageInfo.AddAnnot(oAnnot);
         
+        this.CheckComment(oAnnot);
         return oAnnot;
     };
     CPDFDoc.prototype.AddAnnot = function(oAnnot, nPage) {
@@ -3084,6 +3081,8 @@ var CPresentation = CPresentation || function(){};
 
         oAnnot.SetDocument(this);
         oPagesInfo.AddAnnot(oAnnot);
+
+        this.CheckComment(oAnnot);
     };
     CPDFDoc.prototype.AddComment = function(AscCommentData) {
         let oCurHistory = AscCommon.History;
@@ -3145,10 +3144,10 @@ var CPresentation = CPresentation || function(){};
                 }
             }
             else {
-                oStickyComm = this.AddAnnotByProps(oProps);
                 AscCommentData.m_sUserData = oStickyComm.GetId();
                 AscCommentData.m_sQuoteText = "";
-                this.CheckComment(oStickyComm);
+
+                oStickyComm = this.AddAnnotByProps(oProps);
             }
             
             if (!oStickyComm)
@@ -5458,7 +5457,6 @@ var CPresentation = CPresentation || function(){};
                 // }
 
                 oThis.AddAnnot(annot, oThis.GetCurPage());
-                oThis.CheckComment(annot);
 
                 if (index == 0) {
                     oThis.SetMouseDownObject(annot);
@@ -8089,12 +8087,12 @@ var CPresentation = CPresentation || function(){};
     }
 
     function ReadAnnotReplyJSON(oParentAnnot, replyJson) {
-        let oReply = new AscPDF.CAnnotationText(replyJson["UniqueName"], oParentAnnot.GetPage(), [], oParentAnnot.GetDocument());
+        let oReply = new AscPDF.CAnnotationText(replyJson["UniqueName"], [], oParentAnnot.GetDocument());
 
         oReply.SetCreationDate(AscPDF.ParsePDFDate(replyJson["CreationDate"]).getTime());
         oReply.SetModDate(AscPDF.ParsePDFDate(replyJson["LastModified"]).getTime());
         oReply.SetAuthor(replyJson["User"]);
-        oReply.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
+        oReply.SetDisplay(window["AscPDF"].Api.Types.display["visible"]);
         oReply.SetPopupIdx(replyJson["Popup"]);
         oReply.SetSubject(replyJson["Subj"]);
         oReply.SetUserId(replyJson["OUserID"]);
