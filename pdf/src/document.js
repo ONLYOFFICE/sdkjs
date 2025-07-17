@@ -5345,16 +5345,19 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.InsertContent2 = function(aSelContent, nIndex) {
         let nCurPage    = this.GetCurPage();
         let oPageInfo   = this.GetPageInfo(nCurPage);
+        let oTargetContent = aSelContent[nIndex];
 
-        let isAnnotsPaste = aSelContent[nIndex] && aSelContent[nIndex].Annots.length !== 0;
-        if (!isAnnotsPaste) {
-            if (true == this.Api.isRestrictionView() || (oPageInfo.IsDeleteLock() && !aSelContent[nIndex].MergePagesInfo && !aSelContent[nIndex].MergePagesInfo.binaryData)) {
+        let isViewerAction = oTargetContent && oTargetContent.Annots.length !== 0 || (this.activeForm && this.activeForm.IsCanEditText() && this.activeForm.IsInForm()) ||
+        (this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() && this.mouseDownAnnot.IsInTextBox());
+        
+        if (!isViewerAction) {
+            if (true == this.Api.isRestrictionView() || (oPageInfo.IsDeleteLock() && !oTargetContent.MergePagesInfo && !oTargetContent.MergePagesInfo.binaryData)) {
                 return false;
             }
         }
 
         let oThis = this;
-        return oThis.InsertContent(aSelContent[nIndex].copy());
+        return oThis.InsertContent(oTargetContent.copy());
     };
     CPDFDoc.prototype.InsertContent = function(oSelContent) {
         let oThis       = this;
@@ -5465,34 +5468,59 @@ var CPresentation = CPresentation || function(){};
 
             bResult = true;
         }
-        if (oSelContent.DocContent && !this.Api.isRestrictionView()) {
+        if (oSelContent.DocContent) {
             oSelContent.DocContent.EndCollect(this);
-            if (oSelContent.DocContent.Elements.length > 0) {
-                let oTargetTextObject = AscFormat.getTargetTextObject(oController);
-                let oTargetDocContent = oController.getTargetDocContent(true), paragraph, NearPos;
 
-                if (oTargetDocContent) {
-                    if (oTargetDocContent.Selection.Use) {
-                        oController.removeCallback(1, undefined, undefined, undefined, undefined, undefined);
-                    }
+            if (this.activeForm && this.activeForm.IsCanEditText() && this.activeForm.IsInForm() ||
+            this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() && this.mouseDownAnnot.IsInTextBox()) {
+                let text = "";
 
-                    paragraph = oTargetDocContent.Content[oTargetDocContent.CurPos.ContentPos];
-                    if (null != paragraph && paragraph.IsParagraph()) {
-                        NearPos = {Paragraph: paragraph, ContentPos: paragraph.Get_ParaContentPos(false, false)};
-                        paragraph.Check_NearestPos(NearPos);
-                        oSelContent.DocContent.Insert(NearPos);
+                oSelContent.DocContent.Elements.forEach(function(element) {
+                    if (element.Element.IsParagraph()) {
+                        text += element.Element.GetText({ParaSeparator: ""});
                     }
-                    
-                    oTargetTextObject && oTargetTextObject.checkExtentsByDocContent && oTargetTextObject.checkExtentsByDocContent();
-                    oTargetTextObject.SetNeedRecalc(true);
-                    AscCommon.History.SetSourceObjectsToPointPdf([oTargetTextObject]);
+                });
+
+                AscFonts.FontPickerByCharacter.checkText(text, this, processPaste);
+
+                function processPaste() {
+                    let aChars = [];
+                    for (let i = 0; i < text.length; i++)
+                        aChars.push(text[i].charCodeAt(0));
+
+                    Asc.editor.asc_enterText(text, true);
                 }
-                else {
-                    this.CreateAndAddShapeFromSelectedContent(oSelContent.DocContent);
-                }
+
+                bResult = true;
             }
+            else if (!this.Api.isRestrictionView()) {
+                if (oSelContent.DocContent.Elements.length > 0) {
+                    let oTargetTextObject = AscFormat.getTargetTextObject(oController);
+                    let oTargetDocContent = oController.getTargetDocContent(true), paragraph, NearPos;
 
-            bResult = true;
+                    if (oTargetDocContent) {
+                        if (oTargetDocContent.Selection.Use) {
+                            oController.removeCallback(1, undefined, undefined, undefined, undefined, undefined);
+                        }
+
+                        paragraph = oTargetDocContent.Content[oTargetDocContent.CurPos.ContentPos];
+                        if (null != paragraph && paragraph.IsParagraph()) {
+                            NearPos = {Paragraph: paragraph, ContentPos: paragraph.Get_ParaContentPos(false, false)};
+                            paragraph.Check_NearestPos(NearPos);
+                            oSelContent.DocContent.Insert(NearPos);
+                        }
+                        
+                        oTargetTextObject && oTargetTextObject.checkExtentsByDocContent && oTargetTextObject.checkExtentsByDocContent();
+                        oTargetTextObject.SetNeedRecalc(true);
+                        AscCommon.History.SetSourceObjectsToPointPdf([oTargetTextObject]);
+                    }
+                    else {
+                        this.CreateAndAddShapeFromSelectedContent(oSelContent.DocContent);
+                    }
+                }
+
+                bResult = true;
+            }
         }
 
         let oThumbnails = this.Viewer.thumbnails;
