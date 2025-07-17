@@ -317,17 +317,17 @@
         return this._origPage;
     };
     CAnnotationBase.prototype.SetWasChanged = function(isChanged, viewSync) {
-        let oViewer = Asc.editor.getDocumentRenderer();
-        let oDoc = Asc.editor.getPDFDoc();
-        let canChange = !oViewer.IsOpenAnnotsInProgress && oDoc.History.CanAddChanges();
-        if (this._wasChanged == isChanged || !canChange) {
-            return;
+        let oViewer   = Asc.editor.getDocumentRenderer();
+        let canChange = !oViewer.IsOpenAnnotsInProgress && AscCommon.History.CanAddChanges();
+
+        let prev    = this._wasChanged;
+        let changed = prev !== isChanged && canChange;
+        if (changed) {
+            AscCommon.History.Add(new CChangesPDFAnnotChanged(this, prev, isChanged));
+            this._wasChanged = isChanged;
         }
 
-        oDoc.History.Add(new CChangesPDFAnnotChanged(this, this._wasChanged, isChanged));
-
-        this._wasChanged = isChanged;
-        if (false !== viewSync) {
+        if (false !== viewSync && canChange && (isChanged || changed)) {
             this.SetDrawFromStream(!isChanged);
         }
     };
