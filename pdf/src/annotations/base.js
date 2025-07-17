@@ -47,7 +47,6 @@
         }
 
         this._apIdx = -1;
-        this._copyApIdx = -1; // file idx of copied annot
         this.type = nType;
 
         this._author                = undefined;
@@ -112,17 +111,6 @@
         AscCommon.History.Add(new CChangesPDFAnnotUserId(this, this.uid, sUID));
         this.uid = sUID;
     };
-    CAnnotationBase.prototype.SetCopyOfApIdx = function(nApIdx) {
-        if (this._copyApIdx == nApIdx) {
-            return;
-        }
-
-        AscCommon.History.Add(new CChangesPDFAnnotCopyApIdx(this, this._copyApIdx, nApIdx));
-        this._copyApIdx = nApIdx;
-    };
-    CAnnotationBase.prototype.GetCopyOfApIdx = function() {
-        return this._copyApIdx;
-    }
     CAnnotationBase.prototype.GetUserId = function() {
         return this.uid;
     };
@@ -397,7 +385,7 @@
      * @returns {canvas}
 	 */
     CAnnotationBase.prototype.GetOriginView = function(nPageW, nPageH) {
-        if (this.GetApIdx() == -1 && this.GetCopyOfApIdx() == -1)
+        if (this.GetApIdx() == -1)
             return null;
 
         nPageW = Math.round(nPageW);
@@ -413,19 +401,6 @@
             
         oApInfoTmp = oApearanceInfo["N"];
         
-        // for stamp save info in stamp
-        if (this.GetCopyOfApIdx() != -1 && !this.IsStamp()) {
-            let _t = this;
-            let oDoc = this.GetDocument();
-            let oCopyOf = oDoc.annots.find(function(annot) {
-                return annot.GetApIdx() == _t.GetCopyOfApIdx();
-            });
-
-            if (oCopyOf) {
-                this._originView.normal = oCopyOf._originView.normal;
-            }
-        }
-
         oSavedView = this._originView.normal;
         if (oSavedView) {
             if (oSavedView.width == oApearanceInfo["w"] && oSavedView.height == oApearanceInfo["h"]) {
@@ -483,7 +458,7 @@
         let oOriginPage = oFile.pages.find(function(page) {
             return page.originIndex == nPage;
         });
-        let nApIdx = this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx();
+        let nApIdx = this.GetApIdx();
 
         if (oOriginPage.annotsAPInfo == null || oOriginPage.annotsAPInfo.size.w != nPageW || oOriginPage.annotsAPInfo.size.h != nPageH) {
             oOriginPage.annotsAPInfo = {
@@ -1281,13 +1256,6 @@
         if (sUserId) {
             Flags |= (1 << 7);
             memory.WriteString(sUserId);
-        }
-
-        // copy of annot
-        let nCopyOfApId = this.GetCopyOfApIdx();
-        if (nCopyOfApId != -1) {
-            Flags |= (1 << 8);
-            memory.WriteLong(nCopyOfApId);
         }
 
         nEndPos = memory.GetCurPosition();

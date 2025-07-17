@@ -216,7 +216,6 @@
         let aFillColor      = this.GetFillColor();
         let aLinePoints     = this.GetLinePoints();
 
-        oLine._copyApIdx = this._copyApIdx;
         oLine._apIdx = this._apIdx;
         oLine._originView = this._originView;
         oLine.SetOriginPage(this.GetOriginPage());
@@ -249,7 +248,6 @@
         let aFillColor      = this.GetFillColor();
         let aLinePoints     = this.GetLinePoints();
 
-        oLine.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
         oLine.SetOriginPage(this.GetOriginPage());
         oLine.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
         oLine.SetModDate(sDate);
@@ -266,11 +264,6 @@
         oLine.recalculate();
 
         this.FillCommentsDataTo(oLine);
-
-        if ((this.IsUseInDocument() && this.IsNeedDrawFromStream()) || !this.IsChanged() || this.GetCopyOfApIdx() != -1) {
-            oLine.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
-            oLine.SetDrawFromStream(true);
-        }
 
         return oLine;
     };

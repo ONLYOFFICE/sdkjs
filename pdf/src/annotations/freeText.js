@@ -481,7 +481,6 @@
         let aCallout        = this.GetCallout();
         let aRD             = this.GetRectangleDiff();
 
-        oFreeText._copyApIdx = this._copyApIdx;
         oFreeText._apIdx = this._apIdx;
         oFreeText._originView = this._originView;
         oFreeText.SetOriginPage(this.GetOriginPage());
@@ -530,11 +529,6 @@
         oFreeText.recalcGeometry();
         
         this.FillCommentsDataTo(oFreeText);
-
-        if ((this.IsUseInDocument() && this.IsNeedDrawFromStream()) || !this.IsChanged() || this.GetCopyOfApIdx() != -1) {
-            oFreeText.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
-            oFreeText.SetDrawFromStream(true);
-        }
 
         return oFreeText;
     };

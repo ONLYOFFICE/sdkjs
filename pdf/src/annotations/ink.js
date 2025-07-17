@@ -342,7 +342,6 @@
 
         let aStrokeColor = this.GetStrokeColor();
 
-        oNewInk._copyApIdx = this._copyApIdx;
         oNewInk._apIdx = this._apIdx;
         oNewInk._originView = this._originView;
         oNewInk.SetOriginPage(this.GetOriginPage());
@@ -370,7 +369,6 @@
 
         let aStrokeColor = this.GetStrokeColor();
 
-        oNewInk.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
         oNewInk.SetOriginPage(this.GetOriginPage());
         oNewInk.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
         oNewInk.SetModDate(sDate);
@@ -383,11 +381,6 @@
         oNewInk.recalcGeometry();
 
         this.FillCommentsDataTo(oNewInk);
-
-        if ((this.IsUseInDocument() && this.IsNeedDrawFromStream()) || !this.IsChanged() || this.GetCopyOfApIdx() != -1) {
-            oNewInk.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
-            oNewInk.SetDrawFromStream(true);
-        }
 
         return oNewInk;
     };

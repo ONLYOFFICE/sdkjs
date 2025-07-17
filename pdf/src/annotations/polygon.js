@@ -162,7 +162,6 @@
         let aFillColor      = this.GetFillColor();
         let aVertices       = this.GetVertices();
 
-        oPolygon._copyApIdx = this._copyApIdx;
         oPolygon._apIdx = this._apIdx;
         oPolygon._originView = this._originView;
         oPolygon.SetOriginPage(this.GetOriginPage());
@@ -195,7 +194,6 @@
         let aFillColor      = this.GetFillColor();
         let aVertices       = this.GetVertices();
 
-        oPolygon.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
         oPolygon.SetOriginPage(this.GetOriginPage());
         oPolygon.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
         oPolygon.SetModDate(sDate);
@@ -214,11 +212,6 @@
 
         this.FillCommentsDataTo(oPolygon);
         
-        if ((this.IsUseInDocument() && this.IsNeedDrawFromStream()) || !this.IsChanged() || this.GetCopyOfApIdx() != -1) {
-            oPolygon.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
-            oPolygon.SetDrawFromStream(true);
-        }
-
         return oPolygon;
     };
     CAnnotationPolygon.prototype.onMouseDown = function(x, y, e) {

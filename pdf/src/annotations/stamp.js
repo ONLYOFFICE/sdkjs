@@ -241,7 +241,7 @@
         let oViewer     = editor.getDocumentRenderer();
         let oFile       = oViewer.file;
         let nPage       = this.GetOriginPage();
-        let nApIdx      = this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx();
+        let nApIdx      = this.GetApIdx();
 
         if (this.APInfo == null || this.APInfo.size.w != nPageW || this.APInfo.size.h != nPageH) {
             this.APInfo = {
@@ -387,7 +387,6 @@
         let aStrokeColor    = this.GetStrokeColor();
         let aFillColor      = this.GetFillColor();
 
-        oNewStamp._copyApIdx = this._copyApIdx;
         oNewStamp._apIdx = this._apIdx;
         oNewStamp._originView = this._originView;
         oNewStamp.SetOriginPage(this.GetOriginPage());
@@ -418,7 +417,6 @@
         let aStrokeColor    = this.GetStrokeColor();
         let aFillColor      = this.GetFillColor();
 
-        oNewStamp.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
         oNewStamp.SetOriginPage(this.GetOriginPage());
         oNewStamp.SetInRect(this.GetInRect());
         oNewStamp.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
@@ -431,11 +429,6 @@
         oNewStamp.SetIconType(this.GetIconType());
         oNewStamp.SetRotate(this.GetRotate());
         oNewStamp.Recalculate(true);
-
-        if ((this.IsUseInDocument() && this.IsNeedDrawFromStream()) || !this.IsChanged() || this.GetCopyOfApIdx() != -1) {
-            oNewStamp.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
-            oNewStamp.SetDrawFromStream(true, true);
-        }
 
         return oNewStamp;
     };

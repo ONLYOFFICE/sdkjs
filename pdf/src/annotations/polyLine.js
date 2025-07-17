@@ -153,7 +153,6 @@
         let aFillColor      = this.GetFillColor();
         let aVertices       = this.GetVertices();
 
-        oPolyline._copyApIdx = this._copyApIdx;
         oPolyline._apIdx = this._apIdx;
         oPolyline._originView = this._originView;
         oPolyline.SetOriginPage(this.GetOriginPage());
@@ -203,11 +202,6 @@
         oPolyline.recalcInfo.recalculateGeometry = true;
         
         this.FillCommentsDataTo(oPolyline);
-
-        if ((this.IsUseInDocument() && this.IsNeedDrawFromStream()) || !this.IsChanged() || this.GetCopyOfApIdx() != -1) {
-            oPolyline.SetCopyOfApIdx(this.GetCopyOfApIdx() != -1 ? this.GetCopyOfApIdx() : this.GetApIdx());
-            oPolyline.SetDrawFromStream(true);
-        }
 
         return oPolyline;
     };

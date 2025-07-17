@@ -4120,7 +4120,6 @@
 	AscDFH.historyitem_Pdf_Annot_Changed_View		= AscDFH.historyitem_type_Pdf_Annot | 22;
 	AscDFH.historyitem_Pdf_Annot_Border_Style		= AscDFH.historyitem_type_Pdf_Annot | 23;
 	AscDFH.historyitem_Pdf_Annot_Border_Intensity	= AscDFH.historyitem_type_Pdf_Annot | 24;
-	AscDFH.historyitem_Pdf_Annot_Copy_ApIdx			= AscDFH.historyitem_type_Pdf_Annot | 25;
 
 	// Comment
 	AscDFH.historyitem_Pdf_Comment_Data			= AscDFH.historyitem_type_Pdf_Comment | 1;
