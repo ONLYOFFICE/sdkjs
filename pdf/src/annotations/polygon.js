@@ -186,7 +186,7 @@
     CAnnotationPolygon.prototype.Copy = function() {
         let oDoc = this.GetDocument();
 
-        let oPolygon = new CAnnotationPolygon(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
+        let oPolygon = new CAnnotationPolygon(AscCommon.CreateGUID(), this.GetRect().slice(), oDoc);
         let sDate = ((new Date).getTime()).toString();
 
         this.fillObject(oPolygon);

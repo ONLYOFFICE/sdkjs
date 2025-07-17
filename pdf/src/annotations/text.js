@@ -253,7 +253,7 @@
         return oNewAnnot;
     };
     CAnnotationText.prototype.Copy = function() {
-        let oNewAnnot = new CAnnotationText(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), this.GetDocument());
+        let oNewAnnot = new CAnnotationText(AscCommon.CreateGUID(), this.GetRect().slice(), this.GetDocument());
         let sDate = ((new Date).getTime()).toString();
 
         let aFillColor = this.GetFillColor();

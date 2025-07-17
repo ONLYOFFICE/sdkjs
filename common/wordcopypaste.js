@@ -1547,11 +1547,11 @@ CopyProcessor.prototype =
 			copyDocContent();
 		}
 		//Drawings
-		if (elementsContent.Drawings) {
+		if (elementsContent.Drawings.length > 0) {
 			copyDrawings(elementsContent.Drawings);
 		}
 		//Annots
-		if (elementsContent.Annots && elementsContent.Annots.length) {
+		if (elementsContent.Annots.length) {
 			copyAnnots();
 		}
 	},
@@ -5809,16 +5809,13 @@ PasteProcessor.prototype =
 				History.TurnOn();
 			}
 
-			oPDFSelContent.MergePagesInfo.pagesDrawings.push(objects.arrShapes);
+			oPDFSelContent.Annots = objects.arrAnnots;
 
-			let arr_shapes = objects.arrShapes;
-			for (let i = 0; i < arr_shapes.length; ++i) {
-				if (arr_shapes[i].Drawing.getAllFonts) {
-					arr_shapes[i].Drawing.getAllFonts(oFontMap);
+			for (let i = 0; i < objects.arrAnnots.length; ++i) {
+				if (objects.arrAnnots[i].Annot.getAllFonts) {
+					objects.arrAnnots[i].Annot.getAllFonts(oFontMap);
 				}
 			}
-
-			arr_Images = arr_Images.concat(objects.arrImages);
 		};
 
 		let readPageDrawings = function () {

@@ -363,7 +363,7 @@
     CAnnotationInk.prototype.Copy = function() {
         let oDoc = this.GetDocument();
 
-        let oNewInk = new CAnnotationInk(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
+        let oNewInk = new CAnnotationInk(AscCommon.CreateGUID(), this.GetRect().slice(), oDoc);
         let sDate = ((new Date).getTime()).toString();
 
         this.fillObject(oNewInk);

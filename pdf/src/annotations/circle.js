@@ -97,7 +97,7 @@
     CAnnotationCircle.prototype.Copy = function() {
         let oDoc = this.GetDocument();
 
-        let oCircle = new CAnnotationCircle(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
+        let oCircle = new CAnnotationCircle(AscCommon.CreateGUID(), this.GetRect().slice(), oDoc);
         let sDate = ((new Date).getTime()).toString();
 
         this.fillObject(oCircle);

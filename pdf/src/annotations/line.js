@@ -240,7 +240,7 @@
     CAnnotationLine.prototype.Copy = function() {
         let oDoc = this.GetDocument();
 
-        let oLine = new CAnnotationLine(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
+        let oLine = new CAnnotationLine(AscCommon.CreateGUID(), this.GetRect().slice(), oDoc);
         let sDate = ((new Date).getTime()).toString();
 
         this.fillObject(oLine);

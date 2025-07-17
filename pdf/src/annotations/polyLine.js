@@ -178,7 +178,7 @@
     CAnnotationPolyLine.prototype.Copy = function() {
         let oDoc = this.GetDocument();
 
-        let oPolyline = new CAnnotationPolyLine(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
+        let oPolyline = new CAnnotationPolyLine(AscCommon.CreateGUID(), this.GetRect().slice(), oDoc);
         let sDate = ((new Date).getTime()).toString();
 
         this.fillObject(oPolyline);

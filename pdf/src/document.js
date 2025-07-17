@@ -5346,8 +5346,11 @@ var CPresentation = CPresentation || function(){};
         let nCurPage    = this.GetCurPage();
         let oPageInfo   = this.GetPageInfo(nCurPage);
 
-        if (true == this.Api.isRestrictionView() || (oPageInfo.IsDeleteLock() && !aSelContent[nIndex].MergePagesInfo && !aSelContent[nIndex].MergePagesInfo.binaryData)) {
-            return false;
+        let isAnnotsPaste = aSelContent[nIndex] && aSelContent[nIndex].Annots.length !== 0;
+        if (!isAnnotsPaste) {
+            if (true == this.Api.isRestrictionView() || (oPageInfo.IsDeleteLock() && !aSelContent[nIndex].MergePagesInfo && !aSelContent[nIndex].MergePagesInfo.binaryData)) {
+                return false;
+            }
         }
 
         let oThis = this;
@@ -5360,12 +5363,7 @@ var CPresentation = CPresentation || function(){};
 
         let bResult = false;
 
-        // во view шейпы не вставляем
-        if (true == this.Api.isRestrictionView()) {
-            return bResult;
-        }
-
-        if (oSelContent.Drawings.length != 0) {
+        if (oSelContent.Drawings.length != 0 && !this.Api.isRestrictionView()) {
             this.BlurActiveObject();
 
             let aDrToPaste = oSelContent.Drawings.map(function(pasteObj) {
@@ -5467,7 +5465,7 @@ var CPresentation = CPresentation || function(){};
 
             bResult = true;
         }
-        if (oSelContent.DocContent) {
+        if (oSelContent.DocContent && !this.Api.isRestrictionView()) {
             oSelContent.DocContent.EndCollect(this);
             if (oSelContent.DocContent.Elements.length > 0) {
                 let oTargetTextObject = AscFormat.getTargetTextObject(oController);
@@ -5498,7 +5496,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         let oThumbnails = this.Viewer.thumbnails;
-        if (oThumbnails && oThumbnails.isInFocus) {
+        if (oThumbnails && oThumbnails.isInFocus && !this.Api.isRestrictionView()) {
             if (oSelContent.MergePagesInfo && oSelContent.MergePagesInfo.binaryData) {
                 let nInsertPos;
                 if (true === Asc.editor.pastePageBefore) {

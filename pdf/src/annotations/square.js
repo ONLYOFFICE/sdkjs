@@ -94,7 +94,7 @@
     CAnnotationSquare.prototype.Copy = function() {
         let oDoc = this.GetDocument();
 
-        let oSquare = new CAnnotationSquare(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
+        let oSquare = new CAnnotationSquare(AscCommon.CreateGUID(), this.GetRect().slice(), oDoc);
         let sDate = ((new Date).getTime()).toString();
 
         this.fillObject(oSquare);

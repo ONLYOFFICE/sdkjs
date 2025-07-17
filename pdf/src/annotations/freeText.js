@@ -505,7 +505,7 @@
     CAnnotationFreeText.prototype.Copy = function() {
         let oDoc = this.GetDocument();
 
-        let oFreeText = new CAnnotationFreeText(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
+        let oFreeText = new CAnnotationFreeText(AscCommon.CreateGUID(), this.GetRect().slice(), oDoc);
         let sDate = ((new Date).getTime()).toString();
 
         let aStrokeColor    = this.GetStrokeColor();
