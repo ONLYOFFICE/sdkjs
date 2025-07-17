@@ -352,7 +352,10 @@
 		let sectPr = this.Paragraph.Get_SectionPr();
 		let logicDocument = this.Paragraph.GetLogicDocument();
 		if (!logicDocument)
+		{
+			this.X += paraMark.GetWidthVisible();
 			return;
+		}
 		
 		if (logicDocument !== this.Paragraph.GetParent())
 			sectPr = undefined;
