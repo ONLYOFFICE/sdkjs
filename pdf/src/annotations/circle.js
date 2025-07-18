@@ -152,9 +152,8 @@
     };
     CAnnotationCircle.prototype.SetRect = function(aOrigRect) {
         let oViewer = editor.getDocumentRenderer();
-        let oDoc    = oViewer.getPDFDoc();
 
-        oDoc.History.Add(new CChangesPDFAnnotRect(this, this._rect, aOrigRect));
+        AscCommon.History.Add(new CChangesPDFAnnotRect(this, this._rect, aOrigRect));
 
         this._rect = aOrigRect;
         
@@ -163,8 +162,7 @@
         this.SetWasChanged(true);
     };
     CAnnotationCircle.prototype.SetRectangleDiff = function(aDiff, bOnResize) {
-        let oDoc = this.GetDocument();
-        oDoc.History.Add(new CChangesPDFAnnotRD(this, this.GetRectangleDiff(), aDiff));
+        AscCommon.History.Add(new CChangesPDFAnnotRD(this, this.GetRectangleDiff(), aDiff));
 
         this._rectDiff = aDiff;
 

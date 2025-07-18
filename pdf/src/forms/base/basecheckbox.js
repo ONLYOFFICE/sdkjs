@@ -688,13 +688,12 @@
         this.SetWasChanged(true);
         this.AddToRedraw();
 
-        let oDoc = this.GetDocument();
         if (bChecked) {
-            oDoc.History.Add(new CChangesPDFFormValue(this, this.GetValue(), this.GetExportValue()));
+            AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetValue(), this.GetExportValue()));
             this._checked = true;
         }
         else {
-            oDoc.History.Add(new CChangesPDFFormValue(this, this.GetValue(), "Off"));
+            AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetValue(), "Off"));
             this._checked = false;
         }
     };

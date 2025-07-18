@@ -285,8 +285,7 @@
             return;
         }
 
-        let oDoc = this.GetDocument();
-        oDoc.History.Add(new CChangesPDFListMultipleSelection(this, this._multipleSelection, bValue));
+        AscCommon.History.Add(new CChangesPDFListMultipleSelection(this, this._multipleSelection, bValue));
 
         this._multipleSelection = bValue;
         this.SetWasChanged(true);
@@ -1130,10 +1129,9 @@
     };
     CListBoxField.prototype.SetCurIdxs = function(aIdxs) {
         if (this.IsWidget()) {
-            let oDoc = this.GetDocument();
-            oDoc.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetParentCurIdxs(), aIdxs));
+            AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetParentCurIdxs(), aIdxs));
 
-            oDoc.History.StartNoHistoryMode();
+            AscCommon.History.StartNoHistoryMode();
             // сначала снимаем выделение с текущих
             let aCurIdxs = this.GetCurIdxs();
             for (let i = 0; i < aCurIdxs.length; i++) {
@@ -1147,8 +1145,8 @@
                 }
             }
             
-            oDoc.History.EndNoHistoryMode();
-            if (editor.getDocumentRenderer().IsOpenFormsInProgress)
+            AscCommon.History.EndNoHistoryMode();
+            if (Asc.editor.getDocumentRenderer().IsOpenFormsInProgress)
                 this.SetParentCurIdxs(aIdxs);
         }
         else {

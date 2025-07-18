@@ -760,7 +760,7 @@
                 break;
             }
             case AscPDF.FIELD_TYPES.combobox: {
-                oCopy = new AscPDF.CComboboxField(this.GetPartialName(), this.GetRect().slice());
+                oCopy = new AscPDF.CComboBoxField(this.GetPartialName(), this.GetRect().slice());
                 break;
             }
             case AscPDF.FIELD_TYPES.listbox: {

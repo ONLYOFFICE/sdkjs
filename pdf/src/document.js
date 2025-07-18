@@ -5504,26 +5504,21 @@ var CPresentation = CPresentation || function(){};
                 return pasteObj.Field;
             });
 
+            let nShiftY = 0;
             aFieldsToPaste.forEach(function(field, index) {
                 let aRect = field.GetRect();
                 let extXmm = (aRect[2] - aRect[0]);
                 let extYmm = (aRect[3] - aRect[1]);
 
                 let oPos = oThis.private_computeFieldAddingPos(nCurPage, extXmm, extYmm);
-                field.SetPosition(oPos.x, oPos.y)
-
-                // чуть-чуть смещаем при вставке, чтобы было видно вставленную фигуру
-                // let nShift = oController.getDrawingsPasteShift([field]);
-
-                // if (nShift > 0) {
-                //     oXfrm.shift(nShift, nShift);
-                // }
+                field.SetPosition(oPos.x, oPos.y + nShiftY);
+                nShiftY += extYmm + 10;
 
                 oThis.AddField(field, oThis.GetCurPage());
 
                 if (index == 0) {
                     oThis.SetMouseDownObject(field);
-                    this.activeForm = field;
+                    oThis.activeForm = field;
                 }
 
                 field.SetEditMode(true);

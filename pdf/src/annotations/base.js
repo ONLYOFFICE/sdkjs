@@ -482,8 +482,7 @@
         this._originView.normal = null;
     };
     CAnnotationBase.prototype.SetPosition = function(x, y) {
-        let oDoc        = this.GetDocument();
-        let aCurRect    = this.GetRect();
+        let aCurRect = this.GetRect();
 
         let nOldX = aCurRect[0];
         let nOldY = aCurRect[1];
@@ -527,7 +526,7 @@
             }
         }
 
-        oDoc.History.Add(new CChangesPDFAnnotPos(this, [aCurRect[0], aCurRect[1]], [x, y]));
+        AscCommon.History.Add(new CChangesPDFAnnotPos(this, [aCurRect[0], aCurRect[1]], [x, y]));
 
         let nWidth  = aCurRect[2] - aCurRect[0];
         let nHeight = aCurRect[3] - aCurRect[1];
@@ -607,9 +606,7 @@
         return this._bDrawFromStream;
     };
     CAnnotationBase.prototype.SetDrawFromStream = function(bFromStream) {
-        let oDoc = Asc.editor.getPDFDoc();
-        
-        oDoc.History.Add(new CChangesPDFAnnotChangedView(this, this._bDrawFromStream, bFromStream));
+        AscCommon.History.Add(new CChangesPDFAnnotChangedView(this, this._bDrawFromStream, bFromStream));
         this._bDrawFromStream = bFromStream;
     };
     CAnnotationBase.prototype.SetRect = function(aOrigRect) {
@@ -968,10 +965,8 @@
         return false;
     };
     CAnnotationBase.prototype.SetApIdx = function(nIdx) {
-        let oDoc = Asc.editor.getPDFDoc();
-
         this._apIdx = nIdx;
-        oDoc.History.Add(new CChangesPDFAnnotApIdx(this, undefined, nIdx));
+        AscCommon.History.Add(new CChangesPDFAnnotApIdx(this, undefined, nIdx));
     };
     CAnnotationBase.prototype.GetApIdx = function() {
         if (-1 == this._apIdx) {

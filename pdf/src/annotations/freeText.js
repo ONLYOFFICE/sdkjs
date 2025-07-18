@@ -274,8 +274,7 @@
         return this._lineEnd;
     };
     CAnnotationFreeText.prototype.SetRectangleDiff = function(aDiff) {
-        let oDoc = this.GetDocument();
-        oDoc.History.Add(new CChangesPDFAnnotRD(this, this.GetRectangleDiff(), aDiff));
+        AscCommon.History.Add(new CChangesPDFAnnotRD(this, this.GetRectangleDiff(), aDiff));
 
         this._rectDiff = aDiff;
         this.recalcGeometry();
@@ -359,8 +358,7 @@
 		}, undefined, this);
     };
     CAnnotationFreeText.prototype.SetCallout = function(aCallout) {
-        let oDoc = this.GetDocument();
-        oDoc.History.Add(new CChangesFreeTextCallout(this, this.GetCallout(), aCallout));
+        AscCommon.History.Add(new CChangesFreeTextCallout(this, this.GetCallout(), aCallout));
         
         this._callout = aCallout;
         this.recalcGeometry();
@@ -704,14 +702,13 @@
         return false;
     };
     CAnnotationFreeText.prototype.SetRichContents = function(aRCInfo) {
-        let oDoc            = this.GetDocument();
-        let oContent        = this.GetDocContent();
+        let oContent = this.GetDocContent();
         oContent.ClearContent();
         
         let oLastUsedPara   = oContent.GetElement(0);
         oLastUsedPara.RemoveFromContent(0, oLastUsedPara.GetElementsCount());
 
-        oDoc.History.Add(new CChangesPDFFreeTextRC(this, this.GetRichContents(), aRCInfo));
+        AscCommon.History.Add(new CChangesPDFFreeTextRC(this, this.GetRichContents(), aRCInfo));
         this._richContents = aRCInfo;
 
         if (!aRCInfo) {
@@ -781,7 +778,7 @@
         }
 
         let _t = this;
-        if (oDoc.Viewer.IsOpenAnnotsInProgress) {
+        if (Asc.editor.getDocumentRenderer().IsOpenAnnotsInProgress) {
             new Promise(function(resolve) {
                 AscFonts.FontPickerByCharacter.checkTextLight(aRCInfo.reduce(function(accumulator, rc) {
                     return accumulator + rc["text"];

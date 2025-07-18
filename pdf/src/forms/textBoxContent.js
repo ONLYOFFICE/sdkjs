@@ -147,8 +147,7 @@
 		
 		if (codePoints) {
 			if (this.ParentPDF && this.ParentPDF.GetCharLimit && 0 !== this.ParentPDF.GetCharLimit()) {
-				let oDoc        = this.ParentPDF.GetDocument();
-				let isOnOpen    = oDoc.Viewer.IsOpenFormsInProgress;
+				let isOnOpen    = Asc.editor.getDocumentRenderer().IsOpenFormsInProgress;
 				let nCharLimit	= this.ParentPDF.GetCharLimit();
 				
 				if (false == isOnOpen && bIgnoreCount !== true) {

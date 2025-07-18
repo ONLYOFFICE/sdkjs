@@ -175,11 +175,8 @@
         return this._needRecalc;
     };
     CAnnotationLine.prototype.SetLinePoints = function(aPoints) {
-        let oViewer = editor.getDocumentRenderer();
-        let oDoc    = oViewer.getPDFDoc();
-        
         this.recalcGeometry();
-        oDoc.History.Add(new CChangesPDFLinePoints(this, this.GetLinePoints(), aPoints));
+        AscCommon.History.Add(new CChangesPDFLinePoints(this, this.GetLinePoints(), aPoints));
 
         this._points = aPoints;
     };
@@ -333,10 +330,7 @@
         return calculateBoundingRectangle({x1: aPoints[0], y1: aPoints[1], x2: aPoints[2], y2: aPoints[3]}, shapeSizeAtStart, shapeSizeAtEnd);
     };
     CAnnotationLine.prototype.SetRect = function(aOrigRect) {
-        let oViewer     = editor.getDocumentRenderer();
-        let oDoc        = oViewer.getPDFDoc();
-
-        oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aOrigRect));
+        AscCommon.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aOrigRect));
 
         this._rect = aOrigRect;
 

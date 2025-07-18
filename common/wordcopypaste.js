@@ -1493,9 +1493,6 @@ CopyProcessor.prototype =
 			oThis.oPDFWriter.Start_UseFullUrl();
 			for (let i = 0; i < elements.length; ++i) {
 				oThis.CopyPDFAnnotObject(elements[i]);
-
-				//TODO записывать base64 у картинок для разных контентов в единственном экземпляре
-				oThis.oPDFWriter.WriteString2("");
 			}
 			oThis.oPDFWriter.End_UseFullUrl();
 
@@ -1511,9 +1508,6 @@ CopyProcessor.prototype =
 			oThis.oPDFWriter.Start_UseFullUrl();
 			for (let i = 0; i < elements.length; ++i) {
 				oThis.CopyPDFFieldObject(elements[i]);
-
-				//TODO записывать base64 у картинок для разных контентов в единственном экземпляре
-				oThis.oPDFWriter.WriteString2("");
 			}
 			oThis.oPDFWriter.End_UseFullUrl();
 

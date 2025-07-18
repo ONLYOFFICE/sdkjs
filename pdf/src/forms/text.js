@@ -336,10 +336,9 @@
     };
 	CTextField.prototype.SetValue = function(sValue) {
 		if (this.IsWidget()) {
-            let oDoc        = this.GetDocument();
-            let isOnOpen    = oDoc.Viewer.IsOpenFormsInProgress;
+            let isOnOpen = Asc.editor.getDocumentRenderer().IsOpenFormsInProgress;
 
-            oDoc.History.Add(new CChangesPDFFormValue(this, this.GetValue(), sValue));
+            AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetValue(), sValue));
 
 			if (isOnOpen != true)
 				this.SetWasChanged(true);
@@ -389,7 +388,7 @@
     };
 	CTextField.prototype.UpdateDisplayValue = function(displayValue) {
         let oDoc        = this.GetDocument();
-        let isOnOpen    = oDoc.Viewer.IsOpenFormsInProgress;
+        let isOnOpen    = Asc.editor.getDocumentRenderer().IsOpenFormsInProgress;
         let _t          = this;
 
         AscCommon.History.StartNoHistoryMode();

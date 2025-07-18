@@ -261,8 +261,7 @@
         return null;
     };
     CAnnotationStamp.prototype.SetPosition = function(x, y) {
-        let oDoc        = this.GetDocument();
-        let aCurRect    = this.GetRect();
+        let aCurRect = this.GetRect();
 
         let nOldX = aCurRect[0];
         let nOldY = aCurRect[1];
@@ -274,7 +273,7 @@
             return;
         }
 
-        oDoc.History.Add(new CChangesPDFAnnotPos(this, [aCurRect[0], aCurRect[1]], [x, y]));
+        AscCommon.History.Add(new CChangesPDFAnnotPos(this, [aCurRect[0], aCurRect[1]], [x, y]));
 
         let nWidth  = aCurRect[2] - aCurRect[0];
         let nHeight = aCurRect[3] - aCurRect[1];
@@ -297,12 +296,10 @@
         this.SetWasChanged(true);
     };
     CAnnotationStamp.prototype.SetRect = function(aRect, isOnRotate) {
-        let oViewer     = editor.getDocumentRenderer();
-        let oDoc        = oViewer.getPDFDoc();
-        let aCurRect    = this.GetRect();
+        let aCurRect = this.GetRect();
         
         if (this.GetRotate() != 0 && this.getXfrm() && !isOnRotate) {
-            oDoc.History.Add(new CChangesPDFAnnotStampRect(this, aCurRect, aRect, isOnRotate));
+            AscCommon.History.Add(new CChangesPDFAnnotStampRect(this, aCurRect, aRect, isOnRotate));
             this._rect = aRect;
 
             this.SetNeedRecalcSizes(!isOnRotate);
@@ -310,7 +307,7 @@
             return;
         }
 
-        oDoc.History.Add(new CChangesPDFAnnotStampRect(this, aCurRect, aRect, isOnRotate));
+        AscCommon.History.Add(new CChangesPDFAnnotStampRect(this, aCurRect, aRect, isOnRotate));
         this._rect = aRect;
 
         this.SetWasChanged(true);

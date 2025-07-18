@@ -65,11 +65,8 @@
     Object.assign(CAnnotationPolygon.prototype, AscPDF.CAnnotationBase.prototype);
     
     CAnnotationPolygon.prototype.SetVertices = function(aVertices) {
-        let oViewer = editor.getDocumentRenderer();
-        let oDoc    = oViewer.getPDFDoc();
-        
         this.recalcGeometry();
-        oDoc.History.Add(new CChangesPDFAnnotVertices(this, this.GetVertices(), aVertices));
+        AscCommon.History.Add(new CChangesPDFAnnotVertices(this, this.GetVertices(), aVertices));
 
         this._vertices = aVertices;
     };
@@ -138,10 +135,7 @@
         oDoc.EndNoHistoryMode();
     };
     CAnnotationPolygon.prototype.SetRect = function(aOrigRect) {
-        let oViewer     = Asc.editor.getDocumentRenderer();
-        let oDoc        = oViewer.getPDFDoc();
-
-        oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aOrigRect));
+        AscCommon.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aOrigRect));
 
         this._rect = aOrigRect;
 

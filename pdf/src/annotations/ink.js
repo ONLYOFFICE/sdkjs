@@ -140,10 +140,7 @@
         return this._gestures;
     };
     CAnnotationInk.prototype.SetRect = function(aOrigRect) {
-        let oViewer     = editor.getDocumentRenderer();
-        let oDoc        = oViewer.getPDFDoc();
-
-        oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aOrigRect));
+        AscCommon.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aOrigRect));
 
         this._rect = aOrigRect;
 
