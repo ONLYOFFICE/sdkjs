@@ -311,16 +311,21 @@
 			return;
 		}
 		
-		if (oActiveForm && oActiveForm.content && oActiveForm.content.IsSelectionUse()) {
-			let sText = oActiveForm.content.GetSelectedText(false, {ParaSeparator: ""});
-			if (!sText)
-				return;
+		if (oActiveForm) {
+			if (oActiveForm.content && oActiveForm.content.IsSelectionUse()) {
+				let sText = oActiveForm.content.GetSelectedText(false, {ParaSeparator: ""});
+				if (!sText)
+					return;
 
-			if (AscCommon.c_oAscClipboardDataFormat.Text & _formats)
-				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Text, sText);
+				if (AscCommon.c_oAscClipboardDataFormat.Text & _formats)
+					_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Text, sText);
 
-			if (AscCommon.c_oAscClipboardDataFormat.Html & _formats)
-				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, "<div><p><span>" + sText + "</span></p></div>");
+				if (AscCommon.c_oAscClipboardDataFormat.Html & _formats)
+					_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, "<div><p><span>" + sText + "</span></p></div>");
+			}
+			else {
+				processClipboardData.call(this, null, _formats, _clipboard);
+			}
 		}
 		if (oActiveAnnot) {
 			if (oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {

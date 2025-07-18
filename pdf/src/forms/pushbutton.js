@@ -97,6 +97,26 @@
     CPushButtonField.prototype.constructor = CPushButtonField;
     AscFormat.InitClass(CPushButtonField, AscPDF.CBaseField, AscDFH.historyitem_type_Pdf_Button_Field);
 
+    CPushButtonField.prototype.Copy = function() {
+        let oCopy = AscPDF.CBaseField.prototype.Copy.call(this);
+
+        let oIconPos = this.GetIconPosition();
+        oCopy.SetIconPosition(oIconPos.X, oIconPos.Y);
+        oCopy.SetButtonFitBounds(this.IsButtonFitBounds());
+        oCopy.SetLayout(this.GetLayout());
+        oCopy.SetScaleHow(this.GetScaleHow());
+        oCopy.SetScaleWhen(this.GetScaleWhen());
+        oCopy.SetHighlight(this.GetHighlight());
+        oCopy.SetCaption(AscPDF.APPEARANCE_TYPES.normal, this.GetCaption(AscPDF.APPEARANCE_TYPES.normal));
+        oCopy.SetCaption(AscPDF.APPEARANCE_TYPES.mouseDown, this.GetCaption(AscPDF.APPEARANCE_TYPES.mouseDown));
+        oCopy.SetCaption(AscPDF.APPEARANCE_TYPES.rollover, this.GetCaption(AscPDF.APPEARANCE_TYPES.rollover));
+        oCopy.SetImageRasterId(AscPDF.APPEARANCE_TYPES.normal, this.GetCaption(AscPDF.APPEARANCE_TYPES.normal));
+        oCopy.SetImageRasterId(AscPDF.APPEARANCE_TYPES.mouseDown, this.GetCaption(AscPDF.APPEARANCE_TYPES.mouseDown));
+        oCopy.SetImageRasterId(AscPDF.APPEARANCE_TYPES.rollover, this.GetCaption(AscPDF.APPEARANCE_TYPES.rollover));
+
+        return oCopy;
+    };
+
     CPushButtonField.prototype.GetFontSizeAP = function(oContent) {
         let oPara   = oContent.GetElement(0);
         let oRun    = oPara.GetElement(0);
@@ -618,7 +638,7 @@
 
         let sPrevCaption;
         switch (nFace) {
-            case 0:
+            case AscPDF.APPEARANCE_TYPES.normal:
                 sPrevCaption = this.GetCaption();
                 this._buttonCaption = cCaption;
                 let oCaptionRun;
@@ -667,11 +687,11 @@
                 }
                 AscCommon.History.EndNoHistoryMode();
                 break;
-            case 1:
+            case AscPDF.APPEARANCE_TYPES.mouseDown:
                 sPrevCaption = this._downCaption;
                 this._downCaption = cCaption;
                 break;
-            case 2:
+            case AscPDF.APPEARANCE_TYPES.rollover:
                 sPrevCaption = this._rollOverCaption;
                 this._rollOverCaption = cCaption;
                 break;

@@ -733,14 +733,14 @@
         this.WriteToBinaryBase(memory);
         this.WriteToBinaryBase2(memory);
 
-        let value = this.GetParentValue(false);
+        let value = this.GetParentValue(memory.isCopyPaste);
         if (value != null && Array.isArray(value) == false) {
             memory.fieldDataFlags |= (1 << 9);
             memory.WriteString(value);
         }
 
         // элементы списка выбора
-        let aOptions = this.GetOptions(false);
+        let aOptions = this.GetOptions(memory.isCopyPaste);
         if (aOptions && aOptions.length !== 0) {
             memory.fieldDataFlags |= (1 << 10);
             memory.WriteLong(aOptions.length);
@@ -762,7 +762,7 @@
         // массив I (выделенные значения списка)
         let curIdxs;
         if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
-            curIdxs = this.GetParentCurIdxs(false);
+            curIdxs = this.GetParentCurIdxs(memory.isCopyPaste);
         }
         if (curIdxs) {
             memory.fieldDataFlags |= (1 << 14);
@@ -780,13 +780,13 @@
         
         // top index
         
-        if (this.IsEditable(false)) {
+        if (this.IsEditable(memory.isCopyPaste)) {
             memory.widgetFlags |= (1 << 18);
         }
-        if (this.IsDoNotSpellCheck(false)) {
+        if (this.IsDoNotSpellCheck(memory.isCopyPaste)) {
             memory.widgetFlags |= (1 << 22);
         }
-        if (this.IsCommitOnSelChange(false)) {
+        if (this.IsCommitOnSelChange(memory.isCopyPaste)) {
             memory.widgetFlags |= (1 << 26);
         }
         

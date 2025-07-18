@@ -1218,7 +1218,7 @@
         this.WriteToBinaryBase(memory);
         this.WriteToBinaryBase2(memory);
 
-        let value = this.GetParentValue(false);
+        let value = this.GetParentValue(memory.isCopyPaste);
         if (value != null && Array.isArray(value) == false) {
             memory.fieldDataFlags |= (1 << 9);
             memory.WriteString(value);
@@ -1247,7 +1247,7 @@
         // массив I (выделенные значения списка)
         let curIdxs;
         if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
-            curIdxs = this.GetParentCurIdxs(false);
+            curIdxs = this.GetParentCurIdxs(memory.isCopyPaste);
         }
         if (curIdxs) {
             memory.fieldDataFlags |= (1 << 14);
@@ -1267,11 +1267,11 @@
         // top index
         //
 
-        if (this.IsMultipleSelection(false)) {
+        if (this.IsMultipleSelection(memory.isCopyPaste)) {
             memory.widgetFlags |= (1 << 21);
         }
 
-        if (this.IsCommitOnSelChange(false)) {
+        if (this.IsCommitOnSelChange(memory.isCopyPaste)) {
             memory.widgetFlags |= (1 << 26);
         }
 
@@ -1318,6 +1318,6 @@
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
         
-    window["AscPDF"].CListBoxField      = CListBoxField;
+    window["AscPDF"].CListBoxField = CListBoxField;
 })();
 

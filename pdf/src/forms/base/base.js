@@ -751,6 +751,60 @@
         
         return aActions;
     };
+    CBaseField.prototype.Copy = function() {
+        let oCopy;
+
+        switch (this.GetType()) {
+            case AscPDF.FIELD_TYPES.text: {
+                oCopy = new AscPDF.CTextField(this.GetPartialName(), this.GetRect().slice());
+                break;
+            }
+            case AscPDF.FIELD_TYPES.combobox: {
+                oCopy = new AscPDF.CComboboxField(this.GetPartialName(), this.GetRect().slice());
+                break;
+            }
+            case AscPDF.FIELD_TYPES.listbox: {
+                oCopy = new AscPDF.CListboxField(this.GetPartialName(), this.GetRect().slice());
+                break;
+            }
+            case AscPDF.FIELD_TYPES.button: {
+                oCopy = new AscPDF.CPushButtonField(this.GetPartialName(), this.GetRect().slice());
+                break;
+            }
+            case AscPDF.FIELD_TYPES.checkbox: {
+                oCopy = new AscPDF.CCheckBoxField(this.GetPartialName(), this.GetRect().slice());
+                break;
+            }
+            case AscPDF.FIELD_TYPES.radiobutton: {
+                oCopy = new AscPDF.CRadioButtonField(this.GetPartialName(), this.GetRect().slice());
+                break;
+            }
+            default: {
+                return null;
+            }
+        }
+
+        let oParent = this.GetParent();
+        if (oParent && oParent.IsAllKidsWidgets()) {
+            oCopy.DrainLogicFrom(oParent, false);
+            oCopy.SetPartialName(oParent.GetPartialName());
+        }
+        else {
+            oCopy.DrainLogicFrom(this, false);
+        }
+
+        oCopy.DrainViewPropsFrom(this);
+        return oCopy;
+    }
+    CBaseField.prototype.DrainViewPropsFrom = function(oField) {
+        this.SetTextColor(oField.GetTextColor());
+        this.SetTextFontActual(oField.GetTextFontActual());
+        this.SetTextSize(oField.GetTextSize());
+        this.SetBorderColor(oField.GetBorderColor());
+        this.SetBackgroundColor(oField.GetBackgroundColor());
+        this.SetBorderStyle(oField.GetBorderStyle());
+        this.SetBorderWidth(oField.GetBorderWidth());
+    };
     CBaseField.prototype.SetDocument = function(oDoc) {
         if (this._doc == oDoc) {
             return;
@@ -802,8 +856,7 @@
             }
             
             this.SetWasChanged(true);
-            let oDoc = this.GetDocument();
-            oDoc.History.Add(new CChangesPDFFormParentValue(this, this._value, value));
+            AscCommon.History.Add(new CChangesPDFFormParentValue(this, this._value, value));
             this._value = value;
         }
 
@@ -2977,7 +3030,7 @@
         let oMeta = this.GetMeta();
         if (oMeta != null) {
             memory.fieldDataFlags |= (1 << 20);
-            if (memory.isForSplit) {
+            if (memory.isForSplit || memory.isCopyPaste) {
                 let oStyle = this.GetFontStyle();
                 let nStyle = 0;
 
@@ -3169,7 +3222,7 @@
     };
     CBaseField.prototype.WriteRenderToBinary = function(memory) {
         // пока только для text, combobox
-        if (true == memory.isForSplit || null == this.content || true == memory.isForSplit) {
+        if (true == memory.isForSplit || memory.isCopyPaste || null == this.content) {
             return;
         }
 

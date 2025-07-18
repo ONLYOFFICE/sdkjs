@@ -2224,13 +2224,13 @@
         this.WriteToBinaryBase(memory);
         this.WriteToBinaryBase2(memory);
 
-        let sValue = this.GetParentValue(false);
+        let sValue = this.GetParentValue(memory.isCopyPaste);
         if (sValue != null && this.IsPassword() == false) {
             memory.fieldDataFlags |= (1 << 9);
             memory.WriteString(sValue);
         }
 
-        let nCharLimit = this.GetCharLimit(false);
+        let nCharLimit = this.GetCharLimit(memory.isCopyPaste);
         if (nCharLimit != 0) {
             memory.fieldDataFlags |= (1 << 10);
             memory.WriteLong(nCharLimit);
@@ -2246,22 +2246,22 @@
         //     memory.widgetFlags |= (1 << 11);
         // }
 
-        if (this.IsMultiline(false)) {
+        if (this.IsMultiline(memory.isCopyPaste)) {
             memory.widgetFlags |= (1 << 12);
         }
-        if (this.IsPassword(false)) {
+        if (this.IsPassword(memory.isCopyPaste)) {
             memory.widgetFlags |= (1 << 13);
         }
-        if (this.IsFileSelect(false)) {
+        if (this.IsFileSelect(memory.isCopyPaste)) {
             memory.widgetFlags |= (1 << 20);
         }
-        if (this.IsDoNotSpellCheck(false)) {
+        if (this.IsDoNotSpellCheck(memory.isCopyPaste)) {
             memory.widgetFlags |= (1 << 22);
         }
-        if (this.IsDoNotScroll(false)) {
+        if (this.IsDoNotScroll(memory.isCopyPaste)) {
             memory.widgetFlags |= (1 << 23);
         }
-        if (this.IsComb(false)) {
+        if (this.IsComb(memory.isCopyPaste)) {
             memory.widgetFlags |= (1 << 24);
         }
 

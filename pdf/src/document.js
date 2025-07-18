@@ -1448,6 +1448,7 @@ var CPresentation = CPresentation || function(){};
         };
         this.Drawings = [];
         this.Annots = [];
+        this.Fields = [];
         this.DocContent = null;
     }
 
@@ -1485,6 +1486,14 @@ var CPresentation = CPresentation || function(){};
                 X: this.Annots[i].X,
                 Y: this.Annots[i].Y,
                 base64: this.Annots[i].base64
+            });
+        }
+
+        for (let i = 0; i < this.Fields.length; i++) {
+            let oCopyFieldObj = this.Fields[i].Field.Copy();
+            oCopy.Fields.push({
+                Field: oCopyFieldObj,
+                base64: this.Fields[i].base64
             });
         }
 
@@ -1606,6 +1615,9 @@ var CPresentation = CPresentation || function(){};
                         if (oSp.IsAnnot()) {
                             oCopy = oSp.copy(oPr);
                         }
+                        if (oSp.IsEditFieldShape()) {
+                            oCopy = oSp.GetEditField().Copy();
+                        }
                         else if (oSp.isGroupObject()) {
                             oCopy = oSp.copy(oPr);
                             oCopy.setParent(oSp.parent);
@@ -1632,6 +1644,9 @@ var CPresentation = CPresentation || function(){};
             
                         if (oSp.IsAnnot()) {
                             aCollectArray.push(new AnnotCopyObject(oCopy, oSp.x, oSp.y, oSp.extX, oSp.extY));
+                        }
+                        if (oSp.IsEditFieldShape()) {
+                            aCollectArray.push(new FieldCopyObject(oCopy));
                         }
                         else {
                             aCollectArray.push(new DrawingCopyObject(oCopy, oSp.x, oSp.y, oSp.extX, oSp.extY, oSp.getBase64Img()));
@@ -1879,17 +1894,32 @@ var CPresentation = CPresentation || function(){};
                 oIdMap = {};
 
                 let isAnnot = !!aSpTree.find(function(sp) { return sp.IsAnnot() });
-                collectSelectedObjects(aSpTree, isAnnot ? oEndFormattingContent.Annots : oEndFormattingContent.Drawings, bRecursive, oIdMap);
+                let isField = !!aSpTree.find(function(sp) { return sp.IsEditFieldShape() });
+
+                let aTargetEndArr = oEndFormattingContent.Drawings;
+                let aTargetSourceArr = oSourceFormattingContent.Drawings;
+                if (isAnnot) {
+                    aTargetEndArr = oEndFormattingContent.Annots;
+                    aTargetSourceArr = oSourceFormattingContent.Annots;
+                }
+                else if (isField) {
+                    aTargetEndArr = oEndFormattingContent.Fields
+                    aTargetSourceArr = oSourceFormattingContent.Fields
+                }
+
+                collectSelectedObjects(aSpTree, aTargetEndArr, bRecursive, oIdMap);
                 AscFormat.fResetConnectorsIds(oEndFormattingContent.Drawings, oIdMap);
                 oIdMap = {};
-                collectSelectedObjects(aSpTree, isAnnot ? oSourceFormattingContent.Annots : oSourceFormattingContent.Drawings, bRecursive, oIdMap, true);
+                collectSelectedObjects(aSpTree, aTargetSourceArr, bRecursive, oIdMap, true);
                 AscFormat.fResetConnectorsIds(oSourceFormattingContent.Drawings, oIdMap);
-                let oImageData = oController.getSelectionImageData();
-                if (oImageData) {
-                    let oBounds = oImageData.bounds;
-                    let sImageUrl = oImageData.src;
-                    oImage = oController.createImage(sImageUrl, oBounds.min_x * AscCommon.g_dKoef_pix_to_mm, oBounds.min_y * AscCommon.g_dKoef_pix_to_mm, (oImageData.width) * AscCommon.g_dKoef_pix_to_mm, (oImageData.height) * AscCommon.g_dKoef_pix_to_mm);
-                    oImagesSelectedContent.Drawings.push(new DrawingCopyObject(oImage, 0, 0, (oImageData.width) * AscCommon.g_dKoef_pix_to_mm, (oImageData.height) * AscCommon.g_dKoef_pix_to_mm, sImageUrl));
+                if (!isAnnot && !isField) {
+                    let oImageData = oController.getSelectionImageData();
+                    if (oImageData) {
+                        let oBounds = oImageData.bounds;
+                        let sImageUrl = oImageData.src;
+                        oImage = oController.createImage(sImageUrl, oBounds.min_x * AscCommon.g_dKoef_pix_to_mm, oBounds.min_y * AscCommon.g_dKoef_pix_to_mm, (oImageData.width) * AscCommon.g_dKoef_pix_to_mm, (oImageData.height) * AscCommon.g_dKoef_pix_to_mm);
+                        oImagesSelectedContent.Drawings.push(new DrawingCopyObject(oImage, 0, 0, (oImageData.width) * AscCommon.g_dKoef_pix_to_mm, (oImageData.height) * AscCommon.g_dKoef_pix_to_mm, sImageUrl));
+                    }
                 }
             }
 
@@ -2739,6 +2769,8 @@ var CPresentation = CPresentation || function(){};
         if (!oPagesInfo)
             return false;
 
+        oField.SetDocument(this);
+
         let sFieldName = oField.GetFullName();
         let oExistsField = this.GetField(sFieldName);
         if (oExistsField) {
@@ -2816,7 +2848,6 @@ var CPresentation = CPresentation || function(){};
             oField.SetPosition(oPos.x, oPos.y)
         }
 
-        oField.SetDocument(this);
         oPagesInfo.AddField(oField);
 
         if (this.IsEditFieldsMode()) {
@@ -2845,11 +2876,11 @@ var CPresentation = CPresentation || function(){};
         for (let i = 0; i < aAnnotsInfo.length; i++) {
             let oAnnotInfo = aAnnotsInfo[i];
 
-            if (oAnnotInfo["Type"] == AscPDF.ANNOTATIONS_TYPES.Popup) {
+            if (oAnnotInfo["type"] == AscPDF.ANNOTATIONS_TYPES.Popup) {
                 continue;
             }
 
-            if (oAnnotInfo["RefTo"] == null || oAnnotInfo["Type"] != AscPDF.ANNOTATIONS_TYPES.Text) {
+            if (oAnnotInfo["RefTo"] == null || oAnnotInfo["type"] != AscPDF.ANNOTATIONS_TYPES.Text) {
                 let oAnnot = AscPDF.ReadAnnotFromJSON(oAnnotInfo, this);
                 this.AddAnnot(oAnnot, pageOffset + oAnnotInfo["page"]);
 
@@ -3144,10 +3175,9 @@ var CPresentation = CPresentation || function(){};
                 }
             }
             else {
+                oStickyComm = this.AddAnnotByProps(oProps);
                 AscCommentData.m_sUserData = oStickyComm.GetId();
                 AscCommentData.m_sQuoteText = "";
-
-                oStickyComm = this.AddAnnotByProps(oProps);
             }
             
             if (!oStickyComm)
@@ -5346,8 +5376,9 @@ var CPresentation = CPresentation || function(){};
         let oPageInfo   = this.GetPageInfo(nCurPage);
         let oTargetContent = aSelContent[nIndex];
 
-        let isViewerAction = oTargetContent && oTargetContent.Annots.length !== 0 || (this.activeForm && this.activeForm.IsCanEditText() && this.activeForm.IsInForm()) ||
-        (this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() && this.mouseDownAnnot.IsInTextBox());
+        let isViewerAction = oTargetContent && oTargetContent.Annots.length !== 0 || oTargetContent.Fields.length !== 0
+        || (this.activeForm && this.activeForm.IsCanEditText() && this.activeForm.IsInForm())
+        || (this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() && this.mouseDownAnnot.IsInTextBox());
         
         if (!isViewerAction) {
             if (true == this.Api.isRestrictionView() || (oPageInfo.IsDeleteLock() && !oTargetContent.MergePagesInfo && !oTargetContent.MergePagesInfo.binaryData)) {
@@ -5462,6 +5493,41 @@ var CPresentation = CPresentation || function(){};
                     oThis.SetMouseDownObject(annot);
                 }
                 annot.select(oController, nCurPage);
+            });
+
+            bResult = true;
+        }
+        if (oSelContent.Fields.length != 0 && !this.Api.isRestrictionView()) {
+            this.BlurActiveObject();
+
+            let aFieldsToPaste = oSelContent.Fields.map(function(pasteObj) {
+                return pasteObj.Field;
+            });
+
+            aFieldsToPaste.forEach(function(field, index) {
+                let aRect = field.GetRect();
+                let extXmm = (aRect[2] - aRect[0]);
+                let extYmm = (aRect[3] - aRect[1]);
+
+                let oPos = oThis.private_computeFieldAddingPos(nCurPage, extXmm, extYmm);
+                field.SetPosition(oPos.x, oPos.y)
+
+                // чуть-чуть смещаем при вставке, чтобы было видно вставленную фигуру
+                // let nShift = oController.getDrawingsPasteShift([field]);
+
+                // if (nShift > 0) {
+                //     oXfrm.shift(nShift, nShift);
+                // }
+
+                oThis.AddField(field, oThis.GetCurPage());
+
+                if (index == 0) {
+                    oThis.SetMouseDownObject(field);
+                    this.activeForm = field;
+                }
+
+                field.SetEditMode(true);
+                field.GetEditShape().select(oController, nCurPage);
             });
 
             bResult = true;
@@ -7971,7 +8037,7 @@ var CPresentation = CPresentation || function(){};
             contents:		annotJson["Contents"],
             author:			annotJson["User"],
             rect:			rect,
-            type:			annotJson["Type"],
+            type:			annotJson["type"],
             apIdx:			annotJson["AP"]["i"],
             uid:			annotJson["OUserID"]
         }, oDoc);
@@ -8865,6 +8931,25 @@ var CPresentation = CPresentation || function(){};
         return new AnnotCopyObject(this.Annot ? _copy : this.Annot, this.X, this.Y, this.ExtX, this.ExtY, this.ImageUrl);
     };
 
+    function FieldCopyObject(oField, ImageUrl) {
+        this.Field = oField;
+        this.ImageUrl = ImageUrl;
+    }
+    
+    FieldCopyObject.prototype.copy = function (oIdMap) {
+    
+        let _copy = this.Field;
+        let oPr = new AscFormat.CCopyObjectProperties();
+        oPr.idMap = oIdMap;
+        if (this.Field) {
+            _copy = this.Field.copy(oPr);
+            if (AscCommon.isRealObject(oIdMap)) {
+                oIdMap[this.Field.Id] = _copy.Id;
+            }
+        }
+        return new FieldCopyObject(this.Field ? _copy : this.Field, this.ImageUrl);
+    };
+
     function FillFieldActionsFromJSON(oField, oFieldActions) {
         function ExtractActions(oPanentAction) {
             let aActions = [];
@@ -8949,6 +9034,7 @@ var CPresentation = CPresentation || function(){};
     window["AscPDF"].PDFSelectedContent         = PDFSelectedContent;
     window["AscPDF"].DrawingCopyObject          = DrawingCopyObject;
     window["AscPDF"].AnnotCopyObject            = AnnotCopyObject;
+    window["AscPDF"].FieldCopyObject            = FieldCopyObject;
     window["AscPDF"].AscLockTypeElemPDF         = AscLockTypeElemPDF;
     window["AscPDF"]["GetPageCoordsByGlobalCoords"] = window["AscPDF"].GetPageCoordsByGlobalCoords = GetPageCoordsByGlobalCoords;
     window["AscPDF"]["GetGlobalCoordsByPageCoords"] = window["AscPDF"].GetGlobalCoordsByPageCoords = GetGlobalCoordsByPageCoords;

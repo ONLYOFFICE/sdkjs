@@ -1314,7 +1314,11 @@ CopyProcessor.prototype =
 		//DocContent/ Drawings
 
 		if (elementsContent && elementsContent.length) {
-			if (elementsContent[0].DocContent || (elementsContent[0].Drawings && elementsContent[0].Drawings.length) || (elementsContent[0].Annots && elementsContent[0].Annots.length) || elementsContent[0].Pages.length) {
+			if (elementsContent[0].DocContent
+				|| (elementsContent[0].Drawings && elementsContent[0].Drawings.length)
+				|| (elementsContent[0].Annots && elementsContent[0].Annots.length)
+				|| (elementsContent[0].Fields && elementsContent[0].Fields.length)
+				|| elementsContent[0].Pages.length) {
 				this.oPDFWriter.WriteString2(this.api.documentId);
 				//флаг о том, что множественный контент в буфере
 				this.oPDFWriter.WriteBool(true);
@@ -1497,6 +1501,24 @@ CopyProcessor.prototype =
 
 		};
 
+		let copyFields = function(){
+			let elements = elementsContent.Fields;
+
+			//пишем метку и длину
+			oThis.oPDFWriter.WriteString2("Fields");
+			oThis.oPDFWriter.WriteULong(elements.length);
+
+			oThis.oPDFWriter.Start_UseFullUrl();
+			for (let i = 0; i < elements.length; ++i) {
+				oThis.CopyPDFFieldObject(elements[i]);
+
+				//TODO записывать base64 у картинок для разных контентов в единственном экземпляре
+				oThis.oPDFWriter.WriteString2("");
+			}
+			oThis.oPDFWriter.End_UseFullUrl();
+
+		};
+
 		let copyPages = function() {
 			if (oDomTarget) {
 				let oPages = new CopyElement("img");
@@ -1537,7 +1559,6 @@ CopyProcessor.prototype =
 		oThis.oPDFWriter.WriteString2("SelectedContent");
 		oThis.oPDFWriter.WriteULong(contentCount);
 
-
 		//Pages
 		if (elementsContent.Pages.length > 0) {
 			copyPages();
@@ -1553,6 +1574,10 @@ CopyProcessor.prototype =
 		//Annots
 		if (elementsContent.Annots.length) {
 			copyAnnots();
+		}
+		//Fields
+		if (elementsContent.Fields.length) {
+			copyFields();
 		}
 	},
 
@@ -1962,6 +1987,7 @@ CopyProcessor.prototype =
 			if (!selectedContent[0].DocContent && (!selectedContent[0].Drawings ||
 				(selectedContent[0].Drawings && !selectedContent[0].Drawings.length))
 				&& (!selectedContent[0].Annots || (selectedContent[0].Annots && !selectedContent[0].Annots.length))
+				&& (!selectedContent[0].Fields || (selectedContent[0].Fields && !selectedContent[0].Fields.length))
 				&& selectedContent[0].Pages.length == 0) {
 				return false;
 			}
@@ -2341,6 +2367,9 @@ CopyProcessor.prototype =
 	},
 	CopyPDFAnnotObject: function (oAnnotCopyObject) {
 		this.oPDFWriter.WriteAnnotTreeElem(oAnnotCopyObject.Annot);
+	},
+	CopyPDFFieldObject: function (oFieldCopyObject) {
+		this.oPDFWriter.WriteFieldTreeElem(oFieldCopyObject.Field);
 	},
 
 	CopyFootnotes: function (oDomTarget, aFootnotes) {
@@ -5818,6 +5847,18 @@ PasteProcessor.prototype =
 			}
 		};
 
+		let readFields = function () {
+			if (PasteElementsId.g_bIsDocumentCopyPaste) {
+				History.TurnOff();
+			}
+			let objects = oThis.ReadPDFFields(stream);
+			if (PasteElementsId.g_bIsDocumentCopyPaste) {
+				History.TurnOn();
+			}
+
+			oPDFSelContent.Fields = objects.arrFields;
+		};
+
 		let readPageDrawings = function () {
 			stream.GetString2(); // drawings
 
@@ -5891,6 +5932,10 @@ PasteProcessor.prototype =
 						readAnnots();
 						break;
 					}
+					case "Fields": {
+						readFields();
+						break;
+					}
 				}
 			}
 		}
@@ -5932,6 +5977,24 @@ PasteProcessor.prototype =
 		}
 
 		return {arrAnnots: aAnnots};
+	},
+
+	ReadPDFFields: function (stream) {
+		let nCountFields = stream.GetULong();
+
+		let oDoc = Asc.editor.getPDFDoc();
+		let oNativeFile = Asc.editor.getDocumentRenderer().file.nativeFile;
+		let aFieldsInfo = oNativeFile.readAnnotationsInfoFromBinary(stream.data.slice(stream.cur));
+
+		let aFields = [];
+		for (let i = 0; i < aFieldsInfo.length; i++) {
+			let oFieldInfo = aFieldsInfo[i];
+
+			let oField = AscPDF.ReadFieldFromJSON(oFieldInfo, oDoc);
+			aFields.push(new AscPDF.FieldCopyObject(oField));
+		}
+
+		return {arrFields: aFields};
 	},
 
 	//from PRESENTATION to PRESENTATION
