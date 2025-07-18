@@ -5977,16 +5977,21 @@ PasteProcessor.prototype =
 		let nCountFields = stream.GetULong();
 
 		let oDoc = Asc.editor.getPDFDoc();
-		let oNativeFile = Asc.editor.getDocumentRenderer().file.nativeFile;
+		let oViewer = Asc.editor.getDocumentRenderer();
+		let oNativeFile = oViewer.file.nativeFile;
 		let aFieldsInfo = oNativeFile.readAnnotationsInfoFromBinary(stream.data.slice(stream.cur));
+
+		oViewer.IsOpenFormsInProgress = true;
 
 		let aFields = [];
 		for (let i = 0; i < aFieldsInfo.length; i++) {
 			let oFieldInfo = aFieldsInfo[i];
 
-			let oField = AscPDF.ReadFieldFromJSON(oFieldInfo, oDoc);
+			let oField = AscPDF.ReadFieldFromJSON(oFieldInfo, oDoc, true);
 			aFields.push(new AscPDF.FieldCopyObject(oField));
 		}
+
+		oViewer.IsOpenFormsInProgress = false;
 
 		return {arrFields: aFields};
 	},

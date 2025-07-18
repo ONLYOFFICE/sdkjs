@@ -5376,7 +5376,7 @@ var CPresentation = CPresentation || function(){};
         let oPageInfo   = this.GetPageInfo(nCurPage);
         let oTargetContent = aSelContent[nIndex];
 
-        let isViewerAction = oTargetContent && oTargetContent.Annots.length !== 0 || oTargetContent.Fields.length !== 0
+        let isViewerAction = oTargetContent && oTargetContent.Annots.length !== 0
         || (this.activeForm && this.activeForm.IsCanEditText() && this.activeForm.IsInForm())
         || (this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() && this.mouseDownAnnot.IsInTextBox());
         
@@ -5387,7 +5387,12 @@ var CPresentation = CPresentation || function(){};
         }
 
         let oThis = this;
-        return oThis.InsertContent(oTargetContent.copy());
+
+        this.Viewer.IsOpenFormsInProgress = true;
+        let oContentCopy = oTargetContent.copy();
+        this.Viewer.IsOpenFormsInProgress = false;
+
+        return oThis.InsertContent(oContentCopy);
     };
     CPDFDoc.prototype.InsertContent = function(oSelContent) {
         let oThis       = this;
@@ -8166,7 +8171,7 @@ var CPresentation = CPresentation || function(){};
         oParentAnnot._replies.push(oReply);
     }
 
-    function ReadFieldFromJSON(formJson, oDoc) {
+    function ReadFieldFromJSON(formJson, oDoc, isOnCopyPaste) {
         let oForm = oDoc.CreateField(formJson["name"], formJson["type"], [formJson["rect"]["x1"], formJson["rect"]["y1"], formJson["rect"]["x2"], formJson["rect"]["y2"]]);
             
         if (formJson["AP"] != null) {
@@ -8343,7 +8348,17 @@ var CPresentation = CPresentation || function(){};
             if (oForm.GetType() == AscPDF.FIELD_TYPES.button && oFontInfo["AP"])
                 oForm.SetTextFontActual(oFontInfo["AP"]);
             else if (oFontInfo["actual"]) {
-                oForm.SetTextFontActual(oFontInfo["actual"]);
+                // When copying without resources, we select a font 
+                if (isOnCopyPaste) {
+                    let sFontName = oFontInfo["actual"].replace(AscFonts.getEmbeddedFontPrefix(), "");
+                    let oFontinfo = AscFonts.g_fontApplication.GetFontInfo(sFontName);
+
+                    oForm.SetTextFontActual(oFontinfo['Name']);
+                }
+                else {
+                    oForm.SetTextFontActual(oFontInfo["actual"]);
+                }
+                
             }
             else if (oFontInfo["name"]) {
                 oForm.SetTextFontActual(AscFonts.getEmbeddedFontPrefix() + oFontInfo["name"]);

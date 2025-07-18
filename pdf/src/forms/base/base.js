@@ -793,6 +793,7 @@
             oCopy.DrainLogicFrom(this, false);
         }
 
+        oCopy.private_SetValue(this.GetParentValue());
         oCopy.DrainViewPropsFrom(this);
         return oCopy;
     }
