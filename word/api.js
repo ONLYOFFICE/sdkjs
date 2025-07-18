@@ -14618,6 +14618,28 @@ background-repeat: no-repeat;\
 		return false;
 	};
 	
+	asc_docs_api.prototype.startLongPoint = function()
+	{
+		AscCommon.History.startLongPoint();
+		AscCommon.CollaborativeEditing.Set_GlobalLock(true);
+	};
+	asc_docs_api.prototype.doLongPointAction = function(f)
+	{
+		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
+		f.call();
+		AscCommon.CollaborativeEditing.Set_GlobalLock(true);
+	};
+	asc_docs_api.prototype.cancelLongPoint = function()
+	{
+		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
+		AscCommon.History.cancelLongPoint();
+	};
+	asc_docs_api.prototype.endLongPoint = function()
+	{
+		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
+		AscCommon.History.startLongPoint();
+	};
+	
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};
 	CAscSection.prototype['get_PageWidth']                              = CAscSection.prototype.get_PageWidth;

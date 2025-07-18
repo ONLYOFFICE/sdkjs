@@ -5663,6 +5663,19 @@
 
 	baseEditorsApi.prototype.initBroadcastChannelListeners = function() {
 	};
+	
+	baseEditorsApi.prototype.startLongPoint = function()
+	{
+	};
+	baseEditorsApi.prototype.doLongPointAction = function(f)
+	{
+	};
+	baseEditorsApi.prototype.cancelLongPoint = function()
+	{
+	};
+	baseEditorsApi.prototype.endLongPoint = function()
+	{
+	};
 
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
