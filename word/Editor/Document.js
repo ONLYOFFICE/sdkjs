@@ -6915,6 +6915,9 @@ CDocument.prototype.CorrectCursorPosition = function(isForward)
 };
 CDocument.prototype.MoveCursorToStartOfDocument = function()
 {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+	
 	var nDocPosType = this.GetDocPosType();
 
 	if (nDocPosType === docpostype_DrawingObjects)
@@ -6934,6 +6937,9 @@ CDocument.prototype.MoveCursorToStartOfDocument = function()
 };
 CDocument.prototype.MoveCursorToStartPos = function(AddToSelect)
 {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+	
 	this.ResetWordSelection();
 	this.private_UpdateTargetForCollaboration();
 
@@ -6943,6 +6949,9 @@ CDocument.prototype.MoveCursorToStartPos = function(AddToSelect)
 };
 CDocument.prototype.MoveCursorToEndPos = function(AddToSelect)
 {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+	
 	this.ResetWordSelection();
 	this.private_UpdateTargetForCollaboration();
 
@@ -6952,6 +6961,9 @@ CDocument.prototype.MoveCursorToEndPos = function(AddToSelect)
 };
 CDocument.prototype.MoveCursorLeft = function(AddToSelect, Word)
 {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+	
 	this.ResetWordSelection();
 	this.private_UpdateTargetForCollaboration();
 
@@ -6977,6 +6989,9 @@ CDocument.prototype.MoveCursorLeft = function(AddToSelect, Word)
 };
 CDocument.prototype.MoveCursorRight = function(AddToSelect, Word, FromPaste)
 {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+	
 	this.ResetWordSelection();
 	this.private_UpdateTargetForCollaboration();
 
@@ -7002,18 +7017,27 @@ CDocument.prototype.MoveCursorRight = function(AddToSelect, Word, FromPaste)
 };
 CDocument.prototype.MoveCursorUp = function(AddToSelect, CtrlKey)
 {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+	
 	this.ResetWordSelection();
 	this.private_UpdateTargetForCollaboration();
 	this.Controller.MoveCursorUp(AddToSelect, CtrlKey);
 };
 CDocument.prototype.MoveCursorDown = function(AddToSelect, CtrlKey)
 {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+	
 	this.ResetWordSelection();
 	this.private_UpdateTargetForCollaboration();
 	this.Controller.MoveCursorDown(AddToSelect, CtrlKey);
 };
 CDocument.prototype.MoveCursorToEndOfLine = function(AddToSelect)
 {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+	
 	this.ResetWordSelection();
 	this.private_UpdateTargetForCollaboration();
 
@@ -7024,6 +7048,9 @@ CDocument.prototype.MoveCursorToEndOfLine = function(AddToSelect)
 };
 CDocument.prototype.MoveCursorToStartOfLine = function(AddToSelect)
 {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+	
 	this.ResetWordSelection();
 	this.private_UpdateTargetForCollaboration();
 
@@ -7034,12 +7061,18 @@ CDocument.prototype.MoveCursorToStartOfLine = function(AddToSelect)
 };
 CDocument.prototype.MoveCursorToXY = function(X, Y, AddToSelect)
 {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+	
 	this.ResetWordSelection();
 	this.private_UpdateTargetForCollaboration();
 	this.Controller.MoveCursorToXY(X, Y, this.CurPage, AddToSelect);
 };
 CDocument.prototype.MoveCursorToCell = function(bNext)
 {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+	
 	this.ResetWordSelection();
 	this.private_UpdateTargetForCollaboration();
 	this.Controller.MoveCursorToCell(bNext);
@@ -7050,6 +7083,9 @@ CDocument.prototype.GoToSignature = function(sGuid)
 };
 CDocument.prototype.MoveCursorToPageStart = function()
 {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+	
 	if (docpostype_Content !== this.GetDocPosType())
 	{
 		this.RemoveSelection();
@@ -7062,6 +7098,9 @@ CDocument.prototype.MoveCursorToPageStart = function()
 };
 CDocument.prototype.MoveCursorToPageEnd = function()
 {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+	
 	if (docpostype_Content !== this.GetDocPosType())
 	{
 		this.RemoveSelection();
@@ -10571,6 +10610,9 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 {
 	if (PageIndex < 0)
 		return;
+	
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
 
 	this.private_UpdateTargetForCollaboration();
 
@@ -10792,7 +10834,11 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 {
 	if (PageIndex < 0)
 		return;
-
+	
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+	
+	
 	if (this.IsFillingFormMode() && this.CurPos.IsInCC() && !this.CurPos.CheckHitInCC(X, Y, PageIndex))
 	{
 		var oCorrectedPos = this.CurPos.CorrectXYToHitInCC(X, Y, PageIndex);
@@ -10952,7 +10998,11 @@ CDocument.prototype.OnMouseMove = function(e, X, Y, PageIndex)
 {
 	if (PageIndex < 0)
 		return;
-
+	
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+	
+	
 	if (this.DrawTableMode.Start
 		&& (PageIndex === this.DrawTableMode.Page)
 		&& (this.DrawTableMode.Draw || this.DrawTableMode.Erase))
@@ -23252,6 +23302,9 @@ CDocument.prototype.SelectContentControl = function(sId)
  */
 CDocument.prototype.MoveCursorToContentControl = function(sId, isBegin)
 {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+	
 	var oContentControl = this.TableId.Get_ById(sId);
 	if (!oContentControl)
 		return;

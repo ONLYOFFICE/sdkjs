@@ -106,6 +106,8 @@
 		this.LongActionCallbacksParams = [];
 		this.IsActionRestrictionCurrent  = 0;
 		this.IsActionRestrictionPrev  = null;
+		
+		this.groupActionsCounter = 0;
 
 		// AutoSave
 		this.autoSaveGap = 0;					// Интервал автосохранения (0 - означает, что автосохранения нет) в милесекундах
@@ -5664,17 +5666,54 @@
 	baseEditorsApi.prototype.initBroadcastChannelListeners = function() {
 	};
 	
-	baseEditorsApi.prototype.startLongPoint = function()
+	baseEditorsApi.prototype.startGroupActions = function()
 	{
+		++this.groupActionsCounter;
+		
+		if (this.groupActionsCounter > 1)
+			return;
+		
+		AscCommon.History.startGroupPoints();
+		AscCommon.CollaborativeEditing.Set_GlobalLock(true);
+		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(true);
 	};
-	baseEditorsApi.prototype.doLongPointAction = function(f)
+	baseEditorsApi.prototype.executeGroupActions = function(f)
 	{
+		if (!this.isGroupActions())
+			return f.call();
+		
+		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
+		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
+		let res = f.call();
+		AscCommon.CollaborativeEditing.Set_GlobalLock(true);
+		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(true);
+		return res;
 	};
-	baseEditorsApi.prototype.cancelLongPoint = function()
+	baseEditorsApi.prototype.cancelGroupActions = function()
 	{
+		if (!this.isGroupActions())
+			return;
+		
+		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
+		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
+		AscCommon.History.cancelGroupPoints();
 	};
-	baseEditorsApi.prototype.endLongPoint = function()
+	baseEditorsApi.prototype.endGroupActions = function()
 	{
+		if (!this.isGroupActions())
+			return;
+		
+		--this.groupActionsCounter;
+		if (this.groupActionsCounter > 0)
+			return;
+		
+		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
+		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
+		AscCommon.History.endGroupPoints();
+	};
+	baseEditorsApi.prototype.isGroupActions = function()
+	{
+		return this.groupActionsCounter > 0;
 	};
 
 	//----------------------------------------------------------export----------------------------------------------------

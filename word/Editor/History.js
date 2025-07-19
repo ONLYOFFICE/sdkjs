@@ -1838,11 +1838,11 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		else
 			point.Additional.FormFillingLockCheck.push([point.Items.length, 1]);
 	};
-	CHistory.prototype.startLongPoint = function()
+	CHistory.prototype.startGroupPoints = function()
 	{
 		this.Create_NewPoint(AscDFH.historydescription_LongAction);
 	};
-	CHistory.prototype.cancelLongPoint = function()
+	CHistory.prototype.cancelGroupPoints = function()
 	{
 		let startIndex = this._getLongPointIndex();
 		if (-1 === startIndex || this.UndoRedoInProgress)
@@ -1868,7 +1868,7 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		this.UndoRedoInProgress = false;
 		return changes;
 	};
-	CHistory.prototype.endLongPoint = function()
+	CHistory.prototype.endGroupPoints = function()
 	{
 		this.ClearRedo();
 		

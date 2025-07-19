@@ -391,7 +391,9 @@
 
 		window.g_asc_plugins.setPluginMethodReturnAsync();
 		this.incrementCounterLongAction();
-        this.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Text, text, undefined, undefined, undefined, onPasteAsync);
+		this.executeGroupActions(function(){
+			_t.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Text, text, undefined, undefined, undefined, onPasteAsync);
+		});
 	};
 
     /**
@@ -453,7 +455,10 @@
 	 */
     Api.prototype["pluginMethod_StartAction"] = function(type, description)
     {
-        this.sync_StartAction((type == "Block") ? Asc.c_oAscAsyncActionType.BlockInteraction : Asc.c_oAscAsyncActionType.Information, description);
+		if ("GroupActions" === type)
+			this.startGroupActions();
+		else
+			this.sync_StartAction((type === "Block") ? Asc.c_oAscAsyncActionType.BlockInteraction : Asc.c_oAscAsyncActionType.Information, description);
     };
 
     /**
@@ -468,7 +473,17 @@
 	 */
     Api.prototype["pluginMethod_EndAction"] = function(type, description, status)
     {
-        this.sync_EndAction((type == "Block") ? Asc.c_oAscAsyncActionType.BlockInteraction : Asc.c_oAscAsyncActionType.Information, description);
+		if ("GroupActions" === type)
+		{
+			if (status)
+				this.cancelGroupActions();
+			else
+				this.endGroupActions();
+			
+			return;
+		}
+		
+        this.sync_EndAction((type === "Block") ? Asc.c_oAscAsyncActionType.BlockInteraction : Asc.c_oAscAsyncActionType.Information, description);
 
         if (window["AscDesktopEditor"] && status != null && status != "")
         {
