@@ -405,9 +405,14 @@ var editor;
     this.downloadAs(c_oAscAsyncAction.DownloadAs, options);
   };
 	spreadsheet_api.prototype._saveCheck = function() {
-		return !this.isFrameEditor() && c_oAscAdvancedOptionsAction.None === this.advancedOptionsAction &&
-			!this.isLongAction() && !this.asc_getIsTrackShape() && !this.isOpenedChartFrame &&
-			History.IsEndTransaction();
+		return (!this.isFrameEditor()
+			&& c_oAscAdvancedOptionsAction.None === this.advancedOptionsAction
+			&& !this.isLongAction()
+			&& !this.isGroupActions()
+			&& !this.asc_getIsTrackShape()
+			&& !this.isOpenedChartFrame
+			&& History.IsEndTransaction()
+		);
 	};
 	spreadsheet_api.prototype._haveOtherChanges = function () {
 	  return this.collaborativeEditing.haveOtherChanges();

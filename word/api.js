@@ -2830,9 +2830,12 @@ background-repeat: no-repeat;\
 			}
 		}
 	};
-	asc_docs_api.prototype._saveCheck = function() {
-		return !this.isLongAction() &&
-			!(this.WordControl.m_oLogicDocument && this.WordControl.m_oLogicDocument.IsViewModeInReview());
+	asc_docs_api.prototype._saveCheck = function()
+	{
+		return (!this.isLongAction()
+			&& !this.isGroupActions()
+			&& !(this.WordControl.m_oLogicDocument && this.WordControl.m_oLogicDocument.IsViewModeInReview())
+		);
 	};
 	asc_docs_api.prototype._haveOtherChanges = function () {
 		return AscCommon.CollaborativeEditing.Have_OtherChanges();
@@ -14617,6 +14620,17 @@ background-repeat: no-repeat;\
 			return true;
 		return false;
 	};
+	asc_docs_api.prototype.updateSelection = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		this.WordControl.m_oDrawingDocument.UpdateTargetFromPaint = true;
+		logicDocument.RecalculateCurPos();
+		logicDocument.UpdateSelection();
+	};
+	
 	
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};

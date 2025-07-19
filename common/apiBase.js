@@ -5665,6 +5665,9 @@
 
 	baseEditorsApi.prototype.initBroadcastChannelListeners = function() {
 	};
+	baseEditorsApi.prototype.updateSelection = function()
+	{
+	};
 	
 	baseEditorsApi.prototype.startGroupActions = function()
 	{
@@ -5685,6 +5688,7 @@
 		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
 		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
 		let res = f.call();
+		this.updateSelection();
 		AscCommon.CollaborativeEditing.Set_GlobalLock(true);
 		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(true);
 		return res;

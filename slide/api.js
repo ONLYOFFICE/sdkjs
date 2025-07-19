@@ -2567,7 +2567,10 @@ background-repeat: no-repeat;\
 		}
 	};
 	asc_docs_api.prototype._saveCheck = function() {
-		return !this.isLongAction() && !(this.isSlideShow());
+		return (!this.isLongAction()
+			&& !this.isGroupActions()
+			&& !(this.isSlideShow())
+		);
 	};
 	asc_docs_api.prototype._haveOtherChanges = function () {
 		return AscCommon.CollaborativeEditing.Have_OtherChanges();
