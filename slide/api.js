@@ -1926,6 +1926,25 @@ background-repeat: no-repeat;\
 				this.WordControl.m_oLogicDocument.CustomProperties.fromXml(oCustomPrReader, true);
 			}
 		}
+
+		let customXmlParts = documentPart.getPartsByRelationshipType(openXml.Types.customXml.relationType);
+		if (customXmlParts) {
+			for (let i = 0; i < customXmlParts.length; i++) {
+				let customXmlPart		= customXmlParts[i];
+				let customXml			= customXmlPart.getDocumentContent();
+				let customXmlPropsPart	= customXmlPart.getPartByRelationshipType(openXml.Types.customXmlProps.relationType);
+				let customXmlProps		= customXmlPropsPart && customXmlPropsPart.getDocumentContent();
+
+				let CustomXML	= new AscWord.CustomXml();
+				reader			= new StaxParser(customXmlProps, customXmlPropsPart, xmlParserContext);
+
+				CustomXML.fromXml(reader);
+				CustomXML.addXmlContent(customXml);
+
+				this.WordControl.m_oLogicDocument.customXmlManager.add(CustomXML);
+			}
+		}
+
 		var context = reader.context;
 		this.WordControl.m_oLogicDocument.ImageMap = context.loadDataLinks();
 		context.GenerateSmartArts();
