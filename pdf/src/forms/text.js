@@ -1767,7 +1767,7 @@
             ver: false
         }
 
-        if (nContentW > oFormBounds.W) {
+        if (nContentW / oFormBounds.W > 1.005 && oFormBounds.W != 0) {
             oResult.hor = true;
         }
 

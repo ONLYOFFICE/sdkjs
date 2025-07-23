@@ -172,7 +172,7 @@
 	//------------------------------------------------------------------------------------------------------------------
 	AscDFH.historyitem_CustomXmlManager_Content_Start = AscDFH.historyitem_type_CustomXml | 1;
 	AscDFH.historyitem_CustomXmlManager_Content_Part  = AscDFH.historyitem_type_CustomXml | 2;
-	AscDFH.historyitem_CustomXmlManager_Content_End   = AscDFH.historyitem_type_CustomXml | 2;
+	AscDFH.historyitem_CustomXmlManager_Content_End   = AscDFH.historyitem_type_CustomXml | 3;
 	
 	/**
 	 * @constructor

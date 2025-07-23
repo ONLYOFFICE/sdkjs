@@ -422,9 +422,15 @@ CGraphicObjects.prototype =
 
     addToRecalculate: function(object)
     {
-        if(typeof object.Get_Id === "function" && typeof object.recalculate === "function")
-            History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, Object: object});
-        return;
+		if (object && object.Get_Id && object.recalculate) {
+			History.RecalcData_Add({Type : AscDFH.historyitem_recalctype_Drawing, Object : object});
+			if (object.checkAutofit && object.checkAutofit()) {
+				let mainObject = object.group && object.getMainGroup ? object.getMainGroup() : object;
+				if (mainObject && mainObject.parent) {
+					mainObject.parent.Refresh_RecalcData({Type : AscDFH.historyitem_Drawing_SetExtent});
+				}
+			}
+		}
     },
 
     createWatermarkImage: DrawingObjectsController.prototype.createWatermarkImage,

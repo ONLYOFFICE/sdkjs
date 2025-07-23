@@ -1182,15 +1182,15 @@ function CBinaryFileWriter()
         this.EndRecord();
     };
 
-    this.WriteCustomXml = function(presentation)
-    {
-        if(!presentation.CustomXmlData)
-        {
-            return;
-        }
-        this.StartMainRecord(c_oMainTables.Customs);
-        this.WriteBuffer(presentation.CustomXmlData, 0, presentation.CustomXmlData.length);
-    };
+	this.WriteCustomXml = function(presentation)
+	{
+		let xmlManager = presentation.getCustomXmlManager();
+		if (xmlManager.getCount() <= 0)
+			return;
+		
+		this.StartMainRecord(c_oMainTables.Customs);
+		(new AscCommon.BinaryCustomsTableWriter(xmlManager, this)).WritePPTY();
+	};
 
     this.WritePresentation = function(presentation)
     {

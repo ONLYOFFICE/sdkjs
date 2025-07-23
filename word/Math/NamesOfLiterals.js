@@ -5699,7 +5699,7 @@
 				? oStyleParent.Pr
 				: oStyleParent.CtrPrp;
 
-			return this.style.IsEqual(oStyle)
+			return this.IsPrStyleEqual(oStyle)
 				&& this.IsReviewDataEqual(oStyleParent)
 				&& this.IsMPrpEqual(oStyleParent.MathPrp)
 				&& this.IsMetaDataEqual(oStyleParent.math_autocorrection)
@@ -5723,6 +5723,13 @@
 		return oMetaData.getIsEscapedSlash() === oCurrentMetaData.getIsEscapedSlash()
 			&& oMetaData.getIsMathRm() === oCurrentMetaData.getIsMathRm()
 			&& oMetaData.getIsText() === oCurrentMetaData.getIsText();
+	};
+	MathTextAdditionalData.prototype.IsPrStyleEqual = function(oStyle)
+	{
+		if (this.style && this.style.IsEqual(oStyle))
+			return true;
+
+		return false;
 	};
 	MathTextAdditionalData.prototype.IsReviewDataEqual = function (oContent)
 	{

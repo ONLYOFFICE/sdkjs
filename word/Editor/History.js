@@ -1797,6 +1797,53 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		else
 			point.Additional.FormFillingLockCheck.push([point.Items.length, 1]);
 	};
+	CHistory.prototype.startGroupPoints = function()
+	{
+		this.Create_NewPoint(AscDFH.historydescription_LongAction);
+	};
+	CHistory.prototype.cancelGroupPoints = function()
+	{
+		let startIndex = this._getLongPointIndex();
+		if (-1 === startIndex || this.UndoRedoInProgress)
+			return;
+		
+		let changes = [];
+		
+		this.UndoRedoInProgress = true;
+		
+		let point;
+		for (let i = this.Points.length - 1; i >= startIndex; --i)
+		{
+			point = this.Points[i];
+			this.private_UndoPoint(point, changes);
+		}
+		
+		if (point && this.Document)
+			this.Document.SetSelectionState(point.State);
+		
+		if (!window['AscCommon'].g_specialPasteHelper.specialPasteStart)
+			window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide(true);
+		
+		this.UndoRedoInProgress = false;
+		return changes;
+	};
+	CHistory.prototype.endGroupPoints = function()
+	{
+		this.ClearRedo();
+		
+		let startIndex = this._getLongPointIndex();
+		if (-1 === startIndex || this.UndoRedoInProgress)
+			return;
+		
+		let point = this.Points[startIndex];
+		for (let i = startIndex + 1; i < this.Points.length; ++i)
+		{
+			point.Items = point.Items.concat(this.Points[i].Items);
+		}
+		
+		this.Points.length = startIndex + 1;
+		this.Index = startIndex;
+	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1832,6 +1879,16 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 	CHistory.prototype.private_IsFormFillingPoint = function(point, form)
 	{
 		return (point.Additional && form === point.Additional.FormFilling);
+	};
+	CHistory.prototype._getLongPointIndex = function()
+	{
+		for (let i = this.Index; i >= 0; --i)
+		{
+			if (AscDFH.historydescription_LongAction === this.Points[i].Description)
+				return i;
+		}
+		
+		return -1;
 	};
 
 	CHistory.prototype.SavePointIndex = function()

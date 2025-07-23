@@ -443,6 +443,11 @@ window["UpdateInstallPlugins"] = function()
 			//_pluginsCur["pluginsData"][i]["isSystemInstall"] = (k == 0) ? true : false;
 			_pluginsCur["pluginsData"][i]["baseUrl"] = _pluginsCur["url"] + _pluginsCur["pluginsData"][i]["guid"].substring(4) + "/";
 			_plugins["pluginsData"].push(_pluginsCur["pluginsData"][i]);
+
+			if (_pluginsCur["pluginsData"][i]["onlyofficeScheme"])
+			{
+				_pluginsCur["pluginsData"][i]["baseUrl"] = "onlyoffice://plugin/" + _pluginsCur["pluginsData"][i]["baseUrl"];
+			}
 		}
 	}
 

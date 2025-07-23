@@ -1810,7 +1810,7 @@ CChartsDrawer.prototype =
 	},
 
 	_getChartsByAxisId: function(charts, id) {
-		var res = [];
+		var res = [], notChangedId = null;
 		for(var i = 0; i < charts.length; i++) {
 			if(!charts[i].axId) {
 				continue;
@@ -1820,10 +1820,12 @@ CChartsDrawer.prototype =
 				if(id === this._searchChangedAxisId(charts[i].axId[j].axId)) {
 					res.push(charts[i]);
 					break;
+				} else if (id === charts[i].axId[j].axId) {
+					notChangedId = charts[i];
 				}
 			}
 		}
-		return res;
+		return res.length ? res : (notChangedId ? [notChangedId] : res);
 	},
 
 	_searchChangedAxisId: function(id) {

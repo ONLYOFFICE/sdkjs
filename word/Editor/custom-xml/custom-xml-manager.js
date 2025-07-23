@@ -112,9 +112,9 @@
 	{
 		return this.xml[index];
 	};
-	CustomXmlManager.prototype.createCustomXml = function(content, uri)
+	CustomXmlManager.prototype.createCustomXml = function(content, schemaRefs)
 	{
-		let oXML = new AscWord.CustomXml(this, false, uri ? [uri] : null, content);
+		let oXML = new AscWord.CustomXml(this, false, schemaRefs, content);
 		this.add(oXML);
 		oXML.writeContent("", oXML.getText());
 		return oXML;

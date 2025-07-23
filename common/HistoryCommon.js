@@ -4633,7 +4633,7 @@
 	window['AscDFH'].historydescription_Presentation_SetPreserveSlideMaster         = 0x01c8;
 	window['AscDFH'].historydescription_Document_AddMathML                          = 0x01c9;
 	window['AscDFH'].historydescription_OForm_CancelFilling                         = 0x01ca;
-
+	
 	window['AscDFH'].historydescription_Presentation_ShowChartPreview               = 0x01cb;
 
 	window['AscDFH'].historydescription_Document_UpdateCharts                       = 0x01cc;
@@ -4665,7 +4665,10 @@
 	window['AscDFH'].historydescription_Pdf_MovePage			= 0x2b4;
 	window['AscDFH'].historydescription_Pdf_AddField			= 0x2b5;
 	window['AscDFH'].historydescription_Pdf_ChangeField			= 0x2b6;
-
+	
+	// reserved
+	window['AscDFH'].historydescription_GroupPoints = 0xFF01;
+	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
@@ -4989,9 +4992,6 @@
 	};
 	CChangesBaseContentChange.prototype.ConvertToSimpleChanges = function()
 	{
-		if (this.UseArray && 1 === this.Items.length)
-			return [this];
-		
 		let arrSimpleActions = this.ConvertToSimpleActions();
 		let arrChanges       = [];
 

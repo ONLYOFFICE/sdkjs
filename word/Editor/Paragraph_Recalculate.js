@@ -1958,7 +1958,7 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 
         var X = 0;
 		
-		let rtlShift = PRSC.SpaceLen + Range.WBreak + PRSC.Range.WEnd;
+		let rtlShift = PRSC.SpaceLen;
 		let bRtlAlign = ParaPr.Bidi;
 		let jc = ParaPr.Jc;
 		
@@ -2045,7 +2045,7 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 					}
 					case AscCommon.align_Justify:
 					{
-						if (Range.WEnd > AscWord.EPSILON || (Range.WBreak > AscWord.EPSILON && isDoNotExpandShiftReturn))
+						if (PRSC.ParaEnd || (PRSC.LineBreak && isDoNotExpandShiftReturn))
 						{
 							if (bRtlAlign)
 								X = Range.X + RangeWidth - Range.W - rtlShift;
@@ -2132,6 +2132,10 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 		
         Range.Spaces = PRSC.Spaces + PRSC.SpacesSkip;
 
+		PRSA.Range = Range;
+		PRSA.LeftSpace = X - Range.X;
+		PRSA.RTL = bRtlAlign;
+		
         PRSA.X    = X;
         PRSA.Y    = this.Pages[CurPage].Y + this.Lines[CurLine].Y;
         PRSA.XEnd = Range.XEnd;
@@ -2169,6 +2173,12 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
         }
 		
 		Range.XEndVisible = PRSA.X;
+		
+		if (bRtlAlign)
+		{
+			Range.XVisible -= Range.WBreak + Range.WEnd;
+			Range.XEndVisible -= Range.WBreak + Range.WEnd;
+		}
     }
 
     return PRSA.RecalcResult;
@@ -4396,6 +4406,9 @@ CParagraphRecalculateStateCounter.prototype.Reset = function(Paragraph, Range)
 	this.Letters     = 0;
 	this.SpacesSkip  = 0;
 	this.LettersSkip = 0;
+	
+	this.ParaEnd   = false;
+	this.LineBreak = false;
 };
 CParagraphRecalculateStateCounter.prototype.isFastRecalculation = function()
 {

@@ -5390,8 +5390,7 @@ ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
 
                 PRSC.SpacesCount = 0;
                 PRSC.Word        = false;
-
-                PRSC.Range.WBreak = Item.GetWidthVisible();
+				PRSC.LineBreak   = true;
 
                 break;
             }
@@ -5399,8 +5398,8 @@ ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
             {
                 if ( true === PRSC.Word )
                     PRSC.Spaces += PRSC.SpacesCount;
-
-				PRSC.Range.WEnd = Item.GetWidthVisible();
+	
+				PRSC.ParaEnd = true;
 
                 break;
             }
@@ -5831,17 +5830,21 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
             }
             case para_End:
             {
-				Item.CheckMark(PRSA.Paragraph, PRSA.XEnd - PRSA.X);
-                PRSA.X += Item.GetWidthVisible();
+				Item.CheckMark(PRSA.Paragraph, PRSA.RTL ? PRSA.LeftSpace : PRSA.XEnd - PRSA.X);
+				let paraEndW = Item.GetWidthVisible();
+				PRSA.Range.WEnd = paraEndW;
+                PRSA.X += paraEndW;
 
                 break;
             }
             case para_NewLine:
             {
 				if (Item.IsPageBreak() || Item.IsColumnBreak())
-					Item.Update_String(PRSA.XEnd - PRSA.X);
-
-                PRSA.X += Item.WidthVisible;
+					Item.Update_String(PRSA.RTL ? PRSA.LeftSpace : PRSA.XEnd - PRSA.X);
+	
+				let breakW = Item.GetWidthVisible();
+				PRSA.Range.WBreak = breakW;
+                PRSA.X += breakW;
 
                 break;
             }

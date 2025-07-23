@@ -2846,9 +2846,12 @@ background-repeat: no-repeat;\
 			}
 		}
 	};
-	asc_docs_api.prototype._saveCheck = function() {
-		return !this.isLongAction() &&
-			!(this.WordControl.m_oLogicDocument && this.WordControl.m_oLogicDocument.IsViewModeInReview());
+	asc_docs_api.prototype._saveCheck = function()
+	{
+		return (!this.isLongAction()
+			&& !this.isGroupActions()
+			&& !(this.WordControl.m_oLogicDocument && this.WordControl.m_oLogicDocument.IsViewModeInReview())
+		);
 	};
 	asc_docs_api.prototype._haveOtherChanges = function () {
 		return AscCommon.CollaborativeEditing.Have_OtherChanges();
@@ -10184,6 +10187,8 @@ background-repeat: no-repeat;\
 		if (!logicDocument)
 			return false;
 		
+		this.executeGroupActionsStart();
+		
 		// Разрешаем всегда выполнять скрипт билдера, даже если это вьювер, а скрипт меняет содержимое
 		// В конце действия по выполненным изменениям проверяем можно ли оставлять данные изменения
 		logicDocument.StartAction(AscDFH.historydescription_BuilderScript);
@@ -10201,6 +10206,7 @@ background-repeat: no-repeat;\
 		if (callback)
 			callback(result);
 		
+		this.executeGroupActionsEnd();
 		return result;
 	};
 	//----------------------------------------------------------------------------------------------------------------------
@@ -14664,6 +14670,17 @@ background-repeat: no-repeat;\
 			return true;
 		return false;
 	};
+	asc_docs_api.prototype.updateSelection = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		this.WordControl.m_oDrawingDocument.UpdateTargetFromPaint = true;
+		logicDocument.RecalculateCurPos();
+		logicDocument.UpdateSelection();
+	};
+	
 	
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};

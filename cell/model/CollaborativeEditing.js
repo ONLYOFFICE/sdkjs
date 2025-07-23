@@ -1037,12 +1037,12 @@
 			if (changes.length > 0) {
 				//изменение не последнее потому что могут добавиться при корректировке
 				let elem = changes.find(function(elem){
-					if(elem && elem.Point) {
+					if(elem && elem.oData && elem.oData.Point) {
 						return true;
 					}
 				});
 				if (elem) {
-					Point = elem.Point;
+					Point = elem.oData.Point;
 				}
 			}
 			//todo Apply_LinkData inside UndoRedoEnd

@@ -50,7 +50,7 @@ jobs:
           node node_modules/node-qunit-puppeteer/cli.js tests/cell/shortcuts/shortcuts.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/FormulaTests.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/PivotTests.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/CopyPasteTests.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/copy-paste-tests.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/SheetStructureTests.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/autoFilterTests.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/UserProtectedRangesTest.html 30000 "--no-sandbox"

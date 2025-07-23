@@ -1105,7 +1105,19 @@ $(function () {
 				let strBinomial = MathContent.GetTextOfElement(0).GetText();
 				assert.strictEqual(strBinomial, '(1→∞)', 'Check \\infty');
 			})
-
+			QUnit.test('Check processing of \\begin bracket and | on defferent levels', function (assert)
+			{
+				Clear();
+				logicDocument.SetMathInputType(0);
+				AddText('ln |1|');
+				assert.ok(true, "Add func 'ln |1|'");
+				MathContent.MoveCursorToEndPos()
+				assert.ok(true, "Move the cursor outside the content of the function");
+				AddText('+');
+				assert.ok(true, "Add '+'");
+				let strBinomial = MathContent.GetTextOfElement(0).GetText();
+				assert.strictEqual(strBinomial, 'ln⁡|1|+', 'Check processing of \\begin bracket and | on defferent levels');
+			})
 			QUnit.test('Check absolute brackets inside normal brackets', function (assert)
 			{
 				Clear();

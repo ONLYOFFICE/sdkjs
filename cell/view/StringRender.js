@@ -1554,7 +1554,7 @@
 					return strongDir;
 				}
 			}
-			return AscBidi.DIRECTION_FLAG.RTL;
+			return AscBidi.DIRECTION_FLAG.LTR;
 		};
 
 	}

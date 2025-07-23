@@ -1591,6 +1591,7 @@ CInlineLevelSdt.prototype.private_ReplacePlaceHolderWithContent = function(bMath
 	this.RemoveSelection();
 	this.MoveCursorToStartPos();
 
+	let annotationMarks = this.GetAllAnnotationMarks();
 	this.RemoveFromContent(0, this.GetElementsCount());
 
 	if (this.IsContentControlEquation())
@@ -1603,6 +1604,12 @@ CInlineLevelSdt.prototype.private_ReplacePlaceHolderWithContent = function(bMath
 		oRun.SetPr(this.Pr.TextPr.Copy());
 		this.AddToContent(0, oRun);
 	}
+	
+	for (let i = 0; i < annotationMarks.length; ++i)
+	{
+		this.AddToContentToEnd(annotationMarks[i]);
+	}
+	this.CorrectContent();
 
 	this.RemoveSelection();
 	this.MoveCursorToStartPos();
@@ -1655,6 +1662,8 @@ CInlineLevelSdt.prototype.private_ReplaceContentWithPlaceHolder = function(isSel
 CInlineLevelSdt.prototype.private_FillPlaceholderContent = function()
 {
 	var isSelection = this.IsSelectionUse();
+	
+	let annotationMarks = this.GetAllAnnotationMarks();
 
 	this.RemoveFromContent(0, this.GetElementsCount());
 	
@@ -1719,7 +1728,13 @@ CInlineLevelSdt.prototype.private_FillPlaceholderContent = function()
 				this.Content[nIndex].SetPr(this.Pr.TextPr.Copy());
 		}
 	}
-
+	
+	for (let i = 0; i < annotationMarks.length; ++i)
+	{
+		this.AddToContentToEnd(annotationMarks[i]);
+	}
+	this.CorrectContent();
+	
 	if (isSelection)
 		this.SelectAll(1);
 };

@@ -366,10 +366,16 @@
 		for (let index = 0, count = historyPoint.Items.length; index < count; ++index)
 		{
 			let historyItem   = historyPoint.Items[index];
-			let historyChange = historyItem.Data;
+			let historyChange;
 			let historyClass  = historyItem.Class;
 
-			//todo заполнить Class и Data в изменениях автофигур spreadsheet
+			//todo: Refactor Class and Data in spreadsheet to follow other editors design
+			if (AscCommon.History.Item_ToSerializable) {
+				historyChange = AscCommon.History.Item_ToSerializable(historyItem);
+			} else {
+				historyChange = historyItem.Data;
+			}
+
 			if (!historyClass || !(historyClass.Get_Id || historyClass.Class && historyClass.Class.Get_Id))
 				continue;
 

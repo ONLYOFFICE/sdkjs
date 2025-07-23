@@ -157,8 +157,8 @@
 		
 		if (0x2003 === this.Value || 0x2002 === this.Value || 0x2005 === this.Value)
 		{
-			g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII, this.GetFontCoef());
 			g_oTextMeasurer.SetTextPr(textPr);
+			g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII, this.GetFontCoef());
 			let code = 0x2005 === this.Value ? 0x007C : 0x00B0;
 			this.SpaceGap = Math.max((Temp - g_oTextMeasurer.MeasureCode(code).Width) / 2, 0);
 		}

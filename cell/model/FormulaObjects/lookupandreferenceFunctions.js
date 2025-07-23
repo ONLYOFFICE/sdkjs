@@ -528,7 +528,12 @@ function (window, undefined) {
 		rowNumber = rowNumber.getValue();
 		colNumber = colNumber.getValue();
 		refType = refType.getValue();
-		A1RefType = A1RefType.toBool();
+		//TODO tocBool - if !isBoolean -> value error?
+		if (!A1RefType.toBool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else {
+			A1RefType = A1RefType.toBool();
+		}
 
 		rowNumber = parseInt(rowNumber);
 		colNumber = parseInt(colNumber);

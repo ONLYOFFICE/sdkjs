@@ -106,6 +106,8 @@
 		this.LongActionCallbacksParams = [];
 		this.IsActionRestrictionCurrent  = 0;
 		this.IsActionRestrictionPrev  = null;
+		
+		this.groupActionsCounter = 0;
 
 		// AutoSave
 		this.autoSaveGap = 0;					// Интервал автосохранения (0 - означает, что автосохранения нет) в милесекундах
@@ -3671,7 +3673,12 @@
 	};
 	baseEditorsApi.prototype.canRunBuilderScript = function()
 	{
-		return this.asc_canPaste();
+		this.executeGroupActionsStart();
+		let res = this.asc_canPaste();
+		if (!res)
+			this.executeGroupActionsEnd();
+		
+		return res;
 	};
 	baseEditorsApi.prototype.onEndBuilderScript = function(callback)
 	{
@@ -3703,6 +3710,7 @@
 		if (callback)
 			callback(true);
 		
+		this.executeGroupActionsEnd();
 		return true;
 	};
 
@@ -5799,6 +5807,74 @@
 	};
 	baseEditorsApi.prototype.asc_getUpdateLinks = function() {
 		return false;
+	};
+	baseEditorsApi.prototype.updateSelection = function()
+	{
+	};
+	
+	baseEditorsApi.prototype.startGroupActions = function()
+	{
+		++this.groupActionsCounter;
+		
+		if (this.groupActionsCounter > 1)
+			return;
+		
+		AscCommon.History.startGroupPoints();
+		AscCommon.CollaborativeEditing.Set_GlobalLock(true);
+		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(true);
+	};
+	baseEditorsApi.prototype.executeGroupActions = function(f)
+	{
+		if (!this.isGroupActions())
+			return f.call();
+		
+		this.executeGroupActionsStart();
+		let res = f.call();
+		this.updateSelection();
+		this.executeGroupActionsEnd();
+		return res;
+	};
+	baseEditorsApi.prototype.executeGroupActionsStart = function()
+	{
+		if (!this.isGroupActions())
+			return;
+		
+		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
+		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
+	};
+	baseEditorsApi.prototype.executeGroupActionsEnd = function()
+	{
+		if (!this.isGroupActions())
+			return;
+		
+		AscCommon.CollaborativeEditing.Set_GlobalLock(true);
+		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(true);
+	};
+	baseEditorsApi.prototype.cancelGroupActions = function()
+	{
+		if (!this.isGroupActions())
+			return;
+		
+		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
+		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
+		AscCommon.History.cancelGroupPoints();
+	};
+	baseEditorsApi.prototype.endGroupActions = function()
+	{
+		if (!this.isGroupActions())
+			return;
+		
+		--this.groupActionsCounter;
+		if (this.groupActionsCounter > 0)
+			return;
+		
+		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
+		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
+		AscCommon.History.endGroupPoints();
+	};
+	baseEditorsApi.prototype.isGroupActions = function()
+	{
+		return this.groupActionsCounter > 0;
 	};
 
 	//----------------------------------------------------------export----------------------------------------------------

@@ -377,17 +377,8 @@ function BinaryPPTYLoader()
                 let nCustomPos = _main_tables["8"];
                 s.Seek2(nCustomPos);
 
-                //let nCustomType = s.GetUChar();
-                let nCustomCount = s.GetULong();
-                if(nCustomCount > 0) {
-                    for(let nRecord = 0; nRecord < nCustomCount; ++nRecord) {
-
-                        let nCustomType = s.GetUChar();
-                        s.SkipRecord();
-                    }
-                }
-                this.presentation.CustomXmlData = s.data.slice(nCustomPos, s.cur);
-                s.Seek2(nCustomPos);
+                let customXmlManager = this.presentation.getCustomXmlManager();
+				(new AscCommon.BinaryCustomsTableReader(customXmlManager, s)).ReadPPTY();
             }
 
             if (undefined != _main_tables["48"])

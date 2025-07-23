@@ -19099,6 +19099,17 @@ Paragraph.prototype.isRtlDirection = function()
 {
 	return !!this.Get_CompiledPr2(false).ParaPr.Bidi;
 };
+Paragraph.prototype.GetAllAnnotationMarks = function(marks)
+{
+	if (!marks)
+		marks = [];
+	
+	for (let i = 0; i < this.Content.length; ++i)
+	{
+		this.Content[i].GetAllAnnotationMarks(marks);
+	}
+	return marks;
+};
 
 Paragraph.prototype.asc_getText = function()
 {

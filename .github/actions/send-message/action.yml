@@ -11,7 +11,7 @@ inputs:
       Workflow: ${{ github.workflow }}
       Github job: ${{ github.job }}
       Github job status: '❌' - ${{ job.status }}
-      
+      Branch: ${{ github.ref_name }}
 
       See action run logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_number }}
 runs:

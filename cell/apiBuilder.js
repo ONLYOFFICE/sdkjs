@@ -593,12 +593,16 @@
 
 	/**
 	 * Creates a new custom function.
-	 * The description of the function parameters and result is specified using JSDoc. The <em>@customfunction</em> tag is required in JSDoc.
-	 * Parameters and results can be specified as the <em>number / string / boolean / any / number[][] / string[][] / boolean[][] / any[][]</em> types.
+	 * The description of the function parameters and result is specified using JSDoc. The *@customfunction* tag is required in JSDoc.
+	 * Parameters and results can be specified as the *number / string / boolean / any / number[][] / string[][] / boolean[][] / any[][]* types.
 	 * Parameters can be required or optional. A user can also set a default value.
+	 * The passed function can be asynchronous (async function or function returning a Promise).
+	 * Inside the passed function, you can access the current cell address where the calculation is performed using *this.address*.
+	 * You can also access the addresses of function arguments using *this.args[0].address*, *this.args[1].address*, etc.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @param {Function} fCustom - A new function for calculating.
+	 * @param {Function} fCustom - A new function for calculating. Can be synchronous or asynchronous.
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddCustomFunction.js
 	 */
 	// Example with description:
 	// Calculates the sum of the specified numbers.
@@ -696,15 +700,15 @@
 
 	/**
 	 * Registers a new custom functions library (see the <b>SetCustomFunctions</b> plugin method).
-	 * The description of the function parameters and result is specified using JSDoc. The <em>@customfunction</em> tag is required in JSDoc.
-	 * Parameters and results can be specified as the <em>number / string / boolean / any / number[][] / string[][] / boolean[][] / any[][]</em> types.
+	 * The description of the function parameters and result is specified using JSDoc. The *@customfunction* tag is required in JSDoc.
+	 * Parameters and results can be specified as the *number / string / boolean / any / number[][] / string[][] / boolean[][] / any[][]* types.
 	 * Parameters can be required or optional. A user can also set a default value.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sName - The library name.
 	 * @param {Function} Func - The custom functions library code.
 	 * @since 8.2.0
-	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddCustomFunction.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddCustomFunctionLibrary.js
 	 */
 	Api.prototype.AddCustomFunctionLibrary = function(sName, Func) {
 		this.addCustomFunctionsLibrary(sName, Func);
@@ -3022,11 +3026,11 @@
 	 * Calculates predicted exponential growth by using existing data.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number[]} arg1 - The set of y-values from the <em>y = b*m^x</em> equation, an array or range of positive numbers.
-	 * @param {ApiRange | ApiName | number[]} [arg2] - An optional set of x-values from the <em>y = b*m^x</em> equation, an array or range of positive numbers that has the same size as the set of y-values.
+	 * @param {ApiRange | ApiName | number[]} arg1 - The set of y-values from the *y = b*m^x* equation, an array or range of positive numbers.
+	 * @param {ApiRange | ApiName | number[]} [arg2] - An optional set of x-values from the *y = b*m^x* equation, an array or range of positive numbers that has the same size as the set of y-values.
 	 * @param {ApiRange | ApiName | number[]} [arg3] - New x-values for which the function will return the corresponding y-values.
-	 * @param {ApiRange | ApiName | boolean} [arg4] - A logical value: the constant <em>b</em> is calculated normally if this parameter is set to <b>true</b>,
-	 * and <em>b</em> is set equal to 1 if the parameter is <b>false</b> or omitted.
+	 * @param {ApiRange | ApiName | boolean} [arg4] - A logical value: the constant *b* is calculated normally if this parameter is set to <b>true</b>,
+	 * and *b* is set equal to 1 if the parameter is <b>false</b> or omitted.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/GROWTH.js
 	 */
@@ -3115,12 +3119,12 @@
 	 * Returns statistics that describe a linear trend matching known data points, by fitting a straight line using the least squares method.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName} arg1 - The set of y-values from the <em>y = mx + b</em> equation.
-	 * @param {ApiRange | ApiName} [arg2] - An optional set of x-values from the <em>y = mx + b</em> equation.
-	 * @param {ApiRange | ApiName | boolean} [arg3] - A logical value: the constant <em>b</em> is calculated normally if this parameter is set to <b>true</b> or omitted,
-	 * and <em>b</em> is set equal to 0 if the parameter is <b>false</b>.
+	 * @param {ApiRange | ApiName} arg1 - The set of y-values from the *y = mx + b* equation.
+	 * @param {ApiRange | ApiName} [arg2] - An optional set of x-values from the *y = mx + b* equation.
+	 * @param {ApiRange | ApiName | boolean} [arg3] - A logical value: the constant *b* is calculated normally if this parameter is set to <b>true</b> or omitted,
+	 * and *b* is set equal to 0 if the parameter is <b>false</b>.
 	 * @param {ApiRange | ApiName | boolean} [arg4] - A logical value: return additional regression statistics if this parameter is set to <b>true</b>,
-	 * and return m-coefficients and the constant <em>b</em> if the parameter is <b>false</b> or omitted.
+	 * and return m-coefficients and the constant *b* if the parameter is <b>false</b> or omitted.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LINEST.js
 	 */
@@ -3131,12 +3135,12 @@
 	 * Returns statistics that describe an exponential curve matching known data points.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | ApiRange} arg1 - The set of y-values from the <em>y = b*m^x</em> equation.
-	 * @param {ApiRange | ApiName | ApiRange} [arg2] - An optional set of x-values from the <em>y = b*m^x</em> equation.
-	 * @param {ApiRange | ApiName | boolean} [arg3] - A logical value: the constant <em>b</em> is calculated normally if this parameter is set to <b>true</b> or omitted,
-	 * and <em>b</em> is set equal to 1 if the parameter is <b>false</b>.
+	 * @param {ApiRange | ApiName | ApiRange} arg1 - The set of y-values from the *y = b*m^x* equation.
+	 * @param {ApiRange | ApiName | ApiRange} [arg2] - An optional set of x-values from the *y = b*m^x* equation.
+	 * @param {ApiRange | ApiName | boolean} [arg3] - A logical value: the constant *b* is calculated normally if this parameter is set to <b>true</b> or omitted,
+	 * and *b* is set equal to 1 if the parameter is <b>false</b>.
 	 * @param {ApiRange | ApiName | boolean} [arg4] - A logical value: return additional regression statistics if this parameter is set to <b>true</b>,
-	 * and return m-coefficients and the constant <em>b</em> if the parameter is <b>false</b> or omitted.
+	 * and return m-coefficients and the constant *b* if the parameter is <b>false</b> or omitted.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LOGEST.js
 	 */
@@ -3918,11 +3922,11 @@
 	 * Returns numbers in a linear trend matching known data points, using the least squares method.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number[]} arg1 - A range or array of y-values from the <em>y = mx + b</em> equation.
-	 * @param {ApiRange | ApiName | number[]} [arg2] - An optional range or array of x-values from the <em>y = mx + b</em> equation, an array of the same size as an array of y-values.
+	 * @param {ApiRange | ApiName | number[]} arg1 - A range or array of y-values from the *y = mx + b* equation.
+	 * @param {ApiRange | ApiName | number[]} [arg2] - An optional range or array of x-values from the *y = mx + b* equation, an array of the same size as an array of y-values.
 	 * @param {ApiRange | ApiName | number[]} [arg3] - A range or array of new x-values for which this function will return corresponding y-values.
-	 * @param {ApiRange | ApiName | boolean} [arg4] - A logical value: the constant <em>b</em> is calculated normally if this parameter is set to <b>true</b> or omitted,
-	 * and <em>b</em> is set equal to 0 if the parameter is <b>false</b>.
+	 * @param {ApiRange | ApiName | boolean} [arg4] - A logical value: the constant *b* is calculated normally if this parameter is set to <b>true</b> or omitted,
+	 * and *b* is set equal to 0 if the parameter is <b>false</b>.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TREND.js
 	 */
@@ -4259,7 +4263,7 @@
 		return this.private_calculateFunction("NETWORKDAYS.INTL", arguments);
 	};
 	/**
-	 * Returns the current date and time in the <em>MM/dd/yy hh:mm</em> format.
+	 * Returns the current date and time in the *MM/dd/yy hh:mm* format.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
@@ -4304,7 +4308,7 @@
 		return this.private_calculateFunction("TIMEVALUE", arguments);
 	};
 	/**
-	 * Returns the current date in the <em>MM/dd/yy</em> format.
+	 * Returns the current date in the *MM/dd/yy* format.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
@@ -4703,7 +4707,7 @@
 	 * Returns the absolute value (modulus) of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMABS.js
 	 */
@@ -4714,7 +4718,7 @@
 	 * Returns the imaginary coefficient of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMAGINARY.js
 	 */
@@ -4725,7 +4729,7 @@
 	 * Returns the argument Theta, an angle expressed in radians.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMARGUMENT.js
 	 */
@@ -4736,7 +4740,7 @@
 	 * Returns the complex conjugate of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMCONJUGATE.js
 	 */
@@ -4747,7 +4751,7 @@
 	 * Returns the cosine of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMCOS.js
 	 */
@@ -4758,7 +4762,7 @@
 	 * Returns the hyperbolic cosine of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMCOSH.js
 	 */
@@ -4769,7 +4773,7 @@
 	 * Returns the cotangent of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMCOT.js
 	 */
@@ -4780,7 +4784,7 @@
 	 * Returns the cosecant of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMCSC.js
 	 */
@@ -4791,7 +4795,7 @@
 	 * Returns the hyperbolic cosecant of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMCSCH.js
 	 */
@@ -4802,8 +4806,8 @@
 	 * Returns the quotient of two complex numbers.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - The complex numerator or dividend in the <em>x + yi</em> or <em>x + yj</em> form.
-	 * @param {ApiRange | ApiName | number} arg2 - The complex denominator or divisor in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - The complex numerator or dividend in the *x + yi* or *x + yj* form.
+	 * @param {ApiRange | ApiName | number} arg2 - The complex denominator or divisor in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMDIV.js
 	 */
@@ -4814,7 +4818,7 @@
 	 * Returns the exponential of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMEXP.js
 	 */
@@ -4825,7 +4829,7 @@
 	 * Returns the natural logarithm of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMLN.js
 	 */
@@ -4836,7 +4840,7 @@
 	 * Returns the base-10 logarithm of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMLOG10.js
 	 */
@@ -4847,7 +4851,7 @@
 	 * Returns the base-2 logarithm of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMLOG2.js
 	 */
@@ -4858,7 +4862,7 @@
 	 * Returns a complex number raised to an integer power.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @param {ApiRange | ApiName | number} arg2 - The power to which the complex number will be raised.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMPOWER.js
@@ -4870,7 +4874,7 @@
 	 * Returns the product of the specified complex numbers.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | string} args - Up to 255 complex numbers expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | string} args - Up to 255 complex numbers expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMPRODUCT.js
 	 */
@@ -4881,7 +4885,7 @@
 	 * Returns the real coefficient of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMREAL.js
 	 */
@@ -4892,7 +4896,7 @@
 	 * Returns the secant of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSEC.js
 	 */
@@ -4903,7 +4907,7 @@
 	 * Returns the hyperbolic secant of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSECH.js
 	 */
@@ -4914,7 +4918,7 @@
 	 * Returns the sine of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSIN.js
 	 */
@@ -4925,7 +4929,7 @@
 	 * Returns the hyperbolic sine of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSINH.js
 	 */
@@ -4936,7 +4940,7 @@
 	 * Returns the square root of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSQRT.js
 	 */
@@ -4944,7 +4948,7 @@
 		return this.private_calculateFunction("IMSQRT", arguments);
 	};
 	/**
-	 * Returns the difference of two complex numbers expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * Returns the difference of two complex numbers expressed in the *x + yi* or *x + yj* form.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The complex number from which to subtract the second number.
@@ -4959,7 +4963,7 @@
 	 * Returns the sum of the specified complex numbers.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | string} args - Up to 255 complex numbers expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | string} args - Up to 255 complex numbers expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSUM.js
 	 */
@@ -4970,7 +4974,7 @@
 	 * Returns the tangent of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMTAN.js
 	 */
@@ -6071,7 +6075,7 @@
 		return this.private_calculateFunction("ARABIC", arguments);
 	};
 	/**
-	 * Returns the arcsine of a number in radians, in the range from <em>-Pi/2</em> to <em>Pi/2</em>.
+	 * Returns the arcsine of a number in radians, in the range from *-Pi/2* to *Pi/2*.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The angle sine. It must be from -1 to 1.
@@ -6093,7 +6097,7 @@
 		return this.private_calculateFunction("ASINH", arguments);
 	};
 	/**
-	 * Returns the arctangent of a number in radians, in the range from <em>-Pi/2</em> to <em>Pi/2</em>.
+	 * Returns the arctangent of a number in radians, in the range from *-Pi/2* to *Pi/2*.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The angle tangent.
@@ -6238,7 +6242,7 @@
 	 * Returns the hyperbolic cotangent of a number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - The angle in radians for which the hyperbolic cotangent will be calculated. Its absolute value must be less than <em>2^27</em>.
+	 * @param {ApiRange | ApiName | number} arg1 - The angle in radians for which the hyperbolic cotangent will be calculated. Its absolute value must be less than *2^27*.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COTH.js
 	 */
@@ -6260,7 +6264,7 @@
 	 * Returns the hyperbolic cosecant of an angle.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - The angle in radians for which the hyperbolic cosecant will be calculated. Its absolute value must be less than <em>2^27</em>.
+	 * @param {ApiRange | ApiName | number} arg1 - The angle in radians for which the hyperbolic cosecant will be calculated. Its absolute value must be less than *2^27*.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CSCH.js
 	 */
@@ -6325,7 +6329,7 @@
 		return this.private_calculateFunction("EXP", arguments);
 	};
 	/**
-	 * Returns the factorial of a number, which is equal to <em>1*2*3*...*</em> number.
+	 * Returns the factorial of a number, which is equal to *1*2*3*...** number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The nonnegative number for which the factorial will be calculated.
@@ -6736,7 +6740,7 @@
 	 * Returns the sine of an angle.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - The angle in radians for which the sine will be returned. If your argument is in degrees, multiply it by <em>PI()/180</em>.
+	 * @param {ApiRange | ApiName | number} arg1 - The angle in radians for which the sine will be returned. If your argument is in degrees, multiply it by *PI()/180*.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SIN.js
 	 */
@@ -6897,7 +6901,7 @@
 	 * Returns the tangent of an angle.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - The angle in radians for which the tangent will be returned. If the argument is in degrees, multiply it by <em>PI()/180</em>.
+	 * @param {ApiRange | ApiName | number} arg1 - The angle in radians for which the tangent will be returned. If the argument is in degrees, multiply it by *PI()/180*.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TAN.js
 	 */
@@ -7010,7 +7014,7 @@
 	/**
 	 * The match type.
 	 * * <b>-1</b> - The values must be sorted in descending order. If the exact match is not found, the function will return the smallest value that is greater than the searched value.
-	 * * <b>0</b> - The values can be sorted in any order. If the exact match is not found, the function will return the <em>#N/A</em> error.
+	 * * <b>0</b> - The values can be sorted in any order. If the exact match is not found, the function will return the *#N/A* error.
 	 * * <b>1</b> (or omitted) - The values must be sorted in ascending order. If the exact match is not found, the function will return the largest value that is less than the searched value.
 	 * @typedef {("-1" | "0" | "1")} MatchType
 	 * */
@@ -7092,7 +7096,7 @@
 		return this.private_calculateFunction("ERROR.TYPE", arguments);
 	};
 	/**
-	 * Checks whether a value is an error other than <em>#N/A</em>, and returns <b>true</b> or <b>false</b>.
+	 * Checks whether a value is an error other than *#N/A*, and returns <b>true</b> or <b>false</b>.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | boolean | ApiRange | ApiName} arg1 - The value to test.
@@ -7150,7 +7154,7 @@
 		return this.private_calculateFunction("ISLOGICAL", arguments);
 	};
 	/**
-	 * Checks whether a value is <em>#N/A</em>, and returns <b>true</b> or <b>false</b>.
+	 * Checks whether a value is *#N/A*, and returns <b>true</b> or <b>false</b>.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | string | number | boolean | ApiName} arg1 - The value to test.
@@ -7232,7 +7236,7 @@
 		return this.private_calculateFunction("N", arguments);
 	};
 	/**
-	 * Returns the <em>#N/A</em> error value which means "no value is available".
+	 * Returns the *#N/A* error value which means "no value is available".
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
@@ -7321,11 +7325,11 @@
 		return this.private_calculateFunction("IFERROR", arguments);
 	};
 	/**
-	 * Checks if there is an error in the formula in the first argument. The function returns the specified value if the formula returns the <em>#N/A</em> error value, otherwise returns the result of the formula.
+	 * Checks if there is an error in the formula in the first argument. The function returns the specified value if the formula returns the *#N/A* error value, otherwise returns the result of the formula.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number | string | boolean} arg1 - The value, expression, or reference that is checked for an error.
-	 * @param {ApiRange | ApiName | number | string | boolean} arg2 - The value to return if the formula evaluates to the <em>#N/A</em> error value.
+	 * @param {ApiRange | ApiName | number | string | boolean} arg2 - The value to return if the formula evaluates to the *#N/A* error value.
 	 * @returns {number | string | boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IFNA.js
 	 */

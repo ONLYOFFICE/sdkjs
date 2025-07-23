@@ -114,6 +114,10 @@ CParagraphContentBase.prototype.IsMath = function()
 {
 	return false;
 };
+CParagraphContentBase.prototype.IsAnnotationMark = function()
+{
+	return false;
+};
 CParagraphContentBase.prototype.Is_Empty = function()
 {
 	return true;
@@ -742,6 +746,10 @@ CParagraphContentBase.prototype.RestartSpellCheck = function()
 CParagraphContentBase.prototype.GetDirectTextPr = function()
 {
 	return null;
+};
+CParagraphContentBase.prototype.GetAllAnnotationMarks = function(marks)
+{
+	return marks ? marks : [];
 };
 CParagraphContentBase.prototype.GetAllFields = function(isUseSelection, arrFields)
 {
@@ -4639,6 +4647,18 @@ CParagraphContentWithParagraphLikeContent.prototype.GetDirectTextPr = function()
 	{
 		return this.Content[this.State.ContentPos].GetDirectTextPr();
 	}
+};
+CParagraphContentWithParagraphLikeContent.prototype.GetAllAnnotationMarks = function(marks)
+{
+	if (!marks)
+		marks = [];
+	
+	for (let i = 0; i < this.Content.length; ++i)
+	{
+		this.Content[i].GetAllAnnotationMarks(marks);
+	}
+	
+	return marks;
 };
 CParagraphContentWithParagraphLikeContent.prototype.GetAllFields = function(isUseSelection, arrFields)
 {

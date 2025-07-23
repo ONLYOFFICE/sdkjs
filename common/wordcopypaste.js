@@ -2560,6 +2560,7 @@ function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPastePr
 							api.endInsertDocumentUrls();
 							api.sendEvent("asc_onError", c_oAscError.ID.DirectUrl,
 								c_oAscError.Level.NoCritical);
+							callback && callback(false);
 							return;
 						}
 						api.endInsertDocumentUrls();
@@ -2570,6 +2571,7 @@ function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPastePr
 			};
 			reader.onerror = function () {
 				api.sendEvent("asc_onError", Asc.c_oAscError.ID.Unknown, Asc.c_oAscError.Level.NoCritical);
+				callback && callback(false);
 			};
 			reader.readAsArrayBuffer(new Blob([data1]));
 			break;
@@ -2577,6 +2579,7 @@ function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPastePr
 		default:
 		{
 			rejectCallback && rejectCallback();
+			callback && callback(false);
 			break;
 		}
 	}
@@ -2678,7 +2681,7 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
     this.oDocument = api.WordControl.m_oLogicDocument;
     this.oLogicDocument = this.oDocument;
     this.oRecalcDocument = this.oDocument;
-    this.map_font_index = api.FontLoader.map_font_index;
+    this.map_font_index = api.FontLoader && api.FontLoader.map_font_index;
     this.bUploadImage = bUploadImage;
     this.bUploadFonts = bUploadFonts;
     this.bNested = bNested;//для параграфов в таблицах
@@ -3175,7 +3178,7 @@ PasteProcessor.prototype =
 			oSelectedContent.SetCopyComments(false);
 
 			if (this.doNotInsertInDoc) {
-				this.pasteCallback && this.pasteCallback(oSelectedContent);
+				this.pasteCallback && this.pasteCallback(oSelectedContent, true);
 				return;
 			}
 
@@ -3183,6 +3186,7 @@ PasteProcessor.prototype =
 			{
 				this.oLogicDocument.Document_Undo();
 				History.Clear_Redo();
+				this.pasteCallback && this.pasteCallback(false);
 				return;
 			}
 
@@ -3797,6 +3801,7 @@ PasteProcessor.prototype =
 		}
 
 		window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
+		this.pasteCallback && this.pasteCallback(bInsert);
 	},
 
 	_setSpecialPasteShowOptionsPresentation: function(props){
@@ -4119,6 +4124,7 @@ PasteProcessor.prototype =
 				window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
 				window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
 				this.rejectCallback && this.rejectCallback();
+				this.pasteCallback && this.pasteCallback(false);
 				return;
 			}
 
@@ -4147,6 +4153,7 @@ PasteProcessor.prototype =
 		var bInsertFromBinary = false;
 
 		if (!node && "" === fromBinary) {
+			this.pasteCallback && this.pasteCallback(false);
 			return;
 		}
 
@@ -4183,6 +4190,7 @@ PasteProcessor.prototype =
 			if (insertToPresentationWithoutSlides && !base64FromPresentation) {
 				window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
 				window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
+				this.pasteCallback && this.pasteCallback(false);
 				return;
 			}
 
@@ -4236,6 +4244,7 @@ PasteProcessor.prototype =
 			window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
 			window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
 			this.rejectCallback && this.rejectCallback();
+			this.pasteCallback && this.pasteCallback(false);
 		}
 	},
 
@@ -4250,7 +4259,7 @@ PasteProcessor.prototype =
 					oThis.api.GenerateStyles();
 				}
 				if (oThis.pasteCallback) {
-					oThis.pasteCallback();
+					oThis.pasteCallback(true);
 				}
 			}
 		};
@@ -4410,6 +4419,7 @@ PasteProcessor.prototype =
 						window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
 					}
 					window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
+					this.pasteCallback && this.pasteCallback(bInsert);
 				}
 			};
 
@@ -4507,6 +4517,7 @@ PasteProcessor.prototype =
 						window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
 					}
 					window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
+					oThis.pasteCallback && oThis.pasteCallback(bInsert);
 				}
 			};
 
@@ -4559,6 +4570,7 @@ PasteProcessor.prototype =
 						window['AscCommon'].g_specialPasteHelper.CleanButtonInfo()
 					}
 					window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
+					oThis.pasteCallback && oThis.pasteCallback(bInsert);
 				}
 			};
 
@@ -4668,6 +4680,7 @@ PasteProcessor.prototype =
 						window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
 					}
 					window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
+					oThis.pasteCallback && oThis.pasteCallback(bInsert);
 				}
 			};
 
@@ -4739,7 +4752,7 @@ PasteProcessor.prototype =
 					oThis.api.GenerateStyles();
 				}
 				if (oThis.pasteCallback) {
-					oThis.pasteCallback();
+					oThis.pasteCallback(true);
 				}
 			}
 		};
@@ -4913,6 +4926,7 @@ PasteProcessor.prototype =
 				}
 
 				window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
+				oThis.pasteCallback && oThis.pasteCallback(bInsert);
 			}
 		};
 
@@ -4969,7 +4983,7 @@ PasteProcessor.prototype =
 			if (false === oThis.bNested) {
 				oThis.InsertInDocument();
 				if (oThis.pasteCallback) {
-					oThis.pasteCallback();
+					oThis.pasteCallback(true);
 				}
 			}
 		};
@@ -5217,6 +5231,7 @@ PasteProcessor.prototype =
 				}
 
 				window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
+				oThis.pasteCallback && oThis.pasteCallback(bInsert);
 			}
 		};
 
@@ -5355,6 +5370,7 @@ PasteProcessor.prototype =
 					}
 
 					window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
+					oThis.pasteCallback && oThis.pasteCallback(bPaste);
 				}
 			};
 
@@ -5388,7 +5404,7 @@ PasteProcessor.prototype =
 			if (false === oThis.bNested) {
 				oThis.InsertInDocument();
 				if (oThis.pasteCallback) {
-					oThis.pasteCallback();
+					oThis.pasteCallback(true);
 				}
 			}
 		};
@@ -5613,6 +5629,7 @@ PasteProcessor.prototype =
 					}
 
 					window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
+					oThis.pasteCallback && oThis.pasteCallback(bPaste);
 				}
 			};
 
@@ -5701,6 +5718,7 @@ PasteProcessor.prototype =
 					}
 
 					window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
+					oThis.pasteCallback && oThis.pasteCallback(bPaste);
 				}
 			};
 
@@ -6003,6 +6021,7 @@ PasteProcessor.prototype =
 					}
 
 					window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
+					oThis.pasteCallback && oThis.pasteCallback(bPaste);
 				}
 			};
 
@@ -6728,7 +6747,14 @@ PasteProcessor.prototype =
 						oSelectedContent.DocContent.Elements.push(oSelElement);
 					});
 
-					oDoc.InsertContent2([oSelectedContent], 0);
+					let bPaste = oDoc.InsertContent2([oSelectedContent], 0);
+					
+					oPasteHelper.Paste_Process_End();
+					if (false === oThis.bNested) {
+						if (oThis.pasteCallback) {
+							oThis.pasteCallback(bPaste);
+						}
+					}
 				} else {
 					oSelectedContent.Drawings = aCopyObjects;
 					let bPaste = oDoc.InsertContent2([oSelectedContent], 0);
@@ -6746,15 +6772,14 @@ PasteProcessor.prototype =
 							}
 						}
 					}
-				}
-
-				if (false === oThis.bNested) {
-					if (oThis.pasteCallback) {
-						oThis.pasteCallback();
+					
+					oPasteHelper.Paste_Process_End();
+					if (false === oThis.bNested) {
+						if (oThis.pasteCallback) {
+							oThis.pasteCallback(bPaste);
+						}
 					}
 				}
-
-				oPasteHelper.Paste_Process_End();
 			};
 			
 			AscCommon.ExecuteNoHistory(function() {
@@ -6809,7 +6834,7 @@ PasteProcessor.prototype =
 				}
 				if (false === oThis.bNested) {
 					if (oThis.pasteCallback) {
-						oThis.pasteCallback();
+						oThis.pasteCallback(true);
 					}
 				}
 			};
@@ -6960,7 +6985,7 @@ PasteProcessor.prototype =
 				if (false === oThis.bNested) {
 					oThis.InsertInDocument(!window['AscCommon'].g_specialPasteHelper.specialPasteStart);
 					if (oThis.pasteCallback)
-						oThis.pasteCallback();
+						oThis.pasteCallback(true);
 				}
 			};
 
@@ -7082,6 +7107,9 @@ PasteProcessor.prototype =
 				window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
 
 				oThis.aContent = [];
+				if (oThis.pasteCallback) {
+					oThis.pasteCallback(true);
+				}
 			};
 
 			oThis.aContent = [];

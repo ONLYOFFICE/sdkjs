@@ -1189,8 +1189,8 @@
 	 * Class representing a continuous region in a document. 
 	 * Each Range object is determined by the position of the start and end characters.
 	 * @param oElement - The document element that may be Document, Table, Paragraph, Run or Hyperlink.
-	 * @param {Number} Start - The start element of Range in the current Element.
-	 * @param {Number} End - The end element of Range in the current Element.
+	 * @param {Number?} [Start = undefined] - The start element of Range in the current Element. If omitted or undefined, the range begins at the beginning of the element.
+	 * @param {Number?} [End = undefined] - The end element of Range in the current Element. If omitted or undefined, the range begins at the end of the element.
 	 * @constructor
 	 */
 	function ApiRange(oElement, Start, End)
@@ -19979,7 +19979,7 @@
 
 	/**
 	 * Sets the placeholder text to the current inline content control.
-	 *Can't be set to checkbox or radio button*
+	 * *Can't be set to checkbox or radio button*
 	 * @memberof ApiInlineLvlSdt
 	 * @param {string} sText - The text that will be set to the current inline content control.
 	 * @typeofeditors ["CDE"]
@@ -20545,13 +20545,16 @@
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 9.0.0
-	 * @returns {Date} Date object representing the selected date in the date picker control.
+	 * @returns {undefined | Date} Date object representing the selected date in the date picker control, or undefined if the form is a placeholder.
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetDate.js
 	 */
 	ApiInlineLvlSdt.prototype.GetDate = function()
 	{
 		if (!this.Sdt || !this.Sdt.IsDatePicker())
 			throwException(new Error("Content control must be a date picker"));
+		
+		if (this.Sdt.IsPlaceHolder())
+			return undefined;
 		
 		let fullDate = this.Sdt.GetDatePickerPr().GetFullDate();
 		return new Date(fullDate);
@@ -22232,7 +22235,7 @@
 	};
 	/**
 	 * Converts the current form to an inline form.
-	 *Picture form can't be converted to an inline form, it's always a fixed size object.*
+	 * *Picture form can't be converted to an inline form, it's always a fixed size object.*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
@@ -22370,7 +22373,7 @@
     };
 	/**
 	 * Sets the placeholder text to the current form.
-	 *Can't be set to checkbox or radio button.*
+	 * *Can't be set to checkbox or radio button.*
 	 * @memberof ApiFormBase
 	 * @param {string} sText - The text that will be set to the current form.
 	 * @typeofeditors ["CDE", "CFE"]
@@ -22391,7 +22394,7 @@
 	};
 	/**
 	 * Sets the text properties to the current form.
-	 *Used if possible for this type of form*
+	 * *Used if possible for this type of form*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @param {ApiTextPr} textPr - The text properties that will be set to the current form.
@@ -22408,7 +22411,7 @@
 	};
 	/**
 	 * Returns the text properties from the current form.
-	 *Used if possible for this type of form*
+	 * *Used if possible for this type of form*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @return {ApiTextPr}  
@@ -23096,7 +23099,7 @@
 	};
 	/**
 	 * Sets the text to the current combo box.
-	 *Available only for editable combo box forms.*
+	 * *Available only for editable combo box forms.*
 	 * @memberof ApiComboBoxForm
 	 * @param {string} sText - The combo box text.
 	 * @typeofeditors ["CDE", "CFE"]
@@ -23341,16 +23344,17 @@
 	 * Returns the timestamp of the current form.
 	 * @memberof ApiDateForm
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @returns {number}
+	 * @returns {undefined | number} The Unix timestamp in milliseconds, or undefined if the form is a placeholder.
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDateForm/Methods/GetTime.js
 	 */
 	ApiDateForm.prototype.GetTime = function()
 	{
-		let oDatePr	= this.Sdt.GetDatePickerPr();
-		let oDate	= new Date(oDatePr.GetFullDate());
-
-		return oDate.getTime();
+		if (this.Sdt.IsPlaceHolder())
+			return undefined;
+		
+		let fullDate = this.Sdt.GetDatePickerPr().GetFullDate();
+		return (new Date(fullDate)).getTime();
 	};
 
 	/**
@@ -23416,12 +23420,15 @@
 	 * Returns the date of the current form.
 	 * @memberof ApiDateForm
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @returns {Date} - The date object.
+	 * @returns {undefined | Date} - The date object, or undefined if the form is a placeholder.
 	 * @since 9.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDateForm/Methods/GetDate.js
 	 */
 	ApiDateForm.prototype.GetDate = function()
 	{
+		if (this.Sdt.IsPlaceHolder())
+			return undefined;
+
 		let fullDate = this.Sdt.GetDatePickerPr().GetFullDate();
 		return new Date(fullDate);
 	};

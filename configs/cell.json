@@ -50,6 +50,8 @@
 			
 			"common/collaboration/deleted-text-recovery.js",
 			
+			"common/custom-xml/serialize-custom-xml.js",
+			
 			"common/nameMap.js",
 			"common/downloaderfiles.js",
 			"common/NumFormat.js",

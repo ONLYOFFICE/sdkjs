@@ -852,3 +852,9 @@ CDocumentControllerBase.prototype.FindNextFillingForm = function(isNext, isCurre
  * @param oTrackManager {AscWord.CTrackRevisionsManager}
  */
 CDocumentControllerBase.prototype.CollectSelectedReviewChanges = function(oTrackManager) {};
+/**
+ * Получаем верхний текущий класс (для автофигур, если мы стоим не в фигуре, то возвращается внешний контент, а не
+ * внутренний для выделенной фигуры)
+ * @returns {?CDocumentContent}
+ */
+CDocumentControllerBase.prototype.GetCurrentTopDocContent = function(){return null;};

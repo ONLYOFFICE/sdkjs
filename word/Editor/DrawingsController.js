@@ -762,3 +762,8 @@ CDrawingsController.prototype.CollectSelectedReviewChanges = function(oTrackMana
 	if (oTargetDocContent && oTargetDocContent.CollectSelectedReviewChanges)
 		oTargetDocContent.CollectSelectedReviewChanges(oTrackManager);
 };
+CDrawingsController.prototype.GetCurrentTopDocContent = function()
+{
+	let docContent = this.DrawingObjects.getTargetDocContent();
+	return docContent ? docContent : this.LogicDocument;
+};

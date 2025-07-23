@@ -35,7 +35,7 @@ const path = require("path");
 const allTests = [
 	'cell/spreadsheet-calculation/FormulaTests.html',
 	'cell/spreadsheet-calculation/PivotTests.html',
-	'cell/spreadsheet-calculation/CopyPasteTests.html',
+	'cell/spreadsheet-calculation/copy-paste-tests.html',
 	'cell/spreadsheet-calculation/SheetStructureTests.html',
 	'cell/spreadsheet-calculation/autoFilterTests.html',
 	'cell/spreadsheet-calculation/UserProtectedRangesTest.html',

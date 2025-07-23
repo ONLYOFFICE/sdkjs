@@ -3553,6 +3553,20 @@ CFootnotesController.prototype.CollectSelectedReviewChanges = function(oTrackMan
 		this.CurFootnote.CollectSelectedReviewChanges(oTrackManager);
 	}
 };
+CFootnotesController.prototype.GetCurrentTopDocContent = function()
+{
+	if (this.Selection.Use)
+	{
+		for (let id in this.Selection.Footnotes)
+		{
+			return this.Selection.Footnotes[id];
+		}
+	}
+	else if (this.CurFootnote)
+		return this.CurFootnote;
+	
+	return this.LogicDocument;
+};
 
 function CFootEndnotePageColumn()
 {

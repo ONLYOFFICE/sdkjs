@@ -3233,7 +3233,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return {col: realSize ? realSize.col : col, row: realSize ? realSize.row : row};
 	};
 	cArray.prototype.fillMatrix = function (replace_empty) {
-		let maxColCount = Math.max.apply(null, this.countElementInRow);
+		let maxColCount = 0;
+		for (let i = 0; i < this.countElementInRow.length; i++) {
+			if (this.countElementInRow[i] > maxColCount) {
+				maxColCount = this.countElementInRow[i];
+			}
+		}
 		this.countElementInRow = [];
 		this.countElement = 0;
 		for (let i = 0; i < this.rowCount; i++) {

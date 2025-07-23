@@ -3489,6 +3489,20 @@ CEndnotesController.prototype.CollectSelectedReviewChanges = function(oTrackMana
 		this.CurEndnote.CollectSelectedReviewChanges(oTrackManager);
 	}
 };
+CEndnotesController.prototype.GetCurrentTopDocContent = function()
+{
+	if (this.Selection.Use)
+	{
+		for (let id in this.Selection.Endnotes)
+		{
+			return this.Selection.Endnotes[id];
+		}
+	}
+	else if (this.CurEndnote)
+		return this.CurEndnote;
+	
+	return this.LogicDocument;
+};
 
 /**
  * Класс регистрирующий концевые сноски на странице
