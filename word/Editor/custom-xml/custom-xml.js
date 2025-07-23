@@ -884,4 +884,5 @@
 	AscWord.CustomXml					= CustomXml;
 	AscWord.CustomXmlContent			= CustomXmlContent;
 	AscWord.CustomXmlCreateContent		= CustomXmlCreateContent;
+	AscWord.CustomXMLSchemaRefs			= CustomXMLSchemaRefs;
 })();
