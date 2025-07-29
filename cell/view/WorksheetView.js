@@ -19262,7 +19262,7 @@ function isAllowPasteLink(pastedWb) {
 					t.model._getCell(c.bbox.r1, c.bbox.c1, function (cell) {
 						let test = 1;
 					});
-					let getDynamicArrayProperties = t.model.workbook.metadata.getDynamicArrayProperties(1)
+					let getDynamicArrayProperties = t.model.workbook.metadata && t.model.workbook.metadata.getDynamicArrayProperties(1);
 					if (getDynamicArrayProperties) {
 						console.log(" getDynamicArrayProperties.fCollapsed: " + getDynamicArrayProperties.fCollapsed + " getDynamicArrayProperties.fDynamic: " + getDynamicArrayProperties.fDynamic)
 					}
