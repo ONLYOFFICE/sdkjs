@@ -14308,9 +14308,37 @@
 		return arrInks;
 	};
 
+	Worksheet.prototype.getDynamicArrayFirstCell = function (col, row) {
+		let c = this.getCell3(row, col);
+		let t = this;
+		let res = null;
+		c._foreachNoEmpty(function (cell) {
+			if (cell) {
+				let ref = cell.formulaParsed && cell.formulaParsed.getArrayFormulaRef();
+				if (ref) {
+					if (cell.getCm()) {
+						res = ref;
+					} else if (!(cell.nCol === ref.c1 && cell.nRow === ref.r1)) {
+						//check first cell
+						let firstArrayRange = t.getCell3(ref.r1, ref.c1);
+						if (firstArrayRange) {
+							firstArrayRange._foreachNoEmpty(function (_cell) {
+								let firstArrayCellRef = _cell.formulaParsed && _cell.formulaParsed.getArrayFormulaRef();
+								if (_cell.getCm()) {
+									res = firstArrayCellRef;
+								}
+							});
+						}
+					}
+				}
+			}
+		});
+		return res;
+	};
+
 
 //-------------------------------------------------------------------------------------------------
-	var g_nCellStructSize = 4 + 4 + 8;
+	var g_nCellStructSize = 4 + 4 + 8 + 4;
 
 	var g_nCellFlag_empty = 0;
 	var g_nCellFlag_init = 1;
@@ -14384,6 +14412,7 @@
 			var xfSave = this.xfs ? this.xfs.getIndexNumber() : 0;
 			var numberSave = 0;
 			var formulaSave = this.formulaParsed ? wb.workbookFormulas.add(this.formulaParsed).getIndexNumber() : 0;
+			var cmSave = this.cm || 0;
 			var flagValue = 0;
 			if (null != this.number) {
 				flagValue = 1;
@@ -14391,6 +14420,7 @@
 				sheetMemory.setInt32(this.nRow, 0, xfSave | (flags << 24));
 				sheetMemory.setInt32(this.nRow, 4, formulaSave);
 				sheetMemory.setFloat64(this.nRow, 8, this.number);
+				sheetMemory.setInt32(this.nRow, 16, cmSave);
 			} else if (null != this.text) {
 				flagValue = 2;
 				const flags = this._toFlags(flagValue);
@@ -14398,6 +14428,7 @@
 				sheetMemory.setInt32(this.nRow, 4, formulaSave);
 				numberSave = this.getTextIndex();
 				sheetMemory.setInt32(this.nRow, 8, numberSave);
+				sheetMemory.setInt32(this.nRow, 16, cmSave);
 			} else if (null != this.multiText) {
 				flagValue = 3;
 				const flags = this._toFlags(flagValue);
@@ -14405,10 +14436,12 @@
 				sheetMemory.setInt32(this.nRow, 4, formulaSave);
 				numberSave = this.getTextIndex();
 				sheetMemory.setInt32(this.nRow, 8, numberSave);
+				sheetMemory.setInt32(this.nRow, 16, cmSave);
 			} else {
 				const flags = this._toFlags(flagValue);
 				sheetMemory.setInt32(this.nRow, 0, xfSave | (flags << 24));
 				sheetMemory.setInt32(this.nRow, 4, formulaSave);
+				sheetMemory.setInt32(this.nRow, 16, cmSave);
 			}
 		}
 	};
@@ -14438,6 +14471,9 @@
 				if (formulaIndex > 0) {
 					this.formulaParsed = wb.workbookFormulas.get(formulaIndex);
 				}
+				const cmValue = sheetMemory.getInt32(this.nRow, 16);
+				this.cm = cmValue || null;
+				
 				if (1 === flagValue) {
 					this.number = sheetMemory.getFloat64(this.nRow, 8);
 				} else if (2 === flagValue) {
@@ -15391,7 +15427,16 @@
 		}
 
 		var res = AscCommonExcel.getStringFromMultiText(this.getValueForEdit2());
-		return this.formulaParsed && this.formulaParsed.ref && checkFormulaArray ? "{" + res + "}" : res;
+		let isArrayFormula;
+		if (checkFormulaArray) {
+			if (this.formulaParsed && this.formulaParsed.ref) {
+				//check on dynamic array
+				if (!this.getCm() && !this.ws.getDynamicArrayFirstCell(this.formulaParsed.ref.c1, this.formulaParsed.ref.r1)) {
+					isArrayFormula = true;
+				}
+			}
+		}
+		return isArrayFormula ? "{" + res + "}" : res;
 	};
 	Cell.prototype.getValueForEdit2 = function() {
 		this._checkDirty();
@@ -17524,6 +17569,9 @@
 	};
 	Cell.prototype.setVm = function(val) {
 		this.vm = val;
+	};
+	Cell.prototype.getCm = function() {
+		return this.cm;
 	};
 //-------------------------------------------------------------------------------------------------
 

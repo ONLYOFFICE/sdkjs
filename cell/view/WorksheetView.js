@@ -6791,6 +6791,24 @@ function isAllowPasteLink(pastedWb) {
 		}
 	};
 
+	WorksheetView.prototype._drawDynamicArraysRange = function () {
+		let ref = this.getDynamicArrayFirstCell();
+		if (ref) {
+			const lineColor = new CColor(78, 128, 245);
+			this._drawElements(this._drawSelectionElement, ref, AscCommonExcel.selectionLineType.None, lineColor);
+		}
+	};
+
+	WorksheetView.prototype.getDynamicArrayFirstCell = function () {
+		let selectionRange = this.model.getSelection();
+		let activeCell = selectionRange && selectionRange.activeCell;
+		if (!activeCell) {
+			return;
+		}
+
+		return this.model.getDynamicArrayFirstCell(activeCell.col, activeCell.row);
+	};
+
 	WorksheetView.prototype.setCutRange = function (val) {
 		this.copyCutRange = val;
 	};
@@ -8448,6 +8466,10 @@ function isAllowPasteLink(pastedWb) {
 			this._drawPageBreakPreviewSelectionRange();
 		}
 
+		if (AscCommonExcel.bIsSupportDynamicArrays) {
+			this._drawDynamicArraysRange();
+		}
+
 		if(this.viewPrintLines && !this.isPageBreakPreview()) {
 			this._drawPrintArea();
 		}
@@ -8893,7 +8915,7 @@ function isAllowPasteLink(pastedWb) {
 		//print lines view
 		let isTraceDependents = this.traceDependentsManager.isHaveData();
 		let searchSpecificRange = this.handlers.trigger('selectSearchingResults') && this.workbook.SearchEngine && this.workbook.SearchEngine.isSpecificRange();
-		if(this.viewPrintLines || this.getCutRange() || (this.isPageBreakPreview(true) && this.pagesModeData) || searchSpecificRange || isTraceDependents) {
+		if(this.viewPrintLines || this.getCutRange() || (this.isPageBreakPreview(true) && this.pagesModeData) || searchSpecificRange || isTraceDependents || this.getDynamicArrayFirstCell()) {
 			this.overlayCtx.clear();
 			if (isTraceDependents) {
 				this.traceDependentsManager.clearCoordsData();
