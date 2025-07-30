@@ -14338,7 +14338,7 @@
 
 
 //-------------------------------------------------------------------------------------------------
-	var g_nCellStructSize = 4 + 4 + 8 + 4;
+	var g_nCellStructSize = 4 + 4 + 8 + 4 + 4;
 
 	var g_nCellFlag_empty = 0;
 	var g_nCellFlag_init = 1;
@@ -14413,6 +14413,7 @@
 			var numberSave = 0;
 			var formulaSave = this.formulaParsed ? wb.workbookFormulas.add(this.formulaParsed).getIndexNumber() : 0;
 			var cmSave = this.cm || 0;
+			var vmSave = this.vm || 0;
 			var flagValue = 0;
 			if (null != this.number) {
 				flagValue = 1;
@@ -14421,6 +14422,7 @@
 				sheetMemory.setInt32(this.nRow, 4, formulaSave);
 				sheetMemory.setFloat64(this.nRow, 8, this.number);
 				sheetMemory.setInt32(this.nRow, 16, cmSave);
+				sheetMemory.setInt32(this.nRow, 20, vmSave);
 			} else if (null != this.text) {
 				flagValue = 2;
 				const flags = this._toFlags(flagValue);
@@ -14429,6 +14431,7 @@
 				numberSave = this.getTextIndex();
 				sheetMemory.setInt32(this.nRow, 8, numberSave);
 				sheetMemory.setInt32(this.nRow, 16, cmSave);
+				sheetMemory.setInt32(this.nRow, 20, vmSave);
 			} else if (null != this.multiText) {
 				flagValue = 3;
 				const flags = this._toFlags(flagValue);
@@ -14437,11 +14440,13 @@
 				numberSave = this.getTextIndex();
 				sheetMemory.setInt32(this.nRow, 8, numberSave);
 				sheetMemory.setInt32(this.nRow, 16, cmSave);
+				sheetMemory.setInt32(this.nRow, 20, vmSave);
 			} else {
 				const flags = this._toFlags(flagValue);
 				sheetMemory.setInt32(this.nRow, 0, xfSave | (flags << 24));
 				sheetMemory.setInt32(this.nRow, 4, formulaSave);
 				sheetMemory.setInt32(this.nRow, 16, cmSave);
+				sheetMemory.setInt32(this.nRow, 20, vmSave);
 			}
 		}
 	};
@@ -14473,7 +14478,9 @@
 				}
 				const cmValue = sheetMemory.getInt32(this.nRow, 16);
 				this.cm = cmValue || null;
-				
+				const vmValue = sheetMemory.getInt32(this.nRow, 20);
+				this.vm = vmValue || null;
+
 				if (1 === flagValue) {
 					this.number = sheetMemory.getFloat64(this.nRow, 8);
 				} else if (2 === flagValue) {
@@ -15655,7 +15662,7 @@
 			var DataNew = null;
 			if (AscCommon.History.Is_On())
 				DataOld = this.getValueData();
-			if (this.formulaParsed && this.formulaParsed.getDynamicRef()) {
+			if (this.formulaParsed && this.formulaParsed.getDynamicRef() && false) {
 				this.ws.workbook.dependencyFormulas.addToChangedRange2(this.formulaParsed.getWs().getId(), this.formulaParsed.getDynamicRef());
 				if (Val.value.getTextValue()) {
 					// non empty val, delete PF from cell

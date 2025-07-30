@@ -18828,9 +18828,9 @@ function isAllowPasteLink(pastedWb) {
 				bbox = c.bbox;
 
 				// set selection if dynamic arrays are used
-				if (dynamicSelectionRange) {
+				/*if (dynamicSelectionRange) {
 					ws.copySelection && ws.copySelection.assign2(bbox);
-				}
+				}*/
 			}
 		};
 
@@ -19297,8 +19297,15 @@ function isAllowPasteLink(pastedWb) {
 
 					//index "cm" - indicate metadata link, check dynamic array properties on "XLDAPR" oprion
 					//index "vm" - link on valueMetadata (check "XLRICHVALUE")
-					//flag "aca" - "Array Cannot Assign" - The flag for the inability to assign an array. as a rule - spill error
-					//flag "ca" - "Collapsed Array"
+					//flag "aca" - "Always Calculate Array" - The flag for the inability to assign an array. as a rule - spill error
+					//flag "ca" - "Calculate Cell"
+
+					//cm="1" + aca + ca -> collapsed + autoExpand
+					//cm="1" + aca -> collapsed + autoExpand
+					//cm="1" + ca -> not collapsed + not autoExpand
+					//vm="1"  + aca + ca -> not collapsed + not autoExpand
+					//cm="1" vm="1" -> collapsed + autoExpand (after open and save -> aca + ca automatically added)
+
 					t.model._getCell(c.bbox.r1, c.bbox.c1, function (cell) {
 						let test = 1;
 					});
