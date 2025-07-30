@@ -18887,8 +18887,26 @@ function isAllowPasteLink(pastedWb) {
 					/* if we write not through cse, then check the formula for the presence of ref */
 					/* if ref exists, write the formula as an array formula and also find its dimensions for further expansion */
 
+
+					let formulaRes = newFP.calculate(null, null, null, null, calculateResult);
+					if (formulaRes && formulaRes.type === AscCommonExcel.cElementType.array) {
+						applyByArray = true;
+						ctrlKey = true;
+
+						if ((newFP.aca && newFP.ca)) {
+							// array cannot expand
+							// set ref to the first(parent) cell
+							arrayCannotExpand = true;
+							dynamicSelectionRange = new Asc.Range(newFP.parent.nCol, newFP.parent.nRow, newFP.parent.nCol, newFP.parent.nRow);
+							t.model.workbook.dependencyFormulas.addToVolatileArrays(newFP);
+						} else {
+							let dimension = formulaRes.getDimensions();
+							dynamicSelectionRange = new Asc.Range(newFP.parent.nCol, newFP.parent.nRow, newFP.parent.nCol + dimension.col - 1, newFP.parent.nRow + dimension.row - 1);
+						}
+					}
+
 					let isRef = newFP.findRefByOutStack();
-					if (isRef) {
+					/*if (isRef) {
 						// if formula has ref, calculate it to get the final size of ref
 						let formulaRes = newFP.calculate(null, null, null, null, calculateResult);
 						applyByArray = true;
@@ -18908,7 +18926,7 @@ function isAllowPasteLink(pastedWb) {
 						applyByArray = true;
 						ctrlKey = true;
 						dynamicSelectionRange = newFP.ref;
-					}
+					}*/
 				} else if (!applyByArray && !ctrlKey) {
 					// TODO ctrlKey+enter used to fills the selected cell range with the current entry. Dynamic arrays will have to work the same
 					// refInfo = {cannoChangeFormulaArray: true|false, applyByArray: true|false, ctrlKey: true|false, dynamicRange: range}
@@ -19338,6 +19356,7 @@ function isAllowPasteLink(pastedWb) {
 						temporarySetValue();
 					}
 				}
+
 
 				//***array-formula***
 				let ref = null;

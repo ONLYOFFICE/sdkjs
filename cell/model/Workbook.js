@@ -14942,12 +14942,12 @@
 						//***dynamic-array-formula***
 						if(byRef && dynamicRange) {
 							newFP.dynamicRange = dynamicRange;
-							newFP.ref = byRef;
+							newFP.setArrayFormulaRef(byRef);
 							this.ws.formulaArrayLink = newFP;
 						}
 						//***array-formula***
 						else if(byRef) {
-							newFP.ref = byRef;
+							newFP.setArrayFormulaRef(byRef);
 							this.ws.formulaArrayLink = newFP;
 						}
 					}

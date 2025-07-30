@@ -50,7 +50,7 @@ function (window, undefined) {
   var CellAddress = AscCommon.CellAddress;
   var cDate = Asc.cDate;
   var bIsSupportArrayFormula = true;
-  var bIsSupportDynamicArrays = false;
+  var bIsSupportDynamicArrays = true;
 
   var c_oAscError = Asc.c_oAscError;
 
@@ -9022,12 +9022,13 @@ function parserFormula( formula, parent, _ws ) {
 			if (currentElement.name === "(") {
 				continue;
 			}
+			bIsSpecialFunction = true;
 			if(currentElement.type === cElementType.specialFunctionStart){
 				bIsSpecialFunction = true;
 				continue;
 			}
 			if(currentElement.type === cElementType.specialFunctionEnd){
-				bIsSpecialFunction = false;
+				//bIsSpecialFunction = false;
 				continue;
 			}
 			if("number" === typeof(currentElement)){
