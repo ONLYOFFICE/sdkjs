@@ -10192,7 +10192,8 @@ function parserFormula( formula, parent, _ws ) {
 	};
 	parserFormula.prototype.getDynamicRef = function() {
 		if (AscCommonExcel.bIsSupportDynamicArrays) {
-			return this.dynamicRange;
+			let _ref = this.getArrayFormulaRef();
+			return _ref && this.ws.getDynamicArrayFirstCell(_ref.c1, _ref.r1);
 		}
 	};
 	parserFormula.prototype.setArrayFormulaRef = function(ref) {
@@ -10240,7 +10241,7 @@ function parserFormula( formula, parent, _ws ) {
 		return false;
 	};
 	parserFormula.prototype.simplifyRefType = function (val, opt_ws, opt_row, opt_col) {
-		let ref = this.getArrayFormulaRef(), dynamicRef = this.getDynamicRef(), row, col;
+		let ref = this.getArrayFormulaRef(), row, col;
 
 		if (val == null) {
 			return;
@@ -10438,7 +10439,7 @@ function parserFormula( formula, parent, _ws ) {
 					this.ws._getCellNoEmpty(i, j, function(cell) {
 						if (cell) {
 							let formula = cell.getFormulaParsed();
-							let dynamicRangeFromCell = formula && formula.getDynamicRef();
+							let dynamicRangeFromCell = formula && /*formula.getDynamicRef()*/formula.getArrayFormulaRef();
 							if (formula && dynamicRangeFromCell) {
 								// check if cell belong to current dynamicRange
 								// this is necessary so that spill errors do not occur during the second check of the range (since the values ​​in it have already been entered earlier)

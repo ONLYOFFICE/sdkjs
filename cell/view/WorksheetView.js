@@ -19433,9 +19433,10 @@ function isAllowPasteLink(pastedWb) {
 						if (cell) {
 							let formula = cell.formulaParsed;
 							let arrayFormulaRef = formula && formula.getArrayFormulaRef();
-							let dynamicRange = formula && formula.getDynamicRef();
+							//let dynamicRange = formula && formula.getDynamicRef();
 
 							ref = formula && arrayFormulaRef ? arrayFormulaRef : null;
+							let dynamicRange = ref && t.model.getDynamicArrayFirstCell(ref.c1, ref.r1);
 							isDynamicRef = formula && dynamicRange ? true : null;
 	
 							if (isDynamicRef && AscCommonExcel.bIsSupportDynamicArrays) {

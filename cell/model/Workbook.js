@@ -15104,7 +15104,6 @@
 		if (!dontTouchPrev && this.formulaParsed) {
 			let shared = this.formulaParsed.getShared();
 			let arrayFormula = this.formulaParsed.getArrayFormulaRef();
-			let dynamicRange = this.formulaParsed.getDynamicRef();
 			if (shared) {
 				if (shared.ref.isOnTheEdge(this.nCol, this.nRow)) {
 					this.ws.workbook.dependencyFormulas.addToChangedShared(this.formulaParsed);
