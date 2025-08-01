@@ -6806,7 +6806,7 @@ function isAllowPasteLink(pastedWb) {
 			return;
 		}
 
-		return this.model.getDynamicArrayFirstCell(activeCell.col, activeCell.row);
+		return this.model.dynamicArrayManager.getDynamicArrayFirstCell(activeCell.col, activeCell.row);
 	};
 
 	WorksheetView.prototype.setCutRange = function (val) {
@@ -16406,7 +16406,7 @@ function isAllowPasteLink(pastedWb) {
 						t.setSortProps(val);
 						break;
 
-                    case "empty":
+					case "empty":
                         if (isLargeRange && !callTrigger) {
                             callTrigger = true;
                             t.handlers.trigger("slowOperation", true);
@@ -16484,7 +16484,7 @@ function isAllowPasteLink(pastedWb) {
                         }
 
 						// recalculate all volatile arrays on page
-						t.model.recalculateVolatileArrays();
+						t.model.dynamicArrayManager.recalculateVolatileArrays();
 
 
 						t.model.excludeHiddenRows(false);
@@ -18964,7 +18964,7 @@ function isAllowPasteLink(pastedWb) {
 						}
 					}
 					canAutoExpand = newFP.findRefByOutStack(true);
-					refInfo = canAutoExpand ? ws.getRefDynamicInfo(newFP, calculateResult) : false;
+					refInfo = canAutoExpand ? ws.dynamicArrayManager.getRefDynamicInfo(newFP, calculateResult) : false;
 					if (refInfo) {
 						if (refInfo.cannotChangeFormulaArray) {
 							t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotChangeFormulaArray,
@@ -19041,7 +19041,7 @@ function isAllowPasteLink(pastedWb) {
 			}, null, applyByArray ? bbox : ((!applyByArray && ctrlKey) ? null : undefined), null, AscCommonExcel.bIsSupportDynamicArrays ? dynamicSelectionRange : null);
 
 			// recalc all volatile arrays on page
-			t.model.recalculateVolatileArrays();
+			t.model.dynamicArrayManager.recalculateVolatileArrays();
 
 			//***array-formula***
 			if(ctrlKey) {
@@ -19097,7 +19097,7 @@ function isAllowPasteLink(pastedWb) {
 				c.setValue2(val, true);
 			}
 			// recalculate all volatile arrays on page
-			t.model.recalculateVolatileArrays();
+			t.model.dynamicArrayManager.recalculateVolatileArrays();
 
 			// Вызываем функцию пересчета для заголовков форматированной таблицы
 			this.model.checkChangeTablesContent(bbox);
@@ -19436,7 +19436,7 @@ function isAllowPasteLink(pastedWb) {
 							//let dynamicRange = formula && formula.getDynamicRef();
 
 							ref = formula && arrayFormulaRef ? arrayFormulaRef : null;
-							let dynamicRange = ref && t.model.getDynamicArrayFirstCell(ref.c1, ref.r1);
+							let dynamicRange = ref && t.model.dynamicArrayManager.getDynamicArrayFirstCell(ref.c1, ref.r1);
 							isDynamicRef = formula && dynamicRange ? true : null;
 	
 							if (isDynamicRef && AscCommonExcel.bIsSupportDynamicArrays) {

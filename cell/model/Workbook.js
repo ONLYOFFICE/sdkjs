@@ -6328,6 +6328,8 @@
 		this.activeFillType = null;
 		this.timelines = [];
 		this.changedArrays = null;
+
+		this.dynamicArrayManager = new CDynamicArrayManager(this);
 	}
 
 	Worksheet.prototype.getCompiledStyle = function (row, col, opt_cell, opt_styleComponents, opt_AffectingText) {
@@ -14151,94 +14153,6 @@
 	Worksheet.prototype.clearChangedArrayList = function () {
 		this.changedArrays = null;
 	};
-	Worksheet.prototype.recalculateVolatileArrays = function () {
-		if (AscCommonExcel.bIsSupportDynamicArrays) {
-			const ws = this;
-
-			// recalculate all volatile arrays on page
-			if (ws && ws.workbook && ws.workbook.dependencyFormulas) {
-				let depGraph = ws.workbook.dependencyFormulas;
-				// get volatileArraysList
-				let volatileArrayList = depGraph.getVolatileArrays();
-				if (volatileArrayList) {
-					for (let listenerId in volatileArrayList) {
-						let formula = volatileArrayList[listenerId];
-						let formulaResult = formula.calculate();
-						let firstCellRef = formula.parent && new Asc.Range(formula.parent.nCol, formula.parent.nRow, formula.parent.nCol, formula.parent.nRow);
-						if (!(formula.aca && formula.ca)) {
-							// array can expand, setValue for each cell except first
-							let dimensions = formulaResult.getDimensions();
-							let newRef = new Asc.Range(firstCellRef.c1, firstCellRef.r1, firstCellRef.c1 + dimensions.col - 1, firstCellRef.r1 + dimensions.row - 1);
-							formula.setDynamicRef(newRef);
-							if (newRef) {
-								for (let row = newRef.r1; row <= newRef.r2; row++) {
-									for (let col = newRef.c1; col <= newRef.c2; col++) {
-										// if (row === newRef.r1 && col === newRef.c1) {
-										// 	continue
-										// }
-										// get cell and setPF to it
-										ws._getCell(row, col, function(cell) {
-											cell && cell.setFormulaInternal(formula);
-										});
-									}
-								}
-							}
-							depGraph.addToChangedRange2(formula.getWs().getId(), formula.getDynamicRef());
-							depGraph.endListeningVolatileArray(listenerId);
-						} else {
-							formula.setDynamicRef(firstCellRef);
-							ws._getCell(firstCellRef.r1, firstCellRef.c1, function(cell) {
-								cell && cell.setFormulaInternal(formula);
-							});
-
-							depGraph.addToChangedRange2(formula.getWs().getId(), formula.getArrayFormulaRef());
-						}
-					}
-				}
-			}
-		}
-	};
-	Worksheet.prototype.getRefDynamicInfo = function (formula, calculateResult) {
-		if (formula) {
-			let applyByArray = true, ctrlKey = true, dynamicRange = null, cannotChangeFormulaArray = false;
-
-			if (formula.ref) {
-				dynamicRange = formula.ref;
-			} else {
-				let tempRef = new Asc.Range(formula.parent.nCol, formula.parent.nRow, formula.parent.nCol, formula.parent.nRow);
-				formula.ref = tempRef;
-
-				let formulaResult = formula.calculate(null, null, null, null, calculateResult);
-				let arraySize = formulaResult.getDimensions(true);
-				let newR2 = (formula.parent.nRow + arraySize.row) > AscCommon.gc_nMaxRow ? AscCommon.gc_nMaxRow - 1 : (formula.parent.nRow + arraySize.row - 1);
-				let newC2 = (formula.parent.nCol + arraySize.col) > AscCommon.gc_nMaxCol ? AscCommon.gc_nMaxCol - 1 : (formula.parent.nCol + arraySize.col - 1);
-
-				if (formulaResult.type !== cElementType.array) {
-					return false;
-				}
-
-				let tempDynamicSelectionRange = this.getRange3(formula.parent.nRow, formula.parent.nCol, newR2, newC2);
-				tempDynamicSelectionRange._foreachNoEmpty(function (cell) {
-					let ref = cell.formulaParsed && cell.formulaParsed.ref ? cell.formulaParsed.ref : null;
-
-					if (ref && !tempDynamicSelectionRange.bbox.containsRange(ref)) {
-						cannotChangeFormulaArray = true;
-						return false;
-					}
-				});
-
-				if (tempDynamicSelectionRange.bbox.isOneCell() && (formulaResult.type !== cElementType.array && formulaResult.type !== cElementType.cellsRange && formulaResult.type !== cElementType.cellsRange3D)) {
-					applyByArray = false;
-					ctrlKey = false;
-				}
-
-				dynamicRange = tempDynamicSelectionRange.bbox;
-			}
-
-			return {applyByArray: applyByArray, ctrlKey: ctrlKey, dynamicRange: dynamicRange, cannotChangeFormulaArray: cannotChangeFormulaArray};
-		}
-	};
-
 	Worksheet.prototype.findEOT = function (bCheckStyles) {
 		var maxCols = this.getColsCount();
 		var maxRows = this.getRowsCount();
@@ -14306,34 +14220,6 @@
 			}
 		}
 		return arrInks;
-	};
-
-	Worksheet.prototype.getDynamicArrayFirstCell = function (col, row) {
-		let c = this.getCell3(row, col);
-		let t = this;
-		let res = null;
-		c._foreachNoEmpty(function (cell) {
-			if (cell) {
-				let ref = cell.formulaParsed && cell.formulaParsed.getArrayFormulaRef();
-				if (ref) {
-					if (cell.getCm()) {
-						res = ref;
-					} else if (!(cell.nCol === ref.c1 && cell.nRow === ref.r1)) {
-						//check first cell
-						let firstArrayRange = t.getCell3(ref.r1, ref.c1);
-						if (firstArrayRange) {
-							firstArrayRange._foreachNoEmpty(function (_cell) {
-								let firstArrayCellRef = _cell.formulaParsed && _cell.formulaParsed.getArrayFormulaRef();
-								if (_cell.getCm()) {
-									res = firstArrayCellRef;
-								}
-							});
-						}
-					}
-				}
-			}
-		});
-		return res;
 	};
 
 
@@ -15437,7 +15323,7 @@
 		if (checkFormulaArray) {
 			if (this.formulaParsed && this.formulaParsed.ref) {
 				//check on dynamic array
-				if (!this.getCm() && !this.ws.getDynamicArrayFirstCell(this.formulaParsed.ref.c1, this.formulaParsed.ref.r1)) {
+				if (!this.getCm() && !this.ws.dynamicArrayManager.getDynamicArrayFirstCell(this.formulaParsed.ref.c1, this.formulaParsed.ref.r1)) {
 					isArrayFormula = true;
 				}
 			}
@@ -24412,6 +24298,127 @@
 			currentFileDefname: isCurrentFile ? receivedDefName : null
 		};
 	};
+
+	function CDynamicArrayManager(ws) {
+		this.ws = ws;
+	}
+
+	CDynamicArrayManager.prototype.recalculateVolatileArrays = function () {
+		if (AscCommonExcel.bIsSupportDynamicArrays) {
+			const ws = this.ws;
+
+			// recalculate all volatile arrays on page
+			if (ws && ws.workbook && ws.workbook.dependencyFormulas) {
+				let depGraph = ws.workbook.dependencyFormulas;
+				// get volatileArraysList
+				let volatileArrayList = depGraph.getVolatileArrays();
+				if (volatileArrayList) {
+					for (let listenerId in volatileArrayList) {
+						let formula = volatileArrayList[listenerId];
+						let formulaResult = formula.calculate();
+						let firstCellRef = formula.parent && new Asc.Range(formula.parent.nCol, formula.parent.nRow, formula.parent.nCol, formula.parent.nRow);
+						if (!(formula.aca && formula.ca)) {
+							// array can expand, setValue for each cell except first
+							let dimensions = formulaResult.getDimensions();
+							let newRef = new Asc.Range(firstCellRef.c1, firstCellRef.r1, firstCellRef.c1 + dimensions.col - 1, firstCellRef.r1 + dimensions.row - 1);
+							formula.setDynamicRef(newRef);
+							if (newRef) {
+								for (let row = newRef.r1; row <= newRef.r2; row++) {
+									for (let col = newRef.c1; col <= newRef.c2; col++) {
+										// if (row === newRef.r1 && col === newRef.c1) {
+										// 	continue
+										// }
+										// get cell and setPF to it
+										ws._getCell(row, col, function(cell) {
+											cell && cell.setFormulaInternal(formula);
+										});
+									}
+								}
+							}
+							depGraph.addToChangedRange2(formula.getWs().getId(), formula.getDynamicRef());
+							depGraph.endListeningVolatileArray(listenerId);
+						} else {
+							formula.setDynamicRef(firstCellRef);
+							ws._getCell(firstCellRef.r1, firstCellRef.c1, function(cell) {
+								cell && cell.setFormulaInternal(formula);
+							});
+
+							depGraph.addToChangedRange2(formula.getWs().getId(), formula.getArrayFormulaRef());
+						}
+					}
+				}
+			}
+		}
+	};
+	CDynamicArrayManager.prototype.getRefDynamicInfo = function (formula, calculateResult) {
+		if (formula) {
+			let applyByArray = true, ctrlKey = true, dynamicRange = null, cannotChangeFormulaArray = false;
+
+			if (formula.ref) {
+				dynamicRange = formula.ref;
+			} else {
+				let tempRef = new Asc.Range(formula.parent.nCol, formula.parent.nRow, formula.parent.nCol, formula.parent.nRow);
+				formula.ref = tempRef;
+
+				let formulaResult = formula.calculate(null, null, null, null, calculateResult);
+				let arraySize = formulaResult.getDimensions(true);
+				let newR2 = (formula.parent.nRow + arraySize.row) > AscCommon.gc_nMaxRow ? AscCommon.gc_nMaxRow - 1 : (formula.parent.nRow + arraySize.row - 1);
+				let newC2 = (formula.parent.nCol + arraySize.col) > AscCommon.gc_nMaxCol ? AscCommon.gc_nMaxCol - 1 : (formula.parent.nCol + arraySize.col - 1);
+
+				if (formulaResult.type !== cElementType.array) {
+					return false;
+				}
+
+				let tempDynamicSelectionRange = this.getRange3(formula.parent.nRow, formula.parent.nCol, newR2, newC2);
+				tempDynamicSelectionRange._foreachNoEmpty(function (cell) {
+					let ref = cell.formulaParsed && cell.formulaParsed.ref ? cell.formulaParsed.ref : null;
+
+					if (ref && !tempDynamicSelectionRange.bbox.containsRange(ref)) {
+						cannotChangeFormulaArray = true;
+						return false;
+					}
+				});
+
+				if (tempDynamicSelectionRange.bbox.isOneCell() && (formulaResult.type !== cElementType.array && formulaResult.type !== cElementType.cellsRange && formulaResult.type !== cElementType.cellsRange3D)) {
+					applyByArray = false;
+					ctrlKey = false;
+				}
+
+				dynamicRange = tempDynamicSelectionRange.bbox;
+			}
+
+			return {applyByArray: applyByArray, ctrlKey: ctrlKey, dynamicRange: dynamicRange, cannotChangeFormulaArray: cannotChangeFormulaArray};
+		}
+	};
+
+	CDynamicArrayManager.prototype.getDynamicArrayFirstCell = function (col, row) {
+		let c = this.ws.getCell3(row, col);
+		let t = this.ws;
+		let res = null;
+		c._foreachNoEmpty(function (cell) {
+			if (cell) {
+				let ref = cell.formulaParsed && cell.formulaParsed.getArrayFormulaRef();
+				if (ref) {
+					if (cell.getCm()) {
+						res = ref;
+					} else if (!(cell.nCol === ref.c1 && cell.nRow === ref.r1)) {
+						//check first cell
+						let firstArrayRange = t.getCell3(ref.r1, ref.c1);
+						if (firstArrayRange) {
+							firstArrayRange._foreachNoEmpty(function (_cell) {
+								let firstArrayCellRef = _cell.formulaParsed && _cell.formulaParsed.getArrayFormulaRef();
+								if (_cell.getCm()) {
+									res = firstArrayCellRef;
+								}
+							});
+						}
+					}
+				}
+			}
+		});
+		return res;
+	};
+
 
 	// Export
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};

@@ -36867,7 +36867,7 @@ $(function () {
 		// TODO: review tests with ranges after adding dynamic arrays and add findRefByOutStack formula to use in tests
 		oParser = new parserFormula('A1:A3', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'A1:A3');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
@@ -36878,7 +36878,7 @@ $(function () {
 		
 		oParser = new parserFormula('{1;2;3}', cellWithFormula, ws);
 		assert.ok(oParser.parse(), '{1;2;3}');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
@@ -36888,7 +36888,7 @@ $(function () {
 
 		oParser = new parserFormula('A1:C1', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'A1:C1');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
@@ -36898,7 +36898,7 @@ $(function () {
 
 		oParser = new parserFormula('{1,2,3}', cellWithFormula, ws);
 		assert.ok(oParser.parse(), '{1,2,3}');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
@@ -36908,7 +36908,7 @@ $(function () {
 
 		oParser = new parserFormula('A1:C3', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'A1:C3');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
@@ -36918,7 +36918,7 @@ $(function () {
 
 		oParser = new parserFormula('{1,2;3,4}', cellWithFormula, ws);
 		assert.ok(oParser.parse(), '{1,2;3,4}');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
@@ -36928,7 +36928,7 @@ $(function () {
 
 		oParser = new parserFormula('SIN(A1:A3)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'SIN(A1:A3)');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
@@ -36938,7 +36938,7 @@ $(function () {
 
 		oParser = new parserFormula('SIN({1;2;3})', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'SIN({1;2;3})');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
@@ -36948,7 +36948,7 @@ $(function () {
 
 		oParser = new parserFormula('SIN(A1:C1)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'SIN(A1:C1)');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
@@ -36958,7 +36958,7 @@ $(function () {
 
 		oParser = new parserFormula('SIN({1,2,3})', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'SIN({1,2,3})');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
@@ -36968,7 +36968,7 @@ $(function () {
 
 		oParser = new parserFormula('SIN(A1:C3)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'SIN(A1:C3)');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
@@ -36978,7 +36978,7 @@ $(function () {
 
 		oParser = new parserFormula('SIN({1,2;3,4})', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'SIN({1,2;3,4})');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
@@ -36988,7 +36988,7 @@ $(function () {
 
 		oParser = new parserFormula('A:A', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'A:A');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
@@ -36998,7 +36998,7 @@ $(function () {
 
 		oParser = new parserFormula('A1:XFD1', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'A1:XFD1');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
@@ -37009,7 +37009,7 @@ $(function () {
 
 		oParser = new parserFormula('SIN(A1)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'SIN(A1)');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
@@ -37020,7 +37020,7 @@ $(function () {
 
 		oParser = new parserFormula('SUM(A1:A3)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'SUM(A1:A3)');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
@@ -37031,7 +37031,7 @@ $(function () {
 
 		oParser = new parserFormula('SUM(A1:A3+A1:A3)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'SUM(A1:A3+A1:A3)');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
@@ -37041,7 +37041,7 @@ $(function () {
 
 		oParser = new parserFormula('SUM(A1:A3+A1:A3)+A1:A3', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'SUM(A1:A3+A1:A3)+A1:A3');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
@@ -37052,7 +37052,7 @@ $(function () {
 
 		oParser = new parserFormula('SUM(SIN(A1:A3)+A1:A3)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'SUM(SIN(A1:A3)+A1:A3)');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
@@ -37063,7 +37063,7 @@ $(function () {
 
 		oParser = new parserFormula('SUM(SIN(SUM(A1:A3)))', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'SUM(SIN(SUM(A1:A3)))');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
@@ -37074,7 +37074,7 @@ $(function () {
 
 		oParser = new parserFormula('SIN(SUM(SIN(A1:A3)))', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'SIN(SUM(SIN(A1:A3)))');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
@@ -37085,7 +37085,7 @@ $(function () {
 
 		oParser = new parserFormula('COS(SIN(A1)*SUM(A1:A3)+A1:A3)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'COS(SIN(A1)*SUM(A1:A3)+A1:A3)');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
@@ -37096,7 +37096,7 @@ $(function () {
 
 		oParser = new parserFormula('SIN(A1+A1:A3)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'SIN(A1+A1:A3)');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
@@ -37107,7 +37107,7 @@ $(function () {
 
 		oParser = new parserFormula('{1,2}*{3;4}', cellWithFormula, ws);
 		assert.ok(oParser.parse(), '{1,2}*{3;4}');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;
@@ -37117,7 +37117,7 @@ $(function () {
 
 		oParser = new parserFormula('{2}*{2}', cellWithFormula, ws);
 		assert.ok(oParser.parse(), '{2}*{2}');
-		formulaInfo = ws.getRefDynamicInfo(oParser);
+		formulaInfo = ws.dynamicArrayManager.getRefDynamicInfo(oParser);
 		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
 		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
 		applyByArray = formulaInfo && formulaInfo.applyByArray;

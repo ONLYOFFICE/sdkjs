@@ -10193,7 +10193,7 @@ function parserFormula( formula, parent, _ws ) {
 	parserFormula.prototype.getDynamicRef = function() {
 		if (AscCommonExcel.bIsSupportDynamicArrays) {
 			let _ref = this.getArrayFormulaRef();
-			return _ref && this.ws.getDynamicArrayFirstCell(_ref.c1, _ref.r1);
+			return _ref && this.ws.dynamicArrayManager.getDynamicArrayFirstCell(_ref.c1, _ref.r1);
 		}
 	};
 	parserFormula.prototype.setArrayFormulaRef = function(ref) {
