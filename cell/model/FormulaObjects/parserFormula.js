@@ -9214,14 +9214,14 @@ function parserFormula( formula, parent, _ws ) {
 
 			if (AscCommonExcel.bIsSupportDynamicArrays) {
 				// check further dynamic range
-				isRangeCanFitIntoCells =  this.checkDynamicRangeByElement(this.value, opt_bbox);
+				isRangeCanFitIntoCells =  this.ws.dynamicArrayManager.checkDynamicRangeByElement(this.value, opt_bbox);
 				if (!isRangeCanFitIntoCells) {
-					this.aca = true;
-					this.ca = true;
+					this.setAca(true);
+					this.setCa(true);
 					this.value = new cError(cErrorType.cannot_be_spilled);
 				} else {
-					this.ca = false;
-					this.aca = false;
+					this.setAca(false);
+					this.setCa(false);
 				}
 			}
 
@@ -9256,14 +9256,14 @@ function parserFormula( formula, parent, _ws ) {
 
 			if (AscCommonExcel.bIsSupportDynamicArrays) {
 				// check further dynamic range
-				isRangeCanFitIntoCells = this.checkDynamicRangeByElement(this.value, opt_bbox);
+				isRangeCanFitIntoCells = this.ws.dynamicArrayManager.checkDynamicRangeByElement(this.value, opt_bbox);
 				if (!isRangeCanFitIntoCells) {
-					this.aca = true;
-					this.ca = true;
+					this.setAca(true);
+					this.setCa(true);
 					this.value = new cError(cErrorType.cannot_be_spilled);
 				} else {
-					this.ca = false;
-					this.aca = false;
+					this.setAca(false);
+					this.setCa(false);
 				}
 			}
 
@@ -10409,60 +10409,14 @@ function parserFormula( formula, parent, _ws ) {
 		return false
 	};
 
-	parserFormula.prototype.checkDynamicRangeByElement = function (element, parentCell) {
-		/* this function checks if element can fit in the cells */
-		if (!element || !parentCell) {
-			return true;
-		}
-
-		if (element.type !== cElementType.array && element.type !== cElementType.cellsRange && element.type !== cElementType.cellsRange3D) {
-			return true;
-		} else if (element.type === cElementType.array || element.type === cElementType.cellsRange || element.type === cElementType.cellsRange3D) {
-			// go through the range and see if the array can fit into it
-			let dimensions = element.getDimensions(), isHaveNonEmptyCell;
-
-			if (element.isOneElement()) {
-				return true
-			}
-
-			// todo if an element is defname, it has no parent element?
-			const t = this;
-			let rangeRow = parentCell.r1,
-				rangeCol = parentCell.c1;
-
-			let supposedDynamicRange = this.ws.getRange3(rangeRow, rangeCol, (rangeRow + dimensions.row) - 1, (rangeCol + dimensions.col) - 1);
-			for (let i = rangeRow; i < (rangeRow + dimensions.row); i++) {
-				for (let j = rangeCol; j < (rangeCol + dimensions.col); j++) {
-					if (i === rangeRow && j === rangeCol) {
-						continue
-					}
-					this.ws._getCellNoEmpty(i, j, function(cell) {
-						if (cell) {
-							let formula = cell.getFormulaParsed();
-							let dynamicRangeFromCell = formula && /*formula.getDynamicRef()*/formula.getArrayFormulaRef();
-							if (formula && dynamicRangeFromCell) {
-								// check if cell belong to current dynamicRange
-								// this is necessary so that spill errors do not occur during the second check of the range (since the values ​​in it have already been entered earlier)
-								if (!supposedDynamicRange.bbox.isEqual(dynamicRangeFromCell)) {
-									// if the cell is part of another dynamic range, then the range that is in the area of ​​the previous range is displayed (except for the first cell, but we do not check it)
-									// that is, if one of the ranges is “lower” or “to the right” in the editor, then it will be displayed, and the other will receive a SPILL error
-									isHaveNonEmptyCell = true
-								}
-							} else if (cell.formulaParsed || !cell.isEmptyTextString()) {
-								isHaveNonEmptyCell = true
-							}
-						}
-					});
-					if (isHaveNonEmptyCell) {
-						return false
-					}
-				}
-			}
-			return true
-		}
-
-		return false
+	parserFormula.prototype.setAca = function (val) {
+		this.aca = val;
 	};
+
+	parserFormula.prototype.setCa = function (val) {
+		this.ca = val;
+	};
+
 
 	/**
 	 * Class representative an iterative calculations logic
