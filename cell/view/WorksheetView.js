@@ -144,8 +144,6 @@
     var filterSizeButton = 17;
     var collapsePivotSizeButton = 10;
 
-	//limit rows for prepare metrics. if more then limit -> metrics will prepare dynamic
-	var nMaxPrintRows = 150000;
 
 
 function isAllowPasteLink(pastedWb) {
@@ -16420,29 +16418,7 @@ function isAllowPasteLink(pastedWb) {
 							let changedDynamicArraysList;
 							// checking affected arrays only for cases of deleting values ​​in cells
 							if (val === c_oAscCleanOptions.All || val === c_oAscCleanOptions.Text || val === c_oAscCleanOptions.Formula) {
-								changedDynamicArraysList = ws.getChangedArrayList();
-								if (changedDynamicArraysList) {
-									// go through changed dynamic arrays, and delete all|partitional values?
-									for (let array in changedDynamicArraysList) {
-										let arrayData = changedDynamicArraysList[array];
-										let formula = arrayData.formula;
-										let dynamicbbox = arrayData.range;
-										let range = (formula && formula.aca && formula.ca) ? t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r1, dynamicbbox.c1) : t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
-										// todo create clear function for cells (clearRange?)
-										if (arrayData.doDelete) {
-											// delete all cells
-											range.cleanText();
-											let listenerId = arrayData.formula && arrayData.formula.getListenerId();
-											// remove from volatilate listeners
-											ws.workbook.dependencyFormulas.endListeningVolatileArray(listenerId);
-										} else if (arrayData.doRecalc) {
-											// delete all cells except the first one
-											range.cleanTextExceptFirst();
-											ws.workbook.dependencyFormulas.addToVolatileArrays(formula);
-										}
-									}
-									ws.clearChangedArrayList();
-								}
+								ws.dynamicArrayManager.applyChangedArrayList();
 							}
 						}
 
@@ -18789,7 +18765,6 @@ function isAllowPasteLink(pastedWb) {
 		const changeRangesIfArrayFormula = function() {
 			if(ctrlKey) {
 				//TODO есть баг с тем, что не лочатся все ячейки при данном действии
-				// c = dynamicSelectionRange && !arrayCannotExpand ? t._getRange(dynamicSelectionRange.c1, dynamicSelectionRange.r1, dynamicSelectionRange.c2, dynamicSelectionRange.r2) : t.getSelectedRange();
 				c = dynamicSelectionRange ? t._getRange(dynamicSelectionRange.c1, dynamicSelectionRange.r1, dynamicSelectionRange.c2, dynamicSelectionRange.r2) : t.getSelectedRange();
 				var isAllColumnSelect = c && c.bbox && (c.bbox.getType() === c_oAscSelectionType.RangeMax || c.bbox.getType() === c_oAscSelectionType.RangeCol);
 				if(c.bbox.isOneCell()) {
@@ -18826,11 +18801,6 @@ function isAllowPasteLink(pastedWb) {
 					return;
 				}
 				bbox = c.bbox;
-
-				// set selection if dynamic arrays are used
-				/*if (dynamicSelectionRange) {
-					ws.copySelection && ws.copySelection.assign2(bbox);
-				}*/
 			}
 		};
 
@@ -18893,99 +18863,68 @@ function isAllowPasteLink(pastedWb) {
 				}
 			}
 
-				// we check for new links to external data
-				if (parseResult.externalReferenesNeedAdd) {
-					t.model.workbook.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
-					// then we parse the formula again to obtain the correct outStack and external link indexes
-					newFP = new AscCommonExcel.parserFormula(valText.substring(1), cellWithFormula, this.model);
+			// we check for new links to external data
+			if (parseResult.externalReferenesNeedAdd) {
+				t.model.workbook.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
+				// then we parse the formula again to obtain the correct outStack and external link indexes
+				newFP = new AscCommonExcel.parserFormula(valText.substring(1), cellWithFormula, this.model);
+				if (!newFP.parse(AscCommonExcel.oFormulaLocaleInfo.Parse, AscCommonExcel.oFormulaLocaleInfo.DigitSep, parseResult)) {
+					this.model.workbook.handlers.trigger("asc_onError", parseResult.error, c_oAscError.Level.NoCritical);
+					endTransaction();
+					return;
+				}
+			}
+
+			if (!applyByArray && AscCommonExcel.bIsSupportDynamicArrays) {
+				/* if we write not through cse, then check the formula for the presence of ref */
+				/* if ref exists, write the formula as an array formula and also find its dimensions for further expansion */
+				dynamicSelectionRange = t.model.dynamicArrayManager.getDynamicRangeByFormula(newFP, calculateResult, true);
+				if (dynamicSelectionRange) {
+					applyByArray = true;
+					ctrlKey = true;
+					if ((newFP.aca && newFP.ca)) {
+						// array cannot expand
+						// set ref to the first(parent) cell
+						arrayCannotExpand = true;
+					}
+				}
+			} else if (!applyByArray && !ctrlKey) {
+				// TODO ctrlKey+enter used to fills the selected cell range with the current entry. Dynamic arrays will have to work the same
+				// refInfo = {cannoChangeFormulaArray: true|false, applyByArray: true|false, ctrlKey: true|false, dynamicRange: range}
+
+				let canAutoExpand, refInfo;
+				if (parseResult.error === c_oAscError.ID.FrmlParenthesesCorrectCount) {
+					// parse again with correct amount of parentheses
+					newFP = new AscCommonExcel.parserFormula(newFP.getFormula(), cellWithFormula, this.model);
 					if (!newFP.parse(AscCommonExcel.oFormulaLocaleInfo.Parse, AscCommonExcel.oFormulaLocaleInfo.DigitSep, parseResult)) {
 						this.model.workbook.handlers.trigger("asc_onError", parseResult.error, c_oAscError.Level.NoCritical);
 						endTransaction();
 						return;
 					}
 				}
-
-				if (!applyByArray && AscCommonExcel.bIsSupportDynamicArrays) {
-					/* if we write not through cse, then check the formula for the presence of ref */
-					/* if ref exists, write the formula as an array formula and also find its dimensions for further expansion */
-
-
-					let formulaRes = newFP.calculate(null, null, null, null, calculateResult);
-					if (formulaRes && formulaRes.type === AscCommonExcel.cElementType.array) {
-						applyByArray = true;
-						ctrlKey = true;
-
-						if ((newFP.aca && newFP.ca)) {
-							// array cannot expand
-							// set ref to the first(parent) cell
-							arrayCannotExpand = true;
-							dynamicSelectionRange = new Asc.Range(newFP.parent.nCol, newFP.parent.nRow, newFP.parent.nCol, newFP.parent.nRow);
-							t.model.workbook.dependencyFormulas.addToVolatileArrays(newFP);
-						} else {
-							let dimension = formulaRes.getDimensions();
-							dynamicSelectionRange = new Asc.Range(newFP.parent.nCol, newFP.parent.nRow, newFP.parent.nCol + dimension.col - 1, newFP.parent.nRow + dimension.row - 1);
-						}
+				canAutoExpand = newFP.findRefByOutStack(true);
+				refInfo = canAutoExpand ? ws.dynamicArrayManager.getRefDynamicInfo(newFP, calculateResult) : false;
+				if (refInfo) {
+					if (refInfo.cannotChangeFormulaArray) {
+						t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotChangeFormulaArray,
+							c_oAscError.Level.NoCritical);
+						endTransaction();
+						return false;
 					}
 
-					let isRef = newFP.findRefByOutStack();
-					/*if (isRef) {
-						// if formula has ref, calculate it to get the final size of ref
-						let formulaRes = newFP.calculate(null, null, null, null, calculateResult);
-						applyByArray = true;
-						ctrlKey = true;
-
-						if ((newFP.aca && newFP.ca)) {
-							// array cannot expand
-							// set ref to the first(parent) cell
-							arrayCannotExpand = true;
-							dynamicSelectionRange = new Asc.Range(newFP.parent.nCol, newFP.parent.nRow, newFP.parent.nCol, newFP.parent.nRow);
-							t.model.workbook.dependencyFormulas.addToVolatileArrays(newFP);
-						} else {
-							let dimension = formulaRes.getDimensions();
-							dynamicSelectionRange = new Asc.Range(newFP.parent.nCol, newFP.parent.nRow, newFP.parent.nCol + dimension.col - 1, newFP.parent.nRow + dimension.row - 1);
-						}
-					} else if (newFP.ref) {
-						applyByArray = true;
-						ctrlKey = true;
-						dynamicSelectionRange = newFP.ref;
-					}*/
-				} else if (!applyByArray && !ctrlKey) {
-					// TODO ctrlKey+enter used to fills the selected cell range with the current entry. Dynamic arrays will have to work the same
-					// refInfo = {cannoChangeFormulaArray: true|false, applyByArray: true|false, ctrlKey: true|false, dynamicRange: range}
-
-					let canAutoExpand, refInfo;
-					if (parseResult.error === c_oAscError.ID.FrmlParenthesesCorrectCount) {
-						// parse again with correct amount of parentheses
-						newFP = new AscCommonExcel.parserFormula(newFP.getFormula(), cellWithFormula, this.model);
-						if (!newFP.parse(AscCommonExcel.oFormulaLocaleInfo.Parse, AscCommonExcel.oFormulaLocaleInfo.DigitSep, parseResult)) {
-							this.model.workbook.handlers.trigger("asc_onError", parseResult.error, c_oAscError.Level.NoCritical);
-							endTransaction();
-							return;
-						}
-					}
-					canAutoExpand = newFP.findRefByOutStack(true);
-					refInfo = canAutoExpand ? ws.dynamicArrayManager.getRefDynamicInfo(newFP, calculateResult) : false;
-					if (refInfo) {
-						if (refInfo.cannotChangeFormulaArray) {
-							t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotChangeFormulaArray,
-								c_oAscError.Level.NoCritical);
-							endTransaction();
-							return false;
-						}
-	
-						applyByArray = refInfo.applyByArray;
-						ctrlKey = refInfo.ctrlKey;
-						dynamicSelectionRange = refInfo.dynamicRange;
-					}
+					applyByArray = refInfo.applyByArray;
+					ctrlKey = refInfo.ctrlKey;
+					dynamicSelectionRange = refInfo.dynamicRange;
 				}
+			}
 
-				// preliminary calculation of the formula
-				// if calculateResult.error is not empty - return this error
-				if (calculateResult && calculateResult.error != null) {
-					this.model.workbook.handlers.trigger("asc_onError", calculateResult.error, c_oAscError.Level.NoCritical);
-					endTransaction();
-					return false;
-				}
+			// preliminary calculation of the formula
+			// if calculateResult.error is not empty - return this error
+			if (calculateResult && calculateResult.error != null) {
+				this.model.workbook.handlers.trigger("asc_onError", calculateResult.error, c_oAscError.Level.NoCritical);
+				endTransaction();
+				return false;
+			}
 
 		}
 
@@ -19003,7 +18942,6 @@ function isAllowPasteLink(pastedWb) {
 			changeRangesIfArrayFormula();
 
 			//***dynamic array-formula***
-			let changedDynamicArraysList = AscCommonExcel.bIsSupportDynamicArrays ? ws.getChangedArrayList() : null;
 			if(ctrlKey) {
 				this.model.workbook.dependencyFormulas.lockRecal();
 			}
@@ -19012,28 +18950,7 @@ function isAllowPasteLink(pastedWb) {
 			// collect a list of all affected arrays and go through each of them
 			// if the main cell was affected, then need to clear the entire array (we will also need to update the DepGraph dependency list)
 			// if the main cell has NOT been affected, we need to execute cell.setValue("") or Range.setValue("") for all child cells of the array, and set the aca=true flag for the main cell
-			if (changedDynamicArraysList) {
-				for (let array in changedDynamicArraysList) {
-					let arrayData = changedDynamicArraysList[array];
-					let formula = arrayData.formula;
-					let dynamicbbox = arrayData.range;
-					let range = (formula && formula.aca && formula.ca) ? t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r1, dynamicbbox.c1) : t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
-					if (arrayData.doDelete) {
-						// delete all cells
-						range.cleanText();
-
-						// remove listener
-						let listenerId = arrayData.formula && arrayData.formula.getListenerId();
-						ws.workbook.dependencyFormulas.endListeningVolatileArray(listenerId);
-					} else if (arrayData.doRecalc) {
-						// delete all cells except the first one
-						range.cleanTextExceptFirst();
-						// add to volatile
-						ws.workbook.dependencyFormulas.addToVolatileArrays(formula);
-					}
-				}
-				ws.clearChangedArrayList();
-			}
+			ws.dynamicArrayManager.applyChangedArrayList();
 
 			// set the value to the selected range
 			c.setValue(AscCommonExcel.getFragmentsText(val), function (r) {
@@ -19062,32 +18979,7 @@ function isAllowPasteLink(pastedWb) {
 
 			if (AscCommonExcel.bIsSupportDynamicArrays) {
 				//***dynamic array-formula***
-				let changedDynamicArraysList =  ws.getChangedArrayList();
-				if (changedDynamicArraysList) {
-					// go through changed dynamic arrays, and delete all|partitional values?
-					for (let array in changedDynamicArraysList) {
-						let arrayData = changedDynamicArraysList[array];
-						let formula = arrayData.formula;
-						let dynamicbbox = arrayData.range;
-						let range = (formula && formula.aca && formula.ca) ? t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r1, dynamicbbox.c1) : t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
-						// todo create clear function for cells (clearRange?)
-						if (arrayData.doDelete) {
-							// delete all cells
-							range.cleanText();
-
-							// remove listener
-							let listenerId = arrayData.formula && arrayData.formula.getListenerId();
-							ws.workbook.dependencyFormulas.endListeningVolatileArray(listenerId);
-						} else if (arrayData.doRecalc) {
-							// delete all cells except the first one
-							range.cleanTextExceptFirst();
-							// add to volatile 
-							ws.workbook.dependencyFormulas.addToVolatileArrays(formula);
-						}
-					}
-
-					ws.clearChangedArrayList();
-				}
+				ws.dynamicArrayManager.applyChangedArrayList();
 			}
 
 			// set the value to the selected range
@@ -19105,9 +18997,9 @@ function isAllowPasteLink(pastedWb) {
 
 		if (!isFormula) {
 			if (-1 !== AscCommonExcel.getFragmentsText(val).indexOf(kNewLine)) {
-					c.setWrap(true);
-				}
+				c.setWrap(true);
 			}
+		}
 
 		endTransaction();
 
@@ -19309,10 +19201,6 @@ function isAllowPasteLink(pastedWb) {
 					t.model._getCell(c.bbox.r1, c.bbox.c1, function (cell) {
 						let test = 1;
 					});
-					let getDynamicArrayProperties = t.model.workbook.metadata && t.model.workbook.metadata.getDynamicArrayProperties(1);
-					if (getDynamicArrayProperties) {
-						console.log(" getDynamicArrayProperties.fCollapsed: " + getDynamicArrayProperties.fCollapsed + " getDynamicArrayProperties.fDynamic: " + getDynamicArrayProperties.fDynamic)
-					}
 
 
 					// let beforeExternalReferences = t.getExternalReferencesByCell(c, null, true);
@@ -19431,25 +19319,10 @@ function isAllowPasteLink(pastedWb) {
 					// check activeCell for the presence of an array formula
 					c._foreachNoEmpty(function (cell) {
 						if (cell) {
-							let formula = cell.formulaParsed;
-							let arrayFormulaRef = formula && formula.getArrayFormulaRef();
-							//let dynamicRange = formula && formula.getDynamicRef();
-
-							ref = formula && arrayFormulaRef ? arrayFormulaRef : null;
-							let dynamicRange = ref && t.model.dynamicArrayManager.getDynamicArrayFirstCell(ref.c1, ref.r1);
-							isDynamicRef = formula && dynamicRange ? true : null;
-	
-							if (isDynamicRef && AscCommonExcel.bIsSupportDynamicArrays) {
-								let name = dynamicRange.getName(AscCommonExcel.referenceType.R);
-								let arrayInfo = {range: dynamicRange, doDelete: false, doRecalc: true, formula: formula};
-							
-								// check this cell. If this is the first cell of dynamic range, delete this range, else delete all elements except the first
-								if (cell.nRow === dynamicRange.r1 && cell.nCol === dynamicRange.c1) {
-									arrayInfo.doRecalc = false
-									arrayInfo.doDelete = true
-								}
-			
-								t.model.addChangedArray(name, arrayInfo);
+							let oRef = t.model.dynamicArrayManager.putChangedArrayByCell(cell);
+							if (oRef) {
+								ref = oRef.ref;
+								isDynamicRef = oRef.isDynamicRef;
 							}
 						}
 					});
@@ -22513,51 +22386,6 @@ function isAllowPasteLink(pastedWb) {
 				}
 			}
 		});
-		return res;
-	};
-	WorksheetView.prototype.intersectionFormulaArray2 = function(range, notCheckContains, checkOneCellArray) {
-		const t = this;
-		const ws = this.model;
-		//checkOneCellArray - ф/т можно добавить поверх формулы массива, которая содержит 1 ячейку, если более - то ошибка
-		//notCheckContains - ф/т нельзя добавить, если мы пересекаемся или содержим ф/т
-		// this function, in addition to checking cse formulas, checks dynamic arrays and fills in the list of changed arrays
-
-		let res = false;
-		for (let row = range.r1; row <= range.r2; row++) {
-			for (let col = range.c1; col <= range.c2; col++) {
-				if (res) {
-					return res;
-				}
-				
-				ws._getCell(row, col, function(cell) {
-					if(cell.isFormula()) {
-						let formulaParsed = cell.getFormulaParsed();
-						let arrayFormulaRef = formulaParsed.getArrayFormulaRef();
-						let dynamicRange = formulaParsed.getDynamicRef();
-
-						if (arrayFormulaRef && dynamicRange) {
-							let name = dynamicRange.getName(AscCommonExcel.referenceType.R);
-							let arrayInfo = {range: dynamicRange, doDelete: false, doRecalc: true, formula: formulaParsed};
-						
-							// check this cell. If this is the first cell of dynamic range, delete this range, else delete all elements except the first
-							if (cell.nRow === dynamicRange.r1 && cell.nCol === dynamicRange.c1) {
-								arrayInfo.doRecalc = false
-								arrayInfo.doDelete = true
-							}
-		
-							ws.addChangedArray(name, arrayInfo);
-						} else if(arrayFormulaRef && (!checkOneCellArray || (checkOneCellArray && !arrayFormulaRef.isOneCell()))) {
-							if(notCheckContains) {
-								res = true;
-							} else if(!notCheckContains && !range.containsRange(arrayFormulaRef)){
-								res = true;
-							}
-						}
-					}
-				});	
-				
-			}
-		}
 		return res;
 	};
 

@@ -6327,7 +6327,6 @@
 		this.nFillMenuChosenProp = null;
 		this.activeFillType = null;
 		this.timelines = [];
-		this.changedArrays = null;
 
 		this.dynamicArrayManager = new CDynamicArrayManager(this);
 	}
@@ -14122,37 +14121,7 @@
 		}
 		return false;
 	};
-	
-	Worksheet.prototype.addChangedArray = function (rangeName, arrayInfo) {
-		if (!rangeName || !arrayInfo) {
-			return
-		}
 
-		if (!this.changedArrays) {
-			this.changedArrays = {};
-		}
-
-		if (!this.changedArrays[rangeName]) {
-			this.changedArrays[rangeName] = arrayInfo
-		}
-	};
-	Worksheet.prototype.getChangedArrayList = function () {
-		if (!this.changedArrays) {
-			return
-		}
-
-		return this.changedArrays
-	};
-	Worksheet.prototype.removeFromChangedArrayList = function (name) {
-		if (!this.changedArrays) {
-			return
-		}
-
-		return this.changedArrays[name]
-	};
-	Worksheet.prototype.clearChangedArrayList = function () {
-		this.changedArrays = null;
-	};
 	Worksheet.prototype.findEOT = function (bCheckStyles) {
 		var maxCols = this.getColsCount();
 		var maxRows = this.getRowsCount();
@@ -24301,6 +24270,7 @@
 
 	function CDynamicArrayManager(ws) {
 		this.ws = ws;
+		this.changedArrays = null;
 	}
 
 	CDynamicArrayManager.prototype.recalculateVolatileArrays = function () {
@@ -24357,8 +24327,7 @@
 			if (formula.ref) {
 				dynamicRange = formula.ref;
 			} else {
-				let tempRef = new Asc.Range(formula.parent.nCol, formula.parent.nRow, formula.parent.nCol, formula.parent.nRow);
-				formula.ref = tempRef;
+				formula.ref = new Asc.Range(formula.parent.nCol, formula.parent.nRow, formula.parent.nCol, formula.parent.nRow);
 
 				let formulaResult = formula.calculate(null, null, null, null, calculateResult);
 				let arraySize = formulaResult.getDimensions(true);
@@ -24418,6 +24387,133 @@
 		});
 		return res;
 	};
+
+	CDynamicArrayManager.prototype.addChangedArray = function (rangeName, arrayInfo) {
+		if (!rangeName || !arrayInfo) {
+			return
+		}
+		if (!this.changedArrays) {
+			this.changedArrays = {};
+		}
+		if (!this.changedArrays[rangeName]) {
+			this.changedArrays[rangeName] = arrayInfo
+		}
+	};
+	CDynamicArrayManager.prototype.getChangedArrayList = function () {
+		if (!this.changedArrays) {
+			return
+		}
+		return this.changedArrays
+	};
+	CDynamicArrayManager.prototype.removeFromChangedArrayList = function (name) {
+		if (!this.changedArrays) {
+			return
+		}
+		return this.changedArrays[name]
+	};
+	CDynamicArrayManager.prototype.clearChangedArrayList = function () {
+		this.changedArrays = null;
+	};
+	CDynamicArrayManager.prototype.getDynamicRangeByFormula = function (oFormula, calculateResult, addToDependency) {
+		let res;
+		let formulaRes = oFormula.calculate(null, null, null, null, calculateResult ? calculateResult :  null);
+		if (formulaRes && formulaRes.type === AscCommonExcel.cElementType.array) {
+			if ((oFormula.aca && oFormula.ca)) {
+				res = new Asc.Range(oFormula.parent.nCol, oFormula.parent.nRow, oFormula.parent.nCol, oFormula.parent.nRow);
+				addToDependency && t.ws.workbook.dependencyFormulas.addToVolatileArrays(oFormula);
+			} else {
+				let dimension = formulaRes.getDimensions();
+				res = new Asc.Range(oFormula.parent.nCol, oFormula.parent.nRow, oFormula.parent.nCol + dimension.col - 1, oFormula.parent.nRow + dimension.row - 1);
+			}
+		}
+		return res;
+		//let isRef = oFormula.findRefByOutStack();
+		/*if (isRef) {
+			// if formula has ref, calculate it to get the final size of ref
+			let formulaRes = newFP.calculate(null, null, null, null, calculateResult);
+			applyByArray = true;
+			ctrlKey = true;
+
+			if ((newFP.aca && newFP.ca)) {
+				// array cannot expand
+				// set ref to the first(parent) cell
+				arrayCannotExpand = true;
+				dynamicSelectionRange = new Asc.Range(newFP.parent.nCol, newFP.parent.nRow, newFP.parent.nCol, newFP.parent.nRow);
+				t.model.workbook.dependencyFormulas.addToVolatileArrays(newFP);
+			} else {
+				let dimension = formulaRes.getDimensions();
+				dynamicSelectionRange = new Asc.Range(newFP.parent.nCol, newFP.parent.nRow, newFP.parent.nCol + dimension.col - 1, newFP.parent.nRow + dimension.row - 1);
+			}
+		} else if (newFP.ref) {
+			applyByArray = true;
+			ctrlKey = true;
+			dynamicSelectionRange = newFP.ref;
+		}*/
+	};
+
+	CDynamicArrayManager.prototype.applyChangedArrayList = function () {
+		let ws = this.ws;
+		let changedDynamicArraysList = this.getChangedArrayList();
+		if (changedDynamicArraysList) {
+			// go through changed dynamic arrays, and delete all|partitional values?
+			for (let array in changedDynamicArraysList) {
+				let arrayData = changedDynamicArraysList[array];
+				let formula = arrayData.formula;
+				let dynamicbbox = arrayData.range;
+				let range = (formula && formula.aca && formula.ca) ? ws.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r1, dynamicbbox.c1) : ws.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
+				// todo create clear function for cells (clearRange?)
+				if (arrayData.doDelete) {
+					// delete all cells
+					range.cleanText();
+
+					// remove listener
+					let listenerId = arrayData.formula && arrayData.formula.getListenerId();
+					ws.workbook.dependencyFormulas.endListeningVolatileArray(listenerId);
+				} else if (arrayData.doRecalc) {
+					// delete all cells except the first one
+					range.cleanTextExceptFirst();
+					// add to volatile
+					ws.workbook.dependencyFormulas.addToVolatileArrays(formula);
+				}
+			}
+
+			this.clearChangedArrayList();
+		}
+	};
+
+	CDynamicArrayManager.prototype._getDynamicArrayProperties = function () {
+		let getDynamicArrayProperties = t.model.workbook.metadata && t.model.workbook.metadata.getDynamicArrayProperties(1);
+		if (getDynamicArrayProperties) {
+			console.log(" getDynamicArrayProperties.fCollapsed: " + getDynamicArrayProperties.fCollapsed + " getDynamicArrayProperties.fDynamic: " + getDynamicArrayProperties.fDynamic)
+		}
+	};
+
+	CDynamicArrayManager.prototype.putChangedArrayByCell = function (cell) {
+		let formula = cell.formulaParsed;
+		let arrayFormulaRef = formula && formula.getArrayFormulaRef();
+
+		let ref = formula && arrayFormulaRef ? arrayFormulaRef : null;
+		let dynamicRange = ref && this.getDynamicArrayFirstCell(ref.c1, ref.r1);
+		let isDynamicRef = formula && dynamicRange ? true : null;
+
+		if (isDynamicRef && AscCommonExcel.bIsSupportDynamicArrays) {
+			let name = dynamicRange.getName(AscCommonExcel.referenceType.R);
+			let arrayInfo = {range: dynamicRange, doDelete: false, doRecalc: true, formula: formula};
+
+			// check this cell. If this is the first cell of dynamic range, delete this range, else delete all elements except the first
+			if (cell.nRow === dynamicRange.r1 && cell.nCol === dynamicRange.c1) {
+				arrayInfo.doRecalc = false
+				arrayInfo.doDelete = true
+			}
+
+			this.addChangedArray(name, arrayInfo);
+		}
+
+		return {ref: ref, isDynamicRef: isDynamicRef};
+	};
+
+
+
 
 
 	// Export
