@@ -24492,6 +24492,13 @@
 			} else if (arrayData.doRecalc) {
 				// delete all cells except the first one
 				range.cleanTextExceptFirst();
+
+				var fText = "=" + arrayData.formula.getFormula();
+				let arrayFormula = arrayData.formula.getArrayFormulaRef();
+				//this.formulaParsed.removeDependencies();
+				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoArrayFormula, AscCH.historyitem_ArrayFromula_DeleteFormula, this.ws.getId(),
+					new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new AscCommonExcel.UndoRedoData_ArrayFormula(arrayFormula, fText), true);
+
 				// add to volatile
 				ws.workbook.dependencyFormulas.addToVolatileArrays(formula);
 			}
