@@ -19833,7 +19833,7 @@
 
 		worksheet.setCFRule(rule);
 
-		let formatCondition = new ApiFormatCondition(rule, this.range);
+		let formatCondition = new ApiFormatCondition(rule, this.range, this);
 		this.conditions.push(formatCondition);
 
 		return formatCondition;
@@ -19919,6 +19919,17 @@
 		}
 	});
 
+	ApiFormatConditions.prototype.private_removeRule = function(id) {
+		if (this.conditions) {
+			for (let i = 0; i < this.conditions.length; i++) {
+				if (this.conditions[i].rule && this.conditions[i].rule.id === id) {
+					this.conditions.splice(i);
+					return;
+				}
+			}
+		}
+	};
+
 	/**
 	 * Class representing a single format condition.
 	 * @constructor
@@ -19936,9 +19947,11 @@
 	 * @property {boolean} StopIfTrue - Returns or sets whether to stop if this condition is true.
 	 * @property {ApiRange} AppliesTo - Returns the range the condition applies to.
 	 */
-	function ApiFormatCondition(rule, range) {
+	function ApiFormatCondition(rule, range, _parent) {
 		this.rule = rule;
 		this.range = range;
+
+		this._parent = _parent; // if delete ApiFormatCondition, we must delete rule in ApiFormatConditions
 	}
 
 	/**
@@ -19953,15 +19966,12 @@
 		}
 
 		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
-		if (!worksheet || !worksheet.conditionalFormattingRules) {
+		if (!worksheet || !worksheet.aConditionalFormattingRules) {
 			return;
 		}
 
-		let index = worksheet.conditionalFormattingRules.indexOf(this.rule);
-		if (index !== -1) {
-			worksheet.conditionalFormattingRules.splice(index, 1);
-		}
-
+		worksheet.deleteCFRule(this.rule.id, true);
+		this._parent.private_removeRule(this.rule.id);
 		this.rule = null;
 	};
 
@@ -19980,6 +19990,9 @@
 		if (!this.rule) {
 			return null;
 		}
+
+		let oldRule = this.rule;
+		this.rule = this.rule.clone();
 
 		if (Type !== undefined) {
 			let internalType = FromXlFormatConditionTypeTo(Type);
@@ -20041,6 +20054,9 @@
 				}
 			}
 		}
+
+		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		worksheet.changeCFRule(oldRule, this.rule, true);
 
 		return this;
 	};
