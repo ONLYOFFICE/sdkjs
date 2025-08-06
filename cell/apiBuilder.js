@@ -12366,6 +12366,23 @@
 		}
 	});
 
+	/**
+	 * Returns the format conditions collection for the range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiFormatConditions}
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetFormatConditions.js
+	 */
+	ApiRange.prototype.GetFormatConditions = function() {
+		return new ApiFormatConditions(this);
+	};
+
+	Object.defineProperty(ApiRange.prototype, "FormatConditions", {
+		get: function() {
+			return this.GetFormatConditions();
+		}
+	});
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiDrawing
@@ -19375,6 +19392,992 @@
 		}
 	});
 
+	/**
+	 * Conditional formatting type.
+	 * @typedef {("xlCellValue" | "xlExpression" | "xlTop10" | "xlAboveAverageCondition" |
+	 * "xlUniqueValues" | "xlTextString" | "xlBlanksCondition" | "xlTimePeriod" | "xlErrorsCondition" |
+	 * "xlNoErrorsCondition" | "xlColorScale" | "xlDatabar" | "xlIconSets")} XlFormatConditionType
+	 * @see office-js-api/Examples/Enumerations/XlFormatConditionType.js
+	 */
+
+	/**
+	 * Format condition operator.
+	 * @typedef {("xlBetween" | "xlNotBetween" | "xlEqual" | "xlNotEqual" |
+	 * "xlGreater" | "xlLess" | "xlGreaterEqual" | "xlLessEqual" | "xlBeginsWith" |
+	 * "xlEndsWith" | "xlContains" | "xlNotContains")} XlFormatConditionOperator
+	 * @see office-js-api/Examples/Enumerations/XlFormatConditionOperator.js
+	 */
+
+	/**
+	 * Time period for conditional formatting.
+	 * @typedef {("xlToday" | "xlYesterday" | "xlTomorrow" | "xlLast7Days" | "xlLastWeek" |
+	 * "xlThisWeek" | "xlNextWeek" | "xlLastMonth" | "xlThisMonth" | "xlNextMonth")} XlTimePeriods
+	 * @see office-js-api/Examples/Enumerations/XlTimePeriods.js
+	 */
+
+	function FromXlFormatConditionTypeTo(sType) {
+		let nType = -1;
+		switch (sType) {
+			case "xlCellValue":
+				nType = Asc.ECfType.cellIs;
+				break;
+			case "xlExpression":
+				nType = Asc.ECfType.expression;
+				break;
+			case "xlTop10":
+				nType = Asc.ECfType.top10;
+				break;
+			case "xlAboveAverageCondition":
+				nType = Asc.ECfType.aboveAverage;
+				break;
+			case "xlUniqueValues":
+				nType = Asc.ECfType.uniqueValues;
+				break;
+			case "xlTextString":
+				nType = Asc.ECfType.containsText;
+				break;
+			case "xlBlanksCondition":
+				nType = Asc.ECfType.containsBlanks;
+				break;
+			case "xlTimePeriod":
+				nType = Asc.ECfType.timePeriod;
+				break;
+			case "xlErrorsCondition":
+				nType = Asc.ECfType.containsErrors;
+				break;
+			case "xlNoErrorsCondition":
+				nType = Asc.ECfType.notContainsErrors;
+				break;
+			case "xlColorScale":
+				nType = Asc.ECfType.colorScale;
+				break;
+			case "xlDatabar":
+				nType = Asc.ECfType.dataBar;
+				break;
+			case "xlIconSets":
+				nType = Asc.ECfType.iconSet;
+				break;
+		}
+		return nType;
+	}
+
+	function ToXlFormatConditionTypeFrom(nType) {
+		let sType = "";
+		switch (nType) {
+			case Asc.ECfType.cellIs:
+				sType = "xlCellValue";
+				break;
+			case Asc.ECfType.expression:
+				sType = "xlExpression";
+				break;
+			case Asc.ECfType.top10:
+				sType = "xlTop10";
+				break;
+			case Asc.ECfType.aboveAverage:
+				sType = "xlAboveAverageCondition";
+				break;
+			case Asc.ECfType.uniqueValues:
+				sType = "xlUniqueValues";
+				break;
+			case Asc.ECfType.containsText:
+			case Asc.ECfType.notContainsText:
+			case Asc.ECfType.beginsWith:
+			case Asc.ECfType.endsWith:
+				sType = "xlTextString";
+				break;
+			case Asc.ECfType.containsBlanks:
+				sType = "xlBlanksCondition";
+				break;
+			case Asc.ECfType.timePeriod:
+				sType = "xlTimePeriod";
+				break;
+			case Asc.ECfType.containsErrors:
+				sType = "xlErrorsCondition";
+				break;
+			case Asc.ECfType.notContainsErrors:
+				sType = "xlNoErrorsCondition";
+				break;
+			case Asc.ECfType.colorScale:
+				sType = "xlColorScale";
+				break;
+			case Asc.ECfType.dataBar:
+				sType = "xlDatabar";
+				break;
+			case Asc.ECfType.iconSet:
+				sType = "xlIconSets";
+				break;
+		}
+		return sType;
+	}
+
+	function FromXlFormatConditionOperatorTo(sOperator) {
+		let nOperator = -1;
+		switch (sOperator) {
+			case "xlBetween":
+				nOperator = AscCommonExcel.ECfOperator.Operator_between;
+				break;
+			case "xlNotBetween":
+				nOperator = AscCommonExcel.ECfOperator.Operator_notBetween;
+				break;
+			case "xlEqual":
+				nOperator = AscCommonExcel.ECfOperator.Operator_equal;
+				break;
+			case "xlNotEqual":
+				nOperator = AscCommonExcel.ECfOperator.Operator_notEqual;
+				break;
+			case "xlGreater":
+				nOperator = AscCommonExcel.ECfOperator.Operator_greaterThan;
+				break;
+			case "xlLess":
+				nOperator = AscCommonExcel.ECfOperator.Operator_lessThan;
+				break;
+			case "xlGreaterEqual":
+				nOperator = AscCommonExcel.ECfOperator.Operator_greaterThanOrEqual;
+				break;
+			case "xlLessEqual":
+				nOperator = AscCommonExcel.ECfOperator.Operator_lessThanOrEqual;
+				break;
+			case "xlBeginsWith":
+				nOperator = AscCommonExcel.ECfOperator.Operator_beginsWith;
+				break;
+			case "xlEndsWith":
+				nOperator = AscCommonExcel.ECfOperator.Operator_endsWith;
+				break;
+			case "xlContains":
+				nOperator = AscCommonExcel.ECfOperator.Operator_containsText;
+				break;
+			case "xlNotContains":
+				nOperator = AscCommonExcel.ECfOperator.Operator_notContains;
+				break;
+		}
+		return nOperator;
+	}
+
+	function ToXlFormatConditionOperatorFrom(nOperator) {
+		let sOperator = "";
+		switch (nOperator) {
+			case AscCommonExcel.ECfOperator.Operator_between:
+				sOperator = "xlBetween";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_notBetween:
+				sOperator = "xlNotBetween";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_equal:
+				sOperator = "xlEqual";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_notEqual:
+				sOperator = "xlNotEqual";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_greaterThan:
+				sOperator = "xlGreater";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_lessThan:
+				sOperator = "xlLess";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_greaterThanOrEqual:
+				sOperator = "xlGreaterEqual";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_lessThanOrEqual:
+				sOperator = "xlLessEqual";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_beginsWith:
+				sOperator = "xlBeginsWith";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_endsWith:
+				sOperator = "xlEndsWith";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_containsText:
+				sOperator = "xlContains";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_notContains:
+				sOperator = "xlNotContains";
+				break;
+		}
+		return sOperator;
+	}
+
+	function FromXlTimePeriodsTo(sPeriod) {
+		let nPeriod = -1;
+		switch (sPeriod) {
+			case "xlToday":
+				nPeriod = AscCommonExcel.ST_TimePeriod.today;
+				break;
+			case "xlYesterday":
+				nPeriod = AscCommonExcel.ST_TimePeriod.yesterday;
+				break;
+			case "xlTomorrow":
+				nPeriod = AscCommonExcel.ST_TimePeriod.tomorrow;
+				break;
+			case "xlLast7Days":
+				nPeriod = AscCommonExcel.ST_TimePeriod.last7Days;
+				break;
+			case "xlLastWeek":
+				nPeriod = AscCommonExcel.ST_TimePeriod.lastWeek;
+				break;
+			case "xlThisWeek":
+				nPeriod = AscCommonExcel.ST_TimePeriod.thisWeek;
+				break;
+			case "xlNextWeek":
+				nPeriod = AscCommonExcel.ST_TimePeriod.nextWeek;
+				break;
+			case "xlLastMonth":
+				nPeriod = AscCommonExcel.ST_TimePeriod.lastMonth;
+				break;
+			case "xlThisMonth":
+				nPeriod = AscCommonExcel.ST_TimePeriod.thisMonth;
+				break;
+			case "xlNextMonth":
+				nPeriod = AscCommonExcel.ST_TimePeriod.nextMonth;
+				break;
+		}
+		return nPeriod;
+	}
+
+	function ToXlTimePeriodsFrom(nPeriod) {
+		let sPeriod = "";
+		switch (nPeriod) {
+			case AscCommonExcel.ST_TimePeriod.today:
+				sPeriod = "xlToday";
+				break;
+			case AscCommonExcel.ST_TimePeriod.yesterday:
+				sPeriod = "xlYesterday";
+				break;
+			case AscCommonExcel.ST_TimePeriod.tomorrow:
+				sPeriod = "xlTomorrow";
+				break;
+			case AscCommonExcel.ST_TimePeriod.last7Days:
+				sPeriod = "xlLast7Days";
+				break;
+			case AscCommonExcel.ST_TimePeriod.lastWeek:
+				sPeriod = "xlLastWeek";
+				break;
+			case AscCommonExcel.ST_TimePeriod.thisWeek:
+				sPeriod = "xlThisWeek";
+				break;
+			case AscCommonExcel.ST_TimePeriod.nextWeek:
+				sPeriod = "xlNextWeek";
+				break;
+			case AscCommonExcel.ST_TimePeriod.lastMonth:
+				sPeriod = "xlLastMonth";
+				break;
+			case AscCommonExcel.ST_TimePeriod.thisMonth:
+				sPeriod = "xlThisMonth";
+				break;
+			case AscCommonExcel.ST_TimePeriod.nextMonth:
+				sPeriod = "xlNextMonth";
+				break;
+		}
+		return sPeriod;
+	}
+
+	/**
+	 * Class representing a collection of format conditions.
+	 * @constructor
+	 */
+	function ApiFormatConditions(range) {
+		this.range = range;
+		this.conditions = [];
+	}
+
+	/**
+	 * Adds a new format condition to the collection.
+	 * @memberof ApiFormatConditions
+	 * @typeofeditors ["CSE"]
+	 * @param {XlFormatConditionType} Type - The format condition type.
+	 * @param {XlFormatConditionOperator} [Operator] - The format condition operator.
+	 * @param {string | number | ApiRange} [Formula1] - The first formula.
+	 * @param {string | number | ApiRange} [Formula2] - The second formula.
+	 * @returns {ApiFormatCondition | null}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/Add.js
+	 */
+	ApiFormatConditions.prototype.Add = function(Type, Operator, Formula1, Formula2) {
+		if (!Type) {
+			return null;
+		}
+
+		let internalType = FromXlFormatConditionTypeTo(Type);
+		if (internalType === -1) {
+			return null;
+		}
+
+		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		if (!worksheet) {
+			return null;
+		}
+
+		let rule = new window['AscCommonExcel'].CConditionalFormattingRule();
+		rule.type = internalType;
+		rule.priority = worksheet.getNextCFPriority ? worksheet.getNextCFPriority() : 1;
+
+		if (Operator !== undefined) {
+			let internalOperator = FromXlFormatConditionOperatorTo(Operator);
+			if (internalOperator !== -1) {
+				rule.operator = internalOperator;
+			}
+		}
+
+		let processFormula = function(formula) {
+			if (formula === undefined || formula === null) {
+				return null;
+			}
+
+			if (typeof formula === "string") {
+				let formulaCF = new window['AscCommonExcel'].CFormulaCF();
+				formulaCF.Text = formula;
+				return formulaCF;
+			} else if (typeof formula === "number") {
+				let formulaCF = new window['AscCommonExcel'].CFormulaCF();
+				formulaCF.Text = formula.toString();
+				return formulaCF;
+			} else if (formula && formula.constructor === ApiRange) {
+				let formulaCF = new window['AscCommonExcel'].CFormulaCF();
+				formulaCF.Text = formula.GetAddress();
+				return formulaCF;
+			}
+
+			return null;
+		};
+
+		if (Formula1 !== undefined) {
+			let formula = processFormula(Formula1);
+			if (formula) {
+				rule.aRuleElements.push(formula);
+			}
+		}
+
+		if (Formula2 !== undefined) {
+			let formula = processFormula(Formula2);
+			if (formula) {
+				rule.aRuleElements.push(formula);
+			}
+		}
+
+		let ranges = [];
+		if (this.range.areas) {
+			for (let i = 0; i < this.range.areas.length; i++) {
+				ranges.push(this.range.areas[i].bbox);
+			}
+		} else {
+			ranges.push(this.range.range.bbox);
+		}
+		rule.ranges = ranges;
+
+		// Создаем форматирование по умолчанию
+		rule.dxf = new window['AscCommonExcel'].CellXfs();
+
+		if (!worksheet.conditionalFormattingRules) {
+			worksheet.conditionalFormattingRules = [];
+		}
+
+		worksheet.conditionalFormattingRules.push(rule);
+
+		let formatCondition = new ApiFormatCondition(rule, this.range);
+		this.conditions.push(formatCondition);
+
+		return formatCondition;
+	};
+
+	/**
+	 * Deletes all format conditions from the collection.
+	 * @memberof ApiFormatConditions
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/Delete.js
+	 */
+	ApiFormatConditions.prototype.Delete = function() {
+		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		if (!worksheet || !worksheet.conditionalFormattingRules) {
+			return;
+		}
+
+		// Удаляем все правила для данного диапазона
+		for (let i = 0; i < this.conditions.length; i++) {
+			let condition = this.conditions[i];
+			if (condition.rule) {
+				let index = worksheet.conditionalFormattingRules.indexOf(condition.rule);
+				if (index !== -1) {
+					worksheet.conditionalFormattingRules.splice(index, 1);
+				}
+			}
+		}
+
+		this.conditions = [];
+	};
+
+	/**
+	 * Returns the count of format conditions.
+	 * @memberof ApiFormatConditions
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/GetCount.js
+	 */
+	ApiFormatConditions.prototype.GetCount = function() {
+		return this.conditions.length;
+	};
+
+	/**
+	 * Returns a format condition by index.
+	 * @memberof ApiFormatConditions
+	 * @typeofeditors ["CSE"]
+	 * @param {number} index - The index of the format condition (1-based).
+	 * @returns {ApiFormatCondition | null}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/GetItem.js
+	 */
+	ApiFormatConditions.prototype.GetItem = function(index) {
+		if (index < 1 || index > this.conditions.length) {
+			return null;
+		}
+		return this.conditions[index - 1];
+	};
+
+	Object.defineProperty(ApiFormatConditions.prototype, "Count", {
+		get: function() {
+			return this.GetCount();
+		}
+	});
+
+	/**
+	 * Class representing a single format condition.
+	 * @constructor
+	 * @property {XlFormatConditionType} Type - Returns or sets the format condition type.
+	 * @property {XlFormatConditionOperator} Operator - Returns or sets the format condition operator.
+	 * @property {string} Formula1 - Returns or sets the first formula.
+	 * @property {string} Formula2 - Returns or sets the second formula.
+	 * @property {XlTimePeriods} DateOperator - Returns or sets the date operator for time period conditions.
+	 * @property {string} Text - Returns or sets the text for text-based conditions.
+	 * @property {number} Rank - Returns or sets the rank for top/bottom conditions.
+	 * @property {boolean} PercentRank - Returns or sets whether rank is percentage-based.
+	 * @property {boolean} AboveBelow - Returns or sets above/below for average conditions.
+	 * @property {number} StdDev - Returns or sets standard deviations for average conditions.
+	 * @property {number} Priority - Returns or sets the priority of the condition.
+	 * @property {boolean} StopIfTrue - Returns or sets whether to stop if this condition is true.
+	 * @property {ApiRange} AppliesTo - Returns the range the condition applies to.
+	 */
+	function ApiFormatCondition(rule, range) {
+		this.rule = rule;
+		this.range = range;
+	}
+
+	/**
+	 * Deletes the format condition.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/Delete.js
+	 */
+	ApiFormatCondition.prototype.Delete = function() {
+		if (!this.rule) {
+			return;
+		}
+
+		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		if (!worksheet || !worksheet.conditionalFormattingRules) {
+			return;
+		}
+
+		let index = worksheet.conditionalFormattingRules.indexOf(this.rule);
+		if (index !== -1) {
+			worksheet.conditionalFormattingRules.splice(index, 1);
+		}
+
+		this.rule = null;
+	};
+
+	/**
+	 * Modifies the format condition.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {XlFormatConditionType} [Type] - The format condition type.
+	 * @param {XlFormatConditionOperator} [Operator] - The format condition operator.
+	 * @param {string | number | ApiRange} [Formula1] - The first formula.
+	 * @param {string | number | ApiRange} [Formula2] - The second formula.
+	 * @returns {ApiFormatCondition | null}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/Modify.js
+	 */
+	ApiFormatCondition.prototype.Modify = function(Type, Operator, Formula1, Formula2) {
+		if (!this.rule) {
+			return null;
+		}
+
+		if (Type !== undefined) {
+			let internalType = FromXlFormatConditionTypeTo(Type);
+			if (internalType !== -1) {
+				this.rule.type = internalType;
+			}
+		}
+
+		if (Operator !== undefined) {
+			let internalOperator = FromXlFormatConditionOperatorTo(Operator);
+			if (internalOperator !== -1) {
+				this.rule.operator = internalOperator;
+			}
+		}
+
+		let processFormula = function(formula) {
+			if (formula === undefined || formula === null) {
+				return null;
+			}
+
+			if (typeof formula === "string") {
+				let formulaCF = new window['AscCommonExcel'].CFormulaCF();
+				formulaCF.Text = formula;
+				return formulaCF;
+			} else if (typeof formula === "number") {
+				let formulaCF = new window['AscCommonExcel'].CFormulaCF();
+				formulaCF.Text = formula.toString();
+				return formulaCF;
+			} else if (formula && formula.constructor === ApiRange) {
+				let formulaCF = new window['AscCommonExcel'].CFormulaCF();
+				formulaCF.Text = formula.GetAddress();
+				return formulaCF;
+			}
+
+			return null;
+		};
+
+		if (Formula1 !== undefined) {
+			let formula = processFormula(Formula1);
+			if (formula) {
+				if (this.rule.aRuleElements.length > 0) {
+					this.rule.aRuleElements[0] = formula;
+				} else {
+					this.rule.aRuleElements.push(formula);
+				}
+			}
+		}
+
+		if (Formula2 !== undefined) {
+			let formula = processFormula(Formula2);
+			if (formula) {
+				if (this.rule.aRuleElements.length > 1) {
+					this.rule.aRuleElements[1] = formula;
+				} else {
+					while (this.rule.aRuleElements.length < 2) {
+						this.rule.aRuleElements.push(null);
+					}
+					this.rule.aRuleElements[1] = formula;
+				}
+			}
+		}
+
+		return this;
+	};
+
+	/**
+	 * Returns the format condition type.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlFormatConditionType}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetType.js
+	 */
+	ApiFormatCondition.prototype.GetType = function() {
+		return ToXlFormatConditionTypeFrom(this.rule.type);
+	};
+
+	/**
+	 * Sets the format condition type.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {XlFormatConditionType} Type - The format condition type.
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetType.js
+	 */
+	ApiFormatCondition.prototype.SetType = function(Type) {
+		let internalType = FromXlFormatConditionTypeTo(Type);
+		if (internalType !== -1) {
+			this.rule.type = internalType;
+		}
+	};
+
+	/**
+	 * Returns the format condition operator.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlFormatConditionOperator}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetOperator.js
+	 */
+	ApiFormatCondition.prototype.GetOperator = function() {
+		return ToXlFormatConditionOperatorFrom(this.rule.operator);
+	};
+
+	/**
+	 * Sets the format condition operator.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {XlFormatConditionOperator} Operator - The format condition operator.
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetOperator.js
+	 */
+	ApiFormatCondition.prototype.SetOperator = function(Operator) {
+		let internalOperator = FromXlFormatConditionOperatorTo(Operator);
+		if (internalOperator !== -1) {
+			this.rule.operator = internalOperator;
+		}
+	};
+
+	/**
+	 * Returns the first formula.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetFormula1.js
+	 */
+	ApiFormatCondition.prototype.GetFormula1 = function() {
+		if (this.rule.aRuleElements && this.rule.aRuleElements.length > 0 && this.rule.aRuleElements[0]) {
+			return this.rule.aRuleElements[0].Text || "";
+		}
+		return "";
+	};
+
+	/**
+	 * Sets the first formula.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {string} Formula1 - The first formula.
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetFormula1.js
+	 */
+	ApiFormatCondition.prototype.SetFormula1 = function(Formula1) {
+		let formula = new window['AscCommonExcel'].CFormulaCF();
+		formula.Text = Formula1;
+
+		if (this.rule.aRuleElements.length > 0) {
+			this.rule.aRuleElements[0] = formula;
+		} else {
+			this.rule.aRuleElements.push(formula);
+		}
+	};
+
+	/**
+	 * Returns the second formula.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetFormula2.js
+	 */
+	ApiFormatCondition.prototype.GetFormula2 = function() {
+		if (this.rule.aRuleElements && this.rule.aRuleElements.length > 1 && this.rule.aRuleElements[1]) {
+			return this.rule.aRuleElements[1].Text || "";
+		}
+		return "";
+	};
+
+	/**
+	 * Sets the second formula.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {string} Formula2 - The second formula.
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetFormula2.js
+	 */
+	ApiFormatCondition.prototype.SetFormula2 = function(Formula2) {
+		let formula = new window['AscCommonExcel'].CFormulaCF();
+		formula.Text = Formula2;
+
+		while (this.rule.aRuleElements.length < 2) {
+			this.rule.aRuleElements.push(null);
+		}
+		this.rule.aRuleElements[1] = formula;
+	};
+
+	/**
+	 * Returns the date operator for time period conditions.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlTimePeriods}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetDateOperator.js
+	 */
+	ApiFormatCondition.prototype.GetDateOperator = function() {
+		return ToXlTimePeriodsFrom(this.rule.timePeriod);
+	};
+
+	/**
+	 * Sets the date operator for time period conditions.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {XlTimePeriods} DateOperator - The date operator.
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetDateOperator.js
+	 */
+	ApiFormatCondition.prototype.SetDateOperator = function(DateOperator) {
+		let internalPeriod = FromXlTimePeriodsTo(DateOperator);
+		if (internalPeriod !== -1) {
+			this.rule.timePeriod = internalPeriod;
+		}
+	};
+
+	/**
+	 * Returns the text for text-based conditions.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetText.js
+	 */
+	ApiFormatCondition.prototype.GetText = function() {
+		return this.rule.text || "";
+	};
+
+	/**
+	 * Sets the text for text-based conditions.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {string} Text - The text.
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetText.js
+	 */
+	ApiFormatCondition.prototype.SetText = function(Text) {
+		this.rule.text = Text;
+	};
+
+	/**
+	 * Returns the rank for top/bottom conditions.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetRank.js
+	 */
+	ApiFormatCondition.prototype.GetRank = function() {
+		return this.rule.rank || 10;
+	};
+
+	/**
+	 * Sets the rank for top/bottom conditions.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {number} Rank - The rank.
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetRank.js
+	 */
+	ApiFormatCondition.prototype.SetRank = function(Rank) {
+		this.rule.rank = Rank;
+	};
+
+	/**
+	 * Returns whether rank is percentage-based.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetPercentRank.js
+	 */
+	ApiFormatCondition.prototype.GetPercentRank = function() {
+		return this.rule.percent || false;
+	};
+
+	/**
+	 * Sets whether rank is percentage-based.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} PercentRank - Whether rank is percentage-based.
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetPercentRank.js
+	 */
+	ApiFormatCondition.prototype.SetPercentRank = function(PercentRank) {
+		this.rule.percent = PercentRank;
+	};
+
+	/**
+	 * Returns above/below for average conditions.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetAboveBelow.js
+	 */
+	ApiFormatCondition.prototype.GetAboveBelow = function() {
+		return this.rule.aboveAverage;
+	};
+
+	/**
+	 * Sets above/below for average conditions.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} AboveBelow - Above/below for average conditions.
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetAboveBelow.js
+	 */
+	ApiFormatCondition.prototype.SetAboveBelow = function(AboveBelow) {
+		this.rule.aboveAverage = AboveBelow;
+	};
+
+	/**
+	 * Returns standard deviations for average conditions.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetStdDev.js
+	 */
+	ApiFormatCondition.prototype.GetStdDev = function() {
+		return this.rule.stdDev || 1;
+	};
+
+	/**
+	 * Sets standard deviations for average conditions.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {number} StdDev - Standard deviations.
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetStdDev.js
+	 */
+	ApiFormatCondition.prototype.SetStdDev = function(StdDev) {
+		this.rule.stdDev = StdDev;
+	};
+
+	/**
+	 * Returns the priority of the condition.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetPriority.js
+	 */
+	ApiFormatCondition.prototype.GetPriority = function() {
+		return this.rule.priority || 1;
+	};
+
+	/**
+	 * Sets the priority of the condition.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {number} Priority - The priority.
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetPriority.js
+	 */
+	ApiFormatCondition.prototype.SetPriority = function(Priority) {
+		this.rule.priority = Priority;
+	};
+
+	/**
+	 * Returns whether to stop if this condition is true.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetStopIfTrue.js
+	 */
+	ApiFormatCondition.prototype.GetStopIfTrue = function() {
+		return this.rule.stopIfTrue || false;
+	};
+
+	/**
+	 * Sets whether to stop if this condition is true.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} StopIfTrue - Whether to stop if this condition is true.
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetStopIfTrue.js
+	 */
+	ApiFormatCondition.prototype.SetStopIfTrue = function(StopIfTrue) {
+		this.rule.stopIfTrue = StopIfTrue;
+	};
+
+	/**
+	 * Returns the range the condition applies to.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetAppliesTo.js
+	 */
+	ApiFormatCondition.prototype.GetAppliesTo = function() {
+		return this.range;
+	};
+
+// Добавляем свойства объектов
+	Object.defineProperty(ApiFormatCondition.prototype, "Type", {
+		get: function() {
+			return this.GetType();
+		},
+		set: function(value) {
+			this.SetType(value);
+		}
+	});
+
+	Object.defineProperty(ApiFormatCondition.prototype, "Operator", {
+		get: function() {
+			return this.GetOperator();
+		},
+		set: function(value) {
+			this.SetOperator(value);
+		}
+	});
+
+	Object.defineProperty(ApiFormatCondition.prototype, "Formula1", {
+		get: function() {
+			return this.GetFormula1();
+		},
+		set: function(value) {
+			this.SetFormula1(value);
+		}
+	});
+
+	Object.defineProperty(ApiFormatCondition.prototype, "Formula2", {
+		get: function() {
+			return this.GetFormula2();
+		},
+		set: function(value) {
+			this.SetFormula2(value);
+		}
+	});
+
+	Object.defineProperty(ApiFormatCondition.prototype, "DateOperator", {
+		get: function() {
+			return this.GetDateOperator();
+		},
+		set: function(value) {
+			this.SetDateOperator(value);
+		}
+	});
+
+	Object.defineProperty(ApiFormatCondition.prototype, "Text", {
+		get: function() {
+			return this.GetText();
+		},
+		set: function(value) {
+			this.SetText(value);
+		}
+	});
+
+	Object.defineProperty(ApiFormatCondition.prototype, "Rank", {
+		get: function() {
+			return this.GetRank();
+		},
+		set: function(value) {
+			this.SetRank(value);
+		}
+	});
+
+	Object.defineProperty(ApiFormatCondition.prototype, "PercentRank", {
+		get: function() {
+			return this.GetPercentRank();
+		},
+		set: function(value) {
+			this.SetPercentRank(value);
+		}
+	});
+
+	Object.defineProperty(ApiFormatCondition.prototype, "AboveBelow", {
+		get: function() {
+			return this.GetAboveBelow();
+		},
+		set: function(value) {
+			this.SetAboveBelow(value);
+		}
+	});
+
+	Object.defineProperty(ApiFormatCondition.prototype, "StdDev", {
+		get: function() {
+			return this.GetStdDev();
+		},
+		set: function(value) {
+			this.SetStdDev(value);
+		}
+	});
+
+	Object.defineProperty(ApiFormatCondition.prototype, "Priority", {
+		get: function() {
+			return this.GetPriority();
+		},
+		set: function(value) {
+			this.SetPriority(value);
+		}
+	});
+
+	Object.defineProperty(ApiFormatCondition.prototype, "StopIfTrue", {
+		get: function() {
+			return this.GetStopIfTrue();
+		},
+		set: function(value) {
+			this.SetStopIfTrue(value);
+		}
+	});
+
+	Object.defineProperty(ApiFormatCondition.prototype, "AppliesTo", {
+		get: function() {
+			return this.GetAppliesTo();
+		}
+	});
 
 	Api.prototype["Format"]                = Api.prototype.Format;
 	Api.prototype["AddSheet"]              = Api.prototype.AddSheet;
@@ -19567,6 +20570,7 @@
 	ApiRange.prototype["GetEntireRow"] = ApiRange.prototype.GetEntireRow;
 	ApiRange.prototype["GetEntireColumn"] = ApiRange.prototype.GetEntireColumn;
 	ApiRange.prototype["GetValidation"] = ApiRange.prototype.GetValidation;
+	ApiRange.prototype["GetFormatConditions"] = ApiRange.prototype.GetFormatConditions;
 
 
 
@@ -20297,6 +21301,40 @@
 	ApiValidation.prototype["GetOperator"]          = ApiValidation.prototype.GetOperator;
 	ApiValidation.prototype["SetOperator"]          = ApiValidation.prototype.SetOperator;
 	ApiValidation.prototype["GetParent"]            = ApiValidation.prototype.GetParent;
+
+	ApiFormatConditions.prototype["Add"] = ApiFormatConditions.prototype.Add;
+	ApiFormatConditions.prototype["Delete"] = ApiFormatConditions.prototype.Delete;
+	ApiFormatConditions.prototype["GetCount"] = ApiFormatConditions.prototype.GetCount;
+	ApiFormatConditions.prototype["GetItem"] = ApiFormatConditions.prototype.GetItem;
+
+	ApiFormatCondition.prototype["Delete"] = ApiFormatCondition.prototype.Delete;
+	ApiFormatCondition.prototype["Modify"] = ApiFormatCondition.prototype.Modify;
+	ApiFormatCondition.prototype["GetType"] = ApiFormatCondition.prototype.GetType;
+	ApiFormatCondition.prototype["SetType"] = ApiFormatCondition.prototype.SetType;
+	ApiFormatCondition.prototype["GetOperator"] = ApiFormatCondition.prototype.GetOperator;
+	ApiFormatCondition.prototype["SetOperator"] = ApiFormatCondition.prototype.SetOperator;
+	ApiFormatCondition.prototype["GetFormula1"] = ApiFormatCondition.prototype.GetFormula1;
+	ApiFormatCondition.prototype["SetFormula1"] = ApiFormatCondition.prototype.SetFormula1;
+	ApiFormatCondition.prototype["GetFormula2"] = ApiFormatCondition.prototype.GetFormula2;
+	ApiFormatCondition.prototype["SetFormula2"] = ApiFormatCondition.prototype.SetFormula2;
+	ApiFormatCondition.prototype["GetDateOperator"] = ApiFormatCondition.prototype.GetDateOperator;
+	ApiFormatCondition.prototype["SetDateOperator"] = ApiFormatCondition.prototype.SetDateOperator;
+	ApiFormatCondition.prototype["GetText"] = ApiFormatCondition.prototype.GetText;
+	ApiFormatCondition.prototype["SetText"] = ApiFormatCondition.prototype.SetText;
+	ApiFormatCondition.prototype["GetRank"] = ApiFormatCondition.prototype.GetRank;
+	ApiFormatCondition.prototype["SetRank"] = ApiFormatCondition.prototype.SetRank;
+	ApiFormatCondition.prototype["GetPercentRank"] = ApiFormatCondition.prototype.GetPercentRank;
+	ApiFormatCondition.prototype["SetPercentRank"] = ApiFormatCondition.prototype.SetPercentRank;
+	ApiFormatCondition.prototype["GetAboveBelow"] = ApiFormatCondition.prototype.GetAboveBelow;
+	ApiFormatCondition.prototype["SetAboveBelow"] = ApiFormatCondition.prototype.SetAboveBelow;
+	ApiFormatCondition.prototype["GetStdDev"] = ApiFormatCondition.prototype.GetStdDev;
+	ApiFormatCondition.prototype["SetStdDev"] = ApiFormatCondition.prototype.SetStdDev;
+	ApiFormatCondition.prototype["GetPriority"] = ApiFormatCondition.prototype.GetPriority;
+	ApiFormatCondition.prototype["SetPriority"] = ApiFormatCondition.prototype.SetPriority;
+	ApiFormatCondition.prototype["GetStopIfTrue"] = ApiFormatCondition.prototype.GetStopIfTrue;
+	ApiFormatCondition.prototype["SetStopIfTrue"] = ApiFormatCondition.prototype.SetStopIfTrue;
+	ApiFormatCondition.prototype["GetAppliesTo"] = ApiFormatCondition.prototype.GetAppliesTo;
+
 
 	function private_SetCoords(oDrawing, oWorksheet, nExtX, nExtY, nFromCol, nColOffset, nFromRow, nRowOffset, pos) {
 		oDrawing.x = 0;
