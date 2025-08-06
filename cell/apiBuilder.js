@@ -151,6 +151,9 @@
 	function ApiRange(range, areas) {
 		this.range = range;
 		this.areas = areas || null;
+
+		this._validation = null;
+		this._formatConditions = null;
 	}
 
 
@@ -12374,7 +12377,16 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetFormatConditions.js
 	 */
 	ApiRange.prototype.GetFormatConditions = function() {
-		return new ApiFormatConditions(this);
+		if (!this._formatConditions) {
+			this._formatConditions = new ApiFormatConditions(this);
+			let rules = this.range.worksheet.workbook.getRulesByType(Asc.c_oAscSelectionForCFType.selection, null, null, this.worksheet, this.range.bbox);
+			if (rules) {
+				for (let i = 0; i < rules.length; i++) {
+					this._formatConditions.conditions.push(new ApiFormatCondition(rules[i], this.range));
+				}
+			}
+		}
+		return this._formatConditions;
 	};
 
 	Object.defineProperty(ApiRange.prototype, "FormatConditions", {
@@ -19675,8 +19687,9 @@
 	 * @constructor
 	 */
 	function ApiFormatConditions(range) {
-		this.range = range;
+		this.range = range;//parent
 		this.conditions = [];
+		//creator
 	}
 
 	/**
@@ -19705,6 +19718,60 @@
 			return null;
 		}
 
+		let props = [];
+
+		switch (internalType) {
+			case Asc.ECfType.expression:
+			case Asc.ECfType.cellIs:
+			case Asc.ECfType.containsText:
+				if (Formula1 !== undefined) {
+					let formula1String = (Formula1 && Formula1 instanceof ApiRange) ? Formula1.GetAddress() : Formula1;
+					props.push([formula1String]);
+				}
+				if (Formula2 !== undefined) {
+					let formula2String = (Formula2 && Formula2 instanceof ApiRange) ? Formula2.GetAddress() : Formula2;
+					props.push([formula2String]);
+				}
+				break;
+			case Asc.ECfType.top10:
+				if (Formula1 !== undefined) {
+					let isPercent = Operator && (Operator.indexOf("percent") !== -1 || Operator.indexOf("Percent") !== -1);
+					let formula1String = (Formula1 && Formula1 instanceof ApiRange) ? Formula1.GetAddress() : Formula1;
+					props.push([formula1String, isPercent]);
+				}
+				break;
+			case Asc.ECfType.colorScale:
+			case Asc.ECfType.dataBar:
+			case Asc.ECfType.iconSet:
+				if (Formula1 !== undefined) {
+					let formula1String = (Formula1 && Formula1 instanceof ApiRange) ? Formula1.GetAddress() : Formula1;
+					props.push([formula1String, AscCommonExcel.ECfvoType.Formula]);
+				}
+				if (Formula2 !== undefined) {
+					let formula2String = (Formula2 && Formula2 instanceof ApiRange) ? Formula2.GetAddress() : Formula2;
+					props.push([formula2String, AscCommonExcel.ECfvoType.Formula]);
+				}
+				break;
+			default:
+				if (Formula1 !== undefined) {
+					let formula1String = (Formula1 && Formula1 instanceof ApiRange) ? Formula1.GetAddress() : Formula1;
+					props.push([formula1String]);
+				}
+				if (Formula2 !== undefined) {
+					let formula2String = (Formula2 && Formula2 instanceof ApiRange) ? Formula2.GetAddress() : Formula2;
+					props.push([formula2String]);
+				}
+				break;
+		}
+
+		if (props.length > 0) {
+			let validationResult = AscCommonExcel.isValidDataRefCf(internalType, props);
+			if (validationResult && validationResult[0] !== null) {
+				console.error("Conditional formatting validation failed:"/*, validationResult[0], "at index:", validationResult[1]*/);
+				return null;
+			}
+		}
+
 		let rule = new window['AscCommonExcel'].CConditionalFormattingRule();
 		rule.type = internalType;
 		rule.priority = worksheet.getNextCFPriority ? worksheet.getNextCFPriority() : 1;
@@ -19716,7 +19783,7 @@
 			}
 		}
 
-		let processFormula = function(formula) {
+		let processFormula = function (formula) {
 			if (formula === undefined || formula === null) {
 				return null;
 			}
@@ -19762,14 +19829,9 @@
 		}
 		rule.ranges = ranges;
 
-		// Создаем форматирование по умолчанию
 		rule.dxf = new window['AscCommonExcel'].CellXfs();
 
-		if (!worksheet.conditionalFormattingRules) {
-			worksheet.conditionalFormattingRules = [];
-		}
-
-		worksheet.conditionalFormattingRules.push(rule);
+		worksheet.setCFRule(rule);
 
 		let formatCondition = new ApiFormatCondition(rule, this.range);
 		this.conditions.push(formatCondition);
@@ -19785,18 +19847,23 @@
 	 */
 	ApiFormatConditions.prototype.Delete = function() {
 		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
-		if (!worksheet || !worksheet.conditionalFormattingRules) {
+		if (!worksheet || !worksheet.aConditionalFormattingRules) {
 			return;
 		}
 
-		// Удаляем все правила для данного диапазона
+		let ranges = [];
+		if (this.range.areas) {
+			for (let i = 0; i < this.range.areas.length; i++) {
+				ranges.push(this.range.areas[i].bbox);
+			}
+		} else {
+			ranges.push(this.range.range.bbox);
+		}
+
 		for (let i = 0; i < this.conditions.length; i++) {
 			let condition = this.conditions[i];
 			if (condition.rule) {
-				let index = worksheet.conditionalFormattingRules.indexOf(condition.rule);
-				if (index !== -1) {
-					worksheet.conditionalFormattingRules.splice(index, 1);
-				}
+				worksheet.tryClearCFRule(condition.rule, ranges);
 			}
 		}
 
@@ -19832,6 +19899,23 @@
 	Object.defineProperty(ApiFormatConditions.prototype, "Count", {
 		get: function() {
 			return this.GetCount();
+		}
+	});
+
+	/**
+	 * Returns the parent range object.
+	 * @memberof ApiFormatConditions
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/GetParent.js
+	 */
+	ApiFormatConditions.prototype.GetParent = function() {
+		return this.range;
+	};
+
+	Object.defineProperty(ApiFormatConditions.prototype, "Parent", {
+		get: function() {
+			return this.GetParent();
 		}
 	});
 

@@ -5195,14 +5195,14 @@
 		}
 	};
 
-	Workbook.prototype.getRulesByType = function(type, id, needClone) {
+	Workbook.prototype.getRulesByType = function(type, id, needClone, opt_sheet, opt_range) {
 		var range, sheet;
 		var rules = null;
 		switch (type) {
 			case Asc.c_oAscSelectionForCFType.selection:
-				sheet = this.getActiveWs();
+				sheet = opt_sheet ? opt_sheet : this.getActiveWs();
 				// ToDo multiselect
-				range = sheet.selectionRange.getLast();
+				range = opt_range ? opt_range : sheet.selectionRange.getLast();
 				break;
 			case Asc.c_oAscSelectionForCFType.worksheet:
 				sheet = id ? this.getWorksheet(id) : this.getActiveWs();
