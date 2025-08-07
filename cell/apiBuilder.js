@@ -13978,6 +13978,12 @@
 				isBold = null;
 			}
 			return isBold;
+		} else if (this._object instanceof ApiFormatCondition) {
+			let isBold = null;
+			if (this._object.dxf && this._object.dxf.font) {
+				isBold = this._object.dxf.font.b;
+			}
+			return isBold;
 		}
 	};
 
@@ -14019,7 +14025,34 @@
 					}
 				}
 			}
-		}
+		} else if (this._object instanceof ApiFormatCondition) {
+			let currentBold = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.b;
+			let newBold = isBold ? true : null;
+			
+			if (currentBold === newBold) {
+				return;
+			}
+			
+			let worksheet = this._object._parent._parent.range.worksheet;
+			if (!worksheet || !worksheet.aConditionalFormattingRules) {
+				return;
+			}
+
+			let oldRule = this._object.rule;
+			let newRule = oldRule.clone();
+			
+			if (!newRule.dxf) {
+				newRule.dxf = new window['AscCommonExcel'].CellXfs();
+			}
+			if (!newRule.dxf.font) {
+				newRule.dxf.font = new window['AscCommonExcel'].Font();
+			}
+			newRule.dxf.font.b = newBold;
+			
+			worksheet.changeCFRule(oldRule, newRule, true);
+			
+			this._object.rule = newRule;
+		} 
 	};
 
 	Object.defineProperty(ApiFont.prototype, "Bold", {
@@ -14059,6 +14092,12 @@
 				}
 			} else {
 				isItalic = null;
+			}
+			return isItalic;
+		} else if (this._object instanceof ApiFormatCondition) {
+			let isItalic = null;
+			if (this._object.dxf && this._object.dxf.font) {
+				isItalic = this._object.dxf.font.i;
 			}
 			return isItalic;
 		}
@@ -14102,6 +14141,33 @@
 					}
 				}
 			}
+		} else if (this._object instanceof ApiFormatCondition) {
+			let currentItalic = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.i;
+			let newItalic = isItalic ? true : null;
+			
+			if (currentItalic === newItalic) {
+				return;
+			}
+			
+			let worksheet = this._object._parent._parent.range.worksheet;
+			if (!worksheet || !worksheet.aConditionalFormattingRules) {
+				return;
+			}
+
+			let oldRule = this._object.rule;
+			let newRule = oldRule.clone();
+			
+			if (!newRule.dxf) {
+				newRule.dxf = new window['AscCommonExcel'].CellXfs();
+			}
+			if (!newRule.dxf.font) {
+				newRule.dxf.font = new window['AscCommonExcel'].Font();
+			}
+			newRule.dxf.font.i = newItalic;
+			
+			worksheet.changeCFRule(oldRule, newRule, true);
+			
+			this._object.rule = newRule;
 		}
 	};
 
@@ -14144,6 +14210,12 @@
 				size = null;
 			}
 			return size;
+		} else if (this._object instanceof ApiFormatCondition) {
+			let fontSize = null;
+			if (this._object.dxf && this._object.dxf.font) {
+				fontSize = this._object.dxf.font.sz;
+			}
+			return fontSize;
 		}
 	};
 
@@ -14185,6 +14257,32 @@
 					}
 				}
 			}
+		} else if (this._object instanceof ApiFormatCondition) {
+			let currentSize = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.sz;
+			
+			if (currentSize === Size) {
+				return;
+			}
+			
+			let worksheet = this._object._parent._parent.range.worksheet;
+			if (!worksheet || !worksheet.aConditionalFormattingRules) {
+				return;
+			}
+
+			let oldRule = this._object.rule;
+			let newRule = oldRule.clone();
+			
+			if (!newRule.dxf) {
+				newRule.dxf = new window['AscCommonExcel'].CellXfs();
+			}
+			if (!newRule.dxf.font) {
+				newRule.dxf.font = new window['AscCommonExcel'].Font();
+			}
+			newRule.dxf.font.sz = Size;
+			
+			worksheet.changeCFRule(oldRule, newRule, true);
+			
+			this._object.rule = newRule;
 		}
 	};
 
@@ -14225,6 +14323,12 @@
 				}
 			} else {
 				isStrikethrough = null;
+			}
+			return isStrikethrough;
+		} else if (this._object instanceof ApiFormatCondition) {
+			let isStrikethrough = null;
+			if (this._object.dxf && this._object.dxf.font) {
+				isStrikethrough = this._object.dxf.font.strike;
 			}
 			return isStrikethrough;
 		}
@@ -14268,6 +14372,38 @@
 					}
 				}
 			}
+		} else if (this._object instanceof ApiFormatCondition) {
+			// Проверяем текущее значение
+			let currentStrike = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.strike;
+			let newStrike = isStrikethrough ? true : null;
+			
+			// Если значение не изменилось, ничего не делаем
+			if (currentStrike === newStrike) {
+				return;
+			}
+			
+			let worksheet = this._object._parent._parent.range.worksheet;
+			if (!worksheet || !worksheet.aConditionalFormattingRules) {
+				return;
+			}
+
+			// Клонируем правило перед изменением
+			let oldRule = this._object.rule;
+			let newRule = oldRule.clone();
+			
+			if (!newRule.dxf) {
+				newRule.dxf = new window['AscCommonExcel'].CellXfs();
+			}
+			if (!newRule.dxf.font) {
+				newRule.dxf.font = new window['AscCommonExcel'].Font();
+			}
+			newRule.dxf.font.strike = newStrike;
+			
+			// Обновляем правило в worksheet
+			worksheet.changeCFRule(oldRule, newRule, true);
+			
+			// Обновляем ссылку на правило в объекте
+			this._object.rule = newRule;
 		}
 	};
 
@@ -14342,6 +14478,25 @@
 			}
 
 			return Underline;
+		} else if (this._object instanceof ApiFormatCondition) {
+			let underlineType = null;
+			if (this._object.dxf && this._object.dxf.font) {
+				underlineType = this._object.dxf.font.u;
+			}
+
+			// Convert internal underline type to XlUnderlineStyle
+			 switch (underlineType) {
+				case Asc.EUnderline.underlineSingle: 
+					return "xlUnderlineStyleSingle";
+				case Asc.EUnderline.underlineDouble: 
+					return "xlUnderlineStyleDouble";
+				case Asc.EUnderline.underlineSingleAccounting: 
+					return "xlUnderlineStyleSingleAccounting";
+				case Asc.EUnderline.underlineDoubleAccounting: 
+					return "xlUnderlineStyleDoubleAccounting";
+				default: 
+					return "xlUnderlineStyleNone";
+			}
 		}
 	};
 
@@ -14408,6 +14563,32 @@
 					}
 				}
 			}
+		} else if (this._object instanceof ApiFormatCondition) {
+			let currentUnderline = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.u;
+			
+			if (currentUnderline === Underline) {
+				return;
+			}
+			
+			let worksheet = this._object._parent._parent.range.worksheet;
+			if (!worksheet || !worksheet.aConditionalFormattingRules) {
+				return;
+			}
+
+			let oldRule = this._object.rule;
+			let newRule = oldRule.clone();
+			
+			if (!newRule.dxf) {
+				newRule.dxf = new window['AscCommonExcel'].CellXfs();
+			}
+			if (!newRule.dxf.font) {
+				newRule.dxf.font = new window['AscCommonExcel'].Font();
+			}
+			newRule.dxf.font.u = Underline;
+			
+			worksheet.changeCFRule(oldRule, newRule, true);
+			
+			this._object.rule = newRule;
 		}
 	};
 
@@ -14448,6 +14629,12 @@
 				}
 			} else {
 				isSubscript = null;
+			}
+			return isSubscript;
+		} else if (this._object instanceof ApiFormatCondition) {
+			let isSubscript = null;
+			if (this._object.dxf && this._object.dxf.font) {
+				isSubscript = this._object.dxf.font.vertAlign === 2; // 2 = subscript
 			}
 			return isSubscript;
 		}
@@ -14491,6 +14678,33 @@
 					}
 				}
 			}
+		} else if (this._object instanceof ApiFormatCondition) {
+			let currentVertAlign = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.vertAlign;
+			let newVertAlign = isSubscript ? Asc.EVerticalAlignRun.vertalignSubscript : null;
+			
+			if (currentVertAlign === newVertAlign) {
+				return;
+			}
+			
+			let worksheet = this._object._parent._parent.range.worksheet;
+			if (!worksheet || !worksheet.aConditionalFormattingRules) {
+				return;
+			}
+
+			let oldRule = this._object.rule;
+			let newRule = oldRule.clone();
+			
+			if (!newRule.dxf) {
+				newRule.dxf = new window['AscCommonExcel'].CellXfs();
+			}
+			if (!newRule.dxf.font) {
+				newRule.dxf.font = new window['AscCommonExcel'].Font();
+			}
+			newRule.dxf.font.vertAlign = newVertAlign;
+			
+			worksheet.changeCFRule(oldRule, newRule, true);
+			
+			this._object.rule = newRule;
 		}
 	};
 
@@ -14531,6 +14745,12 @@
 				}
 			} else {
 				isSuperscript = null;
+			}
+			return isSuperscript;
+		} else if (this._object instanceof ApiFormatCondition) {
+			let isSuperscript = null;
+			if (this._object.dxf && this._object.dxf.font) {
+				isSuperscript = this._object.dxf.font.vertAlign === 1; // 1 = superscript
 			}
 			return isSuperscript;
 		}
@@ -14574,6 +14794,33 @@
 					}
 				}
 			}
+		} else if (this._object instanceof ApiFormatCondition) {
+			let currentVertAlign = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.vertAlign;
+			let newVertAlign = isSuperscript ? Asc.EVerticalAlignRun.vertalignSuperscript : null;
+			
+			if (currentVertAlign === newVertAlign) {
+				return;
+			}
+			
+			let worksheet = this._object._parent._parent.range.worksheet;
+			if (!worksheet || !worksheet.aConditionalFormattingRules) {
+				return;
+			}
+
+			let oldRule = this._object.rule;
+			let newRule = oldRule.clone();
+			
+			if (!newRule.dxf) {
+				newRule.dxf = new window['AscCommonExcel'].CellXfs();
+			}
+			if (!newRule.dxf.font) {
+				newRule.dxf.font = new window['AscCommonExcel'].Font();
+			}
+			newRule.dxf.font.vertAlign = newVertAlign;
+			
+			worksheet.changeCFRule(oldRule, newRule, true);
+			
+			this._object.rule = newRule;
 		}
 	};
 
@@ -14616,6 +14863,12 @@
 				FontName = null;
 			}
 			return FontName;
+		} else if (this._object instanceof ApiFormatCondition) {
+			let fontName = null;
+			if (this._object.dxf && this._object.dxf.font) {
+				fontName = this._object.dxf.font.name;
+			}
+			return fontName;
 		}
 	};
 
@@ -14658,6 +14911,32 @@
 					}
 				}
 			}
+		} else if (this._object instanceof ApiFormatCondition) {
+			let currentName = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.fn;
+			
+			if (currentName === FontName) {
+				return;
+			}
+			
+			let worksheet = this._object._parent._parent.range.worksheet;
+			if (!worksheet || !worksheet.aConditionalFormattingRules) {
+				return;
+			}
+
+			let oldRule = this._object.rule;
+			let newRule = oldRule.clone();
+			
+			if (!newRule.dxf) {
+				newRule.dxf = new window['AscCommonExcel'].CellXfs();
+			}
+			if (!newRule.dxf.font) {
+				newRule.dxf.font = new window['AscCommonExcel'].Font();
+			}
+			newRule.dxf.font.fn = FontName;
+			
+			worksheet.changeCFRule(oldRule, newRule, true);
+			
+			this._object.rule = newRule;
 		}
 	};
 
@@ -14700,6 +14979,12 @@
 				color = null;
 			}
 			return (color !== null ? new ApiColor(color) : null);
+		} else if (this._object instanceof ApiFormatCondition) {
+			let fontColor = null;
+			if (this._object.dxf && this._object.dxf.font && this._object.dxf.font.color) {
+				fontColor = this._object.dxf.font.color;
+			}
+			return fontColor ? new ApiColor(fontColor) : null;
 		}
 	};
 
@@ -14742,6 +15027,33 @@
 					}
 				}
 			}
+		} else if (this._object instanceof ApiFormatCondition) {
+			let currentColor = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.c;
+			let newColor = Color.color;
+			
+			if (currentColor === newColor) {
+				return;
+			}
+			
+			let worksheet = this._object._parent._parent.range.worksheet;
+			if (!worksheet || !worksheet.aConditionalFormattingRules) {
+				return;
+			}
+
+			let oldRule = this._object.rule;
+			let newRule = oldRule.clone();
+			
+			if (!newRule.dxf) {
+				newRule.dxf = new window['AscCommonExcel'].CellXfs();
+			}
+			if (!newRule.dxf.font) {
+				newRule.dxf.font = new window['AscCommonExcel'].Font();
+			}
+			newRule.dxf.font.c = newColor;
+			
+			worksheet.changeCFRule(oldRule, newRule, true);
+			
+			this._object.rule = newRule;
 		}
 	};
 
@@ -20116,8 +20428,9 @@
 		this.rule = this.rule.clone();
 		this.rule.priority = 1;
 
+		let t = this;
 		worksheet.forEachConditionalFormattingRules(function (rule) {
-			if (rule.id !== this.rule.id && rule.priority && rule.priority >= 1 && rule.priority < currentPriority) {
+			if (rule.id !== t.rule.id && rule.priority && rule.priority >= 1 && rule.priority < currentPriority) {
 				let oldOtherRule = rule;
 				let newOtherRule = rule.clone();
 				newOtherRule.priority = rule.priority + 1;
@@ -20205,6 +20518,28 @@
 			return this.GetAppliesTo();
 		}
 	});
+	/**
+	 * Returns the font applied by the format condition.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiFont | null}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetFont.js
+	 */
+	ApiFormatCondition.prototype.GetFont = function() {
+		if (!this.rule || !this.rule.dxf) {
+			return null;
+		}
+
+		return new ApiFont(this);
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "Font", {
+		get: function() {
+			return this.GetFont();
+		}
+	});
+
+
 
 	/**
 	 * Returns the format condition type.
