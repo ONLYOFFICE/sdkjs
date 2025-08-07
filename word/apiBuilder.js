@@ -10221,9 +10221,7 @@
 			'ltr': false,
 			'rtl': true
 		};
-		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.SetParagraphBidi(map[readingOrder]);
-		this.Paragraph.SetApplyToAll(false);
 		return this;
 	};
 	/**
