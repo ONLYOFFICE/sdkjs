@@ -20062,6 +20062,151 @@
 	};
 
 	/**
+	 * Sets the cell range to which this formatting rule applies.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} Range - The range to which this formatting rule will be applied.
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/ModifyAppliesToRange.js
+	 */
+	ApiFormatCondition.prototype.ModifyAppliesToRange = function(Range) {
+		if (!this.rule || !Range) {
+			return;
+		}
+
+		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		if (!worksheet || !worksheet.aConditionalFormattingRules) {
+			return;
+		}
+
+		let oldRule = this.rule;
+		this.rule = this.rule.clone();
+
+		let ranges = [];
+		if (Range.areas) {
+			for (let i = 0; i < Range.areas.length; i++) {
+				let area = Range.areas[i];
+				ranges.push(new Asc.Range(area.range.bbox.c1, area.range.bbox.r1, area.range.bbox.c2, area.range.bbox.r2));
+			}
+		} else {
+			ranges.push(new Asc.Range(Range.range.bbox.c1, Range.range.bbox.r1, Range.range.bbox.c2, Range.range.bbox.r2));
+		}
+
+		this.rule.ranges = ranges;
+		worksheet.changeCFRule(oldRule, this.rule, true);
+
+		this.range = Range;
+	};
+
+	ApiFormatCondition.prototype.SetFirstPriority = function() {
+		if (!this.rule) {
+			return;
+		}
+
+		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		if (!worksheet || !worksheet.aConditionalFormattingRules) {
+			return;
+		}
+
+		let currentPriority = this.rule.priority;
+		if (currentPriority === 1) {
+			return;
+		}
+
+		let oldRule = this.rule;
+		this.rule = this.rule.clone();
+		this.rule.priority = 1;
+
+		worksheet.forEachConditionalFormattingRules(function (rule) {
+			if (rule.id !== this.rule.id && rule.priority && rule.priority >= 1 && rule.priority < currentPriority) {
+				let oldOtherRule = rule;
+				let newOtherRule = rule.clone();
+				newOtherRule.priority = rule.priority + 1;
+				worksheet.changeCFRule(oldOtherRule, newOtherRule, true);
+			}
+		});
+
+		worksheet.changeCFRule(oldRule, this.rule, true);
+	};
+
+	ApiFormatCondition.prototype.SetLastPriority = function() {
+		if (!this.rule) {
+			return;
+		}
+
+		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		if (!worksheet || !worksheet.aConditionalFormattingRules) {
+			return;
+		}
+
+		let maxPriority = 0;
+		worksheet.forEachConditionalFormattingRules(function (rule) {
+			if (rule.priority && rule.priority > maxPriority) {
+				maxPriority = rule.priority;
+			}
+		});
+
+		let newPriority = maxPriority + 1;
+		let currentPriority = this.rule.priority;
+
+		if (currentPriority === newPriority) {
+			return;
+		}
+
+		let oldRule = this.rule;
+		this.rule = this.rule.clone();
+		this.rule.priority = newPriority;
+
+		let t = this;
+		worksheet.forEachConditionalFormattingRules(function (rule) {
+			if (rule.id !== t.rule.id && rule.priority && rule.priority > currentPriority) {
+				let oldOtherRule = rule;
+				let newOtherRule = rule.clone();
+				newOtherRule.priority = rule.priority - 1;
+				worksheet.changeCFRule(oldOtherRule, newOtherRule, true);
+			}
+		});
+
+		worksheet.changeCFRule(oldRule, this.rule, true);
+	};
+
+	/**
+	 * Returns the range the condition applies to.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange | null}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetAppliesTo.js
+	 */
+	ApiFormatCondition.prototype.GetAppliesTo = function() {
+		if (!this.rule || !this.rule.ranges || this.rule.ranges.length === 0) {
+			return null;
+		}
+
+		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		if (!worksheet) {
+			return null;
+		}
+
+		let apiRange;
+		if (this.rule.ranges.length === 1) {
+			apiRange = new ApiRange(worksheet.getRange3(this.rule.ranges[0].r1, this.rule.ranges[0].c1, this.rule.ranges[0].r2, this.rule.ranges[0].c2))
+		} else {
+			let areas = [];
+			for (var i = 0; i < this.rule.ranges.length; i++) {
+				areas.push(worksheet.getRange3(this.rule.ranges[i].r1, this.rule.ranges[i].c1, this.rule.ranges[i].r2, this.rule.ranges[i].c2));
+			}
+			apiRange = new ApiRange(worksheet.getRange3(this.rule.ranges[0].r1, this.rule.ranges[0].c1, this.rule.ranges[0].r2, this.rule.ranges[0].c2), areas);
+		}
+
+		return apiRange;
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "AppliesTo", {
+		get: function() {
+			return this.GetAppliesTo();
+		}
+	});
+
+	/**
 	 * Returns the format condition type.
 	 * @memberof ApiFormatCondition
 	 * @typeofeditors ["CSE"]
@@ -20353,18 +20498,6 @@
 		this.rule.stopIfTrue = StopIfTrue;
 	};
 
-	/**
-	 * Returns the range the condition applies to.
-	 * @memberof ApiFormatCondition
-	 * @typeofeditors ["CSE"]
-	 * @returns {ApiRange}
-	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetAppliesTo.js
-	 */
-	ApiFormatCondition.prototype.GetAppliesTo = function() {
-		return this.range;
-	};
-
-// Добавляем свойства объектов
 	Object.defineProperty(ApiFormatCondition.prototype, "Type", {
 		get: function() {
 			return this.GetType();
@@ -20473,11 +20606,6 @@
 		}
 	});
 
-	Object.defineProperty(ApiFormatCondition.prototype, "AppliesTo", {
-		get: function() {
-			return this.GetAppliesTo();
-		}
-	});
 
 	Api.prototype["Format"]                = Api.prototype.Format;
 	Api.prototype["AddSheet"]              = Api.prototype.AddSheet;
@@ -21409,6 +21537,9 @@
 
 	ApiFormatCondition.prototype["Delete"] = ApiFormatCondition.prototype.Delete;
 	ApiFormatCondition.prototype["Modify"] = ApiFormatCondition.prototype.Modify;
+	ApiFormatCondition.prototype["ModifyAppliesToRange"] = ApiFormatCondition.prototype.ModifyAppliesToRange;
+	ApiFormatCondition.prototype["SetFirstPriority"] = ApiFormatCondition.prototype.SetFirstPriority;
+	ApiFormatCondition.prototype["SetLastPriority"] = ApiFormatCondition.prototype.SetLastPriority;
 	ApiFormatCondition.prototype["GetType"] = ApiFormatCondition.prototype.GetType;
 	ApiFormatCondition.prototype["SetType"] = ApiFormatCondition.prototype.SetType;
 	ApiFormatCondition.prototype["GetOperator"] = ApiFormatCondition.prototype.GetOperator;
