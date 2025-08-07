@@ -1741,6 +1741,15 @@
 		return true;
 	};
 
+	ApiPresentation.prototype.Search = function (searchText, matchCase) {
+		const searchResults = [];
+		this.GetAllSlides().forEach(function (apiSlide) {
+			const slideSearchResults = apiSlide.Search(searchText, matchCase);
+			searchResults.push.apply(searchResults, slideSearchResults);
+		});
+		return searchResults;
+	};
+
     /**
 	 * Retrieves the custom XML manager associated with the presentation.
 	 * This manager allows manipulation and access to custom XML parts within the presentation.
@@ -3953,6 +3962,15 @@
 		return false;
 	}
 
+	ApiSlide.prototype.Search = function (searchText, matchCase) {
+		const searchResults = [];
+		this.GetAllShapes().forEach(function (apiShape) {
+			const shapeSearchResults = apiShape.Search(searchText, matchCase);
+			searchResults.push.apply(searchResults, shapeSearchResults);
+		});
+		return searchResults;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiNotesPage
@@ -4585,6 +4603,19 @@
             }
         }
     };
+
+	ApiShape.prototype.Search = function (searchText, matchCase) {
+		const searchResults = [];
+		const content = this.GetContent();
+		if (content) {
+			const paragraphs = content.GetAllParagraphs();
+			paragraphs.forEach(function (apiParagraph) {
+				const paragraphSearchResults = apiParagraph.Search(searchText, matchCase);
+				searchResults.push.apply(searchResults, paragraphSearchResults);
+			});
+		}
+		return searchResults;
+	};
 
     //------------------------------------------------------------------------------------------------------------------
     //
@@ -5403,6 +5434,7 @@
     ApiPresentation.prototype["GetAllDrawings"]           = ApiPresentation.prototype.GetAllDrawings;
     ApiPresentation.prototype["GetCore"]                  = ApiPresentation.prototype.GetCore;
     ApiPresentation.prototype["GetCustomProperties"]      = ApiPresentation.prototype.GetCustomProperties;
+    ApiPresentation.prototype["Search"]                   = ApiPresentation.prototype.Search;
 
     ApiMaster.prototype["GetClassType"]                   = ApiMaster.prototype.GetClassType;
     ApiMaster.prototype["GetAllLayouts"]                  = ApiMaster.prototype.GetAllLayouts;
@@ -5524,6 +5556,7 @@
     ApiSlide.prototype["GroupDrawings"]                   = ApiSlide.prototype.GroupDrawings;
 	ApiSlide.prototype["GetNotesPage"]                    = ApiSlide.prototype.GetNotesPage;
 	ApiSlide.prototype["AddNotesText"]                    = ApiSlide.prototype.AddNotesText;
+	ApiSlide.prototype["Search"]                          = ApiSlide.prototype.Search;
 
 	ApiNotesPage.prototype["GetClassType"]                = ApiNotesPage.prototype.GetClassType;
 	ApiNotesPage.prototype["AddBodyShapeText"]            = ApiNotesPage.prototype.AddBodyShapeText;
@@ -5575,6 +5608,7 @@
     ApiShape.prototype["GetDocContent"]                   = ApiShape.prototype.GetDocContent;
     ApiShape.prototype["GetContent"]                      = ApiShape.prototype.GetContent;
     ApiShape.prototype["SetVerticalTextAlign"]            = ApiShape.prototype.SetVerticalTextAlign;
+    ApiShape.prototype["Search"]                          = ApiShape.prototype.Search;
 
 
     ApiOleObject.prototype["GetClassType"]                = ApiOleObject.prototype.GetClassType;
