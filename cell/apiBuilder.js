@@ -13980,8 +13980,8 @@
 			return isBold;
 		} else if (this._object instanceof ApiFormatCondition) {
 			let isBold = null;
-			if (this._object.dxf && this._object.dxf.font) {
-				isBold = this._object.dxf.font.b;
+			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
+				isBold = this._object.rule.dxf.font.b;
 			}
 			return isBold;
 		}
@@ -14033,7 +14033,7 @@
 				return;
 			}
 			
-			let worksheet = this._object._parent._parent.range.worksheet;
+			let worksheet = this._object._parent.range.range.worksheet;
 			if (!worksheet || !worksheet.aConditionalFormattingRules) {
 				return;
 			}
@@ -14096,8 +14096,8 @@
 			return isItalic;
 		} else if (this._object instanceof ApiFormatCondition) {
 			let isItalic = null;
-			if (this._object.dxf && this._object.dxf.font) {
-				isItalic = this._object.dxf.font.i;
+			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
+				isItalic = this._object.rule.dxf.font.i;
 			}
 			return isItalic;
 		}
@@ -14149,7 +14149,7 @@
 				return;
 			}
 			
-			let worksheet = this._object._parent._parent.range.worksheet;
+			let worksheet = this._object._parent.range.range.worksheet;
 			if (!worksheet || !worksheet.aConditionalFormattingRules) {
 				return;
 			}
@@ -14212,8 +14212,8 @@
 			return size;
 		} else if (this._object instanceof ApiFormatCondition) {
 			let fontSize = null;
-			if (this._object.dxf && this._object.dxf.font) {
-				fontSize = this._object.dxf.font.sz;
+			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
+				fontSize = this._object.rule.dxf.font.sz;
 			}
 			return fontSize;
 		}
@@ -14264,7 +14264,7 @@
 				return;
 			}
 			
-			let worksheet = this._object._parent._parent.range.worksheet;
+			let worksheet = this._object._parent.range.range.worksheet;
 			if (!worksheet || !worksheet.aConditionalFormattingRules) {
 				return;
 			}
@@ -14327,8 +14327,8 @@
 			return isStrikethrough;
 		} else if (this._object instanceof ApiFormatCondition) {
 			let isStrikethrough = null;
-			if (this._object.dxf && this._object.dxf.font) {
-				isStrikethrough = this._object.dxf.font.strike;
+			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
+				isStrikethrough = this._object.rule.dxf.font.strike;
 			}
 			return isStrikethrough;
 		}
@@ -14382,7 +14382,7 @@
 				return;
 			}
 			
-			let worksheet = this._object._parent._parent.range.worksheet;
+			let worksheet = this._object._parent.range.range.worksheet;
 			if (!worksheet || !worksheet.aConditionalFormattingRules) {
 				return;
 			}
@@ -14480,11 +14480,10 @@
 			return Underline;
 		} else if (this._object instanceof ApiFormatCondition) {
 			let underlineType = null;
-			if (this._object.dxf && this._object.dxf.font) {
-				underlineType = this._object.dxf.font.u;
+			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
+				underlineType = this._object.rule.dxf.font.u;
 			}
 
-			// Convert internal underline type to XlUnderlineStyle
 			 switch (underlineType) {
 				case Asc.EUnderline.underlineSingle: 
 					return "xlUnderlineStyleSingle";
@@ -14570,7 +14569,7 @@
 				return;
 			}
 			
-			let worksheet = this._object._parent._parent.range.worksheet;
+			let worksheet = this._object._parent.range.range.worksheet;
 			if (!worksheet || !worksheet.aConditionalFormattingRules) {
 				return;
 			}
@@ -14633,8 +14632,8 @@
 			return isSubscript;
 		} else if (this._object instanceof ApiFormatCondition) {
 			let isSubscript = null;
-			if (this._object.dxf && this._object.dxf.font) {
-				isSubscript = this._object.dxf.font.vertAlign === 2; // 2 = subscript
+			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
+				isSubscript = this._object.rule.dxf.font.vertAlign === AscCommon.vertalign_SubScript; // 2 = subscript
 			}
 			return isSubscript;
 		}
@@ -14686,7 +14685,7 @@
 				return;
 			}
 			
-			let worksheet = this._object._parent._parent.range.worksheet;
+			let worksheet = this._object._parent.range.range.worksheet;
 			if (!worksheet || !worksheet.aConditionalFormattingRules) {
 				return;
 			}
@@ -14749,8 +14748,8 @@
 			return isSuperscript;
 		} else if (this._object instanceof ApiFormatCondition) {
 			let isSuperscript = null;
-			if (this._object.dxf && this._object.dxf.font) {
-				isSuperscript = this._object.dxf.font.vertAlign === 1; // 1 = superscript
+			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
+				isSuperscript = this._object.rule.dxf.font.vertAlign === 1; // 1 = superscript
 			}
 			return isSuperscript;
 		}
@@ -14796,13 +14795,13 @@
 			}
 		} else if (this._object instanceof ApiFormatCondition) {
 			let currentVertAlign = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.vertAlign;
-			let newVertAlign = isSuperscript ? Asc.EVerticalAlignRun.vertalignSuperscript : null;
+			let newVertAlign = isSuperscript ? AscCommon.vertalign_SuperScript : null;
 			
 			if (currentVertAlign === newVertAlign) {
 				return;
 			}
 			
-			let worksheet = this._object._parent._parent.range.worksheet;
+			let worksheet = this._object._parent.range.range.worksheet;
 			if (!worksheet || !worksheet.aConditionalFormattingRules) {
 				return;
 			}
@@ -14865,8 +14864,8 @@
 			return FontName;
 		} else if (this._object instanceof ApiFormatCondition) {
 			let fontName = null;
-			if (this._object.dxf && this._object.dxf.font) {
-				fontName = this._object.dxf.font.name;
+			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
+				fontName = this._object.rule.dxf.font.name;
 			}
 			return fontName;
 		}
@@ -14918,7 +14917,7 @@
 				return;
 			}
 			
-			let worksheet = this._object._parent._parent.range.worksheet;
+			let worksheet = this._object._parent.range.range.worksheet;
 			if (!worksheet || !worksheet.aConditionalFormattingRules) {
 				return;
 			}
@@ -14981,8 +14980,8 @@
 			return (color !== null ? new ApiColor(color) : null);
 		} else if (this._object instanceof ApiFormatCondition) {
 			let fontColor = null;
-			if (this._object.dxf && this._object.dxf.font && this._object.dxf.font.color) {
-				fontColor = this._object.dxf.font.color;
+			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.color) {
+				fontColor = this._object.rule.dxf.font.color;
 			}
 			return fontColor ? new ApiColor(fontColor) : null;
 		}
@@ -15035,7 +15034,7 @@
 				return;
 			}
 			
-			let worksheet = this._object._parent._parent.range.worksheet;
+			let worksheet = this._object._parent.range.range.worksheet;
 			if (!worksheet || !worksheet.aConditionalFormattingRules) {
 				return;
 			}
