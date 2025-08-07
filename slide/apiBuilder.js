@@ -1741,6 +1741,17 @@
 		return true;
 	};
 
+	/**
+	* Searches for the specified string throughout the entire presentation. The search results are an array of ApiRange objects.
+	*
+	* @memberof ApiPresentation
+	* @typeofeditors ["CPE"]
+	* @param {string} searchText
+	* @param {string} matchCase - Case sensitive or not.
+	* @returns {ApiRange[]}
+	* @since 9.1.0
+	* @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/Search.js
+	*/
 	ApiPresentation.prototype.Search = function (searchText, matchCase) {
 		const searchResults = [];
 		this.GetAllSlides().forEach(function (apiSlide) {
@@ -3962,6 +3973,17 @@
 		return false;
 	}
 
+	/**
+	* Searches for the specified string throughout the specified slide. The search results are an array of ApiRange objects.
+	*
+	* @memberof ApiSlide
+	* @typeofeditors ["CPE"]
+	* @param {string} searchText
+	* @param {string} matchCase - Case sensitive or not.
+	* @returns {ApiRange[]}
+	* @since 9.1.0
+	* @see office-js-api/Examples/{Editor}/ApiSlide/Methods/Search.js
+	*/
 	ApiSlide.prototype.Search = function (searchText, matchCase) {
 		const searchResults = [];
 		this.GetAllShapes().forEach(function (apiShape) {
@@ -4604,6 +4626,17 @@
         }
     };
 
+	/**
+	* Searches for the specified row inside the shape content. The search results are an array of ApiRange objects.
+	*
+	* @memberof ApiShape
+	* @typeofeditors ["CPE"]
+	* @param {string} searchText
+	* @param {string} matchCase - Case sensitive or not.
+	* @returns {ApiRange[]}
+	* @since 9.1.0
+	* @see office-js-api/Examples/{Editor}/ApiShape/Methods/Search.js
+	*/
 	ApiShape.prototype.Search = function (searchText, matchCase) {
 		const searchResults = [];
 		const content = this.GetContent();
