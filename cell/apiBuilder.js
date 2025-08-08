@@ -14033,28 +14033,11 @@
 				return;
 			}
 			
-			let worksheet = this._object._parent.range.range.worksheet;
-			if (!worksheet || !worksheet.aConditionalFormattingRules) {
-				return;
-			}
-
-			let oldRule = this._object.rule;
-			let newRule = oldRule.clone();
-			
-			if (!newRule.dxf) {
-				newRule.dxf = new window['AscCommonExcel'].CellXfs();
-			}
-			if (!newRule.dxf.font) {
-				newRule.dxf.font = new window['AscCommonExcel'].Font();
-			}
-			newRule.dxf.font.b = newBold;
-			
-			worksheet.changeCFRule(oldRule, newRule, true);
-			
-			this._object.rule = newRule;
+			this._object.private_changeStyle(function (_newRule) {
+				_newRule.dxf.font.b = newBold;
+			});
 		} 
 	};
-
 	Object.defineProperty(ApiFont.prototype, "Bold", {
 		get: function () {
 			return this.GetBold();
@@ -14149,25 +14132,9 @@
 				return;
 			}
 			
-			let worksheet = this._object._parent.range.range.worksheet;
-			if (!worksheet || !worksheet.aConditionalFormattingRules) {
-				return;
-			}
-
-			let oldRule = this._object.rule;
-			let newRule = oldRule.clone();
-			
-			if (!newRule.dxf) {
-				newRule.dxf = new window['AscCommonExcel'].CellXfs();
-			}
-			if (!newRule.dxf.font) {
-				newRule.dxf.font = new window['AscCommonExcel'].Font();
-			}
-			newRule.dxf.font.i = newItalic;
-			
-			worksheet.changeCFRule(oldRule, newRule, true);
-			
-			this._object.rule = newRule;
+			this._object.private_changeStyle(function (_newRule) {
+				_newRule.dxf.font.i = newItalic;
+			});
 		}
 	};
 
@@ -14213,7 +14180,7 @@
 		} else if (this._object instanceof ApiFormatCondition) {
 			let fontSize = null;
 			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
-				fontSize = this._object.rule.dxf.font.sz;
+				fontSize = this._object.rule.dxf.font.fs;
 			}
 			return fontSize;
 		}
@@ -14258,31 +14225,15 @@
 				}
 			}
 		} else if (this._object instanceof ApiFormatCondition) {
-			let currentSize = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.sz;
+			let currentSize = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.fs;
 			
 			if (currentSize === Size) {
 				return;
 			}
 			
-			let worksheet = this._object._parent.range.range.worksheet;
-			if (!worksheet || !worksheet.aConditionalFormattingRules) {
-				return;
-			}
-
-			let oldRule = this._object.rule;
-			let newRule = oldRule.clone();
-			
-			if (!newRule.dxf) {
-				newRule.dxf = new window['AscCommonExcel'].CellXfs();
-			}
-			if (!newRule.dxf.font) {
-				newRule.dxf.font = new window['AscCommonExcel'].Font();
-			}
-			newRule.dxf.font.sz = Size;
-			
-			worksheet.changeCFRule(oldRule, newRule, true);
-			
-			this._object.rule = newRule;
+			this._object.private_changeStyle(function (_newRule) {
+				_newRule.dxf.font.fs = Size;
+			});
 		}
 	};
 
@@ -14328,7 +14279,7 @@
 		} else if (this._object instanceof ApiFormatCondition) {
 			let isStrikethrough = null;
 			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
-				isStrikethrough = this._object.rule.dxf.font.strike;
+				isStrikethrough = this._object.rule.dxf.font.s;
 			}
 			return isStrikethrough;
 		}
@@ -14373,37 +14324,16 @@
 				}
 			}
 		} else if (this._object instanceof ApiFormatCondition) {
-			// Проверяем текущее значение
-			let currentStrike = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.strike;
+			let currentStrike = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.s;
 			let newStrike = isStrikethrough ? true : null;
 			
-			// Если значение не изменилось, ничего не делаем
 			if (currentStrike === newStrike) {
 				return;
 			}
 			
-			let worksheet = this._object._parent.range.range.worksheet;
-			if (!worksheet || !worksheet.aConditionalFormattingRules) {
-				return;
-			}
-
-			// Клонируем правило перед изменением
-			let oldRule = this._object.rule;
-			let newRule = oldRule.clone();
-			
-			if (!newRule.dxf) {
-				newRule.dxf = new window['AscCommonExcel'].CellXfs();
-			}
-			if (!newRule.dxf.font) {
-				newRule.dxf.font = new window['AscCommonExcel'].Font();
-			}
-			newRule.dxf.font.strike = newStrike;
-			
-			// Обновляем правило в worksheet
-			worksheet.changeCFRule(oldRule, newRule, true);
-			
-			// Обновляем ссылку на правило в объекте
-			this._object.rule = newRule;
+			this._object.private_changeStyle(function (_newRule) {
+				_newRule.dxf.font.s = newStrike;
+			});
 		}
 	};
 
@@ -14564,30 +14494,12 @@
 			}
 		} else if (this._object instanceof ApiFormatCondition) {
 			let currentUnderline = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.u;
-			
 			if (currentUnderline === Underline) {
 				return;
 			}
-			
-			let worksheet = this._object._parent.range.range.worksheet;
-			if (!worksheet || !worksheet.aConditionalFormattingRules) {
-				return;
-			}
-
-			let oldRule = this._object.rule;
-			let newRule = oldRule.clone();
-			
-			if (!newRule.dxf) {
-				newRule.dxf = new window['AscCommonExcel'].CellXfs();
-			}
-			if (!newRule.dxf.font) {
-				newRule.dxf.font = new window['AscCommonExcel'].Font();
-			}
-			newRule.dxf.font.u = Underline;
-			
-			worksheet.changeCFRule(oldRule, newRule, true);
-			
-			this._object.rule = newRule;
+			this._object.private_changeStyle(function (_newRule) {
+				_newRule.dxf.font.u = Underline;
+			});
 		}
 	};
 
@@ -14633,7 +14545,7 @@
 		} else if (this._object instanceof ApiFormatCondition) {
 			let isSubscript = null;
 			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
-				isSubscript = this._object.rule.dxf.font.vertAlign === AscCommon.vertalign_SubScript; // 2 = subscript
+				isSubscript = this._object.rule.dxf.font.va === AscCommon.vertalign_SubScript; // 2 = subscript
 			}
 			return isSubscript;
 		}
@@ -14678,32 +14590,16 @@
 				}
 			}
 		} else if (this._object instanceof ApiFormatCondition) {
-			let currentVertAlign = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.vertAlign;
-			let newVertAlign = isSubscript ? Asc.EVerticalAlignRun.vertalignSubscript : null;
+			let currentVertAlign = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.va;
+			let newVertAlign = isSubscript ? AscCommon.vertalign_SubScript : null;
 			
 			if (currentVertAlign === newVertAlign) {
 				return;
 			}
 			
-			let worksheet = this._object._parent.range.range.worksheet;
-			if (!worksheet || !worksheet.aConditionalFormattingRules) {
-				return;
-			}
-
-			let oldRule = this._object.rule;
-			let newRule = oldRule.clone();
-			
-			if (!newRule.dxf) {
-				newRule.dxf = new window['AscCommonExcel'].CellXfs();
-			}
-			if (!newRule.dxf.font) {
-				newRule.dxf.font = new window['AscCommonExcel'].Font();
-			}
-			newRule.dxf.font.vertAlign = newVertAlign;
-			
-			worksheet.changeCFRule(oldRule, newRule, true);
-			
-			this._object.rule = newRule;
+			this._object.private_changeStyle(function (_newRule) {
+				_newRule.dxf.font.va = newVertAlign;
+			});
 		}
 	};
 
@@ -14749,7 +14645,7 @@
 		} else if (this._object instanceof ApiFormatCondition) {
 			let isSuperscript = null;
 			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
-				isSuperscript = this._object.rule.dxf.font.vertAlign === 1; // 1 = superscript
+				isSuperscript = this._object.rule.dxf.font.va === AscCommon.vertalign_SuperScript; // 1 = superscript
 			}
 			return isSuperscript;
 		}
@@ -14794,32 +14690,16 @@
 				}
 			}
 		} else if (this._object instanceof ApiFormatCondition) {
-			let currentVertAlign = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.vertAlign;
+			let currentVertAlign = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.va;
 			let newVertAlign = isSuperscript ? AscCommon.vertalign_SuperScript : null;
 			
 			if (currentVertAlign === newVertAlign) {
 				return;
 			}
 			
-			let worksheet = this._object._parent.range.range.worksheet;
-			if (!worksheet || !worksheet.aConditionalFormattingRules) {
-				return;
-			}
-
-			let oldRule = this._object.rule;
-			let newRule = oldRule.clone();
-			
-			if (!newRule.dxf) {
-				newRule.dxf = new window['AscCommonExcel'].CellXfs();
-			}
-			if (!newRule.dxf.font) {
-				newRule.dxf.font = new window['AscCommonExcel'].Font();
-			}
-			newRule.dxf.font.vertAlign = newVertAlign;
-			
-			worksheet.changeCFRule(oldRule, newRule, true);
-			
-			this._object.rule = newRule;
+			this._object.private_changeStyle(function (_newRule) {
+				_newRule.dxf.font.va = newVertAlign;
+			});
 		}
 	};
 
@@ -14865,7 +14745,7 @@
 		} else if (this._object instanceof ApiFormatCondition) {
 			let fontName = null;
 			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
-				fontName = this._object.rule.dxf.font.name;
+				fontName = this._object.rule.dxf.font.fn;
 			}
 			return fontName;
 		}
@@ -14917,25 +14797,9 @@
 				return;
 			}
 			
-			let worksheet = this._object._parent.range.range.worksheet;
-			if (!worksheet || !worksheet.aConditionalFormattingRules) {
-				return;
-			}
-
-			let oldRule = this._object.rule;
-			let newRule = oldRule.clone();
-			
-			if (!newRule.dxf) {
-				newRule.dxf = new window['AscCommonExcel'].CellXfs();
-			}
-			if (!newRule.dxf.font) {
-				newRule.dxf.font = new window['AscCommonExcel'].Font();
-			}
-			newRule.dxf.font.fn = FontName;
-			
-			worksheet.changeCFRule(oldRule, newRule, true);
-			
-			this._object.rule = newRule;
+			this._object.private_changeStyle(function (_newRule) {
+				_newRule.dxf.font.fn = FontName;
+			});
 		}
 	};
 
@@ -14980,8 +14844,8 @@
 			return (color !== null ? new ApiColor(color) : null);
 		} else if (this._object instanceof ApiFormatCondition) {
 			let fontColor = null;
-			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.color) {
-				fontColor = this._object.rule.dxf.font.color;
+			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.c) {
+				fontColor = this._object.rule.dxf.font.c;
 			}
 			return fontColor ? new ApiColor(fontColor) : null;
 		}
@@ -15034,25 +14898,9 @@
 				return;
 			}
 			
-			let worksheet = this._object._parent.range.range.worksheet;
-			if (!worksheet || !worksheet.aConditionalFormattingRules) {
-				return;
-			}
-
-			let oldRule = this._object.rule;
-			let newRule = oldRule.clone();
-			
-			if (!newRule.dxf) {
-				newRule.dxf = new window['AscCommonExcel'].CellXfs();
-			}
-			if (!newRule.dxf.font) {
-				newRule.dxf.font = new window['AscCommonExcel'].Font();
-			}
-			newRule.dxf.font.c = newColor;
-			
-			worksheet.changeCFRule(oldRule, newRule, true);
-			
-			this._object.rule = newRule;
+			this._object.private_changeStyle(function (_newRule) {
+				_newRule.dxf.font.c = newColor;
+			});
 		}
 	};
 
@@ -20566,31 +20414,6 @@
 	};
 
 	/**
-	 * Returns the format condition operator.
-	 * @memberof ApiFormatCondition
-	 * @typeofeditors ["CSE"]
-	 * @returns {XlFormatConditionOperator}
-	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetOperator.js
-	 */
-	ApiFormatCondition.prototype.GetOperator = function() {
-		return ToXlFormatConditionOperatorFrom(this.rule.operator);
-	};
-
-	/**
-	 * Sets the format condition operator.
-	 * @memberof ApiFormatCondition
-	 * @typeofeditors ["CSE"]
-	 * @param {XlFormatConditionOperator} Operator - The format condition operator.
-	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetOperator.js
-	 */
-	ApiFormatCondition.prototype.SetOperator = function(Operator) {
-		let internalOperator = FromXlFormatConditionOperatorTo(Operator);
-		if (internalOperator !== -1) {
-			this.rule.operator = internalOperator;
-		}
-	};
-
-	/**
 	 * Returns the first formula.
 	 * @memberof ApiFormatCondition
 	 * @typeofeditors ["CSE"]
@@ -20604,23 +20427,72 @@
 		return "";
 	};
 
-	/**
-	 * Sets the first formula.
-	 * @memberof ApiFormatCondition
-	 * @typeofeditors ["CSE"]
-	 * @param {string} Formula1 - The first formula.
-	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetFormula1.js
-	 */
-	ApiFormatCondition.prototype.SetFormula1 = function(Formula1) {
-		let formula = new window['AscCommonExcel'].CFormulaCF();
-		formula.Text = Formula1;
+	// /**
+	//  * Sets the first formula.
+	//  * @memberof ApiFormatCondition
+	//  * @typeofeditors ["CSE"]
+	//  * @param {string} Formula1 - The first formula.
+	//  * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetFormula1.js
+	//  */
+	// ApiFormatCondition.prototype.SetFormula1 = function(Formula1) {
+	// 	if (!this.rule) {
+	// 		return;
+	// 	}
+	//
+	// 	let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+	// 	if (!worksheet) {
+	// 		return;
+	// 	}
+	//
+	// 	let oldRule = this.rule;
+	// 	let newRule = this.rule.clone();
+	//
+	// 	let processFormula = function(formula) {
+	// 		if (formula === undefined || formula === null) {
+	// 			return null;
+	// 		}
+	//
+	// 		if (typeof formula === "string") {
+	// 			let formulaCF = new window['AscCommonExcel'].CFormulaCF();
+	// 			formulaCF.Text = formula;
+	// 			return formulaCF;
+	// 		} else if (typeof formula === "number") {
+	// 			let formulaCF = new window['AscCommonExcel'].CFormulaCF();
+	// 			formulaCF.Text = formula.toString();
+	// 			return formulaCF;
+	// 		}
+	//
+	// 		return null;
+	// 	};
+	//
+	// 	let formula = processFormula(Formula1);
+	// 	if (formula) {
+	// 		if (!newRule.aRuleElements) {
+	// 			newRule.aRuleElements = [];
+	// 		}
+	//
+	// 		if (newRule.aRuleElements.length > 0) {
+	// 			newRule.aRuleElements[0] = formula;
+	// 		} else {
+	// 			newRule.aRuleElements.push(formula);
+	// 		}
+	// 	} else {
+	// 		if (newRule.aRuleElements && newRule.aRuleElements.length > 0) {
+	// 			newRule.aRuleElements[0] = null;
+	// 		}
+	// 	}
+	//
+	// 	worksheet.changeCFRule(oldRule, newRule, true);
+	// };
 
-		if (this.rule.aRuleElements.length > 0) {
-			this.rule.aRuleElements[0] = formula;
-		} else {
-			this.rule.aRuleElements.push(formula);
-		}
-	};
+	Object.defineProperty(ApiFormatCondition.prototype, "Formula1", {
+		get: function() {
+			return this.GetFormula1();
+		}/*,
+		set: function(value) {
+			this.SetFormula1(value);
+		}*/
+	});
 
 	/**
 	 * Returns the second formula.
@@ -20636,309 +20508,243 @@
 		return "";
 	};
 
+	// /**
+	//  * Sets the second formula.
+	//  * @memberof ApiFormatCondition
+	//  * @typeofeditors ["CSE"]
+	//  * @param {string} Formula2 - The second formula.
+	//  * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetFormula2.js
+	//  */
+	// ApiFormatCondition.prototype.SetFormula2 = function(Formula2) {
+	// 	if (!this.rule) {
+	// 		return;
+	// 	}
+	//
+	// 	let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+	// 	if (!worksheet) {
+	// 		return;
+	// 	}
+	//
+	// 	// Check if operator supports Formula2 (only xlBetween or xlNotBetween)
+	// 	let operator = this.rule.operator;
+	// 	if (operator !== AscCommonExcel.ECfOperator.Operator_between &&
+	// 		operator !== AscCommonExcel.ECfOperator.Operator_notBetween) {
+	// 		return; // Formula2 is only valid for Between and NotBetween operators
+	// 	}
+	//
+	// 	let oldRule = this.rule;
+	// 	let newRule = this.rule.clone();
+	//
+	// 	let processFormula = function(formula) {
+	// 		if (formula === undefined || formula === null) {
+	// 			return null;
+	// 		}
+	//
+	// 		if (typeof formula === "string") {
+	// 			let formulaCF = new window['AscCommonExcel'].CFormulaCF();
+	// 			formulaCF.Text = formula;
+	// 			return formulaCF;
+	// 		} else if (typeof formula === "number") {
+	// 			let formulaCF = new window['AscCommonExcel'].CFormulaCF();
+	// 			formulaCF.Text = formula.toString();
+	// 			return formulaCF;
+	// 		}
+	//
+	// 		return null;
+	// 	};
+	//
+	// 	let formula = processFormula(Formula2);
+	// 	if (formula) {
+	// 		if (!newRule.aRuleElements) {
+	// 			newRule.aRuleElements = [];
+	// 		}
+	//
+	// 		while (newRule.aRuleElements.length < 2) {
+	// 			newRule.aRuleElements.push(null);
+	// 		}
+	// 		newRule.aRuleElements[1] = formula;
+	// 	} else {
+	// 		if (newRule.aRuleElements && newRule.aRuleElements.length > 1) {
+	// 			newRule.aRuleElements[1] = null;
+	// 		}
+	// 	}
+	//
+	// 	worksheet.changeCFRule(oldRule, newRule, true);
+	// };
+
+	Object.defineProperty(ApiFormatCondition.prototype, "Formula2", {
+		get: function() {
+			return this.GetFormula2();
+		}/*,
+		set: function(value) {
+			this.SetFormula2(value);
+		}*/
+	});
+
 	/**
-	 * Sets the second formula.
+	 * Sets the number format applied to a cell if the conditional formatting rule evaluates to True.
 	 * @memberof ApiFormatCondition
 	 * @typeofeditors ["CSE"]
-	 * @param {string} Formula2 - The second formula.
-	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetFormula2.js
+	 * @param {string} NumberFormat - The number format code (e.g., "General", "#,##0.00", etc.)
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetNumberFormat.js
 	 */
-	ApiFormatCondition.prototype.SetFormula2 = function(Formula2) {
-		let formula = new window['AscCommonExcel'].CFormulaCF();
-		formula.Text = Formula2;
-
-		while (this.rule.aRuleElements.length < 2) {
-			this.rule.aRuleElements.push(null);
+	ApiFormatCondition.prototype.SetNumberFormat = function(NumberFormat) {
+		if (!this.rule) {
+			return;
 		}
-		this.rule.aRuleElements[1] = formula;
+
+		this.private_changeStyle(function (newRule) {
+			newRule.dxf.asc_setNumFormatInfo(NumberFormat);
+		}, true);
 	};
 
 	/**
-	 * Returns the date operator for time period conditions.
-	 * @memberof ApiFormatCondition
-	 * @typeofeditors ["CSE"]
-	 * @returns {XlTimePeriods}
-	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetDateOperator.js
-	 */
-	ApiFormatCondition.prototype.GetDateOperator = function() {
-		return ToXlTimePeriodsFrom(this.rule.timePeriod);
-	};
-
-	/**
-	 * Sets the date operator for time period conditions.
-	 * @memberof ApiFormatCondition
-	 * @typeofeditors ["CSE"]
-	 * @param {XlTimePeriods} DateOperator - The date operator.
-	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetDateOperator.js
-	 */
-	ApiFormatCondition.prototype.SetDateOperator = function(DateOperator) {
-		let internalPeriod = FromXlTimePeriodsTo(DateOperator);
-		if (internalPeriod !== -1) {
-			this.rule.timePeriod = internalPeriod;
-		}
-	};
-
-	/**
-	 * Returns the text for text-based conditions.
+	 * Returns the number format applied to a cell if the conditional formatting rule evaluates to True.
 	 * @memberof ApiFormatCondition
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetText.js
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetNumberFormat.js
 	 */
-	ApiFormatCondition.prototype.GetText = function() {
-		return this.rule.text || "";
+	ApiFormatCondition.prototype.GetNumberFormat = function() {
+		if (!this.rule || !this.rule.dxf || !this.rule.dxf.num) {
+			return "General";
+		}
+
+		return this.rule.dxf.asc_getNumFormat();
 	};
 
-	/**
-	 * Sets the text for text-based conditions.
-	 * @memberof ApiFormatCondition
-	 * @typeofeditors ["CSE"]
-	 * @param {string} Text - The text.
-	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetText.js
-	 */
-	ApiFormatCondition.prototype.SetText = function(Text) {
-		this.rule.text = Text;
-	};
+	Object.defineProperty(ApiFormatCondition.prototype, "NumberFormat", {
+		get: function() {
+			return this.GetNumberFormat();
+		},
+		set: function(value) {
+			this.SetNumberFormat(value);
+		}
+	});
+
+	// /**
+	//  * Sets the format condition operator.
+	//  * @memberof ApiFormatCondition
+	//  * @typeofeditors ["CSE"]
+	//  * @param {XlFormatConditionOperator} Operator - The format condition operator.
+	//  * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetOperator.js
+	//  */
+	// ApiFormatCondition.prototype.SetOperator = function(Operator) {
+	// 	if (!this.rule) {
+	// 		return;
+	// 	}
+	//
+	// 	let internalOperator = FromXlFormatConditionOperatorTo(Operator);
+	// 	if (internalOperator !== -1) {
+	// 		this.private_changeStyle(function (newRule) {
+	// 			newRule.operator = internalOperator;
+	// 		}, true);
+	// 	}
+	// };
 
 	/**
-	 * Returns the rank for top/bottom conditions.
+	 * Returns the format condition operator.
 	 * @memberof ApiFormatCondition
 	 * @typeofeditors ["CSE"]
-	 * @returns {number}
-	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetRank.js
+	 * @returns {XlFormatConditionOperator}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetOperator.js
 	 */
-	ApiFormatCondition.prototype.GetRank = function() {
-		return this.rule.rank || 10;
+	ApiFormatCondition.prototype.GetOperator = function() {
+		if (!this.rule) {
+			return "";
+		}
+
+		return ToXlFormatConditionOperatorFrom(this.rule.operator);
 	};
 
-	/**
-	 * Sets the rank for top/bottom conditions.
-	 * @memberof ApiFormatCondition
-	 * @typeofeditors ["CSE"]
-	 * @param {number} Rank - The rank.
-	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetRank.js
-	 */
-	ApiFormatCondition.prototype.SetRank = function(Rank) {
-		this.rule.rank = Rank;
-	};
+	Object.defineProperty(ApiFormatCondition.prototype, "Operator", {
+		get: function() {
+			return this.GetOperator();
+		}/*,
+		set: function(value) {
+			this.SetOperator(value);
+		}*/
+	});
 
 	/**
-	 * Returns whether rank is percentage-based.
+	 * Returns the parent range object.
 	 * @memberof ApiFormatCondition
 	 * @typeofeditors ["CSE"]
-	 * @returns {boolean}
-	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetPercentRank.js
+	 * @returns {ApiRange}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetParent.js
 	 */
-	ApiFormatCondition.prototype.GetPercentRank = function() {
-		return this.rule.percent || false;
+	ApiFormatCondition.prototype.GetParent = function() {
+		return this.range;
 	};
 
-	/**
-	 * Sets whether rank is percentage-based.
-	 * @memberof ApiFormatCondition
-	 * @typeofeditors ["CSE"]
-	 * @param {boolean} PercentRank - Whether rank is percentage-based.
-	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetPercentRank.js
-	 */
-	ApiFormatCondition.prototype.SetPercentRank = function(PercentRank) {
-		this.rule.percent = PercentRank;
-	};
+	Object.defineProperty(ApiFormatCondition.prototype, "Parent", {
+		get: function() {
+			return this.GetParent();
+		}
+	});
 
 	/**
-	 * Returns above/below for average conditions.
+	 * Returns the format condition type.
 	 * @memberof ApiFormatCondition
 	 * @typeofeditors ["CSE"]
-	 * @returns {boolean}
-	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetAboveBelow.js
+	 * @returns {XlFormatConditionType}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetType.js
 	 */
-	ApiFormatCondition.prototype.GetAboveBelow = function() {
-		return this.rule.aboveAverage;
-	};
-
-	/**
-	 * Sets above/below for average conditions.
-	 * @memberof ApiFormatCondition
-	 * @typeofeditors ["CSE"]
-	 * @param {boolean} AboveBelow - Above/below for average conditions.
-	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetAboveBelow.js
-	 */
-	ApiFormatCondition.prototype.SetAboveBelow = function(AboveBelow) {
-		this.rule.aboveAverage = AboveBelow;
-	};
-
-	/**
-	 * Returns standard deviations for average conditions.
-	 * @memberof ApiFormatCondition
-	 * @typeofeditors ["CSE"]
-	 * @returns {number}
-	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetStdDev.js
-	 */
-	ApiFormatCondition.prototype.GetStdDev = function() {
-		return this.rule.stdDev || 1;
-	};
-
-	/**
-	 * Sets standard deviations for average conditions.
-	 * @memberof ApiFormatCondition
-	 * @typeofeditors ["CSE"]
-	 * @param {number} StdDev - Standard deviations.
-	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetStdDev.js
-	 */
-	ApiFormatCondition.prototype.SetStdDev = function(StdDev) {
-		this.rule.stdDev = StdDev;
-	};
-
-	/**
-	 * Returns the priority of the condition.
-	 * @memberof ApiFormatCondition
-	 * @typeofeditors ["CSE"]
-	 * @returns {number}
-	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetPriority.js
-	 */
-	ApiFormatCondition.prototype.GetPriority = function() {
-		return this.rule.priority || 1;
-	};
-
-	/**
-	 * Sets the priority of the condition.
-	 * @memberof ApiFormatCondition
-	 * @typeofeditors ["CSE"]
-	 * @param {number} Priority - The priority.
-	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetPriority.js
-	 */
-	ApiFormatCondition.prototype.SetPriority = function(Priority) {
-		this.rule.priority = Priority;
-	};
-
-	/**
-	 * Returns whether to stop if this condition is true.
-	 * @memberof ApiFormatCondition
-	 * @typeofeditors ["CSE"]
-	 * @returns {boolean}
-	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetStopIfTrue.js
-	 */
-	ApiFormatCondition.prototype.GetStopIfTrue = function() {
-		return this.rule.stopIfTrue || false;
-	};
-
-	/**
-	 * Sets whether to stop if this condition is true.
-	 * @memberof ApiFormatCondition
-	 * @typeofeditors ["CSE"]
-	 * @param {boolean} StopIfTrue - Whether to stop if this condition is true.
-	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetStopIfTrue.js
-	 */
-	ApiFormatCondition.prototype.SetStopIfTrue = function(StopIfTrue) {
-		this.rule.stopIfTrue = StopIfTrue;
+	ApiFormatCondition.prototype.GetType = function() {
+		return ToXlFormatConditionTypeFrom(this.rule.type);
 	};
 
 	Object.defineProperty(ApiFormatCondition.prototype, "Type", {
 		get: function() {
 			return this.GetType();
-		},
-		set: function(value) {
-			this.SetType(value);
 		}
 	});
 
-	Object.defineProperty(ApiFormatCondition.prototype, "Operator", {
+	/**
+	 * Returns the pivot table condition object.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {PTCondition | null}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetPTCondition.js
+	 */
+	ApiFormatCondition.prototype.GetPTCondition = function() {
+		if (!this.rule) {
+			return null;
+		}
+		
+		if (this.rule.pivot) {
+			return this.rule.pivot;
+		}
+
+		return null;
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "PTCondition", {
 		get: function() {
-			return this.GetOperator();
-		},
-		set: function(value) {
-			this.SetOperator(value);
+			return this.GetPTCondition();
 		}
 	});
 
-	Object.defineProperty(ApiFormatCondition.prototype, "Formula1", {
-		get: function() {
-			return this.GetFormula1();
-		},
-		set: function(value) {
-			this.SetFormula1(value);
+	ApiFormatCondition.prototype.private_changeStyle = function(callback, notInitFont) {
+		let worksheet = this._parent.range.range.worksheet;
+		if (!worksheet || !worksheet.aConditionalFormattingRules) {
+			return;
 		}
-	});
 
-	Object.defineProperty(ApiFormatCondition.prototype, "Formula2", {
-		get: function() {
-			return this.GetFormula2();
-		},
-		set: function(value) {
-			this.SetFormula2(value);
-		}
-	});
+		let oldRule = this.rule;
+		let newRule = oldRule.clone();
 
-	Object.defineProperty(ApiFormatCondition.prototype, "DateOperator", {
-		get: function() {
-			return this.GetDateOperator();
-		},
-		set: function(value) {
-			this.SetDateOperator(value);
+		if (!newRule.dxf) {
+			newRule.dxf = new window['AscCommonExcel'].CellXfs();
 		}
-	});
+		if (!newRule.dxf.font && !notInitFont) {
+			newRule.dxf.font = new window['AscCommonExcel'].Font();
+		}
+		callback(newRule);
 
-	Object.defineProperty(ApiFormatCondition.prototype, "Text", {
-		get: function() {
-			return this.GetText();
-		},
-		set: function(value) {
-			this.SetText(value);
-		}
-	});
+		worksheet.changeCFRule(oldRule, newRule, true);
+	};
 
-	Object.defineProperty(ApiFormatCondition.prototype, "Rank", {
-		get: function() {
-			return this.GetRank();
-		},
-		set: function(value) {
-			this.SetRank(value);
-		}
-	});
-
-	Object.defineProperty(ApiFormatCondition.prototype, "PercentRank", {
-		get: function() {
-			return this.GetPercentRank();
-		},
-		set: function(value) {
-			this.SetPercentRank(value);
-		}
-	});
-
-	Object.defineProperty(ApiFormatCondition.prototype, "AboveBelow", {
-		get: function() {
-			return this.GetAboveBelow();
-		},
-		set: function(value) {
-			this.SetAboveBelow(value);
-		}
-	});
-
-	Object.defineProperty(ApiFormatCondition.prototype, "StdDev", {
-		get: function() {
-			return this.GetStdDev();
-		},
-		set: function(value) {
-			this.SetStdDev(value);
-		}
-	});
-
-	Object.defineProperty(ApiFormatCondition.prototype, "Priority", {
-		get: function() {
-			return this.GetPriority();
-		},
-		set: function(value) {
-			this.SetPriority(value);
-		}
-	});
-
-	Object.defineProperty(ApiFormatCondition.prototype, "StopIfTrue", {
-		get: function() {
-			return this.GetStopIfTrue();
-		},
-		set: function(value) {
-			this.SetStopIfTrue(value);
-		}
-	});
 
 
 	Api.prototype["Format"]                = Api.prototype.Format;
