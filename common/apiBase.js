@@ -533,6 +533,19 @@
 	{
 
 	};
+	baseEditorsApi.prototype.asc_setLicenseoForStandalone                  = function(licenseInfo)
+	{
+		this.CoAuthoringApi.set_onlineWork(false);
+		this.CoAuthoringApi.set_standaloneApp(true);
+		this.licenseResult   = licenseInfo;
+		this.isOnLoadLicense = true;
+		this._onEndPermissions();
+	}
+	baseEditorsApi.prototype.asc_openDocumentForStandalone                  = function(documentInfo)
+	{
+			this.CoAuthoringApi.onDocumentOpen(documentInfo);
+	}
+
 	baseEditorsApi.prototype.asc_setDocInfo                  = function(oDocInfo)
 	{
 		var oldInfo = this.DocInfo;
@@ -2916,7 +2929,9 @@
 				|| this.forceSaveOformRequest) {
 				if (this._prepareSave(isIdle)) {
 					// Не даем пользователю сохранять, пока не закончится сохранение (если оно началось)
-					this.canSave = false;
+					if(!this.CoAuthoringApi.get_standaloneApp()){
+						this.canSave = false;
+					}
 					this.CoAuthoringApi.askSaveChanges(function (e) {
 						t._onSaveCallback(e);
 					});

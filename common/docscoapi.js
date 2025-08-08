@@ -48,10 +48,11 @@
   function CDocsCoApi() {
     this._CoAuthoringApi = new DocsCoApi();
     this._onlineWork = false;
+    this._standaloneApp = false;
   }
 
   CDocsCoApi.prototype.init = function(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo, shardKey, wopiSrc, userSessionId, headingsColor, openCmd) {
-    if (this._CoAuthoringApi && this._CoAuthoringApi.isRightURL()) {
+    if (this._CoAuthoringApi && this._CoAuthoringApi.isRightURL() && !this._standaloneApp ) {
       var t = this;
       this._CoAuthoringApi.onAuthParticipantsChanged = function(e, id) {
         t.callback_OnAuthParticipantsChanged(e, id);
@@ -149,8 +150,12 @@
       this._onlineWork = true;
     } else {
       // Фиктивные вызовы
-      this.onFirstConnect();
-      this.onLicense(null);
+      if(this.onFirstConnect){
+        this.onFirstConnect();
+      }
+      if(this.onLicense && !this._standaloneApp){
+        this.onLicense(null);
+      }
     }
   };
 
@@ -178,7 +183,9 @@
       // Фиктивные вызовы
       this.callback_OnSpellCheckInit('');
       this.callback_OnSetIndexUser('123');
-      this.onFirstLoadChangesEnd();
+      if(this.onFirstLoadChangesEnd){
+        this.onFirstLoadChangesEnd();
+      }
     }
   };
 
@@ -190,6 +197,18 @@
 
   CDocsCoApi.prototype.get_onlineWork = function() {
     return this._onlineWork;
+  };
+
+  CDocsCoApi.prototype.set_onlineWork = function(val) {
+    return this._onlineWork = val;
+  };
+
+  CDocsCoApi.prototype.get_standaloneApp = function() {
+    return this._standaloneApp;
+  };
+
+  CDocsCoApi.prototype.set_standaloneApp = function(val) {
+    return this._standaloneApp = val;
   };
 
   CDocsCoApi.prototype.get_state = function() {
@@ -245,7 +264,19 @@
         if (callback) {
           var lengthArray = (arrayBlockId) ? arrayBlockId.length : 0;
           if (0 < lengthArray) {
-            callback({"lock": arrayBlockId[0]});
+            if(t._standaloneApp){
+              callback({ 
+                "lock": {
+                  "state": 2,
+                  "user": null,
+                  "time": Date.now(),
+                  "block": arrayBlockId[0],
+                  "blockValue": arrayBlockId[0]
+                }
+              });
+            } else {
+              callback({"lock": arrayBlockId[0]});
+            }
             // Фиктивные вызовы
             for (var i = 0; i < lengthArray; ++i) {
               t.callback_OnLocksAcquired({"state": 2, "block": arrayBlockId[i]});
