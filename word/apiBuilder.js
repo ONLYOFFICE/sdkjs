@@ -4380,6 +4380,11 @@
 			return new ApiInlineLvlSdt(obj);
 		else if (obj instanceof AscWord.CBlockLevelSdt)
 			return new ApiBlockLvlSdt(obj);
+		else if (obj instanceof AscWord.Paragraph)
+			return new ApiParagraph(obj);
+		else if (obj instanceof AscFormat.CGraphicObjectBase) {
+			return new ApiDrawing(obj);
+		}
 			
 		return null;
 	};
@@ -5855,7 +5860,7 @@
 	/**
 	 * Returns an array of all paragraphs from the current document content.
 	 * @memberof ApiDocumentContent
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {ApiParagraph[]}
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetAllParagraphs.js
 	 */
@@ -5887,7 +5892,7 @@
 	/**
 	 * Returns the inner text of the current document content object.
 	 * @memberof ApiDocumentContent
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {object} oProps - The resulting string display properties.
      * @param {boolean} oProps.Numbering - Defines if the resulting string will include numbering or not.
      * @param {boolean} oProps.Math - Defines if the resulting string will include mathematical expressions or not.
@@ -5930,7 +5935,7 @@
 	/**
 	 * Returns the current paragraph where the cursor is located.
 	 * @memberof ApiDocumentContent
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?ApiParagraph}
 	 * @since 9.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetCurrentParagraph.js
@@ -5948,7 +5953,7 @@
 	/**
 	 * Returns the current run where the cursor is located.
 	 * @memberof ApiDocumentContent
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?ApiRun}
 	 * @since 9.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetCurrentRun.js
@@ -5975,6 +5980,11 @@
 	{
 		let contentControl = this.Document.GetCurrentContentControl();
 		return contentControl ? ToApiContentControl(contentControl) : null;
+	};
+
+	ApiDocumentContent.prototype.GetInternalId = function()
+	{
+		return this.Document.GetId();
 	};
 
 	/**
@@ -9793,7 +9803,7 @@
 	/**
 	 * Adds an element to the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {ParagraphContent} oElement - The document element which will be added at the current position. Returns false if the
 	 * oElement type is not supported by a paragraph.
 	 * @returns {boolean} Returns <code>false</code> if the type of <code>oElement</code> is not supported by paragraph
@@ -9834,7 +9844,7 @@
 	/**
 	 * Returns the last Run with text in the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {ApiRun} Returns <code>false</code> if the paragraph doesn't containt the required run.
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetLastRunWithText.js
 	 */
@@ -9861,7 +9871,7 @@
 	/**
 	 * Sets the bold property to the text character.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} isBold - Specifies that the contents of this paragraph are displayed bold.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetBold.js
@@ -9877,7 +9887,7 @@
 	/**
 	 * Specifies that any lowercase characters in this paragraph are formatted for display only as their capital letter character equivalents.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} isCaps - Specifies that the contents of the current paragraph are displayed capitalized.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetCaps.js
@@ -9893,7 +9903,7 @@
 	/**
 	 * Sets the text color to the current paragraph in the RGB format.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
@@ -9940,7 +9950,7 @@
 	/**
 	 * Specifies that the contents of this paragraph are displayed with two horizontal lines through each character displayed on the line.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} isDoubleStrikeout - Specifies that the contents of the current paragraph are displayed double struck through.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetDoubleStrikeout.js
@@ -9956,7 +9966,7 @@
 	/**
 	 * Sets all 4 font slots with the specified font family.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} sFontFamily - The font family or families used for the current paragraph.
 	 * @returns {?ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetFontFamily.js
@@ -9980,7 +9990,7 @@
 	/**
 	 * Returns all font names from all elements inside the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {string[]} - The font names used for the current paragraph.
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetFontNames.js
 	 */
@@ -10004,7 +10014,7 @@
 	/**
 	 * Sets the font size to the characters of the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {hps} nSize - The text size value measured in half-points (1/144 of an inch).
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetFontSize.js
@@ -10059,7 +10069,7 @@
 	/**
 	 * Sets the italic property to the text character.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} isItalic - Specifies that the contents of the current paragraph are displayed italicized.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetItalic.js
@@ -10094,7 +10104,7 @@
 	 * Specifies that all the small letter characters in this paragraph are formatted for display only as their capital
 	 * letter character equivalents which are two points smaller than the actual font size specified for this text.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} isSmallCaps - Specifies if the contents of the current paragraph are displayed capitalized two points smaller or not.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetSmallCaps.js
@@ -10113,7 +10123,7 @@
 	/**
 	 * Sets the text spacing measured in twentieths of a point.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {twips} nSpacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch).
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetSpacing.js
@@ -10129,7 +10139,7 @@
 	/**
 	 * Specifies that the contents of this paragraph are displayed with a single horizontal line through the center of the line.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} isStrikeout - Specifies that the contents of the current paragraph are displayed struck through.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetStrikeout.js
@@ -10149,7 +10159,7 @@
 	 * Specifies that the contents of this paragraph are displayed along with a line appearing directly below the character
 	 * (less than all the spacing above and below the characters on the line).
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} isUnderline - Specifies that the contents of the current paragraph are displayed underlined.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetUnderline.js
@@ -10195,7 +10205,7 @@
 	/**
 	 * Returns the last element of the paragraph which is not empty.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {?ParagraphContent}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/Last.js
 	 */
@@ -10406,7 +10416,7 @@
 	/**
 	 * Sets the paragraph text properties.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {ApiTextPr} oTextPr - The paragraph text properties.
 	 * @return {boolean} - returns false if param is invalid.
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetTextPr.js
@@ -10459,7 +10469,7 @@
 	/**
 	 * Inserts a paragraph at the specified position.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string | ApiParagraph} paragraph - Text or paragraph.
 	 * @param {string} sPosition - The position where the text or paragraph will be inserted ("before" or "after" the paragraph specified).
 	 * @param {boolean} beRNewPara - Defines if this method returns a new paragraph (true) or the current paragraph (false).
@@ -10955,7 +10965,7 @@
 	/**
 	 * Converts the ApiParagraph object into the JSON object.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
 	 * @param {boolean} bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
 	 * @returns {JSON}
@@ -11155,6 +11165,19 @@
 
 		this.private_GetImpl().Set_SectionPr(oSectPr);
 		return true;
+	};
+
+
+	/**
+	 * Returns an internal ID of the current content paragraph.
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetInternalId.js
+	 */
+	ApiParagraph.prototype.GetInternalId = function()
+	{
+		return this.Paragraph.GetId();
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -25502,6 +25525,7 @@
 	ApiDocumentContent.prototype["GetCurrentParagraph"]      = ApiDocumentContent.prototype.GetCurrentParagraph;
 	ApiDocumentContent.prototype["GetCurrentRun"]            = ApiDocumentContent.prototype.GetCurrentRun;
 	ApiDocumentContent.prototype["GetCurrentContentControl"] = ApiDocumentContent.prototype.GetCurrentContentControl;
+	ApiDocumentContent.prototype["GetInternalId"]            = ApiDocumentContent.prototype.GetInternalId;
 
 	ApiRange.prototype["GetClassType"]               = ApiRange.prototype.GetClassType;
 	ApiRange.prototype["GetParagraph"]               = ApiRange.prototype.GetParagraph;
@@ -25718,7 +25742,7 @@
 	ApiParagraph.prototype["AddCaption"]             = ApiParagraph.prototype.AddCaption;
 	ApiParagraph.prototype["SetSection"]             = ApiParagraph.prototype.SetSection;
 	ApiParagraph.prototype["GetSection"]             = ApiParagraph.prototype.GetSection;
-
+	ApiParagraph.prototype["GetInternalId"]          = ApiParagraph.prototype.GetInternalId;
 	ApiParagraph.prototype["ToJSON"]                 = ApiParagraph.prototype.ToJSON;
 
 

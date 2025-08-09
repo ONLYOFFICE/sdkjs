@@ -9701,6 +9701,7 @@ CPresentation.prototype.insertSlide = function (pos, slide) {
 	for (var i = 0; i < aSlideComments.length; ++i) {
 		this.Api.sync_AddComment(aSlideComments[i].Get_Id(), aSlideComments[i].Data);
 	}
+	slide.setSlideSize(this.GetWidthMM(), this.GetHeightMM());
 };
 CPresentation.prototype.insertSlideObjectToPos = function (pos, slide) {
 	if(this.IsMasterMode()) {

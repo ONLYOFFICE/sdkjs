@@ -425,6 +425,28 @@
         return null;
     };
 
+	Api.prototype.GetByInternalId = function(id)
+	{
+		let obj = AscCommon.g_oTableId.Get_ById(id);
+		if (!obj)
+			return null;
+
+		if (obj instanceof AscWord.CDocument)
+			return new AscBuilder.ApiDocument(obj);
+		else if (obj instanceof AscWord.CDocumentContent)
+			return new AscBuilder.ApiDocumentContent(obj);
+		else if (obj instanceof AscWord.Paragraph)
+			return new AscBuilder.ApiParagraph(obj);
+		else if (obj instanceof AscFormat.CGraphicFrame) {
+			return new ApiTable(obj);
+		}
+		else if (obj instanceof AscFormat.CGraphicObjectBase) {
+			return new ApiDrawing(obj);
+		}
+
+		return null;
+	};
+
     /**
      * Creates a new slide master.
      * @typeofeditors ["CPE"]
@@ -451,6 +473,10 @@
         return oMaster;
     };
 
+
+	Api.prototype.CreateDefaultMasterSlide = function () {
+		return new ApiMaster(AscCommonSlide.CreateDefaultMaster());
+	};
     /**
      * Creates a new slide layout and adds it to the slide master if it is specified.
      * @typeofeditors ["CPE"]
@@ -1172,6 +1198,8 @@
 				index = nIndex;
 			}
             this.Presentation.insertSlide(index, oSlide.Slide);
+			this.Presentation.CurPage = index;
+			this.Presentation.bGoToPage = true;
         }
     };
 
@@ -1773,7 +1801,7 @@
     ApiMaster.prototype.GetLayoutByType = function(sType)
     {
 		let type = AscCommonSlide.LAYOUT_TYPE_MAP[sType];
-		let layout = this.Master.getMatchingLayout(type)
+		let layout = this.Master.getMatchingLayout(type, undefined, undefined, true);
 		if(!layout) return null;
 		return new ApiLayout(layout)
     };
@@ -2203,7 +2231,7 @@
     /**
      * Returns a type if the current layout.
      * @typeofeditors ["CPE"]
-     * @returns {boolean}
+     * @returns {LayoutType}
      * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/GetLayoutType.js
 	 */
     ApiLayout.prototype.GetLayoutType = function()
@@ -4332,6 +4360,25 @@
 		return nRad * 180 / Math.PI
 	};
 
+
+
+	ApiDrawing.prototype.ReplacePlaceholder = function(oDrawing)
+	{
+		let ph = this.GetPlaceholder();
+		if (!ph) return false;
+
+		let slide = this.Drawing.parent;
+		if (!slide || !slide.graphicObjects) return false;
+		slide.replaceSp(this.Drawing, oDrawing.Drawing);
+		oDrawing.Drawing.setSpPr(this.Drawing.spPr.createDuplicate());
+	};
+
+
+	ApiDrawing.prototype.GetInternalId = function(oDrawing)
+	{
+		return this.Drawing.GetId();
+	};
+
     //------------------------------------------------------------------------------------------------------------------
     //
     // ApiGroup
@@ -5254,6 +5301,7 @@
     Api.prototype["CreateParagraph"]                      = Api.prototype.CreateParagraph;
     Api.prototype["Save"]                                 = Api.prototype.Save;
     Api.prototype["CreateMaster"]                         = Api.prototype.CreateMaster;
+    Api.prototype["CreateDefaultMasterSlide"]             = Api.prototype.CreateDefaultMasterSlide;
     Api.prototype["CreateLayout"]                         = Api.prototype.CreateLayout;
     Api.prototype["CreatePlaceholder"]                    = Api.prototype.CreatePlaceholder;
     Api.prototype["CreateTheme"]                          = Api.prototype.CreateTheme;
@@ -5263,6 +5311,7 @@
     Api.prototype["CreateWordArt"]                        = Api.prototype.CreateWordArt;
 	Api.prototype["FromJSON"]                             = Api.prototype.FromJSON;
 	Api.prototype["GetSelection"]                         = Api.prototype.GetSelection;
+	Api.prototype["GetByInternalId"]                      = Api.prototype.GetByInternalId;
 
 
     ApiPresentation.prototype["GetClassType"]             = ApiPresentation.prototype.GetClassType;
@@ -5438,6 +5487,8 @@
     ApiDrawing.prototype["Select"]                        = ApiDrawing.prototype.Select;
     ApiDrawing.prototype["SetRotation"]                   = ApiDrawing.prototype.SetRotation;
     ApiDrawing.prototype["GetRotation"]                   = ApiDrawing.prototype.GetRotation;
+    ApiDrawing.prototype["ReplacePlaceholder"]            = ApiDrawing.prototype.ReplacePlaceholder;
+    ApiDrawing.prototype["GetInternalId"]                 = ApiDrawing.prototype.GetInternalId;
 
     ApiGroup.prototype["GetClassType"]	= ApiGroup.prototype.GetClassType;
 	ApiGroup.prototype["Ungroup"]		= ApiGroup.prototype.Ungroup;
