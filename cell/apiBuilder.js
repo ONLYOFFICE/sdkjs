@@ -12171,10 +12171,10 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange | null} - Returns the expanded range or null if the range cannot be expanded.
-	 * @since 9.0.4
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/Expand.js
+	 * @since 9.1
+	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetCurrentRegion.js
 	 */
-	ApiRange.prototype.Expand = function () {
+	ApiRange.prototype.GetCurrentRegion = function () {
 		if (!this.range) {
 			return null;
 		}
@@ -12193,7 +12193,7 @@
 
 	Object.defineProperty(ApiRange.prototype, "CurrentRegion", {
 		get: function () {
-			return this.Expand();
+			return this.GetCurrentRegion();
 		}
 	});
 
@@ -19560,13 +19560,13 @@
 	ApiRange.prototype["SetAutoFilter"] = ApiRange.prototype.SetAutoFilter;
 	ApiRange.prototype["SetFormulaArray"] = ApiRange.prototype.SetFormulaArray;
 	ApiRange.prototype["GetFormulaArray"] = ApiRange.prototype.GetFormulaArray;
-	ApiRange.prototype["Expand"] = ApiRange.prototype.Expand;
 	ApiRange.prototype["Offset"] = ApiRange.prototype.Offset;
 	ApiRange.prototype["Resize"] = ApiRange.prototype.Resize;
 	ApiRange.prototype["GetRange"] = ApiRange.prototype.GetRange;
 	ApiRange.prototype["GetEntireRow"] = ApiRange.prototype.GetEntireRow;
 	ApiRange.prototype["GetEntireColumn"] = ApiRange.prototype.GetEntireColumn;
 	ApiRange.prototype["GetValidation"] = ApiRange.prototype.GetValidation;
+	ApiRange.prototype["GetCurrentRegion"] = ApiRange.prototype.GetCurrentRegion;
 
 
 
