@@ -19592,6 +19592,12 @@
 	 * @see office-js-api/Examples/Enumerations/XlContainsOperator.js
 	 */
 
+	/**
+	 * Specifies the scope for pivot table conditional formatting conditions.
+	 * @typedef {("xlFieldsScope" | "xlSelectionScope" | "xlDataFieldScope")} XlPivotConditionScope
+	 * @see office-js-api/Examples/Enumerations/XlPivotConditionScope.js
+	 */
+
 	function FromXlFormatConditionTypeTo(sType) {
 		let nType = -1;
 		switch (sType) {
@@ -19883,105 +19889,155 @@
 			return null;
 		}
 
-		let props = [];
+		let props = new window['AscCommonExcel'].CConditionalFormattingRule();
+		props.type = internalType;
+		props.priority = worksheet.getNextCFPriority ? worksheet.getNextCFPriority() : 1;
 
-		switch (internalType) {
-			case Asc.ECfType.expression:
-			case Asc.ECfType.cellIs:
-			case Asc.ECfType.containsText:
-				if (Formula1 !== undefined) {
-					let formula1String = (Formula1 && Formula1 instanceof ApiRange) ? Formula1.GetAddress() : Formula1;
-					props.push([formula1String]);
-				}
-				if (Formula2 !== undefined) {
-					let formula2String = (Formula2 && Formula2 instanceof ApiRange) ? Formula2.GetAddress() : Formula2;
-					props.push([formula2String]);
-				}
-				break;
-			case Asc.ECfType.top10:
-				if (Formula1 !== undefined) {
-					let isPercent = Operator && (Operator.indexOf("percent") !== -1 || Operator.indexOf("Percent") !== -1);
-					let formula1String = (Formula1 && Formula1 instanceof ApiRange) ? Formula1.GetAddress() : Formula1;
-					props.push([formula1String, isPercent]);
-				}
-				break;
-			case Asc.ECfType.colorScale:
-			case Asc.ECfType.dataBar:
-			case Asc.ECfType.iconSet:
-				if (Formula1 !== undefined) {
-					let formula1String = (Formula1 && Formula1 instanceof ApiRange) ? Formula1.GetAddress() : Formula1;
-					props.push([formula1String, AscCommonExcel.ECfvoType.Formula]);
-				}
-				if (Formula2 !== undefined) {
-					let formula2String = (Formula2 && Formula2 instanceof ApiRange) ? Formula2.GetAddress() : Formula2;
-					props.push([formula2String, AscCommonExcel.ECfvoType.Formula]);
-				}
-				break;
-			default:
-				if (Formula1 !== undefined) {
-					let formula1String = (Formula1 && Formula1 instanceof ApiRange) ? Formula1.GetAddress() : Formula1;
-					props.push([formula1String]);
-				}
-				if (Formula2 !== undefined) {
-					let formula2String = (Formula2 && Formula2 instanceof ApiRange) ? Formula2.GetAddress() : Formula2;
-					props.push([formula2String]);
-				}
-				break;
-		}
-
-		if (props.length > 0) {
-			let validationResult = AscCommonExcel.isValidDataRefCf(internalType, props);
-			if (validationResult && validationResult[0] !== null) {
-				console.error("Conditional formatting validation failed:"/*, validationResult[0], "at index:", validationResult[1]*/);
-				return null;
-			}
-		}
-
-		let rule = new window['AscCommonExcel'].CConditionalFormattingRule();
-		rule.type = internalType;
-		rule.priority = worksheet.getNextCFPriority ? worksheet.getNextCFPriority() : 1;
-
-		if (Operator !== undefined) {
+		if (Operator !== undefined && (internalType === Asc.ECfType.cellIs || internalType === Asc.ECfType.containsText)) {
 			let internalOperator = FromXlFormatConditionOperatorTo(Operator);
 			if (internalOperator !== -1) {
-				rule.operator = internalOperator;
+				props.operator = internalOperator;
 			}
 		}
 
-		let processFormula = function (formula) {
-			if (formula === undefined || formula === null) {
-				return null;
-			}
+		switch (internalType) {
+			case Asc.ECfType.containsText:
+				if (Formula1 !== undefined) {
+					let formula1String = (Formula1 instanceof ApiRange) ? Formula1.GetAddress() : Formula1.toString();
+					props.asc_setContainsText(formula1String);
+				}
+				if (Operator !== undefined) {
+					let textOperatorType = FromXlFormatConditionOperatorTo(Operator);
+					if (textOperatorType !== -1) {
+						props.operator = textOperatorType;
+					}
+				}
+				break;
 
-			if (typeof formula === "string") {
-				let formulaCF = new window['AscCommonExcel'].CFormulaCF();
-				formulaCF.Text = formula;
-				return formulaCF;
-			} else if (typeof formula === "number") {
-				let formulaCF = new window['AscCommonExcel'].CFormulaCF();
-				formulaCF.Text = formula.toString();
-				return formulaCF;
-			} else if (formula && formula.constructor === ApiRange) {
-				let formulaCF = new window['AscCommonExcel'].CFormulaCF();
-				formulaCF.Text = formula.GetAddress();
-				return formulaCF;
-			}
+			case Asc.ECfType.cellIs:
+				if (Formula1 !== undefined) {
+					let formula1String = (Formula1 instanceof ApiRange) ? Formula1.GetAddress() : Formula1.toString();
+					props.asc_setValue1(formula1String);
+				}
+				if (Formula2 !== undefined && (props.operator === Asc.ECfOperator.between || props.operator === Asc.ECfOperator.notBetween)) {
+					let formula2String = (Formula2 instanceof ApiRange) ? Formula2.GetAddress() : Formula2.toString();
+					props.asc_setValue2(formula2String);
+				}
+				break;
 
-			return null;
-		};
+			case Asc.ECfType.expression:
+				if (Formula1 !== undefined) {
+					let formula1String = (Formula1 instanceof ApiRange) ? Formula1.GetAddress() : Formula1.toString();
+					props.asc_setValue1(formula1String);
+				}
+				break;
 
-		if (Formula1 !== undefined) {
-			let formula = processFormula(Formula1);
-			if (formula) {
-				rule.aRuleElements.push(formula);
-			}
+			case Asc.ECfType.top10:
+				props.asc_setBottom(false);
+				props.asc_setPercent(false);
+				if (Formula1 !== undefined) {
+					let rank = parseInt(Formula1);
+					if (!isNaN(rank)) {
+						props.asc_setRank(rank);
+					}
+				}
+				if (Operator && typeof Operator === 'string') {
+					if (Operator.toLowerCase().includes('bottom')) {
+						props.asc_setBottom(true);
+					}
+					if (Operator.toLowerCase().includes('percent')) {
+						props.asc_setPercent(true);
+					}
+				}
+				break;
+
+			case Asc.ECfType.aboveAverage:
+				props.asc_setAboveAverage(true);
+				props.asc_setEqualAverage(false);
+				props.asc_setStdDev(0);
+				// Operator может переопределить настройки
+				if (Operator !== undefined) {
+					// Здесь можно добавить логику для различных типов above/below average
+				}
+				break;
+
+			case Asc.ECfType.duplicateValues:
+			case Asc.ECfType.containsBlanks:
+
+				if (Operator !== undefined) {
+					let specificType = FromXlFormatConditionOperatorTo(Operator);
+					if (specificType !== -1) {
+						props.type = specificType;
+					}
+				}
+				break;
+
+			case Asc.ECfType.timePeriod:
+				if (Operator !== undefined) {
+					let timePeriod = FromXlTimePeriodsTo(Operator);
+					if (timePeriod !== -1) {
+						props.asc_setTimePeriod(timePeriod);
+					}
+				}
+				break;
+
+			case Asc.ECfType.colorScale:
+				let scaleProps = new window['AscCommonExcel'].CColorScale();
+				let colors = [
+					new window['AscCommonExcel'].CColor(255, 99, 99), // red
+					new window['AscCommonExcel'].CColor(255, 255, 99), // yellow
+					new window['AscCommonExcel'].CColor(99, 255, 99)  // green
+				];
+				let scales = [];
+				for (let i = 0; i < 3; i++) {
+					let scale = new window['AscCommonExcel'].CConditionalFormatValueObject();
+					scale.asc_setType(i === 0 ? Asc.ECfvoType.Min : (i === 2 ? Asc.ECfvoType.Max : Asc.ECfvoType.Percentile));
+					if (i === 1) scale.asc_setVal("50");
+					scales.push(scale);
+				}
+				scaleProps.asc_setColors(colors);
+				scaleProps.asc_setCFVOs(scales);
+				props.asc_setColorScaleOrDataBarOrIconSetRule(scaleProps);
+				break;
+
+			case Asc.ECfType.dataBar:
+				let barProps = new window['AscCommonExcel'].CDataBar();
+				barProps.asc_setInterfaceDefault();
+				let bars = [];
+				for (let i = 0; i < 2; i++) {
+					let bar = new window['AscCommonExcel'].CConditionalFormatValueObject();
+					bar.asc_setType(i === 0 ? Asc.ECfvoType.AutoMin : Asc.ECfvoType.AutoMax);
+					bars.push(bar);
+				}
+				barProps.asc_setCFVOs(bars);
+				props.asc_setColorScaleOrDataBarOrIconSetRule(barProps);
+				break;
+
+			case Asc.ECfType.iconSet:
+				let iconsProps = new window['AscCommonExcel'].CIconSet();
+				iconsProps.asc_setShowValue(true);
+				iconsProps.asc_setReverse(false);
+				iconsProps.asc_setIconSet(Asc.EIconSetType.ThreeTrafficLights1);
+
+				let values = [];
+				let iconCount = 3;
+				for (let i = 0; i < iconCount - 1; i++) {
+					let value = new window['AscCommonExcel'].CConditionalFormatValueObject();
+					value.asc_setType(Asc.ECfvoType.Percent);
+					value.asc_setVal(i === 0 ? "33" : "67");
+					value.asc_setGte(true);
+					values.push(value);
+				}
+				iconsProps.asc_setCFVOs(values);
+				props.asc_setColorScaleOrDataBarOrIconSetRule(iconsProps);
+				break;
 		}
 
-		if (Formula2 !== undefined) {
-			let formula = processFormula(Formula2);
-			if (formula) {
-				rule.aRuleElements.push(formula);
-			}
+		if (internalType === Asc.ECfType.containsText || internalType === Asc.ECfType.containsBlanks ||
+			internalType === Asc.ECfType.duplicateValues || internalType === Asc.ECfType.timePeriod ||
+			internalType === Asc.ECfType.aboveAverage || internalType === Asc.ECfType.top10 ||
+			internalType === Asc.ECfType.cellIs || internalType === Asc.ECfType.expression) {
+			props.dxf = new window['AscCommonExcel'].CellXfs();
 		}
 
 		let ranges = [];
@@ -19992,13 +20048,11 @@
 		} else {
 			ranges.push(this.range.range.bbox);
 		}
-		rule.ranges = ranges;
+		props.ranges = ranges;
 
-		rule.dxf = new window['AscCommonExcel'].CellXfs();
+		worksheet.setCFRule(props);
 
-		worksheet.setCFRule(rule);
-
-		let formatCondition = new ApiFormatCondition(rule, this.range, this);
+		let formatCondition = new ApiFormatCondition(props, this.range, this);
 		this.conditions.push(formatCondition);
 
 		return formatCondition;
@@ -20757,6 +20811,27 @@
 			return;
 		}
 
+		if (newRule.priority === Priority) {
+			return;
+		}
+
+		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		if (!worksheet || !worksheet.aConditionalFormattingRules) {
+			return;
+		}
+		let isContains = false;
+		worksheet.forEachConditionalFormattingRules(function (rule) {
+			if (rule.priority === Priority) {
+				isContains = true;
+				return true;
+			}
+		});
+
+		if (isContains) {
+			logError(new Error("Priority already exists in the worksheet."));
+			return;
+		}
+
 		this.private_changeStyle(function (newRule) {
 			newRule.priority = Priority;
 		}, true);
@@ -20775,36 +20850,36 @@
 	 * Returns the scope type of the conditional formatting rule.
 	 * @memberof ApiFormatCondition
 	 * @typeofeditors ["CSE"]
-	 * @returns {string} - Returns "Selection" for normal ranges, "Worksheet" for entire worksheet, "PivotTable" for pivot tables
+	 * @returns {XlPivotConditionScope} - Returns "xlSelectionScope" for normal ranges, "xlDataFieldScope" for entire worksheet, "xlFieldsScope" for pivot tables
 	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetScopeType.js
 	 */
 	ApiFormatCondition.prototype.GetScopeType = function() {
 		if (!this.rule) {
-			return "Selection";
+			return "xlSelectionScope";
 		}
 
 		// Check if it's a pivot table conditional formatting
 		if (this.rule.pivot) {
-			return "PivotTable";
+			return "xlFieldsScope";
 		}
 
-		// Check if it covers the entire worksheet
+		// Check if it covers the entire worksheet (data field scope)
 		if (this.rule.ranges && this.rule.ranges.length === 1) {
 			let range = this.rule.ranges[0];
 			if (range.r1 === 0 && range.c1 === 0 &&
 				range.r2 === AscCommon.gc_nMaxRow0 && range.c2 === AscCommon.gc_nMaxCol0) {
-				return "Worksheet";
+				return "xlDataFieldScope";
 			}
 		}
 
-		return "Selection";
+		return "xlSelectionScope";
 	};
 
 	/**
 	 * Sets the scope type of the conditional formatting rule.
 	 * @memberof ApiFormatCondition
 	 * @typeofeditors ["CSE"]
-	 * @param {string} ScopeType - The scope type: "Selection", "Worksheet", or "PivotTable"
+	 * @param {XlPivotConditionScope} ScopeType - The scope type: "xlSelectionScope", "xlDataFieldScope", or "xlFieldsScope"
 	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetScopeType.js
 	 */
 	ApiFormatCondition.prototype.SetScopeType = function(ScopeType) {
@@ -20821,11 +20896,11 @@
 		let newRule = this.rule.clone();
 
 		switch (ScopeType) {
-			case "Worksheet":
+			case "xlDataFieldScope":
 				newRule.ranges = [new Asc.Range(0, 0, AscCommon.gc_nMaxCol0, AscCommon.gc_nMaxRow0)];
 				newRule.pivot = false;
 				break;
-			case "PivotTable":
+			case "xlFieldsScope":
 				// Find pivot table at current selection
 				let activeCell = worksheet.selectionRange.activeCell;
 				let pivot = worksheet.getPivotTable(activeCell.col, activeCell.row);
@@ -20834,9 +20909,9 @@
 					newRule.pivot = true;
 				}
 				break;
-			case "Selection":
+			case "xlSelectionScope":
 			default:
-				// Keep current selection
+				// Keep current selection range from AppliesTo property
 				newRule.pivot = false;
 				break;
 		}
@@ -20985,16 +21060,24 @@
 			return null;
 		}
 
+		if (!(this.rule.type === Asc.ECfType.containsText ||
+			this.rule.type === Asc.ECfType.notContainsText ||
+			this.rule.type === Asc.ECfType.beginsWith ||
+			this.rule.type === Asc.ECfType.endsWith)) {
+			logError(new Error('Type must be one of the text-based types: containsText, notContainsText, beginsWith, endsWith'));
+			return;
+		}
+
 		// Map internal types to text operators
-		switch (this.rule.type) {
-			case Asc.ECfType.containsText:
-				return "xlContains";
-			case Asc.ECfType.notContainsText:
-				return "xlDoesNotContain";
-			case Asc.ECfType.beginsWith:
+		switch (this.rule.operator) {
+			case AscCommonExcel.ECfOperator.Operator_beginsWith:
 				return "xlBeginsWith";
-			case Asc.ECfType.endsWith:
+			case AscCommonExcel.ECfOperator.Operator_endsWith:
 				return "xlEndsWith";
+			case AscCommonExcel.ECfOperator.Operator_containsText:
+				return "xlContains";
+			case AscCommonExcel.ECfOperator.Operator_notContains:
+				return "xlDoesNotContain";
 			default:
 				return null;
 		}
@@ -21012,19 +21095,32 @@
 			return;
 		}
 
+		if (!(this.rule.type === Asc.ECfType.containsText ||
+			this.rule.type === Asc.ECfType.notContainsText ||
+			this.rule.type === Asc.ECfType.beginsWith ||
+			this.rule.type === Asc.ECfType.endsWith)) {
+			logError(new Error('Type must be one of the text-based types: containsText, notContainsText, beginsWith, endsWith'));
+			return;
+		}
+
 		let newType = null;
+		let newOperator = null;
 		switch (TextOperator) {
 			case "xlContains":
 				newType = Asc.ECfType.containsText;
+				newOperator = AscCommonExcel.ECfOperator.Operator_containsText;
 				break;
 			case "xlDoesNotContain":
 				newType = Asc.ECfType.notContainsText;
+				newOperator = AscCommonExcel.ECfOperator.Operator_notContains;
 				break;
 			case "xlBeginsWith":
 				newType = Asc.ECfType.beginsWith;
+				newOperator = AscCommonExcel.ECfOperator.Operator_beginsWith;
 				break;
 			case "xlEndsWith":
 				newType = Asc.ECfType.endsWith;
+				newOperator = AscCommonExcel.ECfOperator.Operator_endsWith;
 				break;
 			default:
 				return;
@@ -21032,6 +21128,7 @@
 
 		this.private_changeStyle(function (newRule) {
 			newRule.type = newType;
+			newRule.operator = newOperator;
 
 			// Update formula if text is already set
 			if (newRule.text) {
@@ -21076,6 +21173,60 @@
 		},
 		set: function(value) {
 			this.SetTextOperator(value);
+		}
+	});
+
+	/**
+	 * Returns the date operator for time period conditions.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlTimePeriods | null}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetDateOperator.js
+	 */
+	ApiFormatCondition.prototype.GetDateOperator = function() {
+		if (!this.rule) {
+			return null;
+		}
+
+		// DateOperator применяется только для условий типа xlTimePeriod
+		if (this.rule.type !== Asc.ECfType.timePeriod) {
+			return null;
+		}
+
+		return ToXlTimePeriodsFrom(this.rule.timePeriod);
+	};
+
+	/**
+	 * Sets the date operator for time period conditions.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {XlTimePeriods} DateOperator - The date operator for time period conditions.
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetDateOperator.js
+	 */
+	ApiFormatCondition.prototype.SetDateOperator = function(DateOperator) {
+		if (!this.rule || typeof DateOperator !== "string") {
+			return;
+		}
+
+		// DateOperator применяется только для условий типа xlTimePeriod
+		if (this.rule.type !== Asc.ECfType.timePeriod) {
+			return;
+		}
+
+		let internalTimePeriod = FromXlTimePeriodsTo(DateOperator);
+		if (internalTimePeriod !== -1) {
+			this.private_changeStyle(function (newRule) {
+				newRule.asc_setTimePeriod(internalTimePeriod);
+			}, true);
+		}
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "DateOperator", {
+		get: function() {
+			return this.GetDateOperator();
+		},
+		set: function(value) {
+			this.SetDateOperator(value);
 		}
 	});
 
