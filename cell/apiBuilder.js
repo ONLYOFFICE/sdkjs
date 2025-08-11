@@ -19586,6 +19586,12 @@
 	 * @see office-js-api/Examples/Enumerations/XlTimePeriods.js
 	 */
 
+	/**
+	 * Contains operator for text-based conditional formatting.
+	 * @typedef {("xlContains" | "xlDoesNotContain" | "xlBeginsWith" | "xlEndsWith")} XlContainsOperator
+	 * @see office-js-api/Examples/Enumerations/XlContainsOperator.js
+	 */
+
 	function FromXlFormatConditionTypeTo(sType) {
 		let nType = -1;
 		switch (sType) {
@@ -20722,6 +20728,354 @@
 	Object.defineProperty(ApiFormatCondition.prototype, "PTCondition", {
 		get: function() {
 			return this.GetPTCondition();
+		}
+	});
+
+	/**
+	 * Returns the priority value of the conditional formatting rule.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetPriority.js
+	 */
+	ApiFormatCondition.prototype.GetPriority = function() {
+		if (!this.rule) {
+			return null;
+		}
+		return this.rule.priority;
+	};
+
+	/**
+	 * Sets the priority value of the conditional formatting rule.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {number} Priority - The priority value (1-based).
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetPriority.js
+	 */
+	ApiFormatCondition.prototype.SetPriority = function(Priority) {
+		if (!this.rule || typeof Priority !== "number" || Priority < 1) {
+			return;
+		}
+
+		this.private_changeStyle(function (newRule) {
+			newRule.priority = Priority;
+		}, true);
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "Priority", {
+		get: function() {
+			return this.GetPriority();
+		},
+		set: function(value) {
+			this.SetPriority(value);
+		}
+	});
+
+	/**
+	 * Returns the scope type of the conditional formatting rule.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {string} - Returns "Selection" for normal ranges, "Worksheet" for entire worksheet, "PivotTable" for pivot tables
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetScopeType.js
+	 */
+	ApiFormatCondition.prototype.GetScopeType = function() {
+		if (!this.rule) {
+			return "Selection";
+		}
+
+		// Check if it's a pivot table conditional formatting
+		if (this.rule.pivot) {
+			return "PivotTable";
+		}
+
+		// Check if it covers the entire worksheet
+		if (this.rule.ranges && this.rule.ranges.length === 1) {
+			let range = this.rule.ranges[0];
+			if (range.r1 === 0 && range.c1 === 0 &&
+				range.r2 === AscCommon.gc_nMaxRow0 && range.c2 === AscCommon.gc_nMaxCol0) {
+				return "Worksheet";
+			}
+		}
+
+		return "Selection";
+	};
+
+	/**
+	 * Sets the scope type of the conditional formatting rule.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {string} ScopeType - The scope type: "Selection", "Worksheet", or "PivotTable"
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetScopeType.js
+	 */
+	ApiFormatCondition.prototype.SetScopeType = function(ScopeType) {
+		if (!this.rule) {
+			return;
+		}
+
+		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		if (!worksheet) {
+			return;
+		}
+
+		let oldRule = this.rule;
+		let newRule = this.rule.clone();
+
+		switch (ScopeType) {
+			case "Worksheet":
+				newRule.ranges = [new Asc.Range(0, 0, AscCommon.gc_nMaxCol0, AscCommon.gc_nMaxRow0)];
+				newRule.pivot = false;
+				break;
+			case "PivotTable":
+				// Find pivot table at current selection
+				let activeCell = worksheet.selectionRange.activeCell;
+				let pivot = worksheet.getPivotTable(activeCell.col, activeCell.row);
+				if (pivot && pivot.location && pivot.location.ref) {
+					newRule.ranges = [pivot.location.ref];
+					newRule.pivot = true;
+				}
+				break;
+			case "Selection":
+			default:
+				// Keep current selection
+				newRule.pivot = false;
+				break;
+		}
+
+		worksheet.changeCFRule(oldRule, newRule, true);
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "ScopeType", {
+		get: function() {
+			return this.GetScopeType();
+		},
+		set: function(value) {
+			this.SetScopeType(value);
+		}
+	});
+
+	/**
+	 * Returns whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetStopIfTrue.js
+	 */
+	ApiFormatCondition.prototype.GetStopIfTrue = function() {
+		if (!this.rule) {
+			return false;
+		}
+		return this.rule.stopIfTrue;
+	};
+
+	/**
+	 * Sets whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetStopIfTrue.js
+	 */
+	ApiFormatCondition.prototype.SetStopIfTrue = function(StopIfTrue) {
+		if (!this.rule || typeof StopIfTrue !== "boolean") {
+			return;
+		}
+
+		this.private_changeStyle(function (newRule) {
+			newRule.stopIfTrue = StopIfTrue;
+		}, true);
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "StopIfTrue", {
+		get: function() {
+			return this.GetStopIfTrue();
+		},
+		set: function(value) {
+			this.SetStopIfTrue(value);
+		}
+	});
+
+	/**
+	 * Returns the text value used in text-based conditional formatting rules.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetText.js
+	 */
+	ApiFormatCondition.prototype.GetText = function() {
+		if (!this.rule) {
+			return "";
+		}
+		return this.rule.text || "";
+	};
+
+	/**
+	 * Sets the text value used in text-based conditional formatting rules.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {string} Text - The text value to compare against.
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetText.js
+	 */
+	ApiFormatCondition.prototype.SetText = function(Text) {
+		if (!this.rule || typeof Text !== "string") {
+			return;
+		}
+
+		this.private_changeStyle(function (newRule) {
+			newRule.text = Text;
+
+			// Update formula for text-based conditions if needed
+			if (newRule.type === Asc.ECfType.containsText ||
+				newRule.type === Asc.ECfType.notContainsText ||
+				newRule.type === Asc.ECfType.beginsWith ||
+				newRule.type === Asc.ECfType.endsWith) {
+
+				// Generate appropriate formula based on type
+				let formula = null;
+				let range = newRule.ranges && newRule.ranges[0];
+				if (range) {
+					let firstCell = new Asc.Range(range.c1, range.r1, range.c1, range.r1).getName();
+					let quotedText = '"' + Text.replace(/"/g, '""') + '"';
+
+					switch (newRule.type) {
+						case Asc.ECfType.containsText:
+							formula = "NOT(ISERROR(SEARCH(" + quotedText + "," + firstCell + ")))";
+							break;
+						case Asc.ECfType.notContainsText:
+							formula = "ISERROR(SEARCH(" + quotedText + "," + firstCell + "))";
+							break;
+						case Asc.ECfType.beginsWith:
+							formula = "LEFT(" + firstCell + ",LEN(" + quotedText + "))=" + quotedText;
+							break;
+						case Asc.ECfType.endsWith:
+							formula = "RIGHT(" + firstCell + ",LEN(" + quotedText + "))=" + quotedText;
+							break;
+					}
+
+					if (formula) {
+						if (!newRule.aRuleElements) {
+							newRule.aRuleElements = [];
+						}
+						if (!newRule.aRuleElements[0]) {
+							newRule.aRuleElements[0] = new window['AscCommonExcel'].CFormulaCF();
+						}
+						newRule.aRuleElements[0].Text = formula;
+					}
+				}
+			}
+		}, true);
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "Text", {
+		get: function() {
+			return this.GetText();
+		},
+		set: function(value) {
+			this.SetText(value);
+		}
+	});
+
+	/**
+	 * Returns the text operator for text-based conditional formatting rules.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlContainsOperator | null}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetTextOperator.js
+	 */
+	ApiFormatCondition.prototype.GetTextOperator = function() {
+		if (!this.rule) {
+			return null;
+		}
+
+		// Map internal types to text operators
+		switch (this.rule.type) {
+			case Asc.ECfType.containsText:
+				return "xlContains";
+			case Asc.ECfType.notContainsText:
+				return "xlDoesNotContain";
+			case Asc.ECfType.beginsWith:
+				return "xlBeginsWith";
+			case Asc.ECfType.endsWith:
+				return "xlEndsWith";
+			default:
+				return null;
+		}
+	};
+
+	/**
+	 * Sets the text operator for text-based conditional formatting rules.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {XlContainsOperator} TextOperator - The text operator: "xlContains", "xlDoesNotContain", "xlBeginsWith", "xlEndsWith"
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetTextOperator.js
+	 */
+	ApiFormatCondition.prototype.SetTextOperator = function(TextOperator) {
+		if (!this.rule || !TextOperator) {
+			return;
+		}
+
+		let newType = null;
+		switch (TextOperator) {
+			case "xlContains":
+				newType = Asc.ECfType.containsText;
+				break;
+			case "xlDoesNotContain":
+				newType = Asc.ECfType.notContainsText;
+				break;
+			case "xlBeginsWith":
+				newType = Asc.ECfType.beginsWith;
+				break;
+			case "xlEndsWith":
+				newType = Asc.ECfType.endsWith;
+				break;
+			default:
+				return;
+		}
+
+		this.private_changeStyle(function (newRule) {
+			newRule.type = newType;
+
+			// Update formula if text is already set
+			if (newRule.text) {
+				let range = newRule.ranges && newRule.ranges[0];
+				if (range) {
+					let firstCell = new Asc.Range(range.c1, range.r1, range.c1, range.r1).getName();
+					let quotedText = '"' + newRule.text.replace(/"/g, '""') + '"';
+					let formula = null;
+
+					switch (newType) {
+						case Asc.ECfType.containsText:
+							formula = "NOT(ISERROR(SEARCH(" + quotedText + "," + firstCell + ")))";
+							break;
+						case Asc.ECfType.notContainsText:
+							formula = "ISERROR(SEARCH(" + quotedText + "," + firstCell + "))";
+							break;
+						case Asc.ECfType.beginsWith:
+							formula = "LEFT(" + firstCell + ",LEN(" + quotedText + "))=" + quotedText;
+							break;
+						case Asc.ECfType.endsWith:
+							formula = "RIGHT(" + firstCell + ",LEN(" + quotedText + "))=" + quotedText;
+							break;
+					}
+
+					if (formula) {
+						if (!newRule.aRuleElements) {
+							newRule.aRuleElements = [];
+						}
+						if (!newRule.aRuleElements[0]) {
+							newRule.aRuleElements[0] = new window['AscCommonExcel'].CFormulaCF();
+						}
+						newRule.aRuleElements[0].Text = formula;
+					}
+				}
+			}
+		}, true);
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "TextOperator", {
+		get: function() {
+			return this.GetTextOperator();
+		},
+		set: function(value) {
+			this.SetTextOperator(value);
 		}
 	});
 
