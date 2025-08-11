@@ -4650,6 +4650,27 @@
 		return searchResults;
 	};
 
+	ApiShape.prototype.SearchAndReplace = function (searchText, replaceText, matchCase) {
+		const searchResults = this.Search(searchText, matchCase);
+		searchResults.forEach(function (apiRange) {
+			apiRange.Select();
+
+			// const newContent = AscCommon.textToPresentationContent(replaceText, drawingDocContent);
+
+			// // const presentationSelectedContent = new PresentationSelectedContent();
+			// const presentationSelectedContent = {};
+			// presentationSelectedContent.DocContent = new AscCommonWord.CSelectedContent();
+			// for (let i = 0, length = newContent.length; i < length; ++i) {
+			// 	const oSelectedElement = new AscCommonWord.CSelectedElement();
+			// 	oSelectedElement.Element = newContent[i];
+			// 	presentationSelectedContent.DocContent.Elements[i] = oSelectedElement;
+			// }
+
+			// const presentation = Asc.editor.getLogicDocument();
+			// presentation.InsertContent(presentationSelectedContent);
+		});
+	};
+
     //------------------------------------------------------------------------------------------------------------------
     //
     // ApiChart
@@ -5407,7 +5428,39 @@
         this.Cell.Set_Pr(oPr);
     };
 
+    //------------------------------------------------------------------------------------------------------------------
+    //
+    // ApiRange
+    //
+    //------------------------------------------------------------------------------------------------------------------
 
+	const ApiRange = window.AscBuilder.ApiRange;
+	ApiRange.prototype.Select = function () {
+		const paragraph = this.Element;
+
+		// const drawingDocContent = paragraph.Parent;
+		// const textBody = drawingDocContent.Parent;
+		// const shape = textBody.parent;
+		// shape.Set_CurrentElement();
+
+		const oStartPos = new AscWord.CParagraphContentPos();
+		const oEndPos = new AscWord.CParagraphContentPos();
+
+		oStartPos.Data = [
+			this.StartPos[1].Position,
+			this.StartPos[2].Position,
+			0
+		];
+		oEndPos.Data = [
+			this.EndPos[1].Position,
+			this.EndPos[2].Position,
+			0
+		];
+
+		paragraph.StartSelectionFromCurPos();
+		paragraph.SetSelectionContentPos(oStartPos, oEndPos, false);
+		paragraph.Document_SetThisElementCurrent();
+	};
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Export
