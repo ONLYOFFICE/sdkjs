@@ -20059,6 +20059,151 @@
 	};
 
 	/**
+	 * Adds a new above average conditional formatting rule to the collection.
+	 * @memberof ApiFormatConditions
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiAboveAverage | null}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/AddAboveAverage.js
+	 */
+	ApiFormatConditions.prototype.AddAboveAverage = function() {
+		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		if (!worksheet) {
+			return null;
+		}
+
+		let props = new window['AscCommonExcel'].CConditionalFormattingRule();
+		props.type = Asc.ECfType.aboveAverage;
+		props.priority = worksheet.getNextCFPriority ? worksheet.getNextCFPriority() : 1;
+
+		// Set default values for above average condition
+		props.asc_setAboveAverage(true);
+		props.asc_setEqualAverage(false);
+		props.asc_setStdDev(0);
+
+		// Create default formatting style
+		props.dxf = new window['AscCommonExcel'].CellXfs();
+
+		let ranges = [];
+		if (this.range.areas) {
+			for (let i = 0; i < this.range.areas.length; i++) {
+				ranges.push(this.range.areas[i].bbox);
+			}
+		} else {
+			ranges.push(this.range.range.bbox);
+		}
+		props.ranges = ranges;
+
+		worksheet.setCFRule(props);
+
+		let aboveAverage = new ApiAboveAverage(props, this.range, this);
+		this.conditions.push(aboveAverage);
+
+		return aboveAverage;
+	};
+
+	/**
+	 * Adds a new color scale conditional formatting rule to the collection.
+	 * @memberof ApiFormatConditions
+	 * @typeofeditors ["CSE"]
+	 * @param {number} [ColorScaleType=3] - The type of color scale (2 for two-color scale, 3 for three-color scale).
+	 * @returns {ApiColorScale | null}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/AddColorScale.js
+	 */
+	ApiFormatConditions.prototype.AddColorScale = function(ColorScaleType) {
+		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		if (!worksheet) {
+			return null;
+		}
+
+		// Default to 3-color scale if not specified
+		if (ColorScaleType === undefined || ColorScaleType === null) {
+			ColorScaleType = 3;
+		}
+
+		// Validate ColorScaleType parameter
+		if (ColorScaleType !== 2 && ColorScaleType !== 3) {
+			return null;
+		}
+
+		let props = new window['AscCommonExcel'].CConditionalFormattingRule();
+		props.type = Asc.ECfType.colorScale;
+		props.priority = worksheet.getNextCFPriority ? worksheet.getNextCFPriority() : 1;
+
+		// Create color scale properties
+		let scaleProps = new window['AscCommonExcel'].CColorScale();
+
+		let colors = [];
+		let cfvos = [];
+
+		if (ColorScaleType === 2) {
+			// Two-color scale: red -> green
+			colors = [
+				new window['AscCommonExcel'].CColor(248, 105, 107), // red
+				new window['AscCommonExcel'].CColor(99, 190, 123)   // green
+			];
+
+			// Create conditional format value objects for min and max
+			for (let i = 0; i < 2; i++) {
+				let cfvo = new window['AscCommonExcel'].CConditionalFormatValueObject();
+				if (i === 0) {
+					cfvo.asc_setType(Asc.ECfvoType.Min);
+				} else {
+					cfvo.asc_setType(Asc.ECfvoType.Max);
+				}
+				cfvos.push(cfvo);
+			}
+		} else {
+			// Three-color scale: red -> yellow -> green
+			colors = [
+				new window['AscCommonExcel'].CColor(248, 105, 107), // red
+				new window['AscCommonExcel'].CColor(255, 235, 132), // yellow
+				new window['AscCommonExcel'].CColor(99, 190, 123)   // green
+			];
+
+			// Create conditional format value objects for min, midpoint, max
+			for (let i = 0; i < 3; i++) {
+				let cfvo = new window['AscCommonExcel'].CConditionalFormatValueObject();
+				if (i === 0) {
+					cfvo.asc_setType(Asc.ECfvoType.Min);
+				} else if (i === 1) {
+					cfvo.asc_setType(Asc.ECfvoType.Percentile);
+					cfvo.asc_setVal("50");
+				} else {
+					cfvo.asc_setType(Asc.ECfvoType.Max);
+				}
+				cfvos.push(cfvo);
+			}
+		}
+
+		// Set colors and value objects to the color scale
+		scaleProps.asc_setColors(colors);
+		scaleProps.asc_setCFVOs(cfvos);
+
+		// Apply the color scale rule
+		props.asc_setColorScaleOrDataBarOrIconSetRule(scaleProps);
+
+		// Set the ranges for the conditional formatting
+		let ranges = [];
+		if (this.range.areas) {
+			for (let i = 0; i < this.range.areas.length; i++) {
+				ranges.push(this.range.areas[i].bbox);
+			}
+		} else {
+			ranges.push(this.range.range.bbox);
+		}
+		props.ranges = ranges;
+
+		// Apply the conditional formatting rule to the worksheet
+		worksheet.setCFRule(props);
+
+		// Create and return ApiColorScale object
+		let colorScale = new ApiColorScale(props, this.range, this);
+		this.conditions.push(colorScale);
+
+		return colorScale;
+	};
+
+	/**
 	 * Deletes all format conditions from the collection.
 	 * @memberof ApiFormatConditions
 	 * @typeofeditors ["CSE"]
@@ -21250,7 +21395,445 @@
 		worksheet.changeCFRule(oldRule, newRule, true);
 	};
 
+	/**
+	 * Class representing an above average conditional formatting rule.
+	 * @constructor
+	 * @extends ApiFormatCondition
+	 */
+	function ApiAboveAverage(rule, range, _parent) {
+		ApiFormatCondition.call(this, rule, range, _parent);
+	}
 
+	ApiAboveAverage.prototype = Object.create(ApiFormatCondition.prototype);
+	ApiAboveAverage.prototype.constructor = ApiAboveAverage;
+
+	/**
+	 * Returns whether the rule is looking for above or below average values.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} True if looking for above average values, false for below average.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetAboveBelow.js
+	 */
+	ApiAboveAverage.prototype.GetAboveBelow = function() {
+		if (!this.rule) {
+			return true;
+		}
+		return this.rule.asc_getAboveAverage();
+	};
+
+	/**
+	 * Sets whether the rule is looking for above or below average values.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} aboveBelow - True to look for above average values, false for below average.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/SetAboveBelow.js
+	 */
+	ApiAboveAverage.prototype.SetAboveBelow = function(aboveBelow) {
+		if (!this.rule || typeof aboveBelow !== "boolean") {
+			return;
+		}
+
+		this.private_changeStyle(function (newRule) {
+			newRule.asc_setAboveAverage(aboveBelow);
+		}, true);
+	};
+
+	Object.defineProperty(ApiAboveAverage.prototype, "AboveBelow", {
+		get: function() {
+			return this.GetAboveBelow();
+		},
+		set: function(value) {
+			this.SetAboveBelow(value);
+		}
+	});
+
+	/**
+	 * Returns the calculation scope for the above average condition in pivot tables.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetCalcFor.js
+	 */
+	ApiAboveAverage.prototype.GetCalcFor = function() {
+		if (!this.rule || !this.rule.pivot) {
+			return 0; // xlAllValues
+		}
+
+		// Возвращаем значение области расчета для сводных таблиц
+		return this.rule.pivot.calcFor || 0;
+	};
+
+	/**
+	 * Sets the calculation scope for the above average condition in pivot tables.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @param {number} calcFor - The calculation scope (0 = xlAllValues, 1 = xlColItems, 2 = xlRowItems)
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/SetCalcFor.js
+	 */
+	ApiAboveAverage.prototype.SetCalcFor = function(calcFor) {
+		if (!this.rule || typeof calcFor !== "number") {
+			return;
+		}
+
+		this.private_changeStyle(function (newRule) {
+			if (!newRule.pivot) {
+				newRule.pivot = {};
+			}
+			newRule.pivot.calcFor = calcFor;
+		}, true);
+	};
+
+	Object.defineProperty(ApiAboveAverage.prototype, "CalcFor", {
+		get: function() {
+			return this.GetCalcFor();
+		},
+		set: function(value) {
+			this.SetCalcFor(value);
+		}
+	});
+
+	/**
+	 * Returns the number of standard deviations from the average.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetNumStdDev.js
+	 */
+	ApiAboveAverage.prototype.GetNumStdDev = function() {
+		if (!this.rule) {
+			return 0;
+		}
+		return this.rule.asc_getStdDev() || 0;
+	};
+
+	/**
+	 * Sets the number of standard deviations from the average.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @param {number} numStdDev - The number of standard deviations (0 for simple average, positive numbers for deviations)
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/SetNumStdDev.js
+	 */
+	ApiAboveAverage.prototype.SetNumStdDev = function(numStdDev) {
+		if (!this.rule || typeof numStdDev !== "number") {
+			return;
+		}
+
+		this.private_changeStyle(function (newRule) {
+			newRule.asc_setStdDev(numStdDev);
+		}, true);
+	};
+
+	Object.defineProperty(ApiAboveAverage.prototype, "NumStdDev", {
+		get: function() {
+			return this.GetNumStdDev();
+		},
+		set: function(value) {
+			this.SetNumStdDev(value);
+		}
+	});
+
+	/**
+	 * Returns the type of the above average conditional formatting rule.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlFormatConditionType}
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetType.js
+	 */
+	ApiAboveAverage.prototype.GetType = function() {
+		return "xlAboveAverageCondition";
+	};
+
+	Object.defineProperty(ApiAboveAverage.prototype, "Type", {
+		get: function() {
+			return this.GetType();
+		}
+	});
+
+	/**
+	 * Class representing a color scale conditional formatting rule.
+	 * @constructor
+	 * @extends ApiFormatCondition
+	 */
+	function ApiColorScale(rule, range, _parent) {
+		ApiFormatCondition.call(this, rule, range, _parent);
+	}
+
+	ApiColorScale.prototype = Object.create(ApiFormatCondition.prototype);
+	ApiColorScale.prototype.constructor = ApiColorScale;
+
+	/**
+	 * Returns the ColorScaleCriteria collection for this color scale.
+	 * @memberof ApiColorScale
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiColorScaleCriteria | null}
+	 * @since 9.2.0
+	 */
+	ApiColorScale.prototype.GetColorScaleCriteria = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.colorScale) {
+			return null;
+		}
+
+		let colorScaleElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!colorScaleElement || colorScaleElement.type !== Asc.ECfType.colorScale) {
+			return null;
+		}
+
+		return new ApiColorScaleCriteria(colorScaleElement);
+	};
+
+	/**
+	 * Sets the ColorScaleCriteria for this color scale.
+	 * @memberof ApiColorScale
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiColorScaleCriteria} criteria - The ColorScaleCriteria collection.
+	 * @since 9.2.0
+	 */
+	ApiColorScale.prototype.SetColorScaleCriteria = function(criteria) {
+		if (!this.rule || this.rule.type !== Asc.ECfType.colorScale || !criteria) {
+			return;
+		}
+
+		this.private_changeStyle(function (newRule) {
+			let colorScaleElement = newRule.aRuleElements && newRule.aRuleElements[0];
+			if (!colorScaleElement) {
+				colorScaleElement = new window['AscCommonExcel'].CColorScale();
+				if (!newRule.aRuleElements) {
+					newRule.aRuleElements = [];
+				}
+				newRule.aRuleElements[0] = colorScaleElement;
+			}
+
+			// Update the color scale element with new criteria
+			if (criteria.aCFVOs) {
+				colorScaleElement.aCFVOs = criteria.aCFVOs;
+			}
+			if (criteria.aColors) {
+				colorScaleElement.aColors = criteria.aColors;
+			}
+		}, true);
+	};
+
+	Object.defineProperty(ApiColorScale.prototype, "ColorScaleCriteria", {
+		get: function() {
+			return this.GetColorScaleCriteria();
+		},
+		set: function(value) {
+			this.SetColorScaleCriteria(value);
+		}
+	});
+
+	/**
+	 * Returns the formula for the color scale.
+	 * @memberof ApiColorScale
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @since 9.2.0
+	 */
+	ApiColorScale.prototype.GetFormula = function() {
+		if (this.rule.aRuleElements && this.rule.aRuleElements.length > 0 && this.rule.aRuleElements[0]) {
+			let element = this.rule.aRuleElements[0];
+			if (element.aCFVOs && element.aCFVOs.length > 0 && element.aCFVOs[0] && element.aCFVOs[0].formula) {
+				return "=" + element.aCFVOs[0].formula.getFormulaStr();
+			}
+		}
+		return "";
+	};
+
+	Object.defineProperty(ApiColorScale.prototype, "Formula", {
+		get: function() {
+			return this.GetFormula();
+		}
+	});
+
+	/**
+	 * Returns the type of the color scale conditional formatting rule.
+	 * @memberof ApiColorScale
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlFormatConditionType}
+	 * @since 9.2.0
+	 */
+	ApiColorScale.prototype.GetType = function() {
+		return "xlColorScale";
+	};
+
+	Object.defineProperty(ApiColorScale.prototype, "Type", {
+		get: function() {
+			return this.GetType();
+		}
+	});
+
+
+	/**
+	 * Class representing a collection of ColorScaleCriterion objects.
+	 * @constructor
+	 */
+	function ApiColorScaleCriteria(colorScaleElement) {
+		this.colorScaleElement = colorScaleElement;
+		this.aCFVOs = colorScaleElement.aCFVOs || [];
+		this.aColors = colorScaleElement.aColors || [];
+		this.length = Math.max(this.aCFVOs.length, this.aColors.length);
+	}
+
+	/**
+	 * Returns the number of criteria in the collection.
+	 * @memberof ApiColorScaleCriteria
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @since 9.2.0
+	 */
+	ApiColorScaleCriteria.prototype.GetCount = function() {
+		return this.length;
+	};
+
+	/**
+	 * Returns a ColorScaleCriterion object by index.
+	 * @memberof ApiColorScaleCriteria
+	 * @typeofeditors ["CSE"]
+	 * @param {number} index - The index of the criterion (1-based).
+	 * @returns {ApiColorScaleCriterion | null}
+	 * @since 9.2.0
+	 */
+	ApiColorScaleCriteria.prototype.GetItem = function(index) {
+		if (index < 1 || index > this.length) {
+			return null;
+		}
+		let idx = index - 1;
+		return new ApiColorScaleCriterion(this.aCFVOs[idx], this.aColors[idx], this.colorScaleElement);
+	};
+
+	Object.defineProperty(ApiColorScaleCriteria.prototype, "Count", {
+		get: function() {
+			return this.GetCount();
+		}
+	});
+
+	/**
+	 * Class representing a single ColorScaleCriterion object.
+	 * @constructor
+	 */
+	function ApiColorScaleCriterion(cfvo, color, colorScaleElement) {
+		this.cfvo = cfvo;
+		this.color = color;
+		this.colorScaleElement = colorScaleElement;
+	}
+
+	/**
+	 * Returns the type of the color scale criterion.
+	 * @memberof ApiColorScaleCriterion
+	 * @typeofeditors ["CSE"]
+	 * @returns {string | null}
+	 * @since 9.2.0
+	 */
+	ApiColorScaleCriterion.prototype.GetType = function() {
+		if (!this.cfvo) {
+			return null;
+		}
+		return this.cfvo.Type;
+	};
+
+	/**
+	 * Sets the type of the color scale criterion.
+	 * @memberof ApiColorScaleCriterion
+	 * @typeofeditors ["CSE"]
+	 * @param {string} type - The type of the criterion.
+	 * @since 9.2.0
+	 */
+	ApiColorScaleCriterion.prototype.SetType = function(type) {
+		if (this.cfvo) {
+			this.cfvo.asc_setType(type);
+		}
+	};
+
+	/**
+	 * Returns the value of the color scale criterion.
+	 * @memberof ApiColorScaleCriterion
+	 * @typeofeditors ["CSE"]
+	 * @returns {string | null}
+	 * @since 9.2.0
+	 */
+	ApiColorScaleCriterion.prototype.GetValue = function() {
+		if (!this.cfvo) {
+			return null;
+		}
+		return this.cfvo.Val;
+	};
+
+	/**
+	 * Sets the value of the color scale criterion.
+	 * @memberof ApiColorScaleCriterion
+	 * @typeofeditors ["CSE"]
+	 * @param {string} value - The value of the criterion.
+	 * @since 9.2.0
+	 */
+	ApiColorScaleCriterion.prototype.SetValue = function(value) {
+		if (this.cfvo) {
+			this.cfvo.asc_setVal(value);
+		}
+	};
+
+	/**
+	 * Returns the format color of the color scale criterion.
+	 * @memberof ApiColorScaleCriterion
+	 * @typeofeditors ["CSE"]
+	 * @returns {object}
+	 * @since 9.2.0
+	 */
+	ApiColorScaleCriterion.prototype.GetFormatColor = function() {
+		return {
+			Color: this.color ? this.color.getRgb() : 0
+		};
+	};
+
+	/**
+	 * Sets the format color of the color scale criterion.
+	 * @memberof ApiColorScaleCriterion
+	 * @typeofeditors ["CSE"]
+	 * @param {number} color - The RGB color value.
+	 * @since 9.2.0
+	 */
+	ApiColorScaleCriterion.prototype.SetFormatColor = function(color) {
+		if (this.color && typeof color === "number") {
+			// Create new color object with RGB value
+			this.color = new window['AscCommonExcel'].CColor();
+			this.color.setRgb(color);
+		}
+	};
+
+	Object.defineProperty(ApiColorScaleCriterion.prototype, "Type", {
+		get: function() {
+			return this.GetType();
+		},
+		set: function(value) {
+			this.SetType(value);
+		}
+	});
+
+	Object.defineProperty(ApiColorScaleCriterion.prototype, "Value", {
+		get: function() {
+			return this.GetValue();
+		},
+		set: function(value) {
+			this.SetValue(value);
+		}
+	});
+
+	Object.defineProperty(ApiColorScaleCriterion.prototype, "FormatColor", {
+		get: function() {
+			return this.GetFormatColor();
+		},
+		set: function(value) {
+			if (value && typeof value === "object" && typeof value.Color === "number") {
+				this.SetFormatColor(value.Color);
+			}
+		}
+	});
 
 	Api.prototype["Format"]                = Api.prototype.Format;
 	Api.prototype["AddSheet"]              = Api.prototype.AddSheet;
@@ -22176,6 +22759,8 @@
 	ApiValidation.prototype["GetParent"]            = ApiValidation.prototype.GetParent;
 
 	ApiFormatConditions.prototype["Add"] = ApiFormatConditions.prototype.Add;
+	ApiFormatConditions.prototype["AddAboveAverage"] = ApiFormatConditions.prototype.AddAboveAverage;
+	ApiFormatConditions.prototype["AddColorScale"] = ApiFormatConditions.prototype.AddColorScale;
 	ApiFormatConditions.prototype["Delete"] = ApiFormatConditions.prototype.Delete;
 	ApiFormatConditions.prototype["GetCount"] = ApiFormatConditions.prototype.GetCount;
 	ApiFormatConditions.prototype["GetItem"] = ApiFormatConditions.prototype.GetItem;
@@ -22201,8 +22786,6 @@
 	ApiFormatCondition.prototype["SetRank"] = ApiFormatCondition.prototype.SetRank;
 	ApiFormatCondition.prototype["GetPercentRank"] = ApiFormatCondition.prototype.GetPercentRank;
 	ApiFormatCondition.prototype["SetPercentRank"] = ApiFormatCondition.prototype.SetPercentRank;
-	ApiFormatCondition.prototype["GetAboveBelow"] = ApiFormatCondition.prototype.GetAboveBelow;
-	ApiFormatCondition.prototype["SetAboveBelow"] = ApiFormatCondition.prototype.SetAboveBelow;
 	ApiFormatCondition.prototype["GetStdDev"] = ApiFormatCondition.prototype.GetStdDev;
 	ApiFormatCondition.prototype["SetStdDev"] = ApiFormatCondition.prototype.SetStdDev;
 	ApiFormatCondition.prototype["GetPriority"] = ApiFormatCondition.prototype.GetPriority;
@@ -22210,6 +22793,14 @@
 	ApiFormatCondition.prototype["GetStopIfTrue"] = ApiFormatCondition.prototype.GetStopIfTrue;
 	ApiFormatCondition.prototype["SetStopIfTrue"] = ApiFormatCondition.prototype.SetStopIfTrue;
 	ApiFormatCondition.prototype["GetAppliesTo"] = ApiFormatCondition.prototype.GetAppliesTo;
+
+	ApiAboveAverage.prototype["GetAboveBelow"] = ApiAboveAverage.prototype.GetAboveBelow;
+	ApiAboveAverage.prototype["SetAboveBelow"] = ApiAboveAverage.prototype.SetAboveBelow;
+	ApiAboveAverage.prototype["GetNumStdDev"] = ApiAboveAverage.prototype.GetNumStdDev;
+	ApiAboveAverage.prototype["SetNumStdDev"] = ApiAboveAverage.prototype.SetNumStdDev;
+	ApiAboveAverage.prototype["GetType"] = ApiAboveAverage.prototype.GetType;
+	ApiAboveAverage.prototype["GetCalcFor"] = ApiAboveAverage.prototype.GetCalcFor;
+	ApiAboveAverage.prototype["SetCalcFor"] = ApiAboveAverage.prototype.SetCalcFor;
 
 
 	function private_SetCoords(oDrawing, oWorksheet, nExtX, nExtY, nFromCol, nColOffset, nFromRow, nRowOffset, pos) {
