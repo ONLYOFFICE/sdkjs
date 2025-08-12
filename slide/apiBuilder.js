@@ -1761,6 +1761,24 @@
 		return searchResults;
 	};
 
+	/**
+	* Searches for the specified text in the entire presentation and replaces it with the specified text.
+	*
+	* @memberof ApiPresentation
+	* @typeofeditors ["CPE"]
+	* @param {string} searchText
+	* @param {string} replaceText
+	* @param {string} matchCase - Case sensitive or not.
+	* @since 9.1.0
+	* @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/SearchAndReplace.js
+	*/
+	ApiPresentation.prototype.SearchAndReplace = function (searchText, replaceText, matchCase) {
+		const searchResults = this.Search(searchText, matchCase);
+		searchResults.forEach(function (apiRange) {
+			apiRange.ReplaceText(replaceText);
+		});
+	};
+
     /**
 	 * Retrieves the custom XML manager associated with the presentation.
 	 * This manager allows manipulation and access to custom XML parts within the presentation.
@@ -3993,6 +4011,24 @@
 		return searchResults;
 	};
 
+	/**
+	* Searches for the specified text in the current slide and replaces it with the specified text.
+	*
+	* @memberof ApiSlide
+	* @typeofeditors ["CPE"]
+	* @param {string} searchText
+	* @param {string} replaceText
+	* @param {string} matchCase - Case sensitive or not.
+	* @since 9.1.0
+	* @see office-js-api/Examples/{Editor}/ApiSlide/Methods/SearchAndReplace.js
+	*/
+	ApiSlide.prototype.SearchAndReplace = function (searchText, replaceText, matchCase) {
+		const searchResults = this.Search(searchText, matchCase);
+		searchResults.forEach(function (apiRange) {
+			apiRange.ReplaceText(replaceText);
+		});
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiNotesPage
@@ -4650,24 +4686,21 @@
 		return searchResults;
 	};
 
+	/**
+	* Searches for the specified text inside the shape content and replaces it with the specified text.
+	*
+	* @memberof ApiShape
+	* @typeofeditors ["CPE"]
+	* @param {string} searchText
+	* @param {string} replaceText
+	* @param {string} matchCase - Case sensitive or not.
+	* @since 9.1.0
+	* @see office-js-api/Examples/{Editor}/ApiShape/Methods/SearchAndReplace.js
+	*/
 	ApiShape.prototype.SearchAndReplace = function (searchText, replaceText, matchCase) {
 		const searchResults = this.Search(searchText, matchCase);
 		searchResults.forEach(function (apiRange) {
-			apiRange.Select();
-
-			// const newContent = AscCommon.textToPresentationContent(replaceText, drawingDocContent);
-
-			// // const presentationSelectedContent = new PresentationSelectedContent();
-			// const presentationSelectedContent = {};
-			// presentationSelectedContent.DocContent = new AscCommonWord.CSelectedContent();
-			// for (let i = 0, length = newContent.length; i < length; ++i) {
-			// 	const oSelectedElement = new AscCommonWord.CSelectedElement();
-			// 	oSelectedElement.Element = newContent[i];
-			// 	presentationSelectedContent.DocContent.Elements[i] = oSelectedElement;
-			// }
-
-			// const presentation = Asc.editor.getLogicDocument();
-			// presentation.InsertContent(presentationSelectedContent);
+			apiRange.ReplaceText(replaceText);
 		});
 	};
 
@@ -5435,6 +5468,14 @@
     //------------------------------------------------------------------------------------------------------------------
 
 	const ApiRange = window.AscBuilder.ApiRange;
+
+	/**
+	 * Selects the text specified by the current range.
+	 *
+	 * @memberof ApiRange
+	 * @typeofeditors ["CPE"]
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Select.js
+	 */
 	ApiRange.prototype.Select = function () {
 		const paragraph = this.Element;
 
@@ -5459,6 +5500,39 @@
 
 		paragraph.StartSelectionFromCurPos();
 		paragraph.SetSelectionContentPos(oStartPos, oEndPos, false);
+		paragraph.Document_SetThisElementCurrent();
+	};
+
+	/**
+	 * Replaces the text specified by the current range with the given text.
+	 *
+	 * @memberof ApiRange
+	 * @typeofeditors ["CPE"]
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/ReplaceText.js
+	 */
+	ApiRange.prototype.ReplaceText = function (replaceString) {
+		const paragraph = this.Element;
+
+		if (replaceString === undefined || replaceString === null) {
+			replaceString = "";
+		}
+
+		const oStartPos = new AscWord.CParagraphContentPos();
+		const oEndPos = new AscWord.CParagraphContentPos();
+
+		oStartPos.Data = [
+			this.StartPos[1].Position,
+			this.StartPos[2].Position,
+			0
+		];
+		oEndPos.Data = [
+			this.EndPos[1].Position,
+			this.EndPos[2].Position,
+			0
+		];
+		oEndPos.Depth = oStartPos.Depth = 2;
+
+		paragraph.private_ReplaceSubstring(replaceString, oStartPos, oEndPos);
 		paragraph.Document_SetThisElementCurrent();
 	};
 
@@ -5521,6 +5595,7 @@
     ApiPresentation.prototype["GetCore"]                  = ApiPresentation.prototype.GetCore;
     ApiPresentation.prototype["GetCustomProperties"]      = ApiPresentation.prototype.GetCustomProperties;
     ApiPresentation.prototype["Search"]                   = ApiPresentation.prototype.Search;
+    ApiPresentation.prototype["SearchAndReplace"]        = ApiPresentation.prototype.SearchAndReplace;
 
     ApiMaster.prototype["GetClassType"]                   = ApiMaster.prototype.GetClassType;
     ApiMaster.prototype["GetAllLayouts"]                  = ApiMaster.prototype.GetAllLayouts;
@@ -5643,6 +5718,7 @@
 	ApiSlide.prototype["GetNotesPage"]                    = ApiSlide.prototype.GetNotesPage;
 	ApiSlide.prototype["AddNotesText"]                    = ApiSlide.prototype.AddNotesText;
 	ApiSlide.prototype["Search"]                          = ApiSlide.prototype.Search;
+	ApiSlide.prototype["SearchAndReplace"]                = ApiSlide.prototype.SearchAndReplace;
 
 	ApiNotesPage.prototype["GetClassType"]                = ApiNotesPage.prototype.GetClassType;
 	ApiNotesPage.prototype["AddBodyShapeText"]            = ApiNotesPage.prototype.AddBodyShapeText;
@@ -5695,7 +5771,7 @@
     ApiShape.prototype["GetContent"]                      = ApiShape.prototype.GetContent;
     ApiShape.prototype["SetVerticalTextAlign"]            = ApiShape.prototype.SetVerticalTextAlign;
     ApiShape.prototype["Search"]                          = ApiShape.prototype.Search;
-
+	ApiShape.prototype["SearchAndReplace"]                = ApiShape.prototype.SearchAndReplace;
 
     ApiOleObject.prototype["GetClassType"]                = ApiOleObject.prototype.GetClassType;
 	ApiOleObject.prototype["SetData"]                     = ApiOleObject.prototype.SetData;
@@ -5733,7 +5809,8 @@
     ApiTableCell.prototype["SetVerticalAlign"]            = ApiTableCell.prototype.SetVerticalAlign;
     ApiTableCell.prototype["SetTextDirection"]            = ApiTableCell.prototype.SetTextDirection;
 
-
+	ApiRange.prototype["SearchAndReplace"]                = ApiRange.prototype.SearchAndReplace;
+	ApiRange.prototype["Select"]                          = ApiRange.prototype.Select;
 
     Api.prototype.private_CreateApiSlide = function(oSlide){
         return new ApiSlide(oSlide);
