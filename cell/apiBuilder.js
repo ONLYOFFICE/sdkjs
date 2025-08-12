@@ -18735,6 +18735,15 @@
 	 * @see office-js-api/Examples/Enumerations/ValidationOperator.js
 	 */
 
+	/**
+	 * Condition value types for color scale criteria.
+	 * @typedef {("xlConditionValueAutomaticMax" | "xlConditionValueAutomaticMin" |
+	 * "xlConditionValueHighestValue" | "xlConditionValueLowestValue" |
+	 * "xlConditionValueNone" | "xlConditionValueNumber" | "xlConditionValuePercent" |
+	 * "xlConditionValuePercentile" | "xlConditionValueFormula")} XlConditionValueTypes
+	 * @see office-js-api/Examples/Enumerations/XlConditionValueTypes.js
+	 */
+
 	function FromXlValidationTypeTo(sType) {
 		let nType = -1;
 		switch (sType) {
@@ -19982,16 +19991,16 @@
 				break;
 
 			case Asc.ECfType.colorScale:
-				let scaleProps = new window['AscCommonExcel'].CColorScale();
+				let scaleProps = new Asc.asc_CColorScale();
 				let colors = [
-					new window['AscCommonExcel'].CColor(255, 99, 99), // red
-					new window['AscCommonExcel'].CColor(255, 255, 99), // yellow
-					new window['AscCommonExcel'].CColor(99, 255, 99)  // green
+					new Asc.asc_CColor(255, 99, 99), // red
+					new Asc.asc_CColor(255, 255, 99), // yellow
+					new Asc.asc_CColor(99, 255, 99)  // green
 				];
 				let scales = [];
 				for (let i = 0; i < 3; i++) {
 					let scale = new window['AscCommonExcel'].CConditionalFormatValueObject();
-					scale.asc_setType(i === 0 ? Asc.ECfvoType.Min : (i === 2 ? Asc.ECfvoType.Max : Asc.ECfvoType.Percentile));
+					scale.asc_setType(i === 0 ? Asc.c_oAscCfvoType.Min : (i === 2 ? Asc.c_oAscCfvoType.Max : Asc.c_oAscCfvoType.Percentile));
 					if (i === 1) scale.asc_setVal("50");
 					scales.push(scale);
 				}
@@ -20006,7 +20015,7 @@
 				let bars = [];
 				for (let i = 0; i < 2; i++) {
 					let bar = new window['AscCommonExcel'].CConditionalFormatValueObject();
-					bar.asc_setType(i === 0 ? Asc.ECfvoType.AutoMin : Asc.ECfvoType.AutoMax);
+					bar.asc_setType(i === 0 ? Asc.c_oAscCfvoType.AutoMin : Asc.c_oAscCfvoType.AutoMax);
 					bars.push(bar);
 				}
 				barProps.asc_setCFVOs(bars);
@@ -20023,7 +20032,7 @@
 				let iconCount = 3;
 				for (let i = 0; i < iconCount - 1; i++) {
 					let value = new window['AscCommonExcel'].CConditionalFormatValueObject();
-					value.asc_setType(Asc.ECfvoType.Percent);
+					value.asc_setType(Asc.c_oAscCfvoType.Percent);
 					value.asc_setVal(i === 0 ? "33" : "67");
 					value.asc_setGte(true);
 					values.push(value);
@@ -20122,6 +20131,7 @@
 
 		// Validate ColorScaleType parameter
 		if (ColorScaleType !== 2 && ColorScaleType !== 3) {
+			logError(new Error("Invalid ColorScaleType. Must be 2 (two-color scale) or 3 (three-color scale)."));
 			return null;
 		}
 
@@ -20130,7 +20140,7 @@
 		props.priority = worksheet.getNextCFPriority ? worksheet.getNextCFPriority() : 1;
 
 		// Create color scale properties
-		let scaleProps = new window['AscCommonExcel'].CColorScale();
+		let scaleProps = new Asc.asc_CColorScale();
 
 		let colors = [];
 		let cfvos = [];
@@ -20138,38 +20148,38 @@
 		if (ColorScaleType === 2) {
 			// Two-color scale: red -> green
 			colors = [
-				new window['AscCommonExcel'].CColor(248, 105, 107), // red
-				new window['AscCommonExcel'].CColor(99, 190, 123)   // green
+				new Asc.asc_CColor(248, 105, 107), // red
+				new Asc.asc_CColor(99, 190, 123)   // green
 			];
 
 			// Create conditional format value objects for min and max
 			for (let i = 0; i < 2; i++) {
 				let cfvo = new window['AscCommonExcel'].CConditionalFormatValueObject();
 				if (i === 0) {
-					cfvo.asc_setType(Asc.ECfvoType.Min);
+					cfvo.asc_setType(Asc.c_oAscCfvoType.Minimum);
 				} else {
-					cfvo.asc_setType(Asc.ECfvoType.Max);
+					cfvo.asc_setType(Asc.c_oAscCfvoType.Maximum);
 				}
 				cfvos.push(cfvo);
 			}
 		} else {
 			// Three-color scale: red -> yellow -> green
 			colors = [
-				new window['AscCommonExcel'].CColor(248, 105, 107), // red
-				new window['AscCommonExcel'].CColor(255, 235, 132), // yellow
-				new window['AscCommonExcel'].CColor(99, 190, 123)   // green
+				new Asc.asc_CColor(248, 105, 107), // red
+				new Asc.asc_CColor(255, 235, 132), // yellow
+				new Asc.asc_CColor(99, 190, 123)   // green
 			];
 
 			// Create conditional format value objects for min, midpoint, max
 			for (let i = 0; i < 3; i++) {
 				let cfvo = new window['AscCommonExcel'].CConditionalFormatValueObject();
 				if (i === 0) {
-					cfvo.asc_setType(Asc.ECfvoType.Min);
+					cfvo.asc_setType(Asc.c_oAscCfvoType.Minimum);
 				} else if (i === 1) {
-					cfvo.asc_setType(Asc.ECfvoType.Percentile);
+					cfvo.asc_setType(Asc.c_oAscCfvoType.Percentile);
 					cfvo.asc_setVal("50");
 				} else {
-					cfvo.asc_setType(Asc.ECfvoType.Max);
+					cfvo.asc_setType(Asc.c_oAscCfvoType.Maximum);
 				}
 				cfvos.push(cfvo);
 			}
@@ -20814,7 +20824,7 @@
 		if (!this.rule || !this.rule.dxf || !this.rule.dxf.num) {
 			return "General";
 		}
-
+		//TODO check
 		return this.rule.dxf.asc_getNumFormat();
 	};
 
@@ -21588,44 +21598,9 @@
 		return new ApiColorScaleCriteria(colorScaleElement);
 	};
 
-	/**
-	 * Sets the ColorScaleCriteria for this color scale.
-	 * @memberof ApiColorScale
-	 * @typeofeditors ["CSE"]
-	 * @param {ApiColorScaleCriteria} criteria - The ColorScaleCriteria collection.
-	 * @since 9.2.0
-	 */
-	ApiColorScale.prototype.SetColorScaleCriteria = function(criteria) {
-		if (!this.rule || this.rule.type !== Asc.ECfType.colorScale || !criteria) {
-			return;
-		}
-
-		this.private_changeStyle(function (newRule) {
-			let colorScaleElement = newRule.aRuleElements && newRule.aRuleElements[0];
-			if (!colorScaleElement) {
-				colorScaleElement = new window['AscCommonExcel'].CColorScale();
-				if (!newRule.aRuleElements) {
-					newRule.aRuleElements = [];
-				}
-				newRule.aRuleElements[0] = colorScaleElement;
-			}
-
-			// Update the color scale element with new criteria
-			if (criteria.aCFVOs) {
-				colorScaleElement.aCFVOs = criteria.aCFVOs;
-			}
-			if (criteria.aColors) {
-				colorScaleElement.aColors = criteria.aColors;
-			}
-		}, true);
-	};
-
 	Object.defineProperty(ApiColorScale.prototype, "ColorScaleCriteria", {
 		get: function() {
 			return this.GetColorScaleCriteria();
-		},
-		set: function(value) {
-			this.SetColorScaleCriteria(value);
 		}
 	});
 
@@ -21724,32 +21699,113 @@
 		this.colorScaleElement = colorScaleElement;
 	}
 
+	function FromXlConditionValueTypesTo(sType) {
+		let nType = -1;
+		switch (sType) {
+			case "xlConditionValueAutomaticMax":
+				nType = window['Asc']['c_oAscCfvoType'].AutoMax;
+				break;
+			case "xlConditionValueAutomaticMin":
+				nType = window['Asc']['c_oAscCfvoType'].AutoMin;
+				break;
+			case "xlConditionValueHighestValue":
+				nType = window['Asc']['c_oAscCfvoType'].Maximum;
+				break;
+			case "xlConditionValueLowestValue":
+				nType = window['Asc']['c_oAscCfvoType'].Minimum;
+				break;
+			case "xlConditionValueNone":
+				nType = window['Asc']['c_oAscCfvoType'].Number;
+				break;
+			case "xlConditionValueNumber":
+				nType = window['Asc']['c_oAscCfvoType'].Number;
+				break;
+			case "xlConditionValuePercent":
+				nType = window['Asc']['c_oAscCfvoType'].Percent;
+				break;
+			case "xlConditionValuePercentile":
+				nType = window['Asc']['c_oAscCfvoType'].Percentile;
+				break;
+			case "xlConditionValueFormula":
+				nType = window['Asc']['c_oAscCfvoType'].Formula;
+				break;
+		}
+		return nType;
+	}
+
+	function ToXlConditionValueTypesFrom(nType) {
+		let sType = "";
+		switch (nType) {
+			case window['Asc']['c_oAscCfvoType'].AutoMax:
+				sType = "xlConditionValueAutomaticMax";
+				break;
+			case window['Asc']['c_oAscCfvoType'].AutoMin:
+				sType = "xlConditionValueAutomaticMin";
+				break;
+			case window['Asc']['c_oAscCfvoType'].Maximum:
+				sType = "xlConditionValueHighestValue";
+				break;
+			case window['Asc']['c_oAscCfvoType'].Minimum:
+				sType = "xlConditionValueLowestValue";
+				break;
+			case window['Asc']['c_oAscCfvoType'].Number:
+				sType = "xlConditionValueNumber";
+				break;
+			case window['Asc']['c_oAscCfvoType'].Percent:
+				sType = "xlConditionValuePercent";
+				break;
+			case window['Asc']['c_oAscCfvoType'].Percentile:
+				sType = "xlConditionValuePercentile";
+				break;
+			case window['Asc']['c_oAscCfvoType'].Formula:
+				sType = "xlConditionValueFormula";
+				break;
+			default:
+				sType = "xlConditionValueNumber";
+				break;
+		}
+		return sType;
+	}
+
 	/**
 	 * Returns the type of the color scale criterion.
 	 * @memberof ApiColorScaleCriterion
 	 * @typeofeditors ["CSE"]
-	 * @returns {string | null}
+	 * @returns {XlConditionValueTypes | null}
 	 * @since 9.2.0
 	 */
 	ApiColorScaleCriterion.prototype.GetType = function() {
 		if (!this.cfvo) {
 			return null;
 		}
-		return this.cfvo.Type;
+		return ToXlConditionValueTypesFrom(this.cfvo.asc_getType());
 	};
 
 	/**
 	 * Sets the type of the color scale criterion.
 	 * @memberof ApiColorScaleCriterion
 	 * @typeofeditors ["CSE"]
-	 * @param {string} type - The type of the criterion.
+	 * @param {XlConditionValueTypes} type - The type of the criterion.
 	 * @since 9.2.0
 	 */
 	ApiColorScaleCriterion.prototype.SetType = function(type) {
 		if (this.cfvo) {
-			this.cfvo.asc_setType(type);
+			let internalType = FromXlConditionValueTypesTo(type);
+			if (internalType !== -1) {
+				this.cfvo.asc_setType(internalType);
+			}
 		}
 	};
+
+	Object.defineProperty(ApiColorScaleCriterion.prototype, "Type", {
+		get: function() {
+			return this.GetType();
+		},
+		set: function(value) {
+			this.SetType(value);
+		}
+	});
+
 
 	/**
 	 * Returns the value of the color scale criterion.
@@ -21778,6 +21834,44 @@
 		}
 	};
 
+	Object.defineProperty(ApiColorScaleCriterion.prototype, "Value", {
+		get: function() {
+			return this.GetValue();
+		},
+		set: function(value) {
+			this.SetValue(value);
+		}
+	});
+
+	/**
+	 * Returns the index indicating which threshold the criteria represents.
+	 * @memberof ApiColorScaleCriterion
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} Returns 1 for minimum threshold, 2 for midpoint (3-color scale) or maximum (2-color scale), and 3 for maximum threshold (3-color scale only).
+	 * @since 9.2.0
+	 */
+	ApiColorScaleCriterion.prototype.GetIndex = function() {
+		if (!this.colorScaleElement || !this.colorScaleElement.aCFVOs) {
+			return 1;
+		}
+
+		// Find the index of this criterion in the collection
+		for (let i = 0; i < this.colorScaleElement.aCFVOs.length; i++) {
+			if (this.colorScaleElement.aCFVOs[i] === this.cfvo) {
+				return i + 1; // Return 1-based index
+			}
+		}
+
+		// If not found, return 1 as default
+		return 1;
+	};
+
+	Object.defineProperty(ApiColorScaleCriterion.prototype, "Index", {
+		get: function() {
+			return this.GetIndex();
+		}
+	});
+
 	/**
 	 * Returns the format color of the color scale criterion.
 	 * @memberof ApiColorScaleCriterion
@@ -21801,28 +21895,10 @@
 	ApiColorScaleCriterion.prototype.SetFormatColor = function(color) {
 		if (this.color && typeof color === "number") {
 			// Create new color object with RGB value
-			this.color = new window['AscCommonExcel'].CColor();
+			this.color = new Asc.asc_CColor();
 			this.color.setRgb(color);
 		}
 	};
-
-	Object.defineProperty(ApiColorScaleCriterion.prototype, "Type", {
-		get: function() {
-			return this.GetType();
-		},
-		set: function(value) {
-			this.SetType(value);
-		}
-	});
-
-	Object.defineProperty(ApiColorScaleCriterion.prototype, "Value", {
-		get: function() {
-			return this.GetValue();
-		},
-		set: function(value) {
-			this.SetValue(value);
-		}
-	});
 
 	Object.defineProperty(ApiColorScaleCriterion.prototype, "FormatColor", {
 		get: function() {
@@ -21834,6 +21910,532 @@
 			}
 		}
 	});
+
+	/**
+	 * Class representing a data bar conditional formatting rule.
+	 * @constructor
+	 * @extends ApiFormatCondition
+	 */
+	function ApiDatabar(rule, range, _parent) {
+		ApiFormatCondition.call(this, rule, range, _parent);
+	}
+
+	ApiDatabar.prototype = Object.create(ApiFormatCondition.prototype);
+	ApiDatabar.prototype.constructor = ApiDatabar;
+
+	ApiDatabar.prototype.GetAxisColor = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return null;
+		}
+
+		return {
+			Color: dataBarElement.axisColor ? dataBarElement.axisColor.getRgb() : 0
+		};
+	};
+
+	ApiDatabar.prototype.SetAxisColor = function(color) {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return;
+		}
+
+		if (typeof color === "number") {
+			let newColor = new Asc.asc_CColor();
+			newColor.setRgb(color);
+			dataBarElement.axisColor = newColor;
+		} else if (color && typeof color === "object" && typeof color.Color === "number") {
+			let newColor = new Asc.asc_CColor();
+			newColor.setRgb(color.Color);
+			dataBarElement.axisColor = newColor;
+		}
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "AxisColor", {
+		get: function() {
+			return this.GetAxisColor();
+		},
+		set: function(value) {
+			this.SetAxisColor(value);
+		}
+	});
+
+	ApiDatabar.prototype.GetAxisPosition = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return null;
+		}
+
+		return dataBarElement.axisPosition || "Automatic";
+	};
+
+	ApiDatabar.prototype.SetAxisPosition = function(position) {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return;
+		}
+
+		dataBarElement.axisPosition = position;
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "AxisPosition", {
+		get: function() {
+			return this.GetAxisPosition();
+		},
+		set: function(value) {
+			this.SetAxisPosition(value);
+		}
+	});
+
+	ApiDatabar.prototype.GetBarBorder = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return null;
+		}
+
+		return {
+			Color: dataBarElement.borderColor ? dataBarElement.borderColor.getRgb() : 0,
+			Type: dataBarElement.border ? "Solid" : "None"
+		};
+	};
+
+	ApiDatabar.prototype.SetBarBorder = function(border) {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return;
+		}
+
+		if (border && typeof border === "object") {
+			if (typeof border.Color === "number") {
+				let newColor = new Asc.asc_CColor();
+				newColor.setRgb(border.Color);
+				dataBarElement.borderColor = newColor;
+			}
+			if (border.Type) {
+				dataBarElement.border = border.Type !== "None";
+			}
+		}
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "BarBorder", {
+		get: function() {
+			return this.GetBarBorder();
+		},
+		set: function(value) {
+			this.SetBarBorder(value);
+		}
+	});
+
+	ApiDatabar.prototype.GetBarColor = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement || !dataBarElement.aColors || !dataBarElement.aColors[0]) {
+			return null;
+		}
+
+		return {
+			Color: dataBarElement.aColors[0].getRgb()
+		};
+	};
+
+	ApiDatabar.prototype.SetBarColor = function(color) {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return;
+		}
+
+		if (!dataBarElement.aColors) {
+			dataBarElement.aColors = [];
+		}
+
+		if (typeof color === "number") {
+			let newColor = new Asc.asc_CColor();
+			newColor.setRgb(color);
+			dataBarElement.aColors[0] = newColor;
+		} else if (color && typeof color === "object" && typeof color.Color === "number") {
+			let newColor = new Asc.asc_CColor();
+			newColor.setRgb(color.Color);
+			dataBarElement.aColors[0] = newColor;
+		}
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "BarColor", {
+		get: function() {
+			return this.GetBarColor();
+		},
+		set: function(value) {
+			this.SetBarColor(value);
+		}
+	});
+
+	ApiDatabar.prototype.GetBarFillType = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return null;
+		}
+
+		return dataBarElement.gradient ? "Gradient" : "Solid";
+	};
+
+	ApiDatabar.prototype.SetBarFillType = function(fillType) {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return;
+		}
+
+		dataBarElement.gradient = fillType === "Gradient";
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "BarFillType", {
+		get: function() {
+			return this.GetBarFillType();
+		},
+		set: function(value) {
+			this.SetBarFillType(value);
+		}
+	});
+
+	ApiDatabar.prototype.GetDirection = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return null;
+		}
+
+		return dataBarElement.direction || "LeftToRight";
+	};
+
+	ApiDatabar.prototype.SetDirection = function(direction) {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return;
+		}
+
+		dataBarElement.direction = direction;
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "Direction", {
+		get: function() {
+			return this.GetDirection();
+		},
+		set: function(value) {
+			this.SetDirection(value);
+		}
+	});
+
+	ApiDatabar.prototype.GetFormula = function() {
+		if (this.rule.aRuleElements && this.rule.aRuleElements.length > 0 && this.rule.aRuleElements[0]) {
+			let element = this.rule.aRuleElements[0];
+			if (element.aCFVOs && element.aCFVOs.length > 0 && element.aCFVOs[0] && element.aCFVOs[0].formula) {
+				return "=" + element.aCFVOs[0].formula.getFormulaStr();
+			}
+		}
+		return "";
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "Formula", {
+		get: function() {
+			return this.GetFormula();
+		}
+	});
+
+	ApiDatabar.prototype.GetMaxPoint = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement || !dataBarElement.aCFVOs || !dataBarElement.aCFVOs[1]) {
+			return null;
+		}
+
+		return new ApiDatabarPoint(dataBarElement.aCFVOs[1]);
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "MaxPoint", {
+		get: function() {
+			return this.GetMaxPoint();
+		}
+	});
+
+	ApiDatabar.prototype.GetMinPoint = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement || !dataBarElement.aCFVOs || !dataBarElement.aCFVOs[0]) {
+			return null;
+		}
+
+		return new ApiDatabarPoint(dataBarElement.aCFVOs[0]);
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "MinPoint", {
+		get: function() {
+			return this.GetMinPoint();
+		}
+	});
+
+	ApiDatabar.prototype.GetNegativeBarFormat = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return null;
+		}
+
+		return {
+			Color: dataBarElement.negativeBarColor ? dataBarElement.negativeBarColor.getRgb() : 0,
+			BorderColor: dataBarElement.negativeBarBorderColor ? dataBarElement.negativeBarBorderColor.getRgb() : 0
+		};
+	};
+
+	ApiDatabar.prototype.SetNegativeBarFormat = function(format) {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return;
+		}
+
+		if (format && typeof format === "object") {
+			if (typeof format.Color === "number") {
+				let newColor = new Asc.asc_CColor();
+				newColor.setRgb(format.Color);
+				dataBarElement.negativeBarColor = newColor;
+			}
+			if (typeof format.BorderColor === "number") {
+				let newBorderColor = new Asc.asc_CColor();
+				newBorderColor.setRgb(format.BorderColor);
+				dataBarElement.negativeBarBorderColor = newBorderColor;
+			}
+		}
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "NegativeBarFormat", {
+		get: function() {
+			return this.GetNegativeBarFormat();
+		},
+		set: function(value) {
+			this.SetNegativeBarFormat(value);
+		}
+	});
+
+	ApiDatabar.prototype.GetPercentMax = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return null;
+		}
+
+		return dataBarElement.maxLength || 100;
+	};
+
+	ApiDatabar.prototype.SetPercentMax = function(percent) {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return;
+		}
+
+		if (typeof percent === "number") {
+			dataBarElement.maxLength = percent;
+		}
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "PercentMax", {
+		get: function() {
+			return this.GetPercentMax();
+		},
+		set: function(value) {
+			this.SetPercentMax(value);
+		}
+	});
+
+	ApiDatabar.prototype.GetPercentMin = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return null;
+		}
+
+		return dataBarElement.minLength || 0;
+	};
+
+	ApiDatabar.prototype.SetPercentMin = function(percent) {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return;
+		}
+
+		if (typeof percent === "number") {
+			dataBarElement.minLength = percent;
+		}
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "PercentMin", {
+		get: function() {
+			return this.GetPercentMin();
+		},
+		set: function(value) {
+			this.SetPercentMin(value);
+		}
+	});
+
+	ApiDatabar.prototype.GetShowValue = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return true;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return true;
+		}
+
+		return dataBarElement.showValue !== false;
+	};
+
+	ApiDatabar.prototype.SetShowValue = function(show) {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return;
+		}
+
+		if (typeof show === "boolean") {
+			dataBarElement.showValue = show;
+		}
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "ShowValue", {
+		get: function() {
+			return this.GetShowValue();
+		},
+		set: function(value) {
+			this.SetShowValue(value);
+		}
+	});
+
+	ApiDatabar.prototype.GetType = function() {
+		return "xlDatabar";
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "Type", {
+		get: function() {
+			return this.GetType();
+		}
+	});
+
+	function ApiDatabarPoint(cfvo) {
+		this.cfvo = cfvo;
+	}
+
+	ApiDatabarPoint.prototype.GetType = function() {
+		if (!this.cfvo) {
+			return null;
+		}
+		return ToXlConditionValueTypesFrom(this.cfvo.asc_getType());
+	};
+
+	ApiDatabarPoint.prototype.SetType = function(type) {
+		if (this.cfvo) {
+			let internalType = FromXlConditionValueTypesTo(type);
+			if (internalType !== -1) {
+				this.cfvo.asc_setType(internalType);
+			}
+		}
+	};
+
+	Object.defineProperty(ApiDatabarPoint.prototype, "Type", {
+		get: function() {
+			return this.GetType();
+		},
+		set: function(value) {
+			this.SetType(value);
+		}
+	});
+
+	ApiDatabarPoint.prototype.GetValue = function() {
+		if (!this.cfvo) {
+			return null;
+		}
+		return this.cfvo.Val;
+	};
+
+	ApiDatabarPoint.prototype.SetValue = function(value) {
+		if (this.cfvo) {
+			this.cfvo.asc_setVal(value);
+		}
+	};
+
+	Object.defineProperty(ApiDatabarPoint.prototype, "Value", {
 
 	Api.prototype["Format"]                = Api.prototype.Format;
 	Api.prototype["AddSheet"]              = Api.prototype.AddSheet;
