@@ -19607,6 +19607,24 @@
 	 * @see office-js-api/Examples/Enumerations/XlPivotConditionScope.js
 	 */
 
+	/**
+	 * The data bar axis position.
+	 * @typedef {("xlDataBarAxisAutomatic" | "xlDataBarAxisMidpoint" | "xlDataBarAxisNone")} XlDataBarAxisPosition
+	 * @see office-js-api/Examples/Enumerations/XlDataBarAxisPosition.js
+	 */
+
+	/**
+	 * The reading order for data bars.
+	 * @typedef {("xlLTR" | "xlRTL" | "xlContext")} XlReadingOrder
+	 * @see office-js-api/Examples/Enumerations/XlReadingOrder.js
+	 */
+
+	/**
+	 * Data bar fill type.
+	 * @typedef {("xlDataBarFillSolid" | "xlDataBarFillGradient")} XlDataBarFillType
+	 * @see office-js-api/Examples/Enumerations/XlDataBarFillType.js
+	 */
+
 	function FromXlFormatConditionTypeTo(sType) {
 		let nType = -1;
 		switch (sType) {
@@ -21595,7 +21613,7 @@
 			return null;
 		}
 
-		return new ApiColorScaleCriteria(colorScaleElement);
+		return new ApiColorScaleCriteria(colorScaleElement, this);
 	};
 
 	Object.defineProperty(ApiColorScale.prototype, "ColorScaleCriteria", {
@@ -21649,11 +21667,12 @@
 	 * Class representing a collection of ColorScaleCriterion objects.
 	 * @constructor
 	 */
-	function ApiColorScaleCriteria(colorScaleElement) {
+	function ApiColorScaleCriteria(colorScaleElement, parent) {
 		this.colorScaleElement = colorScaleElement;
 		this.aCFVOs = colorScaleElement.aCFVOs || [];
 		this.aColors = colorScaleElement.aColors || [];
 		this.length = Math.max(this.aCFVOs.length, this.aColors.length);
+		this.parent = parent;
 	}
 
 	/**
@@ -21680,7 +21699,7 @@
 			return null;
 		}
 		let idx = index - 1;
-		return new ApiColorScaleCriterion(this.aCFVOs[idx], this.aColors[idx], this.colorScaleElement);
+		return new ApiColorScaleCriterion(this.aCFVOs[idx], this.aColors[idx], this.colorScaleElement, this);
 	};
 
 	Object.defineProperty(ApiColorScaleCriteria.prototype, "Count", {
@@ -21693,10 +21712,11 @@
 	 * Class representing a single ColorScaleCriterion object.
 	 * @constructor
 	 */
-	function ApiColorScaleCriterion(cfvo, color, colorScaleElement) {
+	function ApiColorScaleCriterion(cfvo, color, colorScaleElement, parent) {
 		this.cfvo = cfvo;
 		this.color = color;
 		this.colorScaleElement = colorScaleElement;
+		this.parent = parent;
 	}
 
 	function FromXlConditionValueTypesTo(sType) {
@@ -21792,7 +21812,11 @@
 		if (this.cfvo) {
 			let internalType = FromXlConditionValueTypesTo(type);
 			if (internalType !== -1) {
-				this.cfvo.asc_setType(internalType);
+				let t = this;
+				this.parent.parent.private_changeStyle(function (newRule) {
+					let index = t.GetIndex();
+					newRule.aRuleElements[0].aCFVOs[index - 1].asc_setType(internalType);
+				}, true);
 			}
 		}
 	};
@@ -21830,7 +21854,11 @@
 	 */
 	ApiColorScaleCriterion.prototype.SetValue = function(value) {
 		if (this.cfvo) {
-			this.cfvo.asc_setVal(value);
+			let t = this;
+			this.parent.parent.private_changeStyle(function (newRule) {
+				let index = t.GetIndex();
+				newRule.aRuleElements[0].aCFVOs[index - 1].asc_setVal(value);
+			}, true);
 		}
 	};
 
@@ -21893,6 +21921,7 @@
 	 * @since 9.2.0
 	 */
 	ApiColorScaleCriterion.prototype.SetFormatColor = function(color) {
+		//TODO
 		if (this.color && typeof color === "number") {
 			// Create new color object with RGB value
 			this.color = new Asc.asc_CColor();
@@ -21923,7 +21952,14 @@
 	ApiDatabar.prototype = Object.create(ApiFormatCondition.prototype);
 	ApiDatabar.prototype.constructor = ApiDatabar;
 
+	/**
+	 * Returns the axis color of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiRGBColor | null} Returns the RGB color object representing the axis color, or null if no axis color is set.
+	 */
 	ApiDatabar.prototype.GetAxisColor = function() {
+		//TODO formatColor
 		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
 			return null;
 		}
@@ -21938,36 +21974,55 @@
 		};
 	};
 
-	ApiDatabar.prototype.SetAxisColor = function(color) {
-		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
-			return;
-		}
-
-		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
-		if (!dataBarElement) {
-			return;
-		}
-
-		if (typeof color === "number") {
-			let newColor = new Asc.asc_CColor();
-			newColor.setRgb(color);
-			dataBarElement.axisColor = newColor;
-		} else if (color && typeof color === "object" && typeof color.Color === "number") {
-			let newColor = new Asc.asc_CColor();
-			newColor.setRgb(color.Color);
-			dataBarElement.axisColor = newColor;
-		}
-	};
-
 	Object.defineProperty(ApiDatabar.prototype, "AxisColor", {
 		get: function() {
 			return this.GetAxisColor();
-		},
-		set: function(value) {
-			this.SetAxisColor(value);
 		}
 	});
 
+	function FromXlDataBarAxisPositionTo(sPosition) {
+		let nPosition = -1;
+		switch (sPosition) {
+			case "xlDataBarAxisAutomatic":
+				nPosition = AscCommonExcel.EDataBarAxisPosition.automatic;
+				break;
+			case "xlDataBarAxisMidpoint":
+				nPosition = AscCommonExcel.EDataBarAxisPosition.midpoint;
+				break;
+			case "xlDataBarAxisNone":
+				nPosition = AscCommonExcel.EDataBarAxisPosition.none;
+				break;
+		}
+		return nPosition;
+	}
+
+	function ToXlDataBarAxisPositionFrom(nPosition) {
+		let sPosition = "";
+		switch (nPosition) {
+			case AscCommonExcel.EDataBarAxisPosition.automatic:
+				sPosition = "xlDataBarAxisAutomatic";
+				break;
+			case AscCommonExcel.EDataBarAxisPosition.midpoint:
+				sPosition = "xlDataBarAxisMidpoint";
+				break;
+			case AscCommonExcel.EDataBarAxisPosition.none:
+				sPosition = "xlDataBarAxisNone";
+				break;
+			default:
+				sPosition = "xlDataBarAxisAutomatic";
+				break;
+		}
+		return sPosition;
+	}
+
+	/**
+	 * Returns the axis position of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlDataBarAxisPosition} The axis position setting for the data bar.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetAxisPosition.js
+	 */
 	ApiDatabar.prototype.GetAxisPosition = function() {
 		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
 			return null;
@@ -21978,20 +22033,35 @@
 			return null;
 		}
 
-		return dataBarElement.axisPosition || "Automatic";
+		return ToXlDataBarAxisPositionFrom(dataBarElement.axisPosition || AscCommonExcel.EDataBarAxisPosition.automatic);
 	};
 
+	/**
+	 * Sets the axis position of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {XlDataBarAxisPosition} position - The axis position setting for the data bar.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetAxisPosition.js
+	 */
 	ApiDatabar.prototype.SetAxisPosition = function(position) {
-		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
-			return;
+		if (typeof position !== "number") {
+			return false;
 		}
 
-		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
-		if (!dataBarElement) {
-			return;
+		let internalPosition = FromXlDataBarAxisPositionTo(position);
+		if (internalPosition === -1) {
+			return false;
 		}
 
-		dataBarElement.axisPosition = position;
+		var oRule = this.rule;
+		if (!oRule) {
+			return false;
+		}
+
+		return private_changeStyle(oRule, function() {
+			oRule.asc_setAxisPosition(internalPosition);
+		});
 	};
 
 	Object.defineProperty(ApiDatabar.prototype, "AxisPosition", {
@@ -22003,352 +22073,17 @@
 		}
 	});
 
-	ApiDatabar.prototype.GetBarBorder = function() {
-		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
-			return null;
-		}
-
-		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
-		if (!dataBarElement) {
-			return null;
-		}
-
-		return {
-			Color: dataBarElement.borderColor ? dataBarElement.borderColor.getRgb() : 0,
-			Type: dataBarElement.border ? "Solid" : "None"
-		};
-	};
-
-	ApiDatabar.prototype.SetBarBorder = function(border) {
-		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
-			return;
-		}
-
-		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
-		if (!dataBarElement) {
-			return;
-		}
-
-		if (border && typeof border === "object") {
-			if (typeof border.Color === "number") {
-				let newColor = new Asc.asc_CColor();
-				newColor.setRgb(border.Color);
-				dataBarElement.borderColor = newColor;
-			}
-			if (border.Type) {
-				dataBarElement.border = border.Type !== "None";
-			}
-		}
-	};
-
-	Object.defineProperty(ApiDatabar.prototype, "BarBorder", {
-		get: function() {
-			return this.GetBarBorder();
-		},
-		set: function(value) {
-			this.SetBarBorder(value);
-		}
-	});
-
-	ApiDatabar.prototype.GetBarColor = function() {
-		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
-			return null;
-		}
-
-		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
-		if (!dataBarElement || !dataBarElement.aColors || !dataBarElement.aColors[0]) {
-			return null;
-		}
-
-		return {
-			Color: dataBarElement.aColors[0].getRgb()
-		};
-	};
-
-	ApiDatabar.prototype.SetBarColor = function(color) {
-		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
-			return;
-		}
-
-		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
-		if (!dataBarElement) {
-			return;
-		}
-
-		if (!dataBarElement.aColors) {
-			dataBarElement.aColors = [];
-		}
-
-		if (typeof color === "number") {
-			let newColor = new Asc.asc_CColor();
-			newColor.setRgb(color);
-			dataBarElement.aColors[0] = newColor;
-		} else if (color && typeof color === "object" && typeof color.Color === "number") {
-			let newColor = new Asc.asc_CColor();
-			newColor.setRgb(color.Color);
-			dataBarElement.aColors[0] = newColor;
-		}
-	};
-
-	Object.defineProperty(ApiDatabar.prototype, "BarColor", {
-		get: function() {
-			return this.GetBarColor();
-		},
-		set: function(value) {
-			this.SetBarColor(value);
-		}
-	});
-
-	ApiDatabar.prototype.GetBarFillType = function() {
-		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
-			return null;
-		}
-
-		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
-		if (!dataBarElement) {
-			return null;
-		}
-
-		return dataBarElement.gradient ? "Gradient" : "Solid";
-	};
-
-	ApiDatabar.prototype.SetBarFillType = function(fillType) {
-		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
-			return;
-		}
-
-		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
-		if (!dataBarElement) {
-			return;
-		}
-
-		dataBarElement.gradient = fillType === "Gradient";
-	};
-
-	Object.defineProperty(ApiDatabar.prototype, "BarFillType", {
-		get: function() {
-			return this.GetBarFillType();
-		},
-		set: function(value) {
-			this.SetBarFillType(value);
-		}
-	});
-
-	ApiDatabar.prototype.GetDirection = function() {
-		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
-			return null;
-		}
-
-		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
-		if (!dataBarElement) {
-			return null;
-		}
-
-		return dataBarElement.direction || "LeftToRight";
-	};
-
-	ApiDatabar.prototype.SetDirection = function(direction) {
-		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
-			return;
-		}
-
-		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
-		if (!dataBarElement) {
-			return;
-		}
-
-		dataBarElement.direction = direction;
-	};
-
-	Object.defineProperty(ApiDatabar.prototype, "Direction", {
-		get: function() {
-			return this.GetDirection();
-		},
-		set: function(value) {
-			this.SetDirection(value);
-		}
-	});
-
-	ApiDatabar.prototype.GetFormula = function() {
-		if (this.rule.aRuleElements && this.rule.aRuleElements.length > 0 && this.rule.aRuleElements[0]) {
-			let element = this.rule.aRuleElements[0];
-			if (element.aCFVOs && element.aCFVOs.length > 0 && element.aCFVOs[0] && element.aCFVOs[0].formula) {
-				return "=" + element.aCFVOs[0].formula.getFormulaStr();
-			}
-		}
-		return "";
-	};
-
-	Object.defineProperty(ApiDatabar.prototype, "Formula", {
-		get: function() {
-			return this.GetFormula();
-		}
-	});
-
-	ApiDatabar.prototype.GetMaxPoint = function() {
-		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
-			return null;
-		}
-
-		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
-		if (!dataBarElement || !dataBarElement.aCFVOs || !dataBarElement.aCFVOs[1]) {
-			return null;
-		}
-
-		return new ApiDatabarPoint(dataBarElement.aCFVOs[1]);
-	};
-
-	Object.defineProperty(ApiDatabar.prototype, "MaxPoint", {
-		get: function() {
-			return this.GetMaxPoint();
-		}
-	});
-
-	ApiDatabar.prototype.GetMinPoint = function() {
-		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
-			return null;
-		}
-
-		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
-		if (!dataBarElement || !dataBarElement.aCFVOs || !dataBarElement.aCFVOs[0]) {
-			return null;
-		}
-
-		return new ApiDatabarPoint(dataBarElement.aCFVOs[0]);
-	};
-
-	Object.defineProperty(ApiDatabar.prototype, "MinPoint", {
-		get: function() {
-			return this.GetMinPoint();
-		}
-	});
-
-	ApiDatabar.prototype.GetNegativeBarFormat = function() {
-		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
-			return null;
-		}
-
-		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
-		if (!dataBarElement) {
-			return null;
-		}
-
-		return {
-			Color: dataBarElement.negativeBarColor ? dataBarElement.negativeBarColor.getRgb() : 0,
-			BorderColor: dataBarElement.negativeBarBorderColor ? dataBarElement.negativeBarBorderColor.getRgb() : 0
-		};
-	};
-
-	ApiDatabar.prototype.SetNegativeBarFormat = function(format) {
-		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
-			return;
-		}
-
-		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
-		if (!dataBarElement) {
-			return;
-		}
-
-		if (format && typeof format === "object") {
-			if (typeof format.Color === "number") {
-				let newColor = new Asc.asc_CColor();
-				newColor.setRgb(format.Color);
-				dataBarElement.negativeBarColor = newColor;
-			}
-			if (typeof format.BorderColor === "number") {
-				let newBorderColor = new Asc.asc_CColor();
-				newBorderColor.setRgb(format.BorderColor);
-				dataBarElement.negativeBarBorderColor = newBorderColor;
-			}
-		}
-	};
-
-	Object.defineProperty(ApiDatabar.prototype, "NegativeBarFormat", {
-		get: function() {
-			return this.GetNegativeBarFormat();
-		},
-		set: function(value) {
-			this.SetNegativeBarFormat(value);
-		}
-	});
-
-	ApiDatabar.prototype.GetPercentMax = function() {
-		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
-			return null;
-		}
-
-		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
-		if (!dataBarElement) {
-			return null;
-		}
-
-		return dataBarElement.maxLength || 100;
-	};
-
-	ApiDatabar.prototype.SetPercentMax = function(percent) {
-		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
-			return;
-		}
-
-		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
-		if (!dataBarElement) {
-			return;
-		}
-
-		if (typeof percent === "number") {
-			dataBarElement.maxLength = percent;
-		}
-	};
-
-	Object.defineProperty(ApiDatabar.prototype, "PercentMax", {
-		get: function() {
-			return this.GetPercentMax();
-		},
-		set: function(value) {
-			this.SetPercentMax(value);
-		}
-	});
-
-	ApiDatabar.prototype.GetPercentMin = function() {
-		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
-			return null;
-		}
-
-		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
-		if (!dataBarElement) {
-			return null;
-		}
-
-		return dataBarElement.minLength || 0;
-	};
-
-	ApiDatabar.prototype.SetPercentMin = function(percent) {
-		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
-			return;
-		}
-
-		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
-		if (!dataBarElement) {
-			return;
-		}
-
-		if (typeof percent === "number") {
-			dataBarElement.minLength = percent;
-		}
-	};
-
-	Object.defineProperty(ApiDatabar.prototype, "PercentMin", {
-		get: function() {
-			return this.GetPercentMin();
-		},
-		set: function(value) {
-			this.SetPercentMin(value);
-		}
-	});
-
+	/**
+	 * Returns the show value setting of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} True if the data bar shows the value, false otherwise.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetShowValue.js
+	 */
 	ApiDatabar.prototype.GetShowValue = function() {
 		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
-			return true;
+			return null;
 		}
 
 		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
@@ -22356,22 +22091,30 @@
 			return true;
 		}
 
-		return dataBarElement.showValue !== false;
+		return dataBarElement.ShowValue !== false;
 	};
 
-	ApiDatabar.prototype.SetShowValue = function(show) {
-		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
-			return;
+	/**
+	 * Sets the show value setting of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} showValue - True to show the value, false to hide it.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetShowValue.js
+	 */
+	ApiDatabar.prototype.SetShowValue = function(showValue) {
+		if (typeof showValue !== "boolean") {
+			return false;
 		}
 
-		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
-		if (!dataBarElement) {
-			return;
+		var oRule = this.rule;
+		if (!oRule) {
+			return false;
 		}
 
-		if (typeof show === "boolean") {
-			dataBarElement.showValue = show;
-		}
+		return this.private_changeStyle(oRule, function() {
+			oRule.asc_setShowValue(showValue);
+		});
 	};
 
 	Object.defineProperty(ApiDatabar.prototype, "ShowValue", {
@@ -22383,6 +22126,465 @@
 		}
 	});
 
+	/**
+	 * The reading order for data bars.
+	 * @typedef {("xlLTR" | "xlRTL" | "xlContext")} XlReadingOrder
+	 * @see office-js-api/Examples/Enumerations/XlReadingOrder.js
+	 */
+
+	function FromXlReadingOrderTo(sDirection) {
+		let nDirection = -1;
+		switch (sDirection) {
+			case "xlContext":
+				nDirection = AscCommonExcel.EDataBarDirection.context;
+				break;
+			case "xlLTR":
+				nDirection = AscCommonExcel.EDataBarDirection.leftToRight;
+				break;
+			case "xlRTL":
+				nDirection = AscCommonExcel.EDataBarDirection.rightToLeft;
+				break;
+		}
+		return nDirection;
+	}
+
+	function ToXlReadingOrderFrom(nDirection) {
+		let sDirection = "";
+		switch (nDirection) {
+			case AscCommonExcel.EDataBarDirection.context:
+				sDirection = "xlContext";
+				break;
+			case AscCommonExcel.EDataBarDirection.leftToRight:
+				sDirection = "xlLTR";
+				break;
+			case AscCommonExcel.EDataBarDirection.rightToLeft:
+				sDirection = "xlRTL";
+				break;
+			default:
+				sDirection = "xlContext";
+				break;
+		}
+		return sDirection;
+	}
+
+	/**
+	 * Returns the direction of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlReadingOrder} The direction setting for the data bar.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetDirection.js
+	 */
+	ApiDatabar.prototype.GetDirection = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return null;
+		}
+
+		return ToXlReadingOrderFrom(dataBarElement.Direction || AscCommonExcel.EDataBarDirection.context);
+	};
+
+	/**
+	 * Sets the direction of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {XlReadingOrder} direction - The direction setting for the data bar.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetDirection.js
+	 */
+	ApiDatabar.prototype.SetDirection = function(direction) {
+		if (typeof direction !== "string") {
+			return false;
+		}
+
+		let internalDirection = FromXlReadingOrderTo(direction);
+		if (internalDirection === -1) {
+			return false;
+		}
+
+		var oRule = this.rule;
+		if (!oRule) {
+			return false;
+		}
+
+		return private_changeStyle(oRule, function() {
+			oRule.asc_setDirection(internalDirection);
+		});
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "Direction", {
+		get: function() {
+			return this.GetDirection();
+		},
+		set: function(value) {
+			this.SetDirection(value);
+		}
+	});
+
+	/**
+	 * Returns the bar color of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRGBColor | null} Returns the RGB color object representing the bar color.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetBarColor.js
+	 */
+	ApiDatabar.prototype.GetBarColor = function() {
+		//TODO FormatColor
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return null;
+		}
+
+		return {
+			Color: dataBarElement.Color ? dataBarElement.Color.getRgb() : 0
+		};
+	};
+
+	/**
+	 * Sets the bar color of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {number} color - The RGB color value for the bar.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetBarColor.js
+	 */
+	ApiDatabar.prototype.SetBarColor = function(color) {
+		if (typeof color !== "number") {
+			return false;
+		}
+
+		var oRule = this.rule;
+		if (!oRule) {
+			return false;
+		}
+
+		return private_changeStyle(oRule, function() {
+			oRule.asc_setColor(new AscCommonExcel.RgbColor(color));
+		});
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "BarColor", {
+		get: function() {
+			return this.GetBarColor();
+		},
+		set: function(value) {
+			this.SetBarColor(value.Color);
+		}
+	});
+
+	/**
+	 * Returns the bar fill type of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlDataBarFillType} The fill type setting for the data bar.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetBarFillType.js
+	 */
+	ApiDatabar.prototype.GetBarFillType = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return null;
+		}
+
+		return dataBarElement.Gradient ? "xlDataBarFillGradient" : "xlDataBarFillSolid";
+	};
+
+	/**
+	 * Sets the bar fill type of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {XlDataBarFillType} fillType - The fill type setting for the data bar.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetBarFillType.js
+	 */
+	ApiDatabar.prototype.SetBarFillType = function(fillType) {
+		if (typeof fillType !== "string") {
+			return false;
+		}
+
+		var gradient = fillType === "xlDataBarFillGradient";
+		var oRule = this.rule;
+		if (!oRule) {
+			return false;
+		}
+
+		return this.private_changeStyle(function() {
+			oRule.asc_setGradient(gradient);
+		}, true);
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "BarFillType", {
+		get: function() {
+			return this.GetBarFillType();
+		},
+		set: function(value) {
+			this.SetBarFillType(value);
+		}
+	});
+
+	/**
+	 * Returns the minimum point of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiConditionValue | null} Returns the minimum condition value object.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetMinPoint.js
+	 */
+	ApiDatabar.prototype.GetMinPoint = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement || !dataBarElement.aCFVOs || dataBarElement.aCFVOs.length < 1) {
+			return null;
+		}
+
+		return new ApiConditionValue(dataBarElement.aCFVOs[0]);
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "MinPoint", {
+		get: function() {
+			return this.GetMinPoint();
+		}
+	});
+
+	/**
+	 * Returns the maximum point of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiConditionValue | null} Returns the maximum condition value object.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetMaxPoint.js
+	 */
+	ApiDatabar.prototype.GetMaxPoint = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement || !dataBarElement.aCFVOs || dataBarElement.aCFVOs.length < 2) {
+			return null;
+		}
+
+		return new ApiConditionValue(dataBarElement.aCFVOs[1]);
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "MaxPoint", {
+		get: function() {
+			return this.GetMaxPoint();
+		}
+	});
+
+	/**
+	 * Returns the negative bar format of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiNegativeBarFormat | null} Returns the negative bar format object.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetNegativeBarFormat.js
+	 */
+	ApiDatabar.prototype.GetNegativeBarFormat = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return null;
+		}
+
+		return new ApiNegativeBarFormat(dataBarElement);
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "NegativeBarFormat", {
+		get: function() {
+			return this.GetNegativeBarFormat();
+		}
+	});
+
+	/**
+	 * Returns the bar border of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiDataBarBorder | null} Returns the data bar border object.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetBarBorder.js
+	 */
+	ApiDatabar.prototype.GetBarBorder = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return null;
+		}
+
+		return new ApiDataBarBorder(dataBarElement);
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "BarBorder", {
+		get: function() {
+			return this.GetBarBorder();
+		}
+	});
+
+	/**
+	 * Returns the percent maximum value of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} Returns the maximum length as percentage.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetPercentMax.js
+	 */
+	ApiDatabar.prototype.GetPercentMax = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return 100;
+		}
+
+		return dataBarElement.MaxLength || 100;
+	};
+
+	/**
+	 * Sets the percent maximum value of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {number} percent - The maximum length as percentage.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetPercentMax.js
+	 */
+	ApiDatabar.prototype.SetPercentMax = function(percent) {
+		if (typeof percent !== "number") {
+			return false;
+		}
+
+		var oRule = this.rule;
+		if (!oRule) {
+			return false;
+		}
+
+		return private_changeStyle(oRule, function() {
+			let dataBarElement = oRule.aRuleElements && oRule.aRuleElements[0];
+			if (dataBarElement) {
+				dataBarElement.MaxLength = percent;
+			}
+		});
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "PercentMax", {
+		get: function() {
+			return this.GetPercentMax();
+		},
+		set: function(value) {
+			this.SetPercentMax(value);
+		}
+	});
+
+	/**
+	 * Returns the percent minimum value of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} Returns the minimum length as percentage.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetPercentMin.js
+	 */
+	ApiDatabar.prototype.GetPercentMin = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return 0;
+		}
+
+		return dataBarElement.MinLength || 0;
+	};
+
+	/**
+	 * Sets the percent minimum value of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {number} percent - The minimum length as percentage.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetPercentMin.js
+	 */
+	ApiDatabar.prototype.SetPercentMin = function(percent) {
+		if (typeof percent !== "number") {
+			return false;
+		}
+
+		var oRule = this.rule;
+		if (!oRule) {
+			return false;
+		}
+
+		return private_changeStyle(oRule, function() {
+			let dataBarElement = oRule.aRuleElements && oRule.aRuleElements[0];
+			if (dataBarElement) {
+				dataBarElement.MinLength = percent;
+			}
+		});
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "PercentMin", {
+		get: function() {
+			return this.GetPercentMin();
+		},
+		set: function(value) {
+			this.SetPercentMin(value);
+		}
+	});
+
+	/**
+	 * Returns the formula for the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {string} Returns the formula string.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetFormula.js
+	 */
+	ApiDatabar.prototype.GetFormula = function() {
+		if (this.rule.aRuleElements && this.rule.aRuleElements.length > 0 && this.rule.aRuleElements[0]) {
+			let element = this.rule.aRuleElements[0];
+			return element.Text || "";
+		}
+		return "";
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "Formula", {
+		get: function() {
+			return this.GetFormula();
+		}
+	});
+
+	/**
+	 * Returns the type of the data bar conditional formatting rule.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlFormatConditionType} Returns "xlDatabar".
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetType.js
+	 */
 	ApiDatabar.prototype.GetType = function() {
 		return "xlDatabar";
 	};
@@ -22393,18 +22595,38 @@
 		}
 	});
 
-	function ApiDatabarPoint(cfvo) {
+	/**
+	 * Class representing a condition value for data bars and color scales.
+	 * @constructor
+	 */
+	function ApiConditionValue(cfvo) {
 		this.cfvo = cfvo;
 	}
 
-	ApiDatabarPoint.prototype.GetType = function() {
+	/**
+	 * Returns the type of the condition value.
+	 * @memberof ApiConditionValue
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlConditionValueTypes} The type of the condition value.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiConditionValue/Methods/GetType.js
+	 */
+	ApiConditionValue.prototype.GetType = function() {
 		if (!this.cfvo) {
 			return null;
 		}
 		return ToXlConditionValueTypesFrom(this.cfvo.asc_getType());
 	};
 
-	ApiDatabarPoint.prototype.SetType = function(type) {
+	/**
+	 * Sets the type of the condition value.
+	 * @memberof ApiConditionValue
+	 * @typeofeditors ["CSE"]
+	 * @param {XlConditionValueTypes} type - The type of the condition value.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiConditionValue/Methods/SetType.js
+	 */
+	ApiConditionValue.prototype.SetType = function(type) {
 		if (this.cfvo) {
 			let internalType = FromXlConditionValueTypesTo(type);
 			if (internalType !== -1) {
@@ -22413,7 +22635,7 @@
 		}
 	};
 
-	Object.defineProperty(ApiDatabarPoint.prototype, "Type", {
+	Object.defineProperty(ApiConditionValue.prototype, "Type", {
 		get: function() {
 			return this.GetType();
 		},
@@ -22422,20 +22644,301 @@
 		}
 	});
 
-	ApiDatabarPoint.prototype.GetValue = function() {
+	/**
+	 * Returns the value of the condition value.
+	 * @memberof ApiConditionValue
+	 * @typeofeditors ["CSE"]
+	 * @returns {string | number} The value of the condition value.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiConditionValue/Methods/GetValue.js
+	 */
+	ApiConditionValue.prototype.GetValue = function() {
 		if (!this.cfvo) {
 			return null;
 		}
-		return this.cfvo.Val;
+		return this.cfvo.asc_getVal();
 	};
 
-	ApiDatabarPoint.prototype.SetValue = function(value) {
+	/**
+	 * Sets the value of the condition value.
+	 * @memberof ApiConditionValue
+	 * @typeofeditors ["CSE"]
+	 * @param {string | number} value - The value of the condition value.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiConditionValue/Methods/SetValue.js
+	 */
+	ApiConditionValue.prototype.SetValue = function(value) {
 		if (this.cfvo) {
 			this.cfvo.asc_setVal(value);
 		}
 	};
 
-	Object.defineProperty(ApiDatabarPoint.prototype, "Value", {
+	Object.defineProperty(ApiConditionValue.prototype, "Value", {
+		get: function() {
+			return this.GetValue();
+		},
+		set: function(value) {
+			this.SetValue(value);
+		}
+	});
+
+	/**
+	 * Class representing negative bar formatting for data bars.
+	 * @constructor
+	 */
+	function ApiNegativeBarFormat(dataBarElement) {
+		this.dataBarElement = dataBarElement;
+	}
+
+	/**
+	 * Returns the color of the negative bars.
+	 * @memberof ApiNegativeBarFormat
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRGBColor | null} The color of negative bars.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiNegativeBarFormat/Methods/GetColor.js
+	 */
+	ApiNegativeBarFormat.prototype.GetColor = function() {
+		if (!this.dataBarElement || !this.dataBarElement.NegativeColor) {
+			return null;
+		}
+		return {
+			Color: this.dataBarElement.NegativeColor.getRgb()
+		};
+	};
+
+	/**
+	 * Sets the color of the negative bars.
+	 * @memberof ApiNegativeBarFormat
+	 * @typeofeditors ["CSE"]
+	 * @param {number} color - The RGB color value for negative bars.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiNegativeBarFormat/Methods/SetColor.js
+	 */
+	ApiNegativeBarFormat.prototype.SetColor = function(color) {
+		if (this.dataBarElement && typeof color === "number") {
+			this.dataBarElement.NegativeColor = new AscCommonExcel.RgbColor(color);
+		}
+	};
+
+	Object.defineProperty(ApiNegativeBarFormat.prototype, "Color", {
+		get: function() {
+			return this.GetColor();
+		},
+		set: function(value) {
+			if (typeof value === "object" && typeof value.Color === "number") {
+				this.SetColor(value.Color);
+			}
+		}
+	});
+
+	/**
+	 * Returns the border color of the negative bars.
+	 * @memberof ApiNegativeBarFormat
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRGBColor | null} The border color of negative bars.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiNegativeBarFormat/Methods/GetBorderColor.js
+	 */
+	ApiNegativeBarFormat.prototype.GetBorderColor = function() {
+		if (!this.dataBarElement || !this.dataBarElement.NegativeBorderColor) {
+			return null;
+		}
+		return {
+			Color: this.dataBarElement.NegativeBorderColor.getRgb()
+		};
+	};
+
+	/**
+	 * Sets the border color of the negative bars.
+	 * @memberof ApiNegativeBarFormat
+	 * @typeofeditors ["CSE"]
+	 * @param {number} color - The RGB color value for negative bar borders.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiNegativeBarFormat/Methods/SetBorderColor.js
+	 */
+	ApiNegativeBarFormat.prototype.SetBorderColor = function(color) {
+		if (this.dataBarElement && typeof color === "number") {
+			this.dataBarElement.NegativeBorderColor = new AscCommonExcel.RgbColor(color);
+		}
+	};
+
+	Object.defineProperty(ApiNegativeBarFormat.prototype, "BorderColor", {
+		get: function() {
+			return this.GetBorderColor();
+		},
+		set: function(value) {
+			if (typeof value === "object" && typeof value.Color === "number") {
+				this.SetBorderColor(value.Color);
+			}
+		}
+	});
+
+	/**
+	 * Returns whether the negative bar color is the same as positive.
+	 * @memberof ApiNegativeBarFormat
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} True if negative bars use the same color as positive bars.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiNegativeBarFormat/Methods/GetColorSameAsPositive.js
+	 */
+	ApiNegativeBarFormat.prototype.GetColorSameAsPositive = function() {
+		if (!this.dataBarElement) {
+			return true;
+		}
+		return this.dataBarElement.NegativeBarColorSameAsPositive !== false;
+	};
+
+	/**
+	 * Sets whether the negative bar color is the same as positive.
+	 * @memberof ApiNegativeBarFormat
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} sameAsPositive - True to use the same color as positive bars.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiNegativeBarFormat/Methods/SetColorSameAsPositive.js
+	 */
+	ApiNegativeBarFormat.prototype.SetColorSameAsPositive = function(sameAsPositive) {
+		if (this.dataBarElement && typeof sameAsPositive === "boolean") {
+			this.dataBarElement.NegativeBarColorSameAsPositive = sameAsPositive;
+		}
+	};
+
+	Object.defineProperty(ApiNegativeBarFormat.prototype, "ColorSameAsPositive", {
+		get: function() {
+			return this.GetColorSameAsPositive();
+		},
+		set: function(value) {
+			this.SetColorSameAsPositive(value);
+		}
+	});
+
+	/**
+	 * Returns whether the negative bar border color is the same as positive.
+	 * @memberof ApiNegativeBarFormat
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} True if negative bar borders use the same color as positive bar borders.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiNegativeBarFormat/Methods/GetBorderColorSameAsPositive.js
+	 */
+	ApiNegativeBarFormat.prototype.GetBorderColorSameAsPositive = function() {
+		if (!this.dataBarElement) {
+			return true;
+		}
+		return this.dataBarElement.NegativeBarBorderColorSameAsPositive !== false;
+	};
+
+	/**
+	 * Sets whether the negative bar border color is the same as positive.
+	 * @memberof ApiNegativeBarFormat
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} sameAsPositive - True to use the same border color as positive bars.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiNegativeBarFormat/Methods/SetBorderColorSameAsPositive.js
+	 */
+	ApiNegativeBarFormat.prototype.SetBorderColorSameAsPositive = function(sameAsPositive) {
+		if (this.dataBarElement && typeof sameAsPositive === "boolean") {
+			this.dataBarElement.NegativeBarBorderColorSameAsPositive = sameAsPositive;
+		}
+	};
+
+	Object.defineProperty(ApiNegativeBarFormat.prototype, "BorderColorSameAsPositive", {
+		get: function() {
+			return this.GetBorderColorSameAsPositive();
+		},
+		set: function(value) {
+			this.SetBorderColorSameAsPositive(value);
+		}
+	});
+
+	/**
+	 * Class representing data bar border formatting.
+	 * @constructor
+	 */
+	function ApiDataBarBorder(dataBarElement) {
+		this.dataBarElement = dataBarElement;
+	}
+
+	/**
+	 * Returns the color of the data bar border.
+	 * @memberof ApiDataBarBorder
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRGBColor | null} The border color.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDataBarBorder/Methods/GetColor.js
+	 */
+	ApiDataBarBorder.prototype.GetColor = function() {
+		if (!this.dataBarElement || !this.dataBarElement.BorderColor) {
+			return null;
+		}
+		return {
+			Color: this.dataBarElement.BorderColor.getRgb()
+		};
+	};
+
+	/**
+	 * Sets the color of the data bar border.
+	 * @memberof ApiDataBarBorder
+	 * @typeofeditors ["CSE"]
+	 * @param {number} color - The RGB color value for the border.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDataBarBorder/Methods/SetColor.js
+	 */
+	ApiDataBarBorder.prototype.SetColor = function(color) {
+		if (this.dataBarElement && typeof color === "number") {
+			this.dataBarElement.BorderColor = new AscCommonExcel.RgbColor(color);
+		}
+	};
+
+	Object.defineProperty(ApiDataBarBorder.prototype, "Color", {
+		get: function() {
+			return this.GetColor();
+		},
+		set: function(value) {
+			if (typeof value === "object" && typeof value.Color === "number") {
+				this.SetColor(value.Color);
+			}
+		}
+	});
+
+	/**
+	 * Returns the type of the data bar border.
+	 * @memberof ApiDataBarBorder
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlDataBarBorderType} The border type.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDataBarBorder/Methods/GetType.js
+	 */
+	ApiDataBarBorder.prototype.GetType = function() {
+		if (!this.dataBarElement || !this.dataBarElement.BorderColor) {
+			return "xlDataBarBorderNone";
+		}
+		return "xlDataBarBorderSolid";
+	};
+
+	/**
+	 * Sets the type of the data bar border.
+	 * @memberof ApiDataBarBorder
+	 * @typeofeditors ["CSE"]
+	 * @param {XlDataBarBorderType} borderType - The border type.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDataBarBorder/Methods/SetType.js
+	 */
+	ApiDataBarBorder.prototype.SetType = function(borderType) {
+		if (this.dataBarElement && typeof borderType === "string") {
+			if (borderType === "xlDataBarBorderNone") {
+				this.dataBarElement.BorderColor = null;
+			}
+		}
+	};
+
+	Object.defineProperty(ApiDataBarBorder.prototype, "Type", {
+		get: function() {
+			return this.GetType();
+		},
+		set: function(value) {
+			this.SetType(value);
+		}
+	});
 
 	Api.prototype["Format"]                = Api.prototype.Format;
 	Api.prototype["AddSheet"]              = Api.prototype.AddSheet;
