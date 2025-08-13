@@ -18744,6 +18744,15 @@
 	 * @see office-js-api/Examples/Enumerations/XlConditionValueTypes.js
 	 */
 
+	/**
+	 * Icon set types for conditional formatting.
+	 * @typedef {("xl3Arrows" | "xl3ArrowsGray" | "xl3Flags" | "xl3TrafficLights1" | "xl3TrafficLights2" |
+	 * "xl3Signs" | "xl3Symbols" | "xl3Symbols2" | "xl4Arrows" | "xl4ArrowsGray" | "xl4RedToBlack" |
+	 * "xl4CRV" | "xl4TrafficLights" | "xl5Arrows" | "xl5ArrowsGray" | "xl5CRV" | "xl5Quarters" |
+	 * "xl3Stars" | "xl3Triangles" | "xl5Boxes")} XlIconSet
+	 * @see office-js-api/Examples/Enumerations/XlIconSet.js
+	 */
+
 	function FromXlValidationTypeTo(sType) {
 		let nType = -1;
 		switch (sType) {
@@ -20044,7 +20053,7 @@
 				let iconsProps = new window['AscCommonExcel'].CIconSet();
 				iconsProps.asc_setShowValue(true);
 				iconsProps.asc_setReverse(false);
-				iconsProps.asc_setIconSet(Asc.EIconSetType.ThreeTrafficLights1);
+				iconsProps.asc_setIconSet(Asc.Asc.EIconSetType.ThreeTrafficLights1);
 
 				let values = [];
 				let iconCount = 3;
@@ -20229,6 +20238,141 @@
 		this.conditions.push(colorScale);
 
 		return colorScale;
+	};
+
+	/**
+	 * Adds a new data bar conditional formatting rule to the collection.
+	 * @memberof ApiFormatConditions
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiDataBar | null}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/AddDataBar.js
+	 */
+	ApiFormatConditions.prototype.AddDataBar = function() {
+		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		if (!worksheet) {
+			return null;
+		}
+
+		let props = new window['AscCommonExcel'].CConditionalFormattingRule();
+		props.type = Asc.ECfType.dataBar;
+		props.priority = worksheet.getNextCFPriority ? worksheet.getNextCFPriority() : 1;
+
+		// Create data bar properties with default settings
+		let dataBarProps = new window['AscCommonExcel'].CDataBar();
+		dataBarProps.asc_setInterfaceDefault(); // Sets MinLength=0, MaxLength=100
+
+		// Set default CFVOs (Conditional Format Value Objects)
+		let cfvos = [];
+
+		// Minimum value (auto minimum)
+		let minCfvo = new window['AscCommonExcel'].CConditionalFormatValueObject();
+		minCfvo.asc_setType(Asc.c_oAscCfvoType.AutoMin);
+		minCfvo.asc_setGte(true);
+		cfvos.push(minCfvo);
+
+		// Maximum value (auto maximum)
+		let maxCfvo = new window['AscCommonExcel'].CConditionalFormatValueObject();
+		maxCfvo.asc_setType(Asc.c_oAscCfvoType.AutoMax);
+		maxCfvo.asc_setGte(true);
+		cfvos.push(maxCfvo);
+
+		dataBarProps.asc_setCFVOs(cfvos);
+
+		// Set the data bar rule to the conditional formatting rule
+		props.asc_setColorScaleOrDataBarOrIconSetRule(dataBarProps);
+
+		// Set the ranges for the conditional formatting
+		let ranges = [];
+		if (this.range.areas) {
+			for (let i = 0; i < this.range.areas.length; i++) {
+				ranges.push(this.range.areas[i].bbox);
+			}
+		} else {
+			ranges.push(this.range.range.bbox);
+		}
+		props.ranges = ranges;
+
+		// Apply the conditional formatting rule to the worksheet
+		worksheet.setCFRule(props);
+
+		// Create and return ApiDataBar object
+		let dataBar = new ApiDatabar(props, this.range, this);
+		this.conditions.push(dataBar);
+
+		return dataBar;
+	};
+
+	/**
+	 * Adds a new icon set conditional formatting rule to the collection.
+	 * @memberof ApiFormatConditions
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiIconSetCondition | null}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/AddIconSetCondition.js
+	 */
+	ApiFormatConditions.prototype.AddIconSetCondition = function() {
+		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		if (!worksheet) {
+			return null;
+		}
+
+		let props = new window['AscCommonExcel'].CConditionalFormattingRule();
+		props.type = Asc.ECfType.iconSet;
+		props.priority = worksheet.getNextCFPriority ? worksheet.getNextCFPriority() : 1;
+
+		// Create icon set properties with default settings (3 arrows)
+		let iconSetProps = new window['AscCommonExcel'].CIconSet();
+		iconSetProps.asc_setIconSet(Asc.EIconSetType.Arrows3); // Default to 3 arrows
+		iconSetProps.asc_setReverse(false);
+		iconSetProps.asc_setShowValue(true);
+		iconSetProps.Percent = true;
+
+		// Create default CFVOs (Conditional Format Value Objects) for 3-icon set
+		let cfvos = [];
+
+		// First threshold (minimum) - no threshold needed, always starts from minimum
+		let minCfvo = new window['AscCommonExcel'].CConditionalFormatValueObject();
+		minCfvo.asc_setType(Asc.c_oAscCfvoType.Minimum);
+		minCfvo.asc_setGte(true);
+		cfvos.push(minCfvo);
+
+		// Second threshold (33rd percentile)
+		let midCfvo = new window['AscCommonExcel'].CConditionalFormatValueObject();
+		midCfvo.asc_setType(Asc.c_oAscCfvoType.Percentile);
+		midCfvo.asc_setVal("33");
+		midCfvo.asc_setGte(true);
+		cfvos.push(midCfvo);
+
+		// Third threshold (67th percentile)
+		let maxCfvo = new window['AscCommonExcel'].CConditionalFormatValueObject();
+		maxCfvo.asc_setType(Asc.c_oAscCfvoType.Percentile);
+		maxCfvo.asc_setVal("67");
+		maxCfvo.asc_setGte(true);
+		cfvos.push(maxCfvo);
+
+		iconSetProps.asc_setCFVOs(cfvos);
+
+		// Set the icon set rule to the conditional formatting rule
+		props.asc_setColorScaleOrDataBarOrIconSetRule(iconSetProps);
+
+		// Set the ranges for the conditional formatting
+		let ranges = [];
+		if (this.range.areas) {
+			for (let i = 0; i < this.range.areas.length; i++) {
+				ranges.push(this.range.areas[i].bbox);
+			}
+		} else {
+			ranges.push(this.range.range.bbox);
+		}
+		props.ranges = ranges;
+
+		// Apply the conditional formatting rule to the worksheet
+		worksheet.setCFRule(props);
+
+		// Create and return ApiIconSetCondition object
+		let iconSetCondition = new ApiIconSetCondition(props, this.range, this);
+		this.conditions.push(iconSetCondition);
+
+		return iconSetCondition;
 	};
 
 	/**
@@ -20984,7 +21128,7 @@
 			return;
 		}
 
-		if (newRule.priority === Priority) {
+		if (this.rule.priority === Priority) {
 			return;
 		}
 
@@ -21421,6 +21565,7 @@
 		callback(newRule);
 
 		worksheet.changeCFRule(oldRule, newRule, true);
+		this.rule = newRule;
 	};
 
 	/**
@@ -21987,7 +22132,7 @@
 				nPosition = AscCommonExcel.EDataBarAxisPosition.automatic;
 				break;
 			case "xlDataBarAxisMidpoint":
-				nPosition = AscCommonExcel.EDataBarAxisPosition.midpoint;
+				nPosition = AscCommonExcel.EDataBarAxisPosition.middle;
 				break;
 			case "xlDataBarAxisNone":
 				nPosition = AscCommonExcel.EDataBarAxisPosition.none;
@@ -22002,7 +22147,7 @@
 			case AscCommonExcel.EDataBarAxisPosition.automatic:
 				sPosition = "xlDataBarAxisAutomatic";
 				break;
-			case AscCommonExcel.EDataBarAxisPosition.midpoint:
+			case AscCommonExcel.EDataBarAxisPosition.middle:
 				sPosition = "xlDataBarAxisMidpoint";
 				break;
 			case AscCommonExcel.EDataBarAxisPosition.none:
@@ -22033,7 +22178,7 @@
 			return null;
 		}
 
-		return ToXlDataBarAxisPositionFrom(dataBarElement.axisPosition || AscCommonExcel.EDataBarAxisPosition.automatic);
+		return ToXlDataBarAxisPositionFrom(dataBarElement.AxisPosition || AscCommonExcel.EDataBarAxisPosition.automatic);
 	};
 
 	/**
@@ -22045,10 +22190,6 @@
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetAxisPosition.js
 	 */
 	ApiDatabar.prototype.SetAxisPosition = function(position) {
-		if (typeof position !== "number") {
-			return false;
-		}
-
 		let internalPosition = FromXlDataBarAxisPositionTo(position);
 		if (internalPosition === -1) {
 			return false;
@@ -22059,8 +22200,8 @@
 			return false;
 		}
 
-		return private_changeStyle(oRule, function() {
-			oRule.asc_setAxisPosition(internalPosition);
+		return this.private_changeStyle(function(newRule) {
+			newRule.aRuleElements[0].asc_setAxisPosition(internalPosition);
 		});
 	};
 
@@ -22112,8 +22253,8 @@
 			return false;
 		}
 
-		return this.private_changeStyle(oRule, function() {
-			oRule.asc_setShowValue(showValue);
+		return this.private_changeStyle(function(newRule) {
+			newRule.aRuleElements[0].asc_setShowValue(showValue);
 		});
 	};
 
@@ -22211,8 +22352,8 @@
 			return false;
 		}
 
-		return private_changeStyle(oRule, function() {
-			oRule.asc_setDirection(internalDirection);
+		return this.private_changeStyle(function(newRule) {
+			newRule.aRuleElements[0].asc_setDirection(internalDirection);
 		});
 	};
 
@@ -22267,8 +22408,8 @@
 			return false;
 		}
 
-		return private_changeStyle(oRule, function() {
-			oRule.asc_setColor(new AscCommonExcel.RgbColor(color));
+		return this.private_changeStyle(oRule, function(newRule) {
+			newRule.aRuleElements[0].asc_setColor(new AscCommonExcel.RgbColor(color));
 		});
 	};
 
@@ -22321,8 +22462,8 @@
 			return false;
 		}
 
-		return this.private_changeStyle(function() {
-			oRule.asc_setGradient(gradient);
+		return this.private_changeStyle(function(newRule) {
+			newRule.aRuleElements[0].asc_setGradient(gradient);
 		}, true);
 	};
 
@@ -22482,8 +22623,8 @@
 			return false;
 		}
 
-		return private_changeStyle(oRule, function() {
-			let dataBarElement = oRule.aRuleElements && oRule.aRuleElements[0];
+		return this.private_changeStyle(function(newRule) {
+			let dataBarElement = newRule.aRuleElements && newRule.aRuleElements[0];
 			if (dataBarElement) {
 				dataBarElement.MaxLength = percent;
 			}
@@ -22538,8 +22679,8 @@
 			return false;
 		}
 
-		return private_changeStyle(oRule, function() {
-			let dataBarElement = oRule.aRuleElements && oRule.aRuleElements[0];
+		return this.private_changeStyle(function(newRule) {
+			let dataBarElement = newRule.aRuleElements && newRule.aRuleElements[0];
 			if (dataBarElement) {
 				dataBarElement.MinLength = percent;
 			}
@@ -22937,6 +23078,1019 @@
 		},
 		set: function(value) {
 			this.SetType(value);
+		}
+	});
+
+
+	/**
+	 * Class representing an icon set conditional formatting rule.
+	 * @constructor
+	 * @extends ApiFormatCondition
+	 */
+	function ApiIconSetCondition(rule, range, _parent) {
+		ApiFormatCondition.call(this, rule, range, _parent);
+	}
+
+	ApiIconSetCondition.prototype = Object.create(ApiFormatCondition.prototype);
+	ApiIconSetCondition.prototype.constructor = ApiIconSetCondition;
+
+	function FromXlIconSetTo(sIconSet) {
+		let nIconSet = -1;
+		switch (sIconSet) {
+			case "xl3Arrows":
+				nIconSet = Asc.EIconSetType.Arrows3;
+				break;
+			case "xl3ArrowsGray":
+				nIconSet = Asc.EIconSetType.Arrows3Gray;
+				break;
+			case "xl3Flags":
+				nIconSet = Asc.EIconSetType.Flags3;
+				break;
+			case "xl3TrafficLights1":
+				nIconSet = Asc.EIconSetType.Traffic3Lights1;
+				break;
+			case "xl3TrafficLights2":
+				nIconSet = Asc.EIconSetType.Traffic3Lights2;
+				break;
+			case "xl3Signs":
+				nIconSet = Asc.EIconSetType.Signs3;
+				break;
+			case "xl3Symbols":
+				nIconSet = Asc.EIconSetType.Symbols3;
+				break;
+			case "xl3Symbols2":
+				nIconSet = Asc.EIconSetType.Symbols3_2;
+				break;
+			case "xl4Arrows":
+				nIconSet = Asc.EIconSetType.Arrows4;
+				break;
+			case "xl4ArrowsGray":
+				nIconSet = Asc.EIconSetType.Arrows4Gray;
+				break;
+			case "xl4RedToBlack":
+				nIconSet = Asc.EIconSetType.RedToBlack4;
+				break;
+			case "xl4CRV":
+				nIconSet = Asc.EIconSetType.Rating4;
+				break;
+			case "xl4TrafficLights":
+				nIconSet = Asc.EIconSetType.Traffic4Lights;
+				break;
+			case "xl5Arrows":
+				nIconSet = Asc.EIconSetType.Arrows5;
+				break;
+			case "xl5ArrowsGray":
+				nIconSet = Asc.EIconSetType.Arrows5Gray;
+				break;
+			case "xl5CRV":
+				nIconSet = Asc.EIconSetType.Rating5;
+				break;
+			case "xl5Quarters":
+				nIconSet = Asc.EIconSetType.Quarters5;
+				break;
+			case "xl3Stars":
+				nIconSet = Asc.EIconSetType.Stars3;
+				break;
+			case "xl3Triangles":
+				nIconSet = Asc.EIconSetType.Triangles3;
+				break;
+			case "xl5Boxes":
+				nIconSet = Asc.EIconSetType.Boxes5;
+				break;
+		}
+		return nIconSet;
+	}
+
+	function ToXlIconSetFrom(nIconSet) {
+		let sIconSet = "";
+		switch (nIconSet) {
+			case Asc.EIconSetType.Arrows3:
+				sIconSet = "xl3Arrows";
+				break;
+			case Asc.EIconSetType.Arrows3Gray:
+				sIconSet = "xl3ArrowsGray";
+				break;
+			case Asc.EIconSetType.Flags3:
+				sIconSet = "xl3Flags";
+				break;
+			case Asc.EIconSetType.Traffic3Lights1:
+				sIconSet = "xl3TrafficLights1";
+				break;
+			case Asc.EIconSetType.Traffic3Lights2:
+				sIconSet = "xl3TrafficLights2";
+				break;
+			case Asc.EIconSetType.Signs3:
+				sIconSet = "xl3Signs";
+				break;
+			case Asc.EIconSetType.Symbols3:
+				sIconSet = "xl3Symbols";
+				break;
+			case Asc.EIconSetType.Symbols3_2:
+				sIconSet = "xl3Symbols2";
+				break;
+			case Asc.EIconSetType.Arrows4:
+				sIconSet = "xl4Arrows";
+				break;
+			case Asc.EIconSetType.Arrows4Gray:
+				sIconSet = "xl4ArrowsGray";
+				break;
+			case Asc.EIconSetType.RedToBlack4:
+				sIconSet = "xl4RedToBlack";
+				break;
+			case Asc.EIconSetType.Rating4:
+				sIconSet = "xl4CRV";
+				break;
+			case Asc.EIconSetType.Traffic4Lights:
+				sIconSet = "xl4TrafficLights";
+				break;
+			case Asc.EIconSetType.Arrows5:
+				sIconSet = "xl5Arrows";
+				break;
+			case Asc.EIconSetType.Arrows5Gray:
+				sIconSet = "xl5ArrowsGray";
+				break;
+			case Asc.EIconSetType.Rating5:
+				sIconSet = "xl5CRV";
+				break;
+			case Asc.EIconSetType.Quarters5:
+				sIconSet = "xl5Quarters";
+				break;
+			case Asc.EIconSetType.Stars3:
+				sIconSet = "xl3Stars";
+				break;
+			case Asc.EIconSetType.Triangles3:
+				sIconSet = "xl3Triangles";
+				break;
+			case Asc.EIconSetType.Boxes5:
+				sIconSet = "xl5Boxes";
+				break;
+			default:
+				sIconSet = "xl3TrafficLights1";
+				break;
+		}
+		return sIconSet;
+	}
+
+	/**
+	 * Returns the icon set type used in the conditional formatting rule.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlIconSet | null} The icon set type, or null if not applicable.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetIconSet.js
+	 */
+	ApiIconSetCondition.prototype.GetIconSet = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.iconSet) {
+			return null;
+		}
+
+		let iconSetElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!iconSetElement) {
+			return null;
+		}
+
+		return ToXlIconSetFrom(iconSetElement.IconSet || Asc.EIconSetType.Traffic3Lights1);
+	};
+
+	/**
+	 * Sets the icon set type for the conditional formatting rule.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {XlIconSet} iconSet - The icon set type to apply.
+	 * @returns {boolean} True if the icon set was successfully set, false otherwise.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/SetIconSet.js
+	 */
+	ApiIconSetCondition.prototype.SetIconSet = function(iconSet) {
+		if (typeof iconSet !== "string") {
+			return false;
+		}
+
+		let internalIconSet = FromXlIconSetTo(iconSet);
+		if (internalIconSet === -1) {
+			return false;
+		}
+
+		var oRule = this.rule;
+		if (!oRule) {
+			return false;
+		}
+
+		return this.private_changeStyle(function(newRule) {
+			newRule.aRuleElements[0].asc_setIconSet(internalIconSet);
+		});
+	};
+
+	Object.defineProperty(ApiIconSetCondition.prototype, "IconSet", {
+		get: function() {
+			return this.GetIconSet();
+		},
+		set: function(value) {
+			this.SetIconSet(value);
+		}
+	});
+
+	/**
+	 * Returns whether the thresholds for the icon set conditional format are determined by using percentiles.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} True if all thresholds are set to percentile, false otherwise.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetPercentileValues.js
+	 */
+	ApiIconSetCondition.prototype.GetPercentileValues = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.iconSet) {
+			return false;
+		}
+
+		let iconSetElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!iconSetElement || !iconSetElement.aCFVOs) {
+			return false;
+		}
+
+		// Check if all CFVOs (except the first one which is always the minimum) are set to percentile
+		for (let i = 1; i < iconSetElement.aCFVOs.length; i++) {
+			let cfvo = iconSetElement.aCFVOs[i];
+			if (!cfvo || cfvo.asc_getType() !== Asc.c_oAscCfvoType.Percentile) {
+				return false;
+			}
+		}
+
+		return true;
+	};
+
+	/**
+	 * Sets whether the thresholds for the icon set conditional format are determined by using percentiles.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} percentileValues - True to set all thresholds to percentile, false otherwise.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/SetPercentileValues.js
+	 */
+	ApiIconSetCondition.prototype.SetPercentileValues = function(percentileValues) {
+		if (typeof percentileValues !== "boolean") {
+			return false;
+		}
+
+		if (!this.rule || this.rule.type !== Asc.ECfType.iconSet) {
+			return false;
+		}
+
+		var oRule = this.rule;
+		if (!oRule) {
+			return false;
+		}
+
+		this.private_changeStyle(function(newRule) {
+			let iconSetElement = newRule.aRuleElements && newRule.aRuleElements[0];
+			if (!iconSetElement || !iconSetElement.aCFVOs) {
+				return;
+			}
+
+			// Set type for all CFVOs (except the first one which is always the minimum)
+			for (let i = 1; i < iconSetElement.aCFVOs.length; i++) {
+				let cfvo = iconSetElement.aCFVOs[i];
+				if (cfvo) {
+					if (percentileValues) {
+						cfvo.asc_setType(Asc.c_oAscCfvoType.Percentile);
+						// Set default percentile values if not already set
+						if (!cfvo.asc_getVal()) {
+							// For 3-icon set: 33%, 67%; for 4-icon set: 25%, 50%, 75%; for 5-icon set: 20%, 40%, 60%, 80%
+							let totalCfvos = iconSetElement.aCFVOs.length;
+							let percentileValue = Math.round((i / (totalCfvos - 1)) * 100);
+							cfvo.asc_setVal(percentileValue.toString());
+						}
+					} else {
+						cfvo.asc_setType(Asc.c_oAscCfvoType.Number);
+						// Reset to default numeric values if needed
+						if (!cfvo.asc_getVal()) {
+							cfvo.asc_setVal("0");
+						}
+					}
+				}
+			}
+		});
+	};
+
+	Object.defineProperty(ApiIconSetCondition.prototype, "PercentileValues", {
+		get: function() {
+			return this.GetPercentileValues();
+		},
+		set: function(value) {
+			this.SetPercentileValues(value);
+		}
+	});
+
+	/**
+	 * Returns whether the icon order is reversed.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean | null} True if the icon order is reversed, false otherwise, or null if not applicable.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetReverse.js
+	 */
+	ApiIconSetCondition.prototype.GetReverseOrder = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.iconSet) {
+			return null;
+		}
+
+		let iconSetElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!iconSetElement) {
+			return false;
+		}
+
+		return iconSetElement.Reverse === true;
+	};
+
+	/**
+	 * Sets whether the icon order should be reversed.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} reverse - True to reverse the icon order, false otherwise.
+	 * @returns {boolean} True if the setting was successfully applied, false otherwise.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/SetReverse.js
+	 */
+	ApiIconSetCondition.prototype.SetReverseOrder = function(reverse) {
+		if (typeof reverse !== "boolean") {
+			return false;
+		}
+
+		var oRule = this.rule;
+		if (!oRule) {
+			return false;
+		}
+
+		return this.private_changeStyle(function(newRule) {
+			newRule.aRuleElements[0].asc_setReverse(reverse);
+		});
+	};
+
+	Object.defineProperty(ApiIconSetCondition.prototype, "ReverseOrder", {
+		get: function() {
+			return this.GetReverseOrder();
+		},
+		set: function(value) {
+			this.SetReverseOrder(value);
+		}
+	});
+
+	/**
+	 * Returns whether only icons are displayed (without cell values).
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean | null} True if only icons are shown, false if values are also shown, or null if not applicable.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetShowIconOnly.js
+	 */
+	ApiIconSetCondition.prototype.GetShowIconOnly = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.iconSet) {
+			return null;
+		}
+
+		let iconSetElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!iconSetElement) {
+			return true;
+		}
+
+		return iconSetElement.ShowValue === false;
+	};
+
+	/**
+	 * Sets whether to display only icons (without cell values).
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} showIconOnly - True to show only icons, false to show both icons and values.
+	 * @returns {boolean} True if the setting was successfully applied, false otherwise.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/SetShowIconOnly.js
+	 */
+	ApiIconSetCondition.prototype.SetShowIconOnly = function(showIconOnly) {
+		if (typeof showIconOnly !== "boolean") {
+			return false;
+		}
+
+		var oRule = this.rule;
+		if (!oRule) {
+			return false;
+		}
+
+		return this.private_changeStyle(function(newRule) {
+			newRule.aRuleElements[0].asc_setShowValue(!showIconOnly);
+		});
+	};
+
+	Object.defineProperty(ApiIconSetCondition.prototype, "ShowIconOnly", {
+		get: function() {
+			return this.GetShowIconOnly();
+		},
+		set: function(value) {
+			this.SetShowIconOnly(value);
+		}
+	});
+
+	/**
+	 * Returns the icon criteria collection for this icon set condition.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiIconCriteria | null} The collection of icon criteria, or null if not applicable.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetIconCriteria.js
+	 */
+	ApiIconSetCondition.prototype.GetIconCriteria = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.iconSet) {
+			return null;
+		}
+
+		let iconSetElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!iconSetElement) {
+			return null;
+		}
+
+		return new ApiIconCriteria(iconSetElement, this);
+	};
+
+	Object.defineProperty(ApiIconSetCondition.prototype, "IconCriteria", {
+		get: function() {
+			return this.GetIconCriteria();
+		}
+	});
+
+	/**
+	 * Returns the formula associated with the icon set condition.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {string} The formula string, or empty string if no formula is set.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetFormula.js
+	 */
+	ApiIconSetCondition.prototype.GetFormula = function() {
+		if (this.rule.aRuleElements && this.rule.aRuleElements.length > 0 && this.rule.aRuleElements[0]) {
+			let element = this.rule.aRuleElements[0];
+			return element.Text || "";
+		}
+		return "";
+	};
+
+	Object.defineProperty(ApiIconSetCondition.prototype, "Formula", {
+		get: function() {
+			return this.GetFormula();
+		}
+	});
+
+	/**
+	 * Returns the type of the icon set conditional formatting rule.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlFormatConditionType} Returns "xlIconSets".
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetType.js
+	 */
+	ApiIconSetCondition.prototype.GetType = function() {
+		return "xlIconSets";
+	};
+
+	Object.defineProperty(ApiIconSetCondition.prototype, "Type", {
+		get: function() {
+			return this.GetType();
+		}
+	});
+
+	/**
+	 * Class representing a collection of icon criteria.
+	 * @constructor
+	 */
+	function ApiIconCriteria(iconSetElement, parent) {
+		this.iconSetElement = iconSetElement;
+		this.aCFVOs = iconSetElement.aCFVOs || [];
+		this.aIconSets = iconSetElement.aIconSets || [];
+		this.length = Math.max(this.aCFVOs.length, this.aIconSets.length);
+		this.parent = parent;
+	}
+
+	/**
+	 * Returns the count of icon criteria in the collection.
+	 * @memberof ApiIconCriteria
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} The number of icon criteria.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconCriteria/Methods/GetCount.js
+	 */
+	ApiIconCriteria.prototype.GetCount = function() {
+		return this.length;
+	};
+
+	Object.defineProperty(ApiIconCriteria.prototype, "Count", {
+		get: function() {
+			return this.GetCount();
+		}
+	});
+
+	/**
+	 * Returns an icon criterion by its index.
+	 * @memberof ApiIconCriteria
+	 * @typeofeditors ["CSE"]
+	 * @param {number} index - The index of the criterion (1-based).
+	 * @returns {ApiIconCriterion | null} The icon criterion object, or null if index is invalid.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconCriteria/Methods/GetItem.js
+	 */
+	ApiIconCriteria.prototype.GetItem = function(index) {
+		if (index < 1 || index > this.length) {
+			return null;
+		}
+		let idx = index - 1;
+		return new ApiIconCriterion(this.aCFVOs[idx], this.aIconSets[idx], this.iconSetElement, this);
+	};
+
+	/**
+	 * Class representing a single icon criterion.
+	 * @constructor
+	 */
+	function ApiIconCriterion(cfvo, iconSet, iconSetElement, parent) {
+		this.cfvo = cfvo;
+		this.iconSet = iconSet;
+		this.iconSetElement = iconSetElement;
+		this.parent = parent;
+	}
+
+	/**
+	 * Returns the condition value type for the icon criterion.
+	 * @memberof ApiIconCriterion
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlConditionValueTypes | null} The condition value type, or null if not available.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/GetType.js
+	 */
+	ApiIconCriterion.prototype.GetType = function() {
+		if (!this.cfvo) {
+			return null;
+		}
+		return ToXlConditionValueTypesFrom(this.cfvo.asc_getType());
+	};
+
+	/**
+	 * Sets the condition value type for the icon criterion.
+	 * @memberof ApiIconCriterion
+	 * @typeofeditors ["CSE"]
+	 * @param {XlConditionValueTypes} type - The condition value type to set.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/SetType.js
+	 */
+	ApiIconCriterion.prototype.SetType = function(type) {
+		if (this.cfvo) {
+			let internalType = FromXlConditionValueTypesTo(type);
+			if (internalType !== -1) {
+				this.cfvo.asc_setType(internalType);
+			}
+		}
+	};
+
+	Object.defineProperty(ApiIconCriterion.prototype, "Type", {
+		get: function() {
+			return this.GetType();
+		},
+		set: function(value) {
+			this.SetType(value);
+		}
+	});
+
+	/**
+	 * Returns the threshold value for the icon criterion.
+	 * @memberof ApiIconCriterion
+	 * @typeofeditors ["CSE"]
+	 * @returns {string | number | null} The threshold value, or null if not available.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/GetValue.js
+	 */
+	ApiIconCriterion.prototype.GetValue = function() {
+		if (!this.cfvo) {
+			return null;
+		}
+		return this.cfvo.asc_getVal();
+	};
+
+	/**
+	 * Sets the threshold value for the icon criterion.
+	 * @memberof ApiIconCriterion
+	 * @typeofeditors ["CSE"]
+	 * @param {string | number} value - The threshold value to set.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/SetValue.js
+	 */
+	ApiIconCriterion.prototype.SetValue = function(value) {
+		if (this.cfvo) {
+			this.cfvo.asc_setVal(value);
+		}
+	};
+
+	Object.defineProperty(ApiIconCriterion.prototype, "Value", {
+		get: function() {
+			return this.GetValue();
+		},
+		set: function(value) {
+			this.SetValue(value);
+		}
+	});
+
+	/**
+	 * Returns the comparison operator for the icon criterion.
+	 * @memberof ApiIconCriterion
+	 * @typeofeditors ["CSE"]
+	 * @returns {string | null} The operator ("xlGreaterEqual" or "xlGreater"), or null if not available.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/GetOperator.js
+	 */
+	ApiIconCriterion.prototype.GetOperator = function() {
+		if (!this.cfvo) {
+			return null;
+		}
+		return this.cfvo.asc_getGte() ? "xlGreaterEqual" : "xlGreater";
+	};
+
+	/**
+	 * Sets the comparison operator for the icon criterion.
+	 * @memberof ApiIconCriterion
+	 * @typeofeditors ["CSE"]
+	 * @param {string} operator - The operator to set ("xlGreaterEqual" or "xlGreater").
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/SetOperator.js
+	 */
+	ApiIconCriterion.prototype.SetOperator = function(operator) {
+		if (this.cfvo && typeof operator === "string") {
+			this.cfvo.asc_setGte(operator === "xlGreaterEqual");
+		}
+	};
+
+	Object.defineProperty(ApiIconCriterion.prototype, "Operator", {
+		get: function() {
+			return this.GetOperator();
+		},
+		set: function(value) {
+			this.SetOperator(value);
+		}
+	});
+
+	/**
+	 * Returns the index of the icon criterion in the collection.
+	 * @memberof ApiIconCriterion
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} The 1-based index of the criterion.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/GetIndex.js
+	 */
+	ApiIconCriterion.prototype.GetIndex = function() {
+		if (!this.iconSetElement || !this.iconSetElement.aCFVOs) {
+			return 1;
+		}
+
+		for (let i = 0; i < this.iconSetElement.aCFVOs.length; i++) {
+			if (this.iconSetElement.aCFVOs[i] === this.cfvo) {
+				return i + 1;
+			}
+		}
+
+		return 1;
+	};
+
+	Object.defineProperty(ApiIconCriterion.prototype, "Index", {
+		get: function() {
+			return this.GetIndex();
+		}
+	});
+
+	/**
+	 * Returns the icon associated with this criterion.
+	 * @memberof ApiIconCriterion
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiIcon | null} The icon object, or null if not available.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/GetIcon.js
+	 */
+	ApiIconCriterion.prototype.GetIcon = function() {
+		if (!this.iconSet) {
+			return null;
+		}
+		return new ApiIcon(this.iconSet, this.iconSetElement);
+	};
+
+	Object.defineProperty(ApiIconCriterion.prototype, "Icon", {
+		get: function() {
+			return this.GetIcon();
+		}
+	});
+
+	/**
+	 * Class representing an icon in an icon set.
+	 * @constructor
+	 */
+	function ApiIcon(iconSetData, iconSetElement) {
+		this.iconSetData = iconSetData;
+		this.iconSetElement = iconSetElement;
+	}
+
+	/**
+	 * Returns the icon set type for the icon.
+	 * @memberof ApiIcon
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlIconSet | null} The icon set type, or null if not available.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIcon/Methods/GetIconSet.js
+	 */
+	ApiIcon.prototype.GetIconSet = function() {
+		if (!this.iconSetData) {
+			return null;
+		}
+		return ToXlIconSetFrom(this.iconSetData.asc_getIconSet());
+	};
+
+	/**
+	 * Sets the icon set type for the icon.
+	 * @memberof ApiIcon
+	 * @typeofeditors ["CSE"]
+	 * @param {XlIconSet} iconSet - The icon set type to set.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIcon/Methods/SetIconSet.js
+	 */
+	ApiIcon.prototype.SetIconSet = function(iconSet) {
+		if (this.iconSetData && typeof iconSet === "string") {
+			let internalIconSet = FromXlIconSetTo(iconSet);
+			if (internalIconSet !== -1) {
+				this.iconSetData.asc_setIconSet(internalIconSet);
+			}
+		}
+	};
+
+	Object.defineProperty(ApiIcon.prototype, "IconSet", {
+		get: function() {
+			return this.GetIconSet();
+		},
+		set: function(value) {
+			this.SetIconSet(value);
+		}
+	});
+
+	/**
+	 * Returns the index of the icon within its icon set.
+	 * @memberof ApiIcon
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} The 1-based index of the icon.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIcon/Methods/GetIndex.js
+	 */
+	ApiIcon.prototype.GetIndex = function() {
+		if (!this.iconSetData) {
+			return 1;
+		}
+		return (this.iconSetData.asc_getIndex() || 0) + 1;
+	};
+
+	/**
+	 * Sets the index of the icon within its icon set.
+	 * @memberof ApiIcon
+	 * @typeofeditors ["CSE"]
+	 * @param {number} index - The 1-based index to set.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIcon/Methods/SetIndex.js
+	 */
+	ApiIcon.prototype.SetIndex = function(index) {
+		if (this.iconSetData && typeof index === "number") {
+			this.iconSetData.asc_setIndex(index - 1);
+		}
+	};
+
+	Object.defineProperty(ApiIcon.prototype, "Index", {
+		get: function() {
+			return this.GetIndex();
+		},
+		set: function(value) {
+			this.SetIndex(value);
+		}
+	});
+
+	/**
+	 * Class representing a top 10 conditional formatting rule.
+	 * @constructor
+	 * @extends ApiFormatCondition
+	 */
+	function ApiTop10(rule, range, _parent) {
+		ApiFormatCondition.call(this, rule, range, _parent);
+	}
+
+	ApiTop10.prototype = Object.create(ApiFormatCondition.prototype);
+	ApiTop10.prototype.constructor = ApiTop10;
+
+	/**
+	 * Returns the calculation scope for the top 10 condition in pivot tables.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetCalcFor.js
+	 */
+	ApiTop10.prototype.GetCalcFor = function() {
+		return 0;
+	};
+
+	/**
+	 * Sets the calculation scope for the top 10 condition in pivot tables.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @param {number} calcFor - The calculation scope (0 = xlAllValues, 1 = xlColItems, 2 = xlRowItems)
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetCalcFor.js
+	 */
+	ApiTop10.prototype.SetCalcFor = function(calcFor) {
+		// Implementation would be added here
+	};
+
+	Object.defineProperty(ApiTop10.prototype, "CalcFor", {
+		get: function() {
+			return this.GetCalcFor();
+		},
+		set: function(value) {
+			this.SetCalcFor(value);
+		}
+	});
+
+	/**
+	 * Returns whether the rule is for top or bottom values.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} True for bottom values, false for top values.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetTopBottom.js
+	 */
+	ApiTop10.prototype.GetTopBottom = function() {
+		if (!this.rule) {
+			return false;
+		}
+		return this.rule.bottom === true;
+	};
+
+	/**
+	 * Sets whether the rule is for top or bottom values.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} topBottom - True for bottom values, false for top values.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetTopBottom.js
+	 */
+	ApiTop10.prototype.SetTopBottom = function(topBottom) {
+		if (typeof topBottom !== "boolean") {
+			return;
+		}
+
+		var oRule = this.rule;
+		if (!oRule) {
+			return;
+		}
+
+		this.private_changeStyle(function(newRule) {
+			newRule.bottom = topBottom;
+		});
+	};
+
+	Object.defineProperty(ApiTop10.prototype, "TopBottom", {
+		get: function() {
+			return this.GetTopBottom();
+		},
+		set: function(value) {
+			this.SetTopBottom(value);
+		}
+	});
+
+	/**
+	 * Returns whether the rank is percentage-based.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} True if percentage-based, false if count-based.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetPercent.js
+	 */
+	ApiTop10.prototype.GetPercent = function() {
+		if (!this.rule) {
+			return false;
+		}
+		return this.rule.percent === true;
+	};
+
+	/**
+	 * Sets whether the rank is percentage-based.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} percent - True for percentage-based, false for count-based.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetPercent.js
+	 */
+	ApiTop10.prototype.SetPercent = function(percent) {
+		if (typeof percent !== "boolean") {
+			return;
+		}
+
+		var oRule = this.rule;
+		if (!oRule) {
+			return;
+		}
+
+		this.private_changeStyle(function(newRule) {
+			newRule.percent = percent;
+		});
+	};
+
+	Object.defineProperty(ApiTop10.prototype, "Percent", {
+		get: function() {
+			return this.GetPercent();
+		},
+		set: function(value) {
+			this.SetPercent(value);
+		}
+	});
+
+	/**
+	 * Returns the rank value for the top 10 condition.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} The rank value.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetRank.js
+	 */
+	ApiTop10.prototype.GetRank = function() {
+		if (!this.rule) {
+			return 10;
+		}
+		return this.rule.rank || 10;
+	};
+
+	/**
+	 * Sets the rank value for the top 10 condition.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @param {number} rank - The rank value.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetRank.js
+	 */
+	ApiTop10.prototype.SetRank = function(rank) {
+		if (typeof rank !== "number") {
+			return;
+		}
+
+		var oRule = this.rule;
+		if (!oRule) {
+			return;
+		}
+
+		this.private_changeStyle(function(newRule) {
+			newRule.rank = rank;
+		});
+	};
+
+	Object.defineProperty(ApiTop10.prototype, "Rank", {
+		get: function() {
+			return this.GetRank();
+		},
+		set: function(value) {
+			this.SetRank(value);
+		}
+	});
+
+	/**
+	 * Returns the type of the top 10 conditional formatting rule.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlFormatConditionType}
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetType.js
+	 */
+	ApiTop10.prototype.GetType = function() {
+		return "xlTop10";
+	};
+
+	Object.defineProperty(ApiTop10.prototype, "Type", {
+		get: function() {
+			return this.GetType();
+		}
+	});
+
+	/**
+	 * Returns the formula associated with the top 10 condition.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @returns {string} The formula string, or empty string if no formula is set.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetFormula.js
+	 */
+	ApiTop10.prototype.GetFormula = function() {
+		if (this.rule.aRuleElements && this.rule.aRuleElements.length > 0 && this.rule.aRuleElements[0]) {
+			let element = this.rule.aRuleElements[0];
+			return element.Text || "";
+		}
+		return "";
+	};
+
+	Object.defineProperty(ApiTop10.prototype, "Formula", {
+		get: function() {
+			return this.GetFormula();
 		}
 	});
 
