@@ -20463,13 +20463,10 @@
 		let ranges = [];
 		if (this.range.areas) {
 			for (let i = 0; i < this.range.areas.length; i++) {
-				let area = this.range.areas[i];
-				let range = new window['AscCommonExcel'].Range(area.c1, area.r1, area.c2, area.r2);
-				ranges.push(range);
+				ranges.push(this.range.areas[i].bbox);
 			}
 		} else {
-			let range = new window['AscCommonExcel'].Range(this.range.bbox.c1, this.range.bbox.r1, this.range.bbox.c2, this.range.bbox.r2);
-			ranges.push(range);
+			ranges.push(this.range.range.bbox);
 		}
 		props.ranges = ranges;
 
@@ -24272,99 +24269,7 @@
 		}
 	}
 
-	/**
-	 * Returns the duplicate values type for the unique values condition.
-	 * @memberof ApiUniqueValues
-	 * @typeofeditors ["CSE"]
-	 * @returns {XlDuplicateValues}
-	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/GetDuplicateType.js
-	 */
-	ApiUniqueValues.prototype.GetDuplicateType = function() {
-		if (!this.rule) {
-			return "xlUnique";
-		}
-		return ToXlDuplicateValuesFrom(this.rule.type);
-	};
 
-	/**
-	 * Sets the duplicate values type for the unique values condition.
-	 * @memberof ApiUniqueValues
-	 * @typeofeditors ["CSE"]
-	 * @param {XlDuplicateValues} duplicateType - The duplicate values type
-	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/SetDuplicateType.js
-	 */
-	ApiUniqueValues.prototype.SetDuplicateType = function(duplicateType) {
-		if (!this.rule || typeof duplicateType !== "string") {
-			return;
-		}
-
-		let internalType = FromXlDuplicateValuesTo(duplicateType);
-
-		this.private_changeStyle(function (newRule) {
-			newRule.type = internalType;
-		}, true);
-	};
-
-	Object.defineProperty(ApiUniqueValues.prototype, "DuplicateType", {
-		get: function() {
-			return this.GetDuplicateType();
-		},
-		set: function(value) {
-			this.SetDuplicateType(value);
-		}
-	});
-
-	/**
-	 * Returns the calculation scope for the unique values condition in pivot tables.
-	 * @memberof ApiUniqueValues
-	 * @typeofeditors ["CSE"]
-	 * @returns {XlCalcFor}
-	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/GetCalcFor.js
-	 */
-	ApiUniqueValues.prototype.GetCalcFor = function() {
-		if (!this.rule || !this.rule.pivot) {
-			return "xlAllValues";
-		}
-		return ToXlCalcForFrom(this.rule.pivot.calcFor || 0);
-	};
-
-	/**
-	 * Sets the calculation scope for the unique values condition in pivot tables.
-	 * @memberof ApiUniqueValues
-	 * @typeofeditors ["CSE"]
-	 * @param {XlCalcFor} calcFor - The calculation scope
-	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/SetCalcFor.js
-	 */
-	ApiUniqueValues.prototype.SetCalcFor = function(calcFor) {
-		if (!this.rule || typeof calcFor !== "string") {
-			return;
-		}
-
-		let internalCalcFor = FromXlCalcForTo(calcFor);
-		if (internalCalcFor === -1) {
-			return;
-		}
-
-		this.private_changeStyle(function (newRule) {
-			if (!newRule.pivot) {
-				newRule.pivot = {};
-			}
-			newRule.pivot.calcFor = internalCalcFor;
-		}, true);
-	};
-
-	Object.defineProperty(ApiUniqueValues.prototype, "CalcFor", {
-		get: function() {
-			return this.GetCalcFor();
-		},
-		set: function(value) {
-			this.SetCalcFor(value);
-		}
-	});
 
 	/**
 	 * Returns the type of the unique values conditional formatting rule.
