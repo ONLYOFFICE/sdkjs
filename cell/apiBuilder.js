@@ -19973,7 +19973,7 @@
 					let formula1String = (Formula1 instanceof ApiRange) ? Formula1.GetAddress() : Formula1.toString();
 					props.asc_setValue1(formula1String);
 				}
-				if (Formula2 !== undefined && (props.operator === Asc.ECfOperator.between || props.operator === Asc.ECfOperator.notBetween)) {
+				if (Formula2 !== undefined && (props.operator === AscCommonExcel.ECfOperator.between || props.operator === AscCommonExcel.ECfOperator.notBetween)) {
 					let formula2String = (Formula2 instanceof ApiRange) ? Formula2.GetAddress() : Formula2.toString();
 					props.asc_setValue2(formula2String);
 				}
@@ -21672,6 +21672,109 @@
 		worksheet.changeCFRule(oldRule, newRule, true);
 		this.rule = newRule;
 	};
+
+	/**
+	 * Sets borders for the format condition.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {BordersIndex} bordersIndex - Specifies the cell border position.
+	 * @param {LineStyle} lineStyle - Specifies the line style used to form the cell border.
+	 * @param {ApiColor} oColor - The color object which specifies the color to be set to the cell border.
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetBorders.js
+	 */
+	ApiFormatCondition.prototype.SetBorders = function(bordersIndex, lineStyle, oColor) {
+		if (!this.rule) {
+			return;
+		}
+
+		this.private_changeStyle(function (newRule) {
+			if (!newRule.dxf.border) {
+				newRule.dxf.border = new AscCommonExcel.Border();
+				newRule.dxf.border.initDefault();
+			}
+
+			var borders = newRule.dxf.border;
+			switch (bordersIndex) {
+				case 'DiagonalDown':
+					borders.dd = true;
+					borders.d = private_MakeBorder(lineStyle, oColor);
+					break;
+				case 'DiagonalUp':
+					borders.du = true;
+					borders.d = private_MakeBorder(lineStyle, oColor);
+					break;
+				case 'Bottom':
+					borders.b = private_MakeBorder(lineStyle, oColor);
+					break;
+				case 'Left':
+					borders.l = private_MakeBorder(lineStyle, oColor);
+					break;
+				case 'Right':
+					borders.r = private_MakeBorder(lineStyle, oColor);
+					break;
+				case 'Top':
+					borders.t = private_MakeBorder(lineStyle, oColor);
+					break;
+				case 'InsideHorizontal':
+					borders.ih = private_MakeBorder(lineStyle, oColor);
+					break;
+				case 'InsideVertical':
+					borders.iv = private_MakeBorder(lineStyle, oColor);
+					break;
+			}
+		}, true);
+	};
+
+	/**
+	 * Sets the background color to the format condition with the previously created color object.
+	 * Sets 'No Fill' when previously created color object is null.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiColor} oColor - The color object which specifies the color to be set to the background in the format condition.
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetFillColor.js
+	 */
+	ApiFormatCondition.prototype.SetFillColor = function(oColor) {
+		if (!this.rule) {
+			return;
+		}
+
+		this.private_changeStyle(function (newRule) {
+			if (!newRule.dxf.fill) {
+				newRule.dxf.fill = new window['AscCommonExcel'].Fill();
+			}
+
+			if ('No Fill' === oColor || oColor === null) {
+				newRule.dxf.fill.fromColor(null);
+			} else if (oColor && oColor.color) {
+				newRule.dxf.fill.fromColor(oColor.color);
+			}
+		}, true);
+	};
+
+	/**
+	 * Returns the background color for the format condition. Returns 'No Fill' when the color of the background in the format condition is null.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiColor|'No Fill'} - return 'No Fill' when the color to the background in the format condition is null.
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetFillColor.js
+	 */
+	ApiFormatCondition.prototype.GetFillColor = function() {
+		if (!this.rule || !this.rule.dxf || !this.rule.dxf.fill) {
+			return 'No Fill';
+		}
+
+		var oColor = this.rule.dxf.fill.bg();
+		return oColor ? new ApiColor(oColor) : 'No Fill';
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "FillColor", {
+		get: function() {
+			return this.GetFillColor();
+		},
+		set: function(oColor) {
+			this.SetFillColor(oColor);
+		}
+	});
 
 	/**
 	 * Class representing an above average conditional formatting rule.
