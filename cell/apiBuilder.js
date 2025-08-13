@@ -18753,6 +18753,24 @@
 	 * @see office-js-api/Examples/Enumerations/XlIconSet.js
 	 */
 
+	/**
+	 * Calculation scope for pivot table conditions.
+	 * @typedef {("xlAllValues" | "xlColItems" | "xlRowItems")} XlCalcFor
+	 * @see office-js-api/Examples/Enumerations/XlCalcFor.js
+	 */
+
+	/**
+	 * The XlTopBottom enumeration constants.
+	 * @typedef {("xlTop10Top" | "xlTop10Bottom")} XlTopBottom
+	 * @see office-js-api/Examples/Enumerations/XlTopBottom.js
+	 */
+
+	/**
+	 * The XlDuplicateValues enumeration constants.
+	 * @typedef {("xlDuplicate" | "xlUnique")} XlDuplicateValues
+	 * @see office-js-api/Examples/Enumerations/XlDuplicateValues.js
+	 */
+
 	function FromXlValidationTypeTo(sType) {
 		let nType = -1;
 		switch (sType) {
@@ -20373,6 +20391,96 @@
 		this.conditions.push(iconSetCondition);
 
 		return iconSetCondition;
+	};
+
+	/**
+	 * Adds a new top 10 conditional formatting rule to the collection.
+	 * @memberof ApiFormatConditions
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiTop10 | null}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/AddTop10.js
+	 */
+	ApiFormatConditions.prototype.AddTop10 = function() {
+		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		if (!worksheet) {
+			return null;
+		}
+
+		let props = new window['AscCommonExcel'].CConditionalFormattingRule();
+		props.type = Asc.ECfType.top10;
+		props.priority = worksheet.getNextCFPriority ? worksheet.getNextCFPriority() : 1;
+
+		// Set default values for top 10 condition
+		props.asc_setRank(10); // Default to top 10
+		props.asc_setBottom(false); // Default to top (not bottom)
+		props.asc_setPercent(false); // Default to count (not percent)
+
+		// Create default formatting style
+		props.dxf = new window['AscCommonExcel'].CellXfs();
+
+		// Set the ranges for the conditional formatting
+		let ranges = [];
+		if (this.range.areas) {
+			for (let i = 0; i < this.range.areas.length; i++) {
+				ranges.push(this.range.areas[i].bbox);
+			}
+		} else {
+			ranges.push(this.range.range.bbox);
+		}
+		props.ranges = ranges;
+
+		// Apply the conditional formatting rule to the worksheet
+		worksheet.setCFRule(props);
+
+		// Create and return ApiTop10 object
+		let top10 = new ApiTop10(props, this.range, this);
+		this.conditions.push(top10);
+
+		return top10;
+	};
+
+	/**
+	 * Adds a new unique values conditional formatting rule to the collection.
+	 * @memberof ApiFormatConditions
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiUniqueValues | null}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/AddUniqueValues.js
+	 */
+	ApiFormatConditions.prototype.AddUniqueValues = function() {
+		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		if (!worksheet) {
+			return null;
+		}
+
+		let props = new window['AscCommonExcel'].CConditionalFormattingRule();
+		props.type = Asc.ECfType.uniqueValues;
+		props.priority = worksheet.getNextCFPriority ? worksheet.getNextCFPriority() : 1;
+
+		// Create default formatting style
+		props.dxf = new window['AscCommonExcel'].CellXfs();
+
+		// Set the ranges for the conditional formatting
+		let ranges = [];
+		if (this.range.areas) {
+			for (let i = 0; i < this.range.areas.length; i++) {
+				let area = this.range.areas[i];
+				let range = new window['AscCommonExcel'].Range(area.c1, area.r1, area.c2, area.r2);
+				ranges.push(range);
+			}
+		} else {
+			let range = new window['AscCommonExcel'].Range(this.range.bbox.c1, this.range.bbox.r1, this.range.bbox.c2, this.range.bbox.r2);
+			ranges.push(range);
+		}
+		props.ranges = ranges;
+
+		// Apply the conditional formatting rule to the worksheet
+		worksheet.setCFRule(props);
+
+		// Create and return ApiUniqueValues object
+		let uniqueValues = new ApiUniqueValues(props, this.range, this);
+		this.conditions.push(uniqueValues);
+
+		return uniqueValues;
 	};
 
 	/**
@@ -23880,64 +23988,121 @@
 	ApiTop10.prototype = Object.create(ApiFormatCondition.prototype);
 	ApiTop10.prototype.constructor = ApiTop10;
 
+	function FromXlCalcForTo(sCalcFor) {
+		let nCalcFor = -1;
+		switch (sCalcFor) {
+			case "xlAllValues":
+				nCalcFor = 0;
+				break;
+			case "xlColItems":
+				nCalcFor = 1;
+				break;
+			case "xlRowItems":
+				nCalcFor = 2;
+				break;
+		}
+		return nCalcFor;
+	}
+
+	function ToXlCalcForFrom(nCalcFor) {
+		let sCalcFor = "";
+		switch (nCalcFor) {
+			case 0:
+				sCalcFor = "xlAllValues";
+				break;
+			case 1:
+				sCalcFor = "xlColItems";
+				break;
+			case 2:
+				sCalcFor = "xlRowItems";
+				break;
+			default:
+				sCalcFor = "xlAllValues";
+		}
+		return sCalcFor;
+	}
+
 	/**
 	 * Returns the calculation scope for the top 10 condition in pivot tables.
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
-	 * @returns {number}
+	 * @returns {XlCalcFor}
 	 * @since 9.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetCalcFor.js
 	 */
 	ApiTop10.prototype.GetCalcFor = function() {
-		return 0;
+		if (!this.rule || !this.rule.pivot) {
+			return "xlAllValues";
+		}
+		return ToXlCalcForFrom(this.rule.pivot.calcFor || 0);
 	};
 
 	/**
 	 * Sets the calculation scope for the top 10 condition in pivot tables.
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
-	 * @param {number} calcFor - The calculation scope (0 = xlAllValues, 1 = xlColItems, 2 = xlRowItems)
+	 * @param {XlCalcFor} calcFor - The calculation scope
 	 * @since 9.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetCalcFor.js
 	 */
 	ApiTop10.prototype.SetCalcFor = function(calcFor) {
-		// Implementation would be added here
+		if (!this.rule || typeof calcFor !== "string") {
+			return;
+		}
+
+		let internalCalcFor = FromXlCalcForTo(calcFor);
+		if (internalCalcFor === -1) {
+			return;
+		}
+
+		this.private_changeStyle(function (newRule) {
+			if (!newRule.pivot) {
+				newRule.pivot = {};
+			}
+			newRule.pivot.calcFor = internalCalcFor;
+		}, true);
 	};
 
-	Object.defineProperty(ApiTop10.prototype, "CalcFor", {
-		get: function() {
-			return this.GetCalcFor();
-		},
-		set: function(value) {
-			this.SetCalcFor(value);
+	function FromXlTopBottomTo(sTopBottom) {
+		switch (sTopBottom) {
+			case "xlTop10Top":
+				return false;
+			case "xlTop10Bottom":
+				return true;
+			default:
+				return false;
 		}
-	});
+	}
+
+	function ToXlTopBottomFrom(bBottom) {
+		return bBottom === true ? "xlTop10Bottom" : "xlTop10Top";
+	}
 
 	/**
-	 * Returns whether the rule is for top or bottom values.
+	 * Returns one of the constants of the XlTopBottom enumeration, which determines if the ranking is evaluated from the top or bottom.
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
-	 * @returns {boolean} True for bottom values, false for top values.
+	 * @returns {XlTopBottom} The XlTopBottom enumeration constant.
 	 * @since 9.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetTopBottom.js
 	 */
 	ApiTop10.prototype.GetTopBottom = function() {
 		if (!this.rule) {
-			return false;
+			return "xlTop10Top";
 		}
-		return this.rule.bottom === true;
+		return ToXlTopBottomFrom(this.rule.bottom);
 	};
 
 	/**
-	 * Sets whether the rule is for top or bottom values.
+	 * Sets one of the constants of the XlTopBottom enumeration, which determines if the ranking is evaluated from the top or bottom.
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
-	 * @param {boolean} topBottom - True for bottom values, false for top values.
+	 * @param {XlTopBottom} topBottom - The XlTopBottom enumeration constant.
 	 * @since 9.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetTopBottom.js
 	 */
 	ApiTop10.prototype.SetTopBottom = function(topBottom) {
-		if (typeof topBottom !== "boolean") {
+		if (typeof topBottom !== "string") {
 			return;
 		}
 
@@ -23946,8 +24111,9 @@
 			return;
 		}
 
+		var bottomValue = FromXlTopBottomTo(topBottom);
 		this.private_changeStyle(function(newRule) {
-			newRule.bottom = topBottom;
+			newRule.bottom = bottomValue;
 		});
 	};
 
@@ -24073,26 +24239,151 @@
 	});
 
 	/**
-	 * Returns the formula associated with the top 10 condition.
-	 * @memberof ApiTop10
-	 * @typeofeditors ["CSE"]
-	 * @returns {string} The formula string, or empty string if no formula is set.
-	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetFormula.js
+	 * Class representing a unique values conditional formatting rule.
+	 * @constructor
+	 * @extends ApiFormatCondition
 	 */
-	ApiTop10.prototype.GetFormula = function() {
-		if (this.rule.aRuleElements && this.rule.aRuleElements.length > 0 && this.rule.aRuleElements[0]) {
-			let element = this.rule.aRuleElements[0];
-			return element.Text || "";
+	function ApiUniqueValues(rule, range, _parent) {
+		ApiFormatCondition.call(this, rule, range, _parent);
+	}
+
+	ApiUniqueValues.prototype = Object.create(ApiFormatCondition.prototype);
+	ApiUniqueValues.prototype.constructor = ApiUniqueValues;
+
+	function FromXlDuplicateValuesTo(sDuplicateValues) {
+		switch (sDuplicateValues) {
+			case "xlDuplicate":
+				return Asc.ECfType.duplicateValues;
+			case "xlUnique":
+				return Asc.ECfType.uniqueValues;
+			default:
+				return Asc.ECfType.uniqueValues;
 		}
-		return "";
+	}
+
+	function ToXlDuplicateValuesFrom(nType) {
+		switch (nType) {
+			case Asc.ECfType.duplicateValues:
+				return "xlDuplicate";
+			case Asc.ECfType.uniqueValues:
+				return "xlUnique";
+			default:
+				return "xlUnique";
+		}
+	}
+
+	/**
+	 * Returns the duplicate values type for the unique values condition.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlDuplicateValues}
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/GetDuplicateType.js
+	 */
+	ApiUniqueValues.prototype.GetDuplicateType = function() {
+		if (!this.rule) {
+			return "xlUnique";
+		}
+		return ToXlDuplicateValuesFrom(this.rule.type);
 	};
 
-	Object.defineProperty(ApiTop10.prototype, "Formula", {
+	/**
+	 * Sets the duplicate values type for the unique values condition.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @param {XlDuplicateValues} duplicateType - The duplicate values type
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/SetDuplicateType.js
+	 */
+	ApiUniqueValues.prototype.SetDuplicateType = function(duplicateType) {
+		if (!this.rule || typeof duplicateType !== "string") {
+			return;
+		}
+
+		let internalType = FromXlDuplicateValuesTo(duplicateType);
+
+		this.private_changeStyle(function (newRule) {
+			newRule.type = internalType;
+		}, true);
+	};
+
+	Object.defineProperty(ApiUniqueValues.prototype, "DuplicateType", {
 		get: function() {
-			return this.GetFormula();
+			return this.GetDuplicateType();
+		},
+		set: function(value) {
+			this.SetDuplicateType(value);
 		}
 	});
+
+	/**
+	 * Returns the calculation scope for the unique values condition in pivot tables.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlCalcFor}
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/GetCalcFor.js
+	 */
+	ApiUniqueValues.prototype.GetCalcFor = function() {
+		if (!this.rule || !this.rule.pivot) {
+			return "xlAllValues";
+		}
+		return ToXlCalcForFrom(this.rule.pivot.calcFor || 0);
+	};
+
+	/**
+	 * Sets the calculation scope for the unique values condition in pivot tables.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @param {XlCalcFor} calcFor - The calculation scope
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/SetCalcFor.js
+	 */
+	ApiUniqueValues.prototype.SetCalcFor = function(calcFor) {
+		if (!this.rule || typeof calcFor !== "string") {
+			return;
+		}
+
+		let internalCalcFor = FromXlCalcForTo(calcFor);
+		if (internalCalcFor === -1) {
+			return;
+		}
+
+		this.private_changeStyle(function (newRule) {
+			if (!newRule.pivot) {
+				newRule.pivot = {};
+			}
+			newRule.pivot.calcFor = internalCalcFor;
+		}, true);
+	};
+
+	Object.defineProperty(ApiUniqueValues.prototype, "CalcFor", {
+		get: function() {
+			return this.GetCalcFor();
+		},
+		set: function(value) {
+			this.SetCalcFor(value);
+		}
+	});
+
+	/**
+	 * Returns the type of the unique values conditional formatting rule.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlFormatConditionType}
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/GetType.js
+	 */
+	ApiUniqueValues.prototype.GetType = function() {
+		return "xlUniqueValues";
+	};
+
+	Object.defineProperty(ApiUniqueValues.prototype, "Type", {
+		get: function() {
+			return this.GetType();
+		}
+	});
+
 
 	Api.prototype["Format"]                = Api.prototype.Format;
 	Api.prototype["AddSheet"]              = Api.prototype.AddSheet;
