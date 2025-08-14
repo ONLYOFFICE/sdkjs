@@ -15857,7 +15857,7 @@ CDocument.prototype.UpdateNumberingPanel = function()
 };
 CDocument.prototype.GetAllParagraphs = function(Props, ParaArray)
 {
-	if (Props && true === Props.OnlyMainDocument && true === Props.All && null !== this.AllParagraphsList)
+	if (Props && true === Props.OnlyMainDocument && true === Props.All && Props.Shapes !== false && null !== this.AllParagraphsList)
 		return this.AllParagraphsList;
 
 	if (!ParaArray)

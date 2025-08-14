@@ -1204,6 +1204,7 @@
 		this.EndPos			= null;
 		this.StartPos		= null;
 		this.TextPr 		= new CTextPr();
+		this.CalcPosMode	= 'chars';
 
 		if (Array.isArray(Start) && Array.isArray(End))
 		{
@@ -1211,7 +1212,7 @@
 			this.EndPos = End;
 		}
 		else
-			this.private_UpdateDocPos(Start, End, oElement);
+			this.private_UpdateCharDocPos(Start, End, oElement);
 
 		if (this.StartPos === null || this.EndPos === null)
 		{
@@ -1229,7 +1230,7 @@
 
 	ApiRange.prototype.constructor = ApiRange;
 	
-	ApiRange.prototype.private_UpdateDocPos = function(nStartPos, nEndPos, oElement)
+	ApiRange.prototype.private_UpdateLogicDocPos = function(nStartPos, nEndPos, oElement)
 	{
 		function correctPositions(oElement) {
 			let nPosCount = 0;
@@ -1339,6 +1340,108 @@
 		this.StartPos	= aStartDocPos;
 		this.EndPos		= aEndDocPos;
 	};
+	ApiRange.prototype.private_UpdateCharDocPos = function(nStartPos, nEndPos, oElement)
+	{
+		function calcMaxCharPos(oElement) {
+			let oSearchPos		= new CParagraphSearchPos();
+			oSearchPos.Found	= true;
+
+			let nCharPos = 0;
+			let isFound = false;
+
+			let aAllParas = oElement.GetAllParagraphs({OnlyMainDocument: true, All: true, Shapes: false});
+			for (let i = 0; i < aAllParas.length; i++) {
+				if (isFound) {
+					break;
+				}
+
+				let oPara = aAllParas[i];
+				oSearchPos.Pos.Reset();
+				oSearchPos.Pos.SetDepth(1);
+				
+				while (oSearchPos.Found) {
+					nCharPos++;
+					oPara.GetCursorRightPos(oSearchPos, oSearchPos.Pos, false);
+				}
+			}
+
+			if (nCharPos > 0) {
+				nCharPos--;
+			}
+
+			return nCharPos;
+		}
+
+		function correctPositions(oElement)
+		{
+			let nMaxCharPos = calcMaxCharPos(oElement);
+
+			if (typeof(nStartPos) == "number" && typeof(nEndPos) == "number" && nStartPos > nEndPos)
+			{
+				let temp	= nStartPos;
+				nStartPos	= nEndPos;
+				nEndPos		= temp;
+				return;
+			}
+			
+			if (nStartPos === undefined || nStartPos > nMaxCharPos)
+				nStartPos = 0;
+
+			if (nEndPos === undefined || nEndPos > nMaxCharPos)
+				nEndPos = nMaxCharPos;
+		}
+
+		correctPositions(oElement);
+
+		let oSearchPos		= new CParagraphSearchPos();
+		oSearchPos.Found	= true;
+
+		let nCharPos = 0;
+		let isSearchDone = false;
+		let isStartFound = false;
+		let isEndFound = false;
+
+		let aAllParas = oElement.GetAllParagraphs({OnlyMainDocument: true, All: true, Shapes: false});
+		for (let i = 0; i < aAllParas.length; i++) {
+			if (isSearchDone) {
+				break;
+			}
+
+			let oPara = aAllParas[i];
+			oSearchPos.Pos.Reset();
+			oSearchPos.Pos.SetDepth(1);
+			
+			while (oSearchPos.Found) {
+				if (nStartPos == nCharPos) {
+					let oCurRun = oPara.Get_ElementByPos(oSearchPos.Pos);
+					let oOldContentPos = oPara.Get_ParaContentPos();
+					oPara.Set_ParaContentPos(oSearchPos.Pos);
+
+					this.StartPos = oCurRun.GetDocumentPositionForCurrentPosition();
+					oPara.Set_ParaContentPos(oOldContentPos);
+
+					isStartFound = true;
+				}
+				if (nEndPos == nCharPos) {
+					let oCurRun = oPara.Get_ElementByPos(oSearchPos.Pos);
+					let oOldContentPos = oPara.Get_ParaContentPos();
+					oPara.Set_ParaContentPos(oSearchPos.Pos);
+
+					this.EndPos = oCurRun.GetDocumentPositionForCurrentPosition();
+					oPara.Set_ParaContentPos(oOldContentPos);
+
+					isEndFound = true;
+				}
+				if (isStartFound && isEndFound) {
+					isSearchDone = true;
+					break;
+				}
+
+				nCharPos++;
+				oPara.GetCursorRightPos(oSearchPos, oSearchPos.Pos, false);
+			}
+		}
+	};
 	ApiRange.prototype.private_CheckController = function()
 	{
 		if (this.StartPos[0].Class.IsHdrFtr())
@@ -1402,6 +1505,317 @@
 	{
 		return private_GetLogicDocument();
 	};
+	ApiRange.prototype.private_GetRunInfoByLogicPos = function(nPos) {
+		if (typeof nPos !== "number") {
+			return null;
+		}
+	
+		let result = null;
+		let offsetPos = 0;
+		let isFirstRun = true;
+	
+		this.Element.CheckRunContent(function(oRun) {
+			if (result !== null) return;
+	
+			if (!isFirstRun) {
+				offsetPos++;
+			}
+			isFirstRun = false;
+	
+			if (offsetPos === nPos && result === null) {
+				result = { run: oRun, pos: 0 };
+			}
+	
+			for (let i = 0; i < oRun.Content.length; i++) {
+				offsetPos++;
+				if (offsetPos === nPos && result === null) {
+					result = { run: oRun, pos: i + 1 };
+					break;
+				}
+			}
+		});
+	
+		return result;
+	};
+
+	ApiRange.prototype.private_GetRunInfoByCharPos = function(nPos) {
+		let oSearchPos		= new CParagraphSearchPos();
+		oSearchPos.Found	= true;
+
+		let nCharPos = 0;
+
+		let oRunInfo = null;
+		let isFound = false;
+
+		let aAllParas = this.StartPos[0].Class.GetAllParagraphs({OnlyMainDocument: true, All: true, Shapes: false});
+		for (let i = 0; i < aAllParas.length; i++) {
+			if (isFound) {
+				return oRunInfo;
+			}
+
+			let oPara = aAllParas[i];
+			oSearchPos.Pos.Reset();
+			oSearchPos.Pos.SetDepth(1);
+
+			while (oSearchPos.Found) {
+				let oCurRun = oPara.Get_ElementByPos(oSearchPos.Pos);
+				if (nCharPos == nPos) {
+					isFound = true;
+
+					let oOldContentPos = oPara.Get_ParaContentPos();
+					oPara.Set_ParaContentPos(oSearchPos.Pos);
+
+					let aDocPos = oCurRun.GetDocumentPositionForCurrentPosition();
+					oPara.Set_ParaContentPos(oOldContentPos);
+
+					oRunInfo = {
+						run: oCurRun,
+						pos: aDocPos[aDocPos.length - 1].Position
+					}
+
+					break;
+				}
+
+				nCharPos++;
+				oPara.GetCursorRightPos(oSearchPos, oSearchPos.Pos, false);
+			}
+		}
+
+		return oRunInfo;
+	};
+
+	ApiRange.prototype.private_SetStartLogicPos = function(nPos)
+	{
+		let nEndPos = this.GetLogicEndPos();
+		this.private_UpdateLogicDocPos(nPos, nEndPos, this.StartPos[0].Class);
+		return true;
+	};
+
+	ApiRange.prototype.private_SetEndLogicPos = function(nPos)
+	{
+		let nStartPos = this.GetLogicStartPos();
+		this.private_UpdateLogicDocPos(nStartPos, nPos, this.EndPos[0].Class);
+		return true;
+	};
+
+	ApiRange.prototype.private_GetStartLogicPos = function() {
+		private_RefreshRangesPosition();
+
+		let isFirstRun		= true;
+		let oRunStart		= this.StartPos[this.StartPos.length - 1].Class;
+		let oRunStartPos	= this.StartPos[this.StartPos.length - 1].Position;
+
+		let isStartPosFounded = false;
+		let nStartCharPos = 0;
+
+		function calcStartPos(oRun)
+		{
+			if (isStartPosFounded)
+				return;
+
+			if (false == isFirstRun) {
+				nStartCharPos++;
+			}
+			if (isFirstRun) {
+				isFirstRun = false;
+			}
+
+			if (oRun == oRunStart) {
+				isStartPosFounded = true;
+			}
+				
+			let nStartPos = oRun.Content.length;
+			if (oRun == oRunStart)
+				nStartPos = oRunStartPos;
+
+			for (let nPos = 0; nPos < nStartPos; ++nPos)
+				nStartCharPos++;
+		}
+
+		this.StartPos[0].Class.CheckRunContent(calcStartPos);
+		return nStartCharPos;
+	};
+
+	ApiRange.prototype.private_GetEndLogicPos = function() {
+		private_RefreshRangesPosition();
+		
+		let isFirstRun	= true;
+		let oRunEnd		= this.EndPos[this.EndPos.length - 1].Class;
+		let oRunEndPos	= this.EndPos[this.EndPos.length - 1].Position;
+
+		let isEndPosFounded = false;
+		let nEndCharPos = 0;
+
+		function calcEndPos(oRun)
+		{
+			if (isEndPosFounded)
+				return;
+
+			if (false == isFirstRun) {
+				nEndCharPos++;
+			}
+			if (isFirstRun) {
+				isFirstRun = false;
+			}
+
+			if (oRun == oRunEnd) {
+				isEndPosFounded = true;
+			}
+				
+			let nEndPos = oRun.Content.length;
+			if (oRun == oRunEnd)
+				nEndPos	= oRunEndPos;
+
+			for (let nPos = 0; nPos < nEndPos; ++nPos)
+				nEndCharPos++;
+		}
+
+		this.EndPos[0].Class.CheckRunContent(calcEndPos);
+		return nEndCharPos;
+	};
+	
+	ApiRange.prototype.private_GetStartCharPos = function() {
+		private_RefreshRangesPosition();
+
+		let oSearchPos		= new CParagraphSearchPos();
+		oSearchPos.Found	= true;
+
+		let oTopContent		= this.StartPos[0].Class;
+		let oRunStart		= this.StartPos[this.StartPos.length - 1].Class;
+		let nRunStartPos	= this.StartPos[this.StartPos.length - 1].Position;
+
+		let nCharPos = 0;
+		let isFound = false;
+
+		let aAllParas = oTopContent.GetAllParagraphs({OnlyMainDocument: true, All: true, Shapes: false});
+		for (let i = 0; i < aAllParas.length; i++) {
+			if (isFound) {
+				break;
+			}
+
+			let oPara = aAllParas[i];
+			oSearchPos.Pos.Reset();
+			oSearchPos.Pos.SetDepth(1);
+
+			let isRunFound = false;
+			while (oSearchPos.Found) {
+				let oCurRun = oPara.Get_ElementByPos(oSearchPos.Pos);
+				if (oCurRun == oRunStart) {
+					isRunFound = true;
+
+					let nPosInRun = oSearchPos.Pos.Get(2);
+					if (nPosInRun == nRunStartPos) {
+						isFound = true;
+						break;
+					}
+					else if (nPosInRun > nRunStartPos) {
+						nCharPos--;
+						isFound = true;
+						break;
+					}
+				}
+				else if (isRunFound) {
+					isFound = true;
+					break;
+				}
+					
+				nCharPos++;
+				oPara.GetCursorRightPos(oSearchPos, oSearchPos.Pos, false);
+			}
+		}
+
+		return nCharPos;
+	};
+
+	ApiRange.prototype.private_SetStartCharPos = function(nPos)
+	{
+		let nEndPos = this.GetEndCharPos();
+		this.private_UpdateCharDocPos(nPos, nEndPos, this.StartPos[0].Class);
+		return true;
+	};
+
+	ApiRange.prototype.private_GetEndCharPos = function() {
+		private_RefreshRangesPosition();
+
+		let oSearchPos		= new CParagraphSearchPos();
+		oSearchPos.Found	= true;
+
+		let oTopContent		= this.EndPos[0].Class;
+		let oRunEnd			= this.EndPos[this.EndPos.length - 1].Class;
+		let nRunEndPos		= this.EndPos[this.EndPos.length - 1].Position;
+
+		let nCharPos = 0;
+		let isFound = false;
+
+		let aAllParas = oTopContent.GetAllParagraphs({OnlyMainDocument: true, All: true, Shapes: false});
+		for (let i = 0; i < aAllParas.length; i++) {
+			if (isFound) {
+				break;
+			}
+
+			let oPara = aAllParas[i];
+			oSearchPos.Pos.Reset();
+			oSearchPos.Pos.SetDepth(1);
+			
+			let isRunFound = false;
+			while (oSearchPos.Found) {
+				let oCurRun = oPara.Get_ElementByPos(oSearchPos.Pos);
+				if (oCurRun == oRunEnd) {
+					isRunFound = true;
+
+					let nPosInRun = oSearchPos.Pos.Get(2);
+					if (nPosInRun == nRunEndPos) {
+						isFound = true;
+						break;
+					}
+					else if (nPosInRun > nRunEndPos) {
+						nCharPos--;
+						isFound = true;
+						break;
+					}
+				}
+				else if (isRunFound) {
+					isFound = true;
+					break;
+				}
+					
+				nCharPos++;
+				oPara.GetCursorRightPos(oSearchPos, oSearchPos.Pos, false);
+			}
+		}
+
+		return nCharPos;
+	};
+
+	ApiRange.prototype.private_SetEndCharPos = function(nPos)
+	{
+		let nStartPos = this.GetStartCharPos();
+		this.private_UpdateCharDocPos(nStartPos, nPos, this.EndPos[0].Class);
+		return true;
+	};
+
+	ApiRange.prototype.private_MoveCursorToLogicPos = function(nPos)
+	{
+		let oPosInfo = this.private_GetRunInfoByLogicPos(nPos);
+		if (!oPosInfo)
+			return false;
+
+		let oApiRun = new ApiRun(oPosInfo.run);
+		oApiRun.MoveCursorToPos(oPosInfo.pos);
+		return true;
+	};
+
+	ApiRange.prototype.private_MoveCursorToCharPos = function(nPos)
+	{
+		let oPosInfo = this.private_GetRunInfoByCharPos(nPos);
+		if (!oPosInfo)
+			return false;
+
+		let oApiRun = new ApiRun(oPosInfo.run);
+		oApiRun.MoveCursorToPos(oPosInfo.pos);
+		return true;
+	};
+	
 	ApiRange.prototype._trackPositions = function()
 	{
 		let logicDocument = this.private_GetLogicDocument();
@@ -1449,39 +1863,6 @@
 	ApiRange.prototype.GetClassType = function()
 	{
 		return "range";
-	};
-
-	ApiRange.prototype.private_GetRunInfoByPos = function(nPos) {
-		if (typeof nPos !== "number") {
-			return null;
-		}
-	
-		let result = null;
-		let offsetPos = 0;
-		let isFirstRun = true;
-	
-		this.Element.CheckRunContent(function(oRun) {
-			if (result !== null) return;
-	
-			if (!isFirstRun) {
-				offsetPos++;
-			}
-			isFirstRun = false;
-	
-			if (offsetPos === nPos && result === null) {
-				result = { run: oRun, pos: 0 };
-			}
-	
-			for (let i = 0; i < oRun.Content.length; i++) {
-				offsetPos++;
-				if (offsetPos === nPos && result === null) {
-					result = { run: oRun, pos: i + 1 };
-					break;
-				}
-			}
-		});
-	
-		return result;
 	};
 
 	/**
@@ -2851,6 +3232,56 @@
 	};
 
 	/**
+	 * Sets the range position calculate mode.
+	 * <note> "chars" is used by default </note>
+	 * @memberof ApiRange
+	 * @typeofeditors ["CDE"]
+	 * @param {RangeMode} sMode
+	 * @returns {number}
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetRangeMode.js
+	 */
+	ApiRange.prototype.SetRangeMode = function(sMode) {
+		switch (sMode) {
+			case 'chars':
+			case 'logic':
+				this.CalcPosMode = sMode;
+				return true;
+			default:
+				return false;
+		}
+	};
+
+	/**
+	 * Gets the range position calculate mode.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CDE"]
+	 * @returns {RangeMode}
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetRangeMode.js
+	 */
+	ApiRange.prototype.GetRangeMode = function() {
+		return this.CalcPosMode;
+	};
+
+	/**
+	 * Returns the start position of the current range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CDE"]
+	 * @returns {number}
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetStartPos.js
+	 */
+	ApiRange.prototype.GetStartPos = function() {
+		switch (this.GetRangeMode()) {
+			case "chars":
+				return this.private_GetStartCharPos();
+			case "logic":
+				return this.private_GetStartLogicPos();
+		}
+	};
+
+	/**
 	 * Sets the start position of the current range object.
 	 * @memberof ApiRange
 	 * @param {Number} nPos - Start position.
@@ -2861,79 +3292,20 @@
 	 */
 	ApiRange.prototype.SetStartPos = function(nPos)
 	{
-		let nEndPos = this.GetEndPos();
-		this.private_UpdateDocPos(nPos, nEndPos, this.StartPos[0].Class);
-		return true;
-	};
-
-	/**
-	 * Sets the end position of the current range object.
-	 * @memberof ApiRange
-	 * @param {Number} nPos - End position.
-	 * @typeofeditors ["CDE"]
-	 * @returns {boolean}
-	 * @since 8.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetEndPos.js
-	 */
-	ApiRange.prototype.SetEndPos = function(nPos)
-	{
-		let nStartPos = this.GetStartPos();
-		this.private_UpdateDocPos(nStartPos, nPos, this.EndPos[0].Class);
-		return true;
-	};
-
-	/**
-	 * Returns the start position of the current range.
-	 * @memberof ApiRange
-	 * @typeofeditors ["CDE"]
-	 * @returns {number}
-	 * @since 8.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetStartPos.js
-	 */
-	ApiRange.prototype.GetStartPos = function() {
-		private_RefreshRangesPosition();
-
-		let isFirstRun		= true;
-		let oRunStart		= this.StartPos[this.StartPos.length - 1].Class;
-		let oRunStartPos	= this.StartPos[this.StartPos.length - 1].Position;
-
-		let isStartPosFounded = false;
-		let nStartCharPos = 0;
-
-		function calcStartPos(oRun)
-		{
-			if (isStartPosFounded)
-				return;
-
-			if (false == isFirstRun) {
-				nStartCharPos++;
-			}
-			if (isFirstRun) {
-				isFirstRun = false;
-			}
-
-			if (oRun == oRunStart) {
-				isStartPosFounded = true;
-			}
-				
-			let nStartPos = oRun.Content.length;
-			if (oRun == oRunStart)
-				nStartPos = oRunStartPos;
-
-			for (let nPos = 0; nPos < nStartPos; ++nPos)
-				nStartCharPos++;
+		switch (this.GetRangeMode()) {
+			case "chars":
+				return this.private_SetStartCharPos(nPos);
+			case "logic":
+				return this.private_SetStartLogicPos(nPos);
 		}
-
-		this.StartPos[0].Class.CheckRunContent(calcStartPos);
-		return nStartCharPos;
 	};
 
 	Object.defineProperty(ApiRange.prototype, "Start", {
 		get: function () {
 			return this.GetStartPos();
 		},
-		set: function(nPos) {
-			return this.SetStartPos(nPos);
+		set: function(nChar) {
+			return this.SetStartPos(nChar);
 		}
 	});
 
@@ -2942,53 +3314,43 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @returns {number}
-	 * @since 8.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetEndPos.js
 	 */
 	ApiRange.prototype.GetEndPos = function() {
-		private_RefreshRangesPosition();
-		
-		let isFirstRun	= true;
-		let oRunEnd		= this.EndPos[this.EndPos.length - 1].Class;
-		let oRunEndPos	= this.EndPos[this.EndPos.length - 1].Position;
-
-		let isEndPosFounded = false;
-		let nEndCharPos = 0;
-
-		function calcEndPos(oRun)
-		{
-			if (isEndPosFounded)
-				return;
-
-			if (false == isFirstRun) {
-				nEndCharPos++;
-			}
-			if (isFirstRun) {
-				isFirstRun = false;
-			}
-
-			if (oRun == oRunEnd) {
-				isEndPosFounded = true;
-			}
-				
-			let nEndPos = oRun.Content.length;
-			if (oRun == oRunEnd)
-				nEndPos	= oRunEndPos;
-
-			for (let nPos = 0; nPos < nEndPos; ++nPos)
-				nEndCharPos++;
+		switch (this.GetRangeMode()) {
+			case "chars":
+				return this.private_GetEndCharPos();
+			case "logic":
+				return this.private_GetEndLogicPos();
 		}
-
-		this.EndPos[0].Class.CheckRunContent(calcEndPos);
-		return nEndCharPos;
 	};
-	
+
+	/**
+	 * Sets the end position of the current range object.
+	 * @memberof ApiRange
+	 * @param {Number} nPos - end position.
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 * @since 8.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetEndPos.js
+	 */
+	ApiRange.prototype.SetEndPos = function(nPos)
+	{
+		switch (this.GetRangeMode()) {
+			case "chars":
+				return this.private_SetEndCharPos(nPos);
+			case "logic":
+				return this.private_SetEndLogicPos(nPos);
+		}
+	};
+
 	Object.defineProperty(ApiRange.prototype, "End", {
 		get: function () {
 			return this.GetEndPos();
 		},
-		set: function(nPos) {
-			return this.SetEndPos(nPos);
+		set: function(nChar) {
+			return this.SetEndPos(nChar);
 		}
 	});
 
@@ -3004,13 +3366,12 @@
 	 */
 	ApiRange.prototype.MoveCursorToPos = function(nPos)
 	{
-		let oPosInfo = this.private_GetRunInfoByPos(nPos);
-		if (!oPosInfo)
-			return false;
-
-		let oApiRun = new ApiRun(oPosInfo.run);
-		oApiRun.MoveCursorToPos(oPosInfo.pos);
-		return true;
+		switch (this.GetRangeMode()) {
+			case "chars":
+				return this.private_MoveCursorToCharPos(nPos);
+			case "logic":
+				return this.private_MoveCursorToLogicPos(nPos);
+		}
 	};
 
 	/**
@@ -4320,6 +4681,11 @@
      * Available drawing element for grouping.
      * @typedef {(ApiShape | ApiGroup | ApiImage | ApiChart)} DrawingForGroup
 	 * @see office-js-api/Examples/Enumerations/DrawingForGroup.js
+	 */
+
+	/**
+     * Available drawing element for grouping.
+     * @typedef {("chars" | "logic")} RangeMode
 	 */
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -26087,6 +26453,8 @@
 	ApiRange.prototype["GetRange"]                   = ApiRange.prototype.GetRange;
 	ApiRange.prototype["GetStartPage"]               = ApiRange.prototype.GetStartPage;
 	ApiRange.prototype["GetEndPage"]                 = ApiRange.prototype.GetEndPage;
+	ApiRange.prototype["SetRangeMode"]               = ApiRange.prototype.SetRangeMode;
+	ApiRange.prototype["GetRangeMode"]               = ApiRange.prototype.GetRangeMode;
 	ApiRange.prototype["SetStartPos"]                = ApiRange.prototype.SetStartPos;
 	ApiRange.prototype["SetEndPos"]                  = ApiRange.prototype.SetEndPos;
 	ApiRange.prototype["GetStartPos"]                = ApiRange.prototype.GetStartPos;
