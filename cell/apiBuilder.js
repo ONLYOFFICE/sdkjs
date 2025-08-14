@@ -12381,8 +12381,44 @@
 			this._formatConditions = new ApiFormatConditions(this);
 			let rules = this.range.worksheet.workbook.getRulesByType(Asc.c_oAscSelectionForCFType.selection, null, null, this.worksheet, this.range.bbox);
 			if (rules) {
-				for (let i = 0; i < rules.length; i++) {
-					this._formatConditions.conditions.push(new ApiFormatCondition(rules[i], this.range));
+				for (var i = 0; i < rules.length; i++) {
+					var rule = rules[i];
+
+					var oApiFormatCondition = null;
+
+					switch (rule.type) {
+						case Asc.ECfType.colorScale:
+							oApiFormatCondition = new ApiColorScale(rule, this, this._formatConditions);
+							break;
+
+						case Asc.ECfType.dataBar:
+							oApiFormatCondition = new ApiDataBar(rule, this, this._formatConditions);
+							break;
+
+						case Asc.ECfType.iconSet:
+							oApiFormatCondition = new ApiIconSet(rule, this, this._formatConditions);
+							break;
+
+						case Asc.ECfType.top10:
+							oApiFormatCondition = new ApiTop10(rule, this, this._formatConditions);
+							break;
+
+						case Asc.ECfType.uniqueValues:
+							oApiFormatCondition = new ApiUniqueValues(rule, this, this._formatConditions);
+							break;
+						case Asc.ECfType.aboveAverage:
+							oApiFormatCondition = new ApiAboveAverage(rule, this, this._formatConditions);
+							break;
+
+						default:
+							oApiFormatCondition = new ApiFormatCondition(rule, this, this._formatConditions);
+							break;
+					}
+
+					if (oApiFormatCondition)
+					{
+						this._formatConditions.conditions.push(oApiFormatCondition);
+					}
 				}
 			}
 		}
@@ -21670,7 +21706,7 @@
 		callback(newRule);
 
 		worksheet.changeCFRule(oldRule, newRule, true);
-		this.rule = newRule;
+		//this.rule = newRule;
 	};
 
 	/**
@@ -21944,6 +21980,8 @@
 	 */
 	function ApiColorScale(rule, range, _parent) {
 		ApiFormatCondition.call(this, rule, range, _parent);
+
+		this._colorScaleCriteria = [];
 	}
 
 	ApiColorScale.prototype = Object.create(ApiFormatCondition.prototype);
@@ -21953,7 +21991,7 @@
 	 * Returns the ColorScaleCriteria collection for this color scale.
 	 * @memberof ApiColorScale
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiColorScaleCriteria | null}
+	 * @returns {ApiColorScaleCriterion[] | null}
 	 * @since 9.2.0
 	 */
 	ApiColorScale.prototype.GetColorScaleCriteria = function() {
@@ -21966,7 +22004,26 @@
 			return null;
 		}
 
-		return new ApiColorScaleCriteria(colorScaleElement, this);
+		if (this._colorScaleCriteria && this._colorScaleCriteria.length) {
+			return this._colorScaleCriteria;
+		}
+
+		let aCFVOs = colorScaleElement.aCFVOs || [];
+		let aColors = colorScaleElement.aColors || [];
+		let length = Math.max(aCFVOs.length, aColors.length);
+
+		let criteria = [];
+		for (let i = 0; i < length; i++) {
+			criteria.push(new ApiColorScaleCriterion(
+				aCFVOs[i],
+				aColors[i],
+				this,
+				i
+			));
+		}
+
+		this._colorScaleCriteria = criteria;
+		return this._colorScaleCriteria;
 	};
 
 	Object.defineProperty(ApiColorScale.prototype, "ColorScaleCriteria", {
@@ -21975,28 +22032,28 @@
 		}
 	});
 
-	/**
-	 * Returns the formula for the color scale.
-	 * @memberof ApiColorScale
-	 * @typeofeditors ["CSE"]
-	 * @returns {string}
-	 * @since 9.2.0
-	 */
-	ApiColorScale.prototype.GetFormula = function() {
-		if (this.rule.aRuleElements && this.rule.aRuleElements.length > 0 && this.rule.aRuleElements[0]) {
-			let element = this.rule.aRuleElements[0];
-			if (element.aCFVOs && element.aCFVOs.length > 0 && element.aCFVOs[0] && element.aCFVOs[0].formula) {
-				return "=" + element.aCFVOs[0].formula.getFormulaStr();
-			}
-		}
-		return "";
-	};
-
-	Object.defineProperty(ApiColorScale.prototype, "Formula", {
-		get: function() {
-			return this.GetFormula();
-		}
-	});
+	// /**
+	//  * Returns the formula for the color scale.
+	//  * @memberof ApiColorScale
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {string}
+	//  * @since 9.2.0
+	//  */
+	// ApiColorScale.prototype.GetFormula = function() {
+	// 	if (this.rule.aRuleElements && this.rule.aRuleElements.length > 0 && this.rule.aRuleElements[0]) {
+	// 		let element = this.rule.aRuleElements[0];
+	// 		if (element.aCFVOs && element.aCFVOs.length > 0 && element.aCFVOs[0] && element.aCFVOs[0].formula) {
+	// 			return "=" + element.aCFVOs[0].formula.getFormulaStr();
+	// 		}
+	// 	}
+	// 	return "";
+	// };
+	//
+	// Object.defineProperty(ApiColorScale.prototype, "Formula", {
+	// 	get: function() {
+	// 		return this.GetFormula();
+	// 	}
+	// });
 
 	/**
 	 * Returns the type of the color scale conditional formatting rule.
@@ -22015,61 +22072,15 @@
 		}
 	});
 
-
-	/**
-	 * Class representing a collection of ColorScaleCriterion objects.
-	 * @constructor
-	 */
-	function ApiColorScaleCriteria(colorScaleElement, parent) {
-		this.colorScaleElement = colorScaleElement;
-		this.aCFVOs = colorScaleElement.aCFVOs || [];
-		this.aColors = colorScaleElement.aColors || [];
-		this.length = Math.max(this.aCFVOs.length, this.aColors.length);
-		this.parent = parent;
-	}
-
-	/**
-	 * Returns the number of criteria in the collection.
-	 * @memberof ApiColorScaleCriteria
-	 * @typeofeditors ["CSE"]
-	 * @returns {number}
-	 * @since 9.2.0
-	 */
-	ApiColorScaleCriteria.prototype.GetCount = function() {
-		return this.length;
-	};
-
-	/**
-	 * Returns a ColorScaleCriterion object by index.
-	 * @memberof ApiColorScaleCriteria
-	 * @typeofeditors ["CSE"]
-	 * @param {number} index - The index of the criterion (1-based).
-	 * @returns {ApiColorScaleCriterion | null}
-	 * @since 9.2.0
-	 */
-	ApiColorScaleCriteria.prototype.GetItem = function(index) {
-		if (index < 1 || index > this.length) {
-			return null;
-		}
-		let idx = index - 1;
-		return new ApiColorScaleCriterion(this.aCFVOs[idx], this.aColors[idx], this.colorScaleElement, this);
-	};
-
-	Object.defineProperty(ApiColorScaleCriteria.prototype, "Count", {
-		get: function() {
-			return this.GetCount();
-		}
-	});
-
 	/**
 	 * Class representing a single ColorScaleCriterion object.
 	 * @constructor
 	 */
-	function ApiColorScaleCriterion(cfvo, color, colorScaleElement, parent) {
+	function ApiColorScaleCriterion(cfvo, color, parent, index) {
 		this.cfvo = cfvo;
 		this.color = color;
-		this.colorScaleElement = colorScaleElement;
 		this.parent = parent;
+		this.index = index;
 	}
 
 	function FromXlConditionValueTypesTo(sType) {
@@ -22166,9 +22177,9 @@
 			let internalType = FromXlConditionValueTypesTo(type);
 			if (internalType !== -1) {
 				let t = this;
-				this.parent.parent.private_changeStyle(function (newRule) {
+				this.parent.private_changeStyle(function (newRule) {
 					let index = t.GetIndex();
-					newRule.aRuleElements[0].aCFVOs[index - 1].asc_setType(internalType);
+					newRule.aRuleElements[0].aCFVOs[index].asc_setType(internalType);
 				}, true);
 			}
 		}
@@ -22208,9 +22219,9 @@
 	ApiColorScaleCriterion.prototype.SetValue = function(value) {
 		if (this.cfvo) {
 			let t = this;
-			this.parent.parent.private_changeStyle(function (newRule) {
+			this.parent.private_changeStyle(function (newRule) {
 				let index = t.GetIndex();
-				newRule.aRuleElements[0].aCFVOs[index - 1].asc_setVal(value);
+				newRule.aRuleElements[0].aCFVOs[index].asc_setVal(value);
 			}, true);
 		}
 	};
@@ -22232,7 +22243,8 @@
 	 * @since 9.2.0
 	 */
 	ApiColorScaleCriterion.prototype.GetIndex = function() {
-		if (!this.colorScaleElement || !this.colorScaleElement.aCFVOs) {
+		return this.index;
+		/*if (!this.colorScaleElement || !this.colorScaleElement.aCFVOs) {
 			return 1;
 		}
 
@@ -22244,7 +22256,7 @@
 		}
 
 		// If not found, return 1 as default
-		return 1;
+		return 1;*/
 	};
 
 	Object.defineProperty(ApiColorScaleCriterion.prototype, "Index", {
@@ -22257,39 +22269,51 @@
 	 * Returns the format color of the color scale criterion.
 	 * @memberof ApiColorScaleCriterion
 	 * @typeofeditors ["CSE"]
-	 * @returns {object}
+	 * @returns {ApiColor | null}
 	 * @since 9.2.0
 	 */
-	ApiColorScaleCriterion.prototype.GetFormatColor = function() {
-		return {
-			Color: this.color ? this.color.getRgb() : 0
-		};
+	ApiColorScaleCriterion.prototype.GetColor = function() {
+		if (!this.color) {
+			return null;
+		}
+		return new ApiColor(this.color);
 	};
 
 	/**
 	 * Sets the format color of the color scale criterion.
 	 * @memberof ApiColorScaleCriterion
 	 * @typeofeditors ["CSE"]
-	 * @param {number} color - The RGB color value.
+	 * @param {ApiColor} oColor - The ApiColor object specifying the color.
 	 * @since 9.2.0
 	 */
-	ApiColorScaleCriterion.prototype.SetFormatColor = function(color) {
-		//TODO
-		if (this.color && typeof color === "number") {
-			// Create new color object with RGB value
-			this.color = new Asc.asc_CColor();
-			this.color.setRgb(color);
+	ApiColorScaleCriterion.prototype.SetColor = function(oColor) {
+		if (!oColor || !(oColor instanceof ApiColor)) {
+			return;
+		}
+
+		if (this.color) {
+			let t = this;
+			this.parent.private_changeStyle(function (newRule) {
+				let index = t.GetIndex();
+				if (newRule.aRuleElements && newRule.aRuleElements[0] &&
+					newRule.aRuleElements[0].aColors &&
+					newRule.aRuleElements[0].aColors[index]) {
+					// Update the color in the color scale rule
+					newRule.aRuleElements[0].aColors[index] = oColor.color;
+				}
+			}, true);
+
+			// Update local reference
+			this.color = oColor.color;
 		}
 	};
 
-	Object.defineProperty(ApiColorScaleCriterion.prototype, "FormatColor", {
+	Object.defineProperty(ApiColorScaleCriterion.prototype, "Color", {
 		get: function() {
-			return this.GetFormatColor();
+			return this.GetColor();
 		},
-		set: function(value) {
-			if (value && typeof value === "object" && typeof value.Color === "number") {
-				this.SetFormatColor(value.Color);
-			}
+		set: function(oColor) {
+			this.SetColor(oColor);
 		}
 	});
 
