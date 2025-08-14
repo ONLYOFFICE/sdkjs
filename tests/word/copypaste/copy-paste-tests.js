@@ -37,11 +37,15 @@ $(function () {
 
 	QUnit.module("Word Copy Paste Tests");
 
-    let logicDocument = AscTest.CreateLogicDocument();;
+    let logicDocument = AscTest.CreateLogicDocument();
 	AscTest.Editor.WordControl.m_oDrawingDocument.m_oLogicDocument = logicDocument;
 	AscTest.Editor.WordControl.m_oLogicDocument = logicDocument;
 
 	QUnit.test("Test: \"callback tests paste plain text\"", function (assert) {
+		AscTest.ClearDocument();
+		let p = AscTest.CreateParagraph();
+		logicDocument.AddToContent(0, p);
+
 		let done = assert.async();
 		AscTest.Editor.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Text, "test", undefined, undefined, undefined, function (success) {
 			assert.ok(success);
@@ -50,6 +54,10 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"callback tests paste HTML\"", function (assert) {
+		AscTest.ClearDocument();
+		let p = AscTest.CreateParagraph();
+		logicDocument.AddToContent(0, p);
+
 		let done = assert.async();
 		let htmlElement = document.createElement("div");
 		htmlElement.innerHTML = "test HTML content";
@@ -60,6 +68,10 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"callback tests paste Internal format\"", function (assert) {
+		AscTest.ClearDocument();
+		let p = AscTest.CreateParagraph();
+		logicDocument.AddToContent(0, p);
+
 		let done = assert.async();
 		let binaryData = "";
 		AscTest.Editor.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Internal, binaryData, undefined, undefined, undefined, function () {
@@ -68,5 +80,84 @@ $(function () {
 		});
 	});
 
+	QUnit.test("Test: \"copy HTML with JSON verification\"", function (assert) {
+		AscTest.ClearDocument();
+		let p = AscTest.CreateParagraph();
+		logicDocument.AddToContent(0, p);
+
+		let done = assert.async();
+
+		// Create an HTML element to simulate copying
+		let htmlElement = document.createElement("div");
+		htmlElement.innerHTML = "<p>Test HTML content</p>";
+
+		// Simulate pasting the HTML content into the document
+		AscTest.Editor.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, htmlElement, undefined, undefined, undefined, function () {});
+
+		const result = ToJsonString(logicDocument);
+
+		const expected = {
+			"type": "document",
+			"textPr": "Test HTML content\r\n\r\n"
+		};
+
+		assert.strictEqual(result, JSON.stringify(expected), "HTML content should match expected JSON format");
+
+		done();
+	});
+
+	QUnit.test("Test: \"copy complex HTML with JSON verification\"", function (assert) {
+		AscTest.ClearDocument();
+		let p = AscTest.CreateParagraph();
+		logicDocument.AddToContent(0, p);
+
+		let done = assert.async();
+
+		// Create a complex HTML element to simulate copying
+		let htmlElement = document.createElement("div");
+		htmlElement.innerHTML = `
+								<div>
+								  <h1 style="color: red;">Title</h1>
+								  <p>Paragraph with <strong>bold</strong> and <em>italic</em> text.</p>
+								  <ul>
+									<li>List item 1</li>
+									<li>List item 2</li>
+								  </ul>
+								</div>
+							  `;
+
+		// Simulate pasting the HTML content into the document
+		AscTest.Editor.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, htmlElement, undefined, undefined, undefined, function () {});
+
+		const result = ToJsonString(logicDocument);
+		console.log("Result JSON:", result);
+
+		const expected = {
+			"type": "document",
+			"textPr": "Title\r\nParagraph with bold and italic text.\r\n·\tList item 1\r\nList item 2\r\n"
+		};
+
+		assert.strictEqual(result, JSON.stringify(expected), "Complex HTML content should match expected JSON format");
+
+		done();
+	});
+
 	QUnit.module("Word Copy Paste Tests");
 });
+
+function ToJsonString(logicDocument) {
+	// var oWriter = new AscJsonConverter.WriterToJSON();
+
+	var oResult = {
+		"type":      "document",
+		"textPr":    logicDocument.GetText(),
+		// "paraPr":    bWriteDefaultParaPr ? oWriter.SerParaPr(this.GetDefaultParaPr().ParaPr) : undefined,
+		// "theme":     bWriteTheme ? oWriter.SerTheme(this.Document.GetTheme()) : undefined,
+		// "sectPr":    bWriteSectionPr ? oWriter.SerSectionPr(this.Document.SectPr) : undefined,
+		// "content":   oWriter.SerContent(this.Document.Content, undefined, undefined, undefined, true),
+		// "numbering": bWriteNumberings ? oWriter.jsonWordNumberings : undefined,
+		// "styles":    bWriteStyles ? oWriter.SerWordStylesForWrite() : undefined
+	}
+
+	return JSON.stringify(oResult);
+}
