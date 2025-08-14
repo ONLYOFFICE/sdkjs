@@ -513,16 +513,27 @@ void main() {\n\
         let ret = this.getNearestPos(pageIndex, x, y);
         let sel = this.Selection;
 
-        sel.Page1  = pageIndex;
-        sel.Line1  = ret.Line;
-        sel.Glyph1 = ret.Glyph;
+        if (Asc.editor.isRedactTool) {
+            sel.startPoint = {
+                x: x,
+                y: y
+            }
+        }
+        else {
+            sel.Page1  = pageIndex;
+            sel.Line1  = ret.Line;
+            sel.Glyph1 = ret.Glyph;
 
-        sel.Page2  = pageIndex;
-        sel.Line2  = ret.Line;
-        sel.Glyph2 = ret.Glyph;
-
-        sel.IsSelection = true;
+            sel.Page2  = pageIndex;
+            sel.Line2  = ret.Line;
+            sel.Glyph2 = ret.Glyph;
+        }
+        
         this.cacheSelectionQuads([]);
+        sel.IsSelection = true;
+
+        this.updateCursorType(pageIndex, x, y);
+        this.viewer.drawingDocument.LockCursorType(this.viewer.id_main.style.cursor);
 
         this.onUpdateSelection();
         this.onUpdateOverlay();
@@ -534,22 +545,43 @@ void main() {\n\
         let ret = this.getNearestPos(pageIndex, x, y);
         let sel = this.Selection;
 
-        sel.Page2  = pageIndex;
-        sel.Line2  = ret.Line;
-        sel.Glyph2 = ret.Glyph;
-
+        if (Asc.editor.isRedactTool) {
+            sel.endPoint = {
+                x: x,
+                y: y
+            }
+        }
+        else {
+            sel.Page2  = pageIndex;
+            sel.Line2  = ret.Line;
+            sel.Glyph2 = ret.Glyph;
+        }
+        
         this.onUpdateOverlay();
     };
+    CFile.prototype.updateCursorType = function(pageIndex, x, y) {
+        let ret = this.getNearestPos(pageIndex, x, y);
+        
+        if (ret.Glyph < 0 || ret.Line < 0) {
+            this.viewer.setCursorType("default");
+        }
+        else {
+            this.viewer.setCursorType("text");
+        }
+    };
     CFile.prototype.onMouseUp = function() {
+        let oDoc    = this.viewer.getPDFDoc();
+        let oViewer = this.viewer;
+
+        this.viewer.drawingDocument.LockCursorType();
+
         this.Selection.IsSelection = false;
-        this.viewer.getPDFDoc().TextSelectTrackHandler.Update(true);
+        oDoc.TextSelectTrackHandler.Update(true);
         this.onUpdateSelection();
         this.onUpdateOverlay();
 
-        if (this.viewer.Api.isMarkerFormat) {
-            let oDoc    = this.viewer.getPDFDoc();
-            let oViewer = this.viewer;
-            let oColor  = oDoc.GetMarkerColor(oViewer.Api.curMarkerType);
+        if (oViewer.Api.isMarkerFormat) {
+            let oColor = oDoc.GetMarkerColor(oViewer.Api.curMarkerType);
 
             oDoc.DoAction(function() {
                 switch (oViewer.Api.curMarkerType) {
@@ -563,7 +595,12 @@ void main() {\n\
                         oViewer.Api.SetStrikeout(oColor.r, oColor.g, oColor.b, oColor.a);
                         break;
                 }
-            }, AscDFH.historydescription_Pdf_AddHighlightAnnot);
+            }, AscDFH.historydescription_Pdf_AddAnnot);
+        }
+        else if (oViewer.Api.isRedactTool) {
+            oDoc.DoAction(function() {
+                oDoc.SetRedact();
+            }, AscDFH.historydescription_Pdf_AddAnnot);
         }
     };
     CFile.prototype.getNearestPos = function(pageIndex, x, y, bNeedLinePos) {
@@ -932,6 +969,9 @@ void main() {\n\
         }
         else if (this.Selection.quads.length)
             return this.Selection.quads;
+        else if (Asc.editor.isRedactTool) {
+            
+        }
         
         let selection = this.sortSelection();
         let Page1 = selection.Page1;

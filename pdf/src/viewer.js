@@ -3441,6 +3441,9 @@
 
 				bRetValue = true;
 			}
+			else if (e.KeyCode == 113 && e.CtrlKey) {
+				Asc.editor.SetRedactTool(true);
+			}
 			
 			oDoc.UpdateCopyCutState();
 			return bRetValue;

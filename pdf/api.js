@@ -1194,6 +1194,9 @@
 			oDoc.bOffMarkerAfterUsing = true;
 		}
 	};
+	PDFEditorApi.prototype.SetRedactTool = function(bUse) {
+		this.isRedactTool = bUse;
+	};
 	PDFEditorApi.prototype.IsCommentMarker = function() {
         return this.curMarkerType !== undefined;
     };

@@ -2099,7 +2099,7 @@ var CPresentation = CPresentation || function(){};
         let isHitted = oMouseMoveLink || oMouseMoveField || oMouseMoveAnnot || oMouseMoveDrawing;
 
         // координаты клика на странице в MM
-        var pageObject = oViewer.getPageByCoords2(x, y);
+        let pageObject = oViewer.getPageByCoords2(x, y);
         if (!pageObject)
             return false;
 
@@ -2195,8 +2195,12 @@ var CPresentation = CPresentation || function(){};
         // если не обновлен по drawing объектам и не задан по объектам из pdf то выставляем дефолтный
         if (cursorType == undefined) {
             if (isCursorUpdated == false || !isHitted) {
-                cursorType = defaultCursor;
-                oViewer.setCursorType(cursorType);
+                if (!oViewer.MouseHandObject) {
+                    this.Viewer.file.updateCursorType(pageObject.index, pageObject.x, pageObject.y);
+                }
+                else {
+                    oViewer.setCursorType(defaultCursor);
+                }
             }
         }
         else {
@@ -5043,6 +5047,47 @@ var CPresentation = CPresentation || function(){};
         if (this.bOffMarkerAfterUsing) {
             editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Strikeout, false);
             editor.SetMarkerFormat(AscPDF.ANNOTATIONS_TYPES.Strikeout, false);
+        }
+    };
+    CPDFDoc.prototype.SetRedact = function() {
+        let oViewer         = editor.getDocumentRenderer();
+        let oFile           = oViewer.file;
+        let aSelQuads       = oFile.getSelectionQuads();
+
+        if (aSelQuads.length == 0) {
+            return;
+        }
+
+        for (let nInfo = 0; nInfo < aSelQuads.length; nInfo++) {
+            let nPage   = aSelQuads[nInfo].page;
+            let aQuads  = aSelQuads[nInfo].quads;
+
+            let aAllPoints = [];
+            aQuads.forEach(function(rect) {
+                aAllPoints = aAllPoints.concat(rect);
+            });
+
+            let aMinRect = getMinRect(aAllPoints);
+            let MinX = aMinRect[0];
+            let MinY = aMinRect[1];
+            let MaxX = aMinRect[2];
+            let MaxY = aMinRect[3];
+
+            let oProps = {
+                rect:           [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
+                page:           nPage,
+                name:           AscCommon.CreateGUID(),
+                type:           AscPDF.ANNOTATIONS_TYPES.Redact,
+                creationDate:   (new Date().getTime()).toString(),
+                modDate:        (new Date().getTime()).toString(),
+                hidden:         false
+            }
+
+            let oAnnot = this.AddAnnotByProps(oProps);
+
+            oAnnot.SetQuads(aQuads);
+            oAnnot.SetStrokeColor([0, 0, 0]);
+            oAnnot.SetOpacity(1);
         }
     };
     CPDFDoc.prototype.SetParagraphSpacing = function(oSpacing) {
@@ -8053,6 +8098,9 @@ var CPresentation = CPresentation || function(){};
                 break;
             case AscPDF.ANNOTATIONS_TYPES.Stamp:
                 oAnnot = new AscPDF.CAnnotationStamp(sName, aRect, oPdfDoc);
+                break;
+            case AscPDF.ANNOTATIONS_TYPES.Redact:
+                oAnnot = new AscPDF.CAnnotationRedact(sName, aRect, oPdfDoc);
                 break;
             default:
                 return null;
