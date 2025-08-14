@@ -22333,29 +22333,51 @@
 	 * Returns the axis color of the data bar.
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CDE"]
-	 * @returns {ApiRGBColor | null} Returns the RGB color object representing the axis color, or null if no axis color is set.
+	 * @returns {ApiColor | null} returns null if color is not specified
 	 */
-	ApiDatabar.prototype.GetAxisColor = function() {
-		//TODO formatColor
-		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
-			return null;
+	ApiDatabar.prototype.GetAxisColor = function()
+	{
+		var oColor = this.dataBar.asc_getAxisColor();
+		if (oColor) {
+			return new ApiColor(oColor);
 		}
-
-		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
-		if (!dataBarElement) {
-			return null;
-		}
-
-		return {
-			Color: dataBarElement.axisColor ? dataBarElement.axisColor.getRgb() : 0
-		};
+		return null;
 	};
 
-	Object.defineProperty(ApiDatabar.prototype, "AxisColor", {
-		get: function() {
-			return this.GetAxisColor();
+	/**
+	 * Sets the axis color of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiColor} oColor - The axis color.
+	 * @since 9.2.0
+	 */
+	ApiDatabar.prototype.SetAxisColor = function(oColor)
+	{
+		if (!oColor || !(oColor instanceof ApiColor)) {
+			return;
 		}
-	});
+
+		if (!this.rule) {
+			return;
+		}
+
+		this.private_changeStyle(function (newRule) {
+			if (newRule.aRuleElements && newRule.aRuleElements[0]) {
+				// Update the axis color in the data bar rule
+				newRule.aRuleElements[0].asc_setAxisColor(oColor.color);
+			}
+		}, true);
+	};
+
+	//vba returns formatColor
+	// Object.defineProperty(ApiDatabar.prototype, "AxisColor", {
+	// 	get: function() {
+	// 		return this.GetAxisColor();
+	// 	},
+	// 	set: function(oColor) {
+	// 		this.SetAxisColor(oColor);
+	// 	}
+	// });
 
 	function FromXlDataBarAxisPositionTo(sPosition) {
 		let nPosition = -1;
@@ -22602,57 +22624,56 @@
 	 * Returns the bar color of the data bar.
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiRGBColor | null} Returns the RGB color object representing the bar color.
+	 * @returns {ApiColor | null} Returns the ApiColor object representing the bar color, or null if not specified.
 	 * @since 9.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetBarColor.js
 	 */
 	ApiDatabar.prototype.GetBarColor = function() {
-		//TODO FormatColor
 		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
 			return null;
 		}
 
 		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
-		if (!dataBarElement) {
+		if (!dataBarElement || !dataBarElement.Color) {
 			return null;
 		}
 
-		return {
-			Color: dataBarElement.Color ? dataBarElement.Color.getRgb() : 0
-		};
+		return new ApiColor(dataBarElement.Color);
 	};
 
 	/**
 	 * Sets the bar color of the data bar.
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
-	 * @param {number} color - The RGB color value for the bar.
+	 * @param {ApiColor} oColor - The ApiColor object for the bar.
 	 * @since 9.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetBarColor.js
 	 */
-	ApiDatabar.prototype.SetBarColor = function(color) {
-		if (typeof color !== "number") {
-			return false;
+	ApiDatabar.prototype.SetBarColor = function(oColor) {
+		if (!oColor || !(oColor instanceof ApiColor)) {
+			return;
 		}
 
-		var oRule = this.rule;
-		if (!oRule) {
-			return false;
+		if (!this.rule) {
+			return;
 		}
 
-		return this.private_changeStyle(oRule, function(newRule) {
-			newRule.aRuleElements[0].asc_setColor(new AscCommonExcel.RgbColor(color));
-		});
+		this.private_changeStyle(function(newRule) {
+			if (newRule.aRuleElements && newRule.aRuleElements[0]) {
+				newRule.aRuleElements[0].asc_setColor(oColor.color);
+			}
+		}, true);
 	};
 
-	Object.defineProperty(ApiDatabar.prototype, "BarColor", {
-		get: function() {
-			return this.GetBarColor();
-		},
-		set: function(value) {
-			this.SetBarColor(value.Color);
-		}
-	});
+	//vba returns formatColor
+	// Object.defineProperty(ApiDatabar.prototype, "BarColor", {
+	// 	get: function() {
+	// 		return this.GetBarColor();
+	// 	},
+	// 	set: function(value) {
+	// 		this.SetBarColor(value.Color);
+	// 	}
+	// });
 
 	/**
 	 * Returns the bar fill type of the data bar.
@@ -22709,14 +22730,14 @@
 	});
 
 	/**
-	 * Returns the minimum point of the data bar.
+	 * Returns the type of the minimum point condition value.
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiConditionValue | null} Returns the minimum condition value object.
+	 * @returns {XlConditionValueTypes | null} The type of the minimum condition value.
 	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetMinPoint.js
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetMinPointType.js
 	 */
-	ApiDatabar.prototype.GetMinPoint = function() {
+	ApiDatabar.prototype.GetMinPointType = function() {
 		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
 			return null;
 		}
@@ -22726,7 +22747,67 @@
 			return null;
 		}
 
-		return new ApiConditionValue(dataBarElement.aCFVOs[0]);
+		return ToXlConditionValueTypesFrom(dataBarElement.aCFVOs[0].asc_getType());
+	};
+
+	/**
+	 * Sets the type of the minimum point condition value.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {XlConditionValueTypes} type - The type of the condition value.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetMinPointType.js
+	 */
+	ApiDatabar.prototype.SetMinPointType = function(type) {
+		let internalType = FromXlConditionValueTypesTo(type);
+		if (internalType === -1) {
+			return;
+		}
+
+		this.private_changeStyle(function(newRule) {
+			if (newRule.aRuleElements && newRule.aRuleElements[0] &&
+				newRule.aRuleElements[0].aCFVOs && newRule.aRuleElements[0].aCFVOs[0]) {
+				newRule.aRuleElements[0].aCFVOs[0].asc_setType(internalType);
+			}
+		}, true);
+	};
+
+	/**
+	 * Returns the value of the minimum point condition value.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {string | number | null} The value of the minimum condition value.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetMinPointValue.js
+	 */
+	ApiDatabar.prototype.GetMinPointValue = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement || !dataBarElement.aCFVOs || dataBarElement.aCFVOs.length < 1) {
+			return null;
+		}
+
+		return dataBarElement.aCFVOs[0].asc_getVal();
+	};
+
+	/**
+	 * Sets the value of the minimum point condition value.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {string | number} value - The value of the condition value.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetMinPointValue.js
+	 */
+	ApiDatabar.prototype.SetMinPointValue = function(value) {
+		this.private_changeStyle(function(newRule) {
+			if (newRule.aRuleElements && newRule.aRuleElements[0] &&
+				newRule.aRuleElements[0].aCFVOs && newRule.aRuleElements[0].aCFVOs[0]) {
+				newRule.aRuleElements[0].aCFVOs[0].asc_setVal(value);
+			}
+		}, true);
 	};
 
 	Object.defineProperty(ApiDatabar.prototype, "MinPoint", {
@@ -22736,14 +22817,14 @@
 	});
 
 	/**
-	 * Returns the maximum point of the data bar.
+	 * Returns the type of the maximum point condition value.
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiConditionValue | null} Returns the maximum condition value object.
+	 * @returns {XlConditionValueTypes | null} The type of the maximum condition value.
 	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetMaxPoint.js
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetMaxPointType.js
 	 */
-	ApiDatabar.prototype.GetMaxPoint = function() {
+	ApiDatabar.prototype.GetMaxPointType = function() {
 		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
 			return null;
 		}
@@ -22753,7 +22834,67 @@
 			return null;
 		}
 
-		return new ApiConditionValue(dataBarElement.aCFVOs[1]);
+		return ToXlConditionValueTypesFrom(dataBarElement.aCFVOs[1].asc_getType());
+	};
+
+	/**
+	 * Sets the type of the maximum point condition value.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {XlConditionValueTypes} type - The type of the condition value.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetMaxPointType.js
+	 */
+	ApiDatabar.prototype.SetMaxPointType = function(type) {
+		let internalType = FromXlConditionValueTypesTo(type);
+		if (internalType === -1) {
+			return;
+		}
+
+		this.private_changeStyle(function(newRule) {
+			if (newRule.aRuleElements && newRule.aRuleElements[0] &&
+				newRule.aRuleElements[0].aCFVOs && newRule.aRuleElements[0].aCFVOs[1]) {
+				newRule.aRuleElements[0].aCFVOs[1].asc_setType(internalType);
+			}
+		}, true);
+	};
+
+	/**
+	 * Returns the value of the maximum point condition value.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {string | number | null} The value of the maximum condition value.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetMaxPointValue.js
+	 */
+	ApiDatabar.prototype.GetMaxPointValue = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement || !dataBarElement.aCFVOs || dataBarElement.aCFVOs.length < 2) {
+			return null;
+		}
+
+		return dataBarElement.aCFVOs[1].asc_getVal();
+	};
+
+	/**
+	 * Sets the value of the maximum point condition value.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {string | number} value - The value of the condition value.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetMaxPointValue.js
+	 */
+	ApiDatabar.prototype.SetMaxPointValue = function(value) {
+		this.private_changeStyle(function(newRule) {
+			if (newRule.aRuleElements && newRule.aRuleElements[0] &&
+				newRule.aRuleElements[0].aCFVOs && newRule.aRuleElements[0].aCFVOs[1]) {
+				newRule.aRuleElements[0].aCFVOs[1].asc_setVal(value);
+			}
+		}, true);
 	};
 
 	Object.defineProperty(ApiDatabar.prototype, "MaxPoint", {
@@ -22762,59 +22903,217 @@
 		}
 	});
 
-	/**
-	 * Returns the negative bar format of the data bar.
+	// /**
+	//  * Returns the negative bar format of the data bar.
+	//  * @memberof ApiDatabar
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {ApiNegativeBarFormat | null} Returns the negative bar format object.
+	//  * @since 9.2.0
+	//  * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetNegativeBarFormat.js
+	//  */
+	// ApiDatabar.prototype.GetNegativeBarFormat = function() {
+	// 	if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+	// 		return null;
+	// 	}
+	//
+	// 	let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+	// 	if (!dataBarElement) {
+	// 		return null;
+	// 	}
+	//
+	// 	return new ApiNegativeBarFormat(dataBarElement);
+	// };
+	//
+	// Object.defineProperty(ApiDatabar.prototype, "NegativeBarFormat", {
+	// 	get: function() {
+	// 		return this.GetNegativeBarFormat();
+	// 	}
+	// });
+
+		/**
+	 * Returns the negative bar color of the data bar.
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiNegativeBarFormat | null} Returns the negative bar format object.
+	 * @returns {ApiColor | null} Returns the ApiColor object representing the negative bar color, or null if not specified.
 	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetNegativeBarFormat.js
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetNegativeBarColor.js
 	 */
-	ApiDatabar.prototype.GetNegativeBarFormat = function() {
+	ApiDatabar.prototype.GetNegativeBarColor = function() {
 		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
 			return null;
 		}
 
 		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
-		if (!dataBarElement) {
+		if (!dataBarElement || !dataBarElement.NegativeColor) {
 			return null;
 		}
 
-		return new ApiNegativeBarFormat(dataBarElement);
+		return new ApiColor(dataBarElement.NegativeColor);
 	};
 
-	Object.defineProperty(ApiDatabar.prototype, "NegativeBarFormat", {
+	/**
+	 * Sets the negative bar color of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiColor} oColor - The ApiColor object for the negative bars.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetNegativeBarColor.js
+	 */
+	ApiDatabar.prototype.SetNegativeBarColor = function(oColor) {
+		if (!oColor || !(oColor instanceof ApiColor)) {
+			return;
+		}
+
+		if (!this.rule) {
+			return;
+		}
+
+		this.private_changeStyle(function(newRule) {
+			if (!newRule.aRuleElements || !newRule.aRuleElements[0]) {
+				return;
+			}
+			newRule.aRuleElements[0].NegativeColor = oColor.color;
+		}, true);
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "NegativeBarColor", {
 		get: function() {
-			return this.GetNegativeBarFormat();
+			return this.GetNegativeBarColor();
+		},
+		set: function(oColor) {
+			this.SetNegativeBarColor(oColor);
 		}
 	});
 
 	/**
-	 * Returns the bar border of the data bar.
+	 * Returns the negative bar border color of the data bar.
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiDataBarBorder | null} Returns the data bar border object.
+	 * @returns {ApiColor | null} Returns the ApiColor object representing the negative bar border color, or null if not specified.
 	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetBarBorder.js
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetNegativeBorderColor.js
 	 */
-	ApiDatabar.prototype.GetBarBorder = function() {
+	ApiDatabar.prototype.GetNegativeBorderColor = function() {
 		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
 			return null;
 		}
 
 		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
-		if (!dataBarElement) {
+		if (!dataBarElement || !dataBarElement.NegativeBorderColor) {
 			return null;
 		}
 
-		return new ApiDataBarBorder(dataBarElement);
+		return new ApiColor(dataBarElement.NegativeBorderColor);
 	};
 
-	Object.defineProperty(ApiDatabar.prototype, "BarBorder", {
+	/**
+	 * Sets the negative bar border color of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiColor} oColor - The ApiColor object for the negative bar borders.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetNegativeBorderColor.js
+	 */
+	ApiDatabar.prototype.SetNegativeBorderColor = function(oColor) {
+		if (!oColor || !(oColor instanceof ApiColor)) {
+			return;
+		}
+
+		if (!this.rule) {
+			return;
+		}
+
+		this.private_changeStyle(function(newRule) {
+			if (!newRule.aRuleElements || !newRule.aRuleElements[0]) {
+				return;
+			}
+			newRule.aRuleElements[0].NegativeBorderColor = oColor.color;
+		}, true);
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "NegativeBorderColor", {
 		get: function() {
-			return this.GetBarBorder();
+			return this.GetNegativeBorderColor();
+		},
+		set: function(oColor) {
+			this.SetNegativeBorderColor(oColor);
 		}
 	});
+
+	//ms vba: use only color from borders
+	// /**
+	//  * Returns the bar border of the data bar.
+	//  * @memberof ApiDatabar
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {ApiDataBarBorder | null} Returns the data bar border object.
+	//  * @since 9.2.0
+	//  * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetBarBorder.js
+	//  */
+	// ApiDatabar.prototype.GetBarBorder = function() {
+	// 	if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+	// 		return null;
+	// 	}
+	//
+	// 	let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+	// 	if (!dataBarElement) {
+	// 		return null;
+	// 	}
+	//
+	// 	return new ApiDataBarBorder(dataBarElement);
+	// };
+	//
+	// Object.defineProperty(ApiDatabar.prototype, "BarBorder", {
+	// 	get: function() {
+	// 		return this.GetBarBorder();
+	// 	}
+	// });
+
+
+	/**
+	 * Returns the bar color of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiColor | null} Returns the ApiColor object representing the bar color, or null if not specified.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetBarBorderColor.js
+	 */
+	ApiDatabar.prototype.GetBarBorderColor = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement || !dataBarElement.BorderColor) {
+			return null;
+		}
+
+		return new ApiColor(dataBarElement.BorderColor);
+	};
+
+	/**
+	 * Sets the bar color of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiColor} oColor - The ApiColor object for the bar.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetBarColor.js
+	 */
+	ApiDatabar.prototype.SetBarBorderColor = function(oColor) {
+		if (!oColor || !(oColor instanceof ApiColor)) {
+			return;
+		}
+
+		if (!this.rule) {
+			return;
+		}
+
+		this.private_changeStyle(function(newRule) {
+			if (newRule.aRuleElements && newRule.aRuleElements[0]) {
+				newRule.aRuleElements[0].asc_setBorderColor(oColor.color);
+			}
+		}, true);
+	};
+
 
 	/**
 	 * Returns the percent maximum value of the data bar.
@@ -22967,352 +23266,6 @@
 			return this.GetType();
 		}
 	});
-
-	/**
-	 * Class representing a condition value for data bars and color scales.
-	 * @constructor
-	 */
-	function ApiConditionValue(cfvo) {
-		this.cfvo = cfvo;
-	}
-
-	/**
-	 * Returns the type of the condition value.
-	 * @memberof ApiConditionValue
-	 * @typeofeditors ["CSE"]
-	 * @returns {XlConditionValueTypes} The type of the condition value.
-	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiConditionValue/Methods/GetType.js
-	 */
-	ApiConditionValue.prototype.GetType = function() {
-		if (!this.cfvo) {
-			return null;
-		}
-		return ToXlConditionValueTypesFrom(this.cfvo.asc_getType());
-	};
-
-	/**
-	 * Sets the type of the condition value.
-	 * @memberof ApiConditionValue
-	 * @typeofeditors ["CSE"]
-	 * @param {XlConditionValueTypes} type - The type of the condition value.
-	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiConditionValue/Methods/SetType.js
-	 */
-	ApiConditionValue.prototype.SetType = function(type) {
-		if (this.cfvo) {
-			let internalType = FromXlConditionValueTypesTo(type);
-			if (internalType !== -1) {
-				this.cfvo.asc_setType(internalType);
-			}
-		}
-	};
-
-	Object.defineProperty(ApiConditionValue.prototype, "Type", {
-		get: function() {
-			return this.GetType();
-		},
-		set: function(value) {
-			this.SetType(value);
-		}
-	});
-
-	/**
-	 * Returns the value of the condition value.
-	 * @memberof ApiConditionValue
-	 * @typeofeditors ["CSE"]
-	 * @returns {string | number} The value of the condition value.
-	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiConditionValue/Methods/GetValue.js
-	 */
-	ApiConditionValue.prototype.GetValue = function() {
-		if (!this.cfvo) {
-			return null;
-		}
-		return this.cfvo.asc_getVal();
-	};
-
-	/**
-	 * Sets the value of the condition value.
-	 * @memberof ApiConditionValue
-	 * @typeofeditors ["CSE"]
-	 * @param {string | number} value - The value of the condition value.
-	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiConditionValue/Methods/SetValue.js
-	 */
-	ApiConditionValue.prototype.SetValue = function(value) {
-		if (this.cfvo) {
-			this.cfvo.asc_setVal(value);
-		}
-	};
-
-	Object.defineProperty(ApiConditionValue.prototype, "Value", {
-		get: function() {
-			return this.GetValue();
-		},
-		set: function(value) {
-			this.SetValue(value);
-		}
-	});
-
-	/**
-	 * Class representing negative bar formatting for data bars.
-	 * @constructor
-	 */
-	function ApiNegativeBarFormat(dataBarElement) {
-		this.dataBarElement = dataBarElement;
-	}
-
-	/**
-	 * Returns the color of the negative bars.
-	 * @memberof ApiNegativeBarFormat
-	 * @typeofeditors ["CSE"]
-	 * @returns {ApiRGBColor | null} The color of negative bars.
-	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiNegativeBarFormat/Methods/GetColor.js
-	 */
-	ApiNegativeBarFormat.prototype.GetColor = function() {
-		if (!this.dataBarElement || !this.dataBarElement.NegativeColor) {
-			return null;
-		}
-		return {
-			Color: this.dataBarElement.NegativeColor.getRgb()
-		};
-	};
-
-	/**
-	 * Sets the color of the negative bars.
-	 * @memberof ApiNegativeBarFormat
-	 * @typeofeditors ["CSE"]
-	 * @param {number} color - The RGB color value for negative bars.
-	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiNegativeBarFormat/Methods/SetColor.js
-	 */
-	ApiNegativeBarFormat.prototype.SetColor = function(color) {
-		if (this.dataBarElement && typeof color === "number") {
-			this.dataBarElement.NegativeColor = new AscCommonExcel.RgbColor(color);
-		}
-	};
-
-	Object.defineProperty(ApiNegativeBarFormat.prototype, "Color", {
-		get: function() {
-			return this.GetColor();
-		},
-		set: function(value) {
-			if (typeof value === "object" && typeof value.Color === "number") {
-				this.SetColor(value.Color);
-			}
-		}
-	});
-
-	/**
-	 * Returns the border color of the negative bars.
-	 * @memberof ApiNegativeBarFormat
-	 * @typeofeditors ["CSE"]
-	 * @returns {ApiRGBColor | null} The border color of negative bars.
-	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiNegativeBarFormat/Methods/GetBorderColor.js
-	 */
-	ApiNegativeBarFormat.prototype.GetBorderColor = function() {
-		if (!this.dataBarElement || !this.dataBarElement.NegativeBorderColor) {
-			return null;
-		}
-		return {
-			Color: this.dataBarElement.NegativeBorderColor.getRgb()
-		};
-	};
-
-	/**
-	 * Sets the border color of the negative bars.
-	 * @memberof ApiNegativeBarFormat
-	 * @typeofeditors ["CSE"]
-	 * @param {number} color - The RGB color value for negative bar borders.
-	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiNegativeBarFormat/Methods/SetBorderColor.js
-	 */
-	ApiNegativeBarFormat.prototype.SetBorderColor = function(color) {
-		if (this.dataBarElement && typeof color === "number") {
-			this.dataBarElement.NegativeBorderColor = new AscCommonExcel.RgbColor(color);
-		}
-	};
-
-	Object.defineProperty(ApiNegativeBarFormat.prototype, "BorderColor", {
-		get: function() {
-			return this.GetBorderColor();
-		},
-		set: function(value) {
-			if (typeof value === "object" && typeof value.Color === "number") {
-				this.SetBorderColor(value.Color);
-			}
-		}
-	});
-
-	/**
-	 * Returns whether the negative bar color is the same as positive.
-	 * @memberof ApiNegativeBarFormat
-	 * @typeofeditors ["CSE"]
-	 * @returns {boolean} True if negative bars use the same color as positive bars.
-	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiNegativeBarFormat/Methods/GetColorSameAsPositive.js
-	 */
-	ApiNegativeBarFormat.prototype.GetColorSameAsPositive = function() {
-		if (!this.dataBarElement) {
-			return true;
-		}
-		return this.dataBarElement.NegativeBarColorSameAsPositive !== false;
-	};
-
-	/**
-	 * Sets whether the negative bar color is the same as positive.
-	 * @memberof ApiNegativeBarFormat
-	 * @typeofeditors ["CSE"]
-	 * @param {boolean} sameAsPositive - True to use the same color as positive bars.
-	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiNegativeBarFormat/Methods/SetColorSameAsPositive.js
-	 */
-	ApiNegativeBarFormat.prototype.SetColorSameAsPositive = function(sameAsPositive) {
-		if (this.dataBarElement && typeof sameAsPositive === "boolean") {
-			this.dataBarElement.NegativeBarColorSameAsPositive = sameAsPositive;
-		}
-	};
-
-	Object.defineProperty(ApiNegativeBarFormat.prototype, "ColorSameAsPositive", {
-		get: function() {
-			return this.GetColorSameAsPositive();
-		},
-		set: function(value) {
-			this.SetColorSameAsPositive(value);
-		}
-	});
-
-	/**
-	 * Returns whether the negative bar border color is the same as positive.
-	 * @memberof ApiNegativeBarFormat
-	 * @typeofeditors ["CSE"]
-	 * @returns {boolean} True if negative bar borders use the same color as positive bar borders.
-	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiNegativeBarFormat/Methods/GetBorderColorSameAsPositive.js
-	 */
-	ApiNegativeBarFormat.prototype.GetBorderColorSameAsPositive = function() {
-		if (!this.dataBarElement) {
-			return true;
-		}
-		return this.dataBarElement.NegativeBarBorderColorSameAsPositive !== false;
-	};
-
-	/**
-	 * Sets whether the negative bar border color is the same as positive.
-	 * @memberof ApiNegativeBarFormat
-	 * @typeofeditors ["CSE"]
-	 * @param {boolean} sameAsPositive - True to use the same border color as positive bars.
-	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiNegativeBarFormat/Methods/SetBorderColorSameAsPositive.js
-	 */
-	ApiNegativeBarFormat.prototype.SetBorderColorSameAsPositive = function(sameAsPositive) {
-		if (this.dataBarElement && typeof sameAsPositive === "boolean") {
-			this.dataBarElement.NegativeBarBorderColorSameAsPositive = sameAsPositive;
-		}
-	};
-
-	Object.defineProperty(ApiNegativeBarFormat.prototype, "BorderColorSameAsPositive", {
-		get: function() {
-			return this.GetBorderColorSameAsPositive();
-		},
-		set: function(value) {
-			this.SetBorderColorSameAsPositive(value);
-		}
-	});
-
-	/**
-	 * Class representing data bar border formatting.
-	 * @constructor
-	 */
-	function ApiDataBarBorder(dataBarElement) {
-		this.dataBarElement = dataBarElement;
-	}
-
-	/**
-	 * Returns the color of the data bar border.
-	 * @memberof ApiDataBarBorder
-	 * @typeofeditors ["CSE"]
-	 * @returns {ApiRGBColor | null} The border color.
-	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiDataBarBorder/Methods/GetColor.js
-	 */
-	ApiDataBarBorder.prototype.GetColor = function() {
-		if (!this.dataBarElement || !this.dataBarElement.BorderColor) {
-			return null;
-		}
-		return {
-			Color: this.dataBarElement.BorderColor.getRgb()
-		};
-	};
-
-	/**
-	 * Sets the color of the data bar border.
-	 * @memberof ApiDataBarBorder
-	 * @typeofeditors ["CSE"]
-	 * @param {number} color - The RGB color value for the border.
-	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiDataBarBorder/Methods/SetColor.js
-	 */
-	ApiDataBarBorder.prototype.SetColor = function(color) {
-		if (this.dataBarElement && typeof color === "number") {
-			this.dataBarElement.BorderColor = new AscCommonExcel.RgbColor(color);
-		}
-	};
-
-	Object.defineProperty(ApiDataBarBorder.prototype, "Color", {
-		get: function() {
-			return this.GetColor();
-		},
-		set: function(value) {
-			if (typeof value === "object" && typeof value.Color === "number") {
-				this.SetColor(value.Color);
-			}
-		}
-	});
-
-	/**
-	 * Returns the type of the data bar border.
-	 * @memberof ApiDataBarBorder
-	 * @typeofeditors ["CSE"]
-	 * @returns {XlDataBarBorderType} The border type.
-	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiDataBarBorder/Methods/GetType.js
-	 */
-	ApiDataBarBorder.prototype.GetType = function() {
-		if (!this.dataBarElement || !this.dataBarElement.BorderColor) {
-			return "xlDataBarBorderNone";
-		}
-		return "xlDataBarBorderSolid";
-	};
-
-	/**
-	 * Sets the type of the data bar border.
-	 * @memberof ApiDataBarBorder
-	 * @typeofeditors ["CSE"]
-	 * @param {XlDataBarBorderType} borderType - The border type.
-	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiDataBarBorder/Methods/SetType.js
-	 */
-	ApiDataBarBorder.prototype.SetType = function(borderType) {
-		if (this.dataBarElement && typeof borderType === "string") {
-			if (borderType === "xlDataBarBorderNone") {
-				this.dataBarElement.BorderColor = null;
-			}
-		}
-	};
-
-	Object.defineProperty(ApiDataBarBorder.prototype, "Type", {
-		get: function() {
-			return this.GetType();
-		},
-		set: function(value) {
-			this.SetType(value);
-		}
-	});
-
 
 	/**
 	 * Class representing an icon set conditional formatting rule.
