@@ -18807,6 +18807,28 @@
 	 * @see office-js-api/Examples/Enumerations/XlDuplicateValues.js
 	 */
 
+	/**
+	 * Icon constants for conditional formatting.
+	 * @typedef {("xlIcon0Bars" | "xlIcon0FilledBoxes" | "xlIcon1Bar" | "xlIcon1FilledBox" |
+	 * "xlIcon2Bars" | "xlIcon2FilledBoxes" | "xlIcon3Bars" | "xlIcon3FilledBoxes" |
+	 * "xlIcon4Bars" | "xlIcon4FilledBoxes" | "xlIconBlackCircle" | "xlIconBlackCircleWithBorder" |
+	 * "xlIconCircleWithOneWhiteQuarter" | "xlIconCircleWithThreeWhiteQuarters" |
+	 * "xlIconCircleWithTwoWhiteQuarters" | "xlIconGoldStar" | "xlIconGrayCircle" |
+	 * "xlIconGrayDownArrow" | "xlIconGrayDownInclineArrow" | "xlIconGraySideArrow" |
+	 * "xlIconGrayUpArrow" | "xlIconGrayUpInclineArrow" | "xlIconGreenCheck" |
+	 * "xlIconGreenCheckSymbol" | "xlIconGreenCircle" | "xlIconGreenFlag" |
+	 * "xlIconGreenTrafficLight" | "xlIconGreenUpArrow" | "xlIconGreenUpTriangle" |
+	 * "xlIconHalfGoldStar" | "xlIconNoCellIcon" | "xlIconPinkCircle" | "xlIconRedCircle" |
+	 * "xlIconRedCircleWithBorder" | "xlIconRedCross" | "xlIconRedCrossSymbol" |
+	 * "xlIconRedDiamond" | "xlIconRedDownArrow" | "xlIconRedDownTriangle" | "xlIconRedFlag" |
+	 * "xlIconRedTrafficLight" | "xlIconSilverStar" | "xlIconWhiteCircleAllWhiteQuarters" |
+	 * "xlIconYellowCircle" | "xlIconYellowDash" | "xlIconYellowDownInclineArrow" |
+	 * "xlIconYellowExclamation" | "xlIconYellowExclamationSymbol" | "xlIconYellowFlag" |
+	 * "xlIconYellowSideArrow" | "xlIconYellowTrafficLight" | "xlIconYellowTriangle" |
+	 * "xlIconYellowUpInclineArrow")} XlIcon
+	 * @see office-js-api/Examples/Enumerations/XlIcon.js
+	 */
+
 	function FromXlValidationTypeTo(sType) {
 		let nType = -1;
 		switch (sType) {
@@ -23274,6 +23296,8 @@
 	 */
 	function ApiIconSetCondition(rule, range, _parent) {
 		ApiFormatCondition.call(this, rule, range, _parent);
+
+		this._iconCriteria = [];
 	}
 
 	ApiIconSetCondition.prototype = Object.create(ApiFormatCondition.prototype);
@@ -23675,10 +23699,10 @@
 	});
 
 	/**
-	 * Returns the icon criteria collection for this icon set condition.
+	 * Returns a collection of icon criteria that represent the threshold values and icons for the icon set conditional formatting rule.
 	 * @memberof ApiIconSetCondition
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiIconCriteria | null} The collection of icon criteria, or null if not applicable.
+	 * @returns {ApiIconCriterion[] | null} Collection of icon criteria objects, or null if the rule is not an icon set type.
 	 * @since 9.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetIconCriteria.js
 	 */
@@ -23692,10 +23716,30 @@
 			return null;
 		}
 
-		return new ApiIconCriteria(iconSetElement, this);
+		if (this._iconCriteria && this._iconCriteria.length) {
+			return this._iconCriteria;
+		}
+
+		let aCFVOs = iconSetElement.aCFVOs || [];
+		let aIconSets = iconSetElement.aIconSets || [];
+		let length = Math.max(aCFVOs.length, aIconSets.length);
+
+		let criteria = [];
+		for (let i = 0; i < length; i++) {
+			criteria.push(new ApiIconCriterion(
+				aCFVOs[i],
+				aIconSets[i],
+				iconSetElement,
+				this,
+				i
+			));
+		}
+
+		this._iconCriteria = criteria;
+		return this._iconCriteria;
 	};
 
-	Object.defineProperty(ApiIconSetCondition.prototype, "IconCriteria", {
+	Object.defineProperty(ApiColorScale.prototype, "IconCriteria", {
 		get: function() {
 			return this.GetIconCriteria();
 		}
@@ -23741,62 +23785,64 @@
 		}
 	});
 
-	/**
-	 * Class representing a collection of icon criteria.
-	 * @constructor
-	 */
-	function ApiIconCriteria(iconSetElement, parent) {
-		this.iconSetElement = iconSetElement;
-		this.aCFVOs = iconSetElement.aCFVOs || [];
-		this.aIconSets = iconSetElement.aIconSets || [];
-		this.length = Math.max(this.aCFVOs.length, this.aIconSets.length);
-		this.parent = parent;
-	}
-
-	/**
-	 * Returns the count of icon criteria in the collection.
-	 * @memberof ApiIconCriteria
-	 * @typeofeditors ["CSE"]
-	 * @returns {number} The number of icon criteria.
-	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiIconCriteria/Methods/GetCount.js
-	 */
-	ApiIconCriteria.prototype.GetCount = function() {
-		return this.length;
-	};
-
-	Object.defineProperty(ApiIconCriteria.prototype, "Count", {
-		get: function() {
-			return this.GetCount();
-		}
-	});
-
-	/**
-	 * Returns an icon criterion by its index.
-	 * @memberof ApiIconCriteria
-	 * @typeofeditors ["CSE"]
-	 * @param {number} index - The index of the criterion (1-based).
-	 * @returns {ApiIconCriterion | null} The icon criterion object, or null if index is invalid.
-	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiIconCriteria/Methods/GetItem.js
-	 */
-	ApiIconCriteria.prototype.GetItem = function(index) {
-		if (index < 1 || index > this.length) {
-			return null;
-		}
-		let idx = index - 1;
-		return new ApiIconCriterion(this.aCFVOs[idx], this.aIconSets[idx], this.iconSetElement, this);
-	};
+	// /**
+	//  * Class representing a collection of icon criteria.
+	//  * @constructor
+	//  */
+	// function ApiIconCriteria(iconSetElement, parent) {
+	// 	this.iconSetElement = iconSetElement;
+	// 	this.aCFVOs = iconSetElement.aCFVOs || [];
+	// 	this.aIconSets = iconSetElement.aIconSets || [];
+	// 	this.length = Math.max(this.aCFVOs.length, this.aIconSets.length);
+	// 	this.parent = parent;
+	// }
+	//
+	// /**
+	//  * Returns the count of icon criteria in the collection.
+	//  * @memberof ApiIconCriteria
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {number} The number of icon criteria.
+	//  * @since 9.2.0
+	//  * @see office-js-api/Examples/{Editor}/ApiIconCriteria/Methods/GetCount.js
+	//  */
+	// ApiIconCriteria.prototype.GetCount = function() {
+	// 	return this.length;
+	// };
+	//
+	// Object.defineProperty(ApiIconCriteria.prototype, "Count", {
+	// 	get: function() {
+	// 		return this.GetCount();
+	// 	}
+	// });
+	//
+	// /**
+	//  * Returns an icon criterion by its index.
+	//  * @memberof ApiIconCriteria
+	//  * @typeofeditors ["CSE"]
+	//  * @param {number} index - The index of the criterion (1-based).
+	//  * @returns {ApiIconCriterion | null} The icon criterion object, or null if index is invalid.
+	//  * @since 9.2.0
+	//  * @see office-js-api/Examples/{Editor}/ApiIconCriteria/Methods/GetItem.js
+	//  */
+	// ApiIconCriteria.prototype.GetItem = function(index) {
+	// 	if (index < 1 || index > this.length) {
+	// 		return null;
+	// 	}
+	// 	let idx = index - 1;
+	// 	return new ApiIconCriterion(this.aCFVOs[idx], this.aIconSets[idx], this.iconSetElement, this);
+	// };
 
 	/**
 	 * Class representing a single icon criterion.
 	 * @constructor
 	 */
-	function ApiIconCriterion(cfvo, iconSet, iconSetElement, parent) {
+	function ApiIconCriterion(cfvo, iconSet, iconSetElement, parent, index) {
 		this.cfvo = cfvo;
 		this.iconSet = iconSet;
 		this.iconSetElement = iconSetElement;
 		this.parent = parent;
+
+		this.index = index;
 	}
 
 	/**
@@ -23826,7 +23872,11 @@
 		if (this.cfvo) {
 			let internalType = FromXlConditionValueTypesTo(type);
 			if (internalType !== -1) {
-				this.cfvo.asc_setType(internalType);
+				let t = this;
+				this.parent.private_changeStyle(function (newRule) {
+					let index = t.GetIndex();
+					newRule.aRuleElements[0].aCFVOs[index].asc_setType(internalType);
+				}, true);
 			}
 		}
 	};
@@ -23864,9 +23914,28 @@
 	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/SetValue.js
 	 */
 	ApiIconCriterion.prototype.SetValue = function(value) {
-		if (this.cfvo) {
-			this.cfvo.asc_setVal(value);
+		if (!this.cfvo) {
+			return;
 		}
+
+		// Check if the type allows setting a value
+		let currentType = this.cfvo.asc_getType();
+		let allowedTypes = [
+			Asc.c_oAscCfvoType.Number,        // xlConditionValueNumber
+			Asc.c_oAscCfvoType.Percent,       // xlConditionValuePercent
+			Asc.c_oAscCfvoType.Percentile,    // xlConditionValuePercentile
+			Asc.c_oAscCfvoType.Formula        // xlConditionValueFormula
+		];
+
+		if (allowedTypes.indexOf(currentType) === -1) {
+			return; // Cannot set value for this type
+		}
+
+		let t = this;
+		this.parent.private_changeStyle(function (newRule) {
+			let index = t.GetIndex();
+			newRule.aRuleElements[0].aCFVOs[index].asc_setVal(value);
+		}, true);
 	};
 
 	Object.defineProperty(ApiIconCriterion.prototype, "Value", {
@@ -23903,7 +23972,11 @@
 	 */
 	ApiIconCriterion.prototype.SetOperator = function(operator) {
 		if (this.cfvo && typeof operator === "string") {
-			this.cfvo.asc_setGte(operator === "xlGreaterEqual");
+			let t = this;
+			this.parent.private_changeStyle(function (newRule) {
+				let index = t.GetIndex();
+				newRule.aRuleElements[0].aCFVOs[index].asc_setGte(operator === "xlGreaterEqual");
+			}, true);
 		}
 	};
 
@@ -23925,17 +23998,18 @@
 	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/GetIndex.js
 	 */
 	ApiIconCriterion.prototype.GetIndex = function() {
-		if (!this.iconSetElement || !this.iconSetElement.aCFVOs) {
-			return 1;
-		}
-
-		for (let i = 0; i < this.iconSetElement.aCFVOs.length; i++) {
-			if (this.iconSetElement.aCFVOs[i] === this.cfvo) {
-				return i + 1;
-			}
-		}
-
-		return 1;
+		return this.index;
+		// if (!this.iconSetElement || !this.iconSetElement.aCFVOs) {
+		// 	return 1;
+		// }
+		//
+		// for (let i = 0; i < this.iconSetElement.aCFVOs.length; i++) {
+		// 	if (this.iconSetElement.aCFVOs[i] === this.cfvo) {
+		// 		return i + 1;
+		// 	}
+		// }
+		//
+		// return 1;
 	};
 
 	Object.defineProperty(ApiIconCriterion.prototype, "Index", {
@@ -23948,20 +24022,542 @@
 	 * Returns the icon associated with this criterion.
 	 * @memberof ApiIconCriterion
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiIcon | null} The icon object, or null if not available.
+	 * @returns {XlIcon | null} The icon constant, or null if not available.
 	 * @since 9.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/GetIcon.js
 	 */
 	ApiIconCriterion.prototype.GetIcon = function() {
-		if (!this.iconSet) {
+		if (!this.iconSet || !this.iconSetElement) {
 			return null;
 		}
-		return new ApiIcon(this.iconSet, this.iconSetElement);
+
+		let iconSetType = this.iconSet.asc_getIconSet();
+		let iconIndex = this.iconSet.asc_getIndex();
+
+		// Если нет пользовательской иконки, берем из основного набора
+		if (iconSetType === null || iconSetType === undefined) {
+			iconSetType = this.iconSetElement.IconSet || Asc.EIconSetType.Traffic3Lights1;
+		}
+
+		return ToXlIconFrom(iconSetType, iconIndex);
+	};
+
+	function FromXlIconTo(sIcon) {
+		let iconData = { iconSetType: -1, iconIndex: -1 };
+
+		switch (sIcon) {
+			// 3 Arrows
+			case "xlIconRedDownArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows3, iconIndex: 0 };
+				break;
+			case "xlIconYellowSideArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows3, iconIndex: 1 };
+				break;
+			case "xlIconGreenUpArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows3, iconIndex: 2 };
+				break;
+
+			// 3 Arrows Gray
+			case "xlIconGrayDownArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows3Gray, iconIndex: 0 };
+				break;
+			case "xlIconGraySideArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows3Gray, iconIndex: 1 };
+				break;
+			case "xlIconGrayUpArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows3Gray, iconIndex: 2 };
+				break;
+
+			// 3 Flags
+			case "xlIconRedFlag":
+				iconData = { iconSetType: Asc.EIconSetType.Flags3, iconIndex: 0 };
+				break;
+			case "xlIconYellowFlag":
+				iconData = { iconSetType: Asc.EIconSetType.Flags3, iconIndex: 1 };
+				break;
+			case "xlIconGreenFlag":
+				iconData = { iconSetType: Asc.EIconSetType.Flags3, iconIndex: 2 };
+				break;
+
+			// 3 Traffic Lights 1 (solid circles)
+			case "xlIconRedTrafficLight":
+				iconData = { iconSetType: Asc.EIconSetType.Traffic3Lights1, iconIndex: 0 };
+				break;
+			case "xlIconYellowTrafficLight":
+				iconData = { iconSetType: Asc.EIconSetType.Traffic3Lights1, iconIndex: 1 };
+				break;
+			case "xlIconGreenTrafficLight":
+				iconData = { iconSetType: Asc.EIconSetType.Traffic3Lights1, iconIndex: 2 };
+				break;
+
+			// 3 Traffic Lights 2 (traffic light shapes) - using same mapping as Traffic3Lights1 since no distinction in XlIcon
+			case "xlIconRedCircle":
+				iconData = { iconSetType: Asc.EIconSetType.Traffic3Lights2, iconIndex: 0 };
+				break;
+			case "xlIconYellowCircle":
+				iconData = { iconSetType: Asc.EIconSetType.Traffic3Lights2, iconIndex: 1 };
+				break;
+			case "xlIconGreenCircle":
+				iconData = { iconSetType: Asc.EIconSetType.Traffic3Lights2, iconIndex: 2 };
+				break;
+
+			// 3 Signs
+			case "xlIconRedDiamond":
+				iconData = { iconSetType: Asc.EIconSetType.Signs3, iconIndex: 0 };
+				break;
+			case "xlIconYellowTriangle":
+				iconData = { iconSetType: Asc.EIconSetType.Signs3, iconIndex: 1 };
+				break;
+			case "xlIconGreenCircle":
+				iconData = { iconSetType: Asc.EIconSetType.Signs3, iconIndex: 2 };
+				break;
+
+			// 3 Symbols (circles with symbols)
+			case "xlIconRedCrossSymbol":
+				iconData = { iconSetType: Asc.EIconSetType.Symbols3, iconIndex: 0 };
+				break;
+			case "xlIconYellowExclamationSymbol":
+				iconData = { iconSetType: Asc.EIconSetType.Symbols3, iconIndex: 1 };
+				break;
+			case "xlIconGreenCheckSymbol":
+				iconData = { iconSetType: Asc.EIconSetType.Symbols3, iconIndex: 2 };
+				break;
+
+			// 3 Symbols 2 (plain symbols)
+			case "xlIconRedCross":
+				iconData = { iconSetType: Asc.EIconSetType.Symbols3_2, iconIndex: 0 };
+				break;
+			case "xlIconYellowExclamation":
+				iconData = { iconSetType: Asc.EIconSetType.Symbols3_2, iconIndex: 1 };
+				break;
+			case "xlIconGreenCheck":
+				iconData = { iconSetType: Asc.EIconSetType.Symbols3_2, iconIndex: 2 };
+				break;
+
+			// 4 Arrows
+			case "xlIconRedDownArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows4, iconIndex: 0 };
+				break;
+			case "xlIconYellowDownInclineArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows4, iconIndex: 1 };
+				break;
+			case "xlIconYellowUpInclineArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows4, iconIndex: 2 };
+				break;
+			case "xlIconGreenUpArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows4, iconIndex: 3 };
+				break;
+
+			// 4 Arrows Gray
+			case "xlIconGrayDownArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows4Gray, iconIndex: 0 };
+				break;
+			case "xlIconGrayDownInclineArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows4Gray, iconIndex: 1 };
+				break;
+			case "xlIconGrayUpInclineArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows4Gray, iconIndex: 2 };
+				break;
+			case "xlIconGrayUpArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows4Gray, iconIndex: 3 };
+				break;
+
+			// 4 Red To Black
+			case "xlIconBlackCircle":
+				iconData = { iconSetType: Asc.EIconSetType.RedToBlack4, iconIndex: 0 };
+				break;
+			case "xlIconGrayCircle":
+				iconData = { iconSetType: Asc.EIconSetType.RedToBlack4, iconIndex: 1 };
+				break;
+			case "xlIconPinkCircle":
+				iconData = { iconSetType: Asc.EIconSetType.RedToBlack4, iconIndex: 2 };
+				break;
+			case "xlIconRedCircle":
+				iconData = { iconSetType: Asc.EIconSetType.RedToBlack4, iconIndex: 3 };
+				break;
+
+			// 4 Rating (bars)
+			case "xlIcon1Bar":
+				iconData = { iconSetType: Asc.EIconSetType.Rating4, iconIndex: 0 };
+				break;
+			case "xlIcon2Bars":
+				iconData = { iconSetType: Asc.EIconSetType.Rating4, iconIndex: 1 };
+				break;
+			case "xlIcon3Bars":
+				iconData = { iconSetType: Asc.EIconSetType.Rating4, iconIndex: 2 };
+				break;
+			case "xlIcon4Bars":
+				iconData = { iconSetType: Asc.EIconSetType.Rating4, iconIndex: 3 };
+				break;
+
+			// 4 Traffic Lights
+			case "xlIconBlackCircle":
+				iconData = { iconSetType: Asc.EIconSetType.Traffic4Lights, iconIndex: 0 };
+				break;
+			case "xlIconRedCircle":
+				iconData = { iconSetType: Asc.EIconSetType.Traffic4Lights, iconIndex: 1 };
+				break;
+			case "xlIconYellowCircle":
+				iconData = { iconSetType: Asc.EIconSetType.Traffic4Lights, iconIndex: 2 };
+				break;
+			case "xlIconGreenCircle":
+				iconData = { iconSetType: Asc.EIconSetType.Traffic4Lights, iconIndex: 3 };
+				break;
+
+			// 5 Arrows
+			case "xlIconRedDownArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows5, iconIndex: 0 };
+				break;
+			case "xlIconYellowDownInclineArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows5, iconIndex: 1 };
+				break;
+			case "xlIconYellowSideArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows5, iconIndex: 2 };
+				break;
+			case "xlIconYellowUpInclineArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows5, iconIndex: 3 };
+				break;
+			case "xlIconGreenUpArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows5, iconIndex: 4 };
+				break;
+
+			// 5 Arrows Gray
+			case "xlIconGrayDownArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows5Gray, iconIndex: 0 };
+				break;
+			case "xlIconGrayDownInclineArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows5Gray, iconIndex: 1 };
+				break;
+			case "xlIconGraySideArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows5Gray, iconIndex: 2 };
+				break;
+			case "xlIconGrayUpInclineArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows5Gray, iconIndex: 3 };
+				break;
+			case "xlIconGrayUpArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows5Gray, iconIndex: 4 };
+				break;
+
+			// 5 Rating (bars)
+			case "xlIcon0Bars":
+				iconData = { iconSetType: Asc.EIconSetType.Rating5, iconIndex: 0 };
+				break;
+			case "xlIcon1Bar":
+				iconData = { iconSetType: Asc.EIconSetType.Rating5, iconIndex: 1 };
+				break;
+			case "xlIcon2Bars":
+				iconData = { iconSetType: Asc.EIconSetType.Rating5, iconIndex: 2 };
+				break;
+			case "xlIcon3Bars":
+				iconData = { iconSetType: Asc.EIconSetType.Rating5, iconIndex: 3 };
+				break;
+			case "xlIcon4Bars":
+				iconData = { iconSetType: Asc.EIconSetType.Rating5, iconIndex: 4 };
+				break;
+
+			// 5 Quarters
+			case "xlIconCircleWithOneWhiteQuarter":
+				iconData = { iconSetType: Asc.EIconSetType.Quarters5, iconIndex: 0 };
+				break;
+			case "xlIconCircleWithTwoWhiteQuarters":
+				iconData = { iconSetType: Asc.EIconSetType.Quarters5, iconIndex: 1 };
+				break;
+			case "xlIconCircleWithThreeWhiteQuarters":
+				iconData = { iconSetType: Asc.EIconSetType.Quarters5, iconIndex: 2 };
+				break;
+			case "xlIconWhiteCircleAllWhiteQuarters":
+				iconData = { iconSetType: Asc.EIconSetType.Quarters5, iconIndex: 3 };
+				break;
+			case "xlIconBlackCircleWithBorder":
+				iconData = { iconSetType: Asc.EIconSetType.Quarters5, iconIndex: 4 };
+				break;
+
+			// 3 Stars
+			case "xlIconSilverStar":
+				iconData = { iconSetType: Asc.EIconSetType.Stars3, iconIndex: 0 };
+				break;
+			case "xlIconHalfGoldStar":
+				iconData = { iconSetType: Asc.EIconSetType.Stars3, iconIndex: 1 };
+				break;
+			case "xlIconGoldStar":
+				iconData = { iconSetType: Asc.EIconSetType.Stars3, iconIndex: 2 };
+				break;
+
+			// 3 Triangles
+			case "xlIconRedDownTriangle":
+				iconData = { iconSetType: Asc.EIconSetType.Triangles3, iconIndex: 0 };
+				break;
+			case "xlIconYellowDash":
+				iconData = { iconSetType: Asc.EIconSetType.Triangles3, iconIndex: 1 };
+				break;
+			case "xlIconGreenUpTriangle":
+				iconData = { iconSetType: Asc.EIconSetType.Triangles3, iconIndex: 2 };
+				break;
+
+			// 5 Boxes
+			case "xlIcon0FilledBoxes":
+				iconData = { iconSetType: Asc.EIconSetType.Boxes5, iconIndex: 0 };
+				break;
+			case "xlIcon1FilledBox":
+				iconData = { iconSetType: Asc.EIconSetType.Boxes5, iconIndex: 1 };
+				break;
+			case "xlIcon2FilledBoxes":
+				iconData = { iconSetType: Asc.EIconSetType.Boxes5, iconIndex: 2 };
+				break;
+			case "xlIcon3FilledBoxes":
+				iconData = { iconSetType: Asc.EIconSetType.Boxes5, iconIndex: 3 };
+				break;
+			case "xlIcon4FilledBoxes":
+				iconData = { iconSetType: Asc.EIconSetType.Boxes5, iconIndex: 4 };
+				break;
+
+			// Special case for no icon
+			case "xlIconNoCellIcon":
+				iconData = { iconSetType: -1, iconIndex: -1 };
+				break;
+
+			default:
+				return iconData;
+		}
+
+		return iconData;
+	}
+
+	function ToXlIconFrom(iconSetType, iconIndex) {
+		let sIcon = "";
+
+		switch (iconSetType) {
+			case Asc.EIconSetType.Arrows3:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconRedDownArrow"; break;
+					case 1: sIcon = "xlIconYellowSideArrow"; break;
+					case 2: sIcon = "xlIconGreenUpArrow"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Arrows3Gray:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconGrayDownArrow"; break;
+					case 1: sIcon = "xlIconGraySideArrow"; break;
+					case 2: sIcon = "xlIconGrayUpArrow"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Flags3:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconRedFlag"; break;
+					case 1: sIcon = "xlIconYellowFlag"; break;
+					case 2: sIcon = "xlIconGreenFlag"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Signs3:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconRedDiamond"; break;
+					case 1: sIcon = "xlIconYellowTriangle"; break;
+					case 2: sIcon = "xlIconGreenCircle"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Symbols3:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconRedCrossSymbol"; break;
+					case 1: sIcon = "xlIconYellowExclamationSymbol"; break;
+					case 2: sIcon = "xlIconGreenCheckSymbol"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Symbols3_2:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconRedCross"; break;
+					case 1: sIcon = "xlIconYellowExclamation"; break;
+					case 2: sIcon = "xlIconGreenCheck"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Traffic3Lights1:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconRedTrafficLight"; break;
+					case 1: sIcon = "xlIconYellowTrafficLight"; break;
+					case 2: sIcon = "xlIconGreenTrafficLight"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Traffic3Lights2:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconRedCircle"; break;
+					case 1: sIcon = "xlIconYellowCircle"; break;
+					case 2: sIcon = "xlIconGreenCircle"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Arrows4:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconRedDownArrow"; break;
+					case 1: sIcon = "xlIconYellowDownInclineArrow"; break;
+					case 2: sIcon = "xlIconYellowUpInclineArrow"; break;
+					case 3: sIcon = "xlIconGreenUpArrow"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Arrows4Gray:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconGrayDownArrow"; break;
+					case 1: sIcon = "xlIconGrayDownInclineArrow"; break;
+					case 2: sIcon = "xlIconGrayUpInclineArrow"; break;
+					case 3: sIcon = "xlIconGrayUpArrow"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.RedToBlack4:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconBlackCircle"; break;
+					case 1: sIcon = "xlIconGrayCircle"; break;
+					case 2: sIcon = "xlIconPinkCircle"; break;
+					case 3: sIcon = "xlIconRedCircle"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Rating4:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIcon1Bar"; break;
+					case 1: sIcon = "xlIcon2Bars"; break;
+					case 2: sIcon = "xlIcon3Bars"; break;
+					case 3: sIcon = "xlIcon4Bars"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Traffic4Lights:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconBlackCircle"; break;
+					case 1: sIcon = "xlIconRedCircle"; break;
+					case 2: sIcon = "xlIconYellowCircle"; break;
+					case 3: sIcon = "xlIconGreenCircle"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Arrows5:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconRedDownArrow"; break;
+					case 1: sIcon = "xlIconYellowDownInclineArrow"; break;
+					case 2: sIcon = "xlIconYellowSideArrow"; break;
+					case 3: sIcon = "xlIconYellowUpInclineArrow"; break;
+					case 4: sIcon = "xlIconGreenUpArrow"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Arrows5Gray:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconGrayDownArrow"; break;
+					case 1: sIcon = "xlIconGrayDownInclineArrow"; break;
+					case 2: sIcon = "xlIconGraySideArrow"; break;
+					case 3: sIcon = "xlIconGrayUpInclineArrow"; break;
+					case 4: sIcon = "xlIconGrayUpArrow"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Rating5:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIcon0Bars"; break;
+					case 1: sIcon = "xlIcon1Bar"; break;
+					case 2: sIcon = "xlIcon2Bars"; break;
+					case 3: sIcon = "xlIcon3Bars"; break;
+					case 4: sIcon = "xlIcon4Bars"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Quarters5:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconCircleWithOneWhiteQuarter"; break;
+					case 1: sIcon = "xlIconCircleWithTwoWhiteQuarters"; break;
+					case 2: sIcon = "xlIconCircleWithThreeWhiteQuarters"; break;
+					case 3: sIcon = "xlIconWhiteCircleAllWhiteQuarters"; break;
+					case 4: sIcon = "xlIconBlackCircleWithBorder"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Stars3:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconSilverStar"; break;
+					case 1: sIcon = "xlIconHalfGoldStar"; break;
+					case 2: sIcon = "xlIconGoldStar"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Triangles3:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconRedDownTriangle"; break;
+					case 1: sIcon = "xlIconYellowDash"; break;
+					case 2: sIcon = "xlIconGreenUpTriangle"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Boxes5:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIcon0FilledBoxes"; break;
+					case 1: sIcon = "xlIcon1FilledBox"; break;
+					case 2: sIcon = "xlIcon2FilledBoxes"; break;
+					case 3: sIcon = "xlIcon3FilledBoxes"; break;
+					case 4: sIcon = "xlIcon4FilledBoxes"; break;
+				}
+				break;
+
+			default:
+				sIcon = "xlIconNoCellIcon";
+				break;
+		}
+
+		return sIcon;
+	}
+
+	/**
+	 * Sets the icon for this criterion.
+	 * @memberof ApiIconCriterion
+	 * @typeofeditors ["CSE"]
+	 * @param {XlIcon} icon - The icon constant to set.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/SetIcon.js
+	 */
+	ApiIconCriterion.prototype.SetIcon = function(icon) {
+		if (typeof icon !== "string") {
+			return;
+		}
+
+		let iconData = FromXlIconTo(icon);
+		if (iconData.iconSetType === -1 || iconData.iconIndex === -1) {
+			return;
+		}
+
+		// Создаем или обновляем iconSet
+		if (!this.iconSet) {
+			this.iconSet = new window['AscCommonExcel'].CConditionalFormatIconSet();
+		}
+
+		this.iconSet.asc_setIconSet(iconData.iconSetType);
+		this.iconSet.asc_setIndex(iconData.iconIndex);
+
+		// Обновляем правило через parent
+		let t = this;
+		this.parent.private_changeStyle(function (newRule) {
+			let iconSetElement = newRule.aRuleElements && newRule.aRuleElements[0];
+			if (iconSetElement && iconSetElement.aIconSets) {
+				// Убеждаемся что массив достаточно большой
+				while (iconSetElement.aIconSets.length <= t.index) {
+					iconSetElement.aIconSets.push(new window['AscCommonExcel'].CConditionalFormatIconSet());
+				}
+
+				iconSetElement.aIconSets[t.index].asc_setIconSet(iconData.iconSetType);
+				iconSetElement.aIconSets[t.index].asc_setIndex(iconData.iconIndex);
+			}
+		}, true);
 	};
 
 	Object.defineProperty(ApiIconCriterion.prototype, "Icon", {
 		get: function() {
 			return this.GetIcon();
+		},
+		set: function(value) {
+			this.SetIcon(value);
 		}
 	});
 
@@ -24001,7 +24597,16 @@
 		if (this.iconSetData && typeof iconSet === "string") {
 			let internalIconSet = FromXlIconSetTo(iconSet);
 			if (internalIconSet !== -1) {
-				this.iconSetData.asc_setIconSet(internalIconSet);
+				let parentCondition = this.getParentCondition();
+				if (parentCondition) {
+					let t = this;
+					parentCondition.private_changeStyle(function (newRule) {
+						let iconIndex = t.getIndex();
+						if (iconIndex !== -1) {
+							newRule.aRuleElements[0].aIconSets[iconIndex].asc_setIconSet(internalIconSet);
+						}
+					}, true);
+				}
 			}
 		}
 	};
@@ -24040,7 +24645,16 @@
 	 */
 	ApiIcon.prototype.SetIndex = function(index) {
 		if (this.iconSetData && typeof index === "number") {
-			this.iconSetData.asc_setIndex(index - 1);
+			let parentCondition = this.getParentCondition();
+			if (parentCondition) {
+				let t = this;
+				parentCondition.private_changeStyle(function (newRule) {
+					let iconIndex = t.getIconIndex();
+					if (iconIndex !== -1) {
+						newRule.aRuleElements[0].aIconSets[iconIndex].asc_setIndex(index - 1);
+					}
+				}, true);
+			}
 		}
 	};
 
