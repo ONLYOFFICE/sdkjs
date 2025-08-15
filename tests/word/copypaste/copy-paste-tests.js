@@ -135,12 +135,45 @@ $(function () {
 		const expected = {
 			"type": "document",
 			"textPr": "Title\r\nParagraph with bold and italic text.\r\n·\tList item 1\r\nList item 2\r\n",
-			'content': [{"bFromDocument":true,"pPr":{"pBdr":{"bottom":{"color":{"auto":false,"r":0,"g":0,"b":0},"sz":4,"space":0,"value":"none"},"left":{"color":{"auto":false,"r":0,"g":0,"b":0},"sz":4,"space":0,"value":"none"},"right":{"color":{"auto":false,"r":0,"g":0,"b":0},"sz":4,"space":0,"value":"none"},"top":{"color":{"auto":false,"r":0,"g":0,"b":0},"sz":4,"space":0,"value":"none"}},"bFromDocument":true,"type":"paraPr","pStyle":"139"},"rPr":{"bFromDocument":true,"type":"textPr"},"content":[{"bFromDocument":true,"rPr":{"bFromDocument":true,"type":"textPr"},"content":["Title"],"footnotes":[],"endnotes":[],"reviewType":"common","type":"run"},{"bFromDocument":true,"rPr":{"bFromDocument":true,"type":"textPr"},"content":[],"footnotes":[],"endnotes":[],"reviewType":"common","type":"endRun"}],"changes":[],"type":"paragraph"},{"bFromDocument":true,"pPr":{"pBdr":{"bottom":{"color":{"auto":false,"r":0,"g":0,"b":0},"sz":4,"space":0,"value":"none"},"left":{"color":{"auto":false,"r":0,"g":0,"b":0},"sz":4,"space":0,"value":"none"},"right":{"color":{"auto":false,"r":0,"g":0,"b":0},"sz":4,"space":0,"value":"none"},"top":{"color":{"auto":false,"r":0,"g":0,"b":0},"sz":4,"space":0,"value":"none"}},"bFromDocument":true,"type":"paraPr"},"rPr":{"bFromDocument":true,"type":"textPr"},"content":[{"bFromDocument":true,"rPr":{"bFromDocument":true,"type":"textPr"},"content":["Paragraph with bold and italic text."],"footnotes":[],"endnotes":[],"reviewType":"common","type":"run"},{"bFromDocument":true,"rPr":{"bFromDocument":true,"type":"textPr"},"content":[],"footnotes":[],"endnotes":[],"reviewType":"common","type":"endRun"}],"changes":[],"type":"paragraph"},{"bFromDocument":true,"pPr":{"numPr":{"ilvl":0,"numId":"495"},"pBdr":{"bottom":{"color":{"auto":false,"r":0,"g":0,"b":0},"sz":4,"space":0,"value":"none"},"left":{"color":{"auto":false,"r":0,"g":0,"b":0},"sz":4,"space":0,"value":"none"},"right":{"color":{"auto":false,"r":0,"g":0,"b":0},"sz":4,"space":0,"value":"none"},"top":{"color":{"auto":false,"r":0,"g":0,"b":0},"sz":4,"space":0,"value":"none"}},"bFromDocument":true,"type":"paraPr","pStyle":"165"},"rPr":{"bFromDocument":true,"type":"textPr"},"content":[{"bFromDocument":true,"rPr":{"bFromDocument":true,"type":"textPr"},"content":["List item 1"],"footnotes":[],"endnotes":[],"reviewType":"common","type":"run"},{"bFromDocument":true,"rPr":{"bFromDocument":true,"type":"textPr"},"content":[],"footnotes":[],"endnotes":[],"reviewType":"common","type":"endRun"}],"changes":[],"type":"paragraph"},{"bFromDocument":true,"pPr":{"bFromDocument":true,"type":"paraPr"},"rPr":{"bFromDocument":true,"type":"textPr"},"content":[{"bFromDocument":true,"rPr":{"bFromDocument":true,"type":"textPr"},"content":["List item 2"],"footnotes":[],"endnotes":[],"reviewType":"common","type":"run"},{"bFromDocument":true,"rPr":{"bFromDocument":true,"type":"textPr"},"content":[],"footnotes":[],"endnotes":[],"reviewType":"common","type":"run"},{"bFromDocument":true,"rPr":{"bFromDocument":true,"type":"textPr"},"content":[],"footnotes":[],"endnotes":[],"reviewType":"common","type":"endRun"}],"changes":[],"type":"paragraph"}]
+			'content': [{"bFromDocument":true,"pPr":{"pBdr":{"bottom":{"color":{"auto":false,"r":0,"g":0,"b":0},"sz":4,"space":0,"value":"none"},"left":{"color":{"auto":false,"r":0,"g":0,"b":0},"sz":4,"space":0,"value":"none"},"right":{"color":{"auto":false,"r":0,"g":0,"b":0},"sz":4,"space":0,"value":"none"},"top":{"color":{"auto":false,"r":0,"g":0,"b":0},"sz":4,"space":0,"value":"none"}},"bFromDocument":true,"type":"paraPr","pStyle":"139"},"rPr":{"bFromDocument":true,"type":"textPr"},"content":[{"bFromDocument":true,"rPr":{"bFromDocument":true,"type":"textPr"},"content":["Title"],"footnotes":[],"endnotes":[],"reviewType":"common","type":"run"},{"bFromDocument":true,"rPr":{"bFromDocument":true,"type":"textPr"},"content":[],"footnotes":[],"endnotes":[],"reviewType":"common","type":"endRun"}],"changes":[],"type":"paragraph"},{"bFromDocument":true,"pPr":{"pBdr":{"bottom":{"color":{"auto":false,"r":0,"g":0,"b":0},"sz":4,"space":0,"value":"none"},"left":{"color":{"auto":false,"r":0,"g":0,"b":0},"sz":4,"space":0,"value":"none"},"right":{"color":{"auto":false,"r":0,"g":0,"b":0},"sz":4,"space":0,"value":"none"},"top":{"color":{"auto":false,"r":0,"g":0,"b":0},"sz":4,"space":0,"value":"none"}},"bFromDocument":true,"type":"paraPr"},"rPr":{"bFromDocument":true,"type":"textPr"},"content":[{"bFromDocument":true,"rPr":{"bFromDocument":true,"type":"textPr"},"content":["Paragraph with bold and italic text."],"footnotes":[],"endnotes":[],"reviewType":"common","type":"run"},{"bFromDocument":true,"rPr":{"bFromDocument":true,"type":"textPr"},"content":[],"footnotes":[],"endnotes":[],"reviewType":"common","type":"endRun"}],"changes":[],"type":"paragraph"},{"bFromDocument":true,"pPr":{"numPr":{"ilvl":0,"numId":"488"},"pBdr":{"bottom":{"color":{"auto":false,"r":0,"g":0,"b":0},"sz":4,"space":0,"value":"none"},"left":{"color":{"auto":false,"r":0,"g":0,"b":0},"sz":4,"space":0,"value":"none"},"right":{"color":{"auto":false,"r":0,"g":0,"b":0},"sz":4,"space":0,"value":"none"},"top":{"color":{"auto":false,"r":0,"g":0,"b":0},"sz":4,"space":0,"value":"none"}},"bFromDocument":true,"type":"paraPr","pStyle":"165"},"rPr":{"bFromDocument":true,"type":"textPr"},"content":[{"bFromDocument":true,"rPr":{"bFromDocument":true,"type":"textPr"},"content":["List item 1"],"footnotes":[],"endnotes":[],"reviewType":"common","type":"run"},{"bFromDocument":true,"rPr":{"bFromDocument":true,"type":"textPr"},"content":[],"footnotes":[],"endnotes":[],"reviewType":"common","type":"endRun"}],"changes":[],"type":"paragraph"},{"bFromDocument":true,"pPr":{"bFromDocument":true,"type":"paraPr"},"rPr":{"bFromDocument":true,"type":"textPr"},"content":[{"bFromDocument":true,"rPr":{"bFromDocument":true,"type":"textPr"},"content":["List item 2"],"footnotes":[],"endnotes":[],"reviewType":"common","type":"run"},{"bFromDocument":true,"rPr":{"bFromDocument":true,"type":"textPr"},"content":[],"footnotes":[],"endnotes":[],"reviewType":"common","type":"run"},{"bFromDocument":true,"rPr":{"bFromDocument":true,"type":"textPr"},"content":[],"footnotes":[],"endnotes":[],"reviewType":"common","type":"endRun"}],"changes":[],"type":"paragraph"}]
 		};
 
 		assert.strictEqual(result, JSON.stringify(expected), "Complex HTML content should match expected JSON format");
 
 		done();
+	});
+
+	QUnit.test("Test: \"paste html, select text, copy html, check htmls\"", function (assert) {
+		AscTest.ClearDocument();
+		let p = AscTest.CreateParagraph();
+		logicDocument.AddToContent(0, p);
+
+		let done = assert.async();
+
+		// Create a complex HTML element to simulate copying
+		let htmlElement = document.createElement("div");
+		htmlElement.innerHTML = `
+								<div>
+								  <h1 style="color: red;">Title</h1>
+								  <p>Paragraph with <strong>bold</strong> and <em>italic</em> text.</p>
+								  <ul>
+									<li>List item 1</li>
+									<li>List item 2</li>
+								  </ul>
+								</div>
+							  `;
+
+		// Simulate pasting the HTML content into the document
+		AscTest.Editor.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, htmlElement, undefined, undefined, undefined, function () {});
+
+		// Select the text in the paragraph and copy to clipboard
+		logicDocument.SelectAll();
+		var oCopyProcessor = new AscCommon.CopyProcessor(AscTest.Editor);
+		const sBase64 = oCopyProcessor.Start();
+		const _data = oCopyProcessor.getInnerHtml();
+		logicDocument.RemoveSelection();
+		console.log("Copied HTML:", _data);
+
 	});
 
 	QUnit.module("Word Copy Paste Tests");
