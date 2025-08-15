@@ -5809,7 +5809,7 @@
     ApiTableCell.prototype["SetVerticalAlign"]            = ApiTableCell.prototype.SetVerticalAlign;
     ApiTableCell.prototype["SetTextDirection"]            = ApiTableCell.prototype.SetTextDirection;
 
-	ApiRange.prototype["SearchAndReplace"]                = ApiRange.prototype.SearchAndReplace;
+	ApiRange.prototype["ReplaceText"]                     = ApiRange.prototype.ReplaceText;
 	ApiRange.prototype["Select"]                          = ApiRange.prototype.Select;
 
     Api.prototype.private_CreateApiSlide = function(oSlide){
