@@ -12396,7 +12396,7 @@
 							break;
 
 						case Asc.ECfType.iconSet:
-							oApiFormatCondition = new ApiIconSet(rule, this, this._formatConditions);
+							oApiFormatCondition = new ApiIconSetCondition(rule, this, this._formatConditions);
 							break;
 
 						case Asc.ECfType.top10:
@@ -20397,7 +20397,7 @@
 
 		// Create icon set properties with default settings (3 arrows)
 		let iconSetProps = new window['AscCommonExcel'].CIconSet();
-		iconSetProps.asc_setIconSet(Asc.EIconSetType.Arrows3); // Default to 3 arrows
+		//iconSetProps.asc_setIconSet(Asc.EIconSetType.Arrows3); // Default to 3 arrows
 		iconSetProps.asc_setReverse(false);
 		iconSetProps.asc_setShowValue(true);
 		iconSetProps.Percent = true;
@@ -20407,20 +20407,21 @@
 
 		// First threshold (minimum) - no threshold needed, always starts from minimum
 		let minCfvo = new window['AscCommonExcel'].CConditionalFormatValueObject();
-		minCfvo.asc_setType(Asc.c_oAscCfvoType.Minimum);
+		minCfvo.asc_setType(Asc.c_oAscCfvoType.Percent);
+		minCfvo.asc_setVal("0");
 		minCfvo.asc_setGte(true);
 		cfvos.push(minCfvo);
 
 		// Second threshold (33rd percentile)
 		let midCfvo = new window['AscCommonExcel'].CConditionalFormatValueObject();
-		midCfvo.asc_setType(Asc.c_oAscCfvoType.Percentile);
+		midCfvo.asc_setType(Asc.c_oAscCfvoType.Percent);
 		midCfvo.asc_setVal("33");
 		midCfvo.asc_setGte(true);
 		cfvos.push(midCfvo);
 
 		// Third threshold (67th percentile)
 		let maxCfvo = new window['AscCommonExcel'].CConditionalFormatValueObject();
-		maxCfvo.asc_setType(Asc.c_oAscCfvoType.Percentile);
+		maxCfvo.asc_setType(Asc.c_oAscCfvoType.Percent);
 		maxCfvo.asc_setVal("67");
 		maxCfvo.asc_setGte(true);
 		cfvos.push(maxCfvo);
@@ -23485,11 +23486,108 @@
 			return false;
 		}
 
+		let newIconCount = this.getIconSetCount(internalIconSet);
+		if (newIconCount === -1) {
+			return false;
+		}
+
 		return this.private_changeStyle(function(newRule) {
-			newRule.aRuleElements[0].asc_setIconSet(internalIconSet);
+			let iconSetElement = newRule.aRuleElements[0];
+			if (!iconSetElement) {
+				return;
+			}
+
+			iconSetElement.asc_setIconSet(internalIconSet);
+
+			let currentCFVOs = iconSetElement.aCFVOs || [];
+			let currentCount = currentCFVOs.length;
+
+			if (newIconCount < currentCount) {
+				iconSetElement.aCFVOs = currentCFVOs.slice(0, newIconCount);
+			} else if (newIconCount > currentCount) {
+				let lastCFVO = currentCFVOs[currentCount - 1];
+
+				for (let i = currentCount; i < newIconCount; i++) {
+					let newCFVO = new window['AscCommonExcel'].CConditionalFormatValueObject();
+
+					if (lastCFVO) {
+						newCFVO.Gte = lastCFVO.Gte;
+						newCFVO.Type = lastCFVO.Type;
+						newCFVO.Val = lastCFVO.Val;
+
+						// Клонируем формулу если она есть
+						if (lastCFVO.formula) {
+							newCFVO.formula = lastCFVO.formula.clone();
+						}
+						if (lastCFVO.formulaParent) {
+							newCFVO.formulaParent = lastCFVO.formulaParent.clone();
+						}
+					} else {
+						newCFVO.Gte = true;
+						newCFVO.Type = window['AscCommonExcel'].ECfvoType.Percent;
+						newCFVO.Val = "67";
+					}
+
+					iconSetElement.aCFVOs.push(newCFVO);
+				}
+			}
+
+			let currentIconSets = iconSetElement.aIconSets || [];
+			let currentIconSetsCount = currentIconSets.length;
+
+			if (newIconCount < currentIconSetsCount) {
+				iconSetElement.aIconSets = currentIconSets.slice(0, newIconCount);
+			} else if (newIconCount > currentIconSetsCount) {
+				for (let i = currentIconSetsCount; i < newIconCount; i++) {
+					let newIconSet = new window['AscCommonExcel'].CConditionalFormatIconSet();
+					newIconSet.IconSet = internalIconSet;
+					newIconSet.IconId = i;
+
+					iconSetElement.aIconSets.push(newIconSet);
+				}
+			}
 		});
 	};
 
+	/**
+	 * Получает количество иконок в наборе по его типу
+	 * @private
+	 * @param {number} iconSetType - Внутренний тип набора иконок
+	 * @returns {number} Количество иконок в наборе или -1 если тип неизвестен
+	 */
+	ApiIconSetCondition.prototype.getIconSetCount = function(iconSetType) {
+		// Определяем количество иконок в зависимости от типа набора
+		switch (iconSetType) {
+			case Asc.EIconSetType.Arrows3:
+			case Asc.EIconSetType.Arrows3Gray:
+			case Asc.EIconSetType.Flags3:
+			case Asc.EIconSetType.Signs3:
+			case Asc.EIconSetType.Symbols3:
+			case Asc.EIconSetType.Symbols3_2:
+			case Asc.EIconSetType.Traffic3Lights1:
+			case Asc.EIconSetType.Traffic3Lights2:
+			case Asc.EIconSetType.Triangles3:
+			case Asc.EIconSetType.Stars3:
+				return 3;
+
+			case Asc.EIconSetType.Arrows4:
+			case Asc.EIconSetType.Arrows4Gray:
+			case Asc.EIconSetType.Rating4:
+			case Asc.EIconSetType.RedToBlack4:
+			case Asc.EIconSetType.Traffic4Lights:
+				return 4;
+
+			case Asc.EIconSetType.Arrows5:
+			case Asc.EIconSetType.Arrows5Gray:
+			case Asc.EIconSetType.Quarters5:
+			case Asc.EIconSetType.Rating5:
+			case Asc.EIconSetType.Boxes5:
+				return 5;
+
+			default:
+				return -1;
+		}
+	};
 	Object.defineProperty(ApiIconSetCondition.prototype, "IconSet", {
 		get: function() {
 			return this.GetIconSet();
@@ -23860,33 +23958,9 @@
 		return ToXlConditionValueTypesFrom(this.cfvo.asc_getType());
 	};
 
-	/**
-	 * Sets the condition value type for the icon criterion.
-	 * @memberof ApiIconCriterion
-	 * @typeofeditors ["CSE"]
-	 * @param {XlConditionValueTypes} type - The condition value type to set.
-	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/SetType.js
-	 */
-	ApiIconCriterion.prototype.SetType = function(type) {
-		if (this.cfvo) {
-			let internalType = FromXlConditionValueTypesTo(type);
-			if (internalType !== -1) {
-				let t = this;
-				this.parent.private_changeStyle(function (newRule) {
-					let index = t.GetIndex();
-					newRule.aRuleElements[0].aCFVOs[index].asc_setType(internalType);
-				}, true);
-			}
-		}
-	};
-
 	Object.defineProperty(ApiIconCriterion.prototype, "Type", {
 		get: function() {
 			return this.GetType();
-		},
-		set: function(value) {
-			this.SetType(value);
 		}
 	});
 
@@ -23917,6 +23991,8 @@
 		if (!this.cfvo) {
 			return;
 		}
+
+		//ms not allow change value at 1 criterion
 
 		// Check if the type allows setting a value
 		let currentType = this.cfvo.asc_getType();
