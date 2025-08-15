@@ -23958,9 +23958,63 @@
 		return ToXlConditionValueTypesFrom(this.cfvo.asc_getType());
 	};
 
+	/**
+	 * Sets the condition value type for the icon criterion.
+	 * @memberof ApiIconCriterion
+	 * @typeofeditors ["CSE"]
+	 * @param {XlConditionValueTypes} type - The condition value type. Only xlConditionValueNumber, xlConditionValuePercent, xlConditionValuePercentile, or xlConditionValueFormula are supported.
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/SetType.js
+	 */
+	ApiIconCriterion.prototype.SetType = function(type) {
+		if (!this.cfvo || typeof type !== "string") {
+			return;
+		}
+
+		// Check if the type is one of the supported types for setting
+		let supportedTypes = [
+			"xlConditionValueNumber",
+			"xlConditionValuePercent",
+			"xlConditionValuePercentile",
+			"xlConditionValueFormula"
+		];
+
+		if (supportedTypes.indexOf(type) === -1) {
+			return; // Only these types are supported for setting
+		}
+
+		let internalType = FromXlConditionValueTypesTo(type);
+		if (internalType === -1) {
+			return;
+		}
+
+		// MS Excel doesn't allow changing the type of the first criterion (minimum)
+		if (this.GetIndex() === 0) {
+			return;
+		}
+
+		let t = this;
+		this.parent.private_changeStyle(function (newRule) {
+			let index = t.GetIndex(); // Convert to 0-based index
+			if (newRule.aRuleElements[0].aCFVOs && newRule.aRuleElements[0].aCFVOs[index]) {
+				newRule.aRuleElements[0].aCFVOs[index].asc_setType(internalType);
+
+				// Reset value when changing type
+				/*if (internalType === Asc.c_oAscCfvoType.Formula) {
+					newRule.aRuleElements[0].aCFVOs[index].asc_setVal("0");
+				} else {
+					newRule.aRuleElements[0].aCFVOs[index].asc_setVal("0");
+				}*/
+			}
+		}, true);
+	};
+
 	Object.defineProperty(ApiIconCriterion.prototype, "Type", {
 		get: function() {
 			return this.GetType();
+		},
+		set: function(value) {
+			this.SetType(value);
 		}
 	});
 
