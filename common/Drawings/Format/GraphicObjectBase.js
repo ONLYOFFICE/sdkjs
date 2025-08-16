@@ -3628,11 +3628,37 @@
 		var sTrText = AscCommon.translateManager.getValue(sText);
 		return sTrText;
 	};
+    CGraphicObjectBase.prototype.checkRecalculateTransform = function() {
+        if(this.recalcInfo.recalcTransform) {
+            this.recalculateTransform();
+            this.recalcInfo.recalcTransform = false;
+        }
+    };
+    CGraphicObjectBase.prototype.checkTransformBeforeApply = function() {
+        this.checkRecalculateTransform();
+        if(!this.group) {
+                AscFormat.CheckSpPrXfrm3(this, true);
+        }
+        else {
+                AscFormat.CheckSpPrXfrm(this, true);
+        }
+    };
 	CGraphicObjectBase.prototype.GetWidth = function () {
-		return this.getXfrmExtX();
+        this.checkRecalculateTransform();
+		return this.extX;
 	};
 	CGraphicObjectBase.prototype.GetHeight = function () {
-		return this.getXfrmExtY();
+        this.checkRecalculateTransform();
+		return this.extY;
+	};
+    
+	CGraphicObjectBase.prototype.GetPosX = function () {
+        this.checkRecalculateTransform();
+		return this.x;
+	};
+	CGraphicObjectBase.prototype.GetPosY = function () {
+        this.checkRecalculateTransform();
+		return this.y;
 	};
 	CGraphicObjectBase.prototype.getXfrm = function () {
 		if (this.spPr && this.spPr.xfrm)

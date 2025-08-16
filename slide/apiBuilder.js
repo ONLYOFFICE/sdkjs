@@ -440,8 +440,14 @@
 		else if (obj instanceof AscFormat.CGraphicFrame) {
 			return new ApiTable(obj);
 		}
+		else if (obj instanceof AscFormat.CShape) {
+			return new ApiShape(obj);
+		}
 		else if (obj instanceof AscFormat.CGraphicObjectBase) {
 			return new ApiDrawing(obj);
+		}
+		else if (obj instanceof AscCommonSlide.MasterSlide) {
+			return new ApiMaster(obj);
 		}
 
 		return null;
@@ -475,7 +481,10 @@
 
 
 	Api.prototype.CreateDefaultMasterSlide = function () {
-		return new ApiMaster(AscCommonSlide.CreateDefaultMaster());
+        let master = AscCommonSlide.CreateDefaultMaster();
+        let pres = private_GetPresentation()
+        pres.pushSlideMaster(master);
+		return new ApiMaster(master);
 	};
     /**
      * Creates a new slide layout and adds it to the slide master if it is specified.
@@ -1758,6 +1767,11 @@
     ApiMaster.prototype.GetClassType = function()
     {
         return "master";
+    };
+
+    ApiMaster.prototype.GetInternalId = function()
+    {
+        return this.Master.Get_Id();
     };
 
 	/**
@@ -3551,7 +3565,7 @@
             }
         }
         if (i === oPresentation.slideMasters.length) {
-            oPresentation.addSlideMaster(oPresentation.slideMasters.length, oApiTheme.ThemeInfo.Master);
+            oPresentation.pushSlideMaster(oApiTheme.ThemeInfo.Master);
         }
         var oldMaster = this.Slide && this.Slide.Layout && this.Slide.Layout.Master;
         var _new_master = oApiTheme.ThemeInfo.Master;
@@ -3963,6 +3977,21 @@
 		return false;
 	};
 
+    ApiNotesPage.prototype.GetTheme = function(){
+            if (this.NotesPage && this.NotesPage.Master && this.NotesPage.Master.Theme)
+            {
+                var oThemeLoadInfo     = new AscCommonSlide.CThemeLoadInfo();
+                oThemeLoadInfo.Master  = this.NotesPage.Master;
+                oThemeLoadInfo.Layouts = [];
+                oThemeLoadInfo.Theme   = this.NotesPage.Master.Theme;
+
+                return new ApiTheme(oThemeLoadInfo);
+            }
+            
+            return null;
+        };
+
+
     //------------------------------------------------------------------------------------------------------------------
     //
     // ApiDrawing
@@ -4334,7 +4363,8 @@
 		if (!this.Drawing.canRotate()) {
 			return false;
 		}
-
+        
+        this.Drawing.checkTransformBeforeApply();
 		let oXfrm = this.Drawing.getXfrm();
 		oXfrm.setRot(nRotAngle * Math.PI / 180);
 
@@ -4350,17 +4380,41 @@
 	 */
 	ApiDrawing.prototype.GetRotation = function()
 	{
-		if (!this.Drawing.canRotate()) {
-			return 0;
-		}
-
-		let oXfrm = this.Drawing.getXfrm();
-		let nRad = oXfrm.getRot();
-
-		return nRad * 180 / Math.PI
+		this.Drawing.checkRecalculateTransform();
+		return this.Drawing.rot * 180 / Math.PI
 	};
 
 
+    
+	ApiDrawing.prototype.GetPosX = function()
+	{
+		return private_MM2EMU(this.Drawing.GetPosX());
+	};
+
+    
+	ApiDrawing.prototype.GetPosY = function()
+	{
+		return private_MM2EMU(this.Drawing.GetPosY());
+	};
+
+
+    
+    
+	ApiDrawing.prototype.SetPosX = function(posX)
+	{
+        
+        this.Drawing.checkTransformBeforeApply();
+		let oXfrm = this.Drawing.getXfrm();
+		oXfrm.setOffX(private_EMU2MM(posX));
+	};
+
+    
+	ApiDrawing.prototype.SetPosY = function(posY)
+	{
+        this.Drawing.checkTransformBeforeApply();
+		let oXfrm = this.Drawing.getXfrm();
+		oXfrm.setOffY(private_EMU2MM(posY));
+	};
 
 	ApiDrawing.prototype.ReplacePlaceholder = function(oDrawing)
 	{
@@ -4371,10 +4425,11 @@
 		if (!slide || !slide.graphicObjects) return false;
 		slide.replaceSp(this.Drawing, oDrawing.Drawing);
 		oDrawing.Drawing.setSpPr(this.Drawing.spPr.createDuplicate());
+        return true;
 	};
 
 
-	ApiDrawing.prototype.GetInternalId = function(oDrawing)
+	ApiDrawing.prototype.GetInternalId = function()
 	{
 		return this.Drawing.GetId();
 	};
@@ -5348,6 +5403,7 @@
     ApiPresentation.prototype["GetCustomProperties"]      = ApiPresentation.prototype.GetCustomProperties;
 
     ApiMaster.prototype["GetClassType"]                   = ApiMaster.prototype.GetClassType;
+    ApiMaster.prototype["GetInternalId"]                  = ApiMaster.prototype.GetInternalId;
     ApiMaster.prototype["GetAllLayouts"]                  = ApiMaster.prototype.GetAllLayouts;
     ApiMaster.prototype["GetLayout"]                      = ApiMaster.prototype.GetLayout;
     ApiMaster.prototype["GetLayoutByType"]                = ApiMaster.prototype.GetLayoutByType;
@@ -5468,7 +5524,8 @@
 	ApiNotesPage.prototype["GetClassType"]                = ApiNotesPage.prototype.GetClassType;
 	ApiNotesPage.prototype["AddBodyShapeText"]            = ApiNotesPage.prototype.AddBodyShapeText;
 	ApiNotesPage.prototype["GetBodyShape"]                = ApiNotesPage.prototype.GetBodyShape;
-
+	ApiNotesPage.prototype["GetTheme"]                    = ApiNotesPage.prototype.GetTheme;
+    
     ApiDrawing.prototype["GetClassType"]                  = ApiDrawing.prototype.GetClassType;
     ApiDrawing.prototype["SetSize"]                       = ApiDrawing.prototype.SetSize;
     ApiDrawing.prototype["SetPosition"]                   = ApiDrawing.prototype.SetPosition;
@@ -5487,6 +5544,11 @@
     ApiDrawing.prototype["Select"]                        = ApiDrawing.prototype.Select;
     ApiDrawing.prototype["SetRotation"]                   = ApiDrawing.prototype.SetRotation;
     ApiDrawing.prototype["GetRotation"]                   = ApiDrawing.prototype.GetRotation;
+    ApiDrawing.prototype["GetPosX"]                       = ApiDrawing.prototype.GetPosX;
+    ApiDrawing.prototype["GetPosY"]                       = ApiDrawing.prototype.GetPosY;
+    ApiDrawing.prototype["SetPosX"]                       = ApiDrawing.prototype.SetPosX;
+    ApiDrawing.prototype["SetPosY"]                       = ApiDrawing.prototype.SetPosY;
+  
     ApiDrawing.prototype["ReplacePlaceholder"]            = ApiDrawing.prototype.ReplacePlaceholder;
     ApiDrawing.prototype["GetInternalId"]                 = ApiDrawing.prototype.GetInternalId;
 
