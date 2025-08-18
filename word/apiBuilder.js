@@ -3731,6 +3731,20 @@
 	ApiPresetColor.prototype.constructor = ApiPresetColor;
 
 	/**
+	 * Represents a color that can be applied to text.
+	 * @constructor
+	 */
+	function ApiColor(type, value) {
+		const allowedTypes = ['auto', 'rgb', 'rgba', 'hex', 'theme'];
+		if (!allowedTypes.includes(type)) {
+			throwException(new Error('Type ' + type + ' is not a valid color type. Allowed types are: ' + allowedTypes.join(', ')));
+		}
+
+		this.type = type;
+		this.value = value;
+	}
+
+	/**
 	 * Class representing a base class for fill.
 	 * @constructor
 	 */
@@ -4681,6 +4695,41 @@
 	Api.prototype.CreatePresetColor = function(presetColor)
 	{
 		return new ApiPresetColor(presetColor);
+	};
+
+	Api.prototype.AutoColor = function () {
+		return new ApiColor('auto');
+	};
+	Api.prototype.RGB = function (r, g, b) {
+		const intRgbColor = (r & 0xFF) << 24 | (g & 0xFF) << 16 | (b & 0xFF) << 8 | (255 & 0xFF);
+		return new ApiColor('rgb', intRgbColor);
+	};
+	Api.prototype.RGBA = function (r, g, b, a) {
+		const intRgbColor = (r & 0xFF) << 24 | (g & 0xFF) << 16 | (b & 0xFF) << 8 | (a & 0xFF);
+		return new ApiColor('rgba', intRgbColor);
+	};
+	Api.prototype.HexColor = function (hexString) {
+		const hexNumber = parseInt(hexString, 16);
+		return new ApiColor('hex', hexNumber);
+	};
+	Api.prototype.ThemeColor = function (name) {
+		const themeColorMap = {
+			'accent1': 0,
+			'accent2': 1,
+			'accent3': 2,
+			'accent4': 3,
+			'accent5': 4,
+			'accent6': 5,
+			'bg1': 6,
+			'bg2': 7,
+			'dk1': 8,
+			'dk2': 9,
+			'lt1': 12,
+			'lt2': 13,
+			'tx1': 15,
+			'tx2': 16,
+		};
+		return new ApiColor('theme', themeColorMap[name] || 0);
 	};
 
 	/**
@@ -19528,6 +19577,67 @@
 		return JSON.stringify(oWriter.SerColor(this.Unicolor));
 	};
 
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiColor
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	ApiColor.prototype.private_convertToRGBA = function () {
+		switch (this.type) {
+			case 'rgb':
+			case 'rgba':
+				return this.value;
+			case 'hex':
+				return (this.value << 8) | 0xFF;
+			case 'auto':
+				return this._resolveAutoColor();
+			case 'theme':
+				return this._resolveThemeColor(this.value);
+			default: return null;
+		}
+	};
+	ApiColor.prototype.private_resolveAutoColor = function () {
+		return (255 << 24) | (0 << 16) | (0 << 8) | 255;
+	};
+	ApiColor.prototype.private_resolveThemeColor = function (name) {
+		return (0 << 24) | (255 << 16) | (0 << 8) | 255;
+	};
+
+	ApiColor.prototype.GetClassType = function () {
+		return 'color';
+	};
+	ApiColor.prototype.GetRGB = function () {
+		const packed = this.private_convertToRGBA();
+		return {
+			'r': (packed >> 24) & 0xFF,
+			'g': (packed >> 16) & 0xFF,
+			'b': (packed >> 8) & 0xFF
+		};
+	};
+	ApiColor.prototype.GetRGBA = function () {
+		const packed = this.private_convertToRGBA();
+		return {
+			r: (packed >> 24) & 0xFF,
+			g: (packed >> 16) & 0xFF,
+			b: (packed >> 8) & 0xFF,
+			a: packed & 0xFF
+		};
+	};
+	ApiColor.prototype.GetHex = function () {
+		const packedRGBA = this.private_convertToRGBA();
+		const packedRGB = (packedRGBA >> 8) & 0xFFFFFF;
+		let hexStr = packedRGB.toString(16);
+		while (hexStr.length < 6) hexStr = '0' + hexStr;
+		return hexStr.toUpperCase();
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiBullet
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
 	/**
 	 * Returns a type of the ApiBullet class.
 	 * @memberof ApiBullet
@@ -25988,6 +26098,11 @@
 	Api.prototype["CreateRGBColor"]                   = Api.prototype.CreateRGBColor;
 	Api.prototype["CreateSchemeColor"]                = Api.prototype.CreateSchemeColor;
 	Api.prototype["CreatePresetColor"]                = Api.prototype.CreatePresetColor;
+	Api.prototype["AutoColor"]                        = Api.prototype.AutoColor;
+	Api.prototype["RGB"]                              = Api.prototype.RGB;
+	Api.prototype["RGBA"]                             = Api.prototype.RGBA;
+	Api.prototype["HexColor"]                         = Api.prototype.HexColor;
+	Api.prototype["ThemeColor"]                       = Api.prototype.ThemeColor;
 	Api.prototype["CreateSolidFill"]                  = Api.prototype.CreateSolidFill;
 	Api.prototype["CreateLinearGradientFill"]         = Api.prototype.CreateLinearGradientFill;
 	Api.prototype["CreateRadialGradientFill"]         = Api.prototype.CreateRadialGradientFill;
@@ -26761,6 +26876,11 @@
 
 	ApiPresetColor.prototype["GetClassType"]         = ApiPresetColor.prototype.GetClassType;
 	ApiPresetColor.prototype["ToJSON"]               = ApiPresetColor.prototype.ToJSON;
+
+	ApiColor.prototype["GetClassType"] = ApiColor.prototype.GetClassType;
+	ApiColor.prototype["GetRGB"] = ApiColor.prototype.GetRGB;
+	ApiColor.prototype["GetRGBA"] = ApiColor.prototype.GetRGBA;
+	ApiColor.prototype["GetHex"] = ApiColor.prototype.GetHex;
 
 	ApiBullet.prototype["GetClassType"]              = ApiBullet.prototype.GetClassType;
 	ApiBullet.prototype["ToJSON"]                    = ApiBullet.prototype.ToJSON;
