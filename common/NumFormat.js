@@ -3568,6 +3568,13 @@ function FormatParser()
 }
 FormatParser.prototype =
 {
+	_parseNum: function(str) {
+		if (str.indexOf("x") > -1 || str == "" || str.match(/^\s+$/))//исключаем запись числа в 16-ричной форме из числа.
+		{
+			return false;
+		}
+		return !isNaN(str);
+	},
     isLocaleNumber: function (val, cultureInfo) {
         if (null == cultureInfo)
             cultureInfo = g_oDefaultCultureInfo;
@@ -3577,7 +3584,7 @@ FormatParser.prototype =
             val = val.replace(cultureInfo.NumberDecimalSeparator, ".");
         }
         //parseNum исключаем запись числа в 16-ричной форме из числа.
-        return AscCommonExcel.parseNum(val) && Asc.isNumberInfinity(val);
+        return this._parseNum(val) && Asc.isNumberInfinity(val);
     },
     parseLocaleNumber: function (val, cultureInfo) {
         if (null == cultureInfo)
@@ -4461,132 +4468,8 @@ FormatParser.prototype =
 		    var oParsedDate = this._parseDateFromArray(match, oDataTypes, cultureInfo);
 			if(null != oParsedDate)
 			{
-				var d = oParsedDate.d;
-				var m = oParsedDate.m;
-				var y = oParsedDate.y;
-				var h = oParsedDate.h;
-				var min = oParsedDate.min;
-				var s = oParsedDate.s;
-				var am = oParsedDate.am;
-				var pm = oParsedDate.pm;
-				var sDateFormat = oParsedDate.sDateFormat;
-				
-				var bDate = false;
-				var bTime = false;
-				var bSeconds = false;
-				var nDay;
-				var nMounth;
-				var nYear;
-				if(AscCommon.bDate1904)
-				{
-					nDay = 1;
-					nMounth = 0;
-					nYear = 1904;
-				}
-				else
-				{
-					nDay = 31;
-					nMounth = 11;
-					nYear = 1899;
-				}
-				var nHour = 0;
-				var nMinute = 0;
-				var nSecond = 0;
-				var dValue = 0;
-				var bValidDate = true;
-				if(null != m && (null != d || null != y))
-				{
-					bDate = true;
-					var oNowDate;
-					if(null != d)
-						nDay = d - 0;
-					else
-						nDay = 1;
-					nMounth = m - 1;
-					if(null != y)
-						nYear = y - 0;
-					else
-                    {
-                        oNowDate = new Date();
-						nYear = oNowDate.getFullYear();
-                    }
-					
-					//проверяем дату на валидность
-					bValidDate = this.isValidDate(nYear, nMounth, nDay);
-				}
-				if(null != h)
-				{
-					bTime = true;
-					nHour = h - 0;
-					if (am || pm)
-					{
-						if(nHour <= 23)
-						{
-							//переводим 24
-							nHour = nHour % 12;
-							if(pm)
-								nHour += 12;
-						}
-						else
-							bValidDate = false;
-					}
-					if(null != min)
-					{
-						nMinute = min - 0;
-						if(nMinute > 59)
-							bValidDate = false;
-					}
-					if(null != s)
-					{
-						nSecond = s - 0;
-						if (0 <= nSecond && nSecond < 60) {
-							bSeconds = true;
-						} else {
-							bValidDate = false;
-						}
-					}
-				}
-				if(true == bValidDate && (true == bDate || true == bTime))
-				{
-					if(AscCommon.bDate1904)
-						dValue = (Date.UTC(nYear,nMounth,nDay,nHour,nMinute,nSecond) - Date.UTC(1904,0,1,0,0,0)) / (86400 * 1000);
-					else
-					{
-						if(1900 < nYear || (1900 == nYear && 1 < nMounth ))
-							dValue = (Date.UTC(nYear,nMounth,nDay,nHour,nMinute,nSecond) - Date.UTC(1899,11,30,0,0,0)) / (86400 * 1000);
-						else if(1900 == nYear && 1 == nMounth && 29 == nDay)
-							dValue = 60;
-						else
-							dValue = (Date.UTC(nYear,nMounth,nDay,nHour,nMinute,nSecond) - Date.UTC(1899,11,31,0,0,0)) / (86400 * 1000);
-					}
-					if(dValue >= 0)
-					{
-						var sFormat = "";
-						if (bDate) {
-							if (bTime && nHour > 23) {
-								sFormat = AscCommon.g_cGeneralFormat;
-							} else {
-								sFormat += sDateFormat;
-								if (bTime) {
-									sFormat += " h:mm";
-								}
-							}
-						} else {
-							if (dValue > 1) {
-								sFormat += "[h]:mm";
-							} else {
-								sFormat += "h:mm";
-							}
-							if (bSeconds || dValue > 1) {
-								sFormat += ":ss";
-							}
-							if (am || pm)
-								sFormat += " AM/PM";
-						}
-						res = {format: sFormat, value: dValue, bDateTime: true, bDate: bDate, bTime: bTime, bPercent: false, bCurrency: false};
-					}
-				}
-            }
+				res = this._buildDateTimeResult(oParsedDate, cultureInfo, { mode: "default" });
+			}
         }
 		return res;
 	},
@@ -4724,143 +4607,435 @@ FormatParser.prototype =
 		    var oParsedDate = this._parseDateFromArrayPDF(match, oDataTypes, cultureInfo, oFormat);
 			if(null != oParsedDate)
 			{
-				var d = oParsedDate.d;
-				var m = oParsedDate.m;
-				var y = oParsedDate.y;
-				var h = oParsedDate.h;
-				var min = oParsedDate.min;
-				var s = oParsedDate.s;
-				var am = oParsedDate.am;
-				var pm = oParsedDate.pm;
-				var sDateFormat = oParsedDate.sDateFormat;
-				
-				var bDate = false;
-				var bTime = false;
-				var nDay;
-				var nMounth;
-				var nYear;
-				if(AscCommon.bDate1904)
-				{
-					nDay = 1;
-					nMounth = 0;
-					nYear = 1904;
-				}
-				else
-				{
-					nDay = 31;
-					nMounth = 11;
-					nYear = 1899;
-				}
-				var nHour = 0;
-				var nMinute = 0;
-				var nSecond = 0;
-				var dValue = 0;
-				var bValidDate = true;
-				if(null != m && (null != d || null != y))
-				{
-					bDate = true;
-					var oNowDate;
-					if(null != d)
-						nDay = d - 0;
-					else
-						nDay = 1;
-					nMounth = m - 1;
-					if(null != y)
-						nYear = y - 0;
-					else
-                    {
-                        oNowDate = new Date();
-						nYear = oNowDate.getFullYear();
-                    }
-					
-					//проверяем дату на валидность
-					bValidDate = this.isValidDatePDF(nYear, nMounth, nDay);
-				}
-				if(null != h)
-				{
-					bTime = true;
-					nHour = h - 0;
-					if (am || pm)
-					{
-						if(nHour <= 23)
-						{
-							//переводим 24
-							nHour = nHour % 12;
-							if(pm)
-								nHour += 12;
-						}
-						else
-							bValidDate = false;
-					}
-					if(null != min)
-					{
-						nMinute = min - 0;
-						if(nMinute > 59)
-							bValidDate = false;
-					}
-					if(null != s)
-					{
-						nSecond = s - 0;
-						if(nSecond > 59)
-							bValidDate = false;
-					}
-				}
-				if(true == bValidDate && (true == bDate || true == bTime))
-				{
-					var oDateTmp = new Date();
-					oDateTmp.setFullYear(nYear, nMounth, nDay);
-					oDateTmp.setHours(nHour, nMinute, nSecond);
-					dValue = oDateTmp.getTime() / (86400 * 1000);
-
-					var sFormat;
-					if(true == bDate && true == bTime)
-					{
-						sFormat = sDateFormat + " h:mm:ss";
-						if (am || pm)
-							sFormat += " AM/PM";
-					}
-					else if(true == bDate)
-						sFormat = sDateFormat;
-					else
-					{
-						if(dValue > 1)
-							sFormat = "[h]:mm:ss";
-						else if (am || pm)
-							sFormat = "h:mm:ss AM/PM";
-						else
-							sFormat = "h:mm:ss";
-					}
-					res = {format: sFormat, value: dValue, bDateTime: true, bDate: bDate, bTime: bTime, bPercent: false, bCurrency: false};
-				}
-            }
+				res = this._buildDateTimeResult(oParsedDate, cultureInfo, { mode: "pdf" });
+			}
         }
 		return res;
 	},
-	isValidDate : function(nYear, nMounth, nDay)
-	{
-		if(nYear < 1900 && !(1899 === nYear && 11 == nMounth && 31 == nDay))
-			return false;
-		else
-		{
-			if(nMounth < 0 || nMounth > 11)
-				return false;
-			else if(this.isValidDay(nYear, nMounth, nDay))
-				return true;
-			else if(1900 == nYear && 1 == nMounth && 29 == nDay)
-				return true;
-		}
-		return false;
-	},
-	isValidDatePDF : function(nYear, nMounth, nDay)
-	{
-		if(nMounth < 0 || nMounth > 11)
-			return false;
-		else if(this.isValidDay(nYear, nMounth, nDay))
-			return true;
-		else if(1900 == nYear && 1 == nMounth && 29 == nDay)
-			return true;
-		return false;
-	},
+    /**
+     * Validates a date using unified rules for both default and PDF modes.
+     * - Default mode: disallow years before 1900 except 1899-12-31 (Excel serial compat)
+     * - PDF mode: allow any year, but keep month/day bounds and 1900-02-29 special-case
+     * @param {number} nYear
+     * @param {number} nMounth Zero-based month [0..11]
+     * @param {number} nDay
+     * @param {{mode: string}} options Parsing mode: 'default' or 'pdf'
+     * @returns {boolean}
+     */
+    _isValidDateUnified: function (nYear, nMounth, nDay, options) {
+        const mode = options && options.mode === "pdf" ? "pdf" : "default";
+        if (mode === "default") {
+            if (nYear < 1900 && !(1899 === nYear && 11 == nMounth && 31 == nDay))
+                return false;
+        }
+        if (nMounth < 0 || nMounth > 11)
+            return false;
+        if (this.isValidDay(nYear, nMounth, nDay))
+            return true;
+        if (1900 == nYear && 1 == nMounth && 29 == nDay)
+            return true;
+        return false;
+    },
+    /**
+     * Build final parse result from parsed components.
+     * Centralizes Excel 1900/1904 systems, AM/PM handling, and format generation.
+     * Preserves behavioral differences between default and PDF modes.
+     * @param {{d:number,m:number,y:number,h:number,min:number,s:number,am:boolean,pm:boolean,sDateFormat:string}} parsed Parsed date/time parts
+     * @param {*} cultureInfo Culture info with separators and patterns
+     * @param {{mode:string}} options Parsing mode: 'default' | 'pdf'
+     */
+    _buildDateTimeResult: function (parsed, cultureInfo, options) {
+        if (!parsed)
+            return null;
+        const mode = options && options.mode === "pdf" ? "pdf" : "default";
+        const d = parsed.d;
+        const m = parsed.m;
+        const y = parsed.y;
+        const h = parsed.h;
+        const min = parsed.min;
+        const s = parsed.s;
+        const am = parsed.am;
+        const pm = parsed.pm;
+        const sDateFormat = parsed.sDateFormat;
+
+        let bDate = false;
+        let bTime = false;
+        let bSeconds = false;
+
+        let nDay;
+        let nMounth;
+        let nYear;
+        if (AscCommon.bDate1904) {
+            nDay = 1;
+            nMounth = 0;
+            nYear = 1904;
+        } else {
+            nDay = 31;
+            nMounth = 11;
+            nYear = 1899;
+        }
+        let nHour = 0;
+        let nMinute = 0;
+        let nSecond = 0;
+        let dValue = 0;
+        let bValidDate = true;
+
+        if (m != null && (d != null || y != null)) {
+            bDate = true;
+            if (d != null)
+                nDay = d - 0;
+            else
+                nDay = 1;
+            nMounth = m - 1;
+            if (y != null)
+                nYear = y - 0;
+            else {
+                const oNowDate = new Date();
+                nYear = oNowDate.getFullYear();
+            }
+            bValidDate = this._isValidDateUnified(nYear, nMounth, nDay, { mode: mode });
+        }
+        if (h != null) {
+            bTime = true;
+            nHour = h - 0;
+            if (am || pm) {
+                if (nHour <= 23) {
+                    nHour = nHour % 12;
+                    if (pm)
+                        nHour += 12;
+                } else
+                    bValidDate = false;
+            }
+            if (min != null) {
+                nMinute = min - 0;
+                if (nMinute > 59)
+                    bValidDate = false;
+            }
+            if (s != null) {
+                nSecond = s - 0;
+                if (mode === "default") {
+                    if (0 <= nSecond && nSecond < 60) {
+                        bSeconds = true;
+                    } else {
+                        bValidDate = false;
+                    }
+                } else {
+                    if (nSecond > 59)
+                        bValidDate = false;
+                }
+            }
+        }
+        if (true == bValidDate && (true == bDate || true == bTime)) {
+            if (mode === "default") {
+                if (AscCommon.bDate1904)
+                    dValue = (Date.UTC(nYear, nMounth, nDay, nHour, nMinute, nSecond) - Date.UTC(1904, 0, 1, 0, 0, 0)) / (86400 * 1000);
+                else {
+                    if (1900 < nYear || (1900 == nYear && 1 < nMounth))
+                        dValue = (Date.UTC(nYear, nMounth, nDay, nHour, nMinute, nSecond) - Date.UTC(1899, 11, 30, 0, 0, 0)) / (86400 * 1000);
+                    else if (1900 == nYear && 1 == nMounth && 29 == nDay)
+                        dValue = 60;
+                    else
+                        dValue = (Date.UTC(nYear, nMounth, nDay, nHour, nMinute, nSecond) - Date.UTC(1899, 11, 31, 0, 0, 0)) / (86400 * 1000);
+                }
+                if (dValue >= 0) {
+                    let sFormat = "";
+                    if (bDate) {
+                        if (bTime && nHour > 23) {
+                            sFormat = AscCommon.g_cGeneralFormat;
+                        } else {
+                            sFormat += sDateFormat;
+                            if (bTime) {
+                                sFormat += " h:mm";
+                            }
+                        }
+                    } else {
+                        if (dValue > 1) {
+                            sFormat += "[h]:mm";
+                        } else {
+                            sFormat += "h:mm";
+                        }
+                        if (bSeconds || dValue > 1) {
+                            sFormat += ":ss";
+                        }
+                        if (am || pm)
+                            sFormat += " AM/PM";
+                    }
+                    return {format: sFormat, value: dValue, bDateTime: true, bDate: bDate, bTime: bTime, bPercent: false, bCurrency: false};
+                }
+            } else {
+                const oDateTmp = new Date();
+                oDateTmp.setFullYear(nYear, nMounth, nDay);
+                oDateTmp.setHours(nHour, nMinute, nSecond);
+                dValue = oDateTmp.getTime() / (86400 * 1000);
+
+                let sFormat;
+                if (true == bDate && true == bTime) {
+                    sFormat = sDateFormat + " h:mm:ss";
+                    if (am || pm)
+                        sFormat += " AM/PM";
+                } else if (true == bDate) {
+                    sFormat = sDateFormat;
+                } else {
+                    if (dValue > 1)
+                        sFormat = "[h]:mm:ss";
+                    else if (am || pm)
+                        sFormat = "h:mm:ss AM/PM";
+                    else
+                        sFormat = "h:mm:ss";
+                }
+                return {format: sFormat, value: dValue, bDateTime: true, bDate: bDate, bTime: bTime, bPercent: false, bCurrency: false};
+            }
+        }
+        return null;
+    },
+    /**
+     * Strictly parse a date/time value by a known format string.
+     * Supported tokens (Excel-like):
+     *  - Date: d, dd, m, mm, mmm, mmmm, yy, yyyy
+     *  - Time: h, hh, m, mm (minutes when in time section), s, ss
+     *  - AM/PM: literal token "AM/PM" (case-insensitive in input)
+     * Non-token characters are treated as literals and must match input.
+     *
+     * Uses unified helpers to validate and build the result.
+     *
+     * @param {string} input Input value to parse
+     * @param {string} format Format pattern, e.g. "dd/mm/yyyy h:mm:ss"
+     * @param {*} cultureInfo Culture info (uses g_oDefaultCultureInfo if omitted)
+     * @param {{mode: string, yearWindowStart: number}} options Parsing options
+     * @returns {{format:string, value:number, bDateTime:boolean, bDate:boolean, bTime:boolean, bPercent:boolean, bCurrency:boolean}|null}
+     */
+    parseWithFormat: function (input, format, cultureInfo, options) {
+        if (null == input || null == format)
+            return null;
+        const str = String(input);
+        const fmt = String(format);
+        const ci = cultureInfo || g_oDefaultCultureInfo;
+        const opt = options || {};
+        const mode = opt.mode === "pdf" ? "pdf" : "default";
+        const yearWindowStart = (typeof opt.yearWindowStart === "number") ? opt.yearWindowStart : 1930;
+
+        let i = 0; // input index
+        let j = 0; // format index
+        const n = str.length;
+        const mlen = fmt.length;
+
+        let d = null, m = null, y = null, h = null, min = null, s = null;
+        let am = false, pm = false;
+        let sDateFormat = "";
+        let inTime = false;
+        let yearDigits = 0; // 2 for yy, 4 for yyyy
+
+        function isDigit(ch) {
+            return ch >= '0' && ch <= '9';
+        }
+
+        function readNDigits(minD, maxD) {
+            const start = i;
+            let count = 0;
+            while (count < maxD && i < n && isDigit(str[i])) {
+                ++i; ++count;
+            }
+            if (count < minD)
+                return null;
+            return parseInt(str.substring(start, start + count), 10);
+        }
+
+        function matchLiteral(lit) {
+            if (lit.length === 0)
+                return true;
+            if (str.substr(i, lit.length) !== lit)
+                return false;
+            i += lit.length;
+            return true;
+        }
+
+        function matchAMPM() {
+            // Accept AM/PM designators case-insensitively; prefer standard "am"/"pm"
+            const rem = str.substr(i, 2).toLowerCase();
+            if (rem === "am") { am = true; pm = false; i += 2; return true; }
+            if (rem === "pm") { pm = true; am = false; i += 2; return true; }
+            // Also try culture-specific designators if available
+            if (ci && ci.AMDesignator && str.substr(i, ci.AMDesignator.length).toLowerCase() === ci.AMDesignator.toLowerCase()) {
+                am = true; pm = false; i += ci.AMDesignator.length; return true;
+            }
+            if (ci && ci.PMDesignator && str.substr(i, ci.PMDesignator.length).toLowerCase() === ci.PMDesignator.toLowerCase()) {
+                pm = true; am = false; i += ci.PMDesignator.length; return true;
+            }
+            return false;
+        }
+
+        function matchMonthName(useLong) {
+            const arr = useLong ? ci.MonthNames : ci.AbbreviatedMonthNames;
+            const lower = str.toLowerCase();
+            for (let idx = 0; idx < arr.length; idx++) {
+                const name = (arr[idx] || "").toLowerCase();
+                if (!name)
+                    continue;
+                const nameCrop = name.replace(/\./g, "");
+                if (lower.substr(i, name.length) === name) {
+                    i += name.length;
+                    return idx + 1;
+                }
+                if (name !== nameCrop && lower.substr(i, nameCrop.length) === nameCrop) {
+                    i += nameCrop.length;
+                    return idx + 1;
+                }
+            }
+            return null;
+        }
+
+        while (j < mlen) {
+            const ch = fmt[j];
+
+            // Quoted literals "text"
+            if (ch === '"') {
+                let k = j + 1;
+                let lit = "";
+                while (k < mlen && fmt[k] !== '"') { lit += fmt[k]; ++k; }
+                if (k >= mlen)
+                    return null; // unmatched quote
+                if (!matchLiteral(lit))
+                    return null;
+                j = k + 1;
+                continue;
+            }
+
+            // Bracketed time tokens like [h] or [mm]
+            if (ch === '[') {
+                let k = j + 1;
+                let token = "";
+                while (k < mlen && fmt[k] !== ']') { token += fmt[k]; ++k; }
+                if (k >= mlen)
+                    return null; // malformed
+                const tLower = token.toLowerCase();
+                if (tLower === 'h' || tLower === 'hh') {
+                    const val = readNDigits(tLower === 'hh' ? 2 : 1, 2);
+                    if (val == null) return null;
+                    h = val;
+                    inTime = true;
+                } else if (tLower === 'm' || tLower === 'mm') {
+                    const val = readNDigits(tLower === 'mm' ? 2 : 1, 2);
+                    if (val == null) return null;
+                    min = val;
+                    inTime = true;
+                } else if (tLower === 's' || tLower === 'ss') {
+                    const val = readNDigits(tLower === 'ss' ? 2 : 1, 2);
+                    if (val == null) return null;
+                    s = val;
+                    inTime = true;
+                } else {
+                    // Unsupported bracketed token
+                    return null;
+                }
+                j = k + 1;
+                continue;
+            }
+
+            // AM/PM literal token in format
+            if (fmt.substr(j, 5) === 'AM/PM') {
+                if (!matchAMPM())
+                    return null;
+                j += 5;
+                inTime = true;
+                continue;
+            }
+
+            // Token runs for d, m, y, h, s
+            if (ch === 'd' || ch === 'm' || ch === 'y' || ch === 'h' || ch === 's') {
+                let k = j;
+                while (k < mlen && fmt[k] === ch) ++k;
+                const runLen = k - j;
+                const lowerCh = ch.toLowerCase();
+
+                if (lowerCh === 'd') {
+                    if (runLen >= 3) {
+                        // Not supporting ddd/dddd here
+                        return null;
+                    }
+                    const val = readNDigits(runLen === 2 ? 2 : 1, 2);
+                    if (val == null) return null;
+                    d = val;
+                    sDateFormat += (runLen === 2 ? 'dd' : 'd');
+                } else if (lowerCh === 'm') {
+                    if (!inTime && runLen >= 3) {
+                        const useLong = (runLen >= 4);
+                        const val = matchMonthName(useLong);
+                        if (val == null) return null;
+                        m = val;
+                        sDateFormat += (useLong ? 'mmmm' : 'mmm');
+                    } else {
+                        // Decide month vs minutes by context: time section or next char ':'
+                        const nextCh = (k < mlen) ? fmt[k] : '';
+                        const isMinutes = inTime || nextCh === ':';
+                        const val = readNDigits(runLen === 2 ? 2 : 1, 2);
+                        if (val == null) return null;
+                        if (isMinutes) {
+                            min = val;
+                            inTime = true;
+                        } else {
+                            m = val;
+                            sDateFormat += (runLen === 2 ? 'mm' : 'm');
+                        }
+                    }
+                } else if (lowerCh === 'y') {
+                    if (runLen === 2 || runLen === 4) {
+                        const val = readNDigits(runLen, runLen);
+                        if (val == null) return null;
+                        y = val;
+                        yearDigits = runLen;
+                        sDateFormat += (runLen === 2 ? 'yy' : 'yyyy');
+                    } else {
+                        return null;
+                    }
+                } else if (lowerCh === 'h') {
+                    const val = readNDigits(runLen === 2 ? 2 : 1, 2);
+                    if (val == null) return null;
+                    h = val;
+                    inTime = true;
+                } else if (lowerCh === 's') {
+                    const val = readNDigits(runLen === 2 ? 2 : 1, 2);
+                    if (val == null) return null;
+                    s = val;
+                    inTime = true;
+                }
+                j = k;
+                continue;
+            }
+
+            // Everything else is a literal that must match exactly
+            if (!matchLiteral(fmt[j]))
+                return null;
+            if (!inTime) // keep date separators as-is
+                sDateFormat += fmt[j];
+            ++j;
+        }
+
+        // Ensure full input consumed for strict parsing
+        if (i !== n) {
+            return null;
+        }
+
+        // Two-digit year window expansion
+        if (y != null && yearDigits === 2) {
+            const century = Math.floor(yearWindowStart / 100) * 100;
+            const windowEnd = yearWindowStart + 99;
+            const threshold = (windowEnd % 100);
+            const yy = y % 100;
+            const full = (yy <= threshold) ? century + yy : (century - 100) + yy;
+            y = full;
+        }
+
+        const parsed = { d: d, m: m, y: y, h: h, min: min, s: s, am: am, pm: pm, sDateFormat: sDateFormat };
+        return this._buildDateTimeResult(parsed, ci, { mode: mode });
+    },
+    isValidDate : function(nYear, nMounth, nDay)
+    {
+        return this._isValidDateUnified(nYear, nMounth, nDay, { mode: "default" });
+    },
+    isValidDatePDF : function(nYear, nMounth, nDay)
+    {
+        return this._isValidDateUnified(nYear, nMounth, nDay, { mode: "pdf" });
+    },
 	isValidDay : function(nYear, nMounth, nDay){
 		if(this.isLeapYear(nYear))
 		{
