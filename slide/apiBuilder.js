@@ -5536,6 +5536,32 @@
 		paragraph.Document_SetThisElementCurrent();
 	};
 
+	// Version 2 of ReplaceText method that uses InsertContent instead of ReplaceSubstring.
+	ApiRange.prototype.ReplaceText2 = function (replaceString) {
+		const rangeLength = this.GetEndPos() - this.GetStartPos();
+		if (rangeLength <= 0) return;
+
+		this.Select();
+
+		const shape = AscFormat.getTargetTextObject(editor.getGraphicController());
+		const drawingDocContent = new AscFormat.CDrawingDocContent(shape.txBody, shape.getDrawingDocument());
+		const paragraph = new AscWord.Paragraph(drawingDocContent, true);
+		const run = new AscWord.ParaRun(paragraph, false);
+		run.AddText(replaceString);
+		paragraph.AddToContentToEnd(run);
+		drawingDocContent.Content.push(paragraph);
+
+		const selectedContent = new AscCommonWord.CSelectedContent();
+		drawingDocContent.SelectAll();
+		drawingDocContent.GetSelectedContent(selectedContent);
+
+		const presentationSelectedContent = new PresentationSelectedContent();
+		presentationSelectedContent.DocContent = selectedContent;
+
+		const presentation = editor.getLogicDocument();
+		presentation.InsertContent(presentationSelectedContent);
+	};
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Export
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
