@@ -4019,10 +4019,13 @@
     {
         var fWidth = private_EMU2MM(nWidth);
         var fHeight = private_EMU2MM(nHeight);
-        if(this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
+        
+        this.Drawing.checkTransformBeforeApply();
+		let xfrm = this.Drawing.getXfrm();
+        if(xfrm)
         {
-            this.Drawing.spPr.xfrm.setExtX(fWidth);
-            this.Drawing.spPr.xfrm.setExtY(fHeight);
+            xfrm.setExtX(fWidth);
+            xfrm.setExtY(fHeight);
         }
     };
 
@@ -4423,8 +4426,24 @@
 
 		let slide = this.Drawing.parent;
 		if (!slide || !slide.graphicObjects) return false;
+
+        
 		slide.replaceSp(this.Drawing, oDrawing.Drawing);
+
+        
 		oDrawing.Drawing.setSpPr(this.Drawing.spPr.createDuplicate());
+        if(oDrawing.GetClassType() === "table")
+        {
+            let pr = {};
+            pr.FrameX = this.GetPosX() / 36000;
+            pr.FrameY = this.GetPosY() / 36000;
+            pr.FrameWidth = this.GetWidth() / 36000;
+            pr.FrameHeight = this.GetHeight() / 36000;
+            pr.Force = true;
+            oDrawing.Drawing.recalculate();
+            
+            oDrawing.Drawing.setFrameTransform(pr);
+        }
         return true;
 	};
 

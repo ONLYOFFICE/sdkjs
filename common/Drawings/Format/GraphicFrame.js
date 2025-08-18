@@ -593,10 +593,10 @@
 
 		return false;
 	};
-	CGraphicFrame.prototype.resize = function (extX, extY) {
+	CGraphicFrame.prototype.resize = function (extX, extY, bForce) {
 		var newExtX = AscFormat.isRealNumber(extX) ? extX : this.extX;
 		var newExtY = AscFormat.isRealNumber(extY) ? extY : this.extY;
-		if (!AscFormat.fApproxEqual(newExtX, this.extX) || !AscFormat.fApproxEqual(newExtY, this.extY)) {
+		if (bForce || !AscFormat.fApproxEqual(newExtX, this.extX) || !AscFormat.fApproxEqual(newExtY, this.extY)) {
 			this.graphicObject.Resize(newExtX, newExtY);
 			this.recalculateTable();
 			this.recalculateSizes();
@@ -605,11 +605,11 @@
 		return false;
 	};
 	CGraphicFrame.prototype.setFrameTransform = function (oPr) {
-		var bResult = this.resize(oPr.FrameWidth, oPr.FrameHeight);
+		var bResult = this.resize(oPr.FrameWidth, oPr.FrameHeight, oPr.Force);
 		var newX = AscFormat.isRealNumber(oPr.FrameX) ? oPr.FrameX : this.x;
 		var newY = AscFormat.isRealNumber(oPr.FrameY) ? oPr.FrameY : this.y;
 		this.setNoChangeAspect(oPr.FrameLockAspect ? true : undefined);
-		if (!AscFormat.fApproxEqual(newX, this.x) || !AscFormat.fApproxEqual(newY, this.y)) {
+		if (oPr.Force || !AscFormat.fApproxEqual(newX, this.x) || !AscFormat.fApproxEqual(newY, this.y)) {
 			AscFormat.CheckSpPrXfrm(this, true);
 			var xfrm = this.spPr.xfrm;
 			xfrm.setOffX(newX);
