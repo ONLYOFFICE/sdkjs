@@ -1999,7 +1999,7 @@
 
 			if (oThis.canSelectPageText() && !oThis.MouseHandObject && !oDoc.mouseDownAnnot && !oDoc.mouseDownField)
 			{
-				var pageObjectLogic = oThis.getPageByCoords2(oThis.mouseDownCoords.X, oThis.mouseDownCoords.Y);
+				let pageObjectLogic = oThis.getPageByCoords2(oThis.mouseDownCoords.X, oThis.mouseDownCoords.Y);
 				if (global_mouseEvent.ClickCount == 2)
 					oThis.file.selectWholeWord(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
 				else if (global_mouseEvent.ClickCount == 3)
@@ -2009,9 +2009,11 @@
 			}
 
 			// если было нажатие - то отжимаем
-			if (oThis.isMouseMoveBetweenDownUp)
-				oThis.file.onMouseUp();
-
+			if (oThis.isMouseMoveBetweenDownUp) {
+				let pageObjectLogic = oThis.getPageByCoords2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+				oThis.file.onMouseUp(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+			}
+				
 			if (oThis.MouseHandObject)
 				oThis.MouseHandObject.Active = false;
 			oThis.isMouseMoveBetweenDownUp = false;
@@ -3279,6 +3281,9 @@
 					this.Api.sync_EndAddShape();
 					this.DrawingObjects.endTrackNewShape();
 				}
+				else if (this.Api.isRedactTool) {
+					this.Api.SetRedactTool(false);
+				}
 				else {
 					const oController = oDoc.GetController();
 					oController.resetSelection();
@@ -3442,7 +3447,7 @@
 				bRetValue = true;
 			}
 			else if (e.KeyCode == 113 && e.CtrlKey) {
-				Asc.editor.SetRedactTool(true);
+				Asc.editor.SetRedactTool(!Asc.editor.isRedactTool);
 			}
 			
 			oDoc.UpdateCopyCutState();

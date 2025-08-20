@@ -1197,6 +1197,28 @@
 	PDFEditorApi.prototype.SetRedactTool = function(bUse) {
 		this.isRedactTool = bUse;
 	};
+	PDFEditorApi.prototype.RedactPages = function(aIdxs) {
+		let oDoc = this.getPDFDoc();
+		let oFile = oDoc.Viewer.file;
+
+		oDoc.DoAction(function() {
+			aIdxs.forEach(function(idx) {
+				let oPage = oFile.pages[idx];
+				if (!oPage) {
+					return;
+				}
+				
+				let aSelQuads = [{ page: idx, quads: [[
+					0, 0,				// left up
+					oPage.W, 0, 		// right up
+					0, oPage.H,			// left down
+					oPage.W, oPage.H 	// right down
+				]]}];
+
+				oDoc.AddRedactAnnot(aSelQuads);
+			})
+		}, AscDFH.historydescription_Pdf_AddAnnot);
+	};
 	PDFEditorApi.prototype.IsCommentMarker = function() {
         return this.curMarkerType !== undefined;
     };

@@ -684,6 +684,9 @@
     CAnnotationBase.prototype.IsHighlight = function() {
         return false;
     };
+    CAnnotationBase.prototype.IsRedact = function() {
+        return false;
+    };
     CAnnotationBase.prototype.IsTextMarkup = function() {
         return false;
     };

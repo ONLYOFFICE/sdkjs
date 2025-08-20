@@ -1174,6 +1174,12 @@ var CPresentation = CPresentation || function(){};
         let oFloatObject        = (this.IsEditFieldsMode() && oMouseDownField) || oMouseDownAnnot || oMouseDownDrawing;
         let oCurObject          = this.GetMouseDownObject();
 
+        // redact annot has more priority
+        if (oMouseDownAnnot && oMouseDownAnnot.IsRedact()) {
+            oMouseDownField = null;
+            oMouseDownDrawing = null;
+        }
+
         // координаты клика на странице в MM
         var pageObject = oViewer.getPageByCoords2(x, y);
         if (!pageObject)
@@ -1967,6 +1973,12 @@ var CPresentation = CPresentation || function(){};
         let oMouseMoveAnnot         = oViewer.getPageAnnotByMouse();
         let oMouseMoveDrawing       = oViewer.getPageDrawingByMouse();
 
+        // redact annot has more priority
+        if (oMouseMoveAnnot && oMouseMoveAnnot.IsRedact()) {
+            oMouseMoveField = null;
+            oMouseMoveDrawing = null;
+        }
+
         // координаты клика на странице в MM
         let pageObject = oViewer.getPageByCoords2(x, y);
         if (!pageObject)
@@ -2096,6 +2108,12 @@ var CPresentation = CPresentation || function(){};
         let oMouseMoveAnnot         = oViewer.getPageAnnotByMouse();
         let oMouseMoveDrawing       = oViewer.getPageDrawingByMouse();
 
+        // redact annot has more priority
+        if (oMouseMoveAnnot && oMouseMoveAnnot.IsRedact()) {
+            oMouseMoveField = null;
+            oMouseMoveDrawing = null;
+        }
+        
         let isHitted = oMouseMoveLink || oMouseMoveField || oMouseMoveAnnot || oMouseMoveDrawing;
 
         // координаты клика на странице в MM
@@ -2231,6 +2249,12 @@ var CPresentation = CPresentation || function(){};
         let oMouseUpField       = oViewer.getPageFieldByMouse();
         let oMouseUpAnnot       = oViewer.getPageAnnotByMouse();
         let oMouseUpDrawing     = oViewer.getPageDrawingByMouse();
+
+        // redact annot has more priority
+        if (oMouseUpAnnot && oMouseUpAnnot.IsRedact()) {
+            oMouseUpField = null;
+            oMouseUpDrawing = null;
+        }
 
         // координаты клика на странице в MM
         var pageObject = oViewer.getPageByCoords2(x, y);
@@ -3646,13 +3670,9 @@ var CPresentation = CPresentation || function(){};
             oForm.Remove(nDirection, isCtrlKey);
             oContent = oForm.GetDocContent();
         }
-        else if (oAnnot) {
-            let oContent = oController.getTargetDocContent();
-
-            if (oContent) {
-                oAnnot.Remove(nDirection, isCtrlKey);
-                oContent = oAnnot.GetDocContent();
-            }
+        else if (oAnnot && oController.getTargetDocContent()) {
+            oAnnot.Remove(nDirection, isCtrlKey);
+            oContent = oAnnot.GetDocContent();
         }
         else if (oDrawing && oDrawing.IsInTextBox()) {
             oDrawing.Remove(nDirection, isCtrlKey);
@@ -5049,11 +5069,7 @@ var CPresentation = CPresentation || function(){};
             editor.SetMarkerFormat(AscPDF.ANNOTATIONS_TYPES.Strikeout, false);
         }
     };
-    CPDFDoc.prototype.SetRedact = function() {
-        let oViewer         = editor.getDocumentRenderer();
-        let oFile           = oViewer.file;
-        let aSelQuads       = oFile.getSelectionQuads();
-
+    CPDFDoc.prototype.AddRedactAnnot = function(aSelQuads) {
         if (aSelQuads.length == 0) {
             return;
         }
@@ -5089,6 +5105,8 @@ var CPresentation = CPresentation || function(){};
             oAnnot.SetStrokeColor([0, 0, 0]);
             oAnnot.SetOpacity(1);
         }
+
+        this.Viewer.file.removeSelection();
     };
     CPDFDoc.prototype.SetParagraphSpacing = function(oSpacing) {
         let oController = this.GetController();

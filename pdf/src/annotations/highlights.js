@@ -675,7 +675,7 @@
     CAnnotationRedact.prototype.constructor = CAnnotationRedact;
     AscFormat.InitClass(CAnnotationRedact, CAnnotationTextMarkup, AscDFH.historyitem_type_Pdf_Annot_Redact);
 
-    CAnnotationRedact.prototype.IsHighlight = function() {
+    CAnnotationRedact.prototype.IsRedact = function() {
         return true;
     };
 
@@ -712,7 +712,6 @@
             let rotationAngle   = angle1;
 
             oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
-            AscPDF.startMultiplyMode(oGraphicsPDF.GetContext());
 
             oGraphicsPDF.BeginPath();
             oGraphicsPDF.SetFillStyle(oRGBFill.r, oRGBFill.g, oRGBFill.b);
@@ -733,7 +732,6 @@
             }
 
             oGraphicsPDF.Fill();
-            AscPDF.endMultiplyMode(oGraphicsPDF.GetContext());
         }
 
         let aUnitedRegion = this.GetUnitedRegion();
