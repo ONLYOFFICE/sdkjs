@@ -4484,33 +4484,19 @@
 					const controller = Asc.editor.getGraphicController();
 					if (!controller) return;
 
-					const selectedObjects = Asc.editor.getSelectedElements();
+					const editorId = Asc.editor.getEditorId();
+					let selectedObjects, isChart, getRect;
 
-					const chartObjects = selectedObjects.filter(function (object) {
-						return object.get_ObjectType() === Asc.c_oAscTypeSelectElement.Chart;
-					});
-					if (chartObjects.length !== 1) {
-						Asc.editor.sendEvent('asc_onSingleChartSelectionChanged', null);
-						return;
-					}
+					switch (editorId) {
+						case AscCommon.c_oEditorId.Word: {
+							selectedObjects = Asc.editor.getSelectedElements();
 
-					const chartObject = chartObjects[0];
-					if (!chartObject) {
-						Asc.editor.sendEvent('asc_onSingleChartSelectionChanged', null);
-						return;
-					}
+							isChart = function (object) {
+								const value = object.asc_getObjectValue && object.asc_getObjectValue();
+								return object.asc_getObjectType() === Asc.c_oAscTypeSelectElement.Image && value && value.asc_getChartProperties();
+							};
 
-					const chartSpace = chartObject.Value.ChartProperties.chartSpace;
-					const chartSpaceRect = getChartSpaceRect(chartSpace);
-					Asc.editor.sendEvent('asc_onSingleChartSelectionChanged', chartSpaceRect || null);
-
-					function getChartSpaceRect(chartSpace) {
-						const bounds = chartSpace.getRectBounds();
-						if (!bounds) return null;
-
-						const editorId = Asc.editor.getEditorId();
-						switch (editorId) {
-							case AscCommon.c_oEditorId.Word: {
+							getRect = function (bounds) {
 								const logicDocument = Asc.editor.getLogicDocument();
 								if (!logicDocument) return null;
 
@@ -4522,9 +4508,20 @@
 									convertedPosTopLeft.X, convertedPosTopLeft.Y,
 									convertedPosRightBottom.X - convertedPosTopLeft.X, convertedPosRightBottom.Y - convertedPosTopLeft.Y
 								);
-							}
+							};
 
-							case AscCommon.c_oEditorId.Spreadsheet: {
+							break;
+						}
+
+						case AscCommon.c_oEditorId.Spreadsheet: {
+							selectedObjects = Asc.editor.asc_getGraphicObjectProps();
+
+							isChart = function (object) {
+								const value = object.asc_getObjectValue && object.asc_getObjectValue();
+								return object.asc_getObjectType() === Asc.c_oAscTypeSelectElement.Image && value && value.asc_getChartProperties();
+							};
+
+							getRect = function (bounds) {
 								const ws = Asc.editor.wb.getWorksheet();
 								if (!ws) return null;
 
@@ -4537,9 +4534,19 @@
 								const bottom = AscCommon.AscBrowser.convertToRetinaValue(bounds.b * mmToPx - ws._getOffsetY() + ws.cellsTop);
 
 								return new AscCommon.asc_CRect(left, top, right - left, bottom - top);
-							}
+							};
 
-							case AscCommon.c_oEditorId.Presentation: {
+							break;
+						}
+
+						case AscCommon.c_oEditorId.Presentation: {
+							selectedObjects = Asc.editor.getSelectedElements();
+
+							isChart = function (object) {
+								return object.get_ObjectType && object.get_ObjectType() === Asc.c_oAscTypeSelectElement.Chart;
+							};
+
+							getRect = function (bounds) {
 								const logicDocument = Asc.editor.getLogicDocument();
 								if (!logicDocument) return null;
 
@@ -4551,11 +4558,33 @@
 									convertedPosTopLeft.X, convertedPosTopLeft.Y,
 									convertedPosRightBottom.X - convertedPosTopLeft.X, convertedPosRightBottom.Y - convertedPosTopLeft.Y
 								);
-							}
+							};
 
-							default: return null;
+							break;
 						}
+
+						default: return;
 					}
+
+					const chartObjects = selectedObjects.filter(isChart);
+					if (chartObjects.length !== 1) {
+						Asc.editor.sendEvent("asc_onSingleChartSelectionChanged", null);
+						return;
+					}
+
+					const chartObject = chartObjects[0];
+					const chartSpace = chartObject &&
+						chartObject.Value &&
+						chartObject.Value.ChartProperties &&
+						chartObject.Value.ChartProperties.chartSpace;
+
+					if (!chartSpace) {
+						Asc.editor.sendEvent("asc_onSingleChartSelectionChanged", null);
+						return;
+					}
+
+					const chartSpaceRect = getRect(chartSpace.getRectBounds());
+					Asc.editor.sendEvent("asc_onSingleChartSelectionChanged", chartSpaceRect || null);
 				},
 
 				getChartForRangesDrawing: function () {
