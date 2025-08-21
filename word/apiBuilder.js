@@ -2043,6 +2043,7 @@
 			r = rgb.r;
 			g = rgb.g;
 			b = rgb.b;
+			isAuto = apiColor.isAutoColor();
 		}
 
 		private_RefreshRangesPosition();
@@ -10026,6 +10027,7 @@
 			r = rgb.r;
 			g = rgb.g;
 			b = rgb.b;
+			isAuto = apiColor.isAutoColor();
 		}
 
 		var color = new Asc.asc_CColor();
@@ -11758,6 +11760,7 @@
 			r = rgb.r;
 			g = rgb.g;
 			b = rgb.b;
+			isAuto = apiColor.isAutoColor();
 		}
 
 		var oTextPr = this.GetTextPr();
@@ -14947,6 +14950,7 @@
 			r = rgb.r;
 			g = rgb.g;
 			b = rgb.b;
+			isAuto = apiColor.isAutoColor();
 		}
 
 		this.TextPr.Color = private_GetColor(r, g, b, isAuto);
@@ -19675,21 +19679,29 @@
 			case 'hex':
 				return (this.value << 8) | 0xFF;
 			case 'auto':
-				return this._resolveAutoColor();
+				return this.private_resolveAutoColor();
 			case 'theme':
-				return this._resolveThemeColor(this.value);
+				return this.private_resolveThemeColor(this.value);
 			default: return null;
 		}
 	};
 	ApiColor.prototype.private_resolveAutoColor = function () {
-		return (255 << 24) | (0 << 16) | (0 << 8) | 255;
+		// Заглушка - просто возвращаю черный цвет с полной непрозрачностью.
+		return (0 << 24) | (0 << 16) | (0 << 8) | 255;
 	};
 	ApiColor.prototype.private_resolveThemeColor = function (name) {
-		return (0 << 24) | (255 << 16) | (0 << 8) | 255;
+		// Заглушка - просто возвращаю черный цвет с полной непрозрачностью.
+		return (0 << 24) | (0 << 16) | (0 << 8) | 255;
 	};
 
 	ApiColor.prototype.GetClassType = function () {
 		return 'color';
+	};
+	ApiColor.prototype.isAutoColor = function () {
+		return this.type === 'auto';
+	};
+	ApiColor.prototype.isThemeColor = function () {
+		return this.type === 'theme';
 	};
 	ApiColor.prototype.GetRGB = function () {
 		const packed = this.private_convertToRGBA();
@@ -26962,6 +26974,8 @@
 	ApiPresetColor.prototype["ToJSON"]               = ApiPresetColor.prototype.ToJSON;
 
 	ApiColor.prototype["GetClassType"] = ApiColor.prototype.GetClassType;
+	ApiColor.prototype["isAutoColor"] = ApiColor.prototype.isAutoColor;
+	ApiColor.prototype["isThemeColor"] = ApiColor.prototype.isThemeColor;
 	ApiColor.prototype["GetRGB"] = ApiColor.prototype.GetRGB;
 	ApiColor.prototype["GetRGBA"] = ApiColor.prototype.GetRGBA;
 	ApiColor.prototype["GetHex"] = ApiColor.prototype.GetHex;
