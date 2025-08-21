@@ -2035,68 +2035,55 @@
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetColor.js
 	 */
-	ApiRange.prototype.SetColor = function(r, g, b, isAuto)
-	{
-		if (arguments.length === 1 && arguments[0] instanceof ApiColor) {
-			const apiColor = arguments[0];
+	ApiRange.prototype.SetColor = function (r, g, b, isAuto) {
+		let isTheme = false;
+		const apiColor = arguments.length === 1 && arguments[0] instanceof ApiColor
+			? arguments[0]
+			: null;
+
+		if (apiColor) {
 			const rgb = apiColor.GetRGB();
 			r = rgb.r;
 			g = rgb.g;
 			b = rgb.b;
 			isAuto = apiColor.isAutoColor();
+			isTheme = apiColor.isThemeColor();
 		}
 
 		private_RefreshRangesPosition();
 
-		var Document			= private_GetLogicDocument();
-		var oldSelectionInfo	= Document.SaveDocumentState();
+		const logicDocument = private_GetLogicDocument();
+		const oldSelectionInfo = logicDocument.SaveDocumentState();
 
 		this.Select(false);
 		private_TrackRangesPositions();
 
-		var color = new Asc.asc_CColor();
-		color.r    = r;
-		color.g    = g;
-		color.b    = b;
-		color.Auto = isAuto;
-
-		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
-		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
-		{
-			Document.LoadDocumentState(oldSelectionInfo);
-			Document.UpdateSelection();
+		const selectedContent = logicDocument.GetSelectedElementsInfo({ CheckAllSelection: true });
+		if (!selectedContent.CanEditBlockSdts() || !selectedContent.CanDeleteInlineSdts()) {
+			logicDocument.LoadDocumentState(oldSelectionInfo);
+			logicDocument.UpdateSelection();
 
 			return null;
 		}
 
-		var ParaTextPr;
-		if (true === color.Auto)
-		{
-			ParaTextPr = new AscCommonWord.ParaTextPr({
-				Color      : {
-					Auto : true,
-					r    : 0,
-					g    : 0,
-					b    : 0
-				}, Unifill : undefined
-			});
-			Document.AddToParagraph(ParaTextPr);
-		}
-		else
-		{
-			ParaTextPr = new AscCommonWord.ParaTextPr({
-				Color      : {
-					Auto : false,
-					r    : r,
-					g    : g,
-					b    : b
-				}, Unifill : undefined
-			});
-			Document.AddToParagraph(ParaTextPr);
+		let paraTextPrOptions = {
+			Color: { Auto: isAuto, r: r, g: g, b: b },
+			Unifill: undefined
+		};
+
+		if (!isAuto && isTheme) {
+			const unifill = new AscFormat.CUniFill();
+			unifill.fill = new AscFormat.CSolidFill();
+			unifill.fill.color = new AscFormat.CUniColor();
+			unifill.fill.color.color = new AscFormat.CSchemeColor();
+			unifill.fill.color.color.id = apiColor.value;
+
+			paraTextPrOptions = { Unifill: unifill };
 		}
 
-		Document.LoadDocumentState(oldSelectionInfo);
-		Document.UpdateSelection();
+		logicDocument.AddToParagraph(new AscCommonWord.ParaTextPr(paraTextPrOptions));
+		logicDocument.LoadDocumentState(oldSelectionInfo);
+		logicDocument.UpdateSelection();
 
 		return this;
 	};
@@ -4731,6 +4718,7 @@
 		return new ApiColor('rgba', intRgbColor);
 	};
 	Api.prototype.HexColor = function (hexString) {
+		hexString = hexString.replace(/^#/, '');
 		const hexNumber = parseInt(hexString, 16);
 		return new ApiColor('hex', hexNumber);
 	};
@@ -10019,49 +10007,39 @@
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetColor.js
 	 */
-	ApiParagraph.prototype.SetColor = function(r, g, b, isAuto)
-	{
-		if (arguments.length === 1 && arguments[0] instanceof ApiColor) {
-			const apiColor = arguments[0];
+	ApiParagraph.prototype.SetColor = function (r, g, b, isAuto) {
+		let isTheme = false;
+		const apiColor = arguments.length === 1 && arguments[0] instanceof ApiColor
+			? arguments[0]
+			: null;
+
+		if (apiColor) {
 			const rgb = apiColor.GetRGB();
 			r = rgb.r;
 			g = rgb.g;
 			b = rgb.b;
 			isAuto = apiColor.isAutoColor();
+			isTheme = apiColor.isThemeColor();
 		}
 
-		var color = new Asc.asc_CColor();
-		color.r    = r;
-		color.g    = g;
-		color.b    = b;
-		color.Auto = isAuto;
+		let paraTextPrOptions = {
+			Color: { Auto: isAuto, r: r, g: g, b: b },
+			Unifill: undefined
+		};
+
+		if (!isAuto && isTheme) {
+			const unifill = new AscFormat.CUniFill();
+			unifill.fill = new AscFormat.CSolidFill();
+			unifill.fill.color = new AscFormat.CUniColor();
+			unifill.fill.color.color = new AscFormat.CSchemeColor();
+			unifill.fill.color.color.id = apiColor.value;
+
+			paraTextPrOptions = { Unifill: unifill };
+		}
 
 		this.Paragraph.SetApplyToAll(true);
-		if (true === color.Auto)
-		{
-			this.Paragraph.Add(new AscCommonWord.ParaTextPr({
-				Color      : {
-					Auto : true,
-					r    : 0,
-					g    : 0,
-					b    : 0
-				}, Unifill : undefined
-			}));
-		}
-		else
-		{
-			this.Paragraph.Add(new AscCommonWord.ParaTextPr({
-				Color      : {
-					Auto : false,
-					r    : r,
-					g    : g,
-					b    : b
-				}, Unifill : undefined
-			}));
-			
-		}
+		this.Paragraph.Add(new AscCommonWord.ParaTextPr(paraTextPrOptions));
 		this.Paragraph.SetApplyToAll(false);
-		
 		return this;
 	};
 	/**
@@ -11752,20 +11730,16 @@
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetColor.js
 	 */
-	ApiRun.prototype.SetColor = function(r, g, b, isAuto)
-	{
-		if (arguments.length === 1 && arguments[0] instanceof ApiColor) {
-			const apiColor = arguments[0];
-			const rgb = apiColor.GetRGB();
-			r = rgb.r;
-			g = rgb.g;
-			b = rgb.b;
-			isAuto = apiColor.isAutoColor();
-		}
+	ApiRun.prototype.SetColor = function (r, g, b, isAuto) {
+		const apiColor = arguments.length === 1 && arguments[0] instanceof ApiColor
+			? arguments[0]
+			: null;
 
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetColor(r, g, b, isAuto);
-		
+		const oTextPr = this.GetTextPr();
+		apiColor
+			? oTextPr.SetColor(apiColor)
+			: oTextPr.SetColor(r, g, b, isAuto);
+
 		return oTextPr;
 	};
 	/**
@@ -14922,7 +14896,8 @@
 	 * Sets the text color to the current text run.
 	 *
 	 * There are two supported ways to use this method:
-	 * 1. Passing an instance of the {@link ApiColor} class
+	 * 1. Passing an instance of the {@link ApiColor} class.
+	 *    - If the {@link ApiColor} represents a theme color, the text color property will be cleared.
 	 * 2. Passing three color components and an optional isAuto parameter.
 	 *
 	 * @memberof ApiTextPr
@@ -14942,18 +14917,25 @@
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetColor.js
 	 */
-	ApiTextPr.prototype.SetColor = function(r, g, b, isAuto)
-	{
-		if (arguments.length === 1 && arguments[0] instanceof ApiColor) {
-			const apiColor = arguments[0];
+	ApiTextPr.prototype.SetColor = function (r, g, b, isAuto) {
+		let isTheme = false;
+		const apiColor = arguments.length === 1 && arguments[0] instanceof ApiColor
+			? arguments[0]
+			: null;
+
+		if (apiColor) {
 			const rgb = apiColor.GetRGB();
 			r = rgb.r;
 			g = rgb.g;
 			b = rgb.b;
 			isAuto = apiColor.isAutoColor();
+			isTheme = apiColor.isThemeColor();
 		}
 
-		this.TextPr.Color = private_GetColor(r, g, b, isAuto);
+		this.TextPr.Color = (!isAuto && isTheme)
+			? undefined
+			: private_GetColor(r, g, b, isAuto);
+
 		this.private_OnChange();
 		return this;
 	};
