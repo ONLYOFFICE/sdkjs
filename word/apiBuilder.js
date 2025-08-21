@@ -2012,18 +2012,39 @@
 	};
 
 	/**
-	 * Sets the text color to the current text Range in the RGB format.
+	 * Sets the text color to the current text Range.
+	 *
+	 * There are two supported ways to use this method:
+	 * 1. Passing an instance of the {@link ApiColor} class
+	 * 2. Passing three color components and an optional isAuto parameter.
+	 *
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
+	 *
+	 * @overload
+	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then r,g,b parameters will be ignored.
 	 * @returns {ApiRange | null} - returns null if can't apply color.
+	 *
+	 * @overload
+	 * @param {ApiColor} color - Instance of the {@link ApiColor} class.
+	 * @return {ApiRange | null} - returns null if can't apply color.
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetColor.js
 	 */
 	ApiRange.prototype.SetColor = function(r, g, b, isAuto)
 	{
+		if (arguments.length === 1 && arguments[0] instanceof ApiColor) {
+			const apiColor = arguments[0];
+			const rgb = apiColor.GetRGB();
+			r = rgb.r;
+			g = rgb.g;
+			b = rgb.b;
+		}
+
 		private_RefreshRangesPosition();
 
 		var Document			= private_GetLogicDocument();
@@ -9974,18 +9995,39 @@
 		return this;
 	};
 	/**
-	 * Sets the text color to the current paragraph in the RGB format.
+	 * Sets the text color to the current paragraph.
+	 *
+	 * There are two supported ways to use this method:
+	 * 1. Passing an instance of the {@link ApiColor} class
+	 * 2. Passing three color components and an optional isAuto parameter.
+	 *
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
+	 *
+	 * @overload
+	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then r,g,b parameters will be ignored.
-	 * @returns {ApiParagraph} this
+	 * @return {ApiParagraph} this
+	 *
+	 * @overload
+	 * @param {ApiColor} color - Instance of the {@link ApiColor} class.
+	 * @return {ApiParagraph} this
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetColor.js
 	 */
 	ApiParagraph.prototype.SetColor = function(r, g, b, isAuto)
 	{
+		if (arguments.length === 1 && arguments[0] instanceof ApiColor) {
+			const apiColor = arguments[0];
+			const rgb = apiColor.GetRGB();
+			r = rgb.r;
+			g = rgb.g;
+			b = rgb.b;
+		}
+
 		var color = new Asc.asc_CColor();
 		color.r    = r;
 		color.g    = g;
@@ -11685,18 +11727,39 @@
 		return oTextPr;
 	};
 	/**
-	 * Sets the text color for the current text run in the RGB format.
+	 * Sets the text color for the current text run.
+	 *
+	 * There are two supported ways to use this method:
+	 * 1. Passing an instance of the {@link ApiColor} class
+	 * 2. Passing three color components and an optional isAuto parameter.
+	 *
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @overload
+	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then r,g,b parameters will be ignored.
-	 * @returns {ApiTextPr}
+	 * @return {ApiTextPr}
+	 *
+	 * @overload
+	 * @param {ApiColor} color - Instance of the {@link ApiColor} class.
+	 * @return {ApiTextPr}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetColor.js
 	 */
 	ApiRun.prototype.SetColor = function(r, g, b, isAuto)
 	{
+		if (arguments.length === 1 && arguments[0] instanceof ApiColor) {
+			const apiColor = arguments[0];
+			const rgb = apiColor.GetRGB();
+			r = rgb.r;
+			g = rgb.g;
+			b = rgb.b;
+		}
+
 		var oTextPr = this.GetTextPr();
 		oTextPr.SetColor(r, g, b, isAuto);
 		
@@ -14853,18 +14916,39 @@
 	};
 
 	/**
-	 * Sets the text color to the current text run in the RGB format.
+	 * Sets the text color to the current text run.
+	 *
+	 * There are two supported ways to use this method:
+	 * 1. Passing an instance of the {@link ApiColor} class
+	 * 2. Passing three color components and an optional isAuto parameter.
+	 *
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
+	 *
+	 * @overload
+	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then r,g,b parameters will be ignored.
 	 * @return {ApiTextPr} - this text properties.
+	 *
+	 * @overload
+	 * @param {ApiColor} color - Instance of the {@link ApiColor} class.
+	 * @return {ApiTextPr} - this text properties.
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetColor.js
 	 */
 	ApiTextPr.prototype.SetColor = function(r, g, b, isAuto)
 	{
+		if (arguments.length === 1 && arguments[0] instanceof ApiColor) {
+			const apiColor = arguments[0];
+			const rgb = apiColor.GetRGB();
+			r = rgb.r;
+			g = rgb.g;
+			b = rgb.b;
+		}
+
 		this.TextPr.Color = private_GetColor(r, g, b, isAuto);
 		this.private_OnChange();
 		return this;
@@ -19618,10 +19702,10 @@
 	ApiColor.prototype.GetRGBA = function () {
 		const packed = this.private_convertToRGBA();
 		return {
-			r: (packed >> 24) & 0xFF,
-			g: (packed >> 16) & 0xFF,
-			b: (packed >> 8) & 0xFF,
-			a: packed & 0xFF
+			'r': (packed >> 24) & 0xFF,
+			'g': (packed >> 16) & 0xFF,
+			'b': (packed >> 8) & 0xFF,
+			'a': packed & 0xFF
 		};
 	};
 	ApiColor.prototype.GetHex = function () {
