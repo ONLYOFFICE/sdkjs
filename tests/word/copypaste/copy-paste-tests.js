@@ -34,6 +34,17 @@
 
 $(function () {
 
+	// let startTime = 0;
+	//
+	// QUnit.begin(function() {
+	// 	startTime = performance.now();
+	// });
+	//
+	// QUnit.done(function(details) {
+	// 	const endTime = performance.now();
+	// 	const duration = (endTime - startTime).toFixed(2);
+	// 	console.log(`Время выполнения всех тестов: ${duration} мс`);
+	// });
 
 	QUnit.module("Word Copy Paste Tests");
 
