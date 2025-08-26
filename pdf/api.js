@@ -1194,31 +1194,6 @@
 			oDoc.bOffMarkerAfterUsing = true;
 		}
 	};
-	PDFEditorApi.prototype.SetRedactTool = function(bUse) {
-		this.isRedactTool = bUse;
-	};
-	PDFEditorApi.prototype.RedactPages = function(aIdxs) {
-		let oDoc = this.getPDFDoc();
-		let oFile = oDoc.Viewer.file;
-
-		oDoc.DoAction(function() {
-			aIdxs.forEach(function(idx) {
-				let oPage = oFile.pages[idx];
-				if (!oPage) {
-					return;
-				}
-				
-				let aSelQuads = [{ page: idx, quads: [[
-					0, 0,				// left up
-					oPage.W, 0, 		// right up
-					0, oPage.H,			// left down
-					oPage.W, oPage.H 	// right down
-				]]}];
-
-				oDoc.AddRedactAnnot(aSelQuads);
-			})
-		}, AscDFH.historydescription_Pdf_AddAnnot);
-	};
 	PDFEditorApi.prototype.IsCommentMarker = function() {
         return this.curMarkerType !== undefined;
     };
@@ -1292,6 +1267,53 @@
 			}
 		}
 		
+	};
+
+	PDFEditorApi.prototype.SetRedactTool = function(bUse) {
+		this.isRedactTool = bUse;
+	};
+	PDFEditorApi.prototype.RedactPages = function(aIdxs) {
+		let oDoc = this.getPDFDoc();
+		let oFile = oDoc.Viewer.file;
+
+		oDoc.DoAction(function() {
+			aIdxs.forEach(function(idx) {
+				let oPage = oFile.pages[idx];
+				if (!oPage) {
+					return;
+				}
+				
+				let aSelQuads = [{ page: idx, quads: [[
+					0, 0,				// left up
+					oPage.W, 0, 		// right up
+					0, oPage.H,			// left down
+					oPage.W, oPage.H 	// right down
+				]]}];
+
+				oDoc.AddRedactAnnot(aSelQuads);
+			})
+		}, AscDFH.historydescription_Pdf_AddAnnot);
+	};
+	PDFEditorApi.prototype.ApplyRedact = function() {
+		let oViewer = this.getDocumentRenderer();
+		let oNativeFile = oViewer.file.nativeFile;
+		let oDoc = this.getPDFDoc();
+
+		oDoc.annots.forEach(function(annot) {
+			if (!annot.IsRedact()) {
+				return;
+			}
+
+			let nPage = annot.GetPage();
+			let aRects = [];
+
+			let aQuadsParts = annot.GetQuads();
+			aQuadsParts.forEach(function(quads) {
+				aRects.push([quads[0], quads[1], quads[6], quads[7]]);
+			});
+
+			oNativeFile["RedactPage"](nPage, aRects, annot.GetFillColor());
+		});
 	};
 
 	/////////////////////////////////////////////////////////////
@@ -4816,6 +4838,11 @@
 
 	// freetext
 	PDFEditorApi.prototype['AddFreeTextAnnot']	= PDFEditorApi.prototype.AddFreeTextAnnot;
+
+	// redact
+	PDFEditorApi.prototype['SetRedactTool']	= PDFEditorApi.prototype.SetRedactTool;
+	PDFEditorApi.prototype['RedactPages']	= PDFEditorApi.prototype.RedactPages;
+	PDFEditorApi.prototype['ApplyRedact']	= PDFEditorApi.prototype.ApplyRedact;
 
 	// forms
 	PDFEditorApi.prototype['AddTextField']				= PDFEditorApi.prototype.AddTextField;

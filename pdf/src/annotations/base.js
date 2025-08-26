@@ -191,6 +191,8 @@
     CAnnotationBase.prototype.GetMeta = function() {
         return this._meta;
     };
+    CAnnotationBase.prototype.onMouseExit = function() {};
+    CAnnotationBase.prototype.onMouseEnter = function() {};
 
     CAnnotationBase.prototype.IsEditFieldShape = function() {
         return false;

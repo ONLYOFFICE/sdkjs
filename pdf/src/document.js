@@ -2090,6 +2090,16 @@ var CPresentation = CPresentation || function(){};
                 if (oMouseMoveField)
                     oMouseMoveField.onMouseEnter();
             }
+            // redact mouse in / mouse out
+            else if (oMouseMoveAnnot != this.mouseMoveAnnot) {
+                if (this.mouseMoveAnnot) {
+                    this.mouseMoveAnnot.onMouseExit();
+                }
+
+                this.mouseMoveAnnot = oMouseMoveAnnot;
+                if (oMouseMoveAnnot)
+                    oMouseMoveAnnot.onMouseEnter();
+            }
         }
 
         this.Api.sync_MouseMoveEndCallback();
@@ -5102,7 +5112,8 @@ var CPresentation = CPresentation || function(){};
             let oAnnot = this.AddAnnotByProps(oProps);
 
             oAnnot.SetQuads(aQuads);
-            oAnnot.SetStrokeColor([0, 0, 0]);
+            oAnnot.SetFillColor([0, 0, 0]);
+            oAnnot.SetStrokeColor([255, 0, 0]);
             oAnnot.SetOpacity(1);
         }
 

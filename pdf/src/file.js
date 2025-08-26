@@ -1014,7 +1014,7 @@ void main() {\n\
                 xMax, yMin, // right up
                 xMin, yMax, // left down
                 xMax, yMax  // right down
-            ]]}
+            ]]};
             
             aInfo.push(oInfo);
             return aInfo;
