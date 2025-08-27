@@ -684,19 +684,24 @@
 						if (window.editor.WordControl.reporterPointer) {
 							this.elementReporter6.onclick()
 						}
+
+                        let currentIcon;
 						switch (currentTool) {
 							case "pen":
+                                currentIcon = "btn-pen";
 								Asc.editor.asc_StartDrawInk(createSolidPen(this.currentDrawColor, 1, 100));
 								break;
 							case "highlighter":
+                                currentIcon = "btn-highlighter";
 								Asc.editor.asc_StartDrawInk(createSolidPen(this.currentDrawColor, 6, 50));
 								break;
 							case "eraser":
+                                currentIcon = "btn-eraser";
 								Asc.editor.asc_StartInkEraser();
 								break;
 						}
 
-						this.toggleElementReporterDrawMenuButton(true);
+						this.toggleElementReporterDrawMenuButton(true, currentIcon);
 					}
 
 					this.elementReporterDrawMenu.style.display = "none";
@@ -3168,7 +3173,9 @@
 		styleContent += (".btn-pointer-active { background-position: " + xOffset2 + "px -100px; }");
 		styleContent += (".btn-erase-all { background-position: " + xOffset1 + "px -120px; }");
 		styleContent += (".btn-eraser { background-position: " + xOffset1 + "px -140px; }");
+		styleContent += (".btn-eraser-active { background-position: " + xOffset2 + "px -140px; }");
 		styleContent += (".btn-highlighter { background-position: " + xOffset1 + "px -160px; }");
+		styleContent += (".btn-highlighter-active { background-position: " + xOffset2 + "px -160px; }");
 		styleContent += (".btn-pen { background-position: " + xOffset1 + "px -180px; }");
 		styleContent += (".btn-pen-active { background-position: " + xOffset2 + "px -180px; }");
 
