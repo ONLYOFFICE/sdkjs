@@ -751,6 +751,138 @@ var CPresentation = CPresentation || function(){};
         this.BlurActiveObject();
         this.SearchEngine.Select(id);
     };
+    CPDFDoc.prototype.MarkSearchElementForRedact = function(id) {
+        this.DoAction(function() {
+            let oPdfMatch = this.SearchEngine.Elements[id];
+
+            let aSelQuadsParts = [];
+            
+            oPdfMatch.forEach(function(pageMatch) {
+                let x1 = pageMatch.X * g_dKoef_mm_to_pt;
+                let y1 = pageMatch.Y * g_dKoef_mm_to_pt;
+                let x2 = (pageMatch.X + pageMatch.W) * g_dKoef_mm_to_pt;
+                let y2 = (pageMatch.Y + pageMatch.H) * g_dKoef_mm_to_pt;
+
+                aSelQuadsParts.push({ page: pageMatch.PageNum, quads: [[
+                    x1, y1, // left up
+                    x2, y1, // right up
+                    x1, y2,	// left down
+                    x2, y2 	// right down
+                ]]});
+            });
+
+            this.AddRedactAnnot(aSelQuadsParts);
+        }, AscDFH.historydescription_Pdf_AddAnnot, this);
+    };
+    CPDFDoc.prototype.MarkAllSearchElementsForRedact = function() {
+        let _t = this;
+
+        this.DoAction(function() {
+            let aSelQuadsParts = [];
+
+            Object.values(_t.SearchEngine.Elements).forEach(function(pdfMatch) {
+                pdfMatch.forEach(function(pageMatch) {
+                    let x1 = pageMatch.X * g_dKoef_mm_to_pt;
+                    let y1 = pageMatch.Y * g_dKoef_mm_to_pt;
+                    let x2 = (pageMatch.X + pageMatch.W) * g_dKoef_mm_to_pt;
+                    let y2 = (pageMatch.Y + pageMatch.H) * g_dKoef_mm_to_pt;
+
+                    aSelQuadsParts.push({ page: pageMatch.PageNum, quads: [[
+                        x1, y1, // left up
+                        x2, y1, // right up
+                        x1, y2,	// left down
+                        x2, y2 	// right down
+                    ]]});
+                });
+            })
+
+            _t.AddRedactAnnot(aSelQuadsParts);
+        }, AscDFH.historydescription_Pdf_AddAnnot, this);
+    };
+    CPDFDoc.prototype.GetSearchRedactInfo = function(id) {
+        let _t = this;
+
+        let oUsedRedactInfo = {
+            "current": true,
+            "all": true
+        }
+
+        function arraysEqual(a, b) {
+            for (let i = 0; i < a.length; i++) {
+                if (Math.abs(a[i] - b[i]) > 0.001) return false;
+            }
+            return true;
+        }
+
+        // all
+        Object.values(_t.SearchEngine.Elements).forEach(function(pdfMatch) {
+            pdfMatch.forEach(function(pageMatch) {
+                let x1 = pageMatch.X * g_dKoef_mm_to_pt;
+                let y1 = pageMatch.Y * g_dKoef_mm_to_pt;
+                let x2 = (pageMatch.X + pageMatch.W) * g_dKoef_mm_to_pt;
+                let y2 = (pageMatch.Y + pageMatch.H) * g_dKoef_mm_to_pt;
+
+                let aQuads = [
+                    x1, y1, // left up
+                    x2, y1, // right up
+                    x1, y2,	// left down
+                    x2, y2 	// right down
+                ];
+                
+                let oPageInfo = _t.GetPageInfo(pageMatch.PageNum);
+                let isFoundRedact = false;
+
+                oPageInfo.annots.forEach(function(annot) {
+                    if (annot.IsRedact()) {
+                        let aRedactQuadsParts = annot.GetQuads();
+
+                        isFoundRedact = aRedactQuadsParts.find(function(quads) {
+                            return arraysEqual(aQuads, quads);
+                        });
+                    }
+                });
+
+                if (!isFoundRedact) {
+                    oUsedRedactInfo["all"] = false;
+                }
+            });
+        });
+
+        // current 
+        let oPdfMatch = this.SearchEngine.Elements[id];
+        oPdfMatch.forEach(function(pageMatch) {
+            let x1 = pageMatch.X * g_dKoef_mm_to_pt;
+            let y1 = pageMatch.Y * g_dKoef_mm_to_pt;
+            let x2 = (pageMatch.X + pageMatch.W) * g_dKoef_mm_to_pt;
+            let y2 = (pageMatch.Y + pageMatch.H) * g_dKoef_mm_to_pt;
+
+            let aQuads = [
+                x1, y1, // left up
+                x2, y1, // right up
+                x1, y2,	// left down
+                x2, y2 	// right down
+            ];
+            
+            let oPageInfo = _t.GetPageInfo(pageMatch.PageNum);
+            let isFoundRedact = false;
+
+            oPageInfo.annots.forEach(function(annot) {
+                if (annot.IsRedact()) {
+                    let aRedactQuadsParts = annot.GetQuads();
+
+                    isFoundRedact = aRedactQuadsParts.find(function(quads) {
+                        return arraysEqual(aQuads, quads);
+                    });
+                }
+            });
+
+            if (!isFoundRedact) {
+                oUsedRedactInfo["current"] = false;
+            }
+        });
+
+        return oUsedRedactInfo;
+    };
     CPDFDoc.prototype.GetSearchElementId = function(isNext) {
         let nCurPage        = this.Viewer.currentPage;
         let nCurMatchIdx    = this.SearchEngine.CurId;
