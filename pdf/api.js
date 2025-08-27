@@ -1317,14 +1317,21 @@
 	};
 	PDFEditorApi.prototype.ApplyRedact = function() {
 		let oViewer = this.getDocumentRenderer();
-		let oNativeFile = oViewer.file.nativeFile;
+		let oFile = oViewer.file;
+		let oNativeFile = oFile.nativeFile;
 		let oDoc = this.getPDFDoc();
 
 		return oDoc.DoAction(function() {
+			oDoc.BlurActiveObject();
+			
+			let pagesSet = new Set();
+
 			oDoc.annots.forEach(function(annot) {
-				if (!annot.IsRedact()) {
+				if (!annot.IsRedact() || annot.IsApplied()) {
 					return;
 				}
+
+				annot.SetApplied(true);
 
 				let nPage = annot.GetPage();
 				let aRects = [];
@@ -1334,8 +1341,27 @@
 					aRects.push(quads[0], quads[1], quads[6], quads[7]);
 				});
 
-				oNativeFile["RedactPage"](nPage, aRects, annot.GetFillColor());
+				let oFillRGB = annot.GetRGBColor(annot.GetFillColor());
+				
+				let oMemory = new AscCommon.CMemory(true);
+				oMemory.Init(24);
+				oMemory.WriteLong(oFillRGB.r);
+				oMemory.WriteLong(oFillRGB.g);
+				oMemory.WriteLong(oFillRGB.b);
+				
+				oNativeFile["RedactPage"](nPage, aRects, new Uint8Array(oMemory.data.buffer, 0, oMemory.GetCurPosition()));
+				
+				annot.AddToRedraw();
+				pagesSet.add(nPage);
 			});
+
+			oViewer.onUpdatePages(Array.from(pagesSet));
+			
+			// update text
+			pagesSet.forEach(function(idx) {
+				oFile.pages[idx].text = oFile.getText(idx);
+			});
+
 		}, AscDFH.historydescription_Pdf_Apply_Redact, this);
 	};
 

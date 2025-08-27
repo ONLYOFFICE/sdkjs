@@ -688,6 +688,15 @@
     CAnnotationRedact.prototype.IsHovered = function() {
         return this._hovered;
     };
+    CAnnotationRedact.prototype.SetApplied = function(isApplied) {
+        this._isApplied = isApplied;
+    };
+    CAnnotationRedact.prototype.IsApplied = function() {
+        return this._isApplied;
+    };
+    CAnnotationRedact.prototype.IsHidden = function() {
+        return AscPDF.CAnnotationBase.prototype.IsHidden.call(this) || this.IsApplied();
+    };
     CAnnotationRedact.prototype.Draw = function(oGraphicsPDF) {
         if (this.IsHidden() == true)
             return;
