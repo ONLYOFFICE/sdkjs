@@ -1290,6 +1290,9 @@
 	PDFEditorApi.prototype.SetRedactTool = function(bUse) {
 		this.isRedactTool = bUse;
 	};
+	PDFEditorApi.prototype.IsRedactTool = function() {
+		return this.isRedactTool;
+	}
 	PDFEditorApi.prototype.RedactPages = function(aIdxs) {
 		let oDoc = this.getPDFDoc();
 		let oFile = oDoc.Viewer.file;
@@ -4862,6 +4865,7 @@
 
 	// redact
 	PDFEditorApi.prototype['SetRedactTool']	= PDFEditorApi.prototype.SetRedactTool;
+	PDFEditorApi.prototype['IsRedactTool']	= PDFEditorApi.prototype.IsRedactTool;
 	PDFEditorApi.prototype['RedactPages']	= PDFEditorApi.prototype.RedactPages;
 	PDFEditorApi.prototype['ApplyRedact']	= PDFEditorApi.prototype.ApplyRedact;
 
