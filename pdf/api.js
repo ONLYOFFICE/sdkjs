@@ -1320,21 +1320,23 @@
 		let oNativeFile = oViewer.file.nativeFile;
 		let oDoc = this.getPDFDoc();
 
-		oDoc.annots.forEach(function(annot) {
-			if (!annot.IsRedact()) {
-				return;
-			}
+		return oDoc.DoAction(function() {
+			oDoc.annots.forEach(function(annot) {
+				if (!annot.IsRedact()) {
+					return;
+				}
 
-			let nPage = annot.GetPage();
-			let aRects = [];
+				let nPage = annot.GetPage();
+				let aRects = [];
 
-			let aQuadsParts = annot.GetQuads();
-			aQuadsParts.forEach(function(quads) {
-				aRects.push([quads[0], quads[1], quads[6], quads[7]]);
+				let aQuadsParts = annot.GetQuads();
+				aQuadsParts.forEach(function(quads) {
+					aRects.push(quads[0], quads[1], quads[6], quads[7]);
+				});
+
+				oNativeFile["RedactPage"](nPage, aRects, annot.GetFillColor());
 			});
-
-			oNativeFile["RedactPage"](nPage, aRects, annot.GetFillColor());
-		});
+		}, AscDFH.historydescription_Pdf_Apply_Redact, this);
 	};
 
 	/////////////////////////////////////////////////////////////

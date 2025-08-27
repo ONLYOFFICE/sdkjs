@@ -4682,6 +4682,7 @@
 	window['AscDFH'].historydescription_Pdf_MovePage			= 0x2b4;
 	window['AscDFH'].historydescription_Pdf_AddField			= 0x2b5;
 	window['AscDFH'].historydescription_Pdf_ChangeField			= 0x2b6;
+	window['AscDFH'].historydescription_Pdf_Apply_Redact		= 0x2b7;
 	
 	// reserved
 	window['AscDFH'].historydescription_GroupPoints     = 0xFF01;
