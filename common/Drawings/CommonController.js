@@ -1126,7 +1126,7 @@
 						var oThis = this;
 						this.checkSelectedObjectsAndCallback(function () {
 							if (!oShape.bWordShape) {
-								oShape.createTextBody();
+								oShape.createTextBodyOnEdit();
 							} else {
 								oShape.createTextBoxContent();
 							}
@@ -1492,7 +1492,7 @@
 					if (!oShape.getDocContent() && oShape.canEditText()) {
 						this.checkSelectedObjectsAndCallback(function () {
 							if (!oShape.bWordShape) {
-								oShape.createTextBody();
+								oShape.createTextBodyOnEdit();
 							} else {
 								oShape.createTextBoxContent();
 							}
@@ -2087,7 +2087,7 @@
 									}
 								} else {
 									if (!oShape.txBody) {
-										oShape.createTextBody();
+										oShape.createTextBodyOnEdit();
 									}
 								}
 								oController.selection.textSelection = oShape;
@@ -2688,7 +2688,7 @@
 												if (drawing.bWordShape) {
 													drawing.createTextBoxContent();
 												} else {
-													drawing.createTextBody();
+													drawing.createTextBodyOnEdit();
 												}
 												content = drawing.getDocContent();
 												if (content) {
@@ -2853,7 +2853,7 @@
 											if (oSelectedObject.bWordShape) {
 												oSelectedObject.createTextBoxContent();
 											} else {
-												oSelectedObject.createTextBody();
+												oSelectedObject.createTextBodyOnEdit();
 											}
 											oContent = oSelectedObject.getDocContent();
 											if (oContent) {
@@ -8509,7 +8509,7 @@
 						oShape.createTextBoxContent();
 					} else {
 						nFontSize = 54;
-						oShape.createTextBody();
+						oShape.createTextBodyOnEdit();
 					}
 					var bUseStartString = (typeof sStartString === "string");
 					if (bUseStartString) {

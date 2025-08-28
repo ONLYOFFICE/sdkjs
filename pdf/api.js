@@ -330,7 +330,7 @@
 				processClipboardData.call(this, null, _formats, _clipboard);
 			}
 		}
-		if (oActiveAnnot) {
+		else if (oActiveAnnot) {
 			if (oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
 				let sText = oActiveAnnot.GetDocContent().GetSelectedText(false, { NewLine: true });
 				if (!sText) return;
@@ -344,7 +344,8 @@
 				let oContent = oActiveAnnot.GetDocContent();
 				processClipboardData.call(this, oContent, _formats, _clipboard);
 			}
-		} else if (oActiveDrawing) {
+		}
+		else if (oActiveDrawing) {
 			let oContent = oActiveDrawing.GetDocContent();
 			processClipboardData.call(this, oContent, _formats, _clipboard);
 		}

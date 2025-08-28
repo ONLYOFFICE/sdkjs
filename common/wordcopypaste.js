@@ -1484,6 +1484,11 @@ CopyProcessor.prototype =
 
 		};
 		let copyAnnots = function(){
+			if (oDomTarget) {
+				let oAnnots = new CopyElement("img");
+				oDomTarget.addChild(oAnnots);
+			}
+
 			let elements = elementsContent.Annots;
 
 			//пишем метку и длину
@@ -1499,6 +1504,11 @@ CopyProcessor.prototype =
 		};
 
 		let copyFields = function(){
+			if (oDomTarget) {
+				let oFields = new CopyElement("img");
+				oDomTarget.addChild(oFields);
+			}
+
 			let elements = elementsContent.Fields;
 
 			//пишем метку и длину

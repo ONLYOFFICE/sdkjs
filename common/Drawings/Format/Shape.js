@@ -1309,6 +1309,17 @@
 			this.useBgFill = pr;
 		};
 
+		CShape.prototype.createTextBodyOnEdit = function () {
+			let txBody = this.createTextBody();
+			if (Asc.editor.isPresentationEditor) {
+				let firstParagraph = txBody.content.Content[0];
+				firstParagraph.SetParagraphAlign(AscCommon.align_Center);
+				let newBodyPr = txBody.bodyPr.createDuplicate();
+				newBodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
+				txBody.setBodyPr(newBodyPr);
+			}
+		};
+
 		CShape.prototype.createTextBody = function () {
 			var tx_body = new AscFormat.CTextBody();
 			tx_body.setParent(this);
@@ -1319,16 +1330,11 @@
 				oBodyPr.horzOverflow = AscFormat.nHOTClip;
 			}
 
-			if (Asc.editor.isPresentationEditor) {
-				const firstParagraph = tx_body.content.Content[0];
-				firstParagraph.SetParagraphAlign(AscCommon.align_Center);
-				oBodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
-			}
-
 			tx_body.setBodyPr(oBodyPr);
 			tx_body.content.Content[0].Set_DocumentIndex(0);
 			tx_body.content.MoveCursorToStartPos(false);
 			this.setTxBody(tx_body);
+			return tx_body;
 		};
 
 		CShape.prototype.createTextBoxContent = function () {
@@ -1361,7 +1367,7 @@
 					if (this.bWordShape) {
 						this.createTextBoxContent();
 					} else {
-						this.createTextBody();
+						this.createTextBodyOnEdit();
 					}
 					content_to_add = this.getDocContent();
 				}
@@ -1379,7 +1385,7 @@
 					if (this.bWordShape) {
 						this.createTextBoxContent();
 					} else {
-						this.createTextBody();
+						this.createTextBodyOnEdit();
 					}
 					content_to_add = this.getDocContent();
 					content_to_add.MoveCursorToStartPos();
@@ -1919,7 +1925,7 @@
 					if (this.bWordShape) {
 						this.createTextBoxContent();
 					} else {
-						this.createTextBody();
+						this.createTextBodyOnEdit();
 					}
 				}
 			}
@@ -1946,7 +1952,7 @@
 					if (this.bWordShape) {
 						this.createTextBoxContent();
 					} else {
-						this.createTextBody();
+						this.createTextBodyOnEdit();
 					}
 				}
 			}
@@ -6853,7 +6859,7 @@
 					new_body_pr.numCol = (num >> 0);
 
 					if (!this.txBody) {
-						this.createTextBody();
+						this.createTextBodyOnEdit();
 					}
 					if (this.txBody) {
 						this.txBody.setBodyPr(new_body_pr);
@@ -6871,7 +6877,7 @@
 					new_body_pr = new_body_pr.createDuplicate();
 					new_body_pr.spcCol = spcCol;
 					if (!this.txBody) {
-						this.createTextBody();
+						this.createTextBodyOnEdit();
 					}
 					if (this.txBody) {
 						this.txBody.setBodyPr(new_body_pr);

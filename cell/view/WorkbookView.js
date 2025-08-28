@@ -1119,7 +1119,7 @@
 	});
 	this.Api.asc_registerCallback("EndTransactionCheckSize", function() {
 		self.Api.checkChangesSize();
-	});
+	}, true);
 	this.model.handlers.add("changeUpdateLinks", function(val) {
 		self.changeUpdateLinks(val);
 	});
@@ -5266,12 +5266,13 @@
 		this.model.convertEquationToMath(oEquation, isAll);
 	};
 	WorkbookView.prototype.removeHandlersList = function () {
-		var eventList = ["changeSheetViewSettings", "cleanCellCache", "changeWorksheetUpdate", "showWorksheet",
-			"setSelection", "getSelectionState", "setSelectionState", "drawWS", "showDrawingObjects", "setCanUndo",
-			"setCanRedo", "setDocumentModified", "updateWorksheetByModel", "undoRedoAddRemoveRowCols",
-			"undoRedoHideSheet", "updateSelection", "asc_onLockDefNameManager", 'addComment', 'removeComment',
-			'hiddenComments', 'showSolved', "hideSpecialPasteOptions", "toggleAutoCorrectOptions", "cleanCutData",
-			"updateGroupData", "cleanCopyData"];
+		var eventList = ["changeSheetViewSettings", "cleanCellCache", "changeWorksheetUpdate", "changeDocument",
+			"showWorksheet", "setSelection", "getSelectionState", "setSelectionState", "drawWS", "scrollToTopLeftCell",
+			"showDrawingObjects", "setCanUndo", "setCanRedo", "setDocumentModified", "updateWorksheetByModel",
+			"undoRedoAddRemoveRowCols", "undoRedoHideSheet", "updateSelection", "asc_onLockDefNameManager", 'addComment',
+			'removeComment', 'hiddenComments', 'showSolved', "hideSpecialPasteOptions", "toggleAutoCorrectOptions",
+			"cleanCutData", "cleanCopyData", "updateGroupData", "updatePrintPreview", "clearFindResults", "updateCellWatches",
+			"changeCellWatches", "onChangePageSetupProps", "changeUpdateLinks", "updateScrollVisibility"];
 
 		for (var i = 0; i < eventList.length; i++) {
 			this.handlers.remove(eventList[i]);

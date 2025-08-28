@@ -727,7 +727,7 @@ NullState.prototype =
 	ControlState.prototype.onMouseDown = function (e, x, y, pageIndex) {
 		if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_CURSOR)
 		{
-			return {cursorType: "default", objectId: this.control.Get_Id()};
+			return {cursorType: "pointer", objectId: this.control.Get_Id()};
 		}
 		return this.control.onMouseDown(e, x, y, pageIndex, this.controller);
 	};

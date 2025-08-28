@@ -501,11 +501,9 @@ NullState.prototype =
             aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].annots);
 
             if (oDoc.IsEditFieldsMode()) {
-                if (this.drawingObjects.selectedObjects.find(function(obj) {
-                    return obj.IsDrawing() && obj.IsEditFieldShape();
-                })) {
-                    aDrawings = aDrawings.concat(this.drawingObjects.selectedObjects);
-                }
+                oDoc.GetPageInfo(pageIndex).fields.forEach(function(field) {
+                    aDrawings.push(field.GetEditShape());
+                });
             }
 
             ret = AscFormat.handleFloatObjects(this.drawingObjects, aDrawings, e, x, y, null, pageIndex, true);
