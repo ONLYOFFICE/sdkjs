@@ -1694,6 +1694,7 @@
 		this.ctWidgetsInfo		= 166;
 
 		this.ctHeadings         = 169;
+		this.ctRedact			= 170;
 
 		this.ctPageWidth  = 200;
 		this.ctPageHeight = 201;

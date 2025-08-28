@@ -4365,6 +4365,11 @@
 			}
 		}
 
+		checkMemory();
+		
+		oMemory.WriteLong(1);
+		oMemory.WriteByte(AscPDF.CommandType.saveModeNew);
+
 		if (oDoc.mergedPagesData.length != 0) {
 			checkMemory();
 
@@ -4407,6 +4412,11 @@
 			oMemory.WriteByte(nCommandType);
 			oMemory.WriteLong(originIndex != undefined ? originIndex : curIndex);
 			
+			let oPageInfo = aPagesInfo[curIndex];
+			if (checkNeedRedactPage(oPageInfo)) {
+				writePageRedactInfo(oPageInfo);
+			}
+
 			if ([AscPDF.CommandType.editPage, AscPDF.CommandType.addPage].includes(nCommandType)) {
 				let nRotAngle = this.getPageRotate(curIndex);
 				let bClearPage = !!oFile.pages[curIndex].isRecognized;
@@ -4451,7 +4461,6 @@
 				return;
 			}
 			
-			let oPageInfo = aPagesInfo[curIndex];
 			let oRenderer = this.InitDocRenderer(oMemory, curIndex);
 
 			// annots
@@ -4535,6 +4544,71 @@
 			oMemory.Seek(nStartPos);
 			oMemory.WriteLong(nEndPos - nStartPos);
 			oMemory.Seek(nEndPos);
+		}
+		function writePageRedactInfo(oPageInfo) {
+			let nStartPos = oMemory.GetCurPosition();
+			oMemory.Skip(4);
+
+			oMemory.WriteByte(AscCommon.CommandType.ctRedact);
+
+			let nPosForLenght = oMemory.GetCurPosition();
+			oMemory.Skip(4);
+			
+			let aRects = [];
+			let oFillRGB;
+			
+			oPageInfo.annots.forEach(function(annot) {
+				if (!annot.IsRedact() || !annot.IsApplied()) {
+					return;
+				}
+
+				let aQuadsParts = annot.GetQuads();
+				aQuadsParts.forEach(function(quads) {
+					aRects.push(quads[0], quads[1], quads[6], quads[7]);
+				});
+
+				oFillRGB = annot.GetRGBColor(annot.GetFillColor());
+			});
+
+			// count of rects
+			oMemory.WriteLong(aRects.length / 4);
+			aRects.forEach(function(measure) {
+				oMemory.WriteDouble(measure);
+			});
+
+			// reserved
+			oMemory.WriteLong(0);
+
+			// render
+			let oMemoryRender = new AscCommon.CMemory(true);
+			oMemoryRender.Init(24);
+			oMemoryRender.WriteLong(oFillRGB.r);
+			oMemoryRender.WriteLong(oFillRGB.g);
+			oMemoryRender.WriteLong(oFillRGB.b);
+			let oBuffer = new Uint8Array(oMemoryRender.data.buffer, 0, oMemoryRender.GetCurPosition());
+
+			oMemory.WriteBuffer(oBuffer, oMemory.GetCurPosition(), oBuffer.length);
+
+			let nEndPos = oMemory.GetCurPosition();
+
+			// redact command size
+			oMemory.Seek(nPosForLenght);
+			oMemory.WriteLong(nEndPos - nPosForLenght);
+			oMemory.Seek(nEndPos);
+			
+			// total command size
+			oMemory.Seek(nStartPos);
+			oMemory.WriteLong(nEndPos - nStartPos);
+			oMemory.Seek(nEndPos);
+		}
+		function checkNeedRedactPage(oPageInfo) {
+			if (oPageInfo.annots.find(function(annot) {
+				return annot.IsRedact() && annot.IsApplied();
+			})) {
+				return true;
+			}
+
+			return false;
 		}
 
 		function generateOperations(originalPageCount, finalPages) {
@@ -4717,7 +4791,7 @@
 			oMemory.Seek(nStartPos);
 			oMemory.WriteLong(nEndPos - nStartPos);
 			oMemory.Seek(nEndPos);
-
+			
 			return new Uint8Array(oMemory.data.buffer, 0, oMemory.GetCurPosition());
 		}
 			
@@ -4851,8 +4925,13 @@
 			// annots
 			if (oPageInfo.annots) {
 				for (let nAnnot = 0; nAnnot < oPageInfo.annots.length; nAnnot++) {
-					oPageInfo.annots[nAnnot].IsChanged() && oPageInfo.annots[nAnnot].WriteToBinary(oMemory);
-					oPageInfo.annots[nAnnot].GetReplies().forEach(function(reply) {
+					let oAnnot = oPageInfo.annots[nAnnot];
+					if (oAnnot.IsRedact() && oAnnot.IsApplied()) {
+						continue;
+					}
+
+					oAnnot.IsChanged() && oAnnot.WriteToBinary(oMemory);
+					oAnnot.GetReplies().forEach(function(reply) {
 						reply.IsChanged() && reply.WriteToBinary(oMemory); 
 					});
 				}
