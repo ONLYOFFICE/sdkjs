@@ -4546,12 +4546,9 @@
 			oMemory.Seek(nEndPos);
 		}
 		function writePageRedactInfo(oPageInfo) {
-			let nStartPos = oMemory.GetCurPosition();
-			oMemory.Skip(4);
-
 			oMemory.WriteByte(AscCommon.CommandType.ctRedact);
 
-			let nPosForLenght = oMemory.GetCurPosition();
+			let nStartPos = oMemory.GetCurPosition();
 			oMemory.Skip(4);
 			
 			let aRects = [];
@@ -4576,10 +4573,12 @@
 				oMemory.WriteDouble(measure);
 			});
 
-			// reserved
-			oMemory.WriteLong(0);
+			// reserved flags
+			let nFlagsPos = oMemory.GetCurPosition();
+			let nFlags = 0;
 
 			// render
+			nFlags |= (1 << 0);
 			let oMemoryRender = new AscCommon.CMemory(true);
 			oMemoryRender.Init(24);
 			oMemoryRender.WriteLong(oFillRGB.r);
@@ -4587,15 +4586,22 @@
 			oMemoryRender.WriteLong(oFillRGB.b);
 			let oBuffer = new Uint8Array(oMemoryRender.data.buffer, 0, oMemoryRender.GetCurPosition());
 
+			let nRenderLengthPos = oMemory.GetCurPosition();
+       		oMemory.Skip(4);
 			oMemory.WriteBuffer(oBuffer, oMemory.GetCurPosition(), oBuffer.length);
 
 			let nEndPos = oMemory.GetCurPosition();
 
-			// redact command size
-			oMemory.Seek(nPosForLenght);
-			oMemory.WriteLong(nEndPos - nPosForLenght);
+			// flags
+			oMemory.Seek(nFlagsPos);
+			oMemory.WriteLong(nFlags);
 			oMemory.Seek(nEndPos);
-			
+
+			// render length
+			oMemory.Seek(nRenderLengthPos);
+			oMemory.WriteLong(nEndPos - nRenderLengthPos);
+			oMemory.Seek(nEndPos);
+
 			// total command size
 			oMemory.Seek(nStartPos);
 			oMemory.WriteLong(nEndPos - nStartPos);
@@ -4669,7 +4675,6 @@
 		
 			return operations;
 		}
-		
 
 		function checkNeedEditOrigPage(nPage) {
 			let aDrawings		= aPagesInfo[nPage].drawings;
