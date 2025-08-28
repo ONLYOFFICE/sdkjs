@@ -417,7 +417,7 @@
         this.path = oPath;
         this.morph(1);
     }
-    AscFormat.InitClassWithoutType(CMorphedPath, CMorphObjectBase);
+    AscCommon.InitClassWithoutType(CMorphedPath, CMorphObjectBase);
     CMorphedPath.prototype.morph = function (dTime, oInvTransform) {
         if(!this.isValid()) {
             return;
@@ -488,7 +488,7 @@
         CMorphObjectBase.call(this, oTexturesCache, nRelH1, nRelH2);
         this.morphedObjects = [];
     }
-    AscFormat.InitClassWithoutType(CComplexMorphObject, CMorphObjectBase);
+    AscCommon.InitClassWithoutType(CComplexMorphObject, CMorphObjectBase);
     CComplexMorphObject.prototype.morph = function (dTime) {
         CMorphObjectBase.prototype.morph.call(this, dTime);
         for(let nIdx = 0; nIdx < this.morphedObjects.length; ++ nIdx) {
@@ -561,7 +561,7 @@
             }
         }
     }
-    AscFormat.InitClassWithoutType(CShapeComplexMorph, CComplexMorphObject);
+    AscCommon.InitClassWithoutType(CShapeComplexMorph, CComplexMorphObject);
 	CShapeComplexMorph.prototype.getDrawingParamsWithoutRotate = function(shadowShape, nMainShapeRot) {
 		const oTransform = shadowShape.transform.CreateDublicate();
 		const oOldTransform = shadowShape.transform;
@@ -687,7 +687,7 @@
 
         this.init();
     }
-    AscFormat.InitClassWithoutType(CGeometryMorphObject, CMorphObjectBase);
+    AscCommon.InitClassWithoutType(CGeometryMorphObject, CMorphObjectBase);
     CGeometryMorphObject.prototype.init = function() {
         if(!this.geometry1 || !this.geometry2) {
             return;
@@ -1003,7 +1003,7 @@
         this.shape2 = this.createShape(oGeometry2, oBrush2, oPen2, oTransform2);
     }
 
-    AscFormat.InitClassWithoutType(CGeometryTextureMorph, CMorphObjectBase);
+    AscCommon.InitClassWithoutType(CGeometryTextureMorph, CMorphObjectBase);
     CGeometryTextureMorph.prototype.createShape = function (oGeometry, oBrush, oPen, oTransform) {
         return AscFormat.ExecuteNoHistory(function() {
             AscCommon.g_oTableId.TurnOn();
@@ -1191,14 +1191,14 @@
             }
         }
     }
-    AscFormat.InitClassWithoutType(CContentMorphObject, CComplexMorphObject);
+    AscCommon.InitClassWithoutType(CContentMorphObject, CComplexMorphObject);
 
     function CMorphedFadeObject(oTexturesCache, oDrawing, nRelH, bNoText) {
         CMorphObjectBase.call(this, oTexturesCache, nRelH, null);
         this.drawing = oDrawing;
         this.bNoText = bNoText;
     }
-    AscFormat.InitClassWithoutType(CMorphedFadeObject, CMorphObjectBase);
+    AscCommon.InitClassWithoutType(CMorphedFadeObject, CMorphObjectBase);
     CMorphedFadeObject.prototype.morph = function(dRelTime) {
         CMorphObjectBase.prototype.morph.call(this, dRelTime);
     };
@@ -1218,7 +1218,7 @@
     function CMorphedAppearObject(oTexturesCache, oDrawing, nRelH, bNoText) {
         CMorphedFadeObject.call(this, oTexturesCache, oDrawing, nRelH, bNoText)
     }
-    AscFormat.InitClassWithoutType(CMorphedAppearObject, CMorphedFadeObject);
+    AscCommon.InitClassWithoutType(CMorphedAppearObject, CMorphedFadeObject);
     CMorphedAppearObject.prototype.draw = function(oGraphics) {
         let dAlpha;
         if(this.relTime < 0.5) {
@@ -1232,7 +1232,7 @@
     function CMorphedDisappearObject(oTexturesCache, oDrawing, nRelH, bNoText) {
         CMorphedFadeObject.call(this, oTexturesCache, oDrawing, nRelH, bNoText)
     }
-    AscFormat.InitClassWithoutType(CMorphedDisappearObject, CMorphedFadeObject);
+    AscCommon.InitClassWithoutType(CMorphedDisappearObject, CMorphedFadeObject);
     CMorphedDisappearObject.prototype.draw = function(oGraphics) {
         let dAlpha;
         if(this.relTime < 0.5) {
@@ -1250,7 +1250,7 @@
 			this.transform2 = oTransform2;
 			this.drawingParams = oDrawingParams;
 		}
-	AscFormat.InitClassWithoutType(CMorphedTransformFadeObject, CMorphedFadeObject);
+	AscCommon.InitClassWithoutType(CMorphedTransformFadeObject, CMorphedFadeObject);
 	CMorphedTransformFadeObject.prototype.draw = function(oGraphics) {
 		let oTransform = new AscCommon.CMatrix();
 		oTransform.tx = this.getValBetween(this.transform1.tx, this.transform2.tx);
@@ -1274,14 +1274,14 @@
 	function CMorphedTransformAppearObject(oTexturesCache, oDrawing, nRelH, oTransform1, oTransform2, oDrawingParams, bNoText) {
 		CMorphedTransformFadeObject.call(this, oTexturesCache, oDrawing, nRelH, oTransform1, oTransform2, oDrawingParams, bNoText);
 	}
-	AscFormat.InitClassWithoutType(CMorphedTransformAppearObject, CMorphedTransformFadeObject);
+	AscCommon.InitClassWithoutType(CMorphedTransformAppearObject, CMorphedTransformFadeObject);
 	CMorphedTransformAppearObject.prototype.getAlpha = function() {
 		return this.relTime;
 	};
 	function CMorphedTransformDisappearObject(oTexturesCache, oDrawing, nRelH, oTransform1, oTransform2, oDrawingParams, bNoText) {
 		CMorphedTransformFadeObject.call(this, oTexturesCache, oDrawing, nRelH, oTransform1, oTransform2, oDrawingParams, bNoText);
 	}
-	AscFormat.InitClassWithoutType(CMorphedTransformDisappearObject, CMorphedTransformFadeObject);
+	AscCommon.InitClassWithoutType(CMorphedTransformDisappearObject, CMorphedTransformFadeObject);
 	CMorphedTransformDisappearObject.prototype.getAlpha = function() {
 		return 1 - this.relTime;
 	};
@@ -1293,7 +1293,7 @@
         this.bNoText = !!bNoText;
         this.texture = null;
     }
-    AscFormat.InitClassWithoutType(CStretchTextureTransform, CMorphObjectBase);
+    AscCommon.InitClassWithoutType(CStretchTextureTransform, CMorphObjectBase);
     CStretchTextureTransform.prototype.getTextureData = function(oDrawing, oAnimPlayer, dScale) {
 
         function createParams(oTexture, oBounds, dOpacity) {
@@ -1393,7 +1393,7 @@
         let aDrawings2 = oGroup2.arrGraphicObjects;
         this.getMorph().addComparisonMorph(aDrawings1, aDrawings2)
     }
-    AscFormat.InitClassWithoutType(CGroupComplexMorph, CComplexMorphObject);
+    AscCommon.InitClassWithoutType(CGroupComplexMorph, CComplexMorphObject);
 
     function CWrapperBase(oTransform, oTheme, oColorMap, oFormatDrawing) {
 
@@ -1451,7 +1451,7 @@
 			this.morph = oMorph;
 			CWrapperBase.call(this, oTransform, oTheme, oColorMap, oFormatDrawing);
 		}
-	AscFormat.InitClassWithoutType(CWrapperMorphBase, CWrapperBase);
+	AscCommon.InitClassWithoutType(CWrapperMorphBase, CWrapperBase);
 	CWrapperMorphBase.prototype.registerId = function () {
 		CWrapperBase.prototype.registerId.call(this);
 		this.morph.registerWrapperObject(this);
@@ -1464,7 +1464,7 @@
         this.textDrawerStructure = oTextDrawerStructure;
         CWrapperMorphBase.call(this, oMorph, oTransform, oTheme, oColorMap, oDrawing);
     }
-    AscFormat.InitClassWithoutType(CTextDrawerStructureWrapper, CWrapperMorphBase);
+    AscCommon.InitClassWithoutType(CTextDrawerStructureWrapper, CWrapperMorphBase);
     CTextDrawerStructureWrapper.prototype.draw = function(oGraphics) {
         this.textDrawerStructure.draw(oGraphics, this.transform, this.theme, this.colorMap);
     };
@@ -1473,7 +1473,7 @@
         this.objectForDraw = oObjectForDraw;
         CWrapperMorphBase.call(this, oMorph, oTransform, oTheme, oColorMap, oDrawing);
     }
-    AscFormat.InitClassWithoutType(CMorphObjectForDrawWrapper, CWrapperMorphBase);
+    AscCommon.InitClassWithoutType(CMorphObjectForDrawWrapper, CWrapperMorphBase);
     CMorphObjectForDrawWrapper.prototype.draw = function(oGraphics) {
         this.objectForDraw.draw(oGraphics, undefined, this.transform, this.theme, this.colorMap);
     };
@@ -1491,7 +1491,7 @@
         this.objectsForDraw = aObjectForDraw;
         CWrapperMorphBase.call(this, oMorph, oTransform, oTheme, oColorMap, oDrawing);
     }
-    AscFormat.InitClassWithoutType(CMorphObjectForDrawArrayWrapper, CWrapperMorphBase);
+    AscCommon.InitClassWithoutType(CMorphObjectForDrawArrayWrapper, CWrapperMorphBase);
     CMorphObjectForDrawArrayWrapper.prototype.draw = function(oGraphics) {
         for(let nIdx = 0; nIdx < this.objectsForDraw.length; ++nIdx) {
             this.objectsForDraw[nIdx].draw(oGraphics, undefined, this.transform, this.theme, this.colorMap);
@@ -1519,7 +1519,7 @@
 			this.contentObjects = aContentObjects || [];
 			CWrapperBase.call(this, oTransform, oTheme, oColorMap, oDrawing);
 		}
-	AscFormat.InitClassWithoutType(CObjectForDrawArrayWrapper, CWrapperBase);
+	AscCommon.InitClassWithoutType(CObjectForDrawArrayWrapper, CWrapperBase);
 		CObjectForDrawArrayWrapper.prototype.forEachAnimationDrawing = function(fCallback) {
 			return !!fCallback(this);
 		};
@@ -1689,7 +1689,7 @@
         this.slide = oSlide;
         CWrapperMorphBase.call(this, oMorph, new AscCommon.CMatrix(), oSlide.getTheme(), oSlide.getColorMap(), null);
     }
-    AscFormat.InitClassWithoutType(CBackgroundWrapper, CWrapperMorphBase);
+    AscCommon.InitClassWithoutType(CBackgroundWrapper, CWrapperMorphBase);
     CBackgroundWrapper.prototype.draw = function(oGraphics) {
         oGraphics.SaveGrState();
         oGraphics.transform3(this.transform);
@@ -1706,7 +1706,7 @@
     function CTableComplexMorph(oTexturesCache, nRelH1, nRelH2, oGrFrame1, oGrFrame2) {
         CStretchTextureTransform.call(this, oTexturesCache, nRelH1, nRelH2, oGrFrame1, oGrFrame2);
     }
-    AscFormat.InitClassWithoutType(CTableComplexMorph, CStretchTextureTransform);
+    AscCommon.InitClassWithoutType(CTableComplexMorph, CStretchTextureTransform);
 
     function CSlideMorphEffect(oSlide1, oSlide2, nType) {
         this.slide1 = oSlide1;

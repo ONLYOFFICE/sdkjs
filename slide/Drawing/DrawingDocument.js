@@ -3694,7 +3694,7 @@ function CSlideThPos(oThumbnails)
 	CThPosBase.call(this, oThumbnails);
 	this.Idx = -1;
 }
-AscFormat.InitClassWithoutType(CSlideThPos, CThPosBase);
+AscCommon.InitClassWithoutType(CSlideThPos, CThPosBase);
 CSlideThPos.prototype.Check = function()
 {
 	let aThs = this.thumbnails.slides;
@@ -3742,7 +3742,7 @@ function CMasterThPos(oThumbnails)
 	this.MasterIdx = -1;
 	this.LayoutIdx = -1;
 }
-AscFormat.InitClassWithoutType(CMasterThPos, CThPosBase);
+AscCommon.InitClassWithoutType(CMasterThPos, CThPosBase);
 CMasterThPos.prototype.Check = function()
 {
 	let nOldMasterIdx = this.MasterIdx;
@@ -3993,7 +3993,7 @@ function CSlidesThumbnails() {
 	CThumbnailsBase.call(this);
 	this.slides = [];
 }
-AscFormat.InitClassWithoutType(CSlidesThumbnails, CThumbnailsBase);
+AscCommon.InitClassWithoutType(CSlidesThumbnails, CThumbnailsBase);
 CSlidesThumbnails.prototype.GetIterator = function()
 {
 	return new CSlideThPos(this);
@@ -4035,7 +4035,7 @@ function CMastersThumbnails()
 	CThumbnailsBase.call(this);
 	this.masters = [];
 }
-AscFormat.InitClassWithoutType(CMastersThumbnails, CThumbnailsBase);
+AscCommon.InitClassWithoutType(CMastersThumbnails, CThumbnailsBase);
 CMastersThumbnails.prototype.clear = function ()
 {
 	for(let nIdx = 0; nIdx < this.masters.length; ++nIdx)

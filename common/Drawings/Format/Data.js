@@ -2886,7 +2886,7 @@ Because of this, the display is sometimes not correct.
 			this.ruleLst = null;
 			this.varLst = null;
 		}
-		AscFormat.InitClassWithoutType(LayoutBaseClass, AscFormat.CBaseFormatNoIdObject);
+		AscCommon.InitClassWithoutType(LayoutBaseClass, AscFormat.CBaseFormatNoIdObject);
 	  LayoutBaseClass.prototype.addToLst = function (idx , pr) {
 			idx = Math.min(this.list.length, Math.max(idx, 0));
 		  this.list.splice(idx, 0, pr);

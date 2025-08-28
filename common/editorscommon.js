@@ -15433,6 +15433,12 @@
 		}
 	}
 
+	function InitClassWithoutType(fClass, fBase) {
+		fClass.prototype = Object.create(fBase.prototype);
+		fClass.prototype.superclass = fBase;
+		fClass.prototype.constructor = fClass;
+	}
+
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].consoleLog = consoleLog;
@@ -15676,6 +15682,8 @@
 	window["AscCommon"].cStrucTableReservedWords = cStrucTableReservedWords;
 	window["AscCommon"].getArrayRandomElement = getArrayRandomElement;
 	window["AscCommon"].rx_error = rx_error;
+
+	window["AscCommon"].InitClassWithoutType = InitClassWithoutType;
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo, csv_data)

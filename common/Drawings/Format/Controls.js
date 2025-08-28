@@ -631,7 +631,7 @@ function getFlatPenColor() {
 	function CCheckBox(oController) {
 		CButtonBase.call(this, oController);
 	}
-	AscFormat.InitClassWithoutType(CCheckBox, CButtonBase);
+	AscCommon.InitClassWithoutType(CCheckBox, CButtonBase);
 	CCheckBox.prototype.getFlatPenColor = function () {
 		return getFlatCheckBoxPenColor();
 	};
@@ -678,7 +678,7 @@ function getFlatPenColor() {
 		this.checkBox = new CCheckBox(this);
 		this.initCheckBoxHandlers();
 	}
-	AscFormat.InitClassWithoutType(CCheckBoxController, CControlControllerBase);
+	AscCommon.InitClassWithoutType(CCheckBoxController, CControlControllerBase);
 	CCheckBoxController.prototype.initCheckBoxHandlers = function () {
 		const oThis = this;
 		this.checkBox.isChecked = function () {
@@ -919,7 +919,7 @@ function getFlatPenColor() {
 		this.button = new CButtonBase(this);
 		this.initButton();
 	};
-	AscFormat.InitClassWithoutType(CButtonController, CControlControllerBase);
+	AscCommon.InitClassWithoutType(CButtonController, CControlControllerBase);
 	CButtonController.prototype.initButton = function () {
 		const oThis = this;
 		this.button._onMouseMove = function () {
@@ -1032,7 +1032,7 @@ function getFlatPenColor() {
 		CButtonBase.call(this, oController);
 		this.direction = nDirection || SPINBUTTON_DIRECTION_UP;
 	}
-	AscFormat.InitClassWithoutType(CSpinButton, CButtonBase);
+	AscCommon.InitClassWithoutType(CSpinButton, CButtonBase);
 	CSpinButton.prototype.draw = function (graphics) {
 		CButtonBase.prototype.draw.call(this, graphics);
 		const arrRectColor = [51, 51, 51, 255];
@@ -1089,7 +1089,7 @@ function getFlatPenColor() {
 		this.stepManager = new CStepManager();
 		this.initButtonEventHandlers();
 	};
-	AscFormat.InitClassWithoutType(CSpinController, CControlControllerBase);
+	AscCommon.InitClassWithoutType(CSpinController, CControlControllerBase);
 	CSpinController.prototype.startChangeValue = function (fCallback) {
 		Asc.editor.startGroupActions();
 		this.stepManager.start(fCallback);
@@ -1248,7 +1248,7 @@ function getFlatPenColor() {
 			y: 0
 		};
 	}
-	AscFormat.InitClassWithoutType(CTrackArea, CButtonBase);
+	AscCommon.InitClassWithoutType(CTrackArea, CButtonBase);
 	CTrackArea.prototype.getFlatFillColor = function () {
 		return [244, 244, 244, 255];
 	}
@@ -1265,7 +1265,7 @@ function getFlatPenColor() {
 		this.initButtonEventHandlers();
 	}
 
-	AscFormat.InitClassWithoutType(CScrollController, CControlControllerBase);
+	AscCommon.InitClassWithoutType(CScrollController, CControlControllerBase);
 	CScrollController.prototype.startGroupPoints = function () {
 		Asc.editor.startGroupActions();
 	};
@@ -1390,7 +1390,7 @@ function getFlatPenColor() {
 	function CThumbButton(oController) {
 		CButtonBase.call(this, oController);
 	}
-	AscFormat.InitClassWithoutType(CThumbButton, CButtonBase);
+	AscCommon.InitClassWithoutType(CThumbButton, CButtonBase);
 	CThumbButton.prototype.getFlatFillColor = function () {
 		if (this.isHold || this.isHover) {
 			return [51, 51, 51, 255];
@@ -2155,7 +2155,7 @@ function getFlatPenColor() {
 		this.setupListBoxBehavior();
 	}
 
-	AscFormat.InitClassWithoutType(CListBoxController, CControlControllerBase);
+	AscCommon.InitClassWithoutType(CListBoxController, CControlControllerBase);
 	CListBoxController.prototype.handleFmlaRange = function (aRanges) {
 		return this.handleRef(aRanges, this.getParsedFmlaRange(), this.updateListItems.bind(this));
 	};
@@ -2336,7 +2336,7 @@ function getFlatPenColor() {
 		this.setupComboBoxBehavior();
 	}
 
-	AscFormat.InitClassWithoutType(CComboBoxController, CControlControllerBase);
+	AscCommon.InitClassWithoutType(CComboBoxController, CControlControllerBase);
 	CComboBoxController.prototype.recalculate = function () {
 		if (this.recalcInfo.recalculateItems) {
 			this.recalcInfo.recalculateItems = false;
