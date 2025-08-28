@@ -1171,7 +1171,7 @@
 				if (geometry) {
 					oSpPr.setGeometry(geometry.createDuplicate());
 				}
-				if (this.getObjectType() === AscDFH.historyitem_type_Shape
+				if ((this.getObjectType() === AscDFH.historyitem_type_Shape || this.getObjectType() === AscDFH.historyitem_type_Control)
 					&& (!this.brush || !this.brush.isVisible())) {
 					if (this.pen && this.pen.isVisible()) {
 						oSpPr.Fill = AscFormat.CreateNoFillUniFill();
@@ -1301,7 +1301,8 @@
 
 	CGraphicObjectBase.prototype.drawShdw = function (graphics) {
 		var outerShdw = this.getOuterShdw && this.getOuterShdw();
-		if (this.shdwSp && outerShdw && !graphics.isBoundsChecker()) {
+		const needToDrawShadow = AscCommon.IsShapeToImageConverter || !graphics.isBoundsChecker();
+		if (this.shdwSp && outerShdw && needToDrawShadow) {
 			this.shdwSp.transform = this.shdwSp.getShdwTransform(outerShdw, this);
 			this.shdwSp.recalculateBounds();
 			this.shdwSp.draw(graphics);
@@ -1647,6 +1648,8 @@
 	};
 	CGraphicObjectBase.prototype.recalcContent2 = function () {
 	};
+	CGraphicObjectBase.prototype.applySpecialPasteProps = function () {};
+	CGraphicObjectBase.prototype.getSpecialPasteProps = function () {};
 
 	CGraphicObjectBase.prototype.checkDrawingBaseCoords = function () {
 		if (this.drawingBase && this.spPr && this.spPr.xfrm && !this.group) {
@@ -4016,6 +4019,9 @@
 	CGraphicObjectBase.prototype.getDocContent = function () {
 		return null;
 	};
+	CGraphicObjectBase.prototype.isControl = function() {
+		return false;
+	}
 	var ANIM_LABEL_WIDTH_PIX = 22;
 	var ANIM_LABEL_HEIGHT_PIX = 17;
 

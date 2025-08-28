@@ -111,14 +111,10 @@
 		pathWithFill.setExtrusionOk(false);
 		pathWithFill.setFill("norm");
 		pathWithFill.setStroke(true);
-		pathWithFill.setPathW(undefined);
-		pathWithFill.setPathH(undefined);
 
 		pathWithoutFill.setExtrusionOk(false);
 		pathWithoutFill.setFill("none");
 		pathWithoutFill.setStroke(true);
-		pathWithoutFill.setPathW(undefined);
-		pathWithoutFill.setPathH(undefined);
 
 		// for path overlap fix: If there is only equal geometry section NoLine values
 		// we can set true NoLine value for path
@@ -126,6 +122,22 @@
 		let unfilledPathNoLine = false;
 		let allFilledPathNoLineValuesEqual = true;
 		let allUnfilledPathNoLineValuesEqual = true;
+
+		// imply that units were in mm until units parse realized
+		// TODO parse formula and units
+		// TODO parse line style fill style text style
+
+		const additionalUnitCoefficient = g_dKoef_in_to_mm / pageScale;
+
+
+		/* extrusionOk, fill, stroke, w, h*/
+		// path.AddPathCommand(0, undefined, fillValue, undefined, undefined, undefined);
+
+		//TODO maybe get shapeWidth and Height from outside
+		//TODO shape with RelMoveTo and RelLineTo takes wrong position
+
+		let shapeWidth = Number(shape.getCell("Width").v);
+		let shapeHeight = Number(shape.getCell("Height").v);
 
 		// set path objects - parts of geometry objects
 		for (let i = 0; i < geometrySections.length; i++) {
@@ -230,23 +242,6 @@
 					unfilledPathNoLine = noLineValue;
 				}
 			}
-
-
-			// imply that units were in mm until units parse realized
-			// TODO parse formula and units
-			// TODO parse line style fill style text style
-
-			const additionalUnitCoefficient = g_dKoef_in_to_mm / pageScale;
-
-
-			/* extrusionOk, fill, stroke, w, h*/
-			// path.AddPathCommand(0, undefined, fillValue, undefined, undefined, undefined);
-
-			//TODO maybe get shapeWidth and Height from outside
-			//TODO shape with RelMoveTo and RelLineTo takes wrong position
-
-			let shapeWidth = Number(shape.getCell("Width").v);
-			let shapeHeight = Number(shape.getCell("Height").v);
 
 			/**
 			 *
@@ -875,6 +870,24 @@
 		}
 
 		geometry.setPreset("Any");
+
+		// setting path width below
+		// zero shape width or height can't be used in normalizeCoordinates because there is division by the width or height
+		// also zero path w or h refers to empty shape
+		if (shapeWidth > 0 && shapeHeight > 0) {
+			const shapeWidthEmu = mmToEmu(shapeWidth * additionalUnitCoefficient);
+			const shapeHeightEmu = mmToEmu(shapeHeight * additionalUnitCoefficient);
+			let maxPathSize = 100000; //this precision is enough
+			
+			pathWithFill.setPathW(maxPathSize);
+			pathWithFill.setPathH(maxPathSize);
+			pathWithFill.normalizeCoordinates(shapeWidthEmu, shapeHeightEmu, maxPathSize, maxPathSize);
+
+			pathWithoutFill.setPathW(maxPathSize);
+			pathWithoutFill.setPathH(maxPathSize);
+			pathWithoutFill.normalizeCoordinates(shapeWidthEmu, shapeHeightEmu, maxPathSize, maxPathSize);
+		}
+
 		geometry.AddPath(pathWithFill);
 		geometry.AddPath(pathWithoutFill);
 

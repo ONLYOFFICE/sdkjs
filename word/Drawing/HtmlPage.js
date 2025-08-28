@@ -2915,7 +2915,7 @@ function CEditorPage(api)
 			return;
 		}
 
-		var context       = canvas.getContext("2d");
+		var context       = AscCommon.AscBrowser.getContext2D(canvas);
 		context.fillStyle = GlobalSkin.BackgroundColor;
 
 		if (AscCommon.AscBrowser.isSailfish)

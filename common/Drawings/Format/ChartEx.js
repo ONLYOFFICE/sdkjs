@@ -793,7 +793,7 @@ function (window, undefined) {
 		let aRes = [];
 		for (let nDim = 0; nDim < this.dimension.length; ++nDim) {
 			let oDim = this.dimension[nDim];
-			if ((oDim instanceof  CNumericDimension) && oDim.type === AscFormat.NUMERIC_DIMENSION_TYPE_VAL) {
+			if ((oDim instanceof  CNumericDimension) && (oDim.type === AscFormat.NUMERIC_DIMENSION_TYPE_VAL || oDim.type === AscFormat.NUMERIC_DIMENSION_TYPE_SIZE)) {
 				aRes.push(oDim);
 			}
 		}
@@ -2574,8 +2574,12 @@ function (window, undefined) {
 		return null;
 	};
 	CDimension.prototype.clearLevelData = function () {
+		const isClear = !!this.levelData.length;
 		for(let nIdx = this.levelData.length; nIdx > -1; --nIdx) {
 			this.removeLevelDataByPos(nIdx)
+		}
+		if (isClear) {
+			this.onUpdateCache();
 		}
 	};
 	CDimension.prototype.removeLevelDataByPos = function (nIdx) {
@@ -2668,11 +2672,18 @@ function (window, undefined) {
 				}
 			}
 		}
+		this.onUpdateCache();
 	};
 	CDimension.prototype.updateCache = function() {
 		AscFormat.ExecuteNoHistory(function () {
 			this.updateReferences();
 		}, this, []);
+	};
+	CDimension.prototype.Refresh_RecalcData = function (data) {
+		const chartSpace = this.getChartSpace();
+		if (chartSpace) {
+			chartSpace.Refresh_RecalcData(data);
+		}
 	};
 	// NumericDimension
 	drawingContentChanges[AscDFH.historyitem_NumericDimension_AddLevelData] =
@@ -3219,7 +3230,10 @@ function (window, undefined) {
 		let nType = this.layoutId;
 		if(nType === AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN ||
 			nType === AscFormat.SERIES_LAYOUT_WATERFALL ||
-			nType === AscFormat.SERIES_LAYOUT_FUNNEL) {
+			nType === AscFormat.SERIES_LAYOUT_FUNNEL ||
+			nType === AscFormat.SERIES_LAYOUT_TREEMAP ||
+			nType === AscFormat.SERIES_LAYOUT_BOX_WHISKER ||
+			nType === AscFormat.SERIES_LAYOUT_SUNBURST) {
 			return true;
 		}
 		return false;
@@ -3382,8 +3396,12 @@ function (window, undefined) {
 		if (aCatDim.length > 0) {
 			let oDim = aCatDim[0];
 			if (oDim) {
-				let index = (type === AscFormat.SERIES_LAYOUT_WATERFALL || type === AscFormat.SERIES_LAYOUT_FUNNEL) ? oDim.levelData.length - 1 : 0;
-				return oDim.levelData[index] || null;
+				if (type === AscFormat.SERIES_LAYOUT_SUNBURST) {
+					return oDim.levelData;
+				} else {
+					let index = (type === AscFormat.SERIES_LAYOUT_WATERFALL || type === AscFormat.SERIES_LAYOUT_FUNNEL) ? oDim.levelData.length - 1 : 0;
+					return oDim.levelData[index] || null;
+				}
 			}
 		}
 		return null;

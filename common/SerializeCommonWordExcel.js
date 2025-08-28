@@ -1029,7 +1029,7 @@ var g_oCellAddressUtils = new CellAddressUtils();
 		return g_oCellAddressUtils.colnumToColstr(this.col + 1) + (this.row + 1);
 	};
 	CellBase.prototype.fromRefA1 = function(val) {
-		this.clean();
+		this.row = this.col = 0;
 		var index = 0;
 		var char = val.charCodeAt(index);
 		while (65 <= char && char <= 90) {//'A'<'Z'
@@ -1044,12 +1044,8 @@ var g_oCellAddressUtils = new CellAddressUtils();
 			this.row = 10 * this.row + char - 48;
 			char = val.charCodeAt(++index);
 		}
-		this.row -= 1;
-		this.col -= 1;
-		this.row = Math.min(this.row, gc_nMaxRow0);
-		this.row = Math.max(this.row, 0);
-		this.col = Math.min(this.col, gc_nMaxCol0);
-		this.col = Math.max(this.col, 0);
+		this.row = Math.max(0, Math.min(this.row - 1, gc_nMaxRow0));
+		this.col = Math.max(0, Math.min(this.col - 1, gc_nMaxCol0));
 	};
 	CellBase.prototype.toRefA1 = function (row, col) {
 		//TODO функция неверно работает, если кол-во столбцов превышает 26

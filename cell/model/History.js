@@ -533,9 +533,27 @@ CHistory.prototype.Undo = function(Options)
 	var oRedoObjectParam = this.oRedoObjectParam = new AscCommonExcel.RedoObjectParam();
 	this.UndoRedoPrepare(oRedoObjectParam, true);
 
-	var t = this;
-	var doUndo = function () {
-		for ( var Index = Point.Items.length - 1; Index >= 0; Index-- )
+	// Откатываем все действия в обратном порядке (относительно их выполенения)
+	var Point = null;
+	if (undefined !== Options && null !== Options && true === Options.All)
+	{
+		while (this.Index >= 0)
+		{
+			Point = this.Points[this.Index--];
+			this.private_UndoPoint(Point, oRedoObjectParam);
+		}
+	}
+	else
+	{
+		Point = this.Points[this.Index--];
+		this.private_UndoPoint(Point, oRedoObjectParam);
+	}
+
+	this.UndoRedoEnd(Point, oRedoObjectParam, true);
+  return true;
+};
+CHistory.prototype.private_UndoPoint = function(Point, oRedoObjectParam) {
+	for ( var Index = Point.Items.length - 1; Index >= 0; Index-- )
 		{
 			var Item = Point.Items[Index];
 
@@ -550,29 +568,9 @@ CHistory.prototype.Undo = function(Options)
 				}
 			}
 
-			t._addRedoObjectParam(oRedoObjectParam, Item);
+			this._addRedoObjectParam(oRedoObjectParam, Item);
 		}
-	};
-
-	// Откатываем все действия в обратном порядке (относительно их выполенения)
-	var Point = null;
-	if (undefined !== Options && null !== Options && true === Options.All)
-	{
-		while (this.Index >= 0)
-		{
-			Point = this.Points[this.Index--];
-			doUndo();
-		}
-	}
-	else
-	{
-		Point = this.Points[this.Index--];
-		doUndo();
-	}
-
-	this.UndoRedoEnd(Point, oRedoObjectParam, true);
-  return true;
-};
+}
 CHistory.prototype.UndoRedoPrepare = function (oRedoObjectParam, bUndo, bKeepTurn) {
 	if (this.Is_On() && !bKeepTurn) {
 		oRedoObjectParam.bIsOn = true;
@@ -712,6 +710,11 @@ CHistory.prototype.RedoExecute = function(Point, oRedoObjectParam)
 };
 CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 	var wsViews, i, oState = null, bCoaut = false, t = this;
+	AscCommonExcel.executeInR1C1Mode(false, function () {
+		AscCommonExcel.lockCustomFunctionRecalculate(true, function () {
+			t.workbook.dependencyFormulas.unlockRecal();
+		});
+	});
 	if (!bUndo && null == Point) {
 		Point = this.Points[this.Index];
 		AscCommon.CollaborativeEditing.Apply_LinkData();
@@ -720,12 +723,6 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 			Asc["editor"].wb.recalculateDrawingObjects(Point, true);
         }
 	}
-
-	AscCommonExcel.executeInR1C1Mode(false, function () {
-		AscCommonExcel.lockCustomFunctionRecalculate(true, function () {
-			t.workbook.dependencyFormulas.unlockRecal();
-		});
-	});
 
 	if (null != Point) {
 		if (oRedoObjectParam.bChangeColorScheme) {
@@ -1112,7 +1109,7 @@ CHistory.prototype.CheckUnionLastPoints = function()
 CHistory.prototype.Add_RecalcTableGrid = function()
 {};
 
-CHistory.prototype.Create_NewPoint = function()
+CHistory.prototype.Create_NewPoint = function(nDescription)
 {
 	if ( 0 !== this.TurnOffHistory || 0 !== this.Transaction )
 		return false;
@@ -1143,7 +1140,8 @@ CHistory.prototype.Create_NewPoint = function()
 		SelectRange : oSelectRange,
 		SelectRangeRedo : oSelectRange,
 		Time  : Time,   // Текущее время
-		SelectionState : oSelectionState
+		SelectionState : oSelectionState,
+			Description : nDescription
     };
 
     // Удаляем ненужные точки
@@ -1645,6 +1643,48 @@ CHistory.prototype.GetSerializeArray = function()
 	};
 	CHistory.prototype.ConvertPointItemsToSimpleChanges = function(pointIndex) {
 	}
+	CHistory.prototype.cancelGroupPoints = function()
+	{
+		let startIndex = this._getLongPointIndex();
+		if (-1 === startIndex)
+			return;
+		var oRedoObjectParam = this.oRedoObjectParam = new AscCommonExcel.RedoObjectParam();
+		let point;
+		for (let i = this.Index; i >= startIndex; --i)
+		{
+			point = this.Points[i];
+			this.private_UndoPoint(point, oRedoObjectParam);
+		}
+		if (point.SelectionState) {
+			this.workbook.handlers.trigger("setSelectionState", point.SelectionState);
+		}
+
+		if (!window['AscCommon'].g_specialPasteHelper.specialPasteStart)
+			window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide(true);
+
+		this.Points.length = startIndex + 1;
+		this.Index = startIndex - 1;
+		return oRedoObjectParam;
+	};
+	CHistory.prototype.endGroupPoints = function()
+	{
+		this.Points.length = this.Index + 1;
+
+		let startIndex = this._getLongPointIndex();
+		if (-1 === startIndex)
+			return;
+
+		let point = this.Points[startIndex];
+		point.Description = AscDFH.historydescription_GroupPoints;
+
+		for (let i = startIndex + 1; i < this.Points.length; ++i)
+		{
+			point.Items = point.Items.concat(this.Points[i].Items);
+		}
+
+		this.Points.length = startIndex + 1;
+		this.Index = startIndex;
+	};
 	//------------------------------------------------------------export--------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].CHistory = CHistory;

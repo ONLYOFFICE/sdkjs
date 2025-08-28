@@ -159,6 +159,19 @@
 		return arrResult;
 	};
 
+	/**
+	 * Removes the OLE object from the workbook by its internal ID.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @alias RemoveOleObject
+	 * @param {string} internalId - The OLE object identifier which is used to work with OLE object added to the worksheet.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveOleObject.js
+	 */
+	Api.prototype["pluginMethod_RemoveOleObject"] = function (internalId) {
+		if (this.wbModel) this.wbModel.RemoveDrawingObjectById(internalId);
+	};
+
 	const customFunctionsStorageId = "cell-custom-functions-library";
 
 	Api.prototype.registerCustomFunctionsLibrary = function(obj, isNotUpdate)

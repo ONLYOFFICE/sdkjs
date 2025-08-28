@@ -19167,6 +19167,18 @@ Paragraph.prototype.getLayoutFontSizeCoefficient = function()
 };
 Paragraph.prototype.isRtlDirection = function()
 {
+	// for pdf forms
+	if (Asc.editor.isPdfEditor()) {
+		if (this.Parent && this.Parent.ParentPDF) {
+			if (this.Parent.ParentPDF.IsRTL()) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+	}
+
 	return !!this.Get_CompiledPr2(false).ParaPr.Bidi;
 };
 Paragraph.prototype.GetAllAnnotationMarks = function(marks)

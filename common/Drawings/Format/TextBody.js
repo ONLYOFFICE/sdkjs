@@ -337,8 +337,16 @@
         else if(this.content) {
             if(!graphics.isSupportTextDraw()) {
                 let bEmpty = this.content.IsEmpty();
-                let _w = bEmpty ? 0.1 : this.content.XLimit;
-                let _h = this.content.GetSummaryHeight();
+								let _w;
+								let _h;
+								if (this.parent && this.parent.isControl()) {
+									const oBounds = this.content.GetContentBounds(this.Get_StartPage_Absolute());
+									_w = bEmpty ? 0.1 : oBounds.Right - oBounds.Left;
+									_h = oBounds.Bottom - oBounds.Top;
+								} else {
+									_w = bEmpty ? 0.1 : this.content.XLimit;
+									_h = this.content.GetSummaryHeight();
+								}
                 graphics.rect(this.content.X, this.content.Y, _w, _h);
 				return;
             }

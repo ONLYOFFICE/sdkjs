@@ -151,7 +151,7 @@
 			this.handlers = new AscCommonExcel.asc_CHandlersList(handlers);
 			this._createScrollBars();
 
-			if (Asc.editor.isEditOleMode) {
+			if (!Asc.editor.frameManager.isInitFrameManager) {
 				return;
 			}
 

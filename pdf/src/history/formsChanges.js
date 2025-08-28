@@ -56,10 +56,13 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_No_Export]		= CChangesPDFFormN
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Border_Width]		= CChangesPDFFormBorderWidth;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Locked]			= CChangesPDFFormLocked;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Rotate]			= CChangesPDFFormRotate;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Tooltip]			= CChangesPDFFormTooltip;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_ME_Options]		= CChangesPDFFormMEOptions;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Align]			= CChangesPDFFormAlign;
+
 
 // text
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Multiline]			= CChangesPDFTextFormMultiline;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Align]				= CChangesPDFTextFormAlign;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Char_Limit]			= CChangesPDFTextCharLimit;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_Comb]				= CChangesPDFTextComb;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Form_DoNot_Scroll]		= CChangesPDFTextFormDoNotScroll;
@@ -646,7 +649,7 @@ CChangesPDFFormMeta.prototype.Type = AscDFH.historyitem_Pdf_Form_Meta;
 CChangesPDFFormMeta.prototype.private_SetValue = function(Value)
 {
 	var oField = this.Class;
-	oField.SetMeta(Value);
+	oField._meta = Value;
 };
 
 CChangesPDFFormMeta.prototype.WriteToBinary = function(Writer)
@@ -797,6 +800,43 @@ CChangesPDFFormRotate.prototype.private_SetValue = function(Value)
 	oForm.SetRotate(Value);
 };
 
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesPDFFormTooltip(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFormTooltip.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesPDFFormTooltip.prototype.constructor = CChangesPDFFormTooltip;
+CChangesPDFFormTooltip.prototype.Type = AscDFH.historyitem_Pdf_Form_Tooltip;
+CChangesPDFFormTooltip.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm._tooltip = Value;
+	oForm.AddToRedraw();
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFFormMEOptions(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFormMEOptions.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFFormMEOptions.prototype.constructor = CChangesPDFFormMEOptions;
+CChangesPDFFormMEOptions.prototype.Type = AscDFH.historyitem_Pdf_Form_ME_Options;
+CChangesPDFFormMEOptions.prototype.private_SetValue = function(Value)
+{
+	let oField = this.Class;
+	oField._meOptions = Value;
+	oField.SetNeedRecalc(true);
+	oField.UpdateMEOptions();
+};
+
 
 //------------------------------------------------------------------------------------------------------------------
 //
@@ -825,14 +865,14 @@ CChangesPDFTextFormMultiline.prototype.private_SetValue = function(Value)
  * @constructor
  * @extends {AscDFH.CChangesBaseLongProperty}
  */
-function CChangesPDFTextFormAlign(Class, Old, New, Color)
+function CChangesPDFFormAlign(Class, Old, New, Color)
 {
 	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
 }
-CChangesPDFTextFormAlign.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
-CChangesPDFTextFormAlign.prototype.constructor = CChangesPDFTextFormAlign;
-CChangesPDFTextFormAlign.prototype.Type = AscDFH.historyitem_Pdf_Text_Form_Align;
-CChangesPDFTextFormAlign.prototype.private_SetValue = function(Value)
+CChangesPDFFormAlign.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFFormAlign.prototype.constructor = CChangesPDFFormAlign;
+CChangesPDFFormAlign.prototype.Type = AscDFH.historyitem_Pdf_Form_Align;
+CChangesPDFFormAlign.prototype.private_SetValue = function(Value)
 {
 	let oForm = this.Class;
 	oForm.SetAlign(Value);

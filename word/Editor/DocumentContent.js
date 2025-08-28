@@ -3094,10 +3094,9 @@ CDocumentContent.prototype.AddInlineImage = function(W, H, Img, GraphicObject, b
 			else
 			{
 				Drawing   = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
-				var Image = this.DrawingObjects.getChartSpace2(GraphicObject, null);
-				Image.setParent(Drawing);
-				Drawing.Set_GraphicObject(Image);
-				Drawing.setExtent(Image.spPr.xfrm.extX, Image.spPr.xfrm.extY);
+				GraphicObject.setParent(Drawing);
+				Drawing.Set_GraphicObject(GraphicObject);
+				Drawing.setExtent(GraphicObject.spPr.xfrm.extX, GraphicObject.spPr.xfrm.extY);
 			}
 			if (true === bFlow)
 			{
@@ -3259,11 +3258,53 @@ CDocumentContent.prototype.AddSignatureLine = function(oSignatureDrawing)
         }
 	}
 };
+CDocumentContent.prototype.LoadChartData = function(bNeedRecalculate)
+{
+	if (docpostype_DrawingObjects === this.CurPos.Type)
+	{
+		return this.LogicDocument.DrawingObjects.loadChartData(bNeedRecalculate);
+	}
+};
 CDocumentContent.prototype.EditChart = function(Chart)
 {
 	if (docpostype_DrawingObjects === this.CurPos.Type)
 	{
 		return this.LogicDocument.DrawingObjects.editChart(Chart);
+	}
+};
+CDocumentContent.prototype.UpdateChart = function(Chart)
+{
+	if (docpostype_DrawingObjects === this.CurPos.Type)
+	{
+		return this.LogicDocument.DrawingObjects.updateChart(Chart);
+	}
+};
+CDocumentContent.prototype.OpenChartEditor = function()
+{
+	if (docpostype_DrawingObjects === this.CurPos.Type)
+	{
+		return this.LogicDocument.DrawingObjects.openChartEditor();
+	}
+};
+CDocumentContent.prototype.OpenOleEditor = function()
+{
+	if (docpostype_DrawingObjects === this.CurPos.Type)
+	{
+		return this.LogicDocument.DrawingObjects.openOleEditor();
+	}
+};
+CDocumentContent.prototype.ApplyChartSettings = function(oChartSettings)
+{
+	if (docpostype_DrawingObjects === this.CurPos.Type)
+	{
+		return this.LogicDocument.DrawingObjects.ApplyChartSettings(oChartSettings);
+	}
+};
+CDocumentContent.prototype.GetChartSettings = function()
+{
+	if (docpostype_DrawingObjects === this.CurPos.Type)
+	{
+		return this.LogicDocument.DrawingObjects.getChartSettings();
 	}
 };
 CDocumentContent.prototype.AddInlineTable = function(nCols, nRows, nMode)

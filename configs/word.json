@@ -15,7 +15,9 @@
 			"vendor/string.js",
 			"vendor/array.js",
 			"common/editorscommon.js",
-            "common/BulletPreviewDrawer.js",
+			"common/externalChartCollector.js",
+			"common/frameManager.js",
+			"common/BulletPreviewDrawer.js",
 			"common/HistoryCommon.js",
 			"common/TableId.js",
 			"common/TableIdChanges.js",
@@ -153,6 +155,7 @@
 			"common/wordcopypaste.js",
 			"common/intervalTree.js",
 
+			"cell/model/FormulaObjects/parserFormula.js",
 			"cell/model/SheetMemory.js",
 			"cell/model/WorkbookElems.js",
 			"cell/model/Workbook.js",
@@ -177,6 +180,7 @@
 			"word/Editor/GraphicObjects/Format/GroupPrototype.js",
 			"word/Editor/GraphicObjects/Format/ChartSpacePrototype.js",
 			"common/Drawings/Format/GraphicFrame.js",
+			"common/Drawings/Format/Controls.js",
 			"common/Drawings/Format/LockedCanvas.js",
 			"word/Editor/GraphicObjects/GraphicObjects.js",
 			"word/Editor/GraphicObjects/GraphicPage.js",
@@ -433,7 +437,9 @@
 			"common/plugins.js",
 			
 			"common/Native/native_graphics.js",
-						
+			
+			"word/Editor/document-visitor.js",
+			
 			"vendor/easysax.js",
 			"common/openxml.js"
 		],

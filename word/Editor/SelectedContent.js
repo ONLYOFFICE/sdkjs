@@ -101,6 +101,15 @@
 	{
 		this.Elements.push(oElement);
 	};
+	CSelectedContent.prototype.GetContentArray = function()
+	{
+		let content = [];
+		for (let i = 0, count = this.Elements.length; i < count; ++i)
+		{
+			content.push(this.Elements[i].Element);
+		}
+		return content;
+	};
 	CSelectedContent.prototype.EndCollect = function(oLogicDocument)
 	{
 		this.private_CollectObjects();

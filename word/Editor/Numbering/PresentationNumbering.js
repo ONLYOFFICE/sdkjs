@@ -561,7 +561,7 @@ CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
 		var r = this.m_oColor.r;
 		var g = this.m_oColor.g;
 		var b = this.m_oColor.b;
-		if(PDSE.Paragraph && PDSE.Paragraph.IsEmpty())
+		if(PDSE.Paragraph && PDSE.Paragraph.IsEmpty() && !(PDSE.Paragraph.LogicDocument && PDSE.Paragraph.LogicDocument.IsVisioEditor()))
 		{
 			var dAlpha = 0.4;
 			var rB, gB, bB;

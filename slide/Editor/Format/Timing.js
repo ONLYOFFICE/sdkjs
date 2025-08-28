@@ -7275,7 +7275,7 @@
         oHSL.L = Math.min(255, Math.max(0, 255 * (oFormatHSL.L + 100000) / 200000));
         var oRGBColor = {R: 255, G: 255, B: 255, A: 255};
         var oColorModifiers = new AscFormat.CColorModifiers();
-        oColorModifiers.HSL2RGB(oHSL, oRGBColor);
+        oColorModifiers.HSL2RGB(oHSL, oRGBColor, true);
         return oRGBColor;
     };
     CAnimClr.prototype.alignNumber = function (dVal, dMax) {
@@ -14141,137 +14141,142 @@
     MoveAnimationDrawObject.prototype.canResize = function () {
         return true;
     };
-    MoveAnimationDrawObject.prototype.draw = function (oGraphics) {
-        if (oGraphics.IsThumbnail === true ||
-            oGraphics.IsDemonstrationMode === true ||
-            AscCommon.IsShapeToImageConverter) {
-            return;
-        }
-        this.pen = this.pen1;
-        AscFormat.CShape.prototype.draw.call(this, oGraphics);
-        this.pen = this.pen2;
-        AscFormat.CShape.prototype.draw.call(this, oGraphics);
-        var oGeometry = this.spPr.geometry;
-        if (oGeometry) {
-            var oPath = oGeometry.pathLst[0];
-        }
-        if (oPath) {
-            var dStartX1, dStartX2, dStartY1, dStartY2;
-            var aCommands = oPath.ArrPathCommand, nCmd, oCmd;
-            var aPTS = [];
-            var bClosed = false;
-            for (var nCmd = 0; nCmd < aCommands.length; ++nCmd) {
-                oCmd = aCommands[nCmd];
-                if (oCmd.id === AscFormat.moveTo || oCmd.id === AscFormat.lineTo) {
-                    aPTS.push({x: oCmd.X, y: oCmd.Y})
-                } else if (oCmd.id === AscFormat.bezier4) {
-                    aPTS.push({x: oCmd.X0, y: oCmd.Y0});
-                    aPTS.push({x: oCmd.X1, y: oCmd.Y1});
-                    aPTS.push({x: oCmd.X2, y: oCmd.Y2});
-                } else if (oCmd.id === AscFormat.close) {
-                    bClosed = true;
-                }
-            }
-            if (aPTS.length > 1) {
-                oGraphics.SaveGrState();
-                // if(this.selected) {
-                //     var oTexture = this.getDrawingTexture(oGraphics);
-                //     var oTransform = null;
-                //     var dXS, dYS, dXE, dYE;
-                //     dXS = this.transform.TransformPointX(aPTS[0].x, aPTS[0].y);
-                //     dYS = this.transform.TransformPointY(aPTS[0].x, aPTS[0].y);
-                //     dXE = this.transform.TransformPointX(aPTS[aPTS.length - 1].x, aPTS[aPTS.length - 1].y);
-                //     dYE = this.transform.TransformPointY(aPTS[aPTS.length - 1].x, aPTS[aPTS.length - 1].y);
-                //     if(oTexture) {
-                //
-                //         oTransform = new AscCommon.CMatrix();
-                //         var hc = this.boundsByDrawing.w * 0.5;
-                //         var vc = this.boundsByDrawing.h * 0.5;
-                //         AscCommon.global_MatrixTransformer.TranslateAppend(oTransform, -hc + dXS, -vc + dYS);
-                //
-                //
-                //         oGraphics.put_GlobalAlpha(true, 0.5);
-                //         oTexture.draw(oGraphics, oTransform);
-                //
-                //         if(!bClosed) {
-                //             oTransform = new AscCommon.CMatrix();
-                //             AscCommon.global_MatrixTransformer.TranslateAppend(oTransform, -hc + dXE, -vc + dYE);
-                //             oTexture.draw(oGraphics, oTransform);
-                //         }
-                //         oGraphics.put_GlobalAlpha(false, 1);
-                //     }
-                // }
-                //draw start arrow
-                var dWidth = 5, dLen = 3;
-                var x0p, y0p, x1p, y1p, x2p, y2p, dx, dy, dStartLen, dWidthCoeff, dLenCoeff;
-                dx = aPTS[1].x - aPTS[0].x;
-                dy = aPTS[1].y - aPTS[0].y;
-                dStartLen = Math.sqrt(dx * dx + dy * dy);
-                dWidthCoeff = dWidth / dStartLen;
-                x0p = aPTS[0].x - dy * dWidthCoeff / 2;
-                y0p = aPTS[0].y + dx * dWidthCoeff / 2;
-                x1p = aPTS[0].x + dy * dWidthCoeff / 2;
-                y1p = aPTS[0].y - dx * dWidthCoeff / 2;
+	MoveAnimationDrawObject.prototype.draw = function (oGraphics) {
+		if (oGraphics.IsThumbnail === true ||
+			oGraphics.IsDemonstrationMode === true ||
+			AscCommon.IsShapeToImageConverter) {
+			return;
+		}
 
-                dLenCoeff = dLen / dStartLen;
-                x2p = aPTS[0].x + dx * dLenCoeff;
-                y2p = aPTS[0].y + dy * dLenCoeff;
-                oGraphics.transform3(this.transform);
-                oGraphics.b_color1(43, 166, 15, 128);
-                oGraphics.p_color(43, 166, 15, 255);
-                oGraphics._s()
-                oGraphics._m(x0p, y0p);
-                oGraphics._l(x1p, y1p);
-                oGraphics._l(x2p, y2p);
-                oGraphics._z();
-                oGraphics.df();
-                oGraphics.ds();
-                oGraphics._e();
+		// Draw dashed line (path itself)
+		this.pen = this.pen1;
+		AscFormat.CShape.prototype.draw.call(this, oGraphics);
+		this.pen = this.pen2;
+		AscFormat.CShape.prototype.draw.call(this, oGraphics);
 
+		const path = this.spPr.geometry && this.spPr.geometry.pathLst[0];
+		if (!path) return;
 
-                if (!bClosed) {
-                    dx = aPTS[aPTS.length - 2].x - aPTS[aPTS.length - 1].x;
-                    dy = aPTS[aPTS.length - 2].y - aPTS[aPTS.length - 1].y;
-                    dStartLen = Math.sqrt(dx * dx + dy * dy);
-                    dLenCoeff = dLen / dStartLen;
-                    dWidthCoeff = dWidth / dStartLen;
-                    var xp = aPTS[aPTS.length - 1].x + dx * dLenCoeff;
-                    var yp = aPTS[aPTS.length - 1].y + dy * dLenCoeff;
+		// Collect key points array
+		let aPTS = [];
+		let bClosed = false;
+		path.ArrPathCommand.forEach(function (command, index) {
+			switch (command.id) {
+				case AscFormat.moveTo:
+				case AscFormat.lineTo:
+					aPTS.push({ x: command.X, y: command.Y });
+					break;
 
+				case AscFormat.bezier4:
+					aPTS.push({ x: command.X0, y: command.Y0 });
+					aPTS.push({ x: command.X1, y: command.Y1 });
+					aPTS.push({ x: command.X2, y: command.Y2 });
+					break;
 
-                    x0p = xp - dy * dWidthCoeff / 2;
-                    y0p = yp + dx * dWidthCoeff / 2;
-                    x1p = xp + dy * dWidthCoeff / 2;
-                    y1p = yp - dx * dWidthCoeff / 2;
+				case AscFormat.close:
+					bClosed = true;
+					break;
+			}
+		});
 
-                    x2p = aPTS[aPTS.length - 1].x;
-                    y2p = aPTS[aPTS.length - 1].y;
-                    oGraphics.b_color1(222, 5, 5, 128);
-                    oGraphics.p_color(222, 5, 5, 255);
-                    oGraphics._s()
-                    oGraphics._m(x0p, y0p);
-                    oGraphics._l(x1p, y1p);
-                    oGraphics._l(x2p, y2p);
-                    oGraphics._z()
+		if (aPTS.length > 1) {
+			oGraphics.SaveGrState();
 
+			// Draw preview start and end shapes
+			if (this.selected) {
+				const dXS = this.transform.TransformPointX(aPTS[0].x, aPTS[0].y);
+				const dYS = this.transform.TransformPointY(aPTS[0].x, aPTS[0].y);
+				const dXE = this.transform.TransformPointX(aPTS[aPTS.length - 1].x, aPTS[aPTS.length - 1].y);
+				const dYE = this.transform.TransformPointY(aPTS[aPTS.length - 1].x, aPTS[aPTS.length - 1].y);
 
-                    x0p = aPTS[aPTS.length - 1].x - dy * dWidthCoeff / 2;
-                    y0p = aPTS[aPTS.length - 1].y + dx * dWidthCoeff / 2;
+				const texture = this.getDrawingTexture(oGraphics);
+				if (texture) {
 
-                    x1p = aPTS[aPTS.length - 1].x + dy * dWidthCoeff / 2;
-                    y1p = aPTS[aPTS.length - 1].y - dx * dWidthCoeff / 2;
-                    oGraphics._m(x0p, y0p);
-                    oGraphics._l(x1p, y1p);
+					oGraphics.put_GlobalAlpha(true, 0.5);
+					const horizontalCenter = this.boundsByDrawing.w * 0.5;
+					const verticalCenter = this.boundsByDrawing.h * 0.5;
 
-                    oGraphics.df();
-                    oGraphics.ds();
-                    oGraphics._e();
-                }
+					let oTransform = new AscCommon.CMatrix();
+					AscCommon.global_MatrixTransformer.TranslateAppend(oTransform, -horizontalCenter + dXS, -verticalCenter + dYS);
+					texture.draw(oGraphics, oTransform);
 
-                oGraphics.RestoreGrState();
-            }
-        }
-    };
+					if (!bClosed) {
+						oTransform = new AscCommon.CMatrix();
+						AscCommon.global_MatrixTransformer.TranslateAppend(oTransform, -horizontalCenter + dXE, -verticalCenter + dYE);
+						texture.draw(oGraphics, oTransform);
+					}
+					oGraphics.put_GlobalAlpha(false, 1);
+				}
+			}
+
+			// Draw start arrow
+			const dWidth = 5, dLen = 3;
+			var x0p, y0p, x1p, y1p, x2p, y2p, dx, dy, dStartLen, dWidthCoeff, dLenCoeff;
+			dx = aPTS[1].x - aPTS[0].x;
+			dy = aPTS[1].y - aPTS[0].y;
+			dStartLen = Math.sqrt(dx * dx + dy * dy);
+			dWidthCoeff = dWidth / dStartLen;
+			x0p = aPTS[0].x - dy * dWidthCoeff / 2;
+			y0p = aPTS[0].y + dx * dWidthCoeff / 2;
+			x1p = aPTS[0].x + dy * dWidthCoeff / 2;
+			y1p = aPTS[0].y - dx * dWidthCoeff / 2;
+
+			dLenCoeff = dLen / dStartLen;
+			x2p = aPTS[0].x + dx * dLenCoeff;
+			y2p = aPTS[0].y + dy * dLenCoeff;
+			oGraphics.transform3(this.transform);
+			oGraphics.b_color1(43, 166, 15, 128);
+			oGraphics.p_color(43, 166, 15, 255);
+			oGraphics._s();
+			oGraphics._m(x0p, y0p);
+			oGraphics._l(x1p, y1p);
+			oGraphics._l(x2p, y2p);
+			oGraphics._z();
+			oGraphics.df();
+			oGraphics.ds();
+			oGraphics._e();
+
+			if (!bClosed) {
+				// Draw end arrow
+				dx = aPTS[aPTS.length - 2].x - aPTS[aPTS.length - 1].x;
+				dy = aPTS[aPTS.length - 2].y - aPTS[aPTS.length - 1].y;
+				dStartLen = Math.sqrt(dx * dx + dy * dy);
+				dLenCoeff = dLen / dStartLen;
+				dWidthCoeff = dWidth / dStartLen;
+				var xp = aPTS[aPTS.length - 1].x + dx * dLenCoeff;
+				var yp = aPTS[aPTS.length - 1].y + dy * dLenCoeff;
+
+				x0p = xp - dy * dWidthCoeff / 2;
+				y0p = yp + dx * dWidthCoeff / 2;
+				x1p = xp + dy * dWidthCoeff / 2;
+				y1p = yp - dx * dWidthCoeff / 2;
+
+				x2p = aPTS[aPTS.length - 1].x;
+				y2p = aPTS[aPTS.length - 1].y;
+				oGraphics.b_color1(222, 5, 5, 128);
+				oGraphics.p_color(222, 5, 5, 255);
+				oGraphics._s()
+				oGraphics._m(x0p, y0p);
+				oGraphics._l(x1p, y1p);
+				oGraphics._l(x2p, y2p);
+				oGraphics._z()
+
+				x0p = aPTS[aPTS.length - 1].x - dy * dWidthCoeff / 2;
+				y0p = aPTS[aPTS.length - 1].y + dx * dWidthCoeff / 2;
+
+				x1p = aPTS[aPTS.length - 1].x + dy * dWidthCoeff / 2;
+				y1p = aPTS[aPTS.length - 1].y - dx * dWidthCoeff / 2;
+				oGraphics._m(x0p, y0p);
+				oGraphics._l(x1p, y1p);
+
+				oGraphics.df();
+				oGraphics.ds();
+				oGraphics._e();
+			}
+
+			oGraphics.RestoreGrState();
+		}
+	};
     MoveAnimationDrawObject.prototype.recalculate = function () {
         var oPresentation = editor.WordControl.m_oLogicDocument;
         var sPath = this.anim.path;

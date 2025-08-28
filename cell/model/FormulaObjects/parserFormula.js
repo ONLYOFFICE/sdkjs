@@ -5113,6 +5113,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 		};
 
+		forEachElementInRef(pushRanges, ref, ws, checkFormula);
+		return ranges;
+	}
+
+	function forEachElementInRef(callback, ref, ws, checkFormula) {
 		//TODO вызываю проверку на то, что это может быть формула только для печати. необходимо проверить везде - для этого необходимо просмотреть весь смежный функционал
 		var isFormula;
 		if(checkFormula && ref) {
@@ -5123,7 +5128,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 
 		if (isFormula && isFormula.type !== cElementType.error) {
-			pushRanges({oper: isFormula});
+			callback({oper: isFormula});
 		} else {
 			// ToDo in parser formula
 			if (ref[0] === '(') {
@@ -5144,12 +5149,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				var _f = new AscCommonExcel.parserFormula(refItem, null, ws);
 				var parseResult = new AscCommonExcel.ParseResult([]);
 				if (_f.parse(null, null, parseResult)) {
-					parseResult.refPos.forEach(pushRanges);
+					for (let i = 0; i < parseResult.refPos.length; i++) {
+						if (callback(parseResult.refPos[i])) {
+							break;
+						}
+					}
 				}
 			});
 		}
-
-		return ranges;
 	}
 
 
@@ -5904,77 +5911,6 @@ _func[cElementType.number][cElementType.array] = _func[cElementType.string][cEle
             return res;
         };
 
-
-_func.binarySearch = function ( sElem, arrTagert, regExp ) {
-	var first = 0, /* The number of the first element in the array */
-		last = arrTagert.length - 1, /* The number of the element in the array that comes AFTER the last one */
-		/* If the viewed segment is not empty, first<last */
-		mid;
-
-	var arrTagertOneType = [], isString = false;
-
-	for (var i = 0; i < arrTagert.length; i++) {
-		if ((arrTagert[i] instanceof cString || sElem instanceof cString) && !isString) {
-			i = 0;
-			isString = true;
-			sElem = new cString(sElem.toString().toLowerCase());
-		}
-		if (isString) {
-			arrTagertOneType[i] = new cString(arrTagert[i].toString().toLowerCase());
-		} else {
-			arrTagertOneType[i] = arrTagert[i].tocNumber();
-		}
-	}
-
-	// comparing the lengths of arrays and the first and last element
-	if (arrTagert.length === 0) {
-		return -1;
-		/* array empty */
-	} else if (arrTagert[0].value > sElem.value) {
-		return -2;
-	} else if (arrTagert[arrTagert.length - 1].value < sElem.value) {
-		return arrTagert.length - 1;
-	}
-
-	// according to the sorting in MS, the comparison will be like this: cError > cBool > cText > (cNumber == cEmpty)
-	while (first < last) {
-		mid = Math.floor(first + (last - first) / 2);
-		if (sElem.type !== arrTagert[mid].type) {
-			if (sElem.type === cElementType.empty || arrTagert[mid].type === cElementType.empty) {
-				if (sElem.value <= arrTagert[mid].value) {
-					// cEmpty.tocNumber() ?
-					last = mid;
-				} else {
-					first = mid + 1;
-				}
-			} else {
-				if (cElementTypeWeight.get(sElem.type) < cElementTypeWeight.get(arrTagert[mid].type)) {
-					last = mid;
-				} else {
-					first = mid + 1;
-				}
-			}
-		} else {
-			// if cError && cError ?
-			if (sElem.value < arrTagert[mid].value || ( regExp && regExp.test(arrTagert[mid].value) )) {
-				last = mid;
-			} else {
-				first = mid + 1;
-			}
-		}
-	}
-
-	/* If the conditional operator if(n==0) and so on is omitted at the beginning - then uncomment it here!    */
-	if (/* last<n &&*/ arrTagert[last].value === sElem.value) {
-		return last;
-		/* The desired element is found. last is the desired index */
-	} else {
-		return last - 1;
-		/* The desired element is not found. But if you suddenly need to insert it with a shift, its place is at last.    */
-	}
-
-};
-
 _func.lookupBinarySearch = function ( sElem, arrayNoEmpty, isByRangeCall, regExp ) {
 	let first = 0, last, mid;
 	let typedArr;
@@ -6025,7 +5961,7 @@ _func.lookupBinarySearch = function ( sElem, arrayNoEmpty, isByRangeCall, regExp
 	} else if (cacheIndex !== undefined && typedArr[cacheIndex].v.value <= sElem.value) {
 		return typedArr[cacheIndex].i;
 	} else {
-		return -2;
+		return -1;
 	}
 };
 
@@ -9926,7 +9862,15 @@ function parserFormula( formula, parent, _ws ) {
 			ref = this.outStack[i];
 
 			if (ref.type === cElementType.table) {
-				this.wb.dependencyFormulas.startListeningDefName(ref.tableName, this);
+				// analyze table structure - if its full link, write defnamelistener
+				const isFullTableLink = ref.reservedColumnIndex === AscCommon.FormulaTablePartInfo.all;
+				const refAreaRange = ref.area && ref.area.getRange && ref.area.getRange();
+				
+				if (isFullTableLink || !refAreaRange) {
+					this.wb.dependencyFormulas.startListeningDefName(ref.tableName, this, null, ref);
+				} else {
+					this._buildDependenciesRef(ref.ws.getId(), refAreaRange.getBBox0(), null, /*isStart*/true);
+				}
 			} else if (ref.type === cElementType.name) {
 				this.wb.dependencyFormulas.startListeningDefName(ref.value, this);
 			} else if (ref.type === cElementType.name3D) {
@@ -10002,7 +9946,14 @@ function parserFormula( formula, parent, _ws ) {
 			ref = this.outStack[i];
 
 			if (ref.type === cElementType.table) {
-				this.wb.dependencyFormulas.endListeningDefName(ref.tableName, this);
+				const isFullTableLink = ref.reservedColumnIndex === AscCommon.FormulaTablePartInfo.all;
+				const refAreaRange = ref.area && ref.area.getRange && ref.area.getRange();
+				
+				if (isFullTableLink || !refAreaRange) {
+					this.wb.dependencyFormulas.endListeningDefName(ref.tableName, this);
+				} else {
+					this._buildDependenciesRef(ref.ws.getId(), refAreaRange.getBBox0(), null, /*isStart*/false);
+				}
 			} else if (ref.type === cElementType.name) {
 				this.wb.dependencyFormulas.endListeningDefName(ref.value, this);
 			} else if (ref.type === cElementType.name3D) {
@@ -12033,6 +11984,7 @@ function parserFormula( formula, parent, _ws ) {
 
 	window['AscCommonExcel'].getFormulasInfo = getFormulasInfo;
 	window['AscCommonExcel'].getRangeByRef = getRangeByRef;
+	window['AscCommonExcel'].forEachElementInRef = forEachElementInRef;
 	window['AscCommonExcel'].addNewFunction = addNewFunction;
 	window['AscCommonExcel'].removeCustomFunction = removeCustomFunction;
 	window['AscCommonExcel'].getRangeByName = getRangeByName;

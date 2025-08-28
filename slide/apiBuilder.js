@@ -461,20 +461,33 @@
      * @returns {?ApiMaster} - returns null if presentation theme doesn't exist.
      * @see office-js-api/Examples/{Editor}/Api/Methods/CreateMaster.js
 	 */
-    Api.prototype.CreateMaster = function(oTheme){
-        if (!oTheme || !oTheme.GetClassType || oTheme.GetClassType() !== "theme")
-        {
-            if (editor.GetPresentation().GetMaster(0))
-                oTheme = editor.GetPresentation().GetMaster(0).GetTheme();
+    Api.prototype.CreateMaster = function(oTheme)
+	{
+		const rawMaster = new AscCommonSlide.MasterSlide();
+
+		const isThemeValid = oTheme && oTheme.GetClassType && oTheme.GetClassType() === "theme";
+        if (!isThemeValid) {
+			
+			const zeroMaster = editor.GetPresentation().GetMaster(0);
+            if (zeroMaster) {
+				oTheme = zeroMaster.GetTheme();
+			} else {
+				const currentTheme = Asc.editor.getCurrentTheme();
+				const themeLoadInfo = new AscCommonSlide.CThemeLoadInfo();
+				themeLoadInfo.Master = rawMaster;
+				themeLoadInfo.Layouts = rawMaster.sldLayoutLst;
+				themeLoadInfo.Theme = currentTheme;
+				oTheme = new ApiTheme(themeLoadInfo);
+			}
         }
         
         if (!oTheme)
             return null;
 
         var oThemeCopy = oTheme.ThemeInfo.Theme.createDuplicate();
-        var oMaster = new ApiMaster(new AscCommonSlide.MasterSlide());
+        const oMaster = new ApiMaster(rawMaster);
         oMaster.Master.setTheme(oThemeCopy);
-				oMaster.Master.setPreserve(true);
+		oMaster.Master.setPreserve(true);
 
         return oMaster;
     };
@@ -542,7 +555,7 @@
         oFormatScheme.GetClassType() !== "themeFormatScheme" || oFontScheme.GetClassType() !== "themeFontScheme")
             return null;
 
-        var oPresentation      = editor.GetPresentation().Presentation;
+        var oPresentation      = private_GetPresentation();
         var oThemeLoadInfo     = new AscCommonSlide.CThemeLoadInfo();
         oThemeLoadInfo.Master  = oMaster.Master;
         oThemeLoadInfo.Layouts = oMaster.Master.sldLayoutLst;
@@ -1360,11 +1373,12 @@
     {
         if (oApiMaster && oApiMaster.GetClassType && oApiMaster.GetClassType() === "master")
         {
-            if (!nPos || nPos < 0 || nPos > this.Presentation.slideMasters.length)
-                nPos = this.Presentation.slideMasters.length;
+			let master = oApiMaster.Master;
+			let position = getArrayAddIndex(nPos, master, this.Presentation.slideMasters);
+			if (position === null)
+				return false;
 
-            this.Presentation.addSlideMaster(nPos, oApiMaster.Master)
-
+            this.Presentation.addSlideMaster(position, master)
             return true;
         }
 
@@ -1544,6 +1558,18 @@
 	 */
 	ApiPresentation.prototype.GetAllOleObjects = function () {
 		return this._collectAllObjects('GetAllOleObjects');
+	};
+
+	/**
+	 * Returns an array with all tables from the current presentation (including slide masters and slide layouts).
+	 *
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiTable[]}
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetAllTables.js
+	 */
+	ApiPresentation.prototype.GetAllTables = function () {
+		return this._collectAllObjects('GetAllTables');
 	};
 
 	/**
@@ -1750,6 +1776,69 @@
 		}
 
 		return true;
+	};
+	/**
+	* Adds a math equation to the current document.
+	* @memberof ApiPresentation
+	* @typeofeditors ["CPE"]
+	* @param {string} sText - The math equation text.
+	* @param {string} sFormat - The math equation format. Possible values are "unicode" and "latex".
+	* @returns {boolean}
+	* @since 9.0.0
+	* @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/AddMathEquation.js
+	*/
+	ApiPresentation.prototype.AddMathEquation = function (sText, sFormat) {
+		if (!Asc.editor) {
+			return false;
+		}
+
+		Asc.editor.addBuilderFont('Cambria Math');
+		Asc.editor.loadBuilderFonts(insertMathEquation);
+
+		function insertMathEquation() {
+			const format = AscBuilder.GetStringParameter(sFormat, "unicode");
+			const text = AscBuilder.GetStringParameter(sText, "");
+
+			const logicDocument = Asc.editor.getLogicDocument();
+			logicDocument.RemoveBeforePaste();
+			logicDocument.RemoveSelection();
+
+			const mathPr = new AscCommonWord.MathMenu(c_oAscMathType.Default_Text, logicDocument.GetDirectTextPr());
+			mathPr.SetText(text);
+
+			logicDocument.AddToParagraph(mathPr);
+
+			const targetDocContent = editor.getGraphicController().getSelectedArray()[0].txBody.content;
+			const info = new CSelectedElementsInfo();
+			targetDocContent.GetSelectedElementsInfo(info);
+
+			const paraMath = info.GetMath();
+			if (!paraMath) {
+				return;
+			}
+
+			paraMath.ConvertView(false, 'latex' === format ? Asc.c_oAscMathInputType.LaTeX : Asc.c_oAscMathInputType.Unicode);
+
+			const graphicController = Asc.editor.getGraphicController();
+			graphicController.startRecalculate();
+		}
+
+		return true;
+	};
+
+
+    /**
+	 * Retrieves the custom XML manager associated with the presentation.
+	 * This manager allows manipulation and access to custom XML parts within the presentation.
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @since 9.1.0
+	 * @returns {ApiCustomXmlParts|null} Returns an instance of ApiCustomXmlParts if the custom XML manager exists, otherwise returns null.
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetCustomXmlParts.js
+	 */
+	ApiPresentation.prototype.GetCustomXmlParts = function()
+	{
+		return new AscBuilder.ApiCustomXmlParts(this.Presentation);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -1994,15 +2083,11 @@
         if (!this.Master)
             return null;
         
-        var oPresentation       = editor.GetPresentation().Presentation;
-        var oMasterCopy         = this.Master.createDuplicate();
-        
-        if (!nPos || nPos < 0 || nPos > oPresentation.Slides.length)
-            nPos = oPresentation.slideMasters.length;
-
-        oPresentation.addSlideMaster(nPos, oMasterCopy);
-
-        return new ApiMaster(oMasterCopy);
+        let presentation = private_GetPresentation();
+        let masterCopy = this.Master.createDuplicate();
+        let position = getAddIndex(nPos, presentation.slideMasters.length);
+		presentation.addSlideMaster(position, masterCopy);
+        return new ApiMaster(masterCopy);
     };
 
     /**
@@ -2131,6 +2216,25 @@
 		return private_GetAllDrawingsWithType(this.Master.cSld.spTree, AscDFH.historyitem_type_OleObject,
 			function (oDrawing) {return new ApiOleObject(oDrawing);});
     };
+
+	/**
+	 * Returns an array with all tables from the slide master.
+	 *
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiTable[]}
+	 * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/GetAllTables.js
+	 */
+	ApiMaster.prototype.GetAllTables = function () {
+		const tables = [];
+		if (this.Master) {
+			this.Master.cSld.spTree.forEach(function (obj) {
+				const isTable = obj.getObjectType() === AscDFH.historyitem_type_GraphicFrame && obj.isTable();
+				if (isTable) tables.push(new ApiTable(obj));
+			})
+		}
+		return tables;
+	};
+
     /**
 	 * Converts the ApiMaster object into the JSON object.
 	 * @memberof ApiMaster
@@ -2420,18 +2524,15 @@
      * Returns null if slide layout doesn't exist or is not in the slide master.
      * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/Duplicate.js
 	 */
-    ApiLayout.prototype.Duplicate = function(nPos){
+    ApiLayout.prototype.Duplicate = function(nPos)
+	{
         if (this.Layout && this.Layout.Master)
         {
-            var oMaster     = this.Layout.Master;
-            var oLayoutCopy = this.Layout.createDuplicate();
-            
-            if (nPos < 0 || nPos > this.Layout.Master.sldLayoutLst.length || !nPos)
-                nPos = oMaster.sldLayoutLst.length;
-    
-            oMaster.addToSldLayoutLstToPos(nPos, oLayoutCopy);
-    
-            return new ApiLayout(oLayoutCopy);
+            let master     = this.Layout.Master;
+            let layoutCopy = this.Layout.createDuplicate();
+            let position = getAddIndex(nPos, master.sldLayoutLst.length);
+			master.addToSldLayoutLstToPos(position, layoutCopy);
+            return new ApiLayout(layoutCopy);
         }
         return null;
     };
@@ -2527,6 +2628,24 @@
 		return private_GetAllDrawingsWithType(this.Layout.cSld.spTree, AscDFH.historyitem_type_OleObject,
 			function (oDrawing) {return new ApiOleObject(oDrawing);});
     };
+
+	/**
+	 * Returns an array with all tables from the current slide layout.
+	 *
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiTable[]}
+	 * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/GetAllTables.js
+	 */
+	ApiLayout.prototype.GetAllTables = function () {
+		const tables = [];
+		if (this.Layout) {
+			this.Layout.cSld.spTree.forEach(function (obj) {
+				const isTable = obj.getObjectType() === AscDFH.historyitem_type_GraphicFrame && obj.isTable();
+				if (isTable) tables.push(new ApiTable(obj));
+			})
+		}
+		return tables;
+	};
 
     /**
      * Returns the parent slide master of the current layout.
@@ -3383,8 +3502,8 @@
         if (!this.Slide)
             return false;
         
-        var oPresentation = editor.GetPresentation().Presentation;
-        var nPosToDelete  = this.GetSlideIndex();
+        let oPresentation = private_GetPresentation();
+        let nPosToDelete  = this.GetSlideIndex();
 
         if (nPosToDelete > -1)
         {
@@ -3418,19 +3537,16 @@
      * Returns null if slide doesn't exist or is not in the presentation.
      * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/Duplicate.js
 	 */
-    ApiSlide.prototype.Duplicate = function(nPos){
+    ApiSlide.prototype.Duplicate = function(nPos)
+	{
         if (!this.Slide)
             return null;
         
-        var oPresentation = editor.GetPresentation().Presentation;
-        var oSlideCopy    = this.Slide.createDuplicate();
-        
-        if (nPos < 0 || nPos > oPresentation.Slides.length || !nPos)
-            nPos = oPresentation.Slides.length;
-
-        oPresentation.insertSlide(nPos, oSlideCopy);
-
-        return new ApiSlide(oSlideCopy);
+        let presentation = private_GetPresentation();
+        let slideCopy = this.Slide.createDuplicate();
+        let position = getAddIndex(nPos, presentation.Slides.length);
+		presentation.insertSlide(position, slideCopy);
+        return new ApiSlide(slideCopy);
     };
 
     /**
@@ -3441,7 +3557,7 @@
      * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/MoveTo.js
 	 */
     ApiSlide.prototype.MoveTo = function(nPos){
-        var oPresentation = editor.GetPresentation().Presentation;
+        var oPresentation = private_GetPresentation();
 
         if (!this.Slide || nPos < 0 || nPos > oPresentation.Slides.length)
             return false;
@@ -3468,7 +3584,7 @@
         if (!this.Slide)
             return -1;
         
-        var oPresentation = editor.GetPresentation().Presentation;
+        var oPresentation = private_GetPresentation();
 
         for (var Index = 0; Index < oPresentation.Slides.length; Index++)
         {
@@ -3757,6 +3873,24 @@
 			function (oDrawing) {return new ApiOleObject(oDrawing);});
     };
 
+	/**
+	 * Returns an array with all tables from the current slide.
+	 *
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiTable[]}
+	 * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetAllTables.js
+	 */
+	ApiSlide.prototype.GetAllTables = function () {
+		const tables = [];
+		if (this.Slide) {
+			this.Slide.cSld.spTree.forEach(function (obj) {
+				const isTable = obj.getObjectType() === AscDFH.historyitem_type_GraphicFrame && obj.isTable();
+				if (isTable) tables.push(new ApiTable(obj));
+			})
+		}
+		return tables;
+	};
+
     /**
 	 * Converts the ApiSlide object into the JSON object.
 	 * @memberof ApiSlide
@@ -3962,7 +4096,7 @@
 		const oBodyShape = this.GetBodyShape();
 		if (oBodyShape) {
 
-			const oDocContent = oBodyShape.GetDocContent();
+			const oDocContent = oBodyShape.GetContent();
 			if (oDocContent) {
 
 				const oParagraph = oDocContent.GetElement(0);
@@ -3975,6 +4109,26 @@
 		}
 
 		return false;
+	};
+
+	/**
+	 * Gets the text from the body shape of the current notes page.
+	 *
+	 * @typeofeditors ["CPE"]
+	 * @memberof ApiNotesPage
+	 * @returns {string}
+     * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiNotesPage/Methods/GetBodyShapeText.js
+	 */
+	ApiNotesPage.prototype.GetBodyShapeText = function (sText) {
+		const oBodyShape = this.GetBodyShape();
+		if (oBodyShape) {
+			const oDocContent = oBodyShape.GetContent();
+			if (oDocContent) {
+				return oDocContent.GetText();
+			}
+		}
+		return '';
 	};
 
     ApiNotesPage.prototype.GetTheme = function(){
@@ -5414,6 +5568,7 @@
     ApiPresentation.prototype["SlidesToJSON"]             = ApiPresentation.prototype.SlidesToJSON;
     ApiPresentation.prototype["ToJSON"]                   = ApiPresentation.prototype.ToJSON;
     ApiPresentation.prototype["GetAllOleObjects"]         = ApiPresentation.prototype.GetAllOleObjects;
+    ApiPresentation.prototype["GetAllTables"]             = ApiPresentation.prototype.GetAllTables;
     ApiPresentation.prototype["GetAllCharts"]             = ApiPresentation.prototype.GetAllCharts;
     ApiPresentation.prototype["GetAllShapes"]             = ApiPresentation.prototype.GetAllShapes;
     ApiPresentation.prototype["GetAllImages"]             = ApiPresentation.prototype.GetAllImages;
@@ -5443,6 +5598,7 @@
     ApiMaster.prototype["GetAllImages"]                   = ApiMaster.prototype.GetAllImages;
     ApiMaster.prototype["GetAllCharts"]                   = ApiMaster.prototype.GetAllCharts;
     ApiMaster.prototype["GetAllOleObjects"]               = ApiMaster.prototype.GetAllOleObjects;
+    ApiMaster.prototype["GetAllTables"]                   = ApiMaster.prototype.GetAllTables;
     ApiMaster.prototype["ToJSON"]                         = ApiMaster.prototype.ToJSON;
     ApiMaster.prototype["GetDrawingsByPlaceholderType"]   = ApiMaster.prototype.GetDrawingsByPlaceholderType;
     ApiMaster.prototype["GroupDrawings"]                  = ApiMaster.prototype.GroupDrawings;
@@ -5466,6 +5622,7 @@
     ApiLayout.prototype["GetAllImages"]                   = ApiLayout.prototype.GetAllImages;
     ApiLayout.prototype["GetAllCharts"]                   = ApiLayout.prototype.GetAllCharts;
     ApiLayout.prototype["GetAllOleObjects"]               = ApiLayout.prototype.GetAllOleObjects;
+    ApiLayout.prototype["GetAllTables"]                   = ApiLayout.prototype.GetAllTables;
     ApiLayout.prototype["GetMaster"]                      = ApiLayout.prototype.GetMaster;
     ApiLayout.prototype["ToJSON"]                         = ApiLayout.prototype.ToJSON;
     ApiLayout.prototype["GetDrawingsByPlaceholderType"]   = ApiLayout.prototype.GetDrawingsByPlaceholderType;
@@ -5533,6 +5690,7 @@
     ApiSlide.prototype["GetAllImages"]                    = ApiSlide.prototype.GetAllImages;
     ApiSlide.prototype["GetAllCharts"]                    = ApiSlide.prototype.GetAllCharts;
     ApiSlide.prototype["GetAllOleObjects"]                = ApiSlide.prototype.GetAllOleObjects;
+    ApiSlide.prototype["GetAllTables"]                    = ApiSlide.prototype.GetAllTables;
     ApiSlide.prototype["ToJSON"]                          = ApiSlide.prototype.ToJSON;
     ApiSlide.prototype["GetDrawingsByPlaceholderType"]    = ApiSlide.prototype.GetDrawingsByPlaceholderType;
     ApiSlide.prototype["Select"]                          = ApiSlide.prototype.Select;
@@ -5770,7 +5928,7 @@
     }
 
     function private_GetPresentation(){
-        return editor.WordControl.m_oLogicDocument;
+        return Asc.editor.WordControl.m_oLogicDocument;
     }
 
     function private_EMU2MM(EMU)
@@ -5779,7 +5937,7 @@
     }
 
     function private_GetApi(){
-        return editor;
+        return Asc.editor;
     }
 
 
@@ -6024,6 +6182,24 @@
 		}
 		return aWrappers;
 	}
+	function getArrayAddIndex(position, element, aArray) {
+		if(!element) return null;
+		let arrayLength = aArray.length;
+		for(let idx = 0; idx < arrayLength; ++idx) {
+			if(aArray[idx] === element) {
+				return null;
+			}
+		}
+		return getAddIndex(position, arrayLength);
+	}
+
+	function getAddIndex(position, arrayLength) {
+		if(!AscFormat.isRealNumber(position) || position < 0 || position > arrayLength) {
+			return arrayLength;
+		}
+		return position;
+	}
+
 	window['AscBuilder'] = window['AscBuilder'] || {};
 	window['AscBuilder'].ApiShape = ApiShape;
 	window['AscBuilder'].ApiImage = ApiImage;

@@ -72,7 +72,7 @@
 		End_CollaborationEditing : function() {},
 		ConvertCoordsToCursorWR : function() {return {X : 0, Y : 0};},
 		Set_RulerState_Table : function() {},
-		scrollToTarget : function() {}
+		scrollToTarget : function() {},
 	};
 
 	drawingDocument.CanvasHit = document.createElement('canvas');
@@ -169,6 +169,10 @@
 	editor.initCollaborativeEditing = AscCommon.DocumentEditorApi.prototype.initCollaborativeEditing.bind(editor);
 	editor.asc_PasteData = AscCommon.DocumentEditorApi.prototype.asc_PasteData.bind(editor);
 	
+	editor.externalChartCollector = {
+		onUpdateExternalList: function () {},
+		checkChart          : function () {}
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.DrawingDocument = drawingDocument;
 	AscTest.Editor          = editor;

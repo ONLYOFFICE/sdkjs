@@ -56,6 +56,66 @@ $(function () {
 	};
 	AscCommonExcel.WorkbookView.prototype.restoreFocus = function () {
 	};
+	AscCommonExcel.WorkbookView.prototype._onChangeSelection = function (isStartPoint, dc, dr, isCoord, isCtrl, callback) {
+        if (!this._checkStopCellEditorInFormulas()) {
+            return;
+        }
+
+        var ws = this.getWorksheet();
+		if (ws.model.getSheetProtection(Asc.c_oAscSheetProtectType.selectUnlockedCells)) {
+			return;
+		}
+		if (ws.model.getSheetProtection(Asc.c_oAscSheetProtectType.selectLockedCells)) {
+			//TODO _getRangeByXY ?
+			var newRange = isCoord ? ws._getRangeByXY(dc, dr) :
+				ws._calcSelectionEndPointByOffset(dc, dr);
+			var lockedCell = ws.model.getLockedCell(newRange.c2, newRange.r2);
+			if (lockedCell || lockedCell === null) {
+				return;
+			}
+		}
+
+        if (this.selectionDialogMode && !ws.model.selectionRange) {
+            if (isCoord) {
+                ws.model.selectionRange = new AscCommonExcel.SelectionRange(ws.model);
+
+				// remove first range if we paste argument with ctrl key
+				if (isCtrl && ws.model.selectionRange.ranges && Array.isArray(ws.model.selectionRange.ranges)) {
+					ws.model.selectionRange.ranges.shift();
+				}
+
+                isStartPoint = true;
+            } else {
+                ws.model.selectionRange = ws.model.copySelection.clone();
+            }
+        }
+
+        var t = this;
+        var d = isStartPoint ? ws.changeSelectionStartPoint(dc, dr, isCoord, isCtrl) :
+            ws.changeSelectionEndPoint(dc, dr, isCoord, isCoord && this.keepType);
+        if (!isCoord && !isStartPoint) {
+            // Выделение с зажатым shift
+            this.canUpdateAfterShiftUp = true;
+        }
+        this.keepType = isCoord;
+        // if (isCoord && !this.timerEnd && this.timerId === null) {
+        //     this.timerId = setTimeout(function () {
+        //         var arrClose = [];
+        //         arrClose.push(new asc_CMM({type: c_oAscMouseMoveType.None}));
+        //         t.handlers.trigger("asc_onMouseMove", arrClose);
+        //         t._onUpdateCursor(AscCommon.Cursors.CellCur);
+        //         t.timerId = null;
+        //         t.timerEnd = true;
+        //     }, 1000);
+        // }
+
+        if (this.isFormulaEditMode && this.isCellEditMode && this.cellEditor && this.cellEditor.openFromTopLine) {
+            /* set focus to the top formula entry line */
+            this.cellEditor.restoreFocus();
+        }
+
+        AscCommonExcel.applyFunction(callback, d);
+    };
 	AscCommonExcel.WorksheetView.prototype._init = function () {
 	};
 	AscCommonExcel.WorksheetView.prototype.updateRanges = function () {
@@ -432,6 +492,13 @@ $(function () {
 		autoFillRange = getRange(13, autofillR1, 13, r2To);
 		autoFillAssert(assert, autoFillRange, expectedDataShortLower, `Case: ${descSequenceType} Short name Camel-registry - su.`);
 
+	}
+
+	function CacheColumn() {
+	    this.left = 0;
+		this.width = 0;
+
+		this._widthForPrint = null;
 	}
 
 	QUnit.test("Test: \"Move rows/cols\"", function (assert) {
@@ -7559,6 +7626,497 @@ $(function () {
 		assert.strictEqual(ws.selectionRange.getLast().getName(), "A1:C3");
 		api.wb._onSelectAllByRange();
 		assert.strictEqual(ws.selectionRange.getLast().getType(), Asc.c_oAscSelectionType.RangeMax);
+	});
+
+	QUnit.test('Selection in formulas test', function (assert) {
+
+		ws.getRange2("A1:Z100").cleanAll();
+
+		// remove all data from selection
+		let selectedRange = ws.getRange2("A1:Z100");
+		wsView.setSelection(selectedRange.bbox);
+		wsView.emptySelection(Asc.c_oAscCleanOptions.All);
+
+		// remove defnames from wb
+		wb.dependencyFormulas._foreachDefName(function(defName) {
+			wb.dependencyFormulas.removeDefName(undefined, defName.name);
+		});
+
+		ws.getRange2("A1").setValue("1");
+		ws.getRange2("A2").setValue("2");
+		ws.getRange2("B1").setValue("3");
+		ws.getRange2("B2").setValue("4");
+		ws.getRange2("C2").setValue("5");
+
+		api.wb.cellEditor =  {
+			data : {},
+			changeCellText: function () {},
+			canEnterCellRange: function () {
+				return true;
+			},
+			getText: function () {
+				return "";
+			}
+		};
+
+		// set params to correct function start
+		api.wb.wsActive = ws.getIndex();
+		api.wb.setCellEditMode(true);
+		api.wb.isFormulaEditMode = true;
+		api.wb.selectionDialogMode = true;
+
+		ws.selectionRange = null;
+
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		wsView.cols[0] = new CacheColumn();
+
+		let isStartPoint = true, isCoord = true, isCtrl = true;
+		let dc = 0, dr = 0, callback;
+
+		// selection check with ctrl
+		assert.strictEqual(ws.selectionRange, null, "Ranges before cell select by coords with ctrl=true");
+		api.wb._onChangeSelection(isStartPoint, dc, dr, isCoord, isCtrl, callback);
+		assert.strictEqual(ws.selectionRange.ranges.length, 1, "Ranges after first cell select by dc: " + dc + " dr: " + dr + " coords with ctrl=true");
+		assert.strictEqual(wsView.getSelectionRangeValue(), "A1", "Selection in cell format by dc: " + dc + " dr: " + dr + " coords with ctrl=true");
+
+		api.wb._onChangeSelection(isStartPoint, dc, dr, isCoord, isCtrl, callback);
+		assert.strictEqual(ws.selectionRange.ranges.length, 2, "Ranges after second cell select by dc: " + dc + " dr: " + dr + " coords with ctrl=true");
+		assert.strictEqual(wsView.getSelectionRangeValue(), "A1,A1", "Selection in cell format by dc: " + dc + " dr: " + dr + " coords with ctrl=true");
+
+		api.wb._onChangeSelection(isStartPoint, dc, dr, isCoord, isCtrl, callback);
+		assert.strictEqual(ws.selectionRange.ranges.length, 3, "Ranges after third cell select by dc: " + dc + " dr: " + dr + " coords with ctrl=true");
+		assert.strictEqual(wsView.getSelectionRangeValue(), "A1,A1,A1", "Selection in cell format by dc: " + dc + " dr: " + dr + " coords with ctrl=true");
+
+		isCtrl = false;
+		api.wb._onChangeSelection(isStartPoint, dc, dr, isCoord, isCtrl, callback);
+		assert.strictEqual(ws.selectionRange.ranges.length, 1, "Ranges after fourth cell select by dc: " + dc + " dr: " + dr + " coords with ctrl=false");
+		assert.strictEqual(wsView.getSelectionRangeValue(), "A1", "Selection in cell format by dc: " + dc + " dr: " + dr + " coords with ctrl=false");
+		
+		// todo add more coords to test in _onChangeSelection?
+		
+		api.wb.isFormulaEditMode = false;
+		api.wb.selectionDialogMode = false;
+	});
+
+	QUnit.test("Test: \"Formulas calc test\"", function (assert) {
+		let cellWithFormula, fillRange, array;
+			
+		// wb.dependencyFormulas.unlockRecal();
+
+		ws.getRange2("A1:F10").cleanAll();
+		ws.getRange2("A1").setValue("1");
+		ws.getRange2("A2").setValue("2");
+		ws.getRange2("A3").setValue("3");
+		ws.getRange2("B1").setValue("+5");
+		ws.getRange2("B2").setValue("+5+5");
+		ws.getRange2("B3").setValue("-5");
+		ws.getRange2("B4").setValue("-5-5");
+
+		// set flags for CSE formula call
+		let flags = wsView._getCellFlags(0, 2);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// set selection C1
+		fillRange = ws.getRange2("C1");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+
+		let fragment = ws.getRange2("C1").getValueForEdit2();
+		let resCell = ws.getRange2("C1");
+		
+		// MDETERM
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in C1 before =MDETERM({1,2,3,4}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in C1 before =MDETERM({1,2,3,4}) calculate");
+		fragment[0].setFragmentText("=MDETERM({1,2,3,4})");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Value in C1 after =MDETERM({1,2,3,4}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=MDETERM({1,2,3,4})", "Formula in C1 after =MDETERM({1,2,3,4}) calculate");
+
+
+		assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Value in C1 before =MDETERM({1,2;10,11}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=MDETERM({1,2,3,4})", "Formula in C1 before =MDETERM({1,2;10,11}) calculate");
+		fragment[0].setFragmentText("=MDETERM({1,2;10,11})");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "-9", "Value in C1 after =MDETERM({1,2;10,11}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=MDETERM({1,2;10,11})", "Formula in C1 after =MDETERM({1,2;10,11}) calculate");
+
+		
+	});
+
+	QUnit.test("Test: \"Workbook dependencies tests\"", function (assert) {
+		let cellWithFormula, fillRange, array, wsID = ws.getId();
+			
+		// wb.dependencyFormulas.unlockRecal();
+
+		ws.getRange2("A1:F10").cleanAll();
+		// set flags for CSE formula call
+		let flags = wsView._getCellFlags(0, 2);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// set selection C1
+		fillRange = ws.getRange2("C10");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		
+		// A1:D5 - Full Table
+		// A2:D4 - Table without headers
+		// A1:A4 - First Column and so on...
+		let dependencyFormulas = wb.dependencyFormulas;
+		let sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		let defNameListeners = dependencyFormulas.defNameListeners;
+
+		// set values and props for table
+		ws.getRange2("A1:D3").setValue("1");
+		let tableProp = AscCommonExcel.AddFormatTableOptions();
+		tableProp.asc_setRange("A1:D3");
+		tableProp.asc_setIsTitle(false);
+		
+		ws.autoFilters.addAutoFilter("TableStyleLight1", ws.selectionRange.getLast().clone(), tableProp);
+
+		let tables = wsView.model.autoFilters.getTablesIntersectionRange(ws.getRange2("A1").bbox);
+		assert.strictEqual(tables.length, 1, "Table was created without selection of formula. Compare tables length");
+
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after create the table");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after create the table");
+
+		let table = tables[0];
+		let tableName = table.DisplayName;
+
+		let fragment = ws.getRange2("C10").getValueForEdit2();
+		let resCell = ws.getRange2("C10");
+		// Table
+		// Table link without headers
+		fragment[0].setFragmentText("=SUM("+tableName+")");
+		// resCell = ws.getRange2("C10");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "12", "Value in C10 after =SUM(tableName) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM("+tableName+")", "Formula in C10 after =SUM(tableName) calculate");
+		// ws.getRange2("C10").setValue("=SUM("+tableName+")");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 2, "AreaMap listeners after set value =SUM(tableName)");
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap["A2:D4"].listeners).length, 1, "A2:D4(Table) listeners after set value =SUM(tableName)");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after set value =SUM(tableName)");
+
+		// delete formula
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after =22 calculate(remove =SUM(table)");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after =22 calculate(remove =SUM(table)");
+		// ws.getRange2("C10").setValue("22");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after delete value =SUM(tableName)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after delete value =SUM(tableName)");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after delete value =SUM(tableName)");
+
+
+		// Table[#All]
+		// Table link with headers
+		fragment[0].setFragmentText("=SUM("+tableName+"[#All])");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "12", "Value in C10 after =SUM("+tableName+"[#All]) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM("+tableName+"[#All])", "Formula in C10 after =SUM("+tableName+"[#All]) calculate");
+		// ws.getRange2("C10").setValue("=SUM("+tableName+"[#All])");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after set value =SUM(tableName#All)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after set value =SUM(tableName#All)");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 1, "DefNameListeners after set value =SUM(tableName#All)");
+
+		// delete formula
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after =22 calculate(remove =SUM(table[#All])");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after =22 calculate(remove =SUM(table[#All])");
+		// ws.getRange2("C10").setValue("22");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after delete value =SUM(tableName#All)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after delete value =SUM(tableName#All)");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after delete value =SUM(tableName#All)");
+
+
+		// Table[Column1]
+		// Table columns link without headers
+		fragment[0].setFragmentText("=SUM("+tableName+"[Column1])");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value in C10 after =SUM("+tableName+"[Column1]) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM("+tableName+"[Column1])", "Formula in C10 after =SUM("+tableName+"[Column1]) calculate");
+		// ws.getRange2("C10").setValue("=SUM("+tableName+"[Column1])");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 2, "AreaMap listeners after set value =SUM(Column1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after set value =SUM(Column1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"] !== undefined, true, "A2:A4(Column) listeners after set value =SUM(Column1)");
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap["A2:A4"].listeners).length, 1, "A2:A4(Column) listeners after set value =SUM(Column1)");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after set value =SUM(Column1)");
+
+		// delete formula
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after =SUM("+tableName+"[Column1]) delete");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after =SUM("+tableName+"[Column1]) delete");
+		// ws.getRange2("C10").setValue("22");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after delete value =SUM(Column1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after delete value =SUM(Column1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"], undefined, "A2:A4(Column) listeners after delete value =SUM(Column1)");	
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after delete value =SUM(Column1)");
+
+
+		// Table[[Column1]:[Column2]]
+		// Table columns link without headers
+		fragment[0].setFragmentText("=SUM("+tableName+"[[Column1]:[Column2]])");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "6", "Value in C10 after =SUM("+tableName+"[[Column1]:[Column2]]) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM("+tableName+"[[Column1]:[Column2]])", "Formula in C10 after =SUM("+tableName+"[[Column1]:[Column2]]) calculate");
+		// ws.getRange2("C10").setValue("=SUM("+tableName+"[[Column1]:[Column2]])");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 2, "AreaMap listeners after set value SUM(Table[Col1]:[Col2])");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after set value SUM(Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"], undefined, "A2:A4(Column) listeners after set value SUM(Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:B4"] !== undefined, true, "A2:B4(Columns) listeners after set value SUM(Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap["A2:B4"].listeners).length, 1, "A2:B4(Columns) listeners after set value SUM(Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after set value SUM(Table[Col1]:[Col2]");
+
+		// delete formula
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after =SUM("+tableName+"[[Column1]:[Column2]]) delete");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after =SUM("+tableName+"[[Column1]:[Column2]]) delete");
+		// ws.getRange2("C10").setValue("22");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after delete value SUM(Table[Col1]:[Col2])");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after delete value SUM(Table[Col1]:[Col2])");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"], undefined, "A2:A4(Column) listeners after delete value SUM(Table[Col1]:[Col2])");	
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:B4"], undefined, "A2:B4(Columns) listeners after delete value SUM(Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after delete value SUM(Table[Col1]:[Col2]");
+
+
+		// Table[[#All],[Column1]]
+		// Table columns link with headers
+		fragment[0].setFragmentText("=SUM("+tableName+"[[#All],[Column1]])");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value in C10 after =SUM("+tableName+"[[#All],[Column1]]) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM("+tableName+"[[#All],[Column1]])", "Formula in C10 after =SUM("+tableName+"[[#All],[Column1]]) calculate");
+		// ws.getRange2("C10").setValue("=SUM("+tableName+"[[#All],[Column1]])");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 2, "AreaMap listeners after set value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after set value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"], undefined, "A2:A4(Column) listeners after set value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A1:A4"] !== undefined, true, "A1:A4(Column) listeners after set value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap["A1:A4"].listeners).length, 1, "A1:A4(Column) listeners after set value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after set value SUM(tableName#All,Col1)");
+
+		// delete formula
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after =SUM("+tableName+"[[#All],[Column1]]) delete");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after =SUM("+tableName+"[[#All],[Column1]]) delete");
+		// ws.getRange2("C10").setValue("22");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after delete value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after delete value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"], undefined, "A2:A4(Column) listeners after delete value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A1:A4"], undefined, "A1:A4(Column) listeners after delete value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after delete value SUM(tableName#All,Col1)");
+
+
+		// Table[[#All],[Column1]:[Column2]]
+		// Table columns link with headers
+		fragment[0].setFragmentText("=SUM("+tableName+"[[#All],[Column1]:[Column2]])");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "6", "Value in C10 after =SUM("+tableName+"[[#All],[Column1]:[Column2]]) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM("+tableName+"[[#All],[Column1]:[Column2]])", "Formula in C10 after =SUM("+tableName+"[[#All],[Column1]:[Column2]]) calculate");
+		// ws.getRange2("C10").setValue("=SUM("+tableName+"[[#All],[Column1]:[Column2]])");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 2, "AreaMap listeners after set value SUM(tableName#All,Col1:Col2)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after set value SUM(tableName#All,Col1:Col2)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"], undefined, "A2:A4(Column) listeners after set value SUM(tableName#All,Col1:Col2)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A1:A4"], undefined, "A1:A4(Column) listeners after set value SUM(tableName#All,Col1:Col2)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A1:B4"] !== undefined, true, "A1:B4(Columns) listeners after set value SUM(tableName#All,Col1:Col2)");
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap["A1:B4"].listeners).length, 1, "A1:B4(Columns) listeners after set value SUM(tableName#All,Col1:Col2)");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after set value SUM(tableName#All,Col1:Col2)");
+
+		// delete formula
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after =SUM("+tableName+"[[#All],[Column1]:[Column2]]) delete");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after =SUM("+tableName+"[[#All],[Column1]:[Column2]]) delete");
+
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after delete value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after delete value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"], undefined, "A2:A4(Column) listeners after delete value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A1:A4"], undefined, "A1:A4(Column) listeners after delete value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A1:B4"], undefined, "A1:B4(Columns) listeners after delete value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after delete value SUM(tableName#All,Col1)");
+
+
+		fragment[0].setFragmentText("=SUM("+tableName + "[[#All],[Column1]:[Column4]])");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "12", "Value in C10 after =SUM("+tableName + "[[#All],[Column1]:[Column4]]) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM("+tableName + "[[#All],[Column1]:[Column4]])", "Formula in C10 after =SUM("+tableName + "[[#All],[Column1]:[Column4]]) calculate");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 2, "AreaMap listeners after set value SUM(tableName#All,Col1:Col4)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A1:D4"] !== undefined, true, "A1:D4(Columns) listeners after set value SUM(tableName#All,Col1:Col4)");
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap["A1:D4"].listeners).length, 1, "A1:D4(Columns) listeners after set value SUM(tableName#All,Col1:Col4)");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after set value SUM(tableName#All,Col1:Col4)");
+
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after tableName[[#All],[Column1]:[Column4]] delete");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after tableName[[#All],[Column1]:[Column4]] delete");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A1:D4"], undefined, "A1:D4(Columns) listeners after delete value tableName#All,Col1")
+
+
+		flags.ctrlKey = true;
+		flags.shiftKey = true;
+		fragment[0].setFragmentText("="+tableName);
+		fillRange = ws.getRange2("C10:G14");
+		wsView.setSelection(fillRange.bbox);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in C10 after tableName calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "="+tableName, "Formula in C10 after tableName calculate");
+		resCell = ws.getRange2("C11");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in C11 after tableName calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "="+tableName, "Formula in C11 after tableName calculate");
+		resCell = ws.getRange2("C12");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in C12 after tableName calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "="+tableName, "Formula in C12 after tableName calculate");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 2, "AreaMap listeners after set value tableName");
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap["A2:D4"].listeners).length, 1, "A2:D4(Table) listeners after set value tableName");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after set value tableName");
+
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after =22 calculate(remove table)");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after =22 calculate(remove table)");		
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after delete value tableName");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after delete value tableName");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after delete value tableName");
+
+		fragment[0].setFragmentText("="+tableName + "[#All]");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = ws.getRange2("C10");
+		assert.strictEqual(resCell.getValueWithFormat(), "Column1", "Value in C10 after tableName[#All] calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "="+tableName + "[#All]", "Formula in C10 after tableName[#All] calculate");
+		resCell = ws.getRange2("C11");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in C11 after tableName[#All] calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "="+tableName + "[#All]", "Formula in C11 after tableName[#All] calculate");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after set value tableName#All");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after set value tableName#All");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 1, "DefNameListeners after set value tableName#All");
+
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = ws.getRange2("C10");
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after =22 calculate(remove table[#All])");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after =22 calculate(remove table[#All])");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after delete value tableName#All");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after delete value tableName#All");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after delete value tableName#All");
+
+		fragment[0].setFragmentText("="+tableName + "[Column1]");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in C10 after tableName[Column1] calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "="+tableName + "[Column1]", "Formula in C10 after tableName[Column1] calculate");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 2, "AreaMap listeners after set value Column1");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after set value Column1");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"] !== undefined, true, "A2:A4(Column) listeners after set value Column1");
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap["A2:A4"].listeners).length, 1, "A2:A4(Column) listeners after set value Column1");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after set value Column1");
+
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after tableName[Column1] delete");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after tableName[Column1] delete");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after delete value Column1");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after delete value Column1");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"], undefined, "A2:A4(Column) listeners after delete value Column1");
+
+		fragment[0].setFragmentText("="+tableName + "[[Column1]:[Column2]]");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in C10 after tableName[[Column1]:[Column2]] calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "="+tableName + "[[Column1]:[Column2]]", "Formula in C10 after tableName[[Column1]:[Column2]] calculate");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 2, "AreaMap listeners after set value Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after set value Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"], undefined, "A2:A4(Column) listeners after set value Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:B4"] !== undefined, true, "A2:B4(Columns) listeners after set value Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap["A2:B4"].listeners).length, 1, "A2:B4(Columns) listeners after set value Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after set value Table[Col1]:[Col2]");
+
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after tableName[[Column1]:[Column2]] delete");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after tableName[[Column1]:[Column2]] delete");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after delete value Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after delete value Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"], undefined, "A2:A4(Column) listeners after delete value Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:B4"], undefined, "A2:B4(Columns) listeners after delete value Table[Col1]:[Col2]");
+
+		fragment[0].setFragmentText("="+tableName + "[[#All],[Column1]]");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = ws.getRange2("C10");
+		assert.strictEqual(resCell.getValueWithFormat(), "Column1", "Value in C10 after tableName[[#All],[Column1]] calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "="+tableName + "[[#All],[Column1]]", "Formula in C10 after tableName[[#All],[Column1]] calculate");
+		resCell = ws.getRange2("C11");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in C11 after tableName[[#All],[Column1]] calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "="+tableName + "[[#All],[Column1]]", "Formula in C10 after tableName[[#All],[Column1]] calculate");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 2, "AreaMap listeners after set value tableName#All,Col1");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after set value tableName#All,Col1");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"], undefined, "A2:A4(Column) listeners after set value tableName#All,Col1");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A1:A4"] !== undefined, true, "A1:A4(Column) listeners after set value tableName#All,Col1");
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap["A1:A4"].listeners).length, 1, "A1:A4(Column) listeners after set value tableName#All,Col1");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after set value tableName#All,Col1");
+
+		resCell = ws.getRange2("C10");
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after tableName[[#All],[Column1]] delete");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after tableName[[#All],[Column1]] delete");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after delete value tableName#All,Col1");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A1:A4"], undefined, "A1:A4(Column) listeners after delete value tableName#All,Col1");
+
+		fragment[0].setFragmentText("="+tableName + "[[#All],[Column1]:[Column2]]");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "Column1", "Value in C10 after tableName[[#All],[Column1]:[Column2]] calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "="+tableName + "[[#All],[Column1]:[Column2]]", "Formula in C10 after tableName[[#All],[Column1]:[Column2]] calculate");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 2, "AreaMap listeners after set value tableName#All,Col1:Col2");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A1:B4"] !== undefined, true, "A1:B4(Columns) listeners after set value tableName#All,Col1:Col2");
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap["A1:B4"].listeners).length, 1, "A1:B4(Columns) listeners after set value tableName#All,Col1:Col2");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after set value tableName#All,Col1:Col2");
+
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after tableName[[#All],[Column1]:[Column2]] delete");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after tableName[[#All],[Column1]:[Column2]] delete");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A1:B4"], undefined, "A1:B4(Columns) listeners after delete value tableName#All,Col1");
+
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+
+		// remove tables
+		tables.length = 0;
+		
 	});
 
 		QUnit.module("Sheet structure");

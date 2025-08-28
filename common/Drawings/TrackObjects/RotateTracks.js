@@ -185,6 +185,35 @@ function OverlayObject(geometry, extX, extY, brush, pen, transform )
     };
 }
 
+OverlayObject.prototype.getTransformMatrix = function () {
+	return this.TransformMatrix;
+};
+OverlayObject.prototype.getGeometry = function () {
+	return this.geometry;
+};
+OverlayObject.prototype.getBounds = function () {
+	const originalDrawer = this.shapeDrawer;
+
+	const tmpDrawer = new AscCommon.CShapeDrawer();
+	const boundsChecker = new AscFormat.CSlideBoundsChecker();
+
+	this.shapeDrawer = tmpDrawer;
+	this.draw(boundsChecker, this.TransformMatrix);
+	this.shapeDrawer = originalDrawer;
+
+	boundsChecker.CorrectBounds();
+
+	return new AscFormat.CGraphicBounds(
+		boundsChecker.Bounds.min_x,
+		boundsChecker.Bounds.min_y,
+		boundsChecker.Bounds.max_x,
+		boundsChecker.Bounds.max_y
+	);
+};
+OverlayObject.prototype.getFullRotate = function () {
+	return AscCommon.deg2rad(this.TransformMatrix.GetRotation());
+};
+
     function ObjectToDraw(brush, pen, extX, extY, geometry, transform, x, y, oComment, TextElement, oLineStructure, nId, bIsBulletSymbol)
     {
         this.extX = extX;
@@ -197,9 +226,9 @@ function OverlayObject(geometry, extX, extY, brush, pen, transform )
         this.TextElement = TextElement;
         this.pen = pen;
         this.brush = brush;
-        this.lineStructure = oLineStructure;
-        this.isBulletSymbol = bIsBulletSymbol;
-        this.SpaceTextElements = [];
+		this.lineStructure = oLineStructure;
+		this.isBulletSymbol = bIsBulletSymbol;
+		this.SpaceTextElements = [];
         /*позиция символа*/
         this.x = x;
         this.y = y;

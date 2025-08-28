@@ -4002,3 +4002,4 @@ CInlineLevelSdt.prototype.GetDataBinding = function()
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CInlineLevelSdt = CInlineLevelSdt;
 window["AscWord"].CInlineLevelSdt = CInlineLevelSdt;
+window["AscWord"].InlineLevelSdt = CInlineLevelSdt;

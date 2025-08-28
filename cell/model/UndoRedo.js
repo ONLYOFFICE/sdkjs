@@ -408,6 +408,17 @@ function (window, undefined) {
 		var arrActions = [];
 		return arrActions;
 	};
+	UndoRedoItemSerializable.prototype.ConvertToSimpleChanges = function()
+	{
+		if (this.oClass) {
+			if (this.oClass.ConvertToSimpleChanges) {
+				return this.oClass.ConvertToSimpleChanges();
+			} else if (this.oClass.ConvertToSimpleChangesSpreadsheet) {
+				return this.oClass.ConvertToSimpleChangesSpreadsheet(this);
+			}
+		}
+		return [];
+	};
 	UndoRedoItemSerializable.prototype.ConvertFromSimpleActions = function(arrActions)
 	{
 		if (this.oClass) {
@@ -1815,7 +1826,7 @@ function (window, undefined) {
 	UndoRedoData_BinaryWrapper.prototype.Read_FromBinary2 = function (reader) {
 		this.Id = reader.GetString2();
 		this.len = reader.GetLong();
-		this.binary = reader.GetBuffer(this.len);
+		this.binary = reader.GetBufferUint8(this.len);
 	};
 	UndoRedoData_BinaryWrapper.prototype.getData = function () {
 		var reader = new AscCommon.FT_Stream2(this.binary, this.len);
@@ -1850,7 +1861,7 @@ function (window, undefined) {
 	};
 	UndoRedoData_BinaryWrapper2.prototype.Read_FromBinary2 = function (reader) {
 		this.len = reader.GetLong();
-		this.binary = reader.GetBuffer(this.len);
+		this.binary = reader.GetBufferUint8(this.len);
 	};
 	UndoRedoData_BinaryWrapper2.prototype.initObject = function (data) {
 		var reader = new AscCommon.FT_Stream2(this.binary, this.len);
@@ -2897,6 +2908,11 @@ function (window, undefined) {
 			Add  : isAdd
 		}];
 	};
+	UndoRedoWorkbook.prototype.ConvertToSimpleChangesSpreadsheet = function(SerializableItem)
+	{
+		const oItem = new UndoRedoItemSerializable(SerializableItem.oClass, SerializableItem.nActionType, SerializableItem.nSheetId, SerializableItem.oRange, SerializableItem.oData, SerializableItem.LocalChange);
+		return [oItem];
+	};
 	UndoRedoWorkbook.prototype.ConvertFromSimpleActionsSpreadsheet = function(arrActions, Data)
 	{
 		let action = arrActions[0];
@@ -3026,7 +3042,7 @@ function (window, undefined) {
 					wb.delDefinesNamesUndoRedo(oldName);
 					wb.handlers.trigger("asc_onDelDefName")
 				} else {
-					wb.editDefinesNamesUndoRedo(oldName, newName);
+					wb.editDefinesNamesUndoRedo(oldName, newName, true);
 					wb.handlers.trigger("asc_onEditDefName", oldName, newName);
 				}
 				// clear traces
@@ -3052,7 +3068,7 @@ function (window, undefined) {
 			var externalReferenceIndex;
 
 			if (from && !to) {//удаление
-				from.initWorksheetsFromSheetDataSet();
+				from.initExternalReference();
 				/* the first call is a search by referenceData, if we get null, we make a second call to search by Id below and then add or re-assign the link */
 				externalReferenceIndex = wb.getExternalReferenceByReferenceData(from.referenceData, true);
 				if (!externalReferenceIndex) {
@@ -3099,7 +3115,7 @@ function (window, undefined) {
 					}
 
 					from.worksheets = wb.externalReferences[externalReferenceIndex - 1].worksheets;
-					from.initWorksheetsFromSheetDataSet();
+					from.initExternalReference();
 					from.putToChangedCells();
 					wb.externalReferences[externalReferenceIndex - 1] = from;
 				}

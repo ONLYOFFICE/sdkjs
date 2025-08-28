@@ -1569,7 +1569,7 @@
 			}
 
 			var props = this.buttonInfo;
-			if(props && props.options)
+			if(props && props.options && props.options.length)
 			{
 				if((Asc["editor"] && Asc["editor"].wb) || props.cellCoord)
 				{

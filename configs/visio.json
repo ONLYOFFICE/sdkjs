@@ -16,6 +16,7 @@
 			"vendor/array.js",
 			"common/editorscommon.js",
             "common/BulletPreviewDrawer.js",
+			"common/frameManager.js",
 			"common/HistoryCommon.js",
 			"common/TableId.js",
 			"common/TableIdChanges.js",
@@ -25,6 +26,7 @@
 			"visio/apiDefines.js",
 			"common/collaborativeHistory.js",
 			"common/CollaborativeEditingBase.js",
+			"slide/Editor/CollaborativeEditing.js",
 			"common/macros.js",
 			"common/apiBase.js",
 			"common/apiBase_plugins.js",
@@ -100,6 +102,7 @@
 			"common/Drawings/Format/TextBody.js",
 			"slide/Editor/Format/TextBodyPrototype.js",
 			"common/Drawings/Format/GraphicFrame.js",
+			"common/Drawings/Format/Controls.js",
 			"common/Charts/charts.js",
 			"common/Charts/DrawingObjects.js",
 			"common/Charts/3DTransformation.js",
@@ -353,8 +356,8 @@
 			"visio/model/overrides.js",
 			"visio/model/SerializeReader.js",
 			"visio/model/SerializeWriter.js",
-
-			"slide/Editor/CollaborativeEditing.js"
+			
+			"word/Editor/document-visitor.js"
 		],
 		"desktop": {
 			"min": [

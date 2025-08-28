@@ -1493,7 +1493,12 @@
 		CGroupShape.prototype.Refresh_RecalcData = function (oData) {
 			if (oData) {
 				switch (oData.Type) {
-
+					case AscDFH.historyitem_AutoShapes_AddToDrawingObjects: {
+						if (!this.bDeleted) {
+							this.addToRecalculate();
+						}
+						break;
+					}
 					case AscDFH.historyitem_ShapeSetBDeleted: {
 						if (!this.bDeleted) {
 							this.addToRecalculate();

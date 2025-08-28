@@ -878,6 +878,117 @@
 				this.m_oPen.Color.B + "," + (this.m_oPen.Color.A / 255) + ")";
 		}
 	};
+	CGraphics.prototype.drawBlipFillTile = function (transform, imageUrl, alpha, scaleX, scaleY, offsetX, offsetY, flipH, flipV) {
+		const ctx = this.m_oContext;
+		if (!ctx) return;
+
+		ctx.save();
+
+		if (transform) {
+			ctx.transform(
+				transform.sx,
+				transform.shy,
+				transform.shx,
+				transform.sy,
+				transform.tx,
+				transform.ty
+			);
+		}
+
+		const imageData = Asc.editor.ImageLoader.map_image_index[imageUrl];
+		if (!imageData || this.checkLoadingImage(imageData)) return;
+
+		const image = imageData.Image;
+		if (!image) return;
+
+		// Translation (offsets)
+		ctx.translate(offsetX, offsetY);
+
+		// Scaling (local)
+		ctx.scale(scaleX, scaleY);
+
+		// Mirroring
+		function createVerticalFlipPattern(sourceCanvas, width, height) {
+			const newCanvas = document.createElement('canvas');
+			newCanvas.width = width;
+			newCanvas.height = height * 2;
+
+			const newCtx = newCanvas.getContext('2d');
+			newCtx.drawImage(sourceCanvas, 0, 0, width, height);
+			newCtx.scale(1, -1);
+			newCtx.drawImage(sourceCanvas, 0, -height * 2, width, height);
+
+			return newCanvas;
+		}
+		function createHorizontalFlipPattern(sourceCanvas, width, height) {
+			const newCanvas = document.createElement('canvas');
+			newCanvas.width = width * 2;
+			newCanvas.height = height;
+
+			const newCtx = newCanvas.getContext('2d');
+			newCtx.drawImage(sourceCanvas, 0, 0, width, height);
+			newCtx.scale(-1, 1);
+			newCtx.drawImage(sourceCanvas, -width * 2, 0, width, height);
+
+			return newCanvas;
+		}
+
+		let patternSource = image;
+
+		if (flipH || flipV) {
+			const tempCanvas = document.createElement('canvas');
+			tempCanvas.width = image.width;
+			tempCanvas.height = image.height;
+			const tempCtx = tempCanvas.getContext('2d');
+			tempCtx.drawImage(image, 0, 0);
+			patternSource = tempCanvas;
+		}
+
+		if (flipV) {
+			patternSource = createVerticalFlipPattern(patternSource, patternSource.width, patternSource.height);
+		}
+		if (flipH) {
+			patternSource = createHorizontalFlipPattern(patternSource, patternSource.width, patternSource.height);
+		}
+
+		// Transparency
+		if (AscFormat.isRealNumber(alpha) && alpha >= 0 && alpha <= 1) {
+			ctx.globalAlpha = alpha;
+		}
+
+		const pattern = ctx.createPattern(patternSource, 'repeat');
+		ctx.fillStyle = pattern;
+		ctx.fill();
+
+		ctx.restore();
+	};
+	CGraphics.prototype.drawBlipFillStretch = function (transform, imageUrl, alpha, x, y, w, h, srcRect, canvas) {
+		const ctx = this.m_oContext;
+		if (!ctx) return;
+
+		ctx.save();
+
+		if (transform) {
+			ctx.transform(
+				transform.sx,
+				transform.shy,
+				transform.shx,
+				transform.sy,
+				transform.tx,
+				transform.ty
+			);
+		}
+
+		this.drawImage(
+			imageUrl,
+			x, y, w, h,
+			alpha * 255,
+			srcRect,
+			canvas
+		);
+
+		ctx.restore();
+	}
 
 	// text
 	CGraphics.prototype.GetFont = function()

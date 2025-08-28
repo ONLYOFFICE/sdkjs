@@ -178,12 +178,16 @@ CSectionPr.prototype =
         this.Set_Columns_Num(Other.Columns.Num);
         this.Set_Columns_Sep(Other.Columns.Sep);
         this.Set_Columns_Space(Other.Columns.Space);
+				const NewColumns = [];
         for (var ColumnIndex = 0, ColumnsCount = Other.Columns.Cols.length; ColumnIndex < ColumnsCount; ++ColumnIndex)
         {
-            var Column = Other.Columns.Cols[ColumnIndex];
-            this.Set_Columns_Col(ColumnIndex, Column.W, Column.Space);
+            const Column = Other.Columns.Cols[ColumnIndex];
+						const NewColumn = new CSectionColumn();
+	        NewColumn.W = Column.W;
+	        NewColumn.Space = Column.Space;
+					NewColumns.push(NewColumn);
         }
-
+	      this.Set_Columns_Cols(NewColumns);
         this.SetFootnotePos(Other.FootnotePr.Pos);
         this.SetFootnoteNumStart(Other.FootnotePr.NumStart);
         this.SetFootnoteNumRestart(Other.FootnotePr.NumRestart);

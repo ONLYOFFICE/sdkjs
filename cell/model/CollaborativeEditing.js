@@ -243,15 +243,14 @@
 
 				asc_applyFunction(callback, true);
 			} else if (result["error"]) {
-				if (Asc.editor && Asc.editor.isOleEditor && !Asc.editor.isEditOleMode) {
+				if (Asc.editor.frameManager.isLoadingOleEditor) {
 					Asc.editor.sync_closeOleEditor();
 				}
 
 				asc_applyFunction(callback, false);
 			}
-			if (Asc.editor && !Asc.editor.isEditOleMode) {
-				Asc.editor.isOleEditor = false;
-			}
+
+			Asc.editor.frameManager.endLoadOleEditor();
 		};
 		CCollaborativeEditing.prototype.addUnlock = function (LockClass) {
 			this.m_arrNeedUnlock.push(LockClass);

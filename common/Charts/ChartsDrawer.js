@@ -232,6 +232,15 @@ CChartsDrawer.prototype =
 			case AscFormat.SERIES_LAYOUT_PARETO_LINE :
 				this.charts.chartEx = new drawParetoChart(seria, this);
 				break;
+			case AscFormat.SERIES_LAYOUT_TREEMAP :
+				this.charts.chartEx = new drawTreemapChart(seria, this);
+				break;
+			case AscFormat.SERIES_LAYOUT_BOX_WHISKER :
+				this.charts.chartEx = new drawBoxWhiskerChart(seria, this);
+				break;
+			case AscFormat.SERIES_LAYOUT_SUNBURST :
+				this.charts.chartEx = new drawSunburstChart(seria, this);
+				break;
 			default :
 				this.charts.chartEx = null;
 		}
@@ -2703,7 +2712,7 @@ CChartsDrawer.prototype =
 
 
 	//****functions for UP Functions****
-	preCalculateData: function (chartSpace, notCalcExtremum) {
+	preCalculateData: function (chartSpace, notCalcExtremum, predefinedRect) {
 		this._calculateChangeAxisMap(chartSpace);
 		this.cChartSpace = chartSpace;
 		this.calcProp.pxToMM = 1 / AscCommon.g_dKoef_pix_to_mm;
@@ -2726,7 +2735,7 @@ CChartsDrawer.prototype =
 				//calculate calcProp -> /min/max/ymax/ymin/
 				this._calculateExtremumAllCharts(chartSpace);
 			} else {
-				this._prepChartExData(chartSpace)
+				this._prepChartExData(chartSpace, predefinedRect);
 			}
 		}
 
@@ -2775,7 +2784,7 @@ CChartsDrawer.prototype =
 		}
 	},
 
-	_prepChartExData: function (chartSpace) {
+	_prepChartExData: function (chartSpace, oRect) {
 		// plotArea: CPlotArea
 		// data: CNumericPoint
 		if (!chartSpace || !chartSpace.chart || !chartSpace.chart.plotArea || !chartSpace.chart.plotArea.plotAreaRegion || !chartSpace.chart.plotArea.plotAreaRegion.series) {
@@ -2791,6 +2800,8 @@ CChartsDrawer.prototype =
 		const secondType = 1 < plotArea.plotAreaRegion.series.length ? plotArea.plotAreaRegion.series[1].layoutId : null;
 		const strLit = seria.getCatLit(type);
 		const numLit = seria.getValLit();
+		const width = oRect ? oRect.w : 0;
+		const height = oRect ? oRect.h : 0;
 
 		if (numLit && numLit.pts && numLit.ptCount > 0) {
 
@@ -2817,12 +2828,12 @@ CChartsDrawer.prototype =
 			}
 
 			calculateExtremums(type, axisProperties, numLit);
-			plotArea.plotAreaRegion.setCachedData(this._createCachedData(type, seria, numLit, strLit, axisProperties, secondType));
+			plotArea.plotAreaRegion.setCachedData(this._createCachedData(type, seria, numLit, strLit, axisProperties, secondType, width, height));
 			this._chartExHandleAxesConfigurations(plotArea.axId, axisProperties);
 		}
 	},
 
-	_createCachedData: function (type, seria, numLit, strLit, axisProperties, secondType) {
+	_createCachedData: function (type, seria, numLit, strLit, axisProperties, secondType, width, height) {
 		switch (type) {
 			case AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN:
 				return new CCachedClusteredColumn(type, seria, numLit, strLit, axisProperties, secondType);
@@ -2830,6 +2841,12 @@ CChartsDrawer.prototype =
 				return new CCachedWaterfall(type, seria, numLit, axisProperties);
 			case AscFormat.SERIES_LAYOUT_FUNNEL:
 				return new CCachedFunnel(type, numLit, axisProperties);
+			case AscFormat.SERIES_LAYOUT_TREEMAP:
+				return new CCachedTreemap(type, numLit, strLit, width, height);
+			case AscFormat.SERIES_LAYOUT_BOX_WHISKER:
+				return new CCachedBoxWhisker(type, seria, numLit, strLit, axisProperties);
+			case AscFormat.SERIES_LAYOUT_SUNBURST:
+				return new CCachedSunburst(type, numLit, strLit);
 			default:
 				return null;
 		}
@@ -7920,6 +7937,138 @@ drawParetoChart.prototype.drawParetoLine = function () {
 	}
 };
 
+function drawSunburstChart(chart, chartsDrawer) {
+	this.chartProp = chartsDrawer.calcProp;
+	this.cChartDrawer = chartsDrawer;
+	this.cChartSpace = chartsDrawer.cChartSpace;
+
+	this.paths = {};
+}
+
+drawSunburstChart.prototype = {
+	constructor : drawSunburstChart,
+	recalculate : function () {
+		const cachedData = this.cChartSpace ? this.cChartSpace.getCachedData() : null;
+		if (cachedData) {
+			const trueWidth = this.chartProp.trueWidth;
+			const trueHeight = this.chartProp.trueHeight;
+
+			const diagramRadius = Math.min(trueHeight, trueWidth) / 2;
+			const coords = {
+				x : this.chartProp.chartGutter._left + trueWidth / 2,
+				y : this.chartProp.chartGutter._top + trueHeight / 2
+			}
+
+			const ringWidth = diagramRadius / (cachedData.layersCount + 1);
+
+			let head = cachedData.data.getChildren();
+			// let indexesStack = [];
+			let angleStack = [];
+			let startAngle = Math.PI / 2;
+			// let i = 0;
+			let currentLayer= 1;
+			// let pathIndex = {};
+
+			cachedData.data.preorderTraverse(
+				function(t, node) {
+					var angle = node.pVal * Math.PI * 2;
+
+					// Do your layout logic here, maybe with external state
+					t.paths[node.idx] = t._calculateSegment(
+						startAngle,
+						angle,
+						ringWidth * currentLayer,
+						ringWidth * (currentLayer + 1),
+						coords
+					);
+
+					if (node.children && node.children.length > 0) {
+						angleStack.push(startAngle + angle);
+						currentLayer++;
+						startAngle = startAngle;
+					} else {
+						startAngle += angle;
+					}
+				},
+				function () {
+					startAngle = angleStack.pop();
+					currentLayer--;
+				}
+				, this);
+		}
+	},
+
+	_calculateSegment : function (stAngle, swAngle, innerRadius, outerRadius, coords) {
+		if (!AscFormat.isRealNumber(stAngle) || !AscFormat.isRealNumber(swAngle) || !AscFormat.isRealNumber(outerRadius) || !AscFormat.isRealNumber(innerRadius) || !coords || !AscFormat.isRealNumber(coords.x) || !AscFormat.isRealNumber(coords.y)) {
+			return;
+		}
+
+		const pathId = this.cChartSpace.AllocPath();
+		const path = this.cChartSpace.GetPath(pathId);
+
+		const pathH = this.chartProp.pathH;
+		const pathW = this.chartProp.pathW;
+
+		const pxToMm = this.chartProp.pxToMM;
+
+		const xRight = coords.x + outerRadius * Math.cos(stAngle + swAngle);
+		const yRight = coords.y - outerRadius * Math.sin(stAngle + swAngle);
+
+		const xLeft = coords.x + innerRadius * Math.cos(stAngle);
+		const yLeft = coords.y - innerRadius * Math.sin(stAngle);
+
+		path.moveTo(xLeft / pxToMm * pathW, yLeft / pxToMm * pathH);
+		path.arcTo(innerRadius / pxToMm * pathW, innerRadius / pxToMm * pathH, -1 * stAngle * cToDeg, -1 * swAngle * cToDeg);
+		path.lnTo(xRight / pxToMm * pathW, yRight / pxToMm * pathH);
+		path.arcTo(outerRadius / pxToMm * pathW, outerRadius / pxToMm * pathH, -1 * (stAngle + swAngle) * cToDeg, swAngle * cToDeg);
+		path.lnTo(xLeft / pxToMm * pathW, yLeft / pxToMm * pathH);
+
+		return pathId;
+	},
+	draw : function () {
+		if (!this.cChartDrawer || !this.cChartDrawer.calcProp || !this.cChartDrawer.cShapeDrawer || !this.cChartDrawer.cShapeDrawer.Graphics || !this.cChartDrawer.calcProp.chartGutter) {
+			return;
+		}
+
+		// find chart starting coordinates, width and height;
+		let leftRect = this.cChartDrawer.calcProp.chartGutter._left / this.cChartDrawer.calcProp.pxToMM;
+		let topRect = (this.cChartDrawer.calcProp.chartGutter._top) / this.cChartDrawer.calcProp.pxToMM;
+		let rightRect = this.cChartDrawer.calcProp.trueWidth / this.cChartDrawer.calcProp.pxToMM;
+		let bottomRect = (this.cChartDrawer.calcProp.trueHeight) / this.cChartDrawer.calcProp.pxToMM;
+
+		if (!AscFormat.isRealNumber(leftRect) || !AscFormat.isRealNumber(topRect) || !AscFormat.isRealNumber(rightRect) || !AscFormat.isRealNumber(bottomRect) ) {
+			return;
+		}
+
+		this.cChartDrawer.cShapeDrawer.Graphics.SaveGrState();
+		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(leftRect, topRect, rightRect, bottomRect);
+
+		let series = this.cChartSpace.chart.plotArea.plotAreaRegion.series;
+
+		let oSeries = series[0];
+		if(oSeries) {
+			for (let i in this.paths) {
+				if (this.paths.hasOwnProperty(i) && this.paths[i]) {
+					let nPtIdx = parseInt(i);
+					let pen = oSeries.getPtPen(nPtIdx);
+					let brush = oSeries.getPtBrush(nPtIdx);
+					pen.Fill = brush.createDuplicate();
+					pen.Fill.fill.color.RGBA.B = 255;
+					pen.Fill.fill.color.RGBA.G = 255;
+					pen.Fill.fill.color.RGBA.R = 255;
+					this.cChartDrawer.drawPath(this.paths[i], pen, brush);
+				}
+			}
+		}
+
+		this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
+	},
+
+	_calculateDLbl: function (compiledDlb) {
+		return {x: 0, y: 0};
+	}
+}
+
 /** @constructor */
 function drawWaterfallChart(chart, chartsDrawer) {
 	this.chartProp = chartsDrawer.calcProp;
@@ -8317,6 +8466,399 @@ drawFunnelChart.prototype = {
 		}
 
 		return {x: centerX, y: centerY};
+	}
+}
+
+/** @constructor */
+function drawTreemapChart(chart, chartsDrawer) {
+	this.chartProp = chartsDrawer.calcProp;
+	this.cChartDrawer = chartsDrawer;
+	this.cChartSpace = chartsDrawer.cChartSpace;
+
+	this.chart = chart;
+
+	this.catAx = null;
+	this.valAx = null;
+
+	this.ptCount = null;
+	this.seriesCount = null;
+	this.subType = null;
+
+	this.paths = {};
+	this.linePath = null;
+}
+
+drawTreemapChart.prototype = {
+	constructor: drawTreemapChart,
+
+	recalculate: function () {
+		const cachedData = this.cChartSpace ? this.cChartSpace.getCachedData() : null;
+		if (!cachedData) {
+			return;
+		}
+		const plotArea = this.cChartSpace && this.cChartSpace.chart && this.cChartSpace.chart.plotArea;
+		if (cachedData.data.length > 0 && this.chartProp && this.chartProp.chartGutter && plotArea) {
+			let x = plotArea.x;
+			let y = plotArea.y;
+			let pos = 0;
+			for (let i = 0; i < cachedData.data.length; i++) {
+				let direction = cachedData.data[i].position;
+				let startX = x;
+				let startY = y;
+				const rect = cachedData.data[i]
+				// predefinedSize tells about the height of the whole array, however if array contains multiple elements, then to find the width of one element, we can divide totalArea by height
+				const weekSide = rect.totalSum/ rect.predefinedSize;
+				for( let j = 0; j < rect.array.length; j++) {
+					// vertical arrays weekSide is width and horizontal arrays weekSide is height;
+					const w = direction? weekSide : rect.array[j] / weekSide;
+					const h = direction ? rect.array[j] / weekSide : weekSide;
+					this.paths[pos] = this.cChartDrawer._calculateRect(startX, startY + h, w, h , true);
+					if (direction) {
+						startY += h;
+					} else {
+						startX += w;
+					}
+					pos += 1;
+				}
+				if (direction) {
+					x += weekSide;
+				} else {
+					y += weekSide;
+				}
+			}
+		}
+	},
+
+	draw: function () {
+		if (!this.cChartDrawer || !this.cChartDrawer.calcProp || !this.cChartDrawer.cShapeDrawer || !this.cChartDrawer.cShapeDrawer.Graphics || !this.cChartDrawer.calcProp.chartGutter) {
+			return;
+		}
+
+		// find chart starting coordinates, width and height;
+		// let leftRect = this.cChartDrawer.calcProp.chartGutter._left / this.cChartDrawer.calcProp.pxToMM;
+		// let topRect = (this.cChartDrawer.calcProp.chartGutter._top) / this.cChartDrawer.calcProp.pxToMM;
+		// let rightRect = this.cChartDrawer.calcProp.trueWidth / this.cChartDrawer.calcProp.pxToMM;
+		// let bottomRect = (this.cChartDrawer.calcProp.trueHeight) / this.cChartDrawer.calcProp.pxToMM;
+		//
+		// if (!AscFormat.isRealNumber(leftRect) || !AscFormat.isRealNumber(topRect) || !AscFormat.isRealNumber(rightRect) || !AscFormat.isRealNumber(bottomRect) ) {
+		// 	return
+		// }
+		//
+		// this.cChartDrawer.cShapeDrawer.Graphics.SaveGrState();
+		// this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(leftRect, topRect, rightRect, bottomRect);
+
+		let series = this.cChartSpace.chart.plotArea.plotAreaRegion.series;
+
+		let oSeries = series[0];
+		if(oSeries) {
+			for (let i in this.paths) {
+				if (this.paths.hasOwnProperty(i) && this.paths[i]) {
+					let nPtIdx = parseInt(i);
+					let pen = oSeries.getPtPen(nPtIdx);
+					let brush = oSeries.getPtBrush(nPtIdx);
+					
+					if (!brush || !brush.Fill) {
+						brush = this._getDefaultTreemapBrush(nPtIdx);
+					}
+					
+					if (!pen) {
+						pen = this._getDefaultTreemapPen();
+					}
+					
+					this.cChartDrawer.drawPath(this.paths[i], pen, brush);
+				}
+			}
+		}
+	},
+
+	_calculateDLbl: function (compiledDlb) {
+		return {x: null, y: null}
+	},
+
+	_getDefaultTreemapBrush: function(index) {
+		const excelTreemapColors = [
+			{r: 68, g: 114, b: 196},
+			{r: 237, g: 125, b: 49},
+			{r: 165, g: 165, b: 165},
+			{r: 255, g: 192, b: 0},
+			{r: 91, g: 155, b: 213},
+			{r: 112, g: 173, b: 71},
+			{r: 158, g: 72, b: 14},
+			{r: 99, g: 99, b: 99},
+			{r: 153, g: 115, b: 0},
+			{r: 67, g: 104, b: 43}
+		];
+		
+		const colorIndex = index % excelTreemapColors.length;
+		const color = excelTreemapColors[colorIndex];
+
+		const brush = new AscFormat.CUniFill();
+		const solidFill = new AscFormat.CSolidFill();
+		const uniColor = new AscFormat.CUniColor();
+		const rgbColor = new AscFormat.CRGBColor();
+		
+		rgbColor.setR(color.r);
+		rgbColor.setG(color.g);
+		rgbColor.setB(color.b);
+		
+		uniColor.setColor(rgbColor);
+		solidFill.setColor(uniColor);
+		brush.setFill(solidFill);
+
+		let props = this.cChartSpace.getParentObjects();
+		brush.calculate(props.theme, props.slide, props.layout, props.master, new AscFormat.CUniColor().RGBA, this.cChartSpace.clrMapOvr);
+		
+		return brush;
+	},
+
+	_getDefaultTreemapPen: function() {
+		const pen = new AscFormat.CLn();
+		pen.setW(AscFormat.g_dKoef_pt_to_emu * 0.75);
+		
+		const penFill = new AscFormat.CUniFill();
+		const solidFill = new AscFormat.CSolidFill();
+		const uniColor = new AscFormat.CUniColor();
+		const rgbColor = new AscFormat.CRGBColor();
+		
+		rgbColor.setR(255);
+		rgbColor.setG(255);
+		rgbColor.setB(255);
+		
+		uniColor.setColor(rgbColor);
+		solidFill.setColor(uniColor);
+		penFill.setFill(solidFill);
+		pen.setFill(penFill);
+		
+		return pen;
+	}
+}
+
+/** @constructor */
+function drawBoxWhiskerChart(chart, chartsDrawer) {
+	this.chartProp = chartsDrawer.calcProp;
+	this.cChartDrawer = chartsDrawer;
+	this.cChartSpace = chartsDrawer.cChartSpace;
+
+	this.chart = chart;
+
+	this.catAx = null;
+	this.valAx = null;
+
+	this.ptCount = null;
+	this.seriesCount = null;
+	this.subType = null;
+
+	this.paths = {};
+	this.linePath = null;
+}
+
+drawBoxWhiskerChart.prototype = {
+	constructor: drawBoxWhiskerChart,
+
+	recalculate: function () {
+		const cachedData = this.cChartSpace ? this.cChartSpace.getCachedData() : null;
+		if (!cachedData || !this.cChartSpace.chart.plotArea.axId) {
+			return;
+		}
+
+		if (cachedData.data.length > 0 && this.chartProp && this.chartProp.chartGutter) {
+			const seria = this.cChartSpace.chart.plotArea.plotAreaRegion.series[0];
+			const strLit = seria.getCatLit();
+			const strCache = strLit && strLit.pts;
+			const numLit = seria.getValLit();
+			const catStart = this.chartProp.chartGutter._left;
+
+			const valAxis = this.cChartSpace.chart.plotArea.axId[1];
+			const catAxis = this.cChartSpace.chart.plotArea.axId[0];
+			const data = cachedData.data;
+			const ends = cachedData.ends;
+
+			const coeff = catAxis.scaling.gapWidth;
+
+			// 1 px gap for each section length
+			const gapWidth = 0.5 / this.chartProp.pxToMM;
+			const gapNumber = ends.length;
+
+			//Each bar will have 2 gapWidth and 2 margins , on left and right sides
+			const initialBarWidth = (this.chartProp.trueWidth - (2 * gapWidth * gapNumber)) / ends.length;
+			const barWidth = (initialBarWidth / (1 + coeff));
+			const margin = (initialBarWidth - barWidth) / 2;
+
+			const tailWidth = barWidth / 3;
+
+			// starting cat point
+			let catPoint = catStart + margin + (barWidth / 2);
+
+			// the gap between two bars
+			const gapBetween = 2 * (margin + gapWidth);
+
+			let index = 0;
+
+			const meanLine = [];
+			let j = 0;
+			for (let i = 0; i < data.length; i++) {
+				let valPoint = this.cChartDrawer.getYPosition(data[i].val, valAxis, true);
+
+				switch (data[i].type) {
+					case cachedData.pointType:
+						// Point
+						this.paths[index] = [this.createPoint(catPoint, valPoint, 18 * gapWidth), false];
+						break;
+					case cachedData.tailType:
+						// Tail
+						const boxEdgeValPoint = this.cChartDrawer.getYPosition(data[i].val2, valAxis, true);
+						this.paths[index] = [this.createTail(catPoint, valPoint, boxEdgeValPoint, tailWidth), true];
+						break;
+					case cachedData.bottomBoxType:
+						// Bottom of the box
+						const medianValPointTop = this.cChartDrawer.getYPosition(data[i].val2, valAxis, true) * this.chartProp.pxToMM;
+						valPoint *= this.chartProp.pxToMM
+						this.paths[index] = [this.cChartDrawer._calculateRect(catPoint - (barWidth / 2), valPoint, barWidth, valPoint - medianValPointTop ), true];
+						break;
+					case cachedData.medianType:
+						// Median of the box
+						valPoint *= this.chartProp.pxToMM
+						this.paths[index] = [this._createLine([[catPoint - (barWidth / 2), valPoint], [catPoint + (barWidth / 2), valPoint]]), true];
+						break;
+					case cachedData.topBoxType:
+						// Top of the box
+						const medianValPointBottom = this.cChartDrawer.getYPosition(data[i].val2, valAxis, true) * this.chartProp.pxToMM;
+						valPoint *= this.chartProp.pxToMM
+						this.paths[index] = [this.cChartDrawer._calculateRect(catPoint - (barWidth / 2), medianValPointBottom, barWidth, medianValPointBottom - valPoint), true];
+						break;
+					case cachedData.meanType:
+						// Mean
+						valPoint *= this.chartProp.pxToMM
+						meanLine.push([catPoint, valPoint]);
+						this.paths[index] = [this._createMeanMarker(catPoint, valPoint, 32 * gapWidth), false];
+						break;
+				}
+
+				if (i === ends[j]) {
+					catPoint += (gapBetween + barWidth);
+					j++;
+				}
+
+				index++;
+			}
+
+			if (cachedData.meanLine) {
+				this.linePath = this._createLine(meanLine);
+			}
+		}
+	},
+
+	_createMeanMarker: function (x, y, halfSize) {
+		const pathId = this.cChartSpace.AllocPath();
+		const path = this.cChartSpace.GetPath(pathId);
+		const pathW = this.chartProp.pathW;
+		const pathH = this.chartProp.pathH;
+		const pxToMm = this.chartProp.pxToMM;
+
+		path.moveTo((x - halfSize) * pathW / pxToMm, (y - halfSize) * pathH / pxToMm );
+		path.lnTo((x + halfSize) * pathW / pxToMm, (y + halfSize) * pathH / pxToMm );
+		path.moveTo((x - halfSize) * pathW / pxToMm, (y + halfSize) * pathH / pxToMm );
+		path.lnTo((x + halfSize) * pathW / pxToMm, (y - halfSize) * pathH / pxToMm );
+
+		return pathId;
+	},
+
+	_createLine: function (arr) {
+		const pathId = this.cChartSpace.AllocPath();
+		const path = this.cChartSpace.GetPath(pathId);
+		const pathW = this.chartProp.pathW;
+		const pathH = this.chartProp.pathH;
+		const pxToMm = this.chartProp.pxToMM;
+
+		if (0 < arr.length) {
+			path.moveTo(arr[0][0] * pathW / pxToMm, arr[0][1] * pathH / pxToMm);
+		}
+		for (let i = 1; i < arr.length; i++) {
+			path.lnTo(arr[i][0] * pathW / pxToMm, arr[i][1] * pathH / pxToMm);
+		}
+
+		return pathId;
+	},
+
+	createTail: function (x, y, y1, size) {
+		const pathId = this.cChartSpace.AllocPath();
+		const path = this.cChartSpace.GetPath(pathId);
+		const pathW = this.chartProp.pathW;
+		const pathH = this.chartProp.pathH;
+		const pxToMm = this.chartProp.pxToMM;
+
+		path.moveTo(x * pathW / pxToMm, y1 * pathH);
+		path.lnTo(x * pathW / pxToMm, y * pathH);
+		path.moveTo((x + (size / 2)) * pathW / pxToMm, y * pathH);
+		path.lnTo((x - (size / 2)) * pathW / pxToMm, y * pathH);
+
+
+		return pathId;
+	},
+
+	createPoint: function (x, y, halfSize) {
+		const pathId = this.cChartSpace.AllocPath();
+		const path = this.cChartSpace.GetPath(pathId);
+		const pathW = this.chartProp.pathW;
+		const pathH = this.chartProp.pathH;
+		const pxToMm = this.chartProp.pxToMM;
+
+		path.moveTo((x + halfSize) * pathW / pxToMm, y * pathH);
+		path.arcTo(halfSize * pathW / pxToMm, halfSize * pathW / pxToMm, 0, Math.PI * 2 * cToDeg);
+
+		return pathId;
+	},
+
+	draw : function () {
+		if (!this.cChartDrawer || !this.cChartDrawer.calcProp || !this.cChartDrawer.cShapeDrawer || !this.cChartDrawer.cShapeDrawer.Graphics || !this.cChartDrawer.calcProp.chartGutter) {
+			return;
+		}
+
+		// find chart starting coordinates, width and height;
+		let leftRect = this.cChartDrawer.calcProp.chartGutter._left / this.cChartDrawer.calcProp.pxToMM;
+		let topRect = (this.cChartDrawer.calcProp.chartGutter._top) / this.cChartDrawer.calcProp.pxToMM;
+		let rightRect = this.cChartDrawer.calcProp.trueWidth / this.cChartDrawer.calcProp.pxToMM;
+		let bottomRect = (this.cChartDrawer.calcProp.trueHeight) / this.cChartDrawer.calcProp.pxToMM;
+
+		if (!AscFormat.isRealNumber(leftRect) || !AscFormat.isRealNumber(topRect) || !AscFormat.isRealNumber(rightRect) || !AscFormat.isRealNumber(bottomRect) ) {
+			return
+		}
+
+		this.cChartDrawer.cShapeDrawer.Graphics.SaveGrState();
+		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(leftRect, topRect, rightRect, bottomRect);
+
+		let series = this.cChartSpace.chart.plotArea.plotAreaRegion.series;
+
+		let oSeries = series[0];
+
+		let pen = oSeries.compiledSeriesPen;
+		if (pen) {
+			pen.Fill.fill.color.RGBA.R = 255;
+			pen.Fill.fill.color.RGBA.B = 0;
+			pen.Fill.fill.color.RGBA.G = 0;
+		}
+		let brush = oSeries.compiledSeriesBrush;
+
+		if(oSeries) {
+			this.drawParts(true, pen, brush);
+			this.drawParts(false, pen, brush);
+		}
+
+		// drawLine
+		this.cChartDrawer.drawPath(this.linePath, pen);
+		this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
+	},
+
+	drawParts : function (order, pen, brush) {
+		for (let i in this.paths) {
+			if (this.paths.hasOwnProperty(i) && this.paths[i] && this.paths[i][1] === order) {
+				this.cChartDrawer.drawPath(this.paths[i][0], pen, brush);
+			}
+		}
+	},
+
+	_calculateDLbl : function (compiledDlb) {
+		return;
 	}
 }
 
@@ -19090,6 +19632,705 @@ CColorObj.prototype =
 		num = (count >= 0) ? roundedNum * Math.pow(10, count) : roundedNum / Math.pow(10, -count);
 		return isNegative ? -num : num;
 	}
+
+	function CCachedTreemap(type, numLit, strLit, width, height) {
+		CCachedChartExData.call(this, type, []);
+		this._calculate(numLit, strLit, width, height);
+	}
+
+	AscFormat.InitClassWithoutType(CCachedTreemap, CCachedChartExData);
+
+	CCachedTreemap.prototype._calculate = function (numLit, strLit, width, height) {
+		if (!numLit || !numLit.pts) {
+			return;
+		}
+		const getLastLayer = function (strLit) {
+			if (!strLit || strLit.length <= 1) {
+				return null;
+			}
+
+			for (let i = strLit.length - 1; i >= 0; i--) {
+				if (strLit[i].pts.length > 0) {
+					return i;
+				}
+			}
+			return null
+		}
+
+		// Normalize all elements that either negative or have no corresponding label to zero
+		const normalizeNumArr = function (numArr, strLit, lastLayer, area) {
+			// turn all elements that have no corresponding label into zero
+			const verifiedIdxs = {};
+
+			// Populate `verifiedIdxs` if there are labels in `strLit`
+			if (lastLayer !== null) {
+				for (let i = 0; i < strLit.length; i++) {
+					for (let j = 0; j < strLit[i].pts.length; j++) {
+						verifiedIdxs[strLit[i].pts[j].idx] = true;
+					}
+				}
+			}
+
+			// Normalize `numArr` values
+			const arr = [];
+			let sum = 0;
+			for (let k = 0; k < numArr.length; k++) {
+				if (numArr[k].val < 0 || (lastLayer !== null && !verifiedIdxs[numArr[k].idx])) {
+					continue;
+				}
+				sum += numArr[k].val;
+				arr.push({idx: numArr[k].idx, val: numArr[k].val});
+			}
+
+			for (let k = 0; k < arr.length; k++) {
+				arr[k].val = (arr[k].val / sum) * area;
+			}
+
+			arr.sort(function(a, b) {
+				return b.val - a.val;
+			});
+
+			return arr;
+		}
+
+		const createTreemap = function (numArr, strLit, lastLayer, width, height) {
+
+			const getAspectRatio = function(currentAreasSum, lastElementArea, predefinedSide, isVert){
+				if (predefinedSide === 0) {
+					return null;
+				}
+				const totalArea = currentAreasSum + lastElementArea;
+				let newWidth = null;
+				let newHeight = null;
+				if (isVert){
+					newWidth = totalArea / predefinedSide;
+					newHeight = lastElementArea / newWidth;
+				} else{
+					newHeight = totalArea / predefinedSide;
+					newWidth = lastElementArea / newHeight;
+				}
+				return Math.max(newWidth, newHeight) / Math.min(newWidth, newHeight);
+			}
+
+			const squarify = function(areas, newWidth, newHeight){
+				const resArr = [];
+				let oldHeight, oldWidth;
+				for (let i = 0; i < areas.length; i++){
+					const area = areas[i].val;
+					const lastElem = resArr.length !== 0 ? resArr[resArr.length - 1] : null;
+					const oldAspectRatio = lastElem && getAspectRatio(lastElem.totalSum, area, lastElem.predefinedSize, lastElem.position);
+					const newVerticalAspectRatio = getAspectRatio(0, area, newHeight, true);
+					const newHorizontalAspectRatio = getAspectRatio(0, area, newWidth, false);
+					if (oldAspectRatio && oldAspectRatio < newHorizontalAspectRatio && oldAspectRatio < newVerticalAspectRatio){
+						lastElem.array.push(area);
+						lastElem.totalSum += area;
+						if (lastElem.position) {
+							newWidth = newWidth - (area / oldHeight);
+						} else {
+							newHeight = newHeight - (area / oldWidth);
+						}
+					}else {
+						oldHeight = newHeight;
+						oldWidth = newWidth;
+						if (newVerticalAspectRatio < newHorizontalAspectRatio){
+							resArr.push({position: true, array: [area], totalSum: area, predefinedSize: oldHeight});
+							newWidth = oldWidth - (area / oldHeight);
+							console.log("width changed", newWidth, area)
+						} else {
+							resArr.push({position: false, array: [area], totalSum: area, predefinedSize: oldWidth});
+							newHeight = oldHeight - (area / oldWidth);
+						}
+					}
+				}
+				return resArr;
+			}
+
+
+			if (lastLayer != null) {
+				return [];
+			} else {
+				// const isStrLit = strLit;
+				// let labelCounter = 0;
+				// for (let i = 0; i < numArr.length; i++) {
+				// 	// search label in strLit if found get name, and increase labelCounter
+				// 	let name = isStrLit && numArr[i].idx === strLit[0].pts[labelCounter].idx ? strLit[0].pts[0].val : null;
+				// 	labelCounter = name !== null ? labelCounter + 1 : labelCounter;
+				// 	treeHead.push({name: name, pVal: numArr[i].val / totalValue, start: i, end: i + 1, pos: i, idx: i});
+				// }
+				return squarify(numArr, width, height);
+			}
+		}
+
+		const numArr = numLit.pts;
+		const lastLayer = getLastLayer(strLit)
+		const newNumArr = normalizeNumArr(numArr, strLit, lastLayer, width * height);
+		this.data = createTreemap(newNumArr, strLit, lastLayer, width, height);
+	}
+
+	function CCachedBoxWhisker(type, seria, numLit, strLit, axisProperties) {
+		CCachedChartExData.call(this, type, []);
+		this.exclusive = seria && seria.layoutPr && seria.layoutPr.statistics ? seria.layoutPr.statistics.quartileMethod : AscFormat.QUARTILE_METHOD_EXCLUSIVE;
+		this.outliers = seria && seria.layoutPr && seria.layoutPr.visibility ? seria.layoutPr.visibility.outliers : false;
+		this.nonoutliers = seria && seria.layoutPr && seria.layoutPr.visibility ? seria.layoutPr.visibility.nonoutliers : false;
+		this.meanLine = seria && seria.layoutPr && seria.layoutPr.visibility ? seria.layoutPr.visibility.meanLine : false;
+		this.meanMarker = seria && seria.layoutPr && seria.layoutPr.visibility ? seria.layoutPr.visibility.meanMarker : false;
+		this.ends = [];
+		this.pointType = 0;
+		this.tailType = 1;
+		this.bottomBoxType = 2;
+		this.medianType = 3;
+		this.topBoxType = 4
+		this.meanType = 5;
+		this._calculate(seria, numLit, strLit, axisProperties);
+	}
+
+	AscFormat.InitClassWithoutType(CCachedBoxWhisker, CCachedChartExData);
+
+	CCachedBoxWhisker.prototype._calculate = function (seria, numLit, strLit, axisProperties) {
+		if (!numLit || !axisProperties || !numLit.pts) {
+			return;
+		}
+
+		const strCache = strLit && strLit.pts;
+
+		const resultingArr = this._constructArrays(strCache, numLit.pts);
+		let box = null;
+		for (let i = 0; i < resultingArr.length; i++) {
+			box = this._createBox(resultingArr[i], axisProperties);
+			this._addDataPoints(box, resultingArr[i]);
+		}
+	}
+
+	CCachedBoxWhisker.prototype._constructArrays = function (strCache, numArr) {
+		const resultingArr = [];
+		if (strCache) {
+			const dictSet = {}
+			let index = 0;
+
+			// return value for specific label
+			const getVal = function (strCacheIdx) {
+				for (; index < numArr.length; index++) {
+					if (numArr[index].idx === strCacheIdx) {
+						return numArr[index].val;
+					}
+				}
+			}
+			// create arrays of families of same labels
+			for (let i = 0; i < strCache.length; i++) {
+				const key = strCache[i].val;
+				if (dictSet[key] === undefined) {
+					resultingArr.push([getVal(strCache[i].idx)]);
+					dictSet[key] = resultingArr.length - 1;
+				} else {
+					resultingArr[dictSet[key]].push(getVal(strCache[i].idx));
+				}
+			}
+		} else {
+			// construct single array of values
+			const result = [];
+			for (let i = 0; i < numArr.length; i++) {
+				result.push(numArr[i].val);
+			}
+
+			resultingArr.push(result);
+		}
+		return resultingArr;
+	}
+
+	CCachedBoxWhisker.prototype._createBox = function (arr, axisProperties) {
+
+		if (arr.length === 0) {
+			return {bEmpty : true}
+		}
+
+		const getLowest = function (arr, threshold) {
+			for (let i = 0; i < arr.length; i++) {
+				if (arr[i] >= threshold) {
+					return arr[i];
+				}
+			}
+			return null;
+		}
+
+		const getHighest = function (arr, threshold) {
+			for (let i = arr.length - 1; i >= 0; i--) {
+				if (arr[i] <= threshold) {
+					return arr[i];
+				}
+			}
+			return null;
+		}
+
+		const getMean = function (arr) {
+			if (!arr.length) {
+				return 0;
+			}
+			let sum = 0;
+			for (let i = 0; i < arr.length; i++) {
+				sum += arr[i];
+			}
+			return sum / arr.length;
+		}
+		const fMedian = AscCommonExcel.getMedian(arr);
+
+		// Get the first quartile using the appropriate method based on `exclusive`
+		const fFirstQuartile = this.exclusive
+			? AscCommonExcel.getPercentileExclusive(arr, 0.25, true)
+			: AscCommonExcel.getPercentile(arr, 0.25, true);
+
+		// Get the value of the first quartile, convert "#!Num" to null
+		const fFirstQuartileVal = fFirstQuartile && fFirstQuartile.getValue() !== '#NUM!' ? fFirstQuartile.getValue() : null;
+
+		// Get the second quartile using the appropriate method based on `exclusive`
+		const fThirdQuartile = this.exclusive
+			? AscCommonExcel.getPercentileExclusive(arr, 0.75, true)
+			: AscCommonExcel.getPercentile(arr, 0.75, true);
+
+		// Get the value of the second quartile, convert "#!Num" to null
+		const fThirdQuartileVal = fThirdQuartile && fThirdQuartile.getValue() !== '#NUM!' ? fThirdQuartile.getValue() : null;
+
+		// Calculate the interquartile range (IQR), ensuring null values are handled
+		const fIQR = (fThirdQuartileVal !== null && fFirstQuartileVal !== null)
+			? fThirdQuartileVal - fFirstQuartileVal
+			: null;
+
+		// this multiplier is used insede the formula to detect outliers
+		const fMulitplier = 1.5;
+		const fLowerThreshold = fFirstQuartileVal - (fMulitplier * fIQR);
+		const fUpperThreshold = fThirdQuartileVal + (fMulitplier * fIQR);
+
+		// dont return lowest and highest if arr length is less than 3
+		const fLowestNum = getLowest(arr, fLowerThreshold);
+		const fHighestNum = arr.length > 1 ? getHighest(arr, fUpperThreshold) : null;
+		const fMean = this.meanMarker ? getMean(arr) : null;
+
+		this._chartExSetAxisMinAndMax(axisProperties.val, fLowestNum);
+		this._chartExSetAxisMinAndMax(axisProperties.val, fFirstQuartileVal);
+		this._chartExSetAxisMinAndMax(axisProperties.val, fMedian.getValue());
+		this._chartExSetAxisMinAndMax(axisProperties.val, fMean);
+		this._chartExSetAxisMinAndMax(axisProperties.val, fThirdQuartileVal);
+		this._chartExSetAxisMinAndMax(axisProperties.val, fHighestNum);
+
+		return {fStart: fLowestNum, fFirstQuartile: fFirstQuartileVal, fMedian: fMedian.getValue(), fMean: fMean,  fThirdQuartile: fThirdQuartileVal, fEnd: fHighestNum}
+	}
+
+	CCachedBoxWhisker.prototype._addDataPoints = function (box, arr) {
+		for (let j = 0; j < arr.length; j++) {
+
+			if (arr[j] === box.fStart || arr[j] === box.fEnd) {
+				// point from which to start drawing vertical line to tail
+				const value = arr[j] === box.fStart ? box.fFirstQuartile : box.fThirdQuartile;
+				this.data.push({type: this.tailType, val : arr[j], val2: value})
+			} else {
+				// obtain condition to draw, either outlier or nonoutlier
+				const isDraw = arr[j] < box.fStart || arr[j] > box.fEnd ? this.outliers : this.nonoutliers;
+				if (isDraw) {
+					this.data.push({type : this.pointType, val: arr[j]})
+				}
+			}
+		}
+		this.data.push({type: this.bottomBoxType, val: box.fFirstQuartile, val2: box.fMedian});
+		this.data.push({type: this.medianType, val: box.fMedian});
+		this.data.push({type: this.topBoxType, val: box.fThirdQuartile, val2: box.fMedian});
+
+		if (this.meanLine) {
+			this.data.push({type: this.meanType, val: box.fMean});
+		}
+
+		// store the ending index;
+		this.ends.push(this.data.length - 1);
+	}
+
+	/*
+	 * Sunburst
+	 *
+	 * @param {string} name - The name of the node.
+	 * @param {number} pVal - The parent value of the node.
+	 * @param {number} idx - The index of the node.
+	 * @param {CSunburstNode || null} parent - The parent node.
+	 * @param {Array} children - The child nodes.
+	 * @param {number} stIdx - The start index of the node.
+	 * @param {number} endIdx - The end index of the node.
+	 */
+	function CSunburstNode(name, pVal, idx, parent, children, stIdx, endIdx) {
+		AscCommon.CTree.call(this);
+		this.name = name;
+		this.pVal = pVal;
+		this.idx = idx;
+		this.parent = parent;
+		this.stIdx = stIdx;
+		this.endIdx = endIdx;
+		this.children = children || [];
+	}
+	AscFormat.InitClassWithoutType(CSunburstNode, AscCommon.CTree);
+
+	CSunburstNode.prototype.fillObject = function (oCopy) {
+		AscCommon.CTree.prototype.fillObject.call(this, oCopy);
+		oCopy.name = this.name;
+		oCopy.pVal = this.pVal;
+		oCopy.idx = this.idx;
+		oCopy.stIdx = this.stIdx;
+		oCopy.endIdx = this.endIdx;
+		oCopy.children = [];
+
+		for (let i = 0; i < this.children.length; i++) {
+			const childCopy = new CSunburstNode();
+			this.children[i].fillObject(childCopy);
+			childCopy.parent = oCopy;
+
+			oCopy.children.push(childCopy);
+		}
+	};
+
+	CSunburstNode.prototype.getChildren = function () {
+		return this.children;
+	}
+
+	function CCachedSunburst(type, numLit, strLit ) {
+		CCachedChartExData.call(this, type, []);
+		this.layersCount = 0;
+		this._calculate(numLit, strLit);
+	}
+
+	AscFormat.InitClassWithoutType(CCachedSunburst, CCachedChartExData);
+
+	CCachedSunburst.prototype._calculate = function (numLit, strLit) {
+		if (!numLit || !numLit.pts) {
+			return;
+		}
+
+		this.createSunburst(numLit.pts, strLit);
+		this.sortSunburstAndCountLayers();
+	}
+
+	CCachedSunburst.prototype.createSunburst = function (numArr, strLit) {
+
+		// first columns of strLit can be null for all rows
+		const normalizeStrLit = function (strLit) {
+			if (!strLit) {
+				return [];
+			}
+			const newStrLit = [];
+			for (let i = 0; i < strLit.length; i++) {
+				if (strLit[i].pts.length > 0) {
+					newStrLit.push(strLit[i]);
+				}
+			}
+			return newStrLit;
+		}
+
+		// Find index of last layer
+		const getLastLayer = function (strLit) {
+			if (!strLit || strLit.length <= 1) {
+				return null;
+			}
+
+			for (let i = strLit.length - 1; i >= 0; i--) {
+				if (strLit[i].pts.length > 0) {
+					return i;
+				}
+			}
+			return null
+		}
+
+		// Normalize all elements that either negative or have no corresponding label to zero
+		const normalizeNumArr = function (numArr, strLit, lastLayer) {
+			// turn all elements that have no corresponding label into zero
+			const verifiedIdxs = {};
+
+			// Populate `verifiedIdxs` if there are labels in `strLit`
+			if (lastLayer !== null) {
+				for (let i = 0; i < strLit.length; i++) {
+					for (let j = 0; j < strLit[i].pts.length; j++) {
+						verifiedIdxs[strLit[i].pts[j].idx] = true;
+					}
+				}
+			}
+
+			// Normalize `numArr` values
+			const arr = [];
+			for (let k = 0; k < numArr.length; k++) {
+				if (numArr[k].val < 0 || (lastLayer !== null && !verifiedIdxs[numArr[k].idx])) {
+					continue;
+				}
+				arr.push({idx: numArr[k].idx, val: numArr[k].val});
+			}
+			return arr;
+		}
+
+		// Calculate total value of all elements in numArr
+		const getTotalValue = function (numArr) {
+			let sum = 0;
+			for (let i = 0; i < numArr.length; i++) {
+				if (numArr[i].val >= 0) {
+					sum += numArr[i].val;
+				}
+			}
+			return sum;
+		}
+
+		// Transform strLit and numArr into a sunburst
+		const _createSunburst = function (numArr, strLit, totalValue, lastLayer) {
+			const treeHead = new CSunburstNode(null, totalValue, -1, null, [], 0, 0);;
+			if (lastLayer != null) {
+				let head = treeHead.children;
+				let parent = null;
+				const strItIndexes = [0];
+				const numIndexes = [0];
+				const strRealIndexes = [0];
+				let realIndex = null;
+				let strArr = strLit[0].pts;
+				let prevVal = strArr[0].idx === 0 ? strArr[0].val : null;
+				let row = prevVal !== null ? 1 : 0;
+				let col = 0;
+				const nullIndexes = [];
+				let currIdx = 0;
+
+				// function to update all indexes of current column
+				const updateCurrentColumn = function () {
+					strItIndexes[col] = row;
+					strRealIndexes[col] = realIndex;
+					nullIndexes[col] = prevVal === null;
+				}
+
+				const goNextColumn = function () {
+
+					let nextRow = null;
+					do {
+						// failed to go to the next column;
+						if (nextRow !== null && col >= lastLayer) {
+							return false;
+						}
+
+						// handle cases when we skipped more than one column
+						if (nextRow !== null) {
+							strRealIndexes[col] = strRealIndexes[col - 1];
+							nullIndexes[col] = true;
+						}
+
+						// updateColumn;
+						col += 1;
+
+						// if it is the first time in this column then add new indexes
+						if (col === strItIndexes.length) {
+							strItIndexes.push(0);
+							numIndexes.push(0);
+							strRealIndexes.push(0);
+							nullIndexes.push(true);
+						}
+
+						// update strArr and nextRow;
+						strArr = strLit[col].pts;
+						nextRow = strItIndexes[col];
+
+					} while (nextRow >= strArr.length);
+
+					// prepare prevVal and currentRow for next column
+					prevVal = nextRow < strArr.length && strArr[nextRow].idx === strRealIndexes[col] ? strArr[nextRow].val : null;
+					row = prevVal !== null ? nextRow : nextRow - 1;
+					return true;
+				}
+
+				const handleFailedTrial = function () {
+					// col is currently in last layer;
+					// update numindexes for last layer;
+					numIndexes[col] = numArr[numIndexes[col]].idx < realIndex ? numIndexes[col] + 1 : numIndexes[col];
+
+					// go to the previous layer
+					col -= 1;
+
+					// if prevVal then we are currently in empty branch
+					// if not then update numIndexes, because we are returned to previous layer
+					if (prevVal !== null) {
+						head = parent
+						parent = head.length > 0 ? head[head.length - 1].parent : null;
+					} else {
+						numIndexes[col] = Math.max(numIndexes[col], numIndexes[col + 1]);
+					}
+
+					// return to prev strArr
+					strArr = strLit[col].pts;
+					const prevRow = strItIndexes[col];
+					if (prevRow === strArr.length) {
+						row = prevRow;
+						return;
+					}
+					prevVal = prevRow < strArr.length && strArr[prevRow].idx === strRealIndexes[col] ? strArr[prevRow].val : null;
+					row = prevVal !== null ? prevRow : prevRow - 1;
+				}
+
+				const updateNumIndexes = function () {
+					if (prevVal === null) {
+						numIndexes[col] = numArr[numIndexes[col]].idx < realIndex ? numIndexes[col] + 1 : numIndexes[col];
+					}
+					prevVal = row < strArr.length ? strArr[row].val : null;
+				}
+
+				const getPercent = function (end) {
+					let start = numIndexes[col];
+					let sum = 0;
+					for (; start < numArr.length; start++) {
+						if (numArr[start].idx >= end) {
+							numIndexes[col] = start;
+							break;
+						}
+						sum += numArr[start].val;
+					}
+					return sum / totalValue;
+				}
+
+				const createCell = function () {
+					return new CSunburstNode(
+						prevVal,
+						getPercent(realIndex),
+						currIdx++,
+						parent,
+						[],
+						strRealIndexes[col],
+						realIndex
+					)
+				}
+
+				const goBack = function () {
+					if (col === 0) {
+						return;
+					}
+
+					// go back both in columns and in tree
+					let index = col - 1;
+					let lastIdx = strRealIndexes[index];
+					do {
+						if (!nullIndexes[index]) {
+							head = parent
+							parent = head.length > 0 ? head[head.length - 1].parent : null;
+						}
+						numIndexes[index] = Math.max(numIndexes[index], numIndexes[col]);
+
+						index -= 1;
+					} while (index >= 0 && strRealIndexes[index] === lastIdx)
+
+					//updateCurrentCol
+					col = index + 1;
+
+					// return to prevStrArr
+					strArr = strLit[col].pts;
+					const prevRow = strItIndexes[col];
+					if (prevRow === strArr.length) {
+						row = prevRow;
+						return;
+					}
+					prevVal = (prevRow < strArr.length && strArr[prevRow].idx === strRealIndexes[col]) ? strArr[prevRow].val : null;
+					row = prevVal !== null ? prevRow : prevRow - 1;
+				}
+
+				const updateTree = function (cell, isLastLayer) {
+					head.push(cell);
+					if (!isLastLayer) {
+						parent = head;
+						head = cell.getChildren()
+					}
+				}
+
+				for (;row <= strArr.length; row++) {
+					const isLastElem = row === strArr.length;
+					const isOutOfGroup = !isLastElem && col > 0 && strArr[row].idx >= strRealIndexes[col - 1];
+					const isLastLayer = col === lastLayer;
+					const isNewLabel = !isLastElem && strArr[row].val !== prevVal;
+
+					if (isLastElem || isNewLabel || isLastLayer || isOutOfGroup) {
+						realIndex = ( isLastElem || isOutOfGroup )? (col > 0 ? strRealIndexes[col - 1] : strLit[col].ptCount): strArr[row].idx;
+						if (prevVal !== null) {
+							const cell = createCell();
+							updateTree(cell, isLastLayer);
+						}
+						updateCurrentColumn()
+						if (!isLastLayer) {
+							const isSuccess = goNextColumn();
+							// if jumped to next column then don need to handle next functions
+							if (isSuccess) {
+								continue;
+							}
+							handleFailedTrial();
+						} else {
+							updateNumIndexes();
+						}
+					}
+
+					if (isOutOfGroup || isLastElem) {
+						goBack();
+					}
+				}
+			} else {
+				// cheeck if labels exist
+				const isStrLit = strLit.length !== 0;
+				let labelCounter = 0;
+				const head = treeHead.getChildren();
+				for (let i = 0; i < numArr.length; i++) {
+					// search label in strLit if found get name, and increase labelCounter
+					let name = isStrLit && labelCounter < strLit[0].pts.length && numArr[i].idx === strLit[0].pts[labelCounter].idx ? strLit[0].pts[labelCounter].val : null;
+					labelCounter = name !== null ? labelCounter + 1 : labelCounter;
+					head.push(
+						new CSunburstNode(
+							name,
+							numArr[i].val / totalValue,
+							i,
+							null,
+							[],
+							i,
+							i+1
+						)
+					);
+				}
+			}
+			return treeHead;
+		}
+		const newStrLit = normalizeStrLit(strLit);
+		const lastLayer = getLastLayer(newStrLit);
+		const newNumArr = normalizeNumArr(numArr, newStrLit, lastLayer);
+		const totalValue = getTotalValue(newNumArr);
+		this.data = _createSunburst(newNumArr, newStrLit, totalValue, lastLayer);
+	}
+
+	CCachedSunburst.prototype.sortSunburstAndCountLayers = function () {
+		let head = this.data.getChildren();
+		if (head.length === 0) {
+			this.layersCount = 0;
+		}
+		const sortArr = function (arr) {
+			arr.sort(function(a, b) {
+				// sort by pVal;
+				return a.pVal - b.pVal;
+			});
+		}
+
+		let indexesStack = [];
+		let i = 0;
+		let additionalLayers = 0;
+		while (i <= head.length) {
+			if (i === head.length) {
+				sortArr(head);
+				if (indexesStack.length !== 0) {
+					i = indexesStack.pop() + 1;
+					head = head[0].parent;
+				} else {
+					i++;
+				}
+			} else {
+				if (head[i].children && head[i].children.length > 0) {
+					indexesStack.push(i);
+					additionalLayers = Math.max(additionalLayers, indexesStack.length);
+					head = head[i].children;
+					i = 0;
+				} else {
+					i++;
+				}
+			}
+		}
+
+		// 1 layer plus maximum number of children
+		this.layersCount = 1 + additionalLayers;
+	}
+
 
 	function CUpDownBars(chartsDrawer) {
 		this.cChartDrawer = chartsDrawer;

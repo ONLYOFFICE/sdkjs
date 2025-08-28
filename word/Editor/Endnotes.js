@@ -1498,12 +1498,55 @@ CEndnotesController.prototype.AddSignatureLine = function(oSignatureDrawing)
 
 	return this.CurEndnote.AddSignatureLine(oSignatureDrawing);
 };
+CEndnotesController.prototype.LoadChartData = function(bNeedRecalculate)
+{
+	if (false === this.private_CheckEndnotesSelectionBeforeAction())
+		return;
+
+	this.CurEndnote.LoadChartData(bNeedRecalculate);
+};
 CEndnotesController.prototype.EditChart = function(oChartPr)
 {
 	if (false === this.private_CheckEndnotesSelectionBeforeAction())
 		return;
 
 	this.CurEndnote.EditChart(oChartPr);
+};
+CEndnotesController.prototype.UpdateChart = function(oChart)
+{
+	if (false === this.private_CheckEndnotesSelectionBeforeAction())
+		return;
+
+	this.CurEndnote.UpdateChart(oChart);
+};
+CEndnotesController.prototype.OpenChartEditor = function()
+{
+	if (false === this.private_CheckEndnotesSelectionBeforeAction())
+		return;
+
+	this.CurEndnote.OpenChartEditor();
+};
+
+CEndnotesController.prototype.ApplyChartSettings = function(oChartSettings)
+{
+	if (false === this.private_CheckEndnotesSelectionBeforeAction())
+		return;
+
+	return this.CurEndnote.ApplyChartSettings(oChartSettings);
+};
+CEndnotesController.prototype.GetChartSettings = function()
+{
+	if (false === this.private_CheckEndnotesSelectionBeforeAction())
+		return;
+
+	return this.CurEndnote.GetChartSettings();
+};
+CEndnotesController.prototype.OpenOleEditor = function()
+{
+	if (false === this.private_CheckEndnotesSelectionBeforeAction())
+		return;
+
+	this.CurEndnote.OpenChartEditor();
 };
 CEndnotesController.prototype.AddInlineTable = function(nCols, nRows, nMode)
 {

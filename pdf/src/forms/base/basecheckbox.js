@@ -115,7 +115,7 @@
         this._hovered = bValue;
     };
     CBaseCheckBoxField.prototype.DrawCheckedSymbol = function(oGraphicsPDF) {
-        let aOrigRect = this.GetOrigRect();
+        let aOrigRect = this.GetRect();
         let nRotAngle = this.GetRotate();
 
         let X       = aOrigRect[0];
@@ -688,13 +688,12 @@
         this.SetWasChanged(true);
         this.AddToRedraw();
 
-        let oDoc = this.GetDocument();
         if (bChecked) {
-            oDoc.History.Add(new CChangesPDFFormValue(this, this.GetValue(), this.GetExportValue()));
+            AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetValue(), this.GetExportValue()));
             this._checked = true;
         }
         else {
-            oDoc.History.Add(new CChangesPDFFormValue(this, this.GetValue(), "Off"));
+            AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetValue(), "Off"));
             this._checked = false;
         }
     };
@@ -756,18 +755,18 @@
         // check symbol
         memory.WriteByte(this.GetStyle());
 
-        let sExportValue = this.GetExportValue(false);
+        let sExportValue = this.GetExportValue(memory.isCopyPaste);
         if (sExportValue != null) {
             memory.fieldDataFlags |= (1 << 14);
             memory.WriteString(sExportValue);
         }
 
-        if (this.IsNoToggleToOff(false)) {
+        if (this.IsNoToggleToOff(memory.isCopyPaste)) {
             memory.widgetFlags |= (1 << 14);
         }
 
         if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton) {
-            if (this.IsRadiosInUnison(false)) {
+            if (this.IsRadiosInUnison(memory.isCopyPaste)) {
                 memory.widgetFlags |= (1 << 25);
             }
         }

@@ -956,6 +956,10 @@
 		this.m_oPanelRight_vertScroll = CreateControl("id_vertical_scroll");
 		this.m_oPanelRight.AddControl(this.m_oPanelRight_vertScroll);
 
+		if (this.m_oApi.isMobileVersion) {
+			this.m_oPanelRight.HtmlElement.style.display = "none";
+		}
+
 		// --- left ---
 		this.m_oLeftRuler = CreateControlContainer("id_panel_left");
 		this.m_oMainContent.AddControl(this.m_oLeftRuler);
@@ -2493,9 +2497,7 @@
 		if (null == canvas)
 			return;
 
-
-
-		var context = canvas.getContext("2d");
+		var context = AscCommon.AscBrowser.getContext2D(canvas);
 		var _width = canvas.width;
 		var _height = canvas.height;
 

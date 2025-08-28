@@ -59,8 +59,7 @@
         if (oParent && this.IsWidget() && oParent.IsAllKidsWidgets())
             oParent.SetParentCurIdxs(aIdxs);
         else {
-            let oDoc = this.GetDocument();
-            oDoc.History.Add(new CChangesPDFListFormParentCurIdxs(this, this.GetParentCurIdxs(), aIdxs));
+            AscCommon.History.Add(new CChangesPDFListFormParentCurIdxs(this, this.GetParentCurIdxs(), aIdxs));
             this._currentValueIndices = aIdxs;
         }
     };
@@ -83,8 +82,7 @@
             return;
         }
 
-        let oDoc = this.GetDocument();
-        oDoc.History.Add(new CChangesPDFListCommitOnSelChange(this, this._commitOnSelChange, bValue));
+        AscCommon.History.Add(new CChangesPDFListCommitOnSelChange(this, this._commitOnSelChange, bValue));
 
         this._commitOnSelChange = bValue;
         this.SetWasChanged(true);

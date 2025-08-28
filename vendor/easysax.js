@@ -1184,43 +1184,35 @@ StaxParser.prototype.next = function() {
         this.depth--;
     }
 
-    this.eventType = EasySAXEvent.Unknown;
-    this.isTagStart = null;
     this.isInAttr = false;
-    this.isTagEnd = null;
-    this.eventType = null;
-    this.name = null;
-    this.text = null;
-    this.value = null;
+    this.eventType = EasySAXEvent.Unknown;
+    this.isTagStart = this.isTagEnd = this.name = this.text = this.value = null;
 
+    var xml = this.xml;
     var i = this.index;
-    if (this.xml.charCodeAt(i) !== 60) {//'<'
-        i = this.xml.indexOf('<', i);
-    }
 
-    if (i === -1) {
-        this.stop = true;
-        return;
-    }
-
-    // Text
-    if (this.index !== i) {
+    if (xml.charCodeAt(i) !== 60) { // '<'
+        i = xml.indexOf('<', i);
+        if (i === -1) {
+            this.stop = true;
+            return;
+        }
         this.eventType = EasySAXEvent.CHARACTERS;
-        this.text = this.xml.substring(this.index, i);
+        this.text = xml.substring(this.index, i);
         this.index = i;
         return this.eventType;
     }
 
     // ELEMENT
     // ---------------------------------------------
-    var w = this.xml.charCodeAt(i + 1);
+    var w = xml.charCodeAt(i + 1);
     if (w === 33) { // 33 == "!"
-        if (i + 3 < this.length && 45 === this.xml.charCodeAt(i + 2) && 45 === this.xml.charCodeAt(i + 3)) { // COMMENT
-            this.index = this.xml.indexOf('-->', i) + 3;
+        if (i + 3 < this.length && xml.charCodeAt(i + 2) === 45 && xml.charCodeAt(i + 3) === 45) { // COMMENT
+            this.index = xml.indexOf('-->', i) + 3;
         } else { // CDATA
-            this.index = this.xml.indexOf(']]>', i) + 3;
+            this.index = xml.indexOf(']]>', i) + 3;
         }
-        if (-1 === this.index) {
+        if (this.index === 2) { // -1 + 3 = 2
             this.stop = true;
         }
         this.eventType = EasySAXEvent.Unknown;
@@ -1229,7 +1221,7 @@ StaxParser.prototype.next = function() {
     // QUESTION
     // ---------------------------------------------
     if (w === 63) { // "?"
-        this.index = this.xml.indexOf('>', i);
+        this.index = xml.indexOf('>', i);
         return this.eventType;
     }
     // NODE ELEMENT
@@ -1263,56 +1255,78 @@ StaxParser.prototype.next = function() {
     return this.eventType;
 };
 StaxParser.prototype.parseNode = function(indexStart) {
-    var ixNameStart = +indexStart + 1; // позиция первого сивола имени
+    var xml = this.xml;
+    var len = this.length;
+    var ixNameStart = indexStart + 1;
 
     var i = ixNameStart;
-    var w = this.xml.charCodeAt(i);
-    while (i < this.length) {
-        if (w > 96 && w < 123 || w > 64 && w < 91 || w > 47 && w < 59 || w === 45 || w === 46 || w === 95) {
-            w = this.xml.charCodeAt(++i);
+    var w;
+    while (i < len) {
+        w = xml.charCodeAt(i);
+        if ((w | 32) > 96 && (w | 32) < 123 || // letters
+            (w > 47 && w < 58) ||              // digits
+            w === 45 || w === 46 || w === 58 || w === 95) { // - . :_
+            ++i;
             continue;
         }
-        if (w === 32 || w === 9 || w === 10 || w === 11 || w === 12 || w === 13) { // \f\n\r\t\v space
-            this.name = this.xml.substring(ixNameStart, i);
+        // whitespace (space, tab, LF, VT, FF, CR)
+        if (w === 32 || (w >= 9 && w <= 13)) {
+            this.name = xml.substring(ixNameStart, i);
             return i;
         }
-        if (w === 62 /* ">" */ || w === 47 /* "/" */) {
-            this.name = this.xml.substring(ixNameStart, i);
+        // tag end or self-closing slash
+        if (w === 62 /* > */ || w === 47 /* / */) {
+            this.name = xml.substring(ixNameStart, i);
             return i;
         }
+        // invalid char
         return -1;
     }
     return -1;
 };
 StaxParser.prototype.MoveToNextAttribute = function() {
+    var xml = this.xml;
+    var len = this.length;
     var i = this.index;
-    var w = this.xml.charCodeAt(i);
-    while (i < this.length) {
-        if (w === 61 /* "=" */ && i + 1 < this.length) {
-            this.name = this.xml.substring(this.index, i);
-            this.name = this.name.trim();
+
+    while (i < len) {
+        var w = xml.charCodeAt(i);
+        if (w === 61 /* '=' */ && i + 1 < len) {
+            // Extract attribute name (likely clean, trim only if needed)
+            var nameStart = this.index;
+            var nameEnd = i;
+            var rawName = xml.substring(nameStart, nameEnd);
+            
+            // Fast quote detection
+            var quoteChar = xml.charCodeAt(i + 1);
             var textStart = i + 2;
-            if (this.xml.charCodeAt(textStart - 1) === 34/* "\"" */) {
-                i = this.xml.indexOf("\"", textStart);
+            
+            if (quoteChar === 34) { // '"'
+                i = xml.indexOf('"', textStart);
+            } else if (quoteChar === 39) { // "'"
+                i = xml.indexOf("'", textStart);
             } else {
-                i = this.xml.slice(textStart - 1).search(/["']/g);
-                if (-1 !== i) {
-                    i += textStart - 1;//slice compensation
-                    textStart = i + 1;
-                    i = this.xml.indexOf(this.xml[i], textStart);
-                }
+                // Fallback for other quotes
+                i = xml.indexOf(xml.charAt(i + 1), textStart);
             }
-            if (-1 !== i) {
-                this.text = this.xml.substring(textStart, i);
+            
+            if (i !== -1) {
+                // Only trim if name has leading/trailing spaces
+                if (rawName.charCodeAt(0) === 32 || rawName.charCodeAt(nameEnd - nameStart - 1) === 32) {
+                    this.name = rawName.trim();
+                } else {
+                    this.name = rawName;
+                }
+                this.text = xml.substring(textStart, i);
                 this.index = i + 1;
                 return true;
             } else {
                 break;
             }
         }
-        if (w === 32 || w === 9 || w === 10 || w === 11 || w === 12 || w === 13) { // \f\n\r\t\v space
-            //todo spaces between name and =
-            w = this.xml.charCodeAt(++i);
+        // whitespace (space, tab, LF, VT, FF, CR)
+        if (w === 32 || (w >= 9 && w <= 13)) {
+            ++i;
             continue;
         }
         if (w === 62 /* ">" */) {
@@ -1320,13 +1334,13 @@ StaxParser.prototype.MoveToNextAttribute = function() {
             this.isInAttr = false;
             return false;
         }
-        if (w === 47 /* "/" */ && i + 1 < this.length && this.xml.charCodeAt(i + 1) === 62) {
+        if (w === 47 /* "/" */ && i + 1 < len && xml.charCodeAt(i + 1) === 62) {
             this.index = i + 2;
             this.isInAttr = false;
             this.isTagEnd = true;
             return false;
         }
-        w = this.xml.charCodeAt(++i);
+        ++i;
     }
     this.stop = true;
     this.index = i;
@@ -1342,11 +1356,15 @@ StaxParser.prototype.GetAttributes = function() {
 	return attributes;
 };
 StaxParser.prototype.SkipAttributes = function() {
-    var i = this.xml.indexOf('>', this.index);
-    if (i === -1) { // error  ...> // не нашел знак закрытия тега
+    var xml = this.xml;
+    var i = xml.indexOf('>', this.index);
+    
+    if (i === -1) {
         this.stop = true;
+        return;
     }
-    this.isTagEnd = this.xml.charCodeAt(i - 1) === 47;
+    
+    this.isTagEnd = xml.charCodeAt(i - 1) === 47; // '/'
     this.isInAttr = false;
     this.index = i + 1;
 };
@@ -1363,17 +1381,24 @@ StaxParser.prototype.ReadNextNode = function() {
     return EasySAXEvent.START_ELEMENT === type;
 };
 StaxParser.prototype.ReadNextSiblingNode = function(depth) {
-    var type = EasySAXEvent.Unknown;
+    var targetDepth = depth + 1;
+    var type;
+    
     while (this.hasNext()) {
         type = this.next();
         var curDepth = this.depth;
-        if (curDepth < depth)
+        
+        if (curDepth < depth) {
             break;
-        if (EasySAXEvent.START_ELEMENT == type && curDepth == depth + 1)
+        }
+        
+        if (type === EasySAXEvent.START_ELEMENT && curDepth === targetDepth) {
             return true;
-        else if (EasySAXEvent.END_ELEMENT == type && curDepth == depth)
+        }
+        
+        if (type === EasySAXEvent.END_ELEMENT && curDepth === depth) {
             return false;
-
+        }
     }
     return false;
 };
@@ -1469,44 +1494,72 @@ StaxParser.prototype.GetValueDecodeXmlExt = function () {
     return this.GetValueDecodeXml();
 };
 StaxParser.prototype.DecodeXml = function (text) {
-    if (-1 !== text.indexOf('&')) {
-        var res = "";
-        for (var i = 0; i < text.length; ++i) {
-            if(text[i] === '&') {
-                if(i + 3 < text.length) {
-                    if(text[i + 1] == 'l' && text[i + 2] == 't' && text[i + 3] == ';') {
-                        res += '<';
-                        i+=3;
-                        continue;
-                    } else if(text[i + 1] == 'g' && text[i + 2] == 't' && text[i + 3] == ';') {
-                        res += '>';
-                        i+=3;
-                        continue;
-                    }
-                }
-                if(i + 4 < text.length && text[i + 1] == 'a' && text[i + 2] == 'm' && text[i + 3] == 'p' && text[i + 4] == ';') {
-                    res += '&';
-                    i+=4;
+    if (text.indexOf('&') === -1) {
+        return text;
+    }
+    
+    var result = [];
+    var len = text.length;
+    
+    for (var i = 0; i < len; ++i) {
+        if (text.charCodeAt(i) === 38) { // '&'
+            var nextChar = i + 1 < len ? text.charCodeAt(i + 1) : 0;
+            
+            // &lt; (4 chars)
+            if (nextChar === 108 && i + 3 < len && // 'l'
+                text.charCodeAt(i + 2) === 116 && // 't'
+                text.charCodeAt(i + 3) === 59) {   // ';'
+                result.push('<');
+                i += 3;
+                continue;
+            }
+            
+            // &gt; (4 chars)
+            if (nextChar === 103 && i + 3 < len && // 'g'
+                text.charCodeAt(i + 2) === 116 && // 't'
+                text.charCodeAt(i + 3) === 59) {   // ';'
+                result.push('>');
+                i += 3;
+                continue;
+            }
+            
+            // &amp; (5 chars)
+            if (nextChar === 97 && i + 4 < len && // 'a'
+                text.charCodeAt(i + 2) === 109 && // 'm'
+                text.charCodeAt(i + 3) === 112 && // 'p'
+                text.charCodeAt(i + 4) === 59) {   // ';'
+                result.push('&');
+                i += 4;
+                continue;
+            }
+            
+            // &quot; or &apos; (6 chars)
+            if (i + 5 < len) {
+                if (nextChar === 113 && // 'q'
+                    text.charCodeAt(i + 2) === 117 && // 'u'
+                    text.charCodeAt(i + 3) === 111 && // 'o'
+                    text.charCodeAt(i + 4) === 116 && // 't'
+                    text.charCodeAt(i + 5) === 59) {   // ';'
+                    result.push('"');
+                    i += 5;
                     continue;
                 }
-                if(i + 5 < text.length) {
-                    if(text[i + 1] == 'q' && text[i + 2] == 'u' && text[i + 3] == 'o' && text[i + 4] == 't' && text[i + 5] == ';') {
-                        res += '\"';
-                        i+=5;
-                        continue;
-                    } else if(text[i + 1] == 'a' && text[i + 2] == 'p' && text[i + 3] == 'o' && text[i + 4] == 's' && text[i + 5] == ';') {
-                        res += '\'';
-                        i+=5;
-                        continue;
-                    }
+                
+                if (nextChar === 97 && // 'a'
+                    text.charCodeAt(i + 2) === 112 && // 'p'
+                    text.charCodeAt(i + 3) === 111 && // 'o'
+                    text.charCodeAt(i + 4) === 115 && // 's'
+                    text.charCodeAt(i + 5) === 59) {   // ';'
+                    result.push("'");
+                    i += 5;
+                    continue;
                 }
             }
-            res += text[i]
         }
-        return res;
-    } else {
-        return (' ' + text).substr(1);
+
+        result.push(text.charAt(i));
     }
+    return result.join('');
 };
 StaxParser.prototype.GetText = function () {
     var text = "";

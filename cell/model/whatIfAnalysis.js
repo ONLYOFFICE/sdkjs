@@ -2754,7 +2754,7 @@ function (window, undefined) {
 		const aExcludeWords = ['integer', 'binary', 'AllDifferent'];
 		const aConstraints = [];
 
-		oConstraints.forEach((oConstraint) => {
+		oConstraints.forEach(function (oConstraint) {
 			const oConstraintsWs = actualWsByRef(oConstraint.constraint, oWs);
 			const sConstraintsActualRef = convertToAbsoluteRef(oConstraint.constraint);
 			const oCellRefWs = actualWsByRef(oConstraint.cellRef, oWs);

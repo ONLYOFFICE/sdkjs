@@ -2821,3 +2821,4 @@ CTableCellRecalculateObject.prototype =
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CTableCell = CTableCell;
 window['AscWord'].CTableCell = CTableCell;
+window['AscWord'].TableCell = CTableCell;

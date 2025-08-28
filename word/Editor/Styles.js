@@ -60,7 +60,7 @@ var smallcaps_Koef = 0.8; // Коэффициент изменения разм�
 var smallcaps_and_script_koef = AscCommon.vaKSize * smallcaps_Koef; // суммарный коэффициент, когда текст одновременно и в индексе, и написан малыми прописными
 
 var g_dKoef_pt_to_mm = 25.4 / 72;
-var g_dKoef_pc_to_mm = g_dKoef_pt_to_mm / 12;
+var g_dKoef_pc_to_mm = g_dKoef_pt_to_mm * 12;
 var g_dKoef_in_to_mm = 25.4;
 var g_dKoef_twips_to_mm = g_dKoef_pt_to_mm / 20;
 var g_dKoef_mm_to_pt = 1 / g_dKoef_pt_to_mm;
@@ -72,6 +72,7 @@ var g_dKoef_pt_to_twips = 20;
 var g_dKoef_twips_to_emu = 1 / g_dKoef_emu_to_twips;
 var g_dKoef_twips_to_pt = 1 / g_dKoef_pt_to_twips;
 var g_dKoef_em_to_mm = 4.21752;
+const g_dKoef_pc_to_pt = 12;
 
 var tblwidth_Auto = 0x00;
 var tblwidth_Mm   = 0x01;
@@ -18007,6 +18008,7 @@ window["AscCommonWord"].g_dKoef_twips_to_pt = g_dKoef_twips_to_pt;
 window["AscCommonWord"].g_dKoef_twips_to_emu = g_dKoef_twips_to_emu;
 window["AscCommonWord"].g_dKoef_em_to_mm = g_dKoef_em_to_mm;
 window["AscCommonWord"].g_dKoef_pt_to_twips = g_dKoef_pt_to_twips;
+window["AscCommonWord"].g_dKoef_pc_to_pt = g_dKoef_pc_to_pt;
 window["AscCommonWord"].border_Single = border_Single;
 window["AscCommonWord"].Default_Tab_Stop = Default_Tab_Stop;
 window["AscCommonWord"].highlight_None = highlight_None;

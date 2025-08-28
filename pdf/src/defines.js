@@ -252,6 +252,14 @@
     APPEARANCE_TYPES["mouseDown"]   = APPEARANCE_TYPES.mouseDown;
     APPEARANCE_TYPES["rollover"]    = APPEARANCE_TYPES.rollover;
 
+    const DIGITS_TYPES = {
+        arabic:     0,
+        hindi:      1
+    };
+
+    DIGITS_TYPES["arabic"]  = DIGITS_TYPES.arabic;
+    DIGITS_TYPES["hindi"]   = DIGITS_TYPES.hindi;
+
     asc["FIELD_TYPES"]              = asc.FIELD_TYPES               = FIELD_TYPES;
     asc["BORDER_EFFECT_STYLES"]     = asc.BORDER_EFFECT_STYLES      = BORDER_EFFECT_STYLES;
     asc["REF_TO_REASON"]            = asc.REF_TO_REASON             = REF_TO_REASON;
@@ -266,5 +274,6 @@
     asc["BORDER_TYPES"]             = asc.BORDER_TYPES              = BORDER_TYPES;
     asc["BUTTON_HIGHLIGHT_TYPES"]   = asc.BUTTON_HIGHLIGHT_TYPES    = BUTTON_HIGHLIGHT_TYPES;
     asc["APPEARANCE_TYPES"]         = asc.APPEARANCE_TYPES          = APPEARANCE_TYPES;
+    asc["DIGITS_TYPES"]             = asc.DIGITS_TYPES              = DIGITS_TYPES;
     asc.CommandType                 = CommandType;
 })();

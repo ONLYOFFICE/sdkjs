@@ -639,11 +639,12 @@ window.AscCommon.g_cIsBeta = "false";
 	var c_oAscFrameDataType = {
 		SendImageUrls: 0,
 		GetLoadedImages: 1,
-		OpenFrame: 2,
-		ShowImageDialogInFrame: 3,
-		GetUrlsFromImageDialog: 4,
-		SkipStartEndAction: 5,
-		StartUploadImageAction: 6
+		ShowImageDialogInFrame: 2,
+		GetUrlsFromImageDialog: 3,
+		SkipStartEndAction: 4,
+		StartUploadImageAction: 5,
+		UpdateDiagramInGeneral: 6,
+		UpdateIsOpenOnClient: 7
 	};
 
 	var CellValueType = {
@@ -2477,6 +2478,7 @@ window.AscCommon.g_cIsBeta = "false";
 
 	var offlineMode = '_offline_';
 	var chartMode = '_chart_';
+	var oleMode = '_ole_';
 	var dataMode = '_data_';
 
 	var c_oSpecialPasteProps = {
@@ -2513,7 +2515,12 @@ window.AscCommon.g_cIsBeta = "false";
 		useTextImport: 25,
 
 		comments: 26,
-		columnWidth: 27
+		columnWidth: 27,
+
+		sourceFormattingEmbedding: 28,
+		destinationFormattingEmbedding: 29,
+		sourceFormattingLink: 30,
+		destinationFormattingLink: 31
 	};
 
 	var c_oSpecialPasteOperation = {
@@ -4601,6 +4608,19 @@ window.AscCommon.g_cIsBeta = "false";
 	];
 
 
+
+	const c_oAscExternalReferenceType = {
+		referenceData: 0,
+		link: 1,
+		path: 2
+	};
+
+	var c_oAscCalcMode = {
+		auto: 0,
+		autoNoTable: 1,
+		manual: 2
+	};
+
 	//------------------------------------------------------------export--------------------------------------------------
 	var prot;
 	window['Asc']['FONT_THUMBNAIL_HEIGHT'] = FONT_THUMBNAIL_HEIGHT;
@@ -5423,6 +5443,7 @@ window.AscCommon.g_cIsBeta = "false";
 	window["AscCommon"].offlineMode = offlineMode;
 	window["AscCommon"].chartMode = chartMode;
 	window["AscCommon"].dataMode = dataMode;
+	window["AscCommon"].oleMode = oleMode;
 
 	window['AscCommon']['align_Right'] = window['AscCommon'].align_Right = align_Right;
 	window['AscCommon']['align_Left'] = window['AscCommon'].align_Left = align_Left;
@@ -5466,6 +5487,10 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['useTextImport'] = prot.useTextImport;
 	prot['comments'] = prot.comments;
 	prot['columnWidth'] = prot.columnWidth;
+	prot['sourceFormattingEmbedding'] = prot.sourceFormattingEmbedding;
+	prot['destinationFormattingEmbedding'] = prot.destinationFormattingEmbedding;
+	prot['sourceFormattingLink'] = prot.sourceFormattingLink;
+	prot['destinationFormattingLink'] = prot.destinationFormattingLink;
 
 	window['Asc']['c_oSpecialPasteOperation'] = window['Asc'].c_oSpecialPasteOperation = c_oSpecialPasteOperation;
 	prot = c_oSpecialPasteOperation;
@@ -6061,5 +6086,15 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['OleObject'] = prot.OleObject;
 
 	window['Asc']['c_oAscDateTimeFormat'] = window['Asc'].c_oAscDateTimeFormat = c_oAscDateTimeFormat;
+
+	prot = window['Asc']['c_oAscExternalReferenceType'] = window['Asc'].c_oAscExternalReferenceType = c_oAscExternalReferenceType;
+	prot['referenceData'] = prot.referenceData;
+	prot['link'] = prot.link;
+	prot['path'] = prot.path;
+
+	prot = window['Asc']['c_oAscCalcMode'] = window['Asc'].c_oAscCalcMode = c_oAscCalcMode;
+	prot['auto'] = prot.auto;
+	prot['autoNoTable'] = prot.autoNoTable;
+	prot['manual'] = prot.manual;
 
 })(window);

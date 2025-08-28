@@ -1318,6 +1318,13 @@
 				oBodyPr.vertOverflow = AscFormat.nVOTClip;
 				oBodyPr.horzOverflow = AscFormat.nHOTClip;
 			}
+
+			if (Asc.editor.isPresentationEditor) {
+				const firstParagraph = tx_body.content.Content[0];
+				firstParagraph.SetParagraphAlign(AscCommon.align_Center);
+				oBodyPr.setAnchor(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
+			}
+
 			tx_body.setBodyPr(oBodyPr);
 			tx_body.content.Content[0].Set_DocumentIndex(0);
 			tx_body.content.MoveCursorToStartPos(false);
@@ -1797,6 +1804,10 @@
 			}
 			return this.compiledFill;
 		};
+
+        CShape.prototype.getBounds = function () {
+            return this.bounds;
+        };
 
 		CShape.prototype.getMargins = function () {
 			if (this.txBody) {
@@ -5397,7 +5408,38 @@
 				}
 			}
 		};
+		CShape.prototype.drawTxBody = function (graphics, transform, transformText, pageIndex) {
+			if (this.txBody) {
+				var oController = this.getDrawingObjectsController && this.getDrawingObjectsController();
+				graphics.SaveGrState();
+				graphics.SetIntegerGrid(false);
+				var _transformText;
+				if ((!this.txBody.content || this.txBody.content.Is_Empty()) && !AscCommon.IsShapeToImageConverter && this.txBody.content2 != null && !this.txBody.checkCurrentPlaceholder() && (this.isEmptyPlaceholder ? this.isEmptyPlaceholder() : false) && this.transformText2) {
+					_transformText = this.transformText2;
+				} else if (this.txBody.content) {
+					_transformText = transformText;
+				}
+				let isPdfAnnot = false;
+				if (Asc.editor.isPdfEditor()) {
+					if (this.IsAnnot && this.IsAnnot()) {
+						isPdfAnnot = true;
+					}
+				}
+				if (this instanceof CShape) {
+					if (!(oController && (AscFormat.getTargetTextObject(oController) === this)) && !isPdfAnnot)
+						this.clipTextRect(graphics, transform, transformText, pageIndex);
+				}
+				graphics.transform3(_transformText, true);
+				if (graphics.CheckUseFonts2 !== undefined)
+					graphics.CheckUseFonts2(_transformText);
 
+				graphics.SetIntegerGrid(true);
+				this.txBody.draw(graphics);
+				if (graphics.UncheckUseFonts2 !== undefined)
+					graphics.UncheckUseFonts2(_transformText);
+				graphics.RestoreGrState();
+			}
+		};
 		/**
 		 * note: sometimes call to recalculate bounds
 		 * @memberOf CShape
@@ -5502,30 +5544,7 @@
 
 			if (!this.cropObject) {
 				if (!this.txWarpStruct && !this.txWarpStructParamarksNoTransform || (!this.txWarpStructParamarksNoTransform && oController && (AscFormat.getTargetTextObject(oController) === this) || (!this.txBody && !this.textBoxContent)) /*|| this.haveSelectedDrawingInContent()*/) {
-					if (this.txBody) {
-						graphics.SaveGrState();
-						graphics.SetIntegerGrid(false);
-						var transform_text;
-						if ((!this.txBody.content || this.txBody.content.Is_Empty()) && !AscCommon.IsShapeToImageConverter && this.txBody.content2 != null && !this.txBody.checkCurrentPlaceholder() && (this.isEmptyPlaceholder ? this.isEmptyPlaceholder() : false) && this.transformText2) {
-							transform_text = this.transformText2;
-						} else if (this.txBody.content) {
-							transform_text = _transform_text;
-						}
-
-						if (this instanceof CShape) {
-							if (!(oController && (AscFormat.getTargetTextObject(oController) === this)))
-								this.clipTextRect(graphics, transform, transformText, pageIndex);
-						}
-						graphics.transform3(transform_text, true);
-						if (graphics.CheckUseFonts2 !== undefined)
-							graphics.CheckUseFonts2(transform_text);
-
-						graphics.SetIntegerGrid(true);
-						this.txBody.draw(graphics);
-						if (graphics.UncheckUseFonts2 !== undefined)
-							graphics.UncheckUseFonts2(transform_text);
-						graphics.RestoreGrState();
-					}
+					this.drawTxBody(graphics, transform, _transform_text, pageIndex);
 
 					if (this.textBoxContent && graphics.isSupportTextDraw() && this.transformText) {
 						var old_start_page = this.textBoxContent.Get_StartPage_Relative();
@@ -6532,7 +6551,6 @@
 				case AscDFH.historyitem_AutoShapes_RemoveFromDrawingObjects: {
 					break;
 				}
-
 				case AscDFH.historyitem_AutoShapes_AddToDrawingObjects: {
 					break;
 				}

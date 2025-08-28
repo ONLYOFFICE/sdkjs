@@ -47,7 +47,6 @@ jobs:
           npm install --prefix build
           node node_modules/grunt-cli/bin/grunt --gruntfile build/Gruntfile.js develop
           node node_modules/node-qunit-puppeteer/cli.js tests/common/api/api.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/common/color-mods/color-mods.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/cell/shortcuts/shortcuts.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/FormulaTests.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/PivotTests.html 30000 "--no-sandbox"

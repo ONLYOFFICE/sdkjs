@@ -15,7 +15,8 @@
 			"vendor/string.js",
 			"vendor/array.js",
 			"common/editorscommon.js",
-			"common/BulletPreviewDrawer.js",
+          "common/frameManager.js",
+          "common/BulletPreviewDrawer.js",
 			"common/HistoryCommon.js",
 			"common/TableId.js",
 			"common/TableIdChanges.js",
@@ -205,6 +206,7 @@
 			"common/Drawings/Format/GraphicFrame.js",
 			"common/Drawings/Format/LockedCanvas.js",
 			"common/Drawings/Format/SlicerView.js",
+			"common/Drawings/Format/Controls.js",
 			"cell/model/PivotTables.js",
 			
 			"word/Editor/Paragraph/RunContent/Types.js",
@@ -397,6 +399,8 @@
 			"common/plugins.js",
 
 			"common/Native/native_graphics.js",
+			
+			"word/Editor/document-visitor.js",
 			
 			"vendor/easysax.js",
 			"common/openxml.js"

@@ -85,8 +85,133 @@
     AscFormat.InitClass(CAnnotationStamp, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Stamp);
     Object.assign(CAnnotationStamp.prototype, AscPDF.CAnnotationBase.prototype);
 
+    CAnnotationStamp.prototype.Copy = function(isForMove) {
+        let oCopy = AscPDF.CAnnotationBase.prototype.Copy.call(this, isForMove);
+
+        let aInRect = this.GetInRect();
+
+        oCopy.SetRenderStructure(this.GetRenderStructure());
+        oCopy.SetInRect(aInRect.slice());
+        oCopy.SetIconType(this.GetIconType());
+        oCopy.SetRotate(this.GetRotate());
+
+        return oCopy;
+    };
+    
     CAnnotationStamp.prototype.IsStamp = function() {
         return true;
+    };
+    CAnnotationStamp.prototype.RecalcSizes = function() {
+        let aRect = this.GetRect();
+        let aInRect = this.GetInRect();
+
+        if (!aInRect) {
+            AscPDF.CAnnotationBase.prototype.RecalcSizes.call(this);
+            return;
+        }
+
+        function calcScale(rectA, angleRad, bboxB, eps = 1e-3) {
+            const cosL = Math.cos(angleRad);
+            const sinL = Math.sin(angleRad);
+
+            let minX =  Infinity, maxX = -Infinity;
+            let minY =  Infinity, maxY = -Infinity;
+
+            for (let i = 0; i < 8; i += 2) {
+                const x = rectA[i],     y = rectA[i + 1];
+                const uX =  cosL * x - sinL * y;
+                const uY =  sinL * x + cosL * y;
+
+                if (uX < minX) minX = uX;
+                if (uX > maxX) maxX = uX;
+                if (uY < minY) minY = uY;
+                if (uY > maxY) maxY = uY;
+            }
+
+            const dUX = maxX - minX;
+            const dUY = maxY - minY;
+            if (dUX < eps || dUY < eps) return 1;
+
+            const wB = Math.abs(bboxB[2] - bboxB[0]);
+            const hB = Math.abs(bboxB[3] - bboxB[1]);
+
+            const sX = wB / dUX;
+            const sY = hB / dUY;
+
+            return (sX + sY) * 0.5;
+        }
+
+        function getDistance(x1, y1, x2, y2) {
+            return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+        }
+
+        function rotateRect(pts, deg) {
+            const rad = deg * Math.PI / 180;
+            const cos = Math.cos(rad);
+            const sin = Math.sin(rad);
+
+            // центр прямоугольника
+            let cx = 0, cy = 0;
+            for (let i = 0; i < 8; i += 2) {
+                cx += pts[i];
+                cy += pts[i + 1];
+            }
+            cx /= 4;
+            cy /= 4;
+
+            // поворот каждой точки
+            const res = new Array(8);
+            for (let i = 0; i < 8; i += 2) {
+                const dx = pts[i]     - cx;
+                const dy = pts[i + 1] - cy;
+                res[i]     = cx + dx * cos - dy * sin;
+                res[i + 1] = cy + dx * sin + dy * cos;
+            }
+            return res;
+        }
+
+        function getRectRotation(pts) {
+            let dx1 = pts[2] - pts[0];
+            let dy1 = pts[3] - pts[1];
+            let dx2 = pts[4] - pts[2];
+            let dy2 = pts[5] - pts[3];
+
+            let len1 = dx1 * dx1 + dy1 * dy1;
+            let len2 = dx2 * dx2 + dy2 * dy2;
+            let dx   = len1 >= len2 ? dx1 : dx2;
+            let dy   = len1 >= len2 ? dy1 : dy2;
+
+            let deg = Math.atan2(dy, dx) * 180 / Math.PI; // ±180°
+            return deg < 0 ? deg + 360 : deg;             // 0‑360°
+        }
+
+        // If this annotation is from a file, then the rotation is not taken into account.
+        let rad = this.GetRotate() * Math.PI / 180;
+        
+        let nInRectRot = getRectRotation(aInRect);
+        if (nInRectRot != 0) {
+            aInRect = rotateRect(aInRect, -nInRectRot);
+        }
+
+        let scale = calcScale(aInRect, rad, aRect);
+        let nShapeW = getDistance(aInRect[0], aInRect[1], aInRect[6], aInRect[7]);
+        let nShapeH = getDistance(aInRect[0], aInRect[1], aInRect[2], aInRect[3]);
+
+        if (Math.abs(scale - 1) < 1e-3) scale = 1;
+
+        let nExtX = nShapeW * scale * g_dKoef_pt_to_mm;
+        let nExtY = nShapeH * scale * g_dKoef_pt_to_mm;
+        let nOffX = aRect[0] - (nExtX / g_dKoef_pt_to_mm - (aRect[2] - aRect[0])) / 2;
+        let nOffY = aRect[1] - (nExtY / g_dKoef_pt_to_mm - (aRect[3] - aRect[1])) / 2;
+
+        AscCommon.History.StartNoHistoryMode();
+        this.spPr.xfrm.setOffX(nOffX * g_dKoef_pt_to_mm);
+        this.spPr.xfrm.setOffY(nOffY * g_dKoef_pt_to_mm);
+        this.spPr.xfrm.setExtX(nExtX);
+        this.spPr.xfrm.setExtY(nExtY);
+        AscCommon.History.EndNoHistoryMode();
+
+        this.SetNeedRecalcSizes(false);
     };
     CAnnotationStamp.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
         let sType = this.GetIconType();
@@ -96,13 +221,13 @@
 
         this.Recalculate();
         if (AscPDF.STAMP_TYPES.Image == sType) {
-            this.draw(oGraphicsWord);
+            this.draw(oGraphicsWord, oGraphicsPDF);
         }
         else {
-            this._draw(oGraphicsWord);
+            this._draw(oGraphicsWord, oGraphicsPDF);
         }
     };
-    CAnnotationStamp.prototype._draw = function(oGraphicsWord) {
+    CAnnotationStamp.prototype._draw = function(oGraphicsWord, oGraphicsPDF) {
         let oStructure = this.GetRenderStructure();
         if (!oStructure) {
             return;
@@ -132,7 +257,7 @@
         }
 
         oStructure.draw(oGraphicsWord, oTr);
-    }
+    };
     CAnnotationStamp.prototype.SetRenderStructure = function(oStructure) {
         AscCommon.History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Pdf_Stamp_RenderStructure, this.renderStructure, oStructure));
         this.renderStructure = oStructure;
@@ -141,9 +266,9 @@
         return this.renderStructure;
     };
     CAnnotationStamp.prototype.SetInRect = function(aInRect) {
-        AscCommon.History.Add(new CChangesPDFAnnotStampInRect(this, this.inRect, aInRect));
+        AscCommon.History.Add(new CChangesPDFAnnotStampInRect(this, this._inRect, aInRect));
 
-        this.inRect = aInRect;
+        this._inRect = aInRect;
         
         function getDistance(x1, y1, x2, y2) {
             return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
@@ -178,7 +303,7 @@
         AscCommon.History.EndNoHistoryMode();
     };
     CAnnotationStamp.prototype.GetInRect = function() {
-        return this.inRect;
+        return this._inRect;
     };
     CAnnotationStamp.prototype.GetDrawing = function() {
         return this.content.GetAllDrawingObjects()[0];
@@ -211,7 +336,7 @@
             
         let nScale      = this.GetOriginViewScale();
         let originView  = this.GetOriginView(oGraphicsPDF.GetDrawingPageW() * nScale, oGraphicsPDF.GetDrawingPageH() * nScale);
-        let nRot        = this.GetRot();
+        let nRot        = -this.GetRotate() * Math.PI / 180;
 
         if (originView) {
             let oXfrm = this.getXfrm();
@@ -226,6 +351,26 @@
             oGraphicsPDF.DrawImageXY(originView, X, Y, nRot, true);
             AscPDF.endMultiplyMode(oGraphicsPDF.GetContext());
         }
+
+        if (oGraphicsPDF) {
+            oGraphicsPDF.SetLineWidth(1);
+            let aOringRect  = this.GetRect();
+            let X       = aOringRect[0];
+            let Y       = aOringRect[1];
+            let nWidth  = aOringRect[2] - aOringRect[0];
+            let nHeight = aOringRect[3] - aOringRect[1];
+
+            Y += 1 / 2;
+            X += 1 / 2;
+            nWidth  -= 1;
+            nHeight -= 1;
+
+            oGraphicsPDF.SetStrokeStyle(0, 255, 255);
+            oGraphicsPDF.SetLineDash([]);
+            oGraphicsPDF.BeginPath();
+            oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
+            oGraphicsPDF.Stroke();
+        }
     };
     CAnnotationStamp.prototype.ClearCache = function() {
         this._originView.normal = null;
@@ -235,10 +380,11 @@
         let oViewer     = editor.getDocumentRenderer();
         let oFile       = oViewer.file;
         let nPage       = this.GetOriginPage();
+        let nApIdx      = this.GetApIdx();
 
         if (this.APInfo == null || this.APInfo.size.w != nPageW || this.APInfo.size.h != nPageH) {
             this.APInfo = {
-                info: oFile.nativeFile["getAnnotationsAP"](nPage, nPageW, nPageH, undefined, this.GetApIdx()),
+                info: oFile.nativeFile["getAnnotationsAP"](nPage, nPageW, nPageH, undefined, nApIdx),
                 size: {
                     w: nPageW,
                     h: nPageH
@@ -247,15 +393,14 @@
         }
         
         for (let i = 0; i < this.APInfo.info.length; i++) {
-            if (this.APInfo.info[i]["i"] == this._apIdx)
+            if (this.APInfo.info[i]["i"] == nApIdx)
                 return this.APInfo.info[i];
         }
 
         return null;
     };
     CAnnotationStamp.prototype.SetPosition = function(x, y) {
-        let oDoc        = this.GetDocument();
-        let aCurRect    = this.GetOrigRect();
+        let aCurRect = this.GetRect();
 
         let nOldX = aCurRect[0];
         let nOldY = aCurRect[1];
@@ -267,15 +412,15 @@
             return;
         }
 
-        oDoc.History.Add(new CChangesPDFAnnotPos(this, [aCurRect[0], aCurRect[1]], [x, y]));
+        AscCommon.History.Add(new CChangesPDFAnnotPos(this, [aCurRect[0], aCurRect[1]], [x, y]));
 
         let nWidth  = aCurRect[2] - aCurRect[0];
         let nHeight = aCurRect[3] - aCurRect[1];
 
-        this._origRect[0] = x;
-        this._origRect[1] = y;
-        this._origRect[2] = x + nWidth;
-        this._origRect[3] = y + nHeight;
+        this._rect[0] = x;
+        this._rect[1] = y;
+        this._rect[2] = x + nWidth;
+        this._rect[3] = y + nHeight;
         
         let oXfrm = this.getXfrm();
         let nOffX = x - (this.getXfrmExtX() / g_dKoef_pt_to_mm - nWidth) / 2;
@@ -288,38 +433,6 @@
 
         this.SetNeedRecalc(true);
         this.SetWasChanged(true);
-    };
-    CAnnotationStamp.prototype.SetRect = function(aRect, isOnRotate) {
-        let oViewer     = editor.getDocumentRenderer();
-        let oDoc        = oViewer.getPDFDoc();
-        let aCurRect    = this.GetRect();
-        
-        if (this.GetRotate() != 0 && this.getXfrm() && !isOnRotate) {
-            oDoc.History.Add(new CChangesPDFAnnotStampRect(this, aCurRect, aRect, isOnRotate));
-            this._origRect = aRect;
-
-            this.SetNeedRecalcSizes(!isOnRotate);
-            this.handleUpdateRot();
-            return;
-        }
-
-        oDoc.History.Add(new CChangesPDFAnnotStampRect(this, aCurRect, aRect, isOnRotate));
-        this._origRect = aRect;
-
-        this.SetWasChanged(true);
-        this.SetNeedRecalcSizes(!isOnRotate);
-    };
-    CAnnotationStamp.prototype.SetNeedRecalcSizes = function(bRecalc) {
-        let oDoc = Asc.editor.getPDFDoc();
-        if (oDoc.Viewer.IsOpenAnnotsInProgress) {
-            return;
-        }
-
-        this._needRecalcSizes = bRecalc;
-        this.recalcGeometry();
-    };
-    CAnnotationStamp.prototype.IsNeedRecalcSizes = function() {
-        return this._needRecalcSizes;
     };
     CAnnotationStamp.prototype.canRotate = function() {
         return true;
@@ -338,7 +451,6 @@
         } else {
             this._draw(boundsChecker);
         }
-        boundsChecker.CorrectBounds();
 
         this.bounds.x = boundsChecker.Bounds.min_x;
         this.bounds.y = boundsChecker.Bounds.min_y;
@@ -349,69 +461,15 @@
         this.bounds.w = boundsChecker.Bounds.max_x - boundsChecker.Bounds.min_x;
         this.bounds.h = boundsChecker.Bounds.max_y - boundsChecker.Bounds.min_y;
     };
-    CAnnotationStamp.prototype.Recalculate = function(bForce) {
-        if (true !== bForce && false == this.IsNeedRecalc()) {
+    CAnnotationStamp.prototype.RefillGeometry = function(oGeometry, aBounds) {
+        // skip on recalc
+        if (!oGeometry) {
             return;
         }
 
-        if (this.IsNeedRecalcSizes()) {
-            let aRect = this.GetRect();
-
-            let extX = ((aRect[2] - aRect[0])) * g_dKoef_pt_to_mm;
-            let extY = ((aRect[3] - aRect[1])) * g_dKoef_pt_to_mm;
-
-            this.spPr.xfrm.setOffX(aRect[0] * g_dKoef_pt_to_mm);
-            this.spPr.xfrm.setOffY(aRect[1] * g_dKoef_pt_to_mm);
-
-            this.spPr.xfrm.setExtX(extX);
-            this.spPr.xfrm.setExtY(extY);
-
-            this.SetNeedRecalcSizes(false);
-        }
-
-        this.recalculateTransform();
-        this.updateTransformMatrix();
-        this.recalculate();
-        this.SetNeedRecalc(false);
-    };
-    CAnnotationStamp.prototype.RefillGeometry = function(oGeometry, aBounds) {
         oGeometry.Recalculate(aBounds[2] - aBounds[0], aBounds[3] - aBounds[1]);
         return oGeometry;
     };
-    CAnnotationStamp.prototype.LazyCopy = function() {
-        let oDoc = this.GetDocument();
-        oDoc.StartNoHistoryMode();
-
-        let oNewStamp = new CAnnotationStamp(AscCommon.CreateGUID(), this.GetOrigRect().slice(), oDoc);
-
-        oNewStamp.SetInRect(this.inRect);
-        oNewStamp.lazyCopy = true;
-
-        this.fillObject(oNewStamp);
-
-        let aStrokeColor    = this.GetStrokeColor();
-        let aFillColor      = this.GetFillColor();
-
-        oNewStamp._apIdx = this._apIdx;
-        oNewStamp._originView = this._originView;
-        oNewStamp.SetOriginPage(this.GetOriginPage());
-        oNewStamp.SetAuthor(this.GetAuthor());
-        oNewStamp.SetModDate(this.GetModDate());
-        oNewStamp.SetCreationDate(this.GetCreationDate());
-        aStrokeColor && oNewStamp.SetStrokeColor(aStrokeColor.slice());
-        aFillColor && oNewStamp.SetFillColor(aFillColor.slice());
-        oNewStamp.SetWidth(this.GetWidth());
-        oNewStamp.SetOpacity(this.GetOpacity());
-        oNewStamp.recalcGeometry()
-        oNewStamp.SetNeedRecalcSizes(false);
-        oNewStamp.Recalculate(true);
-        oNewStamp.SetIconType(this.GetIconType());
-        oNewStamp.SetRenderStructure(this.GetRenderStructure());
-
-        oDoc.EndNoHistoryMode();
-        return oNewStamp;
-    };
-    
     CAnnotationStamp.prototype.IsSelected = function() {
         let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
@@ -436,7 +494,6 @@
         return this._stampType;
     };
     CAnnotationStamp.prototype.SetRotate = function(nAngle) {
-        let oViewer = Asc.editor.getDocumentRenderer();
         if (this._rotate == nAngle) {
             return;
         }
@@ -454,24 +511,6 @@
     CAnnotationStamp.prototype.GetRotate = function() {
         return this._rotate;
     };
-    CAnnotationStamp.prototype.handleUpdateRot = function(){
-        AscFormat.CShape.prototype.handleUpdateRot.call(this);
-        let oXfrm = this.getXfrm();
-
-        this.SetRotate(-oXfrm.rot * (180 / Math.PI));
-        this.recalcBounds();
-        this.recalcGeometry();
-        this.Recalculate(true);
-        
-        let aNewRect = [];
-        let oGrBounds = this.bounds;
-        aNewRect[0] = Math.round(oGrBounds.l) * g_dKoef_mm_to_pt;
-        aNewRect[1] = Math.round(oGrBounds.t) * g_dKoef_mm_to_pt;
-        aNewRect[2] = Math.round(oGrBounds.r) * g_dKoef_mm_to_pt;
-        aNewRect[3] = Math.round(oGrBounds.b) * g_dKoef_mm_to_pt;
-
-        this.SetRect(aNewRect, true);
-    };
     CAnnotationStamp.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
 
@@ -486,11 +525,18 @@
         
         let aInRect = this.GetInRect();
         let nBorderW = this.GetWidth();
-        // original rect
-        memory.WriteDouble(aInRect[0] - nBorderW / 2); // x1
-        memory.WriteDouble(aInRect[3] - nBorderW / 2); // y1
-        memory.WriteDouble(aInRect[4] + nBorderW / 2); // x2
-        memory.WriteDouble(aInRect[1] + nBorderW / 2); // y2
+        // original rect (save)
+        if (memory.docRenderer) {
+            memory.WriteDouble(aInRect[0] - nBorderW / 2); // x1
+            memory.WriteDouble(aInRect[3] - nBorderW / 2); // y1
+            memory.WriteDouble(aInRect[4] + nBorderW / 2); // x2
+            memory.WriteDouble(aInRect[1] + nBorderW / 2); // y2
+        }
+        else { // copying
+            aInRect.forEach(function(measure) {
+                memory.WriteDouble(measure);
+            });
+        }
 
         let nEndPos = memory.GetCurPosition();
         memory.Seek(memory.posForFlags);
@@ -499,11 +545,15 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
+
+        this.GetReplies().forEach(function(reply) {
+            (reply.IsChanged() || !memory.docRenderer) && reply.WriteToBinary(memory);
+        });
     };
-    CAnnotationStamp.prototype.SetDrawFromStream = function() {
+    CAnnotationStamp.prototype.SetDrawFromStream = function(bDraw, bForce) {
         let oViewer = editor.getDocumentRenderer();
-        if (oViewer.IsOpenAnnotsInProgress) {
-            this._bDrawFromStream = true;
+        if (oViewer.IsOpenAnnotsInProgress || bForce) {
+            this._bDrawFromStream = bDraw;
         }
     };
     CAnnotationStamp.prototype.GetAllFonts = function(fontMap) {
@@ -527,7 +577,7 @@
     };
     CAnnotationStamp.prototype.WriteRenderToBinary = function(memory) {
         // пока только для основанных на фигурах
-        if (this.IsNeedDrawFromStream()) {
+        if (this.IsNeedDrawFromStream() || !memory.docRenderer || (memory.isForSplit || memory.isCopyPaste)) {
             return;
         }
 
