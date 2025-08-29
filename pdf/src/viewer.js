@@ -4545,6 +4545,7 @@
 			oMemory.WriteLong(nEndPos - nStartPos);
 			oMemory.Seek(nEndPos);
 		}
+
 		function writePageRedactInfo(oPageInfo) {
 			oMemory.WriteByte(AscCommon.CommandType.ctRedact);
 
@@ -4576,6 +4577,7 @@
 			// reserved flags
 			let nFlagsPos = oMemory.GetCurPosition();
 			let nFlags = 0;
+			oMemory.Skip(4);
 
 			// render
 			nFlags |= (1 << 0);
@@ -4607,6 +4609,7 @@
 			oMemory.WriteLong(nEndPos - nStartPos);
 			oMemory.Seek(nEndPos);
 		}
+
 		function checkNeedRedactPage(oPageInfo) {
 			if (oPageInfo.annots.find(function(annot) {
 				return annot.IsRedact() && annot.IsApplied();
