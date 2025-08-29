@@ -502,7 +502,14 @@
         // oGraphicsPDF.Stroke();
     };
     CAnnotationBase.prototype.SetSubject = function(sSubject) {
+        if (this._subject == sSubject) {
+            return;
+        }
+
+        AscCommon.History.Add(new CChangesPDFAnnotSubject(this, this._subject, sSubject));
         this._subject = sSubject;
+
+        this.SetWasChanged(true, false);
     };
     CAnnotationBase.prototype.GetSubject = function() {
         return this._subject;

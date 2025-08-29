@@ -64,7 +64,9 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Border_Intensity]= CChangesPD
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Border_Dash]		= CChangesPDFAnnotBorderDash;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Border_Type]		= CChangesPDFAnnotBorderDash;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Meta]			= CChangesPDFAnnotMeta;
-
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Subject]			= CChangesPDFAnnotSubject;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Line_Start]		= CChangesPDFAnnotLineStart;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Line_End]		= CChangesPDFAnnotLineEnd;
 AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_FreeText_CL]			= CChangesFreeTextCallout;
 AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_FreeText_RC]			= CChangesPDFFreeTextRC;
 AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_FreeText_Align]			= CChangesPDFFreeTextAlign;
@@ -77,8 +79,6 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Line_Annot_Points]			= CChangesPDFL
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Line_Annot_Leader_Length]	= CChangesPDFLineAnnotLeaderLength;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Line_Annot_Leader_Ext]		= CChangesPDFLineAnnotLeaderExt;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Line_Annot_Do_Caption]		= CChangesPDFLineAnnotDoCaption;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Line_Annot_Start]			= CChangesPDFLineAnnotStart;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Line_Annot_End]			= CChangesPDFLineAnnotEnd;
 AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_Line_RC]		= CChangesPDFLineAnnotRC;
 
 AscDFH.drawingsChangesMap[AscDFH.historyitem_Pdf_Stamp_RenderStructure] = function(oClass, value) {
@@ -1016,6 +1016,7 @@ CChangesPDFAnnotChangedView.prototype.private_SetValue = function(Value)
 	Annot.AddToRedraw();
 };
 
+
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseLongProperty}
@@ -1161,6 +1162,142 @@ CChangesPDFAnnotMeta.prototype.ReadFromBinary = function(Reader)
 		this.Old = JSON.parse(Reader.GetString2());
 };
 
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesPDFAnnotSubject(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFAnnotSubject.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesPDFAnnotSubject.prototype.constructor = CChangesPDFAnnotSubject;
+CChangesPDFAnnotSubject.prototype.Type = AscDFH.historyitem_Pdf_Annot_Subject;
+CChangesPDFAnnotSubject.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot._subject = Value;
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFAnnotLineStart(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFAnnotLineStart.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFAnnotLineStart.prototype.constructor = CChangesPDFAnnotLineStart;
+CChangesPDFAnnotLineStart.prototype.Type = AscDFH.historyitem_Pdf_Annot_Line_Start;
+CChangesPDFAnnotLineStart.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	this._lineStart = Value;
+
+	let oLine = oAnnot.spPr.ln;
+	oLine.setHeadEnd(new AscFormat.EndArrow());
+	let nLineEndType;
+	switch (Value) {
+		case AscPDF.LINE_END_TYPE.None:
+			nLineEndType = AscFormat.LineEndType.None;
+			break;
+		case AscPDF.LINE_END_TYPE.OpenArrow:
+			nLineEndType = AscFormat.LineEndType.Arrow;
+			break;
+		case AscPDF.LINE_END_TYPE.Diamond:
+			nLineEndType = AscFormat.LineEndType.Diamond;
+			break;
+		case AscPDF.LINE_END_TYPE.Circle:
+			nLineEndType = AscFormat.LineEndType.Oval;
+			break;
+		case AscPDF.LINE_END_TYPE.ClosedArrow:
+			nLineEndType = AscFormat.LineEndType.Triangle;
+			break;
+		case AscPDF.LINE_END_TYPE.ROpenArrow:
+			nLineEndType = AscFormat.LineEndType.ReverseArrow;
+			break;
+		case AscPDF.LINE_END_TYPE.RClosedArrow:
+			nLineEndType = AscFormat.LineEndType.ReverseTriangle;
+			break;
+		case AscPDF.LINE_END_TYPE.Butt:
+			nLineEndType = AscFormat.LineEndType.Butt;
+			break;
+		case AscPDF.LINE_END_TYPE.Square:
+			nLineEndType = AscFormat.LineEndType.Square;
+			break;
+		case AscPDF.LINE_END_TYPE.Slash:
+			nLineEndType = AscFormat.LineEndType.Slash;
+			break;
+		default:
+			nLineEndType = AscFormat.LineEndType.Arrow;
+			break;
+	}
+
+	oLine.headEnd.setType(nLineEndType);
+	oLine.headEnd.setLen(AscFormat.LineEndSize.Mid);
+	oAnnot.handleUpdateLn();
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFAnnotLineEnd(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFAnnotLineEnd.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFAnnotLineEnd.prototype.constructor = CChangesPDFAnnotLineEnd;
+CChangesPDFAnnotLineEnd.prototype.Type = AscDFH.historyitem_Pdf_Annot_Line_End;
+CChangesPDFAnnotLineEnd.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	this._lineEnd = Value;
+        
+	let oLine = oAnnot.spPr.ln;
+	oLine.setTailEnd(new AscFormat.EndArrow());
+	let nLineEndType;
+	switch (Value) {
+		case AscPDF.LINE_END_TYPE.None:
+			nLineEndType = AscFormat.LineEndType.None;
+			break;
+		case AscPDF.LINE_END_TYPE.OpenArrow:
+			nLineEndType = AscFormat.LineEndType.Arrow;
+			break;
+		case AscPDF.LINE_END_TYPE.Diamond:
+			nLineEndType = AscFormat.LineEndType.Diamond;
+			break;
+		case AscPDF.LINE_END_TYPE.Circle:
+			nLineEndType = AscFormat.LineEndType.Oval;
+			break;
+		case AscPDF.LINE_END_TYPE.ClosedArrow:
+			nLineEndType = AscFormat.LineEndType.Triangle;
+			break;
+		case AscPDF.LINE_END_TYPE.ROpenArrow:
+			nLineEndType = AscFormat.LineEndType.ReverseArrow;
+			break;
+		case AscPDF.LINE_END_TYPE.RClosedArrow:
+			nLineEndType = AscFormat.LineEndType.ReverseTriangle;
+			break;
+		case AscPDF.LINE_END_TYPE.Butt:
+			nLineEndType = AscFormat.LineEndType.Butt;
+			break;
+		case AscPDF.LINE_END_TYPE.Square:
+			nLineEndType = AscFormat.LineEndType.Square;
+			break;
+		case AscPDF.LINE_END_TYPE.Slash:
+			nLineEndType = AscFormat.LineEndType.Slash;
+			break;
+		default:
+			nLineEndType = AscFormat.LineEndType.Arrow;
+			break;
+	}
+
+	oLine.tailEnd.setType(nLineEndType);
+	oLine.tailEnd.setLen(AscFormat.LineEndSize.Mid);
+	oAnnot.handleUpdateLn();
+};
 // line annot
 
 /**
@@ -1368,4 +1505,3 @@ CChangesPDFLineAnnotRC.prototype.ReadFromBinary = function(Reader) {
     this.New = readRC();
     this.Old = readRC();
 };
-

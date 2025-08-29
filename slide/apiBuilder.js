@@ -79,29 +79,34 @@
     function ApiTheme(oThemeInfo){
         this.ThemeInfo = oThemeInfo;
     }
-    
+
+
     /**
      * Class representing a theme color scheme.
      * @constructor
      */
-    function ApiThemeColorScheme(oClrScheme){
+    function ApiThemeColorScheme(oClrScheme, theme){
         this.ColorScheme = oClrScheme;
+
+		this.Theme = theme;
     }
 
     /**
      * Class representing a theme format scheme.
      * @constructor
      */
-    function ApiThemeFormatScheme(ofmtScheme){
+    function ApiThemeFormatScheme(ofmtScheme, theme){
         this.FormatScheme = ofmtScheme;
+		this.Theme = theme;
     }
 
     /**
      * Class representing a theme font scheme.
      * @constructor
      */
-    function ApiThemeFontScheme(ofontScheme){
+    function ApiThemeFontScheme(ofontScheme, theme){
         this.FontScheme = ofontScheme;
+		this.Theme = theme;
     }
 
     /**
@@ -2885,7 +2890,7 @@
     {
         if (this.ThemeInfo && this.ThemeInfo.Theme && this.ThemeInfo.Theme.themeElements)
         {
-            return new ApiThemeColorScheme(this.ThemeInfo.Theme.themeElements.clrScheme);
+            return new ApiThemeColorScheme(this.ThemeInfo.Theme.themeElements.clrScheme, this.ThemeInfo.Theme);
         }
 
         return null;
@@ -2919,7 +2924,7 @@
     {
         if (this.ThemeInfo && this.ThemeInfo.Theme && this.ThemeInfo.Theme.themeElements)
         {
-            return new ApiThemeFormatScheme(this.ThemeInfo.Theme.themeElements.fmtScheme);
+            return new ApiThemeFormatScheme(this.ThemeInfo.Theme.themeElements.fmtScheme, this.ThemeInfo.Theme);
         }
 
         return null;
@@ -2953,7 +2958,7 @@
     {
         if (this.ThemeInfo && this.ThemeInfo.Theme && this.ThemeInfo.Theme.themeElements)
         {
-            return new ApiThemeFontScheme(this.ThemeInfo.Theme.themeElements.fontScheme);
+            return new ApiThemeFontScheme(this.ThemeInfo.Theme.themeElements.fontScheme, this.ThemeInfo.Theme);
         }
 
         return null;
@@ -2964,6 +2969,23 @@
     // ApiThemeColorScheme
     //
     //------------------------------------------------------------------------------------------------------------------
+
+
+	ApiThemeColorScheme.prototype.checkThemeElement = function(fCallback)
+	{
+		let bUpdateTheme = false;
+		if(this.Theme && this.Theme.themeElements && this.Theme.themeElements.clrScheme === this.ColorScheme)
+		{
+			let oldScheme = this.ColorScheme;
+			this.ColorScheme = oldScheme.createDuplicate();
+			bUpdateTheme = true;
+		}
+		fCallback(this.ColorScheme);
+		if (bUpdateTheme)
+		{
+			this.Theme.setColorScheme(this.ColorScheme);
+		}
+	};
 
     /**
      * Returns the type of the ApiThemeColorScheme class.
@@ -2988,7 +3010,10 @@
         if (typeof(sName) !== "string")
             sName = "";
 
-        this.ColorScheme.setName(sName);
+		this.checkThemeElement(function (colorScheme) {
+			colorScheme.setName(sName);
+		});
+		return true;
     };
 
     /**
@@ -3004,10 +3029,12 @@
         if (nPos < 0 || nPos > 12 || (oColor.GetClassType() !== "rgbColor" && oColor.GetClassType() !== "uniColor"))
             return false;
 
-        if (nPos <= 5)
-            this.ColorScheme.addColor(nPos, oColor.Unicolor);
-        else if (nPos > 5)
-            this.ColorScheme.addColor(nPos + 2, oColor.Unicolor)
+		this.checkThemeElement(function (colorScheme) {
+			if (nPos <= 5)
+				colorScheme.addColor(nPos, oColor.Unicolor);
+			else if (nPos > 5)
+				colorScheme.addColor(nPos + 2, oColor.Unicolor)
+		});
 
         return true;
     };
@@ -3020,7 +3047,7 @@
 	 */
     ApiThemeColorScheme.prototype.Copy = function()
     {
-        return new ApiThemeColorScheme(this.ColorScheme.createDuplicate());
+        return new ApiThemeColorScheme(this.ColorScheme.createDuplicate(), null);
     };
 
     /**
@@ -3040,6 +3067,22 @@
     // ApiThemeFormatScheme
     //
     //------------------------------------------------------------------------------------------------------------------
+
+	ApiThemeFormatScheme.prototype.checkThemeElement = function(fCallback)
+	{
+		let bUpdateTheme = false;
+		if(this.Theme && this.Theme.themeElements && this.Theme.themeElements.fmtScheme === this.FormatScheme)
+		{
+			let oldScheme = this.FormatScheme;
+			this.FormatScheme = oldScheme.createDuplicate();
+			bUpdateTheme = true;
+		}
+		fCallback(this.FormatScheme);
+		if (bUpdateTheme)
+		{
+			this.Theme.setFormatScheme(this.FormatScheme);
+		}
+	};
 
     /**
      * Returns the type of the ApiThemeFormatScheme class.
@@ -3064,7 +3107,10 @@
         if (typeof(sName) !== "string")
             sName = "";
 
-        this.FormatScheme.setName(sName);
+		this.checkThemeElement(function (formatScheme) {
+			formatScheme.setName(sName);
+		});
+		return true;
     };
 
     /**
@@ -3079,21 +3125,23 @@
         if (!arrFill)
             arrFill = [];
 
-        this.FormatScheme.fillStyleLst = [];
-
-        for (var nFill = 0; nFill < 3; nFill++)
-        {
-            if (arrFill[nFill] && arrFill[nFill].GetClassType() === "fill")
-                this.FormatScheme.addFillToStyleLst(arrFill[nFill].UniFill);
-            else 
-                this.FormatScheme.addFillToStyleLst(editor.CreateNoFill().UniFill);
-        }
+		this.checkThemeElement(function (formatScheme) {
+			formatScheme.fillStyleLst = [];
+			for (let nFill = 0; nFill < 3; nFill++)
+			{
+				if (arrFill[nFill] && arrFill[nFill].GetClassType() === "fill")
+					formatScheme.addFillToStyleLst(arrFill[nFill].UniFill);
+				else
+					formatScheme.addFillToStyleLst(editor.CreateNoFill().UniFill);
+			}
+		});
+		return true;
     };
 
     /**
      * Sets the background fill styles to the current theme format scheme.
      * @typeofeditors ["CPE"]
-     * @param {ApiFill[]} arrBgFill - The array of background fill styles must contains 3 elements - subtle, moderate and intense fills.
+     * @param {ApiFill[]} arrBgFill - The array of background fill styles must contain 3 elements - subtle, moderate and intense fills.
      * If an array is empty or NoFill elements are in the array, it will be filled with the Api.CreateNoFill() elements.
      * @see office-js-api/Examples/{Editor}/ApiThemeFormatScheme/Methods/ChangeBgFillStyles.js
 	 */
@@ -3102,15 +3150,18 @@
         if (!arrBgFill)
             arrBgFill = [];
 
-        this.FormatScheme.bgFillStyleLst = [];
+		this.checkThemeElement(function (formatScheme) {
 
-        for (var nFill = 0; nFill < 3; nFill++)
-        {
-            if (arrBgFill[nFill] && arrBgFill[nFill].GetClassType() === "fill")
-                this.FormatScheme.addBgFillToStyleLst(arrBgFill[nFill].UniFill);
-            else 
-                this.FormatScheme.addBgFillToStyleLst(editor.CreateNoFill().UniFill);
-        }
+			formatScheme.bgFillStyleLst = [];
+			for (let nFill = 0; nFill < 3; nFill++)
+			{
+				if (arrBgFill[nFill] && arrBgFill[nFill].GetClassType() === "fill")
+					formatScheme.addBgFillToStyleLst(arrBgFill[nFill].UniFill);
+				else
+					formatScheme.addBgFillToStyleLst(editor.CreateNoFill().UniFill);
+			}
+		});
+		return true;
     };
 
     /**
@@ -3125,15 +3176,18 @@
         if (!arrLine)
             arrLine = [];
 
-        this.FormatScheme.lnStyleLst = [];
 
-        for (var nLine = 0; nLine < 3; nLine++)
-        {
-            if (arrLine[nLine] && arrLine[nLine].GetClassType() === "stroke")
-                this.FormatScheme.addLnToStyleLst(arrLine[nLine].Ln);
-            else 
-                this.FormatScheme.addLnToStyleLst(editor.CreateStroke(0, editor.CreateNoFill()).Ln);
-        }
+		this.checkThemeElement(function (formatScheme) {
+			formatScheme.lnStyleLst = [];
+			for (let nLine = 0; nLine < 3; nLine++)
+			{
+				if (arrLine[nLine] && arrLine[nLine].GetClassType() === "stroke")
+					formatScheme.addLnToStyleLst(arrLine[nLine].Ln);
+				else
+					formatScheme.addLnToStyleLst(editor.CreateStroke(0, editor.CreateNoFill()).Ln);
+			}
+		});
+		return true;
     };
 
     // /**
@@ -3192,6 +3246,23 @@
     //
     //------------------------------------------------------------------------------------------------------------------
 
+	ApiThemeFontScheme.prototype.checkThemeElement = function(fCallback)
+	{
+		let bUpdateTheme = false;
+		if(this.Theme && this.Theme.themeElements && this.Theme.themeElements.fontScheme === this.FontScheme)
+		{
+			let oldScheme = this.FontScheme;
+			this.FontScheme = oldScheme.createDuplicate();
+			bUpdateTheme = true;
+		}
+		let bRet = fCallback(this.FontScheme);
+		if (bUpdateTheme)
+		{
+			this.Theme.setFontScheme(this.FontScheme);
+		}
+		return bRet;
+	};
+
     /**
      * Returns the type of the ApiThemeFontScheme class.
      * @typeofeditors ["CPE"]
@@ -3215,13 +3286,17 @@
         if (typeof(sName) !== "string")
             sName = "";
 
-        if (this.FontScheme)
-        {
-            this.FontScheme.setName(sName);
-            return true;
-        }
-        else 
-            return false;
+
+		return this.checkThemeElement(function (fontScheme) {
+			if (fontScheme)
+			{
+				fontScheme.setName(sName);
+				return true;
+			}
+			else
+				return false;
+
+		});
     };
 
     /**
@@ -3237,23 +3312,25 @@
      * @see office-js-api/Examples/{Editor}/ApiThemeFontScheme/Methods/SetFonts.js
 	 */
     ApiThemeFontScheme.prototype.SetFonts = function(mjLatin, mjEa, mjCs, mnLatin, mnEa, mnCs){
-        
-        var oMajorFontCollection = this.FontScheme.majorFont;
-        var oMinorFontCollection = this.FontScheme.minorFont;
 
-        if (typeof(mjLatin) === "string")
-            oMajorFontCollection.setLatin(mjLatin);
-        if (typeof(mjEa) === "string")
-            oMajorFontCollection.setEA(mjEa);
-        if (typeof(mjCs) === "string")
-            oMajorFontCollection.setCS(mjCs);
+		this.checkThemeElement(function (fontScheme) {
+			var oMajorFontCollection = fontScheme.majorFont;
+			var oMinorFontCollection = fontScheme.minorFont;
 
-        if (typeof(mnLatin) === "string")
-            oMinorFontCollection.setLatin(mnLatin);
-        if (typeof(mnEa) === "string")
-            oMinorFontCollection.setEA(mnEa);
-        if (typeof(mnCs) === "string")
-            oMinorFontCollection.setCS(mnCs);
+			if (typeof(mjLatin) === "string")
+				oMajorFontCollection.setLatin(mjLatin);
+			if (typeof(mjEa) === "string")
+				oMajorFontCollection.setEA(mjEa);
+			if (typeof(mjCs) === "string")
+				oMajorFontCollection.setCS(mjCs);
+
+			if (typeof(mnLatin) === "string")
+				oMinorFontCollection.setLatin(mnLatin);
+			if (typeof(mnEa) === "string")
+				oMinorFontCollection.setEA(mnEa);
+			if (typeof(mnCs) === "string")
+				oMinorFontCollection.setCS(mnCs);
+		});
     };
 
     /**

@@ -126,8 +126,14 @@
         return true;
     };
     CAnnotationPolyLine.prototype.SetLineStart = function(nType) {
-        this._lineStart = nType;
+        if (this._lineStart == nType) {
+            return;
+        }
+        
+        AscCommon.History.Add(new CChangesPDFAnnotLineStart(this, this._lineStart, nType));
 
+        this._lineStart = nType;
+        
         this.SetWasChanged(true);
         let oLine = this.spPr.ln;
         oLine.setHeadEnd(new AscFormat.EndArrow());
@@ -173,6 +179,12 @@
         this.handleUpdateLn();
     };
     CAnnotationPolyLine.prototype.SetLineEnd = function(nType) {
+        if (this._lineEnd == nType) {
+            return;
+        }
+
+        AscCommon.History.Add(new CChangesPDFAnnotLineEnd(this, this._lineEnd, nType));
+
         this._lineEnd = nType;
         
         this.SetWasChanged(true);

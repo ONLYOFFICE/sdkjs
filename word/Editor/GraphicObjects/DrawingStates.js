@@ -273,12 +273,28 @@ StartAddNewShape.prototype =
                 }
                 else {
                     oLogicDocument.DoAction(function() {
-                        // добавление шейпов
-                        let oShape = oTrack.getShape(false, this.drawingObjects.drawingDocument, oLogicDocument);
-                        oLogicDocument.AddDrawing(oShape, this.pageIndex);
-                        oLogicDocument.SetMouseDownObject(oShape);
-                        oShape.select(oLogicDocument.GetController(), this.pageIndex);
+                        // adding shapes/annotations
+                        if (Asc.editor.isStartAddAnnot) {
+                            let oShape = AscFormat.ExecuteNoHistory(function () {
+                                return oTrack.getShape(false, this.drawingObjects.drawingDocument, oLogicDocument);
+                            }, this, []);
 
+                            oShape.recalculate();
+                            
+                            let oAnnot = oShape.ConvertToAnnot();
+                            if (oAnnot) {
+                                oLogicDocument.AddAnnot(oAnnot, this.pageIndex);
+                                oLogicDocument.SetMouseDownObject(oAnnot);
+                                oAnnot.select(oLogicDocument.GetController(), this.pageIndex);
+                            }
+                        }
+                        else {
+                            let oShape = oTrack.getShape(false, this.drawingObjects.drawingDocument, oLogicDocument);
+                            oLogicDocument.AddDrawing(oShape, this.pageIndex);
+                            oLogicDocument.SetMouseDownObject(oShape);
+                            oShape.select(oLogicDocument.GetController(), this.pageIndex);
+                        }
+                        
                         bRet = true;
                     }, AscDFH.historydescription_Document_AddNewShape, this);
                 }
@@ -3524,7 +3540,7 @@ AddPolyLine2State3.prototype =
         }
 
         var oTrack = this.drawingObjects.arrTrackObjects[0];
-        if(!e.IsLocked && oTrack.getPointsCount() > 1)
+        if((!e.IsLocked || (Asc.editor.isPdfEditor() && Asc.editor.isStartAddAnnot)) && oTrack.getPointsCount() > 1)
         {
             oTrack.replaceLastPoint(tr_x, tr_y, true);
         }

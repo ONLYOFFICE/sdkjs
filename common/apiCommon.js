@@ -3847,19 +3847,16 @@ function (window, undefined) {
 
 	/** @constructor */
 	function asc_CAnnotProperty() {
-		this.type				= null; // custom
-		this.fill				= null;
-		this.stroke				= null;
-		this.canFill			= true;
-		this.canChangeArrows	= true;
-		this.Locked				= false;
-		this.subject			= undefined;
-		this.canEditText		= false;
+		this.type = null;
 
-		this.Position = undefined;
+		this.fill	= null;
+		this.stroke	= null;
+		this.opacity= undefined;
+		this.subject= undefined;
+
+		this.annotProps = null;
 	}
 
-	asc_CAnnotProperty.prototype.constructor = asc_CAnnotProperty;
 	asc_CAnnotProperty.prototype.asc_getType = function () {
 		return this.type;
 	};
@@ -3878,29 +3875,222 @@ function (window, undefined) {
 	asc_CAnnotProperty.prototype.asc_putStroke = function (v) {
 		this.stroke = v;
 	};
-	asc_CAnnotProperty.prototype.asc_getCanFill = function () {
-		return this.canFill;
+	asc_CAnnotProperty.prototype.asc_getOpacity = function () {
+		return this.opacity;
 	};
-	asc_CAnnotProperty.prototype.asc_putCanFill = function (v) {
-		this.canFill = v;
-	};
-	asc_CAnnotProperty.prototype.asc_getCanChangeArrows = function () {
-		return this.canChangeArrows;
-	};
-	asc_CAnnotProperty.prototype.asc_setCanChangeArrows = function (v) {
-		this.canChangeArrows = v;
+	asc_CAnnotProperty.prototype.asc_putOpacity = function (v) {
+		this.opacity = v;
 	};
 	asc_CAnnotProperty.prototype.asc_getSubject = function () {
 		return this.subject;
 	};
-	asc_CAnnotProperty.prototype.asc_setSubject = function (v) {
+	asc_CAnnotProperty.prototype.asc_putSubject = function (v) {
 		this.subject = v;
 	};
-	asc_CAnnotProperty.prototype.asc_getCanEditText = function () {
+	asc_CAnnotProperty.prototype.asc_getAnnotProps = function () {
+		return this.annotProps;
+	};
+	asc_CAnnotProperty.prototype.asc_putAnnotProps = function (v) {
+		this.annotProps = v;
+	};
+	asc_CAnnotProperty.prototype.compare = function(pr) {
+		if (this.type !== pr.type) {
+			this.type = null;
+		}
+
+		if (!this.fill || !pr.fill || this.fill.r !== pr.fill.r || this.fill.g !== pr.fill.g || this.fill.b !== pr.fill.b) {
+			this.fill = null;
+		}
+		if (!this.stroke || !pr.stroke || this.stroke.r !== pr.stroke.r || this.stroke.g !== pr.stroke.g || this.stroke.b !== pr.stroke.b) {
+			this.stroke = null;
+		}
+		if (this.opacity !== pr.opacity) {
+			this.opacity = null;
+		}
+		if (this.subject !== pr.subject) {
+			this.subject = null;
+		}
+		if (this.type) {
+			this.annotProps.compare(pr.annotProps);
+		}
+	};
+
+	// free text
+	function asc_CFreeTextAnnotProperty() {
+		this.borderWidth		= undefined;
+		this.borderStyle		= undefined;
+		this.lineEnd			= undefined;
+		this.canEditText		= undefined;
+	}
+
+	asc_CFreeTextAnnotProperty.prototype.asc_getBorderWidth = function () {
+		return this.borderWidth;
+	};
+	asc_CFreeTextAnnotProperty.prototype.asc_putBorderWidth = function (v) {
+		this.borderWidth = v;
+	};
+	asc_CFreeTextAnnotProperty.prototype.asc_getBorderStyle = function () {
+		return this.borderStyle;
+	};
+	asc_CFreeTextAnnotProperty.prototype.asc_putBorderStyle = function (v) {
+		this.borderStyle = v;
+	};
+	asc_CFreeTextAnnotProperty.prototype.asc_getLineEnd = function () {
+		return this.lineEnd;
+	};
+	asc_CFreeTextAnnotProperty.prototype.asc_putLineEnd = function (v) {
+		this.lineEnd = v;
+	};
+	asc_CFreeTextAnnotProperty.prototype.asc_getCanEditText = function () {
 		return this.canEditText;
 	};
-	asc_CAnnotProperty.prototype.asc_setCanEditText = function (v) {
+	asc_CFreeTextAnnotProperty.prototype.asc_putCanEditText = function (v) {
 		this.canEditText = v;
+	};
+	asc_CFreeTextAnnotProperty.prototype.compare = function(pr) {
+		if (this.borderWidth !== pr.borderWidth) {
+			this.borderWidth = null;
+		}
+		if (this.borderStyle !== pr.borderStyle) {
+			this.borderStyle = null;
+		}
+		if (this.lineEnd !== pr.lineEnd) {
+			this.lineEnd = null;
+		}
+		if (this.canEditText !== pr.canEditText) {
+			this.canEditText = null;
+		}
+	};
+
+	// line
+	function asc_CLineAnnotProperty() {
+		this.borderStyle= undefined;
+		this.borderWidth= undefined;
+		this.lineEnd	= undefined;
+		this.lineStart	= undefined;
+		this.canEditText= undefined;
+	}
+
+	asc_CLineAnnotProperty.prototype.asc_getBorderStyle = function () {
+		return this.borderStyle;
+	};
+	asc_CLineAnnotProperty.prototype.asc_putBorderStyle = function (v) {
+		this.borderStyle = v;
+	};
+	asc_CLineAnnotProperty.prototype.asc_getBorderWidth = function () {
+		return this.borderWidth;
+	};
+	asc_CLineAnnotProperty.prototype.asc_putBorderWidth = function (v) {
+		this.borderWidth = v;
+	};
+	asc_CLineAnnotProperty.prototype.asc_getLineEnd = function () {
+		return this.lineEnd;
+	};
+	asc_CLineAnnotProperty.prototype.asc_putLineEnd = function (v) {
+		this.lineEnd = v;
+	};
+	asc_CLineAnnotProperty.prototype.asc_getLineStart = function () {
+		return this.lineStart;
+	};
+	asc_CLineAnnotProperty.prototype.asc_putLineStart = function (v) {
+		this.lineStart = v;
+	};
+	asc_CLineAnnotProperty.prototype.asc_getCanEditText = function () {
+		return this.canEditText;
+	};
+	asc_CLineAnnotProperty.prototype.asc_putCanEditText = function (v) {
+		this.canEditText = v;
+	};
+	asc_CLineAnnotProperty.prototype.compare = function(pr) {
+		if (this.borderStyle !== pr.borderStyle) {
+			this.borderStyle = null;
+		}
+		if (this.borderWidth !== pr.borderWidth) {
+			this.borderWidth = null;
+		}
+		if (this.lineEnd !== pr.lineEnd) {
+			this.lineEnd = null;
+		}
+		if (this.lineStart !== pr.lineStart) {
+			this.lineStart = null;
+		}
+		if (this.canEditText !== pr.canEditText) {
+			this.canEditText = null;
+		}
+	};
+
+	// polyline
+	function asc_CPolyLineAnnotProperty() {
+		this.borderStyle= undefined;
+		this.borderWidth= undefined;
+		this.lineEnd	= undefined;
+		this.lineStart	= undefined;
+	}
+
+	asc_CPolyLineAnnotProperty.prototype.asc_getBorderStyle = function () {
+		return this.borderStyle;
+	};
+	asc_CPolyLineAnnotProperty.prototype.asc_putBorderStyle = function (v) {
+		this.borderStyle = v;
+	};
+	asc_CPolyLineAnnotProperty.prototype.asc_getBorderWidth = function () {
+		return this.borderWidth;
+	};
+	asc_CPolyLineAnnotProperty.prototype.asc_putBorderWidth = function (v) {
+		this.borderWidth = v;
+	};
+	asc_CPolyLineAnnotProperty.prototype.asc_getLineEnd = function () {
+		return this.lineEnd;
+	};
+	asc_CPolyLineAnnotProperty.prototype.asc_putLineEnd = function (v) {
+		this.lineEnd = v;
+	};
+	asc_CPolyLineAnnotProperty.prototype.asc_getLineStart = function () {
+		return this.lineStart;
+	};
+	asc_CPolyLineAnnotProperty.prototype.asc_putLineStart = function (v) {
+		this.lineStart = v;
+	};
+	asc_CPolyLineAnnotProperty.prototype.compare = function(pr) {
+		if (this.borderStyle !== pr.borderStyle) {
+			this.borderStyle = null;
+		}
+		if (this.borderWidth !== pr.borderWidth) {
+			this.borderWidth = null;
+		}
+		if (this.lineEnd !== pr.lineEnd) {
+			this.lineEnd = null;
+		}
+		if (this.lineStart !== pr.lineStart) {
+			this.lineStart = null;
+		}
+	};
+
+	// polygon/square/circle
+	function asc_CClosedAnnotProperty() {
+		this.borderStyle= undefined;
+		this.borderWidth= undefined;
+	}
+
+	asc_CClosedAnnotProperty.prototype.asc_getBorderStyle = function () {
+		return this.borderStyle;
+	};
+	asc_CClosedAnnotProperty.prototype.asc_putBorderStyle = function (v) {
+		this.borderStyle = v;
+	};
+	asc_CClosedAnnotProperty.prototype.asc_getBorderWidth = function () {
+		return this.borderWidth;
+	};
+	asc_CClosedAnnotProperty.prototype.asc_putBorderWidth = function (v) {
+		this.borderWidth = v;
+	};
+	asc_CClosedAnnotProperty.prototype.compare = function(pr) {
+		if (this.borderStyle !== pr.borderStyle) {
+			this.borderStyle = null;
+		}
+		if (this.borderWidth !== pr.borderWidth) {
+			this.borderWidth = null;
+		}
 	};
 
 	//////////////////////////////////////////////////////////////////
@@ -8351,15 +8541,55 @@ function (window, undefined) {
 	prot["asc_getFill"]				= prot.asc_getFill;
 	prot["asc_putFill"]				= prot.asc_putFill;
 	prot["asc_getStroke"]			= prot.asc_getStroke;
+	prot["asc_getOpacity"]			= prot.asc_getOpacity;
+	prot["asc_putOpacity"]			= prot.asc_putOpacity;
 	prot["asc_putStroke"]			= prot.asc_putStroke;
-	prot["asc_getCanFill"]			= prot.asc_getCanFill;
-	prot["asc_putCanFill"]			= prot.asc_putCanFill;
-	prot["asc_getCanChangeArrows"]	= prot.asc_getCanChangeArrows;
-	prot["asc_setCanChangeArrows"]	= prot.asc_setCanChangeArrows;
 	prot["asc_getSubject"]			= prot.asc_getSubject;
-	prot["asc_setSubject"]			= prot.asc_setSubject;
-	prot["asc_getCanEditText"]		= prot.asc_getCanEditText;
-	prot["asc_setCanEditText"]		= prot.asc_setCanEditText;
+	prot["asc_putSubject"]			= prot.asc_putSubject;
+	prot["asc_getAnnotProps"]		= prot.asc_getAnnotProps;
+	prot["asc_putAnnotProps"]		= prot.asc_putAnnotProps;
+	
+	window["Asc"]["asc_CFreeTextAnnotProperty"] = window["Asc"].asc_CFreeTextAnnotProperty = asc_CFreeTextAnnotProperty;
+	prot = asc_CFreeTextAnnotProperty.prototype;
+	prot["asc_getBorderWidth"]	= prot.asc_getBorderWidth;
+	prot["asc_putBorderWidth"]	= prot.asc_putBorderWidth;
+	prot["asc_getLineEnd"]		= prot.asc_getLineEnd;
+	prot["asc_putLineEnd"]		= prot.asc_putLineEnd;
+	prot["asc_getBorderStyle"]	= prot.asc_getBorderStyle;
+	prot["asc_putBorderStyle"]	= prot.asc_putBorderStyle;
+	prot["asc_getCanEditText"]	= prot.asc_getCanEditText;
+	prot["asc_putCanEditText"]	= prot.asc_putCanEditText;
+
+	window["Asc"]["asc_CLineAnnotProperty"] = window["Asc"].asc_CLineAnnotProperty = asc_CLineAnnotProperty;
+	prot = asc_CLineAnnotProperty.prototype;
+	prot["asc_getBorderStyle"]	= prot.asc_getBorderStyle;
+	prot["asc_putBorderStyle"]	= prot.asc_putBorderStyle;
+	prot["asc_getBorderWidth"]	= prot.asc_getBorderWidth;
+	prot["asc_putBorderWidth"]	= prot.asc_putBorderWidth;
+	prot["asc_getLineEnd"]		= prot.asc_getLineEnd;
+	prot["asc_putLineEnd"]		= prot.asc_putLineEnd;
+	prot["asc_getLineStart"]	= prot.asc_getLineStart;
+	prot["asc_putLineStart"]	= prot.asc_putLineStart;
+	prot["asc_getCanEditText"]	= prot.asc_getCanEditText;
+	prot["asc_putCanEditText"]	= prot.asc_putCanEditText;
+	
+	window["Asc"]["asc_CPolyLineAnnotProperty"] = window["Asc"].asc_CPolyLineAnnotProperty = asc_CPolyLineAnnotProperty;
+	prot = asc_CPolyLineAnnotProperty.prototype;
+	prot["asc_getBorderStyle"]	= prot.asc_getBorderStyle;
+	prot["asc_putBorderStyle"]	= prot.asc_putBorderStyle;
+	prot["asc_getBorderWidth"]	= prot.asc_getBorderWidth;
+	prot["asc_putBorderWidth"]	= prot.asc_putBorderWidth;
+	prot["asc_getLineEnd"]		= prot.asc_getLineEnd;
+	prot["asc_putLineEnd"]		= prot.asc_putLineEnd;
+	prot["asc_getLineStart"]	= prot.asc_getLineStart;
+	prot["asc_putLineStart"]	= prot.asc_putLineStart;
+	
+	window["Asc"]["asc_CClosedAnnotProperty"] = window["Asc"].asc_CClosedAnnotProperty = asc_CClosedAnnotProperty;
+	prot = asc_CClosedAnnotProperty.prototype;
+	prot["asc_getBorderStyle"]	= prot.asc_getBorderStyle;
+	prot["asc_putBorderStyle"]	= prot.asc_putBorderStyle;
+	prot["asc_getBorderWidth"]	= prot.asc_getBorderWidth;
+	prot["asc_putBorderWidth"]	= prot.asc_putBorderWidth;
 
 	window["Asc"]["asc_CBaseFieldProperty"] = window["Asc"].asc_CBaseFieldProperty = asc_CBaseFieldProperty;
 	prot = asc_CBaseFieldProperty.prototype;

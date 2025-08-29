@@ -95,6 +95,10 @@
 				pen.Fill.calculate(theme, slide, layout, master, RGBA);
 			}
 
+			// adding annots
+			if (Asc.editor.isStartAddAnnot) {
+				pen = Asc.editor.addAnnotPen;
+			}
 
 			this.pen = pen;
 
@@ -217,6 +221,12 @@
 			shape.spPr.setLn(this.pen);
 			shape.spPr.setFill(AscFormat.CreateNoFillUniFill());
 		}
+		// adding annots
+		else if (Asc.editor.isStartAddAnnot) {
+			shape.spPr.setLn(Asc.editor.addAnnotPen.createDuplicate());
+			shape.spPr.setFill(AscFormat.CreateNoFillUniFill());
+		}
+
 		var geometry = new AscFormat.Geometry();
 
 

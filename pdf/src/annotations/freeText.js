@@ -1267,7 +1267,7 @@
                     oDoc.SetGlobalHistory();
                     oDoc.DoAction(function() {
                         this.FitTextBox();
-                    }, AscDFH.historydescription_Pdf_FreeTextFitTextBox, this);
+                    }, AscDFH.historydescription_Pdf_ChangeAnnot, this);
                     oDoc.SetLocalHistory();
 
                     this.selectedObjects.length = 0;

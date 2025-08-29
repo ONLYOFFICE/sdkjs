@@ -4181,6 +4181,9 @@
 	AscDFH.historyitem_Pdf_Annot_Border_Dash		= AscDFH.historyitem_type_Pdf_Annot | 25;
 	AscDFH.historyitem_Pdf_Annot_Border_Type		= AscDFH.historyitem_type_Pdf_Annot | 26;
 	AscDFH.historyitem_Pdf_Annot_Meta				= AscDFH.historyitem_type_Pdf_Annot | 27;
+	AscDFH.historyitem_Pdf_Annot_Subject			= AscDFH.historyitem_type_Pdf_Annot | 28;
+	AscDFH.historyitem_Pdf_Annot_Line_Start			= AscDFH.historyitem_type_Pdf_Annot | 29;
+	AscDFH.historyitem_Pdf_Annot_Line_End			= AscDFH.historyitem_type_Pdf_Annot | 30;
 
 	// Comment
 	AscDFH.historyitem_Pdf_Comment_Data			= AscDFH.historyitem_type_Pdf_Comment | 1;
@@ -4202,9 +4205,7 @@
 	AscDFH.historyitem_Pdf_Line_Annot_Leader_Length	= AscDFH.historyitem_type_Pdf_Annot_Line | 2;
 	AscDFH.historyitem_Pdf_Line_Annot_Leader_Ext	= AscDFH.historyitem_type_Pdf_Annot_Line | 3;
 	AscDFH.historyitem_Pdf_Line_Annot_Do_Caption	= AscDFH.historyitem_type_Pdf_Annot_Line | 4;
-	AscDFH.historyitem_Pdf_Line_Annot_Start			= AscDFH.historyitem_type_Pdf_Annot_Line | 5;
-	AscDFH.historyitem_Pdf_Line_Annot_End			= AscDFH.historyitem_type_Pdf_Annot_Line | 6;
-	AscDFH.historyitem_type_Pdf_Annot_Line_RC		= AscDFH.historyitem_type_Pdf_Annot_Line | 6;
+	AscDFH.historyitem_type_Pdf_Annot_Line_RC		= AscDFH.historyitem_type_Pdf_Annot_Line | 5;
 	
 	// annot stamp
 	AscDFH.historyitem_Pdf_Stamp_Type			 = AscDFH.historyitem_type_Pdf_Annot_Stamp | 1;
@@ -4733,7 +4734,6 @@
 	window['AscDFH'].historydescription_Pdf_FieldImportImage	= 0x2a6;
 	window['AscDFH'].historydescription_Pdf_FieldSelectOption	= 0x2a7;
 	window['AscDFH'].historydescription_Pdf_ExecActions			= 0x2a8;
-	window['AscDFH'].historydescription_Pdf_FreeTextFitTextBox	= 0x2a9;
 	window['AscDFH'].historydescription_Pdf_AddComment			= 0x2b0;
 	window['AscDFH'].historydescription_Pdf_ChangeStrokeColor	= 0x2b1;
 	window['AscDFH'].historydescription_Pdf_ChangeFillColor		= 0x2b2;
@@ -4741,13 +4741,12 @@
 	window['AscDFH'].historydescription_Pdf_MovePage			= 0x2b4;
 	window['AscDFH'].historydescription_Pdf_AddField			= 0x2b5;
 	window['AscDFH'].historydescription_Pdf_ChangeField			= 0x2b6;
+	window['AscDFH'].historydescription_Pdf_ChangeAnnot			= 0x2b7;
 
 	// reserved
 	window['AscDFH'].historydescription_GroupPoints     = 0xFF01;
 	window['AscDFH'].historydescription_GroupPointsOpen = 0xFF02;
 
-
-	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
