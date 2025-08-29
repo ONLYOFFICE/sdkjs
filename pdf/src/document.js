@@ -6201,7 +6201,7 @@ var CPresentation = CPresentation || function(){};
                 let oBlipFill = new AscFormat.CBlipFill();
                 oUniFill.setFill(oBlipFill);
                 oBlipFill.setRasterImageId(AscFormat.checkRasterImageId(oImage.src));
-                oBlipFill.setStretch(true);
+                oBlipFill.setStretch(new AscFormat.CBlipFillStretch());
                 oStamp.setFill(oUniFill);
             }
         }
