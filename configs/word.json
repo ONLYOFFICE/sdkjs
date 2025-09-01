@@ -16,6 +16,8 @@
 			"vendor/array.js",
 			"common/editorscommon.js",
 			"common/crypto.js",
+			"common/digital-signature/sign.js",
+			"common/digital-signature/verify.js",
 			"common/externalChartCollector.js",
 			"common/frameManager.js",
 			"common/BulletPreviewDrawer.js",

@@ -33,41 +33,20 @@
 "use strict";
 
 (function () {
-
-	function CCryptoBase() {
-
+	function CDigitalVerifier(crypto) {
+		this.crypto = crypto;
 	}
-	CCryptoBase.prototype.sign = function (algorithm, key, data) {
-		return Promise(function (resolve, reject) {
-			reject("Override the method in the subclass");
-		});
-	};
-	CCryptoBase.prototype.digest = function (algorithm, data) {
-		return Promise(function (resolve, reject) {
-			reject("Override the method in the subclass");
-		});
-	};
-	CCryptoBase.prototype.verify = function (algorithm, key, signature, data) {
-		return Promise(function (resolve, reject) {
-			reject("Override the method in the subclass");
-		});
+	CDigitalVerifier.prototype.verify = function () {
+
 	};
 
-	function CWebCrypto() {
-		CCryptoBase.call(this);
-		this.subtle = window.crypto.subtle;
+
+	const ID_TYPE = {
+		idPackageSignature: "idPackageSignature",
+	};
+	function CSignature() {
+		// AscFormat.CBaseNoIdObject.call(this);
+		this.Id = ID_TYPE.idPackageSignature;
 	}
-	AscCommon.InitClassWithoutType(CWebCrypto, CCryptoBase);
-	CWebCrypto.prototype.sign = function (algorithm, key, data) {
-		return this.subtle.sign(algorithm, key, data);
-	};
-	CWebCrypto.prototype.digest = function (algorithm, data) {
-		return this.subtle.digest(algorithm, data);
-	};
-	CWebCrypto.prototype.verify = function (algorithm, key, signature, data) {
-		return this.subtle.verify(algorithm, key, signature, data);
-	};
-
-	window["AscCommon"] = window["AscCommon"] || {};
-	window["AscCommon"].CWebCrypto = CWebCrypto;
+	// AscCommon.InitClassWithoutType(CSignature, AscFormat.CBaseNoIdObject);
 })();

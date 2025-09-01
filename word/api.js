@@ -1586,7 +1586,9 @@ background-repeat: no-repeat;\
 		if (!jsZlib.open(data)) {
 			return false;
 		}
-
+		/*todo temp*/
+		const oSigner = new AscCommon.CDigitalSigner(new AscCommon.CWebCrypto(), null, jsZlib);
+		oSigner.sign();
 		let reader, openParams = {};
 		let oBinaryFileReader = new AscCommonWord.BinaryFileReader(this.WordControl.m_oLogicDocument, openParams);
 		//очищать pptx_content_loader не надо, т.к. открываем zip
