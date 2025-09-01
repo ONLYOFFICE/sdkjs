@@ -279,6 +279,8 @@
 		this.reporterTimerAdd = 0;
 		this.reporterTimerLastStart = -1;
 		this.reporterPointer = false;
+        this.reporterTooltip = null;
+        this.reporterTooltipTimeout = null;
 
 		// mobile
 		this.MobileTouchManager = null;
@@ -422,7 +424,13 @@
 				"Highlighter",
 				"Ink color",
 				"Eraser",
-				"Erase screen"
+                "Erase screen",
+                "Start presentation",
+                "Pause presentation",
+                "Previous slide",
+                "Next slide",
+                "Laser pointer",
+                "Draw"
 			];
 			var _translates = this.m_oApi.reporterTranslates;
 			if (_translates) {
@@ -435,6 +443,12 @@
 				this.reporterTranslates[6] = _translates[6];
 				this.reporterTranslates[7] = _translates[7];
 				this.reporterTranslates[8] = _translates[8];
+                this.reporterTranslates[9] = _translates[9]; // Play
+                this.reporterTranslates[10] = _translates[10]; // Pause
+                this.reporterTranslates[11] = _translates[11] // Previous slide
+                this.reporterTranslates[12] = _translates[12] // Next slide
+                this.reporterTranslates[13] = _translates[13] // Pointer
+                this.reporterTranslates[14] = _translates[14] // Draw
 
 				if (_translates[3])
 					this.m_oApi.DemonstrationEndShowMessage(_translates[3]);
@@ -819,6 +833,94 @@
 					window.addEventListener('click', handleOutsideClose);
 				}
 			};
+
+            // Tooltip
+
+            if (!this.reporterTooltip) {
+                this.reporterTooltip = document.createElement('div');
+                this.reporterTooltip.className = 'tooltip';
+                this.reporterTooltip.id = 'dem_tooltip';
+                document.body.appendChild(this.reporterTooltip);
+            }
+
+            const showTooltip = function (element, text, delay = 500) {
+                if (!!this.reporterTooltipTimeout) {
+                    clearTimeout(this.reporterTooltipTimeout);
+                }
+
+                this.reporterTooltipTimeout = setTimeout(() => {
+                    this.reporterTooltip.textContent = text;
+
+                    const rect = element.getBoundingClientRect();
+                    const tooltipRect = this.reporterTooltip.getBoundingClientRect();
+
+                    let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+                    let top = rect.top - tooltipRect.height - 10;
+
+                    if (left < 5) {
+                        left = 5;
+                    }
+
+                    if (left + tooltipRect.width > window.innerWidth - 5) {
+                        left = window.innerWidth - tooltipRect.width - 5;
+                    }
+
+                    this.reporterTooltip.style.left = left + 'px';
+                    this.reporterTooltip.style.top = top + 'px';
+                    this.reporterTooltip.classList.add('show');
+                }, delay);
+            }.bind(this);
+
+            const hideTooltip = function () {
+                if (!!this.reporterTooltipTimeout) {
+                    clearTimeout(this.reporterTooltipTimeout);
+                    this.reporterTooltipTimeout = null;
+                }
+
+                if (!!this.reporterTooltip) {
+                    this.reporterTooltip.classList.remove('show');
+                }
+            }.bind(this);
+
+            function addReporterTooltipToElement(element, tooltipText) {
+                if (!element) {
+                    return;
+                }
+
+                element.addEventListener('mouseenter', (e) => {
+                    showTooltip(e.target, tooltipText);
+                });
+
+                element.addEventListener('mouseleave', () => {
+                    hideTooltip();
+                });
+
+                element.addEventListener('mousedown', () => {
+                    hideTooltip();
+                });
+            }
+
+            addReporterTooltipToElement(this.elementReporter2, this.reporterTranslates[11]);
+            addReporterTooltipToElement(this.elementReporter3, this.reporterTranslates[12]);
+            addReporterTooltipToElement(this.elementReporter6, this.reporterTranslates[13]);
+            addReporterTooltipToElement(this.elementReporterDrawMenuTrigger, this.reporterTranslates[14]);
+
+            if (this.elementReporter4) {
+                const txtPause = this.reporterTranslates[10], txtPlay = this.reporterTranslates[9];
+
+                this.elementReporter4.addEventListener('mouseenter', function(e) {
+                    const isPlaying = window.editor.WordControl.DemonstrationManager.IsPlayMode;
+                    showTooltip(e.target, isPlaying ? txtPause : txtPlay);
+                });
+
+                this.elementReporter4.addEventListener('mouseleave', function() {
+                    hideTooltip();
+                });
+
+                this.elementReporter4.addEventListener('mousedown', function() {
+                    hideTooltip();
+                });
+            }
 
 			window.onkeydown = this.onKeyDown;
 			window.onkeyup = this.onKeyUp;
@@ -3185,6 +3287,10 @@
 		styleContent += ".btn-text-default-img::-moz-focus-inner { border: 0; padding: 0; }";
 		styleContent += ".btn-text-default-img2::-moz-focus-inner { border: 0; padding: 0; }";
 		styleContent += (".dem-text-color { color:" + AscCommon.GlobalSkin.DemTextColor + "; }");
+        styleContent += ".tooltip { position: absolute; background-color: " + GlobalSkin.DemBackgroundColor + "; color: " + GlobalSkin.DemButtonTextColor + "; padding: 6px 8px; border-radius: 4px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 11px; white-space: nowrap; z-index: 10; pointer-events: none; opacity: 0; border: 1px solid " + GlobalSkin.DemSplitterColor + "; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }";
+        styleContent += ".tooltip.show { opacity: 1; }";
+        styleContent += ".tooltip::before { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -5px; border: 5px solid transparent; border-top-color: " + GlobalSkin.DemSplitterColor + "; }";
+        styleContent += ".tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -4px; border: 4px solid transparent; border-top-color: " + GlobalSkin.DemBackgroundColor + "; margin-top: -1px; }";
 		return styleContent;
 	};
 	CEditorPage.prototype.reporterTimerFunc = function (isReturn) {
