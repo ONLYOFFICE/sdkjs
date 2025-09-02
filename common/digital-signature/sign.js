@@ -32,39 +32,173 @@
 
 "use strict";
 
+const CRYPTO_DIGEST_ALGORITHM_TYPE = {
+	SHA256: "SHA-256"
+}
+const OOXML_DIGEST_ALGORITHM_TYPE = {
+	SHA1: 1,
+	SHA224: 2,
+	SHA256: 3,
+	SHA384: 4,
+	SHA512: 5
+}
+
+function digest() {
+
+}
 function CX509Cert() {
 
 }
 CX509Cert.prototype.getDigestAlgorithm = function () {
-	return "SHA-256";
+	return CRYPTO_DIGEST_ALGORITHM_TYPE.SHA256;
 };
+function getEnumFromStrDigestAlgorithm(str) {
+	switch (str) {
+		case "http://www.w3.org/2000/09/xmldsig#rsa-sha1":
+		case "http://www.w3.org/2000/09/xmldsig#sha1": {
+			return OOXML_DIGEST_ALGORITHM_TYPE.SHA1;
+		}
+		case "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256":
+		case "http://www.w3.org/2001/04/xmldsig-more#sha256":
+		case "http://www.w3.org/2001/04/xmlenc#sha256": {
+			return OOXML_DIGEST_ALGORITHM_TYPE.SHA256;
+		}
+		case "http://www.w3.org/2001/04/xmldsig-more#rsa-sha384":
+		case "http://www.w3.org/2001/04/xmldsig-more#sha384": {
+			return OOXML_DIGEST_ALGORITHM_TYPE.SHA384;
+		}
+		case "http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512":
+		case "http://www.w3.org/2001/04/xmldsig-more#rsa-sha512":
+		case "http://www.w3.org/2001/04/xmldsig-more#sha512":
+		case "http://www.w3.org/2001/04/xmlenc#sha512": {
+			return OOXML_DIGEST_ALGORITHM_TYPE.SHA512;
+		}
+		default: {
+			return null;
+		}
+	}
+}
+function getFormatDigestAlgorithm(cryptoAlgorithm) {
+	switch (cryptoAlgorithm) {
+		case CRYPTO_DIGEST_ALGORITHM_TYPE.SHA256:
+			return FORMAT_DIGEST_ALGORITHM_TYPE.SHA256;
+	}
+	return null;
+}
 
 (function () {
 	function CDigitalSigner(crypto, cert, zip) {
 		this.crypto = crypto;
 		this.zip = zip;
 		this.cert = cert || new CX509Cert()/*todo temp*/;
+		this.date = new Date();
+		this.isInit = false;
+		this.certGuid = cert;
 	}
+	CDigitalSigner.prototype.init = function () {
+		const oThis = this;
+		if (this.isInit) {
+			return new Promise(function (resolve) {
+				resolve();
+			});
+		}
+		return new Promise(function (resolve) {
+			if (oThis.isInit) {
+				resolve();
+			} else {
+				oThis.getCertInfo().then(function (cert) {
+					oThis.cert = cert;
+					oThis.isInit = true;
+				});
+			}
+		});
+	};
 	CDigitalSigner.prototype.getDigestAlgorithm = function () {
 
 	};
-	CDigitalSigner.prototype.sign = function () {
+	CDigitalSigner.prototype.getDigestMethod = function () {
+		return new Promise(function (resolve, reject) {
+			reject("todo");
+		});
+	};
+	CDigitalSigner.prototype.digest = function (file) {
+		return new Promise(function (resolve, reject) {
+			reject("todo");
+		});
+	};
+	CDigitalSigner.prototype.getDigestsFromFiles = function (filePaths) {
+		const promises = [];
+		for (let i = 0; i < filePaths.length; i += 1) {
+			const filePath = filePaths[i];
+			const file = this.zip.getFile(filePath);
+			promises.push(this.digest(file));
+		}
+		return promises;
+	}
+	CDigitalSigner.prototype.getContentType = function (filePath) {
+
+	};
+	CDigitalSigner.prototype.getRelsReferences = function (filePaths, digests) {
+		for (let i = 0; i < filePaths.length; i += 1) {
+			const reference = new CReference();
+
+		}
+	};
+	CDigitalSigner.prototype.getContentReferences = function (filePaths, digests) {
+		const references = [];
+		for (let i = 0; i < filePaths.length; i += 1) {
+			const filePath = filePaths[i];
+			const digest = digests[i];
+			const contentType =  this.getContentType(filePath);
+			const reference = new CReference();
+			reference.URI = "/" + filePath + "?ContentType=" + contentType;
+			reference.digestMethod = this.getFormatDigestAlgorithm();
+			reference.digestValue = digest;
+			references.push(reference);
+		}
+		return references;
+	};
+	CDigitalSigner.prototype.getManifestObjectPromise = function () {
 		const oThis = this;
 		const zip = this.zip;
 		const files = zip.files;
 		const promises = [];
-		const digestAlgorithm = this.cert.getDigestAlgorithm();
+		const relsFiles = [];
+		const contentFiles = [];
+		const signFiles = [];
 		files.forEach(function (filePath) {
-			if (oThis.isNeedSign(filePath)) {
-				const file = zip.getFile(filePath);
-				promises.push(oThis.crypto.digest(digestAlgorithm, file));
+			if (isNeedSign(filePath)) {
+				if (isRels(filePath)) {
+					relsFiles.push(filePath);
+				} else {
+					contentFiles.push(filePath);
+				}
 			}
 		});
-		Promise.all(promises).then(function (digestArray) {
-			for (let i = 0; i < digestArray.length; i += 1) {
-				const intArray = new Uint8Array(digestArray[i]);
-				console.log(getBase64FromBuffer(digestArray[i]))
-			}
+
+		const relsPromises = this.getDigestsFromFiles(relsFiles);
+		const contentPromises = this.getDigestsFromFiles(contentFiles);
+		return Promise.all([Promise.all(relsPromises), Promise.all(contentPromises)]).then(function (fileDigests) {
+			const relsDigests = fileDigests[0];
+			const contentDigests = fileDigests[1];
+			const relsReferences = oThis.getRelsReferences(relsFiles, relsDigests);
+			const contentReferences = oThis.getContentReferences(contentFiles, contentDigests);
+			const manifestObject = new CManifestObject();
+			manifestObject.references = [].concat(relsReferences, contentReferences);
+			const signatureTime = new CSignatureTime();
+			signatureTime.format = "YYYY-MM-DDThh:mm:ssTZD";
+			signatureTime.date = oThis.date.toISOString();
+			manifestObject.signatureTime = signatureTime;
+			return manifestObject;
+		});
+	};
+	CDigitalSigner.prototype.sign = function () {
+		const oThis = this;
+		const signature = new CSignature();
+		return this.init().then(function () {
+			return oThis.getManifestObjectPromise();
+		}).then(function (manifest) {
+
 		});
 	};
 	function getBase64FromBuffer(arrayBuffer) {
@@ -75,9 +209,19 @@ CX509Cert.prototype.getDigestAlgorithm = function () {
 		}
 		return window.btoa(arrayResult.join(""));
 	}
-	CDigitalSigner.prototype.isNeedSign = function () {
-		return true;
-	};
+	function isNeedSign(filePath) {
+		return !(filePath.indexOf("_xmlsignatures") === 0 ||
+			filePath.indexOf("docProps") === 0 ||
+			filePath.indexOf("[Content_Types].xml") === 0 ||
+			filePath.indexOf("[trash]") === 0);
+	}
+	function isRels(filePath) {
+		const lastIndex = filePath.lastIndexOf(".");
+		if (lastIndex !== -1) {
+			return filePath.slice(lastIndex + 1) === "rels";
+		}
+		return false;
+	}
 
 
 	function CSignature() {
