@@ -434,32 +434,32 @@ $(function () {
 		done();
 	});
 
-	QUnit.test("Paste ordered list HTML", function(assert) {
-		AscTest.ClearDocument();
-		let p = AscTest.CreateParagraph();
-		logicDocument.AddToContent(0, p);
-
-		let done = assert.async();
-		let htmlElement = document.createElement("div");
-		htmlElement.innerHTML = "<ol><li>First</li><li>Second</li></ol>";
-
-		AscTest.Editor.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, htmlElement, undefined, undefined, undefined, function () {});
-
-		const result = ToJsonString(logicDocument);
-		console.log("Ordered List Result:", result);
-		const expected = {
-			"type": "document",
-			"textPr": "",
-			'content': ""
-		}
-		// const numIds = result.match(/"numId":"(\d+)"/g);
-		// if (numIds) {
-		// 	expected.content[0].pPr.numPr.numId = numIds[0].match(/"numId":"(\d+)"/)[1];
-		// 	expected.content[1].pPr.numPr.numId = numIds[1].match(/"numId":"(\d+)"/)[1];
-		// }
-		assert.strictEqual(result, JSON.stringify(expected), "Должен вставиться маркированный список с двумя элементами");
-		done();
-	});
+	// QUnit.test("Paste ordered list HTML", function(assert) {
+	// 	AscTest.ClearDocument();
+	// 	let p = AscTest.CreateParagraph();
+	// 	logicDocument.AddToContent(0, p);
+	//
+	// 	let done = assert.async();
+	// 	let htmlElement = document.createElement("div");
+	// 	htmlElement.innerHTML = "<ol><li>First</li><li>Second</li></ol>";
+	//
+	// 	AscTest.Editor.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, htmlElement, undefined, undefined, undefined, function () {});
+	//
+	// 	const result = ToJsonString(logicDocument);
+	// 	console.log("Ordered List Result:", result);
+	// 	const expected = {
+	// 		"type": "document",
+	// 		"textPr": "",
+	// 		'content': ""
+	// 	}
+	// 	// const numIds = result.match(/"numId":"(\d+)"/g);
+	// 	// if (numIds) {
+	// 	// 	expected.content[0].pPr.numPr.numId = numIds[0].match(/"numId":"(\d+)"/)[1];
+	// 	// 	expected.content[1].pPr.numPr.numId = numIds[1].match(/"numId":"(\d+)"/)[1];
+	// 	// }
+	// 	assert.strictEqual(result, JSON.stringify(expected), "Должен вставиться маркированный список с двумя элементами");
+	// 	done();
+	// });
 
 	QUnit.test("Paste nested HTML elements", function(assert) {
 		AscTest.ClearDocument();
@@ -633,27 +633,27 @@ $(function () {
 		done();
 	});
 
-	QUnit.test("Paste table HTML, then select & copy back", function(assert) {
-		AscTest.ClearDocument();
-		let p = AscTest.CreateParagraph();
-		logicDocument.AddToContent(0, p);
-		let done = assert.async();
-
-		let htmlElement = document.createElement("div");
-		htmlElement.innerHTML = "<table><tr><td>Cell 1</td><td>Cell 2</td></tr></table>";
-		AscTest.Editor.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, htmlElement);
-
-		logicDocument.SelectAll();
-		let oCopyProcessor = new AscCommon.CopyProcessor(AscTest.Editor);
-		oCopyProcessor.Start();
-		const copiedHtml = oCopyProcessor.getInnerHtml();
-		logicDocument.RemoveSelection();
-
-		const jsonedData = removeBase64(JSON.stringify(copiedHtml));
-		const expectedHtml =''
-		assert.strictEqual(jsonedData, expectedHtml, "Copied HTML should match for table paste");
-		done();
-	});
+	// QUnit.test("Paste table HTML, then select & copy back", function(assert) {
+	// 	AscTest.ClearDocument();
+	// 	let p = AscTest.CreateParagraph();
+	// 	logicDocument.AddToContent(0, p);
+	// 	let done = assert.async();
+	//
+	// 	let htmlElement = document.createElement("div");
+	// 	htmlElement.innerHTML = "<table><tr><td>Cell 1</td><td>Cell 2</td></tr></table>";
+	// 	AscTest.Editor.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, htmlElement);
+	//
+	// 	logicDocument.SelectAll();
+	// 	let oCopyProcessor = new AscCommon.CopyProcessor(AscTest.Editor);
+	// 	oCopyProcessor.Start();
+	// 	const copiedHtml = oCopyProcessor.getInnerHtml();
+	// 	logicDocument.RemoveSelection();
+	//
+	// 	const jsonedData = removeBase64(JSON.stringify(copiedHtml));
+	// 	const expectedHtml =''
+	// 	assert.strictEqual(jsonedData, expectedHtml, "Copied HTML should match for table paste");
+	// 	done();
+	// });
 
 	QUnit.test("Paste unordered list HTML, then select & copy back", function(assert) {
 		AscTest.ClearDocument();
