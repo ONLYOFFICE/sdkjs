@@ -5832,7 +5832,7 @@ var CPresentation = CPresentation || function(){};
         this.AddDrawing(oSmartArt, nPage);
         return oSmartArt;
     };
-    CPDFDoc.prototype.AddChartByBinary = function(chartBinary, isFromInterface, oPlaceholder, nPage) {
+    CPDFDoc.prototype.AddChart = function(nType, isFromInterface, oPlaceholder, nPage) {
         let oPagesInfo = this.Viewer.pagesInfo;
         if (!oPagesInfo.pages[nPage])
             return;
@@ -5841,7 +5841,7 @@ var CPresentation = CPresentation || function(){};
         let oController = this.GetController();
         let nRotAngle    = this.Viewer.getPageRotate(nPage);
 
-        let oChart  = oController.getChartSpace2(chartBinary, null);
+        let oChart  = oController.getChartObject(nType, undefined, undefined, true);
         let oXfrm   = oChart.getXfrm();
 
         let nExtX   = oXfrm.extX;
@@ -7050,6 +7050,9 @@ var CPresentation = CPresentation || function(){};
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Required extensions
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    CPDFDoc.prototype.OpenChartEditor = function() {
+        this.DrawingObjects.openChartEditor();
+    };
     CPDFDoc.prototype.Is_Inline = function() {};
     CPDFDoc.prototype.OnChangeForm = function() {};
     CPDFDoc.prototype.TurnOffCheckChartSelection = function() {};

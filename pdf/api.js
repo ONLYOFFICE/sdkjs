@@ -654,13 +654,15 @@
 		});
 	};
 	PDFEditorApi.prototype.asc_undoAllChanges = function() {};
-	PDFEditorApi.prototype.asc_addChartDrawingObject = function(chartBinary, Placeholder) {
+	PDFEditorApi.prototype.asc_addChartDrawingObject = function(nType, Placeholder) {
+		this.asc_onCloseFrameEditor();
+
 		let oDoc	= this.getPDFDoc();
 		let oViewer	= this.getDocumentRenderer();
 
 		oDoc.DoAction(function() {
 			AscFonts.IsCheckSymbols = true;
-			oDoc.AddChartByBinary(chartBinary, true, Placeholder, oViewer.currentPage);
+			oDoc.AddChart(nType, true, Placeholder, oViewer.currentPage);
 			AscFonts.IsCheckSymbols = false;
 		}, AscDFH.historydescription_Document_AddChart);
 	};

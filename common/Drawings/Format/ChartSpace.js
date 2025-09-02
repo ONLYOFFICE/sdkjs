@@ -12069,7 +12069,7 @@ function(window, undefined) {
 
 	function CreateLineChart(chartSeries, type, bUseCache, oOptions, b3D) {
 		var asc_series = chartSeries;
-		var chart_space = new CChartSpace();
+		var chart_space = Asc.editor.isPdfEditor() ? new AscPDF.CPdfChartSpace() : new AscFormat.CChartSpace();
 		chart_space.setDate1904(false);
 		chart_space.setLang("en-US");
 		chart_space.setRoundedCorners(false);
@@ -12206,7 +12206,7 @@ function(window, undefined) {
 
 	function CreateBarChart(chartSeries, type, bUseCache, oOptions, b3D, bDepth) {
 		var asc_series = chartSeries;
-		var chart_space = new CChartSpace();
+		var chart_space = Asc.editor.isPdfEditor() ? new AscPDF.CPdfChartSpace() : new AscFormat.CChartSpace();
 		chart_space.setDate1904(false);
 		chart_space.setLang("en-US");
 		chart_space.setRoundedCorners(false);
@@ -12315,7 +12315,7 @@ function(window, undefined) {
 
 	function CreateHBarChart(chartSeries, type, bUseCache, oOptions, b3D) {
 		var asc_series = chartSeries;
-		var chart_space = new CChartSpace();
+		var chart_space = Asc.editor.isPdfEditor() ? new AscPDF.CPdfChartSpace() : new AscFormat.CChartSpace();
 		chart_space.setDate1904(false);
 		chart_space.setLang("en-US");
 		chart_space.setRoundedCorners(false);
@@ -12429,7 +12429,7 @@ function(window, undefined) {
 
 	function CreateAreaChart(chartSeries, type, bUseCache, oOptions) {
 		var asc_series = chartSeries;
-		var chart_space = new CChartSpace();
+		var chart_space = Asc.editor.isPdfEditor() ? new AscPDF.CPdfChartSpace() : new AscFormat.CChartSpace();
 		chart_space.setDate1904(false);
 		chart_space.setLang("en-US");
 		chart_space.setRoundedCorners(false);
@@ -12522,7 +12522,7 @@ function(window, undefined) {
 
 	function CreatePieChart(chartSeries, bDoughnut, bUseCache, oOptions, b3D) {
 		var asc_series = chartSeries;
-		var chart_space = new CChartSpace();
+		var chart_space = Asc.editor.isPdfEditor() ? new AscPDF.CPdfChartSpace() : new AscFormat.CChartSpace();
 		chart_space.setDate1904(false);
 		chart_space.setLang("en-US");
 		chart_space.setRoundedCorners(false);
@@ -12568,7 +12568,7 @@ function(window, undefined) {
 
 	function CreateScatterChart(chartSeries, bUseCache, oOptions) {
 		var asc_series = chartSeries;
-		var chart_space = new CChartSpace();
+		var chart_space = Asc.editor.isPdfEditor() ? new AscPDF.CPdfChartSpace() : new AscFormat.CChartSpace();
 		chart_space.setDate1904(false);
 		chart_space.setLang("en-US");
 		chart_space.setRoundedCorners(false);
@@ -12647,7 +12647,7 @@ function(window, undefined) {
 
 	function CreateStockChart(chartSeries, bUseCache, oOptions) {
 		var asc_series = chartSeries;
-		var chart_space = new CChartSpace();
+		var chart_space = Asc.editor.isPdfEditor() ? new AscPDF.CPdfChartSpace() : new AscFormat.CChartSpace();
 		chart_space.setDate1904(false);
 		chart_space.setLang("en-US");
 		chart_space.setRoundedCorners(false);
@@ -12866,7 +12866,7 @@ function(window, undefined) {
 
 	function CreateRadarChart(chartSeries, bUseCache, oOptions, bMarker, bFilled) {
 		var asc_series = chartSeries;
-		var chart_space = new CChartSpace();
+		var chart_space = Asc.editor.isPdfEditor() ? new AscPDF.CPdfChartSpace() : new AscFormat.CChartSpace();
 		chart_space.setDate1904(false);
 		chart_space.setLang("en-US");
 		chart_space.setRoundedCorners(false);
