@@ -12392,7 +12392,7 @@
 							break;
 
 						case Asc.ECfType.dataBar:
-							oApiFormatCondition = new ApiDataBar(rule, this, this._formatConditions);
+							oApiFormatCondition = new ApiDatabar(rule, this, this._formatConditions);
 							break;
 
 						case Asc.ECfType.iconSet:
@@ -20320,10 +20320,10 @@
 	 * Adds a new data bar conditional formatting rule to the collection.
 	 * @memberof ApiFormatConditions
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiDataBar | null}
-	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/AddDataBar.js
+	 * @returns {ApiDatabar | null}
+	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/AddDatabar.js
 	 */
-	ApiFormatConditions.prototype.AddDataBar = function() {
+	ApiFormatConditions.prototype.AddDatabar = function() {
 		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
 		if (!worksheet) {
 			return null;
@@ -20342,17 +20342,19 @@
 
 		// Minimum value (auto minimum)
 		let minCfvo = new window['AscCommonExcel'].CConditionalFormatValueObject();
-		minCfvo.asc_setType(Asc.c_oAscCfvoType.AutoMin);
+		minCfvo.asc_setType(Asc.c_oAscCfvoType.Minimum);
 		minCfvo.asc_setGte(true);
 		cfvos.push(minCfvo);
 
 		// Maximum value (auto maximum)
 		let maxCfvo = new window['AscCommonExcel'].CConditionalFormatValueObject();
-		maxCfvo.asc_setType(Asc.c_oAscCfvoType.AutoMax);
+		maxCfvo.asc_setType(Asc.c_oAscCfvoType.Maximum);
 		maxCfvo.asc_setGte(true);
 		cfvos.push(maxCfvo);
 
 		dataBarProps.asc_setCFVOs(cfvos);
+
+		dataBarProps.asc_setColor(new Asc.asc_CColor(99, 142, 198));
 
 		// Set the data bar rule to the conditional formatting rule
 		props.asc_setColorScaleOrDataBarOrIconSetRule(dataBarProps);
@@ -20371,7 +20373,7 @@
 		// Apply the conditional formatting rule to the worksheet
 		worksheet.setCFRule(props);
 
-		// Create and return ApiDataBar object
+		// Create and return ApiDatabar object
 		let dataBar = new ApiDatabar(props, this.range, this);
 		this.conditions.push(dataBar);
 
