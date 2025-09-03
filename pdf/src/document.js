@@ -4289,6 +4289,21 @@ var CPresentation = CPresentation || function(){};
                     this.Api.sync_VerticalTextAlign(oSpPr.verticalTextAlign);
                     this.Api.sync_Vert(oSpPr.vert);
                 }
+                if (oChartPr && oChartPr.chartProps) {
+                    if (this.bNeedUpdateChartPreview) {
+                        this.Api.chartPreviewManager.clearPreviews();
+                        this.Api.sendEvent("asc_onUpdateChartStyles");
+                        this.bNeedUpdateChartPreview = false;
+                    }
+                    if (oSpPr) {
+                        oChartPr.x = oSpPr.x;
+                        oChartPr.y = oSpPr.y;
+                        if (oSpPr.Position) {
+                            oChartPr.Position = new Asc.CPosition(oSpPr.Position);
+                        }
+                    }
+                    this.Api.sync_ImgPropCallback(oChartPr);
+                }
                 if (oTblPr) {
                     oDrDoc.CheckTableStyles(oTblPr.TableLook);
                     this.Api.sync_TblPropCallback(oTblPr);

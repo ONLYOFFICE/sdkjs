@@ -870,6 +870,34 @@
 		let oDoc = this.getPDFDoc();
 		oDoc.ConvertMathView(isToLinear, isAll);
 	};
+	PDFEditorApi.prototype.getImageSelectedObject  = function(imgProp) {
+		let type = imgProp.chartProps ? Asc.c_oAscTypeSelectElement.Chart : Asc.c_oAscTypeSelectElement.Image;
+		let objects;
+		
+		if (type === Asc.c_oAscTypeSelectElement.Chart) {
+			objects = new Asc.asc_CImgProperty(imgProp);
+			objects.ChartProperties = imgProp.chartProps;
+			objects.severalCharts = imgProp.severalCharts;
+			objects.severalChartStyles = imgProp.severalChartStyles;
+			objects.severalChartTypes = imgProp.severalChartTypes;
+			objects.lockAspect = imgProp.lockAspect;
+
+			let oController = this.getPDFDoc().GetController();
+			if (oController.selection.groupSelection){
+				objects.description = imgProp.description;
+				objects.title = imgProp.title;
+				objects.fromGroup = true;
+			}
+		}
+		else {
+			objects = new Asc.asc_CImgProperty(imgProp);
+		}
+
+		return new AscCommon.asc_CSelectedObject(type, objects);
+	};
+	PDFEditorApi.prototype.sync_ImgPropCallback  = function(imgProp) {
+		this.SelectedObjectsStack[this.SelectedObjectsStack.length] = this.getImageSelectedObject(imgProp);
+	};
 	PDFEditorApi.prototype.sync_shapePropCallback = function(pr) {
 		let oDoc		= this.getPDFDoc();
 		let oDrDoc		= oDoc.GetDrawingDocument();
