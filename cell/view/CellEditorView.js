@@ -1326,7 +1326,12 @@ function (window, undefined) {
 		}
 
 		this.handlers.trigger("updated", s, this.cursorPos, fPos, fName);
-		this.handlers.trigger("updatedEditableFunction", fCurrent, fPos !== undefined ? this.calculateOffset(fPos) : null, this._parseResult && this._parseResult.argPos);
+		let functionInfo = null;
+		if (this._parseResult && this._parseResult.argPos && fCurrent) {
+			functionInfo = new AscCommonExcel.CFunctionInfo(AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale[fCurrent] : fCurrent);
+			functionInfo.activeArgPos = this._parseResult.argPos;
+		}
+		this.handlers.trigger("updatedEditableFunction", fCurrent, fPos !== undefined ? this.calculateOffset(fPos) : null, functionInfo);
 		if (api && api.isMobileVersion) {
 			this.restoreFocus();
 		}
