@@ -1326,7 +1326,7 @@ function (window, undefined) {
 		}
 
 		this.handlers.trigger("updated", s, this.cursorPos, fPos, fName);
-		this.handlers.trigger("updatedEditableFunction", fCurrent, fPos !== undefined ? this.calculateOffset(fPos) : null);
+		this.handlers.trigger("updatedEditableFunction", fCurrent, fPos !== undefined ? this.calculateOffset(fPos) : null, this._parseResult && this._parseResult.argPos);
 		if (api && api.isMobileVersion) {
 			this.restoreFocus();
 		}
