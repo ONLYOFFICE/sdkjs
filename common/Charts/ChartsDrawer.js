@@ -18059,7 +18059,7 @@ CColorObj.prototype =
 			if (!this.storage[chartId][seriaId]) {
 				this.storage[chartId][seriaId] = new CTrendData();
 			}
-			if (!this.storage[chartId][seriaId].isEmpty() && xVal === this.storage[chartId][seriaId].coords.catVals[0]) {
+			if (!this.storage[chartId][seriaId].isEmpty() && xVal === this.storage[chartId][seriaId].coords.catVals[0] && yVal === this.storage[chartId][seriaId].coords.catVals[1] ) {
 				this.stopAdding = true;
 			}
 
