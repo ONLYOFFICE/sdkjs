@@ -89,7 +89,7 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 (function () {
 	function CDigitalSigner(crypto, cert, zip) {
 		this.crypto = crypto;
-		this.zip = zip;
+		this.openXml = new AscCommon.openXml.OpenXmlPackage(zip, null);
 		this.cert = cert || new CX509Cert()/*todo temp*/;
 		this.date = new Date();
 		this.isInit = false;
@@ -109,9 +109,18 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 				oThis.getCertInfo().then(function (cert) {
 					oThis.cert = cert;
 					oThis.isInit = true;
+					resolve();
 				});
 			}
 		});
+	};
+	CDigitalSigner.prototype.getCertInfo = function () {
+		return new Promise(function (resolve) {
+			resolve();
+		});
+	};
+	CDigitalSigner.prototype.getZip = function () {
+		return this.openXml.zip;
 	};
 	CDigitalSigner.prototype.getDigestAlgorithm = function () {
 
@@ -122,15 +131,15 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 		});
 	};
 	CDigitalSigner.prototype.digest = function (file) {
-		return new Promise(function (resolve, reject) {
-			reject("todo");
-		});
+		return this.crypto.digest("SHA-256", file);
+		// return new Promise(function (resolve, reject) {
+		// 	reject("todo");
+		// });
 	};
-	CDigitalSigner.prototype.getDigestsFromFiles = function (filePaths) {
+	CDigitalSigner.prototype.getDigestsFromFiles = function (files) {
 		const promises = [];
-		for (let i = 0; i < filePaths.length; i += 1) {
-			const filePath = filePaths[i];
-			const file = this.zip.getFile(filePath);
+		for (let i = 0; i < files.length; i += 1) {
+			const file = files[i];
 			promises.push(this.digest(file));
 		}
 		return promises;
@@ -138,31 +147,65 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 	CDigitalSigner.prototype.getContentType = function (filePath) {
 
 	};
-	CDigitalSigner.prototype.getRelsReferences = function (filePaths, digests) {
-		for (let i = 0; i < filePaths.length; i += 1) {
-			const reference = new CReference();
-
-		}
-	};
-	CDigitalSigner.prototype.getContentReferences = function (filePaths, digests) {
-		const references = [];
+	CDigitalSigner.prototype.getRelsReferences = function (filePaths) {
+		const openXml = this.openXml;
+		const writer = new AscCommon.CMemory();
+		writer.context = new AscCommon.XmlWriterContext();
+		const files = [];
 		for (let i = 0; i < filePaths.length; i += 1) {
 			const filePath = filePaths[i];
-			const digest = digests[i];
-			const contentType =  this.getContentType(filePath);
-			const reference = new CReference();
-			reference.URI = "/" + filePath + "?ContentType=" + contentType;
-			reference.digestMethod = this.getFormatDigestAlgorithm();
-			reference.digestValue = digest;
-			references.push(reference);
+			const uri = "/" + filePath;
+			const xmlPart = new AscCommon.openXml.OpenXmlPart(openXml, uri, openXml.getContentType(uri));
+			const rels = new AscCommon.openXml.Rels(null, xmlPart);
+			new AscCommon.openXml.SaxParserBase().parse(xmlPart.getDocumentContent(), rels);
+			const relationships = rels.rels;
+			for (let j = relationships.length - 1; j >= 0; j -= 1) {
+				const relationship = relationships[j];
+				if (!isNeedSign(relationship.target)) {
+					relationships.splice(j, 1);
+				}
+			}
+			relationships.sort(function (a, b) {
+				if (a.relationshipId < b.relationshipId) {
+					return -1;
+				}
+				if (a.relationshipId > b.relationshipId) {
+					return 1;
+				}
+				return 0;
+			});
+			const relXml = openXml.getXmlBytes(xmlPart, rels, writer);
+			files.push(relXml);
 		}
-		return references;
+		return Promise.all(this.getDigestsFromFiles(files)).then(function (digests) {
+			console.log(digests.map(function (digest) {return getBase64FromBuffer(digest);}));
+		});
+	};
+	CDigitalSigner.prototype.getContentReferences = function (filePaths) {
+		const zip = this.getZip();
+		const digestPromises = this.getDigestsFromFiles(filePaths.map(function (filePath) {
+			return zip.getFile(filePath);
+		}));
+		const oThis = this;
+		return Promise.all(digestPromises).then(function (digests) {
+			const references = [];
+			for (let i = 0; i < filePaths.length; i += 1) {
+				const filePath = filePaths[i];
+				const digest = digests[i];
+				const contentType =  oThis.getContentType(filePath);
+				const reference = new CReference();
+				reference.URI = "/" + filePath + "?ContentType=" + contentType;
+				reference.digestMethod = oThis.getFormatDigestAlgorithm();
+				reference.digestValue = digest;
+				references.push(reference);
+			}
+			return references;
+		});
 	};
 	CDigitalSigner.prototype.getManifestObjectPromise = function () {
 		const oThis = this;
-		const zip = this.zip;
+		const zip = this.getZip();
 		const files = zip.files;
-		const promises = [];
 		const relsFiles = [];
 		const contentFiles = [];
 		const signFiles = [];
@@ -175,14 +218,11 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 				}
 			}
 		});
-
-		const relsPromises = this.getDigestsFromFiles(relsFiles);
-		const contentPromises = this.getDigestsFromFiles(contentFiles);
-		return Promise.all([Promise.all(relsPromises), Promise.all(contentPromises)]).then(function (fileDigests) {
-			const relsDigests = fileDigests[0];
-			const contentDigests = fileDigests[1];
-			const relsReferences = oThis.getRelsReferences(relsFiles, relsDigests);
-			const contentReferences = oThis.getContentReferences(contentFiles, contentDigests);
+		const relsReferencePromises = this.getRelsReferences(relsFiles);
+		const contentReferencePromises = this.getContentReferences(contentFiles);
+		return Promise.all([relsReferencePromises, contentReferencePromises]).then(function (fileReferences) {
+			const relsReferences = fileReferences[0];
+			const contentReferences = fileReferences[1];
 			const manifestObject = new CManifestObject();
 			manifestObject.references = [].concat(relsReferences, contentReferences);
 			const signatureTime = new CSignatureTime();
@@ -255,6 +295,12 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 		// AscFormat.CBaseNoIdObject.call(this);
 		this.algorithm = null;
 		this.relationshipReferences = [];
+	}
+	// AscCommon.InitClassWithoutType(CTransform, AscFormat.CBaseNoIdObject);
+
+	function CRelationshipReference() {
+		// AscFormat.CBaseNoIdObject.call(this);
+		this.sourceId = null;
 	}
 	// AscCommon.InitClassWithoutType(CTransform, AscFormat.CBaseNoIdObject);
 
