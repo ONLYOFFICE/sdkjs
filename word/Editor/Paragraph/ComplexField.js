@@ -921,7 +921,7 @@ CComplexField.prototype.private_CalculatePAGE = function()
 	var nPage      = oParagraph.getPageByLine(nLine);
 
 	var oLogicDocument = oParagraph.LogicDocument;
-	return oLogicDocument.Get_SectionPageNumInfo2(oParagraph.Get_AbsolutePage(nPage)).CurPage;
+	return oLogicDocument.Get_SectionPageNumInfo2(oParagraph.GetAbsolutePage(nPage)).CurPage;
 };
 CComplexField.prototype.private_UpdateTOC = function()
 {
@@ -931,7 +931,7 @@ CComplexField.prototype.private_UpdateTOC = function()
 	var oSectPr = this.LogicDocument.GetCurrentSectionPr();
 	if (oSectPr)
 	{
-		if (oSectPr.Get_ColumnsCount() > 1)
+		if (oSectPr.GetColumnCount() > 1)
 		{
 			// TODO: Сейчас забирается ширина текущей колонки. По правильному надо читать поля от текущего места
 			nTabPos = Math.max(0, Math.min(oSectPr.GetColumnWidth(0), oSectPr.GetPageWidth(), oSectPr.GetContentFrameWidth()));

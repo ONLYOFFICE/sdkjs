@@ -684,6 +684,12 @@ var c_oAscPopUpSelectorType = {
     manual: 2
   };
 
+  const c_oReadingOrderTypes = {
+    Context: 0,
+    LTR: 1,
+    RTL: 2
+  };
+
   //----------------------------------------------------------export----------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
   window['AscCommonExcel'].c_oAscDrawDepOptions = c_oAscDrawDepOptions;
@@ -1181,5 +1187,11 @@ var c_oAscPopUpSelectorType = {
   prot['auto'] = prot.auto;
   prot['autoNoTable'] = prot.autoNoTable;
   prot['manual'] = prot.manual;
+
+  window['Asc']['c_oReadingOrderTypes'] = window['Asc'].c_oReadingOrderTypes = c_oReadingOrderTypes;
+  prot = c_oReadingOrderTypes;
+  prot['Context'] = prot.Context;
+  prot['LTR'] = prot.LTR;
+  prot['RTL'] = prot.RTL;
 
 })(window);

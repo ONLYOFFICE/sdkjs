@@ -108,7 +108,7 @@ CParagraphBookmark.prototype.IsStart = function()
 };
 CParagraphBookmark.prototype.Recalculate_Range = function(PRS, ParaPr)
 {
-	this.PageAbs = PRS.Paragraph.Get_AbsolutePage(PRS.Page);
+	this.PageAbs = PRS.Paragraph.GetAbsolutePage(PRS.Page);
 
 	this.X = PRS.X;
 	this.Y = PRS.Y;

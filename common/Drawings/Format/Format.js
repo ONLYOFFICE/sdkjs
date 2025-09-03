@@ -83,19 +83,34 @@
 		CBaseNoIdObject.prototype.notAllowedWithoutId = function () {
 			return false;
 		};
+		/**
+		 * @memberof CBaseNoIdObject
+		 */
 		CBaseNoIdObject.prototype.getObjectType = function () {
 			return this.classType;
 		};
+		/**
+		 * @memberof CBaseNoIdObject
+		 */
 		CBaseNoIdObject.prototype.Get_Id = function () {
 			return this.Id;
 		};
+		/**
+		 * @memberof CBaseNoIdObject
+		 */
 		CBaseNoIdObject.prototype.GetId = function () {
 			return this.Id;
 		};
+		/**
+		 * @memberof CBaseNoIdObject
+		 */
 		CBaseNoIdObject.prototype.Write_ToBinary2 = function (oWriter) {
 			oWriter.WriteLong(this.getObjectType());
 			oWriter.WriteString2(this.Get_Id());
 		};
+		/**
+		 * @memberof CBaseNoIdObject
+		 */
 		CBaseNoIdObject.prototype.Read_FromBinary2 = function (oReader) {
 			this.Id = oReader.GetString2();
 		};
@@ -2411,6 +2426,10 @@
 			return (dVal * 1000 + 0.5 >> 0);
 		}
 
+		/**
+		 * @constructor
+		 * @extends CBaseNoIdObject
+		 */
 		function CBaseColor() {
 			CBaseNoIdObject.call(this);
 			this.RGBA = {
@@ -2563,6 +2582,10 @@
 			return nValue;
 		}
 
+		/**
+		 * @constructor
+		 * @extends CBaseColor
+		 */
 		function CSysColor() {
 			CBaseColor.call(this);
 			this.id = "";
@@ -2758,6 +2781,10 @@
 			this.RGBA.B = RGB & 0xFF;
 		}
 
+		/**
+		 * @constructor
+		 * @extends CBaseColor
+		 */
 		function CPrstColor() {
 			CBaseColor.call(this);
 			this.id = "";
@@ -2857,6 +2884,10 @@
 			return "" + toHex(oRGBA.R) + toHex(oRGBA.G) + toHex(oRGBA.B);
 		}
 
+		/**
+		 * @constructor
+		 * @extends CBaseColor
+		 */
 		function CRGBColor() {
 			CBaseColor.call(this);
 
@@ -2932,6 +2963,11 @@
 				return 1.055 * (Math.pow(value , (1 / 2.4))) - 0.055;
 			return 1;
 		};
+
+		/**
+		 * @constructor
+		 * @extends CBaseColor
+		 */
 		function CSchemeColor() {
 			CBaseColor.call(this);
 			this.id = 0;
@@ -3018,6 +3054,10 @@
 			}
 		};
 
+		/**
+		 * @constructor
+		 * @extends CBaseColor
+		 */
 		function CStyleColor() {
 			CBaseColor.call(this);
 			this.bAuto = false;
@@ -3058,9 +3098,13 @@
 
 		/**
 		 * @constructor
+		 * @extends CBaseNoIdObject
 		 */
 		function CUniColor() {
 			CBaseNoIdObject.call(this);
+			/**
+			 * @type {CSysColor | CPrstColor | CRGBColor | CSchemeColor | CStyleColor | any}
+			 */
 			this.color = null;
 			this.Mods = null;//new CColorModifiers();
 			this.RGBA = {
@@ -3809,10 +3853,10 @@
 		};
 
 		CBlipFill.flipTypes = {
-			'none': 0,
-			'x': 1,
-			'y': 2,
-			'xy': 3,
+			none: 0,
+			x: 1,
+			y: 2,
+			xy: 3
 		};
 
 		function CSrcRect(l, t, r, b) {
@@ -5595,6 +5639,9 @@
 //-----------------
 
 
+		/**
+		 * @constructor
+		 */
 		function CSolidFill() {
 			CBaseNoIdObject.call(this);
 			this.type = c_oAscFill.FILL_TYPE_SOLID;
@@ -16256,9 +16303,35 @@
 			}, this, []);
 		}
 
+		/**
+		 * Don't use this method. Use GetDefaultTheme
+		 * @return {CTheme}
+		 */
+		function GenerateDefaultVisioTheme(presentation, opt_fontName) {
+			if (!opt_fontName) {
+				opt_fontName = "Calibri";
+			}
+			let theme = GenerateDefaultTheme(presentation, opt_fontName);
+			let scheme = theme.themeElements.clrScheme;
+			// TODO change other colors
+			scheme.colors[11] = AscFormat.CreateUniColorRGB(0x05, 0x63, 0xC1); // link
+			scheme.colors[10] = AscFormat.CreateUniColorRGB(0x80, 0x00, 0x80); // followed link
+
+
+			theme.themeElements.themeExt = new AscFormat.CThemeExt();
+			theme.themeElements.themeExt.themeSchemeSchemeEnum = "0";
+
+			theme.themeElements.clrScheme.clrSchemeExtLst = new AscFormat.CClrSchemeExtLst();
+			theme.themeElements.clrScheme.clrSchemeExtLst.schemeEnum = "0";
+
+			theme.themeElements.themeExt.fmtConnectorScheme = new AscFormat.FmtScheme();
+
+			return theme;
+		}
+
 		function GetDefaultTheme() {
 			if(!AscFormat.DEFAULT_THEME) {
-				AscFormat.DEFAULT_THEME = GenerateDefaultTheme(null);
+				AscFormat.DEFAULT_THEME = AscFormat.GenerateDefaultTheme(null);
 			}
 			return AscFormat.DEFAULT_THEME;
 		}
@@ -16516,10 +16589,10 @@
 						if (tile === c_oAscFillBlipType.STRETCH) {
 							ret.fill.tile = null;
 							ret.fill.srcRect = null;
-							ret.fill.stretch = true;
+							ret.fill.stretch = new AscFormat.CBlipFillStretch();
 						} else if (tile === c_oAscFillBlipType.TILE) {
 							ret.fill.tile = new CBlipFillTile();
-							ret.fill.stretch = false;
+							ret.fill.stretch = null;
 							ret.fill.srcRect = null;
 						}
 						break;
@@ -20339,6 +20412,10 @@
 		window['AscFormat'].getGrayscaleValue = getGrayscaleValue;
 
 		window['AscFormat'].CBlipFill = window['Asc']['asc_CFillBlip'] = window['Asc'].asc_CFillBlip = CBlipFill;
+		CBlipFill.flipTypes["none"] = CBlipFill.flipTypes.none;
+		CBlipFill.flipTypes["x"] = CBlipFill.flipTypes.x;
+		CBlipFill.flipTypes["y"] = CBlipFill.flipTypes.y;
+		CBlipFill.flipTypes["xy"] = CBlipFill.flipTypes.xy;
 		prot = CBlipFill.prototype;
 		prot['asc_getTile'] = prot.asc_getTile = prot.getTile;
 		prot['asc_setTile'] = prot.asc_setTile = prot.setTile;
@@ -20353,12 +20430,12 @@
 		prot['asc_getType'] = prot.asc_getType = prot['get_type'] = prot.get_type = prot.getType;
 		prot['asc_setType'] = prot.asc_setType = prot['asc_putType'] = prot.asc_putType = prot['put_type'] = prot.put_type = prot.setType;
 		prot['asc_getTextureId'] = prot.asc_getTextureId = prot['get_texture_id'] = prot.get_texture_id = prot.getTextureId;
-		prot['asc_setTextureId'] = prot.asc_setTextureId = prot['put_texture_id'] = prot.put_texture_id = prot.setTextureId;
+		prot['asc_putTextureId'] = prot.asc_putTextureId = prot['put_texture_id'] = prot.put_texture_id = prot.setTextureId;
 		prot['asc_getUrl'] = prot.asc_getUrl = prot['get_url'] = prot.get_url = prot.getUrl;
 		prot['asc_setUrl'] = prot.asc_setUrl = prot['asc_putUrl'] = prot.asc_putUrl = prot['put_url'] = prot.put_url = prot.setUrl;
 
 		window['AscFormat'].CBlipFillTile = CBlipFillTile;
-		CBlipFillTile['flipTypes'] = CBlipFill.flipTypes;
+		CBlipFillTile['flipTypes'] = CBlipFillTile.flipTypes = CBlipFill.flipTypes;
 		prot = CBlipFillTile.prototype;
 		prot['getTx'] = prot.getTx;
 		prot['setTx'] = prot.setTx;
@@ -20439,6 +20516,7 @@
 		window['AscFormat'].CBulletType = CBulletType;
 		window['AscFormat'].TextListStyle = TextListStyle;
 		window['AscFormat'].GenerateDefaultTheme = GenerateDefaultTheme;
+		window['AscFormat'].GenerateDefaultVisioTheme = GenerateDefaultVisioTheme;
 		window['AscFormat'].GenerateDefaultMasterSlide = GenerateDefaultMasterSlide;
 		window['AscFormat'].GenerateDefaultSlideLayout = GenerateDefaultSlideLayout;
 		window['AscFormat'].GenerateDefaultSlide = GenerateDefaultSlide;

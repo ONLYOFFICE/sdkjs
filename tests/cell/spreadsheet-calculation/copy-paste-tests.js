@@ -525,6 +525,36 @@ $(function () {
 			["A \"quoted\" word", "Normal", "End \"here\""]
 		], "Escaped quotes inside quoted fields should be handled correctly");
 
+		// Test 26: Quoted field spanning lines (CRLF normalized to LF)
+		let text26 = '"A","line1\r\nline2","B"\n"C","D","E"';
+		let options26 = createTextOptions(AscCommon.c_oAscCsvDelimiter.Comma, undefined, '"');
+		let result26 = AscCommon.parseText(text26, options26, true);
+		assert.deepEqual(result26, [["A", "line1\nline2", "B"], ["C", "D", "E"]], "Quoted newline should not split record, normalize to LF");
+
+		// Test 27: Quoted field spanning lines (CR normalized to LF)
+		let text27 = '"A","l1\rl2","B"\n"X","Y","Z"';
+		let options27 = createTextOptions(AscCommon.c_oAscCsvDelimiter.Comma, undefined, '"');
+		let result27 = AscCommon.parseText(text27, options27, true);
+		assert.deepEqual(result27, [["A", "l1\nl2", "B"], ["X", "Y", "Z"]], "Quoted newline should not split record, normalize to LF");
+
+		// Test 28: Escaped quotes around a newline inside quoted field
+		let text28 = '"multi ""line""\nvalue",x,y';
+		let options28 = createTextOptions(AscCommon.c_oAscCsvDelimiter.Comma, undefined, '"');
+		let result28 = AscCommon.parseText(text28, options28, true);
+		assert.deepEqual(result28, [["multi \"line\"\nvalue", "x", "y"]], "Escaped quotes with embedded newline should parse correctly");
+
+		// Test 29: Custom delimiter with quoted newline
+		let text29 = '"x\ny"|z';
+		let options29 = createTextOptions(undefined, '|', '"');
+		let result29 = AscCommon.parseText(text29, options29, true);
+		assert.deepEqual(result29, [["x\ny", "z"]], "Custom delimiter with quoted newline should parse correctly");
+
+		// Test 30: Quoted field across multiple lines (normalized to LF)
+		let text30 = '"start\nmiddle\r\nend",foo';
+		let options30 = createTextOptions(AscCommon.c_oAscCsvDelimiter.Comma, undefined, '"');
+		let result30 = AscCommon.parseText(text30, options30, true);
+		assert.deepEqual(result30, [["start\nmiddle\nend", "foo"]], "Quoted field spanning lines normalizes to LF");
+
 		console.log("All parseText CSV tests completed successfully!");
 	});
 

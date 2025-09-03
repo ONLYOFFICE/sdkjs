@@ -90,7 +90,7 @@
         let bSelection      = false;
         let bEmptySelection = true;
 
-        let bShowTrack = oAnnot && oAnnot.IsFreeText() && oAnnot.IsInTextBox();
+        let bShowTrack = oAnnot && (oAnnot.IsFreeText() && oAnnot.IsInTextBox() || oAnnot.IsLine() && oAnnot.IsDoCaption());
 
         oAnnotTextPrTrackHandler.SetTrackObject(IsShowAnnotTrack && bShowTrack ? oAnnot : null, 0, false === bSelection || true === bEmptySelection);
     };
@@ -1219,12 +1219,6 @@
         const nSelectedCount = this.selectedObjects;
         const oFirstSelected = this.selectedObjects[0];
 
-        if (nSelectedCount === 1
-            && oFirstSelected.isForm()
-            && oFirstSelected.getInnerForm()
-            && oFirstSelected.getInnerForm().IsFormLocked())
-            isDrawHandles = false;
-
         var i;
         const oTx           = this.selection.textSelection;
         const oCrop         = this.selection.cropSelection;
@@ -1287,8 +1281,10 @@
         } else if (oTx) {
             if (oTx.selectStartPage === pageIndex) {
                 if (!oTx.isForm()) {
+                    let isLineAnnot = oTx.IsAnnot() && oTx.IsLine();
+
                     drawingDocument.DrawTrack(
-                        AscFormat.TYPE_TRACK.TEXT,
+                        !isLineAnnot ? AscFormat.TYPE_TRACK.TEXT : AscFormat.TYPE_TRACK.SHAPE,
                         oTx.getTransformMatrix(),
                         0,
                         0,
@@ -1297,7 +1293,7 @@
                         AscFormat.CheckObjectLine(oTx),
                         oTx.canRotate(),
                         undefined,
-                        isDrawHandles && oTx.canEdit()
+                        (isDrawHandles || this.document.IsViewerObject(oTx)) && oTx.canEdit()
                     );
                     oTx.drawAdjustments(drawingDocument);
                 }
@@ -1695,6 +1691,9 @@
                                 oTextPr.SetFontSize(nCurFontSize);
                                 oField.SetTextSize(oTextPr.GetIncDecFontSize(args[0]));
                             }
+                            else if (f == CDocumentContent.prototype.SetParagraphBidi) {
+                                oField.SetRTL(args[0]);
+                            }
                         }
                         else {
                             let content = drawing.getDocContent();
@@ -1803,7 +1802,7 @@
         let bRedraw = false;
 
         let oDocContent = this.getTargetDocContent();
-       
+        
         let oEndContent = AscFormat.checkEmptyPlaceholderContent(oDocContent);
         let oEndPara = null;
         if (oStartContent || oEndContent) {
@@ -1827,7 +1826,7 @@
                     oObject = oObject.GetParent();
                 }
                 
-                oObject.AddToRedraw && oObject.AddToRedraw();
+                oObject.IsDrawing() && oObject.AddToRedraw();
             }
 
             oStartContent && redraw(oStartContent);

@@ -408,6 +408,17 @@ function (window, undefined) {
 		var arrActions = [];
 		return arrActions;
 	};
+	UndoRedoItemSerializable.prototype.ConvertToSimpleChanges = function()
+	{
+		if (this.oClass) {
+			if (this.oClass.ConvertToSimpleChanges) {
+				return this.oClass.ConvertToSimpleChanges();
+			} else if (this.oClass.ConvertToSimpleChangesSpreadsheet) {
+				return this.oClass.ConvertToSimpleChangesSpreadsheet(this);
+			}
+		}
+		return [];
+	};
 	UndoRedoItemSerializable.prototype.ConvertFromSimpleActions = function(arrActions)
 	{
 		if (this.oClass) {
@@ -2896,6 +2907,11 @@ function (window, undefined) {
 			Pos  : index,
 			Add  : isAdd
 		}];
+	};
+	UndoRedoWorkbook.prototype.ConvertToSimpleChangesSpreadsheet = function(SerializableItem)
+	{
+		const oItem = new UndoRedoItemSerializable(SerializableItem.oClass, SerializableItem.nActionType, SerializableItem.nSheetId, SerializableItem.oRange, SerializableItem.oData, SerializableItem.LocalChange);
+		return [oItem];
 	};
 	UndoRedoWorkbook.prototype.ConvertFromSimpleActionsSpreadsheet = function(arrActions, Data)
 	{

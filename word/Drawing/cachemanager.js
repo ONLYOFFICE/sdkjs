@@ -108,7 +108,7 @@ CCacheManager.prototype.Lock = function (_w, _h, _drDocument)
 	this.arrayImages[index].image = document.createElement('canvas');
 	this.arrayImages[index].image.width = _w;
 	this.arrayImages[index].image.height = _h;
-	this.arrayImages[index].image.ctx = this.arrayImages[index].image.getContext('2d');
+	this.arrayImages[index].image.ctx = AscCommon.AscBrowser.getContext2D(this.arrayImages[index].image);
 	this.arrayImages[index].image.ctx.globalAlpha = 1.0;
 	this.arrayImages[index].image.ctx.setTransform(1, 0, 0, 1, 0, 0);
 	this.arrayImages[index].image.ctx.fillStyle = backgroundColor;

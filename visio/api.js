@@ -177,6 +177,14 @@
 
 		this.asc_setViewMode(this.isViewMode);
 	};
+	VisioEditorApi.prototype.initCollaborativeEditing = function()
+	{
+		if (AscCommon.CollaborativeEditing)
+			return;
+
+		//todo VisioCollaborativeEditing
+		AscCommon.CollaborativeEditing = new AscCommon.SlideCollaborativeEditing();
+	};
 	VisioEditorApi.prototype.CreateCSS = function()
 	{
 		var _head = document.getElementsByTagName('head')[0];

@@ -3753,7 +3753,8 @@ window.AscCommon.g_cIsBeta = "false";
 
 	var c_oAscMathInputType = {
 		Unicode : 0,
-		LaTeX   : 1
+		LaTeX   : 1, 
+		MathML  : 2
 	};
 
 	const LigaturesFlags = {

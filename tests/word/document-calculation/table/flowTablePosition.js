@@ -67,7 +67,7 @@ $(function ()
 		let p2 = AscTest.CreateParagraph();
 		logicDocument.PushToContent(p2);
 
-		let sectPr = logicDocument.GetLastSection();
+		let sectPr = logicDocument.GetFinalSectPr();
 		sectPr.SetPageMargins(20, 20, 20, 20);
 
 		AscTest.Recalculate();
@@ -118,7 +118,7 @@ $(function ()
 		let p2 = AscTest.CreateParagraph();
 		logicDocument.PushToContent(p2);
 
-		let sectPr = logicDocument.GetLastSection();
+		let sectPr = logicDocument.GetFinalSectPr();
 		sectPr.SetType(Asc.c_oAscSectionBreakType.Continuous);
 		sectPr.SetPageMargins(20, 20, 20, 20);
 
@@ -126,7 +126,7 @@ $(function ()
 		assert.strictEqual(logicDocument.GetPagesCount(), 1, "Check pages count of the document");
 		assert.strictEqual(table.GetPageBounds(0).Left, 20, "Check the left position of the inline table");
 
-		sectPr = new AscWord.CSectionPr();
+		sectPr = new AscWord.SectPr();
 		sectPr.SetPageMargins(40, 40, 40, 40);
 		sectPr.SetType(Asc.c_oAscSectionBreakType.Continuous);
 		p1.SetSectionPr(sectPr);
@@ -156,7 +156,7 @@ $(function ()
 	{
 		AscTest.ClearDocument();
 
-		let sectPr = logicDocument.GetLastSection();
+		let sectPr = logicDocument.GetFinalSectPr();
 		sectPr.SetPageMargins(20, 20, 20, 20);
 		
 		const rowHeight = 30;
@@ -226,7 +226,7 @@ $(function ()
 		let p1 = AscTest.CreateParagraph();
 		logicDocument.PushToContent(p1);
 		
-		let sectPr = logicDocument.GetLastSection();
+		let sectPr = logicDocument.GetFinalSectPr();
 		sectPr.SetPageMargins(50, 50, 50, 50);
 		sectPr.SetPageSize(100, 200);
 		sectPr.SetPageMarginHeader(20);

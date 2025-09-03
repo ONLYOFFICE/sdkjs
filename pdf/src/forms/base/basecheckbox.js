@@ -354,8 +354,6 @@
         oDoc.activeForm = this;
         
         if (oDoc.IsEditFieldsMode()) {
-            let oController = oDoc.GetController();
-            this.editShape.select(oController, this.GetPage());
             if (false == this.IsLocked()) {
                 this.editShape.onMouseDown(x, y, e)
             }

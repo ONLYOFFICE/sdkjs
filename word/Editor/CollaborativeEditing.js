@@ -238,7 +238,7 @@ CWordCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
     if (this.Is_Fast())
 	{
 		var oParagraph = this.m_oLogicDocument.GetCurrentParagraph();
-		nPageIndex     = oParagraph ? Math.max(oParagraph.GetCurrentPageAbsolute(), editor.GetCurrentVisiblePage()) : undefined;
+		nPageIndex     = oParagraph ? Math.max(oParagraph.GetAbsoluteCurrentPage(), editor.GetCurrentVisiblePage()) : undefined;
 	}
 
 	this.m_oLogicDocument.ResumeRecalculate();

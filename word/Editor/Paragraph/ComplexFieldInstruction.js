@@ -835,7 +835,7 @@ CFieldInstructionSEQ.prototype.GetText = function ()
 					for(i = i - 1; i > -1; --i)
 					{
 						oField = aFields[i];
-						if(AscFormat.isRealNumber(oField) && oField >= nLvl)
+						if(AscFormat.isRealNumber(oField) && oField <= nLvl)
 						{
 							aFields = aFields.splice(i + 1, nCounter - i);
 							break;

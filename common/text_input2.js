@@ -194,6 +194,8 @@
 				{
 					window.g_asc_plugins.onPluginEvent2("onKeyDown", {
 						"keyCode" : e.keyCode,
+						"key" : e.key,
+						"code" : e.code,
 						"altKey" : e.altKey,
 						"ctrlKey" : e.ctrlKey,
 						"metaKey" : e.metaKey,
@@ -211,6 +213,8 @@
 		{
 			window.g_asc_plugins.onPluginEvent("onKeyDown", {
 				"keyCode" : e.keyCode,
+				"key" : e.key,
+				"code" : e.code,
 				"altKey" : e.altKey,
 				"ctrlKey" : e.ctrlKey,
 				"metaKey" : e.metaKey,

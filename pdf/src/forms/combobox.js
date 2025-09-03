@@ -40,6 +40,7 @@
     {
         AscPDF.CBaseListField.call(this, sName, AscPDF.FIELD_TYPES.combobox, aRect, oDoc);
 
+        this._alignment         = AscPDF.ALIGN_TYPE.left;
         this._calcOrderIndex    = 0;
         this._doNotSpellCheck   = false;
         this._editable          = false;
@@ -192,8 +193,6 @@
         oDoc.activeForm = this;
 
         if (oDoc.IsEditFieldsMode()) {
-            let oController = oDoc.GetController();
-            this.editShape.select(oController, this.GetPage());
             if (false == this.IsLocked()) {
                 this.editShape.onMouseDown(x, y, e)
             }
@@ -817,7 +816,6 @@
 	CComboBoxField.prototype.SelectionSetEnd        = AscPDF.CTextField.prototype.SelectionSetEnd;
 	CComboBoxField.prototype.CheckFormViewWindow    = AscPDF.CTextField.prototype.CheckFormViewWindow;
 	CComboBoxField.prototype.SetAlign               = AscPDF.CTextField.prototype.SetAlign;
-	CComboBoxField.prototype.GetAlign               = AscPDF.CTextField.prototype.GetAlign;
 	CComboBoxField.prototype.CheckAlignInternal     = AscPDF.CTextField.prototype.CheckAlignInternal;
 	CComboBoxField.prototype.IsTextOutOfForm        = AscPDF.CTextField.prototype.IsTextOutOfForm;
 	CComboBoxField.prototype.SetDoNotSpellCheck     = AscPDF.CTextField.prototype.SetDoNotSpellCheck;
@@ -850,7 +848,6 @@
     CComboBoxField.prototype.SetRegularExp          = AscPDF.CTextField.prototype.SetRegularExp;
     CComboBoxField.prototype.SetArbitaryMask        = AscPDF.CTextField.prototype.SetArbitaryMask;
     CComboBoxField.prototype.ClearFormat            = AscPDF.CTextField.prototype.ClearFormat;
-    CComboBoxField.prototype.SetDrawFromStream      = AscPDF.CTextField.prototype.SetDrawFromStream;
     CComboBoxField.prototype.DrawMarker             = AscPDF.CTextField.prototype.DrawMarker;
     CComboBoxField.prototype.beforeCompositeInput   = AscPDF.CTextField.prototype.beforeCompositeInput;
     CComboBoxField.prototype.IsCanCommit            = AscPDF.CTextField.prototype.IsCanCommit;

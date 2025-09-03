@@ -6028,6 +6028,10 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			pivot = testPivotCellForDetails(assert, pivot, 4, 3, standardFilterEastGT, 'filter 1 (ship date) East | GT');
 			pivot = testPivotCellForDetails(assert, pivot, 17, 3, standardFilterGTGT, 'filter 1 (ship date) GTGT');
 
+			//var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(api.wbModel);
+			//var data = oBinaryFileWriter.Write(true);
+			//AscCommon.DownloadFileFromBytes(data, "Editor.bin", "application/octet-stream");
+
 			const group = new PivotLayoutGroup();
 			group.fld = 4;
 			group.groupMap = {

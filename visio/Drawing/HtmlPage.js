@@ -2435,9 +2435,7 @@
 		if (null == canvas)
 			return;
 
-
-
-		var context = canvas.getContext("2d");
+		var context = AscCommon.AscBrowser.getContext2D(canvas);
 		var _width = canvas.width;
 		var _height = canvas.height;
 

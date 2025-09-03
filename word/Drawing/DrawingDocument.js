@@ -165,7 +165,7 @@ function CTableOutlineDr()
 			return _bounds;
 
 		var _boundsTmp = this.TableOutline.Table.Get_PageBounds(_pagesCount - 1);
-		_bounds.Page = this.TableOutline.Table.Get_AbsolutePage(_pagesCount - 1);
+		_bounds.Page = this.TableOutline.Table.GetAbsolutePage(_pagesCount - 1);
 		_bounds.X = _boundsTmp.Left;
 		_bounds.Y = _boundsTmp.Top;
 		_bounds.W = (_boundsTmp.Right - _boundsTmp.Left);

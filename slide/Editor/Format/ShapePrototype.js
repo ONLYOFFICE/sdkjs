@@ -231,7 +231,7 @@ CShape.prototype.addToRecalculate = function()
 };
 CShape.prototype.getSlideIndex = function()
 {
-    return this.Get_StartPage_Absolute();
+    return this.GetAbsoluteStartPage();
 };
 CShape.prototype.handleUpdatePosition = function()
 {
@@ -719,7 +719,7 @@ CShape.prototype.OnContentReDraw = function(){
     };
 
 
-    CShape.prototype.Get_StartPage_Absolute = function () {
+    CShape.prototype.GetAbsoluteStartPage = function () {
         if(this.getParentObjects) {
             let oParents = this.getParentObjects();
             if(oParents && oParents.presentation) {

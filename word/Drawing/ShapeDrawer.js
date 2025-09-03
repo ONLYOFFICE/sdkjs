@@ -1671,7 +1671,9 @@ CShapeDrawer.prototype =
 		const graphics = this.Graphics.isTrack() ? this.Graphics.Graphics : this.Graphics;
 		if (!graphics) return;
 
-		const transform = this.Shape.getTransformMatrix();
+		const transform = this.Shape.getTransformMatrix
+			? this.Shape.getTransformMatrix()
+			: new AscCommon.CMatrix();
 		const invertedTransform = AscCommon.global_MatrixTransformer.Invert(transform);
 
 		const tile = this.UniFill.fill.tile;
@@ -1756,7 +1758,9 @@ CShapeDrawer.prototype =
 		const graphics = this.Graphics.isTrack() ? this.Graphics.Graphics : this.Graphics;
 		if (!graphics) return;
 
-		const transform = this.Shape.getTransformMatrix();
+		const transform = this.Shape.getTransformMatrix
+			? this.Shape.getTransformMatrix()
+			: new AscCommon.CMatrix();
 		const invertedTransform = AscCommon.global_MatrixTransformer.Invert(transform);
 
 		const rotWithShape = this.UniFill.fill.rotWithShape || this.UniFill.fill.rotWithShape === null;

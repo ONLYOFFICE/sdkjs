@@ -345,12 +345,13 @@ CDocumentContentBase.prototype.private_ReindexContent = function(StartPos)
 		this.ReindexStartPos = StartPos;
 };
 /**
- * Специальная функия для рассчета пустого параграфа с разрывом секции.
+ * Специальная функция для расчета пустого параграфа с разрывом секции.
  * @param Element
  * @param PrevElement
  * @param PageIndex
  * @param ColumnIndex
  * @param ColumnsCount
+ * @returns {number} recalcResult
  */
 CDocumentContentBase.prototype.private_RecalculateEmptySectionParagraph = function(Element, PrevElement, PageIndex, ColumnIndex, ColumnsCount)
 {
@@ -382,6 +383,7 @@ CDocumentContentBase.prototype.private_RecalculateEmptySectionParagraph = functi
 	Element.Lines[0].Bottom        = LastVisibleBounds.H;
 	Element.Pages[0].Bounds.Top    = ___Y;
 	Element.Pages[0].Bounds.Bottom = ___Y + LastVisibleBounds.H;
+	return Element.Get_SectionPr() ? recalcresult_NextSection : recalcresult_NextElement;
 };
 /**
  * Передвигаем курсор (от текущего положения) к началу ссылки на сноску
@@ -1459,7 +1461,7 @@ CDocumentContentBase.prototype.SetSelectionByContentPositions = function(StartDo
 
 	if (this.Parent && this.LogicDocument)
 	{
-		this.Parent.Set_CurrentElement(false, this.Get_StartPage_Absolute(), this);
+		this.Parent.Set_CurrentElement(false, this.GetAbsoluteStartPage(), this);
 		this.LogicDocument.Selection.Use   = true;
 		this.LogicDocument.Selection.Start = false;
 	}
@@ -2980,4 +2982,69 @@ CDocumentContentBase.prototype.GetCurrentContentControl = function()
 	
 	let blockSdt = selectedInfo.GetBlockLevelSdt();
 	return blockSdt ? blockSdt : null;
+};
+CDocumentContentBase.prototype.GetAllSectPrParagraphs = function(paragraphs)
+{
+	if (!paragraphs)
+		paragraphs = [];
+	
+	for (let i = 0; i < this.Content.length; ++i)
+	{
+		this.Content[i].GetAllSectPrParagraphs(paragraphs);
+	}
+	
+	return paragraphs;
+};
+CDocumentContentBase.prototype.IsEmptySectionFlowParagraph = function(index)
+{
+	if (0 === index || index > this.Content.length)
+		return false;
+	
+	let element = this.Content[index];
+	if (!element.IsParagraph() || !element.IsEmpty() || !element.Get_SectionPr())
+		return false;
+	
+	let prevElement = this.Content[index - 1];
+	return (!prevElement.IsParagraph() || !prevElement.Get_SectionPr());
+};
+CDocumentContentBase.prototype.IsTableCellContent = function()
+{
+	return false;
+};
+CDocumentContentBase.prototype.IsAllowSectionBreak = function()
+{
+	return (!this.IsTableCellContent() && (this.GetLogicDocument() === this.GetTopDocumentContent()));
+};
+/**
+ * Данный метод должен вызываться ПОСЛЕ добавления элементов в контент (выставление родительского, индексации и прочее)
+ * @param {AscWord.CDocumentContentElementBase[]} items
+ */
+CDocumentContentBase.prototype.UpdateSectionsAfterAdd = function(items)
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument
+		|| !logicDocument.IsDocumentEditor()
+		|| !this.IsUseInDocument()
+		|| this.IsTableCellContent()
+		|| this.GetTopDocumentContent() !== logicDocument)
+		return;
+	
+	logicDocument.GetSections().UpdateOnAdd(items);
+};
+/**
+ * Данный метод должен вызываться ДО удаления элементов из контента
+ * @param {AscWord.CDocumentContentElementBase[]} items
+ * @param {boolean} checkHdrFtr
+ */
+CDocumentContentBase.prototype.UpdateSectionsBeforeRemove = function(items, checkHdrFtr)
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument
+		|| !logicDocument.IsDocumentEditor()
+		|| !this.IsUseInDocument()
+		|| this.IsTableCellContent()
+		|| this.GetTopDocumentContent() !== logicDocument)
+		return;
+	
+	logicDocument.GetSections().UpdateOnRemove(items, checkHdrFtr);
 };

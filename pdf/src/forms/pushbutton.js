@@ -1232,6 +1232,7 @@
 			let oStyle = this.GetFontStyle();
 			this.content.SetBold(oStyle.bold);
 			this.content.SetItalic(oStyle.italic);
+            this.UpdateMEOptions();
             if (this.GetTextSize()) {
                 this.content.SetFontSize(this.GetTextSize());
             }
@@ -1394,8 +1395,6 @@
         oDoc.activeForm = this;
 
         if (oDoc.IsEditFieldsMode()) {
-            let oController = oDoc.GetController();
-            this.editShape.select(oController, this.GetPage());
             if (false == this.IsLocked()) {
                 this.editShape.onMouseDown(x, y, e)
             }

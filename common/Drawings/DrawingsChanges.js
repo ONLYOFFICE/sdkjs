@@ -807,6 +807,21 @@
     };
     window['AscDFH'].CChangesDrawingsContentBool = CChangesDrawingsContentBool;
 
+	function CChangesDrawingsContentString(Class, Type, Pos, Items, isAdd){
+		AscDFH.CChangesDrawingsContent.call(this, Class, Type, Pos, Items, isAdd);
+	}
+
+	CChangesDrawingsContentString.prototype = Object.create(AscDFH.CChangesDrawingsContent.prototype);
+	CChangesDrawingsContentString.prototype.constructor = CChangesDrawingsContentString;
+
+	CChangesDrawingsContentString.prototype.private_WriteItem = function (Writer, Item) {
+		Writer.WriteString(Item);
+	};
+	CChangesDrawingsContentString.prototype.private_ReadItem = function (Reader) {
+		return Reader.GetString();
+	};
+	window['AscDFH'].CChangesDrawingsContentString = CChangesDrawingsContentString;
+
 
 
     function CChangesDrawingsContentLongMap(Class, Type, Pos, Items, isAdd){

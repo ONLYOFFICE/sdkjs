@@ -46,6 +46,7 @@
     {
         AscPDF.CBaseListField.call(this, sName, AscPDF.FIELD_TYPES.listbox, aRect, oDoc);
 
+        this._alignment         = AscPDF.ALIGN_TYPE.left;
         this._multipleSelection = false;
 
         // internal
@@ -342,6 +343,8 @@
         this.SetNeedRecalc(true);
     };
     CListBoxField.prototype.AddOption = function(option, nPos) {
+        let _t = this;
+
         let oParent = this.GetParent();
         if (oParent && oParent.IsAllKidsWidgets())
             return oParent.AddOption(option, nPos);
@@ -383,7 +386,7 @@
                     AscCommon.History.StartNoHistoryMode();
 
                     AscFonts.FontPickerByCharacter.getFontsByString(sCaption);
-                    let oPara = new AscWord.Paragraph(this.content, false);
+                    let oPara = new AscWord.Paragraph(_t.content, false);
                     let oRun = new AscWord.ParaRun(oPara, false);
                     field.content.Internal_Content_Add(nPos, oPara);
                     oPara.Add(oRun);
@@ -391,7 +394,7 @@
 
                     oPara.SetApplyToAll(true);
                     oPara.Add(new ParaTextPr({Color: oDocColor}));
-                    oPara.RecalcCompiledPr(true);
+                    oPara.SetParagraphBidi(_t.IsRTL());
                     oPara.SetApplyToAll(false);
 
                     AscCommon.History.EndNoHistoryMode();
@@ -623,8 +626,6 @@
         oDoc.activeForm = this;
 
         if (oDoc.IsEditFieldsMode()) {
-            let oController = oDoc.GetController();
-            this.editShape.select(oController, this.GetPage());
             if (false == this.IsLocked()) {
                 this.editShape.onMouseDown(x, y, e)
             }
@@ -1155,15 +1156,6 @@
 
         this.SetNeedCommit(false);
     };
-    CListBoxField.prototype.SetAlign = function(nAlignType) {
-        this._alignment = nAlignType;
-		this.content.SetAlign(nAlignType);
-        this.SetWasChanged(true);
-		this.SetNeedRecalc(true);
-	};
-	CListBoxField.prototype.GetAlign = function() {
-		return this._alignment;
-	};
     /**
 	 * Checks is paragraph text in form is out of form bounds.
 	 * @memberof CListBoxField
@@ -1189,22 +1181,29 @@
         // когда выравнивание посередине или справа, то после того
         // как ширина параграфа будет больше чем размер формы, выравнивание становится слева, пока текста вновь не станет меньше чем размер формы
 
-        if ([AscPDF.ALIGN_TYPE.center, AscPDF.ALIGN_TYPE.right].includes(this.GetAlign())) {
-            for (let i = 0, nCount = this.content.GetElementsCount(); i < nCount; i++) {
-                let oPara = this.content.GetElement(i);
+        let isRTL = this.IsRTL();
+        let nCurAlign = this.GetAlign();
 
-                if (this.IsParaOutOfForm(oPara)) {
-                    if (getPdfAlignType(oPara.GetParagraphAlign()) != AscPDF.ALIGN_TYPE.left) {
-                        oPara.SetParagraphAlign(getInternalAlignType(AscPDF.ALIGN_TYPE.left));
-                        this.SetNeedRecalc(true);
-                    }
-                }
-                else if (getPdfAlignType(oPara.GetParagraphAlign()) != this.GetAlign()) {
-                    oPara.SetParagraphAlign(getInternalAlignType(this.GetAlign()));
+        for (let i = 0, nCount = this.content.GetElementsCount(); i < nCount; i++) {
+            let oPara = this.content.GetElement(i);
+
+            if (this.IsParaOutOfForm(oPara)) {
+                if (AscPDF.getPdfTypeAlignByInternal(oPara.GetParagraphAlign(), isRTL) != (isRTL ? AscPDF.ALIGN_TYPE.right : AscPDF.ALIGN_TYPE.left)) {
+                    oPara.SetParagraphAlign((isRTL ? AscPDF.ALIGN_TYPE.right : AscPDF.ALIGN_TYPE.left));
                     this.SetNeedRecalc(true);
                 }
             }
+            else if (AscPDF.getPdfTypeAlignByInternal(oPara.GetParagraphAlign(), isRTL) != nCurAlign) {
+                oPara.SetParagraphAlign(AscPDF.getInternalAlignByPdfType(nCurAlign));
+                this.SetNeedRecalc(true);
+            }
         }
+    };
+    CListBoxField.prototype.SetNeedCheckAlign = function(bCheck) {
+        this._needCheckAlign = bCheck;
+    };
+    CListBoxField.prototype.IsNeedCheckAlign = function() {
+        return this._needCheckAlign;
     };
     CListBoxField.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
@@ -1289,30 +1288,6 @@
         this.CheckWidgetFlags(memory);
     };
 
-    function getPdfAlignType(nPdfAlign) {
-        switch (nPdfAlign) {
-			case align_Left: return AscPDF.ALIGN_TYPE.left;
-			case align_Center: return AscPDF.ALIGN_TYPE.center;
-			case align_Right: return AscPDF.ALIGN_TYPE.right;
-		}
-    }
-
-    function getInternalAlignType(nInternalAlign) {
-        let _alignType = AscCommon.align_Left;
-		switch (nInternalAlign) {
-			case AscPDF.ALIGN_TYPE.left:
-				_alignType = AscCommon.align_Left;
-				break;
-			case AscPDF.ALIGN_TYPE.center:
-				_alignType = AscCommon.align_Center;
-				break;
-			case AscPDF.ALIGN_TYPE.right:
-				_alignType = AscCommon.align_Right;
-				break;
-		}
-
-        return _alignType;
-    }
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
         

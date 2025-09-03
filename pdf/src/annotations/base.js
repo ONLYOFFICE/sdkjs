@@ -293,9 +293,6 @@
     CAnnotationBase.prototype.GetWidth = function() {
         return this._width;
     };
-    CAnnotationBase.prototype.SetRichContents = function(sText) {
-        this._richContents = sText;
-    };
     CAnnotationBase.prototype.FillCommentsDataFrom = function(oAnnot) {
         let oCurAscCommData = oAnnot.GetAscCommentData();
         let oCurData = oCurAscCommData ? new AscCommon.CCommentData() : undefined;
@@ -505,7 +502,14 @@
         // oGraphicsPDF.Stroke();
     };
     CAnnotationBase.prototype.SetSubject = function(sSubject) {
+        if (this._subject == sSubject) {
+            return;
+        }
+
+        AscCommon.History.Add(new CChangesPDFAnnotSubject(this, this._subject, sSubject));
         this._subject = sSubject;
+
+        this.SetWasChanged(true, false);
     };
     CAnnotationBase.prototype.GetSubject = function() {
         return this._subject;
@@ -953,6 +957,16 @@
         //     oGraphicsPDF.BeginPath();
         //     oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
         //     oGraphicsPDF.Stroke();
+
+        //     // if (this.IsLine()) {
+        //     //     let aPoints = this.GetLinePoints();
+
+        //     //     oGraphicsPDF.BeginPath();
+        //     //     oGraphicsPDF.SetStrokeStyle(255, 0, 0);
+        //     //     oGraphicsPDF.MoveTo(aPoints[0], aPoints[1]);
+        //     //     oGraphicsPDF.LineTo(aPoints[2], aPoints[3]);
+        //     //     oGraphicsPDF.Stroke();
+        //     // }
         // }
     };
     CAnnotationBase.prototype.changeFlipH = function () {
@@ -1532,7 +1546,7 @@
             let nPopupIdx       = this.GetPopupIdx();
             let sAuthor         = this.GetAuthor();
             let nOpacity        = this.GetOpacity();
-            let aRC             = this.GetRichContents();
+            let aRC             = this.GetRichContents(true);
             let CrDate          = this.GetCreationDate(true);
             let oRefTo          = this.GetReplyTo();
             let nRefToReason    = this.GetRefType();

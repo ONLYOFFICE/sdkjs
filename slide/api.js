@@ -5475,6 +5475,9 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.sync_currentPageCallback = function(number)
 	{
 		this.sendEvent("asc_onCurrentPage", number);
+
+		if (window.g_asc_plugins)
+			window.g_asc_plugins.onPluginEvent("onChangeCurrentSlide", number);
 	};
 
 	asc_docs_api.prototype.sync_SendThemeColors = function(colors, standart_colors)

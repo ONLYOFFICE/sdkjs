@@ -434,85 +434,14 @@ CChartSpace.prototype.Get_ColorMap = CShape.prototype.Get_ColorMap;
 			return;
 
 		const oApi = Asc.editor;
-
 		const oWbModel = oApi.wbModel;
-		const oWs = oApi.wb.getWorksheet();
-		if (!oWs)
-			return;
-
-		const oCellPasteHelper = oWs.cellPasteHelper;
 
 		const oMockWb = new AscCommonExcel.Workbook(undefined, undefined, false);
 		oMockWb.externalReferences = oPastedWb.externalReferences;
 		oMockWb.dependencyFormulas = oPastedWb.dependencyFormulas;
 		const oCachedWorksheets = this.getWorksheetsFromCache(oMockWb);
-		for (let i in oCachedWorksheets) {
-			oMockWb.aWorksheets.push(oCachedWorksheets[i].ws);
-		}
-
-		let nChangeExternalReferenceIndex = null;
-		let oMainExternalReference;
-		const allDefNames = [];
-		for (let sSheetName in oCachedWorksheets)
-		{
-			const oWorksheetInfo = oCachedWorksheets[sSheetName];
-			const arrRanges = [new Asc.Range(oWorksheetInfo.minC, oWorksheetInfo.minR, oWorksheetInfo.maxC, oWorksheetInfo.maxR)];
-			const oPastedWS = oWorksheetInfo.ws;
-			const defNames = oWorksheetInfo.defNames;
-			const oPastedLinkInfo = oCellPasteHelper.getPastedLinkInfo(oPastedWb, oPastedWS);
-
-			if (oPastedLinkInfo)
-			{
-				if (oPastedLinkInfo.type === -1)
-				{
-					const pasteSheetLinkName = oPastedLinkInfo.sheet;
-					//необходимо положить нужные данные в SheetDataSet
-					oMainExternalReference = oWbModel.externalReferences[oPastedLinkInfo.index - 1];
-					if (oMainExternalReference)
-					{
-						oMainExternalReference.updateSheetData(pasteSheetLinkName, oPastedWS, arrRanges);
-						nChangeExternalReferenceIndex = oPastedLinkInfo.index;
-					}
-					allDefNames.push.apply(allDefNames, defNames);
-				}
-				else if (oPastedLinkInfo.type === -2)
-				{
-					if (!oMainExternalReference)
-					{
-						var referenceData;
-						var name = oPastedWb.Core.title;
-						if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]())
-						{
-							name = oPastedLinkInfo.path;
-						}
-						else
-						{
-							if (oPastedWb && oPastedWb.Core)
-							{
-								referenceData = {};
-								referenceData["fileKey"] = oPastedWb.Core.contentStatus;
-								referenceData["instanceId"] = oPastedWb.Core.category;
-							}
-						}
-
-						oMainExternalReference = new AscCommonExcel.ExternalReference();
-						oMainExternalReference.referenceData = referenceData;
-						oMainExternalReference.Id = name;
-					}
-
-					allDefNames.push.apply(allDefNames, defNames);
-					oMainExternalReference.addSheet(oPastedWS, arrRanges);
-				}
-			}
-		}
-		if (oMainExternalReference)
-		{
-			oMainExternalReference.initDefinedNamesOnCopyPaste(allDefNames);
-			if (nChangeExternalReferenceIndex === null) {
-				oWbModel.addExternalReferences([oMainExternalReference]);
-			} else {
-				oWbModel.changeExternalReference(nChangeExternalReferenceIndex, oMainExternalReference);
-			}
+		const oMainExternalReference = oWbModel.addExternalReferenceFromWorksheets(oCachedWorksheets, oPastedWb, oMockWb);
+		if (oMainExternalReference) {
 			this.convertRefsToExternal(oMainExternalReference, oPastedWb.externalReferences, oMockWb);
 		} else if (oPastedWb.externalReferences.length) {
 			this.convertRefsToExternal(oMainExternalReference, oPastedWb.externalReferences, oPastedWb);

@@ -1663,23 +1663,17 @@ CChangesParagraphSectPr.prototype.constructor = CChangesParagraphSectPr;
 CChangesParagraphSectPr.prototype.Type = AscDFH.historyitem_Paragraph_SectionPr;
 CChangesParagraphSectPr.prototype.Undo = function()
 {
-	var oParagraph = this.Class;
-	var oOldSectPr = oParagraph.SectPr;
-	oParagraph.SectPr = this.Old;
-	
-	let logicDocument = oParagraph.GetLogicDocument();
-	if (logicDocument)
-		logicDocument.UpdateSectionInfo(oOldSectPr, this.Old, false);
+	let paragraph = this.Class;
+	let oldSectPr = paragraph.SectPr;
+	paragraph.SectPr = this.Old;
+	paragraph.UpdateSectionInfo(oldSectPr, false);
 };
 CChangesParagraphSectPr.prototype.Redo = function()
 {
-	var oParagraph = this.Class;
-	var oOldSectPr = oParagraph.SectPr;
-	oParagraph.SectPr = this.New;
-	
-	let logicDocument = oParagraph.GetLogicDocument();
-	if (logicDocument)
-		logicDocument.UpdateSectionInfo(oOldSectPr, this.New, false);
+	let paragraph = this.Class;
+	let oldSectPr = paragraph.SectPr;
+	paragraph.SectPr = this.New;
+	paragraph.UpdateSectionInfo(oldSectPr, false);
 };
 CChangesParagraphSectPr.prototype.WriteToBinary = function(Writer)
 {

@@ -1607,7 +1607,7 @@ ParaDrawing.prototype.updatePosition3 = function(pageIndex, x, y, oldPageNum)
 	}
 	if(this.graphicObjects)
 	{
-		if (!(bIsHfdFtr && oDocContent && oDocContent.Get_StartPage_Absolute() !== pageIndex))
+		if (!(bIsHfdFtr && oDocContent && oDocContent.GetAbsoluteStartPage() !== pageIndex))
 		{
 			// TODO: ситуацию в колонтитуле с привязкой к полю нужно отдельно обрабатывать через дополнительные пересчеты
 			if (!(bIsHfdFtr && this.GetPositionV().RelativeFrom !== Asc.c_oAscRelativeFromV.Margin))
@@ -2218,7 +2218,7 @@ ParaDrawing.prototype.UpdateCursorType = function(X, Y, PageIndex)
 			var _Y   = this.Parent.Pages[PNum].Y;
 
 			var MMData              = new AscCommon.CMouseMoveData();
-			var Coords              = this.DrawingDocument.ConvertCoordsToCursorWR(_X, _Y, this.Parent.Get_StartPage_Absolute() + ( PageIndex - this.Parent.PageNum ));
+			var Coords              = this.DrawingDocument.ConvertCoordsToCursorWR(_X, _Y, this.Parent.GetAbsoluteStartPage() + ( PageIndex - this.Parent.PageNum ));
 			MMData.X_abs            = Coords.X - 5;
 			MMData.Y_abs            = Coords.Y;
 			MMData.Type             = Asc.c_oAscMouseMoveDataTypes.LockedObject;

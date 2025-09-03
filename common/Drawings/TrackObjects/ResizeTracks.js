@@ -967,12 +967,17 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             }
             
             if (Asc.editor.isPdfEditor() && this.originalObject.IsAnnot()) {
-                let xMin = this.resizedPosX;
-                let xMax = this.resizedPosX + this.resizedExtX;
-                let yMin = this.resizedPosY;
-                let yMax = this.resizedPosY + this.resizedExtY;
-                
-                this.originalObject.RefillGeometry(this.geometry, [xMin, yMin, xMax, yMax]);
+                if (this.originalObject.IsLine()) {
+                    this.geometry.Recalculate(this.resizedExtX, this.resizedExtY);
+                }
+                else {
+                    let xMin = this.resizedPosX;
+                    let xMax = this.resizedPosX + this.resizedExtX;
+                    let yMin = this.resizedPosY;
+                    let yMax = this.resizedPosY + this.resizedExtY;
+                    
+                    this.originalObject.RefillGeometry(this.geometry, [xMin, yMin, xMax, yMax]);
+                }
             }
             else {
                 this.geometry.Recalculate(this.resizedExtX, this.resizedExtY);

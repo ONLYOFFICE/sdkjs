@@ -2137,6 +2137,9 @@
     }
 
     InitClass(CBaseChartObject, CBaseFormatObject, AscDFH.historyitem_type_Unknown);
+		CBaseChartObject.prototype.isControl = function () {
+			return false;
+		};
 		CBaseChartObject.prototype.getBrush = function() {
 			return this.brush;
 		};
@@ -2369,10 +2372,10 @@
         }
         return null;
     };
-    CBaseChartObject.prototype.Get_StartPage_Absolute = function() {
+    CBaseChartObject.prototype.GetAbsoluteStartPage = function() {
         let oChartSpace = this.getChartSpace();
         if(oChartSpace) {
-            return oChartSpace.Get_StartPage_Absolute();
+            return oChartSpace.GetAbsoluteStartPage();
         }
         return 0;
     };
@@ -3140,9 +3143,9 @@
         }
         return AscFormat.GetDefaultColorMap();
     };
-    CDLbl.prototype.Get_AbsolutePage = function() {
-        if(this.chart && this.chart.Get_AbsolutePage) {
-            return this.chart.Get_AbsolutePage();
+    CDLbl.prototype.GetAbsolutePage = function() {
+        if(this.chart && this.chart.GetAbsolutePage) {
+            return this.chart.GetAbsolutePage();
         }
         return 0;
     };
@@ -3581,6 +3584,7 @@
         AscFormat.CShape.prototype.draw.apply(this, arguments);
     };
     CDLbl.prototype.checkContentWordArt = CShape.prototype.checkContentWordArt;
+    CDLbl.prototype.drawTxBody = CShape.prototype.drawTxBody;
     CDLbl.prototype.chekBodyPrTransform = function () {return false;};
     CDLbl.prototype.checkNeedRecalcDocContentForTxWarp = function () {return false;};
     CDLbl.prototype.isEmptyPlaceholder = function() {
@@ -10591,6 +10595,7 @@
     InitClass(CLegend, CBaseChartObject, AscDFH.historyitem_type_Legend);
     CLegend.prototype.recalculatePen = CShape.prototype.recalculatePen;
     CLegend.prototype.recalculateBrush = CShape.prototype.recalculateBrush;
+    CLegend.prototype.drawTxBody = CShape.prototype.drawTxBody;
     CLegend.prototype.getCompiledLine = CShape.prototype.getCompiledLine;
     CLegend.prototype.getCompiledFill = CShape.prototype.getCompiledFill;
     CLegend.prototype.getCompiledTransparent = CShape.prototype.getCompiledTransparent;
@@ -14188,6 +14193,7 @@
     CTitle.prototype.recalculateContent = CDLbl.prototype.recalculateContent;
     CTitle.prototype.chekBodyPrTransform = CDLbl.prototype.chekBodyPrTransform;
     CTitle.prototype.checkContentWordArt = CDLbl.prototype.checkContentWordArt;
+    CTitle.prototype.drawTxBody = CDLbl.prototype.drawTxBody;
     CTitle.prototype.checkNeedRecalcDocContentForTxWarp = CDLbl.prototype.checkNeedRecalcDocContentForTxWarp;
     CTitle.prototype.setPosition = CDLbl.prototype.setPosition;
     CTitle.prototype.checkHitToBounds = CDLbl.prototype.checkHitToBounds;
@@ -14216,9 +14222,9 @@
     CTitle.prototype.chekBodyPrTransform = function() {
         return false;
     };
-    CTitle.prototype.Get_AbsolutePage = function() {
-        if(this.chart && this.chart.Get_AbsolutePage) {
-            return this.chart.Get_AbsolutePage();
+    CTitle.prototype.GetAbsolutePage = function() {
+        if(this.chart && this.chart.GetAbsolutePage) {
+            return this.chart.GetAbsolutePage();
         }
         return 0;
     };
@@ -16531,6 +16537,7 @@
     };
     CalcLegendEntry.prototype.chekBodyPrTransform = CDLbl.prototype.chekBodyPrTransform;
     CalcLegendEntry.prototype.checkContentWordArt = CDLbl.prototype.checkContentWordArt;
+    CalcLegendEntry.prototype.drawTxBody = CDLbl.prototype.drawTxBody;
     CalcLegendEntry.prototype.checkNeedRecalcDocContentForTxWarp = CDLbl.prototype.checkNeedRecalcDocContentForTxWarp;
     CalcLegendEntry.prototype.getParentObjects = CDLbl.prototype.getParentObjects;
     CalcLegendEntry.prototype.getDocContent = CDLbl.prototype.getDocContent;
@@ -16635,6 +16642,7 @@
     CompiledMarker.prototype.GetParaDrawing = function() {
         return null;
     };
+	CompiledMarker.prototype.drawTxBody = function() {};
 
     function CUnionMarker() {
         this.lineMarker = null;
@@ -19746,6 +19754,8 @@
     window['AscFormat'].isRadarChartType = isRadarChartType;
     window['AscFormat'].isDoughnutChartType = isDoughnutChartType;
     window['AscFormat'].isPieChartType = isPieChartType;
+
+    window['AscFormat'].updateRefToExternal = updateRefToExternal;
 
     window['AscFormat'].AX_POS_L = AX_POS_L;
     window['AscFormat'].AX_POS_T = AX_POS_T;

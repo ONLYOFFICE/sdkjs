@@ -586,7 +586,26 @@ CDegree.fromMathML = function (reader, type, content)
 
 	return new AscMath.Degree(props);
 };
+CDegree.fromMathMLContentMarkup = function (reader, base, sub, type)
+{
+	let text		= reader.GetText();
+	let props		= new CMathDegreePr();
 
+	props.type		= type;
+	props.content	= [
+		AscWord.ParaMath.createContentFromText(sub ? sub : text),
+		AscWord.ParaMath.createContentFromText(base)
+	];
+
+	let textOfBase = props.content[0].GetTextOfElement().GetText();
+	if (AscMath.MathLiterals.nary.SearchU(textOfBase))
+	{
+		let nary = new AscMath.Nary.fromMathMLSubSup(props, false, false);
+		return nary;
+	}
+
+	return new AscMath.Degree(props);
+};
 /**
  *
  * @param iterUp
@@ -1307,10 +1326,13 @@ CDegreeSubSup.fromMathML = function (reader, type, content)
 	props.type = undefined !== type ? type : DEGREE_PreSubSup;
 	props.content = content ? content : [];
 
-	while (reader.ReadNextSiblingNode(depth))
+	if (!content)
 	{
-		let current = AscWord.ParaMath.readMathMLContent(reader)
-		props.content.push(current);
+		while (reader.ReadNextSiblingNode(depth))
+		{
+			let current = AscWord.ParaMath.readMathMLContent(reader)
+			props.content.push(current);
+		}
 	}
 
 	if (props.content.length === 3)
@@ -1319,7 +1341,14 @@ CDegreeSubSup.fromMathML = function (reader, type, content)
 		props.content[1] = props.content[2];
 		props.content[2] = temp;
 	}
-	
+
+	let textOfBase = props.content[0].GetTextOfElement().GetText();
+	if (AscMath.MathLiterals.nary.SearchU(textOfBase))
+	{
+		let nary = new AscMath.Nary.fromMathMLSubSup(props, false, false);
+		return nary;
+	}
+
 	return new AscMath.DegreeSubSup(props);
 };
 

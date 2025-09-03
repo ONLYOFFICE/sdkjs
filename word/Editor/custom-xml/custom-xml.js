@@ -109,7 +109,13 @@
 		// Array of Strings : массив с Id элементов
 		this.Id = Reader.GetString2();
 		this.itemId = Reader.GetString2();
-		this.Parent = editor.WordControl.m_oLogicDocument.getCustomXmlManager();
+
+		let editor = Asc.editor
+		if (editor && editor.wb && editor.wb.model)
+			this.Parent = editor.wb.model.getCustomXmlManager(); // Cell editor
+		else if (editor && editor.WordControl && editor.WordControl.m_oLogicDocument)
+			this.Parent = editor.WordControl.m_oLogicDocument.getCustomXmlManager(); // Word editor and Slide
+
 		this.schemaRefs.Read_FromBinary2(Reader);
 	};
 	CustomXml.prototype.Write_ToBinary = function(Writer)

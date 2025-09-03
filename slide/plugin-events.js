@@ -30,4 +30,15 @@
  *
  */
 
+/**
+ * Event: onChangeCurrentSlide
+ * @event Plugin#onChangeCurrentSlide
+ * @memberof Plugin
+ * @typeofeditors ["CPE"]
+ * @alias onChangeCurrentSlide
+ * @description The function called when the current slide has changed.
+ * @param {number} index - new current slide index.
+ * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onChangeCurrentSlide.js
+ */
+
 "use strict";

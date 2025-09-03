@@ -98,6 +98,17 @@
  */
 
 /**
+ * Event: onChangeCurrentPage
+ * @event Plugin#onChangeCurrentPage
+ * @memberof Plugin
+ * @typeofeditors ["CDE"]
+ * @alias onChangeCurrentPage
+ * @description The function called when the current page has changed.
+ * @param {number} index - new current page index.
+ * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onChangeCurrentPage.js
+ */
+
+/**
  * Event: onRemoveComment
  * @event Plugin#onRemoveComment
  * @memberof Plugin

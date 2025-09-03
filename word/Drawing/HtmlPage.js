@@ -1083,7 +1083,7 @@ function CEditorPage(api)
 				this.m_nZoomType = 1;
 				this.m_oDrawingDocument.m_bUpdateAllPagesOnFirstRecalculate = true;
 			}
-			let sectPr = this.m_oLogicDocument.GetSectionsInfo().Get(0).SectPr;
+			let sectPr = this.m_oLogicDocument.GetSections().GetSectPrByIndex(0);
 			const nPageW = sectPr.GetPageWidth() / AscCommon.AscBrowser.retinaPixelRatio;
 			const nPageH = sectPr.GetPageHeight() / AscCommon.AscBrowser.retinaPixelRatio;
 			const nScale = this.ReaderFontSizes[this.ReaderFontSizeCur] / 16;
@@ -2915,7 +2915,7 @@ function CEditorPage(api)
 			return;
 		}
 
-		var context       = canvas.getContext("2d");
+		var context       = AscCommon.AscBrowser.getContext2D(canvas);
 		context.fillStyle = GlobalSkin.BackgroundColor;
 
 		if (AscCommon.AscBrowser.isSailfish)

@@ -214,7 +214,6 @@ CImageShape.prototype.check_bounds = CShape.prototype.check_bounds;
 CImageShape.prototype.updatePosition = CShape.prototype.updatePosition;
 CImageShape.prototype.getDrawingDocument = CShape.prototype.getDrawingDocument;
 CImageShape.prototype.getArrayWrapIntervals = CShape.prototype.getArrayWrapIntervals;
-CImageShape.prototype.getBounds = CShape.prototype.getBounds;
 CImageShape.prototype.setStartPage = CShape.prototype.setStartPage;
 CImageShape.prototype.getRecalcObject = CShape.prototype.getRecalcObject;
 CImageShape.prototype.setRecalcObject = CShape.prototype.setRecalcObject;

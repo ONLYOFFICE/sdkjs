@@ -141,7 +141,7 @@
 				oElm.Document_SetThisElementCurrent();
 			}
 
-			oViewer.navigateToPage(oElm.Get_AbsolutePage());			
+			oViewer.navigateToPage(oElm.GetAbsolutePage());
 		}
 		else if (oElm.pdfPageMatch == true) {
 			oViewer.CurrentSearchNavi = oElm;

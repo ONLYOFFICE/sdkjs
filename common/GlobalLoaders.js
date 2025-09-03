@@ -577,9 +577,12 @@
                 oThis.Api.asyncImageEndLoaded(oImage);
             };
             AscCommon.backoffOnErrorImg(oImage.Image, function(img) {
+                // Remove crossOrigin on retry to maximize display success
+                img.crossOrigin = null;
                 oThis.loadImageByUrl(img, img.src);
             });
-            //oImage.Image.crossOrigin = 'anonymous';
+            // Enable CORS for cross-origin images to allow canvas manipulation
+            oImage.Image.crossOrigin = 'anonymous';
             this.loadImageByUrl(oImage.Image, oImage.src);
             return null;
         };
@@ -602,9 +605,12 @@
                 oThis.Api.asyncImageEndLoadedBackground(oImage);
             };
             AscCommon.backoffOnErrorImg(oImage.Image, function(img) {
+                // Remove crossOrigin on retry to maximize display success
+                img.crossOrigin = null;
                 oThis.loadImageByUrl(img, img.src);
             });
-            //oImage.Image.crossOrigin = 'anonymous';
+            // Enable CORS for cross-origin images to allow canvas manipulation
+            oImage.Image.crossOrigin = 'anonymous';
             oThis.loadImageByUrl(oImage.Image, oImage.src);
         };
 
@@ -654,9 +660,12 @@
 						callback();
 				};
 				AscCommon.backoffOnErrorImg(oImage.Image, function(img) {
+					// Remove crossOrigin on retry to maximize display success
+					img.crossOrigin = null;
 					oThis.loadImageByUrl(img, img.src);
 				});
-				//oImage.Image.crossOrigin = 'anonymous';
+				// Enable CORS for cross-origin images to allow canvas manipulation
+				oImage.Image.crossOrigin = 'anonymous';
                 this.loadImageByUrl(oImage.Image, oImage.src, isDisableCrypto);
 			}
         };

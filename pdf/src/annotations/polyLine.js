@@ -126,8 +126,14 @@
         return true;
     };
     CAnnotationPolyLine.prototype.SetLineStart = function(nType) {
-        this._lineStart = nType;
+        if (this._lineStart == nType) {
+            return;
+        }
+        
+        AscCommon.History.Add(new CChangesPDFAnnotLineStart(this, this._lineStart, nType));
 
+        this._lineStart = nType;
+        
         this.SetWasChanged(true);
         let oLine = this.spPr.ln;
         oLine.setHeadEnd(new AscFormat.EndArrow());
@@ -173,6 +179,12 @@
         this.handleUpdateLn();
     };
     CAnnotationPolyLine.prototype.SetLineEnd = function(nType) {
+        if (this._lineEnd == nType) {
+            return;
+        }
+
+        AscCommon.History.Add(new CChangesPDFAnnotLineEnd(this, this._lineEnd, nType));
+
         this._lineEnd = nType;
         
         this.SetWasChanged(true);
@@ -225,7 +237,7 @@
     CAnnotationPolyLine.prototype.GetLineEnd = function() {
         return this._lineEnd;
     };
-    CAnnotationPolyLine.prototype.GetMinShapeRect = function() {
+    CAnnotationPolyLine.prototype.private_CalcBoundingRect = function() {
         let nLineWidth  = this.GetWidth();
         let aVertices   = this.GetVertices();
 
@@ -483,32 +495,32 @@
             case AscPDF.LINE_END_TYPE.OpenArrow:
             case AscPDF.LINE_END_TYPE.ClosedArrow:
                 oSize.width = 6 * nLineW;
-                oSize.height = 3 * nLineW;
+                oSize.height = 6 * nLineW;
                 break;
             case AscPDF.LINE_END_TYPE.Diamond:
             case AscPDF.LINE_END_TYPE.Square:
-                oSize.width = 4 * nLineW;
-                oSize.height = 4 * nLineW;
+                oSize.width = 6 * nLineW;
+                oSize.height = 6 * nLineW;
                 break;
             case AscPDF.LINE_END_TYPE.Circle:
-                oSize.width = 4 * nLineW;
-                oSize.height = 4 * nLineW;
+                oSize.width = 6 * nLineW;
+                oSize.height = 6 * nLineW;
                 break;
             case AscPDF.LINE_END_TYPE.RClosedArrow:
-                oSize.width = 6 * nLineW;
-                oSize.height = 6 * nLineW;
+                oSize.width = 8 * nLineW;
+                oSize.height = 8 * nLineW;
                 break;
             case AscPDF.LINE_END_TYPE.ROpenArrow:
-                oSize.width = 6 * nLineW;
-                oSize.height = 6 * nLineW;
+                oSize.width = 8 * nLineW;
+                oSize.height = 8 * nLineW;
                 break;
             case AscPDF.LINE_END_TYPE.Butt:
-                oSize.width = 5 * nLineW;
-                oSize.height = 1.5 * nLineW;
+                oSize.width = 6 * nLineW;
+                oSize.height = 6 * nLineW;
                 break;
             case AscPDF.LINE_END_TYPE.Slash:
                 oSize.width = 6 * nLineW;
-                oSize.height = 3 * nLineW;
+                oSize.height = 6 * nLineW;
                 break;
         }
 

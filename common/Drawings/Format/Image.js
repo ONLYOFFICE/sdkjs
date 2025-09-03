@@ -276,6 +276,8 @@
 
 		CImageShape.prototype.changeSize = CShape.prototype.changeSize;
 
+		CImageShape.prototype.getBounds = CShape.prototype.getBounds;
+
 		CImageShape.prototype.canRotate = function () {
 			if (this.isCrop) {
 				return false;

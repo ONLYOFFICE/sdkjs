@@ -5306,8 +5306,9 @@ function CBinaryFileWriter()
 
         this.ShapeTextBoxContent = null;
         this.arrayStackStartsTextBoxContent = [];
-
         this.arrayStackStarts = [];
+
+        this.ShapeStateStack = [];
 
         this.Start_UseFullUrl = function()
         {
@@ -5331,13 +5332,32 @@ function CBinaryFileWriter()
 	    };
         this._Start = function()
         {
+            this.ShapeStateStack.push({
+                ShapeTextBoxContent: this.ShapeTextBoxContent,
+                arrayStackStartsTextBoxContent: this.arrayStackStartsTextBoxContent,
+                arrayStackStarts: this.arrayStackStarts
+            });
+
             this.ShapeTextBoxContent = new AscCommon.CMemory();
             this.arrayStackStartsTextBoxContent = [];
             this.arrayStackStarts = [];
         };
         this._End = function()
         {
-            this.ShapeTextBoxContent = null;
+             let prev = this.ShapeStateStack.length > 0 ? this.ShapeStateStack.pop() : null;
+
+            if (prev)
+            {
+                this.ShapeTextBoxContent = prev.ShapeTextBoxContent;
+                this.arrayStackStartsTextBoxContent = prev.arrayStackStartsTextBoxContent;
+                this.arrayStackStarts = prev.arrayStackStarts;
+            }
+            else
+            {
+                this.ShapeTextBoxContent = null;
+                this.arrayStackStartsTextBoxContent = [];
+                this.arrayStackStarts = [];
+            }
         };
         this.WritePPTXObject = function(memory, fCallback) {
             if (this.BinaryFileWriter.UseContinueWriter > 0)
@@ -5470,6 +5490,7 @@ function CBinaryFileWriter()
             switch(grObject.getObjectType())
             {
                 case AscDFH.historyitem_type_Shape:
+                case AscDFH.historyitem_type_Control:
                 case AscDFH.historyitem_type_Cnx:
                 {
                     if(grObject.bWordShape)

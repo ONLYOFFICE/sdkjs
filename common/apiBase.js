@@ -1927,7 +1927,8 @@
 		};
 		this.CoAuthoringApi.onWarning                 = function(code)
 		{
-			t.sendEvent('asc_onError', code || c_oAscError.ID.Warning, c_oAscError.Level.NoCritical);
+			const error = undefined !== code ? AscCommon.mapAscServerErrorToAscError(code) : c_oAscError.ID.Warning;
+			t.sendEvent('asc_onError', error, c_oAscError.Level.NoCritical);
 		};
 		this.CoAuthoringApi.onMeta                    = function(data)
 		{
@@ -2937,14 +2938,19 @@
 		if (this.isDocumentLoadComplete) {
 			this.asc_CloseFile();
 		} else if (isInfinityLoop) {
-			this.sync_EndAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.RefreshFile, Asc.c_oAscRestrictionType.View);
+			if (this.ServerIdWaitAction) {
+				this.sync_EndAction.apply(this, this.ServerIdWaitAction);
+			}
 			// Loop protection (need backoff and retry?)
 			// todo unique error
 			this.sendEvent("asc_onDocumentUpdateVersion", function () {});
 			// this.sendEvent('asc_onError', Asc.c_oAscError.ID.UpdateVersion, Asc.c_oAscError.Level.Critical);
 			return;
 		}
-		this.ServerIdWaitAction = [Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.RefreshFile, Asc.c_oAscRestrictionType.View];
+		if (!this.ServerIdWaitAction) {
+			this.ServerIdWaitAction = [Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.RefreshFile, Asc.c_oAscRestrictionType.View];
+			this.sync_StartAction.apply(this, this.ServerIdWaitAction);
+		}
 		this.reopenFileWithReconnection(docInfo);
 	};
 	baseEditorsApi.prototype.canRefreshFile = function () {
@@ -2952,7 +2958,8 @@
 	}
 	baseEditorsApi.prototype.onRefreshFile = function () {
 		let t = this;
-		this.sync_StartAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.RefreshFile, Asc.c_oAscRestrictionType.View);
+		this.ServerIdWaitAction = [Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.RefreshFile, Asc.c_oAscRestrictionType.View];
+		this.sync_StartAction.apply(this, this.ServerIdWaitAction);
 		if (this.documentIsWopi) {
 			let callback = function (isTimeout, response) {
 				if (response) {

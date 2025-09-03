@@ -6213,6 +6213,70 @@
 	{
 		return this.customXmlManager;
 	};
+	Workbook.prototype.addExternalReferenceFromWorksheets = function(oWorksheets, oPastedWb, oWorksheetWb) {
+		const oApi = Asc.editor;
+		const oWs = oApi.wb.getWorksheet();
+		if (!oWs)
+			return;
+
+		for (let i in oWorksheets) {
+			oWorksheetWb.aWorksheets.push(oWorksheets[i].ws);
+		}
+
+		let nChangeExternalReferenceIndex = null;
+		let oMainExternalReference;
+		const allDefNames = [];
+		for (let sSheetName in oWorksheets) {
+			const oWorksheetInfo = oWorksheets[sSheetName];
+			const arrRanges = [new Asc.Range(oWorksheetInfo.minC, oWorksheetInfo.minR, oWorksheetInfo.maxC, oWorksheetInfo.maxR)];
+			const oPastedWS = oWorksheetInfo.ws;
+			const defNames = oWorksheetInfo.defNames;
+
+			const oCellPasteHelper = oWs.cellPasteHelper;
+			const oPastedLinkInfo = oCellPasteHelper.getPastedLinkInfo(oPastedWb, oPastedWS);
+
+			if (oPastedLinkInfo) {
+				if (oPastedLinkInfo.type === -1) {
+					const pasteSheetLinkName = oPastedLinkInfo.sheet;
+					//необходимо положить нужные данные в SheetDataSet
+					oMainExternalReference = this.externalReferences[oPastedLinkInfo.index - 1];
+					if (oMainExternalReference) {
+						oMainExternalReference.updateSheetData(pasteSheetLinkName, oPastedWS, arrRanges);
+						nChangeExternalReferenceIndex = oPastedLinkInfo.index;
+					}
+					allDefNames.push.apply(allDefNames, defNames);
+				} else if (oPastedLinkInfo.type === -2) {
+					if (!oMainExternalReference) {
+						var referenceData;
+						var name = oPastedWb.Core.title;
+						if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
+							name = oPastedLinkInfo.path;
+						} else if (oPastedWb && oPastedWb.Core) {
+							referenceData = {};
+							referenceData["fileKey"] = oPastedWb.Core.contentStatus;
+							referenceData["instanceId"] = oPastedWb.Core.category;
+						}
+
+						oMainExternalReference = new AscCommonExcel.ExternalReference();
+						oMainExternalReference.referenceData = referenceData;
+						oMainExternalReference.Id = name;
+					}
+
+					allDefNames.push.apply(allDefNames, defNames);
+					oMainExternalReference.addSheet(oPastedWS, arrRanges);
+				}
+			}
+		}
+		if (oMainExternalReference) {
+			oMainExternalReference.initDefinedNamesOnCopyPaste(allDefNames);
+			if (nChangeExternalReferenceIndex === null) {
+				this.addExternalReferences([oMainExternalReference]);
+			} else {
+				this.changeExternalReference(nChangeExternalReferenceIndex, oMainExternalReference);
+			}
+		}
+		return oMainExternalReference;
+	};
 
 	/**
 	 * @constructor
@@ -8249,8 +8313,11 @@
 				row.setCalcHeight(true);
 				row.setHidden(false);
 				var oNewProps = row.getHeightProp();
-				if(false === oOldProps.isEqual(oNewProps))
+				if (oOldProps.isEqual(oNewProps)) {
+					row.setChanged(false);
+				} else {
 					AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_RowProp, oThis.getId(), row._getUpdateRange(), new UndoRedoData_IndexSimpleProp(row.index, true, oOldProps, oNewProps));
+				}
 			}
 		};
 		if(0 == start && gc_nMaxRow0 == stop)
@@ -14335,6 +14402,15 @@
 			}
 		}
 		return arrInks;
+	};
+	Worksheet.prototype.getDrawingControls = function () {
+		const arrControls = [];
+		this.handleDrawings(function (oDrawing) {
+			if (oDrawing.isControl()) {
+				arrControls.push(oDrawing);
+			}
+		});
+		return arrControls;
 	};
 
 

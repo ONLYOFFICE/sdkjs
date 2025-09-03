@@ -467,6 +467,18 @@ function(window, undefined) {
 			);
 			oTextPr.RFonts = oRFonts;
 		}
+
+		let oldRunPr = oParaPr.DefaultRunPr;
+		let oldUniFill = oldRunPr ? oldRunPr.Unifill : null;
+		let oldLine = oldRunPr ? oldRunPr.TextOutline : null;
+		let prFill = oTextPr.AscUnifill || oTextPr.AscFill;
+		if (prFill) {
+			oTextPr.Unifill = AscFormat.CorrectUniFill(prFill, oldUniFill, 0);
+		}
+		if (oTextPr.AscLine) {
+			oTextPr.TextOutline = AscFormat.CorrectUniStroke(oTextPr.AscLine, oldLine, 0);
+		}
+
 		oParaPr2.DefaultRunPr = oTextPr;
 		oParaPr.Merge(oParaPr2);
 		if(oTextPr.HighlightColor === null &&
@@ -2123,8 +2135,7 @@ function(window, undefined) {
 				return arrData;
 			} else {
 				const oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(oWorkbook);
-				oBinaryFileWriter.Write();
-				return oBinaryFileWriter.Memory.data.slice();
+				return oBinaryFileWriter.Write(true);
 			}
 		}, this, []);
 	};
@@ -2152,50 +2163,6 @@ function(window, undefined) {
 			} else {
 				oCell.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
 			}
-		}
-
-		const depFormulas = oParentWb.dependencyFormulas;
-		function fGetParsedRef(sFormula, arrParsedRefs) {
-			if (sFormula.startsWith("[0]!")) {
-				sFormula = sFormula.slice(4);
-			}
-
-			const isName = AscCommon.parserHelp.isName3D(sFormula, 0) || AscCommon.parserHelp.isDefName(sFormula, 0);
-			if (isName) {
-				if (!isName.external) {
-					const sheetName = isName.sheet;
-					const worksheet = depFormulas.wb.getWorksheetByName(sheetName);
-					const defName = depFormulas.getDefNameByName(isName.defname, worksheet && worksheet.Id);
-					if (defName) {
-						const nOldLength = arrParsedRefs.length;
-						fGetArrF(defName.ref, arrParsedRefs);
-						if (nOldLength < arrParsedRefs.length) {
-							const oLastParsedRef = arrParsedRefs[arrParsedRefs.length - 1];
-							Object.assign(oLastParsedRef, {defName: {defName: isName.defname, ref: defName.ref, worksheetName: oLastParsedRef.sheet, shortLink: true}});
-						}
-					}
-				}
-				return null;
-			}
-			const parsed3DRef = AscCommon.parserHelp.parse3DRef(sFormula, 0);
-			return (!parsed3DRef || parsed3DRef.external) ? null : parsed3DRef;
-		}
-		function fGetArrF(sFormula, arrParsedRefs) {
-			const result = arrParsedRefs || [];
-			if (sFormula[0] === '(')
-				sFormula = sFormula.slice(1);
-			if (sFormula[sFormula.length - 1] === ')')
-				sFormula = sFormula.slice(0, -1);
-
-			const f1 = sFormula;
-			const arrF = f1.split(",");
-			for (let i = 0; i < arrF.length; i++) {
-				let parsedRef = fGetParsedRef(arrF[i], result);
-				if (parsedRef) {
-					result.push(parsedRef);
-				}
-			}
-			return result;
 		}
 
 		function fillTableFromRef(ref)
@@ -2230,12 +2197,7 @@ function(window, undefined) {
 					sFormula = ref.f.content;
 				}
 
-				if (sFormula[0] === '(')
-					sFormula = sFormula.slice(1);
-				if (sFormula[sFormula.length - 1] === ')')
-					sFormula = sFormula.slice(0, -1);
-
-				const arrF = fGetArrF(sFormula);
+				const arrF = getParsedCopyRefs(sFormula, oParentWb);
 
 				let nPtIndex = 0, nPtCount;
 				for (let i = 0; i < arrF.length; ++i)
@@ -6013,7 +5975,7 @@ function(window, undefined) {
 
 						let bTickSkip = AscFormat.isRealNumber(oAxis.tickLblSkip) || nPtsLen >= SKIP_LBL_LIMIT;
 						let nTickLblSkip = AscFormat.isRealNumber(oAxis.tickLblSkip) ? oAxis.tickLblSkip : (nPtsLen < SKIP_LBL_LIMIT ? 1 : (Math.floor(nPtsLen / SKIP_LBL_LIMIT) + 1));
-						// let nTickLblSkip = 1;
+
 						let nLastNoEmptyLblIdx = -1;
 						for (i = 0; i < nPtsLen; ++i) {
 							if (!bTickSkip ||
@@ -6079,15 +6041,8 @@ function(window, undefined) {
 				if (nPtsLength > aStrings.length) {
 					let bTickSkip = AscFormat.isRealNumber(oAxis.tickLblSkip) || nPtsLength >= SKIP_LBL_LIMIT;
 					let nTickLblSkip = AscFormat.isRealNumber(oAxis.tickLblSkip) ? oAxis.tickLblSkip : (nPtsLength < SKIP_LBL_LIMIT ? 1 : (Math.floor(nPtsLength / SKIP_LBL_LIMIT) + 1));
-					// let nTickLblSkip = 1;
+
 					let nStartLength = aStrings.length;
-
-					// // different label skip implementation for catAxis
-					const nAxisType = oAxis.getObjectType();
-					if (AscFormat.isRealNumber(nAxisType) && (AscDFH.historyitem_type_CatAx === nAxisType || AscDFH.historyitem_type_DateAx === nAxisType)) {
-						nTickLblSkip = 1;
-					}
-
 
 					for (i = aStrings.length; i < nPtsLength; ++i) {
 						if (!bCat && (!bTickSkip || (((nStartLength + i) % nTickLblSkip) === 0))) {
@@ -11800,11 +11755,12 @@ function(window, undefined) {
 		}
 		return  oCurCandidate;
 	};
-
 	CChartSpace.prototype.isWorkbookChart = function () {
 		return false;
 	};
-
+	CChartSpace.prototype.getTextArtProperties = function () {
+		return {Fill: undefined, Line: undefined, Form: undefined};
+	};
 	CChartSpace.prototype.updateView = CChartSpace.prototype["updateView"] = function (sDivId) {
 		let oCanvas = AscCommon.checkCanvasInDiv(sDivId);
 		if(!oCanvas) {
@@ -13879,6 +13835,50 @@ function(window, undefined) {
 	};
 	var oChartStyleCache = new CChartStyleCache();
 
+	function getParsedCopyRefs(sFormula, oParentWb, arrInnerResultRefs) {
+		const depFormulas = oParentWb.dependencyFormulas;
+		function fGetParsedRef(sFormula, arrParsedRefs) {
+			if (sFormula.startsWith("[0]!")) {
+				sFormula = sFormula.slice(4);
+			}
+
+			const isName = AscCommon.parserHelp.isName3D(sFormula, 0) || AscCommon.parserHelp.isDefName(sFormula, 0);
+			if (isName) {
+				if (!isName.external) {
+					const sheetName = isName.sheet;
+					const worksheet = depFormulas.wb.getWorksheetByName(sheetName);
+					const defName = depFormulas.getDefNameByName(isName.defname, worksheet && worksheet.Id);
+					if (defName) {
+						const nOldLength = arrParsedRefs.length;
+						getParsedCopyRefs(defName.ref, oParentWb, arrParsedRefs);
+						if (nOldLength < arrParsedRefs.length) {
+							const oLastParsedRef = arrParsedRefs[arrParsedRefs.length - 1];
+							Object.assign(oLastParsedRef, {defName: {defName: isName.defname, ref: defName.ref, worksheetName: oLastParsedRef.sheet, shortLink: true}});
+						}
+					}
+				}
+				return null;
+			}
+			const parsed3DRef = AscCommon.parserHelp.parse3DRef(sFormula, 0);
+			return (!parsed3DRef || parsed3DRef.external) ? null : parsed3DRef;
+		}
+
+		const result = arrInnerResultRefs || [];
+		if (sFormula[0] === '(')
+			sFormula = sFormula.slice(1);
+		if (sFormula[sFormula.length - 1] === ')')
+			sFormula = sFormula.slice(0, -1);
+
+		const f1 = sFormula;
+		const arrF = f1.split(",");
+		for (let i = 0; i < arrF.length; i++) {
+			let parsedRef = fGetParsedRef(arrF[i], result);
+			if (parsedRef) {
+				result.push(parsedRef);
+			}
+		}
+		return result;
+	}
 
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscFormat'] = window['AscFormat'] || {};
@@ -13942,4 +13942,6 @@ function(window, undefined) {
 	window['AscFormat'].CreateTypedLineChart = CreateTypedLineChart;
 	window['AscFormat'].CreateSurfaceAxes = CreateSurfaceAxes;
 	window['AscFormat'].GetTypeMarkerByIndex = GetTypeMarkerByIndex;
+
+	window['AscFormat'].getParsedCopyRefs = getParsedCopyRefs;
 })(window);

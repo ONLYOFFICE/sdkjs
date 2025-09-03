@@ -228,9 +228,13 @@
 
 		if (this.themes) {
 			for (let i = 0; i < this.themes.length; i++) {
-				pWriter.StartRecord(15);
-				pWriter.WriteTheme(this.themes[i]);
-				pWriter.EndRecord();
+				let theme = this.themes[i];
+				// theme with id 0 is default theme (no theme in visio) - this theme should not be saved
+				if (theme.themeElements.themeExt.themeSchemeSchemeEnum !== "0") {
+					pWriter.StartRecord(15);
+					pWriter.WriteTheme(theme);
+					pWriter.EndRecord();
+				}
 			}
 		}
 		//todo VbaProject
@@ -977,11 +981,26 @@
 		pWriter._WriteUInt2(22, this.glueSettings);
 		pWriter._WriteUInt2(23, this.snapSettings);
 		pWriter._WriteUInt2(24, this.snapExtensions);
-		pWriter._WriteBool2(25, this.snapAngles);
 		pWriter._WriteBool2(26, this.dynamicGridEnabled);
 		pWriter._WriteDoubleReal2(27, this.tabSplitterPos);
 		pWriter._WriteUInt2(28, this.stencilGroup);
 		pWriter._WriteUInt2(29, this.stencilGroupPos);
+	};
+
+	/**
+	 * Write children to stream for Window_Type
+	 *
+	 * @param {CBinaryFileWriter} pWriter - The binary writer
+	 */
+	AscVisio.Window_Type.prototype.writeChildren = function (pWriter) {
+		// Write content if present
+		if (this.snapAngles && this.snapAngles.length > 0) {
+			pWriter.StartRecord(0);
+			for (let i = 0; i < this.snapAngles.length; i++) {
+				pWriter.WriteRecordPPTY(0, this.snapAngles[i]);
+			}
+			pWriter.EndRecord();
+		}
 	};
 
 	/**
@@ -1239,7 +1258,6 @@
 		pWriter._WriteInt2(5, this.glueSettings);
 		pWriter._WriteInt2(6, this.snapSettings);
 		pWriter._WriteInt2(7, this.snapExtensions);
-		pWriter._WriteInt2(8, this.snapAngles);
 		pWriter._WriteBool2(9, this.dynamicGridEnabled);
 		pWriter._WriteBool2(10, this.protectStyles);
 		pWriter._WriteBool2(11, this.protectShapes);
@@ -1248,6 +1266,31 @@
 		pWriter._WriteString2(14, this.customMenusFile);
 		pWriter._WriteString2(15, this.customToolbarsFile);
 		pWriter._WriteString2(16, this.attachedToolbars);
+	};
+
+	/**
+	 * Write children to stream for DocumentSettings_Type
+	 *
+	 * @param {CBinaryFileWriter} pWriter - The binary writer
+	 */
+	AscVisio.DocumentSettings_Type.prototype.writeChildren = function (pWriter) {
+		// Write content if present
+		if (this.snapAngles && this.snapAngles.length > 0) {
+			pWriter.StartRecord(0);
+			for (let i = 0; i < this.snapAngles.length; i++) {
+				pWriter.WriteRecordPPTY(0, this.snapAngles[i]);
+			}
+			pWriter.EndRecord();
+		}
+	};
+
+	/**
+	 * Write attributes to stream for SnapAngle_Type
+	 * 
+	 * @param {CBinaryFileWriter} pWriter - The binary writer
+	 */
+	AscVisio.SnapAngle_Type.prototype.privateWriteAttributes = function (pWriter) {
+		pWriter._WriteDoubleReal2(0, this.value);
 	};
 
 	/**

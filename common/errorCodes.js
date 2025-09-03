@@ -136,6 +136,7 @@
 			UserDrop : -100,
 			Warning  : -101,
 			UpdateVersion : -102,
+			ForcedViewMode : -103,
 
 			PrintMaxPagesCount : -110,
 
@@ -263,6 +264,8 @@
 
 			DocumentAndChangeMismatch: 1080,
 			EditProtectedRange       : 1081,
+
+			MacroUnavailableWarning: 1082,
 
 
 			// pdf forms
@@ -446,6 +449,8 @@
 	prot['DocumentAndChangeMismatch']        = prot.DocumentAndChangeMismatch;
 	prot['EditProtectedRange']               = prot.EditProtectedRange;
 	prot['PDFFormsLocked']                   = prot.PDFFormsLocked;
+
+	prot['MacroUnavailableWarning']                   = prot.MacroUnavailableWarning;
 
 
 

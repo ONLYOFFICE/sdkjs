@@ -131,6 +131,7 @@
 	 * @property {string} FontName - Sets the specified font family as the font name for the current cell range.
 	 * @property {'center' | 'bottom' | 'top' | 'distributed' | 'justify'} AlignVertical - Sets the text vertical alignment to the current cell range.
 	 * @property {'left' | 'right' | 'center' | 'justify'} AlignHorizontal - Sets the text horizontal alignment to the current cell range.
+	 * @property {'context' | 'ltr' | 'rtl'} ReadingOrder - Sets the direction (reading order) of the text in the current cell range.
 	 * @property {boolean} Bold - Sets the bold property to the text characters from the current cell or cell range.
 	 * @property {boolean} Italic - Sets the italic property to the text characters in the current cell or cell range.
 	 * @property {'none' | 'single' | 'singleAccounting' | 'double' | 'doubleAccounting'} Underline - Sets the type of underline applied to the font.
@@ -9489,6 +9490,23 @@
 		}
 	};
 
+	/**
+	 * Retrieves the custom XML manager associated with the current sheet.
+	 * This manager allows manipulation and access to custom XML parts within the current sheet.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @returns {ApiCustomXmlParts|null} Returns an instance of ApiCustomXmlParts if the custom XML manager exists, otherwise returns null.
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetCustomXmlParts.js
+	 */
+	ApiWorksheet.prototype.GetCustomXmlParts = function()
+	{
+		if (!(this.worksheet && this.worksheet.workbook))
+			return null;
+
+		let workbook = this.worksheet.workbook;
+		return new AscBuilder.ApiCustomXmlParts(workbook);
+	};
 
 
 	/**
@@ -10346,6 +10364,28 @@
 	Object.defineProperty(ApiRange.prototype, "AlignHorizontal", {
 		set: function (sAlignment) {
 			return this.SetAlignHorizontal(sAlignment);
+		}
+	});
+
+	/**
+	 * Sets the direction (reading order) of the text in the current cell range.
+	 *
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {'context' | 'ltr' | 'rtl'} direction - The direction (reading order) that will be applied to the cell contents.
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetReadingOrder.js
+	 */
+	ApiRange.prototype.SetReadingOrder = function (direction) {
+		const map = {
+			"context": Asc.c_oReadingOrderTypes.Context, // 0
+			"ltr": Asc.c_oReadingOrderTypes.LTR, // 1
+			"rtl": Asc.c_oReadingOrderTypes.RTL, // 2
+		};
+		this.range.setReadingOrder(map[direction] || 0);
+	};
+	Object.defineProperty(ApiRange.prototype, "ReadingOrder", {
+		set: function (direction) {
+			return this.SetReadingOrder(direction);
 		}
 	});
 
@@ -11905,7 +11945,7 @@
 
 		if (Criteria1 == null) {
 			//clean current filter
-			ws.autoFilters.clearFilterColumn(Asc.range(_range.c1 + Field, _range.r1, _range.c1 + Field, _range.r1).getName());
+			ws.autoFilters.clearFilterColumn(Asc.Range(_range.c1 + Field, _range.r1, _range.c1 + Field, _range.r1).getName());
 			//api.asc_clearFilterColumn(Asc.range(_range.c1 + Field, _range.r1, _range.c1 + Field, _range.r1).getName());
 			return;
 		}
@@ -12174,10 +12214,10 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange | null} - Returns the expanded range or null if the range cannot be expanded.
-	 * @since 9.0.4
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/Expand.js
+	 * @since 9.1
+	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetCurrentRegion.js
 	 */
-	ApiRange.prototype.Expand = function () {
+	ApiRange.prototype.GetCurrentRegion = function () {
 		if (!this.range) {
 			return null;
 		}
@@ -12196,7 +12236,7 @@
 
 	Object.defineProperty(ApiRange.prototype, "CurrentRegion", {
 		get: function () {
-			return this.Expand();
+			return this.GetCurrentRegion();
 		}
 	});
 
@@ -17324,8 +17364,10 @@
 			return "Columns";
 		} else if (this.pivotField.axis === Asc.c_oAscAxis.AxisPage) {
 			return "Filters"
+		} else if (this.pivotField.dataField) {
+			return "Values";
 		} else {
-			return "Hidden"
+			return "Hidden";
 		}
 	};
 
@@ -17340,6 +17382,7 @@
 	 */
 	ApiPivotField.prototype.SetOrientation = function (type) {
 		switch (type) {
+			case "xlRowField":
 			case "Rows":
 				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisRow) {
 					this.table.pivot.asc_moveToRowField(this.table.api, this.index);
@@ -17347,6 +17390,7 @@
 					private_MakeError('The field already has that orientation.')
 				}
 				break;
+			case "xlColumnField":
 			case "Columns":
 				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisCol) {
 					this.table.pivot.asc_moveToColField(this.table.api, this.index);
@@ -17354,6 +17398,7 @@
 					private_MakeError('The field already has that orientation.')
 				}
 				break;
+			case "xlPageField":
 			case "Filters":
 				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisPage) {
 					this.table.pivot.asc_moveToPageField(this.table.api, this.index);
@@ -17361,9 +17406,11 @@
 					private_MakeError('The field already has that orientation.')
 				}
 				break;
+			case "xlDataField":
 			case "Values":
 				this.table.pivot.asc_moveToDataField(this.table.api, this.index);
 				break;
+			case "xlHidden":
 			case "Hidden":
 				this.Remove();
 				break;
@@ -17687,7 +17734,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetShowingInAxis.js
 	 */
 	ApiPivotField.prototype.GetShowingInAxis = function () {
-		return this.pivotField.axis !== null || this.pivotField.dataField;
+		return this.pivotField.showingInAxis();
 	};
 
 	Object.defineProperty(ApiPivotField.prototype, "ShowingInAxis", {
@@ -18400,7 +18447,6 @@
 	/**
 	 * Pivot filter type.
 	 * @typedef {("xlAfter" | "xlAfterOrEqualTo" | "xlAllDatesInPeriodApril" | "xlAllDatesInPeriodAugust" | "xlAllDatesInPeriodDecember" | "xlAllDatesInPeriodFebruary" | "xlAllDatesInPeriodJanuary" | "xlAllDatesInPeriodJuly" | "xlAllDatesInPeriodJune" | "xlAllDatesInPeriodMarch" | "xlAllDatesInPeriodMay" | "xlAllDatesInPeriodNovember" | "xlAllDatesInPeriodOctober" | "xlAllDatesInPeriodQuarter1" | "xlAllDatesInPeriodQuarter2" | "xlAllDatesInPeriodQuarter3" | "xlAllDatesInPeriodQuarter4" | "xlAllDatesInPeriodSeptember" | "xlBefore" | "xlBeforeOrEqualTo" | "xlBottomCount" | "xlBottomPercent" | "xlBottomSum" | "xlCaptionBeginsWith" | "xlCaptionContains" | "xlCaptionDoesNotBeginWith" | "xlCaptionDoesNotContain" | "xlCaptionDoesNotEndWith" | "xlCaptionDoesNotEqual" | "xlCaptionEndsWith" | "xlCaptionEquals" | "xlCaptionIsBetween" | "xlCaptionIsGreaterThan" | "xlCaptionIsGreaterThanOrEqualTo" | "xlCaptionIsLessThan" | "xlCaptionIsLessThanOrEqualTo" | "xlCaptionIsNotBetween" | "xlDateBetween" | "xlDateLastMonth" | "xlDateLastQuarter" | "xlDateLastWeek" | "xlDateLastYear" | "xlDateNextMonth" | "xlDateNextQuarter" | "xlDateNextWeek" | "xlDateNextYear" | "xlDateThisMonth" | "xlDateThisQuarter" | "xlDateThisWeek" | "xlDateThisYear" | "xlDateToday" | "xlDateTomorrow" | "xlDateYesterday" | "xlNotSpecificDate" | "xlSpecificDate" | "xlTopCount" | "xlTopPercent" | "xlTopSum" | "xlValueDoesNotEqual" | "xlValueEquals" | "xlValueIsBetween" | "xlValueIsGreaterThan" | "xlValueIsGreaterThanOrEqualTo" | "xlValueIsLessThan" | "xlValueIsLessThanOrEqualTo" | "xlValueIsNotBetween" | "xlYearToDate") } XlPivotFilterType
-	 * @see office-js-api/Examples/Enumerations/XlPivotFilterType.js
 	 */
 
 	/**
@@ -18410,8 +18456,8 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {XlPivotFilterType} filterType - The type of filter to add. Must match VBA XlPivotFilterType enum values.
 	 * @param {ApiPivotDataField} [dataField] - The data field object to filter by. Required for value filters (xlValue* types) and top/bottom filters.
-	 * @param {string | number} [value1] - The first value for the filter condition. Required for comparison filters, between filters, and top/bottom count.
-	 * @param {string | number} [value2] - The second value for "Between" conditions (xlCaptionIsBetween, xlCaptionIsNotBetween, xlValueIsBetween).
+	 * @param {string | number | Date} [value1] - The first value for the filter condition. Required for comparison filters, between filters, and top/bottom count.
+	 * @param {string | number | Date} [value2] - The second value for "Between" conditions (xlCaptionIsBetween, xlCaptionIsNotBetween, xlValueIsBetween).
 	 * @param {boolean} [wholeDayFilter] - Whether to filter by whole day for date filters. Reserved for future use, currently not implemented.
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiPivotFilters/Methods/Add.js
@@ -18428,10 +18474,10 @@
 
 		// Convert values to strings for filter processing (preserve original validation above)
 		if (value1 !== undefined && value1 !== null) {
-			value1 = value1 + '';
+			value1 = checkFormat(value1).toString();
 		}
 		if (value2 !== undefined && value2 !== null) {
-			value2 = value2 + '';
+			value2 = checkFormat(value2).toString();
 		}
 		if (applyCaptionFilter(autoFilterOptions, filterType, value1, value2) ||
 			applyValueFilter(autoFilterOptions, filterType, value1, value2, dataField) ||
@@ -18604,14 +18650,22 @@
 		// Handle comparison date filters that need custom filter logic
 		const captionFilters = {
 			'xlSpecificDate': Asc.c_oAscCustomAutoFilter.equals,
-			'xlNotSpecificDate': Asc.c_oAscCustomAutoFilter.doesNotEqual
+			'xlNotSpecificDate': Asc.c_oAscCustomAutoFilter.doesNotEqual,
+			'xlAfter': Asc.c_oAscCustomAutoFilter.isGreaterThan,
+			'xlBefore': Asc.c_oAscCustomAutoFilter.isLessThan,
+			'xlAfterOrEqualTo': Asc.c_oAscCustomAutoFilter.isGreaterThanOrEqualTo,
+			'xlBeforeOrEqualTo': Asc.c_oAscCustomAutoFilter.isLessThanOrEqualTo
 		};
 		const betweenFilters = {
 			'xlDateBetween': true,
 			'xlDateNotBetween': false
 		};
-
-		return addCaptionFilter(autoFilterOptions, captionFilters, betweenFilters, filterType, value1, value2);
+		
+		const res = addCaptionFilter(autoFilterOptions, captionFilters, betweenFilters, filterType, value1, value2);
+		if (res) {
+			autoFilterOptions.asc_setIsDateFilter(true);
+		}
+		return res;
 	}
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -25260,6 +25314,7 @@
 	ApiRange.prototype["SetFontName"] = ApiRange.prototype.SetFontName;
 	ApiRange.prototype["SetAlignVertical"] = ApiRange.prototype.SetAlignVertical;
 	ApiRange.prototype["SetAlignHorizontal"] = ApiRange.prototype.SetAlignHorizontal;
+	ApiRange.prototype["SetReadingOrder"] = ApiRange.prototype.SetReadingOrder;
 	ApiRange.prototype["SetBold"] = ApiRange.prototype.SetBold;
 	ApiRange.prototype["SetItalic"] = ApiRange.prototype.SetItalic;
 	ApiRange.prototype["SetUnderline"] = ApiRange.prototype.SetUnderline;
@@ -25300,13 +25355,13 @@
 	ApiRange.prototype["SetAutoFilter"] = ApiRange.prototype.SetAutoFilter;
 	ApiRange.prototype["SetFormulaArray"] = ApiRange.prototype.SetFormulaArray;
 	ApiRange.prototype["GetFormulaArray"] = ApiRange.prototype.GetFormulaArray;
-	ApiRange.prototype["Expand"] = ApiRange.prototype.Expand;
 	ApiRange.prototype["Offset"] = ApiRange.prototype.Offset;
 	ApiRange.prototype["Resize"] = ApiRange.prototype.Resize;
 	ApiRange.prototype["GetRange"] = ApiRange.prototype.GetRange;
 	ApiRange.prototype["GetEntireRow"] = ApiRange.prototype.GetEntireRow;
 	ApiRange.prototype["GetEntireColumn"] = ApiRange.prototype.GetEntireColumn;
 	ApiRange.prototype["GetValidation"] = ApiRange.prototype.GetValidation;
+	ApiRange.prototype["GetCurrentRegion"] = ApiRange.prototype.GetCurrentRegion;
 	ApiRange.prototype["GetFormatConditions"] = ApiRange.prototype.GetFormatConditions;
 
 
@@ -26002,11 +26057,14 @@
 	ApiPivotField.prototype["SetNumberFormat"]           = ApiPivotField.prototype.SetNumberFormat;
 	ApiPivotField.prototype["SetFunction"]               = ApiPivotField.prototype.SetFunction;
 	ApiPivotField.prototype["GetFunction"]               = ApiPivotField.prototype.GetFunction;
+	ApiPivotField.prototype["AutoSort"]                  = ApiPivotField.prototype.AutoSort;
 
 	ApiPivotItem.prototype["GetName"]    = ApiPivotItem.prototype.GetName;
 	ApiPivotItem.prototype["GetCaption"] = ApiPivotItem.prototype.GetCaption;
 	ApiPivotItem.prototype["GetValue"]   = ApiPivotItem.prototype.GetValue;
 	ApiPivotItem.prototype["GetParent"]  = ApiPivotItem.prototype.GetParent;
+	ApiPivotItem.prototype["GetVisible"] = ApiPivotItem.prototype.GetVisible;
+	ApiPivotItem.prototype["SetVisible"] = ApiPivotItem.prototype.SetVisible;
 
 	ApiValidation.prototype["Add"]                  = ApiValidation.prototype.Add;
 	ApiValidation.prototype["Delete"]               = ApiValidation.prototype.Delete;

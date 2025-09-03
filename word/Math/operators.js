@@ -4060,23 +4060,28 @@ CDelimiter.prototype.private_GetRightOperator = function(bHide)
 
     return NewEndCode;
 };
-CDelimiter.fromMathML = function(reader)
+CDelimiter.fromMathML = function(reader, props)
 {
-	let attributes = reader.GetAttributes();
-	let props = new CMathDelimiterPr();
-	let open = attributes['open'] || "(";
-	let close = attributes['close'] || ")";
-	let separator = attributes['separators'] || "|"; // For now, left the "|" — the comma is not rendering correctly.
-
-	props.begChr		= open.trim().charCodeAt(0);
-	props.endChr		= close.trim().charCodeAt(0);
-	props.sepChr		= separator[0].trim().charCodeAt(0);
-	props.content		= [];
-
-	let depth = reader.GetDepth();
-	while (reader.ReadNextSiblingNode(depth))
+	if (!props)
 	{
-		props.content.push(AscWord.ParaMath.readMathMLContent(reader));
+		let attributes = reader.GetAttributes();
+		let open = attributes['open'] || "(";
+		let close = attributes['close'] || ")";
+		let separator = attributes['separators'] || ",";
+
+		props = new CMathDelimiterPr();
+		props.begChr		= open.trim().charCodeAt(0);
+		props.endChr		= close.trim().charCodeAt(0);
+		props.sepChr		= separator[0].trim().charCodeAt(0);
+		props.content		= [];
+		props.shp			= DELIMITER_SHAPE_MATCH;
+
+		let depth = reader.GetDepth();
+
+		while (reader.ReadNextSiblingNode(depth))
+		{
+			props.content.push(AscWord.ParaMath.readMathMLContent(reader));
+		}
 	}
 
 	return new CDelimiter(props);
@@ -4742,26 +4747,33 @@ CGroupCharacter.fromMathML = function(reader, type, content)
 
 	let mContents = [];
 	let depth = reader.GetDepth();
-	while (reader.ReadNextSiblingNode(depth))
+
+	if (!content)
 	{
-		mContents.push(AscWord.ParaMath.readMathMLContent(reader));
+		while (reader.ReadNextSiblingNode(depth))
+		{
+			mContents.push(AscWord.ParaMath.readMathMLContent(reader));
+		}
+	}
+	else
+	{
+		mContents = content;
 	}
 
-	if (mContents.length >= 2)
+	if (mContents.length >= 2 || !content)
 	{
 		props.content.push(mContents[0]);
+
 		if (mContents[1])
 		{
 			let chrText = mContents[1].GetTextOfElement().GetText().trim();
-			if (chrText.length > 1)
-			{
-				return AscMath.Limit.fromMathML(reader, type, mContents)
-			}
+			if (chrText.length > 1 || !AscMath.MathLiterals.hbrack.SearchU(chrText))
+				return AscMath.Limit.fromMathML(reader, type === 0 ? 1 : type, mContents);
 
 			props.chr = chrText.charCodeAt(0);
 		}
 	}
-	else
+	else if (!content)
 	{
 		props.content[0] = mContents[0];
 	}

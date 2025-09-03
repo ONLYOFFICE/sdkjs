@@ -896,7 +896,7 @@
      * @param {string} guid - A string value which specifies a plugin identifier which must be of the *asc.{UUID}* type.
      * @param {number} w - A number which specifies the window width measured in millimeters.
      * @param {number} h - A number which specifies the window height measured in millimeters.
-     * @param {boolean} isKeyboardTake - Defines if the keyboard is caught (**true**) or not (**alse**).
+     * @param {boolean} isKeyboardTake - Defines if the keyboard is caught (**true**) or not (**false**).
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ShowInputHelper.js
 	 */
     Api.prototype["pluginMethod_ShowInputHelper"] = function(guid, w, h, isKeyboardTake)

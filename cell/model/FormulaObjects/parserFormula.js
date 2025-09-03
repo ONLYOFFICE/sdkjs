@@ -5911,77 +5911,6 @@ _func[cElementType.number][cElementType.array] = _func[cElementType.string][cEle
             return res;
         };
 
-
-_func.binarySearch = function ( sElem, arrTagert, regExp ) {
-	var first = 0, /* The number of the first element in the array */
-		last = arrTagert.length - 1, /* The number of the element in the array that comes AFTER the last one */
-		/* If the viewed segment is not empty, first<last */
-		mid;
-
-	var arrTagertOneType = [], isString = false;
-
-	for (var i = 0; i < arrTagert.length; i++) {
-		if ((arrTagert[i] instanceof cString || sElem instanceof cString) && !isString) {
-			i = 0;
-			isString = true;
-			sElem = new cString(sElem.toString().toLowerCase());
-		}
-		if (isString) {
-			arrTagertOneType[i] = new cString(arrTagert[i].toString().toLowerCase());
-		} else {
-			arrTagertOneType[i] = arrTagert[i].tocNumber();
-		}
-	}
-
-	// comparing the lengths of arrays and the first and last element
-	if (arrTagert.length === 0) {
-		return -1;
-		/* array empty */
-	} else if (arrTagert[0].value > sElem.value) {
-		return -2;
-	} else if (arrTagert[arrTagert.length - 1].value < sElem.value) {
-		return arrTagert.length - 1;
-	}
-
-	// according to the sorting in MS, the comparison will be like this: cError > cBool > cText > (cNumber == cEmpty)
-	while (first < last) {
-		mid = Math.floor(first + (last - first) / 2);
-		if (sElem.type !== arrTagert[mid].type) {
-			if (sElem.type === cElementType.empty || arrTagert[mid].type === cElementType.empty) {
-				if (sElem.value <= arrTagert[mid].value) {
-					// cEmpty.tocNumber() ?
-					last = mid;
-				} else {
-					first = mid + 1;
-				}
-			} else {
-				if (cElementTypeWeight.get(sElem.type) < cElementTypeWeight.get(arrTagert[mid].type)) {
-					last = mid;
-				} else {
-					first = mid + 1;
-				}
-			}
-		} else {
-			// if cError && cError ?
-			if (sElem.value < arrTagert[mid].value || ( regExp && regExp.test(arrTagert[mid].value) )) {
-				last = mid;
-			} else {
-				first = mid + 1;
-			}
-		}
-	}
-
-	/* If the conditional operator if(n==0) and so on is omitted at the beginning - then uncomment it here!    */
-	if (/* last<n &&*/ arrTagert[last].value === sElem.value) {
-		return last;
-		/* The desired element is found. last is the desired index */
-	} else {
-		return last - 1;
-		/* The desired element is not found. But if you suddenly need to insert it with a shift, its place is at last.    */
-	}
-
-};
-
 _func.lookupBinarySearch = function ( sElem, arrayNoEmpty, isByRangeCall, regExp ) {
 	let first = 0, last, mid;
 	let typedArr;
@@ -6032,7 +5961,7 @@ _func.lookupBinarySearch = function ( sElem, arrayNoEmpty, isByRangeCall, regExp
 	} else if (cacheIndex !== undefined && typedArr[cacheIndex].v.value <= sElem.value) {
 		return typedArr[cacheIndex].i;
 	} else {
-		return -2;
+		return -1;
 	}
 };
 
