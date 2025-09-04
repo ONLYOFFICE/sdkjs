@@ -225,7 +225,7 @@
 		if (this.ParentPDF && this.ParentPDF.OnContentChange && this.isFormatContent == false)
 			this.ParentPDF.OnContentChange();
 	};
-	CTextBoxContent.prototype.Get_AbsolutePage = function() {
+	CTextBoxContent.prototype.GetAbsolutePage = function() {
 		return this.ParentPDF.GetPage();
 	};
 	CTextBoxContent.prototype.Get_ParentTextTransform = function() {

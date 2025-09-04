@@ -5131,7 +5131,7 @@
 				var ParaSectPr = oDocument.Content[ContentIndex].Get_SectionPr();
 				if (ParaSectPr)
 				{
-					var NewParaSectPr = new CSectionPr();
+					var NewParaSectPr = new AscWord.SectPr();
 					NewParaSectPr.Copy(ParaSectPr, true);
 					LogicDocument.Content[OverallIndex - 1].Set_SectionPr(NewParaSectPr, false);
 				}
@@ -6796,10 +6796,8 @@
 			return null;
 		}
 
-		var oSectPr = new CSectionPr(this.Document);
-
-		var nContentPos = oParagraph.Paragraph.GetIndex();
-		var oCurSectPr = this.Document.SectionsInfo.Get_SectPr(nContentPos).SectPr;
+		var oSectPr = new AscWord.SectPr(this.Document);
+		var oCurSectPr = this.Document.SectionsInfo.GetSectPrByElement(oParagraph.Paragraph).SectPr;
 
 		oSectPr.Copy(oCurSectPr);
 		oCurSectPr.Set_Type(oSectPr.Type);
@@ -9069,7 +9067,7 @@
 	/**
 	 * Adds a math equation to the current document.
 	 * @param sText {string} - An equation written as a linear text string.
-	 * @param {"unicode" | "latex"} [sFormat="unicode"] - The format of the specified linear representation.
+	 * @param {"unicode" | "latex" | "mathml"} [sFormat="unicode"] - The format of the specified linear representation.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -9087,15 +9085,34 @@
 		logicDocument.RemoveBeforePaste();
 		logicDocument.RemoveSelection();
 		let mathPr = new AscCommonWord.MathMenu(c_oAscMathType.Default_Text, logicDocument.GetDirectTextPr());
-		mathPr.SetText(text);
+		
+
+		let mathformat = null;
+		switch (format) {
+			case 'latex':
+				mathformat = Asc.c_oAscMathInputType.LaTeX;
+				break;
+			case 'unicode':
+				mathformat = Asc.c_oAscMathInputType.Unicode;
+				break;
+			case 'mathml':
+				mathformat = Asc.c_oAscMathInputType.MathML;
+				break;
+			default:
+				mathformat = Asc.c_oAscMathInputType.LaTeX;
+				break;
+		}
+
+		mathPr.SetText(mathformat === Asc.c_oAscMathInputType.MathML ? "" : text);
+
 		logicDocument.AddToParagraph(mathPr);
 		
 		let info = logicDocument.GetSelectedElementsInfo();
 		let paraMath = info.GetMath();
 		if (!paraMath)
 			return false;
-		
-		paraMath.ConvertView(false, "latex" === format ? Asc.c_oAscMathInputType.LaTeX : Asc.c_oAscMathInputType.Unicode);
+
+		paraMath.ConvertView(false, mathformat, text);
 		return true;
 	};
 
@@ -9119,7 +9136,7 @@
 
 		aDrawings.forEach(function(drawing) { drawing.Drawing.recalculate(); })
 		aDrawings.forEach(function(drawing) {
-			oGraphicObjects.selectObject(drawing.Drawing, drawing.Drawing.Get_AbsolutePage());
+			oGraphicObjects.selectObject(drawing.Drawing, drawing.Drawing.GetAbsolutePage());
 		});
 		
 		let canGroup = oGraphicObjects.canGroup();
@@ -11211,8 +11228,7 @@
 			return false;
 
 		let oSectPr = oSection.Section;
-		let nContentPos = this.Paragraph.GetIndex();
-		let oCurSectPr = oDoc.SectionsInfo.Get_SectPr(nContentPos).SectPr;
+		let oCurSectPr = oDoc.SectionsInfo.GetSectPrByElement(this.Paragraph).SectPr;
 
 		oCurSectPr.Set_Type(oSectPr.Type);
 		oCurSectPr.SetPageNumStart(-1);
@@ -12207,7 +12223,7 @@
 		var aCols = [];
 		for (var nPos = 0, nCount = aWidths.length; nPos < nCount; ++nPos)
 		{
-			var SectionColumn   = new CSectionColumn();
+			var SectionColumn   = new AscWord.SectionColumn();
 			SectionColumn.W     = private_Twips2MM(aWidths[nPos]);
 			SectionColumn.Space = private_Twips2MM(nPos !== nCount - 1 ? aSpaces[nPos] : 0);
 			aCols.push(SectionColumn);
@@ -19311,7 +19327,7 @@
 		let oGraphicObjects = oDoc.getDrawingObjects();
 
 		oGraphicObjects.resetSelection();
-		oGraphicObjects.selectObject(this.Drawing, this.Drawing.Get_AbsolutePage())
+		oGraphicObjects.selectObject(this.Drawing, this.Drawing.GetAbsolutePage())
 		
 		let canUngroup = oGraphicObjects.canUnGroup();
 		if (!canUngroup) {

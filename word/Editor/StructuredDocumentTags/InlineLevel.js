@@ -454,7 +454,7 @@ CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _C
 			Y            : Y0,
 			H            : Y1 - Y0,
 			TextLineH    : Y1 - Y0,
-			Page         : PRSA.Paragraph.Get_AbsolutePage(_CurPage),
+			Page         : PRSA.Paragraph.GetAbsolutePage(_CurPage),
 			PageInternal : _CurPage
 		};
 	}
@@ -1124,7 +1124,7 @@ CInlineLevelSdt.prototype.GetBoundingPolygon = function(shift)
 	var oHdrFtr     = this.Paragraph.Parent.IsHdrFtr(true);
 	var nHdrFtrPage = oHdrFtr ? oHdrFtr.GetContent().GetAbsolutePage(0) : null;
 
-	var StartPage = this.Paragraph.Get_StartPage_Absolute();
+	var StartPage = this.Paragraph.GetAbsoluteStartPage();
 	if (null === this.BoundsPaths || StartPage !== this.BoundsPathsStartPage || shift !== this.BoundsShift)
 	{
 		var arrBounds = [], arrRects = [], CurPage = -1, isAllEmpty = true;

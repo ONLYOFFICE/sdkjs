@@ -247,16 +247,16 @@
             this.parent.OnContentReDraw();
         }
     };
-    CTextBody.prototype.Get_StartPage_Absolute = function() {
+    CTextBody.prototype.GetAbsoluteStartPage = function() {
         return 0;//TODO;
     };
-    CTextBody.prototype.Get_AbsolutePage = function(CurPage) {
-        if(this.parent && this.parent.Get_AbsolutePage) {
-            return this.parent.Get_AbsolutePage(CurPage);
+    CTextBody.prototype.GetAbsolutePage = function(CurPage) {
+        if(this.parent && this.parent.GetAbsolutePage) {
+            return this.parent.GetAbsolutePage(CurPage);
         }
         return 0;//TODO;
     };
-    CTextBody.prototype.Get_AbsoluteColumn = function(CurPage) {
+    CTextBody.prototype.GetAbsoluteColumn = function(CurPage) {
         return 0;//TODO;
     };
     CTextBody.prototype.Get_TextBackGroundColor = function() {
@@ -277,7 +277,10 @@
 
         return false;
     };
-    CTextBody.prototype.Get_PageContentStartPos = function(pageNum) {
+    CTextBody.prototype.GetPageContentFrame = function(page, sectPr){
+        return {X: 0, Y: 0, XLimit: this.contentWidth, YLimit: 20000};
+    };
+    CTextBody.prototype.GetColumnContentFrame = function(page, column, sectPr){
         return {X: 0, Y: 0, XLimit: this.contentWidth, YLimit: 20000};
     };
     CTextBody.prototype.Get_Numbering = function() {

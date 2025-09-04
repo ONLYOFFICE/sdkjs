@@ -427,7 +427,7 @@
 	};
 	/**
 	 * Запоминаем секцию, на которой закончилось выделение (если оно было в основной части документа)
-	 * @param {CSectionPr} oSectPr
+	 * @param {AscWord.SectPr} oSectPr
 	 */
 	CSelectedContent.prototype.SetLastSection = function(oSectPr)
 	{
@@ -435,7 +435,7 @@
 	};
 	/**
 	 * Получаем секцию, на которой закончилось выделение
-	 * @returns {null|CSectionPr}
+	 * @returns {null | AscWord.SectPr}
 	 */
 	CSelectedContent.prototype.GetLastSection = function()
 	{

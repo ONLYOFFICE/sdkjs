@@ -1410,7 +1410,7 @@ void main() {\n\
     PdfPageMatch.prototype = Object.create(Array.prototype);
     PdfPageMatch.prototype.constructor = PdfPageMatch;
 
-    PdfPageMatch.prototype.Get_AbsolutePage = function() {
+    PdfPageMatch.prototype.GetAbsolutePage = function() {
         if (this[0])
             return this[0].PageNum;
         return -1;

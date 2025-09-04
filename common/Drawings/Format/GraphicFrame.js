@@ -722,11 +722,11 @@
 		}
 	};
 
-	CGraphicFrame.prototype.Get_AbsolutePage = function (CurPage) {
-		return this.Get_StartPage_Absolute();
+	CGraphicFrame.prototype.GetAbsolutePage = function (CurPage) {
+		return this.GetAbsoluteStartPage();
 	};
 
-	CGraphicFrame.prototype.Get_AbsoluteColumn = function (CurPage) {
+	CGraphicFrame.prototype.GetAbsoluteColumn = function (CurPage) {
 		return 0;
 	};
 
@@ -974,8 +974,11 @@
 			return this.Get_Styles(0);
 		}
 	};
-
-	CGraphicFrame.prototype.Get_PageContentStartPos = function (PageNum) {
+	
+	CGraphicFrame.prototype.GetPageContentFrame = function(page, sectPr){
+		return this.GetColumnContentFrame(page, 0, sectPr);
+	};
+	CGraphicFrame.prototype.GetColumnContentFrame = function(page, column, sectPr){
 		var presentation = editor.WordControl.m_oLogicDocument;
 		return {
 			X: 0,
@@ -985,11 +988,6 @@
 			MaxTopBorder: 0
 		};
 
-
-	};
-
-	CGraphicFrame.prototype.Get_PageContentStartPos2 = function () {
-		return this.Get_PageContentStartPos();
 	};
 
 	CGraphicFrame.prototype.Refresh_RecalcData = function () {
@@ -1224,6 +1222,9 @@
 	};
 	CGraphicFrame.prototype.Get_ShapeStyleForPara = function () {
 		return null;
+	};
+	CGraphicFrame.prototype.IsAllowSectionBreak = function () {
+		return false;
 	};
 
 	CGraphicFrame.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate, oMapPaired) {

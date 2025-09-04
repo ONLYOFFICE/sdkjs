@@ -16411,7 +16411,7 @@
 							let isCycleCell = false;
 
 							foreachRefElements(function (range) {
-								if (range.bbox.contains(t.nCol, t.nRow)) {
+								if (range.bbox.contains(t.nCol, t.nRow) && range.worksheet.getName() === t.ws.getName()) {
 									if (!parsed.ca) {
 										parsed.ca = true;
 									}

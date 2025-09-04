@@ -2185,6 +2185,16 @@ $(function () {
 		ws.getRange2("A1133").setValue("=OFFSET(A1132,0,0)");
 		assert.strictEqual(ws.getRange2("A1133").getValue(), "5", "Test: Formula OFFSET isn't recursive cell with disabled setting. A1133 - 5");
 		assert.strictEqual(ws.getRange2("A1132").getValue(), "5", "Test: Formula OFFSET isn't recursive cell with disabled setting. A1132 - 5");
+		// - Case: Formula INDIRECT Ref3D isn't recursive cell with disabled setting. Bug-76318
+		ws2 = wb.createWorksheet(0, "Sheet2");
+		ws2.getRange2("A1134").setValue('=INDIRECT("Sheet1!A1134")');
+		ws.getRange2("A1134").setValue("123");
+		assert.strictEqual(ws2.getRange2("A1134").getValue(), "123", "Test: Formula INDIRECT Ref3D isn't recursive cell with disabled setting. Bug-76318. A1134 - 123");
+		oCell = selectCell("A1134", ws2);
+		bCellHasRecursion = !!getStartCellForIterCalc(oCell);
+		assert.strictEqual(bCellHasRecursion, false, "Test: Formula INDIRECT Ref3D isn't recursive cell with disabled setting. Bug-76318. A1134 - false");
+		bCellHasRecursion = null;
+		wb.removeWorksheet(0);
 		// -- Test changeLinkedCell method.
 		oCell = selectCell("A1000");
 		let oCellNeedEnableRecalc = selectCell("B1000");

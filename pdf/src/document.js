@@ -7119,10 +7119,10 @@ var CPresentation = CPresentation || function(){};
 	CPDFDoc.prototype.IsActionStarted = function() {
 		return this.Action.Start;
 	};
-    CPDFDoc.prototype.Get_AbsolutePage = function () {
+    CPDFDoc.prototype.GetAbsolutePage = function () {
         return 0;
     };
-    CPDFDoc.prototype.Get_AbsoluteColumn = function () {
+    CPDFDoc.prototype.GetAbsoluteColumn = function () {
         return 0;
     };
     CPDFDoc.prototype.GetPrevElementEndInfo = function (CurElement) {

@@ -8818,6 +8818,9 @@ var editor;
 
 	spreadsheet_api.prototype.onWorksheetChange = function(props) {
 		let ws = this.wbModel.getActiveWs();
+		if (!ws) {
+			return;
+		}
 		let range = null;
 		let result = null;
 		if (Array.isArray(props)) {

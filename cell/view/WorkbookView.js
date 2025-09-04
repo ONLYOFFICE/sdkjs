@@ -7620,6 +7620,9 @@
 		if (!this._checkDesktop()) {
 			return;
 		}
+		if (!this.externalFormulaEditMode) {
+			return;
+		}
 
 		if (!this.supportVisibilityChangeOption) {
 			this.clean();

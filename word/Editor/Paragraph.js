@@ -80,7 +80,7 @@ function Paragraph(Parent, bFromPresentation)
     this.TextPr.Parent = this;
 
     // Настройки секции
-    this.SectPr = undefined; // undefined или CSectionPr
+    this.SectPr = undefined; // undefined или AscWord.SectPr
 
     this.Bounds = new CDocumentBounds(0, 0, 0, 0);
 
@@ -357,7 +357,7 @@ Paragraph.prototype.Copy = function(Parent, DrawingDocument, oPr)
 			oLogicDocument = oPr.Comparison.originalDocument;
 			bCopyHdrFtr = true;
 		}
-		var SectPr = new CSectionPr(oLogicDocument);
+		var SectPr = new AscWord.SectPr(oLogicDocument);
 		SectPr.Copy(this.SectPr, bCopyHdrFtr, oPr);
 		Para.Set_SectionPr(SectPr);
 	}
@@ -762,7 +762,7 @@ Paragraph.prototype.getColorMap = function()
 {
 	return this.GetColorMap();
 };
-Paragraph.prototype.Reset = function(X, Y, XLimit, YLimit, PageNum, ColumnNum, ColumnsCount)
+Paragraph.prototype.Reset = function(X, Y, XLimit, YLimit, PageNum, ColumnNum, ColumnsCount, sectionIndex, sectPr)
 {
 	this.X      = X;
 	this.Y      = Y;
@@ -775,13 +775,16 @@ Paragraph.prototype.Reset = function(X, Y, XLimit, YLimit, PageNum, ColumnNum, C
 	this.PageNum      = PageNum;
 	this.ColumnNum    = ColumnNum ? ColumnNum : 0;
 	this.ColumnsCount = ColumnsCount ? ColumnsCount : 1;
-
+	this.SectionNum   = sectionIndex ? sectionIndex : 0;
+	
 	// При первом пересчете параграфа this.Parent.RecalcInfo.Can_RecalcObject() всегда будет true, а вот при повторных
 	// уже нет Кроме случая, когда параграф меняет свое местоположение на страницах и колонках
 	if (true === this.Parent.RecalcInfo.Can_RecalcObject() || ColumnNumOld !== this.ColumnNum || PageNumOld !== this.PageNum)
 	{
 		this.private_RecalculateColumnLimits();
 	}
+	
+	this.ResetSection(X, Y, XLimit, YLimit, PageNum, sectionIndex, sectPr);
 };
 Paragraph.prototype.private_RecalculateColumnLimits = function()
 {
@@ -2315,7 +2318,7 @@ Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawStat
 	var _Page = this.Pages[CurPage];
 
 	var DocumentComments = LogicDocument && LogicDocument.Comments;
-	var Page_abs         = this.Get_AbsolutePage(CurPage);
+	var Page_abs         = this.GetAbsolutePage(CurPage);
 
 	var SdtHighlightColor  = LogicDocument && this.LogicDocument.GetSdtGlobalShowHighlight && this.LogicDocument.GetSdtGlobalShowHighlight() ? this.LogicDocument.GetSdtGlobalColor() : null;
 	var FormsHighlight     = LogicDocument && this.LogicDocument.GetSpecialFormsHighlight && this.LogicDocument.GetSpecialFormsHighlight() ? this.LogicDocument.GetSpecialFormsHighlight() : null;
@@ -3830,7 +3833,7 @@ Paragraph.prototype.Is_NeedDrawBorders = function()
 };
 Paragraph.prototype.ReDraw = function()
 {
-	this.Parent.OnContentReDraw(this.Get_AbsolutePage(0), this.Get_AbsolutePage(this.Pages.length - 1));
+	this.Parent.OnContentReDraw(this.GetAbsolutePage(0), this.GetAbsolutePage(this.Pages.length - 1));
 };
 Paragraph.prototype.Shift = function(CurPage, Dx, Dy)
 {
@@ -4821,7 +4824,7 @@ Paragraph.prototype.Add_Tab = function(bShift)
 		if (nDefaultTabStop < 0.001)
 			return;
 
-		var LD_PageFields = this.LogicDocument.Get_PageFields(this.Get_AbsolutePage(0), this.Parent && this.Parent.IsHdrFtr());
+		var LD_PageFields = this.LogicDocument.Get_PageFields(this.GetAbsolutePage(0), this.Parent && this.Parent.IsHdrFtr());
 
 		var nLeft  = ParaPr.Ind.Left;
 		var nFirst = ParaPr.Ind.FirstLine;
@@ -8648,7 +8651,7 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage, clipInfo)
 	if (CurPage < 0 || CurPage >= this.Pages.length)
 		return;
 
-	var PageAbs = this.private_GetAbsolutePageIndex(CurPage);
+	var PageAbs = this.GetAbsolutePage(CurPage);
 
 	if (0 === CurPage && this.Pages[0].EndLine < 0)
 		return;
@@ -9212,7 +9215,7 @@ Paragraph.prototype.GetSelectionBounds = function()
 			Y    : _StartY === null ? this.Pages[StartPage].Y : _StartY,
 			W    : 0,
 			H    : 0,
-			Page : this.Get_AbsolutePage(StartPage)
+			Page : this.GetAbsolutePage(StartPage)
 		};
 	}
 
@@ -9223,7 +9226,7 @@ Paragraph.prototype.GetSelectionBounds = function()
 			Y    : _EndY === null ? this.Pages[StartPage].Y : _EndY,
 			W    : 0,
 			H    : 0,
-			Page : this.Get_AbsolutePage(EndPage)
+			Page : this.GetAbsolutePage(EndPage)
 		};
 	}
 	
@@ -9247,7 +9250,7 @@ Paragraph.prototype.GetSelectDirection = function()
 };
 Paragraph.prototype.GetSelectionAnchorPos = function()
 {
-	var X0 = this.X, X1 = this.XLimit, Y = this.Y, Page = this.Get_AbsolutePage(0);
+	var X0 = this.X, X1 = this.XLimit, Y = this.Y, Page = this.GetAbsolutePage(0);
 	if (true === this.ApplyToAll)
 	{
 		// Ничего не делаем
@@ -9321,7 +9324,7 @@ Paragraph.prototype.GetSelectionAnchorPos = function()
 						X1 = _x + _w;
 						Y  = _y;
 						
-						Page = this.Get_AbsolutePage(iPage);
+						Page = this.GetAbsolutePage(iPage);
 						
 						if (null === Result)
 							Result = {X0 : X0, X1 : X1, Y : Y, Page : Page};
@@ -9346,7 +9349,7 @@ Paragraph.prototype.GetSelectionAnchorPos = function()
 		X0   = this.CurPos.X;
 		X1   = this.CurPos.X;
 		Y    = this.CurPos.Y;
-		Page = this.Get_AbsolutePage(this.CurPos.PagesPos);
+		Page = this.GetAbsolutePage(this.CurPos.PagesPos);
 	}
 
 	return {X0 : X0, X1 : X1, Y : Y, Page : Page};
@@ -9533,7 +9536,7 @@ Paragraph.prototype.GetSelectedContent = function(oSelectedContent)
 			// Добавляем секцию в конце
 			if (undefined !== this.SectPr)
 			{
-				var SectPr = new CSectionPr(this.SectPr.LogicDocument);
+				var SectPr = new AscWord.SectPr(this.SectPr.LogicDocument);
 				SectPr.Copy(this.SectPr);
 				oPara.Set_SectionPr(SectPr);
 			}
@@ -12208,9 +12211,9 @@ Paragraph.prototype.Get_Layout = function(ContentPos, Drawing)
 			var CurPage = DrawingLayout.Page;
 			var Drawing = DrawingLayout.Drawing;
 
-			var PageAbs   = this.Get_AbsolutePage(CurPage);
-			var ColumnAbs = this.Get_AbsoluteColumn(CurPage);
-			var PageRel   = PageAbs - this.Parent.Get_AbsolutePage(0);
+			var PageAbs   = this.GetAbsolutePage(CurPage);
+			var ColumnAbs = this.GetAbsoluteColumn(CurPage);
+			var PageRel   = PageAbs - this.Parent.GetAbsolutePage(0);
 
 			var PageLimits = this.Parent.Get_PageLimits(PageRel);
 			var PageFields = this.Parent.Get_PageFields(PageRel, isInHdrFtr);
@@ -12249,7 +12252,7 @@ Paragraph.prototype.Get_Layout = function(ContentPos, Drawing)
 			}
 
 			var ParagraphTop = (true != Drawing.Use_TextWrap() ? this.Lines[this.Pages[_CurPage].StartLine].Top + this.Pages[_CurPage].Y : this.Pages[_CurPage].Y);
-			var Layout       = new CParagraphLayout(DrawingLayout.X, DrawingLayout.Y, this.Get_AbsolutePage(CurPage), DrawingLayout.LastW, ColumnStartX, ColumnEndX, X_Left_Margin, X_Right_Margin, Page_Width, Top_Margin, Bottom_Margin, Page_H, PageFields.X, PageFields.Y, this.Pages[CurPage].Y + this.Lines[CurLine].Y - this.Lines[CurLine].Metrics.Ascent, ParagraphTop);
+			var Layout       = new CParagraphLayout(DrawingLayout.X, DrawingLayout.Y, this.GetAbsolutePage(CurPage), DrawingLayout.LastW, ColumnStartX, ColumnEndX, X_Left_Margin, X_Right_Margin, Page_Width, Top_Margin, Bottom_Margin, Page_H, PageFields.X, PageFields.Y, this.Pages[CurPage].Y + this.Lines[CurLine].Y - this.Lines[CurLine].Metrics.Ascent, ParagraphTop);
 			return {ParagraphLayout : Layout, PageLimits : PageLimits, PageLimitsOrigin : PageLimitsOrigin};
 		}
 	}
@@ -12302,17 +12305,17 @@ Paragraph.prototype.IsContentOnFirstPage = function()
 
 	return true;
 };
-Paragraph.prototype.Get_CurrentPage_Absolute = function()
+Paragraph.prototype.GetAbsoluteCurrentPage = function()
 {
 	// Обновляем позицию
 	this.Internal_Recalculate_CurPos(true, false, false);
-	return this.private_GetAbsolutePageIndex(this.CurPos.PagesPos);
+	return this.GetAbsolutePage(this.CurPos.PagesPos);
 };
-Paragraph.prototype.Get_CurrentPage_Relative = function()
+Paragraph.prototype.GetRelativeCurrentPage = function()
 {
 	// Обновляем позицию
 	this.Internal_Recalculate_CurPos(true, false, false);
-	return this.private_GetRelativePageIndex(this.CurPos.PagesPos);
+	return this.GetRelativePage(this.CurPos.PagesPos);
 };
 Paragraph.prototype.CollectDocumentStatistics = function(Stats)
 {
@@ -12379,7 +12382,7 @@ Paragraph.prototype.UpdateCursorType = function(X, Y, CurPage)
 	CurPage            = Math.max(0, Math.min(CurPage, this.Pages.length - 1));
 	var text_transform = this.Get_ParentTextTransform();
 	var MMData         = new AscCommon.CMouseMoveData();
-	var Coords         = drawingDocument.ConvertCoordsToCursorWR(X, Y, this.Get_AbsolutePage(CurPage), text_transform);
+	var Coords         = drawingDocument.ConvertCoordsToCursorWR(X, Y, this.GetAbsolutePage(CurPage), text_transform);
 	MMData.X_abs       = Coords.X;
 	MMData.Y_abs       = Coords.Y;
 
@@ -12453,7 +12456,7 @@ Paragraph.prototype.UpdateCursorType = function(X, Y, CurPage)
 		var _Y = this.Pages[CurPage].Y;
 
 		var MMData              = new AscCommon.CMouseMoveData();
-		var Coords              = drawingDocument.ConvertCoordsToCursorWR(_X, _Y, this.Get_AbsolutePage(CurPage), text_transform);
+		var Coords              = drawingDocument.ConvertCoordsToCursorWR(_X, _Y, this.GetAbsolutePage(CurPage), text_transform);
 		MMData.X_abs            = Coords.X - 5;
 		MMData.Y_abs            = Coords.Y;
 		MMData.Type             = Asc.c_oAscMouseMoveDataTypes.LockedObject;
@@ -12530,7 +12533,7 @@ Paragraph.prototype.Document_UpdateRulersState = function()
 			T         : oFrame.T2,
 			R         : oFrame.L2 + oFrame.W2,
 			B         : oFrame.T2 + oFrame.H2,
-			PageIndex : this.GetStartPageAbsolute(),
+			PageIndex : this.GetAbsoluteStartPage(),
 			Frame     : this
 		}, false);
 	}
@@ -14137,14 +14140,15 @@ Paragraph.prototype.Refresh_RecalcData = function(Data)
 		}
 		case AscDFH.historyitem_Paragraph_SectionPr:
 		{
-			if (this.Parent instanceof CDocument)
+			let logicDocument = this.GetLogicDocument();
+			if (logicDocument instanceof AscWord.Document)
 			{
-				this.Parent.UpdateContentIndexing();
-				var nSectionIndex = this.Parent.GetSectionIndexByElementIndex(this.GetIndex());
-				var oFirstElement = this.Parent.GetFirstElementInSection(nSectionIndex);
+				let documentSections = logicDocument.GetSections();
+				let sectionIndex     = documentSections.GetIndexByElement(this);
+				let firstParagraph   = -1 !== sectionIndex ? documentSections.GetFirstParagraph(sectionIndex) : null;
 
-				if (oFirstElement)
-					this.Parent.Refresh_RecalcData2(oFirstElement.GetIndex(), oFirstElement.private_GetRelativePageIndex(0));
+				if (firstParagraph)
+					this.Parent.Refresh_RecalcData2(firstParagraph.GetIndex(), firstParagraph.GetRelativePage(0));
 			}
 
 			break;
@@ -14181,7 +14185,7 @@ Paragraph.prototype.Refresh_RecalcData2 = function(CurPage)
 
 	// Если Index < 0, значит данный элемент еще не был добавлен в родительский класс
 	if (this.Index >= 0)
-		this.Parent.Refresh_RecalcData2(this.Index, this.private_GetRelativePageIndex(CurPage));
+		this.Parent.Refresh_RecalcData2(this.Index, this.GetRelativePage(CurPage));
 };
 //----------------------------------------------------------------------------------------------------------------------
 // Функции для совместного редактирования
@@ -14888,8 +14892,12 @@ Paragraph.prototype.IgnoreMisspelledWord = function(oElement)
 };
 Paragraph.prototype.CanAddSectionPr = function()
 {
-	let oParent = this.Parent;
-	return (oParent && (oParent.GetTopDocumentContent() instanceof CDocument) && !oParent.IsTableCellContent() && this.IsUseInDocument());
+	let logicDocument = this.GetLogicDocument();
+	return (logicDocument
+		&& logicDocument.IsDocumentEditor()
+		&& this.IsUseInDocument()
+		&& !this.IsTableCellContent()
+		&& this.GetTopDocumentContent() === logicDocument);
 };
 //----------------------------------------------------------------------------------------------------------------------
 // Search
@@ -15098,7 +15106,9 @@ Paragraph.prototype.Get_SectionPr = function()
 Paragraph.prototype.Set_SectionPr = function(sectPr, update)
 {
 	let logicDocument = this.GetLogicDocument();
-	if (logicDocument && logicDocument !== this.GetParent() && true !== this.LogicDocument.ForceCopySectPr)
+	if (logicDocument
+		&& logicDocument !== this.GetTopDocumentContent()
+		&& true !== this.LogicDocument.ForceCopySectPr)
 		return;
 	
 	if (sectPr === this.SectPr)
@@ -15109,13 +15119,33 @@ Paragraph.prototype.Set_SectionPr = function(sectPr, update)
 	
 	AscCommon.History.Add(new CChangesParagraphSectPr(this, oldSectPr, sectPr));
 	
-	if (logicDocument && false !== update)
-		logicDocument.UpdateSectionInfo(oldSectPr, sectPr, true);
+	if (false !== update)
+		this.UpdateSectionInfo(oldSectPr, true);
 	
 	// TODO: Когда избавимся от ParaEnd переделать тут
 	let paraEndRun = this.GetParaEndRun();
 	if (paraEndRun)
 		paraEndRun.RecalcMeasure();
+};
+/**
+ * Обновляем информацию о заданной секции
+ * @param prevSectPr {AscWord.SectPr} - Если не задано, значит добавляется новая секция
+ * @param checkHdrFtr {boolean} - Проверять ли колонтитулы при удалении секции
+ */
+Paragraph.prototype.UpdateSectionInfo = function(prevSectPr, checkHdrFtr)
+{
+	if (prevSectPr === this.SectPr)
+		return;
+	
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument
+		|| !logicDocument.IsDocumentEditor()
+		|| !this.IsUseInDocument()
+		|| this.IsTableCellContent()
+		|| this.GetTopDocumentContent() !== logicDocument)
+		return;
+	
+	logicDocument.GetSections().UpdateSection(this, prevSectPr, checkHdrFtr);
 };
 Paragraph.prototype.SetSectionPr = function(sectPr, isUpdate)
 {
@@ -15654,11 +15684,21 @@ Paragraph.prototype.Get_SectPr = function()
 };
 /**
  * Получаем секцию, в которой лежит заданный параграф
- * @returns  {?CSectionPr}
+ * @returns  {?AscWord.SectPr}
  */
 Paragraph.prototype.GetDocumentSectPr = function()
 {
 	return this.Get_SectPr();
+};
+Paragraph.prototype.GetAllSectPrParagraphs = function(paragraphs)
+{
+	if (!paragraphs)
+		paragraphs = [];
+	
+	if (this.Get_SectionPr())
+		paragraphs.push(this);
+	
+	return paragraphs;
 };
 Paragraph.prototype.CheckRevisionsChanges = function(oRevisionsManager)
 {
@@ -16256,7 +16296,7 @@ Paragraph.prototype.Check_EmptyPages = function(CurPage, bSkipEmptyLinesWithBrea
 Paragraph.prototype.Get_CurrentColumn = function(CurPage)
 {
     this.Internal_Recalculate_CurPos(true, false, false);
-    return this.Get_AbsoluteColumn(this.CurPos.PagesPos);
+    return this.GetAbsoluteColumn(this.CurPos.PagesPos);
 };
 Paragraph.prototype.private_RefreshNumbering = function(NumPr)
 {
@@ -17645,7 +17685,7 @@ Paragraph.prototype.GetFirstNonEmptyPageAbsolute = function()
 		nCurPage++;
 	}
 
-	return this.Get_AbsolutePage(nCurPage);
+	return this.GetAbsolutePage(nCurPage);
 };
 /**
  * Удаляем все кроме первого таба в параграфе.

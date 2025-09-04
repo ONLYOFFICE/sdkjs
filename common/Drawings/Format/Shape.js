@@ -3441,7 +3441,7 @@
 											}
 											this.extY *= oParaDrawing.SizeRelV.Percent;
 										}
-										this.m_oSectPr = new CSectionPr();
+										this.m_oSectPr = new AscWord.SectPr();
 										this.m_oSectPr.Copy(oSectPr);
 									}
 								}
@@ -3833,7 +3833,7 @@
 					if (oParentParagraph) {
 						var oSectPr = oParentParagraph.Get_SectPr();
 						if (oSectPr) {
-							this.m_oSectPr = new CSectionPr();
+							this.m_oSectPr = new AscWord.SectPr();
 							this.m_oSectPr.Copy(oSectPr);
 						}
 					}
@@ -3908,7 +3908,7 @@
 			return isRotated;
 		};
 		CShape.prototype.recalculateDocContent = function (oDocContent, oBodyPr) {
-			let nStartPage = this.Get_AbsolutePage ? this.Get_AbsolutePage() : 0;
+			let nStartPage = this.GetAbsolutePage ? this.GetAbsolutePage() : 0;
 			let oRet = {w: 0, h: 0, contentH: 0};
 			let oInsets = this.getInsets({bIgnoreInsets: false, bodyPr: oBodyPr});
 			const oForm = this.isForm && this.isForm() ? this.getInnerForm() : null;
@@ -3935,7 +3935,7 @@
 								} else {
 									dMaxWidth = oSectPr.GetContentFrameHeight();
 								}
-								this.m_oSectPr = new CSectionPr();
+								this.m_oSectPr = new AscWord.SectPr();
 								this.m_oSectPr.Copy(oSectPr);
 							}
 						}
@@ -4045,7 +4045,7 @@
 						if (oParentParagraph) {
 							var oSectPr = oParentParagraph.Get_SectPr();
 							if (oSectPr) {
-								this.m_oSectPr = new CSectionPr();
+								this.m_oSectPr = new AscWord.SectPr();
 								this.m_oSectPr.Copy(oSectPr);
 							}
 						}
@@ -5248,12 +5248,12 @@
 					}
 				}
 				if (!(/*content.IsTextSelectionUse() && */e.ShiftKey))
-					content.Selection_SetStart(tx, ty, slideIndex - content.Get_StartPage_Relative(), e);
+					content.Selection_SetStart(tx, ty, slideIndex - content.GetRelativeStartPage(), e);
 				else {
 					if (!content.IsTextSelectionUse()) {
 						content.StartSelectionFromCurPos();
 					}
-					content.Selection_SetEnd(tx, ty, slideIndex - content.Get_StartPage_Relative(), e);
+					content.Selection_SetEnd(tx, ty, slideIndex - content.GetRelativeStartPage(), e);
 				}
 			}
 		};
@@ -5268,7 +5268,7 @@
 				tx = this.invertTransformText.TransformPointX(x, y);
 				ty = this.invertTransformText.TransformPointY(x, y);
 				if (!(e.Type === AscCommon.g_mouse_event_type_up && this.rightButtonFlag)) {
-					content.Selection_SetEnd(tx, ty, slideIndex - content.Get_StartPage_Relative(), e);
+					content.Selection_SetEnd(tx, ty, slideIndex - content.GetRelativeStartPage(), e);
 				}
 			}
 			delete this.rightButtonFlag;
@@ -5553,7 +5553,7 @@
 					this.drawTxBody(graphics, transform, _transform_text, pageIndex);
 
 					if (this.textBoxContent && graphics.isSupportTextDraw() && this.transformText) {
-						var old_start_page = this.textBoxContent.Get_StartPage_Relative();
+						var old_start_page = this.textBoxContent.GetRelativeStartPage();
 						this.textBoxContent.Set_StartPage(pageIndex);
 
 						graphics.SaveGrState();
@@ -5595,7 +5595,7 @@
 					} else {
 
 						var oContent = this.getDocContent();
-						var result_page_index = AscFormat.isRealNumber(graphics.shapePageIndex) ? graphics.shapePageIndex : (oContent ? oContent.Get_StartPage_Relative() : 0);
+						var result_page_index = AscFormat.isRealNumber(graphics.shapePageIndex) ? graphics.shapePageIndex : (oContent ? oContent.GetRelativeStartPage() : 0);
 						graphics.PageNum = result_page_index;
 						var bNeedRestoreState = false;
 						if (this.bWordShape && this.clipRect /*&& (!this.bodyPr.prstTxWarp || this.bodyPr.prstTxWarp.preset === "textNoShape" || bEditTextArt)*/) {
@@ -6618,8 +6618,12 @@
 				}
 			}
 		};
-
-		CShape.prototype.Get_PageContentStartPos = function (pageNum) {
+		
+		CShape.prototype.GetPageContentFrame = function(page, sectPr){
+			return this.GetColumnContentFrame(page, 0, sectPr);
+		};
+		
+		CShape.prototype.GetColumnContentFrame = function(page, column, sectPr){
 			if (this.textBoxContent) {
 				if (this.getTextRect) {
 					var rect = this.getTextRect();
@@ -6670,7 +6674,7 @@
 				warpGeometry && warpGeometry.Recalculate(dWidth, dHeight);
 				this.recalcInfo.warpGeometry = warpGeometry;
 				var bCheckWordArtContent = this.checkContentWordArt(oContent);
-				var bColumns = oContent.Get_ColumnsCount() > 1;
+				var bColumns = oContent.GetColumnCount() > 1;
 				var bContentRecalculated = false;
 				if (bTransform || bCheckWordArtContent) {
 					var bNeedRecalc = this.checkNeedRecalcDocContentForTxWarp(oBodyPr), dOneLineWidth,
