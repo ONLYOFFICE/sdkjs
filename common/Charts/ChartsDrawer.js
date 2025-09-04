@@ -12142,10 +12142,7 @@ drawPieChart.prototype = {
 			midAngle = startAngle + angle / 2;
 
 			// get the max possibble explosion value
-			maxExplosionValue = this._calculateSliceMaxExplodeDistance(xCenter, yCenter, radius, midAngle, {
-				x1: this.cChartSpace.extX * this.chartProp.pxToMM,
-				y1: this.cChartSpace.extY * this.chartProp.pxToMM
-			}, angle)
+			maxExplosionValue = this._calculateSliceMaxExplodeDistance(xCenter, yCenter, radius, midAngle, this.cChartSpace.extX * this.chartProp.pxToMM, this.cChartSpace.extY * this.chartProp.pxToMM, angle)
 
 			//get X and Y offset for explosion
 			//we substract Y, because in canvas Y axis is inverted
@@ -12195,7 +12192,7 @@ drawPieChart.prototype = {
 		return returnCache ? numCache : (numCache && numCache.pts);
 	},
 
-	_calculateSliceMaxExplodeDistance: function (cx, cy, r, theta, rect, alpha) {
+	_calculateSliceMaxExplodeDistance: function (cx, cy, r, theta, rectWidth, rectHeight, alpha) {
 		function normalize(a) {
 			a = a % (2*Math.PI);
 			return a < 0 ? a + 2*Math.PI : a;
@@ -12215,7 +12212,9 @@ drawPieChart.prototype = {
 			const specials = [0, Math.PI, Math.PI/2, 3*Math.PI/2];
 			for (let i = 0; i < specials.length; i++) {
 				const s = specials[i];
-				if (inArc(s, a1, a2)) cand.push(s);
+				if (inArc(s, a1, a2)) {
+					cand.push(s);
+				}
 			}
 
 			let minx=Infinity, maxx=-Infinity, miny=Infinity, maxy=-Infinity;
@@ -12230,17 +12229,16 @@ drawPieChart.prototype = {
 			return {minx, maxx, miny, maxy};
 		}
 
-		let x1 = rect.x1, y1 = rect.y1;
-		cy = y1 - cy; // flip Y to screen coords
+		cy = rectHeight - cy; // flip Y to screen coords
 
 		const result = sectorExtrema(r, theta, alpha);
 		const minx = result.minx, maxx = result.maxx, miny = result.miny, maxy = result.maxy;
 		const vx = Math.cos(theta), vy = Math.sin(theta);
 
 		const bounds = [];
-		if (vx >  0) bounds.push( (x1 - cx - maxx) / vx );
+		if (vx >  0) bounds.push( (rectWidth - cx - maxx) / vx );
 		if (vx <  0) bounds.push( (0 - cx - minx) / vx ); // note vx < 0 → result positive
-		if (vy >  0) bounds.push( (y1 - cy - maxy) / vy );
+		if (vy >  0) bounds.push( (rectHeight - cy - maxy) / vy );
 		if (vy <  0) bounds.push( (0 - cy - miny) / vy );
 
 		let minBound = Math.min.apply(Math, bounds);
@@ -14005,10 +14003,7 @@ drawDoughnutChart.prototype = {
 					midAngle = startAngle + angle / 2;
 
 					// get the max possibble explosion value
-					maxExplosionValue = this._calculateSliceMaxExplodeDistance(xCenter, yCenter, outRadius, midAngle, {
-						x1: this.cChartSpace.extX * this.chartProp.pxToMM,
-						y1: this.cChartSpace.extY * this.chartProp.pxToMM
-					}, angle)
+					maxExplosionValue = this._calculateSliceMaxExplodeDistance(xCenter, yCenter, outRadius, midAngle, this.cChartSpace.extX * this.chartProp.pxToMM, this.cChartSpace.extY * this.chartProp.pxToMM, angle)
 
 					//get X and Y offset for explosion
 					//we substract Y, because in canvas Y axis is inverted
@@ -14047,7 +14042,7 @@ drawDoughnutChart.prototype = {
 		}
 	},
 
-	_calculateSliceMaxExplodeDistance: function (cx, cy, r, theta, rect, alpha) {
+	_calculateSliceMaxExplodeDistance: function (cx, cy, r, theta, rectWidth, rectHeight, alpha) {
 		function normalize(a) {
 			a = a % (2*Math.PI);
 			return a < 0 ? a + 2*Math.PI : a;
@@ -14067,7 +14062,9 @@ drawDoughnutChart.prototype = {
 			const specials = [0, Math.PI, Math.PI/2, 3*Math.PI/2];
 			for (let i = 0; i < specials.length; i++) {
 				const s = specials[i];
-				if (inArc(s, a1, a2)) cand.push(s);
+				if (inArc(s, a1, a2)) {
+					cand.push(s);
+				}
 			}
 
 			let minx=Infinity, maxx=-Infinity, miny=Infinity, maxy=-Infinity;
@@ -14082,17 +14079,16 @@ drawDoughnutChart.prototype = {
 			return {minx, maxx, miny, maxy};
 		}
 
-		let x1 = rect.x1, y1 = rect.y1;
-		cy = y1 - cy; // flip Y to screen coords
+		cy = rectHeight - cy; // flip Y to screen coords
 
 		const result = sectorExtrema(r, theta, alpha);
 		const minx = result.minx, maxx = result.maxx, miny = result.miny, maxy = result.maxy;
 		const vx = Math.cos(theta), vy = Math.sin(theta);
 
 		const bounds = [];
-		if (vx >  0) bounds.push( (x1 - cx - maxx) / vx );
+		if (vx >  0) bounds.push( (rectWidth - cx - maxx) / vx );
 		if (vx <  0) bounds.push( (0 - cx - minx) / vx ); // note vx < 0 → result positive
-		if (vy >  0) bounds.push( (y1 - cy - maxy) / vy );
+		if (vy >  0) bounds.push( (rectHeight - cy - maxy) / vy );
 		if (vy <  0) bounds.push( (0 - cy - miny) / vy );
 
 		let minBound = Math.min.apply(Math, bounds);
