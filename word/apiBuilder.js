@@ -3655,6 +3655,32 @@
 	ApiGroup.prototype = Object.create(ApiDrawing.prototype);
 	ApiGroup.prototype.constructor = ApiGroup;
 
+
+	/**
+	 * Class representing shape geometry
+	 * @constructor
+	 */
+	function ApiGeometry(geometry) {
+		this.geometry = geometry;
+	}
+
+
+	/**
+	 * Class representing a path command
+	 * @constructor
+	 */
+	function ApiPathCommand(command) {
+		this.command = command;
+	}
+
+	/**
+	 * Class representing a path in geometry
+	 * @constructor
+	 */
+	function ApiPath(path, geometry) {
+		this.path = path;
+	}
+
 	/**
 	 * Class representing a chart series.
 	 * @constructor
@@ -4011,6 +4037,26 @@
 	 * @see office-js-api/Examples/Enumerations/DrawingLockType.js
 	 */
 
+
+
+
+	/**
+	 * Fill type for paths
+	 * @typedef {("none" | "norm" | "lighten" | "lightenLess" | "darken" | "darkenLess")} PathFillType
+	 * @see office-js-api/Examples/Enumerations/PathFillType.js
+	 */
+
+	/**
+	 * Preset shape types
+	 * @typedef {("line" | "lineInv" | "triangle" | "rtTriangle" | "rect" | "diamond" | "parallelogram" | "trapezoid" | "nonIsoscelesTrapezoid" | "pentagon" | "hexagon" | "heptagon" | "octagon" | "decagon" | "dodecagon" | "star4" | "star5" | "star6" | "star7" | "star8" | "star10" | "star12" | "star16" | "star24" | "star32" | "roundRect" | "round1Rect" | "round2SameRect" | "round2DiagRect" | "snipRoundRect" | "snip1Rect" | "snip2SameRect" | "snip2DiagRect" | "plaque" | "ellipse" | "teardrop" | "homePlate" | "chevron" | "pieWedge" | "pie" | "blockArc" | "donut" | "noSmoking" | "rightArrow" | "leftArrow" | "upArrow" | "downArrow" | "stripedRightArrow" | "notchedRightArrow" | "bentUpArrow" | "leftRightArrow" | "upDownArrow" | "leftUpArrow" | "leftRightUpArrow" | "quadArrow" | "leftArrowCallout" | "rightArrowCallout" | "upArrowCallout" | "downArrowCallout" | "leftRightArrowCallout" | "upDownArrowCallout" | "quadArrowCallout" | "bentArrow" | "uturnArrow" | "circularArrow" | "leftCircularArrow" | "leftRightCircularArrow" | "curvedRightArrow" | "curvedLeftArrow" | "curvedUpArrow" | "curvedDownArrow" | "swooshArrow" | "cube" | "can" | "lightningBolt" | "heart" | "sun" | "moon" | "smileyFace" | "irregularSeal1" | "irregularSeal2" | "foldedCorner" | "bevel" | "frame" | "halfFrame" | "corner" | "diagStripe" | "chord" | "arc" | "leftBracket" | "rightBracket" | "leftBrace" | "rightBrace" | "bracketPair" | "bracePair" | "straightConnector1" | "bentConnector2" | "bentConnector3" | "bentConnector4" | "bentConnector5" | "curvedConnector2" | "curvedConnector3" | "curvedConnector4" | "curvedConnector5" | "callout1" | "callout2" | "callout3" | "accentCallout1" | "accentCallout2" | "accentCallout3" | "borderCallout1" | "borderCallout2" | "borderCallout3" | "accentBorderCallout1" | "accentBorderCallout2" | "accentBorderCallout3" | "wedgeRectCallout" | "wedgeRoundRectCallout" | "wedgeEllipseCallout" | "cloudCallout" | "cloud" | "ribbon" | "ribbon2" | "ellipseRibbon" | "ellipseRibbon2" | "leftRightRibbon" | "verticalScroll" | "horizontalScroll" | "wave" | "doubleWave" | "plus" | "flowChartProcess" | "flowChartDecision" | "flowChartInputOutput" | "flowChartPredefinedProcess" | "flowChartInternalStorage" | "flowChartDocument" | "flowChartMultidocument" | "flowChartTerminator" | "flowChartPreparation" | "flowChartManualInput" | "flowChartManualOperation" | "flowChartConnector" | "flowChartPunchedCard" | "flowChartPunchedTape" | "flowChartSummingJunction" | "flowChartOr" | "flowChartCollate" | "flowChartSort" | "flowChartExtract" | "flowChartMerge" | "flowChartOfflineStorage" | "flowChartOnlineStorage" | "flowChartMagneticTape" | "flowChartMagneticDisk" | "flowChartMagneticDrum" | "flowChartDisplay" | "flowChartDelay" | "flowChartAlternateProcess" | "flowChartOffpageConnector" | "actionButtonBlank" | "actionButtonHome" | "actionButtonHelp" | "actionButtonInformation" | "actionButtonForwardNext" | "actionButtonBackPrevious" | "actionButtonEnd" | "actionButtonBeginning" | "actionButtonReturn" | "actionButtonDocument" | "actionButtonSound" | "actionButtonMovie" | "gear6" | "gear9" | "funnel" | "mathPlus" | "mathMinus" | "mathMultiply" | "mathDivide" | "mathEqual" | "mathNotEqual" | "cornerTabs" | "squareTabs" | "plaqueTabs" | "chartX" | "chartStar" | "chartPlus")} ShapePresetType
+	 * @see office-js-api/Examples/Enumerations/ShapePresetType.js
+	 */
+
+	/**
+	 * Path command types
+	 * @typedef {("moveTo" | "lineTo" | "bezier3" | "bezier4" | "arcTo" | "close")} PathCommandType
+	 * @see office-js-api/Examples/Enumerations/PathCommandType.js
+	 */
 
 
 	/**
@@ -4640,6 +4686,35 @@
 		oImage.setParent(oDrawing);
 		oDrawing.Set_GraphicObject(oImage);
 		return new ApiOleObject(oImage);
+	};
+
+	/**
+	 * Creates a new custom geometry
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {ApiGeometry}
+	 */
+	Api.prototype.CreateCustomGeometry = function()
+	{
+		let geometry = new AscFormat.Geometry();
+		return new ApiGeometry(geometry);
+	};
+
+	/**
+	 * Creates a preset geometry
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {ShapePresetType} sPreset - Preset name
+	 * @returns {ApiGeometry}
+	 */
+	Api.prototype.CreatePresetGeometry = function(sPreset)
+	{
+		let geometry = AscFormat.CreateGeometry(sPreset);
+		if (!geometry) {
+			geometry = new AscFormat.Geometry();
+			geometry.setPreset(sPreset);
+		}
+		return new ApiGeometry(geometry);
 	};
 
 	/**
@@ -18356,6 +18431,676 @@
 		return null;
 	};
 
+
+	/**
+	 * Gets the geometry object from a shape
+	 * @memberof ApiShape
+	 * @typeofeditors ["CDE", "CSE"]
+	 * @returns {ApiGeometry}
+	 */
+	ApiShape.prototype.GetGeometry = function()
+	{
+		if (this.Shape && this.Shape.spPr && this.Shape.spPr.geometry)
+		{
+			return new ApiGeometry(this.Shape.spPr.geometry);
+		}
+		return null;
+	};
+
+	/**
+	 * Sets a custom geometry for the shape
+	 * @memberof ApiShape
+	 * @typeofeditors ["CDE", "CSE"]
+	 * @param {ApiGeometry} oGeometry - The geometry to set
+	 * @returns {boolean}
+	 */
+	ApiShape.prototype.SetGeometry = function(oGeometry)
+	{
+		if (this.Shape && this.Shape.spPr && oGeometry && oGeometry.geometry)
+		{
+			this.Shape.spPr.setGeometry(oGeometry.geometry);
+			oGeometry.geometry.setParent(this.Shape.spPr);
+			return true;
+		}
+		return false;
+	};
+
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiGeometry
+	//
+	//------------------------------------------------------------------------------------------------------------------
+	/**
+	 * Checks if this is a custom geometry
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {boolean}
+	 */
+	ApiGeometry.prototype.IsCustom = function()
+	{
+		return !this.geometry.preset;
+	};
+
+	/**
+	 * Gets the preset name if this is a preset geometry
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {ShapePresetType | null}
+	 */
+	ApiGeometry.prototype.GetPreset = function()
+	{
+		if (!this.IsCustom())
+		{
+			return this.geometry.preset;
+		}
+		return null;
+	};
+
+	/**
+	 * Sets the preset for the geometry
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {ShapePresetType} sPreset - Preset name
+	 */
+	ApiGeometry.prototype.SetPreset = function(sPreset)
+	{
+		this.geometry.setPreset(sPreset);
+	};
+
+	/**
+	 * Gets the number of paths in the geometry
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {number}
+	 */
+	ApiGeometry.prototype.GetPathCount = function()
+	{
+		return this.geometry.pathLst ? this.geometry.pathLst.length : 0;
+	};
+
+	/**
+	 * Gets a path by index
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {number} nIndex - Path index
+	 * @returns {ApiPath}
+	 */
+	ApiGeometry.prototype.GetPath = function(nIndex)
+	{
+		if (this.geometry.pathLst && nIndex >= 0 && nIndex < this.geometry.pathLst.length)
+		{
+			return new ApiPath(this.geometry.pathLst[nIndex], this);
+		}
+		return null;
+	};
+
+	/**
+	 * Gets all paths
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {ApiPath[]}
+	 */
+	ApiGeometry.prototype.GetPaths = function()
+	{
+		var paths = [];
+		if (this.geometry.pathLst)
+		{
+			for (var i = 0; i < this.geometry.pathLst.length; i++)
+			{
+				paths.push(new ApiPath(this.geometry.pathLst[i], this));
+			}
+		}
+		return paths;
+	};
+
+	/**
+	 * Adds a new path to the geometry
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {ApiPath | null}
+	 */
+	ApiGeometry.prototype.AddPath = function()
+	{
+		if (!this.IsCustom())
+		{
+			return null;
+		}
+		var path = new AscFormat.Path();
+		path.setStroke(true);
+		path.setFill("norm");
+		path.setExtrusionOk(false);
+		this.geometry.AddPath(path);
+		return new ApiPath(path, this);
+	};
+
+	/**
+	 * Removes a path by index
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {number} nIndex - Path index
+	 * @returns {boolean}
+	 */
+	ApiGeometry.prototype.RemovePath = function(nIndex)
+	{
+		if (!this.IsCustom())
+		{
+			return false;
+		}
+		if (this.geometry.pathLst && nIndex >= 0 && nIndex < this.geometry.pathLst.length)
+		{
+			this.geometry.pathLst.splice(nIndex, 1);
+			return true;
+		}
+		return false;
+	};
+
+	/**
+	 * Converts preset geometry to custom geometry
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {boolean}
+	 */
+	ApiGeometry.prototype.ConvertToCustom = function()
+	{
+		if (this.IsCustom())
+		{
+			return true;
+		}
+
+		this.geometry.setPreset(null);
+		return true;
+	};
+
+	/**
+	 * Gets adjustment value by name
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} sName - Adjustment name
+	 * @returns {number | null}
+	 */
+	ApiGeometry.prototype.GetAdjValue = function(sName)
+	{
+		if (this.geometry.gdLst && this.geometry.gdLst[sName] !== undefined)
+		{
+			return this.geometry.gdLst[sName];
+		}
+		return null;
+	};
+
+	/**
+	 * Gets all adjustment values
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {Object}
+	 */
+	ApiGeometry.prototype.GetAdjustments = function()
+	{
+		var adjustments = {};
+		if (this.geometry.avLst)
+		{
+			for (var key in this.geometry.avLst)
+			{
+				if (this.geometry.avLst.hasOwnProperty(key))
+				{
+					adjustments[key] = this.geometry.gdLst[key];
+				}
+			}
+		}
+		return adjustments;
+	};
+
+	/**
+	 * Adds an adjustment value
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} sName - Adjustment name
+	 * @param {number} nValue - Adjustment value
+	 */
+	ApiGeometry.prototype.AddAdj = function(sName, nValue)
+	{
+		this.geometry.AddAdj(sName, 15, nValue + "");
+	};
+
+	/**
+	 * Sets an adjustment value
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} sName - Adjustment name
+	 * @param {number} nValue - Adjustment value
+	 */
+	ApiGeometry.prototype.SetAdjValue = function(sName, nValue)
+	{
+		this.geometry.setAdjValue(sName, nValue);
+	};
+
+	/**
+	 * Gets all guides (formulas)
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {Array}
+	 */
+	ApiGeometry.prototype.GetGuides = function()
+	{
+		return this.geometry.gdLstInfo ? this.geometry.gdLstInfo.slice() : [];
+	};
+
+	/**
+	 * Adds a guide (formula)
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} sName - Guide name
+	 * @param {number} nFormula - Formula type
+	 * @param {string} sX - X parameter
+	 * @param {string} sY - Y parameter
+	 * @param {string} sZ - Z parameter
+	 */
+	ApiGeometry.prototype.AddGuide = function(sName, nFormula, sX, sY, sZ)
+	{
+		this.geometry.AddGuide(sName, nFormula, sX, sY, sZ);
+	};
+
+	/**
+	 * Gets the text rectangle
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {Object | null}
+	 */
+	ApiGeometry.prototype.GetTextRect = function()
+	{
+		if (this.geometry.rectS)
+		{
+			return {
+				left: this.geometry.rectS.l,
+				top: this.geometry.rectS.t,
+				right: this.geometry.rectS.r,
+				bottom: this.geometry.rectS.b
+			};
+		}
+		return null;
+	};
+
+	/**
+	 * Sets the text rectangle
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} sLeft - Left guide name or value
+	 * @param {string} sTop - Top guide name or value
+	 * @param {string} sRight - Right guide name or value
+	 * @param {string} sBottom - Bottom guide name or value
+	 */
+	ApiGeometry.prototype.SetTextRect = function(sLeft, sTop, sRight, sBottom)
+	{
+		this.geometry.AddRect(sLeft, sTop, sRight, sBottom);
+	};
+
+	/**
+	 * Gets connection points
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {Array}
+	 */
+	ApiGeometry.prototype.GetConnectionPoints = function()
+	{
+		return this.geometry.cnxLstInfo ? this.geometry.cnxLstInfo.slice() : [];
+	};
+
+	/**
+	 * Adds a connection point
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} sAngle - Angle
+	 * @param {string} sX - X position
+	 * @param {string} sY - Y position
+	 */
+	ApiGeometry.prototype.AddConnectionPoint = function(sAngle, sX, sY)
+	{
+		this.geometry.AddCnx(sAngle, sX, sY);
+	};
+
+	/**
+	 * @private
+	 */
+	ApiGeometry.prototype.recalculate = function()
+	{
+		if (this.geometry.parent && this.geometry.parent.parent)
+		{
+			var shape = this.geometry.parent.parent;
+			if (shape && shape.recalculateGeometry)
+			{
+				shape.recalculateGeometry();
+			}
+		}
+	};
+
+	/**
+	 * Gets the command type
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {PathCommandType}
+	 */
+	ApiPathCommand.prototype.GetType = function()
+	{
+		switch(this.command.id)
+		{
+			case AscFormat.moveTo: return "moveTo";
+			case AscFormat.lineTo: return "lineTo";
+			case AscFormat.bezier3: return "bezier3";
+			case AscFormat.bezier4: return "bezier4";
+			case AscFormat.arcTo: return "arcTo";
+			case AscFormat.close: return "close";
+			default: return "unknown";
+		}
+	};
+
+	/**
+	 * Gets the X coordinate for moveTo/lineTo commands
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string | null}
+	 */
+	ApiPathCommand.prototype.GetX = function()
+	{
+		return this.command.X !== undefined ? this.command.X : null;
+	};
+
+	/**
+	 * Gets the Y coordinate for moveTo/lineTo commands
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string | null}
+	 */
+	ApiPathCommand.prototype.GetY = function()
+	{
+		return this.command.Y !== undefined ? this.command.Y : null;
+	};
+
+	/**
+	 * Gets first control point X for bezier curves
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string | null}
+	 */
+	ApiPathCommand.prototype.GetX0 = function()
+	{
+		return this.command.X0 !== undefined ? this.command.X0 : null;
+	};
+
+	/**
+	 * Gets first control point Y for bezier curves
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string | null}
+	 */
+	ApiPathCommand.prototype.GetY0 = function()
+	{
+		return this.command.Y0 !== undefined ? this.command.Y0 : null;
+	};
+
+	/**
+	 * Gets second control point X for cubic bezier
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string | null}
+	 */
+	ApiPathCommand.prototype.GetX1 = function()
+	{
+		return this.command.X1 !== undefined ? this.command.X1 : null;
+	};
+
+	/**
+	 * Gets second control point Y for cubic bezier
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string | null}
+	 */
+	ApiPathCommand.prototype.GetY1 = function()
+	{
+		return this.command.Y1 !== undefined ? this.command.Y1 : null;
+	};
+
+	/**
+	 * Gets end point X for cubic bezier
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string | null}
+	 */
+	ApiPathCommand.prototype.GetX2 = function()
+	{
+		return this.command.X2 !== undefined ? this.command.X2 : null;
+	};
+
+	/**
+	 * Gets end point Y for cubic bezier
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string | null}
+	 */
+	ApiPathCommand.prototype.GetY2 = function()
+	{
+		return this.command.Y2 !== undefined ? this.command.Y2 : null;
+	};
+
+	/**
+	 * Gets width radius for arc
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string | null}
+	 */
+	ApiPathCommand.prototype.GetWR = function()
+	{
+		return this.command.wR !== undefined ? this.command.wR : null;
+	};
+
+	/**
+	 * Gets height radius for arc
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string | null}
+	 */
+	ApiPathCommand.prototype.GetHR = function()
+	{
+		return this.command.hR !== undefined ? this.command.hR : null;
+	};
+
+	/**
+	 * Gets start angle for arc
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string | null}
+	 */
+	ApiPathCommand.prototype.GetStartAngle = function()
+	{
+		return this.command.stAng !== undefined ? this.command.stAng : null;
+	};
+
+	/**
+	 * Gets sweep angle for arc
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string | null}
+	 */
+	ApiPathCommand.prototype.GetSweepAngle = function()
+	{
+		return this.command.swAng !== undefined ? this.command.swAng : null;
+	};
+
+
+
+	/**
+	 * Gets whether the path is stroked
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {boolean}
+	 */
+	ApiPath.prototype.GetStroke = function()
+	{
+		return this.path.stroke;
+	};
+
+	/**
+	 * Sets whether the path should be stroked
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {boolean} bStroke - Whether to stroke the path
+	 */
+	ApiPath.prototype.SetStroke = function(bStroke)
+	{
+		this.path.setStroke(bStroke);
+	};
+
+	/**
+	 * Gets the fill type
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {PathFillType}
+	 */
+	ApiPath.prototype.GetFill = function()
+	{
+		return this.path.fill || "norm";
+	};
+
+	/**
+	 * Sets the fill type for the path
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {PathFillType} sFill - Fill type
+	 */
+	ApiPath.prototype.SetFill = function(sFill)
+	{
+		this.path.setFill(sFill);
+	};
+
+	/**
+	 * Gets the path width
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {number}
+	 */
+	ApiPath.prototype.GetWidth = function()
+	{
+		return this.path.pathW || 0;
+	};
+
+	/**
+	 * Sets the path width
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {number} nWidth - Width in EMU
+	 */
+	ApiPath.prototype.SetWidth = function(nWidth)
+	{
+		this.path.setPathW(nWidth);
+	};
+
+	/**
+	 * Gets the path height
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {number}
+	 */
+	ApiPath.prototype.GetHeight = function()
+	{
+		return this.path.pathH || 0;
+	};
+
+	/**
+	 * Sets the path height
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {number} nHeight - Height in EMU
+	 */
+	ApiPath.prototype.SetHeight = function(nHeight)
+	{
+		this.path.setPathH(nHeight);
+	};
+
+	/**
+	 * Gets all path commands
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {ApiPathCommand[]}
+	 */
+	ApiPath.prototype.GetCommands = function()
+	{
+		var commands = [];
+		if (this.path.ArrPathCommandInfo)
+		{
+			for (var i = 0; i < this.path.ArrPathCommandInfo.length; i++)
+			{
+				commands.push(new ApiPathCommand(this.path.ArrPathCommandInfo[i]));
+			}
+		}
+		return commands;
+	};
+
+	/**
+	 * Gets command count
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {number}
+	 */
+	ApiPath.prototype.GetCommandCount = function()
+	{
+		return this.path.ArrPathCommandInfo ? this.path.ArrPathCommandInfo.length : 0;
+	};
+
+	/**
+	 * Gets a specific command by index
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {number} nIndex - Command index
+	 * @returns {ApiPathCommand | null}
+	 */
+	ApiPath.prototype.GetCommand = function(nIndex)
+	{
+		if (this.path.ArrPathCommandInfo && nIndex >= 0 && nIndex < this.path.ArrPathCommandInfo.length)
+		{
+			return new ApiPathCommand(this.path.ArrPathCommandInfo[nIndex]);
+		}
+		return null;
+	};
+
+	/**
+	 * Moves to a point
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string | number} x - X coordinate
+	 * @param {string | number} y - Y coordinate
+	 */
+	ApiPath.prototype.MoveTo = function(x, y)
+	{
+		this.path.moveTo(x + "", y + "");
+	};
+
+	/**
+	 * Draws a line to a point
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string | number} x - X coordinate
+	 * @param {string | number} y - Y coordinate
+	 */
+	ApiPath.prototype.LineTo = function(x, y)
+	{
+		this.path.lnTo(x + "", y + "");
+	};
+
+	/**
+	 * Draws a cubic bezier curve
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string | number} x1 - First control point X
+	 * @param {string | number} y1 - First control point Y
+	 * @param {string | number} x2 - Second control point X
+	 * @param {string | number} y2 - Second control point Y
+	 * @param {string | number} x3 - End point X
+	 * @param {string | number} y3 - End point Y
+	 */
+	ApiPath.prototype.CubicBezTo = function(x1, y1, x2, y2, x3, y3)
+	{
+		this.path.cubicBezTo(x1 + "", y1 + "", x2 + "", y2 + "", x3 + "", y3 + "");
+	};
+
+	/**
+	 * Draws a quadratic bezier curve
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string | number} x1 - Control point X
+	 * @param {string | number} y1 - Control point Y
+	 * @param {string | number} x2 - End point X
+	 * @param {string | number} y2 - End point Y
+	 */
+	ApiPath.prototype.QuadBezTo = function(x1, y1, x2, y2)
+	{
+		this.path.quadBezTo(x1 + "", y1 + "", x2 + "", y2 + "");
+	};
+
+	/**
+	 * Draws an arc
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string | number} wR - Width radius
+	 * @param {string | number} hR - Height radius
+	 * @param {string | number} stAng - Start angle
+	 * @param {string | number} swAng - Sweep angle
+	 */
+	ApiPath.prototype.ArcTo = function(wR, hR, stAng, swAng)
+	{
+		this.path.arcTo(wR + "", hR + "", stAng + "", swAng + "");
+	};
+
+	/**
+	 * Closes the current path
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 */
+	ApiPath.prototype.Close = function()
+	{
+		this.path.close();
+	};
+
+	/**
+	 * Clears all commands from the path
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 */
+	ApiPath.prototype.Clear = function()
+	{
+		this.path.ArrPathCommandInfo = [];
+		this.path.ArrPathCommand = [];
+	};
+
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiChart
@@ -19307,7 +20052,8 @@
 		oGraphicObjects.selectObject(this.Drawing, this.Drawing.GetAbsolutePage())
 		
 		let canUngroup = oGraphicObjects.canUnGroup();
-		if (!canUngroup) {
+		if (!canUngroup)
+		{
 			return false;
 		}
 
@@ -26063,6 +26809,8 @@
 	Api.prototype["PicasToPoints"]                   = Api.prototype.PicasToPoints;
 	Api.prototype["PixelsToPoints"]                  = Api.prototype.PixelsToPoints;
 	Api.prototype["TwipsToPoints"]                   = Api.prototype.TwipsToPoints;
+	Api.prototype["CreateCustomGeometry"]            = Api.prototype.CreateCustomGeometry;
+	Api.prototype["CreatePresetGeometry"]            = Api.prototype.CreatePresetGeometry;
 
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 	
@@ -26696,6 +27444,64 @@
 	ApiShape.prototype["SetPaddings"]                = ApiShape.prototype.SetPaddings;
 	ApiShape.prototype["GetNextShape"]               = ApiShape.prototype.GetNextShape;
 	ApiShape.prototype["GetPrevShape"]               = ApiShape.prototype.GetPrevShape;
+	ApiShape.prototype["GetGeometry"]                = ApiShape.prototype.GetGeometry;
+	ApiShape.prototype["SetGeometry"]                = ApiShape.prototype.SetGeometry;
+
+	ApiGeometry.prototype["IsCustom"]                = ApiGeometry.prototype.IsCustom;
+	ApiGeometry.prototype["GetPreset"]               = ApiGeometry.prototype.GetPreset;
+	ApiGeometry.prototype["SetPreset"]               = ApiGeometry.prototype.SetPreset;
+	ApiGeometry.prototype["GetPathCount"]            = ApiGeometry.prototype.GetPathCount;
+	ApiGeometry.prototype["GetPath"]                 = ApiGeometry.prototype.GetPath;
+	ApiGeometry.prototype["GetPaths"]                = ApiGeometry.prototype.GetPaths;
+	ApiGeometry.prototype["AddPath"]                 = ApiGeometry.prototype.AddPath;
+	ApiGeometry.prototype["RemovePath"]              = ApiGeometry.prototype.RemovePath;
+	ApiGeometry.prototype["ConvertToCustom"]         = ApiGeometry.prototype.ConvertToCustom;
+	ApiGeometry.prototype["GetAdjValue"]             = ApiGeometry.prototype.GetAdjValue;
+	ApiGeometry.prototype["GetAdjustments"]          = ApiGeometry.prototype.GetAdjustments;
+	ApiGeometry.prototype["AddAdj"]                  = ApiGeometry.prototype.AddAdj;
+	ApiGeometry.prototype["SetAdjValue"]             = ApiGeometry.prototype.SetAdjValue;
+	ApiGeometry.prototype["GetGuides"]               = ApiGeometry.prototype.GetGuides;
+	ApiGeometry.prototype["AddGuide"]                = ApiGeometry.prototype.AddGuide;
+	ApiGeometry.prototype["GetTextRect"]             = ApiGeometry.prototype.GetTextRect;
+	ApiGeometry.prototype["SetTextRect"]             = ApiGeometry.prototype.SetTextRect;
+	ApiGeometry.prototype["AddConnectionPoint"]      = ApiGeometry.prototype.AddConnectionPoint;
+
+
+	ApiPath.prototype["GetStroke"]                   = ApiPath.prototype.GetStroke;
+	ApiPath.prototype["SetStroke"]                   = ApiPath.prototype.SetStroke;
+	ApiPath.prototype["GetFill"]                     = ApiPath.prototype.GetFill;
+	ApiPath.prototype["SetFill"]                     = ApiPath.prototype.SetFill;
+	ApiPath.prototype["GetWidth"]                    = ApiPath.prototype.GetWidth;
+	ApiPath.prototype["SetWidth"]                    = ApiPath.prototype.SetWidth;
+	ApiPath.prototype["GetHeight"]                   = ApiPath.prototype.GetHeight;
+	ApiPath.prototype["SetHeight"]                   = ApiPath.prototype.SetHeight;
+	ApiPath.prototype["GetCommands"]                 = ApiPath.prototype.GetCommands;
+	ApiPath.prototype["GetCommandCount"]             = ApiPath.prototype.GetCommandCount;
+	ApiPath.prototype["GetCommand"]                  = ApiPath.prototype.GetCommand;
+	ApiPath.prototype["MoveTo"]                      = ApiPath.prototype.MoveTo;
+	ApiPath.prototype["LineTo"]                      = ApiPath.prototype.LineTo;
+	ApiPath.prototype["CubicBezTo"]                  = ApiPath.prototype.CubicBezTo;
+	ApiPath.prototype["QuadBezTo"]                   = ApiPath.prototype.QuadBezTo;
+	ApiPath.prototype["ArcTo"]                       = ApiPath.prototype.ArcTo;
+	ApiPath.prototype["Close"]                       = ApiPath.prototype.Close;
+	ApiPath.prototype["Clear"]                       = ApiPath.prototype.Clear;
+
+
+	ApiPathCommand.prototype["GetType"]              = ApiPathCommand.prototype.GetType;
+	ApiPathCommand.prototype["GetX"]                 = ApiPathCommand.prototype.GetX;
+	ApiPathCommand.prototype["GetY"]                 = ApiPathCommand.prototype.GetY;
+	ApiPathCommand.prototype["GetX0"]                = ApiPathCommand.prototype.GetX0;
+	ApiPathCommand.prototype["GetY0"]                = ApiPathCommand.prototype.GetY0;
+	ApiPathCommand.prototype["GetX1"]                = ApiPathCommand.prototype.GetX1;
+	ApiPathCommand.prototype["GetY1"]                = ApiPathCommand.prototype.GetY1;
+	ApiPathCommand.prototype["GetX2"]                = ApiPathCommand.prototype.GetX2;
+	ApiPathCommand.prototype["GetY2"]                = ApiPathCommand.prototype.GetY2;
+	ApiPathCommand.prototype["GetWR"]                = ApiPathCommand.prototype.GetWR;
+	ApiPathCommand.prototype["GetHR"]                = ApiPathCommand.prototype.GetHR;
+	ApiPathCommand.prototype["GetStartAngle"]        = ApiPathCommand.prototype.GetStartAngle;
+	ApiPathCommand.prototype["GetSweepAngle"]        = ApiPathCommand.prototype.GetSweepAngle;
+
+
 
 	ApiChart.prototype["GetClassType"]                 = ApiChart.prototype.GetClassType;
 	ApiChart.prototype["GetChartType"]                 = ApiChart.prototype.GetChartType;
