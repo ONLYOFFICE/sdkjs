@@ -4014,6 +4014,15 @@
 	 */
 
 	/**
+	 * This type specifies the formula type that will be used for a geometry guide.
+	 * @typedef {("*\/" | "+-" | "+\/" | "?:" | "abs" | "at2" | "cat2" | "cos" | "max" | "min" | "mod" | "pin" | "sat2" | "sin" | "sqrt" | "tan" | "val")} GeometryFormulaType
+	 * @see office-js-api/Examples/Enumerations/GeometryFormulaType.js
+	 */
+
+
+
+
+	/**
 	 * This type specifies the available chart types which can be used to create a new chart.
 	 * @typedef {(
 	 *     "bar" | "barStacked" | "barStackedPercent" | "bar3D" | "barStacked3D" | "barStackedPercent3D" | "barStackedPercent3DPerspective" |
@@ -18454,7 +18463,6 @@
 		if (this.Shape && this.Shape.spPr && oGeometry && oGeometry.geometry)
 		{
 			this.Shape.spPr.setGeometry(oGeometry.geometry);
-			oGeometry.geometry.setParent(this.Shape.spPr);
 			return true;
 		}
 		return false;
@@ -18650,14 +18658,18 @@
 	 * Adds a guide (formula)
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} sName - Guide name
-	 * @param {number} nFormula - Formula type
+	 * @param {GeometryFormulaType} sFormula - Formula type
 	 * @param {string} sX - X parameter
 	 * @param {string} sY - Y parameter
 	 * @param {string} sZ - Z parameter
+	 * @returns {boolean}
 	 */
-	ApiGeometry.prototype.AddGuide = function(sName, nFormula, sX, sY, sZ)
+	ApiGeometry.prototype.AddGuide = function(sName, sFormula, sX, sY, sZ)
 	{
-		this.geometry.AddGuide(sName, nFormula, sX, sY, sZ);
+		let nFormulaType = AscFormat.MAP_FMLA_TO_TYPE[sFormula];
+		if (!AscFormat.isRealNumber(nFormulaType)) return false;
+		this.geometry.AddGuide(sName, nFormulaType, sX, sY, sZ);
+		return true;
 	};
 
 	/**
@@ -27382,7 +27394,7 @@
 	ApiGeometry.prototype["AddGuide"]                = ApiGeometry.prototype.AddGuide;
 	ApiGeometry.prototype["SetTextRect"]             = ApiGeometry.prototype.SetTextRect;
 	ApiGeometry.prototype["AddConnectionPoint"]      = ApiGeometry.prototype.AddConnectionPoint;
-	
+
 	ApiPath.prototype["GetStroke"]                   = ApiPath.prototype.GetStroke;
 	ApiPath.prototype["SetStroke"]                   = ApiPath.prototype.SetStroke;
 	ApiPath.prototype["GetFill"]                     = ApiPath.prototype.GetFill;
