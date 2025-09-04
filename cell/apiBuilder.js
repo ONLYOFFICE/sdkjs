@@ -20216,7 +20216,7 @@
 		}
 		props.ranges = ranges;
 
-		worksheet.setCFRule(props);
+		this.private_setRule(props);
 
 		let formatCondition = new ApiFormatCondition(props, this.range, this);
 		this.conditions.push(formatCondition);
@@ -20259,7 +20259,7 @@
 		}
 		props.ranges = ranges;
 
-		worksheet.setCFRule(props);
+		this.private_setRule(props);
 
 		let aboveAverage = new ApiAboveAverage(props, this.range, this);
 		this.conditions.push(aboveAverage);
@@ -20361,7 +20361,7 @@
 		props.ranges = ranges;
 
 		// Apply the conditional formatting rule to the worksheet
-		worksheet.setCFRule(props);
+		this.private_setRule(props);
 
 		// Create and return ApiColorScale object
 		let colorScale = new ApiColorScale(props, this.range, this);
@@ -20425,7 +20425,7 @@
 		props.ranges = ranges;
 
 		// Apply the conditional formatting rule to the worksheet
-		worksheet.setCFRule(props);
+		this.private_setRule(props);
 
 		// Create and return ApiDatabar object
 		let dataBar = new ApiDatabar(props, this.range, this);
@@ -20499,7 +20499,7 @@
 		props.ranges = ranges;
 
 		// Apply the conditional formatting rule to the worksheet
-		worksheet.setCFRule(props);
+		this.private_setRule(props);
 
 		// Create and return ApiIconSetCondition object
 		let iconSetCondition = new ApiIconSetCondition(props, this.range, this);
@@ -20545,7 +20545,7 @@
 		props.ranges = ranges;
 
 		// Apply the conditional formatting rule to the worksheet
-		worksheet.setCFRule(props);
+		this.private_setRule(props);
 
 		// Create and return ApiTop10 object
 		let top10 = new ApiTop10(props, this.range, this);
@@ -20586,7 +20586,7 @@
 		props.ranges = ranges;
 
 		// Apply the conditional formatting rule to the worksheet
-		worksheet.setCFRule(props);
+		this.private_setRule(props);
 
 		// Create and return ApiUniqueValues object
 		let uniqueValues = new ApiUniqueValues(props, this.range, this);
@@ -20683,6 +20683,30 @@
 					return;
 				}
 			}
+		}
+	};
+
+	ApiFormatConditions.prototype.private_setRule = function(rule) {
+		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let arr = [rule];
+		/*if (worksheet.isConditionalFormattingRules()) {
+			worksheet.forEachConditionalFormattingRules(function (val) {
+				var _id = val.id;
+				var oRule = val.clone();
+				oRule.id = _id;
+				oRule.priority++;
+				arr.push(oRule);
+			})
+		}*/
+		let maxPriority = 0;
+		worksheet.forEachConditionalFormattingRules(function (rule) {
+			if (rule.priority && rule.priority > maxPriority) {
+				maxPriority = rule.priority;
+			}
+		});
+		rule.priority = maxPriority + 1;
+		for (let i = 0; i < arr.length; i++) {
+			worksheet.setCFRule(arr[i]);
 		}
 	};
 
@@ -20914,14 +20938,14 @@
 		this.rule.priority = newPriority;
 
 		let t = this;
-		worksheet.forEachConditionalFormattingRules(function (rule) {
+		/*worksheet.forEachConditionalFormattingRules(function (rule) {
 			if (rule.id !== t.rule.id && rule.priority && rule.priority > currentPriority) {
 				let oldOtherRule = rule;
 				let newOtherRule = rule.clone();
 				newOtherRule.priority = rule.priority - 1;
 				worksheet.changeCFRule(oldOtherRule, newOtherRule, true);
 			}
-		});
+		});*/
 
 		worksheet.changeCFRule(oldRule, this.rule, true);
 	};
