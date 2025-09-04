@@ -12111,6 +12111,15 @@ drawPieChart.prototype = {
 		var sumData = this.cChartDrawer._getSumArray(numCache.pts, true);
 
 		var radius = Math.min(trueHeight, trueWidth) / 2;
+
+		// if labels are given then shrink the radius to fit the labels
+		if ((this.chart.dLbls && this.chart.dLbls.showVal) || (this.chart.series && this.chart.series[0] &&
+			this.chart.series[0].dLbls && (this.chart.series[0].dLbls.showVal ||
+			this.chart.series[0].dLbls.showCatName || this.chart.series[0].dLbls.showSerName || this.chart.series[0].dLbls.showPercent
+		))) {
+			let radius_shrink_coeff = 0.15;
+			radius = radius * (1 - radius_shrink_coeff);
+		}
 		var xCenter = this.chartProp.chartGutter._left + trueWidth / 2;
 		var yCenter = this.chartProp.chartGutter._top + trueHeight / 2;
 
