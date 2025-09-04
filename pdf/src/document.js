@@ -4320,7 +4320,9 @@ var CPresentation = CPresentation || function(){};
         this.UpdateParagraphProps();
         this.UpdateTextProps();
         this.UpdateCanAddHyperlinkState();
-        if (oTargetTextObject && (!oTargetTextObject.group || !oTargetTextObject.group.IsAnnot())) {
+        
+        let oGroup = oTargetTextObject && oTargetTextObject.getMainGroup();
+        if (oTargetTextObject && (!oGroup || !oGroup.IsAnnot())) {
             oTargetDocContent && oTargetDocContent.Document_UpdateInterfaceState();
         }
         this.Api.sync_pagePropCallback(oCurPage);
@@ -7707,7 +7709,8 @@ var CPresentation = CPresentation || function(){};
         return this.Api.canEdit() && false == this.Api.IsCommentMarker();
     };
     CPDFDoc.prototype.IsViewerObject = function(oObject) {
-        return !!(oObject && oObject.IsAnnot && (oObject.IsAnnot() || oObject.IsForm() || oObject.IsEditFieldShape() || oObject.group && oObject.group.IsAnnot()));
+        let oGroup = oObject.getMainGroup();
+        return !!(oObject && oObject.IsAnnot && (oObject.IsAnnot() || oObject.IsForm() || oObject.IsEditFieldShape() || oGroup && oGroup.IsAnnot()));
     };
     CPDFDoc.prototype.IsFillingFormMode = function() {
 		return false;

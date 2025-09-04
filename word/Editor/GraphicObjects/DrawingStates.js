@@ -2094,6 +2094,11 @@ MoveInGroupState.prototype =
         let isPdf = Asc.editor.isPdfEditor();
         let isAnnot = this.majorObject.IsAnnot && this.majorObject.IsAnnot();
 
+        if (isPdf) {
+            MoveState.prototype.onMouseUp.call(this, e, x, y, pageIndex);
+            return;
+        }
+
         if (false == isPdf) {
             var parent_paragraph = this.group.parent.Get_ParentParagraph();
             var check_paragraphs = [];
@@ -2134,7 +2139,7 @@ MoveInGroupState.prototype =
                 }
             }
             
-            if (isPdf == false) {
+            if (isAnnot == false) {
                 var oPosObject = this.group.updateCoordinatesAfterInternalResize();
                 this.group.recalculate();
                 var posX = oPosObject.posX;

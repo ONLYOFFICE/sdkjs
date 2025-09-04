@@ -389,6 +389,7 @@
 			"pdf/src/drawings/image.js",
 			"pdf/src/drawings/chart.js",
 			"pdf/src/drawings/graphicFrame.js",
+			"pdf/src/drawings/groupShape.js",
 			"pdf/src/drawings/smartArt.js",
 			"pdf/src/annotations/base.js",
 			"pdf/src/annotations/text.js",
