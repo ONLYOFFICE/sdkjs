@@ -27370,24 +27370,19 @@
 
 	ApiGeometry.prototype["IsCustom"]                = ApiGeometry.prototype.IsCustom;
 	ApiGeometry.prototype["GetPreset"]               = ApiGeometry.prototype.GetPreset;
-	ApiGeometry.prototype["SetPreset"]               = ApiGeometry.prototype.SetPreset;
 	ApiGeometry.prototype["GetPathCount"]            = ApiGeometry.prototype.GetPathCount;
 	ApiGeometry.prototype["GetPath"]                 = ApiGeometry.prototype.GetPath;
 	ApiGeometry.prototype["GetPaths"]                = ApiGeometry.prototype.GetPaths;
 	ApiGeometry.prototype["AddPath"]                 = ApiGeometry.prototype.AddPath;
-	ApiGeometry.prototype["RemovePath"]              = ApiGeometry.prototype.RemovePath;
 	ApiGeometry.prototype["ConvertToCustom"]         = ApiGeometry.prototype.ConvertToCustom;
 	ApiGeometry.prototype["GetAdjValue"]             = ApiGeometry.prototype.GetAdjValue;
 	ApiGeometry.prototype["GetAdjustments"]          = ApiGeometry.prototype.GetAdjustments;
 	ApiGeometry.prototype["AddAdj"]                  = ApiGeometry.prototype.AddAdj;
 	ApiGeometry.prototype["SetAdjValue"]             = ApiGeometry.prototype.SetAdjValue;
-	ApiGeometry.prototype["GetGuides"]               = ApiGeometry.prototype.GetGuides;
 	ApiGeometry.prototype["AddGuide"]                = ApiGeometry.prototype.AddGuide;
-	ApiGeometry.prototype["GetTextRect"]             = ApiGeometry.prototype.GetTextRect;
 	ApiGeometry.prototype["SetTextRect"]             = ApiGeometry.prototype.SetTextRect;
 	ApiGeometry.prototype["AddConnectionPoint"]      = ApiGeometry.prototype.AddConnectionPoint;
-
-
+	
 	ApiPath.prototype["GetStroke"]                   = ApiPath.prototype.GetStroke;
 	ApiPath.prototype["SetStroke"]                   = ApiPath.prototype.SetStroke;
 	ApiPath.prototype["GetFill"]                     = ApiPath.prototype.GetFill;
@@ -27405,8 +27400,6 @@
 	ApiPath.prototype["QuadBezTo"]                   = ApiPath.prototype.QuadBezTo;
 	ApiPath.prototype["ArcTo"]                       = ApiPath.prototype.ArcTo;
 	ApiPath.prototype["Close"]                       = ApiPath.prototype.Close;
-	ApiPath.prototype["Clear"]                       = ApiPath.prototype.Clear;
-
 
 	ApiPathCommand.prototype["GetType"]              = ApiPathCommand.prototype.GetType;
 	ApiPathCommand.prototype["GetX"]                 = ApiPathCommand.prototype.GetX;
@@ -27421,8 +27414,6 @@
 	ApiPathCommand.prototype["GetHR"]                = ApiPathCommand.prototype.GetHR;
 	ApiPathCommand.prototype["GetStartAngle"]        = ApiPathCommand.prototype.GetStartAngle;
 	ApiPathCommand.prototype["GetSweepAngle"]        = ApiPathCommand.prototype.GetSweepAngle;
-
-
 
 	ApiChart.prototype["GetClassType"]                 = ApiChart.prototype.GetClassType;
 	ApiChart.prototype["GetChartType"]                 = ApiChart.prototype.GetChartType;
