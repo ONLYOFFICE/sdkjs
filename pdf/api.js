@@ -1367,7 +1367,7 @@
 	PDFEditorApi.prototype.HasRedact = function() {
 		let oDoc = this.getPDFDoc();
 
-		return !!oDoc.annot.find(function(annot) {
+		return !!oDoc.annots.find(function(annot) {
 			return annot.IsRedact() && !annot.IsApplied();
 		});
 	};
