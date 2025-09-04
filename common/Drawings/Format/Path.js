@@ -2048,6 +2048,7 @@ function (window, undefined) {
 		return true;
 	};
 
+	Path.prototype.clear = function () {};
 	function CPathCmd() {
 		AscFormat.CBaseNoIdObject.call(this);
 		this.pts = [];

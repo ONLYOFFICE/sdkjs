@@ -3677,7 +3677,7 @@
 	 * Class representing a path in geometry
 	 * @constructor
 	 */
-	function ApiPath(path, geometry) {
+	function ApiPath(path) {
 		this.path = path;
 	}
 
@@ -4046,11 +4046,6 @@
 	 * @see office-js-api/Examples/Enumerations/PathFillType.js
 	 */
 
-	/**
-	 * Preset shape types
-	 * @typedef {("line" | "lineInv" | "triangle" | "rtTriangle" | "rect" | "diamond" | "parallelogram" | "trapezoid" | "nonIsoscelesTrapezoid" | "pentagon" | "hexagon" | "heptagon" | "octagon" | "decagon" | "dodecagon" | "star4" | "star5" | "star6" | "star7" | "star8" | "star10" | "star12" | "star16" | "star24" | "star32" | "roundRect" | "round1Rect" | "round2SameRect" | "round2DiagRect" | "snipRoundRect" | "snip1Rect" | "snip2SameRect" | "snip2DiagRect" | "plaque" | "ellipse" | "teardrop" | "homePlate" | "chevron" | "pieWedge" | "pie" | "blockArc" | "donut" | "noSmoking" | "rightArrow" | "leftArrow" | "upArrow" | "downArrow" | "stripedRightArrow" | "notchedRightArrow" | "bentUpArrow" | "leftRightArrow" | "upDownArrow" | "leftUpArrow" | "leftRightUpArrow" | "quadArrow" | "leftArrowCallout" | "rightArrowCallout" | "upArrowCallout" | "downArrowCallout" | "leftRightArrowCallout" | "upDownArrowCallout" | "quadArrowCallout" | "bentArrow" | "uturnArrow" | "circularArrow" | "leftCircularArrow" | "leftRightCircularArrow" | "curvedRightArrow" | "curvedLeftArrow" | "curvedUpArrow" | "curvedDownArrow" | "swooshArrow" | "cube" | "can" | "lightningBolt" | "heart" | "sun" | "moon" | "smileyFace" | "irregularSeal1" | "irregularSeal2" | "foldedCorner" | "bevel" | "frame" | "halfFrame" | "corner" | "diagStripe" | "chord" | "arc" | "leftBracket" | "rightBracket" | "leftBrace" | "rightBrace" | "bracketPair" | "bracePair" | "straightConnector1" | "bentConnector2" | "bentConnector3" | "bentConnector4" | "bentConnector5" | "curvedConnector2" | "curvedConnector3" | "curvedConnector4" | "curvedConnector5" | "callout1" | "callout2" | "callout3" | "accentCallout1" | "accentCallout2" | "accentCallout3" | "borderCallout1" | "borderCallout2" | "borderCallout3" | "accentBorderCallout1" | "accentBorderCallout2" | "accentBorderCallout3" | "wedgeRectCallout" | "wedgeRoundRectCallout" | "wedgeEllipseCallout" | "cloudCallout" | "cloud" | "ribbon" | "ribbon2" | "ellipseRibbon" | "ellipseRibbon2" | "leftRightRibbon" | "verticalScroll" | "horizontalScroll" | "wave" | "doubleWave" | "plus" | "flowChartProcess" | "flowChartDecision" | "flowChartInputOutput" | "flowChartPredefinedProcess" | "flowChartInternalStorage" | "flowChartDocument" | "flowChartMultidocument" | "flowChartTerminator" | "flowChartPreparation" | "flowChartManualInput" | "flowChartManualOperation" | "flowChartConnector" | "flowChartPunchedCard" | "flowChartPunchedTape" | "flowChartSummingJunction" | "flowChartOr" | "flowChartCollate" | "flowChartSort" | "flowChartExtract" | "flowChartMerge" | "flowChartOfflineStorage" | "flowChartOnlineStorage" | "flowChartMagneticTape" | "flowChartMagneticDisk" | "flowChartMagneticDrum" | "flowChartDisplay" | "flowChartDelay" | "flowChartAlternateProcess" | "flowChartOffpageConnector" | "actionButtonBlank" | "actionButtonHome" | "actionButtonHelp" | "actionButtonInformation" | "actionButtonForwardNext" | "actionButtonBackPrevious" | "actionButtonEnd" | "actionButtonBeginning" | "actionButtonReturn" | "actionButtonDocument" | "actionButtonSound" | "actionButtonMovie" | "gear6" | "gear9" | "funnel" | "mathPlus" | "mathMinus" | "mathMultiply" | "mathDivide" | "mathEqual" | "mathNotEqual" | "cornerTabs" | "squareTabs" | "plaqueTabs" | "chartX" | "chartStar" | "chartPlus")} ShapePresetType
-	 * @see office-js-api/Examples/Enumerations/ShapePresetType.js
-	 */
 
 	/**
 	 * Path command types
@@ -4704,7 +4699,7 @@
 	 * Creates a preset geometry
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {ShapePresetType} sPreset - Preset name
+	 * @param {ShapeType} sPreset - Preset name
 	 * @returns {ApiGeometry}
 	 */
 	Api.prototype.CreatePresetGeometry = function(sPreset)
@@ -18471,6 +18466,23 @@
 	// ApiGeometry
 	//
 	//------------------------------------------------------------------------------------------------------------------
+
+
+	ApiGeometry.prototype.privateGetParent = function()
+	{
+		if(!this.geometry) return null;
+		return this.geometry.parent;
+	};
+
+	ApiGeometry.prototype.privateCheckRecalculate = function()
+	{
+		if (!this.geometry) return false;
+		if (this.geometry.isCalculated()) return true;
+		let parent = this.privateGetParent();
+		if (!parent) return false;
+		if (parent.recalculateGeometry) parent.recalculateGeometry();
+		return this.geometry.isCalculated();
+	};
 	/**
 	 * Checks if this is a custom geometry
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
@@ -18484,7 +18496,7 @@
 	/**
 	 * Gets the preset name if this is a preset geometry
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @returns {ShapePresetType | null}
+	 * @returns {ShapeType | null}
 	 */
 	ApiGeometry.prototype.GetPreset = function()
 	{
@@ -18495,15 +18507,6 @@
 		return null;
 	};
 
-	/**
-	 * Sets the preset for the geometry
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {ShapePresetType} sPreset - Preset name
-	 */
-	ApiGeometry.prototype.SetPreset = function(sPreset)
-	{
-		this.geometry.setPreset(sPreset);
-	};
 
 	/**
 	 * Gets the number of paths in the geometry
@@ -18525,7 +18528,7 @@
 	{
 		if (this.geometry.pathLst && nIndex >= 0 && nIndex < this.geometry.pathLst.length)
 		{
-			return new ApiPath(this.geometry.pathLst[nIndex], this);
+			return new ApiPath(this.geometry.pathLst[nIndex]);
 		}
 		return null;
 	};
@@ -18537,12 +18540,12 @@
 	 */
 	ApiGeometry.prototype.GetPaths = function()
 	{
-		var paths = [];
+		let paths = [];
 		if (this.geometry.pathLst)
 		{
-			for (var i = 0; i < this.geometry.pathLst.length; i++)
+			for (let pathIdx = 0; pathIdx < this.geometry.pathLst.length; pathIdx++)
 			{
-				paths.push(new ApiPath(this.geometry.pathLst[i], this));
+				paths.push(new ApiPath(this.geometry.pathLst[pathIdx]));
 			}
 		}
 		return paths;
@@ -18559,33 +18562,14 @@
 		{
 			return null;
 		}
-		var path = new AscFormat.Path();
+		let path = new AscFormat.Path();
 		path.setStroke(true);
 		path.setFill("norm");
 		path.setExtrusionOk(false);
 		this.geometry.AddPath(path);
-		return new ApiPath(path, this);
+		return new ApiPath(path);
 	};
 
-	/**
-	 * Removes a path by index
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {number} nIndex - Path index
-	 * @returns {boolean}
-	 */
-	ApiGeometry.prototype.RemovePath = function(nIndex)
-	{
-		if (!this.IsCustom())
-		{
-			return false;
-		}
-		if (this.geometry.pathLst && nIndex >= 0 && nIndex < this.geometry.pathLst.length)
-		{
-			this.geometry.pathLst.splice(nIndex, 1);
-			return true;
-		}
-		return false;
-	};
 
 	/**
 	 * Converts preset geometry to custom geometry
@@ -18661,15 +18645,6 @@
 		this.geometry.setAdjValue(sName, nValue);
 	};
 
-	/**
-	 * Gets all guides (formulas)
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @returns {Array}
-	 */
-	ApiGeometry.prototype.GetGuides = function()
-	{
-		return this.geometry.gdLstInfo ? this.geometry.gdLstInfo.slice() : [];
-	};
 
 	/**
 	 * Adds a guide (formula)
@@ -18686,25 +18661,6 @@
 	};
 
 	/**
-	 * Gets the text rectangle
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @returns {Object | null}
-	 */
-	ApiGeometry.prototype.GetTextRect = function()
-	{
-		if (this.geometry.rectS)
-		{
-			return {
-				left: this.geometry.rectS.l,
-				top: this.geometry.rectS.t,
-				right: this.geometry.rectS.r,
-				bottom: this.geometry.rectS.b
-			};
-		}
-		return null;
-	};
-
-	/**
 	 * Sets the text rectangle
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} sLeft - Left guide name or value
@@ -18715,16 +18671,6 @@
 	ApiGeometry.prototype.SetTextRect = function(sLeft, sTop, sRight, sBottom)
 	{
 		this.geometry.AddRect(sLeft, sTop, sRight, sBottom);
-	};
-
-	/**
-	 * Gets connection points
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @returns {Array}
-	 */
-	ApiGeometry.prototype.GetConnectionPoints = function()
-	{
-		return this.geometry.cnxLstInfo ? this.geometry.cnxLstInfo.slice() : [];
 	};
 
 	/**
@@ -18739,20 +18685,6 @@
 		this.geometry.AddCnx(sAngle, sX, sY);
 	};
 
-	/**
-	 * @private
-	 */
-	ApiGeometry.prototype.recalculate = function()
-	{
-		if (this.geometry.parent && this.geometry.parent.parent)
-		{
-			var shape = this.geometry.parent.parent;
-			if (shape && shape.recalculateGeometry)
-			{
-				shape.recalculateGeometry();
-			}
-		}
-	};
 
 	/**
 	 * Gets the command type
@@ -19089,17 +19021,6 @@
 	{
 		this.path.close();
 	};
-
-	/**
-	 * Clears all commands from the path
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 */
-	ApiPath.prototype.Clear = function()
-	{
-		this.path.ArrPathCommandInfo = [];
-		this.path.ArrPathCommand = [];
-	};
-
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
