@@ -12182,6 +12182,14 @@
 	* @see office-js-api/Examples/Enumerations/SectionBreakType.js
 	*/
 
+
+	/**
+	 * Coordinate value for geometry paths.
+	 * Can be a guide name from gdLst, a numeric value, or a string representation of a number.
+	 * @typedef {string | number} GeometryCoordinate
+	 * @see office-js-api/Examples/Enumerations/GeometryCoordinate.js
+	 */
+
 	/**
 	 * Specifies a type of the current section. The section type defines how the contents of the current 
 	 * section are placed relative to the previous section.
@@ -18593,25 +18601,6 @@
 		return new ApiPath(path);
 	};
 
-
-	/**
-	 * Converts preset geometry to custom geometry
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @returns {boolean}
-	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/ConvertToCustom.js
-	 * @since 9.1.0
-	 */
-	ApiGeometry.prototype.ConvertToCustom = function()
-	{
-		if (this.IsCustom())
-		{
-			return true;
-		}
-
-		this.geometry.setPreset(null);
-		return true;
-	};
-
 	/**
 	 * Gets adjustment value by name
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
@@ -18634,12 +18623,15 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} sName - Adjustment name
 	 * @param {number} nValue - Adjustment value
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/AddAdj.js
 	 * @since 9.1.0
 	 */
 	ApiGeometry.prototype.AddAdj = function(sName, nValue)
 	{
+		if (!this.IsCustom()) return false;
 		this.geometry.AddAdj(sName, 15, nValue + "");
+		return true;
 	};
 
 	/**
@@ -18670,6 +18662,7 @@
 	 */
 	ApiGeometry.prototype.AddGuide = function(sName, sFormula, sX, sY, sZ)
 	{
+		if (!this.IsCustom()) return false;
 		let nFormulaType = AscFormat.MAP_FMLA_TO_TYPE[sFormula];
 		if (!AscFormat.isRealNumber(nFormulaType)) return false;
 		this.geometry.AddGuide(sName, nFormulaType, sX, sY, sZ);
@@ -18683,12 +18676,15 @@
 	 * @param {string} sTop - Top guide name or value
 	 * @param {string} sRight - Right guide name or value
 	 * @param {string} sBottom - Bottom guide name or value
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/SetTextRect.js
 	 * @since 9.1.0
 	 */
 	ApiGeometry.prototype.SetTextRect = function(sLeft, sTop, sRight, sBottom)
 	{
+		if (!this.IsCustom()) return false;
 		this.geometry.AddRect(sLeft, sTop, sRight, sBottom);
+		return true;
 	};
 
 	/**
@@ -18702,7 +18698,9 @@
 	 */
 	ApiGeometry.prototype.AddConnectionPoint = function(sAngle, sX, sY)
 	{
+		if (!this.IsCustom()) return false;
 		this.geometry.AddCnx(sAngle, sX, sY);
+		return true;
 	};
 
 
@@ -19021,8 +19019,8 @@
 	/**
 	 * Moves to a point
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {string | number} x - X coordinate
-	 * @param {string | number} y - Y coordinate
+	 * @param {GeometryCoordinate} x - X coordinate
+	 * @param {GeometryCoordinate} y - Y coordinate
 	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/MoveTo.js
 	 * @since 9.1.0
 	 */
@@ -19034,8 +19032,8 @@
 	/**
 	 * Draws a line to a point
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {string | number} x - X coordinate
-	 * @param {string | number} y - Y coordinate
+	 * @param {GeometryCoordinate} x - X coordinate
+	 * @param {GeometryCoordinate} y - Y coordinate
 	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/LineTo.js
 	 * @since 9.1.0
 	 */
@@ -19047,12 +19045,12 @@
 	/**
 	 * Draws a cubic bezier curve
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {string | number} x1 - First control point X
-	 * @param {string | number} y1 - First control point Y
-	 * @param {string | number} x2 - Second control point X
-	 * @param {string | number} y2 - Second control point Y
-	 * @param {string | number} x3 - End point X
-	 * @param {string | number} y3 - End point Y
+	 * @param {GeometryCoordinate} x1 - First control point X
+	 * @param {GeometryCoordinate} y1 - First control point Y
+	 * @param {GeometryCoordinate} x2 - Second control point X
+	 * @param {GeometryCoordinate} y2 - Second control point Y
+	 * @param {GeometryCoordinate} x3 - End point X
+	 * @param {GeometryCoordinate} y3 - End point Y
 	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/CubicBezTo.js
 	 * @since 9.1.0
 	 */
@@ -19064,10 +19062,10 @@
 	/**
 	 * Draws a quadratic bezier curve
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {string | number} x1 - Control point X
-	 * @param {string | number} y1 - Control point Y
-	 * @param {string | number} x2 - End point X
-	 * @param {string | number} y2 - End point Y
+	 * @param {GeometryCoordinate} x1 - Control point X
+	 * @param {GeometryCoordinate} y1 - Control point Y
+	 * @param {GeometryCoordinate} x2 - End point X
+	 * @param {GeometryCoordinate} y2 - End point Y
 	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/QuadBezTo.js
 	 * @since 9.1.0
 	 */
@@ -19079,10 +19077,10 @@
 	/**
 	 * Draws an arc
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {string | number} wR - Width radius
-	 * @param {string | number} hR - Height radius
-	 * @param {string | number} stAng - Start angle
-	 * @param {string | number} swAng - Sweep angle Y
+	 * @param {GeometryCoordinate} wR - Width radius
+	 * @param {GeometryCoordinate} hR - Height radius
+	 * @param {GeometryCoordinate} stAng - Start angle
+	 * @param {GeometryCoordinate} swAng - Sweep angle Y
 	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/ArcTo.js
 	 * @since 9.1.0
 	 */
@@ -27454,7 +27452,6 @@
 	ApiGeometry.prototype["GetPath"]                 = ApiGeometry.prototype.GetPath;
 	ApiGeometry.prototype["GetPaths"]                = ApiGeometry.prototype.GetPaths;
 	ApiGeometry.prototype["AddPath"]                 = ApiGeometry.prototype.AddPath;
-	ApiGeometry.prototype["ConvertToCustom"]         = ApiGeometry.prototype.ConvertToCustom;
 	ApiGeometry.prototype["GetAdjValue"]             = ApiGeometry.prototype.GetAdjValue;
 	ApiGeometry.prototype["AddAdj"]                  = ApiGeometry.prototype.AddAdj;
 	ApiGeometry.prototype["SetAdjValue"]             = ApiGeometry.prototype.SetAdjValue;
