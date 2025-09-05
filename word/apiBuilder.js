@@ -29475,12 +29475,6 @@
 	Api.prototype.private_CreateGeometry = function(geometry){
 		return new ApiGeometry(geometry);
 	};
-	Api.prototype.private_CreatePath = function(path){
-		return new ApiPath(path);
-	};
-	Api.prototype.private_CreatePathCmd = function(pathCmd){
-		return new ApiPathCommand(pathCmd);
-	};
 
 }(window, null));
 
