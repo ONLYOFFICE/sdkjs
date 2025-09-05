@@ -12131,7 +12131,7 @@ drawPieChart.prototype = {
 		for (var i = numCache.ptCount - 1; i >= 0; i--) {
 			var point = numCache.getPtByIndex(i);
 			var val = point ? point.val : 0;
-			angle = Math.abs((parseFloat(val / sumData)) * (Math.PI * 2));
+			angle = Math.abs((parseFloat(val / sumData)) * (Math.PI * 2));;
 
 			// get the explosion value
 			nExplosion = getExplosion(this.chart.series[0].dPt && this.chart.series[0].dPt[i] && this.chart.series[0].dPt[i].explosion, nParentExplosion);
@@ -13980,7 +13980,7 @@ drawDoughnutChart.prototype = {
 			sumData = this.cChartDrawer._getSumArray(numCache.pts, true);
 
 			//рисуем против часовой стрелки, поэтому цикл с конца
-			let startAngle = this.tempAngle;
+			let startAngle = this.tempAngle - firstSliceAng;
 			let midAngle;
 			let nExplosion;
 			let fExplosionLenght;
@@ -14032,7 +14032,9 @@ drawDoughnutChart.prototype = {
 				}
 
 				// add angle to the start angle
-				startAngle += angle;
+				if (n === this.chart.series.length - 1) {
+					startAngle += angle;
+				}
 			}
 
 			if (numCache.pts.length) {
