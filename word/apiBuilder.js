@@ -18441,7 +18441,10 @@
 	 * @memberof ApiShape
 	 * @typeofeditors ["CDE", "CSE"]
 	 * @returns {ApiGeometry}
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetGeometry.js
+	 * @since 9.1.0
 	 */
+
 	ApiShape.prototype.GetGeometry = function()
 	{
 		if (this.Shape && this.Shape.spPr && this.Shape.spPr.geometry)
@@ -18457,6 +18460,8 @@
 	 * @typeofeditors ["CDE", "CSE"]
 	 * @param {ApiGeometry} oGeometry - The geometry to set
 	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetGeometry.js
+	 * @since 9.1.0
 	 */
 	ApiShape.prototype.SetGeometry = function(oGeometry)
 	{
@@ -18495,6 +18500,8 @@
 	 * Checks if this is a custom geometry
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/IsCustom.js
+	 * @since 9.1.0
 	 */
 	ApiGeometry.prototype.IsCustom = function()
 	{
@@ -18505,6 +18512,8 @@
 	 * Gets the preset name if this is a preset geometry
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {ShapeType | null}
+	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/GetPreset.js
+	 * @since 9.1.0
 	 */
 	ApiGeometry.prototype.GetPreset = function()
 	{
@@ -18515,11 +18524,12 @@
 		return null;
 	};
 
-
 	/**
 	 * Gets the number of paths in the geometry
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {number}
+	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/GetPathCount.js
+	 * @since 9.1.0
 	 */
 	ApiGeometry.prototype.GetPathCount = function()
 	{
@@ -18531,6 +18541,8 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {number} nIndex - Path index
 	 * @returns {ApiPath}
+	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/GetPath.js
+	 * @since 9.1.0
 	 */
 	ApiGeometry.prototype.GetPath = function(nIndex)
 	{
@@ -18545,6 +18557,8 @@
 	 * Gets all paths
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {ApiPath[]}
+	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/GetPaths.js
+	 * @since 9.1.0
 	 */
 	ApiGeometry.prototype.GetPaths = function()
 	{
@@ -18563,6 +18577,8 @@
 	 * Adds a new path to the geometry
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {ApiPath | null}
+	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/AddPath.js
+	 * @since 9.1.0
 	 */
 	ApiGeometry.prototype.AddPath = function()
 	{
@@ -18583,6 +18599,8 @@
 	 * Converts preset geometry to custom geometry
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/ConvertToCustom.js
+	 * @since 9.1.0
 	 */
 	ApiGeometry.prototype.ConvertToCustom = function()
 	{
@@ -18600,6 +18618,8 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} sName - Adjustment name
 	 * @returns {number | null}
+	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/GetAdjValue.js
+	 * @since 9.1.0
 	 */
 	ApiGeometry.prototype.GetAdjValue = function(sName)
 	{
@@ -18611,31 +18631,12 @@
 	};
 
 	/**
-	 * Gets all adjustment values
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @returns {Object}
-	 */
-	ApiGeometry.prototype.GetAdjustments = function()
-	{
-		var adjustments = {};
-		if (this.geometry.avLst)
-		{
-			for (var key in this.geometry.avLst)
-			{
-				if (this.geometry.avLst.hasOwnProperty(key))
-				{
-					adjustments[key] = this.geometry.gdLst[key];
-				}
-			}
-		}
-		return adjustments;
-	};
-
-	/**
 	 * Adds an adjustment value
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} sName - Adjustment name
 	 * @param {number} nValue - Adjustment value
+	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/AddAdj.js
+	 * @since 9.1.0
 	 */
 	ApiGeometry.prototype.AddAdj = function(sName, nValue)
 	{
@@ -18647,6 +18648,8 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} sName - Adjustment name
 	 * @param {number} nValue - Adjustment value
+	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/SetAdjValue.js
+	 * @since 9.1.0
 	 */
 	ApiGeometry.prototype.SetAdjValue = function(sName, nValue)
 	{
@@ -18663,6 +18666,8 @@
 	 * @param {string} sY - Y parameter
 	 * @param {string} sZ - Z parameter
 	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/AddGuide.js
+	 * @since 9.1.0
 	 */
 	ApiGeometry.prototype.AddGuide = function(sName, sFormula, sX, sY, sZ)
 	{
@@ -18679,6 +18684,8 @@
 	 * @param {string} sTop - Top guide name or value
 	 * @param {string} sRight - Right guide name or value
 	 * @param {string} sBottom - Bottom guide name or value
+	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/SetTextRect.js
+	 * @since 9.1.0
 	 */
 	ApiGeometry.prototype.SetTextRect = function(sLeft, sTop, sRight, sBottom)
 	{
@@ -18691,6 +18698,8 @@
 	 * @param {string} sAngle - Angle
 	 * @param {string} sX - X position
 	 * @param {string} sY - Y position
+	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/AddConnectionPoint.js
+	 * @since 9.1.0
 	 */
 	ApiGeometry.prototype.AddConnectionPoint = function(sAngle, sX, sY)
 	{
@@ -18702,6 +18711,8 @@
 	 * Gets the command type
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {PathCommandType}
+	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetType.js
+	 * @since 9.1.0
 	 */
 	ApiPathCommand.prototype.GetType = function()
 	{
@@ -18721,6 +18732,8 @@
 	 * Gets the X coordinate for moveTo/lineTo commands
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {string | null}
+	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetX.js
+	 * @since 9.1.0
 	 */
 	ApiPathCommand.prototype.GetX = function()
 	{
@@ -18731,6 +18744,8 @@
 	 * Gets the Y coordinate for moveTo/lineTo commands
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {string | null}
+	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetY.js
+	 * @since 9.1.0
 	 */
 	ApiPathCommand.prototype.GetY = function()
 	{
@@ -18741,6 +18756,8 @@
 	 * Gets first control point X for bezier curves
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {string | null}
+	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetX0.js
+	 * @since 9.1.0
 	 */
 	ApiPathCommand.prototype.GetX0 = function()
 	{
@@ -18751,6 +18768,8 @@
 	 * Gets first control point Y for bezier curves
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {string | null}
+	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetY0.js
+	 * @since 9.1.0
 	 */
 	ApiPathCommand.prototype.GetY0 = function()
 	{
@@ -18761,6 +18780,8 @@
 	 * Gets second control point X for cubic bezier
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {string | null}
+	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetX1.js
+	 * @since 9.1.0
 	 */
 	ApiPathCommand.prototype.GetX1 = function()
 	{
@@ -18771,6 +18792,8 @@
 	 * Gets second control point Y for cubic bezier
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {string | null}
+	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetY1.js
+	 * @since 9.1.0
 	 */
 	ApiPathCommand.prototype.GetY1 = function()
 	{
@@ -18781,6 +18804,8 @@
 	 * Gets end point X for cubic bezier
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {string | null}
+	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetX2.js
+	 * @since 9.1.0
 	 */
 	ApiPathCommand.prototype.GetX2 = function()
 	{
@@ -18791,6 +18816,8 @@
 	 * Gets end point Y for cubic bezier
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {string | null}
+	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetY2.js
+	 * @since 9.1.0
 	 */
 	ApiPathCommand.prototype.GetY2 = function()
 	{
@@ -18801,6 +18828,8 @@
 	 * Gets width radius for arc
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {string | null}
+	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetWR.js
+	 * @since 9.1.0
 	 */
 	ApiPathCommand.prototype.GetWR = function()
 	{
@@ -18811,6 +18840,8 @@
 	 * Gets height radius for arc
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {string | null}
+	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetHR.js
+	 * @since 9.1.0
 	 */
 	ApiPathCommand.prototype.GetHR = function()
 	{
@@ -18821,6 +18852,8 @@
 	 * Gets start angle for arc
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {string | null}
+	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetStartAngle.js
+	 * @since 9.1.0
 	 */
 	ApiPathCommand.prototype.GetStartAngle = function()
 	{
@@ -18831,6 +18864,8 @@
 	 * Gets sweep angle for arc
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {string | null}
+	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetSweepAngle.js
+	 * @since 9.1.0
 	 */
 	ApiPathCommand.prototype.GetSweepAngle = function()
 	{
@@ -18843,6 +18878,8 @@
 	 * Gets whether the path is stroked
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/GetStroke.js
+	 * @since 9.1.0
 	 */
 	ApiPath.prototype.GetStroke = function()
 	{
@@ -18853,6 +18890,8 @@
 	 * Sets whether the path should be stroked
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} bStroke - Whether to stroke the path
+	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/SetStroke.js
+	 * @since 9.1.0
 	 */
 	ApiPath.prototype.SetStroke = function(bStroke)
 	{
@@ -18863,6 +18902,8 @@
 	 * Gets the fill type
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {PathFillType}
+	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/GetFill.js
+	 * @since 9.1.0
 	 */
 	ApiPath.prototype.GetFill = function()
 	{
@@ -18873,6 +18914,8 @@
 	 * Sets the fill type for the path
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {PathFillType} sFill - Fill type
+	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/SetFill.js
+	 * @since 9.1.0
 	 */
 	ApiPath.prototype.SetFill = function(sFill)
 	{
@@ -18883,6 +18926,8 @@
 	 * Gets the path width
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {number}
+	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/GetWidth.js
+	 * @since 9.1.0
 	 */
 	ApiPath.prototype.GetWidth = function()
 	{
@@ -18893,6 +18938,8 @@
 	 * Sets the path width
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {number} nWidth - Width in EMU
+	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/SetWidth.js
+	 * @since 9.1.0
 	 */
 	ApiPath.prototype.SetWidth = function(nWidth)
 	{
@@ -18903,6 +18950,8 @@
 	 * Gets the path height
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {number}
+	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/GetHeight.js
+	 * @since 9.1.0
 	 */
 	ApiPath.prototype.GetHeight = function()
 	{
@@ -18913,6 +18962,8 @@
 	 * Sets the path height
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {number} nHeight - Height in EMU
+	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/SetHeight.js
+	 * @since 9.1.0
 	 */
 	ApiPath.prototype.SetHeight = function(nHeight)
 	{
@@ -18923,6 +18974,8 @@
 	 * Gets all path commands
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {ApiPathCommand[]}
+	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/GetCommands.js
+	 * @since 9.1.0
 	 */
 	ApiPath.prototype.GetCommands = function()
 	{
@@ -18941,6 +18994,8 @@
 	 * Gets command count
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {number}
+	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/GetCommandCount.js
+	 * @since 9.1.0
 	 */
 	ApiPath.prototype.GetCommandCount = function()
 	{
@@ -18952,6 +19007,8 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {number} nIndex - Command index
 	 * @returns {ApiPathCommand | null}
+	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/GetCommand.js
+	 * @since 9.1.0
 	 */
 	ApiPath.prototype.GetCommand = function(nIndex)
 	{
@@ -18967,6 +19024,8 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string | number} x - X coordinate
 	 * @param {string | number} y - Y coordinate
+	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/MoveTo.js
+	 * @since 9.1.0
 	 */
 	ApiPath.prototype.MoveTo = function(x, y)
 	{
@@ -18978,6 +19037,8 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string | number} x - X coordinate
 	 * @param {string | number} y - Y coordinate
+	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/LineTo.js
+	 * @since 9.1.0
 	 */
 	ApiPath.prototype.LineTo = function(x, y)
 	{
@@ -18993,6 +19054,8 @@
 	 * @param {string | number} y2 - Second control point Y
 	 * @param {string | number} x3 - End point X
 	 * @param {string | number} y3 - End point Y
+	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/CubicBezTo.js
+	 * @since 9.1.0
 	 */
 	ApiPath.prototype.CubicBezTo = function(x1, y1, x2, y2, x3, y3)
 	{
@@ -19006,6 +19069,8 @@
 	 * @param {string | number} y1 - Control point Y
 	 * @param {string | number} x2 - End point X
 	 * @param {string | number} y2 - End point Y
+	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/QuadBezTo.js
+	 * @since 9.1.0
 	 */
 	ApiPath.prototype.QuadBezTo = function(x1, y1, x2, y2)
 	{
@@ -19018,7 +19083,9 @@
 	 * @param {string | number} wR - Width radius
 	 * @param {string | number} hR - Height radius
 	 * @param {string | number} stAng - Start angle
-	 * @param {string | number} swAng - Sweep angle
+	 * @param {string | number} swAng - Sweep angle Y
+	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/ArcTo.js
+	 * @since 9.1.0
 	 */
 	ApiPath.prototype.ArcTo = function(wR, hR, stAng, swAng)
 	{
@@ -19028,6 +19095,8 @@
 	/**
 	 * Closes the current path
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/Close.js
+	 * @since 9.1.0
 	 */
 	ApiPath.prototype.Close = function()
 	{
