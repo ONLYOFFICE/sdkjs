@@ -18439,7 +18439,7 @@
 	/**
 	 * Gets the geometry object from a shape
 	 * @memberof ApiShape
-	 * @typeofeditors ["CDE", "CSE"]
+	 * @typeofeditors ["CDE"]
 	 * @returns {ApiGeometry}
 	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetGeometry.js
 	 * @since 9.1.0
@@ -18457,7 +18457,7 @@
 	/**
 	 * Sets a custom geometry for the shape
 	 * @memberof ApiShape
-	 * @typeofeditors ["CDE", "CSE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {ApiGeometry} oGeometry - The geometry to set
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetGeometry.js
@@ -27457,7 +27457,6 @@
 	ApiGeometry.prototype["AddPath"]                 = ApiGeometry.prototype.AddPath;
 	ApiGeometry.prototype["ConvertToCustom"]         = ApiGeometry.prototype.ConvertToCustom;
 	ApiGeometry.prototype["GetAdjValue"]             = ApiGeometry.prototype.GetAdjValue;
-	ApiGeometry.prototype["GetAdjustments"]          = ApiGeometry.prototype.GetAdjustments;
 	ApiGeometry.prototype["AddAdj"]                  = ApiGeometry.prototype.AddAdj;
 	ApiGeometry.prototype["SetAdjValue"]             = ApiGeometry.prototype.SetAdjValue;
 	ApiGeometry.prototype["AddGuide"]                = ApiGeometry.prototype.AddGuide;
