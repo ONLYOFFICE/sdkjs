@@ -383,14 +383,11 @@
     CPdfDrawingPrototype.prototype.GetDocContent = function() {
         return null;
     };
-    CPdfDrawingPrototype.prototype.SetInTextBox = function(bIn) {
-        this.isInTextBox = bIn;
-    };
     CPdfDrawingPrototype.prototype.IsInTextBox = function() {
         let oDoc = editor.getPDFDoc();
         let oController = oDoc.GetController();
 
-        if (oDoc.GetActiveObject() == this && this == oController.getTargetTextObject()) {
+        if (oDoc.GetActiveObject() == this && oController.getTargetTextObject()) {
             return !!this.GetDocContent();
         }
 
