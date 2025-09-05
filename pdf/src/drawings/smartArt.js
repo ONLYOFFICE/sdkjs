@@ -52,11 +52,11 @@
         if (this.IsNeedRecalc() == false)
             return;
 
-        this.recalculateTransform();
-        this.updateTransformMatrix();
-        this.recalcGeometry();
-        this.checkExtentsByDocContent(true, true);
+        this.recalcInfo.recalculateTransform = true;
+        this.recalcInfo.recalculateSizes = true;
+        
         this.recalculate();
+        this.updateTransformMatrix();
         this.SetNeedRecalc(false);
     };
     CPdfSmartArt.prototype.onMouseDown = function(x, y, e) {
