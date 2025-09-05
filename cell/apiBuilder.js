@@ -11794,6 +11794,25 @@
 		}
 	};
 
+	let toAscColor = function (_color) {
+		let res;
+		if (_color instanceof AscCommonExcel.RgbColor) {
+			res = new Asc.asc_CColor(_color.getR(), _color.getG(), _color.getB());
+		} else if (_color - 0) {
+			_color = _color - 0;
+			if (!isNaN(_color)) {
+				if (_color === 0) {
+					res = new Asc.asc_CColor(0,0,0);
+				} else {
+					res = new Asc.asc_CColor(1,1,1);
+				}
+			} else {
+				res = new Asc.asc_CColor(1,1,1);
+			}
+		}
+		return res;
+	};
+
 	/**
 	 * Filter type.
 	 * @typedef {("xlAnd" | "xlBottom10Items" | "xlBottom10Percent" | "xlFilterCellColor" | "xlFilterDynamic" | "xlFilterFontColor" | "xlFilterValues" | "xlOr" | "xlTop10Items" | "xlTop10Percent")} XlAutoFilterOperator
@@ -11995,25 +12014,6 @@
 				autoFilterOptions.asc_setCellId(cellId);
 				autoFilterOptions.asc_setValues(autoFiltersOptionsElements.values);
 			}
-		};
-
-		let toAscColor = function (_color) {
-			let res;
-			if (_color instanceof AscCommonExcel.RgbColor) {
-				res = new Asc.asc_CColor(_color.getR(), _color.getG(), _color.getB());
-			} else if (_color - 0) {
-				_color = _color - 0;
-				if (!isNaN(_color)) {
-					if (_color === 0) {
-						res = new Asc.asc_CColor(0,0,0);
-					} else {
-						res = new Asc.asc_CColor(1,1,1);
-					}
-				} else {
-					res = new Asc.asc_CColor(1,1,1);
-				}
-			}
-			return res;
 		};
 
 		let createColorFilter = function (color, isCellColor) {
@@ -20303,7 +20303,9 @@
 		let cfvos = [];
 
 		if (ColorScaleType === 2) {
-			// Two-color scale: red -> green
+			//TODO need cnange base colors
+			/*<color rgb="FFFF7128"/>
+			<color rgb="FFFFEF9C"/>*/
 			colors = [
 				new Asc.asc_CColor(248, 105, 107), // red
 				new Asc.asc_CColor(99, 190, 123)   // green
@@ -21932,7 +21934,7 @@
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean} True if looking for above average values, false for below average.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetAboveBelow.js
 	 */
 	ApiAboveAverage.prototype.GetAboveBelow = function() {
@@ -21947,7 +21949,7 @@
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} aboveBelow - True to look for above average values, false for below average.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/SetAboveBelow.js
 	 */
 	ApiAboveAverage.prototype.SetAboveBelow = function(aboveBelow) {
@@ -21974,7 +21976,7 @@
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetCalcFor.js
 	 */
 	ApiAboveAverage.prototype.GetCalcFor = function() {
@@ -21991,7 +21993,7 @@
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @param {number} calcFor - The calculation scope (0 = xlAllValues, 1 = xlColItems, 2 = xlRowItems)
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/SetCalcFor.js
 	 */
 	ApiAboveAverage.prototype.SetCalcFor = function(calcFor) {
@@ -22021,7 +22023,7 @@
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetNumStdDev.js
 	 */
 	ApiAboveAverage.prototype.GetNumStdDev = function() {
@@ -22036,7 +22038,7 @@
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @param {number} numStdDev - The number of standard deviations (0 for simple average, positive numbers for deviations)
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/SetNumStdDev.js
 	 */
 	ApiAboveAverage.prototype.SetNumStdDev = function(numStdDev) {
@@ -22063,7 +22065,7 @@
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlFormatConditionType}
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetType.js
 	 */
 	ApiAboveAverage.prototype.GetType = function() {
@@ -22095,7 +22097,7 @@
 	 * @memberof ApiColorScale
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiColorScaleCriterion[] | null}
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 */
 	ApiColorScale.prototype.GetColorScaleCriteria = function() {
 		if (!this.rule || this.rule.type !== Asc.ECfType.colorScale) {
@@ -22118,7 +22120,7 @@
 		let criteria = [];
 		for (let i = 0; i < length; i++) {
 			criteria.push(new ApiColorScaleCriterion(
-				aCFVOs[i],
+				aCFVOs[i].clone(),
 				aColors[i],
 				this,
 				i
@@ -22140,7 +22142,7 @@
 	//  * @memberof ApiColorScale
 	//  * @typeofeditors ["CSE"]
 	//  * @returns {string}
-	//  * @since 9.2.0
+	//  * @since 9.1.0
 	//  */
 	// ApiColorScale.prototype.GetFormula = function() {
 	// 	if (this.rule.aRuleElements && this.rule.aRuleElements.length > 0 && this.rule.aRuleElements[0]) {
@@ -22163,7 +22165,7 @@
 	 * @memberof ApiColorScale
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlFormatConditionType}
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 */
 	ApiColorScale.prototype.GetType = function() {
 		return "xlColorScale";
@@ -22259,7 +22261,7 @@
 	 * @memberof ApiColorScaleCriterion
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlConditionValueTypes | null}
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 */
 	ApiColorScaleCriterion.prototype.GetType = function() {
 		if (!this.cfvo) {
@@ -22273,7 +22275,7 @@
 	 * @memberof ApiColorScaleCriterion
 	 * @typeofeditors ["CSE"]
 	 * @param {XlConditionValueTypes} type - The type of the criterion.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 */
 	ApiColorScaleCriterion.prototype.SetType = function(type) {
 		if (this.cfvo) {
@@ -22283,6 +22285,8 @@
 				this.parent.private_changeStyle(function (newRule) {
 					let index = t.GetIndex();
 					newRule.aRuleElements[0].aCFVOs[index].asc_setType(internalType);
+					t.cfvo.asc_setType(internalType);
+
 				}, true);
 			}
 		}
@@ -22303,12 +22307,13 @@
 	 * @memberof ApiColorScaleCriterion
 	 * @typeofeditors ["CSE"]
 	 * @returns {string | null}
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 */
 	ApiColorScaleCriterion.prototype.GetValue = function() {
 		if (!this.cfvo) {
 			return null;
 		}
+		//TODO return min/max values if val null
 		return this.cfvo.Val;
 	};
 
@@ -22317,14 +22322,16 @@
 	 * @memberof ApiColorScaleCriterion
 	 * @typeofeditors ["CSE"]
 	 * @param {string} value - The value of the criterion.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 */
 	ApiColorScaleCriterion.prototype.SetValue = function(value) {
+		//TODO set in excel -> error, if max/min type
 		if (this.cfvo) {
 			let t = this;
 			this.parent.private_changeStyle(function (newRule) {
 				let index = t.GetIndex();
 				newRule.aRuleElements[0].aCFVOs[index].asc_setVal(value);
+				t.cfvo.asc_setVal(value);
 			}, true);
 		}
 	};
@@ -22343,9 +22350,10 @@
 	 * @memberof ApiColorScaleCriterion
 	 * @typeofeditors ["CSE"]
 	 * @returns {number} Returns 1 for minimum threshold, 2 for midpoint (3-color scale) or maximum (2-color scale), and 3 for maximum threshold (3-color scale only).
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 */
 	ApiColorScaleCriterion.prototype.GetIndex = function() {
+		//starts with 0
 		return this.index;
 		/*if (!this.colorScaleElement || !this.colorScaleElement.aCFVOs) {
 			return 1;
@@ -22373,7 +22381,7 @@
 	 * @memberof ApiColorScaleCriterion
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiColor | null}
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 */
 	ApiColorScaleCriterion.prototype.GetColor = function() {
 		if (!this.color) {
@@ -22387,7 +22395,7 @@
 	 * @memberof ApiColorScaleCriterion
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiColor} oColor - The ApiColor object specifying the color.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 */
 	ApiColorScaleCriterion.prototype.SetColor = function(oColor) {
 		if (!oColor || !(oColor instanceof ApiColor)) {
@@ -22440,7 +22448,11 @@
 	 */
 	ApiDatabar.prototype.GetAxisColor = function()
 	{
-		var oColor = this.dataBar.asc_getAxisColor();
+		var oColor;
+		if (this.rule.aRuleElements && this.rule.aRuleElements[0]) {
+			// Update the axis color in the data bar rule
+			oColor = this.rule.aRuleElements[0].asc_getAxisColor();
+		}
 		if (oColor) {
 			return new ApiColor(oColor);
 		}
@@ -22452,7 +22464,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiColor} oColor - The axis color.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 */
 	ApiDatabar.prototype.SetAxisColor = function(oColor)
 	{
@@ -22467,7 +22479,7 @@
 		this.private_changeStyle(function (newRule) {
 			if (newRule.aRuleElements && newRule.aRuleElements[0]) {
 				// Update the axis color in the data bar rule
-				newRule.aRuleElements[0].asc_setAxisColor(oColor.color);
+				newRule.aRuleElements[0].asc_setAxisColor(toAscColor(oColor.color));
 			}
 		}, true);
 	};
@@ -22522,7 +22534,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlDataBarAxisPosition} The axis position setting for the data bar.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetAxisPosition.js
 	 */
 	ApiDatabar.prototype.GetAxisPosition = function() {
@@ -22543,7 +22555,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @param {XlDataBarAxisPosition} position - The axis position setting for the data bar.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetAxisPosition.js
 	 */
 	ApiDatabar.prototype.SetAxisPosition = function(position) {
@@ -22576,7 +22588,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean} True if the data bar shows the value, false otherwise.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetShowValue.js
 	 */
 	ApiDatabar.prototype.GetShowValue = function() {
@@ -22597,7 +22609,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} showValue - True to show the value, false to hide it.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetShowValue.js
 	 */
 	ApiDatabar.prototype.SetShowValue = function(showValue) {
@@ -22670,7 +22682,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlReadingOrder} The direction setting for the data bar.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetDirection.js
 	 */
 	ApiDatabar.prototype.GetDirection = function() {
@@ -22691,7 +22703,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @param {XlReadingOrder} direction - The direction setting for the data bar.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetDirection.js
 	 */
 	ApiDatabar.prototype.SetDirection = function(direction) {
@@ -22728,7 +22740,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiColor | null} Returns the ApiColor object representing the bar color, or null if not specified.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetBarColor.js
 	 */
 	ApiDatabar.prototype.GetBarColor = function() {
@@ -22749,7 +22761,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiColor} oColor - The ApiColor object for the bar.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetBarColor.js
 	 */
 	ApiDatabar.prototype.SetBarColor = function(oColor) {
@@ -22763,7 +22775,7 @@
 
 		this.private_changeStyle(function(newRule) {
 			if (newRule.aRuleElements && newRule.aRuleElements[0]) {
-				newRule.aRuleElements[0].asc_setColor(oColor.color);
+				newRule.aRuleElements[0].asc_setColor(toAscColor(oColor.color));
 			}
 		}, true);
 	};
@@ -22783,7 +22795,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlDataBarFillType} The fill type setting for the data bar.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetBarFillType.js
 	 */
 	ApiDatabar.prototype.GetBarFillType = function() {
@@ -22804,7 +22816,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @param {XlDataBarFillType} fillType - The fill type setting for the data bar.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetBarFillType.js
 	 */
 	ApiDatabar.prototype.SetBarFillType = function(fillType) {
@@ -22837,7 +22849,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlConditionValueTypes | null} The type of the minimum condition value.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetMinPointType.js
 	 */
 	ApiDatabar.prototype.GetMinPointType = function() {
@@ -22858,7 +22870,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @param {XlConditionValueTypes} type - The type of the condition value.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetMinPointType.js
 	 */
 	ApiDatabar.prototype.SetMinPointType = function(type) {
@@ -22880,7 +22892,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @returns {string | number | null} The value of the minimum condition value.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetMinPointValue.js
 	 */
 	ApiDatabar.prototype.GetMinPointValue = function() {
@@ -22893,7 +22905,8 @@
 			return null;
 		}
 
-		return dataBarElement.aCFVOs[0].asc_getVal();
+		let _val = dataBarElement.aCFVOs[0].Val;
+		return _val == null ? 0 : _val;
 	};
 
 	/**
@@ -22901,7 +22914,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @param {string | number} value - The value of the condition value.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetMinPointValue.js
 	 */
 	ApiDatabar.prototype.SetMinPointValue = function(value) {
@@ -22924,7 +22937,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlConditionValueTypes | null} The type of the maximum condition value.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetMaxPointType.js
 	 */
 	ApiDatabar.prototype.GetMaxPointType = function() {
@@ -22945,7 +22958,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @param {XlConditionValueTypes} type - The type of the condition value.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetMaxPointType.js
 	 */
 	ApiDatabar.prototype.SetMaxPointType = function(type) {
@@ -22967,7 +22980,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @returns {string | number | null} The value of the maximum condition value.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetMaxPointValue.js
 	 */
 	ApiDatabar.prototype.GetMaxPointValue = function() {
@@ -22977,10 +22990,11 @@
 
 		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
 		if (!dataBarElement || !dataBarElement.aCFVOs || dataBarElement.aCFVOs.length < 2) {
-			return null;
+			return 0;
 		}
 
-		return dataBarElement.aCFVOs[1].asc_getVal();
+		let _val = dataBarElement.aCFVOs[1].Val;
+		return _val == null ? 0 : _val;
 	};
 
 	/**
@@ -22988,7 +23002,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @param {string | number} value - The value of the condition value.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetMaxPointValue.js
 	 */
 	ApiDatabar.prototype.SetMaxPointValue = function(value) {
@@ -23011,7 +23025,7 @@
 	//  * @memberof ApiDatabar
 	//  * @typeofeditors ["CSE"]
 	//  * @returns {ApiNegativeBarFormat | null} Returns the negative bar format object.
-	//  * @since 9.2.0
+	//  * @since 9.1.0
 	//  * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetNegativeBarFormat.js
 	//  */
 	// ApiDatabar.prototype.GetNegativeBarFormat = function() {
@@ -23038,7 +23052,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiColor | null} Returns the ApiColor object representing the negative bar color, or null if not specified.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetNegativeBarColor.js
 	 */
 	ApiDatabar.prototype.GetNegativeBarColor = function() {
@@ -23059,7 +23073,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiColor} oColor - The ApiColor object for the negative bars.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetNegativeBarColor.js
 	 */
 	ApiDatabar.prototype.SetNegativeBarColor = function(oColor) {
@@ -23093,7 +23107,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiColor | null} Returns the ApiColor object representing the negative bar border color, or null if not specified.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetNegativeBorderColor.js
 	 */
 	ApiDatabar.prototype.GetNegativeBorderColor = function() {
@@ -23114,7 +23128,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiColor} oColor - The ApiColor object for the negative bar borders.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetNegativeBorderColor.js
 	 */
 	ApiDatabar.prototype.SetNegativeBorderColor = function(oColor) {
@@ -23149,7 +23163,7 @@
 	//  * @memberof ApiDatabar
 	//  * @typeofeditors ["CSE"]
 	//  * @returns {ApiDataBarBorder | null} Returns the data bar border object.
-	//  * @since 9.2.0
+	//  * @since 9.1.0
 	//  * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetBarBorder.js
 	//  */
 	// ApiDatabar.prototype.GetBarBorder = function() {
@@ -23177,7 +23191,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiColor | null} Returns the ApiColor object representing the bar color, or null if not specified.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetBarBorderColor.js
 	 */
 	ApiDatabar.prototype.GetBarBorderColor = function() {
@@ -23198,7 +23212,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiColor} oColor - The ApiColor object for the bar.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetBarColor.js
 	 */
 	ApiDatabar.prototype.SetBarBorderColor = function(oColor) {
@@ -23223,7 +23237,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @returns {number} Returns the maximum length as percentage.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetPercentMax.js
 	 */
 	ApiDatabar.prototype.GetPercentMax = function() {
@@ -23244,7 +23258,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @param {number} percent - The maximum length as percentage.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetPercentMax.js
 	 */
 	ApiDatabar.prototype.SetPercentMax = function(percent) {
@@ -23279,7 +23293,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @returns {number} Returns the minimum length as percentage.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetPercentMin.js
 	 */
 	ApiDatabar.prototype.GetPercentMin = function() {
@@ -23300,7 +23314,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @param {number} percent - The minimum length as percentage.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetPercentMin.js
 	 */
 	ApiDatabar.prototype.SetPercentMin = function(percent) {
@@ -23335,10 +23349,11 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @returns {string} Returns the formula string.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetFormula.js
 	 */
 	ApiDatabar.prototype.GetFormula = function() {
+		//TODO excel error property
 		if (this.rule.aRuleElements && this.rule.aRuleElements.length > 0 && this.rule.aRuleElements[0]) {
 			let element = this.rule.aRuleElements[0];
 			return element.Text || "";
@@ -23357,7 +23372,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlFormatConditionType} Returns "xlDatabar".
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetType.js
 	 */
 	ApiDatabar.prototype.GetType = function() {
@@ -23526,7 +23541,7 @@
 	 * @memberof ApiIconSetCondition
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlIconSet | null} The icon set type, or null if not applicable.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetIconSet.js
 	 */
 	ApiIconSetCondition.prototype.GetIconSet = function() {
@@ -23548,7 +23563,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {XlIconSet} iconSet - The icon set type to apply.
 	 * @returns {boolean} True if the icon set was successfully set, false otherwise.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/SetIconSet.js
 	 */
 	ApiIconSetCondition.prototype.SetIconSet = function(iconSet) {
@@ -23682,7 +23697,7 @@
 	 * @memberof ApiIconSetCondition
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean} True if all thresholds are set to percentile, false otherwise.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetPercentileValues.js
 	 */
 	ApiIconSetCondition.prototype.GetPercentileValues = function() {
@@ -23711,7 +23726,7 @@
 	 * @memberof ApiIconSetCondition
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} percentileValues - True to set all thresholds to percentile, false otherwise.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/SetPercentileValues.js
 	 */
 	ApiIconSetCondition.prototype.SetPercentileValues = function(percentileValues) {
@@ -23773,7 +23788,7 @@
 	 * @memberof ApiIconSetCondition
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean | null} True if the icon order is reversed, false otherwise, or null if not applicable.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetReverse.js
 	 */
 	ApiIconSetCondition.prototype.GetReverseOrder = function() {
@@ -23795,7 +23810,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} reverse - True to reverse the icon order, false otherwise.
 	 * @returns {boolean} True if the setting was successfully applied, false otherwise.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/SetReverse.js
 	 */
 	ApiIconSetCondition.prototype.SetReverseOrder = function(reverse) {
@@ -23827,7 +23842,7 @@
 	 * @memberof ApiIconSetCondition
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean | null} True if only icons are shown, false if values are also shown, or null if not applicable.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetShowIconOnly.js
 	 */
 	ApiIconSetCondition.prototype.GetShowIconOnly = function() {
@@ -23849,7 +23864,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} showIconOnly - True to show only icons, false to show both icons and values.
 	 * @returns {boolean} True if the setting was successfully applied, false otherwise.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/SetShowIconOnly.js
 	 */
 	ApiIconSetCondition.prototype.SetShowIconOnly = function(showIconOnly) {
@@ -23881,7 +23896,7 @@
 	 * @memberof ApiIconSetCondition
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiIconCriterion[] | null} Collection of icon criteria objects, or null if the rule is not an icon set type.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetIconCriteria.js
 	 */
 	ApiIconSetCondition.prototype.GetIconCriteria = function() {
@@ -23928,7 +23943,7 @@
 	 * @memberof ApiIconSetCondition
 	 * @typeofeditors ["CSE"]
 	 * @returns {string} The formula string, or empty string if no formula is set.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetFormula.js
 	 */
 	ApiIconSetCondition.prototype.GetFormula = function() {
@@ -23950,7 +23965,7 @@
 	 * @memberof ApiIconSetCondition
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlFormatConditionType} Returns "xlIconSets".
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetType.js
 	 */
 	ApiIconSetCondition.prototype.GetType = function() {
@@ -23980,7 +23995,7 @@
 	//  * @memberof ApiIconCriteria
 	//  * @typeofeditors ["CSE"]
 	//  * @returns {number} The number of icon criteria.
-	//  * @since 9.2.0
+	//  * @since 9.1.0
 	//  * @see office-js-api/Examples/{Editor}/ApiIconCriteria/Methods/GetCount.js
 	//  */
 	// ApiIconCriteria.prototype.GetCount = function() {
@@ -23999,7 +24014,7 @@
 	//  * @typeofeditors ["CSE"]
 	//  * @param {number} index - The index of the criterion (1-based).
 	//  * @returns {ApiIconCriterion | null} The icon criterion object, or null if index is invalid.
-	//  * @since 9.2.0
+	//  * @since 9.1.0
 	//  * @see office-js-api/Examples/{Editor}/ApiIconCriteria/Methods/GetItem.js
 	//  */
 	// ApiIconCriteria.prototype.GetItem = function(index) {
@@ -24028,7 +24043,7 @@
 	 * @memberof ApiIconCriterion
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlConditionValueTypes | null} The condition value type, or null if not available.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/GetType.js
 	 */
 	ApiIconCriterion.prototype.GetType = function() {
@@ -24043,7 +24058,7 @@
 	 * @memberof ApiIconCriterion
 	 * @typeofeditors ["CSE"]
 	 * @param {XlConditionValueTypes} type - The condition value type. Only xlConditionValueNumber, xlConditionValuePercent, xlConditionValuePercentile, or xlConditionValueFormula are supported.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/SetType.js
 	 */
 	ApiIconCriterion.prototype.SetType = function(type) {
@@ -24103,7 +24118,7 @@
 	 * @memberof ApiIconCriterion
 	 * @typeofeditors ["CSE"]
 	 * @returns {string | number | null} The threshold value, or null if not available.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/GetValue.js
 	 */
 	ApiIconCriterion.prototype.GetValue = function() {
@@ -24118,7 +24133,7 @@
 	 * @memberof ApiIconCriterion
 	 * @typeofeditors ["CSE"]
 	 * @param {string | number} value - The threshold value to set.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/SetValue.js
 	 */
 	ApiIconCriterion.prototype.SetValue = function(value) {
@@ -24162,7 +24177,7 @@
 	 * @memberof ApiIconCriterion
 	 * @typeofeditors ["CSE"]
 	 * @returns {string | null} The operator ("xlGreaterEqual" or "xlGreater"), or null if not available.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/GetOperator.js
 	 */
 	ApiIconCriterion.prototype.GetOperator = function() {
@@ -24177,7 +24192,7 @@
 	 * @memberof ApiIconCriterion
 	 * @typeofeditors ["CSE"]
 	 * @param {string} operator - The operator to set ("xlGreaterEqual" or "xlGreater").
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/SetOperator.js
 	 */
 	ApiIconCriterion.prototype.SetOperator = function(operator) {
@@ -24204,7 +24219,7 @@
 	 * @memberof ApiIconCriterion
 	 * @typeofeditors ["CSE"]
 	 * @returns {number} The 1-based index of the criterion.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/GetIndex.js
 	 */
 	ApiIconCriterion.prototype.GetIndex = function() {
@@ -24233,7 +24248,7 @@
 	 * @memberof ApiIconCriterion
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlIcon | null} The icon constant, or null if not available.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/GetIcon.js
 	 */
 	ApiIconCriterion.prototype.GetIcon = function() {
@@ -24725,7 +24740,7 @@
 	 * @memberof ApiIconCriterion
 	 * @typeofeditors ["CSE"]
 	 * @param {XlIcon} icon - The icon constant to set.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/SetIcon.js
 	 */
 	ApiIconCriterion.prototype.SetIcon = function(icon) {
@@ -24785,7 +24800,7 @@
 	 * @memberof ApiIcon
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlIconSet | null} The icon set type, or null if not available.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiIcon/Methods/GetIconSet.js
 	 */
 	ApiIcon.prototype.GetIconSet = function() {
@@ -24800,7 +24815,7 @@
 	 * @memberof ApiIcon
 	 * @typeofeditors ["CSE"]
 	 * @param {XlIconSet} iconSet - The icon set type to set.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiIcon/Methods/SetIconSet.js
 	 */
 	ApiIcon.prototype.SetIconSet = function(iconSet) {
@@ -24835,7 +24850,7 @@
 	 * @memberof ApiIcon
 	 * @typeofeditors ["CSE"]
 	 * @returns {number} The 1-based index of the icon.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiIcon/Methods/GetIndex.js
 	 */
 	ApiIcon.prototype.GetIndex = function() {
@@ -24850,7 +24865,7 @@
 	 * @memberof ApiIcon
 	 * @typeofeditors ["CSE"]
 	 * @param {number} index - The 1-based index to set.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiIcon/Methods/SetIndex.js
 	 */
 	ApiIcon.prototype.SetIndex = function(index) {
@@ -24928,7 +24943,7 @@
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlCalcFor}
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetCalcFor.js
 	 */
 	ApiTop10.prototype.GetCalcFor = function() {
@@ -24943,7 +24958,7 @@
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @param {XlCalcFor} calcFor - The calculation scope
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetCalcFor.js
 	 */
 	ApiTop10.prototype.SetCalcFor = function(calcFor) {
@@ -24984,7 +24999,7 @@
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlTopBottom} The XlTopBottom enumeration constant.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetTopBottom.js
 	 */
 	ApiTop10.prototype.GetTopBottom = function() {
@@ -24999,7 +25014,7 @@
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @param {XlTopBottom} topBottom - The XlTopBottom enumeration constant.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetTopBottom.js
 	 */
 	ApiTop10.prototype.SetTopBottom = function(topBottom) {
@@ -25032,7 +25047,7 @@
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean} True if percentage-based, false if count-based.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetPercent.js
 	 */
 	ApiTop10.prototype.GetPercent = function() {
@@ -25047,7 +25062,7 @@
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} percent - True for percentage-based, false for count-based.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetPercent.js
 	 */
 	ApiTop10.prototype.SetPercent = function(percent) {
@@ -25079,7 +25094,7 @@
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @returns {number} The rank value.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetRank.js
 	 */
 	ApiTop10.prototype.GetRank = function() {
@@ -25094,7 +25109,7 @@
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @param {number} rank - The rank value.
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetRank.js
 	 */
 	ApiTop10.prototype.SetRank = function(rank) {
@@ -25126,7 +25141,7 @@
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlFormatConditionType}
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetType.js
 	 */
 	ApiTop10.prototype.GetType = function() {
@@ -25180,7 +25195,7 @@
 	 * @memberof ApiUniqueValues
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlFormatConditionType}
-	 * @since 9.2.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/GetType.js
 	 */
 	ApiUniqueValues.prototype.GetType = function() {
