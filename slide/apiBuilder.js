@@ -4726,7 +4726,7 @@
 	{
 		if (this.Shape && this.Shape.spPr && this.Shape.spPr.geometry)
 		{
-			return new ApiGeometry(this.Shape.spPr.geometry);
+			return Api.prototype.private_CreateGeometry(this.Shape.spPr.geometry);
 		}
 		return null;
 	};

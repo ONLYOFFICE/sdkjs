@@ -4700,8 +4700,7 @@
 	 */
 	Api.prototype.CreateCustomGeometry = function()
 	{
-		let geometry = new AscFormat.Geometry();
-		return new ApiGeometry(geometry);
+		return Api.prototype.private_CreateGeometry(new AscFormat.Geometry());
 	};
 
 	/**
@@ -4709,16 +4708,16 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {ShapeType} sPreset - Preset name
-	 * @returns {ApiGeometry}
+	 * @returns {ApiGeometry | null}
 	 */
 	Api.prototype.CreatePresetGeometry = function(sPreset)
 	{
 		let geometry = AscFormat.CreateGeometry(sPreset);
-		if (!geometry) {
-			geometry = new AscFormat.Geometry();
-			geometry.setPreset(sPreset);
+		if (!geometry)
+		{
+			return null;
 		}
-		return new ApiGeometry(geometry);
+		return Api.prototype.private_CreateGeometry(geometry);
 	};
 
 	/**
@@ -18449,7 +18448,7 @@
 	{
 		if (this.Shape && this.Shape.spPr && this.Shape.spPr.geometry)
 		{
-			return new ApiGeometry(this.Shape.spPr.geometry);
+			return Api.prototype.private_CreateGeometry(this.Shape.spPr.geometry);
 		}
 		return null;
 	};
@@ -29472,6 +29471,15 @@
 	};
 	Api.prototype.private_CreateApiChart = function(oChartSpace){
 		return new ApiChart(oChartSpace);
+	};
+	Api.prototype.private_CreateGeometry = function(geometry){
+		return new ApiGeometry(geometry);
+	};
+	Api.prototype.private_CreatePath = function(path){
+		return new ApiPath(path);
+	};
+	Api.prototype.private_CreatePathCmd = function(pathCmd){
+		return new ApiPathCommand(pathCmd);
 	};
 
 }(window, null));
