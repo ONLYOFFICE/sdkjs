@@ -1173,7 +1173,8 @@ var CPresentation = CPresentation || function(){};
         let oMouseDownDrawing   = oViewer.getPageDrawingByMouse();
         let oFloatObject        = (this.IsEditFieldsMode() && oMouseDownField) || oMouseDownAnnot || oMouseDownDrawing;
         let oCurObject          = this.GetMouseDownObject();
-
+        let oCurContent         = oCurObject ? oCurObject.GetDocContent() : null;
+        
         // координаты клика на странице в MM
         var pageObject = oViewer.getPageByCoords2(x, y);
         if (!pageObject)
@@ -1274,9 +1275,10 @@ var CPresentation = CPresentation || function(){};
                 oDrDoc.TargetEnd();
             }
         }
+
         // check redraw if focus is lost
         if (oCurObject && oCurObject.IsDrawing() && oCurObject != oMouseDownObject) {
-            let oStartContent = AscFormat.checkEmptyPlaceholderContent(oCurObject.GetDocContent());
+            let oStartContent = AscFormat.checkEmptyPlaceholderContent(oCurContent);
             oController.checkRedrawOnChangeCursorPosition(oStartContent, null);
         }
 
