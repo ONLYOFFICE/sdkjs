@@ -7711,7 +7711,7 @@ var CPresentation = CPresentation || function(){};
         return this.Api.canEdit() && false == this.Api.IsCommentMarker();
     };
     CPDFDoc.prototype.IsViewerObject = function(oObject) {
-        let oGroup = oObject.getMainGroup();
+        let oGroup = oObject && oObject.getMainGroup();
         return !!(oObject && oObject.IsAnnot && (oObject.IsAnnot() || oObject.IsForm() || oObject.IsEditFieldShape() || oGroup && oGroup.IsAnnot()));
     };
     CPDFDoc.prototype.IsFillingFormMode = function() {

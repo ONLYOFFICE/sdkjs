@@ -2554,7 +2554,7 @@
 
 					let arr_shapes = content.Drawings;
 					if (arr_shapes && arr_shapes.length && !(window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor)) {
-						if (content.Drawings.length === selectedContent2[1].content.Drawings.length) {
+						if (content.Drawings.length === pasteObj.content.Drawings.length) {
 							let oEndContent = {
 								Drawings: []
 							};
@@ -2563,7 +2563,7 @@
 							};
 							for (i = 0; i < content.Drawings.length; ++i) {
 								oEndContent.Drawings.push({Drawing: content.Drawings[i].graphicObject});
-								oSourceContent.Drawings.push({Drawing: selectedContent2[1].content.Drawings[i].graphicObject});
+								oSourceContent.Drawings.push({Drawing: pasteObj.content.Drawings[i].graphicObject});
 							}
 							AscFormat.checkDrawingsTransformBeforePaste(oEndContent, oSourceContent, null);
 						}
@@ -3333,6 +3333,7 @@
 				var base64 = returnBinary.base64;
 				var base64FromWord = returnBinary.base64FromWord;
 				var base64FromPresentation = returnBinary.base64FromPresentation;
+				var base64FromPDF = returnBinary.base64FromPDF;
 
 				var result = false;
 				if (base64 != null)//from excel
@@ -3344,6 +3345,9 @@
 					worksheet.workbook.handlers.trigger("cleanCopyData", true);
 				} else if (base64FromPresentation) {
 					result = this._pasteFromBinaryPresentation(worksheet, base64FromPresentation, isIntoShape);
+					worksheet.workbook.handlers.trigger("cleanCopyData", true);
+				} else if (base64FromPDF) {
+					result = this._pasteFromBinaryPDF(worksheet, base64FromPDF, isIntoShape);
 					worksheet.workbook.handlers.trigger("cleanCopyData", true);
 				}
 
@@ -3369,7 +3373,7 @@
 					}
 				}
 
-				return {base64: base64, base64FromWord: base64FromWord, base64FromPresentation: base64FromPresentation};
+				return {base64: base64, base64FromWord: base64FromWord, base64FromPresentation: base64FromPresentation, base64FromPDF: base64FromPDF};
 			},
 
 			_getImageFromHtml: function (html, isGetUrlsArray) {
