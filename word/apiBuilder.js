@@ -18704,6 +18704,37 @@
 	};
 
 
+	function sanitizeCoordinate(coordinate)
+	{
+		let iN = AscFormat.isRealNumber;
+		if (typeof(coordinate) === "string")
+		{
+			const trimmed = coordinate.trim();
+			const circleDiv = {"3cd4": true, "3cd8": true, "5cd8": true, "7cd8": true};
+			if(circleeDiv[trimmed])
+			{
+				return "_" + trimmed;
+			}
+			let parsed = parseFloat(trimmed);
+			if (iN(parsed))
+			{
+				let val = parsed + 0.5 >> 0;
+				return val + "";
+			}
+			if (/^[a-zA-Z_][\w]*$/.test(trimmed)) {
+				return trimmed;
+			}
+			return "0";
+		}
+
+		if (iN(coordinate))
+		{
+			let val = coordinate + 0.5 >> 0;
+			return val + "";
+		}
+		return "0";
+	}
+
 	/**
 	 * Gets the command type
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
@@ -19026,7 +19057,7 @@
 	 */
 	ApiPath.prototype.MoveTo = function(x, y)
 	{
-		this.path.moveTo(x + "", y + "");
+		this.path.moveTo(sanitizeCoordinate(x), sanitizeCoordinate(y));
 	};
 
 	/**
@@ -19039,7 +19070,7 @@
 	 */
 	ApiPath.prototype.LineTo = function(x, y)
 	{
-		this.path.lnTo(x + "", y + "");
+		this.path.lnTo(sanitizeCoordinate(x), sanitizeCoordinate(y));
 	};
 
 	/**
@@ -19056,7 +19087,11 @@
 	 */
 	ApiPath.prototype.CubicBezTo = function(x1, y1, x2, y2, x3, y3)
 	{
-		this.path.cubicBezTo(x1 + "", y1 + "", x2 + "", y2 + "", x3 + "", y3 + "");
+		this.path.cubicBezTo(
+			sanitizeCoordinate(x1), sanitizeCoordinate(y1),
+			sanitizeCoordinate(x2), sanitizeCoordinate(y2),
+			sanitizeCoordinate(x3), sanitizeCoordinate(y3)
+		);
 	};
 
 	/**
@@ -19071,7 +19106,10 @@
 	 */
 	ApiPath.prototype.QuadBezTo = function(x1, y1, x2, y2)
 	{
-		this.path.quadBezTo(x1 + "", y1 + "", x2 + "", y2 + "");
+		this.path.quadBezTo(
+			sanitizeCoordinate(x1), sanitizeCoordinate(y1),
+			sanitizeCoordinate(x2), sanitizeCoordinate(y2)
+		);
 	};
 
 	/**
@@ -19086,7 +19124,9 @@
 	 */
 	ApiPath.prototype.ArcTo = function(wR, hR, stAng, swAng)
 	{
-		this.path.arcTo(wR + "", hR + "", stAng + "", swAng + "");
+		this.path.arcTo(
+			sanitizeCoordinate(wR), sanitizeCoordinate(hR),
+			sanitizeCoordinate(stAng), sanitizeCoordinate(swAng));
 	};
 
 	/**
