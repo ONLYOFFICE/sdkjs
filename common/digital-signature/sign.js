@@ -43,6 +43,16 @@ const OOXML_DIGEST_ALGORITHM_TYPE = {
 	SHA512: 5
 }
 
+const TRANSFORM_ALGORITHM = {
+	RELATIONSHIP: 1,
+	CANONIZATION10: 2,
+};
+
+const SIGNATURE_TYPE = {
+	INVISIBLE: 1,
+	SIGNATURE_LINE: 2
+};
+
 function digest() {
 
 }
@@ -87,13 +97,15 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 }
 
 (function () {
-	function CDigitalSigner(crypto, cert, zip) {
+	function CDigitalSigner(crypto, cert, zip,) {
 		this.crypto = crypto;
 		this.openXml = new AscCommon.openXml.OpenXmlPackage(zip, null);
 		this.cert = cert || new CX509Cert()/*todo temp*/;
 		this.date = new Date();
 		this.isInit = false;
-		this.certGuid = cert;
+		this.guid = "";
+		this.validImg = "";
+		this.invalidImg = "";
 	}
 	CDigitalSigner.prototype.init = function () {
 		const oThis = this;
@@ -113,6 +125,27 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 				});
 			}
 		});
+	};
+	CDigitalSigner.prototype.setGuid = function (pr) {
+		this.guid = pr;
+	};
+	CDigitalSigner.prototype.getGuid = function () {
+		return this.guid;
+	};
+	CDigitalSigner.prototype.setValidImg = function (img) {
+		this.validImg = this.getBase64Img(img);
+	};
+	CDigitalSigner.prototype.setInvalidImg = function (img) {
+		this.invalidImg = this.getBase64Img(img);
+	};
+	CDigitalSigner.prototype.getBase64Img = function (img) {
+		return "";
+	};
+	CDigitalSigner.prototype.getValidImage = function () {
+		return this.validImg;
+	};
+	CDigitalSigner.prototype.getInvalidImage = function () {
+		return this.invalidImg;
 	};
 	CDigitalSigner.prototype.getCertInfo = function () {
 		return new Promise(function (resolve) {
@@ -145,13 +178,28 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 		return promises;
 	}
 	CDigitalSigner.prototype.getContentType = function (filePath) {
-
+		return this.openXml.getContentType("/" + filePath);
+	};
+	CDigitalSigner.prototype.getFormatDigestAlgorithm = function () {
+		//todo
+		return 1;
+	};
+	CDigitalSigner.prototype.getIssuerName = function () {
+		return "";
+	};
+	CDigitalSigner.prototype.getSerialNumber = function () {
+		return "";
+	};
+	CDigitalSigner.prototype.getBase64Cert = function () {
+		return "";
 	};
 	CDigitalSigner.prototype.getRelsReferences = function (filePaths) {
 		const openXml = this.openXml;
 		const writer = new AscCommon.CMemory();
 		writer.context = new AscCommon.XmlWriterContext();
+		const oThis= this;
 		const files = [];
+		const relsStructures = [];
 		for (let i = 0; i < filePaths.length; i += 1) {
 			const filePath = filePaths[i];
 			const uri = "/" + filePath;
@@ -161,6 +209,7 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 			const relationships = rels.rels;
 			for (let j = relationships.length - 1; j >= 0; j -= 1) {
 				const relationship = relationships[j];
+				relationship.checkTargetMode();
 				if (!isNeedSign(relationship.target)) {
 					relationships.splice(j, 1);
 				}
@@ -176,9 +225,21 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 			});
 			const relXml = openXml.getXmlBytes(xmlPart, rels, writer);
 			files.push(relXml);
+			relsStructures.push(rels);
 		}
 		return Promise.all(this.getDigestsFromFiles(files)).then(function (digests) {
-			console.log(digests.map(function (digest) {return getBase64FromBuffer(digest);}));
+			const references = [];
+			for (let i = 0; i < relsStructures.length; i++) {
+				const rels = relsStructures[i];
+				const filePath = filePaths[i];
+				const reference = new CReference();
+				reference.transforms = rels.getTransforms();
+				reference.URI = "/" + filePath + "?ContentType=" + oThis.getContentType(filePath);
+				reference.digestMethod = oThis.getFormatDigestAlgorithm();
+				reference.digestValue = digests[i];
+				references.push(reference);
+			}
+			return references;
 		});
 	};
 	CDigitalSigner.prototype.getContentReferences = function (filePaths) {
@@ -236,9 +297,61 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 		const oThis = this;
 		const signature = new CSignature();
 		return this.init().then(function () {
-			return oThis.getManifestObjectPromise();
-		}).then(function (manifest) {
+			const manifestPromise = oThis.getManifestObjectPromise();
+			const signedPropertiesPromise = oThis.getSignedPropertiesPromise();
+			return Promise.all([manifestPromise, signedPropertiesPromise]);
+		}).then(function (arrPromiseStructures) {
+			const manifestObject = arrPromiseStructures[0];
+			const signedProperties = arrPromiseStructures[1];
+			signature.manifestObject = manifestObject;
+			signature.signedProperties = signedProperties;
 
+			signature.officeObject = new COfficeObject();
+			signature.officeObject.initDefault(oThis);
+
+			if (oThis.validImg) {
+				signature.validSignLnImg = new CImageObject();
+				signature.validSignLnImg.value = oThis.validImg;
+			}
+			if (oThis.invalidImg) {
+				signature.invalidSignLnImg = new CImageObject();
+				signature.invalidSignLnImg.value = oThis.invalidImg;
+			}
+			const signedInfo = new CSignedInfo();
+			signedInfo.canonicalizationMethod
+
+			signature.keyInfo = oThis.getKeyInfo();
+		});
+	};
+	CDigitalSigner.prototype.getKeyInfo = function () {
+		const keyInfo = new CKeyInfo();
+		keyInfo.x509certificate = this.getBase64Cert();
+		return keyInfo;
+	};
+
+	CDigitalSigner.prototype.getSignedPropertiesPromise = function () {
+		const oThis = this;
+		return this.getDigestCertValue().then(function (digestValue) {
+			const signedProperties = new CSignedPropertiesObject();
+			signedProperties.signingTime = oThis.date.toISOString();
+
+			const cert = new CCert();
+			signedProperties.cert = cert;
+
+			const certDigest = new CCertDigest();
+			cert.certDigest = certDigest;
+			certDigest.digestValue = digestValue;
+			certDigest.digestMethod = oThis.getFormatDigestAlgorithm();
+
+			const issuerSerial = new CIssuerSerial()
+			cert.issuerSerial = issuerSerial;
+			issuerSerial.x509IssuerName = oThis.getIssuerName();
+			issuerSerial.x509SerialNumber = oThis.getSerialNumber();
+
+			signedProperties.signaturePolicyIdentifier = new CSignaturePolicyIdentifier();
+			signedProperties.signaturePolicyIdentifier.implied = true;
+
+			return signedProperties;
 		});
 	};
 	function getBase64FromBuffer(arrayBuffer) {
@@ -270,6 +383,10 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 		this.signatureValue = null;
 		this.keyInfo = null;
 		this.manifestObject = null;
+		this.officeObject = null;
+		this.signedPropertiesObject = null;
+		this.validSignLnImg = null;
+		this.invalidSignLnImg = null;
 	}
 	// AscCommon.InitClassWithoutType(CSignature, AscFormat.CBaseNoIdObject);
 
@@ -302,7 +419,7 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 		// AscFormat.CBaseNoIdObject.call(this);
 		this.sourceId = null;
 	}
-	// AscCommon.InitClassWithoutType(CTransform, AscFormat.CBaseNoIdObject);
+	// AscCommon.InitClassWithoutType(CRelationshipReference, AscFormat.CBaseNoIdObject);
 
 	function CKeyInfo() {
 		// AscFormat.CBaseNoIdObject.call(this);
@@ -329,6 +446,10 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 		this.signatureInfo = null;
 	}
 	// AscCommon.InitClassWithoutType(COfficeObject, AscFormat.CBaseNoIdObject);
+	COfficeObject.prototype.initDefault = function (signer) {
+		this.signatureInfo = new CSignatureInfo();
+		this.signatureInfo.initDefault(signer);
+	};
 
 	function CSignatureInfo() {
 		// AscFormat.CBaseNoIdObject.call(this);
@@ -353,6 +474,27 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 		this.windowsVersion = null;
 	}
 	// AscCommon.InitClassWithoutType(CSignatureInfo, AscFormat.CBaseNoIdObject);
+	CSignatureInfo.prototype.initDefault = function (signer) {
+		this.applicationVersion = "16.0";
+		this.colorDepth = 32;
+		this.delegateSuggestedSigner = null;
+		this.delegateSuggestedSigner2 = null;
+		this.delegateSuggestedSignerEmail = null;
+		this.horizontalResolution = 1680;
+		this.manifestHashAlgorithm = null;
+		this.monitors = 2;
+		this.officeVersion = "16.0";
+		this.setupID = signer.getGuid();
+		this.signatureComments = null;
+		this.signatureImage = signer.getValidImage();
+		this.signatureProviderDetails = 9;
+		this.signatureProviderId = "{00000000-0000-0000-0000-000000000000}";
+		this.signatureProviderUrl = "";
+		this.signatureText = "";
+		this.signatureType = SIGNATURE_TYPE.SIGNATURE_LINE;
+		this.verticalResolution = 1050;
+		this.windowsVersion = "10.0";
+	};
 
 	function CSignedPropertiesObject() {
 		// AscFormat.CBaseNoIdObject.call(this);
@@ -395,4 +537,9 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 
 	window["AscCommon"] = window["AscCommon"] || {};
 	window["AscCommon"].CDigitalSigner = CDigitalSigner;
+
+	window["AscFormat"] = window["AscFormat"] || {};
+	window["AscFormat"].CRelationshipReference = CRelationshipReference;
+	window["AscFormat"].CTransform = CTransform;
+	window["AscFormat"].TRANSFORM_ALGORITHM = TRANSFORM_ALGORITHM;
 })();

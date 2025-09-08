@@ -172,6 +172,7 @@
 		this.rels = [];
 		this.nextRId = 1;
 	}
+	openXml.Rels = Rels;
 
 	Rels.prototype.onStartNode = function(elem, attr, uq, tagend, getStrNode) {
 		var attrVals;
@@ -203,6 +204,22 @@
 	};
 	Rels.prototype.getNextRId = function() {
 		return "rId" + (this.nextRId++);
+	};
+	Rels.prototype.getTransforms = function () {
+		const transforms = [];
+		const transform = new AscFormat.CTransform();
+		transform.algorithm = AscFormat.TRANSFORM_ALGORITHM.RELATIONSHIP;
+		for (let i = 0; i < this.rels.length; i += 1) {
+			const rel = this.rels[i];
+			const relReference = new AscFormat.CRelationshipReference();
+			relReference.sourceId = rel.relationshipId;
+			transform.relationshipReferences.push(relReference);
+		}
+		transforms.push(transform);
+		const canonizationTransform = new AscFormat.CTransform();
+		canonizationTransform.algorithm = AscFormat.TRANSFORM_ALGORITHM.CANONIZATION10;
+		transforms.push(canonizationTransform);
+		return transforms;
 	};
 
 
@@ -613,6 +630,11 @@
 	};
 	openXml.OpenXmlRelationship.prototype.getFullPath = function() {
 		return this.targetFullName;
+	};
+	openXml.OpenXmlRelationship.prototype.checkTargetMode = function() {
+		if (!this.targetMode) {
+			this.targetMode = openXml.TargetMode.internal;
+		}
 	};
 
 	openXml.MimeTypes = {
