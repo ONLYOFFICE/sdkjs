@@ -1170,6 +1170,12 @@
 				this.WriteXmlStringEncode(text.toString());
 			this.WriteXmlNodeEnd(name);
 		};
+		this.WriteXmlNullableNodeWithText = function(name, text)
+		{
+			if (text !== null) {
+				this.WriteXmlNodeWithText(name, text);
+			}
+		};
 		this.WriteXmlAttributesEnd = function(isEnd)
 		{
 			if (isEnd)

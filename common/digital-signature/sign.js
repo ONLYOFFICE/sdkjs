@@ -47,15 +47,19 @@ const TRANSFORM_ALGORITHM = {
 	RELATIONSHIP: 1,
 	CANONIZATION10: 2,
 };
+const CANONIZATION_ALGORITHM = {
+	CANONIZATION10: 1,
+};
+const SIGNATURE_ALGORITHM = {
+	RSASHA1: 1,
+	RSASHA256: 2,
+}
 
 const SIGNATURE_TYPE = {
 	INVISIBLE: 1,
 	SIGNATURE_LINE: 2
 };
 
-function digest() {
-
-}
 function CX509Cert() {
 
 }
@@ -97,7 +101,7 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 }
 
 (function () {
-	function CDigitalSigner(crypto, cert, zip,) {
+	function CDigitalSigner(crypto, cert, zip) {
 		this.crypto = crypto;
 		this.openXml = new AscCommon.openXml.OpenXmlPackage(zip, null);
 		this.cert = cert || new CX509Cert()/*todo temp*/;
@@ -109,11 +113,6 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 	}
 	CDigitalSigner.prototype.init = function () {
 		const oThis = this;
-		if (this.isInit) {
-			return new Promise(function (resolve) {
-				resolve();
-			});
-		}
 		return new Promise(function (resolve) {
 			if (oThis.isInit) {
 				resolve();
@@ -185,12 +184,15 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 		return 1;
 	};
 	CDigitalSigner.prototype.getIssuerName = function () {
+		//todo
 		return "";
 	};
 	CDigitalSigner.prototype.getSerialNumber = function () {
+		//todo
 		return "";
 	};
 	CDigitalSigner.prototype.getBase64Cert = function () {
+		//todo
 		return "";
 	};
 	CDigitalSigner.prototype.getRelsReferences = function (filePaths) {
@@ -269,7 +271,6 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 		const files = zip.files;
 		const relsFiles = [];
 		const contentFiles = [];
-		const signFiles = [];
 		files.forEach(function (filePath) {
 			if (isNeedSign(filePath)) {
 				if (isRels(filePath)) {
@@ -310,23 +311,84 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 			signature.officeObject.initDefault(oThis);
 
 			if (oThis.validImg) {
-				signature.validSignLnImg = new CImageObject();
+				signature.validSignLnImg = new CValidImageObject();
 				signature.validSignLnImg.value = oThis.validImg;
 			}
 			if (oThis.invalidImg) {
-				signature.invalidSignLnImg = new CImageObject();
+				signature.invalidSignLnImg = new CInvalidImageObject();
 				signature.invalidSignLnImg.value = oThis.invalidImg;
 			}
-			const signedInfo = new CSignedInfo();
-			signedInfo.canonicalizationMethod
-
 			signature.keyInfo = oThis.getKeyInfo();
+			return oThis.getSignedInfoPromise(signature);
+		}).then(function(signedInfo) {
+			signature.signedInfo = signedInfo;
+			return this.getSignatureValuePromise();
+		}).then(function(signatureValue) {
+			signature.signatureValue = signatureValue;
+
+		});
+	};
+	CDigitalSigner.prototype.getSignatureValuePromise = function() {
+		return new Promise(function(resolve, reject) {
+			reject("todo");
 		});
 	};
 	CDigitalSigner.prototype.getKeyInfo = function () {
 		const keyInfo = new CKeyInfo();
 		keyInfo.x509certificate = this.getBase64Cert();
 		return keyInfo;
+	};
+	const OBJECT_ID = {
+		SIGNATURE: "idPackageSignature",
+		MANIFEST: "idPackageObject",
+		OFFICE: "idOfficeObject",
+		SIGNED_PROPERTIES: "idSignedProperties",
+		VALID_IMG: "idValidSigLnImg",
+		INVALID_IMG: "idInvalidSigLnImg",
+		SIGNATURE_TIME: "idSignatureTime",
+		OFFICE_DETAILS: "idOfficeV1Details"
+	};
+	CDigitalSigner.prototype.getSignedInfoPromise = function(signature) {
+		const signedInfo = new CSignedInfo();
+		signedInfo.canonicalizationMethod = CANONIZATION_ALGORITHM.CANONIZATION10;
+		signedInfo.signatureMethod = SIGNATURE_ALGORITHM.RSASHA256;
+		const referencePromises =[];
+		referencePromises.push(this.getReferencePromiseFromObject(signature.manifestObject, "#" + OBJECT_ID.MANIFEST));
+		referencePromises.push(this.getReferencePromiseFromObject(signature.officeObject, "#" + OBJECT_ID.OFFICE));
+		referencePromises.push(this.getReferencePromiseFromObject(signature.signedPropertiesObject, "#" + OBJECT_ID.SIGNED_PROPERTIES));
+		if (signature.validSignLnImg) {
+			referencePromises.push(this.getReferencePromiseFromObject(signature.validSignLnImg, "#" + OBJECT_ID.VALID_IMG));
+		}
+		if (signature.invalidSignLnImg) {
+			referencePromises.push(this.getReferencePromiseFromObject(signature.invalidSignLnImg, "#" + OBJECT_ID.INVALID_IMG));
+		}
+		return Promise.all(referencePromises).then(function(references) {
+			signedInfo.references = references;
+			return signedInfo;
+		});
+	};
+	const REFERENCE_TYPE = {
+		OBJECT: 1
+	};
+	CDigitalSigner.prototype.getReferencePromiseFromObject = function(object, uri) {
+		const reference = new CReference();
+		const digestMethod = this.getFormatDigestAlgorithm();
+		reference.type = REFERENCE_TYPE.OBJECT;
+		reference.URI = uri;
+		reference.digestMethod = digestMethod;
+		const digestPromise = this.getDigestFromObject(object);
+		return digestPromise.then(function(digestValue) {
+			reference.digestValue = digestValue;
+			return reference;
+		});
+	};
+	CDigitalSigner.prototype.getDigestFromObject = function(object) {
+		const writer = new AscCommon.CMemory();
+		writer.context = new AscCommon.XmlWriterContext();
+		object.toXml(writer);
+		const length = writer.GetCurPosition();
+		const xmlBytes = writer.GetDataUint8(0, length);
+		return this.digest(xmlBytes);
 	};
 
 	CDigitalSigner.prototype.getSignedPropertiesPromise = function () {
@@ -534,6 +596,16 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 		this.value = null;
 	}
 	// AscCommon.InitClassWithoutType(CImageObject, AscFormat.CBaseNoIdObject);
+
+	function CValidImageObject() {
+		CImageObject.call(this);
+	}
+	AscCommon.InitClassWithoutType(CValidImageObject, CImageObject);
+
+	function CInvalidImageObject() {
+		CImageObject.call(this);
+	}
+	AscCommon.InitClassWithoutType(CInvalidImageObject, CImageObject);
 
 	window["AscCommon"] = window["AscCommon"] || {};
 	window["AscCommon"].CDigitalSigner = CDigitalSigner;
