@@ -214,7 +214,7 @@
 				reference.transforms = rels.getTransforms();
 				reference.URI = "/" + filePath + "?ContentType=" + oThis.getContentType(filePath);
 				reference.digestMethod = oThis.getFormatDigestAlgorithm();
-				reference.digestValue = digests[i];
+				reference.digestValue = getBase64FromBuffer(digests[i]);
 				references.push(reference);
 			}
 			return references;
@@ -235,7 +235,7 @@
 				const reference = new AscFormat.CReference();
 				reference.URI = "/" + filePath + "?ContentType=" + contentType;
 				reference.digestMethod = oThis.getFormatDigestAlgorithm();
-				reference.digestValue = digest;
+				reference.digestValue = getBase64FromBuffer(digest);
 				references.push(reference);
 			}
 			return references;
@@ -281,7 +281,7 @@
 			const manifestObject = arrPromiseStructures[0];
 			const signedProperties = arrPromiseStructures[1];
 			signature.manifestObject = manifestObject;
-			signature.signedProperties = signedProperties;
+			signature.signedPropertiesObject = signedProperties;
 
 			signature.officeObject = new AscFormat.COfficeObject();
 			signature.officeObject.initDefault(oThis);
@@ -298,7 +298,7 @@
 			return oThis.getSignedInfoPromise(signature);
 		}).then(function(signedInfo) {
 			signature.signedInfo = signedInfo;
-			return this.getSignatureValuePromise();
+			return oThis.getSignatureValuePromise();
 		}).then(function(signatureValue) {
 			signature.signatureValue = signatureValue;
 
@@ -341,7 +341,7 @@
 		reference.digestMethod = digestMethod;
 		const digestPromise = this.getDigestFromObject(object);
 		return digestPromise.then(function(digestValue) {
-			reference.digestValue = digestValue;
+			reference.digestValue = getBase64FromBuffer(digestValue);
 			return reference;
 		});
 	};
@@ -353,7 +353,9 @@
 		const xmlBytes = writer.GetDataUint8(0, length);
 		return this.digest(xmlBytes);
 	};
-
+	CDigitalSigner.prototype.getDigestCertValue = function () {
+		return this.digest(AscCommon.Base64.decode(this.getBase64Cert()));
+	};
 	CDigitalSigner.prototype.getSignedPropertiesPromise = function () {
 		const oThis = this;
 		return this.getDigestCertValue().then(function (digestValue) {
@@ -365,7 +367,7 @@
 
 			const certDigest = new AscFormat.CCertDigest();
 			cert.certDigest = certDigest;
-			certDigest.digestValue = digestValue;
+			certDigest.digestValue = getBase64FromBuffer(digestValue);
 			certDigest.digestMethod = oThis.getFormatDigestAlgorithm();
 
 			const issuerSerial = new AscFormat.CIssuerSerial()
