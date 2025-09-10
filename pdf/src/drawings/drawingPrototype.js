@@ -426,7 +426,7 @@
     ///// Overrides
     /////////////////////////////////////////////////////////////////////////////
     
-    CPdfDrawingPrototype.prototype.Get_AbsolutePage = function(nCurPage) {
+    CPdfDrawingPrototype.prototype.GetAbsolutePage = function(nCurPage) {
         return this.GetPage() != undefined ? this.GetPage() : nCurPage;
     };
     CPdfDrawingPrototype.prototype.getLogicDocument = function() {

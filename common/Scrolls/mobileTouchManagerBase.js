@@ -1370,7 +1370,7 @@
 			that.ContextMenuShowTimerId = -1;
 			var _pos = that.delegate.GetContextMenuPosition();
 			if (AscCommon.g_inputContext) AscCommon.g_inputContext.isGlobalDisableFocus = true;
-			that.Api.sendEvent("asc_onShowPopMenu", _pos.X, _pos.Y, (_pos.Mode > 1) ? true : false);
+			that.Api.sendEvent("asc_onShowPopMenu", _pos.X, _pos.Y, _pos.Mode);
 			if (AscCommon.g_inputContext) AscCommon.g_inputContext.isGlobalDisableFocus = false;
 		}, 500);
 	};
@@ -2754,6 +2754,15 @@
 			this.iScroll._execEvent('scroll');
 		}
 	};
+
+
+	AscCommon["MobileTouchContextMenuType"] = AscCommon.MobileTouchContextMenuType;
+	let menuType = AscCommon.MobileTouchContextMenuType;
+	menuType["None"] = menuType.None;
+	menuType["Target"] = menuType.Target;
+	menuType["Select"] = menuType.Select;
+	menuType["Object"] = menuType.Object;
+	menuType["Slide"] = menuType.Slide;
 
 	//--------------------------------------------------------export----------------------------------------------------
 	AscCommon.CMobileDelegateSimple = CMobileDelegateSimple;

@@ -520,7 +520,7 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 		if (comment_type_HdrFtr === Type)
 		{
 			// Проставим начальные значения страниц (это текущий номер страницы, на котором произошло добавление комментария)
-			this.m_oStartInfo.PageNum = Data.Content.Get_StartPage_Absolute();
+			this.m_oStartInfo.PageNum = Data.Content.GetAbsoluteStartPage();
 		}
 	};
 	CComment.prototype.Get_TypeInfo = function()

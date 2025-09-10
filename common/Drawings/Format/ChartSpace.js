@@ -467,6 +467,18 @@ function(window, undefined) {
 			);
 			oTextPr.RFonts = oRFonts;
 		}
+
+		let oldRunPr = oParaPr.DefaultRunPr;
+		let oldUniFill = oldRunPr ? oldRunPr.Unifill : null;
+		let oldLine = oldRunPr ? oldRunPr.TextOutline : null;
+		let prFill = oTextPr.AscUnifill || oTextPr.AscFill;
+		if (prFill) {
+			oTextPr.Unifill = AscFormat.CorrectUniFill(prFill, oldUniFill, 0);
+		}
+		if (oTextPr.AscLine) {
+			oTextPr.TextOutline = AscFormat.CorrectUniStroke(oTextPr.AscLine, oldLine, 0);
+		}
+
 		oParaPr2.DefaultRunPr = oTextPr;
 		oParaPr.Merge(oParaPr2);
 		if(oTextPr.HighlightColor === null &&
@@ -2123,8 +2135,7 @@ function(window, undefined) {
 				return arrData;
 			} else {
 				const oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(oWorkbook);
-				oBinaryFileWriter.Write();
-				return oBinaryFileWriter.Memory.data.slice();
+				return oBinaryFileWriter.Write(true, false, true);
 			}
 		}, this, []);
 	};
@@ -11744,11 +11755,12 @@ function(window, undefined) {
 		}
 		return  oCurCandidate;
 	};
-
 	CChartSpace.prototype.isWorkbookChart = function () {
 		return false;
 	};
-
+	CChartSpace.prototype.getTextArtProperties = function () {
+		return {Fill: undefined, Line: undefined, Form: undefined};
+	};
 	CChartSpace.prototype.updateView = CChartSpace.prototype["updateView"] = function (sDivId) {
 		let oCanvas = AscCommon.checkCanvasInDiv(sDivId);
 		if(!oCanvas) {

@@ -923,7 +923,7 @@ function getFlatPenColor() {
 	CButtonController.prototype.initButton = function () {
 		const oThis = this;
 		this.button._onMouseMove = function () {
-			return false;
+			return true;
 		};
 		this.button._onMouseDown = function () {
 			return true;
@@ -1351,12 +1351,7 @@ function getFlatPenColor() {
 	};
 
 	CScrollController.prototype.getCursorInfo = function (e, nX, nY) {
-		const oControl = this.control;
-		if (this.scroll.hit(nX, nY)) {
-			return {cursorType: "default", objectId: oControl.GetId()};
-		}
-
-		return null;
+		return this.scroll.getCursorInfo(nX, nY);
 	};
 	CScrollController.prototype.onMouseUp = function (e, nX, nY, nPageIndex, oDrawingController) {
 		return this.scroll.onMouseUp(e, nX, nY, nPageIndex, oDrawingController);
@@ -1798,6 +1793,15 @@ function getFlatPenColor() {
 	CScrollContainer.prototype.hit = function (nX, nY) {
 		return AscFormat.HitToRect(nX, nY, this.invertTransform, 0, 0, this.extX, this.extY);
 	}
+	CScrollContainer.prototype.getCursorInfo = function (nX, nY) {
+		const oControl = this.controller.control;
+		if (this.thumb.hit(nX, nY) || this.downButton.hit(nX, nY) || this.upButton.hit(nX, nY)) {
+			return {cursorType: "pointer", objectId: oControl.GetId()};
+		} else if (this.trackArea.hit(nX, nY)) {
+			return {cursorType: "default", objectId: oControl.GetId()};
+		}
+		return null;
+	};
 
 
 	const LISTBOX_ITEM_HEIGHT = 2;
@@ -2157,7 +2161,7 @@ function getFlatPenColor() {
 
 	AscCommon.InitClassWithoutType(CListBoxController, CControlControllerBase);
 	CListBoxController.prototype.handleFmlaRange = function (aRanges) {
-		return this.handleRef(aRanges, this.getParsedFmlaRange(), this.updateListItems.bind(this));
+		return this.handleRef(aRanges, this.getParsedFmlaRange(), this.recalculateItems.bind(this));
 	};
 	CListBoxController.prototype.handleFmlaLink = function (aRanges) {
 		if (this.listBox.isMultiSelection() || this.listBox.isExtendedSelection()) {
@@ -2169,7 +2173,6 @@ function getFlatPenColor() {
 		if (this.recalcInfo.recalculateItems) {
 			this.recalcInfo.recalculateItems = false;
 			this.recalculateItems();
-			this.recalculateTransform();
 		}
 	};
 	CListBoxController.prototype.recalculateItems = function() {
@@ -2581,7 +2584,7 @@ function getFlatPenColor() {
 		return !this.isDropdownOpen;
 	};
 	CComboBoxController.prototype.handleFmlaRange = function (aRanges) {
-		return this.handleRef(aRanges, this.getParsedFmlaRange(), this.updateListItems.bind(this));
+		return this.handleRef(aRanges, this.getParsedFmlaRange(), this.recalculateItems.bind(this));
 	};
 	CComboBoxController.prototype.handleFmlaLink = function (aRanges) {
 		return this.handleRef(aRanges, this.getParsedFmlaLink(), this.updateSelectedIndex.bind(this));
@@ -2888,7 +2891,7 @@ function getFlatPenColor() {
 	};
 	AscDFH.drawingsChangesMap[AscDFH.historyitem_FormControlPr_Sel] = function (oClass, value) {
 		if(oClass.parent) {
-			oClass.parent.recalcInfo.recalculateItems = true;
+			oClass.parent.controller.recalcInfo.recalculateItems = true;
 			oClass.parent.addToRecalculate();
 		}
 		oClass.sel = value;

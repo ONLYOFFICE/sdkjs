@@ -1631,7 +1631,7 @@
 			oNumerator = this.GetOperandLiteral();
 		}
 
-		if (this.oLookahead.class === Literals.divide.id && this.oLookahead.style.metaData.isEscapedSlash !== true)
+		if (this.oLookahead.class === Literals.divide.id && (!this.oLookahead.style || this.oLookahead.style.metaData.isEscapedSlash !== true))
 		{
 			let oFracStyle				= this.oLookahead.style,
 				strOpOver				= this.EatToken(Literals.divide.id).data,
@@ -1677,7 +1677,7 @@
 		}
 		else
 		{
-			if (this.oLookahead.class !== undefined && this.oLookahead.style.metaData.isEscapedSlash)
+			if (this.oLookahead.class !== undefined && (!this.oLookahead.style || this.oLookahead.style.metaData.isEscapedSlash))
 			{
 				let oEscSlash = this.EatToken();
 				return [

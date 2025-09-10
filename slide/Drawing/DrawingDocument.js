@@ -3533,6 +3533,7 @@ function DrawBackground(graphics, unifill, w, h)
 	_shape.TransformMatrix = new AscCommon.CMatrix();
 	_shape.extX            = w;
 	_shape.extY            = h;
+	_shape.bounds.reset(0, 0, w, h);
 	_shape.check_bounds    = function(checker)
 	{
 		checker._s();

@@ -1179,18 +1179,15 @@
 	};
 	CMobileDelegateThumbnails.prototype.GetContextMenuPosition = function()
 	{
-		var aSelected    = this.Thumbnails.GetSelectedArray();
-		var nSlideIndex  = Math.min.apply(Math, aSelected);
-		var ConvertedPos = this.Thumbnails.GetThumbnailPagePosition(nSlideIndex);
-
-		var _ret = { X : 0, Y : 0, Mode : AscCommon.MobileTouchContextMenuType.Slide };
-		if (ConvertedPos)
-		{
-			_ret.X = ConvertedPos.X + (ConvertedPos.W >> 1);
-			_ret.Y = ConvertedPos.Y;
-		}
-
-		return _ret;
+		let selectedIndexes = this.Thumbnails.GetSelectedArray();
+		let menuPos = this.Thumbnails.GetThumbnailPagePosition(Math.min.apply(Math, selectedIndexes));
+		let pos = { X : 0, Y : 0, Mode : AscCommon.MobileTouchContextMenuType.Slide };
+		if (!menuPos)
+			return pos;
+		let thCtrlPos = this.HtmlPage.m_oThumbnails.Parent.AbsolutePosition;
+		pos.X = menuPos.X + ((thCtrlPos.L * g_dKoef_mm_to_pix) >> 0) + this.HtmlPage.X;
+		pos.Y = menuPos.Y + ((thCtrlPos.T * g_dKoef_mm_to_pix) >> 0) + this.HtmlPage.Y;
+		return pos;
 	};
 
 	/**

@@ -626,8 +626,6 @@
         oDoc.activeForm = this;
 
         if (oDoc.IsEditFieldsMode()) {
-            let oController = oDoc.GetController();
-            this.editShape.select(oController, this.GetPage());
             if (false == this.IsLocked()) {
                 this.editShape.onMouseDown(x, y, e)
             }
@@ -1165,10 +1163,7 @@
      * @returns {boolean}
 	 */
     CListBoxField.prototype.IsParaOutOfForm = function(oPara) {
-        if (null == this.getFormRelRect())
-            this.Recalculate();
-        else
-            oPara.Recalculate_Page(0);
+        this.Recalculate();
         
         let oFormBounds = this.getFormRelRect();
         let nContentW   = oPara.GetContentWidthInRange();

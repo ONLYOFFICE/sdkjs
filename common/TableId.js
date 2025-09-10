@@ -161,7 +161,7 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_Style]                  = AscCommonWord.CStyle;
 		this.m_oFactoryClass[AscDFH.historyitem_type_CommentMark]            = AscCommon.ParaComment;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ParaRun]                = AscCommonWord.ParaRun;
-		this.m_oFactoryClass[AscDFH.historyitem_type_Section]                = AscCommonWord.CSectionPr;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Section]                = AscWord.SectPr;
 		this.m_oFactoryClass[AscDFH.historyitem_type_Field]                  = AscCommonWord.ParaField;
 		this.m_oFactoryClass[AscDFH.historyitem_type_FootEndNote]            = AscCommonWord.CFootEndnote;
 		this.m_oFactoryClass[AscDFH.historyitem_type_DefaultShapeDefinition] = AscFormat.DefaultShapeDefinition;

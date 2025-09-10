@@ -315,6 +315,201 @@
 		}
 		return this.getNoMove() === false;
 	};
+    CPdfShape.prototype.ConvertToAnnot = function() {
+        let oDoc = Asc.editor.getPDFDoc();
+        let oXfrm = this.getXfrm();
+
+        let oAnnot;
+        let aRect = [oXfrm.offX * g_dKoef_mm_to_pt, oXfrm.offY * g_dKoef_mm_to_pt, (oXfrm.offX + oXfrm.extX) * g_dKoef_mm_to_pt, (oXfrm.offY + oXfrm.extY) * g_dKoef_mm_to_pt];
+        let sCreationDate = (new Date().getTime()).toString();
+        let nLineW = this.pen.w / 36000.0 * g_dKoef_mm_to_pt;
+        let oRGAStroke = this.pen.Fill.fill.color.RGBA;
+        let aStrokeColor = [oRGAStroke.R / 255, oRGAStroke.G / 255, oRGAStroke.B / 255];
+        let oRGBAFill = !this.brush.isNoFill() ? this.brush.fill.color.RGBA : null;
+        let aFillColor = oRGBAFill ? [oRGBAFill.R / 255, oRGBAFill.G / 255, oRGBAFill.B / 255] : null;
+
+        let oProps = {
+            rect:           aRect,
+            contents:       null,
+            creationDate:   sCreationDate,
+            modDate:        sCreationDate,
+            hidden:         false
+        }
+
+        let oGeometry = this.getGeometry();
+        switch (oGeometry.preset) {
+            case "rect":
+                oProps.type = AscPDF.ANNOTATIONS_TYPES.Square;
+                break;
+            case "ellipse":
+                oProps.type = AscPDF.ANNOTATIONS_TYPES.Circle;
+                break;
+            case "line":
+                oProps.type = AscPDF.ANNOTATIONS_TYPES.Line;
+                break;
+            default: {
+                let aCommands = oGeometry.pathLst[0].ArrPathCommand;
+                
+                function isPolyLine(commands) {
+                    let count0 = 0;
+
+                    for (let i = 0; i < commands.length; i++) {
+                        if (commands[i].id === AscFormat.moveTo) {
+                            count0++;
+
+                            if (count0 > 1) {
+                                return false;
+                            }
+                        }
+                        else if (commands[i].id !== AscFormat.lineTo) {
+                            return false;
+                        }
+                    }
+
+                    return count0 === 1;
+                };
+
+                function isPolygon(commands) {
+                    let count0 = 0;
+
+                    for (let i = 0; i < commands.length; i++) {
+                        if (commands[i].id === AscFormat.moveTo) {
+                            count0++;
+
+                            if (count0 > 1) {
+                                return false;
+                            }
+                        }
+                        else if (commands[i].id !== AscFormat.lineTo && commands[i].id !== AscFormat.close) {
+                            return false;
+                        }
+                    }
+
+                    return count0 === 1;
+                };
+
+                let isCanConvert = oGeometry.pathLst.length == 1;
+                if (!isCanConvert) {
+                    return null;
+                }
+                else if (isPolyLine(aCommands)) {
+                    oProps.type = AscPDF.ANNOTATIONS_TYPES.PolyLine;
+                }
+                else if (isPolygon(aCommands)) {
+                    oProps.type = AscPDF.ANNOTATIONS_TYPES.Polygon;
+                }
+                break;
+            }
+        }
+
+        oAnnot = AscPDF.CreateAnnotByProps(oProps, oDoc);
+        oAnnot.SetWidth(nLineW);
+        oAnnot.SetStrokeColor(aStrokeColor);
+        aFillColor && oAnnot.SetFillColor(aFillColor);
+
+        switch (oAnnot.GetType()) {
+            case AscPDF.ANNOTATIONS_TYPES.Square:
+            case AscPDF.ANNOTATIONS_TYPES.Circle: {
+                let nLineW = oAnnot.GetWidth() * g_dKoef_pt_to_mm;
+                oAnnot.recalcBounds();
+                oAnnot.recalcGeometry();
+                oAnnot.Recalculate(true);
+                
+                let oGrBounds = oAnnot.bounds;
+                let oShapeBounds = oAnnot.getRectBounds();
+
+                aRect[0] = Math.round(oGrBounds.l - nLineW) * g_dKoef_mm_to_pt;
+                aRect[1] = Math.round(oGrBounds.t - nLineW) * g_dKoef_mm_to_pt;
+                aRect[2] = Math.round(oGrBounds.r + nLineW) * g_dKoef_mm_to_pt;
+                aRect[3] = Math.round(oGrBounds.b + nLineW) * g_dKoef_mm_to_pt;
+
+                oAnnot.SetRect(aRect);
+                oAnnot.SetRectangleDiff([
+                    Math.round(oShapeBounds.l - oGrBounds.l + nLineW) * g_dKoef_mm_to_pt,
+                    Math.round(oShapeBounds.t - oGrBounds.t + nLineW) * g_dKoef_mm_to_pt,
+                    Math.round(oGrBounds.r - oShapeBounds.r + nLineW) * g_dKoef_mm_to_pt,
+                    Math.round(oGrBounds.b - oShapeBounds.b + nLineW) * g_dKoef_mm_to_pt
+                ]);
+                break;
+            }
+            case AscPDF.ANNOTATIONS_TYPES.Line: {
+                oAnnot.SetLineEnd(AscPDF.LINE_END_TYPE.OpenArrow);
+                let aCommands = oGeometry.pathLst[0].ArrPathCommand;
+                let oPt1 = { X: aCommands[0].X, Y: aCommands[0].Y };
+                let oPt2 = { X: aCommands[1].X, Y: aCommands[1].Y };
+
+                if (this.flipH) {
+                    oPt1.X = oXfrm.extX - oPt1.X;
+                    oPt2.X = oXfrm.extX - oPt2.X;
+                }
+                if (this.flipV) {
+                    oPt1.Y = oXfrm.extY - oPt1.Y;
+                    oPt2.Y = oXfrm.extY - oPt2.Y;
+                }
+
+                let aLinePoints = [];
+                let oTranform   = oAnnot.transform;
+                // считаем новые точки linePoints (в оригинальных координатах - в пикселях, без скейлов)
+                aLinePoints.push(oTranform.TransformPointX(oPt1.X, 0) * g_dKoef_mm_to_pt);
+                aLinePoints.push(oTranform.TransformPointY(0, oPt1.Y) * g_dKoef_mm_to_pt);
+                aLinePoints.push(oTranform.TransformPointX(oPt2.X, 0) * g_dKoef_mm_to_pt);
+                aLinePoints.push(oTranform.TransformPointY(0, oPt2.Y) * g_dKoef_mm_to_pt);
+
+                oAnnot.SetLinePoints(aLinePoints);
+                oAnnot.SetRect(oAnnot.private_CalcBoundingRect());
+
+                break;
+            }
+            case AscPDF.ANNOTATIONS_TYPES.PolyLine: {
+                let aCommands = this.getGeometry().pathLst[0].ArrPathCommand;
+                let oTranform = oAnnot.transform;
+                let aVertices = [];
+
+                aCommands.forEach(function(command) {
+                    let oPt = { X: command.X, Y: command.Y };
+                    aVertices.push(oTranform.TransformPointX(oPt.X, 0) * g_dKoef_mm_to_pt);
+                    aVertices.push(oTranform.TransformPointY(0, oPt.Y) * g_dKoef_mm_to_pt);
+                });
+
+                oAnnot.SetVertices(aVertices);
+                
+                aRect[0] -= nLineW;
+                aRect[1] -= nLineW;
+                aRect[2] += nLineW;
+                aRect[3] += nLineW;
+
+                oAnnot.SetRect(aRect);
+                break;
+            }
+            case AscPDF.ANNOTATIONS_TYPES.Polygon: {
+                let aCommands = this.getGeometry().pathLst[0].ArrPathCommand;
+                let oTranform = oAnnot.transform;
+                let aVertices = [];
+
+                aCommands.forEach(function(command) {
+                    let oPt = { X: command.X, Y: command.Y };
+                    if (command.id == AscFormat.close) {
+                        oPt = { X: aCommands[0].X, Y: aCommands[0].Y };
+                    }
+                    
+                    aVertices.push(oTranform.TransformPointX(oPt.X, 0) * g_dKoef_mm_to_pt);
+                    aVertices.push(oTranform.TransformPointY(0, oPt.Y) * g_dKoef_mm_to_pt);
+                });
+
+                oAnnot.SetVertices(aVertices);
+                
+                aRect[0] -= nLineW;
+                aRect[1] -= nLineW;
+                aRect[2] += nLineW;
+                aRect[3] += nLineW;
+
+                oAnnot.SetRect(aRect);
+                break;
+            }
+        }
+
+        return oAnnot;
+    };
 
     //////////////////////////////////////////////////////////////////////////////
     ///// Overrides

@@ -273,12 +273,28 @@ StartAddNewShape.prototype =
                 }
                 else {
                     oLogicDocument.DoAction(function() {
-                        // добавление шейпов
-                        let oShape = oTrack.getShape(false, this.drawingObjects.drawingDocument, oLogicDocument);
-                        oLogicDocument.AddDrawing(oShape, this.pageIndex);
-                        oLogicDocument.SetMouseDownObject(oShape);
-                        oShape.select(oLogicDocument.GetController(), this.pageIndex);
+                        // adding shapes/annotations
+                        if (Asc.editor.isStartAddAnnot) {
+                            let oShape = AscFormat.ExecuteNoHistory(function () {
+                                return oTrack.getShape(false, this.drawingObjects.drawingDocument, oLogicDocument);
+                            }, this, []);
 
+                            oShape.recalculate();
+                            
+                            let oAnnot = oShape.ConvertToAnnot();
+                            if (oAnnot) {
+                                oLogicDocument.AddAnnot(oAnnot, this.pageIndex);
+                                oLogicDocument.SetMouseDownObject(oAnnot);
+                                oAnnot.select(oLogicDocument.GetController(), this.pageIndex);
+                            }
+                        }
+                        else {
+                            let oShape = oTrack.getShape(false, this.drawingObjects.drawingDocument, oLogicDocument);
+                            oLogicDocument.AddDrawing(oShape, this.pageIndex);
+                            oLogicDocument.SetMouseDownObject(oShape);
+                            oShape.select(oLogicDocument.GetController(), this.pageIndex);
+                        }
+                        
                         bRet = true;
                     }, AscDFH.historydescription_Document_AddNewShape, this);
                 }
@@ -313,7 +329,7 @@ NullState.prototype =
         {
             this.drawingObjects.setStartTrackPos(x, y, pageIndex);
             start_target_doc_content = checkEmptyPlaceholderContent(this.drawingObjects.getTargetDocContent());
-            nStartPage = start_target_doc_content && start_target_doc_content.Get_AbsolutePage();
+            nStartPage = start_target_doc_content && start_target_doc_content.GetAbsolutePage();
         }
         const oThis = this;
         const fRecalculatePages = function() {
@@ -501,11 +517,9 @@ NullState.prototype =
             aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].annots);
 
             if (oDoc.IsEditFieldsMode()) {
-                if (this.drawingObjects.selectedObjects.find(function(obj) {
-                    return obj.IsDrawing() && obj.IsEditFieldShape();
-                })) {
-                    aDrawings = aDrawings.concat(this.drawingObjects.selectedObjects);
-                }
+                oDoc.GetPageInfo(pageIndex).fields.forEach(function(field) {
+                    aDrawings.push(field.GetEditShape());
+                });
             }
 
             ret = AscFormat.handleFloatObjects(this.drawingObjects, aDrawings, e, x, y, null, pageIndex, true);
@@ -1380,8 +1394,8 @@ RotateState.prototype =
                         }
                         if(false === this.drawingObjects.document.Document_Is_SelectionLocked(changestype_Drawing_Props, {Type : changestype_2_ElementsArray_and_Type , Elements : aCheckParagraphs, CheckType : AscCommon.changestype_Paragraph_Content}))
                         {
-                            this.drawingObjects.resetSelection();
                             this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_RotateFlowDrawingCtrl);
+							this.drawingObjects.resetSelection();
                             var aDrawingsToAdd = [];
 							for(i = 0; i < aTracks.length; ++i)
                             {
@@ -3526,7 +3540,7 @@ AddPolyLine2State3.prototype =
         }
 
         var oTrack = this.drawingObjects.arrTrackObjects[0];
-        if(!e.IsLocked && oTrack.getPointsCount() > 1)
+        if((!e.IsLocked || (Asc.editor.isPdfEditor() && Asc.editor.isStartAddAnnot)) && oTrack.getPointsCount() > 1)
         {
             oTrack.replaceLastPoint(tr_x, tr_y, true);
         }

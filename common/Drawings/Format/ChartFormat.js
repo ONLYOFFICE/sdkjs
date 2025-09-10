@@ -2372,10 +2372,10 @@
         }
         return null;
     };
-    CBaseChartObject.prototype.Get_StartPage_Absolute = function() {
+    CBaseChartObject.prototype.GetAbsoluteStartPage = function() {
         let oChartSpace = this.getChartSpace();
         if(oChartSpace) {
-            return oChartSpace.Get_StartPage_Absolute();
+            return oChartSpace.GetAbsoluteStartPage();
         }
         return 0;
     };
@@ -3143,9 +3143,9 @@
         }
         return AscFormat.GetDefaultColorMap();
     };
-    CDLbl.prototype.Get_AbsolutePage = function() {
-        if(this.chart && this.chart.Get_AbsolutePage) {
-            return this.chart.Get_AbsolutePage();
+    CDLbl.prototype.GetAbsolutePage = function() {
+        if(this.chart && this.chart.GetAbsolutePage) {
+            return this.chart.GetAbsolutePage();
         }
         return 0;
     };
@@ -14222,9 +14222,9 @@
     CTitle.prototype.chekBodyPrTransform = function() {
         return false;
     };
-    CTitle.prototype.Get_AbsolutePage = function() {
-        if(this.chart && this.chart.Get_AbsolutePage) {
-            return this.chart.Get_AbsolutePage();
+    CTitle.prototype.GetAbsolutePage = function() {
+        if(this.chart && this.chart.GetAbsolutePage) {
+            return this.chart.GetAbsolutePage();
         }
         return 0;
     };

@@ -2880,10 +2880,10 @@ var editor;
 	if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["onFileLockedClose"]) {
       this.asc_registerCallback("onOpenCellEditor", function() {
         window["AscDesktopEditor"]["onFileLockedClose"](true);
-	  });
+	  }, true);
 	  this.asc_registerCallback("onCloseCellEditor", function() {
         window["AscDesktopEditor"]["onFileLockedClose"](false);
-	  });
+	  }, true);
     }
   };
 
@@ -3243,6 +3243,7 @@ var editor;
 		this.initBroadcastChannelListeners();
 
 		// Toggle chart elements (bug #67197)
+		Asc.editor.asc_unregisterCallback('asc_onSelectionChanged', this.toggleChartElementsCallback);
 		Asc.editor.asc_registerCallback('asc_onSelectionChanged', this.toggleChartElementsCallback);
 	};
 
@@ -8817,6 +8818,9 @@ var editor;
 
 	spreadsheet_api.prototype.onWorksheetChange = function(props) {
 		let ws = this.wbModel.getActiveWs();
+		if (!ws) {
+			return;
+		}
 		let range = null;
 		let result = null;
 		if (Array.isArray(props)) {

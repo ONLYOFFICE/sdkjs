@@ -1467,7 +1467,7 @@ CGraphicObjects.prototype =
                 }
                 else if(arrObjects[i].IsTable())
                 {
-                	if (0 === arrObjects[i].GetStartPageRelative())
+                	if (0 === arrObjects[i].GetRelativeStartPage())
                     	ret.push(new CFlowTable(arrObjects[i], 0));
                 }
             }
@@ -4475,7 +4475,7 @@ CGraphicObjects.prototype =
             if(obj.isHdrFtrChild(false))
             {
                 const oDocContent = obj.GetDocumentContent();
-                if(oDocContent && oDocContent.Get_StartPage_Absolute() !== obj.PageNum)
+                if(oDocContent && oDocContent.GetAbsoluteStartPage() !== obj.PageNum)
                 {
                     nPageIndex = obj.PageNum;
                 }

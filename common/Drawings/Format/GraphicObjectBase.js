@@ -2968,7 +2968,7 @@
 	CGraphicObjectBase.prototype.canAddButtonPlaceholder = function () {
 		return false;
 	};
-	CGraphicObjectBase.prototype.Get_AbsolutePage = function (nCurPage) {
+	CGraphicObjectBase.prototype.GetAbsolutePage = function (nCurPage) {
 		return nCurPage || 0;
 	};
 	CGraphicObjectBase.prototype.createPlaceholderControl = function (aControls) {
@@ -3087,7 +3087,7 @@
 		} else if (this.worksheet) {
 			nPageNum = this.worksheet.workbook && this.worksheet.workbook.nActive;
 		} else {
-			nPageNum = this.Get_AbsolutePage() || 0;
+			nPageNum = this.GetAbsolutePage() || 0;
 		}
 		if (aButtons.length > 0) {
 			aControls.push(AscCommon.CreateDrawingPlaceholder(this.Id, aButtons, nPageNum, oRect, this.transform, isDisabled));
@@ -3224,9 +3224,9 @@
 		}
 		return { slide: null, layout: null, master: null, theme: null};
 	};
-	CGraphicObjectBase.prototype.Get_StartPage_Absolute = function () {
-		if (AscFormat.CShape.prototype.Get_StartPage_Absolute) {
-			return AscFormat.CShape.prototype.Get_StartPage_Absolute.call(this);
+	CGraphicObjectBase.prototype.GetAbsoluteStartPage = function () {
+		if (AscFormat.CShape.prototype.GetAbsoluteStartPage) {
+			return AscFormat.CShape.prototype.GetAbsoluteStartPage.call(this);
 		}
 	};
 	CGraphicObjectBase.prototype.Get_Theme = function () {

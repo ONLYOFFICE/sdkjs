@@ -514,8 +514,8 @@
 					{
 						var oCurPara = LogicDocument.GetCurrentParagraph();
 						LogicDocument.Content[oCurPara.Index].Document_SetThisElementCurrent();
-						LogicDocument.Add_SectionBreak(_current["Props"]["SectionBreak"]);
-						LogicDocument.Add_SectionBreak(_current["Props"]["SectionBreak"]);
+						LogicDocument.AddSectionBreak(_current["Props"]["SectionBreak"]);
+						LogicDocument.AddSectionBreak(_current["Props"]["SectionBreak"]);
 						LogicDocument.Content[oCurPara.Index + 1].Document_SetThisElementCurrent();
 					}
 
@@ -2564,7 +2564,7 @@ background-repeat: no-repeat;\
 
 			var _X       = elem.X;
 			var _Y       = elem.Y;
-			var _PageNum = elem.GetCurrentPageAbsolute();
+			var _PageNum = elem.GetAbsoluteCurrentPage();
 
 			if (elem.IsTable())
 			{
@@ -5309,7 +5309,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.asc_SetColumnsProps       = function(ColumnsProps)
 	{
-		this.WordControl.m_oLogicDocument.Set_ColumnsProps(ColumnsProps);
+		this.WordControl.m_oLogicDocument.SetColumnProps(ColumnsProps);
 	};
 	asc_docs_api.prototype.asc_GetColumnsProps       = function()
 	{
@@ -5457,30 +5457,27 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.put_AddPageBreak              = function()
 	{
-		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Content))
-		{
-			var Document = this.WordControl.m_oLogicDocument;
-
-			if (null === Document.IsCursorInHyperlink(false))
-			{
-				this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_AddPageBreak);
-				this.WordControl.m_oLogicDocument.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Page));
-				this.WordControl.m_oLogicDocument.FinalizeAction();
-			}
-		}
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument
+			|| null !== logicDocument.IsCursorInHyperlink(false)
+			|| logicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
+			return;
+		
+		logicDocument.StartAction(AscDFH.historydescription_Document_AddPageBreak, null, AscWord.ACTION_FLAGS.UPDATEALL_RECALCULATE);
+		logicDocument.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Page));
+		logicDocument.FinalizeAction();
 	};
 	asc_docs_api.prototype.put_AddColumnBreak            = function()
 	{
-		var Document = this.WordControl.m_oLogicDocument;
-		if (false === Document.Document_Is_SelectionLocked(changestype_Paragraph_Content))
-		{
-			if (null === Document.IsCursorInHyperlink(false))
-			{
-				this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_AddPageBreak);
-				this.WordControl.m_oLogicDocument.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Column));
-				this.WordControl.m_oLogicDocument.FinalizeAction();
-			}
-		}
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument
+			|| null !== logicDocument.IsCursorInHyperlink(false)
+			|| logicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
+			return;
+		
+		logicDocument.StartAction(AscDFH.historydescription_Document_AddPageBreak, null, AscWord.ACTION_FLAGS.UPDATEALL_RECALCULATE);
+		logicDocument.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Column));
+		logicDocument.FinalizeAction();
 	};
 	asc_docs_api.prototype.Update_ParaInd                = function(paraInd, isRtl)
 	{
@@ -9160,14 +9157,15 @@ background-repeat: no-repeat;\
 		return obj;
 	};
 
-	asc_docs_api.prototype.add_SectionBreak = function(_Type)
+	asc_docs_api.prototype.add_SectionBreak = function(breakType)
 	{
-		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Content))
-		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_AddSectionBreak);
-			this.WordControl.m_oLogicDocument.Add_SectionBreak(_Type);
-			this.WordControl.m_oLogicDocument.FinalizeAction();
-		}
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || logicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
+			return;
+		
+		logicDocument.StartAction(AscDFH.historydescription_Document_AddSectionBreak, null, AscWord.ACTION_FLAGS.UPDATEALL_RECALCULATE);
+		logicDocument.AddSectionBreak(breakType);
+		logicDocument.FinalizeAction();
 	};
 	asc_docs_api.prototype.asc_GetSectionsCount = function()
 	{

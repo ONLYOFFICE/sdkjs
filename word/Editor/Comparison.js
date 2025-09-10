@@ -2887,7 +2887,7 @@
         {
             const oLogicDocument = this.originalDocument;
             const bCopyHdrFtr = true;
-            const SectPr = new CSectionPr(oLogicDocument);
+            const SectPr = new AscWord.SectPr(oLogicDocument);
             SectPr.Copy(oReviseSectPr, bCopyHdrFtr, this.copyPr);
             if(oElement.Set_SectionPr)
             {

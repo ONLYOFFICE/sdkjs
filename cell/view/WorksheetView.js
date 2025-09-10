@@ -13372,44 +13372,23 @@ function isAllowPasteLink(pastedWb) {
 
 		let vr = this.visibleRange;
 		if (offset.col !== 0) {
-			if (offset.col < 0) {
-				//left
-				let x1 = this.getCellLeft(vr.c1);
-				let x2 = this.getCellLeft(Math.max(vr.c1 + offset.col, 0));
-				let rowsWidth = x1 - x2;
-				let unitDeltaStep = this.getHScrollStep();
-				offset.col = -rowsWidth / unitDeltaStep;
-				offset.col -= this.getHorizontalScrollCorrect() / unitDeltaStep;
-			} else {
-				//down
-				/*let x1 = this.getCellLeft(vr.c2);
-				let x2 = this.getCellLeft(vr.c2 + offset.col);
-				let rowsWidth = x2 - x1;
-				let unitDeltaStep = Asc.round(this.defaultRowHeightPx * this.getZoom());
-				offset.col = rowsWidth / unitDeltaStep;
-				offset.col += this.getHorizontalScrollCorrect() / unitDeltaStep;*/
-			}
-			//this.setHorizontalScrollCorrect(0);
+			let x1 = this.getCellLeft(vr.c1);
+			let x2 = this.getCellLeft(Math.max(vr.c1 + offset.col, 0));
+			let rowsWidth = x2 - x1;
+			let unitDeltaStep = this.getHScrollStep();
+
+			offset.col = rowsWidth / unitDeltaStep;
+			offset.col -= this.getHorizontalScrollCorrect() / unitDeltaStep;
 		}
 		if (offset.row !== 0) {
-			if (offset.row < 0) {
-				//up
-				let y1 = this.getCellTop(vr.r1);
-				let y2 = this.getCellTop(Math.max(vr.r1 + offset.row, 0));
-				let rowsHeight = y1 - y2;
-				let unitDeltaStep = this.getVScrollStep();
-				offset.row = -rowsHeight / unitDeltaStep;
-				offset.row -= this.getScrollCorrect() / unitDeltaStep;
-			} else {
-				//down
-				/*let y1 = this.getCellTop(vr.r2);
-				let y2 = this.getCellTop(vr.r2 + offset.row);
-				let rowsHeight = y2 - y1;
-				let unitDeltaStep = Asc.round(this.defaultRowHeightPx * this.getZoom());
-				offset.row = rowsHeight / unitDeltaStep;
-				offset.row += this.getScrollCorrect() / unitDeltaStep;*/
-			}
-			//this.setScrollCorrect(0);
+
+			let y1 = this.getCellTop(vr.r1);
+			let y2 = this.getCellTop(Math.max(vr.r1 + offset.row, 0));
+			let rowsHeight = y2 - y1;
+			let unitDeltaStep = this.getVScrollStep();
+
+			offset.row = rowsHeight / unitDeltaStep;
+			offset.row -= this.getScrollCorrect() / unitDeltaStep;
 		}
 		return offset;
 	};
@@ -30122,7 +30101,7 @@ function isAllowPasteLink(pastedWb) {
 
 			const cPasteProps = Asc.c_oSpecialPasteProps;
 			const pasteProp = props && props.property;
-			if (cPasteProps.picture === pasteProp) {
+			if (cPasteProps.picture === pasteProp && specialPasteData.images) {
 				if (specialPasteData.htmlImage && false) {
 					pastingData1 = specialPasteData.htmlImage;
 					doPaste(true);
