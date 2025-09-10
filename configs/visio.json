@@ -122,6 +122,8 @@
 			"common/Drawings/DrawingObjectsHandlers.js",
 			"common/Drawings/TextDrawer.js",
 
+		  "common/digital-signature/digital-signature.js",
+
 			"common/Drawings/Externals.js",
 			"common/GlobalLoaders.js",
 			"common/Controls.js",

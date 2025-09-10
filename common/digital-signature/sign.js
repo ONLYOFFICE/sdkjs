@@ -31,76 +31,55 @@
  */
 
 "use strict";
-
-const CRYPTO_DIGEST_ALGORITHM_TYPE = {
-	SHA256: "SHA-256"
-}
-const OOXML_DIGEST_ALGORITHM_TYPE = {
-	SHA1: 1,
-	SHA224: 2,
-	SHA256: 3,
-	SHA384: 4,
-	SHA512: 5
-}
-
-const TRANSFORM_ALGORITHM = {
-	RELATIONSHIP: 1,
-	CANONIZATION10: 2,
-};
-const CANONIZATION_ALGORITHM = {
-	CANONIZATION10: 1,
-};
-const SIGNATURE_ALGORITHM = {
-	RSASHA1: 1,
-	RSASHA256: 2,
-}
-
-const SIGNATURE_TYPE = {
-	INVISIBLE: 1,
-	SIGNATURE_LINE: 2
-};
-
-function CX509Cert() {
-
-}
-CX509Cert.prototype.getDigestAlgorithm = function () {
-	return CRYPTO_DIGEST_ALGORITHM_TYPE.SHA256;
-};
-function getEnumFromStrDigestAlgorithm(str) {
-	switch (str) {
-		case "http://www.w3.org/2000/09/xmldsig#rsa-sha1":
-		case "http://www.w3.org/2000/09/xmldsig#sha1": {
-			return OOXML_DIGEST_ALGORITHM_TYPE.SHA1;
-		}
-		case "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256":
-		case "http://www.w3.org/2001/04/xmldsig-more#sha256":
-		case "http://www.w3.org/2001/04/xmlenc#sha256": {
-			return OOXML_DIGEST_ALGORITHM_TYPE.SHA256;
-		}
-		case "http://www.w3.org/2001/04/xmldsig-more#rsa-sha384":
-		case "http://www.w3.org/2001/04/xmldsig-more#sha384": {
-			return OOXML_DIGEST_ALGORITHM_TYPE.SHA384;
-		}
-		case "http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512":
-		case "http://www.w3.org/2001/04/xmldsig-more#rsa-sha512":
-		case "http://www.w3.org/2001/04/xmldsig-more#sha512":
-		case "http://www.w3.org/2001/04/xmlenc#sha512": {
-			return OOXML_DIGEST_ALGORITHM_TYPE.SHA512;
-		}
-		default: {
-			return null;
-		}
-	}
-}
-function getFormatDigestAlgorithm(cryptoAlgorithm) {
-	switch (cryptoAlgorithm) {
-		case CRYPTO_DIGEST_ALGORITHM_TYPE.SHA256:
-			return FORMAT_DIGEST_ALGORITHM_TYPE.SHA256;
-	}
-	return null;
-}
-
 (function () {
+	const CRYPTO_DIGEST_ALGORITHM_TYPE = {
+		SHA256: "SHA-256"
+	};
+	function getCryptoDigestFromOOXMLDigest(ooxmlType) {
+		switch (ooxmlType) {
+			case AscFormat.OOXML_DIGEST_ALGORITHM_TYPE.SHA1:
+				return "SHA-1";
+			case AscFormat.OOXML_DIGEST_ALGORITHM_TYPE.SHA256:
+				return "SHA-256";
+			case AscFormat.OOXML_DIGEST_ALGORITHM_TYPE.SHA384:
+				return "SHA-384";
+			case AscFormat.OOXML_DIGEST_ALGORITHM_TYPE.SHA512:
+				return "SHA-512";
+				default:
+					return null;
+		}
+	}
+	function CX509Cert() {
+	}
+
+	CX509Cert.prototype.getDigestAlgorithm = function () {
+		return CRYPTO_DIGEST_ALGORITHM_TYPE.SHA256;
+	};
+
+
+
+	function getBase64FromBuffer(arrayBuffer) {
+		const intArray = new Uint8Array(arrayBuffer);
+		let arrayResult = [];
+		for (let i = 0; i < intArray.length; i += 1) {
+			arrayResult.push(String.fromCharCode(intArray[i]));
+		}
+		return window.btoa(arrayResult.join(""));
+	}
+	function isNeedSign(filePath) {
+		return !(filePath.indexOf("_xmlsignatures") === 0 ||
+			filePath.indexOf("docProps") === 0 ||
+			filePath.indexOf("[Content_Types].xml") === 0 ||
+			filePath.indexOf("[trash]") === 0);
+	}
+	function isRels(filePath) {
+		const lastIndex = filePath.lastIndexOf(".");
+		if (lastIndex !== -1) {
+			return filePath.slice(lastIndex + 1) === "rels";
+		}
+		return false;
+	}
+
 	function CDigitalSigner(crypto, cert, zip) {
 		this.crypto = crypto;
 		this.openXml = new AscCommon.openXml.OpenXmlPackage(zip, null);
@@ -157,16 +136,9 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 	CDigitalSigner.prototype.getDigestAlgorithm = function () {
 
 	};
-	CDigitalSigner.prototype.getDigestMethod = function () {
-		return new Promise(function (resolve, reject) {
-			reject("todo");
-		});
-	};
 	CDigitalSigner.prototype.digest = function (file) {
-		return this.crypto.digest("SHA-256", file);
-		// return new Promise(function (resolve, reject) {
-		// 	reject("todo");
-		// });
+		const digestAlgorithm = this.getFormatDigestAlgorithm();
+		return this.crypto.digest(getCryptoDigestFromOOXMLDigest(digestAlgorithm), file);
 	};
 	CDigitalSigner.prototype.getDigestsFromFiles = function (files) {
 		const promises = [];
@@ -181,7 +153,11 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 	};
 	CDigitalSigner.prototype.getFormatDigestAlgorithm = function () {
 		//todo
-		return 1;
+		return AscFormat.OOXML_DIGEST_ALGORITHM_TYPE.SHA256;
+	};
+	CDigitalSigner.prototype.getFormatSignatureAlgorithm = function () {
+		//todo
+		return AscFormat.OOXML_SIGNATURE_ALGORITHM_TYPE.RSASHA256;
 	};
 	CDigitalSigner.prototype.getIssuerName = function () {
 		//todo
@@ -234,7 +210,7 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 			for (let i = 0; i < relsStructures.length; i++) {
 				const rels = relsStructures[i];
 				const filePath = filePaths[i];
-				const reference = new CReference();
+				const reference = new AscFormat.CReference();
 				reference.transforms = rels.getTransforms();
 				reference.URI = "/" + filePath + "?ContentType=" + oThis.getContentType(filePath);
 				reference.digestMethod = oThis.getFormatDigestAlgorithm();
@@ -256,7 +232,7 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 				const filePath = filePaths[i];
 				const digest = digests[i];
 				const contentType =  oThis.getContentType(filePath);
-				const reference = new CReference();
+				const reference = new AscFormat.CReference();
 				reference.URI = "/" + filePath + "?ContentType=" + contentType;
 				reference.digestMethod = oThis.getFormatDigestAlgorithm();
 				reference.digestValue = digest;
@@ -285,9 +261,9 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 		return Promise.all([relsReferencePromises, contentReferencePromises]).then(function (fileReferences) {
 			const relsReferences = fileReferences[0];
 			const contentReferences = fileReferences[1];
-			const manifestObject = new CManifestObject();
+			const manifestObject = new AscFormat.CManifestObject();
 			manifestObject.references = [].concat(relsReferences, contentReferences);
-			const signatureTime = new CSignatureTime();
+			const signatureTime = new AscFormat.CSignatureTime();
 			signatureTime.format = "YYYY-MM-DDThh:mm:ssTZD";
 			signatureTime.date = oThis.date.toISOString();
 			manifestObject.signatureTime = signatureTime;
@@ -296,7 +272,7 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 	};
 	CDigitalSigner.prototype.sign = function () {
 		const oThis = this;
-		const signature = new CSignature();
+		const signature = new AscFormat.CSignature();
 		return this.init().then(function () {
 			const manifestPromise = oThis.getManifestObjectPromise();
 			const signedPropertiesPromise = oThis.getSignedPropertiesPromise();
@@ -307,15 +283,15 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 			signature.manifestObject = manifestObject;
 			signature.signedProperties = signedProperties;
 
-			signature.officeObject = new COfficeObject();
+			signature.officeObject = new AscFormat.COfficeObject();
 			signature.officeObject.initDefault(oThis);
 
 			if (oThis.validImg) {
-				signature.validSignLnImg = new CValidImageObject();
+				signature.validSignLnImg = new AscFormat.CValidImageObject();
 				signature.validSignLnImg.value = oThis.validImg;
 			}
 			if (oThis.invalidImg) {
-				signature.invalidSignLnImg = new CInvalidImageObject();
+				signature.invalidSignLnImg = new AscFormat.CInvalidImageObject();
 				signature.invalidSignLnImg.value = oThis.invalidImg;
 			}
 			signature.keyInfo = oThis.getKeyInfo();
@@ -334,46 +310,33 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 		});
 	};
 	CDigitalSigner.prototype.getKeyInfo = function () {
-		const keyInfo = new CKeyInfo();
+		const keyInfo = new AscFormat.CKeyInfo();
 		keyInfo.x509certificate = this.getBase64Cert();
 		return keyInfo;
 	};
-	const OBJECT_ID = {
-		SIGNATURE: "idPackageSignature",
-		MANIFEST: "idPackageObject",
-		OFFICE: "idOfficeObject",
-		SIGNED_PROPERTIES: "idSignedProperties",
-		VALID_IMG: "idValidSigLnImg",
-		INVALID_IMG: "idInvalidSigLnImg",
-		SIGNATURE_TIME: "idSignatureTime",
-		OFFICE_DETAILS: "idOfficeV1Details"
-	};
 	CDigitalSigner.prototype.getSignedInfoPromise = function(signature) {
-		const signedInfo = new CSignedInfo();
-		signedInfo.canonicalizationMethod = CANONIZATION_ALGORITHM.CANONIZATION10;
-		signedInfo.signatureMethod = SIGNATURE_ALGORITHM.RSASHA256;
+		const signedInfo = new AscFormat.CSignedInfo();
+		signedInfo.canonicalizationMethod = AscFormat.TRANSFORM_ALGORITHM.CANONIZATION10;
+		signedInfo.signatureMethod = this.getFormatSignatureAlgorithm();
 		const referencePromises =[];
-		referencePromises.push(this.getReferencePromiseFromObject(signature.manifestObject, "#" + OBJECT_ID.MANIFEST));
-		referencePromises.push(this.getReferencePromiseFromObject(signature.officeObject, "#" + OBJECT_ID.OFFICE));
-		referencePromises.push(this.getReferencePromiseFromObject(signature.signedPropertiesObject, "#" + OBJECT_ID.SIGNED_PROPERTIES));
+		referencePromises.push(this.getReferencePromiseFromObject(signature.manifestObject, "#" + AscFormat.OBJECT_ID.MANIFEST));
+		referencePromises.push(this.getReferencePromiseFromObject(signature.officeObject, "#" + AscFormat.OBJECT_ID.OFFICE));
+		referencePromises.push(this.getReferencePromiseFromObject(signature.signedPropertiesObject, "#" + AscFormat.OBJECT_ID.SIGNED_PROPERTIES));
 		if (signature.validSignLnImg) {
-			referencePromises.push(this.getReferencePromiseFromObject(signature.validSignLnImg, "#" + OBJECT_ID.VALID_IMG));
+			referencePromises.push(this.getReferencePromiseFromObject(signature.validSignLnImg, "#" + AscFormat.OBJECT_ID.VALID_IMG));
 		}
 		if (signature.invalidSignLnImg) {
-			referencePromises.push(this.getReferencePromiseFromObject(signature.invalidSignLnImg, "#" + OBJECT_ID.INVALID_IMG));
+			referencePromises.push(this.getReferencePromiseFromObject(signature.invalidSignLnImg, "#" + AscFormat.OBJECT_ID.INVALID_IMG));
 		}
 		return Promise.all(referencePromises).then(function(references) {
 			signedInfo.references = references;
 			return signedInfo;
 		});
 	};
-	const REFERENCE_TYPE = {
-		OBJECT: 1
-	};
 	CDigitalSigner.prototype.getReferencePromiseFromObject = function(object, uri) {
-		const reference = new CReference();
+		const reference = new AscFormat.CReference();
 		const digestMethod = this.getFormatDigestAlgorithm();
-		reference.type = REFERENCE_TYPE.OBJECT;
+		reference.type = AscFormat.REFERENCE_TYPE.OBJECT;
 		reference.URI = uri;
 		reference.digestMethod = digestMethod;
 		const digestPromise = this.getDigestFromObject(object);
@@ -394,224 +357,29 @@ function getFormatDigestAlgorithm(cryptoAlgorithm) {
 	CDigitalSigner.prototype.getSignedPropertiesPromise = function () {
 		const oThis = this;
 		return this.getDigestCertValue().then(function (digestValue) {
-			const signedProperties = new CSignedPropertiesObject();
+			const signedProperties = new AscFormat.CSignedPropertiesObject();
 			signedProperties.signingTime = oThis.date.toISOString();
 
-			const cert = new CCert();
+			const cert = new AscFormat.CCert();
 			signedProperties.cert = cert;
 
-			const certDigest = new CCertDigest();
+			const certDigest = new AscFormat.CCertDigest();
 			cert.certDigest = certDigest;
 			certDigest.digestValue = digestValue;
 			certDigest.digestMethod = oThis.getFormatDigestAlgorithm();
 
-			const issuerSerial = new CIssuerSerial()
+			const issuerSerial = new AscFormat.CIssuerSerial()
 			cert.issuerSerial = issuerSerial;
 			issuerSerial.x509IssuerName = oThis.getIssuerName();
 			issuerSerial.x509SerialNumber = oThis.getSerialNumber();
 
-			signedProperties.signaturePolicyIdentifier = new CSignaturePolicyIdentifier();
+			signedProperties.signaturePolicyIdentifier = new AscFormat.CSignaturePolicyIdentifier();
 			signedProperties.signaturePolicyIdentifier.implied = true;
 
 			return signedProperties;
 		});
 	};
-	function getBase64FromBuffer(arrayBuffer) {
-		const intArray = new Uint8Array(arrayBuffer);
-		let arrayResult = [];
-		for (let i = 0; i < intArray.length; i += 1) {
-			arrayResult.push(String.fromCharCode(intArray[i]));
-		}
-		return window.btoa(arrayResult.join(""));
-	}
-	function isNeedSign(filePath) {
-		return !(filePath.indexOf("_xmlsignatures") === 0 ||
-			filePath.indexOf("docProps") === 0 ||
-			filePath.indexOf("[Content_Types].xml") === 0 ||
-			filePath.indexOf("[trash]") === 0);
-	}
-	function isRels(filePath) {
-		const lastIndex = filePath.lastIndexOf(".");
-		if (lastIndex !== -1) {
-			return filePath.slice(lastIndex + 1) === "rels";
-		}
-		return false;
-	}
-
-
-	function CSignature() {
-		// AscFormat.CBaseNoIdObject.call(this);
-		this.signedInfo = null;
-		this.signatureValue = null;
-		this.keyInfo = null;
-		this.manifestObject = null;
-		this.officeObject = null;
-		this.signedPropertiesObject = null;
-		this.validSignLnImg = null;
-		this.invalidSignLnImg = null;
-	}
-	// AscCommon.InitClassWithoutType(CSignature, AscFormat.CBaseNoIdObject);
-
-	function CSignedInfo() {
-		// AscFormat.CBaseNoIdObject.call(this);
-		this.canonicalizationMethod = null;
-		this.signatureMethod = null;
-		this.references = [];
-	}
-	// AscCommon.InitClassWithoutType(CSignedInfo, AscFormat.CBaseNoIdObject);
-
-	function CReference() {
-		// AscFormat.CBaseNoIdObject.call(this);
-		this.type = null;
-		this.URI = null;
-		this.digestMethod = null;
-		this.digestValue = null;
-		this.transforms = [];
-	}
-	// AscCommon.InitClassWithoutType(CReference, AscFormat.CBaseNoIdObject);
-
-	function CTransform() {
-		// AscFormat.CBaseNoIdObject.call(this);
-		this.algorithm = null;
-		this.relationshipReferences = [];
-	}
-	// AscCommon.InitClassWithoutType(CTransform, AscFormat.CBaseNoIdObject);
-
-	function CRelationshipReference() {
-		// AscFormat.CBaseNoIdObject.call(this);
-		this.sourceId = null;
-	}
-	// AscCommon.InitClassWithoutType(CRelationshipReference, AscFormat.CBaseNoIdObject);
-
-	function CKeyInfo() {
-		// AscFormat.CBaseNoIdObject.call(this);
-		this.x509certificate = null;
-	}
-	// AscCommon.InitClassWithoutType(CKeyInfo, AscFormat.CBaseNoIdObject);
-
-	function CManifestObject() {
-		// AscFormat.CBaseNoIdObject.call(this);
-		this.references = [];
-		this.signatureTime = null;
-	}
-	// AscCommon.InitClassWithoutType(CManifestObject, AscFormat.CBaseNoIdObject);
-
-	function CSignatureTime() {
-		// AscFormat.CBaseNoIdObject.call(this);
-		this.format = null;
-		this.value = null;
-	}
-	// AscCommon.InitClassWithoutType(CSignatureTime, AscFormat.CBaseNoIdObject);
-
-	function COfficeObject() {
-		// AscFormat.CBaseNoIdObject.call(this);
-		this.signatureInfo = null;
-	}
-	// AscCommon.InitClassWithoutType(COfficeObject, AscFormat.CBaseNoIdObject);
-	COfficeObject.prototype.initDefault = function (signer) {
-		this.signatureInfo = new CSignatureInfo();
-		this.signatureInfo.initDefault(signer);
-	};
-
-	function CSignatureInfo() {
-		// AscFormat.CBaseNoIdObject.call(this);
-		this.applicationVersion = null;
-		this.colorDepth = null;
-		this.delegateSuggestedSigner = null;
-		this.delegateSuggestedSigner2 = null;
-		this.delegateSuggestedSignerEmail = null;
-		this.horizontalResolution = null;
-		this.manifestHashAlgorithm = null;
-		this.monitors = null;
-		this.officeVersion = null;
-		this.setupID = null;
-		this.signatureComments = null;
-		this.signatureImage = null;
-		this.signatureProviderDetails = null;
-		this.signatureProviderId = null;
-		this.signatureProviderUrl = null;
-		this.signatureText = null;
-		this.signatureType = null;
-		this.verticalResolution = null;
-		this.windowsVersion = null;
-	}
-	// AscCommon.InitClassWithoutType(CSignatureInfo, AscFormat.CBaseNoIdObject);
-	CSignatureInfo.prototype.initDefault = function (signer) {
-		this.applicationVersion = "16.0";
-		this.colorDepth = 32;
-		this.delegateSuggestedSigner = null;
-		this.delegateSuggestedSigner2 = null;
-		this.delegateSuggestedSignerEmail = null;
-		this.horizontalResolution = 1680;
-		this.manifestHashAlgorithm = null;
-		this.monitors = 2;
-		this.officeVersion = "16.0";
-		this.setupID = signer.getGuid();
-		this.signatureComments = null;
-		this.signatureImage = signer.getValidImage();
-		this.signatureProviderDetails = 9;
-		this.signatureProviderId = "{00000000-0000-0000-0000-000000000000}";
-		this.signatureProviderUrl = "";
-		this.signatureText = "";
-		this.signatureType = SIGNATURE_TYPE.SIGNATURE_LINE;
-		this.verticalResolution = 1050;
-		this.windowsVersion = "10.0";
-	};
-
-	function CSignedPropertiesObject() {
-		// AscFormat.CBaseNoIdObject.call(this);
-		this.signingTime = null;
-		this.cert = null;
-		this.signaturePolicyIdentifier = null;
-	}
-	// AscCommon.InitClassWithoutType(CSignedPropertiesObject, AscFormat.CBaseNoIdObject);
-
-	function CSignaturePolicyIdentifier() {
-		// AscFormat.CBaseNoIdObject.call(this);
-		this.implied = false;
-	}
-	// AscCommon.InitClassWithoutType(CSignaturePolicyIdentifier, AscFormat.CBaseNoIdObject);
-
-	function CCert() {
-		// AscFormat.CBaseNoIdObject.call(this);
-		this.certDigest = null;
-		this.issuerSerial = null;
-	}
-	// AscCommon.InitClassWithoutType(CCert, AscFormat.CBaseNoIdObject);
-	function CCertDigest() {
-		// AscFormat.CBaseNoIdObject.call(this);
-		this.digestMethod = null;
-		this.digestValue = null;
-	}
-	// AscCommon.InitClassWithoutType(CCertDigest, AscFormat.CBaseNoIdObject);
-
-	function CIssuerSerial() {
-		// AscFormat.CBaseNoIdObject.call(this);
-		this.x509IssuerName = null;
-		this.x509SerialNumber = null;
-	}
-	// AscCommon.InitClassWithoutType(CIssuerSerial, AscFormat.CBaseNoIdObject);
-	function CImageObject() {
-		// AscFormat.CBaseNoIdObject.call(this);
-		this.value = null;
-	}
-	// AscCommon.InitClassWithoutType(CImageObject, AscFormat.CBaseNoIdObject);
-
-	function CValidImageObject() {
-		CImageObject.call(this);
-	}
-	AscCommon.InitClassWithoutType(CValidImageObject, CImageObject);
-
-	function CInvalidImageObject() {
-		CImageObject.call(this);
-	}
-	AscCommon.InitClassWithoutType(CInvalidImageObject, CImageObject);
 
 	window["AscCommon"] = window["AscCommon"] || {};
 	window["AscCommon"].CDigitalSigner = CDigitalSigner;
-
-	window["AscFormat"] = window["AscFormat"] || {};
-	window["AscFormat"].CRelationshipReference = CRelationshipReference;
-	window["AscFormat"].CTransform = CTransform;
-	window["AscFormat"].TRANSFORM_ALGORITHM = TRANSFORM_ALGORITHM;
 })();

@@ -135,6 +135,7 @@
 			"common/Drawings/DrawingObjectsHandlers.js",
 			"common/Drawings/TextDrawer.js",
 
+		  "common/digital-signature/digital-signature.js",
 			"common/PromiseIterators.js",
 			"common/ExternalDataLoader.js",
 
