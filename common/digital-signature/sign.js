@@ -298,13 +298,14 @@
 			return oThis.getSignedInfoPromise(signature);
 		}).then(function(signedInfo) {
 			signature.signedInfo = signedInfo;
-			return oThis.getSignatureValuePromise();
+			return oThis.getSignatureValuePromise(signedInfo);
 		}).then(function(signatureValue) {
 			signature.signatureValue = signatureValue;
 
 		});
 	};
-	CDigitalSigner.prototype.getSignatureValuePromise = function() {
+	CDigitalSigner.prototype.getSignatureValuePromise = function(signedInfo) {
+		const xmlBytes = this.getXmlBytesFromObject(signedInfo);
 		return new Promise(function(resolve, reject) {
 			reject("todo");
 		});
@@ -345,12 +346,15 @@
 			return reference;
 		});
 	};
-	CDigitalSigner.prototype.getDigestFromObject = function(object) {
+	CDigitalSigner.prototype.getXmlBytesFromObject = function (object) {
 		const writer = new AscCommon.CMemory();
 		writer.context = new AscCommon.XmlWriterContext();
 		object.toXml(writer);
 		const length = writer.GetCurPosition();
-		const xmlBytes = writer.GetDataUint8(0, length);
+		return writer.GetDataUint8(0, length);
+	}
+	CDigitalSigner.prototype.getDigestFromObject = function(object) {
+		const xmlBytes = this.getXmlBytesFromObject(object);
 		return this.digest(xmlBytes);
 	};
 	CDigitalSigner.prototype.getDigestCertValue = function () {
