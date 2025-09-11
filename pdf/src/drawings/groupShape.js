@@ -36,30 +36,30 @@
 	 * Class representing a pdf text shape.
 	 * @constructor
     */
-    function CPdfSmartArt() {
-        AscFormat.SmartArt.call(this);
+    function CPdfGroupShape() {
+        AscFormat.CGroupShape.call(this);
     }
     
-    CPdfSmartArt.prototype.constructor = CPdfSmartArt;
-    CPdfSmartArt.prototype = Object.create(AscFormat.SmartArt.prototype);
-    Object.assign(CPdfSmartArt.prototype, AscPDF.CPdfDrawingPrototype.prototype);
+    CPdfGroupShape.prototype.constructor = CPdfGroupShape;
+    CPdfGroupShape.prototype = Object.create(AscFormat.CGroupShape.prototype);
+    Object.assign(CPdfGroupShape.prototype, AscPDF.CPdfDrawingPrototype.prototype);
 
-    CPdfSmartArt.prototype.IsSmartArt = function() {
+    CPdfGroupShape.prototype.IsGroup = function() {
         return true;
     };
 
-    CPdfSmartArt.prototype.Recalculate = function() {
+    CPdfGroupShape.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
             return;
 
-        this.recalcInfo.recalculateTransform = true;
-        this.recalcInfo.recalculateSizes = true;
-        
-        this.recalculate();
+        this.recalculateTransform();
         this.updateTransformMatrix();
+        this.recalcGeometry();
+        this.checkExtentsByDocContent(true, true);
+        this.recalculate();
         this.SetNeedRecalc(false);
     };
-    CPdfSmartArt.prototype.onMouseDown = function(x, y, e) {
+    CPdfGroupShape.prototype.onMouseDown = function(x, y, e) {
         let oViewer             = Asc.editor.getDocumentRenderer();
         let oDoc                = this.GetDocument();
         let oDrawingObjects     = oDoc.Viewer.DrawingObjects;
@@ -74,18 +74,18 @@
 
         oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
     };
-    CPdfSmartArt.prototype.AddNewParagraph = function() {
+    CPdfGroupShape.prototype.AddNewParagraph = function() {
         this.GetDocContent().AddNewParagraph();
         this.SetNeedRecalc(true);
     };
-    CPdfSmartArt.prototype.GetDocContent = function() {
+    CPdfGroupShape.prototype.GetDocContent = function() {
         return this.getTargetDocContent();
     };
-    CPdfSmartArt.prototype.SelectAllText = function() {
+    CPdfGroupShape.prototype.SelectAllText = function() {
         this.GetDocContent().SelectAll();
     };
 
-    CPdfSmartArt.prototype.onMouseUp = function(x, y, e) {
+    CPdfGroupShape.prototype.onMouseUp = function(x, y, e) {
         let oViewer         = Asc.editor.getDocumentRenderer();
         
         this.selectStartPage    = this.GetPage();
@@ -107,7 +107,7 @@
     /// work with text properties
     ////////////////////////////
 
-    CPdfSmartArt.prototype.SetParaTextPr = function(oParaTextPr) {
+    CPdfGroupShape.prototype.SetParaTextPr = function(oParaTextPr) {
         let oContent = this.GetDocContent();
         
         false == this.IsInTextBox() && oContent.SetApplyToAll(true);
@@ -116,78 +116,78 @@
 
         this.SetNeedRecalc(true);
     };
-    CPdfSmartArt.prototype.SetAlign = function(nType) {
+    CPdfGroupShape.prototype.SetAlign = function(nType) {
         let oContent = this.GetDocContent();
         oContent.SetParagraphAlign(nType);
         this.SetNeedRecalc(true);
     };
-    CPdfSmartArt.prototype.GetAlign = function() {
+    CPdfGroupShape.prototype.GetAlign = function() {
         return this.GetDocContent().GetCalculatedParaPr().GetJc();
     };
-    CPdfSmartArt.prototype.SetBold = function(bBold) {
+    CPdfGroupShape.prototype.SetBold = function(bBold) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({Bold : bBold}));
     };
-    CPdfSmartArt.prototype.GetBold = function() {
+    CPdfGroupShape.prototype.GetBold = function() {
         return !!this.GetCalculatedTextPr().GetBold();        
     };
-    CPdfSmartArt.prototype.SetItalic = function(bItalic) {
+    CPdfGroupShape.prototype.SetItalic = function(bItalic) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({Italic : bItalic}));
     };
-    CPdfSmartArt.prototype.GetItalic = function() {
+    CPdfGroupShape.prototype.GetItalic = function() {
         return !!this.GetCalculatedTextPr().GetItalic();
     };
-    CPdfSmartArt.prototype.SetUnderline = function(bUnderline) {
+    CPdfGroupShape.prototype.SetUnderline = function(bUnderline) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({Underline : bUnderline}));
     };
-    CPdfSmartArt.prototype.GetUnderline = function() {
+    CPdfGroupShape.prototype.GetUnderline = function() {
         return !!this.GetCalculatedTextPr().GetUnderline();
     };
-    CPdfSmartArt.prototype.SetHighlight = function(r, g, b) {
+    CPdfGroupShape.prototype.SetHighlight = function(r, g, b) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({HighlightColor : AscFormat.CreateUniColorRGB(r, g, b)}));
     };
-    CPdfSmartArt.prototype.SetStrikeout = function(bStrikeout) {
+    CPdfGroupShape.prototype.SetStrikeout = function(bStrikeout) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({
 			Strikeout  : bStrikeout,
 			DStrikeout : false
         }));
     };
-    CPdfSmartArt.prototype.GetStrikeout = function() {
+    CPdfGroupShape.prototype.GetStrikeout = function() {
         return !!this.GetCalculatedTextPr().GetStrikeout();
     };
-    CPdfSmartArt.prototype.SetBaseline = function(nType) {
+    CPdfGroupShape.prototype.SetBaseline = function(nType) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({VertAlign : nType}));
     };
-    CPdfSmartArt.prototype.GetBaseline = function() {
+    CPdfGroupShape.prototype.GetBaseline = function() {
         return this.GetCalculatedTextPr().GetVertAlign();
     };
-    CPdfSmartArt.prototype.SetFontSize = function(nType) {
+    CPdfGroupShape.prototype.SetFontSize = function(nType) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({FontSize : nType}));
     };
-    CPdfSmartArt.prototype.GetFontSize = function() {
+    CPdfGroupShape.prototype.GetFontSize = function() {
         return this.GetCalculatedTextPr().GetFontSize();
     };
-    CPdfSmartArt.prototype.IncreaseDecreaseFontSize = function(bIncrease) {
+    CPdfGroupShape.prototype.IncreaseDecreaseFontSize = function(bIncrease) {
         this.GetDocContent().IncreaseDecreaseFontSize(bIncrease);
         this.SetNeedRecalc(true);
     };
-    CPdfSmartArt.prototype.SetSpacing = function(nSpacing) {
+    CPdfGroupShape.prototype.SetSpacing = function(nSpacing) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({Spacing : nSpacing}));
     };
-    CPdfSmartArt.prototype.GetSpacing = function() {
+    CPdfGroupShape.prototype.GetSpacing = function() {
         return this.GetCalculatedTextPr().GetSpacing();
     };
-    CPdfSmartArt.prototype.SetFontFamily = function(sFontFamily) {
+    CPdfGroupShape.prototype.SetFontFamily = function(sFontFamily) {
         let oParaTextPr = new AscCommonWord.ParaTextPr();
 		oParaTextPr.Value.RFonts.SetAll(sFontFamily, -1);
         this.SetParaTextPr(oParaTextPr);
     };
-    CPdfSmartArt.prototype.GetFontFamily = function() {
+    CPdfGroupShape.prototype.GetFontFamily = function() {
         return this.GetCalculatedTextPr().GetFontFamily();
     };
-    CPdfSmartArt.prototype.SetTextColor = function(r, g, b) {
+    CPdfGroupShape.prototype.SetTextColor = function(r, g, b) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({Unifill : AscFormat.CreateSolidFillRGB(r, g, b)}));
     };
-    CPdfSmartArt.prototype.ChangeTextCase = function(nCaseType) {
+    CPdfGroupShape.prototype.ChangeTextCase = function(nCaseType) {
         let oContent    = this.GetDocContent();
         let oState      = oContent.GetSelectionState();
 
@@ -197,19 +197,19 @@
         oContent.SetSelectionState(oState);
         this.SetNeedRecalc(true);
     };
-    CPdfSmartArt.prototype.GetSelectedParagraphs = function() {
+    CPdfGroupShape.prototype.GetSelectedParagraphs = function() {
         let oContent        = this.GetDocContent();
         let aSelectedParas  = [];
 
         oContent.GetCurrentParagraph(false, aSelectedParas);
         return aSelectedParas;
     };
-    CPdfSmartArt.prototype.SetVertAlign = function(nType) {
+    CPdfGroupShape.prototype.SetVertAlign = function(nType) {
         this.setVerticalAlign(nType);
         this.SetNeedRecalc(true);
     };
 
-    CPdfSmartArt.prototype.GetAllFonts = function(fontMap) {
+    CPdfGroupShape.prototype.GetAllFonts = function(fontMap) {
         let aContents = [];
         this.getAllDocContents(aContents);
 
@@ -242,31 +242,31 @@
         return fontMap;
     };
 
-    CPdfSmartArt.prototype.SetLineSpacing = function(oSpacing) {
+    CPdfGroupShape.prototype.SetLineSpacing = function(oSpacing) {
         this.GetDocContent().SetParagraphSpacing(oSpacing);
         this.SetNeedRecalc(true);
     };
-    CPdfSmartArt.prototype.GetLineSpacing = function() {
+    CPdfGroupShape.prototype.GetLineSpacing = function() {
         let oCalcedPr = this.GetCalculatedParaPr();
         return {
             After:  oCalcedPr.GetSpacingAfter(),
             Before: oCalcedPr.GetSpacingBefor()
         }
     };
-    CPdfSmartArt.prototype.SetColumnNumber = function(nColumns) {
+    CPdfGroupShape.prototype.SetColumnNumber = function(nColumns) {
         this.setColumnNumber(nColumns);
         this.SetNeedRecalc(true);
     };
-    CPdfSmartArt.prototype.IncreaseDecreaseIndent = function(bIncrease) {
+    CPdfGroupShape.prototype.IncreaseDecreaseIndent = function(bIncrease) {
         // Increase_ParagraphLevel для шейпов из презентаций
         this.GetDocContent().Increase_ParagraphLevel(bIncrease);
         this.SetNeedRecalc(true);
     };
-    CPdfSmartArt.prototype.SetNumbering = function(oBullet) {
+    CPdfGroupShape.prototype.SetNumbering = function(oBullet) {
         this.GetDocContent().Set_ParagraphPresentationNumbering(oBullet);
         this.SetNeedRecalc(true);
     };
-    CPdfSmartArt.prototype.ClearFormatting = function(bParaPr, bTextText) {
+    CPdfGroupShape.prototype.ClearFormatting = function(bParaPr, bTextText) {
         this.GetDocContent().ClearParagraphFormatting(bParaPr, bTextText);
         this.SetNeedRecalc(true);
     };
@@ -275,10 +275,10 @@
      * Получаем рассчитанные настройки текста (полностью заполненные)
      * @returns {CTextPr}
      */
-    CPdfSmartArt.prototype.GetCalculatedTextPr = function() {
+    CPdfGroupShape.prototype.GetCalculatedTextPr = function() {
         return this.GetDocContent().GetCalculatedTextPr();
     };
-    CPdfSmartArt.prototype.GetCalculatedParaPr = function() {
+    CPdfGroupShape.prototype.GetCalculatedParaPr = function() {
         return this.GetDocContent().GetCalculatedParaPr();
     };
 
@@ -286,7 +286,7 @@
     ///// Overrides
     /////////////////////////////////////////////////////////////////////////////
     
-    CPdfSmartArt.prototype.updateSelectionState = function () {
+    CPdfGroupShape.prototype.updateSelectionState = function () {
         var drawing_document = this.getDrawingDocument();
         if (drawing_document) {
             var content = this.getDocContent();
@@ -329,8 +329,8 @@
             }
         }
     };
-    CPdfSmartArt.prototype.copy = function(oPr) {
-        let copy = new CPdfSmartArt();
+    CPdfGroupShape.prototype.copy = function(oPr) {
+        let copy = new CPdfGroupShape();
         this.copy2(copy, oPr);
         let drawing = copy.getDrawing();
 
@@ -350,6 +350,6 @@
         return copy;
     };
 
-    window["AscPDF"].CPdfSmartArt = CPdfSmartArt;
+    window["AscPDF"].CPdfGroupShape = CPdfGroupShape;
 })();
 

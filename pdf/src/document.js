@@ -1173,7 +1173,8 @@ var CPresentation = CPresentation || function(){};
         let oMouseDownDrawing   = oViewer.getPageDrawingByMouse();
         let oFloatObject        = (this.IsEditFieldsMode() && oMouseDownField) || oMouseDownAnnot || oMouseDownDrawing;
         let oCurObject          = this.GetMouseDownObject();
-
+        let oCurContent         = oCurObject ? oCurObject.GetDocContent() : null;
+        
         // координаты клика на странице в MM
         var pageObject = oViewer.getPageByCoords2(x, y);
         if (!pageObject)
@@ -1274,9 +1275,10 @@ var CPresentation = CPresentation || function(){};
                 oDrDoc.TargetEnd();
             }
         }
+
         // check redraw if focus is lost
         if (oCurObject && oCurObject.IsDrawing() && oCurObject != oMouseDownObject) {
-            let oStartContent = AscFormat.checkEmptyPlaceholderContent(oCurObject.GetDocContent());
+            let oStartContent = AscFormat.checkEmptyPlaceholderContent(oCurContent);
             oController.checkRedrawOnChangeCursorPosition(oStartContent, null);
         }
 
@@ -1903,8 +1905,8 @@ var CPresentation = CPresentation || function(){};
                 let aSpTree = bRecursive && !oController.selection.groupSelection.IsAnnot() ? oController.selection.groupSelection.spTree : oController.selectedObjects;
                 oIdMap = {};
 
-                let isAnnot = !!aSpTree.find(function(sp) { return sp.IsAnnot() });
-                let isField = !!aSpTree.find(function(sp) { return sp.IsEditFieldShape() });
+                let isAnnot = !!aSpTree.find(function(sp) { return sp.IsAnnot && sp.IsAnnot() });
+                let isField = !!aSpTree.find(function(sp) { return sp.IsEditFieldShape && sp.IsEditFieldShape() });
 
                 let aTargetEndArr = oEndFormattingContent.Drawings;
                 let aTargetSourceArr = oSourceFormattingContent.Drawings;
@@ -4320,7 +4322,9 @@ var CPresentation = CPresentation || function(){};
         this.UpdateParagraphProps();
         this.UpdateTextProps();
         this.UpdateCanAddHyperlinkState();
-        if (oTargetTextObject && (!oTargetTextObject.group || !oTargetTextObject.group.IsAnnot())) {
+        
+        let oGroup = oTargetTextObject && oTargetTextObject.getMainGroup();
+        if (oTargetTextObject && (!oGroup || !oGroup.IsAnnot())) {
             oTargetDocContent && oTargetDocContent.Document_UpdateInterfaceState();
         }
         this.Api.sync_pagePropCallback(oCurPage);
@@ -5788,9 +5792,8 @@ var CPresentation = CPresentation || function(){};
         oSmartArt.fitFontSize();
         oSmartArt.recalculateBounds();
 
-        // oSmartArt.changeSize(nExtX / oSmartArt.extX, nExtY / oSmartArt.extY);
         let oXfrm   = oSmartArt.getXfrm();
-        let oPos    = this.private_computeDrawingAddingPos(nPage, nExtX, nExtY);
+        let oPos    = this.private_computeDrawingAddingPos(nPage, oXfrm.extX, oXfrm.extY);
 
         if (nRotAngle != 0) {
             oXfrm.setRot(-nRotAngle * Math.PI / 180);
@@ -7707,7 +7710,8 @@ var CPresentation = CPresentation || function(){};
         return this.Api.canEdit() && false == this.Api.IsCommentMarker();
     };
     CPDFDoc.prototype.IsViewerObject = function(oObject) {
-        return !!(oObject && oObject.IsAnnot && (oObject.IsAnnot() || oObject.IsForm() || oObject.IsEditFieldShape() || oObject.group && oObject.group.IsAnnot()));
+        let oGroup = oObject && oObject.getMainGroup();
+        return !!(oObject && oObject.IsAnnot && (oObject.IsAnnot() || oObject.IsForm() || oObject.IsEditFieldShape() || oGroup && oGroup.IsAnnot()));
     };
     CPDFDoc.prototype.IsFillingFormMode = function() {
 		return false;
@@ -8151,6 +8155,8 @@ var CPresentation = CPresentation || function(){};
 
         if (annotJson["Icon"] != null)
             oAnnot.SetIconType(annotJson["Icon"]);
+        if (annotJson["State"] != null)
+            oAnnot.SetState(annotJson["State"]);
         if (annotJson["RefToReason"] != null)
             oAnnot.SetRefType(annotJson["RefToReason"]);
         if (annotJson["Popup"] != null)

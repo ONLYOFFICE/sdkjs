@@ -7407,11 +7407,11 @@
         this.InitSaveManager = new InitSaveManager(wb, isCopyPaste);
         this.bs = new BinaryCommonWriter(this.Memory);
 	    const pptx_content_writer = AscCommon.pptx_content_writer;
-        this.Write = function(noBase64, onlySaveBase64)
+        this.Write = function(noBase64, onlySaveBase64, skipWriteFileHeader)
         {
             var t = this;
             pptx_content_writer._Start();
-			if (noBase64) {
+			if (noBase64 && !skipWriteFileHeader) {
 				this.Memory.WriteXmlString(this.WriteFileHeader(0, Asc.c_nVersionNoBase64));
 			}
 			AscCommonExcel.executeInR1C1Mode(false, function () {
@@ -7424,6 +7424,9 @@
 			    else
 			        return this.Memory.GetData();
 			} else {
+				if (skipWriteFileHeader) {
+					return this.Memory.GetBase64Memory();
+				}
 				return this.WriteFileHeader(this.Memory.GetCurPosition(), AscCommon.c_oSerFormat.Version) + this.Memory.GetBase64Memory();
 			}
         };

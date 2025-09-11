@@ -343,7 +343,7 @@
 								let _w;
 								let _h;
 								if (this.parent && this.parent.isControl()) {
-									const oBounds = this.content.GetContentBounds(this.Get_StartPage_Absolute());
+									const oBounds = this.content.GetContentBounds(this.GetAbsoluteStartPage());
 									_w = bEmpty ? 0.1 : oBounds.Right - oBounds.Left;
 									_h = oBounds.Bottom - oBounds.Top;
 								} else {

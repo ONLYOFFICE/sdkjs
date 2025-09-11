@@ -7616,7 +7616,7 @@ function BinaryPPTYLoader()
         var _smartArt;
         if(typeof AscFormat.SmartArt !== "undefined" && !CDrawing)
         {
-            _smartArt = new AscFormat.SmartArt();
+            _smartArt = Asc.editor.isPdfEditor() ? new AscPDF.CPdfSmartArt() : new AscFormat.SmartArt();
             _smartArt.fromPPTY(this);
             _smartArt.setBDeleted(false);
 						_smartArt.generateDefaultStructures();

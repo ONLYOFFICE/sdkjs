@@ -1933,7 +1933,7 @@ CT_PivotCacheDefinition.prototype.getGroupRangePr = function (fld) {
 					dateTypes.push(dateRangePr.groupBy);
 				}
 			}
-			dateTypes.sort();
+			dateTypes.sort(AscCommon.fSortAscending);
 		}
 		return {rangePr: rangePr, dateTypes: dateTypes};
 	}
@@ -8031,7 +8031,7 @@ CT_pivotTableDefinition.prototype.groupRangePr = function (fld, rangePr, dateTyp
 		rangePr.groupInterval = 1;
 	}
 	if (dateTypes) {
-		dateTypes.sort();
+		dateTypes.sort(AscCommon.fSortAscending);
 		rangePr.groupBy = dateTypes[0];
 		if (dateTypes.length > 1 || c_oAscGroupBy.Days !== rangePr.groupBy) {
 			rangePr.groupInterval = 1;

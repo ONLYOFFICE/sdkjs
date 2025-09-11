@@ -83,11 +83,21 @@ CFootEndnote.prototype.GetElementPageIndex = function(nPageAbs, nColumnAbs)
 
 	return Math.max(0, nColumnAbs - nStartColumn + (nPageAbs - nStartPage) * nColumnsCount);
 };
-CFootEndnote.prototype.GetPageContentFrame = function(nCurPage)
+CFootEndnote.prototype.GetPageContentFrame = function(pageRel)
 {
-	var nPageAbs   = this.GetAbsolutePage(nCurPage);
-	var nColumnAbs = this.GetAbsoluteColumn(nCurPage);
-	return this.Parent.GetColumnContentFrame(nPageAbs, nColumnAbs, this.GetSectionIndex());
+	if (0 === pageRel)
+	{
+		return {
+			X      : this.X,
+			Y      : this.Y,
+			XLimit : this.XLimit,
+			YLimit : this.YLimit
+		}
+	}
+	
+	let pageAbs   = this.GetAbsolutePage(pageRel);
+	let columnAbs = this.GetAbsoluteColumn(pageRel);
+	return this.Parent.GetColumnContentFrame(pageAbs, columnAbs, this.GetSectionIndex());
 };
 CFootEndnote.prototype.Refresh_RecalcData2 = function(nIndex, nCurPage)
 {

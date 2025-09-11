@@ -188,61 +188,6 @@ function Document_Recalculate_HdrFtrPageCount()
 	LogicDocument.private_RecalculateHdrFtrPageCountUpdate();
 }
 
-function CDocumentPageColumn()
-{
-    this.Bounds = new CDocumentBounds(0, 0, 0, 0);
-    this.Pos    = 0;
-    this.EndPos = -1;
-    this.Empty  = true;
-
-    this.X      = 0;
-    this.Y      = 0;
-    this.XLimit = 0;
-    this.YLimit = 0;
-
-    this.SpaceBefore = 0;
-    this.SpaceAfter  = 0;
-}
-CDocumentPageColumn.prototype.Copy = function()
-{
-    var NewColumn = new CDocumentPageColumn();
-
-    NewColumn.Bounds.CopyFrom(this.Bounds);
-    NewColumn.Pos    = this.Pos;
-    NewColumn.EndPos = this.EndPos;
-    NewColumn.X      = this.X;
-    NewColumn.Y      = this.Y;
-    NewColumn.XLimit = this.XLimit;
-    NewColumn.YLimit = this.YLimit;
-
-    return NewColumn;
-};
-CDocumentPageColumn.prototype.Shift = function(Dx, Dy)
-{
-    this.X      += Dx;
-    this.XLimit += Dx;
-    this.Y      += Dy;
-    this.YLimit += Dy;
-
-    this.Bounds.Shift(Dx, Dy);
-};
-CDocumentPageColumn.prototype.Reset = function()
-{
-    this.Bounds.Reset();
-    this.Pos    = 0;
-    this.EndPos = -1;
-    this.Empty  = true;
-
-    this.X      = 0;
-    this.Y      = 0;
-    this.XLimit = 0;
-    this.YLimit = 0;
-};
-CDocumentPageColumn.prototype.IsEmpty = function()
-{
-	return this.Empty;
-};
-
 function CStatistics(LogicDocument)
 {
     this.LogicDocument = LogicDocument;
@@ -443,6 +388,11 @@ CDocumentRecalcInfo.prototype =
         this.RecalcResult            = RecalcResult;
         this.AdditionalInfo          = AdditionalInfo;
     },
+	
+	HaveFlowObject : function()
+	{
+		return (!!this.FlowObject);
+	},
 
     Set_ParaMath : function(Object)
     {
@@ -3479,7 +3429,9 @@ CDocument.prototype.Recalculate_Page = function()
         this.Pages[PageIndex].Sections[0].Pos    = StartIndex;
         this.Pages[PageIndex].Sections[0].EndPos = StartIndex;
     }
-
+	
+	this.Pages[PageIndex].Sections.length = SectionIndex + 1;
+	
 	this.Endnotes.Reset(PageIndex, SectionIndex, ColumnIndex);
 
     this.Recalculate_PageColumn();
@@ -3763,10 +3715,19 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
             }
             else
             {
+				// TODO: По верхней границе объекта можно расчитать более точно секцию, с которой следует начать пересчет
+				if (this.RecalcInfo.HaveFlowObject())
+					_SectionIndex = 0;
+				
                 _ColumnIndex = 0;
                 _StartIndex  = this.Pages[_PageIndex].Sections[_SectionIndex].Columns[0].Pos;
             }
-
+			
+			_sectPr = this.Pages[_PageIndex].Sections[_SectionIndex].GetSectPr();
+			
+			if (_SectionIndex !== SectionIndex)
+				this.Pages[_PageIndex].Sections[_SectionIndex].Init(_PageIndex, _sectPr, this.Layout.GetSectionIndex(_sectPr));
+			
             break;
         }
         else if (RecalcResult & recalcresult_NextElement)
@@ -3965,18 +3926,24 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
             }
             else
             {
-                if (_SectionIndex > 0)
-                {
-                    // Сюда мы никогда не должны попадать
-                }
-
-                _PageIndex    = Math.max(PageIndex - 1, 0);
-                _SectionIndex = this.Pages[_PageIndex].Sections.length - 1;
-                _ColumnIndex  = 0;
+				_PageIndex   = Math.max(PageIndex - 1, 0);
+				_ColumnIndex = 0;
+				
+				// TODO: Если пересчет происходит из-за плавающей фигуры, то мы можем прикинуть с какой секции надо
+				//       начать по её положению, а еще лучше записать это при первом повтороном пересчете
+				//       recalcresult_CurPage, и начать с сохраненной секции
+				if (this.RecalcInfo.HaveFlowObject())
+					_SectionIndex = 0;
+				else
+					_SectionIndex = this.Pages[_PageIndex].Sections.length - 1;
             }
 
             _StartIndex = this.Pages[_PageIndex].Sections[_SectionIndex].Columns[_ColumnIndex].Pos;
+			_sectPr     = this.Pages[_PageIndex].Sections[_SectionIndex].GetSectPr();
             _bStart     = false;
+	
+			this.Pages[_PageIndex].Sections[_SectionIndex].Init(_PageIndex, _sectPr, this.Layout.GetSectionIndex(_sectPr));
+			
             break;
         }
 		else if ((RecalcResult & recalcresult_NextSection) || (RecalcResult & recalcresult_NextSection_Cur))
@@ -7820,6 +7787,19 @@ CDocument.prototype.SelectAll = function()
 		}
 
 		return;
+	}
+	
+	if (this.IsFillingOFormMode())
+	{
+		let selectedInfo = this.GetSelectedElementsInfo();
+		let inlineSdt = selectedInfo.GetInlineLevelSdt();
+		if (inlineSdt && inlineSdt.IsForm())
+		{
+			inlineSdt.SelectContentControl();
+			this.UpdateSelection();
+			this.UpdateInterface();
+			return;
+		}
 	}
 
 	this.private_UpdateTargetForCollaboration();
@@ -22495,7 +22475,47 @@ CDocument.prototype.TurnComboBoxFormValue = function(oForm, isNext)
 {
 	if (!(oForm instanceof CInlineLevelSdt) || (!oForm.IsComboBox() && !oForm.IsDropDownList()))
 		return;
+	
+	let rect = oForm.GetBoundingRect();
+	if (!rect || rect.Page < 0)
+		return;
+	
+	let x = rect.X;
+	let y = rect.Y;
+	let w = rect.W + this.DrawingDocument.GetMMPerDot(20);
+	let h = rect.H;
+	
+	let transform = rect.Transform;
+	if (transform)
+	{
+		let x0 = transform.TransformPointX(x, y);
+		let y0 = transform.TransformPointY(x, y);
+		let x1 = transform.TransformPointX(x + w, y);
+		let y1 = transform.TransformPointY(x + w, y);
+		let x2 = transform.TransformPointX(x + w, y + h);
+		let y2 = transform.TransformPointY(x + w, y + h);
+		let x3 = transform.TransformPointX(x, y + h);
+		let y3 = transform.TransformPointY(x, y + h);
+		
+		x = Math.min(x0, x1, x2, x3);
+		y = Math.min(y0, y1, y2, y3);
+		w = Math.max(x0, x1, x2, x3) - x;
+		h = Math.max(y0, y1, y2, y3) - y;
+	}
+	
+	let realCoords = this.GetDrawingDocument().ConvertCoordsToCursorWR(x + w, y + h, rect.Page);
+	let obj = new Asc.CButtonData( {
+		"obj" : oForm,
+		"type" : oForm.GetSpecificType(),
+		"button" : AscCommon.CCButtonType.Combo,
+		"isForm" : true,
+		"pr" : oForm.GetContentControlPr()
+	});
+	
+	this.Api.sendEvent("asc_onShowContentControlsActions", obj, realCoords.X, realCoords.Y);
+	return;
 
+	// Previously we changed the value directly in the form
 	var sValue = oForm.GetSelectedText(true, true);
 	var oComboBoxPr = oForm.IsComboBox() ? oForm.GetComboBoxPr() : oForm.GetDropDownListPr();
 
@@ -26647,7 +26667,7 @@ CDocument.prototype.private_ConvertTextToTable = function(oProps, oSelectedConte
 	var W;
 	if (oItem === this)
 	{
-		var SectPr = this.SectionsInfo.GetCurrentSectPr();
+		var SectPr = this.GetCurrentSectPr();
 		var PageFields = this.Get_PageFields(this.CurPage);
 		var nAdd = this.GetCompatibilityMode() <= AscCommon.document_compatibility_mode_Word14 ?  2 * 1.9 : 0;
 		W = (PageFields.XLimit - PageFields.X + nAdd);

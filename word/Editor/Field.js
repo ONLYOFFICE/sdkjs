@@ -819,3 +819,4 @@ window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].ParaField = ParaField;
 
 window['AscWord'].CSimpleField = ParaField;
+window['AscWord'].FldSimple = ParaField;

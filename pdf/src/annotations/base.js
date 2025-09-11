@@ -274,6 +274,12 @@
 
         this._width = nWidthPt;
 
+        this.SetWasChanged(true);
+        this.private_UpdateLn();
+    };
+    CAnnotationBase.prototype.private_UpdateLn = function() {
+        let nWidthPt = this.GetWidth();
+        
         if (this.IsShapeBased()) {
             let oLine = this.spPr.ln;
             oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
@@ -308,6 +314,13 @@
         
         this.SetUserId(Asc.editor.documentUserId);
         this.EditCommentData(oCurData);
+    };
+    CAnnotationBase.prototype.SetRichContents = function(aRCInfo) {
+        AscCommon.History.Add(new CChangesPDFAnnotRC(this, this._richContents, aRCInfo));
+        this._richContents = aRCInfo;
+
+        this.SetWasChanged(true);
+        this.SetNeedRecalc(true);
     };
     CAnnotationBase.prototype.GetRichContents = function() {
         return this._richContents;
@@ -440,6 +453,8 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CAnnotationBase.prototype.SetOriginPage = function(nPage) {
+        AscCommon.History.Add(new CChangesPDFAnnotOrigPage(this, this._origPage, nPage));
+
         this._origPage = nPage;
     };
     CAnnotationBase.prototype.GetOriginPage = function() {
@@ -992,7 +1007,7 @@
         let oCurData = oCurAscCommData ? new AscCommon.CCommentData() : undefined;
 		oCurData && oCurData.Read_FromAscCommentData(oCurAscCommData);
 
-        AscCommon.History.Add(new CChangesPDFCommentData(this, oCurData, oCommentData));
+        AscCommon.History.Add(new CChangesPDFAnnotCommentData(this, oCurData, oCommentData));
 
         if (oCommentData == null) {
             this._replies.length = 0;

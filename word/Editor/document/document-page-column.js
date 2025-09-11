@@ -38,61 +38,61 @@
 	/**
 	 * @constructor
 	 */
-	function DocumentElementSection(x, y, xLimit, yLimit, parentStartPage, startPage, endPage, sectPr, startColumn, columnCount, index)
+	function DocumentPageColumn()
 	{
-		this.x               = x;
-		this.y               = y;
-		this.xLimit          = xLimit;
-		this.yLimit          = yLimit;
-		this.parentStartPage = parentStartPage; // Страница внешнего элемента, с которой начинается данная секция
-		this.sectPr          = sectPr;
-		this.startPage       = startPage;
-		this.endPage         = endPage;
-		this.columnCount     = columnCount ? columnCount : 1;
-		this.startColumn     = startColumn ? startColumn : 0;
-		this.index           = index;
+		this.Bounds = new CDocumentBounds(0, 0, 0, 0);
+		this.Pos    = 0;
+		this.EndPos = -1;
+		this.Empty  = true;
+		
+		this.X      = 0;
+		this.Y      = 0;
+		this.XLimit = 0;
+		this.YLimit = 0;
+		
+		this.SpaceBefore = 0;
+		this.SpaceAfter  = 0;
 	}
-	DocumentElementSection.prototype.GetParentStartPage = function()
+	DocumentPageColumn.prototype.Copy = function()
 	{
-		return this.parentStartPage;
+		var NewColumn = new DocumentPageColumn();
+		
+		NewColumn.Bounds.CopyFrom(this.Bounds);
+		NewColumn.Pos    = this.Pos;
+		NewColumn.EndPos = this.EndPos;
+		NewColumn.X      = this.X;
+		NewColumn.Y      = this.Y;
+		NewColumn.XLimit = this.XLimit;
+		NewColumn.YLimit = this.YLimit;
+		
+		return NewColumn;
 	};
-	DocumentElementSection.prototype.GetStartPage = function()
+	DocumentPageColumn.prototype.Shift = function(Dx, Dy)
 	{
-		return this.startPage;
+		this.X      += Dx;
+		this.XLimit += Dx;
+		this.Y      += Dy;
+		this.YLimit += Dy;
+		
+		this.Bounds.Shift(Dx, Dy);
 	};
-	DocumentElementSection.prototype.GetEndPage = function()
+	DocumentPageColumn.prototype.Reset = function()
 	{
-		return this.endPage;
+		this.Bounds.Reset();
+		this.Pos    = 0;
+		this.EndPos = -1;
+		this.Empty  = true;
+		
+		this.X      = 0;
+		this.Y      = 0;
+		this.XLimit = 0;
+		this.YLimit = 0;
 	};
-	DocumentElementSection.prototype.GetPageCount = function()
+	DocumentPageColumn.prototype.IsEmpty = function()
 	{
-		return (this.startPage > this.endPage ? 0 : this.endPage - this.startPage + 1);
-	};
-	DocumentElementSection.prototype.GetColumnCount = function()
-	{
-		return this.columnCount;
-	};
-	DocumentElementSection.prototype.GetStartColumn = function()
-	{
-		return this.startColumn;
-	};
-	DocumentElementSection.prototype.GetContentFrame = function()
-	{
-		return {
-			X : this.x,
-			Y : this.y,
-			XLimit : this.xLimit,
-			YLimit : this.yLimit
-		}
-	};
-	DocumentElementSection.prototype.GetSectPr = function()
-	{
-		return this.sectPr;
-	};
-	DocumentElementSection.prototype.GetIndex = function()
-	{
-		return this.index;
+		return this.Empty;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
-	AscWord.DocumentElementSection = DocumentElementSection;
+	AscWord.DocumentPageColumn = DocumentPageColumn;
+	
 })();

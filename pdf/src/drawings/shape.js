@@ -108,7 +108,8 @@
 			return false;
 		}
 
-        if (this.group && this.group.IsAnnot()) {
+        let oGroup = this.getMainGroup();
+        if (oGroup && oGroup.IsAnnot()) {
             return false;
         }
 
@@ -173,8 +174,10 @@
     };
 
     CPdfShape.prototype.getTrackGeometry = function () {
+        let oGroup = this.getMainGroup();
+
         // заглушка для трека геометрии с клауд бордером для FreeText
-        if (this.group && this.group.IsAnnot && this.group.IsAnnot() && this.group.GetTextBoxShape() == this) {
+        if (oGroup && oGroup.IsAnnot && oGroup.IsAnnot() && oGroup.GetTextBoxShape() == this) {
             return AscFormat.ExecuteNoHistory(
                 function () {
                     var _ret = AscFormat.CreateGeometry("rect");
@@ -564,7 +567,9 @@
         let oController = oDoc.GetController();
 
         this.SetControllerTextSelection(oController, this.GetPage());
-        if (!this.group)
+
+        let oGroup = this.getMainGroup();
+        if (!oGroup)
             oDoc.SetMouseDownObject(this);
     };
     CPdfShape.prototype.setRecalculateInfo = function() {

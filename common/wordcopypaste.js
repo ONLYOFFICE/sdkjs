@@ -6018,7 +6018,7 @@ PasteProcessor.prototype =
 
 		let oDoc = Asc.editor.getPDFDoc();
 		let oNativeFile = Asc.editor.getDocumentRenderer().file.nativeFile;
-		let oAnnotsInfo = oNativeFile.readAnnotationsInfoFromBinary(stream.data.slice(stream.cur));
+		let oAnnotsInfo = oNativeFile["readAnnotationsInfoFromBinary"](stream.data.slice(stream.cur));
 
 		let oAnnotsMap = {};
 		let aAnnots = [];
@@ -6055,7 +6055,7 @@ PasteProcessor.prototype =
 		let oDoc = Asc.editor.getPDFDoc();
 		let oViewer = Asc.editor.getDocumentRenderer();
 		let oNativeFile = oViewer.file.nativeFile;
-		let oFieldsInfo = oNativeFile.readAnnotationsInfoFromBinary(stream.data.slice(stream.cur));
+		let oFieldsInfo = oNativeFile["readAnnotationsInfoFromBinary"](stream.data.slice(stream.cur));
 
 		oViewer.IsOpenFormsInProgress = true;
 

@@ -309,6 +309,7 @@
 			"word/Editor/Layout/ReadView.js",
 			"word/Editor/document/document-background.js",
 			"word/Editor/document/document-page.js",
+			"word/Editor/document/document-page-column.js",
 			"word/Editor/document/document-page-section.js",
 			"word/Editor/document/element-section.js",
 			"word/Editor/DocumentContentBase.js",

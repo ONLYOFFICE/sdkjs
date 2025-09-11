@@ -202,7 +202,9 @@ CHeaderFooter.prototype =
 
 		this.Clear_PageCountElements();
 		this.LogicDocument.GetDrawingObjects().resetHdrFtrDrawingArrays(Page_abs);
-
+		
+		this.RecalculateDrawingsWithFields();
+		
         var CurPage = 0;
         var RecalcResult = recalcresult2_NextPage;
 		while (recalcresult2_End !== RecalcResult)
@@ -331,7 +333,27 @@ CHeaderFooter.prototype =
 
 		this.OnEndRecalculate();
     },
-
+	
+	RecalculateDrawingsWithFields : function()
+	{
+		let drawings = this.Content.GetAllDrawingObjects();
+		for (let i = 0; i < drawings.length; ++i)
+		{
+			let graphicObj = drawings[i].GraphicObj;
+			let docContent = graphicObj ? graphicObj.getDocContent() : null;
+			if (docContent
+				&& AscWord.HdrFtrFieldChecker.check(docContent)
+				&& graphicObj.recalcText
+				&& graphicObj.recalculateText)
+			{
+				// fields can be in a calculated table
+				docContent.Reset_RecalculateCache();
+				graphicObj.recalcText();
+				graphicObj.recalculateText();
+			}
+		}
+	},
+	
     Reset_RecalculateCache : function()
     {
         this.Refresh_RecalcData2();
@@ -2984,8 +3006,6 @@ CHeaderFooterController.prototype.CollectSelectedReviewChanges = function(oTrack
 	if (this.CurHdrFtr)
 		this.CurHdrFtr.GetContent().CollectSelectedReviewChanges(oTrackManager);
 };
-
-
 
 function CHdrFtrPage()
 {

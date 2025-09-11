@@ -124,14 +124,14 @@
 	CDocumentReadView.prototype.GetSectionByElement = function(element)
 	{
 		if (this.OriginalSectPr)
-			return AscWord.GetSectionByElement.prototype.GetSectionByElement.apply(this, arguments);
+			return AscWord.CDocumentLayoutBase.prototype.GetSectionByElement.apply(this, arguments);
 		
 		return this.SectPr;
 	};
 	CDocumentReadView.prototype.CheckSectPr = function(sectPr)
 	{
 		if (this.OriginalSectPr)
-			return AscWord.GetSectionByElement.prototype.CheckSectPr.apply(this, arguments);
+			return AscWord.CDocumentLayoutBase.prototype.CheckSectPr.apply(this, arguments);
 		
 		return this.SectPr;
 	};

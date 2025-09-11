@@ -9161,7 +9161,7 @@ background-repeat: no-repeat;\
 		if (!logicDocument || logicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
 			return;
 		
-		logicDocument.StartAction(AscDFH.historydescription_Document_AddSectionBreak, null, ACTION_FLAGS.UPDATEALL_RECALCULATE);
+		logicDocument.StartAction(AscDFH.historydescription_Document_AddSectionBreak, null, AscWord.ACTION_FLAGS.UPDATEALL_RECALCULATE);
 		logicDocument.AddSectionBreak(breakType);
 		logicDocument.FinalizeAction();
 	};

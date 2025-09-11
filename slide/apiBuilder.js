@@ -1739,7 +1739,7 @@
 	* @memberof ApiPresentation
 	* @typeofeditors ["CPE"]
 	* @param {string} sText - The math equation text.
-	* @param {string} sFormat - The math equation format. Possible values are "unicode" and "latex".
+	* @param {string} sFormat - The math equation format. Possible values are "unicode", "latex" and "mathml".
 	* @returns {boolean}
 	* @since 9.0.0
 	* @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/AddMathEquation.js
@@ -1761,7 +1761,22 @@
 			logicDocument.RemoveSelection();
 
 			const mathPr = new AscCommonWord.MathMenu(c_oAscMathType.Default_Text, logicDocument.GetDirectTextPr());
-			mathPr.SetText(text);
+
+            let mathformat = null;
+            switch (format) {
+                case 'latex':
+                    mathformat = Asc.c_oAscMathInputType.LaTeX;
+                    break;
+                case 'unicode':
+                    mathformat = Asc.c_oAscMathInputType.Unicode;
+                    break;
+                case 'mathml':
+                    mathformat = Asc.c_oAscMathInputType.MathML;
+                    break;
+                default:
+                    mathformat = Asc.c_oAscMathInputType.LaTeX;
+                    break;
+            }
 
 			logicDocument.AddToParagraph(mathPr);
 
@@ -1774,7 +1789,7 @@
 				return;
 			}
 
-			paraMath.ConvertView(false, 'latex' === format ? Asc.c_oAscMathInputType.LaTeX : Asc.c_oAscMathInputType.Unicode);
+            paraMath.ConvertView(false, mathformat, text);
 
 			const graphicController = Asc.editor.getGraphicController();
 			graphicController.startRecalculate();
@@ -1782,55 +1797,6 @@
 
 		return true;
 	};
-	/**
-	* Adds a math equation to the current document.
-	* @memberof ApiPresentation
-	* @typeofeditors ["CPE"]
-	* @param {string} sText - The math equation text.
-	* @param {string} sFormat - The math equation format. Possible values are "unicode" and "latex".
-	* @returns {boolean}
-	* @since 9.0.0
-	* @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/AddMathEquation.js
-	*/
-	ApiPresentation.prototype.AddMathEquation = function (sText, sFormat) {
-		if (!Asc.editor) {
-			return false;
-		}
-
-		Asc.editor.addBuilderFont('Cambria Math');
-		Asc.editor.loadBuilderFonts(insertMathEquation);
-
-		function insertMathEquation() {
-			const format = AscBuilder.GetStringParameter(sFormat, "unicode");
-			const text = AscBuilder.GetStringParameter(sText, "");
-
-			const logicDocument = Asc.editor.getLogicDocument();
-			logicDocument.RemoveBeforePaste();
-			logicDocument.RemoveSelection();
-
-			const mathPr = new AscCommonWord.MathMenu(c_oAscMathType.Default_Text, logicDocument.GetDirectTextPr());
-			mathPr.SetText(text);
-
-			logicDocument.AddToParagraph(mathPr);
-
-			const targetDocContent = editor.getGraphicController().getSelectedArray()[0].txBody.content;
-			const info = new CSelectedElementsInfo();
-			targetDocContent.GetSelectedElementsInfo(info);
-
-			const paraMath = info.GetMath();
-			if (!paraMath) {
-				return;
-			}
-
-			paraMath.ConvertView(false, 'latex' === format ? Asc.c_oAscMathInputType.LaTeX : Asc.c_oAscMathInputType.Unicode);
-
-			const graphicController = Asc.editor.getGraphicController();
-			graphicController.startRecalculate();
-		}
-
-		return true;
-	};
-
 
     /**
 	 * Retrieves the custom XML manager associated with the presentation.
@@ -4833,7 +4799,46 @@
         }
     };
 
-    //------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Gets the geometry object from a shape
+	 * @memberof ApiShape
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiGeometry}
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetGeometry.js
+	 * @since 9.1.0
+	 */
+
+	ApiShape.prototype.GetGeometry = function()
+	{
+		if (this.Shape && this.Shape.spPr && this.Shape.spPr.geometry)
+		{
+			return Api.prototype.private_CreateGeometry(this.Shape.spPr.geometry);
+		}
+		return null;
+	};
+
+	/**
+	 * Sets a custom geometry for the shape
+	 * @memberof ApiShape
+	 * @typeofeditors ["CPE"]
+	 * @param {ApiGeometry} oGeometry - The geometry to set
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetGeometry.js
+	 * @since 9.1.0
+	 */
+	ApiShape.prototype.SetGeometry = function(oGeometry)
+	{
+		if (this.Shape && this.Shape.spPr && oGeometry && oGeometry.geometry)
+		{
+			this.Shape.spPr.setGeometry(oGeometry.geometry);
+			return true;
+		}
+		return false;
+	};
+
+
+	//------------------------------------------------------------------------------------------------------------------
     //
     // ApiChart
     //
@@ -5833,7 +5838,8 @@
     ApiShape.prototype["GetDocContent"]                   = ApiShape.prototype.GetDocContent;
     ApiShape.prototype["GetContent"]                      = ApiShape.prototype.GetContent;
     ApiShape.prototype["SetVerticalTextAlign"]            = ApiShape.prototype.SetVerticalTextAlign;
-
+	ApiShape.prototype["GetGeometry"]                     = ApiShape.prototype.GetGeometry;
+	ApiShape.prototype["SetGeometry"]                     = ApiShape.prototype.SetGeometry;
 
     ApiOleObject.prototype["GetClassType"]                = ApiOleObject.prototype.GetClassType;
 	ApiOleObject.prototype["SetData"]                     = ApiOleObject.prototype.SetData;

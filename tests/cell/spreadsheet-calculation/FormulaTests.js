@@ -23800,6 +23800,11 @@ $(function () {
 		assert.ok(oParser.parse(), 'HLOOKUP(ABS(2),HLOOKUPTestNameArea3D,ABS(2),1=1)');
 		assert.strictEqual(oParser.calculate().getValue(), 2, 'Result of HLOOKUP(ABS(2),HLOOKUPTestNameArea3D,ABS(2),1=1)');
 
+		// Case #63: String, Array, Number, Boolean. For bug 76652.
+		oParser = new parserFormula('HLOOKUP("Aîné",{"Aine","Ainé","Aîné","Aîné";111,222,333,333},2,FALSE)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 333);
+
 		// Negative Cases:
 		// Case #1: Array, Array, Array with wrong data
 		oParser = new parserFormula("HLOOKUP({2,3,4},{1,2;2,3;3,4},{4,5,6})", "A2", ws);

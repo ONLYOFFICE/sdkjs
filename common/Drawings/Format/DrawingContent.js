@@ -221,7 +221,7 @@
 	};
 	
 	CDrawingDocContent.prototype.GetColumnContentFrame = function(page, column, sectPr){
-		return this._GetColumnContentFrame(0);
+		return this._GetColumnContentFrame(column);
 	};
 	
     CDrawingDocContent.prototype._GetColumnContentFrame = function(nColumnIndex){
@@ -262,6 +262,7 @@
 
 
     CDrawingDocContent.prototype.RecalculateContent = function(fWidth, fHeight, nStartPage){
+		this.Recalculated = true;
         this.CalculateAllFields();
         if(this.GetColumnCount() === 1){
             CDocumentContent.prototype.RecalculateContent.call(this, fWidth, fHeight, nStartPage);
@@ -321,7 +322,7 @@
             oPage.Sections[0] = new AscWord.DocumentPageSection();
             for (var i = 0; i < nColumnsCount; ++i)
             {
-                oPage.Sections[0].Columns[i] = new CDocumentPageColumn();
+                oPage.Sections[0].Columns[i] = new AscWord.DocumentPageColumn();
             }
             this.Pages[nPageIndex] = oPage;
         }
@@ -837,6 +838,41 @@
         }
         return CDocumentContent.prototype.Is_Empty.call(this);
     };
+	CDrawingDocContent.prototype.Shift = function(pageIndex, dx, dy, keepClip) {
+		if (!this.IsRecalculated() || pageIndex !== 0)
+			return;
+		
+		this.Pages[0].Shift(dx, dy);
+		
+		if (this.ClipInfo[0] && true !== keepClip)
+			this.ClipInfo[0].shift(dx, dy);
+		
+		if (this.GetColumnCount() > 1) {
+			let pageSection = this.Pages[0].Sections[0];
+			if (!pageSection)
+				return;
+			
+			for (let columnIndex = 0, columnCount = pageSection.Columns.length; columnIndex < columnCount; ++columnIndex) {
+				let pageColumn = pageSection.Columns[columnIndex];
+				
+				let startPos = pageColumn.Pos;
+				let endPos   = pageColumn.EndPos;
+				for (let pos = startPos; pos <= endPos; ++pos) {
+					let element          = this.Content[pos];
+					let elementPageIndex = element.GetElementPageIndex(0, columnIndex, columnCount);
+					element.Shift(elementPageIndex, dx, dy);
+				}
+			}
+		} else {
+			let startPos = this.Pages[pageIndex].Pos;
+			let endPos   = this.Pages[pageIndex].EndPos;
+			for (let pos = startPos; pos <= endPos; ++pos) {
+				let element          = this.Content[pos];
+				let elementPageIndex = element.GetElementPageIndex(0, 0, 1);
+				element.Shift(elementPageIndex, dx, dy);
+			}
+		}
+	};
 
     CDrawingDocContent.prototype.isDocumentContentInSmartArtShape = function () {
         return this.Parent && this.Parent.parent && this.Parent.parent.isObjectInSmartArt && this.Parent.parent.isObjectInSmartArt();

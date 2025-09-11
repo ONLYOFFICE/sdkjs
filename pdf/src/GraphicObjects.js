@@ -446,9 +446,10 @@
 
                     let oTargetTextObject = AscFormat.getTargetTextObject(oController);
                     if (oTargetTextObject) {
-                        if (oTargetTextObject.group && oTargetTextObject.group.IsAnnot()) {
-                            oTargetTextObject.group.SetInTextBox(true);
-                            oTargetTextObject.group.SetNeedRecalc(true);
+                        let oGroup = oTargetTextObject.getMainGroup();
+                        if (oGroup && oGroup.IsAnnot()) {
+                            oGroup.SetInTextBox(true);
+                            oGroup.SetNeedRecalc(true);
                         }
                         else {
                             oTargetTextObject.SetNeedRecalc(true);
@@ -470,7 +471,8 @@
     CGraphicObjects.prototype.getParagraphParaPr = function () {
         let target_text_object = AscFormat.getTargetTextObject(this);
         if (target_text_object) {
-            if (target_text_object.group && target_text_object.group.IsAnnot())
+            let oGroup = target_text_object.getMainGroup();
+            if (oGroup && oGroup.IsAnnot())
                 return null;
             
             if (target_text_object.getObjectType() === AscDFH.historyitem_type_GraphicFrame) {
@@ -487,8 +489,10 @@
                 let cur_pr, result_pr, content;
                 for (let i = 0; i < arr.length; ++i) {
                     cur_pr = null;
+
+                    let oGroup = arr[i].getMainGroup();
                     if (arr[i].IsAnnot && arr[i].IsAnnot()
-                        || (arr[i].group && arr[i].group.IsAnnot && arr[i].group.IsAnnot())
+                        || (oGroup && oGroup.IsAnnot && oGroup.IsAnnot())
                         || arr[i].IsDrawing() && arr[i].IsShape() && arr[i].GetEditField()) {
                         return null;
                     }

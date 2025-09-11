@@ -14143,12 +14143,18 @@ Paragraph.prototype.Refresh_RecalcData = function(Data)
 			let logicDocument = this.GetLogicDocument();
 			if (logicDocument instanceof AscWord.Document)
 			{
+				// TODO: Когда удаляется параграф, мы удаляем в нем секцию. И параграф уже нигде не лежит,
+				//       и положение секции уже не определить. По-хорошему нужно пройтись по расчитанным страницам,
+				//       найти удаленную секцию, и начать расчет с начальной точки секции (либо в секцию записать
+				//       расчетную информацию о том, где располагалась секция). Сейчас в данной ситуации
+				//       мы рассчитываем документ с самого начала
+				
 				let documentSections = logicDocument.GetSections();
 				let sectionIndex     = documentSections.GetIndexByElement(this);
-				let firstParagraph   = -1 !== sectionIndex ? documentSections.GetFirstParagraph(sectionIndex) : null;
+				let firstParagraph   = documentSections.GetFirstParagraph(-1 !== sectionIndex ? sectionIndex : 0);
 
 				if (firstParagraph)
-					this.Parent.Refresh_RecalcData2(firstParagraph.GetIndex(), firstParagraph.GetRelativePage(0));
+					firstParagraph.Refresh_RecalcData2();
 			}
 
 			break;

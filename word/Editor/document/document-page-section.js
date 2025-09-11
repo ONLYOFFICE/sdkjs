@@ -78,7 +78,7 @@
 		
 		for (var nCurColumn = 0, nColumnsCount = oSectPr.GetColumnCount(); nCurColumn < nColumnsCount; ++nCurColumn)
 		{
-			this.Columns[nCurColumn] = new CDocumentPageColumn();
+			this.Columns[nCurColumn] = new AscWord.DocumentPageColumn();
 			
 			this.Columns[nCurColumn].X      = nX;
 			this.Columns[nCurColumn].XLimit = nColumnsCount - 1 === nCurColumn ? nXLimit : nX + oSectPr.GetColumnWidth(nCurColumn);

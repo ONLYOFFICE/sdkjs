@@ -2135,7 +2135,7 @@ function(window, undefined) {
 				return arrData;
 			} else {
 				const oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(oWorkbook);
-				return oBinaryFileWriter.Write(true);
+				return oBinaryFileWriter.Write(true, false, true);
 			}
 		}, this, []);
 	};

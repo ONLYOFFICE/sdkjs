@@ -67,6 +67,10 @@
 			this.visitDocContent(logicDocument.Content);
 		}
 	};
+	DocumentVisitor.prototype.traverseDocContent = function(docContent)
+	{
+		this.visitDocContent(docContent.Content);
+	};
 	DocumentVisitor.prototype.stop = function()
 	{
 		this.stopped = true;
@@ -88,6 +92,10 @@
 		return false;
 	};
 	DocumentVisitor.prototype.tableCell = function(tableCell, isStart)
+	{
+		return false;
+	};
+	DocumentVisitor.prototype.fldSimple = function(field, isStart)
 	{
 		return false;
 	};
@@ -222,6 +230,15 @@
 		
 		visitor.run(this, false);
 	};
+	AscWord.FldSimple.prototype.visit = function(visitor)
+	{
+		if (visitor.fldSimple(this, true))
+			return;
+		
+		AscWord.ParagraphContentWithParagraphLikeContent.prototype.visit.apply(this, arguments);
+		
+		visitor.fldSimple(this, false);
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.DocumentVisitor = DocumentVisitor;
 	
@@ -250,6 +267,65 @@
 	// };
 	//
 	// AscWord.DocumentText = DocumentText;
+	
+	
+	// TODO: Move to the proper place
+	/**
+	 * Check if header/footer have fields than need to be recalculated across different pages
+	 * @constructor
+	 */
+	function HdrFtrFieldChecker()
+	{
+		DocumentVisitor.call(this);
+		
+		this.haveField = false;
+	}
+	HdrFtrFieldChecker.check = function(docContent)
+	{
+		let checker = new HdrFtrFieldChecker();
+		checker.traverseDocContent(docContent);
+		return checker.haveField;
+	};
+	HdrFtrFieldChecker.prototype = Object.create(DocumentVisitor.prototype);
+	HdrFtrFieldChecker.prototype.constructor = HdrFtrFieldChecker;
+	HdrFtrFieldChecker.prototype.run = function(run)
+	{
+		for (let i = 0; i < run.GetElementsCount(); ++i)
+		{
+			let item = run.GetElement(i);
+			if (item.IsFieldChar() && item.IsBegin())
+			{
+				let complexField = item.GetComplexField();
+				let instruction  = complexField ? complexField.GetInstruction() : null;
+				if (instruction)
+					this.checkFieldType(instruction.GetType());
+			}
+			else if (para_PageCount === item.Type || para_PageNum === item.Type)
+			{
+				this.stop();
+				this.haveField = true;
+				return true;
+			}
+		}
+		return false;
+	};
+	HdrFtrFieldChecker.prototype.fldSimple = function(field, isStart)
+	{
+		if (!isStart)
+			return false;
+		
+		this.checkFieldType(field.GetFieldType());
+		return false;
+	};
+	HdrFtrFieldChecker.prototype.checkFieldType = function(type)
+	{
+		if (AscWord.fieldtype_PAGE === type || AscWord.fieldtype_NUMPAGES === type)
+		{
+			this.haveField = true;
+			this.stop();
+		}
+	};
+	AscWord.HdrFtrFieldChecker = HdrFtrFieldChecker;
 	
 })(window);
 
