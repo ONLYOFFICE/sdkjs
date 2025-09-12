@@ -1249,6 +1249,24 @@
 					this.updateSlicer(currentFilter.DisplayName);
 				}
 
+				// Update dynamic filters in other columns after applying a filter
+				if (!bUndoChanges && !bRedoChanges) {
+					var updateResult = autoFilter.updateDynamic();
+					if (updateResult && updateResult.updated && updateResult.columns && updateResult.columns.length > 0) {
+						// Re-apply row hidden state for updated dynamic filters
+						var targetAutoFilter = currentFilter.isAutoFilter() ? autoFilter : currentFilter.AutoFilter;
+						if (targetAutoFilter) {
+							for (var i = 0; i < updateResult.columns.length; i++) {
+								var updatedCol = updateResult.columns[i];
+								var dynamicFilterColumn = targetAutoFilter.FilterColumns[updatedCol.index];
+								if (dynamicFilterColumn) {
+									targetAutoFilter.setRowHidden(worksheet, dynamicFilterColumn, nsvFilter ? nsvFilter.columnsFilter : null);
+								}
+							}
+						}
+					}
+				}
+
 				if (activeNamedSheetView) {
 					autoFiltersObject.namedSheetView = activeNamedSheetView.Id;
 				}
@@ -1438,6 +1456,26 @@
 
 				worksheet.workbook.dependencyFormulas.unlockRecal();
 				this.updateSlicer(displayName);
+				
+				// Update dynamic filters when reapplying filters
+				if ((!bUndoChanges && !bRedoChanges) || ignoreUndoRedo) {
+					var filterForUpdate = filter.isAutoFilter() ? autoFilter : filter;
+					var updateResult = filterForUpdate.updateDynamic();
+					if (updateResult && updateResult.updated && updateResult.columns && updateResult.columns.length > 0) {
+						// Re-apply row hidden state for updated dynamic filters
+						var targetAutoFilter = filter.isAutoFilter() ? autoFilter : filter.AutoFilter;
+						if (targetAutoFilter) {
+							for (var i = 0; i < updateResult.columns.length; i++) {
+								var updatedCol = updateResult.columns[i];
+								var dynamicFilterColumn = targetAutoFilter.FilterColumns[updatedCol.index];
+								if (dynamicFilterColumn) {
+									targetAutoFilter.setRowHidden(worksheet, dynamicFilterColumn, opt_columnsFilter ? opt_columnsFilter.columnsFilter : null);
+								}
+							}
+						}
+					}
+				}
+				
 				return {minChangeRow: minChangeRow, updateRange: filter.Ref, filter: filter};
 			},
 

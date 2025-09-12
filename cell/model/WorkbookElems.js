@@ -9685,6 +9685,44 @@ function RangeDataManagerElem(bbox, data)
 		}
 	};
 
+	AutoFilter.prototype.updateDynamic = function () {
+		if (!this.FilterColumns) {
+			return;
+		}
+
+		var needsUpdate = false;
+		var updatedColumns = [];
+
+		for (var i = 0; i < this.FilterColumns.length; i++) {
+			var filterColumn = this.FilterColumns[i];
+			
+			if (filterColumn && filterColumn.DynamicFilter) {
+				var dynamicFilter = filterColumn.DynamicFilter;
+				var oldVal = dynamicFilter.Val;
+				var oldMaxVal = dynamicFilter.MaxVal;
+
+				dynamicFilter.init(null);
+
+				if (oldVal !== dynamicFilter.Val || oldMaxVal !== dynamicFilter.MaxVal) {
+					needsUpdate = true;
+					updatedColumns.push({
+						index: i,
+						colId: filterColumn.ColId,
+						oldVal: oldVal,
+						oldMaxVal: oldMaxVal,
+						newVal: dynamicFilter.Val,
+						newMaxVal: dynamicFilter.MaxVal
+					});
+				}
+			}
+		}
+
+		return {
+			updated: needsUpdate,
+			columns: updatedColumns
+		};
+	};
+
 	function FilterColumns() {
 		this.ColId = null;
 		this.CustomFiltersObj = null;
