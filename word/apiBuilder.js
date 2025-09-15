@@ -2046,8 +2046,8 @@
 			r = rgb.r;
 			g = rgb.g;
 			b = rgb.b;
-			isAuto = apiColor.isAutoColor();
-			isTheme = apiColor.isThemeColor();
+			isAuto = apiColor.IsAutoColor();
+			isTheme = apiColor.IsThemeColor();
 		}
 
 		private_RefreshRangesPosition();
@@ -4706,22 +4706,76 @@
 		return new ApiPresetColor(presetColor);
 	};
 
+	/**
+	 * Creates an auto-color.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiColor} Instance of ApiColor with 'auto' type.
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/AutoColor.js
+	 */
 	Api.prototype.AutoColor = function () {
 		return new ApiColor('auto');
 	};
+
+	/**
+	 * Creates an RGB color from red, green and blue components.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {byte} r - Red component (0-255).
+	 * @param {byte} g - Green component (0-255).
+	 * @param {byte} b - Blue component (0-255).
+	 * @returns {ApiColor}
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/RGB.js
+	 */
 	Api.prototype.RGB = function (r, g, b) {
 		const intRgbColor = (r & 0xFF) << 24 | (g & 0xFF) << 16 | (b & 0xFF) << 8 | (255 & 0xFF);
 		return new ApiColor('rgb', intRgbColor);
 	};
+
+	/**
+	 * Creates an RGBA color from red, green, blue and alpha components.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {byte} r - Red component (0-255).
+	 * @param {byte} g - Green component (0-255).
+	 * @param {byte} b - Blue component (0-255).
+	 * @param {byte} a - Alpha component (0-255).
+	 * @returns {ApiColor}
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/RGBA.js
+	 */
 	Api.prototype.RGBA = function (r, g, b, a) {
 		const intRgbColor = (r & 0xFF) << 24 | (g & 0xFF) << 16 | (b & 0xFF) << 8 | (a & 0xFF);
 		return new ApiColor('rgba', intRgbColor);
 	};
+
+	/**
+	 * Creates a color from a HEX string.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {string} hexString
+	 * @returns {ApiColor}
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/HexColor.js
+	 */
 	Api.prototype.HexColor = function (hexString) {
 		hexString = hexString.replace(/^#/, '');
 		const hexNumber = parseInt(hexString, 16);
 		return new ApiColor('hex', hexNumber);
 	};
+
+	/**
+	 * Creates a theme color.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {"accent1" | "accent2" | "accent3" | "accent4" | "accent5" | "accent6" |
+	 * "bg1" | "bg2" | "dk1" | "dk2" | "lt1" | "lt2" | "tx1" | "tx2"} [name="tx1"]
+	 * @returns {ApiColor} Instance of ApiColor with 'theme' type.
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/ThemeColor.js
+	 */
 	Api.prototype.ThemeColor = function (name) {
 		const themeColorMap = {
 			'accent1': 0,
@@ -4739,7 +4793,7 @@
 			'tx1': 15,
 			'tx2': 16,
 		};
-		return new ApiColor('theme', themeColorMap[name] || 0);
+		return new ApiColor('theme', themeColorMap[name] || 15); // default is 'tx1' color
 	};
 
 	/**
@@ -10018,8 +10072,8 @@
 			r = rgb.r;
 			g = rgb.g;
 			b = rgb.b;
-			isAuto = apiColor.isAutoColor();
-			isTheme = apiColor.isThemeColor();
+			isAuto = apiColor.IsAutoColor();
+			isTheme = apiColor.IsThemeColor();
 		}
 
 		let paraTextPrOptions = {
@@ -14928,8 +14982,8 @@
 			r = rgb.r;
 			g = rgb.g;
 			b = rgb.b;
-			isAuto = apiColor.isAutoColor();
-			isTheme = apiColor.isThemeColor();
+			isAuto = apiColor.IsAutoColor();
+			isTheme = apiColor.IsThemeColor();
 		}
 
 		this.TextPr.Color = (!isAuto && isTheme)
@@ -19654,37 +19708,63 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	ApiColor.prototype.private_convertToRGBA = function () {
-		switch (this.type) {
-			case 'rgb':
-			case 'rgba':
-				return this.value;
-			case 'hex':
-				return (this.value << 8) | 0xFF;
-			case 'auto':
-				return this.private_resolveAutoColor();
-			case 'theme':
-				return this.private_resolveThemeColor(this.value);
-			default: return null;
-		}
-	};
-	ApiColor.prototype.private_resolveAutoColor = function () {
-		// Заглушка - просто возвращаю черный цвет с полной непрозрачностью.
-		return (0 << 24) | (0 << 16) | (0 << 8) | 255;
-	};
-	ApiColor.prototype.private_resolveThemeColor = function (name) {
-		// Заглушка - просто возвращаю черный цвет с полной непрозрачностью.
-		return (0 << 24) | (0 << 16) | (0 << 8) | 255;
+		const colorMap = {
+			'rgb': this.value,
+			'rgba': this.value,
+			'hex': (this.value << 8) | 0xFF,
+			'auto': 0x000000FF,
+			'theme': 0x000000FF,
+		};
+
+		return (this.type in colorMap)
+			? colorMap[this.type]
+			: null;
 	};
 
+	/**
+	 * Returns a type of the ApiColor class.
+	 *
+	 * @memberof ApiColor
+	 * @typeofeditors ["CDE"]
+	 * @returns {"color"}
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetClassType.js
+	 */
 	ApiColor.prototype.GetClassType = function () {
 		return 'color';
 	};
-	ApiColor.prototype.isAutoColor = function () {
+
+	/**
+	 * Returns true if the color is set to auto.
+	 *
+	 * @memberof ApiColor
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/IsAutoColor.js
+	 */
+	ApiColor.prototype.IsAutoColor = function () {
 		return this.type === 'auto';
 	};
-	ApiColor.prototype.isThemeColor = function () {
+
+	/**
+	 * Returns true if the color is a theme color.
+	 *
+	 * @memberof ApiColor
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/IsThemeColor.js
+	 */
+	ApiColor.prototype.IsThemeColor = function () {
 		return this.type === 'theme';
 	};
+
+	/**
+	 * Gets the RGB components of the color.
+	 *
+	 * @memberof ApiColor
+	 * @typeofeditors ["CDE"]
+	 * @returns {{r: byte, g: byte, b: byte}}
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetRGB.js
+	 */
 	ApiColor.prototype.GetRGB = function () {
 		const packed = this.private_convertToRGBA();
 		return {
@@ -19693,6 +19773,15 @@
 			'b': (packed >> 8) & 0xFF
 		};
 	};
+
+	/**
+	 * Gets the RGBA components of the color.
+	 *
+	 * @memberof ApiColor
+	 * @typeofeditors ["CDE"]
+	 * @returns {{r: byte, g: byte, b: byte, a: byte}}
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetRGBA.js
+	 */
 	ApiColor.prototype.GetRGBA = function () {
 		const packed = this.private_convertToRGBA();
 		return {
@@ -19702,6 +19791,15 @@
 			'a': packed & 0xFF
 		};
 	};
+
+	/**
+	 * Gets the HEX string representation of the color.
+	 *
+	 * @memberof ApiColor
+	 * @typeofeditors ["CDE"]
+	 * @returns {string} A six-digit uppercase hex string, e.g. "FF00AA".
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetHex.js
+	 */
 	ApiColor.prototype.GetHex = function () {
 		const packedRGBA = this.private_convertToRGBA();
 		const packedRGB = (packedRGBA >> 8) & 0xFFFFFF;
@@ -26956,8 +27054,8 @@
 	ApiPresetColor.prototype["ToJSON"]               = ApiPresetColor.prototype.ToJSON;
 
 	ApiColor.prototype["GetClassType"] = ApiColor.prototype.GetClassType;
-	ApiColor.prototype["isAutoColor"] = ApiColor.prototype.isAutoColor;
-	ApiColor.prototype["isThemeColor"] = ApiColor.prototype.isThemeColor;
+	ApiColor.prototype["IsAutoColor"] = ApiColor.prototype.IsAutoColor;
+	ApiColor.prototype["IsThemeColor"] = ApiColor.prototype.IsThemeColor;
 	ApiColor.prototype["GetRGB"] = ApiColor.prototype.GetRGB;
 	ApiColor.prototype["GetRGBA"] = ApiColor.prototype.GetRGBA;
 	ApiColor.prototype["GetHex"] = ApiColor.prototype.GetHex;
