@@ -1732,6 +1732,74 @@
 		return this.Paragraphs;
 	};
 
+	function private_forEachTable(selectedContent, callback) {
+		if (!selectedContent) return;
+		const elementWrappers = selectedContent.Elements;
+		for (let i = 0; i < elementWrappers.length; i++) {
+			const element = elementWrappers[i].Element;
+			if (element && element.IsTable && element.IsTable()) {
+				callback(element);
+			}
+		}
+	}
+
+	ApiRange.prototype.private_GetSelectedContent = function () {
+		private_RefreshRangesPosition();
+
+		const logicDocument = private_GetLogicDocument();
+		const oldState = logicDocument.SaveDocumentState();
+
+		this.Select(false);
+		private_TrackRangesPositions();
+
+		const selectedContent = new AscCommonWord.CSelectedContent();
+		logicDocument.controller_GetSelectedContent(selectedContent);
+
+		logicDocument.LoadDocumentState(oldState);
+		logicDocument.UpdateSelection();
+
+		return selectedContent;
+	};
+	ApiRange.prototype.GetAllTables = function () {
+		const tables = [];
+
+		const selectedContent = this.private_GetSelectedContent();
+		private_forEachTable(selectedContent, function (table) {
+			tables.push(new ApiTable(table));
+		});
+
+		return tables;
+	};
+	ApiRange.prototype.GetAllTableRows = function () {
+		const rows = [];
+
+		const selectedContent = this.private_GetSelectedContent();
+		private_forEachTable(selectedContent, function (table) {
+			const apiRows = table.Content.map(function (row) {
+				return new ApiTableRow(row);
+			});
+			Array.prototype.push.apply(rows, apiRows);
+		});
+
+		return rows;
+	};
+	ApiRange.prototype.GetAllTableCells = function () {
+		const cells = [];
+
+		const selectedContent = this.private_GetSelectedContent();
+		private_forEachTable(selectedContent, function (table) {
+			const rows = table.Content;
+			rows.forEach(function (row) {
+				const apiCells = row.Content.map(function (cell) {
+					return new ApiTableCell(cell);
+				});
+				Array.prototype.push.apply(cells, apiCells);
+			});
+		});
+
+		return cells;
+	};
+
 	/**
 	 * Sets the selection to the specified range.
 	 * @memberof ApiRange
@@ -9441,6 +9509,11 @@
 		this.Document.GoToPage(index);
 		return true;
 	};
+
+	ApiDocument.prototype.GetSelection = function () {
+		return new ApiSelection(this);
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiParagraph
@@ -26942,6 +27015,245 @@
 		});
 		return property ? property.asc_getValue() : null;
 	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiSelection (https://learn.microsoft.com/en-us/office/vba/api/word.selection)
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	function ApiSelection(apiDocument) {
+		this.ApiDocument = apiDocument;
+	};
+
+	ApiSelection.prototype.GetClassType = function () {
+		return 'selection';
+	};
+
+	// Массив ApiRange для каждого символа, слова, предложения?
+	ApiSelection.prototype.GetCharacters = function () {};
+	ApiSelection.prototype.GetWords = function () {};
+	ApiSelection.prototype.GetSentences = function () {};
+
+	// Надо создавать ApiFont или вернуть тут просто имя шрифта?
+	ApiSelection.prototype.GetFont = function () {};
+
+	ApiSelection.prototype.GetComments = function () {};
+	ApiSelection.prototype.GetFields = function () {};
+	ApiSelection.prototype.GetFormFields = function () {};
+	ApiSelection.prototype.GetHyperlinks = function () {};
+	ApiSelection.prototype.GetInlineShapes = function () {};
+	ApiSelection.prototype.GetOMaths = function () {};
+	ApiSelection.prototype.GetParagraphFormat = function () {};
+	ApiSelection.prototype.GetShading = function () {};
+	ApiSelection.prototype.GetShapeRange = function () {};
+	ApiSelection.prototype.GetStyle = function () {};
+
+	ApiSelection.prototype.GetDocument = function () {
+		return this.ApiDocument;
+	};
+	ApiSelection.prototype.GetRange = function () {
+		const apiDocument = this.ApiDocument;
+		const range = apiDocument.GetRangeBySelect();
+		return range;
+	};
+	ApiSelection.prototype.GetText = function () {
+		const range = this.GetRange();
+		return range ? range.GetText() : "";
+	};
+	ApiSelection.prototype.GetParagraphs = function () {
+		const range = this.GetRange();
+		return range ? range.GetAllParagraphs() : [];
+	};
+	ApiSelection.prototype.GetTables = function () {
+		const range = this.GetRange();
+		return range ? range.GetAllTables() : [];
+	};
+	ApiSelection.prototype.GetRows = function () {
+		const range = this.GetRange();
+		return range ? range.GetAllTableRows() : [];
+	};
+	ApiSelection.prototype.GetCells = function () {
+		const range = this.GetRange();
+		return range ? range.GetAllTableCells() : [];
+	};
+
+	Object.defineProperties(ApiSelection.prototype, {
+		'Document': { get: function () { return this.GetDocument(); } },
+		'Range': { get: function () { return this.GetRange(); } },
+		'Text': { get: function () { return this.GetText(); } },
+		'Paragraphs': { get: function () { return this.GetParagraphs(); } },
+		'Tables': { get: function () { return this.GetTables(); } },
+		'Rows': { get: function () { return this.GetRows(); } },
+		'Cells': { get: function () { return this.GetCells(); } },
+	});
+
+	/* Fields:
+		Active
+		Application
+		BookmarkID
+		Bookmarks
+		Borders
+		ChildShapeRange
+		Columns
+		ColumnSelectMode
+		Creator
+		Editors
+		End
+		EndnoteOptions
+		Endnotes
+		EnhMetaFileBits
+		ExtendMode
+		Find
+		FitTextWidth
+		Flags
+		FootnoteOptions
+		Footnotes
+		FormattedText
+		Frames
+		HasChildShapeRange
+		HeaderFooter
+		HTMLDivisions
+		Information
+		PAtEndOfLine
+		IsEndOfRowMark
+		LanguageDetected
+		LanguageID
+		LanguageIDFarEast
+		LanguageIDOther
+		NoProofing
+		Orientation
+		PageSetup
+		Parent
+		PreviousBookmarkID
+		Sections
+		Start
+		StartIsActive
+		StoryLength
+		StoryType
+		TopLevelTables
+		Type
+		WordOpenXML
+		XML
+	*/
+
+	/* Methods:
+		BoldRun
+		Calculate
+		ClearCharacterAllFormatting
+		ClearCharacterDirectFormatting
+		ClearCharacterStyle
+		ClearFormatting
+		ClearParagraphAllFormatting
+		ClearParagraphDirectFormatting
+		ClearParagraphStyle
+		Collapse
+		ConvertToTable
+		Copy
+		CopyAsPicture
+		CopyFormat
+		CreateAutoTextEntry
+		CreateTextbox
+		Cut
+		Delete
+		DetectLanguage
+		EndKey
+		EndOf
+		EscapeKey
+		Expand
+		ExportAsFixedFormat
+		ExportAsFixedFormat2
+		ExportAsFixedFormat3
+		Extend
+		GoTo
+		GoToEditableRange
+		GoToNext
+		GoToPrevious
+		HomeKey
+		InRange
+		InsertAfter
+		InsertBefore
+		InsertBreak
+		InsertCaption
+		InsertCells
+		InsertColumns
+		InsertColumnsRight
+		InsertCrossReference
+		InsertDateTime
+		InsertFile
+		InsertFormula
+		InsertNewPage
+		InsertParagraph
+		InsertParagraphAfter
+		InsertParagraphBefore
+		InsertRows
+		InsertRowsAbove
+		InsertRowsBelow
+		InsertStyleSeparator
+		InsertSymbol
+		InsertXML
+		InStory
+		IsEqual
+		ItalicRun
+		LtrPara
+		LtrRun
+		Move
+		MoveDown
+		MoveEnd
+		MoveEndUntil
+		MoveEndWhile
+		MoveLeft
+		MoveRight
+		MoveStart
+		MoveStartUntil
+		MoveStartWhile
+		MoveUntil
+		MoveUp
+		MoveWhile
+		Next
+		NextField
+		NextRevision
+		NextSubdocument
+		Paste
+		PasteAndFormat
+		PasteAppendTable
+		PasteAsNestedTable
+		PasteExcelTable
+		PasteFormat
+		PasteSpecial
+		Previous
+		PreviousField
+		PreviousRevision
+		PreviousSubdocument
+		ReadingModeGrowFont
+		ReadingModeShrinkFont
+		RtlPara
+		RtlRun
+		Select
+		SelectCell
+		SelectColumn
+		SelectCurrentAlignment
+		SelectCurrentColor
+		SelectCurrentFont
+		SelectCurrentIndent
+		SelectCurrentSpacing
+		SelectCurrentTabs
+		SelectRow
+		SetRange
+		Shrink
+		ShrinkDiscontiguousSelection
+		Sort
+		SortAscending
+		SortByHeadings
+		SortDescending
+		SplitTable
+		StartOf
+		ToggleCharacterCode
+		TypeBackspace
+		TypeParagraph
+		TypeText
+		WholeStory
+	*/
 	
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -27300,6 +27612,9 @@
 	ApiRange.prototype["GetEndPos"]                  = ApiRange.prototype.GetEndPos;
 	ApiRange.prototype["MoveCursorToPos"]            = ApiRange.prototype.MoveCursorToPos;
 	ApiRange.prototype["AddField"]                   = ApiRange.prototype.AddField;
+	ApiRange.prototype["GetAllTables"]               = ApiRange.prototype.GetAllTables;
+	ApiRange.prototype["GetAllTableRows"]            = ApiRange.prototype.GetAllTableRows;
+	ApiRange.prototype["GetAllTableCells"]           = ApiRange.prototype.GetAllTableCells;
 	
 	ApiDocument.prototype["GetClassType"]                  = ApiDocument.prototype.GetClassType;
 	ApiDocument.prototype["CreateNewHistoryPoint"]         = ApiDocument.prototype.CreateNewHistoryPoint;
@@ -27401,9 +27716,9 @@
 	ApiDocument.prototype["MoveCursorToStart"]             = ApiDocument.prototype.MoveCursorToStart;
 	ApiDocument.prototype["MoveCursorToEnd"]               = ApiDocument.prototype.MoveCursorToEnd;
 	ApiDocument.prototype["GoToPage"]                      = ApiDocument.prototype.GoToPage;
+	ApiDocument.prototype["GetSelection"]                  = ApiDocument.prototype.GetSelection;
 	ApiDocument.prototype["GetDocumentVisitor"]            = ApiDocument.prototype.GetDocumentVisitor;
-	
-	
+
 	ApiParagraph.prototype["GetClassType"]           = ApiParagraph.prototype.GetClassType;
 	ApiParagraph.prototype["AddText"]                = ApiParagraph.prototype.AddText;
 	ApiParagraph.prototype["AddPageBreak"]           = ApiParagraph.prototype.AddPageBreak;
@@ -28363,6 +28678,15 @@
 	ApiCustomProperties.prototype["GetClassType"] = ApiCustomProperties.prototype.GetClassType;
 	ApiCustomProperties.prototype["Add"] = ApiCustomProperties.prototype.Add;
 	ApiCustomProperties.prototype["Get"] = ApiCustomProperties.prototype.Get;
+
+	ApiSelection.prototype["GetClassType"] = ApiSelection.prototype.GetClassType;
+	ApiSelection.prototype["GetDocument"] = ApiSelection.prototype.GetDocument;
+	ApiSelection.prototype["GetCells"] = ApiSelection.prototype.GetCells;
+	ApiSelection.prototype["GetParagraphs"] = ApiSelection.prototype.GetParagraphs;
+	ApiSelection.prototype["GetRange"] = ApiSelection.prototype.GetRange;
+	ApiSelection.prototype["GetRows"] = ApiSelection.prototype.GetRows;
+	ApiSelection.prototype["GetTables"] = ApiSelection.prototype.GetTables;
+	ApiSelection.prototype["GetText"] = ApiSelection.prototype.GetText;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export for internal usage
