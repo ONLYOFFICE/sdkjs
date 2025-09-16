@@ -9513,6 +9513,9 @@
 	ApiDocument.prototype.GetSelection = function () {
 		return new ApiSelection(this);
 	};
+	Object.defineProperty(ApiDocument.prototype, "Selection", {
+		get: function () { return this.GetSelection(); }
+	});
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -27035,9 +27038,6 @@
 	ApiSelection.prototype.GetWords = function () {};
 	ApiSelection.prototype.GetSentences = function () {};
 
-	// Надо создавать ApiFont или вернуть тут просто имя шрифта?
-	ApiSelection.prototype.GetFont = function () {};
-
 	ApiSelection.prototype.GetComments = function () {};
 	ApiSelection.prototype.GetFields = function () {};
 	ApiSelection.prototype.GetFormFields = function () {};
@@ -27077,6 +27077,12 @@
 		const range = this.GetRange();
 		return range ? range.GetAllTableCells() : [];
 	};
+	ApiSelection.prototype.GetFont = ApiSelection.prototype.GetTextPr = function () {
+		const range = this.GetRange();
+		const rangeTextPr = range.GetTextPr();
+		const selectionTextPr = new ApiSelectionTextPr(this, rangeTextPr.TextPr);
+		return selectionTextPr;
+	};
 
 	Object.defineProperties(ApiSelection.prototype, {
 		'Document': { get: function () { return this.GetDocument(); } },
@@ -27086,7 +27092,14 @@
 		'Tables': { get: function () { return this.GetTables(); } },
 		'Rows': { get: function () { return this.GetRows(); } },
 		'Cells': { get: function () { return this.GetCells(); } },
+		'Font': { get: function () { return this.GetFont(); } },
 	});
+
+	ApiSelection.prototype.private_updateTextPrFromCurrentSelection = function (apiTextPr) {
+		const range = this.GetRange();
+		const rangeTextPr = range.GetTextPr();
+		apiTextPr.TextPr.Set_FromObject(rangeTextPr.TextPr);
+	};
 
 	/* Fields:
 		Active
@@ -28828,6 +28841,26 @@
 		}
 	})(ApiRangeTextPr.prototype);
 
+	function ApiSelectionTextPr(apiSelection, textPr) {
+		ApiTextPr.call(this, apiSelection, textPr);
+	}
+	ApiSelectionTextPr.prototype = Object.create(ApiTextPr.prototype);
+	ApiSelectionTextPr.prototype.constructor = ApiSelectionTextPr;
+	ApiSelectionTextPr.prototype.private_updateFromCurrentSelection = function () {
+		if (this.Parent && this.Parent.private_updateTextPrFromCurrentSelection)
+			this.Parent.private_updateTextPrFromCurrentSelection(this);
+	};
+	const wrapGetMethodsForApiSelectionTextPr = function (prototype) {
+		for (let key in prototype) {
+			if (typeof (prototype[key]) === 'function' && key.startsWith('Get')) {
+				prototype[key] = function () {
+					this.private_updateFromCurrentSelection();
+					return ApiTextPr.prototype[key].apply(this, arguments);
+				};
+			}
+		}
+	};
+	wrapGetMethodsForApiSelectionTextPr(ApiSelectionTextPr.prototype);
 
 	function ToApiForm(oForm)
 	{
