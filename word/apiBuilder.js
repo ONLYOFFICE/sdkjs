@@ -4793,7 +4793,8 @@
 			'tx1': 15,
 			'tx2': 16,
 		};
-		return new ApiColor('theme', themeColorMap[name] || 15); // default is 'tx1' color
+		const index = themeColorMap[name] !== undefined ? themeColorMap[name] : 15; // default is 'tx1' color
+		return new ApiColor('theme', index);
 	};
 
 	/**
