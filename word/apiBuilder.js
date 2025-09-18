@@ -19826,6 +19826,23 @@
 			: null;
 	};
 
+	ApiColor.prototype.private_resolveThemeColor = function () {
+		if (this.type !== 'theme')
+			return null;
+
+		const logicDocument = private_GetLogicDocument();
+		if (!logicDocument)
+			return null;
+
+		const theme = logicDocument.GetTheme();
+		const colors = theme.themeElements.clrScheme.colors;
+		const color = colors[this.value];
+		if (!color || !color.RGBA)
+			return null;
+
+		return Api.prototype.RGBA(color.RGBA.R, color.RGBA.G, color.RGBA.B, color.RGBA.A);
+	}
+
 	/**
 	 * Returns a type of the ApiColor class.
 	 *
@@ -20614,18 +20631,51 @@
 	
 	/**
 	 * Sets the border color to the current content control.
+	 *
+	 * There are two supported ways to use this method:
+	 * 1. Passing an instance of the {@link ApiColor} class.
+	 * 2. Passing RGBA color component values as separate parameters.
+	 *
 	 * @memberof ApiInlineLvlSdt
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @overload
+	 * @param {ApiColor} [apiColor] - Instance of the {@link ApiColor} class.
+	 * @return {boolean}
+	 *
+	 * @overload
+	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {byte} a - Alpha color component value.
-	 * @typeofeditors ["CDE"]
 	 * @since 8.3.2
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetBorderColor.js
 	 */
-	ApiInlineLvlSdt.prototype.SetBorderColor = function(r, g, b, a)
+	ApiInlineLvlSdt.prototype.SetBorderColor = function (apiColor)
 	{
+		// Old format
+		let r = arguments[0], g = arguments[1], b = arguments[2], a = arguments[3];
+
+		// New format
+		if (apiColor instanceof ApiColor) {
+			const isAuto = apiColor.IsAutoColor();
+			const isTheme = apiColor.IsThemeColor();
+
+			// ApiInlineLvlSdt doesn't support Auto and Theme colors yet so we convert them right to RGBA.
+			// When support is added this code should be changed.
+			if (isTheme)
+				apiColor = apiColor.private_resolveThemeColor() || new Api.prototype.RGBA(0, 0, 0, 255);
+
+			const rgba = apiColor.GetRGBA();
+			r = rgba.r;
+			g = rgba.g;
+			b = rgba.b;
+			a = rgba.a;
+		}
+
 		this.Sdt.setBorderColor(new AscWord.CDocumentColorA(r, g, b, a));
 		return true;
 	};
@@ -20653,17 +20703,50 @@
 	
 	/**
 	 * Sets the background color to the current content control.
+	 *
+	 * There are two supported ways to use this method:
+	 * 1. Passing an instance of the {@link ApiColor} class.
+	 * 2. Passing RGBA color component values as separate parameters.
+	 *
 	 * @memberof ApiInlineLvlSdt
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @overload
+	 * @param {ApiColor} [apiColor] - Instance of the {@link ApiColor} class.
+	 * @return {boolean}
+	 *
+	 * @overload
+	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {byte} a - Alpha color component value.
-	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetBackgroundColor.js
 	 */
-	ApiInlineLvlSdt.prototype.SetBackgroundColor = function(r, g, b, a)
+	ApiInlineLvlSdt.prototype.SetBackgroundColor = function (apiColor)
 	{
+		// Old format
+		let r = arguments[0], g = arguments[1], b = arguments[2], a = arguments[3];
+
+		// New format
+		if (apiColor instanceof ApiColor) {
+			const isAuto = apiColor.IsAutoColor();
+			const isTheme = apiColor.IsThemeColor();
+
+			// ApiInlineLvlSdt doesn't support Auto and Theme colors yet so we convert them right to RGBA.
+			// When support is added this code should be changed.
+			if (isTheme)
+				apiColor = apiColor.private_resolveThemeColor() || new Api.prototype.RGBA(0, 0, 0, 255);
+
+			const rgba = apiColor.GetRGBA();
+			r = rgba.r;
+			g = rgba.g;
+			b = rgba.b;
+			a = rgba.a;
+		}
+
 		this.Sdt.setShdColor(new AscWord.CDocumentColorA(r, g, b, a));
 		return true;
 	};
