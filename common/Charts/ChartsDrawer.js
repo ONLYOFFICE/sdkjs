@@ -12111,17 +12111,57 @@ drawPieChart.prototype = {
 		var sumData = this.cChartDrawer._getSumArray(numCache.pts, true);
 
 		var radius = Math.min(trueHeight, trueWidth) / 2;
+
+		// if labels are given then shrink the radius to fit the labels
+		let _dLbls = this.chart.dLbls;
+		let _series = this.chart.series;
+		if ((_dLbls && _dLbls.dLblPos !== c_oAscChartDataLabelsPos.ctr && _dLbls.dLblPos !== c_oAscChartDataLabelsPos.inEnd && _dLbls.showVal) ||
+			(_series && _series[0] && _series[0].dLbls && _series[0].dLbls.dLblPos !== c_oAscChartDataLabelsPos.ctr &&
+				_series[0].dLbls.dLblPos !== c_oAscChartDataLabelsPos.inEnd && (_series[0].dLbls.showVal ||
+					_series[0].dLbls.showCatName || _series[0].dLbls.showSerName || _series[0].dLbls.showPercent))) {
+			let radius_shrink_coeff = 0.15;
+			radius = radius * (1 - radius_shrink_coeff);
+		}
+
 		var xCenter = this.chartProp.chartGutter._left + trueWidth / 2;
 		var yCenter = this.chartProp.chartGutter._top + trueHeight / 2;
 
 		var firstSliceAng = this.chart && this.chart.firstSliceAng ? this.chart.firstSliceAng : 0;
 		this.tempAngle = Math.PI / 2 - (firstSliceAng / 180) * Math.PI;
 		//рисуем против часовой стрелки, поэтому цикл с конца
-		var angle;
+		let startAngle = this.tempAngle
+		let angle;
+		let midAngle;
+		let nExplosion;
+		let fExplosionLenght;
+		let maxExplosionValue;
+		// the parent explosion value spans all its children
+		let nParentExplosion = _series[0] && _series[0].explosion ? _series[0].explosion : 0;
+		if (nParentExplosion) {
+			radius = radius / (1 + nParentExplosion / 100);
+		}
 		for (var i = numCache.ptCount - 1; i >= 0; i--) {
 			var point = numCache.getPtByIndex(i);
 			var val = point ? point.val : 0;
-			angle = Math.abs((parseFloat(val / sumData)) * (Math.PI * 2));
+			angle = Math.abs((parseFloat(val / sumData)) * (Math.PI * 2));;
+
+			// get the explosion value
+			nExplosion = getExplosion(_series[0].dPt && _series[0].dPt[i] && _series[0].dPt[i].explosion, nParentExplosion);
+			// find the explosion value relative to the radius lenght
+			fExplosionLenght = nExplosion * radius / 100;
+
+			// mid angle for explosion point is the middle of the slice
+			midAngle = startAngle + angle / 2;
+
+			// get the max possibble explosion value
+			maxExplosionValue = this._calculateSliceMaxExplodeDistance(xCenter, yCenter, radius, midAngle, this.cChartSpace.extX * this.chartProp.pxToMM, this.cChartSpace.extY * this.chartProp.pxToMM, angle)
+
+			//get X and Y offset for explosion
+			//we substract Y, because in canvas Y axis is inverted
+			//and we add X, because we draw against the clock
+			const xExplosion = Math.max(0, Math.min(maxExplosionValue, fExplosionLenght)) * Math.cos(midAngle);
+			const yExplosion = Math.max(0, Math.min(maxExplosionValue, fExplosionLenght)) * Math.sin(midAngle);
+
 			//правка связана с реализацией arcTo, где swAng зануляется и приравнивается к значению
 			if(angle < 10e-16) {
 				angle = 0;
@@ -12134,8 +12174,11 @@ drawPieChart.prototype = {
 			{
 				this.paths.series[i] = this._calculateEmptySegment(radius, xCenter, yCenter);
 			} else {
-				this.paths.series[i] = this._calculateSegment(angle, radius, xCenter, yCenter);
+				this.paths.series[i] = this._calculateSegment(angle,  radius,  xCenter + xExplosion, yCenter - yExplosion);
 			}
+
+			// add angle to the start angle
+			startAngle += angle;
 		}
 	},
 
@@ -12159,6 +12202,69 @@ drawPieChart.prototype = {
 
 		numCache = series[0] && series[0].getNumLit();
 		return returnCache ? numCache : (numCache && numCache.pts);
+	},
+
+	_calculateSliceMaxExplodeDistance: function (cx, cy, r, theta, rectWidth, rectHeight, alpha) {
+		function normalize(a) {
+			a = a % (2*Math.PI);
+			return a < 0 ? a + 2*Math.PI : a;
+		}
+
+		function inArc(a, a1, a2) {
+			// is angle a inside the arc [a1,a2] on the circle, allowing wrap
+			a = normalize(a); a1 = normalize(a1); a2 = normalize(a2);
+			if (a1 <= a2) {
+				return a1 <= a && a <= a2;
+			}
+			return a >= a1 || a <= a2; // wrapped
+		}
+
+		function sectorExtrema(r, theta, alpha) {
+			const a1 = theta - alpha/2, a2 = theta + alpha/2;
+			const cand = [a1, a2];
+			// add special angles if they lie inside the arc
+			const specials = [0, Math.PI, Math.PI/2, 3*Math.PI/2];
+			for (let i = 0; i < specials.length; i++) {
+				const s = specials[i];
+				if (inArc(s, a1, a2)) {
+					cand.push(s);
+				}
+			}
+
+			let minx=Infinity, maxx=-Infinity, miny=Infinity, maxy=-Infinity;
+			for (let i = 0; i < cand.length; i++) {
+				const a = cand[i];
+				const c = Math.cos(a), s = Math.sin(a);
+				minx = Math.min(minx, r*c);
+				maxx = Math.max(maxx, r*c);
+				miny = Math.min(miny, r*s);
+				maxy = Math.max(maxy, r*s);
+			}
+			return {minx, maxx, miny, maxy};
+		}
+
+		cy = rectHeight - cy; // flip Y to screen coords
+
+		const result = sectorExtrema(r, theta, alpha);
+		const minx = result.minx, maxx = result.maxx, miny = result.miny, maxy = result.maxy;
+		const vx = Math.cos(theta), vy = Math.sin(theta);
+
+		const bounds = [];
+		if (vx >  0) {
+			bounds.push( (rectWidth - cx - maxx) / vx );
+		}
+		if (vx <  0) {
+			bounds.push( (0 - cx - minx) / vx ); // note vx < 0 → result positive
+		}
+		if (vy >  0) {
+			bounds.push( (rectHeight - cy - maxy) / vy );
+		}
+		if (vy <  0) {
+			bounds.push( (0 - cy - miny) / vy );
+		}
+
+		let minBound = Math.min.apply(Math, bounds);
+		return Math.max(0, minBound);
 	},
 
 	_calculateSegment: function (angle, radius, xCenter, yCenter) {
@@ -13858,8 +13964,16 @@ drawDoughnutChart.prototype = {
 		var trueWidth = this.chartProp.trueWidth;
 		var trueHeight = this.chartProp.trueHeight;
 
+		const index = this.chart.series.length - 1;
+		// the parent explosion value spans all its children can be only for last series
+		let nParentExplosion = this.chart.series[index] && this.chart.series[index].explosion ? this.chart.series[index].explosion : 0;
+
 		var sumData;
-		var outRadius = Math.min(trueHeight, trueWidth) / 2;
+		let outRadius = Math.min(trueHeight, trueWidth) / 2;
+
+		if (nParentExplosion) {
+			outRadius = outRadius / (1 + nParentExplosion / 100);
+		}
 
 		//% from out radius
 		var defaultSize = 0;
@@ -13887,11 +14001,37 @@ drawDoughnutChart.prototype = {
 			sumData = this.cChartDrawer._getSumArray(numCache.pts, true);
 
 			//рисуем против часовой стрелки, поэтому цикл с конца
+			let startAngle = this.tempAngle - firstSliceAng;
+			let midAngle;
+			let nExplosion;
+			let fExplosionLenght;
+			let xExplosion = 0;
+			let yExplosion = 0;
+			let maxExplosionValue;
 			for (var k = numCache.ptCount - 1; k >= 0; k--) {
 
 				idxPoint = this.cChartDrawer.getPointByIndex(this.chart.series[n], k);
 				curVal = idxPoint ? idxPoint.val : 0;
 				angle = Math.abs((parseFloat(curVal / sumData)) * (Math.PI * 2));
+
+				// explosion works only for last doughnut series which is last layer
+				if (n === this.chart.series.length - 1) {
+					// get the explosion value
+					nExplosion = getExplosion((this.chart.series[n].dPt && this.chart.series[n].dPt[k] && this.chart.series[n].dPt[k].explosion), nParentExplosion);
+					// find the explosion value relative to the radius lenght
+					fExplosionLenght = nExplosion * outRadius / 100;
+					// mid angle for explosion point is the middle of the slice
+					midAngle = startAngle + angle / 2;
+
+					// get the max possibble explosion value
+					maxExplosionValue = this._calculateSliceMaxExplodeDistance(xCenter, yCenter, outRadius, midAngle, this.cChartSpace.extX * this.chartProp.pxToMM, this.cChartSpace.extY * this.chartProp.pxToMM, angle)
+
+					//get X and Y offset for explosion
+					//we substract Y, because in canvas Y axis is inverted
+					//and we add X, because we draw against the clock
+					xExplosion = Math.max(0, Math.min(maxExplosionValue, fExplosionLenght)) * Math.cos(midAngle);
+					yExplosion = Math.max(0, Math.min(maxExplosionValue, fExplosionLenght)) * Math.sin(midAngle);
+				}
 
 				//правка связана с реализацией arcTo, где swAng зануляется и приравнивается к значению
 				if(angle < 10e-16) {
@@ -13907,9 +14047,14 @@ drawDoughnutChart.prototype = {
 
 				if (angle) {
 					this.paths.series[n][k] =
-						this._calculateSegment(angle, radius, xCenter, yCenter, radius + step * (seriesCounter + 1), radius + step * seriesCounter, firstSliceAng);
+						this._calculateSegment(angle, radius, xCenter + xExplosion, yCenter - yExplosion, radius + step * (seriesCounter + 1), radius + step * seriesCounter, firstSliceAng);
 				} else {
 					this.paths.series[n][k] = null;
+				}
+
+				// add angle to the start angle
+				if (n === this.chart.series.length - 1) {
+					startAngle += angle;
 				}
 			}
 
@@ -13918,6 +14063,69 @@ drawDoughnutChart.prototype = {
 			}
 
 		}
+	},
+
+	_calculateSliceMaxExplodeDistance: function (cx, cy, r, theta, rectWidth, rectHeight, alpha) {
+		function normalize(a) {
+			a = a % (2*Math.PI);
+			return a < 0 ? a + 2*Math.PI : a;
+		}
+
+		function inArc(a, a1, a2) {
+			// is angle a inside the arc [a1,a2] on the circle, allowing wrap
+			a = normalize(a); a1 = normalize(a1); a2 = normalize(a2);
+			if (a1 <= a2) {
+				return a1 <= a && a <= a2;
+			}
+			return a >= a1 || a <= a2; // wrapped
+		}
+
+		function sectorExtrema(r, theta, alpha) {
+			const a1 = theta - alpha/2, a2 = theta + alpha/2;
+			const cand = [a1, a2];
+			// add special angles if they lie inside the arc
+			const specials = [0, Math.PI, Math.PI/2, 3*Math.PI/2];
+			for (let i = 0; i < specials.length; i++) {
+				const s = specials[i];
+				if (inArc(s, a1, a2)) {
+					cand.push(s);
+				}
+			}
+
+			let minx=Infinity, maxx=-Infinity, miny=Infinity, maxy=-Infinity;
+			for (let i = 0; i < cand.length; i++) {
+				const a = cand[i];
+				const c = Math.cos(a), s = Math.sin(a);
+				minx = Math.min(minx, r*c);
+				maxx = Math.max(maxx, r*c);
+				miny = Math.min(miny, r*s);
+				maxy = Math.max(maxy, r*s);
+			}
+			return {minx, maxx, miny, maxy};
+		}
+
+		cy = rectHeight - cy; // flip Y to screen coords
+
+		const result = sectorExtrema(r, theta, alpha);
+		const minx = result.minx, maxx = result.maxx, miny = result.miny, maxy = result.maxy;
+		const vx = Math.cos(theta), vy = Math.sin(theta);
+
+		const bounds = [];
+		if (vx >  0) {
+			bounds.push( (rectWidth - cx - maxx) / vx );
+		}
+		if (vx <  0) {
+			bounds.push( (0 - cx - minx) / vx ); // note vx < 0 → result positive
+		}
+		if (vy >  0) {
+			bounds.push( (rectHeight - cy - maxy) / vy );
+		}
+		if (vy <  0) {
+			bounds.push( (0 - cy - miny) / vy );
+		}
+
+		let minBound = Math.min.apply(Math, bounds);
+		return Math.max(0, minBound);
 	},
 
 	_calculateSegment: function (angle, radius, xCenter, yCenter, radius1, radius2, firstSliceAng) {
@@ -18059,7 +18267,7 @@ CColorObj.prototype =
 			if (!this.storage[chartId][seriaId]) {
 				this.storage[chartId][seriaId] = new CTrendData();
 			}
-			if (!this.storage[chartId][seriaId].isEmpty() && xVal === this.storage[chartId][seriaId].coords.catVals[0]) {
+			if (!this.storage[chartId][seriaId].isEmpty() && xVal === this.storage[chartId][seriaId].coords.catVals[0] && yVal === this.storage[chartId][seriaId].coords.catVals[1] ) {
 				this.stopAdding = true;
 			}
 
@@ -19735,7 +19943,6 @@ CColorObj.prototype =
 						if (newVerticalAspectRatio < newHorizontalAspectRatio){
 							resArr.push({position: true, array: [area], totalSum: area, predefinedSize: oldHeight});
 							newWidth = oldWidth - (area / oldHeight);
-							console.log("width changed", newWidth, area)
 						} else {
 							resArr.push({position: false, array: [area], totalSum: area, predefinedSize: oldWidth});
 							newHeight = oldHeight - (area / oldWidth);
@@ -20404,9 +20611,15 @@ CColorObj.prototype =
 			let diff;
 			let chosenPath;
 			for (let i in charts) {
+
+				if (!charts.hasOwnProperty(i) || !charts[i] || !charts[i].chart
+					|| !this.storage[i] || this.storage[i].length !== 2
+					|| this.storage[i][0].length !== this.ptsCount || this.storage[i][1].length !== this.ptsCount || !this.upDownBars) {
+					continue;
+				}
+
 				const valAxis = this.cChartDrawer.getAxisFromAxId(charts[i].chart.axId, AscDFH.historyitem_type_ValAx);
-				if (valAxis && charts.hasOwnProperty(i) && charts[i] && this.upDownBars && this.storage[i] && this.storage[i].length === 2
-					&& this.storage[i][0].length === this.ptsCount && this.storage[i][1].length === this.ptsCount) {
+				if (valAxis) {
 
 					const catStart = this.cChartDrawer.calcProp.chartGutter._left;
 
@@ -20492,6 +20705,15 @@ CColorObj.prototype =
 		}
 	}
 
+	function getExplosion (pointExplosion, seriesExplosion) {
+		if (AscFormat.isRealNumber(pointExplosion)) {
+			return pointExplosion;
+		}
+		if (AscFormat.isRealNumber(seriesExplosion)) {
+			return seriesExplosion;
+		}
+		return 0;
+	}
 
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscFormat'] = window['AscFormat'] || {};

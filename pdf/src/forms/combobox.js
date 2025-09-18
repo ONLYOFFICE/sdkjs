@@ -59,7 +59,7 @@
     AscFormat.InitClass(CComboBoxField, AscPDF.CBaseListField, AscDFH.historyitem_type_Pdf_Combobox_Field);
 
     CComboBoxField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
-        if (this.IsHidden() && !this.IsEditMode())
+        if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
             return;
 
         let oDoc = this.GetDocument();
@@ -193,8 +193,6 @@
         oDoc.activeForm = this;
 
         if (oDoc.IsEditFieldsMode()) {
-            let oController = oDoc.GetController();
-            this.editShape.select(oController, this.GetPage());
             if (false == this.IsLocked()) {
                 this.editShape.onMouseDown(x, y, e)
             }

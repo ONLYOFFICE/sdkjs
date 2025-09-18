@@ -1786,7 +1786,7 @@ $(function () {
 				Clear();
 				logicDocument.SetMathInputType(1);
 
-				AddText('\\lim\\below{\\left(n\\to\\infty\\right){\\left(1+\\frac{1}{n}\\right)^n}}');
+				AddText('\\lim\\below{\\left(n\\to\\infty\\right)}{\\left(1+\\frac{1}{n}\\right)^n}');
 
 				MathContent.ConvertView(true, Asc.c_oAscMathInputType.LaTeX);
 				assert.ok(true, "Convert to proff. view");
@@ -1795,7 +1795,7 @@ $(function () {
 				assert.ok(true, "Convert to linear view");
 
 				let strFunc = MathContent.GetTextOfElement(0).GetText();
-				assert.strictEqual(strFunc, '\\lim\\below{\\left(n\\to\\infty\\right){\\left(1+\\frac{1}{n}\\right)^n}}', 'Check complex math func content');
+				assert.strictEqual(strFunc, '\\lim\\below{\\left(n\\to\\infty\\right)}{\\left(1+\\frac{1}{n}\\right)^n}', 'Check complex math func content');
 			})
 
 			// QUnit.todo('Check eqarray frac - Find case for LaTeX', function (assert)

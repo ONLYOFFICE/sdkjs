@@ -106,7 +106,7 @@
         {
             if (null == this.m_oContext)
             {
-                this.m_oContext = this.m_oControl.HtmlElement.getContext('2d');
+                this.m_oContext = AscCommon.AscBrowser.getContext2D(this.m_oControl.HtmlElement);
 
                 this.m_oContext.imageSmoothingEnabled = false;
                 this.m_oContext.mozImageSmoothingEnabled = false;

@@ -488,7 +488,7 @@
 	};
         
     CTextField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
-        if (this.IsHidden() && !this.IsEditMode())
+        if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
             return;
 
         let oDoc = this.GetDocument();
@@ -759,40 +759,105 @@
     };
     CTextField.prototype.GetFormatArgs = function() {
         function extractArguments(str) {
-            var start = str.indexOf('(');
-            var end = str.lastIndexOf(')');
-            if (start === -1 || end === -1 || end <= start) {
-                return [];
-            }
-            
-            var argsString = str.slice(start + 1, end);
-            var args = argsString.split(/,\s*/);
-            var parsedArgs = [];
-        
-            for (var i = 0; i < args.length; i++) {
-                var arg = args[i].trim();
-        
-                if (arg === "true") {
-                    parsedArgs.push(true);
-                } else if (arg === "false") {
-                    parsedArgs.push(false);
-                }
-                else if (arg === "null") {
-                    parsedArgs.push(null);
-                }
-                else if (!isNaN(arg) && arg !== "") {
-                    parsedArgs.push(Number(arg));
-                }
-                else if ((arg.startsWith('"') && arg.endsWith('"')) || (arg.startsWith("'") && arg.endsWith("'"))) {
-                    parsedArgs.push(arg.slice(1, -1));
-                }
-                else {
-                    parsedArgs.push(arg);
-                }
-            }
-            
-            return parsedArgs;
+            const start = str.indexOf('(');
+            const end = str.lastIndexOf(')');
+            if (start === -1 || end === -1 || end <= start) return [];
+
+            const parts = splitArgs(str.slice(start + 1, end));
+            return parts.map(parseArg);
         }
+
+        function splitArgs(s) {
+            const out = [];
+            let buf = '';
+            let quote = null;
+            let escape = false;
+            const stack = [];
+
+            for (let i = 0; i < s.length; i++) {
+                const ch = s[i];
+
+                if (escape) {
+                    buf += ch;
+                    escape = false;
+                    continue;
+                }
+
+                if (quote) {
+                    if (ch === '\\') {
+                        buf += ch;
+                        escape = true;
+                        continue;
+                    }
+                    if (ch === quote) {
+                        quote = null;
+                        buf += ch;
+                        continue;
+                    }
+                    buf += ch;
+                    continue;
+                }
+
+                if (ch === "'" || ch === '"' || ch === '`') {
+                    quote = ch;
+                    buf += ch;
+                    continue;
+                }
+
+                if (ch === '(' || ch === '[' || ch === '{') {
+                    stack.push(ch);
+                    buf += ch;
+                    continue;
+                }
+                if (ch === ')' || ch === ']' || ch === '}') {
+                    stack.pop();
+                    buf += ch;
+                    continue;
+                }
+
+                if (ch === ',' && stack.length === 0) {
+                    out.push(buf.trim());
+                    buf = '';
+                    continue;
+                }
+
+                buf += ch;
+            }
+            if (buf.trim()) out.push(buf.trim());
+            return out;
+        }
+
+        function parseArg(arg) {
+            if (arg === 'true') return true;
+            if (arg === 'false') return false;
+            if (arg === 'null') return null;
+            if (arg === 'undefined') return undefined;
+
+            if (/^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/.test(arg)) return Number(arg);
+
+            if ((arg.startsWith('"') && arg.endsWith('"')) ||
+                (arg.startsWith("'") && arg.endsWith("'")) ||
+                (arg.startsWith('`') && arg.endsWith('`'))) {
+                const body = arg.slice(1, -1);
+                return body.replace(/\\([\\'"`nrvtbf])/g, (_, c) =>
+                    ({
+                        n: '\n',
+                        r: '\r',
+                        t: '\t',
+                        v: '\v',
+                        b: '\b',
+                        f: '\f',
+                        "'": "'",
+                        '"': '"',
+                        '`': '`',
+                        '\\': '\\'
+                    } [c] ?? c)
+                );
+            }
+
+            return arg;
+        }
+  
 
         let oMeta = this.GetMeta();
         // our custom format
@@ -1234,8 +1299,6 @@
         oDoc.activeForm = this;
 
         if (oDoc.IsEditFieldsMode()) {
-            let oController = oDoc.GetController();
-            this.editShape.select(oController, this.GetPage());
             if (false == this.IsLocked()) {
                 this.editShape.onMouseDown(x, y, e)
             }
@@ -1326,7 +1389,7 @@
         this._scrollInfo = oInfo;
     };
     CTextField.prototype.UpdateScroll = function(bShow) {
-        if (bShow && this.IsEditMode()) {
+        if (bShow && Asc.editor.IsEditFieldsMode()) {
             return;
         }
 

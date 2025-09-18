@@ -161,7 +161,7 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_Style]                  = AscCommonWord.CStyle;
 		this.m_oFactoryClass[AscDFH.historyitem_type_CommentMark]            = AscCommon.ParaComment;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ParaRun]                = AscCommonWord.ParaRun;
-		this.m_oFactoryClass[AscDFH.historyitem_type_Section]                = AscCommonWord.CSectionPr;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Section]                = AscWord.SectPr;
 		this.m_oFactoryClass[AscDFH.historyitem_type_Field]                  = AscCommonWord.ParaField;
 		this.m_oFactoryClass[AscDFH.historyitem_type_FootEndNote]            = AscCommonWord.CFootEndnote;
 		this.m_oFactoryClass[AscDFH.historyitem_type_DefaultShapeDefinition] = AscFormat.DefaultShapeDefinition;
@@ -453,7 +453,9 @@
 			this.m_oFactoryClass[AscDFH.historyitem_type_Shape]					= AscPDF.CPdfShape;
 			this.m_oFactoryClass[AscDFH.historyitem_type_GraphicFrame]			= AscPDF.CPdfGraphicFrame;
 			this.m_oFactoryClass[AscDFH.historyitem_type_ImageShape]			= AscPDF.CPdfImage;
+			this.m_oFactoryClass[AscDFH.historyitem_type_ChartSpace]			= AscPDF.CPdfChartSpace;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Cnx]					= AscPDF.CPdfConnectionShape;
+			this.m_oFactoryClass[AscDFH.historyitem_type_SmartArt]				= AscPDF.CPdfSmartArt;
 
 			// annots
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Text]		= AscPDF.CAnnotationText;

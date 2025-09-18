@@ -716,6 +716,41 @@ NullState.prototype =
         this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
         return bRet;
     };
+	function ControlState(drawingObjects, oControl) {
+		AscCommon.CDrawingControllerStateBase.call(this, drawingObjects);
+		this.control = oControl;
+	}
+	ControlState.prototype = Object.create(AscCommon.CDrawingControllerStateBase.prototype);
+	ControlState.prototype.constructor = ControlState;
+	ControlState.prototype.superclass = AscCommon.CDrawingControllerStateBase;
+
+	ControlState.prototype.onMouseDown = function (e, x, y, pageIndex) {
+		if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_CURSOR)
+		{
+			return {cursorType: "pointer", objectId: this.control.Get_Id()};
+		}
+		return this.control.onMouseDown(e, x, y, pageIndex, this.controller);
+	};
+	ControlState.prototype.onMouseMove = function (e, x, y, pageIndex) {
+		if(!e.IsLocked && this.control.isNeedResetState()) {
+			return this.emulateMouseUp(e, x, y, pageIndex);
+		}
+		this.control.onMouseMove(e, x, y, pageIndex, this.controller);
+	};
+	ControlState.prototype.onMouseUp = function (e, x, y, pageIndex) {
+		if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_CURSOR)
+		{
+			return {cursorType: "default", objectId: this.control.Get_Id()};
+		}
+		var bRet = this.control.onMouseUp(e, x, y, pageIndex, this.controller);
+		if (this.control.isNeedResetState()) {
+			this.changeControllerState(new NullState(this.drawingObjects));
+		}
+		return bRet;
+	};
+	ControlState.prototype.getCursorInfo = function () {
+
+	};
 function TrackSelectionRect(drawingObjects)
 {
     this.drawingObjects = drawingObjects;
@@ -2996,6 +3031,7 @@ function TrackTextState(drawingObjects, majorObject, x, y) {
     window['AscFormat'].StartAddNewShape = StartAddNewShape;
     window['AscFormat'].NullState = NullState;
     window['AscFormat'].SlicerState = SlicerState;
+    window['AscFormat'].ControlState = ControlState;
     window['AscFormat'].PreChangeAdjState = PreChangeAdjState;
     window['AscFormat'].PreRotateState = PreRotateState;
     window['AscFormat'].RotateState = RotateState;

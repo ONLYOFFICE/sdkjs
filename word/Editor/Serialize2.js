@@ -9309,7 +9309,7 @@ function Binary_pPrReader(doc, oReadResult, stream)
 			case c_oSerProp_pPrType.SectPr:
 				if(null != this.paragraph && (!this.oReadResult.bCopyPaste || this.oReadResult.isDocumentPasting()))
 				{
-					var oNewSectionPr = new CSectionPr(this.oReadResult.logicDocument);
+					var oNewSectionPr = new AscWord.SectPr(this.oReadResult.logicDocument);
 					var oAdditional = {EvenAndOddHeaders: null};
 					res = this.bcr.Read1(length, function(t, l){
 							return oThis.Read_SecPr(t, l, oNewSectionPr, oAdditional);
@@ -9665,9 +9665,13 @@ function Binary_pPrReader(doc, oReadResult, stream)
             res = c_oSerConstants.ReadUnknown;//todo
         else if( c_oSerProp_secPrType.cols === type ) {
             //todo clear;
+	        const arrColumns = [];
             res = this.bcr.Read1(length, function(t, l){
-                return oThis.Read_cols(t, l, oSectPr);
+                return oThis.Read_cols(t, l, oSectPr, arrColumns);
             });
+						if (arrColumns.length) {
+							oSectPr.Set_Columns_Cols(arrColumns);
+						}
         }
 		else if( c_oSerProp_secPrType.pgBorders === type ) {
 			res = this.bcr.Read1(length, function(t, l){
@@ -9943,7 +9947,7 @@ function Binary_pPrReader(doc, oReadResult, stream)
 			res = c_oSerConstants.ReadUnknown;
 		return res;
 	}
-    this.Read_cols = function(type, length, oSectPr)
+    this.Read_cols = function(type, length, oSectPr, arrColumns)
     {
         var res = c_oSerConstants.ReadOk;
         var oThis = this;
@@ -9956,11 +9960,11 @@ function Binary_pPrReader(doc, oReadResult, stream)
         } else if (c_oSerProp_Columns.Space === type) {
             oSectPr.Set_Columns_Space(g_dKoef_twips_to_mm * this.stream.GetULongLE());
         } else if (c_oSerProp_Columns.Column === type) {
-            var col = new CSectionColumn();
+            var col = new AscWord.SectionColumn();
             res = this.bcr.Read1(length, function(t, l){
                 return oThis.Read_col(t, l, col);
             });
-            oSectPr.Set_Columns_Col(oSectPr.Columns.Cols.length, col.W, col.Space);
+						arrColumns.push(col);
         } else
             res = c_oSerConstants.ReadUnknown;
         return res;

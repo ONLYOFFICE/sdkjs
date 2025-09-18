@@ -145,33 +145,36 @@
 	{
 		this.SectionEnd = null;
 	};
-	CRunParagraphMark.prototype.CheckMark = function(oParagraph, nRangeW)
+	CRunParagraphMark.prototype.CheckMark = function(paragraph, rangeW)
 	{
-		let oSectPr        = oParagraph.Get_SectionPr();
-		let oLogicDocument = oParagraph.GetLogicDocument();
+		let sectPr        = paragraph.Get_SectionPr();
+		let logicDocument = paragraph.GetLogicDocument();
 
-		if (!oLogicDocument
-			|| oLogicDocument !== oParagraph.GetParent()
-			|| !oLogicDocument.IsDocumentEditor())
-			oSectPr = null;
-
-		if (oSectPr)
+		if (!logicDocument
+			|| paragraph.IsTableCellContent()
+			|| logicDocument !== paragraph.GetTopDocumentContent()
+			|| !logicDocument.IsDocumentEditor())
 		{
-			let oNextSectPr = oLogicDocument.SectionsInfo.Get_SectPr(oParagraph.GetIndex() + 1).SectPr;
-			this.UpdateSectionEnd(oNextSectPr.Type, nRangeW, oLogicDocument);
+			sectPr = null;
+		}
+		
+		if (sectPr)
+		{
+			let nextSectPr = logicDocument.GetSections().GetNextSectPr(sectPr);
+			this.UpdateSectionEnd(nextSectPr.GetType(), rangeW, logicDocument);
 		}
 		else
 		{
 			this.ClearSectionEnd();
 
-			let isEndCell = oParagraph.IsLastParagraphInCell();
+			let isEndCell = paragraph.IsLastParagraphInCell();
 
 			let nType = isEndCell ? FLAGS_MARK_ENDCELL : FLAGS_MARK_NORMAL;
 			if (nType !== this.GetMarkType())
 			{
 				let oMeasurer = AscCommon.g_oTextMeasurer;
-				let oTextPr   = oParagraph.GetParaEndCompiledPr();
-				oMeasurer.SetTextPr(oTextPr, oParagraph.GetTheme());
+				let oTextPr   = paragraph.GetParaEndCompiledPr();
+				oMeasurer.SetTextPr(oTextPr, paragraph.GetTheme());
 				this.Measure(oMeasurer, oTextPr, isEndCell);
 			}
 		}

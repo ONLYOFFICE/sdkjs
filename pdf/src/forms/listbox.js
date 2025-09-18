@@ -66,7 +66,7 @@
     AscFormat.InitClass(CListBoxField, AscPDF.CBaseListField, AscDFH.historyitem_type_Pdf_Listbox_Field);
 
     CListBoxField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
-        if (this.IsHidden() && !this.IsEditMode())
+        if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
             return;
 
         // когда выравнивание посередине или справа, то после того
@@ -626,8 +626,6 @@
         oDoc.activeForm = this;
 
         if (oDoc.IsEditFieldsMode()) {
-            let oController = oDoc.GetController();
-            this.editShape.select(oController, this.GetPage());
             if (false == this.IsLocked()) {
                 this.editShape.onMouseDown(x, y, e)
             }
@@ -746,7 +744,7 @@
         this.UpdateScroll(true);
     };
     CListBoxField.prototype.UpdateScroll = function(bShow) {
-        if (bShow && this.IsEditMode()) {
+        if (bShow && Asc.editor.IsEditFieldsMode()) {
             return;
         }
         
@@ -1165,10 +1163,7 @@
      * @returns {boolean}
 	 */
     CListBoxField.prototype.IsParaOutOfForm = function(oPara) {
-        if (null == this.getFormRelRect())
-            this.Recalculate();
-        else
-            oPara.Recalculate_Page(0);
+        this.Recalculate();
         
         let oFormBounds = this.getFormRelRect();
         let nContentW   = oPara.GetContentWidthInRange();

@@ -725,6 +725,17 @@ CFraction.fromMathML = function (reader)
 	
 	return new CFraction(props);
 };
+CFraction.fromMathMLContentMarkup = function (reader, num, den)
+{
+	let props = new CMathFractionPr();
+
+	props.content = [
+		AscWord.ParaMath.createContentFromText(num),
+		AscWord.ParaMath.createContentFromText(den)
+	];
+
+	return new CFraction(props);
+};
 /**
  *
  * @param CMathMenuFraction

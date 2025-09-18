@@ -45,7 +45,7 @@
 	function CDocumentLayoutBase(oLogicDocument)
 	{
 		this.LogicDocument = oLogicDocument;
-		this.SectionsInfo  = oLogicDocument.GetSectionsInfo();
+		this.SectionsInfo  = oLogicDocument.GetSections();
 	}
 	
 	CDocumentLayoutBase.prototype.IsPrintMode = function()
@@ -77,30 +77,31 @@
 	 * @param nPageAbs
 	 * @param isFirst
 	 * @param isEven
-	 * @returns {{Header : null, SectPr : AscWord.CSectionPr, Footer : null}}
+	 * @returns {{Header : null, SectPr : AscWord.SectPr, Footer : null}}
 	 */
 	CDocumentLayoutBase.prototype.GetSectionHdrFtr = function(nPageAbs, isFirst, isEven)
 	{
 		let oLogicDocument = this.LogicDocument;
 		
-		let nSectionIndex = this.SectionsInfo.Get_Index(oLogicDocument.GetPage(nPageAbs).GetStartPos());
-		let oSectPr       = this.SectionsInfo.Get_SectPr2(nSectionIndex).SectPr;
-		let startSectPr   = oSectPr;
+		let docPage      = oLogicDocument.GetPage(nPageAbs);
+		let sectionIndex = docPage.GetSection(0).GetIndex();
+		let sectPr       = this.SectionsInfo.GetSectPrByIndex(sectionIndex);
+		let startSectPr  = sectPr;
 		
-		isEven  = isEven && oSectPr.IsEvenAndOdd();
-		isFirst = isFirst && oSectPr.IsTitlePage();
+		isEven  = isEven && sectPr.IsEvenAndOdd();
+		isFirst = isFirst && sectPr.IsTitlePage();
 		
 		let oHeader = null;
 		let oFooter = null;
-		while (nSectionIndex >= 0)
+		while (sectionIndex >= 0)
 		{
-			oSectPr = this.SectionsInfo.Get_SectPr2(nSectionIndex--).SectPr;
+			sectPr = this.SectionsInfo.GetSectPrByIndex(sectionIndex--);
 			
 			if (!oHeader)
-				oHeader = oSectPr.GetHdrFtr(true, isFirst, isEven);
+				oHeader = sectPr.GetHdrFtr(true, isFirst, isEven);
 			
 			if (!oFooter)
-				oFooter = oSectPr.GetHdrFtr(false, isFirst, isEven);
+				oFooter = sectPr.GetHdrFtr(false, isFirst, isEven);
 			
 			if (oHeader && oFooter)
 				break;
@@ -115,7 +116,7 @@
 	/**
 	 * Получаем границы, внутри короторых должно быть расчитано содержимое основной части документа
 	 * @param nPageAbs {number}
-	 * @param oSectPr {AscWord.CSectionPr}
+	 * @param oSectPr {AscWord.SectPr}
 	 * @returns {{X : number, Y : number, XLimit : number, YLimit : number}}
 	 */
 	CDocumentLayoutBase.prototype.GetPageContentFrame = function(nPageAbs, oSectPr)
@@ -131,7 +132,7 @@
 	 * Получаем границы содержимого по заданной колонке и заданной странице
 	 * @param nPageAbs {number}
 	 * @param nColumnAbs {number}
-	 * @param oSectPr {AscWord.CSectionPr}
+	 * @param oSectPr {AscWord.SectPr}
 	 * @returns {{ColumnSpaceBefore : number, X : number, ColumnSpaceAfter : number, Y : number, XLimit : number, YLimit : number}}
 	 */
 	CDocumentLayoutBase.prototype.GetColumnContentFrame = function(nPageAbs, nColumnAbs, oSectPr)
@@ -146,31 +147,32 @@
 		};
 	};
 	/**
-	 * Получаем настройки секции на заданной странице, или заданного элемента
-	 * @param nPageAbs {number} Если номер элемента не задан, тогда получаем по заданному номеру страницы
-	 * @param nContentIndex {?number} Если задан номер элемента, то ориентируемся на него
-	 * @returns {AscWord.CSectionPr}
+	 * Получаем настройки секции на заданной странице
+	 * @param pageAbs {number}
+	 * @returns {AscWord.SectPr}
 	 */
-	CDocumentLayoutBase.prototype.GetSection = function(nPageAbs, nContentIndex)
+	CDocumentLayoutBase.prototype.GetPageStartSection = function(pageAbs)
 	{
-		let oPage;
-		if (undefined === nContentIndex && (oPage = this.LogicDocument.GetPage(nPageAbs)))
-			nContentIndex = oPage.GetStartPos();
-		
-		return this.SectionsInfo.Get_SectPr(nContentIndex).SectPr;
+		let docPage = this.LogicDocument.GetPage(pageAbs);
+		let pageSection = docPage ? docPage.GetSection(0) : null;
+		let sectPr = pageSection ? pageSection.GetSectPr() : this.LogicDocument.GetFinalSectPr();
+		return this.CheckSectPr(sectPr);
 	};
-	CDocumentLayoutBase.prototype.GetSectionByPos = function(nContentIndex)
+	CDocumentLayoutBase.prototype.GetSectionByElement = function(element)
 	{
-		let sectInfo = this.SectionsInfo.Get_SectPr(nContentIndex);
-		return sectInfo ? sectInfo.SectPr : null;
+		return this.SectionsInfo.GetSectPrByElement(element);
 	};
-	CDocumentLayoutBase.prototype.GetSectionInfo = function(nContentIndex)
+	CDocumentLayoutBase.prototype.CheckSectPr = function(sectPr)
 	{
-		return this.SectionsInfo.Get_SectPr(nContentIndex);
+		return sectPr;
+	};
+	CDocumentLayoutBase.prototype.GetFinalSectPr = function()
+	{
+		return this.LogicDocument.SectPr;
 	};
 	/**
 	 * Получаем номер секции в общем списке секций
-	 * @param oSectPr {AscWord.CSectionPr}
+	 * @param oSectPr {AscWord.SectPr}
 	 * @returns {number}
 	 */
 	CDocumentLayoutBase.prototype.GetSectionIndex = function(oSectPr)

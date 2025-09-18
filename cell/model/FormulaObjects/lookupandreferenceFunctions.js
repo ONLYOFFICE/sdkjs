@@ -2924,7 +2924,7 @@ function (window, undefined) {
 			opt_arg4 = arg[4];
 			opt_arg5 = arg[5];
 		}
-		let t = this, number, valueForSearching, r, c, res = -1, min, regexp, count;
+		let t = this, number, r, c, res = -1, count;
 
 		if (!opt_xlookup) {
 			if (cElementType.cell3D === arg2.type || cElementType.cell === arg2.type) {
@@ -2960,14 +2960,12 @@ function (window, undefined) {
 		let arg0Val;
 		if (cElementType.array === arg0.type) {
 			arg0Val = arg0.getElementRowCol(0, 0);
-			valueForSearching = ('' + arg0Val.getValue()).toLowerCase();
 		} else {
 			if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
 				arg0Val = arg0.cross(argument1);
 			} else {
 				arg0Val = arg0;
 			}
-			valueForSearching = ('' + arg0Val.getValue()).toLowerCase();
 		}
 
 
@@ -2982,12 +2980,7 @@ function (window, undefined) {
 
 		let arg0ValType = arg0Val.type
 		if (cElementType.array === arg1.type && !opt_xlookup) {
-			// ToDo
-			if (cElementType.string === arg0.type) {
-				regexp = searchRegExp(valueForSearching);
-			}
-
-			let arrayToSearch, res = -1;
+			let arrayToSearch;
 			if (this.bHor) {
 				arrayToSearch = arg1.getRow(0);
 			} else {
@@ -2999,16 +2992,23 @@ function (window, undefined) {
 					// approximate(binary) search
 					res = _func.lookupBinarySearch(arg0Val, arrayToSearch, false);
 				} else {
+					let searchValue = arg0Val.getValue();
+					if (arg0Val.type === cElementType.string) {
+						searchValue = searchValue.toLowerCase();
+					}
 					// exact (simple) search
 					for (let i = 0; i < arrayToSearch.length; i++) {
 						let elem = arrayToSearch[i];
+						if (elem.type !== arg0ValType) {
+							continue;
+						}
 						let elemValue = elem.getValue();
 	
 						if (elem.type === cElementType.string) {
 							elemValue = elemValue.toLowerCase();
 						}
 	
-						if ((elem.type === arg0ValType) && elemValue === arg0Val.getValue()) {
+						if (elemValue === searchValue) {
 							res = i;
 							break
 						}

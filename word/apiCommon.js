@@ -1776,6 +1776,7 @@
 		this.Suff    = Asc.c_oAscNumberingSuff.Tab;
 		this.Align   = AscCommon.align_Left;
 		this.PStyle  = undefined;
+		this.IsLgl   = undefined;
 	}
 	CAscNumberingLvl.prototype.checkTextPr = function ()
 	{
@@ -1982,6 +1983,14 @@
 	{
 		return this.Suff;
 	};
+	CAscNumberingLvl.prototype.get_IsLgl = function()
+	{
+		return this.IsLgl;
+	};
+	CAscNumberingLvl.prototype.put_IsLgl = function(v)
+	{
+		this.IsLgl = v;
+	};
 	window['Asc']['CAscNumberingLvl']                 = window['Asc'].CAscNumberingLvl = CAscNumberingLvl;
 	CAscNumberingLvl.prototype['get_LvlNum']          = CAscNumberingLvl.prototype.get_LvlNum;
 	CAscNumberingLvl.prototype['get_Format']          = CAscNumberingLvl.prototype.get_Format;
@@ -2018,6 +2027,8 @@
 	CAscNumberingLvl.prototype['put_NumberPosition']  = CAscNumberingLvl.prototype.put_NumberPosition;
 	CAscNumberingLvl.prototype['put_StopTab']         = CAscNumberingLvl.prototype.put_StopTab;
 	CAscNumberingLvl.prototype['get_StopTab']         = CAscNumberingLvl.prototype.get_StopTab;
+	CAscNumberingLvl.prototype['get_IsLgl']           = CAscNumberingLvl.prototype.get_IsLgl;
+	CAscNumberingLvl.prototype['put_IsLgl']           = CAscNumberingLvl.prototype.put_IsLgl;
 
 	function CAscWatermarkProperties()
 	{

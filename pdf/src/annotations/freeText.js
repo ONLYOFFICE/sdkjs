@@ -252,17 +252,24 @@
         return this._alignment;
     };
     CAnnotationFreeText.prototype.SetLineEnd = function(nType) {
+        if (this._lineEnd == nType) {
+            return;
+        }
+
+        AscCommon.History.Add(new CChangesPDFAnnotLineEnd(this, this._lineEnd, nType));
+
         this._lineEnd = nType;
-        
+
         this.SetWasChanged(true);
-		
-		AscCommon.ExecuteNoHistory(function() {
-			if (3 === this.spTree.length)
-			{
+        this.private_UpdateLineEnd();
+    };
+    CAnnotationFreeText.prototype.private_UpdateLineEnd = function() {
+        AscCommon.ExecuteNoHistory(function() {
+			if (3 === this.spTree.length) {
 				let oTargetSp = this.spTree[1];
 				let oLine     = oTargetSp.pen;
 				oLine.setTailEnd(new AscFormat.EndArrow());
-				let nLineEndType = getInnerLineEndType(nType);
+				let nLineEndType = AscPDF.getInnerLineEndType(this.GetLineEnd());
 				
 				
 				oLine.tailEnd.setType(nLineEndType);
@@ -342,7 +349,7 @@
 				let oTargetSp = this.spTree[1];
 				let oLine = oTargetSp.spPr.ln;
 				oLine.setTailEnd(new AscFormat.EndArrow());
-				let nInnerType = getInnerLineEndType(nLineEndType);
+				let nInnerType = AscPDF.getInnerLineEndType(nLineEndType);
 				
 				oLine.tailEnd.setType(nInnerType);
 				oLine.tailEnd.setLen(AscFormat.LineEndSize.Mid);
@@ -360,12 +367,10 @@
     CAnnotationFreeText.prototype.GetCallout = function(bScaled) {
         return this._callout;
     };
-	CAnnotationFreeText.prototype.SetWidth = function(nWidthPt) {
-		AscCommon.History.Add(new CChangesPDFAnnotStrokeWidth(this, this.GetWidth(), nWidthPt));
-		
-		this._width = nWidthPt;
-		
-		AscCommon.ExecuteNoHistory(function() {
+    CAnnotationFreeText.prototype.private_UpdateLn = function() {
+        let nWidthPt = this.GetWidth();
+        
+        AscCommon.ExecuteNoHistory(function() {
 			for (let i = 1; i < this.spTree.length; i++) {
 				let oLine = this.spTree[i].spPr.ln;
 				if (nWidthPt == 0 && this.spTree[i] != this.GetTextBoxShape()) {
@@ -383,7 +388,7 @@
 				}
 			}
 		}, undefined, this);
-	};
+    };
 	CAnnotationFreeText.prototype.SetStrokeColor = function(aColor) {
 		AscCommon.History.Add(new CChangesPDFAnnotStroke(this, this.GetStrokeColor(), aColor));
 		
@@ -568,7 +573,6 @@
             return;
 
         let oViewer         = editor.getDocumentRenderer();
-        let oDoc            = this.GetDocument();
         let sCurContents    = this.GetContents();
         
         this._contents = contents;
@@ -625,7 +629,7 @@
         let oLastUsedPara   = oContent.GetElement(0);
         oLastUsedPara.RemoveFromContent(0, oLastUsedPara.GetElementsCount());
 
-        AscCommon.History.Add(new CChangesPDFFreeTextRC(this, this.GetRichContents(), aRCInfo));
+        AscCommon.History.Add(new CChangesPDFAnnotRC(this, this.GetRichContents(), aRCInfo));
         this._richContents = aRCInfo;
 
         if (!aRCInfo) {
@@ -677,16 +681,18 @@
                 let nCharCode = oRCInfo["text"][nChar].charCodeAt(0);
                 
                 if (nCharCode == 13) {
-                    oLastUsedPara.Correct_Content();
-                    oLastUsedPara.AddToParagraph(new AscWord.ParaTextPr(oRun.GetTextPr()));
+                    if (i != aRCInfo.length - 1) {
+                        oLastUsedPara.Correct_Content();
+                        oLastUsedPara.AddToParagraph(new AscWord.ParaTextPr(oRun.GetTextPr()));
 
-                    oLastUsedPara = new AscWord.Paragraph(oContent, true);
-                    oContent.Internal_Content_Add(oContent.GetElementsCount(), oLastUsedPara);
+                        oLastUsedPara = new AscWord.Paragraph(oContent, true);
+                        oContent.Internal_Content_Add(oContent.GetElementsCount(), oLastUsedPara);
 
-                    oRun = new ParaRun(oLastUsedPara, false);
-                    setRunPr(oRun, oRCInfo);
-                    oLastUsedPara.AddToContentToEnd(oRun);
-                    oLastUsedPara.Set_Align(AscPDF.getInternalAlignByPdfType(oRCInfo["alignment"]));
+                        oRun = new ParaRun(oLastUsedPara, false);
+                        setRunPr(oRun, oRCInfo);
+                        oLastUsedPara.AddToContentToEnd(oRun);
+                        oLastUsedPara.Set_Align(AscPDF.getInternalAlignByPdfType(oRCInfo["alignment"]));
+                    }
                 }
                 else {
                     oRun.AddToContentToEnd(AscPDF.codePointToRunElement(nCharCode));
@@ -1082,7 +1088,7 @@
                     oDoc.History.Add(new CChangesFreeTextCallout(this, this._prevCallout, this.GetCallout()));
                     oDoc.History.Add(new CChangesPDFAnnotRD(this, this._prevRectDiff, this.GetRectangleDiff()));
                     oDoc.History.Add(new CChangesPDFAnnotRect(this, this._prevRect, this.GetRect()));
-                    oDoc.History.Add(new CChangesPDFFreeTextRC(this, aCurRc, aNewRc));
+                    oDoc.History.Add(new CChangesPDFAnnotRC(this, aCurRc, aNewRc));
                     oDoc.private_UpdateTargetForCollaboration(true);
                 }
             }, AscDFH.historydescription_Pdf_UpdateAnnotRC, this);
@@ -1266,7 +1272,7 @@
                     oDoc.SetGlobalHistory();
                     oDoc.DoAction(function() {
                         this.FitTextBox();
-                    }, AscDFH.historydescription_Pdf_FreeTextFitTextBox, this);
+                    }, AscDFH.historydescription_Pdf_ChangeAnnot, this);
                     oDoc.SetLocalHistory();
 
                     this.selectedObjects.length = 0;
@@ -1442,10 +1448,6 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
-
-        this.GetReplies().forEach(function(reply) {
-            (reply.IsChanged() || !memory.docRenderer) && reply.WriteToBinary(memory);
-        });
     };
     CAnnotationFreeText.prototype.SetPosition = function(x, y) {
         let oDoc        = this.GetDocument();
@@ -1493,7 +1495,7 @@
     CAnnotationFreeText.canRotate = function() {
         return false;
     };
-    CAnnotationFreeText.prototype.Get_AbsolutePage = function() {
+    CAnnotationFreeText.prototype.GetAbsolutePage = function() {
         return this.GetPage();
     };
     CAnnotationFreeText.prototype.select = function (drawingObjectsController, pageIndex) {
@@ -1866,47 +1868,6 @@
         return oShape;
     }
 
-    function getInnerLineEndType(nPdfType) {
-        let nInnerType;
-        switch (nPdfType) {
-            case AscPDF.LINE_END_TYPE.None:
-                nInnerType = AscFormat.LineEndType.None;
-                break;
-            case AscPDF.LINE_END_TYPE.OpenArrow:
-                nInnerType = AscFormat.LineEndType.Arrow;
-                break;
-            case AscPDF.LINE_END_TYPE.Diamond:
-                nInnerType = AscFormat.LineEndType.Diamond;
-                break;
-            case AscPDF.LINE_END_TYPE.Circle:
-                nInnerType = AscFormat.LineEndType.Oval;
-                break;
-            case AscPDF.LINE_END_TYPE.ClosedArrow:
-                nInnerType = AscFormat.LineEndType.Triangle;
-                break;
-            case AscPDF.LINE_END_TYPE.ROpenArrow:
-                nInnerType = AscFormat.LineEndType.ReverseArrow;
-                break;
-            case AscPDF.LINE_END_TYPE.RClosedArrow:
-                nInnerType = AscFormat.LineEndType.ReverseTriangle;
-                break;
-            case AscPDF.LINE_END_TYPE.Butt:
-                nInnerType = AscFormat.LineEndType.Butt;
-                break;
-            case AscPDF.LINE_END_TYPE.Square:
-                nInnerType = AscFormat.LineEndType.Square;
-                break;
-            case AscPDF.LINE_END_TYPE.Slash:
-                nInnerType = AscFormat.LineEndType.Slash;
-                break;
-            default:
-                nInnerType = AscFormat.LineEndType.Arrow;
-                break;
-        }
-
-        return nInnerType;
-    }
-    
     window["AscPDF"].CAnnotationFreeText    = CAnnotationFreeText;
     window["AscPDF"].FREE_TEXT_INTENT_TYPE  = window["AscPDF"]["FREE_TEXT_INTENT_TYPE"] = FREE_TEXT_INTENT_TYPE;
     FREE_TEXT_INTENT_TYPE['FreeText']           = FREE_TEXT_INTENT_TYPE.FreeText;

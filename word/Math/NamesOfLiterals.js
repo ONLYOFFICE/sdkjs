@@ -2168,7 +2168,12 @@
 	};
 	Tokenizer.prototype.GetStyle = function (nCursorPos)
 	{
-		return this._styles[nCursorPos - 1];
+		let style = this._styles[nCursorPos - 1];
+
+		if (!style)
+			style = new MathTextAdditionalData();
+
+		return style;
 	};
 	Tokenizer.prototype.ProcessString = function (str, char)
 	{
@@ -2295,6 +2300,13 @@
 	{
 		Paragraph = oContext.Paragraph;
 
+		let arrContentAfterConvert = [];
+		if (oContext.Content[oContext.CurPos] instanceof ParaRun)
+		{
+			arrContentAfterConvert = oContext.SplitContentByPos(oContext.CurPos, true)
+			oContext.CurPos = oContext.Content.length - 1;
+		}
+
 		if (typeof oTokens === "object")
 		{
 			if (oTokens.type === "LaTeXEquation" || oTokens.type === "UnicodeEquation")
@@ -2330,6 +2342,12 @@
 		else
 		{
 			oContext.Add_Text(oTokens);
+		}
+
+		if (arrContentAfterConvert.length)
+		{
+			oContext.MoveCursorToEndPos();
+			oContext.ConcatToContent(oContext.Content.length, arrContentAfterConvert);
 		}
 	}
 	// Find token in all types for convert
@@ -5585,6 +5603,9 @@
 
 		if (oContent)
 			this.SetAdditionalDataFromContent(oContent, isCtrPr);
+
+		if (!oContent)
+			this.style = new CTextPr();
 	}
 
 	MathTextAdditionalData.prototype.Copy = function()
@@ -6275,7 +6296,7 @@
 
 			if (oPos)
 			{
-				while (!oPos.IsEqualPosition(oToken))
+				while (oToken && nCounter < arrAllTokens.length && !oPos.IsEqualPosition(oToken))
 				{
 					nCounter++;
 					oToken = arrAllTokens[nCounter];

@@ -194,7 +194,7 @@ function CFlowTable(Table, PageIndex)
 
     this.Table          = Table;
     this.Id             = Table.Get_Id();
-    this.PageNum        = Table.Get_StartPage_Absolute();
+    this.PageNum        = Table.GetAbsoluteStartPage();
     this.PageController = PageIndex - Table.PageNum;
     this.Distance       = Table.Distance;
 	this.WrappingType   = WRAPPING_TYPE_SQUARE;

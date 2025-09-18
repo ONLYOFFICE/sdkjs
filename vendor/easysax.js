@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 
 /*
 new function() {
@@ -99,19 +99,7 @@ function replaceEntities(s, d, x, z) {
 };
 
 function xmlEntityDecode(s) {
-    var s = ('' + s);
-
-    if (s.length > 3 && s.indexOf('&') !== -1) {
-        if (s.indexOf('&lt;') !== -1) {s = s.replace(/&lt;/g, '<');}
-        if (s.indexOf('&gt;') !== -1) {s = s.replace(/&gt;/g, '>');}
-        if (s.indexOf('&quot;') !== -1) {s = s.replace(/&quot;/g, '"');}
-
-        if (s.indexOf('&') !== -1) {
-            s = s.replace(/&#(\d+);|&#x([0123456789abcdef]+);|&(\w+);/ig, replaceEntities);
-        };
-    };
-
-    return s;
+    return StaxParser.prototype.DecodeXml(s);
 };
 
 function cloneMatrixNS(nsmatrix) {
@@ -1494,71 +1482,120 @@ StaxParser.prototype.GetValueDecodeXmlExt = function () {
     return this.GetValueDecodeXml();
 };
 StaxParser.prototype.DecodeXml = function (text) {
-    if (text.indexOf('&') === -1) {
-        return text;
+    // Detect &amp; and _xHHHH_ patterns
+    const len = text.length;
+    let firstSpecial = -1;
+    let i = 0;
+    
+    for (i = 0; i < len; ++i) {
+        const c = text.charCodeAt(i);
+        if (c === 38 /* & */ || (c === 95 /* _ */ && i + 1 < len && text.charCodeAt(i + 1) === 120 /* x */)) {
+            firstSpecial = i;
+            break;
+        }
     }
     
-    var result = [];
-    var len = text.length;
-    
-    for (var i = 0; i < len; ++i) {
-        if (text.charCodeAt(i) === 38) { // '&'
-            var nextChar = i + 1 < len ? text.charCodeAt(i + 1) : 0;
-            
+    if (firstSpecial === -1) {
+        return text;
+    }
+
+    const result = [];
+    let lastCopied = 0;
+    for (i = firstSpecial; i < len; ++i) {
+        const ch = text.charCodeAt(i);
+        let entityLen = 0;
+        let decoded = null;
+        
+        if (ch === 38) { // '&'
+            const nextChar = i + 1 < len ? text.charCodeAt(i + 1) : 0;
+
             // &lt; (4 chars)
             if (nextChar === 108 && i + 3 < len && // 'l'
                 text.charCodeAt(i + 2) === 116 && // 't'
                 text.charCodeAt(i + 3) === 59) {   // ';'
-                result.push('<');
-                i += 3;
-                continue;
+                decoded = '<';
+                entityLen = 4;
             }
-            
             // &gt; (4 chars)
-            if (nextChar === 103 && i + 3 < len && // 'g'
+            else if (nextChar === 103 && i + 3 < len && // 'g'
                 text.charCodeAt(i + 2) === 116 && // 't'
                 text.charCodeAt(i + 3) === 59) {   // ';'
-                result.push('>');
-                i += 3;
-                continue;
+                decoded = '>';
+                entityLen = 4;
             }
-            
             // &amp; (5 chars)
-            if (nextChar === 97 && i + 4 < len && // 'a'
+            else if (nextChar === 97 && i + 4 < len && // 'a'
                 text.charCodeAt(i + 2) === 109 && // 'm'
                 text.charCodeAt(i + 3) === 112 && // 'p'
                 text.charCodeAt(i + 4) === 59) {   // ';'
-                result.push('&');
-                i += 4;
-                continue;
+                decoded = '&';
+                entityLen = 5;
             }
-            
             // &quot; or &apos; (6 chars)
-            if (i + 5 < len) {
+            else if (i + 5 < len) {
                 if (nextChar === 113 && // 'q'
                     text.charCodeAt(i + 2) === 117 && // 'u'
                     text.charCodeAt(i + 3) === 111 && // 'o'
                     text.charCodeAt(i + 4) === 116 && // 't'
                     text.charCodeAt(i + 5) === 59) {   // ';'
-                    result.push('"');
-                    i += 5;
-                    continue;
-                }
-                
-                if (nextChar === 97 && // 'a'
+                    decoded = '"';
+                    entityLen = 6;
+                } else if (nextChar === 97 && // 'a'
                     text.charCodeAt(i + 2) === 112 && // 'p'
                     text.charCodeAt(i + 3) === 111 && // 'o'
                     text.charCodeAt(i + 4) === 115 && // 's'
                     text.charCodeAt(i + 5) === 59) {   // ';'
-                    result.push("'");
-                    i += 5;
-                    continue;
+                    decoded = "'";
+                    entityLen = 6;
                 }
             }
-        }
+        } else if (ch === 95 && i + 6 < len && // '_'
+            text.charCodeAt(i + 1) === 120 && // 'x'
+            text.charCodeAt(i + 6) === 95) {  // '_'
 
-        result.push(text.charAt(i));
+            // Inline hex parsing for _xHHHH_ pattern
+            let code = 0;
+            let isValidHex = true;
+
+            for (let j = i + 2; j < i + 6; ++j) {
+                const hexChar = text.charCodeAt(j);
+                code *= 16;
+
+                if (hexChar >= 48 && hexChar <= 57) {        // '0'-'9'
+                    code += hexChar - 48;
+                } else if (hexChar >= 65 && hexChar <= 70) { // 'A'-'F'
+                    code += hexChar - 55;
+                } else if (hexChar >= 97 && hexChar <= 102) { // 'a'-'f'
+                    code += hexChar - 87;
+                } else {
+                    isValidHex = false;
+                    break;
+                }
+            }
+
+            if (isValidHex) {
+                decoded = code === 0x005F ? '_' : stringFromCharCode(code);
+                entityLen = 7;
+            }
+        }
+        
+        if (decoded !== null) {
+            // Copy text before entity
+            if (i > lastCopied) {
+                result.push(text.substring(lastCopied, i));
+            }
+            result.push(decoded);
+            const after = i + entityLen;
+            i = after - 1; // loop will ++i next iteration
+            lastCopied = after;
+        }
     }
+    
+    // Copy remaining text
+    if (lastCopied < len) {
+        result.push(text.substring(lastCopied, len));
+    }
+    
     return result.join('');
 };
 StaxParser.prototype.GetText = function () {

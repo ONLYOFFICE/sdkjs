@@ -392,7 +392,7 @@ var editor;
 			&& !this.isLongAction()
 			&& !this.isGroupActions()
 			&& !this.asc_getIsTrackShape()
-			&& !this.isOpenedChartFrame
+			&& !this.isOpenedFrameEditor
 			&& History.IsEndTransaction()
 		);
 	};
@@ -1836,8 +1836,6 @@ var editor;
 		if (this.wb.MobileTouchManager) {
 			this.wb.MobileTouchManager.Destroy();
 		}
-		this.wb = null;
-		this.wbModel = null;
 		this.sendEvent("asc_onCloseFile");
 	};
 
@@ -2880,10 +2878,10 @@ var editor;
 	if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["onFileLockedClose"]) {
       this.asc_registerCallback("onOpenCellEditor", function() {
         window["AscDesktopEditor"]["onFileLockedClose"](true);
-	  });
+	  }, true);
 	  this.asc_registerCallback("onCloseCellEditor", function() {
         window["AscDesktopEditor"]["onFileLockedClose"](false);
-	  });
+	  }, true);
     }
   };
 
@@ -3243,6 +3241,7 @@ var editor;
 		this.initBroadcastChannelListeners();
 
 		// Toggle chart elements (bug #67197)
+		Asc.editor.asc_unregisterCallback('asc_onSelectionChanged', this.toggleChartElementsCallback);
 		Asc.editor.asc_registerCallback('asc_onSelectionChanged', this.toggleChartElementsCallback);
 	};
 
@@ -8707,7 +8706,7 @@ var editor;
 			}
 
 			var oRange = new AscCommonExcel.Range(ws, historyUpdateRange.r1, historyUpdateRange.c1, historyUpdateRange.r2, historyUpdateRange.c2);
-			this.wb.handleChartsOnWorkbookChange([oRange]);
+			this.wb.handleDrawingsOnWorkbookChange([oRange]);
 			ws.autoFilters.reapplyAllFilters(true, ws.getActiveNamedSheetViewId() !== null, null, true);
 			this.updateAllFilters();
 			this.handlers.trigger("asc_onRefreshNamedSheetViewList", index);
@@ -8817,6 +8816,9 @@ var editor;
 
 	spreadsheet_api.prototype.onWorksheetChange = function(props) {
 		let ws = this.wbModel.getActiveWs();
+		if (!ws) {
+			return;
+		}
 		let range = null;
 		let result = null;
 		if (Array.isArray(props)) {

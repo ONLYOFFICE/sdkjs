@@ -16589,10 +16589,10 @@
 						if (tile === c_oAscFillBlipType.STRETCH) {
 							ret.fill.tile = null;
 							ret.fill.srcRect = null;
-							ret.fill.stretch = true;
+							ret.fill.stretch = new AscFormat.CBlipFillStretch();
 						} else if (tile === c_oAscFillBlipType.TILE) {
 							ret.fill.tile = new CBlipFillTile();
-							ret.fill.stretch = false;
+							ret.fill.stretch = null;
 							ret.fill.srcRect = null;
 						}
 						break;

@@ -1326,3 +1326,4 @@ CTableRowRecalculateObject.prototype =
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CTableRow = CTableRow;
+window['AscWord'].TableRow = CTableRow;

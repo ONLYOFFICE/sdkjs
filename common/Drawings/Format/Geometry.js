@@ -1192,6 +1192,12 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
 
     };
 
+    Geometry.prototype.isCalculated = function ()
+    {
+        let iN = AscFormat.isRealNumber;
+        return iN(this.gdLst['w']) && iN(this.gdLst['h']);
+    };
+
     Geometry.prototype.Recalculate = function(w, h, bResetPathsInfo)
     {
         this.gdLst["_3cd4"]= 16200000;
