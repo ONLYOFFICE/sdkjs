@@ -783,6 +783,7 @@ ParaRun.prototype.MathAutoCorrection_DeleteLastSpace = function()
 ParaRun.prototype.Is_Empty = function(oProps)
 {
 	var SkipAnchor  = (undefined !== oProps ? oProps.SkipAnchor : false);
+	let SkipDrawing = (undefined !== oProps ? oProps.SkipDrawing : false);
 	var SkipEnd     = (undefined !== oProps ? oProps.SkipEnd : false);
 	var SkipPlcHldr = (undefined !== oProps ? oProps.SkipPlcHldr : false);
 	var SkipNewLine = (undefined !== oProps ? oProps.SkipNewLine : false);
@@ -812,6 +813,7 @@ ParaRun.prototype.Is_Empty = function(oProps)
 			var nType = oItem.Type;
 
 			if ((true !== SkipAnchor || para_Drawing !== nType || false !== oItem.Is_Inline())
+				&& (true !== SkipDrawing || para_Drawing !== nType)
 				&& (true !== SkipEnd || para_End !== nType)
 				&& (true !== SkipPlcHldr || true !== oItem.IsPlaceholder())
 				&& (true !== SkipNewLine || para_NewLine !== nType)
@@ -4510,7 +4512,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     {
 						let logicDocument = Para.LogicDocument;
 						let sectInfo  = logicDocument.Get_SectionPageNumInfo2(Para.GetAbsolutePage(PRS.Page));
-						let sectPr    = logicDocument.GetSectionsInfo().Get(sectInfo.SectIndex).SectPr;
+						let sectPr    = logicDocument.GetSections().GetSectPrByIndex(sectInfo.SectIndex);
                         Item.SetValue(sectInfo.CurPage, sectPr.GetPageNumFormat());
                     }
 
@@ -4764,7 +4766,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 						break;
 
 					Item.SetXY(X + SpaceLen + WordLen, PRS.Y);
-					Item.SetPage(Para.Get_AbsolutePage(PRS.Page));
+					Item.SetPage(Para.GetAbsolutePage(PRS.Page));
 
 					Item.SetRun(this);
 					PRS.ComplexFields.processFieldChar(Item);
@@ -4833,7 +4835,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 							{
 								let logicDocument = Para.LogicDocument;
 								let sectInfo      = logicDocument.Get_SectionPageNumInfo2(Para.GetAbsolutePage(PRS.Page));
-								let sectPr        = logicDocument.GetSectionsInfo().Get(sectInfo.SectIndex).SectPr;
+								let sectPr        = logicDocument.GetSections().GetSectPrByIndex(sectInfo.SectIndex);
 								let numFormat     = oInstruction.haveNumericFormat() ? oInstruction.getNumericFormat() : sectPr.GetPageNumFormat();
 								Item.SetNumValue(sectInfo.CurPage, numFormat);
 							}
@@ -5545,9 +5547,9 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
                 var Para = PRSA.Paragraph;
                 var isInHdrFtr = Para.Parent.IsHdrFtr();
 
-                var PageAbs = Para.private_GetAbsolutePageIndex(CurPage);
-                var PageRel = Para.private_GetRelativePageIndex(CurPage);
-                var ColumnAbs = Para.Get_AbsoluteColumn(CurPage);
+                var PageAbs = Para.GetAbsolutePage(CurPage);
+                var PageRel = Para.GetRelativePage(CurPage);
+                var ColumnAbs = Para.GetAbsoluteColumn(CurPage);
 
                 var LogicDocument = PRSA.getLogicDocument();
                 var LD_PageLimits = LogicDocument.Get_PageLimits(PageAbs);

@@ -476,7 +476,7 @@ asc_CChartBinary.prototype = {
         const stream = AscFormat.CreateBinaryReader(binary, 0, binary.length);
         //надо сбросить то, что остался после открытия документа
         AscCommon.pptx_content_loader.Clear();
-        const oNewChartSpace = Asc.editor.isPdfEditor() ? new AscPDF.CPdfChart() : new AscFormat.CChartSpace();
+        const oNewChartSpace = Asc.editor.isPdfEditor() ? new AscPDF.CPdfChartSpace() : new AscFormat.CChartSpace();
         const oBinaryChartReader = new AscCommon.BinaryChartReader(stream);
 	    if(this["IsChartEx"]) {
 		    oBinaryChartReader.ExternalReadCT_ChartExSpace(stream.size , oNewChartSpace, workSheet);
@@ -1770,7 +1770,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         this.graphicObject.handleObject(fCallback);
     };
     DrawingBase.prototype.initAfterSerialize = function(ws) {
-        if(!this.graphicObject) {
+        if(!this.graphicObject || !ws) {
             return;
         }
         let bIsShape = this.graphicObject.isShape();
@@ -2323,14 +2323,20 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         if (worksheet.model !== api.wb.model.getActiveWs()) {
             return;
         }
-        if (!oUpdateRect) {
-            if(!window['IS_NATIVE_EDITOR']) {
-                _this.drawingArea.clear();
-            }
-                }
+				if (!window['IS_NATIVE_EDITOR']) {
+					if (oUpdateRect) {
+						_this.drawingArea.clearRect(oUpdateRect);
+					} else {
+						_this.drawingArea.clear();
+					}
+				}
         for (var nDrawing = 0; nDrawing < aObjects.length; nDrawing++) {
             _this.drawingArea.drawObject(aObjects[nDrawing], oUpdateRect);
                 }
+				const aDropDowns = _this.controller.dropDowns;
+			for (var nDrawing = 0; nDrawing < aDropDowns.length; nDrawing++) {
+				_this.drawingArea.drawDropDown(aDropDowns[nDrawing], oUpdateRect);
+			}
         _this.OnUpdateOverlay();
         _this.controller.updateSelectionState(true);
         AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();

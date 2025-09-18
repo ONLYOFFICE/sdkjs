@@ -844,7 +844,7 @@ ChartPreviewManager.prototype.getChartPreviews = function(chartType, arrId, bEmp
 
 	SmartArtPreviewDrawer.prototype.getSmartArt = function(nSmartArtType) {
 		return AscFormat.ExecuteNoHistory(function () {
-			const oSmartArt = new AscFormat.SmartArt();
+			const oSmartArt = Asc.editor.isPdfEditor() ? new AscPDF.CPdfSmartArt() : new AscFormat.SmartArt();
 			oSmartArt.bNeedUpdatePosition = false;
 			oSmartArt.bFirstRecalculate = false;
 			const oApi = Asc.editor || editor;

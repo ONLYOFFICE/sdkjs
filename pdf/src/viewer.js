@@ -1672,7 +1672,7 @@
 						if (bGetHidden) {
 							return oField;
 						}
-						else if (oField.IsHidden() == false || oField.IsEditMode()) {
+						else if (oField.IsHidden() == false || Asc.editor.IsEditFieldsMode()) {
 							return oField;
 						}
 					}
@@ -3275,9 +3275,9 @@
 				}
 				else if (this.Api.isStartAddShape)
 				{
+					this.DrawingObjects.endTrackNewShape();
 					this.Api.sync_StartAddShapeCallback(false);
 					this.Api.sync_EndAddShape();
-					this.DrawingObjects.endTrackNewShape();
 				}
 				else {
 					const oController = oDoc.GetController();
@@ -3440,6 +3440,12 @@
 				}
 
 				bRetValue = true;
+			}
+			else if (e.KeyCode === 113) {
+				Asc.editor.StartAddAnnot(AscPDF.ANNOTATIONS_TYPES.Line, true);
+			}
+			else if (e.KeyCode === 114) {
+				Asc.editor.StartAddAnnot(AscPDF.ANNOTATIONS_TYPES.PolyLine, true);
 			}
 			
 			oDoc.UpdateCopyCutState();
@@ -4450,6 +4456,9 @@
 			if (oPageInfo.annots) {
 				for (let nAnnot = 0; nAnnot < oPageInfo.annots.length; nAnnot++) {
 					oPageInfo.annots[nAnnot].IsChanged() && oPageInfo.annots[nAnnot].WriteToBinary(oMemory);
+					oPageInfo.annots[nAnnot].GetReplies().forEach(function(reply) {
+						(reply.IsChanged() || !oMemory.docRenderer) && reply.WriteToBinary(oMemory);
+					});
 				}
 			}
 
@@ -4600,6 +4609,10 @@
 
 			let bNeedEdit = false;
 
+			if (nOriginIndex == undefined) {
+				return false;
+			}
+
 			if (nRotAngle != nOrigRotAngle) bNeedEdit = true;
 			if (aDrawings.length != 0) bNeedEdit = true;
 			if (aAnnots.find(function(annot) {
@@ -4612,7 +4625,6 @@
 				return form.IsChanged();
 			})) bNeedEdit = true;
 			if (aDeletedObj.length != 0) bNeedEdit = true;
-			if (bNeedEdit && nOriginIndex !== undefined) bNeedEdit = true;
 
 			return bNeedEdit;
 		}
@@ -4845,7 +4857,7 @@
 				for (let nAnnot = 0; nAnnot < oPageInfo.annots.length; nAnnot++) {
 					oPageInfo.annots[nAnnot].IsChanged() && oPageInfo.annots[nAnnot].WriteToBinary(oMemory);
 					oPageInfo.annots[nAnnot].GetReplies().forEach(function(reply) {
-						reply.IsChanged() && reply.WriteToBinary(oMemory); 
+						(reply.IsChanged() || !oMemory.docRenderer) && reply.WriteToBinary(oMemory);
 					});
 				}
 			}
@@ -4942,6 +4954,10 @@
 
 			let bNeedEdit = false;
 
+			if (nOriginIndex == undefined) {
+				return false;
+			}
+
 			if (nRotAngle != nOrigRotAngle) bNeedEdit = true;
 			if (aDrawings.length != 0) bNeedEdit = true;
 			if (aAnnots.some(function(annot) {
@@ -4954,8 +4970,6 @@
 				return form.IsChanged();
 			})) bNeedEdit = true;
 			if (aDeletedObj.length != 0) bNeedEdit = true;
-
-			if (bNeedEdit && nOriginIndex === undefined) bNeedEdit = false;
 
 			return bNeedEdit;
 		}

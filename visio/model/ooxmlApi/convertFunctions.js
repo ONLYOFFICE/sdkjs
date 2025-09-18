@@ -124,7 +124,7 @@
 
 		let isShapeDeleted = this.del === "1" || this.del === true;
 		if (isShapeDeleted) {
-			return null;
+			return createEmptyShape();
 		}
 
 
@@ -1204,7 +1204,7 @@
 		 * @param {number} pagesCount
 		 * @param {Page_Type} pageInfo
 		 * @param {CUniFill?} layerColor
-		 * @return {CShape} textCShape
+		 * @return {CShape | null} return textCShape or null if no text
 		 */
 		function getTextCShape(theme, shape, cShape, lineUniFill,
 							   fillUniFill, drawingPageScale, maxHeightScaledIn, currentPageIndex, pagesCount, pageInfo, layerColor) {
@@ -1952,19 +1952,6 @@
 
 			// UPD: now with binary file read \r\n in original is replaced with \n! Focus is made for binary \n
 
-			// visio set extra \r\n at the end of each text element (text tag): see fix below.
-			// UPD: fix below works for both binary read with \n and xml with \r\n
-			let lastTextEl = textElement.elements[textElement.elements.length - 1];
-			if (typeof lastTextEl === "string") {
-				if (lastTextEl.endsWith("\r\n")) {
-					lastTextEl = lastTextEl.slice(0, lastTextEl.length - 2);
-					textElement.elements[textElement.elements.length - 1] = lastTextEl;
-				} else if (lastTextEl.endsWith("\n")) {
-					lastTextEl = lastTextEl.slice(0, lastTextEl.length - 1);
-					textElement.elements[textElement.elements.length - 1] = lastTextEl;
-				}
-			}
-
 			// read text:
 			// consider CRLF (\r\n) (UPD: \n for binary read) as new paragraph start.
 			// Right after CRLF visio searches for pp
@@ -1986,6 +1973,19 @@
 							paragraphPropsCommon, textCShape);
 					currentParagraph = oContent.Content.slice(-1)[0]; // last paragraph
 				}
+
+				// visio set extra \r\n at the end of each Text tag: see fix below.
+				// UPD: fix below works for both binary read with \n and xml with \r\n
+				if (i === textElement.elements.length - 1) {
+					if (typeof textElementPart === "string") {
+						if (textElementPart.endsWith("\r\n")) {
+							textElementPart = textElementPart.slice(0, textElementPart.length - 2);
+						} else if (textElementPart.endsWith("\n")) {
+							textElementPart = textElementPart.slice(0, textElementPart.length - 1);
+						}
+					}
+				}
+
 
 				if (typeof textElementPart === "string" || textElementPart.kind === AscVisio.c_oVsdxTextKind.FLD) {
 					if (typeof textElementPart === "string") {
@@ -2574,16 +2574,18 @@
 
 	/**
 	 * converts !Shape TypeGroup! To CGroupShape Recursively.
-	 * let's say shape can only have subshapes if its Type='Group'.
+	 * Shape can only have subshapes if its Type='Group'.
+	 * Can be called on shapes Type not 'Group' then shape just adds to currentGroupHandling
 	 * @memberOf Shape_Type
 	 * @param {CVisioDocument} visioDocument
 	 * @param {Page_Type} pageInfo
 	 * @param {Number} drawingPageScale
 	 * @param {CGroupShape?} currentGroupHandling
-	 * @return {CGroupShape}
+	 * @param {number[]?} delMasterShapes - shapes with MasterShape included in array will not be converted
+	 * @return {CGroupShape | undefined}
 	 */
 	Shape_Type.prototype.convertGroup = function (visioDocument, pageInfo,
-												  drawingPageScale, currentGroupHandling) {
+												  drawingPageScale, currentGroupHandling, delMasterShapes) {
 		// if we need to create CGroupShape create CShape first then copy its properties to CGroupShape object
 		// so anyway create CShapes
 		let cShapeOrCGroupShape = this.convertShape(visioDocument, pageInfo, drawingPageScale, currentGroupHandling);
@@ -2655,18 +2657,43 @@
 					groupShape.spTree[groupShape.spTree.length - 1].setGroup(groupShape);
 				}
 
-				if (currentGroupHandling) {
-					// insert group to currentGroupHandling
-					currentGroupHandling.addToSpTree(currentGroupHandling.spTree.length, groupShape);
-					currentGroupHandling.spTree[currentGroupHandling.spTree.length - 1].setGroup(currentGroupHandling);
-				}
-
 				// handle sub-shapes
-				currentGroupHandling = groupShape;
 				let subShapes = this.getSubshapes();
+
+				/**
+				 * see bug for Del attribute handle: https://bugzilla.onlyoffice.com/show_bug.cgi?id=76050
+				 * let's collect dels first and then traverse through all the group again in groupShape.deleteShapes().
+				 * Dels appear rarely so it is ok.
+				 * @type {number[]}
+				 */
+				let delMasterShapesCurrent = [];
 				for (let i = 0; i < subShapes.length; i++) {
 					const subShape = subShapes[i];
-					subShape.convertGroup(visioDocument, pageInfo, drawingPageScale, currentGroupHandling);
+					if (subShape.del && subShape.masterShape !== null) {
+						delMasterShapesCurrent.push(subShape.masterShape);
+					}
+				}
+				if (delMasterShapes === undefined) {
+					delMasterShapes = delMasterShapesCurrent;
+				} else {
+					delMasterShapes = delMasterShapes.concat(delMasterShapesCurrent);
+				}
+
+				for (let i = 0; i < subShapes.length; i++) {
+					const subShape = subShapes[i];
+					// if group - remove
+					// if shape and fully inherited - remove
+					// if shape/group is not inherited check for masterShape
+					// if shape/group is inherited check for id
+					// TODO Optimization: use Set() because has() is faster than includes()
+					// TODO try changing shape Del='1' IDs and see what happens
+					const delIdCheck = this.inheritedShapes.includes(subShape) && delMasterShapes.includes(subShape.id)
+							|| delMasterShapes.includes(subShape.masterShape);
+					const isDeleted = delIdCheck && (subShape.type === AscVisio.SHAPE_TYPES_GROUP
+							|| subShape.type === AscVisio.SHAPE_TYPES_SHAPE && this.inheritedShapes.includes(subShape))
+					if (!isDeleted) {
+						subShape.convertGroup(visioDocument, pageInfo, drawingPageScale, groupShape, delMasterShapes);
+					}
 				}
 
 				// if group geometry should be on the top layer
@@ -2685,6 +2712,14 @@
 					groupShape.addToSpTree(groupShape.spTree.length, cShapeOrCGroupShape.spTree[1]);
 					groupShape.spTree[groupShape.spTree.length - 1].setGroup(groupShape);
 				}
+
+				if (currentGroupHandling) {
+					// insert group to currentGroupHandling
+					currentGroupHandling.addToSpTree(currentGroupHandling.spTree.length, groupShape);
+					currentGroupHandling.spTree[currentGroupHandling.spTree.length - 1].setGroup(currentGroupHandling);
+				}
+
+				return groupShape;
 			}
 		} else {
 			// if read cShape not CGroupShape
@@ -2698,8 +2733,6 @@
 				}
 			}
 		}
-
-		return currentGroupHandling;
 	}
 
 	/**

@@ -465,12 +465,34 @@ function CContentControlPr(nType)
 }
 CContentControlPr.prototype.GetEventObject = function()
 {
-	return {
+	let result = {
 		"Tag"        : this.Tag,
 		"Id"         : this.Id,
 		"Lock"       : this.Lock,
-		"InternalId" : this.InternalId
+		"InternalId" : this.InternalId,
+		"Alias"      : this.Alias,
+		"Appearance" : this.Appearance
 	};
+	
+	if (this.CC && this.CC.IsForm())
+	{
+		result["FormKey"] = this.CC.GetFormKey();
+		if (this.CC.IsRadioButton())
+			result["RadioGroup"] = this.CC.GetRadioButtonGroupKey();
+		
+		result["FormValue"] = this.CC.GetFormValue();
+	}
+	
+	if (this.Color)
+	{
+		result["Color"] = {
+			"R" : this.Color.r,
+			"G" : this.Color.g,
+			"B" : this.Color.b
+		};
+	}
+	
+	return result;
 };
 CContentControlPr.prototype.FillFromObject = function(oPr)
 {

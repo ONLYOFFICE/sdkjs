@@ -328,6 +328,11 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
                 ret = handleSlicer(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord);
                 break;
             }
+	        case AscDFH.historyitem_type_Control: 
+					{
+						ret = handleControl(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord);
+						break;
+	        }
             case AscDFH.historyitem_type_Shape:
             case AscDFH.historyitem_type_ImageShape:
             case AscDFH.historyitem_type_OleObject:
@@ -477,6 +482,44 @@ function handleBaseAnnot(annot, drawingObjectsController, e, x, y, group, pageIn
             return handleShapeImageInGroup(drawingObjectsController, drawing, shape, e, x, y, pageIndex, bWord);
         }
     }
+
+	function handleControl(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord) {
+		if (drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE) {
+			var bRet = drawing.onMouseDown(e, x, y, pageIndex, drawingObjectsController);
+			if (!bRet) {
+				return handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord);
+
+			} else {
+				drawingObjectsController.changeCurrentState(new AscFormat.ControlState(drawingObjectsController, drawing));
+			}
+			return bRet;
+		} else {
+			var oCursorInfo = drawing.getCursorInfo(e, x, y);
+			if (oCursorInfo) {
+				return oCursorInfo;
+			}
+			return handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord);
+		}
+	}
+
+	function handleControlInGroup(drawingObjectsController, drawing, shape, e, x, y, pageIndex, bWord) {
+		if (drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE) {
+			var bRet = shape.onMouseDown(e, x, y);
+			if (!bRet) {
+				return handleShapeImageInGroup(drawingObjectsController, drawing, shape, e, x, y, pageIndex, bWord);
+
+			} else {
+				drawingObjectsController.changeCurrentState(new AscFormat.ControlState(drawingObjectsController, shape));
+			}
+			return bRet;
+		} else {
+			var oCursorInfo = shape.getCursorInfo(e, x, y);
+			if (oCursorInfo) {
+				return oCursorInfo;
+			}
+			return handleShapeImageInGroup(drawingObjectsController, drawing, shape, e, x, y, pageIndex, bWord);
+		}
+	}
 
 function handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord)
 {
@@ -669,6 +712,15 @@ function handleGroup(drawing, drawingObjectsController, e, x, y, group, pageInde
                 }
                 break;
             }
+	        case AscDFH.historyitem_type_Control:
+	        {
+		        ret = handleControlInGroup(drawingObjectsController, drawing, cur_grouped_object, e, x, y, pageIndex, bWord);
+		        if(ret)
+		        {
+			        return ret;
+		        }
+		        break;
+	        }
             case AscDFH.historyitem_type_Shape:
             case AscDFH.historyitem_type_ImageShape:
             case AscDFH.historyitem_type_OleObject:

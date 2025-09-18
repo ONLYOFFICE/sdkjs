@@ -5483,9 +5483,9 @@
 						oMap[aParaComments[nComment].Comment.CommentId] = {};
 
 					if (aParaComments[nComment].Comment.Start)
-						oMap[aParaComments[nComment].Comment.CommentId]["Start"] = true;
+						oMap[aParaComments[nComment].Comment.CommentId].Start = true;
 					else
-						oMap[aParaComments[nComment].Comment.CommentId]["End"] = true;
+						oMap[aParaComments[nComment].Comment.CommentId].End = true;
 				}
 			}
 			if (oElm instanceof AscCommonWord.CTable)
@@ -6944,6 +6944,17 @@
 
 		return arrResults;
 	};
+
+	WriterToJSON.prototype.SetSrcRect = function(srcRect) {
+		if (!srcRect) return srcRect;
+		return {
+			"b": srcRect.b,
+			"l": srcRect.l,
+			"r": srcRect.r,
+			"t": srcRect.t
+		};
+	};
+
 	WriterToJSON.prototype.SerBlipFill = function(oBlipFill)
 	{
 		if (!oBlipFill)
@@ -6954,12 +6965,7 @@
 		return {
 			"blip": this.SerEffects(oBlipFill.Effects),
 
-			"srcRect": oBlipFill.srcRect ? {
-				"b": oBlipFill.srcRect.b,
-				"l": oBlipFill.srcRect.l,
-				"r": oBlipFill.srcRect.r,
-				"t": oBlipFill.srcRect.t
-			} : oBlipFill.srcRect,
+			"srcRect": this.SetSrcRect(oBlipFill.srcRect),
 
 			"tile": oBlipFill.tile ? {
 				"algn": GetRectAlgnStrType(oBlipFill.tile.algn),
@@ -6970,7 +6976,9 @@
 				"ty":   oBlipFill.tile.ty
 			} : oBlipFill.tile,
 
-			"stretch":       oBlipFill.stretch,
+			"stretch":  oBlipFill.stretch ? {
+				"fillRect": this.SetSrcRect(oBlipFill.stretch.fillRect),
+			} : oBlipFill.stretch,
 			"rotWithShape":  oBlipFill.rotWithShape,
 			"rasterImageId": rasterImageId,
 			"type": "blipFill"
@@ -10081,7 +10089,7 @@
 	};
 	ReaderFromJSON.prototype.SectPrFromJSON = function(oParsedSectPr)
 	{
-		var oSectPr = new AscCommonWord.CSectionPr(private_GetLogicDocument());
+		var oSectPr = new AscWord.SectPr(private_GetLogicDocument());
 
 		var nSectionType = undefined;
 		switch(oParsedSectPr["type"])
@@ -11873,19 +11881,28 @@
 
 		return oMods;
 	};
+
+	ReaderFromJSON.prototype.SrcRectFromJSON = function (parsedSrcRect)
+	{
+		if (!parsedSrcRect) return parsedSrcRect;
+		let srcRect   = new AscFormat.CSrcRect();
+		srcRect.b = parsedSrcRect["b"];
+		srcRect.l = parsedSrcRect["l"];
+		srcRect.r = parsedSrcRect["r"];
+		srcRect.t = parsedSrcRect["t"];
+		return srcRect;
+	};
+
 	ReaderFromJSON.prototype.BlipFillFromJSON = function(oParsedFill)
 	{
 		var oBlipFill = new AscFormat.CBlipFill();
+		oBlipFill.srcRect = this.SrcRectFromJSON(oParsedFill["srcRect"]);
 
-		if (oParsedFill["srcRect"])
+		if (oParsedFill["stretch"])
 		{
-			oBlipFill.srcRect   = new AscFormat.CSrcRect();
-			oBlipFill.srcRect.b = oParsedFill["srcRect"]["b"];
-			oBlipFill.srcRect.l = oParsedFill["srcRect"]["l"];
-			oBlipFill.srcRect.r = oParsedFill["srcRect"]["r"];
-			oBlipFill.srcRect.t = oParsedFill["srcRect"]["t"];
+			oBlipFill.stretch = AscFormat.CBlipFillStretch();
+			oBlipFill.stretch.fillRect = this.SrcRectFromJSON(oParsedFill["stretch"]["fillRect"]);
 		}
-		oBlipFill.stretch = oParsedFill["stretch"];
 
 		if (oParsedFill["tile"])
 		{

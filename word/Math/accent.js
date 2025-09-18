@@ -795,9 +795,17 @@ CAccent.fromMathML = function(reader, type)
 	if (isNary)
 	{
 		if (mContents.length > 2)
+		{
 			return AscMath.DegreeSubSup.fromMathML(reader, mContents);
+		}
 		else
-			return AscMath.Degree.fromMathML(reader, type ===  VJUST_TOP ? DEGREE_SUBSCRIPT : DEGREE_SUPERSCRIPT, mContents);
+		{
+			return AscMath.Degree.fromMathML(
+				reader,
+				type ===  VJUST_TOP ? DEGREE_SUBSCRIPT : DEGREE_SUPERSCRIPT,
+				mContents
+			);
+		}
 	}
 
 	if (mContents.length >= 2)
@@ -806,9 +814,13 @@ CAccent.fromMathML = function(reader, type)
 		if (mContents[1])
 		{
 			let chrText = mContents[1].GetTextOfElement().GetText().trim();
-			if (chrText.length > 1)
+			if (chrText.length > 1 || !AscMath.MathLiterals.accent.SearchU(chrText))
 			{
-				return  AscMath.Limit.fromMathML(reader, type, mContents)
+				return AscMath.GroupCharacter.fromMathML(
+					reader,
+					type === VJUST_BOT ? VJUST_TOP: VJUST_BOT,
+					mContents
+				)
 			}
 			props.chr = chrText.charCodeAt(0);
 		}

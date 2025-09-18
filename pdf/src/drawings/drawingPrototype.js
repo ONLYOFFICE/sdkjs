@@ -87,8 +87,9 @@
 			return false;
 		}
 
-		if (this.group && this.group.IsUseInDocument)
-			return this.group.IsUseInDocument();
+        let oGroup = this.getMainGroup();
+		if (oGroup && oGroup != this && oGroup.IsUseInDocument)
+			return oGroup.IsUseInDocument();
 		
         let oPage = this.GetParentPage();
         if (oPage && oPage.drawings.includes(this) && oPage.GetIndex() !== -1) {
@@ -253,24 +254,27 @@
         this._doc = oDoc;
     };
     CPdfDrawingPrototype.prototype.OnContentChange = function() {
-        if (this.group) {
-            this.group.SetNeedRecalc(true);
+        let oGroup = this.getMainGroup();
+        if (oGroup) {
+            oGroup.SetNeedRecalc && oGroup.SetNeedRecalc(true);
         }
         else {
             this.SetNeedRecalc(true);
         }
     };
     CPdfDrawingPrototype.prototype.OnTextPrChange = function() {
-        if (this.group) {
-            this.group.SetNeedRecalc(true);
+        let oGroup = this.getMainGroup();
+        if (oGroup) {
+            oGroup.SetNeedRecalc && oGroup.SetNeedRecalc(true);
         }
         else {
             this.SetNeedRecalc(true);
         }
     };
     CPdfDrawingPrototype.prototype.GetDocument = function() {
-        if (this.group)
-            return this.group.getLogicDocument();
+        let oGroup = this.getMainGroup();
+        if (oGroup && oGroup != this)
+            return oGroup.getLogicDocument();
 
         return this._doc;
     };
@@ -289,8 +293,10 @@
         }
     };
     CPdfDrawingPrototype.prototype.GetPage = function() {
-        if (this.group)
-            return this.group.GetPage();
+        let oGroup = this.getMainGroup();
+        if (oGroup && oGroup != this) {
+            return oGroup.GetPage();
+        }
         
         let oParentPage = this.GetParentPage();
         if (!oParentPage || !(oParentPage instanceof AscPDF.CPageInfo)) {
@@ -308,8 +314,9 @@
             return;
         }
         
-        if (this.group && this.group.IsAnnot()) {
-            this.group.AddToRedraw();
+        let oGroup = this.getMainGroup();
+        if (oGroup && oGroup != this && oGroup.IsAnnot()) {
+            oGroup.AddToRedraw();
             return;
         }
 
@@ -336,12 +343,13 @@
             this._needRecalc = false;
         }
         else {
-            if (this.group) {
-                if (!this.group.IsPdfObject || !this.group.IsPdfObject()) {
+            let oGroup = this.getMainGroup();
+            if (oGroup && oGroup != this) {
+                if (!oGroup.IsPdfObject || !oGroup.IsPdfObject()) {
                     return;
                 }
 
-                this.group.SetNeedRecalc(bRecalc, bSkipAddToRedraw);
+                oGroup.SetNeedRecalc(bRecalc, bSkipAddToRedraw);
                 return;
             }
 
@@ -353,8 +361,8 @@
             if (bSkipAddToRedraw != true)
                 this.AddToRedraw();
 
-            if (this.group) {
-                this.group.SetNeedRecalc(true);
+            if (oGroup && oGroup != this) {
+                oGroup.SetNeedRecalc(true);
             }
         }
     };
@@ -375,14 +383,11 @@
     CPdfDrawingPrototype.prototype.GetDocContent = function() {
         return null;
     };
-    CPdfDrawingPrototype.prototype.SetInTextBox = function(bIn) {
-        this.isInTextBox = bIn;
-    };
     CPdfDrawingPrototype.prototype.IsInTextBox = function() {
         let oDoc = editor.getPDFDoc();
         let oController = oDoc.GetController();
 
-        if (oDoc.GetActiveObject() == this && this == oController.getTargetTextObject()) {
+        if (oDoc.GetActiveObject() == this && oController.getTargetTextObject()) {
             return !!this.GetDocContent();
         }
 
@@ -399,17 +404,20 @@
 		this.SetNeedRecalc(true);
 		content.RecalculateCurPos();
 	};
-	CPdfDrawingPrototype.prototype.EnterText = function(value) {
+	CPdfDrawingPrototype.prototype.EnterText = function(codePoints) {
 		let doc = this.GetDocument();
+        let controller = doc.GetController();
 		let content = this.GetDocContent();
 		if (!doc || !content)
 			return false;
 		
-		let result = content.EnterText(value);
-		content.RecalculateCurPos();
-        
-        this.checkExtentsByDocContent && this.checkExtentsByDocContent();
-		return result;
+        for (let nIdx = 0; nIdx < codePoints.length; ++nIdx) {
+            let nCode = codePoints[nIdx];
+            let oItem = AscCommon.IsSpace(nCode) ? new AscWord.CRunSpace(nCode) : new AscWord.CRunText(nCode);
+            controller.paragraphAdd(oItem, false);
+        }
+
+		return true;
 	};
 	CPdfDrawingPrototype.prototype.canBeginCompositeInput = function() {
 		return true;
@@ -426,7 +434,7 @@
     ///// Overrides
     /////////////////////////////////////////////////////////////////////////////
     
-    CPdfDrawingPrototype.prototype.Get_AbsolutePage = function(nCurPage) {
+    CPdfDrawingPrototype.prototype.GetAbsolutePage = function(nCurPage) {
         return this.GetPage() != undefined ? this.GetPage() : nCurPage;
     };
     CPdfDrawingPrototype.prototype.getLogicDocument = function() {

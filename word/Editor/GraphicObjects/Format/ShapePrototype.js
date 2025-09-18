@@ -838,11 +838,11 @@ CShape.prototype.Refresh_RecalcData2 = function()
     }
 };
 
-CShape.prototype.Get_StartPage_Absolute = function()
+CShape.prototype.GetAbsoluteStartPage = function()
 {
     return 0;
 };
-CShape.prototype.Get_AbsolutePage = function(CurPage)
+CShape.prototype.GetAbsolutePage = function(CurPage)
 {
     var oDrawing = this.GetParaDrawing();
     if(oDrawing)
@@ -851,7 +851,7 @@ CShape.prototype.Get_AbsolutePage = function(CurPage)
     }
     return 0;
 };
-CShape.prototype.Get_AbsoluteColumn = function(CurPage)
+CShape.prototype.GetAbsoluteColumn = function(CurPage)
 {
     return 0;
 };
@@ -949,7 +949,7 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex, bNoTextSelect
 	}
 };
 
-CShape.prototype.Get_StartPage_Relative = function()
+CShape.prototype.GetRelativeStartPage = function()
 {
     return 0;
 };

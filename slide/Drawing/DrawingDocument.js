@@ -1572,7 +1572,11 @@ function CDrawingDocument()
 	{
 
 		let thpages = this.m_oWordControl.Thumbnails.m_arrPages;
-		if(index < 0 || index >= thpages.length) return;
+		if (thpages.length > index)
+		{
+			thpages[index].IsRecalc = true;
+		}
+
 
 		if (this.m_oWordControl && this.m_oWordControl.MobileTouchManager)
 		{
@@ -1591,10 +1595,6 @@ function CDrawingDocument()
 			this.SendChangeDocumentToApi(true);
 		}
 
-		if (thpages.length > index)
-		{
-			thpages[index].IsRecalc = true;
-		}
 
 		if (index === this.SlideCurrent)
 		{
@@ -3533,6 +3533,7 @@ function DrawBackground(graphics, unifill, w, h)
 	_shape.TransformMatrix = new AscCommon.CMatrix();
 	_shape.extX            = w;
 	_shape.extY            = h;
+	_shape.bounds.reset(0, 0, w, h);
 	_shape.check_bounds    = function(checker)
 	{
 		checker._s();
@@ -5260,7 +5261,7 @@ function CThumbnailsManager(editorPage)
 
 		this.m_oWordControl.m_oApi.clearEyedropperImgData();
 
-		const context = canvas.getContext("2d");
+		const context = AscCommon.AscBrowser.getContext2D(canvas);
 		context.clearRect(0, 0, canvas.width, canvas.height);
 
 		const digitDistance = this.const_offset_x * g_dKoef_pix_to_mm;
@@ -6679,7 +6680,7 @@ function CSlideDrawer()
 				this.CachedCanvas.width  = _need_pix_width + 100;
 				this.CachedCanvas.height = _need_pix_height + 100;
 
-				this.CachedCanvasCtx = this.CachedCanvas.getContext('2d');
+				this.CachedCanvasCtx = AscCommon.AscBrowser.getContext2D(this.CachedCanvas);
 			}
 			else
 			{
@@ -6924,7 +6925,7 @@ function CNotesDrawer(page)
 	this.OnPaint = function()
 	{
 		var element = this.HtmlPage.m_oNotes.HtmlElement;
-		var ctx = element.getContext('2d');
+		var ctx = AscCommon.AscBrowser.getContext2D(element);
 		ctx.clearRect(0, 0, element.width, element.height);
 
 		if (-1 == this.Slide || this.IsEmptyDraw)

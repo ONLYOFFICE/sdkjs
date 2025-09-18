@@ -292,7 +292,7 @@ ParaTextPr.prototype.SetBold = function(Value)
 	if (this.Value.Bold === Value)
 		return;
 
-	History.Add(new CChangesParaTextPrBold(this, this.Value.Bold, Value));
+	AscCommon.History.Add(new CChangesParaTextPrBold(this, this.Value.Bold, Value));
 	this.Value.Bold = Value;
 };
 ParaTextPr.prototype.SetItalic = function(Value)
@@ -303,7 +303,7 @@ ParaTextPr.prototype.SetItalic = function(Value)
 	if (this.Value.Italic === Value)
 		return;
 
-	History.Add(new CChangesParaTextPrItalic(this, this.Value.Italic, Value));
+	AscCommon.History.Add(new CChangesParaTextPrItalic(this, this.Value.Italic, Value));
 	this.Value.Italic = Value;
 };
 ParaTextPr.prototype.SetStrikeout = function(Value)
@@ -314,7 +314,7 @@ ParaTextPr.prototype.SetStrikeout = function(Value)
 	if (this.Value.Strikeout === Value)
 		return;
 
-	History.Add(new CChangesParaTextPrStrikeout(this, this.Value.Strikeout, Value));
+	AscCommon.History.Add(new CChangesParaTextPrStrikeout(this, this.Value.Strikeout, Value));
 	this.Value.Strikeout = Value;
 };
 ParaTextPr.prototype.SetUnderline = function(Value)
@@ -325,7 +325,7 @@ ParaTextPr.prototype.SetUnderline = function(Value)
 	if (this.Value.Underline === Value)
 		return;
 
-	History.Add(new CChangesParaTextPrUnderline(this, this.Value.Underline, Value));
+	AscCommon.History.Add(new CChangesParaTextPrUnderline(this, this.Value.Underline, Value));
 	this.Value.Underline = Value;
 };
 ParaTextPr.prototype.SetFontSize = function(Value)
@@ -336,7 +336,7 @@ ParaTextPr.prototype.SetFontSize = function(Value)
 	if (this.Value.FontSize === Value)
 		return;
 
-	History.Add(new CChangesParaTextPrFontSize(this, this.Value.FontSize, Value));
+	AscCommon.History.Add(new CChangesParaTextPrFontSize(this, this.Value.FontSize, Value));
 	this.Value.FontSize = Value;
 };
 ParaTextPr.prototype.Set_Color = function(Value)
@@ -344,7 +344,7 @@ ParaTextPr.prototype.Set_Color = function(Value)
 	if (null === Value)
 		Value = undefined;
 
-	History.Add(new CChangesParaTextPrColor(this, this.Value.Color, Value));
+	AscCommon.History.Add(new CChangesParaTextPrColor(this, this.Value.Color, Value));
 	this.Value.Color = Value;
 };
 ParaTextPr.prototype.Set_VertAlign = function(Value)
@@ -355,7 +355,7 @@ ParaTextPr.prototype.Set_VertAlign = function(Value)
 	if (this.Value.VertAlign === Value)
 		return;
 
-	History.Add(new CChangesParaTextPrVertAlign(this, this.Value.VertAlign, Value));
+	AscCommon.History.Add(new CChangesParaTextPrVertAlign(this, this.Value.VertAlign, Value));
 	this.Value.VertAlign = Value;
 };
 ParaTextPr.prototype.Set_HighLight = function(Value)
@@ -363,7 +363,7 @@ ParaTextPr.prototype.Set_HighLight = function(Value)
 	if (null === Value)
 		Value = undefined;
 
-	History.Add(new CChangesParaTextPrHighLight(this, this.Value.HighLight, Value));
+	AscCommon.History.Add(new CChangesParaTextPrHighLight(this, this.Value.HighLight, Value));
 	this.Value.HighLight = Value;
 };
 ParaTextPr.prototype.SetHighlightColor = function(Value)
@@ -371,7 +371,7 @@ ParaTextPr.prototype.SetHighlightColor = function(Value)
 	if (null === Value)
 		Value = undefined;
 
-	History.Add(new CChangesParaTextPrHighlightColor(this, this.Value.HighlightColor, Value));
+	AscCommon.History.Add(new CChangesParaTextPrHighlightColor(this, this.Value.HighlightColor, Value));
 	this.Value.HighlightColor = Value;
 };
 ParaTextPr.prototype.Set_RStyle = function(Value)
@@ -382,7 +382,7 @@ ParaTextPr.prototype.Set_RStyle = function(Value)
 	if (this.Value.RStyle === Value)
 		return;
 
-	History.Add(new CChangesParaTextPrRStyle(this, this.Value.RStyle, Value));
+	AscCommon.History.Add(new CChangesParaTextPrRStyle(this, this.Value.RStyle, Value));
 	this.Value.RStyle = Value;
 };
 ParaTextPr.prototype.SetRStyle = function(styleId)
@@ -397,7 +397,7 @@ ParaTextPr.prototype.Set_Spacing = function(Value)
 	if (this.Value.Spacing === Value)
 		return;
 
-	History.Add(new CChangesParaTextPrSpacing(this, this.Value.Spacing, Value));
+	AscCommon.History.Add(new CChangesParaTextPrSpacing(this, this.Value.Spacing, Value));
 	this.Value.Spacing = Value;
 };
 ParaTextPr.prototype.Set_DStrikeout = function(Value)
@@ -408,7 +408,7 @@ ParaTextPr.prototype.Set_DStrikeout = function(Value)
 	if (this.Value.DStrikeout === Value)
 		return;
 
-	History.Add(new CChangesParaTextPrDStrikeout(this, this.Value.DStrikeout, Value));
+	AscCommon.History.Add(new CChangesParaTextPrDStrikeout(this, this.Value.DStrikeout, Value));
 	this.Value.DStrikeout = Value;
 };
 ParaTextPr.prototype.Set_Caps = function(Value)
@@ -419,7 +419,7 @@ ParaTextPr.prototype.Set_Caps = function(Value)
 	if (this.Value.Caps === Value)
 		return;
 
-	History.Add(new CChangesParaTextPrCaps(this, this.Value.Caps, Value));
+	AscCommon.History.Add(new CChangesParaTextPrCaps(this, this.Value.Caps, Value));
 	this.Value.Caps = Value;
 };
 ParaTextPr.prototype.Set_SmallCaps = function(Value)
@@ -430,7 +430,7 @@ ParaTextPr.prototype.Set_SmallCaps = function(Value)
 	if (this.Value.SmallCaps === Value)
 		return;
 
-	History.Add(new CChangesParaTextPrSmallCaps(this, this.Value.SmallCaps, Value));
+	AscCommon.History.Add(new CChangesParaTextPrSmallCaps(this, this.Value.SmallCaps, Value));
 	this.Value.SmallCaps = Value;
 };
 ParaTextPr.prototype.Set_Position = function(Value)
@@ -441,7 +441,7 @@ ParaTextPr.prototype.Set_Position = function(Value)
 	if (this.Value.Position === Value)
 		return;
 
-	History.Add(new CChangesParaTextPrPosition(this, this.Value.Position, Value));
+	AscCommon.History.Add(new CChangesParaTextPrPosition(this, this.Value.Position, Value));
 	this.Value.Position = Value;
 };
 ParaTextPr.prototype.Set_Value = function(Value)
@@ -449,13 +449,13 @@ ParaTextPr.prototype.Set_Value = function(Value)
 	if (!Value || !(Value instanceof CTextPr) || true === this.Value.Is_Equal(Value))
 		return;
 
-	History.Add(new CChangesParaTextPrValue(this, this.Value, Value));
+	AscCommon.History.Add(new CChangesParaTextPrValue(this, this.Value, Value));
 	this.Value = Value;
 };
 ParaTextPr.prototype.Set_RFonts = function(Value)
 {
 	var _Value = Value ? Value : new CRFonts();
-	History.Add(new CChangesParaTextPrRFonts(this, this.Value.RFonts, _Value));
+	AscCommon.History.Add(new CChangesParaTextPrRFonts(this, this.Value.RFonts, _Value));
 	this.Value.RFonts = _Value;
 };
 ParaTextPr.prototype.Set_RFonts2 = function(oRFonts)
@@ -559,7 +559,7 @@ ParaTextPr.prototype.SetRFontsAscii = function(Value)
 	if (null === Value)
 		Value = undefined;
 
-	History.Add(new CChangesParaTextPrRFontsAscii(this, this.Value.RFonts.Ascii, Value));
+	AscCommon.History.Add(new CChangesParaTextPrRFontsAscii(this, this.Value.RFonts.Ascii, Value));
 	this.Value.RFonts.Ascii = Value;
 };
 ParaTextPr.prototype.SetRFontsHAnsi = function(Value)
@@ -567,7 +567,7 @@ ParaTextPr.prototype.SetRFontsHAnsi = function(Value)
 	if (null === Value)
 		Value = undefined;
 
-	History.Add(new CChangesParaTextPrRFontsHAnsi(this, this.Value.RFonts.HAnsi, Value));
+	AscCommon.History.Add(new CChangesParaTextPrRFontsHAnsi(this, this.Value.RFonts.HAnsi, Value));
 	this.Value.RFonts.HAnsi = Value;
 };
 ParaTextPr.prototype.SetRFontsCS = function(Value)
@@ -575,7 +575,7 @@ ParaTextPr.prototype.SetRFontsCS = function(Value)
 	if (null === Value)
 		Value = undefined;
 
-	History.Add(new CChangesParaTextPrRFontsCS(this, this.Value.RFonts.CS, Value));
+	AscCommon.History.Add(new CChangesParaTextPrRFontsCS(this, this.Value.RFonts.CS, Value));
 	this.Value.RFonts.CS = Value;
 };
 ParaTextPr.prototype.SetRFontsEastAsia = function(Value)
@@ -583,7 +583,7 @@ ParaTextPr.prototype.SetRFontsEastAsia = function(Value)
 	if (null === Value)
 		Value = undefined;
 
-	History.Add(new CChangesParaTextPrRFontsEastAsia(this, this.Value.RFonts.EastAsia, Value));
+	AscCommon.History.Add(new CChangesParaTextPrRFontsEastAsia(this, this.Value.RFonts.EastAsia, Value));
 	this.Value.RFonts.EastAsia = Value;
 };
 ParaTextPr.prototype.SetRFontsHint = function(Value)
@@ -591,7 +591,7 @@ ParaTextPr.prototype.SetRFontsHint = function(Value)
 	if (null === Value)
 		Value = undefined;
 
-	History.Add(new CChangesParaTextPrRFontsHint(this, this.Value.RFonts.Hint, Value));
+	AscCommon.History.Add(new CChangesParaTextPrRFontsHint(this, this.Value.RFonts.Hint, Value));
 	this.Value.RFonts.Hint = Value;
 };
 ParaTextPr.prototype.SetRFontsAsciiTheme = function(sValue)
@@ -636,27 +636,27 @@ ParaTextPr.prototype.Set_Lang = function(Value)
 	if (Value)
 		_Value.Set_FromObject(Value);
 
-	History.Add(new CChangesParaTextPrLang(this, this.Value.Lang, Value));
+	AscCommon.History.Add(new CChangesParaTextPrLang(this, this.Value.Lang, Value));
 	this.Value.Lang = _Value;
 };
 ParaTextPr.prototype.Set_Lang_Bidi = function(Value)
 {
-	History.Add(new CChangesParaTextPrLangBidi(this, this.Value.Lang.Bidi, Value));
+	AscCommon.History.Add(new CChangesParaTextPrLangBidi(this, this.Value.Lang.Bidi, Value));
 	this.Value.Lang.Bidi = Value;
 };
 ParaTextPr.prototype.Set_Lang_EastAsia = function(Value)
 {
-	History.Add(new CChangesParaTextPrLangEastAsia(this, this.Value.Lang.EastAsia, Value));
+	AscCommon.History.Add(new CChangesParaTextPrLangEastAsia(this, this.Value.Lang.EastAsia, Value));
 	this.Value.Lang.EastAsia = Value;
 };
 ParaTextPr.prototype.Set_Lang_Val = function(Value)
 {
-	History.Add(new CChangesParaTextPrLangVal(this, this.Value.Lang.Val, Value));
+	AscCommon.History.Add(new CChangesParaTextPrLangVal(this, this.Value.Lang.Val, Value));
 	this.Value.Lang.Val = Value;
 };
 ParaTextPr.prototype.Set_Unifill = function(Value)
 {
-	History.Add(new CChangesParaTextPrUnifill(this, this.Value.Unifill, Value));
+	AscCommon.History.Add(new CChangesParaTextPrUnifill(this, this.Value.Unifill, Value));
 	this.Value.Unifill = Value;
 };
 ParaTextPr.prototype.SetFontSizeCS = function(Value)
@@ -667,17 +667,17 @@ ParaTextPr.prototype.SetFontSizeCS = function(Value)
 	if (this.Value.FontSizeCS === Value)
 		return;
 
-	History.Add(new CChangesParaTextPrFontSizeCS(this, this.Value.FontSizeCS, Value));
+	AscCommon.History.Add(new CChangesParaTextPrFontSizeCS(this, this.Value.FontSizeCS, Value));
 	this.Value.FontSizeCS = Value;
 };
 ParaTextPr.prototype.Set_TextOutline = function(Value)
 {
-	History.Add(new CChangesParaTextPrTextOutline(this, this.Value.TextOutline, Value));
+	AscCommon.History.Add(new CChangesParaTextPrTextOutline(this, this.Value.TextOutline, Value));
 	this.Value.TextOutline = Value;
 };
 ParaTextPr.prototype.Set_TextFill = function(Value)
 {
-	History.Add(new CChangesParaTextPrTextFill(this, this.Value.TextFill, Value));
+	AscCommon.History.Add(new CChangesParaTextPrTextFill(this, this.Value.TextFill, Value));
 	this.Value.TextFill = Value;
 };
 ParaTextPr.prototype.SetBoldCS = function(isBold)

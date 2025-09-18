@@ -148,6 +148,11 @@ function CPresentationBullet()
 	this.m_sSrc = null;
 }
 
+CPresentationBullet.prototype.IsLegalStyle = function()
+{
+	return false;
+};
+
 CPresentationBullet.prototype.convertFromAscTypeToPresentation = function (nType) {
 	switch (nType) {
 			case c_oAscNumberingLevel.DecimalBracket_Right    :

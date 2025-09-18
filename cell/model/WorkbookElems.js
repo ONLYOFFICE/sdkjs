@@ -11691,18 +11691,19 @@ function RangeDataManagerElem(bbox, data)
 			case Asc.c_oAscDynamicAutoFilter.belowAverage: {
 				let sum = 0;
 				let counter = 0;
+				if (range) {
+					range._foreachNoEmpty(function (cell) {
+						let cellVal = parseFloat(cell.getValueWithoutFormat());
 
-				range._foreachNoEmpty(function (cell) {
-					let cellVal = parseFloat(cell.getValueWithoutFormat());
-
-					if (!isNaN(cellVal)) {
-						sum += parseFloat(cellVal);
-						counter++;
+						if (!isNaN(cellVal)) {
+							sum += parseFloat(cellVal);
+							counter++;
+						}
+					});
+					if (counter > 0) {
+						val = sum / counter;
 					}
-
-				});
-				val = sum / counter;
-
+				}
 				break;
 			}
 			case Asc.c_oAscDynamicAutoFilter.lastMonth:
@@ -16170,7 +16171,7 @@ function RangeDataManagerElem(bbox, data)
 					});
 				}
 			}
-			wbView && wbView.handleChartsOnWorkbookChange(aRanges);
+			wbView && wbView.handleDrawingsOnWorkbookChange(aRanges);
 		}
 		return isChanged;
 	};
