@@ -13474,31 +13474,56 @@
 		
 		return true;
 	};
+
 	/**
 	 * Sets the background color to all cells in the current table.
+	 *
+	 * There are three supported ways to use this method:
+	 * 1. Passing no parameters to clear the background color.
+	 * 2. Passing an instance of the {@link ApiColor} class.
+	 * 3. Passing three color components and an optional bNone parameter.
+	 *
 	 * @memberof ApiTable
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @overload
+	 * @param {ApiColor} [color] - Instance of the {@link ApiColor} class. If not passed, the background color will be cleared.
+	 * @return {boolean}
+	 *
+	 * @overload
+	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} bNone - Defines that background color will not be set.
-	 * @typeofeditors ["CDE"]
+	 * @param {boolean} [bNone=false] - Defines that background color will not be set.
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetBackgroundColor.js
 	 */
-	ApiTable.prototype.SetBackgroundColor = function(r, g, b, bNone)
+	ApiTable.prototype.SetBackgroundColor = function (apiColor)
 	{
-		if ((typeof(r) == "number" && typeof(g) == "number" && typeof(b) == "number" && !bNone) || bNone)
-		{
-			var oRow;
-			for (var nRow = 0, nCount = this.GetRowsCount(); nRow < nCount; nRow++)
-			{
-				oRow = this.GetRow(nRow);
-				oRow.SetBackgroundColor(r, g, b, bNone);
-			}
-			return true;
-		}
-		else
+		// New format: ApiColor
+		const isNewArgumentSetCorrect =
+			arguments.length === 0 ||
+			arguments.length === 1 && apiColor instanceof ApiColor;
+
+		// Old format: r, g, b [, bNone]
+		const isOldArgumentSetCorrect =
+			arguments.length >= 3 &&
+			typeof arguments[0] === "number" &&
+			typeof arguments[1] === "number" &&
+			typeof arguments[2] === "number" &&
+			(arguments.length === 3 || typeof arguments[3] === "boolean");
+
+		if (!isOldArgumentSetCorrect && !isNewArgumentSetCorrect)
 			return false;
+
+		for (let nRow = 0, nCount = this.GetRowsCount(); nRow < nCount; nRow++) {
+			let oRow = this.GetRow(nRow);
+			oRow.SetBackgroundColor.apply(oRow, arguments);
+		}
+
+		return true;
 	};
 	
 	/**
@@ -13987,31 +14012,56 @@
 
 		return arrApiRanges;
 	};
+
 	/**
 	 * Sets the background color to all cells in the current table row.
+	 *
+	 * There are three supported ways to use this method:
+	 * 1. Passing no parameters to clear the background color.
+	 * 2. Passing an instance of the {@link ApiColor} class.
+	 * 3. Passing three color components and an optional bNone parameter.
+	 *
 	 * @memberof ApiTableRow
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @overload
+	 * @param {ApiColor} [color] - Instance of the {@link ApiColor} class. If not passed, the background color will be cleared.
+	 * @return {boolean}
+	 *
+	 * @overload
+	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} bNone - Defines that background color will not be set.
-	 * @typeofeditors ["CDE"]
+	 * @param {boolean} [bNone=false] - Defines that background color will not be set.
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/SetBackgroundColor.js
 	 */
-	ApiTableRow.prototype.SetBackgroundColor = function(r, g, b, bNone)
+	ApiTableRow.prototype.SetBackgroundColor = function (apiColor)
 	{
-		if ((typeof(r) == "number" && typeof(g) == "number" && typeof(b) == "number" && !bNone) || bNone)
-		{
-			var oCell;
-			for (var nCell = 0, nCount = this.GetCellsCount(); nCell < nCount; nCell++)
-			{
-				oCell = this.GetCell(nCell);
-				oCell.SetBackgroundColor(r, g, b, bNone);
-			}
-			return true;
-		}
-		else
+		// New format: ApiColor
+		const isNewArgumentSetCorrect =
+			arguments.length === 0 ||
+			arguments.length === 1 && apiColor instanceof ApiColor;
+
+		// Old format: r, g, b [, bNone]
+		const isOldArgumentSetCorrect =
+			arguments.length >= 3 &&
+			typeof arguments[0] === "number" &&
+			typeof arguments[1] === "number" &&
+			typeof arguments[2] === "number" &&
+			(arguments.length === 3 || typeof arguments[3] === "boolean");
+
+		if (!isOldArgumentSetCorrect && !isNewArgumentSetCorrect)
 			return false;
+
+		for (let nCell = 0, nCount = this.GetCellsCount(); nCell < nCount; nCell++) {
+			let oCell = this.GetCell(nCell);
+			oCell.SetBackgroundColor.apply(oCell, arguments);
+		}
+
+		return true;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -14334,44 +14384,74 @@
 	};
 	/**
 	 * Sets the background color to the current table cell.
+	 *
+	 * There are three supported ways to use this method:
+	 * 1. Passing no parameters to clear the background color.
+	 * 2. Passing an instance of the {@link ApiColor} class.
+	 * 3. Passing three color components and an optional bNone parameter.
+	 *
 	 * @memberof ApiTableCell
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @overload
+	 * @param {ApiColor} [color] - Instance of the {@link ApiColor} class. If not passed, the background color will be cleared.
+	 * @return {boolean}
+	 *
+	 * @overload
+	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} bNone - Defines that background color will not be set.
-	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetBackgroundColor.js
 	 */
-	ApiTableCell.prototype.SetBackgroundColor = function(r, g, b, bNone)
+	ApiTableCell.prototype.SetBackgroundColor = function (apiColor)
 	{
-		let oUnifill = new AscFormat.CUniFill();
-		oUnifill.setFill(new AscFormat.CSolidFill());
-		oUnifill.fill.setColor(new AscFormat.CUniColor());
-		oUnifill.fill.color.setColor(new AscFormat.CRGBColor());
+		// Old format: r, g, b [, bNone]
+		let r = arguments[0], g = arguments[1], b = arguments[2], bNone = arguments[3];
+		let isAuto = false, isTheme = false;
 
-		if (r >=0 && g >=0 && b >=0)
-			oUnifill.fill.color.color.setColor(r, g, b);
-		else
+		// New format: without arguments
+		if (arguments.length === 0) {
+			r = g = b = 0;
+			bNone = true;
+			isAuto = isTheme = false;
+		}
+
+		// New format: ApiColor
+		if (apiColor instanceof ApiColor) {
+			const rgb = apiColor.GetRGB();
+			r = rgb.r;
+			g = rgb.g;
+			b = rgb.b;
+			bNone = false;
+			isAuto = apiColor.IsAutoColor();
+			isTheme = apiColor.IsThemeColor();
+		}
+
+		if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
 			return false;
 
-		var oNewShd = {
-			Value : bNone ? Asc.c_oAscShd.Nil : Asc.c_oAscShd.Clear,
-			Color : {
-				r    : r,
-				g    : g,
-				b    : b,
-				Auto : false
-			},
+		const oUnifill = new AscFormat.CUniFill();
+		oUnifill.setFill(new AscFormat.CSolidFill());
+		oUnifill.fill.setColor(new AscFormat.CUniColor());
 
-			Fill    : {
-				r    : r,
-				g    : g,
-				b    : b,
-				Auto : false
-			},
-			Unifill   : oUnifill.createDuplicate(),
-			ThemeFill : oUnifill.createDuplicate()
+		if (!isTheme && !isAuto) {
+			oUnifill.fill.color.setColor(new AscFormat.CRGBColor());
+			oUnifill.fill.color.color.setColor(r, g, b);
+		} else if (isTheme) {
+			oUnifill.fill.color.setColor(new AscFormat.CSchemeColor());
+			oUnifill.fill.color.color.id = apiColor.value;
+		}
+
+		const oNewShd = {
+			Value: bNone ? Asc.c_oAscShd.Nil : Asc.c_oAscShd.Clear,
+			Color: { r: r, g: g, b: b, Auto: isAuto },
+			Fill: { r: r, g: g, b: b, Auto: isAuto },
+			Unifill: oUnifill.createDuplicate(),
+			ThemeFill: oUnifill.createDuplicate()
 		}
 
 		this.Cell.Set_Shd(oNewShd);
@@ -14379,38 +14459,62 @@
 	};
 	/**
 	 * Sets the background color to all cells in the column containing the current cell.
+	 *
+	 * There are three supported ways to use this method:
+	 * 1. Passing no parameters to clear the background color.
+	 * 2. Passing an instance of the {@link ApiColor} class.
+	 * 3. Passing three color components and an optional bNone parameter.
+	 *
 	 * @memberof ApiTableCell
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @overload
+	 * @param {ApiColor} [color] - Instance of the {@link ApiColor} class. If not passed, the background color will be cleared.
+	 * @return {boolean}
+	 *
+	 * @overload
+	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} bNone - Defines that background color will not be set.
-	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetColumnBackgroundColor.js
 	 */
-	ApiTableCell.prototype.SetColumnBackgroundColor = function(r, g, b, bNone)
+	ApiTableCell.prototype.SetColumnBackgroundColor = function(apiColor)
 	{
-		if ((typeof(r) == "number" && typeof(g) == "number" && typeof(b) == "number" && !bNone) || bNone)
-		{
-			var oTable = this.GetParentTable();
-			var aColumnCells = oTable.Table.GetColumn(this.GetIndex(), this.GetParentRow().GetIndex());
-			var aCellsToFill = [];
+		// New format: ApiColor
+		const isNewArgumentSetCorrect =
+			arguments.length === 0 ||
+			arguments.length === 1 && apiColor instanceof ApiColor;
 
-			for (var nCell = 0; nCell < aColumnCells.length; nCell++)
-				aCellsToFill[nCell] = new ApiTableCell(aColumnCells[nCell]);
+		// Old format: r, g, b [, bNone]
+		const isOldArgumentSetCorrect =
+			arguments.length >= 3 &&
+			typeof arguments[0] === "number" &&
+			typeof arguments[1] === "number" &&
+			typeof arguments[2] === "number" &&
+			(arguments.length === 3 || typeof arguments[3] === "boolean");
 
-			if (aCellsToFill.length > 0)
-			{
-				for (nCell = 0; nCell < aCellsToFill.length; nCell++)
-				{
-					aCellsToFill[nCell].SetBackgroundColor(r, g, b, bNone);
-				}
-				return true;
-			}
+		if (!isOldArgumentSetCorrect && !isNewArgumentSetCorrect)
 			return false;
+
+		const oTable = this.GetParentTable();
+		const aColumnCells = oTable.Table.GetColumn(this.GetIndex(), this.GetParentRow().GetIndex());
+		const aCellsToFill = aColumnCells.map(function (cell) {
+			return new ApiTableCell(cell);
+		});
+
+		if (aCellsToFill.length === 0)
+			return false;
+
+		for (let nCell = 0; nCell < aCellsToFill.length; nCell++) {
+			const apiCell = aCellsToFill[nCell];
+			apiCell.SetBackgroundColor.apply(apiCell, arguments);
 		}
-		else
-			return false;
+
+		return true;
 	};
 	
 	//------------------------------------------------------------------------------------------------------------------
