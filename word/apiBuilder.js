@@ -2022,6 +2022,10 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @overload
+	 * @param {ApiColor} apiColor - Instance of the {@link ApiColor} class.
+	 * @return {ApiRange | null} - returns null if can't apply color.
+	*
+	 * @overload
 	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
@@ -2029,25 +2033,25 @@
 	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then r,g,b parameters will be ignored.
 	 * @returns {ApiRange | null} - returns null if can't apply color.
 	 *
-	 * @overload
-	 * @param {ApiColor} color - Instance of the {@link ApiColor} class.
-	 * @return {ApiRange | null} - returns null if can't apply color.
-	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetColor.js
 	 */
-	ApiRange.prototype.SetColor = function (r, g, b, isAuto) {
-		let isTheme = false;
-		const apiColor = arguments.length === 1 && arguments[0] instanceof ApiColor
-			? arguments[0]
-			: null;
+	ApiRange.prototype.SetColor = function (apiColor) {
+		let r, g, b;
+		let isAuto, isTheme;
 
-		if (apiColor) {
+		if (apiColor instanceof ApiColor) {
 			const rgb = apiColor.GetRGB();
 			r = rgb.r;
 			g = rgb.g;
 			b = rgb.b;
 			isAuto = apiColor.IsAutoColor();
 			isTheme = apiColor.IsThemeColor();
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			isAuto = GetBoolParameter(arguments[3], false);
+			isTheme = false;
 		}
 
 		private_RefreshRangesPosition();
@@ -2068,7 +2072,7 @@
 
 		let paraTextPrOptions = {
 			Color: { Auto: isAuto, r: r, g: g, b: b },
-			Unifill: undefined
+			Unifill: undefined,
 		};
 
 		if (!isAuto && isTheme) {
@@ -4810,7 +4814,7 @@
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/RGB.js
 	 */
 	Api.prototype.RGB = function (r, g, b) {
-		const intRgbColor = (r & 0xFF) << 24 | (g & 0xFF) << 16 | (b & 0xFF) << 8 | (255 & 0xFF);
+		const intRgbColor = (r & 0xFF) << 16 | (g & 0xFF) << 8 | (b & 0xFF);
 		return new ApiColor('rgb', intRgbColor);
 	};
 
@@ -4900,7 +4904,6 @@
 	Api.prototype.CreateSolidFill = function (color)
 	{
 		if (color instanceof ApiColor) {
-			const isAuto = color.IsAutoColor(); // We will consider the 'auto' color as black here
 			const isTheme = color.IsThemeColor();
 
 			const unifill = new AscFormat.CUniFill();
@@ -10180,6 +10183,10 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @overload
+	 * @param {ApiColor} apiColor - Instance of the {@link ApiColor} class.
+	 * @return {ApiParagraph} this
+	 *
+	 * @overload
 	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
@@ -10187,25 +10194,26 @@
 	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then r,g,b parameters will be ignored.
 	 * @return {ApiParagraph} this
 	 *
-	 * @overload
-	 * @param {ApiColor} color - Instance of the {@link ApiColor} class.
-	 * @return {ApiParagraph} this
-	 *
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetColor.js
 	 */
-	ApiParagraph.prototype.SetColor = function (r, g, b, isAuto) {
-		let isTheme = false;
-		const apiColor = arguments.length === 1 && arguments[0] instanceof ApiColor
-			? arguments[0]
-			: null;
+	ApiParagraph.prototype.SetColor = function (apiColor)
+	{
+		let r, g, b;
+		let isAuto, isTheme;
 
-		if (apiColor) {
+		if (apiColor instanceof ApiColor) {
 			const rgb = apiColor.GetRGB();
 			r = rgb.r;
 			g = rgb.g;
 			b = rgb.b;
 			isAuto = apiColor.IsAutoColor();
 			isTheme = apiColor.IsThemeColor();
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			isAuto = false;
+			isTheme = false;
 		}
 
 		let paraTextPrOptions = {
@@ -11902,6 +11910,10 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 *
 	 * @overload
+	 * @param {ApiColor} apiColor - Instance of the {@link ApiColor} class.
+	 * @return {ApiTextPr}
+	 *
+	 * @overload
 	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
@@ -11909,22 +11921,11 @@
 	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then r,g,b parameters will be ignored.
 	 * @return {ApiTextPr}
 	 *
-	 * @overload
-	 * @param {ApiColor} color - Instance of the {@link ApiColor} class.
-	 * @return {ApiTextPr}
-	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetColor.js
 	 */
-	ApiRun.prototype.SetColor = function (r, g, b, isAuto) {
-		const apiColor = arguments.length === 1 && arguments[0] instanceof ApiColor
-			? arguments[0]
-			: null;
-
+	ApiRun.prototype.SetColor = function (apiColor) {
 		const oTextPr = this.GetTextPr();
-		apiColor
-			? oTextPr.SetColor(apiColor)
-			: oTextPr.SetColor(r, g, b, isAuto);
-
+		oTextPr.SetColor.apply(oTextPr, arguments);
 		return oTextPr;
 	};
 	/**
@@ -13625,7 +13626,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @overload
-	 * @param {ApiColor} [color] - Instance of the {@link ApiColor} class. If not passed, the background color will be cleared.
+	 * @param {ApiColor} [apiColor] - Instance of the {@link ApiColor} class. If not passed, the background color will be cleared.
 	 * @return {boolean}
 	 *
 	 * @overload
@@ -13638,30 +13639,16 @@
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetBackgroundColor.js
 	 */
-	ApiTable.prototype.SetBackgroundColor = function (apiColor)
-	{
-		// New format: ApiColor
-		const isNewArgumentSetCorrect =
-			arguments.length === 0 ||
-			arguments.length === 1 && apiColor instanceof ApiColor;
-
-		// Old format: r, g, b [, bNone]
-		const isOldArgumentSetCorrect =
-			arguments.length >= 3 &&
-			typeof arguments[0] === "number" &&
-			typeof arguments[1] === "number" &&
-			typeof arguments[2] === "number" &&
-			(arguments.length === 3 || typeof arguments[3] === "boolean");
-
-		if (!isOldArgumentSetCorrect && !isNewArgumentSetCorrect)
-			return false;
-
+	ApiTable.prototype.SetBackgroundColor = function (apiColor) {
+		let allRowsUpdated = true;
+	
 		for (let nRow = 0, nCount = this.GetRowsCount(); nRow < nCount; nRow++) {
-			let oRow = this.GetRow(nRow);
-			oRow.SetBackgroundColor.apply(oRow, arguments);
+			const oRow = this.GetRow(nRow);
+			const rowUpdated = oRow.SetBackgroundColor.apply(oRow, arguments);
+			if (!rowUpdated) allRowsUpdated = false;
 		}
 
-		return true;
+		return allRowsUpdated;
 	};
 	
 	/**
@@ -14163,7 +14150,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @overload
-	 * @param {ApiColor} [color] - Instance of the {@link ApiColor} class. If not passed, the background color will be cleared.
+	 * @param {ApiColor} [apiColor] - Instance of the {@link ApiColor} class. If not passed, the background color will be cleared.
 	 * @return {boolean}
 	 *
 	 * @overload
@@ -14178,28 +14165,15 @@
 	 */
 	ApiTableRow.prototype.SetBackgroundColor = function (apiColor)
 	{
-		// New format: ApiColor
-		const isNewArgumentSetCorrect =
-			arguments.length === 0 ||
-			arguments.length === 1 && apiColor instanceof ApiColor;
-
-		// Old format: r, g, b [, bNone]
-		const isOldArgumentSetCorrect =
-			arguments.length >= 3 &&
-			typeof arguments[0] === "number" &&
-			typeof arguments[1] === "number" &&
-			typeof arguments[2] === "number" &&
-			(arguments.length === 3 || typeof arguments[3] === "boolean");
-
-		if (!isOldArgumentSetCorrect && !isNewArgumentSetCorrect)
-			return false;
+		let allCellsUpdated = true;
 
 		for (let nCell = 0, nCount = this.GetCellsCount(); nCell < nCount; nCell++) {
-			let oCell = this.GetCell(nCell);
-			oCell.SetBackgroundColor.apply(oCell, arguments);
+			const oCell = this.GetCell(nCell);
+			const cellUpdated = oCell.SetBackgroundColor.apply(oCell, arguments);
+			if (!cellUpdated) allCellsUpdated = false;
 		}
 
-		return true;
+		return allCellsUpdated;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -14547,18 +14521,10 @@
 	 */
 	ApiTableCell.prototype.SetBackgroundColor = function (apiColor)
 	{
-		// Old format: r, g, b [, bNone]
-		let r = arguments[0], g = arguments[1], b = arguments[2], bNone = arguments[3];
-		let isAuto = false, isTheme = false;
+		let r, g, b;
+		let bNone;
+		let isAuto, isTheme;
 
-		// New format: without arguments
-		if (arguments.length === 0) {
-			r = g = b = 0;
-			bNone = true;
-			isAuto = isTheme = false;
-		}
-
-		// New format: ApiColor
 		if (apiColor instanceof ApiColor) {
 			const rgb = apiColor.GetRGB();
 			r = rgb.r;
@@ -14567,6 +14533,13 @@
 			bNone = false;
 			isAuto = apiColor.IsAutoColor();
 			isTheme = apiColor.IsThemeColor();
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			bNone = GetBoolParameter(arguments[3], false);
+			isAuto = false;
+			isTheme = false;
 		}
 
 		if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
@@ -14589,8 +14562,8 @@
 			Color: { r: r, g: g, b: b, Auto: isAuto },
 			Fill: { r: r, g: g, b: b, Auto: isAuto },
 			Unifill: oUnifill.createDuplicate(),
-			ThemeFill: oUnifill.createDuplicate()
-		}
+			ThemeFill: oUnifill.createDuplicate(),
+		};
 
 		this.Cell.Set_Shd(oNewShd);
 		return true;
@@ -14622,37 +14595,24 @@
 	 */
 	ApiTableCell.prototype.SetColumnBackgroundColor = function(apiColor)
 	{
-		// New format: ApiColor
-		const isNewArgumentSetCorrect =
-			arguments.length === 0 ||
-			arguments.length === 1 && apiColor instanceof ApiColor;
-
-		// Old format: r, g, b [, bNone]
-		const isOldArgumentSetCorrect =
-			arguments.length >= 3 &&
-			typeof arguments[0] === "number" &&
-			typeof arguments[1] === "number" &&
-			typeof arguments[2] === "number" &&
-			(arguments.length === 3 || typeof arguments[3] === "boolean");
-
-		if (!isOldArgumentSetCorrect && !isNewArgumentSetCorrect)
-			return false;
-
 		const oTable = this.GetParentTable();
 		const aColumnCells = oTable.Table.GetColumn(this.GetIndex(), this.GetParentRow().GetIndex());
+		if (aColumnCells.length === 0)
+			return false;
+
+		let allCellsUpdated = true;
+
 		const aCellsToFill = aColumnCells.map(function (cell) {
 			return new ApiTableCell(cell);
 		});
 
-		if (aCellsToFill.length === 0)
-			return false;
-
 		for (let nCell = 0; nCell < aCellsToFill.length; nCell++) {
 			const apiCell = aCellsToFill[nCell];
-			apiCell.SetBackgroundColor.apply(apiCell, arguments);
+			const cellUpdated = apiCell.SetBackgroundColor.apply(apiCell, arguments);
+			if (!cellUpdated) allCellsUpdated = false;
 		}
 
-		return true;
+		return allCellsUpdated;
 	};
 	
 	//------------------------------------------------------------------------------------------------------------------
@@ -15201,6 +15161,10 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @overload
+	 * @param {ApiColor} apiColor - Instance of the {@link ApiColor} class.
+	 * @return {ApiTextPr} - this text properties.
+	 *
+	 * @overload
 	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
@@ -15208,17 +15172,11 @@
 	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then r,g,b parameters will be ignored.
 	 * @return {ApiTextPr} - this text properties.
 	 *
-	 * @overload
-	 * @param {ApiColor} color - Instance of the {@link ApiColor} class.
-	 * @return {ApiTextPr} - this text properties.
-	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetColor.js
 	 */
-	ApiTextPr.prototype.SetColor = function (r, g, b, isAuto) {
-		let isTheme = false;
-		const apiColor = arguments.length === 1 && arguments[0] instanceof ApiColor
-			? arguments[0]
-			: null;
+	ApiTextPr.prototype.SetColor = function (apiColor) {
+		let r, g, b;
+		let isAuto, isTheme;
 
 		if (apiColor) {
 			const rgb = apiColor.GetRGB();
@@ -15227,9 +15185,15 @@
 			b = rgb.b;
 			isAuto = apiColor.IsAutoColor();
 			isTheme = apiColor.IsThemeColor();
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			isAuto = GetBoolParameter(arguments[3], false);
+			isTheme = false;
 		}
 
-		this.TextPr.Color = (!isAuto && isTheme)
+		this.TextPr.Color = isTheme
 			? undefined
 			: private_GetColor(r, g, b, isAuto);
 
@@ -20651,16 +20615,16 @@
 
 	ApiColor.prototype.private_convertToRGBA = function () {
 		const colorMap = {
-			'rgb': this.value,
 			'rgba': this.value,
+			'rgb': (this.value << 8) | 0xFF,
 			'hex': (this.value << 8) | 0xFF,
-			'auto': 0x000000FF,
-			'theme': 0x000000FF,
+			'auto': this.private_resolveAutoColor(),
+			'theme': this.private_resolveThemeColor(),
 		};
 
 		return (this.type in colorMap)
 			? colorMap[this.type]
-			: null;
+			: 0x000000FF;
 	};
 
 	ApiColor.prototype.private_resolveThemeColor = function () {
@@ -20677,8 +20641,18 @@
 		if (!color || !color.RGBA)
 			return null;
 
-		return Api.prototype.RGBA(color.RGBA.R, color.RGBA.G, color.RGBA.B, color.RGBA.A);
-	}
+		return (color.RGBA.R & 0xFF) << 24 |
+			(color.RGBA.G & 0xFF) << 16 |
+			(color.RGBA.B & 0xFF) << 8 |
+			(color.RGBA.A & 0xFF);
+	};
+
+	ApiColor.prototype.private_resolveAutoColor = function () {
+		if (this.type !== 'auto')
+			return null;
+
+		return 0x000000FF;
+	};
 
 	/**
 	 * Returns a type of the ApiColor class.
@@ -21493,24 +21467,19 @@
 	 */
 	ApiInlineLvlSdt.prototype.SetBorderColor = function (apiColor)
 	{
-		// Old format
-		let r = arguments[0], g = arguments[1], b = arguments[2], a = arguments[3];
+		let r, g, b, a;
 
-		// New format
 		if (apiColor instanceof ApiColor) {
-			const isAuto = apiColor.IsAutoColor();
-			const isTheme = apiColor.IsThemeColor();
-
-			// ApiInlineLvlSdt doesn't support Auto and Theme colors yet so we convert them right to RGBA.
-			// When support is added this code should be changed.
-			if (isTheme)
-				apiColor = apiColor.private_resolveThemeColor() || new Api.prototype.RGBA(0, 0, 0, 255);
-
 			const rgba = apiColor.GetRGBA();
 			r = rgba.r;
 			g = rgba.g;
 			b = rgba.b;
 			a = rgba.a;
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			a = GetIntParameter(arguments[3], 255);
 		}
 
 		this.Sdt.setBorderColor(new AscWord.CDocumentColorA(r, g, b, a));
@@ -21564,24 +21533,19 @@
 	 */
 	ApiInlineLvlSdt.prototype.SetBackgroundColor = function (apiColor)
 	{
-		// Old format
-		let r = arguments[0], g = arguments[1], b = arguments[2], a = arguments[3];
+		let r, g, b, a;
 
-		// New format
 		if (apiColor instanceof ApiColor) {
-			const isAuto = apiColor.IsAutoColor();
-			const isTheme = apiColor.IsThemeColor();
-
-			// ApiInlineLvlSdt doesn't support Auto and Theme colors yet so we convert them right to RGBA.
-			// When support is added this code should be changed.
-			if (isTheme)
-				apiColor = apiColor.private_resolveThemeColor() || new Api.prototype.RGBA(0, 0, 0, 255);
-
 			const rgba = apiColor.GetRGBA();
 			r = rgba.r;
 			g = rgba.g;
 			b = rgba.b;
 			a = rgba.a;
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			a = GetIntParameter(arguments[3], 255);
 		}
 
 		this.Sdt.setShdColor(new AscWord.CDocumentColorA(r, g, b, a));
@@ -23719,31 +23683,20 @@
 	 */
 	ApiFormBase.prototype.SetBorderColor = function(apiColor)
 	{
-		let isAuto = false;
-		let isTheme = false;
+		let r, g, b;
+		let bNone;
 
-		// Old format
-		let r = arguments[0], g = arguments[1], b = arguments[2], bNone = arguments[3];
-
-		// New format: ApiColor
-		if (arguments.length === 0) {
-			r = g = b = 0;
-			bNone = true;
-		}
 		if (apiColor instanceof ApiColor) {
-			isAuto = apiColor.IsAutoColor();
-			isTheme = apiColor.IsThemeColor();
-
-			// ApiForm doesn't support Auto and Theme colors yet so we convert them right to RGBA.
-			// When support is added this code should be changed.
-			if (isTheme)
-				apiColor = apiColor.private_resolveThemeColor() || new Api.prototype.RGB(0, 0, 0);
-
 			const rgb = apiColor.GetRGB();
 			r = rgb.r;
 			g = rgb.g;
 			b = rgb.b;
 			bNone = false;
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			bNone = GetBoolParameter(arguments[3], false);
 		}
 
 		return executeNoFormLockCheck(function() {
@@ -23791,31 +23744,23 @@
 	 */
 	ApiFormBase.prototype.SetBackgroundColor = function (apiColor)
 	{
-		let isAuto = false;
-		let isTheme = false;
+		let r, g, b;
+		let bNone;
+		let isAuto;
 
-		// Old format
-		let r = arguments[0], g = arguments[1], b = arguments[2], bNone = arguments[3];
-
-		// New format
-		if (arguments.length === 0) {
-			r = g = b = 0;
-			bNone = true;
-		}
 		if (apiColor instanceof ApiColor) {
-			isAuto = apiColor.IsAutoColor();
-			isTheme = apiColor.IsThemeColor();
-
-			// ApiForm doesn't support Auto and Theme colors yet so we convert them right to RGBA.
-			// When support is added this code should be changed.
-			if (isTheme)
-				apiColor = apiColor.private_resolveThemeColor() || new Api.prototype.RGB(0, 0, 0);
-
 			const rgb = apiColor.GetRGB();
 			r = rgb.r;
 			g = rgb.g;
 			b = rgb.b;
 			bNone = false;
+			isAuto = apiColor.IsAutoColor();
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			bNone = GetBoolParameter(arguments[3], false);
+			isAuto = false;
 		}
 
 		var oFormPr = this.Sdt.GetFormPr().Copy();
