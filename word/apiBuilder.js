@@ -4879,30 +4879,40 @@
 
 	/**
 	 * Creates a solid fill to apply to the object using a selected solid color as the object background.
+	 *
+	 * There are two supported ways to use this method:
+	 * 1. Passing an instance of the {@link ApiColor} class.
+	 * 2. Passing an instance of one of the color classes that implement the {@link ApiUniColor} interface
+	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @overload
+	 * @param {ApiColor} color - The color used for the element fill.
+	 * @returns {ApiFill}
+	 *
+	 * @overload
 	 * @param {ApiUniColor} color - The color used for the element fill.
 	 * @returns {ApiFill}
+	 *
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateSolidFill.js
 	 */
 	Api.prototype.CreateSolidFill = function (color)
 	{
 		if (color instanceof ApiColor) {
-			const isAuto = color.IsAutoColor();
-
-			if (isAuto)
-				return null; // Cannot create solid fill with auto color
-
+			const isAuto = color.IsAutoColor(); // We will consider the 'auto' color as black here
 			const isTheme = color.IsThemeColor();
 
 			const unifill = new AscFormat.CUniFill();
 			unifill.setFill(new AscFormat.CSolidFill());
 			unifill.fill.setColor(new AscFormat.CUniColor());
+
 			if (isTheme) {
 				unifill.fill.color.setColor(new AscFormat.CSchemeColor());
-				unifill.fill.color.color.id = apiColor.value;
+				unifill.fill.color.color.id = color.value;
 			} else {
 				unifill.fill.color.setColor(new AscFormat.CRGBColor());
+
 				const components = color.GetRGBA();
 				unifill.fill.color.color.RGBA.R = components.r;
 				unifill.fill.color.color.RGBA.G = components.g;
