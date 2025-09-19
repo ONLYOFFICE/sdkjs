@@ -23659,17 +23659,57 @@
 	};
 	/**
 	 * Sets the border color to the current form.
+	 *
+	 * There are two supported ways to use this method:
+	 * 1. Passing an instance of the {@link ApiColor} class
+	 * 2. Passing three color components and an optional bNone parameter.
+	 *
 	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 *
+	 * @overload
+	 * @param {ApiColor} [apiColor] - Instance of the {@link ApiColor} class.
+	 * @return {boolean}
+	 *
+	 * @overload
+	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} bNone - Defines that border color will not be set.
-	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetBorderColor.js
 	 */
-	ApiFormBase.prototype.SetBorderColor = function(r, g, b, bNone)
+	ApiFormBase.prototype.SetBorderColor = function(apiColor)
 	{
+		let isAuto = false;
+		let isTheme = false;
+
+		// Old format
+		let r = arguments[0], g = arguments[1], b = arguments[2], bNone = arguments[3];
+
+		// New format: ApiColor
+		if (arguments.length === 0) {
+			r = g = b = 0;
+			bNone = true;
+		}
+		if (apiColor instanceof ApiColor) {
+			isAuto = apiColor.IsAutoColor();
+			isTheme = apiColor.IsThemeColor();
+
+			// ApiForm doesn't support Auto and Theme colors yet so we convert them right to RGBA.
+			// When support is added this code should be changed.
+			if (isTheme)
+				apiColor = apiColor.private_resolveThemeColor() || new Api.prototype.RGB(0, 0, 0);
+
+			const rgb = apiColor.GetRGB();
+			r = rgb.r;
+			g = rgb.g;
+			b = rgb.b;
+			bNone = false;
+		}
+
 		return executeNoFormLockCheck(function() {
 			var oFormPr = this.Sdt.GetFormPr().Copy();
 			var oBorder;
@@ -23682,28 +23722,68 @@
 				oBorder = undefined;
 			else
 				return false;
-			
+
 			oFormPr.Border = oBorder;
-			
+
 			this.Sdt.SetFormPr(oFormPr);
 			return true;
 		}, this);
 	};
 	/**
 	 * Sets the background color to the current form.
+	 *
+	 * There are two supported ways to use this method:
+	 * 1. Passing an instance of the {@link ApiColor} class
+	 * 2. Passing three color components and an optional bNone parameter.
+	 *
 	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 *
+	 * @overload
+	 * @param {ApiColor} [apiColor] - Instance of the {@link ApiColor} class.
+	 * @return {boolean}
+	 *
+	 * @overload
+	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} bNone - Defines that background color will not be set.
-	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetBackgroundColor.js
 	 */
-	ApiFormBase.prototype.SetBackgroundColor = function(r, g, b, bNone)
+	ApiFormBase.prototype.SetBackgroundColor = function (apiColor)
 	{
+		let isAuto = false;
+		let isTheme = false;
+
+		// Old format
+		let r = arguments[0], g = arguments[1], b = arguments[2], bNone = arguments[3];
+
+		// New format
+		if (arguments.length === 0) {
+			r = g = b = 0;
+			bNone = true;
+		}
+		if (apiColor instanceof ApiColor) {
+			isAuto = apiColor.IsAutoColor();
+			isTheme = apiColor.IsThemeColor();
+
+			// ApiForm doesn't support Auto and Theme colors yet so we convert them right to RGBA.
+			// When support is added this code should be changed.
+			if (isTheme)
+				apiColor = apiColor.private_resolveThemeColor() || new Api.prototype.RGB(0, 0, 0);
+
+			const rgb = apiColor.GetRGB();
+			r = rgb.r;
+			g = rgb.g;
+			b = rgb.b;
+			bNone = false;
+		}
+
 		var oFormPr = this.Sdt.GetFormPr().Copy();
-		
+
 		let oUnifill = new AscFormat.CUniFill();
 		oUnifill.setFill(new AscFormat.CSolidFill());
 		oUnifill.fill.setColor(new AscFormat.CUniColor());
@@ -23716,19 +23796,9 @@
 
 		oFormPr.Shd = new CDocumentShd();
 		oFormPr.Shd.Set_FromObject({
-			Value: bNone ? Asc.c_oAscShd.Clear : Asc.c_oAscShd.Clear,
-			Color: {
-				r: r,
-				g: g,
-				b: b,
-				Auto: false
-			},
-			Fill: {
-				r: r,
-				g: g,
-				b: b,
-				Auto: false
-			},
+			Value: bNone ? Asc.c_oAscShd.Nil : Asc.c_oAscShd.Clear,
+			Color: { r: r, g: g, b: b, Auto: isAuto },
+			Fill: { r: r, g: g, b: b, Auto: isAuto },
 			Unifill: oUnifill
 		});
 
