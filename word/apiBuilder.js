@@ -4881,13 +4881,39 @@
 	 * Creates a solid fill to apply to the object using a selected solid color as the object background.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {ApiUniColor} uniColor - The color used for the element fill.
+	 * @param {ApiUniColor} color - The color used for the element fill.
 	 * @returns {ApiFill}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateSolidFill.js
 	 */
-	Api.prototype.CreateSolidFill = function(uniColor)
+	Api.prototype.CreateSolidFill = function (color)
 	{
-		return new ApiFill(AscFormat.CreateUniFillByUniColorCopy(uniColor.Unicolor));
+		if (color instanceof ApiColor) {
+			const isAuto = color.IsAutoColor();
+
+			if (isAuto)
+				return null; // Cannot create solid fill with auto color
+
+			const isTheme = color.IsThemeColor();
+
+			const unifill = new AscFormat.CUniFill();
+			unifill.setFill(new AscFormat.CSolidFill());
+			unifill.fill.setColor(new AscFormat.CUniColor());
+			if (isTheme) {
+				unifill.fill.color.setColor(new AscFormat.CSchemeColor());
+				unifill.fill.color.color.id = apiColor.value;
+			} else {
+				unifill.fill.color.setColor(new AscFormat.CRGBColor());
+				const components = color.GetRGBA();
+				unifill.fill.color.color.RGBA.R = components.r;
+				unifill.fill.color.color.RGBA.G = components.g;
+				unifill.fill.color.color.RGBA.B = components.b;
+				unifill.fill.color.color.RGBA.A = components.a;
+			}
+
+			return new ApiFill(unifill);
+		}
+
+		return new ApiFill(AscFormat.CreateUniFillByUniColorCopy(color.Unicolor));
 	};
 
 	/**
