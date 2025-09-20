@@ -257,6 +257,28 @@
 	};
 	CUnicodeIteratorOld.prototype.check = CUnicodeIteratorOld.prototype.isInside;
 
+	CUnicodeIteratorOld.prototype.skip = function (n)
+	{
+		let counter = n;
+		while (counter > 0 && this.check())
+		{
+			this.next();
+			counter--;
+		}
+	};
+	CUnicodeIteratorOld.prototype.takeCodePoints = function (n)
+	{
+		let codePoints = [];
+		let counter = n;
+		while (counter > 0 && this.check())
+		{
+			codePoints.push(this.value());
+			this.next();
+			counter--;
+		}
+		return codePoints;
+	};
+
 	var CUnicodeIteratorNew = null;
 
 	if (String.prototype.codePointAt && (typeof Symbol === 'function') && typeof Symbol.iterator === "symbol")
@@ -297,6 +319,27 @@
 			return this._position;
 		};
 		CUnicodeIteratorNew.prototype.check = CUnicodeIteratorNew.prototype.isInside;
+		CUnicodeIteratorNew.prototype.skip = function (n)
+		{
+			let counter = n;
+			while (counter > 0 && this.check())
+			{
+				this.next();
+				counter--;
+			}
+		};
+		CUnicodeIteratorNew.prototype.takeCodePoints = function (n)
+		{
+			let codePoints = [];
+			let counter = n;
+			while (counter > 0 && this.check())
+			{
+				codePoints.push(this.value());
+				this.next();
+				counter--;
+			}
+			return codePoints;
+		};
 	}
 
 	var CUnicodeIterator = CUnicodeIteratorNew ? CUnicodeIteratorNew : CUnicodeIteratorOld;
@@ -319,6 +362,19 @@
 			_codePoints.push(iter.value());
 
 		return _codePoints;
+	};
+
+	/**
+	 * @returns {number}
+	 */
+	String.prototype.codePointsCount = function()
+	{
+		let count = 0;
+		for (let it = this.getUnicodeIterator(); it.check(); it.next())
+		{
+			count++;
+		}
+		return count;
 	};
 
 })();

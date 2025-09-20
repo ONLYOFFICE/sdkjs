@@ -14388,87 +14388,64 @@
 		return true;
 	}
 
-	function CStringNode(element, par) {
-		this.element = element;
-		this.partner = null;
-		this.par = par;
-		if(typeof element === "string") {
-			this.children = [];
-			for (var oIterator = element.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
-				var nCharCode = oIterator.value();
-				this.children.push(new CStringNode(nCharCode, this));
-			}
-		}
-	}
-	CStringNode.prototype.children = [];
-	CStringNode.prototype.equals = function(oNode) {
-		return this.element === oNode.element;
-	};
-	CStringNode.prototype.forEachDescendant = function(callback, T) {
-		this.children.forEach(function(node) {
-			node.forEach(callback, T);
-		});
-	};
-	CStringNode.prototype.forEach = function(callback, T) {
-		callback.call(T, this);
-		this.children.forEach(function(node) {
-			node.forEach(callback, T);
-		});
-	};
 
-	function CDiffMatching() {
-	}
-	CDiffMatching.prototype.get = function(oNode) {
-		return oNode.partner;
-	};
-	CDiffMatching.prototype.put = function(oNode1, oNode2) {
-		oNode1.partner = oNode2;
-		oNode2.partner = oNode1;
-	};
-	function CStringChange(oOperation) {
-		this.pos = -1;
-		this.deleteCount = 0;
-		this.insert = [];
+	const DIFF_DELETE = -1;
+	const DIFF_INSERT = 1;
+	const DIFF_EQUAL  = 0;
 
-		var oAnchor = oOperation.anchor;
-		this.pos = oAnchor.index;
-		if(Array.isArray(oOperation.remove)) {
-			this.deleteCount = oOperation.remove.length;
-		}
-		var nIndex, oNode;
-		if(Array.isArray(oOperation.insert)) {
-			for(nIndex = 0; nIndex < oOperation.insert.length; ++nIndex) {
-				oNode = oOperation.insert[nIndex];
-				this.insert.push(oNode.element);
-			}
-		}
+	function CStringChange(pos, delCount, insert) {
+		this.pos = pos;
+		this.deleteCount = delCount;
+		this.insert = insert;
 	}
-	CStringChange.prototype.getPos = function() {
-		return this.pos;
-	};
-	CStringChange.prototype.getDeleteCount = function() {
-		return this.deleteCount;
-	};
-	CStringChange.prototype.getInsertSymbols = function() {
-		return this.insert;
-	};
+	CStringChange.prototype.getPos = function () { return this.pos; };
+	CStringChange.prototype.getDeleteCount = function () { return this.deleteCount; };
+	CStringChange.prototype.getInsertSymbols = function () { return this.insert; };
+
 	function getTextDelta(sBase, sReplace) {
-		var aDelta = [];
-		var oBaseNode = new CStringNode(sBase, null);
-		var oReplaceNode = new CStringNode(sReplace, null);
-		var oMatching = new CDiffMatching();
-		oMatching.put(oBaseNode, oReplaceNode);
-		var oDiff  = new AscCommon.Diff(oBaseNode, oReplaceNode);
-		oDiff.equals = function(a, b)
-		{
-			return a.equals(b);
-		};
-		oDiff.matchTrees(oMatching);
-		var oDeltaCollector = new AscCommon.DeltaCollector(oMatching, oBaseNode, oReplaceNode);
-		oDeltaCollector.forEachChange(function(oOperation){
-			aDelta.push(new CStringChange(oOperation));
-		});
-		return aDelta;
+		let dmp = new diff_match_patch();
+		let diffs = dmp.diff_main(sBase, sReplace);
+		dmp.diff_cleanupSemantic(diffs);
+
+		let changes = [];
+		let basePos = 0;
+
+		for (let diffIdx = 0; diffIdx < diffs.length; diffIdx++) {
+			let diff = diffs[diffIdx];
+			let op  = diff[0];
+			let txt = diff[1];
+			let len = txt.codePointsCount();
+
+			if (op === DIFF_EQUAL) {
+				basePos += len;
+				continue;
+			}
+
+			if (op === DIFF_DELETE) {
+				let delCount = len;
+				let pos = basePos;
+
+				if (diffIdx + 1 < diffs.length && diffs[diffIdx + 1][0] === DIFF_INSERT) {
+					let insTxt = diffs[diffIdx + 1][1];
+					let insertCps = insTxt.codePointsArray();
+					changes.push(new CStringChange(pos, delCount, insertCps));
+					basePos += delCount;
+					diffIdx++;
+				} else {
+					changes.push(new CStringChange(pos, delCount, []));
+					basePos += delCount;
+				}
+				continue;
+			}
+
+			if (op === DIFF_INSERT) {
+				let insertOnly = txt.codePointsArray();
+				changes.push(new CStringChange(basePos, 0, insertOnly));
+				continue;
+			}
+		}
+
+		return changes;
 	}
 
 	function _getIntegerByDivide(val)

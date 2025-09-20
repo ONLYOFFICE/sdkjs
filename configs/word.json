@@ -149,6 +149,7 @@
 			"common/scroll.js",
 			"vendor/iscroll.js",
 			"vendor/delta.js",
+			"vendor/diff_match_patch.js",
 			"common/Scrolls/mobileTouchManagerBase.js",
 			"word/Drawing/mobileTouchManager.js",
 
