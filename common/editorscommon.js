@@ -15625,6 +15625,7 @@
 	window["AscCommon"].IsAbbreviation = IsAbbreviation;
 
 	window["AscCommon"].getTextDelta = getTextDelta;
+	window["AscCommon"].CStringChange = CStringChange;
 
 	window["AscCommon"].rx_test_ws_name = rx_test_ws_name;
 
