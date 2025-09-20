@@ -15178,7 +15178,7 @@
 		let r, g, b;
 		let isAuto, isTheme;
 
-		if (apiColor) {
+		if (apiColor instanceof ApiColor) {
 			const rgb = apiColor.GetRGB();
 			r = rgb.r;
 			g = rgb.g;
@@ -15205,15 +15205,23 @@
 	 * Gets the RGB color from the current text properties.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
-	 * @return {?ApiRGBColor}
+	 * @return {?ApiColor}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/GetColor.js
 	 */
-	ApiTextPr.prototype.GetColor = function()
+	ApiTextPr.prototype.GetColor = function ()
 	{
 		let oColor = this.TextPr.GetColor();
 		if (oColor !== undefined) {
-			return new ApiRGBColor(oColor.r, oColor.g, oColor.b);
+			const isAuto = oColor.Auto === true;
+			return isAuto ? Api.prototype.AutoColor() : Api.prototype.RGB(oColor.r, oColor.g, oColor.b);
+		}
+
+		if (this.TextPr.Unifill &&
+			this.TextPr.Unifill.fill &&
+			this.TextPr.Unifill.fill.color &&
+			this.TextPr.Unifill.fill.color.color) {
+			return new ApiColor('theme', this.TextPr.Unifill.fill.color.color.id);
 		}
 
 		return null;
@@ -15515,18 +15523,44 @@
 
 	/**
 	 * Specifies the shading applied to the contents of the current text run.
+	 *
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
+	 *
+	 * @overload
+	 * @param {ShdType} sType - The shading type applied to the contents of the current text run.
+	 * @param {ApiColor} apiColor - The color or pattern used to fill the shading.
+	 * @return {ApiTextPr} - this text properties.
+	 *
+	 * @overload
+	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
 	 * @param {ShdType} sType - The shading type applied to the contents of the current text run.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @return {ApiTextPr} - this text properties.
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetShd.js
 	 */
-	ApiTextPr.prototype.SetShd = function(sType, r, g, b)
+	ApiTextPr.prototype.SetShd = function (sType, apiColor)
 	{
-		this.TextPr.Shd = private_GetShd(sType, r, g, b, false);
+		let r, g, b;
+		let isAuto;
+
+		if (apiColor instanceof ApiColor) {
+			const rgb = apiColor.GetRGB();
+			r = rgb.r;
+			g = rgb.g;
+			b = rgb.b;
+			isAuto = apiColor.IsAutoColor();
+		} else {
+			r = GetIntParameter(arguments[1], 0);
+			g = GetIntParameter(arguments[2], 0);
+			b = GetIntParameter(arguments[3], 0);
+			isAuto = false;
+		}
+
+		this.TextPr.Shd = private_GetShd(sType, r, g, b, isAuto);
 		this.private_OnChange();
 		return this;
 	};
@@ -15535,15 +15569,16 @@
 	 * Gets the text shading from the current text properties.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
-	 * @return {?ApiRGBColor}
+	 * @return {?ApiColor}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/GetShd.js
 	 */
-	ApiTextPr.prototype.GetShd = function()
+	ApiTextPr.prototype.GetShd = function ()
 	{
 		let oShd = this.TextPr.GetShd();
 		if (oShd) {
-			return new ApiRGBColor(oShd.Fill.r, oShd.Fill.g, oShd.Fill.b);
+			const isAuto = oShd.Fill && oShd.Fill.Auto === true;
+			return isAuto ? Api.prototype.AutoColor() : Api.prototype.RGB(oShd.Fill.r, oShd.Fill.g, oShd.Fill.b);
 		}
 
 		return null;
@@ -16134,18 +16169,44 @@
 	};
 	/**
 	 * Specifies the shading applied to the contents of the paragraph.
+	 *
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
+	 *
+	 * @overload
+	 * @param {ShdType} sType - The shading type which will be applied to the contents of the current paragraph.
+	 * @param {ApiColor} apiColor - The color or pattern used to fill the shading.
+	 * @returns {boolean}
+	 *
+	 * @overload
+	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
 	 * @param {ShdType} sType - The shading type which will be applied to the contents of the current paragraph.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [isAuto=false] - The true value disables paragraph contents shading.
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetShd.js
 	 */
-	ApiParaPr.prototype.SetShd = function(sType, r, g, b, isAuto)
+	ApiParaPr.prototype.SetShd = function(sType, apiColor)
 	{
+		let r, g, b;
+		let isAuto;
+
+		if (apiColor instanceof ApiColor) {
+			const rgb = apiColor.GetRGB();
+			r = rgb.r;
+			g = rgb.g;
+			b = rgb.b;
+			isAuto = apiColor.IsAutoColor();
+		} else {
+			r = GetIntParameter(arguments[1], 0);
+			g = GetIntParameter(arguments[2], 0);
+			b = GetIntParameter(arguments[3], 0);
+			isAuto = GetBoolParameter(arguments[4], false);
+		}
+
 		this.ParaPr.Shd = private_GetShd(sType, r, g, b, isAuto);
 		this.private_OnChange();
 		return true;
@@ -16154,7 +16215,7 @@
 	 * Returns the shading applied to the contents of the paragraph.
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
-	 * @returns {?ApiRGBColor}
+	 * @returns {?ApiColor}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/GetShd.js
 	 */
 	ApiParaPr.prototype.GetShd = function()
@@ -16168,8 +16229,10 @@
 				return null;
 
 			oColor = this.ParaPr.Shd.Color;
-			if (oColor)
-				return new ApiRGBColor(oColor.r, oColor.g, oColor.b);
+			if (oColor) {
+				const isAuto = oColor.Auto === true;
+				return isAuto ? Api.prototype.AutoColor() : Api.prototype.RGB(oColor.r, oColor.g, oColor.b);
+			}
 			
 			return null;
 		}
@@ -16179,8 +16242,10 @@
 			return null;
 
 		oColor = this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Shd.Color;
-		if (oColor)
-			return new ApiRGBColor(oColor.r, oColor.g, oColor.b);
+		if (oColor) {
+			const isAuto = oColor.Auto === true;
+			return isAuto ? Api.prototype.AutoColor() : Api.prototype.RGB(oColor.r, oColor.g, oColor.b);
+		}
 
 		return null;
 	};
@@ -20740,6 +20805,14 @@
 		while (hexStr.length < 6) hexStr = '0' + hexStr;
 		return hexStr.toUpperCase();
 	};
+
+	// Define properties for backwards compatibility
+	Object.defineProperties(ApiColor.prototype, {
+		r: { get: function () { return this.GetRGBA().r; } },
+		g: { get: function () { return this.GetRGBA().g; } },
+		b: { get: function () { return this.GetRGBA().b; } },
+		a: { get: function () { return this.GetRGBA().a; } },
+	});
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
