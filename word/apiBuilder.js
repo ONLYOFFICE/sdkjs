@@ -3807,11 +3807,13 @@
 	 * Class representing gradient stop.
 	 * @constructor
 	 */
-	function ApiGradientStop(oApiUniColor, pos)
+	function ApiGradientStop(color, pos)
 	{
 		this.Gs = new AscFormat.CGs();
 		this.Gs.pos = pos;
-		this.Gs.color = oApiUniColor.Unicolor;
+		this.Gs.color = color instanceof ApiColor
+			? color.private_createUnifill().fill.color
+			: color.Unicolor; // color - ApiUniColor instance
 	}
 
 	/**
@@ -4903,30 +4905,11 @@
 	 */
 	Api.prototype.CreateSolidFill = function (color)
 	{
-		if (color instanceof ApiColor) {
-			const isTheme = color.IsThemeColor();
+		const unifill = color instanceof ApiColor
+			? color.private_createUnifill()
+			: AscFormat.CreateUniFillByUniColorCopy(color.Unicolor);
 
-			const unifill = new AscFormat.CUniFill();
-			unifill.setFill(new AscFormat.CSolidFill());
-			unifill.fill.setColor(new AscFormat.CUniColor());
-
-			if (isTheme) {
-				unifill.fill.color.setColor(new AscFormat.CSchemeColor());
-				unifill.fill.color.color.id = color.value;
-			} else {
-				unifill.fill.color.setColor(new AscFormat.CRGBColor());
-
-				const components = color.GetRGBA();
-				unifill.fill.color.color.RGBA.R = components.r;
-				unifill.fill.color.color.RGBA.G = components.g;
-				unifill.fill.color.color.RGBA.B = components.b;
-				unifill.fill.color.color.RGBA.A = components.a;
-			}
-
-			return new ApiFill(unifill);
-		}
-
-		return new ApiFill(AscFormat.CreateUniFillByUniColorCopy(color.Unicolor));
+		return new ApiFill(unifill);
 	};
 
 	/**
@@ -5013,16 +4996,26 @@
 
 	/**
 	 * Creates a gradient stop used for different types of gradients.
+	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {ApiUniColor} uniColor - The color used for the gradient stop.
+	 *
+	 * @overload
+	 * @param {ApiColor} color - The color used for the gradient stop.
 	 * @param {PositivePercentage} pos - The position of the gradient stop measured in 1000th of percent.
 	 * @returns {ApiGradientStop}
+	 *
+	 * @overload
+	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
+	 * @param {ApiUniColor} color - The color used for the gradient stop.
+	 * @param {PositivePercentage} pos - The position of the gradient stop measured in 1000th of percent.
+	 * @returns {ApiGradientStop}
+	 *
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateGradientStop.js
 	 */
-	Api.prototype.CreateGradientStop = function(uniColor, pos)
+	Api.prototype.CreateGradientStop = function (color, pos)
 	{
-		return new ApiGradientStop(uniColor, pos);
+		return new ApiGradientStop(color, pos);
 	};
 
 	/**
@@ -20717,6 +20710,32 @@
 			return null;
 
 		return 0x000000FF;
+	};
+
+	ApiColor.prototype.private_createUnifill = function () {
+		const unifill = new AscFormat.CUniFill();
+		const solidfill = new AscFormat.CSolidFill();
+		const unicolor = new AscFormat.CUniColor();
+		let color;
+
+		const isTheme = this.IsThemeColor();
+		if (isTheme) {
+			color = new AscFormat.CSchemeColor();
+			color.id = this.value;
+		} else {
+			color = new AscFormat.CRGBColor();
+			const components = this.GetRGBA();
+			color.RGBA.R = components.r;
+			color.RGBA.G = components.g;
+			color.RGBA.B = components.b;
+			color.RGBA.A = components.a;
+		}
+
+		unicolor.setColor(color);
+		solidfill.setColor(unicolor);
+		unifill.setFill(solidfill);
+
+		return unifill;
 	};
 
 	/**
