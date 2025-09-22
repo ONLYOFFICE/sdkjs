@@ -2022,7 +2022,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @overload
-	 * @param {ApiColor} apiColor - Instance of the {@link ApiColor} class.
+	 * @param {ApiColor} color - Instance of the {@link ApiColor} class.
 	 * @return {ApiRange | null} - returns null if can't apply color.
 	*
 	 * @overload
@@ -2035,17 +2035,17 @@
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetColor.js
 	 */
-	ApiRange.prototype.SetColor = function (apiColor) {
+	ApiRange.prototype.SetColor = function (color) {
 		let r, g, b;
 		let isAuto, isTheme;
 
-		if (apiColor instanceof ApiColor) {
-			const rgb = apiColor.GetRGB();
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
 			r = rgb.r;
 			g = rgb.g;
 			b = rgb.b;
-			isAuto = apiColor.IsAutoColor();
-			isTheme = apiColor.IsThemeColor();
+			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
 		} else {
 			r = GetIntParameter(arguments[0], 0);
 			g = GetIntParameter(arguments[1], 0);
@@ -2080,7 +2080,7 @@
 			unifill.fill = new AscFormat.CSolidFill();
 			unifill.fill.color = new AscFormat.CUniColor();
 			unifill.fill.color.color = new AscFormat.CSchemeColor();
-			unifill.fill.color.color.id = apiColor.value;
+			unifill.fill.color.color.id = color.value;
 
 			paraTextPrOptions = { Unifill: unifill };
 		}
@@ -10176,7 +10176,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @overload
-	 * @param {ApiColor} apiColor - Instance of the {@link ApiColor} class.
+	 * @param {ApiColor} color - Instance of the {@link ApiColor} class.
 	 * @return {ApiParagraph} this
 	 *
 	 * @overload
@@ -10189,18 +10189,18 @@
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetColor.js
 	 */
-	ApiParagraph.prototype.SetColor = function (apiColor)
+	ApiParagraph.prototype.SetColor = function (color)
 	{
 		let r, g, b;
 		let isAuto, isTheme;
 
-		if (apiColor instanceof ApiColor) {
-			const rgb = apiColor.GetRGB();
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
 			r = rgb.r;
 			g = rgb.g;
 			b = rgb.b;
-			isAuto = apiColor.IsAutoColor();
-			isTheme = apiColor.IsThemeColor();
+			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
 		} else {
 			r = GetIntParameter(arguments[0], 0);
 			g = GetIntParameter(arguments[1], 0);
@@ -10219,7 +10219,7 @@
 			unifill.fill = new AscFormat.CSolidFill();
 			unifill.fill.color = new AscFormat.CUniColor();
 			unifill.fill.color.color = new AscFormat.CSchemeColor();
-			unifill.fill.color.color.id = apiColor.value;
+			unifill.fill.color.color.id = color.value;
 
 			paraTextPrOptions = { Unifill: unifill };
 		}
@@ -11903,7 +11903,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 *
 	 * @overload
-	 * @param {ApiColor} apiColor - Instance of the {@link ApiColor} class.
+	 * @param {ApiColor} color - Instance of the {@link ApiColor} class.
 	 * @return {ApiTextPr}
 	 *
 	 * @overload
@@ -11916,7 +11916,7 @@
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetColor.js
 	 */
-	ApiRun.prototype.SetColor = function (apiColor) {
+	ApiRun.prototype.SetColor = function (color) {
 		const oTextPr = this.GetTextPr();
 		oTextPr.SetColor.apply(oTextPr, arguments);
 		return oTextPr;
@@ -13619,7 +13619,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @overload
-	 * @param {ApiColor} [apiColor] - Instance of the {@link ApiColor} class. If not passed, the background color will be cleared.
+	 * @param {ApiColor} [color] - Instance of the {@link ApiColor} class. If not passed, the background color will be cleared.
 	 * @return {boolean}
 	 *
 	 * @overload
@@ -13632,7 +13632,7 @@
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetBackgroundColor.js
 	 */
-	ApiTable.prototype.SetBackgroundColor = function (apiColor) {
+	ApiTable.prototype.SetBackgroundColor = function (color) {
 		let allRowsUpdated = true;
 	
 		for (let nRow = 0, nCount = this.GetRowsCount(); nRow < nCount; nRow++) {
@@ -14143,7 +14143,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @overload
-	 * @param {ApiColor} [apiColor] - Instance of the {@link ApiColor} class. If not passed, the background color will be cleared.
+	 * @param {ApiColor} [color] - Instance of the {@link ApiColor} class. If not passed, the background color will be cleared.
 	 * @return {boolean}
 	 *
 	 * @overload
@@ -14156,7 +14156,7 @@
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/SetBackgroundColor.js
 	 */
-	ApiTableRow.prototype.SetBackgroundColor = function (apiColor)
+	ApiTableRow.prototype.SetBackgroundColor = function (color)
 	{
 		let allCellsUpdated = true;
 
@@ -14512,20 +14512,20 @@
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetBackgroundColor.js
 	 */
-	ApiTableCell.prototype.SetBackgroundColor = function (apiColor)
+	ApiTableCell.prototype.SetBackgroundColor = function (color)
 	{
 		let r, g, b;
 		let bNone;
 		let isAuto, isTheme;
 
-		if (apiColor instanceof ApiColor) {
-			const rgb = apiColor.GetRGB();
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
 			r = rgb.r;
 			g = rgb.g;
 			b = rgb.b;
 			bNone = false;
-			isAuto = apiColor.IsAutoColor();
-			isTheme = apiColor.IsThemeColor();
+			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
 		} else {
 			r = GetIntParameter(arguments[0], 0);
 			g = GetIntParameter(arguments[1], 0);
@@ -14547,7 +14547,7 @@
 			oUnifill.fill.color.color.setColor(r, g, b);
 		} else if (isTheme) {
 			oUnifill.fill.color.setColor(new AscFormat.CSchemeColor());
-			oUnifill.fill.color.color.id = apiColor.value;
+			oUnifill.fill.color.color.id = color.value;
 		}
 
 		const oNewShd = {
@@ -14586,7 +14586,7 @@
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetColumnBackgroundColor.js
 	 */
-	ApiTableCell.prototype.SetColumnBackgroundColor = function(apiColor)
+	ApiTableCell.prototype.SetColumnBackgroundColor = function(color)
 	{
 		const oTable = this.GetParentTable();
 		const aColumnCells = oTable.Table.GetColumn(this.GetIndex(), this.GetParentRow().GetIndex());
@@ -15154,7 +15154,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @overload
-	 * @param {ApiColor} apiColor - Instance of the {@link ApiColor} class.
+	 * @param {ApiColor} color - Instance of the {@link ApiColor} class.
 	 * @return {ApiTextPr} - this text properties.
 	 *
 	 * @overload
@@ -15167,17 +15167,17 @@
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetColor.js
 	 */
-	ApiTextPr.prototype.SetColor = function (apiColor) {
+	ApiTextPr.prototype.SetColor = function (color) {
 		let r, g, b;
 		let isAuto, isTheme;
 
-		if (apiColor instanceof ApiColor) {
-			const rgb = apiColor.GetRGB();
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
 			r = rgb.r;
 			g = rgb.g;
 			b = rgb.b;
-			isAuto = apiColor.IsAutoColor();
-			isTheme = apiColor.IsThemeColor();
+			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
 		} else {
 			r = GetIntParameter(arguments[0], 0);
 			g = GetIntParameter(arguments[1], 0);
@@ -15521,13 +15521,13 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @overload
-	 * @param {ShdType} sType - The shading type applied to the contents of the current text run.
-	 * @param {ApiColor} apiColor - The color or pattern used to fill the shading.
+	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
+	 * @param {ApiColor} color - The color or pattern used to fill the shading.
 	 * @return {ApiTextPr} - this text properties.
 	 *
 	 * @overload
 	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
-	 * @param {ShdType} sType - The shading type applied to the contents of the current text run.
+	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
@@ -15535,17 +15535,17 @@
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetShd.js
 	 */
-	ApiTextPr.prototype.SetShd = function (sType, apiColor)
+	ApiTextPr.prototype.SetShd = function (type, color)
 	{
 		let r, g, b;
 		let isAuto;
 
-		if (apiColor instanceof ApiColor) {
-			const rgb = apiColor.GetRGB();
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
 			r = rgb.r;
 			g = rgb.g;
 			b = rgb.b;
-			isAuto = apiColor.IsAutoColor();
+			isAuto = color.IsAutoColor();
 		} else {
 			r = GetIntParameter(arguments[1], 0);
 			g = GetIntParameter(arguments[2], 0);
@@ -15553,7 +15553,7 @@
 			isAuto = false;
 		}
 
-		this.TextPr.Shd = private_GetShd(sType, r, g, b, isAuto);
+		this.TextPr.Shd = private_GetShd(type, r, g, b, isAuto);
 		this.private_OnChange();
 		return this;
 	};
@@ -16167,13 +16167,13 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @overload
-	 * @param {ShdType} sType - The shading type which will be applied to the contents of the current paragraph.
-	 * @param {ApiColor} apiColor - The color or pattern used to fill the shading.
+	 * @param {ShdType} type - The shading type which will be applied to the contents of the current paragraph.
+	 * @param {ApiColor} color - The color or pattern used to fill the shading.
 	 * @returns {boolean}
 	 *
 	 * @overload
 	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
-	 * @param {ShdType} sType - The shading type which will be applied to the contents of the current paragraph.
+	 * @param {ShdType} type - The shading type which will be applied to the contents of the current paragraph.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
@@ -16182,17 +16182,17 @@
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetShd.js
 	 */
-	ApiParaPr.prototype.SetShd = function(sType, apiColor)
+	ApiParaPr.prototype.SetShd = function(type, color)
 	{
 		let r, g, b;
 		let isAuto;
 
-		if (apiColor instanceof ApiColor) {
-			const rgb = apiColor.GetRGB();
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
 			r = rgb.r;
 			g = rgb.g;
 			b = rgb.b;
-			isAuto = apiColor.IsAutoColor();
+			isAuto = color.IsAutoColor();
 		} else {
 			r = GetIntParameter(arguments[1], 0);
 			g = GetIntParameter(arguments[2], 0);
@@ -16200,7 +16200,7 @@
 			isAuto = GetBoolParameter(arguments[4], false);
 		}
 
-		this.ParaPr.Shd = private_GetShd(sType, r, g, b, isAuto);
+		this.ParaPr.Shd = private_GetShd(type, r, g, b, isAuto);
 		this.private_OnChange();
 		return true;
 	};
@@ -21543,7 +21543,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @overload
-	 * @param {ApiColor} [apiColor] - Instance of the {@link ApiColor} class.
+	 * @param {ApiColor} [color] - Instance of the {@link ApiColor} class.
 	 * @return {boolean}
 	 *
 	 * @overload
@@ -21557,12 +21557,12 @@
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetBorderColor.js
 	 */
-	ApiInlineLvlSdt.prototype.SetBorderColor = function (apiColor)
+	ApiInlineLvlSdt.prototype.SetBorderColor = function (color)
 	{
 		let r, g, b, a;
 
-		if (apiColor instanceof ApiColor) {
-			const rgba = apiColor.GetRGBA();
+		if (color instanceof ApiColor) {
+			const rgba = color.GetRGBA();
 			r = rgba.r;
 			g = rgba.g;
 			b = rgba.b;
@@ -21610,7 +21610,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @overload
-	 * @param {ApiColor} [apiColor] - Instance of the {@link ApiColor} class.
+	 * @param {ApiColor} [color] - Instance of the {@link ApiColor} class.
 	 * @return {boolean}
 	 *
 	 * @overload
@@ -21623,12 +21623,12 @@
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetBackgroundColor.js
 	 */
-	ApiInlineLvlSdt.prototype.SetBackgroundColor = function (apiColor)
+	ApiInlineLvlSdt.prototype.SetBackgroundColor = function (color)
 	{
 		let r, g, b, a;
 
-		if (apiColor instanceof ApiColor) {
-			const rgba = apiColor.GetRGBA();
+		if (color instanceof ApiColor) {
+			const rgba = color.GetRGBA();
 			r = rgba.r;
 			g = rgba.g;
 			b = rgba.b;
@@ -23760,7 +23760,7 @@
 	 * @typeofeditors ["CDE", "CFE"]
 	 *
 	 * @overload
-	 * @param {ApiColor} [apiColor] - Instance of the {@link ApiColor} class.
+	 * @param {ApiColor} [color] - Instance of the {@link ApiColor} class.
 	 * @return {boolean}
 	 *
 	 * @overload
@@ -23773,13 +23773,13 @@
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetBorderColor.js
 	 */
-	ApiFormBase.prototype.SetBorderColor = function(apiColor)
+	ApiFormBase.prototype.SetBorderColor = function(color)
 	{
 		let r, g, b;
 		let bNone;
 
-		if (apiColor instanceof ApiColor) {
-			const rgb = apiColor.GetRGB();
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
 			r = rgb.r;
 			g = rgb.g;
 			b = rgb.b;
@@ -23821,7 +23821,7 @@
 	 * @typeofeditors ["CDE", "CFE"]
 	 *
 	 * @overload
-	 * @param {ApiColor} [apiColor] - Instance of the {@link ApiColor} class.
+	 * @param {ApiColor} [color] - Instance of the {@link ApiColor} class.
 	 * @return {boolean}
 	 *
 	 * @overload
@@ -23834,19 +23834,19 @@
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetBackgroundColor.js
 	 */
-	ApiFormBase.prototype.SetBackgroundColor = function (apiColor)
+	ApiFormBase.prototype.SetBackgroundColor = function (color)
 	{
 		let r, g, b;
 		let bNone;
 		let isAuto;
 
-		if (apiColor instanceof ApiColor) {
-			const rgb = apiColor.GetRGB();
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
 			r = rgb.r;
 			g = rgb.g;
 			b = rgb.b;
 			bNone = false;
-			isAuto = apiColor.IsAutoColor();
+			isAuto = color.IsAutoColor();
 		} else {
 			r = GetIntParameter(arguments[0], 0);
 			g = GetIntParameter(arguments[1], 0);
