@@ -48,6 +48,17 @@
         return true;
     };
 
+    CPdfSmartArt.prototype.SetNeedRecalc = function(bRecalc, bSkipAddToRedraw) { 
+        AscPDF.CPdfDrawingPrototype.prototype.SetNeedRecalc.call(this, bRecalc, bSkipAddToRedraw);
+
+        if (bRecalc && !bSkipAddToRedraw) {
+            let oViewer = Asc.editor.getDocumentRenderer();
+            oViewer.paint(null, function() {
+                let oDoc = Asc.editor.getPDFDoc();
+                oDoc.private_UpdatePlaceholders();
+            });
+        }
+    };
     CPdfSmartArt.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
             return;

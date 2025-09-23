@@ -81,7 +81,7 @@ const allTests = [
 	'word/merge-documents/mergeDocuments.html',
 	'word/math-autocorrection/math-autocorrection.html',
 	'word/change-case/change-case.html',
-	'word/builder/api/replace-text-smart.html',
+	'word/js-api/js-api.html',
 
 	'cell/shortcuts/shortcuts.html',
 	'slide/shortcuts/shortcuts.html',

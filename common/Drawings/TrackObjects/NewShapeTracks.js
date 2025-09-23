@@ -566,7 +566,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
             }
         }
 
-        if (Asc.editor.isPdfEditor()) {
+        if (Asc.editor.isPdfEditor() && !this.isLine) {
             let oDoc = Asc.editor.getPDFDoc();
             let nRotAngle = oDoc.Viewer.getPageRotate(this.pageIndex);
             this.rot = -nRotAngle * Math.PI / 180;

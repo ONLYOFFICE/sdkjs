@@ -89,6 +89,10 @@
         if (this.IsNeedRecalc() == false)
             return;
 
+        if (!this.contentClipRect) {
+            this.RecalculateContentRect();
+        }
+        
         if (this.IsNeedCheckAlign()) {
             this.CheckAlignInternal();
         }

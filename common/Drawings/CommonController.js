@@ -4366,57 +4366,78 @@
 				getAllowedDataLabelsPosition: function (chartType, position) {
 					const types = Asc.c_oAscChartTypeSettings;
 					const positions = Asc.c_oAscChartDataLabelsPos;
+					
+					let allowedPositions;
+					switch (chartType) {
+						case types.barNormal:
+						case types.hBarNormal:
+							allowedPositions = [positions.ctr, positions.inBase, positions.inEnd, positions.outEnd];
+							break;
 
-					const allowedDataLabelPositions = {
-						[types.barNormal]: [positions.ctr, positions.inBase, positions.inEnd, positions.outEnd],
-						[types.barStacked]: [positions.ctr, positions.inBase, positions.inEnd],
-						[types.barStackedPer]: [positions.ctr, positions.inBase, positions.inEnd],
-						[types.barNormal3d]: [],
-						[types.barStacked3d]: [],
-						[types.barStackedPer3d]: [],
-						[types.barNormal3dPerspective]: [],
-						[types.lineNormal]: [positions.ctr, positions.l, positions.t, positions.r, positions.b],
-						[types.lineStacked]: [positions.ctr, positions.l, positions.t, positions.r, positions.b],
-						[types.lineStackedPer]: [positions.ctr, positions.l, positions.t, positions.r, positions.b],
-						[types.lineNormalMarker]: [positions.ctr, positions.l, positions.t, positions.r, positions.b],
-						[types.lineStackedMarker]: [positions.ctr, positions.l, positions.t, positions.r, positions.b],
-						[types.lineStackedPerMarker]: [positions.ctr, positions.l, positions.t, positions.r, positions.b],
-						[types.line3d]: [],
-						[types.pie]: [positions.ctr, positions.inEnd, positions.outEnd, positions.bestFit],
-						[types.pie3d]: [positions.ctr, positions.inEnd, positions.outEnd, positions.bestFit],
-						[types.hBarNormal]: [positions.ctr, positions.inBase, positions.inEnd, positions.outEnd],
-						[types.hBarStacked]: [positions.ctr, positions.inBase, positions.inEnd],
-						[types.hBarStackedPer]: [positions.ctr, positions.inBase, positions.inEnd],
-						[types.hBarNormal3d]: [],
-						[types.hBarStacked3d]: [],
-						[types.hBarStackedPer3d]: [],
-						[types.areaNormal]: [positions.show],
-						[types.areaStacked]: [positions.show],
-						[types.areaStackedPer]: [positions.show],
-						[types.doughnut]: [positions.show],
-						[types.stock]: [positions.show],
-						[types.scatter]: [positions.ctr, positions.l, positions.r, positions.t, positions.b],
-						[types.scatterLine]: [positions.ctr, positions.l, positions.r, positions.t, positions.b],
-						[types.scatterLineMarker]: [positions.ctr, positions.l, positions.r, positions.t, positions.b],
-						[types.scatterMarker]: [positions.ctr, positions.l, positions.r, positions.t, positions.b],
-						[types.scatterNone]: [positions.ctr, positions.l, positions.r, positions.t, positions.b],
-						[types.scatterSmooth]: [positions.ctr, positions.l, positions.r, positions.t, positions.b],
-						[types.scatterSmoothMarker]: [positions.ctr, positions.l, positions.r, positions.t, positions.b],
-						[types.surfaceNormal]: [],
-						[types.surfaceWireframe]: [],
-						[types.contourNormal]: [],
-						[types.contourWireframe]: [],
-						[types.comboCustom]: [],
-						[types.comboBarLine]: [],
-						[types.comboBarLineSecondary]: [],
-						[types.comboAreaBar]: [],
-						[types.radar]: [positions.show],
-						[types.radarMarker]: [positions.show],
-						[types.radarFilled]: [positions.show],
-						[types.unknown]: []
-					};
+						case types.barStacked:
+						case types.barStackedPer:
+						case types.hBarStacked:
+						case types.hBarStackedPer:
+							allowedPositions = [positions.ctr, positions.inBase, positions.inEnd];
+							break;
 
-					const allowedPositions = allowedDataLabelPositions[chartType] || [];
+						case types.lineNormal:
+						case types.lineStacked:
+						case types.lineStackedPer:
+						case types.lineNormalMarker:
+						case types.lineStackedMarker:
+						case types.lineStackedPerMarker:
+							allowedPositions = [positions.ctr, positions.l, positions.t, positions.r, positions.b];
+							break;
+
+						case types.pie:
+						case types.pie3d:
+							allowedPositions = [positions.ctr, positions.inEnd, positions.outEnd, positions.bestFit];
+							break;
+
+						case types.areaNormal:
+						case types.areaStacked:
+						case types.areaStackedPer:
+						case types.doughnut:
+						case types.stock:
+						case types.radar:
+						case types.radarMarker:
+						case types.radarFilled:
+							allowedPositions = [positions.show];
+							break;
+
+						case types.scatter:
+						case types.scatterLine:
+						case types.scatterLineMarker:
+						case types.scatterMarker:
+						case types.scatterNone:
+						case types.scatterSmooth:
+						case types.scatterSmoothMarker:
+							allowedPositions = [positions.ctr, positions.l, positions.r, positions.t, positions.b];
+							break;
+
+						case types.barNormal3d:
+						case types.barStacked3d:
+						case types.barStackedPer3d:
+						case types.barNormal3dPerspective:
+						case types.line3d:
+						case types.hBarNormal3d:
+						case types.hBarStacked3d:
+						case types.hBarStackedPer3d:
+						case types.surfaceNormal:
+						case types.surfaceWireframe:
+						case types.contourNormal:
+						case types.contourWireframe:
+						case types.comboCustom:
+						case types.comboBarLine:
+						case types.comboBarLineSecondary:
+						case types.comboAreaBar:
+						case types.unknown:
+							allowedPositions = [];
+							break;
+
+						default: allowedPositions = [];
+					}
 
 					return allowedPositions.indexOf(position) > -1
 						? position
@@ -4491,11 +4512,18 @@
 						case AscCommon.c_oEditorId.Word: {
 							selectedObjects = Asc.editor.getSelectedElements();
 
-							isChart = function (object) {
-								const value = object.asc_getObjectValue && object.asc_getObjectValue();
-								return object.asc_getObjectType() === Asc.c_oAscTypeSelectElement.Image && value && value.asc_getChartProperties();
-							};
-
+							if (Asc.editor.isPdfEditor()) {
+								isChart = function (object) {
+									return object.asc_getObjectType && object.asc_getObjectType() === Asc.c_oAscTypeSelectElement.Chart;
+								};
+							}
+							else {
+								isChart = function (object) {
+									const value = object.asc_getObjectValue && object.asc_getObjectValue();
+									return object.asc_getObjectType() === Asc.c_oAscTypeSelectElement.Image && value && value.asc_getChartProperties();
+								};
+							}
+							
 							getRect = function (bounds) {
 								const logicDocument = Asc.editor.getLogicDocument();
 								if (!logicDocument) return null;
@@ -4550,7 +4578,7 @@
 								const logicDocument = Asc.editor.getLogicDocument();
 								if (!logicDocument) return null;
 
-								const slideIndex = logicDocument.GetCurrentSlide().getSlideIndex();
+								const slideIndex = logicDocument.GetSlideIndex();
 								const convertedPosTopLeft = logicDocument.DrawingDocument.ConvertCoordsToCursorWR(bounds.l, bounds.t, slideIndex);
 								const convertedPosRightBottom = logicDocument.DrawingDocument.ConvertCoordsToCursorWR(bounds.r, bounds.b, slideIndex);
 

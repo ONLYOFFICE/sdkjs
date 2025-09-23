@@ -807,6 +807,10 @@ CHeaderFooter.prototype =
 	{
 		this.Content.UpdateChart( Chart );
 	},
+	OpenChartEditor : function()
+	{
+		this.Content.OpenChartEditor();
+	},
 	GetChartSettings : function()
 	{
 		return this.Content.GetChartSettings();
@@ -2129,7 +2133,11 @@ CHeaderFooterController.prototype =
 		if ( null != this.CurHdrFtr )
 			return this.CurHdrFtr.UpdateChart( Chart );
 	},
-
+	OpenChartEditor : function()
+	{
+		if ( null != this.CurHdrFtr )
+			return this.CurHdrFtr.OpenChartEditor();
+	},
 	GetChartSettings : function()
 	{
 		if ( null != this.CurHdrFtr )

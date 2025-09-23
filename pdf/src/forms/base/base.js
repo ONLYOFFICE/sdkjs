@@ -388,8 +388,13 @@
         
         if (oNewPage) {
             let sId = this.GetId();
-            oCurPage.RemoveField(sId);
+            oCurPage.RemoveField(sId, true);
             oNewPage.AddField(this);
+
+            let oEditShape = this.GetEditShape();
+            if (oEditShape) {
+                oEditShape.selectStartPage = nPage;
+            }
         }
     };
     CBaseField.prototype.GetPage = function() {
@@ -596,7 +601,7 @@
             oNewTrigger.SetParentField(this);
         }
 
-        const aCurActionsInfo = this.GetActions();
+        const aCurActionsInfo = this.GetActions(nTriggerType);
         AscCommon.History.Add(new CChangesPDFFormActions(this, aCurActionsInfo, aActionsInfo, nTriggerType));
 
         switch (nTriggerType) {
@@ -928,6 +933,8 @@
 
         oCopy.private_SetValue(this.GetParentValue());
         oCopy.DrainViewPropsFrom(this);
+        oCopy.SetMeta(this.GetMeta());
+        
         return oCopy;
     };
     CBaseField.prototype.DrainViewPropsFrom = function(oField) {
@@ -1045,7 +1052,7 @@
     };
     CBaseField.prototype.IsUseInDocument = function() {
         let oPage = this.GetParentPage();
-        if (oPage && oPage.fields.includes(this)) {
+        if (oPage && oPage.fields.includes(this) && oPage.GetIndex() !== -1) {
             return true;
         }
 
@@ -1565,7 +1572,9 @@
         this.SetReadOnly(oFieldToInherit.IsReadOnly());
         this.SetNoExport(oFieldToInherit.IsNoExport());
         this.SetRequired(oFieldToInherit.IsRequired());
-        
+        this.SetTooltip(oFieldToInherit.GetTooltip());
+        this.SetMEOptions(oFieldToInherit.GetMEOptions());
+
         if (bClearFrom !== false) {
             oFieldToInherit.SetDefaultValue(undefined);
             oFieldToInherit.SetParentValue(undefined);
@@ -2621,7 +2630,7 @@
 
         let nNewExtX = this.GetWidth();
         let nNewExtY = this.GetHeight();
-        this.SetWasChanged(true, !(Math.abs(nOldExtX - nNewExtX) < 0.001 && Math.abs(nOldExtY == nNewExtY) < 0.001));
+        this.SetWasChanged(true, !(Math.abs(nOldExtX - nNewExtX) < 0.001 && Math.abs(nOldExtY - nNewExtY) < 0.001));
         
         this.SetNeedRecalc(true);
 		this.RecalcTextTransform();
@@ -2653,7 +2662,7 @@
             this.SetNeedUpdateImage(true);
         }
 
-        this.CalculateContentClipRect();
+        this.contentClipRect = null;
     };
     CBaseField.prototype.CalculateContentClipRect = function() {};
     CBaseField.prototype.SetPosition = function(x, y) {

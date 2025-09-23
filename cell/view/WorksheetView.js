@@ -18897,7 +18897,9 @@ function isAllowPasteLink(pastedWb) {
 		let isFormulaFromVal;
 
 		let valText = val[0].getFragmentText();
-		let canConverToFormula = this.canConverToFormula(valText);
+		let _numFormat = c && c.getNumFormat && c.getNumFormat();
+		let _isTextFormat = _numFormat && _numFormat.getType && _numFormat.getType() === Asc.c_oAscNumFormatType.Text;
+		let canConverToFormula = !_isTextFormat && this.canConverToFormula(valText);
 		let cellWithFormula = new AscCommonExcel.CCellWithFormula(this.model, bbox.r1, bbox.c1);
 
 		if (!isFormula && canConverToFormula) {

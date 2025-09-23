@@ -154,13 +154,11 @@
 		}
 
 		// bug #76224
-		if (this.isViewMode(true)) {
-			const modesToReplace = [
-				AscCommon.MobileTouchMode.FlowObj,
-				AscCommon.MobileTouchMode.InlineObj
-			];
-
-			if (modesToReplace.includes(this.Mode)) {
+		if (this.isViewMode(true))
+		{
+			if (this.Mode === AscCommon.MobileTouchMode.FlowObj ||
+				this.Mode === AscCommon.MobileTouchMode.InlineObj)
+			{
 				this.Mode = AscCommon.MobileTouchMode.None;
 			}
 		}

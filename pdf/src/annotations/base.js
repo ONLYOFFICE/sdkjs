@@ -165,6 +165,8 @@
         let aDash           = this.GetDash();
 
         oCopy.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
+        oCopy.SetUserId(this.GetUserId());
+        oCopy.SetDisplay(this.GetDisplay());
         oCopy.SetModDate(sDate);
         oCopy.SetCreationDate(sDate);
         oCopy.SetContents(this.GetContents());
@@ -781,7 +783,7 @@
     };
     CAnnotationBase.prototype.IsUseInDocument = function() {
         let oPage = this.GetParentPage();
-        if (oPage && oPage.annots.includes(this)) {
+        if (oPage && oPage.annots.includes(this) && oPage.GetIndex() !== -1) {
             return true;
         }
 
@@ -886,7 +888,7 @@
         
         this._contents  = contents;
         
-        if (AscCommon.History.UndoRedoInProgress == false && oViewer.IsOpenAnnotsInProgress == false) {
+        if (AscCommon.History.UndoRedoInProgress == false) {
             AscCommon.History.Add(new CChangesPDFAnnotContents(this, sCurContents, contents));
         }
         

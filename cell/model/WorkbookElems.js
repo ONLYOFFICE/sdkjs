@@ -14539,6 +14539,9 @@ function RangeDataManagerElem(bbox, data)
 
 		this.arguments = null;
 
+		this.activeArgPos = null;
+		this.activeArgsCount = null;
+
 		this._init(name);
 
 		return this;
@@ -14582,6 +14585,12 @@ function RangeDataManagerElem(bbox, data)
 	};
 	CFunctionInfo.prototype.asc_setArguments = function (val) {
 		this.arguments = val;
+	};
+	CFunctionInfo.prototype.asc_getActiveArgPos = function () {
+		return this.activeArgPos;
+	};
+	CFunctionInfo.prototype.asc_getActiveArgsCount = function () {
+		return this.activeArgsCount;
 	};
 
 
@@ -18676,14 +18685,7 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	CCustomFunctionEngine.prototype.clear = function () {
-		if (AscCommonExcel.cFormulaFunctionGroup["Custom"] && AscCommonExcel.cFormulaFunctionGroup["Custom"].length) {
-			let aCustomFunc = AscCommonExcel.cFormulaFunctionGroup["Custom"];
-			for (let i = 0; i < aCustomFunc.length; i++) {
-				let sName = aCustomFunc[i].prototype.name;
-				AscCommonExcel.removeCustomFunction(sName);
-			}
-			AscCommonExcel.cFormulaFunctionGroup["Custom"] = [];
-
+		if (AscCommonExcel.removeCustomFunctions()) {
 			this.wb.initFormulasList && this.wb.initFormulasList();
 			if (this.wb && this.wb.Api) {
 				this.wb.Api.formulasList = AscCommonExcel.getFormulasInfo();
@@ -20593,6 +20595,8 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_getName"] = prot.asc_getName;
 	prot["asc_getArguments"] = prot.asc_getArguments;
 	prot["asc_setArguments"] = prot.asc_setArguments;
+	prot["asc_getActiveArgPos"] = prot.asc_getActiveArgPos;
+	prot["asc_getActiveArgsCount"] = prot.asc_getActiveArgsCount
 
 
 	window["Asc"]["asc_CExternalReference"] = window["Asc"].asc_CExternalReference = asc_CExternalReference;

@@ -1834,5 +1834,5 @@ CChangesPDFCheckOptions.prototype.Type = AscDFH.historyitem_Pdf_Checkbox_Options
 CChangesPDFCheckOptions.prototype.private_SetValue = function(Value)
 {
 	let oForm = this.Class;
-	oForm.SetOptions(Value);
+	oForm._options = Value;
 };

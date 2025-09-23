@@ -1290,7 +1290,7 @@ function (window, undefined) {
 		if (!this.getMenuEditorMode()) {
 			this._fireUpdated();
 		}
-		this._updateCursorPosition(true, isExpand);
+		this._updateCursorPosition(true, isExpand, null, true);
 		this._updateCursor();
 
 		this._updateUndoRedoChanged();
@@ -1326,7 +1326,13 @@ function (window, undefined) {
 		}
 
 		this.handlers.trigger("updated", s, this.cursorPos, fPos, fName);
-		this.handlers.trigger("updatedEditableFunction", fCurrent, fPos !== undefined ? this.calculateOffset(fPos) : null);
+		let functionInfo = null;
+		if (this._parseResult && this._parseResult.argPos && fCurrent) {
+			functionInfo = new AscCommonExcel.CFunctionInfo(AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale[fCurrent] : fCurrent);
+			functionInfo.activeArgPos = this._parseResult.argPos;
+			functionInfo.activeArgsCount = this._parseResult.argPosArr && this._parseResult.argPosArr.length;
+		}
+		this.handlers.trigger("updatedEditableFunction", fCurrent, fPos !== undefined ? this.calculateOffset(fPos) : null, functionInfo);
 		if (api && api.isMobileVersion) {
 			this.restoreFocus();
 		}
@@ -1747,7 +1753,7 @@ function (window, undefined) {
 		this.cursorStyle.display = "none";
 	};
 
-	CellEditor.prototype._updateCursorPosition = function (redrawText, isExpand, lineIndex) {
+	CellEditor.prototype._updateCursorPosition = function (redrawText, isExpand, lineIndex, opt_not_formulas_update) {
 		// ToDo should forward this function
 		let h = this.canvas.height;
 		let y = -this.textRender.calcLineOffset(this.topLineIndex);
@@ -1821,6 +1827,27 @@ function (window, undefined) {
 		if (this.isTopLineActive && !this.skipTLUpdate) {
 			this._updateTopLineCurPos();
 		}
+
+		var s = AscCommonExcel.getFragmentsText(this.options.fragments);
+		var isFormula = -1 === this.beginCompositePos && (s.charAt(0) === "=" || s.charAt(0) === "+" || s.charAt(0) === "-");
+		var fPos, fName, fCurrent, argPos = null;
+
+		if (!opt_not_formulas_update && isFormula && this._parseResult && this._parseResult.allFunctionsPos && this.cursorPos) {
+			let activeFunction = this._parseResult.getActiveFunction(this.cursorPos, this.cursorPos, true);
+			let argPos = activeFunction && activeFunction.argPos;
+
+			fCurrent = activeFunction && activeFunction.func ? activeFunction.func.name : null;
+			fPos = activeFunction && activeFunction.start;
+
+			let functionInfo = null;
+			if (fCurrent) {
+				functionInfo = new AscCommonExcel.CFunctionInfo(AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale[fCurrent] : fCurrent);
+				functionInfo.activeArgPos = argPos != null ? argPos + 1 : null;
+				functionInfo.activeArgsCount = activeFunction && activeFunction.args ? activeFunction.args.length : 0;
+			}
+			this.handlers.trigger("updatedEditableFunction", fCurrent, fPos !== undefined ? this.calculateOffset(fPos) : null, functionInfo);
+		}
+
 
 		if (this.getMenuEditorMode()) {
 			this.handlers.trigger("updateMenuEditorCursorPosition", curTop, curHeight);

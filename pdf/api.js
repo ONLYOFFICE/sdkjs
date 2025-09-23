@@ -339,7 +339,7 @@
 					_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Text, sText);
 		
 				if (AscCommon.c_oAscClipboardDataFormat.Html & _formats)
-					_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, `<div><p><span>${sText}</span></p></div>`);
+					_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, "<div><p><span>" + sText + "</span></p></div>");
 			} else if (!oActiveAnnot.IsTextMarkup()) {
 				let oContent = oActiveAnnot.GetDocContent();
 				processClipboardData.call(this, oContent, _formats, _clipboard);
@@ -654,7 +654,7 @@
 		});
 	};
 	PDFEditorApi.prototype.asc_undoAllChanges = function() {};
-	PDFEditorApi.prototype.asc_addChartDrawingObject = function(nType, Placeholder) {
+	PDFEditorApi.prototype.asc_addChartDrawingObject = function(nType, Placeholder, bOpenChartEditor) {
 		this.asc_onCloseFrameEditor();
 
 		let oDoc	= this.getPDFDoc();
@@ -664,6 +664,9 @@
 			AscFonts.IsCheckSymbols = true;
 			oDoc.AddChart(nType, true, Placeholder, oViewer.currentPage);
 			AscFonts.IsCheckSymbols = false;
+			if (bOpenChartEditor) {
+				oDoc.OpenChartEditor();
+			}
 		}, AscDFH.historydescription_Document_AddChart);
 	};
 	PDFEditorApi.prototype.ChartApply = function(obj) {
@@ -1652,6 +1655,8 @@
 					return false;
 				}
 
+				let sDateFormat = oField.GetDateFormat();
+
 				oField.ClearFormat();
 				if (oField.IsMultiline && oField.IsMultiline()) {
 					return false;
@@ -1668,9 +1673,13 @@
 					"JS": 'AFDate_KeystrokeEx("' + sFormat + '");'
 				}];
 				oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+				oField.prevDateFormat = sDateFormat;
+
 				if (oField.IsCanCommit()) {
 					oField.Commit();
 				}
+
+				oField.prevDateFormat = undefined;
 
 				res = true;
 			});
@@ -3616,27 +3625,29 @@
 						oOptionObject.forEach(function(buttonField) {
 							buttonField.AddImage(oImage, buttonField.asc_curImageState);
 						});
+						return;
 					}
 					else if (oOptionObject.GetType && oOptionObject.GetType() === AscPDF.FIELD_TYPES.button) {
 						oOptionObject.AddImage(oImage, oOptionObject.asc_curImageState);
+						return;
 					}
 					else if (oOptionObject.isStamp) {
 						oDoc.AddStampAnnot(AscPDF.STAMP_TYPES.Image, oDoc.Viewer.currentPage, oImage);
+						return;
 					}
 				}
-				else {
-					const arrImages = [];
-					for (let i = 0; i < arrUrls.length; ++i) {
-						const oImage = oApi.ImageLoader.LoadImage(arrUrls[i], 1);
-						if (oImage.Image) {
-							arrImages.push(oImage);
-						}
+
+				const arrImages = [];
+				for (let i = 0; i < arrUrls.length; ++i) {
+					const oImage = oApi.ImageLoader.LoadImage(arrUrls[i], 1);
+					if (oImage.Image) {
+						arrImages.push(oImage);
 					}
-					if (arrImages.length) {
-						oDoc.DoAction(function() {
-							oDoc.AddImages(arrImages);
-						}, AscDFH.historydescription_Presentation_AddFlowImage)
-					}
+				}
+				if (arrImages.length) {
+					oDoc.DoAction(function() {
+						oDoc.AddImages(arrImages, oOptionObject);
+					}, AscDFH.historydescription_Presentation_AddFlowImage)
 				}
 			}, []);
 		}
@@ -3686,15 +3697,9 @@
 		oDate.setSeconds(oCurDate.getSeconds());
 		oDate.getMilliseconds(oCurDate.getMilliseconds());
 
-		oDoc.lastDatePickerInfo = {
-			value: AscPDF.FormatDateValue(oDate.getTime(), oActiveForm.GetDateFormat()),
-			form: oActiveForm
-		};
-
 		oActiveForm.content.SelectAll();
-		oActiveForm.EnterText(AscWord.CTextFormFormat.prototype.GetBuffer(oDoc.lastDatePickerInfo.value));
+		oActiveForm.EnterText(AscWord.CTextFormFormat.prototype.GetBuffer(AscPDF.FormatDateValue(oDate.getTime(), oActiveForm.GetDateFormat())));
 		oDoc.EnterDownActiveField();
-		oDoc.lastDatePickerInfo = null;
 	};
 	PDFEditorApi.prototype.asc_SelectPDFFormListItem = function(sId) {
 		let oViewer	= this.DocumentRenderer;
@@ -4322,10 +4327,7 @@
 
 		if (!pageObject) {
 			let oPos = AscPDF.GetGlobalCoordsByPageCoords(oBasePos.x, oBasePos.y, nPage);
-			oDoc.anchorPositionToAdd = {
-				x: oBasePos.x,
-				y: oBasePos.y
-			};
+			oDoc.anchorPositionToAdd = null;
 			return new AscCommon.asc_CRect(oPos["X"] + nCommentWidth, oPos["Y"] + nCommentHeight / 2, 0, 0);
 		}
 
@@ -4512,6 +4514,8 @@
 		
 		this.DocumentRenderer = documentRenderer;
 		this.WordControl.m_oDrawingDocument.m_oDocumentRenderer = documentRenderer;
+
+		this.externalChartCollector.init(this);
 	};
 	PDFEditorApi.prototype.haveThumbnails = function() {
 		return !!(this.DocumentRenderer && this.DocumentRenderer.Thumbnails);
@@ -4757,6 +4761,9 @@
 			this.isApplyChangesOnOpen = true;
 		}
 		this.initBroadcastChannelListeners();
+
+		// Toggle chart elements (bug #67197)
+		Asc.editor.asc_registerCallback('asc_onFocusObject', this.toggleChartElementsCallback);
 	};
 	PDFEditorApi.prototype._canSyncCollaborativeChanges = function(isFirstLoad)
 	{

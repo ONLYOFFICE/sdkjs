@@ -758,7 +758,8 @@
 				"padding": "5px"
 			});
 
-			this.toggleElementReporterDrawMenuButton = function(state, icon = "btn-pen") {
+			this.toggleElementReporterDrawMenuButton = function(state, icon) {
+				icon = undefined !== icon ? icon : "btn-pen";
 				const btnIcon = document.getElementById("dem_id_draw_menu_trigger_span");
 
 				let currentIcon;
@@ -848,7 +849,8 @@
                 document.body.appendChild(this.reporterTooltip);
             }
 
-            const showTooltip = function (element, text, delay = 500) {
+            const showTooltip = function (element, text, delay) {
+                delay = undefined !== delay ? delay : 500;
                 if (!!this.reporterTooltipTimeout) {
                     clearTimeout(this.reporterTooltipTimeout);
                 }

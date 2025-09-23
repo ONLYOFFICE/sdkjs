@@ -250,6 +250,36 @@ $(function () {
 		assert.strictEqual(para.GetLinesCount(), 1, "Lines count 1");
 		assert.strictEqual(para.GetTextOnLine(0), "xyz", "Text on line 0 'xyz'");
 	});
-
+	
+	QUnit.test("Test edge cases", function (assert)
+	{
+		// -------------------------------------------------------------------------------------------------------------
+		// Check bug (76557)
+		// We can make a break after '-'
+		// But '%',')' can't be at the start of the line
+		// so we should treat the whole text as a long word
+		// '(' can be at the start of the line
+		setText("hhhh-%hhh");
+		recalculate(charWidth * 6.5);
+		checkLines(assert, para, [
+			"hhhh-%",
+			"hhh"
+		]);
+		
+		setText("hhhh-)hhh");
+		recalculate(charWidth * 6.5);
+		checkLines(assert, para, [
+			"hhhh-)",
+			"hhh"
+		]);
+		
+		setText("hhhh-(hhh");
+		recalculate(charWidth * 6.5);
+		checkLines(assert, para, [
+			"hhhh-",
+			"(hhh"
+		]);
+		// -------------------------------------------------------------------------------------------------------------
+	});
 
 });

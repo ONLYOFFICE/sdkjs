@@ -7903,7 +7903,7 @@ function (window, undefined) {
 			this.Position        = undefined;
 			this.Locked          = false;
 			this.lockAspect      = undefined;
-			this.ChartProperties = new Asc.asc_ChartSettings();
+			this.ChartProperties = null;
 
 			this.severalCharts      = false;
 			this.severalChartTypes  = undefined;

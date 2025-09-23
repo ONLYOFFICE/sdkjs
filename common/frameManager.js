@@ -572,6 +572,9 @@
 
 	CDiagramCellFrameManager.prototype.updateGeneralDiagramCache = function (aRanges)
 	{
+		if (!this.mainDiagram) {
+			return;
+		}
 		const aRefsToChange = [];
 		this.mainDiagram.collectIntersectionRefs(aRanges, aRefsToChange);
 		for (let i = 0; i < aRefsToChange.length; i += 1)
@@ -590,6 +593,9 @@
 
 	CDiagramCellFrameManager.prototype.getAscSettings = function ()
 	{
+		if (!this.mainDiagram) {
+			return;
+		}
 		const oProps = this.mainDiagram.getAscSettings();
 		const oThis = this;
 

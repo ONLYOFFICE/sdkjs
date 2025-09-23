@@ -328,7 +328,7 @@
             ];
         }
 
-        let extX = Math.sqrt((aPoints[2] - aPoints[0]) ** 2 + (aPoints[3] - aPoints[1]) ** 2);
+        var extX = Math.sqrt(Math.pow(aPoints[2] - aPoints[0], 2) + Math.pow(aPoints[3] - aPoints[1], 2));
         let extY = (Math.abs(nLeaderLength) + Math.abs(nLeaderExt));
 
         if (nLeaderLength > 0) {

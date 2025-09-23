@@ -5225,6 +5225,7 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
     this.memory = memory;
     this.Document = doc;
 	this.oNumIdMap = oNumIdMap;
+	this.oBinaryHeaderFooterTableWriter = oBinaryHeaderFooterTableWriter;
     this.bs = new BinaryCommonWriter(this.memory);
 	this.btblPrs = new Binary_tblPrWriter(this.memory, oNumIdMap, saveParams);
     this.bpPrs = new Binary_pPrWriter(this.memory, oNumIdMap, oBinaryHeaderFooterTableWriter, saveParams);
@@ -6653,7 +6654,7 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
         //Content
         if(null != cell.Content)
         {
-            var oInnerDocument = new BinaryDocumentTableWriter(this.memory, this.Document, this.oMapCommentId, this.oNumIdMap, this.copyParams, this.saveParams, this.oBinaryHeaderFooterTableWriter);
+            var oInnerDocument = new BinaryDocumentTableWriter(this.memory, this.Document, this.oMapCommentId, this.oNumIdMap, this.copyParams, this.saveParams, null);
             this.bs.WriteItem(c_oSerDocTableType.Cell_Content, function(){oInnerDocument.WriteDocumentContent(cell.Content);});
         }
     };

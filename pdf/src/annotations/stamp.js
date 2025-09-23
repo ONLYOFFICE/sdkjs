@@ -110,7 +110,8 @@
             return;
         }
 
-        function calcScale(rectA, angleRad, bboxB, eps = 1e-3) {
+        function calcScale(rectA, angleRad, bboxB, eps) {
+            eps = undefined !== eps ? eps : 1e-3;
             const cosL = Math.cos(angleRad);
             const sinL = Math.sin(angleRad);
 
@@ -352,25 +353,25 @@
             AscPDF.endMultiplyMode(oGraphicsPDF.GetContext());
         }
 
-        if (oGraphicsPDF) {
-            oGraphicsPDF.SetLineWidth(1);
-            let aOringRect  = this.GetRect();
-            let X       = aOringRect[0];
-            let Y       = aOringRect[1];
-            let nWidth  = aOringRect[2] - aOringRect[0];
-            let nHeight = aOringRect[3] - aOringRect[1];
+        // if (oGraphicsPDF) {
+        //     oGraphicsPDF.SetLineWidth(1);
+        //     let aOringRect  = this.GetRect();
+        //     let X       = aOringRect[0];
+        //     let Y       = aOringRect[1];
+        //     let nWidth  = aOringRect[2] - aOringRect[0];
+        //     let nHeight = aOringRect[3] - aOringRect[1];
 
-            Y += 1 / 2;
-            X += 1 / 2;
-            nWidth  -= 1;
-            nHeight -= 1;
+        //     Y += 1 / 2;
+        //     X += 1 / 2;
+        //     nWidth  -= 1;
+        //     nHeight -= 1;
 
-            oGraphicsPDF.SetStrokeStyle(0, 255, 255);
-            oGraphicsPDF.SetLineDash([]);
-            oGraphicsPDF.BeginPath();
-            oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
-            oGraphicsPDF.Stroke();
-        }
+        //     oGraphicsPDF.SetStrokeStyle(0, 255, 255);
+        //     oGraphicsPDF.SetLineDash([]);
+        //     oGraphicsPDF.BeginPath();
+        //     oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
+        //     oGraphicsPDF.Stroke();
+        // }
     };
     CAnnotationStamp.prototype.ClearCache = function() {
         this._originView.normal = null;

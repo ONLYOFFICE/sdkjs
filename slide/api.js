@@ -8153,7 +8153,7 @@ background-repeat: no-repeat;\
 		}
 	};
 
-	asc_docs_api.prototype.asc_addChartDrawingObject = function(nType, Placeholder)
+	asc_docs_api.prototype.asc_addChartDrawingObject = function(nType, Placeholder, bOpenChartEditor)
 	{
 		this.asc_onCloseFrameEditor();
 		const oLogicDocument = this.private_GetLogicDocument();
@@ -8161,6 +8161,12 @@ background-repeat: no-repeat;\
 		return;
 
 		this.WordControl.m_oLogicDocument.addChart(nType, true, Placeholder);
+		if (bOpenChartEditor) {
+			const oCurSlide = oLogicDocument.GetCurrentSlide();
+			if (oCurSlide) {
+				oCurSlide.openChartEditor();
+			}
+		}
 	};
 
 	asc_docs_api.prototype.asc_editChartDrawingObject = function(chartBinary)

@@ -448,6 +448,8 @@ SlideLayout.prototype.getMaster = function(){
     SlideLayout.prototype.handleAllContents = Slide.prototype.handleAllContents;
     SlideLayout.prototype.getAllRasterImagesForDraw = Slide.prototype.getAllRasterImagesForDraw;
     SlideLayout.prototype.checkImageDraw = Slide.prototype.checkImageDraw;
+    SlideLayout.prototype.openChartEditor = Slide.prototype.openChartEditor;
+    SlideLayout.prototype.openOleEditor = Slide.prototype.openOleEditor;
 
     SlideLayout.prototype.recalculateBackground = function()
     {

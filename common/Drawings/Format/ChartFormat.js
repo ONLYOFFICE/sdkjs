@@ -10488,17 +10488,16 @@
         return this.pen;
     };
 	CErrBars.prototype.getDefaultVal = function () {
-		const valuesMap = {
-			[AscFormat.st_errvaltypeCUST]: null,
-			[AscFormat.st_errvaltypeFIXEDVAL]: 0.1,
-			[AscFormat.st_errvaltypePERCENTAGE]: 5,
-			[AscFormat.st_errvaltypeSTDDEV]: 1,
-			[AscFormat.st_errvaltypeSTDERR]: null,
-		};
-
-		return this.errValType in valuesMap
-			? valuesMap[this.errValType]
-			: null;
+		let val;
+		switch (this.errValType) {
+			case AscFormat.st_errvaltypeCUST:
+			case AscFormat.st_errvaltypeSTDERR: val = null; break;
+			case AscFormat.st_errvaltypeFIXEDVAL: val = 0.1; break;
+			case AscFormat.st_errvaltypePERCENTAGE: val = 5; break;
+			case AscFormat.st_errvaltypeSTDDEV: val = 1; break;
+			default: val = null;
+		}
+		return val;
 	};
 
     function CLayout() {

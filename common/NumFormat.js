@@ -4788,7 +4788,7 @@ FormatParser.prototype =
 				var nSecond = 0;
 				var dValue = 0;
 				var bValidDate = true;
-				if(null != m && (null != d || null != y))
+				if(null != m)
 				{
 					bDate = true;
 					var oNowDate;

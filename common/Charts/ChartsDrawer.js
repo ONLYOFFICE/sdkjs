@@ -2381,10 +2381,23 @@ CChartsDrawer.prototype =
 				var limit = limitArr[res.length - 1];
 				const num = (trueHeight / (res.length - 1));
 				var heightGrid = Math.round(num);
-				while (heightGrid <= limit) {
+				
+				var maxIterations = 1000;
+				var iterationCount = 0;
+				var previousStepValue = newStep;
+				
+				while (heightGrid <= limit && iterationCount < maxIterations) {
+					iterationCount++;
+					
 					var firstDegreeStep = this._getFirstDegree(newStep);
 					var tempStep = this._getNextStep(firstDegreeStep.val);
 					newStep = tempStep * firstDegreeStep.numPow;
+					
+					if (newStep === previousStepValue) {
+						newStep = newStep * 2;
+					}
+					previousStepValue = newStep;
+					
 					const newRes = this._getArrayDataValues(newStep, axisMin, axisMax, manualMin, manualMax);
 
 					//new array cannot be generated from broken data, example: step is NaN
@@ -2400,6 +2413,10 @@ CChartsDrawer.prototype =
 
 					limit = limitArr[res.length - 1];
 					heightGrid = Math.round((trueHeight / (res.length - 1)));
+					
+					if (limit === undefined) {
+						limit = limitArr[limitArr.length - 1];
+					}
 				}
 			}
 		}
@@ -2415,6 +2432,10 @@ CChartsDrawer.prototype =
 			step = 5;
 		} else if (step === 5) {
 			step = 10;
+		} else if (step < 10) {
+			step = 10;
+		} else {
+			step = step * 2;
 		}
 
 		return step;
@@ -12240,7 +12261,7 @@ drawPieChart.prototype = {
 				miny = Math.min(miny, r*s);
 				maxy = Math.max(maxy, r*s);
 			}
-			return {minx, maxx, miny, maxy};
+			return {minx: minx,  maxx: maxx, miny: miny, maxy: maxy};
 		}
 
 		cy = rectHeight - cy; // flip Y to screen coords
@@ -14101,7 +14122,7 @@ drawDoughnutChart.prototype = {
 				miny = Math.min(miny, r*s);
 				maxy = Math.max(maxy, r*s);
 			}
-			return {minx, maxx, miny, maxy};
+			return {minx: minx,  maxx: maxx, miny: miny, maxy: maxy};
 		}
 
 		cy = rectHeight - cy; // flip Y to screen coords
