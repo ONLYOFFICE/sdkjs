@@ -15186,9 +15186,13 @@
 			isTheme = false;
 		}
 
-		this.TextPr.Color = isTheme
-			? undefined
-			: private_GetColor(r, g, b, isAuto);
+		if (isTheme) {
+			this.TextPr.Unifill = color.private_createUnifill();
+			this.TextPr.Color = undefined;
+		} else {
+			this.TextPr.Color = private_GetColor(r, g, b, isAuto);
+			this.TextPr.Unifill = undefined;
+		}
 
 		this.private_OnChange();
 		return this;
@@ -15204,17 +15208,17 @@
 	 */
 	ApiTextPr.prototype.GetColor = function ()
 	{
-		let oColor = this.TextPr.GetColor();
-		if (oColor !== undefined) {
-			const isAuto = oColor.Auto === true;
-			return isAuto ? Api.prototype.AutoColor() : Api.prototype.RGB(oColor.r, oColor.g, oColor.b);
-		}
-
 		if (this.TextPr.Unifill &&
 			this.TextPr.Unifill.fill &&
 			this.TextPr.Unifill.fill.color &&
 			this.TextPr.Unifill.fill.color.color) {
 			return new ApiColor('theme', this.TextPr.Unifill.fill.color.color.id);
+		}
+
+		const oColor = this.TextPr.GetColor();
+		if (oColor !== undefined) {
+			const isAuto = oColor.Auto === true;
+			return isAuto ? Api.prototype.AutoColor() : Api.prototype.RGB(oColor.r, oColor.g, oColor.b);
 		}
 
 		return null;
@@ -15538,7 +15542,7 @@
 	ApiTextPr.prototype.SetShd = function (type, color)
 	{
 		let r, g, b;
-		let isAuto;
+		let isAuto, isTheme;
 
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
@@ -15546,14 +15550,23 @@
 			g = rgb.g;
 			b = rgb.b;
 			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
 		} else {
 			r = GetIntParameter(arguments[1], 0);
 			g = GetIntParameter(arguments[2], 0);
 			b = GetIntParameter(arguments[3], 0);
 			isAuto = false;
+			isTheme = false;
 		}
 
 		this.TextPr.Shd = private_GetShd(type, r, g, b, isAuto);
+
+		if (isTheme) {
+			const unifill = color.private_createUnifill();
+			this.TextPr.Shd.Unifill = unifill;
+			this.TextPr.Shd.ThemeFill = unifill;
+		}
+
 		this.private_OnChange();
 		return this;
 	};
@@ -15569,12 +15582,22 @@
 	ApiTextPr.prototype.GetShd = function ()
 	{
 		let oShd = this.TextPr.GetShd();
-		if (oShd) {
-			const isAuto = oShd.Fill && oShd.Fill.Auto === true;
-			return isAuto ? Api.prototype.AutoColor() : Api.prototype.RGB(oShd.Fill.r, oShd.Fill.g, oShd.Fill.b);
+		if (!oShd)
+			return null;
+
+		const unifill = oShd.Unifill || oShd.ThemeFill;
+		if (unifill &&
+			unifill.fill &&
+			unifill.fill.color &&
+			unifill.fill.color.color) {
+			return Api.prototype.ThemeColor(unifill.fill.color.color.id);
 		}
 
-		return null;
+		const color = oShd.Fill || oShd.Color;
+		const isAuto = color && color.Auto === true;
+		return isAuto
+			? Api.prototype.AutoColor()
+			: Api.prototype.RGB(oShd.Fill.r, oShd.Fill.g, oShd.Fill.b);
 	};
 
 	/**
@@ -20694,15 +20717,14 @@
 			return null;
 
 		const theme = logicDocument.GetTheme();
-		const colors = theme.themeElements.clrScheme.colors;
-		const color = colors[this.value];
-		if (!color || !color.RGBA)
+		const unicolors = theme.themeElements.clrScheme.colors;
+		const unicolor = unicolors[this.value];
+		if (!unicolor || !unicolor.color || !unicolor.color.RGBA)
 			return null;
 
-		return (color.RGBA.R & 0xFF) << 24 |
-			(color.RGBA.G & 0xFF) << 16 |
-			(color.RGBA.B & 0xFF) << 8 |
-			(color.RGBA.A & 0xFF);
+		const rgba = unicolor.color.RGBA;
+
+		return (rgba.R & 0xFF) << 24 | (rgba.G & 0xFF) << 16 | (rgba.B & 0xFF) << 8 | (rgba.A & 0xFF);
 	};
 
 	ApiColor.prototype.private_resolveAutoColor = function () {
@@ -20822,7 +20844,7 @@
 		const packedRGB = (packedRGBA >> 8) & 0xFFFFFF;
 		let hexStr = packedRGB.toString(16);
 		while (hexStr.length < 6) hexStr = '0' + hexStr;
-		return hexStr.toUpperCase();
+		return '#' + hexStr.toLowerCase();
 	};
 
 	// Define properties for backwards compatibility
