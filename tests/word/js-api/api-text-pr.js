@@ -1,0 +1,82 @@
+/*
+ * (c) Copyright Ascensio System SIA 2010-2025
+ *
+ * This program is a free software product. You can redistribute it and/or
+ * modify it under the terms of the GNU Affero General Public License (AGPL)
+ * version 3 as published by the Free Software Foundation. In accordance with
+ * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
+ * that Ascensio System SIA expressly excludes the warranty of non-infringement
+ * of any third-party rights.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
+ * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ *
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
+ * street, Riga, Latvia, EU, LV-1050.
+ *
+ * The  interactive user interfaces in modified source and object code versions
+ * of the Program must display Appropriate Legal Notices, as required under
+ * Section 5 of the GNU AGPL version 3.
+ *
+ * Pursuant to Section 7(b) of the License you must retain the original Product
+ * logo when distributing the program. Pursuant to Section 7(e) we decline to
+ * grant you any rights under trademark law for use of our trademarks.
+ *
+ * All the Product's GUI elements, including illustrations and icon sets, as
+ * well as technical writing content are licensed under the terms of the
+ * Creative Commons Attribution-ShareAlike 4.0 International. See the License
+ * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ *
+ */
+
+$(function () {
+	QUnit.module('Test the ApiTextPr methods');
+
+	function getParagraphTextPr() {
+		const paragraph = AscTest.Editor.CreateParagraph();
+		return paragraph.GetTextPr();
+	}
+
+	QUnit.test('SetColor, GetColor', function (assert) {
+		const autoColor = AscTest.Editor.AutoColor();
+		const themeColor = AscTest.Editor.ThemeColor('accent2');
+		const hexColor = AscTest.Editor.HexColor('#bada55');
+		const textPr = getParagraphTextPr();
+
+		assert.strictEqual(textPr.GetColor(), null, 'Color check for empty TextPr');
+
+		textPr.SetColor(255, 127, 0);
+		assert.equalRgb(textPr.GetColor(), { r: 255, g: 127, b: 0 }, 'Color check after setting with RGB components');
+
+		textPr.SetColor(hexColor);
+		assert.equalRgba(textPr.GetColor(), { r: 186, g: 218, b: 85, a: 255 }, 'Color check after setting with ApiColor (hex)');
+
+		textPr.SetColor(themeColor);
+		assert.strictEqual(textPr.GetColor().IsThemeColor(), true, 'Color check after setting with ApiColor (theme)');
+
+		textPr.SetColor(autoColor);
+		assert.strictEqual(textPr.GetColor().IsAutoColor(), true, 'Color check after setting with ApiColor (auto)');
+	});
+
+	QUnit.test('SetShd, GetShd', function (assert) {
+		const autoColor = AscTest.Editor.AutoColor();
+		const themeColor = AscTest.Editor.ThemeColor('accent2');
+		const hexColor = AscTest.Editor.HexColor('#bada55');
+		const textPr = getParagraphTextPr();
+
+		assert.strictEqual(textPr.GetShd(), null, 'Shd check for empty TextPr');
+
+		textPr.SetShd('clear', 255, 127, 0);
+		assert.equalRgb(textPr.GetShd(), { r: 255, g: 127, b: 0 }, 'Shd check after setting with RGB components');
+
+		textPr.SetShd('clear', hexColor);
+		assert.equalRgba(textPr.GetShd(), { r: 186, g: 218, b: 85, a: 255 }, 'Shd check after setting with ApiColor (hex)');
+
+		textPr.SetShd('clear', themeColor);
+		assert.strictEqual(textPr.GetShd().IsThemeColor(), true, 'Shd check after setting with ApiColor (theme)');
+
+		textPr.SetShd('clear', autoColor);
+		assert.strictEqual(textPr.GetShd().IsAutoColor(), true, 'Shd check after setting with ApiColor (auto)');
+	});
+});
