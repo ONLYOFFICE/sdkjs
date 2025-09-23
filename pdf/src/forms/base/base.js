@@ -114,6 +114,7 @@
         this._textFontActual= undefined;    // фактический используемый
         this._textSize      = 10;
         this._fontStyle     = 0;    // информация о стиле шрифта (bold, italic)
+        this._meOptions     = 0;    // middle-east text options (flags)
 
         this._display       = AscPDF.Api.Types.display["visible"];
         this._hidden        = false;             // This property has been superseded by the display property and its use is discouraged.
@@ -199,7 +200,124 @@
 
         return this._apIdx;
     };
+    CBaseField.prototype.SetMEOptions = function(nFlags) {
+        let oParent = this.GetParent();
+        if (oParent && oParent.IsAllKidsWidgets())
+            return oParent.SetMEOptions(nFlags);
 
+        if (this._meOptions === nFlags) {
+            return true;
+        }
+
+        AscCommon.History.Add(new CChangesPDFFormMEOptions(this, this._meOptions, nFlags));
+
+        let isRtlChanged = (this._meOptions & 1) !== (nFlags & 1);
+
+        this._meOptions = nFlags;
+
+        this.UpdateMEOptions(isRtlChanged);
+    };
+    CBaseField.prototype.UpdateMEOptions = function(isRtlChanged) {
+        AscCommon.History.StartNoHistoryMode();
+
+        this.GetAllWidgets().forEach(function(widget) {
+            if (isRtlChanged) {
+                AscCommon.History.EndNoHistoryMode();
+
+                if (false == Asc.editor.getDocumentRenderer().IsOpenFormsInProgress) {
+                    if (widget.IsRTL()) {
+                        widget.SetAlign(AscPDF.ALIGN_TYPE.right);
+                    }
+                    else {
+                        widget.SetAlign(AscPDF.ALIGN_TYPE.left);
+                    }
+                }
+                else {
+                    widget.SetNeedCheckAlign(true);
+                }
+
+                AscCommon.History.StartNoHistoryMode();
+            }
+
+            if (widget.content) {
+                widget.content.SetApplyToAll(true);
+                widget.content.SetParagraphBidi(widget.IsRTL());
+                widget.content.SetApplyToAll(false);
+                widget.private_NeedShapeText();
+            }
+            if (widget.contentFormat) {
+                widget.contentFormat.SetApplyToAll(true);
+                widget.contentFormat.SetParagraphBidi(widget.IsRTL());
+                widget.contentFormat.SetApplyToAll(false);
+                widget.private_NeedShapeText();
+            }
+
+            widget.SetWasChanged(true);
+            widget.SetNeedRecalc(true);
+        });
+
+        AscCommon.History.EndNoHistoryMode();
+    };
+    CBaseField.prototype.private_NeedShapeText = function() {
+        if (this.content) {
+            this.content.GetAllParagraphs().forEach(function(paragraph) {
+                paragraph.RecalcInfo.NeedShapeText();
+            });
+        }
+        
+        if (this.contentFormat) {
+            this.contentFormat.GetAllParagraphs().forEach(function(paragraph) {
+                paragraph.RecalcInfo.NeedShapeText();
+            });
+        }
+    };
+    CBaseField.prototype.GetMEOptions = function(bInherit) {
+        let oParent = this.GetParent();
+        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+            return oParent.GetMEOptions();
+
+        return this._meOptions;
+    };
+    CBaseField.prototype.SetRTL = function(bRTL) {
+        let nMEOptions = this.GetMEOptions();
+
+        if (bRTL) {
+            nMEOptions |= (1 << 0);
+        }
+        else {
+            nMEOptions &= ~(1 << 0);
+        }
+        
+        this.SetMEOptions(nMEOptions);
+    };
+    CBaseField.prototype.IsRTL = function() {
+        return !!(this.GetMEOptions() & 1 << 0);
+    };
+    CBaseField.prototype.SetDigitsType = function(nType) {
+        let nMEOptions = this.GetMEOptions();
+
+        switch (nType) {
+            case AscPDF.DIGITS_TYPES.arabic: {
+                nMEOptions &= ~(1 << 2);
+                break;
+            }
+            case AscPDF.DIGITS_TYPES.hindi: {
+                nMEOptions |= (1 << 2);
+                break;
+            }
+        }
+
+        this.SetMEOptions(nMEOptions);
+    };
+    CBaseField.prototype.GetDigitsType = function () {
+        let nMEOptions = this.GetMEOptions();
+        return (nMEOptions & (1 << 2)) !== 0 
+            ? AscPDF.DIGITS_TYPES.hindi 
+            : AscPDF.DIGITS_TYPES.arabic;
+    };
+    CBaseField.prototype.IsHindiDigits = function() {
+        return !!(this.GetMEOptions() & 1 << 2);
+    };
     CBaseField.prototype.SetMeta = function(oMeta) {
         AscCommon.History.Add(new CChangesPDFFormMeta(this, this._meta, oMeta))
 
@@ -270,8 +388,13 @@
         
         if (oNewPage) {
             let sId = this.GetId();
-            oCurPage.RemoveField(sId);
+            oCurPage.RemoveField(sId, true);
             oNewPage.AddField(this);
+
+            let oEditShape = this.GetEditShape();
+            if (oEditShape) {
+                oEditShape.selectStartPage = nPage;
+            }
         }
     };
     CBaseField.prototype.GetPage = function() {
@@ -764,7 +887,7 @@
                 break;
             }
             case AscPDF.FIELD_TYPES.listbox: {
-                oCopy = new AscPDF.CListboxField(this.GetPartialName(), this.GetRect().slice());
+                oCopy = new AscPDF.CListBoxField(this.GetPartialName(), this.GetRect().slice());
                 break;
             }
             case AscPDF.FIELD_TYPES.button: {
@@ -810,6 +933,8 @@
 
         oCopy.private_SetValue(this.GetParentValue());
         oCopy.DrainViewPropsFrom(this);
+        oCopy.SetMeta(this.GetMeta());
+        
         return oCopy;
     };
     CBaseField.prototype.DrainViewPropsFrom = function(oField) {
@@ -927,14 +1052,14 @@
     };
     CBaseField.prototype.IsUseInDocument = function() {
         let oPage = this.GetParentPage();
-        if (oPage && oPage.fields.includes(this)) {
+        if (oPage && oPage.fields.includes(this) && oPage.GetIndex() !== -1) {
             return true;
         }
 
         return false;
     };
     CBaseField.prototype.DrawHighlight = function(oCtx) {
-        if (this.IsHidden() && !this.IsEditMode())
+        if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
             return;
 
         let oViewer     = Asc.editor.getDocumentRenderer();
@@ -1447,7 +1572,9 @@
         this.SetReadOnly(oFieldToInherit.IsReadOnly());
         this.SetNoExport(oFieldToInherit.IsNoExport());
         this.SetRequired(oFieldToInherit.IsRequired());
-        
+        this.SetTooltip(oFieldToInherit.GetTooltip());
+        this.SetMEOptions(oFieldToInherit.GetMEOptions());
+
         if (bClearFrom !== false) {
             oFieldToInherit.SetDefaultValue(undefined);
             oFieldToInherit.SetParentValue(undefined);
@@ -1490,7 +1617,7 @@
         let aPartNames = sName.split('.').filter(function(item) {
             if (item != "")
                 return item;
-        })
+        });
 
         // по формату не больше 20 вложенностей
         if (aPartNames.length > 20)
@@ -1562,17 +1689,19 @@
         return this._needRecalc;
     };
     CBaseField.prototype.Refresh_RecalcData = function(){};
-    CBaseField.prototype.SetWasChanged = function(isChanged) {
-        let oViewer = Asc.editor.getDocumentRenderer();
-        let canChange = !oViewer.IsOpenFormsInProgress && !AscCommon.History.UndoRedoInProgress;
-        if (this._wasChanged == isChanged || !canChange) {
-            return;
-        }
-        
-        AscCommon.History.Add(new CChangesPDFFormChanged(this, this._wasChanged, isChanged));
+    CBaseField.prototype.SetWasChanged = function(isChanged, viewSync) {
+        let oViewer   = Asc.editor.getDocumentRenderer();
+        let canChange = !oViewer.IsOpenAnnotsInProgress && AscCommon.History.CanAddChanges();
 
-        this._wasChanged = isChanged;
-        this.IsWidget() && this.SetDrawFromStream(!isChanged);
+        let changed = this._wasChanged !== isChanged && canChange;
+        if (changed) {
+            AscCommon.History.Add(new CChangesPDFFormChanged(this, this._wasChanged, isChanged));
+            this._wasChanged = isChanged;
+        }
+
+        if (this.IsWidget() && false !== viewSync && canChange && (isChanged || changed)) {
+            this.SetDrawFromStream(!isChanged);
+        }
     };
 
     CBaseField.prototype.UndoNotAppliedChanges = function() {
@@ -1641,7 +1770,7 @@
         function setRedrawPageOnRepaint() {
             if (oViewer.pagesInfo.pages[nPage]) {
                 oViewer.pagesInfo.pages[nPage].needRedrawForms = true;
-                // oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage);
+                oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage);
             }
         }
 
@@ -1771,7 +1900,8 @@
         AscCommon.History.Add(new CChangesPDFFormTooltip(this, this._tooltip, sTooltip));
 
         this._tooltip = sTooltip;
-        this.SetWasChanged(true);
+        
+        this.SetWasChanged(true, false);
         return true;
     };
     CBaseField.prototype.GetTooltip = function(bInherit) {
@@ -2281,7 +2411,7 @@
     };
 	
 	CBaseField.prototype.DrawOnPage = function(pdfGraphics, textBoxGraphics, pageIndex) {
-		if (this.IsHidden() && !this.IsEditMode())
+		if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
 			return;
 		
         if (pdfGraphics.isThumbnails) {
@@ -2443,7 +2573,26 @@
             this.contentFormat.SetItalic(oStyle.italic);
         }
     };
-    CBaseField.prototype.GetAlign = function() {};
+    CBaseField.prototype.SetAlign = function(nAlignType) {
+        if (this._alignment != nAlignType) {
+            AscCommon.History.Add(new CChangesPDFFormAlign(this, this._alignment, nAlignType));
+            this._alignment = nAlignType;
+        }
+
+        let nFieldType = this.GetType();
+        if (AscPDF.FIELD_TYPES.text !== nFieldType &&
+        AscPDF.FIELD_TYPES.combobox !== nFieldType &&
+        AscPDF.FIELD_TYPES.listbox !== nFieldType) {
+            return;
+        }
+
+        this.SetNeedCheckAlign(true);
+        this.SetWasChanged(true);
+		this.SetNeedRecalc(true);
+	};
+    CBaseField.prototype.GetAlign = function() {
+        return this._alignment;
+    };
     CBaseField.prototype.GetFontStyle = function() {
         return this._fontStyle;
     };
@@ -2472,14 +2621,21 @@
         return this._textSize;
     };
     CBaseField.prototype.SetRect = function(aOrigRect) {
+        let nOldExtX = this.GetWidth();
+        let nOldExtY = this.GetHeight();
+
         AscCommon.History.Add(new CChangesPDFFormRect(this, this.GetRect(), aOrigRect));
 
         this._rect = aOrigRect;
-        this.SetWasChanged(true);
+
+        let nNewExtX = this.GetWidth();
+        let nNewExtY = this.GetHeight();
+        this.SetWasChanged(true, !(Math.abs(nOldExtX - nNewExtX) < 0.001 && Math.abs(nOldExtY - nNewExtY) < 0.001));
+        
         this.SetNeedRecalc(true);
 		this.RecalcTextTransform();
 
-        if (this.IsEditMode()) {
+        if (Asc.editor.IsEditFieldsMode()) {
             this.SetNeedUpdateEditShape(true);
         }
 
@@ -2506,7 +2662,7 @@
             this.SetNeedUpdateImage(true);
         }
 
-        this.CalculateContentClipRect();
+        this.contentClipRect = null;
     };
     CBaseField.prototype.CalculateContentClipRect = function() {};
     CBaseField.prototype.SetPosition = function(x, y) {
@@ -2522,10 +2678,18 @@
     };
     CBaseField.prototype.GetWidth = function() {
         let aRect = this.GetRect();
+        if (!aRect) {
+            return 0;
+        }
+
         return aRect[2] - aRect[0];
     };
     CBaseField.prototype.GetHeight = function() {
         let aRect = this.GetRect();
+        if (!aRect) {
+            return 0;
+        }
+
         return aRect[3] - aRect[1];
     };
 
@@ -2825,9 +2989,6 @@
         
         return true;
     };
-    CBaseField.prototype.IsEditMode = function() {
-        return !!this.editShape;
-    };
     CBaseField.prototype.GetEditShape = function() {
         return this.editShape;
     };
@@ -3078,6 +3239,13 @@
             memory.WriteString(sName);
         }
 
+        // middle east options
+        let nMEOptions = this.GetMEOptions(false);
+        if (nMEOptions !== 0) {
+            memory.fieldDataFlags |= (1 << 21);
+            memory.WriteLong(nMEOptions);
+        }
+        
         // actions
         let aActions = this.GetListActions(false);
         memory.WriteLong(aActions.length);
@@ -3248,6 +3416,13 @@
             memory.WriteString(sTooltip);
         }
 
+        // middle east options
+        let nMEOptions = this.GetMEOptions();
+        if (nMEOptions !== 0) {
+            nFlags |= (1 << 11);
+            memory.WriteLong(nMEOptions);
+        }
+
         // write flags
         let nEndPos = memory.GetCurPosition();
         memory.Seek(nStartPos);
@@ -3255,8 +3430,8 @@
         memory.Seek(nEndPos);
     };
     CBaseField.prototype.WriteRenderToBinary = function(memory) {
-        // пока только для text, combobox
-        if (true == memory.isForSplit || memory.isCopyPaste || null == this.content) {
+        // пока только для text, combobox, listbox
+        if (true == memory.isForSplit || memory.isCopyPaste || null == this.content || this.IsNeedDrawFromStream()) {
             return;
         }
 

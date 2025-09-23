@@ -5092,18 +5092,6 @@ var g_oFontProperties = {
 			WrapText: 8
 	};
 
-	const c_oReadingOrderTypes = {
-		Context: 0,
-		LTR: 1,
-		RTL: 2
-	};
-
-	window['Asc']['c_oReadingOrderTypes'] = window['Asc'].c_oReadingOrderTypes = c_oReadingOrderTypes;
-	prot = c_oReadingOrderTypes;
-	prot['Context'] = prot.Context;
-	prot['LTR'] = prot.LTR;
-	prot['RTL'] = prot.RTL;
-
 	window['Asc']['c_oSerAligmentTypes'] = window['Asc'].c_oSerAligmentTypes = c_oSerAligmentTypes;
 	prot = c_oSerAligmentTypes;
 	prot['Horizontal'] = prot.Horizontal;
@@ -11703,18 +11691,19 @@ function RangeDataManagerElem(bbox, data)
 			case Asc.c_oAscDynamicAutoFilter.belowAverage: {
 				let sum = 0;
 				let counter = 0;
+				if (range) {
+					range._foreachNoEmpty(function (cell) {
+						let cellVal = parseFloat(cell.getValueWithoutFormat());
 
-				range._foreachNoEmpty(function (cell) {
-					let cellVal = parseFloat(cell.getValueWithoutFormat());
-
-					if (!isNaN(cellVal)) {
-						sum += parseFloat(cellVal);
-						counter++;
+						if (!isNaN(cellVal)) {
+							sum += parseFloat(cellVal);
+							counter++;
+						}
+					});
+					if (counter > 0) {
+						val = sum / counter;
 					}
-
-				});
-				val = sum / counter;
-
+				}
 				break;
 			}
 			case Asc.c_oAscDynamicAutoFilter.lastMonth:
@@ -14550,6 +14539,9 @@ function RangeDataManagerElem(bbox, data)
 
 		this.arguments = null;
 
+		this.activeArgPos = null;
+		this.activeArgsCount = null;
+
 		this._init(name);
 
 		return this;
@@ -14593,6 +14585,12 @@ function RangeDataManagerElem(bbox, data)
 	};
 	CFunctionInfo.prototype.asc_setArguments = function (val) {
 		this.arguments = val;
+	};
+	CFunctionInfo.prototype.asc_getActiveArgPos = function () {
+		return this.activeArgPos;
+	};
+	CFunctionInfo.prototype.asc_getActiveArgsCount = function () {
+		return this.activeArgsCount;
 	};
 
 
@@ -16182,7 +16180,7 @@ function RangeDataManagerElem(bbox, data)
 					});
 				}
 			}
-			wbView && wbView.handleChartsOnWorkbookChange(aRanges);
+			wbView && wbView.handleDrawingsOnWorkbookChange(aRanges);
 		}
 		return isChanged;
 	};
@@ -18687,14 +18685,7 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	CCustomFunctionEngine.prototype.clear = function () {
-		if (AscCommonExcel.cFormulaFunctionGroup["Custom"] && AscCommonExcel.cFormulaFunctionGroup["Custom"].length) {
-			let aCustomFunc = AscCommonExcel.cFormulaFunctionGroup["Custom"];
-			for (let i = 0; i < aCustomFunc.length; i++) {
-				let sName = aCustomFunc[i].prototype.name;
-				AscCommonExcel.removeCustomFunction(sName);
-			}
-			AscCommonExcel.cFormulaFunctionGroup["Custom"] = [];
-
+		if (AscCommonExcel.removeCustomFunctions()) {
 			this.wb.initFormulasList && this.wb.initFormulasList();
 			if (this.wb && this.wb.Api) {
 				this.wb.Api.formulasList = AscCommonExcel.getFormulasInfo();
@@ -20604,6 +20595,8 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_getName"] = prot.asc_getName;
 	prot["asc_getArguments"] = prot.asc_getArguments;
 	prot["asc_setArguments"] = prot.asc_setArguments;
+	prot["asc_getActiveArgPos"] = prot.asc_getActiveArgPos;
+	prot["asc_getActiveArgsCount"] = prot.asc_getActiveArgsCount
 
 
 	window["Asc"]["asc_CExternalReference"] = window["Asc"].asc_CExternalReference = asc_CExternalReference;

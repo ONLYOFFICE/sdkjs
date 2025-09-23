@@ -116,13 +116,27 @@
     };
     
     CAnnotationText.prototype.SetState = function(nType) {
+        if (nType == this._state) {
+            return;
+        }
+
+        AscCommon.History.Add(new CChangesPDFTextAnnotState(this, this._state, nType));
+
         this._state = nType;
+        this.SetWasChanged(true);
     };
     CAnnotationText.prototype.GetState = function() {
         return this._state;
     };
     CAnnotationText.prototype.SetStateModel = function(nType) {
+        if (nType == this._stateModel) {
+            return;
+        }
+
+        AscCommon.History.Add(new CChangesPDFTextAnnotStateModel(this, this._stateModel, nType));
+
         this._stateModel = nType;
+        this.SetWasChanged(true);
     };
     CAnnotationText.prototype.GetStateModel = function() {
         return this._stateModel;
@@ -182,7 +196,7 @@
             return;
         }
 
-        AscCommon.History.Add(new CChangesPDFCommentIcon(this, this._noteIcon, nType));
+        AscCommon.History.Add(new CChangesPDFTextAnnotIcon(this, this._noteIcon, nType));
         this._noteIcon = nType;
         this.SetWasChanged(true);
     };
@@ -366,7 +380,7 @@
         let nIconType = this.GetIconType();
         if (nIconType != null) {
             memory.annotFlags |= (1 << 16);
-            memory.WriteByte(this.GetIconType());
+            memory.WriteByte(nIconType);
         }
         
         // state model
@@ -390,10 +404,6 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
-
-        this.GetReplies().forEach(function(reply) {
-            (reply.IsChanged() || !memory.docRenderer) && reply.WriteToBinary(memory);
-        });
     };
     CAnnotationText.prototype.ReadFromBinary = function(reader) {
         reader.CommandType = reader.GetUChar();

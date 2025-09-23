@@ -83,15 +83,25 @@ CFootEndnote.prototype.GetElementPageIndex = function(nPageAbs, nColumnAbs)
 
 	return Math.max(0, nColumnAbs - nStartColumn + (nPageAbs - nStartPage) * nColumnsCount);
 };
-CFootEndnote.prototype.Get_PageContentStartPos = function(nCurPage)
+CFootEndnote.prototype.GetPageContentFrame = function(pageRel)
 {
-	var nPageAbs   = this.Get_AbsolutePage(nCurPage);
-	var nColumnAbs = this.Get_AbsoluteColumn(nCurPage);
-	return this.Parent.Get_PageContentStartPos(nPageAbs, nColumnAbs, this.GetSectionIndex());
+	if (0 === pageRel)
+	{
+		return {
+			X      : this.X,
+			Y      : this.Y,
+			XLimit : this.XLimit,
+			YLimit : this.YLimit
+		}
+	}
+	
+	let pageAbs   = this.GetAbsolutePage(pageRel);
+	let columnAbs = this.GetAbsoluteColumn(pageRel);
+	return this.Parent.GetColumnContentFrame(pageAbs, columnAbs, this.GetSectionIndex());
 };
 CFootEndnote.prototype.Refresh_RecalcData2 = function(nIndex, nCurPage)
 {
-	this.Parent.Refresh_RecalcData2(this.Get_AbsolutePage(nCurPage));
+	this.Parent.Refresh_RecalcData2(this.GetAbsolutePage(nCurPage));
 };
 CFootEndnote.prototype.Write_ToBinary2 = function(Writer)
 {
@@ -199,9 +209,9 @@ CFootEndnote.prototype.OnFastRecalculate = function()
 {
 	this.NeedUpdateHint = true;
 };
-CFootEndnote.prototype.Get_ColumnFields = function(nElementIndex, nColumnIndex)
+CFootEndnote.prototype.GetColumnFields = function(pageIndex, columnIndex, sectionIndex)
 {
-	return this.Parent.GetColumnFields(this.Get_StartPage_Absolute(), nColumnIndex, this.GetSectionIndex());
+	return this.Parent.GetColumnFields(this.GetAbsoluteStartPage(), columnIndex, this.GetSectionIndex());
 };
 CFootEndnote.prototype.SetSectionIndex = function(nSectionIndex)
 {

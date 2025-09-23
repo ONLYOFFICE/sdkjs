@@ -1484,6 +1484,11 @@ CopyProcessor.prototype =
 
 		};
 		let copyAnnots = function(){
+			if (oDomTarget) {
+				let oAnnots = new CopyElement("img");
+				oDomTarget.addChild(oAnnots);
+			}
+
 			let elements = elementsContent.Annots;
 
 			//пишем метку и длину
@@ -1499,6 +1504,11 @@ CopyProcessor.prototype =
 		};
 
 		let copyFields = function(){
+			if (oDomTarget) {
+				let oFields = new CopyElement("img");
+				oDomTarget.addChild(oFields);
+			}
+
 			let elements = elementsContent.Fields;
 
 			//пишем метку и длину
@@ -3168,6 +3178,14 @@ PasteProcessor.prototype =
 		{
 			oTable = null;
 			var paragraph = oDoc.GetCurrentParagraph();
+			if (!paragraph)
+			{
+				this.oLogicDocument.Document_Undo();
+				History.Clear_Redo();
+				this.pasteCallback && this.pasteCallback(false);
+				return;
+			}
+			
 			var NearPos = paragraph.GetCurrentAnchorPosition();
 			//делаем небольшой сдвиг по y, потому что сама точка TargetPos для двухстрочного параграфа определяется как верхняя
 			//var NearPos = oDoc.Get_NearestPos(this.oLogicDocument.TargetPos.PageNum, this.oLogicDocument.TargetPos.X, this.oLogicDocument.TargetPos.Y + 0.05);//0.05 == 2pix
@@ -4468,7 +4486,7 @@ PasteProcessor.prototype =
 						window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
 					}
 					window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
-					this.pasteCallback && this.pasteCallback(oInsertResult.insert);
+					oThis.pasteCallback && oThis.pasteCallback(oInsertResult.insert);
 				}
 			};
 
@@ -5573,6 +5591,9 @@ PasteProcessor.prototype =
 				oThis.api.pre_Paste(fonts, image_map, fPrepasteCallback);
 			}, true);
 		}
+		else {
+			window['AscCommon'].g_specialPasteHelper.Paste_Process_End(true);
+		}
 	},
 
 	//from PDF to PRESENTATION
@@ -5661,13 +5682,12 @@ PasteProcessor.prototype =
 
 			var paste_callback = function () {
 				if (false === oThis.bNested) {
-					var bPaste = presentation.InsertContent2(aContents, nIndex);
-
+					let res = presentation.InsertContent2(aContents, nIndex);
 
 					presentation.FinalizeAction();
 					presentation.UpdateInterface();
 
-					if (specialOptionsArr.length >= 1 && bPaste) {
+					if (specialOptionsArr.length >= 1 && res.insert) {
 						if (presentationSelectedContent && presentationSelectedContent.DocContent) {
 							specialOptionsArr.push(Asc.c_oSpecialPasteProps.keepTextOnly);
 						}
@@ -5678,7 +5698,7 @@ PasteProcessor.prototype =
 					}
 
 					window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
-					oThis.pasteCallback && oThis.pasteCallback(bPaste);
+					oThis.pasteCallback && oThis.pasteCallback(res);
 				}
 			};
 
@@ -5998,9 +6018,13 @@ PasteProcessor.prototype =
 	ReadPDFAnnots: function (stream) {
 		let nCountAnnots = stream.GetULong();
 
-		let oDoc = Asc.editor.getPDFDoc();
+		let oDoc = Asc.editor.getPDFDoc && Asc.editor.getPDFDoc();
+		if (!oDoc) {
+			return {arrAnnots: []};
+		}
+		
 		let oNativeFile = Asc.editor.getDocumentRenderer().file.nativeFile;
-		let oAnnotsInfo = oNativeFile.readAnnotationsInfoFromBinary(stream.data.slice(stream.cur));
+		let oAnnotsInfo = oNativeFile["readAnnotationsInfoFromBinary"](stream.data.slice(stream.cur));
 
 		let oAnnotsMap = {};
 		let aAnnots = [];
@@ -6009,13 +6033,6 @@ PasteProcessor.prototype =
 
 			if (oAnnotInfo["RefTo"] == null || oAnnotInfo["type"] != AscPDF.ANNOTATIONS_TYPES.Text) {
 				let oAnnot = AscPDF.ReadAnnotFromJSON(oAnnotInfo, oDoc);
-				if (oAnnot.IsStamp()) {
-					let oMeta = oAnnot.GetMeta();
-					if (oMeta && oMeta["isOO"]) {
-						let oStampRender = oDoc.CreateStampRender(oAnnot.GetIconType(), oAnnot.GetAuthor(), oAnnot.GetCreationDate());
-						oAnnot.SetRenderStructure(oStampRender.m_aStack[0]);
-					}
-				}
 				
 				if (oAnnotInfo["RefTo"] == null)
 					oAnnotsMap[oAnnotInfo["AP"]["i"]] = oAnnot;
@@ -6034,10 +6051,14 @@ PasteProcessor.prototype =
 	ReadPDFFields: function (stream) {
 		let nCountFields = stream.GetULong();
 
-		let oDoc = Asc.editor.getPDFDoc();
+		let oDoc = Asc.editor.getPDFDoc && Asc.editor.getPDFDoc();
+		if (!oDoc) {
+			return {arrFields: []};
+		}
+
 		let oViewer = Asc.editor.getDocumentRenderer();
 		let oNativeFile = oViewer.file.nativeFile;
-		let oFieldsInfo = oNativeFile.readAnnotationsInfoFromBinary(stream.data.slice(stream.cur));
+		let oFieldsInfo = oNativeFile["readAnnotationsInfoFromBinary"](stream.data.slice(stream.cur));
 
 		oViewer.IsOpenFormsInProgress = true;
 
@@ -8111,7 +8132,13 @@ PasteProcessor.prototype =
 		//если есть срез в контенте - вставляем только картинку
 		var _sheet = tempWorkbook.aWorksheets[0];
 		var pDrawings;
-		if (_sheet && _sheet.aSlicers && _sheet.aSlicers.length) {
+		let arrSlicers = null;
+		let arrControls = null;
+		if (_sheet) {
+			arrSlicers = _sheet.aSlicers;
+			arrControls = _sheet.getDrawingControls();
+		}
+		if (arrSlicers && arrSlicers.length || arrControls && arrControls.length) {
 			if (tempWorkbook.Core && tempWorkbook.Core.subject) {
 				var _str = tempWorkbook.Core.subject;
 				var _parseStr = _str.split(";");
@@ -11907,7 +11934,7 @@ PasteProcessor.prototype =
 					/*if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Word && pPr.msoWordSection && "section-break" === pPr["mso-break-type"]) {
 						//section break
 						oThis._Add_NewParagraph();
-						var oSectPr = new CSectionPr(oThis.oLogicDocument);
+						var oSectPr = new AscWord.SectPr(oThis.oLogicDocument);
 						var msoWordSection = oThis._findElemFromMsoHeadStyle("@page", pPr.msoWordSection);
 						if (msoWordSection && msoWordSection[0]) {
 							var sMsoColumns = msoWordSection[0]["mso-columns"];
@@ -12165,7 +12192,7 @@ PasteProcessor.prototype =
 				}
 
 				if (sChildNodeName === "math") {
-					let paraMath = AscWord.ParaMath.fromMathML(child.outerHTML);
+					let paraMath = AscWord.ParaMath.fromMathML(undefined, child.outerHTML);
 					bAddParagraph = oThis._Decide_AddParagraph(child, pPr, bAddParagraph);
 					let oAddedParaMath = paraMath;
 					oAddedParaMath.SetParagraph && oAddedParaMath.SetParagraph(oThis.oCurPar);
@@ -12943,7 +12970,7 @@ PasteProcessor.prototype =
 				}
 				var oSectPr;
 				if (nStartPos > 0 && (type_Paragraph !== aContent[nStartPos - 1].GetType() || !aContent[nStartPos - 1].Get_SectionPr())) {
-					oSectPr = new CSectionPr(this.oLogicDocument);
+					oSectPr = new AscWord.SectPr(this.oLogicDocument);
 					oSectPr.Copy(oStartSectPr, false);
 					var oStartParagraph = new AscWord.Paragraph(this.oLogicDocument);
 					aContent.splice(nStartPos, 0, oStartParagraph);
@@ -12953,7 +12980,7 @@ PasteProcessor.prototype =
 				}
 				if (nEndPos !== aContent.length - 1) {
 					oEndSectPr.Set_Type(c_oAscSectionBreakType.Continuous);
-					oSectPr = new CSectionPr(this.oLogicDocument);
+					oSectPr = new AscWord.SectPr(this.oLogicDocument);
 					oSectPr.Copy(oEndSectPr, false);
 					oEndParagraph.Set_SectionPr(oSectPr, true);
 					oSectPr.SetColumnProps(columnsProps);
@@ -12976,7 +13003,7 @@ PasteProcessor.prototype =
 	},
 
 	getMsoSectionPr: function (prefix, sectionName) {
-		var oSectPr = new CSectionPr(this.oLogicDocument);
+		var oSectPr = new AscWord.SectPr(this.oLogicDocument);
 		var msoWordSection = this._findElemFromMsoHeadStyle(prefix, sectionName);
 		if (msoWordSection && msoWordSection[0]) {
 			var sMsoColumns = msoWordSection[0]["mso-columns"];

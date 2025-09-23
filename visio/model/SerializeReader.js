@@ -496,9 +496,6 @@
 			case 7:
 				this.snapExtensions = stream.GetLong();
 				break;
-			case 8:
-				this.snapAngles = stream.GetLong();
-				break;
 			case 9:
 				this.dynamicGridEnabled = stream.GetBool();
 				break;
@@ -522,6 +519,38 @@
 				break;
 			case 16:
 				this.attachedToolbars = stream.GetString2();
+				break;
+			default:
+				return false;
+		}
+		
+		return true;
+	};
+
+	/**
+	 * Read children from stream for DocumentSettings_Type
+	 * 
+	 * @param  {number} attrType - The type of attribute
+	 * @param {BinaryVSDYLoader} pReader - The binary reader
+	 * @returns {boolean} - True if attribute was handled, false otherwise
+	 */
+	AscVisio.DocumentSettings_Type.prototype.readChild = function(elementType, pReader) {
+		const t = this;
+		switch (elementType) {
+			case 0:
+				// Read Shape_Type
+				AscFormat.CBaseFormatNoIdObject.prototype.fromPPTY.call({
+					readChildren: AscFormat.CBaseFormatNoIdObject.prototype.readChildren,
+					readChild: function(elementType, pReader) {
+						if (elementType === 0) {
+							const snapAngle = new AscVisio.SnapAngle_Type();
+							snapAngle.fromPPTY(pReader);
+							t.snapAngles.push(snapAngle);
+							return true;
+						}
+						return false;
+					}
+				}, pReader);
 				break;
 			default:
 				return false;
@@ -1564,9 +1593,6 @@
 			case 24:
 				this.snapExtensions = stream.GetULong();
 				return true;
-			case 25:
-				this.snapAngles = stream.GetBool();
-				return true;
 			case 26:
 				this.dynamicGridEnabled = stream.GetBool();
 				return true;
@@ -1578,6 +1604,56 @@
 				return true;
 			case 29:
 				this.stencilGroupPos = stream.GetULong();
+				return true;
+		}
+		
+		return false;
+	};
+
+	/**
+	 * Read children from stream for DocumentSettings_Type
+	 * 
+	 * @param  {number} attrType - The type of attribute
+	 * @param {BinaryVSDYLoader} pReader - The binary reader
+	 * @returns {boolean} - True if attribute was handled, false otherwise
+	 */
+	AscVisio.Window_Type.prototype.readChild = function(elementType, pReader) {
+		const t = this;
+		switch (elementType) {
+			case 0:
+				// Read Shape_Type
+				AscFormat.CBaseFormatNoIdObject.prototype.fromPPTY.call({
+					readChildren: AscFormat.CBaseFormatNoIdObject.prototype.readChildren,
+					readChild: function(elementType, pReader) {
+						if (elementType === 0) {
+							const snapAngle = new AscVisio.SnapAngle_Type();
+							snapAngle.fromPPTY(pReader);
+							t.snapAngles.push(snapAngle);
+							return true;
+						}
+						return false;
+					}
+				}, pReader);
+				break;
+			default:
+				return false;
+		}
+		
+		return true;
+	};
+
+	/**
+	 * Read attributes from stream for Window_Type
+	 * 
+	 * @param  {number} attrType - The type of attribute
+	 * @param {BinaryVSDYLoader} pReader - The binary reader
+	 * @returns {boolean} - True if attribute was handled, false otherwise
+	 */
+	AscVisio.SnapAngle_Type.prototype.readAttribute = function(attrType, pReader) {
+		const stream = pReader.stream;
+		switch (attrType) {
+			case 0:
+				this.value = stream.GetDouble();
 				return true;
 		}
 		

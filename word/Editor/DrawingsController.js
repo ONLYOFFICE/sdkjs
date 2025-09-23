@@ -586,7 +586,7 @@ CDrawingsController.prototype.UpdateRulersState = function()
 {
 	// Вызываем данную функцию, чтобы убрать рамку буквицы
 	this.DrawingDocument.Set_RulerState_Paragraph(null);
-	this.LogicDocument.Document_UpdateRulersStateBySection(this.LogicDocument.CurPos.ContentPos);
+	this.LogicDocument.Document_UpdateRulersStateBySection();
 	this.DrawingObjects.documentUpdateRulersState();
 };
 CDrawingsController.prototype.UpdateSelectionState = function()

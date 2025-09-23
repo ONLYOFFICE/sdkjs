@@ -199,26 +199,9 @@
 	var nMaxRequestLength = 5242880;//5mb <requestLimits maxAllowedContentLength="30000000" /> default 30mb
 
 	function decimalNumberConversion(number, base) {
-		if (typeof number !== 'number') {
-			return;
-		}
-		var result = [];
-		if (number === 0)
-		{
-			return [0];
-		}
-		while (number > 0) {
-			var remainder = number % base;
-			if (remainder === 0) {
-				result.unshift(0);
-
-			} else {
-				result.unshift(remainder);
-				number = number - remainder;
-			}
-			number /= base;
-		}
-		return result;
+		return number.toString(base).split("").map(function (digit) {
+			return parseInt(digit, base);
+		});
 	}
 
 	function getSockJs()
@@ -1119,6 +1102,9 @@
 			case c_oAscServerError.ChangeDocInfo :
 				nRes = Asc.c_oAscError.ID.AccessDeny;
 				break;
+			case c_oAscServerError.ForcedViewMode :
+				nRes = Asc.c_oAscError.ID.ForcedViewMode;
+				break;
 			case c_oAscServerError.Storage :
 			case c_oAscServerError.StorageFileNoFound :
 			case c_oAscServerError.StorageRead :
@@ -1716,7 +1702,9 @@
 		VKeyKeyExpire:       -122,
 		VKeyUserCountExceed: -123,
 
-		Password: -180
+		Password: -180,
+
+		ForcedViewMode: -200
 	};
 
 	//todo get from server config
@@ -14045,15 +14033,14 @@
 	 * @returns {Array<Array<string>>} Matrix of parsed CSV values
 	 */
 	function parseText(text, options, bTrimSpaces) {
-		const delimiterChar = options.asc_getDelimiterChar() || {
-			[AscCommon.c_oAscCsvDelimiter.None]: undefined,
-			[AscCommon.c_oAscCsvDelimiter.Tab]: "\t",
-			[AscCommon.c_oAscCsvDelimiter.Semicolon]: ";",
-			[AscCommon.c_oAscCsvDelimiter.Colon]: ":",
-			[AscCommon.c_oAscCsvDelimiter.Comma]: ",",
-			[AscCommon.c_oAscCsvDelimiter.Space]: " "
-		}[options.asc_getDelimiter()];
-		
+		let delimiterMap = {};
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.None] = undefined;
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Tab] = "\t";
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Semicolon] = ";";
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Colon] = ":";
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Comma] = ",";
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Space] = " ";
+		const delimiterChar = options.asc_getDelimiterChar() || delimiterMap[options.asc_getDelimiter()];
 		const textQualifier = options.asc_getTextQualifier();
 		const hasQualifier = !!textQualifier;
 		
@@ -14068,21 +14055,50 @@
 		const delimiterCode = delimiterChar ? delimiterChar.charCodeAt(0) : 0;
 		const qualifierCode = hasQualifier ? textQualifier.charCodeAt(0) : 0;
 		
-		const processSpaceRow = (row) => {
+		/**
+		 * Trim and normalize a row when space is the delimiter and trimming is enabled.
+		 * Preserves a single leading space delimiter when present to avoid data loss.
+		 * @param {string} row
+		 * @returns {string}
+		 */
+		const processSpaceRow = function(row) {
 			if (!isSpace || !bTrimSpaces) return row;
 			const hasLeadingSpace = row.length > 0 && row.charCodeAt(0) === delimiterCode;
 			row = row.trim();
 			return hasLeadingSpace ? delimiterChar + row : row;
 		};
 		
-		const parseRowWithQualifiers = (row) => {
+		/**
+		 * Parse a logical CSV record that may span multiple pre-split rows.
+		 * @param {string} row - Row to parse
+		 * @param {number} startIndex - Index in rows array to start parsing from
+		 * @returns {{fields: Array<string>, curIndex: number}}
+		 */
+		const parseRowWithQualifiers = function(row, startIndex) {
 			const fields = [];
-			const rowLength = row.length;
+			let idx = startIndex;
+			let rowLength = row.length;
 			let textParts = [];
 			let insideQualifier = false;
 			let j = 0;
 			
-			while (j < rowLength) {
+			while (true) {
+				if (j >= rowLength) {
+					if (insideQualifier && idx + 1 < rows.length) {
+						// Continue to next line, adding normalized newline
+						textParts.push('\n');
+						idx++;
+						row = rows[idx] || "";
+						row = processSpaceRow(row);
+						rowLength = row.length;
+						j = 0;
+						continue;
+					}
+					// End of record
+					fields.push(textParts.join(''));
+					return { fields: fields, curIndex: idx };
+				}
+
 				const charCode = row.charCodeAt(j);
 				if (charCode === qualifierCode) {
 					if (!insideQualifier && (j === 0 || row.charCodeAt(j - 1) === delimiterCode)) {
@@ -14110,9 +14126,6 @@
 				}
 				j++;
 			}
-			
-			fields.push(textParts.join(''));
-			return fields;
 		};
 		
 		const matrix = [];
@@ -14125,7 +14138,9 @@
 			}
 			
 			if (hasQualifier) {
-				matrix.push(parseRowWithQualifiers(row));
+				const res = parseRowWithQualifiers(row, i);
+				matrix.push(res.fields);
+				i = res.curIndex;
 			} else {
 				matrix.push(delimiterChar === undefined ? [row] : row.split(delimiterChar));
 			}
@@ -15444,6 +15459,7 @@
 	window["AscCommon"].openFileCommand = openFileCommand;
 	window["AscCommon"].sendCommand = sendCommand;
 	window["AscCommon"].sendSaveFile = sendSaveFile;
+	window["AscCommon"].c_oAscServerError = c_oAscServerError;
 	window["AscCommon"].mapAscServerErrorToAscError = mapAscServerErrorToAscError;
 	window["AscCommon"].joinUrls = joinUrls;
 	window["AscCommon"].getFullImageSrc2 = getFullImageSrc2;

@@ -742,7 +742,7 @@ CNum.prototype.GetText = function(nLvl, oNumInfo, bWithoutLastLvlText, oLang)
 			{
 				var nCurLvl = arrText[Index].Value;
 				if (nCurLvl < oNumInfo.length)
-					sResult += this.private_GetNumberedLvlText(nCurLvl, oNumInfo[nCurLvl], false, oLang);
+					sResult += this.private_GetNumberedLvlText(nCurLvl, oNumInfo[nCurLvl], oLvl.IsLegalStyle(), oLang);
 
 				break;
 			}

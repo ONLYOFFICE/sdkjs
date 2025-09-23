@@ -119,10 +119,6 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
-
-        this.GetReplies().forEach(function(reply) {
-            (reply.IsChanged() || !memory.docRenderer) && reply.WriteToBinary(memory); 
-        });
     };
     
     function generateCloudyGeometry(arrPoints, aBounds, oGeometry, nIntensity) {

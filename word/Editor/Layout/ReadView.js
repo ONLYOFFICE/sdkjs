@@ -53,8 +53,8 @@
 		let oThis = this;
 		AscCommon.ExecuteNoHistory(function()
 		{
-			oThis.SectPr   = new CSectionPr(oLogicDocument);
-			oThis.SectInfo = new CDocumentSectionsInfoElement(oThis.SectPr, 0);
+			oThis.SectPr   = new AscWord.SectPr(oLogicDocument);
+			oThis.SectInfo = new AscWord.DocumentSection(oThis.SectPr, 0);
 		}, oLogicDocument);
 		
 		this.OriginalSectPr = false;
@@ -121,26 +121,23 @@
 			ColumnSpaceAfter  : 0
 		};
 	};
-	CDocumentReadView.prototype.GetSection = function(nPageAbs, nContentIndex)
+	CDocumentReadView.prototype.GetSectionByElement = function(element)
 	{
 		if (this.OriginalSectPr)
-			return AscWord.CDocumentLayoutBase.prototype.GetSection.apply(this, arguments);
+			return AscWord.CDocumentLayoutBase.prototype.GetSectionByElement.apply(this, arguments);
 		
 		return this.SectPr;
 	};
-	CDocumentReadView.prototype.GetSectionByPos = function(nContentIndex)
+	CDocumentReadView.prototype.CheckSectPr = function(sectPr)
 	{
 		if (this.OriginalSectPr)
-			return AscWord.CDocumentLayoutBase.prototype.GetSectionByPos.apply(this, arguments);
+			return AscWord.CDocumentLayoutBase.prototype.CheckSectPr.apply(this, arguments);
 		
 		return this.SectPr;
 	};
-	CDocumentReadView.prototype.GetSectionInfo = function(nContentIndex)
+	CDocumentReadView.prototype.GetFinalSectPr = function()
 	{
-		if (this.OriginalSectPr)
-			return AscWord.CDocumentLayoutBase.prototype.GetSectionInfo.apply(this, arguments);
-		
-		return this.SectInfo;
+		return this.SectPr;
 	};
 	CDocumentReadView.prototype.GetSectionIndex = function(oSectPr)
 	{

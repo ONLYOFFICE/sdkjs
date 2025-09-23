@@ -165,6 +165,8 @@
         let aDash           = this.GetDash();
 
         oCopy.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
+        oCopy.SetUserId(this.GetUserId());
+        oCopy.SetDisplay(this.GetDisplay());
         oCopy.SetModDate(sDate);
         oCopy.SetCreationDate(sDate);
         oCopy.SetContents(this.GetContents());
@@ -274,6 +276,12 @@
 
         this._width = nWidthPt;
 
+        this.SetWasChanged(true);
+        this.private_UpdateLn();
+    };
+    CAnnotationBase.prototype.private_UpdateLn = function() {
+        let nWidthPt = this.GetWidth();
+        
         if (this.IsShapeBased()) {
             let oLine = this.spPr.ln;
             oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
@@ -293,9 +301,6 @@
     CAnnotationBase.prototype.GetWidth = function() {
         return this._width;
     };
-    CAnnotationBase.prototype.SetRichContents = function(sText) {
-        this._richContents = sText;
-    };
     CAnnotationBase.prototype.FillCommentsDataFrom = function(oAnnot) {
         let oCurAscCommData = oAnnot.GetAscCommentData();
         let oCurData = oCurAscCommData ? new AscCommon.CCommentData() : undefined;
@@ -311,6 +316,13 @@
         
         this.SetUserId(Asc.editor.documentUserId);
         this.EditCommentData(oCurData);
+    };
+    CAnnotationBase.prototype.SetRichContents = function(aRCInfo) {
+        AscCommon.History.Add(new CChangesPDFAnnotRC(this, this._richContents, aRCInfo));
+        this._richContents = aRCInfo;
+
+        this.SetWasChanged(true);
+        this.SetNeedRecalc(true);
     };
     CAnnotationBase.prototype.GetRichContents = function() {
         return this._richContents;
@@ -443,6 +455,8 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CAnnotationBase.prototype.SetOriginPage = function(nPage) {
+        AscCommon.History.Add(new CChangesPDFAnnotOrigPage(this, this._origPage, nPage));
+
         this._origPage = nPage;
     };
     CAnnotationBase.prototype.GetOriginPage = function() {
@@ -505,7 +519,14 @@
         // oGraphicsPDF.Stroke();
     };
     CAnnotationBase.prototype.SetSubject = function(sSubject) {
+        if (this._subject == sSubject) {
+            return;
+        }
+
+        AscCommon.History.Add(new CChangesPDFAnnotSubject(this, this._subject, sSubject));
         this._subject = sSubject;
+
+        this.SetWasChanged(true, false);
     };
     CAnnotationBase.prototype.GetSubject = function() {
         return this._subject;
@@ -762,7 +783,7 @@
     };
     CAnnotationBase.prototype.IsUseInDocument = function() {
         let oPage = this.GetParentPage();
-        if (oPage && oPage.annots.includes(this)) {
+        if (oPage && oPage.annots.includes(this) && oPage.GetIndex() !== -1) {
             return true;
         }
 
@@ -867,7 +888,7 @@
         
         this._contents  = contents;
         
-        if (AscCommon.History.UndoRedoInProgress == false && oViewer.IsOpenAnnotsInProgress == false) {
+        if (AscCommon.History.UndoRedoInProgress == false) {
             AscCommon.History.Add(new CChangesPDFAnnotContents(this, sCurContents, contents));
         }
         
@@ -953,6 +974,16 @@
         //     oGraphicsPDF.BeginPath();
         //     oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
         //     oGraphicsPDF.Stroke();
+
+        //     // if (this.IsLine()) {
+        //     //     let aPoints = this.GetLinePoints();
+
+        //     //     oGraphicsPDF.BeginPath();
+        //     //     oGraphicsPDF.SetStrokeStyle(255, 0, 0);
+        //     //     oGraphicsPDF.MoveTo(aPoints[0], aPoints[1]);
+        //     //     oGraphicsPDF.LineTo(aPoints[2], aPoints[3]);
+        //     //     oGraphicsPDF.Stroke();
+        //     // }
         // }
     };
     CAnnotationBase.prototype.changeFlipH = function () {
@@ -978,7 +1009,7 @@
         let oCurData = oCurAscCommData ? new AscCommon.CCommentData() : undefined;
 		oCurData && oCurData.Read_FromAscCommentData(oCurAscCommData);
 
-        AscCommon.History.Add(new CChangesPDFCommentData(this, oCurData, oCommentData));
+        AscCommon.History.Add(new CChangesPDFAnnotCommentData(this, oCurData, oCommentData));
 
         if (oCommentData == null) {
             this._replies.length = 0;
@@ -1532,7 +1563,7 @@
             let nPopupIdx       = this.GetPopupIdx();
             let sAuthor         = this.GetAuthor();
             let nOpacity        = this.GetOpacity();
-            let aRC             = this.GetRichContents();
+            let aRC             = this.GetRichContents(true);
             let CrDate          = this.GetCreationDate(true);
             let oRefTo          = this.GetReplyTo();
             let nRefToReason    = this.GetRefType();

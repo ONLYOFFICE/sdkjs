@@ -233,6 +233,7 @@ CHistory.prototype =
                 oItem.Data.Undo();
                 arrChanges.push(oItem.Data);
             }
+						this.Document.RecalculateByChanges(arrChanges);
             oPoint.Items.length = _bottomIndex + 1;
             this.Document.SetSelectionState( oPoint.State );
         }
@@ -681,18 +682,17 @@ CHistory.prototype =
 
     OnEnd_GetRecalcData : function()
     {
-        // Пересчитываем таблицы
-        for (var TableId in this.RecalculateData.Tables)
-        {
-            var Table = AscCommon.g_oTableId.Get_ById(TableId);
-            if (null !== Table && Table.IsUseInDocument())
-            {
-                if (true === Table.Check_ChangedTableGrid())
-                {
-                    Table.Refresh_RecalcData2(0, 0);
-                }
-            }
-        }
+		// Пересчитываем таблицы
+		for (let tableId in this.RecalculateData.Tables)
+		{
+			let table = AscCommon.g_oTableId.Get_ById(tableId);
+			if (table
+				&& table.IsUseInDocument()
+				&& table.IsChangedTableGrid())
+			{
+				table.Refresh_RecalcData2(0, 0);
+			}
+		}
 
         // Делаем это, чтобы пересчитались ячейки таблиц, в которых есть заданная нумерация. Но нам не нужно менять
         // начальную точку пересчета здесь, т.к. начальная точка уже рассчитана правильно.

@@ -220,344 +220,6 @@
 		return this.IsMaster;
 	};
 
-	function CAscChartProp(obj)
-	{
-		if (obj)
-		{
-
-			this.Width    = (undefined != obj.w) ? obj.w : undefined;
-			this.Height   = (undefined != obj.h) ? obj.h : undefined;
-			this.Position = new Asc.CPosition({X : obj.x, Y : obj.y});
-
-			this.Locked          = (undefined != obj.locked) ? obj.locked : false;
-			this.lockAspect      = (undefined != obj.lockAspect) ? obj.lockAspect : false;
-			this.ChartProperties = (undefined != obj.chartProps) ? obj.chartProps : null;
-
-			this.severalCharts      = obj.severalCharts != undefined ? obj.severalCharts : false;
-			this.severalChartTypes  = obj.severalChartTypes != undefined ? obj.severalChartTypes : undefined;
-			this.severalChartStyles = obj.severalChartStyles != undefined ? obj.severalChartStyles : undefined;
-
-			this.title = obj.title != undefined ? obj.title : undefined;
-			this.description = obj.description != undefined ? obj.description : undefined;
-			this.name = obj.name != undefined ? obj.name : undefined;
-		}
-		else
-		{
-			this.Width           = undefined;
-			this.Height          = undefined;
-			this.Position        = undefined;
-			this.Locked          = false;
-			this.lockAspect      = undefined;
-			this.ChartProperties = new Asc.asc_ChartSettings();
-
-			this.severalCharts      = false;
-			this.severalChartTypes  = undefined;
-			this.severalChartStyles = undefined;
-            this.title = undefined;
-            this.description = undefined;
-		}
-	}
-
-	CAscChartProp.prototype.get_ChangeLevel = function()
-	{
-		return this.ChangeLevel;
-	};
-	CAscChartProp.prototype.put_ChangeLevel = function(v)
-	{
-		this.ChangeLevel = v;
-	};
-
-	CAscChartProp.prototype.get_CanBeFlow     = function()
-	{
-		return this.CanBeFlow;
-	};
-	CAscChartProp.prototype.get_Width         = function()
-	{
-		return this.Width;
-	};
-	CAscChartProp.prototype.put_Width         = function(v)
-	{
-		this.Width = v;
-	};
-	CAscChartProp.prototype.get_Height        = function()
-	{
-		return this.Height;
-	};
-	CAscChartProp.prototype.put_Height        = function(v)
-	{
-		this.Height = v;
-	};
-	CAscChartProp.prototype.get_WrappingStyle = function()
-	{
-		return this.WrappingStyle;
-	};
-	CAscChartProp.prototype.put_WrappingStyle = function(v)
-	{
-		this.WrappingStyle = v;
-	};
-	// Возвращается объект класса Asc.asc_CPaddings
-	CAscChartProp.prototype.get_Paddings      = function()
-	{
-		return this.Paddings;
-	};
-	// Аргумент объект класса Asc.asc_CPaddings
-	CAscChartProp.prototype.put_Paddings      = function(v)
-	{
-		this.Paddings = v;
-	};
-	CAscChartProp.prototype.get_AllowOverlap  = function()
-	{
-		return this.AllowOverlap;
-	};
-	CAscChartProp.prototype.put_AllowOverlap  = function(v)
-	{
-		this.AllowOverlap = v;
-	};
-	// Возвращается объект класса CPosition
-	CAscChartProp.prototype.get_Position      = function()
-	{
-		return this.Position;
-	};
-	// Аргумент объект класса CPosition
-	CAscChartProp.prototype.put_Position      = function(v)
-	{
-		this.Position = v;
-	};
-	CAscChartProp.prototype.get_PositionH     = function()
-	{
-		return this.PositionH;
-	};
-	CAscChartProp.prototype.put_PositionH     = function(v)
-	{
-		this.PositionH = v;
-	};
-	CAscChartProp.prototype.get_PositionV     = function()
-	{
-		return this.PositionV;
-	};
-	CAscChartProp.prototype.put_PositionV     = function(v)
-	{
-		this.PositionV = v;
-	};
-	CAscChartProp.prototype.get_Value_X       = function(RelativeFrom)
-	{
-		if (null != this.Internal_Position) return this.Internal_Position.Calculate_X_Value(RelativeFrom);
-		return 0;
-	};
-	CAscChartProp.prototype.get_Value_Y       = function(RelativeFrom)
-	{
-		if (null != this.Internal_Position) return this.Internal_Position.Calculate_Y_Value(RelativeFrom);
-		return 0;
-	};
-
-	CAscChartProp.prototype.get_ImageUrl     = function()
-	{
-		return this.ImageUrl;
-	};
-	CAscChartProp.prototype.put_ImageUrl     = function(v)
-	{
-		this.ImageUrl = v;
-	};
-	CAscChartProp.prototype.get_Group        = function()
-	{
-		return this.Group;
-	};
-	CAscChartProp.prototype.put_Group        = function(v)
-	{
-		this.Group = v;
-	};
-	CAscChartProp.prototype.asc_getFromGroup = function()
-	{
-		return this.fromGroup;
-	};
-	CAscChartProp.prototype.asc_putFromGroup = function(v)
-	{
-		this.fromGroup = v;
-	};
-
-	CAscChartProp.prototype.get_isChartProps = function()
-	{
-		return this.isChartProps;
-	};
-	CAscChartProp.prototype.put_isChartPross = function(v)
-	{
-		this.isChartProps = v;
-	};
-
-	CAscChartProp.prototype.get_SeveralCharts     = function()
-	{
-		return this.severalCharts;
-	};
-	CAscChartProp.prototype.put_SeveralCharts     = function(v)
-	{
-		this.severalCharts = v;
-	};
-	CAscChartProp.prototype.get_SeveralChartTypes = function()
-	{
-		return this.severalChartTypes;
-	};
-	CAscChartProp.prototype.put_SeveralChartTypes = function(v)
-	{
-		this.severalChartTypes = v;
-	};
-
-	CAscChartProp.prototype.get_SeveralChartStyles = function()
-	{
-		return this.severalChartStyles;
-	};
-	CAscChartProp.prototype.put_SeveralChartStyles = function(v)
-	{
-		this.severalChartStyles = v;
-	};
-
-	CAscChartProp.prototype.get_VerticalTextAlign = function()
-	{
-		return this.verticalTextAlign;
-	};
-	CAscChartProp.prototype.put_VerticalTextAlign = function(v)
-	{
-		this.verticalTextAlign = v;
-	};
-
-	CAscChartProp.prototype.get_Locked = function()
-	{
-		return this.Locked;
-	};
-
-	CAscChartProp.prototype.get_ChartProperties = function()
-	{
-		return this.ChartProperties;
-	};
-
-	CAscChartProp.prototype.put_ChartProperties = function(v)
-	{
-		this.ChartProperties = v;
-	};
-
-	CAscChartProp.prototype.get_ShapeProperties = function()
-	{
-		return this.ShapeProperties;
-	};
-
-	CAscChartProp.prototype.put_ShapeProperties = function(v)
-	{
-		this.ShapeProperties = v;
-	};
-
-	CAscChartProp.prototype.asc_getType    = function()
-	{
-		return this.ChartProperties.asc_getType();
-	};
-	CAscChartProp.prototype.asc_getSubType = function()
-	{
-		return this.ChartProperties.asc_getSubType();
-	};
-
-	CAscChartProp.prototype.asc_getStyleId = function()
-	{
-		return this.ChartProperties.asc_getStyleId();
-	};
-
-	CAscChartProp.prototype.asc_getHeight = function()
-	{
-		return this.Height;
-	};
-	CAscChartProp.prototype.asc_getWidth  = function()
-	{
-		return this.Width;
-	};
-
-	CAscChartProp.prototype.asc_setType    = function(v)
-	{
-		this.ChartProperties.asc_setType(v);
-	};
-	CAscChartProp.prototype.asc_setSubType = function(v)
-	{
-		this.ChartProperties.asc_setSubType(v);
-	};
-
-	CAscChartProp.prototype.asc_setStyleId = function(v)
-	{
-		this.ChartProperties.asc_setStyleId(v);
-	};
-
-	CAscChartProp.prototype.asc_setHeight = function(v)
-	{
-		this.Height = v;
-	};
-	CAscChartProp.prototype.asc_setWidth  = function(v)
-	{
-		this.Width = v;
-	};
-
-	CAscChartProp.prototype.asc_setTitle = function(v)
-	{
-		this.title = v;
-	};
-	CAscChartProp.prototype.asc_setDescription  = function(v)
-	{
-		this.description = v;
-	};
-
-	CAscChartProp.prototype.asc_getTitle = function()
-	{
-		return this.title;
-	};
-	CAscChartProp.prototype.asc_getDescription  = function()
-	{
-		return this.description;
-	};
-
-	CAscChartProp.prototype.asc_getPosition  = function()
-	{
-		return this.Position;
-	};
-
-	CAscChartProp.prototype.asc_putPosition  = function(v)
-	{
-		this.Position = v;
-	};
-
-	CAscChartProp.prototype.asc_getName  = function()
-	{
-		return this.name;
-	};
-	CAscChartProp.prototype.asc_putName  = function(v)
-	{
-		this.name = v;
-	};
-
-	CAscChartProp.prototype.getType = function()
-	{
-		return this.ChartProperties && this.ChartProperties.getType();
-	};
-	CAscChartProp.prototype.putType = function(v)
-	{
-		return this.ChartProperties && this.ChartProperties.putType(v);
-	};
-
-	CAscChartProp.prototype.getStyle      = function()
-	{
-		return this.ChartProperties && this.ChartProperties.getStyle();
-	};
-	CAscChartProp.prototype.putStyle      = function(v)
-	{
-		return this.ChartProperties && this.ChartProperties.putStyle(v);
-	};
-	CAscChartProp.prototype.getLockAspect = function()
-	{
-		return this.lockAspect;
-	};
-	CAscChartProp.prototype.putLockAspect = function(v)
-	{
-		return this.lockAspect = v;
-	};
-
-	CAscChartProp.prototype.changeType = function(v)
-	{
-		return this.ChartProperties && this.ChartProperties.changeType(v);
-	};
-
 	// CSearchResult - returns result of searching
 	function CSearchResult(obj)
 	{
@@ -5332,7 +4994,7 @@ background-repeat: no-repeat;\
 		var objects;
 		if (type === c_oAscTypeSelectElement.Chart)
 		{
-			objects = new CAscChartProp(imgProp);
+			objects = new Asc.CAscChartProp(imgProp);
 		}
 		else
 		{
@@ -5475,6 +5137,9 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.sync_currentPageCallback = function(number)
 	{
 		this.sendEvent("asc_onCurrentPage", number);
+
+		if (window.g_asc_plugins)
+			window.g_asc_plugins.onPluginEvent("onChangeCurrentSlide", number);
 	};
 
 	asc_docs_api.prototype.sync_SendThemeColors = function(colors, standart_colors)
@@ -8087,7 +7752,13 @@ background-repeat: no-repeat;\
 			data["translations"]["highlighter"],
 			data["translations"]["inkColor"],
 			data["translations"]["eraser"],
-			data["translations"]["eraseScreen"]
+			data["translations"]["eraseScreen"],
+			data["translations"]["play"],
+			data["translations"]["pause"],
+			data["translations"]["prevSlide"],
+			data["translations"]["nextSlide"],
+			data["translations"]["pointer"],
+			data["translations"]["draw"]
 		];
 
         if (data["cryptoCurrentPassword"])
@@ -8116,13 +7787,17 @@ background-repeat: no-repeat;\
 
 		var _button1 = document.getElementById("dem_id_reset");
 		var _button2 = document.getElementById("dem_id_end");
+        var _btnPlay = document.getElementById("dem_id_play");
+        var _btnPrev = document.getElementById("dem_id_prev");
+        var _btnNext = document.getElementById("dem_id_next");
+        var _btnPointer = document.getElementById("dem_id_pointer");
+        var _btnDrawMenu = document.getElementById("dem_id_draw_menu_trigger");
 
 		var _miPen = document.querySelector("#dem_id_draw_menu a[data-tool=\"pen\"]");
 		var _miHighlighter = document.querySelector("#dem_id_draw_menu a[data-tool=\"highlighter\"]");
 		var _miInkColor = document.querySelector("#dem_id_draw_color_menu_trigger > a");
 		var _miEraser = document.querySelector("#dem_id_draw_menu a[data-tool=\"eraser\"]");
 		var _miEraseAll = document.querySelector("#dem_id_draw_menu a[data-tool=\"erase-all\"]");
-
 
 		if (_button1)
 			_button1.innerHTML = this.reporterTranslates[0];
@@ -8131,6 +7806,14 @@ background-repeat: no-repeat;\
 			_button2.innerHTML = this.reporterTranslates[2];
 			this.WordControl.OnResizeReporter();
 		}
+        if (_btnPlay) {
+            _btnPlay.setAttribute("data-play-tooltip", this.reporterTranslates[9]);
+            _btnPlay.setAttribute("data-pause-tooltip", this.reporterTranslates[10]);
+        }
+        if (_btnPrev) _btnPrev.setAttribute("data-tooltip", this.reporterTranslates[11]);
+        if (_btnNext) _btnNext.setAttribute("data-tooltip", this.reporterTranslates[12]);
+        if (_btnPointer) _btnPointer.setAttribute("data-tooltip", this.reporterTranslates[13]);
+        if (_btnDrawMenu) _btnDrawMenu.setAttribute("data-tooltip", this.reporterTranslates[14]);
 
 		if (_miPen) _miPen.childNodes[1].textContent = this.reporterTranslates[4];
 		if (_miHighlighter) _miHighlighter.childNodes[1].textContent = this.reporterTranslates[5];
@@ -8470,7 +8153,7 @@ background-repeat: no-repeat;\
 		}
 	};
 
-	asc_docs_api.prototype.asc_addChartDrawingObject = function(nType, Placeholder)
+	asc_docs_api.prototype.asc_addChartDrawingObject = function(nType, Placeholder, bOpenChartEditor)
 	{
 		this.asc_onCloseFrameEditor();
 		const oLogicDocument = this.private_GetLogicDocument();
@@ -8478,6 +8161,12 @@ background-repeat: no-repeat;\
 		return;
 
 		this.WordControl.m_oLogicDocument.addChart(nType, true, Placeholder);
+		if (bOpenChartEditor) {
+			const oCurSlide = oLogicDocument.GetCurrentSlide();
+			if (oCurSlide) {
+				oCurSlide.openChartEditor();
+			}
+		}
 	};
 
 	asc_docs_api.prototype.asc_editChartDrawingObject = function(chartBinary)
@@ -10444,74 +10133,6 @@ background-repeat: no-repeat;\
 	CAscSlideProps.prototype['get_ShowMasterSp']             = CAscSlideProps.prototype.get_ShowMasterSp;
 	CAscSlideProps.prototype['put_ShowMasterSp']             = CAscSlideProps.prototype.put_ShowMasterSp;
 	CAscSlideProps.prototype['get_IsMasterSelected']         = CAscSlideProps.prototype.get_IsMasterSelected;
-	window['Asc']['CAscChartProp'] = window['Asc'].CAscChartProp = CAscChartProp;
-	CAscChartProp.prototype['get_ChangeLevel']        = CAscChartProp.prototype.get_ChangeLevel;
-	CAscChartProp.prototype['put_ChangeLevel']        = CAscChartProp.prototype.put_ChangeLevel;
-	CAscChartProp.prototype['get_CanBeFlow']          = CAscChartProp.prototype.get_CanBeFlow;
-	CAscChartProp.prototype['get_Width']              = CAscChartProp.prototype.get_Width;
-	CAscChartProp.prototype['put_Width']              = CAscChartProp.prototype.put_Width;
-	CAscChartProp.prototype['get_Height']             = CAscChartProp.prototype.get_Height;
-	CAscChartProp.prototype['put_Height']             = CAscChartProp.prototype.put_Height;
-	CAscChartProp.prototype['get_WrappingStyle']      = CAscChartProp.prototype.get_WrappingStyle;
-	CAscChartProp.prototype['put_WrappingStyle']      = CAscChartProp.prototype.put_WrappingStyle;
-	CAscChartProp.prototype['get_Paddings']           = CAscChartProp.prototype.get_Paddings;
-	CAscChartProp.prototype['put_Paddings']           = CAscChartProp.prototype.put_Paddings;
-	CAscChartProp.prototype['get_AllowOverlap']       = CAscChartProp.prototype.get_AllowOverlap;
-	CAscChartProp.prototype['put_AllowOverlap']       = CAscChartProp.prototype.put_AllowOverlap;
-	CAscChartProp.prototype['get_Position']           = CAscChartProp.prototype.get_Position;
-	CAscChartProp.prototype['put_Position']           = CAscChartProp.prototype.put_Position;
-	CAscChartProp.prototype['get_PositionH']          = CAscChartProp.prototype.get_PositionH;
-	CAscChartProp.prototype['put_PositionH']          = CAscChartProp.prototype.put_PositionH;
-	CAscChartProp.prototype['get_PositionV']          = CAscChartProp.prototype.get_PositionV;
-	CAscChartProp.prototype['put_PositionV']          = CAscChartProp.prototype.put_PositionV;
-	CAscChartProp.prototype['get_Value_X']            = CAscChartProp.prototype.get_Value_X;
-	CAscChartProp.prototype['get_Value_Y']            = CAscChartProp.prototype.get_Value_Y;
-	CAscChartProp.prototype['get_ImageUrl']           = CAscChartProp.prototype.get_ImageUrl;
-	CAscChartProp.prototype['put_ImageUrl']           = CAscChartProp.prototype.put_ImageUrl;
-	CAscChartProp.prototype['get_Group']              = CAscChartProp.prototype.get_Group;
-	CAscChartProp.prototype['put_Group']              = CAscChartProp.prototype.put_Group;
-	CAscChartProp.prototype['asc_getFromGroup']       = CAscChartProp.prototype.asc_getFromGroup;
-	CAscChartProp.prototype['asc_putFromGroup']       = CAscChartProp.prototype.asc_putFromGroup;
-	CAscChartProp.prototype['get_isChartProps']       = CAscChartProp.prototype.get_isChartProps;
-	CAscChartProp.prototype['put_isChartPross']       = CAscChartProp.prototype.put_isChartPross;
-	CAscChartProp.prototype['get_SeveralCharts']      = CAscChartProp.prototype.get_SeveralCharts;
-	CAscChartProp.prototype['put_SeveralCharts']      = CAscChartProp.prototype.put_SeveralCharts;
-	CAscChartProp.prototype['get_SeveralChartTypes']  = CAscChartProp.prototype.get_SeveralChartTypes;
-	CAscChartProp.prototype['put_SeveralChartTypes']  = CAscChartProp.prototype.put_SeveralChartTypes;
-	CAscChartProp.prototype['get_SeveralChartStyles'] = CAscChartProp.prototype.get_SeveralChartStyles;
-	CAscChartProp.prototype['put_SeveralChartStyles'] = CAscChartProp.prototype.put_SeveralChartStyles;
-	CAscChartProp.prototype['get_VerticalTextAlign']  = CAscChartProp.prototype.get_VerticalTextAlign;
-	CAscChartProp.prototype['put_VerticalTextAlign']  = CAscChartProp.prototype.put_VerticalTextAlign;
-	CAscChartProp.prototype['get_Locked']             = CAscChartProp.prototype.get_Locked;
-	CAscChartProp.prototype['get_ChartProperties']    = CAscChartProp.prototype.get_ChartProperties;
-	CAscChartProp.prototype['put_ChartProperties']    = CAscChartProp.prototype.put_ChartProperties;
-	CAscChartProp.prototype['get_ShapeProperties']    = CAscChartProp.prototype.get_ShapeProperties;
-	CAscChartProp.prototype['put_ShapeProperties']    = CAscChartProp.prototype.put_ShapeProperties;
-	CAscChartProp.prototype['asc_getType']            = CAscChartProp.prototype.asc_getType;
-	CAscChartProp.prototype['asc_getSubType']         = CAscChartProp.prototype.asc_getSubType;
-	CAscChartProp.prototype['asc_getStyleId']         = CAscChartProp.prototype.asc_getStyleId;
-	CAscChartProp.prototype['asc_getHeight']          = CAscChartProp.prototype.asc_getHeight;
-	CAscChartProp.prototype['asc_getWidth']           = CAscChartProp.prototype.asc_getWidth;
-	CAscChartProp.prototype['asc_setType']            = CAscChartProp.prototype.asc_setType;
-	CAscChartProp.prototype['asc_setSubType']         = CAscChartProp.prototype.asc_setSubType;
-	CAscChartProp.prototype['asc_setStyleId']         = CAscChartProp.prototype.asc_setStyleId;
-	CAscChartProp.prototype['asc_setHeight']          = CAscChartProp.prototype.asc_setHeight;
-	CAscChartProp.prototype['asc_setWidth']           = CAscChartProp.prototype.asc_setWidth;
-	CAscChartProp.prototype['asc_putTitle']           = CAscChartProp.prototype['put_Title']           = CAscChartProp.prototype['asc_setTitle']           = CAscChartProp.prototype.asc_setTitle;
-	CAscChartProp.prototype['asc_putDescription']     = CAscChartProp.prototype['put_Description']     = CAscChartProp.prototype['asc_setDescription']     = CAscChartProp.prototype.asc_setDescription;
-	CAscChartProp.prototype['asc_getTitle']           = CAscChartProp.prototype.asc_getTitle;
-	CAscChartProp.prototype['asc_getDescription']     = CAscChartProp.prototype.asc_getDescription;
-	CAscChartProp.prototype['asc_getPosition']     = CAscChartProp.prototype.asc_getPosition;
-	CAscChartProp.prototype['asc_putPosition']     = CAscChartProp.prototype.asc_putPosition;
-	CAscChartProp.prototype['asc_getName']     = CAscChartProp.prototype.asc_getName;
-	CAscChartProp.prototype['asc_putName']     = CAscChartProp.prototype.asc_putName;
-	CAscChartProp.prototype['getType']                = CAscChartProp.prototype.getType;
-	CAscChartProp.prototype['putType']                = CAscChartProp.prototype.putType;
-	CAscChartProp.prototype['getStyle']               = CAscChartProp.prototype.getStyle;
-	CAscChartProp.prototype['putStyle']               = CAscChartProp.prototype.putStyle;
-	CAscChartProp.prototype['putLockAspect']          = CAscChartProp.prototype['asc_putLockAspect'] = CAscChartProp.prototype.putLockAspect;
-	CAscChartProp.prototype['getLockAspect'] = CAscChartProp.prototype['asc_getLockAspect'] = CAscChartProp.prototype.getLockAspect;
-	CAscChartProp.prototype['changeType']        = CAscChartProp.prototype.changeType;
 	CSearchResult.prototype['get_Text']          = CSearchResult.prototype.get_Text;
 	CSearchResult.prototype['get_Navigator']     = CSearchResult.prototype.get_Navigator;
 	CSearchResult.prototype['put_Navigator']     = CSearchResult.prototype.put_Navigator;

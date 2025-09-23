@@ -57,7 +57,7 @@
     CBaseCheckBoxField.prototype.constructor = CBaseCheckBoxField;
 
     CBaseCheckBoxField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
-        if (this.IsHidden() && !this.IsEditMode())
+        if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
             return;
 
         this.DrawBackground(oGraphicsPDF);
@@ -354,8 +354,6 @@
         oDoc.activeForm = this;
         
         if (oDoc.IsEditFieldsMode()) {
-            let oController = oDoc.GetController();
-            this.editShape.select(oController, this.GetPage());
             if (false == this.IsLocked()) {
                 this.editShape.onMouseDown(x, y, e)
             }
@@ -500,6 +498,13 @@
         return this._noToggleToOff;
     };
     CBaseCheckBoxField.prototype.SetOptions = function(aOpt) {
+        let oParent = this.GetParent();
+        if (oParent && oParent.IsAllKidsWidgets()) {
+            oParent.SetOptions(aOpt);
+        }
+        
+        let hasOptions = !!this._options;
+        
         AscCommon.History.Add(new CChangesPDFCheckOptions(this, this._options, aOpt));
 
         if (this._options == aOpt) {
@@ -513,9 +518,27 @@
             widget.SetExportValue(undefined, true);
         });
 
+        let sDefValue = this.GetDefaultValue();
+        let sCurExpValue;
+
+        if (sDefValue) {
+            if (!hasOptions) {
+                sCurExpValue = this.GetDefaultValue();
+            }
+            else {
+                sCurExpValue = aOpt[sDefValue];
+            }
+
+            this.SetDefaultValue(String(aOpt.indexOf(sCurExpValue)));
+        }
+
         return true;
     };
-    CBaseCheckBoxField.prototype.GetOptions = function() {
+    CBaseCheckBoxField.prototype.GetOptions = function(bInherit) {
+        let oParent = this.GetParent();
+        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+            return oParent.GetOptions();
+
         return this._options;
     };
     CBaseCheckBoxField.prototype.GetOptionsIndex = function() {
@@ -727,6 +750,11 @@
                 oFieldToInherit.SetRadiosInUnison(false);
             }
         }
+    };
+    CBaseCheckBoxField.prototype.DrainViewPropsFrom = function(oField) {
+        AscPDF.CBaseField.prototype.DrainViewPropsFrom.call(this, oField);
+
+        this.SetStyle(oField.GetStyle());
     };
     CBaseCheckBoxField.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);

@@ -5195,14 +5195,14 @@
 		}
 	};
 
-	Workbook.prototype.getRulesByType = function(type, id, needClone) {
+	Workbook.prototype.getRulesByType = function(type, id, needClone, opt_sheet, opt_range) {
 		var range, sheet;
 		var rules = null;
 		switch (type) {
 			case Asc.c_oAscSelectionForCFType.selection:
-				sheet = this.getActiveWs();
+				sheet = opt_sheet ? opt_sheet : this.getActiveWs();
 				// ToDo multiselect
-				range = sheet.selectionRange.getLast();
+				range = opt_range ? opt_range : sheet.selectionRange.getLast();
 				break;
 			case Asc.c_oAscSelectionForCFType.worksheet:
 				sheet = id ? this.getWorksheet(id) : this.getActiveWs();
@@ -6212,6 +6212,70 @@
 	Workbook.prototype.getCustomXmlManager = function()
 	{
 		return this.customXmlManager;
+	};
+	Workbook.prototype.addExternalReferenceFromWorksheets = function(oWorksheets, oPastedWb, oWorksheetWb) {
+		const oApi = Asc.editor;
+		const oWs = oApi.wb.getWorksheet();
+		if (!oWs)
+			return;
+
+		for (let i in oWorksheets) {
+			oWorksheetWb.aWorksheets.push(oWorksheets[i].ws);
+		}
+
+		let nChangeExternalReferenceIndex = null;
+		let oMainExternalReference;
+		const allDefNames = [];
+		for (let sSheetName in oWorksheets) {
+			const oWorksheetInfo = oWorksheets[sSheetName];
+			const arrRanges = [new Asc.Range(oWorksheetInfo.minC, oWorksheetInfo.minR, oWorksheetInfo.maxC, oWorksheetInfo.maxR)];
+			const oPastedWS = oWorksheetInfo.ws;
+			const defNames = oWorksheetInfo.defNames;
+
+			const oCellPasteHelper = oWs.cellPasteHelper;
+			const oPastedLinkInfo = oCellPasteHelper.getPastedLinkInfo(oPastedWb, oPastedWS);
+
+			if (oPastedLinkInfo) {
+				if (oPastedLinkInfo.type === -1) {
+					const pasteSheetLinkName = oPastedLinkInfo.sheet;
+					//необходимо положить нужные данные в SheetDataSet
+					oMainExternalReference = this.externalReferences[oPastedLinkInfo.index - 1];
+					if (oMainExternalReference) {
+						oMainExternalReference.updateSheetData(pasteSheetLinkName, oPastedWS, arrRanges);
+						nChangeExternalReferenceIndex = oPastedLinkInfo.index;
+					}
+					allDefNames.push.apply(allDefNames, defNames);
+				} else if (oPastedLinkInfo.type === -2) {
+					if (!oMainExternalReference) {
+						var referenceData;
+						var name = oPastedWb.Core.title;
+						if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
+							name = oPastedLinkInfo.path;
+						} else if (oPastedWb && oPastedWb.Core) {
+							referenceData = {};
+							referenceData["fileKey"] = oPastedWb.Core.contentStatus;
+							referenceData["instanceId"] = oPastedWb.Core.category;
+						}
+
+						oMainExternalReference = new AscCommonExcel.ExternalReference();
+						oMainExternalReference.referenceData = referenceData;
+						oMainExternalReference.Id = name;
+					}
+
+					allDefNames.push.apply(allDefNames, defNames);
+					oMainExternalReference.addSheet(oPastedWS, arrRanges);
+				}
+			}
+		}
+		if (oMainExternalReference) {
+			oMainExternalReference.initDefinedNamesOnCopyPaste(allDefNames);
+			if (nChangeExternalReferenceIndex === null) {
+				this.addExternalReferences([oMainExternalReference]);
+			} else {
+				this.changeExternalReference(nChangeExternalReferenceIndex, oMainExternalReference);
+			}
+		}
+		return oMainExternalReference;
 	};
 
 	/**
@@ -8249,8 +8313,11 @@
 				row.setCalcHeight(true);
 				row.setHidden(false);
 				var oNewProps = row.getHeightProp();
-				if(false === oOldProps.isEqual(oNewProps))
+				if (oOldProps.isEqual(oNewProps)) {
+					row.setChanged(false);
+				} else {
 					AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_RowProp, oThis.getId(), row._getUpdateRange(), new UndoRedoData_IndexSimpleProp(row.index, true, oOldProps, oNewProps));
+				}
 			}
 		};
 		if(0 == start && gc_nMaxRow0 == stop)
@@ -10416,6 +10483,7 @@
 					}
 					oCellValue = new AscCommonExcel.CCellValue();
 					oCellValue.type = AscCommon.CellValueType.String;
+					const titleRangeValue = totalTitleRange[r + j].getValueWithFormatSkipToSpace();
 					if (r + j > valuesIndex) {
 						fieldIndex = fields[r + j].asc_getIndex();
 						field = pivotFields[fieldIndex];
@@ -10426,9 +10494,9 @@
 						});
 						if (AscCommonExcel.st_VALUES !== fieldIndex) {
 							if (field.subtotalCaption) {
-								oCellValue.text = field.subtotalCaption;
+								oCellValue.text = field.subtotalCaption.replace(/\?/g, titleRangeValue);
 							} else {
-								oCellValue.text = totalTitleRange[r + j].getValueWithFormatSkipToSpace();
+								oCellValue.text = titleRangeValue;
 								oCellValue.text += ' ' + AscCommon.translateManager.getValue(AscCommonExcel.ToName_ST_ItemType(item.t));
 								query.field = fieldIndex;
 								this._updatePivotTableCellsRowColLablesOffsets(pivotTable, rowFieldsOffset, isRowItems, i, j, query);
@@ -10447,7 +10515,7 @@
 							type: Asc.c_oAscItemType.Data
 						});
 						query.field = fieldIndex;
-						oCellValue.text = totalTitleRange[r + j].getValueWithFormatSkipToSpace();
+						oCellValue.text = titleRangeValue;
 						oCellValue.text += ' ' + pivotTable.getDataFieldName(item.i);
 						this._updatePivotTableCellsRowColLablesOffsets(pivotTable, rowFieldsOffset, isRowItems, i, j, query);
 					}
@@ -14336,6 +14404,15 @@
 		}
 		return arrInks;
 	};
+	Worksheet.prototype.getDrawingControls = function () {
+		const arrControls = [];
+		this.handleDrawings(function (oDrawing) {
+			if (oDrawing.isControl()) {
+				arrControls.push(oDrawing);
+			}
+		});
+		return arrControls;
+	};
 
 
 //-------------------------------------------------------------------------------------------------
@@ -16335,7 +16412,7 @@
 							let isCycleCell = false;
 
 							foreachRefElements(function (range) {
-								if (range.bbox.contains(t.nCol, t.nRow)) {
+								if (range.bbox.contains(t.nCol, t.nRow) && range.worksheet.getName() === t.ws.getName()) {
 									if (!parsed.ca) {
 										parsed.ca = true;
 									}
@@ -16344,9 +16421,8 @@
 								} else {
 									range._foreachNoEmpty(function (cell) {
 										if (cell.isFormula()) {
-											const isRecursiveFormula = cell.checkRecursiveFormula(t);
-											!isRecursiveFormula && cell.initStartCellForIterCalc();
-											if (g_cCalcRecursion.getStartCellIndex() != null || isRecursiveFormula) {
+											cell.initStartCellForIterCalc();
+											if (g_cCalcRecursion.getStartCellIndex() != null) {
 												if (!cell.getFormulaParsed().ca) {
 													cell.getFormulaParsed().ca = true;
 												}

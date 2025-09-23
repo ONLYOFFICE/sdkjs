@@ -1192,6 +1192,12 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
 
     };
 
+    Geometry.prototype.isCalculated = function ()
+    {
+        let iN = AscFormat.isRealNumber;
+        return iN(this.gdLst['w']) && iN(this.gdLst['h']);
+    };
+
     Geometry.prototype.Recalculate = function(w, h, bResetPathsInfo)
     {
         this.gdLst["_3cd4"]= 16200000;
@@ -1353,6 +1359,14 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
     {
         var oApi = Asc.editor || editor;
         var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+        
+        if (oApi.isPdfEditor()) {
+            let oTopObj = this.parent && this.parent.parent;
+            if (oTopObj && oTopObj.IsAnnot && oTopObj.IsAnnot() && oTopObj.IsLine() && oTopObj.HasAdjustments()) {
+                isDrawHandles = true;
+            }
+        }
+
         if(isDrawHandles === false)
         {
             return { hit: false, adjPolarFlag: null, adjNum: null, warp: false };

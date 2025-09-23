@@ -39,6 +39,8 @@
 function (window, undefined) {
 	var cDate = Asc.cDate;
 	var fSortAscending = AscCommon.fSortAscending;
+	var gc_nMaxRow0 = AscCommon.gc_nMaxRow0;
+	var gc_nMaxCol0 = AscCommon.gc_nMaxCol0;
 
 	var cElementType = AscCommonExcel.cElementType;
 	var cErrorType = AscCommonExcel.cErrorType;
@@ -4085,17 +4087,41 @@ function (window, undefined) {
 		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			arg0.foreach2(function (v, cell, row, col) {
 				if (matching(v, matchingInfo)) {
-					let offset = new AscCommon.CellBase(row - r.bbox.r1, col - r.bbox.c1);
-					r2.setOffset(offset);
-
 					let val;
-					ws._getCellNoEmpty(r2.bbox.r1, r2.bbox.c1, function (cell) {
-						val = checkTypeCell(cell);
-					});
+					if ((r2.bbox.r1 === 0 && r2.bbox.r2 === gc_nMaxRow0) || 
+						(r2.bbox.c1 === 0 && r2.bbox.c2 === gc_nMaxCol0)) {
+						let targetRow = row;
+						let targetCol = col;
+						
+						if (r2.bbox.r1 === 0 && r2.bbox.r2 === gc_nMaxRow0) {
+							targetCol = r2.bbox.c1 + (col - r.bbox.c1);
+							if (targetCol < r2.bbox.c1 || targetCol > r2.bbox.c2) {
+								return;
+							}
+						}
+						
+						if (r2.bbox.c1 === 0 && r2.bbox.c2 === gc_nMaxCol0) {
+							targetRow = r2.bbox.r1 + (row - r.bbox.r1);
+							if (targetRow < r2.bbox.r1 || targetRow > r2.bbox.r2) {
+								return;
+							}
+						}
+						
+						ws._getCellNoEmpty(targetRow, targetCol, function (cell) {
+							val = checkTypeCell(cell);
+						});
+					} else {
+						let offset = new AscCommon.CellBase(row - r.bbox.r1, col - r.bbox.c1);
+						r2.setOffset(offset);
 
-					offset.col *= -1;
-					offset.row *= -1;
-					r2.setOffset(offset);
+						ws._getCellNoEmpty(r2.bbox.r1, r2.bbox.c1, function (cell) {
+							val = checkTypeCell(cell);
+						});
+
+						offset.col *= -1;
+						offset.row *= -1;
+						r2.setOffset(offset);
+					}
 
 					if (cElementType.number === val.type) {
 						_sum += val.getValue();

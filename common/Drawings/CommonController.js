@@ -121,7 +121,7 @@
 
 			var blip_fill = new AscFormat.CBlipFill();
 			blip_fill.setRasterImageId(rasterImageId);
-			blip_fill.setStretch(true);
+			blip_fill.setStretch(new AscFormat.CBlipFillStretch());
 			image.setBlipFill(blip_fill);
 			image.setNvPicPr(new AscFormat.UniNvPr());
 
@@ -576,6 +576,7 @@
 				var type = drawing.getObjectType();
 				switch (type) {
 					case AscDFH.historyitem_type_Shape:
+					case AscDFH.historyitem_type_Control:
 					case AscDFH.historyitem_type_Cnx: {
 						ret.shapes.push(drawing);
 						break;
@@ -706,6 +707,7 @@
 
 
 			this.lastCursorInfo = null;
+			this.dropDowns = [];
 		}
 
 		function CanStartEditText(oController) {
@@ -1124,7 +1126,7 @@
 						var oThis = this;
 						this.checkSelectedObjectsAndCallback(function () {
 							if (!oShape.bWordShape) {
-								oShape.createTextBody();
+								oShape.createTextBodyOnEdit();
 							} else {
 								oShape.createTextBoxContent();
 							}
@@ -1490,7 +1492,7 @@
 					if (!oShape.getDocContent() && oShape.canEditText()) {
 						this.checkSelectedObjectsAndCallback(function () {
 							if (!oShape.bWordShape) {
-								oShape.createTextBody();
+								oShape.createTextBodyOnEdit();
 							} else {
 								oShape.createTextBoxContent();
 							}
@@ -1502,7 +1504,6 @@
 						}, [], false);
 					}
 				},
-
 				handleMoveHit: function (object, e, x, y, group, bInSelect, pageIndex, bWord) {
 					var b_is_inline;
 					if (isRealObject(group)) {
@@ -1604,7 +1605,7 @@
 								return null;
 							}
 						}
-						if (object.canMove() || bStartMedia) {
+						if (/*object.selected && */(object.canMove() || bStartMedia)) {
 							this.checkSelectedObjectsForMove(pageIndex);
 							if (!isRealObject(group)) {
 								var bGroupSelection = AscCommon.isRealObject(this.selection.groupSelection);
@@ -2086,7 +2087,7 @@
 									}
 								} else {
 									if (!oShape.txBody) {
-										oShape.createTextBody();
+										oShape.createTextBodyOnEdit();
 									}
 								}
 								oController.selection.textSelection = oShape;
@@ -2497,7 +2498,6 @@
 							var g = new AscCommon.CGraphics();
 							g.init(_ctx, w_px, h_px, w_mm, h_mm);
 							g.m_oFontManager = AscCommon.g_fontManager;
-
 							g.m_oCoordTransform.tx = -_bounds_cheker.Bounds.min_x;
 							g.m_oCoordTransform.ty = -_bounds_cheker.Bounds.min_y;
 							g.transform(1, 0, 0, 1, 0, 0);
@@ -2688,7 +2688,7 @@
 												if (drawing.bWordShape) {
 													drawing.createTextBoxContent();
 												} else {
-													drawing.createTextBody();
+													drawing.createTextBodyOnEdit();
 												}
 												content = drawing.getDocContent();
 												if (content) {
@@ -2853,7 +2853,7 @@
 											if (oSelectedObject.bWordShape) {
 												oSelectedObject.createTextBoxContent();
 											} else {
-												oSelectedObject.createTextBody();
+												oSelectedObject.createTextBodyOnEdit();
 											}
 											oContent = oSelectedObject.getDocContent();
 											if (oContent) {
@@ -4012,7 +4012,7 @@
 							if (oBlipFill) {
 								let oBlipFillCopy = oBlipFill.createDuplicate();
 								oBlipFillCopy.tile = null;
-								oBlipFillCopy.stretch = true;
+								oBlipFillCopy.stretch = new AscFormat.CBlipFillStretch();
 								oBlipFillCopy.srcRect = null;
 								oImg.setBlipFill(oBlipFillCopy);
 
@@ -4366,57 +4366,78 @@
 				getAllowedDataLabelsPosition: function (chartType, position) {
 					const types = Asc.c_oAscChartTypeSettings;
 					const positions = Asc.c_oAscChartDataLabelsPos;
+					
+					let allowedPositions;
+					switch (chartType) {
+						case types.barNormal:
+						case types.hBarNormal:
+							allowedPositions = [positions.ctr, positions.inBase, positions.inEnd, positions.outEnd];
+							break;
 
-					const allowedDataLabelPositions = {
-						[types.barNormal]: [positions.ctr, positions.inBase, positions.inEnd, positions.outEnd],
-						[types.barStacked]: [positions.ctr, positions.inBase, positions.inEnd],
-						[types.barStackedPer]: [positions.ctr, positions.inBase, positions.inEnd],
-						[types.barNormal3d]: [],
-						[types.barStacked3d]: [],
-						[types.barStackedPer3d]: [],
-						[types.barNormal3dPerspective]: [],
-						[types.lineNormal]: [positions.ctr, positions.l, positions.t, positions.r, positions.b],
-						[types.lineStacked]: [positions.ctr, positions.l, positions.t, positions.r, positions.b],
-						[types.lineStackedPer]: [positions.ctr, positions.l, positions.t, positions.r, positions.b],
-						[types.lineNormalMarker]: [positions.ctr, positions.l, positions.t, positions.r, positions.b],
-						[types.lineStackedMarker]: [positions.ctr, positions.l, positions.t, positions.r, positions.b],
-						[types.lineStackedPerMarker]: [positions.ctr, positions.l, positions.t, positions.r, positions.b],
-						[types.line3d]: [],
-						[types.pie]: [positions.ctr, positions.inEnd, positions.outEnd, positions.bestFit],
-						[types.pie3d]: [positions.ctr, positions.inEnd, positions.outEnd, positions.bestFit],
-						[types.hBarNormal]: [positions.ctr, positions.inBase, positions.inEnd, positions.outEnd],
-						[types.hBarStacked]: [positions.ctr, positions.inBase, positions.inEnd],
-						[types.hBarStackedPer]: [positions.ctr, positions.inBase, positions.inEnd],
-						[types.hBarNormal3d]: [],
-						[types.hBarStacked3d]: [],
-						[types.hBarStackedPer3d]: [],
-						[types.areaNormal]: [positions.show],
-						[types.areaStacked]: [positions.show],
-						[types.areaStackedPer]: [positions.show],
-						[types.doughnut]: [positions.show],
-						[types.stock]: [positions.show],
-						[types.scatter]: [positions.ctr, positions.l, positions.r, positions.t, positions.b],
-						[types.scatterLine]: [positions.ctr, positions.l, positions.r, positions.t, positions.b],
-						[types.scatterLineMarker]: [positions.ctr, positions.l, positions.r, positions.t, positions.b],
-						[types.scatterMarker]: [positions.ctr, positions.l, positions.r, positions.t, positions.b],
-						[types.scatterNone]: [positions.ctr, positions.l, positions.r, positions.t, positions.b],
-						[types.scatterSmooth]: [positions.ctr, positions.l, positions.r, positions.t, positions.b],
-						[types.scatterSmoothMarker]: [positions.ctr, positions.l, positions.r, positions.t, positions.b],
-						[types.surfaceNormal]: [],
-						[types.surfaceWireframe]: [],
-						[types.contourNormal]: [],
-						[types.contourWireframe]: [],
-						[types.comboCustom]: [],
-						[types.comboBarLine]: [],
-						[types.comboBarLineSecondary]: [],
-						[types.comboAreaBar]: [],
-						[types.radar]: [positions.show],
-						[types.radarMarker]: [positions.show],
-						[types.radarFilled]: [positions.show],
-						[types.unknown]: []
-					};
+						case types.barStacked:
+						case types.barStackedPer:
+						case types.hBarStacked:
+						case types.hBarStackedPer:
+							allowedPositions = [positions.ctr, positions.inBase, positions.inEnd];
+							break;
 
-					const allowedPositions = allowedDataLabelPositions[chartType] || [];
+						case types.lineNormal:
+						case types.lineStacked:
+						case types.lineStackedPer:
+						case types.lineNormalMarker:
+						case types.lineStackedMarker:
+						case types.lineStackedPerMarker:
+							allowedPositions = [positions.ctr, positions.l, positions.t, positions.r, positions.b];
+							break;
+
+						case types.pie:
+						case types.pie3d:
+							allowedPositions = [positions.ctr, positions.inEnd, positions.outEnd, positions.bestFit];
+							break;
+
+						case types.areaNormal:
+						case types.areaStacked:
+						case types.areaStackedPer:
+						case types.doughnut:
+						case types.stock:
+						case types.radar:
+						case types.radarMarker:
+						case types.radarFilled:
+							allowedPositions = [positions.show];
+							break;
+
+						case types.scatter:
+						case types.scatterLine:
+						case types.scatterLineMarker:
+						case types.scatterMarker:
+						case types.scatterNone:
+						case types.scatterSmooth:
+						case types.scatterSmoothMarker:
+							allowedPositions = [positions.ctr, positions.l, positions.r, positions.t, positions.b];
+							break;
+
+						case types.barNormal3d:
+						case types.barStacked3d:
+						case types.barStackedPer3d:
+						case types.barNormal3dPerspective:
+						case types.line3d:
+						case types.hBarNormal3d:
+						case types.hBarStacked3d:
+						case types.hBarStackedPer3d:
+						case types.surfaceNormal:
+						case types.surfaceWireframe:
+						case types.contourNormal:
+						case types.contourWireframe:
+						case types.comboCustom:
+						case types.comboBarLine:
+						case types.comboBarLineSecondary:
+						case types.comboAreaBar:
+						case types.unknown:
+							allowedPositions = [];
+							break;
+
+						default: allowedPositions = [];
+					}
 
 					return allowedPositions.indexOf(position) > -1
 						? position
@@ -4481,74 +4502,117 @@
 				},
 
 				checkSingleChartSelection: function () {
-
 					const controller = Asc.editor.getGraphicController();
 					if (!controller) return;
 
-					const selectedArray = controller.getSelectedArray();
-					if (selectedArray.length === 1) {
+					const editorId = Asc.editor.getEditorId();
+					let selectedObjects, isChart, getRect;
 
-						const selectedObject = selectedArray[0];
-						if (selectedObject.isChart && selectedObject.isChart()) {
+					switch (editorId) {
+						case AscCommon.c_oEditorId.Word: {
+							selectedObjects = Asc.editor.getSelectedElements();
 
-							let left, top, width, height;
-
-							const editorId = Asc.editor.getEditorId();
-							switch (editorId) {
-								case AscCommon.c_oEditorId.Word: {
-									const logicDocument = Asc.editor.getLogicDocument();
-									if (!logicDocument) return;
-
-									const bounds = selectedObject.getRectBounds();
-									const pageIndex = logicDocument.GetCurPage();
-									const convertedPosTopLeft = logicDocument.DrawingDocument.ConvertCoordsToCursorWR(bounds.l, bounds.t, pageIndex);
-									const convertedPosRightBottom = logicDocument.DrawingDocument.ConvertCoordsToCursorWR(bounds.r, bounds.b, pageIndex);
-
-									left = convertedPosTopLeft.X;
-									top = convertedPosTopLeft.Y;
-									width = convertedPosRightBottom.X - convertedPosTopLeft.X;
-									height = convertedPosRightBottom.Y - convertedPosTopLeft.Y;
-									break;
-								}
-								case AscCommon.c_oEditorId.Spreadsheet: {
-									const ws = Asc.editor.wb.getWorksheet();
-									if (!ws) return;
-
-									const ppi = ws._getPPIX();
-									const mmToPx = Asc.getCvtRatio(3, 0, ppi);
-
-									const bounds = selectedObject.getRectBounds();
-									const right = AscCommon.AscBrowser.convertToRetinaValue(bounds.r * mmToPx - ws._getOffsetX() + ws.cellsLeft);
-									const bottom = AscCommon.AscBrowser.convertToRetinaValue(bounds.b * mmToPx - ws._getOffsetY() + ws.cellsTop);
-									left = AscCommon.AscBrowser.convertToRetinaValue(bounds.l * mmToPx - ws._getOffsetX() + ws.cellsLeft);
-									top = AscCommon.AscBrowser.convertToRetinaValue(bounds.t * mmToPx - ws._getOffsetY() + ws.cellsTop);
-									width = right - left;
-									height = bottom - top;
-									break;
-								}
-								case AscCommon.c_oEditorId.Presentation: {
-									const logicDocument = Asc.editor.getLogicDocument();
-									if (!logicDocument) return;
-
-									const bounds = selectedObject.getRectBounds();
-									const slideIndex = logicDocument.GetCurrentSlide().getSlideIndex();
-									const convertedPosTopLeft = logicDocument.DrawingDocument.ConvertCoordsToCursorWR(bounds.l, bounds.t, slideIndex);
-									const convertedPosRightBottom = logicDocument.DrawingDocument.ConvertCoordsToCursorWR(bounds.r, bounds.b, slideIndex);
-
-									left = convertedPosTopLeft.X;
-									top = convertedPosTopLeft.Y;
-									width = convertedPosRightBottom.X - convertedPosTopLeft.X;
-									height = convertedPosRightBottom.Y - convertedPosTopLeft.Y;
-									break;
-								}
-								default: return;
+							if (Asc.editor.isPdfEditor()) {
+								isChart = function (object) {
+									return object.asc_getObjectType && object.asc_getObjectType() === Asc.c_oAscTypeSelectElement.Chart;
+								};
 							}
+							else {
+								isChart = function (object) {
+									const value = object.asc_getObjectValue && object.asc_getObjectValue();
+									return object.asc_getObjectType() === Asc.c_oAscTypeSelectElement.Image && value && value.asc_getChartProperties();
+								};
+							}
+							
+							getRect = function (bounds) {
+								const logicDocument = Asc.editor.getLogicDocument();
+								if (!logicDocument) return null;
 
-							const chartSpaceRect = new AscCommon.asc_CRect(left, top, width, height);
-							return Asc.editor.sendEvent('asc_onSingleChartSelectionChanged', chartSpaceRect);
+								const pageIndex = logicDocument.GetCurPage();
+								const convertedPosTopLeft = logicDocument.DrawingDocument.ConvertCoordsToCursorWR(bounds.l, bounds.t, pageIndex);
+								const convertedPosRightBottom = logicDocument.DrawingDocument.ConvertCoordsToCursorWR(bounds.r, bounds.b, pageIndex);
+
+								return new AscCommon.asc_CRect(
+									convertedPosTopLeft.X, convertedPosTopLeft.Y,
+									convertedPosRightBottom.X - convertedPosTopLeft.X, convertedPosRightBottom.Y - convertedPosTopLeft.Y
+								);
+							};
+
+							break;
 						}
+
+						case AscCommon.c_oEditorId.Spreadsheet: {
+							selectedObjects = Asc.editor.asc_getGraphicObjectProps();
+
+							isChart = function (object) {
+								const value = object.asc_getObjectValue && object.asc_getObjectValue();
+								return object.asc_getObjectType() === Asc.c_oAscTypeSelectElement.Image && value && value.asc_getChartProperties();
+							};
+
+							getRect = function (bounds) {
+								const ws = Asc.editor.wb.getWorksheet();
+								if (!ws) return null;
+
+								const ppi = ws._getPPIX();
+								const mmToPx = Asc.getCvtRatio(3, 0, ppi);
+
+								const left = AscCommon.AscBrowser.convertToRetinaValue(bounds.l * mmToPx - ws._getOffsetX() + ws.cellsLeft);
+								const top = AscCommon.AscBrowser.convertToRetinaValue(bounds.t * mmToPx - ws._getOffsetY() + ws.cellsTop);
+								const right = AscCommon.AscBrowser.convertToRetinaValue(bounds.r * mmToPx - ws._getOffsetX() + ws.cellsLeft);
+								const bottom = AscCommon.AscBrowser.convertToRetinaValue(bounds.b * mmToPx - ws._getOffsetY() + ws.cellsTop);
+
+								return new AscCommon.asc_CRect(left, top, right - left, bottom - top);
+							};
+
+							break;
+						}
+
+						case AscCommon.c_oEditorId.Presentation: {
+							selectedObjects = Asc.editor.getSelectedElements();
+
+							isChart = function (object) {
+								return object.asc_getObjectType && object.asc_getObjectType() === Asc.c_oAscTypeSelectElement.Chart;
+							};
+
+							getRect = function (bounds) {
+								const logicDocument = Asc.editor.getLogicDocument();
+								if (!logicDocument) return null;
+
+								const slideIndex = logicDocument.GetSlideIndex();
+								const convertedPosTopLeft = logicDocument.DrawingDocument.ConvertCoordsToCursorWR(bounds.l, bounds.t, slideIndex);
+								const convertedPosRightBottom = logicDocument.DrawingDocument.ConvertCoordsToCursorWR(bounds.r, bounds.b, slideIndex);
+
+								return new AscCommon.asc_CRect(
+									convertedPosTopLeft.X, convertedPosTopLeft.Y,
+									convertedPosRightBottom.X - convertedPosTopLeft.X, convertedPosRightBottom.Y - convertedPosTopLeft.Y
+								);
+							};
+
+							break;
+						}
+
+						default: return;
 					}
-					return Asc.editor.sendEvent('asc_onSingleChartSelectionChanged', null);
+
+					const chartObjects = selectedObjects.filter(isChart);
+					if (chartObjects.length !== 1) {
+						Asc.editor.sendEvent("asc_onSingleChartSelectionChanged", null);
+						return;
+					}
+
+					const chartObject = chartObjects[0];
+					const chartSpace = chartObject &&
+						chartObject.Value &&
+						chartObject.Value.ChartProperties &&
+						chartObject.Value.ChartProperties.chartSpace;
+
+					if (!chartSpace) {
+						Asc.editor.sendEvent("asc_onSingleChartSelectionChanged", null);
+						return;
+					}
+
+					const chartSpaceRect = getRect(chartSpace.getRectBounds());
+					Asc.editor.sendEvent("asc_onSingleChartSelectionChanged", chartSpaceRect || null);
 				},
 
 				getChartForRangesDrawing: function () {
@@ -6193,12 +6257,21 @@
 				},
 
 				onMouseWheel: function (deltaX, deltaY) {
+					for (let i = 0; i < this.dropDowns.length; i += 1) {
+						this.dropDowns[i].forceUpdate();
+					}
 					var aSelection = this.getSelectedArray();
 					if (aSelection.length === 1
 						&& aSelection[0].getObjectType() === AscDFH.historyitem_type_SlicerView) {
 						return aSelection[0].onWheel(deltaX, deltaY);
 					}
 					return false;
+				},
+				addDropDown: function(oDropDown) {
+					this.dropDowns.push(oDropDown);
+				},
+				resetDropDowns: function() {
+					this.dropDowns.length = 0;
 				},
 
 				/*onKeyPress: function(e)
@@ -7354,6 +7427,7 @@
 						let sOwnName = drawing.getObjectName();
 						switch (drawing.getObjectType()) {
 							case AscDFH.historyitem_type_Shape:
+							case AscDFH.historyitem_type_Control:
 							case AscDFH.historyitem_type_Cnx:
 							case AscDFH.historyitem_type_SmartArt: {
 								var oBodyPr = drawing.getBodyPr();
@@ -7647,7 +7721,7 @@
 										bFromSmartArtInternal: false,
 										bFromGroup: AscCommon.isRealObject(drawing.group),
 										locked: locked,
-										textArtProperties: null,
+										textArtProperties: drawing.getTextArtProperties(),
 										lockAspect: lockAspect,
 										title: drawing.getTitle(),
 										name: sOwnName,
@@ -8463,7 +8537,7 @@
 						oShape.createTextBoxContent();
 					} else {
 						nFontSize = 54;
-						oShape.createTextBody();
+						oShape.createTextBodyOnEdit();
 					}
 					var bUseStartString = (typeof sStartString === "string");
 					if (bUseStartString) {

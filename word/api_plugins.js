@@ -211,7 +211,7 @@
         for (var i = 0; i < _blocks.length; i++)
         {
             _obj = _blocks[i].GetContentControlPr();
-            _ret.push({"Tag" : _obj.Tag, "Id" : _obj.Id, "Lock" : _obj.Lock, "InternalId" : _obj.InternalId});
+            _ret.push(_obj.GetEventObject());
         }
         return _ret;
     };
@@ -274,26 +274,7 @@
 			prop.CC.SelectContentControl();
 		}
 
-		var result =
-		{
-			"Tag"        : prop.Tag,
-			"Id"         : prop.Id,
-			"Lock"       : prop.Lock,
-			"Alias"      : prop.Alias,
-			"InternalId" : prop.InternalId,
-			"Appearance" : prop.Appearance,
-		};
-		
-		if (prop.Color)
-		{
-			result["Color"] =
-			{
-				"R" : prop.Color.r,
-				"G" : prop.Color.g,
-				"B" : prop.Color.b
-			}
-		}
-
+		var result = prop.GetEventObject();
 		if (contentFormat)
 		{
 			var copy_data = {

@@ -727,6 +727,9 @@ CPresentation.prototype.IsSpreadSheetEditor = function () {
 CPresentation.prototype.IsPdfEditor = function() {
 	return false;
 };
+CPresentation.prototype.IsVisioEditor = function() {
+	return false;
+};
 CPresentation.prototype.GetWidthMM = function () {
 	return this.GetWidthEMU() / g_dKoef_mm_to_emu;
 };
@@ -2691,7 +2694,9 @@ CPresentation.prototype.GetSlideObjectsWithTheme = function (oTheme) {
 
 	return result;
 };
-
+CPresentation.prototype.RecalculateByChanges = function(arrChanges, nStartIndex, nEndIndex) {
+	this.Recalculate(History.Get_RecalcData(null, arrChanges, nStartIndex, nEndIndex));
+};
 CPresentation.prototype.Recalculate = function (RecalcData) {
 	this.DrawingDocument.OnStartRecalculate(this.GetSlidesCount());
 	this.StopAnimationPreview();
@@ -3894,11 +3899,11 @@ CPresentation.prototype.putImageToSelection = function (sImageSrc, nWidth, nHeig
 };
 
 
-CPresentation.prototype.Get_AbsolutePage = function () {
+CPresentation.prototype.GetAbsolutePage = function () {
 	return 0;
 };
 
-CPresentation.prototype.Get_AbsoluteColumn = function () {
+CPresentation.prototype.GetAbsoluteColumn = function () {
 	return 0;
 };
 
@@ -6121,7 +6126,7 @@ CPresentation.prototype.OnMouseDown = function (e, X, Y, PageIndex) {
 
 		const selectedAfter = getSelectedMoveAnimIdMap();
 		let moveAnimSelectionChanged = selectedBefore.length !== selectedAfter.length ||
-			selectedBefore.some((id, index) => id !== selectedAfter[index]);
+			selectedBefore.some(function (id, index) {return id !== selectedAfter[index];});
 
 		if (moveAnimSelectionChanged) {
 			oSlide.showDrawingObjects();
@@ -7335,14 +7340,16 @@ CPresentation.prototype.Document_Undo = function (Options) {
 			this.Api.forceSaveUndoRequest = true;
 		}
 	} else {
-		this.Api.sendEvent("asc_onBeforeUndoRedo");
-		this.clearThemeTimeouts();
-		var arrChanges = this.History.Undo(Options);
-		this.Recalculate(this.History.Get_RecalcData(null, arrChanges));
+		if (this.History.Can_Undo()) {
+			this.Api.sendEvent("asc_onBeforeUndoRedo");
+			this.clearThemeTimeouts();
+			var arrChanges = this.History.Undo(Options);
+			this.Recalculate(this.History.Get_RecalcData(null, arrChanges));
 
-		this.Document_UpdateSelectionState();
-		this.Document_UpdateInterfaceState();
-		this.Api.sendEvent("asc_onUndoRedo");
+			this.Document_UpdateSelectionState();
+			this.Document_UpdateInterfaceState();
+			this.Api.sendEvent("asc_onUndoRedo");
+		}
 	}
 };
 

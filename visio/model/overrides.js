@@ -51,8 +51,8 @@ AscFormat.CShape.prototype.getParentObjects = function ()
 	if (this.parent) {
 		oTheme = this.parent.themes[0];
 	} else {
-		AscCommon.consoleLog("Parent was not set for shape/group. GenerateDefaultTheme is used. shape/group:", this);
-		oTheme = AscFormat.GenerateDefaultTheme(null, null);
+		AscCommon.consoleLog("Parent was not set for shape/group. GetDefaultTheme will be used. shape/group:", this);
+		oTheme = AscFormat.GetDefaultTheme();
 	}
 	return {slide: null, layout: null, master: null, theme: oTheme};
 };
@@ -85,7 +85,7 @@ AscFormat.CShape.prototype.recalculate = function ()
 	}
 
 	// var check_slide_placeholder = !this.isPlaceholder() || (this.parent && (this.parent.getObjectType() === AscDFH.historyitem_type_Slide));
-	let check_placeholder = !this.isPlaceholder() || (this.parent && this.parent.isVisioDocument);
+	let check_placeholder = !this.isPlaceholder() || (this.parent && this.parent.IsVisioEditor());
 	AscFormat.ExecuteNoHistory(function(){
 
 		var bRecalcShadow = this.recalcInfo.recalculateBrush ||
@@ -156,20 +156,22 @@ AscFormat.CTheme.prototype.getFillStyle = function (idx, unicolor, isConnectorSh
 	let fmtScheme = (isConnectorShape && this.themeElements.themeExt) ?
 		this.themeElements.themeExt.fmtConnectorScheme :
 		this.themeElements.fmtScheme;
-	if (idx >= 1 && idx <= 999) {
-		if (fmtScheme.fillStyleLst[idx - 1]) {
-			ret = fmtScheme.fillStyleLst[idx - 1].createDuplicate();
-			if (ret) {
-				ret.checkPhColor(unicolor, false);
-				return ret;
+	if (fmtScheme) {
+		if (idx >= 1 && idx <= 999) {
+			if (fmtScheme.fillStyleLst[idx - 1]) {
+				ret = fmtScheme.fillStyleLst[idx - 1].createDuplicate();
+				if (ret) {
+					ret.checkPhColor(unicolor, false);
+					return ret;
+				}
 			}
-		}
-	} else if (idx >= 1001) {
-		if (fmtScheme.bgFillStyleLst[idx - 1001]) {
-			ret = fmtScheme.bgFillStyleLst[idx - 1001].createDuplicate();
-			if (ret) {
-				ret.checkPhColor(unicolor, false);
-				return ret;
+		} else if (idx >= 1001) {
+			if (fmtScheme.bgFillStyleLst[idx - 1001]) {
+				ret = fmtScheme.bgFillStyleLst[idx - 1001].createDuplicate();
+				if (ret) {
+					ret.checkPhColor(unicolor, false);
+					return ret;
+				}
 			}
 		}
 	}
@@ -814,6 +816,8 @@ AscCommonWord.CPresentationField.prototype.private_GetString = function()
 	}
 	return sStr;
 };
+
+AscFormat.GenerateDefaultTheme = AscFormat.GenerateDefaultVisioTheme;
 
 //todo CMobileDelegateEditorDiagram
 AscCommon.CMobileDelegateEditorPresentation.prototype.GetObjectTrack = function(x, y, page, bSelected, bText) { return false; }

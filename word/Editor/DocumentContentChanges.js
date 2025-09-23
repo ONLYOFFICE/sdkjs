@@ -65,6 +65,9 @@ CChangesDocumentContentAddItem.prototype.Undo = function()
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
 	{
 		var Pos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
+		
+		oDocument.UpdateSectionsBeforeRemove([oDocument.Content[Pos]], false);
+		
 		var Elements = oDocument.Content.splice(Pos, 1);
 		oDocument.private_RecalculateNumbering(Elements);
 		oDocument.private_ReindexContent(Pos);
@@ -123,6 +126,7 @@ CChangesDocumentContentAddItem.prototype.Redo = function()
 		}
 
 		Element.Parent = oDocument;
+		oDocument.UpdateSectionsAfterAdd([Element]);
 	}
 	this.Class.Recalculated = false;
 };
@@ -176,6 +180,7 @@ CChangesDocumentContentAddItem.prototype.Load = function(Color)
 			oDocument.private_ReindexContent(Pos);
 
 			AscCommon.CollaborativeEditing.Update_DocumentPositionsOnAdd(oDocument, Pos);
+			oDocument.UpdateSectionsAfterAdd([Element]);
 		}
 	}
 	
@@ -237,6 +242,7 @@ CChangesDocumentContentRemoveItem.prototype.Undo = function()
 		oElement.Parent = oDocument;
 	}
 	this.Class.Recalculated = false;
+	oDocument.UpdateSectionsAfterAdd(this.Items);
 };
 CChangesDocumentContentRemoveItem.prototype.Redo = function()
 {
@@ -244,6 +250,10 @@ CChangesDocumentContentRemoveItem.prototype.Redo = function()
 		return;
 
 	var oDocument = this.Class;
+	
+	let removedElements = oDocument.Content.slice(this.Pos, this.Pos + this.Items.length);
+	oDocument.UpdateSectionsBeforeRemove(removedElements, false);
+	
 	var Elements = oDocument.Content.splice(this.Pos, this.Items.length);
 	oDocument.private_RecalculateNumbering(Elements);
 	oDocument.private_ReindexContent(this.Pos);
@@ -286,7 +296,9 @@ CChangesDocumentContentRemoveItem.prototype.Load = function(Color)
 		// действие совпало, не делаем его
 		if (false === Pos)
 			continue;
-
+		
+		oDocument.UpdateSectionsBeforeRemove([oDocument.Content[Pos]], false);
+		
 		var Elements = oDocument.Content.splice(Pos, 1);
 		oDocument.private_RecalculateNumbering(Elements);
 		AscCommon.CollaborativeEditing.Update_DocumentPositionsOnRemove(oDocument, Pos, 1);

@@ -112,6 +112,7 @@
 			"common/Drawings/Format/TextBody.js",
 			"slide/Editor/Format/TextBodyPrototype.js",
 			"common/Drawings/Format/GraphicFrame.js",
+		  	"common/Drawings/Format/Controls.js",
 			"common/Charts/charts.js",
 			"common/Charts/DrawingObjects.js",
 			"common/Charts/3DTransformation.js",
@@ -198,9 +199,15 @@
 			"word/Editor/Table/TableCell.js",
 			"word/Editor/Table/TableCellChanges.js",
 			"word/Editor/Common.js",
-			"word/Editor/Sections.js",
-			"word/Editor/SectionsChanges.js",
+			"word/Editor/sections/document-sections.js",
+			"word/Editor/sections/footnote-pr.js",
+			"word/Editor/sections/line-numbering.js",
+			"word/Editor/sections/sect-pr.js",
+			"word/Editor/sections/sect-pr-changes.js",
+			"word/Editor/sections/section-columns.js",
+			"word/Editor/sections/section-page.js",
 
+			
 			"word/Drawing/Graphics.js",
 			"word/Drawing/ShapeDrawer.js",
 			"word/Drawing/buttons.js",
@@ -301,6 +308,10 @@
 			"word/Editor/Layout/PrintView.js",
 			"word/Editor/Layout/ReadView.js",
 			"word/Editor/document/document-background.js",
+			"word/Editor/document/document-page.js",
+			"word/Editor/document/document-page-column.js",
+			"word/Editor/document/document-page-section.js",
+			"word/Editor/document/element-section.js",
 			"word/Editor/DocumentContentBase.js",
 			"word/Editor/Document.js",
 			"word/Editor/document-composite-input.js",
@@ -360,6 +371,10 @@
 			"word/Editor/custom-xml/custom-xml-manager.js",
 			"word/Editor/custom-xml/data-binding.js",
 			
+			"word/Editor/api/document-column-props.js",
+			"word/Editor/api/document-columns-props.js",
+			"word/Editor/api/document-section-props.js",
+			
 			"slide/Editor/Format/ImagePrototype.js",
 			"slide/Editor/Format/GroupPrototype.js",
 			"slide/Editor/Format/ChartSpacePrototype.js",
@@ -380,6 +395,8 @@
 			"common/plugins.js",
 
 			"common/Native/native_graphics.js",
+			
+			"word/Editor/document-visitor.js",
 			
 			"vendor/easysax.js",
 			"common/openxml.js"
