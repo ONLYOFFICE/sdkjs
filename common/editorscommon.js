@@ -199,26 +199,9 @@
 	var nMaxRequestLength = 5242880;//5mb <requestLimits maxAllowedContentLength="30000000" /> default 30mb
 
 	function decimalNumberConversion(number, base) {
-		if (typeof number !== 'number') {
-			return;
-		}
-		var result = [];
-		if (number === 0)
-		{
-			return [0];
-		}
-		while (number > 0) {
-			var remainder = number % base;
-			if (remainder === 0) {
-				result.unshift(0);
-
-			} else {
-				result.unshift(remainder);
-				number = number - remainder;
-			}
-			number /= base;
-		}
-		return result;
+		return number.toString(base).split("").map(function (digit) {
+			return parseInt(digit, base);
+		});
 	}
 
 	function getSockJs()
@@ -14050,15 +14033,14 @@
 	 * @returns {Array<Array<string>>} Matrix of parsed CSV values
 	 */
 	function parseText(text, options, bTrimSpaces) {
-		const delimiterChar = options.asc_getDelimiterChar() || {
-			[AscCommon.c_oAscCsvDelimiter.None]: undefined,
-			[AscCommon.c_oAscCsvDelimiter.Tab]: "\t",
-			[AscCommon.c_oAscCsvDelimiter.Semicolon]: ";",
-			[AscCommon.c_oAscCsvDelimiter.Colon]: ":",
-			[AscCommon.c_oAscCsvDelimiter.Comma]: ",",
-			[AscCommon.c_oAscCsvDelimiter.Space]: " "
-		}[options.asc_getDelimiter()];
-		
+		let delimiterMap = {};
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.None] = undefined;
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Tab] = "\t";
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Semicolon] = ";";
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Colon] = ":";
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Comma] = ",";
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Space] = " ";
+		const delimiterChar = options.asc_getDelimiterChar() || delimiterMap[options.asc_getDelimiter()];
 		const textQualifier = options.asc_getTextQualifier();
 		const hasQualifier = !!textQualifier;
 		
@@ -14114,7 +14096,7 @@
 					}
 					// End of record
 					fields.push(textParts.join(''));
-					return { fields, curIndex: idx };
+					return { fields: fields, curIndex: idx };
 				}
 
 				const charCode = row.charCodeAt(j);

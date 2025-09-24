@@ -297,12 +297,9 @@
 		this._loadModules();
 
 		const noop = function () { };
-		if (!this.isPdfEditor())
-		{
-			AscCommon.loadChartStyles(noop, function (err) {
-				t.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingScriptError, c_oAscError.Level.NoCritical);
-			});
-		}
+		AscCommon.loadChartStyles(noop, function (err) {
+			t.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingScriptError, c_oAscError.Level.NoCritical);
+		});
 		const sendUnhandledError  = function(errorMsg, url, lineNumber, column, stack) {
 			let editorInfo = t.getEditorErrorInfo();
 			let memoryInfo = AscCommon.getMemoryInfo();
@@ -5070,19 +5067,25 @@
     };
 
     baseEditorsApi.prototype.attachEventWithRpcTimeout = function(name, callback, listenerId, timeout) {
-        const timeoutId = setTimeout(() => {
+        const t = this;
+        let called = false;
+        const timeoutId = setTimeout(function() {
+            if (called) return;
+            called = true;
             //callback with isTimeout=true as first parameter
-            callback.apply(this, [true]);
-            this.detachEvent(name, listenerId);
+            callback.apply(t, [true]);
+            t.detachEvent(name, listenerId);
         }, timeout);
         
         const wrappedCallback = function() {
+            if (called) return;
+            called = true;
             clearTimeout(timeoutId);
             //callback with isTimeout=false as first parameter followed by any original arguments
             const args = Array.prototype.slice.call(arguments);
             args.unshift(false);
-            callback.apply(this, args);
-            this.detachEvent(name, listenerId);
+            callback.apply(t, args);
+            t.detachEvent(name, listenerId);
         };
         return this.attachEvent(name, wrappedCallback, listenerId);
     };

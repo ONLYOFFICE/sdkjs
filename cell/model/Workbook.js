@@ -16421,9 +16421,8 @@
 								} else {
 									range._foreachNoEmpty(function (cell) {
 										if (cell.isFormula()) {
-											const isRecursiveFormula = cell.checkRecursiveFormula(t);
-											!isRecursiveFormula && cell.initStartCellForIterCalc();
-											if (g_cCalcRecursion.getStartCellIndex() != null || isRecursiveFormula) {
+											cell.initStartCellForIterCalc();
+											if (g_cCalcRecursion.getStartCellIndex() != null) {
 												if (!cell.getFormulaParsed().ca) {
 													cell.getFormulaParsed().ca = true;
 												}

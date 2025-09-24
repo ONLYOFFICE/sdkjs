@@ -387,6 +387,8 @@ MasterSlide.prototype.handleAllContents = Slide.prototype.handleAllContents;
 MasterSlide.prototype.getAllRasterImagesForDraw = Slide.prototype.getAllRasterImagesForDraw;
 MasterSlide.prototype.checkImageDraw = Slide.prototype.checkImageDraw;
 MasterSlide.prototype.getMatchingShape = Slide.prototype.getMatchingShape;
+MasterSlide.prototype.openChartEditor = Slide.prototype.openChartEditor;
+MasterSlide.prototype.openOleEditor = Slide.prototype.openOleEditor;
 MasterSlide.prototype.recalculate = function () {
     if (!this.Theme) return;
     var _shapes = this.cSld.spTree;

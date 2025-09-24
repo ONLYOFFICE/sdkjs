@@ -476,7 +476,7 @@ asc_CChartBinary.prototype = {
         const stream = AscFormat.CreateBinaryReader(binary, 0, binary.length);
         //надо сбросить то, что остался после открытия документа
         AscCommon.pptx_content_loader.Clear();
-        const oNewChartSpace = Asc.editor.isPdfEditor() ? new AscPDF.CPdfChart() : new AscFormat.CChartSpace();
+        const oNewChartSpace = Asc.editor.isPdfEditor() ? new AscPDF.CPdfChartSpace() : new AscFormat.CChartSpace();
         const oBinaryChartReader = new AscCommon.BinaryChartReader(stream);
 	    if(this["IsChartEx"]) {
 		    oBinaryChartReader.ExternalReadCT_ChartExSpace(stream.size , oNewChartSpace, workSheet);

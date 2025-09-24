@@ -32,9 +32,6 @@
 
 $(function ()
 {
-	AscTest.Editor.GetDocument = AscCommon.DocumentEditorApi.prototype.GetDocument.bind(AscTest.Editor);
-	AscTest.Editor.ReplaceTextSmart = AscCommon.DocumentEditorApi.prototype.ReplaceTextSmart.bind(AscTest.Editor);
-
 	function GetParagraphRunsInfo(paragraph)
 	{
 		let result = [];

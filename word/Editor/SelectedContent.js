@@ -490,14 +490,28 @@
 	};
 	CSelectedContent.prototype.GetText = function(oPr)
 	{
-		var sText = "";
-		for (var nIndex = 0, nCount = this.Elements.length; nIndex < nCount; ++nIndex)
+		let text = "";
+		
+		if (1 === this.Elements.length
+			&& this.Elements[0].Element.IsParagraph()
+			&& this.Elements[0].Element.IsEmpty({SkipDrawing: true}))
 		{
-			var oElement = this.Elements[nIndex].Element;
-			if (oElement.IsParagraph() || oElement.IsTable() || oElement.IsBlockLevelSdt())
-				sText += oElement.GetText(oPr);
+			let drawings = this.Elements[0].Element.GetAllDrawingObjects();
+			let graphicObj = 1 === drawings.length ? drawings[0].GraphicObj : null;
+			let docContent = graphicObj ? graphicObj.getDocContent() : null;
+			if (docContent)
+				text = docContent.GetText(oPr);
 		}
-		return sText;
+		else
+		{
+			for (var nIndex = 0, nCount = this.Elements.length; nIndex < nCount; ++nIndex)
+			{
+				var oElement = this.Elements[nIndex].Element;
+				if (oElement.IsParagraph() || oElement.IsTable() || oElement.IsBlockLevelSdt())
+					text += oElement.GetText(oPr);
+			}
+		}
+		return text;
 	};
 	CSelectedContent.prototype.ConvertToPresentation = function(Parent)
 	{

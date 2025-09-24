@@ -6126,7 +6126,7 @@ CPresentation.prototype.OnMouseDown = function (e, X, Y, PageIndex) {
 
 		const selectedAfter = getSelectedMoveAnimIdMap();
 		let moveAnimSelectionChanged = selectedBefore.length !== selectedAfter.length ||
-			selectedBefore.some((id, index) => id !== selectedAfter[index]);
+			selectedBefore.some(function (id, index) {return id !== selectedAfter[index];});
 
 		if (moveAnimSelectionChanged) {
 			oSlide.showDrawingObjects();

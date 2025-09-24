@@ -453,6 +453,7 @@
 			this.m_oFactoryClass[AscDFH.historyitem_type_Shape]					= AscPDF.CPdfShape;
 			this.m_oFactoryClass[AscDFH.historyitem_type_GraphicFrame]			= AscPDF.CPdfGraphicFrame;
 			this.m_oFactoryClass[AscDFH.historyitem_type_ImageShape]			= AscPDF.CPdfImage;
+			this.m_oFactoryClass[AscDFH.historyitem_type_ChartSpace]			= AscPDF.CPdfChartSpace;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Cnx]					= AscPDF.CPdfConnectionShape;
 			this.m_oFactoryClass[AscDFH.historyitem_type_SmartArt]				= AscPDF.CPdfSmartArt;
 

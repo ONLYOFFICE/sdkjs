@@ -3692,7 +3692,7 @@ var editor;
     return true;
   };
 
-  spreadsheet_api.prototype.asc_renameWorksheet = function(name) {
+  spreadsheet_api.prototype.asc_renameWorksheet = function(name, opt_id) {
     // Проверка глобального лока
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return false;
@@ -3702,8 +3702,17 @@ var editor;
       return false;
     }
 
-	let newName = AscCommon.stripDirectionMarks(name);
-    var i = this.wbModel.getActive();
+    let newName = AscCommon.stripDirectionMarks(name);
+    let i = null;
+    if (opt_id) {
+        let activeWs = this.wbModel.getWorksheetById(opt_id);
+        if (activeWs) {
+            i = activeWs.getIndex();
+        }
+    }
+    if (i === null) {
+        i = this.wbModel.getActive();
+    }
     var sheetId = this.wbModel.getWorksheet(i).getId();
     var lockInfo = this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Sheet, /*subType*/null, sheetId, sheetId);
 
@@ -9454,7 +9463,10 @@ var editor;
 		if (!wb) {
 			return;
 		}
-		return wb.customFunctionEngine && wb.customFunctionEngine.clear();
+		if (wb.customFunctionEngine) {
+			return wb.customFunctionEngine.clear();
+		}
+		return AscCommonExcel.removeCustomFunctions();
 	};
 
 	spreadsheet_api.prototype.recalculateCustomFunctions = function(isNotUpdate) {

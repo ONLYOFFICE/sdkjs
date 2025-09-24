@@ -7682,6 +7682,18 @@ CDocumentContent.prototype.GetAbsoluteSection = function(curPage)
 	
 	return this.Parent.GetAbsoluteSection(this.GetRelativePage(curPage));
 };
+CDocumentContent.prototype.IsFirstOnDocumentPage = function(curPage)
+{
+	if (0 === curPage || undefined === curPage)
+	{
+		if (!this.Parent || !this.Parent.IsFirstOnDocumentPage)
+			return true;
+		
+		return this.Parent.IsFirstOnDocumentPage();
+	}
+	
+	return this.GetAbsolutePage(curPage) !== this.GetAbsolutePage(curPage - 1);
+};
 //-----------------------------------------------------------------------------------
 // Undo/Redo функции
 //-----------------------------------------------------------------------------------

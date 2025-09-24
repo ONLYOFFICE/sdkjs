@@ -388,8 +388,13 @@
         
         if (oNewPage) {
             let sId = this.GetId();
-            oCurPage.RemoveField(sId);
+            oCurPage.RemoveField(sId, true);
             oNewPage.AddField(this);
+
+            let oEditShape = this.GetEditShape();
+            if (oEditShape) {
+                oEditShape.selectStartPage = nPage;
+            }
         }
     };
     CBaseField.prototype.GetPage = function() {
@@ -596,7 +601,7 @@
             oNewTrigger.SetParentField(this);
         }
 
-        const aCurActionsInfo = this.GetActions();
+        const aCurActionsInfo = this.GetActions(nTriggerType);
         AscCommon.History.Add(new CChangesPDFFormActions(this, aCurActionsInfo, aActionsInfo, nTriggerType));
 
         switch (nTriggerType) {
@@ -882,7 +887,7 @@
                 break;
             }
             case AscPDF.FIELD_TYPES.listbox: {
-                oCopy = new AscPDF.CListboxField(this.GetPartialName(), this.GetRect().slice());
+                oCopy = new AscPDF.CListBoxField(this.GetPartialName(), this.GetRect().slice());
                 break;
             }
             case AscPDF.FIELD_TYPES.button: {
@@ -928,6 +933,8 @@
 
         oCopy.private_SetValue(this.GetParentValue());
         oCopy.DrainViewPropsFrom(this);
+        oCopy.SetMeta(this.GetMeta());
+        
         return oCopy;
     };
     CBaseField.prototype.DrainViewPropsFrom = function(oField) {
@@ -1045,14 +1052,14 @@
     };
     CBaseField.prototype.IsUseInDocument = function() {
         let oPage = this.GetParentPage();
-        if (oPage && oPage.fields.includes(this)) {
+        if (oPage && oPage.fields.includes(this) && oPage.GetIndex() !== -1) {
             return true;
         }
 
         return false;
     };
     CBaseField.prototype.DrawHighlight = function(oCtx) {
-        if (this.IsHidden() && !this.IsEditMode())
+        if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
             return;
 
         let oViewer     = Asc.editor.getDocumentRenderer();
@@ -1565,7 +1572,9 @@
         this.SetReadOnly(oFieldToInherit.IsReadOnly());
         this.SetNoExport(oFieldToInherit.IsNoExport());
         this.SetRequired(oFieldToInherit.IsRequired());
-        
+        this.SetTooltip(oFieldToInherit.GetTooltip());
+        this.SetMEOptions(oFieldToInherit.GetMEOptions());
+
         if (bClearFrom !== false) {
             oFieldToInherit.SetDefaultValue(undefined);
             oFieldToInherit.SetParentValue(undefined);
@@ -1761,7 +1770,7 @@
         function setRedrawPageOnRepaint() {
             if (oViewer.pagesInfo.pages[nPage]) {
                 oViewer.pagesInfo.pages[nPage].needRedrawForms = true;
-                // oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage);
+                oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage);
             }
         }
 
@@ -2402,7 +2411,7 @@
     };
 	
 	CBaseField.prototype.DrawOnPage = function(pdfGraphics, textBoxGraphics, pageIndex) {
-		if (this.IsHidden() && !this.IsEditMode())
+		if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
 			return;
 		
         if (pdfGraphics.isThumbnails) {
@@ -2621,12 +2630,12 @@
 
         let nNewExtX = this.GetWidth();
         let nNewExtY = this.GetHeight();
-        this.SetWasChanged(true, !(Math.abs(nOldExtX - nNewExtX) < 0.001 && Math.abs(nOldExtY == nNewExtY) < 0.001));
+        this.SetWasChanged(true, !(Math.abs(nOldExtX - nNewExtX) < 0.001 && Math.abs(nOldExtY - nNewExtY) < 0.001));
         
         this.SetNeedRecalc(true);
 		this.RecalcTextTransform();
 
-        if (this.IsEditMode()) {
+        if (Asc.editor.IsEditFieldsMode()) {
             this.SetNeedUpdateEditShape(true);
         }
 
@@ -2653,7 +2662,7 @@
             this.SetNeedUpdateImage(true);
         }
 
-        this.CalculateContentClipRect();
+        this.contentClipRect = null;
     };
     CBaseField.prototype.CalculateContentClipRect = function() {};
     CBaseField.prototype.SetPosition = function(x, y) {
@@ -2979,9 +2988,6 @@
         AscCommon.History.EndNoHistoryMode();
         
         return true;
-    };
-    CBaseField.prototype.IsEditMode = function() {
-        return !!this.editShape;
     };
     CBaseField.prototype.GetEditShape = function() {
         return this.editShape;

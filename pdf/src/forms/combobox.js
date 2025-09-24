@@ -59,7 +59,7 @@
     AscFormat.InitClass(CComboBoxField, AscPDF.CBaseListField, AscDFH.historyitem_type_Pdf_Combobox_Field);
 
     CComboBoxField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
-        if (this.IsHidden() && !this.IsEditMode())
+        if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
             return;
 
         let oDoc = this.GetDocument();
@@ -89,6 +89,10 @@
         if (this.IsNeedRecalc() == false)
             return;
 
+        if (!this.contentClipRect) {
+            this.RecalculateContentRect();
+        }
+        
         if (this.IsNeedCheckAlign()) {
             this.CheckAlignInternal();
         }

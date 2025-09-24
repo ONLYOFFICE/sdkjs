@@ -1632,7 +1632,7 @@ CDocument.prototype.On_EndLoad                     = function()
 	this.SectionsInfo.RemoveEmptyHdrFtrs();
 
     // Проверяем последний параграф на наличие секции
-    this.Check_SectionLastParagraph();
+    this.CheckSectionBreakInLastParagraph();
 
     this.Styles.OnEndDocumentLoad(this);
 
@@ -2341,6 +2341,7 @@ CDocument.prototype.private_CheckAdditionalOnFinalize = function()
 	
 	this.Comments.CheckMarks();
 	this.PermRangesManager.updateMarks();
+	this.CheckSectionBreakInLastParagraph();
 
 	if (this.Action.Additional.TrackMove)
 		this.private_FinalizeRemoveTrackMove();
@@ -3018,7 +3019,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 	this.FullRecalc.StartIndex        = StartIndex;
 	this.FullRecalc.Start             = true;
 	this.FullRecalc.StartPage         = StartPage;
-	this.FullRecalc.ResetStartElement = this.private_RecalculateIsNewSection(StartPage);
+	this.FullRecalc.ResetStartElement = this.private_RecalculateIsResetStartElement(StartPage, StartIndex);
 	this.FullRecalc.ResetSectionStart = false;
 	this.FullRecalc.SectPr            = this.private_RecalculateGetStartSectPr(StartPage);
 	this.FullRecalc.Endnotes          = this.Endnotes.IsContinueRecalculateFromPrevPage(StartPage);
@@ -3389,15 +3390,9 @@ CDocument.prototype.Recalculate_Page = function()
                 this.FullRecalc.PageIndex         = PageIndex + 1;
                 this.FullRecalc.Start             = true;
                 this.FullRecalc.StartIndex        = this.Pages[PageIndex + 1].Pos;
-                this.FullRecalc.ResetStartElement = false;
-
-                let curSectPr  = this.Pages[PageIndex + 1].GetFirstSectPr();
-                let prevSectPr = this.Pages[PageIndex].GetLastSectPr();
-
-                if (prevSectPr !== curSectPr)
-                    this.FullRecalc.ResetStartElement = true;
-
-				this.FullRecalc.Continue = true;
+				this.FullRecalc.ResetStartElement = this.private_RecalculateIsResetStartElement(PageIndex + 1, this.Pages[PageIndex + 1].Pos);
+				this.FullRecalc.SectPr            = this.Pages[PageIndex + 1].GetSectPr();
+				this.FullRecalc.Continue          = true;
                 return;
             }
         }
@@ -3697,7 +3692,7 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 		}
 		
 		// Такого не должно быть, всегда должен быть в конце документа параграф без настроек секции (MSWord ведет себя также)
-		if (((RecalcResult & recalcresult_NextSection) || (RecalcResult & recalcresult_NextSection_Cur)) && Index >= Count - 1)
+		if ((RecalcResult & recalcresult_NextSection) && Index >= Count - 1)
 			RecalcResult = recalcresult_NextElement;
 
         if (RecalcResult & recalcresult_CurPage)
@@ -3941,8 +3936,16 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
             _StartIndex = this.Pages[_PageIndex].Sections[_SectionIndex].Columns[_ColumnIndex].Pos;
 			_sectPr     = this.Pages[_PageIndex].Sections[_SectionIndex].GetSectPr();
             _bStart     = false;
-	
-			this.Pages[_PageIndex].Sections[_SectionIndex].Init(_PageIndex, _sectPr, this.Layout.GetSectionIndex(_sectPr));
+
+			let currPageSection = this.Pages[_PageIndex].Sections[_SectionIndex];
+			currPageSection.Init(_PageIndex, _sectPr, this.Layout.GetSectionIndex(_sectPr));
+			if (_SectionIndex > 0)
+			{
+				let prevPageSection = this.Pages[_PageIndex].Sections[_SectionIndex - 1];
+				currPageSection.Y       = prevPageSection.GetBottomLimit() + 0.001;
+				currPageSection.YLimit  = this.Pages[_PageIndex].YLimit;
+				currPageSection.YLimit2 = this.Pages[_PageIndex].YLimit;
+			}
 			
             break;
         }
@@ -4019,13 +4022,7 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 				// на данной странице мы будем использовать только новые горизонтальные поля, а поля по вертикали
 				// используем от предыдущей секции.
 				
-				var SectionY = Y;
-				for (var TempColumnIndex = 0; TempColumnIndex < ColumnsCount; ++TempColumnIndex)
-				{
-					if (PageSection.Columns[TempColumnIndex].Bounds.Bottom > SectionY)
-						SectionY = PageSection.Columns[TempColumnIndex].Bounds.Bottom;
-				}
-				
+				let SectionY = PageSection.GetBottomLimit();
 				PageSection.YLimit = SectionY;
 				
 				if ((!PageSection.IsCalculatingSectionBottomLine() || PageSection.CanDecreaseBottomLine()) && ColumnsCount > 1 && PageSection.CanRecalculateBottomLine())
@@ -4222,7 +4219,7 @@ CDocument.prototype.private_IsStartTimeoutOnRecalc = function(page)
 	// }
 	// return nRes;
 };
-CDocument.prototype.private_RecalculateIsNewSection = function(nPageAbs)
+CDocument.prototype.private_RecalculateIsResetStartElement = function(nPageAbs, startIndex)
 {
 	// Определим, является ли данная страница первой в новой секции
 	if (0 === nPageAbs)
@@ -4232,7 +4229,8 @@ CDocument.prototype.private_RecalculateIsNewSection = function(nPageAbs)
 	let prevSectPr = this.Pages[nPageAbs - 1].GetFirstSectPr();
 	
 	return (curSectPr !== prevSectPr
-		&& (c_oAscSectionBreakType.Continuous !== curSectPr.GetType() || true !== curSectPr.Compare_PageSize(prevSectPr))
+		&& (c_oAscSectionBreakType.Continuous !== curSectPr.GetType() || true !== curSectPr.Compare_PageSize(prevSectPr) || !this.Footnotes.IsEmptyPage(nPageAbs - 1))
+		&& startIndex !== this.Pages[nPageAbs - 1].EndPos
 	);
 };
 CDocument.prototype.private_RecalculateGetStartSectPr = function(page)
@@ -4857,7 +4855,7 @@ CDocument.prototype.private_RecalculateHdrFtrPageCountUpdate = function()
 			this.FullRecalc.StartIndex        = this.Pages[nPageAbs].Pos;
 			this.FullRecalc.Start             = true;
 			this.FullRecalc.StartPage         = nPageAbs;
-			this.FullRecalc.ResetStartElement = this.private_RecalculateIsNewSection(nPageAbs);
+			this.FullRecalc.ResetStartElement = this.private_RecalculateIsResetStartElement(nPageAbs, this.Pages[nPageAbs].Pos);
 			this.FullRecalc.ResetSectionStart = false;
 			this.FullRecalc.SectPr            = this.private_RecalculateGetStartSectPr(nPageAbs);
 			this.FullRecalc.Endnotes          = this.Endnotes.IsContinueRecalculateFromPrevPage(nPageAbs);
@@ -5362,8 +5360,9 @@ CDocument.prototype.Draw                                     = function(nPageInd
 		var nFooterY = this.Pages[nPageIndex].YLimit;
 		if (null !== oHdrFtrLine.Bottom && oHdrFtrLine.Bottom < nFooterY)
 			nFooterY = oHdrFtrLine.Bottom;
-
-		let sectIndex = this.SectionsInfo.Find(SectPr);
+	
+		let sectionCount = this.SectionsInfo.GetSectionsCount();
+		let sectIndex = sectionCount > 1 ? this.SectionsInfo.Find(SectPr) : -1;
         pGraphics.DrawHeaderEdit(nHeaderY, this.HdrFtr.Lock.Get_Type(), sectIndex, RepH, HeaderInfo);
         pGraphics.DrawFooterEdit(nFooterY, this.HdrFtr.Lock.Get_Type(), sectIndex, RepF, FooterInfo);
     }
@@ -10951,9 +10950,6 @@ CDocument.prototype.Internal_Content_Add = function(Position, NewObject, isCorre
 	
 	if (false !== isCorrectContent)
 	{
-		// В последнем параграфе не должно быть разрыва секции
-		this.Check_SectionLastParagraph();
-
 		// Проверим, что последний элемент - параграф
 		if (!this.Content[this.Content.length - 1].IsParagraph())
 			this.Internal_Content_Add(this.Content.length, new AscWord.Paragraph(), false);
@@ -10998,9 +10994,6 @@ CDocument.prototype.Internal_Content_Remove = function(Position, Count, isCorrec
 
 	if (false !== isCorrectContent)
 	{
-		// Проверим последний параграф
-		this.Check_SectionLastParagraph();
-
 		// Проверим, что последний элемент - параграф
 		if (this.Content.length <= 0 || !this.Content[this.Content.length - 1].IsParagraph())
 			this.Internal_Content_Add(this.Content.length, new AscWord.Paragraph());
@@ -14068,15 +14061,13 @@ CDocument.prototype.UpdateAllSectionsInfo = function()
 {
 	this.SectionsInfo.Update();
 };
-CDocument.prototype.Check_SectionLastParagraph = function()
+CDocument.prototype.CheckSectionBreakInLastParagraph = function()
 {
-	var Count = this.Content.length;
-	if (Count <= 0)
+	let lastParagraph = this.GetLastParagraph();
+	if (!lastParagraph || !lastParagraph.Get_SectionPr())
 		return;
-
-	var Element = this.Content[Count - 1];
-	if (type_Paragraph === Element.GetType() && undefined !== Element.Get_SectionPr())
-		this.Internal_Content_Add(Count, new AscWord.Paragraph(), false);
+	
+	this.Internal_Content_Add(this.Content.length, new AscWord.Paragraph(), false);
 };
 CDocument.prototype.AddSectionBreak = function(sectionBreakType)
 {
@@ -14206,7 +14197,7 @@ CDocument.prototype.Get_SectionPageNumInfo = function(Page_abs)
 		if (curSectPr !== prevSectPr && c_oAscSectionBreakType.Continuous === curSectPr.Get_Type() && true === curSectPr.Compare_PageSize(prevSectPr))
 		{
 			let paragraph = this.SectionsInfo.GetFirstParagraph(SectIndex);
-			if (paragraph && true !== paragraph.IsStartFromNewPage())
+			if (paragraph && true !== paragraph.IsFirstOnDocumentPage())
 				bCheckFP = false;
 		}
 	}
@@ -22775,7 +22766,7 @@ CDocument.prototype.private_CheckCursorPosInFillingFormMode = function()
 CDocument.prototype.OnEndLoadScript = function()
 {
 	this.UpdateAllSectionsInfo();
-	this.Check_SectionLastParagraph();
+	this.CheckSectionBreakInLastParagraph();
 	this.Styles.Check_StyleNumberingOnLoad(this.Numbering);
 
 	var arrParagraphs = this.GetAllParagraphs({All : true});
@@ -27792,6 +27783,10 @@ CDocument.prototype.SetNumeralType = function(type)
 CDocument.prototype.GetNumeralType = function()
 {
 	return this.NumeralType;
+};
+CDocument.prototype.IsFirstOnDocumentPage = function(curPage)
+{
+	return true;
 };
 
 function CDocumentSelectionState()

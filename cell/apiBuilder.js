@@ -497,6 +497,7 @@
 	 * @property {string | number} CurrentPage - Returns the current page which is displayed for the page field (valid only for page fields).
 	 * @property {ApiPivotItem | ApiPivotItem[]} PivotItems - Returns an object that represents either a single pivot table item (the ApiPivotItem object)
 	 * or a collection of all the visible and hidden items (an array of the ApiPivotItem objects) in the specified field.
+	 * @property {ApiPivotFilters} PivotFilters - Returns an object that represents the filters for the specified field.
 	 * @property {string} AutoSortField - Returns the name of the field that is used to sort the specified field.
 	 * @property {SortOrder} AutoSortOrder - Returns the sort order for the specified field.
 	 */
@@ -27148,7 +27149,10 @@
 	ApiPivotField.prototype["SetNumberFormat"]           = ApiPivotField.prototype.SetNumberFormat;
 	ApiPivotField.prototype["SetFunction"]               = ApiPivotField.prototype.SetFunction;
 	ApiPivotField.prototype["GetFunction"]               = ApiPivotField.prototype.GetFunction;
+	ApiPivotField.prototype["GetPivotFilters"]           = ApiPivotField.prototype.GetPivotFilters;
 	ApiPivotField.prototype["AutoSort"]                  = ApiPivotField.prototype.AutoSort;
+
+	ApiPivotFilters.prototype["Add"]                     = ApiPivotFilters.prototype.Add;
 
 	ApiPivotItem.prototype["GetName"]    = ApiPivotItem.prototype.GetName;
 	ApiPivotItem.prototype["GetCaption"] = ApiPivotItem.prototype.GetCaption;

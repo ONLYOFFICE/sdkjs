@@ -9507,7 +9507,7 @@ background-repeat: no-repeat;\
 		}
 	};
 
-	asc_docs_api.prototype.asc_addChartDrawingObject = function(nType)
+	asc_docs_api.prototype.asc_addChartDrawingObject = function(nType, oPlaceholder, bOpenChartEditor)
 	{
 		this.asc_onCloseFrameEditor();
 		const oLogicDocument = this.private_GetLogicDocument();
@@ -9526,6 +9526,9 @@ background-repeat: no-repeat;\
 				this.asc_SetSilentMode(false, true);
 				oLogicDocument.FinalizeAction();
 			}, false, false, false);
+			if (bOpenChartEditor) {
+				oLogicDocument.OpenChartEditor();
+			}
 		}
 	};
 

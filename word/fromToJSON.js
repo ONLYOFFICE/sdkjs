@@ -5483,9 +5483,9 @@
 						oMap[aParaComments[nComment].Comment.CommentId] = {};
 
 					if (aParaComments[nComment].Comment.Start)
-						oMap[aParaComments[nComment].Comment.CommentId]["Start"] = true;
+						oMap[aParaComments[nComment].Comment.CommentId].Start = true;
 					else
-						oMap[aParaComments[nComment].Comment.CommentId]["End"] = true;
+						oMap[aParaComments[nComment].Comment.CommentId].End = true;
 				}
 			}
 			if (oElm instanceof AscCommonWord.CTable)

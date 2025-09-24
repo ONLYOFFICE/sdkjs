@@ -16623,16 +16623,6 @@ CTable.prototype.GetReviewType = function()
 {
     return reviewtype_Common;
 };
-CTable.prototype.Get_SectPr = function()
-{
-    if (this.Parent && this.Parent.Get_SectPr)
-    {
-        this.Parent.Update_ContentIndexing();
-        return this.Parent.Get_SectPr(this.Index);
-    }
-
-    return null;
-};
 CTable.prototype.IsSelectedAll = function()
 {
 	if (!this.IsCellSelection())

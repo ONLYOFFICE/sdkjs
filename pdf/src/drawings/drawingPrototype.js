@@ -404,17 +404,20 @@
 		this.SetNeedRecalc(true);
 		content.RecalculateCurPos();
 	};
-	CPdfDrawingPrototype.prototype.EnterText = function(value) {
+	CPdfDrawingPrototype.prototype.EnterText = function(codePoints) {
 		let doc = this.GetDocument();
+        let controller = doc.GetController();
 		let content = this.GetDocContent();
 		if (!doc || !content)
 			return false;
 		
-		let result = content.EnterText(value);
-		content.RecalculateCurPos();
-        
-        this.checkExtentsByDocContent && this.checkExtentsByDocContent();
-		return result;
+        for (let nIdx = 0; nIdx < codePoints.length; ++nIdx) {
+            let nCode = codePoints[nIdx];
+            let oItem = AscCommon.IsSpace(nCode) ? new AscWord.CRunSpace(nCode) : new AscWord.CRunText(nCode);
+            controller.paragraphAdd(oItem, false);
+        }
+
+		return true;
 	};
 	CPdfDrawingPrototype.prototype.canBeginCompositeInput = function() {
 		return true;

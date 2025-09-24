@@ -1572,7 +1572,11 @@ function CDrawingDocument()
 	{
 
 		let thpages = this.m_oWordControl.Thumbnails.m_arrPages;
-		if(index < 0 || index >= thpages.length) return;
+		if (thpages.length > index)
+		{
+			thpages[index].IsRecalc = true;
+		}
+
 
 		if (this.m_oWordControl && this.m_oWordControl.MobileTouchManager)
 		{
@@ -1591,10 +1595,6 @@ function CDrawingDocument()
 			this.SendChangeDocumentToApi(true);
 		}
 
-		if (thpages.length > index)
-		{
-			thpages[index].IsRecalc = true;
-		}
 
 		if (index === this.SlideCurrent)
 		{

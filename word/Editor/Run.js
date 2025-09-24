@@ -783,6 +783,7 @@ ParaRun.prototype.MathAutoCorrection_DeleteLastSpace = function()
 ParaRun.prototype.Is_Empty = function(oProps)
 {
 	var SkipAnchor  = (undefined !== oProps ? oProps.SkipAnchor : false);
+	let SkipDrawing = (undefined !== oProps ? oProps.SkipDrawing : false);
 	var SkipEnd     = (undefined !== oProps ? oProps.SkipEnd : false);
 	var SkipPlcHldr = (undefined !== oProps ? oProps.SkipPlcHldr : false);
 	var SkipNewLine = (undefined !== oProps ? oProps.SkipNewLine : false);
@@ -812,6 +813,7 @@ ParaRun.prototype.Is_Empty = function(oProps)
 			var nType = oItem.Type;
 
 			if ((true !== SkipAnchor || para_Drawing !== nType || false !== oItem.Is_Inline())
+				&& (true !== SkipDrawing || para_Drawing !== nType)
 				&& (true !== SkipEnd || para_End !== nType)
 				&& (true !== SkipPlcHldr || true !== oItem.IsPlaceholder())
 				&& (true !== SkipNewLine || para_NewLine !== nType)
@@ -3991,39 +3993,47 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 							// предыдущий разрыв.
 							if (PRS.LineBreakFirst && !Item.CanBeAtBeginOfLine())
 							{
+								Word            = true;
 								FirstItemOnLine = true;
-								LetterLen       = LetterLen + SpaceLen;
-								SpaceLen        = 0;
-							}
-							else if (Item.CanBeAtBeginOfLine())
-							{
-								PRS.Set_LineBreakPos(Pos, FirstItemOnLine);
-								PRS.checkLastAutoHyphen();
-							}
 
-							// Если текущий символ с переносом, например, дефис, тогда на нем заканчивается слово
-							if (isBreakAfter
-								|| (PRS.canPlaceAutoHyphenAfter(Item)
-									&& X + SpaceLen + LetterLen + PRS.getAutoHyphenWidth(Item, this) <= XEnd
-									&& (FirstItemOnLine || PRS.checkHyphenationZone(X + SpaceLen))))
-							{
-								if (!isBreakAfter)
-									PRS.lastAutoHyphen = Item;
+								WordLen  = X - PRS.XRange + LetterLen + SpaceLen;
+								SpaceLen = 0;
 
-								// Добавляем длину пробелов до слова и ширину самого слова.
-								X += SpaceLen + LetterLen;
-
-								Word            = false;
-								FirstItemOnLine = false;
-								EmptyLine       = false;
-								TextOnLine      = true;
-								SpaceLen        = 0;
-								WordLen         = 0;
+								X = PRS.XRange;
+								PRS.X = X;
 							}
 							else
 							{
-								Word    = true;
-								WordLen = LetterLen;
+								if (Item.CanBeAtBeginOfLine())
+								{
+									PRS.Set_LineBreakPos(Pos, FirstItemOnLine);
+									PRS.checkLastAutoHyphen();
+								}
+
+								// Если текущий символ с переносом, например, дефис, тогда на нем заканчивается слово
+								if (isBreakAfter
+									|| (PRS.canPlaceAutoHyphenAfter(Item)
+										&& X + SpaceLen + LetterLen + PRS.getAutoHyphenWidth(Item, this) <= XEnd
+										&& (FirstItemOnLine || PRS.checkHyphenationZone(X + SpaceLen))))
+								{
+									if (!isBreakAfter)
+										PRS.lastAutoHyphen = Item;
+
+									// Добавляем длину пробелов до слова и ширину самого слова.
+									X += SpaceLen + LetterLen;
+
+									Word            = false;
+									FirstItemOnLine = false;
+									EmptyLine       = false;
+									TextOnLine      = true;
+									SpaceLen        = 0;
+									WordLen         = 0;
+								}
+								else
+								{
+									Word    = true;
+									WordLen = LetterLen;
+								}
 							}
 						}
                     }

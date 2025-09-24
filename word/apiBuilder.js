@@ -25458,10 +25458,14 @@
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE", "CPE"]
 	 * @param {string} sText - The comment text.
-	 * @returns {ApiComment} - this
+	 * @returns {?ApiComment} - this
 	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/SetText.js
 	 */
 	ApiComment.prototype.SetText = function (sText) {
+		sText = GetStringParameter(sText, null);
+		if (!sText)
+			return null;
+
 		this.Comment.GetData().Set_Text(sText);
 		this.private_OnChange();
 		return this;
@@ -25483,10 +25487,14 @@
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE", "CPE"]
 	 * @param {string} sAuthorName - The comment author's name.
-	 * @returns {ApiComment} - this
+	 * @returns {?ApiComment} - this
 	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/SetAuthorName.js
 	 */
 	ApiComment.prototype.SetAuthorName = function (sAuthorName) {
+		sAuthorName = GetStringParameter(sAuthorName, null);
+		if (!sAuthorName)
+			return null;
+
 		this.Comment.GetData().Set_Name(sAuthorName);
 		this.private_OnChange();
 		return this;
@@ -25650,9 +25658,9 @@
 	 * Adds a reply to a comment.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE", "CPE"]
-	 * @param {String} sText - The comment reply text (required).
-	 * @param {String} sAuthorName - The name of the comment reply author (optional).
-	 * @param {String} sUserId - The user ID of the comment reply author (optional).
+	 * @param {String} sText - The comment reply text.
+	 * @param {String} [sAuthorName] - The name of the comment reply author.
+	 * @param {String} [sUserId] - The user ID of the comment reply author.
 	 * @param {Number} [nPos=-1] - The comment reply position. If nPos=-1 add to the end.
 	 * @returns {ApiComment?} - this
 	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/AddReply.js
@@ -25783,10 +25791,14 @@
 	 * @memberof ApiCommentReply
 	 * @typeofeditors ["CDE", "CPE"]
 	 * @param {string} sText - The comment reply text.
-	 * @returns {ApiCommentReply} - this
+	 * @returns {?ApiCommentReply} - this
 	 * @see office-js-api/Examples/{Editor}/ApiCommentReply/Methods/SetText.js
 	 */
 	ApiCommentReply.prototype.SetText = function (sText) {
+		sText = GetStringParameter(sText, null);
+		if (!sText)
+			return null;
+
 		this.Data.Set_Text(sText);
 		this.private_OnChange();
 		return this;
@@ -25808,10 +25820,14 @@
 	 * @memberof ApiCommentReply
 	 * @typeofeditors ["CDE", "CPE"]
 	 * @param {string} sAuthorName - The comment reply author's name.
-	 * @returns {ApiCommentReply} - this
+	 * @returns {?ApiCommentReply} - this
 	 * @see office-js-api/Examples/{Editor}/ApiCommentReply/Methods/SetAuthorName.js
 	 */
 	ApiCommentReply.prototype.SetAuthorName = function (sAuthorName) {
+		sAuthorName = GetStringParameter(sAuthorName, null);
+		if (!sAuthorName)
+			return null;
+
 		this.Data.Set_Name(sAuthorName);
 		this.private_OnChange();
 		return this;
@@ -25913,6 +25929,10 @@
 	 */
 	ApiWatermarkSettings.prototype.SetText = function (sText)
 	{
+		sText = GetStringParameter(sText, null);
+		if (!sText)
+			return false;
+
 		this.Settings.put_Text(sText);
 		return true;
 	};
@@ -28169,9 +28189,10 @@
 		CommentData.SetText(oProps.text);
 		CommentData.SetQuoteText(oProps.quoteText);
 		CommentData.SetUserName(oProps.author || AscCommon.UserInfoParser.getCurrentName());
-		CommentData.m_sUserId	= oProps.userId || Asc.editor.documentUserId;
-		CommentData.m_sTime		= ((new Date()).getTime() - (new Date()).getTimezoneOffset() * 60000).toString();
-		CommentData.m_sOOTime	= ((new Date()).getTime()).toString();
+		CommentData.m_sUserId     = oProps.userId || Asc.editor.documentUserId;
+		CommentData.m_sProviderId = "Teamlab";
+		CommentData.m_sTime       = ((new Date()).getTime() - (new Date()).getTimezoneOffset() * 60000).toString();
+		CommentData.m_sOOTime     = ((new Date()).getTime()).toString();
 		
 		return CommentData;
 	};

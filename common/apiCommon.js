@@ -7875,6 +7875,344 @@ function (window, undefined) {
 		return this["pr"];
 	};
 
+	function CAscChartProp(obj)
+	{
+		if (obj)
+		{
+
+			this.Width    = (undefined != obj.w) ? obj.w : undefined;
+			this.Height   = (undefined != obj.h) ? obj.h : undefined;
+			this.Position = new Asc.CPosition({X : obj.x, Y : obj.y});
+
+			this.Locked          = (undefined != obj.locked) ? obj.locked : false;
+			this.lockAspect      = (undefined != obj.lockAspect) ? obj.lockAspect : false;
+			this.ChartProperties = (undefined != obj.chartProps) ? obj.chartProps : null;
+
+			this.severalCharts      = obj.severalCharts != undefined ? obj.severalCharts : false;
+			this.severalChartTypes  = obj.severalChartTypes != undefined ? obj.severalChartTypes : undefined;
+			this.severalChartStyles = obj.severalChartStyles != undefined ? obj.severalChartStyles : undefined;
+
+			this.title = obj.title != undefined ? obj.title : undefined;
+			this.description = obj.description != undefined ? obj.description : undefined;
+			this.name = obj.name != undefined ? obj.name : undefined;
+		}
+		else
+		{
+			this.Width           = undefined;
+			this.Height          = undefined;
+			this.Position        = undefined;
+			this.Locked          = false;
+			this.lockAspect      = undefined;
+			this.ChartProperties = null;
+
+			this.severalCharts      = false;
+			this.severalChartTypes  = undefined;
+			this.severalChartStyles = undefined;
+            this.title = undefined;
+            this.description = undefined;
+		}
+	}
+
+	CAscChartProp.prototype.get_ChangeLevel = function()
+	{
+		return this.ChangeLevel;
+	};
+	CAscChartProp.prototype.put_ChangeLevel = function(v)
+	{
+		this.ChangeLevel = v;
+	};
+
+	CAscChartProp.prototype.get_CanBeFlow     = function()
+	{
+		return this.CanBeFlow;
+	};
+	CAscChartProp.prototype.get_Width         = function()
+	{
+		return this.Width;
+	};
+	CAscChartProp.prototype.put_Width         = function(v)
+	{
+		this.Width = v;
+	};
+	CAscChartProp.prototype.get_Height        = function()
+	{
+		return this.Height;
+	};
+	CAscChartProp.prototype.put_Height        = function(v)
+	{
+		this.Height = v;
+	};
+	CAscChartProp.prototype.get_WrappingStyle = function()
+	{
+		return this.WrappingStyle;
+	};
+	CAscChartProp.prototype.put_WrappingStyle = function(v)
+	{
+		this.WrappingStyle = v;
+	};
+	// Возвращается объект класса Asc.asc_CPaddings
+	CAscChartProp.prototype.get_Paddings      = function()
+	{
+		return this.Paddings;
+	};
+	// Аргумент объект класса Asc.asc_CPaddings
+	CAscChartProp.prototype.put_Paddings      = function(v)
+	{
+		this.Paddings = v;
+	};
+	CAscChartProp.prototype.get_AllowOverlap  = function()
+	{
+		return this.AllowOverlap;
+	};
+	CAscChartProp.prototype.put_AllowOverlap  = function(v)
+	{
+		this.AllowOverlap = v;
+	};
+	// Возвращается объект класса CPosition
+	CAscChartProp.prototype.get_Position      = function()
+	{
+		return this.Position;
+	};
+	// Аргумент объект класса CPosition
+	CAscChartProp.prototype.put_Position      = function(v)
+	{
+		this.Position = v;
+	};
+	CAscChartProp.prototype.get_PositionH     = function()
+	{
+		return this.PositionH;
+	};
+	CAscChartProp.prototype.put_PositionH     = function(v)
+	{
+		this.PositionH = v;
+	};
+	CAscChartProp.prototype.get_PositionV     = function()
+	{
+		return this.PositionV;
+	};
+	CAscChartProp.prototype.put_PositionV     = function(v)
+	{
+		this.PositionV = v;
+	};
+	CAscChartProp.prototype.get_Value_X       = function(RelativeFrom)
+	{
+		if (null != this.Internal_Position) return this.Internal_Position.Calculate_X_Value(RelativeFrom);
+		return 0;
+	};
+	CAscChartProp.prototype.get_Value_Y       = function(RelativeFrom)
+	{
+		if (null != this.Internal_Position) return this.Internal_Position.Calculate_Y_Value(RelativeFrom);
+		return 0;
+	};
+
+	CAscChartProp.prototype.get_ImageUrl     = function()
+	{
+		return this.ImageUrl;
+	};
+	CAscChartProp.prototype.put_ImageUrl     = function(v)
+	{
+		this.ImageUrl = v;
+	};
+	CAscChartProp.prototype.get_Group        = function()
+	{
+		return this.Group;
+	};
+	CAscChartProp.prototype.put_Group        = function(v)
+	{
+		this.Group = v;
+	};
+	CAscChartProp.prototype.asc_getFromGroup = function()
+	{
+		return this.fromGroup;
+	};
+	CAscChartProp.prototype.asc_putFromGroup = function(v)
+	{
+		this.fromGroup = v;
+	};
+
+	CAscChartProp.prototype.get_isChartProps = function()
+	{
+		return this.isChartProps;
+	};
+	CAscChartProp.prototype.put_isChartPross = function(v)
+	{
+		this.isChartProps = v;
+	};
+
+	CAscChartProp.prototype.get_SeveralCharts     = function()
+	{
+		return this.severalCharts;
+	};
+	CAscChartProp.prototype.put_SeveralCharts     = function(v)
+	{
+		this.severalCharts = v;
+	};
+	CAscChartProp.prototype.get_SeveralChartTypes = function()
+	{
+		return this.severalChartTypes;
+	};
+	CAscChartProp.prototype.put_SeveralChartTypes = function(v)
+	{
+		this.severalChartTypes = v;
+	};
+
+	CAscChartProp.prototype.get_SeveralChartStyles = function()
+	{
+		return this.severalChartStyles;
+	};
+	CAscChartProp.prototype.put_SeveralChartStyles = function(v)
+	{
+		this.severalChartStyles = v;
+	};
+
+	CAscChartProp.prototype.get_VerticalTextAlign = function()
+	{
+		return this.verticalTextAlign;
+	};
+	CAscChartProp.prototype.put_VerticalTextAlign = function(v)
+	{
+		this.verticalTextAlign = v;
+	};
+
+	CAscChartProp.prototype.get_Locked = function()
+	{
+		return this.Locked;
+	};
+
+	CAscChartProp.prototype.get_ChartProperties = function()
+	{
+		return this.ChartProperties;
+	};
+
+	CAscChartProp.prototype.put_ChartProperties = function(v)
+	{
+		this.ChartProperties = v;
+	};
+
+	CAscChartProp.prototype.get_ShapeProperties = function()
+	{
+		return this.ShapeProperties;
+	};
+
+	CAscChartProp.prototype.put_ShapeProperties = function(v)
+	{
+		this.ShapeProperties = v;
+	};
+
+	CAscChartProp.prototype.asc_getType    = function()
+	{
+		return this.ChartProperties.asc_getType();
+	};
+	CAscChartProp.prototype.asc_getSubType = function()
+	{
+		return this.ChartProperties.asc_getSubType();
+	};
+
+	CAscChartProp.prototype.asc_getStyleId = function()
+	{
+		return this.ChartProperties.asc_getStyleId();
+	};
+
+	CAscChartProp.prototype.asc_getHeight = function()
+	{
+		return this.Height;
+	};
+	CAscChartProp.prototype.asc_getWidth  = function()
+	{
+		return this.Width;
+	};
+
+	CAscChartProp.prototype.asc_setType    = function(v)
+	{
+		this.ChartProperties.asc_setType(v);
+	};
+	CAscChartProp.prototype.asc_setSubType = function(v)
+	{
+		this.ChartProperties.asc_setSubType(v);
+	};
+
+	CAscChartProp.prototype.asc_setStyleId = function(v)
+	{
+		this.ChartProperties.asc_setStyleId(v);
+	};
+
+	CAscChartProp.prototype.asc_setHeight = function(v)
+	{
+		this.Height = v;
+	};
+	CAscChartProp.prototype.asc_setWidth  = function(v)
+	{
+		this.Width = v;
+	};
+
+	CAscChartProp.prototype.asc_setTitle = function(v)
+	{
+		this.title = v;
+	};
+	CAscChartProp.prototype.asc_setDescription  = function(v)
+	{
+		this.description = v;
+	};
+
+	CAscChartProp.prototype.asc_getTitle = function()
+	{
+		return this.title;
+	};
+	CAscChartProp.prototype.asc_getDescription  = function()
+	{
+		return this.description;
+	};
+
+	CAscChartProp.prototype.asc_getPosition  = function()
+	{
+		return this.Position;
+	};
+
+	CAscChartProp.prototype.asc_putPosition  = function(v)
+	{
+		this.Position = v;
+	};
+
+	CAscChartProp.prototype.asc_getName  = function()
+	{
+		return this.name;
+	};
+	CAscChartProp.prototype.asc_putName  = function(v)
+	{
+		this.name = v;
+	};
+
+	CAscChartProp.prototype.getType = function()
+	{
+		return this.ChartProperties && this.ChartProperties.getType();
+	};
+	CAscChartProp.prototype.putType = function(v)
+	{
+		return this.ChartProperties && this.ChartProperties.putType(v);
+	};
+
+	CAscChartProp.prototype.getStyle      = function()
+	{
+		return this.ChartProperties && this.ChartProperties.getStyle();
+	};
+	CAscChartProp.prototype.putStyle      = function(v)
+	{
+		return this.ChartProperties && this.ChartProperties.putStyle(v);
+	};
+	CAscChartProp.prototype.getLockAspect = function()
+	{
+		return this.lockAspect;
+	};
+	CAscChartProp.prototype.putLockAspect = function(v)
+	{
+		return this.lockAspect = v;
+	};
+
+	CAscChartProp.prototype.changeType = function(v)
+	{
+		return this.ChartProperties && this.ChartProperties.changeType(v);
+	};
+
 	/*
 	 * Export
 	 * -----------------------------------------------------------------------------
@@ -9271,4 +9609,75 @@ function (window, undefined) {
 	prot["asc_getSymbol"] = prot.asc_getSymbol;
 	prot["asc_getCurrencySymbol"] = prot.asc_getCurrencySymbol;
 
+	window['Asc']['CAscChartProp'] = window['Asc'].CAscChartProp = CAscChartProp;
+	prot = CAscChartProp.prototype;
+
+	prot['get_ChangeLevel']        = prot.get_ChangeLevel;
+	prot['put_ChangeLevel']        = prot.put_ChangeLevel;
+	prot['get_CanBeFlow']          = prot.get_CanBeFlow;
+	prot['get_Width']              = prot.get_Width;
+	prot['put_Width']              = prot.put_Width;
+	prot['get_Height']             = prot.get_Height;
+	prot['put_Height']             = prot.put_Height;
+	prot['get_WrappingStyle']      = prot.get_WrappingStyle;
+	prot['put_WrappingStyle']      = prot.put_WrappingStyle;
+	prot['get_Paddings']           = prot.get_Paddings;
+	prot['put_Paddings']           = prot.put_Paddings;
+	prot['get_AllowOverlap']       = prot.get_AllowOverlap;
+	prot['put_AllowOverlap']       = prot.put_AllowOverlap;
+	prot['get_Position']           = prot.get_Position;
+	prot['put_Position']           = prot.put_Position;
+	prot['get_PositionH']          = prot.get_PositionH;
+	prot['put_PositionH']          = prot.put_PositionH;
+	prot['get_PositionV']          = prot.get_PositionV;
+	prot['put_PositionV']          = prot.put_PositionV;
+	prot['get_Value_X']            = prot.get_Value_X;
+	prot['get_Value_Y']            = prot.get_Value_Y;
+	prot['get_ImageUrl']           = prot.get_ImageUrl;
+	prot['put_ImageUrl']           = prot.put_ImageUrl;
+	prot['get_Group']              = prot.get_Group;
+	prot['put_Group']              = prot.put_Group;
+	prot['asc_getFromGroup']       = prot.asc_getFromGroup;
+	prot['asc_putFromGroup']       = prot.asc_putFromGroup;
+	prot['get_isChartProps']       = prot.get_isChartProps;
+	prot['put_isChartPross']       = prot.put_isChartPross;
+	prot['get_SeveralCharts']      = prot.get_SeveralCharts;
+	prot['put_SeveralCharts']      = prot.put_SeveralCharts;
+	prot['get_SeveralChartTypes']  = prot.get_SeveralChartTypes;
+	prot['put_SeveralChartTypes']  = prot.put_SeveralChartTypes;
+	prot['get_SeveralChartStyles'] = prot.get_SeveralChartStyles;
+	prot['put_SeveralChartStyles'] = prot.put_SeveralChartStyles;
+	prot['get_VerticalTextAlign']  = prot.get_VerticalTextAlign;
+	prot['put_VerticalTextAlign']  = prot.put_VerticalTextAlign;
+	prot['get_Locked']             = prot.get_Locked;
+	prot['get_ChartProperties']    = prot.get_ChartProperties;
+	prot['put_ChartProperties']    = prot.put_ChartProperties;
+	prot['get_ShapeProperties']    = prot.get_ShapeProperties;
+	prot['put_ShapeProperties']    = prot.put_ShapeProperties;
+	prot['asc_getType']            = prot.asc_getType;
+	prot['asc_getSubType']         = prot.asc_getSubType;
+	prot['asc_getStyleId']         = prot.asc_getStyleId;
+	prot['asc_getHeight']          = prot.asc_getHeight;
+	prot['asc_getWidth']           = prot.asc_getWidth;
+	prot['asc_setType']            = prot.asc_setType;
+	prot['asc_setSubType']         = prot.asc_setSubType;
+	prot['asc_setStyleId']         = prot.asc_setStyleId;
+	prot['asc_setHeight']          = prot.asc_setHeight;
+	prot['asc_setWidth']           = prot.asc_setWidth;
+	prot['asc_putTitle']           = prot['put_Title']           = prot['asc_setTitle']           = prot.asc_setTitle;
+	prot['asc_putDescription']     = prot['put_Description']     = prot['asc_setDescription']     = prot.asc_setDescription;
+	prot['asc_getTitle']           = prot.asc_getTitle;
+	prot['asc_getDescription']     = prot.asc_getDescription;
+	prot['asc_getPosition']		   = prot.asc_getPosition;
+	prot['asc_putPosition']		   = prot.asc_putPosition;
+	prot['asc_getName']     	   = prot.asc_getName;
+	prot['asc_putName']     	   = prot.asc_putName;
+	prot['getType']                = prot.getType;
+	prot['putType']                = prot.putType;
+	prot['getStyle']               = prot.getStyle;
+	prot['putStyle']               = prot.putStyle;
+	prot['putLockAspect']          = prot['asc_putLockAspect'] = prot.putLockAspect;
+	prot['getLockAspect']		   = prot['asc_getLockAspect'] = prot.getLockAspect;
+	prot['changeType']             = prot.changeType;
+	
 })(window);

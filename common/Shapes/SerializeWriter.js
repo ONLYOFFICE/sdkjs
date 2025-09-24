@@ -1754,7 +1754,10 @@ function CBinaryFileWriter()
     this.WriteAnnotTreeElem = function(oAnnot) {
         oThis.WriteByMemory(function(memory) {
             memory.isCopyPaste = true;
-            oAnnot.WriteToBinary(memory)
+            oAnnot.WriteToBinary(memory);
+            oAnnot.GetReplies().forEach(function(reply) {
+                (reply.IsChanged() || !memory.docRenderer) && reply.WriteToBinary(memory);
+            });
         });
     };
     this.WriteFieldTreeElem = function(oField) {

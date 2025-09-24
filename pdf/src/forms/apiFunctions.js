@@ -418,7 +418,7 @@
         oDoc.event["format"] = cFormat;
         
         let oDateFormat         = AscCommon.oNumFormatCache.get(cFormat, AscCommon.NumFormatType.PDFFormDate);
-        let oDateFormatForParse = oDoc.lastDatePickerInfo ? AscCommon.oNumFormatCache.get("dd.mm.yyyy", AscCommon.NumFormatType.PDFFormDate) : oDateFormat;
+        let oDateFormatForParse = AscCommon.oNumFormatCache.get(oCurForm.prevDateFormat || cFormat, AscCommon.NumFormatType.PDFFormDate);
 
         oDateFormat.oNegativeFormat.bAddMinusIfNes = false;
         
@@ -493,14 +493,9 @@
         oCultureInfo.AbbreviatedMonthNames.length = 12;
         oCultureInfo.MonthNames.length = 12;
 
-        let oResParsed;
+        let oResParsed = oFormatParser.parseDatePDF(sCurValue, oCultureInfo, oDateFormatForParse);
         let sRes;
-        if (oDoc.lastDatePickerInfo) {
-            oResParsed = true;
-        }
-        else
-            oResParsed = oFormatParser.parseDatePDF(sCurValue, oCultureInfo, oDateFormatForParse);
-                
+        
         if (sCurValue == "")
             oTargetRun.ClearContent();
 
@@ -509,13 +504,8 @@
             return;
         }
 
-        if (oDoc.lastDatePickerInfo) {
-            sRes = oDoc.lastDatePickerInfo.value;
-        }
-        else {
-            oDateFormat.oTextFormat.formatType = AscCommon.NumFormatType.PDFFormDate;
-            sRes = oDateFormat.oTextFormat.format(oResParsed.value, 0, AscCommon.gc_nMaxDigCount, oCultureInfo)[0].text;
-        }
+        oDateFormat.oTextFormat.formatType = AscCommon.NumFormatType.PDFFormDate;
+        sRes = oDateFormat.oTextFormat.format(oResParsed.value, 0, AscCommon.gc_nMaxDigCount, oCultureInfo)[0].text;
 
         oCurForm.SetFormatValue(sRes);
     }
@@ -536,7 +526,7 @@
         }
 
         let oDateFormat         = AscCommon.oNumFormatCache.get(cFormat, AscCommon.NumFormatType.PDFFormDate);
-        let oDateFormatForParse = oDoc.lastDatePickerInfo ? AscCommon.oNumFormatCache.get("dd.mm.yyyy", AscCommon.NumFormatType.PDFFormDate) : oDateFormat;
+        let oDateFormatForParse = AscCommon.oNumFormatCache.get(oForm.prevDateFormat || cFormat, AscCommon.NumFormatType.PDFFormDate);
         oDateFormat.oNegativeFormat.bAddMinusIfNes = false;
         
         let sCurValue;
@@ -608,12 +598,7 @@
         oCultureInfo.AbbreviatedMonthNames.length = 12;
         oCultureInfo.MonthNames.length = 12;
 
-        let oResParsed;
-        if (oDoc.lastDatePickerInfo) {
-            oResParsed = true;
-        }
-        else
-            oResParsed = oFormatParser.parseDatePDF(sCurValue, oCultureInfo, oDateFormatForParse);
+        let oResParsed = oFormatParser.parseDatePDF(sCurValue, oCultureInfo, oDateFormatForParse);
 
         if (!oResParsed) {
             oDoc.event["rc"] = false;

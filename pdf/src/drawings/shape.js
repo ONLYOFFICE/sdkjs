@@ -331,8 +331,20 @@
         let oRGBAFill = !this.brush.isNoFill() ? this.brush.fill.color.RGBA : null;
         let aFillColor = oRGBAFill ? [oRGBAFill.R / 255, oRGBAFill.G / 255, oRGBAFill.B / 255] : null;
 
+        function rotateRect(rect, rad) {
+            const [x1, y1, x2, y2] = rect;
+            const cx = (x1 + x2) * 0.5, cy = (y1 + y2) * 0.5;
+            const hw = (x2 - x1) * 0.5, hh = (y2 - y1) * 0.5;
+
+            const c = Math.cos(rad), s = Math.sin(rad);
+            const newHW = Math.abs(hw * c) + Math.abs(hh * s);
+            const newHH = Math.abs(hw * s) + Math.abs(hh * c);
+
+            return [cx - newHW, cy - newHH, cx + newHW, cy + newHH];
+        }
+
         let oProps = {
-            rect:           aRect,
+            rect:           this.rot ? rotateRect(aRect, this.rot) : aRect,
             contents:       null,
             creationDate:   sCreationDate,
             modDate:        sCreationDate,
