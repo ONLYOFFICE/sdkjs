@@ -2180,41 +2180,74 @@
 
 	/**
 	 * Specifies the shading applied to the contents of the current text Range.
+	 *
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {ShdType} sType - The shading type applied to the contents of the current text Range.
+	 *
+	 * @overload
+	 * @param {ShdType} type - The shading type applied to the contents of the current text Range.
+	 * @param {ApiColor} color
+	 * @returns {ApiRange | null} - returns null if can't apply shadow.
+	 *
+	 * @overload
+	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
+	 * @param {ShdType} type - The shading type applied to the contents of the current text Range.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {ApiRange | null} - returns null if can't apply shadow.
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetShd.js
 	 */
-	ApiRange.prototype.SetShd = function(sType, r, g, b)
+	ApiRange.prototype.SetShd = function (type, color)
 	{
+		let r, g, b;
+		let isAuto, isTheme;
+
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb.r;
+			g = rgb.g;
+			b = rgb.b;
+			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
+		} else {
+			r = GetIntParameter(arguments[1], 0);
+			g = GetIntParameter(arguments[2], 0);
+			b = GetIntParameter(arguments[3], 0);
+			isAuto = false;
+			isTheme = false;
+		}
+
 		private_RefreshRangesPosition();
 
-		var Document			= private_GetLogicDocument();
-		var oldSelectionInfo	= Document.SaveDocumentState();
+		const logicDocument = private_GetLogicDocument();
+		const oldSelectionInfo = logicDocument.SaveDocumentState();
 
 		this.Select(false);
 		private_TrackRangesPositions();
 
-		let oShd = private_GetShd(sType, r, g, b, false);
-
-		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
-		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
-		{
-			Document.LoadDocumentState(oldSelectionInfo);
-			Document.UpdateSelection();
+		const selectedContent = logicDocument.GetSelectedElementsInfo({ CheckAllSelection: true });
+		if (!selectedContent.CanEditBlockSdts() || !selectedContent.CanDeleteInlineSdts()) {
+			logicDocument.LoadDocumentState(oldSelectionInfo);
+			logicDocument.UpdateSelection();
 
 			return null;
 		}
 
-		Document.SetParagraphShd(oShd);
-		this.TextPr.Shd = oShd;
-		
-		Document.LoadDocumentState(oldSelectionInfo);
-		Document.UpdateSelection();
+		const shd = private_GetShd(type, r, g, b, isAuto);
+
+		if (isTheme) {
+			const unifill = color.private_createUnifill();
+			shd.Unifill = unifill.createDuplicate();
+			shd.ThemeFill = unifill.createDuplicate();
+		}
+
+		logicDocument.SetParagraphShd(shd);
+		this.TextPr.Shd = shd;
+
+		logicDocument.LoadDocumentState(oldSelectionInfo);
+		logicDocument.UpdateSelection();
 
 		return this;
 	};
