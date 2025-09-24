@@ -15593,11 +15593,15 @@
 			return Api.prototype.ThemeColor(unifill.fill.color.color.id);
 		}
 
-		const color = oShd.Fill || oShd.Color;
-		const isAuto = color && color.Auto === true;
-		return isAuto
-			? Api.prototype.AutoColor()
-			: Api.prototype.RGB(oShd.Fill.r, oShd.Fill.g, oShd.Fill.b);
+		const color = oShd.Color || oShd.Fill;
+		if (color) {
+			const isAuto = color.Auto === true;
+			return isAuto
+				? Api.prototype.AutoColor()
+				: Api.prototype.RGB(color.r, color.g, color.b);
+		}
+
+		return null;
 	};
 
 	/**
@@ -16208,7 +16212,7 @@
 	ApiParaPr.prototype.SetShd = function(type, color)
 	{
 		let r, g, b;
-		let isAuto;
+		let isAuto, isTheme;
 
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
@@ -16216,14 +16220,23 @@
 			g = rgb.g;
 			b = rgb.b;
 			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
 		} else {
 			r = GetIntParameter(arguments[1], 0);
 			g = GetIntParameter(arguments[2], 0);
 			b = GetIntParameter(arguments[3], 0);
 			isAuto = GetBoolParameter(arguments[4], false);
+			isTheme = false;
 		}
 
 		this.ParaPr.Shd = private_GetShd(type, r, g, b, isAuto);
+
+		if (isTheme) {
+			const unifill = color.private_createUnifill();
+			this.ParaPr.Shd.Unifill = unifill;
+			this.ParaPr.Shd.ThemeFill = unifill;
+		}
+
 		this.private_OnChange();
 		return true;
 	};
@@ -16236,31 +16249,32 @@
 	 */
 	ApiParaPr.prototype.GetShd = function()
 	{
-		var oColor = null;
-		var oShd;
-		if (!this.Parent)
-		{
-			oShd = this.ParaPr.Shd;
-			if (!oShd)
-				return null;
-
-			oColor = this.ParaPr.Shd.Color;
-			if (oColor) {
-				const isAuto = oColor.Auto === true;
-				return isAuto ? Api.prototype.AutoColor() : Api.prototype.RGB(oColor.r, oColor.g, oColor.b);
-			}
-			
-			return null;
-		}
-
-		oShd = this.ParaPr.Shd;
+		const oShd = this.ParaPr.Shd;
 		if (!oShd)
 			return null;
 
-		oColor = this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Shd.Color;
-		if (oColor) {
-			const isAuto = oColor.Auto === true;
-			return isAuto ? Api.prototype.AutoColor() : Api.prototype.RGB(oColor.r, oColor.g, oColor.b);
+		let unifill, color;
+		if (this.Parent) {
+			const compiledShd = this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Shd;
+			unifill = compiledShd.Unifill || compiledShd.ThemeFill;
+			color = compiledShd.Color || compiledShd.Fill;
+		} else {
+			unifill = oShd.Unifill || oShd.ThemeFill;
+			color = oShd.Color || oShd.Fill;
+		}
+
+		if (unifill &&
+			unifill.fill &&
+			unifill.fill.color &&
+			unifill.fill.color.color) {
+			return Api.prototype.ThemeColor(unifill.fill.color.color.id);
+		}
+
+		if (color) {
+			const isAuto = color.Auto === true;
+			return isAuto
+				? Api.prototype.AutoColor()
+				: Api.prototype.RGB(color.r, color.g, color.b);
 		}
 
 		return null;
