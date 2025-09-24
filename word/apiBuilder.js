@@ -12066,20 +12066,29 @@
 	};
 	/**
 	 * Specifies the shading applied to the contents of the current text run.
+	 *
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {ShdType} sType - The shading type applied to the contents of the current text run.
+	 *
+	 * @overload
+	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
+	 * @param {ApiColor} color - Instance of the {@link ApiColor} class.
+	 * @returns {ApiTextPr}
+	 *
+	 * @overload
+	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
+	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {ApiTextPr}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetShd.js
 	 */
-	ApiRun.prototype.SetShd = function(sType, r, g, b)
+	ApiRun.prototype.SetShd = function (type, color)
 	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetShd(sType, r, g, b);
-		
+		const oTextPr = this.GetTextPr();
+		oTextPr.SetShd.apply(oTextPr, arguments);
 		return oTextPr;
 	};
 	/**
