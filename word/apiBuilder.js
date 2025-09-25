@@ -15260,7 +15260,9 @@
 		const oColor = this.TextPr.GetColor();
 		if (oColor !== undefined) {
 			const isAuto = oColor.Auto === true;
-			return isAuto ? Api.prototype.AutoColor() : Api.prototype.RGB(oColor.r, oColor.g, oColor.b);
+			return isAuto
+				? Api.prototype.AutoColor()
+				: Api.prototype.RGB(oColor.r, oColor.g, oColor.b);
 		}
 
 		return null;
@@ -15632,7 +15634,7 @@
 			unifill.fill &&
 			unifill.fill.color &&
 			unifill.fill.color.color) {
-			return Api.prototype.ThemeColor(unifill.fill.color.color.id);
+			return new ApiColor('theme', unifill.fill.color.color.id);
 		}
 
 		const color = oShd.Color || oShd.Fill;
@@ -16309,7 +16311,7 @@
 			unifill.fill &&
 			unifill.fill.color &&
 			unifill.fill.color.color) {
-			return Api.prototype.ThemeColor(unifill.fill.color.color.id);
+			return new ApiColor('theme', unifill.fill.color.color.id);
 		}
 
 		if (color) {
@@ -23989,7 +23991,7 @@
 			unifill.fill &&
 			unifill.fill.color &&
 			unifill.fill.color.color) {
-			return Api.prototype.ThemeColor(unifill.fill.color.color.id);
+			return new ApiColor('theme', unifill.fill.color.color.id);
 		}
 
 		const color = formPr.Shd.Fill || formPr.Shd.Color;
