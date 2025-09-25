@@ -30,24 +30,27 @@
  *
  */
 
-$(function()
-{
-	AscTest.Editor.GetDocument = AscCommon.DocumentEditorApi.prototype.GetDocument.bind(AscTest.Editor);
-	AscTest.Editor.ReplaceTextSmart = AscCommon.DocumentEditorApi.prototype.ReplaceTextSmart.bind(AscTest.Editor);
-	AscTest.Editor.CreateRun = AscCommon.DocumentEditorApi.prototype.CreateRun.bind(AscTest.Editor);
-	AscTest.Editor.CreateParagraph = AscCommon.DocumentEditorApi.prototype.CreateParagraph.bind(AscTest.Editor);
-	AscTest.Editor.CreateInlineLvlSdt = AscCommon.DocumentEditorApi.prototype.CreateInlineLvlSdt.bind(AscTest.Editor);
-	AscTest.Editor.CreateTextForm = AscCommon.DocumentEditorApi.prototype.CreateTextForm.bind(AscTest.Editor);
-	AscTest.Editor.CreateTable = AscCommon.DocumentEditorApi.prototype.CreateTable.bind(AscTest.Editor);
-	AscTest.Editor.HexColor = AscCommon.DocumentEditorApi.prototype.HexColor.bind(AscTest.Editor);
-	AscTest.Editor.ThemeColor = AscCommon.DocumentEditorApi.prototype.ThemeColor.bind(AscTest.Editor);
-	AscTest.Editor.AutoColor = AscCommon.DocumentEditorApi.prototype.AutoColor.bind(AscTest.Editor);
-	AscTest.Editor.RGBA = AscCommon.DocumentEditorApi.prototype.RGBA.bind(AscTest.Editor);
-	AscTest.Editor.RGB = AscCommon.DocumentEditorApi.prototype.RGB.bind(AscTest.Editor);
+$(function () {
+	QUnit.module('Test the ApiTableCell methods');
 
-	QUnit.testStart(function()
-	{
-		AscCommon.History.Clear();
-		AscTest.ClearDocument();
+	QUnit.test('SetColor, GetColor', function (assert) {
+		const table = AscTest.Editor.CreateTable(2, 2);
+		const cell = table.GetCell(0, 0);
+
+		assert.strictEqual(cell.GetBackgroundColor(), null, 'Color check for a newly created table cell');
+
+		cell.SetBackgroundColor(255, 127, 0);
+		assert.equalRgb(cell.GetBackgroundColor(), { r: 255, g: 127, b: 0 }, 'Color check after setting color with RGB components');
+
+		const hexColor = AscTest.Editor.HexColor('bada55');
+		cell.SetBackgroundColor(hexColor);
+		assert.strictEqual(cell.GetBackgroundColor().GetHex(), '#bada55', 'Color check after setting color with ApiColor (hex)');
+
+		const themeColor = AscTest.Editor.ThemeColor('accent2');
+		cell.SetBackgroundColor(themeColor);
+		assert.strictEqual(cell.GetBackgroundColor().IsThemeColor(), true, 'Color check after setting color with ApiColor (theme)');
+
+		cell.SetBackgroundColor(0, 0, 0, true);
+		assert.strictEqual(cell.GetBackgroundColor(), null, 'Color check after resetting color');
 	});
 });

@@ -14580,29 +14580,57 @@
 		if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
 			return false;
 
-		const oUnifill = new AscFormat.CUniFill();
-		oUnifill.setFill(new AscFormat.CSolidFill());
-		oUnifill.fill.setColor(new AscFormat.CUniColor());
-
-		if (!isTheme && !isAuto) {
-			oUnifill.fill.color.setColor(new AscFormat.CRGBColor());
-			oUnifill.fill.color.color.setColor(r, g, b);
-		} else if (isTheme) {
-			oUnifill.fill.color.setColor(new AscFormat.CSchemeColor());
-			oUnifill.fill.color.color.id = color.value;
-		}
+		const oUnifill = isTheme
+			? color.private_createUnifill()
+			: Api.prototype.RGB(r, g, b).private_createUnifill();
 
 		const oNewShd = {
 			Value: bNone ? Asc.c_oAscShd.Nil : Asc.c_oAscShd.Clear,
-			Color: { r: r, g: g, b: b, Auto: isAuto },
 			Fill: { r: r, g: g, b: b, Auto: isAuto },
-			Unifill: oUnifill.createDuplicate(),
-			ThemeFill: oUnifill.createDuplicate(),
+			// Color: { r: r, g: g, b: b, Auto: isAuto },
+			ThemeFill: isTheme ? oUnifill : undefined,
+			// Unifill: oUnifill.createDuplicate(),
 		};
 
 		this.Cell.Set_Shd(oNewShd);
 		return true;
 	};
+
+	/**
+	 * Returns the background color of the current table cell.
+	 *
+	 * @memberof ApiTableCell
+	 * @typeofeditors ["CDE"]
+	 * @return {?ApiColor}
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetBackgroundColor.js
+	 */
+	ApiTableCell.prototype.GetBackgroundColor = function () {
+		const shd = this.Cell.Get_Shd();
+		if (!shd || shd.Value === Asc.c_oAscShd.Nil)
+			return null;
+
+		const unifill = shd.ThemeFill;
+		const unifillColor = unifill && unifill.fill && unifill.fill.color && unifill.fill.color.color;
+		if (unifillColor) {
+			if (unifillColor instanceof AscFormat.CSchemeColor)
+				return new ApiColor('theme', unifillColor.id);
+
+			if (unifillColor instanceof AscFormat.CRGBColor)
+				return Api.prototype.RGB(unifillColor.r, unifillColor.g, unifillColor.b);
+		}
+
+		const color = shd.Fill;
+		if (color) {
+			const isAuto = color.Auto === true;
+			return isAuto
+				? Api.prototype.AutoColor()
+				: Api.prototype.RGB(color.r, color.g, color.b);
+		}
+
+		return null;
+	};
+
 	/**
 	 * Sets the background color to all cells in the column containing the current cell.
 	 *
@@ -15250,11 +15278,14 @@
 	 */
 	ApiTextPr.prototype.GetColor = function ()
 	{
-		if (this.TextPr.Unifill &&
-			this.TextPr.Unifill.fill &&
-			this.TextPr.Unifill.fill.color &&
-			this.TextPr.Unifill.fill.color.color) {
-			return new ApiColor('theme', this.TextPr.Unifill.fill.color.color.id);
+		const unifill = this.TextPr.Unifill;
+		const unifillColor = unifill && unifill.fill && unifill.fill.color && unifill.fill.color.color;
+		if (unifillColor) {
+			if (unifillColor instanceof AscFormat.CSchemeColor)
+				return new ApiColor('theme', unifillColor.id);
+
+			if (unifillColor instanceof AscFormat.CRGBColor)
+				return Api.prototype.RGB(unifillColor.r, unifillColor.g, unifillColor.b);
 		}
 
 		const oColor = this.TextPr.GetColor();
@@ -15630,11 +15661,13 @@
 			return null;
 
 		const unifill = oShd.Unifill || oShd.ThemeFill;
-		if (unifill &&
-			unifill.fill &&
-			unifill.fill.color &&
-			unifill.fill.color.color) {
-			return new ApiColor('theme', unifill.fill.color.color.id);
+		const unifillColor = unifill && unifill.fill && unifill.fill.color && unifill.fill.color.color;
+		if (unifillColor) {
+			if (unifillColor instanceof AscFormat.CSchemeColor)
+				return new ApiColor('theme', unifillColor.id);
+
+			if (unifillColor instanceof AscFormat.CRGBColor)
+				return Api.prototype.RGB(unifillColor.r, unifillColor.g, unifillColor.b);
 		}
 
 		const color = oShd.Color || oShd.Fill;
@@ -16307,11 +16340,13 @@
 			color = oShd.Color || oShd.Fill;
 		}
 
-		if (unifill &&
-			unifill.fill &&
-			unifill.fill.color &&
-			unifill.fill.color.color) {
-			return new ApiColor('theme', unifill.fill.color.color.id);
+		const unifillColor = unifill && unifill.fill && unifill.fill.color && unifill.fill.color.color;
+		if (unifillColor) {
+			if (unifillColor instanceof AscFormat.CSchemeColor)
+				return new ApiColor('theme', unifillColor.id);
+
+			if (unifillColor instanceof AscFormat.CRGBColor)
+				return Api.prototype.RGB(unifillColor.r, unifillColor.g, unifillColor.b);
 		}
 
 		if (color) {
@@ -23987,11 +24022,13 @@
 			return null;
 
 		const unifill = formPr.Shd.ThemeFill || formPr.Shd.Unifill;
-		if (unifill &&
-			unifill.fill &&
-			unifill.fill.color &&
-			unifill.fill.color.color) {
-			return new ApiColor('theme', unifill.fill.color.color.id);
+		const unifillColor = unifill && unifill.fill && unifill.fill.color && unifill.fill.color.color;
+		if (unifillColor) {
+			if (unifillColor instanceof AscFormat.CSchemeColor)
+				return new ApiColor('theme', unifillColor.id);
+
+			if (unifillColor instanceof AscFormat.CRGBColor)
+				return Api.prototype.RGB(unifillColor.r, unifillColor.g, unifillColor.b);
 		}
 
 		const color = formPr.Shd.Fill || formPr.Shd.Color;
@@ -28025,6 +28062,7 @@
 	ApiTableCell.prototype["Clear"]    		           = ApiTableCell.prototype.Clear;
 	ApiTableCell.prototype["AddElement"]    		   = ApiTableCell.prototype.AddElement;
 	ApiTableCell.prototype["SetBackgroundColor"]       = ApiTableCell.prototype.SetBackgroundColor;
+	ApiTableCell.prototype["GetBackgroundColor"]       = ApiTableCell.prototype.GetBackgroundColor;
 	ApiTableCell.prototype["SetColumnBackgroundColor"] = ApiTableCell.prototype.SetColumnBackgroundColor;
 
 	ApiStyle.prototype["GetClassType"]               = ApiStyle.prototype.GetClassType;
