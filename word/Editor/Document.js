@@ -12373,7 +12373,35 @@ CDocument.prototype.SetWatermarkProps = function(oProps)
 		return;
 
 	this.StartAction(AscDFH.historydescription_Document_AddWatermark);
-	this.SetWatermarkPropsAction(oProps);
+    for (let pageIndex = 0; pageIndex < this.Pages.length; pageIndex++) {
+        // Определим четность страницы и является ли она первой в данной секции. Заметим, что четность страницы
+        // отсчитывается от начала текущей секции и не зависит от настроек нумерации страниц для данной секции.
+        var SectionPageInfo = this.Get_SectionPageNumInfo( pageIndex );
+
+        var bFirst = SectionPageInfo.bFirst;
+        var bEven  = SectionPageInfo.bEven;
+
+        // Запросим нужный нам колонтитул
+        var HdrFtr = this.Get_SectionHdrFtr( pageIndex, bFirst, bEven );
+
+        var Header = HdrFtr.Header;
+        var Footer = HdrFtr.Footer;
+        var SectPr = HdrFtr.SectPr;
+
+        if (!Header && SectPr.IsTitlePage()) {
+            Header = new CHeaderFooter(this.GetHdrFtr(), this, this.Get_DrawingDocument(), hdrftr_Header);
+            SectPr.Set_Header_First(Header);
+        }else if (!Header && SectPr.IsEvenAndOdd()) {
+            Header = new CHeaderFooter(this.GetHdrFtr(), this, this.Get_DrawingDocument(), hdrftr_Header);
+            SectPr.Set_Header_First(Header);
+        } else if(!Header){
+            Header = new CHeaderFooter(this.GetHdrFtr(), this, this.Get_DrawingDocument(), hdrftr_Header);
+            SectPr.Set_Header_Default(Header);
+        }
+        if(Header){
+            Header.SetWatermarkPropsAction(oProps);
+        }
+    }
 	this.Recalculate();
 	this.UpdateInterface();
 	this.UpdateSelection();
