@@ -21657,10 +21657,11 @@
 	};
 	/**
 	 * Returns the border color of the current content control.
+	 *
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 8.3.2
-	 * @returns {null | {r:byte, g:byte, b:byte, a:byte}}
+	 * @returns {?ApiColor}
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetBorderColor.js
 	 */
 	ApiInlineLvlSdt.prototype.GetBorderColor = function()
@@ -21668,15 +21669,10 @@
 		let color = this.Sdt.getBorderColor();
 		if (!color)
 			return null;
-		
-		return {
-			"r" : color.r,
-			"g" : color.g,
-			"b" : color.b,
-			"a" : color.a
-		};
+
+		return Api.prototype.RGBA(color.r, color.g, color.b, color.a);
 	};
-	
+
 	/**
 	 * Sets the background color to the current content control.
 	 *
@@ -21724,10 +21720,11 @@
 	
 	/**
 	 * Returns the background color of the current content control.
+	 *
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 8.3.2
-	 * @returns {null | {r:byte, g:byte, b:byte, a:byte}}
+	 * @returns {?ApiColor}
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetBackgroundColor.js
 	 */
 	ApiInlineLvlSdt.prototype.GetBackgroundColor = function()
@@ -21735,13 +21732,8 @@
 		let color = this.Sdt.getShdColor();
 		if (!color)
 			return null;
-		
-		return {
-			"r" : color.r,
-			"g" : color.g,
-			"b" : color.b,
-			"a" : color.a
-		};
+
+		return Api.prototype.RGBA(color.r, color.g, color.b, color.a);
 	};
 
 	/**
@@ -23855,6 +23847,7 @@
 	{
 		let r, g, b;
 		let bNone;
+		let isAuto;
 
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
@@ -23862,31 +23855,51 @@
 			g = rgb.g;
 			b = rgb.b;
 			bNone = false;
+			isAuto = color.IsAutoColor();
 		} else {
 			r = GetIntParameter(arguments[0], 0);
 			g = GetIntParameter(arguments[1], 0);
 			b = GetIntParameter(arguments[2], 0);
 			bNone = GetBoolParameter(arguments[3], false);
+			isAuto = false;
 		}
 
-		return executeNoFormLockCheck(function() {
-			var oFormPr = this.Sdt.GetFormPr().Copy();
-			var oBorder;
-			if (typeof (r) == "number" && typeof (g) == "number" && typeof (b) == "number" && !bNone)
-			{
-				oBorder       = new CDocumentBorder();
-				oBorder.Color = new CDocumentColor(r, g, b);
+		return executeNoFormLockCheck(function () {
+			const formPrCopy = this.Sdt.GetFormPr().Copy();
+
+			let border;
+			if (bNone)
+				border = undefined;
+			else {
+				border = new CDocumentBorder();
+				border.Color = new CDocumentColor(r, g, b, isAuto);
+				border.Value = border_Single;
 			}
-			else if (bNone)
-				oBorder = undefined;
-			else
-				return false;
 
-			oFormPr.Border = oBorder;
+			formPrCopy.Border = border;
+			this.Sdt.SetFormPr(formPrCopy);
 
-			this.Sdt.SetFormPr(oFormPr);
 			return true;
 		}, this);
+	};
+	/**
+	 * Returns the border color of the current form.
+	 *
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @return {?ApiColor}
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/GetBorderColor.js
+	 */
+	ApiFormBase.prototype.GetBorderColor = function () {
+		const formPr = this.Sdt.GetFormPr();
+		if (!formPr || !formPr.Border || !formPr.Border.Color)
+			return null;
+
+		const color = formPr.Border.Color;
+		return (color.Auto === true)
+			? Api.prototype.AutoColor()
+			: Api.prototype.RGB(color.r, color.g, color.b);
 	};
 	/**
 	 * Sets the background color to the current form.
@@ -23916,7 +23929,8 @@
 	{
 		let r, g, b;
 		let bNone;
-		let isAuto;
+		let isAuto, isTheme;
+		let unifill;
 
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
@@ -23925,36 +23939,68 @@
 			b = rgb.b;
 			bNone = false;
 			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
+			unifill = color.private_createUnifill();
 		} else {
 			r = GetIntParameter(arguments[0], 0);
 			g = GetIntParameter(arguments[1], 0);
 			b = GetIntParameter(arguments[2], 0);
+
 			bNone = GetBoolParameter(arguments[3], false);
 			isAuto = false;
+			isTheme = false;
+			unifill = Api.prototype.RGB(r, g, b).private_createUnifill();
 		}
 
-		var oFormPr = this.Sdt.GetFormPr().Copy();
-
-		let oUnifill = new AscFormat.CUniFill();
-		oUnifill.setFill(new AscFormat.CSolidFill());
-		oUnifill.fill.setColor(new AscFormat.CUniColor());
-		oUnifill.fill.color.setColor(new AscFormat.CRGBColor());
-
-		if (r >=0 && g >=0 && b >=0)
-			oUnifill.fill.color.color.setColor(r, g, b);
-		else
+		if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
 			return false;
+
+		var oFormPr = this.Sdt.GetFormPr().Copy();
 
 		oFormPr.Shd = new CDocumentShd();
 		oFormPr.Shd.Set_FromObject({
 			Value: bNone ? Asc.c_oAscShd.Nil : Asc.c_oAscShd.Clear,
 			Color: { r: r, g: g, b: b, Auto: isAuto },
 			Fill: { r: r, g: g, b: b, Auto: isAuto },
-			Unifill: oUnifill
+			Unifill: isTheme ? unifill.createDuplicate() : undefined,
+			ThemeFill: isTheme ? unifill.createDuplicate() : undefined,
 		});
 
 		this.Sdt.SetFormPr(oFormPr);
 		return true;
+	};
+
+	/**
+	 * Returns the background color of the current form.
+	 *
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @return {?ApiColor}
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetBorderColor.js
+	 */
+	ApiFormBase.prototype.GetBackgroundColor = function () {
+		const formPr = this.Sdt.GetFormPr();
+		if (!formPr || !formPr.Shd)
+			return null;
+
+		const unifill = formPr.Shd.ThemeFill || formPr.Shd.Unifill;
+		if (unifill &&
+			unifill.fill &&
+			unifill.fill.color &&
+			unifill.fill.color.color) {
+			return Api.prototype.ThemeColor(unifill.fill.color.color.id);
+		}
+
+		const color = formPr.Shd.Fill || formPr.Shd.Color;
+		if (color) {
+			const isAuto = color.Auto === true;
+			return isAuto
+				? Api.prototype.AutoColor()
+				: Api.prototype.RGB(color.r, color.g, color.b);
+		}
+
+		return null;
 	};
 	/**
 	 * Returns the text from the current form.
@@ -28488,7 +28534,9 @@
 	ApiFormBase.prototype["ToFixed"]            = ApiFormBase.prototype.ToFixed;
 	ApiFormBase.prototype["ToInline"]           = ApiFormBase.prototype.ToInline;
 	ApiFormBase.prototype["SetBorderColor"]     = ApiFormBase.prototype.SetBorderColor;
+	ApiFormBase.prototype["GetBorderColor"]     = ApiFormBase.prototype.GetBorderColor;
 	ApiFormBase.prototype["SetBackgroundColor"] = ApiFormBase.prototype.SetBackgroundColor;
+	ApiFormBase.prototype["GetBackgroundColor"] = ApiFormBase.prototype.GetBackgroundColor;
 	ApiFormBase.prototype["GetText"]            = ApiFormBase.prototype.GetText;
 	ApiFormBase.prototype["Clear"]              = ApiFormBase.prototype.Clear;
 	ApiFormBase.prototype["GetWrapperShape"]    = ApiFormBase.prototype.GetWrapperShape;

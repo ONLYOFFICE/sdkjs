@@ -59,7 +59,6 @@ $(function () {
 		apiRun = apiParagraph.GetElement(0);
 		assert.strictEqual(apiRun.GetColor(), null, 'Color check for an empty run');
 
-		debugger
 		apiRange.SetColor(80, 160, 240);
 		apiRun = apiParagraph.GetElement(0);
 		assert.equalRgb(apiRun.GetColor(), { r: 80, g: 160, b: 240 }, 'Color check after setting color for range with RGB components');

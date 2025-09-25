@@ -37,6 +37,7 @@ $(function()
 	AscTest.Editor.CreateRun = AscCommon.DocumentEditorApi.prototype.CreateRun.bind(AscTest.Editor);
 	AscTest.Editor.CreateParagraph = AscCommon.DocumentEditorApi.prototype.CreateParagraph.bind(AscTest.Editor);
 	AscTest.Editor.CreateInlineLvlSdt = AscCommon.DocumentEditorApi.prototype.CreateInlineLvlSdt.bind(AscTest.Editor);
+	AscTest.Editor.CreateTextForm = AscCommon.DocumentEditorApi.prototype.CreateTextForm.bind(AscTest.Editor);
 	AscTest.Editor.HexColor = AscCommon.DocumentEditorApi.prototype.HexColor.bind(AscTest.Editor);
 	AscTest.Editor.ThemeColor = AscCommon.DocumentEditorApi.prototype.ThemeColor.bind(AscTest.Editor);
 	AscTest.Editor.AutoColor = AscCommon.DocumentEditorApi.prototype.AutoColor.bind(AscTest.Editor);

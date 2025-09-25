@@ -30,22 +30,32 @@
  *
  */
 
-$(function ()
-{
-	QUnit.module("Test the ApiInlineLevelSdt methods");
-	
-	function createApiInlineCC()
-	{
-		return AscTest.Editor.CreateInlineLvlSdt();
-	}
-	
-	QUnit.test("Color", function (assert)
-	{
-		let apiInlineCC = createApiInlineCC();
-		
-		assert.strictEqual(apiInlineCC.GetBorderColor(), null, "Color border color for a newly created paragraph");
-		
+$(function () {
+	QUnit.module('Test the ApiInlineLevelSdt methods');
+
+	QUnit.test('SetBorderColor, GetBorderColor', function (assert) {
+		let apiInlineCC = AscTest.Editor.CreateInlineLvlSdt();
+
+		assert.strictEqual(apiInlineCC.GetBorderColor(), null, 'Color border color for a newly created inline content control');
+
 		apiInlineCC.SetBorderColor(255, 122, 100, 255);
-		assert.equalRgba(apiInlineCC.GetBorderColor(), {r : 255, g : 122, b : 100, a : 255}, "Check border color");
+		assert.equalRgba(apiInlineCC.GetBorderColor(), { r: 255, g: 122, b: 100, a: 255 }, 'Check border color after setting it with rgba components');
+
+		const rgbaColor = AscTest.Editor.RGBA(60, 120, 180, 240);
+		apiInlineCC.SetBorderColor(rgbaColor);
+		assert.equalRgba(apiInlineCC.GetBorderColor(), { r: 60, g: 120, b: 180, a: 240 }, 'Check border color after setting it with ApiColor (rgba)');
+	});
+
+	QUnit.test('SetBackgroundColor, GetBackgroundColor', function (assert) {
+		let apiInlineCC = AscTest.Editor.CreateInlineLvlSdt();
+
+		assert.strictEqual(apiInlineCC.GetBackgroundColor(), null, 'Color background color for a newly created inline content control');
+
+		apiInlineCC.SetBackgroundColor(255, 122, 100, 255);
+		assert.equalRgba(apiInlineCC.GetBackgroundColor(), { r: 255, g: 122, b: 100, a: 255 }, 'Check background color after setting it with rgba components');
+
+		const rgbaColor = AscTest.Editor.RGBA(60, 120, 180, 240);
+		apiInlineCC.SetBackgroundColor(rgbaColor);
+		assert.equalRgba(apiInlineCC.GetBackgroundColor(), { r: 60, g: 120, b: 180, a: 240 }, 'Check background color after setting it with ApiColor (rgba)');
 	});
 });
