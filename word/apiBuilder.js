@@ -8378,16 +8378,40 @@
 	/**
 	 * Sets the highlight to the forms in the document.
 	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE", "CFE"]
+	 *
+	 * @overload
+	 * @param {ApiColor} color
+	 * @returns {boolean}
+	 *
+	 * @overload
+	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [bNone=false] - Defines that highlight will not be set.
-	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetFormsHighlight.js
 	 */
-	ApiDocument.prototype.SetFormsHighlight = function(r, g, b, bNone)
+	ApiDocument.prototype.SetFormsHighlight = function(color)
 	{
+		let r, g, b;
+		let bNone;
+
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb.r;
+			g = rgb.g;
+			b = rgb.b;
+			bNone = false;
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			bNone = GetBoolParameter(arguments[3], false);
+		}
+
 		if (bNone === true)
 			this.Document.SetSpecialFormsHighlight(null, null, null);
 		else
@@ -8759,17 +8783,42 @@
 
 	/**
 	 * Sets the highlight to the content controls from the current document.
+	 *
 	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @overload
+	 * @param {ApiColor} color
+	 * @returns {boolean}
+	 *
+	 * @overload
+	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [bNone=false] - Defines that highlight will not be set.
-	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetControlsHighlight.js
 	 */
-	ApiDocument.prototype.SetControlsHighlight = function(r, g, b, bNone)
+	ApiDocument.prototype.SetControlsHighlight = function(color)
 	{
+		let r, g, b;
+		let bNone;
+
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb.r;
+			g = rgb.g;
+			b = rgb.b;
+			bNone = false;
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			bNone = GetBoolParameter(arguments[3], false);
+		}
+
 		if (bNone === true)
 			this.Document.SetSdtGlobalShowHighlight(false);
 		else
