@@ -4972,18 +4972,37 @@
 	{
 		return new ApiFill(AscFormat.builder_CreateRadialGradient(gradientStops));
 	};
+
 	/**
 	 * Creates a pattern fill to apply to the object using the selected pattern as the object background.
+	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @overload
+	 * @param {PatternType} patternType - The pattern type used for the fill selected from one of the available pattern types.
+	 * @param {ApiColor} bgColor - The background color used for the pattern creation.
+	 * @param {ApiColor} fgColor - The foreground color used for the pattern creation.
+	 * @returns {ApiFill}
+	 *
+	 * @overload
+	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
 	 * @param {PatternType} patternType - The pattern type used for the fill selected from one of the available pattern types.
 	 * @param {ApiUniColor} bgColor - The background color used for the pattern creation.
 	 * @param {ApiUniColor} fgColor - The foreground color used for the pattern creation.
 	 * @returns {ApiFill}
+	 *
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreatePatternFill.js
 	 */
-	Api.prototype.CreatePatternFill = function(patternType, bgColor, fgColor)
+	Api.prototype.CreatePatternFill = function (patternType, bgColor, fgColor)
 	{
+		if (bgColor instanceof ApiColor) {
+			bgColor = { Unicolor: bgColor.private_createUnifill().fill.color };
+		}
+		if (fgColor instanceof ApiColor) {
+			fgColor = { Unicolor: fgColor.private_createUnifill().fill.color };
+		}
+
 		return new ApiFill(AscFormat.builder_CreatePatternFill(patternType, bgColor, fgColor));
 	};
 
