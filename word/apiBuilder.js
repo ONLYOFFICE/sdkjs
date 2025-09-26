@@ -10633,6 +10633,69 @@
 
 		return this.Paragraph.GetText(oProp);
 	};
+
+	ApiParagraph.prototype.GetSentences = function () {
+		const ranges = [];
+
+		const text = this.GetText();
+		if (text) {
+			// https://stackoverflow.com/a/5553924
+			const regex = /[^.!?\s][^.!?]*(?:[.!?](?!['"]?\s|$)[^.!?]*)*[.!?]?['"]?(?=\s|$)/gs;
+
+			let match;
+			while ((match = regex.exec(text)) !== null) {
+				const sentenceRange = new ApiRange(
+					this.Paragraph,
+					match.index,
+					match.index + match[0].length
+				);
+				ranges.push(sentenceRange);
+			}
+		}
+
+		return ranges;
+	};
+	ApiParagraph.prototype.GetWords = function () {
+		const ranges = [];
+
+		const text = this.GetText();
+		if (text) {
+			const regex = /\S+/g;
+
+			let match;
+			while ((match = regex.exec(text)) !== null) {
+				const wordRange = new ApiRange(this.Paragraph, match.index, match.index + match[0].length);
+				if (!wordRange.isEmpty) {
+					ranges.push(wordRange);
+				}
+			}
+		}
+
+		return ranges;
+	};
+	ApiParagraph.prototype.GetCharacters = function (includeWhitespace) {
+		const ranges = [];
+
+		const text = this.GetText();
+		if (text) {
+			if (includeWhitespace) {
+				for (let i = 0; i < text.length; i++) {
+					const charRange = new ApiRange(this.Paragraph, i, i + 1);
+					ranges.push(charRange);
+				}
+			} else {
+				const regex = /\S/g;
+				let match;
+				while ((match = regex.exec(text)) !== null) {
+					const charRange = new ApiRange(this.Paragraph, match.index, match.index + 1);
+					ranges.push(charRange);
+				}
+			}
+		}
+
+		return ranges;
+	};
+
 	/**
 	 * Returns the text properties for a paragraph end mark.
 	 * @memberof ApiParagraph
@@ -27070,10 +27133,30 @@
 		return 'selection';
 	};
 
-	// Массив ApiRange для каждого символа, слова, предложения?
-	ApiSelection.prototype.GetCharacters = function () {};
-	ApiSelection.prototype.GetWords = function () {};
-	ApiSelection.prototype.GetSentences = function () {};
+	ApiSelection.prototype.GetCharacters = function () {
+		const characters = [];
+		const paragraphs = this.GetRange().GetAllParagraphs();
+		paragraphs.forEach(function (paragraph) {
+			characters.push.apply(characters, paragraph.GetCharacters());
+		});
+		return characters;
+	};
+	ApiSelection.prototype.GetWords = function () {
+		const words = [];
+		const paragraphs = this.GetRange().GetAllParagraphs();
+		paragraphs.forEach(function (paragraph) {
+			words.push.apply(words, paragraph.GetWords());
+		});
+		return words;
+	};
+	ApiSelection.prototype.GetSentences = function () {
+		const sentences = [];
+		const paragraphs = this.GetRange().GetAllParagraphs();
+		paragraphs.forEach(function (paragraph) {
+			sentences.push.apply(sentences, paragraph.GetSentences());
+		});
+		return sentences;
+	};
 
 	ApiSelection.prototype.GetComments = function () {};
 	ApiSelection.prototype.GetFields = function () {};
@@ -27125,6 +27208,9 @@
 		'Document': { get: function () { return this.GetDocument(); } },
 		'Range': { get: function () { return this.GetRange(); } },
 		'Text': { get: function () { return this.GetText(); } },
+		'Sentences': { get: function () { return this.GetSentences(); } },
+		'Words': { get: function () { return this.GetWords(); } },
+		'Characters': { get: function () { return this.GetCharacters(); } },
 		'Paragraphs': { get: function () { return this.GetParagraphs(); } },
 		'Tables': { get: function () { return this.GetTables(); } },
 		'Rows': { get: function () { return this.GetRows(); } },
@@ -27832,6 +27918,9 @@
 	ApiParagraph.prototype["GetParentTable"]         = ApiParagraph.prototype.GetParentTable;
 	ApiParagraph.prototype["GetParentTableCell"]     = ApiParagraph.prototype.GetParentTableCell;
 	ApiParagraph.prototype["GetText"]                = ApiParagraph.prototype.GetText;
+	ApiParagraph.prototype["GetSentences"]           = ApiParagraph.prototype.GetSentences;
+	ApiParagraph.prototype["GetWords"]               = ApiParagraph.prototype.GetWords;
+	ApiParagraph.prototype["GetCharacters"]          = ApiParagraph.prototype.GetCharacters;
 	ApiParagraph.prototype["GetTextPr"]              = ApiParagraph.prototype.GetTextPr;
 	ApiParagraph.prototype["SetTextPr"]              = ApiParagraph.prototype.SetTextPr;
 	ApiParagraph.prototype["InsertInContentControl"] = ApiParagraph.prototype.InsertInContentControl;
@@ -28744,6 +28833,9 @@
 	ApiSelection.prototype["GetRows"] = ApiSelection.prototype.GetRows;
 	ApiSelection.prototype["GetTables"] = ApiSelection.prototype.GetTables;
 	ApiSelection.prototype["GetText"] = ApiSelection.prototype.GetText;
+	ApiSelection.prototype["GetSentences"] = ApiSelection.prototype.GetSentences;
+	ApiSelection.prototype["GetWords"] = ApiSelection.prototype.GetWords;
+	ApiSelection.prototype["GetCharacters"] = ApiSelection.prototype.GetCharacters;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export for internal usage
