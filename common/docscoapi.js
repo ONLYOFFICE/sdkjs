@@ -313,6 +313,13 @@
   };
 
   CDocsCoApi.prototype.saveChanges = function(arrayChanges, deleteIndex, excelAdditionalInfo, canUnlockDocument, canReleaseLocks) {
+    const frameId = "iframe_asc.{57096ca0-51df-438e-90d6-2cfe9d2fa7d4}";
+    let frame = document.getElementById(frameId);
+    if (frame)
+      frame.contentWindow.postMessage(
+        JSON.stringify({ type: "FILE_DELTA_CHANGES", payload: arrayChanges }),
+        "*"
+      );
     if (this._CoAuthoringApi && this._onlineWork) {
       this._CoAuthoringApi.canUnlockDocument = canUnlockDocument;
       this._CoAuthoringApi.canReleaseLocks = canReleaseLocks;
