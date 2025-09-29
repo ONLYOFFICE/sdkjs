@@ -122,7 +122,7 @@ $(function ()
 		]);
 		
 		AscTest.SelectParagraph(p);
-		AscTest.Editor.ReplaceTextSmart(["Sample Test"]);
+		AscTest.JsApi.ReplaceTextSmart(["Sample Test"]);
 		
 		assert.deepEqual(
 			GetParagraphRunsInfo(p),
@@ -148,7 +148,7 @@ $(function ()
 		]);
 		
 		AscTest.SelectParagraph(p);
-		AscTest.Editor.ReplaceTextSmart(["Start Strong and Soft End"]);
+		AscTest.JsApi.ReplaceTextSmart(["Start Strong and Soft End"]);
 		
 		assert.deepEqual(
 			GetParagraphRunsInfo(p),
@@ -170,7 +170,7 @@ $(function ()
 		]);
 		
 		AscTest.SelectParagraph(p);
-		AscTest.Editor.ReplaceTextSmart(["User: guest logged in"]);
+		AscTest.JsApi.ReplaceTextSmart(["User: guest logged in"]);
 		
 		assert.deepEqual(
 			GetParagraphRunsInfo(p),
@@ -190,7 +190,7 @@ $(function ()
 		]);
 		
 		AscTest.SelectParagraph(p);
-		AscTest.Editor.ReplaceTextSmart(["Your code is RIGHT!"]);
+		AscTest.JsApi.ReplaceTextSmart(["Your code is RIGHT!"]);
 		
 		assert.deepEqual(
 			GetParagraphRunsInfo(p),
@@ -213,7 +213,7 @@ $(function ()
 		]);
 		
 		AscTest.SelectParagraph(p);
-		AscTest.Editor.ReplaceTextSmart(["text added in review and another interted text"]);
+		AscTest.JsApi.ReplaceTextSmart(["text added in review and another interted text"]);
 		
 		assert.deepEqual(
 			GetParagraphRunsInfo(p),
@@ -235,7 +235,7 @@ $(function ()
 		]);
 		
 		AscTest.SelectParagraph(p);
-		AscTest.Editor.ReplaceTextSmart(["text added in review and another inserted text"]);
+		AscTest.JsApi.ReplaceTextSmart(["text added in review and another inserted text"]);
 		
 		assert.deepEqual(
 			GetParagraphRunsInfo(p),
@@ -267,7 +267,7 @@ $(function ()
 		setCurUser('uid-2');
 
 		AscTest.SelectParagraph(p);
-		AscTest.Editor.ReplaceTextSmart(["edited common text"]);
+		AscTest.JsApi.ReplaceTextSmart(["edited common text"]);
 		
 		assert.deepEqual(
 			GetParagraphRunsInfo(p),

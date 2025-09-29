@@ -34,15 +34,15 @@ $(function () {
 	QUnit.module('Test the ApiRun methods');
 
 	function createApiRun() {
-		return AscTest.Editor.CreateRun();
+		return AscTest.JsApi.CreateRun();
 	}
 
 	QUnit.test('SetColor, GetColor', function (assert) {
 		const apiRun = createApiRun();
 
-		const hexColor = AscTest.Editor.HexColor('#bada55');
-		const themeColor = AscTest.Editor.ThemeColor('accent2');
-		const autoColor = AscTest.Editor.AutoColor();
+		const hexColor = AscTest.JsApi.HexColor('#bada55');
+		const themeColor = AscTest.JsApi.ThemeColor('accent2');
+		const autoColor = AscTest.JsApi.AutoColor();
 
 		assert.strictEqual(apiRun.GetColor(), null, 'Color check for a newly created run');
 
@@ -62,9 +62,9 @@ $(function () {
 	QUnit.test('SetShd, GetShd', function (assert) {
 		const apiRun = createApiRun();
 
-		const hexColor = AscTest.Editor.HexColor('#bada55');
-		const themeColor = AscTest.Editor.ThemeColor('accent2');
-		const autoColor = AscTest.Editor.AutoColor();
+		const hexColor = AscTest.JsApi.HexColor('#bada55');
+		const themeColor = AscTest.JsApi.ThemeColor('accent2');
+		const autoColor = AscTest.JsApi.AutoColor();
 
 		assert.strictEqual(apiRun.GetShd(), null, 'Shading (Shd) check for a newly created run');
 

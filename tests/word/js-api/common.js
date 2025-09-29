@@ -33,17 +33,21 @@
 $(function()
 {
 	AscTest.Editor.GetDocument = AscCommon.DocumentEditorApi.prototype.GetDocument.bind(AscTest.Editor);
-	AscTest.Editor.ReplaceTextSmart = AscCommon.DocumentEditorApi.prototype.ReplaceTextSmart.bind(AscTest.Editor);
-	AscTest.Editor.CreateRun = AscCommon.DocumentEditorApi.prototype.CreateRun.bind(AscTest.Editor);
-	AscTest.Editor.CreateParagraph = AscCommon.DocumentEditorApi.prototype.CreateParagraph.bind(AscTest.Editor);
-	AscTest.Editor.CreateInlineLvlSdt = AscCommon.DocumentEditorApi.prototype.CreateInlineLvlSdt.bind(AscTest.Editor);
-	AscTest.Editor.CreateTextForm = AscCommon.DocumentEditorApi.prototype.CreateTextForm.bind(AscTest.Editor);
-	AscTest.Editor.CreateTable = AscCommon.DocumentEditorApi.prototype.CreateTable.bind(AscTest.Editor);
-	AscTest.Editor.HexColor = AscCommon.DocumentEditorApi.prototype.HexColor.bind(AscTest.Editor);
-	AscTest.Editor.ThemeColor = AscCommon.DocumentEditorApi.prototype.ThemeColor.bind(AscTest.Editor);
-	AscTest.Editor.AutoColor = AscCommon.DocumentEditorApi.prototype.AutoColor.bind(AscTest.Editor);
-	AscTest.Editor.RGBA = AscCommon.DocumentEditorApi.prototype.RGBA.bind(AscTest.Editor);
-	AscTest.Editor.RGB = AscCommon.DocumentEditorApi.prototype.RGB.bind(AscTest.Editor);
+
+	AscTest.JsApi = {};
+	
+	AscTest.JsApi.GetDocument = AscCommon.DocumentEditorApi.prototype.GetDocument.bind(AscTest.Editor);
+	AscTest.JsApi.ReplaceTextSmart = AscCommon.DocumentEditorApi.prototype.ReplaceTextSmart.bind(AscTest.Editor);
+	AscTest.JsApi.CreateRun = AscCommon.DocumentEditorApi.prototype.CreateRun.bind(AscTest.Editor);
+	AscTest.JsApi.CreateParagraph = AscCommon.DocumentEditorApi.prototype.CreateParagraph.bind(AscTest.Editor);
+	AscTest.JsApi.CreateInlineLvlSdt = AscCommon.DocumentEditorApi.prototype.CreateInlineLvlSdt.bind(AscTest.Editor);
+	AscTest.JsApi.CreateTextForm = AscCommon.DocumentEditorApi.prototype.CreateTextForm.bind(AscTest.Editor);
+	AscTest.JsApi.CreateTable = AscCommon.DocumentEditorApi.prototype.CreateTable.bind(AscTest.Editor);
+	AscTest.JsApi.HexColor = AscCommon.DocumentEditorApi.prototype.HexColor.bind(AscTest.Editor);
+	AscTest.JsApi.ThemeColor = AscCommon.DocumentEditorApi.prototype.ThemeColor.bind(AscTest.Editor);
+	AscTest.JsApi.AutoColor = AscCommon.DocumentEditorApi.prototype.AutoColor.bind(AscTest.Editor);
+	AscTest.JsApi.RGBA = AscCommon.DocumentEditorApi.prototype.RGBA.bind(AscTest.Editor);
+	AscTest.JsApi.RGB = AscCommon.DocumentEditorApi.prototype.RGB.bind(AscTest.Editor);
 
 	QUnit.testStart(function()
 	{

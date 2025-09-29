@@ -34,21 +34,21 @@ $(function () {
 	QUnit.module('Test the ApiRange methods');
 
 	function getFirstDocParagraph() {
-		const doc = AscTest.Editor.GetDocument();
+		const doc = AscTest.JsApi.GetDocument();
 		let par = doc.GetElement(0);
 		if (par)
 			return par;
 
-		par = AscTest.Editor.CreateParagraph();
+		par = AscTest.JsApi.CreateParagraph();
 		doc.Push(par);
 		return par;
 	}
 
 	QUnit.test('SetColor, GetColor', function (assert) {
-		const rgbColor = AscTest.Editor.RGB(255, 127, 0);
-		const hexColor = AscTest.Editor.HexColor('#bada55');
-		const themeColor = AscTest.Editor.ThemeColor('accent2');
-		const autoColor = AscTest.Editor.AutoColor();
+		const rgbColor = AscTest.JsApi.RGB(255, 127, 0);
+		const hexColor = AscTest.JsApi.HexColor('#bada55');
+		const themeColor = AscTest.JsApi.ThemeColor('accent2');
+		const autoColor = AscTest.JsApi.AutoColor();
 
 		const apiParagraph = getFirstDocParagraph();
 		apiParagraph.AddText('Paragraph for testing range color');
@@ -81,10 +81,10 @@ $(function () {
 	});
 
 	QUnit.test('SetShd, GetShd', function (assert) {
-		const rgbColor = AscTest.Editor.RGB(255, 127, 0);
-		const hexColor = AscTest.Editor.HexColor('#bada55');
-		const themeColor = AscTest.Editor.ThemeColor('accent2');
-		const autoColor = AscTest.Editor.AutoColor();
+		const rgbColor = AscTest.JsApi.RGB(255, 127, 0);
+		const hexColor = AscTest.JsApi.HexColor('#bada55');
+		const themeColor = AscTest.JsApi.ThemeColor('accent2');
+		const autoColor = AscTest.JsApi.AutoColor();
 
 		const apiParagraph = getFirstDocParagraph();
 		apiParagraph.AddText('Paragraph for testing range color');

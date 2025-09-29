@@ -34,7 +34,7 @@ $(function () {
 	QUnit.module('Test the ApiParagraph methods');
 
 	function createApiParagraph() {
-		return AscTest.Editor.CreateParagraph();
+		return AscTest.JsApi.CreateParagraph();
 	}
 
 	QUnit.test('SetShd, GetShd', function (assert) {
@@ -45,20 +45,20 @@ $(function () {
 		apiParagraph.SetShd('clear', 255, 122, 100);
 		assert.equalRgb(apiParagraph.GetShd(), { r: 255, g: 122, b: 100 }, 'Check shd color set with RGB components');
 
-		apiParagraph.SetShd('clear', AscTest.Editor.HexColor('55aa00'));
+		apiParagraph.SetShd('clear', AscTest.JsApi.HexColor('55aa00'));
 		assert.equalRgb(apiParagraph.GetShd(), { r: 85, g: 170, b: 0 }, 'Check shd color set with ApiColor (hex)');
 
-		apiParagraph.SetShd('clear', AscTest.Editor.ThemeColor('accent2'));
+		apiParagraph.SetShd('clear', AscTest.JsApi.ThemeColor('accent2'));
 		assert.strictEqual(apiParagraph.GetShd().IsThemeColor(), true, 'Check shd color set with ApiColor (theme)');
 
-		apiParagraph.SetShd('clear', AscTest.Editor.AutoColor());
+		apiParagraph.SetShd('clear', AscTest.JsApi.AutoColor());
 		assert.strictEqual(apiParagraph.GetShd().IsAutoColor(), true, 'Check shd color set with ApiColor (auto)');
 	});
 
 	QUnit.test('SetColor, GetColor', function (assert) {
-		const hexColor = AscTest.Editor.HexColor('#bada55');
-		const themeColor = AscTest.Editor.ThemeColor('accent2');
-		const autoColor = AscTest.Editor.AutoColor();
+		const hexColor = AscTest.JsApi.HexColor('#bada55');
+		const themeColor = AscTest.JsApi.ThemeColor('accent2');
+		const autoColor = AscTest.JsApi.AutoColor();
 
 		const apiParagraph = createApiParagraph();
 		apiParagraph.AddText('Run for testing paragraph color');
