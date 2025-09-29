@@ -151,7 +151,7 @@
 		}
 	}
 	function startRoundControl(graphics, x, y, extX, extY, nRadiusPx, arrColor) {
-		graphics.save();
+		graphics.SaveGrState();
 		const nRadius = Math.min(nRadiusPx * AscCommon.g_dKoef_pix_to_mm * AscCommon.AscBrowser.retinaPixelRatio, extX / 2, extY / 2);
 		graphics.p_color.apply(graphics, arrColor);
 		graphics.p_width(0);
@@ -170,7 +170,7 @@
 		graphics.EndClipPath();
 	}
 	function endRoundControl(graphics) {
-		graphics.restore();
+		graphics.RestoreGrState();
 	}
 	function CStepManager() {
 		this.timeoutId = null;
@@ -671,6 +671,7 @@ function getFlatPenColor() {
 		}
 		graphics._e();
 		endRoundControl(graphics);
+		graphics.RestoreGrState();
 	};
 
 	function CCheckBoxController(oControl) {
@@ -1131,7 +1132,7 @@ function getFlatPenColor() {
 		};
 	};
 	CSpinController.prototype.draw = function (graphics, transform, transformText, pageIndex, opt) {
-		graphics.SaveGrState()
+		graphics.SaveGrState();
 		transform = transform || this.control.transform;
 		graphics.transform3(transform);
 		startRoundControl(graphics, 0, 0, this.control.extX, this.control.extY, 2, getFlatPenColor());

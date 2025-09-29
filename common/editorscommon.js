@@ -12187,32 +12187,34 @@
 		this.CustomCounter = 0;
 		this.CustomActions = {};
 	}
-	CShortcuts.prototype.Add = function(nType, nCode, isCtrl, isShift, isAlt)
-	{
-		this.List[this.private_GetIndex(nCode, isCtrl, isShift, isAlt)] = nType;
+	CShortcuts.GetShortcutIndex = function(nCode, isCtrl, isShift, isAlt, isCommand) {
+		return ((nCode << 16) | (isCtrl ? 8 : 0) | (isShift ? 4 : 0) | (isAlt ? 2 : 0) | (isCommand ? 1 : 0));
 	};
-	CShortcuts.prototype.Get = function(nCode, isCtrl, isShift, isAlt)
+	CShortcuts.prototype.Add = function(nType, nCode, isCtrl, isShift, isAlt, isCommand)
 	{
-		var nType = this.List[this.private_GetIndex(nCode, isCtrl, isShift, isAlt)];
+		this.List[CShortcuts.GetShortcutIndex(nCode, isCtrl, isShift, isAlt, isCommand)] = nType;
+	};
+	CShortcuts.prototype.Get = function(nCode, isCtrl, isShift, isAlt, isCommand)
+	{
+		var nType = this.List[CShortcuts.GetShortcutIndex(nCode, isCtrl, isShift, isAlt, isCommand)];
 		return (undefined !== nType ? nType : 0);
 	};
-	CShortcuts.prototype.private_GetIndex = function(nCode, isCtrl, isShift, isAlt)
-	{
-		return ((nCode << 8) | (isCtrl ? 4 : 0) | (isShift ? 2 : 0) | (isAlt ? 1 : 0));
-	}
+	CShortcuts.prototype.GetShortcutObject = function(nIndex) {
+		return {KeyCode : nIndex >>> 16, CtrlKey : !!(nIndex & 8), ShiftKey : !!(nIndex & 4), AltKey : !!(nIndex & 2), MacCmdKey : !!(nIndex & 1)};
+	};
 	CShortcuts.prototype.CheckType = function(nType)
 	{
 		for (var nIndex in this.List)
 		{
 			if (this.List[nIndex] === nType)
-				return {KeyCode : nIndex >>> 8, CtrlKey : !!(nIndex & 4), ShiftKey : !!(nIndex & 2), AltKey : !!(nIndex & 1)};
+				return this.GetShortcutObject(nIndex);
 		}
 
 		return null;
 	};
-	CShortcuts.prototype.Remove = function(nCode, isCtrl, isShift, isAlt)
+	CShortcuts.prototype.Remove = function(nCode, isCtrl, isShift, isAlt, isCommand)
 	{
-		delete this.List[this.private_GetIndex(nCode, isCtrl, isShift, isAlt)];
+		delete this.List[CShortcuts.GetShortcutIndex(nCode, isCtrl, isShift, isAlt, isCommand)];
 	};
 	CShortcuts.prototype.RemoveByType = function(nType)
 	{
@@ -12239,6 +12241,33 @@
 		var nType = this.GetNewCustomType();
 		this.CustomActions[nType] = new CCustomShortcutActionSymbol(nCharCode, sFont);
 		return nType;
+	};
+	CShortcuts.prototype.Reset = function()
+	{
+		this.List = {};
+	};
+	CShortcuts.prototype.ApplyFromStorage = function(oAscShortcut)
+	{
+		const arrKeyCodes = [oAscShortcut.keyCode];
+		const arrAddKeyCodes = Asc.c_oAscKeyCodeAnalogues[oAscShortcut.keyCode];
+		if (arrAddKeyCodes)
+		{
+			arrKeyCodes.push.apply(arrKeyCodes, arrAddKeyCodes);
+		}
+		if (oAscShortcut.isHidden)
+		{
+			for (let i = 0; i < arrKeyCodes.length; i += 1)
+			{
+				this.Remove(arrKeyCodes[i], oAscShortcut.ctrlKey, oAscShortcut.shiftKey, oAscShortcut.altKey, oAscShortcut.commandKey);
+			}
+		}
+		else
+		{
+			for (let i = 0; i < arrKeyCodes.length; i += 1)
+			{
+				this.Add(oAscShortcut.type, arrKeyCodes[i], oAscShortcut.ctrlKey, oAscShortcut.shiftKey, oAscShortcut.altKey, oAscShortcut.commandKey);
+			}
+		}
 	};
 
 	function CCustomShortcutActionSymbol(nCharCode, sFont)

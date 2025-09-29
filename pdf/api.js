@@ -662,11 +662,13 @@
 
 		oDoc.DoAction(function() {
 			AscFonts.IsCheckSymbols = true;
-			oDoc.AddChart(nType, true, Placeholder, oViewer.currentPage);
+			oDoc.AddChart(nType, true, Placeholder, oViewer.currentPage, bOpenChartEditor);
 			AscFonts.IsCheckSymbols = false;
-			if (bOpenChartEditor) {
+
+			oViewer.paint(null, function() {
 				oDoc.OpenChartEditor();
-			}
+			});
+			
 		}, AscDFH.historydescription_Document_AddChart);
 	};
 	PDFEditorApi.prototype.ChartApply = function(obj) {

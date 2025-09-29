@@ -4198,8 +4198,7 @@ function CBinaryFileWriter()
                 bIsExistLn = true;
         }
 
-        if (spPr.xfrm && spPr.xfrm.isNotNull())
-            oThis.WriteRecord2(0, spPr.xfrm, oThis.WriteXfrm);
+        oThis.WriteRecord2(0, spPr.xfrm, oThis.WriteXfrm);
 
         oThis.WriteRecord2(1, spPr.geometry, oThis.WriteGeometry);
 

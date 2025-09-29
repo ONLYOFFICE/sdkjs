@@ -446,16 +446,21 @@
 
                     let oTargetTextObject = AscFormat.getTargetTextObject(oController);
                     if (oTargetTextObject) {
-                        let oGroup = oTargetTextObject.getMainGroup();
+                        let oGroup = oTargetTextObject.getMainGroup && oTargetTextObject.getMainGroup();
                         if (oGroup && oGroup.IsAnnot()) {
                             oGroup.SetInTextBox(true);
                             oGroup.SetNeedRecalc(true);
                         }
                         else {
-                            oTargetTextObject.SetNeedRecalc(true);
+                            let oMainObj = oTargetTextObject;
+                            while (!oMainObj.SetNeedRecalc) {
+                                oMainObj = oMainObj.parent;
+                            }
+
+                            oMainObj.SetNeedRecalc(true);
                             
-                            if (oTargetTextObject.checkExtentsByDocContent)
-                                oTargetTextObject.checkExtentsByDocContent();
+                            if (oMainObj.checkExtentsByDocContent)
+                                oMainObj.checkExtentsByDocContent();
                         }
                     }
                 }
@@ -490,7 +495,7 @@
                 for (let i = 0; i < arr.length; ++i) {
                     cur_pr = null;
 
-                    let oGroup = arr[i].getMainGroup();
+                    let oGroup = arr[i].getMainGroup && arr[i].getMainGroup();
                     if (arr[i].IsAnnot && arr[i].IsAnnot()
                         || (oGroup && oGroup.IsAnnot && oGroup.IsAnnot())
                         || arr[i].IsDrawing() && arr[i].IsShape() && arr[i].GetEditField()) {

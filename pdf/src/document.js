@@ -2090,7 +2090,12 @@ var CPresentation = CPresentation || function(){};
             // действия mouseEnter и mouseExit у полей
             if (oMouseMoveField != this.mouseMoveField && true !== this.IsEditFieldsMode()) {
                 if (this.mouseMoveField) {
-                    this.mouseMoveField.onMouseExit();
+                    if (!this.mouseMoveField.IsUseInDocument()) {
+                        this.mouseMoveField = null;
+                    }
+                    else {
+                        this.mouseMoveField.onMouseExit();
+                    }
                 }
 
                 this.mouseMoveField = oMouseMoveField;
@@ -2735,6 +2740,7 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.MovePages = function(aIndexes, nNewPos) {
         if (!Array.isArray(aIndexes) || aIndexes.length === 0) return;
+        if (Math.max.apply(null, aIndexes) >= this.GetPagesCount() || nNewPos >= this.GetPagesCount()) return;
 
         let nMinIdx = Infinity;
         let nMaxIdx = 0;
@@ -2914,6 +2920,8 @@ var CPresentation = CPresentation || function(){};
             oEditShape.select(oController, oField.GetPage());
         }
 
+        oField.Commit();
+
         return true;
     };
     CPDFDoc.prototype.private_AddAnnotsByInfo = function(aAnnotsInfo, pageOffset) {
@@ -2994,6 +3002,8 @@ var CPresentation = CPresentation || function(){};
             }
 
             let oParent = _t.CreateField(widgets[0].GetFullName(), widgets[0].GetType(), []);
+            // force write information about new parent
+            oParent._wasChanged = true;
 
             widgets.forEach(function(widget) {
                 oParent.DrainLogicFrom(widget);
@@ -3002,6 +3012,8 @@ var CPresentation = CPresentation || function(){};
 
             widgets.forEach(function(widget) {
                 oParent.AddKid(widget);
+                // force write information about new parent
+                widget._wasChanged = true;
             });
         });
 
@@ -3203,6 +3215,10 @@ var CPresentation = CPresentation || function(){};
         this.CheckComment(oAnnot);
     };
     CPDFDoc.prototype.AddComment = function(AscCommentData) {
+        if (null == AscCommentData.asc_getQuoteText()) {
+            AscCommentData.asc_putQuoteText("");
+        }
+
         let oCurHistory = AscCommon.History;
         AscCommon.History = this.History;
 
@@ -5630,6 +5646,12 @@ var CPresentation = CPresentation || function(){};
             }
         }
 
+        // cant paste object when page is selected in thumbnails
+        let oThumbnails = this.Viewer.thumbnails;
+        if (!oTargetContent.MergePagesInfo.binaryData && oThumbnails.isInFocus) {
+            return false;
+        }
+
         let oThis = this;
 
         this.Viewer.IsOpenFormsInProgress = true;
@@ -6817,8 +6839,8 @@ var CPresentation = CPresentation || function(){};
                     aOriginIndexes.push(oFilePage.originIndex);
                 }
                 else {
-                    if (i < this.Viewer.file.originalPagesCount) {
-                        aOriginIndexes.push(i + this.Viewer.file.originalPagesCount);
+                    if (i <= this.Viewer.file.originalPagesCount - 1) {
+                        aOriginIndexes.push(i + this.Viewer.file.originalPagesCount - 1);
                     }
                     else {
                         aOriginIndexes.push(i);
@@ -7356,6 +7378,9 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.UpdateMaxApIdx = function(nApIdx) {
         AscCommon.g_oIdCounter.m_nIdCounterEdit = Math.max(nApIdx, AscCommon.g_oIdCounter.m_nIdCounterEdit);
+    };
+    CPDFDoc.prototype.UpdateMaxLoadApIdx = function(nApIdx) {
+        AscCommon.g_oIdCounter.m_nIdCounterLoad = Math.max(nApIdx, AscCommon.g_oIdCounter.m_nIdCounterLoad);
     };
     CPDFDoc.prototype.Add_ContentChanges = function(Changes) {
         this.pagesContentChanges.Add(Changes);

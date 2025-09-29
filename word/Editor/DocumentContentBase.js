@@ -3048,3 +3048,7 @@ CDocumentContentBase.prototype.UpdateSectionsBeforeRemove = function(items, chec
 	
 	logicDocument.GetSections().UpdateOnRemove(items, checkHdrFtr);
 };
+CDocumentContentBase.prototype.IsFirstOnDocumentPage = function(curPage)
+{
+	return false;
+};

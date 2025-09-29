@@ -497,6 +497,7 @@
 	 * @property {string | number} CurrentPage - Returns the current page which is displayed for the page field (valid only for page fields).
 	 * @property {ApiPivotItem | ApiPivotItem[]} PivotItems - Returns an object that represents either a single pivot table item (the ApiPivotItem object)
 	 * or a collection of all the visible and hidden items (an array of the ApiPivotItem objects) in the specified field.
+	 * @property {ApiPivotFilters} PivotFilters - Returns an object that represents the filters for the specified field.
 	 * @property {string} AutoSortField - Returns the name of the field that is used to sort the specified field.
 	 * @property {SortOrder} AutoSortOrder - Returns the sort order for the specified field.
 	 */
@@ -9614,6 +9615,44 @@
 		wsView.cellCommentator.deleteCommentsRange(bbox, null);
 	};
 
+    /**
+     * Sets the bold property to the text characters in the current cell or cell range.
+     * @memberof ApiRange
+     * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/ClearFormats.js
+     */
+    ApiRange.prototype.ClearFormats = function () {
+        const range = this.range;
+        const bbox = range.bbox;
+        const ws = range.worksheet;
+		range.cleanFormat();
+        ws.clearConditionalFormattingRulesByRanges([bbox]);
+    };
+
+    /**
+     * Sets the bold property to the text characters in the current cell or cell range.
+     * @memberof ApiRange
+     * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/ClearContents.js
+     */
+    ApiRange.prototype.ClearContents = function () {
+		const range = this.range;
+		const bbox = range.bbox;
+		const ws = range.worksheet;
+        this.range.cleanAll();
+		ws.deletePivotTables(bbox);
+    };
+
+    /**
+     * Sets the bold property to the text characters in the current cell or cell range.
+     * @memberof ApiRange
+     * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/ClearHyperlinks.js
+     */
+    ApiRange.prototype.ClearHyperlinks = function () {
+        this.range.cleanHyperlinks();
+    };
+
 	/**
 	 * Returns a Range object that represents the rows in the specified range. If the specified row is outside the Range object, a new Range will be returned that represents the cells between the columns of the original range in the specified row.
 	 * @memberof ApiRange
@@ -9641,6 +9680,66 @@
 	Object.defineProperty(ApiRange.prototype, "Rows", {
 		get: function () {
 			return this.GetRows();
+		}
+	});
+
+	/**
+	 * Return a number of cells in the current range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetCellsCount.js
+	 */
+	ApiRange.prototype.GetCellsCount = function() {
+		const bbox = this.range.bbox;
+		if (!bbox) {
+			return 0;
+		}
+		return bbox.getWidth() * bbox.getHeight();
+	};
+	Object.defineProperty(ApiRange.prototype, "CellsCount", {
+		get: function () {
+			return this.GetCellsCount();
+		}
+	});
+
+	/**
+	 * Return a number of columns in the current range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetColumnsCount.js
+	 */
+	ApiRange.prototype.GetColumnsCount = function() {
+		const bbox = this.range.bbox;
+		if (!bbox) {
+			return 0;
+		}
+		return bbox.getWidth();
+	};
+	Object.defineProperty(ApiRange.prototype, "ColumnsCount", {
+		get: function () {
+			return this.GetColumnsCount();
+		}
+	});
+
+	/**
+	 * Return a number of rows in the current range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetRowsCount.js
+	 */
+	ApiRange.prototype.GetRowsCount = function() {
+		const bbox = this.range.bbox;
+		if (!bbox) {
+			return 0;
+		}
+		return bbox.getHeight();
+	};
+	Object.defineProperty(ApiRange.prototype, "RowsCount", {
+		get: function () {
+			return this.GetRowsCount();
 		}
 	});
 
@@ -19186,7 +19285,7 @@
 		}
 		dataValidation.ranges = ranges;
 
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (!worksheet) {
 			return null;
 		}
@@ -19221,7 +19320,7 @@
 			return;
 		}
 
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (!worksheet || !worksheet.dataValidations) {
 			return;
 		}
@@ -19251,7 +19350,7 @@
 			return null;
 		}
 
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (!worksheet || !worksheet.dataValidations) {
 			return null;
 		}
@@ -20092,7 +20191,7 @@
 			return null;
 		}
 
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (!worksheet) {
 			return null;
 		}
@@ -20276,7 +20375,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/AddAboveAverage.js
 	 */
 	ApiFormatConditions.prototype.AddAboveAverage = function() {
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (!worksheet) {
 			return null;
 		}
@@ -20320,7 +20419,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/AddColorScale.js
 	 */
 	ApiFormatConditions.prototype.AddColorScale = function(ColorScaleType) {
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (!worksheet) {
 			return null;
 		}
@@ -20424,7 +20523,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/AddDatabar.js
 	 */
 	ApiFormatConditions.prototype.AddDatabar = function() {
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (!worksheet) {
 			return null;
 		}
@@ -20488,7 +20587,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/AddIconSetCondition.js
 	 */
 	ApiFormatConditions.prototype.AddIconSetCondition = function() {
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (!worksheet) {
 			return null;
 		}
@@ -20562,7 +20661,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/AddTop10.js
 	 */
 	ApiFormatConditions.prototype.AddTop10 = function() {
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (!worksheet) {
 			return null;
 		}
@@ -20608,7 +20707,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/AddUniqueValues.js
 	 */
 	ApiFormatConditions.prototype.AddUniqueValues = function() {
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (!worksheet) {
 			return null;
 		}
@@ -20648,7 +20747,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/Delete.js
 	 */
 	ApiFormatConditions.prototype.Delete = function() {
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (!worksheet || !worksheet.aConditionalFormattingRules) {
 			return;
 		}
@@ -20733,7 +20832,7 @@
 	};
 
 	ApiFormatConditions.prototype.private_setRule = function(rule) {
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		let arr = [rule];
 		/*if (worksheet.isConditionalFormattingRules()) {
 			worksheet.forEachConditionalFormattingRules(function (val) {
@@ -20791,7 +20890,7 @@
 			return;
 		}
 
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (!worksheet || !worksheet.aConditionalFormattingRules) {
 			return;
 		}
@@ -20881,7 +20980,7 @@
 			}
 		}
 
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		worksheet.changeCFRule(oldRule, this.rule, true);
 
 		return this;
@@ -20899,7 +20998,7 @@
 			return;
 		}
 
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (!worksheet || !worksheet.aConditionalFormattingRules) {
 			return;
 		}
@@ -20928,7 +21027,7 @@
 			return;
 		}
 
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (!worksheet || !worksheet.aConditionalFormattingRules) {
 			return;
 		}
@@ -20960,7 +21059,7 @@
 			return;
 		}
 
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (!worksheet || !worksheet.aConditionalFormattingRules) {
 			return;
 		}
@@ -21008,7 +21107,7 @@
 			return null;
 		}
 
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (!worksheet) {
 			return null;
 		}
@@ -21408,7 +21507,7 @@
 			return;
 		}
 
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (!worksheet || !worksheet.aConditionalFormattingRules) {
 			return;
 		}
@@ -21480,7 +21579,7 @@
 			return;
 		}
 
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (!worksheet) {
 			return;
 		}
@@ -26378,7 +26477,13 @@
 	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType;
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
 	ApiRange.prototype["GetCol"] = ApiRange.prototype.GetCol;
+	ApiRange.prototype["GetCellsCount"] = ApiRange.prototype.GetCellsCount;
+	ApiRange.prototype["GetRowsCount"] = ApiRange.prototype.GetRowsCount;
+	ApiRange.prototype["GetColumnsCount"] = ApiRange.prototype.GetColumnsCount;
 	ApiRange.prototype["Clear"] = ApiRange.prototype.Clear;
+    ApiRange.prototype["ClearFormats"] = ApiRange.prototype.ClearFormats;
+    ApiRange.prototype["ClearContents"] = ApiRange.prototype.ClearContents;
+    ApiRange.prototype["ClearHyperlinks"] = ApiRange.prototype.ClearHyperlinks;
 	ApiRange.prototype["GetRows"] = ApiRange.prototype.GetRows;
 	ApiRange.prototype["GetCols"] = ApiRange.prototype.GetCols;
 	ApiRange.prototype["End"] = ApiRange.prototype.End;
@@ -27148,7 +27253,10 @@
 	ApiPivotField.prototype["SetNumberFormat"]           = ApiPivotField.prototype.SetNumberFormat;
 	ApiPivotField.prototype["SetFunction"]               = ApiPivotField.prototype.SetFunction;
 	ApiPivotField.prototype["GetFunction"]               = ApiPivotField.prototype.GetFunction;
+	ApiPivotField.prototype["GetPivotFilters"]           = ApiPivotField.prototype.GetPivotFilters;
 	ApiPivotField.prototype["AutoSort"]                  = ApiPivotField.prototype.AutoSort;
+
+	ApiPivotFilters.prototype["Add"]                     = ApiPivotFilters.prototype.Add;
 
 	ApiPivotItem.prototype["GetName"]    = ApiPivotItem.prototype.GetName;
 	ApiPivotItem.prototype["GetCaption"] = ApiPivotItem.prototype.GetCaption;

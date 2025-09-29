@@ -941,7 +941,7 @@
 							'SUM', Asc.c_oAscPopUpSelectorType.Func, true);
 					break;
 				}
-				case Asc.c_oAscSpreadsheetShortcutType.Print: {
+				case Asc.c_oAscSpreadsheetShortcutType.PrintPreviewAndPrint: {
 					if (this.getCellEditMode()) {
 						break;
 					}
@@ -1067,7 +1067,7 @@
 			if (oThis.getCellEditMode() && !oThis.hasFocus || oThis.isSelectMode ||
 				oThis.isFillHandleMode || oThis.isMoveRangeMode || oThis.isMoveResizeRange) {
 				// For some reason, I really want to process extra conditions in our code, instead of processing them at the top...
-				if (oThis.enableKeyEvents || (nShortcutAction !== Asc.c_oAscSpreadsheetShortcutType.Print)) {
+				if (oThis.enableKeyEvents || (nShortcutAction !== Asc.c_oAscSpreadsheetShortcutType.PrintPreviewAndPrint)) {
 					// Only if events are disabled and Ctrl+S or Ctrl+P is pressed we will process them
 					return nRetValue;
 				}
@@ -1198,7 +1198,7 @@
 						if (oThis.getCellEditMode()) {
 							break;
 						}
-						const bIsSelectColumns = oEvent.IsShortcutCtrl() || oEvent.IsMacCmd();
+						const bIsSelectColumns = oEvent.IsShortcutCtrl() || oEvent.IsCmd();
 						if (bIsSelectColumns && bIsSelect && bIsMacOs) {
 							break;
 						}

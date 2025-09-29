@@ -4925,7 +4925,11 @@ var g_oFontProperties = {
 		return this.getAlign2().getShrinkToFit();
 	};
 	CellXfs.prototype.asc_getReadingOrder = function () {
-		return this.getAlign2().getReadingOrder();
+		let readingOrder = this.getAlign2().getReadingOrder();
+		if (readingOrder === null || readingOrder === undefined) {
+			readingOrder = Asc.c_oReadingOrderTypes.Context;
+		}
+		return readingOrder;
 	};
 	CellXfs.prototype.asc_getPreview = function (api, text, width, height) {
 		return AscCommonExcel.generateXfsStyle(width, height, api.wb, this, text);

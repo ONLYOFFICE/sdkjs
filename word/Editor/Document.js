@@ -1408,7 +1408,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.CompileStyleOnLoad        = false; // Компилировать ли принудительно стили во время загрузки
 	this.SmartParagraphSelection   = true;  // Выделять ли автоматически знак параграфа, когда все содержимое параграфа выделено
 	this.PreventPreDelete          = false; // Заглушка на случай, когда удаляемые объекты, не удаляются, а переносятся
-	this.ClearNotesOnPreDelete     = true;  // Очищать ли сноски при удалении (выключаем, при сплите параграфа)
+	this.ClearNotesOnPreDelete     = true;  // Очищать ли сноски при удалении (выключаем, при сплите параграфа) // TODO: Объединить с PreventPreDelete
 
 	this.DrawTableMode = {
 		Start  : false,
@@ -3936,8 +3936,16 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
             _StartIndex = this.Pages[_PageIndex].Sections[_SectionIndex].Columns[_ColumnIndex].Pos;
 			_sectPr     = this.Pages[_PageIndex].Sections[_SectionIndex].GetSectPr();
             _bStart     = false;
-	
-			this.Pages[_PageIndex].Sections[_SectionIndex].Init(_PageIndex, _sectPr, this.Layout.GetSectionIndex(_sectPr));
+
+			let currPageSection = this.Pages[_PageIndex].Sections[_SectionIndex];
+			currPageSection.Init(_PageIndex, _sectPr, this.Layout.GetSectionIndex(_sectPr));
+			if (_SectionIndex > 0)
+			{
+				let prevPageSection = this.Pages[_PageIndex].Sections[_SectionIndex - 1];
+				currPageSection.Y       = prevPageSection.GetBottomLimit() + 0.001;
+				currPageSection.YLimit  = this.Pages[_PageIndex].YLimit;
+				currPageSection.YLimit2 = this.Pages[_PageIndex].YLimit;
+			}
 			
             break;
         }
@@ -4014,13 +4022,7 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 				// на данной странице мы будем использовать только новые горизонтальные поля, а поля по вертикали
 				// используем от предыдущей секции.
 				
-				var SectionY = Y;
-				for (var TempColumnIndex = 0; TempColumnIndex < ColumnsCount; ++TempColumnIndex)
-				{
-					if (PageSection.Columns[TempColumnIndex].Bounds.Bottom > SectionY)
-						SectionY = PageSection.Columns[TempColumnIndex].Bounds.Bottom;
-				}
-				
+				let SectionY = PageSection.GetBottomLimit();
 				PageSection.YLimit = SectionY;
 				
 				if ((!PageSection.IsCalculatingSectionBottomLine() || PageSection.CanDecreaseBottomLine()) && ColumnsCount > 1 && PageSection.CanRecalculateBottomLine())
@@ -14195,7 +14197,7 @@ CDocument.prototype.Get_SectionPageNumInfo = function(Page_abs)
 		if (curSectPr !== prevSectPr && c_oAscSectionBreakType.Continuous === curSectPr.Get_Type() && true === curSectPr.Compare_PageSize(prevSectPr))
 		{
 			let paragraph = this.SectionsInfo.GetFirstParagraph(SectIndex);
-			if (paragraph && true !== paragraph.IsStartFromNewPage())
+			if (paragraph && true !== paragraph.IsFirstOnDocumentPage())
 				bCheckFP = false;
 		}
 	}
@@ -17047,9 +17049,17 @@ CDocument.prototype.AddComplexForm = function(oPr, formPr)
 
 	oCC.SetComplexFormPr(oPr);
 	oCC.MoveCursorToStartPos();
-
-	let _formPr = formPr ? formPr : new AscWord.CSdtFormPr();
-	oCC.SetFormPr(_formPr);
+	
+	if (!formPr)
+	{
+		formPr = new AscWord.CSdtFormPr();
+		let oform = this.GetOFormDocument();
+		let defaultRole = oform ? oform.getDefaultRole() : null;
+		if (defaultRole)
+			formPr.SetRole(defaultRole.getRole());
+	}
+	
+	oCC.SetFormPr(formPr);
 
 	if (sText)
 	{
@@ -17060,7 +17070,7 @@ CDocument.prototype.AddComplexForm = function(oPr, formPr)
 		oCC.SelectContentControl();
 	}
 	
-	if (_formPr.GetFixed())
+	if (formPr.GetFixed())
 		oCC.ConvertFormToFixed();
 
 	this.UpdateSelection();
@@ -27781,6 +27791,10 @@ CDocument.prototype.SetNumeralType = function(type)
 CDocument.prototype.GetNumeralType = function()
 {
 	return this.NumeralType;
+};
+CDocument.prototype.IsFirstOnDocumentPage = function(curPage)
+{
+	return true;
 };
 
 function CDocumentSelectionState()

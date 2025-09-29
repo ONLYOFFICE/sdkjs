@@ -186,6 +186,7 @@
 			"cell/model/Slicer.js",
 			"cell/model/NamedSheetViews.js",
 			"cell/model/protectRange.js",
+			"cell/model/Shortcuts.js",
 			"cell/view/mobileTouch.js",
 			"cell/view/StringRender.js",
 			"cell/view/CellTextRender.js",

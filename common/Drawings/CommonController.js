@@ -5855,7 +5855,7 @@
 							this.decreaseFontSize();
 							break;
 						}
-						case Asc.c_oAscSpreadsheetShortcutType.DrawingSubscript: {
+						case Asc.c_oAscSpreadsheetShortcutType.Subscript: {
 							if (!bCanEdit) {
 								break;
 							}
@@ -5865,7 +5865,7 @@
 							}
 							break;
 						}
-						case Asc.c_oAscSpreadsheetShortcutType.DrawingSuperscript: {
+						case Asc.c_oAscSpreadsheetShortcutType.Superscript: {
 							if (!bCanEdit) {
 								break;
 							}
@@ -5875,7 +5875,7 @@
 							}
 							break;
 						}
-						case Asc.c_oAscSpreadsheetShortcutType.DrawingCenterPara: {
+						case Asc.c_oAscSpreadsheetShortcutType.CenterPara: {
 							if (!bCanEdit) {
 								break;
 							}
@@ -5885,7 +5885,7 @@
 							}
 							break;
 						}
-						case Asc.c_oAscSpreadsheetShortcutType.DrawingJustifyPara: {
+						case Asc.c_oAscSpreadsheetShortcutType.JustifyPara: {
 							if (!bCanEdit) {
 								break;
 							}
@@ -5895,7 +5895,7 @@
 							}
 							break;
 						}
-						case Asc.c_oAscSpreadsheetShortcutType.DrawingLeftPara: {
+						case Asc.c_oAscSpreadsheetShortcutType.LeftPara: {
 							if (!bCanEdit) {
 								break;
 							}
@@ -5905,7 +5905,7 @@
 							}
 							break;
 						}
-						case Asc.c_oAscSpreadsheetShortcutType.DrawingRightPara: {
+						case Asc.c_oAscSpreadsheetShortcutType.RightPara: {
 							if (!bCanEdit) {
 								break;
 							}
@@ -5915,7 +5915,7 @@
 							}
 							break;
 						}
-						case Asc.c_oAscSpreadsheetShortcutType.DrawingEnDash: {
+						case Asc.c_oAscSpreadsheetShortcutType.EnDash: {
 							if (!bCanEdit) {
 								break;
 							}

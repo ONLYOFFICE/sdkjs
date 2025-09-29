@@ -1683,6 +1683,8 @@
             oParentField.AddKid(this);
         }
 
+        this.Commit();
+        
         return true;
     };
     CBaseField.prototype.IsNeedRecalc = function() {

@@ -446,6 +446,9 @@
     CPdfDrawingPrototype.prototype.getDrawingDocument = function() {
         return Asc.editor.getPDFDoc().GetDrawingDocument();
     };
+    CPdfDrawingPrototype.prototype.handleUpdateRot = function() {
+        this.SetNeedRecalc(true);
+    };
 
     /////////////////////////////
     /// saving

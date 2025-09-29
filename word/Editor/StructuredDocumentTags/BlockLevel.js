@@ -267,6 +267,21 @@ CBlockLevelSdt.prototype.GetRelativeCurrentPage = function()
 {
 	return this.Content.GetRelativeCurrentPage();
 };
+CBlockLevelSdt.prototype.IsFirstOnDocumentPage = function(curPage)
+{
+	if (0 === curPage || undefined === curPage)
+	{
+		if (null !== this.Get_DocumentPrev())
+			return false;
+		
+		if (!this.Parent || !this.Parent.IsFirstOnDocumentPage)
+			return true;
+		
+		return this.Parent.IsFirstOnDocumentPage(this.GetRelativePage(0));
+	}
+	
+	return this.GetAbsolutePage(curPage) !== this.GetAbsolutePage(curPage - 1);
+};
 CBlockLevelSdt.prototype.IsInText = function(X, Y, CurPage)
 {
 	return this.Content.IsInText(X, Y, CurPage);

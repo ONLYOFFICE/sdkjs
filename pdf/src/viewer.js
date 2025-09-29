@@ -1276,6 +1276,7 @@
 			let oFormsInfo	= this.file.nativeFile["getInteractiveFormsInfo"]();
 			let nMaxIdx		= this.file.nativeFile["getStartID"]();
 
+			oDoc.UpdateMaxLoadApIdx(nMaxIdx);
 			oDoc.private_AddFormsByInfo(oFormsInfo);
 			oDoc.UpdateMaxApIdx(nMaxIdx);
 		};
@@ -1466,12 +1467,12 @@
 				posX = this.scrollMaxX;
 
 			let oDoc		= this.getPDFDoc();
-			let oActiveForm	= oDoc.activeForm;
-			let nPage		= oActiveForm ? oActiveForm.GetPage() : undefined;
+			let oActiveObj	= oDoc.GetActiveObject();
+			let nPage		= oActiveObj ? oActiveObj.GetPage() : undefined;
 
 			this.checkVisiblePages();
 			// выход из активного объекта если сместились на другую страницу
-			if (!oDoc.IsEditFieldsMode() && oActiveForm && !(nPage >= this.startVisiblePage && nPage <= this.endVisiblePage)) {
+			if (oActiveObj && !(nPage >= this.startVisiblePage && nPage <= this.endVisiblePage)) {
 				oDoc.BlurActiveObject();
 			}
 
@@ -1480,15 +1481,15 @@
 		};
 		this.scrollToXY = function(posY, posX) {
 			let oDoc		= this.getPDFDoc();
-			let oActiveForm	= oDoc.activeForm;
-			let nPage		= oActiveForm ? oActiveForm.GetPage() : undefined;
+			let oActiveObj	= oDoc.GetActiveObject();
+			let nPage		= oActiveObj ? oActiveObj.GetPage() : undefined;
 
 			this.m_oScrollVerApi.scrollToY(posY);
 			this.m_oScrollVerApi.scrollToX(posX);
 
 			this.checkVisiblePages();
 			// выход из активного объекта если сместились на другую страницу
-			if (!oDoc.IsEditFieldsMode() && oActiveForm && !(nPage >= this.startVisiblePage && nPage <= this.endVisiblePage)) {
+			if (oActiveObj && !(nPage >= this.startVisiblePage && nPage <= this.endVisiblePage)) {
 				oDoc.BlurActiveObject();
 			}
 		};
@@ -1858,10 +1859,11 @@
 			// down inside drawing (placeholders)
 			if (Asc.editor.canEdit()) {
 				let pos = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
-				
-				let is_drawing = oDrDoc.checkMouseDown_Drawing(pos, e === undefined ? true : false);
-				if (is_drawing === true) {
-					return;
+				if (pos.Page !== -1) {
+					let is_drawing = oDrDoc.checkMouseDown_Drawing(pos, e === undefined ? true : false);
+					if (is_drawing === true) {
+						return;
+					}
 				}
 			}
 
@@ -1877,6 +1879,10 @@
 					if (oThis.overlay.m_oContext)
 					{
 						let pageCoords = oThis.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+						if (!pageCoords) {
+							return false;
+						}
+
 						let isSelectionUse = oThis.file.isSelectionUse();
 						let selection = oThis.file.getSelection();
 						let pageSelQuads = pageCoords ? selection.quads.find(function(pageQuads) {
@@ -1948,7 +1954,11 @@
 				return;
 			}
 
-			var pageObjectLogic = this.getPageByCoords2(oThis.mouseDownCoords.X, oThis.mouseDownCoords.Y);
+			let pageObjectLogic = this.getPageByCoords2(oThis.mouseDownCoords.X, oThis.mouseDownCoords.Y);
+			if (!pageObjectLogic) {
+				return false;
+			}
+
 			if (e.ShiftKey) {
 				this.file.Selection.IsSelection = true;
 				this.file.onMouseMove(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
@@ -2013,17 +2023,22 @@
 			// up inside drawing (placeholders)
 			if (Asc.editor.canEdit()) {
 				let pos = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
-				
-				let is_drawing = oDrDoc.checkMouseUp_Drawing(pos);
-				if (is_drawing === true)
-					return;
+				if (pos.Page !== -1) {
+					let is_drawing = oDrDoc.checkMouseUp_Drawing(pos);
+					if (is_drawing === true)
+						return;
+				}
 			}
 
 			oDoc.OnMouseUp(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, AscCommon.global_mouseEvent);
 
 			if (oThis.canSelectPageText() && !oThis.MouseHandObject && !oDoc.mouseDownAnnot && !oDoc.mouseDownField)
 			{
-				var pageObjectLogic = oThis.getPageByCoords2(oThis.mouseDownCoords.X, oThis.mouseDownCoords.Y);
+				let pageObjectLogic = oThis.getPageByCoords2(oThis.mouseDownCoords.X, oThis.mouseDownCoords.Y);
+				if (!pageObjectLogic) {
+					return false;
+				}
+
 				if (global_mouseEvent.ClickCount == 2)
 					oThis.file.selectWholeWord(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
 				else if (global_mouseEvent.ClickCount == 3)
@@ -2072,12 +2087,13 @@
 			// move inside drawing (placeholders)
 			if (Asc.editor.canEdit()) {
 				let pos = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
-				
-				let is_drawing = oDrDoc.checkMouseMove_Drawing(pos, e === undefined ? true : false);
-				if (is_drawing === true) {
-					oDoc.UpdateCursorType(pos.X, pos.Y, pos.Page, global_mouseEvent);
-					oDrDoc.checkMouseMove_Drawing(pos, e === undefined);
-					return;
+				if (pos.Page !== -1) {
+					let is_drawing = oDrDoc.checkMouseMove_Drawing(pos, e === undefined ? true : false);
+					if (is_drawing === true) {
+						oDoc.UpdateCursorType(pos.X, pos.Y, pos.Page, global_mouseEvent);
+						oDrDoc.checkMouseMove_Drawing(pos, e === undefined);
+						return;
+					}
 				}
 			}
 
@@ -2139,7 +2155,11 @@
 						// нажатая мышка - курсор всегда default (так как за eps вышли)
 						oThis.setCursorType("default");
 
-						var pageObjectLogic = oThis.getPageByCoords2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+						let pageObjectLogic = oThis.getPageByCoords2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+						if (!pageObjectLogic) {
+							return false;
+						}
+
 						oThis.file.onMouseMove(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
 					}
 					else
@@ -2807,12 +2827,12 @@
 			
 			this.isClearPages = false;
 			this.updateCurrentPage(this.pageDetector.getCurrentPage(this.currentPage));
-			let oActiveForm	= oDoc.activeForm;
+			let oActiveObj	= oDoc.GetActiveObject();
 
 			// выход из активного объекта если сместились на другую страницу
-			if (!oDoc.IsEditFieldsMode() && oActiveForm && this.pageDetector.pages.map(function(item) {
+			if (oActiveObj && this.pageDetector.pages.map(function(item) {
 				return item.num;
-			}).includes(oActiveForm.GetPage()) == false) {
+			}).includes(oActiveObj.GetPage()) == false) {
 				oDoc.BlurActiveObject();
 			}
 
@@ -3143,7 +3163,11 @@
 		};
 		this.removeSelection = function()
 		{
-			var pageObjectLogic = this.getPageByCoords2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+			let pageObjectLogic = this.getPageByCoords2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+			if (!pageObjectLogic) {
+				return false;
+			}
+
 			this.file.onMouseDown(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
 			this.file.onMouseUp(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
 		};
@@ -4718,6 +4742,10 @@
 			}
 		}
 
+		if (this.scheduledRepaintTimer == null) {
+			oDoc.UpdateInterface();
+		}
+
 		if (oMemory) {
 			let nStartPos = oMemory.GetCurPosition();
 			oMemory.Skip(4);
@@ -5061,6 +5089,10 @@
 			if (isParentsChanged) {
 				checkMemory();
 			}
+		}
+
+		if (this.scheduledRepaintTimer == null) {
+			oDoc.UpdateInterface();
 		}
 
 		if (oMemory) {
