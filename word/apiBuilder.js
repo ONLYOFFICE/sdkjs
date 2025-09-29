@@ -4881,7 +4881,9 @@
 	 */
 	Api.prototype.HexColor = function (hexString) {
 		hexString = hexString.replace(/^#/, '');
-		const hexNumber = parseInt(hexString, 16);
+		let hexNumber = parseInt(hexString, 16);
+		if (isNaN(hexNumber))
+			hexNumber = 0;
 		return new ApiColor('hex', hexNumber);
 	};
 
@@ -15283,20 +15285,10 @@
 	/**
 	 * Sets the text color to the current text run.
 	 *
-	 * There are two supported ways to use this method:
-	 * 1. Passing an instance of the {@link ApiColor} class.
-	 *    - If the {@link ApiColor} represents a theme color, the text color property will be cleared.
-	 * 2. Passing three color components and an optional isAuto parameter.
-	 *
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 *
-	 * @overload
-	 * @param {ApiColor} color - Instance of the {@link ApiColor} class.
-	 * @return {ApiTextPr} - this text properties.
-	 *
-	 * @overload
-	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
@@ -15305,7 +15297,20 @@
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetColor.js
 	 */
-	ApiTextPr.prototype.SetColor = function (color) {
+	/**
+	 * Sets the text color to the current text run.
+	 *
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @param {ApiColor} color
+	 * @return {ApiTextPr} - this text properties.
+	 *
+	 * @since 9.1.0
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetColor.js
+	 */
+	ApiTextPr.prototype.SetColor = function(color) {
 		let r, g, b;
 		let isAuto, isTheme;
 
@@ -21004,16 +21009,17 @@
 		const packedRGBA = this.private_convertToRGBA();
 		const packedRGB = (packedRGBA >> 8) & 0xFFFFFF;
 		let hexStr = packedRGB.toString(16);
-		while (hexStr.length < 6) hexStr = '0' + hexStr;
-		return '#' + hexStr.toLowerCase();
+		while (hexStr.length < 6)
+			hexStr = '0' + hexStr;
+		return "#" + hexStr.toUpperCase();
 	};
 
 	// Define properties for backwards compatibility
 	Object.defineProperties(ApiColor.prototype, {
-		r: { get: function () { return this.GetRGBA().r; } },
-		g: { get: function () { return this.GetRGBA().g; } },
-		b: { get: function () { return this.GetRGBA().b; } },
-		a: { get: function () { return this.GetRGBA().a; } },
+		"r": {get : function() {return this.GetRGBA()["r"];}},
+		"g": {get : function() {return this.GetRGBA()["g"];}},
+		"b": {get : function() {return this.GetRGBA()["b"];}},
+		"a": {get : function() {return this.GetRGBA()["a"];}}
 	});
 
 	//------------------------------------------------------------------------------------------------------------------

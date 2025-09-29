@@ -49,7 +49,7 @@ $(function () {
 		
 		const hexColor = AscTest.JsApi.HexColor('bada55');
 		cell.SetBackgroundColor(hexColor);
-		assert.strictEqual(cell.GetBackgroundColor().GetHex(), '#bada55', 'Color check after setting color with ApiColor (hex)');
+		assert.strictEqual(cell.GetBackgroundColor().GetHex(), '#BADA55', 'Color check after setting color with ApiColor (hex)');
 		
 		const themeColor = AscTest.JsApi.ThemeColor('accent2');
 		cell.SetBackgroundColor(themeColor);

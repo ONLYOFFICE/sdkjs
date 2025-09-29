@@ -69,7 +69,7 @@ $(function () {
 
 		apiRange.SetColor(hexColor);
 		apiRun = apiParagraph.GetElement(0);
-		assert.strictEqual(apiRun.GetColor().GetHex(), '#bada55', 'Color check after setting color for range with ApiColor (hex)');
+		assert.strictEqual(apiRun.GetColor().GetHex(), '#BADA55', 'Color check after setting color for range with ApiColor (hex)');
 
 		apiRange.SetColor(themeColor);
 		apiRun = apiParagraph.GetElement(0);
@@ -105,7 +105,7 @@ $(function () {
 
 		apiRange.SetShd('clear', hexColor);
 		firstParagraph = getFirstDocParagraph();
-		assert.strictEqual(firstParagraph.GetShd().GetHex(), '#bada55', 'Shading check after setting shading for range with ApiColor (hex)');
+		assert.strictEqual(firstParagraph.GetShd().GetHex(), '#BADA55', 'Shading check after setting shading for range with ApiColor (hex)');
 
 		apiRange.SetShd('clear', themeColor);
 		firstParagraph = getFirstDocParagraph();

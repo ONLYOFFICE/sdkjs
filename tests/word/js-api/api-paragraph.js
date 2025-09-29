@@ -74,7 +74,7 @@ $(function () {
 
 		apiParagraph.SetColor(hexColor);
 		apiRun = apiParagraph.GetElement(0);
-		assert.strictEqual(apiRun.GetColor().GetHex(), '#bada55', 'Color check after setting color with ApiColor (hex)');
+		assert.strictEqual(apiRun.GetColor().GetHex(), '#BADA55', 'Color check after setting color with ApiColor (hex)');
 
 		apiParagraph.SetColor(themeColor);
 		apiRun = apiParagraph.GetElement(0);

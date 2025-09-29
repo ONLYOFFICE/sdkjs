@@ -50,28 +50,31 @@ $(function () {
 	
 	QUnit.test('GetRGB, GetRGBA, GetHex', function(assert)
 	{
-		const rgbColor   = AscTest.JsApi.RGB(186, 218, 85);
-		const rgbaColor  = AscTest.JsApi.RGBA(186, 218, 85, 123);
-		const hexColor   = AscTest.JsApi.HexColor('#bada55');
-		const themeColor = AscTest.JsApi.ThemeColor('accent2');
-		const autoColor  = AscTest.JsApi.AutoColor();
-		
+		const rgbColor = AscTest.JsApi.RGB(186, 218, 85);
 		assert.equalRgb(rgbColor.GetRGB(), {r : 186, g : 218, b : 85}, 'Check RGB from RGB color');
 		assert.equalRgba(rgbColor.GetRGBA(), {r : 186, g : 218, b : 85, a : 255}, 'Check RGBA from RGBA color');
-		assert.strictEqual(rgbColor.GetHex(), '#bada55', 'Check Hex from RGB color');
+		assert.strictEqual(rgbColor.GetHex(), '#BADA55', 'Check Hex from RGB color');
 		
+		const rgbaColor = AscTest.JsApi.RGBA(186, 218, 85, 123);
 		assert.equalRgb(rgbaColor.GetRGB(), {r : 186, g : 218, b : 85}, 'Check RGB from RGBA color');
 		assert.equalRgba(rgbaColor.GetRGBA(), {r : 186, g : 218, b : 85, a : 123}, 'Check RGBA from RGBA color');
-		assert.strictEqual(rgbaColor.GetHex(), '#bada55', 'Check Hex from RGBA color');
+		assert.strictEqual(rgbaColor.GetHex(), '#BADA55', 'Check Hex from RGBA color');
 		
+		let hexColor = AscTest.JsApi.HexColor('#bada55');
 		assert.equalRgb(hexColor.GetRGB(), {r : 186, g : 218, b : 85}, 'Check RGB from Hex color');
 		assert.equalRgba(hexColor.GetRGBA(), {r : 186, g : 218, b : 85, a : 255}, 'Check RGBA from Hex color');
-		assert.strictEqual(hexColor.GetHex(), '#bada55', 'Check Hex from Hex color');
+		assert.strictEqual(hexColor.GetHex(), '#BADA55', 'Check Hex from Hex color');
+		// Check invalid input
+		hexColor = AscTest.JsApi.HexColor('ZZZZ');
+		assert.equalRgb(hexColor.GetRGB(), {r : 0, g : 0, b : 0}, 'Check RGB from Hex color');
+		assert.strictEqual(hexColor.GetHex(), '#000000', 'Check Hex from Hex color');
 		
+		const themeColor = AscTest.JsApi.ThemeColor('accent2');
 		assert.equalRgb(themeColor.GetRGB(), {r : 192, g : 80, b : 77}, 'Check RGB from ThemeColor');
 		assert.equalRgba(themeColor.GetRGBA(), {r : 192, g : 80, b : 77, a : 255}, 'Check RGBA from ThemeColor');
-		assert.strictEqual(themeColor.GetHex(), '#c0504d', 'Check Hex from ThemeColor');
+		assert.strictEqual(themeColor.GetHex(), '#C0504D', 'Check Hex from ThemeColor');
 		
+		const autoColor = AscTest.JsApi.AutoColor();
 		assert.equalRgb(autoColor.GetRGB(), {r : 0, g : 0, b : 0}, 'AutoColor is black in RGB');
 		assert.equalRgba(autoColor.GetRGBA(), {r : 0, g : 0, b : 0, a : 255}, 'AutoColor is black in RGBA');
 		assert.strictEqual(autoColor.GetHex(), '#000000', 'AutoColor is black in Hex');
