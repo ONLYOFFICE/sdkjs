@@ -20960,11 +20960,10 @@
 		if (this.type !== 'theme')
 			return null;
 
-		const logicDocument = private_GetLogicDocument();
-		if (!logicDocument)
+		const theme = editor.getCurrentTheme();
+		if (!theme || !theme.themeElements || !theme.themeElements.clrScheme)
 			return null;
 
-		const theme = logicDocument.GetTheme();
 		const unicolors = theme.themeElements.clrScheme.colors;
 		const unicolor = unicolors[this.value];
 		if (!unicolor || !unicolor.color || !unicolor.color.RGBA)
@@ -29007,6 +29006,7 @@
 	window['AscBuilder'].ApiCore             = ApiCore;
 	window['AscBuilder'].ApiCustomProperties = ApiCustomProperties;
 	window['AscBuilder'].ApiCustomXmlParts	 = ApiCustomXmlParts;
+	window['AscBuilder'].ApiColor            = ApiColor;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Area for internal usage
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
