@@ -21013,6 +21013,7 @@
 	 *
 	 * @memberof ApiColor
 	 * @typeofeditors ["CDE"]
+	 * @since 9.1.0
 	 * @returns {"color"}
 	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetClassType.js
 	 */
@@ -21025,6 +21026,7 @@
 	 *
 	 * @memberof ApiColor
 	 * @typeofeditors ["CDE"]
+	 * @since 9.1.0
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/IsAutoColor.js
 	 */
@@ -21037,6 +21039,7 @@
 	 *
 	 * @memberof ApiColor
 	 * @typeofeditors ["CDE"]
+	 * @since 9.1.0
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/IsThemeColor.js
 	 */
@@ -21049,6 +21052,7 @@
 	 *
 	 * @memberof ApiColor
 	 * @typeofeditors ["CDE"]
+	 * @since 9.1.0
 	 * @returns {{r: byte, g: byte, b: byte}}
 	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetRGB.js
 	 */
@@ -21066,6 +21070,7 @@
 	 *
 	 * @memberof ApiColor
 	 * @typeofeditors ["CDE"]
+	 * @since 9.1.0
 	 * @returns {{r: byte, g: byte, b: byte, a: byte}}
 	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetRGBA.js
 	 */
@@ -21084,6 +21089,7 @@
 	 *
 	 * @memberof ApiColor
 	 * @typeofeditors ["CDE"]
+	 * @since 9.1.0
 	 * @returns {string} A six-digit uppercase hex string, e.g. "FF00AA".
 	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetHex.js
 	 */
