@@ -2041,9 +2041,9 @@
 
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
-			r = rgb.r;
-			g = rgb.g;
-			b = rgb.b;
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
 			isAuto = color.IsAutoColor();
 			isTheme = color.IsThemeColor();
 		} else {
@@ -2206,9 +2206,9 @@
 
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
-			r = rgb.r;
-			g = rgb.g;
-			b = rgb.b;
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
 			isAuto = color.IsAutoColor();
 			isTheme = color.IsThemeColor();
 		} else {
@@ -8422,9 +8422,9 @@
 
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
-			r = rgb.r;
-			g = rgb.g;
-			b = rgb.b;
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
 			bNone = false;
 		} else {
 			r = GetIntParameter(arguments[0], 0);
@@ -8829,9 +8829,9 @@
 
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
-			r = rgb.r;
-			g = rgb.g;
-			b = rgb.b;
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
 			bNone = false;
 		} else {
 			r = GetIntParameter(arguments[0], 0);
@@ -10299,9 +10299,9 @@
 
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
-			r = rgb.r;
-			g = rgb.g;
-			b = rgb.b;
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
 			isAuto = color.IsAutoColor();
 			isTheme = color.IsThemeColor();
 		} else {
@@ -14632,9 +14632,9 @@
 
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
-			r = rgb.r;
-			g = rgb.g;
-			b = rgb.b;
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
 			bNone = false;
 			isAuto = color.IsAutoColor();
 			isTheme = color.IsThemeColor();
@@ -15316,9 +15316,9 @@
 
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
-			r = rgb.r;
-			g = rgb.g;
-			b = rgb.b;
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
 			isAuto = color.IsAutoColor();
 			isTheme = color.IsThemeColor();
 		} else {
@@ -15694,9 +15694,9 @@
 
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
-			r = rgb.r;
-			g = rgb.g;
-			b = rgb.b;
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
 			isAuto = color.IsAutoColor();
 			isTheme = color.IsThemeColor();
 		} else {
@@ -16366,9 +16366,9 @@
 
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
-			r = rgb.r;
-			g = rgb.g;
-			b = rgb.b;
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
 			isAuto = color.IsAutoColor();
 			isTheme = color.IsThemeColor();
 		} else {
@@ -23962,9 +23962,9 @@
 
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
-			r = rgb.r;
-			g = rgb.g;
-			b = rgb.b;
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
 			bNone = false;
 			isAuto = color.IsAutoColor();
 		} else {
@@ -24045,9 +24045,9 @@
 
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
-			r = rgb.r;
-			g = rgb.g;
-			b = rgb.b;
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
 			bNone = false;
 			isAuto = color.IsAutoColor();
 			isTheme = color.IsThemeColor();
