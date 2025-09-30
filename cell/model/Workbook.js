@@ -5521,7 +5521,7 @@
 			if (extarnalLink.SheetNames) {
 				for (var i = 0; i < extarnalLink.SheetNames.length; i++) {
 					if (extarnalLink.SheetNames[i] === sheet) {
-						extarnalLink.initWorksheetFromSheetDataSet(sheet);
+						extarnalLink.initWorksheetFromSheetDataSet(sheet, true);
 						return extarnalLink.worksheets && extarnalLink.worksheets[sheet];
 					}
 				}

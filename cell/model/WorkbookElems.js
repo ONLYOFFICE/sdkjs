@@ -15731,7 +15731,7 @@ function RangeDataManagerElem(bbox, data)
 		}
 	};
 
-	ExternalReference.prototype.initWorksheetFromSheetDataSet = function (sheetName) {
+	ExternalReference.prototype.initWorksheetFromSheetDataSet = function (sheetName, opt_notCalc) {
 		var sheetDataSetIndex = this.getSheetByName(sheetName);
 		if (null !== sheetDataSetIndex) {
 
@@ -15783,7 +15783,7 @@ function RangeDataManagerElem(bbox, data)
 				}
 			}
 			if (isLockRecalc) {
-				originalWb && originalWb.dependencyFormulas.unlockRecal();
+				originalWb && originalWb.dependencyFormulas.unlockRecal(opt_notCalc);
 			}
 		}
 	};
