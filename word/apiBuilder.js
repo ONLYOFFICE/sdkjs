@@ -10640,7 +10640,7 @@
 		const text = this.GetText();
 		if (text) {
 			// https://stackoverflow.com/a/5553924
-			const regex = /[^.!?\s][^.!?]*(?:[.!?](?!['"]?\s|$)[^.!?]*)*[.!?]?['"]?(?=\s|$)/gs;
+			const regex = /[^.!?\s][^.!?]*(?:[.!?](?!['"]?\s|$)[^.!?]*)*[.!?]?['"]?(?=\s|$)/g;
 
 			let match;
 			while ((match = regex.exec(text)) !== null) {
