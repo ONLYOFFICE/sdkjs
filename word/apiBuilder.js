@@ -2014,24 +2014,27 @@
 	/**
 	 * Sets the text color to the current text Range.
 	 *
-	 * There are two supported ways to use this method:
-	 * 1. Passing an instance of the {@link ApiColor} class
-	 * 2. Passing three color components and an optional isAuto parameter.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @deprecated since 9.1.0 version.
+	 * @param {byte} r - Red color component value.
+	 * @param {byte} g - Green color component value.
+	 * @param {byte} b - Blue color component value.
+	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then (r, g, b) parameters will be ignored.
+	 * @returns {ApiRange | null} - returns null if can't apply color.
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetColor.js
+	 */
+	/**
+	 * Sets the text color to the current text Range.
 	 *
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 *
-	 * @overload
-	 * @param {ApiColor} color - Instance of the {@link ApiColor} class.
+	 * @since 9.1.0
+	 * @param {ApiColor} color
 	 * @return {ApiRange | null} - returns null if can't apply color.
-	*
-	 * @overload
-	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
-	 * @param {byte} r - Red color component value.
-	 * @param {byte} g - Green color component value.
-	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then r,g,b parameters will be ignored.
-	 * @returns {ApiRange | null} - returns null if can't apply color.
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetColor.js
 	 */
@@ -2184,17 +2187,24 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 *
-	 * @overload
-	 * @param {ShdType} type - The shading type applied to the contents of the current text Range.
-	 * @param {ApiColor} color
-	 * @returns {ApiRange | null} - returns null if can't apply shadow.
-	 *
-	 * @overload
-	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
+	 * @deprecated since 9.1.0 version.
 	 * @param {ShdType} type - The shading type applied to the contents of the current text Range.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
+	 * @returns {ApiRange | null} - returns null if can't apply shadow.
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetShd.js
+	 */
+	/**
+	 * Specifies the shading applied to the contents of the current text Range.
+	 *
+	 * @memberof ApiRange
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ShdType} type - The shading type applied to the contents of the current text Range.
+	 * @param {ApiColor} color
 	 * @returns {ApiRange | null} - returns null if can't apply shadow.
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetShd.js
@@ -4921,19 +4931,23 @@
 	/**
 	 * Creates a solid fill to apply to the object using a selected solid color as the object background.
 	 *
-	 * There are two supported ways to use this method:
-	 * 1. Passing an instance of the {@link ApiColor} class.
-	 * 2. Passing an instance of one of the color classes that implement the {@link ApiUniColor} interface
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @deprecated since 9.1.0 version.
+	 * @param {ApiUniColor} color - The color used for the element fill.
+	 * @returns {ApiFill}
+	 *
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateSolidFill.js
+	 */
+	/**
+	 * Creates a solid fill to apply to the object using a selected solid color as the object background.
 	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 *
-	 * @overload
+	 * @since 9.1.0
 	 * @param {ApiColor} color - The color used for the element fill.
-	 * @returns {ApiFill}
-	 *
-	 * @overload
-	 * @param {ApiUniColor} color - The color used for the element fill.
 	 * @returns {ApiFill}
 	 *
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateSolidFill.js
@@ -4981,17 +4995,24 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 *
-	 * @overload
-	 * @param {PatternType} patternType - The pattern type used for the fill selected from one of the available pattern types.
-	 * @param {ApiColor} bgColor - The background color used for the pattern creation.
-	 * @param {ApiColor} fgColor - The foreground color used for the pattern creation.
-	 * @returns {ApiFill}
-	 *
-	 * @overload
-	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
+	 * @deprecated since 9.1.0 version.
 	 * @param {PatternType} patternType - The pattern type used for the fill selected from one of the available pattern types.
 	 * @param {ApiUniColor} bgColor - The background color used for the pattern creation.
 	 * @param {ApiUniColor} fgColor - The foreground color used for the pattern creation.
+	 * @returns {ApiFill}
+	 *
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreatePatternFill.js
+	 */
+	/**
+	 * Creates a pattern fill to apply to the object using the selected pattern as the object background.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @since 9.1.0
+	 * @param {PatternType} patternType - The pattern type used for the fill selected from one of the available pattern types.
+	 * @param {ApiColor} bgColor - The background color used for the pattern creation.
+	 * @param {ApiColor} fgColor - The foreground color used for the pattern creation.
 	 * @returns {ApiFill}
 	 *
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreatePatternFill.js
@@ -5054,14 +5075,21 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 *
-	 * @overload
-	 * @param {ApiColor} color - The color used for the gradient stop.
+	 * @deprecated since 9.1.0 version.
+	 * @param {ApiUniColor} color - The color used for the gradient stop.
 	 * @param {PositivePercentage} pos - The position of the gradient stop measured in 1000th of percent.
 	 * @returns {ApiGradientStop}
 	 *
-	 * @overload
-	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
-	 * @param {ApiUniColor} color - The color used for the gradient stop.
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateGradientStop.js
+	 */
+	/**
+	 * Creates a gradient stop used for different types of gradients.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} color - The color used for the gradient stop.
 	 * @param {PositivePercentage} pos - The position of the gradient stop measured in 1000th of percent.
 	 * @returns {ApiGradientStop}
 	 *
@@ -8398,19 +8426,27 @@
 
 	/**
 	 * Sets the highlight to the forms in the document.
+	 *
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE", "CFE"]
 	 *
-	 * @overload
-	 * @param {ApiColor} color
-	 * @returns {boolean}
-	 *
-	 * @overload
-	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [bNone=false] - Defines that highlight will not be set.
+	 * @returns {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetFormsHighlight.js
+	 */
+	/**
+	 * Sets the highlight to the forms in the document.
+	 *
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE", "CFE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} color
 	 * @returns {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetFormsHighlight.js
@@ -8808,16 +8844,23 @@
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 *
-	 * @overload
-	 * @param {ApiColor} color
-	 * @returns {boolean}
-	 *
-	 * @overload
-	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [bNone=false] - Defines that highlight will not be set.
+	 * @returns {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetControlsHighlight.js
+	 */
+	/**
+	 * Sets the highlight to the content controls from the current document.
+	 *
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} color
 	 * @returns {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetControlsHighlight.js
@@ -10268,26 +10311,30 @@
 		
 		return this;
 	};
+
 	/**
 	 * Sets the text color to the current paragraph.
-	 *
-	 * There are two supported ways to use this method:
-	 * 1. Passing an instance of the {@link ApiColor} class
-	 * 2. Passing three color components and an optional isAuto parameter.
 	 *
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 *
-	 * @overload
-	 * @param {ApiColor} color - Instance of the {@link ApiColor} class.
-	 * @return {ApiParagraph} this
-	 *
-	 * @overload
-	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then r,g,b parameters will be ignored.
+	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then (r, g, b) parameters will be ignored.
+	 * @return {ApiParagraph} this
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetColor.js
+	 */
+	/**
+	 * Sets the text color to the current paragraph.
+	 *
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} color
 	 * @return {ApiParagraph} this
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetColor.js
@@ -11995,26 +12042,30 @@
 		
 		return oTextPr;
 	};
+
 	/**
 	 * Sets the text color for the current text run.
-	 *
-	 * There are two supported ways to use this method:
-	 * 1. Passing an instance of the {@link ApiColor} class
-	 * 2. Passing three color components and an optional isAuto parameter.
 	 *
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 *
-	 * @overload
-	 * @param {ApiColor} color - Instance of the {@link ApiColor} class.
-	 * @return {ApiTextPr}
-	 *
-	 * @overload
-	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then r,g,b parameters will be ignored.
+	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then (r, g, b) parameters will be ignored.
+	 * @return {ApiTextPr}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetColor.js
+	 */
+	/**
+	 * Sets the text color for the current text run.
+	 *
+	 * @memberof ApiRun
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} color
 	 * @return {ApiTextPr}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetColor.js
@@ -12167,23 +12218,31 @@
 		
 		return oTextPr;
 	};
+
 	/**
 	 * Specifies the shading applied to the contents of the current text run.
 	 *
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 *
-	 * @overload
-	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
-	 * @param {ApiColor} color - Instance of the {@link ApiColor} class.
-	 * @returns {ApiTextPr}
-	 *
-	 * @overload
-	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
+	 * @deprecated since 9.1.0 version.
 	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
+	 * @returns {ApiTextPr}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetShd.js
+	 */
+	/**
+	 * Specifies the shading applied to the contents of the current text run.
+	 *
+	 * @memberof ApiRun
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
+	 * @param {ApiColor} color
 	 * @returns {ApiTextPr}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetShd.js
@@ -13722,25 +13781,27 @@
 	/**
 	 * Sets the background color to all cells in the current table.
 	 *
-	 * There are three supported ways to use this method:
-	 * 1. Passing no parameters to clear the background color.
-	 * 2. Passing an instance of the {@link ApiColor} class.
-	 * 3. Passing three color components and an optional bNone parameter.
-	 *
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 *
-	 * @overload
-	 * @param {ApiColor} [color] - Instance of the {@link ApiColor} class. If not passed, the background color will be cleared.
-	 * @return {boolean}
-	 *
-	 * @overload
-	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [bNone=false] - Defines that background color will not be set.
 	 * @returns {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetBackgroundColor.js
+	 */
+	/**
+	 * Sets the background color to all cells in the current table.
+	 *
+	 * @memberof ApiTable
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
+	 * @return {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetBackgroundColor.js
 	 */
@@ -14246,25 +14307,27 @@
 	/**
 	 * Sets the background color to all cells in the current table row.
 	 *
-	 * There are three supported ways to use this method:
-	 * 1. Passing no parameters to clear the background color.
-	 * 2. Passing an instance of the {@link ApiColor} class.
-	 * 3. Passing three color components and an optional bNone parameter.
-	 *
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CDE"]
 	 *
-	 * @overload
-	 * @param {ApiColor} [color] - Instance of the {@link ApiColor} class. If not passed, the background color will be cleared.
-	 * @return {boolean}
-	 *
-	 * @overload
-	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [bNone=false] - Defines that background color will not be set.
 	 * @returns {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/SetBackgroundColor.js
+	 */
+	/**
+	 * Sets the background color to all cells in the current table row.
+	 *
+	 * @memberof ApiTableRow
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
+	 * @return {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/SetBackgroundColor.js
 	 */
@@ -14599,28 +14662,31 @@
 
 		return false;
 	};
+
 	/**
 	 * Sets the background color to the current table cell.
-	 *
-	 * There are three supported ways to use this method:
-	 * 1. Passing no parameters to clear the background color.
-	 * 2. Passing an instance of the {@link ApiColor} class.
-	 * 3. Passing three color components and an optional bNone parameter.
 	 *
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CDE"]
 	 *
-	 * @overload
-	 * @param {ApiColor} [color] - Instance of the {@link ApiColor} class. If not passed, the background color will be cleared.
-	 * @return {boolean}
-	 *
-	 * @overload
-	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} bNone - Defines that background color will not be set.
 	 * @returns {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetBackgroundColor.js
+	 */
+	/**
+	 * Sets the background color to the current table cell.
+	 *
+	 * @memberof ApiTableCell
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
+	 * @return {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetBackgroundColor.js
 	 */
@@ -14704,25 +14770,27 @@
 	/**
 	 * Sets the background color to all cells in the column containing the current cell.
 	 *
-	 * There are three supported ways to use this method:
-	 * 1. Passing no parameters to clear the background color.
-	 * 2. Passing an instance of the {@link ApiColor} class.
-	 * 3. Passing three color components and an optional bNone parameter.
-	 *
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CDE"]
 	 *
-	 * @overload
-	 * @param {ApiColor} [color] - Instance of the {@link ApiColor} class. If not passed, the background color will be cleared.
-	 * @return {boolean}
-	 *
-	 * @overload
-	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} bNone - Defines that background color will not be set.
 	 * @returns {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetColumnBackgroundColor.js
+	 */
+	/**
+	 * Sets the background color to all cells in the column containing the current cell.
+	 *
+	 * @memberof ApiTableCell
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
+	 * @return {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetColumnBackgroundColor.js
 	 */
@@ -15292,7 +15360,7 @@
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then r,g,b parameters will be ignored.
+	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then (r, g, b) parameters will be ignored.
 	 * @return {ApiTextPr} - this text properties.
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetColor.js
@@ -15303,10 +15371,9 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 *
+	 * @since 9.1.0
 	 * @param {ApiColor} color
 	 * @return {ApiTextPr} - this text properties.
-	 *
-	 * @since 9.1.0
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetColor.js
 	 */
@@ -15672,17 +15739,24 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 *
-	 * @overload
-	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
-	 * @param {ApiColor} color - The color or pattern used to fill the shading.
-	 * @return {ApiTextPr} - this text properties.
-	 *
-	 * @overload
-	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
+	 * @deprecated since 9.1.0 version.
 	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
+	 * @return {ApiTextPr} - this text properties.
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetShd.js
+	 */
+	/**
+	 * Specifies the shading applied to the contents of the current text run.
+	 *
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
+	 * @param {ApiColor} color - The color or pattern used to fill the shading.
 	 * @return {ApiTextPr} - this text properties.
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetShd.js
@@ -16337,24 +16411,32 @@
 
 		return AscCommon.MMToTwips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Spacing.After);
 	};
+
 	/**
 	 * Specifies the shading applied to the contents of the paragraph.
 	 *
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
 	 *
-	 * @overload
-	 * @param {ShdType} type - The shading type which will be applied to the contents of the current paragraph.
-	 * @param {ApiColor} color - The color or pattern used to fill the shading.
-	 * @returns {boolean}
-	 *
-	 * @overload
-	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
+	 * @deprecated since 9.1.0 version.
 	 * @param {ShdType} type - The shading type which will be applied to the contents of the current paragraph.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [isAuto=false] - The true value disables paragraph contents shading.
+	 * @returns {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetShd.js
+	 */
+	/**
+	 * Specifies the shading applied to the contents of the paragraph.
+	 *
+	 * @memberof ApiParaPr
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ShdType} type - The shading type which will be applied to the contents of the current paragraph.
+	 * @param {ApiColor} color - The color or pattern used to fill the shading.
 	 * @returns {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetShd.js
@@ -21724,25 +21806,27 @@
 	/**
 	 * Sets the border color to the current content control.
 	 *
-	 * There are two supported ways to use this method:
-	 * 1. Passing an instance of the {@link ApiColor} class.
-	 * 2. Passing RGBA color component values as separate parameters.
-	 *
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 *
-	 * @overload
-	 * @param {ApiColor} [color] - Instance of the {@link ApiColor} class.
-	 * @return {boolean}
-	 *
-	 * @overload
-	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {byte} a - Alpha color component value.
-	 * @since 8.3.2
 	 * @returns {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetBorderColor.js
+	 */
+	/**
+	 * Sets the border color to the current content control.
+	 *
+	 * @memberof ApiInlineLvlSdt
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} [color]
+	 * @return {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetBorderColor.js
 	 */
@@ -21787,24 +21871,27 @@
 	/**
 	 * Sets the background color to the current content control.
 	 *
-	 * There are two supported ways to use this method:
-	 * 1. Passing an instance of the {@link ApiColor} class.
-	 * 2. Passing RGBA color component values as separate parameters.
-	 *
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 *
-	 * @overload
-	 * @param {ApiColor} [color] - Instance of the {@link ApiColor} class.
-	 * @return {boolean}
-	 *
-	 * @overload
-	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {byte} a - Alpha color component value.
 	 * @returns {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetBackgroundColor.js
+	 */
+	/**
+	 * Sets the background color to the current content control.
+	 *
+	 * @memberof ApiInlineLvlSdt
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} [color]
+	 * @return {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetBackgroundColor.js
 	 */
@@ -23930,27 +24017,31 @@
 			return true;
 		}, this);
 	};
+
 	/**
 	 * Sets the border color to the current form.
-	 *
-	 * There are two supported ways to use this method:
-	 * 1. Passing an instance of the {@link ApiColor} class
-	 * 2. Passing three color components and an optional bNone parameter.
 	 *
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 *
-	 * @overload
-	 * @param {ApiColor} [color] - Instance of the {@link ApiColor} class.
-	 * @return {boolean}
-	 *
-	 * @overload
-	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} bNone - Defines that border color will not be set.
 	 * @returns {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetBorderColor.js
+	 */
+	/**
+	 * Sets the border color to the current form.
+	 *
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} [color]
+	 * @return {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetBorderColor.js
 	 */
@@ -24012,27 +24103,31 @@
 			? Api.prototype.AutoColor()
 			: Api.prototype.RGB(color.r, color.g, color.b);
 	};
+
 	/**
 	 * Sets the background color to the current form.
-	 *
-	 * There are two supported ways to use this method:
-	 * 1. Passing an instance of the {@link ApiColor} class
-	 * 2. Passing three color components and an optional bNone parameter.
 	 *
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 *
-	 * @overload
-	 * @param {ApiColor} [color] - Instance of the {@link ApiColor} class.
-	 * @return {boolean}
-	 *
-	 * @overload
-	 * @deprecated Will be deprecated in future versions. Use {@link ApiColor} instead.
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} bNone - Defines that background color will not be set.
 	 * @returns {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetBackgroundColor.js
+	 */
+	/**
+	 * Sets the background color to the current form.
+	 *
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} [color]
+	 * @return {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetBackgroundColor.js
 	 */
