@@ -2791,6 +2791,8 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
         "mso-border-left-alt": 1, "mso-border-top-alt": 1, "mso-border-right-alt": 1, "mso-border-bottom-alt": 1, "mso-border-between": 1, "mso-list": 1,
 		"mso-comment-reference": 1, "mso-comment-date": 1, "mso-comment-continuation": 1, "mso-data-placement": 1, "mso-table-layout-alt": 1, "mso-table-left": 1,
 		"mso-table-top": 1, "mso-ignore": 1};
+	this.mathMLElements = {"mi":1,"mo":1,"mn":1,"mspace":1,"mtext":1,"ms":1,"menclose":1,"mphantom":1,"msub":1,"msup":1,"msubsup":1,"munderover":1,"mfrac":1,"msqrt":1,"mroot":1,"mpadded":1,"mstyle":1,"mrow":1,"merror":1,"semantics":1,"munder":1,"mover":1,"mtable":1,"mtr":1,"mtd":1,"mfenced":1};
+
 	this.OnlyOfficeStyles = {"oo-latex": 1}
     this.oBorderCache = {};
 
@@ -8446,6 +8448,7 @@ PasteProcessor.prototype =
 			//принудительно добавляю для математики шрифт Cambria Math
 			if ((child && (child.nodeName.toLowerCase() === "#comment" && this.isSupportPasteMathContent(child.nodeValue, true)
 				&& this.apiEditor["asc_isSupportFeature"]("ooxml")) || child.nodeName.toLowerCase() === "math" ||
+				this.mathMLElements[child.nodeName.toLowerCase()] ||
 				(child.className && child.className.indexOf && -1 !== child.className.indexOf("oo-latex")) ||
 				(style && -1 !== style.indexOf("oo-latex"))) && !this.pasteInExcel) {
 				//TODO пока только в документы разрешаю вставку математики математику
@@ -12164,6 +12167,29 @@ PasteProcessor.prototype =
 			} else {
 				sChildNodeName = child.nodeName.toLowerCase();
 
+				let executeMathML = function (_htmlContent) {
+					let paraMath = AscWord.ParaMath.fromMathML(undefined, _htmlContent);
+					bAddParagraph = oThis._Decide_AddParagraph(child, pPr, bAddParagraph);
+					let oAddedParaMath = paraMath;
+					oAddedParaMath.SetParagraph && oAddedParaMath.SetParagraph(oThis.oCurPar);
+					oThis._CommitElemToParagraph(oAddedParaMath);
+					let clonePr = oThis.oCurRun.Pr.Copy();
+					oThis.oCurRun = new ParaRun(oThis.oCurPar);
+					oThis.oCurRun.Set_Pr(clonePr);
+				};
+
+				if (sMathTable && !oThis.mathMLElements[sChildNodeName]) {
+					let htmlMathContent;
+					if (skipMathRow) {
+						htmlMathContent = '<math><mtable><mtr>' + sMathTable + '</mtr></mtable></math>';
+					} else {
+						htmlMathContent = '<math><mtable>' + sMathTable + '</mtable></math>';
+					}
+					executeMathML(htmlMathContent);
+					sMathTable = null;
+					skipMathRow = null;
+				}
+
 				//исключаю чтение тега "o:p", потому что ms в пустые ячейки таблицы добавляется внутрь данного тега неразрывные пробелы
 				//не нашёл такой ситуации, когда пропадают пробелы между словами
 				//todo протестровать "o:p"!
@@ -12182,14 +12208,15 @@ PasteProcessor.prototype =
 				}
 
 				if (sChildNodeName === "math") {
-					let paraMath = AscWord.ParaMath.fromMathML(undefined, child.outerHTML);
-					bAddParagraph = oThis._Decide_AddParagraph(child, pPr, bAddParagraph);
-					let oAddedParaMath = paraMath;
-					oAddedParaMath.SetParagraph && oAddedParaMath.SetParagraph(oThis.oCurPar);
-					oThis._CommitElemToParagraph(oAddedParaMath);
-					let clonePr = oThis.oCurRun.Pr.Copy();
-					oThis.oCurRun = new ParaRun(oThis.oCurPar);
-					oThis.oCurRun.Set_Pr(clonePr);
+					executeMathML(child.outerHTML);
+				} else if (sChildNodeName === "mtd" || sChildNodeName === "mtr") {
+					if (!sMathTable) {
+						sMathTable = "";
+						if (sChildNodeName === "mtd") {
+							skipMathRow = true;
+						}
+					}
+					sMathTable += child.outerHTML;
 					return;
 				}
 
@@ -12624,6 +12651,7 @@ PasteProcessor.prototype =
 
 
 		//рекурсивно вызываем для childNodes
+		let sMathTable = null, skipMathRow = null;
 		for (var i = 0, length = node.childNodes.length; i < length; i++) {
 			var child = node.childNodes[i];
 			var nodeType = child.nodeType;
