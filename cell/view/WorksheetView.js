@@ -4819,7 +4819,7 @@ function isAllowPasteLink(pastedWb) {
 		this._drawGroupData(null, null, undefined, undefined, true);
 		this._drawFrozenPane();
 		this._drawFrozenPaneLines();
-		this._fixSelectionOfMergedCells();
+		this._fixSelectionOfMergedCells(null, true);
 		this._drawElements(this.af_drawButtons);
 		this.cellCommentator.drawCommentCells();
 		this.objectRender.showDrawingObjects();
