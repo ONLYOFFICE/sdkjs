@@ -2234,9 +2234,11 @@
 				if (!rows[nRow])
 				{
 					arrRows.push([]);
+				}
 
-					if (!this.IsRowLiteral() && this.oLookahead.class === Literals.rBrackets.id)
-						arrRows.push([]);
+				if (!this.IsRowLiteral() && this.oLookahead.class === Literals.rBrackets.id)
+				{
+					arrRows.push([]);
 				}
 
 				nRow++;

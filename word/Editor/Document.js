@@ -8581,12 +8581,13 @@ CDocument.prototype.OnKeyDown = function(e)
 					{
 						if (oMath.Is_InInnerContent())
 						{
+							let currentContent = oMath.GetSelectContent().Content;
+							currentContent.ConvertContentView(0, currentContent.Content.length, this.Api.getMathInputType(), false);
 							oMath.Handle_AddNewLine();
-							oMath.ProcessAutoCorrect();
 						}
 						else
 						{
-							oMath.ProcessAutoCorrect();
+							oMath.ConvertView(false, this.Api.getMathInputType());
 							this.AddNewParagraph();
 						}
 					}
