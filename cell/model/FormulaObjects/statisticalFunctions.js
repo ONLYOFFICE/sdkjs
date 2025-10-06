@@ -12095,6 +12095,14 @@ function (window, undefined) {
 			emptyCount -= res[i].length;
 		}
 		res[cElementType.empty] = emptyCount;
+		if (res[cElementType.string]) {
+			res[cElementType.string].sort(AscCommonExcel.stringCompare);
+		}
+		if (res[cElementType.number]) {
+			res[cElementType.number].sort(function (a, b) {
+				return a - b;
+			});
+		}
 		return res;
 	};
 	CountIfCache.prototype.calculate = function (arg, _arg1) {
@@ -12178,11 +12186,11 @@ function (window, undefined) {
 		res = cacheElem.results[sInputKey];
 
 		if (!res) {
-			cacheElem.results[sInputKey] = res = this._calculate(cacheElem.elements, arg1);
+			cacheElem.results[sInputKey] = res = this._calculate(cacheElem.elements, arg1, true);
 		}
 		return res;
 	};
-	CountIfCache.prototype._calculate = function (arr, arg1) {
+	CountIfCache.prototype._calculate = function (arr, arg1, isBinaryOptimization) {
 		let _count = 0;
 		let matchingInfo = AscCommonExcel.matchingValue(arg1);
 		let type = matchingInfo.val.type;
@@ -12216,8 +12224,35 @@ function (window, undefined) {
 		const isWildcard = type === cElementType.string && (searchValue.indexOf('*') !== -1 || searchValue.indexOf('?') !== -1);
 		const matchingFunction = getMatchingFunction(type, matchingInfo.op, isWildcard);
 		if (typedArr) {
-			for (let i = 0; i < typedArr.length; i += 1) {
-				_count += matchingFunction(typedArr[i], searchValue);
+			if ((type === cElementType.string || type === cElementType.number) && !isWildcard && isBinaryOptimization) {
+				const compareFunc = type === cElementType.string ? AscCommonExcel.stringCompare : function(a, b) {
+					return a - b;
+				}
+				switch(matchingInfo.op) {
+					case ">":
+						_count += typedArr.length - this.upperBound(typedArr, searchValue, compareFunc);
+						break;
+					case "<":
+						_count += this.lowerBound(typedArr, searchValue, compareFunc);
+						break;
+					case ">=":
+						_count += typedArr.length - this.lowerBound(typedArr, searchValue, compareFunc);
+						break;
+					case "<=":
+						_count += this.upperBound(typedArr, searchValue, compareFunc);
+						break;
+					case "<>":
+						_count += typedArr.length - (this.upperBound(typedArr, searchValue, compareFunc) - this.lowerBound(typedArr, searchValue, compareFunc));
+						break;
+					case "=":
+					default:
+						_count += this.upperBound(typedArr, searchValue, compareFunc) - this.lowerBound(typedArr, searchValue, compareFunc);
+						break;
+				}
+			} else {
+				for (let i = 0; i < typedArr.length; i += 1) {
+					_count += matchingFunction(typedArr[i], searchValue);
+				}
 			}
 		}
 		return new cNumber(_count);
@@ -12236,6 +12271,37 @@ function (window, undefined) {
 	CountIfCache.prototype.clean = function () {
 		this.cacheId = {};
 		this.cacheRanges = {};
+	};
+
+	CountIfCache.prototype.lowerBound = function(sortedArray, value, compareFunction) {
+		let left = 0;
+		let right = sortedArray.length;
+		
+		while (left < right) {
+			const mid = Math.floor((left + right) / 2);
+			if (compareFunction(sortedArray[mid], value) < 0) {
+				left = mid + 1;
+			} else {
+				right = mid;
+			}
+		}
+		
+		return left;
+	};
+	CountIfCache.prototype.upperBound = function(sortedArray, value, compareFunction) {
+		let left = 0;
+		let right = sortedArray.length;
+		
+		while (left < right) {
+			const mid = Math.floor((left + right) / 2);
+			if (compareFunction(sortedArray[mid], value) <= 0) {
+				left = mid + 1;
+			} else {
+				right = mid;
+			}
+		}
+		
+		return left;
 	};
 
 
