@@ -1256,9 +1256,11 @@ function isAllowPasteLink(pastedWb) {
 	WorksheetView.prototype.getHorizontalSmoothScrollRange = function (/*bCheckEqual*/) {
 		var offsetFrozen = this.getFrozenPaneOffset(false, true);
 		var ctxW = this.drawingCtx.getWidth() - offsetFrozen.offsetX - this.cellsLeft;
+		let wOffset = 0;
 		for (var h = 0, i = this.nColsCount - 1; i >= 0; --i) {
 			h += this._getColumnWidth(i);
 			if (h >= ctxW) {
+				wOffset = (h - ctxW) > 0 ? ((h - ctxW) - 1) : 0;
 				/*if (bCheckEqual && h > ctxH) {
 					i++;
 				}*/
@@ -1278,9 +1280,9 @@ function isAllowPasteLink(pastedWb) {
 		let isMobileVersion = this.workbook && this.workbook.Api && this.workbook.Api.isMobileVersion;
 		let col = Math.max(0, i); // Диапазон скрола должен быть меньше количества строк, чтобы не было прибавления строк при перетаскивании бегунка
 		let defaultScrollPxStep = Asc.round(this.getHScrollStep());
-		let beforeVisibleRangeWidth = this._getColLeft(col) - this.cellsLeft;
+		let beforeVisibleRangeWidth = this._getColLeft(col) - this.cellsLeft + wOffset;
 		if (isMobileVersion || AscCommonExcel.c_oAscScrollType.ScrollInitRowsColsCount & this.scrollType) {
-			beforeVisibleRangeWidth += this.getHorizontalScrollCorrect();
+			//beforeVisibleRangeWidth += this.getHorizontalScrollCorrect();
 		}
 
 		return defaultScrollPxStep === 0 ? 0 : ((beforeVisibleRangeWidth - frozenVisibleRangeWidth)/defaultScrollPxStep);
