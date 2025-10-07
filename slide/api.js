@@ -7775,9 +7775,9 @@ background-repeat: no-repeat;\
 			if (undefined == _obj["main_command"])
 				return;
 
-			if (undefined !== _obj["keyCode"])
+			if (undefined !== _obj["keyEvent"])
 			{
-				_this.WordControl.DemonstrationManager.onKeyDownCode(_obj["keyCode"]);
+				_this.WordControl.DemonstrationManager.onKeyDownCode(AscCommon.CKeyboardEvent.fromJSON(_obj["keyEvent"]));
 			}
 			else if (undefined !== _obj["mouseUp"])
 			{

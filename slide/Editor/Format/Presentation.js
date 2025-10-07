@@ -5836,7 +5836,11 @@ CPresentation.prototype.OnKeyDown = function (e) {
 				}
 			}
 			bRetValue = keydownresult_PreventAll;
-		} else if (e.KeyCode === 144) // Num Lock
+		} else if (e.KeyCode === 80 && e.CtrlKey)
+		{
+			bRetValue = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode === 144) // Num Lock
 		{
 			// Ничего не делаем
 			bRetValue = keydownresult_PreventAll;

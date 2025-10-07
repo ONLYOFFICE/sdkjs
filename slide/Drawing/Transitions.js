@@ -3804,9 +3804,25 @@ function CDemonstrationManager(htmlpage)
     };
 
     // manipulators
-    this.onKeyDownCode = function(code)
+    this.onKeyDownCode = function(e)
     {
+			let nRet = keydownresult_PreventAll;
+			const oApi = oThis.HtmlPage.m_oApi;
+			const isEmbedVersion = oApi.isEmbedVersion;
+			if (isEmbedVersion) {
+				const nShortcutType = oApi.getShortcut(e);
+				switch (nShortcutType) {
+					case Asc.c_oAscPresentationShortcutType.PrintPreviewAndPrint: {
+						oApi.onPrint();
+						return nRet;
+					}
+					default: {
+						break;
+					}
+				}
+			}
 			let bDropGoToSlideStack = !!this.GoToSlideShortcutStack.length;
+			const code = e.KeyCode;
 		switch (code)
 		{
 			case 13:    // enter
@@ -3873,6 +3889,8 @@ function CDemonstrationManager(htmlpage)
 				bDropGoToSlideStack = false;
 				this.GoToSlideShortcutStack.push(code - 48);
 				break;
+			case 80: // print
+				break;
 			case 96: // numpad0
 			case 97: // numpad1
 			case 98: // numpad2
@@ -3887,12 +3905,14 @@ function CDemonstrationManager(htmlpage)
 				this.GoToSlideShortcutStack.push(code - 96);
 				break;
 			default:
+				nRet = keydownresult_PreventNothing;
 				break;
 		}
 		if (bDropGoToSlideStack)
 		{
 			this.GoToSlideShortcutStack = [];
 		}
+		return nRet;
     };
 
     this.onKeyDown = function(e)
@@ -3903,7 +3923,7 @@ function CDemonstrationManager(htmlpage)
         {
 			var _msg_ = {
 				"main_command"  : true,
-				"keyCode"       : AscCommon.global_keyboardEvent.KeyCode
+				"keyEvent"       : AscCommon.global_keyboardEvent.toJSON()
 			};
 
 			oThis.HtmlPage.m_oApi.sendToReporter(JSON.stringify(_msg_));
@@ -3911,8 +3931,10 @@ function CDemonstrationManager(htmlpage)
 			return false;
         }
 
-        this.onKeyDownCode(AscCommon.global_keyboardEvent.KeyCode);
-
+        const nRetValue = this.onKeyDownCode(AscCommon.global_keyboardEvent);
+				if (nRetValue & keydownresult_PreventDefault) {
+					e.preventDefault();
+				}
         oThis.HtmlPage.IsKeyDownButNoPress = true;
         return false;
     };

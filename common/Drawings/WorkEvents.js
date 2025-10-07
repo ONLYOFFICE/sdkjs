@@ -222,7 +222,31 @@
 		this.CharCode = 0;
 		this.KeyCode  = 0;
 	}
+	CKeyboardEvent.fromJSON = function(json)
+	{
+		const res = new CKeyboardEvent();
+		res.AltKey   = json["AltKey"];
+		res.CtrlKey  = json["CtrlKey"];
+		res.ShiftKey = json["ShiftKey"];
+		res.MacCmdKey = json["MacCmdKey"];
+		res.AltGr    = json["AltGr"];
 
+		res.CharCode = json["CharCode"];
+		res.KeyCode  = json["KeyCode"];
+		return res;
+	};
+	CKeyboardEvent.prototype.toJSON = function()
+	{
+		return {
+			"AltKey": this.AltKey,
+			"CtrlKey": this.CtrlKey,
+			"ShiftKey": this.ShiftKey,
+			"MacCmdKey": this.MacCmdKey,
+			"AltGr": this.AltGr,
+			"CharCode": this.CharCode,
+			"KeyCode": this.KeyCode
+		};
+	};
 	CKeyboardEvent.prototype.Up = function()
 	{
 		this.AltKey    = false;
