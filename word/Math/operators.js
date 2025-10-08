@@ -4060,32 +4060,6 @@ CDelimiter.prototype.private_GetRightOperator = function(bHide)
 
     return NewEndCode;
 };
-CDelimiter.fromMathML = function(reader, props)
-{
-	if (!props)
-	{
-		let attributes = reader.GetAttributes();
-		let open = attributes['open'] || "(";
-		let close = attributes['close'] || ")";
-		let separator = attributes['separators'] || ",";
-
-		props = new CMathDelimiterPr();
-		props.begChr		= open.trim().charCodeAt(0);
-		props.endChr		= close.trim().charCodeAt(0);
-		props.sepChr		= separator[0].trim().charCodeAt(0);
-		props.content		= [];
-		props.shp			= DELIMITER_SHAPE_MATCH;
-
-		let depth = reader.GetDepth();
-
-		while (reader.ReadNextSiblingNode(depth))
-		{
-			props.content.push(AscWord.ParaMath.readMathMLContent(reader));
-		}
-	}
-
-	return new CDelimiter(props);
-};
 CDelimiter.prototype.GetTextOfElement = function(oMathText)
 {
 	oMathText = new AscMath.MathTextAndStyles(oMathText);
@@ -4737,49 +4711,6 @@ CGroupCharacter.prototype.GetTextOfElement = function(oMathText)
 
 	return oMathText;
 };
-
-CGroupCharacter.fromMathML = function(reader, type, content)
-{
-	let props = new CMathGroupChrPr();
-	props.content = content ? content : [];
-	props.pos = type;
-	props.vertJc = (type === VJUST_TOP ) ? VJUST_BOT : undefined;
-
-	let mContents = [];
-	let depth = reader.GetDepth();
-
-	if (!content)
-	{
-		while (reader.ReadNextSiblingNode(depth))
-		{
-			mContents.push(AscWord.ParaMath.readMathMLContent(reader));
-		}
-	}
-	else
-	{
-		mContents = content;
-	}
-
-	if (mContents.length >= 2 || !content)
-	{
-		props.content.push(mContents[0]);
-
-		if (mContents[1])
-		{
-			let chrText = mContents[1].GetTextOfElement().GetText().trim();
-			if (chrText.length > 1 || !AscMath.MathLiterals.hbrack.SearchU(chrText))
-				return AscMath.Limit.fromMathML(reader, type === 0 ? 1 : type, mContents);
-
-			props.chr = chrText.charCodeAt(0);
-		}
-	}
-	else if (!content)
-	{
-		props.content[0] = mContents[0];
-	}
-
-	return new CGroupCharacter(props);
-}
 
 /**
  *

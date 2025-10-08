@@ -75,7 +75,7 @@ function (window, undefined) {
 	var arrayFunctionsMap = {"SUMPRODUCT": 1, "FILTER": 1, "SUM": 1, "LOOKUP": 1, "AGGREGATE": 1};
 
 	var importRangeLinksState = {importRangeLinks: null, startBuildImportRangeLinks: null};
-	const aExcludeRecursiveFormulas = ['ISFORMULA', 'SHEETS', 'AREAS', 'COLUMN', 'COLUMNS', 'ROW', 'ROWS', 'CELL', 'OFFSET'];
+	const aExcludeRecursiveFormulas = ['ISFORMULA','SHEET','SHEETS', 'AREAS', 'COLUMN', 'COLUMNS', 'ROW', 'ROWS', 'CELL', 'OFFSET'];
 
 	const cReplaceFormulaType = {
 		val: 1,
@@ -5394,13 +5394,13 @@ _func[cElementType.string][cElementType.string] = function ( arg0, arg1, what ) 
 
 	let _arg0, _arg1;
 	if (what === ">") {
-		res = arg0.getValue(true) > arg1.getValue(true);
+		res = AscCommonExcel.stringCompare(arg0.getValue(true), arg1.getValue(true)) > 0;
 	} else if (what === ">=") {
-		res = arg0.getValue(true) >= arg1.getValue(true);
+		res = AscCommonExcel.stringCompare(arg0.getValue(true), arg1.getValue(true)) >= 0;
 	} else if (what === "<") {
-		res = arg0.getValue(true) < arg1.getValue(true);
+		res = AscCommonExcel.stringCompare(arg0.getValue(true), arg1.getValue(true)) < 0;
 	} else if (what === "<=") {
-		res = arg0.getValue(true) <= arg1.getValue(true);
+		res = AscCommonExcel.stringCompare(arg0.getValue(true), arg1.getValue(true)) <= 0;
 	} else if (what === "=") {
 		res = isEqualStrings(arg0.getValue(true), arg1.getValue(true));
 	} else if (what === "<>") {
@@ -11374,7 +11374,81 @@ function parserFormula( formula, parent, _ws ) {
 
 		return res;
 	}
-
+	/**
+	 * @param {cElementType} type
+	 * @param {string} op
+	 * @param {boolean} isWildcard
+	 * @returns {Function}
+	 */
+	function getMatchingFunction(type, op, isWildcard) {
+		if (type === cElementType.string) {
+			switch (op) {
+				case ">":
+					return function (a, b) {
+						return AscCommonExcel.stringCompare(a, b) > 0;
+					};
+				case "<":
+					return function (a, b) {
+						return AscCommonExcel.stringCompare(a, b) < 0;
+					};
+				case ">=":
+					return function (a, b) {
+						return AscCommonExcel.stringCompare(a, b) >= 0;
+					};
+				case "<=":
+					return function (a, b) {
+						return AscCommonExcel.stringCompare(a, b) <= 0;
+					};
+				case "<>":
+					if (isWildcard) {
+						return function (a, b) {
+							return !AscCommonExcel.searchRegExp2(a, b);
+						};
+					}
+					return function (a, b) {
+						return AscCommonExcel.stringCompare(a, b) !== 0;
+					};
+				case "=":
+				default:
+					if (isWildcard) {
+						return function (a, b) {
+							return AscCommonExcel.searchRegExp2(a, b);
+						};
+					}
+					return function (a, b) {
+						return AscCommonExcel.stringCompare(a, b) === 0;
+					};
+			}
+		} else {
+			switch (op) {
+				case ">":
+					return function (a, b) {
+						return a > b;
+					};
+				case "<":
+					return function (a, b) {
+						return a < b;
+					};
+				case ">=":
+					return function (a, b) {
+						return a >= b;
+					};
+				case "<=":
+					return function (a, b) {
+						return a <= b;
+					};
+				case "<>":
+					return function (a, b) {
+						return a !== b;
+					};
+				case "=":
+				default:
+					return function (a, b) {
+						return a === b;
+					};
+			}
+		}
+	}
 	function matching(x, matchingInfo, doNotParseNum, doNotParseFormat) {
 		var y = matchingInfo.val;
 		var operator = matchingInfo.op;
@@ -12125,6 +12199,7 @@ function parserFormula( formula, parent, _ws ) {
 
 	window['AscCommonExcel'].parseNum = parseNum;
 	window['AscCommonExcel'].matching = matching;
+	window['AscCommonExcel'].getMatchingFunction = getMatchingFunction;
 	window['AscCommonExcel'].matchingValue = matchingValue;
 	window['AscCommonExcel'].GetDiffDate360 = GetDiffDate360;
 	window['AscCommonExcel'].searchRegExp2 = searchRegExp2;

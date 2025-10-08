@@ -3160,6 +3160,20 @@
         return this.copyStyle(this.revisedDocument.Styles.Get(sId));
 
     };
+	CDocumentComparison.prototype.checkNumStyleId = function (oParaPr, oOriginalStyle, oRevisedStyle) {
+		if (oParaPr.NumPr && oParaPr.NumPr.NumId) {
+			const oNumbering = this.originalDocument.GetNumbering();
+			const oNum = oNumbering && oNumbering.GetNum(oParaPr.NumPr.NumId);
+			if (oNum) {
+				const nLvl = oNum.GetLvlByStyle(oRevisedStyle.GetId());
+				if (nLvl !== -1) {
+					const oNumLvl = oNum.GetLvl(nLvl).Copy();
+					oNumLvl.SetPStyle(oOriginalStyle.GetId());
+					oNum.SetLvl(oNumLvl, nLvl);
+				}
+			}
+		}
+	};
     CDocumentComparison.prototype.copyStyle = function(oStyle)
     {
         if(!oStyle)
@@ -3179,7 +3193,9 @@
             const oNewParaPr = this.getNewParaPrWithDiff(oStyleCopy.ParaPr, oStyle.ParaPr);
             if(oNewParaPr)
             {
-                oStyleCopy.Set_ParaPr(oNewParaPr);
+							this.checkNumStyleId(oNewParaPr, oStyleCopy, oStyle);
+              oStyleCopy.Set_ParaPr(oNewParaPr);
+								
             }
             return sStyleId;
         }
@@ -3193,7 +3209,9 @@
         oStyleCopy.Set_SemiHidden(oStyle.semiHidden);
         oStyleCopy.Set_UnhideWhenUsed(oStyle.unhideWhenUsed);
         oStyleCopy.Set_TextPr(oStyle.TextPr.Copy(undefined, this.copyPr));
-        oStyleCopy.Set_ParaPr( oStyle.ParaPr.Copy(undefined, this.copyPr));
+				const oParaPr = oStyle.ParaPr.Copy(undefined, this.copyPr);
+	    this.checkNumStyleId(oParaPr, oStyleCopy, oStyle);
+        oStyleCopy.Set_ParaPr( oParaPr);
         oStyleCopy.Set_TablePr(oStyle.TablePr.Copy());
         oStyleCopy.Set_TableRowPr(oStyle.TableRowPr.Copy());
         oStyleCopy.Set_TableCellPr(oStyle.TableCellPr.Copy());

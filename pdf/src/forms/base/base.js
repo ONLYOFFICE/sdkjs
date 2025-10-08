@@ -186,19 +186,17 @@
         this._apIdx = nIdx;
     };
     CBaseField.prototype.GetApIdx = function() {
-        if (undefined == this._apIdx) {
-            if (undefined == this.GetId()) {
-                return -1;
-            }
-            else {
-                let nApIdx = Number(this.GetId().replace("_", ""));
-                if (!isNaN(nApIdx)) {
-                    return nApIdx;
-                }
-            }
+        if (undefined !== this._apIdx) {
+            return this._apIdx;
         }
-
-        return this._apIdx;
+        else {
+            let nPos = Object.keys(AscCommon.g_oTableId.m_aPairs).indexOf(this.GetId());
+            if (-1 !== nPos) {
+                return Asc.editor.getPDFDoc().GetCurMaxApIdx() + nPos;
+            }
+            
+            return undefined;
+        }
     };
     CBaseField.prototype.SetMEOptions = function(nFlags) {
         let oParent = this.GetParent();
@@ -601,7 +599,7 @@
             oNewTrigger.SetParentField(this);
         }
 
-        const aCurActionsInfo = this.GetActions();
+        const aCurActionsInfo = this.GetActions(nTriggerType);
         AscCommon.History.Add(new CChangesPDFFormActions(this, aCurActionsInfo, aActionsInfo, nTriggerType));
 
         switch (nTriggerType) {
@@ -945,6 +943,7 @@
         this.SetBackgroundColor(oField.GetBackgroundColor());
         this.SetBorderStyle(oField.GetBorderStyle());
         this.SetBorderWidth(oField.GetBorderWidth());
+        this.SetLocked(oField.IsLocked());
     };
     CBaseField.prototype.SetDocument = function(oDoc) {
         if (this._doc == oDoc) {
@@ -1683,6 +1682,8 @@
             oParentField.AddKid(this);
         }
 
+        this.Commit();
+        
         return true;
     };
     CBaseField.prototype.IsNeedRecalc = function() {
@@ -1691,7 +1692,7 @@
     CBaseField.prototype.Refresh_RecalcData = function(){};
     CBaseField.prototype.SetWasChanged = function(isChanged, viewSync) {
         let oViewer   = Asc.editor.getDocumentRenderer();
-        let canChange = !oViewer.IsOpenAnnotsInProgress && AscCommon.History.CanAddChanges();
+        let canChange = !oViewer.IsOpenFormsInProgress && AscCommon.History.CanAddChanges();
 
         let changed = this._wasChanged !== isChanged && canChange;
         if (changed) {
@@ -2757,7 +2758,7 @@
         let bPrint       = false;
         let bNoView      = false;
         let ToggleNoView = false;
-        let locked       = false;
+        let locked       = this.IsLocked();
         let lockedC      = false;
         let noZoom       = false;
         let noRotate     = false;

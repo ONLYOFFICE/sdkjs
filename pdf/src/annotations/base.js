@@ -46,7 +46,7 @@
 			}
         }
 
-        this._apIdx = -1;
+        this._apIdx = undefined;
         this.type = nType;
 
         this._author                = undefined;
@@ -90,6 +90,7 @@
         }
         this._wasChanged = false;
         this.Lock = new AscCommon.CLock();
+        this.repliesArrayChanges = new AscCommon.CContentChanges();
 
         this.uid = "";
 
@@ -181,10 +182,58 @@
         aFillColor && oCopy.SetFillColor(aFillColor.slice());
         aDash && oCopy.SetDash(aDash.slice());
         aRD && oCopy.SetRectangleDiff(aRD.slice());
+        
+        // copy replies
+        let oAscCommData = this.GetAscCommentData();
+        if (oAscCommData) {
+            let oCommentData = new AscCommon.CCommentData();
+            oCommentData.Read_FromAscCommentData(oAscCommData);
+            if (false == this.IsFreeText()) {
+                oCommentData.SetUserData(oCopy.GetId());
+            }
+            oCopy.EditCommentData(oCommentData)
+        }
 
         return oCopy;
     };
 
+    CAnnotationBase.prototype.AddReplyByCommentData = function(CommentData, nPos) {
+        let oReply = new AscPDF.CAnnotationText(AscCommon.CreateGUID(), this.GetRect().slice(), this.GetDocument());
+
+        oReply.SetCreationDate(CommentData.m_sOOTime);
+        oReply.SetModDate(CommentData.m_sOOTime);
+        oReply.SetAuthor(CommentData.m_sUserName);
+        oReply.SetUserId(CommentData.m_sUserId);
+        oReply.SetDisplay(window["AscPDF"].Api.Types.display["visible"]);
+        oReply.SetReplyTo(this.GetReplyTo() || this);
+        CommentData.SetUserData(oReply.GetId());
+        oReply.SetContents(CommentData.m_sText);
+        oReply._wasChanged = true;
+        
+        if (!nPos) {
+            nPos = this._replies.length;
+        }
+
+        this._replies.splice(nPos, 0, oReply);
+    };
+    CAnnotationBase.prototype.AddReply = function(oReplyAnnot, nPos) {
+        if (!nPos) {
+            nPos = this._replies.length;
+        }
+
+        this._replies.splice(nPos, 0, oReplyAnnot);
+
+        AscCommon.History.Add(new CChangesPDFAnnotReply(this, nPos, [oReplyAnnot], true));
+    };
+    CAnnotationBase.prototype.Add_ContentChanges = function(Changes) {
+        this.repliesArrayChanges.Add(Changes);
+    };
+    CAnnotationBase.prototype.Refresh_ContentChanges = function() {
+        this.repliesArrayChanges.Refresh();
+    };
+    CAnnotationBase.prototype.Clear_ContentChanges = function() {
+        this.repliesArrayChanges.Clear();
+    };
     CAnnotationBase.prototype.SetMeta = function(oMeta) {
         AscCommon.History.Add(new CChangesPDFAnnotMeta(this, this._meta, oMeta))
 
@@ -193,6 +242,8 @@
     CAnnotationBase.prototype.GetMeta = function() {
         return this._meta;
     };
+    CAnnotationBase.prototype.onMouseExit = function() {};
+    CAnnotationBase.prototype.onMouseEnter = function() {};
 
     CAnnotationBase.prototype.IsEditFieldShape = function() {
         return false;
@@ -538,7 +589,7 @@
      * @returns {canvas}
 	 */
     CAnnotationBase.prototype.GetOriginView = function(nPageW, nPageH) {
-        if (this.GetApIdx() == -1)
+        if (this.GetApIdx() == undefined)
             return null;
 
         nPageW = Math.round(nPageW);
@@ -706,6 +757,9 @@
         return this instanceof AscPDF.CPdfShape || this instanceof AscFormat.CGroupShape;
     };
     CAnnotationBase.prototype.IsHighlight = function() {
+        return false;
+    };
+    CAnnotationBase.prototype.IsRedact = function() {
         return false;
     };
     CAnnotationBase.prototype.IsTextMarkup = function() {
@@ -1028,7 +1082,7 @@
         
         AscCommon.History.StartNoHistoryMode();
         if (null == oFirstCommToEdit) {
-            AscPDF.CAnnotationText.prototype.AddReply.call(this, oCommentData);
+            this.AddReplyByCommentData(oCommentData);
             oFirstCommToEdit = this.GetReply(0);
             oDoc.CheckComment(this);
         }
@@ -1068,7 +1122,7 @@
             if (!this._replies.find(function(reply) {
                 return oReplyCommentData.m_sUserData == reply.GetId();
             })) {
-                AscPDF.CAnnotationText.prototype.AddReply.call(this, oReplyCommentData, i);
+               this.AddReplyByCommentData(oReplyCommentData, i);
             }
         }
         AscCommon.History.EndNoHistoryMode();
@@ -1110,7 +1164,10 @@
         oAscCommData.asc_putUserData(this.GetId());
 
         this._replies.forEach(function(reply) {
-            oAscCommData.m_aReplies.push(reply.GetAscCommentData());
+            let oReplyAscCommData = reply.GetAscCommentData();
+            if (oReplyAscCommData) {
+                oAscCommData.m_aReplies.push(oReplyAscCommData);
+            }
         });
 
         return oAscCommData;
@@ -1180,22 +1237,19 @@
     };
     CAnnotationBase.prototype.SetApIdx = function(nIdx) {
         this._apIdx = nIdx;
-        AscCommon.History.Add(new CChangesPDFAnnotApIdx(this, undefined, nIdx));
     };
     CAnnotationBase.prototype.GetApIdx = function() {
-        if (-1 == this._apIdx) {
-            if (undefined == this.GetId()) {
-                return -1;
-            }
-            else {
-                let sId = this.GetId();
-
-                let nApIdx = Number(sId.replace("_", "").replace("off", ""));
-                return nApIdx;
-            }
+        if (undefined !== this._apIdx) {
+            return this._apIdx;
         }
-
-        return this._apIdx;
+        else {
+            let nPos = Object.keys(AscCommon.g_oTableId.m_aPairs).indexOf(this.GetId());
+            if (-1 !== nPos) {
+                return Asc.editor.getPDFDoc().GetCurMaxApIdx() + nPos;
+            }
+            
+            return undefined;
+        }
     };
     CAnnotationBase.prototype.AddToRedraw = function() {
         let oViewer = editor.getDocumentRenderer();
@@ -1446,9 +1500,22 @@
         if (oMeta != null) {
             Flags |= (1 << 9);
             if (memory.isForSplit || memory.isCopyPaste) {
-                if (this.IsStamp() && this.GetRenderStructure()) {
+                if (this.IsStamp()) {
+                    if (this.GetRenderStructure()) {
+                        oMeta["isOO"] = true;
+                        oMeta["InRect"] = this.GetInRect();
+                    }
+                }
+                if (this.GetOriginPage() == undefined) {
                     oMeta["isOO"] = true;
-                } 
+
+                    if (this.IsRedact()) {
+                        let sRedactId = this.GetRedactId();
+                        if (sRedactId) {
+                            oMeta["redactId"] = sRedactId;
+                        }
+                    }
+                }
             }
             
             memory.WriteString(JSON.stringify(oMeta));

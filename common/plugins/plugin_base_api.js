@@ -783,6 +783,16 @@ window.startPluginApi = function() {
 		return true;
 	};
 
+	Plugin.sendEvent = function(name, data)
+	{
+		window.Asc.plugin.executeMethod("SendEvent", [name, data]);
+	};
+
+	Plugin.sendEventInternal = function(name, data)
+	{
+		window.Asc.plugin.executeMethod("SendEventInternal", [name, data]);
+	};
+
 };
 
 

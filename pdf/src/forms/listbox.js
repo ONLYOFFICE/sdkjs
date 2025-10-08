@@ -626,9 +626,7 @@
         oDoc.activeForm = this;
 
         if (oDoc.IsEditFieldsMode()) {
-            if (false == this.IsLocked()) {
-                this.editShape.onMouseDown(x, y, e)
-            }
+            this.editShape.onMouseDown(x, y, e);
             return;
         }
 

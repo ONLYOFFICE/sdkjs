@@ -938,7 +938,7 @@
 	 * @param {CTheme[]} themes
 	 * @param {{fontColor?: boolean, lineUniFill?: boolean, uniFillForegnd?: boolean}?} themeValWasUsedFor - changes
 	 * during function. use only for font Color LineColor and FillColor cells otherwise undefined
-	 * @param {boolean?} gradientEnabled
+	 * @param {boolean?} gradientEnabled - true by default
 	 * @param {number?}  themedColorsRow
 	 * @return {(CUniFill | CUniColor | boolean | *)}
 	 */

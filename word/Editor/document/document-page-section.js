@@ -236,6 +236,9 @@
 		
 		this.CurrentY = Math.min(this.CurrentY, this.YLimit2);
 		
+		// // Recalculation LOG
+		// console.log(`Calculate continuous section count=${this.IterationsCount} step=${this.IterationStep} Y=${this.CurrentY}`);
+		
 		this.IterationsCount++;
 		return this.CurrentY;
 	};
@@ -262,6 +265,15 @@
 		// 	console.log("Bad continuous section calculate");
 		
 		return (this.YLimit2 - this.CurrentY > 0.001);
+	};
+	DocumentPageSection.prototype.GetBottomLimit = function()
+	{
+		let bottomLimit = this.Y;
+		for (let column = 0, columnCount = this.Columns.length; column < columnCount; ++column)
+		{
+			bottomLimit = Math.max(bottomLimit, this.Columns[column].Bounds.Bottom);
+		}
+		return bottomLimit;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.DocumentPageSection = DocumentPageSection;

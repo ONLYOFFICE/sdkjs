@@ -6624,6 +6624,17 @@ function BinaryPPTYLoader()
             }
         }
 
+        if (AscCommon.PasteElementsId.g_bIsPdfBinary) {
+            let nRedacts = s.GetULong();
+            for (let i = 0; i < nRedacts; i++) {
+                let sId = s.GetString2();
+
+                if (Asc.editor.isPdfEditor()) {
+                    _object.AddRedactId(sId);
+                }
+            }
+        }
+
         return _object;
     };
 

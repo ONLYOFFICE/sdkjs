@@ -641,7 +641,7 @@ QUnit.config.autostart = false;
 		AscCommon.AscBrowser.isOpera = true;
 		assert.strictEqual(ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.EditOpenCellEditor) & keydownresult_PreventDefault, keydownresult_PreventDefault);
 		AscCommon.AscBrowser.isOpera = false;
-		assert.strictEqual(ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Print) & keydownresult_PreventDefault, keydownresult_PreventDefault);
+		assert.strictEqual(ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.PrintPreviewAndPrint) & keydownresult_PreventDefault, keydownresult_PreventDefault);
 	});
 
 	QUnit.test('Check select all', (assert) =>
@@ -712,7 +712,7 @@ QUnit.config.autostart = false;
 			editor.asc_unregisterCallback(sSendEvent, Check);
 		}
 
-		ExecuteTestWithCatchEvent('asc_onPrint', () => true, true, Asc.c_oAscSpreadsheetShortcutType.Print);
+		ExecuteTestWithCatchEvent('asc_onPrint', () => true, true, Asc.c_oAscSpreadsheetShortcutType.PrintPreviewAndPrint);
 		ExecuteTestWithCatchEvent('asc_onContextMenu', () => true, true, tableEvents[tableHotkeyTypes.contextMenu][0]);
 
 
@@ -1067,28 +1067,28 @@ QUnit.config.autostart = false;
 		ClearShapeAndAddParagraph('Hello world');
 
 		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Left, "Check align left");
-		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DrawingCenterPara);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CenterPara);
 		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Center, "Check turn on center para");
-		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DrawingCenterPara);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CenterPara);
 		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Left, "Check turn on center para");
 
-		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DrawingJustifyPara);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.JustifyPara);
 		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Justify, "Check turn on justify para");
-		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DrawingJustifyPara);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.JustifyPara);
 		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Left, "Check turn on justify para");
-		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DrawingJustifyPara);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.JustifyPara);
 		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Justify, "Check turn on justify para");
 
-		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DrawingLeftPara);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.LeftPara);
 		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Left, "Check turn on left para");
-		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DrawingLeftPara);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.LeftPara);
 		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Justify, "Check turn on left para");
-		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DrawingLeftPara);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.LeftPara);
 		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Left, "Check turn on left para");
 
-		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DrawingRightPara);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.RightPara);
 		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Right, "Check turn on right para");
-		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DrawingRightPara);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.RightPara);
 		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Left, "Check turn on right para");
 	});
 
@@ -1112,14 +1112,14 @@ QUnit.config.autostart = false;
 		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Underline);
 		assert.strictEqual(GetDirectGraphicTextPr().GetUnderline(), false, 'Check turn off underline');
 
-		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DrawingSuperscript);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Superscript);
 		assert.strictEqual(GetDirectGraphicTextPr().GetVertAlign(), AscCommon.vertalign_SuperScript, 'Check turn on superscript');
-		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DrawingSuperscript);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Superscript);
 		assert.strictEqual(GetDirectGraphicTextPr().GetVertAlign(), AscCommon.vertalign_Baseline, 'Check turn off superscript');
 
-		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DrawingSubscript);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Subscript);
 		assert.strictEqual(GetDirectGraphicTextPr().GetVertAlign(), AscCommon.vertalign_SubScript, 'Check turn on subscript');
-		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DrawingSubscript);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Subscript);
 		assert.strictEqual(GetDirectGraphicTextPr().GetVertAlign(), AscCommon.vertalign_Baseline, 'Check turn off subscript');
 
 		// defaultSize = 10
@@ -1146,10 +1146,10 @@ QUnit.config.autostart = false;
 	QUnit.test('Check add various characters', (assert) =>
 	{
 		const {paragraph} = ClearShapeAndAddParagraph('');
-		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DrawingEnDash);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.EnDash);
 		assert.strictEqual(GetParagraphText(paragraph), String.fromCharCode(0x2013), 'Check add en dash');
 
-		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DrawingEnDash);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.EnDash);
 		assert.strictEqual(GetParagraphText(paragraph), String.fromCharCode(0x2013, 0x2013), 'Check add en dash');
 	});
 

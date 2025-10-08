@@ -473,38 +473,134 @@ var c_oSerFormat = {
 };
 
 var c_oAscPresentationShortcutType = {
-	EditSelectAll   : 1,
-	EditUndo        : 2,
-	EditRedo        : 3,
-	Cut             : 4,
-	Copy            : 5,
-	Paste           : 6,
-	Duplicate       : 7,
-	Print           : 8,
-	Save            : 9,
-	ShowContextMenu : 10,
-	ShowParaMarks   : 11,
-	Bold            : 12,
-	CopyFormat      : 13,
-	CenterAlign     : 14,
-	EuroSign        : 15,
-	Group           : 16,
-	Italic          : 17,
-	JustifyAlign    : 18,
-	AddHyperlink    : 19,
-	BulletList      : 20,
-	LeftAlign       : 21,
-	RightAlign      : 22,
-	Underline       : 23,
-	Strikethrough   : 24,
-	Superscript     : 25,
-	Subscript       : 26,
-	EnDash          : 27,
-	DecreaseFont    : 28,
-	IncreaseFont    : 29,
-	PasteFormat     : 30,
-	UnGroup         : 31,
-	SpeechWorker    : 32
+	OpenFilePanel                 : 1,
+	OpenFindDialog                : 2,
+	OpenFindAndReplaceMenu        : 3,
+	OpenCommentsPanel             : 4,
+	OpenCommentField              : 5,
+	OpenChatPanel                 : 6,
+	Save                          : 7,
+	PrintPreviewAndPrint          : 8,
+	SaveAs                        : 9,
+	OpenHelpMenu                  : 10,
+	OpenExistingFile              : 11,
+	NextFileTab                   : 12,
+	PreviousFileTab               : 13,
+	CloseFile                     : 14,
+	OpenContextMenu               : 15,
+	CloseMenu                     : 16,
+	Zoom100                       : 17,
+	GoToFirstSlide                : 18,
+	GoToLastSlide                 : 19,
+	GoToNextSlide                 : 20,
+	GoToPreviousSlide             : 21,
+	ZoomIn                        : 22,
+	ZoomOut                       : 23,
+	NextModalControl              : 24,
+	PreviousModalControl          : 25,
+	NewSlide                      : 26,
+	RemoveSlide                   : 27,
+	Duplicate                     : 28,
+	MoveSlideUp                   : 29,
+	MoveSlideDown                 : 30,
+	MoveSlideToBegin              : 31,
+	MoveSlideToEnd                : 32,
+	EditShape                     : 33,
+	EditChart                     : 34,
+	Group                         : 35,
+	UnGroup                       : 36,
+	MoveFocusToNextObject         : 37,
+	MoveFocusToPreviousObject     : 38,
+	LittleMoveObjectLeft          : 39,
+	LittleMoveObjectRight         : 40,
+	LittleMoveObjectUp            : 41,
+	LittleMoveObjectDown          : 42,
+	BigMoveObjectLeft             : 43,
+	BigMoveObjectRight            : 44,
+	BigMoveObjectUp               : 45,
+	BigMoveObjectDown             : 46,
+	MoveToNextCell                : 47,
+	MoveToPreviousCell            : 48,
+	MoveToNextRow                 : 49,
+	MoveToPreviousRow             : 50,
+	EndParagraphCell              : 51,
+	AddNewRow                     : 52,
+	DemonstrationStartPresentation: 53,
+	DemonstrationGoToNextSlide    : 54,
+	DemonstrationGoToPreviousSlide: 55,
+	DemonstrationGoToFirstSlide   : 56,
+	DemonstrationGoToLastSlide    : 57,
+	DemonstrationClosePreview     : 58,
+	EditUndo                      : 59,
+	EditRedo                      : 60,
+	Cut                           : 61,
+	Copy                          : 62,
+	Paste                         : 63,
+	PasteTextWithoutFormat        : 64,
+	CopyFormat                    : 65,
+	PasteFormat                   : 66,
+	UseDestinationTheme           : 67,
+	KeepSourceFormat              : 68,
+	PasteAsPicture                : 69,
+	KeepTextOnly                  : 70,
+	InsertHyperlink               : 71,
+	VisitHyperlink                : 72,
+	EditSelectAll                 : 73,
+	SelectNextSlide               : 74,
+	SelectPreviousSlide           : 75,
+	SelectToFirstSlide            : 76,
+	SelectToLastSlide             : 77,
+	SelectToStartLine             : 78,
+	SelectToEndLine               : 79,
+	SelectRightChar               : 80,
+	SelectLeftChar                : 81,
+	SelectRightWord               : 82,
+	SelectLeftWord                : 83,
+	SelectLineUp                  : 84,
+	SelectLineDown                : 85,
+	EditDeselectAll               : 86,
+	ShowParaMarks                 : 87,
+	Bold                          : 88,
+	Italic                        : 89,
+	Underline                     : 90,
+	Strikeout                     : 91,
+	Subscript                     : 92,
+	Superscript                   : 93,
+	BulletList                    : 94,
+	ResetChar                     : 95,
+	IncreaseFontSize              : 96,
+	DecreaseFontSize              : 97,
+	CenterPara                    : 98,
+	JustifyPara                   : 99,
+	RightPara                     : 100,
+	LeftPara                      : 101,
+	Indent                        : 102,
+	UnIndent                      : 103,
+	DeleteLeftChar                : 104,
+	DeleteRightChar               : 105,
+	DeleteLeftWord                : 106,
+	DeleteRightWord               : 107,
+	StartIndent                   : 108,
+	StartUnIndent                 : 109,
+	InsertTab                     : 110,
+	EquationAddPlaceholder        : 111,
+	InsertLineBreak               : 112,
+	EndParagraph                  : 113,
+	EuroSign                      : 114,
+	EnDash                        : 116,
+	NonBreakingSpace              : 117,
+	MoveToRightChar               : 118,
+	MoveToLeftChar                : 119,
+	MoveToUpLine                  : 120,
+	MoveToDownLine                : 121,
+	MoveToStartWord               : 122,
+	MoveToEndWord                 : 123,
+	GoToNextPlaceholder           : 124,
+	MoveToStartLine               : 125,
+	MoveToEndLine                 : 126,
+	MoveToStartContent            : 127,
+	MoveToEndContent              : 128,
+	SpeechWorker                  : 129
 };
 
 
@@ -589,38 +685,134 @@ prot['Morph_Words']            = c_oAscSlideTransitionParams.Morph_Words;
 prot['Morph_Letters']          = c_oAscSlideTransitionParams.Morph_Letters;
 
 prot = window['Asc']['c_oAscPresentationShortcutType'] = window['Asc'].c_oAscPresentationShortcutType = c_oAscPresentationShortcutType;
-prot['EditSelectAll']                 = c_oAscPresentationShortcutType.EditSelectAll;
-prot['EditUndo']                      = c_oAscPresentationShortcutType.EditUndo;
-prot['EditRedo']                      = c_oAscPresentationShortcutType.EditRedo;
-prot['Cut']                           = c_oAscPresentationShortcutType.Cut;
-prot['Copy']                          = c_oAscPresentationShortcutType.Copy;
-prot['Paste']                         = c_oAscPresentationShortcutType.Paste;
-prot['Duplicate']                     = c_oAscPresentationShortcutType.Duplicate;
-prot['Print']                         = c_oAscPresentationShortcutType.Print;
-prot['Save']                          = c_oAscPresentationShortcutType.Save;
-prot['ShowContextMenu']               = c_oAscPresentationShortcutType.ShowContextMenu;
-prot['ShowParaMarks']                 = c_oAscPresentationShortcutType.ShowParaMarks;
-prot['Bold']                          = c_oAscPresentationShortcutType.Bold;
-prot['CopyFormat']                    = c_oAscPresentationShortcutType.CopyFormat;
-prot['CenterAlign']                   = c_oAscPresentationShortcutType.CenterAlign;
-prot['EuroSign']                      = c_oAscPresentationShortcutType.EuroSign;
-prot['Group']                         = c_oAscPresentationShortcutType.Group;
-prot['Italic']                        = c_oAscPresentationShortcutType.Italic;
-prot['JustifyAlign']                  = c_oAscPresentationShortcutType.JustifyAlign;
-prot['AddHyperlink']                  = c_oAscPresentationShortcutType.AddHyperlink;
-prot['BulletList']                    = c_oAscPresentationShortcutType.BulletList;
-prot['LeftAlign']                     = c_oAscPresentationShortcutType.LeftAlign;
-prot['RightAlign']                    = c_oAscPresentationShortcutType.RightAlign;
-prot['Underline']                     = c_oAscPresentationShortcutType.Underline;
-prot['Strikethrough']                 = c_oAscPresentationShortcutType.Strikethrough;
-prot['Superscript']                   = c_oAscPresentationShortcutType.Superscript;
-prot['Subscript']                     = c_oAscPresentationShortcutType.Subscript;
-prot['EnDash']                        = c_oAscPresentationShortcutType.EnDash;
-prot['DecreaseFont']                  = c_oAscPresentationShortcutType.DecreaseFont;
-prot['IncreaseFont']                  = c_oAscPresentationShortcutType.IncreaseFont;
-prot['PasteFormat']                   = c_oAscPresentationShortcutType.PasteFormat;
-prot['UnGroup']                       = c_oAscPresentationShortcutType.UnGroup;
-prot['SpeechWorker']                  = c_oAscPresentationShortcutType.SpeechWorker;
+prot["OpenFilePanel"] = prot.OpenFilePanel;
+prot["OpenFindDialog"] = prot.OpenFindDialog;
+prot["OpenFindAndReplaceMenu"] = prot.OpenFindAndReplaceMenu;
+prot["OpenCommentsPanel"] = prot.OpenCommentsPanel;
+prot["OpenCommentField"] = prot.OpenCommentField;
+prot["OpenChatPanel"] = prot.OpenChatPanel;
+prot["Save"] = prot.Save;
+prot["PrintPreviewAndPrint"] = prot.PrintPreviewAndPrint;
+prot["SaveAs"] = prot.SaveAs;
+prot["OpenHelpMenu"] = prot.OpenHelpMenu;
+prot["OpenExistingFile"] = prot.OpenExistingFile;
+prot["NextFileTab"] = prot.NextFileTab;
+prot["PreviousFileTab"] = prot.PreviousFileTab;
+prot["CloseFile"] = prot.CloseFile;
+prot["OpenContextMenu"] = prot.OpenContextMenu;
+prot["CloseMenu"] = prot.CloseMenu;
+prot["Zoom100"] = prot.Zoom100;
+prot["GoToFirstSlide"] = prot.GoToFirstSlide;
+prot["GoToLastSlide"] = prot.GoToLastSlide;
+prot["GoToNextSlide"] = prot.GoToNextSlide;
+prot["GoToPreviousSlide"] = prot.GoToPreviousSlide;
+prot["ZoomIn"] = prot.ZoomIn;
+prot["ZoomOut"] = prot.ZoomOut;
+prot["NextModalControl"] = prot.NextModalControl;
+prot["PreviousModalControl"] = prot.PreviousModalControl;
+prot["NewSlide"] = prot.NewSlide;
+prot["RemoveSlide"] = prot.RemoveSlide;
+prot["Duplicate"] = prot.Duplicate;
+prot["MoveSlideUp"] = prot.MoveSlideUp;
+prot["MoveSlideDown"] = prot.MoveSlideDown;
+prot["MoveSlideToBegin"] = prot.MoveSlideToBegin;
+prot["MoveSlideToEnd"] = prot.MoveSlideToEnd;
+prot["EditShape"] = prot.EditShape;
+prot["EditChart"] = prot.EditChart;
+prot["Group"] = prot.Group;
+prot["UnGroup"] = prot.UnGroup;
+prot["MoveFocusToNextObject"] = prot.MoveFocusToNextObject;
+prot["MoveFocusToPreviousObject"] = prot.MoveFocusToPreviousObject;
+prot["LittleMoveObjectLeft"] = prot.LittleMoveObjectLeft;
+prot["LittleMoveObjectRight"] = prot.LittleMoveObjectRight;
+prot["LittleMoveObjectUp"] = prot.LittleMoveObjectUp;
+prot["LittleMoveObjectDown"] = prot.LittleMoveObjectDown;
+prot["BigMoveObjectLeft"] = prot.BigMoveObjectLeft;
+prot["BigMoveObjectRight"] = prot.BigMoveObjectRight;
+prot["BigMoveObjectUp"] = prot.BigMoveObjectUp;
+prot["BigMoveObjectDown"] = prot.BigMoveObjectDown;
+prot["MoveToNextCell"] = prot.MoveToNextCell;
+prot["MoveToPreviousCell"] = prot.MoveToPreviousCell;
+prot["MoveToNextRow"] = prot.MoveToNextRow;
+prot["MoveToPreviousRow"] = prot.MoveToPreviousRow;
+prot["EndParagraphCell"] = prot.EndParagraphCell;
+prot["AddNewRow"] = prot.AddNewRow;
+prot["DemonstrationStartPresentation"] = prot.DemonstrationStartPresentation;
+prot["DemonstrationGoToNextSlide"] = prot.DemonstrationGoToNextSlide;
+prot["DemonstrationGoToPreviousSlide"] = prot.DemonstrationGoToPreviousSlide;
+prot["DemonstrationGoToFirstSlide"] = prot.DemonstrationGoToFirstSlide;
+prot["DemonstrationGoToLastSlide"] = prot.DemonstrationGoToLastSlide;
+prot["DemonstrationClosePreview"] = prot.DemonstrationClosePreview;
+prot["EditUndo"] = prot.EditUndo;
+prot["EditRedo"] = prot.EditRedo;
+prot["Cut"] = prot.Cut;
+prot["Copy"] = prot.Copy;
+prot["Paste"] = prot.Paste;
+prot["PasteTextWithoutFormat"] = prot.PasteTextWithoutFormat;
+prot["CopyFormat"] = prot.CopyFormat;
+prot["PasteFormat"] = prot.PasteFormat;
+prot["UseDestinationTheme"] = prot.UseDestinationTheme;
+prot["KeepSourceFormat"] = prot.KeepSourceFormat;
+prot["PasteAsPicture"] = prot.PasteAsPicture;
+prot["KeepTextOnly"] = prot.KeepTextOnly;
+prot["InsertHyperlink"] = prot.InsertHyperlink;
+prot["VisitHyperlink"] = prot.VisitHyperlink;
+prot["EditSelectAll"] = prot.EditSelectAll;
+prot["SelectNextSlide"] = prot.SelectNextSlide;
+prot["SelectPreviousSlide"] = prot.SelectPreviousSlide;
+prot["SelectToFirstSlide"] = prot.SelectToFirstSlide;
+prot["SelectToLastSlide"] = prot.SelectToLastSlide;
+prot["SelectToStartLine"] = prot.SelectToStartLine;
+prot["SelectToEndLine"] = prot.SelectToEndLine;
+prot["SelectRightChar"] = prot.SelectRightChar;
+prot["SelectLeftChar"] = prot.SelectLeftChar;
+prot["SelectRightWord"] = prot.SelectRightWord;
+prot["SelectLeftWord"] = prot.SelectLeftWord;
+prot["SelectLineUp"] = prot.SelectLineUp;
+prot["SelectLineDown"] = prot.SelectLineDown;
+prot["EditDeselectAll"] = prot.EditDeselectAll;
+prot["ShowParaMarks"] = prot.ShowParaMarks;
+prot["Bold"] = prot.Bold;
+prot["Italic"] = prot.Italic;
+prot["Underline"] = prot.Underline;
+prot["Strikeout"] = prot.Strikeout;
+prot["Subscript"] = prot.Subscript;
+prot["Superscript"] = prot.Superscript;
+prot["BulletList"] = prot.BulletList;
+prot["ResetChar"] = prot.ResetChar;
+prot["IncreaseFontSize"] = prot.IncreaseFontSize;
+prot["DecreaseFontSize"] = prot.DecreaseFontSize;
+prot["CenterPara"] = prot.CenterPara;
+prot["JustifyPara"] = prot.JustifyPara;
+prot["RightPara"] = prot.RightPara;
+prot["LeftPara"] = prot.LeftPara;
+prot["Indent"] = prot.Indent;
+prot["UnIndent"] = prot.UnIndent;
+prot["DeleteLeftChar"] = prot.DeleteLeftChar;
+prot["DeleteRightChar"] = prot.DeleteRightChar;
+prot["DeleteLeftWord"] = prot.DeleteLeftWord;
+prot["DeleteRightWord"] = prot.DeleteRightWord;
+prot["StartIndent"] = prot.StartIndent;
+prot["StartUnIndent"] = prot.StartUnIndent;
+prot["InsertTab"] = prot.InsertTab;
+prot["EquationAddPlaceholder"] = prot.EquationAddPlaceholder;
+prot["InsertLineBreak"] = prot.InsertLineBreak;
+prot["EndParagraph"] = prot.EndParagraph;
+prot["EuroSign"] = prot.EuroSign;
+prot["EnDash"] = prot.EnDash;
+prot["NonBreakingSpace"] = prot.NonBreakingSpace;
+prot["MoveToRightChar"] = prot.MoveToRightChar;
+prot["MoveToLeftChar"] = prot.MoveToLeftChar;
+prot["MoveToUpLine"] = prot.MoveToUpLine;
+prot["MoveToDownLine"] = prot.MoveToDownLine;
+prot["MoveToStartWord"] = prot.MoveToStartWord;
+prot["MoveToEndWord"] = prot.MoveToEndWord;
+prot["GoToNextPlaceholder"] = prot.GoToNextPlaceholder;
+prot["MoveToStartLine"] = prot.MoveToStartLine;
+prot["MoveToEndLine"] = prot.MoveToEndLine;
+prot["MoveToStartContent"] = prot.MoveToStartContent;
+prot["MoveToEndContent"] = prot.MoveToEndContent;
+prot["SpeechWorker"] = prot.SpeechWorker;
 
 prot = window['Asc']['c_oAscPresetShadowVal'] = window['Asc'].c_oAscPresetShadowVal = c_oAscPresetShadowVal;
 

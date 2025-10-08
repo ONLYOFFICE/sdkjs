@@ -3062,9 +3062,17 @@
 		}
 	};
 
-
-
-
+	/**
+	 * @param {string} s1
+	 * @param {string} s2
+	 * @return {number}
+	 */
+	function stringCompare(s1, s2) {
+		if (s1 === s2) {
+			return 0;
+		}
+		return s1.localeCompare(s2, "en");
+	}
 	function ForwardTransformationFormula(elem, formula, parsed) {
 		this.elem = elem;
 		this.formula = formula;
@@ -5521,8 +5529,7 @@
 			if (extarnalLink.SheetNames) {
 				for (var i = 0; i < extarnalLink.SheetNames.length; i++) {
 					if (extarnalLink.SheetNames[i] === sheet) {
-						extarnalLink.initWorksheetFromSheetDataSet(sheet);
-						return extarnalLink.worksheets && extarnalLink.worksheets[sheet];
+						return extarnalLink.initWorksheet(sheet);
 					}
 				}
 			}
@@ -5832,6 +5839,10 @@
 					var reader = new StaxParser(contentWorkbook, wbPart, xmlParserContext);
 					wbXml.fromXml(reader, {"sheets" : 1});
 				});
+			}
+
+			if (wbXml && wbPart) {
+				wbXml.readExternalReferences(this, wbPart, xmlParserContext);
 			}
 
 			//sharedString
@@ -8306,6 +8317,7 @@
 				prevRow = row;
 
 				var oOldProps = row.getHeightProp();
+				let bOldCalcHeight = row.getCalcHeight();
 				row.setHeight(height);
 				if (isCustom) {
 					row.setCustomHeight(true);
@@ -8314,7 +8326,7 @@
 				row.setHidden(false);
 				var oNewProps = row.getHeightProp();
 				if (oOldProps.isEqual(oNewProps)) {
-					row.setChanged(false);
+					bOldCalcHeight === row.getCalcHeight() && row.setChanged(false);
 				} else {
 					AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_RowProp, oThis.getId(), row._getUpdateRange(), new UndoRedoData_IndexSimpleProp(row.index, true, oOldProps, oNewProps));
 				}
@@ -8705,6 +8717,10 @@
 			var res = cell.loadContent(row, col) ? cell : null;
 			if (res && fAction) {
 				wb.loadCells.push(cell);
+			}
+			if (res && this.workbook.checkProtectedValue && this.isUserProtectedRangesIntersectionCell(res, null, null, Asc.c_oSerUserProtectedRangeType.View)) {
+				res.cleanText();
+				res._hasChanged = false;
 			}
 			fAction(res);
 			cell.saveContent(true);
@@ -15805,19 +15821,19 @@
 					let oArgElem = aOutStack[j];
 					let oBbox = null;
 					let aRef = [cElementType.cell, cElementType.cell3D, cElementType.cellsRange, cElementType.cellsRange3D];
-					if (!aRef.includes(oArgElem.type)) {
-						continue;
-					}
+
 					if (oArgElem.type === cElementType.name || oArgElem.type === cElementType.name3D) {
 						const oElemValue = oArgElem.getValue();
 						if (!aRef.includes(oElemValue.type)) {
 							continue;
 						}
 						oBbox = oElemValue.getBBox0();
-					}  else {
+					} else if (oArgElem.type === cElementType.table) {
+						oBbox = oArgElem.getRange().getBBox0();
+					}  else if (aRef.includes(oArgElem.type)) {
 						oBbox = oArgElem.getBBox0();
 					}
-					bBelongToFormula = oAreaMap.bbox.isIntersect(oBbox);
+					bBelongToFormula = !!oBbox && oAreaMap.bbox.isIntersect(oBbox);
 					if (bBelongToFormula) {
 						return true;
 					}
@@ -18292,7 +18308,7 @@
 		}
 
 		AscCommon.History.EndTransaction();
-		this.worksheet.workbook && this.worksheet.workbook.oApi && this.worksheet.workbook.oApi.onWorksheetChange(this.bbox);
+		this.onWorksheetChange();
 	};
 	Range.prototype.setValue2=function(array, pushOnlyFirstMergedCell){
 		AscCommon.History.Create_NewPoint();
@@ -18315,7 +18331,7 @@
 			// cell.Remove();
 		});
 		AscCommon.History.EndTransaction();
-		this.worksheet.workbook && this.worksheet.workbook.oApi && this.worksheet.workbook.oApi.onWorksheetChange(this.bbox);
+		this.onWorksheetChange();
 	};
 	Range.prototype.setValueData = function(val){
 		AscCommon.History.Create_NewPoint();
@@ -20741,15 +20757,6 @@
 				}
 			}
 		}
-
-		function strcmp(str1, str2) {
-			if (str1 === str2) {
-				return 0;
-			}
-			return str1.localeCompare(str2);
-		}
-
-
 		//color sort
 		var colorFillCmp = function (color1, color2, _customCellColor) {
 			var res = false;
@@ -20822,7 +20829,7 @@
 							if (_b && null != _b.text) {
 								var val1 = caseSensitive ? _a.text : _a.text.toUpperCase();
 								var val2 = caseSensitive ? _b.text : _b.text.toUpperCase();
-								res = strcmp(val1, val2);
+								res = stringCompare(val1, val2);
 							} else if(_b && null != _b.num) {
 								res = 1;
 							} else {
@@ -22016,6 +22023,9 @@
 
 	Range.prototype.move = function (oBBoxTo, copyRange, wsTo) {
 		this.worksheet._moveRange(this.bbox, oBBoxTo, copyRange, wsTo);
+	};
+	Range.prototype.onWorksheetChange = function () {
+		this.worksheet.workbook && this.worksheet.workbook.oApi && this.worksheet.workbook.oApi.onWorksheetChange && this.worksheet.workbook.oApi.onWorksheetChange(this.bbox);
 	};
 
 	function SweepLineRowIterator() {
@@ -24612,5 +24622,6 @@
 
 	window['AscCommonExcel'].mergeCustomFunctions = mergeCustomFunctions;
 	window['AscCommonExcel'].safeJsonParse = safeJsonParse;
+	window['AscCommonExcel'].stringCompare = stringCompare;
 
 })(window);

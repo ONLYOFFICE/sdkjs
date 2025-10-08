@@ -341,6 +341,8 @@
 					}
 				}
 
+				wb.model.checkProtectedValue = true;
+
 				//ignore hidden rows
 				var activeCell = ws.model.selectionRange.activeCell.clone();
 				var activeRange, selectionRange;
@@ -403,6 +405,7 @@
 
 				ws.model.excludeHiddenRows(false);
 				ws.model.ignoreWriteFormulas(false);
+				wb.model.checkProtectedValue = false;
 			}
 
 			if (ws && ws.workbook && !ws.workbook.getCellEditMode()) {
@@ -557,9 +560,11 @@
 				maxCanvasArea = 4096 * 4096;
 			} else {
 				// Chrome, Firefox, Edge and other modern browsers
-				maxCanvasHeight = 32767;
-				maxCanvasWidth = 32767;
-				maxCanvasArea = 268435456;
+				// Reducing limits. Experimentally determined that when height exceeds 16383px, text rendering speed (fillText) drops by tens of times
+				// Setting limits with safety margin
+				maxCanvasHeight = 8192;
+				maxCanvasWidth = 8192;
+				maxCanvasArea = 8192 * 8192;
 			}
 
 			let estimatedHeight = ws._getRowTop(activeRange.r2 + 1) - ws._getRowTop(activeRange.r1);
@@ -1118,12 +1123,12 @@
 
 			_generateHtmlDoc: function (range, worksheet) {
 				function skipMerged() {
-					var m = merged.filter(function (e) {
-						return row >= e.r1 && row <= e.r2 && col >= e.c1 && col <= e.c2
-					});
-					if (m.length > 0) {
-						col = m[0].c2;
-						return true;
+					for (var i = 0; i < merged.length; i++) {
+						var e = merged[i];
+						if (row >= e.r1 && row <= e.r2 && col >= e.c1 && col <= e.c2) {
+							col = e.c2;
+							return true;
+						}
 					}
 					return false;
 				}
@@ -1304,12 +1309,12 @@
 
 			_generateHtmlDocStr: function (range, worksheet, sBase64) {
 				function skipMerged() {
-					var m = merged.filter(function (e) {
-						return row >= e.r1 && row <= e.r2 && col >= e.c1 && col <= e.c2
-					});
-					if (m.length > 0) {
-						col = m[0].c2;
-						return true;
+					for (var i = 0; i < merged.length; i++) {
+						var e = merged[i];
+						if (row >= e.r1 && row <= e.r2 && col >= e.c1 && col <= e.c2) {
+							col = e.c2;
+							return true;
+						}
 					}
 					return false;
 				}

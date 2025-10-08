@@ -512,6 +512,24 @@
     CAnnotationStamp.prototype.GetRotate = function() {
         return this._rotate;
     };
+    CAnnotationStamp.prototype.handleUpdateRot = function(){
+        AscFormat.CShape.prototype.handleUpdateRot.call(this);
+        let oXfrm = this.getXfrm();
+
+        this.SetRotate(-oXfrm.rot * (180 / Math.PI));
+        this.recalcBounds();
+        this.recalcGeometry();
+        this.Recalculate(true);
+        
+        let aNewRect = [];
+        let oGrBounds = this.bounds;
+        aNewRect[0] = Math.round(oGrBounds.l) * g_dKoef_mm_to_pt;
+        aNewRect[1] = Math.round(oGrBounds.t) * g_dKoef_mm_to_pt;
+        aNewRect[2] = Math.round(oGrBounds.r) * g_dKoef_mm_to_pt;
+        aNewRect[3] = Math.round(oGrBounds.b) * g_dKoef_mm_to_pt;
+
+        this.SetRect(aNewRect, true);
+    };
     CAnnotationStamp.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
 
@@ -593,6 +611,9 @@
     
     CAnnotationStamp.prototype.getNoChangeAspect = function() {
         return true;
+    };
+    CAnnotationStamp.prototype.hitInPath = function(x, y) {
+        return this.hitInInnerArea(x, y);
     };
     CAnnotationStamp.prototype.Init = function() {
         let aOrigRect = this.GetRect();

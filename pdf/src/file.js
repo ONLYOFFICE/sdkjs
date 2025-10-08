@@ -86,7 +86,9 @@
             Glyph2 : 0,
 
             quads: [],
-            IsSelection : false
+            IsSelection : false,
+            startPoint: null,
+            endPoint: null
         };
 
         this.viewer = null;
@@ -418,6 +420,8 @@ void main() {\n\
 			Line2 : 0,
 			Glyph2 : 0,
             quads: [],
+            startPoint: null,
+            endPoint: null,
 
 			IsSelection : false
 		}
@@ -426,7 +430,9 @@ void main() {\n\
         this.viewer.getPDFDoc().TextSelectTrackHandler.Update();
     };
     CFile.prototype.isSelectionUse = function() {
-        return !(this.Selection.Page1  == this.Selection.Page2 && this.Selection.Glyph1 == this.Selection.Glyph2 && this.Selection.Line1 == this.Selection.Line2);
+        // return !(this.Selection.Page1 == this.Selection.Page2 && this.Selection.Glyph1 == this.Selection.Glyph2 && this.Selection.Line1 == this.Selection.Line2) ||
+        //     !(this.Selection.startPoint.x == this.Selection.endPoint.x && this.Selection.startPoint.y == this.Selection.endPoint.y);
+        return this.Selection.IsSelection;
     };
     CFile.prototype.sortSelection = function() {
         let sel = this.Selection;
@@ -507,49 +513,108 @@ void main() {\n\
         return this.Selection;
     };
     CFile.prototype.onMouseDown = function(pageIndex, x, y) {
-        if (this.pages[pageIndex].isRecognized)
+        if (this.pages[pageIndex].isRecognized && !Asc.editor.IsRedactTool())
             return;
         
         let ret = this.getNearestPos(pageIndex, x, y);
         let sel = this.Selection;
 
-        sel.Page1  = pageIndex;
-        sel.Line1  = ret.Line;
-        sel.Glyph1 = ret.Glyph;
+        let isTextSel = ret.Glyph >= 0 && ret.Line >= 0;
 
-        sel.Page2  = pageIndex;
-        sel.Line2  = ret.Line;
-        sel.Glyph2 = ret.Glyph;
+        if (Asc.editor.isRedactTool && !isTextSel) {
+            sel.startPoint = {
+                page: pageIndex,
+                x: x,
+                y: y
+            }
+        }
+        else {
+            sel.Page1  = pageIndex;
+            sel.Line1  = ret.Line;
+            sel.Glyph1 = ret.Glyph;
 
-        sel.IsSelection = true;
+            sel.Page2  = pageIndex;
+            sel.Line2  = ret.Line;
+            sel.Glyph2 = ret.Glyph;
+        }
+        
         this.cacheSelectionQuads([]);
+
+        this.updateCursorType(pageIndex, x, y);
+        this.viewer.drawingDocument.LockCursorType(this.viewer.id_main.style.cursor);
 
         this.onUpdateSelection();
         this.onUpdateOverlay();
     };
     CFile.prototype.onMouseMove = function(pageIndex, x, y) {
-        if (false === this.Selection.IsSelection)
+        if (true !== this.viewer.isMouseDown)
             return;
 
         let ret = this.getNearestPos(pageIndex, x, y);
         let sel = this.Selection;
-
-        sel.Page2  = pageIndex;
-        sel.Line2  = ret.Line;
-        sel.Glyph2 = ret.Glyph;
-
+        sel.IsSelection = true;
+        
+        if (Asc.editor.isRedactTool && this.Selection.startPoint) {
+            sel.endPoint = {
+                page: pageIndex,
+                x: x,
+                y: y
+            }
+        }
+        else {
+            sel.Page2  = pageIndex;
+            sel.Line2  = ret.Line;
+            sel.Glyph2 = ret.Glyph;
+        }
+        
         this.onUpdateOverlay();
     };
-    CFile.prototype.onMouseUp = function() {
-        this.Selection.IsSelection = false;
-        this.viewer.getPDFDoc().TextSelectTrackHandler.Update(true);
+    CFile.prototype.updateCursorType = function(pageIndex, x, y) {
+        let ret = this.getNearestPos(pageIndex, x, y);
+        
+        if (ret.Glyph < 0 || ret.Line < 0) {
+            if (Asc.editor.isRedactTool) {
+                this.viewer.setCursorType("crosshair");
+            }
+            else {
+                this.viewer.setCursorType("default");
+            }
+        }
+        else {
+            this.viewer.setCursorType("text");
+        }
+    };
+    CFile.prototype.onMouseUp = function(pageIndex, x, y) {
+        let _t      = this;
+        let oDoc    = this.viewer.getPDFDoc();
+        let oViewer = this.viewer;
+
+        let ret = this.getNearestPos(pageIndex, x, y);
+        let sel = this.Selection;
+        
+        let isTextSel = ret.Glyph >= 0 && ret.Line >= 0;
+
+        if (Asc.editor.isRedactTool && !isTextSel) {
+            sel.endPoint = {
+                page: pageIndex,
+                x: x,
+                y: y
+            }
+        }
+        else {
+            sel.Page2  = pageIndex;
+            sel.Line2  = ret.Line;
+            sel.Glyph2 = ret.Glyph;
+        }
+
+        this.viewer.drawingDocument.UnlockCursorType();
+
+        oDoc.TextSelectTrackHandler.Update(true);
         this.onUpdateSelection();
         this.onUpdateOverlay();
 
-        if (this.viewer.Api.isMarkerFormat) {
-            let oDoc    = this.viewer.getPDFDoc();
-            let oViewer = this.viewer;
-            let oColor  = oDoc.GetMarkerColor(oViewer.Api.curMarkerType);
+        if (oViewer.Api.isMarkerFormat) {
+            let oColor = oDoc.GetMarkerColor(oViewer.Api.curMarkerType);
 
             oDoc.DoAction(function() {
                 switch (oViewer.Api.curMarkerType) {
@@ -563,7 +628,15 @@ void main() {\n\
                         oViewer.Api.SetStrikeout(oColor.r, oColor.g, oColor.b, oColor.a);
                         break;
                 }
-            }, AscDFH.historydescription_Pdf_AddHighlightAnnot);
+            }, AscDFH.historydescription_Pdf_AddAnnot);
+        }
+        else if (oViewer.Api.isRedactTool) {
+            oDoc.DoAction(function() {
+                let oDrawing    = oDoc.activeDrawing;
+                let aSelQuads   = null == oDrawing ? _t.getSelectionQuads() : oDrawing.GetSelectionQuads();
+
+                oDoc.AddRedactAnnot(aSelQuads);
+            }, AscDFH.historydescription_Pdf_AddAnnot);
         }
     };
     CFile.prototype.getNearestPos = function(pageIndex, x, y, bNeedLinePos) {
@@ -925,13 +998,29 @@ void main() {\n\
     CFile.prototype.getSelectionQuads = function() {
         let aInfo = [];
         
-        if (!this.isSelectionUse())
-        {
+        if (!this.isSelectionUse()) {
             this.cacheSelectionQuads(aInfo);
             return aInfo;
         }
-        else if (this.Selection.quads.length)
+        else if (this.Selection.quads.length) {
             return this.Selection.quads;
+        }
+        else if (this.Selection.startPoint && this.Selection.endPoint) {
+            let xMin = Math.min(this.Selection.startPoint.x, this.Selection.endPoint.x) * g_dKoef_mm_to_pt;
+            let xMax = Math.max(this.Selection.startPoint.x, this.Selection.endPoint.x) * g_dKoef_mm_to_pt;
+            let yMin = Math.min(this.Selection.startPoint.y, this.Selection.endPoint.y) * g_dKoef_mm_to_pt;
+            let yMax = Math.max(this.Selection.startPoint.y, this.Selection.endPoint.y) * g_dKoef_mm_to_pt;
+
+            let oInfo = { page: this.Selection.startPoint.page, quads: [[
+                xMin, yMin, // left up
+                xMax, yMin, // right up
+                xMin, yMax, // left down
+                xMax, yMax  // right down
+            ]]};
+            
+            aInfo.push(oInfo);
+            return aInfo;
+        }
         
         let selection = this.sortSelection();
         let Page1 = selection.Page1;
@@ -1083,6 +1172,38 @@ void main() {\n\
     };
     CFile.prototype.drawSelection = function(pageIndex, overlay, x, y)
     {
+        if (Asc.editor.isRedactTool && this.Selection.startPoint && this.Selection.endPoint) {
+            let width = AscCommon.AscBrowser.convertToRetinaValue(this.viewer.drawingPages[pageIndex].W, true) >> 0;
+            let height = AscCommon.AscBrowser.convertToRetinaValue(this.viewer.drawingPages[pageIndex].H, true) >> 0;
+
+            let dKoefX = width  / this.pages[pageIndex].W;
+            let dKoefY = height / this.pages[pageIndex].H;
+            dKoefX *= (this.pages[pageIndex].Dpi / 25.4);
+            dKoefY *= (this.pages[pageIndex].Dpi / 25.4);
+
+            let xMin = x + Math.min(this.Selection.startPoint.x, this.Selection.endPoint.x) * dKoefX;
+            let xMax = x + Math.max(this.Selection.startPoint.x, this.Selection.endPoint.x) * dKoefX;
+            let yMin = y + Math.min(this.Selection.startPoint.y, this.Selection.endPoint.y) * dKoefY;
+            let yMax = y + Math.max(this.Selection.startPoint.y, this.Selection.endPoint.y) * dKoefY;
+            
+            overlay.CheckPoint(xMin, yMin);
+            overlay.CheckPoint(xMax, yMax);
+
+            let ctx = overlay.m_oContext;
+
+            let gA = ctx.globalAlpha;
+            ctx.rect(xMin, yMin, xMax - xMin, yMax - yMin);
+            ctx.strokeStyle = 'rgba(51,102,204,255)';
+            ctx.lineWidth = 1;
+            ctx.globalAlpha = 1;
+            ctx.stroke();
+            ctx.globalAlpha = gA;
+
+            ctx.rect(xMin, yMin, xMax - xMin, yMax - yMin);
+            ctx.closePath();
+            return;
+        }
+
         if (this.pages[pageIndex].isRecognized)
             return;
         

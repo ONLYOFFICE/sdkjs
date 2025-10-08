@@ -691,7 +691,18 @@
 					if (_sy >= _sb || _sy >= _h || _sb <= 0 || h <= 0)
 						return;
 
-					this.m_oContext.drawImage(img,_sx,_sy,_sr-_sx,_sb-_sy,x,y,w,h);
+					if (this.isVectorImage(img)) {
+						const canvas = this.m_oContext.canvas;
+						const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+						this.m_oContext.drawImage(
+							img,
+							_sx * scale, _sy * scale,
+							(_sr - _sx) * scale, (_sb - _sy) * scale,
+							x, y, w, h
+						);
+					} else {
+						this.m_oContext.drawImage(img, _sx, _sy, _sr - _sx, _sb - _sy, x, y, w, h);
+					}
 				}
 				else
 				{

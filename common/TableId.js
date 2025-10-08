@@ -466,6 +466,7 @@
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Highlight]	= AscPDF.CAnnotationHighlight;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Underline]	= AscPDF.CAnnotationUnderline;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Strikeout]	= AscPDF.CAnnotationStrikeout;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Redact]		= AscPDF.CAnnotationRedact;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Ink]			= AscPDF.CAnnotationInk;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Line]		= AscPDF.CAnnotationLine;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Polygon]		= AscPDF.CAnnotationPolygon;

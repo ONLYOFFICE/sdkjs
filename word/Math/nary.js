@@ -921,55 +921,6 @@ CNary.prototype.GetTextOfElement = function(oMathText)
 	return oMathText;
 };
 
-CNary.fromMathML = function(reader, content, type)
-{
-	let props = new CMathNaryPr();
-	props.content = content ? content : [];
-	props.type = NARY_SubSup;
-
-	props.supHide = type ? type.supHide : false;
-	props.subHide = type ? type.subHide : false;
-
-	let depth = reader.GetDepth();
-	while (reader.ReadNextSiblingNode(depth))
-	{
-		props.content.push(AscWord.ParaMath.readMathMLContent(reader));
-	}
-
-	let firstContent = props.content.shift();
-	let charText = firstContent.GetTextOfElement().GetText();
-	props.chr = charText.charCodeAt(0);
-
-	return CNary.private_fromMathML(props, true);
-};
-CNary.private_fromMathML = function(props, isAlredyChr)
-{
-	if (!isAlredyChr)
-	{
-		let firstContent = props.content.shift();
-		let charText = firstContent.GetTextOfElement().GetText();
-		props.chr = charText.charCodeAt(0);
-	}
-	return new CNary(props);
-};
-CNary.fromMathMLSubSup = function(props, isSub, isSup)
-{
-	let propsNary = new CMathNaryPr();
-	propsNary.limLoc = NARY_UndOvr;
-	propsNary.supHide = isSub;
-	propsNary.subHide = isSup;
-	propsNary.content = props.content;
-
-	if (props.content[0])
-	{
-		if (props.content[0].mathml_metadata['movablelimits'] === 'true')
-			propsNary.limLoc = NARY_SubSup;
-	}
-
-	let nary = new AscMath.Nary.private_fromMathML(propsNary);
-	return nary;
-};
-
 /**
  *
  * @param CMathMenuNary

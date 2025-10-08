@@ -1286,7 +1286,7 @@ $(function () {
 				logicDocument.ConvertMathView(true);
 				assert.ok(true, "Convert to linear view");
 
-				assert.strictEqual(MathContent.Root.Content[1].MathPrp.brk !== undefined, true, 'Check brk in "+" ParaRun');
+				assert.strictEqual(MathContent.Root.Content[2].MathPrp.brk !== undefined, true, 'Check brk in "+" ParaRun');
 
 				logicDocument.ConvertMathView(false);
 				assert.ok(true, "Convert to professional view");

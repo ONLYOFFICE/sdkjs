@@ -1295,6 +1295,7 @@
         this.input.disabled = false;
         this.input.value = this.oSelectionInfo.text;
       }
+	  AscCommon.applyElementDirection(this.input);
     }
     this.handlers.trigger("asc_onSelectionChanged", this.oSelectionInfo);
     this.handlers.trigger("asc_onSelectionEnd");

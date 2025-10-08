@@ -38,6 +38,7 @@
     */
     function CPdfSmartArt() {
         AscFormat.SmartArt.call(this);
+        AscPDF.CPdfDrawingPrototype.call(this);
     }
     
     CPdfSmartArt.prototype.constructor = CPdfSmartArt;
@@ -356,6 +357,12 @@
 
         if (oPr && oPr.contentCopyPr && oPr.contentCopyPr.Comparison) {
             copy.generateDrawingPart();
+        }
+
+        if (!oPr || !oPr.bSkipRedactsIds) {
+            this.GetRedactIds().forEach(function(id) {
+                copy.AddRedactId(id);
+            });
         }
 
         return copy;

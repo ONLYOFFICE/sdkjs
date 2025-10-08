@@ -59,7 +59,7 @@
 	const TIMELINE_HEADER_RIGHT_MARGIN = 18 * g_dKoef_pix_to_mm;
 
 	const MEDIA_CONTROL_HEIGHT = 40;
-	const MIN_MEDIA_CONTROL_WIDTH = 560;
+	const MIN_MEDIA_CONTROL_WIDTH = 320;
 	const MIN_MEDIA_CONTROL_CONTROL_INSET = 20;
 	const MEDIA_CONTROL_TOP_MARGIN = 10;
 
@@ -1326,14 +1326,33 @@
 	CEditorPage.prototype.checkBodySize = function () {
 		this.checkBodyOffset();
 
-		var el = document.getElementById(this.Name);
+		const element = document.getElementById(this.Name);
+		if (!element)
+			return;
 
-		if (this.Width != el.offsetWidth || this.Height != el.offsetHeight) {
-			this.Width = el.offsetWidth;
-			this.Height = el.offsetHeight;
-			return true;
+		const rect = AscCommon.UI.getBoundingClientRect(element);
+		if (!rect)
+			return;
+
+		let hasSizeChanges = false;
+
+		if (AscFormat.isRealNumber(rect.width)) {
+			const newWidth = Math.floor(rect.width);
+			if (this.Width != newWidth) {
+				this.Width = newWidth;
+				hasSizeChanges = true;
+			}
 		}
-		return false;
+
+		if (AscFormat.isRealNumber(rect.height)) {
+			const newHeight = Math.floor(rect.height);
+			if (this.Height != newHeight) {
+				this.Height = newHeight;
+				hasSizeChanges = true;
+			}
+		}
+
+		return hasSizeChanges;
 	};
 
 	// Retina checks
@@ -2857,6 +2876,9 @@
 		// update media control position
 		this.m_oApi.onUpdateMediaPlayer();
 		AscCommon.g_specialPasteHelper.SpecialPasteButton_Update_Position();
+
+		// update position of toggle-chart-elements button
+		Asc.editor.toggleChartElementsCallback();
 	};
 
 	// Scrolls

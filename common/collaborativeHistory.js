@@ -666,12 +666,16 @@
 		let localHistory = AscCommon.History;
 
 		let pointIndex = localHistory.CreateNewPointToCollectChanges(AscDFH.historydescription_Collaborative_Undo);
-
+		
+		// До вызова данного метода мы все изменения reverseChanges прогнали через Load, где
+		// изменения позиций из-за этих изменений уже были отмечены
+		this.CoEditing.StopTrackingPositions();
 		for (let index = 0, count = reverseChanges.length; index < count; ++index)
 		{
 			let change = reverseChanges[index];
 			localHistory.Add(change);
 		}
+		this.CoEditing.StartTrackingPositions();
 
 		this.CorrectReveredChanges(reverseChanges);
 

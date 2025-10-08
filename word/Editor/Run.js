@@ -7817,6 +7817,7 @@ ParaRun.prototype.Internal_Compile_Pr = function ()
 	// Одно исключение, когда задан стиль Hyperlink внутри класса Hyperlink внутри поля TOC, то стиль
 	// мержить не надо и, более того, цвет и подчеркивание из прямых настроек тоже не используется.
 	if (Styles
+		&& Styles instanceof AscWord.CStyles
 		&& this.Pr.RStyle
 		&& (!this.IsStyleHyperlink() || !this.IsInHyperlinkInTOC()))
 	{
@@ -11007,17 +11008,17 @@ ParaRun.prototype.private_UpdateTrackRevisionOnChangeContent = function(bUpdateI
 };
 ParaRun.prototype.private_UpdateTrackRevisionOnChangeTextPr = function(bUpdateInfo)
 {
-    if (true === this.HavePrChange())
-    {
-        this.updateTrackRevisions();
-
-        if (true === bUpdateInfo && this.Paragraph && this.Paragraph.bFromDocument && this.Paragraph.LogicDocument && true === this.Paragraph.LogicDocument.IsTrackRevisions())
-        {
-            var OldReviewInfo = this.Pr.ReviewInfo.Copy();
-            this.Pr.ReviewInfo.Update();
-           AscCommon.History.Add(new CChangesRunPrReviewInfo(this, OldReviewInfo, this.Pr.ReviewInfo.Copy()));
-        }
-    }
+	if (true === this.HavePrChange())
+	{
+		this.updateTrackRevisions();
+		
+		if (true === bUpdateInfo && this.Paragraph && this.Paragraph.bFromDocument && this.Paragraph.LogicDocument && true === this.Paragraph.LogicDocument.IsTrackRevisions())
+		{
+			var OldReviewInfo = this.Pr.ReviewInfo.Copy();
+			this.Pr.ReviewInfo.Update();
+			AscCommon.History.Add(new CChangesRunPrReviewInfo(this, OldReviewInfo, this.Pr.ReviewInfo.Copy()));
+		}
+	}
 };
 ParaRun.prototype.AcceptRevisionChanges = function(nType, bAll)
 {
@@ -12127,11 +12128,11 @@ ParaRun.prototype.CopyTextFormContent = function(oRun)
 	}
 
 	if (this.Content.length - nStart - nEnd > 0)
-		this.RemoveFromContent(nStart, this.Content.length - nStart - nEnd);
+		this.RemoveFromContent(nStart, this.Content.length - nStart - nEnd, true);
 
 	for (var nPos = nStart, nEndPos = nRunLen - nEnd; nPos < nEndPos; ++nPos)
 	{
-		this.AddToContent(nPos, oRun.Content[nPos].Copy());
+		this.AddToContent(nPos, oRun.Content[nPos].Copy(), true);
 	}
 };
 /**
@@ -12143,6 +12144,15 @@ ParaRun.prototype.CopyTextFormContent = function(oRun)
  */
 ParaRun.prototype.ConvertFootnoteType = function(isToFootnote, oStyles, oFootnote, oRef)
 {
+	let _t = this;
+	function replaceRef(pos, newRef)
+	{
+		AscCommon.executeNoPreDelete(function(){
+			_t.RemoveFromContent(pos, 1);
+			_t.AddToContent(pos, newRef);
+		}, _t.GetLogicDocument());
+	}
+	
 	var sRStyle = this.GetRStyle();
 	if (isToFootnote)
 	{
@@ -12151,21 +12161,15 @@ ParaRun.prototype.ConvertFootnoteType = function(isToFootnote, oStyles, oFootnot
 		else if (sRStyle === oStyles.GetDefaultEndnoteReference())
 			this.SetRStyle(oStyles.GetDefaultFootnoteReference());
 
-		for (var nCurPos = 0, nCount = this.Content.length; nCurPos < nCount; ++nCurPos)
+		for (let nCurPos = 0, nCount = this.Content.length; nCurPos < nCount; ++nCurPos)
 		{
-			var oElement = this.Content[nCurPos];
+			let oElement = this.Content[nCurPos];
 			if (!oRef || oRef === oElement)
 			{
 				if (para_EndnoteReference === oElement.Type)
-				{
-					this.RemoveFromContent(nCurPos, 1);
-					this.AddToContent(nCurPos, new AscWord.CRunFootnoteReference(oFootnote, oElement.CustomMark));
-				}
+					replaceRef(nCurPos, new AscWord.CRunFootnoteReference(oFootnote, oElement.CustomMark));
 				else if (para_EndnoteRef === oElement.Type)
-				{
-					this.RemoveFromContent(nCurPos, 1);
-					this.AddToContent(nCurPos, new AscWord.CRunFootnoteRef(oFootnote));
-				}
+					replaceRef(nCurPos, new AscWord.CRunFootnoteRef(oFootnote));
 			}
 		}
 	}
@@ -12176,21 +12180,15 @@ ParaRun.prototype.ConvertFootnoteType = function(isToFootnote, oStyles, oFootnot
 		else if (sRStyle === oStyles.GetDefaultFootnoteReference())
 			this.SetRStyle(oStyles.GetDefaultEndnoteReference());
 
-		for (var nCurPos = 0, nCount = this.Content.length; nCurPos < nCount; ++nCurPos)
+		for (let nCurPos = 0, nCount = this.Content.length; nCurPos < nCount; ++nCurPos)
 		{
-			var oElement = this.Content[nCurPos];
+			let oElement = this.Content[nCurPos];
 			if (!oRef || oRef === oElement)
 			{
 				if (para_FootnoteReference === oElement.Type)
-				{
-					this.RemoveFromContent(nCurPos, 1);
-					this.AddToContent(nCurPos, new AscWord.CRunEndnoteReference(oFootnote, oElement.CustomMark));
-				}
+					replaceRef(nCurPos, new AscWord.CRunEndnoteReference(oFootnote, oElement.CustomMark));
 				else if (para_FootnoteRef === oElement.Type)
-				{
-					this.RemoveFromContent(nCurPos, 1);
-					this.AddToContent(nCurPos, new AscWord.CRunEndnoteRef(oFootnote));
-				}
+					replaceRef(nCurPos, new AscWord.CRunEndnoteRef(oFootnote));
 			}
 		}
 	}

@@ -1323,6 +1323,8 @@ function (window, undefined) {
 			fPos = obj.fPos;
 			fName = obj.fName;
 			fCurrent = this._getEditableFunction(this._parseResult).func;
+		} else {
+			this._parseResult = null;
 		}
 
 		this.handlers.trigger("updated", s, this.cursorPos, fPos, fName);
@@ -2672,10 +2674,10 @@ function (window, undefined) {
 			}
 			case Asc.c_oAscSpreadsheetShortcutType.CellInsertDate: {
 				const oDate = new Asc.cDate();
-				this._addChars(oDate.getDateString(oApi));
+				this._addChars(oDate.getDateString(oApi, true));
 				break;
 			}
-			case Asc.c_oAscSpreadsheetShortcutType.Print: {
+			case Asc.c_oAscSpreadsheetShortcutType.PrintPreviewAndPrint: {
 				break;
 			}
 			case Asc.c_oAscSpreadsheetShortcutType.EditOpenCellEditor: {

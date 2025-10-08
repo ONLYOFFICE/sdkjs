@@ -1272,8 +1272,8 @@ CDocumentContentBase.prototype.private_AddContentControl = function(nContentCont
 				for (let nIndex = nEndPos; nIndex >= nStartPos; --nIndex)
 				{
 					let oElement = this.Content[nIndex];
-					oSdt.Content.Add_ToContent(0, oElement);
 					this.Remove_FromContent(nIndex, 1);
+					oSdt.Content.Add_ToContent(0, oElement);
 					oElement.SelectAll(1);
 				}
 
@@ -3047,4 +3047,8 @@ CDocumentContentBase.prototype.UpdateSectionsBeforeRemove = function(items, chec
 		return;
 	
 	logicDocument.GetSections().UpdateOnRemove(items, checkHdrFtr);
+};
+CDocumentContentBase.prototype.IsFirstOnDocumentPage = function(curPage)
+{
+	return false;
 };

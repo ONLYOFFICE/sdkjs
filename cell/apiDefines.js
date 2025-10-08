@@ -637,45 +637,182 @@ var c_oAscPopUpSelectorType = {
     changeSeries : 1  // fill right click mouse - series menu
   };
 
-	var c_oAscSpreadsheetShortcutType = {
-		RefreshAllPivots         : 1,
-		RefreshSelectedPivots    : 2,
-		EditSelectAll            : 3,
-		RecalculateAll           : 4,
-		RecalculateActiveSheet   : 5,
-		CellInsertDate           : 6,
-		CellInsertTime           : 7,
-		CellInsertSumFunction    : 8,
-		NextWorksheet            : 9,
-		PreviousWorksheet        : 10,
-		Strikeout                : 11,
-		Italic                   : 12,
-		Bold                     : 13,
-		Underline                : 14,
-		EditUndo                 : 15,
-		EditRedo                 : 16,
-		SpeechWorker             : 17,
-		Print                    : 18,
-		EditOpenCellEditor       : 19,
-		CellAddSeparator         : 20,
-		CellNumberFormat         : 21,
-		CellTimeFormat           : 22,
-		CellDateFormat           : 23,
-		CellCurrencyFormat       : 24,
-		CellPercentFormat        : 25,
-		CellExponentialFormat    : 26,
-		CellGeneralFormat        : 27,
-		ShowFormulas             : 28,
-		IncreaseFontSize         : 29,
-		DecreaseFontSize         : 31,
-		DrawingSubscript         : 32,
-		DrawingSuperscript       : 33,
-		DrawingCenterPara        : 34,
-		DrawingJustifyPara       : 35,
-		DrawingLeftPara          : 36,
-		DrawingRightPara         : 37,
-		CellEditorSwitchReference: 38,
-		DrawingEnDash            : 39
+	const c_oAscSpreadsheetShortcutType = {
+		OpenFilePanel:              1,
+		OpenFindDialog:             2,
+		OpenFindAndReplaceMenu:     3,
+		OpenCommentsPanel:          4,
+		OpenCommentField:           5,
+		OpenChatPanel:              6,
+		Save:                       7,
+		PrintPreviewAndPrint:       8,
+		DownloadAs:                 9,
+		OpenHelpMenu:               10,
+		OpenExistingFile:           11,
+		NextFileTab:                12,
+		PreviousFileTab:            13,
+		CloseFile:                  14,
+		OpenContextMenu:            15,
+		CloseMenu:                  16,
+		Zoom100:                    17,
+		CellMoveUp:                 18,
+		CellMoveDown:               19,
+		CellMoveLeft:               20,
+		CellMoveRight:              21,
+		CellMoveActiveCellDown:     22,
+		CellMoveActiveCellUp:       23,
+		CellMoveActiveCellRight:    24,
+		CellMoveActiveCellLeft:     25,
+		CellMoveLeftNonBlank:       26,
+		CellMoveFirstColumn:        27,
+		CellMoveRightNonBlank:      28,
+		CellMoveBottomNonBlank:     29,
+		CellMoveBottomEdge:         30,
+		CellMoveTopNonBlank:        31,
+		CellMoveTopEdge:            32,
+		CellMoveFirstCell:          33,
+		CellMoveEndSpreadsheet:     34,
+		PreviousWorksheet:          35,
+		NextWorksheet:              36,
+		ZoomIn:                     37,
+		ZoomOut:                    38,
+		NavigatePreviousControl:    39,
+		NavigateNextControl:        40,
+		SelectColumn:               41,
+		SelectRow:                  42,
+		SelectOneCellRight:         43,
+		SelectOneCellLeft:          44,
+		SelectOneCellUp:            45,
+		SelectOneCellDown:          46,
+		SelectCursorBeginningRow:   47,
+		SelectCursorEndRow:         48,
+		SelectNextNonblankRight:    49,
+		SelectNextNonblankLeft:     50,
+		SelectNextNonblankUp:       51,
+		SelectNextNonblankDown:     52,
+		SelectBeginningWorksheet:   53,
+		SelectLastUsedCell:         54,
+		SelectNearestNonblankRight: 55,
+		SelectNonblankLeft:         56,
+		SelectFirstColumn:          57,
+		SelectNearestNonblankDown:  58,
+		SelectNearestNonblankUp:    59,
+		SelectDownOneScreen:        60,
+		SelectUpOneScreen:          61,
+		EditUndo:                   62,
+		EditRedo:                   63,
+		Cut:                        64,
+		Copy:                       65,
+		Paste:                      66,
+		PasteOnlyFormula:           67,
+		PasteFormulaNumberFormat:   68,
+		PasteFormulaAllFormatting:  69,
+		PasteFormulaNoBorders:      70,
+		PasteFormulaColumnWidth:    71,
+		Transpose:                  72,
+		PasteOnlyValue:             73,
+		PasteValueNumberFormat:     74,
+		PasteValueAllFormatting:    75,
+		PasteOnlyFormatting:        76,
+		PasteLink:                  77,
+		InsertHyperlink:            78,
+		VisitHyperlink:             79,
+		Bold:                       80,
+		Italic:                     81,
+		Underline:                  82,
+		Strikeout:                  83,
+		EditOpenCellEditor:         84,
+		ToggleAutoFilter:           85,
+		OpenFilterWindow:           86,
+		FormatAsTableTemplate:      87,
+		CompleteCellEntryMoveDown:  88,
+		CompleteCellEntryMoveUp:    89,
+		CompleteCellEntryMoveRight: 90,
+		CompleteCellEntryMoveLeft:  91,
+		CompleteCellEntryStay:      92,
+		FillSelectedCellRange:      93,
+		CellStartNewLine:           94,
+		EquationAddPlaceholder:     95,
+		CellEntryCancel:            96,
+		DeleteLeftChar:             97,
+		DeleteRightChar:            98,
+		ClearActiveCellContent:     99,
+		ClearSelectedCellsContent:  100,
+		OpenInsertCellsWindow:      101,
+		OpenDeleteCellsWindow:      102,
+		CellInsertDate:             103,
+		CellInsertTime:             104,
+		CellAddSeparator:           105,
+		AutoFill:                   106,
+		DeleteLeftWord:             107,
+		DeleteRightWord:            108,
+		EditSelectAll:              109,
+		MoveCharacterLeft:          110,
+		MoveCharacterRight:         111,
+		MoveCursorLineUp:           112,
+		MoveCursorLineDown:         113,
+		SelectCharacterRight:       114,
+		SelectCharacterLeft:        115,
+		MoveWordLeft:               116,
+		MoveWordRight:              117,
+		SelectWordLeft:             118,
+		SelectWordRight:            119,
+		MoveBeginningText:          120,
+		MoveEndText:                121,
+		SelectBeginningText:        122,
+		SelectEndText:              123,
+		MoveBeginningLine:          124,
+		MoveEndLine:                125,
+		SelectBeginningLine:        126,
+		SelectEndLine:              127,
+		SelectLineUp:               128,
+		SelectLineDown:             129,
+		RefreshSelectedPivots:      130,
+		RefreshAllPivots:           131,
+		SlicerClearSelectedValues:  132,
+		SlicerSwitchMultiSelect:    133,
+		FormatTableAddSummaryRow:   134,
+		OpenInsertFunctionDialog:   135,
+		CellInsertSumFunction:      136,
+		RecalculateAll:             137,
+		RecalculateActiveSheet:     138,
+		ShowFormulas:               139,
+		CellEditorSwitchReference:  140,
+		OpenNumberFormatDialog:     141,
+		CellGeneralFormat:          142,
+		CellCurrencyFormat:         143,
+		CellPercentFormat:          144,
+		CellExponentialFormat:      145,
+		CellDateFormat:             146,
+		CellTimeFormat:             147,
+		CellNumberFormat:           148,
+		EditShape:                  149,
+		EditChart:                  150,
+		MoveShapeLittleStepRight:   151,
+		MoveShapeLittleStepLeft:    152,
+		MoveShapeLittleStepUp:      153,
+		MoveShapeLittleStepBottom:  154,
+		MoveShapeBigStepLeft:       155,
+		MoveShapeBigStepRight:      156,
+		MoveShapeBigStepUp:         157,
+		MoveShapeBigStepBottom:     158,
+		MoveFocusNextObject:        159,
+		MoveFocusPreviousObject:    160,
+		DrawingAddTab:              161,
+		Subscript:                  162,
+		Superscript:                163,
+		IncreaseFontSize:           164,
+		DecreaseFontSize:           165,
+		CenterPara:                 166,
+		JustifyPara:                167,
+		RightPara:                  168,
+		LeftPara:                   169,
+		EndParagraph:               170,
+		AddLineBreak:               171,
+		RemoveGraphicalObject:      172,
+		ExitAddingShapesMode:       173,
+		SpeechWorker:               174,
+		EnDash:                     175
 	};
 
   var c_oAscCalcMode = {
@@ -1143,44 +1280,181 @@ var c_oAscPopUpSelectorType = {
 
 	window['Asc']['c_oAscSpreadsheetShortcutType'] = window['Asc'].c_oAscSpreadsheetShortcutType = c_oAscSpreadsheetShortcutType;
 	prot = c_oAscSpreadsheetShortcutType;
-	prot["RefreshAllPivots"] = prot.RefreshAllPivots;
-	prot["RefreshSelectedPivots"] = prot.RefreshSelectedPivots;
-	prot["EditSelectAll"] = prot.EditSelectAll;
-	prot["RecalculateAll"] = prot.RecalculateAll;
-	prot["RecalculateActiveSheet"] = prot.RecalculateActiveSheet;
-	prot["CellInsertDate"] = prot.CellInsertDate;
-	prot["CellInsertTime"] = prot.CellInsertTime;
-	prot["CellInsertSumFunction"] = prot.CellInsertSumFunction;
-	prot["NextWorksheet"] = prot.NextWorksheet;
+	prot["OpenFilePanel"] = prot.OpenFilePanel;
+	prot["OpenFindDialog"] = prot.OpenFindDialog;
+	prot["OpenFindAndReplaceMenu"] = prot.OpenFindAndReplaceMenu;
+	prot["OpenCommentsPanel"] = prot.OpenCommentsPanel;
+	prot["OpenCommentField"] = prot.OpenCommentField;
+	prot["OpenChatPanel"] = prot.OpenChatPanel;
+	prot["Save"] = prot.Save;
+	prot["PrintPreviewAndPrint"] = prot.PrintPreviewAndPrint;
+	prot["DownloadAs"] = prot.DownloadAs;
+	prot["OpenHelpMenu"] = prot.OpenHelpMenu;
+	prot["OpenExistingFile"] = prot.OpenExistingFile;
+	prot["NextFileTab"] = prot.NextFileTab;
+	prot["PreviousFileTab"] = prot.PreviousFileTab;
+	prot["CloseFile"] = prot.CloseFile;
+	prot["OpenContextMenu"] = prot.OpenContextMenu;
+	prot["CloseMenu"] = prot.CloseMenu;
+	prot["Zoom100"] = prot.Zoom100;
+	prot["CellMoveUp"] = prot.CellMoveUp;
+	prot["CellMoveDown"] = prot.CellMoveDown;
+	prot["CellMoveLeft"] = prot.CellMoveLeft;
+	prot["CellMoveRight"] = prot.CellMoveRight;
+	prot["CellMoveActiveCellDown"] = prot.CellMoveActiveCellDown;
+	prot["CellMoveActiveCellUp"] = prot.CellMoveActiveCellUp;
+	prot["CellMoveActiveCellRight"] = prot.CellMoveActiveCellRight;
+	prot["CellMoveActiveCellLeft"] = prot.CellMoveActiveCellLeft;
+	prot["CellMoveLeftNonBlank"] = prot.CellMoveLeftNonBlank;
+	prot["CellMoveFirstColumn"] = prot.CellMoveFirstColumn;
+	prot["CellMoveRightNonBlank"] = prot.CellMoveRightNonBlank;
+	prot["CellMoveBottomNonBlank"] = prot.CellMoveBottomNonBlank;
+	prot["CellMoveBottomEdge"] = prot.CellMoveBottomEdge;
+	prot["CellMoveTopNonBlank"] = prot.CellMoveTopNonBlank;
+	prot["CellMoveTopEdge"] = prot.CellMoveTopEdge;
+	prot["CellMoveFirstCell"] = prot.CellMoveFirstCell;
+	prot["CellMoveEndSpreadsheet"] = prot.CellMoveEndSpreadsheet;
 	prot["PreviousWorksheet"] = prot.PreviousWorksheet;
-	prot["Strikeout"] = prot.Strikeout;
-	prot["Italic"] = prot.Italic;
-	prot["Bold"] = prot.Bold;
-	prot["Underline"] = prot.Underline;
+	prot["NextWorksheet"] = prot.NextWorksheet;
+	prot["ZoomIn"] = prot.ZoomIn;
+	prot["ZoomOut"] = prot.ZoomOut;
+	prot["NavigatePreviousControl"] = prot.NavigatePreviousControl;
+	prot["NavigateNextControl"] = prot.NavigateNextControl;
+	prot["SelectColumn"] = prot.SelectColumn;
+	prot["SelectRow"] = prot.SelectRow;
+	prot["SelectOneCellRight"] = prot.SelectOneCellRight;
+	prot["SelectOneCellLeft"] = prot.SelectOneCellLeft;
+	prot["SelectOneCellUp"] = prot.SelectOneCellUp;
+	prot["SelectOneCellDown"] = prot.SelectOneCellDown;
+	prot["SelectCursorBeginningRow"] = prot.SelectCursorBeginningRow;
+	prot["SelectCursorEndRow"] = prot.SelectCursorEndRow;
+	prot["SelectNextNonblankRight"] = prot.SelectNextNonblankRight;
+	prot["SelectNextNonblankLeft"] = prot.SelectNextNonblankLeft;
+	prot["SelectNextNonblankUp"] = prot.SelectNextNonblankUp;
+	prot["SelectNextNonblankDown"] = prot.SelectNextNonblankDown;
+	prot["SelectBeginningWorksheet"] = prot.SelectBeginningWorksheet;
+	prot["SelectLastUsedCell"] = prot.SelectLastUsedCell;
+	prot["SelectNearestNonblankRight"] = prot.SelectNearestNonblankRight;
+	prot["SelectNonblankLeft"] = prot.SelectNonblankLeft;
+	prot["SelectFirstColumn"] = prot.SelectFirstColumn;
+	prot["SelectNearestNonblankDown"] = prot.SelectNearestNonblankDown;
+	prot["SelectNearestNonblankUp"] = prot.SelectNearestNonblankUp;
+	prot["SelectDownOneScreen"] = prot.SelectDownOneScreen;
+	prot["SelectUpOneScreen"] = prot.SelectUpOneScreen;
 	prot["EditUndo"] = prot.EditUndo;
 	prot["EditRedo"] = prot.EditRedo;
-	prot["SpeechWorker"] = prot.SpeechWorker;
-	prot["Print"] = prot.Print;
+	prot["Cut"] = prot.Cut;
+	prot["Copy"] = prot.Copy;
+	prot["Paste"] = prot.Paste;
+	prot["PasteOnlyFormula"] = prot.PasteOnlyFormula;
+	prot["PasteFormulaNumberFormat"] = prot.PasteFormulaNumberFormat;
+	prot["PasteFormulaAllFormatting"] = prot.PasteFormulaAllFormatting;
+	prot["PasteFormulaNoBorders"] = prot.PasteFormulaNoBorders;
+	prot["PasteFormulaColumnWidth"] = prot.PasteFormulaColumnWidth;
+	prot["Transpose"] = prot.Transpose;
+	prot["PasteOnlyValue"] = prot.PasteOnlyValue;
+	prot["PasteValueNumberFormat"] = prot.PasteValueNumberFormat;
+	prot["PasteValueAllFormatting"] = prot.PasteValueAllFormatting;
+	prot["PasteOnlyFormatting"] = prot.PasteOnlyFormatting;
+	prot["PasteLink"] = prot.PasteLink;
+	prot["InsertHyperlink"] = prot.InsertHyperlink;
+	prot["VisitHyperlink"] = prot.VisitHyperlink;
+	prot["Bold"] = prot.Bold;
+	prot["Italic"] = prot.Italic;
+	prot["Underline"] = prot.Underline;
+	prot["Strikeout"] = prot.Strikeout;
 	prot["EditOpenCellEditor"] = prot.EditOpenCellEditor;
+	prot["ToggleAutoFilter"] = prot.ToggleAutoFilter;
+	prot["OpenFilterWindow"] = prot.OpenFilterWindow;
+	prot["FormatAsTableTemplate"] = prot.FormatAsTableTemplate;
+	prot["CompleteCellEntryMoveDown"] = prot.CompleteCellEntryMoveDown;
+	prot["CompleteCellEntryMoveUp"] = prot.CompleteCellEntryMoveUp;
+	prot["CompleteCellEntryMoveRight"] = prot.CompleteCellEntryMoveRight;
+	prot["CompleteCellEntryMoveLeft"] = prot.CompleteCellEntryMoveLeft;
+	prot["CompleteCellEntryStay"] = prot.CompleteCellEntryStay;
+	prot["FillSelectedCellRange"] = prot.FillSelectedCellRange;
+	prot["CellStartNewLine"] = prot.CellStartNewLine;
+	prot["EquationAddPlaceholder"] = prot.EquationAddPlaceholder;
+	prot["CellEntryCancel"] = prot.CellEntryCancel;
+	prot["DeleteLeftChar"] = prot.DeleteLeftChar;
+	prot["DeleteRightChar"] = prot.DeleteRightChar;
+	prot["ClearActiveCellContent"] = prot.ClearActiveCellContent;
+	prot["ClearSelectedCellsContent"] = prot.ClearSelectedCellsContent;
+	prot["OpenInsertCellsWindow"] = prot.OpenInsertCellsWindow;
+	prot["OpenDeleteCellsWindow"] = prot.OpenDeleteCellsWindow;
+	prot["CellInsertDate"] = prot.CellInsertDate;
+	prot["CellInsertTime"] = prot.CellInsertTime;
 	prot["CellAddSeparator"] = prot.CellAddSeparator;
-	prot["CellNumberFormat"] = prot.CellNumberFormat;
-	prot["CellTimeFormat"] = prot.CellTimeFormat;
-	prot["CellDateFormat"] = prot.CellDateFormat;
+	prot["AutoFill"] = prot.AutoFill;
+	prot["DeleteLeftWord"] = prot.DeleteLeftWord;
+	prot["DeleteRightWord"] = prot.DeleteRightWord;
+	prot["EditSelectAll"] = prot.EditSelectAll;
+	prot["MoveCharacterLeft"] = prot.MoveCharacterLeft;
+	prot["MoveCharacterRight"] = prot.MoveCharacterRight;
+	prot["MoveCursorLineUp"] = prot.MoveCursorLineUp;
+	prot["MoveCursorLineDown"] = prot.MoveCursorLineDown;
+	prot["SelectCharacterRight"] = prot.SelectCharacterRight;
+	prot["SelectCharacterLeft"] = prot.SelectCharacterLeft;
+	prot["MoveWordLeft"] = prot.MoveWordLeft;
+	prot["MoveWordRight"] = prot.MoveWordRight;
+	prot["SelectWordLeft"] = prot.SelectWordLeft;
+	prot["SelectWordRight"] = prot.SelectWordRight;
+	prot["MoveBeginningText"] = prot.MoveBeginningText;
+	prot["MoveEndText"] = prot.MoveEndText;
+	prot["SelectBeginningText"] = prot.SelectBeginningText;
+	prot["SelectEndText"] = prot.SelectEndText;
+	prot["MoveBeginningLine"] = prot.MoveBeginningLine;
+	prot["MoveEndLine"] = prot.MoveEndLine;
+	prot["SelectBeginningLine"] = prot.SelectBeginningLine;
+	prot["SelectEndLine"] = prot.SelectEndLine;
+	prot["SelectLineUp"] = prot.SelectLineUp;
+	prot["SelectLineDown"] = prot.SelectLineDown;
+	prot["RefreshSelectedPivots"] = prot.RefreshSelectedPivots;
+	prot["RefreshAllPivots"] = prot.RefreshAllPivots;
+	prot["SlicerClearSelectedValues"] = prot.SlicerClearSelectedValues;
+	prot["SlicerSwitchMultiSelect"] = prot.SlicerSwitchMultiSelect;
+	prot["FormatTableAddSummaryRow"] = prot.FormatTableAddSummaryRow;
+	prot["OpenInsertFunctionDialog"] = prot.OpenInsertFunctionDialog;
+	prot["CellInsertSumFunction"] = prot.CellInsertSumFunction;
+	prot["RecalculateAll"] = prot.RecalculateAll;
+	prot["RecalculateActiveSheet"] = prot.RecalculateActiveSheet;
+	prot["ShowFormulas"] = prot.ShowFormulas;
+	prot["CellEditorSwitchReference"] = prot.CellEditorSwitchReference;
+	prot["OpenNumberFormatDialog"] = prot.OpenNumberFormatDialog;
+	prot["CellGeneralFormat"] = prot.CellGeneralFormat;
 	prot["CellCurrencyFormat"] = prot.CellCurrencyFormat;
 	prot["CellPercentFormat"] = prot.CellPercentFormat;
 	prot["CellExponentialFormat"] = prot.CellExponentialFormat;
-	prot["CellGeneralFormat"] = prot.CellGeneralFormat;
-	prot["ShowFormulas"] = prot.ShowFormulas;
+	prot["CellDateFormat"] = prot.CellDateFormat;
+	prot["CellTimeFormat"] = prot.CellTimeFormat;
+	prot["CellNumberFormat"] = prot.CellNumberFormat;
+	prot["EditShape"] = prot.EditShape;
+	prot["EditChart"] = prot.EditChart;
+	prot["MoveShapeLittleStepRight"] = prot.MoveShapeLittleStepRight;
+	prot["MoveShapeLittleStepLeft"] = prot.MoveShapeLittleStepLeft;
+	prot["MoveShapeLittleStepUp"] = prot.MoveShapeLittleStepUp;
+	prot["MoveShapeLittleStepBottom"] = prot.MoveShapeLittleStepBottom;
+	prot["MoveShapeBigStepLeft"] = prot.MoveShapeBigStepLeft;
+	prot["MoveShapeBigStepRight"] = prot.MoveShapeBigStepRight;
+	prot["MoveShapeBigStepUp"] = prot.MoveShapeBigStepUp;
+	prot["MoveShapeBigStepBottom"] = prot.MoveShapeBigStepBottom;
+	prot["MoveFocusNextObject"] = prot.MoveFocusNextObject;
+	prot["MoveFocusPreviousObject"] = prot.MoveFocusPreviousObject;
+	prot["DrawingAddTab"] = prot.DrawingAddTab;
+	prot["Subscript"] = prot.Subscript;
+	prot["Superscript"] = prot.Superscript;
 	prot["IncreaseFontSize"] = prot.IncreaseFontSize;
 	prot["DecreaseFontSize"] = prot.DecreaseFontSize;
-	prot["DrawingSubscript"] = prot.DrawingSubscript;
-	prot["DrawingSuperscript"] = prot.DrawingSuperscript;
-	prot["DrawingCenterPara"] = prot.DrawingCenterPara;
-	prot["DrawingJustifyPara"] = prot.DrawingJustifyPara;
-	prot["DrawingLeftPara"] = prot.DrawingLeftPara;
-	prot["DrawingRightPara"] = prot.DrawingRightPara;
-	prot["DrawingEnDash"] = prot.DrawingEnDash;
-	prot["CellEditorSwitchReference"] = prot.CellEditorSwitchReference;
+	prot["CenterPara"] = prot.CenterPara;
+	prot["JustifyPara"] = prot.JustifyPara;
+	prot["RightPara"] = prot.RightPara;
+	prot["LeftPara"] = prot.LeftPara;
+	prot["EndParagraph"] = prot.EndParagraph;
+	prot["AddLineBreak"] = prot.AddLineBreak;
+	prot["RemoveGraphicalObject"] = prot.RemoveGraphicalObject;
+	prot["ExitAddingShapesMode"] = prot.ExitAddingShapesMode;
+	prot["SpeechWorker"] = prot.SpeechWorker;
+	prot["EnDash"] = prot.EnDash;
 
   window['Asc']['c_oAscCalcMode'] = window['Asc'].c_oAscCalcMode = c_oAscCalcMode;
   prot = c_oAscCalcMode;

@@ -3910,7 +3910,7 @@ function (window, undefined) {
 		if (this.subject !== pr.subject) {
 			this.subject = null;
 		}
-		if (this.type) {
+		if (this.type && this.annotProps) {
 			this.annotProps.compare(pr.annotProps);
 		}
 	};
@@ -7847,6 +7847,92 @@ function (window, undefined) {
 		return this.insertObject;
 	};
 
+	function CAscShortcut(type, keyCode, isCtrl, isShift, isAlt, isCommand, isLocked, isHidden) {
+		this.type = type || null;
+		this.keyCode = keyCode;
+		this.ctrlKey = isCtrl;
+		this.shiftKey = isShift;
+		this.altKey = isAlt;
+		this.commandKey = isCommand;
+
+		this.isLocked = !!isLocked;
+		this.isHidden = !!isHidden;
+	}
+
+	CAscShortcut.prototype.asc_GetKeyCode = function() {
+		return this.keyCode;
+	};
+	CAscShortcut.prototype.asc_GetType = function() {
+		return this.type;
+	};
+	CAscShortcut.prototype.asc_IsCtrl = function() {
+		return this.ctrlKey;
+	};
+	CAscShortcut.prototype.asc_IsShift = function() {
+		return this.shiftKey;
+	};
+	CAscShortcut.prototype.asc_IsAlt = function() {
+		return this.altKey;
+	};
+	CAscShortcut.prototype.asc_IsCommand = function() {
+		return this.commandKey;
+	};
+	CAscShortcut.prototype.asc_IsLocked = function() {
+		return this.isLocked;
+	};
+	CAscShortcut.prototype.asc_IsHidden = function() {
+		return this.isHidden;
+	};
+	CAscShortcut.prototype.asc_SetIsHidden = function(pr) {
+		this.isHidden = pr;
+	};
+	CAscShortcut.prototype.asc_SetKeyCode = function(pr) {
+		this.keyCode = pr;
+	};
+	CAscShortcut.prototype.asc_SetIsCtrl = function(pr) {
+		this.ctrlKey = pr;
+	};
+	CAscShortcut.prototype.asc_SetIsShift = function(pr) {
+		this.shiftKey = pr;
+	};
+	CAscShortcut.prototype.asc_SetIsAlt = function(pr) {
+		this.altKey = pr;
+	};
+	CAscShortcut.prototype.asc_SetIsCommand = function(pr) {
+		this.commandKey = pr;
+	};
+	CAscShortcut.prototype.asc_SetIsLocked = function(pr) {
+		this.isLocked = pr;
+	};
+	CAscShortcut.prototype.asc_SetType = function(pr) {
+		this.type = pr;
+	};
+	CAscShortcut.prototype.asc_ToJson = function() {
+		const res = {};
+		res["type"] = AscCommon.getStringFromShortcutType(this.type);
+		res["keyCode"] = this.keyCode;
+		res["ctrlKey"] = this.ctrlKey;
+		res["shiftKey"] = this.shiftKey;
+		res["altKey"] = this.altKey;
+		res["commandKey"] = this.commandKey;
+		res["isLocked"] = this.isLocked;
+		res["isHidden"] = this.isHidden;
+		return res;
+	};
+	CAscShortcut.prototype.asc_FromJson = function(obj) {
+		this.type = AscCommon.getShortcutTypeFromString(obj["type"]);
+		this.keyCode = obj["keyCode"];
+		this.ctrlKey = obj["ctrlKey"];
+		this.shiftKey = obj["shiftKey"];
+		this.altKey = obj["altKey"];
+		this.commandKey = obj["commandKey"];
+		this.isLocked = obj["isLocked"];
+		this.isHidden = obj["isHidden"];
+	};
+	CAscShortcut.prototype.asc_GetShortcutIndex = function() {
+		return AscCommon.CShortcuts.GetShortcutIndex(this.asc_GetKeyCode(), this.asc_IsCtrl(), this.asc_IsShift(), this.asc_IsAlt(), this.asc_IsCommand());
+	};
+
 
 	function CButtonData(oData) {
 		this["obj"] = oData["obj"];
@@ -9514,6 +9600,28 @@ function (window, undefined) {
 	prot["get_canEditText"] = prot.get_canEditText;
 	prot["get_canEditPara"] = prot.get_canEditPara;
 	prot["get_canInsObject"] = prot.get_canInsObject;
+
+	window["Asc"]["CAscShortcut"] = window["Asc"].CAscShortcut = CAscShortcut;
+	CAscShortcut.prototype["asc_GetKeyCode"] = CAscShortcut.prototype.asc_GetKeyCode;
+	CAscShortcut.prototype["asc_GetType"] = CAscShortcut.prototype.asc_GetType;
+	CAscShortcut.prototype["asc_IsCtrl"] = CAscShortcut.prototype.asc_IsCtrl;
+	CAscShortcut.prototype["asc_IsShift"] = CAscShortcut.prototype.asc_IsShift;
+	CAscShortcut.prototype["asc_IsAlt"] = CAscShortcut.prototype.asc_IsAlt;
+	CAscShortcut.prototype["asc_IsCommand"] = CAscShortcut.prototype.asc_IsCommand;
+	CAscShortcut.prototype["asc_IsLocked"] = CAscShortcut.prototype.asc_IsLocked;
+	CAscShortcut.prototype["asc_IsHidden"] = CAscShortcut.prototype.asc_IsHidden;
+	CAscShortcut.prototype["asc_SetIsHidden"] = CAscShortcut.prototype.asc_SetIsHidden;
+	CAscShortcut.prototype["asc_SetKeyCode"] = CAscShortcut.prototype.asc_SetKeyCode;
+	CAscShortcut.prototype["asc_SetIsCtrl"] = CAscShortcut.prototype.asc_SetIsCtrl;
+	CAscShortcut.prototype["asc_SetIsShift"] = CAscShortcut.prototype.asc_SetIsShift;
+	CAscShortcut.prototype["asc_SetIsAlt"] = CAscShortcut.prototype.asc_SetIsAlt;
+	CAscShortcut.prototype["asc_SetIsCommand"] = CAscShortcut.prototype.asc_SetIsCommand;
+	CAscShortcut.prototype["asc_SetIsLocked"] = CAscShortcut.prototype.asc_SetIsLocked;
+	CAscShortcut.prototype["asc_SetType"] = CAscShortcut.prototype.asc_SetType;
+	CAscShortcut.prototype["asc_ToJson"] = CAscShortcut.prototype.asc_ToJson;
+	CAscShortcut.prototype["asc_FromJson"] = CAscShortcut.prototype.asc_FromJson;
+	CAscShortcut.prototype["asc_GetShortcutIndex"] = CAscShortcut.prototype.asc_GetShortcutIndex;
+
 
 	window["Asc"]["CButtonData"] = window["Asc"].CButtonData = CButtonData;
 	prot = CButtonData.prototype;

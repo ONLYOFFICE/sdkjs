@@ -373,6 +373,7 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
             case AscDFH.historyitem_type_Pdf_Annot_Strikeout:
             case AscDFH.historyitem_type_Pdf_Annot_Squiggly:
             case AscDFH.historyitem_type_Pdf_Annot_Caret:
+            case AscDFH.historyitem_type_Pdf_Annot_Redact:
                 ret = handleBaseAnnot(drawing, drawingObjectsController, e, x, y, group, pageIndex);
                 break;
         }

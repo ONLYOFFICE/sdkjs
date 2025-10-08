@@ -1804,12 +1804,15 @@ CShapeDrawer.prototype =
 		const useTransparency = this.IsRectShape ? true : graphics.isSupportTextDraw() && !graphics.isTrack();
 		const alpha = (isTransparent && useTransparency) ? this.UniFill.transparent / 255 : 1;
 
+		// this.UniFill.fill.srcRect === this.Shape.brush.fill.srcRect === this.Shape.blipFill.srcRect
+		const srcRect = this.UniFill.fill.srcRect;
+
 		graphics.drawBlipFillStretch(
 			rotWithShape ? null : invertedTransform,
 			imageData.src,
 			alpha,
 			dstRect.l, dstRect.t, dstRect.r - dstRect.l, dstRect.b - dstRect.t,
-			this.UniFill.fill.srcRect,
+			srcRect,
 			this.UniFill.fill.canvas
 		);
 	},

@@ -151,26 +151,31 @@
 		}
 	}
 	function startRoundControl(graphics, x, y, extX, extY, nRadiusPx, arrColor) {
-		graphics.save();
 		const nRadius = Math.min(nRadiusPx * AscCommon.g_dKoef_pix_to_mm * AscCommon.AscBrowser.retinaPixelRatio, extX / 2, extY / 2);
+		function draw() {
+			graphics._s();
+			graphics._m(x, y + nRadius);
+			graphics._c2(x, y, x + nRadius, y);
+			graphics._l(x + extX - nRadius, y);
+			graphics._c2(x + extX, y, x + extX, y + nRadius);
+			graphics._l(x + extX, y + extY - nRadius);
+			graphics._c2(x + extX, y + extY, x + extX - nRadius, y + extY);
+			graphics._l(x + nRadius, y + extY);
+			graphics._c2(x, y + extY, x, y + extY - nRadius);
+			graphics._z();
+		}
+		graphics.SaveGrState();
 		graphics.p_color.apply(graphics, arrColor);
 		graphics.p_width(0);
-		graphics.StartClipPath();
-		graphics._s();
-		graphics._m(x, y + nRadius);
-		graphics._c2(x, y, x + nRadius, y);
-		graphics._l(x + extX - nRadius, y);
-		graphics._c2(x + extX, y, x + extX, y + nRadius);
-		graphics._l(x + extX, y + extY - nRadius);
-		graphics._c2(x + extX, y + extY, x + extX - nRadius, y + extY);
-		graphics._l(x + nRadius, y + extY);
-		graphics._c2(x, y + extY, x, y + extY - nRadius);
-		graphics._z();
+		draw();
 		graphics.ds();
+		graphics.AddClipRect(x, y, extX, extY);
+		graphics.StartClipPath();
+		draw();
 		graphics.EndClipPath();
 	}
 	function endRoundControl(graphics) {
-		graphics.restore();
+		graphics.RestoreGrState();
 	}
 	function CStepManager() {
 		this.timeoutId = null;
@@ -671,6 +676,7 @@ function getFlatPenColor() {
 		}
 		graphics._e();
 		endRoundControl(graphics);
+		graphics.RestoreGrState();
 	};
 
 	function CCheckBoxController(oControl) {
@@ -929,13 +935,7 @@ function getFlatPenColor() {
 			return true;
 		};
 		this.button._onMouseUp = function () {
-			const oControlPr = oThis.getControlPr();
-			const sMacro = oControlPr.getJSAMacroId();
-			if (sMacro === null) {
-				oThis.onMacroError();
-			} else {
-				oThis.runMacros(sMacro);
-			}
+			oThis.runMacros();
 			return true;
 		}
 	};
@@ -960,10 +960,10 @@ function getFlatPenColor() {
 		this.button.transform = oControl.transform.CreateDublicate();
 		this.button.invertTransform = oControl.invertTransform.CreateDublicate();
 	};
-	CButtonController.prototype.onMacroError = function () {
+	CButtonController.prototype.onMacroError = function (sMacro) {
 		const oApi = Asc.editor;
 		if (oApi) {
-			oApi.sendEvent("asc_onError", Asc.c_oAscError.ID.MacroUnavailableWarning, c_oAscError.Level.NoCritical);
+			oApi.sendEvent("asc_onError", Asc.c_oAscError.ID.MacroUnavailableWarning, c_oAscError.Level.NoCritical, sMacro);
 		}
 	};
 	CButtonController.prototype.getCursorInfo = function (e, nX, nY) {
@@ -987,6 +987,10 @@ function getFlatPenColor() {
 		if (e.CtrlKey) {
 			return false;
 		}
+		const oControlPr = this.getControlPr();
+		if (oControlPr.getMacroId() === null) {
+			return false;
+		}
 		return this.button.onMouseDown(e, nX, nY, nPageIndex, oDrawingController);
 	};
 	CButtonController.prototype.onMouseUp = function (e, nX, nY, nPageIndex, oController) {
@@ -995,9 +999,19 @@ function getFlatPenColor() {
 	CButtonController.prototype.onMouseMove = function (e, nX, nY, nPageIndex, oController) {
 		return this.button.onMouseMove(e, nX, nY, nPageIndex, oController);
 	};
-	CButtonController.prototype.runMacros = function (sMacro) {
+	CButtonController.prototype.runMacros = function () {
+		const oControlPr = this.getControlPr();
+		const sMacro = oControlPr.getJSAMacroId();
+		if (sMacro === null) {
+			this.onMacroError(oControlPr.getMacroId());
+			return;
+		}
 		const oApi = Asc.editor;
 		if (oApi) {
+			const sMacroName = oApi.macros && oApi.macros.getNameByGuid(sMacro);
+			if (!sMacroName) {
+				this.onMacroError(sMacro);
+			}
 			oApi.asc_runMacros(sMacro);
 		}
 	};
@@ -1131,7 +1145,7 @@ function getFlatPenColor() {
 		};
 	};
 	CSpinController.prototype.draw = function (graphics, transform, transformText, pageIndex, opt) {
-		graphics.SaveGrState()
+		graphics.SaveGrState();
 		transform = transform || this.control.transform;
 		graphics.transform3(transform);
 		startRoundControl(graphics, 0, 0, this.control.extX, this.control.extY, 2, getFlatPenColor());
@@ -1959,14 +1973,23 @@ function getFlatPenColor() {
 			oThis.controller.checkNeedUpdate();
 		};
 	};
-	CListBox.prototype.updateListItems = function (oRange) {
+	CListBox.prototype.updateListItems = function () {
 		this.listItems = [];
-		if (oRange) {
-			const oThis = this;
-			oRange._foreach(function (oCell) {
-				const sItem = oCell && !oCell.isNullText() ? oCell.getValue() : "";
-				oThis.listItems.push(new CListBoxItem(oThis, sItem));
-			});
+		const oFormControlPr = this.controller.getFormControlPr();
+		if (oFormControlPr.itemLst.length) {
+			for (let i = 0; i < oFormControlPr.itemLst.length; i += 1) {
+				this.listItems.push(new CListBoxItem(this, oFormControlPr.itemLst[i]));
+			}
+		}
+		else {
+			const oRange = this.controller.getParsedFmlaRange();
+			if (oRange) {
+				const oThis = this;
+				oRange._foreach(function (oCell) {
+					const sItem = oCell && !oCell.isNullText() ? oCell.getValue() : "";
+					oThis.listItems.push(new CListBoxItem(oThis, sItem));
+				});
+			}
 		}
 	};
 
@@ -1996,11 +2019,6 @@ function getFlatPenColor() {
 			oItem.y = oItem.extY * nIndex;
 			oItem.recalculateTextPosition();
 			nIndex++;
-		});
-	};
-	CListBox.prototype.recalculateVisibleItemTextPositions = function () {
-		this.checkVisibleItems(function (oItem) {
-			oItem.recalculateTextPosition();
 		});
 	};
 	CListBox.prototype.resetSelectedIndices = function () {
@@ -2206,7 +2224,7 @@ function getFlatPenColor() {
 	};
 
 	CListBoxController.prototype.updateListItems = function () {
-		this.listBox.updateListItems(this.getParsedFmlaRange());
+		this.listBox.updateListItems();
 	};
 	CListBoxController.prototype.getFmlaLinkIndex = function () {
 		const oParsedLink = this.getParsedFmlaLink();
@@ -2292,7 +2310,6 @@ function getFlatPenColor() {
 	};
 
 	CListBoxController.prototype.onMouseDown = function (e, nX, nY, nPageIndex, oDrawingController) {
-		const oControl = this.control;
 		if (e.button !== 0) {
 			return false;
 		}
@@ -2400,7 +2417,7 @@ function getFlatPenColor() {
 		oFormControlPr.setSel(nIndex ? nIndex : null);
 	};
 	CComboBoxController.prototype.updateListItems = function () {
-		this.listBox.updateListItems(this.getParsedFmlaRange());
+		this.listBox.updateListItems();
 	};
 
 	CComboBoxController.prototype.updateSelectedIndex = function () {
@@ -2821,9 +2838,13 @@ function getFlatPenColor() {
 		oCopy.setRecalcAlways(this.recalcAlways);
 		oCopy.setUiObject(this.uiObject);
 	};
-	CControlPr.prototype.getJSAMacroId = function () {
+	CControlPr.prototype.getMacroId = function () {
 		const sMacro = this.macro;
-		if (typeof sMacro === "string" && sMacro.indexOf(AscFormat.MACRO_PREFIX) === 0) {
+		return typeof sMacro === "string" ? sMacro : null;
+	};
+	CControlPr.prototype.getJSAMacroId = function () {
+		const sMacro = this.getMacroId();
+		if (sMacro !== null && sMacro.indexOf(AscFormat.MACRO_PREFIX) === 0) {
 			return sMacro.slice(AscFormat.MACRO_PREFIX.length);
 		}
 		return null;

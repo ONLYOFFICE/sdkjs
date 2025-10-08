@@ -383,7 +383,7 @@
         ctx.lineTo(nLineOffsetX + _x, _y2);
     };
     CPDFGraphics.prototype.DrawLockObjectRect = function(lock_type, aRegions) {
-        if (Asc.editor.isViewMode || this.IsThumbnail || this.IsDemonstrationMode || lock_type === AscCommon.c_oAscLockTypes.kLockTypeNone)
+        if (!aRegions || Asc.editor.isViewMode || this.IsThumbnail || this.IsDemonstrationMode || lock_type === AscCommon.c_oAscLockTypes.kLockTypeNone)
             return;
     
         if (Asc.editor.WordControl) {

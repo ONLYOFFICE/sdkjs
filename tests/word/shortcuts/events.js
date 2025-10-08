@@ -49,8 +49,8 @@
 		moveToPreviousCell                 : 8,
 		selectNextObject                   : 9,
 		selectPreviousObject               : 10,
-		testIndent                         : 11,
-		testUnIndent                       : 12,
+		BeginIndent                         : 11,
+		BeginUnIndent                       : 12,
 		addTabToParagraph                  : 13,
 		visitHyperlink                     : 14,
 		addBreakLineInlineLvlSdt           : 15,
@@ -153,8 +153,8 @@
 	testHotkeyEvents[testHotkeyActions.moveToPreviousCell] = [CreateTestEvent(9, false, true, false, false)];
 	testHotkeyEvents[testHotkeyActions.selectNextObject] = [CreateTestEvent(9, false, false, false, false)];
 	testHotkeyEvents[testHotkeyActions.selectPreviousObject] = [CreateTestEvent(9, false, true, false, false)];
-	testHotkeyEvents[testHotkeyActions.testIndent] = [CreateTestEvent(9, false, false, false, false)];
-	testHotkeyEvents[testHotkeyActions.testUnIndent] = [CreateTestEvent(9, false, true, false, false)];
+	testHotkeyEvents[testHotkeyActions.BeginIndent] = [CreateTestEvent(9, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.BeginUnIndent] = [CreateTestEvent(9, false, true, false, false)];
 	testHotkeyEvents[testHotkeyActions.addTabToParagraph] = [CreateTestEvent(9, false, false, false)];
 	testHotkeyEvents[testHotkeyActions.visitHyperlink] = [CreateTestEvent(13, false, false, false, false, false)];
 	testHotkeyEvents[testHotkeyActions.addBreakLineInlineLvlSdt] = [CreateTestEvent(13, false, false, false, false, false)];

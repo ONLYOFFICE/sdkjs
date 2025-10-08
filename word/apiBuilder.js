@@ -4144,7 +4144,7 @@
 	/**
 	 * Form type.
 	 * The available form types.
-	 * @typedef {"textForm" | "comboBoxForm" | "dropDownForm" | "checkBoxForm" | "radioButtonForm" | "pictureForm" | "complexForm"} FormType
+	 * @typedef {"textForm" | "comboBoxForm" | "dropDownForm" | "checkBoxForm" | "radioButtonForm" | "pictureForm" | "complexForm" | "dateForm"} FormType
 	 * @see office-js-api/Examples/Enumerations/FormType.js
 	 */
 
@@ -6068,6 +6068,19 @@
 	{
 		let contentControl = this.Document.GetCurrentContentControl();
 		return contentControl ? ToApiContentControl(contentControl) : null;
+	};
+	
+	/**
+	 * Returns the currently selected content control.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @since 9.1.0
+	 * @returns {ApiDocumentVisitor}
+	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetDocumentVisitor.js
+	 */
+	ApiDocumentContent.prototype.GetDocumentVisitor = function()
+	{
+		return new ApiDocumentVisitor(this);
 	};
 
 	/**
@@ -18921,6 +18934,8 @@
 	 */
 	ApiPath.prototype.SetStroke = function(bStroke)
 	{
+		if (bStroke !== true && bStroke !== false)
+			return;
 		this.path.setStroke(bStroke);
 	};
 
@@ -18943,8 +18958,14 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/SetFill.js
 	 * @since 9.1.0
 	 */
+
 	ApiPath.prototype.SetFill = function(sFill)
 	{
+		const FILL_ALLOWED = ["none", "norm", "lighten", "lightenLess", "darken", "darkenLess"];
+		if (FILL_ALLOWED.indexOf(sFill) === -1)
+		{
+			return;
+		}
 		this.path.setFill(sFill);
 	};
 
@@ -18969,6 +18990,8 @@
 	 */
 	ApiPath.prototype.SetWidth = function(nWidth)
 	{
+		if (!AscFormat.isRealNumber(nWidth) || nWidth < 0)
+			return;
 		this.path.setPathW(nWidth);
 	};
 
@@ -18993,6 +19016,8 @@
 	 */
 	ApiPath.prototype.SetHeight = function(nHeight)
 	{
+		if (!AscFormat.isRealNumber(nHeight) || nHeight < 0)
+			return;
 		this.path.setPathH(nHeight);
 	};
 
@@ -23323,6 +23348,18 @@
 		}, this);
 	};
 	/**
+	 * Returns the placeholder text from the current form.
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @since 9.1.0
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/GetPlaceholderText.js
+	 */
+	ApiFormBase.prototype.GetPlaceholderText = function()
+	{
+		return this.Sdt.GetPlaceholderText();
+	};
+	/**
 	 * Sets the text properties to the current form.
 	 * *Used if possible for this type of form*
 	 * @memberof ApiFormBase
@@ -26789,7 +26826,218 @@
 		});
 		return property ? property.asc_getValue() : null;
 	};
-
+	
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiDocumentVisitor
+	//
+	//------------------------------------------------------------------------------------------------------------------
+	function ApiDocumentVisitor(docContent)
+	{
+		AscWord.DocumentVisitor.call(this);
+		
+		this.docContent = docContent;
+	}
+	ApiDocumentVisitor.prototype = Object.create(AscWord.DocumentVisitor.prototype);
+	ApiDocumentVisitor.prototype.constructor = ApiDocumentVisitor;
+	ApiDocumentVisitor.prototype.paragraph = function(paragraph, isStart)
+	{
+		if (isStart)
+			return this["Paragraph"](new ApiParagraph(paragraph));
+		else
+			return this["ParagraphEnd"](new ApiParagraph(paragraph));
+	};
+	ApiDocumentVisitor.prototype.table = function(table, isStart)
+	{
+		if (isStart)
+			return this["Table"](new ApiTable(table));
+		else
+			return this["TableEnd"](new ApiTable(table));
+	};
+	ApiDocumentVisitor.prototype.tableRow = function(tableRow, isStart)
+	{
+		if (isStart)
+			return this["TableRow"](new ApiTableRow(tableRow));
+		else
+			return this["TableRowEnd"](new ApiTableRow(tableRow));
+	};
+	ApiDocumentVisitor.prototype.tableCell = function(tableCell, isStart)
+	{
+		if (isStart)
+			return this["TableCell"](new ApiTableCell(tableCell));
+		else
+			return this["TableCellEnd"](new ApiTableCell(tableCell));
+	};
+	ApiDocumentVisitor.prototype.fldSimple = function(field, isStart)
+	{
+		return true;
+	};
+	ApiDocumentVisitor.prototype.blockLevelSdt = function(sdt, isStart)
+	{
+		if (isStart)
+			return this["BlockLevelSdt"](new ApiBlockLvlSdt(sdt));
+		else
+			return this["BlockLevelSdtEnd"](new ApiBlockLvlSdt(sdt));
+	};
+	ApiDocumentVisitor.prototype.inlineLevelSdt = function(sdt, isStart)
+	{
+		if (isStart)
+			return this["InlineLevelSdt"](new ApiInlineLvlSdt(sdt));
+		else
+			return this["InlineLevelSdtEnd"](new ApiInlineLvlSdt(sdt));
+	};
+	ApiDocumentVisitor.prototype.oform = function(form, isStart)
+	{
+		if (!isStart)
+			return true;
+		
+		let apiForm = private_CheckForm(form);
+		if (!apiForm || apiForm instanceof ApiUnsupported)
+			return true;
+		
+		this["Form"](apiForm);
+		
+		// Внутрь формы не даем заходить
+		return true;
+	};
+	ApiDocumentVisitor.prototype.run = function(run, isStart)
+	{
+		function isParaEndRun(run)
+		{
+			return run && 1 === run.Content.length && run.Content[0].IsParaEnd();
+		}
+		if (isParaEndRun(run))
+			return;
+		
+		if (!isStart)
+			return this["RunEnd"](new ApiRun(run));
+		
+		if (this["Run"](new ApiRun(run)))
+			return true;
+		
+		let text = "";
+		let _t = this;
+		function flushText()
+		{
+			if ("" === text)
+				return;
+			
+			_t["Text"](text);
+			text = "";
+		}
+		
+		for (let i = 0; i < run.Content.length; ++i)
+		{
+			let runItem = run.Content[i];
+			if (runItem.IsText() || runItem.IsSpace())
+			{
+				text += String.fromCodePoint(runItem.GetCodePoint())
+			}
+			else if (runItem.IsBreak())
+			{
+				text += "\n";
+			}
+			else if (runItem.IsTab())
+			{
+				text += "\t";
+			}
+			else if (runItem.IsDrawing() && runItem.IsForm())
+			{
+				flushText();
+				let form = runItem.GetInnerForm();
+				let apiForm = private_CheckForm(form);
+				if (apiForm && !(apiForm instanceof ApiUnsupported))
+					return this["Form"](apiForm);
+			}
+			else
+			{
+				flushText();
+			}
+		}
+		flushText();
+	};
+	//------------------------------------------------------------------------------------------------------------------
+	ApiDocumentVisitor.prototype["Traverse"] = function(isSelection)
+	{
+		let docContent = this.docContent.Document;
+		if (isSelection)
+		{
+			let _t = this;
+			AscCommon.ExecuteNoHistory(function()
+			{
+				let selectedContent = docContent.GetSelectedContent(false);
+				_t.traverseSelectedContent(selectedContent)
+			});
+		}
+		else
+		{
+			this.visitDocContent(docContent.Content);
+		}
+	};
+	ApiDocumentVisitor.prototype["Paragraph"] = function(paragraph)
+	{
+		return false;
+	};
+	ApiDocumentVisitor.prototype["ParagraphEnd"] = function(paragraph)
+	{
+		return false;
+	};
+	ApiDocumentVisitor.prototype["Table"] = function(table)
+	{
+		return false;
+	};
+	ApiDocumentVisitor.prototype["TableEnd"] = function(table)
+	{
+		return false;
+	};
+	ApiDocumentVisitor.prototype["TableRow"] = function(tableRow)
+	{
+		return false;
+	};
+	ApiDocumentVisitor.prototype["TableRowEnd"] = function(table)
+	{
+		return false;
+	};
+	ApiDocumentVisitor.prototype["TableCell"] = function(tableCell)
+	{
+		return false;
+	};
+	ApiDocumentVisitor.prototype["TableCellEnd"] = function(tableCell)
+	{
+		return false;
+	};
+	ApiDocumentVisitor.prototype["BlockLevelSdt"] = function(sdt)
+	{
+		return false;
+	};
+	ApiDocumentVisitor.prototype["BlockLevelSdtEnd"] = function(sdt)
+	{
+		return false;
+	};
+	ApiDocumentVisitor.prototype["InlineLevelSdt"] = function(sdt)
+	{
+		return false;
+	};
+	ApiDocumentVisitor.prototype["InlineLevelSdtEnd"] = function(sdt)
+	{
+		return false;
+	};
+	ApiDocumentVisitor.prototype["Form"] = function(form)
+	{
+		return false;
+	};
+	ApiDocumentVisitor.prototype["Run"] = function(run)
+	{
+		return false;
+	};
+	ApiDocumentVisitor.prototype["RunEnd"] = function(run)
+	{
+		return false;
+	};
+	ApiDocumentVisitor.prototype["Text"] = function(text)
+	{
+		return false;
+	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26892,6 +27140,7 @@
 	ApiDocumentContent.prototype["GetCurrentParagraph"]      = ApiDocumentContent.prototype.GetCurrentParagraph;
 	ApiDocumentContent.prototype["GetCurrentRun"]            = ApiDocumentContent.prototype.GetCurrentRun;
 	ApiDocumentContent.prototype["GetCurrentContentControl"] = ApiDocumentContent.prototype.GetCurrentContentControl;
+	ApiDocumentContent.prototype["GetDocumentVisitor"]       = ApiDocumentContent.prototype.GetDocumentVisitor;
 
 	ApiRange.prototype["GetClassType"]               = ApiRange.prototype.GetClassType;
 	ApiRange.prototype["GetParagraph"]               = ApiRange.prototype.GetParagraph;
@@ -27034,6 +27283,7 @@
 	ApiDocument.prototype["MoveCursorToStart"]             = ApiDocument.prototype.MoveCursorToStart;
 	ApiDocument.prototype["MoveCursorToEnd"]               = ApiDocument.prototype.MoveCursorToEnd;
 	ApiDocument.prototype["GoToPage"]                      = ApiDocument.prototype.GoToPage;
+	ApiDocument.prototype["GetDocumentVisitor"]            = ApiDocument.prototype.GetDocumentVisitor;
 	
 	
 	ApiParagraph.prototype["GetClassType"]           = ApiParagraph.prototype.GetClassType;
@@ -27784,6 +28034,7 @@
 	ApiFormBase.prototype["Clear"]              = ApiFormBase.prototype.Clear;
 	ApiFormBase.prototype["GetWrapperShape"]    = ApiFormBase.prototype.GetWrapperShape;
 	ApiFormBase.prototype["SetPlaceholderText"] = ApiFormBase.prototype.SetPlaceholderText;
+	ApiFormBase.prototype["GetPlaceholderText"] = ApiFormBase.prototype.GetPlaceholderText;
 	ApiFormBase.prototype["SetTextPr"]          = ApiFormBase.prototype.SetTextPr;
 	ApiFormBase.prototype["GetTextPr"]          = ApiFormBase.prototype.GetTextPr;
 	ApiFormBase.prototype["MoveCursorOutside"]  = ApiFormBase.prototype.MoveCursorOutside;

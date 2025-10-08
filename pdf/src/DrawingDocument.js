@@ -425,6 +425,75 @@
                 viewer.onRepaintForms(redrawPages);
             }
         };
+        // mouse events
+        this.checkMouseDown_Drawing = function(pos) {
+            let oWordControl = this.m_oWordControl;
+            let bIsReturn = false;
+
+            if (!this.isButtonsDisabled() && this.placeholders.onPointerDown(pos, this.m_arrPages[pos.Page].drawingPage, this.m_oLogicDocument.GetPageWidthMM(), this.m_oLogicDocument.GetPageHeightMM())) {
+                bIsReturn = true;
+                this.m_oWordControl.onMouseUpMainSimple();
+            }
+
+            if (bIsReturn) {
+                oWordControl.OnUpdateOverlay();
+                oWordControl.EndUpdateOverlay();
+            }
+            return bIsReturn;
+        };
+
+        this.checkMouseMove_Drawing = function(pos) {
+            let oWordControl = this.m_oWordControl;
+            let bIsReturn = false;
+
+            if (this.InlineTextTrackEnabled) {
+                if (-1 != oWordControl.m_oTimerScrollSelect) {
+                    clearInterval(oWordControl.m_oTimerScrollSelect);
+                    oWordControl.m_oTimerScrollSelect = -1;
+                }
+
+                this.InlineTextTrack = oWordControl.m_oLogicDocument.Get_NearestPos(pos.Page, pos.X, pos.Y, pos.isNotes);
+                this.InlineTextTrackPage = pos.Page;
+                this.InlineTextInNotes = pos.isNotes ? true : false;
+
+                bIsReturn = true;
+            } else {
+                if (!AscCommon.global_mouseEvent.IsLocked) {
+                    if (!this.isButtonsDisabled() && this.placeholders.onPointerMove(pos, this.m_arrPages[pos.Page].drawingPage, this.m_oLogicDocument.GetPageWidthMM(), this.m_oLogicDocument.GetPageHeightMM())) {
+                        oWordControl.OnUpdateOverlay();
+                        oWordControl.EndUpdateOverlay();
+                        bIsReturn = true;
+                    }
+                }
+            }
+
+            if (bIsReturn) {
+                oWordControl.OnUpdateOverlay();
+                oWordControl.EndUpdateOverlay();
+            }
+            return bIsReturn;
+        };
+
+        this.checkMouseUp_Drawing = function(pos) {
+            let oWordControl = this.m_oWordControl;
+            let bIsReturn = false;
+
+            if (this.InlineTextTrackEnabled) {
+                this.InlineTextTrack = oWordControl.m_oLogicDocument.Get_NearestPos(pos.Page, pos.X, pos.Y, pos.isNotes);
+                this.InlineTextTrackPage = pos.Page;
+                this.InlineTextInNotes = pos.isNotes ? true : false;
+                this.EndTrackText();
+
+                bIsReturn = true;
+            } else if (!this.isButtonsDisabled() && this.placeholders.onPointerUp(pos, this.m_arrPages[pos.Page].drawingPage, this.m_oLogicDocument.GetPageWidthMM(), this.m_oLogicDocument.GetPageHeightMM()))
+                bIsReturn = true;
+
+            if (bIsReturn) {
+                oWordControl.OnUpdateOverlay();
+                oWordControl.EndUpdateOverlay();
+            }
+            return bIsReturn;
+        };
     }
 
     CDrawingDocument.prototype.constructor = CDrawingDocument;

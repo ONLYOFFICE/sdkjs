@@ -1958,12 +1958,12 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 		let rtlShift = PRSC.SpaceLen;
 		let bRtlAlign = ParaPr.Bidi;
 		let jc = ParaPr.Jc;
-		
-		if(!this.bFromDocument && bRtlAlign)
+	
+		if (!this.bFromDocument && !PRS.isDocumentEditor() && bRtlAlign)
 		{
-			if(jc === AscCommon.align_Left)
+			if (jc === AscCommon.align_Left)
 				jc = AscCommon.align_Right;
-			else if(jc === AscCommon.align_Right)
+			else if (jc === AscCommon.align_Right)
 				jc = AscCommon.align_Left;
 		}
 
@@ -3621,6 +3621,11 @@ CParagraphRecalculateStateWrap.prototype.getDocumentSettings = function()
 		return logicDocument.getDocumentSettings();
 	
 	return AscWord.DEFAULT_DOCUMENT_SETTINGS;
+};
+CParagraphRecalculateStateWrap.prototype.isDocumentEditor = function()
+{
+	let logicDocument = this.Paragraph.GetLogicDocument();
+	return (logicDocument && logicDocument.IsDocumentEditor());
 };
 CParagraphRecalculateStateWrap.prototype.getCompatibilityMode = function()
 {

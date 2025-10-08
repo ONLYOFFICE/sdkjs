@@ -186,6 +186,7 @@
 			"cell/model/Slicer.js",
 			"cell/model/NamedSheetViews.js",
 			"cell/model/protectRange.js",
+			"cell/model/Shortcuts.js",
 			"cell/view/mobileTouch.js",
 			"cell/view/StringRender.js",
 			"cell/view/CellTextRender.js",
@@ -382,6 +383,7 @@
 			"word/Math/operators.js",
 			"word/Math/accent.js",
 			"word/Math/borderBox.js",
+			"word/Math/math-ml.js",
 			"word/Math/mathTrackHandler.js",
 			"word/Editor/Styles/style-cache.js",
 			"word/Editor/Styles/FixedFormDefaults.js",
@@ -396,6 +398,8 @@
 			"word/Editor/api/document-column-props.js",
 			"word/Editor/api/document-columns-props.js",
 			"word/Editor/api/document-section-props.js",
+			
+			"word/Editor/document-visitor.js",
 			
 			"word/apiBuilder.js",
 			"slide/apiBuilder.js",
@@ -412,8 +416,6 @@
 			"common/plugins.js",
 
 			"common/Native/native_graphics.js",
-			
-			"word/Editor/document-visitor.js",
 			
 			"vendor/easysax.js",
 			"common/openxml.js"

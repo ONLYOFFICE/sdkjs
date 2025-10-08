@@ -1199,7 +1199,7 @@ CInlineLevelSdt.prototype.GetBoundingRect = function()
 	}
 
 	if (-1 === nCurPage)
-		return {X: 0, Y : 0, W : 0, H : 0, Page : 0, Transform : null};
+		return {X: 0, Y : 0, W : 0, H : 0, Page : 0, Transform : null, Invalid : true};
 
 	var nPageAbs = this.Paragraph.GetAbsolutePage(nCurPage);
 	for (var Key in this.Bounds)
@@ -1221,7 +1221,7 @@ CInlineLevelSdt.prototype.GetBoundingRect = function()
 	}
 
 	if (null === nL || null === nT || null === nR || null === nB)
-		return {X: 0, Y : 0, W : 0, H : 0, Page : 0, Transform : null};
+		return {X: 0, Y : 0, W : 0, H : 0, Page : 0, Transform : null, Invalid : true};
 
 	return {
 		X : nL,
@@ -2837,13 +2837,19 @@ CInlineLevelSdt.prototype.SyncFormPrWithSameKey = function(form)
 	
 	this.SetFormRequired(form.IsFormRequired());
 	
-	if (Asc.c_oAscContentControlSpecificType.DropDownList === this.GetSpecificType())
+	let type = this.GetSpecificType();
+	if (Asc.c_oAscContentControlSpecificType.DropDownList === type)
 	{
 		this.SetDropDownListPr(form.GetDropDownListPr());
 	}
-	else if (Asc.c_oAscContentControlSpecificType.ComboBox === this.GetSpecificType())
+	else if (Asc.c_oAscContentControlSpecificType.ComboBox === type)
 	{
 		this.SetComboBoxPr(form.GetComboBoxPr());
+	}
+	else if (Asc.c_oAscContentControlSpecificType.CheckBox === type)
+	{
+		if (!form.IsRadioButton())
+			this.SetCheckBoxChecked(form.IsCheckBoxChecked());
 	}
 };
 CInlineLevelSdt.prototype.Get_ParentTextTransform = function()
@@ -3867,6 +3873,7 @@ CInlineLevelSdt.prototype.MoveCursorOutsideForm = function(isBefore)
 	
 	let oShape;
 	if (this.IsForm()
+		&& this.IsMainForm()
 		&& this.Paragraph
 		&& (oShape = this.Paragraph.Parent ? this.Paragraph.Parent.Is_DrawingShape(true) : null)
 		&& oShape.isForm())

@@ -38,6 +38,7 @@
     */
     function CPdfShape() {
         AscFormat.CShape.call(this);
+        AscPDF.CPdfDrawingPrototype.call(this);
     }
     
     CPdfShape.prototype.constructor = CPdfShape;
@@ -129,10 +130,10 @@
         this.recalculateShdw();
         this.SetNeedRecalc(false);
     };
-    CPdfShape.prototype.recalculateBounds = function() {
+    CPdfShape.prototype.recalculateBounds = function(bLine) {
         let boundsChecker = new AscFormat.CSlideBoundsChecker();
         
-        // boundsChecker.CheckLineWidth(this);
+        bLine && boundsChecker.CheckLineWidth(this);
         boundsChecker.DO_NOT_DRAW_ANIM_LABEL = true;
         this.draw(boundsChecker);
         boundsChecker.CorrectBounds();
@@ -307,6 +308,12 @@
     CPdfShape.prototype.canMove = function () {
 		var oApi = Asc.editor || editor;
 		var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+
+        let oEditField = this.GetEditField();
+        if (oEditField && oEditField.IsLocked()) {
+            return false;
+        }
+        
         if (oApi.getPDFDoc().IsViewerObject(this))
             return true;
 
@@ -317,6 +324,14 @@
 			return false;
 		}
 		return this.getNoMove() === false;
+	};
+    CPdfShape.prototype.canResize = function () {
+        let oEditField = this.GetEditField();
+        if (oEditField && oEditField.IsLocked()) {
+            return false;
+        }
+
+		return AscFormat.CGraphicObjectBase.prototype.canResize.call(this);
 	};
     CPdfShape.prototype.ConvertToAnnot = function() {
         let oDoc = Asc.editor.getPDFDoc();
@@ -609,6 +624,13 @@
     CPdfShape.prototype.copy = function (oPr) {
         let copy = new CPdfShape();
         this.fillObject(copy, oPr);
+
+        if (!oPr || !oPr.bSkipRedactsIds) {
+            this.GetRedactIds().forEach(function(id) {
+                copy.AddRedactId(id);
+            });
+        }
+        
         return copy;
     };
     window["AscPDF"].CPdfShape = CPdfShape;
