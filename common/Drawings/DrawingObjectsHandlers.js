@@ -373,6 +373,7 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
             case AscDFH.historyitem_type_Pdf_Annot_Strikeout:
             case AscDFH.historyitem_type_Pdf_Annot_Squiggly:
             case AscDFH.historyitem_type_Pdf_Annot_Caret:
+            case AscDFH.historyitem_type_Pdf_Annot_Redact:
                 ret = handleBaseAnnot(drawing, drawingObjectsController, e, x, y, group, pageIndex);
                 break;
         }
@@ -1660,7 +1661,8 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
                         }
                     }
                 }
-                let oTrendlineLbl = ser.trendline && ser.trendline.trendlineLbl;
+				const trendline = ser.getLastTrendline();
+                let oTrendlineLbl = trendline && trendline.trendlineLbl;
                 if(oTrendlineLbl && oTrendlineLbl.hit(x, y))
                 {
                     if(drawing.selection.trendlineLbl === oTrendlineLbl)

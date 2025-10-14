@@ -34,7 +34,7 @@
 
 /**
  * @typedef {Object} ContentControl
- * Content control object.
+ * The content control object.
  * @property {string} Tag - A tag assigned to the content control. The same tag can be assigned to several content controls so that you can make reference to them in your code.
  * @property {string} Id - A unique content control identifier. It can be used to search for a certain content control and make reference to it in your code.
  * @property {ContentControlLock} Lock - A value that defines if it is possible to delete and/or edit the content control or not.
@@ -44,7 +44,8 @@
 
 /**
  * @typedef {(0 | 1 | 2 | 3)} ContentControlLock
- * A value that defines if it is possible to delete and/or edit the content control or not:
+ * Defines the access restrictions for a content control.
+ * Possible values:
  * <b>0</b> - only deleting,
  * <b>1</b> - disable deleting or editing,
  * <b>2</b> - only editing,
@@ -54,7 +55,7 @@
 
 /**
  * @typedef {Object} comment
- * Comment object.
+ * The comment object.
  * @property {string} Id - The comment ID.
  * @property {CommentData} Data - An object which contains the comment data.
  * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/comment.js
@@ -104,7 +105,7 @@
  * @typeofeditors ["CDE"]
  * @alias onChangeCurrentPage
  * @description The function called when the current page has changed.
- * @param {number} index - new current page index.
+ * @param {number} index - The index of the newly activated page.
  * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onChangeCurrentPage.js
  */
 
@@ -176,8 +177,8 @@
  * @memberof Plugin
  * @typeofeditors ["CDE"]
  * @alias onHideContentControlTrack
- * @description The function called when the focus of the content control changes.
- * @param {string[]} ids - array with ids of controls that lost focus
+ * @description The function called when the content control loses focus in the document.
+ * @param {string[]} ids - An array of content control IDs that have lost focus.
  * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onHideContentControlTrack.js
  */
 
@@ -187,8 +188,8 @@
  * @memberof Plugin
  * @typeofeditors ["CDE"]
  * @alias onShowContentControlTrack
- * @description The function called when the track of the content control appears.
- * @param {string[]} ids - array with ids of controls that received focus
+ * @description The function called when the content control receives focus and its track appears.
+ * @param {string[]} ids - An array of content control IDs that have received focus.
  * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onShowContentControlTrack.js
  */
 
@@ -198,8 +199,8 @@
  * @memberof Plugin
  * @typeofeditors ["CDE"]
  * @alias onInsertOleObjects
- * @description The function called when the track of the content control hides.
- * @param {object[]} data - array with data of inserted ole-objects
+ * @description The function called when one or more OLE objects are inserted into the document.
+ * @param {object[]} data - An array containing information about the inserted OLE objects.
  * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onInsertOleObjects.js
  */
 

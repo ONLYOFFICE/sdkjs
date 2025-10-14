@@ -691,7 +691,7 @@
 					if (_sy >= _sb || _sy >= _h || _sb <= 0 || h <= 0)
 						return;
 
-					this.m_oContext.drawImage(img,_sx,_sy,_sr-_sx,_sb-_sy,x,y,w,h);
+					this.m_oContext.drawImage(img, _sx, _sy, _sr - _sx, _sb - _sy, x, y, w, h);
 				}
 				else
 				{

@@ -209,6 +209,7 @@
         this.m_bFast  = false;
 
         this.m_oLogicDocument     = null;
+		this.m_nTrackingPositions = 1; // По-умолчанию мы отслеживаем позиции
         this.m_aDocumentPositions = new CDocumentPositionsManager();
         this.m_aForeignCursorsPos = new CDocumentPositionsManager();
         this.m_aForeignCursors    = {};
@@ -908,7 +909,19 @@
     // Функции для работы с сохраненными позициями в Word-документах. Они объявлены в базовом классе, потому что вызываются
     // из общих классов Paragraph, Run, Table. Вообщем, для совместимости.
     //----------------------------------------------------------------------------------------------------------------------
-    CCollaborativeEditingBase.prototype.Clear_DocumentPositions = function(){
+	CCollaborativeEditingBase.prototype.StopTrackingPositions = function()
+	{
+		--this.m_nTrackingPositions;
+	};
+	CCollaborativeEditingBase.prototype.StartTrackingPositions = function()
+	{
+		++this.m_nTrackingPositions;
+	};
+	CCollaborativeEditingBase.prototype.IsTrackingPositions = function()
+	{
+		return this.m_nTrackingPositions > 0;
+	};
+	CCollaborativeEditingBase.prototype.Clear_DocumentPositions = function(){
         this.m_aDocumentPositions.Clear_DocumentPositions();
     };
     CCollaborativeEditingBase.prototype.Add_DocumentPosition = function(DocumentPos){

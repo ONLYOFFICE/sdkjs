@@ -708,23 +708,6 @@ CFraction.prototype.GetTextOfElement = function(oMathText)
 	oMathText.ResetGlobalStyle()
 	return oMathText;
 };
-CFraction.fromMathML = function (reader)
-{
-	let attributes = reader.GetAttributes();
-	let props = new CMathFractionPr();
-	props.content = [];
-
-	if (attributes['bevelled'])
-		props.type = SKEWED_FRACTION;
-
-	let depth = reader.GetDepth();
-	while (reader.ReadNextSiblingNode(depth))
-	{
-		props.content.push(AscWord.ParaMath.readMathMLContent(reader));
-	}
-	
-	return new CFraction(props);
-};
 CFraction.fromMathMLContentMarkup = function (reader, num, den)
 {
 	let props = new CMathFractionPr();

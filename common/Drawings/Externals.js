@@ -721,23 +721,54 @@
         return "Embedded: ";
     };
 
-    window['AscFonts'].initEmbeddedFonts = function(fonts)
+    window['AscFonts'].initEmbeddedFonts = function(fonts, isMerge)
     {
         const prefix = AscFonts.getEmbeddedFontPrefix();
         let fontFiles = AscFonts.g_font_files;
 
-        if (CFontFileLoaderEmbed.prototype.startIndex > 0)
-            fontFiles.splice(CFontFileLoaderEmbed.prototype.startIndex);
-
-        CFontFileLoaderEmbed.prototype.startIndex = fontFiles.length;
-        let currentIndex = CFontFileLoaderEmbed.prototype.startIndex;
-
-        for (let i = 0, len = fonts.length; i < len; i++)
+        if (!isMerge)
         {
-            let name = prefix + fonts[i];
-            AscFonts.g_font_files.push(new CFontFileLoaderEmbed(name));
-            AscFonts.g_font_infos_embed.push(new CFontInfoEmbed(name, currentIndex++));
-            AscFonts.g_map_font_index_embed[name] = i;
+            if (CFontFileLoaderEmbed.prototype.startIndex > 0)
+                fontFiles.splice(CFontFileLoaderEmbed.prototype.startIndex);
+
+            CFontFileLoaderEmbed.prototype.startIndex = fontFiles.length;
+            let currentIndex = CFontFileLoaderEmbed.prototype.startIndex;
+
+            for (let i = 0, len = fonts.length; i < len; i++)
+            {
+                let name = prefix + fonts[i];
+                AscFonts.g_font_files.push(new CFontFileLoaderEmbed(name));
+                AscFonts.g_font_infos_embed.push(new CFontInfoEmbed(name, currentIndex++));
+                AscFonts.g_map_font_index_embed[name] = i;
+            }
+        }
+        else
+        {
+            let startIndex = CFontFileLoaderEmbed.prototype.startIndex;
+            let endIndex = fontFiles.length;
+            let currentIndex = endIndex;
+
+            for (let i = 0, len = fonts.length; i < len; i++)
+            {
+                let name = prefix + fonts[i];
+
+                let isFound = false;
+                for (let j = startIndex; j < endIndex; j++)
+                {
+                    if (fontFiles[j].Id === name)
+                    {
+                        isFound = true;
+                        break;
+                    }
+                }
+
+                if (isFound)
+                    continue;
+
+                AscFonts.g_font_files.push(new CFontFileLoaderEmbed(name));
+                AscFonts.g_font_infos_embed.push(new CFontInfoEmbed(name, currentIndex++));
+                AscFonts.g_map_font_index_embed[name] = i;
+            }
         }
     };
 

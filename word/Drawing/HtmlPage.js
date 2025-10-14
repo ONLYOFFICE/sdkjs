@@ -3229,6 +3229,9 @@ function CEditorPage(api)
 
 		if (this.m_bDocumentPlaceChangedEnabled)
 			this.m_oApi.sendEvent("asc_onDocumentPlaceChanged");
+
+		// update position of toggle-chart-elements button
+		Asc.editor.toggleChartElementsCallback();
 	};
 
 	this.OnResize = function(isAttack)

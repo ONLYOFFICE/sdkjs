@@ -446,16 +446,21 @@
 
                     let oTargetTextObject = AscFormat.getTargetTextObject(oController);
                     if (oTargetTextObject) {
-                        let oGroup = oTargetTextObject.getMainGroup();
+                        let oGroup = oTargetTextObject.getMainGroup && oTargetTextObject.getMainGroup();
                         if (oGroup && oGroup.IsAnnot()) {
                             oGroup.SetInTextBox(true);
                             oGroup.SetNeedRecalc(true);
                         }
                         else {
-                            oTargetTextObject.SetNeedRecalc(true);
+                            let oMainObj = oTargetTextObject;
+                            while (!oMainObj.SetNeedRecalc) {
+                                oMainObj = oMainObj.parent;
+                            }
+
+                            oMainObj.SetNeedRecalc(true);
                             
-                            if (oTargetTextObject.checkExtentsByDocContent)
-                                oTargetTextObject.checkExtentsByDocContent();
+                            if (oMainObj.checkExtentsByDocContent)
+                                oMainObj.checkExtentsByDocContent();
                         }
                     }
                 }
@@ -490,7 +495,7 @@
                 for (let i = 0; i < arr.length; ++i) {
                     cur_pr = null;
 
-                    let oGroup = arr[i].getMainGroup();
+                    let oGroup = arr[i].getMainGroup && arr[i].getMainGroup();
                     if (arr[i].IsAnnot && arr[i].IsAnnot()
                         || (oGroup && oGroup.IsAnnot && oGroup.IsAnnot())
                         || arr[i].IsDrawing() && arr[i].IsShape() && arr[i].GetEditField()) {
@@ -1126,6 +1131,10 @@
 
             return this.selection.groupSelection.selectedObjects;
         }
+        else if (this.selection.chartSelection) {
+            return [this.selection.chartSelection];
+        }
+        
         return this.selectedObjects;
     };
 
@@ -1252,10 +1261,10 @@
     };
     CGraphicObjects.prototype.selectObject = function (object, pageIndex) {
         let oDoc = this.document;
-        object.select(this, pageIndex);
-        if (this.selectedObjects.length == 1 && !oDoc.GetActiveObject()) {
+        if (this.selectedObjects.length == 0 && !oDoc.GetActiveObject()) {
             oDoc.SetMouseDownObject(object);
         }
+        object.select(this, pageIndex);
 
         if (AscFormat.MoveAnimationDrawObject) {
             if (object instanceof AscFormat.MoveAnimationDrawObject) {
@@ -1901,8 +1910,14 @@
                     if (oObject.GetParent) {
                         oObject = oObject.GetParent();
                     }
+                    else if (oObject.parent) {
+                        oObject = oObject.parent;
+                    }
                     else if (oObject.GetTable) {
                         oObject = oObject.GetTable();
+                    }
+                    else {
+                        return;
                     }
                 }
                 
@@ -1983,7 +1998,58 @@
             }
         }
         return null;
-    }
+    };
+
+    CGraphicObjects.prototype.checkSingleChartSelection = function () {
+        const controller = Asc.editor.getGraphicController();
+        if (!controller) return;
+
+        let selectedObjects = Asc.editor.getSelectedElements();
+
+        let isChart = function (object) {
+            return object.asc_getObjectType && object.asc_getObjectType() === Asc.c_oAscTypeSelectElement.Chart;
+        };
+        
+        let getRect = function (bounds, pageIndex) {
+            const oDoc = Asc.editor.getPDFDoc();
+            if (!oDoc) return null;
+
+            let oFirtsTr = oDoc.pagesTransform[pageIndex].invert;
+
+            let convertedPosTopLeft = oFirtsTr.TransformPoint(bounds.l * g_dKoef_mm_to_pt, bounds.t * g_dKoef_mm_to_pt);
+            let convertedPosRightBottom = oFirtsTr.TransformPoint(bounds.r * g_dKoef_mm_to_pt, bounds.b * g_dKoef_mm_to_pt);
+
+            let xMin = Math.min(convertedPosTopLeft.x, convertedPosRightBottom.x);
+            let yMin = Math.min(convertedPosTopLeft.y, convertedPosRightBottom.y);
+            let xMax = Math.max(convertedPosTopLeft.x, convertedPosRightBottom.x);
+            let yMax = Math.max(convertedPosTopLeft.y, convertedPosRightBottom.y);
+
+            return new AscCommon.asc_CRect(
+                xMin, yMin,
+                xMax - xMin, yMax - yMin
+            );
+        };
+
+        const chartObjects = selectedObjects.filter(isChart);
+        if (chartObjects.length !== 1) {
+            Asc.editor.sendEvent("asc_onSingleChartSelectionChanged", null);
+            return;
+        }
+
+        const chartObject = chartObjects[0];
+        const chartSpace = chartObject &&
+            chartObject.Value &&
+            chartObject.Value.ChartProperties &&
+            chartObject.Value.ChartProperties.chartSpace;
+
+        if (!chartSpace) {
+            Asc.editor.sendEvent("asc_onSingleChartSelectionChanged", null);
+            return;
+        }
+
+        const chartSpaceRect = getRect(chartSpace.getRectBounds(), chartSpace.GetPage());
+        Asc.editor.sendEvent("asc_onSingleChartSelectionChanged", chartSpaceRect || null);
+    };
 
     // import
     CGraphicObjects.prototype.setEquationTrack          = AscFormat.DrawingObjectsController.prototype.setEquationTrack;

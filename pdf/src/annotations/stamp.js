@@ -512,6 +512,24 @@
     CAnnotationStamp.prototype.GetRotate = function() {
         return this._rotate;
     };
+    CAnnotationStamp.prototype.handleUpdateRot = function(){
+        AscFormat.CShape.prototype.handleUpdateRot.call(this);
+        let oXfrm = this.getXfrm();
+
+        this.SetRotate(-oXfrm.rot * (180 / Math.PI));
+        this.recalcBounds();
+        this.recalcGeometry();
+        this.Recalculate(true);
+        
+        let aNewRect = [];
+        let oGrBounds = this.bounds;
+        aNewRect[0] = Math.round(oGrBounds.l) * g_dKoef_mm_to_pt;
+        aNewRect[1] = Math.round(oGrBounds.t) * g_dKoef_mm_to_pt;
+        aNewRect[2] = Math.round(oGrBounds.r) * g_dKoef_mm_to_pt;
+        aNewRect[3] = Math.round(oGrBounds.b) * g_dKoef_mm_to_pt;
+
+        this.SetRect(aNewRect, true);
+    };
     CAnnotationStamp.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
 
@@ -526,12 +544,14 @@
         
         let aInRect = this.GetInRect();
         let nBorderW = this.GetWidth();
+        let nScale = this.GetOriginViewScale();
+
         // original rect (save)
         if (memory.docRenderer) {
-            memory.WriteDouble(aInRect[0] - nBorderW / 2); // x1
-            memory.WriteDouble(aInRect[3] - nBorderW / 2); // y1
-            memory.WriteDouble(aInRect[4] + nBorderW / 2); // x2
-            memory.WriteDouble(aInRect[1] + nBorderW / 2); // y2
+            memory.WriteDouble(aInRect[0] - (nBorderW / 2) * nScale); // x1
+            memory.WriteDouble(aInRect[3] - (nBorderW / 2) * nScale); // y1
+            memory.WriteDouble(aInRect[4] + (nBorderW / 2) * nScale); // x2
+            memory.WriteDouble(aInRect[1] + (nBorderW / 2) * nScale); // y2
         }
         else { // copying
             aInRect.forEach(function(measure) {
@@ -550,6 +570,7 @@
     CAnnotationStamp.prototype.SetDrawFromStream = function(bDraw, bForce) {
         let oViewer = editor.getDocumentRenderer();
         if (oViewer.IsOpenAnnotsInProgress || bForce) {
+            AscCommon.History.Add(new CChangesPDFAnnotChangedView(this, this._bDrawFromStream, bDraw));
             this._bDrawFromStream = bDraw;
         }
     };
@@ -593,6 +614,9 @@
     
     CAnnotationStamp.prototype.getNoChangeAspect = function() {
         return true;
+    };
+    CAnnotationStamp.prototype.hitInPath = function(x, y) {
+        return this.hitInInnerArea(x, y);
     };
     CAnnotationStamp.prototype.Init = function() {
         let aOrigRect = this.GetRect();

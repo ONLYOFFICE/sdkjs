@@ -236,6 +236,9 @@
 		
 		this.CurrentY = Math.min(this.CurrentY, this.YLimit2);
 		
+		// // Recalculation LOG
+		// console.log(`Calculate continuous section count=${this.IterationsCount} step=${this.IterationStep} Y=${this.CurrentY}`);
+		
 		this.IterationsCount++;
 		return this.CurrentY;
 	};

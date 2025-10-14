@@ -1724,7 +1724,8 @@ CChartsDrawer.prototype =
 					if (subType === 'normal') {
 						for (let j = 0; j < series.length; j++) {
 							const seria = series[j];
-							if (seria.trendline) {
+							const trendline = seria.getLastTrendline();
+							if (trendline) {
 								const val = seria.val ? seria.val : seria.yVal;
 								const valNumCache = this.getNumCache(val);
 								const valPts = valNumCache ? valNumCache.pts : null;
@@ -2089,8 +2090,9 @@ CChartsDrawer.prototype =
 							numCache = t.getNumCache(seria.val);
 							const ptCount = numCache && AscFormat.isRealNumber(numCache.ptCount) ? numCache.ptCount : 0;
 							// trendline can affect max value
-							const newMin = seria.trendline && seria.trendline.backward && ptCount > 1 ? min - Math.floor(seria.trendline.backward) : ptCount;
-							const newMax = seria.trendline && seria.trendline.forward && ptCount > 1 ? ptCount + seria.trendline.forward : ptCount;
+							const trendline = seria.getLastTrendline();
+							const newMin = trendline && trendline.backward && ptCount > 1 ? min - Math.floor(trendline.backward) : ptCount;
+							const newMax = trendline && trendline.forward && ptCount > 1 ? ptCount + trendline.forward : ptCount;
 							max = Math.max(max, newMax);
 							min = Math.min(min, newMin);
 						}
@@ -2119,9 +2121,10 @@ CChartsDrawer.prototype =
 				}
 
 				// check the impact of trendline on scatter chart
-				if (series[l].trendline) {
-					min = series[l].trendline.backward ? min - series[l].trendline.backward : min;
-					max = series[l].trendline.forward ? max + series[l].trendline.forward : max;
+				const trendline = series[l].getLastTrendline();
+				if (trendline) {
+					min = trendline.backward ? min - trendline.backward : min;
+					max = trendline.forward ? max + trendline.forward : max;
 				}
 			}
 		};
@@ -6549,7 +6552,8 @@ drawBarChart.prototype = {
 
 				//стартовая позиция колонки Y(+ высота с учётом поправок на накопительные диаграммы)
 				val = parseFloat(seria[j].val);
-				idx = seria[j].idx != null ? seria[j].idx + Math.floor(this.chart.series[i].trendline && this.chart.series[i].trendline.backward ? this.chart.series[i].trendline.backward : 0) : j;
+				const trendline = this.chart.series[i].getLastTrendline();
+				idx = seria[j].idx != null ? seria[j].idx + Math.floor(trendline && trendline.backward ? trendline.backward : 0) : j;
 				/*if (this.valAx && this.valAx.scaling.logBase) {
 					val = this.cChartDrawer.getLogarithmicValue(val, this.valAx.scaling.logBase);
 				}*/
@@ -9504,7 +9508,8 @@ drawAreaChart.prototype = {
 				if((null === val && this.cChartDrawer.nDimensionCount !== 3) || (isLog && val === 0)) {
 					continue;
 				}
-				let idx = n != null ? n + Math.floor(this.chart.series[i].trendline && this.chart.series[i].trendline.backward ? this.chart.series[i].trendline.backward : 0) : n;
+				const trendline = this.chart.series[i].getLastTrendline();
+				let idx = n != null ? n + Math.floor(trendline && trendline.backward ? trendline.backward : 0) : n;
 				x = this.xPoints[idx].pos;
 
 				y = this.cChartDrawer.getYPosition(val, this.valAx);
@@ -11114,7 +11119,9 @@ drawHBarChart.prototype = {
 				/*if (this.valAx && this.valAx.scaling.logBase) {
 					val = this.cChartDrawer.getLogarithmicValue(val, this.valAx.scaling.logBase, xPoints);
 				}*/
-				idx = seria[j].idx != null ? seria[j].idx + Math.floor(this.chart.series[i].trendline && this.chart.series[i].trendline.backward ? this.chart.series[i].trendline.backward : 0) : j;
+
+				const trendline = this.chart.series[i].getLastTrendline();
+				idx = seria[j].idx != null ? seria[j].idx + Math.floor(trendline && trendline.backward ? trendline.backward : 0) : j;
 
 
 				startXColumnPosition = this._getStartYColumnPosition(seriesHeight, idx, i, val, xPoints, shapeType);
@@ -12136,10 +12143,12 @@ drawPieChart.prototype = {
 		// if labels are given then shrink the radius to fit the labels
 		let _dLbls = this.chart.dLbls;
 		let _series = this.chart.series;
-		if ((_dLbls && _dLbls.dLblPos !== c_oAscChartDataLabelsPos.ctr && _dLbls.dLblPos !== c_oAscChartDataLabelsPos.inEnd && _dLbls.showVal) ||
+		const isLabelsExist = this.cChartSpace.recalcInfo && this.cChartSpace.recalcInfo.dataLbls && Array.isArray(this.cChartSpace.recalcInfo.dataLbls) && this.cChartSpace.recalcInfo.dataLbls.length > 0;
+		const affectedByLayout = this.cChartSpace.isLayoutSizes();
+		if (isLabelsExist && !affectedByLayout && ((_dLbls && _dLbls.dLblPos !== c_oAscChartDataLabelsPos.ctr && _dLbls.dLblPos !== c_oAscChartDataLabelsPos.inEnd && _dLbls.showVal) ||
 			(_series && _series[0] && _series[0].dLbls && _series[0].dLbls.dLblPos !== c_oAscChartDataLabelsPos.ctr &&
 				_series[0].dLbls.dLblPos !== c_oAscChartDataLabelsPos.inEnd && (_series[0].dLbls.showVal ||
-					_series[0].dLbls.showCatName || _series[0].dLbls.showSerName || _series[0].dLbls.showPercent))) {
+					_series[0].dLbls.showCatName || _series[0].dLbls.showSerName || _series[0].dLbls.showPercent)))) {
 			let radius_shrink_coeff = 0.15;
 			radius = radius * (1 - radius_shrink_coeff);
 		}
@@ -18342,7 +18351,8 @@ CColorObj.prototype =
 					for (let j in charts[i].series) {
 						const index2 = charts[i].series[j].Id;
 						if (charts[i].series.hasOwnProperty(j) && this.storage[index1][index2]) {
-							this._calculateLine(charts[i].series[j].parent, this.storage[index1][index2], charts[i].series[j].trendline);
+							const trendline = charts[i].series[j].getLastTrendline();
+							this._calculateLine(charts[i].series[j].parent, this.storage[index1][index2], trendline);
 							this._setNewBoundaries(charts[i].series[j].parent, this.storage[index1][index2], boundaries);
 						}
 					}
@@ -18964,7 +18974,8 @@ CColorObj.prototype =
 					if (!this.storage[i].hasOwnProperty(j) || !oSeries || !this.storage[i][j]) {
 						continue;
 					}
-					let pen = oSeries.trendline.getPen();
+					const trendline = oSeries.getLastTrendline();
+					let pen = trendline && trendline.getPen();
 					if (!pen) {
 						pen = this.cChartDrawer.cChartSpace.chart.plotArea.axId[1].compiledMajorGridLines;
 					}

@@ -240,7 +240,7 @@ CWordCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
 		var oParagraph = this.m_oLogicDocument.GetCurrentParagraph();
 		nPageIndex     = oParagraph ? Math.max(oParagraph.GetAbsoluteCurrentPage(), editor.GetCurrentVisiblePage()) : undefined;
 	}
-
+	
 	this.m_oLogicDocument.ResumeRecalculate();
 	this.m_oLogicDocument.RecalculateByChanges(this.CoHistory.GetAllChanges(), this.m_nRecalcIndexStart, this.m_nRecalcIndexEnd, false, nPageIndex);
 	this.m_oLogicDocument.UpdateTracks();

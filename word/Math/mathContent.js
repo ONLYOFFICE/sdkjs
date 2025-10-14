@@ -6355,46 +6355,7 @@ CMathContent.prototype.GetTextContent = function(bSelectedText, isLaTeX)
 	let strContent = oMathText.GetText();
 	return {str: strContent, content: oMathText};
 };
-CMathContent.prototype.getGlobalAttributes = function(attributes, paraMath)
-{
-	if (!paraMath)
-		return;
 
-	paraMath.mathml_metadata = {};
-
-	if (!attributes['display'])
-		attributes['display'] = 'inline'; // default for mathMl
-
-	if (attributes['display'] === 'block')
-		paraMath.mathml_metadata['display'] = true;
-	else
-		paraMath.mathml_metadata['display'] = false;
-};
-CMathContent.prototype.fromMathML = function(reader, paraMath)
-{
-	let depth = reader.GetDepth();
-	this.getGlobalAttributes(reader.GetAttributes(), paraMath);
-
-	while (reader.ReadNextSiblingNode(depth))
-	{
-		let elements = AscWord.ParaMath.readMathMLNode(reader);
-		for (let i = 0; i < elements.length; ++i)
-		{
-			let current = elements[i];
-			if (typeof current === 'string')
-				continue;
-
-			this.addElementToContent(current);
-
-			let breakPos = AscWord.ParaMath.checkLinebreak(current)
-			if (breakPos !== null)
-			{
-				current.Set_MathForcedBreak(true, undefined);
-			}
-		}
-	}
-	AscWord.ParaMath.checkAfterAddContent();
-};
 
 var g_DefaultAutoCorrectMathFuncs =
 [

@@ -2047,6 +2047,7 @@ CTableCell.prototype =
 			this.Content.SetParent(this);
 	}
 };
+CTableCell.prototype.constructor = CTableCell;
 /**
  * Доступ к содержимому ячейки
  * @returns {CDocumentContent}

@@ -2497,7 +2497,10 @@
 							null,
 							null
 						);
-						oFraction.SetReviewTypeWithInfo(oTokens.style.reviewData.reviewType, oTokens.style.reviewData.reviewInfo);
+
+						if (oTokens.style.reviewData.reviewType && oTokens.style.reviewData.reviewInfo)
+							oFraction.SetReviewTypeWithInfo(oTokens.style.reviewData.reviewType, oTokens.style.reviewData.reviewInfo);
+
 						if (oTokens.style.reviewData.reviewInfo && oFraction.ReviewInfo)
 							oFraction.ReviewInfo.Update();
 
@@ -2676,7 +2679,8 @@
 							null
 						);
 
-						SubSup.SetReviewTypeWithInfo(oCurrentStyle.reviewData.reviewType, oCurrentStyle.reviewData.reviewInfo);
+						if (oCurrentStyle.reviewData.reviewType && oCurrentStyle.reviewData.reviewInfo)
+							SubSup.SetReviewTypeWithInfo(oCurrentStyle.reviewData.reviewType, oCurrentStyle.reviewData.reviewInfo);
 
 						ConvertTokens(
 							oTokens.value,
@@ -2700,7 +2704,7 @@
 						if (oUpper && oTokens.style.subStyle)
 						{
 							oUpper.CtrPrp.Merge(oTokens.style.subStyle.style);
-							if (oTokens.style.subStyle.reviewData.reviewInfo)
+							if (oTokens.style.subStyle.reviewData.reviewType && oTokens.style.subStyle.reviewData.reviewInfo)
 								oUpper.SetReviewTypeWithInfo(oTokens.style.subStyle.reviewData.reviewType, oTokens.style.subStyle.reviewData.reviewInfo);
 						}
 
@@ -2708,7 +2712,7 @@
 						if (oLower && oTokens.style.supStyle)
 						{
 							oLower.CtrPrp.Merge(oTokens.style.supStyle.style);
-							if (oTokens.style.supStyle.reviewData.reviewInfo)
+							if (oTokens.style.supStyle.reviewData.reviewType && oTokens.style.supStyle.reviewData.reviewInfo)
 								oLower.SetReviewTypeWithInfo(oTokens.style.supStyle.reviewData.reviewType, oTokens.style.supStyle.reviewData.reviewInfo);
 						}
 					}
@@ -2903,7 +2907,9 @@
 						null
 					);
 
-					oRadical.SetReviewTypeWithInfo(oTokens.style.reviewData.reviewType, oTokens.style.reviewData.reviewInfo);
+					if (oTokens.style.reviewData.reviewType && oTokens.style.reviewData.reviewInfo)
+						oRadical.SetReviewTypeWithInfo(oTokens.style.reviewData.reviewType, oTokens.style.reviewData.reviewInfo);
+					
 					UnicodeArgument(
 						oTokens.value,
 						MathStructures.bracket_block,

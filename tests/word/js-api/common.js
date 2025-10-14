@@ -40,6 +40,7 @@ $(function()
 	
 	QUnit.testStart(function()
 	{
+		AscTest.CreateLogicDocument();
 		AscCommon.History.Clear();
 		AscTest.ClearDocument();
 	});

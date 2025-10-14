@@ -482,16 +482,16 @@
 		ExecuteTestWithCatchEvent('asc_onEndDemonstration', () => true, true, demonstrationEvents[demonstrationTypes.exitFromDemonstrationMode][0]);
 
 		Execute = ExecuteMainShortcut;
-		ExecuteTestWithCatchEvent('asc_onPrint', () => true, true, Asc.c_oAscPresentationShortcutType.Print);
-		ExecuteTestWithCatchEvent('asc_onContextMenu', () => true, true, Asc.c_oAscPresentationShortcutType.ShowContextMenu);
+		ExecuteTestWithCatchEvent('asc_onPrint', () => true, true, Asc.c_oAscPresentationShortcutType.PrintPreviewAndPrint);
+		ExecuteTestWithCatchEvent('asc_onContextMenu', () => true, true, Asc.c_oAscPresentationShortcutType.OpenContextMenu);
 
 		ClearShapeAndAddParagraph('')
-		ExecuteTestWithCatchEvent('asc_onDialogAddHyperlink', () => true, true, Asc.c_oAscPresentationShortcutType.AddHyperlink);
+		ExecuteTestWithCatchEvent('asc_onDialogAddHyperlink', () => true, true, Asc.c_oAscPresentationShortcutType.InsertHyperlink);
 
 		Execute = ExecuteThumbnailShortcut;
 		GoToSlide(0, FOCUS_OBJECT_THUMBNAILS);
-		ExecuteTestWithCatchEvent('asc_onPrint', () => true, true, Asc.c_oAscPresentationShortcutType.Print);
-		ExecuteTestWithCatchEvent('asc_onContextMenu', () => true, true, Asc.c_oAscPresentationShortcutType.ShowContextMenu);
+		ExecuteTestWithCatchEvent('asc_onPrint', () => true, true, Asc.c_oAscPresentationShortcutType.PrintPreviewAndPrint);
+		ExecuteTestWithCatchEvent('asc_onContextMenu', () => true, true, Asc.c_oAscPresentationShortcutType.OpenContextMenu);
 
 		GoToSlide(0, FOCUS_OBJECT_MAIN);
 	});
@@ -691,9 +691,9 @@
 		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Italic);
 		assert.strictEqual(GetDirectTextPr().GetItalic(), false, 'Check turn off italic');
 
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Strikethrough);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Strikeout);
 		assert.strictEqual(GetDirectTextPr().GetStrikeout(), true, 'Check turn on strikeout');
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Strikethrough);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Strikeout);
 		assert.strictEqual(GetDirectTextPr().GetStrikeout(), false, 'Check turn off strikeout');
 
 		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Underline);
@@ -713,22 +713,22 @@
 
 		// defaultSize = 10
 		// 10 -> 11 -> 12 -> 14 -> 16 -> 14 -> 12 -> 11 -> 10
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.IncreaseFont);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetDirectTextPr().GetFontSize(), 11, 'Check increase font size');
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.IncreaseFont);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetDirectTextPr().GetFontSize(), 12, 'Check increase font size');
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.IncreaseFont);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetDirectTextPr().GetFontSize(), 14, 'Check increase font size');
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.IncreaseFont);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetDirectTextPr().GetFontSize(), 16, 'Check increase font size');
 
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.DecreaseFont);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetDirectTextPr().GetFontSize(), 14, 'Check decrease font size');
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.DecreaseFont);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetDirectTextPr().GetFontSize(), 12, 'Check decrease font size');
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.DecreaseFont);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetDirectTextPr().GetFontSize(), 11, 'Check decrease font size');
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.DecreaseFont);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetDirectTextPr().GetFontSize(), 10, 'Check decrease font size');
 	});
 
@@ -737,16 +737,16 @@
 		const {paragraph} = ClearShapeAndAddParagraph('Hello world');
 
 		assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Left, "Check align left");
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.CenterAlign);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.CenterPara);
 		assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Center, "Check turn on center para");
 
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.JustifyAlign);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.JustifyPara);
 		assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Justify, "Check turn on justify para");
 
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.LeftAlign);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.LeftPara);
 		assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Left, "Check turn on left para");
 
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.RightAlign);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.RightPara);
 		assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Right, "Check turn on right para");
 
 

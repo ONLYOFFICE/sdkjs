@@ -38,6 +38,7 @@
     */
     function CPdfSmartArt() {
         AscFormat.SmartArt.call(this);
+        AscPDF.CPdfDrawingPrototype.call(this);
     }
     
     CPdfSmartArt.prototype.constructor = CPdfSmartArt;
@@ -358,7 +359,18 @@
             copy.generateDrawingPart();
         }
 
+        if ((!oPr || !oPr.bSkipRedactsIds) && this.GetRedactIds) {
+            this.GetRedactIds().forEach(function(id) {
+                copy.AddRedactId(id);
+            });
+        }
+
         return copy;
+    };
+
+    CPdfSmartArt.prototype.writeChildren = function(pWriter) {
+        AscFormat.SmartArt.prototype.writeChildren.call(this, pWriter);
+        this.WriteRedactIds(pWriter);
     };
 
     window["AscPDF"].CPdfSmartArt = CPdfSmartArt;

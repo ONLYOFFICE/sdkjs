@@ -6737,6 +6737,11 @@ function BinaryPPTYLoader()
                     this.ResetImageId(shape, rIdOverride);
                     break;
                 }
+                case 0xFF:
+                {
+                    shape.ReadRedactIds(s);
+                    break;
+                }
                 default:
                 {
                     s.SkipRecord();
@@ -6894,6 +6899,11 @@ function BinaryPPTYLoader()
                             }
                         }
                     }
+                    break;
+                }
+                case 0xFF:
+                {
+                    shape.ReadRedactIds(s);
                     break;
                 }
                 default:
@@ -7187,6 +7197,11 @@ function BinaryPPTYLoader()
                     this.ResetImageId(pic, rIdOverride);
                     break;
                 }
+                case 0xFF:
+                {
+                    pic.ReadRedactIds(s);
+                    break;
+                }
                 default:
                 {
                     this.stream.SkipRecord();
@@ -7248,6 +7263,11 @@ function BinaryPPTYLoader()
                 case 0xA1:
                 {
                     shape.readMacro(s);
+                    break;
+                }
+                case 0xFF:
+                {
+                    shape.ReadRedactIds(s);
                     break;
                 }
                 default:
@@ -7502,7 +7522,7 @@ function BinaryPPTYLoader()
                 case 8://smartArt
                 {
                     _smartArt = this.ReadSmartArt();
-										this.smartarts.push(_smartArt);
+                    this.smartarts.push(_smartArt);
                     break;
                 }
                 case 9:
@@ -7521,6 +7541,17 @@ function BinaryPPTYLoader()
                 case 0xA1:
                 {
                     _graphic_frame.readMacro(s);
+                    break;
+                }
+                case 0xFF:
+                {
+                    if (_table) {
+                        _graphic_frame.ReadRedactIds(s);
+                    }
+                    else if (_chart) {
+                        _chart.ReadRedactIds(s);
+                    }
+                    
                     break;
                 }
                 default:

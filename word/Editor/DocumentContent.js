@@ -472,11 +472,9 @@ CDocumentContent.prototype.GetStyles = function(nLvl)
 {
 	if (this.bPresentation && this.Parent)
 		return this.Parent.Get_Styles(nLvl);
-
-	if (this.LogicDocument && this.LogicDocument.GetStyles)
-		return this.LogicDocument.GetStyles();
-
-	return AscWord.DEFAULT_STYLES;
+	
+	let logicDocument = this.GetLogicDocument();
+	return logicDocument && logicDocument.GetStyles ? logicDocument.GetStyles() : AscWord.DEFAULT_STYLES;
 };
 CDocumentContent.prototype.Get_TableStyleForPara = function()
 {
@@ -5910,7 +5908,7 @@ CDocumentContent.prototype.SetImageProps = function(Props)
 	if (docpostype_DrawingObjects === this.CurPos.Type)
 	{
 		this.LogicDocument.DrawingObjects.setProps(Props);
-		this.Document_UpdateInterfaceState();
+		this.LogicDocument.Document_UpdateInterfaceState();
 	}
 	else if (docpostype_Content == this.CurPos.Type && ( ( true === this.Selection.Use && this.Selection.StartPos == this.Selection.EndPos && type_Table == this.Content[this.Selection.StartPos].GetType() ) || ( false == this.Selection.Use && type_Table == this.Content[this.CurPos.ContentPos].GetType() ) ))
 	{

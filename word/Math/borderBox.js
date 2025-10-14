@@ -605,25 +605,7 @@ CBorderBox.prototype.GetTextOfElement = function(oMathText)
 	return oMathText;
 };
 
-CBorderBox.fromMathML = function(reader)
-{
-	let props = new CMathBorderBoxPr();
-	props.content = [];
-	let mathContent = new CMathContent();
-	props.content.push(mathContent);
 
-	let depth = reader.GetDepth();
-	while (reader.ReadNextSiblingNode(depth))
-	{
-		let elements = AscWord.ParaMath.readMathMLNode(reader);
-		for (let i = 0; i < elements.length; i++)
-		{
-			props.content[0].addElementToContent(elements[i]);
-		}
-	}
-
-	return new CBorderBox(props);
-};
 
 /**
  *
@@ -1412,17 +1394,6 @@ CPhantom.prototype.GetTextOfElement = function(oMathText)
 
 	return oMathText;
 };
-
-CPhantom.fromMathML = function (reader)
-{
-	let props = new CMathPhantomPr();
-	props.show = false;
-	props.transp = true;
-	props.content = [AscWord.ParaMath.readMathMLContentOnLevel(reader)];
-
-	return new CPhantom(props);
-};
-
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CBar = CBar;

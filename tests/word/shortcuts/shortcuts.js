@@ -533,10 +533,10 @@
 
 			logicDocument.SelectAll();
 
-			ExecuteHotkey(testHotkeyActions.testIndent);
+			ExecuteHotkey(testHotkeyActions.BeginIndent);
 			assert.strictEqual(GetDirectParaPr().GetIndLeft(), 12.5, "Check multi indent");
 
-			ExecuteHotkey(testHotkeyActions.testUnIndent);
+			ExecuteHotkey(testHotkeyActions.BeginUnIndent);
 			assert.strictEqual(GetDirectParaPr().GetIndLeft(), 0, "Check multi unindent");
 		});
 

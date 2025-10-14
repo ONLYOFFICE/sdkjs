@@ -38,6 +38,7 @@
     */
     function CPdfChartSpace() {
         AscFormat.CChartSpace.call(this);
+        AscPDF.CPdfDrawingPrototype.call(this);
     }
     
     CPdfChartSpace.prototype.constructor = CPdfChartSpace;
@@ -60,9 +61,22 @@
         this.recalculateTransform();
         this.recalcGeometry();
         this.recalculate();
-        this.updateTransformMatrix();
+        this.updateTransformMatrixPDF();
         this.SetNeedRecalc(false);
     };
+
+
+	CPdfChartSpace.prototype.updateTransformMatrixPDF = function() {
+		this.posX = 0;
+		this.posY = 0;
+		this.updateTransformMatrix();
+		let posX = this.localTransform.tx + this.posX;
+		let posY = this.localTransform.ty + this.posY;
+		let updateMatrix = new AscCommon.CMatrix();
+		AscCommon.global_MatrixTransformer.TranslateAppend(updateMatrix, -posX, -posY);
+		AscCommon.global_MatrixTransformer.MultiplyAppend(updateMatrix, this.localTransform);
+		this.checkShapeChildTransform(updateMatrix);
+	};
     CPdfChartSpace.prototype.onMouseDown = function(x, y, e) {
         let oViewer             = Asc.editor.getDocumentRenderer();
         let oDoc                = this.GetDocument();
@@ -200,6 +214,13 @@
 			copy.cachedPixH = this.cachedPixH;
 			copy.cachedPixW = this.cachedPixW;
 		}
+
+		if ((!oPr || !oPr.bSkipRedactsIds) && this.GetRedactIds) {
+            this.GetRedactIds().forEach(function(id) {
+                copy.AddRedactId(id);
+            });
+        }
+		
 		return copy;
 	};
 

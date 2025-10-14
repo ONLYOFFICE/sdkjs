@@ -235,7 +235,7 @@ let isOverrideDocumentUrls = true;//window['Asc']['VisioEditorApi'] ? false : tr
 
 function getCorrectImageUrl(path)
 {
-	if (!window['Asc']['VisioEditorApi'])
+	if (!window['Asc']['VisioEditorApi'] || !window["AscDesktopEditor"])
 		return path;
 
 	return window["AscDesktopEditor"]["LocalFileGetImageUrlCorrect"](path);

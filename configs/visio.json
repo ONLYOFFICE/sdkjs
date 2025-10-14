@@ -139,6 +139,7 @@
 			"common/wordcopypaste.js",
 			"common/intervalTree.js",
 
+		  "cell/view/HandlerList.js",
 			"cell/model/SheetMemory.js",
 			"cell/model/WorkbookElems.js",
 			"cell/model/Workbook.js",
@@ -265,6 +266,7 @@
 			"word/Math/operators.js",
 			"word/Math/accent.js",
 			"word/Math/borderBox.js",
+			"word/Math/math-ml.js",
 			"word/Math/mathTrackHandler.js",
 			"word/Editor/FlowObjects.js",
 			"word/Editor/Paragraph.js",

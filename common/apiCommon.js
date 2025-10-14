@@ -1882,189 +1882,10 @@ function (window, undefined) {
 		}
 
 		AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-		bShow
-			? this.chartSpace.chart.createLegend(nLegendPosition)
-			: this.chartSpace.chart.setLegend(null);
-
-		this.updateChart();
-		const oLogicDocument = Asc.editor.getLogicDocument();
-		if (oLogicDocument) {
-			oLogicDocument.Recalculate();
-		}
-	};
-	// asc_ChartSettings.prototype.setDisplayLines = function (bShow, nLineType) {};
-	asc_ChartSettings.prototype.setDisplayTrendlines = function (bShow, nTrendlineType, nForecastForward, nForecastBackward) {
-		if (!this.chartSpace) {
-			return;
-		}
-
-		AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-		this.chartSpace.showTrendlines(bShow, nTrendlineType, nForecastForward, nForecastBackward);
-		this.updateChart();
-		const oLogicDocument = Asc.editor.getLogicDocument();
-		if (oLogicDocument) {
-			oLogicDocument.Recalculate();
-		}
-	};
-	asc_ChartSettings.prototype.setDisplayUpDownBars = function (bShow) {
-		if (!this.chartSpace) {
-			return;
-		}
-
-		const plotArea = this.chartSpace.getPlotArea();
-		if (!plotArea) {
-			return;
-		}
-
-		const chart = plotArea.chart;
-		const isAllowedChartType = chart instanceof AscFormat.CLineChart || chart instanceof AscFormat.CStockChart;
-		if (!chart || !isAllowedChartType) {
-			return;
-		}
-
-		AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-		bShow
-			? chart.createUpDownBars()
-			: chart.setUpDownBars(null);
-
-		this.chartSpace.recalculateUpDownBars();
-		this.updateChart();
-		const oLogicDocument = Asc.editor.getLogicDocument();
-		if (oLogicDocument) {
-			oLogicDocument.Recalculate();
-		}
-	};
-
-	asc_ChartSettings.prototype.setDisplayAxes = function (bShowPrimaryCatAx, bShowSecondaryCatAx, bShowPrimaryValAx, bShowSecondaryValAx, bShowSerAx) {
-		if (this.chartSpace) {
-			AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-			this.chartSpace.showAxesByTypes(bShowPrimaryCatAx, bShowSecondaryCatAx, bShowPrimaryValAx, bShowSecondaryValAx, bShowSerAx);
-			this.updateChart();
-			const oLogicDocument = Asc.editor.getLogicDocument();
-			if (oLogicDocument) {
-				oLogicDocument.Recalculate();
-			}
-		}
-	};
-	asc_ChartSettings.prototype.setDisplayAxisTitles = function (bShowPrimaryCatAx, bShowSecondaryCatAx, bShowPrimaryValAx, bShowSecondaryValAx, bShowSerAx) {
-		if (this.chartSpace) {
-			AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-			this.chartSpace.showAxisTitlesByTypes(bShowPrimaryCatAx, bShowSecondaryCatAx, bShowPrimaryValAx, bShowSecondaryValAx, bShowSerAx);
-			this.updateChart();
-			const oLogicDocument = Asc.editor.getLogicDocument();
-			if (oLogicDocument) {
-				oLogicDocument.Recalculate();
-			}
-		}
-	};
-	asc_ChartSettings.prototype.setDisplayChartTitle = function (bDisplay, bOverlay) {
-		if (this.chartSpace) {
-			AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-			this.chartSpace.showChartTitle(bDisplay, bOverlay);
-			this.updateChart();
-			const oLogicDocument = Asc.editor.getLogicDocument();
-			if (oLogicDocument) {
-				oLogicDocument.Recalculate();
-			}
-		}
-	};
-	asc_ChartSettings.prototype.setDisplayDataLabels = function (bDisplay, nDataLabelPos) {
-		if (this.chartSpace) {
-			AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-			this.chartSpace.showDataLabels(bDisplay, nDataLabelPos);
-			this.updateChart();
-			const oLogicDocument = Asc.editor.getLogicDocument();
-			if (oLogicDocument) {
-				oLogicDocument.Recalculate();
-			}
-		}
-	};
-	asc_ChartSettings.prototype.setDisplayDataTable = function (bDisplayDataTable, bDisplayLegendKeys) {
-		if (this.chartSpace) {
-			AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-			this.chartSpace.showDataTable(bDisplayDataTable, bDisplayLegendKeys);
-			this.updateChart();
-			const oLogicDocument = Asc.editor.getLogicDocument();
-			if (oLogicDocument) {
-				oLogicDocument.Recalculate();
-			}
-		}
-	};
-	asc_ChartSettings.prototype.setDisplayErrorBars = function (bShowErrorBars, nErrorValueType) {
-		if (!this.chartSpace) {
-			return;
-		}
-
-		const series = this.chartSpace.getAllSeries();
-		if (!series.length) {
-			return;
-		}
-
-		AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-		series.forEach(function (ser) {
-			bShowErrorBars
-				? ser.createAllErrBars(nErrorValueType)
-				: ser.removeAllErrBars();
-		});
-
-		this.updateChart();
-		const oLogicDocument = Asc.editor.getLogicDocument();
-		if (oLogicDocument) {
-			oLogicDocument.Recalculate();
-		}
-	};
-	asc_ChartSettings.prototype.setDisplayGridlines = function (bShowHorMajor, bShowVerMajor, bShowHorMinor, bShowVerMinor) {
-		if (!this.chartSpace) {
-			return;
-		}
-
-		const plotArea = this.chartSpace.getPlotArea();
-		if (!plotArea) {
-			return;
-		}
-
-		function getGridlinesSetting(displayMajor, displayMinor) {
-			if (displayMajor && displayMinor) {
-				return Asc.c_oAscGridLinesSettings.majorMinor;
-			} else if (displayMajor) {
-				return Asc.c_oAscGridLinesSettings.major;
-			} else if (displayMinor) {
-				return Asc.c_oAscGridLinesSettings.minor;
-			} else {
-				return Asc.c_oAscGridLinesSettings.none;
-			}
-		}
-
-		const categoryAxis = plotArea.catAx;
-		const valueAxis = plotArea.valAx;
-
-		if (categoryAxis || valueAxis) {
-			AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-			if (categoryAxis) {
-				const catAxSettings = getGridlinesSetting(bShowVerMajor, bShowVerMinor);
-				categoryAxis.setGridlinesSetting(catAxSettings);
-			}
-			if (valueAxis) {
-				const valAxSettings = getGridlinesSetting(bShowHorMajor, bShowHorMinor);
-				valueAxis.setGridlinesSetting(valAxSettings);
-			}
-		}
-
-		this.updateChart();
-		const oLogicDocument = Asc.editor.getLogicDocument();
-		if (oLogicDocument) {
-			oLogicDocument.Recalculate();
-		}
-	};
-	asc_ChartSettings.prototype.setDisplayLegend = function (bShow, nLegendPosition) {
-		if (!this.chartSpace || !this.chartSpace.chart) {
-			return;
-		}
-
-		AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-		bShow
-			? this.chartSpace.chart.createLegend(nLegendPosition)
-			: this.chartSpace.chart.setLegend(null);
+		const clearLegend = !bShow || nLegendPosition == null || nLegendPosition == Asc.c_oAscChartLegendShowSettings.none;
+		clearLegend
+			? this.chartSpace.chart.setLegend(null)
+			: this.chartSpace.chart.createLegend(nLegendPosition);
 
 		this.updateChart();
 		const oLogicDocument = Asc.editor.getLogicDocument();
@@ -3910,7 +3731,7 @@ function (window, undefined) {
 		if (this.subject !== pr.subject) {
 			this.subject = null;
 		}
-		if (this.type) {
+		if (this.type && this.annotProps) {
 			this.annotProps.compare(pr.annotProps);
 		}
 	};
@@ -7847,6 +7668,92 @@ function (window, undefined) {
 		return this.insertObject;
 	};
 
+	function CAscShortcut(type, keyCode, isCtrl, isShift, isAlt, isCommand, isLocked, isHidden) {
+		this.type = type || null;
+		this.keyCode = keyCode;
+		this.ctrlKey = isCtrl;
+		this.shiftKey = isShift;
+		this.altKey = isAlt;
+		this.commandKey = isCommand;
+
+		this.isLocked = !!isLocked;
+		this.isHidden = !!isHidden;
+	}
+
+	CAscShortcut.prototype.asc_GetKeyCode = function() {
+		return this.keyCode;
+	};
+	CAscShortcut.prototype.asc_GetType = function() {
+		return this.type;
+	};
+	CAscShortcut.prototype.asc_IsCtrl = function() {
+		return this.ctrlKey;
+	};
+	CAscShortcut.prototype.asc_IsShift = function() {
+		return this.shiftKey;
+	};
+	CAscShortcut.prototype.asc_IsAlt = function() {
+		return this.altKey;
+	};
+	CAscShortcut.prototype.asc_IsCommand = function() {
+		return this.commandKey;
+	};
+	CAscShortcut.prototype.asc_IsLocked = function() {
+		return this.isLocked;
+	};
+	CAscShortcut.prototype.asc_IsHidden = function() {
+		return this.isHidden;
+	};
+	CAscShortcut.prototype.asc_SetIsHidden = function(pr) {
+		this.isHidden = pr;
+	};
+	CAscShortcut.prototype.asc_SetKeyCode = function(pr) {
+		this.keyCode = pr;
+	};
+	CAscShortcut.prototype.asc_SetIsCtrl = function(pr) {
+		this.ctrlKey = pr;
+	};
+	CAscShortcut.prototype.asc_SetIsShift = function(pr) {
+		this.shiftKey = pr;
+	};
+	CAscShortcut.prototype.asc_SetIsAlt = function(pr) {
+		this.altKey = pr;
+	};
+	CAscShortcut.prototype.asc_SetIsCommand = function(pr) {
+		this.commandKey = pr;
+	};
+	CAscShortcut.prototype.asc_SetIsLocked = function(pr) {
+		this.isLocked = pr;
+	};
+	CAscShortcut.prototype.asc_SetType = function(pr) {
+		this.type = pr;
+	};
+	CAscShortcut.prototype.asc_ToJson = function() {
+		const res = {};
+		res["type"] = AscCommon.getStringFromShortcutType(this.type);
+		res["keyCode"] = this.keyCode;
+		res["ctrlKey"] = this.ctrlKey;
+		res["shiftKey"] = this.shiftKey;
+		res["altKey"] = this.altKey;
+		res["commandKey"] = this.commandKey;
+		res["isLocked"] = this.isLocked;
+		res["isHidden"] = this.isHidden;
+		return res;
+	};
+	CAscShortcut.prototype.asc_FromJson = function(obj) {
+		this.type = AscCommon.getShortcutTypeFromString(obj["type"]);
+		this.keyCode = obj["keyCode"];
+		this.ctrlKey = obj["ctrlKey"];
+		this.shiftKey = obj["shiftKey"];
+		this.altKey = obj["altKey"];
+		this.commandKey = obj["commandKey"];
+		this.isLocked = obj["isLocked"];
+		this.isHidden = obj["isHidden"];
+	};
+	CAscShortcut.prototype.asc_GetShortcutIndex = function() {
+		return AscCommon.CShortcuts.GetShortcutIndex(this.asc_GetKeyCode(), this.asc_IsCtrl(), this.asc_IsShift(), this.asc_IsAlt(), this.asc_IsCommand());
+	};
+
 
 	function CButtonData(oData) {
 		this["obj"] = oData["obj"];
@@ -9514,6 +9421,28 @@ function (window, undefined) {
 	prot["get_canEditText"] = prot.get_canEditText;
 	prot["get_canEditPara"] = prot.get_canEditPara;
 	prot["get_canInsObject"] = prot.get_canInsObject;
+
+	window["Asc"]["CAscShortcut"] = window["Asc"].CAscShortcut = CAscShortcut;
+	CAscShortcut.prototype["asc_GetKeyCode"] = CAscShortcut.prototype.asc_GetKeyCode;
+	CAscShortcut.prototype["asc_GetType"] = CAscShortcut.prototype.asc_GetType;
+	CAscShortcut.prototype["asc_IsCtrl"] = CAscShortcut.prototype.asc_IsCtrl;
+	CAscShortcut.prototype["asc_IsShift"] = CAscShortcut.prototype.asc_IsShift;
+	CAscShortcut.prototype["asc_IsAlt"] = CAscShortcut.prototype.asc_IsAlt;
+	CAscShortcut.prototype["asc_IsCommand"] = CAscShortcut.prototype.asc_IsCommand;
+	CAscShortcut.prototype["asc_IsLocked"] = CAscShortcut.prototype.asc_IsLocked;
+	CAscShortcut.prototype["asc_IsHidden"] = CAscShortcut.prototype.asc_IsHidden;
+	CAscShortcut.prototype["asc_SetIsHidden"] = CAscShortcut.prototype.asc_SetIsHidden;
+	CAscShortcut.prototype["asc_SetKeyCode"] = CAscShortcut.prototype.asc_SetKeyCode;
+	CAscShortcut.prototype["asc_SetIsCtrl"] = CAscShortcut.prototype.asc_SetIsCtrl;
+	CAscShortcut.prototype["asc_SetIsShift"] = CAscShortcut.prototype.asc_SetIsShift;
+	CAscShortcut.prototype["asc_SetIsAlt"] = CAscShortcut.prototype.asc_SetIsAlt;
+	CAscShortcut.prototype["asc_SetIsCommand"] = CAscShortcut.prototype.asc_SetIsCommand;
+	CAscShortcut.prototype["asc_SetIsLocked"] = CAscShortcut.prototype.asc_SetIsLocked;
+	CAscShortcut.prototype["asc_SetType"] = CAscShortcut.prototype.asc_SetType;
+	CAscShortcut.prototype["asc_ToJson"] = CAscShortcut.prototype.asc_ToJson;
+	CAscShortcut.prototype["asc_FromJson"] = CAscShortcut.prototype.asc_FromJson;
+	CAscShortcut.prototype["asc_GetShortcutIndex"] = CAscShortcut.prototype.asc_GetShortcutIndex;
+
 
 	window["Asc"]["CButtonData"] = window["Asc"].CButtonData = CButtonData;
 	prot = CButtonData.prototype;
