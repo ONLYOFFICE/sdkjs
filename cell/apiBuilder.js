@@ -8986,13 +8986,13 @@
 			}
 			this.worksheet.selectionRange.assign2(range.range.bbox);
 			var Hyperlink = new Asc.asc_CHyperlink();
-			if (sScreenTip) {
-				Hyperlink.asc_setText(sScreenTip);
+			if (sTextToDisplay) {
+				Hyperlink.asc_setText(sTextToDisplay);
 			} else {
 				Hyperlink.asc_setText((externalLink ? sAddress : subAddress));
 			}
-			if (sTextToDisplay) {
-				Hyperlink.asc_setTooltip(sTextToDisplay);
+			if (sScreenTip) {
+				Hyperlink.asc_setTooltip(sScreenTip);
 			}
 			if (externalLink) {
 				Hyperlink.asc_setHyperlinkUrl(sAddress);
