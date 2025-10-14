@@ -10656,44 +10656,58 @@
 		return ranges;
 	};
 	ApiParagraph.prototype.GetWords = function () {
-		const ranges = [];
-
-		const text = this.GetText();
-		if (text) {
-			const regex = /\S+/g;
-
-			let match;
-			while ((match = regex.exec(text)) !== null) {
-				const wordRange = new ApiRange(this.Paragraph, match.index, match.index + match[0].length);
-				if (!wordRange.isEmpty) {
-					ranges.push(wordRange);
+		const paragraph = this.Paragraph;
+		const words = [];
+		let currentWord = '';
+		let startPos = null;
+		
+		paragraph.CheckRunContent(function (oRun) {
+			const runDocPos = oRun.GetDocumentPositionFromObject();
+			
+			for (let i = 0; i < oRun.Content.length; i++) {
+				const item = oRun.Content[i];
+				const charPos = runDocPos.concat({ Class: oRun, Position: i });
+				
+				const isWordPart = item.IsText() && (item.IsLetter() || item.IsNumber() || item.IsHyphen());
+				if (isWordPart) {
+					if (currentWord === '') {
+						startPos = charPos;
+					}
+					currentWord += String.fromCodePoint(item.GetCodePoint());
+				} else {
+					if (currentWord !== '') {
+						words.push(new ApiRange(paragraph, startPos, charPos));
+						currentWord = '';
+						startPos = null;
+					}
 				}
 			}
+		});
+		
+		if (currentWord !== '' && startPos) {
+			const lastPos = paragraph.GetEndPos
+				? paragraph.GetEndPos()
+				: startPos;
+			words.push(new ApiRange(paragraph, startPos, lastPos));
 		}
-
-		return ranges;
+		
+		return words;
 	};
-	ApiParagraph.prototype.GetCharacters = function (includeWhitespace) {
-		const ranges = [];
-
-		const text = this.GetText();
-		if (text) {
-			if (includeWhitespace) {
-				for (let i = 0; i < text.length; i++) {
-					const charRange = new ApiRange(this.Paragraph, i, i + 1);
-					ranges.push(charRange);
-				}
-			} else {
-				const regex = /\S/g;
-				let match;
-				while ((match = regex.exec(text)) !== null) {
-					const charRange = new ApiRange(this.Paragraph, match.index, match.index + 1);
-					ranges.push(charRange);
-				}
+	ApiParagraph.prototype.GetCharacters = function () {
+		const paragraph = this.Paragraph;
+		const characters = [];
+		
+		paragraph.CheckRunContent(function (run) {
+			const runDocPos = run.GetDocumentPositionFromObject();
+			for (let i = 0; i < run.Content.length; i++) {
+				const startPos = runDocPos.concat({ Class: run, Position: i });
+				const endPos = runDocPos.concat({ Class: run, Position: i + 1 });
+				const range = new ApiRange(paragraph, startPos, endPos);
+				characters.push(range);
 			}
-		}
-
-		return ranges;
+		});
+		
+		return characters;
 	};
 
 	/**
