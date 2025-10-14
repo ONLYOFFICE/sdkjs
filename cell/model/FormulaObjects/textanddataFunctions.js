@@ -1907,7 +1907,7 @@ function (window, undefined) {
 	cREPT.prototype.argumentsMax = 2;
 	cREPT.prototype.argumentsType = [argType.text, argType.number];
 	cREPT.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], res = "";
+		let arg0 = arg[0], arg1 = arg[1], res = "";
 		if (arg0 instanceof cError) {
 			return arg0;
 		}
@@ -1946,12 +1946,17 @@ function (window, undefined) {
 		} else {
 			arg1 = arg1.tocNumber();
 		}
+		
+		arg0 = arg0.getValue();
+		arg1 = arg1.getValue();
 
-		if (arg1.getValue() < 0) {
+		// 268435456
+		// 1 << 28
+		if ((arg1 < 0 || arg1 > 32767) || ((arg0.length * arg1) > 32767)) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		return new cString(arg0.getValue().repeat(arg1.getValue()));
+		return new cString(arg0.repeat(arg1));
 	};
 
 	/**
