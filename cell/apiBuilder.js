@@ -10973,32 +10973,11 @@
 		var columnSort = sortSettings.columnSort = sOrientation !== "xlSortRows";
 
 		var getSortLevel = function (_key, _order) {
-			var index = null;
-			if (_key instanceof ApiRange) {
-				index = columnSort ? _key.range.bbox.c1 - range.c1 : _key.range.bbox.r1 - range.r1;
-			} else if (typeof _key === "string") {
-				//named range
-				var _defName = ws.workbook.getDefinesNames(_key);
-				if (_defName) {
-					var defNameRef;
-					AscCommonExcel.executeInR1C1Mode(false, function () {
-						defNameRef = AscCommonExcel.getRangeByRef(_defName.ref, ws, true, true)
-					});
-					if (defNameRef && defNameRef[0] && defNameRef[0].worksheet) {
-						if (range.contains(defNameRef[0].bbox.c1, defNameRef[0].bbox.r1)) {
-							if (defNameRef[0].worksheet.Id === ws.Id) {
-								index = columnSort ? defNameRef[0].bbox.c1 - range.c1 : defNameRef[0].bbox.r1 - range.r1;
-							}
-						} else {
-							//error
-							return false;
-						}
-					}
-				}
-			}
+			const index = columnSort ? _key.range.bbox.c1 - range.c1 : _key.range.bbox.r1 - range.r1;
+			const maxIndex = columnSort ? range.c2 - range.c1 : range.r2 - range.r1;
 
-			if (null === index) {
-				return null;
+			if (null === index || index < 0 || index > maxIndex) {
+				return false;
 			}
 
 			var level = new Asc.CSortPropertiesLevel();
@@ -11007,14 +10986,44 @@
 			sortSettings.levels.push(level);
 		};
 
+		const filterRange = function (_key) {
+			if (!_key || _key instanceof ApiRange) {
+				return _key;
+			}
+
+			// if named range
+			var _defName = ws.workbook.getDefinesNames(_key);
+			if (_defName) {
+				let defNameRef;
+				AscCommonExcel.executeInR1C1Mode(false, function () {
+					defNameRef = AscCommonExcel.getRangeByRef(_defName.ref, ws, true, true)
+				});
+				if (defNameRef && defNameRef[0] && defNameRef[0].worksheet) {
+					if (defNameRef[0].worksheet.Id === ws.Id) {
+						return new ApiRange(defNameRef[0]);
+					}
+				}
+			}
+
+			return _key;
+		}
+
+		const apiWorksheet = new ApiWorksheet(this.range.worksheet);
+		
 		sortSettings.levels = [];
-		if (key1 && false === getSortLevel(key1, sSortOrder1)) {
+		key1 = filterRange(key1);
+		const rangeKey1 = apiWorksheet.GetRange(key1);
+		if (key1 && false === getSortLevel(rangeKey1, sSortOrder1)) {
 			return;
 		}
-		if (key2 && false === getSortLevel(key2, sSortOrder2)) {
+		key2 = filterRange(key2);
+		const rangeKey2 = apiWorksheet.GetRange(key2);
+		if (key2 && false === getSortLevel(rangeKey2, sSortOrder2)) {
 			return;
 		}
-		if (key3 && false === getSortLevel(key3, sSortOrder3)) {
+		key3 = filterRange(key3);
+		const rangeKey3 = apiWorksheet.GetRange(key3);
+		if (key3 && false === getSortLevel(rangeKey3, sSortOrder3)) {
 			return;
 		}
 
@@ -11025,6 +11034,14 @@
 			obj = tables[0];
 		} else if (ws.AutoFilter && ws.AutoFilter.Ref && ws.AutoFilter.Ref.intersection(range)) {
 			obj = ws.AutoFilter;
+		}
+
+		if (sortSettings.hasHeaders) {
+			if (sortSettings.columnSort) {
+				range.r1++;
+			} else {
+				range.c1++;
+			}
 		}
 		ws.setCustomSort(sortSettings, obj, null, oWorksheet && oWorksheet.cellCommentator, range);
 	};
