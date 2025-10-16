@@ -97,6 +97,7 @@ jobs:
           node node_modules/node-qunit-puppeteer/cli.js tests/word/change-case/change-case.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/word/js-api/js-api.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/word/shortcuts/shortcuts.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/copypaste/copy-paste-tests.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/slide/shortcuts/shortcuts.html 30000 "--no-sandbox"
 
       - name: Send message to telegram if failure
