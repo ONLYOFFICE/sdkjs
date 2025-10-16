@@ -3637,7 +3637,7 @@
 					AscCommon.g_oTableId.Add(oWsFrom, oWsFrom.getId())
 				}, this, [], true);
 			}
-			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_SheetRemove, null, null, new AscCommonExcel.UndoRedoData_SheetRemove(indexFrom, oWsFrom.getId(), oWsFrom));
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_SheetRemove, null, null, new AscCommonExcel.UndoRedoData_SheetRemove(indexFrom, oWsFrom.getId(), oWsFrom, true));
 			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_SheetAdd, null, null, new UndoRedoData_SheetAdd(indexTo, oWsFrom.getName(), null, oWsFrom.getId(), null, null, oWsFrom.getId()));
 			this.dependencyFormulas.unlockRecal();
 
@@ -3668,7 +3668,7 @@
 		}
 		return oRes;
 	};
-	Workbook.prototype.removeWorksheet=function(nIndex, outputParams){
+	Workbook.prototype.removeWorksheet=function(nIndex, outputParams, moveSheet){
 		//проверяем останется ли хоть один нескрытый sheet
 		var bEmpty = true;
 		for(var i = 0, length = this.aWorksheets.length; i < length; ++i)
@@ -3688,7 +3688,7 @@
 		{
 			var removedSheetId = removedSheet.getId();
 			this.dependencyFormulas.lockRecal();
-			var prepared = this.dependencyFormulas.prepareRemoveSheet(removedSheetId, removedSheet.getTableNames());
+			var prepared = !moveSheet && this.dependencyFormulas.prepareRemoveSheet(removedSheetId, removedSheet.getTableNames());
 
 			//remove timeline
 			if (removedSheet.timelines) {
@@ -3725,7 +3725,7 @@
 				outputParams.sheet = removedSheet;
 			}
 			this._updateWorksheetIndexes(wsActive);
-			this.dependencyFormulas.removeSheet(prepared);
+			!moveSheet && this.dependencyFormulas.removeSheet(prepared);
 			this.dependencyFormulas.unlockRecal();
 			this.handlers && this.handlers.trigger("asc_onSheetDeleted", nIndex);
 			this.handlers && this.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetRemove, nIndex);

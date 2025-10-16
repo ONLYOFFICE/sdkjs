@@ -1979,14 +1979,15 @@ function (window, undefined) {
 		}
 	};
 
-	function UndoRedoData_SheetRemove(index, sheetId, sheet) {
+	function UndoRedoData_SheetRemove(index, sheetId, sheet, moveSheet) {
 		this.index = index;
 		this.sheetId = sheetId;
 		this.sheet = sheet;
+		this.moveSheet = moveSheet;
 	}
 
 	UndoRedoData_SheetRemove.prototype.Properties = {
-		index: 0, sheetId: 1, sheet: 2
+		index: 0, sheetId: 1, sheet: 2, moveSheet: 3
 	};
 	UndoRedoData_SheetRemove.prototype.getType = function () {
 		return UndoRedoDataTypes.SheetRemove;
@@ -2002,6 +2003,8 @@ function (window, undefined) {
 				return this.sheetId;
 			case this.Properties.sheet:
 				return this.sheet;
+			case this.Properties.moveSheet:
+				return this.moveSheet;
 		}
 		return null;
 	};
@@ -2015,6 +2018,9 @@ function (window, undefined) {
 				break;
 			case this.Properties.sheet:
 				this.sheet = value;
+				break;
+			case this.Properties.moveSheet:
+				this.moveSheet = value;
 				break;
 		}
 	};
@@ -3019,7 +3025,7 @@ function (window, undefined) {
 					}
 				}
 				if (null != nIndex) {
-					wb.removeWorksheet(nIndex);
+					wb.removeWorksheet(nIndex, null, Data.moveSheet);
 				}
 			}
 			wb.handlers.trigger("updateWorksheetByModel");
