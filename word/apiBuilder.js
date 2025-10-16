@@ -1612,20 +1612,27 @@
 	};
 
 	/**
-	 * Adds a hyperlink to the specified range. 
+	 * Adds a hyperlink to the specified range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sLink - The link address.
 	 * @param {string} sScreenTipText - The screen tip text.
-	 * @return {ApiHyperlink | null}  - returns null if range contains more than one paragraph or sLink is invalid. 
+	 * @param {string} sBookmarkName - name of a bookmark
+	 * @return {?ApiHyperlink }  - returns null if range contains more than one paragraph or sLink is invalid. 
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/AddHyperlink.js
 	 */
-	ApiRange.prototype.AddHyperlink = function(sLink, sScreenTipText)
+	ApiRange.prototype.AddHyperlink = function(sLink, sScreenTipText, sBookmarkName)
 	{
-		if (typeof(sLink) !== "string" || sLink === "" || sLink.length > Asc.c_nMaxHyperlinkLength)
+		sLink = GetStringParameter(sLink, "");
+		sScreenTipText = GetStringParameter(sScreenTipText, "");
+		sBookmarkName = GetStringParameter(sBookmarkName, "");
+
+		if ((!sLink && !sBookmarkName) || (sLink && sBookmarkName)) {
 			return null;
-		if (typeof(sScreenTipText) !== "string")
-			sScreenTipText = "";
+		}
+
+		if (sLink.length > Asc.c_nMaxHyperlinkLength)
+			return null;
 
 		this.GetAllParagraphs();
 		if (this.Paragraphs.length !== 1)
@@ -1641,7 +1648,7 @@
 		sLink = sLink && sLink.replace(new RegExp("%20",'g')," ");
 		hyperlinkPr.put_Value(sLink);
 		hyperlinkPr.put_ToolTip(sScreenTipText);
-		hyperlinkPr.put_Bookmark(null);
+		hyperlinkPr.put_Bookmark(sBookmarkName);
 
 		this.Select(false);
 		var oHyperlink = new ApiHyperlink(this.Paragraphs[0].Paragraph.AddHyperlink(hyperlinkPr));
@@ -9886,15 +9893,22 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sLink - The link address.
 	 * @param {string} sScreenTipText - The screen tip text.
-	 * @return {ApiHyperlink | null} - returns null if params are invalid.
+	 * @param {string} sBookmarkName - name of a bookmark
+	 * @return {?ApiHyperlink } - returns null if params are invalid.
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/AddHyperlink.js
 	 */
-	ApiParagraph.prototype.AddHyperlink = function(sLink, sScreenTipText)
+	ApiParagraph.prototype.AddHyperlink = function(sLink, sScreenTipText, sBookmarkName)
 	{
-		if (typeof(sLink) !== "string" || sLink === "" || sLink.length > Asc.c_nMaxHyperlinkLength)
+		sLink = GetStringParameter(sLink, "");
+		sScreenTipText = GetStringParameter(sScreenTipText, "");
+		sBookmarkName = GetStringParameter(sBookmarkName, "");
+
+		if ((!sLink && !sBookmarkName) || (sLink && sBookmarkName)) {
 			return null;
-		if (typeof(sScreenTipText) !== "string")
-			sScreenTipText = "";
+		}
+
+		if (sLink.length > Asc.c_nMaxHyperlinkLength)
+			return null;
 		
 		var hyperlinkPr	= new Asc.CHyperlinkProperty();
 		var urlType		= AscCommon.getUrlType(sLink);
@@ -9907,7 +9921,7 @@
 		sLink = sLink && sLink.replace(new RegExp("%20",'g')," ");
 		hyperlinkPr.put_Value(sLink);
 		hyperlinkPr.put_ToolTip(sScreenTipText);
-		hyperlinkPr.put_Bookmark(null);
+		hyperlinkPr.put_Bookmark(sBookmarkName);
 		
 		oHyperlink = new ApiHyperlink(this.Paragraph.AddHyperlink(hyperlinkPr));
 		this.Paragraph.RemoveSelection();
@@ -11529,15 +11543,22 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sLink - The link address.
 	 * @param {string} sScreenTipText - The screen tip text.
-	 * @return {ApiHyperlink | null} - returns false if params are invalid.
+	 * @param {string} sBookmarkName - name of a bookmark
+	 * @return {?ApiHyperlink } - returns false if params are invalid.
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/AddHyperlink.js
 	 */
-	ApiRun.prototype.AddHyperlink = function(sLink, sScreenTipText)
+	ApiRun.prototype.AddHyperlink = function(sLink, sScreenTipText, sBookmarkName)
 	{
-		if (typeof(sLink) !== "string" || sLink === "" || sLink.length > Asc.c_nMaxHyperlinkLength)
+		sLink = GetStringParameter(sLink, "");
+		sScreenTipText = GetStringParameter(sScreenTipText, "");
+		sBookmarkName = GetStringParameter(sBookmarkName, "");
+
+		if ((!sLink && !sBookmarkName) || (sLink && sBookmarkName)) {
 			return null;
-		if (typeof(sScreenTipText) !== "string")
-			sScreenTipText = "";
+		}
+
+		if (sLink.length > Asc.c_nMaxHyperlinkLength)
+			return null;
 
 		var parentPara	= this.Run.GetParagraph();
 		if (!parentPara || this.Run.Content.length === 0)
@@ -11571,7 +11592,7 @@
 		sLink = sLink && sLink.replace(new RegExp("%20",'g')," ");
 		hyperlinkPr.put_Value(sLink);
 		hyperlinkPr.put_ToolTip(sScreenTipText);
-		hyperlinkPr.put_Bookmark(null);
+		hyperlinkPr.put_Bookmark(sBookmarkName);
 
 		oHyperlink = new ApiHyperlink(parentPara.AddHyperlink(hyperlinkPr));
 		StartPos[parentParaDepth].Class.RemoveSelection();
