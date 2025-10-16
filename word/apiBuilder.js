@@ -10634,27 +10634,24 @@
 		return this.Paragraph.GetText(oProp);
 	};
 
-	ApiParagraph.prototype.GetSentences = function () {
-		const ranges = [];
-
-		const text = this.GetText();
-		if (text) {
-			// https://stackoverflow.com/a/5553924
-			const regex = /[^.!?\s][^.!?]*(?:[.!?](?!['"]?\s|$)[^.!?]*)*[.!?]?['"]?(?=\s|$)/g;
-
-			let match;
-			while ((match = regex.exec(text)) !== null) {
-				const sentenceRange = new ApiRange(
-					this.Paragraph,
-					match.index,
-					match.index + match[0].length
-				);
-				ranges.push(sentenceRange);
-			}
-		}
-
-		return ranges;
-	};
+	// ApiParagraph.prototype.GetSentences = function () {
+	// 	const ranges = [];
+	// 	const text = this.GetText();
+	// 	if (text) {
+	// 		// https://stackoverflow.com/a/5553924
+	// 		const regex = /[^.!?\s][^.!?]*(?:[.!?](?!['"]?\s|$)[^.!?]*)*[.!?]?['"]?(?=\s|$)/g;
+	// 		let match;
+	// 		while ((match = regex.exec(text)) !== null) {
+	// 			const sentenceRange = new ApiRange(
+	// 				this.Paragraph,
+	// 				match.index,
+	// 				match.index + match[0].length
+	// 			);
+	// 			ranges.push(sentenceRange);
+	// 		}
+	// 	}
+	// 	return ranges;
+	// };
 	ApiParagraph.prototype.GetWords = function () {
 		const paragraph = this.Paragraph;
 		const words = [];
@@ -15083,6 +15080,36 @@
 			return 2 * nFontSize;
 
 		return nFontSize;
+	};
+
+	/**
+	 * Increases the font size to the next value in the font size list.
+	 *
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @return {ApiTextPr} - this text properties.
+	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/Grow.js
+	 */
+	ApiTextPr.prototype.Grow = function()
+	{
+		this.private_Update();
+		const fontSize = this.TextPr.GetIncDecFontSize(true);
+		return this.SetFontSize(fontSize * 2);
+	};
+
+	/**
+	 * Decreases the font size to the previous value in the font size list.
+	 *
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @return {ApiTextPr} - this text properties.
+	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/Grow.js
+	 */
+	ApiTextPr.prototype.Shrink = function()
+	{
+		this.private_Update();
+		const fontSize = this.TextPr.GetIncDecFontSize(false);
+		return this.SetFontSize(fontSize * 2);
 	};
 
 	/**
@@ -27147,39 +27174,11 @@
 		return 'selection';
 	};
 
-	ApiSelection.prototype.GetCharacters = function () {
-		const characters = [];
-		const paragraphs = this.GetRange().GetAllParagraphs();
-		paragraphs.forEach(function (paragraph) {
-			characters.push.apply(characters, paragraph.GetCharacters());
-		});
-		return characters;
-	};
-	ApiSelection.prototype.GetWords = function () {
-		const words = [];
-		const paragraphs = this.GetRange().GetAllParagraphs();
-		paragraphs.forEach(function (paragraph) {
-			words.push.apply(words, paragraph.GetWords());
-		});
-		return words;
-	};
-	ApiSelection.prototype.GetSentences = function () {
-		const sentences = [];
-		const paragraphs = this.GetRange().GetAllParagraphs();
-		paragraphs.forEach(function (paragraph) {
-			sentences.push.apply(sentences, paragraph.GetSentences());
-		});
-		return sentences;
-	};
-
-	ApiSelection.prototype.GetComments = function () {};
 	ApiSelection.prototype.GetFields = function () {};
 	ApiSelection.prototype.GetFormFields = function () {};
-	ApiSelection.prototype.GetHyperlinks = function () {};
 	ApiSelection.prototype.GetInlineShapes = function () {};
 	ApiSelection.prototype.GetOMaths = function () {};
 	ApiSelection.prototype.GetParagraphFormat = function () {};
-	ApiSelection.prototype.GetShading = function () {};
 	ApiSelection.prototype.GetShapeRange = function () {};
 	ApiSelection.prototype.GetStyle = function () {};
 
@@ -27194,6 +27193,22 @@
 	ApiSelection.prototype.GetText = function () {
 		const range = this.GetRange();
 		return range ? range.GetText() : "";
+	};
+	ApiSelection.prototype.GetWords = function () {
+		const words = [];
+		const paragraphs = this.GetRange().GetAllParagraphs();
+		paragraphs.forEach(function (paragraph) {
+			words.push.apply(words, paragraph.GetWords());
+		});
+		return words;
+	};
+	ApiSelection.prototype.GetCharacters = function () {
+		const characters = [];
+		const paragraphs = this.GetRange().GetAllParagraphs();
+		paragraphs.forEach(function (paragraph) {
+			characters.push.apply(characters, paragraph.GetCharacters());
+		});
+		return characters;
 	};
 	ApiSelection.prototype.GetParagraphs = function () {
 		const range = this.GetRange();
@@ -27217,12 +27232,31 @@
 		const selectionTextPr = new ApiTextPr(this, rangeTextPr.TextPr);
 		return selectionTextPr;
 	};
+	ApiSelection.prototype.GetShading = function () {
+		const font = this.GetFont();
+		return font ? font.GetShading() : null;
+	};
+	ApiSelection.prototype.GetComments = function () {
+		const logicDocument = private_GetLogicDocument();
+		const selectedContent = logicDocument.GetSelectedContent(false);
+		const result = [];
+
+		if (selectedContent && selectedContent.CommentsMarks) {
+			Object.values(selectedContent.CommentsMarks).forEach(function (obj) {
+				if (obj.Comment) {
+					result.push(new ApiComment(obj.Comment));
+				}
+			});
+		}
+
+		return result;
+	};
+	ApiSelection.prototype.GetHyperlinks = function () {};
 
 	Object.defineProperties(ApiSelection.prototype, {
 		'Document': { get: function () { return this.GetDocument(); } },
 		'Range': { get: function () { return this.GetRange(); } },
 		'Text': { get: function () { return this.GetText(); } },
-		'Sentences': { get: function () { return this.GetSentences(); } },
 		'Words': { get: function () { return this.GetWords(); } },
 		'Characters': { get: function () { return this.GetCharacters(); } },
 		'Paragraphs': { get: function () { return this.GetParagraphs(); } },
@@ -27230,6 +27264,8 @@
 		'Rows': { get: function () { return this.GetRows(); } },
 		'Cells': { get: function () { return this.GetCells(); } },
 		'Font': { get: function () { return this.GetFont(); } },
+		'Shading': { get: function () { return this.GetShading(); } },
+		'Comments': { get: function () { return this.GetComments(); } },
 	});
 
 	ApiSelection.prototype.private_updateTextPrFromCurrentSelection = function (apiTextPr) {
@@ -27245,173 +27281,6 @@
 		}
 	};
 
-	/* Fields:
-		Active
-		Application
-		BookmarkID
-		Bookmarks
-		Borders
-		ChildShapeRange
-		Columns
-		ColumnSelectMode
-		Creator
-		Editors
-		End
-		EndnoteOptions
-		Endnotes
-		EnhMetaFileBits
-		ExtendMode
-		Find
-		FitTextWidth
-		Flags
-		FootnoteOptions
-		Footnotes
-		FormattedText
-		Frames
-		HasChildShapeRange
-		HeaderFooter
-		HTMLDivisions
-		Information
-		PAtEndOfLine
-		IsEndOfRowMark
-		LanguageDetected
-		LanguageID
-		LanguageIDFarEast
-		LanguageIDOther
-		NoProofing
-		Orientation
-		PageSetup
-		Parent
-		PreviousBookmarkID
-		Sections
-		Start
-		StartIsActive
-		StoryLength
-		StoryType
-		TopLevelTables
-		Type
-		WordOpenXML
-		XML
-	*/
-
-	/* Methods:
-		BoldRun
-		Calculate
-		ClearCharacterAllFormatting
-		ClearCharacterDirectFormatting
-		ClearCharacterStyle
-		ClearFormatting
-		ClearParagraphAllFormatting
-		ClearParagraphDirectFormatting
-		ClearParagraphStyle
-		Collapse
-		ConvertToTable
-		Copy
-		CopyAsPicture
-		CopyFormat
-		CreateAutoTextEntry
-		CreateTextbox
-		Cut
-		Delete
-		DetectLanguage
-		EndKey
-		EndOf
-		EscapeKey
-		Expand
-		ExportAsFixedFormat
-		ExportAsFixedFormat2
-		ExportAsFixedFormat3
-		Extend
-		GoTo
-		GoToEditableRange
-		GoToNext
-		GoToPrevious
-		HomeKey
-		InRange
-		InsertAfter
-		InsertBefore
-		InsertBreak
-		InsertCaption
-		InsertCells
-		InsertColumns
-		InsertColumnsRight
-		InsertCrossReference
-		InsertDateTime
-		InsertFile
-		InsertFormula
-		InsertNewPage
-		InsertParagraph
-		InsertParagraphAfter
-		InsertParagraphBefore
-		InsertRows
-		InsertRowsAbove
-		InsertRowsBelow
-		InsertStyleSeparator
-		InsertSymbol
-		InsertXML
-		InStory
-		IsEqual
-		ItalicRun
-		LtrPara
-		LtrRun
-		Move
-		MoveDown
-		MoveEnd
-		MoveEndUntil
-		MoveEndWhile
-		MoveLeft
-		MoveRight
-		MoveStart
-		MoveStartUntil
-		MoveStartWhile
-		MoveUntil
-		MoveUp
-		MoveWhile
-		Next
-		NextField
-		NextRevision
-		NextSubdocument
-		Paste
-		PasteAndFormat
-		PasteAppendTable
-		PasteAsNestedTable
-		PasteExcelTable
-		PasteFormat
-		PasteSpecial
-		Previous
-		PreviousField
-		PreviousRevision
-		PreviousSubdocument
-		ReadingModeGrowFont
-		ReadingModeShrinkFont
-		RtlPara
-		RtlRun
-		Select
-		SelectCell
-		SelectColumn
-		SelectCurrentAlignment
-		SelectCurrentColor
-		SelectCurrentFont
-		SelectCurrentIndent
-		SelectCurrentSpacing
-		SelectCurrentTabs
-		SelectRow
-		SetRange
-		Shrink
-		ShrinkDiscontiguousSelection
-		Sort
-		SortAscending
-		SortByHeadings
-		SortDescending
-		SplitTable
-		StartOf
-		ToggleCharacterCode
-		TypeBackspace
-		TypeParagraph
-		TypeText
-		WholeStory
-	*/
-	
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiDocumentVisitor
@@ -27932,7 +27801,6 @@
 	ApiParagraph.prototype["GetParentTable"]         = ApiParagraph.prototype.GetParentTable;
 	ApiParagraph.prototype["GetParentTableCell"]     = ApiParagraph.prototype.GetParentTableCell;
 	ApiParagraph.prototype["GetText"]                = ApiParagraph.prototype.GetText;
-	ApiParagraph.prototype["GetSentences"]           = ApiParagraph.prototype.GetSentences;
 	ApiParagraph.prototype["GetWords"]               = ApiParagraph.prototype.GetWords;
 	ApiParagraph.prototype["GetCharacters"]          = ApiParagraph.prototype.GetCharacters;
 	ApiParagraph.prototype["GetTextPr"]              = ApiParagraph.prototype.GetTextPr;
@@ -28170,6 +28038,8 @@
 	ApiTextPr.prototype["GetFontFamily"]             = ApiTextPr.prototype.GetFontFamily;
 	ApiTextPr.prototype["SetFontSize"]               = ApiTextPr.prototype.SetFontSize;
 	ApiTextPr.prototype["GetFontSize"]               = ApiTextPr.prototype.GetFontSize;
+	ApiTextPr.prototype["Grow"]                      = ApiTextPr.prototype.Grow;
+	ApiTextPr.prototype["Shrink"]                    = ApiTextPr.prototype.Shrink;
 	ApiTextPr.prototype["SetColor"]                  = ApiTextPr.prototype.SetColor;
 	ApiTextPr.prototype["GetColor"]                  = ApiTextPr.prototype.GetColor;
 	ApiTextPr.prototype["SetVertAlign"]              = ApiTextPr.prototype.SetVertAlign;
@@ -28847,9 +28717,10 @@
 	ApiSelection.prototype["GetRows"] = ApiSelection.prototype.GetRows;
 	ApiSelection.prototype["GetTables"] = ApiSelection.prototype.GetTables;
 	ApiSelection.prototype["GetText"] = ApiSelection.prototype.GetText;
-	ApiSelection.prototype["GetSentences"] = ApiSelection.prototype.GetSentences;
 	ApiSelection.prototype["GetWords"] = ApiSelection.prototype.GetWords;
 	ApiSelection.prototype["GetCharacters"] = ApiSelection.prototype.GetCharacters;
+	ApiSelection.prototype["GetShading"] = ApiSelection.prototype.GetShading;
+	ApiSelection.prototype["GetComments"] = ApiSelection.prototype.GetComments;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export for internal usage

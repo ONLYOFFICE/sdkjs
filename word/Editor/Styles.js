@@ -13665,6 +13665,10 @@ CTextPr.prototype.Compare = function(TextPr)
 	if (undefined !== this.Color && ( undefined === TextPr.Color || true !== this.Color.Compare(TextPr.Color) ))
 		this.Color = undefined;
 
+	// Shd
+	if (undefined !== this.Shd && (undefined === TextPr.Shd || true !== this.Shd.Compare(TextPr.Shd)))
+		this.Shd = undefined;
+
 	// VertAlign
 	if (undefined !== this.VertAlign && this.VertAlign !== TextPr.VertAlign)
 		this.VertAlign = undefined;
