@@ -5008,6 +5008,7 @@ function (window, undefined) {
 	};
 
 	function wrapRowsCols(arg, argument1, toCol) {
+		// toCol - cWRAPCOLS call
 		let argError = cBaseFunction.prototype._checkErrorArg.call(this, arg);
 		if (argError) {
 			return argError;
@@ -5017,12 +5018,14 @@ function (window, undefined) {
 		if (arg1.type === cElementType.empty) {
 			return new cError(cErrorType.wrong_value_type);
 		}
-		let arg0Dimensions = arg1.getDimensions();
-		if (arg0Dimensions.col > 1 && arg0Dimensions.row > 1) {
+		let arg1Dimensions = arg1.getDimensions();
+		if (arg1Dimensions.col > 1 && arg1Dimensions.row > 1) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
+		let isSingleColumn = arg1Dimensions.col === 1 ? true : false;
 		let arg2 = arg[1];
+
 		if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
 			arg2 = arg2.getValueByRowCol(0,0);
 		} else if (cElementType.array === arg2.type) {
@@ -5038,8 +5041,8 @@ function (window, undefined) {
 		if (arg2.type === cElementType.error) {
 			return arg2;
 		}
-		arg2 = arg2.toNumber();
 
+		arg2 = Math.floor(arg2.toNumber());
 		if (arg2 < 1) {
 			return new cError(cErrorType.not_numeric);
 		}
@@ -5053,7 +5056,40 @@ function (window, undefined) {
 
 		let res = new cArray();
 		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type || cElementType.array === arg1.type) {
+			
+			if ((isSingleColumn && arg1Dimensions.row <= arg2) || (!isSingleColumn && arg1Dimensions.col <= arg2)) {
+				return arg1;
+			}
+
 			let rowCounter = 0, colCounter = 0;
+			if (cElementType.array === arg1.type) {
+				if (isSingleColumn) {
+					colCounter = toCol ? Math.ceil(arg1Dimensions.row / arg2) : arg2;
+					rowCounter = toCol ? arg2 : Math.ceil(arg1Dimensions.row / arg2);
+				} else {
+					colCounter = toCol ? arg2 : Math.ceil(arg1Dimensions.col / arg2);
+					rowCounter = toCol ? Math.ceil(arg1Dimensions.col / arg2) : arg2;
+				}
+
+				let arrayFrom = arg1.array;
+				if (toCol) {
+					for (let col = 0; col < colCounter; col++) {
+						// get part of array from arg1 and insertCol
+						res.pushCol(arrayFrom.slice(col * arg2, (col + 1) * arg2), 0, true);
+					}
+				} else {
+					for (let row = 0; row < rowCounter; row++) {
+						// get part of array from arg1 and insertRow
+						res.pushRow([arrayFrom.slice(row * arg2, (row + 1) * arg2).flat()], 0);
+					}
+				}
+
+				res.recalculate();
+				res.fillMatrix(arg3);
+
+				return res;
+			}
+
 			arg1.foreach2(function (val) {
 				if (toCol) {
 					/*if (res.array.l && res.array[res.array.length - 1].length === arg2) {

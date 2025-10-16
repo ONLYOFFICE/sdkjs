@@ -3278,7 +3278,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			this.countElement += lookingRow.length;
 		}
 	};
-	cArray.prototype.pushCol = function (matrix, colNum) {
+	cArray.prototype.pushCol = function (matrix, colNum, withoutRecalc) {
 		for (let i = 0; i < matrix.length; i++) {
 			if (matrix[i] && matrix[i][colNum]) {
 				if (!this.array[i]) {
@@ -3287,8 +3287,21 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				this.array[i].push(matrix[i][colNum]);
 			}
 		}
-		this.recalculate();
+		if (!withoutRecalc) {
+			this.recalculate();
+		}
 	};
+	// cArray.prototype.pushCol2 = function (matrix, colNum, withoutRecalc) {
+	// 	for (let i = 0; i < matrix.length; i++) {
+	// 		if (matrix[i] && matrix[i][colNum]) {
+	// 			if (!this.array[i]) {
+	// 				this.array[i] = [];
+	// 			}
+	// 			this.array[i].push(matrix[i][colNum]);
+	// 		}
+	// 	}
+
+	// };
 	cArray.prototype.pushRow = function (matrix, rowNum) {
 		if (matrix && matrix[rowNum]) {
 			this.array.push(matrix[rowNum]);
