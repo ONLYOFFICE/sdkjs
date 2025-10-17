@@ -64,9 +64,9 @@
 		//todo more checks
 		return this.ranges && this.ranges.length > 0;
 	};
-	CConditionalFormatting.prototype.initRules = function () {
+	CConditionalFormatting.prototype.initRules = function (ws) {
 		for (var i = 0; i < this.aRules.length; ++i) {
-			this.aRules[i].updateConditionalFormatting(this);
+			this.aRules[i].updateConditionalFormatting(this, ws);
 		}
 	};
 
@@ -927,13 +927,20 @@
 	CConditionalFormattingRule.prototype.hasStdDev = function () {
 		return null !== this.stdDev;
 	};
-	CConditionalFormattingRule.prototype.updateConditionalFormatting = function (cf) {
+	CConditionalFormattingRule.prototype.updateConditionalFormatting = function (cf, ws) {
 		var i;
 		this.pivot = cf.pivot;
 		if (cf.ranges) {
 			this.ranges = [];
 			for (i = 0; i < cf.ranges.length; ++i) {
 				this.ranges.push(cf.ranges[i].clone());
+			}
+		}
+		if (ws) {
+			if (this.aRuleElements) {
+				for (let i = 0 ; i < this.aRuleElements.length; i++) {
+					this.aRuleElements[i] && this.aRuleElements[i].init && this.aRuleElements[i].init(ws);
+				}
 			}
 		}
 	};
@@ -2164,7 +2171,12 @@
 	CFormulaCF.prototype.init = function (ws, opt_parent) {
 		if (!this._f) {
 			this._f = new AscCommonExcel.parserFormula(this.Text, opt_parent, ws);
-			this._f.parse();
+			var parseResult = new AscCommonExcel.ParseResult([]);
+			parseResult.needCorrect = true;
+			this._f.parse(null, null, parseResult);
+			if (parseResult.needAssemble) {
+				this.Text = this._f.assemble(true);
+			}
 			if (opt_parent) {
 				//todo realize removeDependencies
 				this._f.buildDependencies();

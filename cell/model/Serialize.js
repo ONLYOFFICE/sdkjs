@@ -14367,7 +14367,11 @@
                 var newFormulaParent = new AscCommonExcel.CCellWithFormula(cell.ws, cell.nRow, cell.nCol);
                 var parsed = new AscCommonExcel.parserFormula(formula.v, newFormulaParent, cell.ws);
                 parsed.ca = formula.ca;
+                parseResult.needCorrect = true;
                 parsed.parse(undefined, undefined, parseResult);
+                if (parseResult.needAssemble) {
+                    parsed.Formula = parsed.assemble(true);
+                }
                 if (parseResult.error === Asc.c_oAscError.ID.FrmlMaxReference) {
                     tmp.ws.workbook.openErrors.push(cell.getName());
                     return;
@@ -14835,7 +14839,7 @@
     };
     InitOpenManager.prototype.prepareConditionalFormatting = function (oWorksheet, oConditionalFormatting) {
         if (oConditionalFormatting && oConditionalFormatting.isValid()) {
-            oConditionalFormatting.initRules();
+            oConditionalFormatting.initRules(oWorksheet);
             for (let i = 0; i < oConditionalFormatting.aRules.length; i++) {
                 oWorksheet.addConditionalFormattingRule(oConditionalFormatting.aRules[i]);
             }
