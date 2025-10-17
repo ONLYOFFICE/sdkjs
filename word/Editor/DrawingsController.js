@@ -396,10 +396,13 @@ CDrawingsController.prototype.RemoveSelection = function(bNoCheckDrawing)
 	this.DrawingObjects.resetSelection(undefined, bNoCheckDrawing);
 	if (oParaDrawing)
 	{
-		var oInnerForm = null;
-		if (oParaDrawing.IsForm() && (oInnerForm = oParaDrawing.GetInnerForm()) && oInnerForm.IsPicture())
+		let innerForm = null;
+		if (oParaDrawing.IsForm()
+			&& (innerForm = oParaDrawing.GetInnerForm())
+			&& innerForm.IsPicture()
+			&& this.LogicDocument.IsFillingFormMode())
 		{
-			var arrDrawings = oInnerForm.GetAllDrawingObjects();
+			var arrDrawings = innerForm.GetAllDrawingObjects();
 			if (arrDrawings.length)
 				oParaDrawing = arrDrawings[0];
 		}
@@ -659,12 +662,22 @@ CDrawingsController.prototype.CanAddComment = function()
 };
 CDrawingsController.prototype.GetSelectionAnchorPos = function()
 {
-	var ParaDrawing = this.DrawingObjects.getMajorParaDrawing();
+	let paraDrawing = this.DrawingObjects.getMajorParaDrawing();
+	if (!paraDrawing)
+	{
+		return {
+			X0   : 0,
+			Y    : 0,
+			X1   : 0,
+			Page : -1
+		};
+	}
+	let drawing = paraDrawing.GraphicObj;
 	return {
-		X0   : ParaDrawing.GraphicObj.x,
-		Y    : ParaDrawing.GraphicObj.y,
-		X1   : ParaDrawing.GraphicObj.x + ParaDrawing.GraphicObj.extX,
-		Page : ParaDrawing.PageNum
+		X0   : drawing.x,
+		Y    : drawing.y,
+		X1   : drawing.x + drawing.extX,
+		Page : paraDrawing.PageNum
 	};
 };
 CDrawingsController.prototype.StartSelectionFromCurPos = function()

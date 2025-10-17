@@ -1591,6 +1591,25 @@
 			"trendlineType": sTrendlineType
 		}
 	};
+	WriterToJSON.prototype.SerTrendlines = function(trendlines)
+	{
+		const serializedArray = [];
+		
+		if (Array.isArray(trendlines))
+		{
+			for (let i = 0; i < trendlines.length; ++i)
+			{
+				const trendline = trendlines[i];
+				const serializedTrendline = this.SerTrendline(trendline);
+				if (serializedTrendline)
+				{
+					serializedArray.push(serializedTrendline);
+				}
+			}
+		}
+		
+		return serializedArray;
+	};
 	WriterToJSON.prototype.SerPicOptions = function(oPicOptions)
 	{
 		if (!oPicOptions)
@@ -1621,7 +1640,7 @@
 				"pictureOptions":   this.SerPicOptions(arrSeries[nItem].pictureOptions),
 				"shape":            ToXml_ST_Shape(arrSeries[nItem].shape),
 				"spPr":             this.SerSpPr(arrSeries[nItem].spPr),
-				"trendline":        this.SerTrendline(arrSeries[nItem].trendline),
+				"trendlines":       this.SerTrendlines(arrSeries[nItem].trendlines),
 				"tx":               this.SerSerTx(arrSeries[nItem].tx),
 				"val":              this.SerYVAL(arrSeries[nItem].val)
 			});
@@ -5483,9 +5502,9 @@
 						oMap[aParaComments[nComment].Comment.CommentId] = {};
 
 					if (aParaComments[nComment].Comment.Start)
-						oMap[aParaComments[nComment].Comment.CommentId]["Start"] = true;
+						oMap[aParaComments[nComment].Comment.CommentId].Start = true;
 					else
-						oMap[aParaComments[nComment].Comment.CommentId]["End"] = true;
+						oMap[aParaComments[nComment].Comment.CommentId].End = true;
 				}
 			}
 			if (oElm instanceof AscCommonWord.CTable)
@@ -6433,7 +6452,7 @@
 				"invertIfNegative": arrBubbleSeries[nItem].invertIfNegative,
 				"order":            arrBubbleSeries[nItem].order,
 				"spPr":             this.SerSpPr(arrBubbleSeries[nItem].spPr),
-				"trendline":        this.SerTrendline(arrBubbleSeries[nItem].trendline),
+				"trendlines":       this.SerTrendlines(arrBubbleSeries[nItem].trendlines),
 				"tx":               this.SerSerTx(arrBubbleSeries[nItem].tx),
 				"xVal":             this.SerCat(arrBubbleSeries[nItem].xVal),
 				"yVal":             this.SerYVAL(arrBubbleSeries[nItem].yVal)
@@ -6494,7 +6513,7 @@
 				"order":            arrScatterSeries[nItem].order,
 				"smooth":           arrScatterSeries[nItem].smooth,
 				"spPr":             this.SerSpPr(arrScatterSeries[nItem].spPr),
-				"trendline":        this.SerTrendline(arrScatterSeries[nItem].trendline),
+				"trendlines":       this.SerTrendlines(arrScatterSeries[nItem].trendlines),
 				"tx":               this.SerSerTx(arrScatterSeries[nItem].tx),
 				"xVal":             this.SerCat(arrScatterSeries[nItem].xVal),
 				"yVal":             this.SerYVAL(arrScatterSeries[nItem].yVal)
@@ -6535,7 +6554,7 @@
 				"order":            arrStockSeries[nItem].order,
 				"smooth":           arrStockSeries[nItem].smooth,
 				"spPr":             this.SerSpPr(arrStockSeries[nItem].spPr),
-				"trendline":        this.SerTrendline(arrStockSeries[nItem].trendline),
+				"trendlines":       this.SerTrendlines(arrStockSeries[nItem].trendlines),
 				"tx":               this.SerSerTx(arrStockSeries[nItem].tx),
 				"val":              this.SerYVAL(arrStockSeries[nItem].val)
 			});
@@ -6589,7 +6608,7 @@
 				"order":            arrAreaSeries[nItem].order,
 				"pictureOptions":   this.SerPicOptions(arrAreaSeries[nItem].pictureOptions),
 				"spPr":             this.SerSpPr(arrAreaSeries[nItem].spPr),
-				"trendline":        this.SerTrendline(arrAreaSeries[nItem].trendline),
+				"trendlines":       this.SerTrendlines(arrAreaSeries[nItem].trendlines),
 				"tx":               this.SerSerTx(arrAreaSeries[nItem].tx),
 				"val":              this.SerYVAL(arrAreaSeries[nItem].val)
 			});
@@ -6732,7 +6751,7 @@
 				"order":            arrLineSeries[nItem].order,
 				"smooth":           arrLineSeries[nItem].smooth,
 				"spPr":             this.SerSpPr(arrLineSeries[nItem].spPr),
-				"trendline":        this.SerTrendline(arrLineSeries[nItem].trendline),
+				"trendlines":       this.SerTrendlines(arrLineSeries[nItem].trendlines),
 				"tx":               this.SerSerTx(arrLineSeries[nItem].tx),
 				"val":              this.SerYVAL(arrLineSeries[nItem].val)
 			});
@@ -13870,7 +13889,7 @@
 			oItem["pictureOptions"] && oBarSeries.setPictureOptions(this.PicOptionsFromJSON(oItem["pictureOptions"]));
 			oBarSeries.setShape(nShapeType);
 			oItem["spPr"] && oBarSeries.setSpPr(this.SpPrFromJSON(oItem["spPr"], oBarSeries));
-			oItem["trendline"] && oBarSeries.setTrendline(this.TrendlineFromJSON(oItem["trendline"]));
+			oItem["trendlines"] && oBarSeries.setTrendlines(this.TrendlinesFromJSON(oItem["trendlines"]));
 			oItem["tx"] && oBarSeries.setTx(this.TxFromJSON(oItem["tx"], oBarSeries));
 			oItem["val"] && oBarSeries.setVal(this.YVALFromJSON(oItem["val"], oBarSeries));
 			
@@ -13928,7 +13947,7 @@
 			oLineSeries.setOrder(oItem["order"]);
 			oLineSeries.setSmooth(oItem["smooth"]);
 			oItem["spPr"] && oLineSeries.setSpPr(this.SpPrFromJSON(oItem["spPr"], oLineSeries));
-			oItem["trendline"] && oLineSeries.setTrendline(this.TrendlineFromJSON(oItem["trendline"]));
+			oItem["trendlines"] && oLineSeries.setTrendlines(this.TrendlinesFromJSON(oItem["trendlines"]));
 			oItem["tx"] && oLineSeries.setTx(this.TxFromJSON(oItem["tx"], oLineSeries));
 			oItem["val"] && oLineSeries.setVal(this.YVALFromJSON(oItem["val"], oLineSeries));
 
@@ -14028,7 +14047,7 @@
 			oAreaSeries.setOrder(oItem["order"]);
 			oItem["pictureOptions"] && oAreaSeries.setPictureOptions(this.PicOptionsFromJSON(oItem["pictureOptions"]));
 			oItem["spPr"] && oAreaSeries.setSpPr(this.SpPrFromJSON(oItem["spPr"], oAreaSeries));
-			oItem["trendline"] && oAreaSeries.setTrendline(this.TrendlineFromJSON(oItem["trendline"]));
+			oItem["trendlines"] && oAreaSeries.setTrendlines(this.TrendlinesFromJSON(oItem["trendlines"]));
 			oItem["tx"] && oAreaSeries.setTx(this.TxFromJSON(oItem["tx"], oAreaSeries));
 			oItem["val"] && oAreaSeries.setVal(this.YVALFromJSON(oItem["val"], oAreaSeries));
 			
@@ -14068,7 +14087,7 @@
 		// 	oStockSeries.order          = oItem["order"];
 		// 	oStockSeries.pictureOptions = oItem["pictureOptions"] ? this.PicOptionsFromJSON(oItem["pictureOptions"]) : oStockSeries.pictureOptions;
 		// 	oItem["spPr"] && oStockSeries.setSpPr(this.SpPrFromJSON(oItem["spPr"], oStockSeries));
-		// 	oStockSeries.trendline      = oItem["trendline"] ? this.TrendlineFromJSON(oItem["trendline"]) : oStockSeries.trendline;
+		// 	oStockSeries.trendlines     = oItem["trendlines"] ? this.TrendlinesFromJSON(oItem["trendlines"]) : oStockSeries.trendlines;
 		// 	oStockSeries.tx             = oItem["tx"] ? this.TxFromJSON(oItem["tx"], oStockSeries) : oStockSeries.tx;
 		// 	oStockSeries.val            = oItem["val"] ? this.YVALFromJSON(oItem["val"], oStockSeries) : oStockSeries.val;
 		//
@@ -14130,7 +14149,7 @@
 			oScatterSeries.setOrder(oItem["order"]);
 			oScatterSeries.setSmooth(oItem["smooth"]);
 			oItem["spPr"] && oScatterSeries.setSpPr(this.SpPrFromJSON(oItem["spPr"], oScatterSeries));
-			oItem["trendline"] && oScatterSeries.setTrendline(this.TrendlineFromJSON(oItem["trendline"]));
+			oItem["trendlines"] && oScatterSeries.setTrendlines(this.TrendlinesFromJSON(oItem["trendlines"]));
 			oItem["tx"] && oScatterSeries.setTx(this.TxFromJSON(oItem["tx"], oScatterSeries));
 			oItem["yVal"] && oScatterSeries.setYVal(this.YVALFromJSON(oItem["yVal"], oScatterSeries));
 			oItem["xVal"] && oScatterSeries.setXVal(this.CatFromJSON(oItem["xVal"], oScatterSeries));
@@ -14219,7 +14238,7 @@
 			oBubbleSeries.setInvertIfNegative(oItem["invertIfNegative"]);
 			oBubbleSeries.setOrder(oItem["order"]);
 			oItem["spPr"] && oBubbleSeries.setSpPr(this.SpPrFromJSON(oItem["spPr"], oBubbleSeries));
-			oItem["trendline"] && oBubbleSeries.setTrendline(this.TrendlineFromJSON(oItem["trendline"]));
+			oItem["trendlines"] && oBubbleSeries.setTrendlines(this.TrendlinesFromJSON(oItem["trendlines"]));
 			oItem["tx"] && oBubbleSeries.setTx(this.TxFromJSON(oItem["tx"], oBubbleSeries));
 			oItem["yVal"] && oBubbleSeries.setYVal(this.YVALFromJSON(oItem["yVal"], oBubbleSeries));
 			oItem["xVal"] && oBubbleSeries.setXVal(this.CatFromJSON(oItem["xVal"], oBubbleSeries));
@@ -14347,6 +14366,25 @@
 		oTrendLine.setTrendlineType(nTrendlineType);
 
 		return oTrendLine;
+	};
+	ReaderFromJSON.prototype.TrendlinesFromJSON = function(parsedTrendlines)
+	{
+		const trendlines = [];
+		
+		if (Array.isArray(parsedTrendlines))
+		{
+			for (let i = 0; i < parsedTrendlines.length; ++i)
+			{
+				const parsed = parsedTrendlines[i];
+				const trendline = this.TrendlineFromJSON(parsed);
+				if (trendline)
+				{
+					trendlines.push(trendline);
+				}
+			}
+		}
+		
+		return trendlines;
 	};
 	ReaderFromJSON.prototype.ErrBarsFromJSON = function(aParsedErrBars)
 	{

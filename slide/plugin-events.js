@@ -37,7 +37,7 @@
  * @typeofeditors ["CPE"]
  * @alias onChangeCurrentSlide
  * @description The function called when the current slide has changed.
- * @param {number} index - new current slide index.
+ * @param {number} index - The index of the newly activated slide.
  * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onChangeCurrentSlide.js
  */
 

@@ -2687,6 +2687,13 @@ function (window, undefined) {
 			_ctx.lineWidth = _lineWidth;
 
 			if ((_lineWidth & 0x01) == 0x01) bIsEven = true;
+
+			if (_graphics.dash_no_smart) {
+				for (let index = 0; index < _graphics.dash_no_smart.length; index++) _graphics.dash_no_smart[index] = (_graphics.m_oCoordTransform.sx * _graphics.dash_no_smart[index] + 0.5) >> 0;
+
+				_graphics.m_oContext.setLineDash(_graphics.dash_no_smart);
+				_graphics.dash_no_smart = null;
+			}
 		}
 
 		let bIsDrawLast = false;

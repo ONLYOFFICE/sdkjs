@@ -145,10 +145,10 @@ Asc['asc_docs_api'].prototype._saveLocalCheck = function()
 };
 
 AscCommon.baseEditorsApi.prototype.asc_setCurrentPasswordBase = AscCommon.baseEditorsApi.prototype.asc_setCurrentPassword;
-AscCommon.baseEditorsApi.prototype.asc_setCurrentPassword = AscCommon.baseEditorsApi.prototype["asc_setCurrentPassword"] = function(password)
+AscCommon.baseEditorsApi.prototype.asc_setCurrentPassword = AscCommon.baseEditorsApi.prototype["asc_setCurrentPassword"] = function(password, isOnOpen)
 {
 	this.currentPasswordOld = this.currentPassword;
-	return this.asc_setCurrentPasswordBase(password);
+	return this.asc_setCurrentPasswordBase(password, isOnOpen);
 };
 
 var isSupportSaveInPDF = true; // Since 8.2.0

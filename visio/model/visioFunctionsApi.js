@@ -46,7 +46,7 @@
 	 * @param {CTheme[]} themes
 	 * @param {string?} themeValue - value to calculate if cell is not considered (cell is ignored)
 	 * @param {string?} defaultValue
-	 * @param {boolean?} gradientEnabled
+	 * @param {boolean?} gradientEnabled - true by default
 	 * @param {number?}  themedColorsRow
 	 * @return {CUniFill | CUniColor | number | any}
 	 */
@@ -246,8 +246,8 @@
 		let themeIndex = shape.calculateColorThemeIndex(pageInfo);
 
 		// TODO: if THEMEVAL was called with themeValue (argument like "FillColor") even if themeIndex is 0 we should return
-		// color of default theme otherwise if no themeValue argument was passed and 0 themeIndex is used we should return
-		// initialDefaultValue value
+		//   color of default theme otherwise if no themeValue argument was passed and 0 themeIndex is used we should return
+		//   initialDefaultValue value
 		let theme;
 		// 0 theme index (default theme in visio) is considered as default value for now
 		if (themeIndex === 0) {

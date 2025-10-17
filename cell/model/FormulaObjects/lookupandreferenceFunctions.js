@@ -245,7 +245,7 @@ function (window, undefined) {
 
 			let res = 0;
 			if (cElementType.string === itemA.type && cElementType.string === itemB.type) {
-				res = (itemA.value.localeCompare(itemB.value)) * sortOrder;
+				res = AscCommonExcel.stringCompare(itemA.value, itemB.value) * sortOrder;
 			} else if (cElementType.number === itemA.type && cElementType.number === itemB.type) {
 				res = (itemA.value - itemB.value) * sortOrder;
 			} else if (cElementType.string === itemA.type) {
@@ -374,7 +374,7 @@ function (window, undefined) {
 					itemB = _b.item ? _b.item : _b;
 
 				if (cElementType.string === itemA.type && cElementType.string === itemB.type) {
-					res = (itemA.value.localeCompare(itemB.value)) * _sortOrder;
+					res = AscCommonExcel.stringCompare(itemA.value, itemB.value) * _sortOrder;
 				} else if (cElementType.number === itemA.type && cElementType.number === itemB.type) {
 					res = (itemA.value - itemB.value) * _sortOrder;
 				} else if (cElementType.string === itemA.type) {
@@ -3109,7 +3109,9 @@ function (window, undefined) {
 				});
 			} else {
 				tmpArrays[i].sort(function (a, b) {
-					return a.v.localeCompare(b.v);
+					const valueA = a.v;
+					const valueB = b.v;
+					return AscCommonExcel.stringCompare(valueA, valueB);
 				});
 			}
 		}
@@ -3134,8 +3136,10 @@ function (window, undefined) {
 		/** @type {TypedCacheAxis} */
 		const axisData = bHor? this.data[wsId].horizontal : this.data[wsId].vertical;
 		if (!axisData[rowCol]) {
-			axisData[rowCol] = {};
-			this.generateCache(ws, bHor, rowCol, savingValueCallback, tmpToTypedCallback, tmpArrayCallback)
+			let container = {};
+			container[rowCol] = {};
+			this.generateCache(ws, bHor, rowCol, savingValueCallback, tmpToTypedCallback, tmpArrayCallback, container);
+			axisData[rowCol] = container[rowCol];
 		}
 		return axisData[rowCol][elementType];
 	};
@@ -3147,11 +3151,12 @@ function (window, undefined) {
 	 * @param {(value: LookUpElement, i: number) => any} savingValueCallback
 	 * @param {(value: any) => number} tmpToTypedCallback
 	 * @param {(value: {cElementType: any[]}) => void} [tmpArrayCallback]
+	 * @param {Object} [opt_container] - Optional container object to use instead of the default axis data structure.
 	 * @return {Uint32Array}
 	 */
-	TypedCache.prototype.generateCache = function(ws, bHor, rowCol, savingValueCallback, tmpToTypedCallback, tmpArrayCallback) {
+	TypedCache.prototype.generateCache = function(ws, bHor, rowCol, savingValueCallback, tmpToTypedCallback, tmpArrayCallback, opt_container) {
 		const wsId = ws.Get_Id();
-		const axisData = bHor ? this.data[wsId].horizontal : this.data[wsId].vertical;
+		const axisData = opt_container ? opt_container : (bHor ? this.data[wsId].horizontal : this.data[wsId].vertical);
 		const tmpArrays = {};
 		const c1 = bHor ? 0 : rowCol;
 		const r1 = bHor ? rowCol : 0;
@@ -3695,7 +3700,6 @@ function (window, undefined) {
 			valueForSearching = new cString(valueForSearching.getValue().toLowerCase());
 		}
 
-		//TODO opt_arg5 - пока не обрабатываю результат == 2( A wildcard match where *, ?, and ~ have)
 		if (xlookup) {
 			if (Math.abs(opt_arg5) === 1) {
 				if (opt_array) {
@@ -4061,7 +4065,7 @@ function (window, undefined) {
 				moreEqualArr.sort(function(a, b) {
 					if (cElementType.number === a0Type) {
 						if (cElementType.string === a.v.type && cElementType.string === b.v.type) {
-							return a.v.getValue().localeCompare(b.v.getValue());
+							return AscCommonExcel.stringCompare(a.v.getValue(), b.v.getValue());
 						} else if (cElementType.number === a.v.type && cElementType.number === b.v.type) {
 							return a.v.getValue() - b.v.getValue();
 						} else if (cElementType.error === a.v.type || cElementType.error === b.v.type) {
@@ -4071,7 +4075,7 @@ function (window, undefined) {
 						}
 					} else if (cElementType.string === a0Type) {
 						if (cElementType.string === a.v.type && cElementType.string === b.v.type) {
-							return a.v.getValue().localeCompare(b.v.getValue());
+							return AscCommonExcel.stringCompare(a.v.getValue(), b.v.getValue());
 						} else if (cElementType.string === a.v.type || cElementType.string === b.v.type) {
 							return 1;
 						} else if (cElementType.bool === a.v.type && cElementType.bool === b.v.type) {
@@ -4166,7 +4170,7 @@ function (window, undefined) {
 							return b.v.getValue() - a.v.getValue();
 						} else if (cElementType.string === a0Type) {
 							if (cElementType.string === a.v.type && cElementType.string === b.v.type) {
-								return a.v.getValue().localeCompare(b.v.getValue());
+								return AscCommonExcel.stringCompare(a.v.getValue(), b.v.getValue());
 							} else if (cElementType.string === a.v.type || cElementType.string === b.v.type) {
 								return 1;
 							} else if (cElementType.number === a.v.type && cElementType.number === b.v.type) {

@@ -1679,7 +1679,21 @@ CHistory.prototype.GetSerializeArray = function()
 
 		for (let i = startIndex + 1; i < this.Points.length; ++i)
 		{
-			point.Items = point.Items.concat(this.Points[i].Items);
+			let currentPoint = this.Points[i];
+			
+			point.Items = point.Items.concat(currentPoint.Items);
+			
+			for (let sheetId in currentPoint.UpdateRigions)
+			{
+				let currentRange = currentPoint.UpdateRigions[sheetId];
+				let existingRange = point.UpdateRigions[sheetId];
+				
+				if (existingRange) {
+					existingRange.union2(currentRange);
+				} else {
+					point.UpdateRigions[sheetId] = currentRange.clone();
+				}
+			}
 		}
 
 		this.Points.length = startIndex + 1;

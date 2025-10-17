@@ -130,7 +130,8 @@
         removePage: 2,
         widgetInfo: 3,
         movePage:   4,
-        mergePages: 5
+        mergePages: 5,
+        saveModeNew:6 // save as a new file
     }
 
     const FormatType = {

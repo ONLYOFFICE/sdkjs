@@ -1560,6 +1560,20 @@ CDocumentContentElementBase.prototype.GetParentTables = function()
 	}
 	return tables;
 };
+/**
+ * Отличие данной функции от Get_SectionPr в том, что здесь возвращаются настройки секции, к которой
+ * принадлежит данный элемент, а там конкретно настройки секции, которые лежат в данном параграфе (если это параграф).
+ * @returns {null|AscWord.SectPr}
+ */
+CDocumentContentElementBase.prototype.Get_SectPr = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return null;
+	
+	let sectPr = logicDocument.GetSections().GetSectPrByElement(this);
+	return logicDocument.Layout.CheckSectPr(sectPr);
+};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

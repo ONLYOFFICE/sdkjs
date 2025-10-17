@@ -50,7 +50,7 @@
 	};
 	CTextSelectTrackHandler.prototype.OnChangePosition = function(bCheckMouseUpPos) {
 		let oFile = Asc.editor.getDocumentRenderer().file;
-		if (oFile.Selection.IsSelection || false === Asc.editor.NeedShowTextSelectPanel()) {
+		if (false == oFile.isSelectionUse() || false === Asc.editor.NeedShowTextSelectPanel()) {
 			this.OnHide();
 			return;
 		}

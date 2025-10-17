@@ -1957,11 +1957,13 @@ CParagraphContentWithParagraphLikeContent.prototype.Remove = function(Direction,
 	{
 		var ContentPos = this.State.ContentPos;
 
+		// TODO: Пересмотреть эту проверку. Выделять целиком КК нужно, если курсор изначально находился снаружи,
+		//       а если он был внутри, то удалять нужно именно внутреннее содержимое
 		if ((true === this.Cursor_Is_Start() || true === this.Cursor_Is_End())
 			&& !this.IsEmpty()
 			&& (!this.CanPlaceCursorInside()
 				|| !(this instanceof CInlineLevelSdt)
-				|| (!this.IsComplexForm() && !this.IsTextForm() && !this.IsComboBox())))
+				|| (!this.IsComplexForm() && !this.IsTextForm() && !this.IsComboBox() && !this.IsDatePicker())))
 		{
 			this.SelectAll();
 			this.SelectThisElement(1);

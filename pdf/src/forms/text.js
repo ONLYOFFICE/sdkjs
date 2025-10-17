@@ -488,7 +488,7 @@
 	};
         
     CTextField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
-        if (this.IsHidden() && !this.IsEditMode())
+        if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
             return;
 
         let oDoc = this.GetDocument();
@@ -839,8 +839,8 @@
                 (arg.startsWith("'") && arg.endsWith("'")) ||
                 (arg.startsWith('`') && arg.endsWith('`'))) {
                 const body = arg.slice(1, -1);
-                return body.replace(/\\([\\'"`nrvtbf])/g, (_, c) =>
-                    ({
+                return body.replace(/\\([\\'"`nrvtbf])/g, function(_, c) {
+                    var map = {
                         n: '\n',
                         r: '\r',
                         t: '\t',
@@ -851,8 +851,9 @@
                         '"': '"',
                         '`': '`',
                         '\\': '\\'
-                    } [c] ?? c)
-                );
+                    };
+                    return map.hasOwnProperty(c) ? map[c] : c;
+                });
             }
 
             return arg;
@@ -1157,6 +1158,10 @@
         if (this.IsNeedRecalc() == false)
             return;
 
+        if (!this.contentClipRect) {
+            this.RecalculateContentRect();
+        }
+
         if (this.IsPassword()) {
             AscWord.ParagraphTextShaper.SetMaskSymbol("*");
             this.private_NeedShapeText();
@@ -1299,9 +1304,7 @@
         oDoc.activeForm = this;
 
         if (oDoc.IsEditFieldsMode()) {
-            if (false == this.IsLocked()) {
-                this.editShape.onMouseDown(x, y, e)
-            }
+            this.editShape.onMouseDown(x, y, e);
             return;
         }
 
@@ -1389,7 +1392,7 @@
         this._scrollInfo = oInfo;
     };
     CTextField.prototype.UpdateScroll = function(bShow) {
-        if (bShow && this.IsEditMode()) {
+        if (bShow && Asc.editor.IsEditFieldsMode()) {
             return;
         }
 

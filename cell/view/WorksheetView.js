@@ -1658,6 +1658,7 @@ function isAllowPasteLink(pastedWb) {
             this._prepareCellTextMetricsCache();
             this.cellCommentator.updateActiveComment();
 			window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Update_Position();
+			Asc.editor.toggleChartElementsCallback();
             this.handlers.trigger("toggleAutoCorrectOptions", null, true);
             this.handlers.trigger("onDocumentPlaceChanged");
             this._updateDrawingArea();
@@ -1681,6 +1682,7 @@ function isAllowPasteLink(pastedWb) {
         this._prepareCellTextMetricsCache();
         this.cellCommentator.updateActiveComment();
 		window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Update_Position();
+		Asc.editor.toggleChartElementsCallback();
         this.handlers.trigger("onDocumentPlaceChanged");
 		this._updateDrawingArea();
 
@@ -5314,7 +5316,7 @@ function isAllowPasteLink(pastedWb) {
 				curHeader.parser = new AscCommonExcel.HeaderFooterParser();
 				curHeader.parser.parse(curHeader.str);
 			}
-			curHeader.parser.calculateTokens(this, indexPrintPage, countPrintPages);
+			curHeader.parser.calculateTokens(this, indexPrintPage, countPrintPages, true);
 
 			//get current tokens -> curHeader.parser -> getTokensByPosition(AscCommomExcel.c_oPortionPosition)
 			this._drawHeaderFooter(drawingCtx, printPagesData, curHeader, indexPrintPage, countPrintPages, false, opt_headerFooter);
@@ -5335,7 +5337,7 @@ function isAllowPasteLink(pastedWb) {
 				curFooter.parser = new AscCommonExcel.HeaderFooterParser();
 				curFooter.parser.parse(curFooter.str);
 			}
-			curFooter.parser.calculateTokens(this, indexPrintPage, countPrintPages);
+			curFooter.parser.calculateTokens(this, indexPrintPage, countPrintPages, true);
 			//get current tokens -> curHeader.parser -> getTokensByPosition(AscCommomExcel.c_oPortionPosition)
 			this._drawHeaderFooter(drawingCtx, printPagesData, curFooter, indexPrintPage, countPrintPages, true, opt_headerFooter);
 		}
@@ -5412,6 +5414,10 @@ function isAllowPasteLink(pastedWb) {
 
 					GetDrawingDocument: function() {
 						return Asc.editor.getDrawingDocument();
+					},
+
+					IsVisioEditor: function() {
+						return false;
 					},
 
                     SearchEngine: {
@@ -11036,6 +11042,7 @@ function isAllowPasteLink(pastedWb) {
         this.cellCommentator.updateActiveComment();
         this.cellCommentator.drawCommentCells();
 		window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Update_Position();
+		Asc.editor.toggleChartElementsCallback();
         this.handlers.trigger("toggleAutoCorrectOptions", true);
         //this.model.updateTopLeftCell(this.visibleRange);
         return this;
@@ -11381,6 +11388,7 @@ function isAllowPasteLink(pastedWb) {
         this.cellCommentator.updateActiveComment();
         this.cellCommentator.drawCommentCells();
 		window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Update_Position();
+		Asc.editor.toggleChartElementsCallback();
         this.handlers.trigger("toggleAutoCorrectOptions", true);
 
 		//this.model.updateTopLeftCell(this.visibleRange);
@@ -18897,7 +18905,9 @@ function isAllowPasteLink(pastedWb) {
 		let isFormulaFromVal;
 
 		let valText = val[0].getFragmentText();
-		let canConverToFormula = this.canConverToFormula(valText);
+		let _numFormat = c && c.getNumFormat && c.getNumFormat();
+		let _isTextFormat = _numFormat && _numFormat.getType && _numFormat.getType() === Asc.c_oAscNumFormatType.Text;
+		let canConverToFormula = !_isTextFormat && this.canConverToFormula(valText);
 		let cellWithFormula = new AscCommonExcel.CCellWithFormula(this.model, bbox.r1, bbox.c1);
 
 		if (!isFormula && canConverToFormula) {

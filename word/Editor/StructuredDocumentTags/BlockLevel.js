@@ -267,6 +267,21 @@ CBlockLevelSdt.prototype.GetRelativeCurrentPage = function()
 {
 	return this.Content.GetRelativeCurrentPage();
 };
+CBlockLevelSdt.prototype.IsFirstOnDocumentPage = function(curPage)
+{
+	if (0 === curPage || undefined === curPage)
+	{
+		if (null !== this.Get_DocumentPrev())
+			return false;
+		
+		if (!this.Parent || !this.Parent.IsFirstOnDocumentPage)
+			return true;
+		
+		return this.Parent.IsFirstOnDocumentPage(this.GetRelativePage(0));
+	}
+	
+	return this.GetAbsolutePage(curPage) !== this.GetAbsolutePage(curPage - 1);
+};
 CBlockLevelSdt.prototype.IsInText = function(X, Y, CurPage)
 {
 	return this.Content.IsInText(X, Y, CurPage);
@@ -282,17 +297,18 @@ CBlockLevelSdt.prototype.IsTableBorder = function(X, Y, CurPage)
 CBlockLevelSdt.prototype.UpdateCursorType = function(X, Y, CurPage)
 {
 	var oBounds = this.GetContentBounds(CurPage);
-	if (true === this.Lock.Is_Locked() && X < oBounds.Right && X > oBounds.Left && Y > oBounds.Top && Y < oBounds.Bottom)
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && true === this.Lock.Is_Locked() && X < oBounds.Right && X > oBounds.Left && Y > oBounds.Top && Y < oBounds.Bottom)
 	{
 		var MMData              = new AscCommon.CMouseMoveData();
-		var Coords              = this.LogicDocument.DrawingDocument.ConvertCoordsToCursorWR(oBounds.Left, oBounds.Top, this.GetAbsolutePage(CurPage), this.Get_ParentTextTransform());
+		var Coords              = logicDocument.DrawingDocument.ConvertCoordsToCursorWR(oBounds.Left, oBounds.Top, this.GetAbsolutePage(CurPage), this.Get_ParentTextTransform());
 		MMData.X_abs            = Coords.X - 5;
 		MMData.Y_abs            = Coords.Y;
 		MMData.Type             = Asc.c_oAscMouseMoveDataTypes.LockedObject;
 		MMData.UserId           = this.Lock.Get_UserId();
 		MMData.HaveChanges      = this.Lock.Have_Changes();
 		MMData.LockedObjectType = c_oAscMouseMoveLockedObjectType.Common;
-		this.LogicDocument.Api.sync_MouseMoveCallback(MMData);
+		logicDocument.Api.sync_MouseMoveCallback(MMData);
 	}
 
 	this.DrawContentControlsTrack(AscCommon.ContentControlTrack.Hover, X, Y, CurPage);
@@ -410,7 +426,8 @@ CBlockLevelSdt.prototype.MoveCursorLeft = function(AddToSelect, Word)
 	}
 
 	var bResult = this.Content.MoveCursorLeft(AddToSelect, Word);
-	if (!bResult && this.LogicDocument.IsFillingFormMode())
+	let logicDocument = this.GetLogicDocument();
+	if (!bResult && logicDocument && logicDocument.IsFillingFormMode())
 		return true;
 
 	return bResult;
@@ -430,7 +447,8 @@ CBlockLevelSdt.prototype.MoveCursorRight = function(AddToSelect, Word)
 	}
 
 	var bResult = this.Content.MoveCursorRight(AddToSelect, Word, false);
-	if (!bResult && this.LogicDocument.IsFillingFormMode())
+	let logicDocument = this.GetLogicDocument();
+	if (!bResult && logicDocument && logicDocument.IsFillingFormMode())
 		return true;
 
 	return bResult;
@@ -874,8 +892,9 @@ CBlockLevelSdt.prototype.DistributeTableCells = function(isHorizontally)
 };
 CBlockLevelSdt.prototype.Document_UpdateInterfaceState = function()
 {
-	if (!this.IsBuiltInTableOfContents())
-		this.LogicDocument.Api.sync_ContentControlCallback(this.GetContentControlPr());
+	let logicDocument = this.GetLogicDocument();
+	if (!this.IsBuiltInTableOfContents() && logicDocument)
+		logicDocument.Api.sync_ContentControlCallback(this.GetContentControlPr());
 
 	this.Content.Document_UpdateInterfaceState();
 };
@@ -988,11 +1007,11 @@ CBlockLevelSdt.prototype.GetBoundingRect = function()
 };
 CBlockLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurPage, isCheckHit, padding)
 {
-	if (!this.IsRecalculated() || !this.LogicDocument)
+	let logicDocument = this.GetLogicDocument();
+	if (!this.IsRecalculated() || !logicDocument)
 		return false;
 
-	var oLogicDocument   = this.LogicDocument;
-	var oDrawingDocument = oLogicDocument.GetDrawingDocument();
+	var oDrawingDocument = logicDocument.GetDrawingDocument();
 	var arrRects = [];
 
 	// TODO: Нужно отрисовать рамку формулы, но для этого нужно чтобы селект плейсхолдера был не целиком на параграф,
@@ -1005,7 +1024,7 @@ CBlockLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurPa
 	
 	var oHdrFtr     = this.IsHdrFtr(true);
 	var nHdrFtrPage = oHdrFtr ? oHdrFtr.GetContent().GetAbsolutePage(0) : null;
-	let isFullWidth = oLogicDocument.IsFillingFormMode();
+	let isFullWidth = logicDocument.IsFillingFormMode();
 
 	for (var nPageIndex = 0, nPagesCount = this.GetPagesCount(); nPageIndex < nPagesCount; ++nPageIndex)
 	{
@@ -1051,13 +1070,13 @@ CBlockLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurPa
 			oMMData.Y_abs = oCoords.Y;
 			oMMData.Type  = Asc.c_oAscMouseMoveDataTypes.Form;
 			oMMData.Text  = sHelpText;
-			oLogicDocument.GetApi().sync_MouseMoveCallback(oMMData);
+			logicDocument.GetApi().sync_MouseMoveCallback(oMMData);
 		}
 	}
 	
 	if (padding)
 	{
-		let checkBounds = oLogicDocument && oLogicDocument.IsDocumentEditor();
+		let checkBounds = logicDocument.IsDocumentEditor();
 		
 		for (let i = 0; i < arrRects.length; ++i)
 		{
@@ -1071,7 +1090,7 @@ CBlockLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurPa
 				let pageAbs = arrRects[i].Page;
 				let pageRel = arrRects[i].PageRel;
 				let sectionAbs = this.GetAbsoluteSection(pageRel);
-				let documentPage = oLogicDocument.GetPage(pageAbs);
+				let documentPage = logicDocument.GetPage(pageAbs);
 				let pageSectionIndex = documentPage ? documentPage.GetSectionIndexByAbsoluteIndex(sectionAbs) : -1;
 				let pageSection = documentPage ? documentPage.GetSection(pageSectionIndex) : null;
 				if (pageSection)
@@ -1083,7 +1102,7 @@ CBlockLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurPa
 		}
 	}
 	if (AscCommon.ContentControlTrack.Hover === nType)
-		oLogicDocument.HoverCC.addCC(this);
+		logicDocument.HoverCC.addCC(this);
 	
 	oDrawingDocument.addContentControlTrack(this, nType, arrRects);
 	return true;
@@ -1237,11 +1256,13 @@ CBlockLevelSdt.prototype.Is_DrawingShape = function(bRetShape)
 };
 CBlockLevelSdt.prototype.Get_Numbering = function()
 {
-	return this.LogicDocument.Get_Numbering();
+	let logicDocument = this.GetLogicDocument();
+	return logicDocument ? logicDocument.Get_Numbering() : AscWord.DEFAULT_NUMBERING;
 };
 CBlockLevelSdt.prototype.Get_Styles = function()
 {
-	return this.LogicDocument.Get_Styles();
+	let logicDocument = this.GetLogicDocument();
+	return logicDocument ? logicDocument.Get_Styles() : AscWord.DEFAULT_STYLES;
 };
 CBlockLevelSdt.prototype.Get_TableStyleForPara = function()
 {
@@ -1377,16 +1398,6 @@ CBlockLevelSdt.prototype.GetAllSeqFieldsByType = function(sType, aFields)
 CBlockLevelSdt.prototype.Get_ParentTextTransform = function()
 {
 	return this.Parent.Get_ParentTextTransform();
-};
-CBlockLevelSdt.prototype.Get_SectPr = function()
-{
-	if (this.Parent && this.Parent.Get_SectPr)
-	{
-		this.Parent.Update_ContentIndexing();
-		return this.Parent.Get_SectPr(this.Index);
-	}
-
-	return null;
 };
 CBlockLevelSdt.prototype.GetMargins = function()
 {
@@ -2056,9 +2067,9 @@ CBlockLevelSdt.prototype.ToggleCheckBox = function(isChecked)
 	if (undefined !== isChecked && this.Pr.CheckBox.Checked === isChecked)
 		return;
 
-	let oLogicDocument = this.GetLogicDocument();
-	if (oLogicDocument && oLogicDocument.IsDocumentEditor())
-		oLogicDocument.OnChangeForm(this);
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsDocumentEditor())
+		logicDocument.OnChangeForm(this);
 
 	if (undefined === isChecked && this.IsRadioButton() && true === this.Pr.CheckBox.Checked)
 		return;
@@ -2077,7 +2088,8 @@ CBlockLevelSdt.prototype.private_UpdateCheckBoxContent = function()
 	var isChecked = this.Pr.CheckBox.Checked;
 
 	var oRun;
-	if (this.LogicDocument && this.LogicDocument.IsTrackRevisions())
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsTrackRevisions())
 	{
 		var oFirstParagraph = this.GetFirstParagraph();
 		var oFirstRun       = oFirstParagraph ? oFirstParagraph.GetFirstRun() : null;
@@ -2193,14 +2205,15 @@ CBlockLevelSdt.prototype.private_UpdatePictureContent = function(_nW, _nH)
 
 	if (!oDrawing)
 	{
-		var oDrawingObjects = this.LogicDocument ? this.LogicDocument.DrawingObjects : null;
+		let logicDocument = this.GetLogicDocument();
+		var oDrawingObjects = logicDocument ? logicDocument.DrawingObjects : null;
 		if (!oDrawingObjects)
 			return;
 
 		var nW = _nW ? _nW : 50;
 		var nH = _nH ? _nH : 50;
 
-		oDrawing   = new ParaDrawing(nW, nH, null, oDrawingObjects, this.LogicDocument, null);
+		oDrawing   = new ParaDrawing(nW, nH, null, oDrawingObjects, logicDocument, null);
 		var oImage = oDrawingObjects.createImage(AscCommon.g_sWordPlaceholderImage, 0, 0, nW, nH);
 		oImage.setParent(oDrawing);
 		oDrawing.Set_GraphicObject(oImage);
@@ -2314,8 +2327,9 @@ CBlockLevelSdt.prototype.SelectListItem = function(sValue)
 		return;
 
 	var sText = oList.GetTextByValue(sValue);
-
-	if (this.LogicDocument && this.LogicDocument.IsTrackRevisions())
+	
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsTrackRevisions())
 	{
 		if (!sText && this.IsPlaceHolder())
 		{
@@ -2456,7 +2470,8 @@ CBlockLevelSdt.prototype.private_UpdateDatePickerContent = function()
 	var oRun;
 	var sText = this.Pr.Date.ToString();
 
-	if (this.LogicDocument && this.LogicDocument.IsTrackRevisions())
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsTrackRevisions())
 	{
 		if (!sText && this.IsPlaceHolder())
 			return;
@@ -2613,7 +2628,8 @@ CBlockLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType, bChec
 };
 CBlockLevelSdt.prototype.CheckContentControlEditingLock = function()
 {
-	var isCheckContentControlLock = this.LogicDocument ? this.LogicDocument.IsCheckContentControlsLock() : true;
+	let logicDocument = this.GetLogicDocument();
+	var isCheckContentControlLock = logicDocument ? logicDocument.IsCheckContentControlsLock() : true;
 	if (!isCheckContentControlLock)
 		return;
 

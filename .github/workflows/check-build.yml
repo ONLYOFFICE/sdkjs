@@ -93,8 +93,9 @@ jobs:
           node node_modules/node-qunit-puppeteer/cli.js tests/word/revisions/paragraph.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/word/merge-documents/mergeDocuments.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/word/math-autocorrection/math-autocorrection.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/math-ml/math-ml.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/word/change-case/change-case.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/builder/api/replace-text-smart.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/js-api/js-api.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/word/shortcuts/shortcuts.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/slide/shortcuts/shortcuts.html 30000 "--no-sandbox"
 

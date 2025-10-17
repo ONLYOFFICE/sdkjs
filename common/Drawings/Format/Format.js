@@ -3486,6 +3486,14 @@
 
 // -----------------------------
 
+
+		function CBaseFill() {
+			CBaseNoIdObject.call(this);
+		}
+		InitClass(CBaseFill, CBaseNoIdObject, 0);
+		CBaseFill.prototype.type = c_oAscFill.FILL_TYPE_NONE;
+
+
 		function CBlipFill() {
 			CBaseFill.call(this);
 
@@ -4029,12 +4037,6 @@
 				other.fillRect.b == this.fillRect.b);
 		};
 
-
-		function CBaseFill() {
-			CBaseNoIdObject.call(this);
-		}
-		InitClass(CBaseFill, CBaseNoIdObject, 0);
-		CBaseFill.prototype.type = c_oAscFill.FILL_TYPE_NONE;
 
 		function CBlip(oBlipFill) {
 			CBaseNoIdObject.call(this);

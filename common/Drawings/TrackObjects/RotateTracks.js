@@ -373,6 +373,10 @@ OverlayObject.prototype.getFullRotate = function () {
         {
             shape_drawer.bIsNoFillAttack = false;
         }
+        if (this.TextElement)
+        {
+            shape_drawer.bIsNoSmartAttack = true;
+        }
         shape_drawer.draw(this.geometry);
         graphics.RestoreGrState();
     };

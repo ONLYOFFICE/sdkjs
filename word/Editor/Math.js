@@ -3195,7 +3195,7 @@ ParaMath.prototype.IsParentEquationPlaceholder = function()
 
 	return false;
 };
-ParaMath.prototype.GetSelectdLevelOfContent = function()
+ParaMath.prototype.GetSelectedLevelOfContent = function()
 {
 	let content = this.GetSelectContent();
 	return content.Content;
@@ -3204,10 +3204,10 @@ ParaMath.prototype.CalculateTextToTable = function(oEngine)
 {
 	this.Root.CalculateTextToTable(oEngine);
 };
-ParaMath.prototype.ConvertfromMathML = function(xml)
+ParaMath.prototype.ConvertFromMathML = function(xml)
 {
-	let currentMath = this.GetSelectdLevelOfContent();
-	let math = ParaMath.fromMathML(null, xml ? xml : "");
+	let currentMath = this.GetSelectedLevelOfContent();
+	let math = ParaMath.fromMathML(xml);
 
 	let arrContentAfterConvert = [];
 	if (currentMath.Content[currentMath.CurPos] instanceof ParaRun)
@@ -3235,7 +3235,7 @@ ParaMath.prototype.ConvertfromMathML = function(xml)
 };
 ParaMath.prototype.ConvertFromLaTeX = function(text)
 {
-	let math = this.GetSelectdLevelOfContent();
+	let math = this.IsSelectionUse() ? this.GetSelectedLevelOfContent() : this.Root;
 
 	if (!text)
 	{
@@ -3257,7 +3257,7 @@ ParaMath.prototype.ConvertToLaTeX = function()
 };
 ParaMath.prototype.ConvertFromUnicodeMath = function(text)
 {
-	let math = this.GetSelectdLevelOfContent();
+	let math = this.IsSelectionUse() ? this.GetSelectedLevelOfContent() : this.Root;
 
 	if (!text)
 	{
@@ -3312,7 +3312,7 @@ ParaMath.prototype._convertView = function(isToLinear, nInputType, inputData)
 		}
 		else if (Asc.c_oAscMathInputType.MathML === nInputType)
 		{
-			this.ConvertfromMathML(inputData);
+			this.ConvertFromMathML(inputData);
 		}
 	}
 };
@@ -3382,10 +3382,23 @@ ParaMath.prototype.ProcessingOldEquationConvert = function()
 {
 	this.Root.ProcessingOldEquationConvert();
 };
+ParaMath.prototype.applyMathMLGlobalAttributes = function()
+{
+    if (!this.mathml_metadata)
+        return;
+
+    if (this.mathml_metadata['display'] === false)
+    {
+        this.ConvertToInlineMode();
+    }
+};
+ParaMath.fromMathML = function(mathML, textPr)
+{
+	return AscMath.MathML.toParaMath(mathML, textPr);
+};
 ParaMath.fromLatex = function(latex, textPr)
 {
 	let paraMath = new ParaMath();
-
 	latex = latex.replaceAll('&amp;', '&');
 	latex = latex.replaceAll('&lt;', '<');
 	latex = latex.replaceAll('&gt;', '>');
@@ -3407,591 +3420,6 @@ ParaMath.fromLatex = function(latex, textPr)
 	
 	return paraMath;
 };
-ParaMath.prototype.applyMathMLGlobalAttributes = function()
-{
-	if (!this.mathml_metadata)
-		return;
-
-	if (this.mathml_metadata['display'] === false)
-	{
-		this.ConvertToInlineMode();
-	}
-}
-ParaMath.fromMathML = function(inputParaMath, xml, textPr)
-{
-	let paraMath = inputParaMath ? inputParaMath : new ParaMath();
-
-	this.mathMLData = {
-		'mo-linebreak-todo': [],
-		'mo-id': {}
-	};
-	
-	let reader = new StaxParser(xml);
-	if (!reader.ReadNextNode() || "math" !== reader.GetNameNoNS())
-	{
-		paraMath.Root.Correct_Content();
-		return paraMath;
-	}
-	
-	paraMath.Root.fromMathML(reader, paraMath);
-	paraMath.Root.Correct_Content(true);
-
-	if (!inputParaMath)
-		paraMath.SetParagraph(null);
-
-	if (inputParaMath)
-		paraMath.applyMathMLGlobalAttributes();
-	
-	if (textPr)
-	{
-		textPr.RFonts.SetAll("Cambria Math");
-		paraMath.ApplyTextPr(textPr, undefined, true);
-	}
-	return paraMath;
-};
-ParaMath.proceedMathMLDefaultAttributes = function(attributes, elements, el, name)
-{
-	let keysAttributes = Object.keys(attributes);
-
-	for (let nAttribute = 0; nAttribute < keysAttributes.length; nAttribute++)
-	{
-		switch (keysAttributes[nAttribute])
-		{
-			case 'mathcolor':
-			{
-				let rgb = AscFormat.mapPrstColor[attributes.mathcolor];
-				if (rgb) {
-					let color = new AscWord.CDocumentColor((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
-					el.Set_Color(color);
-				}
-				break;
-			}
-			case 'mathbackground':
-			{
-				let rgb = AscFormat.mapPrstColor[attributes.mathbackground];
-				if (rgb)
-				{
-					let color = new AscWord.CDocumentColor((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
-					el.Set_HighLight(color);
-				}
-				break;
-			}
-			case 'mathsize':
-			{
-				//default size if 16px or 1em
-				if (attributes.mathsize === 'normal')
-				{
-					el.SetFontSize(16);
-				}
-				else if (attributes.mathsize === 'small')
-				{
-					el.SetFontSize(12);
-				}
-				else if (attributes.mathsize === 'big')
-				{
-					el.SetFontSize(20);
-				}
-				else if (attributes.mathsize.slice(-1) === "%" && Number(attributes.mathsize.slice(0, -1)))
-				{
-					let percentage		= Number(attributes.mathsize.slice(0, -1));
-					let defaultvalue	= 16;
-					let value			= defaultvalue * (percentage / 100);
-					el.SetFontSize(value);
-				}
-			}
-			default: break;
-		}
-	}
-
-	elements.push(el);
-};
-ParaMath.proceedMathMLImplicitDelimiter = function(result, start, end)
-{
-	let props			= new CMathDelimiterPr();
-	props.begChr		= start ? start.charCodeAt(0) : -1;
-	props.endChr		= end ? end.charCodeAt(0) : -1;
-	props.sepChr		= ','.charCodeAt(0);
-	props.shp			= DELIMITER_SHAPE_MATCH;
-
-	let mathContent = new CMathContent();
-	for (let i = 0; i < result.length; i++)
-	{
-		mathContent.addElementToContent(result[i]);
-	}
-
-	mathContent.Correct_Content(true);
-	props.content = [mathContent];
-
-	return [AscMath.Delimiter.fromMathML(undefined, props)];
-}
-
-ParaMath.readMathMLNode = function(reader, parentMathContent)
-{
-	function decodeHexEntities(str)
-	{
-		var result = '';
-		for (var i = 0; i < str.length;)
-		{
-			if (str.charAt(i) === '&' && str.charAt(i + 1) === '#' && str.charAt(i + 2).toLowerCase() === 'x')
-			{
-				var j = i + 3;
-				var hex = '';
-				while (j < str.length && str.charAt(j) !== ';') {
-					hex += str.charAt(j);
-					j++;
-				}
-				if (str.charAt(j) === ';') {
-					var code = parseInt(hex, 16);
-					if (!isNaN(code)) {
-						result += String.fromCharCode(code);
-						i = j + 1;
-						continue;
-					}
-				}
-			}
-
-			result += str.charAt(i);
-			i++;
-		}
-
-		return result;
-	}
-
-	function proceedAttributes(name, text, attributes)
-	{
-		const GetMathFontChar = AscMath.GetMathFontChar;
-		switch (name)
-		{
-			case 'mi':
-			{
-				let type = -1;
-				switch (attributes['mathvariant'])
-				{
-					case 'bold':					type = 0; break;
-					case 'italic':					type = 1; break;
-					case 'bold-italic':				type = 2; break;
-					case 'double-struck':			type = 12; break;
-					case 'bold-fraktur':			type = 10; break;
-					case 'script':					type = 7; break;
-					case 'bold-script':				type = 8; break;
-					case 'fraktur':					type = 9; break;
-					case 'sans-serif':				type = 3; break;
-					case 'bold-sans-serif':			type = 4; break;
-					case 'sans-serif-italic':		type = 5; break;
-					case 'sans-serif-bold-italic':	type = 6; break;
-					case 'monospace':				type = 11; break;
-					default:						type = -1; break;
-				}
-
-				// single character must be italic
-				if (text.length === 1 && type === -1 && !attributes['mathvariant'])
-					type = 1;
-
-				let convertedText = "";
-				for (let oIter = text.getUnicodeIterator(); oIter.check(); oIter.next())
-				{
-					let currentChar = String.fromCodePoint(oIter.value());
-
-					if (GetMathFontChar[currentChar] && GetMathFontChar[currentChar][type])
-						convertedText += GetMathFontChar[currentChar][type];
-					else
-						convertedText += currentChar;
-				}
-				text = convertedText;
-				break;
-			}
-			case 'mo':
-			{
-				if (attributes['id'])
-					this.mathMLData['mo-id'][attributes['id']] = elements[0];
-
-				if (attributes['linebreak'])
-				{
-					this.mathMLData['mo-linebreak-todo'].push({
-						element: elements[0],
-						type: attributes['linebreak'],
-						indentalign: attributes['indentalign'] === "id",
-						indenttarget: attributes['indenttarget']
-					});
-				}
-
-				// indent
-				if (attributes['movablelimits'])
-				{
-					parentMathContent.mathml_metadata['movablelimits'] = attributes['movablelimits'];
-				}
-
-				break;
-			}
-			case 'mspace':
-			{
-				text = "";
-				break;
-			}
-			case 'ms':
-			{
-				if (attributes['lquote'])
-				{
-					text = attributes['lquote'] + text;
-				}
-				else
-				{
-					text = "\"" + text;
-				}
-
-				if (attributes['rquote'])
-				{
-					text = text + attributes['rquote'];
-				}
-				else
-				{
-					text = text + "\"";
-				}
-				break;
-			}
-		}
-		return text;
-	}
-
-	function updateBaseText(text)
-	{
-		text = text.trim();
-		text = text.replaceAll(String.fromCharCode(8290), ""); // invisible *
-		text = text.replaceAll(String.fromCharCode(8292), ""); // invisible +
-		text = text.replaceAll("\n", "");
-		text = text.replaceAll("\r", "");
-		return text;
-	}
-	let elements = [];
-	let name = reader.GetNameNoNS();
-	switch (name)
-	{
-		case 'mi':
-		case 'mo':
-		case 'mn':
-		case 'mspace':
-		case 'mtext':
-		case 'ms':
-			let attributes = reader.GetAttributes();
-			let text = updateBaseText(reader.GetText());
-			text = decodeHexEntities(text);
-			text = proceedAttributes(name, text, attributes);
-			text = text.replaceAll("&nbsp;", " ");
-
-			if (text)
-			{
-				let run = new AscWord.Run(null, true);
-				run.AddText(text);
-				this.proceedMathMLDefaultAttributes(attributes, elements, run, name);
-			}
-			break;
-		case 'menclose':
-			this.proceedMathMLDefaultAttributes(
-				reader.GetAttributes(),
-				elements,
-				new AscMath.BorderBox.fromMathML(reader)
-			);
-			break;
-		case 'mphantom':
-			elements.push(new AscMath.Phantom.fromMathML(reader));
-			break;
-		case 'msub':
-			elements.push(new AscMath.Degree.fromMathML(reader, DEGREE_SUBSCRIPT));
-			break;
-		case 'msup':
-			elements.push(new AscMath.Degree.fromMathML(reader, DEGREE_SUPERSCRIPT));
-			break;
-		case 'msubsup':
-			elements.push(new AscMath.DegreeSubSup.fromMathML(reader, DEGREE_SubSup));
-			break;
-		// case 'mmultiscripts':
-		// {
-		//     let content = []
-		//     let depth = reader.GetDepth();
-		//     debugger
-		//     while (reader.ReadNextSiblingNode(depth))
-		//     {
-		//         let current = AscWord.ParaMath.readMathMLContent(reader);
-		//         if (reader.GetNameNoNS() === 'mprescripts')
-		//             break;
-		//         content.push(current);
-		//         let post = AscWord.ParaMath.readMathMLContent(reader);
-		//         console.log(current, post)
-		//     }
-		//     console.log(content);
-		//     break;
-		// }
-		case 'munderover':
-			let content = []
-			let depth = reader.GetDepth();
-			while (reader.ReadNextSiblingNode(depth))
-			{
-				let current = AscWord.ParaMath.readMathMLContent(reader)
-				content.push(current);
-			}
-
-			let textFirstContent = content[0].GetTextOfElement().GetText().trim()
-			if (AscMath.MathLiterals.nary.SearchU(textFirstContent))
-			{
-				elements.push(new AscMath.DegreeSubSup.fromMathML(reader, DEGREE_SubSup, content));
-			}
-			else
-			{
-				let Pr =  new CMathLimitPr();
-				Pr.type	= LIMIT_UP
-				Pr.content = [
-					content[0],
-					content[2],
-				];
-
-				var Limit = new CLimit(Pr);
-
-				var MathContent = new CMathContent();
-				MathContent.addElementToContent(Limit);
-				MathContent.Correct_Content(true)
-
-				Pr.type	= LIMIT_LOW
-				Pr.content = [
-					MathContent,
-					content[1]
-				];
-				let Limit2 = new CLimit(Pr);
-
-				// if (munderoverAttributes['accent'] === 'true')
-				// {
-				//     content[2].Apply_MenuProps({Action: c_oMathMenuAction.IncreaseArgumentSize}, 0);
-				// }
-				// else if (munderoverAttributes['accentunder'] === 'true')
-				// {
-				//     content[1].Apply_MenuProps({Action: c_oMathMenuAction.IncreaseArgumentSize}, 0);
-				// }
-				elements.push(Limit2);
-			}
-			break;
-		case 'mfrac':
-			elements.push(AscMath.Fraction.fromMathML(reader));
-			break;
-		case 'msqrt':
-			this.proceedMathMLDefaultAttributes(
-				reader.GetAttributes(),
-				elements,
-				new AscMath.Radical.fromMathML(reader)
-			);
-		
-			break;
-		case 'mroot':
-			elements.push(AscMath.Radical.fromMathML(reader, true));
-			break;
-		case 'mpadded':
-		case 'mstyle':
-		case 'mrow':
-		case 'merror':
-		case 'semantics':
-			elements = AscWord.ParaMath.readMathMLMRow(reader);
-			break;
-		case 'munder':
-		{
-			let attributes = reader.GetAttributes();
-
-			if (attributes['displaystyle'] === 'true')
-			{
-				elements.push(new AscMath.Nary.fromMathML(reader));
-				break;
-			}
-
-			if (attributes['accentunder'] === 'true')
-				elements.push(AscMath.Accent.fromMathML(reader, VJUST_TOP));
-			else
-				elements.push(AscMath.GroupCharacter.fromMathML(reader));
-
-			break;
-		}
-		case 'mover':
-		{
-			let attributes = reader.GetAttributes();
-
-			if (attributes['accent'] === 'true')
-				elements.push(AscMath.Accent.fromMathML(reader, VJUST_BOT));
-			else
-				elements.push(AscMath.GroupCharacter.fromMathML(reader, VJUST_TOP));
-			break;
-		}
-		case 'mtable':
-			elements.push(AscMath.Matrix.fromMathML(reader));
-			break;
-		// case 'mstack':
-		// 	elements.push(AscMath.EqArray.fromMathML(reader, true));
-		// 	break;
-		case 'mtr':
-			elements.push(AscMath.Matrix.fromMathML_mtr(reader));
-			break;
-		case 'mtd':
-			elements.push(AscMath.Matrix.fromMathML_mtd(reader))
-			break;
-		case 'mfenced':
-			elements.push(AscMath.Delimiter.fromMathML(reader));
-			break;
-		default:
-			return elements;
-	}
-	
-	return elements;
-};
-ParaMath.readMathMLMRow = function(reader)
-{
-	let result = []
-	let depth = reader.GetDepth();
-	while (reader.ReadNextSiblingNode(depth))
-	{
-		result = result.concat(AscWord.ParaMath.readMathMLNode(reader));
-	}
-
-	let processedResult = [];
-	let i = 0;
-	while (i < result.length)
-	{
-		let current = result[i];
-		let currentText = current instanceof ParaRun ? current.GetTextOfElement().GetText() : null;
-
-		if (currentText && (AscMath.MathLiterals.lBrackets.SearchU(currentText) || AscMath.MathLiterals.lrBrackets.SearchU(currentText)))
-		{
-			let openBracket = currentText;
-			let bracketContent = [];
-			let j = i + 1;
-			let closeBracket = null;
-			
-			while (j < result.length)
-			{
-				let nextElement = result[j];
-				let nextText = nextElement instanceof ParaRun ? nextElement.GetTextOfElement().GetText() : null;
-				
-				if (nextText && (AscMath.MathLiterals.rBrackets.SearchU(nextText) || AscMath.MathLiterals.lrBrackets.SearchU(nextText)))
-				{
-					closeBracket = nextText;
-					break;
-				}
-				else
-				{
-					bracketContent.push(nextElement);
-				}
-				j++;
-			}
-			
-			if (closeBracket)
-			{
-				processedResult.push(this.proceedMathMLImplicitDelimiter(bracketContent, openBracket, closeBracket)[0]);
-				i = j + 1;
-			}
-			else
-			{
-				let remainingContent = result.slice(i + 1);
-				processedResult.push(this.proceedMathMLImplicitDelimiter(remainingContent, openBracket, null)[0]);
-				break;
-			}
-		}
-		else if (currentText && AscMath.MathLiterals.rBrackets.SearchU(currentText))
-		{
-			let precedingContent = [];
-			let k = processedResult.length - 1;
-			
-			while (k >= 0)
-			{
-				let prevElement = processedResult[k];
-				if (prevElement instanceof AscMath.Delimiter)
-				{
-					break;
-				}
-				precedingContent.unshift(processedResult.pop());
-				k--;
-			}
-			
-			if (precedingContent.length > 0)
-			{
-				processedResult.push(this.proceedMathMLImplicitDelimiter(precedingContent, null, currentText)[0]);
-			}
-			else
-			{
-				processedResult.push(current);
-			}
-			i++;
-		}
-		else
-		{
-			processedResult.push(current);
-			i++;
-		}
-	}
-
-	return processedResult;
-};
-ParaMath.checkAfterAddContent = function()
-{
-};
-ParaMath.checkLinebreak = function (element)
-{
-	for (let i = 0; i < this.mathMLData['mo-linebreak-todo'].length; i++)
-	{
-		let current = this.mathMLData['mo-linebreak-todo'][i];
-		let el = current.element;
-		if (element === el)
-		{
-			this.mathMLData['mo-linebreak-todo'].splice(i, 1);
-			let element =  this.mathMLData['mo-id'][current.indenttarget];
-			return element.private_GetPosInParent();
-			// todo -> to operators
-		}
-	}
-	return null;
-};
-ParaMath.createContentFromText = function(text)
-{
-	let mathContent = new CMathContent();
-	let run = new AscWord.Run(null, true);
-	run.AddText(text);
-	mathContent.addElementToContent(run);
-	return mathContent;
-};
-ParaMath.readMathMLContent = function(reader)
-{
-	let mathContent = new CMathContent();
-	mathContent.mathml_metadata = {};
-	let elements = AscWord.ParaMath.readMathMLNode(reader, mathContent);
-	
-	for (let i = 0; i < elements.length; ++i)
-	{
-		let current = elements[i];
-		mathContent.addElementToContent(current);
-
-		let breakPos = this.checkLinebreak(current)
-		if (breakPos !== null)
-		{
-			current.Set_MathForcedBreak(true, undefined);
-		}
-	}
-	
-	mathContent.Correct_Content(true);
-	this.checkAfterAddContent();
-	return mathContent;
-};
-ParaMath.readMathMLContentOnLevel = function (reader)
-{
-	let content = [];
-	let mathContent = new CMathContent();
-	let depth = reader.GetDepth();
-
-	while (reader.ReadNextSiblingNode(depth))
-	{
-		content = content.concat(AscWord.ParaMath.readMathMLNode(reader));
-	}
-
-	for (let i = 0; i < content.length; i++)
-	{
-		mathContent.addElementToContent(content[i]);
-	}
-
-	mathContent.Correct_Content(true);
-	return mathContent;
-}
 
 function MatGetKoeffArgSize(FontSize, ArgSize)
 {

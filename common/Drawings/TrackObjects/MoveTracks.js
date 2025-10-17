@@ -862,7 +862,7 @@ function MoveChartObjectTrack(oObject, oChartSpace)
             return;
         }
 
-        History.Create_NewPoint(1);
+        AscCommon.History.Create_NewPoint(1);
         var oObjectToSet = null;
         if(this.originalObject instanceof AscFormat.CDLbl)
         {
@@ -995,7 +995,7 @@ function MoveChartObjectTrack(oObject, oChartSpace)
         {
             return;
         }
-        History.Create_NewPoint(1);
+        AscCommon.History.Create_NewPoint(1);
 		this.guide.setPos(this.getPos());
     };
 

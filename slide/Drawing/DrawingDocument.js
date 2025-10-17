@@ -1572,7 +1572,11 @@ function CDrawingDocument()
 	{
 
 		let thpages = this.m_oWordControl.Thumbnails.m_arrPages;
-		if(index < 0 || index >= thpages.length) return;
+		if (thpages.length > index)
+		{
+			thpages[index].IsRecalc = true;
+		}
+
 
 		if (this.m_oWordControl && this.m_oWordControl.MobileTouchManager)
 		{
@@ -1591,10 +1595,6 @@ function CDrawingDocument()
 			this.SendChangeDocumentToApi(true);
 		}
 
-		if (thpages.length > index)
-		{
-			thpages[index].IsRecalc = true;
-		}
 
 		if (index === this.SlideCurrent)
 		{
@@ -4821,14 +4821,6 @@ function CThumbnailsManager(editorPage)
 				bPreventDefault = false;
 				break;
 			}
-			case Asc.c_oAscPresentationShortcutType.Cut:
-			case Asc.c_oAscPresentationShortcutType.Copy:
-			case Asc.c_oAscPresentationShortcutType.Paste:
-			{
-				bReturnValue = undefined;
-				bPreventDefault = false;
-				break;
-			}
 			case Asc.c_oAscPresentationShortcutType.Duplicate:
 			{
 				if (oPresentation.CanEdit())
@@ -4839,7 +4831,7 @@ function CThumbnailsManager(editorPage)
 				bPreventDefault = true;
 				break;
 			}
-			case Asc.c_oAscPresentationShortcutType.Print:
+			case Asc.c_oAscPresentationShortcutType.PrintPreviewAndPrint:
 			{
 				oApi.onPrint();
 				bReturnValue = false;
@@ -4856,7 +4848,7 @@ function CThumbnailsManager(editorPage)
 				bPreventDefault = true;
 				break;
 			}
-			case Asc.c_oAscPresentationShortcutType.ShowContextMenu:
+			case Asc.c_oAscPresentationShortcutType.OpenContextMenu:
 			{
 				oThis.showContextMenu(true);
 				bReturnValue = false;
@@ -4870,6 +4862,9 @@ function CThumbnailsManager(editorPage)
 		}
 		if (!nShortCutAction)
 		{
+			if (AscCommon.isCopyPasteEvent(oEvent)) {
+				return;
+			}
 			switch (oEvent.KeyCode)
 			{
 				case 13: // enter

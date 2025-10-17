@@ -200,6 +200,10 @@
 		writer.WriteLong(flags);
 		writer.Seek(endPos);
 	};
+	FFData.prototype.isCheckBox = function()
+	{
+		return (!!this.checkBox);
+	};
 	FFData.fromBinary = function(reader)
 	{
 		let ffData = new FFData();

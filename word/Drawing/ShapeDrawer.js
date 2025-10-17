@@ -1689,17 +1689,20 @@ CShapeDrawer.prototype =
 		const scaleY = tile.sy ? (tile.sy / 1000) / 100 : 1;
 
 		// Offsets (aligning and direct offsets)
-		const alignmentMap = {
-			[AscCommon.c_oAscRectAlignType.tl]: [0, 0],
-			[AscCommon.c_oAscRectAlignType.t]: [0.5, 0],
-			[AscCommon.c_oAscRectAlignType.tr]: [1, 0],
-			[AscCommon.c_oAscRectAlignType.l]: [0, 0.5],
-			[AscCommon.c_oAscRectAlignType.ctr]: [0.5, 0.5],
-			[AscCommon.c_oAscRectAlignType.r]: [1, 0.5],
-			[AscCommon.c_oAscRectAlignType.bl]: [0, 1],
-			[AscCommon.c_oAscRectAlignType.b]: [0.5, 1],
-			[AscCommon.c_oAscRectAlignType.br]: [1, 1],
-		};
+		function getAlignment(key) {
+			switch (key) {
+				case AscCommon.c_oAscRectAlignType.tl: return [0, 0];
+				case AscCommon.c_oAscRectAlignType.t: return [0.5, 0];
+				case AscCommon.c_oAscRectAlignType.tr: return [1, 0];
+				case AscCommon.c_oAscRectAlignType.l: return [0, 0.5];
+				case AscCommon.c_oAscRectAlignType.ctr: return [0.5, 0.5];
+				case AscCommon.c_oAscRectAlignType.r: return [1, 0.5];
+				case AscCommon.c_oAscRectAlignType.bl: return [0, 1];
+				case AscCommon.c_oAscRectAlignType.b: return [0.5, 1];
+				case AscCommon.c_oAscRectAlignType.br: return [1, 1];
+				default: return [0, 0];
+			}
+		}
 
 		const align = AscFormat.isRealNumber(tile.algn) && tile.algn >= 0 && tile.algn <= 8
 			? tile.algn
@@ -1712,8 +1715,8 @@ CShapeDrawer.prototype =
 			const imageWidth = imageData.Image.width * scaleX * scaleCoefX;
 			const imageHeight = imageData.Image.height * scaleY * scaleCoefY;
 
-			alignOffsetX = alignmentMap[align][0] * (shapeWidth - imageWidth);
-			alignOffsetY = alignmentMap[align][1] * (shapeHeight - imageHeight);
+			alignOffsetX = getAlignment(align)[0] * (shapeWidth - imageWidth);
+			alignOffsetY = getAlignment(align)[1] * (shapeHeight - imageHeight);
 
 		} else {
 			const shapeBounds = this.Shape.getBounds();
@@ -1723,8 +1726,8 @@ CShapeDrawer.prototype =
 			const imageWidth = imageData.Image.width * scaleX * scaleCoefX;
 			const imageHeight = imageData.Image.height * scaleY * scaleCoefY;
 
-			alignOffsetX = shapeBounds.x + alignmentMap[align][0] * (shapeWidth - imageWidth);
-			alignOffsetY = shapeBounds.y + alignmentMap[align][1] * (shapeHeight - imageHeight);
+			alignOffsetX = shapeBounds.x + getAlignment(align)[0] * (shapeWidth - imageWidth);
+			alignOffsetY = shapeBounds.y + getAlignment(align)[1] * (shapeHeight - imageHeight);
 		}
 
 		const offsetX = tile.tx ? tile.tx * AscCommonWord.g_dKoef_emu_to_mm : 0;
@@ -1801,12 +1804,15 @@ CShapeDrawer.prototype =
 		const useTransparency = this.IsRectShape ? true : graphics.isSupportTextDraw() && !graphics.isTrack();
 		const alpha = (isTransparent && useTransparency) ? this.UniFill.transparent / 255 : 1;
 
+		// this.UniFill.fill.srcRect === this.Shape.brush.fill.srcRect === this.Shape.blipFill.srcRect
+		const srcRect = this.UniFill.fill.srcRect;
+
 		graphics.drawBlipFillStretch(
 			rotWithShape ? null : invertedTransform,
 			imageData.src,
 			alpha,
 			dstRect.l, dstRect.t, dstRect.r - dstRect.l, dstRect.b - dstRect.t,
-			this.UniFill.fill.srcRect,
+			srcRect,
 			this.UniFill.fill.canvas
 		);
 	},

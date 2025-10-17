@@ -807,6 +807,10 @@ CHeaderFooter.prototype =
 	{
 		this.Content.UpdateChart( Chart );
 	},
+	OpenChartEditor : function()
+	{
+		this.Content.OpenChartEditor();
+	},
 	GetChartSettings : function()
 	{
 		return this.Content.GetChartSettings();
@@ -1371,6 +1375,7 @@ CHeaderFooter.prototype =
 		return this.Content.CanAddComment();
 	}
 };
+CHeaderFooter.prototype.constructor = CHeaderFooter;
 CHeaderFooter.prototype.UpdateContentToDefaults = function()
 {
 	this.Content.ClearContent(true);
@@ -2129,7 +2134,11 @@ CHeaderFooterController.prototype =
 		if ( null != this.CurHdrFtr )
 			return this.CurHdrFtr.UpdateChart( Chart );
 	},
-
+	OpenChartEditor : function()
+	{
+		if ( null != this.CurHdrFtr )
+			return this.CurHdrFtr.OpenChartEditor();
+	},
 	GetChartSettings : function()
 	{
 		if ( null != this.CurHdrFtr )
@@ -2824,6 +2833,7 @@ CHeaderFooterController.prototype =
 		return {X : 0, Y : 0, Page : 0};
 	}
 };
+CHeaderFooterController.prototype.constructor = CHeaderFooterController;
 CHeaderFooterController.prototype.GetStyleFromFormatting = function()
 {
     if (null != this.CurHdrFtr)

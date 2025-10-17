@@ -399,4 +399,59 @@ $(function(){
 		strictEqual(fGetFormatedText(form.format("q")), "q", "format: ;;, number: q");
 	});
 
+	test("Conditional number formats", function test_conditional() {
+		// Basic conditional formatting with positive, negative, zero, and text
+		let form = new CellFormat('[>0]"+"0;[<0]"-"0;0;"qwe-"@');
+		strictEqual(fGetFormatedText(form.format(1)), '+1', "number: 1; format: [>0]\"+\"0;[<0]\"-\"0;0;\"qwe-\"@");
+		strictEqual(fGetFormatedText(form.format(-1)), '-1', "number: -1; format: [>0]\"+\"0;[<0]\"-\"0;0;\"qwe-\"@");
+		strictEqual(fGetFormatedText(form.format(0)), '0', "number: 0; format: [>0]\"+\"0;[<0]\"-\"0;0;\"qwe-\"@");
+		//todo
+		// strictEqual(fGetFormatedText(form.format("text")), 'qwe-text', "text: text; format: [>0]\"+\"0;[<0]\"-\"0;0;\"qwe-\"@");
+		
+		// Multiple conditional thresholds
+		form = new CellFormat('[<5]"<5-"0;[<20]"<20-"0;0');
+		strictEqual(fGetFormatedText(form.format(1)), '<5-1', "number: 1; format: [<5]\"<5-\"0;[<20]\"<20-\"0;0");
+		strictEqual(fGetFormatedText(form.format(10)), '<20-10', "number: 10; format: [<5]\"<5-\"0;[<20]\"<20-\"0;0");
+		strictEqual(fGetFormatedText(form.format(100)), '100', "number: 100; format: [<5]\"<5-\"0;[<20]\"<20-\"0;0");
+		
+		// Mixed conditional and standard formatting
+		form = new CellFormat('[<5]"<5-"0;000');
+		strictEqual(fGetFormatedText(form.format(1)), '<5-1', "number: 1; format: [<5]\"<5-\"0;000");
+		strictEqual(fGetFormatedText(form.format(5)), '005', "number: 5; format: [<5]\"<5-\"0;000");
+		strictEqual(fGetFormatedText(form.format(10)), '010', "number: 10; format: [<5]\"<5-\"0;000");
+		form = new CellFormat('[<5]"<5-"0;000;"qwe-"@');
+		strictEqual(fGetFormatedText(form.format(10)), '010', "number: 10; format: [<5]\"<5-\"0;000");
+		
+		// Standard first, conditional second
+		form = new CellFormat('000;[<5]"<5-"0');
+		strictEqual(fGetFormatedText(form.format(1)), '001', "number: 1; format: 000;[<5]\"<5-\"0");
+		strictEqual(fGetFormatedText(form.format(5)), '005', "number: 5; format: 000;[<5]\"<5-\"0");
+		strictEqual(fGetFormatedText(form.format(10)), '010', "number: 10; format: 000;[<5]\"<5-\"0");
+		
+		// Standard first with conditional second - negative values
+		form = new CellFormat('000;[<5]"<5-"0');
+		strictEqual(fGetFormatedText(form.format(-1)), '-<5-1', "number: -1; format: 000;[<5]\"<5-\"0");
+		
+		// Negative conditional thresholds
+		form = new CellFormat('000;[<-5]"<-5-"0');
+		strictEqual(fGetFormatedText(form.format(-1)), '#', "number: -1; format: 000;[<-5]\"<-5-\"0");
+		strictEqual(fGetFormatedText(form.format(-10)), '<-5-10', "number: -10; format: 000;[<-5]\"<-5-\"0");
+		
+		// Complex conditional ordering with negatives
+		form = new CellFormat('[<-5]000;00;0000');
+		strictEqual(fGetFormatedText(form.format(1)), '0001', "number: 1; format: [<-5]000;00;0000");
+		strictEqual(fGetFormatedText(form.format(0)), '0000', "number: 0; format: [<-5]000;00;0000");
+		strictEqual(fGetFormatedText(form.format(-1)), '01', "number: -1; format: [<-5]000;00;0000");
+		strictEqual(fGetFormatedText(form.format(-10)), '010', "number: -10; format: [<-5]000;00;0000");
+		
+		// Multiple negative thresholds
+		form = new CellFormat('[<-5]000;[<-10]00;0000');
+		strictEqual(fGetFormatedText(form.format(-20)), '020', "number: -20; format: [<-5]000;[<-10]00;0000");
+		
+		// Edge case - overflow formatting
+		form = new CellFormat('[<5]"<0-"0;[<10]"<10-"0;"qwe-"@');
+		strictEqual(fGetFormatedText(form.format(123)), '#', "number: 123; format: [<0]\"<0-\"0;[<10]\"<10-\"0;\"qwe-\"@");
+		strictEqual(fGetFormatedText(form.format(1)), '<0-1', "number: 1; format: [<0]\"<0-\"0;[<10]\"<10-\"0;\"qwe-\"@");
+	});
+
 });

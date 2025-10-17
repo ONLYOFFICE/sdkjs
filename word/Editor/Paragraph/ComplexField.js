@@ -2093,7 +2093,12 @@ CComplexField.prototype.IsFormFieldEnabled = function()
 };
 CComplexField.prototype.IsFormCheckBox = function()
 {
-	return this.CheckType(AscWord.fieldtype_FORMCHECKBOX);
+	if (!this.CheckType(AscWord.fieldtype_FORMCHECKBOX))
+		return false;
+	
+	let beginChar = this.GetBeginChar();
+	let ffData    = beginChar ? beginChar.GetFFData() : null;
+	return ffData && ffData.isCheckBox();
 };
 CComplexField.prototype.ToggleFormCheckBox = function()
 {

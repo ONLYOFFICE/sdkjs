@@ -708,7 +708,7 @@
     };
     CPushButtonField.prototype.private_SetValue = CPushButtonField.prototype.SetValue;
     CPushButtonField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
-        if (this.IsHidden() && !this.IsEditMode())
+        if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
             return;
 		
 		this._UpdateImage();
@@ -1246,7 +1246,7 @@
     };
 
     CPushButtonField.prototype.DrawFromStream = function(oGraphicsPDF, oGraphicsWord) {
-        if (this.IsHidden() && !this.IsEditMode())
+        if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
             return;
         
         let oViewer = editor.getDocumentRenderer();
@@ -1395,9 +1395,7 @@
         oDoc.activeForm = this;
 
         if (oDoc.IsEditFieldsMode()) {
-            if (false == this.IsLocked()) {
-                this.editShape.onMouseDown(x, y, e)
-            }
+            this.editShape.onMouseDown(x, y, e);
             return;
         }
 
@@ -2158,8 +2156,11 @@
             let sPathToImg = AscCommon.getFullImageSrc2(this.GetImageRasterId(nImgType));
             let nExistIdx = memory.images.indexOf(sPathToImg);
             if ((memory.isForSplit || memory.isCopyPaste) && sPathToImg) {
-                let oImageElm = Asc.editor.ImageLoader.map_image_index[sPathToImg].Image;
-                sPathToImg = getBase64FromImage(oImageElm);
+                let mapItem = Asc.editor.ImageLoader.map_image_index[sPathToImg];
+                if (mapItem) {
+                    let oImageElm = mapItem.Image;
+                    sPathToImg = getBase64FromImage(oImageElm);
+                }
             }
             
             if (nExistIdx === -1) {

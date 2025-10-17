@@ -126,8 +126,10 @@
 			return "Text" + counter;
 		else if (form.IsCheckBox())
 			return "CheckBox" + counter;
-		else if (form.IsDropDownList() || form.IsComboBox())
+		else if (form.IsDropDownList())
 			return "DropDown" + counter;
+		else if (form.IsComboBox())
+			return "ComboBox" + counter;
 		else if (form.IsPicture())
 			return "Image" + counter;
 

@@ -59,7 +59,7 @@
 	const TIMELINE_HEADER_RIGHT_MARGIN = 18 * g_dKoef_pix_to_mm;
 
 	const MEDIA_CONTROL_HEIGHT = 40;
-	const MIN_MEDIA_CONTROL_WIDTH = 560;
+	const MIN_MEDIA_CONTROL_WIDTH = 320;
 	const MIN_MEDIA_CONTROL_CONTROL_INSET = 20;
 	const MEDIA_CONTROL_TOP_MARGIN = 10;
 
@@ -279,6 +279,8 @@
 		this.reporterTimerAdd = 0;
 		this.reporterTimerLastStart = -1;
 		this.reporterPointer = false;
+        this.reporterTooltip = null;
+        this.reporterTooltipTimeout = null;
 
 		// mobile
 		this.MobileTouchManager = null;
@@ -422,7 +424,13 @@
 				"Highlighter",
 				"Ink color",
 				"Eraser",
-				"Erase screen"
+                "Erase screen",
+                "Start presentation",
+                "Pause presentation",
+                "Previous slide",
+                "Next slide",
+                "Laser pointer",
+                "Draw"
 			];
 			var _translates = this.m_oApi.reporterTranslates;
 			if (_translates) {
@@ -435,6 +443,12 @@
 				this.reporterTranslates[6] = _translates[6];
 				this.reporterTranslates[7] = _translates[7];
 				this.reporterTranslates[8] = _translates[8];
+                this.reporterTranslates[9] = _translates[9]; // Play
+                this.reporterTranslates[10] = _translates[10]; // Pause
+                this.reporterTranslates[11] = _translates[11] // Previous slide
+                this.reporterTranslates[12] = _translates[12] // Next slide
+                this.reporterTranslates[13] = _translates[13] // Pointer
+                this.reporterTranslates[14] = _translates[14] // Draw
 
 				if (_translates[3])
 					this.m_oApi.DemonstrationEndShowMessage(_translates[3]);
@@ -442,12 +456,12 @@
 
 			var _buttonsContent = "";
 			_buttonsContent += "<label class=\"block_elem_no_select dem-text-color\" id=\"dem_id_time\" style=\"text-shadow: none;white-space: nowrap;font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 11px; position:absolute; left:10px; bottom: 7px;\">00:00:00</label>";
-			_buttonsContent += "<button class=\"btn-text-default-img\" id=\"dem_id_play\" style=\"left: 60px; bottom: 3px; width: 20px; height: 20px;\"><span class=\"btn-play back_image_buttons\" id=\"dem_id_play_span\" style=\"width:100%;height:100%;\"></span></button>";
+			_buttonsContent += "<button class=\"btn-text-default-img\" id=\"dem_id_play\" data-play-tooltip=\"" + this.reporterTranslates[9] + "\" data-pause-tooltip=\"" + this.reporterTranslates[10] + "\"  style=\"left: 60px; bottom: 3px; width: 20px; height: 20px;\"><span class=\"btn-play back_image_buttons\" id=\"dem_id_play_span\" style=\"width:100%;height:100%;\"></span></button>";
 			_buttonsContent += ("<button class=\"btn-text-default\" id=\"dem_id_reset\" style=\"left: 85px; bottom: 2px; \">" + this.reporterTranslates[0] + "</button>");
 			_buttonsContent += ("<button class=\"btn-text-default\" id=\"dem_id_end\" style=\"right: 10px; bottom: 2px; \">" + this.reporterTranslates[2] + "</button>");
 
-			_buttonsContent += "<button class=\"btn-text-default-img\" id=\"dem_id_prev\"  style=\"left: 150px; bottom: 3px; width: 20px; height: 20px;\"><span class=\"btn-prev back_image_buttons\" style=\"width:100%;height:100%;\"></span></button>";
-			_buttonsContent += "<button class=\"btn-text-default-img\" id=\"dem_id_next\"  style=\"left: 170px; bottom: 3px; width: 20px; height: 20px;\"><span class=\"btn-next back_image_buttons\" style=\"width:100%;height:100%;\"></span></button>";
+			_buttonsContent += "<button class=\"btn-text-default-img\" id=\"dem_id_prev\"  data-tooltip=\"" + this.reporterTranslates[11] + "\" style=\"left: 150px; bottom: 3px; width: 20px; height: 20px;\"><span class=\"btn-prev back_image_buttons\" style=\"width:100%;height:100%;\"></span></button>";
+			_buttonsContent += "<button class=\"btn-text-default-img\" id=\"dem_id_next\" data-tooltip=\"" + this.reporterTranslates[12] + "\" style=\"left: 170px; bottom: 3px; width: 20px; height: 20px;\"><span class=\"btn-next back_image_buttons\" style=\"width:100%;height:100%;\"></span></button>";
 
 			_buttonsContent += "<div class=\"separator block_elem_no_select\" id=\"dem_id_sep\" style=\"left: 185px; bottom: 3px;\"></div>";
 
@@ -455,9 +469,9 @@
 
 			_buttonsContent += "<div class=\"separator block_elem_no_select\" id=\"dem_id_sep2\" style=\"left: 350px; bottom: 3px;\"></div>";
 
-			_buttonsContent += "<button class=\"btn-text-default-img\" id=\"dem_id_pointer\"  style=\"left: 365px; bottom: 3px; width: 20px; height: 20px;\"><span id=\"dem_id_pointer_span\" class=\"btn-pointer back_image_buttons\" style=\"width:100%;height:100%;\"></span></button>";
+			_buttonsContent += "<button class=\"btn-text-default-img\" id=\"dem_id_pointer\" data-tooltip=\"" + this.reporterTranslates[13] + "\" style=\"left: 365px; bottom: 3px; width: 20px; height: 20px;\"><span id=\"dem_id_pointer_span\" class=\"btn-pointer back_image_buttons\" style=\"width:100%;height:100%;\"></span></button>";
 
-			_buttonsContent += "<button class=\"btn-text-default-img\" id=\"dem_id_draw_menu_trigger\"  style=\"left: 385px; bottom: 3px; width: 20px; height: 20px;\"><span id=\"dem_id_draw_menu_trigger_span\" class=\"btn-pen back_image_buttons\" style=\"width:100%;height:100%;\"></span></button>";
+			_buttonsContent += "<button class=\"btn-text-default-img\" id=\"dem_id_draw_menu_trigger\" data-tooltip=\"" + this.reporterTranslates[14] + "\" style=\"left: 385px; bottom: 3px; width: 20px; height: 20px;\"><span id=\"dem_id_draw_menu_trigger_span\" class=\"btn-pen back_image_buttons\" style=\"width:100%;height:100%;\"></span></button>";
 
 			let colorList = "";
 			const drawColors = ["FFFFFF", "000000", "E81416", "FFA500", "FAEB36", "79C314", "487DE7", "4B369D", "70369D"];
@@ -684,19 +698,24 @@
 						if (window.editor.WordControl.reporterPointer) {
 							this.elementReporter6.onclick()
 						}
+
+                        let currentIcon;
 						switch (currentTool) {
 							case "pen":
+                                currentIcon = "btn-pen";
 								Asc.editor.asc_StartDrawInk(createSolidPen(this.currentDrawColor, 1, 100));
 								break;
 							case "highlighter":
+                                currentIcon = "btn-highlighter";
 								Asc.editor.asc_StartDrawInk(createSolidPen(this.currentDrawColor, 6, 50));
 								break;
 							case "eraser":
+                                currentIcon = "btn-eraser";
 								Asc.editor.asc_StartInkEraser();
 								break;
 						}
 
-						this.toggleElementReporterDrawMenuButton(true);
+						this.toggleElementReporterDrawMenuButton(true, currentIcon);
 					}
 
 					this.elementReporterDrawMenu.style.display = "none";
@@ -739,7 +758,8 @@
 				"padding": "5px"
 			});
 
-			this.toggleElementReporterDrawMenuButton = function(state, icon = "btn-pen") {
+			this.toggleElementReporterDrawMenuButton = function(state, icon) {
+				icon = undefined !== icon ? icon : "btn-pen";
 				const btnIcon = document.getElementById("dem_id_draw_menu_trigger_span");
 
 				let currentIcon;
@@ -819,6 +839,93 @@
 					window.addEventListener('click', handleOutsideClose);
 				}
 			};
+
+            // Tooltip
+
+            if (!this.reporterTooltip) {
+                this.reporterTooltip = document.createElement('div');
+                this.reporterTooltip.className = 'tooltip';
+                this.reporterTooltip.id = 'dem_tooltip';
+                document.body.appendChild(this.reporterTooltip);
+            }
+
+            const showTooltip = function (element, text, delay) {
+                delay = undefined !== delay ? delay : 500;
+                if (!!this.reporterTooltipTimeout) {
+                    clearTimeout(this.reporterTooltipTimeout);
+                }
+
+                this.reporterTooltipTimeout = setTimeout(function () {
+                    this.reporterTooltip.textContent = text;
+
+                    const rect = AscCommon.UI.getBoundingClientRect(element);
+                    const tooltipRect = AscCommon.UI.getBoundingClientRect(this.reporterTooltip);
+
+                    let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+                    let top = rect.top - tooltipRect.height - 10;
+
+                    if (left < 5) {
+                        left = 5;
+                    }
+
+                    if (left + tooltipRect.width > window.innerWidth - 5) {
+                        left = window.innerWidth - tooltipRect.width - 5;
+                    }
+
+                    this.reporterTooltip.style.left = left + 'px';
+                    this.reporterTooltip.style.top = top + 'px';
+                    this.reporterTooltip.classList.add('show');
+                }.bind(this), delay);
+            }.bind(this);
+
+            const hideTooltip = function () {
+                if (!!this.reporterTooltipTimeout) {
+                    clearTimeout(this.reporterTooltipTimeout);
+                    this.reporterTooltipTimeout = null;
+                }
+
+                if (!!this.reporterTooltip) {
+                    this.reporterTooltip.classList.remove('show');
+                }
+            }.bind(this);
+
+            function addReporterTooltipToElement(element) {
+                if (!element) {
+                    return;
+                }
+
+                element.addEventListener('mouseenter', function (e) {
+                    showTooltip(e.target, e.target.getAttribute('data-tooltip'));
+                });
+
+                element.addEventListener('mouseleave', function () {
+                    hideTooltip();
+                });
+
+                element.addEventListener('mousedown', function () {
+                    hideTooltip();
+                });
+            }
+
+            addReporterTooltipToElement(this.elementReporter2);
+            addReporterTooltipToElement(this.elementReporter3);
+            addReporterTooltipToElement(this.elementReporter6);
+            addReporterTooltipToElement(this.elementReporterDrawMenuTrigger);
+
+            if (this.elementReporter4) {
+                this.elementReporter4.addEventListener('mouseenter', function(e) {
+                    const isPlaying = window.editor.WordControl.DemonstrationManager.IsPlayMode;
+                    showTooltip(e.target, isPlaying ? e.target.getAttribute('data-pause-tooltip') : e.target.getAttribute('data-play-tooltip'));
+                });
+
+                this.elementReporter4.addEventListener('mouseleave', function() {
+                    hideTooltip();
+                });
+
+                this.elementReporter4.addEventListener('mousedown', function() {
+                    hideTooltip();
+                });
+            }
 
 			window.onkeydown = this.onKeyDown;
 			window.onkeyup = this.onKeyUp;
@@ -1219,14 +1326,33 @@
 	CEditorPage.prototype.checkBodySize = function () {
 		this.checkBodyOffset();
 
-		var el = document.getElementById(this.Name);
+		const element = document.getElementById(this.Name);
+		if (!element)
+			return;
 
-		if (this.Width != el.offsetWidth || this.Height != el.offsetHeight) {
-			this.Width = el.offsetWidth;
-			this.Height = el.offsetHeight;
-			return true;
+		const rect = AscCommon.UI.getBoundingClientRect(element);
+		if (!rect)
+			return;
+
+		let hasSizeChanges = false;
+
+		if (AscFormat.isRealNumber(rect.width)) {
+			const newWidth = Math.floor(rect.width);
+			if (this.Width != newWidth) {
+				this.Width = newWidth;
+				hasSizeChanges = true;
+			}
 		}
-		return false;
+
+		if (AscFormat.isRealNumber(rect.height)) {
+			const newHeight = Math.floor(rect.height);
+			if (this.Height != newHeight) {
+				this.Height = newHeight;
+				hasSizeChanges = true;
+			}
+		}
+
+		return hasSizeChanges;
 	};
 
 	// Retina checks
@@ -2750,6 +2876,9 @@
 		// update media control position
 		this.m_oApi.onUpdateMediaPlayer();
 		AscCommon.g_specialPasteHelper.SpecialPasteButton_Update_Position();
+
+		// update position of toggle-chart-elements button
+		Asc.editor.toggleChartElementsCallback();
 	};
 
 	// Scrolls
@@ -3168,7 +3297,9 @@
 		styleContent += (".btn-pointer-active { background-position: " + xOffset2 + "px -100px; }");
 		styleContent += (".btn-erase-all { background-position: " + xOffset1 + "px -120px; }");
 		styleContent += (".btn-eraser { background-position: " + xOffset1 + "px -140px; }");
+		styleContent += (".btn-eraser-active { background-position: " + xOffset2 + "px -140px; }");
 		styleContent += (".btn-highlighter { background-position: " + xOffset1 + "px -160px; }");
+		styleContent += (".btn-highlighter-active { background-position: " + xOffset2 + "px -160px; }");
 		styleContent += (".btn-pen { background-position: " + xOffset1 + "px -180px; }");
 		styleContent += (".btn-pen-active { background-position: " + xOffset2 + "px -180px; }");
 
@@ -3185,6 +3316,10 @@
 		styleContent += ".btn-text-default-img::-moz-focus-inner { border: 0; padding: 0; }";
 		styleContent += ".btn-text-default-img2::-moz-focus-inner { border: 0; padding: 0; }";
 		styleContent += (".dem-text-color { color:" + AscCommon.GlobalSkin.DemTextColor + "; }");
+        styleContent += ".tooltip { position: absolute; background-color: " + GlobalSkin.DemBackgroundColor + "; color: " + GlobalSkin.DemButtonTextColor + "; padding: 6px 8px; border-radius: 4px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 11px; white-space: nowrap; z-index: 10; pointer-events: none; opacity: 0; border: 1px solid " + GlobalSkin.DemSplitterColor + "; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }";
+        styleContent += ".tooltip.show { opacity: 1; }";
+        styleContent += ".tooltip::before { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -5px; border: 5px solid transparent; border-top-color: " + GlobalSkin.DemSplitterColor + "; }";
+        styleContent += ".tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -4px; border: 4px solid transparent; border-top-color: " + GlobalSkin.DemBackgroundColor + "; margin-top: -1px; }";
 		return styleContent;
 	};
 	CEditorPage.prototype.reporterTimerFunc = function (isReturn) {

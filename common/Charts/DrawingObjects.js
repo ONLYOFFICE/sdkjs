@@ -476,7 +476,7 @@ asc_CChartBinary.prototype = {
         const stream = AscFormat.CreateBinaryReader(binary, 0, binary.length);
         //надо сбросить то, что остался после открытия документа
         AscCommon.pptx_content_loader.Clear();
-        const oNewChartSpace = Asc.editor.isPdfEditor() ? new AscPDF.CPdfChart() : new AscFormat.CChartSpace();
+        const oNewChartSpace = Asc.editor.isPdfEditor() ? new AscPDF.CPdfChartSpace() : new AscFormat.CChartSpace();
         const oBinaryChartReader = new AscCommon.BinaryChartReader(stream);
 	    if(this["IsChartEx"]) {
 		    oBinaryChartReader.ExternalReadCT_ChartExSpace(stream.size , oNewChartSpace, workSheet);
@@ -2585,7 +2585,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         if(aSelectedDrawings.length === 1 && aSelectedDrawings[0].isChart()) {
             _this.controller.checkSelectedObjectsAndCallback(function () {
                 let oSelectedChartSpace = aSelectedDrawings[0];
-                oSelectedChartSpace.fromOther(oChartSpace);
+                oSelectedChartSpace.fromOther(oChartSpace, true);
                 _this.controller.startRecalculate();
                 _this.sendGraphicObjectProps();
             }, [], false, 0, [], false);

@@ -4925,7 +4925,11 @@ var g_oFontProperties = {
 		return this.getAlign2().getShrinkToFit();
 	};
 	CellXfs.prototype.asc_getReadingOrder = function () {
-		return this.getAlign2().getReadingOrder();
+		let readingOrder = this.getAlign2().getReadingOrder();
+		if (readingOrder === null || readingOrder === undefined) {
+			readingOrder = Asc.c_oReadingOrderTypes.Context;
+		}
+		return readingOrder;
 	};
 	CellXfs.prototype.asc_getPreview = function (api, text, width, height) {
 		return AscCommonExcel.generateXfsStyle(width, height, api.wb, this, text);
@@ -7187,6 +7191,11 @@ StyleManager.prototype =
 		}
 		stream.Seek2(end);
 	};
+	Row.prototype.isEqualForXLSB = function(row) {
+		return this.xfs === row.xfs && this.h === row.h && this.outlineLevel === row.outlineLevel &&
+			this.getCollapsed() === row.getCollapsed() && this.getHidden() === row.getHidden() &&
+			this.getCustomHeight() === row.getCustomHeight();
+	};
 	Row.prototype.toXLSB = function(stream, offsetIndex, stylesForWrite) {
 		stream.XlsbStartRecord(AscCommonExcel.XLSB.rt_ROW_HDR, 17);
 		stream.WriteULong((this.index + offsetIndex) & 0xFFFFF);
@@ -7221,6 +7230,7 @@ StyleManager.prototype =
 		stream.WriteByte(0);
 		stream.WriteULong(0);
 		stream.XlsbEndRecord();
+		return 0 === nS && 0 === nHt && 0 === byteExtra2;
 	};
 	Row.prototype.onStartNode = function(elem, attr, uq, tagend, getStrNode) {
 		var attrVals;
@@ -14539,6 +14549,9 @@ function RangeDataManagerElem(bbox, data)
 
 		this.arguments = null;
 
+		this.activeArgPos = null;
+		this.activeArgsCount = null;
+
 		this._init(name);
 
 		return this;
@@ -14582,6 +14595,12 @@ function RangeDataManagerElem(bbox, data)
 	};
 	CFunctionInfo.prototype.asc_setArguments = function (val) {
 		this.arguments = val;
+	};
+	CFunctionInfo.prototype.asc_getActiveArgPos = function () {
+		return this.activeArgPos;
+	};
+	CFunctionInfo.prototype.asc_getActiveArgsCount = function () {
+		return this.activeArgsCount;
 	};
 
 
@@ -15699,17 +15718,21 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	ExternalReference.prototype.initWorksheet = function (sheetName) {
-		var ws = this.worksheets[sheetName];
-		if (!this.worksheets[sheetName]) {
+		let ws = this.worksheets[sheetName];
+		if (!ws) {
 			var wb = this.getWb();
 			if (!wb) {
 				wb = new AscCommonExcel.Workbook(null, window["Asc"]["editor"], false);
+				wb.dependencyFormulas.lockRecal();
 			}
 			ws = new AscCommonExcel.Worksheet(wb);
 			ws.sName = sheetName;
+			wb.aWorksheets.push(ws);
+			ws._setIndex(wb.aWorksheets.length - 1);
 
 			this.worksheets[sheetName] = ws;
 		}
+		return ws;
 	};
 
 	ExternalReference.prototype.initWorksheetFromSheetDataSet = function (sheetName) {
@@ -15717,21 +15740,7 @@ function RangeDataManagerElem(bbox, data)
 		if (null !== sheetDataSetIndex) {
 
 			var sheetDataSet = this.SheetDataSet[sheetDataSetIndex];
-			var ws = this.worksheets[sheetName];
-			if (!this.worksheets[sheetName]) {
-				var wb = this.getWb();
-				if (!wb) {
-					wb = new AscCommonExcel.Workbook(null, window["Asc"]["editor"], false);
-					wb.dependencyFormulas.lockRecal();
-				}
-				ws = new AscCommonExcel.Worksheet(wb);
-				ws.sName = sheetName;
-				wb.aWorksheets.push(ws);
-				ws._setIndex(wb.aWorksheets.length - 1);
-
-				this.worksheets[sheetName] = ws;
-			}
-
+			var ws = this.initWorksheet(sheetName);
 
 			//клонируем все данные из SheetDataSet в данный темповый Worksheet
 			if (!sheetDataSet || !sheetDataSet.Row) {
@@ -16363,7 +16372,18 @@ function RangeDataManagerElem(bbox, data)
 				});
 			}
 
-			let newVal = noData ? "#REF!" : cell.getValue();
+			let cellType = cell.getType();
+			let newVal;
+			if (noData) {
+				newVal = "#REF!";
+			} else {
+				if (cellType === CellValueType.Number) {
+					let _numVal = cell.getNumberValue();
+					newVal = _numVal == null ? cell.getValue() : _numVal + "";
+				} else {
+					newVal = cell.getValue();
+				}
+			}
 			if (this.CellValue !== newVal) {
 				isChanged = true;
 				this.CellValue = newVal;
@@ -16371,12 +16391,21 @@ function RangeDataManagerElem(bbox, data)
 
 
 			var cellValueType = null;
-			switch (cell.getType()) {
+			switch (cellType) {
 				case CellValueType.String:
 					cellValueType = Asc.ECellTypeType.celltypeStr;
 					break;
 				case CellValueType.Bool:
 					cellValueType = Asc.ECellTypeType.celltypeBool;
+					break;
+				case CellValueType.Number:
+					let cellFormat = cell.getNumFormat();
+					let isDateTimeFormat = cellFormat && cellFormat.isDateTimeFormat() && cellFormat.getType() !== Asc.c_oAscNumFormatType.Time;
+					if (isDateTimeFormat) {
+						cellValueType = Asc.ECellTypeType.celltypeDate;
+					} else {
+						cellValueType = Asc.ECellTypeType.celltypeNumber;
+					}
 					break;
 				case CellValueType.Error:
 					cellValueType = Asc.ECellTypeType.celltypeError;
@@ -18676,14 +18705,7 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	CCustomFunctionEngine.prototype.clear = function () {
-		if (AscCommonExcel.cFormulaFunctionGroup["Custom"] && AscCommonExcel.cFormulaFunctionGroup["Custom"].length) {
-			let aCustomFunc = AscCommonExcel.cFormulaFunctionGroup["Custom"];
-			for (let i = 0; i < aCustomFunc.length; i++) {
-				let sName = aCustomFunc[i].prototype.name;
-				AscCommonExcel.removeCustomFunction(sName);
-			}
-			AscCommonExcel.cFormulaFunctionGroup["Custom"] = [];
-
+		if (AscCommonExcel.removeCustomFunctions()) {
 			this.wb.initFormulasList && this.wb.initFormulasList();
 			if (this.wb && this.wb.Api) {
 				this.wb.Api.formulasList = AscCommonExcel.getFormulasInfo();
@@ -20593,6 +20615,8 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_getName"] = prot.asc_getName;
 	prot["asc_getArguments"] = prot.asc_getArguments;
 	prot["asc_setArguments"] = prot.asc_setArguments;
+	prot["asc_getActiveArgPos"] = prot.asc_getActiveArgPos;
+	prot["asc_getActiveArgsCount"] = prot.asc_getActiveArgsCount
 
 
 	window["Asc"]["asc_CExternalReference"] = window["Asc"].asc_CExternalReference = asc_CExternalReference;

@@ -373,6 +373,7 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
             case AscDFH.historyitem_type_Pdf_Annot_Strikeout:
             case AscDFH.historyitem_type_Pdf_Annot_Squiggly:
             case AscDFH.historyitem_type_Pdf_Annot_Caret:
+            case AscDFH.historyitem_type_Pdf_Annot_Redact:
                 ret = handleBaseAnnot(drawing, drawingObjectsController, e, x, y, group, pageIndex);
                 break;
         }
@@ -534,6 +535,9 @@ function handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pag
         if (oDoc.GetActiveObject() != drawing) {
             hit_in_text_rect = false;
         }
+    }
+    else if (drawing.IsAnnot && drawing.IsAnnot() && drawing.IsShapeBased()) {
+        hit_in_inner_area = drawing.hitInBoundingRect(x, y)
     }
 
     if(hit_in_inner_area || hit_in_path || hit_in_text_rect)
@@ -1657,7 +1661,8 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
                         }
                     }
                 }
-                let oTrendlineLbl = ser.trendline && ser.trendline.trendlineLbl;
+				const trendline = ser.getLastTrendline();
+                let oTrendlineLbl = trendline && trendline.trendlineLbl;
                 if(oTrendlineLbl && oTrendlineLbl.hit(x, y))
                 {
                     if(drawing.selection.trendlineLbl === oTrendlineLbl)

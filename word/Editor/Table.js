@@ -16623,16 +16623,6 @@ CTable.prototype.GetReviewType = function()
 {
     return reviewtype_Common;
 };
-CTable.prototype.Get_SectPr = function()
-{
-    if (this.Parent && this.Parent.Get_SectPr)
-    {
-        this.Parent.Update_ContentIndexing();
-        return this.Parent.Get_SectPr(this.Index);
-    }
-
-    return null;
-};
 CTable.prototype.IsSelectedAll = function()
 {
 	if (!this.IsCellSelection())
@@ -19378,8 +19368,20 @@ CTable.prototype.private_CheckCurCell = function()
 			if (oRow.GetCellsCount() > 0)
 			{
 				this.CurCell = oRow.GetCell(0);
-				return;
+				break;
 			}
+		}
+	}
+	
+	// TODO: SelectionData переделать с индексов на массив самих ячеек, и при изменениях мы будем проверять сами ячейки
+	if (this.Selection.Use && this.Selection.Data && this.Selection.Data.length)
+	{
+		for (let i = this.Selection.Data.length - 1; i >= 0; --i)
+		{
+			let row  = this.Selection.Data[i].Row;
+			let cell = this.Selection.Data[i].Cell;
+			if (row >= this.Content.length || row < 0 || cell >= this.GetRow(row).GetCellsCount() || cell < 0)
+				this.Selection.Data.splice(i, 1);
 		}
 	}
 };

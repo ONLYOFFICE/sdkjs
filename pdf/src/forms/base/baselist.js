@@ -54,6 +54,10 @@
     CBaseListField.prototype = Object.create(AscPDF.CBaseField.prototype);
 	CBaseListField.prototype.constructor = CBaseListField;
 
+    CBaseListField.prototype.AddKid = function(oField) {
+        oField.SetOptions([]);
+        AscPDF.CBaseField.prototype.AddKid.call(this, oField);
+    };
     CBaseListField.prototype.SetParentCurIdxs = function(aIdxs) {
         let oParent = this.GetParent();
         if (oParent && this.IsWidget() && oParent.IsAllKidsWidgets())

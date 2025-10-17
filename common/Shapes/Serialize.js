@@ -6737,6 +6737,11 @@ function BinaryPPTYLoader()
                     this.ResetImageId(shape, rIdOverride);
                     break;
                 }
+                case 0xFF:
+                {
+                    shape.ReadRedactIds(s);
+                    break;
+                }
                 default:
                 {
                     s.SkipRecord();
@@ -6894,6 +6899,11 @@ function BinaryPPTYLoader()
                             }
                         }
                     }
+                    break;
+                }
+                case 0xFF:
+                {
+                    shape.ReadRedactIds(s);
                     break;
                 }
                 default:
@@ -7187,6 +7197,11 @@ function BinaryPPTYLoader()
                     this.ResetImageId(pic, rIdOverride);
                     break;
                 }
+                case 0xFF:
+                {
+                    pic.ReadRedactIds(s);
+                    break;
+                }
                 default:
                 {
                     this.stream.SkipRecord();
@@ -7248,6 +7263,11 @@ function BinaryPPTYLoader()
                 case 0xA1:
                 {
                     shape.readMacro(s);
+                    break;
+                }
+                case 0xFF:
+                {
+                    shape.ReadRedactIds(s);
                     break;
                 }
                 default:
@@ -7420,6 +7440,10 @@ function BinaryPPTYLoader()
                 case 1:
                 {
                     _xfrm = this.ReadXfrm();
+                    // has no rotate in other editors
+                    if (false == Asc.editor.isPdfEditor()) {
+                        _xfrm.setRot(0);
+                    }
                     break;
                 }
                 case 2:
@@ -7439,7 +7463,7 @@ function BinaryPPTYLoader()
                         _stream.pos = s.pos;
                         _stream.cur = s.cur;
                         _stream.size = s.size;
-                        _chart = new AscFormat.CChartSpace();
+                        _chart = Asc.editor.isPdfEditor() ? new AscPDF.CPdfChartSpace() : new AscFormat.CChartSpace();
                         _chart.setBDeleted(false);
                         AscCommon.pptx_content_loader.ImageMapChecker = this.ImageMapChecker;
                         AscCommon.pptx_content_loader.Reader.ImageMapChecker = this.ImageMapChecker;
@@ -7498,7 +7522,7 @@ function BinaryPPTYLoader()
                 case 8://smartArt
                 {
                     _smartArt = this.ReadSmartArt();
-										this.smartarts.push(_smartArt);
+                    this.smartarts.push(_smartArt);
                     break;
                 }
                 case 9:
@@ -7517,6 +7541,17 @@ function BinaryPPTYLoader()
                 case 0xA1:
                 {
                     _graphic_frame.readMacro(s);
+                    break;
+                }
+                case 0xFF:
+                {
+                    if (_table) {
+                        _graphic_frame.ReadRedactIds(s);
+                    }
+                    else if (_chart) {
+                        _chart.ReadRedactIds(s);
+                    }
+                    
                     break;
                 }
                 default:

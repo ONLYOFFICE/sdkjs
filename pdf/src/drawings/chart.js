@@ -36,42 +36,48 @@
 	 * Class representing a pdf text shape.
 	 * @constructor
     */
-    function CPdfChart()
-    {
+    function CPdfChartSpace() {
         AscFormat.CChartSpace.call(this);
-                
-        this._page          = undefined;
-        this._apIdx         = undefined; // индекс объекта в файле
-        this._rect          = [];       // scaled rect
-        this._richContents  = [];
-
-        this._isFromScan = false; // флаг, что был прочитан из скана текста 
-
-        this._doc                   = undefined;
-        this._needRecalc            = true;
-        this._wasChanged            = false; // была ли изменена
-        this._bDrawFromStream       = false; // нужно ли рисовать из стрима
-        this._hasOriginView         = false; // имеет ли внешний вид из файла
+        AscPDF.CPdfDrawingPrototype.call(this);
     }
     
-    CPdfChart.prototype.constructor = CPdfChart;
-    CPdfChart.prototype = Object.create(AscFormat.CChartSpace.prototype);
-    Object.assign(CPdfChart.prototype, AscPDF.CPdfDrawingPrototype.prototype);
+    CPdfChartSpace.prototype.constructor = CPdfChartSpace;
+    CPdfChartSpace.prototype = Object.create(AscFormat.CChartSpace.prototype);
+    Object.assign(CPdfChartSpace.prototype, AscPDF.CPdfDrawingPrototype.prototype);
 
-    CPdfChart.prototype.IsChart = function() {
+    CPdfChartSpace.prototype.IsChart = function() {
         return true;
     };
-    CPdfChart.prototype.Recalculate = function() {
+    CPdfChartSpace.prototype.canRotate = function() {
+        return true;
+    };
+    CPdfChartSpace.prototype.createRotateTrack = function () {
+        return new AscFormat.RotateTrackShapeImage(this);
+    };
+    CPdfChartSpace.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
             return;
 
         this.recalculateTransform();
-        this.updateTransformMatrix();
         this.recalcGeometry();
         this.recalculate();
+        this.updateTransformMatrixPDF();
         this.SetNeedRecalc(false);
     };
-    CPdfChart.prototype.onMouseDown = function(x, y, e) {
+
+
+	CPdfChartSpace.prototype.updateTransformMatrixPDF = function() {
+		this.posX = 0;
+		this.posY = 0;
+		this.updateTransformMatrix();
+		let posX = this.localTransform.tx + this.posX;
+		let posY = this.localTransform.ty + this.posY;
+		let updateMatrix = new AscCommon.CMatrix();
+		AscCommon.global_MatrixTransformer.TranslateAppend(updateMatrix, -posX, -posY);
+		AscCommon.global_MatrixTransformer.MultiplyAppend(updateMatrix, this.localTransform);
+		this.checkShapeChildTransform(updateMatrix);
+	};
+    CPdfChartSpace.prototype.onMouseDown = function(x, y, e) {
         let oViewer             = Asc.editor.getDocumentRenderer();
         let oDoc                = this.GetDocument();
         let oDrawingObjects     = oDoc.Viewer.DrawingObjects;
@@ -86,11 +92,7 @@
 
         oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
     };
-    CPdfChart.prototype.SelectAllText = function() {
-        this.GetDocContent().SelectAll();
-    };
-
-    CPdfChart.prototype.onMouseUp = function(x, y, e) {
+    CPdfChartSpace.prototype.onMouseUp = function(x, y, e) {
         let oViewer         = Asc.editor.getDocumentRenderer();
         
         this.selectStartPage    = this.GetPage();
@@ -107,193 +109,31 @@
         if (oContent.IsSelectionEmpty())
             oContent.RemoveSelection();
     };
-    
+    CPdfChartSpace.prototype.GetDocContent = function() {
+        let oTextSelection = this.selection.textSelection;
+        if (oTextSelection) {
+            return oTextSelection.getDocContent();
+        }
+
+        return null;
+    };
+
     /////////////////////////////
     /// saving
     ////////////////////////////
 
-    CPdfChart.prototype.WriteToBinary = function(memory) {
+    CPdfChartSpace.prototype.WriteToBinary = function(memory) {
         this.toXml(memory, '');
     };
 
-    /////////////////////////////
-    /// work with text properties
-    ////////////////////////////
-
-    CPdfChart.prototype.SetParaTextPr = function(oParaTextPr) {
-        let oContent = this.GetDocContent();
-        
-        false == this.IsInTextBox() && oContent.SetApplyToAll(true);
-        oContent.AddToParagraph(oParaTextPr.Copy());
-        false == this.IsInTextBox() && oContent.SetApplyToAll(false);
-
-        this.SetNeedRecalc(true);
-    };
-    CPdfChart.prototype.SetAlign = function(nType) {
-        let oContent = this.GetDocContent();
-        oContent.SetParagraphAlign(nType);
-        this.SetNeedRecalc(true);
-    };
-    CPdfChart.prototype.GetAlign = function() {
-        return this.GetDocContent().GetCalculatedParaPr().GetJc();
-    };
-    CPdfChart.prototype.SetBold = function(bBold) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({Bold : bBold}));
-    };
-    CPdfChart.prototype.GetBold = function() {
-        return !!this.GetCalculatedTextPr().GetBold();        
-    };
-    CPdfChart.prototype.SetItalic = function(bItalic) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({Italic : bItalic}));
-    };
-    CPdfChart.prototype.GetItalic = function() {
-        return !!this.GetCalculatedTextPr().GetItalic();
-    };
-    CPdfChart.prototype.SetUnderline = function(bUnderline) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({Underline : bUnderline}));
-    };
-    CPdfChart.prototype.GetUnderline = function() {
-        return !!this.GetCalculatedTextPr().GetUnderline();
-    };
-    CPdfChart.prototype.SetHighlight = function(r, g, b) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({HighlightColor : AscFormat.CreateUniColorRGB(r, g, b)}));
-    };
-    CPdfChart.prototype.SetStrikeout = function(bStrikeout) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({
-			Strikeout  : bStrikeout,
-			DStrikeout : false
-        }));
-    };
-    CPdfChart.prototype.GetStrikeout = function() {
-        return !!this.GetCalculatedTextPr().GetStrikeout();
-    };
-    CPdfChart.prototype.SetBaseline = function(nType) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({VertAlign : nType}));
-    };
-    CPdfChart.prototype.GetBaseline = function() {
-        return this.GetCalculatedTextPr().GetVertAlign();
-    };
-    CPdfChart.prototype.SetFontSize = function(nType) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({FontSize : nType}));
-    };
-    CPdfChart.prototype.GetFontSize = function() {
-        return this.GetCalculatedTextPr().GetFontSize();
-    };
-    CPdfChart.prototype.IncreaseDecreaseFontSize = function(bIncrease) {
-        this.GetDocContent().IncreaseDecreaseFontSize(bIncrease);
-        this.SetNeedRecalc(true);
-    };
-    CPdfChart.prototype.SetSpacing = function(nSpacing) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({Spacing : nSpacing}));
-    };
-    CPdfChart.prototype.GetSpacing = function() {
-        return this.GetCalculatedTextPr().GetSpacing();
-    };
-    CPdfChart.prototype.SetFontFamily = function(sFontFamily) {
-        let oParaTextPr = new AscCommonWord.ParaTextPr();
-		oParaTextPr.Value.RFonts.SetAll(sFontFamily, -1);
-        this.SetParaTextPr(oParaTextPr);
-    };
-    CPdfChart.prototype.GetFontFamily = function() {
-        return this.GetCalculatedTextPr().GetFontFamily();
-    };
-    CPdfChart.prototype.SetTextColor = function(r, g, b) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({Unifill : AscFormat.CreateSolidFillRGB(r, g, b)}));
-    };
-    CPdfChart.prototype.ChangeTextCase = function(nCaseType) {
-        let oContent    = this.GetDocContent();
-        let oState      = oContent.GetSelectionState();
-
-        let oChangeEngine = new AscCommonWord.CChangeTextCaseEngine(nCaseType);
-		oChangeEngine.ProcessParagraphs(this.GetSelectedParagraphs());
-
-        oContent.SetSelectionState(oState);
-        this.SetNeedRecalc(true);
-    };
-    CPdfChart.prototype.GetSelectedParagraphs = function() {
-        let oContent        = this.GetDocContent();
-        let aSelectedParas  = [];
-
-        oContent.GetCurrentParagraph(false, aSelectedParas);
-        return aSelectedParas;
-    };
-    CPdfChart.prototype.SetVertAlign = function(nType) {
-        this.setVerticalAlign(nType);
-        this.SetNeedRecalc(true);
-    };
-
-    CPdfChart.prototype.GetAllFonts = function(aFonts) {
-        let oContent    = this.GetDocContent();
-        let fontMap     = {};
-		aFonts          = aFonts || [];
-
-        if (!oContent)
-            return aFonts;
-
-        let oPara;
-        for (let nPara = 0, nCount = oContent.GetElementsCount(); nPara < nCount; nPara++) {
-            oPara = oContent.GetElement(nPara);
-            oPara.Get_CompiledPr().TextPr.Document_Get_AllFontNames(fontMap);
-
-            let oRun;
-            for (let nRun = 0, nRunCount = oPara.GetElementsCount(); nRun < nRunCount; nRun++) {
-                oRun = oPara.GetElement(nRun);
-                oRun.Get_CompiledTextPr().Document_Get_AllFontNames(fontMap);
-            }
-        }
-		
-        delete fontMap["+mj-lt"];
-        delete fontMap["+mn-lt"];
-        delete fontMap["+mj-ea"];
-        delete fontMap["+mn-ea"];
-        delete fontMap["+mj-cs"];
-        delete fontMap["+mn-cs"];
-
-        for (let key in fontMap) {
-			if (aFonts.includes(key) == false)
-                aFonts.push(key);
-		}
-		
-		return aFonts;
-    };
-
-    CPdfChart.prototype.SetLineSpacing = function(oSpacing) {
-        this.GetDocContent().SetParagraphSpacing(oSpacing);
-        this.SetNeedRecalc(true);
-    };
-    CPdfChart.prototype.GetLineSpacing = function() {
-        let oCalcedPr = this.GetCalculatedParaPr();
-        return {
-            After:  oCalcedPr.GetSpacingAfter(),
-            Before: oCalcedPr.GetSpacingBefor()
-        }
-    };
-    CPdfChart.prototype.SetColumnNumber = function(nColumns) {
-        this.setColumnNumber(nColumns);
-        this.SetNeedRecalc(true);
-    };
-    CPdfChart.prototype.IncreaseDecreaseIndent = function(bIncrease) {
-        // Increase_ParagraphLevel для шейпов из презентаций
-        this.GetDocContent().Increase_ParagraphLevel(bIncrease);
-        this.SetNeedRecalc(true);
-    };
-    CPdfChart.prototype.SetNumbering = function(oBullet) {
-        this.GetDocContent().Set_ParagraphPresentationNumbering(oBullet);
-        this.SetNeedRecalc(true);
-    };
-    CPdfChart.prototype.ClearFormatting = function(bParaPr, bTextText) {
-        this.GetDocContent().ClearParagraphFormatting(bParaPr, bTextText);
-        this.SetNeedRecalc(true);
-    };
-    
     /**
      * Получаем рассчитанные настройки текста (полностью заполненные)
      * @returns {CTextPr}
      */
-    CPdfChart.prototype.GetCalculatedTextPr = function() {
+    CPdfChartSpace.prototype.GetCalculatedTextPr = function() {
         return this.GetDocContent().GetCalculatedTextPr();
     };
-    CPdfChart.prototype.GetCalculatedParaPr = function() {
+    CPdfChartSpace.prototype.GetCalculatedParaPr = function() {
         return this.GetDocContent().GetCalculatedParaPr();
     };
 
@@ -301,13 +141,89 @@
     ///// Overrides
     /////////////////////////////////////////////////////////////////////////////
     
-    CPdfChart.prototype.getLogicDocument = function() {
+    CPdfChartSpace.prototype.getLogicDocument = function() {
         return this.GetDocument();
     };
-    CPdfChart.prototype.IsThisElementCurrent = function() {
+    CPdfChartSpace.prototype.IsThisElementCurrent = function() {
         return true;
     };
+    CPdfChartSpace.prototype.copy = function (oPr) {
+		let drawingDocument = oPr && oPr.drawingDocument;
+		let copy = new CPdfChartSpace();
+		if (this.chart) {
+			copy.setChart(this.chart.createDuplicate(drawingDocument));
+		}
+		if (this.clrMapOvr) {
+			copy.setClrMapOvr(this.clrMapOvr.createDuplicate());
+		}
+		copy.setDate1904(this.date1904);
+		if (this.externalData) {
+			const oCopyExternalData = {};
+			if (this.externalData.m_autoUpdate)
+			{
+				oCopyExternalData.m_autoUpdate = {m_val: this.externalData.m_autoUpdate.m_val};
+			}
+			copy.setExternalData(oCopyExternalData);
+		}
+		if (this.XLSX) {
+			copy.setXLSX(this.XLSX.slice());
+		}
+		if (this.externalReference) {
+			copy.setExternalReference(this.externalReference.createDuplicate());
+		}
+		copy.setLang(this.lang);
+		if (this.pivotSource) {
+			copy.setPivotSource(this.pivotSource.createDuplicate());
+		}
+		if (this.printSettings) {
+			copy.setPrintSettings(this.printSettings.createDuplicate());
+		}
+		if (this.protection) {
+			copy.setProtection(this.protection.createDuplicate());
+		}
+		copy.setRoundedCorners(this.roundedCorners);
+		if (this.spPr) {
+			copy.setSpPr(this.spPr.createDuplicate());
+			copy.spPr.setParent(copy);
+		}
+		copy.setStyle(this.style);
+		if (this.txPr) {
+			copy.setTxPr(this.txPr.createDuplicate(oPr))
+		}
+		for (var i = 0; i < this.userShapes.length; ++i) {
+			copy.addUserShape(undefined, this.userShapes[i].copy(oPr));
+		}
+		copy.setThemeOverride(this.themeOverride);
+		copy.setBDeleted(this.bDeleted);
+		copy.setLocks(this.locks);
+		if (this.chartStyle && this.chartColors) {
+			copy.setChartStyle(this.chartStyle.createDuplicate());
+			copy.setChartColors(this.chartColors.createDuplicate());
+		}
+		if (this.macro !== null) {
+			copy.setMacro(this.macro);
+		}
+		if (this.textLink !== null) {
+			copy.setTextLink(this.textLink);
+		}
+		if(this.chartData) {
+			copy.setChartData(this.chartData.createDuplicate());
+		}
+		if (!oPr || false !== oPr.cacheImage) {
+			copy.cachedImage = this.getBase64Img();
+			copy.cachedPixH = this.cachedPixH;
+			copy.cachedPixW = this.cachedPixW;
+		}
 
-    window["AscPDF"].CPdfChart = CPdfChart;
+		if ((!oPr || !oPr.bSkipRedactsIds) && this.GetRedactIds) {
+            this.GetRedactIds().forEach(function(id) {
+                copy.AddRedactId(id);
+            });
+        }
+		
+		return copy;
+	};
+
+    window["AscPDF"].CPdfChartSpace = CPdfChartSpace;
 })();
 

@@ -58,7 +58,7 @@ $(function () {
 
 	function AddFromMathML(strMathMl)
 	{
-		return AscWord.ParaMath.fromMathML(undefined, strMathMl);
+		return AscWord.ParaMath.fromMathML(strMathMl);
 	}
 
 	QUnit.testStart(function (){
@@ -837,6 +837,116 @@ $(function () {
 			// 		);
 			// 	})
 			// })
+
+			QUnit.module('mtable', function (){
+				QUnit.test('Normalize nested mtr in mtable', function (assert)
+				{
+					let math = AddFromMathML(`<math display="block">
+						<semantics>
+							<mtable>
+								<mtr>
+									<mtr>
+										<mtd><mi>a</mi></mtd>
+										<mtd><mo>=</mo></mtd>
+										<mtd><mn>0</mn></mtd>
+									</mtr>
+									<mtr>
+										<mtd><mi>b</mi></mtd>
+										<mtd><mo>=</mo></mtd>
+										<mtd><mn>1</mn></mtd>
+									</mtr>
+									<mtr>
+										<mtd><mi>c</mi></mtd>
+										<mtd><mo>=</mo></mtd>
+										<mtd><mn>2</mn></mtd>
+									</mtr>
+								</mtr>
+							</mtable>
+						</semantics>
+					</math>`);
+
+					let content = math.Root.Content[1];
+					assert.ok(content instanceof CMathMatrix, "Check matrix created");
+
+					let rows = content.getRowsCount ? content.getRowsCount() : 0;
+					assert.strictEqual(rows, 3, "Check 3 rows created from nested mtr");
+					
+					let Row1 = content.getContentElement(0,0).GetTextOfElement().GetText();
+					let Row2 = content.getContentElement(1,0).GetTextOfElement().GetText();
+					let Row3 = content.getContentElement(2,0).GetTextOfElement().GetText();
+
+					assert.ok(Row1 === "𝑎" && Row2 === "𝑏" && Row3 === "𝑐", "Check all rows present");
+				})
+
+				QUnit.test('Normalize nested mtd in mtable', function (assert)
+				{
+					let math = AddFromMathML(`<math display="block">
+						
+							<mtable>
+								<mtd>
+									<mtd><mi>x</mi></mtd>
+									<mtd><mo>=</mo></mtd>
+									<mtd><mn>1</mn></mtd>
+								</mtd>
+							</mtable>
+						
+					</math>`);
+
+					let content = math.Root.Content[1];
+					
+					assert.ok(content instanceof CMathMatrix, "Check matrix created");
+
+					let rows = content.getRowsCount ? content.getRowsCount() : 0;
+					assert.strictEqual(rows, 1, "Check 1 row created from nested mtd");
+
+					let cols = content.getColsCount ? content.getColsCount() : 0;
+					assert.strictEqual(cols, 3, "Check 3 columns created from nested mtd");
+
+					let cell1 = content.getContentElement(0,0).GetTextOfElement().GetText();
+					let cell2 = content.getContentElement(0,1).GetTextOfElement().GetText();
+					let cell3 = content.getContentElement(0,2).GetTextOfElement().GetText();
+					assert.ok(cell1 === "𝑥" && cell2 === "=" && cell3 === "1", "Check all cells present");
+				})
+
+				QUnit.test('Normalize mixed nested mtr and mtd in mtable', function (assert)
+				{
+					let math = AddFromMathML(`<math display="block">
+						<semantics>
+							<mtable>
+								<mtr>
+									<mtr>
+										<mtd><mi>a</mi></mtd>
+										<mtd><mo>=</mo></mtd>
+										<mtd><mn>0</mn></mtd>
+									</mtr>
+								</mtr>
+								<mtd>
+									<mtd><mi>b</mi></mtd>
+									<mtd><mo>=</mo></mtd>
+									<mtd><mn>1</mn></mtd>
+								</mtd>
+								<mtr>
+									<mtd><mi>c</mi></mtd>
+									<mtd><mo>=</mo></mtd>
+									<mtd><mn>2</mn></mtd>
+								</mtr>
+							</mtable>
+						</semantics>
+					</math>`);
+
+					let content = math.Root.Content[1];
+					assert.ok(content instanceof CMathMatrix, "Check matrix created");
+
+					let rows = content.getRowsCount ? content.getRowsCount() : 0;
+					assert.strictEqual(rows, 3, "Check 3 rows created from mixed structure");
+
+					let row1 = content.getContentElement(0,0).GetTextOfElement().GetText();
+					let row2 = content.getContentElement(1,0).GetTextOfElement().GetText();
+					let row3 = content.getContentElement(2,0).GetTextOfElement().GetText();
+
+					assert.ok(row1 === "𝑎" && row2 === "𝑏" && row3 === "𝑐", "Check all rows present in mixed structure");
+				})
+			})
 		})
 	})
  })
