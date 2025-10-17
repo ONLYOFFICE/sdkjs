@@ -2477,32 +2477,37 @@ function (window, undefined) {
 	};
 	cTEXTJOIN.prototype.Calculate = function (arg) {
 
-		var argClone = [arg[0], arg[1]];
-		argClone[1] = arg[1].tocBool();
+		let argClone = [arg[0], arg[1]];
 
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
+		
+		let ignore_empty = argClone[1].tocBool();
+		if (ignore_empty.type !== cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		}
 
-		var ignore_empty = argClone[1].toBool();
-		var delimiter = argClone[0];
-		var delimiterIter = 0;
-		//разделитель может быть в виде массива, где используются все его элементы
-		var delimiterArr = this._getOneDimensionalArray(delimiter);
-		//если хотя бы один элемент ошибка, то возвращаем ошибку
-		if (delimiterArr instanceof cError) {
+		ignore_empty = ignore_empty.toBool();
+
+		let delimiter = argClone[0];
+		let delimiterIter = 0;
+		// the separator can be in the form of an array where all its elements are used
+		let delimiterArr = this._getOneDimensionalArray(delimiter);
+		// if at least one element is error, then return an error
+		if (delimiterArr && delimiterArr.type === cElementType.error) {
 			return delimiterArr;
 		}
 
-		var concatString = function (string1, string2) {
-			var res = string1;
+		const concatString = function (string1, string2) {
+			let res = string1;
 			if ("" === string2 && ignore_empty) {
 				return res;
 			}
-			var isStartStr = string1 === "";
-			//выбираем разделитель из массива по порядку
-			var delimiterStr = isStartStr ? "" : delimiterArr[delimiterIter];
+			let isStartStr = string1 === "";
+			// select the separator from the array in order
+			let delimiterStr = isStartStr ? "" : delimiterArr[delimiterIter];
 			if (undefined === delimiterStr) {
 				delimiterIter = 0;
 				delimiterStr = delimiterArr[delimiterIter];
@@ -2515,35 +2520,35 @@ function (window, undefined) {
 			return res;
 		};
 
-		var arg0 = new cString(""), argI;
-		for (var i = 2; i < arg.length; i++) {
+		let arg0 = new cString(""), argI;
+		for (let i = 2; i < arg.length; i++) {
 			argI = arg[i];
 
-			var type = argI.type;
+			let type = argI.type;
 			if (cElementType.cellsRange === type || cElementType.cellsRange3D === type || cElementType.array === type) {
-				//получаем одномерный массив
+				// get a one-dimensional array
 				argI = this._getOneDimensionalArray(argI);
 
-				//если хотя бы один элемент с ошибкой, возвращаем ошибку
-				if (argI instanceof cError) {
+				// if at least one element has an error, return an error
+				if (argI && argI.type === cElementType.error) {
 					return argI;
 				}
 
-				for (var n = 0; n < argI.length; n++) {
+				for (let n = 0; n < argI.length; n++) {
 					arg0 = new cString(concatString(arg0.toString(), argI[n].toLocaleString()));
 				}
 
 			} else if (cElementType.cell === type || cElementType.cell3D === type) {
 				argI = argI.getValue();
 
-				if (argI instanceof cError) {
+				if (argI && argI.type === cElementType.error) {
 					return argI;
 				}
 
 				arg0 = new cString(concatString(arg0.toString(), argI.toLocaleString()));
 			} else {
 
-				if (argI instanceof cError) {
+				if (argI && argI.type === cElementType.error) {
 					return argI;
 				}
 
