@@ -1907,52 +1907,47 @@ function (window, undefined) {
 	cREPT.prototype.argumentsMax = 2;
 	cREPT.prototype.argumentsType = [argType.text, argType.number];
 	cREPT.prototype.Calculate = function (arg) {
+		const MAX_STR_LENGTH = 32767;
 		let arg0 = arg[0], arg1 = arg[1], res = "";
-		if (arg0 instanceof cError) {
+
+		if (arg0.type === cElementType.error) {
 			return arg0;
 		}
-		if (arg1 instanceof cError) {
+		if (arg1.type === cElementType.error) {
 			return arg1;
 		}
 
-		if (arg0 instanceof cArray && arg1 instanceof cArray) {
+		if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElementRowCol(0, 0);
-			arg1 = arg1.getElementRowCol(0, 0);
-		} else if (arg0 instanceof cArray) {
-			arg0 = arg0.getElementRowCol(0, 0);
-		} else if (arg1 instanceof cArray) {
+		}
+		if (arg1.type === cElementType.array) {
 			arg1 = arg1.getElementRowCol(0, 0);
 		}
 
-
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
 		}
 		arg0 = arg0.tocString();
-		if (arg0 instanceof cError) {
+		if (arg0.type === cElementType.error) {
 			return arg0;
 		}
 
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
-			arg1 = arg1.cross(arguments[1]).tocNumber();
-		} else if (arg1 instanceof cRef || arg1 instanceof cRef3D) {
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
+			arg1 = arg1.cross(arguments[1]);
+		} else if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
 			arg1 = arg1.getValue();
 		}
 
-		if (arg1 instanceof cError) {
+		arg1 = arg1.tocNumber();
+
+		if (arg1.type === cElementType.error) {
 			return arg1;
-		} else if (arg1 instanceof cString) {
-			return new cError(cErrorType.wrong_value_type);
-		} else {
-			arg1 = arg1.tocNumber();
 		}
 		
 		arg0 = arg0.getValue();
 		arg1 = arg1.getValue();
 
-		// 268435456
-		// 1 << 28
-		if ((arg1 < 0 || arg1 > 32767) || ((arg0.length * arg1) > 32767)) {
+		if ((arg1 < 0 || arg1 > MAX_STR_LENGTH) || ((arg0.length * arg1) > MAX_STR_LENGTH)) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
