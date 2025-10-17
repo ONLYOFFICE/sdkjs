@@ -5532,34 +5532,33 @@ function (window, undefined) {
 	cGESTEP.prototype.argumentsType = [argType.any, argType.any];
 	cGESTEP.prototype.Calculate = function (arg) {
 
-		var number1 = arg[0], number2 = !arg[1] ? new cNumber(0) : arg[1];
-
-		if (number1 instanceof cArea || number2 instanceof cArea3D) {
+		let number1 = arg[0], step = !arg[1] ? new cNumber(0) : arg[1];
+		if (number1.type === cElementType.cellsRange || number1.type === cElementType.cellsRange3D) {
 			number1 = number1.cross(arguments[1]);
-		} else if (number1 instanceof cArray) {
+		} else if (number1.type === cElementType.array) {
 			number1 = number1.getElement(0);
 		}
 
-		if (number2 instanceof cArea || number2 instanceof cArea3D) {
-			number2 = number2.cross(arguments[1]);
-		} else if (number2 instanceof cArray) {
-			number2 = number2.getElement(0);
+		if (step.type === cElementType.cellsRange || step.type === cElementType.cellsRange3D) {
+			step = step.cross(arguments[1]);
+		} else if (step.type === cElementType.array) {
+			step = step.getElement(0);
 		}
 
 		number1 = number1.tocNumber();
-		number2 = number2.tocNumber();
+		step = step.tocNumber();
 
-		if (number1 instanceof cError) {
+		if (number1.type === cElementType.error) {
 			return number1;
 		}
-		if (number2 instanceof cError) {
-			return number2;
+		if (step.type === cElementType.error) {
+			return step;
 		}
 
 		number1 = number1.getValue();
-		number2 = number2.getValue();
+		step = step.getValue();
 
-		return new cNumber(number1 >= number2 ? 1 : 0);
+		return new cNumber(number1 >= step ? 1 : 0);
 	};
 
 	/**
