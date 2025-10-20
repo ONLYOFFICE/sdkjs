@@ -16082,7 +16082,7 @@
 			});
 			if (oTableStructOperand) {
 				let oTableOpRange = oTableStructOperand.getRange();
-				if (oTableOpRange.bbox && !oTableOpRange.bbox.contains(this.nCol, this.nRow)) {
+				if (oTableOpRange.worksheet.getName() !== this.ws.getName() || (oTableOpRange.bbox && !oTableOpRange.bbox.contains(this.nCol, this.nRow))) {
 					return;
 				}
 				let bContainRange = oCellListeners.bbox && oCellListeners.bbox.containsRange(oTableOpRange.bbox);

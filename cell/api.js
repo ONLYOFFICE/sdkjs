@@ -6663,12 +6663,7 @@ var editor;
 
 		//update
 		if (this.wb && this.wb.wsViews) {
-			let allRange = new Asc.Range(0, 0, AscCommon.gc_nMaxCol0, AscCommon.gc_nMaxRow0);
-			for (let i in this.wb.wsViews) {
-				let item = this.wb.wsViews[i];
-				item._updateRange(allRange);
-			}
-
+			this.wb.cleanCache();
 			let ws = this.wb.getWorksheet();
 			ws && ws.draw();
 		}
