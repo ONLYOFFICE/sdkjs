@@ -1799,6 +1799,23 @@
 
 		return cells;
 	};
+	ApiRange.prototype.GetAllMaths = function () {
+		const maths = [];
+		const selectedContent = this.private_GetSelectedContent();
+		if (selectedContent) {
+			for (let i = 0; i < selectedContent.Elements.length; i++) {
+				const element = selectedContent.Elements[i].Element;
+				if (element && element.GetType && element.GetType() === type_Paragraph) {
+					const paraMaths = [];
+					element.GetAllParaMaths(paraMaths);
+					paraMaths.forEach(function (paraMath) {
+						maths.push(new ApiMath(paraMath));
+					});
+				}
+			}
+		}
+		return maths;
+	};
 
 	/**
 	 * Sets the selection to the specified range.
@@ -8556,7 +8573,7 @@
 			else if (aSelectedInText[nDrawing].GraphicObj.isShape())
 				aResult.push(new ApiShape(aSelectedInText[nDrawing].GraphicObj));
 			else
-				aResult.push(new ApiDrawing(aSelected[nDrawing].GraphicObj));
+				aResult.push(new ApiDrawing(aSelectedInText[nDrawing].GraphicObj));
 		}
 
 		return aResult;
@@ -27176,10 +27193,7 @@
 
 	ApiSelection.prototype.GetFields = function () {};
 	ApiSelection.prototype.GetFormFields = function () {};
-	ApiSelection.prototype.GetInlineShapes = function () {};
-	ApiSelection.prototype.GetOMaths = function () {};
 	ApiSelection.prototype.GetParagraphFormat = function () {};
-	ApiSelection.prototype.GetShapeRange = function () {};
 	ApiSelection.prototype.GetStyle = function () {};
 
 	ApiSelection.prototype.GetDocument = function () {
@@ -27226,7 +27240,7 @@
 		const range = this.GetRange();
 		return range ? range.GetAllTableCells() : [];
 	};
-	ApiSelection.prototype.GetFont = ApiSelection.prototype.GetTextPr = function () {
+	ApiSelection.prototype.GetTextPr = function () {
 		const range = this.GetRange();
 		const rangeTextPr = range.GetTextPr();
 		const selectionTextPr = new ApiTextPr(this, rangeTextPr.TextPr);
@@ -27251,7 +27265,53 @@
 
 		return result;
 	};
-	ApiSelection.prototype.GetHyperlinks = function () {};
+	ApiSelection.prototype.GetHyperlinks = function () {
+		const paragraphs = this.GetParagraphs().map(function (paragraph) { return paragraph.Paragraph; });
+		const hyperlinks = [];
+		paragraphs.forEach(function (paragraph) {
+			paragraph.Content.forEach(function (item) {
+				if (item instanceof AscCommonWord.ParaHyperlink) {
+					hyperlinks.push(new ApiHyperlink(item));
+				}
+			});
+		});
+		return hyperlinks;
+	};
+	ApiSelection.prototype.GetInlineShapes = function () {
+		const apiDocument = this.GetDocument();
+		const selectedDrawings = apiDocument.GetSelectedDrawings().map(function (apiDrawing) { return apiDrawing.Drawing; });
+		const inlineShapes = [];
+		selectedDrawings.forEach(function (drawing) {
+			const isInlineDrawing = drawing && drawing.parent && drawing.parent.IsInline && drawing.parent.IsInline();
+			if (isInlineDrawing) {
+				inlineShapes.push(drawing);
+			}
+		});
+		return new ApiInlineShapes(inlineShapes);
+	};
+	ApiSelection.prototype.GetShapeRange = function () {
+		const apiDocument = this.GetDocument();
+		const selectedDrawings = apiDocument.Document.DrawingObjects.selectedObjects || [];
+		const shapes = [];
+		for (let i = 0; i < selectedDrawings.length; i++) {
+			const drawing = selectedDrawings[i];
+			if (drawing && drawing.parent && drawing.parent.IsInline && !drawing.parent.IsInline()) {
+				if (drawing.isImage && drawing.isImage())
+					shapes.push(new ApiImage(drawing));
+				else if (drawing.isChart && drawing.isChart())
+					shapes.push(new ApiChart(drawing));
+				else if (drawing.isShape && drawing.isShape())
+					shapes.push(new ApiShape(drawing));
+				else
+					shapes.push(new ApiDrawing(drawing));
+			}
+		}
+		return new ApiShapeRange(shapes);
+	};
+	ApiSelection.prototype.GetMaths = function () {
+		const range = this.GetRange();
+		return range ? range.GetAllMaths() : [];
+	};
 
 	Object.defineProperties(ApiSelection.prototype, {
 		'Document': { get: function () { return this.GetDocument(); } },
@@ -27263,9 +27323,13 @@
 		'Tables': { get: function () { return this.GetTables(); } },
 		'Rows': { get: function () { return this.GetRows(); } },
 		'Cells': { get: function () { return this.GetCells(); } },
-		'Font': { get: function () { return this.GetFont(); } },
+		'Font': { get: function () { return this.GetTextPr(); } },
 		'Shading': { get: function () { return this.GetShading(); } },
 		'Comments': { get: function () { return this.GetComments(); } },
+		'Hyperlinks': { get: function () { return this.GetHyperlinks(); } },
+		'InlineShapes': { get: function () { return this.GetInlineShapes(); } },
+		'ShapeRange': { get: function () { return this.GetShapeRange(); } },
+		'OMaths': { get: function () { return this.GetMaths(); } },
 	});
 
 	ApiSelection.prototype.private_updateTextPrFromCurrentSelection = function (apiTextPr) {
@@ -27280,6 +27344,36 @@
 			range.SetTextPr(oApiTextPr);
 		}
 	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiShapeRange
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	function ApiShapeRange(shapes) {
+		this.Shapes = shapes;
+	}
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiInlineShapes
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	function ApiInlineShapes(shapes) {
+		this.Shapes = shapes;
+	}
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiMath
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	function ApiMath(ParaMath) {
+		this.ParaMath = ParaMath;
+	}
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -28719,8 +28813,13 @@
 	ApiSelection.prototype["GetText"] = ApiSelection.prototype.GetText;
 	ApiSelection.prototype["GetWords"] = ApiSelection.prototype.GetWords;
 	ApiSelection.prototype["GetCharacters"] = ApiSelection.prototype.GetCharacters;
+	ApiSelection.prototype["GetTextPr"] = ApiSelection.prototype.GetTextPr;
 	ApiSelection.prototype["GetShading"] = ApiSelection.prototype.GetShading;
 	ApiSelection.prototype["GetComments"] = ApiSelection.prototype.GetComments;
+	ApiSelection.prototype["GetHyperlinks"] = ApiSelection.prototype.GetHyperlinks;
+	ApiSelection.prototype["GetInlineShapes"] = ApiSelection.prototype.GetInlineShapes;
+	ApiSelection.prototype["GetShapeRange"] = ApiSelection.prototype.GetShapeRange;
+	ApiSelection.prototype["GetMaths"] = ApiSelection.prototype.GetMaths;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export for internal usage
