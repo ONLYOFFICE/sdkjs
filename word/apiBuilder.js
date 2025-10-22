@@ -27226,7 +27226,6 @@
 	ApiSelection.prototype.GetFields = function () {};
 	ApiSelection.prototype.GetFormFields = function () {};
 	ApiSelection.prototype.GetParagraphFormat = function () {};
-	ApiSelection.prototype.GetStyle = function () {};
 
 	ApiSelection.prototype.GetDocument = function () {
 		return this.ApiDocument;
@@ -27344,6 +27343,37 @@
 		const range = this.GetRange();
 		return range ? range.GetAllMaths() : [];
 	};
+	ApiSelection.prototype.GetStyle = function () {
+		const range = this.GetRange();
+		if (!range) {
+			return null;
+		}
+
+		const logicDocument = private_GetLogicDocument();
+		const docState = logicDocument.SaveDocumentState();
+		const oStyles = logicDocument.GetStyles();
+
+		const textPr = logicDocument.GetCalculatedTextPr();
+		if (textPr && textPr.RStyle) {
+			const runStyle = oStyles.Get(textPr.RStyle);
+			if (runStyle && runStyle.Get_Type && runStyle.Get_Type() === styletype_Character) {
+				logicDocument.LoadDocumentState(docState);
+				return new ApiStyle(runStyle);
+			}
+		}
+
+		const paraPr = logicDocument.GetDirectParaPr();
+		if (paraPr && paraPr.PStyle) {
+			const paragraphStyle = oStyles.Get(paraPr.PStyle);
+			if (paragraphStyle && paragraphStyle.Get_Type && paragraphStyle.Get_Type() === styletype_Paragraph) {
+				logicDocument.LoadDocumentState(docState);
+				return new ApiStyle(paragraphStyle);
+			}
+		}
+
+		logicDocument.LoadDocumentState(docState);
+		return null;
+	};
 
 	Object.defineProperties(ApiSelection.prototype, {
 		'Document': { get: function () { return this.GetDocument(); } },
@@ -27362,6 +27392,7 @@
 		'InlineShapes': { get: function () { return this.GetInlineShapes(); } },
 		'ShapeRange': { get: function () { return this.GetShapeRange(); } },
 		'OMaths': { get: function () { return this.GetMaths(); } },
+		'Style': { get: function () { return this.GetStyle(); } },
 	});
 
 	ApiSelection.prototype.private_updateTextPrFromCurrentSelection = function (apiTextPr) {
@@ -28853,6 +28884,7 @@
 	ApiSelection.prototype["GetInlineShapes"] = ApiSelection.prototype.GetInlineShapes;
 	ApiSelection.prototype["GetShapeRange"] = ApiSelection.prototype.GetShapeRange;
 	ApiSelection.prototype["GetMaths"] = ApiSelection.prototype.GetMaths;
+	ApiSelection.prototype["GetStyle"] = ApiSelection.prototype.GetStyle;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export for internal usage
