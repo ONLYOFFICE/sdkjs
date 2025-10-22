@@ -15722,6 +15722,8 @@
 	 */
 	ApiParaPr.prototype.GetStyle = function()
 	{
+		this.private_Update();
+		
 		var oDocument = private_GetLogicDocument();
 		var oStyles   = oDocument.GetStyles();
 
@@ -15780,6 +15782,8 @@
 	 */
 	ApiParaPr.prototype.GetIndLeft = function()
 	{
+		this.private_Update();
+		
 		if (!this.Parent)
 		{
 			if (this.ParaPr.Ind.Left !== undefined)
@@ -15811,6 +15815,8 @@
 	 */
 	ApiParaPr.prototype.GetIndRight = function()
 	{
+		this.private_Update();
+		
 		if (!this.Parent)
 		{
 			if (this.ParaPr.Ind.Right !== undefined)
@@ -15843,6 +15849,8 @@
 	 */
 	ApiParaPr.prototype.GetIndFirstLine = function()
 	{
+		this.private_Update();
+		
 		if (!this.Parent)
 		{
 			if (this.ParaPr.Ind.FirstLine !== undefined)
@@ -15877,6 +15885,8 @@
 	 */
 	ApiParaPr.prototype.GetJc = function()
 	{
+		this.private_Update();
+		
 		function GetJC(nType) 
 		{
 			switch (nType)
@@ -15996,6 +16006,8 @@
 	 */
 	ApiParaPr.prototype.GetSpacingLineValue = function()
 	{
+		this.private_Update();
+		
 		function GetValue(oSpacing)
 		{
 			switch (oSpacing.LineRule)
@@ -16029,6 +16041,8 @@
 	 */
 	ApiParaPr.prototype.GetSpacingLineRule = function()
 	{
+		this.private_Update();
+		
 		function GetRule(nLineRule)
 		{
 			switch (nLineRule)
@@ -16086,6 +16100,8 @@
 	 */
 	ApiParaPr.prototype.GetSpacingBefore = function()
 	{
+		this.private_Update();
+		
 		if (!this.Parent)
 		{
 			if (this.ParaPr.Spacing.Before !== undefined)
@@ -16127,6 +16143,8 @@
 	 */
 	ApiParaPr.prototype.GetSpacingAfter = function()
 	{
+		this.private_Update();
+		
 		if (!this.Parent)
 		{
 			if (this.ParaPr.Spacing.After !== undefined)
@@ -16164,6 +16182,8 @@
 	 */
 	ApiParaPr.prototype.GetShd = function()
 	{
+		this.private_Update();
+		
 		var oColor = null;
 		var oShd;
 		if (!this.Parent)
@@ -16183,7 +16203,9 @@
 		if (!oShd)
 			return null;
 
-		oColor = this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Shd.Color;
+		oColor = this.Parent instanceof ApiSelection
+			? oShd.Color || oShd.Fill
+			: this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Shd.Color;
 		if (oColor)
 			return new ApiRGBColor(oColor.r, oColor.g, oColor.b);
 
@@ -16406,6 +16428,8 @@
 	 */
 	ApiParaPr.prototype.GetOutlineLvl = function()
 	{
+		this.private_Update();
+		
 		return this.ParaPr.OutlineLvl;
 	};
 
@@ -16426,6 +16450,10 @@
 		return JSON.stringify(oJSON);
 	};
 
+	ApiParaPr.prototype.private_Update = function () {
+		if (this.Parent && this.Parent instanceof ApiSelection && this.Parent.private_updateParaPrFromCurrentSelection)
+			this.Parent.private_updateParaPrFromCurrentSelection(this);
+	};
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -27225,7 +27253,6 @@
 
 	ApiSelection.prototype.GetFields = function () {};
 	ApiSelection.prototype.GetFormFields = function () {};
-	ApiSelection.prototype.GetParagraphFormat = function () {};
 
 	ApiSelection.prototype.GetDocument = function () {
 		return this.ApiDocument;
@@ -27374,6 +27401,11 @@
 		logicDocument.LoadDocumentState(docState);
 		return null;
 	};
+	ApiSelection.prototype.GetParaPr = function () {
+		const paraPr = new ApiParaPr(this, new AscCommonWord.CParaPr());
+		this.private_updateParaPrFromCurrentSelection(paraPr);
+		return paraPr;
+	};
 
 	Object.defineProperties(ApiSelection.prototype, {
 		'Document': { get: function () { return this.GetDocument(); } },
@@ -27393,6 +27425,7 @@
 		'ShapeRange': { get: function () { return this.GetShapeRange(); } },
 		'OMaths': { get: function () { return this.GetMaths(); } },
 		'Style': { get: function () { return this.GetStyle(); } },
+		'ParagraphFormat': { get: function () { return this.GetParaPr(); } },
 	});
 
 	ApiSelection.prototype.private_updateTextPrFromCurrentSelection = function (apiTextPr) {
@@ -27400,12 +27433,30 @@
 		const rangeTextPr = range.GetTextPr();
 		apiTextPr.TextPr.Set_FromObject(rangeTextPr.TextPr);
 	};
+	ApiSelection.prototype.private_updateParaPrFromCurrentSelection = function (apiParaPr) {
+		const paragraphs = this.GetParagraphs();
+		let accumulated = paragraphs[0].GetParaPr().ParaPr;
+		for (let i = 1; i < paragraphs.length; i++) {
+			const currentParaPr = paragraphs[i].GetParaPr().ParaPr;
+			const compared = accumulated.Compare(currentParaPr);
+			if (compared !== undefined && compared !== null) {
+				accumulated = compared;
+			}
+		}
+		apiParaPr.ParaPr.Set_FromObject(accumulated);
+	};
 
 	ApiSelection.prototype.OnChangeTextPr = function (oApiTextPr) {
 		const range = this.GetRange();
 		if (range && range.SetTextPr) {
 			range.SetTextPr(oApiTextPr);
 		}
+	};
+	ApiSelection.prototype.OnChangeParaPr = function (apiParaPr) {
+		const paragraphs = this.GetParagraphs();
+		paragraphs.forEach(function (paragraph) {
+			paragraph.OnChangeParaPr(apiParaPr);
+		});
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -28885,6 +28936,7 @@
 	ApiSelection.prototype["GetShapeRange"] = ApiSelection.prototype.GetShapeRange;
 	ApiSelection.prototype["GetMaths"] = ApiSelection.prototype.GetMaths;
 	ApiSelection.prototype["GetStyle"] = ApiSelection.prototype.GetStyle;
+	ApiSelection.prototype["GetParaPr"] = ApiSelection.prototype.GetParaPr;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export for internal usage
