@@ -1376,6 +1376,157 @@
 		return {intersection: intersectionArr, contain: containArr};
 	};
 
+	// each data validation contains field ranges that contains c1 r1 c2 r2
+	// three cases to consider: 1. validation range is same a range or contained by range, 2. range is contained by validation range, 3. ranges intersect
+	CDataValidations.prototype.deleteMassValidations = function (validations, ws, rangeBbox, addToHistory) {
+		if (!validations || !validations.length) {
+			return;
+		}
+
+		for (let i = 0; i < validations.length; i++) {
+			const originalValidation = validations[i];
+			let val = originalValidation.clone();
+			if (originalValidation && originalValidation.ranges && originalValidation.ranges.length > 0) {
+				// find intersecting ranges
+				for (let j = 0; j < val.ranges.length; j++) {
+					let range = val.ranges[j];
+					let intersectR1 = Math.max(rangeBbox.r1, range.r1);
+					let intersectC1 = Math.max(rangeBbox.c1, range.c1);
+					let intersectR2 = Math.min(rangeBbox.r2, range.r2);
+					let intersectC2 = Math.min(rangeBbox.c2, range.c2);
+					if (intersectR1 <= intersectR2 && intersectC1 <= intersectC2) {
+						if (rangeBbox.r1 <= range.r1 && rangeBbox.c1 <= range.c1 && rangeBbox.r2 >= range.r2 && rangeBbox.c2 >= range.c2) {
+							// case 1
+							ws.dataValidations.delete(ws, originalValidation.Id, addToHistory);
+						} else if (rangeBbox.r1 >= range.r1 && rangeBbox.c1 >= range.c1 && rangeBbox.r2 <= range.r2 && rangeBbox.c2 <= range.c2) {
+							// case 2
+							// need to split validation range into up to 4 new ranges
+							let newRanges = [];
+							// above
+							if (rangeBbox.r1 > range.r1) {
+								const topRange = range.clone();
+								topRange.r2 = rangeBbox.r1 - 1;
+								newRanges.push(topRange);
+							}
+							// below
+							if (rangeBbox.r2 < range.r2) {
+								const bottomRange = range.clone();
+								bottomRange.r1 = rangeBbox.r2 + 1;
+								newRanges.push(bottomRange);
+							}
+							// left
+							if (rangeBbox.c1 > range.c1) {
+								const leftRange = range.clone();
+								leftRange.c2 = rangeBbox.c1 - 1;
+								leftRange.r1 = Math.max(range.r1, rangeBbox.r1);
+								leftRange.r2 = Math.min(range.r2, rangeBbox.r2);
+								newRanges.push(leftRange);
+							}
+							// right
+							if (rangeBbox.c2 < range.c2) {
+								const rightRange = range.clone();
+								rightRange.c1 = rangeBbox.c2 + 1;
+								rightRange.r1 = Math.max(range.r1, rangeBbox.r1);
+								rightRange.r2 = Math.min(range.r2, rangeBbox.r2);
+								newRanges.push(rightRange);
+							}
+							// remove the range from j place and insert 4 new ranges
+							val.ranges.splice(j, 1);
+							for (let k = 0; k < newRanges.length; k++) {
+								val.ranges.splice(j + k, 0, newRanges[k]);
+							}
+
+							val._init(ws);
+							val.correctToInterface(ws);
+							ws.dataValidations.change(ws, originalValidation, val, addToHistory);
+							// adjust j to skip over newly added ranges
+							j += newRanges.length - 1;
+						} else {
+							// case 3
+							// need to adjust existing range to remove intersection
+
+							let newRanges = [];
+
+							// above
+							if (range.r1 < intersectR1) {
+								const topRange = range.clone();
+								topRange.r2 = intersectR1 - 1;
+								newRanges.push(topRange);
+							}
+
+							// below
+							if (range.r2 > intersectR2) {
+								const bottomRange = range.clone();
+								bottomRange.r1 = intersectR2 + 1;
+								newRanges.push(bottomRange);
+							}
+
+							// left
+							if (range.c1 < intersectC1) {
+								const leftRange = range.clone();
+								leftRange.c2 = intersectC1 - 1;
+								leftRange.r1 = Math.max(range.r1, intersectR1);
+								leftRange.r2 = Math.min(range.r2, intersectR2);
+								newRanges.push(leftRange);
+							}
+
+							// right
+							if (range.c2 > intersectC2) {
+								const rightRange = range.clone();
+								rightRange.c1 = intersectC2 + 1;
+								rightRange.r1 = Math.max(range.r1, intersectR1);
+								rightRange.r2 = Math.min(range.r2, intersectR2);
+								newRanges.push(rightRange);
+							}
+
+							// remove the range from j place and insert up to 4 new ranges
+							val.ranges.splice(j, 1);
+							for (let k = 0; k < newRanges.length; k++) {
+								val.ranges.splice(j + k, 0, newRanges[k]);
+							}
+
+							val._init(ws);
+							val.correctToInterface(ws);
+
+							ws.dataValidations.change(ws, originalValidation, val, addToHistory);
+							// adjust j to skip over newly added ranges
+							j += newRanges.length - 1;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	CDataValidations.prototype.getSelectedRangeValidations = function (ranges, ws) {
+		var _obj = this.getIntersections(ranges);
+		const dataValidationIntersections = _obj.intersection;
+		const dataValidationContain = _obj.contain;
+		let res = [];
+		// we either intersect with one or more data validations, or either one data validation contains the entire selection or none
+		if (dataValidationIntersections.length) {
+			res = dataValidationIntersections;
+		}else if (dataValidationContain.length) {
+			res = dataValidationContain;
+		} else {
+			res =[this.getNewValidation()];
+		}
+
+		for (let i = 0; i < res.length; i++) {
+			res[i]._init(ws);
+			res[i].correctToInterface(ws);
+		}
+		return res;
+	}
+
+	CDataValidations.prototype.getNewValidation = function () {
+		var res = new window['AscCommonExcel'].CDataValidation();
+		res.showErrorMessage = true;
+		res.showInputMessage = true;
+		res.allowBlank = true;
+		return res;
+	}
+
 	CDataValidations.prototype.getProps = function (ranges, doExtend, ws) {
 		var _obj = this.getIntersections(ranges);
 		var dataValidationIntersection = _obj.intersection;
@@ -1393,26 +1544,18 @@
 			}
 		}
 
-		var getNewObject = function () {
-			var _res = new window['AscCommonExcel'].CDataValidation();
-			_res.showErrorMessage = true;
-			_res.showInputMessage = true;
-			_res.allowBlank = true;
-			return _res;
-		};
-
 		//для передачи в интерфейс использую объект и модели - CDataValidation
 		//если doExtend = null -> значит erase === true
 		var res;
 		if (doExtend === null) {
-			res = getNewObject();
+			res = this.getNewValidation();
 		} else if (doExtend !== undefined) {
-			res = doExtend ? dataValidationIntersection[0].clone(true) : getNewObject();
+			res = doExtend ? dataValidationIntersection[0].clone(true) : this.getNewValidation();
 		} else if (dataValidationContain.length === 1) {
 			res = dataValidationContain[0].clone(true);
 		} else {
 			//возвращаем новый объект с опциями
-			res = getNewObject();
+			res = this.getNewValidation();
 		}
 
 		res._init(ws);

@@ -12494,36 +12494,36 @@
 			return this.GetEntireColumn();
 		}
 	});
-	// /**
-	//  * Returns a collection of the ranges.
-	//  * @memberof ApiRange
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {ApiValidation}
-	//  * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetValidation.js
-	//  */
-	// ApiRange.prototype.GetValidation = function () {
-	// 	if (!this._validation) {
-	// 		let worksheet = this.range.worksheet;
-	// 		let ranges = [];
-	// 		if (this.areas) {
-	// 			for (let i = 0; i < this.areas.length; i++) {
-	// 				ranges.push(this.areas[i].bbox);
-	// 			}
-	// 		} else {
-	// 			ranges.push(this.range.bbox);
-	// 		}
-	// 		this._validation = new ApiValidation(worksheet.getDataValidationProps(undefined, ranges), this);
-	// 		if (!this._validation.range) {
-	// 			this._validation.range = this;
-	// 		}
-	// 	}
-	// 	return this._validation;
-	// };
-	// Object.defineProperty(ApiRange.prototype, "Validation", {
-	// 	get: function () {
-	// 		return this.GetValidation();
-	// 	}
-	// });
+	/**
+	 * Returns a collection of the ranges.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiValidation}
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetValidation.js
+	 */
+	ApiRange.prototype.GetValidation = function () {
+		if (!this._validation) {
+			let worksheet = this.range.worksheet;
+			let ranges = [];
+			if (this.areas) {
+				for (let i = 0; i < this.areas.length; i++) {
+					ranges.push(this.areas[i].bbox);
+				}
+			} else {
+				ranges.push(this.range.bbox);
+			}
+			this._validation = new ApiValidation(worksheet.getDataValidationProps(undefined, ranges, true), this);
+			if (!this._validation.range) {
+				this._validation.range = this;
+			}
+		}
+		return this._validation;
+	};
+	Object.defineProperty(ApiRange.prototype, "Validation", {
+		get: function () {
+			return this.GetValidation();
+		}
+	});
 
 	/**
 	 * Returns the format conditions collection for the range.
@@ -19205,677 +19205,755 @@
 		return sOperator;
 	}
 
-	// /**
-	//  * Class representing data validation.
-	//  * @constructor
-	//  * @property {ValidationType} Type - Returns or sets the validation type.
-	//  * @property {ValidationAlertStyle} AlertStyle - Returns or sets the validation alert style.
-	//  * @property {boolean} IgnoreBlank - Returns or sets a Boolean value that specifies whether blank values are permitted by the range data validation.
-	//  * @property {boolean} InCellDropdown - Returns or sets a Boolean value indicating whether data validation displays a drop-down list that contains acceptable values.
-	//  * @property {boolean} ShowInput - Returns or sets a Boolean value indicating whether the data validation input message will be displayed whenever the user selects a cell in the data validation range.
-	//  * @property {boolean} ShowError - Returns or sets a Boolean value indicating whether the data validation error message will be displayed whenever the user enters invalid data.
-	//  * @property {string} InputTitle - Returns or sets the title of the data-validation input dialog box.
-	//  * @property {string} InputMessage - Returns or sets the data validation input message.
-	//  * @property {string} ErrorTitle - Returns or sets the title of the data-validation error dialog box.
-	//  * @property {string} ErrorMessage - Returns or sets the data validation error message.
-	//  * @property {string} Formula1 - Returns or sets the value or expression associated with the conditional format or data validation.
-	//  * @property {string} Formula2 - Returns or sets the value or expression associated with the second part of a conditional format or data validation.
-	//  * @property {ValidationOperator} Operator - Returns or sets the data validation operator.
-	//  * @property {ApiRange} Parent - Returns the parent range object.
-	//  * @property {string} Value - Returns or sets the validation value.
-	//  */
-	// function ApiValidation(validation, range) {
-	// 	this.validation = validation;
-	// 	this.range = range;
-	// }
-	//
-	// /**
-	//  * Adds data validation to the specified range.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @param {ValidationType} Type - The validation type.
-	//  * @param {ValidationAlertStyle} [AlertStyle] - The validation alert style.
-	//  * @param {ValidationOperator} [Operator] - The data validation operator.
-	//  * @param {string | number | ApiRange} [Formula1] - The first formula in the data validation.
-	//  * @param {string | number | ApiRange} [Formula2] - The second formula in the data validation.
-	//  * @returns {ApiValidation | null}
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/Add.js
-	//  */
-	// ApiValidation.prototype.Add = function(Type, AlertStyle, Operator, Formula1, Formula2) {
-	// 	if (!Type) {
-	// 		return;
-	// 	}
-	//
-	// 	if (this.validation.ranges) {
-	// 		logError(new Error('Validation already exists.'));
-	// 		return null;
-	// 	}
-	//
-	// 	let internalType = FromXlValidationTypeTo(Type);
-	// 	let internalAlertStyle = AlertStyle ? FromXlValidationAlertStyleTo(AlertStyle) : Asc.EDataValidationErrorStyle.Stop;
-	// 	let internalOperator = Operator ? FromXlValidationOperatorTo(Operator) : Asc.EDataValidationOperator.Between;
-	//
-	// 	if (internalType === -1) {
-	// 		return null;
-	// 	}
-	//
-	// 	let dataValidation = new window['AscCommonExcel'].CDataValidation();
-	//
-	// 	dataValidation.type = internalType;
-	// 	dataValidation.errorStyle = internalAlertStyle;
-	// 	dataValidation.operator = internalOperator;
-	// 	dataValidation.showErrorMessage = true;
-	// 	dataValidation.showInputMessage = true;
-	// 	dataValidation.allowBlank = true;
-	//
-	// 	let processFormula = function(formula) {
-	// 		if (formula === undefined || formula === null) {
-	// 			return null;
-	// 		}
-	//
-	// 		if (typeof formula === "string") {
-	// 			return new window['Asc'].CDataFormula(formula);
-	// 		} else if (typeof formula === "number") {
-	// 			return new window['Asc'].CDataFormula(formula.toString());
-	// 		} else if (formula && formula.constructor === ApiRange) {
-	// 			return new window['Asc'].CDataFormula(formula.GetAddress());
-	// 		}
-	//
-	// 		return null;
-	// 	};
-	//
-	// 	if (Formula1 !== undefined) {
-	// 		dataValidation.formula1 = processFormula(Formula1);
-	// 	}
-	//
-	// 	if (Formula2 !== undefined) {
-	// 		dataValidation.formula2 = processFormula(Formula2);
-	// 	}
-	//
-	// 	let ranges = [];
-	// 	if (this.range.areas) {
-	// 		for (let i = 0; i < this.range.areas.length; i++) {
-	// 			ranges.push(this.range.areas[i].bbox);
-	// 		}
-	// 	} else {
-	// 		ranges.push(this.range.range.bbox);
-	// 	}
-	// 	dataValidation.ranges = ranges;
-	//
-	// 	let worksheet = this.range && this.range.range && this.range.range.worksheet;
-	// 	if (!worksheet) {
-	// 		return null;
-	// 	}
-	//
-	// 	if (Asc.c_oAscError.ID.No !== dataValidation.asc_checkValid()) {
-	// 		logError(new Error('Check params error.'));
-	// 		return null;
-	// 	}
-	//
-	// 	if (!worksheet.dataValidations) {
-	// 		worksheet.dataValidations = new window['AscCommonExcel'].CDataValidations();
-	// 	}
-	//
-	// 	dataValidation._init(worksheet);
-	// 	dataValidation.correctFromInterface(worksheet);
-	//
-	// 	worksheet.dataValidations.add(worksheet, dataValidation, true);
-	//
-	// 	this.validation = dataValidation;
-	//
-	// 	return this;
-	// };
-	//
-	// /**
-	//  * Deletes the object.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/Delete.js
-	//  */
-	// ApiValidation.prototype.Delete = function() {
-	// 	if (!this.validation || !this.validation.ranges) {
-	// 		return;
-	// 	}
-	//
-	// 	let worksheet = this.range && this.range.range && this.range.range.worksheet;
-	// 	if (!worksheet || !worksheet.dataValidations) {
-	// 		return;
-	// 	}
-	//
-	// 	// Удаляем data validation из worksheet
-	// 	worksheet.dataValidations.delete(worksheet, this.validation.Id, true);
-	//
-	// 	// Очищаем ссылку на validation
-	// 	this.validation = new window['AscCommonExcel'].CDataValidation();
-	// };
-	//
-	// /**
-	//  * Modifies data validation for a range.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @param {ValidationType} [Type] - The validation type.
-	//  * @param {ValidationAlertStyle} [AlertStyle] - The validation alert style.
-	//  * @param {ValidationOperator} [Operator] - The data validation operator.
-	//  * @param {string | number | ApiRange} [Formula1] - The first formula in the data validation.
-	//  * @param {string | number | ApiRange} [Formula2] - The second formula in the data validation.
-	//  * @returns {ApiValidation | null}
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/Modify.js
-	//  */
-	// ApiValidation.prototype.Modify = function(Type, AlertStyle, Operator, Formula1, Formula2) {
-	// 	if (!this.validation || !this.validation.ranges) {
-	// 		logError(new Error('No validation to modify.'));
-	// 		return null;
-	// 	}
-	//
-	// 	let worksheet = this.range && this.range.range && this.range.range.worksheet;
-	// 	if (!worksheet || !worksheet.dataValidations) {
-	// 		return null;
-	// 	}
-	//
-	// 	let newValidation = this.validation.clone(true);
-	//
-	// 	let processFormula = function(formula) {
-	// 		if (formula === undefined || formula === null) {
-	// 			return null;
-	// 		}
-	//
-	// 		if (typeof formula === "string") {
-	// 			return new window['Asc'].CDataFormula(formula);
-	// 		} else if (typeof formula === "number") {
-	// 			return new window['Asc'].CDataFormula(formula.toString());
-	// 		} else if (formula && formula.constructor === ApiRange) {
-	// 			return new window['Asc'].CDataFormula(formula.GetAddress());
-	// 		}
-	//
-	// 		return null;
-	// 	};
-	//
-	// 	if (Type !== undefined) {
-	// 		let internalType = FromXlValidationTypeTo(Type);
-	// 		if (internalType !== -1) {
-	// 			newValidation.type = internalType;
-	// 		}
-	// 	}
-	//
-	// 	if (AlertStyle !== undefined) {
-	// 		let internalAlertStyle = FromXlValidationAlertStyleTo(AlertStyle);
-	// 		if (internalAlertStyle !== -1) {
-	// 			newValidation.errorStyle = internalAlertStyle;
-	// 		}
-	// 	}
-	//
-	// 	if (Operator !== undefined) {
-	// 		let internalOperator = FromXlValidationOperatorTo(Operator);
-	// 		if (internalOperator !== -1) {
-	// 			newValidation.operator = internalOperator;
-	// 		}
-	// 	}
-	//
-	// 	if (Formula1 !== undefined) {
-	// 		newValidation.formula1 = processFormula(Formula1);
-	// 	}
-	//
-	// 	if (Formula2 !== undefined) {
-	// 		newValidation.formula2 = processFormula(Formula2);
-	// 	}
-	//
-	// 	if (Asc.c_oAscError.ID.No !== newValidation.asc_checkValid()) {
-	// 		logError(new Error('Invalid validation parameters.'));
-	// 		return null;
-	// 	}
-	//
-	// 	newValidation._init(worksheet);
-	// 	newValidation.correctFromInterface(worksheet);
-	//
-	// 	worksheet.dataValidations.change(worksheet, this.validation, newValidation, true);
-	//
-	// 	this.validation = newValidation;
-	//
-	// 	return this;
-	// };
-	//
-	// /**
-	//  * Returns the validation type.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {ValidationType}
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetType.js
-	//  */
-	// ApiValidation.prototype.GetType = function() {
-	// 	return ToXlValidationTypeFrom(this.validation.asc_getType());
-	// };
-	//
-	// /**
-	//  * Sets the validation type.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @param {ValidationType} Type - The validation type.
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetType.js
-	//  */
-	// ApiValidation.prototype.SetType = function(Type) {
-	// 	let internalType = FromXlValidationTypeTo(Type);
-	// 	if (internalType !== -1) {
-	// 		this.validation.asc_setType(internalType);
-	// 	}
-	// };
-	//
-	// /**
-	//  * Returns the validation alert style.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {ValidationAlertStyle}
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetAlertStyle.js
-	//  */
-	// ApiValidation.prototype.GetAlertStyle = function() {
-	// 	return ToXlValidationAlertStyleFrom(this.validation.getErrorStyle());
-	// };
-	//
-	// /**
-	//  * Sets the validation alert style.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @param {ValidationAlertStyle} AlertStyle - The validation alert style.
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetAlertStyle.js
-	//  */
-	// ApiValidation.prototype.SetAlertStyle = function(AlertStyle) {
-	// 	let internalAlertStyle = FromXlValidationAlertStyleTo(AlertStyle);
-	// 	if (internalAlertStyle !== -1) {
-	// 		this.validation.asc_setErrorStyle(internalAlertStyle);
-	// 	}
-	// };
-	//
-	// /**
-	//  * Returns whether blank values are permitted by the range data validation.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {boolean}
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetIgnoreBlank.js
-	//  */
-	// ApiValidation.prototype.GetIgnoreBlank = function() {
-	// 	return this.validation.getAllowBlank();
-	// };
-	//
-	// /**
-	//  * Sets whether blank values are permitted by the range data validation.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @param {boolean} IgnoreBlank - Specifies whether blank values are permitted.
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetIgnoreBlank.js
-	//  */
-	// ApiValidation.prototype.SetIgnoreBlank = function(IgnoreBlank) {
-	// 	this.validation.asc_setAllowBlank(IgnoreBlank);
-	// };
-	//
-	// /**
-	//  * Returns whether data validation displays a drop-down list that contains acceptable values.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {boolean}
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetInCellDropdown.js
-	//  */
-	// ApiValidation.prototype.GetInCellDropdown = function() {
-	// 	return !this.validation.getShowDropDown();
-	// };
-	//
-	// /**
-	//  * Sets whether data validation displays a drop-down list that contains acceptable values.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @param {boolean} InCellDropdown - Specifies whether to display a drop-down list.
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetInCellDropdown.js
-	//  */
-	// ApiValidation.prototype.SetInCellDropdown = function(InCellDropdown) {
-	// 	this.validation.asc_setShowDropDown(!InCellDropdown);
-	// };
-	//
-	// /**
-	//  * Returns whether the data validation input message will be displayed.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {boolean}
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetShowInput.js
-	//  */
-	// ApiValidation.prototype.GetShowInput = function() {
-	// 	return this.validation.getShowInputMessage();
-	// };
-	//
-	// /**
-	//  * Sets whether the data validation input message will be displayed.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @param {boolean} ShowInput - Specifies whether to show input message.
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetShowInput.js
-	//  */
-	// ApiValidation.prototype.SetShowInput = function(ShowInput) {
-	// 	this.validation.asc_setShowInputMessage(ShowInput);
-	// };
-	//
-	// /**
-	//  * Returns whether the data validation error message will be displayed.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {boolean}
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetShowError.js
-	//  */
-	// ApiValidation.prototype.GetShowError = function() {
-	// 	return this.validation.getShowErrorMessage();
-	// };
-	//
-	// /**
-	//  * Sets whether the data validation error message will be displayed.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @param {boolean} ShowError - Specifies whether to show error message.
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetShowError.js
-	//  */
-	// ApiValidation.prototype.SetShowError = function(ShowError) {
-	// 	this.validation.asc_setShowErrorMessage(ShowError);
-	// };
-	//
-	// /**
-	//  * Returns the title of the data-validation input dialog box.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {string}
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetInputTitle.js
-	//  */
-	// ApiValidation.prototype.GetInputTitle = function() {
-	// 	return this.validation.getPromptTitle();
-	// };
-	//
-	// /**
-	//  * Sets the title of the data-validation input dialog box.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @param {string} InputTitle - The input dialog title.
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetInputTitle.js
-	//  */
-	// ApiValidation.prototype.SetInputTitle = function(InputTitle) {
-	// 	this.validation.asc_setPromptTitle(InputTitle);
-	// };
-	//
-	// /**
-	//  * Returns the data validation input message.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {string}
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetInputMessage.js
-	//  */
-	// ApiValidation.prototype.GetInputMessage = function() {
-	// 	return this.validation.getPrompt();
-	// };
-	//
-	// /**
-	//  * Sets the data validation input message.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @param {string} InputMessage - The input message.
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetInputMessage.js
-	//  */
-	// ApiValidation.prototype.SetInputMessage = function(InputMessage) {
-	// 	this.validation.asc_setPrompt(InputMessage);
-	// };
-	//
-	// /**
-	//  * Returns the title of the data-validation error dialog box.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {string}
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetErrorTitle.js
-	//  */
-	// ApiValidation.prototype.GetErrorTitle = function() {
-	// 	return this.validation.getErrorTitle();
-	// };
-	//
-	// /**
-	//  * Sets the title of the data-validation error dialog box.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @param {string} ErrorTitle - The error dialog title.
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetErrorTitle.js
-	//  */
-	// ApiValidation.prototype.SetErrorTitle = function(ErrorTitle) {
-	// 	this.validation.asc_setErrorTitle(ErrorTitle);
-	// };
-	//
-	// /**
-	//  * Returns the data validation error message.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {string}
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetErrorMessage.js
-	//  */
-	// ApiValidation.prototype.GetErrorMessage = function() {
-	// 	return this.validation.getError();
-	// };
-	//
-	// /**
-	//  * Sets the data validation error message.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @param {string} ErrorMessage - The error message.
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetErrorMessage.js
-	//  */
-	// ApiValidation.prototype.SetErrorMessage = function(ErrorMessage) {
-	// 	this.validation.asc_setError(ErrorMessage);
-	// };
-	//
-	// /**
-	//  * Returns the first formula in the data validation.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {string}
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetFormula1.js
-	//  */
-	// ApiValidation.prototype.GetFormula1 = function() {
-	// 	let formula1 = this.validation.getFormula1();
-	// 	return formula1 ? formula1.asc_getValue() : "";
-	// };
-	//
-	// /**
-	//  * Sets the first formula in the data validation.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @param {string} Formula1 - The first formula.
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetFormula1.js
-	//  */
-	// ApiValidation.prototype.SetFormula1 = function(Formula1) {
-	// 	let formula = new window['Asc'].CDataFormula(Formula1);
-	// 	this.validation.asc_setFormula1(formula);
-	// };
-	//
-	// /**
-	//  * Returns the second formula in the data validation.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {string}
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetFormula2.js
-	//  */
-	// ApiValidation.prototype.GetFormula2 = function() {
-	// 	let formula2 = this.validation.getFormula2();
-	// 	return formula2 ? formula2.asc_getValue() : "";
-	// };
-	//
-	// /**
-	//  * Sets the second formula in the data validation.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @param {string} Formula2 - The second formula.
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetFormula2.js
-	//  */
-	// ApiValidation.prototype.SetFormula2 = function(Formula2) {
-	// 	let formula = new window['Asc'].CDataFormula(Formula2);
-	// 	this.validation.asc_setFormula2(formula);
-	// };
-	//
-	// /**
-	//  * Returns the data validation operator.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {ValidationOperator}
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetOperator.js
-	//  */
-	// ApiValidation.prototype.GetOperator = function() {
-	// 	return ToXlValidationOperatorFrom(this.validation.getOperator());
-	// };
-	//
-	// /**
-	//  * Sets the data validation operator.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @param {ValidationOperator} Operator - The validation operator.
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetOperator.js
-	//  */
-	// ApiValidation.prototype.SetOperator = function(Operator) {
-	// 	let internalOperator = FromXlValidationOperatorTo(Operator);
-	// 	if (internalOperator !== -1) {
-	// 		this.validation.asc_setOperator(internalOperator);
-	// 	}
-	// };
-	//
-	// /**
-	//  * Returns the parent range object.
-	//  * @memberof ApiValidation
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {ApiRange}
-	//  * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetParent.js
-	//  */
-	// ApiValidation.prototype.GetParent = function() {
-	// 	return this.range;
-	// };
-	//
-	// // Property implementations с использованием новых методов
-	// Object.defineProperty(ApiValidation.prototype, "Type", {
-	// 	get: function() {
-	// 		return this.GetType();
-	// 	},
-	// 	set: function(value) {
-	// 		this.SetType(value);
-	// 	}
-	// });
-	//
-	// Object.defineProperty(ApiValidation.prototype, "AlertStyle", {
-	// 	get: function() {
-	// 		return this.GetAlertStyle();
-	// 	},
-	// 	set: function(value) {
-	// 		this.SetAlertStyle(value);
-	// 	}
-	// });
-	//
-	// Object.defineProperty(ApiValidation.prototype, "IgnoreBlank", {
-	// 	get: function() {
-	// 		return this.GetIgnoreBlank();
-	// 	},
-	// 	set: function(value) {
-	// 		this.SetIgnoreBlank(value);
-	// 	}
-	// });
-	//
-	// Object.defineProperty(ApiValidation.prototype, "InCellDropdown", {
-	// 	get: function() {
-	// 		return this.GetInCellDropdown();
-	// 	},
-	// 	set: function(value) {
-	// 		this.SetInCellDropdown(value);
-	// 	}
-	// });
-	//
-	// Object.defineProperty(ApiValidation.prototype, "ShowInput", {
-	// 	get: function() {
-	// 		return this.GetShowInput();
-	// 	},
-	// 	set: function(value) {
-	// 		this.SetShowInput(value);
-	// 	}
-	// });
-	//
-	// Object.defineProperty(ApiValidation.prototype, "ShowError", {
-	// 	get: function() {
-	// 		return this.GetShowError();
-	// 	},
-	// 	set: function(value) {
-	// 		this.SetShowError(value);
-	// 	}
-	// });
-	//
-	// Object.defineProperty(ApiValidation.prototype, "InputTitle", {
-	// 	get: function() {
-	// 		return this.GetInputTitle();
-	// 	},
-	// 	set: function(value) {
-	// 		this.SetInputTitle(value);
-	// 	}
-	// });
-	//
-	// Object.defineProperty(ApiValidation.prototype, "InputMessage", {
-	// 	get: function() {
-	// 		return this.GetInputMessage();
-	// 	},
-	// 	set: function(value) {
-	// 		this.SetInputMessage(value);
-	// 	}
-	// });
-	//
-	// Object.defineProperty(ApiValidation.prototype, "ErrorTitle", {
-	// 	get: function() {
-	// 		return this.GetErrorTitle();
-	// 	},
-	// 	set: function(value) {
-	// 		this.SetErrorTitle(value);
-	// 	}
-	// });
-	//
-	// Object.defineProperty(ApiValidation.prototype, "ErrorMessage", {
-	// 	get: function() {
-	// 		return this.GetErrorMessage();
-	// 	},
-	// 	set: function(value) {
-	// 		this.SetErrorMessage(value);
-	// 	}
-	// });
-	//
-	// Object.defineProperty(ApiValidation.prototype, "Formula1", {
-	// 	get: function() {
-	// 		return this.GetFormula1();
-	// 	},
-	// 	set: function(value) {
-	// 		this.SetFormula1(value);
-	// 	}
-	// });
-	//
-	// Object.defineProperty(ApiValidation.prototype, "Formula2", {
-	// 	get: function() {
-	// 		return this.GetFormula2();
-	// 	},
-	// 	set: function(value) {
-	// 		this.SetFormula2(value);
-	// 	}
-	// });
-	//
-	// Object.defineProperty(ApiValidation.prototype, "Operator", {
-	// 	get: function() {
-	// 		return this.GetOperator();
-	// 	},
-	// 	set: function(value) {
-	// 		this.SetOperator(value);
-	// 	}
-	// });
-	//
-	// Object.defineProperty(ApiValidation.prototype, "Parent", {
-	// 	get: function() {
-	// 		return this.GetParent();
-	// 	}
-	// });
-	//
-	// Object.defineProperty(ApiValidation.prototype, "Value", {
-	// 	get: function() {
-	// 		return this.GetFormula1();
-	// 	},
-	// 	set: function(value) {
-	// 		this.SetFormula1(value);
-	// 	}
-	// });
+	// Helper to get single instance of validation
+	function getSingleValidation(apiValidation) {
+		if (!apiValidation) {
+			return;
+		}
+		if (!apiValidation.validations || !Array.isArray(apiValidation.validations) || !apiValidation.validations.length) {
+			const validation = new window['AscCommonExcel'].CDataValidations().getNewValidation();
+			apiValidation.validations = [validation];
+			return apiValidation.validations[0];
+		}
+		if (apiValidation.validations.length > 1) {
+			logError(new Error('Multiple validations exist'));
+			return null;
+		}
+		return apiValidation.validations[0];
+	}
+
+	/**
+	 * Class representing data validation.
+	 * @constructor
+	 * @property {ValidationType} Type - Returns or sets the validation type.
+	 * @property {ValidationAlertStyle} AlertStyle - Returns or sets the validation alert style.
+	 * @property {boolean} IgnoreBlank - Returns or sets a Boolean value that specifies whether blank values are permitted by the range data validation.
+	 * @property {boolean} InCellDropdown - Returns or sets a Boolean value indicating whether data validation displays a drop-down list that contains acceptable values.
+	 * @property {boolean} ShowInput - Returns or sets a Boolean value indicating whether the data validation input message will be displayed whenever the user selects a cell in the data validation range.
+	 * @property {boolean} ShowError - Returns or sets a Boolean value indicating whether the data validation error message will be displayed whenever the user enters invalid data.
+	 * @property {string} InputTitle - Returns or sets the title of the data-validation input dialog box.
+	 * @property {string} InputMessage - Returns or sets the data validation input message.
+	 * @property {string} ErrorTitle - Returns or sets the title of the data-validation error dialog box.
+	 * @property {string} ErrorMessage - Returns or sets the data validation error message.
+	 * @property {string} Formula1 - Returns or sets the value or expression associated with the conditional format or data validation.
+	 * @property {string} Formula2 - Returns or sets the value or expression associated with the second part of a conditional format or data validation.
+	 * @property {ValidationOperator} Operator - Returns or sets the data validation operator.
+	 * @property {ApiRange} Parent - Returns the parent range object.
+	 * @property {string} Value - Returns or sets the validation value.
+	 */
+	function ApiValidation(validations, range) {
+        if (!validations || !Array.isArray(validations) || !validations.length ) {
+            validations = [];
+        }
+		this.range = range;
+		this.validations = validations;
+	}
+
+	/**
+	 * Adds data validation to the specified range.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {ValidationType} Type - The validation type.
+	 * @param {ValidationAlertStyle} [AlertStyle] - The validation alert style.
+	 * @param {ValidationOperator} [Operator] - The data validation operator.
+	 * @param {string | number | ApiRange} [Formula1] - The first formula in the data validation.
+	 * @param {string | number | ApiRange} [Formula2] - The second formula in the data validation.
+	 * @returns {ApiValidation | null}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/Add.js
+	 */
+	ApiValidation.prototype.Add = function(Type, AlertStyle, Operator, Formula1, Formula2) {
+		if (!Type) {
+			return;
+		}
+
+		if (this.validations && Array.isArray(this.validations) && this.validations.length > 0 && this.validations[0].ranges) {
+			logError(new Error('Validation already exists.'));
+			return null;
+		}
+
+		let internalType = FromXlValidationTypeTo(Type);
+		let internalAlertStyle = AlertStyle ? FromXlValidationAlertStyleTo(AlertStyle) : Asc.EDataValidationErrorStyle.Stop;
+		let internalOperator = Operator ? FromXlValidationOperatorTo(Operator) : Asc.EDataValidationOperator.Between;
+
+		if (internalType === -1) {
+			return null;
+		}
+
+		let dataValidation = new window['AscCommonExcel'].CDataValidation();
+
+		dataValidation.type = internalType;
+		dataValidation.errorStyle = internalAlertStyle;
+		dataValidation.operator = internalOperator;
+		dataValidation.showErrorMessage = true;
+		dataValidation.showInputMessage = true;
+		dataValidation.allowBlank = true;
+
+		let processFormula = function(formula) {
+			if (formula === undefined || formula === null) {
+				return null;
+			}
+
+			if (typeof formula === "string") {
+				return new window['Asc'].CDataFormula(formula);
+			} else if (typeof formula === "number") {
+				return new window['Asc'].CDataFormula(formula.toString());
+			} else if (formula && formula.constructor === ApiRange) {
+				return new window['Asc'].CDataFormula(formula.GetAddress());
+			}
+
+			return null;
+		};
+
+		if (Formula1 !== undefined) {
+			dataValidation.formula1 = processFormula(Formula1);
+		}
+
+		if (Formula2 !== undefined) {
+			dataValidation.formula2 = processFormula(Formula2);
+		}
+
+		let ranges = [];
+		if (this.range.areas) {
+			for (let i = 0; i < this.range.areas.length; i++) {
+				ranges.push(this.range.areas[i].bbox);
+			}
+		} else {
+			ranges.push(this.range.range.bbox);
+		}
+		dataValidation.ranges = ranges;
+
+		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		if (!worksheet) {
+			return null;
+		}
+
+		if (Asc.c_oAscError.ID.No !== dataValidation.asc_checkValid()) {
+			logError(new Error('Check params error.'));
+			return null;
+		}
+
+		if (!worksheet.dataValidations) {
+			worksheet.dataValidations = new window['AscCommonExcel'].CDataValidations();
+		}
+
+		dataValidation._init(worksheet);
+		dataValidation.correctFromInterface(worksheet);
+
+		worksheet.dataValidations.add(worksheet, dataValidation, true);
+
+		this.validations = [dataValidation];
+
+		return this;
+	};
+
+	/**
+	 * Deletes the object.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/Delete.js
+	 */
+	ApiValidation.prototype.Delete = function() {
+		if (!this.validations || !Array.isArray(this.validations) || !this.validations.length) {
+			return;
+		}
+
+		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		if (!worksheet || !worksheet.dataValidations) {
+			return;
+		}
+
+		// for all validations in the this.validations remove intersecting range from validations
+		let rangeBbox = this.range.range.bbox;
+		worksheet.dataValidations.deleteMassValidations(this.validations, worksheet, rangeBbox, true);
+		
+
+		// Очищаем ссылку на validation
+		this.validations = [];
+		return this;
+	};
+
+	/**
+	 * Modifies data validation for a range.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {ValidationType} [Type] - The validation type.
+	 * @param {ValidationAlertStyle} [AlertStyle] - The validation alert style.
+	 * @param {ValidationOperator} [Operator] - The data validation operator.
+	 * @param {string | number | ApiRange} [Formula1] - The first formula in the data validation.
+	 * @param {string | number | ApiRange} [Formula2] - The second formula in the data validation.
+	 * @returns {ApiValidation | null}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/Modify.js
+	 */
+	ApiValidation.prototype.Modify = function(Type, AlertStyle, Operator, Formula1, Formula2) {
+		if (!this.validations || !Array.isArray(this.validations) || !this.validations.length) {
+			logError(new Error('No validation to modify.'));
+			return null;
+		}
+
+		if (this.validations.length > 0 && !this.validations[0].ranges) {
+			logError(new Error('No ranges to modify.'));
+			return null;
+		}
+
+		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		if (!worksheet || !worksheet.dataValidations) {
+			return null;
+		}
+				
+		worksheet.dataValidations.deleteMassValidations(this.validations, worksheet, this.range.range.bbox, true);
+		this.validations = [];
+		this.Add(Type, AlertStyle, Operator, Formula1, Formula2);
+
+		return this;
+	};
+
+	/**
+	 * Returns the validation type.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {ValidationType}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetType.js
+	 */
+	ApiValidation.prototype.GetType = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		return ToXlValidationTypeFrom(validation.asc_getType());
+	};
+
+	/**
+	 * Sets the validation type.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {ValidationType} Type - The validation type.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetType.js
+	 */
+	ApiValidation.prototype.SetType = function(Type) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		// If there are multiple validations, we cannot set type
+		let internalType = FromXlValidationTypeTo(Type);
+		if (internalType !== -1) {
+			validation.asc_setType(internalType);
+		}
+	};
+
+	/**
+	 * Returns the validation alert style.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {ValidationAlertStyle}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetAlertStyle.js
+	 */
+	ApiValidation.prototype.GetAlertStyle = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		return ToXlValidationAlertStyleFrom(validation.getErrorStyle());
+	};
+
+	/**
+	 * Sets the validation alert style.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {ValidationAlertStyle} AlertStyle - The validation alert style.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetAlertStyle.js
+	 */
+	ApiValidation.prototype.SetAlertStyle = function(AlertStyle) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		let internalAlertStyle = FromXlValidationAlertStyleTo(AlertStyle);
+		if (internalAlertStyle !== -1) {
+			validation.asc_setErrorStyle(internalAlertStyle);
+		}
+	};
+
+	/**
+	 * Returns whether blank values are permitted by the range data validation.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetIgnoreBlank.js
+	 */
+	ApiValidation.prototype.GetIgnoreBlank = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		return validation.getAllowBlank();
+	};
+
+	/**
+	 * Sets whether blank values are permitted by the range data validation.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} IgnoreBlank - Specifies whether blank values are permitted.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetIgnoreBlank.js
+	 */
+	ApiValidation.prototype.SetIgnoreBlank = function(IgnoreBlank) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		validation.asc_setAllowBlank(IgnoreBlank);
+	};
+
+	/**
+	 * Returns whether data validation displays a drop-down list that contains acceptable values.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetInCellDropdown.js
+	 */
+	ApiValidation.prototype.GetInCellDropdown = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		return !validation.getShowDropDown();
+	};
+
+	/**
+	 * Sets whether data validation displays a drop-down list that contains acceptable values.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} InCellDropdown - Specifies whether to display a drop-down list.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetInCellDropdown.js
+	 */
+	ApiValidation.prototype.SetInCellDropdown = function(InCellDropdown) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		validation.asc_setShowDropDown(!InCellDropdown);
+	};
+
+	/**
+	 * Returns whether the data validation input message will be displayed.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetShowInput.js
+	 */
+	ApiValidation.prototype.GetShowInput = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		return validation.getShowInputMessage();
+	};
+
+	/**
+	 * Sets whether the data validation input message will be displayed.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} ShowInput - Specifies whether to show input message.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetShowInput.js
+	 */
+	ApiValidation.prototype.SetShowInput = function(ShowInput) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		validation.asc_setShowInputMessage(ShowInput);
+	};
+
+	/**
+	 * Returns whether the data validation error message will be displayed.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetShowError.js
+	 */
+	ApiValidation.prototype.GetShowError = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		return validation.getShowErrorMessage();
+	};
+
+	/**
+	 * Sets whether the data validation error message will be displayed.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} ShowError - Specifies whether to show error message.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetShowError.js
+	 */
+	ApiValidation.prototype.SetShowError = function(ShowError) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		validation.asc_setShowErrorMessage(ShowError);
+	};
+
+	/**
+	 * Returns the title of the data-validation input dialog box.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetInputTitle.js
+	 */
+	ApiValidation.prototype.GetInputTitle = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		return validation.getPromptTitle();
+	};
+
+	/**
+	 * Sets the title of the data-validation input dialog box.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {string} InputTitle - The input dialog title.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetInputTitle.js
+	 */
+	ApiValidation.prototype.SetInputTitle = function(InputTitle) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		validation.asc_setPromptTitle(InputTitle);
+	};
+
+	/**
+	 * Returns the data validation input message.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetInputMessage.js
+	 */
+	ApiValidation.prototype.GetInputMessage = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		return validation.getPrompt();
+	};
+
+	/**
+	 * Sets the data validation input message.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {string} InputMessage - The input message.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetInputMessage.js
+	 */
+	ApiValidation.prototype.SetInputMessage = function(InputMessage) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		validation.asc_setPrompt(InputMessage);
+	};
+
+	/**
+	 * Returns the title of the data-validation error dialog box.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetErrorTitle.js
+	 */
+	ApiValidation.prototype.GetErrorTitle = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		return validation.getErrorTitle();
+	};
+
+	/**
+	 * Sets the title of the data-validation error dialog box.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {string} ErrorTitle - The error dialog title.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetErrorTitle.js
+	 */
+	ApiValidation.prototype.SetErrorTitle = function(ErrorTitle) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		validation.asc_setErrorTitle(ErrorTitle);
+	};
+
+	/**
+	 * Returns the data validation error message.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetErrorMessage.js
+	 */
+	ApiValidation.prototype.GetErrorMessage = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		return validation.getError();
+	};
+
+	/**
+	 * Sets the data validation error message.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {string} ErrorMessage - The error message.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetErrorMessage.js
+	 */
+	ApiValidation.prototype.SetErrorMessage = function(ErrorMessage) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		validation.asc_setError(ErrorMessage);
+	};
+
+	/**
+	 * Returns the first formula in the data validation.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetFormula1.js
+	 */
+	ApiValidation.prototype.GetFormula1 = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		let formula1 = validation.getFormula1();
+		return formula1 ? formula1.asc_getValue() : "";
+	};
+
+	/**
+	 * Sets the first formula in the data validation.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {string} Formula1 - The first formula.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetFormula1.js
+	 */
+	ApiValidation.prototype.SetFormula1 = function(Formula1) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		let formula = new window['Asc'].CDataFormula(Formula1);
+		validation.asc_setFormula1(formula);
+	};
+
+	/**
+	 * Returns the second formula in the data validation.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetFormula2.js
+	 */
+	ApiValidation.prototype.GetFormula2 = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		let formula2 = validation.getFormula2();
+		return formula2 ? formula2.asc_getValue() : "";
+	};
+
+	/**
+	 * Sets the second formula in the data validation.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {string} Formula2 - The second formula.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetFormula2.js
+	 */
+	ApiValidation.prototype.SetFormula2 = function(Formula2) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		let formula = new window['Asc'].CDataFormula(Formula2);
+		validation.asc_setFormula2(formula);
+	};
+
+	/**
+	 * Returns the data validation operator.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {ValidationOperator}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetOperator.js
+	 */
+	ApiValidation.prototype.GetOperator = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		return ToXlValidationOperatorFrom(validation.getOperator());
+	};
+
+	/**
+	 * Sets the data validation operator.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {ValidationOperator} Operator - The validation operator.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetOperator.js
+	 */
+	ApiValidation.prototype.SetOperator = function(Operator) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		let internalOperator = FromXlValidationOperatorTo(Operator);
+		if (internalOperator !== -1) {
+			validation.asc_setOperator(internalOperator);
+		}
+	};
+
+	/**
+	 * Returns the parent range object.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetParent.js
+	 */
+	ApiValidation.prototype.GetParent = function() {
+		return this.range;
+	};
+
+	// Property implementations с использованием новых методов
+	Object.defineProperty(ApiValidation.prototype, "Type", {
+		get: function() {
+			return this.GetType();
+		},
+		set: function(value) {
+			this.SetType(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "AlertStyle", {
+		get: function() {
+			return this.GetAlertStyle();
+		},
+		set: function(value) {
+			this.SetAlertStyle(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "IgnoreBlank", {
+		get: function() {
+			return this.GetIgnoreBlank();
+		},
+		set: function(value) {
+			this.SetIgnoreBlank(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "InCellDropdown", {
+		get: function() {
+			return this.GetInCellDropdown();
+		},
+		set: function(value) {
+			this.SetInCellDropdown(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "ShowInput", {
+		get: function() {
+			return this.GetShowInput();
+		},
+		set: function(value) {
+			this.SetShowInput(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "ShowError", {
+		get: function() {
+			return this.GetShowError();
+		},
+		set: function(value) {
+			this.SetShowError(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "InputTitle", {
+		get: function() {
+			return this.GetInputTitle();
+		},
+		set: function(value) {
+			this.SetInputTitle(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "InputMessage", {
+		get: function() {
+			return this.GetInputMessage();
+		},
+		set: function(value) {
+			this.SetInputMessage(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "ErrorTitle", {
+		get: function() {
+			return this.GetErrorTitle();
+		},
+		set: function(value) {
+			this.SetErrorTitle(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "ErrorMessage", {
+		get: function() {
+			return this.GetErrorMessage();
+		},
+		set: function(value) {
+			this.SetErrorMessage(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "Formula1", {
+		get: function() {
+			return this.GetFormula1();
+		},
+		set: function(value) {
+			this.SetFormula1(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "Formula2", {
+		get: function() {
+			return this.GetFormula2();
+		},
+		set: function(value) {
+			this.SetFormula2(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "Operator", {
+		get: function() {
+			return this.GetOperator();
+		},
+		set: function(value) {
+			this.SetOperator(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "Parent", {
+		get: function() {
+			return this.GetParent();
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "Value", {
+		get: function() {
+			return this.GetFormula1();
+		},
+		set: function(value) {
+			this.SetFormula1(value);
+		}
+	});
 
 	/**
 	 * Conditional formatting type.
@@ -27452,36 +27530,36 @@
 	ApiPivotItem.prototype["GetVisible"] = ApiPivotItem.prototype.GetVisible;
 	ApiPivotItem.prototype["SetVisible"] = ApiPivotItem.prototype.SetVisible;
 
-	// ApiValidation.prototype["Add"]                  = ApiValidation.prototype.Add;
-	// ApiValidation.prototype["Delete"]               = ApiValidation.prototype.Delete;
-	// ApiValidation.prototype["Modify"]               = ApiValidation.prototype.Modify;
-	// ApiValidation.prototype["GetType"]              = ApiValidation.prototype.GetType;
-	// ApiValidation.prototype["SetType"]              = ApiValidation.prototype.SetType;
-	// ApiValidation.prototype["GetAlertStyle"]        = ApiValidation.prototype.GetAlertStyle;
-	// ApiValidation.prototype["SetAlertStyle"]        = ApiValidation.prototype.SetAlertStyle;
-	// ApiValidation.prototype["GetIgnoreBlank"]       = ApiValidation.prototype.GetIgnoreBlank;
-	// ApiValidation.prototype["SetIgnoreBlank"]       = ApiValidation.prototype.SetIgnoreBlank;
-	// ApiValidation.prototype["GetInCellDropdown"]    = ApiValidation.prototype.GetInCellDropdown;
-	// ApiValidation.prototype["SetInCellDropdown"]    = ApiValidation.prototype.SetInCellDropdown;
-	// ApiValidation.prototype["GetShowInput"]         = ApiValidation.prototype.GetShowInput;
-	// ApiValidation.prototype["SetShowInput"]         = ApiValidation.prototype.SetShowInput;
-	// ApiValidation.prototype["GetShowError"]         = ApiValidation.prototype.GetShowError;
-	// ApiValidation.prototype["SetShowError"]         = ApiValidation.prototype.SetShowError;
-	// ApiValidation.prototype["GetInputTitle"]        = ApiValidation.prototype.GetInputTitle;
-	// ApiValidation.prototype["SetInputTitle"]        = ApiValidation.prototype.SetInputTitle;
-	// ApiValidation.prototype["GetInputMessage"]      = ApiValidation.prototype.GetInputMessage;
-	// ApiValidation.prototype["SetInputMessage"]      = ApiValidation.prototype.SetInputMessage;
-	// ApiValidation.prototype["GetErrorTitle"]        = ApiValidation.prototype.GetErrorTitle;
-	// ApiValidation.prototype["SetErrorTitle"]        = ApiValidation.prototype.SetErrorTitle;
-	// ApiValidation.prototype["GetErrorMessage"]      = ApiValidation.prototype.GetErrorMessage;
-	// ApiValidation.prototype["SetErrorMessage"]      = ApiValidation.prototype.SetErrorMessage;
-	// ApiValidation.prototype["GetFormula1"]          = ApiValidation.prototype.GetFormula1;
-	// ApiValidation.prototype["SetFormula1"]          = ApiValidation.prototype.SetFormula1;
-	// ApiValidation.prototype["GetFormula2"]          = ApiValidation.prototype.GetFormula2;
-	// ApiValidation.prototype["SetFormula2"]          = ApiValidation.prototype.SetFormula2;
-	// ApiValidation.prototype["GetOperator"]          = ApiValidation.prototype.GetOperator;
-	// ApiValidation.prototype["SetOperator"]          = ApiValidation.prototype.SetOperator;
-	// ApiValidation.prototype["GetParent"]            = ApiValidation.prototype.GetParent;
+	ApiValidation.prototype["Add"]                  = ApiValidation.prototype.Add;
+	ApiValidation.prototype["Delete"]               = ApiValidation.prototype.Delete;
+	ApiValidation.prototype["Modify"]               = ApiValidation.prototype.Modify;
+	ApiValidation.prototype["GetType"]              = ApiValidation.prototype.GetType;
+	ApiValidation.prototype["SetType"]              = ApiValidation.prototype.SetType;
+	ApiValidation.prototype["GetAlertStyle"]        = ApiValidation.prototype.GetAlertStyle;
+	ApiValidation.prototype["SetAlertStyle"]        = ApiValidation.prototype.SetAlertStyle;
+	ApiValidation.prototype["GetIgnoreBlank"]       = ApiValidation.prototype.GetIgnoreBlank;
+	ApiValidation.prototype["SetIgnoreBlank"]       = ApiValidation.prototype.SetIgnoreBlank;
+	ApiValidation.prototype["GetInCellDropdown"]    = ApiValidation.prototype.GetInCellDropdown;
+	ApiValidation.prototype["SetInCellDropdown"]    = ApiValidation.prototype.SetInCellDropdown;
+	ApiValidation.prototype["GetShowInput"]         = ApiValidation.prototype.GetShowInput;
+	ApiValidation.prototype["SetShowInput"]         = ApiValidation.prototype.SetShowInput;
+	ApiValidation.prototype["GetShowError"]         = ApiValidation.prototype.GetShowError;
+	ApiValidation.prototype["SetShowError"]         = ApiValidation.prototype.SetShowError;
+	ApiValidation.prototype["GetInputTitle"]        = ApiValidation.prototype.GetInputTitle;
+	ApiValidation.prototype["SetInputTitle"]        = ApiValidation.prototype.SetInputTitle;
+	ApiValidation.prototype["GetInputMessage"]      = ApiValidation.prototype.GetInputMessage;
+	ApiValidation.prototype["SetInputMessage"]      = ApiValidation.prototype.SetInputMessage;
+	ApiValidation.prototype["GetErrorTitle"]        = ApiValidation.prototype.GetErrorTitle;
+	ApiValidation.prototype["SetErrorTitle"]        = ApiValidation.prototype.SetErrorTitle;
+	ApiValidation.prototype["GetErrorMessage"]      = ApiValidation.prototype.GetErrorMessage;
+	ApiValidation.prototype["SetErrorMessage"]      = ApiValidation.prototype.SetErrorMessage;
+	ApiValidation.prototype["GetFormula1"]          = ApiValidation.prototype.GetFormula1;
+	ApiValidation.prototype["SetFormula1"]          = ApiValidation.prototype.SetFormula1;
+	ApiValidation.prototype["GetFormula2"]          = ApiValidation.prototype.GetFormula2;
+	ApiValidation.prototype["SetFormula2"]          = ApiValidation.prototype.SetFormula2;
+	ApiValidation.prototype["GetOperator"]          = ApiValidation.prototype.GetOperator;
+	ApiValidation.prototype["SetOperator"]          = ApiValidation.prototype.SetOperator;
+	ApiValidation.prototype["GetParent"]            = ApiValidation.prototype.GetParent;
 
 	ApiFormatConditions.prototype["Add"] = ApiFormatConditions.prototype.Add;
 	ApiFormatConditions.prototype["AddAboveAverage"] = ApiFormatConditions.prototype.AddAboveAverage;

@@ -12475,7 +12475,7 @@
 		}
 	};
 
-	Worksheet.prototype.getDataValidationProps = function (doExtend, ranges) {
+	Worksheet.prototype.getDataValidationProps = function (doExtend, ranges, isArray) {
 		var _selection = ranges ? ranges : this.getSelection().ranges;
 		
 		if (!this.dataValidations) {
@@ -12483,9 +12483,13 @@
 			newDataValidation.showErrorMessage = true;
 			newDataValidation.showInputMessage = true;
 			newDataValidation.allowBlank = true;
-			return newDataValidation;
+			return isArray ? [newDataValidation] : newDataValidation;
 		} else {
-			return this.dataValidations.getProps(_selection, doExtend, this);
+            if (isArray) {
+                return this.dataValidations.getSelectedRangeValidations(_selection, this);
+            } else {
+                return this.dataValidations.getProps(_selection, doExtend, this);
+            }
 		}
 	};
 
