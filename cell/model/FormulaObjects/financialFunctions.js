@@ -5347,6 +5347,11 @@ function (window, undefined) {
 			factor = arg[5];
 		}
 
+		// TODO:
+		// This function has difficulties with calculation for large numbers in time periods. 
+		// Just like in ms, when we calling the formula =VDB(1000,500,1E+307,1E+306,1E+307,2,FALSE)
+		// the editor will freeze for a very long time due to the specifics of the calculation. 
+		// The problem remains relevant for us, MS and for LO too.
 		function getVDB(cost, fRest, life, life1, startPeriod, factor) {
 			let res = 0, loopEnd = end = Math.ceil(startPeriod), temp, sln = 0, rest = cost - fRest, sln1 = false, ddb;
 
@@ -5470,8 +5475,12 @@ function (window, undefined) {
 		}
 
 		let start = Math.floor(startPeriod), end = Math.ceil(endPeriod);
-
 		let res = 0;
+
+		if (start === end) {
+			// equal start and endPeriod always return zero as formula result
+			return new cNumber(res); 
+		}
 
 		if (cost < salvage) {
 			if (startPeriod >= 1 || flag) {
