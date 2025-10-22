@@ -27350,7 +27350,7 @@
 		}
 
 		const logicDocument = private_GetLogicDocument();
-		const docState = logicDocument.SaveDocumentState();
+		const docState = logicDocument.SaveDocumentState(false);
 		const oStyles = logicDocument.GetStyles();
 
 		const textPr = logicDocument.GetCalculatedTextPr();
