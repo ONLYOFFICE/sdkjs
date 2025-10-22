@@ -441,6 +441,7 @@ function asc_CChartBinary(chart) {
 				}
 				this["binary"] = writer.memory.pos + ";" + writer.memory.GetBase64Memory();
 				this["documentImageUrls"] = AscCommon.g_oDocumentUrls.urls;
+				this["documentUrl"] = AscCommon.g_oDocumentUrls.documentUrl;
 			}
 			else if (chart.getObjectType() === AscDFH.historyitem_type_Chart)
 			{
@@ -458,6 +459,7 @@ function asc_CChartBinary(chart) {
 				}
 				this["binary"] = chartWriter.memory.GetBase64Memory();
 				this["documentImageUrls"] = AscCommon.g_oDocumentUrls.urls;
+				this["documentUrl"] = AscCommon.g_oDocumentUrls.documentUrl;
 			}
 		}
 }

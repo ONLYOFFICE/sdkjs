@@ -58,7 +58,7 @@
 	CFrameManagerBase.prototype.obtain = function (oInfo) {};
 	CFrameManagerBase.prototype.setGeneralDocumentUrls = function (oPr) {};
 	CFrameManagerBase.prototype.getGeneralImageUrl = function (sImageId) {};
-	CFrameManagerBase.prototype.openWorkbookData = function (sStream) {};
+	CFrameManagerBase.prototype.openWorkbookData = function (sStream, oInfo) {};
 	CFrameManagerBase.prototype.updateGeneralDiagramCache = function (aRanges) {};
 	CFrameManagerBase.prototype.sendLoadImages = function (arrImages, token, bNotShowError) {};
 	CFrameManagerBase.prototype.sendFromFrameToGeneralEditor = function (oSendObject) {};
@@ -251,7 +251,7 @@
 			sStream = new Uint8Array(sStream);
 		}
 		this.setGeneralDocumentUrls(oInfo["documentImageUrls"] || {});
-		this.openWorkbookData(sStream);
+		this.openWorkbookData(sStream, oInfo);
 	};
 	CCellFrameManager.prototype.setGeneralDocumentUrls = function (oPr)
 	{
@@ -264,13 +264,13 @@
 			return this.generalDocumentUrls[sImageId];
 		}
 	};
-	CCellFrameManager.prototype.openWorkbookData = function (sStream)
+	CCellFrameManager.prototype.openWorkbookData = function (sStream, oInfo)
 	{
 		const oFile = new AscCommon.OpenFileResult();
 		oFile.bSerFormat = AscCommon.checkStreamSignature(sStream, AscCommon.c_oSerFormat.Signature);
 		oFile.data = sStream;
 		this.api.asc_CloseFile();
-
+		AscCommon.g_oDocumentUrls.documentUrl = oInfo["documentUrl"];
 		this.api.imagesFromGeneralEditor = this.generalDocumentUrls;
 		this.api.openDocument(oFile);
 	}
@@ -404,10 +404,10 @@
 			delete oApi.fAfterLoad;
 		}
 	};
-	COleCellFrameManager.prototype.openWorkbookData = function (sStream)
+	COleCellFrameManager.prototype.openWorkbookData = function (sStream, oInfo)
 	{
 		this.setAfterLoadCallback();
-		CCellFrameManager.prototype.openWorkbookData.call(this, sStream);
+		CCellFrameManager.prototype.openWorkbookData.call(this, sStream, oInfo);
 	}
 
 	COleCellFrameManager.prototype.isOleEditor = function ()
@@ -797,7 +797,8 @@
 				"isFromSheetEditor": !!this.oleObject.worksheet,
 				"imageWidth": nImageWidth,
 				"imageHeight": nImageHeight,
-				"documentImageUrls": documentImageUrls
+				"documentImageUrls": documentImageUrls,
+				"documentUrl": AscCommon.g_oDocumentUrls.documentUrl
 			};
 	};
 
