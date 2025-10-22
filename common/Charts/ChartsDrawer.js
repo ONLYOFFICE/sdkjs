@@ -14742,6 +14742,9 @@ drawScatterChart.prototype = {
 		const valMin = this.valAx && this.valAx.scaling ? this.valAx.scaling.min : null;
 		const valMax = this.valAx && this.valAx.scaling ? this.valAx.scaling.max : null;
 
+		// prevent the distance between values being smaller than epsilon
+		let epsilon = 0.03;
+
 		let t = this;
 		let _initObjs = function (_index) {
 			if (!t.paths.points) {
@@ -14785,7 +14788,7 @@ drawScatterChart.prototype = {
 				}
 
 				let values = this.cChartDrawer._getScatterPointVal(seria, idx);
-				if(values){
+				if(values && (!points || !points[i] || !points[i].length || Math.abs(values?.x) > Math.abs(points[i][points[i].length - 1]?.x) + epsilon)){
 					yVal = values.y;
 					xVal = values.x;
 					xPoint = values.xPoint;
