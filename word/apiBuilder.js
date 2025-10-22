@@ -27362,7 +27362,7 @@
 			}
 		}
 
-		const paraPr = logicDocument.GetDirectParaPr();
+		const paraPr = logicDocument.GetCalculatedParaPr();
 		if (paraPr && paraPr.PStyle) {
 			const paragraphStyle = oStyles.Get(paraPr.PStyle);
 			if (paragraphStyle && paragraphStyle.Get_Type && paragraphStyle.Get_Type() === styletype_Paragraph) {
