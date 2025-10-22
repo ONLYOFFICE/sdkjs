@@ -27767,6 +27767,7 @@
 	ApiRange.prototype["GetAllTables"]               = ApiRange.prototype.GetAllTables;
 	ApiRange.prototype["GetAllTableRows"]            = ApiRange.prototype.GetAllTableRows;
 	ApiRange.prototype["GetAllTableCells"]           = ApiRange.prototype.GetAllTableCells;
+	ApiRange.prototype["GetAllMaths"]                = ApiRange.prototype.GetAllMaths;
 	
 	ApiDocument.prototype["GetClassType"]                  = ApiDocument.prototype.GetClassType;
 	ApiDocument.prototype["CreateNewHistoryPoint"]         = ApiDocument.prototype.CreateNewHistoryPoint;
