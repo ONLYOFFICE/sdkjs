@@ -1805,16 +1805,48 @@
 		if (selectedContent) {
 			for (let i = 0; i < selectedContent.Elements.length; i++) {
 				const element = selectedContent.Elements[i].Element;
-				if (element && element.GetType && element.GetType() === type_Paragraph) {
-					const paraMaths = [];
-					element.GetAllParaMaths(paraMaths);
-					paraMaths.forEach(function (paraMath) {
-						maths.push(new ApiMath(paraMath));
-					});
-				}
+				collectMathsFromElement(element);
 			}
 		}
 		return maths;
+		
+		function collectMathsFromElement(element) {
+			const type = element && element.GetType && element.GetType();
+
+			if (type === type_Paragraph) {
+				const paraMaths = [];
+				element.GetAllParaMaths(paraMaths);
+				paraMaths.forEach(function (paraMath) {
+					maths.push(new ApiMath(paraMath));
+				});
+				return;
+			}
+
+			if (type === type_Table) {
+				for (let rowIndex = 0; rowIndex < element.Content.length; rowIndex++) {
+					const row = element.Content[rowIndex];
+					for (let cellIndex = 0; cellIndex < row.Content.length; cellIndex++) {
+						const cell = row.Content[cellIndex];
+						if (cell && cell.Content && cell.Content.Content) {
+							// cell.Content instanceof CDocumentContent
+							for (let contentIndex = 0; contentIndex < cell.Content.Content.length; contentIndex++) {
+								collectMathsFromElement(cell.Content.Content[contentIndex]);
+							}
+						}
+					}
+				}
+				return;
+			}
+
+			if (type === type_BlockLevelSdt) {
+				if (element.Content && element.Content.Content) {
+					for (let contentIndex = 0; contentIndex < element.Content.Content.length; contentIndex++) {
+						collectMathsFromElement(element.Content.Content[contentIndex]);
+					}
+				}
+				return;
+			}
+		}
 	};
 
 	/**
