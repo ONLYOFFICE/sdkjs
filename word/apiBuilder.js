@@ -1760,19 +1760,34 @@
 
 		return selectedContent;
 	};
+
+	/**
+	 * Returns an array of all tables in the range.
+	 *
+	 * @memberof ApiRange
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiTable[]}
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetAllTables.js
+	 */
 	ApiRange.prototype.GetAllTables = function () {
 		const tables = [];
-
 		const selectedContent = this.private_GetSelectedContent();
 		private_forEachTable(selectedContent, function (table) {
 			tables.push(new ApiTable(table));
 		});
-
 		return tables;
 	};
+
+	/**
+	 * Returns an array of all table rows in the range.
+	 *
+	 * @memberof ApiRange
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiTableRow[]}
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetAllTableRows.js
+	 */
 	ApiRange.prototype.GetAllTableRows = function () {
 		const rows = [];
-
 		const selectedContent = this.private_GetSelectedContent();
 		private_forEachTable(selectedContent, function (table) {
 			const apiRows = table.Content.map(function (row) {
@@ -1780,12 +1795,19 @@
 			});
 			Array.prototype.push.apply(rows, apiRows);
 		});
-
 		return rows;
 	};
+
+	/**
+	 * Returns an array of all table cells in the range.
+	 *
+	 * @memberof ApiRange
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiTableCell[]}
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetAllTableCells.js
+	 */
 	ApiRange.prototype.GetAllTableCells = function () {
 		const cells = [];
-
 		const selectedContent = this.private_GetSelectedContent();
 		private_forEachTable(selectedContent, function (table) {
 			const rows = table.Content;
@@ -1796,9 +1818,17 @@
 				Array.prototype.push.apply(cells, apiCells);
 			});
 		});
-
 		return cells;
 	};
+
+	/**
+	 * Returns an array of all mathematical formulas in the range.
+	 *
+	 * @memberof ApiRange
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiMath[]}
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetAllMaths.js
+	 */
 	ApiRange.prototype.GetAllMaths = function () {
 		const maths = [];
 		const selectedContent = this.private_GetSelectedContent();
@@ -3967,6 +3997,14 @@
 	 */
 	function ApiCustomProperties(oCustomProperties) {
 		this.CustomProperties = oCustomProperties;
+	};
+
+	/**
+	 * Class representing a selection in the document.
+	 * @constructor
+	 */
+	function ApiSelection(apiDocument) {
+		this.ApiDocument = apiDocument;
 	};
 
 
@@ -9559,6 +9597,14 @@
 		return true;
 	};
 
+	/**
+	 * Returns the current selection in the document.
+	 *
+	 * @memberof ApiDocument
+	 * @returns {ApiSelection}
+	 * @typeofeditors ["CDE"]
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetSelection.js
+	 */
 	ApiDocument.prototype.GetSelection = function () {
 		return new ApiSelection(this);
 	};
@@ -10701,6 +10747,15 @@
 	// 	}
 	// 	return ranges;
 	// };
+
+	/**
+	 * Returns an array of words in the paragraph.
+	 *
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiRange[]}
+	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetWords.js
+	 */
 	ApiParagraph.prototype.GetWords = function () {
 		const paragraph = this.Paragraph;
 		const words = [];
@@ -10739,6 +10794,15 @@
 		
 		return words;
 	};
+
+	/**
+	 * Returns an array of characters in the paragraph.
+	 *
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiRange[]}
+	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetCharacters.js
+	 */
 	ApiParagraph.prototype.GetCharacters = function () {
 		const paragraph = this.Paragraph;
 		const characters = [];
@@ -27243,10 +27307,14 @@
 	//
 	//------------------------------------------------------------------------------------------------------------------
 
-	function ApiSelection(apiDocument) {
-		this.ApiDocument = apiDocument;
-	};
-
+	/**
+	 * Returns a type of the ApiSelection class.
+	 *
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CDE"]
+	 * @returns {"selection"}
+	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetClassType.js
+	 */
 	ApiSelection.prototype.GetClassType = function () {
 		return 'selection';
 	};
@@ -27254,18 +27322,53 @@
 	ApiSelection.prototype.GetFields = function () {};
 	ApiSelection.prototype.GetFormFields = function () {};
 
+	/**
+	 * Returns the parent document.
+	 *
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiDocument}
+	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetDocument.js
+	 */
 	ApiSelection.prototype.GetDocument = function () {
 		return this.ApiDocument;
 	};
+
+	/**
+	 * Returns a Range object that represents the current selection.
+	 *
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiRange}
+	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetRange.js
+	 */
 	ApiSelection.prototype.GetRange = function () {
 		const apiDocument = this.ApiDocument;
 		const range = apiDocument.GetRangeBySelect();
 		return range;
 	};
+
+	/**
+	 * Returns the text of the selection.
+	 *
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CDE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetText.js
+	 */
 	ApiSelection.prototype.GetText = function () {
 		const range = this.GetRange();
 		return range ? range.GetText() : "";
 	};
+
+	/**
+	 * Returns an array of words in the selection.
+	 *
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiRange[]}
+	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetWords.js
+	 */
 	ApiSelection.prototype.GetWords = function () {
 		const words = [];
 		const paragraphs = this.GetRange().GetAllParagraphs();
@@ -27274,6 +27377,15 @@
 		});
 		return words;
 	};
+
+	/**
+	 * Returns an array of characters in the selection.
+	 *
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiRange[]}
+	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetCharacters.js
+	 */
 	ApiSelection.prototype.GetCharacters = function () {
 		const characters = [];
 		const paragraphs = this.GetRange().GetAllParagraphs();
@@ -27282,32 +27394,96 @@
 		});
 		return characters;
 	};
+
+	/**
+	 * Returns an array of paragraphs in the selection.
+	 *
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiParagraph[]}
+	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetParagraphs.js
+	 */
 	ApiSelection.prototype.GetParagraphs = function () {
 		const range = this.GetRange();
 		return range ? range.GetAllParagraphs() : [];
 	};
+
+	/**
+	 * Returns an array of tables in the selection.
+	 *
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiTable[]}
+	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetTables.js
+	 */
 	ApiSelection.prototype.GetTables = function () {
 		const range = this.GetRange();
 		return range ? range.GetAllTables() : [];
 	};
+
+	/**
+	 * Returns an array of table rows in the selection.
+	 *
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiTableRow[]}
+	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetRows.js
+	 */
 	ApiSelection.prototype.GetRows = function () {
 		const range = this.GetRange();
 		return range ? range.GetAllTableRows() : [];
 	};
+
+	/**
+	 * Returns an array of table cells in the selection.
+	 *
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiTableCell[]}
+	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetCells.js
+	 */
 	ApiSelection.prototype.GetCells = function () {
 		const range = this.GetRange();
 		return range ? range.GetAllTableCells() : [];
 	};
+
+	/**
+	 * Returns the merged text properties of the entire selection
+	 * ApiTextPr instance linked to current selection and updates when selection is changed.
+	 *
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiTextPr}
+	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetTextPr.js
+	 */
 	ApiSelection.prototype.GetTextPr = function () {
 		const range = this.GetRange();
 		const rangeTextPr = range.GetTextPr();
 		const selectionTextPr = new ApiTextPr(this, rangeTextPr.TextPr);
 		return selectionTextPr;
 	};
+
+	/**
+	 * Returns the shading applied to the selection.
+	 *
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiShading | null} The shading properties or null if no shading.
+	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetShading.js
+	 */
 	ApiSelection.prototype.GetShading = function () {
-		const font = this.GetFont();
-		return font ? font.GetShading() : null;
+		const textPr = this.GetTextPr();
+		return textPr ? textPr.GetShading() : null;
 	};
+
+	/**
+	 * Returns an array of comments in the selection.
+	 *
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiComment[]}
+	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetComments.js
+	 */
 	ApiSelection.prototype.GetComments = function () {
 		const logicDocument = private_GetLogicDocument();
 		const selectedContent = logicDocument.GetSelectedContent(false);
@@ -27323,6 +27499,15 @@
 
 		return result;
 	};
+
+	/**
+	 * Returns an array of hyperlinks in the selection.
+	 *
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiHyperlink[]}
+	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetHyperlinks.js
+	 */
 	ApiSelection.prototype.GetHyperlinks = function () {
 		const paragraphs = this.GetParagraphs().map(function (paragraph) { return paragraph.Paragraph; });
 		const hyperlinks = [];
@@ -27335,6 +27520,15 @@
 		});
 		return hyperlinks;
 	};
+
+	/**
+	 * Returns a collection of inline shapes in the selection.
+	 *
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiInlineShapes}
+	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetInlineShapes.js
+	 */
 	ApiSelection.prototype.GetInlineShapes = function () {
 		const apiDocument = this.GetDocument();
 		const selectedDrawings = apiDocument.GetSelectedDrawings().map(function (apiDrawing) { return apiDrawing.Drawing; });
@@ -27347,6 +27541,15 @@
 		});
 		return new ApiInlineShapes(inlineShapes);
 	};
+
+	/**
+	 * Returns a collection of floating shapes in the selection.
+	 *
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiShapeRange}
+	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetShapeRange.js
+	 */
 	ApiSelection.prototype.GetShapeRange = function () {
 		const apiDocument = this.GetDocument();
 		const selectedDrawings = apiDocument.Document.DrawingObjects.selectedObjects || [];
@@ -27366,10 +27569,29 @@
 		}
 		return new ApiShapeRange(shapes);
 	};
+
+	/**
+	 * Returns a collection of mathematical formulas in the selection.
+	 *
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiMath[]}
+	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetMaths.js
+	 */
 	ApiSelection.prototype.GetMaths = function () {
 		const range = this.GetRange();
 		return range ? range.GetAllMaths() : [];
 	};
+
+	/**
+	 * Returns the style applied to the selection.
+	 * When there are both character and paragraph styles applied, the character style is returned.
+	 *
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiStyle | null}
+	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetStyle.js
+	 */
 	ApiSelection.prototype.GetStyle = function () {
 		const range = this.GetRange();
 		if (!range) {
@@ -27401,6 +27623,16 @@
 		logicDocument.LoadDocumentState(docState);
 		return null;
 	};
+
+	/**
+	 * Returns the paragraph formatting properties of the selection.
+	 * ApiParaPr instance linked to current selection and updates when selection is changed.
+	 *
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiParaPr}
+	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetParaPr.js
+	 */
 	ApiSelection.prototype.GetParaPr = function () {
 		const paraPr = new ApiParaPr(this, new AscCommonWord.CParaPr());
 		this.private_updateParaPrFromCurrentSelection(paraPr);
