@@ -490,11 +490,11 @@
 		this.setAfterLoadCallback(oInfo);
 		if (oInfo["workbookBinary"])
 		{
-			this.obtain({"binary": oInfo["workbookBinary"], "documentImageUrls": oInfo["documentImageUrls"]});
+			this.obtain({"binary": oInfo["workbookBinary"], "documentImageUrls": oInfo["documentImageUrls"], "documentUrl": oInfo["documentUrl"]});
 		}
 		else
 		{
-			this.obtainWithRepair({"binary": AscCommon.getEmpty(), "documentImageUrls": oInfo["documentImageUrls"]});
+			this.obtainWithRepair({"binary": AscCommon.getEmpty(), "documentImageUrls": oInfo["documentImageUrls"], "documentUrl": oInfo["documentUrl"]});
 		}
 	}
 	CDiagramCellFrameManager.prototype.obtainWithRepair = function (oInfo)
