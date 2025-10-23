@@ -27319,9 +27319,6 @@
 		return 'selection';
 	};
 
-	ApiSelection.prototype.GetFields = function () {};
-	ApiSelection.prototype.GetFormFields = function () {};
-
 	/**
 	 * Returns the parent document.
 	 *
@@ -27639,6 +27636,29 @@
 		return paraPr;
 	};
 
+	/**
+	 * Returns an array of all fields in the selection.
+	 *
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CDE"]
+	 * @returns {(ApiField | ApiComplexField)[]}
+	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetFields.js
+	 */
+	ApiSelection.prototype.GetFields = function () {
+		const fields = [];
+		const doc = this.ApiDocument.Document;
+		const allFields = doc.GetAllFields(true);
+		allFields.forEach(function (field) {
+			if (field instanceof AscCommonWord.ParaField) {
+				fields.push(new ApiField(field));
+			}
+			if (field instanceof AscCommonWord.CComplexField) {
+				fields.push(new ApiComplexField(field));
+			}
+		});
+		return fields;
+	};
+
 	Object.defineProperties(ApiSelection.prototype, {
 		'Document': { get: function () { return this.GetDocument(); } },
 		'Range': { get: function () { return this.GetRange(); } },
@@ -27658,6 +27678,7 @@
 		'OMaths': { get: function () { return this.GetMaths(); } },
 		'Style': { get: function () { return this.GetStyle(); } },
 		'ParagraphFormat': { get: function () { return this.GetParaPr(); } },
+		'Fields': { get: function () { return this.GetFields(); } },
 	});
 
 	ApiSelection.prototype.private_updateTextPrFromCurrentSelection = function (apiTextPr) {
@@ -27720,6 +27741,98 @@
 	function ApiMath(ParaMath) {
 		this.ParaMath = ParaMath;
 	}
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiField
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a simple field.
+	 * @constructor
+	 */
+	function ApiField(oField) {
+		this.Field = oField;
+	}
+
+	/**
+	 * Returns a type of the ApiField class.
+	 *
+	 * @memberof ApiField
+	 * @typeofeditors ["CDE"]
+	 * @returns {"field"}
+	 * @see office-js-api/Examples/{Editor}/ApiField/Methods/GetClassType.js
+	 */
+	ApiField.prototype.GetClassType = function () {
+		return 'field';
+	};
+
+	/**
+	 * Returns the field value.
+	 *
+	 * @memberof ApiField
+	 * @typeofeditors ["CDE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiField/Methods/GetValue.js
+	 */
+	ApiField.prototype.GetValue = function () {
+		return this.Field.GetValue();
+	};
+
+	/**
+	 * Sets the field result/value.
+	 *
+	 * @memberof ApiField
+	 * @typeofeditors ["CDE"]
+	 * @param {string} value
+	 * @returns {boolean}
+	 */
+	ApiField.prototype.SetValue = function (value) {
+		if (typeof value === 'string') {
+			this.Field.SetValue(value);
+			return true;
+		}
+		return false;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiComplexField
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a complex field.
+	 * @constructor
+	 */
+	function ApiComplexField(complexField) {
+		this.ComplexField = complexField;
+	}
+
+	/**
+	 * Returns a type of the ApiComplexField class.
+	 *
+	 * @memberof ApiComplexField
+	 * @typeofeditors ["CDE"]
+	 * @returns {"complexField"}
+	 * @see office-js-api/Examples/{Editor}/ApiComplexField/Methods/GetClassType.js
+	 */
+	ApiComplexField.prototype.GetClassType = function () {
+		return 'complexField';
+	};
+
+	/**
+	 * Returns the field value text.
+	 *
+	 * @memberof ApiComplexField
+	 * @typeofeditors ["CDE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiComplexField/Methods/GetValue.js
+	 */
+	ApiComplexField.prototype.GetValue = function () {
+		return this.ComplexField.GetFieldValueText();
+	};
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -29169,6 +29282,14 @@
 	ApiSelection.prototype["GetMaths"] = ApiSelection.prototype.GetMaths;
 	ApiSelection.prototype["GetStyle"] = ApiSelection.prototype.GetStyle;
 	ApiSelection.prototype["GetParaPr"] = ApiSelection.prototype.GetParaPr;
+	ApiSelection.prototype["GetFields"] = ApiSelection.prototype.GetFields;
+
+	ApiField.prototype["GetClassType"] = ApiField.prototype.GetClassType;
+	ApiField.prototype["GetValue"] = ApiField.prototype.GetValue;
+	ApiField.prototype["SetValue"] = ApiField.prototype.SetValue;
+
+	ApiComplexField.prototype["GetClassType"] = ApiComplexField.prototype.GetClassType;
+	ApiComplexField.prototype["GetValue"] = ApiComplexField.prototype.GetValue;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export for internal usage
