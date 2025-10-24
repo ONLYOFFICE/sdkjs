@@ -1855,7 +1855,7 @@ void main() {\n\
                 if (endChar == Infinity)
                     off2 = _lineWidth;
 
-                if (off2 <= off1)
+                if (off2 < off1)
                     continue;
 
                 rects.push({
@@ -1865,7 +1865,7 @@ void main() {\n\
                     Char2: endChar,
                     X : _lineX + _lineAscent * _lineEy + off1 * _lineEx,
                     Y : _lineY - _lineAscent * _lineEx + off1 * _lineEy,
-                    W : off2 - off1,
+                    W : off2 - off1 || (0.5 * g_dKoef_pix_to_mm * g_dKoef_mm_to_pt),
                     H : _lineAscent + _lineDescent,
                     Ex : _lineEx,
                     Ey : _lineEy,

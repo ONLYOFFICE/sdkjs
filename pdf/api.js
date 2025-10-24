@@ -561,7 +561,7 @@
 		if (!this.DocumentRenderer)
 			return false;
 		
-		return this.getPDFDoc().GetSearchRedactInfo(id);
+		return this.getPDFDoc().GetRedactSearchInfo(id);
 	};
 	PDFEditorApi.prototype.ContentToHTML = function() {
 		if (!this.DocumentRenderer)

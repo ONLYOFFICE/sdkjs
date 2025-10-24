@@ -4871,7 +4871,8 @@
 	 */
 	Api.prototype.CreateGradientStop = function(uniColor, pos)
 	{
-		return new ApiGradientStop(uniColor, pos);
+		let pos_ = AscCommon.clampNumber(pos, 0, 100000);
+		return new ApiGradientStop(uniColor, pos_);
 	};
 
 	/**

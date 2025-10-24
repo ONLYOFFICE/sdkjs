@@ -2306,7 +2306,20 @@ window.AscCommon.g_cIsBeta = "false";
 	g_aPunctuation[0x00BB] = PUNCTUATION_FLAG_BASE;                                     // »
 	g_aPunctuation[0x00BB] = PUNCTUATION_FLAG_BASE;                                     // »
 	g_aPunctuation[0x00BF] = PUNCTUATION_FLAG_BASE;                                     // ¿
-
+	
+	g_aPunctuation[0x0609] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x060A] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x060C] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x060D] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x061B] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x061E] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x061F] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x066A] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x066B] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x066C] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x066D] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x06D4] = PUNCTUATION_FLAG_BASE;
+	
 	g_aPunctuation[0x2010] = PUNCTUATION_FLAG_BASE;                                     // ‐
 	g_aPunctuation[0x2011] = PUNCTUATION_FLAG_BASE;                                     // ‑
 	g_aPunctuation[0x2012] = PUNCTUATION_FLAG_BASE;                                     // ‒

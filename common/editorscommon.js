@@ -15481,6 +15481,11 @@
 				}
 			}
 		}
+	};
+
+	function clampNumber(value, min, max)
+	{
+		return value < min ? min : value > max ? max : value;
 	}
 
 	//------------------------------------------------------------export---------------------------------------------------
@@ -15555,6 +15560,7 @@
 	window["AscCommon"].getFirstStrongDirection = getFirstStrongDirection;
 	window["AscCommon"].getGradientPoints = getGradientPoints;
 	window["AscCommon"].getNormalPoint = getNormalPoint;
+	window["AscCommon"].clampNumber = clampNumber;
 
 	window["AscCommon"].DocumentUrls = DocumentUrls;
 	window["AscCommon"].OpenFileResult = OpenFileResult;

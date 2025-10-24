@@ -3406,7 +3406,10 @@ function BinaryPPTYLoader()
 
                                     s.Skip2(1); // start attr
                                     s.Skip2(1); // pos type
-                                    _gs.pos = s.GetLong();
+                                    let pos = s.GetLong();
+                                    pos = AscCommon.clampNumber(pos, 0, 100000);
+                                    _gs.pos = pos;
+
                                     s.Skip2(1); // end attr
 
                                     s.Skip2(1);

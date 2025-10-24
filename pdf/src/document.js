@@ -788,16 +788,49 @@ var CPresentation = CPresentation || function(){};
             }
             else {
                 oPdfMatch.forEach(function(pageMatch) {
-                    let x1 = pageMatch.X * g_dKoef_mm_to_pt;
-                    let y1 = pageMatch.Y * g_dKoef_mm_to_pt;
-                    let x2 = (pageMatch.X + pageMatch.W) * g_dKoef_mm_to_pt;
-                    let y2 = (pageMatch.Y + pageMatch.H) * g_dKoef_mm_to_pt;
+                    let x1, y1, x2, y2, x3, y3, x4, y4;
+
+                    if (undefined === pageMatch.Ex) {
+                        x1 = pageMatch.X;
+                        y1 = pageMatch.Y;
+
+                        x2 = pageMatch.X + pageMatch.W;
+                        y2 = pageMatch.Y;
+
+                        x3 = pageMatch.X;
+                        y3 = pageMatch.Y + pageMatch.H;
+
+                        x4 = pageMatch.X + pageMatch.W;
+                        y4 = pageMatch.Y + pageMatch.H;
+                    }
+                    else {
+                        x1 = pageMatch.X;
+                        y1 = pageMatch.Y;
+
+                        x2 = pageMatch.X + pageMatch.W * pageMatch.Ex;
+                        y2 = pageMatch.Y + pageMatch.W * pageMatch.Ey;
+
+                        x3 = pageMatch.X - pageMatch.H * pageMatch.Ey;
+                        y3 = pageMatch.Y + pageMatch.H * pageMatch.Ex;
+
+                        x4 = x2 - pageMatch.H * pageMatch.Ey;
+                        y4 = y2 + pageMatch.H * pageMatch.Ex;
+                    }
+
+                    x1 *= g_dKoef_mm_to_pt;
+                    y1 *= g_dKoef_mm_to_pt;
+                    x2 *= g_dKoef_mm_to_pt;
+                    y2 *= g_dKoef_mm_to_pt;
+                    x3 *= g_dKoef_mm_to_pt;
+                    y3 *= g_dKoef_mm_to_pt;
+                    x4 *= g_dKoef_mm_to_pt;
+                    y4 *= g_dKoef_mm_to_pt;
 
                     aSelQuadsParts.push({ page: pageMatch.PageNum, quads: [[
                         x1, y1, // left up
-                        x2, y1, // right up
-                        x1, y2,	// left down
-                        x2, y2 	// right down
+                        x2, y2, // right up
+                        x3, y3,	// left down
+                        x4, y4 	// right down
                     ]]});
                 });
             }
@@ -848,7 +881,7 @@ var CPresentation = CPresentation || function(){};
             this.SetSelectionState(oState);
         }, AscDFH.historydescription_Pdf_AddAnnot, this);
     };
-    CPDFDoc.prototype.GetSearchRedactInfo = function(id) {
+    CPDFDoc.prototype.GetRedactSearchInfo = function(id) {
         let _t = this;
 
         let oUsedRedactInfo = {
@@ -909,16 +942,49 @@ var CPresentation = CPresentation || function(){};
             }
             else {
                 pdfMatch.forEach(function(pageMatch) {
-                    let x1 = pageMatch.X * g_dKoef_mm_to_pt;
-                    let y1 = pageMatch.Y * g_dKoef_mm_to_pt;
-                    let x2 = (pageMatch.X + pageMatch.W) * g_dKoef_mm_to_pt;
-                    let y2 = (pageMatch.Y + pageMatch.H) * g_dKoef_mm_to_pt;
+                    let x1, y1, x2, y2, x3, y3, x4, y4;
+
+                    if (undefined === pageMatch.Ex) {
+                        x1 = pageMatch.X;
+                        y1 = pageMatch.Y;
+
+                        x2 = pageMatch.X + pageMatch.W;
+                        y2 = pageMatch.Y;
+
+                        x3 = pageMatch.X;
+                        y3 = pageMatch.Y + pageMatch.H;
+
+                        x4 = pageMatch.X + pageMatch.W;
+                        y4 = pageMatch.Y + pageMatch.H;
+                    }
+                    else {
+                        x1 = pageMatch.X;
+                        y1 = pageMatch.Y;
+
+                        x2 = pageMatch.X + pageMatch.W * pageMatch.Ex;
+                        y2 = pageMatch.Y + pageMatch.W * pageMatch.Ey;
+
+                        x3 = pageMatch.X - pageMatch.H * pageMatch.Ey;
+                        y3 = pageMatch.Y + pageMatch.H * pageMatch.Ex;
+
+                        x4 = x2 - pageMatch.H * pageMatch.Ey;
+                        y4 = y2 + pageMatch.H * pageMatch.Ex;
+                    }
+
+                    x1 *= g_dKoef_mm_to_pt;
+                    y1 *= g_dKoef_mm_to_pt;
+                    x2 *= g_dKoef_mm_to_pt;
+                    y2 *= g_dKoef_mm_to_pt;
+                    x3 *= g_dKoef_mm_to_pt;
+                    y3 *= g_dKoef_mm_to_pt;
+                    x4 *= g_dKoef_mm_to_pt;
+                    y4 *= g_dKoef_mm_to_pt;
 
                     let aQuads = [
                         x1, y1, // left up
-                        x2, y1, // right up
-                        x1, y2,	// left down
-                        x2, y2 	// right down
+                        x2, y2, // right up
+                        x3, y3,	// left down
+                        x4, y4 	// right down
                     ];
                     
                     let oPageInfo = _t.GetPageInfo(pageMatch.PageNum);
@@ -992,16 +1058,49 @@ var CPresentation = CPresentation || function(){};
         }
         else {
             oPdfMatch.forEach(function(pageMatch) {
-                let x1 = pageMatch.X * g_dKoef_mm_to_pt;
-                let y1 = pageMatch.Y * g_dKoef_mm_to_pt;
-                let x2 = (pageMatch.X + pageMatch.W) * g_dKoef_mm_to_pt;
-                let y2 = (pageMatch.Y + pageMatch.H) * g_dKoef_mm_to_pt;
+                let x1, y1, x2, y2, x3, y3, x4, y4;
+
+                if (undefined === pageMatch.Ex) {
+                    x1 = pageMatch.X;
+                    y1 = pageMatch.Y;
+
+                    x2 = pageMatch.X + pageMatch.W;
+                    y2 = pageMatch.Y;
+
+                    x3 = pageMatch.X;
+                    y3 = pageMatch.Y + pageMatch.H;
+
+                    x4 = pageMatch.X + pageMatch.W;
+                    y4 = pageMatch.Y + pageMatch.H;
+                }
+                else {
+                    x1 = pageMatch.X;
+                    y1 = pageMatch.Y;
+
+                    x2 = pageMatch.X + pageMatch.W * pageMatch.Ex;
+                    y2 = pageMatch.Y + pageMatch.W * pageMatch.Ey;
+
+                    x3 = pageMatch.X - pageMatch.H * pageMatch.Ey;
+                    y3 = pageMatch.Y + pageMatch.H * pageMatch.Ex;
+
+                    x4 = x2 - pageMatch.H * pageMatch.Ey;
+                    y4 = y2 + pageMatch.H * pageMatch.Ex;
+                }
+
+                x1 *= g_dKoef_mm_to_pt;
+                y1 *= g_dKoef_mm_to_pt;
+                x2 *= g_dKoef_mm_to_pt;
+                y2 *= g_dKoef_mm_to_pt;
+                x3 *= g_dKoef_mm_to_pt;
+                y3 *= g_dKoef_mm_to_pt;
+                x4 *= g_dKoef_mm_to_pt;
+                y4 *= g_dKoef_mm_to_pt;
 
                 let aQuads = [
                     x1, y1, // left up
-                    x2, y1, // right up
-                    x1, y2,	// left down
-                    x2, y2 	// right down
+                    x2, y2, // right up
+                    x3, y3,	// left down
+                    x4, y4 	// right down
                 ];
                 
                 let oPageInfo = _t.GetPageInfo(pageMatch.PageNum);
@@ -4951,8 +5050,9 @@ var CPresentation = CPresentation || function(){};
         if (oActiveForm) {
             oContent = oActiveForm.GetDocContent();
         }
-        else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
-            oContent = oActiveAnnot.GetDocContent();
+        else if (oActiveAnnot) {
+            isCanCopy = true;
+            isCanCut = true;
         }
         else if (oActiveDrawing) {
             oContent = oActiveDrawing.GetDocContent();
