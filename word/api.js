@@ -5574,6 +5574,54 @@ background-repeat: no-repeat;\
 			logicDocument.FinalizeAction();
 		});
 	};
+	asc_docs_api.prototype.asc_SetSectionPageNumProps = function(props)
+	{
+		if (!(props instanceof Asc.SectionPageNumProps))
+			return;
+		
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		let page = logicDocument.CurPage;
+		let sectPr = logicDocument.Pages[page] ? logicDocument.Pages[page].GetFirstSectPr() : null;
+		if (!sectPr)
+			return;
+		
+		return new Promise(function(resolve)
+		{
+			let format = props.get_Format();
+			
+			let symbols = undefined !== format ? AscWord.GetNumberingSymbolsByFormat(format) : null;
+			if (symbols && symbols.length)
+				AscFonts.FontPickerByCharacter.checkText(symbols, this, resolve);
+			else
+				resolve();
+		}).then(function()
+		{
+			if (logicDocument.IsSelectionLocked(AscCommon.changestype_HdrFtr))
+				return;
+			
+			logicDocument.StartAction(AscDFH.historydescription_Document_SectionPageNumFormat);
+			
+			if (undefined !== props.get_Format())
+				sectPr.SetPageNumFormat(props.get_Format());
+			
+			if (undefined !== props.get_Start())
+				sectPr.SetPageNumStart(props.get_Start());
+			
+			if (undefined !== props.get_ChapStyle())
+				sectPr.SetPageNumChapStyle(props.get_ChapStyle());
+			
+			if (undefined !== props.get_ChapSep())
+				sectPr.SetPageNumChapSep(props.get_ChapSep());
+
+			logicDocument.Recalculate();
+			logicDocument.UpdateSelection();
+			logicDocument.UpdateInterface();
+			logicDocument.FinalizeAction();
+		});
+	};
 
 	/*структура для передачи настроек колонтитулов
 	 {
@@ -14963,6 +15011,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['HeadersAndFooters_LinkToPrevious']          = asc_docs_api.prototype.HeadersAndFooters_LinkToPrevious;
 	asc_docs_api.prototype['asc_SetSectionStartPage']                   = asc_docs_api.prototype.asc_SetSectionStartPage;
 	asc_docs_api.prototype['asc_SetSectionPageNumFormat']               = asc_docs_api.prototype.asc_SetSectionPageNumFormat;
+	asc_docs_api.prototype['asc_SetSectionPageNumProps']                = asc_docs_api.prototype.asc_SetSectionPageNumProps;
 	asc_docs_api.prototype['sync_DocSizeCallback']                      = asc_docs_api.prototype.sync_DocSizeCallback;
 	asc_docs_api.prototype['sync_PageOrientCallback']                   = asc_docs_api.prototype.sync_PageOrientCallback;
 	asc_docs_api.prototype['sync_HeadersAndFootersPropCallback']        = asc_docs_api.prototype.sync_HeadersAndFootersPropCallback;
