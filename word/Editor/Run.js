@@ -4861,7 +4861,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 							}
 							isVisualFieldChar = true;
 						}
-						else if (oInstruction && AscWord.fieldtype_FORMCHECKBOX === oInstruction.GetType())
+						else if (oComplexField && oComplexField.IsFormCheckBox())
 						{
 							isVisualFieldChar = true;
 							Item.SetFormCheckBox(true);

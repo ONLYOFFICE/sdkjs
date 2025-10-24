@@ -677,8 +677,13 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 
 				if (type_Paragraph === EndType || type_BlockLevelSdt === EndType)
 				{
+					if (type_Paragraph === EndType)
+						bEndEmpty = this.Content[EndPos].IsSelectionToEnd();
+					
 					this.Content[EndPos].Remove(1, true);
-					bEndEmpty = this.Content[EndPos].IsEmpty()
+					
+					if (type_BlockLevelSdt === EndType)
+						bEndEmpty = this.Content[EndPos].IsEmpty()
 				}
 				else if (type_Table === EndType)
 				{

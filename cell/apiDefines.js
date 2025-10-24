@@ -285,11 +285,6 @@ var c_oAscMergeType = {
   rows: 2  // Замержены ли строки (если да, то автоподбор высоты не должен работать)
 };
 
-var c_oAscPaneState = {
-  Frozen: "frozen",
-  FrozenSplit: "frozenSplit",
-  Split: "split"
-};
 
 var c_oAscFindLookIn = {
   Formulas: 1,
@@ -442,55 +437,6 @@ var c_oAscPopUpSelectorType = {
       change: 3
   };
 
-  //поля header/footer
-  var c_oAscHeaderFooterField = {
-      pageNumber: 0,
-      pageCount: 1,
-      sheetName: 2,
-      fileName: 3,
-      filePath: 4,
-      date: 5,
-      time: 6,
-      lineBreak: 7,
-	  picture: 8,
-	  text: 9
-  };
-
-  var c_oAscPageHFType = {
-      firstHeader: 0,
-      oddHeader: 1,
-      evenHeader: 2,
-      firstFooter: 3,
-      oddFooter: 4,
-      evenFooter: 5
-  };
-
-  var c_oAscHeaderFooterType = {
-      first: 0,
-      odd: 1,
-      even: 2
-  };
-
-  var c_oAscHeaderFooterPresets = {
-      none: 0,
-      page: 1,
-      pageOfQuestion: 2,
-      sheet: 3,
-      confidential: 4,
-      bookName: 5,
-      //bookPath: 5
-      sheetPage: 6,
-      sheetConfidentialPage: 7,
-      bookNamePage: 8,
-      pageSheet: 9,
-      pageBook: 10,
-      //bookPathPage: 11;
-      pageBookName: 11,
-      userPageDate: 12,
-      //bookPathPagePathFile: 12;
-      preparedUserDatePage: 13,
-      custom: 14
-  };
 
   var c_oAscPrintTitlesRangeType = {
       first: 0,
@@ -837,7 +783,6 @@ var c_oAscPopUpSelectorType = {
   window['AscCommonExcel'].c_oAscCellEditorSelectState = c_oAscCellEditorSelectState;
   window['AscCommonExcel'].c_oAscCanChangeColWidth = c_oAscCanChangeColWidth;
   window['AscCommonExcel'].c_oAscMergeType = c_oAscMergeType;
-  window['AscCommonExcel'].c_oAscPaneState = c_oAscPaneState;
   window['AscCommonExcel'].c_oTargetType = c_oTargetType;
   window['AscCommonExcel'].c_oAscCoAuthoringMeBorderColor = c_oAscCoAuthoringMeBorderColor;
   window['AscCommonExcel'].c_oAscCoAuthoringOtherBorderColor = c_oAscCoAuthoringOtherBorderColor;
@@ -1098,50 +1043,6 @@ var c_oAscPopUpSelectorType = {
   prot['set'] = prot.set;
   prot['clear'] = prot.clear;
   prot['add'] = prot.add;
-  window['Asc']['c_oAscHeaderFooterField'] = window['Asc'].c_oAscHeaderFooterField = c_oAscHeaderFooterField;
-  prot = c_oAscHeaderFooterField;
-  prot['pageNumber'] = prot.pageNumber;
-  prot['pageCount'] = prot.pageCount;
-  prot['sheetName'] = prot.sheetName;
-  prot['fileName'] = prot.fileName;
-  prot['filePath'] = prot.filePath;
-  prot['date'] = prot.date;
-  prot['time'] = prot.time;
-  prot['lineBreak'] = prot.lineBreak;
-  prot['picture'] = prot.picture;
-  prot['text'] = prot.text;
-  window['Asc']['c_oAscPageHFType'] = window['Asc'].c_oAscPageHFType = c_oAscPageHFType;
-  prot = c_oAscPageHFType;
-  prot['firstHeader'] = prot.firstHeader;
-  prot['oddHeader'] = prot.oddHeader;
-  prot['evenHeader'] = prot.evenHeader;
-  prot['firstFooter'] = prot.firstFooter;
-  prot['oddFooter'] = prot.oddFooter;
-  prot['evenFooter'] = prot.evenFooter;
-
-  window['Asc']['c_oAscHeaderFooterType'] = window['Asc'].c_oAscHeaderFooterType = c_oAscHeaderFooterType;
-  prot = c_oAscHeaderFooterType;
-  prot['first'] = prot.first;
-  prot['odd'] = prot.odd;
-  prot['even'] = prot.even;
-
-  window['Asc']['c_oAscHeaderFooterPresets'] = window['Asc'].c_oAscHeaderFooterPresets = c_oAscHeaderFooterPresets;
-  prot = c_oAscHeaderFooterPresets;
-  prot['none'] = prot.none;
-  prot['page'] = prot.page;
-  prot['pageOfQuestion'] = prot.pageOfQuestion;
-  prot['sheet'] = prot.sheet;
-  prot['confidential'] = prot.confidential;
-  prot['bookName'] = prot.bookName;
-  prot['sheetPage'] = prot.sheetPage;
-  prot['sheetConfidentialPage'] = prot.sheetConfidentialPage;
-  prot['bookNamePage'] = prot.bookNamePage;
-  prot['pageSheet'] = prot.pageSheet;
-  prot['pageBook'] = prot.pageBook;
-  prot['pageBookName'] = prot.pageBookName;
-  prot['userPageDate'] = prot.userPageDate;
-  prot['preparedUserDatePage'] = prot.preparedUserDatePage;
-  prot['custom'] = prot.custom;
 
   window['Asc']['c_oAscPrintTitlesRangeType'] = window['Asc'].c_oAscPrintTitlesRangeType = c_oAscPrintTitlesRangeType;
   prot = c_oAscPrintTitlesRangeType;

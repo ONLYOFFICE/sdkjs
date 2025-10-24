@@ -373,6 +373,10 @@ OverlayObject.prototype.getFullRotate = function () {
         {
             shape_drawer.bIsNoFillAttack = false;
         }
+        if (this.TextElement)
+        {
+            shape_drawer.bIsNoSmartAttack = true;
+        }
         shape_drawer.draw(this.geometry);
         graphics.RestoreGrState();
     };
@@ -455,6 +459,18 @@ OverlayObject.prototype.getFullRotate = function () {
         }
         this.transform = this.TransformMatrix = new AscCommon.CMatrix();
     };
+    ObjectToDraw.prototype.getBounds = function () {
+
+        if (this.geometry) {
+            let boundsChecker = new AscFormat.CSlideBoundsChecker();
+            boundsChecker.init(100, 100, 100, 100);
+            this.geometry.check_bounds(boundsChecker);
+            boundsChecker.CorrectBounds();
+            let bounds = boundsChecker.Bounds;
+            return new AscFormat.CGraphicBounds(bounds.min_x, bounds.min_y, bounds.max_x, bounds.max_y);
+        }
+        return new AscFormat.CGraphicBounds(0, 0, 0, 0);
+    }
 function RotateTrackShapeImage(originalObject)
 {
     this.bIsTracked = false;

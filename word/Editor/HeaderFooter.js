@@ -1375,6 +1375,7 @@ CHeaderFooter.prototype =
 		return this.Content.CanAddComment();
 	}
 };
+CHeaderFooter.prototype.constructor = CHeaderFooter;
 CHeaderFooter.prototype.UpdateContentToDefaults = function()
 {
 	this.Content.ClearContent(true);
@@ -2832,6 +2833,7 @@ CHeaderFooterController.prototype =
 		return {X : 0, Y : 0, Page : 0};
 	}
 };
+CHeaderFooterController.prototype.constructor = CHeaderFooterController;
 CHeaderFooterController.prototype.GetStyleFromFormatting = function()
 {
     if (null != this.CurHdrFtr)

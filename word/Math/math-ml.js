@@ -95,6 +95,26 @@
 				mathContent.addElementToContent(element);
 			}
 		};
+        this.GetAttributes = function(reader)
+        {
+            let attributes = reader.GetAttributes();
+
+            function valuesToLower(obj)
+            {
+                let out = {};
+                for (let k in obj) {
+                    if (Object.prototype.hasOwnProperty.call(obj, k))
+                    {
+                        let v = obj[k];
+                        out[k] = (typeof v === 'string')
+                            ? v.toLowerCase()
+                            : v;
+                    }
+                }
+                return out;
+            }
+            return valuesToLower(attributes);
+        };
         this.proceedMathMLDefaultAttributes = function(attributes, elements, el, name)
         {
             let keysAttributes = Object.keys(attributes);
@@ -104,7 +124,7 @@
                 {
                     case 'mathcolor':
                     {
-                        let rgb = AscFormat.mapPrstColor[attributes.mathcolor];
+                        let rgb = AscFormat.mapPrstColor[attributes['mathcolor']];
                         if (rgb) {
                             let color = new AscWord.CDocumentColor((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
                             el.Set_Color(color);
@@ -113,7 +133,7 @@
                     }
                     case 'mathbackground':
                     {
-                        let rgb = AscFormat.mapPrstColor[attributes.mathbackground];
+                        let rgb = AscFormat.mapPrstColor[attributes['mathbackground']];
                         if (rgb)
                         {
                             let color = new AscWord.CDocumentColor((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
@@ -124,24 +144,32 @@
                     case 'mathsize':
                     {
                         //default size if 16px or 1em
-                        if (attributes.mathsize === 'normal')
+                        if (attributes['mathsize'] === 'normal')
                         {
                             el.SetFontSize(16);
                         }
-                        else if (attributes.mathsize === 'small')
+                        else if (attributes['mathsize'] === 'small')
                         {
                             el.SetFontSize(12);
                         }
-                        else if (attributes.mathsize === 'big')
+                        else if (attributes['mathsize'] === 'big')
                         {
                             el.SetFontSize(20);
                         }
-                        else if (attributes.mathsize.slice(-1) === "%" && Number(attributes.mathsize.slice(0, -1)))
+                        else if (attributes['mathsize'].slice(-1) === "%" && Number(attributes['mathsize'].slice(0, -1)))
                         {
-                            let percentage		= Number(attributes.mathsize.slice(0, -1));
+                            let percentage		= Number(attributes['mathsize'].slice(0, -1));
                             let defaultvalue	= 16;
                             let value			= defaultvalue * (percentage / 100);
                             el.SetFontSize(value);
+                        }
+                    }
+                    case 'stretchy': {
+                        if (attributes['stretchy'] === 'false')
+                        {
+                            if (!el.mathml_metadata)
+                                el.mathml_metadata = {};
+                            el.mathml_metadata.stretchy = false;
                         }
                     }
                     default: break;
@@ -315,7 +343,7 @@
                 case 'mspace':
                 case 'mtext':
                 case 'ms':
-                    let attributes = reader.GetAttributes();
+                    let attributes = this.GetAttributes(reader);
                     let text = updateBaseText(reader.GetText());
 
                     if (text.length === 0)
@@ -334,7 +362,7 @@
                     break;
                 case 'menclose':
                     this.proceedMathMLDefaultAttributes(
-                        reader.GetAttributes(),
+                        this.GetAttributes(reader),
                         elements,
                         this.handleBorderBox(reader)
                     );
@@ -420,7 +448,7 @@
                     break;
                 case 'msqrt':
                     this.proceedMathMLDefaultAttributes(
-                        reader.GetAttributes(),
+                        this.GetAttributes(reader),
                         elements,
                         this.handleRadical(reader)
                     );
@@ -437,7 +465,7 @@
                     break;
                 case 'munder':
                 {
-                    let attributes = reader.GetAttributes();
+                    let attributes = reader.GetAttributes(reader);
     
                     if (attributes['displaystyle'] === 'true')
                     {
@@ -454,7 +482,7 @@
                 }
                 case 'mover':
                 {
-                    let attributes = reader.GetAttributes();
+                    let attributes = this.GetAttributes(reader);
     
                     if (attributes['accent'] === 'true')
                         elements.push(this.handleAccent(reader, VJUST_BOT));
@@ -499,8 +527,9 @@
             {
                 let current = result[i];
                 let currentText = current instanceof ParaRun ? current.GetTextOfElement().GetText() : null;
-    
-                if (currentText && (AscMath.MathLiterals.lBrackets.SearchU(currentText) || AscMath.MathLiterals.lrBrackets.SearchU(currentText)))
+                let isStretchy = !(current instanceof ParaRun && current.mathml_metadata && current.mathml_metadata.stretchy === false);
+
+                if (currentText && isStretchy && (AscMath.MathLiterals.lBrackets.SearchU(currentText) || AscMath.MathLiterals.lrBrackets.SearchU(currentText)))
                 {
                     let openBracket = currentText;
                     let bracketContent = [];
@@ -511,8 +540,9 @@
                     {
                         let nextElement = result[j];
                         let nextText = nextElement instanceof ParaRun ? nextElement.GetTextOfElement().GetText() : null;
-                        
-                        if (nextText && (AscMath.MathLiterals.rBrackets.SearchU(nextText) || AscMath.MathLiterals.lrBrackets.SearchU(nextText)))
+                        let nextIsStretchy = !(nextElement instanceof ParaRun && nextElement.mathml_metadata && nextElement.mathml_metadata.stretchy === false);
+
+                        if (nextText && nextIsStretchy&& (AscMath.MathLiterals.rBrackets.SearchU(nextText) || AscMath.MathLiterals.lrBrackets.SearchU(nextText)))
                         {
                             closeBracket = nextText;
                             break;
@@ -536,7 +566,7 @@
                         break;
                     }
                 }
-                else if (currentText && AscMath.MathLiterals.rBrackets.SearchU(currentText))
+                else if (currentText && isStretchy && AscMath.MathLiterals.rBrackets.SearchU(currentText))
                 {
                     let precedingContent = [];
                     let k = processedResult.length - 1;
@@ -853,7 +883,7 @@
         };
         this.handleFraction = function (reader)
         {
-            let attributes = reader.GetAttributes();
+            let attributes = this.GetAttributes(reader);
             let props = new CMathFractionPr();
             props.content = [];
 
@@ -913,7 +943,7 @@
         this.handleMathContent = function(reader, paraMath, mathContent)
         {
             let depth = reader.GetDepth();
-            this.getGlobalAttributes(reader.GetAttributes(), paraMath);
+            this.getGlobalAttributes(this.GetAttributes(reader), paraMath);
 
             while (reader.ReadNextSiblingNode(depth))
             {
@@ -1180,7 +1210,7 @@
         {
             if (!props)
             {
-                let attributes = reader.GetAttributes();
+                let attributes = this.GetAttributes(reader);
                 let open = attributes['open'] || "(";
                 let close = attributes['close'] || ")";
                 let separator = attributes['separators'] || ",";

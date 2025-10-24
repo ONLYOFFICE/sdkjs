@@ -68,6 +68,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_RC]				= CChangesPDFAnnotRC;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Orig_Page]		= CChangesPDFAnnotOrigPage;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Comment_Data]	= CChangesPDFAnnotCommentData;
 AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_Reply]		= CChangesPDFAnnotReply;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Ap_Idx]			= CChangesPDFAnnotApIdx;
 
 // text annot
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Annot_Icon]		= CChangesPDFTextAnnotIcon;
@@ -825,11 +826,12 @@ CChangesPDFAnnotReply.prototype.private_GetContentChanges = function() {
 CChangesPDFAnnotReply.prototype.GetContentChangesClass = function() {
 	return this.private_GetContentChanges();
 };
-CChangesPDFAnnotReply.prototype.private_WriteItem = function (Writer, sId) {
-    Writer.WriteString2(sId);
+CChangesPDFAnnotReply.prototype.private_WriteItem = function (Writer, oItem) {
+    Writer.WriteString2(oItem.GetId());
 };
 CChangesPDFAnnotReply.prototype.private_ReadItem = function (Reader) {
-    return Reader.GetString2();
+    let sId = Reader.GetString2();
+    return AscCommon.g_oTableId.Get_ById(sId);
 };
 CChangesPDFAnnotReply.prototype.Copy = function() {
     let oChanges = new this.constructor(this.Class, this.Pos, this.Items, this.Add);
@@ -843,6 +845,23 @@ CChangesPDFAnnotReply.prototype.Copy = function() {
 };
 CChangesPDFAnnotReply.prototype.CreateReverseChange = function(){
     return this.private_CreateReverseChange(this.constructor);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFAnnotApIdx(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFAnnotApIdx.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFAnnotApIdx.prototype.constructor = CChangesPDFAnnotApIdx;
+CChangesPDFAnnotApIdx.prototype.Type = AscDFH.historyitem_Pdf_Annot_Ap_Idx;
+CChangesPDFAnnotApIdx.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot._apIdx = Value;
 };
 
 // text annot

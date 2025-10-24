@@ -3185,11 +3185,16 @@ BinaryChartWriter.prototype.WriteCT_BubbleSer = function (oVal) {
             oThis.WriteCT_DLbls(oVal.dLbls);
         });
     }
-    if (null != oVal.trendline) {
-        this.bs.WriteItem(c_oserct_bubbleserTRENDLINE, function () {
-            oThis.WriteCT_Trendline(oVal.trendline);
-        });
-    }
+	if (Array.isArray(oVal.trendlines)) {
+		for (let i = 0; i < oVal.trendlines.length; ++i) {
+			const trendline = oVal.trendlines[i];
+			if (trendline) {
+				this.bs.WriteItem(c_oserct_bubbleserTRENDLINE, function () {
+					oThis.WriteCT_Trendline(trendline);
+				});
+			}
+		}
+	}
 	for (let nIdx = 0; nIdx < oVal.errBars.length; ++nIdx) {
 		this.bs.WriteItem(c_oserct_bubbleserERRBARS, function () {
 			oThis.WriteCT_ErrBars(oVal.errBars[nIdx]);
@@ -4551,12 +4556,16 @@ BinaryChartWriter.prototype.WriteCT_BarSer = function (oVal) {
             oThis.WriteCT_DLbls(oVal.dLbls);
         });
     }
-    //todo array
-    if (null != oVal.trendline) {
-        this.bs.WriteItem(c_oserct_barserTRENDLINE, function () {
-            oThis.WriteCT_Trendline(oVal.trendline);
-        });
-    }
+	if (Array.isArray(oVal.trendlines)) {
+		for (let i = 0; i < oVal.trendlines.length; ++i) {
+			const trendline = oVal.trendlines[i];
+			if (trendline) {
+				this.bs.WriteItem(c_oserct_barserTRENDLINE, function () {
+					oThis.WriteCT_Trendline(trendline);
+				});
+			}
+		}
+	}
 
 	for (let nIdx = 0; nIdx < oVal.errBars.length; ++nIdx) {
 		this.bs.WriteItem(c_oserct_barserERRBARS, function () {
@@ -4842,12 +4851,16 @@ BinaryChartWriter.prototype.WriteCT_ScatterSer = function (oVal) {
             oThis.WriteCT_DLbls(oVal.dLbls);
         });
     }
-    //todo array
-    if (null != oVal.trendline) {
-        this.bs.WriteItem(c_oserct_scatterserTRENDLINE, function () {
-            oThis.WriteCT_Trendline(oVal.trendline);
-        });
-    }
+	if (Array.isArray(oVal.trendlines)) {
+		for (let i = 0; i < oVal.trendlines.length; ++i) {
+			const trendline = oVal.trendlines[i];
+			if (trendline) {
+				this.bs.WriteItem(c_oserct_scatterserTRENDLINE, function () {
+					oThis.WriteCT_Trendline(trendline);
+				});
+			}
+		}
+	}
 	for (let nIdx = 0; nIdx < oVal.errBars.length; ++nIdx) {
 		this.bs.WriteItem(c_oserct_scatterserERRBARS, function () {
 			oThis.WriteCT_ErrBars(oVal.errBars[nIdx]);
@@ -5158,12 +5171,16 @@ BinaryChartWriter.prototype.WriteCT_LineSer = function (oVal) {
             oThis.WriteCT_DLbls(oVal.dLbls);
         });
     }
-    //todo array
-    if (null != oVal.trendline) {
-        this.bs.WriteItem(c_oserct_lineserTRENDLINE, function () {
-            oThis.WriteCT_Trendline(oVal.trendline);
-        });
-    }
+	if (Array.isArray(oVal.trendlines)) {
+		for (let i = 0; i < oVal.trendlines.length; ++i) {
+			const trendline = oVal.trendlines[i];
+			if (trendline) {
+				this.bs.WriteItem(c_oserct_lineserTRENDLINE, function () {
+					oThis.WriteCT_Trendline(trendline);
+				});
+			}
+		}
+	}
 	for (let nIdx = 0; nIdx < oVal.errBars.length; ++nIdx) {
 		this.bs.WriteItem(c_oserct_lineserERRBARS, function () {
 			oThis.WriteCT_ErrBars(oVal.errBars[nIdx]);
@@ -5464,12 +5481,16 @@ BinaryChartWriter.prototype.WriteCT_AreaSer = function (oVal) {
             oThis.WriteCT_DLbls(oVal.dLbls);
         });
     }
-    //todo array
-    if (null != oVal.trendline) {
-        this.bs.WriteItem(c_oserct_areaserTRENDLINE, function () {
-            oThis.WriteCT_Trendline(oVal.trendline);
-        });
-    }
+	if (Array.isArray(oVal.trendlines)) {
+		for (let i = 0; i < oVal.trendlines.length; ++i) {
+			const trendline = oVal.trendlines[i];
+			if (trendline) {
+				this.bs.WriteItem(c_oserct_areaserTRENDLINE, function () {
+					oThis.WriteCT_Trendline(trendline);
+				});
+			}
+		}
+	}
 
 	for (let nIdx = 0; nIdx < oVal.errBars.length; ++nIdx) {
 		this.bs.WriteItem(c_oserct_areaserERRBARS, function () {
@@ -9776,12 +9797,11 @@ BinaryChartReader.prototype.ReadCT_BubbleSer = function (type, length, val) {
         val.setDLbls(oNewVal);
     }
     else if (c_oserct_bubbleserTRENDLINE === type) {
-        //todo array
         var oNewVal = new AscFormat.CTrendLine();
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_Trendline(t, l, oNewVal);
         });
-        val.setTrendline(oNewVal);
+        val.addTrendline(oNewVal);
     }
     else if (c_oserct_bubbleserERRBARS === type) {
         var oNewVal = new AscFormat.CErrBars();
@@ -11540,7 +11560,6 @@ BinaryChartReader.prototype.ReadCT_BarSer = function (type, length, val) {
         val.setDLbls(oNewVal);
     }
     else if (c_oserct_barserTRENDLINE === type) {
-        //todo array
         var oNewVal = new AscFormat.CTrendLine();
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_Trendline(t, l, oNewVal);
@@ -11548,7 +11567,7 @@ BinaryChartReader.prototype.ReadCT_BarSer = function (type, length, val) {
 		let tlType = oNewVal.trendlineType;
 		let isAllowedType = (tlType !== TRENDLINE_TYPE_EXP && tlType !== TRENDLINE_TYPE_POLY)
 		if (isAllowedType) {
-			val.setTrendline(oNewVal);
+			val.addTrendline(oNewVal);
 		}
     }
     else if (c_oserct_barserERRBARS === type) {
@@ -11952,12 +11971,11 @@ BinaryChartReader.prototype.ReadCT_ScatterSer = function (type, length, val) {
         val.setDLbls(oNewVal);
     }
     else if (c_oserct_scatterserTRENDLINE === type) {
-        //todo array
         var oNewVal = new AscFormat.CTrendLine();
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_Trendline(t, l, oNewVal);
         });
-        val.setTrendline(oNewVal);
+        val.addTrendline(oNewVal);
     }
     else if (c_oserct_scatterserERRBARS === type) {
         var oNewVal = new AscFormat.CErrBars();
@@ -12346,12 +12364,11 @@ BinaryChartReader.prototype.ReadCT_LineSer = function (type, length, val) {
         val.setDLbls(oNewVal);
     }
     else if (c_oserct_lineserTRENDLINE === type) {
-        //todo array
         var oNewVal = new AscFormat.CTrendLine();
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_Trendline(t, l, oNewVal);
         });
-        val.setTrendline(oNewVal);
+        val.addTrendline(oNewVal);
     }
     else if (c_oserct_lineserERRBARS === type) {
         var oNewVal = new AscFormat.CErrBars();
@@ -12768,12 +12785,11 @@ BinaryChartReader.prototype.ReadCT_AreaSer = function (type, length, val) {
         val.setDLbls(oNewVal);
     }
     else if (c_oserct_areaserTRENDLINE === type) {
-        //todo array
         var oNewVal = new AscFormat.CTrendLine();
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_Trendline(t, l, oNewVal);
         });
-        val.setTrendline(oNewVal);
+        val.addTrendline(oNewVal);
     }
     else if (c_oserct_areaserERRBARS === type) {
         var oNewVal = new AscFormat.CErrBars();

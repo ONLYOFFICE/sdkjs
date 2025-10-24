@@ -1661,7 +1661,8 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
                         }
                     }
                 }
-                let oTrendlineLbl = ser.trendline && ser.trendline.trendlineLbl;
+				const trendline = ser.getLastTrendline();
+                let oTrendlineLbl = trendline && trendline.trendlineLbl;
                 if(oTrendlineLbl && oTrendlineLbl.hit(x, y))
                 {
                     if(drawing.selection.trendlineLbl === oTrendlineLbl)

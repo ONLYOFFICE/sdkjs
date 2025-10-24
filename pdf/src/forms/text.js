@@ -71,8 +71,8 @@
     AscFormat.InitClass(CTextField, AscPDF.CBaseField, AscDFH.historyitem_type_Pdf_Text_Field);
 
     CTextField.prototype.SetComb = function(bComb) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (oParent) {
             return oParent.SetComb(bComb);
         }
 
@@ -119,8 +119,8 @@
         return true;
     };
     CTextField.prototype.IsComb = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent) {
             return oParent.IsComb();
         }
 
@@ -134,8 +134,8 @@
         return false;
     };
     CTextField.prototype.SetCharLimit = function(nChars) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (oParent) {
             oParent.SetCharLimit(nChars);
             return false;
         }
@@ -170,16 +170,16 @@
         return true;
     };
     CTextField.prototype.GetCharLimit = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent) {
             return oParent.GetCharLimit();
         }
 
         return this._charLimit;
     };
     CTextField.prototype.SetDoNotScroll = function(bNot) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (oParent) {
             oParent.SetDoNotScroll(bNot);
             return;
         }
@@ -191,15 +191,15 @@
         this.SetNeedRecalc(true);
     };
     CTextField.prototype.IsDoNotScroll = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent)
             return oParent.IsDoNotScroll();
 
         return this._doNotScroll;
     };
     CTextField.prototype.SetDoNotSpellCheck = function(bNot) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (oParent) {
             oParent.SetDoNotSpellCheck(bNot);
             return;
         }
@@ -211,15 +211,15 @@
         this.SetNeedRecalc(true);
     };
     CTextField.prototype.IsDoNotSpellCheck = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent)
             return oParent.IsDoNotSpellCheck();
 
         return this._doNotSpellCheck;
     };
     CTextField.prototype.SetFileSelect = function(bFileSelect) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (oParent) {
             oParent.SetFileSelect(bFileSelect);
             return;
         }
@@ -242,15 +242,15 @@
         this.SetNeedRecalc(true);
     };
     CTextField.prototype.IsFileSelect = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent)
             return oParent.IsFileSelect();
 
         return this._fileSelect;
     };
     CTextField.prototype.SetMultiline = function(bMultiline) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (oParent) {
             oParent.SetMultiline(bMultiline);
             return;
         }
@@ -298,15 +298,15 @@
         this.SetNeedRecalc(true);
     };
     CTextField.prototype.IsMultiline = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent)
             return oParent.IsMultiline();
 
         return this._multiline;
     };
     CTextField.prototype.SetPassword = function(bPassword) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (oParent)
             return oParent.SetPassword(bPassword);
         
         if (this.IsPassword() == bPassword || (bPassword && (this.IsMultiline() || this.IsComb()))) {
@@ -329,8 +329,8 @@
         this.SetWasChanged(true);
     };
     CTextField.prototype.IsPassword = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent)
             return oParent.IsPassword();
 
         return this._password;
@@ -350,7 +350,7 @@
 			if (isOnOpen != true)
 				this.SetWasChanged(true);
 			
-			if (isOnOpen == true && !this.GetParent())
+			if (isOnOpen == true && !this.GetParent(true))
 				this.SetParentValue(sValue);
 			
 			this.UpdateDisplayValue(sValue);

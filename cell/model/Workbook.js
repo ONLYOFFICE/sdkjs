@@ -6841,7 +6841,7 @@
 		this.handlers = handlers;
 		this._setHandlersTablePart();
 		this.aSlicers.forEach(function(elem){
-			elem.initPostOpen(tableIds, sheetIds);
+			elem && elem.initPostOpen(tableIds, sheetIds);
 		});
 		this.aNamedSheetViews.forEach(function(elem){
 			elem.initPostOpen(tableIds, t);
@@ -6856,7 +6856,7 @@
 			pivotTable.initPostOpenZip(oNumFmts, dxfsOpen);
 		});
 		this.aSlicers.forEach(function(slicer){
-			slicer.initPostOpenZip(pivotCaches);
+			slicer && slicer.initPostOpenZip(pivotCaches);
 		});
 	};
 	Worksheet.prototype._getValuesForConditionalFormatting = function(ranges, numbers) {
@@ -14011,15 +14011,13 @@
 		}
 		if (!userId) {
 			let oApi = Asc.editor;
-			userId = oApi.DocInfo && oApi.DocInfo.get_UserId();
+			userId = oApi && oApi.DocInfo && oApi.DocInfo.get_UserId();
 		}
-
-		oCell = {col: oCell.nCol, row: oCell.nRow};
 
 		if (this.userProtectedRanges && userId) {
 			for (let i = 0; i < this.userProtectedRanges.length; i++) {
 				let curUserProtectedRange = this.userProtectedRanges[i];
-				if (curUserProtectedRange.contains2(oCell) && (notCheckUser || !curUserProtectedRange.isUserCanDoByType(userId, type))) {
+				if (curUserProtectedRange.contains(oCell.nCol, oCell.nRow) && (notCheckUser || !curUserProtectedRange.isUserCanDoByType(userId, type))) {
 					return true;
 				}
 			}
@@ -16088,7 +16086,7 @@
 			});
 			if (oTableStructOperand) {
 				let oTableOpRange = oTableStructOperand.getRange();
-				if (oTableOpRange.bbox && !oTableOpRange.bbox.contains(this.nCol, this.nRow)) {
+				if (oTableOpRange.worksheet.getName() !== this.ws.getName() || (oTableOpRange.bbox && !oTableOpRange.bbox.contains(this.nCol, this.nRow))) {
 					return;
 				}
 				let bContainRange = oCellListeners.bbox && oCellListeners.bbox.containsRange(oTableOpRange.bbox);
@@ -18292,6 +18290,9 @@
 			}
 		}
 		this._foreach(function(cell){
+			if (cell.ws.isUserProtectedRangesIntersectionCell(cell)) {
+				return;
+			}
 			var _val = val;
 			if (_formula) {
 				_formula.isParsed = false;

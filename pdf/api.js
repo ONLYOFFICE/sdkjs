@@ -561,7 +561,7 @@
 		if (!this.DocumentRenderer)
 			return false;
 		
-		return this.getPDFDoc().GetSearchRedactInfo(id);
+		return this.getPDFDoc().GetRedactSearchInfo(id);
 	};
 	PDFEditorApi.prototype.ContentToHTML = function() {
 		if (!this.DocumentRenderer)
@@ -1230,7 +1230,7 @@
 		let oDrDoc			= oDoc.GetDrawingDocument();
 		
 		if (value == true) {
-			if (oActiveObj) {
+			if (oActiveObj && !oActiveObj.IsDrawing()) {
 				oDoc.BlurActiveObject();
 				oDoc.UpdateInterface();
 			}
@@ -1411,7 +1411,9 @@
 
 	PDFEditorApi.prototype.SetRedactTool = function(bUse) {
 		let oDoc = this.getPDFDoc();
-		oDoc.BlurActiveObject();
+		if (bUse) {
+			oDoc.BlurActiveObject();
+		}
 		
 		this.isRedactTool = bUse;
 		this.sendEvent("asc_onRedactState", bUse);

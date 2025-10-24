@@ -2306,7 +2306,20 @@ window.AscCommon.g_cIsBeta = "false";
 	g_aPunctuation[0x00BB] = PUNCTUATION_FLAG_BASE;                                     // »
 	g_aPunctuation[0x00BB] = PUNCTUATION_FLAG_BASE;                                     // »
 	g_aPunctuation[0x00BF] = PUNCTUATION_FLAG_BASE;                                     // ¿
-
+	
+	g_aPunctuation[0x0609] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x060A] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x060C] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x060D] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x061B] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x061E] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x061F] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x066A] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x066B] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x066C] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x066D] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x06D4] = PUNCTUATION_FLAG_BASE;
+	
 	g_aPunctuation[0x2010] = PUNCTUATION_FLAG_BASE;                                     // ‐
 	g_aPunctuation[0x2011] = PUNCTUATION_FLAG_BASE;                                     // ‑
 	g_aPunctuation[0x2012] = PUNCTUATION_FLAG_BASE;                                     // ‒
@@ -4731,6 +4744,62 @@ window.AscCommon.g_cIsBeta = "false";
 		autoNoTable: 1,
 		manual: 2
 	};
+	//поля worksheet header/footer
+	var c_oAscHeaderFooterField = {
+		pageNumber: 0,
+		pageCount: 1,
+		sheetName: 2,
+		fileName: 3,
+		filePath: 4,
+		date: 5,
+		time: 6,
+		lineBreak: 7,
+		picture: 8,
+		text: 9
+	};
+
+	var c_oAscPageHFType = {
+		firstHeader: 0,
+		oddHeader: 1,
+		evenHeader: 2,
+		firstFooter: 3,
+		oddFooter: 4,
+		evenFooter: 5
+	};
+
+	var c_oAscHeaderFooterType = {
+		first: 0,
+		odd: 1,
+		even: 2
+	};
+
+	var c_oAscHeaderFooterPresets = {
+		none: 0,
+		page: 1,
+		pageOfQuestion: 2,
+		sheet: 3,
+		confidential: 4,
+		bookName: 5,
+		//bookPath: 5
+		sheetPage: 6,
+		sheetConfidentialPage: 7,
+		bookNamePage: 8,
+		pageSheet: 9,
+		pageBook: 10,
+		//bookPathPage: 11;
+		pageBookName: 11,
+		userPageDate: 12,
+		//bookPathPagePathFile: 12;
+		preparedUserDatePage: 13,
+		custom: 14
+	};
+
+	var c_oAscPaneState = {
+		Frozen: "frozen",
+		FrozenSplit: "frozenSplit",
+		Split: "split"
+	};
+
 
 	//------------------------------------------------------------export--------------------------------------------------
 	var prot;
@@ -6305,5 +6374,54 @@ window.AscCommon.g_cIsBeta = "false";
 
 	window['Asc']['c_oAscKeyCodeEquals'] = window['Asc'].c_oAscKeyCodeEquals = c_oAscKeyCodeEquals;
 	window['Asc']['c_oAscKeyCodeAnalogues'] = window['Asc'].c_oAscKeyCodeAnalogues = c_oAscKeyCodeAnalogues;
+
+	window['Asc']['c_oAscHeaderFooterField'] = window['Asc'].c_oAscHeaderFooterField = c_oAscHeaderFooterField;
+	prot = c_oAscHeaderFooterField;
+	prot['pageNumber'] = prot.pageNumber;
+	prot['pageCount'] = prot.pageCount;
+	prot['sheetName'] = prot.sheetName;
+	prot['fileName'] = prot.fileName;
+	prot['filePath'] = prot.filePath;
+	prot['date'] = prot.date;
+	prot['time'] = prot.time;
+	prot['lineBreak'] = prot.lineBreak;
+	prot['picture'] = prot.picture;
+	prot['text'] = prot.text;
+
+	window['Asc']['c_oAscPageHFType'] = window['Asc'].c_oAscPageHFType = c_oAscPageHFType;
+	prot = c_oAscPageHFType;
+	prot['firstHeader'] = prot.firstHeader;
+	prot['oddHeader'] = prot.oddHeader;
+	prot['evenHeader'] = prot.evenHeader;
+	prot['firstFooter'] = prot.firstFooter;
+	prot['oddFooter'] = prot.oddFooter;
+	prot['evenFooter'] = prot.evenFooter;
+
+	window['Asc']['c_oAscHeaderFooterType'] = window['Asc'].c_oAscHeaderFooterType = c_oAscHeaderFooterType;
+	prot = c_oAscHeaderFooterType;
+	prot['first'] = prot.first;
+	prot['odd'] = prot.odd;
+	prot['even'] = prot.even;
+
+	window['Asc']['c_oAscHeaderFooterPresets'] = window['Asc'].c_oAscHeaderFooterPresets = c_oAscHeaderFooterPresets;
+	prot = c_oAscHeaderFooterPresets;
+	prot['none'] = prot.none;
+	prot['page'] = prot.page;
+	prot['pageOfQuestion'] = prot.pageOfQuestion;
+	prot['sheet'] = prot.sheet;
+	prot['confidential'] = prot.confidential;
+	prot['bookName'] = prot.bookName;
+	prot['sheetPage'] = prot.sheetPage;
+	prot['sheetConfidentialPage'] = prot.sheetConfidentialPage;
+	prot['bookNamePage'] = prot.bookNamePage;
+	prot['pageSheet'] = prot.pageSheet;
+	prot['pageBook'] = prot.pageBook;
+	prot['pageBookName'] = prot.pageBookName;
+	prot['userPageDate'] = prot.userPageDate;
+	prot['preparedUserDatePage'] = prot.preparedUserDatePage;
+	prot['custom'] = prot.custom;
+
+	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
+	window['AscCommonExcel'].c_oAscPaneState = c_oAscPaneState;
 
 })(window);

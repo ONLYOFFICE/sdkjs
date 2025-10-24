@@ -37,7 +37,7 @@
  * @event Plugin#onClick
  * @memberof Plugin
  * @alias onClick
- * @description The function called when the user clicks on the element.
+ * @description The function called when the user clicks the element.
  * @param {boolean} isSelectionUse - Defines if the selection is used or not.
  * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onClick.js
  */
@@ -66,7 +66,7 @@
  * @memberof Plugin
  * @alias onEnableMouseEvent
  * @description The function called to turn the mouse or touchpad events on/off.
- * @param {boolean} isEnabled - Defines if the mouse or touchpad is enabled (**true**) or not (**false**).
+ * @param {boolean} isEnabled - Indicates whether the mouse or touchpad is enabled (**true**) or not (**false**).
  * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onEnableMouseEvent.js
  */
 
@@ -84,8 +84,8 @@
  * @event Plugin#onChangeRestrictions
  * @memberof Plugin
  * @alias onChangeRestrictions
- * @description The function called when the restrictions in the editor is changed.
- * @param {number} value - restrictions value.
+ * @description The function called when the restrictions in the editor are changed.
+ * @param {number} value - The restrictions value.
  * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onChangeRestrictions.js
  */
 

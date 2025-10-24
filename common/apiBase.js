@@ -300,6 +300,56 @@
 		AscCommon.loadChartStyles(noop, function (err) {
 			t.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingScriptError, c_oAscError.Level.NoCritical);
 		});
+		/**
+		 * Determines if an error should be handled
+		 * @param {string} errorMsg - Error message  
+		 * @param {string} url - Script URL where error occurred (optional)
+		 * @param {string} stack - Error stack trace (optional, used when url is not available)
+		 * @returns {boolean} True if error should be handled by SDK
+		 */
+		const shouldHandleError = function(errorMsg, url, stack) {
+			// Browser extension schemes to ignore
+			const extensionSchemes = ['chrome-extension://', 'moz-extension://', 'safari-extension://', 'ms-browser-extension://'];
+			
+			// Ignore browser extensions by URL
+			if (url) {
+				for (let i = 0; i < extensionSchemes.length; i++) {
+					if (url.indexOf(extensionSchemes[i]) === 0) {
+						return false;
+					}
+				}
+			}
+
+			// Ignore browser extensions by stack (for promise rejections)
+			if (!url && stack) {
+				for (let i = 0; i < extensionSchemes.length; i++) {
+					if (stack.indexOf(extensionSchemes[i]) !== -1) {
+						return false;
+					}
+				}
+			}
+
+			// Ignore generic cross-origin script errors (browser security feature)
+			if (errorMsg === 'Script error.' && !url) {
+				return false;
+			}
+
+			// Allow only same-origin scripts
+			if (url) {
+				try {
+					const u = new URL(url, window.location.href);
+					if (u.origin !== window.location.origin) {
+						return false;
+					}
+				} catch (e) {
+					// If URL cannot be parsed, be conservative and ignore
+					return false;
+				}
+			}
+
+			return true;
+		};
+
 		const sendUnhandledError  = function(errorMsg, url, lineNumber, column, stack) {
 			let editorInfo = t.getEditorErrorInfo();
 			let memoryInfo = AscCommon.getMemoryInfo();
@@ -334,7 +384,11 @@
 			const errorMsg = errorEvent.reason.message || errorEvent.reason;
 			const stack = errorEvent.reason.stack || "";
 			console.error(errorEvent.reason);
-			sendUnhandledError(errorMsg, undefined, undefined, undefined, stack);
+			
+			if (shouldHandleError(errorMsg, undefined, stack)) {
+				sendUnhandledError(errorMsg, undefined, undefined, undefined, stack);
+			}
+			
 			if (oldOnunhandledrejection) {
 				return oldOnunhandledrejection.apply(this, arguments);
 			} else {
@@ -345,7 +399,12 @@
 		window.onerror = function(errorMsg, url, lineNumber, column, errorObj) {
 			//send only first error to reduce number of requests. also following error may be consequences of first
 			window.onerror = oldOnError;
-			sendUnhandledError(errorMsg, url, lineNumber, column, (errorObj ? errorObj.stack : ""));
+			const stack = errorObj ? errorObj.stack : "";
+			
+			if (shouldHandleError(errorMsg, url, stack)) {
+				sendUnhandledError(errorMsg, url, lineNumber, column, stack);
+			}
+			
 			if (oldOnError) {
 				return oldOnError.apply(this, arguments);
 			} else {

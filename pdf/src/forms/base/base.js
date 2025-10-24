@@ -58,7 +58,8 @@
     let ALIGN_TYPE = {
         left:   0,
         center: 1,
-        right:  2
+        right:  2,
+        justify:3
     };
 
     // For Span attributes (start)
@@ -160,8 +161,8 @@
 		this.compositeReplaceCount = 0;
         this.Lock = new AscCommon.CLock();
         this._meta = {};
-        this.SetPartialName(sName);
-        this.SetRect(aRect);
+        sName && this.SetPartialName(sName);
+        aRect && this.SetRect(aRect);
 
         this.kidsContentChanges = new AscCommon.CContentChanges();
         this.textMatrix = new AscCommon.CMatrix();
@@ -183,6 +184,12 @@
         return true;
     };
     CBaseField.prototype.SetApIdx = function(nIdx) {
+        if (undefined != this._apIdx) {
+            return;
+        }
+
+        AscCommon.History.Add(new CChangesPDFFormApIdx(this, this._apIdx, nIdx));
+
         this._apIdx = nIdx;
     };
     CBaseField.prototype.GetApIdx = function() {
@@ -199,8 +206,8 @@
         }
     };
     CBaseField.prototype.SetMEOptions = function(nFlags) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (oParent)
             return oParent.SetMEOptions(nFlags);
 
         if (this._meOptions === nFlags) {
@@ -270,8 +277,8 @@
         }
     };
     CBaseField.prototype.GetMEOptions = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent)
             return oParent.GetMEOptions();
 
         return this._meOptions;
@@ -346,6 +353,8 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CBaseField.prototype.SetOriginPage = function(nPage) {
+        AscCommon.History.Add(new CChangesPDFAnnotOrigPage(this, this._origPage, nPage));
+
         this._origPage = nPage;
     };
     CBaseField.prototype.GetOriginPage = function() {
@@ -457,8 +466,8 @@
 	 * @returns {Array}
 	 */
     CBaseField.prototype.GetAllWidgets = function() {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (oParent) {
             return oParent.GetAllWidgets()
         }
 
@@ -510,6 +519,10 @@
         return this._partialName ? this._partialName : "";
     };
     CBaseField.prototype.SetPartialName = function(sName) {
+        if (this._partialName == sName) {
+            return;
+        }
+
         AscCommon.History.Add(new CChangesPDFFormPartialName(this, this._partialName, sName));
 
         this._partialName = sName;
@@ -544,8 +557,8 @@
             case AscPDF.FORMS_TRIGGERS_TYPES.Validate:
             case AscPDF.FORMS_TRIGGERS_TYPES.Calculate:
             case AscPDF.FORMS_TRIGGERS_TYPES.Format: {
-                let oParent = this.GetParent();
-                if (oParent && oParent.IsAllKidsWidgets())
+                let oParent = this.GetParent(true);
+                if (oParent)
                     return oParent.SetActions(nTriggerType, aActionsInfo);
             }
         }
@@ -643,8 +656,8 @@
             case AscPDF.FORMS_TRIGGERS_TYPES.Validate:
             case AscPDF.FORMS_TRIGGERS_TYPES.Calculate:
             case AscPDF.FORMS_TRIGGERS_TYPES.Format: {
-                let oParent = this.GetParent();
-                if (oParent && oParent.IsAllKidsWidgets())
+                let oParent = this.GetParent(true);
+                if (oParent)
                     return oParent.GetActions(nTriggerType);
             }
         }
@@ -786,8 +799,8 @@
             case AscPDF.FORMS_TRIGGERS_TYPES.Validate:
             case AscPDF.FORMS_TRIGGERS_TYPES.Calculate:
             case AscPDF.FORMS_TRIGGERS_TYPES.Format: {
-                let oParent = this.GetParent();
-                if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+                let oParent = this.GetParent(true);
+                if (bInherit !== false && oParent)
                     return oParent.GetTrigger(nType);
             }
         }
@@ -905,8 +918,8 @@
             }
         }
 
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (oParent) {
             oCopy.DrainLogicFrom(oParent, false);
             oCopy.SetPartialName(oParent.GetPartialName());
         }
@@ -957,8 +970,16 @@
         return this._doc;
     };
 
-    CBaseField.prototype.GetParent = function() {
-        return this._parent;
+    CBaseField.prototype.GetParent = function(bLogicParent) {
+        if (!bLogicParent) {
+            return this._parent;
+        }
+
+        if (this._parent && this._parent.IsAllKidsWidgets()) {
+            return this._parent;
+        }
+        
+        return null;
     };
 
     /**
@@ -967,7 +988,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CBaseField.prototype.GetParentValue = function(bInherit) {
-        let oParent = this.GetParent();
+        let oParent = this.GetParent(true);
         if (oParent == null && this._value == null)
             return undefined;
         else if (bInherit === false || (this._value != null && this.GetPartialName() != null)) {
@@ -987,8 +1008,8 @@
             value = value.toString();
         }
 
-        let oParent = this.GetParent();
-        if (oParent && this.IsWidget() && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (oParent && this.IsWidget())
             oParent.SetParentValue(value);
         else {
             if (this._value === value) {
@@ -1648,14 +1669,27 @@
             let bParentInherit = !oParentField;
             if (!oParentField) {
                 if (oExistsField) {
+                    let sFullName = aPartNames[0];
+
                     for (let i = 0; i < aPartNames.length; i++) {
-                        let oNewParent = oDoc.CreateField(aPartNames[i], nFieldType, []);
-    
-                        if (oParentField) {
-                            oParentField.AddKid(oNewParent);
+                        if (i !== 0) {
+                            sFullName += "." + aPartNames[i];
+                        }
+
+                        let oField = oDoc.GetField(sFullName);
+                        if (oField && !oField.IsWidget()) {
+                            oParentField = oField;
                         }
                         
-                        oParentField = oNewParent;
+                        if (!oField || oField.IsWidget()) {
+                            let oNewParent = oDoc.CreateField(aPartNames[i], nFieldType, []);
+    
+                            if (oParentField) {
+                                oParentField.AddKid(oNewParent);
+                            }
+                            
+                            oParentField = oNewParent;
+                        }
                     }
                 }
                 // will be field-widget
@@ -1692,7 +1726,7 @@
     CBaseField.prototype.Refresh_RecalcData = function(){};
     CBaseField.prototype.SetWasChanged = function(isChanged, viewSync) {
         let oViewer   = Asc.editor.getDocumentRenderer();
-        let canChange = !oViewer.IsOpenFormsInProgress && AscCommon.History.CanAddChanges();
+        let canChange = !oViewer.IsOpenFormsInProgress && AscCommon.History.CanAddChanges() && !AscCommon.g_oIdCounter.IsLoad();
 
         let changed = this._wasChanged !== isChanged && canChange;
         if (changed) {
@@ -1737,10 +1771,17 @@
         return this._bDrawFromStream;
     };
     CBaseField.prototype.SetDrawFromStream = function(bFromStream) {
-        if (bFromStream && this.HasOriginView())
-            this._bDrawFromStream = true;
-        else
-            this._bDrawFromStream = false;
+        let valueToSet;
+        if (bFromStream && this.HasOriginView()) {
+            valueToSet = true;
+        }
+        else {
+            valueToSet = false;
+        }
+
+        AscCommon.History.Add(new CChangesPDFFormChangedView(this, this._bDrawFromStream, valueToSet));
+
+        this._bDrawFromStream = valueToSet;
     };
     CBaseField.prototype.SetDrawHighlight = function(bDraw) {
         this._needDrawHighlight = bDraw;
@@ -1803,8 +1844,8 @@
     };
 
     CBaseField.prototype.SetReadOnly = function(bReadOnly) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (oParent)
             return oParent.SetReadOnly(bReadOnly);
 
         if (this._readOnly === bReadOnly) {
@@ -1824,16 +1865,16 @@
         return true;
     };
     CBaseField.prototype.IsReadOnly = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent)
             return oParent.IsReadOnly();
 
         return this._readOnly;
     };
 
     CBaseField.prototype.SetNoExport = function(bNoExport) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (oParent) {
             return oParent.SetNoExport(bNoExport);
         }
     
@@ -1850,16 +1891,16 @@
         return true;
     };
     CBaseField.prototype.IsNoExport = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent)
             return oParent.IsNoExport();
 
         return this._noExport;
     };
     
     CBaseField.prototype.SetRequired = function(bRequired) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (oParent)
             return oParent.SetRequired(bRequired);
 
         if (this._required === bRequired) {
@@ -1883,15 +1924,15 @@
         return true;
     };
     CBaseField.prototype.IsRequired = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent)
             return oParent.IsRequired();
 
         return this._required;
     };
     CBaseField.prototype.SetTooltip = function(sTooltip) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (oParent)
             return oParent.SetTooltip(sTooltip);
 
         if (this._tooltip === sTooltip) {
@@ -1906,8 +1947,8 @@
         return true;
     };
     CBaseField.prototype.GetTooltip = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent)
             return oParent.GetTooltip();
 
         return this._tooltip;
@@ -1984,15 +2025,15 @@
         return this._display;
     };
     CBaseField.prototype.GetDefaultValue = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent)
             return oParent.GetDefaultValue();
         
         return this._defaultValue;
     };
     CBaseField.prototype.SetDefaultValue = function(value) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (oParent)
             return oParent.SetDefaultValue(value);
 
         let sOldDefValue = this.GetDefaultValue();
@@ -2478,9 +2519,6 @@
 	CBaseField.prototype.DrawFromTextBox = function(pdfGraphics, textBoxGraphics, pageIndex) {
 		this.Draw(pdfGraphics, textBoxGraphics);
 	};
-    CBaseField.prototype.GetParent = function() {
-        return this._parent;
-    };
     CBaseField.prototype.GetTopParent = function() {
         if (this._parent) 
         {
@@ -2622,6 +2660,10 @@
         return this._textSize;
     };
     CBaseField.prototype.SetRect = function(aOrigRect) {
+        if (this._rect == aOrigRect) {
+            return;
+        }
+
         let nOldExtX = this.GetWidth();
         let nOldExtY = this.GetHeight();
 
@@ -2842,8 +2884,8 @@
         memory.Seek(nEndPos);
     };
     CBaseField.prototype.CheckWidgetFlags = function(memory) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (oParent) {
             let nCurPos = memory.GetCurPosition();
             memory.Seek(memory.posForWidgetFlags);
             memory.WriteLong(-1);
@@ -3146,11 +3188,10 @@
             memory.widgetFlags |= (1 << 2);
         }
 
-        let oParent = this.GetParent();
+        let oParent = this.GetParent(true);
         let nFieldType = this.GetType();
-        let bWriteType = !oParent || !oParent.IsAllKidsWidgets();
 
-        if (bWriteType) {
+        if (!oParent) {
             switch (nFieldType) {
                 case AscPDF.FIELD_TYPES.radiobutton: {
                     memory.widgetFlags |= (1 << 15);

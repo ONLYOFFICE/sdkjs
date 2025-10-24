@@ -582,6 +582,24 @@
 			delete this.m_oFactoryClass[AscDFH.historyitem_type_OForm_FieldGroup];
 		}
 	};
+	CTableId.prototype.Print = function()
+	{
+		let result = {};
+		for (let id in this.m_aPairs)
+		{
+			let name =  this.m_aPairs[id].constructor.name;
+			if (!result[name])
+				result[name] = [];
+			
+			result[name].push(id);
+			console.log("Id=" + id + " class=" + name);
+		}
+		
+		// for (let name in result)
+		// {
+		// 	console.log(name + "\n" + result[name] + "\n");
+		// }
+	};
 	//-----------------------------------------------------------------------------------
 	// Функции для работы с совместным редактирования
 	//-----------------------------------------------------------------------------------

@@ -426,13 +426,21 @@ void main() {\n\
 			IsSelection : false
 		}
 
+        let oDoc            = Asc.editor.getPDFDoc();
+        let oAcitveDrawing  = oDoc.activeDrawing;
+        let oDocContent     = oAcitveDrawing && oAcitveDrawing.GetDocContent();
+        oDocContent && oDocContent.RemoveSelection();
+
         this.cacheSelectionQuads([]);
-        this.viewer.getPDFDoc().TextSelectTrackHandler.Update();
+        oDoc.TextSelectTrackHandler.Update();
     };
     CFile.prototype.isSelectionUse = function() {
-        // return !(this.Selection.Page1 == this.Selection.Page2 && this.Selection.Glyph1 == this.Selection.Glyph2 && this.Selection.Line1 == this.Selection.Line2) ||
-        //     !(this.Selection.startPoint.x == this.Selection.endPoint.x && this.Selection.startPoint.y == this.Selection.endPoint.y);
-        return this.Selection.IsSelection;
+        let oDoc            = Asc.editor.getPDFDoc();
+        let oAcitveDrawing  = oDoc.activeDrawing;
+        let oDocContent     = oAcitveDrawing && oAcitveDrawing.GetDocContent();
+        let isSelectionUse  = !!(oDocContent && oDocContent.IsSelectionUse());
+
+        return this.Selection.IsSelection || isSelectionUse;
     };
     CFile.prototype.sortSelection = function() {
         let sel = this.Selection;
@@ -585,6 +593,10 @@ void main() {\n\
         }
     };
     CFile.prototype.onMouseUp = function(pageIndex, x, y) {
+        if (this.viewer.MouseHandObject) {
+            return;
+        }
+        
         let _t      = this;
         let oDoc    = this.viewer.getPDFDoc();
         let oViewer = this.viewer;
@@ -632,8 +644,7 @@ void main() {\n\
         }
         else if (oViewer.Api.isRedactTool) {
             oDoc.DoAction(function() {
-                let oDrawing    = oDoc.activeDrawing;
-                let aSelQuads   = null == oDrawing ? _t.getSelectionQuads() : oDrawing.GetSelectionQuads();
+                let aSelQuads = _t.getSelectionQuads();
 
                 oDoc.AddRedactAnnot(aSelQuads);
             }, AscDFH.historydescription_Pdf_AddAnnot);
@@ -854,6 +865,8 @@ void main() {\n\
             return;
         }
 
+        let oDoc = this.viewer.getPDFDoc();
+
         stream.pos = ret.LinePos;
 
         let _lineText = "";
@@ -914,10 +927,13 @@ void main() {\n\
             }
         }
 
+        oDoc.TextSelectTrackHandler.Update(true);
+        this.onUpdateSelection();
         this.onUpdateOverlay();
     };
     CFile.prototype.selectWholeRow = function(pageIndex, x, y) {
         let ret = this.getNearestPos(pageIndex, x, y);
+        let oDoc = this.viewer.getPDFDoc();
 
         let sel = this.Selection;
         sel.Glyph1 = -2;
@@ -929,6 +945,8 @@ void main() {\n\
         sel.Page2 = pageIndex;
         sel.quads = [];
         
+        oDoc.TextSelectTrackHandler.Update(true);
+        this.onUpdateSelection();
         this.onUpdateOverlay();
     };
     CFile.prototype.selectWholePage = function(pageIndex) {
@@ -937,6 +955,9 @@ void main() {\n\
         if (!stream) {
             return;
         }
+
+        let oDoc = this.viewer.getPDFDoc();
+
         while (stream.pos < stream.size)
         {
             _numLine++;
@@ -957,6 +978,8 @@ void main() {\n\
         sel.Page2 = pageIndex;
         sel.quads = [];
         
+        oDoc.TextSelectTrackHandler.Update(true);
+        this.onUpdateSelection();
         this.onUpdateOverlay();
     };
     CFile.prototype.selectAll = function() {
@@ -996,6 +1019,12 @@ void main() {\n\
         this.Selection.quads = aQuads;
     };
     CFile.prototype.getSelectionQuads = function() {
+        let oDoc = Asc.editor.getPDFDoc();
+        let oDrawing = oDoc.activeDrawing;
+        if (oDrawing) {
+            return oDrawing.GetSelectionQuads();
+        }
+
         let aInfo = [];
         
         if (!this.isSelectionUse()) {
@@ -1826,7 +1855,7 @@ void main() {\n\
                 if (endChar == Infinity)
                     off2 = _lineWidth;
 
-                if (off2 <= off1)
+                if (off2 < off1)
                     continue;
 
                 rects.push({
@@ -1836,7 +1865,7 @@ void main() {\n\
                     Char2: endChar,
                     X : _lineX + _lineAscent * _lineEy + off1 * _lineEx,
                     Y : _lineY - _lineAscent * _lineEx + off1 * _lineEy,
-                    W : off2 - off1,
+                    W : off2 - off1 || (0.5 * g_dKoef_pix_to_mm * g_dKoef_mm_to_pt),
                     H : _lineAscent + _lineDescent,
                     Ex : _lineEx,
                     Ey : _lineEy,

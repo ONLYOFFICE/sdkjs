@@ -514,8 +514,9 @@
         return this._origPage;
     };
     CAnnotationBase.prototype.SetWasChanged = function(isChanged, viewSync) {
-        let oViewer   = Asc.editor.getDocumentRenderer();
-        let canChange = !oViewer.IsOpenAnnotsInProgress && AscCommon.History.CanAddChanges();
+        let oDoc        = Asc.editor.getPDFDoc();
+        let oViewer     = Asc.editor.getDocumentRenderer();
+        let canChange   = !oViewer.IsOpenAnnotsInProgress && oDoc.LocalHistory !== AscCommon.History && AscCommon.History.CanAddChanges();
 
         let prev    = this._wasChanged;
         let changed = prev !== isChanged && canChange;
@@ -1236,6 +1237,12 @@
         return false;
     };
     CAnnotationBase.prototype.SetApIdx = function(nIdx) {
+        if (undefined != this._apIdx) {
+            return;
+        }
+
+        AscCommon.History.Add(new CChangesPDFAnnotApIdx(this, this._apIdx, nIdx));
+        
         this._apIdx = nIdx;
     };
     CAnnotationBase.prototype.GetApIdx = function() {
@@ -1275,14 +1282,14 @@
      * @returns {object}
 	 */
     CAnnotationBase.prototype.GetRGBColor = function(aInternalColor) {
-        let oColor = {};
+        let oColor = {
+            r: 255,
+            g: 255,
+            b: 255
+        };
 
         if (!aInternalColor || aInternalColor.length == 0) {
-            return {
-                r: 255,
-                g: 255,
-                b: 255
-            }
+            return oColor;
         }
         
         if (aInternalColor.length == 1) {
@@ -1309,6 +1316,9 @@
             }
 
             oColor = cmykToRgb(aInternalColor[0], aInternalColor[1], aInternalColor[2], aInternalColor[3]);
+        }
+        else if (aInternalColor.length > 4) {
+            return this.GetRGBColor(aInternalColor.slice(0, 3));
         }
 
         return oColor;
@@ -1415,11 +1425,13 @@
         // rect
         let aOrigRect = this.GetRect();
         if (this.IsStamp() && memory.docRenderer) {
+            let nScale = this.GetOriginViewScale();
+
             // for not clipping by half border width
-            memory.WriteDouble(aOrigRect[0] - nBorderW / 2); // x1
-            memory.WriteDouble(aOrigRect[1] - nBorderW / 2); // y1
-            memory.WriteDouble(aOrigRect[2] + nBorderW / 2); // x2
-            memory.WriteDouble(aOrigRect[3] + nBorderW / 2); // y2
+            memory.WriteDouble(aOrigRect[0] - (nBorderW / 2) * nScale); // x1
+            memory.WriteDouble(aOrigRect[1] - (nBorderW / 2) * nScale); // y1
+            memory.WriteDouble(aOrigRect[2] + (nBorderW / 2) * nScale); // x2
+            memory.WriteDouble(aOrigRect[3] + (nBorderW / 2) * nScale); // y2
         }
         else {
             memory.WriteDouble(aOrigRect[0]); // x1
@@ -1681,6 +1693,9 @@
                     if (aRC[i]["actual"]) {
                         nStyle |= (1 << 6);
                         memory.WriteString(aRC[i]["actual"]);
+                    }
+                    if (aRC[i]["rtl"]) {
+                        nStyle |= (1 << 7);
                     }
                     // запись флагов настроек шрифта
                     let nEndPos = memory.GetCurPosition();

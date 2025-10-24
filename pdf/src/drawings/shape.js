@@ -625,7 +625,7 @@
         let copy = new CPdfShape();
         this.fillObject(copy, oPr);
 
-        if (!oPr || !oPr.bSkipRedactsIds) {
+        if ((!oPr || !oPr.bSkipRedactsIds) && this.GetRedactIds) {
             this.GetRedactIds().forEach(function(id) {
                 copy.AddRedactId(id);
             });

@@ -2156,8 +2156,11 @@
             let sPathToImg = AscCommon.getFullImageSrc2(this.GetImageRasterId(nImgType));
             let nExistIdx = memory.images.indexOf(sPathToImg);
             if ((memory.isForSplit || memory.isCopyPaste) && sPathToImg) {
-                let oImageElm = Asc.editor.ImageLoader.map_image_index[sPathToImg].Image;
-                sPathToImg = getBase64FromImage(oImageElm);
+                let mapItem = Asc.editor.ImageLoader.map_image_index[sPathToImg];
+                if (mapItem) {
+                    let oImageElm = mapItem.Image;
+                    sPathToImg = getBase64FromImage(oImageElm);
+                }
             }
             
             if (nExistIdx === -1) {

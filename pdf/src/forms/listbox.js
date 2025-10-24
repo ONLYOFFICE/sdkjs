@@ -280,8 +280,8 @@
     };
     
     CListBoxField.prototype.SetMultipleSelection = function(bValue) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (oParent) {
             oParent.SetMultipleSelection(bValue);
             return;
         }
@@ -292,8 +292,8 @@
         this.SetWasChanged(true);
     };
     CListBoxField.prototype.IsMultipleSelection = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent)
             return oParent.IsMultipleSelection();
 
         return this._multipleSelection;
@@ -345,8 +345,8 @@
     CListBoxField.prototype.AddOption = function(option, nPos) {
         let _t = this;
 
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (oParent)
             return oParent.AddOption(option, nPos);
 
         if (option == null) return;
@@ -408,8 +408,8 @@
         }
     };
     CListBoxField.prototype.RemoveOption = function(nPos) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (oParent)
             return oParent.RemoveOption(nPos);
 
         function updateContent(widget) {
@@ -1217,7 +1217,7 @@
         }
 
         // элементы списка выбора
-        let aOptions = this.GetOptions();
+        let aOptions = this.GetOptions(memory.isCopyPaste);
         if (aOptions && aOptions.length !== 0) {
             memory.fieldDataFlags |= (1 << 10);
             memory.WriteLong(aOptions.length);

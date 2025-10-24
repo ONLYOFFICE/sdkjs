@@ -5908,7 +5908,7 @@ CDocumentContent.prototype.SetImageProps = function(Props)
 	if (docpostype_DrawingObjects === this.CurPos.Type)
 	{
 		this.LogicDocument.DrawingObjects.setProps(Props);
-		this.Document_UpdateInterfaceState();
+		this.LogicDocument.Document_UpdateInterfaceState();
 	}
 	else if (docpostype_Content == this.CurPos.Type && ( ( true === this.Selection.Use && this.Selection.StartPos == this.Selection.EndPos && type_Table == this.Content[this.Selection.StartPos].GetType() ) || ( false == this.Selection.Use && type_Table == this.Content[this.CurPos.ContentPos].GetType() ) ))
 	{

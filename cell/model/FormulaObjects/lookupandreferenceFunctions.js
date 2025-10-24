@@ -3151,8 +3151,10 @@ function (window, undefined) {
 		/** @type {TypedCacheAxis} */
 		const axisData = bHor? this.data[wsId].horizontal : this.data[wsId].vertical;
 		if (!axisData[rowCol]) {
-			axisData[rowCol] = {};
-			this.generateCache(ws, bHor, rowCol, savingValueCallback, tmpToTypedCallback, tmpArrayCallback)
+			let container = {};
+			container[rowCol] = {};
+			this.generateCache(ws, bHor, rowCol, savingValueCallback, tmpToTypedCallback, tmpArrayCallback, container);
+			axisData[rowCol] = container[rowCol];
 		}
 		return axisData[rowCol][elementType];
 	};
@@ -3164,11 +3166,12 @@ function (window, undefined) {
 	 * @param {(value: LookUpElement, i: number) => any} savingValueCallback
 	 * @param {(value: any) => number} tmpToTypedCallback
 	 * @param {(value: {cElementType: any[]}) => void} [tmpArrayCallback]
+	 * @param {Object} [opt_container] - Optional container object to use instead of the default axis data structure.
 	 * @return {Uint32Array}
 	 */
-	TypedCache.prototype.generateCache = function(ws, bHor, rowCol, savingValueCallback, tmpToTypedCallback, tmpArrayCallback) {
+	TypedCache.prototype.generateCache = function(ws, bHor, rowCol, savingValueCallback, tmpToTypedCallback, tmpArrayCallback, opt_container) {
 		const wsId = ws.Get_Id();
-		const axisData = bHor ? this.data[wsId].horizontal : this.data[wsId].vertical;
+		const axisData = opt_container ? opt_container : (bHor ? this.data[wsId].horizontal : this.data[wsId].vertical);
 		const tmpArrays = {};
 		const c1 = bHor ? 0 : rowCol;
 		const r1 = bHor ? rowCol : 0;

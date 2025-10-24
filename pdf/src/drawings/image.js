@@ -52,7 +52,7 @@
     CPdfImage.prototype.copy = function (oPr) {
         let copy = this.convertToPdf();
 
-        if (!oPr || !oPr.bSkipRedactsIds) {
+        if ((!oPr || !oPr.bSkipRedactsIds) && this.GetRedactIds) {
             this.GetRedactIds().forEach(function(id) {
                 copy.AddRedactId(id);
             });

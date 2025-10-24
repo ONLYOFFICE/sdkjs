@@ -1959,6 +1959,7 @@
 				oThis.MouseHandObject.Active = true;
 				oThis.MouseHandObject.ScrollX = oThis.scrollX;
 				oThis.MouseHandObject.ScrollY = oThis.scrollY;
+
 				return;
 			}
 
@@ -2046,12 +2047,19 @@
 				if (!pageObjectLogic) {
 					return false;
 				}
-				if (global_mouseEvent.ClickCount == 2)
+				
+				if (global_mouseEvent.ClickCount == 2) {
 					oThis.file.selectWholeWord(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
-				else if (global_mouseEvent.ClickCount == 3)
+					return;
+				}
+				else if (global_mouseEvent.ClickCount == 3) {
 					oThis.file.selectWholeRow(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
-				else if (global_mouseEvent.ClickCount == 4)
+					return;
+				}
+				else if (global_mouseEvent.ClickCount == 4) {
 					oThis.file.selectWholePage(pageObjectLogic.index);
+					return;
+				}
 			}
 
 			// если было нажатие - то отжимаем
@@ -2060,8 +2068,16 @@
 				oThis.file.onMouseUp(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
 			}
 				
-			if (oThis.MouseHandObject)
+			if (oThis.MouseHandObject) {
 				oThis.MouseHandObject.Active = false;
+
+				if (oThis.MouseHandObject.X == AscCommon.global_mouseEvent.X && oThis.MouseHandObject.Y == AscCommon.global_mouseEvent.Y) {
+					oThis.file.removeSelection();
+					oThis.file.onUpdateSelection();
+					oThis.file.onUpdateOverlay();
+				}
+			}
+				
 			oThis.isMouseMoveBetweenDownUp = false;
 
 			if (-1 !== oThis.timerScrollSelect)
@@ -2476,17 +2492,9 @@
 				this.drawCurrentSearchHighlight(ctx, oDoc, oDrDoc);
 			}
 			
-			oDrDoc.private_StartDrawSelection(this.overlay);
 			this.drawSelection(ctx, oDoc, oDrDoc);
-			
 	        this.drawPlaceholders();
 
-			if (oDoc.activeForm && oDoc.activeForm.content && oDoc.activeForm.content.IsSelectionUse() && !oDoc.activeForm.content.IsSelectionEmpty()) {
-				ctx.beginPath();
-				oDoc.activeForm.content.DrawSelectionOnPage(0);
-				oDrDoc.private_EndDrawSelection();
-			}
-			
 			if (oDrDoc.MathTrack.IsActive()) {
 				const prevAlpha = ctx.globalAlpha;
 				ctx.globalAlpha = 1.0;
@@ -2542,6 +2550,8 @@
 		};
 		
 		this.drawSelection = function(ctx, oDoc, oDrDoc) {
+			oDrDoc.private_StartDrawSelection(this.overlay);
+
 			ctx.fillStyle = "rgba(51,102,204,255)";
 			ctx.beginPath();
 			if (this.file.isSelectionUse()) {
@@ -2585,6 +2595,11 @@
 				oDrDoc.private_EndDrawSelection();
 				oDrDoc.AutoShapesTrack.PageIndex = nPage;
 				this.DrawingObjects.drawSelect(nPage);
+			}
+			else if (oDoc.activeForm && oDoc.activeForm.content && oDoc.activeForm.content.IsSelectionUse() && !oDoc.activeForm.content.IsSelectionEmpty()) {
+				ctx.beginPath();
+				oDoc.activeForm.content.DrawSelectionOnPage(0);
+				oDrDoc.private_EndDrawSelection();
 			}
 		};
 		
@@ -3038,7 +3053,7 @@
 
 					let page = this.file.pages[this.pagesInfo.countTextPages];
 					if (undefined !== page.originIndex) {
-						page.text = this.file.getText(this.pagesInfo.countTextPages);
+						page.text = this.file.getText(page.originIndex);
 						isCommands = true;
 					} 
 					
@@ -4399,8 +4414,9 @@
 		let oFile		= this.file;
 
 		// по информации аннотаций определим какие были удалены
-		let oDoc		= this.getPDFDoc();
+		let oDoc = this.getPDFDoc();
 		oDoc.BlurActiveObject();
+		oDoc.RecalculateAll();
 		
 		let aAnnotsInfo	= oFile.nativeFile["getAnnotationsInfo"]();
 		let aFormsInfo = this.file.nativeFile["getInteractiveFormsInfo"]();
@@ -4454,6 +4470,9 @@
 				oMemory.WriteByte("P".charCodeAt(0));
 				oMemory.WriteByte("D".charCodeAt(0));
 				oMemory.WriteByte("F".charCodeAt(0));
+
+				oMemory.isForSplit = false;
+				oMemory.isCopyPaste = false;
 			}
 		}
 
@@ -4507,11 +4526,12 @@
 			oMemory.WriteLong(originIndex != undefined ? originIndex : curIndex);
 			
 			let oPageInfo = aPagesInfo[curIndex];
-			if (checkNeedRedactPage(oPageInfo)) {
-				writePageRedactsInfo(oPageInfo);
-			}
 
 			if ([AscPDF.CommandType.editPage, AscPDF.CommandType.addPage].includes(nCommandType)) {
+				if (checkNeedRedactPage(oPageInfo)) {
+					writePageRedactsInfo(oPageInfo);
+				}
+
 				let nRotAngle = this.getPageRotate(curIndex);
 				let bClearPage = !!oFile.pages[curIndex].isRecognized;
 				
@@ -4975,6 +4995,7 @@
 				oMemory.WriteByte("F".charCodeAt(0));
 
 				oMemory.isForSplit = true;
+				oMemory.isCopyPaste = false;
 			}
 		}
 
@@ -5062,11 +5083,12 @@
 			oMemory.WriteLong(originIndex != undefined ? originIndex : curIndex);
 			
 			let oPageInfo = aPagesInfo[curIndex];
-			if (checkNeedRedactPage(oPageInfo)) {
-				writePageRedactsInfo(oPageInfo);
-			}
-
+			
 			if ([AscPDF.CommandType.editPage, AscPDF.CommandType.addPage].includes(nCommandType)) {
+				if (checkNeedRedactPage(oPageInfo)) {
+					writePageRedactsInfo(oPageInfo);
+				}
+
 				let nRotAngle = this.getPageRotate(curIndex);
 				let bClearPage = !!oFile.pages[curIndex].isRecognized;
 				

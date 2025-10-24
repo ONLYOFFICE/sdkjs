@@ -460,18 +460,7 @@
         }
         
         if (this.IsNeedRecalcSizes()) {
-            let oXfrm = this.getXfrm();
-            if (oXfrm) {
-                let aRect = this.GetRect();
-                AscCommon.ExecuteNoHistory(function() {
-                    this.spPr.xfrm.extX = (aRect[2] - aRect[0]) * g_dKoef_pt_to_mm;
-                    this.spPr.xfrm.extY = (aRect[3] - aRect[1]) * g_dKoef_pt_to_mm;
-                    this.spPr.xfrm.offX = aRect[0] * g_dKoef_pt_to_mm;
-                    this.spPr.xfrm.offY = aRect[1] * g_dKoef_pt_to_mm;
-                    this.updateTransformMatrix();
-                    this.recalcGeometry();
-                }, undefined, this);
-            }
+            this.RecalcSizes();
         }
 
         if (this.recalcInfo.recalculateGeometry)
@@ -488,6 +477,22 @@
         
         this.SetNeedRecalc(false);
     };
+    CAnnotationFreeText.prototype.RecalcSizes = function() {
+        let oXfrm = this.getXfrm();
+        if (oXfrm) {
+            let aRect = this.GetRect();
+            AscCommon.ExecuteNoHistory(function() {
+                this.spPr.xfrm.extX = (aRect[2] - aRect[0]) * g_dKoef_pt_to_mm;
+                this.spPr.xfrm.extY = (aRect[3] - aRect[1]) * g_dKoef_pt_to_mm;
+                this.spPr.xfrm.offX = aRect[0] * g_dKoef_pt_to_mm;
+                this.spPr.xfrm.offY = aRect[1] * g_dKoef_pt_to_mm;
+                this.updateTransformMatrix();
+                this.recalcGeometry();
+            }, undefined, this);
+        }
+
+        this.SetNeedRecalcSizes(false);
+    }
     CAnnotationFreeText.prototype.RefillGeometry = function() {
         let aOrigRect   = this.GetRect();
         let aCallout    = this.GetCallout(); // координаты выходящей стрелки
@@ -666,14 +671,19 @@
             let oRCInfo = aRCInfo[i];
 
             let oRun = new ParaRun(oLastUsedPara, false);
+            let isRTL = Boolean(oRCInfo["rtl"]);
+            let nInternalAlign = AscPDF.getInternalAlignByPdfType(oRCInfo["alignment"], isRTL);
 
             setRunPr(oRun, oRCInfo);
             oLastUsedPara.AddToContentToEnd(oRun);
+            oLastUsedPara.SetParagraphBidi(isRTL);
+            oLastUsedPara.Set_Align(nInternalAlign);
+
             for (let nChar = 0; nChar < oRCInfo["text"].length; nChar++) {
                 let nCharCode = oRCInfo["text"][nChar].charCodeAt(0);
                 
                 if (nCharCode == 13) {
-                    if (i != aRCInfo.length - 1) {
+                    if (i != aRCInfo.length - 1 || nChar != oRCInfo["text"].length - 1) {
                         oLastUsedPara.Correct_Content();
                         oLastUsedPara.AddToParagraph(new AscWord.ParaTextPr(oRun.GetTextPr()));
 
@@ -683,7 +693,8 @@
                         oRun = new ParaRun(oLastUsedPara, false);
                         setRunPr(oRun, oRCInfo);
                         oLastUsedPara.AddToContentToEnd(oRun);
-                        oLastUsedPara.Set_Align(AscPDF.getInternalAlignByPdfType(oRCInfo["alignment"]));
+                        oLastUsedPara.SetParagraphBidi(isRTL);
+                        oLastUsedPara.Set_Align(nInternalAlign);
                     }
                 }
                 else {
@@ -744,6 +755,7 @@
                     
                 let oRCInfo = {
                     "alignment":        AscPDF.getPdfTypeAlignByInternal(oRun.Paragraph.GetParagraphAlign()),
+                    "rtl":              oRun.Paragraph.GetParagraphBidi(),
                     "bold":             oRun.Get_Bold(),
                     "italic":           oRun.Get_Italic(),
                     "strikethrough":    oRun.Get_Strikeout(),
@@ -1240,8 +1252,9 @@
         let oDoc            = this.GetDocument();
         let oController     = oDoc.GetController();
         let oDrDoc          = oDoc.GetDrawingDocument();
+        let nPage           = this.GetPage();
 
-        this.selectStartPage = this.GetPage();
+        this.selectStartPage = nPage;
         
         // координаты клика на странице в MM
         var pageObject = oViewer.getPageByCoords2(x, y);
@@ -1261,6 +1274,7 @@
                 let yContent    = oTransform.TransformPointY(0, Y);
 
                 oController.resetSelection();
+                this.select(oController, nPage);
                 oController.selection.groupSelection = this;
                 
                 if (this.IsInTextBox() == false && false == this.Lock.Is_Locked()) {
@@ -1279,6 +1293,7 @@
                     this.SetInTextBox(true);
                 }
                 else {
+                    this.selection.textSelection = this.GetTextBoxShape();
                     oContent.SelectAll();
                     if (oContent.IsSelectionEmpty() == false)
                         oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();

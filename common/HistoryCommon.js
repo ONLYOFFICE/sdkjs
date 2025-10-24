@@ -2334,6 +2334,8 @@
 	window['AscDFH'].historyitem_CommonChart_RemoveFilteredSeries = window['AscDFH'].historyitem_type_CommonShape | 314;
 	window['AscDFH'].historyitem_CommonChart_DataLabelsRange      = window['AscDFH'].historyitem_type_CommonShape | 315;
 	window['AscDFH'].historyitem_CommonChart_AddErrBars           = window['AscDFH'].historyitem_type_CommonShape | 316;
+	window['AscDFH'].historyitem_CommonSeries_AddTrendline        = window['AscDFH'].historyitem_type_CommonShape | 317;
+	window['AscDFH'].historyitem_CommonSeries_RemoveTrendline     = window['AscDFH'].historyitem_type_CommonShape | 318;
 
 	window['AscDFH'].historyitem_Common_AddWatermark = window['AscDFH'].historyitem_type_CommonShape | 401;
 	//------------------------------------------------------------------------------------------------------------------
@@ -2687,7 +2689,7 @@
 	window['AscDFH'].historyitem_ScatterSer_SetOrder     = window['AscDFH'].historyitem_type_ScatterSer | 6;
 	window['AscDFH'].historyitem_ScatterSer_SetSmooth    = window['AscDFH'].historyitem_type_ScatterSer | 7;
 	window['AscDFH'].historyitem_ScatterSer_SetSpPr      = window['AscDFH'].historyitem_type_ScatterSer | 8;
-	window['AscDFH'].historyitem_ScatterSer_SetTrendline = window['AscDFH'].historyitem_type_ScatterSer | 9;
+	// window['AscDFH'].historyitem_ScatterSer_SetTrendline = window['AscDFH'].historyitem_type_ScatterSer | 9;
 	window['AscDFH'].historyitem_ScatterSer_SetXVal      = window['AscDFH'].historyitem_type_ScatterSer | 10;
 	window['AscDFH'].historyitem_ScatterSer_SetYVal      = window['AscDFH'].historyitem_type_ScatterSer | 11;
 
@@ -2769,7 +2771,7 @@
 	window['AscDFH'].historyitem_AreaSeries_SetOrder          = window['AscDFH'].historyitem_type_AreaSeries | 6;
 	window['AscDFH'].historyitem_AreaSeries_SetPictureOptions = window['AscDFH'].historyitem_type_AreaSeries | 7;
 	window['AscDFH'].historyitem_AreaSeries_SetSpPr           = window['AscDFH'].historyitem_type_AreaSeries | 8;
-	window['AscDFH'].historyitem_AreaSeries_SetTrendline      = window['AscDFH'].historyitem_type_AreaSeries | 9;
+	// window['AscDFH'].historyitem_AreaSeries_SetTrendline      = window['AscDFH'].historyitem_type_AreaSeries | 9;
 	window['AscDFH'].historyitem_AreaSeries_SetVal            = window['AscDFH'].historyitem_type_AreaSeries | 10;
 
 	window['AscDFH'].historyitem_Cat_SetMultiLvlStrRef = window['AscDFH'].historyitem_type_Cat | 1;
@@ -2803,7 +2805,7 @@
 	window['AscDFH'].historyitem_BarSeries_SetPictureOptions   = window['AscDFH'].historyitem_type_BarSeries | 8;
 	window['AscDFH'].historyitem_BarSeries_SetShape            = window['AscDFH'].historyitem_type_BarSeries | 9;
 	window['AscDFH'].historyitem_BarSeries_SetSpPr             = window['AscDFH'].historyitem_type_BarSeries | 10;
-	window['AscDFH'].historyitem_BarSeries_SetTrendline        = window['AscDFH'].historyitem_type_BarSeries | 11;
+	// window['AscDFH'].historyitem_BarSeries_SetTrendline        = window['AscDFH'].historyitem_type_BarSeries | 11;
 	window['AscDFH'].historyitem_BarSeries_SetVal              = window['AscDFH'].historyitem_type_BarSeries | 12;
 
 	window['AscDFH'].historyitem_LineSeries_SetCat       = window['AscDFH'].historyitem_type_LineSeries | 1;
@@ -2815,7 +2817,7 @@
 	window['AscDFH'].historyitem_LineSeries_SetOrder     = window['AscDFH'].historyitem_type_LineSeries | 7;
 	window['AscDFH'].historyitem_LineSeries_SetSmooth    = window['AscDFH'].historyitem_type_LineSeries | 8;
 	window['AscDFH'].historyitem_LineSeries_SetSpPr      = window['AscDFH'].historyitem_type_LineSeries | 9;
-	window['AscDFH'].historyitem_LineSeries_SetTrendline = window['AscDFH'].historyitem_type_LineSeries | 10;
+	// window['AscDFH'].historyitem_LineSeries_SetTrendline = window['AscDFH'].historyitem_type_LineSeries | 10;
 	window['AscDFH'].historyitem_LineSeries_SetVal       = window['AscDFH'].historyitem_type_LineSeries | 11;
 
 	window['AscDFH'].historyitem_PieSeries_SetCat       = window['AscDFH'].historyitem_type_PieSeries | 1;
@@ -2842,7 +2844,7 @@
 	window['AscDFH'].historyitem_BubbleSeries_SetInvertIfNegative = window['AscDFH'].historyitem_type_BubbleSeries | 7;
 	window['AscDFH'].historyitem_BubbleSeries_SetOrder            = window['AscDFH'].historyitem_type_BubbleSeries | 8;
 	window['AscDFH'].historyitem_BubbleSeries_SetSpPr             = window['AscDFH'].historyitem_type_BubbleSeries | 9;
-	window['AscDFH'].historyitem_BubbleSeries_SetTrendline        = window['AscDFH'].historyitem_type_BubbleSeries | 10;
+	// window['AscDFH'].historyitem_BubbleSeries_SetTrendline        = window['AscDFH'].historyitem_type_BubbleSeries | 10;
 	window['AscDFH'].historyitem_BubbleSeries_SetXVal             = window['AscDFH'].historyitem_type_BubbleSeries | 11;
 	window['AscDFH'].historyitem_BubbleSeries_SetYVal             = window['AscDFH'].historyitem_type_BubbleSeries | 12;
 
@@ -4062,6 +4064,9 @@
 	AscDFH.historyitem_Pdf_Form_Tooltip			= AscDFH.historyitem_type_Pdf_Form | 25;
 	AscDFH.historyitem_Pdf_Form_ME_Options		= AscDFH.historyitem_type_Pdf_Form | 26;
 	AscDFH.historyitem_Pdf_Form_Align			= AscDFH.historyitem_type_Pdf_Form | 27;
+	AscDFH.historyitem_Pdf_Form_Ap_Idx			= AscDFH.historyitem_type_Pdf_Form | 28;
+	AscDFH.historyitem_Pdf_Form_Changed_View	= AscDFH.historyitem_type_Pdf_Form | 29;
+	AscDFH.historyitem_Pdf_Form_Orig_Page		= AscDFH.historyitem_type_Pdf_Form | 30;
 
 
 
@@ -4144,6 +4149,7 @@
 	AscDFH.historyitem_Pdf_Annot_Orig_Page			= AscDFH.historyitem_type_Pdf_Annot | 31;
 	AscDFH.historyitem_Pdf_Annot_Comment_Data		= AscDFH.historyitem_type_Pdf_Annot | 32;
 	AscDFH.historyitem_type_Pdf_Annot_Reply			= AscDFH.historyitem_type_Pdf_Annot | 33;
+	AscDFH.historyitem_Pdf_Annot_Ap_Idx				= AscDFH.historyitem_type_Pdf_Annot | 34;
 
 	// Sticky
 	AscDFH.historyitem_Pdf_Text_Annot_Icon			= AscDFH.historyitem_type_Pdf_Comment | 1;

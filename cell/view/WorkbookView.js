@@ -2703,6 +2703,7 @@
       }
       this.drawWorksheet();
 	  this.checkScrollRtl(this.getWorksheet().getRightToLeft());
+	  Asc.editor.toggleChartElementsCallback();
     } else {
       // ToDo не должно происходить ничего, но нам приходит resize сверху, поэтому проверим отрисовывали ли мы
       if (-1 === this.wsActive || this.wsMustDraw) {
@@ -2871,6 +2872,8 @@
         //ToDo item.drawDepCells();
       }
     }
+
+	Asc.editor.toggleChartElementsCallback();
 
     this._onScrollReinitialize(AscCommonExcel.c_oAscScrollType.ScrollVertical | AscCommonExcel.c_oAscScrollType.ScrollHorizontal);
     this.handlers.trigger("asc_onZoomChanged", this.getZoom());
@@ -4144,7 +4147,9 @@
       	this._calcPagesPrintSheet(i, printPagesData, false, adjustPrint);
       }
     } else if (printType === Asc.c_oAscPrintType.Selection) {
-      this._calcPagesPrintSheet(nActive, printPagesData, true, adjustPrint);
+		let _activeSheetsArray = adjustPrint && adjustPrint.asc_getActiveSheetsArray && adjustPrint.asc_getActiveSheetsArray();
+		let activeSheet = _activeSheetsArray && _activeSheetsArray[0] != null ? _activeSheetsArray[0] : null;
+		this._calcPagesPrintSheet(activeSheet != null ? activeSheet : nActive, printPagesData, true, adjustPrint);
     }
 
     if (this.printPreviewState.isNeedShowError(AscCommonExcel.c_kMaxPrintPages === printPagesData.arrPages.length)) {

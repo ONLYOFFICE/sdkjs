@@ -4821,14 +4821,6 @@ function CThumbnailsManager(editorPage)
 				bPreventDefault = false;
 				break;
 			}
-			case Asc.c_oAscPresentationShortcutType.Cut:
-			case Asc.c_oAscPresentationShortcutType.Copy:
-			case Asc.c_oAscPresentationShortcutType.Paste:
-			{
-				bReturnValue = undefined;
-				bPreventDefault = false;
-				break;
-			}
 			case Asc.c_oAscPresentationShortcutType.Duplicate:
 			{
 				if (oPresentation.CanEdit())
@@ -4870,6 +4862,9 @@ function CThumbnailsManager(editorPage)
 		}
 		if (!nShortCutAction)
 		{
+			if (AscCommon.isCopyPasteEvent(oEvent)) {
+				return;
+			}
 			switch (oEvent.KeyCode)
 			{
 				case 13: // enter

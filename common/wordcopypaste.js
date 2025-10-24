@@ -2877,7 +2877,7 @@ PasteProcessor.prototype =
 		const grid = table.TableGrid;
 
 		let nGridBefore = 0;
-		if (row.Pr !== null && row.Pr.GridBefore !== null) {
+		if (row.Pr != null && row.Pr.GridBefore != null) {
 			nGridBefore = row.Pr.GridBefore;
 		}
 
@@ -3016,7 +3016,7 @@ PasteProcessor.prototype =
     let bCheckOneGraphicObjectSpecialProps = false;
 	    if (aNewContent.length === 1)
 	    {
-		    bCheckOneGraphicObjectSpecialProps = true;
+		    bCheckOneGraphicObjectSpecialProps = this._specialPasteGetElemType(aNewContent[0]) === para_Drawing;
 	    }
 		if (oTable && !aNewContent[0].IsTable() && oTable.IsCellSelection())
 		{
@@ -3156,7 +3156,7 @@ PasteProcessor.prototype =
 					this.pasteTypeContent = null;
 					bCheckOneGraphicObjectSpecialProps = false;
 				}
-				this.checkWordGraphicSpecialPasteProps(aNewContent[i], bCheckOneGraphicObjectSpecialProps);
+				this.checkWordGraphicSpecialPasteProps(NewElem, bCheckOneGraphicObjectSpecialProps);
 
 				oSelectedElement.SelectedAll = false;
 				oSelectedContent.Add(oSelectedElement);
@@ -3303,11 +3303,11 @@ PasteProcessor.prototype =
 
     },
 
-	checkWordGraphicSpecialPasteProps: function (oNewContent, bSkipGettingPasteProps)
+	checkWordGraphicSpecialPasteProps: function (oNewContent, bCheckGettingPasteProps)
 	{
 		const arrDrawings = [];
 		oNewContent.GetAllDrawingObjects(arrDrawings);
-		if (bSkipGettingPasteProps && (arrDrawings.length === 1))
+		if (bCheckGettingPasteProps && (arrDrawings.length === 1))
 		{
 			const oGraphicObj = arrDrawings[0].GraphicObj;
 			this.specificPasteProps = oGraphicObj.getSpecialPasteProps();
@@ -3394,23 +3394,25 @@ PasteProcessor.prototype =
 		//для формул параметры как и при обычной вставке. но нужно уметь их преобразовывать в текст при вставке только текста
 		//особые параметры при вставке таблиц из EXCEL
 
+		let specialPasteHelper = window['AscCommon'].g_specialPasteHelper;
 
 		//если вставляются только изображения, пока не показываем параметры специальной
-		if(para_Drawing === this.pasteTypeContent && !(this.aContent.length === 1 && this.specificPasteProps))
+		if(para_Drawing === this.pasteTypeContent && !(this.aContent.length === 1 && this.specificPasteProps) && !specialPasteHelper.specialPasteStart)
 		{
-			window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
-			if(window['AscCommon'].g_specialPasteHelper.buttonInfo)
+			specialPasteHelper.SpecialPasteButton_Hide();
+			if(specialPasteHelper.buttonInfo)
 			{
-				window['AscCommon'].g_specialPasteHelper.showButtonIdParagraph = null;
-				window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
+				specialPasteHelper.showButtonIdParagraph = null;
+				specialPasteHelper.CleanButtonInfo();
 			}
 			return;
 		}
 
-		var specialPasteShowOptions = !window['AscCommon'].g_specialPasteHelper.buttonInfo.isClean() ? window['AscCommon'].g_specialPasteHelper.buttonInfo : null;
-		if(!window['AscCommon'].g_specialPasteHelper.specialPasteStart)
+
+		var specialPasteShowOptions = !specialPasteHelper.buttonInfo.isClean() ? specialPasteHelper.buttonInfo : null;
+		if(!specialPasteHelper.specialPasteStart)
 		{
-			specialPasteShowOptions = window['AscCommon'].g_specialPasteHelper.buttonInfo;
+			specialPasteShowOptions = specialPasteHelper.buttonInfo;
 
 			var sProps = Asc.c_oSpecialPasteProps;
 			var aContent = this.aContent;
@@ -3443,14 +3445,21 @@ PasteProcessor.prototype =
 				props = [sProps.sourceformatting/*, sProps.mergeFormatting*/, sProps.keepTextOnly];
 			}
 
+			if (specialPasteHelper.specialPasteData && specialPasteHelper.specialPasteData.images && specialPasteHelper.specialPasteData.images.length && !(window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor)) {
+				if (!props) {
+					props = [];
+				}
+				props.push(sProps.picture);
+			}
+
 			if(null !== props)
 			{
 				specialPasteShowOptions.asc_setOptions(props);
 			}
 			else
 			{
-				window['AscCommon'].g_specialPasteHelper.showButtonIdParagraph = null;
-				window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
+				specialPasteHelper.showButtonIdParagraph = null;
+				specialPasteHelper.CleanButtonInfo();
 			}
 		}
 
@@ -3458,8 +3467,8 @@ PasteProcessor.prototype =
 		{
 			//SpecialPasteButtonById_Show вызываю здесь, если пересчет документа завершился раньше, чем мы попали сюда и сгенерировали параметры вставки
 			//в противном случае вызываю SpecialPasteButtonById_Show в drawingDocument->OnEndRecalculate
-			if (window['AscCommon'].g_specialPasteHelper.endRecalcDocument) {
-				window['AscCommon'].g_specialPasteHelper.SpecialPasteButtonById_Show();
+			if (specialPasteHelper.endRecalcDocument) {
+				specialPasteHelper.SpecialPasteButtonById_Show();
 			}
 		}
 	},
@@ -10525,10 +10534,10 @@ PasteProcessor.prototype =
 		if (nRowCount > 0 && nMaxColCount > 0) {
 			var bUseScaleKoef = this.bUseScaleKoef;
 			var dScaleKoef = this.dScaleKoef;
-			/*if (dMaxSum * dScaleKoef > this.dMaxWidth) {
+			if (dMaxSum * dScaleKoef > this.dMaxWidth) {
 				dScaleKoef = dScaleKoef * this.dMaxWidth / dMaxSum;
 				bUseScaleKoef = true;
-			}*/
+			}
 			//строим Grid
 			var aGrid = [];
 			var nPrevIndex = null;
@@ -11170,6 +11179,7 @@ PasteProcessor.prototype =
 					row.Set_After(nColSpan);
 				else {
 					var oCurCell = row.Add_Cell(row.Get_CellsCount(), row, null, false);
+					oCurCell.SetIndex(row.Get_CellsCount() - 1);
 					if (nColSpan > 1)
 						oCurCell.Set_GridSpan(nColSpan);
 					if (Shd) {

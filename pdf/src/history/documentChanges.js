@@ -1270,6 +1270,8 @@ CChangesPDFDocumentEndMergePages.prototype.Redo = function()
 
     oFile.nativeFile["MergePages"](oDoc.unitedBinary, this.MaxIdx, this.MergeName);
     let aPages = oFile.nativeFile["getPagesInfo"]();
+    oDoc.UpdateCurMaxApIdx(oFile.nativeFile["getStartID"]());
+
     oFile.originalPagesCount = aPages.length;
 
     oDoc.mergedPagesData.push({
@@ -1568,4 +1570,6 @@ CChangesPDFDocumentEndRedact.prototype.ReadFromBinary = function(Reader)
             this.QuadsFlat[nIndex] = Reader.GetDouble();
     }
 };
-
+CChangesPDFDocumentEndRedact.prototype.CreateReverseChange = function() {
+    return new this.constructor(this.Class, this.RedactId, this.Page, this.QuadsFlat);
+};

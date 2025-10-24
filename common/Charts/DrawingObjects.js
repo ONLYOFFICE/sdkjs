@@ -2585,7 +2585,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         if(aSelectedDrawings.length === 1 && aSelectedDrawings[0].isChart()) {
             _this.controller.checkSelectedObjectsAndCallback(function () {
                 let oSelectedChartSpace = aSelectedDrawings[0];
-                oSelectedChartSpace.fromOther(oChartSpace);
+                oSelectedChartSpace.fromOther(oChartSpace, true);
                 _this.controller.startRecalculate();
                 _this.sendGraphicObjectProps();
             }, [], false, 0, [], false);

@@ -749,10 +749,16 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 			this.workbook.onSlicerUpdate(i);
 		}
 
+		if (!AscCommon.isRealObject(Point.SelectionState)) {
+			Point.SelectionState = null;
+		}
 		if(!bCoaut)
 		{
 			oState = bUndo ? Point.SelectionState : ((this.Index === this.Points.length - 1) ?
 				this.LastState : this.Points[this.Index + 1].SelectionState);
+			if (!AscCommon.isRealObject(oState)) {
+				oState = null;
+			}
 		}
 
 		if (this.workbook.bCollaborativeChanges) {
@@ -1655,7 +1661,7 @@ CHistory.prototype.GetSerializeArray = function()
 			point = this.Points[i];
 			this.private_UndoPoint(point, oRedoObjectParam);
 		}
-		if (point.SelectionState) {
+		if (AscCommon.isRealObject(point.SelectionState)) {
 			this.workbook.handlers.trigger("setSelectionState", point.SelectionState);
 		}
 

@@ -5289,6 +5289,10 @@ function isAllowPasteLink(pastedWb) {
 			return;
 		}
 
+		let trueRtl = this.getRightToLeft();
+		if (trueRtl) {
+			this.setRightToLeft(false);
+		}
 
 		//new CHeaderFooter();
 		//при печати берём колонтитул либо из настроек печати(если есть), либо из модели 
@@ -5340,6 +5344,9 @@ function isAllowPasteLink(pastedWb) {
 			curFooter.parser.calculateTokens(this, indexPrintPage, countPrintPages, true);
 			//get current tokens -> curHeader.parser -> getTokensByPosition(AscCommomExcel.c_oPortionPosition)
 			this._drawHeaderFooter(drawingCtx, printPagesData, curFooter, indexPrintPage, countPrintPages, true, opt_headerFooter);
+		}
+		if (trueRtl) {
+			this.setRightToLeft(trueRtl);
 		}
 	};
 

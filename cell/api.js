@@ -343,10 +343,12 @@ var editor;
     }
   };
 
-  spreadsheet_api.prototype.initGlobalObjects = function(wbModel) {
+  spreadsheet_api.prototype.initGlobalObjects = function(wbModel, fileSize) {
     // global counters
 
     AscCommonExcel.UndoRedoClassTypes.Clean();
+    // Use deterministic pseudo-random offset to make document changes unique (100 to fit in 1 byte)
+    AscCommonExcel.UndoRedoClassTypes.SetOffset((fileSize || 0) % 100);
     AscCommonExcel.g_oUndoRedoCell = new AscCommonExcel.UndoRedoCell(wbModel);
     AscCommonExcel.g_oUndoRedoWorksheet = new AscCommonExcel.UndoRedoWoorksheet(wbModel);
     AscCommonExcel.g_oUndoRedoWorkbook = new AscCommonExcel.UndoRedoWorkbook(wbModel);
@@ -1849,13 +1851,13 @@ var editor;
 	spreadsheet_api.prototype.OpenDocumentFromBin = function(url, gObject)
 	{
 		this.wbModel = new AscCommonExcel.Workbook(this.handlers, this, true);
-		this.initGlobalObjects(this.wbModel);
+		this.initGlobalObjects(this.wbModel, gObject.length);
 		this.OpenDocumentFromBinNoInit(gObject);
 		this._onEndOpen();
 	};
 	spreadsheet_api.prototype.OpenDocumentFromZip = function (data) {
 		this.wbModel = new AscCommonExcel.Workbook(this.handlers, this, true);
-		this.initGlobalObjects(this.wbModel);
+		this.initGlobalObjects(this.wbModel, data.length);
 		let res =  this.OpenDocumentFromZipNoInit(data);
 		this._onEndOpen();
 		return res;
@@ -6663,12 +6665,7 @@ var editor;
 
 		//update
 		if (this.wb && this.wb.wsViews) {
-			let allRange = new Asc.Range(0, 0, AscCommon.gc_nMaxCol0, AscCommon.gc_nMaxRow0);
-			for (let i in this.wb.wsViews) {
-				let item = this.wb.wsViews[i];
-				item._updateRange(allRange);
-			}
-
+			this.wb.cleanCache();
 			let ws = this.wb.getWorksheet();
 			ws && ws.draw();
 		}
@@ -6689,7 +6686,7 @@ var editor;
       AscCommon.CurFileVersion = version;
     }
 	  this.wbModel = new AscCommonExcel.Workbook(this.handlers, this, true);
-	  this.initGlobalObjects(this.wbModel);
+	  this.initGlobalObjects(this.wbModel, base64File.length);
 
 	  this.isOpenOOXInBrowser = this["asc_isSupportFeature"]("ooxml") && AscCommon.checkOOXMLSignature(base64File);
 	  if (this.isOpenOOXInBrowser) {

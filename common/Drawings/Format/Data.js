@@ -8800,6 +8800,15 @@ Because of this, the display is sometimes not correct.
           this.setStyleDef(styleDef);
           break;
         }
+        case 0xFF: {
+          if (this.ReadRedactIds) {
+            this.ReadRedactIds(s);
+          }
+          else {
+            s.SkipRecord();
+          }
+          break;
+        }
         default: {
           s.SkipRecord();
           break;

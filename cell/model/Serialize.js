@@ -5979,8 +5979,55 @@
             {
                 var elem = oHyperlinks[i];
                 //write only active hyperlink, if copy/paste
-                if(!this.isCopyPaste || (this.isCopyPaste && elem && elem.bbox && this.isCopyPaste.containsRange(elem.bbox)))
-                    this.bs.WriteItem(c_oSerWorksheetsTypes.Hyperlink, function(){oThis.WriteHyperlink(elem.data);});
+                if(!this.isCopyPaste || (this.isCopyPaste && elem && elem.bbox && this.isCopyPaste.isIntersect(elem.bbox))) {
+                    if(this.isCopyPaste && ws.bExcludeHiddenRows && elem.data && elem.data.Ref && elem.data.Ref.bbox) {
+                        let isHidden = false;
+                        ws.bExcludeHiddenRows = false;
+                        let _range = ws.getRange3(this.isCopyPaste.r1, this.isCopyPaste.c1, elem.bbox.r2, elem.bbox.c2)
+                        let newRef = elem.data.Ref.bbox;
+                        let beforeOffset = 0;
+                        let insideOffset = 0;
+                        _range._foreachRowNoEmpty(function (row) {
+                            if(row.getHidden()) {
+                                if (row.index === newRef.r1 && newRef.r1 === newRef.r2) {
+                                    isHidden = true;
+                                    return true;
+                                } else if (row.index < newRef.r1) {
+                                    beforeOffset++;
+                                } else if (row.index >= newRef.r1 && row.index <= newRef.r2) {
+                                    insideOffset++;
+                                }
+                            }
+                        });
+                        if (beforeOffset || insideOffset) {
+                            newRef = newRef.clone();
+                        }
+                        if (beforeOffset) {
+                            newRef.r1 -= beforeOffset;
+                            newRef.r2 -= beforeOffset;
+                        }
+                        if (insideOffset) {
+                            newRef.r2 -= insideOffset;
+                        }
+                        if (newRef.r2 < newRef.r1) {
+                            isHidden = true;
+                        }
+                        ws.bExcludeHiddenRows = true;
+
+                        if (!isHidden) {
+                            if (!newRef.isEqual(elem.data.Ref.bbox)) {
+                                let oldRef = elem.data.Ref.bbox;
+                                elem.data.Ref.bbox = newRef;
+                                this.bs.WriteItem(c_oSerWorksheetsTypes.Hyperlink, function(){oThis.WriteHyperlink(elem.data);});
+                                elem.data.Ref.bbox = oldRef;
+                            } else {
+                                this.bs.WriteItem(c_oSerWorksheetsTypes.Hyperlink, function(){oThis.WriteHyperlink(elem.data);});
+                            }
+                        }
+                    } else {
+                        this.bs.WriteItem(c_oSerWorksheetsTypes.Hyperlink, function(){oThis.WriteHyperlink(elem.data);});
+                    }
+                }
             }
         };
         this.WriteHyperlink = function (oHyperlink) {
@@ -10448,12 +10495,6 @@
             var oThis = this;
             if ( c_oSerWorksheetsTypes.Worksheet === type )
             {
-                // Shift by deterministic pseudo-random offset to make document changes unique
-                if (AscCommon.g_oIdCounter.IsLoad()) {
-                    for (let i = 0; i < length % 100; i++) {
-                        AscCommon.g_oIdCounter.Get_NewId();
-                    }
-                }
                 this.aMerged = [];
                 this.aHyperlinks = [];
                 var oNewWorksheet = new AscCommonExcel.Worksheet(this.wb, wb.aWorksheets.length);
