@@ -27506,15 +27506,20 @@
 	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetHyperlinks.js
 	 */
 	ApiSelection.prototype.GetHyperlinks = function () {
-		const paragraphs = this.GetParagraphs().map(function (paragraph) { return paragraph.Paragraph; });
 		const hyperlinks = [];
-		paragraphs.forEach(function (paragraph) {
-			paragraph.Content.forEach(function (item) {
-				if (item instanceof AscCommonWord.ParaHyperlink) {
-					hyperlinks.push(new ApiHyperlink(item));
-				}
-			});
-		});
+
+		const apiDocument = this.GetDocument();
+		if (apiDocument) {
+			const visitor = apiDocument.GetDocumentVisitor();
+
+			visitor['Hyperlink'] = function (apiHyperlink) {
+				hyperlinks.push(apiHyperlink);
+				return false;
+			};
+
+			visitor['Traverse'](true);
+		}
+
 		return hyperlinks;
 	};
 
@@ -27879,6 +27884,12 @@
 	{
 		return true;
 	};
+	ApiDocumentVisitor.prototype.hyperlink = function(hyperlink, isStart)
+	{
+		return isStart
+			? this["Hyperlink"](new ApiHyperlink(hyperlink))
+			: this["HyperlinkEnd"](new ApiHyperlink(hyperlink));
+	};
 	ApiDocumentVisitor.prototype.blockLevelSdt = function(sdt, isStart)
 	{
 		if (isStart)
@@ -28042,6 +28053,14 @@
 		return false;
 	};
 	ApiDocumentVisitor.prototype["Text"] = function(text)
+	{
+		return false;
+	};
+	ApiDocumentVisitor.prototype["Hyperlink"] = function(hyperlink)
+	{
+		return false;
+	};
+	ApiDocumentVisitor.prototype["HyperlinkEnd"] = function(hyperlink)
 	{
 		return false;
 	};
