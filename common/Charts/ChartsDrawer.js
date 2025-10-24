@@ -14742,8 +14742,11 @@ drawScatterChart.prototype = {
 		const valMin = this.valAx && this.valAx.scaling ? this.valAx.scaling.min : null;
 		const valMax = this.valAx && this.valAx.scaling ? this.valAx.scaling.max : null;
 
-		// prevent the distance between values being smaller than epsilon
-		let epsilon = 0.03;
+		let xStep = this._getStep(this.catAx);
+		let yStep = this._getStep(this.valAx);
+		// limit the number of dots to be around 10000 at max
+		const xEpsilon = this._getEpsilon(xStep);
+		const yEpsilon = this._getEpsilon(yStep);
 
 		let t = this;
 		let _initObjs = function (_index) {
@@ -14788,7 +14791,10 @@ drawScatterChart.prototype = {
 				}
 
 				let values = this.cChartDrawer._getScatterPointVal(seria, idx);
-				if(values && (!points || !points[i] || !points[i].length || Math.abs(values?.x) > Math.abs(points[i][points[i].length - 1]?.x) + epsilon)){
+
+				if(values && (!points || !points[i] || !points[i].length || !points[i][points[i].length - 1]
+					|| (Math.abs(values.x - points[i][points[i].length - 1].x) > xEpsilon) || (Math.abs(values.y - points[i][points[i].length - 1].y) > yEpsilon))
+				){
 					yVal = values.y;
 					xVal = values.x;
 					xPoint = values.xPoint;
@@ -14884,6 +14890,29 @@ drawScatterChart.prototype = {
 		}
 
 		this._calculateAllLines(points);
+	},
+
+	_getStep: function (axis) {
+		let prevVal = axis.scale.length > 0 ? axis.scale[0] : null; 
+		let curVal = axis.scale.length > 1 ? axis.scale[1] : null; 
+
+		// get general step. Examples: 2, 20, 200, 0.2 tc.
+		let step = 0;
+		if (prevVal !== null && curVal !== null) {
+			const high = Math.max(prevVal, curVal);
+			const low = Math.min(prevVal, curVal);
+			step = high - low;
+		}
+		
+		return step
+	},
+
+	_getEpsilon: function (step) {
+		const epsilon = 5;
+		// Calculate the power of ten that brings the number between 1 and 10
+		const exponent = step ? Math.floor(Math.log10(step)) : 0;
+		const multiplier = Math.pow(10, exponent);
+		return multiplier * 0.01 * epsilon; // 5% of the step
 	},
 
 	_recalculateScatter2: function () {
