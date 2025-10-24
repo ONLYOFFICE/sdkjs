@@ -5491,14 +5491,18 @@ background-repeat: no-repeat;\
 		}
 	};
 
-	asc_docs_api.prototype.put_HeadersAndFootersDistance = function(value)
+	asc_docs_api.prototype.put_HeadersAndFootersDistance = function(value, isHeader)
 	{
-		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_HdrFtr))
-		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_SetHdrFtrDistance);
-			this.WordControl.m_oLogicDocument.Document_SetHdrFtrDistance(value);
-			this.WordControl.m_oLogicDocument.FinalizeAction();
-		}
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		if (logicDocument.IsSelectionLocked(AscCommon.changestype_HdrFtr))
+			return;
+		
+		logicDocument.StartAction(AscDFH.historydescription_Document_SetHdrFtrDistance);
+		logicDocument.Document_SetHdrFtrDistance(value, isHeader);
+		logicDocument.FinalizeAction();
 	};
 
 	asc_docs_api.prototype.HeadersAndFooters_DifferentFirstPage = function(isOn)

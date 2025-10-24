@@ -11224,28 +11224,33 @@ CDocument.prototype.Document_SetHdrFtrEvenAndOddHeaders = function(Value)
 	this.Document_UpdateSelectionState();
 	this.Document_UpdateInterfaceState();
 };
-CDocument.prototype.Document_SetHdrFtrDistance = function(Value)
+CDocument.prototype.Document_SetHdrFtrDistance = function(value, isHeader)
 {
-	var CurHdrFtr = this.HdrFtr.CurHdrFtr;
-
-	if (null === CurHdrFtr)
+	if (undefined === isHeader || null === isHeader)
+	{
+		if (this.isHeaderEditing())
+			isHeader = true;
+		else if (this.isFooterEditing())
+			isHeader = false;
+		else
+			return;
+	}
+	
+	let page = this.CurPage;
+	if (!this.Pages[page])
 		return;
-
-	var CurPage = CurHdrFtr.RecalcInfo.CurPage;
-	if (-1 === CurPage)
-		return;
-
-	let sectPr = this.Pages[CurPage].GetFirstSectPr();
-	if (hdrftr_Header === CurHdrFtr.Type)
-		sectPr.SetPageMarginHeader(Value);
+	
+	let sectPr = this.Pages[page].GetFirstSectPr();
+	
+	if (isHeader)
+		sectPr.SetPageMarginHeader(value);
 	else
-		sectPr.SetPageMarginFooter(Value);
+		sectPr.SetPageMarginFooter(value);
 
 	this.Recalculate();
-
-	this.Document_UpdateRulersState();
-	this.Document_UpdateInterfaceState();
-	this.Document_UpdateSelectionState();
+	this.UpdateRulers();
+	this.UpdateInterface();
+	this.UpdateSelection();
 };
 CDocument.prototype.Document_SetHdrFtrBounds = function(Y0, Y1)
 {
