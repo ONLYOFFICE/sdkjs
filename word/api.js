@@ -129,6 +129,8 @@
 			this.Locked           = (undefined != obj.Locked) ? obj.Locked : false;
 			this.StartPageNumber  = (undefined != obj.StartPageNumber) ? obj.StartPageNumber : -1;
 			this.NumFormat        = (undefined !== obj.NumFormat) ? obj.NumFormat : -1;
+			this.HeaderMargin     = (undefined !== obj.HeaderMargin)  ? obj.HeaderMargin : null;
+			this.FooterMargin     = (undefined !== obj.FooterMargin)  ? obj.FooterMargin : null;
 		}
 		else
 		{
@@ -140,6 +142,8 @@
 			this.Locked           = false;
 			this.StartPageNumber  = -1;
 			this.NumFormat        = -1;
+			this.HeaderMargin     = 12.5;
+			this.FooterMargin     = 12.5;
 		}
 	}
 
@@ -198,6 +202,22 @@
 	CHeaderProp.prototype.put_NumFormat = function(format)
 	{
 		this.NumFormat = format;
+	};
+	CHeaderProp.prototype.get_HeaderMargin = function()
+	{
+		return this.HeaderMargin;
+	};
+	CHeaderProp.prototype.put_HeaderMargin = function(v)
+	{
+		this.HeaderMargin = v;
+	};
+	CHeaderProp.prototype.get_FooterMargin = function()
+	{
+		return this.FooterMargin;
+	};
+	CHeaderProp.prototype.put_FooterMargin = function(v)
+	{
+		this.FooterMargin = v;
 	};
 
 	var DocumentPageSize = new function()
@@ -5645,6 +5665,7 @@ background-repeat: no-repeat;\
 		if (true === hafProp)
 			hafProp.Locked = true;
 
+		console.log(new CHeaderProp(hafProp));
 		this.SelectedObjectsStack[this.SelectedObjectsStack.length] = new asc_CSelectedObject(c_oAscTypeSelectElement.Header, new CHeaderProp(hafProp));
 	};
 
@@ -14731,6 +14752,10 @@ background-repeat: no-repeat;\
 	CHeaderProp.prototype['put_StartPageNumber']                        = CHeaderProp.prototype.put_StartPageNumber;
 	CHeaderProp.prototype['get_NumFormat']                              = CHeaderProp.prototype.get_NumFormat;
 	CHeaderProp.prototype['put_NumFormat']                              = CHeaderProp.prototype.put_NumFormat;
+	CHeaderProp.prototype['get_HeaderMargin']                           = CHeaderProp.prototype.get_HeaderMargin;
+	CHeaderProp.prototype['put_HeaderMargin']                           = CHeaderProp.prototype.put_HeaderMargin;
+	CHeaderProp.prototype['get_FooterMargin']                           = CHeaderProp.prototype.get_FooterMargin;
+	CHeaderProp.prototype['put_FooterMargin']                           = CHeaderProp.prototype.put_FooterMargin;
 	window['Asc']['CMailMergeSendData'] = window['Asc'].CMailMergeSendData = CMailMergeSendData;
 	CMailMergeSendData.prototype['get_From']                            = CMailMergeSendData.prototype.get_From;
 	CMailMergeSendData.prototype['put_From']                            = CMailMergeSendData.prototype.put_From;
