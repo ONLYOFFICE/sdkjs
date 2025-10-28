@@ -425,41 +425,62 @@ CCellObjectInfo.prototype.initAfterSerialize = function() {
 function asc_CChartBinary(chart) {
 
     this["binary"] = null;
-		if (chart)
-		{
-			if (chart.getObjectType() === AscDFH.historyitem_type_ChartSpace)
-			{
-				this["IsChartEx"] = chart.isChartEx();
-				const writer = new AscCommon.BinaryChartWriter(new AscCommon.CMemory(false));
-				if(this["IsChartEx"])
-				{
-					writer.WriteCT_ChartExSpace(chart);
-				}
-				else
-				{
-					writer.WriteCT_ChartSpace(chart);
-				}
-				this["binary"] = writer.memory.pos + ";" + writer.memory.GetBase64Memory();
-				this["documentImageUrls"] = AscCommon.g_oDocumentUrls.urls;
-			}
-			else if (chart.getObjectType() === AscDFH.historyitem_type_Chart)
-			{
-				this["IsChartEx"] = chart.isChartEx();
-				const chartWriter = new AscCommon.BinaryChartWriter(new AscCommon.CMemory(false));
-				if (this["IsChartEx"]) {
-					chartWriter.WriteCT_ChartEx(chart);
-					if (chart.parent && chart.parent.chartData) {
-						const chartDataWriter = new AscCommon.BinaryChartWriter(new AscCommon.CMemory(false));
-						chartDataWriter.WriteCT_ChartData(chart.parent.chartData);
-						this["binaryChartData"] = chartDataWriter.memory.GetBase64Memory();
-					}
-				} else {
-					chartWriter.WriteCT_Chart(chart);
-				}
-				this["binary"] = chartWriter.memory.GetBase64Memory();
-				this["documentImageUrls"] = AscCommon.g_oDocumentUrls.urls;
-			}
-		}
+    if (chart) {
+        if (chart.getObjectType() === AscDFH.historyitem_type_ChartSpace)
+        {
+            this["IsChartEx"] = chart.isChartEx();
+            const writer = new AscCommon.BinaryChartWriter(new AscCommon.CMemory(false));
+            if(this["IsChartEx"])
+            {
+                writer.WriteCT_ChartExSpace(chart);
+            }
+            else
+            {
+                writer.WriteCT_ChartSpace(chart);
+            }
+            this["binary"] = writer.memory.pos + ";" + writer.memory.GetBase64Memory();
+            this["documentImageUrls"] = AscCommon.g_oDocumentUrls.urls;
+        }
+        else if (chart.getObjectType() === AscDFH.historyitem_type_Chart)
+        {
+            this["IsChartEx"] = chart.isChartEx();
+            const chartWriter = new AscCommon.BinaryChartWriter(new AscCommon.CMemory(false));
+            if (this["IsChartEx"]) {
+                chartWriter.WriteCT_ChartEx(chart);
+                if (chart.parent && chart.parent.chartData) {
+                    const chartDataWriter = new AscCommon.BinaryChartWriter(new AscCommon.CMemory(false));
+                    chartDataWriter.WriteCT_ChartData(chart.parent.chartData);
+                    this["binaryChartData"] = chartDataWriter.memory.GetBase64Memory();
+                }
+            } else {
+                chartWriter.WriteCT_Chart(chart);
+            }
+            this["binary"] = chartWriter.memory.GetBase64Memory();
+            this["documentImageUrls"] = AscCommon.g_oDocumentUrls.urls;
+        }
+
+        if (window['IS_NATIVE_EDITOR']) {
+            if(chart.theme) {
+                let pptx_writer = new AscCommon.CBinaryFileWriter();
+                pptx_writer.WriteTheme(chart.theme);
+                this["themeBinary"] = pptx_writer.pos + ";" + pptx_writer.GetBase64Memory();
+            }
+            if(chart.colorMapOverride) {
+                let pptx_writer = new AscCommon.CBinaryFileWriter();
+                pptx_writer.WriteRecord1(1, chart.colorMapOverride, pptx_writer.WriteClrMap);
+                this["colorMapBinary"] = pptx_writer.pos + ";" + pptx_writer.GetBase64Memory();
+            }
+            this["urls"] = JSON.stringify(AscCommon.g_oDocumentUrls.getUrls());
+            if(chart.parent && chart.parent.docPr){
+                this["cTitle"] = chart.parent.docPr.title;
+                this["cDescription"] = chart.parent.docPr.descr;
+            }
+            else{
+                this["cTitle"] = chart.getTitle();
+                this["cDescription"] = chart.getDescription();
+            }
+        }
+    }
 }
 
 asc_CChartBinary.prototype = {
@@ -523,8 +544,36 @@ asc_CChartBinary.prototype = {
 		});
 		return oChartData;
 	},
-		getWorkbookBinary: function() { return this["workbookBinary"]; },
-		setWorkbookBinary: function(val) { this["workbookBinary"] = val; }
+    getWorkbookBinary: function() { return this["workbookBinary"]; },
+    setWorkbookBinary: function(val) { this["workbookBinary"] = val; },
+
+    asc_getThemeBinary: function() { return this["themeBinary"]; },
+    asc_setThemeBinary: function(val) { this["themeBinary"] = val; },
+    asc_setColorMapBinary: function(val){this["colorMapBinary"] = val;},
+    asc_getColorMapBinary: function(){return this["colorMapBinary"];},
+    getTheme: function()
+    {
+        var binary = this["themeBinary"];
+        if(binary)
+        {
+            let oBinaryReader = AscFormat.CreatePPTYLoader(binary, 0, binary.length);
+            return oBinaryReader.ReadTheme();
+        }
+        return null;
+    },
+    getColorMap: function()
+    {
+        var binary = this["colorMapBinary"];
+        if(binary)
+        {
+            let oBinaryReader = AscFormat.CreatePPTYLoader(binary, 0, binary.length);
+            let _rec = oBinaryReader.stream.GetUChar();
+            let ret = new AscFormat.ClrMap();
+            oBinaryReader.ReadClrMap(ret);
+            return ret;
+        }
+        return null;
+    }
 };
 
 /** @constructor */
@@ -2838,6 +2887,107 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 			_this.controller.addChartDrawingObject(chart);
 		} else if (isObject(chart) && chart["binary"])
 		{
+            if (window["IS_NATIVE_EDITOR"])
+            {
+                var model = worksheet.model;
+                History.Clear();
+                for (var i = 0; i < aObjects.length; i++) {
+                    aObjects[i].graphicObject.deleteDrawingBase();
+                }
+                aObjects.length = 0;
+
+                var oAllRange = new Asc.Range(0, 0, gc_nMaxCol, gc_nMaxRow);
+
+                worksheet.endEditChart();
+
+                //worksheet._clean();
+
+                var asc_chart_binary = new Asc.asc_CChartBinary();
+                asc_chart_binary.asc_setBinary(chart["binary"]);
+                asc_chart_binary.asc_setThemeBinary(chart["themeBinary"]);
+                asc_chart_binary.asc_setColorMapBinary(chart["colorMapBinary"]);
+                asc_chart_binary.asc_setIsChartEx(chart["IsChartEx"]);
+                var oNewChartSpace = asc_chart_binary.getChartSpace(model);
+                var theme = asc_chart_binary.getTheme();
+                if(theme)
+                {
+                    model.workbook.theme = theme;
+                }
+                if(chart["cTitle"] || chart["cDescription"]){
+                    if(!oNewChartSpace.nvGraphicFramePr){
+                        var nv_sp_pr = new AscFormat.UniNvPr();
+                        nv_sp_pr.cNvPr.setId(1024);
+                        oNewChartSpace.setNvSpPr(nv_sp_pr);
+                    }
+                    oNewChartSpace.setTitle(chart["cTitle"]);
+                    oNewChartSpace.setDescription(chart["cDescription"]);
+                }
+                var colorMapOverride = asc_chart_binary.getColorMap();
+                if(colorMapOverride)
+                {
+                    AscFormat.DEFAULT_COLOR_MAP = colorMapOverride;
+                }
+
+                if(typeof chart["urls"] === "string") {
+                    AscCommon.g_oDocumentUrls.addUrls(JSON.parse(chart["urls"]));
+                }
+                var font_map = {};
+                oNewChartSpace.documentGetAllFontNames(font_map);
+                AscFormat.checkThemeFonts(font_map, model.workbook.theme.themeElements.fontScheme);
+                window["Asc"]["editor"]._loadFonts(font_map,
+                    function() {
+                        AscCommonExcel.executeInR1C1Mode(false,
+                            function()
+                            {
+                                oNewChartSpace.getWorksheetsFromCache(Asc['editor'].wbModel, true);
+
+                                aImagesSync.length = 0;
+                                oNewChartSpace.getAllRasterImages(aImagesSync);
+                                oNewChartSpace.setBDeleted(false);
+                                oNewChartSpace.setWorksheet(model);
+                                oNewChartSpace.addToDrawingObjects();
+                                oNewChartSpace.recalcInfo.recalculateReferences = false;
+                                var oDrawingBase_ = oNewChartSpace.drawingBase;
+                                oNewChartSpace.drawingBase = null;
+                                oNewChartSpace.recalculate();
+                                AscFormat.CheckSpPrXfrm(oNewChartSpace);
+                                oNewChartSpace.drawingBase = oDrawingBase_;
+
+                                var canvas_height = worksheet.drawingCtx.getHeight(3);
+                                var pos_y = (canvas_height - oNewChartSpace.spPr.xfrm.extY)/2;
+                                if(pos_y < 0)
+                                {
+                                    pos_y = 0;
+                                }
+
+                                var canvas_width = worksheet.drawingCtx.getWidth(3);
+                                var pos_x = (canvas_width - oNewChartSpace.spPr.xfrm.extX)/2;
+                                if(pos_x < 0)
+                                {
+                                    pos_x = 0;
+                                }
+                                oNewChartSpace.spPr.xfrm.setOffX(pos_x);
+                                oNewChartSpace.spPr.xfrm.setOffY(pos_y);
+                                oNewChartSpace.checkDrawingBaseCoords();
+                                oNewChartSpace.recalculate();
+                                worksheet._scrollToRange(_this.getSelectedDrawingsRange());
+                                _this.showDrawingObjects();
+                                _this.controller.resetSelection();
+                                _this.controller.selectObject(oNewChartSpace, 0);
+                                _this.controller.updateSelectionState();
+                                _this.sendGraphicObjectProps();
+                                worksheet._updateRange(oAllRange);
+                                worksheet.draw();
+                                if(aImagesSync.length > 0)
+                                {
+                                    window["Asc"]["editor"].ImageLoader.LoadDocumentImages(aImagesSync);
+                                }
+                                History.Clear();
+                            });
+                    }
+                );
+                return;
+            }
 			const oApi = Asc.editor;
 			oApi.frameManager.preObtain(chart);
 		}
@@ -4584,6 +4734,12 @@ ClickCounter.prototype.getClickCount = function() {
 	prot["getWorkbookBinary"] = prot.getWorkbookBinary;
 	prot["setWorkbookBinary"] = prot.setWorkbookBinary;
 	prot["getChartData"] = prot.getChartData;
+	prot["asc_getThemeBinary"] = prot.asc_getThemeBinary;
+	prot["asc_setThemeBinary"] = prot.asc_setThemeBinary;
+	prot["asc_setColorMapBinary"] = prot.asc_setColorMapBinary;
+	prot["asc_getColorMapBinary"] = prot.asc_getColorMapBinary;
+	prot["getTheme"] = prot.getTheme;
+	prot["getColorMap"] = prot.getColorMap;
 
     window["AscFormat"].asc_CChartSeria = asc_CChartSeria;
     prot = asc_CChartSeria.prototype;
