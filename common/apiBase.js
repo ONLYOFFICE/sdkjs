@@ -2645,6 +2645,7 @@
 	{
 		this.isOpenedFrameEditor = false;
 		this.openedFrameEditorType = null;
+		this.frameManager.applyCloseCallbacks();
 	};
 	baseEditorsApi.prototype.asc_setInterfaceDrawImagePlaceShape = function(elementId)
 	{

@@ -152,8 +152,9 @@ function (window, undefined) {
 				oLogicDocument.StartAction(AscDFH.historydescription_Document_UpdateCharts);
 
 				for (let i = 0; i < _arrAfterPromise.length; i++) {
-					let externalReferenceId = _arrAfterPromise[i].externalReferenceId;
-					let stream = _arrAfterPromise[i].stream;
+					const oExternalData = _arrAfterPromise[i];
+					let externalReferenceId = oExternalData.externalReferenceId;
+					let stream = oExternalData.stream;
 
 					const arrExternalChartReferences = mapExternalReferences[externalReferenceId];
 					if (stream && arrExternalChartReferences) {
@@ -171,6 +172,7 @@ function (window, undefined) {
 								let jsZlib = new AscCommon.ZLib();
 								if (!jsZlib.open(stream)) {
 									oApi.sendEvent("asc_onErrorUpdateExternalReference", externalReferenceId);
+									oExternalData.applyCloseCallback();
 									continue;
 								}
 
@@ -182,6 +184,7 @@ function (window, undefined) {
 							if (binaryData) {
 								nEditor = AscCommon.getEditorByBinSignature(binaryData);
 								if (nEditor !== AscCommon.c_oEditorId.Spreadsheet) {
+									oExternalData.applyCloseCallback();
 									continue;
 								}
 
@@ -200,13 +203,14 @@ function (window, undefined) {
 								for (let j = 0; j < arrExternalChartReferences.length; j += 1) {
 									const oExternalReference = arrExternalChartReferences[j].externalReference;
 									if (oExternalReference && !oExternalReference.chart.bDeleted && (oExternalReference.chart.getExternalReference() === oExternalReference)) {
-										oExternalReference.updateData(wb, _arrAfterPromise[i].data);
+										oExternalReference.updateData(wb, oExternalData.data);
 									}
 								}
 							}
 						} else {
 							nEditor = AscCommon.getEditorByOOXMLSignature(stream);
 							if (nEditor !== AscCommon.c_oEditorId.Spreadsheet) {
+								oExternalData.applyCloseCallback();
 								continue;
 							}
 							let updatedData = wb.getExternalReferenceSheetsFromZip(stream);
@@ -220,7 +224,7 @@ function (window, undefined) {
 								for (let j = 0; j < arrExternalChartReferences.length; j += 1) {
 									const oExternalReference = arrExternalChartReferences[j].externalReference;
 									if (oExternalReference && !oExternalReference.chart.bDeleted && (oExternalReference.chart.getExternalReference() === oExternalReference)) {
-										oExternalReference.updateData(wb, _arrAfterPromise[i].data);
+										oExternalReference.updateData(wb, oExternalData.data);
 									}
 								}
 							}
@@ -231,6 +235,7 @@ function (window, undefined) {
 							oApi.sendEvent("asc_onErrorUpdateExternalReference", externalReferenceId);
 						}
 					}
+					oExternalData.applyCloseCallback();
 				}
 				fCallback && fCallback(true);
 				oApi.sendEvent("asc_onStartUpdateExternalReference", false);

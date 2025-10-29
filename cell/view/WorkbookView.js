@@ -5904,6 +5904,7 @@
 								let jsZlib = new AscCommon.ZLib();
 								if (!jsZlib.open(stream)) {
 									t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
+									_arrAfterPromise[i].applyCloseCallback();
 									continue;
 								}
 
@@ -5915,6 +5916,7 @@
 							if (binaryData) {
 								editor = AscCommon.getEditorByBinSignature(binaryData);
 								if (editor !== AscCommon.c_oEditorId.Spreadsheet) {
+									_arrAfterPromise[i].applyCloseCallback();
 									continue;
 								}
 
@@ -5940,6 +5942,7 @@
 						} else {
 							editor = AscCommon.getEditorByOOXMLSignature(stream);
 							if (editor !== AscCommon.c_oEditorId.Spreadsheet) {
+								_arrAfterPromise[i].applyCloseCallback();
 								continue;
 							}
 							const oMockWb = wb ? wb : t.model;
@@ -5963,6 +5966,7 @@
 
 						t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
 					}
+					_arrAfterPromise[i].applyCloseCallback();
 				}
 
 				History.EndTransaction();

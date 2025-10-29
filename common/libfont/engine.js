@@ -788,10 +788,12 @@ function onLoadFontsModule(window, undefined)
 
 		this.nativeBlobCounter = 1;
 	}
-	ZlibImageBlobs.prototype.getBlobUrl = function(path, zip)
+	ZlibImageBlobs.prototype.getBlobUrl = function(path, zip, customCache)
 	{
-		if (this.url2BlobUrl[path])
-			return this.url2BlobUrl[path];
+		const url2BlobUrl = customCache ? customCache["url2BlobUrl"] : this.url2BlobUrl;
+		const blobUrl2Data = customCache ? customCache["blobUrl2Data"] : this.blobUrl2Data;
+		if (url2BlobUrl[path])
+			return url2BlobUrl[path];
 
 		let result = zip.getImageBuffer(path);
 		if (result == null)
@@ -818,8 +820,8 @@ function onLoadFontsModule(window, undefined)
 			}
 		}
 
-		this.blobUrl2Data[blobUrl] = result;
-		this.url2BlobUrl[path] = blobUrl;
+		blobUrl2Data[blobUrl] = result;
+		url2BlobUrl[path] = blobUrl;
 		return blobUrl;
 	};
 	ZlibImageBlobs.prototype.getImageBase64 = function(url)

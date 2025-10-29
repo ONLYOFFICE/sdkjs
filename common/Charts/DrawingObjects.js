@@ -425,6 +425,9 @@ CCellObjectInfo.prototype.initAfterSerialize = function() {
 function asc_CChartBinary(chart) {
 
     this["binary"] = null;
+    this["documentUrl"] = null;
+    this["url2BlobUrl"] = null;
+    this["blobUrl2Data"] = null;
 		if (chart)
 		{
 			if (chart.getObjectType() === AscDFH.historyitem_type_ChartSpace)
@@ -526,7 +529,16 @@ asc_CChartBinary.prototype = {
 		return oChartData;
 	},
 		getWorkbookBinary: function() { return this["workbookBinary"]; },
-		setWorkbookBinary: function(val) { this["workbookBinary"] = val; }
+		setWorkbookBinary: function(val) { this["workbookBinary"] = val; },
+	setBlobsInfo: function(val) {
+			if (val) {
+				this["url2BlobUrl"] = val["url2BlobUrl"];
+				this["blobUrl2Data"] = val["blobUrl2Data"];
+			}
+		},
+	setDocumentUrl: function (val) {
+		this["documentUrl"] = val;
+	}
 };
 
 /** @constructor */
@@ -4585,6 +4597,8 @@ ClickCounter.prototype.getClickCount = function() {
 	prot["getChart"] = prot.getChart;
 	prot["getWorkbookBinary"] = prot.getWorkbookBinary;
 	prot["setWorkbookBinary"] = prot.setWorkbookBinary;
+	prot["setBlobsInfo"] = prot.setBlobsInfo;
+	prot["setDocumentUrl"] = prot.setDocumentUrl;
 	prot["getChartData"] = prot.getChartData;
 
     window["AscFormat"].asc_CChartSeria = asc_CChartSeria;

@@ -69,6 +69,8 @@
 	CFrameManagerBase.prototype.sendUpdateDiagram = function () {};
 	CFrameManagerBase.prototype.endLoadChartEditor = function () {};
 	CFrameManagerBase.prototype.isSaveZip = function () {};
+	CFrameManagerBase.prototype.applyCloseCallbacks = function () {};
+	CFrameManagerBase.prototype.addCloseCallback = function (fCallback) {};
 
 	CFrameManagerBase.prototype.preObtain = function (oInfo) {
 		this.obtain(oInfo);
@@ -118,6 +120,7 @@
 		this.isLoadingOleEditor = false;
 		this.isLoadingChartEditor = false;
 		this.chartData = null;
+		this.closeCallbacks = [];
 	}
 	InitClassWithoutType(CMainEditorFrameManager, CFrameManagerBase);
 	CMainEditorFrameManager.prototype.saveChartData = function (chartSpace) {
@@ -160,6 +163,17 @@
 	CMainEditorFrameManager.prototype.endLoadChartEditor = function ()
 	{
 		this.isLoadingChartEditor = false;
+	};
+	CMainEditorFrameManager.prototype.applyCloseCallbacks = function () {
+		while (this.closeCallbacks.length) {
+			const fCallback = this.closeCallbacks.pop();
+			fCallback();
+		}
+	};
+	CMainEditorFrameManager.prototype.addCloseCallback = function (fCallback) {
+		if (fCallback) {
+			this.closeCallbacks.push(fCallback);
+		}
 	};
 
 
@@ -264,6 +278,20 @@
 			return this.generalDocumentUrls[sImageId];
 		}
 	};
+	CCellFrameManager.prototype.initBlob = function(blobUrl2Data, url2BlobUrl) {
+		AscCommon.g_oDocumentBlobUrls.blobUrl2Data = blobUrl2Data || {};
+		AscCommon.g_oDocumentBlobUrls.url2BlobUrl = url2BlobUrl || {};
+		if (url2BlobUrl) {
+			for (let sPath in url2BlobUrl) {
+				const urls = {};
+				const sLocalPath = sPath.slice(6);
+				urls[sLocalPath] = url2BlobUrl[sPath]
+				//todo check this
+				AscCommon.g_oDocumentUrls.addUrls(urls);
+				this.generalDocumentUrls[sPath] = url2BlobUrl[sPath];
+			}
+		}
+	};
 	CCellFrameManager.prototype.openWorkbookData = function (sStream, oInfo)
 	{
 		const oFile = new AscCommon.OpenFileResult();
@@ -271,7 +299,7 @@
 		oFile.data = sStream;
 		this.api.asc_CloseFile();
 		AscCommon.g_oDocumentUrls.documentUrl = oInfo["documentUrl"];
-		this.api.imagesFromGeneralEditor = this.generalDocumentUrls;
+		this.initBlob(oInfo["blobUrl2Data"], oInfo["url2BlobUrl"]);
 		this.api.openDocument(oFile);
 	}
 	CCellFrameManager.prototype.isGeneralEditor = function ()
@@ -488,13 +516,16 @@
 	{
 		this.clear();
 		this.setAfterLoadCallback(oInfo);
+		const obtainInfo = {"documentImageUrls": oInfo["documentImageUrls"], "documentUrl": oInfo["documentUrl"], "blobUrl2Data": oInfo["blobUrl2Data"], "url2BlobUrl": oInfo["url2BlobUrl"]};
 		if (oInfo["workbookBinary"])
 		{
-			this.obtain({"binary": oInfo["workbookBinary"], "documentImageUrls": oInfo["documentImageUrls"], "documentUrl": oInfo["documentUrl"]});
+			obtainInfo["binary"] = oInfo["workbookBinary"];
+			this.obtain(obtainInfo);
 		}
 		else
 		{
-			this.obtainWithRepair({"binary": AscCommon.getEmpty(), "documentImageUrls": oInfo["documentImageUrls"], "documentUrl": oInfo["documentUrl"]});
+			obtainInfo["binary"] = AscCommon.getEmpty();
+			this.obtainWithRepair(obtainInfo);
 		}
 	}
 	CDiagramCellFrameManager.prototype.obtainWithRepair = function (oInfo)
@@ -634,6 +665,17 @@
 		CFrameData.call(this, AscCommon.c_oAscFrameDataType.SendImageUrls, oData);
 	}
 
+	function CBinaryLoaderData() {
+		this.stream = null;
+		this.blobs = null;
+		this.closeCallbacks = [];
+		this.documentUrl = null;
+	};
+	CBinaryLoaderData.prototype.addCloseCallback = function (fCallback) {
+		if (fCallback) {
+			this.closeCallbacks.push(fCallback);
+		}
+	};
 
 	function CFrameBinaryLoader()
 	{
@@ -642,24 +684,24 @@
 		this.frameEditorType = AscCommon.FrameEditorTypes.JustBlock;
 		const isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
 		this.isOpenOnClient = this.api["asc_isSupportFeature"]("ooxml") && !isLocalDesktop;
-		this.XLSXBase64 = null;
 		this.eventOnOpenFrame = "";
-	}
-	CFrameBinaryLoader.prototype.loadFrame = function ()
-	{
 
+		this.XLSXBase64 = null;
+		this.blobs = null;
+		this.documentUrl = null;
 	}
-
 	CFrameBinaryLoader.prototype.getNestedPromise = function (binaryData)
 	{
 		const oThis = this;
+		let oData = new CBinaryLoaderData();
 		return new Promise(function (resolve)
 		{
 			if (binaryData.length)
 			{
 				if (oThis.isOpenOnClient)
 				{
-					resolve(CFrameManagerBase.prototype.getEncodedArray.call(oThis, binaryData));
+					oData.stream = CFrameManagerBase.prototype.getEncodedArray.call(oThis, binaryData);
+					resolve(oData);
 				}
 				else
 				{
@@ -675,34 +717,33 @@
 										arrBinaryData = jsZlib.getFile(jsZlib.files[0]);
 									}
 								}
-								resolve(Array.from(arrBinaryData));
+								oData.stream = Array.from(arrBinaryData);
 							}
-							else
-							{
-								resolve(null);
-							}
+							resolve(oData);
 						});
 					}
 					else
 					{
-						resolve(CFrameManagerBase.prototype.getEncodedArray.call(oThis, binaryData));
+						oData.stream = CFrameManagerBase.prototype.getEncodedArray.call(oThis, binaryData);
+						resolve(oData);
 					}
-
 				}
 			}
 			else
 			{
-				resolve(null);
+				resolve(oData);
 			}
 		});
 	};
 
-	CFrameBinaryLoader.prototype.resolvePromise = function (sStream)
-	{
-		if (this.isTruthStream(sStream))
-		{
-			this.setXLSX(sStream);
+	CFrameBinaryLoader.prototype.resolvePromise = function (oData) {
+		if (this.isTruthStream(oData.stream)) {
+			this.setFromData(oData);
 			this.loadFrame();
+		} else {
+			for (let i = 0; i < oData.closeCallbacks.length; i += 1) {
+				oData.closeCallbacks[i]();
+			}
 		}
 		this.endLoadWorksheet();
 	};
@@ -757,6 +798,44 @@
 		else
 		{
 			this.XLSXBase64 = null;
+		}
+	};
+	CFrameBinaryLoader.prototype.setFromData = function (oData) {
+		this.setXLSX(oData.stream);
+		this.setBlobs(oData.blobs);
+		this.setDocumentUrl(oData.documentUrl);
+		this.setCloseCallbacks(oData.closeCallbacks);
+	}
+	CFrameBinaryLoader.prototype.setBlobs = function(oBlobs) {
+		this.blobs = oBlobs;
+	};
+	CFrameBinaryLoader.prototype.setDocumentUrl = function(sDocumentUrl) {
+		this.documentUrl = sDocumentUrl;
+	};
+	CFrameBinaryLoader.prototype.setCloseCallbacks = function (arrCallbacks) {
+		for (let i = 0; i < arrCallbacks.length; i += 1) {
+			this.api.frameManager.addCloseCallback(arrCallbacks[i]);
+		}
+	};
+	CFrameBinaryLoader.prototype.getBlobCache = function(openZip) {
+		const oRes = {"url2BlobUrl": {}, "blobUrl2Data":{}};
+		for (let i = 0; i < openZip.files.length; i += 1) {
+			const sBlobUrl = AscCommon.g_oDocumentBlobUrls.getBlobUrl(openZip.files[i], openZip, oRes);
+			if (oRes["blobUrl2Data"][sBlobUrl]) {
+				if (oRes["blobUrl2Data"][sBlobUrl]["data"]) {
+					oRes["blobUrl2Data"][sBlobUrl]["data"] = Array.from(oRes["blobUrl2Data"][sBlobUrl]["data"]);
+				}
+			}
+		}
+		return oRes;
+	};
+	CFrameBinaryLoader.prototype.getCloseCallbackFromBlobCache = function (oCache) {
+		return function () {
+			const oOldUrls = oCache["url2BlobUrl"];
+			for (let sPath in oOldUrls) {
+				const sUrl = oOldUrls[sPath];
+				window.URL.revokeObjectURL(sUrl);
+			}
 		}
 	};
 
@@ -818,6 +897,10 @@
 	{
 		const oBinaryChart = new Asc.asc_CChartBinary(this.chart);
 		oBinaryChart.setWorkbookBinary(this.XLSXBase64);
+		oBinaryChart.setBlobsInfo(this.blobs);
+		if (this.documentUrl) {
+			oBinaryChart.setDocumentUrl(this.documentUrl);
+		}
 		return oBinaryChart;
 	};
 
@@ -825,28 +908,38 @@
 	{
 		const isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
 		let arrStream;
-		if (arrValues && arrValues.length === 1)
-		{
-			arrStream = arrValues[0].stream;
-			if (!this.isOpenOnClient)
-			{
-				if (!isLocalDesktop) {
+		const oData = new CBinaryLoaderData();
+		if (arrValues) {
+			if (arrValues.length === 1) {
+				const oExternalData = arrValues[0];
+				arrStream = oExternalData.stream;
+				oData.documentUrl = oExternalData.documentUrl;
+				oData.addCloseCallback(oExternalData.closeCallback);
+				if (!this.isOpenOnClient && !isLocalDesktop)
+				{
 					//xlst
 					let jsZlib = new AscCommon.ZLib();
 					if (jsZlib.open(arrStream))
 					{
 						if (jsZlib.files && jsZlib.files.length) {
+							const oImgBlobs = this.getBlobCache(jsZlib);
 							arrStream = jsZlib.getFile(jsZlib.files[0]);
+							oData.stream = Array.from(arrStream);
+							oData.blobs = oImgBlobs;
+							oData.addCloseCallback(this.getCloseCallbackFromBlobCache(oImgBlobs));
 						}
+						jsZlib.close();
 					}
-					else
-					{
-						arrStream = null;
-					}
+				} else {
+					oData.stream = Array.from(arrStream);
+				}
+			} else {
+				for (let i = 0; i < arrValues.length; i += 1) {
+					oData.addCloseCallback(arrValues[i].closeCallback);
 				}
 			}
 		}
-		this.fCallback(arrStream ? Array.from(arrStream) : arrStream);
+		this.fCallback(oData);
 	}
 
 	CFrameDiagramBinaryLoader.prototype.isExternal = function ()

@@ -144,7 +144,29 @@
 			return this.externalReferences[nId].asc_getPath();
 		}
 	};
-
+	function getDocumentUrlFromImage(oImageObj) {
+		for (let sPath in oImageObj) {
+			const sUrl = oImageObj[sPath];
+			const nIndex = sUrl.lastIndexOf(sPath) - 1;
+			if (nIndex >= 0) {
+				return "file:///" + sUrl.slice(0, nIndex);
+			}
+			break;
+		}
+		return "";
+	}
+	function CExternalData(sExternalReference, oData) {
+		this.stream = null;
+		this.closeCallback = null;
+		this.externalReferenceId = sExternalReference;
+		this.data = oData;
+		this.documentUrl = null;
+	}
+	CExternalData.prototype.applyCloseCallback = function () {
+		if (this.closeCallback) {
+			this.closeCallback();
+		}
+	};
 	function CExternalDataPromiseGetter(oApi, sExternalReference, oData) {
 		this.externalReference = sExternalReference;
 		this.data = oData;
@@ -155,23 +177,25 @@
 	CExternalDataPromiseGetter.prototype.isLocalDesktop = function () {
 		return window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
 	};
-	CExternalDataPromiseGetter.prototype.resolveStream = function (arrStream, fResolve) {
-		fResolve({stream: arrStream, externalReferenceId: this.externalReference, data: this.data});
+	CExternalDataPromiseGetter.prototype.getExternalData = function () {
+		return new CExternalData(this.externalReference, this.data);
 	};
 	CExternalDataPromiseGetter.prototype.getLocalDesktopPromise = function () {
 		const oThis = this;
+		const oData = this.getExternalData();
 		return new Promise(function (resolve) {
 			if (oThis.fileUrl) {
-				window["AscDesktopEditor"]["convertFile"](oThis.fileUrl, 0x2002, function (_file) {
-					let arrStream = null;
+				window["AscDesktopEditor"]["convertFile"](oThis.fileUrl, Asc.c_oAscFileType.CANVAS_SPREADSHEET, function (_file) {
 					if (_file) {
-						arrStream = new Uint8Array(_file["get"]());
-						_file["close"]();
+						const documentUrl = getDocumentUrlFromImage(_file["getImages"]());
+						oData.stream = new Uint8Array(_file["get"]());
+						oData.closeCallback = _file["close"].bind(_file);
+						oData.documentUrl = documentUrl;
 					}
-					oThis.resolveStream(arrStream, resolve);
+					resolve(oData);
 				});
 			} else {
-				oThis.resolveStream(null, resolve);
+				resolve(oData);
 			}
 		});
 	};
@@ -200,20 +224,9 @@
 			return this.getSDKPromise();
 		} else {
 			return new Promise(function (fResolve) {
-				oThis.resolveStream(null, fResolve);
+				fResolve(oThis.getExternalData());
 			});
 		}
-	};
-
-	CExternalDataPromiseGetter.prototype.loadFileContentFromUrl = function (sFileUrl, resolve) {
-		const oThis = this;
-		AscCommon.loadFileContent(sFileUrl, function (httpRequest) {
-			let arrStream = null;
-			if (httpRequest) {
-				arrStream = AscCommon.initStreamFromResponse(httpRequest);
-			}
-			oThis.resolveStream(arrStream, resolve);
-		}, "arraybuffer");
 	};
 
 	CExternalDataPromiseGetter.prototype.getSDKPromise = function () {
@@ -226,19 +239,21 @@
 			const sToken = oThis.data["token"];
 			const sDirectUrl = oThis.data["directUrl"];
 			const bIsXLSX = sFileType === "xlsx";
-
+			const oData = oThis.getExternalData();
 			if ((sFileUrl && !bIsXLSX) || !isSupportOOXML) {
 				const oDocument = {url: sFileUrl, format: sFileType, token: sToken};
 				oThis.api.getConvertedXLSXFileFromUrl(oDocument, nOutputFormat,
 					function (arrBinaryData) {
-						oThis.resolveStream(arrBinaryData, fResolve);
+						oData.stream = arrBinaryData;
+						fResolve(oData);
 					});
 			} else if (sDirectUrl || sFileUrl) {
 				oThis.api._downloadOriginalFile(sDirectUrl, sFileUrl, sFileType, sToken, function (arrStream) {
-					oThis.resolveStream(arrStream, fResolve);
+					oData.stream = arrStream;
+					fResolve(oData);
 				});
 			} else {
-				oThis.resolveStream(null, fResolve);
+				fResolve(oData);
 			}
 		});
 	};
