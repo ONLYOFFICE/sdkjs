@@ -5664,8 +5664,7 @@ background-repeat: no-repeat;\
 	{
 		if (true === hafProp)
 			hafProp.Locked = true;
-
-		console.log(new CHeaderProp(hafProp));
+		
 		this.SelectedObjectsStack[this.SelectedObjectsStack.length] = new asc_CSelectedObject(c_oAscTypeSelectElement.Header, new CHeaderProp(hafProp));
 	};
 
