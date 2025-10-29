@@ -972,6 +972,7 @@ NumFormat.prototype =
     },
     _parseFormatWordDateTime : function()
     {
+        this.formatString = this.formatString.toLowerCase()
         while(true)
         {
             var next = this._readChar();
