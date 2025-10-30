@@ -68,6 +68,10 @@ var numFormat_AmPm = 19;
 var numFormat_DateSeparator = 20;
 var numFormat_TimeSeparator = 21;
 var numFormat_DecimalPointText = 22;
+
+var numFormat_Gennen = 23;
+var numFormat_GennenEra = 24;
+
 //Вспомогательные типы, которые заменятюся в _prepareFormat
 var numFormat_MonthMinute = 101;
 var numFormat_Percent = 102;
@@ -310,6 +314,7 @@ function ParseLocalFormatSymbol(Name)
 	LocaleFormatSymbol['S'] = 'S';
 	LocaleFormatSymbol['s'] = 's';
 	LocaleFormatSymbol['a'] = 'a';
+	LocaleFormatSymbol['g'] = 'g';
 	LocaleFormatSymbol['general'] = 'General';
 	switch (Name) {
 //___________________________________________________fi________________________________________________________________
@@ -613,6 +618,7 @@ function ParseLocalFormatSymbol(Name)
 		case("ja"):
 		case("ja-JP"): {
 			LocaleFormatSymbol['general'] = 'G/標準';
+            LocaleFormatSymbol['g'] = 'g';
 			break;
 		}
 		case("ko"):
@@ -808,6 +814,10 @@ NumFormat.prototype =
         var Second;
         var second;
 		var dayOfWeek;
+
+        var gennen;
+        var gennenEra;
+
 		if (useLocaleFormat) {
 			sGeneral = LocaleFormatSymbol['general'].toLowerCase();
 			DecimalSeparator = g_oDefaultCultureInfo.NumberDecimalSeparator;
@@ -826,6 +836,8 @@ NumFormat.prototype =
 			Second = LocaleFormatSymbol['S'];
 			second = LocaleFormatSymbol['s'];
 			dayOfWeek = LocaleFormatSymbol['a'];
+			gennen = LocaleFormatSymbol['g'];
+			gennenEra = LocaleFormatSymbol['e'];
 		} else {
 			sGeneral = AscCommon.g_cGeneralFormat.toLowerCase();
 			DecimalSeparator = gc_sFormatDecimalPoint;
@@ -844,6 +856,8 @@ NumFormat.prototype =
 			Second = 'S';
 			second = 's';
 			dayOfWeek = 'a';
+            gennen = 'g';
+            gennenEra = 'e';
 		}
         var sGeneralFirst = sGeneral[0];
         this.bGeneralChart = true;
@@ -912,6 +926,12 @@ NumFormat.prototype =
                     var sign = ("+" == nextnext) ? SignType.Positive : SignType.Negative;
                     this._addToFormat2(new FormatObjScientific(next, "", sign));
                 }
+                else
+                { 
+                    if(nextnext == 'e' || nextnext == 'g') this.index--
+                    this._addToFormat2(new FormatObjDateVal(numFormat_GennenEra, 1, false));
+                }
+                    
             }
             else if("*" == next)
             {
@@ -960,6 +980,10 @@ NumFormat.prototype =
 			else if (dayOfWeek == next)
 			{
 				this._addToFormat2(new FormatObjDateVal(numFormat_DayOfWeek, 1, false));
+			}
+            else if (gennen == next)
+			{
+				this._addToFormat2(new FormatObjDateVal(numFormat_Gennen, 1, false));
 			}
             else {
                 bNoFormat = true;
@@ -1133,7 +1157,7 @@ NumFormat.prototype =
                 }
             }
             else if(numFormat_Year == item.type || numFormat_MonthMinute == item.type || numFormat_Month == item.type || numFormat_Day == item.type || numFormat_Hour == item.type || numFormat_Minute == item.type || numFormat_Second == item.type || numFormat_Thousand == item.type ||
-				numFormat_DayOfWeek == item.type)
+				numFormat_DayOfWeek == item.type || numFormat_Gennen == item.type || numFormat_GennenEra == item.type)
             {
                 //Собираем в одно целое последовательности hhh
                 var nStartType = item.type;
@@ -1618,6 +1642,47 @@ NumFormat.prototype =
 			}
 		}
 	},
+    _convertToJapaneseYear: function(gregorianYear, val) 
+    {
+        var japaneseEras = [
+            { start: 2019, character: "令和", symbol: 'R' },
+            { start: 1989, character: "平成", symbol: 'H' }, 
+            { start: 1926, character: "昭和", symbol: 'S' },
+            { start: 1912, character: "大正", symbol: 'T' },
+            { start: 1868, character: "明治", symbol: 'M' }
+        ];
+        
+        for (var i = 0; i < japaneseEras.length; i++) 
+        {
+            var era = japaneseEras[i];
+            if (gregorianYear >= era.start) 
+            {
+                if(val == 1) return era.symbol
+                else if(val == 2) return era.character.toString()[0]
+                else return era.character
+            }
+        }
+    },
+    _convertToJapaneseEra: function(gregorianYear) 
+    {
+        var japaneseEras = [
+            { name: "令和", start: 2019 },
+            { name: "平成", start: 1989 }, 
+            { name: "昭和", start: 1926 },
+            { name: "大正", start: 1912 },
+            { name: "明治", start: 1868 }
+        ];
+    
+        for (var i = 0; i < japaneseEras.length; i++) 
+        {
+            var era = japaneseEras[i];
+            if (gregorianYear >= era.start) 
+            {
+                var yearInEra = gregorianYear - era.start + 1;
+                return yearInEra === 1 ? "1" : yearInEra.toString();
+            }
+        }
+    },
 	parseDate : function(number)
 	{
         var d = {val: 0, coeff: 1}, h = {val: 0, coeff: 24},
@@ -2327,6 +2392,16 @@ NumFormat.prototype =
                     }
                   }
                 }
+                else if (numFormat_Gennen == item.type) 
+                {
+                    var japaneseYear = this._convertToJapaneseYear(oParsedNumber.date.year, item.val);
+                    oCurText.text += japaneseYear;
+                }
+                else if (numFormat_GennenEra == item.type) 
+                {
+                    var japaneseEra = this._convertToJapaneseEra(oParsedNumber.date.year);
+                    oCurText.text += japaneseEra;
+                }
                 else if(numFormat_Month == item.type)
                 {
                     var m = oParsedNumber.date.month;
@@ -2532,6 +2607,8 @@ NumFormat.prototype =
 			minute = LocaleFormatSymbol['minute'];
 			second = LocaleFormatSymbol['s'];
 			dayOfWeek = LocaleFormatSymbol['a'];
+
+            // gennen = LocaleFormatSymbol['g']
 		} else {
 			sGeneral = AscCommon.g_cGeneralFormat;
 			DecimalSeparator = gc_sFormatDecimalPoint;
@@ -2754,6 +2831,10 @@ NumFormat.prototype =
                     res += "]";
                 }
             }
+            else if (numFormat_Gennen == item.type)
+                for (var j = 0; j < item.val; ++j) res += "g";
+            else if (numFormat_GennenEra == item.type)
+                for (var j = 0; j < item.val; ++j) res += "e";
 			else if(numFormat_DayOfWeek == item.type)
 			{
 				var nIndex = (item.val > 3) ? 3 : item.val;
