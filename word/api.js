@@ -5642,6 +5642,14 @@ background-repeat: no-repeat;\
 			logicDocument.FinalizeAction();
 		});
 	};
+	asc_docs_api.prototype.asc_CancelHdrFtrEditing = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		logicDocument.EndHdrFtrEditing(true);
+	};
 
 	/*структура для передачи настроек колонтитулов
 	 {
@@ -15036,6 +15044,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_SetSectionStartPage']                   = asc_docs_api.prototype.asc_SetSectionStartPage;
 	asc_docs_api.prototype['asc_SetSectionPageNumFormat']               = asc_docs_api.prototype.asc_SetSectionPageNumFormat;
 	asc_docs_api.prototype['asc_SetSectionPageNumProps']                = asc_docs_api.prototype.asc_SetSectionPageNumProps;
+	asc_docs_api.prototype['asc_CancelHdrFtrEditing']                   = asc_docs_api.prototype.asc_CancelHdrFtrEditing;
 	asc_docs_api.prototype['sync_DocSizeCallback']                      = asc_docs_api.prototype.sync_DocSizeCallback;
 	asc_docs_api.prototype['sync_PageOrientCallback']                   = asc_docs_api.prototype.sync_PageOrientCallback;
 	asc_docs_api.prototype['sync_HeadersAndFootersPropCallback']        = asc_docs_api.prototype.sync_HeadersAndFootersPropCallback;
