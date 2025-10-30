@@ -842,6 +842,8 @@
 			if (oRes["blobUrl2Data"][sBlobUrl]) {
 				if (oRes["blobUrl2Data"][sBlobUrl]["data"]) {
 					oRes["blobUrl2Data"][sBlobUrl]["data"] = Array.from(oRes["blobUrl2Data"][sBlobUrl]["data"]);
+				} else if (oRes["blobUrl2Data"][sBlobUrl]["dataBlob"]) {
+					oRes["blobUrl2Data"][sBlobUrl]["dataBlob"] = Array.from(oRes["blobUrl2Data"][sBlobUrl]["dataBlob"]);
 				}
 			}
 		}
