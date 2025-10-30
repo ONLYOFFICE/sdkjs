@@ -301,8 +301,6 @@
 				const urls = {};
 				const sLocalPath = sPath.slice(6);
 				urls[sLocalPath] = url2BlobUrl[sPath]
-				//todo check this
-				AscCommon.g_oDocumentUrls.addUrls(urls);
 				this.generalDocumentUrls[sPath] = url2BlobUrl[sPath];
 			}
 		}
