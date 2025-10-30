@@ -14742,12 +14742,6 @@ drawScatterChart.prototype = {
 		const valMin = this.valAx && this.valAx.scaling ? this.valAx.scaling.min : null;
 		const valMax = this.valAx && this.valAx.scaling ? this.valAx.scaling.max : null;
 
-		let xStep = this._getStep(this.catAx);
-		let yStep = this._getStep(this.valAx);
-		// limit the number of dots to be around 10000 at max
-		const xEpsilon = this._getEpsilon(xStep);
-		const yEpsilon = this._getEpsilon(yStep);
-
 		let t = this;
 		let _initObjs = function (_index) {
 			if (!t.paths.points) {
@@ -14792,9 +14786,7 @@ drawScatterChart.prototype = {
 
 				let values = this.cChartDrawer._getScatterPointVal(seria, idx);
 
-				if(values && (!points || !points[i] || !points[i].length || !points[i][points[i].length - 1]
-					|| (Math.abs(values.x - points[i][points[i].length - 1].x) > xEpsilon) || (Math.abs(values.y - points[i][points[i].length - 1].y) > yEpsilon))
-				){
+				if(values){
 					yVal = values.y;
 					xVal = values.x;
 					xPoint = values.xPoint;
@@ -14890,29 +14882,6 @@ drawScatterChart.prototype = {
 		}
 
 		this._calculateAllLines(points);
-	},
-
-	_getStep: function (axis) {
-		let prevVal = axis.scale.length > 0 ? axis.scale[0] : null; 
-		let curVal = axis.scale.length > 1 ? axis.scale[1] : null; 
-
-		// get general step. Examples: 2, 20, 200, 0.2 tc.
-		let step = 0;
-		if (prevVal !== null && curVal !== null) {
-			const high = Math.max(prevVal, curVal);
-			const low = Math.min(prevVal, curVal);
-			step = high - low;
-		}
-		
-		return step
-	},
-
-	_getEpsilon: function (step) {
-		const epsilon = 5;
-		// Calculate the power of ten that brings the number between 1 and 10
-		const exponent = step ? Math.floor(Math.log10(step)) : 0;
-		const multiplier = Math.pow(10, exponent);
-		return multiplier * 0.01 * epsilon; // 5% of the step
 	},
 
 	_recalculateScatter2: function () {
@@ -15013,6 +14982,9 @@ drawScatterChart.prototype = {
 					this.paths.series[i] = [];
 				}
 
+                let prevX = null;
+                let prevY = null;
+
 				if (points[i][n] != null && points[i][n + 1] != null) {
 					if (isSplineLine) {
 
@@ -15034,15 +15006,45 @@ drawScatterChart.prototype = {
 						x = this.cChartDrawer.getYPosition(points[i][n].x, this.catAx, true);
 						y = this.cChartDrawer.getYPosition(points[i][n].y, this.valAx, true);
 
-						x1 = this.cChartDrawer.getYPosition(points[i][n + 1].x, this.catAx, true);
-						y1 = this.cChartDrawer.getYPosition(points[i][n + 1].y, this.valAx, true);
+						// x1 = this.cChartDrawer.getYPosition(points[i][n + 1].x, this.catAx, true);
+						// y1 = this.cChartDrawer.getYPosition(points[i][n + 1].y, this.valAx, true);
+						const nextPoints = this.getNextPosition(i, n, points, x, y);
+
+						if (!nextPoints) {
+							continue;
+						} else {
+							x1 = nextPoints.x1;
+							y1 = nextPoints.y1;
+							n += nextPoints.skip;
+						}
 
 						//this.paths.series[i][n] = {path: this._calculateLine(x, y, x1, y1), idx: points[i][n].idx};
+
 						this.paths.series[i][n] = this._calculateLine(x, y, x1, y1);
 					}
 				}
 			}
 		}
+	},
+
+	// i is series index
+	// n is point index
+	getNextPosition: function (i, n, points, x, y) {
+		const epsilon = 1;
+		const seriaPoints = points[i];
+		let x1, y1;
+		for (let j = n + 1; j < seriaPoints.length; j++) {
+			if (seriaPoints[i] !== null) {
+				console.log(n, j);
+				x1 = this.cChartDrawer.getYPosition(points[i][j].x, this.catAx, true);
+				y1 = this.cChartDrawer.getYPosition(points[i][j].y, this.catAx, true);
+
+				if (Math.abs(x - x1) > epsilon || Math.abs(y - y1) > epsilon) {
+					return {x1: x1, y1: y1, skip: j - n - 1}
+				}
+			}
+		}
+		return null;
 	},
 
 	_getYVal: function (n, i) {
