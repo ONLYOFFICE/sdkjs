@@ -12118,6 +12118,18 @@ PasteProcessor.prototype =
 					}
 					return;
 				}
+
+				if (sChildNodeName === "math") {
+					let paraMath = ParaMath.fromMathML(child.outerHTML);
+					let oAddedParaMath = paraMath;
+					let oCurPar = oShapeContent.GetLastParagraph();
+					oAddedParaMath.SetParagraph && oAddedParaMath.SetParagraph(oCurPar);
+					oCurPar.Internal_Content_Add(oCurPar.Content.length - 1, oAddedParaMath, false);
+					oCurPar.CorrectContent();
+					oCurPar.CheckParaEnd();
+					return;
+				}
+
 				//попускам элеметы состоящие только из \t,\n,\r
 				if (Node.TEXT_NODE === child.nodeType) {
 					value = child.nodeValue;

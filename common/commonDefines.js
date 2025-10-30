@@ -644,7 +644,8 @@ window.AscCommon.g_cIsBeta = "false";
 		SkipStartEndAction: 4,
 		StartUploadImageAction: 5,
 		UpdateDiagramInGeneral: 6,
-		UpdateIsOpenOnClient: 7
+		UpdateIsOpenOnClient: 7,
+		OpenLocalDesktopFileLink: 8
 	};
 
 	var CellValueType = {

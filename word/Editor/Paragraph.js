@@ -12402,6 +12402,7 @@ Paragraph.prototype.Get_ParentTextInvertTransform = function()
 };
 Paragraph.prototype.UpdateCursorType = function(X, Y, CurPage)
 {
+	let logicDocument   = this.GetLogicDocument();
 	let drawingDocument = this.getDrawingDocument();
 	if (!this.IsRecalculated() || !drawingDocument)
 		return;
@@ -12440,7 +12441,8 @@ Paragraph.prototype.UpdateCursorType = function(X, Y, CurPage)
 	if (oContentControl)
 	{
 		oContentControl.DrawContentControlsTrack(AscCommon.ContentControlTrack.Hover, X, Y, CurPage);
-		isCheckBox = oContentControl.IsCheckBox() && oContentControl.CheckHitInContentControlByXY(X, Y, this.GetAbsolutePage(CurPage), false);
+		isCheckBox = (oContentControl.CheckHitInContentControlByXY(X, Y, this.GetAbsolutePage(CurPage), false)
+			&& (oContentControl.IsCheckBox() || (logicDocument && oContentControl.IsLabeledCheckBox() && logicDocument.IsFillingOFormMode())));
 	}
 
 	var Footnote      = this.CheckFootnote(X, Y, CurPage);
@@ -12822,22 +12824,30 @@ Paragraph.prototype.PreDelete = function()
 //----------------------------------------------------------------------------------------------------------------------
 Paragraph.prototype.Document_SetThisElementCurrent = function(bUpdateStates)
 {
-	this.Parent.Update_ContentIndexing();
-	this.Parent.Set_CurrentElement(this.Index, bUpdateStates);
+	let parent = this.GetParent();
+	if (!parent)
+		return;
+	
+	parent.Update_ContentIndexing();
+	parent.Set_CurrentElement(this.Index, bUpdateStates);
 };
 Paragraph.prototype.IsThisElementCurrent = function()
 {
-	let oParent = this.Parent;
-	let nIndex  = this.GetIndex();
-	if (-1 === nIndex || docpostype_Content !== oParent.GetDocPosType())
+	let parent = this.GetParent();
+	if (!parent)
+		return false;
+	
+	let nIndex = this.GetIndex();
+	if (-1 === nIndex || docpostype_Content !== parent.GetDocPosType())
+		return false;
+	
+	if ((parent.IsSelectionUse()
+			&& (parent.Selection.StartPos !== parent.Selection.EndPos
+				|| nIndex !== parent.Selection.StartPos))
+		|| (!parent.IsSelectionUse() && nIndex !== parent.CurPos.ContentPos))
 		return false;
 
-	if ((oParent.IsSelectionUse() && (oParent.Selection.StartPos !== oParent.Selection.EndPos
-			|| nIndex !== oParent.Selection.StartPos))
-		|| (!oParent.IsSelectionUse() && nIndex !== oParent.CurPos.ContentPos))
-		return false;
-
-	return oParent.IsThisElementCurrent();
+	return parent.IsThisElementCurrent();
 };
 Paragraph.prototype.Is_Inline = function()
 {

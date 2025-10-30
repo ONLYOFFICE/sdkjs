@@ -23987,6 +23987,10 @@
 	 */
 	ApiPictureForm.prototype.SetImage = function(sImageSrc, nWidth, nHeight)
 	{
+		if (!AscFormat.isRealNumber(nWidth) || !AscFormat.isRealNumber(nHeight)) {
+			return false;
+		}
+
 		return executeNoFormLockCheck(function(){
 			if (typeof(sImageSrc) !== "string" || sImageSrc === "")
 				return false;
@@ -24318,6 +24322,43 @@
 			this.Sdt.SetFormPr(formPr);
 			return true;
 		}, this);
+	};
+	/**
+	 * Sets the label for the current check box.
+	 * @memberof ApiCheckBoxForm
+	 * @param {string} label - The label.
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @since 9.2.0
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiCheckBoxForm/Methods/SetLabel.js
+	 */
+	ApiCheckBoxForm.prototype.SetLabel = function(label)
+	{
+		return executeNoFormLockCheck(function() {
+			let mainForm = this.Sdt.GetMainForm();
+			if (mainForm && mainForm !== this.Sdt && mainForm.IsLabeledCheckBox())
+				mainForm.SetCheckBoxLabel(label);
+			else
+				this.Sdt.SetCheckBoxLabel(label);
+			
+			return true;
+		}, this);
+	};
+	/**
+	 * Returns the label of the current check box.
+	 * @memberof ApiCheckBoxForm
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @since 9.2.0
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiCheckBoxForm/Methods/GetLabel.js
+	 */
+	ApiCheckBoxForm.prototype.GetLabel = function()
+	{
+		let mainForm = this.Sdt.GetMainForm();
+		if (mainForm && mainForm !== this.Sdt && mainForm.IsLabeledCheckBox())
+			return mainForm.GetCheckBoxLabel();
+		else
+			return this.Sdt.GetCheckBoxLabel();
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -25274,7 +25315,7 @@
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/PixelsToEmu.js
 	 */
 	Api.prototype.PixelsToEmus = function Px2Emu(px) {
-		return private_MM2EMU(AscCommon.g_dKoef_pix_to_mm * px);
+		return Math.round(private_MM2EMU(AscCommon.g_dKoef_pix_to_mm * px));
 	};
 
 	/**
@@ -25311,8 +25352,8 @@
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/PointsToEmus.js
 	 */
 	Api.prototype.PointsToEmus = function PointsToEmus(pt) {
-		const ptToEm = g_dKoef_pt_to_mm * g_dKoef_mm_to_emu;
-		return pt * ptToEm;
+		const ptToEmu = g_dKoef_pt_to_mm * g_dKoef_mm_to_emu;
+		return Math.round(pt * ptToEmu);
 	};
 
 	/**
@@ -25490,6 +25531,32 @@
 	 */
 	Api.prototype.TwipsToPoints = function TwipsToPoints(twips) {
 		return twips * g_dKoef_twips_to_pt;
+	};
+
+	/**
+	 * Converts millimeters to English Metric Units (EMUs).
+	 * The result is an integer value.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE", CSE", "CPE"]
+	 * @param {mm} mm
+	 * @returns {EMU} - The value in English Metric Units (EMUs), as an integer.
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/MillimetersToEmus.js
+	 */
+	Api.prototype.MillimetersToEmus = function MillimetersToEmus(mm) {
+		return Math.round(mm * AscCommonWord.g_dKoef_mm_to_emu);
+	};
+
+	/**
+	 * Converts English measure units (EMU) to millimeters.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {EMU} emu
+	 * @returns {mm}
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/EmusToMillimeters.js
+	 */
+	Api.prototype.EmusToMillimeters = function EmusToMillimeters(emu) {
+		return emu * AscCommonWord.g_dKoef_emu_to_mm;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -27163,6 +27230,8 @@
 	Api.prototype["PicasToPoints"]                   = Api.prototype.PicasToPoints;
 	Api.prototype["PixelsToPoints"]                  = Api.prototype.PixelsToPoints;
 	Api.prototype["TwipsToPoints"]                   = Api.prototype.TwipsToPoints;
+	Api.prototype["MillimetersToEmus"]               = Api.prototype.MillimetersToEmus;
+	Api.prototype["EmusToMillimeters"]               = Api.prototype.EmusToMillimeters;
 	Api.prototype["CreateCustomGeometry"]            = Api.prototype.CreateCustomGeometry;
 	Api.prototype["CreatePresetGeometry"]            = Api.prototype.CreatePresetGeometry;
 
@@ -28151,6 +28220,8 @@
 	ApiCheckBoxForm.prototype["SetRadioGroup"] = ApiCheckBoxForm.prototype.SetRadioGroup;
 	ApiCheckBoxForm.prototype["GetChoiceName"] = ApiCheckBoxForm.prototype.GetChoiceName;
 	ApiCheckBoxForm.prototype["SetChoiceName"] = ApiCheckBoxForm.prototype.SetChoiceName;
+	ApiCheckBoxForm.prototype["GetLabel"]      = ApiCheckBoxForm.prototype.GetLabel;
+	ApiCheckBoxForm.prototype["SetLabel"]      = ApiCheckBoxForm.prototype.SetLabel;
 	ApiCheckBoxForm.prototype["Copy"]          = ApiCheckBoxForm.prototype.Copy;
 
 	ApiComment.prototype["GetClassType"]	= ApiComment.prototype.GetClassType;
@@ -28439,7 +28510,9 @@
 		if (!oForm)
 			return null;
 
-		if (oForm.IsComplexForm())
+		if (oForm.IsLabeledCheckBox())
+			return new ApiCheckBoxForm(oForm.GetInnerCheckBox());
+		else if (oForm.IsComplexForm())
 			return new ApiComplexForm(oForm);
 		else if (oForm.IsTextForm())
 			return new ApiTextForm(oForm);

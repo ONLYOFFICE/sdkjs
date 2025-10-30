@@ -3908,69 +3908,86 @@ CPresentation.prototype.GetAbsoluteColumn = function () {
 };
 
 
+CPresentation.prototype.prepareAddChart = function() {
+  var _this = this;
+  var oSlide = _this.GetCurrentSlide();
+  if (!oSlide) {
+    return;
+  }
+
+  this.Api.inkDrawer.startSilentMode();
+  History.Create_NewPoint(AscDFH.historydescription_Presentation_AddChart);
+  this.Api.inkDrawer.endSilentMode();
+  this.SetThumbnailsFocusElement(FOCUS_OBJECT_MAIN);
+  _this.FocusOnNotes = false;
+  return oSlide;
+};
+
+
+CPresentation.prototype.finalizeAddChart = function(oSlide, oChart, isFromInterface, Placeholder) {
+  oChart.setParent(oSlide);
+
+  var PosX = (this.GetWidthMM() - oChart.spPr.xfrm.extX) / 2;
+  var PosY = (this.GetHeightMM() - oChart.spPr.xfrm.extY) / 2;
+  if (Placeholder) {
+    var oPh = AscCommon.g_oTableId.Get_ById(Placeholder.id);
+    if (oPh) {
+      PosX = oPh.x;
+      PosY = oPh.y;
+      oChart.spPr.xfrm.setExtX(oPh.extX);
+      oChart.spPr.xfrm.setExtY(oPh.extY);
+      if (this.Document_Is_SelectionLocked(AscCommon.changestype_Drawing_Props, undefined, undefined, [oPh])) {
+        oChart.addToDrawingObjects();
+      } else {
+        oSlide.replaceSp(oPh, oChart);
+      }
+    } else {
+      return;
+    }
+  } else {
+    oChart.addToDrawingObjects();
+  }
+
+  oChart.spPr.xfrm.setOffX(PosX);
+  oChart.spPr.xfrm.setOffY(PosY);
+  oSlide.graphicObjects.resetSelection();
+  oSlide.graphicObjects.selectObject(oChart, 0);
+
+  var _this = this;
+  if (isFromInterface) {
+    oChart.recalculate();
+    AscFonts.FontPickerByCharacter.checkText("", this, function () {
+      _this.Recalculate();
+      _this.Document_UpdateInterfaceState();
+      _this.CheckEmptyPlaceholderNotes();
+
+      _this.DrawingDocument.m_oWordControl.OnUpdateOverlay();
+    }, false, false, false);
+  } else {
+    _this.Recalculate();
+    _this.Document_UpdateInterfaceState();
+    _this.CheckEmptyPlaceholderNotes();
+
+    this.DrawingDocument.m_oWordControl.OnUpdateOverlay();
+  }
+  return oChart;
+};
+
 CPresentation.prototype.addChart = function (nTypeChart, isFromInterface, Placeholder) {
-	var _this = this;
-	var oSlide = _this.GetCurrentSlide();
-	if (!oSlide) {
+	let oSlide = this.prepareAddChart();
+	if (!oSlide)
 		return;
-	}
-
-	this.Api.inkDrawer.startSilentMode();
-	History.Create_NewPoint(AscDFH.historydescription_Presentation_AddChart);
-	this.Api.inkDrawer.endSilentMode();
-	this.SetThumbnailsFocusElement(FOCUS_OBJECT_MAIN);
-	_this.FocusOnNotes = false;
-
 	AscFonts.IsCheckSymbols = true;
 	const oChart = this.GetChartObject(nTypeChart, true);
 	AscFonts.IsCheckSymbols = false;
-	oChart.setParent(oSlide);
-
-	var PosX = (this.GetWidthMM() - oChart.spPr.xfrm.extX) / 2;
-	var PosY = (this.GetHeightMM() - oChart.spPr.xfrm.extY) / 2;
-	if (Placeholder) {
-		var oPh = AscCommon.g_oTableId.Get_ById(Placeholder.id);
-		if (oPh) {
-			PosX = oPh.x;
-			PosY = oPh.y;
-			oChart.spPr.xfrm.setExtX(oPh.extX);
-			oChart.spPr.xfrm.setExtY(oPh.extY);
-			if (this.Document_Is_SelectionLocked(AscCommon.changestype_Drawing_Props, undefined, undefined, [oPh])) {
-				oChart.addToDrawingObjects();
-			} else {
-				oSlide.replaceSp(oPh, oChart);
-			}
-		} else {
-			return;
-		}
-	} else {
-		oChart.addToDrawingObjects();
-	}
-
-	oChart.spPr.xfrm.setOffX(PosX);
-	oChart.spPr.xfrm.setOffY(PosY);
-	oSlide.graphicObjects.resetSelection();
-	oSlide.graphicObjects.selectObject(oChart, 0);
-
-	if (isFromInterface) {
-		oChart.recalculate();
-		AscFonts.FontPickerByCharacter.checkText("", this, function () {
-			_this.Recalculate();
-			_this.Document_UpdateInterfaceState();
-			_this.CheckEmptyPlaceholderNotes();
-
-			_this.DrawingDocument.m_oWordControl.OnUpdateOverlay();
-		}, false, false, false);
-	} else {
-		_this.Recalculate();
-		_this.Document_UpdateInterfaceState();
-		_this.CheckEmptyPlaceholderNotes();
-
-		this.DrawingDocument.m_oWordControl.OnUpdateOverlay();
-	}
-	return oChart;
+	return this.finalizeAddChart(oSlide, oChart, isFromInterface, Placeholder);
 };
-
+CPresentation.prototype.addChartObject = function (oChart, isFromInterface, Placeholder) {
+	let oSlide = this.prepareAddChart();
+	if (!oSlide)
+		return;
+	return this.finalizeAddChart(oSlide, oChart, isFromInterface, Placeholder);
+};
 CPresentation.prototype.RemoveSelection = function (bNoResetChartSelection) {
 	var oController = this.GetCurrentController();
 	if (oController) {
@@ -4001,7 +4018,6 @@ CPresentation.prototype.CheckAnimPaneShow = function () {
 		}
 	}
 };
-
 CPresentation.prototype.UpdateChart = function (binary) {
 	const oSlide = this.GetCurrentSlide();
 	if (oSlide)

@@ -849,7 +849,7 @@ CSelectedElementsInfo.prototype.GetInlineLevelSdt = function()
 };
 CSelectedElementsInfo.prototype.GetCheckBox = function()
 {
-	if (this.m_oInlineLevelSdt && this.m_oInlineLevelSdt.IsCheckBox())
+	if (this.m_oInlineLevelSdt && (this.m_oInlineLevelSdt.IsCheckBox() || this.m_oInlineLevelSdt.IsLabeledCheckBox()))
 		return this.m_oInlineLevelSdt;
 	else if (this.m_oBlockLevelSdt && this.m_oBlockLevelSdt.IsCheckBox())
 		return this.m_oBlockLevelSdt;
@@ -10207,9 +10207,10 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 		var oBlockSdt        = oSelectedContent.GetBlockLevelSdt();
 		let runElement       = this.GetRunElementByXY(X, Y, this.CurPage);
 
-		if ((oInlineSdt && oInlineSdt.IsCheckBox()) || (oBlockSdt && oBlockSdt.IsCheckBox()))
+		if ((oInlineSdt && (oInlineSdt.IsCheckBox() || oInlineSdt.IsLabeledCheckBox()))
+			|| (oBlockSdt && oBlockSdt.IsCheckBox()))
 		{
-			var oCC = (oInlineSdt && oInlineSdt.IsCheckBox()) ? oInlineSdt : oBlockSdt;
+			var oCC = (oInlineSdt && (oInlineSdt.IsCheckBox() || oInlineSdt.IsLabeledCheckBox())) ? oInlineSdt : oBlockSdt;
 			if (oCC.CheckHitInContentControlByXY(X, Y, PageIndex) && (!oCC.IsForm() || this.IsFillingFormMode() || oCC === this.CurPos.CC))
 			{
 				this.CurPos.SetCC(oCC);

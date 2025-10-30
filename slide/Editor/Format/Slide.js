@@ -217,8 +217,7 @@ function Slide(presentation, slideLayout, slideNum)
 
     if(presentation)
     {
-        this.Width = presentation.GetWidthMM();
-        this.Height = presentation.GetHeightMM();
+        this.setSlideSize(presentation.GetWidthMM(), presentation.GetHeightMM());
         this.setSlideComments(new SlideComments(this));
         this.setLocks(new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id));
     }

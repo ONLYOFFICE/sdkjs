@@ -223,6 +223,10 @@
 		
 		return copy;
 	};
+		CPdfChartSpace.prototype.applySpecialPasteProps = function() {
+			this.setExternalReference(null);
+			this.setXLSX(new Uint8Array(0));
+		};
 
     window["AscPDF"].CPdfChartSpace = CPdfChartSpace;
 })();

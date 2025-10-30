@@ -642,12 +642,19 @@ CTablePr.prototype.InitDefault = function()
     this.TableStyleRowBandSize = 1;
     this.Jc                    = AscCommon.align_Left;
     this.Shd                   = new CDocumentShd();
-    this.TableBorders.Bottom   = new CDocumentBorder();
-    this.TableBorders.Left     = new CDocumentBorder();
-    this.TableBorders.Right    = new CDocumentBorder();
-    this.TableBorders.Top      = new CDocumentBorder();
-    this.TableBorders.InsideH  = new CDocumentBorder();
-    this.TableBorders.InsideV  = new CDocumentBorder();
+		const oBorderObj = {
+			Color: {r: 0, g: 0, b: 0},
+			Unifill: AscFormat.CreateUnfilFromRGB(0, 0, 0),
+			Space: 0,
+			Size: 12700 / 36000,
+			Value: border_Single
+		};
+    this.TableBorders.Bottom   = CDocumentBorder.FromObject(oBorderObj);
+    this.TableBorders.Left     = CDocumentBorder.FromObject(oBorderObj);
+    this.TableBorders.Right    = CDocumentBorder.FromObject(oBorderObj);
+    this.TableBorders.Top      = CDocumentBorder.FromObject(oBorderObj);
+    this.TableBorders.InsideH  = CDocumentBorder.FromObject(oBorderObj);
+    this.TableBorders.InsideV  = CDocumentBorder.FromObject(oBorderObj);
     this.TableCellMar.Bottom   = new CTableMeasurement(tblwidth_Mm, 1.27);
     this.TableCellMar.Left     = new CTableMeasurement(tblwidth_Mm, 2.54/*5.4 * g_dKoef_pt_to_mm*/); // 5.4pt
     this.TableCellMar.Right    = new CTableMeasurement(tblwidth_Mm, 2.54/*5.4 * g_dKoef_pt_to_mm*/); // 5.4pt

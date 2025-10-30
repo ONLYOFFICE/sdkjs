@@ -4375,7 +4375,7 @@ function CThumbnailsManager(editorPage)
 	// events
 	this.onMouseDown = function (e) {
 		const mobileTouchManager = oThis.m_oWordControl ? oThis.m_oWordControl.MobileTouchManagerThumbnails : null;
-		if (mobileTouchManager && mobileTouchManager.checkTouchEvent(e)) {
+		if (mobileTouchManager && mobileTouchManager.checkTouchEvent(e, true)) {
 			mobileTouchManager.startTouchingInProcess();
 			const res = mobileTouchManager.mainOnTouchStart(e);
 			mobileTouchManager.stopTouchingInProcess();
@@ -4563,7 +4563,7 @@ function CThumbnailsManager(editorPage)
 	this.onMouseMove = function(e)
 	{
 		let mobileTouchManager = oThis.m_oWordControl ? oThis.m_oWordControl.MobileTouchManagerThumbnails : null;
-		if (mobileTouchManager && mobileTouchManager.checkTouchEvent(e))
+		if (mobileTouchManager && mobileTouchManager.checkTouchEvent(e, true))
 		{
 			mobileTouchManager.startTouchingInProcess();
 			let res = mobileTouchManager.mainOnTouchMove(e);
@@ -4678,7 +4678,7 @@ function CThumbnailsManager(editorPage)
 	this.onMouseUp = function(e, bIsWindow)
 	{
 		let mobileTouchManager = oThis.m_oWordControl ? oThis.m_oWordControl.MobileTouchManagerThumbnails : null;
-		if (mobileTouchManager && mobileTouchManager.checkTouchEvent(e))
+		if (mobileTouchManager && mobileTouchManager.checkTouchEvent(e, true))
 		{
 			mobileTouchManager.startTouchingInProcess();
 			let res = mobileTouchManager.mainOnTouchEnd(e);
