@@ -1623,7 +1623,8 @@ NumFormat.prototype =
         var d = {val: 0, coeff: 1}, h = {val: 0, coeff: 24},
             min = {val: 0, coeff: 60}, s = {val: 0, coeff: 60}, ms = {val: 0, coeff: 1000};
         //number is negative in case of bDate1904
-        var numberAbs = this.formatType == AscCommon.NumFormatType.PDFFormDate ? number : Math.abs(number);
+        var isNegativeDate = number < 0;
+        var numberAbs = (this.formatType == AscCommon.NumFormatType.PDFFormDate || number >= 0) ? number : Math.abs(number);        
         var tmp = numberAbs;
         var ttimes = [d, h, min, s, ms];
         for(var i = 0; i < 4; i++)
@@ -1642,8 +1643,15 @@ NumFormat.prototype =
 		if(AscCommon.bDate1904)
 		{
 			stDate = new Date(Date.UTC(1904,0,1,0,0,0));
-			if(d.val)
-				stDate.setUTCDate( stDate.getUTCDate() + d.val );
+            if(d.val) 
+            {
+                if(isNegativeDate) {
+                    stDate.setUTCDate(stDate.getUTCDate() - d.val);
+                    this.bAddMinusIfNes = false
+                } else {
+                    stDate.setUTCDate(stDate.getUTCDate() + d.val);
+                }
+            }
 			day = stDate.getUTCDate();
 			dayWeek = stDate.getUTCDay();
 			month = stDate.getUTCMonth();
@@ -1651,45 +1659,60 @@ NumFormat.prototype =
 		}
 		else
 		{
-			if (60 <= numberAbs && numberAbs < 61)
-			{
-				day = 29;
-				month = 1;
-				year = 1900;
-				dayWeek = 3;
-			}
-			else if (0 <= numberAbs && numberAbs < 1)
-			{
-				//TODO необходимо использовать cDate везде
-				stDate = new Asc.cDate(Date.UTC(1899,11,31,0,0,0));
-				day = stDate.getUTCDate();
-				dayWeek = ( stDate.getUTCDay() > 0) ? stDate.getUTCDay() - 1 : 6;
-				month = stDate.getUTCMonth();
-				year = stDate.getUTCFullYear();
-			}
-			else if(numberAbs < 60 && number > 0)
-			{
-				stDate = new Date(Date.UTC(1899,11,31,0,0,0));
-				if(d.val)
-				// setUTCDate doesn't consider the transition from 1899 to 1900 when adding d.val
-					stDate.setUTCDate( stDate.getUTCDate() + d.val );
-				day = stDate.getUTCDate();
-				dayWeek = ( stDate.getUTCDay() > 0) ? stDate.getUTCDay() - 1 : 6;
-				month = stDate.getUTCMonth();
-				year = stDate.getUTCFullYear();
-			}
-			else
-			{
-				stDate = new Date(Date.UTC(1899,11,30,0,0,0));
-				if(d.val)
-					stDate.setUTCDate( stDate.getUTCDate() + d.val );
-				day = stDate.getUTCDate();
-				dayWeek = stDate.getUTCDay();
-				month = stDate.getUTCMonth();
-				year = stDate.getUTCFullYear();
-			}
+            if(isNegativeDate) 
+            {
+                stDate = new Date(Date.UTC(1899,11,30,0,0,0));
+                if(d.val)
+                    stDate.setUTCDate(stDate.getUTCDate() - d.val);
+                day = stDate.getUTCDate();
+                dayWeek = stDate.getUTCDay();
+                month = stDate.getUTCMonth();
+                year = stDate.getUTCFullYear();
+                this.bAddMinusIfNes = false //чтобы не добавлялся минус в начале строки
+            } 
+            else
+            {
+                if (60 <= numberAbs && numberAbs < 61)
+                {
+                    day = 29;
+                    month = 1;
+                    year = 1900;
+                    dayWeek = 3;
+                }
+                else if (0 <= numberAbs && numberAbs < 1)
+                {
+                    //TODO необходимо использовать cDate везде
+                    stDate = new Asc.cDate(Date.UTC(1899,11,31,0,0,0));
+                    day = stDate.getUTCDate();
+                    dayWeek = ( stDate.getUTCDay() > 0) ? stDate.getUTCDay() - 1 : 6;
+                    month = stDate.getUTCMonth();
+                    year = stDate.getUTCFullYear();
+                }
+                else if(numberAbs < 60 && number > 0)
+                {
+                    stDate = new Date(Date.UTC(1899,11,31,0,0,0));
+                    if(d.val)
+                    // setUTCDate doesn't consider the transition from 1899 to 1900 when adding d.val
+                        stDate.setUTCDate( stDate.getUTCDate() + d.val );
+                    day = stDate.getUTCDate();
+                    dayWeek = ( stDate.getUTCDay() > 0) ? stDate.getUTCDay() - 1 : 6;
+                    month = stDate.getUTCMonth();
+                    year = stDate.getUTCFullYear();
+                }
+                else
+                {
+                    stDate = new Date(Date.UTC(1899,11,30,0,0,0));
+                    if(d.val)
+                        stDate.setUTCDate( stDate.getUTCDate() + d.val );
+                    day = stDate.getUTCDate();
+                    dayWeek = stDate.getUTCDay();
+                    month = stDate.getUTCMonth();
+                    year = stDate.getUTCFullYear();
+                }
+            }
+
 		}
-        return {d: day, month: month, year: year, dayWeek: dayWeek, hour: h.val, min: min.val, sec: s.val, ms: ms.val, countDay: d.val };
+        return {d: day, month: month, year: year, dayWeek: dayWeek, hour: h.val, min: min.val, sec: s.val, ms: ms.val, countDay: isNegativeDate ? -d.val : d.val };
 	},
 	_FormatNumber: function (number, exponent, format, nReadState, cultureInfo, opt_forceNull)
 	{
@@ -1944,6 +1967,8 @@ NumFormat.prototype =
         }
         this.formatString = format;
         this.length = this.formatString.length;
+        this.formatType = formatType
+
         //string -> tokens
 		if (NumFormatType.WordFieldDate === formatType) {
 			this.valid = this._parseFormatWordDateTime();
@@ -2106,7 +2131,7 @@ NumFormat.prototype =
         {
             if(true === this.bDateTime)
             {
-                if(this.isInvalidDateValue(number) && this.formatType != AscCommon.NumFormatType.PDFFormDate)
+                if(this.isInvalidDateValue(number) && this.formatType != AscCommon.NumFormatType.PDFFormDate && this.formatType != AscCommon.NumFormatType.WordFieldDate)
                 {
                     var oNewFont = new AscCommonExcel.Font();
 					oNewFont.repeat = true;

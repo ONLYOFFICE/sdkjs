@@ -210,4 +210,70 @@ $(function () {
         }
     });
 
+    QUnit.test('parse date before 1900', function (assert) {
+        let testCases = [
+            [-1.0, 'dd.MM.yyyy', '29.12.1899'],
+            [-2.0, 'dd.MM.yyyy', '28.12.1899'], 
+            [-30.0, 'dd.MM.yyyy', '30.11.1899'],
+            [-365.0, 'dd.MM.yyyy', '30.12.1898'],
+
+            [-365.25, 'dd.MM.yyyy', '30.12.1898'],
+            [-730.5, 'dd.MM.yyyy', '30.12.1897'], 
+            [-1095.75, 'dd.MM.yyyy', '30.12.1896'], 
+
+            [-3650.0, 'dd.MM.yyyy', '01.01.1890'], 
+            [-4015.0, 'dd.MM.yyyy', '01.01.1889'],
+
+            [-18250.0, 'dd.MM.yyyy', '11.01.1850'], 
+            [-18600.0, 'dd.MM.yyyy', '26.01.1849'],
+
+            [-36500.0, 'dd.MM.yyyy', '23.01.1800'], 
+            [-36525.0, 'dd.MM.yyyy', '29.12.1799'],
+
+            [-73000.0, 'dd.MM.yyyy', '16.02.1700'], 
+            [-73050.0, 'dd.MM.yyyy', '28.12.1699'],
+
+            [-146000.0, 'dd.MM.yyyy', '06.04.1500'],
+            [-146100.0, 'dd.MM.yyyy', '27.12.1499'],
+
+            [-328500.0, 'dd.MM.yyyy', '05.08.1000'],
+            [-328600.0, 'dd.MM.yyyy', '27.04.1000'],
+
+            [-511000.0, 'dd.MM.yyyy', '04.12.0500'], 
+            [-511100.0, 'dd.MM.yyyy', '26.08.0500'],
+
+            [-693000.0, 'dd.MM.yyyy', '17.08.02'],
+            [-693010.0, 'dd.MM.yyyy', '07.08.02'],
+            [-693030.0, 'dd.MM.yyyy', '18.07.02'],
+            [-693060.0, 'dd.MM.yyyy', '18.06.02'],
+            [-693090.0, 'dd.MM.yyyy', '19.05.02'],
+            [-693120.0, 'dd.MM.yyyy', '19.04.02'],
+            [-693150.0, 'dd.MM.yyyy', '20.03.02'],
+            [-693180.0, 'dd.MM.yyyy', '18.02.02'],
+            [-693210.0, 'dd.MM.yyyy', '19.01.02'],
+            [-693240.0, 'dd.MM.yyyy', '20.12.01'],
+            [-693270.0, 'dd.MM.yyyy', '20.11.01'],
+            [-693300.0, 'dd.MM.yyyy', '21.10.01'],
+            [-693330.0, 'dd.MM.yyyy', '21.09.01'],
+            [-693360.0, 'dd.MM.yyyy', '22.08.01'],
+            [-693396.0, 'dd.MM.yyyy', '17.07.01'],
+            [-693900.0, 'dd.MM.yyyy', '29.02.00'],
+        ];
+        
+        for (let i = 0; i < testCases.length; i++) {
+            let value = testCases[i][0];
+            let format = testCases[i][1];
+            let expected = testCases[i][2];
+            
+            let expr = new AscCommon.CellFormat(format, 2);
+            let formatted = expr.format(value);
+            let text = '';
+            for (let j = 0, length = formatted.length; j < length; ++j) {
+                text += formatted[j].text;
+            }
+            
+            assert.strictEqual(text, expected, `format("${format}", ${value})`);
+        }
+    });
+
 });
