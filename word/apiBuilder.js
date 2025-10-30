@@ -1732,153 +1732,6 @@
 		return this.Paragraphs;
 	};
 
-	function private_forEachTable(selectedContent, callback) {
-		if (!selectedContent) return;
-		const elementWrappers = selectedContent.Elements;
-		for (let i = 0; i < elementWrappers.length; i++) {
-			const element = elementWrappers[i].Element;
-			if (element && element.IsTable && element.IsTable()) {
-				callback(element);
-			}
-		}
-	}
-
-	ApiRange.prototype.private_GetSelectedContent = function () {
-		private_RefreshRangesPosition();
-
-		const logicDocument = private_GetLogicDocument();
-		const oldState = logicDocument.SaveDocumentState();
-
-		this.Select(false);
-		private_TrackRangesPositions();
-
-		const selectedContent = new AscCommonWord.CSelectedContent();
-		logicDocument.controller_GetSelectedContent(selectedContent);
-
-		logicDocument.LoadDocumentState(oldState);
-		logicDocument.UpdateSelection();
-
-		return selectedContent;
-	};
-
-	/**
-	 * Returns an array of all tables in the range.
-	 *
-	 * @memberof ApiRange
-	 * @typeofeditors ["CDE"]
-	 * @returns {ApiTable[]}
-	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetAllTables.js
-	 */
-	ApiRange.prototype.GetAllTables = function () {
-		const tables = [];
-		const selectedContent = this.private_GetSelectedContent();
-		private_forEachTable(selectedContent, function (table) {
-			tables.push(new ApiTable(table));
-		});
-		return tables;
-	};
-
-	/**
-	 * Returns an array of all table rows in the range.
-	 *
-	 * @memberof ApiRange
-	 * @typeofeditors ["CDE"]
-	 * @returns {ApiTableRow[]}
-	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetAllTableRows.js
-	 */
-	ApiRange.prototype.GetAllTableRows = function () {
-		const rows = [];
-		const selectedContent = this.private_GetSelectedContent();
-		private_forEachTable(selectedContent, function (table) {
-			const apiRows = table.Content.map(function (row) {
-				return new ApiTableRow(row);
-			});
-			Array.prototype.push.apply(rows, apiRows);
-		});
-		return rows;
-	};
-
-	/**
-	 * Returns an array of all table cells in the range.
-	 *
-	 * @memberof ApiRange
-	 * @typeofeditors ["CDE"]
-	 * @returns {ApiTableCell[]}
-	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetAllTableCells.js
-	 */
-	ApiRange.prototype.GetAllTableCells = function () {
-		const cells = [];
-		const selectedContent = this.private_GetSelectedContent();
-		private_forEachTable(selectedContent, function (table) {
-			const rows = table.Content;
-			rows.forEach(function (row) {
-				const apiCells = row.Content.map(function (cell) {
-					return new ApiTableCell(cell);
-				});
-				Array.prototype.push.apply(cells, apiCells);
-			});
-		});
-		return cells;
-	};
-
-	/**
-	 * Returns an array of all mathematical formulas in the range.
-	 *
-	 * @memberof ApiRange
-	 * @typeofeditors ["CDE"]
-	 * @returns {ApiMath[]}
-	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetAllMaths.js
-	 */
-	ApiRange.prototype.GetAllMaths = function () {
-		const maths = [];
-		const selectedContent = this.private_GetSelectedContent();
-		if (selectedContent) {
-			for (let i = 0; i < selectedContent.Elements.length; i++) {
-				const element = selectedContent.Elements[i].Element;
-				collectMathsFromElement(element);
-			}
-		}
-		return maths;
-		
-		function collectMathsFromElement(element) {
-			const type = element && element.GetType && element.GetType();
-
-			if (type === type_Paragraph) {
-				const paraMaths = [];
-				element.GetAllParaMaths(paraMaths);
-				paraMaths.forEach(function (paraMath) {
-					maths.push(new ApiMath(paraMath));
-				});
-				return;
-			}
-
-			if (type === type_Table) {
-				for (let rowIndex = 0; rowIndex < element.Content.length; rowIndex++) {
-					const row = element.Content[rowIndex];
-					for (let cellIndex = 0; cellIndex < row.Content.length; cellIndex++) {
-						const cell = row.Content[cellIndex];
-						if (cell && cell.Content && cell.Content.Content) {
-							// cell.Content instanceof CDocumentContent
-							for (let contentIndex = 0; contentIndex < cell.Content.Content.length; contentIndex++) {
-								collectMathsFromElement(cell.Content.Content[contentIndex]);
-							}
-						}
-					}
-				}
-				return;
-			}
-
-			if (type === type_BlockLevelSdt) {
-				if (element.Content && element.Content.Content) {
-					for (let contentIndex = 0; contentIndex < element.Content.Content.length; contentIndex++) {
-						collectMathsFromElement(element.Content.Content[contentIndex]);
-					}
-				}
-				return;
-			}
-		}
-	};
-
 	/**
 	 * Sets the selection to the specified range.
 	 * @memberof ApiRange
@@ -27414,8 +27267,17 @@
 	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetTables.js
 	 */
 	ApiSelection.prototype.GetTables = function () {
-		const range = this.GetRange();
-		return range ? range.GetAllTables() : [];
+		const tables = [];
+		const apiDocument = this.GetDocument();
+		if (apiDocument) {
+			const visitor = apiDocument.GetDocumentVisitor();
+			visitor['Table'] = function (apiTable) {
+				tables.push(apiTable);
+				return false;
+			};
+			visitor['Traverse'](true);
+		}
+		return tables;
 	};
 
 	/**
@@ -27427,8 +27289,17 @@
 	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetRows.js
 	 */
 	ApiSelection.prototype.GetRows = function () {
-		const range = this.GetRange();
-		return range ? range.GetAllTableRows() : [];
+		const rows = [];
+		const apiDocument = this.GetDocument();
+		if (apiDocument) {
+			const visitor = apiDocument.GetDocumentVisitor();
+			visitor['TableRow'] = function (apiTableRow) {
+				rows.push(apiTableRow);
+				return false;
+			};
+			visitor['Traverse'](true);
+		}
+		return rows;
 	};
 
 	/**
@@ -27440,8 +27311,17 @@
 	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetCells.js
 	 */
 	ApiSelection.prototype.GetCells = function () {
-		const range = this.GetRange();
-		return range ? range.GetAllTableCells() : [];
+		const cells = [];
+		const apiDocument = this.GetDocument();
+		if (apiDocument) {
+			const visitor = apiDocument.GetDocumentVisitor();
+			visitor['TableCell'] = function (apiTableCell) {
+				cells.push(apiTableCell);
+				return false;
+			};
+			visitor['Traverse'](true);
+		}
+		return cells;
 	};
 
 	/**
@@ -27507,19 +27387,15 @@
 	 */
 	ApiSelection.prototype.GetHyperlinks = function () {
 		const hyperlinks = [];
-
 		const apiDocument = this.GetDocument();
 		if (apiDocument) {
 			const visitor = apiDocument.GetDocumentVisitor();
-
 			visitor['Hyperlink'] = function (apiHyperlink) {
 				hyperlinks.push(apiHyperlink);
 				return false;
 			};
-
 			visitor['Traverse'](true);
 		}
-
 		return hyperlinks;
 	};
 
@@ -27581,8 +27457,17 @@
 	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetMaths.js
 	 */
 	ApiSelection.prototype.GetMaths = function () {
-		const range = this.GetRange();
-		return range ? range.GetAllMaths() : [];
+		const maths = [];
+		const apiDocument = this.GetDocument();
+		if (apiDocument) {
+			const visitor = apiDocument.GetDocumentVisitor();
+			visitor['Math'] = function (oMath) {
+				maths.push(oMath);
+				return false;
+			};
+			visitor['Traverse'](true);
+		}
+		return maths;
 	};
 
 	/**
@@ -27890,6 +27775,12 @@
 			? this["Hyperlink"](new ApiHyperlink(hyperlink))
 			: this["HyperlinkEnd"](new ApiHyperlink(hyperlink));
 	};
+	ApiDocumentVisitor.prototype.oMath = function(oMath, isStart)
+	{
+		return isStart
+			? this["Math"](new ApiMath(oMath))
+			: this["MathEnd"](new ApiMath(oMath));
+	};
 	ApiDocumentVisitor.prototype.blockLevelSdt = function(sdt, isStart)
 	{
 		if (isStart)
@@ -28064,6 +27955,14 @@
 	{
 		return false;
 	};
+	ApiDocumentVisitor.prototype["Math"] = function(oMath)
+	{
+		return false;
+	};
+	ApiDocumentVisitor.prototype["MathEnd"] = function(oMath)
+	{
+		return false;
+	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28210,10 +28109,6 @@
 	ApiRange.prototype["GetEndPos"]                  = ApiRange.prototype.GetEndPos;
 	ApiRange.prototype["MoveCursorToPos"]            = ApiRange.prototype.MoveCursorToPos;
 	ApiRange.prototype["AddField"]                   = ApiRange.prototype.AddField;
-	ApiRange.prototype["GetAllTables"]               = ApiRange.prototype.GetAllTables;
-	ApiRange.prototype["GetAllTableRows"]            = ApiRange.prototype.GetAllTableRows;
-	ApiRange.prototype["GetAllTableCells"]           = ApiRange.prototype.GetAllTableCells;
-	ApiRange.prototype["GetAllMaths"]                = ApiRange.prototype.GetAllMaths;
 	
 	ApiDocument.prototype["GetClassType"]                  = ApiDocument.prototype.GetClassType;
 	ApiDocument.prototype["CreateNewHistoryPoint"]         = ApiDocument.prototype.CreateNewHistoryPoint;
