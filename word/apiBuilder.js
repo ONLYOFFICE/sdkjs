@@ -8169,8 +8169,8 @@
 			"theme":     bWriteTheme ? oWriter.SerTheme(this.Document.GetTheme()) : undefined,
 			"sectPr":    bWriteSectionPr ? oWriter.SerSectionPr(this.Document.SectPr) : undefined,
 			"content":   oWriter.SerContent(this.Document.Content, undefined, undefined, undefined, true),
-			"numbering": bWriteNumberings ? oWriter.jsonWordNumberings : undefined,
-			"styles":    bWriteStyles ? oWriter.SerWordStylesForWrite() : undefined
+			"styles":    bWriteStyles ? oWriter.SerWordStylesForWrite() : undefined,
+			"numbering": bWriteNumberings ? oWriter.jsonWordNumberings : undefined			
 		}
 
 		return JSON.stringify(oResult);
