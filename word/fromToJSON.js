@@ -11919,7 +11919,7 @@
 
 		if (oParsedFill["stretch"])
 		{
-			oBlipFill.stretch = AscFormat.CBlipFillStretch();
+			oBlipFill.stretch = new AscFormat.CBlipFillStretch();
 			oBlipFill.stretch.fillRect = this.SrcRectFromJSON(oParsedFill["stretch"]["fillRect"]);
 		}
 
