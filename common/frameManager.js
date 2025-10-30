@@ -849,10 +849,12 @@
 	};
 	CFrameBinaryLoader.prototype.getCloseCallbackFromBlobCache = function (oCache) {
 		return function () {
-			const oOldUrls = oCache["url2BlobUrl"];
-			for (let sPath in oOldUrls) {
-				const sUrl = oOldUrls[sPath];
-				window.URL.revokeObjectURL(sUrl);
+			if (window.URL.revokeObjectURL) {
+				const oOldUrls = oCache["url2BlobUrl"];
+				for (let sPath in oOldUrls) {
+					const sUrl = oOldUrls[sPath];
+					window.URL.revokeObjectURL(sUrl);
+				}
 			}
 		}
 	};
@@ -942,13 +944,13 @@
 						if (jsZlib.files && jsZlib.files.length) {
 							const oImgBlobs = this.getBlobCache(jsZlib);
 							arrStream = jsZlib.getFile(jsZlib.files[0]);
-							oData.stream = Array.from(arrStream);
+							oData.stream = arrStream ? Array.from(arrStream) : null;
 							oData.blobs = oImgBlobs;
 							oData.addCloseCallback(this.getCloseCallbackFromBlobCache(oImgBlobs));
 						}
 						jsZlib.close();
 					}
-				} else {
+				} else if (arrStream) {
 					oData.stream = Array.from(arrStream);
 				}
 			} else {
