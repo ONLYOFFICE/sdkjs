@@ -412,6 +412,117 @@
 	 *
 	 */
 
+	/**
+	 * Animation effect type that will be applied to the shape or text.
+	 * @typedef {(
+	 * "appear" | "arcUp" | "ascend" | "blast" | "blinds" | "boldFlash" | "boldReveal" |
+	 * "boomerang" | "bounce" | "box" | "brushOnColor" | "brushOnUnderline" | "centerRevolve" |
+	 * "changeFillColor" | "changeFont" | "changeFontColor" | "changeFontSize" | "changeFontStyle" |
+	 * "changeLineColor" | "checkerboard" | "circle" | "colorBlend" | "colorReveal" | "colorWave" |
+	 * "complementaryColor" | "complementaryColor2" | "contrastingColor" | "crawl" | "credits" |
+	 * "custom" | "darken" | "desaturate" | "descend" | "diamond" | "dissolve" | "easeIn" |
+	 * "expand" | "fade" | "fadedSwivel" | "fadedZoom" | "flashBulb" | "flashOnce" | "flicker" |
+	 * "flip" | "float" | "fly" | "fold" | "glide" | "growAndTurn" | "growShrink" | "growWithColor" |
+	 * "lighten" | "lightSpeed" | "mediaPause" | "mediaPlay" | "mediaStop" |
+	 * "path4PointStar" | "path5PointStar" | "path6PointStar" | "path8PointStar" |
+	 * "pathArcDown" | "pathArcLeft" | "pathArcRight" | "pathArcUp" | "pathBean" |
+	 * "pathBounceLeft" | "pathBounceRight" | "pathBuzzsaw" | "pathCircle" | "pathCrescentMoon" |
+	 * "pathCurvedSquare" | "pathCurvedX" | "pathCurvyLeft" | "pathCurvyRight" | "pathCurvyStar" |
+	 * "pathDecayingWave" | "pathDiagonalDownRight" | "pathDiagonalUpRight" | "pathDiamond" |
+	 * "pathDown" | "pathEqualTriangle" | "pathFigure8Four" | "pathFootball" | "pathFunnel" |
+	 * "pathHeart" | "pathHeartbeat" | "pathHexagon" | "pathHorizontalFigure8" |
+	 * "pathInvertedSquare" | "pathInvertedTriangle" | "pathLeft" | "pathLoopdeLoop" |
+	 * "pathNeutron" | "pathOctagon" | "pathParallelogram" | "pathPeanut" | "pathPentagon" |
+	 * "pathPlus" | "pathPointyStar" | "pathRightTriangle" | "pathSCurve1" | "pathSCurve2" |
+	 * "pathSineWave" | "pathSpiralLeft" | "pathSpiralRight" | "pathSpring" | "pathSquare" |
+	 * "pathStairsDown" | "pathSwoosh" | "pathTeardrop" | "pathTrapezoid" | "pathTurnDown" |
+	 * "pathTurnRight" | "pathTurnUp" | "pathTurnUpRight" | "pathUp" | "pathVerticalFigure8" |
+	 * "pathWave" | "pathZigzag" | "peek" | "pinwheel" | "plus" | "randomBars" | "randomEffects" |
+	 * "riseUp" | "shimmer" | "sling" | "spin" | "spinner" | "spiral" | "split" | "stretch" |
+	 * "stretchy" | "strips" | "styleEmphasis" | "swish" | "swivel" | "teeter" | "thinLine" |
+	 * "transparency" | "unfold" | "verticalGrow" | "wave" | "wedge" | "wheel" | "whip" | "wipe" |
+	 * "zip" | "zoom"
+	 * )} AnimationEffectType
+	 * @see office-js-api/Examples/Enumerations/AnimationEffectType.js
+	 */
+
+	/**
+	 * Animation trigger type that defines when the animation starts.
+	 * @typedef {("none" | "onPageClick" | "withPrevious" | "afterPrevious" | "onShapeClick" | "onMediaBookmark" | "mixed")} AnimationTriggerType
+	 * @see office-js-api/Examples/Enumerations/AnimationTriggerType.js
+	 */
+
+	/**
+	 * Animation behavior type that defines the animation action.
+	 * @typedef {("mixed" | "none" | "motion" | "color" | "scale" | "rotate" | "property" | "command" | "filter" | "set")} AnimationBehaviorType
+	 * @see office-js-api/Examples/Enumerations/AnimationBehaviorType.js
+	 */
+
+	/**
+	 * Entry effect type for slide transitions and shape animations.
+	 * @typedef {("none" | "mixed" | "cut" | "fade" | "push" | "wipe" | "split" | "reveal" |
+	 * "random" | "blindsHorizontal" | "blindsVertical" | "checkerboardAcross" | "checkerboardDown" |
+	 * "combHorizontal" | "combVertical" | "coverDown" | "coverLeft" | "coverLeftDown" | "coverLeftUp" |
+	 * "coverRight" | "coverRightDown" | "coverRightUp" | "coverUp" | "dissolve" | "doorsHorizontal" |
+	 * "doorsVertical" | "orbitsHorizontal" | "orbitsVertical" | "plusOut" | "randomBarsHorizontal" |
+	 * "randomBarsVertical" | "stripsDownLeft" | "stripsDownRight" | "stripsLeftDown" | "stripsLeftUp" |
+	 * "stripsRightDown" | "stripsRightUp" | "stripsUpLeft" | "stripsUpRight" | "uncoverDown" |
+	 * "uncoverLeft" | "uncoverLeftDown" | "uncoverLeftUp" | "uncoverRight" | "uncoverRightDown" |
+	 * "uncoverRightUp" | "uncoverUp" | "wedge" | "wheel1Spoke" | "wheel2Spokes" | "wheel3Spokes" |
+	 * "wheel4Spokes" | "wheel8Spokes" | "wipeDown" | "wipeLeft" | "wipeRight" | "wipeUp" |
+	 * "zoomCenter" | "zoomIn" | "zoomInSlightly" | "zoomOut" | "zoomOutSlightly" | "zoomBottom" |
+	 * "newsflash" | "pushDown" | "pushLeft" | "pushRight" | "pushUp" | "spiralIn" | "splitHorizontalIn" |
+	 * "splitHorizontalOut" | "splitVerticalIn" | "splitVerticalOut" | "flashOnce" | "appear" |
+	 * "circleOut" | "diamondOut" | "disappear" | "boxIn" | "boxOut" | "flyFromBottom" | "flyFromBottomLeft" |
+	 * "flyFromBottomRight" | "flyFromLeft" | "flyFromRight" | "flyFromTop" | "flyFromTopLeft" |
+	 * "flyFromTopRight" | "crawlFromDown" | "crawlFromLeft" | "crawlFromRight" | "crawlFromUp" |
+	 * "peekFromDown" | "peekFromLeft" | "peekFromRight" | "peekFromUp" | "boxDown" | "boxLeft" |
+	 * "boxRight" | "boxUp" | "conveyorLeft" | "conveyorRight" | "cubeDown" | "cubeLeft" | "cubeRight" |
+	 * "cubeUp" | "ferrisWheelLeft" | "ferrisWheelRight" | "flashBulb" | "flipDown" | "flipLeft" |
+	 * "flipRight" | "flipUp" | "flyThroughIn" | "flyThroughInBounce" | "flyThroughOut" | "flyThroughOutBounce" |
+	 * "gallery" | "honeycomb" | "pageBottomLeft" | "pageBottomRight" | "panDown" | "panLeft" |
+	 * "panRight" | "panUp" | "rippleCenter" | "rippleLeftDown" | "rippleRightUp" | "rotateDown" |
+	 * "rotateLeft" | "rotateRight" | "rotateUp" | "shredRectangleIn" | "shredRectangleOut" |
+	 * "shredStripsIn" | "shredStripsOut" | "switchDown" | "switchLeft" | "switchRight" | "switchUp" |
+	 * "swivel" | "vortexDown" | "vortexLeft" | "vortexRight" | "vortexUp" | "window" | "windowHorizontal" |
+	 * "windowVertical" | "warpIn" | "warpOut" | "wheelReverse1Spoke" | "wheelReverse2Spokes" |
+	 * "wheelReverse3Spokes" | "wheelReverse4Spokes" | "wheelReverse8Spokes" | "windLeft" | "windRight"
+	 * )} EntryEffectType
+	 * @see office-js-api/Examples/Enumerations/EntryEffectType.js
+	 */
+
+	/**
+	 * Slide transition speed.
+	 * @typedef {("fast" | "medium" | "slow" | "mixed")} TransitionSpeed
+	 * @see office-js-api/Examples/Enumerations/TransitionSpeed.js
+	 */
+
+	/**
+	 * Text animation level.
+	 * @typedef {("none" | "allLevels" | "firstLevel" | "secondLevel" | "thirdLevel" | "fourthLevel" | "fifthLevel")} TextAnimationLevel
+	 * @see office-js-api/Examples/Enumerations/TextAnimationLevel.js
+	 */
+
+	/**
+	 * After effect type for animations.
+	 * @typedef {("none" | "dim" | "hide" | "hideOnNextClick" | "mixed")} AfterEffectType
+	 * @see office-js-api/Examples/Enumerations/AfterEffectType.js
+	 */
+
+	/**
+	 * Animation property type.
+	 * @typedef {("none" | "x" | "y" | "width" | "height" | "opacity" | "rotation" | "color" | "visibility" |
+	 * "textFontBold" | "textFontColor" | "textFontEmboss" | "textFontItalic" | "textFontName" |
+	 * "textFontShadow" | "textFontSize" | "textFontStrikeThrough" | "textFontUnderline" | "textFontSubscript" |
+	 * "textFontSuperscript" | "textBulletCharacter" | "textBulletFontName" | "textBulletNumber" |
+	 * "textBulletColor" | "textBulletRelativeSize" | "textBulletStyle" | "textBulletType" |
+	 * "shapeFillOn" | "shapeFillColor" | "shapeFillOpacity" | "shapeFillBackColor" |
+	 * "shapeLineOn" | "shapeLineColor" | "shapeLineOpacity" | "shapeLineWeight" |
+	 * "shapeShadowOn" | "shapeShadowType" | "shapeShadowColor" | "shapeShadowOpacity" |
+	 * "shapeShadowOffsetX" | "shapeShadowOffsetY")} AnimationPropertyType
+	 * @see office-js-api/Examples/Enumerations/AnimationPropertyType.js
+	 */
+
     //------------------------------------------------------------------------------------------------------------------
     //
     // Base Api
@@ -4093,6 +4204,82 @@
 		return false;
 	}
 
+
+
+
+	/**
+	 * Returns the timeline object for the slide.
+	 * @typeofeditors ["CPE"]
+	 * @memberof ApiSlide
+	 * @returns {ApiTimeLine}
+	 * @see office-js-api/Examples/Presentation/ApiSlide/Methods/GetTimeLine.js
+	 */
+	ApiSlide.prototype.GetTimeLine = function()
+	{
+		return new ApiTimeLine(this.Slide);
+	};
+
+	/**
+	 * Returns the slide show transition object for the slide.
+	 * @typeofeditors ["CPE"]
+	 * @memberof ApiSlide
+	 * @returns {ApiSlideShowTransition}
+	 * @see office-js-api/Examples/Presentation/ApiSlide/Methods/GetSlideShowTransition.js
+	 */
+	ApiSlide.prototype.GetSlideShowTransition = function()
+	{
+		return new ApiSlideShowTransition(this.Slide);
+	};
+
+
+
+	/**
+	 * Class representing a timeline of animations for a slide.
+	 * @constructor
+	 * @param {Slide} oSlide
+	 */
+	function ApiTimeLine(oSlide)
+	{
+		this.Slide = oSlide;
+	}
+
+	/**
+	 * Returns the type of the ApiTimeLine class.
+	 * @typeofeditors ["CPE"]
+	 * @returns {"timeLine"}
+	 * @see office-js-api/Examples/Presentation/ApiTimeLine/Methods/GetClassType.js
+	 */
+	ApiTimeLine.prototype.GetClassType = function()
+	{
+		return "timeLine";
+	};
+
+	/**
+	 * Returns the main sequence of animations.
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiSequence}
+	 * @see office-js-api/Examples/Presentation/ApiTimeLine/Methods/GetMainSequence.js
+	 */
+	ApiTimeLine.prototype.GetMainSequence = function()
+	{
+		return new ApiSequence(this.Slide, "main");
+	};
+
+	/**
+	 * Returns the interactive sequences collection.
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiSequences}
+	 * @see office-js-api/Examples/Presentation/ApiTimeLine/Methods/GetInteractiveSequences.js
+	 */
+	ApiTimeLine.prototype.GetInteractiveSequences = function()
+	{
+		return new ApiSequences(this.Slide, "interactive");
+	};
+
+
+
+
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiNotesPage
@@ -6290,6 +6477,1177 @@
 		}
 		return position;
 	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	// Animation constants
+	AscFormat.NODE_TYPE_CLICKEFFECT = 0;
+	AscFormat.NODE_TYPE_WITHPREV = 1;
+	AscFormat.NODE_TYPE_AFTEREFFECT = 2;
+	AscFormat.NODE_TYPE_MAINSEQ = 3;
+	AscFormat.NODE_TYPE_INTERACTSEQ = 4;
+	AscFormat.NODE_TYPE_CLICKPAR = 5;
+	AscFormat.NODE_TYPE_WITHGROUP = 6;
+	AscFormat.NODE_TYPE_AFTERGROUP = 7;
+
+	AscFormat.NODE_FILL_HOLD = 0;
+	AscFormat.NODE_FILL_FREEZE = 0; // Same as HOLD
+	AscFormat.NODE_FILL_REMOVE = 1;
+	AscFormat.NODE_FILL_TRANSITION = 2;
+
+	AscFormat.PRESET_CLASS_ENTR = 1;
+	AscFormat.PRESET_CLASS_EXIT = 2;
+	AscFormat.PRESET_CLASS_EMPH = 3;
+	AscFormat.PRESET_CLASS_PATH = 4;
+	AscFormat.PRESET_CLASS_MEDIA = 5;
+
+	AscFormat.RESTART_ALWAYS = 0;
+	AscFormat.RESTART_NEVER = 1;
+	AscFormat.RESTART_WHEN_OFF = 2;
+
+	// ============================================================================
+	// API SLIDE EXTENSIONS
+	// ============================================================================
+
+	/**
+	 * Returns the timeline object for the slide.
+	 * @memberof ApiSlide
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiTimeLine}
+	 * @example
+	 * var oPresentation = Api.GetPresentation();
+	 * var oSlide = oPresentation.GetSlideByIndex(0);
+	 * var oTimeLine = oSlide.GetTimeLine();
+	 */
+	ApiSlide.prototype.GetTimeLine = function()
+	{
+		var oSlide = this.Slide;
+		var oTiming = oSlide.timing;
+
+		if (!oTiming)
+		{
+			// Create timing structure
+			oTiming = new AscFormat.CTiming();
+			oTiming.setParent(oSlide);
+
+			// Use internal method if available
+			if (oSlide.setTiming) {
+				oSlide.setTiming(oTiming);
+			} else {
+				oSlide.timing = oTiming;
+			}
+
+			// Initialize main sequence structure
+			oTiming.createMainSequence();
+		}
+
+		return new ApiTimeLine(oTiming, oSlide);
+	};
+
+	/**
+	 * Returns the slide show transition object for the slide.
+	 * @memberof ApiSlide
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiSlideShowTransition}
+	 * @example
+	 * var oPresentation = Api.GetPresentation();
+	 * var oSlide = oPresentation.GetSlideByIndex(0);
+	 * var oTransition = oSlide.GetSlideShowTransition();
+	 * oTransition.SetEntryEffect("fade");
+	 * oTransition.SetDuration(1.5);
+	 */
+	ApiSlide.prototype.GetSlideShowTransition = function()
+	{
+		return new ApiSlideShowTransition(this.Slide);
+	};
+
+
+	/**
+	 * Returns the animation settings for the shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiAnimationSettings}
+	 * @example
+	 * var oShape = oSlide.GetAllShapes()[0];
+	 * var oAnimSettings = oShape.GetAnimationSettings();
+	 */
+	ApiShape.prototype.GetAnimationSettings = function()
+	{
+		return new ApiAnimationSettings(this.Shape);
+	};
+
+	// Also add for ApiDrawing, ApiChart, ApiTable
+	if (typeof ApiDrawing !== 'undefined') {
+		ApiDrawing.prototype.GetAnimationSettings = function()
+		{
+			return new ApiAnimationSettings(this.Drawing);
+		};
+	}
+
+	if (typeof ApiChart !== 'undefined') {
+		ApiChart.prototype.GetAnimationSettings = function()
+		{
+			return new ApiAnimationSettings(this.Chart);
+		};
+	}
+
+	if (typeof ApiTable !== 'undefined') {
+		ApiTable.prototype.GetAnimationSettings = function()
+		{
+			return new ApiAnimationSettings(this.Table);
+		};
+	}
+
+	// ============================================================================
+	// CLASS: ApiTimeLine
+	// ============================================================================
+
+	/**
+	 * Class representing a timeline of animations for a slide.
+	 * @constructor
+	 * @param {CTiming} oTiming - Internal timing object
+	 * @param {Slide} oSlide - Parent slide
+	 */
+	function ApiTimeLine(oTiming, oSlide)
+	{
+		this.timing = oTiming;
+		this.slide = oSlide;
+	}
+
+	/**
+	 * Returns the type of the ApiTimeLine class.
+	 * @typeofeditors ["CPE"]
+	 * @returns {"timeLine"}
+	 */
+	ApiTimeLine.prototype.GetClassType = function()
+	{
+		return "timeLine";
+	};
+
+	/**
+	 * Returns the main sequence of animations.
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiSequence}
+	 * @example
+	 * var oTimeLine = oSlide.GetTimeLine();
+	 * var oMainSequence = oTimeLine.GetMainSequence();
+	 * oMainSequence.AddEffect(oShape, "fade", "onPageClick");
+	 */
+	ApiTimeLine.prototype.GetMainSequence = function()
+	{
+		var oMainSeq = this.timing.getMainSequence();
+		if (!oMainSeq)
+		{
+			// Create main sequence structure if it doesn't exist
+			this.timing.createMainSequence();
+			oMainSeq = this.timing.getMainSequence();
+		}
+		return new ApiSequence(this.timing, "main");
+	};
+
+	/**
+	 * Returns the interactive sequences collection.
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiSequences}
+	 * @example
+	 * var oTimeLine = oSlide.GetTimeLine();
+	 * var oInteractiveSeqs = oTimeLine.GetInteractiveSequences();
+	 */
+	ApiTimeLine.prototype.GetInteractiveSequences = function()
+	{
+		return new ApiSequences(this.timing, "interactive");
+	};
+
+	// ============================================================================
+	// CLASS: ApiSequence
+	// ============================================================================
+
+	/**
+	 * Class representing an animation sequence.
+	 * @constructor
+	 * @param {CTiming} oTiming - Parent timing object
+	 * @param {string} sType - "main" or "interactive"
+	 */
+	function ApiSequence(oTiming, sType)
+	{
+		this.timing = oTiming;
+		this.type = sType;
+	}
+
+	/**
+	 * Returns the type of the ApiSequence class.
+	 * @typeofeditors ["CPE"]
+	 * @returns {"sequence"}
+	 */
+	ApiSequence.prototype.GetClassType = function()
+	{
+		return "sequence";
+	};
+
+	/**
+	 * Adds an animation effect to the sequence.
+	 * @typeofeditors ["CPE"]
+	 * @param {ApiShape | ApiDrawing | ApiChart | ApiTable} oApiObject - The object to animate
+	 * @param {AnimationEffectType} sEffectType - The effect type (e.g., "fade", "fly", "zoom", etc.)
+	 * @param {AnimationTriggerType} [sTrigger="onPageClick"] - When to trigger: "onPageClick", "withPrevious", "afterPrevious"
+	 * @param {ApiRGBColor} [oColor] - Color for color-change effects
+	 * @returns {ApiEffect}
+	 * @example
+	 * var oShape = oSlide.GetAllShapes()[0];
+	 * var oEffect = oMainSequence.AddEffect(oShape, "fade", "onPageClick");
+	 * oEffect.GetTiming().SetDuration(2);
+	 */
+	ApiSequence.prototype.AddEffect = function(oApiObject, sEffectType, sTrigger, oColor)
+	{
+		// Get internal object
+		var oInternalObject = null;
+		var sObjectId = null;
+
+		if (oApiObject && oApiObject.Shape) {
+			oInternalObject = oApiObject.Shape;
+		} else if (oApiObject && oApiObject.Drawing) {
+			oInternalObject = oApiObject.Drawing;
+		} else if (oApiObject && oApiObject.Chart) {
+			oInternalObject = oApiObject.Chart;
+		} else if (oApiObject && oApiObject.Table) {
+			oInternalObject = oApiObject.Table;
+		}
+
+		if (!oInternalObject) {
+			console.error("Invalid object for animation");
+			return null;
+		}
+
+		// Get or create object ID
+		sObjectId = oInternalObject.Get_Id ? oInternalObject.Get_Id() : oInternalObject.Id;
+		if (!sObjectId) {
+			sObjectId = AscCommon.CreateGUID();
+			if (oInternalObject.Set_Id) {
+				oInternalObject.Set_Id(sObjectId);
+			}
+		}
+
+		// Map effect name to preset class and ID
+		var oEffectMap = this.getEffectMapping(sEffectType);
+		var nPresetClass = oEffectMap.presetClass;
+		var nPresetId = oEffectMap.presetId;
+		var nPresetSubtype = oEffectMap.presetSubtype || 0;
+
+		// Get internal color if provided
+		var oInternalColor = null;
+		if (oColor && oColor.Unicolor) {
+			oInternalColor = oColor.Unicolor;
+		}
+
+		// Create effect using internal timing methods
+		var oEffect = this.timing.createEffect(sObjectId, nPresetClass, nPresetId, nPresetSubtype, oInternalColor);
+
+		if (!oEffect) {
+			console.error("Failed to create effect");
+			return null;
+		}
+
+		// Configure trigger type
+		this.configureTriggerType(oEffect, sTrigger || "onPageClick");
+
+		// Add to main sequence
+		if (this.type === "main") {
+			var aEffects = this.timing.addEffectsToMainSequence([oEffect]);
+			if (aEffects && aEffects.length > 0) {
+				return new ApiEffect(aEffects[0], this);
+			}
+		}
+
+		return new ApiEffect(oEffect, this);
+	};
+
+	/**
+	 * Configure trigger type for an effect
+	 * @private
+	 */
+	ApiSequence.prototype.configureTriggerType = function(oEffect, sTrigger)
+	{
+		var oAttr = oEffect.getAttributesObject ? oEffect.getAttributesObject() : oEffect.cTn;
+		if (!oAttr) return;
+
+		var nNodeType;
+		switch(sTrigger) {
+			case "withPrevious":
+				nNodeType = AscFormat.NODE_TYPE_WITHPREV;
+				break;
+			case "afterPrevious":
+				nNodeType = AscFormat.NODE_TYPE_AFTEREFFECT;
+				break;
+			case "onPageClick":
+			default:
+				nNodeType = AscFormat.NODE_TYPE_CLICKEFFECT;
+				break;
+		}
+
+		if (oAttr.setNodeType) {
+			oAttr.setNodeType(nNodeType);
+		}
+	};
+
+	/**
+	 * Get effect mapping for effect name
+	 * @private
+	 */
+	ApiSequence.prototype.getEffectMapping = function(sEffectName)
+	{
+		// Complete effect mappings
+		var oMappings = {
+			// Entrance effects
+			"appear": { presetClass: 1, presetId: 1, presetSubtype: 0 },
+			"blinds": { presetClass: 1, presetId: 2, presetSubtype: 0 },
+			"box": { presetClass: 1, presetId: 3, presetSubtype: 0 },
+			"checkerboard": { presetClass: 1, presetId: 4, presetSubtype: 0 },
+			"circle": { presetClass: 1, presetId: 5, presetSubtype: 0 },
+			"crawl": { presetClass: 1, presetId: 6, presetSubtype: 0 },
+			"diamond": { presetClass: 1, presetId: 7, presetSubtype: 0 },
+			"dissolve": { presetClass: 1, presetId: 8, presetSubtype: 0 },
+			"fade": { presetClass: 1, presetId: 10, presetSubtype: 0 },
+			"flashOnce": { presetClass: 1, presetId: 11, presetSubtype: 0 },
+			"fly": { presetClass: 1, presetId: 12, presetSubtype: 2 }, // From bottom
+			"flyFromBottom": { presetClass: 1, presetId: 12, presetSubtype: 2 },
+			"flyFromTop": { presetClass: 1, presetId: 12, presetSubtype: 4 },
+			"flyFromLeft": { presetClass: 1, presetId: 12, presetSubtype: 8 },
+			"flyFromRight": { presetClass: 1, presetId: 12, presetSubtype: 1 },
+			"peek": { presetClass: 1, presetId: 13, presetSubtype: 0 },
+			"plus": { presetClass: 1, presetId: 14, presetSubtype: 0 },
+			"randomBars": { presetClass: 1, presetId: 15, presetSubtype: 0 },
+			"spiral": { presetClass: 1, presetId: 16, presetSubtype: 0 },
+			"split": { presetClass: 1, presetId: 17, presetSubtype: 0 },
+			"stretch": { presetClass: 1, presetId: 18, presetSubtype: 0 },
+			"strips": { presetClass: 1, presetId: 19, presetSubtype: 0 },
+			"swivel": { presetClass: 1, presetId: 20, presetSubtype: 0 },
+			"wedge": { presetClass: 1, presetId: 21, presetSubtype: 0 },
+			"wheel": { presetClass: 1, presetId: 22, presetSubtype: 1 },
+			"wipe": { presetClass: 1, presetId: 23, presetSubtype: 0 },
+			"zoom": { presetClass: 1, presetId: 24, presetSubtype: 0 },
+			"randomEffects": { presetClass: 1, presetId: 25, presetSubtype: 0 },
+			"boomerang": { presetClass: 1, presetId: 26, presetSubtype: 0 },
+			"bounce": { presetClass: 1, presetId: 29, presetSubtype: 0 },
+			"credits": { presetClass: 1, presetId: 30, presetSubtype: 0 },
+			"curve": { presetClass: 1, presetId: 31, presetSubtype: 0 },
+			"ascend": { presetClass: 1, presetId: 34, presetSubtype: 0 },
+			"descend": { presetClass: 1, presetId: 42, presetSubtype: 0 },
+			"float": { presetClass: 1, presetId: 49, presetSubtype: 0 },
+			"pinwheel": { presetClass: 1, presetId: 53, presetSubtype: 0 },
+			"riseUp": { presetClass: 1, presetId: 54, presetSubtype: 0 },
+
+			// Exit effects (presetClass: 2)
+			"disappear": { presetClass: 2, presetId: 1, presetSubtype: 0 },
+			"fadeOut": { presetClass: 2, presetId: 10, presetSubtype: 0 },
+			"flyOut": { presetClass: 2, presetId: 12, presetSubtype: 2 },
+			"flyOutBottom": { presetClass: 2, presetId: 12, presetSubtype: 2 },
+			"flyOutTop": { presetClass: 2, presetId: 12, presetSubtype: 4 },
+			"flyOutLeft": { presetClass: 2, presetId: 12, presetSubtype: 8 },
+			"flyOutRight": { presetClass: 2, presetId: 12, presetSubtype: 1 },
+			"crawlOut": { presetClass: 2, presetId: 6, presetSubtype: 0 },
+			"dissolveOut": { presetClass: 2, presetId: 8, presetSubtype: 0 },
+			"zoomOut": { presetClass: 2, presetId: 24, presetSubtype: 0 },
+
+			// Emphasis effects (presetClass: 3)
+			"pulse": { presetClass: 3, presetId: 31, presetSubtype: 0 },
+			"colorPulse": { presetClass: 3, presetId: 32, presetSubtype: 0 },
+			"teeter": { presetClass: 3, presetId: 28, presetSubtype: 0 },
+			"spin": { presetClass: 3, presetId: 35, presetSubtype: 0 },
+			"grow": { presetClass: 3, presetId: 36, presetSubtype: 0 },
+			"shrink": { presetClass: 3, presetId: 37, presetSubtype: 0 },
+			"growShrink": { presetClass: 3, presetId: 36, presetSubtype: 0 },
+			"desaturate": { presetClass: 3, presetId: 38, presetSubtype: 0 },
+			"darken": { presetClass: 3, presetId: 39, presetSubtype: 0 },
+			"lighten": { presetClass: 3, presetId: 40, presetSubtype: 0 },
+			"transparency": { presetClass: 3, presetId: 41, presetSubtype: 0 },
+			"flicker": { presetClass: 3, presetId: 42, presetSubtype: 0 },
+			"shimmer": { presetClass: 3, presetId: 43, presetSubtype: 0 },
+			"wave": { presetClass: 3, presetId: 44, presetSubtype: 0 },
+			"changeFillColor": { presetClass: 3, presetId: 45, presetSubtype: 0 },
+			"changeFont": { presetClass: 3, presetId: 46, presetSubtype: 0 },
+			"changeFontColor": { presetClass: 3, presetId: 47, presetSubtype: 0 },
+			"changeFontSize": { presetClass: 3, presetId: 48, presetSubtype: 0 },
+			"changeFontStyle": { presetClass: 3, presetId: 49, presetSubtype: 0 },
+			"changeLineColor": { presetClass: 3, presetId: 50, presetSubtype: 0 },
+			"boldFlash": { presetClass: 3, presetId: 52, presetSubtype: 0 },
+			"boldReveal": { presetClass: 3, presetId: 53, presetSubtype: 0 },
+			"brushOnColor": { presetClass: 3, presetId: 54, presetSubtype: 0 },
+			"brushOnUnderline": { presetClass: 3, presetId: 55, presetSubtype: 0 },
+			"colorBlend": { presetClass: 3, presetId: 56, presetSubtype: 0 },
+			"colorWave": { presetClass: 3, presetId: 57, presetSubtype: 0 },
+			"complementaryColor": { presetClass: 3, presetId: 58, presetSubtype: 0 },
+			"complementaryColor2": { presetClass: 3, presetId: 59, presetSubtype: 0 },
+			"contrastingColor": { presetClass: 3, presetId: 60, presetSubtype: 0 },
+			"styleEmphasis": { presetClass: 3, presetId: 79, presetSubtype: 0 },
+
+			// Motion Path effects (presetClass: 4)
+			"pathDown": { presetClass: 4, presetId: 1, presetSubtype: 0 },
+			"pathUp": { presetClass: 4, presetId: 2, presetSubtype: 0 },
+			"pathLeft": { presetClass: 4, presetId: 3, presetSubtype: 0 },
+			"pathRight": { presetClass: 4, presetId: 4, presetSubtype: 0 },
+			"pathDiagonalDownRight": { presetClass: 4, presetId: 5, presetSubtype: 0 },
+			"pathDiagonalUpRight": { presetClass: 4, presetId: 6, presetSubtype: 0 },
+			"pathDiamond": { presetClass: 4, presetId: 7, presetSubtype: 0 },
+			"pathCircle": { presetClass: 4, presetId: 8, presetSubtype: 0 },
+			"pathSquare": { presetClass: 4, presetId: 9, presetSubtype: 0 },
+			"pathHexagon": { presetClass: 4, presetId: 10, presetSubtype: 0 },
+			"pathOctagon": { presetClass: 4, presetId: 11, presetSubtype: 0 },
+			"pathParallelogram": { presetClass: 4, presetId: 12, presetSubtype: 0 },
+			"pathPentagon": { presetClass: 4, presetId: 13, presetSubtype: 0 },
+			"pathPlus": { presetClass: 4, presetId: 14, presetSubtype: 0 },
+			"pathTrapezoid": { presetClass: 4, presetId: 15, presetSubtype: 0 },
+			"pathTriangle": { presetClass: 4, presetId: 16, presetSubtype: 0 },
+			"pathRightTriangle": { presetClass: 4, presetId: 17, presetSubtype: 0 },
+			"pathArcDown": { presetClass: 4, presetId: 18, presetSubtype: 0 },
+			"pathArcUp": { presetClass: 4, presetId: 19, presetSubtype: 0 },
+			"pathArcLeft": { presetClass: 4, presetId: 20, presetSubtype: 0 },
+			"pathArcRight": { presetClass: 4, presetId: 21, presetSubtype: 0 },
+			"pathBounceLeft": { presetClass: 4, presetId: 22, presetSubtype: 0 },
+			"pathBounceRight": { presetClass: 4, presetId: 23, presetSubtype: 0 },
+			"pathCurvyLeft": { presetClass: 4, presetId: 24, presetSubtype: 0 },
+			"pathCurvyRight": { presetClass: 4, presetId: 25, presetSubtype: 0 },
+			"pathSpiralLeft": { presetClass: 4, presetId: 26, presetSubtype: 0 },
+			"pathSpiralRight": { presetClass: 4, presetId: 27, presetSubtype: 0 },
+			"pathSineWave": { presetClass: 4, presetId: 28, presetSubtype: 0 },
+			"pathSCurve1": { presetClass: 4, presetId: 29, presetSubtype: 0 },
+			"pathSCurve2": { presetClass: 4, presetId: 30, presetSubtype: 0 },
+			"pathHeartbeat": { presetClass: 4, presetId: 31, presetSubtype: 0 },
+			"pathZigzag": { presetClass: 4, presetId: 32, presetSubtype: 0 },
+			"pathFunnel": { presetClass: 4, presetId: 33, presetSubtype: 0 },
+			"pathSpring": { presetClass: 4, presetId: 34, presetSubtype: 0 },
+			"pathStairsDown": { presetClass: 4, presetId: 35, presetSubtype: 0 },
+			"pathTurnUp": { presetClass: 4, presetId: 36, presetSubtype: 0 },
+			"pathTurnDown": { presetClass: 4, presetId: 37, presetSubtype: 0 },
+			"pathTurnRight": { presetClass: 4, presetId: 38, presetSubtype: 0 },
+			"pathTurnUpRight": { presetClass: 4, presetId: 39, presetSubtype: 0 },
+			"pathWave": { presetClass: 4, presetId: 40, presetSubtype: 0 },
+			"pathLoopdeLoop": { presetClass: 4, presetId: 41, presetSubtype: 0 },
+			"pathBuzzsaw": { presetClass: 4, presetId: 42, presetSubtype: 0 },
+			"pathNeutron": { presetClass: 4, presetId: 43, presetSubtype: 0 },
+			"pathPeanut": { presetClass: 4, presetId: 44, presetSubtype: 0 },
+			"pathBean": { presetClass: 4, presetId: 45, presetSubtype: 0 },
+			"pathCrescentMoon": { presetClass: 4, presetId: 46, presetSubtype: 0 },
+			"pathCurvedSquare": { presetClass: 4, presetId: 47, presetSubtype: 0 },
+			"pathCurvedX": { presetClass: 4, presetId: 48, presetSubtype: 0 },
+			"pathCurvyStar": { presetClass: 4, presetId: 49, presetSubtype: 0 },
+			"pathFigure8Four": { presetClass: 4, presetId: 50, presetSubtype: 0 },
+			"pathFootball": { presetClass: 4, presetId: 51, presetSubtype: 0 },
+			"pathHeart": { presetClass: 4, presetId: 52, presetSubtype: 0 },
+			"pathInvertedSquare": { presetClass: 4, presetId: 53, presetSubtype: 0 },
+			"pathInvertedTriangle": { presetClass: 4, presetId: 54, presetSubtype: 0 },
+			"pathSwoosh": { presetClass: 4, presetId: 55, presetSubtype: 0 },
+			"pathTeardrop": { presetClass: 4, presetId: 56, presetSubtype: 0 },
+			"pathPointyStar": { presetClass: 4, presetId: 57, presetSubtype: 0 },
+			"path4PointStar": { presetClass: 4, presetId: 58, presetSubtype: 0 },
+			"path5PointStar": { presetClass: 4, presetId: 59, presetSubtype: 0 },
+			"path6PointStar": { presetClass: 4, presetId: 60, presetSubtype: 0 },
+			"path8PointStar": { presetClass: 4, presetId: 61, presetSubtype: 0 },
+			"pathEqualTriangle": { presetClass: 4, presetId: 62, presetSubtype: 0 },
+			"pathHorizontalFigure8": { presetClass: 4, presetId: 63, presetSubtype: 0 },
+			"pathVerticalFigure8": { presetClass: 4, presetId: 64, presetSubtype: 0 },
+			"pathDecayingWave": { presetClass: 4, presetId: 65, presetSubtype: 0 },
+
+			// Media effects (presetClass: 5)
+			"mediaPlay": { presetClass: 5, presetId: 1, presetSubtype: 0 },
+			"mediaPause": { presetClass: 5, presetId: 2, presetSubtype: 0 },
+			"mediaStop": { presetClass: 5, presetId: 3, presetSubtype: 0 }
+		};
+
+		return oMappings[sEffectType] || oMappings["appear"];
+	};
+
+	/**
+	 * Returns the count of effects in the sequence.
+	 * @typeofeditors ["CPE"]
+	 * @returns {number}
+	 */
+	ApiSequence.prototype.GetCount = function()
+	{
+		if (this.type === "main") {
+			var aEffects = this.timing.getMainSequenceEffects ?
+				this.timing.getMainSequenceEffects() : [];
+			return aEffects.length;
+		}
+		return 0;
+	};
+
+	/**
+	 * Returns an effect by index.
+	 * @typeofeditors ["CPE"]
+	 * @param {number} nIndex - The effect index (0-based)
+	 * @returns {ApiEffect | null}
+	 */
+	ApiSequence.prototype.GetItem = function(nIndex)
+	{
+		if (this.type === "main") {
+			var aEffects = this.timing.getMainSequenceEffects ?
+				this.timing.getMainSequenceEffects() : [];
+			if (nIndex >= 0 && nIndex < aEffects.length) {
+				return new ApiEffect(aEffects[nIndex], this);
+			}
+		}
+		return null;
+	};
+
+	/**
+	 * Removes an effect at the specified index.
+	 * @typeofeditors ["CPE"]
+	 * @param {number} nIndex - The effect index to remove
+	 * @returns {boolean} - True if removed successfully
+	 */
+	ApiSequence.prototype.RemoveEffect = function(nIndex)
+	{
+		if (this.type === "main") {
+			var aEffects = this.timing.getMainSequenceEffects ?
+				this.timing.getMainSequenceEffects() : [];
+			if (nIndex >= 0 && nIndex < aEffects.length) {
+				if (this.timing.removeEffect) {
+					this.timing.removeEffect(aEffects[nIndex]);
+					return true;
+				}
+			}
+		}
+		return false;
+	};
+
+	/**
+	 * Clears all effects from the sequence.
+	 * @typeofeditors ["CPE"]
+	 */
+	ApiSequence.prototype.Clear = function()
+	{
+		if (this.type === "main" && this.timing.clearMainSequence) {
+			this.timing.clearMainSequence();
+		}
+	};
+
+	// ============================================================================
+	// CLASS: ApiEffect
+	// ============================================================================
+
+	/**
+	 * Class representing an animation effect.
+	 * @constructor
+	 * @param {CAnimEffect} oAnimEffect - Internal animation effect object
+	 * @param {ApiSequence} oSequence - Parent sequence
+	 */
+	function ApiEffect(oAnimEffect, oSequence)
+	{
+		this.animEffect = oAnimEffect;
+		this.sequence = oSequence;
+	}
+
+	/**
+	 * Returns the type of the ApiEffect class.
+	 * @typeofeditors ["CPE"]
+	 * @returns {"effect"}
+	 */
+	ApiEffect.prototype.GetClassType = function()
+	{
+		return "effect";
+	};
+
+	/**
+	 * Returns the timing object for the effect.
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiTiming}
+	 * @example
+	 * var oTiming = oEffect.GetTiming();
+	 * oTiming.SetDuration(3);
+	 * oTiming.SetDelay(0.5);
+	 */
+	ApiEffect.prototype.GetTiming = function()
+	{
+		return new ApiTiming(this.animEffect);
+	};
+
+	/**
+	 * Returns the behaviors collection for the effect.
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiBehaviors}
+	 */
+	ApiEffect.prototype.GetBehaviors = function()
+	{
+		return new ApiBehaviors(this.animEffect);
+	};
+
+	/**
+	 * Deletes the effect from the sequence.
+	 * @typeofeditors ["CPE"]
+	 */
+	ApiEffect.prototype.Delete = function()
+	{
+		if (this.sequence && this.sequence.timing && this.sequence.timing.removeEffect) {
+			this.sequence.timing.removeEffect(this.animEffect);
+		}
+	};
+
+	/**
+	 * Sets the after effect (what happens after animation completes).
+	 * @typeofeditors ["CPE"]
+	 * @param {AfterEffectType} sType - "none", "dim", "hide", "hideOnNextClick"
+	 * @param {ApiRGBColor} [oColor] - Color for dim effect
+	 */
+	ApiEffect.prototype.SetAfterEffect = function(sType, oColor)
+	{
+		var oAttr = this.animEffect.getAttributesObject ?
+			this.animEffect.getAttributesObject() : this.animEffect.cTn;
+
+		if (oAttr && oAttr.setAfterEffect) {
+			var bAfterEffect = (sType !== "none");
+			oAttr.setAfterEffect(bAfterEffect);
+
+			// Set specific after effect type
+			// This would need additional implementation in the core
+		}
+	};
+
+	// ============================================================================
+	// CLASS: ApiTiming
+	// ============================================================================
+
+	/**
+	 * Class representing timing properties of an animation effect.
+	 * @constructor
+	 * @param {CAnimEffect} oAnimEffect - Internal animation effect
+	 */
+	function ApiTiming(oAnimEffect)
+	{
+		this.animEffect = oAnimEffect;
+		this.cTn = oAnimEffect.getAttributesObject ?
+			oAnimEffect.getAttributesObject() : oAnimEffect.cTn;
+	}
+
+	/**
+	 * Returns the type of the ApiTiming class.
+	 * @typeofeditors ["CPE"]
+	 * @returns {"timing"}
+	 */
+	ApiTiming.prototype.GetClassType = function()
+	{
+		return "timing";
+	};
+
+	/**
+	 * Sets the duration of the animation in seconds.
+	 * @typeofeditors ["CPE"]
+	 * @param {number} nDuration - Duration in seconds
+	 * @example
+	 * oTiming.SetDuration(2.5); // 2.5 seconds
+	 */
+	ApiTiming.prototype.SetDuration = function(nDuration)
+	{
+		if (this.cTn && this.cTn.setDur) {
+			// Convert seconds to milliseconds or string format
+			if (typeof nDuration === "number") {
+				this.cTn.setDur(String(nDuration * 1000));
+			}
+		}
+
+		// Also set on behavior if exists
+		if (this.animEffect.cBhvr && this.animEffect.cBhvr.cTn && this.animEffect.cBhvr.cTn.setDur) {
+			this.animEffect.cBhvr.cTn.setDur(String(nDuration * 1000));
+		}
+	};
+
+	/**
+	 * Gets the duration of the animation in seconds.
+	 * @typeofeditors ["CPE"]
+	 * @returns {number}
+	 */
+	ApiTiming.prototype.GetDuration = function()
+	{
+		if (this.cTn && this.cTn.dur) {
+			if (typeof this.cTn.dur === "string") {
+				var nMs = parseFloat(this.cTn.dur);
+				if (!isNaN(nMs)) {
+					return nMs / 1000;
+				}
+			} else if (typeof this.cTn.dur === "number") {
+				return this.cTn.dur / 1000;
+			}
+		}
+		return 2.0; // Default 2 seconds
+	};
+
+	/**
+	 * Sets the delay before the animation starts in seconds.
+	 * @typeofeditors ["CPE"]
+	 * @param {number} nDelay - Delay in seconds
+	 * @example
+	 * oTiming.SetDelay(1); // 1 second delay
+	 */
+	ApiTiming.prototype.SetDelay = function(nDelay)
+	{
+		if (!this.cTn) return;
+
+		// Create or get start conditions list
+		var oStCondLst = this.cTn.stCondLst;
+		if (!oStCondLst) {
+			oStCondLst = new AscFormat.CCondLst();
+			oStCondLst.setParent(this.cTn);
+			this.cTn.setStCondLst(oStCondLst);
+		}
+
+		// Find existing delay condition or create new one
+		var oDelayCond = null;
+		if (oStCondLst.list) {
+			for (var i = 0; i < oStCondLst.list.length; i++) {
+				if (oStCondLst.list[i].delay !== undefined) {
+					oDelayCond = oStCondLst.list[i];
+					break;
+				}
+			}
+		}
+
+		if (!oDelayCond) {
+			oDelayCond = new AscFormat.CCond();
+			oDelayCond.setParent(oStCondLst);
+			if (oStCondLst.addToCond) {
+				oStCondLst.addToCond(oDelayCond);
+			} else {
+				if (!oStCondLst.list) oStCondLst.list = [];
+				oStCondLst.list.push(oDelayCond);
+			}
+		}
+
+		if (oDelayCond.setDelay) {
+			oDelayCond.setDelay(nDelay * 1000); // Convert to milliseconds
+		} else {
+			oDelayCond.delay = nDelay * 1000;
+		}
+	};
+
+	/**
+	 * Sets the repeat count for the animation.
+	 * @typeofeditors ["CPE"]
+	 * @param {number} nCount - Number of repetitions (use -1 for indefinite)
+	 * @example
+	 * oTiming.SetRepeatCount(3); // Repeat 3 times
+	 * oTiming.SetRepeatCount(-1); // Repeat indefinitely
+	 */
+	ApiTiming.prototype.SetRepeatCount = function(nCount)
+	{
+		if (this.cTn && this.cTn.setRepeatCount) {
+			if (nCount === -1) {
+				this.cTn.setRepeatCount("indefinite");
+			} else if (nCount > 0) {
+				this.cTn.setRepeatCount(String(nCount * 1000));
+			} else {
+				this.cTn.setRepeatCount(null);
+			}
+		}
+	};
+
+	/**
+	 * Sets the repeat duration for the animation in seconds.
+	 * @typeofeditors ["CPE"]
+	 * @param {number} nDuration - Repeat duration in seconds (use -1 for indefinite)
+	 * @example
+	 * oTiming.SetRepeatDuration(10); // Repeat for 10 seconds
+	 */
+	ApiTiming.prototype.SetRepeatDuration = function(nDuration)
+	{
+		if (this.cTn && this.cTn.setRepeatDur) {
+			if (nDuration === -1) {
+				this.cTn.setRepeatDur("indefinite");
+			} else if (nDuration > 0) {
+				this.cTn.setRepeatDur(String(nDuration * 1000));
+			} else {
+				this.cTn.setRepeatDur(null);
+			}
+		}
+	};
+
+	/**
+	 * Sets whether the animation should auto-reverse.
+	 * @typeofeditors ["CPE"]
+	 * @param {boolean} bAutoReverse - Auto-reverse flag
+	 * @example
+	 * oTiming.SetAutoReverse(true); // Animation will play forward then backward
+	 */
+	ApiTiming.prototype.SetAutoReverse = function(bAutoReverse)
+	{
+		if (this.cTn && this.cTn.setAutoRev) {
+			this.cTn.setAutoRev(bAutoReverse ? 1 : 0);
+		}
+	};
+
+	/**
+	 * Sets the restart behavior.
+	 * @typeofeditors ["CPE"]
+	 * @param {RestartType} sRestart - "always", "never", or "whenNotActive"
+	 */
+	ApiTiming.prototype.SetRestart = function(sRestart)
+	{
+		if (this.cTn && this.cTn.setRestart) {
+			var nRestart = AscFormat.RESTART_ALWAYS;
+			switch(sRestart) {
+				case "never":
+					nRestart = AscFormat.RESTART_NEVER;
+					break;
+				case "whenNotActive":
+					nRestart = AscFormat.RESTART_WHEN_OFF;
+					break;
+			}
+			this.cTn.setRestart(nRestart);
+		}
+	};
+
+	/**
+	 * Sets whether to rewind after playing.
+	 * @typeofeditors ["CPE"]
+	 * @param {boolean} bRewind - Rewind flag
+	 */
+	ApiTiming.prototype.SetRewind = function(bRewind)
+	{
+		if (this.cTn && this.cTn.setFill) {
+			this.cTn.setFill(bRewind ? AscFormat.NODE_FILL_REMOVE : AscFormat.NODE_FILL_HOLD);
+		}
+	};
+
+	/**
+	 * Sets the acceleration percentage (0-100).
+	 * @typeofeditors ["CPE"]
+	 * @param {number} nPercent - Acceleration percentage
+	 * @example
+	 * oTiming.SetAcceleration(50); // Start slow, speed up to 50% through animation
+	 */
+	ApiTiming.prototype.SetAcceleration = function(nPercent)
+	{
+		if (this.cTn && this.cTn.setAccel) {
+			// Store as percentage * 1000 (per OOXML spec)
+			this.cTn.setAccel(Math.max(0, Math.min(100, nPercent)) * 1000);
+		}
+	};
+
+	/**
+	 * Sets the deceleration percentage (0-100).
+	 * @typeofeditors ["CPE"]
+	 * @param {number} nPercent - Deceleration percentage
+	 * @example
+	 * oTiming.SetDeceleration(50); // Start fast, slow down from 50% through animation
+	 */
+	ApiTiming.prototype.SetDeceleration = function(nPercent)
+	{
+		if (this.cTn && this.cTn.setDecel) {
+			// Store as percentage * 1000 (per OOXML spec)
+			this.cTn.setDecel(Math.max(0, Math.min(100, nPercent)) * 1000);
+		}
+	};
+
+	/**
+	 * Sets the speed multiplier.
+	 * @typeofeditors ["CPE"]
+	 * @param {number} nSpeed - Speed multiplier (1 = normal, 2 = double speed, 0.5 = half speed)
+	 */
+	ApiTiming.prototype.SetSpeed = function(nSpeed)
+	{
+		if (this.cTn && this.cTn.setSpd) {
+			// Convert to percentage * 1000
+			this.cTn.setSpd(nSpeed * 100000);
+		}
+	};
+
+	// ============================================================================
+	// CLASS: ApiBehaviors
+	// ============================================================================
+
+	/**
+	 * Class representing a collection of animation behaviors.
+	 * @constructor
+	 * @param {CAnimEffect} oAnimEffect
+	 */
+	function ApiBehaviors(oAnimEffect)
+	{
+		this.animEffect = oAnimEffect;
+	}
+
+	/**
+	 * Returns the type of the ApiBehaviors class.
+	 * @typeofeditors ["CPE"]
+	 * @returns {"behaviors"}
+	 */
+	ApiBehaviors.prototype.GetClassType = function()
+	{
+		return "behaviors";
+	};
+
+	// Note: Behavior manipulation is complex and would require deep integration
+	// with the timeline structure. This is a simplified interface.
+
+	// ============================================================================
+	// CLASS: ApiSlideShowTransition
+	// ============================================================================
+
+	/**
+	 * Class representing slide show transition settings.
+	 * @constructor
+	 * @param {Slide} oSlide
+	 */
+	function ApiSlideShowTransition(oSlide)
+	{
+		this.slide = oSlide;
+	}
+
+	/**
+	 * Returns the type of the ApiSlideShowTransition class.
+	 * @typeofeditors ["CPE"]
+	 * @returns {"slideShowTransition"}
+	 */
+	ApiSlideShowTransition.prototype.GetClassType = function()
+	{
+		return "slideShowTransition";
+	};
+
+	/**
+	 * Sets the transition effect.
+	 * @typeofeditors ["CPE"]
+	 * @param {EntryEffectType} sEffect - The transition effect name
+	 * @example
+	 * oTransition.SetEntryEffect("fade");
+	 * oTransition.SetEntryEffect("wipe");
+	 */
+	ApiSlideShowTransition.prototype.SetEntryEffect = function(sEffect)
+	{
+		// Use slide's internal transition methods if available
+		if (this.slide.applyTransition) {
+			var nType = this.getTransitionTypeByName(sEffect);
+			this.slide.applyTransition(nType);
+		}
+	};
+
+	/**
+	 * Returns the transition effect name.
+	 * @typeofeditors ["CPE"]
+	 * @returns {EntryEffectType}
+	 */
+	ApiSlideShowTransition.prototype.GetEntryEffect = function()
+	{
+		if (this.slide.transition) {
+			return this.getTransitionNameByType(this.slide.transition.TransitionType);
+		}
+		return "none";
+	};
+
+	/**
+	 * Sets the transition speed.
+	 * @typeofeditors ["CPE"]
+	 * @param {TransitionSpeed} sSpeed - "fast", "medium", or "slow"
+	 * @example
+	 * oTransition.SetSpeed("slow");
+	 */
+	ApiSlideShowTransition.prototype.SetSpeed = function(sSpeed)
+	{
+		var nDuration;
+		switch(sSpeed) {
+			case "slow":
+				nDuration = 2.0;
+				break;
+			case "fast":
+				nDuration = 0.5;
+				break;
+			case "medium":
+			default:
+				nDuration = 0.75;
+				break;
+		}
+		this.SetDuration(nDuration);
+	};
+
+	/**
+	 * Sets the transition duration in seconds.
+	 * @typeofeditors ["CPE"]
+	 * @param {number} nDuration - Duration in seconds
+	 * @example
+	 * oTransition.SetDuration(1.5); // 1.5 seconds
+	 */
+	ApiSlideShowTransition.prototype.SetDuration = function(nDuration)
+	{
+		if (this.slide.setTransitionDuration) {
+			this.slide.setTransitionDuration(nDuration * 1000);
+		}
+	};
+
+	/**
+	 * Gets the transition duration in seconds.
+	 * @typeofeditors ["CPE"]
+	 * @returns {number}
+	 */
+	ApiSlideShowTransition.prototype.GetDuration = function()
+	{
+		if (this.slide.transition && this.slide.transition.TransitionDuration) {
+			return this.slide.transition.TransitionDuration / 1000;
+		}
+		return 0.75; // Default
+	};
+
+	/**
+	 * Sets whether to advance on mouse click.
+	 * @typeofeditors ["CPE"]
+	 * @param {boolean} bAdvance - Advance on click flag
+	 * @example
+	 * oTransition.SetAdvanceOnClick(false); // Don't advance on click
+	 */
+	ApiSlideShowTransition.prototype.SetAdvanceOnClick = function(bAdvance)
+	{
+		if (this.slide.setSlideAdvanceOnMouseClick) {
+			this.slide.setSlideAdvanceOnMouseClick(bAdvance);
+		}
+	};
+
+	/**
+	 * Sets whether to advance automatically after a time.
+	 * @typeofeditors ["CPE"]
+	 * @param {boolean} bAdvance - Advance on time flag
+	 */
+	ApiSlideShowTransition.prototype.SetAdvanceOnTime = function(bAdvance)
+	{
+		if (this.slide.setSlideAdvanceAfter) {
+			this.slide.setSlideAdvanceAfter(bAdvance);
+		}
+	};
+
+	/**
+	 * Sets the advance time in seconds.
+	 * @typeofeditors ["CPE"]
+	 * @param {number} nTime - Time in seconds
+	 * @example
+	 * oTransition.SetAdvanceTime(5); // Advance after 5 seconds
+	 */
+	ApiSlideShowTransition.prototype.SetAdvanceTime = function(nTime)
+	{
+		if (this.slide.setSlideAdvanceDuration) {
+			this.slide.setSlideAdvanceDuration(nTime * 1000);
+		}
+		this.SetAdvanceOnTime(true);
+	};
+
+	/**
+	 * Get transition type by name
+	 * @private
+	 */
+	ApiSlideShowTransition.prototype.getTransitionTypeByName = function(sName)
+	{
+		// These should match ONLYOFFICE internal transition types
+		var oMap = {
+			"none": 0,
+			"fade": 1,
+			"push": 2,
+			"wipe": 3,
+			"split": 4,
+			"reveal": 5,
+			"random": 6,
+			"blinds": 7,
+			"checkerboard": 8,
+			"cover": 9,
+			"dissolve": 10,
+			"flash": 11,
+			"plus": 12,
+			"pull": 13,
+			"strips": 14,
+			"subtraction": 15,
+			"zoom": 16,
+			"wedge": 17,
+			"wheel": 18,
+			"circle": 19,
+			"diamond": 20,
+			"newsflash": 21,
+			"comb": 22,
+			"randomBar": 23,
+			"cut": 24
+		};
+		return oMap[sName] || 0;
+	};
+
+	/**
+	 * Get transition name by type
+	 * @private
+	 */
+	ApiSlideShowTransition.prototype.getTransitionNameByType = function(nType)
+	{
+		var aNames = [
+			"none", "fade", "push", "wipe", "split", "reveal", "random",
+			"blinds", "checkerboard", "cover", "dissolve", "flash", "plus",
+			"pull", "strips", "subtraction", "zoom", "wedge", "wheel",
+			"circle", "diamond", "newsflash", "comb", "randomBar", "cut"
+		];
+		return aNames[nType] || "none";
+	};
+
+	// ============================================================================
+	// CLASS: ApiSequences (Interactive Sequences Collection)
+	// ============================================================================
+
+	/**
+	 * Class representing a collection of interactive animation sequences.
+	 * @constructor
+	 * @param {CTiming} oTiming
+	 * @param {string} sType
+	 */
+	function ApiSequences(oTiming, sType)
+	{
+		this.timing = oTiming;
+		this.type = sType;
+	}
+
+	/**
+	 * Returns the type of the ApiSequences class.
+	 * @typeofeditors ["CPE"]
+	 * @returns {"sequenceCollection"}
+	 */
+	ApiSequences.prototype.GetClassType = function()
+	{
+		return "sequenceCollection";
+	};
+
+	// Note: Interactive sequences require complex timeline manipulation
+	// and would need deeper integration with the core animation engine
+
+	// ============================================================================
+	// CLASS: ApiAnimationSettings
+	// ============================================================================
+
+	/**
+	 * Class representing animation settings for a shape.
+	 * @constructor
+	 * @param {Shape} oShape
+	 */
+	function ApiAnimationSettings(oShape)
+	{
+		this.shape = oShape;
+	}
+
+	/**
+	 * Returns the type of the ApiAnimationSettings class.
+	 * @typeofeditors ["CPE"]
+	 * @returns {"animationSettings"}
+	 */
+	ApiAnimationSettings.prototype.GetClassType = function()
+	{
+		return "animationSettings";
+	};
+
+
+
+
+
+
+
+
+
 
 	window['AscBuilder'] = window['AscBuilder'] || {};
 	window['AscBuilder'].ApiShape = ApiShape;

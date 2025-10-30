@@ -102,6 +102,15 @@
 		}
 		return null;
 	};
+	CBaseAnimObject.prototype.changeTargetObjectId = function (newId) {
+		if (this.cBhvr) {
+			return this.cBhvr.changeTargetObjectId(newId);
+		}
+		if (this.tgtEl) {
+			return this.tgtEl.changeTargetObjectId(newId);
+		}
+		return null;
+	};
     CBaseAnimObject.prototype.Refresh_RecalcData2 = function () {
         if (this.parent && this.parent.Refresh_RecalcData2) {
             this.parent.Refresh_RecalcData2();
@@ -401,41 +410,41 @@
 	CTimeNodeBase.prototype.isForceTextAnimation = function () {
 		return false;
 	};
-		CTimeNodeBase.prototype.isSkipMainDrawing = function() {
-			if (!this.isTimingContainer()) {
-				const oDrawing = this.getTargetObject();
-				const oTargetTextOptions = this.getTargetTextOptions();
-				if (oTargetTextOptions) {
-					return true;
-				}  else if (this.isForceTextAnimation()) {
-					return true;
-				} else if (this.isCanIterate()) {
-					return !(oDrawing.brush && oDrawing.brush.isVisible() || oDrawing.pen && oDrawing.pen.Fill && oDrawing.pen.Fill.isVisible() || oDrawing.blipFill && oDrawing.blipFill.RasterImageId);
-				}
+	CTimeNodeBase.prototype.isSkipMainDrawing = function() {
+		if (!this.isTimingContainer()) {
+			const oDrawing = this.getTargetObject();
+			const oTargetTextOptions = this.getTargetTextOptions();
+			if (oTargetTextOptions) {
+				return true;
+			}  else if (this.isForceTextAnimation()) {
+				return true;
+			} else if (this.isCanIterate()) {
+				return !(oDrawing.brush && oDrawing.brush.isVisible() || oDrawing.pen && oDrawing.pen.Fill && oDrawing.pen.Fill.isVisible() || oDrawing.blipFill && oDrawing.blipFill.RasterImageId);
 			}
-			return false;
-		};
-		CTimeNodeBase.prototype.getObjectOptionsHash = function() {
-			const sDrawingId = this.getTargetObjectId();
-			if (!sDrawingId) {
-				return null;
+		}
+		return false;
+	};
+	CTimeNodeBase.prototype.getObjectOptionsHash = function() {
+		const sDrawingId = this.getTargetObjectId();
+		if (!sDrawingId) {
+			return null;
+		}
+		const arrHash = [];
+		arrHash.push(sDrawingId);
+		arrHash.push(this.getIterationType());
+		arrHash.push(Number(this.isSkipMainDrawing()));
+		arrHash.push(Number(this.isForceTextAnimation()));
+		arrHash.push(Number(this.isForceDrawingAnimation()));
+		const oTargetEl = this.getTargetTextOptions();
+		if (oTargetEl) {
+			if (oTargetEl.pRg) {
+				arrHash.push(0, oTargetEl.pRg.st, oTargetEl.pRg.end);
+			} else if (oTargetEl.charRg) {
+				arrHash.push(1, oTargetEl.charRg.st, oTargetEl.charRg.end);
 			}
-			const arrHash = [];
-			arrHash.push(sDrawingId);
-			arrHash.push(this.getIterationType());
-			arrHash.push(Number(this.isSkipMainDrawing()));
-			arrHash.push(Number(this.isForceTextAnimation()));
-			arrHash.push(Number(this.isForceDrawingAnimation()));
-			const oTargetEl = this.getTargetTextOptions();
-			if (oTargetEl) {
-				if (oTargetEl.pRg) {
-					arrHash.push(0, oTargetEl.pRg.st, oTargetEl.pRg.end);
-				} else if (oTargetEl.charRg) {
-					arrHash.push(1, oTargetEl.charRg.st, oTargetEl.charRg.end);
-				}
-			}
-			return arrHash.join(';');
-		};
+		}
+		return arrHash.join(';');
+	};
 	CTimeNodeBase.prototype.getDrawingObjects = function (oDrawer) {
 		const sHash = this.getObjectOptionsHash();
 		if (!sHash) {
@@ -1169,6 +1178,9 @@
     CTimeNodeBase.prototype.isInteractiveSeq = function (sSpId) {
         return sSpId === this.getSpClickInteractiveSeq();
     };
+    CTimeNodeBase.prototype.isInteractiveSeqBool = function () {
+        return this.getNodeType() === AscFormat.NODE_TYPE_INTERACTIVESEQ;
+    };
 
     CTimeNodeBase.prototype.isPartOfInteractiveSeq = function () {
         var aHierarchy = this.getHierarchy();
@@ -1177,8 +1189,14 @@
         }
         return null;
     };
+	CTimeNodeBase.prototype.isInterractiveSeq = function () {
+		if (this.getObectType() !== AscDFH.historyitem_type_Seq) {
+			return false;
+		}
+		return this.getNodeType() === AscFormat.NODE_TYPE_INTERACTIVESEQ;
+	};
     CTimeNodeBase.prototype.getSpClickInteractiveSeq = function () {
-        if (this.getNodeType() === AscFormat.NODE_TYPE_INTERACTIVESEQ) {
+        if (this.isInterractiveSeq()) {
             return this.getSpClickAdvance();
         }
         return null;
@@ -2191,6 +2209,19 @@
         }
         return oMainSeq;
     };
+	CTiming.prototype.getInteractiveSequences = function () {
+		let res = [];
+		let oTmRoot = this.checkTimeRoot();
+		let aSeq = oTmRoot.getChildrenTimeNodes();
+		let oSeq;
+		for (let nSeq = 0; nSeq < aSeq.length; ++nSeq) {
+			oSeq = aSeq[nSeq];
+			if (oSeq.isInteractiveSeqBool()) {
+				res.push(oSeq);
+			}
+		}
+		return res;
+	};
     CTiming.prototype.checkInteractiveSequence = function (sObjectId) {
         var oTnContainer, oCTn;
         var oTmRoot = this.checkTimeRoot();
@@ -2211,19 +2242,7 @@
             oCTn = this.createCCTn(null, NODE_FILL_HOLD, null, AscFormat.NODE_TYPE_INTERACTIVESEQ, RESTART_TYPE_WHEN_NOT_ACTIVE, true, null);
             oTnContainer.setCTn(oCTn);
             oCTn.setEvtFilter("cancelBubble");
-            var oStCondLst = new CCondLst();
-            var oCond = new CCond();
-            oCond.setEvt(COND_EVNT_ON_CLICK);
-            oCond.setDelay("0");
-            var oTgt = new CTgtEl();
-            var oSpTgt = new CSpTgt();
-            oSpTgt.setSpid(sObjectId);
-            oTgt.setSpTgt(oSpTgt);
-            oCond.setTgtEl(oTgt);
-            oStCondLst.push(oCond);
-            oCTn.setStCondLst(oStCondLst);
-            var oNextCondLst = oStCondLst.createDuplicate();
-            oTnContainer.setNextCondLst(oNextCondLst);
+			oTnContainer.setTriggerSp(sObjectId);
             var oEndSync = new CCond();
             oEndSync.setEvt(COND_EVNT_END);
             oEndSync.setDelay("0");
@@ -3170,6 +3189,272 @@
 			oRoot.resetState();
 		}
 	};
+
+
+
+
+	CTiming.prototype.createMainSequence = function() {
+		// Check if main sequence already exists
+		if (this.tnLst && this.tnLst.length > 0) {
+			// Search for existing main sequence
+			for (let i = 0; i < this.tnLst.length; i++) {
+				const node = this.tnLst[i];
+				if (node instanceof AscFormat.CSeq && node.concurrent === false && node.nextAc === "seek") {
+					// Main sequence already exists
+					return node;
+				}
+			}
+		}
+
+		// Create timeline list if not exists
+		if (!this.tnLst) {
+			this.tnLst = [];
+		}
+
+		// Create main sequence node
+		const mainSeq = new AscFormat.CSeq();
+
+		// Set main sequence properties
+		mainSeq.concurrent = false;  // Sequential playback
+		mainSeq.nextAc = "seek";     // Next action is seek
+
+		// Initialize common time node properties
+		const cTn = new AscFormat.CCTn();
+		cTn.id = this.getNextId ? this.getNextId() : 1;
+		cTn.dur = "indefinite";
+		cTn.restart = AscFormat.RESTART_ENUM.never;
+		cTn.nodeType = AscFormat.NODE_TYPE.mainSeq;
+
+		// Create child timeline list for the main sequence
+		cTn.childTnLst = [];
+
+		// Set common time node
+		mainSeq.cTn = cTn;
+
+		// Add main sequence to timing list
+		this.tnLst.push(mainSeq);
+
+		// Set parent reference
+		if (mainSeq.setParent) {
+			mainSeq.setParent(this);
+		} else {
+			mainSeq.parent = this;
+		}
+
+		// Initialize build list if needed
+		if (!this.bldLst) {
+			this.bldLst = new AscFormat.CBldLst();
+		}
+
+		return mainSeq;
+	};
+
+// ============================================================================
+// Helper method to get next available ID
+// ============================================================================
+
+	CTiming.prototype.getNextId = function() {
+		let maxId = 0;
+
+		// Recursive function to find max ID in timeline
+		const findMaxId = function(nodeList) {
+			if (!nodeList) return;
+
+			for (let i = 0; i < nodeList.length; i++) {
+				const node = nodeList[i];
+				if (node && node.cTn && node.cTn.id) {
+					maxId = Math.max(maxId, node.cTn.id);
+
+					// Check children
+					if (node.cTn.childTnLst) {
+						findMaxId(node.cTn.childTnLst);
+					}
+				}
+			}
+		};
+
+		// Search in timeline list
+		if (this.tnLst) {
+			findMaxId(this.tnLst);
+		}
+
+		return maxId + 1;
+	};
+
+// ============================================================================
+// Alternative implementation using internal ONLYOFFICE structures
+// ============================================================================
+
+	/**
+	 * Alternative createMainSequence implementation with full initialization
+	 */
+	CTiming.prototype.createMainSequence2 = function() {
+		// Initialize timing structure if empty
+		if (!this.tnLst) {
+			this.tnLst = [];
+		}
+
+		// Check for existing main sequence
+		let mainSeq = null;
+		for (let i = 0; i < this.tnLst.length; i++) {
+			if (this.tnLst[i] instanceof AscFormat.CSeq) {
+				const seq = this.tnLst[i];
+				// Main sequence has specific properties
+				if (seq.cTn && seq.cTn.nodeType === AscFormat.NODE_TYPE.mainSeq) {
+					mainSeq = seq;
+					break;
+				}
+			}
+		}
+
+		if (mainSeq) {
+			return mainSeq;
+		}
+
+		// Create new main sequence
+		mainSeq = new AscFormat.CSeq();
+
+		// Initialize common time node
+		const cTn = new AscFormat.CCTn();
+
+		// Set unique ID
+		cTn.id = this.generateUniqueId();
+
+		// Main sequence properties
+		cTn.dur = "indefinite";
+		cTn.nodeType = AscFormat.NODE_TYPE.mainSeq;
+		cTn.restart = AscFormat.RESTART_ENUM.never;
+
+		// Initialize conditions for main sequence
+		const stCondLst = new AscFormat.CCondLst();
+		const cond = new AscFormat.CCond();
+		cond.delay = 0;
+		cond.evt = "onBegin";
+		cond.tn = 0; // Reference to parent
+		stCondLst.cond = [cond];
+		cTn.stCondLst = stCondLst;
+
+		// Initialize child timeline list
+		cTn.childTnLst = [];
+
+		// Set properties
+		mainSeq.cTn = cTn;
+		mainSeq.concurrent = false;
+		mainSeq.prevAc = "none";
+		mainSeq.nextAc = "seek";
+
+		// Add to timing
+		this.tnLst.push(mainSeq);
+
+		// Set parent relationship
+		mainSeq.parent = this;
+
+		// Initialize build list
+		if (!this.bldLst) {
+			this.bldLst = new AscFormat.CBldLst();
+			this.bldLst.bld = [];
+		}
+
+		return mainSeq;
+	};
+
+// ============================================================================
+// Helper to generate unique IDs
+// ============================================================================
+
+	CTiming.prototype.generateUniqueId = function() {
+		if (!this.idCounter) {
+			this.idCounter = 1;
+		}
+
+		// Find highest existing ID
+		let maxId = 0;
+		const checkNode = function(node) {
+			if (node && node.cTn && node.cTn.id) {
+				maxId = Math.max(maxId, node.cTn.id);
+			}
+			if (node && node.cTn && node.cTn.childTnLst) {
+				for (let i = 0; i < node.cTn.childTnLst.length; i++) {
+					checkNode(node.cTn.childTnLst[i]);
+				}
+			}
+		};
+
+		if (this.tnLst) {
+			for (let i = 0; i < this.tnLst.length; i++) {
+				checkNode(this.tnLst[i]);
+			}
+		}
+
+		return maxId + 1;
+	};
+
+// ============================================================================
+// Minimal implementation for quick fix
+// ============================================================================
+
+	/**
+	 * Minimal createMainSequence implementation
+	 * This is the simplest working version
+	 */
+	CTiming.prototype.createMainSequence = function() {
+		// Ensure tnLst exists
+		if (!this.tnLst) {
+			this.tnLst = [];
+		}
+
+		// Check if main sequence already exists
+		if (this.tnLst.length > 0 && this.tnLst[0] instanceof AscFormat.CSeq) {
+			return this.tnLst[0];
+		}
+
+		// Create main sequence
+		const mainSeq = new AscFormat.CSeq();
+
+		// Create common time node
+		const cTn = new AscFormat.CCTn();
+		cTn.id = 1;
+		cTn.dur = "indefinite";
+		cTn.childTnLst = [];
+
+		// Set common time node to sequence
+		mainSeq.cTn = cTn;
+		mainSeq.concurrent = false;
+		mainSeq.nextAc = "seek";
+
+		// Add to timing list
+		this.tnLst.push(mainSeq);
+
+		// Set parent reference
+		mainSeq.parent = this;
+
+		return mainSeq;
+	};
+
+	CTiming.prototype.getMainSequence = function() {
+		if (!this.tnLst || this.tnLst.length === 0) {
+			return null;
+		}
+
+		// Main sequence is usually the first sequence node
+		for (let i = 0; i < this.tnLst.length; i++) {
+			const node = this.tnLst[i];
+			if (node instanceof AscFormat.CSeq) {
+				// Check if it's main sequence by properties
+				if (node.cTn && (node.cTn.nodeType === AscFormat.NODE_TYPE.mainSeq ||
+					(node.concurrent === false && node.nextAc === "seek"))) {
+					return node;
+				}
+			}
+		}
+
+		return null;
+	};
+
+	CTiming.prototype.hasMainSequence = function() {
+		return this.getMainSequence() !== null;
+	};
+
 
     changesFactory[AscDFH.historyitem_CommonTimingListAdd] = CChangeContent;
     changesFactory[AscDFH.historyitem_CommonTimingListRemove] = CChangeContent;
@@ -5019,12 +5304,18 @@
         }
         return null;
     };
-		CCBhvr.prototype.getTargetTextOptions = function () {
-			if (this.tgtEl) {
-				return this.tgtEl.getTargetTextOptions();
-			}
-			return null;
-		};
+	CCBhvr.prototype.changeTargetObjectId = function (newId) {
+		if (this.tgtEl) {
+			return this.tgtEl.changeTargetObjectId(newId);
+		}
+		return null;
+	};
+	CCBhvr.prototype.getTargetTextOptions = function () {
+		if (this.tgtEl) {
+			return this.tgtEl.getTargetTextOptions();
+		}
+		return null;
+	};
     CCBhvr.prototype.getAttributes = function () {
         if (!this.attrNameLst) {
             return [];
@@ -6296,6 +6587,11 @@
             return this.spTgt.spid;
         }
         return null;
+    };
+    CTgtEl.prototype.changeTargetObjectId = function (newId) {
+        if (this.spTgt) {
+            return this.spTgt.setSpid(newId);
+        }
     };
 	CTgtEl.prototype.getTargetTextOptions = function () {
 		if (this.spTgt) {
@@ -8842,6 +9138,10 @@
     CTimeNodeContainer.prototype.getLabelFillColor = function () {
 
     };
+	CTimeNodeContainer.prototype.getEffectsCount = function () {
+		return this.getAllEffects().length;
+	};
+
     CTimeNodeContainer.prototype.getLabelRect = function () {
         var oTiming = this.getTiming();
         if (!oTiming) {
@@ -9683,6 +9983,27 @@
             this.cTn.fromPPTY(pReader);
         }
     };
+	CSeq.prototype.setTriggerSp = function (objectId) {
+		if (!this.isInterractiveSeq()) {
+			return;
+		}
+		let drawing = AscCommon.g_oTableId.Get_ById(objectId);
+		if (!drawing)
+			return;
+		let oStCondLst = new CCondLst();
+		let oCond = new CCond();
+		oCond.setEvt(COND_EVNT_ON_CLICK);
+		oCond.setDelay("0");
+		let oTgt = new CTgtEl();
+		let oSpTgt = new CSpTgt();
+		oSpTgt.setSpid(objectId);
+		oTgt.setSpTgt(oSpTgt);
+		oCond.setTgtEl(oTgt);
+		oStCondLst.push(oCond);
+		this.cTn.setStCondLst(oStCondLst);
+		let oNextCondLst = oStCondLst.createDuplicate();
+		this.setNextCondLst(oNextCondLst);
+	};
     CSeq.prototype.getChildren = function () {
         return [this.prevCondLst, this.nextCondLst, this.cTn];
     };
