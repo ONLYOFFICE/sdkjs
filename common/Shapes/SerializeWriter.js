@@ -2921,7 +2921,7 @@ function CBinaryFileWriter()
 
         if (window["IsEmbedImagesInInternalFormat"] === true)
         {
-            var _image = editor.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(_src)];
+            var _image = Asc.editor.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(_src)];
             if (undefined !== _image)
             {
                 var imgNatural = _image.Image;

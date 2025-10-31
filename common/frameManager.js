@@ -223,8 +223,11 @@
 			}
 			else
 			{
+				const bOldFlag = window["IsEmbedImagesInInternalFormat"];
+				window["IsEmbedImagesInInternalFormat"] = true;
 				const oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(oThis.api.wbModel);
 				const arrBinaryData = oBinaryFileWriter.Write().split(';');
+				window["IsEmbedImagesInInternalFormat"] = bOldFlag;
 				resolve(arrBinaryData[arrBinaryData.length - 1]);
 			}
 		});
@@ -1014,6 +1017,76 @@
 		CFrameData.call(this, AscCommon.c_oAscFrameDataType.OpenLocalDesktopFileLink, {"localFileLink": sLocalFileLink});
 	}
 
+	function CLoadBinaryData(hash, binary) {
+		this.hash = hash;
+		this.binary = binary;
+	}
+	function CBinaryCacheManager(api) {
+		this.cache = {};
+		this.isCollaborativeCache = {};
+		this.api = api;
+	}
+	CBinaryCacheManager.prototype.getHash = function(binary) {
+		const sha256 = AscCommon.Digest.sha256(binary, 0, binary.length);
+		return AscCommon.Hex.encode(sha256);
+	};
+	CBinaryCacheManager.prototype.getBinary = function(hash) {
+		if (this.cache[hash]) {
+			return this.cache[hash];
+		}
+		return null;
+	};
+	CBinaryCacheManager.prototype.loadBinaryToServer = function(xlsxBinary) {
+		const oThis = this;
+		const hash = this.getHash(xlsxBinary);
+		return new Promise(function(resolve) {
+			if (AscCommon.History.CanAddChanges() && !oThis.isCollaborativeCache[hash]) {
+				const dataUrl = oThis.getDataURLFromBinary(xlsxBinary);
+				AscCommon.sendImgUrls(this.api, [dataUrl], function(data) {
+					//todo
+				});
+				resolve(null)
+			} else {
+				resolve(new CLoadBinaryData(hash, xlsxBinary));
+			}
+		});
+
+	};
+	CBinaryCacheManager.prototype.addBinary = function(binary) {
+		const oThis = this;
+		this.getXLSXBinary(binary).then(function(arrXLSXBinary) {
+			return oThis.loadBinaryToServer(arrXLSXBinary);
+		}).then(function(oLoadedData) {
+			if (oLoadedData) {
+				this.cache[oLoadedData.hash] = oLoadedData.binary;
+				return oLoadedData.hash;
+			}
+			return null;
+		});
+	};
+
+	CBinaryCacheManager.prototype.getXLSXBinary = function(binary) {
+		const oThis = this;
+		return new Promise(function(resolve) {
+			if (AscCommon.checkOOXMLSignature(binary)) {
+				resolve(binary);
+			} else {
+				const base64 = oThis.api.frameManager.getEncodedArray(binary).toUtf8();
+				oThis.api.getConvertedXLSXFileFromUrl({data: base64}, Asc.c_oAscFileType.XLSX, function (arrBinaryData) {
+					if (arrBinaryData) {
+						resolve(arrBinaryData);
+					} else {
+						resolve(null);
+					}
+				});
+			}
+		});
+	};
+	CBinaryCacheManager.prototype.getDataURLFromBinary = function(arrXLSXBinary) {
+		return "data:" + AscCommon.openXml.Types.package.contentType + ";base64," + AscCommon.Base64.encode(arrXLSXBinary, 0, arrXLSXBinary.length);
+	};
+
+	window["AscCommon"].g_oBinaryCacheManager = new CBinaryCacheManager;
 	window["AscCommon"].CDiagramCellFrameManager = CDiagramCellFrameManager;
 	window["AscCommon"].CMainEditorFrameManager  = CMainEditorFrameManager;
 	window["AscCommon"].COleCellFrameManager = COleCellFrameManager;

@@ -667,6 +667,8 @@
 			{
 				if (this.wb)
 				{
+					const bOldFlag = window["IsEmbedImagesInInternalFormat"];
+					window["IsEmbedImagesInInternalFormat"] = true;
 					const oOldPPTXWriter = AscCommon.pptx_content_writer;
 					AscCommon.pptx_content_writer = new AscCommon.CPPTXContentWriter();
 
@@ -695,6 +697,7 @@
 					this.wb.Core.contentStatus = newContentStatus;
 
 					AscCommon.pptx_content_writer = oOldPPTXWriter;
+					window["IsEmbedImagesInInternalFormat"] = bOldFlag;
 				}
 			}
 			return this.cachedWbBinaryData;
