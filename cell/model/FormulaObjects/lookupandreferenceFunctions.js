@@ -5079,8 +5079,18 @@ function (window, undefined) {
 					}
 				} else {
 					for (let row = 0; row < rowCounter; row++) {
-						// get part of array from arg1 and insertRow
-						res.pushRow([arrayFrom.slice(row * arg2, (row + 1) * arg2).flat()], 0);
+						
+						// when we get the matrix from the argument, we get strings wrapped in arrays
+						// [[cNumber],[cNumber],[cNumber]] (1 row = 1 array inside the common matrix from the argument)
+						// to insert correctly into the row, you need to get all the object values and wrap them in one array like [cNumber, cNumber, cNumber]
+
+						let arrToInsert = arrayFrom.slice(row * arg2, (row + 1) * arg2);
+						let flatArray = [].concat.apply([], arrToInsert);
+						res.pushRow([flatArray], 0);
+
+						// ES6+ method doesn't work with old versions IE
+						// res.pushRow([arrayFrom.slice(row * arg2, (row + 1) * arg2).flat()], 0);
+
 					}
 				}
 
