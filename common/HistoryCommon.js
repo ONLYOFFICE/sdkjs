@@ -2495,9 +2495,7 @@
 	window['AscDFH'].historyitem_ChartSpace_RemoveUserShape    = window['AscDFH'].historyitem_type_ChartSpace | 19;
 	window['AscDFH'].historyitem_ChartSpace_ChartStyle         = window['AscDFH'].historyitem_type_ChartSpace | 20;
 	window['AscDFH'].historyitem_ChartSpace_ChartColors        = window['AscDFH'].historyitem_type_ChartSpace | 21;
-	window['AscDFH'].historyitem_ChartSpace_SetStartBinaryData = window['AscDFH'].historyitem_type_ChartSpace | 22;
-	window['AscDFH'].historyitem_ChartSpace_SetPartBinaryData  = window['AscDFH'].historyitem_type_ChartSpace | 23;
-	window['AscDFH'].historyitem_ChartSpace_SetEndBinaryData   = window['AscDFH'].historyitem_type_ChartSpace | 24;
+	window['AscDFH'].historyitem_ChartSpace_SetXLSXId          = window['AscDFH'].historyitem_type_ChartSpace | 22;
 	window['AscDFH'].historyitem_ChartSpace_SetExternalReference    = window['AscDFH'].historyitem_type_ChartSpace | 25;
 	window['AscDFH'].historyitem_ChartSpace_SetBDeleted        = window['AscDFH'].historyitem_type_ChartSpace | 26;
 	window['AscDFH'].historyitem_ChartSpace_SetChartData       = window['AscDFH'].historyitem_type_ChartSpace | 27;

@@ -1037,10 +1037,9 @@
         const oSelectedChart  = this.getSingleSelectedChart();
         if(oSelectedChart)
         {
-            if (!oSelectedChart.isExternal() && oBinary["workbookBinary"])
+            if (!oSelectedChart.isExternal() && oBinary["workbookHash"])
             {
-                const oApi = this.getEditorApi();
-                chart_space.setXLSX(oApi.frameManager.getDecodedArray(oBinary["workbookBinary"]));
+                chart_space.setXLSXId(oBinary["workbookHash"]);
             }
             if (oBinary['imagesForAddToHistory'])
             {

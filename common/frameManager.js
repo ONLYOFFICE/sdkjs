@@ -94,23 +94,12 @@
 
 	CFrameManagerBase.prototype.getDecodedArray = function (stream)
 	{
-		if (this.isSaveZip())
-		{
 			return new Uint8Array(stream);
-		}
-		return AscCommon.Base64.decode(stream);
 	};
 
 	CFrameManagerBase.prototype.getEncodedArray = function (arrStream)
 	{
-		if (AscCommon.checkOOXMLSignature(arrStream))
-		{
-			return Array.from(arrStream);
-		}
-
-		const nDataSize = arrStream.length;
-		const sData = AscCommon.Base64.encode(arrStream);
-		return "XLSY;v2;" + nDataSize + ";" + sData;
+		return Array.from(arrStream);
 	};
 
 
@@ -226,9 +215,9 @@
 				const bOldFlag = window["IsEmbedImagesInInternalFormat"];
 				window["IsEmbedImagesInInternalFormat"] = true;
 				const oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(oThis.api.wbModel);
-				const arrBinaryData = oBinaryFileWriter.Write().split(';');
+				const arrBinaryData = oBinaryFileWriter.Write(true, false, true);
 				window["IsEmbedImagesInInternalFormat"] = bOldFlag;
-				resolve(arrBinaryData[arrBinaryData.length - 1]);
+				resolve(Array.from(arrBinaryData));
 			}
 		});
 
@@ -1054,7 +1043,7 @@
 	};
 	CBinaryCacheManager.prototype.addBinary = function(binary) {
 		const oThis = this;
-		this.getXLSXBinary(binary).then(function(arrXLSXBinary) {
+		return this.getXLSXBinary(binary).then(function(arrXLSXBinary) {
 			return oThis.loadBinaryToServer(arrXLSXBinary);
 		}).then(function(oLoadedData) {
 			if (oLoadedData) {
@@ -1071,8 +1060,7 @@
 			if (AscCommon.checkOOXMLSignature(binary)) {
 				resolve(binary);
 			} else {
-				const base64 = oThis.api.frameManager.getEncodedArray(binary).toUtf8();
-				oThis.api.getConvertedXLSXFileFromUrl({data: base64}, Asc.c_oAscFileType.XLSX, function (arrBinaryData) {
+				oThis.api.getConvertedXLSXFileFromUrl({data: binary}, Asc.c_oAscFileType.XLSX, function (arrBinaryData) {
 					if (arrBinaryData) {
 						resolve(arrBinaryData);
 					} else {

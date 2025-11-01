@@ -7531,7 +7531,12 @@ BinaryChartReader.prototype.ReadCT_ChartSpace = function (type, length, val, cur
     else if(c_oserct_chartspaceXLSX === type || c_oserct_chartspaceXLSXZIP === type) {
 			const nCur = this.bcr.stream.cur;
 			const arrData = this.bcr.stream.data.slice(nCur, nCur + length);
-			val.setXLSX(arrData);
+			if (AscCommon.pptx_content_loader.IsUseFullUrl) {
+				AscCommon.pptx_content_loader.AddXLSXBinary(val, arrData);
+			} else {
+				//todo
+				val.setXLSX(arrData);
+			}
         res = c_oSerConstants.ReadUnknown;
     }
     else if(c_oserct_chartspaceSTYLES === type) {
@@ -7618,7 +7623,13 @@ BinaryChartReader.prototype.ReadCT_ChartExSpace = function (type, length, val) {
     else if(c_oserct_chartspaceXLSX === type || c_oserct_chartspaceXLSXZIP === type) {
 	    const nCur = this.bcr.stream.cur;
 	    const arrData = this.bcr.stream.data.slice(nCur, nCur + length);
-	    val.setXLSX(arrData);
+			if (AscCommon.pptx_content_loader.IsUseFullUrl) {
+				AscCommon.pptx_content_loader.AddXLSXBinary(val, arrData);
+			} else {
+				//todo
+				val.setXLSX(arrData);
+			}
+
 	    res = c_oSerConstants.ReadUnknown;
     }
     else if (c_oserct_chartspaceXLSXEXTERNAL === type) {

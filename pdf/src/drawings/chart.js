@@ -165,8 +165,8 @@
 			}
 			copy.setExternalData(oCopyExternalData);
 		}
-		if (this.XLSX) {
-			copy.setXLSX(this.XLSX.slice());
+		if (this.XLSXId) {
+			copy.setXLSXId(this.XLSXId);
 		}
 		if (this.externalReference) {
 			copy.setExternalReference(this.externalReference.createDuplicate());
@@ -225,7 +225,7 @@
 	};
 		CPdfChartSpace.prototype.applySpecialPasteProps = function() {
 			this.setExternalReference(null);
-			this.setXLSX(new Uint8Array(0));
+			this.setXLSXId(null);
 		};
 
     window["AscPDF"].CPdfChartSpace = CPdfChartSpace;

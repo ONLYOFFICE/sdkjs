@@ -147,6 +147,17 @@ CBuilderImages.prototype =
     }
 };
 
+function CBuilderBinaries(oClass, arrBinary) {
+	this.class = oClass;
+	this.binary = arrBinary;
+}
+CBuilderBinaries.prototype.getDataUrl = function() {
+	return AscCommon.g_oBinaryCacheManager.getDataURLFromBinary(this.binary);
+};
+CBuilderBinaries.prototype.setId = function(id) {
+
+};
+
 function BinaryPPTYLoader()
 {
     this.stream = null;
@@ -166,6 +177,7 @@ function BinaryPPTYLoader()
     this.IsUseFullUrl = false;
 	this.insertDocumentUrlsData = null;
     this.RebuildImages = [];
+		this.XLSXBinaries = [];
 
     this.aSlideLayouts = [];
     this.aThemes = [];
@@ -175,7 +187,9 @@ function BinaryPPTYLoader()
 	this.fields = [];
 	this.smartarts = [];
 
-
+	this.AddXLSXBinary = function(oClass, arrBinary) {
+		this.XLSXBinaries.push(new CBuilderBinaries(oClass, arrBinary));
+	}
 	this.ClearConnectedObjects = function(){
         this.oConnectedObjects = {};
         this.map_shapes_by_id = {};

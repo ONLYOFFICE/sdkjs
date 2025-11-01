@@ -376,35 +376,6 @@ function(window, undefined) {
 
 	var drawingsChangesMap = window['AscDFH'].drawingsChangesMap;
 
-
-	function CChangesStartChartSpaceBinary(Class, Old, New, Color) {
-		AscDFH.CChangesStartBinaryData.call(this, Class, Old, New, AscDFH.historyitem_ChartSpace_SetStartBinaryData, Color);
-	}
-	CChangesStartChartSpaceBinary.prototype = Object.create(AscDFH.CChangesStartBinaryData.prototype);
-	CChangesStartChartSpaceBinary.prototype.constructor = CChangesStartChartSpaceBinary;
-	CChangesStartChartSpaceBinary.prototype.setBinaryDataToClass = function (oPr)
-	{
-		this.Class.XLSX = oPr;
-	}
-
-	function CChangesPartChartSpaceBinary(Class, Old, New, Color) {
-		AscDFH.CChangesPartBinaryData.call(this, Class, Old, New, AscDFH.historyitem_ChartSpace_SetPartBinaryData, Color);
-	}
-	CChangesPartChartSpaceBinary.prototype = Object.create(AscDFH.CChangesPartBinaryData.prototype);
-	CChangesPartChartSpaceBinary.prototype.constructor = CChangesPartChartSpaceBinary;
-
-	function CChangesEndChartSpaceBinary(Class, Old, New, Color) {
-		AscDFH.CChangesEndBinaryData.call(this, Class, Old, New, AscDFH.historyitem_ChartSpace_SetEndBinaryData, Color);
-	}
-	CChangesEndChartSpaceBinary.prototype = Object.create(AscDFH.CChangesEndBinaryData.prototype);
-	CChangesEndChartSpaceBinary.prototype.constructor = CChangesEndChartSpaceBinary;
-	CChangesEndChartSpaceBinary.prototype.setBinaryDataToClass = function (oPr)
-	{
-		this.Class.XLSX = oPr;
-	}
-	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetStartBinaryData] = CChangesStartChartSpaceBinary;
-	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetPartBinaryData] = CChangesPartChartSpaceBinary;
-	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetEndBinaryData] = CChangesEndChartSpaceBinary;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetNvGrFrProps] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetThemeOverride] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetBDeleted] = CChangesDrawingsBool;
@@ -424,6 +395,7 @@ function(window, undefined) {
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetStyle] = CChangesDrawingsLong;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetTxPr] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetGroup] = CChangesDrawingsObject;
+	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetXLSXId] = CChangesDrawingsString;
 
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_AddUserShape] = CChangesDrawingsContent;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_RemoveUserShape] = CChangesDrawingsContent;
@@ -1920,6 +1892,7 @@ function(window, undefined) {
 		this.clrMapOvr = null;
 		this.date1904 = false;
 		this.externalData = null;
+		this.XLSXId = null;
 		this.XLSX = new Uint8Array(0);
 		this.externalReference = null;
 		this.lang = null;
@@ -2062,7 +2035,6 @@ function(window, undefined) {
 	CChartSpace.prototype.applySpecialPasteProps = function ()
 	{
 		const oSpecialProps = window['AscCommon'].g_specialPasteHelper.specialPasteProps;
-		const oApi = Asc.editor || editor;
 		switch (oSpecialProps)
 		{
 			case Asc.c_oSpecialPasteProps.sourceFormattingEmbedding:
@@ -2074,7 +2046,7 @@ function(window, undefined) {
 			case Asc.c_oSpecialPasteProps.sourceFormattingLink:
 			case Asc.c_oSpecialPasteProps.destinationFormattingLink:
 			{
-				this.setXLSX(new Uint8Array(0));
+				this.setXLSXId(null);
 				break;
 			}
 			case Asc.c_oSpecialPasteProps.destinationFormatting:
@@ -2084,7 +2056,7 @@ function(window, undefined) {
 			{
 				if (this.canPasteExternal())
 				{
-					this.setXLSX(new Uint8Array(0));
+					this.setXLSXId(null);
 				}
 				else
 				{
@@ -2095,24 +2067,6 @@ function(window, undefined) {
 			default:
 			{
 				break;
-			}
-		}
-		if (this.XLSX.length)
-		{
-			if (oApi.isOpenOOXInBrowser && !AscCommon.checkOOXMLSignature(this.XLSX))
-			{
-				const base64 = oApi.frameManager.getEncodedArray(this.XLSX).toUtf8();
-				const oThis = this;
-				oApi.getConvertedXLSXFileFromUrl({data: base64}, Asc.c_oAscFileType.XLSX, function (arrBinaryData) {
-					if (arrBinaryData)
-					{
-						oThis.setXLSX(arrBinaryData);
-					}
-					else
-					{
-						oThis.setXLSX(new Uint8Array(0));
-					}
-				});
 			}
 		}
 	};
@@ -4820,8 +4774,8 @@ function(window, undefined) {
 			}
 			copy.setExternalData(oCopyExternalData);
 		}
-		if (this.XLSX) {
-			copy.setXLSX(this.XLSX.slice());
+		if (this.XLSXId) {
+			copy.setXLSXId(this.XLSXId);
 		}
 		if (this.externalReference) {
 			copy.setExternalReference(this.externalReference.createDuplicate());
@@ -5320,8 +5274,11 @@ function(window, undefined) {
 	};
 	CChartSpace.prototype.setXLSX = function (arrData)
 	{
-		AscDFH.addBinaryDataToHistory(this, this.XLSX, arrData, CChangesStartChartSpaceBinary, CChangesPartChartSpaceBinary, CChangesEndChartSpaceBinary);
 		this.XLSX = arrData;
+	};
+	CChartSpace.prototype.setXLSXId = function(sXLSXId) {
+		AscCommon.History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_ChartSpace_SetXLSXId, this.XLSXId, sXLSXId));
+		this.XLSXId = sXLSXId;
 	};
 	CChartSpace.prototype.setExternalReference = function (oExternalReference)
 	{

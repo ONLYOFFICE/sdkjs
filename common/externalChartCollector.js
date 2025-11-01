@@ -293,8 +293,8 @@ function (window, undefined) {
 			const oNewReference = new AscCommonExcel.CChartExternalReference(oChart);
 			oNewReference.initFromObj(oExternalInfo);
 			oChart.setExternalReference(oNewReference);
-			if (oChart.XlSX && oChart.XlSX.length) {
-				oChart.setXLSX(new Uint8Array(0));
+			if (oChart.XLSXId) {
+				oChart.setXLSXId(null);
 			}
 
 			this.logicDocument.FinalizeAction();

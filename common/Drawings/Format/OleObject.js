@@ -150,9 +150,8 @@ function (window, undefined) {
 				const oApi = Asc.editor || editor;
 		    if (oApi.isOpenOOXInBrowser && !AscCommon.checkOOXMLSignature(this.m_aBinaryData))
 		    {
-			    const base64 = oApi.frameManager.getEncodedArray(this.m_aBinaryData).toUtf8();
 					const oThis = this;
-			    oApi.getConvertedXLSXFileFromUrl({data: base64}, Asc.c_oAscFileType.XLSX, function (arrBinaryData) {
+			    oApi.getConvertedXLSXFileFromUrl({data: this.m_aBinaryData}, Asc.c_oAscFileType.XLSX, function (arrBinaryData) {
 				    if (arrBinaryData)
 				    {
 					    oThis.setBinaryData(arrBinaryData);

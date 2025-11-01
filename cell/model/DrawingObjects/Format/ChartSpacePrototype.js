@@ -501,9 +501,9 @@ CChartSpace.prototype.Get_ColorMap = CShape.prototype.Get_ColorMap;
 			this.addExternalReferenceToEditor(oExternalWb);
 			this.checkChartExRefs();
 		}
-		if (!this.XLSX || this.XLSX.length)
+		if (this.XLSXId)
 		{
-			this.setXLSX(new Uint8Array(0));
+			this.setXLSXId(null);
 		}
 		this.setExternalReference(null);
 	};

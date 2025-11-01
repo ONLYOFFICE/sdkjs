@@ -4035,9 +4035,17 @@ CPresentation.prototype.FinalizeEditChart = function (binary)
 		oSlide.graphicObjects.loadChartData(binary['noHistory']);
 		if (!binary['noHistory'])
 		{
-			oSlide.graphicObjects.checkSelectedObjectsAndCallback(function () {
-				oThis.EditChart(binary);
-			}, [], false, AscDFH.historydescription_Presentation_EditChart);
+			AscCommon.g_oBinaryCacheManager.addBinary(binary["workbookBinary"]).then(function(hash) {
+				if (hash) {
+					chartBinary["workbookHash"] = hash;
+					oSlide.graphicObjects.checkSelectedObjectsAndCallback(function () {
+						oThis.EditChart(binary);
+					}, [], false, AscDFH.historydescription_Presentation_EditChart);
+				}
+			}).catch(function(e) {
+
+			});
+
 		}
 	}
 };

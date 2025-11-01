@@ -5767,14 +5767,23 @@ CDocument.prototype.AddSignatureLine = function(oSignatureDrawing){
 };
 CDocument.prototype.FinalizeEditChart = function(chartBinary)
 {
+	const oThis = this;
 	this.LoadChartData(chartBinary['noHistory']);
 	if (AscFormat.isObject(chartBinary) && !chartBinary['noHistory'])
 	{
 		if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
 		{
-			this.StartAction(AscDFH.historydescription_Document_EditChart);
-			this.EditChart(chartBinary);
-			this.FinalizeAction();
+			AscCommon.g_oBinaryCacheManager.addBinary(chartBinary["workbookBinary"]).then(function(hash) {
+				if (hash) {
+					chartBinary["workbookHash"] = hash;
+					oThis.StartAction(AscDFH.historydescription_Document_EditChart);
+					oThis.EditChart(chartBinary);
+					oThis.FinalizeAction();
+				}
+			}).catch(function(e) {
+
+			});
+
 		}
 	}
 };
