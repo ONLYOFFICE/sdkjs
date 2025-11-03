@@ -5119,10 +5119,11 @@ CDocument.prototype.CheckViewPosition = function()
 	}
 	
 	this.FullRecalc.ScrollToTarget = false;
-
-	let anchorPos = this.ViewPosition.AnchorPos;
-	let alignTop  = this.ViewPosition.AlignTop;
-	let distance  = this.ViewPosition.Distance;
+	
+	let anchorPos      = this.ViewPosition.AnchorPos;
+	let alignTop       = this.ViewPosition.AlignTop;
+	let distance       = this.ViewPosition.Distance;
+	let savedTopOffset = this.ViewPosition.AnchorSavedTopOffset;
 	
 	if (!anchorPos[0] || this !== anchorPos[0].Class)
 	{
@@ -5139,7 +5140,18 @@ CDocument.prototype.CheckViewPosition = function()
 	
 	this.ViewPosition     = null;
 	this.NeedUpdateTarget = false;
-	
+
+	// Check for scrolling event since the last update
+	// If so, we don't want the anchor/distance to invalidate the scroll!
+	// This happens quite often when scrolling due to the FullRecalc conditions above!
+	if (savedTopOffset) {
+		if (savedTopOffset != this.DrawingDocument.m_arrPages[0].drawingPage.top) {
+			let delta = savedTopOffset - this.DrawingDocument.m_arrPages[0].drawingPage.top;
+			delta = this.DrawingDocument.GetMMPerDot(delta);
+			this.ViewPosition.Distance -= delta;
+		}
+	}
+
 	function GetXY(docPos)
 	{
 		let run = docPos[docPos.length - 1].Class;
@@ -15550,10 +15562,11 @@ CDocument.prototype.private_StoreViewPositions = function(state)
 		// Сюда попадаем, когда мы еще не успели обработать предыдущую расчитанную позицию, но при этом
 		// прошло несколько пересчетов, которые могли поменять значения позиции, поэтому мы должны использовать
 		// начально расчитанные значения
-		state.AnchorAlignTop = this.ViewPosition.AlignTop;
-		state.AnchorDistance = this.ViewPosition.Distance;
-		state.AnchorType     = this.ViewPosition.Type;
-		state.AnchorPos      = this.ViewPosition.AnchorPos;
+		state.AnchorAlignTop       = this.ViewPosition.AlignTop;
+		state.AnchorDistance       = this.ViewPosition.Distance;
+		state.AnchorType           = this.ViewPosition.Type;
+		state.AnchorPos            = this.ViewPosition.AnchorPos;
+		state.AnchorSavedTopOffset = this.ViewPosition.AnchorSavedTopOffset;
 		return;
 	}
 	
@@ -15596,7 +15609,7 @@ CDocument.prototype.private_StoreViewPositions = function(state)
 	// TODO: Решить проблему, когда видно больше 2 страниц и курсор находится на средней странице
 	// Использовать положение курсора оказалось не всегда удачно, т.к. при многократном быстром расчете курсор может
 	// может попасть в поле экрана и тогда скролл потянется сразу за ним, что может быть неверным
-	if (false && -1 !== cursorPage
+	if (-1 !== cursorPage
 		&& ((viewPort[0].Page === cursorPage && cursorY + cursorH > viewPort[0].Y)
 			|| (viewPort[1].Page === cursorPage && cursorY < viewPort[1].Y)))
 	{
@@ -15684,6 +15697,76 @@ CDocument.prototype.private_StoreViewPositions = function(state)
 		state.AnchorPos      = anchorPos;
 		state.AnchorAlignTop = true;
 		state.AnchorDistance = xyInfo.Y - viewPort[0].Y;
+
+		let currentAnchorPage = state.AnchorPos ? this.private_GetXYByDocumentPosition(state.AnchorPos).Page : -1;
+		let topViewPage = viewPort[0].Page;
+
+		if (currentAnchorPage !== topViewPage)
+		{
+			// Calculate the desired Y position relative to viewPort[0].Page
+			let desiredY = state.AnchorDistance; // The distance from the top of the viewport
+			let pageHeight = this.Pages[topViewPage] ? this.Pages[topViewPage].Height : 297; // Default A4 height
+
+			// Clamp desiredY within the page's height
+			desiredY = Math.max(0, Math.min(desiredY, pageHeight));
+
+			// Find a new anchorPos on viewPort[0].Page at desiredY
+			let newAnchorPos = this.GetDocumentPositionByXY(topViewPage, 0, desiredY);
+			if (newAnchorPos)
+			{
+				state.AnchorPos = newAnchorPos;
+				let newXyInfo = this.private_GetXYByDocumentPosition(newAnchorPos);
+
+				// Update AnchorDistance with the new Y position
+				state.AnchorDistance = newXyInfo.Y - viewPort[0].Y;
+
+				// Anchor may still be on the wrong page, see if we can find a better one
+				if (newXyInfo.Page < topViewPage) {
+					let y1 = desiredY;
+					let altAnchorPos = newAnchorPos;
+					let altXyInfo = newXyInfo;
+					while (altAnchorPos && altXyInfo && altXyInfo.Page < topViewPage && y1 < pageHeight) {
+						y1+=10;
+						altAnchorPos = this.GetDocumentPositionByXY(topViewPage, 0, y1);
+						if (altAnchorPos) {
+							altXyInfo = this.private_GetXYByDocumentPosition(altAnchorPos);
+						}
+					}
+
+					if (altAnchorPos && altXyInfo && altXyInfo.Page == topViewPage) {
+						// Found an anchor on the correct page
+						newAnchorPos = altAnchorPos;
+						newXyInfo = altXyInfo;
+						state.AnchorPos = newAnchorPos;
+						state.AnchorDistance = newXyInfo.Y - viewPort[0].Y;
+					}
+					else
+					{
+						// Can't find an anchor on the right page, so calculate the offset
+						let offset = this.DrawingDocument.ConvertCoordsToAnotherPage(0, newXyInfo.Y, newXyInfo.Page, topViewPage);
+						state.AnchorDistance = offset.Y - viewPort[0].Y;
+					}
+				}
+			}
+			else
+			{
+				// Fallback: Set anchorPos to the very top of viewPort[0].Page
+				newAnchorPos = this.GetDocumentPositionByXY(topViewPage, 0, 0);
+				if (newAnchorPos)
+				{
+					state.AnchorPos = newAnchorPos;
+					let fallbackXyInfo = this.private_GetXYByDocumentPosition(newAnchorPos);
+
+					// Update AnchorDistance with the new Y position
+					state.AnchorDistance = fallbackXyInfo.Y - viewPort[0].Y;
+				}
+			}
+		}
+	}
+
+	// Record the scroll position in case we get a scroll event before the frame callback
+	if (this.DrawingDocument.m_arrPages.length) {
+		state.AnchorSavedTopOffset = this.DrawingDocument.m_arrPages[0].drawingPage.top;
 	}
 };
 CDocument.prototype.Load_DocumentStateAfterLoadChanges = function(State, updateSelection)
@@ -15726,10 +15809,11 @@ CDocument.prototype.Load_DocumentStateAfterLoadChanges = function(State, updateS
 	if (undefined !== State.AnchorType)
 	{
 		this.ViewPosition = {
-			AnchorPos : State.AnchorPos,
-			AlignTop  : State.AnchorAlignTop,
-			Distance  : State.AnchorDistance,
-			Type      : State.AnchorType
+			AnchorPos            : State.AnchorPos,
+			AlignTop             : State.AnchorAlignTop,
+			Distance             : State.AnchorDistance,
+			Type                 : State.AnchorType,
+			AnchorSavedTopOffset : State.AnchorSavedTopOffset
 		};
 		
 		if (AscWord.ViewPositionType.Cursor === this.ViewPosition.Type)
