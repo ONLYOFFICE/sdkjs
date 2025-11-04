@@ -27523,8 +27523,8 @@
 		const apiDocument = this.GetDocument();
 		if (apiDocument) {
 			const visitor = apiDocument.GetDocumentVisitor();
-			visitor['Math'] = function (oMath) {
-				maths.push(oMath);
+			visitor['Math'] = function (apiMath) {
+				maths.push(apiMath);
 				return false;
 			};
 			visitor['Traverse'](true);
@@ -28027,14 +28027,15 @@
 	{
 		return false;
 	};
-	ApiDocumentVisitor.prototype["Math"] = function(oMath)
+	ApiDocumentVisitor.prototype["Math"] = function(math)
 	{
 		return false;
 	};
-	ApiDocumentVisitor.prototype["MathEnd"] = function(oMath)
+	ApiDocumentVisitor.prototype["MathEnd"] = function(math)
 	{
 		return false;
 	};
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28181,7 +28182,6 @@
 	ApiRange.prototype["GetEndPos"]                  = ApiRange.prototype.GetEndPos;
 	ApiRange.prototype["MoveCursorToPos"]            = ApiRange.prototype.MoveCursorToPos;
 	ApiRange.prototype["AddField"]                   = ApiRange.prototype.AddField;
-	ApiRange.prototype["GetAllMaths"]                = ApiRange.prototype.GetAllMaths;
 	
 	ApiDocument.prototype["GetClassType"]                  = ApiDocument.prototype.GetClassType;
 	ApiDocument.prototype["CreateNewHistoryPoint"]         = ApiDocument.prototype.CreateNewHistoryPoint;
