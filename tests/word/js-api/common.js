@@ -37,7 +37,11 @@ $(function()
 	AscTest.Editor.CreateRun = AscCommon.DocumentEditorApi.prototype.CreateRun.bind(AscTest.Editor);
 	AscTest.Editor.CreateParagraph = AscCommon.DocumentEditorApi.prototype.CreateParagraph.bind(AscTest.Editor);
 	AscTest.Editor.CreateInlineLvlSdt = AscCommon.DocumentEditorApi.prototype.CreateInlineLvlSdt.bind(AscTest.Editor);
-	
+	AscTest.Editor.CreateTable = AscCommon.DocumentEditorApi.prototype.CreateTable.bind(AscTest.Editor);
+	AscTest.Editor.CreateImage = AscCommon.DocumentEditorApi.prototype.CreateImage.bind(AscTest.Editor);
+	AscTest.Editor.CreateChart = AscCommon.DocumentEditorApi.prototype.CreateChart.bind(AscTest.Editor);
+	AscTest.Editor.CreateShape = AscCommon.DocumentEditorApi.prototype.CreateShape.bind(AscTest.Editor);
+
 	QUnit.testStart(function()
 	{
 		AscTest.CreateLogicDocument();

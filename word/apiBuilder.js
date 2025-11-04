@@ -27677,7 +27677,6 @@
 	ApiShapeRange.prototype.GetCount = function () {
 		return this.Shapes.length;
 	};
-	ApiShapeRange.prototype['GetCount'] = ApiShapeRange.prototype.GetCount;
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -27692,7 +27691,6 @@
 	ApiInlineShapes.prototype.GetCount = function () {
 		return this.Shapes.length;
 	};
-	ApiInlineShapes.prototype['GetCount'] = ApiInlineShapes.prototype.GetCount;
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -27703,6 +27701,10 @@
 	function ApiMath(ParaMath) {
 		this.ParaMath = ParaMath;
 	}
+
+	ApiMath.prototype.GetClassType = function () {
+		return 'math';
+	};
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -29273,6 +29275,10 @@
 	ApiSelection.prototype["GetStyle"] = ApiSelection.prototype.GetStyle;
 	ApiSelection.prototype["GetParaPr"] = ApiSelection.prototype.GetParaPr;
 	ApiSelection.prototype["GetFields"] = ApiSelection.prototype.GetFields;
+
+	ApiShapeRange.prototype['GetCount'] = ApiShapeRange.prototype.GetCount;
+	ApiInlineShapes.prototype['GetCount'] = ApiInlineShapes.prototype.GetCount;
+	ApiMath.prototype["GetClassType"] = ApiMath.prototype.GetClassType;
 
 	ApiField.prototype["GetClassType"] = ApiField.prototype.GetClassType;
 	ApiField.prototype["GetValue"] = ApiField.prototype.GetValue;
