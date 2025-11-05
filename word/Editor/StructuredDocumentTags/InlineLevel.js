@@ -89,6 +89,22 @@ CInlineLevelSdt.prototype.Add = function(Item)
 		this.SetDefaultTextPr(oTempTextPr);
 		return;
 	}
+	
+	if (this.IsLabeledCheckBox() && (Item instanceof AscWord.CInlineLevelSdt))
+	{
+		if (this.IsFixedForm())
+			return;
+		
+		let parent = this.GetParent();
+		let posInParent = this.GetPosInParent(parent);
+		if (-1 !== posInParent && parent)
+		{
+			parent.AddToContent(posInParent + 1, Item);
+			Item.MoveCursorToContentControl(true);
+		}
+		
+		return;
+	}
 
 	this.private_ReplacePlaceHolderWithContent();
 

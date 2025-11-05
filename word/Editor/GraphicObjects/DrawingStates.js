@@ -211,7 +211,14 @@ StartAddNewShape.prototype =
                         shape.select(this.drawingObjects, this.pageIndex);
                     }
                     this.drawingObjects.document.Recalculate();
-                    oLogicDocument.FinalizeAction();
+                    oLogicDocument.FinalizeAction(undefined, {
+                        type: shape.getPresetGeom(),
+                        pos: {x: drawing.X, t: drawing.Y},
+                        extX: shape.spPr.xfrm.extX,
+                        extY: shape.spPr.xfrm.extY,
+                        fill: shape.brush,
+                        border: shape.pen
+                    });
                     if(this.preset && (this.preset.indexOf("textRect") === 0))
                     {
                         this.drawingObjects.selection.textSelection = shape;

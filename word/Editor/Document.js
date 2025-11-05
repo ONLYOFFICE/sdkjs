@@ -1962,8 +1962,9 @@ CDocument.prototype.GetColorMap = function()
  * @param {number} nDescription
  * @param {object} [oSelectionState=null] - начальное состояние селекта, до начала действия
  * @param {number} [flags=null]
+ * @param {object} additional
  */
-CDocument.prototype.StartAction = function(nDescription, oSelectionState, flags)
+CDocument.prototype.StartAction = function(nDescription, oSelectionState, flags, additional)
 {
 	this.sendEvent("asc_onUserActionStart");
 	
@@ -2008,6 +2009,8 @@ CDocument.prototype.StartAction = function(nDescription, oSelectionState, flags)
 			this.Action.ScrollToTarget  = !!(flags & ACTION_FLAGS.SCROLL_TO_TARGET);
 		}
 	}
+	
+	this.Api.getMacroRecorder().onAction(nDescription, additional);
 };
 /**
  * В процессе ли какое-либо действие
@@ -2168,7 +2171,7 @@ CDocument.prototype.private_Redraw = function(nStartPage, nEndPage)
  * @param {boolean} [checkEmptyAction=true] Нужно ли проверять, что действие ничего не делало
  * @returns {boolean} Выполнилось ли действие
  */
-CDocument.prototype.FinalizeAction = function(checkEmptyAction)
+CDocument.prototype.FinalizeAction = function(checkEmptyAction, additional)
 {
 	if (!this.IsActionStarted())
 		return true;
@@ -2281,6 +2284,7 @@ CDocument.prototype.FinalizeAction = function(checkEmptyAction)
 	this.Action.UpdateStates = false;
 	
 	this.sendEvent("asc_onUserActionEnd");
+	this.Api.getMacroRecorder().onAction(this.Action.Description, additional);
 	return actionCompleted;
 };
 /**
@@ -6431,7 +6435,8 @@ CDocument.prototype.MoveCursorLeft = function(AddToSelect, Word)
 		let curPara = this.GetCurrentParagraph(true);
 		isRtl = (curPara ? curPara.isRtlDirection() : false);
 	}
-	
+
+	this.StartAction(AscDFH.historydescription_Document_MoveCursorLeft, {isRtl: isRtl, isAddSelect: AddToSelect, isWord: Word});
 	if (isRtl)
 		this.Controller.MoveCursorRight(AddToSelect, Word);
 	else
@@ -6441,6 +6446,7 @@ CDocument.prototype.MoveCursorLeft = function(AddToSelect, Word)
 	this.Document_UpdateInterfaceState();
 	this.Document_UpdateRulersState();
 	this.private_UpdateCursorXY(true, true);
+	this.FinalizeAction();
 };
 CDocument.prototype.MoveCursorRight = function(AddToSelect, Word, FromPaste)
 {
@@ -6459,7 +6465,8 @@ CDocument.prototype.MoveCursorRight = function(AddToSelect, Word, FromPaste)
 		let curPara = this.GetCurrentParagraph(true);
 		isRtl = (curPara ? curPara.isRtlDirection() : false);
 	}
-	
+
+	this.StartAction(AscDFH.historydescription_Document_MoveCursorRight, {isRtl: isRtl, isAddSelect: AddToSelect, isWord: Word});
 	if (isRtl)
 		this.Controller.MoveCursorLeft(AddToSelect, Word);
 	else
@@ -6469,6 +6476,7 @@ CDocument.prototype.MoveCursorRight = function(AddToSelect, Word, FromPaste)
 	this.Document_UpdateInterfaceState();
 	this.Document_UpdateSelectionState();
 	this.private_UpdateCursorXY(true, true);
+	this.FinalizeAction();
 };
 CDocument.prototype.MoveCursorUp = function(AddToSelect, CtrlKey)
 {
@@ -6759,9 +6767,13 @@ CDocument.prototype.SetParagraphStyle = function(sName, isCheckLinkedStyle)
 
 	var oParaPr = this.GetCalculatedParaPr();
 	if (oParaPr.PStyle && this.Styles.Get(oParaPr.PStyle) && this.Styles.Get(oParaPr.PStyle).GetName() === sName)
+	{
 		this.Controller.ClearParagraphFormatting(false, true);
+	}
 	else
+	{
 		this.Controller.SetParagraphStyle(sName);
+	}
 
 	this.Recalculate();
 	this.Document_UpdateSelectionState();
@@ -6835,7 +6847,7 @@ CDocument.prototype.SetParagraphHighlight = function(IsColor, r, g, b)
 	{
 		if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
 		{
-			this.StartAction(AscDFH.historydescription_Document_SetTextHighlight);
+			this.StartAction(AscDFH.historydescription_Document_SetTextHighlight, undefined, undefined, {r:r, g:g, b:b});
 
 			if (false === IsColor)
 				this.AddToParagraph(new ParaTextPr({HighLight : highlight_None}));
@@ -7089,7 +7101,7 @@ CDocument.prototype.RemoveHdrFtr = function(nPageAbs, isHeader)
 
 	if (!this.IsSelectionLocked(AscCommon.changestype_HdrFtr))
 	{
-		this.StartAction(AscDFH.historydescription_Document_RemoveHdrFtr);
+		this.StartAction(AscDFH.historydescription_Document_RemoveHdrFtr, undefined, undefined, {type: oHeader.Type, isHeader: isHeader});
 
 		let nSectPos = this.SectionsInfo.Find_ByHdrFtr(oHeader);
 		if (0 === nSectPos)
@@ -8634,11 +8646,10 @@ CDocument.prototype.OnKeyDown = function(e)
 
 				if (bCanPerform && false === this.Document_Is_SelectionLocked(CheckType, null, false, this.IsFormFieldEditing()))
 				{
-					this.StartAction(AscDFH.historydescription_Document_EnterButton);
-
 					let oMath = oSelectedInfo.GetMath();
 					if (oMath)
 					{
+						this.StartAction(AscDFH.historydescription_Document_MathAddLine);
 						if (oMath.Is_InInnerContent())
 						{
 							oMath.Handle_AddNewLine();
@@ -8652,6 +8663,7 @@ CDocument.prototype.OnKeyDown = function(e)
 					}
 					else
 					{
+						this.StartAction(AscDFH.historydescription_Document_AddParagraph, null, null, true);
 						this.AddNewParagraph();
 					}
 					this.Recalculate();
@@ -8732,31 +8744,32 @@ CDocument.prototype.OnKeyDown = function(e)
 		}
 		else if (e.KeyCode === 32) // Space
 		{
-			this.private_CheckForbiddenPlaceOnTextAdd();
-
-			var oSelectedInfo = this.GetSelectedElementsInfo();
-			var oMath         = oSelectedInfo.GetMath();
-
-			let isFormFieldEditing = this.IsFormFieldEditing();
-			if (!this.CheckEnterSpaceAction() && !this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, isFormFieldEditing))
+			if (this.private_CheckForbiddenPlaceOnTextAdd(0x20))
 			{
-				this.StartAction(AscDFH.historydescription_Document_SpaceButton);
+				var oSelectedInfo = this.GetSelectedElementsInfo();
+				var oMath         = oSelectedInfo.GetMath();
 				
-				// Если мы находимся в формуле, тогда пытаемся выполнить автозамену
-				if (null !== oMath && true === oMath.Make_AutoCorrect())
+				let isFormFieldEditing = this.IsFormFieldEditing();
+				if (!this.CheckEnterSpaceAction() && !this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, isFormFieldEditing))
 				{
-					// Ничего тут не делаем. Все делается в автозамене
-				}
-				else
-				{
-					this.DrawingDocument.TargetStart();
-					this.DrawingDocument.TargetShow();
+					this.StartAction(AscDFH.historydescription_Document_SpaceButton);
 					
-					this.CheckLanguageOnTextAdd = true;
-					this.AddToParagraph(new AscWord.CRunSpace());
-					this.CheckLanguageOnTextAdd = false;
+					// Если мы находимся в формуле, тогда пытаемся выполнить автозамену
+					if (null !== oMath && true === oMath.Make_AutoCorrect())
+					{
+						// Ничего тут не делаем. Все делается в автозамене
+					}
+					else
+					{
+						this.DrawingDocument.TargetStart();
+						this.DrawingDocument.TargetShow();
+						
+						this.CheckLanguageOnTextAdd = true;
+						this.AddToParagraph(new AscWord.CRunSpace());
+						this.CheckLanguageOnTextAdd = false;
+					}
+					this.FinalizeAction();
 				}
-				this.FinalizeAction();
 			}
 
 			bRetValue = keydownresult_PreventNothing;
@@ -9333,7 +9346,8 @@ CDocument.prototype.OnKeyDown = function(e)
 };
 CDocument.prototype.private_AddSymbolByShortcut = function(nCode)
 {
-	this.private_CheckForbiddenPlaceOnTextAdd();
+	if (!this.private_CheckForbiddenPlaceOnTextAdd(nCode))
+		return;
 
 	if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, this.IsFormFieldEditing()))
 	{
@@ -9427,7 +9441,7 @@ CDocument.prototype.executeShortcut = function(type)
 		{
 			if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Properties))
 			{
-				this.StartAction(AscDFH.historydescription_Document_Shortcut_SetStyleHeading1);
+				this.StartAction(AscDFH.historydescription_Document_Shortcut_SetStyleHeading1, null, null, "Heading 1");
 				this.SetParagraphStyle("Heading 1");
 				this.UpdateInterface();
 				this.FinalizeAction();
@@ -9439,7 +9453,7 @@ CDocument.prototype.executeShortcut = function(type)
 		{
 			if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Properties))
 			{
-				this.StartAction(AscDFH.historydescription_Document_Shortcut_SetStyleHeading2);
+				this.StartAction(AscDFH.historydescription_Document_Shortcut_SetStyleHeading2, null, null, "Heading 2");
 				this.SetParagraphStyle("Heading 2");
 				this.UpdateInterface();
 				this.FinalizeAction();
@@ -9451,7 +9465,7 @@ CDocument.prototype.executeShortcut = function(type)
 		{
 			if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Properties))
 			{
-				this.StartAction(AscDFH.historydescription_Document_Shortcut_SetStyleHeading3);
+				this.StartAction(AscDFH.historydescription_Document_Shortcut_SetStyleHeading3, null, null, "Heading 3");
 				this.SetParagraphStyle("Heading 3");
 				this.UpdateInterface();
 				this.FinalizeAction();
@@ -9466,7 +9480,7 @@ CDocument.prototype.executeShortcut = function(type)
 			{
 				if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
 				{
-					this.StartAction(AscDFH.historydescription_Document_SetTextStrikeoutHotKey);
+					this.StartAction(AscDFH.historydescription_Document_SetTextStrikeoutHotKey, null, null, oTextPr.Strikeout !== true);
 					this.AddToParagraph(new ParaTextPr({Strikeout : oTextPr.Strikeout !== true}));
 					this.UpdateInterface();
 					this.FinalizeAction();
@@ -9500,7 +9514,7 @@ CDocument.prototype.executeShortcut = function(type)
 			{
 				if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
 				{
-					this.StartAction(AscDFH.historydescription_Document_SetTextBoldHotKey);
+					this.StartAction(AscDFH.historydescription_Document_SetTextBoldHotKey, null, null, oTextPr.Bold !== true);
 					this.AddToParagraph(new ParaTextPr({Bold : oTextPr.Bold !== true}));
 					this.UpdateInterface();
 					this.FinalizeAction();
@@ -9552,7 +9566,7 @@ CDocument.prototype.executeShortcut = function(type)
 			{
 				if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
 				{
-					this.StartAction(AscDFH.historydescription_Document_SetTextItalicHotKey);
+					this.StartAction(AscDFH.historydescription_Document_SetTextItalicHotKey, null, null, oTextPr.Italic !== true);
 					this.AddToParagraph(new ParaTextPr({Italic : oTextPr.Italic !== true}));
 					this.UpdateInterface();
 					this.FinalizeAction();
@@ -9579,9 +9593,8 @@ CDocument.prototype.executeShortcut = function(type)
 		{
 			if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
 			{
-				this.StartAction(AscDFH.historydescription_Document_SetParagraphNumberingHotKey);
-				
 				let numObject = AscWord.GetNumberingObjectByDeprecatedTypes(0, 1);
+				this.StartAction(AscDFH.historydescription_Document_SetParagraphNumberingHotKey, undefined, undefined, numObject);
 				if (numObject)
 					this.SetParagraphNumbering(numObject);
 				
@@ -9659,7 +9672,7 @@ CDocument.prototype.executeShortcut = function(type)
 			{
 				if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
 				{
-					this.StartAction(AscDFH.historydescription_Document_SetTextUnderlineHotKey);
+					this.StartAction(AscDFH.historydescription_Document_SetTextUnderlineHotKey, null, null, oTextPr.Underline !== true);
 					this.AddToParagraph(new ParaTextPr({Underline : oTextPr.Underline !== true}));
 					this.UpdateInterface();
 					this.FinalizeAction();
@@ -9756,8 +9769,12 @@ CDocument.prototype.executeShortcut = function(type)
 			{
 				if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
 				{
-					this.StartAction(AscDFH.historydescription_Document_SetTextVertAlignHotKey2);
-					this.AddToParagraph(new ParaTextPr({VertAlign : oTextPr.VertAlign === AscCommon.vertalign_SuperScript ? AscCommon.vertalign_Baseline : AscCommon.vertalign_SuperScript}));
+					let vertAlign = (oTextPr.VertAlign === AscCommon.vertalign_SuperScript)
+						? AscCommon.vertalign_Baseline
+						: AscCommon.vertalign_SuperScript;
+
+					this.StartAction(AscDFH.historydescription_Document_SetTextVertAlignHotKey2, null, null, vertAlign === AscCommon.vertalign_Baseline);
+					this.AddToParagraph(new ParaTextPr({VertAlign : vertAlign}));
 					this.UpdateInterface();
 					this.FinalizeAction();
 				}
@@ -9780,12 +9797,6 @@ CDocument.prototype.executeShortcut = function(type)
 			result = true;
 			break;
 		}
-		case Asc.c_oAscDocumentShortcutType.SoftHyphen:
-		{
-			// TODO: Реализовать
-			result = true;
-			break;
-		}
 		case Asc.c_oAscDocumentShortcutType.HorizontalEllipsis:
 		{
 			this.private_AddSymbolByShortcut(0x2026);
@@ -9799,8 +9810,12 @@ CDocument.prototype.executeShortcut = function(type)
 			{
 				if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
 				{
-					this.StartAction(AscDFH.historydescription_Document_SetTextVertAlignHotKey3);
-					this.AddToParagraph(new ParaTextPr({VertAlign : oTextPr.VertAlign === AscCommon.vertalign_SubScript ? AscCommon.vertalign_Baseline : AscCommon.vertalign_SubScript}));
+					let vertAlign = (oTextPr.VertAlign === AscCommon.vertalign_SubScript)
+						? AscCommon.vertalign_Baseline
+						: AscCommon.vertalign_SubScript;
+					
+					this.StartAction(AscDFH.historydescription_Document_SetTextVertAlignHotKey3, null, null, vertAlign === AscCommon.vertalign_Baseline);
+					this.AddToParagraph(new ParaTextPr({VertAlign : vertAlign}));
 					this.UpdateInterface();
 					this.FinalizeAction();
 				}
@@ -9886,7 +9901,8 @@ CDocument.prototype.EnterText = function(value)
 
 	let codePoints = typeof(value) === "string" ? value.codePointsArray() : value;
 
-	this.private_CheckForbiddenPlaceOnTextAdd();
+	if (!this.private_CheckForbiddenPlaceOnTextAdd(codePoints))
+		return true;
 	
 	if (1 === codePoints.length
 		&& AscCommon.IsSpace(codePoints[0])
@@ -9896,8 +9912,8 @@ CDocument.prototype.EnterText = function(value)
 	if (this.IsSelectionLocked(AscCommon.changestype_Paragraph_AddText, null, true, this.IsFormFieldEditing()))
 		return false;
 
-	this.StartAction(AscDFH.historydescription_Document_AddLetter);
-
+	this.StartAction(AscDFH.historydescription_Document_AddLetter, null, null, codePoints);
+	
 	this.DrawingDocument.TargetStart();
 	this.DrawingDocument.TargetShow();
 
@@ -10637,7 +10653,7 @@ CDocument.prototype.private_IsHitInHdrFtr = function(nY, nCurPage)
 	let pageFrame = this.GetPageContentFrame(nCurPage);
 	return (nY <= pageFrame.Y || nY > pageFrame.YLimit);
 };
-CDocument.prototype.private_CheckForbiddenPlaceOnTextAdd = function()
+CDocument.prototype.private_CheckForbiddenPlaceOnTextAdd = function(codePoints)
 {
 	let isFormFieldEditing = this.IsFormFieldEditing();
 	let oSelectedInfo      = this.GetSelectedElementsInfo();
@@ -10653,9 +10669,43 @@ CDocument.prototype.private_CheckForbiddenPlaceOnTextAdd = function()
 
 	if (!isFormFieldEditing && oCheckBox)
 	{
-		this.RemoveSelection();
-		oCheckBox.MoveCursorOutsideForm(!oCheckBox.IsForm() && oCheckBox.IsCursorAtBegin());
+		if (oCheckBox.IsForm() && oCheckBox.GetMainForm() === oCheckBox)
+		{
+			if (this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, false))
+			{
+				this.StartAction(AscDFH.historydescription_Document_AddCheckBoxLabel);
+				
+				let text = "";
+				if (Array.isArray(codePoints))
+				{
+					for (let index = 0, count = codePoints.length; index < count; ++index)
+					{
+						text += String.fromCodePoint(codePoints);
+					}
+				}
+				else
+				{
+					text = String.fromCodePoint(codePoints);
+				}
+				
+				oCheckBox.SetCheckBoxLabel(text);
+				this.RemoveSelection();
+				oCheckBox.MoveCursorToContentControl(false);
+				
+				this.UpdateSelection();
+				this.Recalculate();
+				this.FinalizeAction();
+				return false;
+			}
+		}
+		else
+		{
+			this.RemoveSelection();
+			oCheckBox.MoveCursorOutsideForm(!oCheckBox.IsForm() && oCheckBox.IsCursorAtBegin());
+		}
 	}
+	
+	return true;
 };
 /**
  * Проверяем будет ли добавление текста на ивенте KeyDown
@@ -16196,7 +16246,7 @@ CDocument.prototype.private_ToggleParagraphAlignByHotkey = function(align)
 		{
 			if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
 			{
-				this.StartAction(AscDFH.historydescription_Document_SetParagraphAlignHotKey);
+				this.StartAction(AscDFH.historydescription_Document_SetParagraphAlignHotKey, undefined, undefined, align);
 				Math.Set_Align(align);
 				this.Recalculate();
 				this.UpdateInterface();
@@ -16223,8 +16273,8 @@ CDocument.prototype.private_ToggleParagraphAlignByHotkey = function(align)
 				let currAlign = paraPr.Jc;
 				align = currAlign === align ? (align === AscCommon.align_Left ? AscCommon.align_Justify : AscCommon.align_Left) : align;
 			}
-			
-			this.StartAction(AscDFH.historydescription_Document_SetParagraphAlignHotKey);
+
+			this.StartAction(AscDFH.historydescription_Document_SetParagraphAlignHotKey, undefined, undefined, align);
 			this.SetParagraphAlign(align);
 			this.UpdateInterface();
 			this.FinalizeAction();
@@ -17348,6 +17398,8 @@ CDocument.prototype.Statistics_Stop = function()
 //----------------------------------------------------------------------------------------------------------------------
 CDocument.prototype.Start_MailMerge = function(MailMergeMap, arrFields)
 {
+	this.Api.macroRecorder.stop();
+	
 	this.EndPreview_MailMergeResult();
 
 	this.MailMergeMap    = MailMergeMap;
@@ -17394,7 +17446,7 @@ CDocument.prototype.Add_MailMergeField = function(Name)
 		this.FinalizeAction();
 	}
 };
-CDocument.prototype.Set_HightlighMailMergeFields = function(Value)
+CDocument.prototype.Set_HighlightMailMergeFields = function(Value)
 {
 	if (Value !== this.MailMergeFieldsHighlight)
 	{
@@ -17479,7 +17531,9 @@ CDocument.prototype.Get_MailMergedDocument = function(_nStartIndex, _nEndIndex)
 
 	if (null === this.MailMergeMap || nStartIndex > nEndIndex || nStartIndex >= this.MailMergeMap.length)
 		return null;
-
+	
+	this.Api.macroRecorder.stop();
+	
 	AscCommon.History.TurnOff();
 	AscCommon.g_oTableId.TurnOff();
 
@@ -22937,6 +22991,8 @@ CDocument.prototype.OnEndLoadScript = function()
 };
 CDocument.prototype.BeginViewModeInReview = function(nMode)
 {
+	this.Api.macroRecorder.stop();
+	
 	if (this.IsViewModeInReview())
 		this.EndViewModeInReview();
 
@@ -24910,7 +24966,7 @@ CDocument.prototype.AddBlankPage = function()
 	{
 		if (!this.Document_Is_SelectionLocked(AscCommon.changestype_Document_Content))
 		{
-			this.StartAction(AscDFH.historydescription_Document_AddBlankPage);
+			this.StartAction(AscDFH.historydescription_Document_AddBlankPage, undefined, undefined, true);
 
 			if (this.IsSelectionUse())
 			{
@@ -26691,7 +26747,7 @@ CDocument.prototype.ChangeTextCase = function(nCaseType)
 
 	if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
 	{
-		this.StartAction(AscDFH.historydescription_Document_ChangeTextCase);
+		this.StartAction(AscDFH.historydescription_Document_ChangeTextCase, null, null, nCaseType);
 
 		let oChangeEngine = new AscCommonWord.CChangeTextCaseEngine(nCaseType);
 		oChangeEngine.ProcessParagraphs(this.GetSelectedParagraphs());

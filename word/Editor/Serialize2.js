@@ -456,7 +456,9 @@ var c_oSerParType = {
 	DocParts: 27,
 	PermStart: 28,
 	PermEnd: 29,
-	JsaProjectExternal: 30
+	JsaProjectExternal: 30,
+	ParaID: 31,
+	TextID: 32
 };
 var c_oSerGlossary = {
 	DocPart: 0,
@@ -5414,6 +5416,24 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
             this.memory.WriteByte(c_oSerParType.Content);
             this.bs.WriteItemWithLength(function(){oThis.WriteParagraphContent(par, bUseSelection ,true, selectedAll);});
         }
+		
+		let paraId = par.GetParaId();
+		if (undefined !== paraId && null !== paraId)
+		{
+			this.memory.WriteByte(c_oSerParType.ParaID);
+			this.bs.WriteItemWithLength(function(){
+				oThis.memory.WriteLong(paraId);
+			});
+		}
+		
+		let textId = par.GetTextId();
+		if (undefined !== textId && null !== textId)
+		{
+			this.memory.WriteByte(c_oSerParType.TextID);
+			this.bs.WriteItemWithLength(function(){
+				oThis.memory.WriteLong(textId);
+			});
+		}
     };
     this.WriteParagraphContent = function (par, bUseSelection, bLastRun, selectedAll)
     {
@@ -11554,6 +11574,14 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
                 return oThis.ReadParagraphContent(t, l, paragraph);
             });
         }
+		else if (c_oSerParType.ParaID === type)
+		{
+			paragraph.SetParaId(this.stream.GetLong());
+		}
+		else if (c_oSerParType.TextID === type)
+		{
+			paragraph.SetTextId(this.stream.GetLong());
+		}
         else
             res = c_oSerConstants.ReadUnknown;
         return res;

@@ -228,8 +228,14 @@
                 return result;
             }
 
-            function proceedAttributes(name, text, attributes)
+            function proceedAttributes(data)
             {
+                let name        = data.name;
+                let text        = data.text;
+                let attributes  = data.attributes;
+                let oThis       = data.oThis;
+                let parentMathContent = data.parentMathContent;
+
                 const GetMathFontChar = AscMath.GetMathFontChar;
                 switch (name)
                 {
@@ -274,11 +280,11 @@
                     case 'mo':
                     {
                         if (attributes['id'])
-                            this.mathMLData['mo-id'][attributes['id']] = elements[0];
+                            oThis.mathMLData['mo-id'][attributes['id']] = elements[0];
     
                         if (attributes['linebreak'])
                         {
-                            this.mathMLData['mo-linebreak-todo'].push({
+                            oThis.mathMLData['mo-linebreak-todo'].push({
                                 element: elements[0],
                                 type: attributes['linebreak'],
                                 indentalign: attributes['indentalign'] === "id",
@@ -287,7 +293,7 @@
                         }
     
                         // indent
-                        if (attributes['movablelimits'])
+                        if (attributes['movablelimits'] && parentMathContent)
                         {
                             parentMathContent.mathml_metadata['movablelimits'] = attributes['movablelimits'];
                         }
@@ -350,7 +356,13 @@
                         break;
 
                     text = decodeHexEntities(text);
-                    text = proceedAttributes(name, text, attributes);
+                    text = proceedAttributes({
+                        name: name,
+                        text: text,
+                        attributes: attributes,
+                        oThis: this,
+                        parentMathContent: parentMathContent
+                    });
                     text = text.replaceAll("&nbsp;", " ");
     
                     if (text)

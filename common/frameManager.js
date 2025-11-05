@@ -172,7 +172,7 @@
 			}
 
 			if (Asc.c_oAscError.ID.No !== internalError) {
-				api.sendEvent("asc_onError", internalError, c_oAscError.Level.NoCritical);
+				api.sendEvent("asc_onError", internalError, Asc.c_oAscError.Level.NoCritical);
 			}
 		});
 	};

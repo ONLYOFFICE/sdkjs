@@ -982,7 +982,7 @@ var editor;
  };
 
   spreadsheet_api.prototype.asc_Cut = function() {
-    return AscCommon.g_clipboardBase.Button_Cut();
+	return AscCommon.g_clipboardBase.Button_Cut();
   };
 
   spreadsheet_api.prototype.asc_PasteData = function (_format, data1, data2, text_data, doNotShowButton, callback) {
@@ -5942,7 +5942,7 @@ var editor;
   spreadsheet_api.prototype.asc_setCellFontSize = function(fontSize) {
     var ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellFontSize) {
-      ws.objectRender.controller.setCellFontSize(fontSize);
+		ws.objectRender.controller.setCellFontSize(fontSize);
     } else {
       this.wb.setFontAttributes("fs", fontSize);
       this.wb.restoreFocus();
@@ -5950,10 +5950,9 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
-	  if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
-     return;
+	if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return;
     }
-
   	let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
@@ -5969,7 +5968,6 @@ var editor;
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return;
     }
-
     let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellItalic) {
       ws.objectRender.controller.setCellItalic(isItalic);
@@ -5983,7 +5981,6 @@ var editor;
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return;
     }
-
     let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellUnderline) {
       ws.objectRender.controller.setCellUnderline(isUnderline);
@@ -5997,7 +5994,6 @@ var editor;
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return;
     }
-
     let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellStrikeout) {
       ws.objectRender.controller.setCellStrikeout(isStrikeout);
@@ -6011,8 +6007,7 @@ var editor;
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return;
     }
-
-    let ws = this.wb.getWorksheet();
+	let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellSubscript) {
       ws.objectRender.controller.setCellSubscript(isSubscript);
     } else {
@@ -6025,7 +6020,6 @@ var editor;
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return;
     }
-
     let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellSuperscript) {
       ws.objectRender.controller.setCellSuperscript(isSuperscript);
@@ -6061,7 +6055,6 @@ var editor;
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return;
     }
-
     let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellAlign) {
       ws.objectRender.controller.setCellAlign(align);
@@ -6075,7 +6068,6 @@ var editor;
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return;
     }
-
     let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellVertAlign) {
       ws.objectRender.controller.setCellVertAlign(align);
@@ -6116,7 +6108,6 @@ var editor;
         this.wb.restoreFocus();
       }
     }
-
   };
 
   spreadsheet_api.prototype.asc_setCellFill = function (fill) {
@@ -6224,7 +6215,7 @@ var editor;
   spreadsheet_api.prototype.asc_decreaseFontSize = function() {
     var ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.decreaseFontSize) {
-      ws.objectRender.controller.decreaseFontSize();
+		ws.objectRender.controller.decreaseFontSize();
     } else {
       this.wb.changeFontSize("changeFontSize", false);
       this.wb.restoreFocus();
