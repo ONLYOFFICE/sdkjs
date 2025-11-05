@@ -1277,7 +1277,7 @@ CDocumentContentBase.prototype.private_AddContentControl = function(nContentCont
 				for (let nIndex = nEndPos; nIndex >= nStartPos; --nIndex)
 				{
 					let oElement = this.Content[nIndex];
-					this.Remove_FromContent(nIndex, 1);
+					this.Remove_FromContent(nIndex, 1, false);
 					oSdt.Content.Add_ToContent(0, oElement);
 					oElement.SelectAll(1);
 				}
@@ -1287,7 +1287,7 @@ CDocumentContentBase.prototype.private_AddContentControl = function(nContentCont
 				oSdt.Content.Selection.StartPos = 0;
 				oSdt.Content.Selection.EndPos   = oSdt.Content.GetElementsCount() - 1;
 
-				this.Add_ToContent(nStartPos, oSdt);
+				this.Add_ToContent(nStartPos, oSdt, false);
 				this.Selection.StartPos = nStartPos;
 				this.Selection.EndPos   = nStartPos;
 				this.CurPos.ContentPos  = nStartPos;
@@ -2983,7 +2983,14 @@ CDocumentContentBase.prototype.GetCurrentContentControl = function()
 	
 	let inlineSdt = selectedInfo.GetInlineLevelSdt();
 	if (inlineSdt)
+	{
+		if (inlineSdt.IsLabeledCheckBox())
+		{
+			let checkBox = inlineSdt.GetInnerCheckBox();
+			inlineSdt = checkBox ? checkBox : inlineSdt;
+		}
 		return inlineSdt;
+	}
 	
 	let blockSdt = selectedInfo.GetBlockLevelSdt();
 	return blockSdt ? blockSdt : null;

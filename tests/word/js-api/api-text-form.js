@@ -34,8 +34,11 @@ $(function ()
 {
 	QUnit.module("Test the ApiTextForm methods");
 	
+	let logicDocument = AscTest.CreateLogicDocument();
+	
 	function createApiTextForm(pr)
 	{
+		pr = pr ? pr : {"key": "Name", "placeholder": "Enter your name"};
 		return AscTest.Editor.CreateTextForm(pr);
 	}
 	
@@ -50,5 +53,35 @@ $(function ()
 		
 		textForm.SetPlaceholderText("TEST");
 		assert.strictEqual(textForm.GetPlaceholderText(), "TEST" , "Check text form placeholder after reset placeholder text");
+	});
+	
+	QUnit.test("Delete", function (assert)
+	{
+		AscTest.ClearDocument();
+		let document = AscTest.Editor.GetDocument();
+		let p = AscTest.Editor.CreateParagraph();
+		document.Push(p);
+		
+		let textForm = createApiTextForm();
+		
+		p.AddText("Before");
+		p.Push(textForm);
+		p.AddText("After");
+		
+		assert.strictEqual(textForm.Sdt.IsUseInDocument(), true, "Check if text form were added");
+		
+		textForm.Delete(false);
+		assert.strictEqual(textForm.Sdt.IsUseInDocument(), false, "Check if text form were deleted");
+		assert.strictEqual(p.GetText(), "BeforeAfter\r\n", "Check paragraph text");
+		
+		p.RemoveAllElements();
+		textForm.SetText("Inside");
+		p.AddText("Before");
+		p.Push(textForm);
+		p.AddText("After");
+		
+		textForm.Delete(true);
+		assert.strictEqual(textForm.Sdt.IsUseInDocument(), false, "Check if text form were deleted");
+		assert.strictEqual(p.GetText(), "BeforeInsideAfter\r\n", "Check paragraph text");
 	});
 });

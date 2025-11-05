@@ -776,7 +776,7 @@
 		}
 	};
 
-	CMobileTouchManagerBase.prototype.checkTouchEvent = function(e)
+	CMobileTouchManagerBase.prototype.checkTouchEvent = function(e, checkPen)
 	{
 		if (!e)
 			return false;
@@ -786,7 +786,7 @@
 			if (this.isTouchingInProcess())
 				return false;
 
-			if (e.pointerType === "touch")
+			if (e.pointerType === "touch" || (checkPen === true && e.pointerType === "pen"))
 			{
 				this.desktopTouchState = true;
 

@@ -116,6 +116,8 @@ function (window, undefined) {
 				uuid[d2 & 0x3f | 0x80] + uuid[d2 >> 8 & 0xff] + "-" + uuid[d2 >> 16 & 0xff] + uuid[d2 >> 24 & 0xff] +
 				uuid[d3 & 0xff] + uuid[d3 >> 8 & 0xff] + uuid[d3 >> 16 & 0xff] + uuid[d3 >> 24 & 0xff];
 	}
+	
+	
 
 	function CreateGUID() {
 		function s4() {

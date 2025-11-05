@@ -28,6 +28,7 @@
 			"common/CollaborativeEditingBase.js",
 			"slide/Editor/CollaborativeEditing.js",
 			"common/macros.js",
+			"common/macro-recorder.js",
 			"common/apiBase.js",
 			"common/apiBase_plugins.js",
 			"word/apiCommon.js",

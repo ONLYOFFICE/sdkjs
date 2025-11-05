@@ -3143,7 +3143,12 @@
 		return oDoc.DoAction(function() {
 			oController.selectedObjects.forEach(function(annot) {
 				if (annot.IsAnnot()) {
-					annot.SetStrokeColor(aColor);
+					if (annot.IsRedact()) {
+						annot.SetFillColor(aColor);
+					}
+					else {
+						annot.SetStrokeColor(aColor);
+					}
 				}
 			});
 

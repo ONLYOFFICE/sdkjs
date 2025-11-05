@@ -89,6 +89,22 @@ CInlineLevelSdt.prototype.Add = function(Item)
 		this.SetDefaultTextPr(oTempTextPr);
 		return;
 	}
+	
+	if (this.IsLabeledCheckBox() && (Item instanceof AscWord.CInlineLevelSdt))
+	{
+		if (this.IsFixedForm())
+			return;
+		
+		let parent = this.GetParent();
+		let posInParent = this.GetPosInParent(parent);
+		if (-1 !== posInParent && parent)
+		{
+			parent.AddToContent(posInParent + 1, Item);
+			Item.MoveCursorToContentControl(true);
+		}
+		
+		return;
+	}
 
 	this.private_ReplacePlaceHolderWithContent();
 
@@ -809,13 +825,12 @@ CInlineLevelSdt.prototype.Get_LeftPos = function(SearchPos, ContentPos, Depth, U
 			{
 				let oSubForm = this.GetSubFormFromCurrentPosition(false);
 				let oParaPos = oParagraph.GetPosByElement(oSubForm);
-				if (oSubForm && oParaPos)
-				{
-					let oNewPos = oParaPos.Copy();
-					oSubForm.Get_EndPos(false, oNewPos, oNewPos.GetDepth() + 1);
-					SearchPos.Pos = oNewPos;
-				}
-
+				if (!oSubForm || !oParaPos)
+					return false;
+				
+				let oNewPos = oParaPos.Copy();
+				oSubForm.Get_EndPos(false, oNewPos, oNewPos.GetDepth() + 1);
+				SearchPos.Pos   = oNewPos;
 				SearchPos.Found = true;
 				return true;
 			}
@@ -915,13 +930,12 @@ CInlineLevelSdt.prototype.Get_RightPos = function(SearchPos, ContentPos, Depth, 
 			{
 				let oSubForm = this.GetSubFormFromCurrentPosition(true);
 				let oParaPos = oParagraph.GetPosByElement(oSubForm);
-				if (oSubForm && oParaPos)
-				{
-					let oNewPos = oParaPos.Copy();
-					oSubForm.Get_StartPos(oNewPos, oNewPos.GetDepth() + 1);
-					SearchPos.Pos = oNewPos;
-				}
-
+				if (!oSubForm || !oParaPos)
+					return false;
+				
+				let oNewPos = oParaPos.Copy();
+				oSubForm.Get_StartPos(oNewPos, oNewPos.GetDepth() + 1);
+				SearchPos.Pos = oNewPos;
 				SearchPos.Found = true;
 				return true;
 			}
@@ -1020,6 +1034,29 @@ CInlineLevelSdt.prototype.Remove = function(nDirection, bOnAddText)
 	{
 		this.RemoveThisFromParent(true);
 		return true;
+	}
+	
+	if (this.IsLabeledCheckBox())
+	{
+		let checkBox = this.GetInnerCheckBox();
+		if (checkBox && checkBox.IsSelectedOnlyThis())
+			return false;
+		
+		if (this.IsSelectedAll() && this.IsSelectedOnlyThis())
+		{
+			this.RemoveThisFromParent(true);
+			return true;
+		}
+		
+		if (this.Selection.Use && checkBox)
+		{
+			let checkBoxPos = checkBox.GetPosInParent();
+			if (-1 !== checkBoxPos)
+			{
+				this.Selection.StartPos = Math.max(this.Selection.StartPos, checkBoxPos + 1);
+				this.Selection.EndPos   = Math.max(this.Selection.EndPos, checkBoxPos + 1);
+			}
+		}
 	}
 	
 	if ((this.IsCheckBox() || this.IsDropDownList() || this.IsPicture())
@@ -1276,6 +1313,9 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurP
 	let oMainForm;
 	if (this.IsForm() && (oMainForm = this.GetMainForm()) && oMainForm !== this)
 	{
+		if (oMainForm.IsLabeledCheckBox())
+			return false;
+		
 		if (AscCommon.ContentControlTrack.Hover === nType)
 			return oMainForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.Hover, X, Y, nCurPage, isCheckHit);
 		else if (logicDocument.IsFillingFormMode() && (this.IsTextForm() || this.IsCheckBox()))
@@ -1505,8 +1545,19 @@ CInlineLevelSdt.prototype.GetAllContentControls = function(arrContentControls)
 };
 CInlineLevelSdt.prototype.Document_UpdateInterfaceState = function()
 {
-	if (this.Paragraph && this.Paragraph.LogicDocument)
-		this.Paragraph.LogicDocument.Api.sync_ContentControlCallback(this.GetContentControlPr());
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument)
+	{
+		let contentControlPr = this.GetContentControlPr();
+		if (this.IsLabeledCheckBox())
+		{
+			let checkBox = this.GetInnerCheckBox();
+			if (checkBox)
+				contentControlPr = checkBox.GetContentControlPr();
+		}
+		
+		logicDocument.Api.sync_ContentControlCallback(contentControlPr);
+	}
 
 	CParagraphContentWithParagraphLikeContent.prototype.Document_UpdateInterfaceState.apply(this, arguments);
 };
@@ -1790,6 +1841,10 @@ CInlineLevelSdt.prototype.CorrectContent = function()
 	{
 		this.MakeSingleRunElement(false);
 	}
+	else if (this.IsSpecialComplexForm())
+	{
+		this.CorrectSpecialComplexFormContent();
+	}
 	else
 	{
 		CParagraphContentWithParagraphLikeContent.prototype.CorrectContent.apply(this, arguments);
@@ -1797,6 +1852,115 @@ CInlineLevelSdt.prototype.CorrectContent = function()
 	
 	AscCommon.History.skipFormFillingLockCheck(false);
 };
+CInlineLevelSdt.prototype.CorrectSpecialComplexFormContent = function()
+{
+	if (this.IsLabeledCheckBox())
+	{
+		let checkBox = this.GetInnerCheckBox();
+		if (!checkBox)
+		{
+			let checkBoxPr = new AscWord.CSdtCheckBoxPr();
+			checkBoxPr.SetCheckedSymbol(0x2611);
+			checkBoxPr.SetUncheckedSymbol(0x2610);
+			checkBoxPr.SetCheckedFont("Segoe UI Symbol");
+			checkBoxPr.SetUncheckedFont("Segoe UI Symbol");
+			
+			checkBox = new CInlineLevelSdt();
+			checkBox.SetFormPr(new AscWord.CSdtFormPr());
+			checkBox.SetCheckBoxPr(checkBoxPr);
+			checkBox.private_UpdateCheckBoxContent();
+		}
+		
+		let lastPos = 0;
+		if (checkBox === this.Content[0])
+			lastPos = 1;
+		
+		for (let i = this.Content.length - 1; i >= lastPos; --i)
+		{
+			if (this.Content[i] instanceof CInlineLevelSdt && this.Content[i].IsForm())
+				this.RemoveFromContent(i, 1);
+		}
+		
+		if (0 === lastPos)
+			this.AddToContent(0, checkBox);
+	}
+};
+CInlineLevelSdt.prototype.SetCheckBoxLabel = function(label)
+{
+	let logicDocument = this.GetLogicDocument();
+	let formManager   = logicDocument ? logicDocument.GetFormsManager() : null;
+	if (!formManager)
+		return;
+	
+	if (label)
+	{
+		if (this.IsCheckBox())
+		{
+			let checkBox = this.Copy();
+			
+			this.ClearContent();
+			this.AddToContent(0, checkBox);
+			let run = new AscWord.Run();
+			run.AddText(label);
+			this.AddToContent(1, run);
+			
+			this.SetCheckBoxPr(undefined);
+			
+			let formPr = this.GetFormPr();
+			
+			let complexPr = new AscWord.CSdtComplexFormPr(Asc.ComplexFormType.LabeledCheckBox);
+			this.SetComplexFormPr(complexPr);
+			
+			let keyGen = formManager.GetKeyGenerator();
+			this.SetFormKey(keyGen.GenerateKey(this));
+			
+			if (formPr)
+			{
+				checkBox.SetFormPr(formPr.Copy());
+				this.SetFormPr(formPr.Copy());
+			}
+		}
+		else if (this.IsLabeledCheckBox() && this.GetCheckBoxLabel() !== label)
+		{
+			let checkBox = this.GetInnerCheckBox();
+			if (!checkBox)
+				return;
+			
+			this.ClearContent();
+			this.AddToContent(0, checkBox);
+			let run = new AscWord.Run();
+			run.AddText(label);
+			this.AddToContent(1, run);
+		}
+	}
+	else if (this.IsLabeledCheckBox())
+	{
+		let checkBox = this.GetInnerCheckBox();
+		if (!checkBox)
+			return;
+		
+		this.SetFormPr(checkBox.GetFormPr());
+		this.SetComplexFormPr(undefined);
+		this.SetCheckBoxPr(checkBox.GetCheckBoxPr());
+		this.private_UpdateCheckBoxContent();
+	}
+};
+CInlineLevelSdt.prototype.RemoveLabelFromCheckBox = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	let formManager   = logicDocument ? logicDocument.GetFormsManager() : null;
+	if (!this.IsLabeledCheckBox() || !formManager)
+		return;
+	
+	let checkBox = this.GetInnerCheckBox();
+	if (!checkBox)
+		return;
+	
+	this.SetFormPr(checkBox.GetFormPr());
+	this.SetComplexFormPr(undefined);
+	this.SetCheckBoxPr(checkBox.GetCheckBoxPr());
+	this.private_UpdateCheckBoxContent();
+}
 //----------------------------------------------------------------------------------------------------------------------
 // Выставление настроек
 //----------------------------------------------------------------------------------------------------------------------
@@ -2154,6 +2318,15 @@ CInlineLevelSdt.prototype.GetCheckBoxPr = function()
  */
 CInlineLevelSdt.prototype.ToggleCheckBox = function(isChecked)
 {
+	if (this.IsLabeledCheckBox())
+	{
+		let innerForm = this.GetAllSubForms();
+		if (!innerForm.length || !innerForm[0].IsCheckBox())
+			return;
+		
+		return innerForm[0].ToggleCheckBox(isChecked);
+	}
+	
 	if (!this.IsCheckBox())
 		return;
 

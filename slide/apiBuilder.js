@@ -2022,27 +2022,36 @@
         return new ApiMaster(masterCopy);
     };
 
-    /**
-     * Deletes the specified object from the parent if it exists.
-     * @typeofeditors ["CPE"]
-     * @returns {boolean} - return false if master doesn't exist or is not in the presentation.
-     * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/Delete.js
+	/**
+	 * Deletes the specified object from the parent if it exists.
+	 * Note: Master can't be deleted if it's the last one in the presentation.
+	 *
+	 * @memberof ApiMaster
+	 * @typeofeditors ["CPE"]
+	 * @returns {boolean} - return false if master doesn't exist or is not in the presentation or couldn't be deleted (e.g. the last master).
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/Delete.js
 	 */
-    ApiMaster.prototype.Delete = function(){
-        if (this.Master && this.Master.presentation)
-        {
-            for (var nMaster = 0; nMaster < this.Master.presentation.slideMasters.length; nMaster++)
-            {
-                if (this.Master.Id === this.Master.presentation.slideMasters[nMaster].Id)
-                {
-                    this.Master.presentation.removeSlideMaster(nMaster, 1);
-                    return true;
-                }
-            }
-        }
-        
-        return false;
-    };
+	ApiMaster.prototype.Delete = function () {
+		const presentation = this.Master && this.Master.presentation;
+		if (!presentation) {
+			return false;
+		}
+
+		const masters = presentation.slideMasters;
+		if (masters.length <= 1) {
+			return false;
+		}
+
+		for (let nMaster = 0; nMaster < masters.length; nMaster++) {
+			if (this.Master.Id === masters[nMaster].Id) {
+				presentation.removeSlideMaster(nMaster, 1);
+				return true;
+			}
+		}
+
+		return false;
+	};
 
     /**
      * Returns a theme of the slide master.

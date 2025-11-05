@@ -207,6 +207,7 @@
 		this.macros = null;
 		this.vbaMacros = null;
 		this.vbaProject = null;
+		this.macroRecorder = new AscCommon.MacroRecorder(this);
 
         this.openFileCryptBinary = null;
 
@@ -856,6 +857,8 @@
 		if (this.restrictions & Asc.c_oAscRestrictionType.OnlySignatures)
 			return;
 
+		this.macroRecorder.stop();
+
 		this.restrictions = val;
 		this.onUpdateRestrictions(additionalSettings);
 		this.checkInputMode();
@@ -867,6 +870,8 @@
 	};
 	baseEditorsApi.prototype.asc_addRestriction              = function(val)
 	{
+		this.macroRecorder.stop();
+
 		this.restrictions |= val;
 		this.onUpdateRestrictions();
 		this.checkInputMode();
@@ -1039,6 +1044,9 @@
 				}
 				break;
 			}
+			case c_oAscFrameDataType.OpenLocalDesktopFileLink:
+				this.frameManager.openLocalDesktopFileLink(oInformation["localFileLink"]);
+				break;
 			default:
 			{
 				break;
@@ -3759,7 +3767,7 @@
 		this.loadBuilderFonts(function()
 		{
 			let result = _t._onEndBuilderScript(callback);
-			
+
 			if (_t.SaveAfterMacros)
 			{
 				_t.asc_Save();
@@ -4321,6 +4329,8 @@
 
 	baseEditorsApi.prototype.setViewModeDisconnect = function(enableDownload)
 	{
+		this.macroRecorder.cancel();
+
 		// Посылаем наверх эвент об отключении от сервера
 		this.sendEvent('asc_onCoAuthoringDisconnect', enableDownload);
 		// И переходим в режим просмотра т.к. мы не можем сохранить файл
@@ -4574,7 +4584,7 @@
 						oLogicDocument.UnlockPanelStyles(true);
 						oLogicDocument.OnEndLoadScript();
 					}
-					
+
 					endAction && endAction();
 				});
 				break;
@@ -4595,7 +4605,7 @@
 					{
 						wsView.objectRender.controller.recalculate2(undefined);
 					}
-					
+
 					endAction && endAction();
 				});
 				
@@ -5639,20 +5649,10 @@
 	};
 
 	baseEditorsApi.prototype.asc_openExternalReference = function(externalReference) {
-		let t = this;
 		let isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
 		if (isLocalDesktop) {
-			window["AscDesktopEditor"]["openExternalReference"](AscCommon.getLocalFileLink(externalReference.externalReference.Id), function(error) {
-				let internalError = Asc.c_oAscError.ID.No;
-				switch (error) {
-					case 0: internalError = Asc.c_oAscError.ID.ConvertationOpenError; break;
-					default: break;
-				}
-
-				if (Asc.c_oAscError.ID.No !== internalError) {
-					t.sendEvent("asc_onError", internalError, c_oAscError.Level.NoCritical);
-				}
-			});
+			const sLocalLink = AscCommon.getLocalFileLink(externalReference.externalReference.Id);
+			this.frameManager.openLocalDesktopFileLink(sLocalLink);
 			return null;
 		} else {
 			return externalReference;
@@ -5853,7 +5853,7 @@
 		plugins.internalCallbacks.push(callback);
 		plugins.callMethod(plugins.internalGuid, name, params);
 	};
-	
+
 	baseEditorsApi.prototype.markAsFinal = function(isFinal) {
 	};
 	baseEditorsApi.prototype.isFinal = function() {
@@ -6053,14 +6053,14 @@
 			return;
 
 		--this.groupActionsCounter;
-		
+
 		AscCommon.History.cancelGroupPoints();
 		
 		if (this.groupActionsCounter > 0)
 			return;
 		
 		this._onEndGroupActions();
-		
+
 		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
 		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
 	};
@@ -6076,7 +6076,7 @@
 			return;
 		
 		this._onEndGroupActions();
-		
+
 		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
 		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
 	};
@@ -6086,6 +6086,11 @@
 	};
 	baseEditorsApi.prototype._onEndGroupActions = function()
 	{
+	};
+
+	baseEditorsApi.prototype.getMacroRecorder = function()
+	{
+		return this.macroRecorder;
 	};
 
 	//----------------------------------------------------------export----------------------------------------------------
@@ -6219,5 +6224,6 @@
 	prot["callMethod"] = prot.callMethod;
 	prot['asc_markAsFinal'] = prot.asc_markAsFinal = prot.markAsFinal;
 	prot['asc_isFinal'] = prot.asc_isFinal = prot.isFinal;
+	prot["getMacroRecorder"] = prot.getMacroRecorder;
 
 })(window);

@@ -4706,7 +4706,7 @@
 				nFlags |= (1 << 0);
 				let nRenderLengthPos = oMemory.GetCurPosition();
 				oMemory.Skip(4);
-				oMemory.WriteBuffer(data.binary, oMemory.GetCurPosition(), data.binary.length);
+				oMemory.WriteBuffer(data.binary, 0, data.binary.length);
 
 				let nEndPos = oMemory.GetCurPosition();
 
@@ -5045,7 +5045,7 @@
 				nFlags |= (1 << 0);
 				let nRenderLengthPos = oMemory.GetCurPosition();
 				oMemory.Skip(4);
-				oMemory.WriteBuffer(data.binary, oMemory.GetCurPosition(), data.binary.length);
+				oMemory.WriteBuffer(data.binary, 0, data.binary.length);
 
 				let nEndPos = oMemory.GetCurPosition();
 

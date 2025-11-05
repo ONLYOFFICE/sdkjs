@@ -84,6 +84,8 @@ var section_footnote_RestartEachPage   = 0x02;
 		
 		// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
 		AscCommon.g_oTableId.Add(this, this.Id);
+		
+		this.CheckPageNumSymbols();
 	}
 	
 	SectPr.prototype.Get_Id = function()
@@ -506,6 +508,7 @@ var section_footnote_RestartEachPage   = 0x02;
 		
 		AscCommon.History.Add(new AscDFH.CChangesSectionPageNumTypeFormat(this, this.PageNumType.Format, format));
 		this.PageNumType.Format = format;
+		this.CheckPageNumSymbols();
 	};
 	SectPr.prototype.GetPageNumFormat = function()
 	{
@@ -1401,6 +1404,15 @@ var section_footnote_RestartEachPage   = 0x02;
 			this.Set_Footer_Even(null);
 		else if (this.FooterFirst === oHeader)
 			this.Set_Footer_First(null);
+	};
+	
+	SectPr.prototype.CheckPageNumSymbols = function()
+	{
+		if (!AscFonts.IsCheckSymbols)
+			return;
+		
+		let symbols = AscWord.GetNumberingSymbolsByFormat(this.PageNumType.Format);
+		AscFonts.FontPickerByCharacter.checkTextLight(symbols);
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	/**

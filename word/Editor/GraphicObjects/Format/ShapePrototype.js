@@ -1032,20 +1032,42 @@ CShape.prototype.checkPosTransformText = function()
 {
     if(AscFormat.isRealNumber(this.posX) && AscFormat.isRealNumber(this.posY))
     {
+        let parentTransform = null;
+        let parent = (this.parent || this.group);
+        if(parent && parent.Get_ParentParagraph)
+        {
+            let paragraph = parent.Get_ParentParagraph();
+            if(paragraph)
+            {
+                parentTransform = paragraph.Get_ParentTextTransform();
+            }
+        }
         this.transformText = this.localTransformText.CreateDublicate();
         global_MatrixTransformer.TranslateAppend(this.transformText, this.posX, this.posY);
+        if (parentTransform)
+        {
+            global_MatrixTransformer.MultiplyAppend(this.transformText, parentTransform);
+        }
         this.invertTransformText = global_MatrixTransformer.Invert(this.transformText);
 
         if(this.localTransformTextWordArt)
         {
             this.transformTextWordArt = this.localTransformTextWordArt.CreateDublicate();
             global_MatrixTransformer.TranslateAppend(this.transformTextWordArt, this.posX, this.posY);
+            if (parentTransform)
+            {
+                global_MatrixTransformer.MultiplyAppend(this.transformTextWordArt, parentTransform);
+            }
             this.invertTransformTextWordArt = global_MatrixTransformer.Invert(this.transformTextWordArt);
         }
         if(this.localTransformText2)
         {
             this.transformText2 = this.localTransformText2.CreateDublicate();
             global_MatrixTransformer.TranslateAppend(this.transformText2, this.posX, this.posY);
+            if (parentTransform)
+            {
+                global_MatrixTransformer.MultiplyAppend(this.transformText2, parentTransform);
+            }
             this.invertTransformText2 = global_MatrixTransformer.Invert(this.transformText2);
         }
     }

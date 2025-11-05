@@ -6198,7 +6198,9 @@ var CPresentation = CPresentation || function(){};
             this.BlurActiveObject();
 
             let aDrToPaste = oSelContent.Drawings.map(function(pasteObj) {
-                return pasteObj.Drawing;
+							const oDrawing = pasteObj.Drawing;
+							oDrawing.applySpecialPasteProps();
+                return oDrawing;
             });
 
             if (true !== this.Action.PasteHtmlAction) {

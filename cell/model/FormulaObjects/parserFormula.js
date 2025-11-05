@@ -7140,7 +7140,13 @@ function parserFormula( formula, parent, _ws ) {
 				let oRange = aArg[i].getRange();
 				oRange._foreachNoEmpty(function (oCell) {
 					if (!bRecursiveCell) {
-						bRecursiveCell = oCell.checkRecursiveFormula(oThis.getParent());
+						const sCellKey = oCell.ws.getId() + '_' + oCell.nRow + '_' + oCell.nCol;
+						if (g_cCalcRecursion.isCellChecked(sCellKey)) {
+							bRecursiveCell = g_cCalcRecursion.getCheckedCell(sCellKey);
+						} else {
+							bRecursiveCell = oCell.checkRecursiveFormula(oThis.getParent());
+							g_cCalcRecursion.addCheckedCell(sCellKey, bRecursiveCell);
+						}
 					}
 				});
 
@@ -10547,6 +10553,7 @@ function parserFormula( formula, parent, _ws ) {
 		this.bIsProcessRecursion = false;
 		this.aElems = [];
 		this.aElemsPart = [];
+		this.oCheckedCells = null;
 
 		this.nIterStep = 1;
 		this.oStartCellIndex = null;
@@ -11352,6 +11359,46 @@ function parserFormula( formula, parent, _ws ) {
 	 */
 	CalcRecursion.prototype.clearCycleCells = function () {
 		this.aCycleCell = [];
+	};
+	/**
+	 * Method adds the result of the checked cell to the object.
+	 * @memberof CalcRecursion
+	 * @param {string} sCellKey
+	 * @param {boolean} bCheckResult
+	 */
+	CalcRecursion.prototype.addCheckedCell = function (sCellKey, bCheckResult) {
+		if (this.oCheckedCells == null) {
+			this.oCheckedCells = {};
+		}
+
+		this.oCheckedCells[sCellKey] = bCheckResult;
+	};
+	/**
+	 * Method clears oCheckedCells attribute.
+	 * @memberof CalcResursion
+	 */
+	CalcRecursion.prototype.clearCheckedCells = function () {
+		if (this.oCheckedCells) {
+			this.oCheckedCells = null;
+		}
+	};
+	/**
+	 * Method checks whether the cell has already been checked for a cycle.
+	 * @memberof CalcRecursion
+	 * @param {string} sCellKey
+	 * @returns {boolean}
+	 */
+	CalcRecursion.prototype.isCellChecked = function (sCellKey) {
+		return !!(this.oCheckedCells && this.oCheckedCells.hasOwnProperty(sCellKey));
+	};
+	/**
+	 * Method returns result of checked cell.
+	 * @memberof CalcRecursion
+	 * @param {string} sCellKey
+	 * @returns {boolean}
+	 */
+	CalcRecursion.prototype.getCheckedCell = function (sCellKey) {
+		return this.oCheckedCells && this.oCheckedCells[sCellKey];
 	};
 
 	const g_cCalcRecursion = new CalcRecursion();
