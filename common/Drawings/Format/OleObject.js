@@ -54,32 +54,6 @@ function (window, undefined) {
             this.h = Reader.GetLong();
         };
 
-	    function CChangesStartOleObjectBinary(Class, Old, New, Color) {
-		    AscDFH. CChangesStartBinaryData.call(this, Class, Old, New, AscDFH.historyitem_ImageShapeSetStartBinaryData, Color);
-	    }
-	    CChangesStartOleObjectBinary.prototype = Object.create(AscDFH.CChangesStartBinaryData.prototype);
-	    CChangesStartOleObjectBinary.prototype.constructor = CChangesStartOleObjectBinary;
-	    CChangesStartOleObjectBinary.prototype.setBinaryDataToClass = function (oPr)
-	    {
-		    this.Class.m_aBinaryData = oPr;
-	    }
-			
-	    function CChangesPartOleObjectBinary(Class, Old, New, Color) {
-		    AscDFH.CChangesPartBinaryData.call(this, Class, Old, New, AscDFH.historyitem_ImageShapeSetPartBinaryData, Color);
-	    }
-	    CChangesPartOleObjectBinary.prototype = Object.create(AscDFH.CChangesPartBinaryData.prototype);
-	    CChangesPartOleObjectBinary.prototype.constructor = CChangesPartOleObjectBinary;
-
-	    function CChangesEndOleObjectBinary(Class, Old, New, Color) {
-		    AscDFH.CChangesEndBinaryData.call(this, Class, Old, New, AscDFH.historyitem_ImageShapeSetEndBinaryData, Color);
-	    }
-	    CChangesEndOleObjectBinary.prototype = Object.create(AscDFH.CChangesEndBinaryData.prototype);
-	    CChangesEndOleObjectBinary.prototype.constructor = CChangesEndOleObjectBinary;
-	    CChangesEndOleObjectBinary.prototype.setBinaryDataToClass = function (oPr)
-	    {
-		    this.Class.m_aBinaryData = oPr;
-	    }
-
         AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetData] = AscDFH.CChangesDrawingsString;
         AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetApplicationId] = AscDFH.CChangesDrawingsString;
         AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetPixSizes] = AscDFH.CChangesDrawingsObjectNoId;
@@ -89,9 +63,6 @@ function (window, undefined) {
 		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetMathObject] = AscDFH.CChangesDrawingsObject;
 		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetDrawAspect] = AscDFH.CChangesDrawingsLong;
         AscDFH.drawingsConstructorsMap[AscDFH.historyitem_ChartStyleEntryDefRPr] = AscCommonWord.CTextPr;
-        AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetStartBinaryData] = CChangesStartOleObjectBinary;
-        AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetPartBinaryData] = CChangesPartOleObjectBinary;
-        AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetEndBinaryData] = CChangesEndOleObjectBinary;
 
         AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetData] = function(oClass, value){oClass.m_sData = value;};
         AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetApplicationId] = function(oClass, value){oClass.m_sApplicationId = value;};
@@ -124,7 +95,7 @@ function (window, undefined) {
         this.m_nPixHeight = null;
         this.m_sObjectFile = null;//ole object name in OOX
         this.m_nOleType = null;
-        this.m_aBinaryData = new Uint8Array(0);
+        this.m_sBinaryId = null;
         this.m_oMathObject = null;
         this.m_sDataLink = null;
         this.m_nDrawAspect = AscFormat.EOLEDrawAspect.oledrawaspectContent;
@@ -142,27 +113,6 @@ function (window, undefined) {
     {
         AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_ImageShapeSetData, this.m_sData, sData));
         this.m_sData = sData;
-    };
-    COleObject.prototype.applySpecialPasteProps = function ()
-    {
-	    if (this.m_aBinaryData.length)
-	    {
-				const oApi = Asc.editor || editor;
-		    if (oApi.isOpenOOXInBrowser && !AscCommon.checkOOXMLSignature(this.m_aBinaryData))
-		    {
-					const oThis = this;
-			    oApi.getConvertedXLSXFileFromUrl({data: this.m_aBinaryData}, Asc.c_oAscFileType.XLSX, function (arrBinaryData) {
-				    if (arrBinaryData)
-				    {
-					    oThis.setBinaryData(arrBinaryData);
-				    }
-				    else
-				    {
-					    oThis.setBinaryData(new Uint8Array(0));
-				    }
-			    });
-		    }
-	    }
     };
     COleObject.prototype.setDrawAspect = function (oPr) {
         AscCommon.History.Add(new AscDFH.CChangesDrawingsLong(this, AscDFH.historyitem_ImageShapeSetDrawAspect, this.m_nDrawAspect, oPr));
@@ -203,11 +153,9 @@ function (window, undefined) {
         AscCommon.History.Add(new AscDFH.CChangesDrawingsLong(this, AscDFH.historyitem_ImageShapeSetOleType, this.m_nOleType, nOleType));
         this.m_nOleType = nOleType;
     };
-    COleObject.prototype.setBinaryData = function(aBinaryData)
-    {
-	    AscDFH.addBinaryDataToHistory(this, this.m_aBinaryData, aBinaryData, CChangesStartOleObjectBinary, CChangesPartOleObjectBinary, CChangesEndOleObjectBinary);
-        this.m_aBinaryData = aBinaryData;
-    };
+		COleObject.prototype.setBinaryId = function(sBinaryId) {
+			this.m_sBinaryId = sBinaryId;
+		}
     COleObject.prototype.setMathObject = function(oMath)
     {
         AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetMathObject, this.m_oMathObject, oMath));
@@ -244,10 +192,7 @@ function (window, undefined) {
         copy.setPixSizes(this.m_nPixWidth, this.m_nPixHeight);
         copy.setObjectFile(this.m_sObjectFile);
         copy.setOleType(this.m_nOleType);
-        if(this.m_aBinaryData.length !== 0)
-        {
-            copy.setBinaryData(this.m_aBinaryData.slice(0, this.m_aBinaryData.length));
-        }
+				copy.setXLSXId(this.m_sBinaryId);
         if(this.macro !== null) {
             copy.setMacro(this.macro);
         }
@@ -531,7 +476,7 @@ function (window, undefined) {
     };
 
     COleObject.prototype.canEditTableOleObject = function(bReturnOle) {
-        const canEdit = this.m_aBinaryData.length !== 0 &&
+        const canEdit = this.m_sBinaryId &&
           (this.m_nOleType === AscCommon.c_oAscOleObjectTypes.spreadsheet || this.m_sApplicationId === SPREADSHEET_APPLICATION_ID);
         if (bReturnOle) {
             return canEdit ? this : null;

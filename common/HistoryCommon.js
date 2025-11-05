@@ -3015,9 +3015,6 @@
 	window['AscDFH'].historyitem_ImageShapeSetPixSizes           = window['AscDFH'].historyitem_type_ImageShape | 9;
 	window['AscDFH'].historyitem_ImageShapeSetObjectFile	     = window['AscDFH'].historyitem_type_ImageShape | 10;
 	window['AscDFH'].historyitem_ImageShapeSetOleType   	     = window['AscDFH'].historyitem_type_ImageShape | 11;
-	window['AscDFH'].historyitem_ImageShapeSetStartBinaryData    = window['AscDFH'].historyitem_type_ImageShape | 12;
-	window['AscDFH'].historyitem_ImageShapeSetPartBinaryData     = window['AscDFH'].historyitem_type_ImageShape | 13;
-	window['AscDFH'].historyitem_ImageShapeSetEndBinaryData      = window['AscDFH'].historyitem_type_ImageShape | 14;
 	window['AscDFH'].historyitem_ImageShapeSetMathObject         = window['AscDFH'].historyitem_type_ImageShape | 15;
 	window['AscDFH'].historyitem_ImageShapeSetDataLink           = window['AscDFH'].historyitem_type_ImageShape | 16;
 	window['AscDFH'].historyitem_ImageShapeSetDrawAspect         = window['AscDFH'].historyitem_type_ImageShape | 17;

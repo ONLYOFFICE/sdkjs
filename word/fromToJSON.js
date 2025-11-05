@@ -513,6 +513,7 @@
 
 		oResult["objFile"]    = oOleObject.m_sObjectFile;
 		oResult["oleType"]    = To_XML_OleObj_Type(oOleObject.m_nOleType);
+		// todo
 		oResult["binaryData"] = oOleObject.m_aBinaryData;
 		oResult["mathObj"]    = this.SerParaMath(oOleObject.m_oMathObject);
 
@@ -13625,6 +13626,7 @@
 		oParsedOleObj["data"]       != undefined && oOleObject.setData(oParsedOleObj["data"]);
 		oParsedOleObj["objFile"]    != undefined && oOleObject.setObjectFile(oParsedOleObj["objFile"]);
 		oParsedOleObj["oleType"]    != undefined && oOleObject.setOleType(From_XML_OleObj_Type(oParsedOleObj["oleType"]));
+		//todo
 		oParsedOleObj["binaryData"] != undefined && oOleObject.setBinaryData(oParsedOleObj["binaryData"]);
 		oParsedOleObj["mathObj"]    != undefined && oOleObject.setMathObject(this.ParaMathFromJSON(oParsedOleObj["mathObj"]));
 		

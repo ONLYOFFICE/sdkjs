@@ -437,6 +437,7 @@
 			else
 				t.asc_addRestriction(Asc.c_oAscRestrictionType.OnlySignatures);
 		});
+		window["AscCommon"].g_oBinaryCacheManager = new AscCommon.CBinaryCacheManager(this);
 	};
 	baseEditorsApi.prototype._correctEmbeddedWork = function()
 	{

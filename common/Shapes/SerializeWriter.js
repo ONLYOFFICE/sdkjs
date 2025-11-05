@@ -3751,14 +3751,14 @@ function CBinaryFileWriter()
         oThis._WriteUChar2(5, 0);
         oThis._WriteString2(7, ole.m_sObjectFile);
         oThis.WriteUChar(g_nodeAttributeEnd);
-
-        if((ole.m_nOleType === 0 || ole.m_nOleType === 1 || ole.m_nOleType === 2) && ole.m_aBinaryData.length !== 0)
+				const arrXLSX = AscCommon.g_oBinaryCacheManager.getBinary(ole.m_sBinaryId);
+        if((ole.m_nOleType === 0 || ole.m_nOleType === 1 || ole.m_nOleType === 2) && arrXLSX)
         {
             oThis.WriteRecord1(1, ole.m_nOleType, function(val){
                 oThis.WriteUChar(val);
             });
             oThis.WriteRecord1(2, 0, function(val){
-                oThis.WriteBuffer(ole.m_aBinaryData, 0, ole.m_aBinaryData.length);
+                oThis.WriteBuffer(arrXLSX, 0, arrXLSX.length);
             });
         }
     };

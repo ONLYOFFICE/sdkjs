@@ -99,6 +99,9 @@
 
 	CFrameManagerBase.prototype.getEncodedArray = function (arrStream)
 	{
+		if (!arrStream) {
+			return;
+		}
 		return Array.from(arrStream);
 	};
 
@@ -698,13 +701,14 @@
 		this.blobs = null;
 		this.documentUrl = null;
 	}
-	CFrameBinaryLoader.prototype.getNestedPromise = function (binaryData)
+	CFrameBinaryLoader.prototype.getNestedPromise = function (binaryId)
 	{
 		const oThis = this;
 		let oData = new CBinaryLoaderData();
+		const binaryData = AscCommon.g_oBinaryCacheManager.getBinary(binaryId);
 		return new Promise(function (resolve)
 		{
-			if (binaryData.length)
+			if (binaryData && binaryData.length)
 			{
 				if (oThis.isOpenOnClient)
 				{
@@ -862,7 +866,7 @@
 	InitClassWithoutType(CFrameOleBinaryLoader, CFrameBinaryLoader);
 	CFrameOleBinaryLoader.prototype.resolve = function ()
 	{
-		const oPromise = this.getNestedPromise(this.oleObject.m_aBinaryData);
+		const oPromise = this.getNestedPromise(this.oleObject.m_sBinaryId);
 		oPromise.then(this.fCallback);
 	};
 	CFrameOleBinaryLoader.prototype.getFrameBinary = function ()
@@ -985,7 +989,7 @@
 		}
 		else
 		{
-			const oPromise = this.getNestedPromise(this.chart.XLSX);
+			const oPromise = this.getNestedPromise(this.chart.XLSXId);
 			oPromise.then(this.fCallback);
 		}
 	}
@@ -1028,13 +1032,16 @@
 	CBinaryCacheManager.prototype.loadBinaryToServer = function(xlsxBinary) {
 		const oThis = this;
 		const hash = this.getHash(xlsxBinary);
-		return new Promise(function(resolve) {
-			if (AscCommon.History.CanAddChanges() && !oThis.isCollaborativeCache[hash]) {
+		return new Promise(function(resolve, reject) {
+			if (AscCommon.History.IsOn() && !oThis.isCollaborativeCache[hash]) {
 				const dataUrl = oThis.getDataURLFromBinary(xlsxBinary);
-				AscCommon.sendImgUrls(this.api, [dataUrl], function(data) {
-					//todo
+				AscCommon.sendImgUrls(oThis.api, [dataUrl], function(data) {
+					if (data && data[0] && data[0].url !== "error") {
+						resolve(xlsxBinary)
+					} else {
+						reject();
+					}
 				});
-				resolve(null)
 			} else {
 				resolve(new CLoadBinaryData(hash, xlsxBinary));
 			}
@@ -1052,6 +1059,15 @@
 			}
 			return null;
 		});
+	};
+	CBinaryCacheManager.prototype.addLocalBinary = function(binary) {
+		if (!AscCommon.checkOOXMLSignature(binary)) {
+			return null;
+		}
+
+		const hash = this.getHash(binary);
+		this.cache[hash] = binary;
+		return hash;
 	};
 
 	CBinaryCacheManager.prototype.getXLSXBinary = function(binary) {
@@ -1074,7 +1090,7 @@
 		return "data:" + AscCommon.openXml.Types.package.contentType + ";base64," + AscCommon.Base64.encode(arrXLSXBinary, 0, arrXLSXBinary.length);
 	};
 
-	window["AscCommon"].g_oBinaryCacheManager = new CBinaryCacheManager;
+	window["AscCommon"].CBinaryCacheManager = CBinaryCacheManager;
 	window["AscCommon"].CDiagramCellFrameManager = CDiagramCellFrameManager;
 	window["AscCommon"].CMainEditorFrameManager  = CMainEditorFrameManager;
 	window["AscCommon"].COleCellFrameManager = COleCellFrameManager;

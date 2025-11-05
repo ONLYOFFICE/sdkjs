@@ -1893,7 +1893,6 @@ function(window, undefined) {
 		this.date1904 = false;
 		this.externalData = null;
 		this.XLSXId = null;
-		this.XLSX = new Uint8Array(0);
 		this.externalReference = null;
 		this.lang = null;
 		this.pivotSource = null;
@@ -2501,7 +2500,7 @@ function(window, undefined) {
 			mapProps[oSpecialProps.destinationFormatting].push(oSpecialProps.destinationFormattingLink);
 			mapProps[oSpecialProps.sourceformatting].push(oSpecialProps.sourceFormattingLink);
 		}
-		if (this.XLSX && this.XLSX.length)
+		if (this.XLSXId)
 		{
 			mapProps[oSpecialProps.destinationFormatting].push(oSpecialProps.destinationFormattingEmbedding);
 			mapProps[oSpecialProps.sourceformatting].push(oSpecialProps.sourceFormattingEmbedding);
@@ -5271,10 +5270,6 @@ function(window, undefined) {
 	CChartSpace.prototype.setExternalData = function (externalData) {
 		AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ChartSpace_SetExternalData, this.externalData, externalData));
 		this.externalData = externalData;
-	};
-	CChartSpace.prototype.setXLSX = function (arrData)
-	{
-		this.XLSX = arrData;
 	};
 	CChartSpace.prototype.setXLSXId = function(sXLSXId) {
 		AscCommon.History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_ChartSpace_SetXLSXId, this.XLSXId, sXLSXId));

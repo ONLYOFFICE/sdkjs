@@ -1439,7 +1439,7 @@ BinaryChartWriter.prototype.WriteCT_extLst = function (oVal) {
 		}
 		else
 		{
-			let XLSX = (oVal.XLSX && oVal.XLSX.length) ? oVal.XLSX : null;
+			let XLSX = AscCommon.g_oBinaryCacheManager.getBinary(oVal.XLSXId);
 			if (oVal.externalReference && oVal.externalReference.Id) {
 				oThis.memory.WriteByte(c_oserct_chartspaceXLSXEXTERNAL);
 				oThis.memory.WriteString2(AscCommonExcel.encodeXmlPath(oVal.externalReference.Id));
@@ -7534,8 +7534,7 @@ BinaryChartReader.prototype.ReadCT_ChartSpace = function (type, length, val, cur
 			if (AscCommon.pptx_content_loader.IsUseFullUrl) {
 				AscCommon.pptx_content_loader.AddXLSXBinary(val, arrData);
 			} else {
-				//todo
-				val.setXLSX(arrData);
+				val.setXLSXId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrData));
 			}
         res = c_oSerConstants.ReadUnknown;
     }
@@ -7626,8 +7625,7 @@ BinaryChartReader.prototype.ReadCT_ChartExSpace = function (type, length, val) {
 			if (AscCommon.pptx_content_loader.IsUseFullUrl) {
 				AscCommon.pptx_content_loader.AddXLSXBinary(val, arrData);
 			} else {
-				//todo
-				val.setXLSX(arrData);
+				val.setXLSXId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrData));
 			}
 
 	    res = c_oSerConstants.ReadUnknown;

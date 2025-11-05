@@ -320,7 +320,7 @@ DrawingObjectsController.prototype.editChart = function(binary)
 	    oSelectedChart.recalculateChart();
         if (!oSelectedChart.isExternal() && binary["workbookHash"])
         {
-          chart_space.setXLSX(binary["workbookHash"]);
+          chart_space.setXLSXId(binary["workbookHash"]);
         }
 				if (binary['imagesForAddToHistory'])
 				{
