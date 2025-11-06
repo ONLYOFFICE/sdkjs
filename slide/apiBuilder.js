@@ -4207,17 +4207,6 @@
 
 
 
-	/**
-	 * Returns the timeline object for the slide.
-	 * @typeofeditors ["CPE"]
-	 * @memberof ApiSlide
-	 * @returns {ApiTimeLine}
-	 * @see office-js-api/Examples/Presentation/ApiSlide/Methods/GetTimeLine.js
-	 */
-	ApiSlide.prototype.GetTimeLine = function()
-	{
-		return new ApiTimeLine(this.Slide);
-	};
 
 	/**
 	 * Returns the slide show transition object for the slide.
@@ -4233,15 +4222,6 @@
 
 
 
-	/**
-	 * Class representing a timeline of animations for a slide.
-	 * @constructor
-	 * @param {Slide} oSlide
-	 */
-	function ApiTimeLine(oSlide)
-	{
-		this.Slide = oSlide;
-	}
 
 	/**
 	 * Returns the type of the ApiTimeLine class.
@@ -6526,34 +6506,20 @@
 	 * @memberof ApiSlide
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiTimeLine}
-	 * @example
-	 * var oPresentation = Api.GetPresentation();
-	 * var oSlide = oPresentation.GetSlideByIndex(0);
-	 * var oTimeLine = oSlide.GetTimeLine();
 	 */
 	ApiSlide.prototype.GetTimeLine = function()
 	{
-		var oSlide = this.Slide;
-		var oTiming = oSlide.timing;
+		let slide = this.Slide;
+		let timing = slide.timing;
 
-		if (!oTiming)
+		if (!slide)
 		{
-			// Create timing structure
-			oTiming = new AscFormat.CTiming();
-			oTiming.setParent(oSlide);
-
-			// Use internal method if available
-			if (oSlide.setTiming) {
-				oSlide.setTiming(oTiming);
-			} else {
-				oSlide.timing = oTiming;
-			}
-
-			// Initialize main sequence structure
-			oTiming.createMainSequence();
+			timing = new AscFormat.CTiming();
+			slide.setTiming(timing);
+			timing.checkMainSequence();
 		}
 
-		return new ApiTimeLine(oTiming, oSlide);
+		return new ApiTimeLine(timing, slide);
 	};
 
 	/**

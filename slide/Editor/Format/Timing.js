@@ -3398,37 +3398,8 @@
 	 * This is the simplest working version
 	 */
 	CTiming.prototype.createMainSequence = function() {
-		// Ensure tnLst exists
-		if (!this.tnLst) {
-			this.tnLst = [];
-		}
-
-		// Check if main sequence already exists
-		if (this.tnLst.length > 0 && this.tnLst[0] instanceof AscFormat.CSeq) {
-			return this.tnLst[0];
-		}
-
-		// Create main sequence
-		const mainSeq = new AscFormat.CSeq();
-
-		// Create common time node
-		const cTn = new AscFormat.CCTn();
-		cTn.id = 1;
-		cTn.dur = "indefinite";
-		cTn.childTnLst = [];
-
-		// Set common time node to sequence
-		mainSeq.cTn = cTn;
-		mainSeq.concurrent = false;
-		mainSeq.nextAc = "seek";
-
-		// Add to timing list
-		this.tnLst.push(mainSeq);
-
-		// Set parent reference
-		mainSeq.parent = this;
-
-		return mainSeq;
+		this.checkTimeRoot();
+		this.checkMainSequence();
 	};
 
 	CTiming.prototype.getMainSequence = function() {
