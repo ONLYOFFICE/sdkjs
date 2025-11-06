@@ -77,7 +77,7 @@ $(function ()
 		assert.strictEqual(p2.GetPagesCount(), 2, "p2 have 2 pages");
 		assert.strictEqual(p2.IsEmptyPage(0) && !p2.IsEmptyPage(1), true, "p2 the first page is empty and the second is not");
 		assert.strictEqual(p3.GetPagesCount(), 1, "p3 have 1 page");
-		assert.strictEqual(p3.GetStartPageAbsolute(), 1, "check p3 start page number");
+		assert.strictEqual(p3.GetAbsoluteStartPage(), 1, "check p3 start page number");
 	});
 	
 	QUnit.test("Test the case when a paragraph with the KeepNext property is followed by a table", function (assert)
@@ -109,7 +109,7 @@ $(function ()
 		assert.strictEqual(p2.GetPagesCount(), 2, "p2 have 2 pages");
 		assert.strictEqual(p2.IsEmptyPage(0) && !p2.IsEmptyPage(1), true, "p2 the first page is empty and the second is not");
 		assert.strictEqual(table.GetPagesCount(), 1, "table have 1 page");
-		assert.strictEqual(table.GetStartPageAbsolute(), 1, "check table start page number");
+		assert.strictEqual(table.GetAbsoluteStartPage(), 1, "check table start page number");
 	});
 	
 });

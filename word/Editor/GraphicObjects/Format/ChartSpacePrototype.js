@@ -68,7 +68,7 @@ CChartSpace.prototype.hitInPath = CShape.prototype.hitInPath;
 CChartSpace.prototype.check_bounds = CShape.prototype.check_bounds;
 CChartSpace.prototype.Get_Theme = CShape.prototype.Get_Theme;
 CChartSpace.prototype.Get_ColorMap = CShape.prototype.Get_ColorMap;
-CChartSpace.prototype.Get_AbsolutePage = CShape.prototype.Get_AbsolutePage;
+CChartSpace.prototype.GetAbsolutePage = CShape.prototype.GetAbsolutePage;
 
 CChartSpace.prototype.handleUpdateFill = function()
 {
@@ -183,12 +183,6 @@ CChartSpace.prototype.handleUpdatePosition = function()
 CChartSpace.prototype.handleUpdateFlip = function()
 {
     this.handleUpdateExtents();
-};
-CChartSpace.prototype.handleUpdateChart = function()
-{
-    this.recalcChart();
-    this.setRecalculateInfo();
-    this.addToRecalculate();
 };
 CChartSpace.prototype.handleUpdateStyle = function()
 {

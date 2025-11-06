@@ -62,43 +62,9 @@
     CAnnotationCircle.prototype.IsCircle = function() {
         return true;
     };
-    CAnnotationCircle.prototype.LazyCopy = function() {
-        let oDoc = this.GetDocument();
-        oDoc.StartNoHistoryMode();
-
-        let oCircle = new CAnnotationCircle(AscCommon.CreateGUID(), this.GetOrigRect().slice(), oDoc);
-        oCircle.lazyCopy = true;
-
-        this.fillObject(oCircle);
-
-        let aStrokeColor    = this.GetStrokeColor();
-        let aFillColor      = this.GetFillColor();
-        let aRD             = this.GetRectangleDiff();
-
-        oCircle._apIdx = this._apIdx;
-        oCircle._originView = this._originView;
-        oCircle.SetOriginPage(this.GetOriginPage());
-        oCircle.SetAuthor(this.GetAuthor());
-        oCircle.SetModDate(this.GetModDate());
-        oCircle.SetCreationDate(this.GetCreationDate());
-        aStrokeColor && oCircle.SetStrokeColor(aStrokeColor.slice());
-        aFillColor && oCircle.SetFillColor(aFillColor.slice());
-        oCircle.SetWidth(this.GetWidth());
-        oCircle.SetOpacity(this.GetOpacity());
-        oCircle.recalcGeometry()
-        aRD && oCircle.SetRectangleDiff(aRD.slice(), true);
-        oCircle.SetDash(this.GetDash());
-        oCircle.Recalculate(true);
-
-        oDoc.EndNoHistoryMode();
-        return oCircle;
-    };
     CAnnotationCircle.prototype.RefillGeometry = function(oGeometry, aShapeRectInMM) {
-        let oViewer = editor.getDocumentRenderer();
-        let oDoc    = oViewer.getPDFDoc();
-
         let aRD         = this.GetRectangleDiff() || [0, 0, 0, 0];
-        let aOrigRect   = this.GetOrigRect();
+        let aOrigRect   = this.GetRect();
 
         if (!oGeometry) {
             oGeometry = this.spPr.geometry;
@@ -110,71 +76,14 @@
             ];
         }
         
-        oDoc.StartNoHistoryMode();
+        AscCommon.History.StartNoHistoryMode();
         if (this.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.Cloud) {
             generateCloudyGeometry(undefined, aShapeRectInMM, oGeometry, this.GetBorderEffectIntensity());
         }
         else {
             oGeometry.Recalculate(aShapeRectInMM[2] - aShapeRectInMM[0], aShapeRectInMM[3] - aShapeRectInMM[1]);
         }
-        oDoc.EndNoHistoryMode();
-    };
-    CAnnotationCircle.prototype.SetRect = function(aOrigRect) {
-        let oViewer = editor.getDocumentRenderer();
-        let oDoc    = oViewer.getPDFDoc();
-
-        oDoc.History.Add(new CChangesPDFAnnotRect(this, this._origRect, aOrigRect));
-
-        this._origRect = aOrigRect;
-        
-        this.SetWasChanged(true);
-        this.SetNeedRecalcSizes(true);
-    };
-    CAnnotationCircle.prototype.SetRectangleDiff = function(aDiff, bOnResize) {
-        let oDoc = this.GetDocument();
-        oDoc.History.Add(new CChangesPDFAnnotRD(this, this.GetRectangleDiff(), aDiff));
-
-        this._rectDiff = aDiff;
-
-        this.SetWasChanged(true);
-        this.SetNeedRecalcSizes(true);
-        this.SetNeedRecalc(true);
-    };
-    CAnnotationCircle.prototype.SetNeedRecalcSizes = function(bRecalc) {
-        this._needRecalcSizes = bRecalc;
-        this.recalcGeometry();
-    };
-    CAnnotationCircle.prototype.IsNeedRecalcSizes = function() {
-        return this._needRecalcSizes;
-    };
-    CAnnotationCircle.prototype.Recalculate = function(bForce) {
-        if (true !== bForce && false == this.IsNeedRecalc()) {
-            return;
-        }
-
-        if (this.IsNeedRecalcSizes()) {
-            let aOrigRect = this.GetOrigRect();
-            let aRD = this.GetRectangleDiff();
-
-            let extX = ((aOrigRect[2] - aOrigRect[0]) - aRD[0] - aRD[2]) * g_dKoef_pt_to_mm;
-            let extY = ((aOrigRect[3] - aOrigRect[1]) - aRD[1] - aRD[3]) * g_dKoef_pt_to_mm;
-
-            this.spPr.xfrm.offX = (aOrigRect[0] + aRD[0]) * g_dKoef_pt_to_mm;
-            this.spPr.xfrm.offY = (aOrigRect[1] + aRD[1]) * g_dKoef_pt_to_mm;
-
-            this.spPr.xfrm.extX = extX;
-            this.spPr.xfrm.extY = extY;
-
-            this.SetNeedRecalcSizes(false);
-        }
-        if (this.recalcInfo.recalculateGeometry) {
-            this.RefillGeometry();
-        }
-
-        this.recalculateTransform();
-        this.updateTransformMatrix();
-        this.recalculate();
-        this.SetNeedRecalc(false);
+        AscCommon.History.EndNoHistoryMode();
     };
     CAnnotationCircle.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);

@@ -44,7 +44,7 @@ function CEndnotesController(oLogicDocument)
 
 	this.Id = oLogicDocument.GetIdCounter().Get_NewId();
 
-	this.EndnotePr = new CFootnotePr(); // Глобальные настройки для сносок
+	this.EndnotePr = new AscWord.FootnotePr(); // Глобальные настройки для сносок
 	this.EndnotePr.InitDefaultEndnotePr();
 
 	this.Endnote = {};
@@ -159,7 +159,7 @@ CEndnotesController.prototype.SetEndnotePrNumFormat = function(nFormatType)
 {
 	if (undefined !== nFormatType && this.EndnotePr.NumFormat !== nFormatType)
 	{
-		this.LogicDocument.GetHistory().Add(new CChangesSectionEndnoteNumFormat(this, this.EndnotePr.NumFormat, nFormatType));
+		this.LogicDocument.GetHistory().Add(new AscDFH.CChangesSectionEndnoteNumFormat(this, this.EndnotePr.NumFormat, nFormatType));
 		this.EndnotePr.NumFormat = nFormatType;
 	}
 };
@@ -167,7 +167,7 @@ CEndnotesController.prototype.SetEndnotePrPos = function(nPos)
 {
 	if (undefined !== nPos && this.EndnotePr.Pos !== nPos)
 	{
-		this.LogicDocument.GetHistory().Add(new CChangesSectionEndnotePos(this, this.EndnotePr.Pos, nPos));
+		this.LogicDocument.GetHistory().Add(new AscDFH.CChangesSectionEndnotePos(this, this.EndnotePr.Pos, nPos));
 		this.EndnotePr.Pos = nPos;
 	}
 };
@@ -175,7 +175,7 @@ CEndnotesController.prototype.SetEndnotePrNumStart = function(nStart)
 {
 	if (undefined !== nStart && this.EndnotePr.NumStart !== nStart)
 	{
-		this.LogicDocument.GetHistory().Add(new CChangesSectionEndnoteNumStart(this, this.EndnotePr.NumStart, nStart));
+		this.LogicDocument.GetHistory().Add(new AscDFH.CChangesSectionEndnoteNumStart(this, this.EndnotePr.NumStart, nStart));
 		this.EndnotePr.NumStart = nStart;
 	}
 };
@@ -183,7 +183,7 @@ CEndnotesController.prototype.SetEndnotePrNumRestart = function(nRestartType)
 {
 	if (undefined !== nRestartType && this.EndnotePr.NumRestart !== nRestartType)
 	{
-		this.LogicDocument.GetHistory().Add(new CChangesSectionEndnoteNumRestart(this, this.EndnotePr.NumRestart, nRestartType));
+		this.LogicDocument.GetHistory().Add(new AscDFH.CChangesSectionEndnoteNumRestart(this, this.EndnotePr.NumRestart, nRestartType));
 		this.EndnotePr.NumRestart = nRestartType;
 	}
 };
@@ -299,7 +299,7 @@ CEndnotesController.prototype.Refresh_RecalcData2 = function(nRelPageIndex)
 		}
 	}
 };
-CEndnotesController.prototype.Get_PageContentStartPos = function(nPageAbs, nColumnAbs, nSectionAbs)
+CEndnotesController.prototype.GetColumnContentFrame = function(nPageAbs, nColumnAbs, nSectionAbs)
 {
 	var oColumn = this.private_GetPageColumn(nPageAbs, nColumnAbs, nSectionAbs);
 	if (!oColumn)
@@ -405,7 +405,7 @@ CEndnotesController.prototype.RegisterEndnotes = function(nPageAbs, arrEndnotes)
 };
 /**
  * Проверяем, есть ли сноски, которые нужно пересчитать в конце заданной секции
- * @param oSectPr {CSectionPr} секция, в конце которой мы расчитываем сноски
+ * @param oSectPr {AscWord.SectPr} секция, в конце которой мы расчитываем сноски
  * @param isFinal {boolean} последняя ли это секция документа
  * @returns {boolean}
  */
@@ -1402,7 +1402,7 @@ CEndnotesController.prototype.CanUpdateTarget = function()
 		if (!oLogicDocument.FullRecalc.Endnotes)
 			return true;
 
-		var _nSectionIndex = this.LogicDocument.SectionsInfo.Find(this.LogicDocument.SectionsInfo.Get_SectPr(oLogicDocument.FullRecalc.StartIndex).SectPr);
+		var _nSectionIndex = this.LogicDocument.SectionsInfo.Find(oLogicDocument.FullRecalc.SectPr);
 		if (_nSectionIndex < nSectionIndex)
 			return false;
 		else if (_nSectionIndex > nSectionIndex)
@@ -1452,7 +1452,7 @@ CEndnotesController.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY, i
 CEndnotesController.prototype.GetCurPage = function()
 {
 	if (this.CurEndnote)
-		return this.CurEndnote.Get_StartPage_Absolute();
+		return this.CurEndnote.GetAbsoluteStartPage();
 
 	return -1;
 };
@@ -1498,12 +1498,55 @@ CEndnotesController.prototype.AddSignatureLine = function(oSignatureDrawing)
 
 	return this.CurEndnote.AddSignatureLine(oSignatureDrawing);
 };
+CEndnotesController.prototype.LoadChartData = function(bNeedRecalculate)
+{
+	if (false === this.private_CheckEndnotesSelectionBeforeAction())
+		return;
+
+	this.CurEndnote.LoadChartData(bNeedRecalculate);
+};
 CEndnotesController.prototype.EditChart = function(oChartPr)
 {
 	if (false === this.private_CheckEndnotesSelectionBeforeAction())
 		return;
 
 	this.CurEndnote.EditChart(oChartPr);
+};
+CEndnotesController.prototype.UpdateChart = function(oChart)
+{
+	if (false === this.private_CheckEndnotesSelectionBeforeAction())
+		return;
+
+	this.CurEndnote.UpdateChart(oChart);
+};
+CEndnotesController.prototype.OpenChartEditor = function()
+{
+	if (false === this.private_CheckEndnotesSelectionBeforeAction())
+		return;
+
+	this.CurEndnote.OpenChartEditor();
+};
+
+CEndnotesController.prototype.ApplyChartSettings = function(oChartSettings)
+{
+	if (false === this.private_CheckEndnotesSelectionBeforeAction())
+		return;
+
+	return this.CurEndnote.ApplyChartSettings(oChartSettings);
+};
+CEndnotesController.prototype.GetChartSettings = function()
+{
+	if (false === this.private_CheckEndnotesSelectionBeforeAction())
+		return;
+
+	return this.CurEndnote.GetChartSettings();
+};
+CEndnotesController.prototype.OpenOleEditor = function()
+{
+	if (false === this.private_CheckEndnotesSelectionBeforeAction())
+		return;
+
+	this.CurEndnote.OpenChartEditor();
 };
 CEndnotesController.prototype.AddInlineTable = function(nCols, nRows, nMode)
 {
@@ -2873,12 +2916,11 @@ CEndnotesController.prototype.UpdateInterfaceState = function()
 };
 CEndnotesController.prototype.UpdateRulersState = function()
 {
-	var nPageAbs = this.CurEndnote.Get_StartPage_Absolute();
+	var nPageAbs = this.CurEndnote.GetAbsoluteStartPage();
 	if (this.LogicDocument.Pages[nPageAbs])
 	{
-		var nPos    = this.LogicDocument.Pages[nPageAbs].Pos;
-		var oSectPr = this.LogicDocument.SectionsInfo.Get_SectPr(nPos).SectPr;
-		var oFrame  = oSectPr.GetContentFrame(nPageAbs);
+		let sectPr = this.LogicDocument.Pages[nPageAbs].GetFirstSectPr();
+		var oFrame = sectPr.GetContentFrame(nPageAbs);
 
 		this.DrawingDocument.Set_RulerState_Paragraph({L : oFrame.Left, T : oFrame.Top, R : oFrame.Right, B : oFrame.Bottom}, true);
 	}
@@ -3445,6 +3487,20 @@ CEndnotesController.prototype.CollectSelectedReviewChanges = function(oTrackMana
 	{
 		this.CurEndnote.CollectSelectedReviewChanges(oTrackManager);
 	}
+};
+CEndnotesController.prototype.GetCurrentTopDocContent = function()
+{
+	if (this.Selection.Use)
+	{
+		for (let id in this.Selection.Endnotes)
+		{
+			return this.Selection.Endnotes[id];
+		}
+	}
+	else if (this.CurEndnote)
+		return this.CurEndnote;
+	
+	return this.LogicDocument;
 };
 
 /**

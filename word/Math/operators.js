@@ -4060,27 +4060,6 @@ CDelimiter.prototype.private_GetRightOperator = function(bHide)
 
     return NewEndCode;
 };
-CDelimiter.fromMathML = function(reader)
-{
-	let attributes = reader.GetAttributes();
-	let props = new CMathDelimiterPr();
-	let open = attributes['open'] || "(";
-	let close = attributes['close'] || ")";
-	let separator = attributes['separators'] || "|"; // For now, left the "|" — the comma is not rendering correctly.
-
-	props.begChr		= open.trim().charCodeAt(0);
-	props.endChr		= close.trim().charCodeAt(0);
-	props.sepChr		= separator[0].trim().charCodeAt(0);
-	props.content		= [];
-
-	let depth = reader.GetDepth();
-	while (reader.ReadNextSiblingNode(depth))
-	{
-		props.content.push(AscWord.ParaMath.readMathMLContent(reader));
-	}
-
-	return new CDelimiter(props);
-};
 CDelimiter.prototype.GetTextOfElement = function(oMathText)
 {
 	oMathText = new AscMath.MathTextAndStyles(oMathText);
@@ -4732,42 +4711,6 @@ CGroupCharacter.prototype.GetTextOfElement = function(oMathText)
 
 	return oMathText;
 };
-
-CGroupCharacter.fromMathML = function(reader, type, content)
-{
-	let props = new CMathGroupChrPr();
-	props.content = content ? content : [];
-	props.pos = type;
-	props.vertJc = (type === VJUST_TOP ) ? VJUST_BOT : undefined;
-
-	let mContents = [];
-	let depth = reader.GetDepth();
-	while (reader.ReadNextSiblingNode(depth))
-	{
-		mContents.push(AscWord.ParaMath.readMathMLContent(reader));
-	}
-
-	if (mContents.length >= 2)
-	{
-		props.content.push(mContents[0]);
-		if (mContents[1])
-		{
-			let chrText = mContents[1].GetTextOfElement().GetText().trim();
-			if (chrText.length > 1)
-			{
-				return AscMath.Limit.fromMathML(reader, type, mContents)
-			}
-
-			props.chr = chrText.charCodeAt(0);
-		}
-	}
-	else
-	{
-		props.content[0] = mContents[0];
-	}
-
-	return new CGroupCharacter(props);
-}
 
 /**
  *

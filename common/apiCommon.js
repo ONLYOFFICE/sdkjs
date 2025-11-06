@@ -116,6 +116,8 @@ function (window, undefined) {
 				uuid[d2 & 0x3f | 0x80] + uuid[d2 >> 8 & 0xff] + "-" + uuid[d2 >> 16 & 0xff] + uuid[d2 >> 24 & 0xff] +
 				uuid[d3 & 0xff] + uuid[d3 >> 8 & 0xff] + uuid[d3 >> 16 & 0xff] + uuid[d3 >> 24 & 0xff];
 	}
+	
+	
 
 	function CreateGUID() {
 		function s4() {
@@ -1116,6 +1118,7 @@ function (window, undefined) {
 
 		this.sRange = null;
 
+		this.fUpdateGeneralChart = null;
 
 		this.showMarker = null;
 		this.bLine = null;
@@ -1129,6 +1132,8 @@ function (window, undefined) {
 
 		this.view3D = null;
 
+		this.forcedWorksheet = null;
+
 		this.displayTrendlinesEquation = false;
 	}
 
@@ -1139,6 +1144,20 @@ function (window, undefined) {
 		}
 		else {
 			this.horizontalAxes[0] = v;
+		}
+	};
+	asc_ChartSettings.prototype._collectPropsFromDLbls = function (nDefaultDataLabelsPos, data_labels)
+	{
+		this.putShowSerName(data_labels.showSerName === true);
+		this.putShowCatName(data_labels.showCatName === true);
+		this.putShowVal(data_labels.showVal === true);
+		this.putSeparator(data_labels.separator);
+		if (data_labels.bDelete) {
+			this.putDataLabelsPos(Asc.c_oAscChartDataLabelsPos.none);
+		} else if (data_labels.showSerName || data_labels.showCatName || data_labels.showVal || data_labels.showPercent) {
+			this.putDataLabelsPos(AscFormat.isRealNumber(data_labels.dLblPos) ? data_labels.dLblPos : nDefaultDataLabelsPos);
+		} else {
+			this.putDataLabelsPos(Asc.c_oAscChartDataLabelsPos.none);
 		}
 	};
 	asc_ChartSettings.prototype.getHorAxisProps = function () {
@@ -1279,6 +1298,13 @@ function (window, undefined) {
 		this.horizontalAxes.length = 0;
 		this.verticalAxes.length = 0;
 		this.depthAxes.length = 0;
+	};
+	asc_ChartSettings.prototype.getExternalReference = function ()
+	{
+		if (this.chartSpace && this.chartSpace.externalReference)
+		{
+			return this.chartSpace.externalReference.getAscLink();
+		}
 	};
 	asc_ChartSettings.prototype.equalBool = function (a, b) {
 		return ((!!a) === (!!b));
@@ -1692,7 +1718,7 @@ function (window, undefined) {
 		}
 		this.bStartEdit = false;
 		AscCommon.History.EndTransaction();
-		this.updateChart();
+		this.updateChart(true);
 		this.updateInterface();
 	};
 	asc_ChartSettings.prototype.cancelEdit = function () {
@@ -1704,7 +1730,7 @@ function (window, undefined) {
 			AscCommon.History.Clear_Redo();
 		}
 		AscCommon.History._sendCanUndoRedo();
-		this.updateChart();
+		this.updateChart(true);
 		this.updateInterface();
 	};
 	asc_ChartSettings.prototype.startEditData = function () {
@@ -1718,9 +1744,10 @@ function (window, undefined) {
 		AscCommon.History.ClearPointIndex();
 		this.updateChart();
 	};
-	asc_ChartSettings.prototype.updateChart = function () {
+	asc_ChartSettings.prototype.updateChart = function (bSelect) {
 		if (this.chartSpace) {
 			this.chartSpace.onDataUpdate();
+			this.updateGeneralChart(bSelect);
 		}
 	};
 	asc_ChartSettings.prototype.getDisplayTrendlinesEquation = function() {
@@ -1728,6 +1755,198 @@ function (window, undefined) {
 	};
 	asc_ChartSettings.prototype.putDisplayTrendlinesEquation = function(v) {
 		this.displayTrendlinesEquation = v;
+	};
+
+	asc_ChartSettings.prototype.setDisplayAxes = function (bShowPrimaryCatAx, bShowSecondaryCatAx, bShowPrimaryValAx, bShowSecondaryValAx, bShowSerAx) {
+		if (this.chartSpace) {
+			AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
+			this.chartSpace.showAxesByTypes(bShowPrimaryCatAx, bShowSecondaryCatAx, bShowPrimaryValAx, bShowSecondaryValAx, bShowSerAx);
+			this.updateChart();
+			const oLogicDocument = Asc.editor.getLogicDocument();
+			if (oLogicDocument) {
+				oLogicDocument.Recalculate();
+			}
+		}
+	};
+	asc_ChartSettings.prototype.setDisplayAxisTitles = function (bShowPrimaryCatAx, bShowSecondaryCatAx, bShowPrimaryValAx, bShowSecondaryValAx, bShowSerAx) {
+		if (this.chartSpace) {
+			AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
+			this.chartSpace.showAxisTitlesByTypes(bShowPrimaryCatAx, bShowSecondaryCatAx, bShowPrimaryValAx, bShowSecondaryValAx, bShowSerAx);
+			this.updateChart();
+			const oLogicDocument = Asc.editor.getLogicDocument();
+			if (oLogicDocument) {
+				oLogicDocument.Recalculate();
+			}
+		}
+	};
+	asc_ChartSettings.prototype.setDisplayChartTitle = function (bDisplay, bOverlay) {
+		if (this.chartSpace) {
+			AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
+			this.chartSpace.showChartTitle(bDisplay, bOverlay);
+			this.updateChart();
+			const oLogicDocument = Asc.editor.getLogicDocument();
+			if (oLogicDocument) {
+				oLogicDocument.Recalculate();
+			}
+		}
+	};
+	asc_ChartSettings.prototype.setDisplayDataLabels = function (bDisplay, nDataLabelPos) {
+		if (this.chartSpace) {
+			AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
+			this.chartSpace.showDataLabels(bDisplay, nDataLabelPos);
+			this.updateChart();
+			const oLogicDocument = Asc.editor.getLogicDocument();
+			if (oLogicDocument) {
+				oLogicDocument.Recalculate();
+			}
+		}
+	};
+	asc_ChartSettings.prototype.setDisplayDataTable = function (bDisplayDataTable, bDisplayLegendKeys) {
+		if (this.chartSpace) {
+			AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
+			this.chartSpace.showDataTable(bDisplayDataTable, bDisplayLegendKeys);
+			this.updateChart();
+			const oLogicDocument = Asc.editor.getLogicDocument();
+			if (oLogicDocument) {
+				oLogicDocument.Recalculate();
+			}
+		}
+	};
+	asc_ChartSettings.prototype.setDisplayErrorBars = function (bShowErrorBars, nErrorValueType) {
+		if (!this.chartSpace) {
+			return;
+		}
+
+		const series = this.chartSpace.getAllSeries();
+		if (!series.length) {
+			return;
+		}
+
+		AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
+		series.forEach(function (ser) {
+			bShowErrorBars
+				? ser.createAllErrBars(nErrorValueType)
+				: ser.removeAllErrBars();
+		});
+
+		this.updateChart();
+		const oLogicDocument = Asc.editor.getLogicDocument();
+		if (oLogicDocument) {
+			oLogicDocument.Recalculate();
+		}
+	};
+	asc_ChartSettings.prototype.setDisplayGridlines = function (bShowHorMajor, bShowVerMajor, bShowHorMinor, bShowVerMinor) {
+		if (!this.chartSpace) {
+			return;
+		}
+
+		const plotArea = this.chartSpace.getPlotArea();
+		if (!plotArea) {
+			return;
+		}
+
+		function getGridlinesSetting(displayMajor, displayMinor) {
+			if (displayMajor && displayMinor) {
+				return Asc.c_oAscGridLinesSettings.majorMinor;
+			} else if (displayMajor) {
+				return Asc.c_oAscGridLinesSettings.major;
+			} else if (displayMinor) {
+				return Asc.c_oAscGridLinesSettings.minor;
+			} else {
+				return Asc.c_oAscGridLinesSettings.none;
+			}
+		}
+
+		const categoryAxis = plotArea.catAx;
+		const valueAxis = plotArea.valAx;
+
+		if (categoryAxis || valueAxis) {
+			AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
+			if (categoryAxis) {
+				const catAxSettings = getGridlinesSetting(bShowVerMajor, bShowVerMinor);
+				categoryAxis.setGridlinesSetting(catAxSettings);
+			}
+			if (valueAxis) {
+				const valAxSettings = getGridlinesSetting(bShowHorMajor, bShowHorMinor);
+				valueAxis.setGridlinesSetting(valAxSettings);
+			}
+		}
+
+		this.updateChart();
+		const oLogicDocument = Asc.editor.getLogicDocument();
+		if (oLogicDocument) {
+			oLogicDocument.Recalculate();
+		}
+	};
+	asc_ChartSettings.prototype.setDisplayLegend = function (bShow, nLegendPosition) {
+		if (!this.chartSpace || !this.chartSpace.chart) {
+			return;
+		}
+
+		AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
+		const clearLegend = !bShow || nLegendPosition == null || nLegendPosition == Asc.c_oAscChartLegendShowSettings.none;
+		clearLegend
+			? this.chartSpace.chart.setLegend(null)
+			: this.chartSpace.chart.createLegend(nLegendPosition);
+
+		this.updateChart();
+		const oLogicDocument = Asc.editor.getLogicDocument();
+		if (oLogicDocument) {
+			oLogicDocument.Recalculate();
+		}
+	};
+	// asc_ChartSettings.prototype.setDisplayLines = function (bShow, nLineType) {};
+	asc_ChartSettings.prototype.setDisplayTrendlines = function (bShow, nTrendlineType, nForecastForward, nForecastBackward) {
+		if (!this.chartSpace) {
+			return;
+		}
+
+		AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
+		this.chartSpace.showTrendlines(bShow, nTrendlineType, nForecastForward, nForecastBackward);
+		this.updateChart();
+		const oLogicDocument = Asc.editor.getLogicDocument();
+		if (oLogicDocument) {
+			oLogicDocument.Recalculate();
+		}
+	};
+	asc_ChartSettings.prototype.setDisplayUpDownBars = function (bShow) {
+		if (!this.chartSpace) {
+			return;
+		}
+
+		const plotArea = this.chartSpace.getPlotArea();
+		if (!plotArea) {
+			return;
+		}
+
+		const chart = plotArea.chart;
+		const isAllowedChartType = chart instanceof AscFormat.CLineChart || chart instanceof AscFormat.CStockChart;
+		if (!chart || !isAllowedChartType) {
+			return;
+		}
+
+		AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
+		bShow
+			? chart.createUpDownBars()
+			: chart.setUpDownBars(null);
+
+		this.chartSpace.recalculateUpDownBars();
+		this.updateChart();
+		const oLogicDocument = Asc.editor.getLogicDocument();
+		if (oLogicDocument) {
+			oLogicDocument.Recalculate();
+		}
+	};
+
+	asc_ChartSettings.prototype.setFUpdateGeneralChart = function(fUpdate) {
+		this.fUpdateGeneralChart = fUpdate;
+	};
+	asc_ChartSettings.prototype.updateGeneralChart = function (bSelect)
+	{
+		if (this.fUpdateGeneralChart)
+		{
+			this.fUpdateGeneralChart(bSelect);
+		}
 	};
 
 	/** @constructor */
@@ -2842,7 +3061,7 @@ function (window, undefined) {
 			this.CanEditInlineCC = true;
 		}
 	}
-	
+
 	asc_CParagraphProperty.prototype.asc_getRtlDirection = function() {
 		return this.Bidi;
 	};
@@ -3444,22 +3663,23 @@ function (window, undefined) {
 	asc_CShapeProperty.prototype.asc_setCanEditText = function (v) {
 		this.canEditText = v;
 	};
+	asc_CShapeProperty.prototype.fillBlipFill = function (url, textureType) {
+		this.fill = new Asc.asc_CShapeFill();
+		this.fill.fillBlipFill(url, textureType);
+	};
 
 	/** @constructor */
 	function asc_CAnnotProperty() {
-		this.type				= null; // custom
-		this.fill				= null;
-		this.stroke				= null;
-		this.canFill			= true;
-		this.canChangeArrows	= true;
-		this.Locked				= false;
-		this.subject			= undefined;
-		this.canEditText		= false;
+		this.type = null;
 
-		this.Position = undefined;
+		this.fill	= null;
+		this.stroke	= null;
+		this.opacity= undefined;
+		this.subject= undefined;
+
+		this.annotProps = null;
 	}
 
-	asc_CAnnotProperty.prototype.constructor = asc_CAnnotProperty;
 	asc_CAnnotProperty.prototype.asc_getType = function () {
 		return this.type;
 	};
@@ -3478,29 +3698,222 @@ function (window, undefined) {
 	asc_CAnnotProperty.prototype.asc_putStroke = function (v) {
 		this.stroke = v;
 	};
-	asc_CAnnotProperty.prototype.asc_getCanFill = function () {
-		return this.canFill;
+	asc_CAnnotProperty.prototype.asc_getOpacity = function () {
+		return this.opacity;
 	};
-	asc_CAnnotProperty.prototype.asc_putCanFill = function (v) {
-		this.canFill = v;
-	};
-	asc_CAnnotProperty.prototype.asc_getCanChangeArrows = function () {
-		return this.canChangeArrows;
-	};
-	asc_CAnnotProperty.prototype.asc_setCanChangeArrows = function (v) {
-		this.canChangeArrows = v;
+	asc_CAnnotProperty.prototype.asc_putOpacity = function (v) {
+		this.opacity = v;
 	};
 	asc_CAnnotProperty.prototype.asc_getSubject = function () {
 		return this.subject;
 	};
-	asc_CAnnotProperty.prototype.asc_setSubject = function (v) {
+	asc_CAnnotProperty.prototype.asc_putSubject = function (v) {
 		this.subject = v;
 	};
-	asc_CAnnotProperty.prototype.asc_getCanEditText = function () {
+	asc_CAnnotProperty.prototype.asc_getAnnotProps = function () {
+		return this.annotProps;
+	};
+	asc_CAnnotProperty.prototype.asc_putAnnotProps = function (v) {
+		this.annotProps = v;
+	};
+	asc_CAnnotProperty.prototype.compare = function(pr) {
+		if (this.type !== pr.type) {
+			this.type = null;
+		}
+
+		if (!this.fill || !pr.fill || this.fill.r !== pr.fill.r || this.fill.g !== pr.fill.g || this.fill.b !== pr.fill.b) {
+			this.fill = null;
+		}
+		if (!this.stroke || !pr.stroke || this.stroke.r !== pr.stroke.r || this.stroke.g !== pr.stroke.g || this.stroke.b !== pr.stroke.b) {
+			this.stroke = null;
+		}
+		if (this.opacity !== pr.opacity) {
+			this.opacity = null;
+		}
+		if (this.subject !== pr.subject) {
+			this.subject = null;
+		}
+		if (this.type && this.annotProps) {
+			this.annotProps.compare(pr.annotProps);
+		}
+	};
+
+	// free text
+	function asc_CFreeTextAnnotProperty() {
+		this.borderWidth		= undefined;
+		this.borderStyle		= undefined;
+		this.lineEnd			= undefined;
+		this.canEditText		= undefined;
+	}
+
+	asc_CFreeTextAnnotProperty.prototype.asc_getBorderWidth = function () {
+		return this.borderWidth;
+	};
+	asc_CFreeTextAnnotProperty.prototype.asc_putBorderWidth = function (v) {
+		this.borderWidth = v;
+	};
+	asc_CFreeTextAnnotProperty.prototype.asc_getBorderStyle = function () {
+		return this.borderStyle;
+	};
+	asc_CFreeTextAnnotProperty.prototype.asc_putBorderStyle = function (v) {
+		this.borderStyle = v;
+	};
+	asc_CFreeTextAnnotProperty.prototype.asc_getLineEnd = function () {
+		return this.lineEnd;
+	};
+	asc_CFreeTextAnnotProperty.prototype.asc_putLineEnd = function (v) {
+		this.lineEnd = v;
+	};
+	asc_CFreeTextAnnotProperty.prototype.asc_getCanEditText = function () {
 		return this.canEditText;
 	};
-	asc_CAnnotProperty.prototype.asc_setCanEditText = function (v) {
+	asc_CFreeTextAnnotProperty.prototype.asc_putCanEditText = function (v) {
 		this.canEditText = v;
+	};
+	asc_CFreeTextAnnotProperty.prototype.compare = function(pr) {
+		if (this.borderWidth !== pr.borderWidth) {
+			this.borderWidth = null;
+		}
+		if (this.borderStyle !== pr.borderStyle) {
+			this.borderStyle = null;
+		}
+		if (this.lineEnd !== pr.lineEnd) {
+			this.lineEnd = null;
+		}
+		if (this.canEditText !== pr.canEditText) {
+			this.canEditText = null;
+		}
+	};
+
+	// line
+	function asc_CLineAnnotProperty() {
+		this.borderStyle= undefined;
+		this.borderWidth= undefined;
+		this.lineEnd	= undefined;
+		this.lineStart	= undefined;
+		this.canEditText= undefined;
+	}
+
+	asc_CLineAnnotProperty.prototype.asc_getBorderStyle = function () {
+		return this.borderStyle;
+	};
+	asc_CLineAnnotProperty.prototype.asc_putBorderStyle = function (v) {
+		this.borderStyle = v;
+	};
+	asc_CLineAnnotProperty.prototype.asc_getBorderWidth = function () {
+		return this.borderWidth;
+	};
+	asc_CLineAnnotProperty.prototype.asc_putBorderWidth = function (v) {
+		this.borderWidth = v;
+	};
+	asc_CLineAnnotProperty.prototype.asc_getLineEnd = function () {
+		return this.lineEnd;
+	};
+	asc_CLineAnnotProperty.prototype.asc_putLineEnd = function (v) {
+		this.lineEnd = v;
+	};
+	asc_CLineAnnotProperty.prototype.asc_getLineStart = function () {
+		return this.lineStart;
+	};
+	asc_CLineAnnotProperty.prototype.asc_putLineStart = function (v) {
+		this.lineStart = v;
+	};
+	asc_CLineAnnotProperty.prototype.asc_getCanEditText = function () {
+		return this.canEditText;
+	};
+	asc_CLineAnnotProperty.prototype.asc_putCanEditText = function (v) {
+		this.canEditText = v;
+	};
+	asc_CLineAnnotProperty.prototype.compare = function(pr) {
+		if (this.borderStyle !== pr.borderStyle) {
+			this.borderStyle = null;
+		}
+		if (this.borderWidth !== pr.borderWidth) {
+			this.borderWidth = null;
+		}
+		if (this.lineEnd !== pr.lineEnd) {
+			this.lineEnd = null;
+		}
+		if (this.lineStart !== pr.lineStart) {
+			this.lineStart = null;
+		}
+		if (this.canEditText !== pr.canEditText) {
+			this.canEditText = null;
+		}
+	};
+
+	// polyline
+	function asc_CPolyLineAnnotProperty() {
+		this.borderStyle= undefined;
+		this.borderWidth= undefined;
+		this.lineEnd	= undefined;
+		this.lineStart	= undefined;
+	}
+
+	asc_CPolyLineAnnotProperty.prototype.asc_getBorderStyle = function () {
+		return this.borderStyle;
+	};
+	asc_CPolyLineAnnotProperty.prototype.asc_putBorderStyle = function (v) {
+		this.borderStyle = v;
+	};
+	asc_CPolyLineAnnotProperty.prototype.asc_getBorderWidth = function () {
+		return this.borderWidth;
+	};
+	asc_CPolyLineAnnotProperty.prototype.asc_putBorderWidth = function (v) {
+		this.borderWidth = v;
+	};
+	asc_CPolyLineAnnotProperty.prototype.asc_getLineEnd = function () {
+		return this.lineEnd;
+	};
+	asc_CPolyLineAnnotProperty.prototype.asc_putLineEnd = function (v) {
+		this.lineEnd = v;
+	};
+	asc_CPolyLineAnnotProperty.prototype.asc_getLineStart = function () {
+		return this.lineStart;
+	};
+	asc_CPolyLineAnnotProperty.prototype.asc_putLineStart = function (v) {
+		this.lineStart = v;
+	};
+	asc_CPolyLineAnnotProperty.prototype.compare = function(pr) {
+		if (this.borderStyle !== pr.borderStyle) {
+			this.borderStyle = null;
+		}
+		if (this.borderWidth !== pr.borderWidth) {
+			this.borderWidth = null;
+		}
+		if (this.lineEnd !== pr.lineEnd) {
+			this.lineEnd = null;
+		}
+		if (this.lineStart !== pr.lineStart) {
+			this.lineStart = null;
+		}
+	};
+
+	// polygon/square/circle
+	function asc_CClosedAnnotProperty() {
+		this.borderStyle= undefined;
+		this.borderWidth= undefined;
+	}
+
+	asc_CClosedAnnotProperty.prototype.asc_getBorderStyle = function () {
+		return this.borderStyle;
+	};
+	asc_CClosedAnnotProperty.prototype.asc_putBorderStyle = function (v) {
+		this.borderStyle = v;
+	};
+	asc_CClosedAnnotProperty.prototype.asc_getBorderWidth = function () {
+		return this.borderWidth;
+	};
+	asc_CClosedAnnotProperty.prototype.asc_putBorderWidth = function (v) {
+		this.borderWidth = v;
+	};
+	asc_CClosedAnnotProperty.prototype.compare = function(pr) {
+		if (this.borderStyle !== pr.borderStyle) {
+			this.borderStyle = null;
+		}
+		if (this.borderWidth !== pr.borderWidth) {
+			this.borderWidth = null;
+		}
 	};
 
 	//////////////////////////////////////////////////////////////////
@@ -3509,7 +3922,7 @@ function (window, undefined) {
 	function asc_CBaseFieldProperty() {
 		// common
 		this.type				= undefined;
-		
+
 		this.name				= undefined;
 		this.required			= undefined;
 		this.readOnly			= undefined;
@@ -3519,6 +3932,8 @@ function (window, undefined) {
 		this.stroke				= null;
 		this.strokeWidth		= undefined;
 		this.strokeStyle		= undefined;
+		this.tooltip			= undefined;
+		this.digitsType			= undefined;
 		this.locked				= false;
 
 		this.fieldProps	= null;
@@ -3589,6 +4004,18 @@ function (window, undefined) {
 	asc_CBaseFieldProperty.prototype.asc_putPropLocked = function (v) {
 		this.locked = v;
 	};
+	asc_CBaseFieldProperty.prototype.asc_getTooltip = function () {
+		return this.tooltip;
+	};
+	asc_CBaseFieldProperty.prototype.asc_putTooltip = function (v) {
+		this.tooltip = v;
+	};
+	asc_CBaseFieldProperty.prototype.asc_getDigitsType = function () {
+		return this.digitsType;
+	};
+	asc_CBaseFieldProperty.prototype.asc_putDigitsType = function (v) {
+		this.digitsType = v;
+	};
 	asc_CBaseFieldProperty.prototype.get_Locked = function () {
 		return this.coEditLocked;
 	};
@@ -3600,6 +4027,54 @@ function (window, undefined) {
 	};
 	asc_CBaseFieldProperty.prototype.asc_putFieldProps = function (v) {
 		this.fieldProps = v;
+	};
+	asc_CBaseFieldProperty.prototype.compare = function (pr) {
+		if (this.type !== pr.type) {
+			this.type = null;
+		}
+		if (this.name !== pr.name) {
+			this.name = null;
+		}
+		if (this.required !== pr.required) {
+			this.required = null;
+		}
+		if (this.readOnly !== pr.readOnly) {
+			this.readOnly = null;
+		}
+		if (this.rot !== pr.rot) {
+			this.rot = null;
+		}
+		if (this.display !== pr.display) {
+			this.display = null;
+		}
+		if (!this.fill || !pr.fill || this.fill.r !== pr.fill.r || this.fill.g !== pr.fill.g || this.fill.b !== pr.fill.b) {
+			this.fill = null;
+		}
+		if (!this.stroke || !pr.stroke || this.stroke.r !== pr.stroke.r || this.stroke.g !== pr.stroke.g || this.stroke.b !== pr.stroke.b) {
+			this.stroke = null;
+		}
+		if (this.strokeWidth !== pr.strokeWidth) {
+			this.strokeWidth = null;
+		}
+		if (this.strokeStyle !== pr.strokeStyle) {
+			this.strokeStyle = null;
+		}
+		if (this.tooltip !== pr.tooltip) {
+			this.tooltip = null;
+		}
+		if (this.hindiDigits !== pr.hindiDigits) {
+			this.hindiDigits = null;
+		}
+		if (this.locked !== pr.locked) {
+			this.locked = null;
+		}
+
+		if (this.type != undefined && this.fieldProps && pr.fieldProps) {
+			this.fieldProps.compare(pr.fieldProps);
+		}
+		else {
+			this.fieldProps = null;
+		}
 	};
 	//////////////////////////////////////////////////////////////////
 	///// Text field
@@ -3617,6 +4092,7 @@ function (window, undefined) {
 		this.comb				= undefined;
 		this.placeholder		= undefined;
 		this.autoFit			= undefined;
+		this.password			= undefined;
 	}
 	asc_CTextFieldProperty.prototype.asc_getDefaultValue = function () {
 		return this.defaultValue;
@@ -3660,6 +4136,12 @@ function (window, undefined) {
 	asc_CTextFieldProperty.prototype.asc_putAutoFit = function (v) {
 		this.autoFit = v;
 	};
+	asc_CTextFieldProperty.prototype.asc_getPassword = function () {
+		return this.password;
+	};
+	asc_CTextFieldProperty.prototype.asc_putPassword = function (v) {
+		this.password = v;
+	};
 	asc_CTextFieldProperty.prototype.asc_getFormat = function () {
 		return this.format;
 	};
@@ -3672,7 +4154,44 @@ function (window, undefined) {
 	asc_CTextFieldProperty.prototype.asc_putValidate = function (v) {
 		this.validate = v;
 	};
-	
+	asc_CTextFieldProperty.prototype.compare = function (pr) {
+		if (this.defaultValue !== pr.defaultValue) {
+			this.defaultValue = null;
+		}
+		if (this.multiline !== pr.multiline) {
+			this.multiline = null;
+		}
+		if (this.scrollLongText !== pr.scrollLongText) {
+			this.scrollLongText = null;
+		}
+		if (this.charLimit !== pr.charLimit) {
+			this.charLimit = null;
+		}
+		if (this.comb !== pr.comb) {
+			this.comb = null;
+		}
+		if (this.placeholder !== pr.placeholder) {
+			this.placeholder = null;
+		}
+		if (this.autoFit !== pr.autoFit) {
+			this.autoFit = null;
+		}
+
+		if (this.format && pr.format && this.format.type === pr.format.type) {
+			this.format.compare(pr.format);
+		}
+		else {
+			this.format = null;
+		}
+		
+		if (this.validate && pr.validate && this.validate.type === pr.validate.type) {
+			this.validate.compare(pr.validate);
+		}
+		else {
+			this.validate = null;
+		}
+	};
+
 	//////////////////////////////////////////////////////////////////
 	///// Combobox field
 	//////////////////////////////////////////////////////////////////
@@ -3729,11 +4248,42 @@ function (window, undefined) {
 	asc_CComboboxFieldProperty.prototype.asc_putValidate = function (v) {
 		this.validate = v;
 	};
+	asc_CComboboxFieldProperty.prototype.compare = function (pr) {
+		for (let i = 0; i < this.options.length; i++) {
+			let a = this.options[i];
+			let b = pr.options[i];
+
+			if (Array.isArray(a)) {
+				if (!Array.isArray(b) || a[0] !== b[0] || a[1] !== b[1]) {
+					this.options = null;
+					break;
+				}
+			}
+			else if (a !== b) {
+				this.options = null;
+				break;
+			}
+		}
+
+		if (this.commitOnSelChange !== pr.commitOnSelChange) {
+			this.commitOnSelChange = null;
+		}
+		if (this.editable !== pr.editable) {
+			this.editable = null;
+		}
+		if (this.placeholder !== pr.placeholder) {
+			this.placeholder = null;
+		}
+		if (this.autoFit !== pr.autoFit) {
+			this.autoFit = null;
+		}
+	};
 
 	//////////////////////////////////////////////////////////////////
 	///// Listbox field
 	//////////////////////////////////////////////////////////////////
 	function asc_CListboxFieldProperty() {
+		this.options		 	= null;
 		this.commitOnSelChange	= undefined;
 		this.multipleSelection	= undefined;
 	}
@@ -3754,6 +4304,30 @@ function (window, undefined) {
 	};
 	asc_CListboxFieldProperty.prototype.asc_putMultipleSelection = function (v) {
 		this.multipleSelection = v;
+	};
+	asc_CListboxFieldProperty.prototype.compare = function (pr) {
+		for (let i = 0; i < this.options.length; i++) {
+			let a = this.options[i];
+			let b = pr.options[i];
+
+			if (Array.isArray(a)) {
+				if (!Array.isArray(b) || a[0] !== b[0] || a[1] !== b[1]) {
+					this.options = null;
+					break;
+				}
+			}
+			else if (a !== b) {
+				this.options = null;
+				break;
+			}
+		}
+
+		if (this.commitOnSelChange !== pr.commitOnSelChange) {
+			this.commitOnSelChange = null;
+		}
+		if (this.multipleSelection !== pr.multipleSelection) {
+			this.multipleSelection = null;
+		}
 	};
 	//////////////////////////////////////////////////////////////////
 	///// Checkbox
@@ -3788,7 +4362,21 @@ function (window, undefined) {
 	asc_CCheckboxFieldProperty.prototype.asc_putToggleToOff = function (v) {
 		this.toggleToOff = v;
 	};
-	
+	asc_CCheckboxFieldProperty.prototype.compare = function (pr) {
+		if (this.checkboxStyle !== pr.checkboxStyle) {
+			this.checkboxStyle = null;
+		}
+		if (this.exportValue !== pr.exportValue) {
+			this.exportValue = null;
+		}
+		if (this.defaultChecked !== pr.defaultChecked) {
+			this.defaultChecked = null;
+		}
+		if (this.toggleToOff !== pr.toggleToOff) {
+			this.toggleToOff = null;
+		}
+	};
+
 	//////////////////////////////////////////////////////////////////
 	///// Radiobutton
 	//////////////////////////////////////////////////////////////////
@@ -3805,11 +4393,18 @@ function (window, undefined) {
 	asc_CRadiobuttonFieldProperty.prototype.asc_putRadiosInUnison = function (v) {
 		this.radiosInUnison = v;
 	};
+	asc_CRadiobuttonFieldProperty.prototype.compare = function (pr) {
+		asc_CCheckboxFieldProperty.prototype.compare.call(this, pr);
+
+		if (this.radiosInUnison !== pr.radiosInUnison) {
+			this.radiosInUnison = null;
+		}
+	};
 	//////////////////////////////////////////////////////////////////
 	///// Pushbutton
 	//////////////////////////////////////////////////////////////////
 	function asc_CButtonFieldProperty(buttonField) {
-		this.parentField	= buttonField;
+		this.parentFields	= [buttonField];
 
 		this.highlight		= undefined;
 		this.layout			= undefined;
@@ -3828,8 +4423,8 @@ function (window, undefined) {
 
 		this.DivId			= undefined;
 	}
-	asc_CButtonFieldProperty.prototype.getParentField = function () {
-		return this.parentField;
+	asc_CButtonFieldProperty.prototype.getParentFields = function () {
+		return this.parentFields;
 	};
 	asc_CButtonFieldProperty.prototype.asc_getHighlight = function () {
 		return this.highlight;
@@ -3912,9 +4507,10 @@ function (window, undefined) {
 	asc_CButtonFieldProperty.prototype.asc_putCurrentState = function(v) {
 		this.currentState = v;
 
-		// set to field state to add image (will clear after set image)
-		let oField = this.getParentField();
-		oField.asc_curImageState = v;
+		// set to fields state to add image (will clear after set image)
+		this.getParentFields().forEach(function(field) {
+			field.asc_curImageState = v;
+		});
 
 		this.drawTexture(v);
 	};
@@ -3965,7 +4561,7 @@ function (window, undefined) {
 		if (!sImageRasterId) {
 			return;
 		}
-		
+
 		var _img = Asc.editor.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(sImageRasterId)];
 		if (_img != undefined && _img.Image != null && _img.Status != AscFonts.ImageLoadStatus.Loading)
 		{
@@ -4021,10 +4617,7 @@ function (window, undefined) {
 		}
 		let Api = Asc.editor;
 
-		// set to field state to add image (will clear after set image)
-		let oField = this.getParentField();
-
-		Api._addImageUrl([sUrl], oField);
+		Api._addImageUrl([sUrl], this.getParentFields());
 	};
 	asc_CButtonFieldProperty.prototype.showFileDialog = function (nState) {
 		if (!this.DivId){
@@ -4033,8 +4626,8 @@ function (window, undefined) {
 		let Api = Asc.editor;
 
 		// set to field state to add image (will clear after set image)
-		let oField = this.getParentField();
-		let oDoc = oField.GetDocument();
+		let aFields = this.getParentFields();
+		let oDoc = Asc.editor.getPDFDoc();
 		let oActionsQueue = oDoc.GetActionsQueue();
 
 		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
@@ -4042,18 +4635,15 @@ function (window, undefined) {
                 var file = _file;
                 if (Array.isArray(file))
                     file = file[0];
-        
+
                 var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](file);
-                editor._addImageUrl([AscCommon.g_oDocumentUrls.getImageUrl(_url)], oField);
+                Asc.editor._addImageUrl([AscCommon.g_oDocumentUrls.getImageUrl(_url)], aFields);
             });
         }
         else {
             AscCommon.ShowImageFileDialog(Api.documentId, Api.documentUserId, undefined, Api.documentShardKey, Api.documentWopiSrc, Api.documentUserSessionId, function(error, files) {
-                if (error.canceled == true) {
-                    oActionsQueue.Continue();
-                }
-                else {
-                    Api._uploadCallback(error, files, oField);
+                if (error.canceled !== true) {
+                    Api._uploadCallback(error, files, aFields);
                 }
 
 				AscCommon.global_mouseEvent.UnLockMouse();
@@ -4067,6 +4657,64 @@ function (window, undefined) {
                 AscCommon.global_mouseEvent.UnLockMouse();
             });
         }
+	};
+	asc_CButtonFieldProperty.prototype.compare = function (pr) {
+		let aFullNames = this.parentFields.map(function(field) {
+			return field.GetFullName();
+		});
+
+		let _t = this;
+		pr.parentFields.forEach(function(field) {
+			if (!aFullNames.includes(field.GetFullName())) {
+				_t.parentFields.push(field);
+			}
+		});
+
+		if (this.highlight !== pr.highlight) {
+			this.highlight = null;
+		}
+		if (this.layout !== pr.layout) {
+			this.layout = null;
+		}
+		if (this.scaleWhen !== pr.scaleWhen) {
+			this.scaleWhen = null;
+		}
+		if (this.scaleHow !== pr.scaleHow) {
+			this.scaleHow = null;
+		}
+		if (this.fitBounds !== pr.fitBounds) {
+			this.fitBounds = null;
+		}
+		if (!this.iconPos || !pr.iconPos || this.iconPos.X !== pr.iconPos.X || this.iconPos.Y !== pr.iconPos.Y) {
+			this.iconPos = null;
+		}
+		if (this.behavior !== pr.behavior) {
+			this.behavior = null;
+		}
+		if (this.currentState !== pr.currentState) {
+			this.currentState = null;
+		}
+		if (this.normalCaption !== pr.normalCaption) {
+			this.normalCaption = null;
+		}
+		if (this.hoverCaption !== pr.hoverCaption) {
+			this.hoverCaption = null;
+		}
+		if (this.downCaption !== pr.downCaption) {
+			this.downCaption = null;
+		}
+		if (this.normalImage !== pr.normalImage) {
+			this.normalImage = null;
+		}
+		if (this.hoverImage !== pr.hoverImage) {
+			this.hoverImage = null;
+		}
+		if (this.downImage !== pr.downImage) {
+			this.downImage = null;
+		}
+		if (this.radiosInUnison !== pr.radiosInUnison) {
+			this.radiosInUnison = null;
+		}
 	};
 	//////////////////////////////////////////////////////////////////
 	///// Number format
@@ -4113,6 +4761,23 @@ function (window, undefined) {
 	asc_CFieldNumberFormatProperty.prototype.asc_putCurrencyPrepend = function (v) {
 		this.currencyPrepend = v;
 	};
+	asc_CFieldNumberFormatProperty.prototype.compare = function (pr) {
+		if (this.decimals !== pr.decimals) {
+			this.decimals = null;
+		}
+		if (this.sepStyle !== pr.sepStyle) {
+			this.sepStyle = null;
+		}
+		if (this.negStyle !== pr.negStyle) {
+			this.negStyle = null;
+		}
+		if (this.currency !== pr.currency) {
+			this.currency = null;
+		}
+		if (this.currencyPrepend !== pr.currencyPrepend) {
+			this.currencyPrepend = null;
+		}
+	};
 	//////////////////////////////////////////////////////////////////
 	///// Percentage format
 	//////////////////////////////////////////////////////////////////
@@ -4137,6 +4802,14 @@ function (window, undefined) {
 	asc_CFieldPercentageFormatProperty.prototype.asc_putSepStyle = function (v) {
 		this.sepStyle = v;
 	};
+	asc_CFieldPercentageFormatProperty.prototype.compare = function (pr) {
+		if (this.decimals !== pr.decimals) {
+			this.decimals = null;
+		}
+		if (this.sepStyle !== pr.sepStyle) {
+			this.sepStyle = null;
+		}
+	};
 
 	//////////////////////////////////////////////////////////////////
 	///// Date format
@@ -4155,7 +4828,12 @@ function (window, undefined) {
 	asc_CFieldDateFormatProperty.prototype.asc_putFormat = function (v) {
 		this.format = v;
 	};
-	
+	asc_CFieldDateFormatProperty.prototype.compare = function (pr) {
+		if (this.format !== pr.format) {
+			this.format = null;
+		}
+	};
+
 	//////////////////////////////////////////////////////////////////
 	///// Time format
 	//////////////////////////////////////////////////////////////////
@@ -4172,6 +4850,11 @@ function (window, undefined) {
 	};
 	asc_CFieldTimeFormatProperty.prototype.asc_putFormat = function (v) {
 		this.format = v;
+	};
+	asc_CFieldTimeFormatProperty.prototype.compare = function (pr) {
+		if (this.format !== pr.format) {
+			this.format = null;
+		}
 	};
 
 	//////////////////////////////////////////////////////////////////
@@ -4198,6 +4881,14 @@ function (window, undefined) {
 	asc_CFieldSpecialFormatProperty.prototype.asc_putMask = function (v) {
 		this.mask = v;
 	};
+	asc_CFieldSpecialFormatProperty.prototype.compare = function (pr) {
+		if (this.format !== pr.format) {
+			this.format = null;
+		}
+		if (this.mask !== pr.mask) {
+			this.mask = null;
+		}
+	};
 
 	//////////////////////////////////////////////////////////////////
 	///// Regular (our custom) format
@@ -4215,6 +4906,11 @@ function (window, undefined) {
 	};
 	asc_CFieldRegularFormatProperty.prototype.asc_putRegExp = function (v) {
 		this.regExp = v;
+	};
+	asc_CFieldSpecialFormatProperty.prototype.compare = function (pr) {
+		if (this.regExp !== pr.regExp) {
+			this.regExp = null;
+		}
 	};
 
 	//////////////////////////////////////////////////////////////////
@@ -4255,6 +4951,14 @@ function (window, undefined) {
 	};
 	asc_CFieldValidateProperty.prototype.asc_putLessThen = function (v) {
 		this.lessThen = v;
+	};
+	asc_CFieldSpecialFormatProperty.prototype.compare = function (pr) {
+		if (this.greaterThen !== pr.greaterThen) {
+			this.greaterThen = null;
+		}
+		if (this.lessThen !== pr.lessThen) {
+			this.lessThen = null;
+		}
 	};
 
 	/** @constructor */
@@ -5034,34 +5738,17 @@ function (window, undefined) {
 		}
 		return false;
 	};
+	asc_CShapeFill.prototype.fillBlipFill = function (url, textureType) {
+		this.type = Asc.c_oAscFill.FILL_TYPE_BLIP;
+		this.fill = new AscFormat.CBlipFill();
+		this.fill.asc_putUrl(url);
+		if(textureType !== null && textureType !== undefined) {
+			this.fill.asc_putType(textureType);
+		}
+	};
 
-	/** @constructor */
-	function asc_CFillBlip() {
-		this.type = c_oAscFillBlipType.STRETCH;
-		this.url = "";
-		this.token = undefined;
-		this.texture_id = null;
-	}
 
-	asc_CFillBlip.prototype.asc_getType = function () {
-		return this.type
-	};
-	asc_CFillBlip.prototype.asc_putType = function (v) {
-		this.type = v;
-	};
-	asc_CFillBlip.prototype.asc_getUrl = function () {
-		return this.url;
-	};
-	asc_CFillBlip.prototype.asc_putUrl = function (v, sToken) {
-		this.url = v;
-		this.token = sToken;
-	};
-	asc_CFillBlip.prototype.asc_getTextureId = function () {
-		return this.texture_id;
-	};
-	asc_CFillBlip.prototype.asc_putTextureId = function (v) {
-		this.texture_id = v;
-	};
+	// There was asc_CFillBlip
 
 	/** @constructor */
 	function asc_CFillHatch() {
@@ -6869,6 +7556,45 @@ function (window, undefined) {
 		return 0;
 	};
 
+	/** @constructor */
+	function asc_CFormatCellsInfo() {
+		this.type = Asc.c_oAscNumFormatType.General;
+		this.decimalPlaces = 2;
+		this.separator = false;
+		this.symbol = null;
+		this.currency = null;
+	}
+	asc_CFormatCellsInfo.prototype.asc_setType = function (val) {
+		this.type = val;
+	};
+	asc_CFormatCellsInfo.prototype.asc_setDecimalPlaces = function (val) {
+		this.decimalPlaces = val;
+	};
+	asc_CFormatCellsInfo.prototype.asc_setSeparator = function (val) {
+		this.separator = val;
+	};
+	asc_CFormatCellsInfo.prototype.asc_setSymbol = function (val) {
+		this.symbol = val;
+	};
+	asc_CFormatCellsInfo.prototype.asc_setCurrencySymbol = function (val) {
+		this.currency = val;
+	};
+	asc_CFormatCellsInfo.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CFormatCellsInfo.prototype.asc_getDecimalPlaces = function () {
+		return this.decimalPlaces;
+	};
+	asc_CFormatCellsInfo.prototype.asc_getSeparator = function () {
+		return this.separator;
+	};
+	asc_CFormatCellsInfo.prototype.asc_getSymbol = function () {
+		return this.symbol;
+	};
+	asc_CFormatCellsInfo.prototype.asc_getCurrencySymbol = function () {
+		return this.currency;
+	};
+
 	/**
 	 * @constructor
 	 */
@@ -6919,7 +7645,7 @@ function (window, undefined) {
 	CDocInfoProp.prototype.put_SymbolsWSCount = function (v) {
 		this.SymbolsWSCount = v;
 	};
-	
+
 	/**
 	 * @constructor
 	 */
@@ -6942,6 +7668,92 @@ function (window, undefined) {
 	};
 	RangePermProp.prototype.get_canInsObject = function() {
 		return this.insertObject;
+	};
+
+	function CAscShortcut(type, keyCode, isCtrl, isShift, isAlt, isCommand, isLocked, isHidden) {
+		this.type = type || null;
+		this.keyCode = keyCode;
+		this.ctrlKey = isCtrl;
+		this.shiftKey = isShift;
+		this.altKey = isAlt;
+		this.commandKey = isCommand;
+
+		this.isLocked = !!isLocked;
+		this.isHidden = !!isHidden;
+	}
+
+	CAscShortcut.prototype.asc_GetKeyCode = function() {
+		return this.keyCode;
+	};
+	CAscShortcut.prototype.asc_GetType = function() {
+		return this.type;
+	};
+	CAscShortcut.prototype.asc_IsCtrl = function() {
+		return this.ctrlKey;
+	};
+	CAscShortcut.prototype.asc_IsShift = function() {
+		return this.shiftKey;
+	};
+	CAscShortcut.prototype.asc_IsAlt = function() {
+		return this.altKey;
+	};
+	CAscShortcut.prototype.asc_IsCommand = function() {
+		return this.commandKey;
+	};
+	CAscShortcut.prototype.asc_IsLocked = function() {
+		return this.isLocked;
+	};
+	CAscShortcut.prototype.asc_IsHidden = function() {
+		return this.isHidden;
+	};
+	CAscShortcut.prototype.asc_SetIsHidden = function(pr) {
+		this.isHidden = pr;
+	};
+	CAscShortcut.prototype.asc_SetKeyCode = function(pr) {
+		this.keyCode = pr;
+	};
+	CAscShortcut.prototype.asc_SetIsCtrl = function(pr) {
+		this.ctrlKey = pr;
+	};
+	CAscShortcut.prototype.asc_SetIsShift = function(pr) {
+		this.shiftKey = pr;
+	};
+	CAscShortcut.prototype.asc_SetIsAlt = function(pr) {
+		this.altKey = pr;
+	};
+	CAscShortcut.prototype.asc_SetIsCommand = function(pr) {
+		this.commandKey = pr;
+	};
+	CAscShortcut.prototype.asc_SetIsLocked = function(pr) {
+		this.isLocked = pr;
+	};
+	CAscShortcut.prototype.asc_SetType = function(pr) {
+		this.type = pr;
+	};
+	CAscShortcut.prototype.asc_ToJson = function() {
+		const res = {};
+		res["type"] = AscCommon.getStringFromShortcutType(this.type);
+		res["keyCode"] = this.keyCode;
+		res["ctrlKey"] = this.ctrlKey;
+		res["shiftKey"] = this.shiftKey;
+		res["altKey"] = this.altKey;
+		res["commandKey"] = this.commandKey;
+		res["isLocked"] = this.isLocked;
+		res["isHidden"] = this.isHidden;
+		return res;
+	};
+	CAscShortcut.prototype.asc_FromJson = function(obj) {
+		this.type = AscCommon.getShortcutTypeFromString(obj["type"]);
+		this.keyCode = obj["keyCode"];
+		this.ctrlKey = obj["ctrlKey"];
+		this.shiftKey = obj["shiftKey"];
+		this.altKey = obj["altKey"];
+		this.commandKey = obj["commandKey"];
+		this.isLocked = obj["isLocked"];
+		this.isHidden = obj["isHidden"];
+	};
+	CAscShortcut.prototype.asc_GetShortcutIndex = function() {
+		return AscCommon.CShortcuts.GetShortcutIndex(this.asc_GetKeyCode(), this.asc_IsCtrl(), this.asc_IsShift(), this.asc_IsAlt(), this.asc_IsCommand());
 	};
 
 
@@ -6970,6 +7782,344 @@ function (window, undefined) {
 	};
 	CButtonData.prototype.get_Properties = function() {
 		return this["pr"];
+	};
+
+	function CAscChartProp(obj)
+	{
+		if (obj)
+		{
+
+			this.Width    = (undefined != obj.w) ? obj.w : undefined;
+			this.Height   = (undefined != obj.h) ? obj.h : undefined;
+			this.Position = new Asc.CPosition({X : obj.x, Y : obj.y});
+
+			this.Locked          = (undefined != obj.locked) ? obj.locked : false;
+			this.lockAspect      = (undefined != obj.lockAspect) ? obj.lockAspect : false;
+			this.ChartProperties = (undefined != obj.chartProps) ? obj.chartProps : null;
+
+			this.severalCharts      = obj.severalCharts != undefined ? obj.severalCharts : false;
+			this.severalChartTypes  = obj.severalChartTypes != undefined ? obj.severalChartTypes : undefined;
+			this.severalChartStyles = obj.severalChartStyles != undefined ? obj.severalChartStyles : undefined;
+
+			this.title = obj.title != undefined ? obj.title : undefined;
+			this.description = obj.description != undefined ? obj.description : undefined;
+			this.name = obj.name != undefined ? obj.name : undefined;
+		}
+		else
+		{
+			this.Width           = undefined;
+			this.Height          = undefined;
+			this.Position        = undefined;
+			this.Locked          = false;
+			this.lockAspect      = undefined;
+			this.ChartProperties = null;
+
+			this.severalCharts      = false;
+			this.severalChartTypes  = undefined;
+			this.severalChartStyles = undefined;
+            this.title = undefined;
+            this.description = undefined;
+		}
+	}
+
+	CAscChartProp.prototype.get_ChangeLevel = function()
+	{
+		return this.ChangeLevel;
+	};
+	CAscChartProp.prototype.put_ChangeLevel = function(v)
+	{
+		this.ChangeLevel = v;
+	};
+
+	CAscChartProp.prototype.get_CanBeFlow     = function()
+	{
+		return this.CanBeFlow;
+	};
+	CAscChartProp.prototype.get_Width         = function()
+	{
+		return this.Width;
+	};
+	CAscChartProp.prototype.put_Width         = function(v)
+	{
+		this.Width = v;
+	};
+	CAscChartProp.prototype.get_Height        = function()
+	{
+		return this.Height;
+	};
+	CAscChartProp.prototype.put_Height        = function(v)
+	{
+		this.Height = v;
+	};
+	CAscChartProp.prototype.get_WrappingStyle = function()
+	{
+		return this.WrappingStyle;
+	};
+	CAscChartProp.prototype.put_WrappingStyle = function(v)
+	{
+		this.WrappingStyle = v;
+	};
+	// Возвращается объект класса Asc.asc_CPaddings
+	CAscChartProp.prototype.get_Paddings      = function()
+	{
+		return this.Paddings;
+	};
+	// Аргумент объект класса Asc.asc_CPaddings
+	CAscChartProp.prototype.put_Paddings      = function(v)
+	{
+		this.Paddings = v;
+	};
+	CAscChartProp.prototype.get_AllowOverlap  = function()
+	{
+		return this.AllowOverlap;
+	};
+	CAscChartProp.prototype.put_AllowOverlap  = function(v)
+	{
+		this.AllowOverlap = v;
+	};
+	// Возвращается объект класса CPosition
+	CAscChartProp.prototype.get_Position      = function()
+	{
+		return this.Position;
+	};
+	// Аргумент объект класса CPosition
+	CAscChartProp.prototype.put_Position      = function(v)
+	{
+		this.Position = v;
+	};
+	CAscChartProp.prototype.get_PositionH     = function()
+	{
+		return this.PositionH;
+	};
+	CAscChartProp.prototype.put_PositionH     = function(v)
+	{
+		this.PositionH = v;
+	};
+	CAscChartProp.prototype.get_PositionV     = function()
+	{
+		return this.PositionV;
+	};
+	CAscChartProp.prototype.put_PositionV     = function(v)
+	{
+		this.PositionV = v;
+	};
+	CAscChartProp.prototype.get_Value_X       = function(RelativeFrom)
+	{
+		if (null != this.Internal_Position) return this.Internal_Position.Calculate_X_Value(RelativeFrom);
+		return 0;
+	};
+	CAscChartProp.prototype.get_Value_Y       = function(RelativeFrom)
+	{
+		if (null != this.Internal_Position) return this.Internal_Position.Calculate_Y_Value(RelativeFrom);
+		return 0;
+	};
+
+	CAscChartProp.prototype.get_ImageUrl     = function()
+	{
+		return this.ImageUrl;
+	};
+	CAscChartProp.prototype.put_ImageUrl     = function(v)
+	{
+		this.ImageUrl = v;
+	};
+	CAscChartProp.prototype.get_Group        = function()
+	{
+		return this.Group;
+	};
+	CAscChartProp.prototype.put_Group        = function(v)
+	{
+		this.Group = v;
+	};
+	CAscChartProp.prototype.asc_getFromGroup = function()
+	{
+		return this.fromGroup;
+	};
+	CAscChartProp.prototype.asc_putFromGroup = function(v)
+	{
+		this.fromGroup = v;
+	};
+
+	CAscChartProp.prototype.get_isChartProps = function()
+	{
+		return this.isChartProps;
+	};
+	CAscChartProp.prototype.put_isChartPross = function(v)
+	{
+		this.isChartProps = v;
+	};
+
+	CAscChartProp.prototype.get_SeveralCharts     = function()
+	{
+		return this.severalCharts;
+	};
+	CAscChartProp.prototype.put_SeveralCharts     = function(v)
+	{
+		this.severalCharts = v;
+	};
+	CAscChartProp.prototype.get_SeveralChartTypes = function()
+	{
+		return this.severalChartTypes;
+	};
+	CAscChartProp.prototype.put_SeveralChartTypes = function(v)
+	{
+		this.severalChartTypes = v;
+	};
+
+	CAscChartProp.prototype.get_SeveralChartStyles = function()
+	{
+		return this.severalChartStyles;
+	};
+	CAscChartProp.prototype.put_SeveralChartStyles = function(v)
+	{
+		this.severalChartStyles = v;
+	};
+
+	CAscChartProp.prototype.get_VerticalTextAlign = function()
+	{
+		return this.verticalTextAlign;
+	};
+	CAscChartProp.prototype.put_VerticalTextAlign = function(v)
+	{
+		this.verticalTextAlign = v;
+	};
+
+	CAscChartProp.prototype.get_Locked = function()
+	{
+		return this.Locked;
+	};
+
+	CAscChartProp.prototype.get_ChartProperties = function()
+	{
+		return this.ChartProperties;
+	};
+
+	CAscChartProp.prototype.put_ChartProperties = function(v)
+	{
+		this.ChartProperties = v;
+	};
+
+	CAscChartProp.prototype.get_ShapeProperties = function()
+	{
+		return this.ShapeProperties;
+	};
+
+	CAscChartProp.prototype.put_ShapeProperties = function(v)
+	{
+		this.ShapeProperties = v;
+	};
+
+	CAscChartProp.prototype.asc_getType    = function()
+	{
+		return this.ChartProperties.asc_getType();
+	};
+	CAscChartProp.prototype.asc_getSubType = function()
+	{
+		return this.ChartProperties.asc_getSubType();
+	};
+
+	CAscChartProp.prototype.asc_getStyleId = function()
+	{
+		return this.ChartProperties.asc_getStyleId();
+	};
+
+	CAscChartProp.prototype.asc_getHeight = function()
+	{
+		return this.Height;
+	};
+	CAscChartProp.prototype.asc_getWidth  = function()
+	{
+		return this.Width;
+	};
+
+	CAscChartProp.prototype.asc_setType    = function(v)
+	{
+		this.ChartProperties.asc_setType(v);
+	};
+	CAscChartProp.prototype.asc_setSubType = function(v)
+	{
+		this.ChartProperties.asc_setSubType(v);
+	};
+
+	CAscChartProp.prototype.asc_setStyleId = function(v)
+	{
+		this.ChartProperties.asc_setStyleId(v);
+	};
+
+	CAscChartProp.prototype.asc_setHeight = function(v)
+	{
+		this.Height = v;
+	};
+	CAscChartProp.prototype.asc_setWidth  = function(v)
+	{
+		this.Width = v;
+	};
+
+	CAscChartProp.prototype.asc_setTitle = function(v)
+	{
+		this.title = v;
+	};
+	CAscChartProp.prototype.asc_setDescription  = function(v)
+	{
+		this.description = v;
+	};
+
+	CAscChartProp.prototype.asc_getTitle = function()
+	{
+		return this.title;
+	};
+	CAscChartProp.prototype.asc_getDescription  = function()
+	{
+		return this.description;
+	};
+
+	CAscChartProp.prototype.asc_getPosition  = function()
+	{
+		return this.Position;
+	};
+
+	CAscChartProp.prototype.asc_putPosition  = function(v)
+	{
+		this.Position = v;
+	};
+
+	CAscChartProp.prototype.asc_getName  = function()
+	{
+		return this.name;
+	};
+	CAscChartProp.prototype.asc_putName  = function(v)
+	{
+		this.name = v;
+	};
+
+	CAscChartProp.prototype.getType = function()
+	{
+		return this.ChartProperties && this.ChartProperties.getType();
+	};
+	CAscChartProp.prototype.putType = function(v)
+	{
+		return this.ChartProperties && this.ChartProperties.putType(v);
+	};
+
+	CAscChartProp.prototype.getStyle      = function()
+	{
+		return this.ChartProperties && this.ChartProperties.getStyle();
+	};
+	CAscChartProp.prototype.putStyle      = function(v)
+	{
+		return this.ChartProperties && this.ChartProperties.putStyle(v);
+	};
+	CAscChartProp.prototype.getLockAspect = function()
+	{
+		return this.lockAspect;
+	};
+	CAscChartProp.prototype.putLockAspect = function(v)
+	{
+		return this.lockAspect = v;
+	};
+
+	CAscChartProp.prototype.changeType = function(v)
+	{
+		return this.ChartProperties && this.ChartProperties.changeType(v);
 	};
 
 	/*
@@ -7258,6 +8408,19 @@ function (window, undefined) {
 	prot["setView3d"] = prot.setView3d;
 	prot["getDisplayTrendlinesEquation"] = prot.getDisplayTrendlinesEquation;
 	prot["putDisplayTrendlinesEquation"] = prot.putDisplayTrendlinesEquation;
+	prot["setDisplayAxes"] = prot.setDisplayAxes;
+	prot["setDisplayAxisTitles"] = prot.setDisplayAxisTitles;
+	prot["setDisplayChartTitle"] = prot.setDisplayChartTitle;
+	prot["setDisplayDataLabels"] = prot.setDisplayDataLabels;
+	prot["setDisplayDataTable"] = prot.setDisplayDataTable;
+	prot["setDisplayErrorBars"] = prot.setDisplayErrorBars;
+	prot["setDisplayGridlines"] = prot.setDisplayGridlines;
+	prot["setDisplayLegend"] = prot.setDisplayLegend;
+	prot["setDisplayTrendlines"] = prot.setDisplayTrendlines;
+	prot["setDisplayUpDownBars"] = prot.setDisplayUpDownBars;
+
+	prot["getExternalReference"] = prot.getExternalReference;
+
 
 	window["AscCommon"].asc_CRect = asc_CRect;
 	prot = asc_CRect.prototype;
@@ -7625,15 +8788,55 @@ function (window, undefined) {
 	prot["asc_getFill"]				= prot.asc_getFill;
 	prot["asc_putFill"]				= prot.asc_putFill;
 	prot["asc_getStroke"]			= prot.asc_getStroke;
+	prot["asc_getOpacity"]			= prot.asc_getOpacity;
+	prot["asc_putOpacity"]			= prot.asc_putOpacity;
 	prot["asc_putStroke"]			= prot.asc_putStroke;
-	prot["asc_getCanFill"]			= prot.asc_getCanFill;
-	prot["asc_putCanFill"]			= prot.asc_putCanFill;
-	prot["asc_getCanChangeArrows"]	= prot.asc_getCanChangeArrows;
-	prot["asc_setCanChangeArrows"]	= prot.asc_setCanChangeArrows;
 	prot["asc_getSubject"]			= prot.asc_getSubject;
-	prot["asc_setSubject"]			= prot.asc_setSubject;
-	prot["asc_getCanEditText"]		= prot.asc_getCanEditText;
-	prot["asc_setCanEditText"]		= prot.asc_setCanEditText;
+	prot["asc_putSubject"]			= prot.asc_putSubject;
+	prot["asc_getAnnotProps"]		= prot.asc_getAnnotProps;
+	prot["asc_putAnnotProps"]		= prot.asc_putAnnotProps;
+	
+	window["Asc"]["asc_CFreeTextAnnotProperty"] = window["Asc"].asc_CFreeTextAnnotProperty = asc_CFreeTextAnnotProperty;
+	prot = asc_CFreeTextAnnotProperty.prototype;
+	prot["asc_getBorderWidth"]	= prot.asc_getBorderWidth;
+	prot["asc_putBorderWidth"]	= prot.asc_putBorderWidth;
+	prot["asc_getLineEnd"]		= prot.asc_getLineEnd;
+	prot["asc_putLineEnd"]		= prot.asc_putLineEnd;
+	prot["asc_getBorderStyle"]	= prot.asc_getBorderStyle;
+	prot["asc_putBorderStyle"]	= prot.asc_putBorderStyle;
+	prot["asc_getCanEditText"]	= prot.asc_getCanEditText;
+	prot["asc_putCanEditText"]	= prot.asc_putCanEditText;
+
+	window["Asc"]["asc_CLineAnnotProperty"] = window["Asc"].asc_CLineAnnotProperty = asc_CLineAnnotProperty;
+	prot = asc_CLineAnnotProperty.prototype;
+	prot["asc_getBorderStyle"]	= prot.asc_getBorderStyle;
+	prot["asc_putBorderStyle"]	= prot.asc_putBorderStyle;
+	prot["asc_getBorderWidth"]	= prot.asc_getBorderWidth;
+	prot["asc_putBorderWidth"]	= prot.asc_putBorderWidth;
+	prot["asc_getLineEnd"]		= prot.asc_getLineEnd;
+	prot["asc_putLineEnd"]		= prot.asc_putLineEnd;
+	prot["asc_getLineStart"]	= prot.asc_getLineStart;
+	prot["asc_putLineStart"]	= prot.asc_putLineStart;
+	prot["asc_getCanEditText"]	= prot.asc_getCanEditText;
+	prot["asc_putCanEditText"]	= prot.asc_putCanEditText;
+	
+	window["Asc"]["asc_CPolyLineAnnotProperty"] = window["Asc"].asc_CPolyLineAnnotProperty = asc_CPolyLineAnnotProperty;
+	prot = asc_CPolyLineAnnotProperty.prototype;
+	prot["asc_getBorderStyle"]	= prot.asc_getBorderStyle;
+	prot["asc_putBorderStyle"]	= prot.asc_putBorderStyle;
+	prot["asc_getBorderWidth"]	= prot.asc_getBorderWidth;
+	prot["asc_putBorderWidth"]	= prot.asc_putBorderWidth;
+	prot["asc_getLineEnd"]		= prot.asc_getLineEnd;
+	prot["asc_putLineEnd"]		= prot.asc_putLineEnd;
+	prot["asc_getLineStart"]	= prot.asc_getLineStart;
+	prot["asc_putLineStart"]	= prot.asc_putLineStart;
+	
+	window["Asc"]["asc_CClosedAnnotProperty"] = window["Asc"].asc_CClosedAnnotProperty = asc_CClosedAnnotProperty;
+	prot = asc_CClosedAnnotProperty.prototype;
+	prot["asc_getBorderStyle"]	= prot.asc_getBorderStyle;
+	prot["asc_putBorderStyle"]	= prot.asc_putBorderStyle;
+	prot["asc_getBorderWidth"]	= prot.asc_getBorderWidth;
+	prot["asc_putBorderWidth"]	= prot.asc_putBorderWidth;
 
 	window["Asc"]["asc_CBaseFieldProperty"] = window["Asc"].asc_CBaseFieldProperty = asc_CBaseFieldProperty;
 	prot = asc_CBaseFieldProperty.prototype;
@@ -7659,6 +8862,10 @@ function (window, undefined) {
 	prot["asc_putStrokeStyle"]	= prot.asc_putStrokeStyle;
 	prot["asc_getPropLocked"]	= prot.asc_getPropLocked;
 	prot["asc_putPropLocked"]	= prot.asc_putPropLocked;
+	prot["asc_getTooltip"]		= prot.asc_getTooltip;
+	prot["asc_putTooltip"]		= prot.asc_putTooltip;
+	prot["asc_getDigitsType"]	= prot.asc_getDigitsType;
+	prot["asc_putDigitsType"]	= prot.asc_putDigitsType;
 	prot["get_Locked"]			= prot.get_Locked;
 	prot["put_Locked"]			= prot.put_Locked;
 	prot["asc_getFieldProps"]	= prot.asc_getFieldProps;
@@ -7680,6 +8887,8 @@ function (window, undefined) {
 	prot["asc_putPlaceholder"]			= prot.asc_putPlaceholder;
 	prot["asc_getAutoFit"]				= prot.asc_getAutoFit;
 	prot["asc_putAutoFit"]				= prot.asc_putAutoFit;
+	prot["asc_getPassword"]				= prot.asc_getPassword;
+	prot["asc_putPassword"]				= prot.asc_putPassword;
 	prot["asc_getFormat"]				= prot.asc_getFormat;
 	prot["asc_putFormat"]				= prot.asc_putFormat;
 	prot["asc_getValidate"]				= prot.asc_getValidate;
@@ -7776,7 +8985,7 @@ function (window, undefined) {
 	prot["asc_getCurrencyPrepend"]	= prot.asc_getCurrencyPrepend;
 	prot["asc_putCurrencyPrepend"]	= prot.asc_putCurrencyPrepend;
 
-	
+
 	window["Asc"]["asc_CFieldPercentageFormatProperty"] = window["Asc"].asc_CFieldPercentageFormatProperty = asc_CFieldPercentageFormatProperty;
 	prot = asc_CFieldPercentageFormatProperty.prototype;
 	prot["asc_getType"]				= prot.asc_getType;
@@ -7790,13 +8999,13 @@ function (window, undefined) {
 	prot["asc_getType"]				= prot.asc_getType;
 	prot["asc_getFormat"]			= prot.asc_getFormat;
 	prot["asc_putFormat"]			= prot.asc_putFormat;
-	
+
 	window["Asc"]["asc_CFieldTimeFormatProperty"] = window["Asc"].asc_CFieldTimeFormatProperty = asc_CFieldTimeFormatProperty;
 	prot = asc_CFieldTimeFormatProperty.prototype;
 	prot["asc_getType"]				= prot.asc_getType;
 	prot["asc_getFormat"]			= prot.asc_getFormat;
 	prot["asc_putFormat"]			= prot.asc_putFormat;
-	
+
 	window["Asc"]["asc_CFieldSpecialFormatProperty"] = window["Asc"].asc_CFieldSpecialFormatProperty = asc_CFieldSpecialFormatProperty;
 	prot = asc_CFieldSpecialFormatProperty.prototype;
 	prot["asc_getType"]				= prot.asc_getType;
@@ -7804,13 +9013,13 @@ function (window, undefined) {
 	prot["asc_putFormat"]			= prot.asc_putFormat;
 	prot["asc_getMask"]				= prot.asc_getMask;
 	prot["asc_putMask"]				= prot.asc_putMask;
-	
+
 	window["Asc"]["asc_CFieldRegularFormatProperty"] = window["Asc"].asc_CFieldRegularFormatProperty = asc_CFieldRegularFormatProperty;
 	prot = asc_CFieldRegularFormatProperty.prototype;
 	prot["asc_getType"]				= prot.asc_getType;
 	prot["asc_getRegExp"]			= prot.asc_getRegExp;
 	prot["asc_putRegExp"]			= prot.asc_putRegExp;
-	
+
 	window["Asc"]["asc_CFieldValidateProperty"] = window["Asc"].asc_CFieldValidateProperty = asc_CFieldValidateProperty;
 	prot = asc_CFieldValidateProperty.prototype;
 	prot["asc_getType"]				= prot.asc_getType;
@@ -8000,15 +9209,6 @@ function (window, undefined) {
 	prot["get_transparent"] = prot["asc_getTransparent"] = prot.asc_getTransparent;
 	prot["put_transparent"] = prot["asc_putTransparent"] = prot.asc_putTransparent;
 	prot["asc_CheckForseSet"] = prot["asc_CheckForseSet"] = prot.asc_CheckForseSet;
-
-	window["Asc"]["asc_CFillBlip"] = window["Asc"].asc_CFillBlip = asc_CFillBlip;
-	prot = asc_CFillBlip.prototype;
-	prot["get_type"] = prot["asc_getType"] = prot.asc_getType;
-	prot["put_type"] = prot["asc_putType"] = prot.asc_putType;
-	prot["get_url"] = prot["asc_getUrl"] = prot.asc_getUrl;
-	prot["put_url"] = prot["asc_putUrl"] = prot.asc_putUrl;
-	prot["get_texture_id"] = prot["asc_getTextureId"] = prot.asc_getTextureId;
-	prot["put_texture_id"] = prot["asc_putTextureId"] = prot.asc_putTextureId;
 
 	window["Asc"]["asc_CFillHatch"] = window["Asc"].asc_CFillHatch = asc_CFillHatch;
 	prot = asc_CFillHatch.prototype;
@@ -8217,12 +9417,34 @@ function (window, undefined) {
 	CDocInfoProp.prototype['put_SymbolsCount'] = CDocInfoProp.prototype.put_SymbolsCount;
 	CDocInfoProp.prototype['get_SymbolsWSCount'] = CDocInfoProp.prototype.get_SymbolsWSCount;
 	CDocInfoProp.prototype['put_SymbolsWSCount'] = CDocInfoProp.prototype.put_SymbolsWSCount;
-	
+
 	window["Asc"]["RangePermProp"] = window["Asc"].RangePermProp = RangePermProp;
 	prot = RangePermProp.prototype;
 	prot["get_canEditText"] = prot.get_canEditText;
 	prot["get_canEditPara"] = prot.get_canEditPara;
 	prot["get_canInsObject"] = prot.get_canInsObject;
+
+	window["Asc"]["CAscShortcut"] = window["Asc"].CAscShortcut = CAscShortcut;
+	CAscShortcut.prototype["asc_GetKeyCode"] = CAscShortcut.prototype.asc_GetKeyCode;
+	CAscShortcut.prototype["asc_GetType"] = CAscShortcut.prototype.asc_GetType;
+	CAscShortcut.prototype["asc_IsCtrl"] = CAscShortcut.prototype.asc_IsCtrl;
+	CAscShortcut.prototype["asc_IsShift"] = CAscShortcut.prototype.asc_IsShift;
+	CAscShortcut.prototype["asc_IsAlt"] = CAscShortcut.prototype.asc_IsAlt;
+	CAscShortcut.prototype["asc_IsCommand"] = CAscShortcut.prototype.asc_IsCommand;
+	CAscShortcut.prototype["asc_IsLocked"] = CAscShortcut.prototype.asc_IsLocked;
+	CAscShortcut.prototype["asc_IsHidden"] = CAscShortcut.prototype.asc_IsHidden;
+	CAscShortcut.prototype["asc_SetIsHidden"] = CAscShortcut.prototype.asc_SetIsHidden;
+	CAscShortcut.prototype["asc_SetKeyCode"] = CAscShortcut.prototype.asc_SetKeyCode;
+	CAscShortcut.prototype["asc_SetIsCtrl"] = CAscShortcut.prototype.asc_SetIsCtrl;
+	CAscShortcut.prototype["asc_SetIsShift"] = CAscShortcut.prototype.asc_SetIsShift;
+	CAscShortcut.prototype["asc_SetIsAlt"] = CAscShortcut.prototype.asc_SetIsAlt;
+	CAscShortcut.prototype["asc_SetIsCommand"] = CAscShortcut.prototype.asc_SetIsCommand;
+	CAscShortcut.prototype["asc_SetIsLocked"] = CAscShortcut.prototype.asc_SetIsLocked;
+	CAscShortcut.prototype["asc_SetType"] = CAscShortcut.prototype.asc_SetType;
+	CAscShortcut.prototype["asc_ToJson"] = CAscShortcut.prototype.asc_ToJson;
+	CAscShortcut.prototype["asc_FromJson"] = CAscShortcut.prototype.asc_FromJson;
+	CAscShortcut.prototype["asc_GetShortcutIndex"] = CAscShortcut.prototype.asc_GetShortcutIndex;
+
 
 	window["Asc"]["CButtonData"] = window["Asc"].CButtonData = CButtonData;
 	prot = CButtonData.prototype;
@@ -8303,5 +9525,90 @@ function (window, undefined) {
 
 		return false;
 	};
+	
+
+	window["Asc"]["asc_CFormatCellsInfo"] = window["Asc"].asc_CFormatCellsInfo = asc_CFormatCellsInfo;
+	prot = asc_CFormatCellsInfo.prototype;
+	prot["asc_setType"] = prot.asc_setType;
+	prot["asc_setDecimalPlaces"] = prot.asc_setDecimalPlaces;
+	prot["asc_setSeparator"] = prot.asc_setSeparator;
+	prot["asc_setSymbol"] = prot.asc_setSymbol;
+	prot["asc_setCurrencySymbol"] = prot.asc_setCurrencySymbol;
+	prot["asc_getType"] = prot.asc_getType;
+	prot["asc_getDecimalPlaces"] = prot.asc_getDecimalPlaces;
+	prot["asc_getSeparator"] = prot.asc_getSeparator;
+	prot["asc_getSymbol"] = prot.asc_getSymbol;
+	prot["asc_getCurrencySymbol"] = prot.asc_getCurrencySymbol;
+
+	window['Asc']['CAscChartProp'] = window['Asc'].CAscChartProp = CAscChartProp;
+	prot = CAscChartProp.prototype;
+
+	prot['get_ChangeLevel']        = prot.get_ChangeLevel;
+	prot['put_ChangeLevel']        = prot.put_ChangeLevel;
+	prot['get_CanBeFlow']          = prot.get_CanBeFlow;
+	prot['get_Width']              = prot.get_Width;
+	prot['put_Width']              = prot.put_Width;
+	prot['get_Height']             = prot.get_Height;
+	prot['put_Height']             = prot.put_Height;
+	prot['get_WrappingStyle']      = prot.get_WrappingStyle;
+	prot['put_WrappingStyle']      = prot.put_WrappingStyle;
+	prot['get_Paddings']           = prot.get_Paddings;
+	prot['put_Paddings']           = prot.put_Paddings;
+	prot['get_AllowOverlap']       = prot.get_AllowOverlap;
+	prot['put_AllowOverlap']       = prot.put_AllowOverlap;
+	prot['get_Position']           = prot.get_Position;
+	prot['put_Position']           = prot.put_Position;
+	prot['get_PositionH']          = prot.get_PositionH;
+	prot['put_PositionH']          = prot.put_PositionH;
+	prot['get_PositionV']          = prot.get_PositionV;
+	prot['put_PositionV']          = prot.put_PositionV;
+	prot['get_Value_X']            = prot.get_Value_X;
+	prot['get_Value_Y']            = prot.get_Value_Y;
+	prot['get_ImageUrl']           = prot.get_ImageUrl;
+	prot['put_ImageUrl']           = prot.put_ImageUrl;
+	prot['get_Group']              = prot.get_Group;
+	prot['put_Group']              = prot.put_Group;
+	prot['asc_getFromGroup']       = prot.asc_getFromGroup;
+	prot['asc_putFromGroup']       = prot.asc_putFromGroup;
+	prot['get_isChartProps']       = prot.get_isChartProps;
+	prot['put_isChartPross']       = prot.put_isChartPross;
+	prot['get_SeveralCharts']      = prot.get_SeveralCharts;
+	prot['put_SeveralCharts']      = prot.put_SeveralCharts;
+	prot['get_SeveralChartTypes']  = prot.get_SeveralChartTypes;
+	prot['put_SeveralChartTypes']  = prot.put_SeveralChartTypes;
+	prot['get_SeveralChartStyles'] = prot.get_SeveralChartStyles;
+	prot['put_SeveralChartStyles'] = prot.put_SeveralChartStyles;
+	prot['get_VerticalTextAlign']  = prot.get_VerticalTextAlign;
+	prot['put_VerticalTextAlign']  = prot.put_VerticalTextAlign;
+	prot['get_Locked']             = prot.get_Locked;
+	prot['get_ChartProperties']    = prot.get_ChartProperties;
+	prot['put_ChartProperties']    = prot.put_ChartProperties;
+	prot['get_ShapeProperties']    = prot.get_ShapeProperties;
+	prot['put_ShapeProperties']    = prot.put_ShapeProperties;
+	prot['asc_getType']            = prot.asc_getType;
+	prot['asc_getSubType']         = prot.asc_getSubType;
+	prot['asc_getStyleId']         = prot.asc_getStyleId;
+	prot['asc_getHeight']          = prot.asc_getHeight;
+	prot['asc_getWidth']           = prot.asc_getWidth;
+	prot['asc_setType']            = prot.asc_setType;
+	prot['asc_setSubType']         = prot.asc_setSubType;
+	prot['asc_setStyleId']         = prot.asc_setStyleId;
+	prot['asc_setHeight']          = prot.asc_setHeight;
+	prot['asc_setWidth']           = prot.asc_setWidth;
+	prot['asc_putTitle']           = prot['put_Title']           = prot['asc_setTitle']           = prot.asc_setTitle;
+	prot['asc_putDescription']     = prot['put_Description']     = prot['asc_setDescription']     = prot.asc_setDescription;
+	prot['asc_getTitle']           = prot.asc_getTitle;
+	prot['asc_getDescription']     = prot.asc_getDescription;
+	prot['asc_getPosition']		   = prot.asc_getPosition;
+	prot['asc_putPosition']		   = prot.asc_putPosition;
+	prot['asc_getName']     	   = prot.asc_getName;
+	prot['asc_putName']     	   = prot.asc_putName;
+	prot['getType']                = prot.getType;
+	prot['putType']                = prot.putType;
+	prot['getStyle']               = prot.getStyle;
+	prot['putStyle']               = prot.putStyle;
+	prot['putLockAspect']          = prot['asc_putLockAspect'] = prot.putLockAspect;
+	prot['getLockAspect']		   = prot['asc_getLockAspect'] = prot.getLockAspect;
+	prot['changeType']             = prot.changeType;
 	
 })(window);

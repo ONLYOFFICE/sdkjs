@@ -214,7 +214,16 @@ function (window, undefined) {
 				}
 			}
 
-			let _cCellFunctionLocal = window["AscCommon"].cCellFunctionLocal;
+			let api = window["Asc"]["editor"];
+			let printOptionsJson = api && api.wb && api.wb.getPrintOptionsJson && api.wb.getPrintOptionsJson();
+			let spreadsheetLayout = printOptionsJson && printOptionsJson["spreadsheetLayout"];
+			let _cCellFunctionLocal;
+			if (spreadsheetLayout && spreadsheetLayout["formulaProps"] && spreadsheetLayout["formulaProps"]["cellFunctionTypeTranslate"]) {
+				_cCellFunctionLocal = spreadsheetLayout["formulaProps"]["cellFunctionTypeTranslate"];
+			} else {
+				_cCellFunctionLocal = window["AscCommon"].cCellFunctionLocal;
+			}
+
 			let res, numFormat;
 			switch (str) {
 				case "col":
@@ -243,9 +252,6 @@ function (window, undefined) {
 				case "filename":
 				case _cCellFunctionLocal["filename"]: {
 					//TODO без пути
-					let api = window["Asc"]["editor"];
-					let printOptionsJson = api && api.wb && api.wb.getPrintOptionsJson && api.wb.getPrintOptionsJson();
-					let spreadsheetLayout = printOptionsJson && printOptionsJson["spreadsheetLayout"];
 					let fileName;
 					if (spreadsheetLayout && spreadsheetLayout["formulaProps"] && spreadsheetLayout["formulaProps"]["docTitle"]) {
 						fileName = spreadsheetLayout["formulaProps"]["docTitle"];

@@ -211,7 +211,7 @@
         for (var i = 0; i < _blocks.length; i++)
         {
             _obj = _blocks[i].GetContentControlPr();
-            _ret.push({"Tag" : _obj.Tag, "Id" : _obj.Id, "Lock" : _obj.Lock, "InternalId" : _obj.InternalId});
+            _ret.push(_obj.GetEventObject());
         }
         return _ret;
     };
@@ -274,26 +274,7 @@
 			prop.CC.SelectContentControl();
 		}
 
-		var result =
-		{
-			"Tag"        : prop.Tag,
-			"Id"         : prop.Id,
-			"Lock"       : prop.Lock,
-			"Alias"      : prop.Alias,
-			"InternalId" : prop.InternalId,
-			"Appearance" : prop.Appearance,
-		};
-		
-		if (prop.Color)
-		{
-			result["Color"] =
-			{
-				"R" : prop.Color.r,
-				"G" : prop.Color.g,
-				"B" : prop.Color.b
-			}
-		}
-
+		var result = prop.GetEventObject();
 		if (contentFormat)
 		{
 			var copy_data = {
@@ -1379,6 +1360,37 @@
 		}
 		return direction;
 	}
+
+	/**
+	 * Insert streamed content.
+	 * @undocumented
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias InsertStreamedContent
+	 * @returns {undefined}
+	 * @since 9.2.0
+	 */
+	Api.prototype["pluginMethod_InsertStreamedContent"] = function(streamObj)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return null;
+
+		if (streamObj["word"] && streamObj["word"]["removeSelection"])
+			logicDocument.RemoveSelection();
+
+		if (streamObj["undo"])
+			this["pluginMethod_EndAction"]("GroupActions", "", "cancel");
+
+		if (streamObj["stable"] !== "")
+			this["pluginMethod_PasteHtml"](streamObj["stable"]);
+
+		if (streamObj["tail"] !== "")
+		{
+			this["pluginMethod_StartAction"]("GroupActions");
+			this["pluginMethod_PasteHtml"](streamObj["tail"]);
+		}
+	};
 
 	window["AscCommon"] = window["AscCommon"] || {};
 	window["AscCommon"].readContentControlCommonPr = readContentControlCommonPr;

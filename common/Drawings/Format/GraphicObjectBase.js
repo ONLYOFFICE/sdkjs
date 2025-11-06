@@ -763,6 +763,23 @@
 			oWriter.EndRecord();
 		}
 	};
+	CGraphicObjectBase.prototype.ReadRedactIds = function (oReader) {
+		oReader.GetULong();//length
+
+		let nRedacts = oReader.GetULong();
+        for (let i = 0; i < nRedacts; i++) {
+            let sId = oReader.GetString2();
+
+            if (Asc.editor.isPdfEditor()) {
+                this.AddRedactId(sId);
+            }
+        }
+	};
+	CGraphicObjectBase.prototype.WriteRedactIds = function(oWriter) {
+        oWriter.StartRecord(0xFF);
+        oWriter.WriteULong(0);
+        oWriter.EndRecord();
+	};
 	CGraphicObjectBase.prototype.setMacro = function (sMacroName) {
 		AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_ShapeSetMacro, this.macro, sMacroName));
 		this.macro = sMacroName;
@@ -1171,7 +1188,7 @@
 				if (geometry) {
 					oSpPr.setGeometry(geometry.createDuplicate());
 				}
-				if (this.getObjectType() === AscDFH.historyitem_type_Shape
+				if ((this.getObjectType() === AscDFH.historyitem_type_Shape || this.getObjectType() === AscDFH.historyitem_type_Control)
 					&& (!this.brush || !this.brush.isVisible())) {
 					if (this.pen && this.pen.isVisible()) {
 						oSpPr.Fill = AscFormat.CreateNoFillUniFill();
@@ -1301,7 +1318,8 @@
 
 	CGraphicObjectBase.prototype.drawShdw = function (graphics) {
 		var outerShdw = this.getOuterShdw && this.getOuterShdw();
-		if (this.shdwSp && outerShdw && !graphics.isBoundsChecker()) {
+		const needToDrawShadow = AscCommon.IsShapeToImageConverter || !graphics.isBoundsChecker();
+		if (this.shdwSp && outerShdw && needToDrawShadow) {
 			this.shdwSp.transform = this.shdwSp.getShdwTransform(outerShdw, this);
 			this.shdwSp.recalculateBounds();
 			this.shdwSp.draw(graphics);
@@ -1647,6 +1665,8 @@
 	};
 	CGraphicObjectBase.prototype.recalcContent2 = function () {
 	};
+	CGraphicObjectBase.prototype.applySpecialPasteProps = function () {};
+	CGraphicObjectBase.prototype.getSpecialPasteProps = function () {};
 
 	CGraphicObjectBase.prototype.checkDrawingBaseCoords = function () {
 		if (this.drawingBase && this.spPr && this.spPr.xfrm && !this.group) {
@@ -2965,7 +2985,7 @@
 	CGraphicObjectBase.prototype.canAddButtonPlaceholder = function () {
 		return false;
 	};
-	CGraphicObjectBase.prototype.Get_AbsolutePage = function (nCurPage) {
+	CGraphicObjectBase.prototype.GetAbsolutePage = function (nCurPage) {
 		return nCurPage || 0;
 	};
 	CGraphicObjectBase.prototype.createPlaceholderControl = function (aControls) {
@@ -3084,7 +3104,7 @@
 		} else if (this.worksheet) {
 			nPageNum = this.worksheet.workbook && this.worksheet.workbook.nActive;
 		} else {
-			nPageNum = this.Get_AbsolutePage() || 0;
+			nPageNum = this.GetAbsolutePage() || 0;
 		}
 		if (aButtons.length > 0) {
 			aControls.push(AscCommon.CreateDrawingPlaceholder(this.Id, aButtons, nPageNum, oRect, this.transform, isDisabled));
@@ -3221,9 +3241,9 @@
 		}
 		return { slide: null, layout: null, master: null, theme: null};
 	};
-	CGraphicObjectBase.prototype.Get_StartPage_Absolute = function () {
-		if (AscFormat.CShape.prototype.Get_StartPage_Absolute) {
-			return AscFormat.CShape.prototype.Get_StartPage_Absolute.call(this);
+	CGraphicObjectBase.prototype.GetAbsoluteStartPage = function () {
+		if (AscFormat.CShape.prototype.GetAbsoluteStartPage) {
+			return AscFormat.CShape.prototype.GetAbsoluteStartPage.call(this);
 		}
 	};
 	CGraphicObjectBase.prototype.Get_Theme = function () {
@@ -3990,6 +4010,9 @@
 	CGraphicObjectBase.prototype.getDocContent = function () {
 		return null;
 	};
+	CGraphicObjectBase.prototype.isControl = function() {
+		return false;
+	}
 	var ANIM_LABEL_WIDTH_PIX = 22;
 	var ANIM_LABEL_HEIGHT_PIX = 17;
 

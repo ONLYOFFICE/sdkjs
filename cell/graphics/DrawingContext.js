@@ -507,7 +507,7 @@
 	 */
 	DrawingContext.prototype.setCanvas = function (canvas) {
 		this.canvas = canvas || null;
-		this.ctx = window["IS_NATIVE_EDITOR"] ? new NativeContext() : (this.canvas && this.canvas.getContext("2d"));
+		this.ctx = window["IS_NATIVE_EDITOR"] ? new NativeContext() : (this.canvas && AscCommon.AscBrowser.getContext2D(this.canvas));
 	};
 
 	/**

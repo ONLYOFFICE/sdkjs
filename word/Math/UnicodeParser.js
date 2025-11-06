@@ -56,12 +56,28 @@
 		this.bracketStack		= [];
 		this.barStack			= [];
 		this.nBarCount			= 0;
+
+		this.nLevel				= 0;
 	}
+	CUnicodeParser.prototype.IncreseLevel = function()
+	{
+		this.nLevel++;
+	};
+	CUnicodeParser.prototype.DecreaseLevel = function()
+	{
+		this.nLevel--;
+	};
+	CUnicodeParser.prototype.GetCurrentLevel = function()
+	{
+		return this.nLevel;
+	};
 	CUnicodeParser.prototype.GetSpaceExitFunction = function (oFunc, oArg)
 	{
+		this.IncreseLevel();
 		this.isSpaceExit = true;
 		let oContent = oFunc.call(this, oArg);
 		this.isSpaceExit = false;
+		this.DecreaseLevel();
 
 		return oContent;
 	}
@@ -758,13 +774,29 @@
 			|| this.oLookahead.data === "\\left"
 			|| this.oLookahead.data === "\\open") && !this.oLookahead.isClose;
 	};
-	CUnicodeParser.prototype.GetTypeOfLastLRInStack = function ()
+	CUnicodeParser.prototype.GetLastLRBrackInStack = function ()
 	{
 		if (this.bracketStack.length > 0)
 			return this.bracketStack[this.bracketStack.length - 1];
 
 		return false;
-	}
+	};
+	CUnicodeParser.prototype.GetTypeOfLastLRInStack = function ()
+	{
+		let oLast = this.GetLastLRBrackInStack();
+		if (oLast)
+			return oLast[0];
+
+		return false;
+	};
+	CUnicodeParser.prototype.GetLevelOfLastLRInStack = function ()
+	{
+		let oLast = this.GetLastLRBrackInStack();
+		if (oLast)
+			return oLast[1];
+
+		return false;
+	};
 	CUnicodeParser.prototype.GetExpBracketLiteral = function ()
 	{
 		let strOpen,
@@ -778,6 +810,7 @@
 		if (this.oLookahead.data === "|" || this.oLookahead.data === "‖")
 		{
 			let oLastType = this.GetTypeOfLastLRInStack();
+			let nLastLevel = this.GetLevelOfLastLRInStack();
 
 			if (this.nBarCount % 2 === 0)
 			{
@@ -791,11 +824,11 @@
 					&& oNextLookahead.class !== undefined
 					)
 				{
-					this.bracketStack.push(LRBracketType.open);
+					this.bracketStack.push([LRBracketType.open, this.GetCurrentLevel()]);
 					this.barStack.push(this.nBarCount);
 					this.nBarCount++;
 				}
-				else
+				else if ((nLastLevel - this.GetCurrentLevel()) === 0)
 				{
 					this.bracketStack.pop();
 					this.oLookahead.isClose = true;
@@ -818,7 +851,7 @@
 				}
 				else
 				{
-					this.bracketStack.push(LRBracketType.open);
+					this.bracketStack.push([LRBracketType.open, this.GetCurrentLevel()]);
 					this.barStack.push(this.nBarCount);
 					this.nBarCount++;
 				}
@@ -826,14 +859,14 @@
 		}
 		else if (this.oLookahead.class === Literals.lBrackets.id)
 		{
-			this.bracketStack.push(LRBracketType.open);
+			this.bracketStack.push([LRBracketType.open, this.GetCurrentLevel()]);
 			this.barStack.push(this.nBarCount);
 			this.nBarCount = 0;
 		}
 		else if (this.oLookahead.class === Literals.rBrackets.id)
 		{
 			let oLastType = this.GetTypeOfLastLRInStack();
-
+			//let nLastLevel = this.GetCurrentLevel(); For normal brackets, don't use for now
 
 			if (oLastType === LRBracketType.open)
 			{
@@ -1598,7 +1631,7 @@
 			oNumerator = this.GetOperandLiteral();
 		}
 
-		if (this.oLookahead.class === Literals.divide.id && this.oLookahead.style.metaData.isEscapedSlash !== true)
+		if (this.oLookahead.class === Literals.divide.id && (!this.oLookahead.style || this.oLookahead.style.metaData.isEscapedSlash !== true))
 		{
 			let oFracStyle				= this.oLookahead.style,
 				strOpOver				= this.EatToken(Literals.divide.id).data,
@@ -1644,7 +1677,7 @@
 		}
 		else
 		{
-			if (this.oLookahead.class !== undefined && this.oLookahead.style.metaData.isEscapedSlash)
+			if (this.oLookahead.class !== undefined && (!this.oLookahead.style || this.oLookahead.style.metaData.isEscapedSlash))
 			{
 				let oEscSlash = this.EatToken();
 				return [

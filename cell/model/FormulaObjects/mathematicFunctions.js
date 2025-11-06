@@ -2574,7 +2574,7 @@ function (window, undefined) {
 	cMDETERM.prototype.Calculate = function (arg) {
 
 		function determ(A) {
-			var N = A.length, denom = 1, exchanges = 0, i, j;
+			let N = A.length, denom = 1, exchanges = 0, i, j;
 
 			for (i = 0; i < N; i++) {
 				for (j = 0; j < A[i].length; j++) {
@@ -2585,16 +2585,16 @@ function (window, undefined) {
 			}
 
 			for (i = 0; i < N - 1; i++) {
-				var maxN = i, maxValue = Math.abs(A[i][i] instanceof cEmpty ? NaN : A[i][i]);
+				let maxN = i, maxValue = Math.abs(A[i][i] instanceof cEmpty ? NaN : A[i][i]);
 				for (j = i + 1; j < N; j++) {
-					var value = Math.abs(A[j][i] instanceof cEmpty ? NaN : A[j][i]);
+					let value = Math.abs(A[j][i] instanceof cEmpty ? NaN : A[j][i]);
 					if (value > maxValue) {
 						maxN = j;
 						maxValue = value;
 					}
 				}
 				if (maxN > i) {
-					var temp = A[i];
+					let temp = A[i];
 					A[i] = A[maxN];
 					A[maxN] = temp;
 					exchanges++;
@@ -2603,11 +2603,11 @@ function (window, undefined) {
 						return maxValue;
 					}
 				}
-				var value1 = A[i][i] instanceof cEmpty ? NaN : A[i][i];
+				let value1 = A[i][i] instanceof cEmpty ? NaN : A[i][i];
 				for (j = i + 1; j < N; j++) {
-					var value2 = A[j][i] instanceof cEmpty ? NaN : A[j][i];
+					let value2 = A[j][i] instanceof cEmpty ? NaN : A[j][i];
 					A[j][i] = 0;
-					for (var k = i + 1; k < N; k++) {
+					for (let k = i + 1; k < N; k++) {
 						A[j][k] = (A[j][k] * value1 - A[i][k] * value2) / denom;
 					}
 				}
@@ -2621,9 +2621,13 @@ function (window, undefined) {
 			}
 		}
 
-		var arg0 = arg[0];
-		if (arg0 instanceof cArea || arg0 instanceof cArray) {
-			arg0 = arg0.getMatrix();
+		let arg0 = arg[0];
+		if (cElementType.array === arg0.type || cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+			if (cElementType.array === arg0.type) {
+				arg0 = arg0.getMatrixCopy();
+			} else {
+				arg0 = cElementType.cellsRange3D === arg0.type ? arg0.getMatrix()[0] : arg0.getMatrix();
+			}
 		} else {
 			return new cError(cErrorType.not_available);
 		}

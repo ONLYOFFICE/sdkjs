@@ -199,26 +199,9 @@
 	var nMaxRequestLength = 5242880;//5mb <requestLimits maxAllowedContentLength="30000000" /> default 30mb
 
 	function decimalNumberConversion(number, base) {
-		if (typeof number !== 'number') {
-			return;
-		}
-		var result = [];
-		if (number === 0)
-		{
-			return [0];
-		}
-		while (number > 0) {
-			var remainder = number % base;
-			if (remainder === 0) {
-				result.unshift(0);
-
-			} else {
-				result.unshift(remainder);
-				number = number - remainder;
-			}
-			number /= base;
-		}
-		return result;
+		return number.toString(base).split("").map(function (digit) {
+			return parseInt(digit, base);
+		});
 	}
 
 	function getSockJs()
@@ -1119,6 +1102,9 @@
 			case c_oAscServerError.ChangeDocInfo :
 				nRes = Asc.c_oAscError.ID.AccessDeny;
 				break;
+			case c_oAscServerError.ForcedViewMode :
+				nRes = Asc.c_oAscError.ID.ForcedViewMode;
+				break;
 			case c_oAscServerError.Storage :
 			case c_oAscServerError.StorageFileNoFound :
 			case c_oAscServerError.StorageRead :
@@ -1311,13 +1297,9 @@
 
 	var UTF8Decoder = typeof TextDecoder !== "undefined" ? new TextDecoder("utf8") : undefined;
 	function UTF8ArrayToString(u8Array, idx, maxBytesToRead) {
-		var endIdx = idx + maxBytesToRead;
-		var endPtr = idx;
-		while (u8Array[endPtr] && !(endPtr >= endIdx)) {
-			++endPtr;
-		}
-		if (endPtr - idx > 16 && u8Array.subarray && UTF8Decoder) {
-			return UTF8Decoder.decode(u8Array.subarray(idx, endPtr));
+		var endPtr = idx + maxBytesToRead;
+		if (endPtr - idx > 16 && UTF8Decoder) {
+			return UTF8Decoder.decode(new Uint8Array(u8Array.buffer, u8Array.byteOffset + idx, endPtr - idx));
 		} else {
 			var str = "";
 			while (idx < endPtr) {
@@ -1720,7 +1702,9 @@
 		VKeyKeyExpire:       -122,
 		VKeyUserCountExceed: -123,
 
-		Password: -180
+		Password: -180,
+
+		ForcedViewMode: -200
 	};
 
 	//todo get from server config
@@ -2718,31 +2702,14 @@
 					if (AscCommon.AscBrowser.isSafari)
 						return true;
 					
-					if (event.dataTransfer.items)
-					{
-						for (var j = 0, length2 = event.dataTransfer.items.length; j < length2; j++)
-						{
-							var item = event.dataTransfer.items[j];
-							if (item.type && item.kind && "file" == item.kind.toLowerCase())
-							{
-								bRes = false;
-								for (var k = 0,
-										 length3 = c_oAscImageUploadProp.SupportedFormats.length; k < length3; k++)
-								{
-									if (-1 != item.type.indexOf(c_oAscImageUploadProp.SupportedFormats[k]))
-									{
-										bRes = true;
-										break;
-									}
-								}
-								if (false == bRes)
-									break;
-							}
-						}
-					}
-					else
-						bRes = true;
-					break;
+  					if (event.dataTransfer.items)
+  					{
+ 						// Allow drop if at least one item looks like an image file (strictly validated on drop)
+ 						bRes = Array.prototype.some.call(event.dataTransfer.items, isValidImageDragItem);
+ 					}
+ 					else
+ 						bRes = true;
+ 					break;
 				}
 				else if (type == "text" || type == "text/plain" || type == "text/html")
 				{
@@ -2752,6 +2719,25 @@
 			}
 		}
 		return bRes;
+	}
+
+	/**
+	 * Validate drag item as an image file in dragover phase.
+	 * Prefer MIME check (image/*) when available; allow empty type and validate on drop.
+	 * @param {DataTransferItem} item Drag item to validate
+	 * @returns {boolean} True if item can be treated as an image candidate during dragover
+	 */
+	function isValidImageDragItem(item) {
+		if (!item || !item.kind || item.kind.toLowerCase() !== "file") {
+			return false;
+		}
+		const mime = item.type ? item.type.toLowerCase().trim() : "";
+		if (mime) {
+			// If browser provides MIME, accept only images
+			return mime.indexOf("image/") === 0;
+		}
+		// No MIME available (common in some environments): allow and validate strictly on drop
+		return true;
 	}
 
 	function GetUploadIFrame()
@@ -3792,6 +3778,15 @@
 		}
 		return false;
 	};
+	parserHelper.prototype.isDefName = function(formula, start_pos) {
+		var _isArea = this.isArea(formula, start_pos);
+		var _isRef = !_isArea && this.isRef(formula, start_pos);
+		var _isName = !_isRef && !_isArea && this.isName(formula, start_pos);
+		if (_isName) {
+			return {defname: this.operand_str};
+		}
+		return false;
+	};
 	parserHelper.prototype.isName3D = function (formula, start_pos)
 	{
 		if (this instanceof parserHelper)
@@ -3800,12 +3795,17 @@
 		}
 
 		var _is3DRef = this.is3DRef(formula, start_pos);
-		if(_is3DRef && _is3DRef[0] && _is3DRef[1] && _is3DRef[1].length)
+		if(_is3DRef && _is3DRef[0])
 		{
-			var _startPos = this.pCurrPos;
-			var _isArea = this.isArea(formula, _startPos);
-			var _isRef = !_isArea && this.isRef(formula, _startPos);
-			return !_isRef && !_isArea && this.isName(formula, _startPos);
+			let _isName = false;
+			if (_is3DRef[1] && _is3DRef[1].length) {
+				_isName = this.isDefName(formula, this.pCurrPos);
+			} else {
+				_isName = _is3DRef[4];
+			}
+			if (_isName) {
+				return {defName: _isName.defname, sheet: _is3DRef[1], external: _is3DRef[3]};
+			}
 		}
 
 		return false;
@@ -4018,7 +4018,7 @@
 			if (this.isArea(formula, indexStartRange) || this.isRef(formula, indexStartRange))
 			{
 				if (this.operand_str.length == formula.substring(indexStartRange).length)
-					return {sheet: sheetName, sheet2: is3DRefResult[2], range: this.operand_str};
+					return {sheet: sheetName, sheet2: is3DRefResult[2], range: this.operand_str, external: is3DRefResult[3]};
 				else
 					return null;
 			}
@@ -4531,6 +4531,7 @@
 		this.m_nOFormEditCounter = 0;
 		
 		this.m_nPdfNewFormCounter = 0;
+		this.m_nPdfRedactCounter = 0;
 
 		this.m_nTurnOffCounter = 0;
 	}
@@ -4574,6 +4575,7 @@
 		this.m_nOFormEditCounter = 0;
 
 		this.m_nPdfNewFormCounter = 0;
+		this.m_nPdfRedactCounter = 0;
 	};
 	CIdCounter.prototype.GetNewIdForOForm = function()
 	{
@@ -4585,6 +4587,13 @@
 	CIdCounter.prototype.GetNewIdForPdfForm = function()
 	{
 		return ++this.m_nPdfNewFormCounter;
+	};
+	CIdCounter.prototype.GetNewIdForPdfRedact = function()
+	{
+		if (true === this.m_bLoad || null === this.m_sUserId)
+			return ("_redact_" + (++this.m_nPdfRedactCounter));
+		else
+			return ("" + this.m_sUserId + "_redact_" + (++this.m_nPdfRedactCounter));
 	};
 
 	function CLock()
@@ -10894,7 +10903,7 @@
 		{
 			AscCommon.History.TurnOff && AscCommon.History.TurnOff();
 
-			if (AscCommon.g_oTableId && !AscCommon.g_oTableId.IsOn())
+			if (AscCommon.g_oTableId && AscCommon.g_oTableId.IsOn())
 			{
 				AscCommon.g_oTableId.TurnOff();
 				isTableId = true;
@@ -11106,6 +11115,13 @@
 			return new CColor(0, 0, 0, 255);
 
 		return true === isDark ? res.Dark : res.Light;
+	}
+	function setUserColorById(userId, light, dark)
+	{
+		g_oUserColorById[userId] = {
+			Light : new CColor(light.r, light.g, light.b, 255),
+			Dark : new CColor(dark.r, dark.g, dark.b, 255),
+		};
 	}
 	function getUserColorById(userId, userName, isDark, isNumericValue)
 	{
@@ -12182,32 +12198,34 @@
 		this.CustomCounter = 0;
 		this.CustomActions = {};
 	}
-	CShortcuts.prototype.Add = function(nType, nCode, isCtrl, isShift, isAlt)
-	{
-		this.List[this.private_GetIndex(nCode, isCtrl, isShift, isAlt)] = nType;
+	CShortcuts.GetShortcutIndex = function(nCode, isCtrl, isShift, isAlt, isCommand) {
+		return ((nCode << 16) | (isCtrl ? 8 : 0) | (isShift ? 4 : 0) | (isAlt ? 2 : 0) | (isCommand ? 1 : 0));
 	};
-	CShortcuts.prototype.Get = function(nCode, isCtrl, isShift, isAlt)
+	CShortcuts.prototype.Add = function(nType, nCode, isCtrl, isShift, isAlt, isCommand)
 	{
-		var nType = this.List[this.private_GetIndex(nCode, isCtrl, isShift, isAlt)];
+		this.List[CShortcuts.GetShortcutIndex(nCode, isCtrl, isShift, isAlt, isCommand)] = nType;
+	};
+	CShortcuts.prototype.Get = function(nCode, isCtrl, isShift, isAlt, isCommand)
+	{
+		var nType = this.List[CShortcuts.GetShortcutIndex(nCode, isCtrl, isShift, isAlt, isCommand)];
 		return (undefined !== nType ? nType : 0);
 	};
-	CShortcuts.prototype.private_GetIndex = function(nCode, isCtrl, isShift, isAlt)
-	{
-		return ((nCode << 8) | (isCtrl ? 4 : 0) | (isShift ? 2 : 0) | (isAlt ? 1 : 0));
-	}
+	CShortcuts.prototype.GetShortcutObject = function(nIndex) {
+		return {KeyCode : nIndex >>> 16, CtrlKey : !!(nIndex & 8), ShiftKey : !!(nIndex & 4), AltKey : !!(nIndex & 2), MacCmdKey : !!(nIndex & 1)};
+	};
 	CShortcuts.prototype.CheckType = function(nType)
 	{
 		for (var nIndex in this.List)
 		{
 			if (this.List[nIndex] === nType)
-				return {KeyCode : nIndex >>> 8, CtrlKey : !!(nIndex & 4), ShiftKey : !!(nIndex & 2), AltKey : !!(nIndex & 1)};
+				return this.GetShortcutObject(nIndex);
 		}
 
 		return null;
 	};
-	CShortcuts.prototype.Remove = function(nCode, isCtrl, isShift, isAlt)
+	CShortcuts.prototype.Remove = function(nCode, isCtrl, isShift, isAlt, isCommand)
 	{
-		delete this.List[this.private_GetIndex(nCode, isCtrl, isShift, isAlt)];
+		delete this.List[CShortcuts.GetShortcutIndex(nCode, isCtrl, isShift, isAlt, isCommand)];
 	};
 	CShortcuts.prototype.RemoveByType = function(nType)
 	{
@@ -12235,6 +12253,33 @@
 		this.CustomActions[nType] = new CCustomShortcutActionSymbol(nCharCode, sFont);
 		return nType;
 	};
+	CShortcuts.prototype.Reset = function()
+	{
+		this.List = {};
+	};
+	CShortcuts.prototype.ApplyFromStorage = function(oAscShortcut)
+	{
+		const arrKeyCodes = [oAscShortcut.keyCode];
+		const arrAddKeyCodes = Asc.c_oAscKeyCodeAnalogues[oAscShortcut.keyCode];
+		if (arrAddKeyCodes)
+		{
+			arrKeyCodes.push.apply(arrKeyCodes, arrAddKeyCodes);
+		}
+		if (oAscShortcut.isHidden)
+		{
+			for (let i = 0; i < arrKeyCodes.length; i += 1)
+			{
+				this.Remove(arrKeyCodes[i], oAscShortcut.ctrlKey, oAscShortcut.shiftKey, oAscShortcut.altKey, oAscShortcut.commandKey);
+			}
+		}
+		else
+		{
+			for (let i = 0; i < arrKeyCodes.length; i += 1)
+			{
+				this.Add(oAscShortcut.type, arrKeyCodes[i], oAscShortcut.ctrlKey, oAscShortcut.shiftKey, oAscShortcut.altKey, oAscShortcut.commandKey);
+			}
+		}
+	};
 
 	function CCustomShortcutActionSymbol(nCharCode, sFont)
 	{
@@ -12261,7 +12306,7 @@
         this.isChangesHandled = false;
 
         this.cryptoMode = 0; // start crypto mode
-		this.isChartEditor = false;
+		this.isFrameEditor = false;
 
         this.isExistDecryptedChanges = false; // был ли хоть один запрос на расшифровку данных (были ли чужие изменения)
 
@@ -12295,7 +12340,7 @@
             if (!window["AscDesktopEditor"])
                 return false;
 
-            if (this.isChartEditor)
+            if (this.isFrameEditor)
             	return false;
 
             if (2 == this.cryptoMode)
@@ -13861,6 +13906,11 @@
 	{
 		this.started = true;
 		this.endCallback = fEndCallback;
+		let drawingDocument = Asc.editor.getDrawingDocument();
+		if (drawingDocument)
+		{
+			drawingDocument.LockCursorType("eyedropper");
+		}
 	};
 	CEyedropper.prototype.cancel = function()
 	{
@@ -13873,6 +13923,12 @@
 		this.api.sendEvent("asc_onHideEyedropper");
 		this.clearColor();
 		this.clearImageData();
+
+		let drawingDocument = Asc.editor.getDrawingDocument();
+		if (drawingDocument)
+		{
+			drawingDocument.UnlockCursorType();
+		}
 	};
 	CEyedropper.prototype.clearImageData = function()
 	{
@@ -14021,95 +14077,123 @@
 		}
 	}
 	
+	/**
+	 * @param {string} text
+	 * @param {Asc.asc_CTextOptions} options
+	 * @param {boolean} bTrimSpaces - Whether to trim spaces when using space delimiter
+	 * @returns {Array<Array<string>>} Matrix of parsed CSV values
+	 */
 	function parseText(text, options, bTrimSpaces) {
-		var delimiterChar;
-		if (options.asc_getDelimiterChar()) {
-			delimiterChar = options.asc_getDelimiterChar();
-		} else {
-			switch (options.asc_getDelimiter()) {
-				case AscCommon.c_oAscCsvDelimiter.None:
-					delimiterChar = undefined;
-					break;
-				case AscCommon.c_oAscCsvDelimiter.Tab:
-					delimiterChar = "\t";
-					break;
-				case AscCommon.c_oAscCsvDelimiter.Semicolon:
-					delimiterChar = ";";
-					break;
-				case AscCommon.c_oAscCsvDelimiter.Colon:
-					delimiterChar = ":";
-					break;
-				case AscCommon.c_oAscCsvDelimiter.Comma:
-					delimiterChar = ",";
-					break;
-				case AscCommon.c_oAscCsvDelimiter.Space:
-					delimiterChar = " ";
-					break;
-			}
-		}
-
-		var textQualifier = options.asc_getTextQualifier();
-		var matrix = [];
-		//var rows = text.match(/[^\r\n]+/g);
-		var rows;
-		if (delimiterChar === '\n') {
-			rows = [text];
-		} else {
-			rows = text.split(/\r?\n/);
-		}
-		for (var i = 0; i < rows.length; ++i) {
-			var row = rows[i];
-			if(" " === delimiterChar && bTrimSpaces) {
-				var addSpace = false;
-				if(row[0] === delimiterChar) {
-					addSpace = true;
-				}
-				row = addSpace ? delimiterChar + row.trim() : row.trim();
-			}
-			//todo quotes
-			if (textQualifier) {
-				if (!row.length) {
-					matrix.push(row.split(delimiterChar));
-					continue;
-				}
-
-				var _text = "";
-				var startQualifier = false;
-				for (var j = 0; j < row.length; j++) {
-					if (!startQualifier && row[j] === textQualifier && (!row[j - 1] || (row[j - 1] && row[j - 1] === delimiterChar))) {
-						startQualifier = !startQualifier;
-						continue;
-					} else if (startQualifier && row[j] === textQualifier) {
-						startQualifier = !startQualifier;
-
-						if (j === row.length - 1) {
-							if (!matrix[i]) {
-								matrix[i] = [];
-							}
-							matrix[i].push(_text);
-						}
-
+		let delimiterMap = {};
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.None] = undefined;
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Tab] = "\t";
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Semicolon] = ";";
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Colon] = ":";
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Comma] = ",";
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Space] = " ";
+		const delimiterChar = options.asc_getDelimiterChar() || delimiterMap[options.asc_getDelimiter()];
+		const textQualifier = options.asc_getTextQualifier();
+		const hasQualifier = !!textQualifier;
+		
+		if (!text.length) return [[]];
+		
+		let rows = delimiterChar === '\n' ? [text] : text.split(/\r\n|\r|\n/);
+		if (rows.length > 1 && rows[rows.length - 1] === '') rows.pop();
+		
+		const isSpace = delimiterChar === " ";
+		// Note: Using charCodeAt instead of codePointAt for performance.
+		// CSV delimiters are always basic ASCII chars (comma=44, semicolon=59, tab=9, etc.)
+		const delimiterCode = delimiterChar ? delimiterChar.charCodeAt(0) : 0;
+		const qualifierCode = hasQualifier ? textQualifier.charCodeAt(0) : 0;
+		
+		/**
+		 * Trim and normalize a row when space is the delimiter and trimming is enabled.
+		 * Preserves a single leading space delimiter when present to avoid data loss.
+		 * @param {string} row
+		 * @returns {string}
+		 */
+		const processSpaceRow = function(row) {
+			if (!isSpace || !bTrimSpaces) return row;
+			const hasLeadingSpace = row.length > 0 && row.charCodeAt(0) === delimiterCode;
+			row = row.trim();
+			return hasLeadingSpace ? delimiterChar + row : row;
+		};
+		
+		/**
+		 * Parse a logical CSV record that may span multiple pre-split rows.
+		 * @param {string} row - Row to parse
+		 * @param {number} startIndex - Index in rows array to start parsing from
+		 * @returns {{fields: Array<string>, curIndex: number}}
+		 */
+		const parseRowWithQualifiers = function(row, startIndex) {
+			const fields = [];
+			let idx = startIndex;
+			let rowLength = row.length;
+			let textParts = [];
+			let insideQualifier = false;
+			let j = 0;
+			
+			while (true) {
+				if (j >= rowLength) {
+					if (insideQualifier && idx + 1 < rows.length) {
+						// Continue to next line, adding normalized newline
+						textParts.push('\n');
+						idx++;
+						row = rows[idx] || "";
+						row = processSpaceRow(row);
+						rowLength = row.length;
+						j = 0;
 						continue;
 					}
-					
-					if (!startQualifier && row[j] === delimiterChar) {
-						if (!matrix[i]) {
-							matrix[i] = [];
-						}
-						matrix[i].push(_text);
-						_text = "";
-					} else {
-						_text += row[j];
-						if (j === row.length - 1) {
-							if (!matrix[i]) {
-								matrix[i] = [];
-							}
-							matrix[i].push(_text);
+					// End of record
+					fields.push(textParts.join(''));
+					return { fields: fields, curIndex: idx };
+				}
+
+				const charCode = row.charCodeAt(j);
+				if (charCode === qualifierCode) {
+					if (!insideQualifier && (j === 0 || row.charCodeAt(j - 1) === delimiterCode)) {
+						insideQualifier = true;
+						j++;
+						continue;
+					} else if (insideQualifier) {
+						if (j + 1 < rowLength && row.charCodeAt(j + 1) === qualifierCode) {
+							textParts.push(textQualifier);
+							j += 2;
+							continue;
+						} else {
+							insideQualifier = false;
+							j++;
+							continue;
 						}
 					}
 				}
+				
+				if (!insideQualifier && charCode === delimiterCode) {
+					fields.push(textParts.join(''));
+					textParts = [];
+				} else {
+					textParts.push(row[j]);
+				}
+				j++;
+			}
+		};
+		
+		const matrix = [];
+		for (let i = 0; i < rows.length; i++) {
+			let row = processSpaceRow(rows[i]);
+			
+			if (!row.length) {
+				matrix.push([""]);
+				continue;
+			}
+			
+			if (hasQualifier) {
+				const res = parseRowWithQualifiers(row, i);
+				matrix.push(res.fields);
+				i = res.curIndex;
 			} else {
-				matrix.push(row.split(delimiterChar));	
+				matrix.push(delimiterChar === undefined ? [row] : row.split(delimiterChar));
 			}
 		}
 		return matrix;
@@ -15054,25 +15138,18 @@
 	}
 
 	function applyElementDirection(element) {
-		if (AscCommon.AscBrowser.isIE) {
-			this.topLineEditorElement.addEventListener('input', function () {
-				const text = element.textContent || element.innerText || '';
-				let dir = 'ltr';
-				for (let iter = text.getUnicodeIterator(); iter.check(); iter.next()) {
-					let dir = AscCommon.getCharStrongDir(iter.value());
-					if (dir !== null) {
-						if (dir === AscBidi.TYPE.R) {
-							dir = 'rtl';
-						}
-						break;
-					}
-				}
-				element.dir = dir;
-			});
+		if (!element)
+			return;
+		const text = element.value || '';
+		let dir = 'ltr';
+		for (let iter = text.getUnicodeIterator(); iter.check(); iter.next()) {
+			let charDir = AscCommon.getCharStrongDir(iter.value());
+			if (charDir === AscBidi.DIRECTION_FLAG.RTL) {
+				dir = 'rtl';
+				break;
+			}
 		}
-		else {
-			element.dir = 'auto';
-		}
+		element.dir = dir;
 	}
 
 
@@ -15299,6 +15376,120 @@
 
 		return { X : x, Y : y };
 	}
+	function CTree() {
+	}
+
+	CTree.prototype = {
+		constructor: CTree,
+		getChildren: function () {
+			return [];
+		},
+		fillObject: function (oCopy, oIdMap) {},
+		traverse: function (fCallback, bReverseOrder) {
+			if (fCallback(this)) {
+				return true;
+			}
+			let aChildren = this.getChildren();
+			if(bReverseOrder === undefined || bReverseOrder === true) {
+				for (let nChild = aChildren.length - 1; nChild > -1; --nChild) {
+					let oChild = aChildren[nChild];
+					if (oChild && oChild.traverse) {
+						if (oChild.traverse(fCallback, bReverseOrder)) {
+							return true;
+						}
+					}
+				}
+			}
+			else {
+				for (let nChild = 0; nChild < aChildren.length; ++nChild) {
+					let oChild = aChildren[nChild];
+					if (oChild && oChild.traverse) {
+						if (oChild.traverse(fCallback, bReverseOrder)) {
+							return true;
+						}
+					}
+				}
+			}
+			return false;
+		},
+		isEqual: function (oOther) {
+			if (!oOther) {
+				return false;
+			}
+			if (this.getObjectType() !== oOther.getObjectType()) {
+				return false;
+			}
+			var aThisChildren = this.getChildren();
+			var aOtherChildren = oOther.getChildren();
+			if (aThisChildren.length !== aOtherChildren.length) {
+				return false;
+			}
+			for (var nChild = 0; nChild < aThisChildren.length; ++nChild) {
+				var oThisChild = aThisChildren[nChild];
+				var oOtherChild = aOtherChildren[nChild];
+				if (oThisChild !== this.checkEqualChild(oThisChild, oOtherChild)) {
+					return false;
+				}
+			}
+			return true;
+		},
+		checkEqualChild: function (oThisChild, oOtherChild) {
+			if (AscCommon.isRealObject(oThisChild) && oThisChild.isEqual) {
+				if (!oThisChild.isEqual(oOtherChild)) {
+					return undefined;
+				}
+			} else {
+				if (oThisChild !== oOtherChild) {
+					return undefined;
+				}
+			}
+			return oThisChild;
+		},
+		preorderTraverse : function(nextLayerCallback, backtrackCallback, context) {
+			var stack = [];
+			var nodes = this.getChildren();
+			var i = 0;
+
+			while (i <= nodes.length) {
+				if (i === nodes.length) {
+					// backtrack
+					if (stack.length !== 0) {
+						let state = stack.pop();
+						nodes = state.nodes;
+						i = state.index + 1;
+						if (backtrackCallback) {
+							backtrackCallback();
+						}
+					} else {
+						break;
+					}
+				} else {
+					var node = nodes[i];
+
+					// Call the callback for the current node
+					if (nextLayerCallback) {
+						nextLayerCallback(context, node);
+					}
+
+					if (node.children && node.children.length > 0) {
+						// Save current state and go deeper
+						stack.push({ nodes: nodes, index: i });
+						nodes = node.children;
+						i = 0;
+					} else {
+						// Leaf node, move to next sibling
+						i++;
+					}
+				}
+			}
+		}
+	};
+
+	function clampNumber(value, min, max)
+	{
+		return value < min ? min : value > max ? max : value;
+	}
+
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].consoleLog = consoleLog;
@@ -15315,6 +15506,7 @@
 	window["AscCommon"].openFileCommand = openFileCommand;
 	window["AscCommon"].sendCommand = sendCommand;
 	window["AscCommon"].sendSaveFile = sendSaveFile;
+	window["AscCommon"].c_oAscServerError = c_oAscServerError;
 	window["AscCommon"].mapAscServerErrorToAscError = mapAscServerErrorToAscError;
 	window["AscCommon"].joinUrls = joinUrls;
 	window["AscCommon"].getFullImageSrc2 = getFullImageSrc2;
@@ -15348,6 +15540,7 @@
 	window["AscCommon"].getUrlType = getUrlType;
 	window["AscCommon"].prepareUrl = prepareUrl;
 	window["AscCommon"].getUserColorById = getUserColorById;
+	window["AscCommon"].setUserColorById = setUserColorById;
 	window["AscCommon"].isNullOrEmptyString = isNullOrEmptyString;
 	window["AscCommon"].unleakString = unleakString;
 	window["AscCommon"].readValAttr = readValAttr;
@@ -15369,12 +15562,14 @@
 	window["AscCommon"].getFirstStrongDirection = getFirstStrongDirection;
 	window["AscCommon"].getGradientPoints = getGradientPoints;
 	window["AscCommon"].getNormalPoint = getNormalPoint;
+	window["AscCommon"].clampNumber = clampNumber;
 
 	window["AscCommon"].DocumentUrls = DocumentUrls;
 	window["AscCommon"].OpenFileResult = OpenFileResult;
 	window["AscCommon"].CLock = CLock;
 	window["AscCommon"].CContentChanges = CContentChanges;
 	window["AscCommon"].CContentChangesElement = CContentChangesElement;
+	window["AscCommon"].CTree = CTree;
 
 	window["AscCommon"].CorrectMMToTwips = CorrectMMToTwips;
 	window["AscCommon"].TwipsToMM = TwipsToMM;

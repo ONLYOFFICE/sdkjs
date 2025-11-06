@@ -1102,7 +1102,7 @@
         } else if (code === c_oAscServerCommandErrors.NotModified) {
             this.onForceSave({type: c_oAscForceSaveTypes.Button, refuse: true});
 		} else {
-			this.onWarning(Asc.c_oAscError.ID.Unknown);
+			this.onWarning(AscCommon.c_oAscServerError.Unknown);
 		}
 	};
 	DocsCoApi.prototype._onForceSave = function(data) {
@@ -1512,7 +1512,7 @@
   };
 
   DocsCoApi.prototype._onWarning = function(data) {
-    this.onWarning(Asc.c_oAscError.ID.Warning);
+    this.onWarning(data.code);
   };
 
   DocsCoApi.prototype._onLicense = function(data) {

@@ -33,6 +33,8 @@
 "use strict";
 
 (function (window, undefined) {
+	const BINARY_PART_HISTORY_LIMIT = 1048576;
+
     var drawingsChangesMap = {};
     var drawingConstructorsMap = {};
     var drawingContentChanges = {};
@@ -805,6 +807,21 @@
     };
     window['AscDFH'].CChangesDrawingsContentBool = CChangesDrawingsContentBool;
 
+	function CChangesDrawingsContentString(Class, Type, Pos, Items, isAdd){
+		AscDFH.CChangesDrawingsContent.call(this, Class, Type, Pos, Items, isAdd);
+	}
+
+	CChangesDrawingsContentString.prototype = Object.create(AscDFH.CChangesDrawingsContent.prototype);
+	CChangesDrawingsContentString.prototype.constructor = CChangesDrawingsContentString;
+
+	CChangesDrawingsContentString.prototype.private_WriteItem = function (Writer, Item) {
+		Writer.WriteString(Item);
+	};
+	CChangesDrawingsContentString.prototype.private_ReadItem = function (Reader) {
+		return Reader.GetString();
+	};
+	window['AscDFH'].CChangesDrawingsContentString = CChangesDrawingsContentString;
+
 
 
     function CChangesDrawingsContentLongMap(Class, Type, Pos, Items, isAdd){
@@ -1333,7 +1350,165 @@
     };
     window['AscDFH'].CChangesDrawingsSparklinesRemove = CChangesDrawingsSparklinesRemove;
 
+	function CChangesStartBinaryData(Class, Old, New, Type, Color) {
+		this.Type = Type;
+		AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+	}
+	CChangesStartBinaryData.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+	CChangesStartBinaryData.prototype.constructor = CChangesStartBinaryData;
 
+	CChangesStartBinaryData.prototype.setBinaryDataToClass = function (oPr) {};
+	CChangesStartBinaryData.prototype.Undo = function () {
+		if (!this.Class.partsOfBinaryData) {
+			return this.Redo();
+		}
+
+		let lenOfAllBinaryData = 0;
+		for (let i = 0; i < this.Class.partsOfBinaryData.length; i += 1) {
+			lenOfAllBinaryData += this.Class.partsOfBinaryData[i].length;
+		}
+		const arrBinaryData = new Uint8Array(lenOfAllBinaryData);
+		this.setBinaryDataToClass(arrBinaryData);
+		let indexOfInsert = 0;
+		for (let i = this.Class.partsOfBinaryData.length - 1; i >= 0; i -= 1) {
+			const partOfBinaryData = this.Class.partsOfBinaryData[i];
+			for (let j = 0; j < partOfBinaryData.length; j += 1) {
+				arrBinaryData[indexOfInsert] = partOfBinaryData[j];
+				indexOfInsert += 1;
+			}
+		}
+		delete this.Class.partsOfBinaryData;
+	}
+
+	CChangesStartBinaryData.prototype.Redo = function () {
+		if (this.Class.partsOfBinaryData) {
+			return this.Undo()
+		}
+		this.Class.partsOfBinaryData = [];
+	}
+	window['AscDFH'].CChangesStartBinaryData = CChangesStartBinaryData;
+
+	function CChangesPartBinaryData(Class, Old, New, Type, Color) {
+		this.Type = Type;
+		AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+	}
+	CChangesPartBinaryData.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+	CChangesPartBinaryData.prototype.constructor = CChangesPartBinaryData;
+
+	CChangesPartBinaryData.prototype.private_SetValue = function (oPr) {
+		if (oPr.length) {
+			this.Class.partsOfBinaryData.push(oPr);
+		}
+	}
+
+	CChangesPartBinaryData.prototype.WriteToBinary = function(Writer)
+	{
+		Writer.WriteLong(this.Old.length);
+		Writer.WriteBuffer(this.Old, 0, this.Old.length);
+
+		Writer.WriteLong(this.New.length);
+		Writer.WriteBuffer(this.New, 0, this.New.length);
+	};
+	CChangesPartBinaryData.prototype.ReadFromBinary = function(Reader)
+	{
+		let length = Reader.GetLong();
+		this.Old = new Uint8Array(Reader.GetBuffer(length));
+
+		length = Reader.GetLong();
+		this.New = new Uint8Array(Reader.GetBuffer(length));
+	};
+	window['AscDFH'].CChangesPartBinaryData = CChangesPartBinaryData;
+
+
+	function CChangesEndBinaryData(Class, Old, New, Type, Color) {
+		this.Type = Type;
+		AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+	}
+	CChangesEndBinaryData.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+	CChangesEndBinaryData.prototype.constructor = CChangesEndBinaryData;
+
+
+	CChangesEndBinaryData.prototype.Undo = function () {
+		if (this.Class.partsOfBinaryData) {
+			return this.Redo();
+		}
+		this.Class.partsOfBinaryData = [];
+	}
+	CChangesEndBinaryData.prototype.setBinaryDataToClass = function (oPr) {};
+	CChangesEndBinaryData.prototype.Redo = function () {
+		if (!this.Class.partsOfBinaryData) {
+			return this.Undo();
+		}
+		let lenOfAllBinaryData = 0;
+		for (let i = 0; i < this.Class.partsOfBinaryData.length; i += 1) {
+			lenOfAllBinaryData += this.Class.partsOfBinaryData[i].length;
+		}
+		const arrBinaryData = new Uint8Array(lenOfAllBinaryData);
+		this.setBinaryDataToClass(arrBinaryData);
+
+		let indexOfInsert = 0;
+		for (let i = 0; i < this.Class.partsOfBinaryData.length; i += 1) {
+			const partOfBinaryData = this.Class.partsOfBinaryData[i];
+			for (let j = 0; j < partOfBinaryData.length; j += 1) {
+				arrBinaryData[indexOfInsert] = partOfBinaryData[j];
+				indexOfInsert += 1;
+			}
+		}
+		delete this.Class.partsOfBinaryData;
+	}
+	window['AscDFH'].CChangesEndBinaryData = CChangesEndBinaryData;
+
+	function addBinaryDataToHistory(oClass, arrOldData, arrNewData, oStartChangesClass, oPartChangesClass, oEndChangesClass)
+	{
+		const maxLen = arrNewData.length > arrOldData.length ? arrNewData.length : arrOldData.length;
+		const oldParts = [];
+		const newParts = [];
+		const amountOfParts = Math.ceil(maxLen / BINARY_PART_HISTORY_LIMIT);
+		for (let i = 0; i < amountOfParts; i += 1) {
+			oldParts.push(arrOldData.slice(i * BINARY_PART_HISTORY_LIMIT, (i + 1) * BINARY_PART_HISTORY_LIMIT));
+			newParts.push(arrNewData.slice(i * BINARY_PART_HISTORY_LIMIT, (i + 1) * BINARY_PART_HISTORY_LIMIT));
+		}
+		AscCommon.History.Add(new oStartChangesClass(oClass, null, null, false));
+		for (let i = 0; i < amountOfParts; i += 1) {
+			AscCommon.History.Add(new oPartChangesClass(oClass, oldParts[i], newParts[i], false));
+		}
+		AscCommon.History.Add(new oEndChangesClass(oClass, null, null, false));
+	}
+	window['AscDFH'].addBinaryDataToHistory = addBinaryDataToHistory;
+
+
+	function CChangesDrawingsImageId(Class, NewPr) {
+		CChangesDrawingsString.call(this, Class, AscDFH.historyitem_ImageShapeLoadImagesfromContent, '', NewPr);
+		this.FromLoad = false;
+	}
+	CChangesDrawingsImageId.prototype = Object.create(CChangesDrawingsString.prototype);
+	CChangesDrawingsImageId.prototype.constructor = CChangesDrawingsImageId;
+	CChangesDrawingsImageId.prototype.ReadFromBinary = function (reader) {
+		this.FromLoad = true;
+		CChangesDrawingsString.prototype.ReadFromBinary.call(this, reader);
+	};
+	AscDFH.changesFactory[AscDFH.historyitem_ImageShapeLoadImagesfromContent] = CChangesDrawingsImageId;
+	AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeLoadImagesfromContent] = function (oClass, sValue, bFromLoad)
+	{
+		if (bFromLoad)
+		{
+			if (AscCommon.CollaborativeEditing)
+			{
+				if (sValue && sValue.length > 0)
+				{
+					AscCommon.CollaborativeEditing.Add_NewImage(sValue);
+				}
+			}
+		}
+	};
+
+	function addImagesFromFrame(Class, arrImagesId)
+	{
+		for (let i = 0; i < arrImagesId.length; i += 1) {
+			AscCommon.History.Add(new CChangesDrawingsImageId(Class, arrImagesId[i]));
+		}
+	}
+	window['AscDFH'].addImagesFromFrame = addImagesFromFrame;
 
 
 AscDFH.changesFactory[AscDFH.historyitem_Sparkline_Type               ] = AscDFH.CChangesDrawingsLong;

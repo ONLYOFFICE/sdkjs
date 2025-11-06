@@ -171,10 +171,10 @@ var c_oAscPivotFilterType = {
 	ValueBetween: 56,
 	ValueNotBetween: 57,
 	DateEqual: 58,
-	DateOlderThan: 59,
-	DateOlderThanOrEqual: 60,
-	DateNewerThan: 61,
-	DateNewerThanOrEqual: 62,
+	DateNewerThan: 59,
+	DateNewerThanOrEqual: 60,
+	DateOlderThan: 61,
+	DateOlderThanOrEqual: 62,
 	DateNotEqual: 63,
 	DateBetween: 64,
 	DateNotBetween: 65,
@@ -1933,7 +1933,7 @@ CT_PivotCacheDefinition.prototype.getGroupRangePr = function (fld) {
 					dateTypes.push(dateRangePr.groupBy);
 				}
 			}
-			dateTypes.sort();
+			dateTypes.sort(AscCommon.fSortAscending);
 		}
 		return {rangePr: rangePr, dateTypes: dateTypes};
 	}
@@ -2778,7 +2778,6 @@ CT_PivotCacheRecords.prototype.getDataMap = function(options) {
 	const indexes = options.rowIndexes.concat(options.colIndexes);
 	const filters = this._splitLabelFilters(indexes, options.filterMaps.labelFilters, options.cacheFieldsWithData);
 	const itemsWithDataMap = new Map();
-	const calculatedItems = options.cacheDefinition.getCalculatedItems();
 	let dataMap = new PivotDataElem(options.dataFields.length);
 	const calculatedIndexes = indexes.map(function(fld, index) {
 		return t._getCalculatedIndexes(options.cacheFields, fld);
@@ -4467,12 +4466,15 @@ CT_pivotTableDefinition.prototype.fillAutoFiltersOptions = function (autoFilterO
 			pageFieldItem = pageFilter.item;
 		}
 	}
-	var values = pivotField.getFilterObject(cacheField, pageFieldItem, this.getPivotFieldNum(index));
+	const resFilterObjectRes = pivotField.getFilterObject(cacheField, pageFieldItem, this.getPivotFieldNum(index));
+	var values = resFilterObjectRes.values;
 	var filterObj = new Asc.AutoFilterObj();
 	filterObj.type = Asc.c_oAscAutoFilterTypes.None;
 	var pivotFilter = this.getPivotFilter(index);
+	var isDateFilter = false;
 	if (pivotFilter) {
-		filterObj.convertFromFilterColumn(pivotFilter.autoFilter.FilterColumns[0], false);
+		isDateFilter = pivotFilter.isDateFilter();
+		filterObj.convertFromFilterColumn(pivotFilter.autoFilter.FilterColumns[0], false, {text: !isDateFilter, colors: [], fontColors: [], date: isDateFilter});
 	} else if(null !== pageFieldItem || values.some(function(elem) {return !elem.visible;})){
 		filterObj.type = Asc.c_oAscAutoFilterTypes.Filters;
 	}
@@ -4488,6 +4490,7 @@ CT_pivotTableDefinition.prototype.fillAutoFiltersOptions = function (autoFilterO
 	if (dataFields && 0 <= sortDataIndex && sortDataIndex < dataFields.length) {
 		indexSorting = sortDataIndex + 1;
 	}
+	const isDateField = cacheField.getFieldGroupType() === c_oAscGroupType.Date;
 	var pivotFilterObj = new Asc.PivotFilterObj();
 	pivotFilterObj.asc_setPivotField(index);
 	pivotFilterObj.asc_setDataFields(pivotDataFields);
@@ -4500,6 +4503,9 @@ CT_pivotTableDefinition.prototype.fillAutoFiltersOptions = function (autoFilterO
 	autoFilterObject.asc_setValues(values);
 	autoFilterObject.asc_setFilterObj(filterObj);
 	autoFilterObject.asc_setPivotObj(pivotFilterObj);
+	autoFilterObject.asc_setIsTextFilter(!isDateField);
+	autoFilterObject.asc_setIsDateFilter(isDateField);
+	autoFilterObject.asc_setTimeFormat(resFilterObjectRes.isTimeFormat);
 };
 CT_pivotTableDefinition.prototype.getPivotTableButtons = function (range, buttons) {
 	if (!this.intersection(range)) {
@@ -5115,9 +5121,7 @@ CT_pivotTableDefinition.prototype.getFilterMaps = function(cacheFieldsWithData) 
 	if (pivotFields) {
 		for (i = 0; i < pivotFields.length; ++i) {
 			pivotField = pivotFields[i];
-			if ((c_oAscAxis.AxisRow === pivotField.axis || c_oAscAxis.AxisCol === pivotField.axis ||
-				(c_oAscAxis.AxisPage === pivotField.axis && pivotField.multipleItemSelectionAllowed))
-				&& !pivotField.isAllVisible()) {
+			if (pivotField.showingInAxisForFilter() && !pivotField.isAllVisible()) {
 				labelFilters.push({index: i, map: pivotField.getFilterMap()});
 			}
 		}
@@ -5128,13 +5132,15 @@ CT_pivotTableDefinition.prototype.getFilterMaps = function(cacheFieldsWithData) 
 			pivotField = pivotFields[pivotFilter.fld];
 			cacheField = cacheFields[pivotFilter.fld];
 			var filterColumn = pivotField && pivotFilter.getFilterColumn();
-			if (filterColumn) {
+			if (filterColumn && pivotField.showingInAxisForFilter()) {
 				this.checkPivotFieldItems(pivotFilter.fld);
 				if (pivotFilter.isLabelFilter()) {
+					filterColumn.init(null); //init dynamic date filters
+					let num = pivotFilter.isDateFilter() ? null : this.getPivotFieldNum(pivotFilter.fld);
 					if (cacheField.hasGroup() && cacheField.getSharedItems()) {
-						labelFilters.push({index: pivotFilter.fld, isGroup: true, map: pivotField.getFilterMapFilterColumnGroup(cacheField, filterColumn, this.getPivotFieldNum(pivotFilter.fld))});
+						labelFilters.push({index: pivotFilter.fld, isGroup: true, map: pivotField.getFilterMapFilterColumnGroup(cacheField, filterColumn, num)});
 					} else {
-						labelFilters.push({index: pivotFilter.fld, map: pivotField.getFilterMapFilterColumn(cacheField, filterColumn, this.getPivotFieldNum(pivotFilter.fld))});
+						labelFilters.push({index: pivotFilter.fld, map: pivotField.getFilterMapFilterColumn(cacheField, filterColumn, num)});
 					}
 				} else {
 					valueFilters.push({index: pivotFilter.fld, pivotField: pivotField, pivotFilter: pivotFilter});
@@ -7255,8 +7261,8 @@ CT_pivotTableDefinition.prototype.filterPivotSlicers = function(api, fld, confir
 	if (slicerCache) {
 		var pivotField = this.asc_getPivotFields()[fld];
 		var cacheField = this.asc_getCacheFields()[fld];
-		var values = pivotField.getFilterObject(cacheField, null, this.getPivotFieldNum(fld));
-		let changeResCur = slicerCache.applyPivotFilter(api, values, this, confirmation);
+		const resFilterObjectRes = pivotField.getFilterObject(cacheField, null, this.getPivotFieldNum(fld));
+		let changeResCur = slicerCache.applyPivotFilter(api, resFilterObjectRes.values, this, confirmation);
 		changeRes.merge(changeResCur);
 	}
 	return changeRes;
@@ -7307,10 +7313,11 @@ CT_pivotTableDefinition.prototype.filterPivotItems = function(index, autoFilterO
 				this.filterPivotItemsFilters(index, autoFilterObject.values);
 				break;
 			case c_oAscAutoFilterTypes.CustomFilters:
+				const isDate = autoFilterObject.asc_getIsDateFilter();
 				if (0 < iMeasureFld && iMeasureFld <= this.getDataFieldsCount()) {
-					pivotFilter.initFromCustom(index, filter.filter, iMeasureFld - 1);
+					pivotFilter.initFromCustom(index, filter.filter, isDate, iMeasureFld - 1);
 				} else {
-					pivotFilter.initFromCustom(index, filter.filter, null);
+					pivotFilter.initFromCustom(index, filter.filter, isDate, null);
 				}
 				break;
 			case c_oAscAutoFilterTypes.DynamicFilter:
@@ -8024,7 +8031,7 @@ CT_pivotTableDefinition.prototype.groupRangePr = function (fld, rangePr, dateTyp
 		rangePr.groupInterval = 1;
 	}
 	if (dateTypes) {
-		dateTypes.sort();
+		dateTypes.sort(AscCommon.fSortAscending);
 		rangePr.groupBy = dateTypes[0];
 		if (dateTypes.length > 1 || c_oAscGroupBy.Days !== rangePr.groupBy) {
 			rangePr.groupInterval = 1;
@@ -15269,7 +15276,7 @@ CT_CacheField.prototype.getGroupBase = function () {
 	return this.fieldGroup && this.fieldGroup.base;
 };
 CT_CacheField.prototype.getFieldGroupType = function () {
-	if (this.fieldGroup) {
+	if (this.fieldGroup && null === this.getGroupPar()) {
 		return this.fieldGroup.getFieldGroupType();
 	}
 	var sharedItems = this.getGroupOrSharedItems();
@@ -17080,7 +17087,7 @@ CT_PivotField.prototype.isAllVisible = function() {
 	return true;
 };
 CT_PivotField.prototype.getFilterObject = function(cacheField, pageFilterItem, num) {
-	var values = [];
+	const res = {values: [], isTimeFormat: false};
 	var items = this.getItems();
 	if (items) {
 		for (var i = 0; i < items.length; ++i) {
@@ -17088,20 +17095,40 @@ CT_PivotField.prototype.getFilterObject = function(cacheField, pageFilterItem, n
 
 			if (Asc.c_oAscItemType.Data === item.t || Asc.c_oAscItemType.Blank === item.t) {
 				var elem = AscCommonExcel.AutoFiltersOptionsElements();
-				elem.val = item.x;
-				elem.text = "";
+				elem.asc_setVisible(!item.h && (null == pageFilterItem || i === pageFilterItem));
+				elem.asc_setVal(item.x);
 				if (Asc.c_oAscItemType.Data === item.t) {
-					elem.text = item.getName(cacheField, num);
+					elem.asc_setText(item.getName(cacheField, num));
+				} else {
+					elem.asc_setText("");
 				}
-				elem.visible = !item.h && (null == pageFilterItem || i === pageFilterItem);
-				elem.isDateFormat = false;
-				elem.repeats = undefined;
-				//todo isDateFormat
-				values.push(elem);
+				const sharedItem = cacheField.getGroupOrSharedItem(item.x);
+				let isDateTimeFormat = sharedItem.type === c_oAscPivotRecType.DateTime;
+				if (isDateTimeFormat) {
+					//cut time from dates
+					const date = sharedItem.val >= 1 ? Asc.cDate.prototype.getDateFromExcelWithTime2(sharedItem.val) : null;
+					if (date) {
+						elem.asc_setYear(date.getUTCFullYear());
+						elem.asc_setMonth(date.getUTCMonth());
+						elem.asc_setDay(date.getUTCDate());
+						if (date.getUTCHours() !== 0 || date.getUTCMinutes() !== 0 || date.getUTCSeconds() !== 0) {
+							res.isTimeFormat = true;
+						}
+						elem.asc_setHour(date.getUTCHours());
+						elem.asc_setMinute(date.getUTCMinutes());
+						elem.asc_setSecond(date.getUTCSeconds());
+						elem.asc_setDateTimeGrouping(Asc.EDateTimeGroup.datetimegroupYear);
+					} else {
+						isDateTimeFormat = false;
+					}
+				}
+				elem.asc_setIsDateFormat(isDateTimeFormat);
+				elem.asc_setRepeats(undefined);
+				res.values.push(elem);
 			}
 		}
 	}
-	return values;
+	return res;
 };
 /**
  * @param {CT_CacheField} cacheField
@@ -17252,7 +17279,12 @@ CT_PivotField.prototype.asc_getBaseItemObject = function(cacheField) {
 			const item = items[index];
 			let elem = '';
 			if (Asc.c_oAscItemType.Data === item.t) {
-				elem = item.getName(cacheField);
+				const sharedItem = cacheField.getGroupOrSharedItem(item.x);
+				if (sharedItem && sharedItem.type === c_oAscPivotRecType.DateTime) {
+					elem = item.getName(cacheField, cacheField.num);
+				} else {
+					elem = item.getName(cacheField);
+				}
 				values.push({"baseItem": i, "name": elem});
 			}
 		}
@@ -17839,6 +17871,14 @@ CT_PivotField.prototype.hasCalculated = function() {
 	}
 	return false;
 };
+CT_PivotField.prototype.showingInAxis = function() {
+	return this.axis !== null || this.dataField;
+};
+CT_PivotField.prototype.showingInAxisForFilter = function() {
+	return c_oAscAxis.AxisRow === this.axis || c_oAscAxis.AxisCol === this.axis ||
+		(c_oAscAxis.AxisPage === this.axis && this.multipleItemSelectionAllowed);
+};
+
 function CT_PivotFieldX14() {
 //Attributes
 	this.fillDownLabels = false;
@@ -18834,6 +18874,10 @@ CT_PivotFilter.prototype.Read_FromBinary2 = function(reader) {
 CT_PivotFilter.prototype.isLabelFilter = function() {
 	return !this.isValueFilter();
 };
+CT_PivotFilter.prototype.isDateFilter = function() {
+	return (c_oAscPivotFilterType.DateEqual <= this.type && this.type <= c_oAscPivotFilterType.DateNotBetween) ||
+		(c_oAscPivotFilterType.LastMonth <= this.type && this.type <= c_oAscPivotFilterType.Yesterday);
+};
 CT_PivotFilter.prototype.isValueFilter = function() {
 	return (c_oAscPivotFilterType.ValueEqual <= this.type && this.type <= c_oAscPivotFilterType.ValueNotBetween) ||
 		(c_oAscPivotFilterType.Count <= this.type && this.type <= c_oAscPivotFilterType.Sum);
@@ -18852,21 +18896,28 @@ CT_PivotFilter.prototype.initTemplate = function(fld) {
 	this.autoFilter = autoFilter;
 	this.type = Asc.c_oAscPivotFilterType.Unknown;
 };
-CT_PivotFilter.prototype.initFromCustom = function(index, filter, iMeasureFld) {
-	//todo date
+/**
+ * @param {number} index
+ * @param {Asc.CustomFilters} filter
+ * @param {boolean} isDate
+ * @param {number} iMeasureFld
+ */
+CT_PivotFilter.prototype.initFromCustom = function(index, filter, isDate, iMeasureFld) {
 	this.initTemplate(index);
 	this.fld = index;
 	this.iMeasureFld = iMeasureFld;
 	var isCaption = null === iMeasureFld;
-	var isDate = false;
+	const isLabel = !isDate && isCaption;
 	var baseEqual;
 	var baseBetween;
-	if(isCaption){
-		baseEqual = Asc.c_oAscPivotFilterType.CaptionEqual;
-		baseBetween = Asc.c_oAscPivotFilterType.CaptionBetween;
-	} else if(isDate){
-		baseEqual = Asc.c_oAscPivotFilterType.DateEqual;
-		baseBetween = Asc.c_oAscPivotFilterType.DateBetween;
+	if (isCaption) {
+		if (isDate) {
+			baseEqual = Asc.c_oAscPivotFilterType.DateEqual;
+			baseBetween = Asc.c_oAscPivotFilterType.DateBetween;
+		} else {
+			baseEqual = Asc.c_oAscPivotFilterType.CaptionEqual;
+			baseBetween = Asc.c_oAscPivotFilterType.CaptionBetween;
+		}
 	} else {
 		baseEqual = Asc.c_oAscPivotFilterType.ValueEqual;
 		baseBetween = Asc.c_oAscPivotFilterType.ValueBetween;
@@ -18875,7 +18926,7 @@ CT_PivotFilter.prototype.initFromCustom = function(index, filter, iMeasureFld) {
 		if (1 === filter.CustomFilters.length) {
 			filter.asc_setAnd(false);
 			this.type = baseEqual + filter.CustomFilters[0].Operator - c_oAscCustomAutoFilter.equals;
-			if (this.type !== Asc.c_oAscPivotFilterType.Unknown && isCaption) {
+			if (this.type !== Asc.c_oAscPivotFilterType.Unknown && isLabel) {
 				this.stringValue1 = filter.CustomFilters[0].Val;
 			}
 		} else if (2 === filter.CustomFilters.length) {
@@ -18888,7 +18939,7 @@ CT_PivotFilter.prototype.initFromCustom = function(index, filter, iMeasureFld) {
 				false === filter.And) {
 				this.type = baseBetween + Asc.c_oAscPivotFilterType.CaptionNotBetween - Asc.c_oAscPivotFilterType.CaptionBetween;
 			}
-			if (this.type !== Asc.c_oAscPivotFilterType.Unknown && isCaption) {
+			if (this.type !== Asc.c_oAscPivotFilterType.Unknown && isLabel) {
 				this.stringValue1 = filter.CustomFilters[0].Val;
 				this.stringValue2 = filter.CustomFilters[1].Val;
 			}
@@ -18903,7 +18954,8 @@ CT_PivotFilter.prototype.initFromCustom = function(index, filter, iMeasureFld) {
 CT_PivotFilter.prototype.initFromDynamic = function(index, filter) {
 	this.initTemplate(index);
 	if(Asc.c_oAscDynamicAutoFilter.aboveAverage !== filter.asc_getType() && Asc.c_oAscDynamicAutoFilter.belowAverage !== filter.asc_getType()){
-		this.type = filter.asc_getType()
+		this.type = filter.asc_getType();
+		filter.init(null);
 	} else {
 		this.type = Asc.c_oAscPivotFilterType.Unknown;
 	}

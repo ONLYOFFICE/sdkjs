@@ -517,7 +517,9 @@
 				document.oncut            = function(e)
 				{
 					if (g_clipboardBase.isUseNewCopy()) {
-						e.preventDefault();
+						if (g_clipboardBase.Api.asc_IsFocus(true) && !g_clipboardBase._isUseMobileNewCopy()) {
+							e.preventDefault();
+						}
 						return g_clipboardBase.Copy_New(true);
 					} else {
 						return g_clipboardBase._private_oncut(e)
@@ -1569,7 +1571,7 @@
 			}
 
 			var props = this.buttonInfo;
-			if(props && props.options)
+			if(props && props.options && props.options.length)
 			{
 				if((Asc["editor"] && Asc["editor"].wb) || props.cellCoord)
 				{

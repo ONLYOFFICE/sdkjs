@@ -54,7 +54,8 @@
 		this.VisitedHyperlink = false;
 		this.Hyperlink = false;
 		
-		this.ulTrailSpace = false;
+		this.ulTrailSpace     = false;
+		this.activePermRanges = false;
 		
 		this.Strikeout  = new CParaDrawingRangeHorizontalLines();
 		this.DStrikeout = new CParaDrawingRangeHorizontalLines();
@@ -73,6 +74,8 @@
 		this.BaseLine        = 0;
 		this.UnderlineOffset = 0;
 		this.Spaces          = 0;
+		this.LineY0          = 0;
+		this.LineY1          = 0;
 		
 		this.complexFields = new AscWord.ParagraphComplexFieldStack();
 		this.contentControls = [];
@@ -106,6 +109,8 @@
 		
 		this.collPrChangeColor = null;
 		
+		this.annotationMarks = [];
+		
 		this.bidiFlow = new AscWord.BidiFlow(this);
 	}
 	ParagraphLineDrawState.prototype.init = function()
@@ -115,7 +120,10 @@
 		
 		this.logicDocument = this.GetLogicDocument();
 		if (this.logicDocument && this.logicDocument.IsDocumentEditor())
-			this.ulTrailSpace = this.logicDocument.IsUnderlineTrailSpace();
+		{
+			this.ulTrailSpace     = this.logicDocument.IsUnderlineTrailSpace();
+			this.activePermRanges = this.logicDocument.IsEditCommentsMode() || this.logicDocument.IsViewModeInEditor();
+		}
 	};
 	ParagraphLineDrawState.prototype.resetPage = function(page)
 	{
@@ -129,12 +137,14 @@
 		
 		this.complexFields.resetPage(this.Paragraph, page);
 	};
-	ParagraphLineDrawState.prototype.resetLine = function(Line, Baseline, UnderlineOffset)
+	ParagraphLineDrawState.prototype.resetLine = function(Line, Baseline, UnderlineOffset, lineY0, lineY1)
 	{
 		this.Line = Line;
 		
 		this.Baseline        = Baseline;
 		this.UnderlineOffset = UnderlineOffset;
+		this.LineY0          = lineY0;
+		this.LineY1          = lineY1;
 		
 		this.Strikeout.Clear();
 		this.DStrikeout.Clear();
@@ -175,14 +185,17 @@
 		if (para_Drawing === element.Type && !element.IsInline())
 			return;
 		
-		this.bidiFlow.add([element, run, inRunPos, misspell], element.getBidiType());
+		this.bidiFlow.add([element, run, inRunPos, misspell, this.annotationMarks], element.getBidiType());
+		
+		this.annotationMarks = [];
 	};
-	ParagraphLineDrawState.prototype.handleBidiFlow = function(data)
+	ParagraphLineDrawState.prototype.handleBidiFlow = function(data, direction)
 	{
 		let element  = data[0];
 		let run      = data[1];
 		let inRunPos = data[2];
 		let misspell = data[3];
+		let marks    = data[4];
 		
 		this.handleRun(run);
 		
@@ -258,7 +271,20 @@
 		if (this.collPrChangeColor)
 			this.CollChange.Add(0, 0, startX, endX, 0, this.collPrChangeColor.r, this.collPrChangeColor.g, this.collPrChangeColor.b, {RunPr : this.textPr});
 		
+		if (marks)
+		{
+			let markX = direction === AscBidi.DIRECTION.L ? startX : endX;
+			for (let i = 0; i < marks.length; ++i)
+			{
+				marks[i].drawMark(markX, this.LineY0, this.LineY1 - this.LineY0, this.Graphics, direction === AscBidi.DIRECTION.R, this);
+			}
+		}
+		
 		this.X = endX;
+	};
+	ParagraphLineDrawState.prototype.handleAnnotationMark = function(mark)
+	{
+		this.annotationMarks.push(mark);
 	};
 	/**
 	 * Получаем количество орфографических ошибок в данном месте
@@ -287,6 +313,10 @@
 	ParagraphLineDrawState.prototype.GetLogicDocument = function()
 	{
 		return this.Paragraph.GetLogicDocument();
+	};
+	ParagraphLineDrawState.prototype.isActivePermRanges = function()
+	{
+		return this.activePermRanges;
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area

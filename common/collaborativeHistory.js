@@ -366,10 +366,16 @@
 		for (let index = 0, count = historyPoint.Items.length; index < count; ++index)
 		{
 			let historyItem   = historyPoint.Items[index];
-			let historyChange = historyItem.Data;
+			let historyChange;
 			let historyClass  = historyItem.Class;
 
-			//todo заполнить Class и Data в изменениях автофигур spreadsheet
+			//todo: Refactor Class and Data in spreadsheet to follow other editors design
+			if (AscCommon.History.Item_ToSerializable) {
+				historyChange = AscCommon.History.Item_ToSerializable(historyItem);
+			} else {
+				historyChange = historyItem.Data;
+			}
+
 			if (!historyClass || !(historyClass.Get_Id || historyClass.Class && historyClass.Class.Get_Id))
 				continue;
 
@@ -660,12 +666,16 @@
 		let localHistory = AscCommon.History;
 
 		let pointIndex = localHistory.CreateNewPointToCollectChanges(AscDFH.historydescription_Collaborative_Undo);
-
+		
+		// До вызова данного метода мы все изменения reverseChanges прогнали через Load, где
+		// изменения позиций из-за этих изменений уже были отмечены
+		this.CoEditing.StopTrackingPositions();
 		for (let index = 0, count = reverseChanges.length; index < count; ++index)
 		{
 			let change = reverseChanges[index];
 			localHistory.Add(change);
 		}
+		this.CoEditing.StartTrackingPositions();
 
 		this.CorrectReveredChanges(reverseChanges);
 

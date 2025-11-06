@@ -39,6 +39,8 @@
 function (window, undefined) {
 	var cDate = Asc.cDate;
 	var fSortAscending = AscCommon.fSortAscending;
+	var gc_nMaxRow0 = AscCommon.gc_nMaxRow0;
+	var gc_nMaxCol0 = AscCommon.gc_nMaxCol0;
 
 	var cElementType = AscCommonExcel.cElementType;
 	var cErrorType = AscCommonExcel.cErrorType;
@@ -59,6 +61,7 @@ function (window, undefined) {
 
 	var _func = AscCommonExcel._func;
 	var matching = AscCommonExcel.matching;
+	var getMatchingFunction = AscCommonExcel.getMatchingFunction;
 
 	var maxGammaArgument = 171.624376956302;
 
@@ -318,8 +321,8 @@ function (window, undefined) {
 		return getLogGammaHelper(fZ + 2) - Math.log(fZ + 1) - Math.log(fZ);
 	}
 
-	function getPercentile(values, alpha) {
-		values.sort(fSortAscending);
+	function getPercentile(values, alpha, isSorted) {
+		values = isSorted ? values : values.sort(fSortAscending);
 
 		var nSize = values.length;
 		if (nSize === 0) {
@@ -339,8 +342,8 @@ function (window, undefined) {
 		}
 	}
 
-	function getPercentileExclusive(values, alpha) {
-		values.sort(fSortAscending);
+	function getPercentileExclusive(values, alpha, isSorted) {
+		values = isSorted ? values : values.sort(fSortAscending);
 
 		var nSize1 = values.length + 1;
 		if (nSize1 == 1) {
@@ -1410,15 +1413,15 @@ function (window, undefined) {
 		return cloneMatrix;
 	}
 
-	function CheckMatrix(_bLOG, pMatX, pMatY) {
-		var nCX = 0;
-		var nCY = 0;
-		var nRX = 0;
-		var nRY = 0;
-		var M = 0;
-		var N = 0;
-		var nCase;
-		var i, j;
+	function CheckMatrix(_bLOG, pMatX, pMatY, error) {
+		let nCase;
+		let i, j;
+		let nCX = 0,
+			nCY = 0,
+			nRX = 0,
+			nRY = 0,
+			M = 0,
+			N = 0;
 
 		if (!pMatY || !pMatY[0]) {
 			return false;
@@ -1426,8 +1429,12 @@ function (window, undefined) {
 
 		nRY = pMatY.length;
 		nCY = pMatY[0].length;
-		var nCountY = nCY * nRY;
-		var _pMatY = [];
+
+		let nCountY = nCY * nRY;
+		let _pMatY = [];
+		let pMatOriginalY = [];
+		let pMatOriginalX = [];
+
 		for (i = 0; i < pMatY.length; i++) {
 			for (j = 0; j < pMatY[i].length; j++) {
 				if (!pMatY[i][j]) {
@@ -1438,22 +1445,22 @@ function (window, undefined) {
 						_pMatY[j] = [];
 					}
 					_pMatY[j][i] = pMatY[i][j].getValue();
-					//pMatY[i][j] = pMatY[i][j].getValue();
 				}
 			}
 		}
 
+		pMatOriginalY = _pMatY.slice();
+
 		if (_bLOG) {
-			var pNewY = [];
+			let pNewY = [];
 
 			for (i = 0; i < pMatY.length; i++) {
 				for (j = 0; j < pMatY[i].length; j++) {
-					var fVal = pMatY[i][j];
+					let fVal = pMatY[i][j];
 					if (fVal <= 0.0) {
 						//PushIllegalArgument();
 						return false;
 					} else {
-						//pNewY[i][j] = Math.log(fVal);
 						if (!pNewY[j]) {
 							pNewY[j] = [];
 						}
@@ -1464,12 +1471,12 @@ function (window, undefined) {
 			_pMatY = pNewY;
 		}
 
-		var _pMatX;
+		let _pMatX;
 		if (pMatX) {
 			_pMatX = [];
 			nRX = pMatX.length;
 			nCX = pMatX[0].length;
-			var nCountX = nCX * nRX;
+			let nCountX = nCX * nRX;
 			for (i = 0; i < pMatX.length; i++) {
 				for (j = 0; j < pMatX[i].length; j++) {
 					if (!pMatX[i][j]) {
@@ -1480,7 +1487,6 @@ function (window, undefined) {
 							_pMatX[j] = [];
 						}
 						_pMatX[j][i] = pMatX[i][j].getValue();
-						//pMatX[i][j] = pMatX[i][j].getValue();
 					}
 				}
 			}
@@ -1491,10 +1497,16 @@ function (window, undefined) {
 				N = nCountY;
 			} else if (nCY !== 1 && nRY !== 1) {
 				//PushIllegalArgument();
+				if (Array.isArray(error)) {
+					error.push(new cError(cErrorType.bad_reference));
+				}
 				return false;
 			} else if (nCY === 1) {
 				if (nRX !== nRY) {
 					//PushIllegalArgument();
+					if (Array.isArray(error)) {
+						error.push(new cError(cErrorType.bad_reference));
+					}
 					return false;
 				} else {
 					nCase = 2;              // Y is column
@@ -1503,6 +1515,9 @@ function (window, undefined) {
 				}
 			} else if (nCX !== nCY) {
 				//PushIllegalArgument();
+				if (Array.isArray(error)) {
+					error.push(new cError(cErrorType.bad_reference));
+				}
 				return false;
 			} else {
 				nCase = 3;                  // Y is row
@@ -1514,7 +1529,7 @@ function (window, undefined) {
 			nCX = nCY;
 			nRX = nRY;
 
-			var num = 1;
+			let num = 1;
 			for (i = 0; i < nRY; i++) {
 				for (j = 0; j < nCY; j++) {
 					if (!_pMatX[j]) {
@@ -1530,7 +1545,7 @@ function (window, undefined) {
 			M = 1;
 		}
 
-		return {nCase: nCase, nCX: nCX, nCY: nCY, nRX: nRX, nRY: nRY, M: M, N: N, pMatX: _pMatX, pMatY: _pMatY};
+		return {nCase: nCase, nCX: nCX, nCY: nCY, nRX: nRX, nRY: nRY, M: M, N: N, pMatX: _pMatX, pMatY: _pMatY, pMatOriginalX: _pMatX, pMatOriginalY: pMatOriginalY};
 	}
 
 	function lcl_GetMeanOverAll(pMat, nN) {
@@ -1845,16 +1860,20 @@ function (window, undefined) {
 	}
 
 	function CalculateTrendGrowth(pMatY, pMatX, pMatNewX, bConstant, _bGrowth) {
-		var getMatrixParams = CheckMatrix(_bGrowth, pMatX, pMatY);
-		if (!getMatrixParams) {
+		let error = [];
+		let getMatrixParams = CheckMatrix(_bGrowth, pMatX, pMatY, error);
+		if (error.length > 0) {
+			return error[0];
+		} else if (!getMatrixParams) {
 			return;
 		}
 
+		const identicalValuesTrend = 1;
 		// 1 = simple; 2 = multiple with Y as column; 3 = multiple with Y as row
-		var nCase = getMatrixParams.nCase;
-		var nCX = getMatrixParams.nCX, nCY = getMatrixParams.nCY; // number of columns
-		var nRX = getMatrixParams.nRX, nRY = getMatrixParams.nRY; //number of rows
-		var K = getMatrixParams.M, N = getMatrixParams.N; // K=number of variables X, N=number of data samples
+		let nCase = getMatrixParams.nCase;
+		let nCX = getMatrixParams.nCX, nCY = getMatrixParams.nCY; // number of columns
+		let nRX = getMatrixParams.nRX, nRY = getMatrixParams.nRY; //number of rows
+		let K = getMatrixParams.M, N = getMatrixParams.N; // K=number of variables X, N=number of data samples
 		pMatX = getMatrixParams.pMatX;
 		pMatY = getMatrixParams.pMatY;
 
@@ -1867,11 +1886,11 @@ function (window, undefined) {
 			return;
 		}
 
-		var i, j;
+		let i, j;
 
 		// Set default pMatNewX if necessary
-		var nCXN, nRXN;
-		var nCountXN;
+		let nCXN, nRXN;
+		let nCountXN;
 		if (!pMatNewX) {
 			nCXN = nCX;
 			nRXN = nRX;
@@ -1896,7 +1915,7 @@ function (window, undefined) {
 			}
 		}
 
-		var pResMat; // size depends on nCase
+		let pResMat; // size depends on nCase
 		if (nCase === 1) {
 			pResMat = GetNewMat(nCXN, nRXN);
 		} else {
@@ -1913,10 +1932,10 @@ function (window, undefined) {
 
 		// Uses sum(x-MeanX)^2 and not [sum x^2]-N * MeanX^2 in case bConstant.
 		// Clone constant matrices, so that Mat = Mat - Mean is possible.
-		var fMeanY = 0.0;
+		let fMeanY = 0.0;
 		if (bConstant) {
-			var pCopyX = matrixClone(pMatX);
-			var pCopyY = matrixClone(pMatY);
+			let pCopyX = matrixClone(pMatX);
+			let pCopyY = matrixClone(pMatY);
 			if (!pCopyX || !pCopyY) {
 				//PushError(FormulaError::MatrixSize);
 				return;
@@ -1935,10 +1954,10 @@ function (window, undefined) {
 			}
 		}
 
-		var aVecR, pMeans, pSlopes, bIsSingular, col, fIntercept, row;
+		let aVecR, pMeans, pSlopes, bIsSingular, col, fIntercept, row;
 		if (nCase === 1) {
 			// calculate simple regression
-			var fMeanX = 0.0;
+			let fMeanX = 0.0;
 			if (bConstant) {   // Mat = Mat - Mean
 				fMeanX = lcl_GetMeanOverAll(pMatX, N);
 				if (fMeanX === undefined) {	// explicit check for undefined is necessary since the number can be 0
@@ -1950,14 +1969,15 @@ function (window, undefined) {
 					}
 				}
 			}
-			var fSumXY = lcl_GetSumProduct(pMatX, pMatY, N);
-			var fSumX2 = lcl_GetSumProduct(pMatX, pMatX, N);
+			let fSumXY = lcl_GetSumProduct(pMatX, pMatY, N);
+			let fSumX2 = lcl_GetSumProduct(pMatX, pMatX, N);
 			if (fSumX2 === 0.0) {
 				//PushNoValue(); // all x-values are identical
-				return;
+				// return;
+				fSumX2 = identicalValuesTrend;
 			}
-			var fSlope = fSumXY / fSumX2;
-			var fHelp;
+			let fSlope = fSumXY / fSumX2;
+			let fHelp;
 			if (bConstant) {
 				fIntercept = fMeanY - fSlope * fMeanX;
 				for (i = 0; i < pResMat.length; i++) {
@@ -2131,19 +2151,26 @@ function (window, undefined) {
 	}
 
 	function CalculateRGPRKP(pMatY, pMatX, bConstant, bStats, _bRKP) {
-		var getMatrixParams = CheckMatrix(_bRKP, pMatX, pMatY);
-		if (!getMatrixParams) {
+		let error = [];
+		let getMatrixParams = CheckMatrix(_bRKP, pMatX, pMatY, error);
+
+		if (error.length > 0) {
+			return error[0];
+		} else if (!getMatrixParams) {
 			return;
 		}
 
+		const identicalValuesTrend = 1;
 		// 1 = simple; 2 = multiple with Y as column; 3 = multiple with Y as row
-		var nCase = getMatrixParams.nCase;
-		var nCX = getMatrixParams.nCX, nCY = getMatrixParams.nCY; // number of columns
-		var nRX = getMatrixParams.nRX, nRY = getMatrixParams.nRY; //number of rows
-		var K = getMatrixParams.M, N = getMatrixParams.N; // K=number of variables X, N=number of data samples
+		let nCase = getMatrixParams.nCase;
+		let nCX = getMatrixParams.nCX, nCY = getMatrixParams.nCY; // number of columns
+		let nRX = getMatrixParams.nRX, nRY = getMatrixParams.nRY; //number of rows
+		let K = getMatrixParams.M, N = getMatrixParams.N; // K=number of variables X, N=number of data samples
 		pMatX = getMatrixParams.pMatX;
 		pMatY = getMatrixParams.pMatY;
-		var i, j;
+		let pMatOriginalX = getMatrixParams.pMatOriginalX;
+		let pMatOriginalY = getMatrixParams.pMatOriginalY;
+		let i, j;
 
 		// Enough data samples?
 		// if ((bConstant && (N < K + 1)) || (!bConstant && (N < K)) || (N < 1) || (K < 1)) {
@@ -2156,7 +2183,7 @@ function (window, undefined) {
 			return;
 		}
 
-		var pResMat;
+		let pResMat;
 		if (bStats) {
 			pResMat = GetNewMat(K + 1, 5);
 		} else {
@@ -2181,10 +2208,10 @@ function (window, undefined) {
 
 		// Uses sum(x-MeanX)^2 and not [sum x^2]-N * MeanX^2 in case bConstant.
 		// Clone constant matrices, so that Mat = Mat - Mean is possible.
-		var fMeanY = 0.0;
+		let fMeanY = 0.0;
 		if (bConstant) {
-			var pNewX = matrixClone(pMatX);
-			var pNewY = matrixClone(pMatY);
+			let pNewX = matrixClone(pMatX);
+			let pNewY = matrixClone(pMatY);
 			if (!pNewX || !pNewY) {
 				//PushError(FormulaError::MatrixSize);
 				return;
@@ -2204,11 +2231,11 @@ function (window, undefined) {
 		}
 
 
-		var fIntercept, fSSreg, fDegreesFreedom, fSSresid, fFstatistic, fRMSE, fSigmaSlope, fSigmaIntercept, fR2;
-		var aVecR, pMeans, pMatZ, pSlopes, bIsSingular, row, col, fPart;
+		let fIntercept, fSSreg, fDegreesFreedom, fSSresid, fFstatistic, fRMSE, fSigmaSlope, fSigmaIntercept, fR2;
+		let aVecR, pMeans, pMatZ, pSlopes, bIsSingular, row, col, fPart;
 		if (nCase === 1) {
 			// calculate simple regression
-			var fMeanX = 0.0;
+			let fMeanX = 0.0;
 			if (bConstant) {   // Mat = Mat - Mean
 				fMeanX = lcl_GetMeanOverAll(pMatX, N);
 				if (fMeanX === undefined) {	// explicit check for undefined is necessary since the number can be 0
@@ -2220,13 +2247,15 @@ function (window, undefined) {
 					}
 				}
 			}
-			var fSumXY = lcl_GetSumProduct(pMatX, pMatY, N);
-			var fSumX2 = lcl_GetSumProduct(pMatX, pMatX, N);
+			let fSumXY = lcl_GetSumProduct(pMatX, pMatY, N),
+				fSumX2 = lcl_GetSumProduct(pMatX, pMatX, N);
+
 			if (fSumX2 === 0.0) {
 				//PushNoValue(); // all x-values are identical
-				return;
+				// return;
+				fSumX2 = identicalValuesTrend;
 			}
-			var fSlope = fSumXY / fSumX2;
+			let fSlope = fSumXY / fSumX2;
 			fIntercept = 0.0;
 
 			if (bConstant) {
@@ -4059,17 +4088,41 @@ function (window, undefined) {
 		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			arg0.foreach2(function (v, cell, row, col) {
 				if (matching(v, matchingInfo)) {
-					let offset = new AscCommon.CellBase(row - r.bbox.r1, col - r.bbox.c1);
-					r2.setOffset(offset);
-
 					let val;
-					ws._getCellNoEmpty(r2.bbox.r1, r2.bbox.c1, function (cell) {
-						val = checkTypeCell(cell);
-					});
+					if ((r2.bbox.r1 === 0 && r2.bbox.r2 === gc_nMaxRow0) || 
+						(r2.bbox.c1 === 0 && r2.bbox.c2 === gc_nMaxCol0)) {
+						let targetRow = row;
+						let targetCol = col;
+						
+						if (r2.bbox.r1 === 0 && r2.bbox.r2 === gc_nMaxRow0) {
+							targetCol = r2.bbox.c1 + (col - r.bbox.c1);
+							if (targetCol < r2.bbox.c1 || targetCol > r2.bbox.c2) {
+								return;
+							}
+						}
+						
+						if (r2.bbox.c1 === 0 && r2.bbox.c2 === gc_nMaxCol0) {
+							targetRow = r2.bbox.r1 + (row - r.bbox.r1);
+							if (targetRow < r2.bbox.r1 || targetRow > r2.bbox.r2) {
+								return;
+							}
+						}
+						
+						ws._getCellNoEmpty(targetRow, targetCol, function (cell) {
+							val = checkTypeCell(cell);
+						});
+					} else {
+						let offset = new AscCommon.CellBase(row - r.bbox.r1, col - r.bbox.c1);
+						r2.setOffset(offset);
 
-					offset.col *= -1;
-					offset.row *= -1;
-					r2.setOffset(offset);
+						ws._getCellNoEmpty(r2.bbox.r1, r2.bbox.c1, function (cell) {
+							val = checkTypeCell(cell);
+						});
+
+						offset.col *= -1;
+						offset.row *= -1;
+						r2.setOffset(offset);
+					}
 
 					if (cElementType.number === val.type) {
 						_sum += val.getValue();
@@ -7053,21 +7106,23 @@ function (window, undefined) {
 	cGROWTH.prototype.argumentsType = [argType.reference, argType.reference, argType.reference, argType.logical];
 	cGROWTH.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cGROWTH.prototype.Calculate = function (arg) {
-		var prepeareArgs = prepeareGrowthTrendCalculation(this, arg);
+		let prepeareArgs = prepeareGrowthTrendCalculation(this, arg);
 		if (cElementType.error === prepeareArgs.type) {
 			return prepeareArgs;
 		}
-		var pMatY = prepeareArgs.pMatY;
-		var pMatX = prepeareArgs.pMatX;
-		var pMatNewX = prepeareArgs.pMatNewX;
-		var bConstant = prepeareArgs.bConstant;
-		var mat = CalculateTrendGrowth(pMatY, pMatX, pMatNewX, bConstant, true);
+
+		let pMatY = prepeareArgs.pMatY,
+			pMatX = prepeareArgs.pMatX,
+			pMatNewX = prepeareArgs.pMatNewX,
+			bConstant = prepeareArgs.bConstant;
+			
+		let	mat = CalculateTrendGrowth(pMatY, pMatX, pMatNewX, bConstant, true);
 
 		if (mat && mat[0] && mat[0][0] !== undefined) {
-			var tMatrix = [], res = new cArray();
+			let tMatrix = [], res = new cArray();
 
-			for (var i = 0; i < mat.length; i++) {
-				for (var j = 0; j < mat[i].length; j++) {
+			for (let i = 0; i < mat.length; i++) {
+				for (let j = 0; j < mat[i].length; j++) {
 					if (!tMatrix[j]) {
 						tMatrix[j] = [];
 					}
@@ -7077,6 +7132,8 @@ function (window, undefined) {
 
 			res.fillFromArray(tMatrix);
 			return res;
+		} else if (mat && mat.type && mat.type === cElementType.error) {
+			return mat;
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
@@ -7574,7 +7631,7 @@ function (window, undefined) {
 		let bConstant = getBoolValue(argClone[2], true);
 		let bStats = getBoolValue(argClone[3], false);
 
-		//возвращает матрицу [col][row]
+		//return matrix [col][row]
 		let mat = CalculateRGPRKP(pMatY, pMatX, bConstant, bStats);
 
 		//TODO далее функцию необходимо отптимизировать и сразу формировать итоговую матрицу без промежуточного транспонирования
@@ -7596,6 +7653,8 @@ function (window, undefined) {
 
 			res.fillFromArray(tMatrix);
 			return res;
+		} else if (mat && mat.type && mat.type === cElementType.error) {
+			return mat;
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
@@ -7623,28 +7682,29 @@ function (window, undefined) {
 			arg[1] = tryNumberToArray(arg[1]);
 		}
 
-		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, cElementType.array]);
-		var argClone = oArguments.args;
+		const oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, cElementType.array]);
+		let argClone = oArguments.args;
 
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
 
-		var pMatY = argClone[0];
-		var pMatX = argClone[1];
-		var bConstant = getBoolValue(argClone[2], true);
-		var bStats = getBoolValue(argClone[3], false);
+		let pMatY = argClone[0],
+			pMatX = argClone[1],
+			bConstant = getBoolValue(argClone[2], true),
+			bStats = getBoolValue(argClone[3], false),
+			res = new cArray(),
+			tMatrix = [];
 
-		//возвращает матрицу [col][row]
-		var mat = CalculateRGPRKP(pMatY, pMatX, bConstant, bStats, true);
+
+		//return matrix [col][row]
+		let mat = CalculateRGPRKP(pMatY, pMatX, bConstant, bStats, true);
 
 		//TODO далее функцию необходимо отптимизировать и сразу формировать итоговую матрицу без промежуточного транспонирования
-		if (mat && mat[0] && mat[0][0] !== undefined) {
-			var tMatrix = [], res = new cArray();
-
-			for (var i = 0; i < mat.length; i++) {
-				for (var j = 0; j < mat[i].length; j++) {
+		if (mat && mat[0] && mat[0][0] !== undefined) {	
+			for (let i = 0; i < mat.length; i++) {
+				for (let j = 0; j < mat[i].length; j++) {
 					if (!tMatrix[j]) {
 						tMatrix[j] = [];
 					}
@@ -7658,6 +7718,8 @@ function (window, undefined) {
 
 			res.fillFromArray(tMatrix);
 			return res;
+		} else if (mat && mat.type && mat.type === cElementType.error) {
+			return mat;
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
@@ -11114,22 +11176,22 @@ function (window, undefined) {
 	cTREND.prototype.argumentsType = [argType.reference, argType.reference, argType.reference, argType.logical];
 	cTREND.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cTREND.prototype.Calculate = function (arg) {
-		var prepeareArgs = prepeareGrowthTrendCalculation(this, arg);
+		let prepeareArgs = prepeareGrowthTrendCalculation(this, arg);
 		if (cElementType.error === prepeareArgs.type) {
 			return prepeareArgs;
 		}
-		var pMatY = prepeareArgs.pMatY;
-		var pMatX = prepeareArgs.pMatX;
-		var pMatNewX = prepeareArgs.pMatNewX;
-		var bConstant = prepeareArgs.bConstant;
+		let pMatY = prepeareArgs.pMatY,
+			pMatX = prepeareArgs.pMatX,
+			pMatNewX = prepeareArgs.pMatNewX,
+			bConstant = prepeareArgs.bConstant;
 
-		var mat = CalculateTrendGrowth(pMatY, pMatX, pMatNewX, bConstant);
+		let mat = CalculateTrendGrowth(pMatY, pMatX, pMatNewX, bConstant);
 
 		if (mat && mat[0] && mat[0][0] !== undefined) {
-			var tMatrix = [], res = new cArray();
+			let tMatrix = [], res = new cArray();
 
-			for (var i = 0; i < mat.length; i++) {
-				for (var j = 0; j < mat[i].length; j++) {
+			for (let i = 0; i < mat.length; i++) {
+				for (let j = 0; j < mat[i].length; j++) {
 					if (!tMatrix[j]) {
 						tMatrix[j] = [];
 					}
@@ -11139,7 +11201,9 @@ function (window, undefined) {
 
 			res.fillFromArray(tMatrix);
 			return res;
-		} else {
+		} else if (mat && mat.type && mat.type === cElementType.error) {
+			return mat;
+		}  else {
 			return new cError(cErrorType.wrong_value_type);
 		}
 	};
@@ -11999,8 +12063,40 @@ function (window, undefined) {
 		this.cacheId = {};
 		this.cacheRanges = {};
 	}
-
 	CountIfCache.prototype.constructor = CountIfCache;
+	/**
+	 * Extracts and categorizes all values from a range into a universal array structure
+	 * @private
+	 * @param {cArea} range - The range object to extract values from
+	 * @returns {Object.<cElementType, Array|number>} Object where keys are cElementType constants and values are arrays of cell values or count for empty cells
+	 */
+	CountIfCache.prototype._getUniversalArrayFromRange = function(range) {
+		const res = {};
+		const bbox = range.getBBox0();
+		let emptyCount = (bbox.c2 - bbox.c1 + 1) * (bbox.r2 - bbox.r1 + 1);
+		range.foreach2(function(cell) {
+			const type = cell.type;
+			if (type !== cElementType.empty) {
+				if (!res[type]) {
+					res[type] = [];
+				}
+				let value = cell;
+				if (type === cElementType.error) {
+					value = cell.errorType;
+				} else if (type === cElementType.string) {
+					value = value.value.toLowerCase();
+				} else {
+					value = value.value;
+				}
+				res[type].push(value);
+			}
+		});
+		for (let i in res) {
+			emptyCount -= res[i].length;
+		}
+		res[cElementType.empty] = emptyCount;
+		return res;
+	};
 	CountIfCache.prototype.calculate = function (arg, _arg1) {
 		let arg0 = arg[0], arg1 = arg[1];
 
@@ -12008,31 +12104,60 @@ function (window, undefined) {
 			return arg0;
 		}
 		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
-			cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type && cElementType.array !== arg0.type) {
+			cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type) {
 			return new cError(cErrorType.wrong_value_type);
+		}
+		const t = this;
+		function calculateOne(rangeOrCell, condition) {
+			if (cElementType.cell === rangeOrCell.type || cElementType.cell3D === rangeOrCell.type) {
+				const arr = {};
+				const value = arg0.getValue();
+				if (value.type === cElementType.empty) {
+					arr[value.type] = 1;
+				} else if (value.type === cElementType.error) {
+					arr[value.type] = [value.errorType];
+				} else {
+					arr[value.type] = [value.value];
+				}
+				return t._calculate(arr, condition);
+			}
+			else if (cElementType.cellsRange === rangeOrCell.type || cElementType.cellsRange3D === rangeOrCell.type) {
+				return t._get(rangeOrCell, condition);
+			} else {
+				return new cError(cErrorType.wrong_value_type);
+			}
 		}
 
 		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
-			arg1 = arg1.cross(_arg1);
+			const matrix = arg1.getMatrix();
+			const result = new cArray();
+			for (let row = 0; row < matrix.length; row += 1) {
+				result.addRow();
+				for (let col = 0; col < matrix[row].length; col += 1) {
+					const condition = matrix[row][col];
+					const calculateResult = calculateOne(arg0, condition);
+					result.addElementInRow(calculateResult, row);
+				}
+			}
+			return result;
 		} else if (cElementType.array === arg1.type) {
-			arg1 = arg1.getElementRowCol(0, 0);
+			const dimensions = arg1.getDimensions();
+			const colCount = dimensions.col;
+			const rowCount = dimensions.row;
+			const result = new cArray();
+			for (let row = 0; row < rowCount; row += 1) {
+				result.addRow();
+				for (let col = 0; col < colCount; col += 1) {
+					const condition = arg1.getElementRowCol(row, col);
+					const calculateResult = calculateOne(arg0, condition);
+					result.addElementInRow(calculateResult, row);
+				}
+			}
+			return result;
 		} else if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
 			arg1 = arg1.getValue();
 		}
-
-		if (cElementType.array === arg0.type) {
-			let arr = [];
-			arg0.foreach(function (_val) {
-				arr.push(_val);
-			});
-			return this._calculate(arr, arg1);
-		} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
-			return this._calculate([arg0.getValue()], arg1);
-		} else if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-			return this._get(arg0, arg1);
-		} else {
-			return new cError(cErrorType.wrong_value_type);
-		}
+		return calculateOne(arg0, arg1);
 	};
 	CountIfCache.prototype._get = function (range, arg1) {
 		let res, wsId = range.getWS().getId(),
@@ -12040,16 +12165,7 @@ function (window, undefined) {
 			valueForSearching = arg1.getValue();
 
 		if (!cacheElem) {
-			cacheElem = {elements: [], results: {}};
-
-			if (cElementType.cellsRange3D === range.type) {
-				cacheElem.elements = range.getValue();
-			} else {
-				range.foreach2(function (cell) {
-					cacheElem.elements.push(cell);
-				});
-			}
-
+			cacheElem = {elements: this._getUniversalArrayFromRange(range), results: {}};
 			this.cacheId[sRangeName] = cacheElem;
 			let cacheRange = this.cacheRanges[wsId];
 			if (!cacheRange) {
@@ -12067,35 +12183,43 @@ function (window, undefined) {
 		return res;
 	};
 	CountIfCache.prototype._calculate = function (arr, arg1) {
-
-		let checkEmptyValue = function (res, tempVal, tempMatchingInfo) {
-			//TODO нужно протестировать на различных вариантах
-			//когда в ячейке пустое значение - сравниваем его только с пустым значением
-			//при matchingInfo отличным от пустого значения в данном случае возвращаем false
-
-			//ms excel при несовпадении типов возвращает всегда отрицательное значение
-			//в нашем случае сравниваемая величина(в tempMatchingInfo) не всегда приводится к нужному типу(например, error, empty)
-			//TODO рассмотреть добавление подобной правки, проверить все варианты + расскоментировать тесты
-			/*if ((tempVal.type === cElementType.string || tempVal.type === cElementType.number) && tempMatchingInfo.val && tempMatchingInfo.val.type !== tempVal.type) {
-				return false;
-			}*/
-
-			tempVal = undefined !== tempVal.value ? tempVal.value : tempVal;
-			let matchingValue = tempMatchingInfo.val && tempMatchingInfo.val.value.toString ? tempMatchingInfo.val.value.toString() : null;
-			if (tempVal === "" && matchingValue && "" !== matchingValue.replace(/\*|\?/g, '')) {
-				return false;
-			}
-			return res;
-		};
-
 		let _count = 0;
-		let val;
 		let matchingInfo = AscCommonExcel.matchingValue(arg1);
-
-		for (let i = 0; i < arr.length; i++) {
-			_count += checkEmptyValue(matching(arr[i], matchingInfo, true, true), arr[i], matchingInfo);
+		let type = matchingInfo.val.type;
+		let searchValue = matchingInfo.val;
+		if (type === cElementType.string) {
+			searchValue = searchValue.toString().toLowerCase();
+		} else {
+			searchValue = searchValue.value;
 		}
-
+		if (type === cElementType.string) {
+			const checkErr = new cError(matchingInfo.val.value.toUpperCase());
+			if (checkErr.errorType !== -1) {
+				type = cElementType.error;
+				searchValue = checkErr.errorType;
+			}
+		}
+		if (matchingInfo.op === "<>") {
+			for (let i in arr) {
+				if (i !== String(type)) {
+					_count += arr[i].length ? arr[i].length : arr[i];
+				}
+			}
+		}
+		const typedArr = arr[type];
+		if (searchValue === "" && matchingInfo.op !== "<>") {
+			if (arr[cElementType.empty]) {
+				return new cNumber(arr[cElementType.empty]);
+			}
+			return new cNumber(0);
+		}
+		const isWildcard = type === cElementType.string && (searchValue.indexOf('*') !== -1 || searchValue.indexOf('?') !== -1);
+		const matchingFunction = getMatchingFunction(type, matchingInfo.op, isWildcard);
+		if (typedArr) {
+			for (let i = 0; i < typedArr.length; i += 1) {
+				_count += matchingFunction(typedArr[i], searchValue);
+			}
+		}
 		return new cNumber(_count);
 	};
 	CountIfCache.prototype.remove = function (cell) {
@@ -12125,6 +12249,8 @@ function (window, undefined) {
 	window['AscCommonExcel'].gauss = gauss;
 	window['AscCommonExcel'].gaussinv = gaussinv;
 	window['AscCommonExcel'].getPercentile = getPercentile;
+	window['AscCommonExcel'].getMedian = getMedian;
+	window['AscCommonExcel'].getPercentileExclusive = getPercentileExclusive;
 
 	window['AscCommonExcel'].cAVERAGE = cAVERAGE;
 	window['AscCommonExcel'].cCOUNT = cCOUNT;

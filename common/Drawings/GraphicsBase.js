@@ -59,7 +59,7 @@
 		AscFormat.CColorModifiers.prototype.RGB2HSL(r, g, b, oHSL);
 		var dKoefL = (255 - 58) / 255;
 		oHSL.L = 255 - ((dKoefL * oHSL.L) >> 0);
-		AscFormat.CColorModifiers.prototype.HSL2RGB(oHSL, oRGB);
+		AscFormat.CColorModifiers.prototype.HSL2RGB(oHSL, oRGB, true);
 		return oRGB;
 	};
 
@@ -451,6 +451,10 @@
 	CGraphicsBase.prototype.drawFlowAnchor = function(x, y)
 	{
 	};
+	
+	CGraphicsBase.prototype.drawPermissionMark = function(x, y, h, isStart, isActive)
+	{
+	};
 
 	CGraphicsBase.prototype.DrawFootnoteRect = function(x, y, w, h)
 	{
@@ -459,6 +463,8 @@
 	CGraphicsBase.prototype.DrawPresentationComment = function(type, x, y, w, h)
 	{
 	};
+	CGraphicsBase.prototype.drawBlipFillTile = function () { };
+	CGraphicsBase.prototype.drawBlipFillStretch = function () { };
 
 	// INTEGER GRID
 	CGraphicsBase.prototype.SetIntegerGrid = function(param)

@@ -847,39 +847,6 @@ CRadical.prototype.GetTextOfElement = function(oMathText)
 
 	return oMathText;
 };
-CRadical.fromMathML = function(reader, isRoot)
-{
-	let props = new CMathRadicalPr();
-	props.content = [];
-	
-	if (isRoot)
-	{
-		let mContents = [];
-		let depth = reader.GetDepth();
-		while (reader.ReadNextSiblingNode(depth))
-		{
-			mContents.push(AscWord.ParaMath.readMathMLContent(reader));
-		}
-		
-		if (mContents.length >= 2)
-		{
-			props.content[0] = mContents[1];
-			props.content[1] = mContents[0];
-		}
-		else
-		{
-			props.content[0] = mContents[0];
-		}
-	}
-	else
-	{
-		let mContent = new CMathContent();
-		mContent.fromMathML(reader);
-		props.content[1] = mContent;
-		props.degHide = true;
-	}
-	return new CRadical(props);
-};
 
 /**
  *

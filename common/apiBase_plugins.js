@@ -352,22 +352,28 @@
 		let b_old_save_format = AscCommon.g_clipboardBase.bSaveFormat;
 		AscCommon.g_clipboardBase.bSaveFormat = false;
 		let _t = this;
-
-		this.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, _elem, undefined, undefined, undefined,
-			function () {
-				_t.decrementCounterLongAction();
-
-				let fCallback = function () {
-					document.body.removeChild(_elem);
-					_elem = null;
-					AscCommon.g_clipboardBase.bSaveFormat = b_old_save_format;
-				};
-				if (_t.checkLongActionCallback(fCallback, null)) {
-					fCallback();
+		
+		this.executeGroupActions(function()
+		{
+			_t.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, _elem, undefined, undefined, undefined,
+				function()
+				{
+					_t.decrementCounterLongAction();
+					
+					let fCallback = function()
+					{
+						document.body.removeChild(_elem);
+						_elem                                 = null;
+						AscCommon.g_clipboardBase.bSaveFormat = b_old_save_format;
+					};
+					if (_t.checkLongActionCallback(fCallback, null))
+					{
+						fCallback();
+					}
+					window.g_asc_plugins && window.g_asc_plugins.onPluginMethodReturn(true);
 				}
-				window.g_asc_plugins &&	window.g_asc_plugins.onPluginMethodReturn(true);
-			}
-		);
+			);
+		});
 	};
 
     /**
@@ -380,11 +386,21 @@
 	 */
     Api.prototype["pluginMethod_PasteText"] = function(text)
     {
-        if (!AscCommon.g_clipboardBase)
+        if (!AscCommon.g_clipboardBase || !window.g_asc_plugins || !text)
             return null;
 
-        this.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Text, text);
-    };
+		var _t = this;
+		function onPasteAsync() {
+			_t.decrementCounterLongAction();
+			window.g_asc_plugins.onPluginMethodReturn(true);
+		}
+
+		window.g_asc_plugins.setPluginMethodReturnAsync();
+		this.incrementCounterLongAction();
+		this.executeGroupActions(function(){
+			_t.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Text, text, undefined, undefined, undefined, onPasteAsync);
+		});
+	};
 
     /**
      * An object containing the data about all the macros from the document.
@@ -445,7 +461,10 @@
 	 */
     Api.prototype["pluginMethod_StartAction"] = function(type, description)
     {
-        this.sync_StartAction((type == "Block") ? Asc.c_oAscAsyncActionType.BlockInteraction : Asc.c_oAscAsyncActionType.Information, description);
+		if ("GroupActions" === type)
+			this.startGroupActions();
+		else
+			this.sync_StartAction((type === "Block") ? Asc.c_oAscAsyncActionType.BlockInteraction : Asc.c_oAscAsyncActionType.Information, description);
     };
 
     /**
@@ -460,7 +479,17 @@
 	 */
     Api.prototype["pluginMethod_EndAction"] = function(type, description, status)
     {
-        this.sync_EndAction((type == "Block") ? Asc.c_oAscAsyncActionType.BlockInteraction : Asc.c_oAscAsyncActionType.Information, description);
+		if ("GroupActions" === type)
+		{
+			if (status)
+				this.cancelGroupActions();
+			else
+				this.endGroupActions();
+			
+			return;
+		}
+		
+        this.sync_EndAction((type === "Block") ? Asc.c_oAscAsyncActionType.BlockInteraction : Asc.c_oAscAsyncActionType.Information, description);
 
         if (window["AscDesktopEditor"] && status != null && status != "")
         {
@@ -873,7 +902,7 @@
      * @param {string} guid - A string value which specifies a plugin identifier which must be of the *asc.{UUID}* type.
      * @param {number} w - A number which specifies the window width measured in millimeters.
      * @param {number} h - A number which specifies the window height measured in millimeters.
-     * @param {boolean} isKeyboardTake - Defines if the keyboard is caught (**true**) or not (**alse**).
+     * @param {boolean} isKeyboardTake - Defines if the keyboard is caught (**true**) or not (**false**).
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ShowInputHelper.js
 	 */
     Api.prototype["pluginMethod_ShowInputHelper"] = function(guid, w, h, isKeyboardTake)
@@ -1406,7 +1435,7 @@
 		};
 	}
 
-	Api.prototype.getUsedBackgroundPlugins = function()
+	Api.prototype.getUsedBackgroundPlugins = function(noCheckBundled)
 	{
 		let services = [];
 		try
@@ -1419,13 +1448,71 @@
 		{
 			services = [];
 		}
+
+		if (window.g_asc_plugins && noCheckBundled !== true)
+		{
+			let allPlugins = window.g_asc_plugins.plugins;
+			let unbundledPlugins = this.getUnbundledPlugins();
+			let bundledBackground = Object.create(null);
+
+			for (let i = 0, len = allPlugins.length; i < len; i++)
+			{
+				let item = allPlugins[i];
+				if (item.isBackground() && !unbundledPlugins[item.guid])
+					bundledBackground[item.guid] = true;
+			}
+
+			for (let i = 0, len = services.length; i < len; i++)
+			{
+				if (bundledBackground[services[i]])
+					delete bundledBackground[services[i]];
+			}
+
+			for (let i in bundledBackground)
+			{
+				services.push(i);
+			}
+		}
+
 		return services;
 	};
 	Api.prototype["getUsedBackgroundPlugins"] = Api.prototype.getUsedBackgroundPlugins;
 
 	Api.prototype.setUsedBackgroundPlugins = function(services)
 	{
-		window.localStorage.setItem("asc_plugins_background", JSON.stringify(services));
+		try
+		{
+			window.localStorage.setItem("asc_plugins_background", JSON.stringify(services));
+		}
+		catch (e)
+		{
+		}
+	};
+
+	Api.prototype.getStoppedBackgroundPlugins = function()
+	{
+		let services = [];
+		try
+		{
+			services = JSON.parse(window.localStorage.getItem("asc_plugins_background_stopped"));
+			if (!services)
+				services = [];
+		}
+		catch (e)
+		{
+			services = [];
+		}
+		return services;
+	};
+	Api.prototype.setStoppedBackgroundPlugins = function(services)
+	{
+		try
+		{
+			window.localStorage.setItem("asc_plugins_background_stopped", JSON.stringify(services));
+		}
+		catch (e)
+		{
+		}
 	};
 
 	Api.prototype.checkInstalledPlugins = function()
@@ -1496,6 +1583,72 @@
 			}, 10);
 
 		}
+	};
+
+	// return user-changed plugins guids
+	Api.prototype.getUnbundledPlugins = function()
+	{
+		let changed = Object.create(null);
+
+		let localStorageItems = getLocalStorageItem("asc_plugins_installed");
+		if (localStorageItems)
+		{
+			for (let item in localStorageItems)
+			{
+				if (localStorageItems[item]["guid"])
+					changed[localStorageItems[item]["guid"]] = true;
+			}
+		}
+
+		localStorageItems = getLocalStorageItem("asc_plugins_removed");
+		if (localStorageItems)
+		{
+			for (let item in localStorageItems)
+			{
+				if (localStorageItems[item]["guid"])
+					changed[localStorageItems[item]["guid"]] = true;
+			}
+		}
+
+		if (window["Asc"]["extensionPlugins"] && window["Asc"]["extensionPlugins"].length)
+		{
+			let arrayExtensions = window["Asc"]["extensionPlugins"];
+			for (let i = 0, len = arrayExtensions.length; i < len; i++)
+			{
+				if (arrayExtensions[i]["guid"])
+					changed[arrayExtensions[i]["guid"]] = true;
+			}
+		}
+
+		let backgroundUsed = this.getUsedBackgroundPlugins(true);
+		for (let i = 0, len = backgroundUsed.length; i < len; i++)
+		{
+			changed[backgroundUsed[i]] = true;
+		}
+		backgroundUsed = this.getStoppedBackgroundPlugins();
+		for (let i = 0, len = backgroundUsed.length; i < len; i++)
+		{
+			changed[backgroundUsed[i]] = true;
+		}
+
+		if (window["UpdateInstallPlugins"] && window["AscDesktopEditor"])
+		{
+			try
+			{
+				let plugins = JSON.parse(window["AscDesktopEditor"]["GetInstallPlugins"]());
+				let userPlugins = plugins[1] || [];
+
+				for (var i = 0, len = userPlugins.length; i < len; i++)
+				{
+					changed[userPlugins[i]["guid"]] = true;
+				}
+			}
+			catch (e)
+			{
+			}
+		}
+
+		return changed;
 	};
 
     /**
@@ -2027,6 +2180,58 @@
 		let baseUrl = this.pluginsManager.pluginsMap[guid].baseUrl;
 		correctItemIcons(variation["icons"], baseUrl);
 
+		if (variation["isTargeted"])
+		{
+			let w = 300;
+			let h = 100;
+			if (variation["size"])
+			{
+				w = variation["size"][0];
+				h = variation["size"][1];
+			}
+
+			let offsets = this.getTargetOnBodyCoords();
+			if (w > offsets.W)
+				w = offsets.W;
+			if (h > offsets.H)
+				h = offsets.H;
+
+			let offsetToFrame = 10;
+			let r = offsets.X + offsetToFrame + w;
+			let t = offsets.Y - offsetToFrame - h;
+			let b = offsets.Y + offsets.TargetH + offsetToFrame + h;
+
+			let x = offsets.X + offsetToFrame;
+			if (r > offsets.W)
+				x += (offsets.W - r);
+
+			let y = 0;
+			if (b < offsets.H)
+			{
+				y = offsets.Y + offsets.TargetH + offsetToFrame;
+			}
+			else if (t > 0)
+			{
+				y = t;
+			}
+			else
+			{
+				y = offsets.Y + offsets.TargetH + offsetToFrame;
+				h += (offsets.H - b);
+			}
+
+			if (y > offsets.H)
+				y = offsets.H - h;
+			if (y < offsets.editorY)
+				y = offsets.editorY;
+			if (x < offsets.editorX)
+				x = offsets.editorX;
+
+			variation["size"] = [w, h];
+			variation["positionX"] = x;
+			variation["positionY"] = y;
+		}
+
 		this.sendEvent("asc_onPluginWindowShow", frameId, variation);
 	};
 
@@ -2036,13 +2241,21 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} frameId - The frame ID.
+	 * @param {boolean} isFocus - The focus will be made on the window.
 	 * @alias ActivateWindow
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ActivateWindow.js
 	 */
-	Api.prototype["pluginMethod_ActivateWindow"] = function(frameId)
+	Api.prototype["pluginMethod_ActivateWindow"] = function(frameId, isFocus)
 	{
 		this.sendEvent("asc_onPluginWindowActivate", frameId);
+
+		if (isFocus)
+		{
+			let frame = document.getElementById(frameId);
+			if (frame)
+				frame.focus();
+		}
 	};
 
 	/**
@@ -2173,6 +2386,49 @@
 	 * @param {object} data - Data.
 	 * @since 9.0.0
 	 */
+	Api.prototype["pluginMethod_AI"] = function(data)
+	{
+		if (!window.g_asc_plugins)
+			return;
+
+		window.g_asc_plugins._internalEvents["ai_onStartAction"] = function(data) {
+			window.g_asc_plugins.api.sync_StartAction((data.type === "Block") ? Asc.c_oAscAsyncActionType.BlockInteraction : Asc.c_oAscAsyncActionType.Information, data.description);
+		};
+		window.g_asc_plugins._internalEvents["ai_onEndAction"] = function(data) {
+			window.g_asc_plugins.api.sync_EndAction((data.type === "Block") ? Asc.c_oAscAsyncActionType.BlockInteraction : Asc.c_oAscAsyncActionType.Information, data.description);
+		};
+		window.g_asc_plugins._internalEvents["ai_onRequest"] = function(data) {
+			let api = window.g_asc_plugins.api;
+			let curItem = api.aiResolvers[0];
+			api.aiResolvers.shift();
+
+			curItem.resolve(data);
+
+			if (api.aiResolvers.length > 0)
+				api._AI();
+		};
+
+		window.g_asc_plugins.setPluginMethodReturnAsync();
+
+		data["isFromMethod"] = true;
+		this.AI(data, function(data) {
+			delete window.g_asc_plugins._internalEvents["ai_onStartAction"];
+			delete window.g_asc_plugins._internalEvents["ai_onEndAction"];
+			delete window.g_asc_plugins._internalEvents["ai_onRequest"];
+
+			window.g_asc_plugins.onPluginMethodReturn(data);
+		});
+	};
+
+	/**
+	 * Catch AI event from plugin.
+	 * @memberof Api
+	 * @undocumented
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDF"]
+	 * @alias onAIRequest
+	 * @param {object} data - Data.
+	 * @since 9.0.0
+	 */
 	Api.prototype["pluginMethod_onAIRequest"] = function(data)
 	{
 		let curItem = this.aiResolvers[0];
@@ -2212,6 +2468,18 @@
 
 			window.g_asc_plugins.onPluginMethodReturn(ret);
 		});
+	};
+
+	/**
+	 * Returns focus to the editor.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias FocusEditor
+	 */
+	Api.prototype["pluginMethod_FocusEditor"] = function()
+	{
+		if (AscCommon.g_inputContext && AscCommon.g_inputContext.HtmlArea)
+			AscCommon.g_inputContext.HtmlArea.focus();
 	};
 
 })(window);

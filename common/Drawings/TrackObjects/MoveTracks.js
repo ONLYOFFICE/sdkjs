@@ -682,19 +682,24 @@ function MoveComment(comment)
 
 function MoveAnnotationTrack(originalObject)
 {
+    AscCommon.History.StartNoHistoryMode();
+
     this.bIsTracked     = false;
     this.originalObject = originalObject;
-    this.x              = originalObject._origRect[0];
-    this.y              = originalObject._origRect[1];
+    this.x              = originalObject._rect[0];
+    this.y              = originalObject._rect[1];
     this.viewer         = Asc.editor.getDocumentRenderer();
-    this.objectToDraw   = originalObject.LazyCopy();
+    this.objectToDraw   = originalObject.Copy(true);
+    this.objectToDraw.Recalculate();
     this.pageIndex      = originalObject.GetPage();
+
+    AscCommon.History.EndNoHistoryMode();
 
     this.track = function(dx, dy, pageIndex)
     {
         this.bIsTracked = true;
-        this.x = originalObject._origRect[0] + dx * g_dKoef_mm_to_pt;
-        this.y = originalObject._origRect[1] + dy * g_dKoef_mm_to_pt;
+        this.x = originalObject._rect[0] + dx * g_dKoef_mm_to_pt;
+        this.y = originalObject._rect[1] + dy * g_dKoef_mm_to_pt;
         this.pageIndex = pageIndex;
 
         this.initCanvas();
@@ -864,7 +869,7 @@ function MoveChartObjectTrack(oObject, oChartSpace)
             return;
         }
 
-        History.Create_NewPoint(1);
+        AscCommon.History.Create_NewPoint(1);
         var oObjectToSet = null;
         if(this.originalObject instanceof AscFormat.CDLbl)
         {
@@ -997,7 +1002,7 @@ function MoveChartObjectTrack(oObject, oChartSpace)
         {
             return;
         }
-        History.Create_NewPoint(1);
+        AscCommon.History.Create_NewPoint(1);
 		this.guide.setPos(this.getPos());
     };
 

@@ -307,6 +307,12 @@ AscDFH.changesRelationMap[AscDFH.historyitem_Paragraph_Bidi] = [
 	AscDFH.historyitem_Paragraph_Bidi,
 	AscDFH.historyitem_Paragraph_Pr
 ];
+AscDFH.changesRelationMap[AscDFH.historyitem_Paragraph_ParaId] = [
+	AscDFH.historyitem_Paragraph_ParaId
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_Paragraph_TextId] = [
+	AscDFH.historyitem_Paragraph_TextId
+];
 
 // Общая функция Merge для изменений, которые зависят только от себя и AscDFH.historyitem_Paragraph_Pr
 function private_ParagraphChangesOnMergePr(oChange)
@@ -1663,23 +1669,17 @@ CChangesParagraphSectPr.prototype.constructor = CChangesParagraphSectPr;
 CChangesParagraphSectPr.prototype.Type = AscDFH.historyitem_Paragraph_SectionPr;
 CChangesParagraphSectPr.prototype.Undo = function()
 {
-	var oParagraph = this.Class;
-	var oOldSectPr = oParagraph.SectPr;
-	oParagraph.SectPr = this.Old;
-	
-	let logicDocument = oParagraph.GetLogicDocument();
-	if (logicDocument)
-		logicDocument.UpdateSectionInfo(oOldSectPr, this.Old, false);
+	let paragraph = this.Class;
+	let oldSectPr = paragraph.SectPr;
+	paragraph.SectPr = this.Old;
+	paragraph.UpdateSectionInfo(oldSectPr, false);
 };
 CChangesParagraphSectPr.prototype.Redo = function()
 {
-	var oParagraph = this.Class;
-	var oOldSectPr = oParagraph.SectPr;
-	oParagraph.SectPr = this.New;
-	
-	let logicDocument = oParagraph.GetLogicDocument();
-	if (logicDocument)
-		logicDocument.UpdateSectionInfo(oOldSectPr, this.New, false);
+	let paragraph = this.Class;
+	let oldSectPr = paragraph.SectPr;
+	paragraph.SectPr = this.New;
+	paragraph.UpdateSectionInfo(oldSectPr, false);
 };
 CChangesParagraphSectPr.prototype.WriteToBinary = function(Writer)
 {
@@ -2083,3 +2083,46 @@ CChangesParagraphBidi.prototype.IsNeedRecalculate = function()
 	return true;
 };
 CChangesParagraphBidi.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
+
+(function()
+{
+	/**
+	 * @constructor
+	 * @extends {AscDFH.CChangesBaseLongProperty}
+	 */
+	function CChangesParagraphParaId(Class, Old, New)
+	{
+		AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New);
+	}
+	
+	AscDFH.InheritPropertyChange(
+		CChangesParagraphParaId,
+		AscDFH.CChangesBaseLongProperty,
+		AscDFH.historyitem_Paragraph_ParaId,
+		function(value)
+		{
+			this.Class.ParaId = value;
+		}
+	);
+	AscDFH.CChangesParagraphParaId = CChangesParagraphParaId;
+	
+	/**
+	 * @constructor
+	 * @extends {AscDFH.CChangesBaseLongProperty}
+	 */
+	function CChangesParagraphTextId(Class, Old, New)
+	{
+		AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New);
+	}
+	
+	AscDFH.InheritPropertyChange(
+		CChangesParagraphTextId,
+		AscDFH.CChangesBaseLongProperty,
+		AscDFH.historyitem_Paragraph_TextId,
+		function(value)
+		{
+			this.Class.TextId = value;
+		}
+	);
+	AscDFH.CChangesParagraphTextId = CChangesParagraphTextId;
+})();

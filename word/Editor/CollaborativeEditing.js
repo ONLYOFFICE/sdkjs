@@ -238,9 +238,9 @@ CWordCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
     if (this.Is_Fast())
 	{
 		var oParagraph = this.m_oLogicDocument.GetCurrentParagraph();
-		nPageIndex     = oParagraph ? Math.max(oParagraph.GetCurrentPageAbsolute(), editor.GetCurrentVisiblePage()) : undefined;
+		nPageIndex     = oParagraph ? Math.max(oParagraph.GetAbsoluteCurrentPage(), editor.GetCurrentVisiblePage()) : undefined;
 	}
-
+	
 	this.m_oLogicDocument.ResumeRecalculate();
 	this.m_oLogicDocument.RecalculateByChanges(this.CoHistory.GetAllChanges(), this.m_nRecalcIndexStart, this.m_nRecalcIndexEnd, false, nPageIndex);
 	this.m_oLogicDocument.UpdateTracks();
@@ -381,10 +381,10 @@ CWordCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
         {
             // Если у нас началось редактирование диаграммы, а вернулось, что ее редактировать нельзя,
             // посылаем сообщение о закрытии редактора диаграмм.
-            if (oEditor.isOpenedChartFrame)
-                oEditor.sync_closeChartEditor();
+            if (oEditor.frameManager.isLoadingChartEditor)
+	            oEditor.sync_closeChartEditor();
 
-          if (oEditor.isOleEditor)
+          if (oEditor.frameManager.isLoadingOleEditor)
             oEditor.sync_closeOleEditor();
 
             // Делаем откат на 1 шаг назад и удаляем из Undo/Redo эту последнюю точку
@@ -392,8 +392,8 @@ CWordCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
             AscCommon.History.Clear_Redo();
         }
 
-        oEditor.isChartEditor = false;
-        oEditor.isOleEditor = false;
+	    oEditor.frameManager.endLoadChartEditor();
+	    oEditor.frameManager.endLoadOleEditor();
     }
 };
 CWordCollaborativeEditing.prototype.AddContentControlForSkippingOnCheckEditingLock = function(oContentControl)

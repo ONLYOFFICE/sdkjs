@@ -243,15 +243,14 @@
 
 				asc_applyFunction(callback, true);
 			} else if (result["error"]) {
-				if (Asc.editor && Asc.editor.isOleEditor && !Asc.editor.isEditOleMode) {
+				if (Asc.editor.frameManager.isLoadingOleEditor) {
 					Asc.editor.sync_closeOleEditor();
 				}
 
 				asc_applyFunction(callback, false);
 			}
-			if (Asc.editor && !Asc.editor.isEditOleMode) {
-				Asc.editor.isOleEditor = false;
-			}
+
+			Asc.editor.frameManager.endLoadOleEditor();
 		};
 		CCollaborativeEditing.prototype.addUnlock = function (LockClass) {
 			this.m_arrNeedUnlock.push(LockClass);
@@ -1038,12 +1037,12 @@
 			if (changes.length > 0) {
 				//изменение не последнее потому что могут добавиться при корректировке
 				let elem = changes.find(function(elem){
-					if(elem && elem.Point) {
+					if(elem && elem.oData && elem.oData.Point) {
 						return true;
 					}
 				});
 				if (elem) {
-					Point = elem.Point;
+					Point = elem.oData.Point;
 				}
 			}
 			//todo Apply_LinkData inside UndoRedoEnd

@@ -1472,7 +1472,7 @@
 				if (this.drawingCtx.fillColor && this.drawingCtx.fillColor.isEqual(_r, _g, _b, _a)) {
 					setColor = false;
 				}
-				if (setColor) {
+				if (setColor || window["IS_NATIVE_EDITOR"]) {
 					this.drawingCtx.setFillStyle(textColor);
 				}
 				/////
@@ -1554,7 +1554,7 @@
 					return strongDir;
 				}
 			}
-			return AscBidi.DIRECTION_FLAG.RTL;
+			return AscBidi.DIRECTION_FLAG.LTR;
 		};
 
 	}

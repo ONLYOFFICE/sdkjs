@@ -814,8 +814,11 @@ CMathBase.prototype.Set_CompiledCtrPrp = function(Parent, ParaMath, RPI)
         if ( undefined != this.CtrPrp.RStyle )
         {
             var Styles = ParaMath.Paragraph.Parent.Get_Styles();
-            var StyleTextPr = Styles.Get_Pr( this.CtrPrp.RStyle, styletype_Character ).TextPr;
-            this.CompiledCtrPrp.Merge( StyleTextPr );
+            if (Styles instanceof AscWord.CStyles)
+            {
+                var StyleTextPr = Styles.Get_Pr( this.CtrPrp.RStyle, styletype_Character ).TextPr;
+                this.CompiledCtrPrp.Merge(StyleTextPr);
+            }
         }
 
         var defaultTxtPrp = ParaMath.Get_Default_TPrp();

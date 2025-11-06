@@ -1105,7 +1105,19 @@ $(function () {
 				let strBinomial = MathContent.GetTextOfElement(0).GetText();
 				assert.strictEqual(strBinomial, '(1→∞)', 'Check \\infty');
 			})
-
+			QUnit.test('Check processing of \\begin bracket and | on defferent levels', function (assert)
+			{
+				Clear();
+				logicDocument.SetMathInputType(0);
+				AddText('ln |1|');
+				assert.ok(true, "Add func 'ln |1|'");
+				MathContent.MoveCursorToEndPos()
+				assert.ok(true, "Move the cursor outside the content of the function");
+				AddText('+');
+				assert.ok(true, "Add '+'");
+				let strBinomial = MathContent.GetTextOfElement(0).GetText();
+				assert.strictEqual(strBinomial, 'ln⁡|1|+', 'Check processing of \\begin bracket and | on defferent levels');
+			})
 			QUnit.test('Check absolute brackets inside normal brackets', function (assert)
 			{
 				Clear();
@@ -1274,7 +1286,7 @@ $(function () {
 				logicDocument.ConvertMathView(true);
 				assert.ok(true, "Convert to linear view");
 
-				assert.strictEqual(MathContent.Root.Content[1].MathPrp.brk !== undefined, true, 'Check brk in "+" ParaRun');
+				assert.strictEqual(MathContent.Root.Content[2].MathPrp.brk !== undefined, true, 'Check brk in "+" ParaRun');
 
 				logicDocument.ConvertMathView(false);
 				assert.ok(true, "Convert to professional view");
@@ -1774,7 +1786,7 @@ $(function () {
 				Clear();
 				logicDocument.SetMathInputType(1);
 
-				AddText('\\lim\\below{\\left(n\\to\\infty\\right){\\left(1+\\frac{1}{n}\\right)^n}}');
+				AddText('\\lim\\below{\\left(n\\to\\infty\\right)}{\\left(1+\\frac{1}{n}\\right)^n}');
 
 				MathContent.ConvertView(true, Asc.c_oAscMathInputType.LaTeX);
 				assert.ok(true, "Convert to proff. view");
@@ -1783,7 +1795,7 @@ $(function () {
 				assert.ok(true, "Convert to linear view");
 
 				let strFunc = MathContent.GetTextOfElement(0).GetText();
-				assert.strictEqual(strFunc, '\\lim\\below{\\left(n\\to\\infty\\right){\\left(1+\\frac{1}{n}\\right)^n}}', 'Check complex math func content');
+				assert.strictEqual(strFunc, '\\lim\\below{\\left(n\\to\\infty\\right)}{\\left(1+\\frac{1}{n}\\right)^n}', 'Check complex math func content');
 			})
 
 			// QUnit.todo('Check eqarray frac - Find case for LaTeX', function (assert)

@@ -338,3 +338,9 @@ Asc['asc_docs_api'].prototype.asc_setAdvancedOptions = function(idOption, option
     }
 };
 Asc['asc_docs_api'].prototype["asc_setAdvancedOptions"] = Asc['asc_docs_api'].prototype.asc_setAdvancedOptions;
+
+Asc['asc_docs_api'].prototype.asc_changeExternalReference = function(eR)
+{
+	this._changeDesktopChartExternalReference(eR);
+};
+Asc['asc_docs_api'].prototype["asc_changeExternalReference"] = Asc['asc_docs_api'].prototype.asc_changeExternalReference;

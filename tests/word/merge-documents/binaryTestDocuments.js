@@ -296,7 +296,7 @@ CMathBase.prototype.getTestObject = function (arrParentContent)
 		oRun.getTestObject(oContentObject.content);
 	});
 }
-CDocumentSectionsInfo.prototype.getTestObject = function (arrParentContent)
+AscWord.DocumentSections.prototype.getTestObject = function (arrParentContent)
 {
 	const arrHeaders = this.GetAllHdrFtrs();
 	for (let index = 0, count = arrHeaders.length; index < count; ++index)

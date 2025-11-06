@@ -218,12 +218,6 @@ CChartSpace.prototype.handleUpdateFlip = function()
     //this.setRecalculateInfo();
     this.addToRecalculate();
 };
-CChartSpace.prototype.handleUpdateChart = function()
-{
-    this.recalcChart();
-    this.setRecalculateInfo();
-    this.addToRecalculate();
-};
 CChartSpace.prototype.handleUpdateStyle = function()
 {
     this.recalcInfo.recalculateSeriesColors = true;
@@ -478,7 +472,7 @@ CTable.prototype.DrawSelectionOnPage = function(CurPage)
         return;
 
     var Page    = this.Pages[CurPage];
-    var PageAbs = this.private_GetAbsolutePageIndex(CurPage);
+    var PageAbs = this.GetAbsolutePage(CurPage);
 
     var H;
     switch (this.Selection.Type)
@@ -495,7 +489,7 @@ CTable.prototype.DrawSelectionOnPage = function(CurPage)
                 var X_end   = Page.X + CellInfo.X_cell_end;
 
                 var Cell_Pages   = Cell.Content_Get_PagesCount();
-                var Cell_PageRel = CurPage - Cell.Content.Get_StartPage_Relative();
+                var Cell_PageRel = CurPage - Cell.Content.GetRelativeStartPage();
                 if (Cell_PageRel < 0 || Cell_PageRel >= Cell_Pages)
                     continue;
 
@@ -533,7 +527,7 @@ CTable.prototype.DrawSelectionOnPage = function(CurPage)
         case table_Selection_Text:
         {
             var Cell = this.Content[this.Selection.StartPos.Pos.Row].Get_Cell(this.Selection.StartPos.Pos.Cell);
-            var Cell_PageRel = CurPage - Cell.Content.Get_StartPage_Relative();
+            var Cell_PageRel = CurPage - Cell.Content.GetRelativeStartPage();
             Cell.Content_DrawSelectionOnPage(Cell_PageRel);
             break;
         }
@@ -648,12 +642,19 @@ CTablePr.prototype.InitDefault = function()
     this.TableStyleRowBandSize = 1;
     this.Jc                    = AscCommon.align_Left;
     this.Shd                   = new CDocumentShd();
-    this.TableBorders.Bottom   = new CDocumentBorder();
-    this.TableBorders.Left     = new CDocumentBorder();
-    this.TableBorders.Right    = new CDocumentBorder();
-    this.TableBorders.Top      = new CDocumentBorder();
-    this.TableBorders.InsideH  = new CDocumentBorder();
-    this.TableBorders.InsideV  = new CDocumentBorder();
+		const oBorderObj = {
+			Color: {r: 0, g: 0, b: 0},
+			Unifill: AscFormat.CreateUnfilFromRGB(0, 0, 0),
+			Space: 0,
+			Size: 12700 / 36000,
+			Value: border_Single
+		};
+    this.TableBorders.Bottom   = CDocumentBorder.FromObject(oBorderObj);
+    this.TableBorders.Left     = CDocumentBorder.FromObject(oBorderObj);
+    this.TableBorders.Right    = CDocumentBorder.FromObject(oBorderObj);
+    this.TableBorders.Top      = CDocumentBorder.FromObject(oBorderObj);
+    this.TableBorders.InsideH  = CDocumentBorder.FromObject(oBorderObj);
+    this.TableBorders.InsideV  = CDocumentBorder.FromObject(oBorderObj);
     this.TableCellMar.Bottom   = new CTableMeasurement(tblwidth_Mm, 1.27);
     this.TableCellMar.Left     = new CTableMeasurement(tblwidth_Mm, 2.54/*5.4 * g_dKoef_pt_to_mm*/); // 5.4pt
     this.TableCellMar.Right    = new CTableMeasurement(tblwidth_Mm, 2.54/*5.4 * g_dKoef_pt_to_mm*/); // 5.4pt

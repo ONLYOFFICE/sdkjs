@@ -153,6 +153,16 @@
 			}
 		}
 
+		// bug #76224
+		if (this.isViewMode(true))
+		{
+			if (this.Mode === AscCommon.MobileTouchMode.FlowObj ||
+				this.Mode === AscCommon.MobileTouchMode.InlineObj)
+			{
+				this.Mode = AscCommon.MobileTouchMode.None;
+			}
+		}
+
 		if (!isLockedTouch && this.delegate.IsLockedZoom())
 			isLockedTouch = true;
 
@@ -224,7 +234,7 @@
 			case AscCommon.MobileTouchMode.Scroll:
 			{
 				// ничего не меняем, просто перемещаем точку
-				this.DownPoint           = this.delegate.ConvertCoordsFromCursor(global_mouseEvent.X, global_mouseEvent.Y);
+				this.DownPoint = this.delegate.ConvertCoordsFromCursor(global_mouseEvent.X, global_mouseEvent.Y);
 				this.DownPointOriginal.X = global_mouseEvent.X;
 				this.DownPointOriginal.Y = global_mouseEvent.Y;
 

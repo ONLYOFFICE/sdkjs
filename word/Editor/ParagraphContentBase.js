@@ -78,6 +78,9 @@ CParagraphContentBase.prototype.PreDelete = function()
 CParagraphContentBase.prototype.GetCurrentPermRanges = function(permRanges, isCurrent)
 {
 };
+CParagraphContentBase.prototype.CorrectPosToPermRanges = function(state, paraPos, depth, isCurrent)
+{
+};
 /**
  * Выствялем параграф, в котром лежит данный элемент
  * @param {Paragraph} oParagraph
@@ -111,6 +114,10 @@ CParagraphContentBase.prototype.IsRun = function()
 	return false;
 };
 CParagraphContentBase.prototype.IsMath = function()
+{
+	return false;
+};
+CParagraphContentBase.prototype.IsAnnotationMark = function()
 {
 	return false;
 };
@@ -742,6 +749,10 @@ CParagraphContentBase.prototype.RestartSpellCheck = function()
 CParagraphContentBase.prototype.GetDirectTextPr = function()
 {
 	return null;
+};
+CParagraphContentBase.prototype.GetAllAnnotationMarks = function(marks)
+{
+	return marks ? marks : [];
 };
 CParagraphContentBase.prototype.GetAllFields = function(isUseSelection, arrFields)
 {
@@ -1946,11 +1957,13 @@ CParagraphContentWithParagraphLikeContent.prototype.Remove = function(Direction,
 	{
 		var ContentPos = this.State.ContentPos;
 
+		// TODO: Пересмотреть эту проверку. Выделять целиком КК нужно, если курсор изначально находился снаружи,
+		//       а если он был внутри, то удалять нужно именно внутреннее содержимое
 		if ((true === this.Cursor_Is_Start() || true === this.Cursor_Is_End())
 			&& !this.IsEmpty()
 			&& (!this.CanPlaceCursorInside()
 				|| !(this instanceof CInlineLevelSdt)
-				|| (!this.IsComplexForm() && !this.IsTextForm() && !this.IsComboBox())))
+				|| (!this.IsComplexForm() && !this.IsTextForm() && !this.IsComboBox() && !this.IsDatePicker())))
 		{
 			this.SelectAll();
 			this.SelectThisElement(1);
@@ -4608,6 +4621,33 @@ CParagraphContentWithParagraphLikeContent.prototype.GetCurrentPermRanges = funct
 		this.Content[pos].GetCurrentPermRanges(permRanges, isCurrent && pos === endPos);
 	}
 };
+CParagraphContentWithParagraphLikeContent.prototype.CorrectPosToPermRanges = function(state, paraPos, depth, isCurrent)
+{
+	if (state.isForward())
+	{
+		let startPos = isCurrent ? paraPos.Get(depth) : 0;
+		for (let pos = startPos; pos < this.Content.length; ++pos)
+		{
+			state.setPos(pos, depth);
+			this.Content[pos].CorrectPosToPermRanges(state, paraPos, depth + 1, isCurrent && pos === startPos);
+			
+			if (state.isStopped())
+				break;
+		}
+	}
+	else
+	{
+		let startPos = isCurrent ? paraPos.Get(depth) : this.Content.length - 1;
+		for (let pos = startPos; pos >= 0; --pos)
+		{
+			state.setPos(pos, depth);
+			this.Content[pos].CorrectPosToPermRanges(state, paraPos, depth + 1, isCurrent && pos === startPos);
+			
+			if (state.isStopped())
+				break;
+		}
+	}
+};
 CParagraphContentWithParagraphLikeContent.prototype.GetCurrentComplexFields = function(arrComplexFields, isCurrent, isFieldPos)
 {
 	var nEndPos = isCurrent ? this.State.ContentPos : this.Content.length - 1;
@@ -4639,6 +4679,18 @@ CParagraphContentWithParagraphLikeContent.prototype.GetDirectTextPr = function()
 	{
 		return this.Content[this.State.ContentPos].GetDirectTextPr();
 	}
+};
+CParagraphContentWithParagraphLikeContent.prototype.GetAllAnnotationMarks = function(marks)
+{
+	if (!marks)
+		marks = [];
+	
+	for (let i = 0; i < this.Content.length; ++i)
+	{
+		this.Content[i].GetAllAnnotationMarks(marks);
+	}
+	
+	return marks;
 };
 CParagraphContentWithParagraphLikeContent.prototype.GetAllFields = function(isUseSelection, arrFields)
 {

@@ -40,8 +40,10 @@
 	 */
 	function CNumbering()
 	{
-		this.AbstractNum = {};
+		this.AbstractNum = {}; // all abstract nums
 		this.Num         = {};
+		
+		this.AbstractNumByNsid = {};
 	}
 
 	/**
@@ -102,17 +104,18 @@
 	{
 		this.AbstractNum = {};
 		this.Num         = {};
+		this.AbstractNumByNsid = {};
 	};
 	/**
 	 * Добавляем к текущим абстрактным нумерациям новые
-	 * @param oAbstractNums
+	 * @param {AscWord.CAbstractNum[]} abstractNums
 	 */
-	CNumbering.prototype.AppendAbstractNums = function(oAbstractNums)
+	CNumbering.prototype.AppendAbstractNums = function(abstractNums)
 	{
-		for (var sId in oAbstractNums)
+		for (let numId in abstractNums)
 		{
-			if (undefined === this.AbstractNum[sId])
-				this.AbstractNum[sId] = oAbstractNums[sId];
+			if (undefined === this.AbstractNum[numId])
+				this._AddAbstractNum(abstractNums[numId], numId);
 		}
 	};
 	/**
@@ -129,28 +132,27 @@
 	};
 	/**
 	 * Создаем новую абстрактную нумерацию
-	 * @returns {CAbstractNum}
+	 * @returns {AscWord.CAbstractNum}
 	 */
 	CNumbering.prototype.CreateAbstractNum = function()
 	{
-		var oAbstractNum                       = new CAbstractNum();
-		this.AbstractNum[oAbstractNum.GetId()] = oAbstractNum;
-		return oAbstractNum;
+		let abstractNum = this._CreateAbstractNumWithUniqueNsid();
+		this._AddAbstractNum(abstractNum, abstractNum.GetId());
+		return abstractNum;
 	};
 	/**
 	 * Добавляем абстрактную нумерацию
-	 * @param oAbstractNum {CAbstractNum}
+	 * @param abstractNum {CAbstractNum}
 	 * @returns {string} идентификатор нумерации
 	 */
-	CNumbering.prototype.AddAbstractNum = function(oAbstractNum)
+	CNumbering.prototype.AddAbstractNum = function(abstractNum)
 	{
-		if (!(oAbstractNum instanceof CAbstractNum))
+		if (!(abstractNum instanceof CAbstractNum))
 			return;
-
-		var sId               = oAbstractNum.GetId();
-		this.AbstractNum[sId] = oAbstractNum;
-
-		return sId;
+		
+		let numId = abstractNum.GetId();
+		this._AddAbstractNum(abstractNum, numId);
+		return numId;
 	};
 	/**
 	 * Добавляем абстрактную нумерацию
@@ -174,11 +176,18 @@
 	 */
 	CNumbering.prototype.GetAbstractNum = function(sId)
 	{
-		var oAbstractNum = this.AbstractNum[sId];
-		if (oAbstractNum && oAbstractNum.GetNumStyleLink())
+		let abstractNum = this.AbstractNum[sId];
+		let nsid = abstractNum ? abstractNum.GetNsid() : null;
+		if (nsid && this.AbstractNumByNsid[nsid])
+			abstractNum = this.AbstractNumByNsid[nsid];
+		
+		if (!abstractNum)
+			return null;
+		
+		if (abstractNum.GetNumStyleLink())
 		{
 			var oStyles   = editor.WordControl.m_oLogicDocument.GetStyles();
-			var oNumStyle = oStyles.Get(oAbstractNum.GetNumStyleLink());
+			var oNumStyle = oStyles.Get(abstractNum.GetNumStyleLink());
 
 			if (oNumStyle && oNumStyle.ParaPr.NumPr && undefined !== oNumStyle.ParaPr.NumPr.NumId)
 			{
@@ -190,7 +199,7 @@
 			}
 		}
 
-		return oAbstractNum;
+		return abstractNum;
 	};
 	/**
 	 * Создаем новую нумерацию
@@ -198,12 +207,12 @@
 	 */
 	CNumbering.prototype.CreateNum = function()
 	{
-		var oAbstractNum                       = new CAbstractNum();
-		this.AbstractNum[oAbstractNum.GetId()] = oAbstractNum;
-
-		var oNum               = new CNum(this, oAbstractNum.GetId());
+		let abstractNum = this._CreateAbstractNumWithUniqueNsid();
+		this._AddAbstractNum(abstractNum, abstractNum.GetId());
+		
+		var oNum               = new CNum(this, abstractNum.GetId());
 		this.Num[oNum.GetId()] = oNum;
-
+		
 		return oNum;
 	};
 	/**
@@ -342,6 +351,33 @@
 				result.push(num);
 		}
 		return result;
+	};
+	CNumbering.prototype._AddAbstractNum = function(abstractNum, numId)
+	{
+		this.AbstractNum[numId] = abstractNum;
+		abstractNum.SetParent(this);
+		
+		let nsid = abstractNum.GetNsid();
+		if (nsid && !this.AbstractNumByNsid[nsid])
+			this.AbstractNumByNsid[nsid] = abstractNum;
+	};
+	CNumbering.prototype._CreateAbstractNumWithUniqueNsid = function()
+	{
+		let abstractNum = new AscWord.CAbstractNum();
+		let nsid = abstractNum.GetNsid();
+		
+		// TODO: Need to create a general scheme for obtaining DurableId with check of existing ones
+		let attempts = 100;
+		while (!nsid || (this.AbstractNumByNsid[nsid] && attempts >= 0))
+		{
+			nsid = AscCommon.CreateDurableId();
+			attempts -= 1;
+		}
+		
+		if (nsid !== abstractNum.GetNsid())
+			abstractNum.SetNsid(nsid);
+		
+		return abstractNum;
 	};
 	//---------------------------------------------------------export---------------------------------------------------
 	window["AscWord"].CNumbering        = CNumbering;

@@ -140,6 +140,11 @@
 		for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 		{
 			let oForm = arrForms[nIndex];
+			if (oForm.IsLabeledCheckBox())
+				oForm = oForm.GetInnerCheckBox();
+			
+			if (!oForm)
+				continue;
 
 			let sKey = null;
 
@@ -182,6 +187,12 @@
 		for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 		{
 			let oForm = arrForms[nIndex];
+			if (oForm.IsLabeledCheckBox())
+				oForm = oForm.GetInnerCheckBox();
+			
+			if (!oForm)
+				continue;
+			
 			if (sKey === oForm.GetFormKey() && (undefined === formType || formType === oForm.GetSpecificType()))
 				arrResult.push(oForm);
 		}
@@ -205,6 +216,15 @@
 		}
 
 		return arrResult;
+	};
+	/**
+	 * @param groupKey
+	 * @returns {boolean}
+	 */
+	CFormsManager.prototype.IsRadioGroupRequired = function(groupKey)
+	{
+		let forms = this.GetRadioButtons(groupKey);
+		return forms.length ? forms[0].IsFormRequired() : false;
 	};
 	/**
 	 * Все ли обязательные поля заполнены
@@ -300,7 +320,12 @@
 	CFormsManager.prototype.OnChangeFormPr = function(form)
 	{
 		let userMaster = this.GetUserMasterByForm(form);
-		let allForms   = this.GetAllFormsByKey(form.GetFormKey(), form.GetSpecificType());
+		let allForms;
+		if (form.IsRadioButton())
+			allForms = this.GetRadioButtons(form.GetRadioButtonGroupKey());
+		else
+			allForms = this.GetAllFormsByKey(form.GetFormKey(), form.GetSpecificType());
+		
 		for (let i = 0, count = allForms.length; i < count; ++i)
 		{
 			let _form = allForms[i];
@@ -511,7 +536,11 @@
 			for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 			{
 				let oTempForm = arrForms[nIndex];
-				if (oTempForm.IsComplexForm()
+				if (oTempForm.IsLabeledCheckBox())
+					oTempForm = oTempForm.GetInnerCheckBox();
+				
+				if (!oTempForm
+					|| oTempForm.IsComplexForm()
 					|| oTempForm === oForm
 					|| !oTempForm.IsRadioButton()
 					|| sKey !== oTempForm.GetCheckBoxPr().GetGroupKey()
@@ -528,6 +557,9 @@
 			for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 			{
 				let oTempForm = arrForms[nIndex];
+				if (oTempForm.IsLabeledCheckBox())
+					oTempForm = oTempForm.GetInnerCheckBox();
+				
 				if (oTempForm.IsComplexForm()
 					|| oTempForm === oForm
 					|| !oTempForm.IsCheckBox()
@@ -580,6 +612,8 @@
 	{
 		let sKey          = oForm.GetFormKey();
 		let isPlaceHolder = oForm.IsPlaceHolder();
+		let isComboBox    = oForm.IsComboBox();
+		let isDropDown    = oForm.IsDropDownList();
 		let oSrcRun       = !isPlaceHolder ? oForm.MakeSingleRunElement(false) : null;
 		let userMaster    = this.GetUserMasterByForm(oForm);
 		let arrForms      = this.GetAllForms();
@@ -590,6 +624,8 @@
 			if (oTempForm.IsComplexForm()
 				|| oTempForm.IsPicture()
 				|| oTempForm.IsCheckBox()
+				|| oTempForm.IsComboBox() !== isComboBox
+				|| oTempForm.IsDropDownList() !== isDropDown
 				|| oTempForm === oForm
 				|| sKey !== oTempForm.GetFormKey()
 				|| userMaster !== this.GetUserMasterByForm(oTempForm))
@@ -612,6 +648,16 @@
 	};
 	CFormsManager.prototype.OnChangeComplexForm = function(oForm)
 	{
+		if (oForm.IsLabeledCheckBox())
+		{
+			oForm.CorrectContent();
+			let checkBox = oForm.GetInnerCheckBox();
+			if (checkBox)
+				this.OnChangeCheckBox(checkBox);
+			
+			return;
+		}
+		
 		let sKey          = oForm.GetFormKey();
 		let isPlaceholder = oForm.IsPlaceHolder();
 		let userMaster    = this.GetUserMasterByForm(oForm);

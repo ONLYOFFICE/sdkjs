@@ -30,4 +30,15 @@
  *
  */
 
+/**
+ * Event: onChangeCurrentSheet
+ * @event Plugin#onChangeCurrentSheet
+ * @memberof Plugin
+ * @typeofeditors ["CSE"]
+ * @alias onChangeCurrentSheet
+ * @description The function called when the current sheet has changed.
+ * @param {number} index - The index of the newly activated worksheet.
+ * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onChangeCurrentSheet.js
+ */
+
 "use strict";

@@ -639,11 +639,13 @@ window.AscCommon.g_cIsBeta = "false";
 	var c_oAscFrameDataType = {
 		SendImageUrls: 0,
 		GetLoadedImages: 1,
-		OpenFrame: 2,
-		ShowImageDialogInFrame: 3,
-		GetUrlsFromImageDialog: 4,
-		SkipStartEndAction: 5,
-		StartUploadImageAction: 6
+		ShowImageDialogInFrame: 2,
+		GetUrlsFromImageDialog: 3,
+		SkipStartEndAction: 4,
+		StartUploadImageAction: 5,
+		UpdateDiagramInGeneral: 6,
+		UpdateIsOpenOnClient: 7,
+		OpenLocalDesktopFileLink: 8
 	};
 
 	var CellValueType = {
@@ -2305,7 +2307,20 @@ window.AscCommon.g_cIsBeta = "false";
 	g_aPunctuation[0x00BB] = PUNCTUATION_FLAG_BASE;                                     // »
 	g_aPunctuation[0x00BB] = PUNCTUATION_FLAG_BASE;                                     // »
 	g_aPunctuation[0x00BF] = PUNCTUATION_FLAG_BASE;                                     // ¿
-
+	
+	g_aPunctuation[0x0609] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x060A] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x060C] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x060D] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x061B] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x061E] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x061F] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x066A] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x066B] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x066C] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x066D] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x06D4] = PUNCTUATION_FLAG_BASE;
+	
 	g_aPunctuation[0x2010] = PUNCTUATION_FLAG_BASE;                                     // ‐
 	g_aPunctuation[0x2011] = PUNCTUATION_FLAG_BASE;                                     // ‑
 	g_aPunctuation[0x2012] = PUNCTUATION_FLAG_BASE;                                     // ‒
@@ -2477,6 +2492,7 @@ window.AscCommon.g_cIsBeta = "false";
 
 	var offlineMode = '_offline_';
 	var chartMode = '_chart_';
+	var oleMode = '_ole_';
 	var dataMode = '_data_';
 
 	var c_oSpecialPasteProps = {
@@ -2513,7 +2529,12 @@ window.AscCommon.g_cIsBeta = "false";
 		useTextImport: 25,
 
 		comments: 26,
-		columnWidth: 27
+		columnWidth: 27,
+
+		sourceFormattingEmbedding: 28,
+		destinationFormattingEmbedding: 29,
+		sourceFormattingLink: 30,
+		destinationFormattingLink: 31
 	};
 
 	var c_oSpecialPasteOperation = {
@@ -3746,7 +3767,8 @@ window.AscCommon.g_cIsBeta = "false";
 
 	var c_oAscMathInputType = {
 		Unicode : 0,
-		LaTeX   : 1
+		LaTeX   : 1,
+		MathML  : 2
 	};
 
 	const LigaturesFlags = {
@@ -4600,6 +4622,185 @@ window.AscCommon.g_cIsBeta = "false";
 		"HH:mm:ss"
 	];
 
+	const c_oAscKeyCodes = {
+		Digit0             : 48,
+		Digit1             : 49,
+		Digit2             : 50,
+		Digit3             : 51,
+		Digit4             : 52,
+		Digit5             : 53,
+		Digit6             : 54,
+		Digit7             : 55,
+		Digit8             : 56,
+		Digit9             : 57,
+		KeyA               : 65,
+		KeyB               : 66,
+		KeyC               : 67,
+		KeyD               : 68,
+		KeyE               : 69,
+		KeyF               : 70,
+		KeyG               : 71,
+		KeyH               : 72,
+		KeyI               : 73,
+		KeyJ               : 74,
+		KeyK               : 75,
+		KeyL               : 76,
+		KeyM               : 77,
+		KeyN               : 78,
+		KeyO               : 79,
+		KeyP               : 80,
+		KeyQ               : 81,
+		KeyR               : 82,
+		KeyS               : 83,
+		KeyT               : 84,
+		KeyU               : 85,
+		KeyV               : 86,
+		KeyW               : 87,
+		KeyX               : 88,
+		KeyY               : 89,
+		KeyZ               : 90,
+		KeyBackquote       : 192,
+		KeyMinus           : 189,
+		KeyFirefoxMinus    : 173,
+		KeyFirefoxEqual    : 61,
+		KeyEqual           : 187,
+		Tab                : 9,
+		Escape             : 27,
+		Enter              : 13,
+		Pause              : 19,
+		ScrollLock         : 145,
+		Backspace          : 8,
+		Delete             : 46,
+		Space              : 32,
+		Home               : 36,
+		End                : 35,
+		PageUp             : 33,
+		PageDown           : 34,
+		Insert             : 45,
+		ArrowLeft          : 37,
+		ArrowRight         : 39,
+		ArrowUp            : 38,
+		ArrowDown          : 40,
+		Period             : 190,
+		Comma              : 188,
+		BracketRight       : 221,
+		BracketLeft        : 219,
+		Numpad0            : 96,
+		Numpad1            : 97,
+		Numpad2            : 98,
+		Numpad3            : 99,
+		Numpad4            : 100,
+		Numpad5            : 101,
+		Numpad6            : 102,
+		Numpad7            : 103,
+		Numpad8            : 104,
+		Numpad9            : 105,
+		NumpadMultiply     : 106,
+		NumpadDivide       : 111,
+		NumpadDecimal      : 110,
+		NumpadPlus         : 107,
+		NumpadMinus        : 109,
+		F1                 : 112,
+		F2                 : 113,
+		F3                 : 114,
+		F4                 : 115,
+		F5                 : 116,
+		F6                 : 117,
+		F7                 : 118,
+		F8                 : 119,
+		F9                 : 120,
+		F10                : 121,
+		F11                : 122,
+		F12                : 123,
+		ContextMenu        : 93,
+		ContextMenuHigh    : 57351,
+		KeySemicolon       : 186,
+		KeyFirefoxSemicolon: 59
+	};
+
+	const c_oAscKeyCodeEquals = {};
+	c_oAscKeyCodeEquals[c_oAscKeyCodes.KeyFirefoxMinus] = c_oAscKeyCodes.KeyMinus;
+	c_oAscKeyCodeEquals[c_oAscKeyCodes.KeyFirefoxEqual] = c_oAscKeyCodes.KeyEqual;
+	c_oAscKeyCodeEquals[c_oAscKeyCodes.KeyFirefoxSemicolon] = c_oAscKeyCodes.KeySemicolon;
+	c_oAscKeyCodeEquals[c_oAscKeyCodes.ContextMenuHigh] = c_oAscKeyCodes.ContextMenu;
+	const c_oAscKeyCodeAnalogues = {};
+	for (let anotherKeyCode in c_oAscKeyCodeEquals) {
+		const normalKeyCode = c_oAscKeyCodeEquals[anotherKeyCode];
+		if (!c_oAscKeyCodeAnalogues[normalKeyCode]) {
+			c_oAscKeyCodeAnalogues[normalKeyCode] = [];
+		}
+		c_oAscKeyCodeAnalogues[normalKeyCode].push(parseInt(anotherKeyCode, 10));
+	}
+
+
+
+	const c_oAscExternalReferenceType = {
+		referenceData: 0,
+		link: 1,
+		path: 2
+	};
+
+	var c_oAscCalcMode = {
+		auto: 0,
+		autoNoTable: 1,
+		manual: 2
+	};
+	//поля worksheet header/footer
+	var c_oAscHeaderFooterField = {
+		pageNumber: 0,
+		pageCount: 1,
+		sheetName: 2,
+		fileName: 3,
+		filePath: 4,
+		date: 5,
+		time: 6,
+		lineBreak: 7,
+		picture: 8,
+		text: 9
+	};
+
+	var c_oAscPageHFType = {
+		firstHeader: 0,
+		oddHeader: 1,
+		evenHeader: 2,
+		firstFooter: 3,
+		oddFooter: 4,
+		evenFooter: 5
+	};
+
+	var c_oAscHeaderFooterType = {
+		first: 0,
+		odd: 1,
+		even: 2
+	};
+
+	var c_oAscHeaderFooterPresets = {
+		none: 0,
+		page: 1,
+		pageOfQuestion: 2,
+		sheet: 3,
+		confidential: 4,
+		bookName: 5,
+		//bookPath: 5
+		sheetPage: 6,
+		sheetConfidentialPage: 7,
+		bookNamePage: 8,
+		pageSheet: 9,
+		pageBook: 10,
+		//bookPathPage: 11;
+		pageBookName: 11,
+		userPageDate: 12,
+		//bookPathPagePathFile: 12;
+		preparedUserDatePage: 13,
+		custom: 14
+	};
+
+	var c_oAscPaneState = {
+		Frozen: "frozen",
+		FrozenSplit: "frozenSplit",
+		Split: "split"
+	};
+
 
 	//------------------------------------------------------------export--------------------------------------------------
 	var prot;
@@ -5423,6 +5624,7 @@ window.AscCommon.g_cIsBeta = "false";
 	window["AscCommon"].offlineMode = offlineMode;
 	window["AscCommon"].chartMode = chartMode;
 	window["AscCommon"].dataMode = dataMode;
+	window["AscCommon"].oleMode = oleMode;
 
 	window['AscCommon']['align_Right'] = window['AscCommon'].align_Right = align_Right;
 	window['AscCommon']['align_Left'] = window['AscCommon'].align_Left = align_Left;
@@ -5466,6 +5668,10 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['useTextImport'] = prot.useTextImport;
 	prot['comments'] = prot.comments;
 	prot['columnWidth'] = prot.columnWidth;
+	prot['sourceFormattingEmbedding'] = prot.sourceFormattingEmbedding;
+	prot['destinationFormattingEmbedding'] = prot.destinationFormattingEmbedding;
+	prot['sourceFormattingLink'] = prot.sourceFormattingLink;
+	prot['destinationFormattingLink'] = prot.destinationFormattingLink;
 
 	window['Asc']['c_oSpecialPasteOperation'] = window['Asc'].c_oSpecialPasteOperation = c_oSpecialPasteOperation;
 	prot = c_oSpecialPasteOperation;
@@ -6061,5 +6267,162 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['OleObject'] = prot.OleObject;
 
 	window['Asc']['c_oAscDateTimeFormat'] = window['Asc'].c_oAscDateTimeFormat = c_oAscDateTimeFormat;
+
+	prot = window['Asc']['c_oAscExternalReferenceType'] = window['Asc'].c_oAscExternalReferenceType = c_oAscExternalReferenceType;
+	prot['referenceData'] = prot.referenceData;
+	prot['link'] = prot.link;
+	prot['path'] = prot.path;
+
+	prot = window['Asc']['c_oAscCalcMode'] = window['Asc'].c_oAscCalcMode = c_oAscCalcMode;
+	prot['auto'] = prot.auto;
+	prot['autoNoTable'] = prot.autoNoTable;
+	prot['manual'] = prot.manual;
+
+	prot = window['Asc']['c_oAscKeyCodes'] = window['Asc'].c_oAscKeyCodes = c_oAscKeyCodes;
+	prot["Digit0"] = prot.Digit0;
+	prot["Digit1"] = prot.Digit1;
+	prot["Digit2"] = prot.Digit2;
+	prot["Digit3"] = prot.Digit3;
+	prot["Digit4"] = prot.Digit4;
+	prot["Digit5"] = prot.Digit5;
+	prot["Digit6"] = prot.Digit6;
+	prot["Digit7"] = prot.Digit7;
+	prot["Digit8"] = prot.Digit8;
+	prot["Digit9"] = prot.Digit9;
+	prot["KeyA"] = prot.KeyA;
+	prot["KeyB"] = prot.KeyB;
+	prot["KeyC"] = prot.KeyC;
+	prot["KeyD"] = prot.KeyD;
+	prot["KeyE"] = prot.KeyE;
+	prot["KeyF"] = prot.KeyF;
+	prot["KeyG"] = prot.KeyG;
+	prot["KeyH"] = prot.KeyH;
+	prot["KeyI"] = prot.KeyI;
+	prot["KeyJ"] = prot.KeyJ;
+	prot["KeyK"] = prot.KeyK;
+	prot["KeyL"] = prot.KeyL;
+	prot["KeyM"] = prot.KeyM;
+	prot["KeyN"] = prot.KeyN;
+	prot["KeyO"] = prot.KeyO;
+	prot["KeyP"] = prot.KeyP;
+	prot["KeyQ"] = prot.KeyQ;
+	prot["KeyR"] = prot.KeyR;
+	prot["KeyS"] = prot.KeyS;
+	prot["KeyT"] = prot.KeyT;
+	prot["KeyU"] = prot.KeyU;
+	prot["KeyV"] = prot.KeyV;
+	prot["KeyW"] = prot.KeyW;
+	prot["KeyX"] = prot.KeyX;
+	prot["KeyY"] = prot.KeyY;
+	prot["KeyZ"] = prot.KeyZ;
+	prot["KeyBackquote"] = prot.KeyBackquote;
+	prot["KeyMinus"] = prot.KeyMinus;
+	prot["KeyFirefoxMinus"] = prot.KeyFirefoxMinus;
+	prot["KeyFirefoxEqual"] = prot.KeyFirefoxEqual;
+	prot["KeyEqual"] = prot.KeyEqual;
+	prot["Tab"] = prot.Tab;
+	prot["Escape"] = prot.Escape;
+	prot["Enter"] = prot.Enter;
+	prot["Pause"] = prot.Pause;
+	prot["ScrollLock"] = prot.ScrollLock;
+	prot["Backspace"] = prot.Backspace;
+	prot["Delete"] = prot.Delete;
+	prot["Space"] = prot.Space;
+	prot["Home"] = prot.Home;
+	prot["End"] = prot.End;
+	prot["PageUp"] = prot.PageUp;
+	prot["PageDown"] = prot.PageDown;
+	prot["Insert"] = prot.Insert;
+	prot["ArrowLeft"] = prot.ArrowLeft;
+	prot["ArrowRight"] = prot.ArrowRight;
+	prot["ArrowUp"] = prot.ArrowUp;
+	prot["ArrowDown"] = prot.ArrowDown;
+	prot["Period"] = prot.Period;
+	prot["Comma"] = prot.Comma;
+	prot["BracketRight"] = prot.BracketRight;
+	prot["BracketLeft"] = prot.BracketLeft;
+	prot["Numpad0"] = prot.Numpad0;
+	prot["Numpad1"] = prot.Numpad1;
+	prot["Numpad2"] = prot.Numpad2;
+	prot["Numpad3"] = prot.Numpad3;
+	prot["Numpad4"] = prot.Numpad4;
+	prot["Numpad5"] = prot.Numpad5;
+	prot["Numpad6"] = prot.Numpad6;
+	prot["Numpad7"] = prot.Numpad7;
+	prot["Numpad8"] = prot.Numpad8;
+	prot["Numpad9"] = prot.Numpad9;
+	prot["NumpadMultiply"] = prot.NumpadMultiply;
+	prot["NumpadDivide"] = prot.NumpadDivide;
+	prot["NumpadDecimal"] = prot.NumpadDecimal;
+	prot["NumpadPlus"] = prot.NumpadPlus;
+	prot["NumpadMinus"] = prot.NumpadMinus;
+	prot["F1"] = prot.F1;
+	prot["F2"] = prot.F2;
+	prot["F3"] = prot.F3;
+	prot["F4"] = prot.F4;
+	prot["F5"] = prot.F5;
+	prot["F6"] = prot.F6;
+	prot["F7"] = prot.F7;
+	prot["F8"] = prot.F8;
+	prot["F9"] = prot.F9;
+	prot["F10"] = prot.F10;
+	prot["F11"] = prot.F11;
+	prot["F12"] = prot.F12;
+	prot["ContextMenu"] = prot.ContextMenu;
+	prot["ContextMenuHigh"] = prot.ContextMenuHigh;
+	prot["KeySemicolon"] = prot.KeySemicolon;
+	prot["KeyFirefoxSemicolon"] = prot.KeyFirefoxSemicolon;
+
+	window['Asc']['c_oAscKeyCodeEquals'] = window['Asc'].c_oAscKeyCodeEquals = c_oAscKeyCodeEquals;
+	window['Asc']['c_oAscKeyCodeAnalogues'] = window['Asc'].c_oAscKeyCodeAnalogues = c_oAscKeyCodeAnalogues;
+
+	window['Asc']['c_oAscHeaderFooterField'] = window['Asc'].c_oAscHeaderFooterField = c_oAscHeaderFooterField;
+	prot = c_oAscHeaderFooterField;
+	prot['pageNumber'] = prot.pageNumber;
+	prot['pageCount'] = prot.pageCount;
+	prot['sheetName'] = prot.sheetName;
+	prot['fileName'] = prot.fileName;
+	prot['filePath'] = prot.filePath;
+	prot['date'] = prot.date;
+	prot['time'] = prot.time;
+	prot['lineBreak'] = prot.lineBreak;
+	prot['picture'] = prot.picture;
+	prot['text'] = prot.text;
+
+	window['Asc']['c_oAscPageHFType'] = window['Asc'].c_oAscPageHFType = c_oAscPageHFType;
+	prot = c_oAscPageHFType;
+	prot['firstHeader'] = prot.firstHeader;
+	prot['oddHeader'] = prot.oddHeader;
+	prot['evenHeader'] = prot.evenHeader;
+	prot['firstFooter'] = prot.firstFooter;
+	prot['oddFooter'] = prot.oddFooter;
+	prot['evenFooter'] = prot.evenFooter;
+
+	window['Asc']['c_oAscHeaderFooterType'] = window['Asc'].c_oAscHeaderFooterType = c_oAscHeaderFooterType;
+	prot = c_oAscHeaderFooterType;
+	prot['first'] = prot.first;
+	prot['odd'] = prot.odd;
+	prot['even'] = prot.even;
+
+	window['Asc']['c_oAscHeaderFooterPresets'] = window['Asc'].c_oAscHeaderFooterPresets = c_oAscHeaderFooterPresets;
+	prot = c_oAscHeaderFooterPresets;
+	prot['none'] = prot.none;
+	prot['page'] = prot.page;
+	prot['pageOfQuestion'] = prot.pageOfQuestion;
+	prot['sheet'] = prot.sheet;
+	prot['confidential'] = prot.confidential;
+	prot['bookName'] = prot.bookName;
+	prot['sheetPage'] = prot.sheetPage;
+	prot['sheetConfidentialPage'] = prot.sheetConfidentialPage;
+	prot['bookNamePage'] = prot.bookNamePage;
+	prot['pageSheet'] = prot.pageSheet;
+	prot['pageBook'] = prot.pageBook;
+	prot['pageBookName'] = prot.pageBookName;
+	prot['userPageDate'] = prot.userPageDate;
+	prot['preparedUserDatePage'] = prot.preparedUserDatePage;
+	prot['custom'] = prot.custom;
+
+	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
+	window['AscCommonExcel'].c_oAscPaneState = c_oAscPaneState;
 
 })(window);

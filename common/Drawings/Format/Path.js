@@ -419,6 +419,74 @@ function (window, undefined) {
 			degree: degree
 		});
 	};
+	/**
+	 * Normalizes coordinates in ArrPathCommandInfo by scaling them relative to shape size
+	 * @param {number} shapeWidth - shape width to normalize by
+	 * @param {number} shapeHeight - shape height to normalize by
+	 * @param {number} pathWidth - destination path width to scale to
+	 * @param {number} pathHeight - destination path height to scale to
+	 */
+	Path.prototype.normalizeCoordinates = function (shapeWidth, shapeHeight, pathWidth, pathHeight) {
+		if (shapeWidth === 0 || shapeHeight === 0) {
+			return;
+		}
+
+		let command;
+		let controlPoint;
+		
+		for (let i = 0; i < this.ArrPathCommandInfo.length; i++) {
+			command = this.ArrPathCommandInfo[i];
+			
+			switch (command.id) {
+				case moveTo:
+				case lineTo:
+					command.X = Math.round((command.X / shapeWidth) * pathWidth);
+					command.Y = Math.round((command.Y / shapeHeight) * pathHeight);
+					break;
+					
+				case arcTo:
+					command.wR = Math.round((command.wR / shapeWidth) * pathWidth);
+					command.hR = Math.round((command.hR / shapeHeight) * pathHeight);
+					break;
+					
+				case bezier3:
+					command.X0 = Math.round((command.X0 / shapeWidth) * pathWidth);
+					command.Y0 = Math.round((command.Y0 / shapeHeight) * pathHeight);
+					command.X1 = Math.round((command.X1 / shapeWidth) * pathWidth);
+					command.Y1 = Math.round((command.Y1 / shapeHeight) * pathHeight);
+					break;
+					
+				case bezier4:
+					command.X0 = Math.round((command.X0 / shapeWidth) * pathWidth);
+					command.Y0 = Math.round((command.Y0 / shapeHeight) * pathHeight);
+					command.X1 = Math.round((command.X1 / shapeWidth) * pathWidth);
+					command.Y1 = Math.round((command.Y1 / shapeHeight) * pathHeight);
+					command.X2 = Math.round((command.X2 / shapeWidth) * pathWidth);
+					command.Y2 = Math.round((command.Y2 / shapeHeight) * pathHeight);
+					break;
+					
+				case ellipticalArcTo:
+					command.x = Math.round((command.x / shapeWidth) * pathWidth);
+					command.y = Math.round((command.y / shapeHeight) * pathHeight);
+					command.a = Math.round((command.a / shapeWidth) * pathWidth);
+					command.b = Math.round((command.b / shapeHeight) * pathHeight);
+					break;
+					
+				case nurbsTo:
+					for (let j = 0; j < command.controlPoints.length; j++) {
+						controlPoint = command.controlPoints[j];
+						controlPoint.x = Math.round((controlPoint.x / shapeWidth) * pathWidth);
+						controlPoint.y = Math.round((controlPoint.y / shapeHeight) * pathHeight);
+					}
+					break;
+					
+				case close:
+					//no coordinates to normalize
+					break;
+			}
+		}
+	};
+	
 	Path.prototype.calculateCommandCoord = function (oGdLst, sFormula, dFormulaCoeff, dNumberCoeff) {
 		let dVal;
 		dVal = oGdLst[sFormula];
@@ -441,6 +509,10 @@ function (window, undefined) {
 		endAngle   = (360 + endAngle)   % 360;
 		ctrlAngle  = (360 + ctrlAngle)  % 360;
 
+		if (startAngle === endAngle) {
+			return 0;
+		}
+
 		// different sweeps depending on where the control point is
 		let sweep;
 		if (startAngle < endAngle) {
@@ -457,9 +529,6 @@ function (window, undefined) {
 			if (endAngle < ctrlAngle && ctrlAngle < startAngle) {
 				// negative sweep - clockwise
 				sweep = endAngle - startAngle;
-			}
-			else if (startAngle === endAngle && startAngle === ctrlAngle) {
-				sweep = 0;
 			}
 			else {
 				// positive sweep - anti-clockwise
@@ -521,10 +590,24 @@ function (window, undefined) {
 		b = controlPoint.y;
 
 		// http://visguy.com/vgforum/index.php?topic=2464.0
-		let d2 = d * d;
-		let cx = ((x0 - x) * (x0 + x) * (y - b) - (x - a) * (x + a) * (y0 - y) + d2 * (y0 - y) * (y - b) * (y0 - b)) / (2.0 * ((x0 - x) * (y - b) - (x - a) * (y0 - y)));
-		let cy = ((x0 - x) * (x - a) * (x0 - a) / d2 + (x - a) * (y0 - y) * (y0 + y) - (x0 - x) * (y - b) * (y + b)) / (2.0 * ((x - a) * (y0 - y) - (x0 - x) * (y - b)));
 		// can also be helpful https://stackoverflow.com/questions/6729056/mapping-svg-arcto-to-html-canvas-arcto
+		let onErrorResult = {wR: NaN, hR: NaN, stAng: NaN, swAng: NaN, ellipseRotation: NaN}
+		if (d === 0) {
+			return onErrorResult;
+		}
+		let d2 = d * d;
+
+		let cxDenominator = 2.0 * ((x0 - x) * (y - b) - (x - a) * (y0 - y));
+		if (cxDenominator === 0) {
+			return onErrorResult;
+		}
+		let cx = ((x0 - x) * (x0 + x) * (y - b) - (x - a) * (x + a) * (y0 - y) + d2 * (y0 - y) * (y - b) * (y0 - b)) / cxDenominator;
+
+		let cyDenominator = 2.0 * ((x - a) * (y0 - y) - (x0 - x) * (y - b));
+		if (cyDenominator === 0) {
+			return onErrorResult;
+		}
+		let cy = ((x0 - x) * (x - a) * (x0 - a) / d2 + (x - a) * (y0 - y) * (y0 + y) - (x0 - x) * (y - b) * (y + b)) / cyDenominator;
 
 		let rx = Math.sqrt(Math.pow(x0 - cx, 2) + Math.pow(y0 - cy, 2) * d2);
 		let ry = rx / d;
@@ -563,6 +646,7 @@ function (window, undefined) {
 		return {wR: wR, hR: hR, stAng: stAng, swAng: swAng, ellipseRotation: ellipseRotationInC};
 	}
 
+	const COL_EPS_K = 2e-8;
 	/**
 	 * Determines whether three points are collinear using an adaptive tolerance proportional to the coordinate scale.
 	 * @param {number} ax
@@ -573,7 +657,6 @@ function (window, undefined) {
 	 * @param {number} cy
 	 * @returns {boolean}
 	 */
-	const COL_EPS_K = 3.6e-5;
 	function isCollinear(ax, ay, bx, by, cx, cy) {
 		// Fast path: any two points coincide – degenerate triangle considered collinear
 		if ((ax === bx && ay === by) || (ax === cx && ay === cy) || (bx === cx && by === cy)) {
@@ -589,7 +672,9 @@ function (window, undefined) {
 			Math.abs(bx - ax), Math.abs(by - ay),
 			Math.abs(cx - ax), Math.abs(cy - ay)
 		);
-		const tol = COL_EPS_K * (scale || 1);
+		const scaleSquared = Math.pow(scale || 1, 2);
+
+		const tol = COL_EPS_K * scaleSquared;
 		return Math.abs(cross) <= tol;
 	}
 
@@ -785,6 +870,21 @@ function (window, undefined) {
 					break;
 				}
 				case ellipticalArcTo: {
+					function onBadParams(path, x, y, a, b) {
+						AscCommon.consoleLog("tranform ellipticalArcTo to line. 2 catch.");
+						path.ArrPathCommand.push({id: lineTo, X: a, Y: b}); // go to control point first
+						path.ArrPathCommand.push({id: lineTo, X: x, Y: y});
+						lastX = x;
+						lastY = y;
+					}
+
+					if (isNaN(lastY)) {
+						lastY = 0;
+					}
+					if (isNaN(lastX)) {
+						lastX = 0;
+					}
+
 					// https://learn.microsoft.com/en-us/office/client-developer/visio/ellipticalarcto-row-geometry-section
 					// but with a length in EMUs units and an angle in C-units, which will be expected clockwise as in other functions.
 					let x, y, a, b, c, d;
@@ -792,6 +892,23 @@ function (window, undefined) {
 					y = this.calculateCommandCoord(gdLst, cmd.y, ch, dCustomPathCoeffH);
 					a = this.calculateCommandCoord(gdLst, cmd.a, cw, dCustomPathCoeffW);
 					b = this.calculateCommandCoord(gdLst, cmd.b, ch, dCustomPathCoeffH);
+
+					// check if command arguments are wrong. Wrong arguments may refer to huge ellipse. It editor it can
+					// break scroll bars. So as visio does let's transform elliptical arc to line.
+					// see bug https://bugzilla.onlyoffice.com/show_bug.cgi?id=75317
+					// files from 4 to 6 should not be caught
+
+					// three points on one line refers to bad arguments
+					// see files:
+					// 1 simple lines and ellipses.vsdx
+					// 3 swAng ~=0 testFlatCurve.vsdx
+					// 7 triangleSquare === 0 cehck test Diagonal.vsdx
+					// 8 small square + NaN params in result, isCollinear cathces.vsdx
+					let isCollinearCheck = isCollinear(lastX, lastY, a, b, x, y);
+					if (isCollinearCheck) {
+						onBadParams(this, x, y, a, b);
+						break;
+					}
 
 					c = gdLst[cmd.c];
 					if (c === undefined) {
@@ -809,31 +926,10 @@ function (window, undefined) {
 					// -286.47888333333333 —-> 73.52111666666667
 					// -572.9577833333333 —-> 147.04221666666672
 					// so c in degrees is from -180 to 180
-					c = Math.atan2(ch * Math.sin(c * cToRad), cw * Math.cos(c * cToRad)) / cToRad;
-
-					let cRadians = c * cToRad2;
-
-					if (isNaN(lastY)) {
-						lastY = 0;
-					}
-					if (isNaN(lastX)) {
-						lastX = 0;
-					}
+					let cRadians = Math.atan2(ch * Math.sin(c * cToRad), cw * Math.cos(c * cToRad));
 
 					// change ellipticalArcTo params to draw arc using old params
 					let newParams = transformEllipticalArcParams(lastX, lastY, x, y, a, b, cRadians, d);
-
-					// check if command arguments are wrong. Wrong arguments may refer to huge ellipse. It editor it can
-					// break scroll bars. So as visio does let's transform elliptical arc to line.
-					// see bug https://bugzilla.onlyoffice.com/show_bug.cgi?id=75317
-					// files from 4 to 6 should not be caught
-
-					// ~0 swing angle refers to bad arguments. check it
-					// see files:
-					// 1 simple lines and ellipses.vsdx
-					// 2 swAng === 0 check  testFlatCurve Huge D.vsdx
-					// 3 swAng ~=0 testFlatCurve.vsdx
-					let swAngCheck = AscFormat.fApproxEqual(newParams.swAng, 0, 1e-7);
 
 					// NaN in newParams refers to bad arguments.
 					// see files:
@@ -842,32 +938,33 @@ function (window, undefined) {
 					// 8 small square + NaN params in result, isCollinear cathces.vsdx
 					let isNaNInParams = isNaN(newParams.swAng) || isNaN(newParams.stAng) ||
 							isNaN(newParams.wR) || isNaN(newParams.hR) || isNaN(newParams.ellipseRotation);
+					if (isNaNInParams) {
+						onBadParams(this, x, y, a, b);
+						break;
+					}
 
-					// three points on one line refers to bad arguments
+					// ~0 swing angle refers to bad arguments. check it
 					// see files:
 					// 1 simple lines and ellipses.vsdx
+					// 2 swAng === 0 check  testFlatCurve Huge D.vsdx
 					// 3 swAng ~=0 testFlatCurve.vsdx
-					// 7 triangleSquare === 0 cehck test Diagonal.vsdx
-					// 8 small square + NaN params in result, isCollinear cathces.vsdx
-					let isCollinearCheck = isCollinear(lastX, lastY, a, b, x, y);
+					let swAngCheck = AscFormat.fApproxEqual(newParams.swAng, 0, 1e-7);
+					if (swAngCheck) {
+						onBadParams(this, x, y, a, b);
+						break;
+					}
 
-					if (swAngCheck || isNaNInParams || isCollinearCheck) {
-						AscCommon.consoleLog("tranform ellipticalArcTo to line. 2 catch.");
-						this.ArrPathCommand.push({id: lineTo, X: a, Y: b}); // go to control point first
-						this.ArrPathCommand.push({id: lineTo, X: x, Y: y});
-					}
-					else {
-						this.ArrPathCommand.push({
-							id: ellipticalArcTo,
-							stX: lastX,
-							stY: lastY,
-							wR: newParams.wR,
-							hR: newParams.hR,
-							stAng: newParams.stAng * cToRad,
-							swAng: newParams.swAng * cToRad,
-							ellipseRotation: newParams.ellipseRotation * cToRad
-						});
-					}
+
+					this.ArrPathCommand.push({
+						id: ellipticalArcTo,
+						stX: lastX,
+						stY: lastY,
+						wR: newParams.wR,
+						hR: newParams.hR,
+						stAng: newParams.stAng * cToRad,
+						swAng: newParams.swAng * cToRad,
+						ellipseRotation: newParams.ellipseRotation * cToRad
+					});
 
 					lastX = x;
 					lastY = y;
@@ -1951,6 +2048,7 @@ function (window, undefined) {
 		return true;
 	};
 
+	Path.prototype.clear = function () {};
 	function CPathCmd() {
 		AscFormat.CBaseNoIdObject.call(this);
 		this.pts = [];
@@ -2589,6 +2687,13 @@ function (window, undefined) {
 			_ctx.lineWidth = _lineWidth;
 
 			if ((_lineWidth & 0x01) == 0x01) bIsEven = true;
+
+			if (_graphics.dash_no_smart) {
+				for (let index = 0; index < _graphics.dash_no_smart.length; index++) _graphics.dash_no_smart[index] = (_graphics.m_oCoordTransform.sx * _graphics.dash_no_smart[index] + 0.5) >> 0;
+
+				_graphics.m_oContext.setLineDash(_graphics.dash_no_smart);
+				_graphics.dash_no_smart = null;
+			}
 		}
 
 		let bIsDrawLast = false;

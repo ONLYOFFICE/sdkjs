@@ -32,9 +32,6 @@
 
 $(function ()
 {
-	AscTest.Editor.GetDocument = AscCommon.DocumentEditorApi.prototype.GetDocument.bind(AscTest.Editor);
-	AscTest.Editor.ReplaceTextSmart = AscCommon.DocumentEditorApi.prototype.ReplaceTextSmart.bind(AscTest.Editor);
-
 	function GetParagraphRunsInfo(paragraph)
 	{
 		let result = [];
@@ -238,7 +235,7 @@ $(function ()
 		]);
 		
 		AscTest.SelectParagraph(p);
-		AscTest.Editor.ReplaceTextSmart(["text added in review and another interted text"]);
+		AscTest.Editor.ReplaceTextSmart(["text added in review and another inserted text"]);
 		
 		assert.deepEqual(
 			GetParagraphRunsInfo(p),
@@ -250,12 +247,16 @@ $(function ()
 				["o", {Italic: true}, reviewtype_Common],
 				["mmo", {Italic: true}, reviewtype_Remove],
 				["ther i", {Italic: true}, reviewtype_Add],
-				["nterted text", {Italic: true}, reviewtype_Common]
+				["n", {Italic: true}, reviewtype_Common],
+				["serted", {Italic: true}, reviewtype_Add],
+				[" text", {Italic: true}, reviewtype_Common]
 			],
 			"ReplaceTextSmart - replace reviewed changes with track revisions"
 		);
 
 		///////////////// 3 //////////////
+		// TODO: Этот тест неправильно работает, если отключить рецензирование
+		// TODO: С включенным рецензированием разница отдается странно, возможно проблема с набивкой текста
 		p = fillDocument([
 			{text: "text removed by first user and ", pr: {Bold: true}, reviewType: reviewtype_Remove},
 			{text: "common text and ", pr: {Italic: true}},
@@ -272,7 +273,8 @@ $(function ()
 			GetParagraphRunsInfo(p),
 			[
 				["text removed by first user and ", {Bold: true}, reviewtype_Remove],
-				["edited commo", {Italic: true}, reviewtype_Common],
+				["edited ", {Italic: true}, reviewtype_Add],
+				["commo", {Italic: true}, reviewtype_Common],
 				["n text a", {Italic: true}, reviewtype_Remove],
 				["n", {Italic: true}, reviewtype_Common],
 				["d", {Italic: true}, reviewtype_Remove],

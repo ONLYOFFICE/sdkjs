@@ -1444,7 +1444,7 @@ ParaDrawing.prototype.SetVerticalClip = function(Top, Bottom)
 	this.LineTop = Top;
 	this.LineBottom = Bottom;
 };
-ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimits, PageLimitsOrigin, LineNum)
+ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimits, PageLimitsOrigin, LineNum, isInTable)
 {
 	if (undefined != this.PositionH_Old)
 	{
@@ -1472,7 +1472,7 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 	this.Internal_Position.SetScaleFactor(this.GetScaleCoefficient());
 	this.Internal_Position.Set(this.GraphicObj.extX, this.GraphicObj.extY, this.getXfrmRot(), this.EffectExtent, this.YOffset, ParaLayout, PageLimits);
 	this.Internal_Position.Calculate_X(bInline, this.PositionH.RelativeFrom, this.PositionH.Align, this.PositionH.Value, this.PositionH.Percent);
-	this.Internal_Position.Calculate_Y(bInline, this.PositionV.RelativeFrom, this.PositionV.Align, this.PositionV.Value, this.PositionV.Percent);
+	this.Internal_Position.Calculate_Y(bInline, this.PositionV.RelativeFrom, this.PositionV.Align, this.PositionV.Value, this.PositionV.Percent, isInTable);
 
 
 	let bCorrect = false;
@@ -1520,10 +1520,10 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 		this.PositionV.Percent      = this.PositionV_Old.Percent;
 
 		// Рассчитаем сдвиг с учетом старой привязки
-		var Value = this.Internal_Position.Calculate_Y_Value(this.PositionV_Old.RelativeFrom);
+		var Value = this.Internal_Position.Calculate_Y_Value(this.PositionV_Old.RelativeFrom, isInTable);
 		this.Set_PositionV(this.PositionV_Old.RelativeFrom, false, Value, false);
 		// На всякий случай пересчитаем заново координату
-		this.Y = this.Internal_Position.Calculate_Y(bInline, this.PositionV.RelativeFrom, this.PositionV.Align, this.PositionV.Value, this.PositionV.Percent);
+		this.Y = this.Internal_Position.Calculate_Y(bInline, this.PositionV.RelativeFrom, this.PositionV.Align, this.PositionV.Value, this.PositionV.Percent, isInTable);
 	}
 	this.OrigX = this.X;
 	this.OrigY = this.Y;
@@ -1607,7 +1607,7 @@ ParaDrawing.prototype.updatePosition3 = function(pageIndex, x, y, oldPageNum)
 	}
 	if(this.graphicObjects)
 	{
-		if (!(bIsHfdFtr && oDocContent && oDocContent.Get_StartPage_Absolute() !== pageIndex))
+		if (!(bIsHfdFtr && oDocContent && oDocContent.GetAbsoluteStartPage() !== pageIndex))
 		{
 			// TODO: ситуацию в колонтитуле с привязкой к полю нужно отдельно обрабатывать через дополнительные пересчеты
 			if (!(bIsHfdFtr && this.GetPositionV().RelativeFrom !== Asc.c_oAscRelativeFromV.Margin))
@@ -2218,7 +2218,7 @@ ParaDrawing.prototype.UpdateCursorType = function(X, Y, PageIndex)
 			var _Y   = this.Parent.Pages[PNum].Y;
 
 			var MMData              = new AscCommon.CMouseMoveData();
-			var Coords              = this.DrawingDocument.ConvertCoordsToCursorWR(_X, _Y, this.Parent.Get_StartPage_Absolute() + ( PageIndex - this.Parent.PageNum ));
+			var Coords              = this.DrawingDocument.ConvertCoordsToCursorWR(_X, _Y, this.Parent.GetAbsoluteStartPage() + ( PageIndex - this.Parent.PageNum ));
 			MMData.X_abs            = Coords.X - 5;
 			MMData.Y_abs            = Coords.Y;
 			MMData.Type             = Asc.c_oAscMouseMoveDataTypes.LockedObject;
@@ -3860,7 +3860,7 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 
 	return this.CalcX;
 };
-CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, Value, bPercent)
+CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, Value, bPercent, isInTable)
 {
 	var _H;
 	if(AscFormat.checkNormalRotate(this.Rot))
@@ -3873,6 +3873,31 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 	}
 	var Height = this.EffectExtentB + _H + this.EffectExtentT;
 	var Shift = this.EffectExtentT + _H / 2.0 - this.H / 2.0;
+	
+	if (isInTable
+		&& (c_oAscRelativeFromV.BottomMargin === RelativeFrom
+			|| c_oAscRelativeFromV.InsideMargin === RelativeFrom
+			|| c_oAscRelativeFromV.OutsideMargin === RelativeFrom
+			|| c_oAscRelativeFromV.Margin === RelativeFrom
+			|| c_oAscRelativeFromV.TopMargin === RelativeFrom))
+	{
+		RelativeFrom = c_oAscRelativeFromV.Margin;
+		if (bAlign)
+		{
+			Value = c_oAscAlignV.Top;
+			Shift = Math.max(0, Shift);
+		}
+		else if (bPercent)
+		{
+			bPercent = 0;
+			Value = 0;
+		}
+		else
+		{
+			Value = Math.max(0, Value);
+		}
+	}
+	
 	if (true === bInline)
 	{
 		this.CalcY = this.Y - this.YOffset - Height + Shift;
@@ -4255,8 +4280,18 @@ CAnchorPosition.prototype.Calculate_X_Value = function(RelativeFrom)
 
 	return Value;
 };
-CAnchorPosition.prototype.Calculate_Y_Value = function(RelativeFrom)
+CAnchorPosition.prototype.Calculate_Y_Value = function(RelativeFrom, isInTable)
 {
+	if (isInTable
+		&& (c_oAscRelativeFromV.BottomMargin === RelativeFrom
+			|| c_oAscRelativeFromV.InsideMargin === RelativeFrom
+			|| c_oAscRelativeFromV.OutsideMargin === RelativeFrom
+			|| c_oAscRelativeFromV.Margin === RelativeFrom
+			|| c_oAscRelativeFromV.TopMargin === RelativeFrom))
+	{
+		RelativeFrom = c_oAscRelativeFromV.Margin;
+	}
+	
 	var Value = 0;
 
 	switch (RelativeFrom)

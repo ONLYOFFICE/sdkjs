@@ -155,21 +155,19 @@
 		else
 			this.WidthEn = ResultWidth;
 		
-		if (0x2003 === this.Value || 0x2002 === this.Value)
-			this.SpaceGap = Math.max((Temp - Context.MeasureCode(0x00B0).Width) / 2, 0);
-		else if (0x2005 === this.Value)
-			this.SpaceGap = (Temp - Context.MeasureCode(0x007C).Width) / 2;
+		if (0x2003 === this.Value || 0x2002 === this.Value || 0x2005 === this.Value)
+		{
+			g_oTextMeasurer.SetTextPr(textPr);
+			g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII, this.GetFontCoef());
+			let code = 0x2005 === this.Value ? 0x007C : 0x00B0;
+			this.SpaceGap = Math.max((Temp - g_oTextMeasurer.MeasureCode(code).Width) / 2, 0);
+		}
 		else if (undefined !== this.SpaceGap)
+		{
 			this.SpaceGap = 0;
+		}
 		
 		// Не меняем здесь WidthVisible, это значение для пробела высчитывается отдельно, и не должно меняться при пересчете
-		
-		if (this.Flags & FLAGS_GAPS)
-		{
-			this.Flags &= FLAGS_NON_GAPS;
-			this.LGap = 0;
-			this.RGap = 0;
-		}
 	};
 	CRunSpace.prototype.Measure = function(Context, TextPr)
 	{

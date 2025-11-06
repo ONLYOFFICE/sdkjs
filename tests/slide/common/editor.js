@@ -79,6 +79,12 @@
 		},
 		getGraphicController: function() {
 			return AscTest.DrawingDocument.m_oLogicDocument.GetCurrentController();
+		},
+		getMaxScrolledY: function() {
+			return 10;
+		},
+		getCurScrolledY : function() {
+			return 0;
 		}
 	};
 
@@ -94,6 +100,11 @@
 	editor.WordControl.m_oApi = editor;
 
 	editor.textArtPreviewManager = drawingDocument;
+	editor.externalChartCollector = {
+		onUpdateExternalList: function () {},
+		checkChart          : function () {}
+	};
+
 	editor.thumbnailsPosition = AscCommon.thumbnailsPositionMap.left;
 	editor.asc_hideComments = function () {};
 	editor.isSlideShow = function () {return false};
@@ -131,6 +142,11 @@
 	};
 	editor.initCollaborativeEditing = AscCommon.SlideEditorApi.prototype.initCollaborativeEditing.bind(editor);
 	editor.getThumbnailsPosition  = AscCommon.SlideEditorApi.prototype.getThumbnailsPosition.bind(editor);
+	editor.asc_PasteData = AscCommon.SlideEditorApi.prototype.asc_PasteData.bind(editor);
+	editor.pre_Paste = function(_fonts, _images, callback)
+	{
+		callback(true);
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.DrawingDocument = editor.WordControl.m_oDrawingDocument;
 	AscTest.Editor = editor;

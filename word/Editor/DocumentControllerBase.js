@@ -100,7 +100,7 @@ CDocumentControllerBase.prototype.Is_DrawingShape = function(bReturnShape)
  * @param {number} CurPage
  * @returns {number}
  */
-CDocumentControllerBase.prototype.Get_AbsolutePage = function(CurPage)
+CDocumentControllerBase.prototype.GetAbsolutePage = function(CurPage)
 {
 	return CurPage;
 };
@@ -109,7 +109,7 @@ CDocumentControllerBase.prototype.Get_AbsolutePage = function(CurPage)
  * @param {number} CurPage
  * @returns {number}
  */
-CDocumentControllerBase.prototype.Get_AbsoluteColumn = function(CurPage)
+CDocumentControllerBase.prototype.GetAbsoluteColumn = function(CurPage)
 {
 	return 0;
 };
@@ -250,7 +250,7 @@ CDocumentControllerBase.prototype.Is_DrawingShape = function(bRetShape)
  * Получаем стартовую позицию для заданной страницы.
  * @returns {{X: number, Y: number, XLimit: number, YLimit: number}}
  */
-CDocumentControllerBase.prototype.Get_PageContentStartPos = function(PageAbs)
+CDocumentControllerBase.prototype.GetPageContentFrame = function(pageAbs)
 {
 	return {X : 0, Y : 0, XLimit : 0, YLimit : 0};
 };
@@ -328,10 +328,39 @@ CDocumentControllerBase.prototype.AddTextArt = function(nStyle){};
  */
 CDocumentControllerBase.prototype.AddSignatureLine = function(oSignatureDrawing){};
 /**
+ * Возвращаем значения из истории
+ * @param bNeedRecalculate
+ */
+CDocumentControllerBase.prototype.LoadChartData = function(bNeedRecalculate){};
+/**
  * Редактируем диаграмму.
  * @param Chart
  */
 CDocumentControllerBase.prototype.EditChart = function(Chart){};
+/**
+ * Обновляем диаграмму.
+ * @param Chart
+ */
+CDocumentControllerBase.prototype.UpdateChart = function(Chart){};
+/**
+ * Пробуем открыть редактор диаграмм.
+ * @param Chart
+ */
+CDocumentControllerBase.prototype.OpenChartEditor = function(){};
+/**
+ * Пробуем открыть редактор оле таблиц.
+ * @param Chart
+ */
+CDocumentControllerBase.prototype.OpenOleEditor = function(){};
+/**
+ * Применяем настройки диаграммы.
+ * @param ChartSettings
+ */
+CDocumentControllerBase.prototype.ApplyChartSettings = function(ChartSettings){};
+/**
+ * Получаем настройки диаграммы.
+ */
+CDocumentControllerBase.prototype.GetChartSettings = function(){};
 /**
  * Добавляем инлайн таблицу
  * @param nCols
@@ -771,7 +800,7 @@ CDocumentControllerBase.prototype.RestoreDocumentStateAfterLoadChanges = functio
 CDocumentControllerBase.prototype.GetColumnSize = function(){return {W : 0, H : 0};};
 /**
  * Получаем настройки текущей секции
- * @returns {?CSectionPr}
+ * @returns {?AscWord.SectPr}
  */
 CDocumentControllerBase.prototype.GetCurrentSectionPr = function(){return null;};
 /**
@@ -823,3 +852,9 @@ CDocumentControllerBase.prototype.FindNextFillingForm = function(isNext, isCurre
  * @param oTrackManager {AscWord.CTrackRevisionsManager}
  */
 CDocumentControllerBase.prototype.CollectSelectedReviewChanges = function(oTrackManager) {};
+/**
+ * Получаем верхний текущий класс (для автофигур, если мы стоим не в фигуре, то возвращается внешний контент, а не
+ * внутренний для выделенной фигуры)
+ * @returns {?CDocumentContent}
+ */
+CDocumentControllerBase.prototype.GetCurrentTopDocContent = function(){return null;};

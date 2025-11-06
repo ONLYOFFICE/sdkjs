@@ -387,6 +387,8 @@ MasterSlide.prototype.handleAllContents = Slide.prototype.handleAllContents;
 MasterSlide.prototype.getAllRasterImagesForDraw = Slide.prototype.getAllRasterImagesForDraw;
 MasterSlide.prototype.checkImageDraw = Slide.prototype.checkImageDraw;
 MasterSlide.prototype.getMatchingShape = Slide.prototype.getMatchingShape;
+MasterSlide.prototype.openChartEditor = Slide.prototype.openChartEditor;
+MasterSlide.prototype.openOleEditor = Slide.prototype.openOleEditor;
 MasterSlide.prototype.recalculate = function () {
     if (!this.Theme) return;
     var _shapes = this.cSld.spTree;
@@ -612,6 +614,10 @@ MasterSlide.prototype.addNewLayout = function()
     }
     this.addToSldLayoutLstToPos(nPos, oLayout);
     return oLayout;
+};
+MasterSlide.prototype.addTitleLayout = function () {
+	const oLayout = CreateTitleLayout(this);
+	this.addLayout(oLayout);
 };
 
 MasterSlide.prototype.getName = function () {
@@ -1477,6 +1483,16 @@ function CreateDefaultLayout(oMaster) {
     oLt.setMaster(oMaster);
 		oLt.setPreserve(true);
     return oLt;
+
+}
+function CreateTitleLayout(oMaster) {
+	const oBinaryReader = AscFormat.CreatePPTYLoader(AscCommonSlide.DEFAULT_LAYOUTS_BINARY, "PPTY;v10;".length, AscCommonSlide.DEFAULT_LAYOUTS_BINARY.length);
+	const nLayoutCount = oBinaryReader.stream.GetULong();
+	const oPresentation = Asc.editor.private_GetLogicDocument();
+	const oLt = oBinaryReader.ReadSlideLayout();
+	oLt.setSlideSize(DEFAULT_SLIDE_W, DEFAULT_SLIDE_H);
+	oLt.setMaster(oMaster);
+	return oLt;
 
 }
 

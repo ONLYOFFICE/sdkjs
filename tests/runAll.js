@@ -35,7 +35,7 @@ const path = require("path");
 const allTests = [
 	'cell/spreadsheet-calculation/FormulaTests.html',
 	'cell/spreadsheet-calculation/PivotTests.html',
-	'cell/spreadsheet-calculation/CopyPasteTests.html',
+	'cell/spreadsheet-calculation/copy-paste-tests.html',
 	'cell/spreadsheet-calculation/SheetStructureTests.html',
 	'cell/spreadsheet-calculation/autoFilterTests.html',
 	'cell/spreadsheet-calculation/UserProtectedRangesTest.html',
@@ -80,8 +80,10 @@ const allTests = [
 	'word/revisions/paragraph.html',
 	'word/merge-documents/mergeDocuments.html',
 	'word/math-autocorrection/math-autocorrection.html',
+	'word/math-ml/math-ml.html',
 	'word/change-case/change-case.html',
-	'word/builder/api/replace-text-smart.html',
+	'word/js-api/js-api.html',
+	'word/js-api/js-api-forms.html',
 
 	'cell/shortcuts/shortcuts.html',
 	'slide/shortcuts/shortcuts.html',

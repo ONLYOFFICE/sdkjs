@@ -293,7 +293,8 @@
 		
 		let logicDocument = paragraph ? paragraph.GetTopDocumentContent() : null;
 		if (!logicDocument
-			|| !(logicDocument instanceof AscWord.CDocument)
+			|| !logicDocument.IsDocumentEditor()
+			|| logicDocument.isPreventedPreDelete()
 			|| false === logicDocument.ClearNotesOnPreDelete)
 			return;
 		

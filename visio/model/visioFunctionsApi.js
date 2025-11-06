@@ -36,18 +36,17 @@
 {
 
 	/**
-	 * accepts visio shadow arguments and common arguments, return OnlyOffice api objects of different types.
-	 * So for foreground color it return Unifill and for stroke too. May cause problems
+	 * accepts visio shadow and common parameters, return OnlyOffice api objects of different types.
+	 * So for foreground color it return Unifill and for stroke Unifill too. For font color returns CUniColor.
+	 * In the end Calculate() is called for colors to calculate their exact value on theme
 	 * https://learn.microsoft.com/ru-ru/office/client-developer/visio/themeval-function.
-	 * For font color return CUniColor.
-	 * themeValue - if no cell passed (cell is ignored)
 	 * @param {Cell_Type} cell
 	 * @param {Shape_Type} shape
 	 * @param {Page_Type} pageInfo
 	 * @param {CTheme[]} themes
-	 * @param {string?} themeValue - value to calculate if cell is not considered
+	 * @param {string?} themeValue - value to calculate if cell is not considered (cell is ignored)
 	 * @param {string?} defaultValue
-	 * @param {boolean?} gradientEnabled
+	 * @param {boolean?} gradientEnabled - true by default
 	 * @param {number?}  themedColorsRow
 	 * @return {CUniFill | CUniColor | number | any}
 	 */
@@ -55,11 +54,18 @@
 					  defaultValue, gradientEnabled, themedColorsRow) {
 		// https://visualsignals.typepad.co.uk/vislog/2013/05/visio-2013-themes-in-the-shapesheet-part-2.html
 
-		// if cell value is not 'Themed' waiting number representing color otherwise
-		// if QuickStyle cell is from 100 to 106 or from 200 to 206 using VariationColorIndex cell value and
-		// 	QuickStyle cell value % 100 get color from theme
-		// if QuickStyle cell value is not in that range it is smt like from 0 to 7 representing theme colors like:
-		//  dk1, lt1, accent1, ...
+
+		// 1) Calculate color
+		//  a) QuickStyleFillColor (or other cell) >= 100 && <= 106:
+		//		select variationClrScheme using VariationColorIndex then color using QuickStyleFillColor
+		//  b) 	if QuickStyle cell value is not in that range it is smt like from 0 to 7 representing theme colors like:
+		// 		dk1, lt1, accent1, ..
+		// 2) Apply modifiers
+		//  a) QuickStyleFillMatrix (or other cell) >= 100 && <= 103:
+		//      select variationStyleScheme using VariationStyleIndex then varStyle using QuickStyleFillMatrix and
+		// 		by appropriate property like fillIdx or other pick modifier from fmtScheme or fmtConnectorScheme
+		//  b) QuickStyleFillMatrix (or other cell) >= 1 && <= 6:
+		//  	pick modifier from fmtScheme or fmtConnectorScheme
 
 		/** @type {CUniColor} */
 		let calculatedColor = null;
@@ -208,7 +214,18 @@
 			getModifiersMethod = themes[0].getOuterShdw;
 			isEffectIdx = true;
 
-			initialDefaultValue = AscFormat.CreateUniColorRGB(255,255,255);
+			initialDefaultValue = AscFormat.CreateUniColorRGB(0,0,0);
+		} else if (cellName === "ShapeShdwOffsetX" || cellName === "ShapeShdwOffsetY") {
+			quickStyleCellName = "QuickStyleShadowColor";
+			quickStyleModifiersCellName = "QuickStyleEffectsMatrix";
+			getModifiersMethod = themes[0].getOuterShdw;
+			isEffectIdx = true;
+
+			if (cellName === "ShapeShdwOffsetX") {
+				initialDefaultValue = 0.125;
+			} else {
+				initialDefaultValue = -0.125;
+			}
 		} else {
 			AscCommon.consoleLog("themeval argument error. cell name: " + cellName + " is unknown. return undefined.");
 			return undefined;
@@ -216,8 +233,6 @@
 
 		// lets define if shape is connector
 		// consider 2.2.7.4.9	Connector
-		// let isConnectorShape = shape.getCellNumberValue("EndArrow") !== 0
-		// 	|| shape.getCellNumberValue("BeginArrow") !== 0;
 		let isConnectorShape = shape.isConnectorStyleIherited;
 
 		// TODO rewrite themeScopeCellName choose consider 2.2.7.4.2	Dynamic Theme Identification
@@ -228,56 +243,17 @@
 		// and pick ColorSchemeIndex instead of ThemeIndex cell
 		// upd: if connector styles are used lets use ConnectorSchemeIndex cell and
 		// ext uri="{D75FF423-9257-4291-A4FE-1B2448832E17} - themeSchemeSchemeEnum to find theme
-		let themeIndex = 0; // zero index means no theme - use default values
-		let themeScopeCellName = isConnectorShape ? "ConnectorSchemeIndex" : "ColorSchemeIndex";
-		let shapeColorSchemeThemeIndex = shape.getCellNumberValue(themeScopeCellName);
-		if (isNaN(shapeColorSchemeThemeIndex)) {
-			shapeColorSchemeThemeIndex = 0; // zero index means no theme
-		}
-		if (shapeColorSchemeThemeIndex === 65534) {
-			let pageThemeIndex = pageInfo.pageSheet.getCellNumberValue(themeScopeCellName);
-			if (!isNaN(pageThemeIndex)) {
-				themeIndex = pageThemeIndex;
-			} else {
-				// it's ok sometimes
-				// AscCommon.consoleLog("pageThemeIndexCell not found");
-				themeIndex = 0;
-			}
-		} else {
-			themeIndex = shapeColorSchemeThemeIndex;
-		}
+		let themeIndex = shape.calculateColorThemeIndex(pageInfo);
 
-
-		// if THEMEVAL was called with themeValue (argument like "FillColor") even if themeIndex is 0 we should
-		// use any theme otherwise if no themeValue argument was passed and 0 themeIndex is used we should return
-		// default value
-		let theme = themes[0];
+		// TODO: if THEMEVAL was called with themeValue (argument like "FillColor") even if themeIndex is 0 we should return
+		//   color of default theme otherwise if no themeValue argument was passed and 0 themeIndex is used we should return
+		//   initialDefaultValue value
+		let theme;
+		// 0 theme index (default theme in visio) is considered as default value for now
 		if (themeIndex === 0) {
 			return initialDefaultValue;
 		} else {
-			// find theme by themeIndex
-			theme = themes.find(function (theme) {
-				// if search by theme index - theme.themeElements.themeExt.themeSchemeSchemeEnum
-				let findThemeByElement;
-				if (isConnectorShape && theme.themeElements.themeExt) {
-					findThemeByElement = theme.themeElements.themeExt.themeSchemeSchemeEnum;
-				} else if (!isConnectorShape && theme.themeElements.clrScheme.clrSchemeExtLst) {
-					findThemeByElement = theme.themeElements.clrScheme.clrSchemeExtLst.schemeEnum;
-				}
-
-				if (!findThemeByElement) {
-					return false;
-				}
-
-				let themeEnum = Number(findThemeByElement);
-				return themeEnum === themeIndex;
-			});
-
-			// themes.find didn't find anything
-			if (theme === undefined) {
-				AscCommon.consoleLog("Theme was not found by theme enum in themes. using themes[0]");
-				theme = themes[0];
-			}
+			theme = shape.getTheme(pageInfo, themes);
 		}
 
 
@@ -416,9 +392,15 @@
 				}
 			}
 
-			if (!gradientEnabled && getMedifiersResult && getMedifiersResult.fill instanceof AscFormat.CGradFill) {
-				// disable gradient
+			// disable gradient
+			let isFillGradient = getMedifiersResult && getMedifiersResult.fill instanceof AscFormat.CGradFill;
+			let isCLnContainsGradient = getMedifiersResult && getMedifiersResult.Fill &&
+					getMedifiersResult.Fill.fill && getMedifiersResult.Fill.fill.type === Asc.c_oAscFill.FILL_TYPE_GRAD;
+			if (!gradientEnabled && isFillGradient) {
 				getMedifiersResult = AscFormat.CreateUniFillByUniColor(calculatedColor);
+			}
+			if (!gradientEnabled && getMedifiersResult && isCLnContainsGradient) {
+				getMedifiersResult.Fill = AscFormat.CreateUniFillByUniColor(calculatedColor);
 			}
 
 			// getModifiersMethod return not only
@@ -452,7 +434,22 @@
 				result = getMedifiersResult && getMedifiersResult.fontPropsObject.color;
 			} else if (cellName === "FillForegnd" || cellName === "FillBkgnd") {
 				//leave result because it is fill
-				result = getMedifiersResult;
+				if (getMedifiersResult && getMedifiersResult.fill &&
+						getMedifiersResult.fill.type === Asc.c_oAscFill.FILL_TYPE_PATT) {
+					let uniColor;
+					if (cellName === "FillForegnd") {
+						uniColor = getMedifiersResult.fill.fgClr;
+					} else {
+						uniColor = getMedifiersResult.fill.bgClr;
+					}
+					let fill = new AscFormat.CUniFill();
+					fill.fill = new AscFormat.CSolidFill();
+					fill.fill.color = uniColor;
+
+					result = fill;
+				} else {
+					result = getMedifiersResult;
+				}
 			} else if (cellName === "LineWeight") {
 				// let's map standart ooxml result in emus to visio result - inches
 				result = getMedifiersResult && getMedifiersResult.w /
@@ -502,6 +499,22 @@
 			} else if (cellName === "ShdwForegnd") {
 				let shadowColor = getMedifiersResult && getMedifiersResult.color;
 				result = shadowColor;
+			} else if (cellName === "ShapeShdwOffsetX" || cellName === "ShapeShdwOffsetY") {
+				let dir = getMedifiersResult && getMedifiersResult.dir;
+				let dist = getMedifiersResult && getMedifiersResult.dist;
+
+				let dist_inches = dist * g_dKoef_emu_to_mm / g_dKoef_in_to_mm;
+				let dir_radians = dir * AscFormat.cToRad;
+
+				// We are now in ooxml cord type system where y goes down.
+				// Let's convert to MS Euclidean cord system where y goes up.
+				dir_radians = -1 * dir_radians;
+
+				if (cellName === "ShapeShdwOffsetX") {
+					result = dist_inches * Math.cos(dir_radians);
+				} else {
+					result = dist_inches * Math.sin(dir_radians);
+				}
 			} else {
 				AscCommon.consoleLog("Error in themeval. result is not changed to appropriate type or quickStyleCellName is not set.");
 			}

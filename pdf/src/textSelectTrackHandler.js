@@ -49,8 +49,11 @@
 		this.OnChangePosition(bCheckMouseUpPos);
 	};
 	CTextSelectTrackHandler.prototype.OnChangePosition = function(bCheckMouseUpPos) {
+		let oDoc = Asc.editor.getPDFDoc();
+		let isCanEditShape = Asc.editor.canEdit();
+
 		let oFile = Asc.editor.getDocumentRenderer().file;
-		if (oFile.Selection.IsSelection || false === Asc.editor.NeedShowTextSelectPanel()) {
+		if (false == oFile.isSelectionUse() || false === Asc.editor.NeedShowTextSelectPanel() || (oDoc.activeDrawing && isCanEditShape)) {
 			this.OnHide();
 			return;
 		}

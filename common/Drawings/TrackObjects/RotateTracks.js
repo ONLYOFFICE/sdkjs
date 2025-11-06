@@ -185,6 +185,35 @@ function OverlayObject(geometry, extX, extY, brush, pen, transform )
     };
 }
 
+OverlayObject.prototype.getTransformMatrix = function () {
+	return this.TransformMatrix;
+};
+OverlayObject.prototype.getGeometry = function () {
+	return this.geometry;
+};
+OverlayObject.prototype.getBounds = function () {
+	const originalDrawer = this.shapeDrawer;
+
+	const tmpDrawer = new AscCommon.CShapeDrawer();
+	const boundsChecker = new AscFormat.CSlideBoundsChecker();
+
+	this.shapeDrawer = tmpDrawer;
+	this.draw(boundsChecker, this.TransformMatrix);
+	this.shapeDrawer = originalDrawer;
+
+	boundsChecker.CorrectBounds();
+
+	return new AscFormat.CGraphicBounds(
+		boundsChecker.Bounds.min_x,
+		boundsChecker.Bounds.min_y,
+		boundsChecker.Bounds.max_x,
+		boundsChecker.Bounds.max_y
+	);
+};
+OverlayObject.prototype.getFullRotate = function () {
+	return AscCommon.deg2rad(this.TransformMatrix.GetRotation());
+};
+
     function ObjectToDraw(brush, pen, extX, extY, geometry, transform, x, y, oComment, TextElement, oLineStructure, nId, bIsBulletSymbol)
     {
         this.extX = extX;
@@ -197,9 +226,9 @@ function OverlayObject(geometry, extX, extY, brush, pen, transform )
         this.TextElement = TextElement;
         this.pen = pen;
         this.brush = brush;
-        this.lineStructure = oLineStructure;
-        this.isBulletSymbol = bIsBulletSymbol;
-        this.SpaceTextElements = [];
+		this.lineStructure = oLineStructure;
+		this.isBulletSymbol = bIsBulletSymbol;
+		this.SpaceTextElements = [];
         /*позиция символа*/
         this.x = x;
         this.y = y;
@@ -344,6 +373,10 @@ function OverlayObject(geometry, extX, extY, brush, pen, transform )
         {
             shape_drawer.bIsNoFillAttack = false;
         }
+        if (this.TextElement)
+        {
+            shape_drawer.bIsNoSmartAttack = true;
+        }
         shape_drawer.draw(this.geometry);
         graphics.RestoreGrState();
     };
@@ -426,6 +459,18 @@ function OverlayObject(geometry, extX, extY, brush, pen, transform )
         }
         this.transform = this.TransformMatrix = new AscCommon.CMatrix();
     };
+    ObjectToDraw.prototype.getBounds = function () {
+
+        if (this.geometry) {
+            let boundsChecker = new AscFormat.CSlideBoundsChecker();
+            boundsChecker.init(100, 100, 100, 100);
+            this.geometry.check_bounds(boundsChecker);
+            boundsChecker.CorrectBounds();
+            let bounds = boundsChecker.Bounds;
+            return new AscFormat.CGraphicBounds(bounds.min_x, bounds.min_y, bounds.max_x, bounds.max_y);
+        }
+        return new AscFormat.CGraphicBounds(0, 0, 0, 0);
+    }
 function RotateTrackShapeImage(originalObject)
 {
     this.bIsTracked = false;

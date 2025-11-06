@@ -783,6 +783,7 @@ CWrapPolygon.prototype =
     {
     }
 };
+CWrapPolygon.prototype.constructor = CWrapPolygon;
 
 
 function CPolygonPoint()
