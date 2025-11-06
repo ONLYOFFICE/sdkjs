@@ -825,6 +825,21 @@ function (window, undefined) {
 		} else if (basis instanceof cArray) {
 			basis = basis.getElementRowCol(0, 0);
 		}
+		// Validate incorrect types.
+		// Check dates args
+		if (cElementType.bool === issue.type || cElementType.bool === settlement.type) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+		if (cElementType.empty === issue.type || cElementType.empty === settlement.type) {
+			return new cError(cErrorType.not_available);
+		}
+		// Check Rate, Par, Basis arguments
+		if (cElementType.bool === rate.type || cElementType.bool === par.type || cElementType.bool === basis.type) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+		if (cElementType.empty === rate.type) {
+			return new cError(cErrorType.not_available);
+		}
 
 		issue = issue.tocNumber();
 		settlement = settlement.tocNumber();
@@ -854,7 +869,8 @@ function (window, undefined) {
 		par = par.getValue();
 		basis = Math.floor(basis.getValue());
 
-		if (settlement < startRangeCurrentDateSystem || issue < startRangeCurrentDateSystem || issue >= settlement ||
+		// Common checking
+		if (settlement < startRangeCurrentDateSystem || issue >= settlement ||
 			rate <= 0 || par <= 0 || basis < 0 || basis > 4) {
 			return new cError(cErrorType.not_numeric);
 		}
@@ -1187,7 +1203,7 @@ function (window, undefined) {
 					countedPeriod++;
 					c++;
 				}
-				return new cNumber(Math.floor(depr));
+				return new cNumber(depr);
 			}
 		}
 

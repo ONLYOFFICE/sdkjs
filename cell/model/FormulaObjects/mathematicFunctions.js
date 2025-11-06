@@ -407,7 +407,7 @@ function (window, undefined) {
 			return argError;
 		}
 
-		let nFunc = argClone[0].getValue();
+		let nFunc = Math.floor(argClone[0].getValue());
 		let f = null;
 		switch (nFunc) {
 			case AGGREGATE_FUNC_AVE:
@@ -487,7 +487,7 @@ function (window, undefined) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		let nOption = argClone[1].getValue();
+		let nOption = Math.floor(argClone[1].getValue());
 		let ignoreHiddenRows = false;
 		let ignoreErrorsVal = false;
 		let ignoreNestedStAg = false;

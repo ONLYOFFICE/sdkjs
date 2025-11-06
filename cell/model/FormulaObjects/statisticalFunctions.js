@@ -4011,6 +4011,8 @@ function (window, undefined) {
 					count++;
 				} else if (cElementType.string === _argV.type) {
 					count++;
+				} else if (cElementType.error === _argV.type) {
+					return _argV;
 				}
 			} else if (cElementType.cellsRange === _arg.type || cElementType.cellsRange3D === _arg.type) {
 				var _argAreaValue = _arg.getValue();
@@ -4021,6 +4023,8 @@ function (window, undefined) {
 						count++;
 					} else if (cElementType.string === __arg.type) {
 						count++;
+					} else if (cElementType.error === __arg.type) {
+						return __arg;
 					}
 				}
 			} else if (cElementType.array === _arg.type) {
@@ -7460,7 +7464,7 @@ function (window, undefined) {
 
 		function kurt(x) {
 
-			var sumSQRDeltaX = 0, _x = 0, xLength = 0, sumSQRDeltaXDivstandDev = 0, i;
+			let sumSQRDeltaX = 0, _x = 0, xLength = 0, sumSQRDeltaXDivstandDev = 0, i;
 			for (i = 0; i < x.length; i++) {
 
 				if (x[i] instanceof cNumber) {
@@ -7480,7 +7484,7 @@ function (window, undefined) {
 
 			}
 
-			var standDev = Math.sqrt(sumSQRDeltaX / (xLength - 1));
+			let standDev = Math.sqrt(sumSQRDeltaX / (xLength - 1));
 
 			for (i = 0; i < x.length; i++) {
 
@@ -7495,9 +7499,9 @@ function (window, undefined) {
 
 		}
 
-		var arr0 = [];
+		let arr0 = [];
 
-		for (var j = 0; j < arg.length; j++) {
+		for (let j = 0; j < arg.length; j++) {
 
 			if (arg[j] instanceof cArea || arg[j] instanceof cArea3D) {
 				arg[j].foreach2(function (elem) {
@@ -7506,7 +7510,7 @@ function (window, undefined) {
 					}
 				});
 			} else if (arg[j] instanceof cRef || arg[j] instanceof cRef3D) {
-				var a = arg[j].getValue();
+				let a = arg[j].getValue();
 				if (a instanceof cNumber) {
 					arr0.push(a);
 				}
@@ -7516,10 +7520,12 @@ function (window, undefined) {
 						arr0.push(elem);
 					}
 				});
-			} else if (arg[j] instanceof cNumber || arg[j] instanceof cBool) {
+			} else if (arg[j] instanceof cNumber || arg[j] instanceof cBool || arg[j] instanceof cEmpty) {
 				arr0.push(arg[j].tocNumber());
 			} else if (arg[j] instanceof cString) {
 				continue;
+			} else if (arg[j] instanceof cError) {
+				return arg[j];
 			} else {
 				return new cError(cErrorType.wrong_value_type);
 			}
@@ -7555,9 +7561,9 @@ function (window, undefined) {
 			return new cError(cErrorType.not_available);
 		}
 
-		var v, tA = [];
-		for (var i = 0; i < arg0.length; i++) {
-			for (var j = 0; j < arg0[i].length; j++) {
+		let v, tA = [];
+		for (let i = 0; i < arg0.length; i++) {
+			for (let j = 0; j < arg0[i].length; j++) {
 				v = arg0[i][j];
 				if (cElementType.error === v.type) {
 					return v;
@@ -7571,14 +7577,24 @@ function (window, undefined) {
 
 		tA.sort(AscCommon.fSortDescending);
 
+		arg1 = Math.ceil(arg1);
 		if (arg1 > tA.length) {
-			return new cError(cErrorType.not_available);
+			return new cError(cErrorType.not_numeric);
 		} else {
 			return new cNumber(tA[arg1 - 1]);
 		}
 	};
 	cLARGE.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1];
+		let arg0 = arg[0], arg1 = arg[1];
+
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+
+		if (cElementType.error === arg1.type) {
+			return arg1;
+		}
+
 		if (cElementType.cellsRange === arg0.type) {
 			arg0 = arg0.getValuesNoEmpty(this.checkExclude, this.excludeHiddenRows, this.excludeErrorsVal,
 				this.excludeNestedStAg);

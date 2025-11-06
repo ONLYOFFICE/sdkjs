@@ -88,6 +88,9 @@ function (window, undefined) {
 					}
 				}
 			} else {
+				if (arg[i].type === cElementType.cell || arg[i].type === cElementType.cell3D) {
+					arg[i] = arg[i].getValue();
+				}
 				if (arg[i] instanceof cString) {
 					return new cError(cErrorType.wrong_value_type);
 				} else if (arg[i] instanceof cError) {
