@@ -4035,9 +4035,10 @@ CPresentation.prototype.FinalizeEditChart = function (binary)
 		oSlide.graphicObjects.loadChartData(binary['noHistory']);
 		if (!binary['noHistory'])
 		{
-			AscCommon.g_oBinaryCacheManager.addBinary(binary["workbookBinary"]).then(function(hash) {
-				if (hash) {
-					chartBinary["workbookHash"] = hash;
+			AscCommon.g_oBinaryCacheManager.addBinary(binary["workbookBinary"]).then(function(loadedData) {
+				if (loadedData) {
+					binary["workbookHash"] = loadedData.hash;
+					binary["workbookPath"] = AscCommon.g_oDocumentUrls.imagePath2Local(loadedData.data.path);
 					oSlide.graphicObjects.checkSelectedObjectsAndCallback(function () {
 						oThis.EditChart(binary);
 					}, [], false, AscDFH.historydescription_Presentation_EditChart);

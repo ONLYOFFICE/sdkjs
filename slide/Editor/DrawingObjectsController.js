@@ -322,9 +322,9 @@ DrawingObjectsController.prototype.editChart = function(binary)
         {
           chart_space.setXLSXId(binary["workbookHash"]);
         }
-				if (binary['imagesForAddToHistory'])
+				if (binary['workbookPath'])
 				{
-					AscDFH.addImagesFromFrame(chart_space, binary['imagesForAddToHistory']);
+					AscDFH.addImagesFromFrame(chart_space, [binary['workbookPath']]);
 				}
         if(oSelectedChart.group)
         {
