@@ -26160,7 +26160,11 @@
 	 */
 	ApiWatermarkSettings.prototype.SetTextPr = function (oTextPr)
 	{
-		this.Settings.put_TextPr(new Asc.CTextProp(oTextPr.TextPr));
+		const textProp = new Asc.CTextProp(oTextPr.TextPr);
+		const fontFamilyName = oTextPr.TextPr.GetFontFamily();
+		const fontFamily = new AscCommon.asc_CTextFontFamily({ Name: fontFamilyName, Index: -1 });
+		textProp.put_FontFamily(fontFamily);
+		this.Settings.put_TextPr(textProp);
 		return true;
 	};
 

@@ -10134,6 +10134,15 @@ background-repeat: no-repeat;\
 	{
 		let logicDocument = this.getLogicDocument();
 		logicDocument.CollaborativeEditing.Clear_DocumentPositions();
+		
+		let watermark = logicDocument.GetWatermark();
+		if (watermark) {
+			let watermarkProps = logicDocument.GetWatermarkProps();
+			if (watermarkProps && watermarkProps.get_Type() === Asc.c_oAscWatermarkType.Text) {
+				logicDocument.SetWatermarkPropsAction(watermarkProps);
+			}
+		}
+		
 		logicDocument.Recalculate();
 		logicDocument.UpdateSelection();
 		logicDocument.UpdateInterface();
