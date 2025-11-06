@@ -920,7 +920,9 @@ NumFormat.prototype =
 			}
             else if("E" == next || "e" == next)
             {
+                var tmpIndex = this.index
                 var nextnext = this._readChar();
+                this.index = tmpIndex
                 if(this.EOF != nextnext && "+" == nextnext || "-" == nextnext)
                 {
                     var sign = ("+" == nextnext) ? SignType.Positive : SignType.Negative;
@@ -928,7 +930,6 @@ NumFormat.prototype =
                 }
                 else
                 { 
-                    if(nextnext == 'e' || nextnext == 'g') this.index--
                     this._addToFormat2(new FormatObjDateVal(numFormat_GennenEra, 1, false));
                 }
                     
@@ -2004,6 +2005,7 @@ NumFormat.prototype =
         }
     },
     setFormat: function(format, cultureInfo, formatType, useLocaleFormat) {
+        console.log(format);
 		if (null == cultureInfo) {
             cultureInfo = g_oDefaultCultureInfo;
         }
@@ -2877,6 +2879,7 @@ NumFormatCache.prototype =
 	},
     get : function(format, formatType)
     {
+        return new CellFormat(format, formatType, false);
 		var key = format + String.fromCharCode(5) + formatType;
         var res = this.oNumFormats[key];
         if(null == res)
