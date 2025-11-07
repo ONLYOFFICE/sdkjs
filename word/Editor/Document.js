@@ -5773,9 +5773,9 @@ CDocument.prototype.FinalizeEditChart = function(chartBinary)
 	{
 		if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
 		{
-			AscCommon.g_oBinaryCacheManager.addBinary(chartBinary["workbookBinary"]).then(function(hash) {
-				if (hash) {
-					chartBinary["workbookHash"] = hash;
+			AscCommon.g_oBinaryCacheManager.addBinary(chartBinary["workbookBinary"]).then(function(loadedData) {
+				if (loadedData) {
+					chartBinary["workbookHash"] = loadedData.hash;
 					oThis.StartAction(AscDFH.historydescription_Document_EditChart);
 					oThis.EditChart(chartBinary);
 					oThis.FinalizeAction();

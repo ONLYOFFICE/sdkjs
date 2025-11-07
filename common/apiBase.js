@@ -6082,6 +6082,22 @@
 	baseEditorsApi.prototype._onEndGroupActions = function()
 	{
 	};
+	baseEditorsApi.prototype.prepareImageMap = function(images) {
+		const result = {
+			binaries: {},
+			images: {}
+		};
+		const xlsxExtension = ".xlsx";
+		for (let sId in images) {
+			const url = images[sId];
+			if (url.lastIndexOf(xlsxExtension) === (url.length - xlsxExtension.length)) {
+				result.binaries[sId] = url;
+			} else {
+				result.images[sId] = url;
+			}
+		}
+		return result;
+	};
 
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};

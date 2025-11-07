@@ -8387,7 +8387,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.pre_Save = function(_images)
 	{
 		this.isSaveFonts_Images = true;
-		this.saveImageMap       = _images;
+		this.saveImageMap       = this.prepareImageMap(_images);
 		this.WordControl.m_oDrawingDocument.CheckFontNeeds();
 		this.FontLoader.LoadDocumentFonts2(this.WordControl.m_oLogicDocument.Fonts);
 	};

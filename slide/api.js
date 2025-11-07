@@ -844,7 +844,7 @@
     asc_docs_api.prototype.pre_Save = function(_images)
 	{
 		this.isSaveFonts_Images = true;
-		this.saveImageMap       = _images;
+		this.saveImageMap       = this.prepareImageMap(_images);
 		this.WordControl.m_oDrawingDocument.CheckFontNeeds();
 		this.FontLoader.LoadDocumentFonts2(this.WordControl.m_oLogicDocument.Fonts);
 	};
@@ -5612,7 +5612,10 @@ background-repeat: no-repeat;\
 		else if (this.isSaveFonts_Images)
 		{
 			var _count = 0;
-			for (var i in this.saveImageMap)
+			for (let i in this.saveImageMap.images)
+				++_count;
+
+			for (let i in this.saveImageMap.binaries)
 				++_count;
 
 			if (_count > 0)
@@ -5621,7 +5624,8 @@ background-repeat: no-repeat;\
 				this.sync_StartAction(c_oAscAsyncActionType.Information, c_oAscAsyncAction.LoadImage);
 			}
 			const oRequiredSyncImagesMap = this.isSyncLoadFirstSlideImages() && this.isApplyChangesOnOpen ? this.getFirstSlideImagesMap() : null;
-			this.ImageLoader.LoadDocumentImages(this.saveImageMap, false, oRequiredSyncImagesMap);
+			AscCommon.g_oBinaryCacheManager.loadBinaries(this.saveImageMap.binaries);
+			this.ImageLoader.LoadDocumentImages(this.saveImageMap.images, false, oRequiredSyncImagesMap);
 			return;
 		}
 

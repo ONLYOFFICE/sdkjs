@@ -1029,7 +1029,7 @@
 			this.loadEventHandlers.push({resolve: fResolve, reject: fReject});
 		}
 	};
-	CLoadBinaryData.prototype.setIsLoaded = function(pr) {
+	CLoadBinaryData.prototype.setLoadState = function(pr) {
 		this.loadState = pr;
 		this.onChangeLoadState();
 	};
@@ -1051,6 +1051,19 @@
 		this.collaborativeCache = {};
 		this.api = api;
 	}
+	CBinaryCacheManager.prototype.loadBinaries = function(urls) {
+		const oThis = this;
+		for (let i = 0; i < urls.length; i++) {
+			this.api._downloadOriginalFile(urls[i], undefined, undefined, undefined, function(binary) {
+				if (binary) {
+					const hash = oThis.getHash(binary);
+					const loadedData = new CLoadBinaryData(hash, binary);
+					loadedData.setLoadState(CLoadBinaryData_Complete);
+
+				}
+			});
+		}
+	};
 	CBinaryCacheManager.prototype.getHash = function(binary) {
 		const sha256 = AscCommon.Digest.sha256(binary, 0, binary.length);
 		return AscCommon.Hex.encode(sha256);
@@ -1071,10 +1084,10 @@
 					const dataUrl = oThis.getDataURLFromBinary(xlsxBinary);
 					AscCommon.sendImgUrls(oThis.api, [dataUrl], function(data) {
 						if (data && data[0] && data[0].url !== "error") {
-							oThis.collaborativeCache[hash].setIsLoaded(CLoadBinaryData_Complete);
+							oThis.collaborativeCache[hash].setLoadState(CLoadBinaryData_Complete);
 							oThis.collaborativeCache[hash].data = data[0];
 						} else {
-							oThis.collaborativeCache[hash].setIsLoaded(CLoadBinaryData_Error);
+							oThis.collaborativeCache[hash].setLoadState(CLoadBinaryData_Error);
 							delete oThis.collaborativeCache[hash];
 						}
 					});

@@ -8026,9 +8026,9 @@ var CPresentation = CPresentation || function(){};
         const oThis = this;
         this.DrawingObjects.loadChartData(chartBinary['noHistory']);
         if (!chartBinary['noHistory']) {
-					AscCommon.g_oBinaryCacheManager.addBinary(chartBinary["workbookBinary"]).then(function(hash) {
-						if (hash) {
-							chartBinary["workbookHash"] = hash;
+					AscCommon.g_oBinaryCacheManager.addBinary(chartBinary["workbookBinary"]).then(function(loadedData) {
+						if (loadedData) {
+							chartBinary["workbookHash"] = loadedData.hash;
 							oThis.DrawingObjects.checkSelectedObjectsAndCallback(function () {
 								oThis.EditChart(chartBinary);
 							}, [], false, AscDFH.historydescription_Presentation_EditChart);

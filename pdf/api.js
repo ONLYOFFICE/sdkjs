@@ -4129,7 +4129,7 @@
 	};
 	PDFEditorApi.prototype.pre_Save = function(_images) {
 		this.isSaveFonts_Images = true;
-		this.saveImageMap       = _images;
+		this.saveImageMap       = this.prepareImageMap(_images);
 		this.FontLoader.LoadDocumentFonts2([]);
 	};
 	PDFEditorApi.prototype.asc_Print = function (options) {
