@@ -10002,7 +10002,7 @@ function parserFormula( formula, parent, _ws ) {
 				if (isFullTableLink || !refAreaRange) {
 					this.wb.dependencyFormulas.startListeningDefName(ref.tableName, this, null, ref);
 				} else {
-					this._buildDependenciesRef(ref.ws.getId(), refAreaRange.getBBox0(), false, /*isStart*/false);
+					this._buildDependenciesRef(ref.ws.getId(), refAreaRange.getBBox0(), false, /*isStart*/true);
 				}
 			} else if (ref.type === cElementType.name) {
 				this.wb.dependencyFormulas.startListeningDefName(ref.value, this);
