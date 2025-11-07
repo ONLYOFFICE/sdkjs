@@ -1656,7 +1656,7 @@ NumFormat.prototype =
         for (var i = 0; i < japaneseEras.length; i++) 
         {
             var era = japaneseEras[i];
-            if (gregorianYear >= era.start) 
+            if (gregorianYear > era.start) 
             {
                 if(val == 1) return era.symbol
                 else if(val == 2) return era.character.toString()[0]
@@ -1677,10 +1677,16 @@ NumFormat.prototype =
         for (var i = 0; i < japaneseEras.length; i++) 
         {
             var era = japaneseEras[i];
-            if (gregorianYear >= era.start) 
+            if (gregorianYear > era.start) 
             {
                 var yearInEra = gregorianYear - era.start + 1;
-                return yearInEra === 1 ? "1" : yearInEra.toString();
+                return yearInEra.toString();
+            }
+            else if(gregorianYear == era.start)
+            {
+                era = japaneseEras[i+1]
+                var yearInEra = gregorianYear - era.start + 1;
+                return yearInEra.toString()
             }
         }
     },
@@ -2005,7 +2011,6 @@ NumFormat.prototype =
         }
     },
     setFormat: function(format, cultureInfo, formatType, useLocaleFormat) {
-        console.log(format);
 		if (null == cultureInfo) {
             cultureInfo = g_oDefaultCultureInfo;
         }
@@ -2396,13 +2401,22 @@ NumFormat.prototype =
                 }
                 else if (numFormat_Gennen == item.type) 
                 {
-                    var japaneseYear = this._convertToJapaneseYear(oParsedNumber.date.year, item.val);
-                    oCurText.text += japaneseYear;
+                    if(this.LCID == 1041)
+                    {
+                        var japaneseYear = this._convertToJapaneseYear(oParsedNumber.date.year, item.val);
+                        oCurText.text += japaneseYear;
+                    }
+
                 }
                 else if (numFormat_GennenEra == item.type) 
                 {
-                    var japaneseEra = this._convertToJapaneseEra(oParsedNumber.date.year);
-                    oCurText.text += japaneseEra;
+                    if(this.LCID == 1041){
+                        var japaneseEra = this._convertToJapaneseEra(oParsedNumber.date.year);
+                        oCurText.text += japaneseEra;                        
+                    }else{
+                        oCurText.text += oParsedNumber.date.year;
+                    }
+
                 }
                 else if(numFormat_Month == item.type)
                 {
@@ -2879,7 +2893,6 @@ NumFormatCache.prototype =
 	},
     get : function(format, formatType)
     {
-        return new CellFormat(format, formatType, false);
 		var key = format + String.fromCharCode(5) + formatType;
         var res = this.oNumFormats[key];
         if(null == res)
