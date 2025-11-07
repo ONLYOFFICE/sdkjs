@@ -1264,8 +1264,17 @@ $(function () {
 		assert.strictEqual(resCell.getValueForEdit(), "", "Value for edit in after table is created");
 		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table with title is created");
 
+		if (ws.TableParts) {
+			for (let i = ws.TableParts.length - 1; i >= 0; i--) {
+				let tablePart = ws.TableParts[i];
+				ws.deleteTablePart(i);
+				tablePart.removeDependencies();
+			}
+		}
+
 		tables.length = 0;
-		clearData(0, 0, 200, 200);
+		ws.TableParts.length = 0;
+		ws.getRange2("A1:H200").cleanAll();
 
 
 		ws.getRange2("A100").setValue("1");
@@ -1330,8 +1339,17 @@ $(function () {
 		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A101:A105)", "Value for edit in after table is created");
 		assert.strictEqual(resCell.getFormula(), "SUM(A101:A105)", "Formula in cell after table is created");
 
+		if (ws.TableParts) {
+			for (let i = ws.TableParts.length - 1; i >= 0; i--) {
+				let tablePart = ws.TableParts[i];
+				ws.deleteTablePart(i);
+				tablePart.removeDependencies();
+			}
+		}
+
 		tables.length = 0;
-		clearData(0, 0, 200, 200);
+		ws.TableParts.length = 0;
+		ws.getRange2("A1:H200").cleanAll();
 
 
 		ws.getRange2("A100").setValue("1");
@@ -1396,8 +1414,17 @@ $(function () {
 		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A101:A105)", "Value for edit in after table is created");
 		assert.strictEqual(resCell.getFormula(), "SUM(A101:A105)", "Formula in cell after table is created");
 
+		if (ws.TableParts) {
+			for (let i = ws.TableParts.length - 1; i >= 0; i--) {
+				let tablePart = ws.TableParts[i];
+				ws.deleteTablePart(i);
+				tablePart.removeDependencies();
+			}
+		}
+
 		tables.length = 0;
-		clearData(0, 0, 200, 200);
+		ws.TableParts.length = 0;
+		ws.getRange2("A1:H200").cleanAll();
 
 
 		ws.getRange2("A100").setValue("1");
@@ -1529,9 +1556,17 @@ $(function () {
 		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A105)", "Value for edit in after table is created");
 		assert.strictEqual(resCell.getFormula(), "SUM(A100:A105)", "Formula in cell after table is created");
 
+		if (ws.TableParts) {
+			for (let i = ws.TableParts.length - 1; i >= 0; i--) {
+				let tablePart = ws.TableParts[i];
+				ws.deleteTablePart(i);
+				tablePart.removeDependencies();
+			}
+		}
+
 		tables.length = 0;
-		clearData(0, 0, 200, 200);
-		ws.getRange2("A99:B110").cleanAll();
+		ws.TableParts.length = 0;
+		ws.getRange2("A1:H200").cleanAll();
 
 	});
 
@@ -4059,7 +4094,19 @@ $(function () {
 		assert.ok(oParser.parse(true, true, parseResult, true));
 		assert.ok(oParser.outStack && oParser.outStack[0] && (oParser.outStack[0].type === AscCommonExcel.cElementType.table), "=[@[Column1]:[Column2]] Formula parsing Inside the table");
 
-		clearData(0, 99, 0, 105);
+		ws.getRange2("A1:H200").cleanAll();
+		// clearData(0, 200, 0, 200);
+		if (ws.TableParts) {
+			for (let i = ws.TableParts.length - 1; i >= 0; i--) {
+				let tablePart = ws.TableParts[i];
+				ws.deleteTablePart(i);
+				tablePart.removeDependencies();
+			}
+		}
+
+		tables.length = 0;
+		ws.TableParts.length = 0;
+		
 	});
 
 	QUnit.test('Table special characters tests', function (assert) {
@@ -7536,7 +7583,6 @@ $(function () {
 
 	QUnit.test("Test: \"Assemble formulas test\"", function (assert) {
 		let cellWithFormula, fillRange, array;
-			
 		ws.getRange2("A1:F100").cleanAll();
 		
 		// set flags for CSE formula call
@@ -7750,8 +7796,6 @@ $(function () {
 
 	QUnit.test("Test: \"Workbook dependencies tests\"", function (assert) {
 		let cellWithFormula, fillRange, array, wsID = ws.getId();
-			
-		// wb.dependencyFormulas.unlockRecal();
 
 		ws.getRange2("A1:F10").cleanAll();
 		// set flags for CSE formula call
@@ -7782,7 +7826,6 @@ $(function () {
 
 		let tables = wsView.model.autoFilters.getTablesIntersectionRange(ws.getRange2("A1").bbox);
 		assert.strictEqual(tables.length, 1, "Table was created without selection of formula. Compare tables length");
-
 		sheetListeners = dependencyFormulas.sheetListeners[wsID];
 		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after create the table");
 		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after create the table");
@@ -8112,14 +8155,24 @@ $(function () {
 
 		flags.ctrlKey = false;
 		flags.shiftKey = false;
+		wb.dependencyFormulas.unlockRecal();
 
+		if (ws.TableParts) {
+			for (let i = ws.TableParts.length - 1; i >= 0; i--) {
+				let tablePart = ws.TableParts[i];
+				ws.deleteTablePart(i);
+				tablePart.removeDependencies();
+			}
+		}
 
-		// remove tables
 		tables.length = 0;
+		ws.TableParts.length = 0;
+
+		ws.getRange2("A1:H200").cleanAll();
 		
 	});
 
-		QUnit.module("Sheet structure");
+	QUnit.module("Sheet structure");
 });
 
 

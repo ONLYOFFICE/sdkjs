@@ -1871,8 +1871,9 @@
 				let table = wb.getTableByName(nameIndex);
 				if (table) {
 					let tableRef = table.Ref;
-					let sheetId = defNameObj.parsedRef && defNameObj.parsedRef.outStack && defNameObj.parsedRef.outStack[0] && defNameObj.parsedRef.outStack[0].getWsId();
-					let areaMap = this.sheetListeners[sheetId] && this.sheetListeners[sheetId].areaMap;
+					let sheetId = defNameObj.parsedRef && defNameObj.parsedRef.outStack && 
+						defNameObj.parsedRef.outStack[0] && defNameObj.parsedRef.outStack[0].getWsId && defNameObj.parsedRef.outStack[0].getWsId();
+					let areaMap = sheetId !== undefined && this.sheetListeners[sheetId] && this.sheetListeners[sheetId].areaMap;
 
 					for (let area in areaMap) {
 						let areabbox = areaMap[area].bbox;
@@ -1885,7 +1886,7 @@
 				}
 			}
 		},
-		_broadcastDefNames: function(notifyData) {
+		_broadcastDefNames: function(notifyData) {	//?
 			if (this.changedDefNameRepeated) {
 				var changedDefName = this.changedDefNameRepeated;
 				this.changedDefNameRepeated = null;
