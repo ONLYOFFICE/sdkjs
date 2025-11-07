@@ -1847,15 +1847,6 @@
 			}
 		},
 		_broadcastDefName: function(name, notifyData) {
-			var nameIndex = getDefNameIndex(name);
-			var container = this.defNameListeners[nameIndex];
-			if (container) {
-				for (var listenerId in container.listeners) {
-					container.listeners[listenerId].notify(notifyData);
-				}
-			}
-		},
-		_broadcastDefName: function(name, notifyData) {
 			const wb = this.wb;
 			let nameIndex = getDefNameIndex(name);
 			let container = this.defNameListeners[nameIndex];
@@ -1886,7 +1877,7 @@
 				}
 			}
 		},
-		_broadcastDefNames: function(notifyData) {	//?
+		_broadcastDefNames: function(notifyData) {
 			if (this.changedDefNameRepeated) {
 				var changedDefName = this.changedDefNameRepeated;
 				this.changedDefNameRepeated = null;

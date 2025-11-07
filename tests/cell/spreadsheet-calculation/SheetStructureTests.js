@@ -1196,8 +1196,17 @@ $(function () {
 		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A101:A105)", "Value for edit in after table is created");
 		assert.strictEqual(resCell.getFormula(), "SUM(A101:A105)", "Formula in cell after table is created");
 
+		if (ws.TableParts) {
+			for (let i = ws.TableParts.length - 1; i >= 0; i--) {
+				let tablePart = ws.TableParts[i];
+				ws.deleteTablePart(i);
+				tablePart.removeDependencies();
+			}
+		}
+
 		tables.length = 0;
-		clearData(0, 0, 200, 200);
+		ws.TableParts.length = 0;
+		ws.getRange2("A1:H200").cleanAll();
 
 
 		/* create table with header/title and with the same data as the previous test*/
@@ -1489,9 +1498,21 @@ $(function () {
 		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A105)", "Value for edit in after table is created");
 		assert.strictEqual(resCell.getFormula(), "SUM(A100:A105)", "Formula in cell after table is created");
 
+		// tables.length = 0;
+		// clearData(0, 0, 200, 200);
+		// ws.getRange2("A99:B110").cleanAll();
+
+		if (ws.TableParts) {
+			for (let i = ws.TableParts.length - 1; i >= 0; i--) {
+				let tablePart = ws.TableParts[i];
+				ws.deleteTablePart(i);
+				tablePart.removeDependencies();
+			}
+		}
+
 		tables.length = 0;
-		clearData(0, 0, 200, 200);
-		ws.getRange2("A99:B110").cleanAll();
+		ws.TableParts.length = 0;
+		ws.getRange2("A1:H200").cleanAll();
 
 
 		ws.getRange2("A100").setValue("1");
@@ -1601,7 +1622,8 @@ $(function () {
 		getHorizontalAutofillCases(0, 0, 0, 3, assert, [expectedDataCapitalized, expectedDataUpper,
 			expectedDataLower, expectedDataShortCapitalized, expectedDataShortUpper, expectedDataShortLower], 3);
 
-		clearData(0, 0, 3, 13);
+		// clearData(0, 0, 3, 13);
+		ws.getRange2("A1:Z15").cleanAll();
 	});
 	QUnit.test('Autofill - Reverse horizontal sequence: Days of the weeks', function (assert) {
 		let testData = [
@@ -1634,7 +1656,8 @@ $(function () {
 		getHorizontalAutofillCases(3, 3, 3, 0, assert, [expectedDataCapitalized, expectedDataUpper,
 			expectedDataLower, expectedDataShortCapitalized, expectedDataShortUpper, expectedDataShortLower], 1);
 
-		clearData(0, 0, 3, 13);
+		// clearData(0, 0, 3, 13);
+		ws.getRange2("A1:Z15").cleanAll();
 	});
 	QUnit.test('Autofill - Asc horizontal even sequence: Days of the weeks', function (assert) {
 		let testData = [
@@ -4095,7 +4118,6 @@ $(function () {
 		assert.ok(oParser.outStack && oParser.outStack[0] && (oParser.outStack[0].type === AscCommonExcel.cElementType.table), "=[@[Column1]:[Column2]] Formula parsing Inside the table");
 
 		ws.getRange2("A1:H200").cleanAll();
-		// clearData(0, 200, 0, 200);
 		if (ws.TableParts) {
 			for (let i = ws.TableParts.length - 1; i >= 0; i--) {
 				let tablePart = ws.TableParts[i];
@@ -7797,7 +7819,7 @@ $(function () {
 	QUnit.test("Test: \"Workbook dependencies tests\"", function (assert) {
 		let cellWithFormula, fillRange, array, wsID = ws.getId();
 
-		ws.getRange2("A1:F10").cleanAll();
+		ws.getRange2("A1:Z200").cleanAll();
 		// set flags for CSE formula call
 		let flags = wsView._getCellFlags(0, 2);
 		flags.ctrlKey = false;
@@ -7815,6 +7837,7 @@ $(function () {
 		let dependencyFormulas = wb.dependencyFormulas;
 		let sheetListeners = dependencyFormulas.sheetListeners[wsID];
 		let defNameListeners = dependencyFormulas.defNameListeners;
+		sheetListeners.areaMap = {};
 
 		// set values and props for table
 		ws.getRange2("A1:D3").setValue("1");
