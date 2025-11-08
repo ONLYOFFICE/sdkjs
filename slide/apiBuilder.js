@@ -4212,63 +4212,7 @@
 		}
 		return false;
 	}
-
-
-
-
-
-	/**
-	 * Returns the slide show transition object for the slide.
-	 * @typeofeditors ["CPE"]
-	 * @memberof ApiSlide
-	 * @returns {ApiSlideShowTransition}
-	 * @see office-js-api/Examples/Presentation/ApiSlide/Methods/GetSlideShowTransition.js
-	 */
-	ApiSlide.prototype.GetSlideShowTransition = function()
-	{
-		return new ApiSlideShowTransition(this.Slide);
-	};
-
-
-
-
-	/**
-	 * Returns the type of the ApiTimeLine class.
-	 * @typeofeditors ["CPE"]
-	 * @returns {"timeLine"}
-	 * @see office-js-api/Examples/Presentation/ApiTimeLine/Methods/GetClassType.js
-	 */
-	ApiTimeLine.prototype.GetClassType = function()
-	{
-		return "timeLine";
-	};
-
-	/**
-	 * Returns the main sequence of animations.
-	 * @typeofeditors ["CPE"]
-	 * @returns {ApiSequence}
-	 * @see office-js-api/Examples/Presentation/ApiTimeLine/Methods/GetMainSequence.js
-	 */
-	ApiTimeLine.prototype.GetMainSequence = function()
-	{
-		return new ApiSequence(this.Slide, "main");
-	};
-
-	/**
-	 * Returns the interactive sequences collection.
-	 * @typeofeditors ["CPE"]
-	 * @returns {ApiSequences}
-	 * @see office-js-api/Examples/Presentation/ApiTimeLine/Methods/GetInteractiveSequences.js
-	 */
-	ApiTimeLine.prototype.GetInteractiveSequences = function()
-	{
-		return new ApiSequences(this.Slide, "interactive");
-	};
-
-
-
-
-
+	
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiNotesPage
