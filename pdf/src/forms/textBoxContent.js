@@ -266,6 +266,9 @@
 			case AscPDF.ALIGN_TYPE.right:
 				nInternalType = AscCommon.align_Right;
 				break;
+			case AscPDF.ALIGN_TYPE.justify:
+				nInternalType = AscCommon.align_Justify;
+				break;
 		}
 
 		return nInternalType;

@@ -1651,6 +1651,7 @@
 			g_cCalcRecursion.clearPrevIterResult();
 			g_cCalcRecursion.clearDiffBetweenIter();
 			g_cCalcRecursion.clearCycleCells();
+			g_cCalcRecursion.clearCheckedCells();
 			this.changedCell = null;
 			this.changedRange = null;
 			this.updateSharedFormulas();
@@ -6841,7 +6842,7 @@
 		this.handlers = handlers;
 		this._setHandlersTablePart();
 		this.aSlicers.forEach(function(elem){
-			elem.initPostOpen(tableIds, sheetIds);
+			elem && elem.initPostOpen(tableIds, sheetIds);
 		});
 		this.aNamedSheetViews.forEach(function(elem){
 			elem.initPostOpen(tableIds, t);
@@ -6856,7 +6857,7 @@
 			pivotTable.initPostOpenZip(oNumFmts, dxfsOpen);
 		});
 		this.aSlicers.forEach(function(slicer){
-			slicer.initPostOpenZip(pivotCaches);
+			slicer && slicer.initPostOpenZip(pivotCaches);
 		});
 	};
 	Worksheet.prototype._getValuesForConditionalFormatting = function(ranges, numbers) {
@@ -12284,6 +12285,7 @@
 
 	Worksheet.prototype.setActiveNamedSheetView = function (id) {
 		this.activeNamedSheetViewId = id;
+		this.workbook.handlers && this.workbook.handlers.trigger("asc_onChangeActiveNamedSheetView");
 	};
 
 	Worksheet.prototype.getNvsFilterByTableName = function (val, opt_name, viewId) {
@@ -16206,11 +16208,7 @@
 	 * @returns {boolean}
 	 */
 	Cell.prototype.checkRecursiveFormula = function (oCellWithFormula, aPassedCell) {
-		if (g_cCalcRecursion.checkRecursionCounter()) {
-			g_cCalcRecursion.resetRecursionCounter();
-			return false;
-		}
-		if (oCellWithFormula == null) {
+		if (g_cCalcRecursion.checkRecursionCounter() || oCellWithFormula == null) {
 			g_cCalcRecursion.resetRecursionCounter();
 			return false;
 		}
@@ -16230,10 +16228,6 @@
 			return false;
 		}
 		const oFormulaParsed = this.getFormulaParsed();
-		if (!oFormulaParsed) {
-			g_cCalcRecursion.resetRecursionCounter();
-			return false;
-		}
 		const aRefElements = _getRefElements(oFormulaParsed);
 		const oThis = this;
 		let bRecursiveFormula = false;
@@ -16655,7 +16649,7 @@
 
 			this.ws.workbook.dependencyFormulas.addToCleanCellCache(this.ws.getId(), this.nRow, this.nCol);
 			AscCommonExcel.g_oLOOKUPCache.remove(this);
-			AscCommonExcel.g_oVLOOKUPCache.remove(this);
+			AscCommonExcel.g_oVLOOKUPCache.remove(this, DataOld, res);
 			AscCommonExcel.g_oHLOOKUPCache.remove(this);
 			AscCommonExcel.g_oMatchCache.remove(this);
 			AscCommonExcel.g_oSUMIFSCache.remove(this);

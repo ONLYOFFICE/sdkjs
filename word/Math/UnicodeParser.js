@@ -620,10 +620,11 @@
 	{
 		let oIndex, oContent;
 
-		if (this.IsOpOpenLiteral()) {
+		if (this.IsOpOpenLiteral())
+		{
 			this.GetOpOpenLiteral();
 
-			if (this.IsOperandLiteral())
+			if (this.oLookahead.class !== Literals.rBrackets.id)
 			{
 				oIndex = this.GetExpLiteral(undefined, true);
 
@@ -2371,12 +2372,34 @@
 			else if (this.IsElementLiteral())
 			{
 				let oElement = this.GetElementLiteral();
-				
+
+				// if space before converted block - remove space
+				if (oExpLiteral.length && oExpLiteral[oExpLiteral.length - 1].type === Struc.space &&
+					(
+						oElement.type === Struc.other
+						|| oElement.type === Struc.frac
+						|| oElement.type === Struc.bracket_block
+						|| oElement.type === Struc.bar
+						|| oElement.type === Struc.nary
+						|| oElement.type === Struc.box
+						|| oElement.type === Struc.rect
+						|| oElement.type === Struc.radical
+						|| oElement.type === Struc.func
+						|| oElement.type === Struc.pre_script
+						|| oElement.type === Struc.sub_sub
+						|| oElement.type === Struc.func_lim
+						|| oElement.type === Struc.limit
+						|| oElement.type === Struc.diacritic_base
+						|| oElement.type === Struc.matrix
+						|| oElement.type === Struc.accent
+						|| oElement.type === Struc.group_character
+						|| oElement.type === Struc.horizontal
+						|| oElement.type === Struc.array
+					)
+				) oExpLiteral.pop();
+
 				if (oElement !== null)
 					oExpLiteral.push(oElement);
-
-				if (oElement && oElement.length > 0 && oElement[oElement.length - 1].type !== Literals.char.id)
-					this.EatOneSpace();
 			}
 			else if (arrCorrectSymbols.includes(this.oLookahead.data))
 			{

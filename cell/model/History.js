@@ -749,10 +749,16 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 			this.workbook.onSlicerUpdate(i);
 		}
 
+		if (!AscCommon.isRealObject(Point.SelectionState)) {
+			Point.SelectionState = null;
+		}
 		if(!bCoaut)
 		{
 			oState = bUndo ? Point.SelectionState : ((this.Index === this.Points.length - 1) ?
 				this.LastState : this.Points[this.Index + 1].SelectionState);
+			if (!AscCommon.isRealObject(oState)) {
+				oState = null;
+			}
 		}
 
 		if (this.workbook.bCollaborativeChanges) {
@@ -1638,6 +1644,40 @@ CHistory.prototype.GetSerializeArray = function()
 		}
 		return false;
 	};
+	CHistory.prototype.checkAsYouTypeEnterText = function(run, inRunPos, codePoint)
+	{
+		this.CheckUnionLastPoints();
+
+		if (this.Points.length <= 0 || this.Index !== this.Points.length - 1)
+			return false;
+
+		let point = this.Points[this.Index];
+		let description = point.Description;
+		if (AscDFH.historydescription_Document_AddLetter !== description
+			&& AscDFH.historydescription_Document_AddLetterUnion !== description
+			&& AscDFH.historydescription_Document_SpaceButton !== description
+			&& AscDFH.historydescription_Document_CorrectEnterText !== description
+			&& AscDFH.historydescription_Document_CompositeInput !== description
+			&& AscDFH.historydescription_Document_CompositeInputReplace !== description
+			&& AscDFH.historydescription_Presentation_ParagraphAdd !== description)
+			return false;
+
+		let changes = point.Items;
+		let lastChange = null;
+		for (let i = changes.length - 1; i >= 0; --i)
+		{
+			lastChange = changes[i].Class;
+			if (lastChange && lastChange.IsContentChange && lastChange.IsContentChange())
+				break;
+		}
+
+		return (lastChange
+			&& AscDFH.historyitem_ParaRun_AddItem === lastChange.Type
+			&& lastChange.Class === run
+			&& lastChange.Pos === inRunPos - 1
+			&& lastChange.Items.length
+			&& (undefined === codePoint || lastChange.Items[0].GetCodePoint() === codePoint));
+	};
 	CHistory.prototype.Update_PointInfoItem = function()
 	{
 	};
@@ -1655,7 +1695,7 @@ CHistory.prototype.GetSerializeArray = function()
 			point = this.Points[i];
 			this.private_UndoPoint(point, oRedoObjectParam);
 		}
-		if (point.SelectionState) {
+		if (AscCommon.isRealObject(point.SelectionState)) {
 			this.workbook.handlers.trigger("setSelectionState", point.SelectionState);
 		}
 

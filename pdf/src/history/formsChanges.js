@@ -236,7 +236,6 @@ CChangesPDFFormChanged.prototype.private_SetValue = function(Value)
 {
 	let oForm = this.Class;
 	oForm._wasChanged = Value;
-	oForm.IsWidget() && oForm.SetDrawFromStream(!Value);
 };
 
 

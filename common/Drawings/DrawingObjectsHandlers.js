@@ -536,9 +536,6 @@ function handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pag
             hit_in_text_rect = false;
         }
     }
-    else if (drawing.IsAnnot && drawing.IsAnnot() && drawing.IsShapeBased()) {
-        hit_in_inner_area = drawing.hitInBoundingRect(x, y)
-    }
 
     if(hit_in_inner_area || hit_in_path || hit_in_text_rect)
     {

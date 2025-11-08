@@ -207,6 +207,7 @@
 		this.macros = null;
 		this.vbaMacros = null;
 		this.vbaProject = null;
+		this.macroRecorder = new AscCommon.MacroRecorder(this);
 
         this.openFileCryptBinary = null;
 
@@ -300,6 +301,56 @@
 		AscCommon.loadChartStyles(noop, function (err) {
 			t.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingScriptError, c_oAscError.Level.NoCritical);
 		});
+		/**
+		 * Determines if an error should be handled
+		 * @param {string} errorMsg - Error message  
+		 * @param {string} url - Script URL where error occurred (optional)
+		 * @param {string} stack - Error stack trace (optional, used when url is not available)
+		 * @returns {boolean} True if error should be handled by SDK
+		 */
+		const shouldHandleError = function(errorMsg, url, stack) {
+			// Browser extension schemes to ignore
+			const extensionSchemes = ['chrome-extension://', 'moz-extension://', 'safari-extension://', 'ms-browser-extension://'];
+			
+			// Ignore browser extensions by URL
+			if (url) {
+				for (let i = 0; i < extensionSchemes.length; i++) {
+					if (url.indexOf(extensionSchemes[i]) === 0) {
+						return false;
+					}
+				}
+			}
+
+			// Ignore browser extensions by stack (for promise rejections)
+			if (!url && stack) {
+				for (let i = 0; i < extensionSchemes.length; i++) {
+					if (stack.indexOf(extensionSchemes[i]) !== -1) {
+						return false;
+					}
+				}
+			}
+
+			// Ignore generic cross-origin script errors (browser security feature)
+			if (errorMsg === 'Script error.' && !url) {
+				return false;
+			}
+
+			// Allow only same-origin scripts
+			if (url) {
+				try {
+					const u = new URL(url, window.location.href);
+					if (u.origin !== window.location.origin) {
+						return false;
+					}
+				} catch (e) {
+					// If URL cannot be parsed, be conservative and ignore
+					return false;
+				}
+			}
+
+			return true;
+		};
+
 		const sendUnhandledError  = function(errorMsg, url, lineNumber, column, stack) {
 			let editorInfo = t.getEditorErrorInfo();
 			let memoryInfo = AscCommon.getMemoryInfo();
@@ -334,7 +385,11 @@
 			const errorMsg = errorEvent.reason.message || errorEvent.reason;
 			const stack = errorEvent.reason.stack || "";
 			console.error(errorEvent.reason);
-			sendUnhandledError(errorMsg, undefined, undefined, undefined, stack);
+			
+			if (shouldHandleError(errorMsg, undefined, stack)) {
+				sendUnhandledError(errorMsg, undefined, undefined, undefined, stack);
+			}
+			
 			if (oldOnunhandledrejection) {
 				return oldOnunhandledrejection.apply(this, arguments);
 			} else {
@@ -345,7 +400,12 @@
 		window.onerror = function(errorMsg, url, lineNumber, column, errorObj) {
 			//send only first error to reduce number of requests. also following error may be consequences of first
 			window.onerror = oldOnError;
-			sendUnhandledError(errorMsg, url, lineNumber, column, (errorObj ? errorObj.stack : ""));
+			const stack = errorObj ? errorObj.stack : "";
+			
+			if (shouldHandleError(errorMsg, url, stack)) {
+				sendUnhandledError(errorMsg, url, lineNumber, column, stack);
+			}
+			
 			if (oldOnError) {
 				return oldOnError.apply(this, arguments);
 			} else {
@@ -797,6 +857,8 @@
 		if (this.restrictions & Asc.c_oAscRestrictionType.OnlySignatures)
 			return;
 
+		this.macroRecorder.stop();
+
 		this.restrictions = val;
 		this.onUpdateRestrictions(additionalSettings);
 		this.checkInputMode();
@@ -808,6 +870,8 @@
 	};
 	baseEditorsApi.prototype.asc_addRestriction              = function(val)
 	{
+		this.macroRecorder.stop();
+
 		this.restrictions |= val;
 		this.onUpdateRestrictions();
 		this.checkInputMode();
@@ -980,13 +1044,28 @@
 				}
 				break;
 			}
+			case c_oAscFrameDataType.OpenLocalDesktopFileLink:
+				this.frameManager.openLocalDesktopFileLink(oInformation["localFileLink"]);
+				break;
 			default:
 			{
 				break;
 			}
 		}
 	};
-
+	baseEditorsApi.prototype.asc_setLocale = function(val) {};
+	baseEditorsApi.prototype.asc_getLocale = function() {};
+	/**
+	 * Gets LCID (Locale Identifier) for current locale
+	 * @returns {number|undefined} LCID number if locale found in map or undefined
+	 */
+	baseEditorsApi.prototype.asc_getLocaleLCID = function () {
+		const locale = this.asc_getLocale();
+		if (typeof locale === "string" && Asc.g_oLcidNameToIdMap) {
+			return Asc.g_oLcidNameToIdMap[locale];
+		}
+		return locale;
+	};
 	baseEditorsApi.prototype.asc_getLocaleExample = function(format, value, culture) {
 		if (!AscFormat.isRealNumber(value))
 		{
@@ -1262,14 +1341,7 @@
 		var rData                  = null;
 		if (!(this.DocInfo && this.DocInfo.get_OfflineApp()))
 		{
-			var locale = !window['NATIVE_EDITOR_ENJINE'] && this.asc_getLocale() || undefined;
-			if (typeof locale === "string") {
-				if (Asc.g_oLcidNameToIdMap) {
-					locale = Asc.g_oLcidNameToIdMap[locale];
-				} else {
-					locale = undefined;
-				}
-			}
+			var lcid = !window['NATIVE_EDITOR_ENJINE'] && this.asc_getLocaleLCID() || undefined;
 			let isOpenOoxml = !!(this.DocInfo && this.DocInfo.get_DirectUrl()) && this["asc_isSupportFeature"]("ooxml");
 			let outputformat = this._getOpenFormatByEditorId(this.editorId, false);//false to avoid ooxml->ooxml conversion
 			let convertToOrigin = '';
@@ -1283,7 +1355,7 @@
 				"format"        : this.documentFormat,
 				"url"           : this.documentUrl,
 				"title"         : this.documentTitle,
-				"lcid"          : locale,
+				"lcid"          : lcid,
 				"nobase64"      : true,
 				"outputformat"  : outputformat,
 				"convertToOrigin" : convertToOrigin,
@@ -3700,7 +3772,7 @@
 		this.loadBuilderFonts(function()
 		{
 			let result = _t._onEndBuilderScript(callback);
-			
+
 			if (_t.SaveAfterMacros)
 			{
 				_t.asc_Save();
@@ -4262,6 +4334,8 @@
 
 	baseEditorsApi.prototype.setViewModeDisconnect = function(enableDownload)
 	{
+		this.macroRecorder.cancel();
+
 		// Посылаем наверх эвент об отключении от сервера
 		this.sendEvent('asc_onCoAuthoringDisconnect', enableDownload);
 		// И переходим в режим просмотра т.к. мы не можем сохранить файл
@@ -4515,7 +4589,7 @@
 						oLogicDocument.UnlockPanelStyles(true);
 						oLogicDocument.OnEndLoadScript();
 					}
-					
+
 					endAction && endAction();
 				});
 				break;
@@ -4536,7 +4610,7 @@
 					{
 						wsView.objectRender.controller.recalculate2(undefined);
 					}
-					
+
 					endAction && endAction();
 				});
 				
@@ -5580,20 +5654,10 @@
 	};
 
 	baseEditorsApi.prototype.asc_openExternalReference = function(externalReference) {
-		let t = this;
 		let isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
 		if (isLocalDesktop) {
-			window["AscDesktopEditor"]["openExternalReference"](AscCommon.getLocalFileLink(externalReference.externalReference.Id), function(error) {
-				let internalError = Asc.c_oAscError.ID.No;
-				switch (error) {
-					case 0: internalError = Asc.c_oAscError.ID.ConvertationOpenError; break;
-					default: break;
-				}
-
-				if (Asc.c_oAscError.ID.No !== internalError) {
-					t.sendEvent("asc_onError", internalError, c_oAscError.Level.NoCritical);
-				}
-			});
+			const sLocalLink = AscCommon.getLocalFileLink(externalReference.externalReference.Id);
+			this.frameManager.openLocalDesktopFileLink(sLocalLink);
 			return null;
 		} else {
 			return externalReference;
@@ -5663,11 +5727,11 @@
 	};
 
 	// for native editors
-	baseEditorsApi.prototype.wrapFunction = function(name, types) 
+	baseEditorsApi.prototype.wrapFunction = function(name, types)
 	{
-		this["native_" + name] = function() 
+		this["native_" + name] = function()
 		{
-			for (let i = 0, len = arguments.length; i < len; i++) 
+			for (let i = 0, len = arguments.length; i < len; i++)
 			{
 				if (types && types[i] && types[i].prototype && types[i].prototype.fromCValue)
 					arguments[i] = types[i].prototype.fromCValue(arguments[i]);
@@ -5677,6 +5741,14 @@
 			let result = this[name].apply(this, arguments);
 			if (result && result.toCValue)
 				result = result.toCValue();
+			else if (Array.isArray(result))
+			{
+				for (let i = 0, len = result.length; i < len; i++)
+				{
+					if (result[i] && result[i].toCValue)
+						result[i] = result[i].toCValue();
+				}
+			}
 			return result;
 		}
 	};
@@ -5786,7 +5858,7 @@
 		plugins.internalCallbacks.push(callback);
 		plugins.callMethod(plugins.internalGuid, name, params);
 	};
-	
+
 	baseEditorsApi.prototype.markAsFinal = function(isFinal) {
 	};
 	baseEditorsApi.prototype.isFinal = function() {
@@ -5986,14 +6058,14 @@
 			return;
 
 		--this.groupActionsCounter;
-		
+
 		AscCommon.History.cancelGroupPoints();
 		
 		if (this.groupActionsCounter > 0)
 			return;
 		
 		this._onEndGroupActions();
-		
+
 		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
 		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
 	};
@@ -6009,7 +6081,7 @@
 			return;
 		
 		this._onEndGroupActions();
-		
+
 		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
 		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
 	};
@@ -6019,6 +6091,11 @@
 	};
 	baseEditorsApi.prototype._onEndGroupActions = function()
 	{
+	};
+
+	baseEditorsApi.prototype.getMacroRecorder = function()
+	{
+		return this.macroRecorder;
 	};
 
 	//----------------------------------------------------------export----------------------------------------------------
@@ -6098,6 +6175,9 @@
 	prot['asc_setContentDarkMode'] = prot.asc_setContentDarkMode;
 	prot['asc_getFilePath'] = prot.asc_getFilePath;
 	prot['asc_getFormatCells'] = prot.asc_getFormatCells;
+	prot['asc_setLocale'] = prot.asc_setLocale;
+	prot['asc_getLocale'] = prot.asc_getLocale;
+	prot['asc_getLocaleLCID'] = prot.asc_getLocaleLCID;
 	prot['asc_getLocaleExample'] = prot.asc_getLocaleExample;
 	prot['asc_getAdditionalCurrencySymbols'] = prot.asc_getAdditionalCurrencySymbols;
 	prot['asc_convertNumFormat2NumFormatLocal'] = prot.asc_convertNumFormat2NumFormatLocal;
@@ -6152,5 +6232,6 @@
 	prot["callMethod"] = prot.callMethod;
 	prot['asc_markAsFinal'] = prot.asc_markAsFinal = prot.markAsFinal;
 	prot['asc_isFinal'] = prot.asc_isFinal = prot.isFinal;
+	prot["getMacroRecorder"] = prot.getMacroRecorder;
 
 })(window);

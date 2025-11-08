@@ -169,24 +169,22 @@ CDocumentContent.prototype.Copy = function(Parent, DrawingDocument, oPr)
 	var Count = this.Content.length;
 	for (var Index = 0; Index < Count; Index++)
 	{
-		DC.Internal_Content_Add(Index, this.Content[Index].Copy(DC, DrawingDocument, oPr), false);
+		DC.Internal_Content_Add(Index, this.Content[Index].Copy(undefined, DrawingDocument, oPr), false);
 	}
 
 	return DC;
 };
-CDocumentContent.prototype.Copy2 = function(OtherDC, oPr)
+CDocumentContent.prototype.Copy2 = function(docContent, oPr)
 {
-	if(this === OtherDC)
-	{
+	if (this === docContent || !docContent)
 		return;
-	}
-	// Копируем содержимое
+	
 	this.Internal_Content_RemoveAll();
 
-	var Count = OtherDC.Content.length;
+	var Count = docContent.Content.length;
 	for (var Index = 0; Index < Count; Index++)
 	{
-		this.Internal_Content_Add(Index, OtherDC.Content[Index].Copy(this, this.DrawingDocument, oPr), false);
+		this.Internal_Content_Add(Index, docContent.Content[Index].Copy(undefined, this.DrawingDocument, oPr), false);
 	}
 };
 CDocumentContent.prototype.Copy3 = function(Parent)//для заголовков диаграмм
@@ -199,7 +197,7 @@ CDocumentContent.prototype.Copy3 = function(Parent)//для заголовков
 	var Count = this.Content.length;
 	for (var Index = 0; Index < Count; Index++)
 	{
-		DC.Internal_Content_Add(Index, this.Content[Index].Copy2(DC), false);
+		DC.Internal_Content_Add(Index, this.Content[Index].Copy2(), false);
 	}
 	return DC;
 };

@@ -350,7 +350,6 @@ var c_oAscDocumentShortcutType = {
 	TrademarkSign                 : 139,
 	HorizontalEllipsis            : 140,
 	ReplaceUnicodeToSymbol        : 141,
-	SoftHyphen                    : 142,
 	SpeechWorker                  : 143,
 	EditChart                     : 144,
 	InsertLineBreakMultilineForm  : 145,
@@ -648,7 +647,6 @@ prot['RegisteredSign']                = prot.RegisteredSign;
 prot['TrademarkSign']                 = prot.TrademarkSign;
 prot['HorizontalEllipsis']            = prot.HorizontalEllipsis;
 prot['ReplaceUnicodeToSymbol']        = prot.ReplaceUnicodeToSymbol;
-prot['SoftHyphen']                    = prot.SoftHyphen;
 prot['SpeechWorker']                  = prot.SpeechWorker;
 
 prot = window['Asc']['c_oAscDocumentRefenceToType'] = window['Asc'].c_oAscDocumentRefenceToType = c_oAscDocumentRefenceToType;

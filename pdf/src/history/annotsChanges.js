@@ -826,11 +826,12 @@ CChangesPDFAnnotReply.prototype.private_GetContentChanges = function() {
 CChangesPDFAnnotReply.prototype.GetContentChangesClass = function() {
 	return this.private_GetContentChanges();
 };
-CChangesPDFAnnotReply.prototype.private_WriteItem = function (Writer, sId) {
-    Writer.WriteString2(sId);
+CChangesPDFAnnotReply.prototype.private_WriteItem = function (Writer, oItem) {
+    Writer.WriteString2(oItem.GetId());
 };
 CChangesPDFAnnotReply.prototype.private_ReadItem = function (Reader) {
-    return Reader.GetString2();
+    let sId = Reader.GetString2();
+    return AscCommon.g_oTableId.Get_ById(sId);
 };
 CChangesPDFAnnotReply.prototype.Copy = function() {
     let oChanges = new this.constructor(this.Class, this.Pos, this.Items, this.Add);

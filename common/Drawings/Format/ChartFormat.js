@@ -2582,6 +2582,9 @@
     CDLbl.prototype.recalculateBrush = CShape.prototype.recalculateBrush;
     CDLbl.prototype.recalculatePen = CShape.prototype.recalculatePen;
     CDLbl.prototype.check_bounds = CShape.prototype.check_bounds;
+    CDLbl.prototype.getBounds = function() {
+        return new AscFormat.CGraphicBounds(0, 0, this.extX, this.extY);
+    };
     CDLbl.prototype.selectionCheck = CShape.prototype.selectionCheck;
     CDLbl.prototype.getInvertTransform = CShape.prototype.getInvertTransform;
     CDLbl.prototype.getDocContent = CShape.prototype.getDocContent;
@@ -5530,6 +5533,9 @@
     CPlotArea.prototype.getCompiledFill = CShape.prototype.getCompiledFill;
     CPlotArea.prototype.getCompiledTransparent = CShape.prototype.getCompiledTransparent;
     CPlotArea.prototype.check_bounds = CShape.prototype.check_bounds;
+    CPlotArea.prototype.getBounds = function() {
+        return new AscFormat.CGraphicBounds(0, 0, this.extX, this.extY);
+    };
     CPlotArea.prototype.getCardDirectionByNum = CShape.prototype.getCardDirectionByNum;
     CPlotArea.prototype.getNumByCardDirection = CShape.prototype.getNumByCardDirection;
     CPlotArea.prototype.getResizeCoefficients = CShape.prototype.getResizeCoefficients;
@@ -10684,6 +10690,9 @@
     CLegend.prototype.getCompiledFill = CShape.prototype.getCompiledFill;
     CLegend.prototype.getCompiledTransparent = CShape.prototype.getCompiledTransparent;
     CLegend.prototype.check_bounds = CShape.prototype.check_bounds;
+    CLegend.prototype.getBounds = function() {
+        return new AscFormat.CGraphicBounds(0, 0, this.extX, this.extY);
+    };
     CLegend.prototype.getCardDirectionByNum = CShape.prototype.getCardDirectionByNum;
     CLegend.prototype.getNumByCardDirection = CShape.prototype.getNumByCardDirection;
     CLegend.prototype.getResizeCoefficients = CShape.prototype.getResizeCoefficients;
@@ -14269,6 +14278,9 @@
     CTitle.prototype.recalculateGeometry = CShape.prototype.recalculateGeometry;
     CTitle.prototype.getTransform = CShape.prototype.getTransform;
     CTitle.prototype.check_bounds = CShape.prototype.check_bounds;
+    CTitle.prototype.getBounds = function() {
+        return new AscFormat.CGraphicBounds(0, 0, this.extX, this.extY);
+    };
     CTitle.prototype.selectionCheck = CShape.prototype.selectionCheck;
     CTitle.prototype.getInvertTransform = CShape.prototype.getInvertTransform;
     CTitle.prototype.recalculatePen = CShape.prototype.recalculatePen;
@@ -16730,6 +16742,9 @@
     CompiledMarker.prototype.chekBodyPrTransform = function () {return false;};
     CompiledMarker.prototype.getGeometry = CShape.prototype.getGeometry;
     CompiledMarker.prototype.check_bounds = CShape.prototype.check_bounds;
+    CompiledMarker.prototype.getBounds = function() {
+        return new AscFormat.CGraphicBounds(0, 0, this.extX, this.extY);
+    };
     CompiledMarker.prototype.isEmptyPlaceholder = function() {
         return false;
     };

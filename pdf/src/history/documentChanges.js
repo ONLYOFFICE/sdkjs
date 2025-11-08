@@ -1570,4 +1570,6 @@ CChangesPDFDocumentEndRedact.prototype.ReadFromBinary = function(Reader)
             this.QuadsFlat[nIndex] = Reader.GetDouble();
     }
 };
-
+CChangesPDFDocumentEndRedact.prototype.CreateReverseChange = function() {
+    return new this.constructor(this.Class, this.RedactId, this.Page, this.QuadsFlat);
+};

@@ -638,6 +638,10 @@
 
     CDocument.prototype.updateCurrentPage = function(pageObject)
     {
+        if (this.selectedPages.length == 0) {
+            this.keepSelectedPages = false;
+        }
+        
         this.selectPageRect = pageObject;
         if (true !== this.keepSelectedPages && false == this.selectedPages.includes(pageObject.num))
         {

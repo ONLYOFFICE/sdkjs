@@ -77,7 +77,6 @@
 	c_oAscUnlockedShortcutActionTypes[Asc.c_oAscDocumentShortcutType.Strikeout] = true;
 	c_oAscUnlockedShortcutActionTypes[Asc.c_oAscDocumentShortcutType.InsertFootnoteNow] = true;
 	c_oAscUnlockedShortcutActionTypes[Asc.c_oAscDocumentShortcutType.InsertEquation] = true;
-	c_oAscUnlockedShortcutActionTypes[Asc.c_oAscDocumentShortcutType.SoftHyphen] = true;
 	c_oAscUnlockedShortcutActionTypes[Asc.c_oAscDocumentShortcutType.HorizontalEllipsis] = true;
 	c_oAscUnlockedShortcutActionTypes[Asc.c_oAscDocumentShortcutType.EnDash] = true;
 	c_oAscUnlockedShortcutActionTypes[Asc.c_oAscDocumentShortcutType.EmDash] = true;
@@ -224,7 +223,6 @@
 		c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.EnDash] = [new AscShortcut(Asc.c_oAscDocumentShortcutType.EnDash, keyCodes.KeyMinus, false, false, true, false, true)];
 		c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.HorizontalEllipsis] = [new AscShortcut(Asc.c_oAscDocumentShortcutType.HorizontalEllipsis, keyCodes.KeySemicolon, false, false, true, false)];
 		c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.ReplaceUnicodeToSymbol] = [new AscShortcut(Asc.c_oAscDocumentShortcutType.ReplaceUnicodeToSymbol, keyCodes.KeyX, false, false, true, true), new AscShortcut(Asc.c_oAscDocumentShortcutType.ReplaceUnicodeToSymbol, keyCodes.KeyX, true, false, true, false)];
-		c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.SoftHyphen] = [new AscShortcut(Asc.c_oAscDocumentShortcutType.SoftHyphen, keyCodes.KeyMinus, true, false, true, false), new AscShortcut(Asc.c_oAscDocumentShortcutType.SoftHyphen, keyCodes.KeyMinus, false, false, true, true)];
 
 		c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.OpenFindDialog].push(new AscShortcut(Asc.c_oAscDocumentShortcutType.OpenFindDialog, keyCodes.KeyF, false, false, false, true));
 		c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.OpenCommentsPanel].push(new AscShortcut(Asc.c_oAscDocumentShortcutType.OpenCommentsPanel, keyCodes.KeyH, false, true, false, true));
@@ -304,7 +302,6 @@
 		c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.LittleMoveObjectDown] = [new AscShortcut(Asc.c_oAscDocumentShortcutType.LittleMoveObjectDown, keyCodes.ArrowDown, true, false, false, false)];
 		c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.InsertFootnoteNow] = [new AscShortcut(Asc.c_oAscDocumentShortcutType.InsertFootnoteNow, keyCodes.KeyF, true, false, true, false)];
 		c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.InsertEquation] = [new AscShortcut(Asc.c_oAscDocumentShortcutType.InsertEquation, keyCodes.KeyEqual, false, false, true, false)];
-		c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.SoftHyphen] = [new AscShortcut(Asc.c_oAscDocumentShortcutType.SoftHyphen, keyCodes.KeyMinus, false, false, true, false)];
 		c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.EmDash] = [new AscShortcut(Asc.c_oAscDocumentShortcutType.EmDash, keyCodes.NumpadMinus, true, false, true, false)];
 		c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.EnDash] = [new AscShortcut(Asc.c_oAscDocumentShortcutType.EnDash, keyCodes.NumpadMinus, true, false, false, false)];
 		c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.HorizontalEllipsis] = [new AscShortcut(Asc.c_oAscDocumentShortcutType.HorizontalEllipsis, keyCodes.Period, true, false, true, false)];
@@ -610,8 +607,6 @@
 				return "HorizontalEllipsis";
 			case Asc.c_oAscDocumentShortcutType.ReplaceUnicodeToSymbol:
 				return "ReplaceUnicodeToSymbol";
-			case Asc.c_oAscDocumentShortcutType.SoftHyphen:
-				return "SoftHyphen";
 			case Asc.c_oAscDocumentShortcutType.SpeechWorker:
 				return "SpeechWorker";
 			case Asc.c_oAscDocumentShortcutType.EditChart:
@@ -911,8 +906,6 @@
 				return Asc.c_oAscDocumentShortcutType.HorizontalEllipsis;
 			case "ReplaceUnicodeToSymbol":
 				return Asc.c_oAscDocumentShortcutType.ReplaceUnicodeToSymbol;
-			case "SoftHyphen":
-				return Asc.c_oAscDocumentShortcutType.SoftHyphen;
 			case "SpeechWorker":
 				return Asc.c_oAscDocumentShortcutType.SpeechWorker;
 			case "EditChart":

@@ -1226,20 +1226,23 @@ CTable.prototype.private_RecalculateBorders = function()
 
             var VMergeCount = this.Internal_GetVertMergeCount( CurRow, CurGridCol, GridSpan );
 
-            var CellMargins = Cell.GetMargins();
+            var CellMargins;
+	        var CellBorders;
 			if(!this.bPresentation)
 			{
+				CellMargins = Cell.GetMargins();
+				CellBorders = Cell.Get_Borders();
 				if ( CellMargins.Bottom.W > MaxBotMargin[CurRow + VMergeCount - 1] )
 					MaxBotMargin[CurRow + VMergeCount - 1] = CellMargins.Bottom.W;
 			}
 			else
 			{
 				let oTopCell = this.Internal_Get_StartMergedCell(CurRow, CurGridCol, GridSpan);
-				let oTopMargins = oTopCell.GetMargins();
-				MaxBotMargin[CurRow] = Math.max(MaxBotMargin[CurRow], oTopMargins.Bottom.W);
+				CellMargins = oTopCell.GetMargins();
+				CellBorders = oTopCell.Get_Borders();
+				MaxBotMargin[CurRow] = Math.max(MaxBotMargin[CurRow], CellMargins.Bottom.W);
 			}
 
-            var CellBorders = Cell.Get_Borders();
             if ( true === bSpacing_Top )
             {
                 if ( border_Single === CellBorders.Top.Value && MaxTopBorder[CurRow] < CellBorders.Top.Size )
@@ -1278,7 +1281,7 @@ CTable.prototype.private_RecalculateBorders = function()
             }
 
             var CellBordersBottom = CellBorders.Bottom;
-            if (VMergeCount > 1)
+            if (VMergeCount > 1 && !this.bPresentation)
             {
                 // Берем нижнюю границу нижней ячейки вертикального объединения.
                 var BottomCell = this.Internal_Get_EndMergedCell(CurRow, CurGridCol, GridSpan);
@@ -1511,6 +1514,8 @@ CTable.prototype.private_RecalculateBorders = function()
 						Left_Max  : 0
 					};
 
+					const oTopMergedCell = this.bPresentation ? this.Internal_Get_StartMergedCell(CurRow, CurGridCol, GridSpan) : null;
+					let oTempCellBorders = oTopMergedCell ? oTopMergedCell.GetBorders() : null;
 					for (var nTempCurRow = 0; nTempCurRow < VMergeCount; ++nTempCurRow)
 					{
 						var oTempRow = this.GetRow(CurRow + nTempCurRow);
@@ -1518,9 +1523,10 @@ CTable.prototype.private_RecalculateBorders = function()
 						var nTempCurCell = this.private_GetCellIndexByStartGridCol(CurRow + nTempCurRow, CurGridCol);
 						if (nTempCurCell < 0)
 							continue;
-
-						var oTempCell        = oTempRow.GetCell(nTempCurCell);
-						var oTempCellBorders = oTempCell.GetBorders();
+						const oTempCell = oTempRow.GetCell(nTempCurCell);
+						if (!oTopMergedCell) {
+							oTempCellBorders = oTempCell.GetBorders();
+						}
 
 						// Обработка левой границы
 						if (0 === nTempCurCell)
@@ -1533,7 +1539,14 @@ CTable.prototype.private_RecalculateBorders = function()
 						}
 						else
 						{
-							var oLeftBorder = this.private_ResolveBordersConflict(oTempRow.GetCell(nTempCurCell - 1).GetBorders().Right, oTempCellBorders.Left, false, false);
+							let oLeftBorder;
+							const oLeftCell = oTempRow.GetCell(nTempCurCell - 1);
+							if (this.bPresentation) {
+								const oLeftTopCell = this.GetStartMergedCell(nTempCurCell - 1, CurRow + nTempCurRow);
+								oLeftBorder = this.private_ResolveBordersConflict(oLeftTopCell.GetBorders().Right, oTempCellBorders.Left, false, false, oLeftCell === oLeftTopCell, oTempCell === oTopMergedCell);
+							} else {
+								oLeftBorder = this.private_ResolveBordersConflict(oLeftCell.GetBorders().Right, oTempCellBorders.Left, false, false);
+							}
 							if (border_Single === oLeftBorder.Value && oLeftBorder.Size > Max_l_w)
 								Max_l_w = oLeftBorder.Size;
 
@@ -1551,7 +1564,14 @@ CTable.prototype.private_RecalculateBorders = function()
 						}
 						else
 						{
-							var oRightBorder = this.private_ResolveBordersConflict(oTempRow.GetCell(nTempCurCell + 1).GetBorders().Left, oTempCellBorders.Right, false, false);
+							let oRightBorder;
+							const oRightCell = oTempRow.GetCell(nTempCurCell + 1);
+							if (this.bPresentation) {
+								const oRightTopCell = this.GetStartMergedCell(nTempCurCell + 1, CurRow + nTempCurRow);
+								oRightBorder = this.private_ResolveBordersConflict(oRightTopCell.GetBorders().Left, oTempCellBorders.Right,false, false, oRightCell === oRightTopCell, oTopMergedCell === oTempCell);
+							} else {
+								oRightBorder = this.private_ResolveBordersConflict(oRightCell.GetBorders().Left, oTempCellBorders.Right, false, false);
+							}
 							if (border_Single === oRightBorder.Value && oRightBorder.Size > Max_r_w)
 								Max_r_w = oRightBorder.Size;
 
@@ -1668,20 +1688,22 @@ CTable.prototype.private_RecalculateCellTopBorder = function(oPrevRow, nCurRow, 
 			// в этом объединении, но в не в случае, когда мы расчитываем границу соприкасающуюся с заголовком таблицы
 			// TODO: Надо проверить, зачем вообще это тут добавлено, т.к. ячейка предыдущей строки по логике
 			//       не должны быть не последней в своем вертикальном объединении
-			if (vmerge_Continue === oPrevCell.GetVMerge() && oPrevRow === this.GetRow(nCurRow - 1))
-				oPrevCell = this.Internal_Get_EndMergedCell(nCurRow - 1, nPrevGridCol, nPrevGridSpan);
-
-			var oPrevBottom = oPrevCell.GetBorders().Bottom;
-
-			var oBorder  = this.private_ResolveBordersConflict(oPrevBottom, oCellBorders.Top, false, false);
-			var nBorderW = oBorder.GetWidth();
-			if (nMaxTopBorder < nBorderW)
-				nMaxTopBorder = nBorderW;
-
+			if (oPrevRow === this.GetRow(nCurRow - 1) && vmerge_Continue === oPrevCell.GetVMerge()) {
+				if (this.bPresentation)
+				{
+					oPrevCell = this.Internal_Get_StartMergedCell(nCurRow - 1, nPrevGridCol, nPrevGridSpan);
+				}
+				else
+				{
+					oPrevCell = this.Internal_Get_EndMergedCell(nCurRow - 1, nPrevGridCol, nPrevGridSpan);
+				}
+			}
+			let bCheckPrevTopMergedCell = false;
 			// Надо добавить столько раз, сколько колонок находится в пересечении этих двух ячееки
 			var nGridCount = 0;
 			if (nPrevGridCol >= nCurGridCol)
 			{
+				bCheckPrevTopMergedCell = true;
 				if (nPrevGridCol + nPrevGridSpan - 1 > nCurGridCol + nGridSpan - 1)
 					nGridCount = nCurGridCol + nGridSpan - nPrevGridCol;
 				else
@@ -1695,9 +1717,29 @@ CTable.prototype.private_RecalculateCellTopBorder = function(oPrevRow, nCurRow, 
 			{
 				nGridCount = nPrevGridCol + nPrevGridSpan - nCurGridCol;
 			}
+			var oPrevBottom = oPrevCell.GetBorders().Bottom;
+			if (this.bPresentation)
+			{
+				for (var nCurGrid = 0; nCurGrid < nGridCount; ++nCurGrid)
+				{
+					var oBorder  = this.private_ResolveBordersConflict(oPrevBottom, oCellBorders.Top, false, false, bCheckPrevTopMergedCell ? !nCurGrid : false, !arrBorderTopInfo.length);
+					var nBorderW = oBorder.GetWidth();
+					if (nMaxTopBorder < nBorderW)
+						nMaxTopBorder = nBorderW;
+					arrBorderTopInfo.push(oBorder);
+				}
 
-			for (var nCurGrid = 0; nCurGrid < nGridCount; ++nCurGrid)
-				arrBorderTopInfo.push(oBorder);
+			}
+			else
+			{
+				var oBorder  = this.private_ResolveBordersConflict(oPrevBottom, oCellBorders.Top, false, false);
+				var nBorderW = oBorder.GetWidth();
+				if (nMaxTopBorder < nBorderW)
+					nMaxTopBorder = nBorderW;
+
+				for (var nCurGrid = 0; nCurGrid < nGridCount; ++nCurGrid)
+					arrBorderTopInfo.push(oBorder);
+			}
 
 			nPrevPos++;
 			nPrevGridCol += nPrevGridSpan;

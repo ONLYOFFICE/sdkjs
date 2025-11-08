@@ -4371,7 +4371,11 @@
 				getAllowedDataLabelsPosition: function (chartType, position) {
 					const types = Asc.c_oAscChartTypeSettings;
 					const positions = Asc.c_oAscChartDataLabelsPos;
-					
+
+					if (position === positions.none) {
+						return position;
+					}
+
 					let allowedPositions;
 					switch (chartType) {
 						case types.barNormal:
@@ -4397,14 +4401,21 @@
 
 						case types.pie:
 						case types.pie3d:
+						case types.doughnut:
 							allowedPositions = [positions.ctr, positions.inEnd, positions.outEnd, positions.bestFit];
 							break;
 
+						case types.barNormal3d:
+						case types.barStacked3d:
+						case types.barStackedPer3d:
+						case types.barNormal3dPerspective:
+						case types.hBarNormal3d:
+						case types.hBarStacked3d:
+						case types.hBarStackedPer3d:
+						case types.line3d:
 						case types.areaNormal:
 						case types.areaStacked:
 						case types.areaStackedPer:
-						case types.doughnut:
-						case types.stock:
 						case types.radar:
 						case types.radarMarker:
 						case types.radarFilled:
@@ -4418,17 +4429,10 @@
 						case types.scatterNone:
 						case types.scatterSmooth:
 						case types.scatterSmoothMarker:
+						case types.stock:
 							allowedPositions = [positions.ctr, positions.l, positions.r, positions.t, positions.b];
 							break;
 
-						case types.barNormal3d:
-						case types.barStacked3d:
-						case types.barStackedPer3d:
-						case types.barNormal3dPerspective:
-						case types.line3d:
-						case types.hBarNormal3d:
-						case types.hBarStacked3d:
-						case types.hBarStackedPer3d:
 						case types.surfaceNormal:
 						case types.surfaceWireframe:
 						case types.contourNormal:
@@ -4444,9 +4448,13 @@
 						default: allowedPositions = [];
 					}
 
-					return allowedPositions.indexOf(position) > -1
-						? position
-						: allowedPositions[0] || null;
+					if (allowedPositions.indexOf(position) > -1) {
+						return position;
+					} else if (AscFormat.isRealNumber(allowedPositions[0])) {
+						return allowedPositions[0];
+					} else {
+						return positions.none;
+					}
 				},
 
 				checkDlblsPosition: function (chart, chart_type, position) {
@@ -4567,11 +4575,12 @@
 
 								const ppi = ws._getPPIX();
 								const mmToPx = Asc.getCvtRatio(3, 0, ppi);
+								const freezeOffset = ws.getFrozenPaneOffset(false, false);
 
-								const left = AscCommon.AscBrowser.convertToRetinaValue(bounds.l * mmToPx - ws._getOffsetX() + ws.cellsLeft);
-								const top = AscCommon.AscBrowser.convertToRetinaValue(bounds.t * mmToPx - ws._getOffsetY() + ws.cellsTop);
-								const right = AscCommon.AscBrowser.convertToRetinaValue(bounds.r * mmToPx - ws._getOffsetX() + ws.cellsLeft);
-								const bottom = AscCommon.AscBrowser.convertToRetinaValue(bounds.b * mmToPx - ws._getOffsetY() + ws.cellsTop);
+								const left = AscCommon.AscBrowser.convertToRetinaValue(bounds.l * mmToPx - ws._getOffsetX() + ws.cellsLeft + freezeOffset.offsetX);
+								const top = AscCommon.AscBrowser.convertToRetinaValue(bounds.t * mmToPx - ws._getOffsetY() + ws.cellsTop + freezeOffset.offsetY);
+								const right = AscCommon.AscBrowser.convertToRetinaValue(bounds.r * mmToPx - ws._getOffsetX() + ws.cellsLeft + freezeOffset.offsetX);
+								const bottom = AscCommon.AscBrowser.convertToRetinaValue(bounds.b * mmToPx - ws._getOffsetY() + ws.cellsTop + freezeOffset.offsetY);
 
 								return new AscCommon.asc_CRect(left, top, right - left, bottom - top);
 							};

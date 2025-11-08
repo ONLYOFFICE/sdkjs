@@ -1361,6 +1361,37 @@
 		return direction;
 	}
 
+	/**
+	 * Insert streamed content.
+	 * @undocumented
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias InsertStreamedContent
+	 * @returns {undefined}
+	 * @since 9.2.0
+	 */
+	Api.prototype["pluginMethod_InsertStreamedContent"] = function(streamObj)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return null;
+
+		if (streamObj["word"] && streamObj["word"]["removeSelection"])
+			logicDocument.RemoveSelection();
+
+		if (streamObj["undo"])
+			this["pluginMethod_EndAction"]("GroupActions", "", "cancel");
+
+		if (streamObj["stable"] !== "")
+			this["pluginMethod_PasteHtml"](streamObj["stable"]);
+
+		if (streamObj["tail"] !== "")
+		{
+			this["pluginMethod_StartAction"]("GroupActions");
+			this["pluginMethod_PasteHtml"](streamObj["tail"]);
+		}
+	};
+
 	window["AscCommon"] = window["AscCommon"] || {};
 	window["AscCommon"].readContentControlCommonPr = readContentControlCommonPr;
 	

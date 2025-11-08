@@ -69,6 +69,7 @@
 	CFrameManagerBase.prototype.sendUpdateDiagram = function () {};
 	CFrameManagerBase.prototype.endLoadChartEditor = function () {};
 	CFrameManagerBase.prototype.isSaveZip = function () {};
+	CFrameManagerBase.prototype.openLocalDesktopFileLink = function (sLocalFileLink) {};
 
 	CFrameManagerBase.prototype.preObtain = function (oInfo) {
 		this.obtain(oInfo);
@@ -160,6 +161,20 @@
 	CMainEditorFrameManager.prototype.endLoadChartEditor = function ()
 	{
 		this.isLoadingChartEditor = false;
+	};
+	CMainEditorFrameManager.prototype.openLocalDesktopFileLink = function(sLocalFileLink) {
+		const api = this.api;
+		window["AscDesktopEditor"]["openExternalReference"](sLocalFileLink, function(error) {
+			let internalError = Asc.c_oAscError.ID.No;
+			switch (error) {
+				case 0: internalError = Asc.c_oAscError.ID.ConvertationOpenError; break;
+				default: break;
+			}
+
+			if (Asc.c_oAscError.ID.No !== internalError) {
+				api.sendEvent("asc_onError", internalError, Asc.c_oAscError.Level.NoCritical);
+			}
+		});
 	};
 
 
@@ -291,6 +306,9 @@
 	CCellFrameManager.prototype.sendFromFrameToGeneralEditor = function (oSendObject)
 	{
 		this.api.sendFromFrameToGeneralEditor(oSendObject);
+	};
+	CCellFrameManager.prototype.openLocalDesktopFileLink = function(sLocalFileLink) {
+		this.sendFromFrameToGeneralEditor(new CFrameOpenLocalDesktopFileLink(sLocalFileLink));
 	};
 
 	function COleCellFrameManager(api)
@@ -894,7 +912,10 @@
 	}
 
 	function CFrameUpdateIsOpenOnClient(bIsOpenOnClient) {
-		return CFrameData.call(this, AscCommon.c_oAscFrameDataType.UpdateIsOpenOnClient, {"isOpenOnClient": bIsOpenOnClient});
+		CFrameData.call(this, AscCommon.c_oAscFrameDataType.UpdateIsOpenOnClient, {"isOpenOnClient": bIsOpenOnClient});
+	}
+	function CFrameOpenLocalDesktopFileLink(sLocalFileLink) {
+		CFrameData.call(this, AscCommon.c_oAscFrameDataType.OpenLocalDesktopFileLink, {"localFileLink": sLocalFileLink});
 	}
 
 	window["AscCommon"].CDiagramCellFrameManager = CDiagramCellFrameManager;

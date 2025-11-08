@@ -4079,33 +4079,56 @@ function (window, undefined) {
 		}
 
 		function roundHelper(number, decimals) {
-			if (num_digits > AscCommonExcel.cExcelMaxExponent) {
-				if (Math.abs(number) < 1 || num_digits < 1e10) // The values are obtained experimentally
-				{
-					return new cNumber(number);
-				}
-				return new cNumber(0);
-			} else if (num_digits < AscCommonExcel.cExcelMinExponent) {
-				if (Math.abs(number) < 0.01) // The values are obtained experimentally
-				{
-					return new cNumber(number);
-				}
-				return new cNumber(0);
+			if (decimals > AscCommonExcel.cExcelMaxExponent) {
+				return new cNumber(Math.abs(number) < 1 || decimals < 1e10 ? number : 0);
 			}
 
-			const EPSILON = 1e-14;
+			if (decimals < AscCommonExcel.cExcelMinExponent) {
+				return new cNumber(Math.abs(number) < 0.01 ? number : 0);
+			}
 
-			// ->integer
 			decimals = decimals >> 0;
 
+			function normalizeFloat(value) {
+				if (!isFinite(value)) {
+					return value;
+				}
+
+				if (Math.abs(value) < 2.2250738585072014e-308) {
+					return 0;
+				}
+
+				const MAX_SAFE = 2147483647;
+				const MIN_SAFE = -2147483648;
+				const MAX_DOUBLE = 1.79769313486231e+308;
+
+				let precision = 14 - Math.max(Math.min(Math.floor(Math.log10(Math.abs(value))), MAX_SAFE), MIN_SAFE);
+
+				if (precision > 308) {
+					let factor = Math.pow(10, precision - 308);
+					return Math.round(value * 1e+308 * factor) / 1e+308 / factor;
+				}
+
+				if (precision >= 0) {
+					let factor = Math.pow(10, precision);
+					return Math.round(value * factor) / factor;
+				}
+
+				let divisor = Math.pow(10, -precision);
+				let result = Math.round(value / divisor) * divisor;
+
+				if (Math.abs(value) >= MAX_DOUBLE || Math.abs(result) >= MAX_DOUBLE) {
+					return Math.sign(value) * MAX_DOUBLE;
+				}
+
+				return result;
+			}
+
 			const multiplier = Math.pow(10, decimals);
-			const shifted = Math.abs(number) * multiplier;
+			const shifted = normalizeFloat(number * multiplier);
+			const rounded = Math.sign(shifted) * Math.floor(Math.abs(shifted) + 0.5);
+			const result = normalizeFloat(rounded / multiplier);
 
-			// Add epsilon to handle floating point precision issues (1.005 case)
-			const compensated = shifted + EPSILON;
-			const rounded = Math.floor(compensated + 0.5);
-
-			let result = (Math.sign(number) * rounded) / multiplier;
 			return new cNumber(result);
 		}
 

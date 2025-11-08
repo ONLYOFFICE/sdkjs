@@ -561,7 +561,7 @@
 		if (!this.DocumentRenderer)
 			return false;
 		
-		return this.getPDFDoc().GetSearchRedactInfo(id);
+		return this.getPDFDoc().GetRedactSearchInfo(id);
 	};
 	PDFEditorApi.prototype.ContentToHTML = function() {
 		if (!this.DocumentRenderer)
@@ -1230,7 +1230,7 @@
 		let oDrDoc			= oDoc.GetDrawingDocument();
 		
 		if (value == true) {
-			if (oActiveObj) {
+			if (oActiveObj && !oActiveObj.IsDrawing()) {
 				oDoc.BlurActiveObject();
 				oDoc.UpdateInterface();
 			}
@@ -1411,7 +1411,9 @@
 
 	PDFEditorApi.prototype.SetRedactTool = function(bUse) {
 		let oDoc = this.getPDFDoc();
-		oDoc.BlurActiveObject();
+		if (bUse) {
+			oDoc.BlurActiveObject();
+		}
 		
 		this.isRedactTool = bUse;
 		this.sendEvent("asc_onRedactState", bUse);
@@ -3141,7 +3143,12 @@
 		return oDoc.DoAction(function() {
 			oController.selectedObjects.forEach(function(annot) {
 				if (annot.IsAnnot()) {
-					annot.SetStrokeColor(aColor);
+					if (annot.IsRedact()) {
+						annot.SetFillColor(aColor);
+					}
+					else {
+						annot.SetStrokeColor(aColor);
+					}
 				}
 			});
 
@@ -3157,7 +3164,9 @@
 			return null;
 		}
 
-		let oColor = oMouseDownAnnot.GetRGBColor(oMouseDownAnnot.GetStrokeColor());
+		let aInnerColor = oMouseDownAnnot.IsRedact() ? oMouseDownAnnot.GetFillColor() : oMouseDownAnnot.GetStrokeColor();
+		let oColor = oMouseDownAnnot.GetRGBColor(aInnerColor);
+		
 		oColor["r"] = oColor.r;
         oColor["g"] = oColor.g;
         oColor["b"] = oColor.b;

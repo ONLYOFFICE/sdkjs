@@ -8967,67 +8967,63 @@ function(window, undefined) {
 			return;
 		}
 
-		if (!AscFormat.isRealNumber(nDataLabelPos)) {
-			nDataLabelPos = Asc.c_oAscChartDataLabelsPos.t;
-		}
-
 		const controller = this.getDrawingObjectsController();
 		const chartType = plotArea.charts.length > 1 ? plotArea.charts[0].getChartType() : this.getChartType();
 		nDataLabelPos = controller.getAllowedDataLabelsPosition(chartType, nDataLabelPos);
 
-		if (chart.dLbls) {
-			chart.dLbls.setShowVal(bDisplay);
-			chart.dLbls.setDLblPos(bDisplay ? nDataLabelPos : undefined);
+		if (nDataLabelPos === Asc.c_oAscChartDataLabelsPos.none) {
+			bDisplay = false;
 		}
 
-		const series = chart.series;
-		series.forEach(function (ser) {
-			if (!bDisplay) {
+		if (!bDisplay) {
+			chart.setDLbls(null);
+			chart.series.forEach(function (ser) {
 				ser.setDLbls(null);
-				return;
+			});
+			return;
+		}
+
+		if (!chart.dLbls) {
+			const dLbls = createDefaultDlbls();
+			chart.setDLbls(dLbls);
+			this.checkElementChartStyle(dLbls);
+		}
+
+		chart.dLbls.setShowVal(true);
+		if (nDataLabelPos !== Asc.c_oAscChartDataLabelsPos.show) {
+			chart.dLbls.setDLblPos(nDataLabelPos);
+		}
+
+		for (let i = 0; i < chart.series.length; i++) {
+			const seria = chart.series[i];
+
+			if (!seria.dLbls) {
+				const dLbls = createDefaultDlbls();
+				seria.setDLbls(dLbls);
+				this.checkElementChartStyle(dLbls);
 			}
 
-			if (ser.dLbls) {
-				ser.dLbls.setShowVal(true);
-				ser.dLbls.setDLblPos(nDataLabelPos);
-			} else {
-				const dLbls = createDLbls(ser);
-				dLbls.setDLblPos(nDataLabelPos);
-				ser.setDLbls(dLbls);
+			seria.dLbls.setShowVal(true);
+			if (nDataLabelPos !== Asc.c_oAscChartDataLabelsPos.show) {
+				seria.dLbls.setDLblPos(nDataLabelPos);
 			}
 
-			if (Array.isArray(ser.dLbls.dLbl)) {
-				ser.dLbls.dLbl.forEach(function (label) {
+			if (Array.isArray(seria.dLbls.dLbl)) {
+				seria.dLbls.dLbl.forEach(function (label) {
 					label.setDLblPos(undefined);
 					label.setShowVal(true);
 				});
 			}
-		});
+		}
 
-		function createDLbls(parent) {
+		function createDefaultDlbls() {
 			const dataLabels = new AscFormat.CDLbls();
-			dataLabels.setParent(parent);
-
 			dataLabels.setShowBubbleSize(false);
 			dataLabels.setShowCatName(false);
 			dataLabels.setShowLeaderLines(false);
 			dataLabels.setShowLegendKey(false);
 			dataLabels.setShowPercent(false);
 			dataLabels.setShowSerName(false);
-			dataLabels.setShowVal(true);
-
-			const chartSpace = dataLabels.getChartSpace();
-			if (chartSpace.chartStyle && chartSpace.chartColors) {
-				dataLabels.applyChartStyle(
-					chartSpace.chartStyle,
-					chartSpace.chartColors,
-					oChartStyleCache.getAdditionalData(chartSpace.getChartType(), chartSpace.chartStyle.id),
-					true
-				);
-			} else {
-				dataLabels.resetFormatting();
-			}
-
 			return dataLabels;
 		}
 	};

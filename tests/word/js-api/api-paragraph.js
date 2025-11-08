@@ -38,6 +38,12 @@ $(function ()
 	{
 		return AscTest.Editor.CreateParagraph();
 	}
+	QUnit.test("ParaId", function (assert)
+	{
+		let apiParagraph = createApiParagraph();
+		apiParagraph.SetParaId(0x48151623);
+		assert.strictEqual(apiParagraph.GetParaId(), 0x48151623, "Check paraId");
+	});
 	
 	QUnit.test("Color", function (assert)
 	{

@@ -1768,7 +1768,7 @@
 					// у draw аннотаций ищем по path
 					if (oAnnot.IsShapeBased())
 					{
-						let isHitted = oAnnot.hitInBoundingRect(pageObjectMM.x, pageObjectMM.y) || oAnnot.hitToHandles(pageObjectMM.x, pageObjectMM.y) != -1 || oAnnot.hitInPath(pageObjectMM.x, pageObjectMM.y) || oAnnot.hitInInnerArea(pageObjectMM.x, pageObjectMM.y);
+						let isHitted = oAnnot.hitToHandles(pageObjectMM.x, pageObjectMM.y) != -1 || oAnnot.hitInPath(pageObjectMM.x, pageObjectMM.y) || oAnnot.hitInInnerArea(pageObjectMM.x, pageObjectMM.y);
 						if (isHitted)
 							return oAnnot;
 					}
@@ -1960,7 +1960,6 @@
 				oThis.MouseHandObject.ScrollX = oThis.scrollX;
 				oThis.MouseHandObject.ScrollY = oThis.scrollY;
 
-				this.file.removeSelection();
 				return;
 			}
 
@@ -2069,8 +2068,16 @@
 				oThis.file.onMouseUp(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
 			}
 				
-			if (oThis.MouseHandObject)
+			if (oThis.MouseHandObject) {
 				oThis.MouseHandObject.Active = false;
+
+				if (oThis.MouseHandObject.X == AscCommon.global_mouseEvent.X && oThis.MouseHandObject.Y == AscCommon.global_mouseEvent.Y) {
+					oThis.file.removeSelection();
+					oThis.file.onUpdateSelection();
+					oThis.file.onUpdateOverlay();
+				}
+			}
+				
 			oThis.isMouseMoveBetweenDownUp = false;
 
 			if (-1 !== oThis.timerScrollSelect)
@@ -2485,17 +2492,9 @@
 				this.drawCurrentSearchHighlight(ctx, oDoc, oDrDoc);
 			}
 			
-			oDrDoc.private_StartDrawSelection(this.overlay);
 			this.drawSelection(ctx, oDoc, oDrDoc);
-			
 	        this.drawPlaceholders();
 
-			if (oDoc.activeForm && oDoc.activeForm.content && oDoc.activeForm.content.IsSelectionUse() && !oDoc.activeForm.content.IsSelectionEmpty()) {
-				ctx.beginPath();
-				oDoc.activeForm.content.DrawSelectionOnPage(0);
-				oDrDoc.private_EndDrawSelection();
-			}
-			
 			if (oDrDoc.MathTrack.IsActive()) {
 				const prevAlpha = ctx.globalAlpha;
 				ctx.globalAlpha = 1.0;
@@ -2551,6 +2550,8 @@
 		};
 		
 		this.drawSelection = function(ctx, oDoc, oDrDoc) {
+			oDrDoc.private_StartDrawSelection(this.overlay);
+
 			ctx.fillStyle = "rgba(51,102,204,255)";
 			ctx.beginPath();
 			if (this.file.isSelectionUse()) {
@@ -2594,6 +2595,11 @@
 				oDrDoc.private_EndDrawSelection();
 				oDrDoc.AutoShapesTrack.PageIndex = nPage;
 				this.DrawingObjects.drawSelect(nPage);
+			}
+			else if (oDoc.activeForm && oDoc.activeForm.content && oDoc.activeForm.content.IsSelectionUse() && !oDoc.activeForm.content.IsSelectionEmpty()) {
+				ctx.beginPath();
+				oDoc.activeForm.content.DrawSelectionOnPage(0);
+				oDrDoc.private_EndDrawSelection();
 			}
 		};
 		
@@ -4408,8 +4414,9 @@
 		let oFile		= this.file;
 
 		// по информации аннотаций определим какие были удалены
-		let oDoc		= this.getPDFDoc();
+		let oDoc = this.getPDFDoc();
 		oDoc.BlurActiveObject();
+		oDoc.RecalculateAll();
 		
 		let aAnnotsInfo	= oFile.nativeFile["getAnnotationsInfo"]();
 		let aFormsInfo = this.file.nativeFile["getInteractiveFormsInfo"]();
@@ -4699,7 +4706,7 @@
 				nFlags |= (1 << 0);
 				let nRenderLengthPos = oMemory.GetCurPosition();
 				oMemory.Skip(4);
-				oMemory.WriteBuffer(data.binary, oMemory.GetCurPosition(), data.binary.length);
+				oMemory.WriteBuffer(data.binary, 0, data.binary.length);
 
 				let nEndPos = oMemory.GetCurPosition();
 
@@ -5038,7 +5045,7 @@
 				nFlags |= (1 << 0);
 				let nRenderLengthPos = oMemory.GetCurPosition();
 				oMemory.Skip(4);
-				oMemory.WriteBuffer(data.binary, oMemory.GetCurPosition(), data.binary.length);
+				oMemory.WriteBuffer(data.binary, 0, data.binary.length);
 
 				let nEndPos = oMemory.GetCurPosition();
 
