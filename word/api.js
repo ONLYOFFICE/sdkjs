@@ -6831,12 +6831,53 @@ background-repeat: no-repeat;\
 	//-----------------------------------------------------------------
 	// Функции для работы с гиперссылками
 	//-----------------------------------------------------------------
-	asc_docs_api.prototype.can_AddHyperlink = function()
+	asc_docs_api.prototype.can_AddHyperlink = function ()
 	{
-		if (!this.WordControl.m_oLogicDocument.CanAddHyperlink(true))
+		const logicDocument = this.WordControl.m_oLogicDocument;
+		if (!logicDocument)
+		{
 			return false;
-
-		return this.WordControl.m_oLogicDocument.GetSelectedText(true, {Numbering : false});
+		}
+		
+		const controller = logicDocument.getDrawingObjects();
+		if (!controller)
+		{
+			return false;
+		}
+		
+		const targetContent = controller.getTargetDocContent();
+		const selectedArray = controller.getSelectedArray();
+		
+		if (targetContent || selectedArray.length === 1)
+		{
+			const bCheckInHyperlink = AscCommon.isRealObject(targetContent);
+			const bCanAdd = logicDocument.CanAddHyperlink(bCheckInHyperlink);
+			
+			if (!bCanAdd)
+			{
+				return false;
+			}
+			
+			if (targetContent)
+			{
+				return logicDocument.GetSelectedText(true, { Numbering: false });
+			}
+			
+			const drawing = selectedArray[0];
+			const isShapeOrImage = drawing && (drawing.isShape && drawing.isShape() || drawing.isImage && drawing.isImage());
+			if (isShapeOrImage)
+			{
+				const cNvProps = drawing.getCNvProps();
+				return cNvProps && AscCommon.isRealObject(cNvProps.hlinkClick) ? false : null;
+			}
+		}
+		
+		if (!logicDocument.CanAddHyperlink(true))
+		{
+			return false;
+		}
+		
+		return logicDocument.GetSelectedText(true, { Numbering: false });
 	};
 	/**
 	 * Добавляем гиперссылку
@@ -6929,7 +6970,7 @@ background-repeat: no-repeat;\
 	 */
 	asc_docs_api.prototype.change_Hyperlink = function(oHyperProps)
 	{
-		if (!oHyperProps || !oHyperProps.get_InternalHyperlink())
+		if (!oHyperProps)
 			return;
 
 		var sBookmarkName = this.private_CheckHeadingHyperlinkProps(oHyperProps);
@@ -6950,10 +6991,11 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.private_ChangeHyperlink = function(hyperProps, bookmarkName)
 	{
 		let logicDocument = this.private_GetLogicDocument();
-		if (!logicDocument
-			|| !hyperProps
-			|| !hyperProps.get_InternalHyperlink()
-			|| !hyperProps.get_InternalHyperlink().IsUseInDocument())
+		if (!logicDocument || !hyperProps)
+			return;
+		
+		let oInternalHyperlink = hyperProps.get_InternalHyperlink();
+		if (oInternalHyperlink && !oInternalHyperlink.IsUseInDocument())
 			return;
 		
 		let additionalCheck = bookmarkName ? {
@@ -6980,10 +7022,11 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.remove_Hyperlink = function(hyperProps)
 	{
 		let logicDocument = this.private_GetLogicDocument();
-		if (!logicDocument
-			|| !hyperProps
-			|| !hyperProps.get_InternalHyperlink()
-			|| !hyperProps.get_InternalHyperlink().IsUseInDocument())
+		if (!logicDocument || !hyperProps)
+			return;
+		
+		let oInternalHyperlink = hyperProps.get_InternalHyperlink();
+		if (oInternalHyperlink && !oInternalHyperlink.IsUseInDocument())
 			return;
 		
 		if (logicDocument.IsSelectionLocked(changestype_Paragraph_Content))

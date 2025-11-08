@@ -7234,7 +7234,11 @@ CDocument.prototype.Interface_Update_DrawingPr = function(Flag)
 		if (this.Api)
 		{
 			for (var i = 0; i < DrawingPr.length; ++i)
-				this.Api.sync_ImgPropCallback(DrawingPr[i]);
+			{
+				DrawingPr[i] instanceof Asc.CHyperlinkProperty
+					? this.Api.sync_HyperlinkPropCallback(DrawingPr[i])
+					: this.Api.sync_ImgPropCallback(DrawingPr[i]);
+			}
 		}
 	}
 	if (Flag)
@@ -13169,6 +13173,13 @@ CDocument.prototype.ModifyHyperlink = function(oHyperProps)
 			oComplexField.MoveCursorOutsideElement(false);
 		}
 	}
+	else if (!oClass)
+	{
+		// shape/image hyperlink
+		if (docpostype_DrawingObjects === this.GetDocPosType())
+			return this.DrawingObjects.hyperlinkModify(oHyperProps);
+		return;
+	}
 	else
 	{
 		return;
@@ -13231,6 +13242,13 @@ CDocument.prototype.RemoveHyperlink = function(oHyperProps)
 
 			oComplexField.RemoveFieldWrap();
 		}
+	}
+	else if (!oClass)
+	{
+		// shape/image hyperlink
+		if (docpostype_DrawingObjects === this.GetDocPosType())
+			return this.DrawingObjects.hyperlinkModify(oHyperProps);
+		return;
 	}
 	else
 	{

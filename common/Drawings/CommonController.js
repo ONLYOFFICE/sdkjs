@@ -3401,7 +3401,8 @@
 						return content.CanAddHyperlink(bCheckInHyperlink);
 					}
 					else {
-						if(Asc.editor.getEditorId() === AscCommon.c_oEditorId.Presentation) {
+						const editorId = Asc.editor.getEditorId();
+						if (editorId === AscCommon.c_oEditorId.Presentation || editorId === AscCommon.c_oEditorId.Word) {
 							let aSelectedObjects = this.getSelectedArray();
 							if(aSelectedObjects.length === 1) {
 								let oDrawing = aSelectedObjects[0];
@@ -3434,7 +3435,8 @@
 						return Ret;
 					}
 					else {
-						if(Asc.editor.getEditorId() === AscCommon.c_oEditorId.Presentation) {
+						const editorId = Asc.editor.getEditorId();
+						if (editorId === AscCommon.c_oEditorId.Presentation || editorId === AscCommon.c_oEditorId.Word) {
 							let aSelectedObjects = this.getSelectedArray();
 							if(aSelectedObjects.length === 1) {
 								let oDrawing = aSelectedObjects[0];
@@ -3464,7 +3466,8 @@
 						return Ret;
 					}
 					else {
-						if(Asc.editor.getEditorId() === AscCommon.c_oEditorId.Presentation) {
+						const editorId = Asc.editor.getEditorId();
+						if (editorId === AscCommon.c_oEditorId.Presentation || editorId === AscCommon.c_oEditorId.Word) {
 							if(HyperProps.Value) {
 								let aSelectedObjects = this.getSelectedArray();
 								if(aSelectedObjects.length === 1) {
@@ -3510,7 +3513,8 @@
 						return Ret;
 					}
 					else {
-						if(Asc.editor.getEditorId() === AscCommon.c_oEditorId.Presentation) {
+						const editorId = Asc.editor.getEditorId();
+						if (editorId === AscCommon.c_oEditorId.Presentation || editorId === AscCommon.c_oEditorId.Word) {
 							if(HyperProps.Value) {
 								let aSelectedObjects = this.getSelectedArray();
 								if(aSelectedObjects.length === 1) {
