@@ -691,6 +691,9 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
                 }
                 shape.setSpPr(new AscFormat.CSpPr());
                 shape.spPr.setParent(shape);
+
+				shape.setNvSpPr(new AscFormat.UniNvPr());
+
                 if(bFromWord)
                 {
                     shape.setWordShape(true);
