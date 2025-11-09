@@ -5594,7 +5594,10 @@ function CBinaryFileWriter()
                 }
             }
 
-            _writer.WriteRecord1(0, {locks: shape.locks, objectType: shape.getObjectType()}, _writer.WriteUniNvPr);
+			const nvSpPr = shape.nvSpPr || {};
+			nvSpPr.locks = shape.locks;
+			nvSpPr.objectType = shape.getObjectType();
+			_writer.WriteRecord1(0, nvSpPr, _writer.WriteUniNvPr);
             _writer.WriteRecord1(1, shape.spPr, _writer.WriteSpPr);
             _writer.WriteRecord2(2, shape.style, _writer.WriteShapeStyle);
             //_writer.WriteRecord2(3, shape.txBody, _writer.WriteTxBody);
@@ -5672,7 +5675,11 @@ function CBinaryFileWriter()
                     });
                 }
             }
-            _writer.WriteRecord1(0, {locks: image.locks, objectType: image.getObjectType()}, _writer.WriteUniNvPr);
+
+			const nvPicPr = image.nvPicPr || {};
+			nvPicPr.locks = image.locks;
+			nvPicPr.objectType = image.getObjectType();
+			_writer.WriteRecord1(0, nvPicPr, _writer.WriteUniNvPr);
 
             image.spPr.WriteXfrm = image.spPr.xfrm;
 
