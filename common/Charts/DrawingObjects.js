@@ -2598,12 +2598,20 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 			coordsFrom.y += offsetY;
 			coordsTo.y += offsetY;
 
+            worksheet.workbook.StartAction(AscDFH.historydescription_Spreadsheet_AddImageUrls, {
+                src: _image.src,
+                width: pxToMm(coordsTo.x - coordsFrom.x),
+                height: pxToMm(coordsTo.y - coordsFrom.y),
+                from: drawingObject.from
+            })
+
             if(bCorrect) {
                 _this.controller.addImageFromParams(_image.src, pxToMm(coordsFrom.x) + MOVE_DELTA, pxToMm(coordsFrom.y) + MOVE_DELTA, pxToMm(coordsTo.x - coordsFrom.x), pxToMm(coordsTo.y - coordsFrom.y));
             }
             else {
                 _this.controller.addImageFromParams(_image.src, pxToMm(coordsFrom.x) + MOVE_DELTA, pxToMm(coordsFrom.y) + MOVE_DELTA, oSize.asc_getImageWidth(), oSize.asc_getImageHeight());
             }
+            worksheet.workbook.FinalizeAction()
         }
     };
 
@@ -2664,6 +2672,8 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 
         History.Create_NewPoint();
         worksheet.setSelectionShape(true);
+        worksheet.workbook.StartAction(AscDFH.historydescription_Document_AddChart)
+
         let oCSForAdd = oChartSpace.copy();
         let w, h, chartLeft, chartTop;
         w = this.convertMetric(AscCommon.AscBrowser.convertToRetinaValue(AscCommon.c_oAscChartDefines.defaultChartWidth, true), 0, 3);
@@ -2690,6 +2700,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         _this.controller.startRecalculate();
         this.sendGraphicObjectProps();
 
+        worksheet.workbook.FinalizeAction(AscDFH.historydescription_Document_AddChart, [oCSForAdd.chart])
     };
 
     _this.addSlicers = function(aNames) {

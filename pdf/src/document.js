@@ -1182,6 +1182,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         this.SetNeedUpdateSearch(false);
+        this.SearchEngine.StartTextAround();
 
         Asc.editor.sendEvent("asc_onUpdateRedactState");
     };
@@ -2730,7 +2731,7 @@ var CPresentation = CPresentation || function(){};
             oController.updateCursorType(pageObject.index, X, Y, e, false);
             oDrDoc.UnlockCursorType();
         }
-        else if (this.mouseDownLinkObject && this.mouseDownLinkObject == oMouseUpLink) {
+        else if (e.Button !== 2 && this.mouseDownLinkObject && this.mouseDownLinkObject == oMouseUpLink) {
             oViewer.navigateToLink(oMouseUpLink);
         }
         
@@ -3234,6 +3235,9 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.SetPageRotate = function(nPage, nAngle) {
 		let oViewer     = this.Viewer;
         let oPageInfo   = this.GetPageInfo(nPage);
+        if (!oPageInfo) {
+            return false;
+        }
 
         oPageInfo.SetRotate(nAngle);
 
@@ -7648,6 +7652,7 @@ var CPresentation = CPresentation || function(){};
                 forUpdateIdxs.push(curIdx);
             });
 
+            this.SetNeedUpdateSearch(true);
             this.Viewer.onUpdatePages(forUpdateIdxs);
 
 		}, AscDFH.historydescription_Pdf_Apply_Redact, this);

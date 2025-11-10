@@ -1186,6 +1186,10 @@ CSdtBase.prototype.GetFormHighlightColor = function(defaultColor)
 		
 		formPr = mainForm.GetFormPr();
 	}
+	else if (this.IsLabeledCheckBox())
+	{
+		return null;
+	}
 	
 	if (!formPr)
 		return defaultColor;

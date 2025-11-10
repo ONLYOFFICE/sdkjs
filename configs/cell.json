@@ -31,6 +31,7 @@
 			"cell/model/CollaborativeEditing.js",
 			"cell/model/DrawingObjects/GlobalCounters.js",
 			"common/macros.js",
+			"common/macro-recorder.js",
 			"common/apiBase.js",
 			"common/apiBase_plugins.js",
 			"word/apiCommon.js",

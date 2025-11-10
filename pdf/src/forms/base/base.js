@@ -2107,13 +2107,8 @@
 
         if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton && this._chStyle == AscPDF.CHECKBOX_STYLES.circle) {
             if (this.IsHovered() && this.IsPressed()) {
-                if (aBgColor.length == 1 && aBgColor[0] == 1) {
-                    oBgRGBColor = {r: 191, g: 0, b: 0};
-                }
-                else {
-                    if (this.GetBorderStyle() !== AscPDF.BORDER_TYPES.beveled)
-                        oBgRGBColor = AscPDF.MakeColorMoreGray(oBgRGBColor, 50);
-                }
+                if (this.GetBorderStyle() !== AscPDF.BORDER_TYPES.beveled)
+                    oBgRGBColor = AscPDF.MakeColorMoreGray(oBgRGBColor, 50);
             }
 
             oGraphicsPDF.BeginPath();

@@ -207,6 +207,7 @@
 		this.macros = null;
 		this.vbaMacros = null;
 		this.vbaProject = null;
+		this.macroRecorder = new AscCommon.MacroRecorder(this);
 
         this.openFileCryptBinary = null;
 
@@ -857,6 +858,8 @@
 		if (this.restrictions & Asc.c_oAscRestrictionType.OnlySignatures)
 			return;
 
+		this.macroRecorder.stop();
+
 		this.restrictions = val;
 		this.onUpdateRestrictions(additionalSettings);
 		this.checkInputMode();
@@ -868,6 +871,8 @@
 	};
 	baseEditorsApi.prototype.asc_addRestriction              = function(val)
 	{
+		this.macroRecorder.stop();
+
 		this.restrictions |= val;
 		this.onUpdateRestrictions();
 		this.checkInputMode();
@@ -1049,7 +1054,19 @@
 			}
 		}
 	};
-
+	baseEditorsApi.prototype.asc_setLocale = function(val) {};
+	baseEditorsApi.prototype.asc_getLocale = function() {};
+	/**
+	 * Gets LCID (Locale Identifier) for current locale
+	 * @returns {number|undefined} LCID number if locale found in map or undefined
+	 */
+	baseEditorsApi.prototype.asc_getLocaleLCID = function () {
+		const locale = this.asc_getLocale();
+		if (typeof locale === "string" && Asc.g_oLcidNameToIdMap) {
+			return Asc.g_oLcidNameToIdMap[locale];
+		}
+		return locale;
+	};
 	baseEditorsApi.prototype.asc_getLocaleExample = function(format, value, culture) {
 		if (!AscFormat.isRealNumber(value))
 		{
@@ -1325,14 +1342,7 @@
 		var rData                  = null;
 		if (!(this.DocInfo && this.DocInfo.get_OfflineApp()))
 		{
-			var locale = !window['NATIVE_EDITOR_ENJINE'] && this.asc_getLocale() || undefined;
-			if (typeof locale === "string") {
-				if (Asc.g_oLcidNameToIdMap) {
-					locale = Asc.g_oLcidNameToIdMap[locale];
-				} else {
-					locale = undefined;
-				}
-			}
+			var lcid = !window['NATIVE_EDITOR_ENJINE'] && this.asc_getLocaleLCID() || undefined;
 			let isOpenOoxml = !!(this.DocInfo && this.DocInfo.get_DirectUrl()) && this["asc_isSupportFeature"]("ooxml");
 			let outputformat = this._getOpenFormatByEditorId(this.editorId, false);//false to avoid ooxml->ooxml conversion
 			let convertToOrigin = '';
@@ -1346,7 +1356,7 @@
 				"format"        : this.documentFormat,
 				"url"           : this.documentUrl,
 				"title"         : this.documentTitle,
-				"lcid"          : locale,
+				"lcid"          : lcid,
 				"nobase64"      : true,
 				"outputformat"  : outputformat,
 				"convertToOrigin" : convertToOrigin,
@@ -3764,7 +3774,7 @@
 		this.loadBuilderFonts(function()
 		{
 			let result = _t._onEndBuilderScript(callback);
-			
+
 			if (_t.SaveAfterMacros)
 			{
 				_t.asc_Save();
@@ -4326,6 +4336,8 @@
 
 	baseEditorsApi.prototype.setViewModeDisconnect = function(enableDownload)
 	{
+		this.macroRecorder.cancel();
+
 		// Посылаем наверх эвент об отключении от сервера
 		this.sendEvent('asc_onCoAuthoringDisconnect', enableDownload);
 		// И переходим в режим просмотра т.к. мы не можем сохранить файл
@@ -4579,7 +4591,7 @@
 						oLogicDocument.UnlockPanelStyles(true);
 						oLogicDocument.OnEndLoadScript();
 					}
-					
+
 					endAction && endAction();
 				});
 				break;
@@ -4600,7 +4612,7 @@
 					{
 						wsView.objectRender.controller.recalculate2(undefined);
 					}
-					
+
 					endAction && endAction();
 				});
 				
@@ -5848,7 +5860,7 @@
 		plugins.internalCallbacks.push(callback);
 		plugins.callMethod(plugins.internalGuid, name, params);
 	};
-	
+
 	baseEditorsApi.prototype.markAsFinal = function(isFinal) {
 	};
 	baseEditorsApi.prototype.isFinal = function() {
@@ -6048,14 +6060,14 @@
 			return;
 
 		--this.groupActionsCounter;
-		
+
 		AscCommon.History.cancelGroupPoints();
 		
 		if (this.groupActionsCounter > 0)
 			return;
 		
 		this._onEndGroupActions();
-		
+
 		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
 		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
 	};
@@ -6071,7 +6083,7 @@
 			return;
 		
 		this._onEndGroupActions();
-		
+
 		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
 		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
 	};
@@ -6097,6 +6109,11 @@
 			}
 		}
 		return result;
+	};
+
+	baseEditorsApi.prototype.getMacroRecorder = function()
+	{
+		return this.macroRecorder;
 	};
 
 	//----------------------------------------------------------export----------------------------------------------------
@@ -6176,6 +6193,9 @@
 	prot['asc_setContentDarkMode'] = prot.asc_setContentDarkMode;
 	prot['asc_getFilePath'] = prot.asc_getFilePath;
 	prot['asc_getFormatCells'] = prot.asc_getFormatCells;
+	prot['asc_setLocale'] = prot.asc_setLocale;
+	prot['asc_getLocale'] = prot.asc_getLocale;
+	prot['asc_getLocaleLCID'] = prot.asc_getLocaleLCID;
 	prot['asc_getLocaleExample'] = prot.asc_getLocaleExample;
 	prot['asc_getAdditionalCurrencySymbols'] = prot.asc_getAdditionalCurrencySymbols;
 	prot['asc_convertNumFormat2NumFormatLocal'] = prot.asc_convertNumFormat2NumFormatLocal;
@@ -6230,5 +6250,6 @@
 	prot["callMethod"] = prot.callMethod;
 	prot['asc_markAsFinal'] = prot.asc_markAsFinal = prot.markAsFinal;
 	prot['asc_isFinal'] = prot.asc_isFinal = prot.isFinal;
+	prot["getMacroRecorder"] = prot.getMacroRecorder;
 
 })(window);

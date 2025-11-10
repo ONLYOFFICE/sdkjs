@@ -183,7 +183,7 @@ DrawingObjectsController.prototype.checkSelectedObjectsAndCallback = function(ca
     if(bNoCheckLock || oPresentation.Document_Is_SelectionLocked(check_type, aCommentData, undefined, aAdditionaObjects) === false)
     {
         var nPointType = AscFormat.isRealNumber(nHistoryPointType) ? nHistoryPointType : AscDFH.historydescription_CommonControllerCheckSelected;
-        oPresentation.StartAction(nPointType)
+        oPresentation.StartAction(nPointType, args);
         callback.apply(this, args);
         oPresentation.FinalizeAction();
     }

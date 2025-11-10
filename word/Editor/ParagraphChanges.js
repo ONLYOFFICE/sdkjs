@@ -307,6 +307,12 @@ AscDFH.changesRelationMap[AscDFH.historyitem_Paragraph_Bidi] = [
 	AscDFH.historyitem_Paragraph_Bidi,
 	AscDFH.historyitem_Paragraph_Pr
 ];
+AscDFH.changesRelationMap[AscDFH.historyitem_Paragraph_ParaId] = [
+	AscDFH.historyitem_Paragraph_ParaId
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_Paragraph_TextId] = [
+	AscDFH.historyitem_Paragraph_TextId
+];
 
 // Общая функция Merge для изменений, которые зависят только от себя и AscDFH.historyitem_Paragraph_Pr
 function private_ParagraphChangesOnMergePr(oChange)
@@ -2077,3 +2083,46 @@ CChangesParagraphBidi.prototype.IsNeedRecalculate = function()
 	return true;
 };
 CChangesParagraphBidi.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
+
+(function()
+{
+	/**
+	 * @constructor
+	 * @extends {AscDFH.CChangesBaseLongProperty}
+	 */
+	function CChangesParagraphParaId(Class, Old, New)
+	{
+		AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New);
+	}
+	
+	AscDFH.InheritPropertyChange(
+		CChangesParagraphParaId,
+		AscDFH.CChangesBaseLongProperty,
+		AscDFH.historyitem_Paragraph_ParaId,
+		function(value)
+		{
+			this.Class.ParaId = value;
+		}
+	);
+	AscDFH.CChangesParagraphParaId = CChangesParagraphParaId;
+	
+	/**
+	 * @constructor
+	 * @extends {AscDFH.CChangesBaseLongProperty}
+	 */
+	function CChangesParagraphTextId(Class, Old, New)
+	{
+		AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New);
+	}
+	
+	AscDFH.InheritPropertyChange(
+		CChangesParagraphTextId,
+		AscDFH.CChangesBaseLongProperty,
+		AscDFH.historyitem_Paragraph_TextId,
+		function(value)
+		{
+			this.Class.TextId = value;
+		}
+	);
+	AscDFH.CChangesParagraphTextId = CChangesParagraphTextId;
+})();

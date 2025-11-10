@@ -25012,6 +25012,133 @@ $(function () {
 		assert.ok(oParser.parse(), 'VLOOKUP(ABS(2),VLOOKUPTestNameArea3D,ABS(2),1=1)');
 		assert.strictEqual(oParser.calculate().getValue(), 2, 'Result of VLOOKUP(ABS(2),VLOOKUPTestNameArea3D,ABS(2),1=1)');
 
+
+		ws.getRange2("A601").setValue("a");
+		ws.getRange2("A602").setValue("b");
+		ws.getRange2("A603").setValue("c");
+		ws.getRange2("A604").setValue("d");
+		ws.getRange2("A605").setValue("e");
+		ws.getRange2("A606").setValue("f");
+		ws.getRange2("A607").setValue("g");
+		ws.getRange2("A608").setValue("i");
+		ws.getRange2("A609").setValue("h");
+		ws.getRange2("A610").setValue("j");
+
+		ws.getRange2("B601").setValue("1");
+		ws.getRange2("B602").setValue("2");
+		ws.getRange2("B603").setValue("3");
+		ws.getRange2("B604").setValue("4");
+		ws.getRange2("B605").setValue("5");
+		ws.getRange2("B606").setValue("6");
+		ws.getRange2("B607").setValue("7");
+		ws.getRange2("B608").setValue("8");
+		ws.getRange2("B609").setValue("9");
+		ws.getRange2("B610").setValue("10");
+
+		ws.getRange2("A611").setValue("=B611+1");
+		ws.getRange2("B611").setValue('=VLOOKUP("a",A601:B610,2,FALSE)');
+
+		wb.dependencyFormulas.unlockRecal();
+
+		// Case #63: Formula. Tests for bug 77578
+		oParser = new parserFormula("B611+A611", "A2", ws);
+		assert.ok(oParser.parse(), "Parse B611+A611");
+		assert.strictEqual(oParser.calculate().getValue(), 3);
+
+		// Case #64: Formula. Tests for bug 77705
+		ws.insertRowsBefore(610,1)
+		assert.strictEqual(ws.getRange2("A612").getValue(), "2");
+
+		wb.dependencyFormulas.lockRecal();
+
+
+		// Case #65: Formula.
+		ws.getRange2("A702").setValue("1");
+		ws.getRange2("A703").setValue("2");
+		ws.getRange2("A704").setValue("3");
+		ws.getRange2("B702").setValue("a1");
+		ws.getRange2("B703").setValue("a2");
+		ws.getRange2("B704").setValue("a3");
+
+		ws.getRange2("A706").setValue("=VLOOKUP(D706,A702:B704,2,FALSE)");
+		ws.getRange2("A707").setValue("=CONCAT(A706,A708)");
+		ws.getRange2("A708").setValue("=VLOOKUP(D708,A710:B712,2,FALSE)");
+		ws.getRange2("B706").setValue("a");
+		ws.getRange2("B707").setValue("b");
+		ws.getRange2("B708").setValue("c");
+
+		ws.getRange2("A710").setValue("4");
+		ws.getRange2("A711").setValue("5");
+		ws.getRange2("A712").setValue("6");
+		ws.getRange2("B710").setValue("a4");
+		ws.getRange2("B711").setValue("a5");
+		ws.getRange2("B712").setValue("a6");
+
+		ws.getRange2("D701").setValue("=VLOOKUP(A707,A702:B712,2,FALSE)");
+		ws.getRange2("D706").setValue("=1+E707");
+		ws.getRange2("D708").setValue("=4+E707");
+
+		ws.getRange2("E707").setValue("1");
+
+		wb.dependencyFormulas.unlockRecal();
+
+		assert.strictEqual(ws.getRange2("D701").getValue(), "b");
+
+		ws.getRange2("E707").setValue("2");
+		assert.strictEqual(ws.getRange2("D701").getValue(), "b");
+
+		ws.getRange2("E707").setValue("3");
+		assert.strictEqual(ws.getRange2("D701").getValue(), "#N/A");
+
+		wb.dependencyFormulas.lockRecal();
+
+
+		// Case #66: Iterative recursion test
+		ws.getRange2("A801").setValue("0");
+		ws.getRange2("A802").setValue("=B802+D801");
+		ws.getRange2("A803").setValue("=B803+D802");
+
+		ws.getRange2("B801").setValue("=1+$C$801");
+		ws.getRange2("B802").setValue("=1+$C$801");
+		ws.getRange2("B803").setValue("=1+$C$801");
+
+		ws.getRange2("C801").setValue("3");
+
+		ws.getRange2("D801").setValue("=VLOOKUP(A801,A801:A803,1,FALSE)");
+		ws.getRange2("D802").setValue("=VLOOKUP(A802,A801:A803,1,FALSE)");
+		ws.getRange2("D803").setValue("=VLOOKUP(A803,A801:A803,1,FALSE)");
+
+		wb.dependencyFormulas.unlockRecal();
+		const api = ws.workbook.oApi;
+		const oCalcSettings = api.asc_GetCalcSettings();
+		oCalcSettings.asc_setIterativeCalc(false);
+
+		// Different with MS
+		// assert.strictEqual(ws.getRange2("A803").getValue(), "8");
+		// assert.strictEqual(ws.getRange2("B803").getValue(), "4");
+		// assert.strictEqual(ws.getRange2("D803").getValue(), "8");
+
+		ws.getRange2("C801").setValue("2");
+
+		assert.strictEqual(ws.getRange2("A803").getValue(), "6");
+		assert.strictEqual(ws.getRange2("B803").getValue(), "3");
+		assert.strictEqual(ws.getRange2("D803").getValue(), "6");
+
+		wb.dependencyFormulas.lockRecal();
+
+		oCalcSettings.asc_setIterativeCalc(true);
+		oCalcSettings.asc_setMaxIterations(2);
+		wb.dependencyFormulas.unlockRecal();
+
+		ws.getRange2("C801").setValue("3");
+
+		assert.strictEqual(ws.getRange2("A803").getValue(), "8");
+		assert.strictEqual(ws.getRange2("B803").getValue(), "4");
+		assert.strictEqual(ws.getRange2("D803").getValue(), "8");
+
+		oCalcSettings.asc_setIterativeCalc(false);
+		wb.dependencyFormulas.lockRecal();
+
 		// Negative Cases:
 		// Case #1: Array, Array, Array with wrong data
 		oParser = new parserFormula("VLOOKUP({2,3,4},{1,2,3;2,3,4},{4,5,6})", "A2", ws);
