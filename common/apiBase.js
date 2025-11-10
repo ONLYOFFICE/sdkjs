@@ -6096,16 +6096,16 @@
 	};
 	baseEditorsApi.prototype.prepareImageMap = function(images) {
 		const result = {
-			binaries: {},
-			images: {}
+			binaries: [],
+			images: []
 		};
 		const xlsxExtension = ".xlsx";
-		for (let sId in images) {
-			const url = images[sId];
+		for (let i = 0; i < images.length; i += 1) {
+			const url = images[i];
 			if (url.lastIndexOf(xlsxExtension) === (url.length - xlsxExtension.length)) {
-				result.binaries[sId] = url;
+				result.binaries[i] = url;
 			} else {
-				result.images[sId] = url;
+				result.images[i] = url;
 			}
 		}
 		return result;

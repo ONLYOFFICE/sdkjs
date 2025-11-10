@@ -659,6 +659,9 @@ function(window, undefined) {
 	drawingsChangesMap[AscDFH.historyitem_ChartSpace_ChartColors] = function (oClass, value) {
 		oClass.chartColors = value;
 	};
+	drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetXLSXId] = function (oClass, value) {
+		oClass.XLSXId = value;
+	};
 
 	function CLabelsBox(aStrings, oAxis, oChartSpace) {
 		this.x = 0.0;

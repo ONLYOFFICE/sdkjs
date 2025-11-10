@@ -1053,16 +1053,31 @@
 	}
 	CBinaryCacheManager.prototype.loadBinaries = function(urls) {
 		const oThis = this;
-		for (let i = 0; i < urls.length; i++) {
-			this.api._downloadOriginalFile(urls[i], undefined, undefined, undefined, function(binary) {
-				if (binary) {
-					const hash = oThis.getHash(binary);
-					const loadedData = new CLoadBinaryData(hash, binary);
-					loadedData.setLoadState(CLoadBinaryData_Complete);
+		return new Promise(function(resolve) {
+			let len = urls.length;
+			let res = Array(len);
+			for (let i = 0; i < urls.length; i++) {
+				const sFullUrl = AscCommon.getFullImageSrc2(urls[i]);
+				oThis.api._downloadOriginalFile(sFullUrl, undefined, undefined, undefined, function(binary) {
+					res[i] = null;
+					if (binary) {
+						const hash = oThis.getHash(binary);
+						const loadedData = new CLoadBinaryData(hash, binary);
+						loadedData.setLoadState(CLoadBinaryData_Complete);
+						loadedData.data = {path: urls[i], url: sFullUrl};
+						oThis.collaborativeCache[hash] = loadedData;
+						res[i] = loadedData;
+						oThis.cache[hash] = binary;
+					}
+					len -= 1;
+					if (len === 0) {
+						resolve(res);
+					}
+				});
+			}
+		});
 
-				}
-			});
-		}
+
 	};
 	CBinaryCacheManager.prototype.getHash = function(binary) {
 		const sha256 = AscCommon.Digest.sha256(binary, 0, binary.length);
