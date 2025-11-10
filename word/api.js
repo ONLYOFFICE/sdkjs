@@ -6870,9 +6870,7 @@ background-repeat: no-repeat;\
 				const isImageDrawing = drawing.isImage && drawing.isImage();
 				if (isShapeDrawing || isImageDrawing)
 				{
-					const cNvProps = (isShapeDrawing)
-						? drawing.parent && drawing.parent.docPr
-						: drawing.getCNvProps();
+					const cNvProps = controller.hyperlinkCollectNonVisualProperties(drawing)[0];
 					return cNvProps && AscCommon.isRealObject(cNvProps.hlinkClick) ? false : null;
 				}
 			}

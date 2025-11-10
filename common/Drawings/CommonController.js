@@ -791,11 +791,8 @@
 							}
 						}
 						if (sHyperlink === null) {
-							const isWordEditor = editorId === AscCommon.c_oEditorId.Word;
-							const isImageDrawing = drawing.isImage();
-							oNvPr = (isWordEditor && !isImageDrawing)
-								? drawing.parent && drawing.parent.docPr
-								: drawing.getCNvProps();
+							const nvProps = this.hyperlinkCollectNonVisualProperties(drawing);
+							oNvPr = nvProps[0];
 							if (oNvPr
 								&& oNvPr.hlinkClick
 								&& typeof oNvPr.hlinkClick.id === "string"
@@ -3418,11 +3415,8 @@
 										return true;
 									}
 
-									const isWordEditor = editorId === AscCommon.c_oEditorId.Word;
-									const oNvPr = (isWordEditor && isShapeDrawing)
-										? oDrawing.parent && oDrawing.parent.docPr
-										: oDrawing.getCNvProps();
-
+									let nvProps = this.hyperlinkCollectNonVisualProperties(oDrawing);
+									const oNvPr = nvProps[0];
 									if (oNvPr
 										&& oNvPr.hlinkClick
 										&& typeof oNvPr.hlinkClick.id === "string"
@@ -3568,17 +3562,17 @@
 					const isShapeDrawing = drawing.isShape();
 					const isImageDrawing = drawing.isImage();
 
-					if (isWordEditor) {
-						const docPr = drawing.parent && drawing.parent.docPr;
-						if (docPr) props.push(docPr);
-
+					if (!isWordEditor || (isWordEditor && drawing.group)) {
+						const cNvPr = drawing.getCNvProps();
+						if (cNvPr) props.push(cNvPr);
+					} else {
 						if (isImageDrawing) {
 							const nvPicPr = drawing.getCNvProps();
 							if (nvPicPr) props.push(nvPicPr);
 						}
-					} else {
-						const cNvPr = drawing.getCNvProps();
-						if (cNvPr) props.push(cNvPr);
+
+						const docPr = drawing.parent && drawing.parent.docPr;
+						if (docPr) props.push(docPr);
 					}
 
 					return props;
@@ -8163,9 +8157,8 @@
 
 						if (!isStickyNote && (isShapeDrawing || isImageDrawing)) {
 							const isWordEditor = editorId === AscCommon.c_oEditorId.Word;
-							const oNvPr = (isWordEditor && isShapeDrawing)
-								? oDrawing.parent && oDrawing.parent.docPr
-								: oDrawing.getCNvProps();
+							const nvProps = this.hyperlinkCollectNonVisualProperties(oDrawing);
+							const oNvPr = nvProps[0];
 
 							if (oNvPr && oNvPr.hlinkClick && oNvPr.hlinkClick.id) {
 								hyperlink_properties = new Asc.CHyperlinkProperty();
