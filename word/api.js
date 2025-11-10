@@ -7914,15 +7914,6 @@ background-repeat: no-repeat;\
 			return;
 		}
 
-		this.GenerateStyles();
-
-		if (null != this.WordControl.m_oLogicDocument)
-		{
-			this.WordControl.m_oDrawingDocument.CheckGuiControlColors();
-			this.sendColorThemes(this.WordControl.m_oLogicDocument.theme);
-			this.sendEvent("asc_onUpdateChartStyles");
-		}
-
 		// открытие после загрузки документа
 
 		var _loader_object = this.WordControl.m_oLogicDocument;
@@ -8286,6 +8277,16 @@ background-repeat: no-repeat;\
 			this.bInit_word_control = true;
 			this.onDocumentContentReady();
 			this.onNeedUpdateExternalReferenceOnOpen();
+		}
+		
+		// Move GenerateStyles and CheckGuiControlColors to fix subscription race in openDocument from bytes (spreadsheet and presentation also in _openDocumentEndCallback)
+		this.GenerateStyles();
+
+		if (null != this.WordControl.m_oLogicDocument)
+		{
+			this.WordControl.m_oDrawingDocument.CheckGuiControlColors();
+			this.sendColorThemes(this.WordControl.m_oLogicDocument.theme);
+			this.sendEvent("asc_onUpdateChartStyles");
 		}
 
 		this.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
