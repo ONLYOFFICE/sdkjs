@@ -3189,7 +3189,7 @@
 			oRoot.resetState();
 		}
 	};
-	
+
     changesFactory[AscDFH.historyitem_CommonTimingListAdd] = CChangeContent;
     changesFactory[AscDFH.historyitem_CommonTimingListRemove] = CChangeContent;
     drawingContentChanges[AscDFH.historyitem_CommonTimingListAdd] = function (oClass) {
