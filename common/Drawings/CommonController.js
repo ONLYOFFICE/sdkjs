@@ -757,6 +757,7 @@
 					//     }
 					// }
 
+					const editorId = Asc.editor.getEditorId();
 
 					var oNvPr;
 					if (this.document || this.drawingObjects && this.drawingObjects.cSld) {
@@ -790,7 +791,11 @@
 							}
 						}
 						if (sHyperlink === null) {
-							oNvPr = drawing.getCNvProps();
+							const isWordEditor = editorId === AscCommon.c_oEditorId.Word;
+							const isImageDrawing = drawing.isImage();
+							oNvPr = (isWordEditor && !isImageDrawing)
+								? drawing.parent && drawing.parent.docPr
+								: drawing.getCNvProps();
 							if (oNvPr
 								&& oNvPr.hlinkClick
 								&& typeof oNvPr.hlinkClick.id === "string"
@@ -3406,25 +3411,24 @@
 							let aSelectedObjects = this.getSelectedArray();
 							if(aSelectedObjects.length === 1) {
 								let oDrawing = aSelectedObjects[0];
-								if(oDrawing.isShape() || oDrawing.isImage()) {
-									if(bCheckInHyperlink) {
-
-										let oNvPr;
-										if (editorId === AscCommon.c_oEditorId.Presentation) {
-											oNvPr = oDrawing.getCNvProps();
-										}
-										if (editorId === AscCommon.c_oEditorId.Word) {
-											oNvPr = oDrawing.parent && oDrawing.parent.docPr;
-										}
-
-										if (oNvPr
-											&& oNvPr.hlinkClick
-											&& typeof oNvPr.hlinkClick.id === "string"
-											&& oNvPr.hlinkClick.id.length > 0) {
-											return false;
-										}
+								const isShapeDrawing = oDrawing.isShape();
+								const isImageDrawing = oDrawing.isImage();
+								if (isShapeDrawing || isImageDrawing) {
+									if (!bCheckInHyperlink) {
+										return true;
 									}
-									return true;
+
+									const isWordEditor = editorId === AscCommon.c_oEditorId.Word;
+									const oNvPr = (isWordEditor && isShapeDrawing)
+										? oDrawing.parent && oDrawing.parent.docPr
+										: oDrawing.getCNvProps();
+
+									if (oNvPr
+										&& oNvPr.hlinkClick
+										&& typeof oNvPr.hlinkClick.id === "string"
+										&& oNvPr.hlinkClick.id.length > 0) {
+										return false;
+									}
 								}
 							}
 						}
@@ -3448,22 +3452,17 @@
 							let aSelectedObjects = this.getSelectedArray();
 							if(aSelectedObjects.length === 1) {
 								let oDrawing = aSelectedObjects[0];
-								if(oDrawing.isShape() || oDrawing.isImage()) {
+								const isImageDrawing = oDrawing.isImage();
+								const isShapeDrawing = oDrawing.isShape();
+								if(isShapeDrawing || isImageDrawing) {
 
-									let oNvPr;
-									if (editorId === AscCommon.c_oEditorId.Presentation) {
-										oNvPr = oDrawing.getCNvProps();
-									}
-									if (editorId === AscCommon.c_oEditorId.Word) {
-										oNvPr = oDrawing.parent && oDrawing.parent.docPr;
-									}
-
-									if (oNvPr) {
-										if(oNvPr.hlinkClick)
+									let nvProps = this.hyperlinkCollectNonVisualProperties(oDrawing);
+									nvProps.forEach(function (oNvPr) {
+										if (oNvPr.hlinkClick)
 											oNvPr.setHlinkClick(null);
-										if(oNvPr.hlinkHover)
+										if (oNvPr.hlinkHover)
 											oNvPr.setHlinkHover(null);
-									}
+									});
 								}
 							}
 						}
@@ -3488,25 +3487,21 @@
 								let aSelectedObjects = this.getSelectedArray();
 								if(aSelectedObjects.length === 1) {
 									let oDrawing = aSelectedObjects[0];
-									if(oDrawing.isShape() || oDrawing.isImage()) {
+									const isShapeDrawing = oDrawing.isShape();
+									const isImageDrawing = oDrawing.isImage();
+									if(isShapeDrawing || isImageDrawing) {
 
-										let oNvPr;
-										if (editorId === AscCommon.c_oEditorId.Presentation) {
-											oNvPr = oDrawing.getCNvProps();
-										}
-										if (editorId === AscCommon.c_oEditorId.Word) {
-											oNvPr = oDrawing.parent && oDrawing.parent.docPr;
-										}
-
-										if (oNvPr) {
+										let nvProps = this.hyperlinkCollectNonVisualProperties(oDrawing);
+										nvProps.forEach(function (oNvPr) {
 											let oHyper = new AscFormat.CT_Hyperlink();
-											if(HyperProps.Value.startsWith("ppaction")) {
+											if (HyperProps.Value.startsWith("ppaction")) {
 												oHyper.action = HyperProps.Value;
 											}
 											oHyper.id = HyperProps.Value;
 											oHyper.tooltip = HyperProps.ToolTip;
 											oNvPr.setHlinkClick(oHyper);
-										}
+										});
+
 									}
 								}
 							}
@@ -3542,25 +3537,21 @@
 								let aSelectedObjects = this.getSelectedArray();
 								if(aSelectedObjects.length === 1) {
 									let oDrawing = aSelectedObjects[0];
-									if(oDrawing.isShape() || oDrawing.isImage()) {
+									const isShapeDrawing = oDrawing.isShape();
+									const isImageDrawing = oDrawing.isImage();
+									if(isShapeDrawing || isImageDrawing) {
 
-										let oNvPr;
-										if (editorId === AscCommon.c_oEditorId.Presentation) {
-											oNvPr = oDrawing.getCNvProps();
-										}
-										if (editorId === AscCommon.c_oEditorId.Word) {
-											oNvPr = oDrawing.parent && oDrawing.parent.docPr;
-										}
-
-										if (oNvPr) {
+										let nvProps = this.hyperlinkCollectNonVisualProperties(oDrawing);
+										nvProps.forEach(function (oNvPr) {
 											let oHyper = new AscFormat.CT_Hyperlink();
-											if(HyperProps.Value.startsWith("ppaction")) {
+											if (HyperProps.Value.startsWith("ppaction")) {
 												oHyper.action = HyperProps.Value;
 											}
 											oHyper.id = HyperProps.Value;
 											oHyper.tooltip = HyperProps.ToolTip;
 											oNvPr.setHlinkClick(oHyper);
-										}
+										});
+
 									}
 								}
 							}
@@ -3569,6 +3560,29 @@
 					return null;
 				},
 
+				hyperlinkCollectNonVisualProperties: function (drawing) {
+					let props = [];
+
+					const editorId = Asc.editor.getEditorId();
+					const isWordEditor = editorId === AscCommon.c_oEditorId.Word;
+					const isShapeDrawing = drawing.isShape();
+					const isImageDrawing = drawing.isImage();
+
+					if (isWordEditor) {
+						const docPr = drawing.parent && drawing.parent.docPr;
+						if (docPr) props.push(docPr);
+
+						if (isImageDrawing) {
+							const nvPicPr = drawing.getCNvProps();
+							if (nvPicPr) props.push(nvPicPr);
+						}
+					} else {
+						const cNvPr = drawing.getCNvProps();
+						if (cNvPr) props.push(cNvPr);
+					}
+
+					return props;
+				},
 
 				insertHyperlink: function (options) {
 
@@ -7452,6 +7466,8 @@
 				},
 
 				getDrawingPropsFromArray: function (drawings) {
+					const editorId = Asc.editor.getEditorId();
+
 					var image_props, shape_props, chart_props, table_props = undefined, new_image_props,
 						new_shape_props, new_chart_props, new_table_props, shape_chart_props, locked;
 					var anim_props = null;
@@ -8140,12 +8156,17 @@
 						const oDrawingObjectsController = oDrawing.getDrawingObjectsController && oDrawing.getDrawingObjectsController();
 						const oTargetDocContent = oDrawingObjectsController && oDrawingObjectsController.getTargetDocContent();
 
-						const isValidType = oDrawing.isShape() || oDrawing.isImage();
+						const isShapeDrawing = oDrawing.isShape();
+						const isImageDrawing = oDrawing.isImage();
 						const isStickyNote = oDrawing.IsAnnot && oDrawing.IsAnnot() && oDrawing.IsComment() ||
 							drawing.IsEditFieldShape && oDrawing.IsEditFieldShape(); // skip pdf text annot and form
 
-						if (!isStickyNote && isValidType && !oTargetDocContent) {
-							const oNvPr = oDrawing.getCNvProps();
+						if (!isStickyNote && (isShapeDrawing || isImageDrawing)) {
+							const isWordEditor = editorId === AscCommon.c_oEditorId.Word;
+							const oNvPr = (isWordEditor && isShapeDrawing)
+								? oDrawing.parent && oDrawing.parent.docPr
+								: oDrawing.getCNvProps();
+
 							if (oNvPr && oNvPr.hlinkClick && oNvPr.hlinkClick.id) {
 								hyperlink_properties = new Asc.CHyperlinkProperty();
 								hyperlink_properties.Text = null;

@@ -2030,6 +2030,8 @@ CGraphicObjects.prototype =
         return content && content.AddComment(commentData, true, true);
     },
 
+    hyperlinkCollectNonVisualProperties: DrawingObjectsController.prototype.hyperlinkCollectNonVisualProperties,
+
     hyperlinkCheck: DrawingObjectsController.prototype.hyperlinkCheck,
 
     hyperlinkCanAdd: DrawingObjectsController.prototype.hyperlinkCanAdd,

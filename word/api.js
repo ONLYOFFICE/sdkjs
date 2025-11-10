@@ -6864,11 +6864,17 @@ background-repeat: no-repeat;\
 			}
 			
 			const drawing = selectedArray[0];
-			const isShapeOrImage = drawing && (drawing.isShape && drawing.isShape() || drawing.isImage && drawing.isImage());
-			if (isShapeOrImage)
+			if (drawing)
 			{
-				const cNvProps = drawing.getCNvProps();
-				return cNvProps && AscCommon.isRealObject(cNvProps.hlinkClick) ? false : null;
+				const isShapeDrawing = drawing.isShape && drawing.isShape(); 
+				const isImageDrawing = drawing.isImage && drawing.isImage();
+				if (isShapeDrawing || isImageDrawing)
+				{
+					const cNvProps = (isShapeDrawing)
+						? drawing.parent && drawing.parent.docPr
+						: drawing.getCNvProps();
+					return cNvProps && AscCommon.isRealObject(cNvProps.hlinkClick) ? false : null;
+				}
 			}
 		}
 		
