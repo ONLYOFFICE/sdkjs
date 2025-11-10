@@ -15700,7 +15700,7 @@
 	window["AscCommon"].fromModelCryptAlgorithmSid = fromModelCryptAlgorithmSid;
 	window["AscCommon"].getMemoryInfo = getMemoryInfo;
 	window["AscCommon"].getClientInfoString = getClientInfoString;
-	window["AscCommon"].sendClientLog = sendClientLog;
+	window["AscCommon"].sendClientLog = window["AscCommon"]["sendClientLog"] = sendClientLog;
 
 	window["AscCommon"].getNativePrintRanges = getNativePrintRanges;
 
