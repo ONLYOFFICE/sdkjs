@@ -3408,7 +3408,15 @@
 								let oDrawing = aSelectedObjects[0];
 								if(oDrawing.isShape() || oDrawing.isImage()) {
 									if(bCheckInHyperlink) {
-										let oNvPr = oDrawing.getCNvProps();
+
+										let oNvPr;
+										if (editorId === AscCommon.c_oEditorId.Presentation) {
+											oNvPr = oDrawing.getCNvProps();
+										}
+										if (editorId === AscCommon.c_oEditorId.Word) {
+											oNvPr = oDrawing.parent && oDrawing.parent.docPr;
+										}
+
 										if (oNvPr
 											&& oNvPr.hlinkClick
 											&& typeof oNvPr.hlinkClick.id === "string"
@@ -3441,7 +3449,15 @@
 							if(aSelectedObjects.length === 1) {
 								let oDrawing = aSelectedObjects[0];
 								if(oDrawing.isShape() || oDrawing.isImage()) {
-									let oNvPr = oDrawing.getCNvProps();
+
+									let oNvPr;
+									if (editorId === AscCommon.c_oEditorId.Presentation) {
+										oNvPr = oDrawing.getCNvProps();
+									}
+									if (editorId === AscCommon.c_oEditorId.Word) {
+										oNvPr = oDrawing.parent && oDrawing.parent.docPr;
+									}
+
 									if (oNvPr) {
 										if(oNvPr.hlinkClick)
 											oNvPr.setHlinkClick(null);
@@ -3474,7 +3490,14 @@
 									let oDrawing = aSelectedObjects[0];
 									if(oDrawing.isShape() || oDrawing.isImage()) {
 
-										let oNvPr = oDrawing.getCNvProps();
+										let oNvPr;
+										if (editorId === AscCommon.c_oEditorId.Presentation) {
+											oNvPr = oDrawing.getCNvProps();
+										}
+										if (editorId === AscCommon.c_oEditorId.Word) {
+											oNvPr = oDrawing.parent && oDrawing.parent.docPr;
+										}
+
 										if (oNvPr) {
 											let oHyper = new AscFormat.CT_Hyperlink();
 											if(HyperProps.Value.startsWith("ppaction")) {
@@ -3521,7 +3544,14 @@
 									let oDrawing = aSelectedObjects[0];
 									if(oDrawing.isShape() || oDrawing.isImage()) {
 
-										let oNvPr = oDrawing.getCNvProps();
+										let oNvPr;
+										if (editorId === AscCommon.c_oEditorId.Presentation) {
+											oNvPr = oDrawing.getCNvProps();
+										}
+										if (editorId === AscCommon.c_oEditorId.Word) {
+											oNvPr = oDrawing.parent && oDrawing.parent.docPr;
+										}
+
 										if (oNvPr) {
 											let oHyper = new AscFormat.CT_Hyperlink();
 											if(HyperProps.Value.startsWith("ppaction")) {
