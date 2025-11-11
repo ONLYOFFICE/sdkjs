@@ -701,6 +701,20 @@
 		this.blobs = null;
 		this.documentUrl = null;
 	}
+	CFrameBinaryLoader.prototype.fillDataFromXLSTZip = function(zipData, data) {
+		let jsZlib = new AscCommon.ZLib();
+		if (jsZlib.open(zipData))
+		{
+			if (jsZlib.files && jsZlib.files.length) {
+				const oImgBlobs = this.getBlobCache(jsZlib);
+				const arrStream = jsZlib.getFile(jsZlib.files[0]);
+				data.stream = arrStream ? Array.from(arrStream) : null;
+				data.blobs = oImgBlobs;
+				data.addCloseCallback(this.getCloseCallbackFromBlobCache(oImgBlobs));
+			}
+			jsZlib.close();
+		}
+	};
 	CFrameBinaryLoader.prototype.getNestedPromise = function (binaryId)
 	{
 		const oThis = this;
@@ -722,14 +736,7 @@
 						oThis.api.getConvertedXLSXFileFromUrl({data: binaryData}, Asc.c_oAscFileType.XLSY, function (arrBinaryData) {
 							if (arrBinaryData)
 							{
-								let jsZlib = new AscCommon.ZLib();
-								if (jsZlib.open(arrBinaryData))
-								{
-									if (jsZlib.files && jsZlib.files.length) {
-										arrBinaryData = jsZlib.getFile(jsZlib.files[0]);
-									}
-								}
-								oData.stream = Array.from(arrBinaryData);
+								oThis.fillDataFromXLSTZip(arrBinaryData, oData);
 							}
 							resolve(oData);
 						});
@@ -934,18 +941,7 @@
 				if (!this.isOpenOnClient && !isLocalDesktop)
 				{
 					//xlst
-					let jsZlib = new AscCommon.ZLib();
-					if (jsZlib.open(arrStream))
-					{
-						if (jsZlib.files && jsZlib.files.length) {
-							const oImgBlobs = this.getBlobCache(jsZlib);
-							arrStream = jsZlib.getFile(jsZlib.files[0]);
-							oData.stream = arrStream ? Array.from(arrStream) : null;
-							oData.blobs = oImgBlobs;
-							oData.addCloseCallback(this.getCloseCallbackFromBlobCache(oImgBlobs));
-						}
-						jsZlib.close();
-					}
+					this.fillDataFromXLSTZip(arrStream, oData);
 				} else if (arrStream) {
 					oData.stream = Array.from(arrStream);
 				}
@@ -1148,7 +1144,8 @@
 			if (AscCommon.checkOOXMLSignature(binary)) {
 				resolve(binary);
 			} else {
-				oThis.api.getConvertedXLSXFileFromUrl({data: binary}, Asc.c_oAscFileType.XLSX, function (arrBinaryData) {
+				const xlsyBinary = ("XLSY;v2;" + binary.length + ";" + AscCommon.Base64.encode(binary)).toUtf8();
+				oThis.api.getConvertedXLSXFileFromUrl({data: xlsyBinary}, Asc.c_oAscFileType.XLSX, function (arrBinaryData) {
 					if (arrBinaryData) {
 						resolve(arrBinaryData);
 					} else {
