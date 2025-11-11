@@ -14116,19 +14116,54 @@
 		delimiterMap[AscCommon.c_oAscCsvDelimiter.Colon] = ":";
 		delimiterMap[AscCommon.c_oAscCsvDelimiter.Comma] = ",";
 		delimiterMap[AscCommon.c_oAscCsvDelimiter.Space] = " ";
-		const delimiterChar = options.asc_getDelimiterChar() || delimiterMap[options.asc_getDelimiter()];
+
+		const delimiterChar = options.asc_getDelimiterChar();
+		const delimiter = options.asc_getDelimiter();
+		const delimiterArray = [];
+
+		if (delimiterChar) {
+			if (Array.isArray(delimiterChar)) {
+				for (let i = 0; i < delimiterChar.length; i++) {
+					delimiterArray.push(delimiterChar[i]);
+				}
+			} else {
+				delimiterArray.push(delimiterChar);
+			}
+		}
+
+		if (delimiter !== undefined && delimiter !== null) {
+			if (delimiter) {
+				if (Array.isArray(delimiter)) {
+					for (let i = 0; i < delimiter.length; i++) {
+						let delimeterValue = delimiterMap[delimiter[i]];
+						if (delimiterArray.indexOf(delimeterValue) === -1) {
+							delimiterArray.push(delimeterValue);
+						}
+					}
+				} else {
+					let delimeterValue = delimiterMap[delimiter];
+					if (delimiterArray.indexOf(delimeterValue) === -1) {
+						delimiterArray.push(delimeterValue);
+					}
+				}
+			}
+		}
+
 		const textQualifier = options.asc_getTextQualifier();
 		const hasQualifier = !!textQualifier;
 		
 		if (!text.length) return [[]];
 		
-		let rows = delimiterChar === '\n' ? [text] : text.split(/\r\n|\r|\n/);
+		let rows = (delimiterArray.length === 1 && delimiterArray[0] === '\n') ? [text] : text.split(/\r\n|\r|\n/);
 		if (rows.length > 1 && rows[rows.length - 1] === '') rows.pop();
-		
-		const isSpace = delimiterChar === " ";
+
+		const isSpace = delimiterArray.length > 0 && delimiterArray.indexOf(" ") !== -1;
 		// Note: Using charCodeAt instead of codePointAt for performance.
 		// CSV delimiters are always basic ASCII chars (comma=44, semicolon=59, tab=9, etc.)
-		const delimiterCode = delimiterChar ? delimiterChar.charCodeAt(0) : 0;
+		const delimiterCodes = [];
+		for (let i = 0; i < delimiterArray.length; i++) {
+			delimiterCodes.push(delimiterArray[i].charCodeAt(0));
+		}
 		const qualifierCode = hasQualifier ? textQualifier.charCodeAt(0) : 0;
 		
 		/**
@@ -14139,9 +14174,9 @@
 		 */
 		const processSpaceRow = function(row) {
 			if (!isSpace || !bTrimSpaces) return row;
-			const hasLeadingSpace = row.length > 0 && row.charCodeAt(0) === delimiterCode;
+			const hasLeadingSpace = row.length > 0 && delimiterCodes.indexOf(row.charCodeAt(0)) !== -1;
 			row = row.trim();
-			return hasLeadingSpace ? delimiterChar + row : row;
+			return hasLeadingSpace ? delimiterArray[0] + row : row;
 		};
 		
 		/**
@@ -14177,7 +14212,7 @@
 
 				const charCode = row.charCodeAt(j);
 				if (charCode === qualifierCode) {
-					if (!insideQualifier && (j === 0 || row.charCodeAt(j - 1) === delimiterCode)) {
+					if (!insideQualifier && (j === 0 || delimiterCodes.indexOf(row.charCodeAt(j - 1)) !== -1)) {
 						insideQualifier = true;
 						j++;
 						continue;
@@ -14194,7 +14229,7 @@
 					}
 				}
 				
-				if (!insideQualifier && charCode === delimiterCode) {
+				if (!insideQualifier && delimiterCodes.indexOf(charCode) !== -1) {
 					fields.push(textParts.join(''));
 					textParts = [];
 				} else {
@@ -14218,7 +14253,22 @@
 				matrix.push(res.fields);
 				i = res.curIndex;
 			} else {
-				matrix.push(delimiterChar === undefined ? [row] : row.split(delimiterChar));
+				if (delimiterArray.length === 0) {
+					matrix.push([row]);
+				} else {
+					const parts = [];
+					let currentPart = "";
+					for (let j = 0; j < row.length; j++) {
+						if (delimiterCodes.indexOf(row.charCodeAt(j)) !== -1) {
+							parts.push(currentPart);
+							currentPart = "";
+						} else {
+							currentPart += row[j];
+						}
+					}
+					parts.push(currentPart);
+					matrix.push(parts);
+				}
 			}
 		}
 		return matrix;
