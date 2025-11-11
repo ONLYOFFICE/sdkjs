@@ -16644,6 +16644,7 @@ $(function () {
 		ws2.getRange2("A1").setValue("0.5");
 		ws2.getRange2("A2").setValue("1.5");
 		ws2.getRange2("A3").setValue("Text");
+		ws2.getRange2("A4").setValue("123");
 		ws2.getRange2("B1").setValue("-1");
 		ws2.getRange2("C1").setValue("1");
 		// DefNames.
@@ -16737,7 +16738,7 @@ $(function () {
 		// Case #20: Area3D, Number. 3D single-cell range with fixed places. 2 arguments used.
 		oParser = new parserFormula('OCT2HEX(Sheet2!A4:A4,3)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: OCT2HEX(Sheet2!A4:A4,3) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Positive case: Area3D, Number. 3D single-cell range with fixed places. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), "053", 'Test: Positive case: Area3D, Number. 3D single-cell range with fixed places. 2 arguments used.');
 		// Case #21: Table. Table structured reference with valid octal. 1 argument used.
 		oParser = new parserFormula('OCT2HEX(Table1[Column1])', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: OCT2HEX(Table1[Column1]) is parsed.');
@@ -16771,15 +16772,15 @@ $(function () {
 		// Case #4: String. Non-numeric string returns #VALUE!. 1 argument used.
 		oParser = new parserFormula('OCT2HEX("abc")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: OCT2HEX("abc") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: String. Non-numeric string returns #VALUE!. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: String. Non-numeric string returns #VALUE!. 1 argument used.');
 		// Case #5: String, Number. Non-numeric string with places returns #VALUE!. 2 arguments used.
 		oParser = new parserFormula('OCT2HEX("abc",3)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: OCT2HEX("abc",3) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: String, Number. Non-numeric string with places returns #VALUE!. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: String, Number. Non-numeric string with places returns #VALUE!. 2 arguments used.');
 		// Case #6: Error. Propagates #N/A error. 1 argument used.
 		oParser = new parserFormula('OCT2HEX(NA())', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: OCT2HEX(NA()) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Error. Propagates #N/A error. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Error. Propagates #N/A error. 1 argument used.');
 		// Case #7: Empty. Empty cell reference returns #VALUE!. 1 argument used.
 		oParser = new parserFormula('OCT2HEX(A104)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: OCT2HEX(A104) is parsed.');
@@ -16791,11 +16792,11 @@ $(function () {
 		// Case #9: Boolean. Boolean TRUE returns #NUM!. 1 argument used.
 		oParser = new parserFormula('OCT2HEX(TRUE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: OCT2HEX(TRUE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean TRUE returns #NUM!. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean TRUE returns #NUM!. 1 argument used.');
 		// Case #10: Boolean, Number. Boolean FALSE with places returns #NUM!. 2 arguments used.
 		oParser = new parserFormula('OCT2HEX(FALSE,3)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: OCT2HEX(FALSE,3) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean, Number. Boolean FALSE with places returns #NUM!. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean, Number. Boolean FALSE with places returns #NUM!. 2 arguments used.');
 		// Case #11: Area. Multi-cell range returns #VALUE!. 1 argument used.
 		oParser = new parserFormula('OCT2HEX(A105:A106)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: OCT2HEX(A105:A106) is parsed.');
@@ -16819,7 +16820,7 @@ $(function () {
 		// Case #17: Formula. Formula resulting in #NUM! error. 1 argument used.
 		oParser = new parserFormula('OCT2HEX(SQRT(-1))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: OCT2HEX(SQRT(-1)) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Formula. Formula resulting in #NUM! error. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Formula. Formula resulting in #NUM! error. 1 argument used.');
 		// Case #18: Number. Invalid negative octal number returns #NUM!. 1 argument used.
 		oParser = new parserFormula('OCT2HEX(-4000000000)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: OCT2HEX(-4000000000) is parsed.');
@@ -16854,16 +16855,6 @@ $(function () {
 		oParser = new parserFormula('OCT2HEX(3777777777,10)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: OCT2HEX(3777777777,10) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '001FFFFFFF', 'Test: Bounded case: Number, Number. Maximum valid octal with maximum places. 2 arguments used.');
-
-		// TODO NaN problem
-		// Need to fix: error handle, error types diff from MS, Boolean handle
-		// Case #20: Area3D, Number. 3D single-cell range with fixed places. 2 arguments used.
-		// Case #4: String. Non-numeric string returns #VALUE!. 1 argument used. - NaN
-		// Case #5: String, Number. Non-numeric string with places returns #VALUE!. 2 arguments used. - NaN
-		// Case #6: Error. Propagates #N/A error. 1 argument used.
-		// Case #9: Boolean. Boolean TRUE returns #NUM!. 1 argument used.
-		// Case #10: Boolean, Number. Boolean FALSE with places returns #NUM!. 2 arguments used.
-		// Case #17: Formula. Formula resulting in #NUM! error. 1 argument used.
 
 
 		testArrayFormula2(assert, "OCT2HEX", 1, 2, true)
